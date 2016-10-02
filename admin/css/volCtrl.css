@@ -1,0 +1,147 @@
+/**
+ * volCtrl.css
+ *
+ *
+ * @package   Hospitality HouseKeeper
+ * @author    Eric K. Crane <ecrane@hospitalityhousekeeper.com>
+ * @copyright 2010-2013 <ecrane@hospitalityhousekeeper.com>
+ * @license   GPL and MIT
+ * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ */
+#widget-docs .editsection, #widget-docs h2.top-header, #overview-example, ul.UIAPIPlugin-toc {
+    display: none;
+}
+/*#widget-docs a:link, #widget-docs a:visited {
+    color: #1B75BB;
+    text-decoration: none;
+}
+#widget-docs a:hover, #widget-docs a:active {
+    color: #0B559B;
+}*/
+#widget-docs h2, #widget-docs h3, #widget-docs h4, #widget-docs p, #widget-docs ul, #widget-docs code {
+    margin: 0;
+    padding: 0;
+}
+#widget-docs h2 {
+    font-size: 16px;
+    margin: 1.2em 0 0.5em;
+}
+#widget-docs h3 {
+    color: #E6820E;
+/*    font-size: 14px;*/
+    margin: 1.5em 0 0.5em;
+}
+#widget-docs ul.options-list {
+    list-style-type: none;
+}
+#widget-docs ul.options-list li {
+    clear: left;
+    float: left;
+    width: 100%;
+    border: 1px solid #D4CCB0;
+}
+#widget-docs .option-header {
+    border-top: 1px solid #DFD9C3;
+    float: left;
+    padding: 2px 0 1px;
+    width: 100%;
+}
+#widget-docs .option-header h3 {
+    background: url("../images/spindown-closed.gif") no-repeat scroll left center transparent;
+    cursor: pointer;
+    float: left;
+    line-height: 1.5;
+    margin: 0 0 0 10px;
+    padding: 0 0 0 15px;
+    width: 60%;
+}
+#widget-docs .header-open h3 {
+    background: url("../images/spindown-open.gif") no-repeat scroll left center transparent;
+}
+#widget-docs .option-description, #widget-docs .event-description, #widget-docs .method-description, #widget-docs .option-examples, #widget-docs .event-examples {
+    padding: 0 10px 0 25px;
+}
+#widget-docs .option-examples, #widget-docs .event-examples {
+    padding-bottom: 15px;
+}
+#widget-docs .option-header dl, #widget-docs .event-header dl, #widget-docs .method-header dl {
+    float: right;
+    width: 65%;
+}
+#widget-docs .option-header dt, #widget-docs .event-header dt, #widget-docs .option-header dd, #widget-docs .event-header dd {
+    float: left;
+    font-size: 1.1em;
+}
+#widget-docs .option-header dt, #widget-docs .event-header dt {
+    color: #888888;
+    padding-right: 0.5em;
+}
+#widget-docs .option-header dt.option-type-label, #widget-docs .method-header dt.method-signature-label {
+    display: none;
+}
+#widget-docs .option-header dd, #widget-docs .event-header dd {
+    margin: 0;
+    padding-right: 15px;
+    width: 35%;
+}
+#widget-docs .option-header dd span {
+    border-bottom: 1px dashed #999999;
+    cursor: pointer;
+}
+#widget-docs .option-header dd span:hover {
+    border-bottom: 1px dashed #000000;
+    color: #999999;
+    cursor: pointer;
+}
+#widget-docs .option-examples-list dd, #widget-docs .event-examples-list dd {
+    margin: 0;
+    padding: 0 0 0 20px;
+}
+
+#widget-docs .ui-state-active {
+    background: url("ss/images/ui-bg_highlight-hard_100_fafaf4_1x100.png") repeat-x scroll 50% 50% #FAFAF4;
+    border: 1px solid #D4CCB0;
+    color: #459E00;
+    font-weight: bold;
+}
+#widget-docs .ui-state-default {
+    background: url("ss/images/ui-bg_highlight-hard_15_459e00_1x100.png") repeat-x scroll 50% 50% #459E00;
+    border: 1px solid #327E04;
+    color: #FFFFFF;
+    font-weight: bold;
+}
+
+/*#widget-docs .ui-widget-content a:link, #widget-docs .ui-widget-content a:visited {
+    color: #1B75BB;
+    text-decoration: none;
+}
+#widget-docs .ui-widget-content a:hover, #widget-docs .ui-widget-content a:active {
+    color: #0B559B;
+}*/
+#widget-docs.ui-corner-all {
+    border-radius: 0 0 0 0;
+}
+#widget-docs .toggle-docs-links {
+    float: right;
+    margin: 0 0.4em 0.4em;
+}
+#widget-docs .toggle-docs-links a {
+    cursor: pointer;
+    margin: 0 0.4em;
+}
+.clearfix:after {
+    clear: both;
+    content: ".";
+    display: block;
+    height: 0;
+    visibility: hidden;
+}
+.clearfix {
+    display: inline-block;
+}
+* html .clearfix {
+    height: 1%;
+}
+.clearfix {
+    display: block;
+}

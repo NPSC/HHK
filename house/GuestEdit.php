@@ -1,0 +1,947 @@
+<?php
+/**
+ * GuestEdit.php
+ *
+ *
+ *
+ * @category  house
+ * @package   Hospitality HouseKeeper
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
+ * @license   GPL and MIT
+ * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ */
+require ("homeIncludes.php");
+
+require (DB_TABLES . 'visitRS.php');
+require (DB_TABLES . 'nameRS.php');
+require (DB_TABLES . 'registrationRS.php');
+require (DB_TABLES . 'ActivityRS.php');
+require (DB_TABLES . 'MercuryRS.php');
+require (DB_TABLES . 'ReservationRS.php');
+require (DB_TABLES . 'PaymentsRS.php');
+require (DB_TABLES . 'AttributeRS.php');
+
+require (MEMBER . 'Member.php');
+require (MEMBER . 'IndivMember.php');
+require (MEMBER . 'OrgMember.php');
+require (MEMBER . "Addresses.php");
+require (MEMBER . "EmergencyContact.php");
+
+require (CLASSES . 'UserCategories.php');
+require (CLASSES . 'volunteer.php');
+require (CLASSES . 'selCtrl.php');
+require (CLASSES . 'Relation.php');
+require (CLASSES . 'History.php');
+require (CLASSES . 'AuditLog.php');
+require (CLASSES . 'CleanAddress.php');
+require (CLASSES . 'CreateMarkupFromDB.php');
+require (HOUSE . 'psg.php');
+require (HOUSE . 'HouseLog.php');
+require (HOUSE . 'Role.php');
+require (HOUSE . 'Guest.php');
+require (HOUSE . 'Patient.php');
+require (HOUSE . 'Agent.php');
+require (HOUSE . 'Doctor.php');
+require (HOUSE . 'RoleMember.php');
+require (HOUSE . 'Registration.php');
+require (HOUSE . 'Reservation_1.php');
+require (HOUSE . 'ReservationSvcs.php');
+require (HOUSE . 'visitViewer.php');
+require (HOUSE . 'Visit.php');
+
+require (HOUSE . 'Vehicle.php');
+require (HOUSE . 'HouseServices.php');
+require (HOUSE . 'VisitLog.php');
+require (HOUSE . 'RoomChooser.php');
+require (HOUSE . 'Resource.php');
+require (HOUSE . 'Room.php');
+require (HOUSE . 'Hospital.php');
+require (HOUSE . 'Attributes.php');
+require (HOUSE . 'Constraint.php');
+require (HOUSE . 'PaymentManager.php');
+require (HOUSE . 'PaymentChooser.php');
+require (HOUSE . 'VisitCharges.php');
+
+require (CLASSES . 'FinAssistance.php');
+require (CLASSES . 'Notes.php');
+
+require (CLASSES . 'MercPay/MercuryHCClient.php');
+require (CLASSES . 'MercPay/Gateway.php');
+require (CLASSES . 'PaymentSvcs.php');
+require (CLASSES . 'Purchase/RoomRate.php');
+require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+require (PMT . 'Payments.php');
+require (PMT . 'HostedPayments.php');
+require (PMT . 'Invoice.php');
+require (PMT . 'InvoiceLine.php');
+require (PMT . 'CreditToken.php');
+require (PMT . 'Transaction.php');
+require (PMT . 'Receipt.php');
+require (PMT . 'CashTX.php');
+require (PMT . 'CheckTX.php');
+
+
+try {
+    $wInit = new webInit();
+} catch (Exception $exw) {
+    die("arrg!  " . $exw->getMessage());
+}
+
+$dbh = $wInit->dbh;
+
+$pageTitle = $wInit->pageTitle;
+
+// get session instance
+$uS = Session::getInstance();
+
+$menuMarkup = $wInit->generatePageMenu();
+
+// Load the session with member - based lookups
+
+$wInit->sessionLoadGuestLkUps();
+
+
+$resultMessage = "";
+$id = 0;
+$idPsg = 0;
+$psg = NULL;
+$uname = $uS->username;
+$receipt = '';
+$guestTabIndex = 0;
+
+
+$memberFlag = ComponentAuthClass::is_Authorized("guestadmin");
+
+// Instantiate the alert message control
+$alertMsg = new alertMessage("divAlert1");
+
+
+
+
+$receiptMarkup = '';
+
+// Hosted payment return
+if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)) === FALSE) {
+
+    $receiptMarkup = $payResult->getReceiptMarkup();
+
+    if ($payResult->getDisplayMessage() != '') {
+
+        $alertMsg->set_Context(alertMessage::Alert);
+        $alertMsg->set_Text($payResult->getDisplayMessage());
+        $resultMessage = $alertMsg->createMarkup();
+    }
+}
+
+
+
+/*
+ * called with get parameters id=x, load that id if feasable.
+ */
+if (isset($_GET["id"])) {
+
+    $id = intval(filter_var($_GET["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+}
+
+if (isset($_GET['psg'])) {
+
+    $idPsg = intval(filter_var($_GET["psg"], FILTER_SANITIZE_NUMBER_INT), 10);
+
+} else if (isset($_POST['hdnpsg'])) {
+
+    $idPsg = intval(filter_var($_POST["hdnpsg"], FILTER_SANITIZE_NUMBER_INT), 10);
+
+}
+
+/*
+ *  Check for new member command on get line
+ *
+ */
+$setForNew = false;
+$cmd = filter_input(INPUT_GET, 'cmd', FILTER_SANITIZE_STRING);
+if (is_null($cmd) === FALSE) {
+
+    if ($cmd == "new") {
+        $setForNew = true;
+    }
+}
+
+
+
+/*
+* This is the ID that the previous page instance saved for us.
+*/
+if (isset($_POST["hdnid"])) {
+   $h_idTxt = filter_var($_POST["hdnid"], FILTER_SANITIZE_NUMBER_INT);
+   $id = intval($h_idTxt, 10);
+   if ($uS->guestId != $id) {
+        $alertMsg->set_Context(alertMessage::Alert);
+        $alertMsg->set_Text("Posted id does not match what the server remembers.");
+        $resultMessage = $alertMsg->createMarkup();
+        $id = 0;
+   }
+}
+
+
+$showSearchOnly = TRUE;
+if ($id > 0 || $setForNew) {
+    $showSearchOnly = FALSE;
+}
+
+$guestName = '';
+$memberData = array();
+
+
+if ($showSearchOnly === FALSE) {
+
+
+
+// Get the name data.
+try {
+
+    $name = new GuestMember($dbh, MemBasis::Indivual, $id, NULL);
+    $name->setIdPrefix('');
+    $id = $name->get_idName();
+
+} catch (Exception $hkex) {
+
+    $alertMsg->set_Context(alertMessage::Notice);
+    $alertMsg->set_Text($hkex->getMessage());
+    $resultMessage = $alertMsg->createMarkup();
+
+    $id = 0;
+    $name = new GuestMember($dbh, MemBasis::Indivual, $id);
+
+}
+
+
+$address = new Address($dbh, $name, $uS->nameLookups[GL_TableNames::AddrPurpose]);
+$phones = new Phones($dbh, $name, $uS->nameLookups[GL_TableNames::PhonePurpose]);
+$emails = new Emails($dbh, $name, $uS->nameLookups[GL_TableNames::EmailPurpose]);
+
+$psgmkup = '';
+
+// Check psg
+$ngRss = Psg::getNameGuests($dbh, $id);
+
+// Check that the guest is a member of the indicated PSG.
+if ($idPsg > 0) {
+
+    $foundIt = FALSE;
+
+    foreach ($ngRss as $n) {
+        if ($n->idPsg->getStoredVal() == $idPsg) {
+            $foundIt = TRUE;
+        }
+    }
+
+    // The psg is not attached to this guest.
+    if ($foundIt === FALSE) {
+
+        $alertMsg->set_Context(alertMessage::Alert);
+        $alertMsg->set_Text('Guest is not a memeber of the PSG indicated on the URL (GET param).  ');
+        $resultMessage = $alertMsg->createMarkup();
+
+        $idPsg = 0;
+    }
+
+}
+
+
+// PSG Chooser
+if ($idPsg == 0) {
+
+    if (count($ngRss) > 1) {
+
+        // Select psg
+        $tbl = new HTMLTable();
+        $tbl->addHeaderTr(HTMLTable::makeTh('Patient'));
+
+        foreach ($ngRss as $n) {
+
+            $gpsg = new Psg($dbh, $n->idPsg->getStoredVal());
+
+            $tbl->addBodyTr(
+                HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $gpsg->getPatientName($dbh), array('href'=> 'GuestEdit.php?id='.$id.'&psg='.$gpsg->getIdPsg())))
+                );
+
+        }
+
+        $psgmkup = HTMLContainer::generateMarkup('h3', 'Choose Patient Support Group') .$tbl->generateMarkup();
+        $guestTabIndex = 1;
+
+    } else if (count($ngRss) == 1) {
+        $ngRs = array_pop($ngRss);
+        $idPsg = $ngRs->idPsg->getStoredVal();
+    }
+}
+
+
+$psg = new Psg($dbh, $idPsg);
+$registration = new Registration($dbh, $psg->getIdPsg());
+$emergContact = new EmergencyContact($dbh, $id);
+$idPatient = $psg->getIdPatient();
+$hospitalStay = new HospitalStay($dbh, $idPatient);
+
+
+/*
+ * This is the main SAVE submit button.  It checks for a change in any data field
+ * and updates the database accordingly.
+ */
+if (isset($_POST["btnSubmit"])) {
+    $msg = "";
+
+    addslashesextended($_POST);
+
+    try {
+        // Name
+        $msg .= $name->saveChanges($dbh, $_POST);
+        $id = $name->get_idName();
+
+        // Address
+        $msg .= $address->savePost($dbh, $_POST, $uname);
+
+        // Phone number
+        $msg .= $phones->savePost($dbh, $_POST, $uname);
+
+        // Email Address
+        $msg .= $emails->savePost($dbh, $_POST, $uname);
+
+        // Emergency contact
+        $emergContact->save($dbh, $id, $_POST, $uname);
+
+
+        // house
+        if ($psg->getIdPsg() > 0) {
+
+            $delMe = FALSE;
+
+            // psg
+            if (isset($_POST['delpMem'])) {
+
+                foreach ($_POST['delpMem'] as $k => $v) {
+
+                    $k = intval(filter_var($k, FILTER_SANITIZE_NUMBER_INT),10);
+
+//                    // does guest have stays with this PSG?
+//                    $query = "select count(*) from visit v join registration on  where  and idName = :id;";
+//                    $stmt = $dbh->query($query);
+//                    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+//
+//                    if (isset($rows) && $rows[0][0] > 0) {
+//                        return TRUE;
+//                    }
+
+                    $psg->removeGuest($dbh, $k, $uname);
+                    if ($k == $id) {
+                        $delMe = TRUE;
+                    }
+                }
+
+            } else {
+
+                if (isset($_POST['selPrel'])) {
+
+                    foreach ($_POST['selPrel'] as $k => $v) {
+                        $k = intval(filter_var($k, FILTER_SANITIZE_NUMBER_INT),10);
+                        $v = filter_var($v, FILTER_SANITIZE_STRING);
+                        $psg->setNewMember($k, 0, $v);
+                    }
+                }
+
+                if (isset($_POST['cbLegalCust'])) {
+
+                    foreach ($psg->psgMembers as $g => $v) {
+
+                        if (isset($_POST['cbLegalCust'][$g])) {
+                            $v->Legal_Custody->setNewVal(1);
+                        } else {
+                            $v->Legal_Custody->setNewVal(0);
+                        }
+                    }
+
+                } else {
+
+                    foreach ($psg->psgMembers as $g => $v) {
+                        $v->Legal_Custody->setNewVal(0);
+                    }
+                }
+            }
+
+            // Notes
+            $psgNotes = '';
+            if (isset($_POST['txtPSGNotes'])) {
+                $psgNotes = $_POST['txtPSGNotes'];
+            }
+
+            // Last info confirmed date
+            if (isset($_POST['cbLastConfirmed']) && isset($_POST['txtLastConfirmed'])) {
+                $lastConfirmed = filter_var($_POST['txtLastConfirmed'], FILTER_SANITIZE_STRING);
+                $psg->setLastConfirmed($lastConfirmed);
+            }
+
+            $msg .= $psg->savePSG($dbh, $psg->getIdPatient(), $uname, $psgNotes);
+
+            if ($delMe) {
+                $psg = new Psg($dbh);
+            }
+
+            // Registration
+            $registration->extractRegistration($dbh, $_POST);
+            $registration->extractVehicleFlag($_POST);
+            $msg = $registration->saveRegistrationRs($dbh, $psg->getIdPsg(), $uname);
+
+
+            if ($uS->TrackAuto && $registration->getNoVehicle() == 0) {
+                Vehicle::saveVehicle($dbh, $_POST, $registration->getIdRegistration());
+            }
+
+            // Hospital info
+            Hospital::saveReferralMarkup($dbh, $psg, $hospitalStay, $_POST, $uname);
+
+
+            if ($uS->IncomeRated) {
+                // Financial Assistance
+                $finApp = new FinAssistance($dbh, $registration->getIdRegistration());
+
+                $faCategory = '';
+                $faStat = '';
+                $reason = '';
+                $notes = '';
+                $faStatDate = '';
+
+                if (isset($_POST['txtFaIncome'])) {
+                    $income = filter_var(str_replace(',', '', $_POST['txtFaIncome']),FILTER_SANITIZE_NUMBER_INT);
+                    $finApp->setMontylyIncome($income);
+                }
+
+                if (isset($_POST['txtFaSize'])) {
+                    $size = intval(filter_var($_POST['txtFaSize'],FILTER_SANITIZE_NUMBER_INT), 10);
+                    $finApp->setHhSize($size);
+                }
+
+                // FA Category
+                if (isset($_POST['hdnRateCat'])) {
+                    $faCategory = filter_var($_POST['hdnRateCat'], FILTER_SANITIZE_STRING);
+                }
+
+                if (isset($_POST['SelFaStatus']) && $_POST['SelFaStatus'] != '') {
+                    $faStat = filter_var($_POST['SelFaStatus'], FILTER_SANITIZE_STRING);
+                }
+
+                if (isset($_POST['txtFaStatusDate']) && $_POST['txtFaStatusDate'] != '') {
+                    $faDT = setTimeZone($uS, filter_var($_POST['txtFaStatusDate'], FILTER_SANITIZE_STRING));
+                    $faStatDate = $faDT->format('Y-m-d');
+                }
+
+                // Reason text
+                if (isset($_POST['txtFaReason'])) {
+                    $reason = filter_var($_POST['txtFaReason'], FILTER_SANITIZE_STRING);
+                }
+
+                // Notes
+                if (isset($_POST['txtFaNotes'])) {
+                    $notes = filter_var($_POST['txtFaNotes'], FILTER_SANITIZE_STRING);
+                }
+
+                // Save Fin App dialog.
+                $finApp->saveDialogMarkup($dbh, $faStat, $faCategory, $reason, $faStatDate, $notes, $uS->username);
+            }
+
+        }
+
+        // success
+        $alertMsg->set_Context(alertMessage::Success);
+        $alertMsg->set_Text($msg);
+        $resultMessage = $alertMsg->createMarkup();
+
+
+    } catch (Exception $ex) {
+
+        $alertMsg->set_Context(alertMessage::Alert);
+        $alertMsg->set_Text($ex->getMessage());
+        $resultMessage = $alertMsg->createMarkup();
+
+    }
+}
+
+
+// Get labels
+$labels = new Config_Lite(LABEL_FILE);
+
+
+
+// Heading member name text
+if ($name->isNew()) {
+
+    $niceName = "New Guest";
+
+} else {
+
+    if ($psg->getIdPatient() == $name->get_idName()) {
+        $niceName = "Patient: " . $name->getMemberName();
+    } else {
+        $niceName = "Guest: " . $name->getMemberName();
+    }
+}
+
+
+//
+// Name Edit Row
+$nameMarkup = $name->createMarkupTable('', FALSE, TRUE);
+
+
+// Demographics
+$demogTab = $name->createDemographicsPanel($dbh);
+
+// Excludes
+$ta = $name->createExcludesPanel();
+
+$ExcludeTab = $ta['markup'];
+
+// Addresses
+$addrPanelMkup = $address->createMarkup('', TRUE, $uS->county);
+// Phone Numbers
+$phoneMkup = $phones->createMarkup();
+// Email addresses
+$emailMkup = $emails->createMarkup();
+$prefMkup = Addresses::getPreferredPanel($phones, $emails);
+
+// Contact last updated
+$contactLastUpdated = '';
+
+if ($name->get_lastUpdated() != '') {
+    $contactLastUpdated = $name->getContactLastUpdatedMU(new DateTime($name->get_lastUpdated()), 'Name');
+}
+
+// Add Emergency contact
+$emergencyTabMarkup = HTMLContainer::generateMarkup('div',
+        $emergContact->createMarkup($emergContact, $uS->nameLookups[GL_TableNames::RelTypes]));
+
+
+
+//
+// Guest History - add this ID.
+History::addToGuestHistoryList($dbh, $id, $uS->rolecode);
+
+
+$visitList = "";
+$visitLog = '';
+$psgOnly = FALSE;
+$regTabMarkup = "";
+$psgTabMarkup = "";
+$vehicleTabMarkup = "";
+$reservMarkup = '';
+$finMarkup = '';
+
+
+//
+// Guest
+//
+if ($psg->getIdPsg() > 0) {
+
+    $psgTabMarkup = $psg->createEditMarkup($dbh, $uS->guestLookups[GL_TableNames::PatientRel], $labels, 'GuestEdit.php', $id, FALSE);
+
+    $ccMarkup = '';
+    if ($uS->ccgw != '') {
+
+        $ccMarkup = HTMLcontainer::generateMarkup('div' ,HTMLContainer::generateMarkup('fieldset',
+                HouseServices::viewCreditTable($dbh, $registration->getIdRegistration(), $id)
+                . HTMLInput::generateMarkup('Update Credit', array('type'=>'button','id'=>'btnCred', 'data-id'=>$id, 'data-idreg'=>$registration->getIdRegistration(), 'style'=>'margin:5px;float:right;'))
+            ,array('style'=>'float:left;padding:5px;')));
+
+    }
+
+    $regTabMarkup = HTMLContainer::generateMarkup('div', $registration->createRegMarkup($dbh, $memberFlag), array('style'=>'float:left;margin-right:1em;')) . $ccMarkup;
+
+    if ($uS->TrackAuto) {
+        $vehicleTabMarkup = Vehicle::createVehicleMarkup($dbh, $registration->getIdRegistration(), $registration->getNoVehicle());
+    }
+
+    // Look for visits
+    $visitRows = VisitView::loadActiveVisits($dbh, $registration->getIdRegistration());
+    $stays = VisitView::loadGuestStays($dbh, $id);
+
+    if (count($visitRows) > 0) {
+
+        // preprocess visits
+        for ($j = count($visitRows) - 1; $j >= 0 ; $j--) {
+
+            if (isset($visitRows[$j - 1])) {
+                $visitRows[$j]['nxtRoom'] = $visitRows[$j - 1]['Title'];
+            }
+        }
+
+
+        foreach ($visitRows as $r) {
+
+            $room = $r['Status_Title'] . ' to ' . $r['Title'];
+            $stIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-check', 'style'=>'float: left; margin-left:.3em;', 'title'=>$r['Status_Title']));
+
+            $stayIcon = '';
+
+            foreach ($stays as $s) {
+
+                if ($s['idVisit'] == $r['idVisit'] && $s['Visit_Span'] == $r['Span']) {
+                    $stayIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float: left; margin-left:.3em;', 'title'=>'Guest Stayed'));
+                    break;
+                }
+
+            }
+
+            if ($r['Status'] == VisitStatus::NewSpan) {
+
+                // Get the next room if room was changed
+                $room = $r['Status_Title'] . ' from ' . $r['Title'] . ' to ' . $r['nxtRoom'];
+                $stIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-newwin', 'style'=>'float: left; margin-left:.3em;', 'title'=>$r['Status_Title']));
+
+            } else if ($r['Status'] == VisitStatus::ChangeRate) {
+
+                $room = $r['Status_Title'] . " (Room: " . $r['Title'] . ")";
+                $stIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-tag', 'style'=>'float: left; margin-left:.3em;', 'title'=>$r['Status_Title']));
+
+            } else if ($r['Status'] == VisitStatus::CheckedOut) {
+
+                $room =  $r['Status_Title'] . ' from ' . $r['Title'];
+                $stIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-extlink', 'style'=>'float: left; margin-left:.3em;', 'title'=>$r['Status_Title']));
+            }
+
+            // Compile header
+            $hdr = HTMLContainer::generateMarkup('h3', HTMLContainer::generateMarkup('span',
+                    'Visit ' .$r['idVisit'] . '-' . $r['Span'] . ': '
+                    . (date('Y') == date('Y', strtotime($r['Span_Start'])) ? date('M j', strtotime($r['Span_Start'])) : date('M j, Y', strtotime($r['Span_Start'])))
+                    . " to "
+                    . ($r['Span_End'] == '' ? date('M j', strtotime($r['Expected_Departure'])) : date('M j', strtotime($r['Span_End'])))
+                    . ".  " . $room . $stIcon . $stayIcon),
+                    array('class'=>'ui-accordion-header ui-helper-reset ui-state-default ui-corner-all hhk-view-visit', 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span'], 'data-gid'=>$id, 'style'=>'min-height:20px; padding-top:5px;'));
+
+            $visitList .= $hdr;
+
+        }
+
+    }
+
+    // Reservation
+    if ($uS->Reservation) {
+        $stmt = $dbh->query("select * from reservation where idRegistration = ". $registration->getIdRegistration() . " order by idReservation desc");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+        foreach ($rows as $r) {
+            $reservRs = new ReservationRS();
+            EditRS::loadRow($r, $reservRs);
+
+            $reserv = new Reservation_1($dbh, $reservRs, 0);
+            $rtbl = new HTMLTable();
+            $rtbl->addHeaderTr(HTMLTable::makeTh('Id').HTMLTable::makeTh('Status').HTMLTable::makeTh('Arrival').HTMLTable::makeTh('Depart').HTMLTable::makeTh('Room').HTMLTable::makeTh('Rate'));
+
+            // Get the room rate category names
+            $stmt = $dbh->query("Select FA_Category, Title, Reduced_Rate_1 from room_rate");
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $categoryTitles = array();
+            foreach ($rows as $r) {
+                $categoryTitles[$r['FA_Category']] = array(0 => $r['FA_Category'], 1 => $r['Title'] . ($r['Reduced_Rate_1'] == 0 ? '' :  ': $' . number_format($r['Reduced_Rate_1'], 0)));
+            }
+
+            $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), array('href'=>'Referral.php?rid=' . $reserv->getIdReservation())))
+                    . HTMLTable::makeTd($reserv->getStatusTitle($reserv->getStatus()))
+                    . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getArrival())))
+                    . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getDeparture())))
+                    . HTMLTable::makeTd($reserv->getRoomTitle($dbh))
+                    . ($uS->RoomPriceModel != ItemPriceCode::None ? HTMLTable::makeTd($categoryTitles[$reserv->getRoomRateCategory()][1]) : HTMLTable::makeTd(''))
+                    );
+
+            $constraintMkup = RoomChooser::createResvConstMkup($dbh, $reserv->getIdReservation(), TRUE);
+            if ($constraintMkup == '') {
+                $constraintMkup = "<p style='padding:4px;'>(No Room Attributes Selected.)<p>";
+            }
+
+            $rtbl->addBodyTr(HTMLTable::makeTd(Notes::markupShell($reserv->getNotes(), 'tbrn'.$reserv->getIdReservation()), array('colspan'=>'7')));
+            $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('div', $constraintMkup, array('style'=>'float:left;margin-left:10px;')), array('colspan'=>'7')));
+
+            $hdr = HTMLContainer::generateMarkup('h3', HTMLContainer::generateMarkup('span',
+                    $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ': '
+                    . (date('Y') == date('Y', strtotime($reserv->getArrival())) ? date('M j', strtotime($reserv->getArrival())) : date('M j, Y', strtotime($reserv->getArrival())))
+                    . " to " .(date('Y') == date('Y', strtotime($reserv->getDeparture())) ? date('M j', strtotime($reserv->getDeparture())) : date('M j, Y', strtotime($reserv->getDeparture())))
+                    . '.  ' . $reserv->getStatusIcon()
+                    , array('style'=>'margin-left:10px;')), array('style'=>'min-height:25px; padding-top:5px;'));
+
+            $reservMarkup .= $hdr . HTMLContainer::generateMarkup('div', $rtbl->generateMarkup());
+
+        }
+
+    }
+
+    // Financial Assistance
+    if ($uS->IncomeRated) {
+        $finApp = new FinAssistance($dbh, $registration->getIdRegistration());
+        $finMarkup = $finApp->createIncomeDialog();
+    }
+
+
+
+
+} else {
+    $psgTabMarkup = $psgmkup;
+    $psgOnly = TRUE;
+}
+
+
+$guestName = "<span style='font-size:2em;'>$niceName</span>";
+
+if ($name->getNoReturnDemog() != '') {
+    $guestName = "<span style='font-size:2em;color:red;'>$niceName - No Return: " . $uS->nameLookups['NoReturnReason'][$name->getNoReturnDemog()][1] . "</span>";
+} else if ($name->get_status() == MemStatus::Deceased) {
+    $guestName = "<span style='font-size:2em;color:#914A4A;'>$niceName - Deceased</span>";
+}
+
+
+$memberData["id"] = $name->get_idName();
+$memberData["memDesig"] = $name->getMemberDesignation();
+$memberData['addrPref'] = ($name->get_preferredMailAddr() == '' ? '1' : $name->get_preferredMailAddr());
+$memberData['phonePref'] = $name->get_preferredPhone();
+$memberData['emailPref'] = $name->get_preferredEmail();
+$memberData['memName'] = $name->getMemberName();
+$memberData['memStatus'] = $name->get_status();
+$memberData['idPsg'] = $psg->getIdPsg();
+$memberData['idReg'] = $registration->getIdRegistration();
+$memberData['psgOnly'] = $psgOnly;
+
+
+} else {
+    // Show just the search message.
+    $guestName = "<h2 style='font-size:2em;'>Search for a Guest/Patient:</h2>";
+}
+
+
+// Guest History tab markup
+$recHistory = History::getGuestHistoryMarkup($dbh);
+
+
+// Currently Checked In guests
+$currentCheckedIn = CreateMarkupFromDB::generateHTML_Table(History::getCheckedInGuestMarkup($dbh, 'GuestEdit.php', FALSE), 'curres');
+
+
+
+// Instantiate the alert message control
+//$alertMsg = new alertMessage("divAlert1");
+$alertMsg->set_DisplayAttr("none");
+$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_iconId("alrIcon");
+$alertMsg->set_styleId("alrResponse");
+$alertMsg->set_txtSpanId("alrMessage");
+$alertMsg->set_Text("uh-oh");
+
+$alertMessage = $alertMsg->createMarkup();
+
+// Save guest Id.
+$uS->guestId = $id;
+
+?>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title><?php echo $pageTitle; ?></title>
+<?php echo JQ_UI_CSS; ?>
+<?php echo TOP_NAV_CSS; ?>
+<?php echo MULTISELECT_CSS; ?>
+<?php echo HOUSE_CSS; ?>
+<style>
+    .hhk-view-visit {
+        padding:5px;
+        cursor:pointer;
+    }
+    .hhk-view-visit:hover {
+        background-color: #d0e5f5;
+        background-image: url("css/redmond/images/ui-bg_glass_75_d0e5f5_1x400.png");
+        background-repeat: repeat-x;
+        background-attachment: scroll;
+        background-position: 50% 50%;
+        background-clip: border-box;
+        background-origin: padding-box;
+        background-size: auto auto;
+    }
+</style>
+        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <?php echo JQ_DT_CSS; ?>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
+    </head>
+    <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
+        <?php echo $menuMarkup; ?>
+        <div id="contentDiv">
+            <div style="float:left; margin-right: 90px; margin-top:5px;">
+                <?php echo $guestName; ?>
+            </div>
+            <div class="ui-widget ui-widget-content ui-corner-all" style="font-size:.9em;background:#EFDBC2; margin:10px; padding:5px; float: left;">
+                <span>Name Search </span>
+                <input type="text" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
+                <span>Phone Search </span>
+                <input type="text" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" />
+            </div>
+            <div style="clear:both;"></div>
+            <?php if ($showSearchOnly === FALSE) { ?>
+            <form action="GuestEdit.php" method="post" id="form1" name="form1" >
+                <?php echo $resultMessage ?><?php echo $alertMessage; ?>
+                <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
+                    <?php echo $nameMarkup; ?>
+                    <?php echo $contactLastUpdated; ?>
+                </div>
+                <div style="clear:both;"></div>
+                <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
+                <div class="hhk-showonload hhk-tdbox" style="display:none;" >
+                    <div id="divNametabs" class="hhk-tdbox hhk-member-detail" style="min-width: 850px;">
+                    <ul>
+                        <li><a href="#nameTab" title="Addresses, Phone Numbers, Email Addresses">Contact Info</a></li>
+                        <li><a href="#demoTab" title="Guest Demographics">Demographics</a></li>
+                        <li><a href="#exclTab" title="Exclude Addresses"><?php echo $ta['tabIcon']; ?> Exclude</a></li>
+                        <?php if ($memberFlag) {  ?>
+                        <li><a href="#vvisitLog">Activity Log</a></li>
+                        <?php } ?>
+                    </ul>
+                    <div id="demoTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
+                        <?php echo $demogTab; ?>
+                    </div>
+                    <div id="exclTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
+                        <?php echo $ExcludeTab; ?>
+                    </div>
+                    <?php if ($memberFlag) {  ?>
+                    <div id="vvisitLog"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
+                        <?php echo $visitLog; ?>
+                    </div>
+                    <?php } ?>
+                    <div id="nameTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
+                        <div class="hhk-showonload hhk-tdbox" style="display:none;" >
+                            <div id="phEmlTabs" class="hhk-member-detail">
+                                    <ul>
+                                        <li><a href="#prefTab" title="Show only preferred phone and Email">Summary</a></li>
+                                        <li><a href="#phonesTab" title="Edit the Phone Numbers and designate the preferred number">Phone</a></li>
+                                        <li><a href="#emailTab" title="Edit the Email Addresses and designate the preferred address">Email</a></li>
+                                    </ul>
+                                    <div id="prefTab" class="ui-tabs-hide" >
+                                        <?php echo $prefMkup; ?>
+                                    </div>
+                                    <div id="phonesTab" class="ui-tabs-hide" >
+                                        <?php echo $phoneMkup; ?>
+                                    </div>
+                                    <div id="emailTab" class="ui-tabs-hide" >
+                                        <?php echo $emailMkup; ?>
+                                    </div>
+                                </div>
+                            <div id="addrsTabs" class="ui-tabs-hide hhk-member-detail" >
+                                <?php echo $addrPanelMkup; ?>
+                            </div>
+                            <div id="emergTabs"  style="float:left;" class="ui-tabs-hide hhk-member-detail" >
+                                <ul><li><a href="#vemerg">Emergency Contact</a></li></ul>
+                                <div id="vemerg" class="ui-tabs-hide">
+                                    <?php echo $emergencyTabMarkup; ?>
+                                </div>
+                            </div>
+                            <div style="clear:both;"></div>
+                        </div>
+                    </div>
+                </div>
+                    </div>
+                <div style="clear:both;"></div>
+                <?php if ($id > 0) {  ?>
+                <div id="psgList" class="hhk-showonload hhk-tdbox hhk-member-detail hhk-visitdialog" style="display:none;">
+                    <ul>
+                        <li><a href="#vVisits">Visits</a></li>
+                        <li><a href="#vpsg"><?php echo $labels->getString('guestEdit', 'psgTab', 'Patient Support Group'); ?></a></li>
+                        <li><a href="#vregister"><?php echo ($uS->ccgw == '' ? 'Registration' : 'Registration/Credit') ?></a></li>
+                        <?php if ($uS->Reservation) { ?>
+                        <li><a href="#vreserv"><?php echo $labels->getString('guestEdit', 'reservationTab', 'Reservations'); ?></a></li>
+                        <?php } if ($uS->IncomeRated) {  ?>
+                        <li id="fin"><a href="#vfin">Financial Assistance</a></li>
+                        <?php } if ($memberFlag && $uS->RoomPriceModel != ItemPriceCode::None) {  ?>
+                        <li><a href="ws_resc.php?cmd=payRpt&id=<?php echo $registration->getIdRegistration(); ?>" title="Payment History">Payments</a></li>
+                        <?php } ?>
+                        <li><a href="ShowStatement.php?cmd=show&reg=<?php echo $registration->getIdRegistration(); ?>" title="Comprehensive Statement">Statement</a></li>
+                        <?php if ($uS->TrackAuto) { ?>
+                        <li><a href="#vvehicle">Vehicles</a></li>
+                        <?php } ?>
+                    </ul>
+                    <div id="vpsg" class="ui-tabs-hide"  style="display:none;">
+                        <div id="divPSGContainer"><?php echo $psgTabMarkup; ?></div>
+                    </div>
+                    <div id="vregister"  class="ui-tabs-hide" style="display:none;">
+                        <div id="divRegContainer"><?php echo $regTabMarkup; ?></div>
+                    </div>
+                    <div id="vvehicle"  class="ui-tabs-hide" style="display:none;">
+                        <div><?php echo $vehicleTabMarkup; ?></div>
+                    </div>
+                    <div id="vreserv"  class="ui-tabs-hide" style="display:none;">
+                        <div id="resvAccordion">
+                        <?php echo $reservMarkup; ?>
+                        </div>
+                    </div>
+                    <div id="vfin"></div>
+                    <div id="vVisits" class="ui-tabs-hide" style="min-width: 600px; display:none">
+                        <div id="visitAccordion">
+                        <?php echo $visitList; ?>
+                        </div>
+                    </div>
+                </div>
+                <?php } ?>
+                <div style="clear:both;"></div>
+                <!-- End of Tabs Control -->
+                <div id="submitButtons" class="ui-corner-all" style="font-size:0.9em;">
+                    <input type="reset" name="btnReset" value="Reset" id="btnReset" />
+                    <input type="submit" name="btnSubmit" value="Save" id="btnSubmit" />
+                </div>
+                <input type="hidden" name="hdnid" id="hdnid" value="<?php echo $id; ?>" />
+                <input type='hidden' name='hdnpsg' id='hdnpsg' value='<?php echo $idPsg; ?>'/>
+            </form>
+            <?php } ?>
+            <div id="divFuncTabs" class="hhk-member-detail" style="display:none; margin-bottom: 50px;" >
+                <ul>
+                    <li><a href="#vckin">Current Guests</a></li>
+                    <li><a href="#vhistory">Recently Viewed Guests</a></li>
+                </ul>
+                <div id="vhistory" class="hhk-tdbox ui-tabs-hide" style="background:#EFDBC2;">
+                    <?php echo $recHistory; ?>
+                </div>
+                <div id="vckin" class="hhk-tdbox ui-tabs-hide" style="background:#EFDBC2;">
+                    <?php echo $currentCheckedIn; ?>
+                </div>
+            </div>
+            <div id="zipSearch" class="hhk-tdbox-noborder" style="display:none;">
+                <table width="100%">
+                    <tr>
+                        <td class="tdlabel">Postal Code: </td><td><input type="text" id="txtZipSch" class="input-medium" value="" title="Type in the postal code."/></td>
+                    </tr>
+                    <tr><td colspan="3" id="placeList"></td></tr>
+                </table>
+            </div>
+            <div id="keysfees" style="font-size: .85em;"></div>
+            <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
+            <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
+            <div id="submit" style="display:none;">
+                <table>
+                    <tr>
+                        <td>Search: </td><td><input type="text" id="txtRelSch" size="15" value="" title="Type at least 3 letters to invoke the search."/></td>
+                    </tr>
+                    <tr><td><input type="hidden" id="hdnRelCode" value=""/></td><td></td></tr>
+                </table>
+            </div>
+        </div>  <!-- div id="contentDiv"-->
+        <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo STATE_COUNTRY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/addrPrefs-min.js<?php echo JS_V; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/jquery.multiselect.min.js"></script>
+        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
+        <script type="text/javascript">
+            var memData = <?php echo json_encode($memberData); ?>;
+            var psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);
+            var rctMkup = '<?php echo $receiptMarkup; ?>';
+        </script>
+        <script type="text/javascript" src="js/guestload-min.js<?php echo JS_V; ?>"></script>
+    </body>
+</html>

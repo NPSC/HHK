@@ -1,0 +1,1467 @@
+<?php
+/**
+ * Reservation_1.php
+ *
+ *
+ * @category  House
+ * @package   Hospitality HouseKeeper
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
+ * @license   GPL and MIT
+ * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ */
+
+/**
+ * Description of Reservation_1
+ *
+ */
+class Reservation_1 {
+
+
+    protected $reservRs;
+    protected $reservConstraints;
+    protected $boDays;
+    protected $startHolidays;
+    protected $endHolidays;
+    protected $idPsg;
+    protected $idHospital;
+    protected $idAssociation;
+    protected $idVisit;
+    protected $constrainedRooms;
+    protected $availableResources = array();
+    protected $untestedResources = array();
+    protected $resultMessage = '';
+
+    public function __construct(\PDO $dbh, ReservationRS $reservRs, $idVisit) {
+
+        $this->reservRs = $reservRs;
+        $this->idVisit = $idVisit;
+        $this->getConstraints($dbh);
+
+    }
+
+    public function getAvailableResources() {
+        return $this->availableResources;
+    }
+
+    public function getUntestedResources() {
+        return $this->untestedResources;
+    }
+
+    public function getResultMessage() {
+        return $this->resultMessage;
+    }
+
+
+    /**
+     * Returns specified reservation ID with max span id.
+     *
+     * @param PDO $dbh
+     * @param integer $idReserv
+     * @return \Reservation_1
+     */
+    public static function instantiateFromIdReserv(\PDO $dbh, $idResv, $idVisit = 0) {
+
+        $resvRs = new ReservationRS();
+
+        $idReserv = intval($idResv, 10);
+
+        if ($idReserv > 0) {
+
+            $resvRs->idReservation->setStoredVal($idReserv);
+            $rows = EditRS::select($dbh, $resvRs, array($resvRs->idReservation));
+
+            if (count($rows) > 0) {
+
+                EditRS::loadRow($rows[0], $resvRs);
+
+                if ($idVisit == 0) {
+
+                    $stmt = $dbh->query("Select idVisit from visit where idReservation = $idReserv");
+                    $lines = $stmt->fetchAll(PDO::FETCH_NUM);
+
+                    if (count($lines) > 0) {
+                        $idVisit = $lines[0][0];
+                    }
+                }
+            }
+        }
+
+        return new Reservation_1($dbh, $resvRs, $idVisit);
+    }
+
+
+    public function move(\PDO $dbh, $startDelta, $endDelta, $uname, $forceNewResource = FALSE) {
+
+        $startInterval = new DateInterval('P' . abs($startDelta) . 'D');
+        $endInterval = new DateInterval('P' . abs($endDelta) . 'D');
+
+        $newStartDT = new DateTime($this->getExpectedArrival());
+        $newEndDt = new DateTime($this->getExpectedDeparture());
+
+        if ($endDelta < 0 || $startDelta < 0) {
+
+            // Move back
+            $newEndDt->sub($endInterval);
+            $newStartDT->sub($startInterval);
+
+            // Validity check
+            if ($endDelta < 0 && $startDelta == 0) {
+                $endDATE = new DateTime($newEndDt->format('Y-m-d 00:00:00'));
+                $startDATE = new DateTime($newStartDT->format('Y-m-d 00:00:00'));
+                if ($endDATE <= $startDATE) {
+                    $this->resultMessage = "The End date precedes the Start date.  ";
+                    return FALSE;
+                }
+            }
+
+
+        } else {
+
+            // Spring ahead
+            $newEndDt->add($endInterval);
+            $newStartDT->add($startInterval);
+
+            // Validity check
+            if ($startDelta > 0 && $endDelta == 0) {
+                $endDATE = new DateTime($newEndDt->format('Y-m-d 00:00:00'));
+                $startDATE = new DateTime($newStartDT->format('Y-m-d 00:00:00'));
+                if ($endDATE <= $startDATE) {
+                    $this->resultMessage = "The End date precedes the Start date.  ";
+                    return FALSE;
+                }
+            }
+        }
+
+        // Check for vacant rooms
+        $rescs = $this->findResources($dbh, $newStartDT->format('Y-m-d 17:00:00'), $newEndDt->format('Y-m-d 09:00:00'), $this->getNumberGuests(), array('room','rmtroom','part'), TRUE);
+
+
+        if (count($rescs) > 0) {
+
+            // move the reservation
+            $this->setExpectedArrival($newStartDT->format('Y-m-d'));
+            $this->setExpectedDeparture($newEndDt->format('Y-m-d'));
+
+            // If my original resource is unavailable, use another
+            $roomChanged = '';
+            if (isset($rescs[$this->getIdResource()]) === FALSE || $forceNewResource) {
+
+                $keys = array_keys($rescs);
+                $this->setIdResource($keys[0]);
+
+                $resc = $rescs[$keys[0]];
+                $roomChanged = 'to room ' . $resc->getTitle() . '.  ';
+
+                if ($this->getStatus() == ReservationStatus::Waitlist) {
+                    $this->setStatus(ReservationStatus::Committed);
+                    $roomChanged .= 'New status is ' . $this->getStatusTitle(ReservationStatus::Committed);
+                }
+
+            }
+
+            $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
+
+            $this->resultMessage = 'Reservation changed ' . $roomChanged;
+            return TRUE;
+
+        } else {
+
+            if ($forceNewResource) {
+
+                // move the reservation
+                $this->setExpectedArrival($newStartDT->format('Y-m-d'));
+                $this->setExpectedDeparture($newEndDt->format('Y-m-d'));
+
+                $this->setIdResource('0');
+                $this->setStatus(ReservationStatus::Waitlist);
+
+                $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
+
+                $this->resultMessage = 'Reservation waitlisted';
+                return TRUE;
+
+            } else {
+
+                $this->resultMessage = 'The date range is not available.  ';
+                return FALSE;
+            }
+       }
+
+        return FALSE;
+    }
+
+    public function checkOut(\PDO $dbh, $endDate, $uname) {
+
+        $this->setStatus(ReservationStatus::Checkedout);
+        $this->setActualDeparture($endDate);
+        $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
+    }
+
+    public function saveConstraints(\PDO $dbh, $pData) {
+
+        if ($this->isNew()) {
+            return;
+        }
+
+        $capturedConstraints = array();
+
+        if (isset($pData['cbRS'])) {
+
+            foreach ($pData['cbRS'] as $idConstraint => $v) {
+                $capturedConstraints[$idConstraint] = $idConstraint;
+            }
+
+        }
+
+        $cResv = $this->getConstraints($dbh);
+        $cResv->saveConstraints($dbh, $capturedConstraints);
+
+        $vConst = new ConstraintsVisit($dbh, $this->getIdReservation());
+        $vConst->saveConstraints($dbh, $capturedConstraints);
+
+        $this->reservConstraints = $this->loadReservationConstraints($dbh, $this->getIdReservation());
+
+    }
+
+    public function saveReservation(\PDO $dbh, $idReg, $uname) {
+
+        $this->reservRs->Updated_By->setNewVal($uname);
+        $this->reservRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+
+
+        if ($this->reservRs->idReservation->getStoredVal() == 0) {
+
+            $this->reservRs->idRegistration->setNewVal($idReg);
+
+            $idResv = EditRS::insert($dbh, $this->reservRs);
+            $this->reservRs->idReservation->setNewVal($idResv);
+
+            $logText = VisitLog::getInsertText($this->reservRs);
+            EditRS::updateStoredVals($this->reservRs);
+            ReservationLog::logReservation($dbh, $idResv,
+                    $this->reservRs->idRegistration->getStoredVal(),
+                    $this->reservRs->idHospital_Stay->getStoredVal(),
+                    $this->reservRs->idResource->getStoredVal(),
+                    0, //$this->reservRs->idRoom_rate->getStoredVal(),
+                    $this->reservRs->idGuest->getStoredVal(),
+                    $logText, "insert", $uname);
+
+            // Load constraints with new Id.
+            $this->reservConstraints = $this->loadReservationConstraints($dbh, $this->getIdReservation());
+
+        } else {
+
+            $updt = EditRS::update($dbh, $this->reservRs, array($this->reservRs->idReservation));
+
+            if ($updt == 1) {
+                $logText = VisitLog::getUpdateText($this->reservRs);
+                EditRS::updateStoredVals($this->reservRs);
+
+                ReservationLog::logReservation($dbh, $this->reservRs->idReservation->getStoredVal(),
+                    $this->reservRs->idRegistration->getStoredVal(),
+                    $this->reservRs->idHospital_Stay->getStoredVal(),
+                    $this->reservRs->idResource->getStoredVal(),
+                    0, //$this->reservRs->idRoom_rate->getStoredVal(),
+                    $this->reservRs->idGuest->getStoredVal(),
+                    $logText, "update", $uname);
+            }
+
+        }
+
+    }
+
+    public function deleteMe(\PDO $dbh, $uname) {
+
+        // Delete
+        $cnt = $dbh->exec("Delete from reservation where idReservation = " . $this->getIdReservation());
+
+        if ($cnt == 1) {
+            $logText = VisitLog::getDeleteText($this->reservRs, $this->getIdReservation());
+
+            ReservationLog::logReservation($dbh, $this->reservRs->idReservation->getStoredVal(),
+                $this->reservRs->idRegistration->getStoredVal(),
+                $this->reservRs->idHospital_Stay->getStoredVal(),
+                $this->reservRs->idResource->getStoredVal(),
+                0, //$this->reservRs->idRoom_rate->getStoredVal(),
+                $this->reservRs->idGuest->getStoredVal(),
+                $logText, "delete", $uname);
+
+            $dbh->exec("Delete from reservation_guest where idReservation = " . $this->getIdReservation());
+            $dbh->exec("Delete from constraint_entity where idEntity = " . $this->getIdReservation());
+
+            $this->reservRs = NULL;
+
+            return TRUE;
+        }
+
+        return FALSE;
+
+    }
+
+    public static function loadNonCleaningDays(\PDO $dbh) {
+
+        $stmt = $dbh->query("select Code from gen_lookups where Table_Name = 'Non_Cleaning_Day';");
+        $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+
+        $boDays = array();
+
+        foreach ($rows as $r) {
+            $boDays[] = intval($r[0], 10);
+        }
+
+        return $boDays;
+
+    }
+
+    public function setNonCleaningDays(\PDO $dbh) {
+        if (is_null($this->boDays)) {
+            $this->boDays = $this->loadNonCleaningDays($dbh);
+        }
+
+    }
+
+    protected function adjustArrivalDate($stringDate) {
+        return $this->adjustStartDate($stringDate, $this->startHolidays, $this->endHolidays, $this->boDays);
+    }
+
+    protected static function adjustStartDate($stringDate, $startHolidays, $endHolidays, $boDays) {
+
+        $arDate = new DateTime($stringDate);
+
+        // Initially check holidays
+        while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
+            $arDate->sub(new DateInterval('P1D'));
+        }
+
+        $dateInfo = getDate($arDate->format('U'));
+        $limit = 5;
+
+        // Now Check weekends
+        while (array_search($dateInfo['wday'], $boDays) !== FALSE && $limit-- > 0) {
+            // move the beginning of the stay back a day
+
+            $arDate->sub(new DateInterval('P1D'));
+            $dateInfo = getDate($arDate->format('U'));
+
+        }
+
+        // Finally check holidays again
+        while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
+            $arDate->sub(new DateInterval('P1D'));
+        }
+
+        return $arDate->format('Y-m-d H:i:s');
+    }
+
+    protected function adjustDepartureDate($stringDate) {
+        return $this->adjustEndDate($stringDate, $this->startHolidays, $this->endHolidays, $this->boDays);
+    }
+
+    protected static function adjustEndDate($stringDate, $startHolidays, $endHolidays, $boDays) {
+
+        $arDate = new DateTime($stringDate);
+
+        // add all consecutive holidays
+        while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
+            $arDate->add(new DateInterval('P1D'));
+        }
+
+
+        $dateInfo = getDate($arDate->format('U'));
+        $limit = 5;
+
+        // Add all consecutive non work weekdays
+        while (array_search($dateInfo['wday'], $boDays) !== FALSE && $limit-- > 0) {
+            // add a day to the end of the stay
+            $arDate->add(new DateInterval('P1D'));
+            $dateInfo = getDate($arDate->format('U'));
+        }
+
+        // Finally, check for holidays again.
+        while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
+            $arDate->add(new DateInterval('P1D'));
+        }
+
+        return $arDate->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * Find resources filtered by this resource attribute array
+     *
+     * @param PDO $dbh
+     * @param string $expectedArrival
+     * @param string $expectedDeparture
+     * @param int $numOccupants
+     * @param array $resourceTypes
+     * @param bool $omitSelf
+     * @return array of resource objects
+     */
+    public function findResources(PDO $dbh, $expectedArrival, $expectedDeparture, $numOccupants, array $resourceTypes, $omitSelf = FALSE) {
+
+        $this->untestedResources = $this->loadAvailableResources($dbh, $expectedArrival, $expectedDeparture, $numOccupants, $resourceTypes, $omitSelf);
+
+        $this->availableResources = $this->testResources($dbh, $this->untestedResources);
+
+        // Return an array of Resource objs.
+        return $this->availableResources;
+    }
+
+    /**
+     * Finds all available open resources and returns both the filtered rooms and the unsuitable rooms
+     *
+     * @param PDO $dbh
+     * @param string $expectedArrival
+     * @param string $expectedDeparture
+     * @param int $numOccupants
+     * @param array $resourceTypes
+     * @param bool $omitSelf
+     * @return array of Resource objects .
+     */
+    public function findGradedResources(PDO $dbh, $expectedArrival, $expectedDeparture, $numOccupants, array $resourceTypes, $omitSelf = FALSE) {
+
+        $this->untestedResources = $this->loadAvailableResources($dbh, $expectedArrival, $expectedDeparture, $numOccupants, $resourceTypes, $omitSelf);
+        $this->availableResources = array();
+
+        // Returns an array of Resource objs.
+        $filteredRows = $this->testResources($dbh, $this->untestedResources);
+
+        foreach ($this->untestedResources as $r) {
+
+            if (isset($filteredRows[$r['idResource']])) {
+
+                $resc = $filteredRows[$r['idResource']];
+                $resc->optGroup = '';
+                $this->availableResources[$r['idResource']] = $resc;
+
+            } else {
+
+                $resourceRS = new ResourceRS();
+                EditRS::loadRow($r, $resourceRS);
+                $resc = Resource::getThisFromRS($dbh, $resourceRS);
+                $resc->optGroup = 'Not Suitable';
+                $this->availableResources[$r['idResource']] = $resc;
+            }
+        }
+
+        return $this->availableResources;
+    }
+
+    /**
+     *
+     * @param PDO $dbh
+     * @param int $idResource
+     * @param string $expectedArrival
+     * @param string $expectedDeparture
+     * @param int $numOccupants
+     * @param array $resourceTypes
+     * @param bool $omitSelf
+     * @return boolean
+     */
+    public function isResourceOpen(PDO $dbh, $idResource, $expectedArrival, $expectedDeparture, $numOccupants, array $resourceTypes, $omitSelf = FALSE, $isAuthorized = FALSE) {
+
+        // Only check if its a real room
+        if ($idResource > 0) {
+
+            if ($isAuthorized) {
+                $resources = $this->findGradedResources($dbh, $expectedArrival, $expectedDeparture, $numOccupants, $resourceTypes, $omitSelf);
+            } else {
+                $resources = $this->findResources($dbh, $expectedArrival, $expectedDeparture, $numOccupants, $resourceTypes, $omitSelf);
+            }
+
+            return isset($resources[$idResource]);
+
+        }
+
+        return TRUE;
+
+    }
+
+    protected function loadAvailableResources(PDO $dbh, $expectedArrival, $expectedDeparture, $numOccupants, array $resourceTypes, $omitSelf = FALSE) {
+
+        if ($expectedArrival == '' || $expectedDeparture == '') {
+            return array();
+        }
+
+
+        // Resource types
+        $typeList = '';
+        foreach ($resourceTypes as $t) {
+            if ($typeList == '') {
+                $typeList = "'" . $t . "'";
+            } else {
+                $typeList .= ",'" . $t . "'";
+            }
+        }
+
+        if ($typeList != '') {
+            $typeList =  " rc.`Type` in (" . $typeList . ") ";
+        }
+
+
+        // Get the list of available resources
+        $stmtr = $dbh->prepare("select rc.*, sum(r.Max_Occupants) as `Max_Occupants`
+from resource rc join resource_room rr on rc.idResource = rr.idResource left join `room` r on r.idRoom = rr.idRoom
+where $typeList group by rc.idResource having `Max_Occupants` >= :num order by rc.Util_Priority;");
+        $stmtr->execute(array(':num'=>$numOccupants));
+        $rescRows = array();
+
+        foreach ($stmtr->fetchAll(PDO::FETCH_ASSOC) as $re) {
+            $rescRows[$re["idResource"]] = $re;
+        }
+
+
+        $rows = $this->findRescsInUse($dbh, $expectedArrival, $expectedDeparture, $omitSelf);
+
+        foreach ($rows as $r) {
+            // remove these from the resources array
+            if (isset($rescRows[$r['idResource']])) {
+                unset($rescRows[$r['idResource']]);
+            }
+        }
+
+        return $rescRows;
+
+    }
+
+    public static function findReservations(\PDO $dbh, $expectedArrival, $expectedDeparture, $idResource) {
+
+        // Deal with non-cleaning days
+        $boDays = self::loadNonCleaningDays($dbh);
+        $startHolidays = new US_Holidays($dbh, date('Y', strtotime($expectedArrival)));
+        $endHolidays = new US_Holidays($dbh, date('Y', strtotime($expectedDeparture)));
+
+        $arr = self::adjustStartDate($expectedArrival, $startHolidays, $endHolidays, $boDays);
+        $dep = self::adjustEndDate($expectedDeparture, $startHolidays, $endHolidays, $boDays);
+        $statuses = "'" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Committed . "'";
+
+        //
+        $query = "select r.idReservation from reservation r where r.idResource = :idr and r.Status in ($statuses) and ifnull(r.Actual_Arrival, r.Expected_Arrival) <= :dtend and ifnull(r.Actual_Departure, r.Expected_Departure) > :start";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute(array(
+            ':start'=>$arr,
+            ':dtend'=>$dep,
+            ':idr'=>$idResource));
+
+        // return an array of resourceId's
+        return $stmt->fetchAll(PDO::FETCH_NUM);
+
+    }
+
+
+    protected function findRescsInUse(\PDO $dbh, $expectedArrival, $expectedDeparture, $omitSelf = FALSE) {
+
+        // Deal with non-cleaning days
+        $this->setNonCleaningDays($dbh);
+        $this->startHolidays = new US_Holidays($dbh, date('Y', strtotime($expectedArrival)));
+        $this->endHolidays = new US_Holidays($dbh, date('Y', strtotime($expectedDeparture)));
+
+        $arr = $this->adjustArrivalDate($expectedArrival);
+        $dep = $this->adjustDepartureDate($expectedDeparture);
+
+        $uS = Session::getInstance();
+
+        $omitTxt = '';
+        $omitVisit = '';
+        if ($omitSelf && $this->getIdReservation() > 0) {
+            $omitTxt = " and r.idReservation != " . $this->getIdReservation();
+            $omitVisit = " and v.idVisit != " . $this->idVisit;
+        }
+
+        // Find resources in use
+        if ($uS->IncludeLastDay) {
+
+            $query = "select r.idResource "
+                . "from reservation r where r.Status in ( :stt , :stt2) $omitTxt and DATE(r.Expected_Arrival) < DATE(:dtend) and DATE(r.Expected_Departure) > DATE(:start)
+    union select ru.idResource from resource_use ru where DATE(ru.Start_Date) < DATE(:ruend) and ifnull(DATE(ru.End_Date), DATE(now())) > DATE(:rustart)
+    union select v.idResource from visit v where v.Status <> :vstat $omitVisit and DATE(v.Arrival_Date) < DATE(:endDate) and
+    ifnull(AddDate(DATE(v.Span_End), -1), case when DATE(now()) >= DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) >= DATE(:beginDate)";
+
+        } else {
+
+            $query = "select r.idResource "
+                . "from reservation r where r.Status in ( :stt , :stt2) $omitTxt and DATE(r.Expected_Arrival) < DATE(:dtend) and DATE(r.Expected_Departure) > DATE(:start)
+    union select ru.idResource from resource_use ru where DATE(ru.Start_Date) < DATE(:ruend) and ifnull(DATE(ru.End_Date), DATE(now())) > DATE(:rustart)
+    union select v.idResource from visit v where v.Status <> :vstat $omitVisit and DATE(v.Arrival_Date) < DATE(:endDate) and
+    ifnull(DATE(v.Span_End), case when DATE(now()) > DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) > DATE(:beginDate)";
+        }
+
+        $stmt = $dbh->prepare($query);
+        $stmt->execute(array(
+            ':start'=>$arr,
+            ':dtend'=>$dep,
+            ':rustart'=>$arr,
+            ':ruend'=>$dep,
+            ':beginDate'=>$arr,
+            ':endDate'=>$dep,
+            ':stt'=>ReservationStatus::Committed,
+            ':stt2'=>ReservationStatus::UnCommitted,
+            ':vstat'=>  VisitStatus::Pending));
+
+        // return an array of resourceId's
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
+    protected function testResources(PDO $dbh, $rescRows) {
+
+        $resources = array();
+        $notRoomIds = array();
+
+        $roomIds = $this->getConstrainedRoomsArray($dbh);
+
+        // Collect not attributes
+        foreach ($roomIds as $k => $v) {
+            if ($v == 'not') {
+                $notRoomIds[$k] = $v;
+            }
+        }
+
+        // Remove notroomids from the rooms
+        foreach ($notRoomIds as $k => $v) {
+            unset($roomIds[$k]);
+        }
+
+         // Make resource objs, test the room id's
+        foreach ($rescRows as $r) {
+
+            $resourceRS = new ResourceRS();
+            EditRS::loadRow($r, $resourceRS);
+            $resc = Resource::getThisFromRS($dbh, $resourceRS);
+
+            $rescRooms = $resc->getRooms();
+            $rmIncludes = array();
+
+            // look for bad rooms
+            foreach ($rescRooms as $roomObj) {
+
+                if (isset($notRoomIds[$roomObj->getIdRoom()])) {
+                    // room is bad, skip resource.
+                    continue 2;
+                }
+
+                if (isset($roomIds[$roomObj->getIdRoom()])) {
+                    $rmIncludes[$roomObj->getIdRoom()] = $roomObj->getIdRoom();
+                }
+            }
+
+            if (count($rmIncludes) == count($rescRooms)) {
+                $resources[$resc->getIdResource()] = $resc;
+            }
+
+        }
+
+        // Return an array of tested Resource objs.
+        return $resources;
+
+    }
+
+    protected function getConstrainedRoomsArray(\PDO $dbh) {
+
+        if (is_null($this->constrainedRooms)) {
+            $this->constrainedRooms = $this->loadConstrainedRooms($dbh);
+        }
+
+        return $this->constrainedRooms;
+    }
+
+    protected function loadConstrainedRooms(\PDO $dbh) {
+
+        $roomIds = array();
+
+        // Find any constrained rooms
+        $stmt = $dbh->prepare("select ae.idEntity, ca.Operation, count(ae.idEntity) as `c` from attribute_entity ae join constraint_attribute ca ON ae.idAttribute = ca.idAttribute
+            and ae.`Type` = '" . Attribute_Types::Room . "' join constraint_entity ce ON ca.idConstraint = ce.idConstraint and ce.`Type` = :rtype and ce.idEntity = :rid "
+                . "group by ae.idEntity having `c` = :num;");
+
+        $rvRooms = $this->loadConstrainedRoomIds($dbh, $stmt, Constraint_Type::Reservation, $this->getIdReservation());
+
+        $assocRooms = $this->loadConstrainedRoomIds($dbh, $stmt, Constraint_Type::Hospital, $this->getIdAssociation());
+
+        // if we have constraints, put them into our roomids array
+        if (count($assocRooms) > 0 && count($rvRooms) > 0) {
+
+            // Collect all 'not's
+            foreach ($assocRooms as $idRoom => $operation) {
+
+                if ($operation == 'not') {
+                    $roomIds[$idRoom] = $operation;
+                    unset($assocRooms[$idRoom]);
+                }
+            }
+
+            foreach ($rvRooms as $idRoom => $operation) {
+                if ($operation == 'not') {
+                    $roomIds[$idRoom] = $operation;
+                    unset($rvRooms[$idRoom]);
+                }
+            }
+        }
+
+        // These array counts may have changed.
+        if (count($assocRooms) > 0 && count($rvRooms) > 0) {
+            $this->mergeRoomArrays(array_intersect_key($rvRooms, $assocRooms), $roomIds);
+        } else if (count($assocRooms) > 0 && count($rvRooms) == 0) {
+            $this->mergeRoomArrays($assocRooms, $roomIds);
+        } else if (count($assocRooms) == 0 && count($rvRooms) > 0) {
+            $this->mergeRoomArrays($rvRooms, $roomIds);
+        }
+
+        return $roomIds;
+    }
+
+    protected function mergeRoomArrays($target, &$roomIds) {
+
+            foreach ($target as $idRoom => $operation) {
+
+                if ($operation == 'not') {
+
+                    $roomIds[$idRoom] = $operation;
+
+                } else if (isset($roomIds[$idRoom]) === FALSE) {
+
+                    $roomIds[$idRoom] = $operation;
+
+                }
+            }
+
+    }
+
+    protected function loadConstrainedRoomIds(\PDO $dbh, \PDOStatement $stmt, $type, $id) {
+
+        $roomIds = array();
+
+        if ($id > 0) {
+
+            $constEntity = ConstraintsEntity::constructByType($dbh, $id, $type);
+            $consts = $constEntity->getActiveConstraintsArray();
+            $n = count($consts);
+
+            if ($n > 0) {
+                $stmt->bindParam(':rtype', $type, PDO::PARAM_STR);
+                $stmt->bindParam(':rid', $id, PDO::PARAM_INT);
+                $stmt->bindParam(':num', $n, PDO::PARAM_INT);
+                $stmt->execute();
+
+                while ($r = $stmt->fetch(PDO::FETCH_NUM)) {
+                    $roomIds[$r[0]] = $r[1];
+                }
+
+            } else {
+                // Load all the rooms
+                $rmStmt = $dbh->query("select distinct idRoom from resource_room where idResource > 0");
+
+                while ($r = $rmStmt->fetch(PDO::FETCH_NUM)) {
+                    $roomIds[$r[0]] = '';
+                }
+            }
+        }
+
+        return $roomIds;
+    }
+
+    public function testResource(\PDO $dbh, \Resource $resc) {
+
+        $pass = FALSE;
+        $roomIds = $this->getConstrainedRoomsArray($dbh);
+        $notRoomIds = array();
+
+        // Collect not attributes
+        foreach ($roomIds as $k => $v) {
+            if ($v == 'not') {
+                $notRoomIds[$k] = $v;
+            }
+        }
+
+        // Remove them from the rooms
+        foreach ($notRoomIds as $k => $v) {
+            unset($roomIds[$k]);
+        }
+
+        $rescRooms = $resc->getRooms();
+        $rmIncludes = array();
+
+        // look for bad rooms
+        foreach ($rescRooms as $roomObj) {
+
+            if (isset($notRoomIds[$roomObj->getIdRoom()])) {
+                // room is bad, skip resource.
+                continue;
+            }
+
+            if (isset($roomIds[$roomObj->getIdRoom()])) {
+                $rmIncludes[$roomObj->getIdRoom()] = $roomObj->getIdRoom();
+            }
+        }
+
+        if (count($rmIncludes) == count($rescRooms)) {
+            $pass = TRUE;
+        }
+
+        return $pass;
+    }
+
+    public static function showListByStatus(PDO $dbh, $editPage, $checkinPage, $reservStatus = ReservationStatus::Committed, $shoDirtyRooms = FALSE, $idResc = NULL, $daysAhead = 2, $showConstraints = FALSE) {
+
+        $dateAhead = new DateTime();
+
+
+        if ($daysAhead > 0) {
+            $dateAhead->add(new DateInterval('P' . $daysAhead . 'D'));
+        }
+
+        if (is_null($idResc) === FALSE) {
+
+            $stmt = $dbh->prepare("select * from vresv_patient where DATE(`Expected_Arrival`) <= DATE(:dte) and Status = '$reservStatus'  and idResource = :idr order by `Expected_Arrival`");
+            $stmt->execute(array(':idr'=>$idResc, ':dte'=>$dateAhead->format('Y-m-d')));
+
+        } else {
+
+            $stmt = $dbh->prepare("select * from vresv_patient where DATE(`Expected_Arrival`) <= DATE(:dte) and Status = '$reservStatus' order by `Expected_Arrival`");
+            $stmt->execute(array(':dte'=>$dateAhead->format('Y-m-d')));
+        }
+
+        // Check-in button text
+        $buttonText = 'Add Guest';
+        if ($reservStatus == ReservationStatus::Committed  || $reservStatus == ReservationStatus::Imediate) {
+            $buttonText = 'Check In';
+        }
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $noCleaning = '';
+
+        if (count($rows) > 0) {
+
+            if ($shoDirtyRooms) {
+                $cleanCodes = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
+
+                foreach ($cleanCodes as $i) {
+                    if ($i['Substitute'] == '0') {
+                        $noCleaning = $i['Code'];
+                    }
+                }
+
+                unset($cleanCodes);
+
+                $stmt = $dbh->query("select rr.idResource, r.* from resource_room rr left join room r on rr.idRoom = r.idRoom");
+                $rooms = array();
+                while ($rm = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    $rooms[$rm['idResource']] = $rm;
+                }
+            }
+
+            $tbl = new HTMLTable();
+
+            $tbl->addHeaderTr(
+                    ($checkinPage == '' ? '' : HTMLTable::makeTh(''))
+                    .HTMLTable::makeTh('Primary Guest')
+                    .HTMLTable::makeTh('Patient')
+                    .HTMLTable::makeTh('Guests')
+                    .HTMLTable::makeTh('Arrival Date')
+                    .HTMLTable::makeTh('Room')
+                    .HTMLTable::makeTh('Nights')
+                    .($showConstraints ? HTMLTable::makeTh('Additional Items') : ''));
+
+            foreach ($rows as $r) {
+
+                $rvRs = new ReservationRS();
+                EditRS::loadRow($r, $rvRs);
+                $resv = new Reservation_1($dbh, $rvRs, 0);
+
+                $guestMember = GuestMember::GetDesignatedMember($dbh, $resv->getIdGuest(), MemBasis::Indivual);
+
+                $today = new DateTime();
+                $today->setTime(23, 59, 59);
+                $expArr = new DateTime($resv->getExpectedArrival());
+
+                $star = '';
+                $dirtyRoom = '';
+                $roomAttr = array('style'=>'text-align:center;');
+
+                if ($reservStatus == ReservationStatus::Staying || $expArr <= $today) {
+
+                    if ($checkinPage != '') {
+                        $star = HTMLContainer::generateMarkup('a',
+                        HTMLInput::generateMarkup($buttonText, array('type'=>'button'))
+                                , array('href'=>$checkinPage.'?rid='.$resv->getIdReservation()));
+                    }
+
+                    if ($shoDirtyRooms) {
+//                        $stmt = $dbh->query("select r.* from resource_room rr left join room r on rr.idRoom = r.idRoom where rr.idResource = " . $resv->getIdResource());
+//                        $rooms = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                        if (isset($rooms[$resv->getIdResource()])) {
+                            $roomRs = new RoomRs();
+                            EditRS::loadRow($rooms[$resv->getIdResource()], $roomRs);
+                            $room = new Room($dbh, 0, $roomRs);
+
+                            if ($room->getCleaningCycleCode() != $noCleaning && $room->isClean() === FALSE) {
+                                $dirtyRoom = '(Dirty)';
+                                $roomAttr = array('style'=>'text-align:center; background-color:yellow;');
+                            }
+                        }
+                    }
+                }
+
+                $constList = '';
+                if ($showConstraints && ($reservStatus == ReservationStatus::Committed  || $reservStatus == ReservationStatus::Imediate)) {
+
+                    // Get constraints
+                    $constraints = new ConstraintsVisit($dbh, $resv->getIdReservation(), 0);
+                    $constrs = array();
+
+                    foreach ($constraints->getConstraints() as $c) {
+
+                        if ($c['isActive'] == 1) {
+                            $constrs[] = $c['Title'];
+                        }
+                    }
+
+                    $constList = HTMLTable::makeTd(implode(', ', $constrs));
+
+                }
+
+                if ($resv->getIdGuest() == $r['idPatient']) {
+                    $pname = '(same)';
+                } else {
+                    $pname = $r['Patient_Name'];
+                }
+
+                $guestAttrs = array('title'=>'Click to view guest details');
+                $guestName = '';
+
+                if ($editPage != '') {
+                    $guestName = HTMLContainer::generateMarkup('a', $guestMember->getMemberName(), array('href'=>$editPage.'?id='.$resv->getIdGuest().'&rid='.$resv->getIdReservation(), 'title'=>'Click to view guest details'));
+                } else {
+                    if ($resv->getStatus() == ReservationStatus::UnCommitted) {
+                        $guestAttrs['class'] = 'ui-state-highlight';
+                        $guestAttrs['title'] = 'Reservation status is ' . $resv->getStatusTitle() . '.  ' . $guestAttrs['title'];
+                    }
+
+                    $guestName = HTMLContainer::generateMarkup('span', $guestMember->getMemberName(), $guestAttrs);
+                }
+
+                $tbl->addBodyTr(
+                    ($checkinPage == '' ? '' : HTMLTable::makeTd($star, array('style'=>'text-align:center;font-size:.8em;', 'title'=>'Check a new guest in to this room')))
+                        .HTMLTable::makeTd($guestName)
+                        .HTMLTable::makeTd($pname)
+                        .HTMLTable::makeTd($resv->getNumberGuests($dbh), array('style'=>'text-align:center;'))
+                        .HTMLTable::makeTd($resv->getActualArrival() != '' ? date('M j, Y', strtotime($resv->getActualArrival())) : date('M j, Y', strtotime($resv->getExpectedArrival())))
+                        .HTMLTable::makeTd($resv->getRoomTitle($dbh) . $dirtyRoom, $roomAttr)
+                        .HTMLTable::makeTd($resv->getExpectedDays(), array('style'=>'text-align:center;'))
+                        .$constList
+                );
+
+            }
+
+            return $tbl->generateMarkup(array('id'=>$reservStatus . 'tblgetter'));
+
+        } else {
+            return "";
+        }
+
+    }
+
+
+    public function getStatusTitle($status = '') {
+
+        if ($status == '') {
+            $status = $this->getStatus();
+
+            if ($status == '') {
+                return '';
+            }
+        }
+
+        $uS = Session::getInstance();
+
+        return $uS->guestLookups['ReservStatus'][$status][1];
+    }
+
+    public function getStatusIcon($status = '') {
+
+        if ($status == '') {
+            $status = $this->getStatus();
+
+            if ($status == '') {
+                return '';
+            }
+        }
+
+        $uS = Session::getInstance();
+
+        return HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ' . $uS->guestLookups['ReservStatus'][$status][2], 'style'=>'float: left; margin-left:.3em;', 'title'=>$uS->guestLookups['ReservStatus'][$status][1]));
+
+    }
+
+    public function getChooserStatuses($reserveStatuses) {
+
+        $limResvStatuses = array();
+        foreach (removeOptionGroups($reserveStatuses) as $s) {
+            if ($s['0'] != ReservationStatus::Checkedout && $s[0] != ReservationStatus::Staying && $s[0] != ReservationStatus::Pending && $s[0] != ReservationStatus::Imediate) {
+                if ($this->isRemovedStatus($s[0])) {
+                    $s[2] = 'Cancel Codes';
+                }
+                $limResvStatuses[$s[0]] = $s;
+            }
+        }
+        return $limResvStatuses;
+    }
+
+    public function isActive() {
+        return $this->isActiveStatus($this->getStatus());
+    }
+
+    public static function isActiveStatus($status) {
+
+        if ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted || $status == ReservationStatus::Waitlist) {
+            return TRUE;
+        }
+
+        return FALSE;
+    }
+
+    public function isRemoved() {
+        return $this->isRemovedStatus($this->getStatus());
+    }
+
+    public static function isRemovedStatus($reservStatus) {
+
+        if ($reservStatus == ReservationStatus::Canceled || $reservStatus == ReservationStatus::NoShow || $reservStatus == ReservationStatus::TurnDown) {
+            return TRUE;
+        }
+
+        return FALSE;
+    }
+
+    /**
+     *
+     * @param \PDO $dbh
+     * @param int $idReserv
+     * @return \ConstraintsReservation
+     */
+    public static function loadReservationConstraints(\PDO $dbh, $idReserv) {
+
+        return new ConstraintsReservation($dbh, $idReserv);
+
+    }
+
+    public function getConstraints(\PDO $dbh) {
+
+        if (is_null($this->reservConstraints)) {
+            $this->reservConstraints = $this->loadReservationConstraints($dbh, $this->getIdReservation());
+        }
+
+        return $this->reservConstraints;
+    }
+
+    public static function isActionStatus($reservStatus) {
+
+        if ($reservStatus == ReservationStatus::Checkedout || $reservStatus == ReservationStatus::Staying || $reservStatus == ReservationStatus::Committed || $reservStatus == ReservationStatus::UnCommitted) {
+            return TRUE;
+        }
+
+        return FALSE;
+    }
+
+
+    public function isNew() {
+        if ($this->reservRs->idReservation->getStoredVal() > 0) {
+            return FALSE;
+        }
+        return TRUE;
+    }
+
+    public function getIdPsg(PDO $dbh) {
+
+        if ($this->getIdRegistration() == 0) {
+
+            $this->idPsg = 0;
+
+        } else if (is_null($this->idPsg)) {
+
+            $regRs = new RegistrationRs();
+            $regRs->idRegistration->setStoredVal($this->getIdRegistration());
+            $rows = EditRS::select($dbh, $regRs, array($regRs->idRegistration));
+
+            if (count($rows) == 1) {
+                EditRS::loadRow($rows[0], $regRs);
+                $this->idPsg = $regRs->idPsg->getStoredVal();
+            } else {
+                $this->idPsg = 0;
+            }
+
+        }
+
+        return $this->idPsg;
+    }
+
+    public static function getIdPsgStatic(\PDO $dbh, $idResv) {
+
+        $idPsg = 0;
+        $id = intval($idResv, 10);
+
+        if ($idResv > 0) {
+            $stmt = $dbh->query("select ifnull(rg.idPsg, 0) from reservation r left join registration rg on rg.idRegistration = r.idRegistration where r.idReservation = $id");
+            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+
+            if (count($rows) > 0) {
+                $idPsg = $rows[0][0];
+            }
+        }
+        return $idPsg;
+    }
+
+    public function isFixedRate() {
+        if ($this->reservRs->Room_Rate_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category) {
+            return TRUE;
+        }
+
+        return FALSE;
+    }
+
+    public function getExpectedPayType() {
+        return $this->reservRs->Expected_Pay_Type->getStoredVal();
+    }
+
+    public function setExpectedPayType($payTypeCode) {
+        $this->reservRs->Expected_Pay_Type->setNewVal($payTypeCode);
+        return $this;
+    }
+
+    public function getVisitFee() {
+        return $this->reservRs->Visit_Fee->getStoredVal();
+    }
+
+    public function setVisitFee($amount) {
+        $this->reservRs->Visit_Fee->setNewVal($amount);
+        return $this;
+    }
+
+    public function getVerbalConfirm() {
+        return $this->reservRs->Confirmation->getStoredVal();
+    }
+
+    public function setVerbalConfirm($confirmCode) {
+        $this->reservRs->Confirmation->setNewVal($confirmCode);
+        return $this;
+    }
+
+    public function setExpectedArrival($v) {
+        if ($v != '') {
+            $arr = date('Y-m-d 16:00:00', strtotime($v));
+            $this->reservRs->Expected_Arrival->setNewVal($arr);
+        }
+        return $this;
+    }
+
+    public function setExpectedDeparture($v) {
+        if ($v != '') {
+            $arr = date('Y-m-d 10:00:00', strtotime($v));
+            $this->reservRs->Expected_Departure->setNewVal($arr);
+        }
+        return $this;
+    }
+
+    public function setActualArrival($v) {
+        $this->reservRs->Actual_Arrival->setNewVal($v);
+        return $this;
+    }
+
+    public function setActualDeparture($v) {
+        $this->reservRs->Actual_Departure->setNewVal($v);
+        return $this;
+    }
+
+    public function getCheckinNotes() {
+        return $this->reservRs->Checkin_Notes->getStoredVal();
+    }
+
+    public function setCheckinNotes($v) {
+        $this->reservRs->Checkin_Notes->setNewVal($v);
+        return $this;
+    }
+
+    public function getIdHospital() {
+        return $this->idHospital;
+    }
+
+    public function getIdAssociation() {
+        return $this->idAssociation;
+    }
+
+    public function setIdHospital($idHospital) {
+        $this->idHospital = $idHospital;
+        return $this;
+    }
+
+    public function setIdAssociation($idAssociation) {
+        $this->idAssociation = $idAssociation;
+        return $this;
+    }
+
+
+    /**
+     * Returns Actual arrival date or Expected depending on reservation status
+     *
+     * @return string
+     */
+    public function getArrival() {
+        if ($this->getStatus() == ReservationStatus::Staying || $this->getStatus() == ReservationStatus::Checkedout) {
+            return $this->getActualArrival();
+        } else {
+            return $this->getExpectedArrival();
+        }
+    }
+
+    /**
+     * Returns Actual departure date or Expected depending on reservation status
+     *
+     * @return string
+     */
+    public function getDeparture() {
+        if ($this->getStatus() == ReservationStatus::Checkedout) {
+            return $this->getActualDeparture();
+        } else {
+            return $this->getExpectedDeparture();
+        }
+    }
+
+    public function setIdResource($v) {
+        $this->reservRs->idResource->setNewVal($v);
+        return $this;
+    }
+
+    public function setIdGuest($v) {
+        $this->reservRs->idGuest->setNewVal($v);
+        return $this;
+    }
+
+    public function setHospitalStay(HospitalStay $v) {
+        $this->reservRs->idHospital_Stay->setNewVal($v->getIdHospital_Stay());
+        $this->setIdHospital($v->getHospitalId())
+                ->setIdAssociation($v->getAssociationId());
+        return $this;
+    }
+
+    public function setIdHospitalStay($idHospitalStay) {
+        $id = intval($idHospitalStay, 10);
+        $this->reservRs->idHospital_Stay->setNewVal($id);
+        return $this;
+    }
+
+    public function setRoomRateCategory($v) {
+        $this->reservRs->Room_Rate_Category->setNewVal($v);
+        return $this;
+    }
+
+    public function setFixedRoomRate($v) {
+        $this->reservRs->Fixed_Room_Rate->setNewVal($v);
+        return $this;
+    }
+
+    public function setAmuntPerGuest($v) {
+        $this->reservRs->Fixed_Room_Rate->setNewVal($v);
+        return $this;
+    }
+
+    public function setRateAdjust($v) {
+
+        if ($v > -100 && $v < 100) {
+
+            $this->reservRs->Rate_Adjust->setNewVal($v);
+        }
+        return $this;
+    }
+
+    public function getIdRoomRate() {
+        return $this->reservRs->idRoom_rate->getStoredVal();
+    }
+
+    public function setIdRoomRate($idRoom_rate) {
+        $this->reservRs->idRoom_rate->setNewVal($idRoom_rate);
+        return $this;
+    }
+
+    public function setNumberGuests($v) {
+        $this->reservRs->Number_Guests->setNewVal($v);
+        return $this;
+    }
+
+    public function setStatus($v) {
+        $this->reservRs->Status->setNewVal($v);
+        return $this;
+    }
+
+    public function setAddRoom($v) {
+        $this->reservRs->Add_Room->setNewVal($v);
+        return $this;
+    }
+
+    public function setNotes($notes, $uname) {
+        if ($notes != '') {
+            $oldNotes = (is_null($this->reservRs->Notes->getStoredVal()) ? '' : $this->reservRs->Notes->getStoredVal());
+            $this->reservRs->Notes->setNewVal($oldNotes . "\r\n" . date('m-d-Y') . ', ' . $uname . ' - ' . $notes);
+        }
+    }
+
+    public function getIdVisit() {
+        return $this->idVisit;
+    }
+
+    public function setIdVisit($idVisit) {
+        $this->idVisit = $idVisit;
+        return $this;
+    }
+
+    public function getReservationRS() {
+        if (is_null($this->reservRs)) {
+            return new ReservationRS();
+        }
+        return $this->reservRs;
+    }
+
+    public function getNotes() {
+        return $this->reservRs->Notes->getStoredVal();  // == '' ? $this->reservRs->Notes->getNewVal() : $this->reservRs->Notes->getStoredVal();
+    }
+
+    public function getIdResource() {
+        return $this->reservRs->idResource->getStoredVal();
+    }
+
+    public function getIdGuest() {
+        return $this->reservRs->idGuest->getStoredVal();
+    }
+
+    public function getIdReservation() {
+        return $this->reservRs->idReservation->getStoredVal();
+    }
+
+    public function getIdHospitalStay() {
+        return $this->reservRs->idHospital_Stay->getStoredVal();
+    }
+
+    public function getFixedRoomRate() {
+        return $this->reservRs->Fixed_Room_Rate->getStoredVal();
+    }
+
+    public function getRoomRateCategory() {
+        return $this->reservRs->Room_Rate_Category->getStoredVal();
+    }
+
+    public function getRateAdjust() {
+        return $this->reservRs->Rate_Adjust->getStoredVal();
+    }
+
+    public function getAmouontPerGuest() {
+        return $this->reservRs->Fixed_Room_Rate->getStoredVal();
+    }
+
+
+    public function getAdjustedTotal($amount) {
+        $adjustedAmount = (1 + $this->getRateAdjust() / 100) * $amount;
+
+        return $adjustedAmount;
+    }
+
+    public function getIdRegistration() {
+        return $this->reservRs->idRegistration->getStoredVal();
+    }
+
+    public function getNumberGuests(\PDO $dbh = null) {
+
+        if (!is_null($dbh) && $this->getStatus() == ReservationStatus::Staying) {
+
+            $stmt = $dbh->query("select count(s.idStays)
+from stays s join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
+where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdReservation());
+
+            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+            $numGuests = 0;
+
+            if (count($rows > 0)) {
+                $numGuests = $rows[0][0];
+            }
+
+            return $numGuests;
+
+        } else {
+
+            if ($this->reservRs->Number_Guests->getStoredVal() == 0) {
+                return $this->reservRs->Number_Guests->getNewVal();
+            }
+
+            return $this->reservRs->Number_Guests->getStoredVal();
+        }
+    }
+
+    public function getStatus() {
+        return $this->reservRs->Status->getStoredVal();
+    }
+
+    public function getAddRoom() {
+        return $this->reservRs->Add_Room->getStoredVal();
+    }
+
+    public function getExpectedArrival() {
+        return $this->reservRs->Expected_Arrival->getStoredVal();
+    }
+
+    public function getExpectedDeparture() {
+        return $this->reservRs->Expected_Departure->getStoredVal();
+    }
+
+    public function getActualArrival() {
+        return $this->reservRs->Actual_Arrival->getStoredVal();
+    }
+
+    public function getActualDeparture() {
+        return $this->reservRs->Actual_Departure->getStoredVal();
+    }
+
+    public function getRoomTitle(PDO $dbh) {
+
+        if ($this->getIdResource() > 0) {
+            $resourceRS = new ResourceRS();
+            $resourceRS->idResource->setStoredVal($this->getIdResource());
+            $rows = EditRS::select($dbh, $resourceRS, array($resourceRS->idResource));
+
+            if (count($rows) == 1) {
+                EditRS::loadRow($rows[0], $resourceRS);
+                return $resourceRS->Title->getStoredVal();
+            }
+        }
+
+        return '';
+    }
+
+    public function getExpectedDays() {
+
+        if ($this->getExpectedArrival() != '' && $this->getExpectedDeparture() != '') {
+            $ad = new DateTime($this->getExpectedArrival());
+            $ad->setTime(11, 0, 0);
+            $dd = new DateTime($this->getExpectedDeparture());
+            $dd->setTime(11, 0, 0);
+
+            return $dd->diff($ad, TRUE)->days;
+        }
+        return 0;
+    }
+
+    public static function getExpectedDaysDT($startDT, $endDT) {
+
+        if (is_a($startDT, 'DateTime') && is_a($endDT, 'DateTime')){
+            $ad = new DateTime($startDT->format('Y-m-d H:i:s'));
+            $ad->setTime(11, 0, 0);
+            $dd = new DateTime($endDT->format('Y-m-d H:i:s'));
+            $dd->setTime(11, 0, 0);
+
+            return $dd->diff($ad, TRUE)->days;
+        }
+
+        return 0;
+    }
+
+}
+
+

@@ -1,0 +1,200 @@
+<?php
+/**
+ * ShowInvoice.php
+ *
+ *
+ * @category  house
+ * @package   Hospitality HouseKeeper
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
+ * @license   GPL and MIT
+ * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ */
+require ("homeIncludes.php");
+
+require(DB_TABLES . "visitRS.php");
+require(DB_TABLES . "registrationRS.php");
+
+require (DB_TABLES . 'nameRS.php');
+require (DB_TABLES . 'PaymentsRS.php');
+
+
+require (CLASSES . 'Purchase/Item.php');
+require(CLASSES . 'Purchase/RoomRate.php');
+
+
+require (PMT . 'Invoice.php');
+require (PMT . 'InvoiceLine.php');
+require (PMT . 'Receipt.php');
+require (MEMBER . 'Member.php');
+require (MEMBER . 'IndivMember.php');
+require (MEMBER . 'OrgMember.php');
+require (MEMBER . "Addresses.php");
+
+
+require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+
+require(HOUSE . "psg.php");
+require (HOUSE . 'Registration.php');
+require (HOUSE . 'RoleMember.php');
+require (HOUSE . 'Role.php');
+require (HOUSE . 'Guest.php');
+require (HOUSE . 'Patient.php');
+require (HOUSE . 'Resource.php');
+require (HOUSE . 'Room.php');
+require (HOUSE . 'Reservation_1.php');
+require (HOUSE . 'ReservationSvcs.php');
+require (HOUSE . 'Visit.php');
+require (HOUSE . 'VisitCharges.php');
+
+
+$wInit = new webInit(WebPageCode::Page);
+$pageTitle = $wInit->pageTitle;
+
+/* @var $dbh PDO */
+$dbh = $wInit->dbh;
+
+$uS = Session::getInstance();
+$logoUrl = $uS->resourceURL . 'images/registrationLogo.png';
+
+
+$stmtMarkup = '<h4>No Information</h4>';
+$emAddr = '';
+$emtableMarkup = '';
+$msg = '';
+$sty = '';
+$guest = NULL;
+$invNum = '';
+
+if (isset($_GET["invnum"])) {
+    $invNum = filter_var($_GET["invnum"], FILTER_SANITIZE_STRING);
+}
+
+// Catch post-back
+if (isset($_POST['hdninvnum'])) {
+    $invNum = filter_var($_POST["hdninvnum"], FILTER_SANITIZE_STRING);
+}
+
+try {
+
+    if ($invNum != '') {
+
+        $invoice = new Invoice($dbh, $invNum);
+        $stmtMarkup = $invoice->createMarkup($dbh);
+    } else {
+        $msg .= 'No Information.';
+    }
+
+
+    if (isset($_POST['txtEmail'])) {
+        $emAddr = filter_var($_POST['txtEmail'], FILTER_SANITIZE_EMAIL);
+        if ($emAddr == '') {
+            $msg .= "The Email address is required.  ";
+        }
+    }
+
+    if (isset($_POST['txtSubject'])) {
+        $emSubject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_STRING);
+        if ($emSubject == '') {
+            $msg .= "The Subject is required.  ";
+        }
+    }
+
+    if (isset($_POST['btnEmail']) && $emAddr != '' && $emSubject != '' && $stmtMarkup != '') {
+
+        $config = new Config_Lite(ciCFG_FILE);
+
+        $mail = prepareEmail($config);
+
+        $mail->From = $config->getString('guest_email', 'FromAddress', '');
+        $mail->FromName = $uS->siteName;
+        $mail->addAddress($emAddr);     // Add a recipient
+        $mail->addReplyTo($config->getString('guest_email', 'ReplyTo', ''));
+
+        $mail->isHTML(true);
+
+        $mail->Subject = $emSubject;
+        $mail->msgHTML($stmtMarkup);
+
+
+        if ($mail->send()) {
+            $msg .= "Email sent.  ";
+        } else {
+            $msg .= "Email failed!  " . $mail->ErrorInfo;
+        }
+    }
+
+    $emSubject = $wInit->siteName . " Invoice";
+
+    if (is_null($guest) === FALSE && $emAddr == '') {
+        $email = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
+        $emAddr = $email["Email"];
+    }
+
+
+
+// create send email table
+    if ($invoice->isDeleted() === FALSE) {
+        $emTbl = new HTMLTable();
+        $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject', 'size' => '70'))));
+        $emTbl->addBodyTr(HTMLTable::makeTd(
+                        'Email: '
+                        . HTMLInput::generateMarkup($emAddr, array('name' => 'txtEmail', 'size' => '70'))
+                        . HTMLInput::generateMarkup($invNum, array('name' => 'hdninvnum', 'type' => 'hidden'))));
+        $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('name' => 'btnEmail', 'type' => 'submit'))));
+
+        $emtableMarkup .= $emTbl->generateMarkup(array(), 'Email Invoice');
+    }
+} catch (Exception $ex) {
+    $msg .= $ex->getMessage();
+}
+
+
+if ($msg != '') {
+    $msg = HTMLContainer::generateMarkup('div', $msg, array('class' => 'ui-state-highlight', 'style' => 'font-size:14pt;'));
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title><?php echo $pageTitle; ?></title>
+<?php echo JQ_UI_CSS; ?>
+        <?php echo HOUSE_CSS; ?>
+<?php echo $sty; ?>
+        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <style type="text/css" media="print">
+            body {margin:0; padding:0; line-height: 1.4em; word-spacing:1px; letter-spacing:0.2px; font: 13px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
+            .hhk-noprint {display:none;}
+        </style>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
+        <script type='text/javascript'>
+            $(document).ready(function () {
+                "use strict";
+                $('#btnPrint, #btnEmail').button();
+                $('#btnPrint').click(function () {
+                    $("div.PrintArea").printArea();
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div id="contentDiv">
+            <div style="float:left; margin-top:5px;margin-bottom:5px;" class="hhk-noprint ui-widget ui-widget-content ui-corner-all">
+                <?php echo $msg; ?>
+            </div>
+            <div style='margin-left:100px;margin-bottom:10px; clear:left; float:left;' class='hhk-noprint ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox'>
+                <form name="formEm" method="Post" action="ShowInvoice.php">
+                <?php echo $emtableMarkup; ?>
+                </form>
+                <input type="button" value="Print" id='btnPrint' style="margin-right:.3em;"/>
+            </div>
+            <div id="divBody" style="max-width: 800px; clear:left;" class='PrintArea ui-widget ui-widget-content ui-corner-all hhk-panel'>
+                    <?php echo $stmtMarkup; ?>
+            </div>
+        </div>
+
+    </body>
+</html>

@@ -1,0 +1,874 @@
+<?php
+/**
+ * ws_ckin.php
+ *
+ *
+ * @category  house
+ * @package   Hospitality HouseKeeper
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
+ * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ */
+/**
+ *  includes and requries
+ */
+require ("homeIncludes.php");
+
+require(DB_TABLES . "visitRS.php");
+require(DB_TABLES . "registrationRS.php");
+require(DB_TABLES . "ReservationRS.php");
+
+require (DB_TABLES . 'nameRS.php');
+require (DB_TABLES . 'ItemRS.php');
+require (DB_TABLES . 'ActivityRS.php');
+require (DB_TABLES . 'MercuryRS.php');
+require (DB_TABLES . 'PaymentsRS.php');
+require (DB_TABLES . 'AttributeRS.php');
+
+require CLASSES . 'CleanAddress.php';
+require CLASSES . 'AuditLog.php';
+require CLASSES . 'History.php';
+require (CLASSES . 'CreateMarkupFromDB.php');
+
+require (CLASSES . 'Notes.php');
+require (CLASSES . 'US_Holidays.php');
+require (CLASSES . 'PaymentSvcs.php');
+require (CLASSES . 'FinAssistance.php');
+
+
+require (CLASSES . 'MercPay/MercuryHCClient.php');
+require (CLASSES . 'MercPay/Gateway.php');
+//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+
+require (PMT . 'Payments.php');
+require (PMT . 'TokenTX.php');
+require (PMT . 'HostedPayments.php');
+require (PMT . 'Invoice.php');
+require (PMT . 'InvoiceLine.php');
+require (PMT . 'Receipt.php');
+require (PMT . 'CreditToken.php');
+require (PMT . 'Transaction.php');
+require (PMT . 'CashTX.php');
+require (PMT . 'CheckTX.php');
+
+require (CLASSES . 'Purchase/Item.php');
+
+require(CLASSES . 'Purchase/RoomRate.php');
+
+require (MEMBER . 'Member.php');
+require (MEMBER . 'IndivMember.php');
+require (MEMBER . 'OrgMember.php');
+require (MEMBER . "Addresses.php");
+require (MEMBER . "EmergencyContact.php");
+
+require (HOUSE . 'RoleMember.php');
+require (HOUSE . 'Role.php');
+require (HOUSE . 'ActivityReport.php');
+require (HOUSE . 'Agent.php');
+require (HOUSE . 'Attributes.php');
+require (HOUSE . 'Constraint.php');
+require (HOUSE . 'Doctor.php');
+require (HOUSE . 'Guest.php');
+require (HOUSE . 'Hospital.php');
+require (HOUSE . 'HouseLog.php');
+require (HOUSE . 'HouseServices.php');
+require (HOUSE . 'Patient.php');
+require (HOUSE . 'PaymentManager.php');
+require (HOUSE . 'PaymentChooser.php');
+require (HOUSE . "psg.php");
+require (HOUSE . 'RateChooser.php');
+require (HOUSE . 'Registration.php');
+require (HOUSE . 'Resource.php');
+require (HOUSE . 'Room.php');
+require (HOUSE . 'RoomChooser.php');
+require (HOUSE . 'Reservation_1.php');
+require (HOUSE . 'ReservationSvcs.php');
+require (HOUSE . 'RegisterForm.php');
+require (HOUSE . 'RegistrationForm.php');
+require (HOUSE . 'VisitLog.php');
+require (HOUSE . 'Vehicle.php');
+require (HOUSE . 'Visit.php');
+require (HOUSE . "visitViewer.php");
+require (HOUSE . 'Waitlist.php');
+require (HOUSE . 'WaitlistSvcs.php');
+require (HOUSE . 'Register.php');
+require (HOUSE . 'VisitCharges.php');
+
+
+$wInit = new webInit(WebPageCode::Service);
+
+/* @var $dbh PDO */
+$dbh = $wInit->dbh;
+
+$uS = Session::getInstance();
+
+
+$guestAdmin = ComponentAuthClass::is_Authorized("guestadmin");
+
+$c = "";
+
+// Get our command
+if (isset($_REQUEST["cmd"])) {
+    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+}
+
+$idGuest = 0;
+if (isset($_REQUEST["idGuest"])) {
+    $idGuest = intval(filter_var($_REQUEST["idGuest"], FILTER_SANITIZE_STRING), 10);
+}
+
+$idVisit = 0;
+if (isset($_REQUEST["idVisit"])) {
+    $idVisit = intval(filter_var($_REQUEST["idVisit"], FILTER_SANITIZE_STRING), 10);
+}
+
+
+$events = array();
+
+
+try {
+
+    switch ($c) {
+
+        case 'rmlist':
+
+            $idresv = 0;
+            if (isset($_POST['rid'])) {
+                $idresv = intval(filter_var($_POST['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $x = 0;
+            if (isset($_POST['x'])) {
+                $x = filter_var($_POST['x'], FILTER_SANITIZE_STRING);
+            }
+
+            $events = ReservationSvcs::getRoomList($dbh, $idresv, $x, $guestAdmin);
+            break;
+
+        case 'setRoom':
+
+            $idresv = 0;
+            if (isset($_POST['rid'])) {
+                $idresv = intval(filter_var($_POST['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $idResc = '';
+            if (isset($_POST['idResc'])) {
+                $idResc = filter_var($_POST['idResc'], FILTER_SANITIZE_STRING);
+            }
+
+            $events = ReservationSvcs::setNewRoom($dbh, $idresv, $idResc, $guestAdmin);
+            break;
+
+        case 'dunf':
+
+            $events = HouseServices::deleteUnfinisedCheckins($dbh);
+            break;
+
+        case 'confrv':
+
+            $idresv = 0;
+            if (isset($_POST['rid'])) {
+                $idresv = intval(filter_var($_POST['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $amount = 0.00;
+            if (isset($_POST['amt'])) {
+                $amount = filter_var($_POST['amt'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+            }
+
+            $sendemail = FALSE;
+            if (isset($_POST['eml'])) {
+                $v = intval(filter_var($_POST['eml'], FILTER_SANITIZE_NUMBER_INT), 10);
+                if ($v == 1) {
+                    $sendemail = TRUE;
+                }
+            }
+
+            $notes = '-';
+            if (isset($_POST['notes'])) {
+                $notes = filter_var($_POST['notes'], FILTER_SANITIZE_STRING);
+            }
+
+            $eaddr = '';
+            if (isset($_POST['eaddr'])) {
+                $eaddr = filter_var($_POST['eaddr'], FILTER_SANITIZE_STRING);
+            }
+
+            $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $amount, $sendemail, $notes, $eaddr);
+            break;
+
+        case 'void':
+
+            $idPayment = 0;
+            if (isset($_POST['pid'])) {
+                $idPayment = intval(filter_var($_POST['pid'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $bid = '';
+            if (isset($_POST['bid'])) {
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+            }
+
+            $events = PaymentSvcs::voidFees($dbh, $idPayment, $bid);
+
+            break;
+
+        case 'revpmt':
+
+            $idPayment = 0;
+            if (isset($_POST['pid'])) {
+                $idPayment = intval(filter_var($_POST['pid'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $bid = '';
+            if (isset($_POST['bid'])) {
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+            }
+
+            $events = PaymentSvcs::reversalFees($dbh, $idPayment, $bid);
+
+            break;
+
+        case 'rtn':
+
+            $idPayment = 0;
+            if (isset($_POST['pid'])) {
+                $idPayment = intval(filter_var($_POST['pid'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $bid = '';
+            if (isset($_POST['bid'])) {
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+            }
+
+            $amt = 0;
+            if (isset($_POST['amt'])) {
+                $amt = floatval(filter_var($_POST['amt'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+            }
+
+            $events = PaymentSvcs::returnPayment($dbh, $idPayment, $bid, $amt);
+
+            break;
+
+        case 'voidret':
+
+            $idPayment = 0;
+            if (isset($_POST['pid'])) {
+                $idPayment = intval(filter_var($_POST['pid'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $bid = '';
+            if (isset($_POST['bid'])) {
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+            }
+
+            $events = PaymentSvcs::voidReturnFees($dbh, $idPayment, $bid);
+
+            break;
+
+    case "getReg":
+
+        $idRegistration = 0;
+        if (isset($_REQUEST["reg"])) {
+            $idRegistration = intval(filter_var($_REQUEST["reg"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        if ($idRegistration > 0) {
+            $reg = new Registration($dbh, 0, $idRegistration);
+            $mkup = HTMLContainer::generateMarkup('div', $reg->createRegMarkup($dbh, FALSE), array('class'=>"ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"));
+            $events = array('success'=>$mkup);
+        } else {
+            $events = array('error'=>'Bad PSG Id.');
+        }
+
+        break;
+
+    case "saveReg":
+
+        $idRegistration = 0;
+        if (isset($_REQUEST["reg"])) {
+            $idRegistration = intval(filter_var($_REQUEST["reg"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $params = array();
+        if (isset($_REQUEST['parm'])) {
+            $params = $_REQUEST['parm'];
+        }
+
+        if ($idRegistration > 0) {
+
+            $reg = new Registration($dbh, 0, $idRegistration);
+
+            $reg->extractRegistration($dbh, $params);
+            $reg->saveRegistrationRs($dbh, 0, $uS->username);
+            $events = array('success'=>'Registration info saved.');
+        } else {
+            $events = array('error'=>'Bad Registration Id.');
+        }
+
+
+        break;
+
+    case "getWLname":
+
+        $id = 0;
+        if (isset($_REQUEST["id"])) {
+            $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $role = "";
+        if (isset($_REQUEST["role"])) {
+            $role = filter_var($_REQUEST["role"], FILTER_SANITIZE_STRING);
+        }
+
+        $events = WaitlistSvcs::getWLName($dbh, $id, $role);
+        break;
+
+    case "reservMove":
+
+        $sdelta = 0;
+        if (isset($_POST['sdelta'])) {
+            $sdelta = intval(filter_var($_POST['sdelta'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+        $edelta = 0;
+        if (isset($_POST['edelta'])) {
+            $edelta = intval(filter_var($_POST['edelta'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+
+        $events = ReservationSvcs::moveReserv($dbh, $idVisit, $sdelta, $edelta);
+        break;
+
+    case "visitMove":
+
+        $sdelta = 0;
+        if (isset($_POST['sdelta'])) {
+            $sdelta = intval(filter_var($_POST['sdelta'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+        $edelta = 0;
+        if (isset($_POST['edelta'])) {
+            $edelta = intval(filter_var($_POST['edelta'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $span = 0;
+        if (isset($_POST['span'])) {
+            $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $events = HouseServices::moveVisit($dbh, $idVisit, $span, $sdelta, $edelta);
+        break;
+
+    case "visitFees":
+        $s = 'n';
+        if (isset($_POST['action'])) {
+            $s = filter_var($_POST['action'], FILTER_SANITIZE_STRING);
+        }
+
+        $cod = '';
+        if (isset($_POST['ckoutdt'])) {
+            $cod = filter_var($_POST['ckoutdt'], FILTER_SANITIZE_STRING);
+        }
+
+        $span = 0;
+        if (isset($_POST['span'])) {
+            $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $events = HouseServices::getVisitFees($dbh, $idGuest, $idVisit, $span, $guestAdmin, $s, $cod);
+
+        break;
+
+    case "getMember":
+
+        $id = 0;
+        if (isset($_POST["id"])) {
+            $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $idReserv = 0;
+        if (isset($_POST["rid"])) {
+            $idReserv = intval(filter_var($_POST["rid"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $idp = "";
+        if (isset($_POST["idPrefix"])) {
+            $idp = filter_var($_POST["idPrefix"], FILTER_SANITIZE_STRING);
+        }
+
+        $role = "";
+        if (isset($_POST["role"])) {
+            $role = filter_var($_POST["role"], FILTER_SANITIZE_STRING);
+        }
+
+        $idPsg = 0;
+        if (isset($_POST["psg"])) {
+            $idPsg = intval(filter_var($_POST["psg"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $patStay = NULL;
+        if (isset($_POST["patStay"]) && $_POST["patStay"] != '') {
+            $patStay = filter_var($_POST["patStay"], FILTER_VALIDATE_BOOLEAN);
+        }
+
+        $havePatient = FALSE;
+        if (isset($_POST["hvPat"])) {
+            $havePatient = filter_var($_POST["hvPat"], FILTER_VALIDATE_BOOLEAN);
+        }
+
+        $addRoom = FALSE;
+        if (isset($_POST["addRoom"])) {
+            $addRoom = filter_var($_POST["addRoom"], FILTER_VALIDATE_BOOLEAN);
+        }
+
+        $events = HouseServices::getMember($dbh, $idReserv, $id, $role, $idp, $idPsg, $patStay, $havePatient, $addRoom);
+
+        break;
+
+    case "addStay":
+
+        $id = 0;
+        if (isset($_POST["id"])) {
+            $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $idVisit = 0;
+        if (isset($_POST["vid"])) {
+            $idVisit = intval(filter_var($_POST["vid"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $visitSpan = 0;
+        if (isset($_POST["span"])) {
+            $visitSpan = intval(filter_var($_POST["span"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $events = HouseServices::addVisitStay($dbh, $idVisit, $visitSpan, $id, $_POST);
+        break;
+
+    case "getResv":
+
+        $id = 0;
+        if (isset($_GET["id"])) {
+            $id = intval(filter_var($_GET["id"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $idReserv = 0;
+        if (isset($_GET["rid"])) {
+            $idReserv = intval(filter_var($_GET["rid"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $idPsg = 0;
+        if (isset($_GET["idPsg"])) {
+            $idPsg = intval(filter_var($_GET["idPsg"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $idp = "";
+        if (isset($_GET["idPrefix"])) {
+            $idp = filter_var($_GET["idPrefix"], FILTER_SANITIZE_STRING);
+        }
+
+        $role = "";
+        if (isset($_GET["role"])) {
+            $role = filter_var($_GET["role"], FILTER_SANITIZE_STRING);
+        }
+
+        $patStay = FALSE;
+        if (isset($_GET["patStay"])) {
+            $patStay = filter_var($_GET["patStay"], FILTER_VALIDATE_BOOLEAN);
+        }
+
+        $events = ReservationSvcs::getResv($dbh, $idReserv, $id, $role, $idPsg, $idp, $guestAdmin, $patStay);
+
+        break;
+
+    case 'delResvGst':
+
+        $id = 0;
+        if (isset($_POST["id"])) {
+            $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $idReserv = 0;
+        if (isset($_POST["rid"])) {
+            $idReserv = intval(filter_var($_POST["rid"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $events = ReservationSvcs::removeResvGuest($dbh, $id, $idReserv, $uS->username);
+        break;
+
+    case "addResv":
+
+        $id = 0;
+        if (isset($_POST["id"])) {
+            $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $idReserv = 0;
+        if (isset($_POST["rid"])) {
+            $idReserv = intval(filter_var($_POST["rid"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $addRoom = FALSE;
+        if (isset($_POST['addRoom'])) {
+            $addRoom = filter_Var($_POST['addRoom'], FILTER_VALIDATE_BOOLEAN);
+        }
+
+        $post = filter_var_array($_POST, FILTER_SANITIZE_STRING);
+
+        $events = ReservationSvcs::addResv($dbh, $idReserv, $id, $addRoom, $post);
+        break;
+
+    case "makeResv":
+
+        $memData = filter_var_array($_POST, FILTER_SANITIZE_STRING);
+
+        $events = ReservationSvcs::findARoom($dbh, $memData, $guestAdmin);
+
+        break;
+
+    case "saveMem":
+
+        $memData = filter_var_array($_POST, FILTER_SANITIZE_STRING);
+
+        $events = HouseServices::saveMembers($dbh, $memData, $guestAdmin);
+
+        break;
+
+    case "savePage":
+
+        $memData = filter_var_array($_POST, FILTER_SANITIZE_STRING);
+
+        $events = HouseServices::saveCheckinPage($dbh, $memData, $guestAdmin);
+        break;
+
+    case "getincmdiag":
+
+        $idresv = 0;
+        if (isset($_GET['rid'])) {
+            $idresv = intval(filter_var($_GET['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $idreg = 0;
+        if (isset($_GET['rgId'])) {
+            $idreg = intval(filter_var($_GET['rgId'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $events = ReservationSvcs::getIncomeDialog($dbh, $idresv, $idreg);
+        break;
+
+
+    case "savefap":
+
+        $post = filter_var_array($_POST, FILTER_SANITIZE_STRING);
+        $events = ReservationSvcs::saveFinApp($dbh, $post);
+
+        break;
+
+    case 'showPayInv':
+
+        $id = 0;
+        if (isset($_POST['id'])) {
+            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $iid = 0;
+        if (isset($_POST['iid'])) {
+            $iid = intval(filter_var($_POST['iid'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $events = HouseServices::ShowPayInvoice($dbh, $id, $iid);
+        break;
+
+    case 'payInv':
+
+        $id = 0;
+        if (isset($_POST['id'])) {
+            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $data = filter_var_array($_POST, FILTER_SANITIZE_STRING);
+        $events = HouseServices::payInvoice($dbh, $id, $data);
+
+        break;
+
+    case "saveFees":
+
+        $span = 0;
+        if (isset($_POST['span'])) {
+            $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $postbackPage = '';
+        if (isset($_POST['pbp'])) {
+            $postbackPage = filter_var($_POST['pbp'], FILTER_SANITIZE_STRING);
+        }
+
+        $events = HouseServices::saveFees($dbh, $idVisit, $span, $guestAdmin, $_REQUEST, $postbackPage);
+
+        break;
+
+
+    // View Activity
+    case 'viewActivity':
+
+        $rid = 0;
+        if (isset($_POST['rid'])) {
+            $rid = intval(filter_var($_POST['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $events = ReservationSvcs::viewActivity($dbh, $rid);
+
+        break;
+
+    // Get House payment dialog
+    case 'getHPay':
+
+        if (isset($_POST['ord'])) {
+
+            $discounts = readGenLookupsPDO($dbh, 'House_Discount');
+            $addnls = readGenLookupsPDO($dbh, 'Addnl_Charge');
+
+            foreach ($discounts as $n) {
+                $events['disc'][$n[0]] = $n[2];
+            }
+
+            foreach ($addnls as $a) {
+                $events['addnl'][$a[0]] = $a[2];
+            }
+
+            $ordNum = intval(filter_var($_POST['ord'], FILTER_SANITIZE_NUMBER_INT), 10);
+
+            $events['markup'] = PaymentChooser::createHousePaymentMarkup($discounts, $addnls, $ordNum);
+
+        } else {
+            $events = array('error'=>'Visit Id is missing.  ');
+        }
+
+        break;
+
+    // Save House payment dialog
+    case 'saveHPay':
+
+        $ord = 0;
+        if (isset($_POST["ord"])) {
+            $ord = intval(filter_var($_POST["ord"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $amt = 0;
+        if (isset($_POST["amt"])) {
+            $amt = floatval(filter_var($_POST["amt"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+        }
+
+        $idItem = 0;
+        if (isset($_POST["item"])) {
+            $idItem = floatval(filter_var($_POST["item"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+        }
+
+        $discount = '';
+        if (isset($_POST['dsc'])) {
+            $discount = filter_var($_POST['dsc'], FILTER_SANITIZE_STRING);
+        }
+
+        $addnlCharge = '';
+        if (isset($_POST['chg'])) {
+            $addnlCharge = filter_var($_POST['chg'], FILTER_SANITIZE_STRING);
+        }
+
+        $events = HouseServices::saveHousePayment($dbh, $idItem, $ord, $amt, $discount, $addnlCharge);
+
+        break;
+
+    // View PSG
+    case 'viewPSG':
+
+        $idPsg = 0;
+        if (isset($_POST['psg'])) {
+            $idPsg = intval(filter_var($_POST['psg'], FILTER_SANITIZE_NUMBER_INT), 10);
+            $psg = new Psg($dbh, $idPsg);
+            $events = array('markup'=>$psg->createEditMarkup($dbh, $uS->guestLookups[GL_TableNames::PatientRel], new Config_Lite(LABEL_FILE)));
+
+        } else {
+            $events = array('error'=>'PSG ID is missing.');
+        }
+
+        break;
+
+
+    // Card on file
+    case "cof":
+
+        $postbackPage = '';
+        if (isset($_POST['pbp'])) {
+            $postbackPage = filter_var($_POST['pbp'], FILTER_SANITIZE_STRING);
+        }
+
+        $idGroup = 0;
+        if (isset($_POST['idGrp'])) {
+            $idGroup = intval(filter_var($_POST['idGrp'], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $events = HouseServices::cardOnFile($dbh, $idGuest, $idGroup, $_POST, $postbackPage);
+
+        break;
+
+    // Card on file
+    case "viewCredit":
+
+        $idReg = 0;
+        if (isset($_POST['reg'])) {
+            $idReg = intval(filter_var($_POST['reg'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $events = array('success'=>HouseServices::viewCreditTable($dbh, $idReg, 0));
+
+        break;
+
+    case "register":
+        $startTime = 0;
+        $endTime = 0;
+
+        if (isset($_REQUEST["start"])) {
+            $startTime = filter_var(urldecode($_REQUEST["start"]), FILTER_SANITIZE_NUMBER_INT);
+        }
+        if (isset($_REQUEST["end"])) {
+            $endTime = filter_var(urldecode($_REQUEST["end"]), FILTER_SANITIZE_NUMBER_INT);
+        }
+
+
+        $events = Register::getRegister($dbh, $startTime, $endTime);
+        break;
+
+    case "wlist":
+
+        $ao = '0';
+        if (isset($_REQUEST['ao'])) {
+            $ao = filter_var($_REQUEST['ao'], FILTER_SANITIZE_STRING);
+        }
+        $events = WaitlistSvcs::getWaitList($dbh, $_POST, $ao);
+        break;
+
+    case 'rvstat':
+
+        $idReservation = 0;
+        if (isset($_POST['rid'])) {
+            $idReservation = intval(filter_var($_POST['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $status = '';
+        if (isset($_POST['stat'])) {
+            $status = filter_var($_POST['stat'], FILTER_SANITIZE_STRING);
+        }
+
+        $events = ReservationSvcs::changeReservStatus($dbh, $idReservation, $status);
+        break;
+
+    case 'delWL':
+
+        $wlid = 0;
+        if (isset($_REQUEST["wlid"])) {
+            $wlid = intval(filter_var($_REQUEST["wlid"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $events = WaitlistSvcs::deleteWLEntry($dbh, $wlid);
+        break;
+
+    case 'cedd':
+
+        $nd = '';
+        if (isset($_POST['nd'])) {
+            $nd = filter_var($_POST['nd'], FILTER_SANITIZE_STRING);
+        }
+
+        $events = HouseServices::changeExpectedDepartureDate($dbh, $idGuest, $idVisit, $nd);
+        break;
+
+    case 'gtvlog':
+
+        $wlid = 0;
+        if (isset($_REQUEST["idReg"])) {
+            $wlid = intval(filter_var($_REQUEST["idReg"], FILTER_SANITIZE_STRING), 10);
+        }
+
+        $events = HouseServices::visitChangeLogMarkup($dbh, $wlid);
+
+        break;
+
+    case 'getPrx':
+        // reprint a receipt
+        $idPayment = 0;
+        if (isset($_POST['pid'])) {
+            $idPayment = intval(filter_var($_POST['pid'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $events = PaymentSvcs::generateReceipt($dbh, $idPayment);
+
+        break;
+
+    case "chgPmtAmt":
+        // respond to changes in payment record amount on Recent Payments tab and Guest Edit payments tab.
+
+        $pid = 0;
+        if (isset($_POST['pid'])) {
+            $pid = intval(filter_var($_POST['pid'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $newAmt = 0.00;
+        if (isset($_POST['amt'])) {
+            $newAmt = floatval(filter_var($_POST['amt'], FILTER_SANITIZE_STRING));
+        }
+
+        if ($guestAdmin) {
+            $events = HouseServices::changePaymentAmount($dbh, $pid, $newAmt);
+        }
+
+        break;
+
+    case "addWL":
+
+        if (isset($_REQUEST["parm"])) {
+            $parm = filter_var_array($_REQUEST["parm"], FILTER_SANITIZE_STRING);
+            $events = WaitlistSvcs::saveWLEntry($dbh, $parm);
+        } else {
+            $events = array("error" => "Missing Parameters.");
+        }
+        break;
+
+    case 'rtcalc':
+
+        // Financial assistance rate category
+        $events = RoomChooser::roomAmtCalculation($dbh, $_POST);
+        break;
+
+    case 'delResv':
+
+        $rid = 0;
+        if (isset($_POST['rid'])) {
+            $rid = intval(filter_var($_POST['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $events = ReservationSvcs::deleteReservation($dbh, $rid);
+
+        break;
+
+    default:
+        $events = array("error" => "Bad Command: \"" . $c . "\"");
+}
+
+} catch (PDOException $ex) {
+    $events = array("error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
+} catch (Hk_Exception $ex) {
+    $events = array("error" => "HouseKeeper Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
+} catch (Exception $ex) {
+    $events = array("error" => "Programming Error: " . $ex->getMessage());
+}
+
+
+
+if (is_array($events)) {
+    echo (json_encode($events));
+} else {
+    echo $events;
+}
+
+exit();
+

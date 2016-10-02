@@ -1,0 +1,242 @@
+* {
+    margin: 0px;
+    padding: 0px;
+}
+body {
+    font-size: 90%;
+}
+.testbody {
+    background-color: #FFCC9F;
+}
+#submitButtons {
+    position: fixed;
+    right: 30px;
+    bottom: 20px;
+    padding: 5px 10px;
+    z-index: 90000;
+    border: 1px solid teal;
+}
+#submitButtons:hover { background-color: white; }
+.submitButtons {
+    position: static;
+    float:right;
+    margin-top:.3em;
+    padding: 5px 10px;
+    z-index: 90000;
+    border: 1px solid teal;
+    }
+.submitButtons:hover { background-color: yellow; }
+#divAlertMsg {
+    z-index:9;
+}
+.hhk-addrCopy, .hhk-addrErase, .hhk-fincalc {
+    cursor:pointer;
+}
+.dp-highlight .ui-state-default {
+    background: #484;
+    color: #FFF;
+}
+ul#topMenu {
+    position: absolute;
+    right: 3px;
+    top: 3px;
+}
+ul#topMenu li {
+    display: inline;
+}
+ul#topMenu li a{
+    float: left;
+    display: inline;
+    margin-right: 4px;
+    margin-left: 4px;
+    border: 1px solid #D4CCB0;
+}
+.nplogo {
+    background-image: url("../../images/NPSClogoSm.png");
+    background-repeat: no-repeat;
+    width: 258px;
+    height: 55px;
+    margin-top:5px;
+    display:inline-block;
+}
+
+.dataTables_info {
+    padding-right: 1em;
+}
+.ui-autocomplete-loading { background: white url('../../images/ui-anim_basic_16x16.gif') right center no-repeat; }
+.hhk-loading { background: white url('../../images/ui-anim_basic_16x16.gif') left center no-repeat; }
+.hhk-schrm:hover {
+    font-size:150%;
+}
+.hhk-relations td {
+    background-color: #ffffff;
+}
+.hhk-relations td:hover {
+    background-color: #67b021;
+    color: whitesmoke;
+    cursor:pointer;
+}
+.hhk-topseperator td {
+    border-top: solid 2px #2E99DD;
+}
+.hhk-member-detail {
+    float:left;
+    font-size: 0.9em;
+}
+.hhk-VisitMessage {
+    float: right;
+    border: 1px solid #79B7E7;
+    background-color: #FFFFCC;
+    padding: 5px;
+    margin: 5px;
+    max-width: 40%;
+    max-height: 125px;
+}
+.hhk-noteBox div {
+    border: 1px solid #79B7E7;
+    max-height: 100px;
+    min-height:14px;
+    overflow-y: auto;
+    background-color:#ffffff;
+}
+.hhk-noteBox textarea {
+    float:left;
+    width:100%;
+}
+table.hhk-badAddress {
+    background-color: lightsalmon;
+}
+.hhk-pastdue {
+    color: red;
+}
+.hhk-showMe {
+    display: block;
+}
+.hhk-hideMe {
+    display:none;
+}
+.spnHosp {
+    padding: 0 .4em;
+    border:solid 1px black;
+    margin-left:.3em;
+    margin-bottom:.2em;
+}
+.spnHosp:hover {
+    cursor: pointer;
+}
+
+div#hideCalendar, div#hideLog {
+    float:left;
+    cursor:pointer;
+}
+.hhk-reservStatus {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin: 5px;
+    float:right;
+}
+div#contentDiv {
+    margin-left: 10px;
+    margin-top: 43px;
+}
+.pageSpacer {
+    width: 100%;
+    background-color: #63A0CE;
+    position:fixed;
+    top: 0;
+    left: 0;
+}
+#content {
+    margin: 20px 10px;
+}
+h1, h2, h3 {
+    padding: 3px 5px;
+}
+div.logo {
+    position: absolute;
+    top: 0px;
+    color: white;
+    padding: 0 4px;
+    margin: 7px 5px;
+    font-size: 2em;
+    z-index: 99;
+}
+#version {
+    height: 15px;
+    position: absolute;
+    right: 2px;
+    top: 47px;
+    font-size: .6em;
+    padding: 0 6px;
+}
+table {
+    border-collapse:collapse;
+}
+.xdebug-error {
+    position: relative;
+    top: 40px;
+}
+.hhk-visitdialog td {
+    background-color: #FFF;
+}
+.hhk-visitdialog th, .hhk-visitdialog .tdlabel {
+    background-color: #E9F4FD;
+}
+.option-description td {
+    border: 1px solid #D4CCB0;
+    vertical-align: middle;
+    padding: 2px 3px;
+}
+.hhk-tdbox td, .hhk-tdbox th {
+    border: 1px solid #D4CCB0;
+    vertical-align: middle;
+    padding: 5px 7px;
+}
+.hhk-tdbox-noborder td, .hhk-tdbox-noborder th {
+    border: none;
+    vertical-align: middle;
+    padding: 2px 3px;
+}
+.hhk-heading {
+    text-align: center;
+    font-weight: bold;
+}
+.hhk-panel {
+    padding: 0.5em 0.5em;
+    margin-top: 5px;
+
+}
+.hhk-panel .hhk-panel {
+    margin: 0;
+}
+.hhk-htip {
+    /*  help tip     */
+    color: #228C5F;
+    
+}
+.tdlabel {
+    text-align: right;
+    padding: 2px 3px;
+}
+td.hhk-tdbox, th.hhk-tdbox {
+    border: 1px solid #D4CCB0;
+    vertical-align: middle;
+    padding: 5px 7px;
+}
+td.hhk-tdTotals {
+    border-top-color: black;
+    border-top-width: 2px;
+}
+input.ro {
+    background-color: transparent;
+    border-style: none;
+}
+span.lbl {
+    font-size: 10pt;
+}
+span.class_history {
+    font-size: .75em;
+}
+.input-medium {
+    width: 150px;
+}

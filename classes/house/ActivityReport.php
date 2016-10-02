@@ -1,0 +1,1009 @@
+<?php
+/**
+ * ActivityReport.php
+ *
+ * Guest Tracking report & markup
+ *
+ * @category  house
+ * @package   Hospitality HouseKeeper
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2015 <nonprofitsoftwarecorp.org>
+ * @license   GPL and MIT
+ * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ */
+
+
+class ActivityReport {
+
+    /**
+     *
+     * @param PDO $dbh
+     * @param string $startDate
+     * @param string $endDate
+     * @return string HTML table markup
+     */
+    public static function staysLog(PDO $dbh, $startDate, $endDate) {
+
+        $query = "select * from vstays_log where (DATE(Timestamp) >= :start and DATE(Timestamp) <= :end);";
+
+        $stmt = $dbh->prepare($query);
+        $stmt->execute(array(':start'=>$startDate, ':end'=>$endDate));
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $visitId = 0;
+        $spanId = 0;
+        $visitIcon = "<span class='ui-icon ui-icon-folder-open' style='float: left; margin-right: .3em;' title='Open Visit Viewer'></span>";
+
+        $tbl = new HTMLTable();
+        $tbl->addHeaderTr(HTMLTable::makeTh("Room"). HTMLTable::makeTh("Guest"). HTMLTable::makeTh("Action"). HTMLTable::makeTh("Date"). HTMLTable::makeTh("By"));
+
+
+        foreach ($rows as $r) {
+
+
+            $logData = array();
+
+            if ($r['Log_Text'] != '') {
+
+                $decod = json_decode($r['Log_Text']);
+
+                foreach ($decod as $k => $v) {
+
+                    // remove ticks from labels
+                    $key = str_ireplace('`', '', $k);
+
+                    if (stristr($v, '|_|') !== FALSE) {
+                        $parts = explode('|', $v);
+                        if (count($parts) == 3) {
+                            $logData[$key] = array('old'=>$parts[0], 'new'=>$parts[2]);
+                        }
+                    } else {
+                        $logData[$key] = array('new'=>$v);
+                    }
+                }
+
+            } else {
+                continue;
+            }
+
+            if ($r['idVisit'] != $visitId) {
+                $visitId = $r['idVisit'];
+                $spanId = $r['Span'];
+                if ($spanId == 0) {
+                    $tbl->addBodyTr(HTMLTable::makeTd(
+                    HTMLContainer::generateMarkup('span', 'Visit Id: ' . $visitId . '-'. ($spanId) . $visitIcon, array('class'=>'hhk-viewvisit', 'data-visitid'=>$visitId.'_'.$spanId)), array('colspan'=>'7', 'style'=>'background-color: lightgrey;')));
+                } else {
+                    // Catch it on the Span check below
+                    $spanId = 0;
+                }
+            }
+
+            if ($r['Span'] != $spanId) {
+                $spanId = $r['Span'];
+                $tbl->addBodyTr(HTMLTable::makeTd(
+                HTMLContainer::generateMarkup('span', 'Visit Id: ' . $visitId . '-'. ($spanId) . $visitIcon, array('class'=>'hhk-viewvisit', 'data-visitid'=>$visitId.'_'.$spanId)), array('colspan'=>'7', 'style'=>'background-color:#EFEFEF;')));
+            }
+
+            $trow = HTMLTable::makeTd($r['Title']);
+
+            if (isset($logData['Status'])) {
+
+                $trow .= HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $r['Name_First'] . " " . $r['Name_Last'], array('href'=>'GuestEdit.php?id=' . $r['idName'] . ($r['idPsg'] == 0 ? '' : '&psg='.$r['idPsg']))));
+
+                if ($logData['Status']['new'] == VisitStatus::NewSpan) {
+                    // Changed rooms
+                    $trow .= HTMLTable::makeTd('Move from room') . HTMLTable::makeTd(date('M j, Y H:i:s', strtotime($logData['Span_End_Date']['new'])));
+
+                } else if ($logData['Status']['new'] == VisitStatus::ChangeRate) {
+                    // Changed rooms
+                    $trow .= HTMLTable::makeTd('Rate Change') . HTMLTable::makeTd(date('M j, Y H:i:s', strtotime($logData['Span_End_Date']['new'])));
+
+                } else if ($logData['Status']['new'] == VisitStatus::CheckedIn) {
+
+                    if (isset($logData['Visit_Span']) && isset($logData['Checkin_Date']['new'])) {
+                        // changed rooms
+                        $trow .= HTMLTable::makeTd('Move to room') . HTMLTable::makeTd(date('M j, Y H:i:s', strtotime($logData['Checkin_Date']['new'])));
+
+                    } else if (isset($logData['Checkin_Date']['new'])) {
+                        // Checking in
+                        $trow .= HTMLTable::makeTd('Check In') . HTMLTable::makeTd(date('M j, Y H:i:s', strtotime($logData['Checkin_Date']['new'])));
+
+                    } else {
+                        // Undo check out
+                        $trow .= HTMLTable::makeTd('Undo Check Out') . HTMLTable::makeTd(date('M j, Y H:i:s', strtotime($r['Timestamp'])));
+                    }
+
+                }  else if ($logData['Status']['new'] == VisitStatus::CheckedOut) {
+                    // Checking out
+                    $trow .= HTMLTable::makeTd('Check Out') . HTMLTable::makeTd(date('M j, Y H:i:s', strtotime($logData['Checkout_Date']['new'])));
+                }
+
+            } else {
+                // something other than status changed
+                $actiontbl = new HTMLTable();
+                $actiontbl->addHeaderTr(HTMLTable::makeTh('Field').HTMLTable::makeTh('Was').HTMLTable::makeTh('Now'));
+                foreach ($logData as $k => $log) {
+                    $actiontbl->addBodyTr(HTMLTable::makeTd($k).HTMLTable::makeTd((isset($log['old']) ? $log['old'] : '')).HTMLTable::makeTd($log['new']));
+                }
+                $trow .= HTMLTable::makeTd($actiontbl->generateMarkup(), array('colspan'=>'2'));
+
+                $trow .= HTMLTable::makeTd(date('M j, Y H:i:s', strtotime($r['Timestamp'])));
+            }
+
+            $trow .= HTMLTable::makeTd($r['User_Name']);
+
+
+            $tbl->addBodyTr($trow);
+
+        }
+
+        return $tbl->generateMarkup(array(), '<h3>Rooms Activity</h3>');
+    }
+
+
+    public static function reservLog(PDO $dbh, $startDate, $endDate, $resvId = 0) {
+
+        $uS = Session::getInstance();
+
+        if ($resvId > 0) {
+            $idResv = intval($resvId, 10);
+
+            $stmt = $dbh->query("select * from vreservation_log where idReservation = $idResv;");
+
+        } else {
+            $query = "select * from vreservation_log where (DATE(Timestamp) >= :start and DATE(Timestamp) <= :end);";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute(array(':start'=>$startDate, ':end'=>$endDate));
+        }
+
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $reservId = 0;
+
+        $reservIcon = "<span class='ui-icon ui-icon-folder-open' style='float: left; margin-right: .3em;' title='Open Reservtion Viewer'></span>";
+
+        $tbl = new HTMLTable();
+        $tbl->addHeaderTr(HTMLTable::makeTh("Room"). HTMLTable::makeTh("Guest"). HTMLTable::makeTh("Action"). HTMLTable::makeTh("Date"). HTMLTable::makeTh("By"));
+
+        foreach ($rows as $r) {
+            $logData = array();
+
+            if ($r['Log_Text'] != '') {
+
+                $decod = json_decode($r['Log_Text']);
+
+                foreach ($decod as $k => $v) {
+
+                    // remove ticks from labels
+                    $key = str_ireplace('`', '', $k);
+
+                    if (stristr($v, '|_|') !== FALSE) {
+
+                        $parts = explode('|', $v);
+                        if (count($parts) == 3) {
+                            $logData[$key] = array('old'=>$parts[0], 'new'=>$parts[2]);
+                        }
+
+                    } else {
+                        $logData[$key] = array('old'=>'', 'new'=>$v);
+                    }
+                }
+
+            } else {
+                continue;
+            }
+
+            if ($r['idReservation'] != $reservId) {
+                $reservId = $r['idReservation'];
+                $tbl->addBodyTr(HTMLTable::makeTd(
+                HTMLContainer::generateMarkup('span', 'Reservation Id: ' . $reservId . $reservIcon, array('class'=>'hhk-viewvisit', 'data-reservid'=>$r['idName'])), array('colspan'=>'7', 'style'=>'background-color: lightgrey;')));
+            }
+
+            $trow = HTMLTable::makeTd($r['Title']);
+
+            if (isset($logData['Status']) && $r['Sub_Type'] == 'update') {
+
+                $trow .= HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $r['Name_First'] . " " . $r['Name_Last'], array('href'=>'Referral.php?id=' . $r['idName'])));
+
+                if (isset($uS->guestLookups['ReservStatus'][$logData['Status']['new']])) {
+                    $statTitle = $uS->guestLookups['ReservStatus'][$logData['Status']['new']][1];
+                } else {
+                    $statTitle = '';
+                }
+
+                if ($logData['Status']['new'] == ReservationStatus::Staying && $logData['Status']['old'] == ReservationStatus::Checkedout) {
+                    $trow .= HTMLTable::makeTd('Undo Checkout, ' . $statTitle) . HTMLTable::makeTd(date('M j, Y', strtotime($r['Timestamp'])));
+                } else {
+                    $trow .= HTMLTable::makeTd($statTitle) . HTMLTable::makeTd(date('M j, Y', strtotime($r['Timestamp'])));
+                }
+
+
+            } else {
+                // something other than status changed
+                $actiontbl = new HTMLTable();
+                $actiontbl->addHeaderTr(HTMLTable::makeTh('Field').HTMLTable::makeTh('Was').HTMLTable::makeTh('Now'));
+                foreach ($logData as $k => $log) {
+                    $actiontbl->addBodyTr(HTMLTable::makeTd($k).HTMLTable::makeTd($log['old']).HTMLTable::makeTd($log['new']));
+                }
+                $trow .= HTMLTable::makeTd($actiontbl->generateMarkup(), array('colspan'=>'2'));
+
+                $trow .= HTMLTable::makeTd(date('M j, Y H:i', strtotime($r['Timestamp'])));
+            }
+
+            $trow .= HTMLTable::makeTd($r['User_Name']);
+
+
+            $tbl->addBodyTr($trow);
+        }
+
+        return $tbl->generateMarkup(array(), '<h3>Reservation Activity</h3>');
+
+    }
+
+
+    public static function HospStayLog(PDO $dbh, $startDate, $endDate, $idPsg = 0) {
+
+        $uS = Session::getInstance();
+
+        if ($idPsg > 0) {
+
+            $idPsg = intval($idPsg, 10);
+            $stmt = $dbh->query("select * from vhospitalstay_log where idPsg = $idPsg;");
+
+        } else if ($startDate != '' && $endDate != '') {
+
+            $query = "select * from vhospitalstay_log where (DATE(Timestamp) >= :start and DATE(Timestamp) <= :end) order by idPsg, Timestamp;";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute(array(':start'=>$startDate, ':end'=>$endDate));
+
+        } else {
+            return 'Error- Missing dates and idPsg.  ';
+        }
+
+
+        $diagnoses = readGenLookupsPDO($dbh, 'Diagnosis');
+        $psgId = 0;
+
+        $stmtd = $dbh->query("select n.idName, n.Name_Full from `name` n join name_volunteer2 nv on n.idName = nv.idName where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'doc'");
+        $doctors = array();
+        while ($d = $stmtd->fetch(PDO::FETCH_ASSOC)) {
+            $doctors[$d['idName']] = $d['Name_Full'];
+        }
+
+        $reservIcon = "<span class='ui-icon ui-icon-folder-open' style='float: left; margin-right: .3em;' title='Open Patient Edit page'></span>";
+
+        $tbl = new HTMLTable();
+        $tbl->addHeaderTr(HTMLTable::makeTh("Action"). HTMLTable::makeTh("Date"). HTMLTable::makeTh("By"));
+
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $logData = array();
+
+            if ($r['Log_Text'] == '') {
+                continue;
+            }
+
+            $decod = json_decode($r['Log_Text']);
+
+            foreach ($decod as $k => $v) {
+
+                // remove ticks from labels
+                $key = str_ireplace('`', '', $k);
+
+                if (stristr($v, '|_|') !== FALSE) {
+
+                    $parts = explode('|', $v);
+                    if (count($parts) == 3) {
+
+                        if ($key == 'Diagnosis') {
+                            if (isset($diagnoses[$parts[0]])) {
+                                $parts[0] = $diagnoses[$parts[0]][1];
+                            }
+                            if (isset($diagnoses[$parts[2]])) {
+                                $parts[2] = $diagnoses[$parts[2]][1];
+                            }
+
+                        }
+
+                        $logData[$key] = array('old'=>$parts[0], 'new'=>$parts[2]);
+
+                    }
+
+                } else {
+                    if ($key == 'Diagnosis' && isset($diagnoses[$v])) {
+                        $v = $diagnoses[$v][1];
+                    }
+
+                    $logData[$key] = array('old'=>'', 'new'=>$v);
+                }
+            }
+
+
+            if ($r['idPsg'] != $psgId) {
+                $psgId = $r['idPsg'];
+                $tbl->addBodyTr(HTMLTable::makeTd(
+                HTMLContainer::generateMarkup('span', 'PSG Id: ' . $psgId . $reservIcon
+                        . HTMLContainer::generateMarkup('a', 'Patient: ' . $r['Name_First'] . " " . $r['Name_Last'], array('href'=>'GuestEdit.php?id=' . $r['idName'], 'style'=>'margin-left:1em;')), array('class'=>'hhk-viewvisit', 'data-patientid'=>$r['idName'])), array('colspan'=>'7', 'style'=>'background-color: lightgrey;')));
+            }
+
+            $trow = '';
+
+            $actiontbl = new HTMLTable();
+            $actiontbl->addHeaderTr(HTMLTable::makeTh('Field').HTMLTable::makeTh('Was').HTMLTable::makeTh('Now'));
+            foreach ($logData as $k => $log) {
+
+                if ($log['old'] == '0') {
+                    $log['old'] = '';
+                }
+                if ($log['new'] == '0') {
+                    $log['new'] = '';
+                }
+
+                switch ($k) {
+                case 'idHospital':
+                    if (isset($uS->guestLookups[GL_TableNames::Hospital][$log['old']])) {
+                        $log['old'] = $uS->guestLookups[GL_TableNames::Hospital][$log['old']][1];
+                    }
+                    if (isset($uS->guestLookups[GL_TableNames::Hospital][$log['new']])) {
+                        $log['new'] = $uS->guestLookups[GL_TableNames::Hospital][$log['new']][1];
+                    }
+
+                    break;
+
+                case 'idAssociation':
+                    if (isset($uS->guestLookups[GL_TableNames::Hospital][$log['old']])) {
+                        $log['old'] = $uS->guestLookups[GL_TableNames::Hospital][$log['old']][1] != '(None)' ? $uS->guestLookups[GL_TableNames::Hospital][$log['old']][1] : '';
+                    }
+                    if (isset($uS->guestLookups[GL_TableNames::Hospital][$log['new']])) {
+                        $log['new'] = $uS->guestLookups[GL_TableNames::Hospital][$log['new']][1] != '(None)' ? $uS->guestLookups[GL_TableNames::Hospital][$log['new']][1] : '';
+                    }
+
+                    break;
+
+                case 'idReferralAgent':
+                    $log['new'] = $r['Agent_First']. ' ' . $r['Agent_Last'];
+                    break;
+
+                case 'idDoctor':
+                    if (isset($doctors[$log['old']])) {
+                        $log['old'] = $doctors[$log['old']];
+                    }
+                    if (isset($doctors[$log['new']])) {
+                        $log['new'] = $doctors[$log['new']];
+                    }
+                    break;
+
+                case 'Arrival_Date':
+
+                    if ($log['old'] != '') {
+                        $log['old'] = date('M j, Y', strtotime($log['old']));
+                    }
+                    if ($log['new'] != '') {
+                        $log['new'] = date('M j, Y', strtotime($log['new']));
+                    }
+
+                    break;
+
+                case 'Expected_Departure':
+
+                    if ($log['old'] != '') {
+                        $log['old'] = date('M j, Y', strtotime($log['old']));
+                    }
+                    if ($log['new'] != '') {
+                        $log['new'] = date('M j, Y', strtotime($log['new']));
+                    }
+
+                    break;
+
+                case 'Last_Updated':
+
+                    if ($log['old'] != '') {
+                        $log['old'] = date('M j, Y H:i', strtotime($log['old']));
+                    }
+                    if ($log['new'] != '') {
+                        $log['new'] = date('M j, Y H:i', strtotime($log['new']));
+                    }
+
+                    break;
+
+                }
+
+                $actiontbl->addBodyTr(HTMLTable::makeTd($k).HTMLTable::makeTd($log['old']).HTMLTable::makeTd($log['new']));
+            }
+
+
+            $trow .= HTMLTable::makeTd($actiontbl->generateMarkup());
+
+            $trow .= HTMLTable::makeTd(date('M j, Y H:i', strtotime($r['Timestamp'])));
+
+
+            $trow .= HTMLTable::makeTd($r['User_Name']);
+
+            $tbl->addBodyTr($trow);
+        }
+
+        return $tbl->generateMarkup(array(), '<h3>Hospital Stay Activity</h3>');
+
+    }
+
+
+
+    /**
+     *
+     * @param PDO $dbh
+     * @param string $startDate
+     * @param string $endDate
+     * @return string HTML table markup
+     */
+    public static function feesLog(PDO $dbh, $startDT, $endDT, $feeStatuses, $selectedPayTypes, $idReg, $title = 'Recent Payments Report', $showDeletedInv = TRUE) {
+
+        $uS = Session::getInstance();
+        $whStatus = '';
+        $whType = '';
+        $whId = '';
+        $whDates = '';
+        $totals = array();
+        $payStatusText = '';
+        $payTypeTotals = array();
+        $payTypeText = '';
+
+        $labels = new Config_Lite(LABEL_FILE);
+
+        // Dates
+        if ($startDT != NULL) {
+            $whDates .= " and DATE(lp.Payment_Date) >= '" . $startDT->format('Y-m-d 00:00:00') . "' ";
+        }
+
+        if ($endDT != NULL) {
+            $whDates .= " and DATE(lp.Payment_Date) <= '" . $endDT->format('Y-m-d 23:59:59') . "' ";
+        }
+
+        // Set up status totals array
+        if (count($feeStatuses) === 1 && $feeStatuses[0] == '') {
+            $active = 'y';
+        } else {
+            $active = 'n';
+        }
+
+        foreach (readGenLookupsPDO($dbh, 'Payment_Status') as $s) {
+            $totals[$s[0]] = array('amount'=>0.00, 'count'=>0, 'title'=>$s[1], 'active'=>$active);
+        }
+
+
+        foreach ($feeStatuses as $s) {
+            if ($s != '') {
+                // Set up query where part.
+                if ($whStatus == '') {
+                    $whStatus = "'" . $s . "'";
+                } else {
+                    $whStatus .= ",'".$s . "'";
+                }
+
+                $totals[$s]['active'] = 'y';
+                if ($payStatusText == '') {
+                    $payStatusText .= $totals[$s]['title'];
+                } else {
+                    $payStatusText .= ', ' . $totals[$s]['title'];
+                }
+            }
+        }
+
+        if ($whStatus != '') {
+            $whStatus = " and lp.Payment_Status in (" . $whStatus . ") ";
+        }
+
+
+        // Set up pay tpes totals array
+        if (count($selectedPayTypes) === 1 && $selectedPayTypes[0] == '') {
+            $active = 'y';
+        } else {
+            $active = 'n';
+        }
+
+        // get payment methods
+        $stmtp = $dbh->query("select * from payment_method");
+        while ($t = $stmtp->fetch(PDO::FETCH_NUM)) {
+            if ($t[0] > 0) {
+                $payTypeTotals[$t[0]] = array('amount'=>0.00, 'count'=>0, 'title'=>$t[1], 'active'=>$active);
+            }
+        }
+
+
+        foreach ($selectedPayTypes as $s) {
+            if ($s != '') {
+                // Set up query where part.
+                if ($whType == '') {
+                    $whType = $s ;
+                } else {
+                    $whType .= ",".$s;
+                }
+
+                $payTypeTotals[$s]['active'] = 'y';
+                if ($payTypeText == '') {
+                    $payTypeText .= $payTypeTotals[$s]['title'];
+                } else {
+                    $payTypeText .= ', ' . $payTypeTotals[$s]['title'];
+                }
+            }
+        }
+
+        if ($whType != '') {
+            $whType = " and lp.idPayment_Method in (" . $whType . ") ";
+        }
+
+        // Guest id selector
+        if ($idReg > 0) {
+            $whId = " and lp.idGroup = $idReg ";
+        }
+
+        if ($showDeletedInv === FALSE) {
+            $whId .= " and lp.Deleted = 0 ";
+        }
+
+        $query = "Select
+    lp . *,
+    ifnull(n.Name_First, '') as `First`,
+    ifnull(n.Name_Last, '') as `Last`,
+    ifnull(n.Company, '') as `Company`,
+    ifnull(r.Title, '') as `Room`,
+    ifnull(re.idPsg, 0) as `idPsg`
+from
+    vlist_inv_pments lp
+        left join
+    `name` n ON lp.Sold_To_Id = n.idName
+        left join
+    visit v on lp.Order_Number = v.idVisit and lp.Suborder_Number = v.Span
+	left join
+    resource r ON v.idResource = r.idResource
+        left join
+    registration re on v.idRegistration = re.idRegistration
+where lp.idPayment > 0
+ $whDates $whStatus $whType $whId order by lp.`idInvoice`, lp.`idPayment`, lp.`idPayment_auth`";
+
+        $stmt = $dbh->query($query);
+        $invoices = Receipt::processPayments($stmt, array('First', 'Last', 'Company', 'Room', 'idPsg'));
+
+        $rowCount = $stmt->rowCount();
+
+        // Create header
+        $hdrTbl = new HTMLTable();
+        $hdrTbl->addBodyTr(HTMLTable::makeTh('Records:', array('style'=>'text-align:right;')) . HTMLTable::makeTd($rowCount));
+
+        if ($startDT != NULL && $endDT != NULL) {
+            $hdrTbl->addBodyTr(HTMLTable::makeTh('Dates:', array('style'=>'text-align:right;')) . HTMLTable::makeTd($startDT->format('M j, Y') . ' to ' .$endDT->format('M j, Y')));
+        }
+
+        $hdrTbl->addBodyTr(HTMLTable::makeTh('Payment Statuses:', array('style'=>'text-align:right;')) . HTMLTable::makeTd($payStatusText == '' ? 'All' : $payStatusText));
+        $hdrTbl->addBodyTr(HTMLTable::makeTh('Payment Types:', array('style'=>'text-align:right;')) . HTMLTable::makeTd($payTypeText == '' ? 'All' : $payTypeText));
+
+        $header = HTMLContainer::generateMarkup('h2', $title, array('class'=>'ui-widget-header')) . $hdrTbl->generateMarkup(array('style'=>'margin-bottom:10px;float:left; '));
+
+
+        // Main fees listing table
+        $tbl = new HTMLTable();
+        $tbl->addHeaderTr(
+                HTMLTable::makeTh("Room")
+                . HTMLTable::makeTh("Payor")
+                . HTMLTable::makeTh("Invoice")
+                . HTMLTable::makeTh("Pay Type")
+                . HTMLTable::makeTh("Detail")
+                . HTMLTable::makeTh("Status")
+                . HTMLTable::makeTh($labels->getString('statement', 'paymentHeader', 'Payment'))
+                . HTMLTable::makeTh("Action")
+                . HTMLTable::makeTh("Date")
+                . HTMLTable::makeTh("By")
+                . HTMLTable::makeTh('Notes'));
+
+
+        foreach ($invoices as $i) {
+
+            $r = $i['i'];
+
+          foreach ($i['p'] as $p) {
+
+            $stat = '';
+            $attr['style'] = 'text-align:right;';
+
+            $voidContent = '';
+            $amt = 0;
+
+            switch ($p['Payment_Status']) {
+
+                case PaymentStatusCode::VoidSale:
+                    $stat = 'Void';
+                    $attr['style'] .= 'color:grey;';
+
+                    if (isset($p['auth'])) {
+                        foreach ($p['auth'] as $pa) {
+                            if ($pa['PA_Status_Code'] == PaymentStatusCode::VoidSale) {
+                                $amt = $pa['Approved_Amount'];
+                            }
+                        }
+                    } else {
+                        $amt = $p['Payment_Balance'];
+                    }
+                    $voidContent .= HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-script pmtRecpt', 'id'=>'pmticon'.$p['idPayment'], 'data-pid'=>$p['idPayment'], 'style'=>'cursor:pointer;float:right;', 'title'=>'View Payment Receipt'));
+
+                    break;
+
+                case PaymentStatusCode::Reverse:
+                    $stat = 'Reverse';
+                    $attr['style'] .= 'color:grey;';
+
+                    if (isset($p['auth'])) {
+                        foreach ($p['auth'] as $pa) {
+                            if ($pa['PA_Status_Code'] == PaymentStatusCode::Reverse) {
+                                $amt = $pa['Approved_Amount'];
+                            }
+                        }
+                    } else {
+                        $amt = $p['Payment_Balance'];
+                    }
+                    $voidContent .= HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-script pmtRecpt', 'id'=>'pmticon'.$p['idPayment'], 'data-pid'=>$p['idPayment'], 'style'=>'cursor:pointer;float:right;', 'title'=>'View Payment Receipt'));
+
+                    break;
+
+                case PaymentStatusCode::Retrn:
+                    $stat = 'Returned';
+                    $attr['style'] .= 'color:red;';
+
+                    if (isset($p['auth'])) {
+                        foreach ($p['auth'] as $pa) {
+                            if ($pa['PA_Status_Code'] == PaymentStatusCode::Retrn) {
+                                $amt += $pa['Approved_Amount'];
+                            }
+                        }
+                    } else {
+                        $amt = $p['Payment_Balance'];
+                    }
+
+                    if ($p['idPayment_Method'] == PaymentMethod::Charge) {
+                        $voidContent .= HTMLInput::generateMarkup('Void-Return', array('type'=>'button', 'id'=>'btnvr'.$p['idPayment'], 'class'=>'hhk-voidReturnPmt', 'data-pid'=>$p['idPayment'], 'data-amt'=>$amt));
+                    }
+
+                    $voidContent .= HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-script pmtRecpt', 'id'=>'pmticon'.$p['idPayment'], 'data-pid'=>$p['idPayment'], 'style'=>'cursor:pointer;float:right;', 'title'=>'View Payment Receipt'));
+
+                    break;
+
+                case PaymentStatusCode::Paid:
+
+                    $amt = $p['Payment_Amount'] - $p['Payment_Balance'];
+                    $payTypeTotals[$p['idPayment_Method']]['amount'] += $amt;
+                    $stat = HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-check', 'style'=>'float:left;', 'title'=>'Paid'));
+
+                    if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d')) {
+                        $voidContent = HTMLInput::generateMarkup('Void', array('type'=>'button', 'id'=>'btnvr'.$p['idPayment'], 'class'=>'hhk-voidPmt', 'data-pid'=>$p['idPayment']));
+                    } else {
+                        $voidContent = HTMLInput::generateMarkup('Return', array('type'=>'button', 'id'=>'btnvr'.$p['idPayment'], 'class'=>'hhk-returnPmt', 'data-pid'=>$p['idPayment'], 'data-amt'=>$amt));
+                    }
+
+                    $voidContent .= HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-script pmtRecpt', 'id'=>'pmticon'.$p['idPayment'], 'data-pid'=>$p['idPayment'], 'style'=>'cursor:pointer;float:right;', 'title'=>'View Payment Receipt'));
+
+
+                    break;
+
+                case PaymentStatusCode::Declined:
+
+                    $stat = 'Declined';
+                    $attr['style'] .= 'color:gray;';
+                    $amt = $p['Payment_Balance'];
+
+                    break;
+
+                default:
+                    $stat = 'Undefined: ' . $p['Payment_Status'];
+            }
+
+            // Dont print out zero payments.
+//            if ($amt == 0) {
+//                continue;
+//            }
+
+            $payTypeTitle = $p['Payment_Method_Title'];
+            if ($p['idPayment_Method'] == PaymentMethod::Charge) {
+                $payTypeTitle = 'Credit Card';
+                $attr['readonly'] = 'readonly';
+            }
+
+            if ($p['idPayment_Method'] == PaymentMethod::ChgAsCash) {
+                $payTypeTitle = 'Credit Card';
+            }
+
+            // Over rides the above
+            if ($r['Sold_To_Id'] == $uS->subsidyId) {
+                // House Subsidy
+                $payTypeTitle = $labels->getString('statement', 'houseSubsidy', 'House Discount');
+                $nameTd = $r['Company'];
+
+            } else if ($r['Bill_Agent'] == 'a') {
+                // 3rd Party
+                $nameTd = $r['Company'];
+
+                if ($r['Last'] != '') {
+
+                    if ($r['Company'] != '') {
+                        $nameTd = $r['Company'] . ' c/o ';
+                    }
+
+                    $nameTd .= $r['First'] . " " . $r['Last'];
+                }
+
+            } else {
+                $nameTd = HTMLContainer::generateMarkup('a', $r['First'] . " " . $r['Last'], array('href'=>'GuestEdit.php?id=' . $r['Sold_To_Id'] . '&psg='.$r['idPsg']));
+            }
+
+
+            $invNumber = $r['Invoice_Number'];
+
+            if ($invNumber != '') {
+
+                $iAttr = array('href'=>'ShowInvoice.php?invnum=' . $r['Invoice_Number'], 'style'=>'float:left;', 'target'=>'_blank');
+
+                if ($r['Invoice_Deleted'] > 0) {
+                    $iAttr['style'] = 'color:red;';
+                    $iAttr['title'] = 'Invoice is Deleted.';
+                } else if ($r['Invoice_Balance'] != 0) {
+
+                    $iAttr['title'] = 'Partial payment.';
+                    $invNumber .= HTMLContainer::generateMarkup('sup', '-p');
+                }
+
+                $invNumber = HTMLContainer::generateMarkup('a', $invNumber, $iAttr)
+                    .HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment invAction', 'id'=>'invicon'.$p['idPayment'], 'data-iid'=>$r['idInvoice'], 'style'=>'cursor:pointer;', 'title'=>'View Items'));
+            }
+
+            $invoiceMkup = HTMLContainer::generateMarkup('span', $invNumber, array("style"=>'white-space:nowrap'));
+
+            $payDetail = '';
+            if ($p['idPayment_Method'] == PaymentMethod::Charge || $p['idPayment_Method'] == PaymentMethod::ChgAsCash) {
+
+                if (isset($p['auths'])) {
+
+                    foreach ($p['auths'] as $a) {
+
+                        if ($a['Card_Type'] != '') {
+                            $payDetail = $a['Card_Type'] . ' - ' . $a['Masked_Account'];
+                        }
+                    }
+                }
+
+            } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer) {
+
+                $payDetail = $p['Check_Number'];
+            }
+
+
+            $trow = HTMLTable::makeTd($r['Room']);
+            $trow .= HTMLTable::makeTd($nameTd);
+            $trow .= HTMLTable::makeTd($invoiceMkup);
+            $trow .= HTMLTable::makeTd($payTypeTitle);
+            $trow .= HTMLTable::makeTd($payDetail);
+            $trow .= HTMLTable::makeTd($stat);
+            $trow .= HTMLTable::makeTd(number_format($amt,2), $attr);
+//                    HTMLInput::generateMarkup(number_format($amt,2), $attr)
+//                    , array('style'=>'text-align:right;'));
+            $trow .= HTMLTable::makeTd($voidContent);
+            $trow .= HTMLTable::makeTd(date('M j, Y', strtotime($p['Payment_Date'])));
+            $trow .= HTMLTable::makeTd($p['Payment_Updated_By'] == '' ? $p['Payment_Created_By'] : $p['Payment_Updated_By']);
+            $trow .= HTMLTable::makeTd($p['Payment_Note']);
+
+            $tbl->addBodyTr($trow);
+
+            $totals[$p['Payment_Status']]['amount'] += $amt;
+            $totals[$p['Payment_Status']]['count']++;
+            $payTypeTotals[$p['idPayment_Method']]['count']++;
+          }
+        }
+
+        $listing = $tbl->generateMarkup(array('id'=>'feesTable', 'style'=>'margin-top:10px;'));
+
+        $summary = '';
+
+        if ($rowCount > 0) {
+
+            $summ = new HTMLTable();
+            $summ->addBodyTr(HTMLTable::makeTh('Payment Status', array('colspan'=>'3')));
+
+            foreach ($totals as $t) {
+
+                if ($t['active'] != 'y') {
+                    continue;
+                }
+
+                $summ->addBodyTr(HTMLTable::makeTd($t['title']) . HTMLTable::makeTd($t['count']) . HTMLTable::makeTd(number_format($t['amount'], 2), array('style'=>'text-align:right;')));
+            }
+
+            $pType = new HTMLTable();
+            $pType->addBodyTr(HTMLTable::makeTh('Payment Type', array('colspan'=>'3')));
+
+            foreach ($payTypeTotals as $k => $p) {
+
+                if ($p['active'] != 'y') {
+                    continue;
+                }
+
+                if ($uS->ccgw != '' && $k == PaymentMethod::ChgAsCash) {
+                    continue;
+                } else if ($uS->ccgw == '' && $k == PaymentMethod::Charge) {
+                    continue;
+                }
+
+                $pType->addBodyTr(HTMLTable::makeTd($p['title']) . HTMLTable::makeTd($p['count']) . HTMLTable::makeTd(number_format($p['amount'], 2), array('style'=>'text-align:right;')));
+
+            }
+
+
+            $summary = HTMLContainer::generateMarkup('div', $summ->generateMarkup(), array('style'=>'float:left; margin-left:.8em;'));
+            $summary .= HTMLContainer::generateMarkup('div', $pType->generateMarkup(), array('style'=>'float:left; margin-left:.8em;'));
+        }
+
+        return HTMLContainer::generateMarkup('div', $header . $summary . $listing, array('style'=>'min-width:900px;'));
+
+    }
+
+    public static function unpaidInvoiceLog(PDO $dbh, $includeAction = TRUE) {
+
+        $uS = Session::getInstance();
+
+        $query = "SELECT
+`i`.`idInvoice`,
+`i`.`Delegated_Invoice_Id`,
+`i`.`Invoice_Number`,
+`i`.`Amount`,
+`i`.`Carried_Amount`,
+`i`.`Balance`,
+`i`.`Order_Number`,
+`i`.`Suborder_Number`,
+`i`.`Sold_To_Id`,
+n.Name_Full as Sold_To_Name,
+n.Company,
+ifnull(np.Name_Full, '') as Patient_Name,
+ifnull(re.Title, '') as `Title`,
+ifnull(hs.idHospital, 0) as `idHospital`,
+ifnull(hs.idAssociation, 0) as `idAssociation`,
+ifnull(hs.idPatient, 0) as `idPatient`,
+`i`.`idGroup`,
+`i`.`Invoice_Date`,
+`i`.`Payment_Attempts`,
+i.BillStatus,
+i.BillDate,
+i.Notes,
+`i`.`Status`,
+`i`.`Updated_By`,
+`i`.`Last_Updated`
+FROM `invoice` `i` left join `name` n on i.Sold_To_Id = n.idName
+    left join visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
+    left join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
+    left join name np on hs.idPatient = np.idName
+    left join resource re on v.idResource = re.idResource
+where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
+
+
+        $stmt = $dbh->query($query);
+
+        $tbl = new HTMLTable();
+        $tbl->addHeaderTr(
+                HTMLTable::makeTh('Action')
+                .HTMLTable::makeTh('Invoice')
+                .HTMLTable::makeTh('Date')
+                .HTMLTable::makeTh('Status')
+                .HTMLTable::makeTh('Bill Date')
+                .HTMLTable::makeTh('Payor')
+                .HTMLTable::makeTh('Room')
+                .HTMLTable::makeTh('Hospital')
+                .HTMLTable::makeTh('Patient')
+                .HTMLTable::makeTh('Amount')
+                .HTMLTable::makeTh('Payments')
+                .HTMLTable::makeTh('Balance')
+                .HTMLTable::makeTh('Notes'));
+
+        $invStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
+
+
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
+            // Hospital
+            $hospital = '';
+            $assoc = '';
+            $hosp = '';
+
+            if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] != '(None)') {
+                $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] . ' / ';
+                $assoc = $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1];
+            }
+            if ($r['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
+                $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
+                $hosp = $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
+            }
+
+            $statusTxt = '';
+            if (isset($invStatuses[$r['Status']])) {
+                $statusTxt = $invStatuses[$r['Status']][1];
+            }
+
+
+
+            $payor = $r['Company'];
+            if ($r['Sold_To_Name'] != '') {
+
+                if ($r['Company'] != '') {
+                    $payor = $r['Company'] . ' c/o ';
+                }
+
+                $payor .= $r['Sold_To_Name'];
+            }
+
+
+            $patient = $r['Patient_Name'];
+            if ($r['idPatient'] > 0) {
+                $patient = HTMLContainer::generateMarkup('a', $patient, array('href'=>'GuestEdit.php?id='.$r['idPatient']));
+            }
+
+
+            $invNumber = $r['Invoice_Number'];
+
+            if ($invNumber != '') {
+
+                $iAttr = array('href'=>'ShowInvoice.php?invnum=' . $r['Invoice_Number'], 'style'=>'float:left;', 'target'=>'_blank');
+
+                if ($r['Amount'] - $r['Balance'] != 0) {
+
+                    $iAttr['title'] = 'Partial payment.';
+                    $invNumber .= HTMLContainer::generateMarkup('sup', '-p');
+                }
+
+                $invNumber = HTMLContainer::generateMarkup('a', $invNumber, $iAttr)
+                    .HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment invAction', 'id'=>'invicon3'.$r['idInvoice'], 'data-stat'=>'view', 'data-iid'=>$r['idInvoice'], 'style'=>'cursor:pointer;', 'title'=>'View Items'));
+            }
+
+            $invoiceMkup = HTMLContainer::generateMarkup('span', $invNumber, array("style"=>'white-space:nowrap'));
+
+            $payments = number_format(($r['Amount'] - $r['Balance']), 2);
+            if (($r['Amount'] - $r['Balance']) != 0) {
+                $payments = HTMLContainer::generateMarkup('span', $payments, array('style'=>'float:right;'))
+                    .HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment invAction', 'id'=>'vwpmt'.$r['idInvoice'], 'data-iid'=>$r['idInvoice'], 'data-stat'=>'vpmt', 'style'=>'cursor:pointer;', 'title'=>'View Payments'));
+            }
+
+            $dateDT = new DateTime($r['Invoice_Date']);
+
+            $billDate = ($r['BillDate'] == '' ? '' : date('M j, Y', strtotime($r['BillDate'])));
+
+            $actionTd = '';
+
+            if ($includeAction) {
+                $actionTd =  HTMLTable::makeTd(HTMLContainer::generateMarkup(
+                    'ul', HTMLContainer::generateMarkup('li', '<a href="#">Action</a>' .
+                        HTMLContainer::generateMarkup('ul',
+                           HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'Pay', array('href'=>'#', 'class'=>'invLoadPc', 'data-name'=>$payor, 'data-id'=>$r['Sold_To_Id'], 'data-iid'=>$r['idInvoice'])))
+                           . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'Set Billed', array('href'=>'#', 'id'=>'aidSetNotes' . $r['Invoice_Number'], 'class'=>'invSetBill', 'data-name'=>$payor, 'data-inb'=>$r['Invoice_Number'])))
+                           . ($r['Payment_Attempts'] > 0 ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'Show Payments', array('id'=>'ainvsp'.$r['idInvoice'], 'href'=>'#', 'class'=>'invAction', 'data-stat'=>'vpmt', 'data-iid'=>$r['idInvoice']))) : '')
+                           . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'Delete', array('id'=>'ainv'.$r['idInvoice'], 'href'=>'#', 'class'=>'invAction', 'data-stat'=>'del', 'data-iid'=>$r['idInvoice'])))
+                     )), array('class' => 'gmenu')));
+            }
+
+
+            $tbl->addBodyTr($actionTd
+                    .HTMLTable::makeTd($invoiceMkup, array('style'=>'text-align:center;'))
+                    .HTMLTable::makeTd($dateDT->format('M j, Y'))
+                    .HTMLTable::makeTd($statusTxt)
+                    .HTMLTable::makeTd($billDate, array('id'=>'trBillDate'.$r['Invoice_Number']))
+                    .HTMLTable::makeTd($payor)
+                    .HTMLTable::makeTd($r['Title'], array('style'=>'text-align:center;'))
+                    .HTMLTable::makeTd($hospital)
+                    .HTMLTable::makeTd($patient)
+                    .HTMLTable::makeTd(number_format($r['Amount'], 2), array('style'=>'text-align:right;'))
+                    .HTMLTable::makeTd($payments, array('style'=>'text-align:right;'))
+                    .HTMLTable::makeTd(number_format($r['Balance'], 2), array('style'=>'text-align:right;'))
+                    .HTMLTable::makeTd(HTMLContainer::generateMarkup('div', $r['Notes'], array('id'=>'divInvNotes' . $r['Invoice_Number'])))
+                    );
+
+        }
+
+        if (count($r) == 0) {
+            $tbl->addBodyTr(HTMLTable::makeTd('-No Data-', array('colspan'=>'11', 'style'=>'text-align:center;')));
+        }
+        return $tbl->generateMarkup(array('id'=>'InvTable', 'width'=>'100%'), '<h3>Invoices</h3>');
+
+    }
+
+}
+

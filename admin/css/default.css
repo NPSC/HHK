@@ -1,0 +1,184 @@
+/**
+ * default.css
+ *
+ *
+ * @package   Hospitality HouseKeeper
+ * @author    Eric K. Crane <ecrane@hospitalityhousekeeper.com>
+ * @copyright 2010-2012 <ecrane@hospitalityhousekeeper.com>
+ * @license   GPL and MIT
+ * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ */
+* {
+    padding: 0;
+    margin: 0;
+}
+body {
+    font-size: 100%;
+}
+body.testbody {
+    background-color: #C7EFB3; /* #DFF7FF;*/
+}
+.pageSpacer {
+    width: 100%;
+    background-color: #459e00;
+    position:fixed;
+    top: 0;
+    left: 0;
+}
+.hhk-relations td {
+    background-color: #ffffff;
+}
+.nplogo {
+    background-image: url("../../images/NPSClogoSm.png");
+    background-repeat: no-repeat;
+    width: 258px;
+    height: 55px;
+    margin-top:5px;
+    display:inline-block;
+}
+.hhk-relations td:hover {
+    background-color: #67b021;
+    color: whitesmoke;
+    cursor:pointer;
+}
+.hhk-gotoweb {
+    background-color: #ffffff;
+    padding-top: 3px;
+}
+.hhk-gotoweb:hover {
+    background-color: #67b021;
+    color: whitesmoke;
+    cursor:pointer;
+}
+.hhk-member-detail {
+    float:left;
+    padding: 0.7em 0.7em;
+    font-size: 0.9em;
+}
+.hhk-deceased {
+    background-color: yellow;
+}
+table.hhk-badAddress {
+    background-color: lightsalmon;
+}
+#content {
+    margin-top: 45px;
+    margin-left: 20px;
+}
+h1, h2, h3 {
+    padding: 3px 5px;
+}
+h2.logo {
+    position: absolute;
+    top: 0px;
+    color: white;
+    padding: 0 4px;
+    margin: 7px 5px;
+    z-index: 99;
+}
+#version {
+    height: 25px;
+    position: absolute;
+    right: 2px;
+    top: 47px;
+    font-size: .6em;
+    padding: 0 6px;
+}
+#banner {
+    height: 45px;
+}
+div#divSubmitButtons {
+    position: fixed;
+    bottom: 1px;
+    right: 80px;
+    padding: 5px 10px;
+    border: solid 1px teal;
+}
+div#divSubmitButtons:hover {
+    background-color: white;
+}
+div#contentDiv {
+    margin-left: 10px;
+    margin-top: 45px;
+}
+.ui-autocomplete-loading { background: white url('../../images/ui-anim_basic_16x16.gif') right center no-repeat; }
+.hhk-date-sel {
+    background: url("ss/images/ui-bg_highlight-hard_100_fafaf4_1x100.png") repeat-x scroll 50% 50% #FAFAF4;
+    border: 1px solid #D4CCB0;
+    color: #459E00;
+    font-weight: bold;
+}
+div.hhk-recent {
+    margin-bottom: 25px;
+    border: 1px solid;
+    padding-bottom: 3px;
+    padding-left: 2px;
+}
+li.menuspacer {
+    background-color: #C8DFB5;
+}
+.clsVolBottom {
+    border-bottom: 2px solid  black;
+    vertical-align: middle;
+}
+table
+{
+    border-collapse:collapse;
+}
+.xdebug-error {
+    position: relative;
+    top: 40px;
+}
+.ui-widget th {
+    padding: 2px 3px;
+    border: 1px solid #D4CCB0;
+}
+.ui-widget td {
+    border: 1px solid #D4CCB0;
+    vertical-align: top;
+    padding: 2px 3px;
+}
+.ui-tabs-panel td {
+    border-style: none;
+    vertical-align: middle;
+    padding: 2px 3px;
+}
+.option-description td {
+    border: 1px solid #D4CCB0;
+    vertical-align: middle;
+    padding: 2px 3px;
+}
+.hhk-tdbox td {
+    border: 1px solid #D4CCB0;
+    vertical-align: middle;
+    padding: 2px 3px;
+}
+#vcategory td, #vcategory th {
+    padding: 0px 10px;
+}
+.tdlabel {
+    text-align: right;
+    border-style: none !important;
+}
+span.hhk-recent-tablenames {
+    font-size: small;
+}
+span.costDeduct {
+    color: red;
+}
+span.donListing {
+    font-size: .7em;
+}
+span.donlistingtotal {
+    font-size: .8em;
+}
+input.ro {
+    background-color: transparent;
+}
+span.class_history {
+    font-size: .85em;
+}
+.input-medium {
+  width: 150px;
+}
+

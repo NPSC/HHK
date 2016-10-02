@@ -1,0 +1,204 @@
+* {
+    padding: 0;
+    margin: 0;
+}
+body {
+    background: url('../../images/vol_bg.jpg') repeat #CEC9B5;
+    font-size: 100%;
+    font-family: Arial, Helvetica, sans-serif;
+}
+p {
+	margin: 0px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-left: 0px;
+/*	color: #333;*/
+}
+h1 {
+	font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+	font-size: 32px;
+	color: #757800;
+	margin: 0px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 10px;
+	padding-left: 0px;
+	font-weight: normal;
+}
+h3 {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 20px;
+	color: #330;
+	font-weight: normal;
+	margin: 0px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0px;
+	padding-left: 0px;
+}
+h2 {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 22px;
+	color: #330;
+	font-weight: normal;
+	margin: 0px;
+	padding: 0px;
+        z-index: 99;
+}
+h4 {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 16px;
+	font-weight: bold;
+	color: #FB883C;
+	margin: 0px;
+	padding: 0px;
+}
+h5 {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 15px;
+	font-weight: bold;
+	color: #330;
+	margin: 0px;
+	padding: 0px;
+}
+div#page {
+    margin-left: 10px;
+}
+.hhk-welcomeVol {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 22px;
+	color: #330;
+	font-weight: normal;
+	margin: 7px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0px;
+	padding-left: 0px;
+
+}
+div.logo {
+    position: absolute;
+    top: 0px;
+    color: darkred;
+    padding: 0 4px;
+    margin: 7px 5px;
+    font-size: 2em;
+    z-index: 99;
+}
+.nplogo {
+    background-image: url("../../images/NPSClogoSm.png");
+    background-repeat: no-repeat;
+    width: 258px;
+    height: 55px;
+    margin-top:5px;
+    display:inline-block;
+}
+h2.logo {
+    position: absolute;
+    top: 0px;
+    color: darkred;
+    padding: 0 4px;
+    margin: 7px 5px;
+}
+.hhk-member-detail {
+    float:left;
+    padding: 0.7em 0.7em;
+    font-size: 0.92em;
+}
+table.hhk-badAddress {
+    background-color: lightsalmon;
+}
+.ui-autocomplete-loading { background: white url('../../images/ui-anim_basic_16x16.gif') right center no-repeat; }
+#version {
+    height: 25px;
+    position: absolute;
+    right: 2px;
+    top: 47px;
+    font-size: .6em;
+    padding: 0 6px;
+}
+div#divSubmitButtons {
+    position: fixed;
+    bottom: 1px;
+    right: 80px;
+    padding: 5px 10px;
+    border-right-style: solid;
+    border-left-style: solid;
+    border-bottom-style: solid;
+    border-top-style: solid;
+    border-right-color: teal;
+    border-left-color: teal;
+    border-bottom-color: teal;
+    border-top-color: teal;
+    border-right-width: 1px;
+    border-left-width: 1px;
+    border-bottom-width: 1px;
+    border-top-width: 1px;
+}
+#wrapper {
+	height: 810px;
+	width: 600px;
+	margin-right: auto;
+	margin-left: auto;
+}
+#header {
+	background-repeat: no-repeat;
+	height: 482px;
+	width: 885px;
+}
+#logoLT {
+	background-image: url(../../images/TopLogo.jpg);
+	height: 264px;
+	width: 280px;
+	background-repeat: no-repeat;
+        float: left;
+}
+#divAlertMsg {
+     position:fixed; top:200px; left:400px;
+     z-index:9;
+}
+.hhk-logo {
+    background-image: url("../../images/hhkLogo.png");
+    background-repeat: no-repeat;
+    width: 404px;
+    height: 316px;
+}
+li.menuspacer {
+    background-color: #FEF8E4;
+}
+table
+{
+    border-collapse:collapse;
+}
+.hhk-border th {
+    font-size: 0.9em;
+    padding: 3px 7px;
+    border: 1px solid #8E846B;
+}
+.hhk-border td {
+    border: 1px solid #8E846B;
+    vertical-align: top;
+    padding: 3px 7px;
+}
+#regFormDiv td {
+    padding: 3px 7px;
+}
+.tdlabel {
+    text-align: right;
+}
+.tdBlank {
+    padding:0;
+}
+input.ro {
+    background-color: transparent;
+}
+.input-medium {
+  width: 150px;
+}
+
+.fc-today .fc-day-number {
+        font-weight: bold;
+        }
+
+
+
