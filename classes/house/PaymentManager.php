@@ -248,6 +248,7 @@ class PaymentManager {
                             $this->pmp->setIdToken($this->pmp->getRtnIdToken());
                             $this->pmp->setChargeAcct($this->pmp->getRtnChargeAcct());
                             $this->pmp->setChargeCard($this->pmp->getRtnChargeCard());
+                            $this->pmp->setTransferAcct($this->pmp->getRtnTransferAcct());
 
                             if ($uS->returnId < 1) {
                                 throw new Hk_Exception_Payment('ReturnPayorId not set in the site configuration file');
@@ -427,7 +428,7 @@ class PaymentManagerPayment {
     protected $overPayment;
     protected $guestCredit;
     protected $refundAmount;
-    protected $refundPayType;
+//    protected $refundPayType;
     protected $totalRoomChg;
 
     protected $payInvoices;
@@ -439,7 +440,9 @@ class PaymentManagerPayment {
     protected $rtnIdToken = 0;
     protected $idInvoicePayor;
     protected $checkNumber = '';
+    protected $rtnCheckNumber = '';
     protected $transferAcct = '';
+    protected $rtnTransferAcct = '';
     protected $chargeCard = '';
     protected $rtnChargeCard = '';
     protected $chargeAcct = '';
@@ -700,6 +703,10 @@ class PaymentManagerPayment {
         return $this->checkNumber;
     }
 
+    public function getRtnCheckNumber() {
+        return $this->rtnCheckNumber;
+    }
+
     public function getTransferAcct() {
         return $this->transferAcct;
     }
@@ -803,8 +810,23 @@ class PaymentManagerPayment {
         return $this;
     }
 
+    public function getRtnTransferAcct() {
+        return $this->rtnTransferAcct;
+    }
+
+    public function setRtnTransferAcct($rtnTransferAcct) {
+        $this->rtnTransferAcct = $rtnTransferAcct;
+        return $this;
+    }
+
+
     public function setCheckNumber($checkNumber) {
         $this->checkNumber = trim($checkNumber);
+        return $this;
+    }
+
+    public function setRtnCheckNumber($checkNumber) {
+        $this->rtnCheckNumber = trim($checkNumber);
         return $this;
     }
 

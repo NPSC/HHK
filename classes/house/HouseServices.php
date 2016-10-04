@@ -539,6 +539,7 @@ class HouseServices {
         $postbackPage = '';
         $dataArray = array();
         $creditCheckOut = array();
+        $uS = Session::getInstance();
 
         if (isset($post['pbp'])) {
             $postbackPage = filter_var($post['pbp'], FILTER_SANITIZE_STRING);
@@ -546,6 +547,15 @@ class HouseServices {
 
         // Instantiate a payment manager payment container.
         $paymentManager = new PaymentManager(PaymentChooser::readPostedPayment($dbh, $post));
+
+        // Is it a return payment?
+        if ($idPayor == $uS->returnId) {
+
+            // Here is where we look for the reimbursment pay type.
+            $paymentManager->pmp->setPayType($paymentManager->pmp->getRtnPayType());
+            $paymentManager->pmp->setCheckNumber($paymentManager->pmp->getRtnCheckNumber());
+            $paymentManager->pmp->setTransferAcct($paymentManager->pmp->getRtnTransferAcct());
+        }
 
         // Make payment
         $payResult = self::processPayments($dbh, $paymentManager, NULL, $postbackPage, $idPayor);

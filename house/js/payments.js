@@ -423,7 +423,7 @@ function amtPaid() {
         totCharges -= heldAmt;
         
     } else if (p.heldCb.length > 0) {
-        
+ 
         p.heldAmtTb.val('');
     }
 
@@ -465,7 +465,7 @@ function amtPaid() {
                     overPayAmt -= feePay;
                     feePay = 0;
                     $('#divReturnPay').show('fade');
-                    $('#txtRtnAmount').val(overPayAmt.toFixed(2).toString())
+                    $('#txtRtnAmount').val(overPayAmt.toFixed(2).toString());
                 }
 
             } else {
@@ -524,13 +524,17 @@ function amtPaid() {
 
 
 
-    if ((totPay ) > 0) {
+    if (totPay > 0 || (totPay < 0 && ! isChdOut)) {
 
         $('.paySelectTbl').show('fade');
         $('.hhk-minPayment').show('fade');
+        
+        if (totPay < 0 && ! isChdOut) {
+            $('#txtRtnAmount').val((0 - totPay).toFixed(2).toString());
+        }
 
     } else {
-        
+
         totPay = 0;
 
         $('.paySelectTbl').hide();
@@ -627,9 +631,12 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
             rtnchg.hide();
             $('.hhk-transferr').hide();
             $('.payReturnNotes').show();
+            $('.hhk-cknum').hide();
 
             if ($(this).val() === 'cc') {
                 rtnchg.show('fade');
+            } else if ($(this).val() === 'ck') {
+                $('.hhk-cknum').show('fade');
             } else if ($(this).val() === 'tf') {
                 $('.hhk-transferr').show('fade');
             } else if ($(this).val() === 'in') {

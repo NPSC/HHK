@@ -18,7 +18,13 @@
  */
 class PaymentChooser {
 
-
+    /**
+     *
+     * @param \PDO $dbh
+     * @param type $post
+     * @param type $rtnIndex
+     * @return \PaymentManagerPayment
+     */
     public static function readPostedPayment(\PDO $dbh, $post, $rtnIndex = ReturnIndex::ReturnIndex) {
 
         $uS = Session::getInstance();
@@ -68,6 +74,10 @@ class PaymentChooser {
         // Check number
         if (isset($post['txtCheckNum'])) {
             $pmp->setCheckNumber(filter_var($post['txtCheckNum'], FILTER_SANITIZE_STRING));
+        }
+
+        if (isset($post['txtRtnCheckNum'])) {
+            $pmp->setRtnCheckNumber(filter_var($post['txtRtnCheckNum'], FILTER_SANITIZE_STRING));
         }
 
         // Transfer Account
@@ -261,6 +271,7 @@ class PaymentChooser {
         }
 
         // Collect panels for Returns
+        unset($payTypes[PayType::Check]);
         $mkup .= HTMLContainer::generateMarkup('div', self::showReturnSelection($dbh,
                 $defaultPayType,
                 $payTypes,
@@ -528,11 +539,18 @@ ORDER BY v.idVisit , v.Span;");
             $payTypes = removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]);
             unset($payTypes[PayType::Invoice]);
 
-            // payment types panel
-            $panelMkup = self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, readGenLookupsPDO($dbh, 'Charge_Cards'), $labels, $uS->ccgw,
-                $id, 0, $prefTokenId, '');
-//            $panelMkup .= self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, readGenLookupsPDO($dbh, 'Charge_Cards'), $labels, $uS->ccgw,
-//                $id, 0, $prefTokenId, '1');
+            // House return invoices
+            if ($id == $uS->returnId) {
+                unset($payTypes[PayType::Charge]);
+                unset($payTypes[PayType::ChargeAsCash]);
+                $panelMkup = self::showReturnSelection($dbh, PayType::Check, $payTypes, array(), $uS->ccgw,
+                    $id, 0, 0, '');
+
+            } else {
+                // payment types panel
+                $panelMkup = self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, readGenLookupsPDO($dbh, 'Charge_Cards'), $labels, $uS->ccgw,
+                    $id, 0, $prefTokenId, '');
+            }
 
             $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
 
@@ -733,71 +751,72 @@ ORDER BY v.idVisit , v.Span;");
         return $mess . $feesTbl->generateMarkup(array('id'=>'payTodayTbl', 'style'=>'margin-right:7px;float:left;'));
     }
 
-    protected static function showPaySelection(\PDO $dbh, $defaultPayType, $payTypes, $chargeCards, $labels, $ccgw, $idPrimaryGuest, $idReg, $prefTokenId = 0, $index = '') {
+    protected static function showPaySelection(\PDO $dbh, $defaultPayType, $payTypes, $chargeCards, $labels, $ccgw, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
 
         $payTbl = new HTMLTable();
 
         // Payment Amount
         $payTbl->addBodyTr(HTMLTable::makeTd('Payment Amount:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnPayAmount' . $index)), array('colspan'=>'2', 'style'=>'text-align:right;')));
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnPayAmount')), array('colspan'=>'2', 'style'=>'text-align:right;')));
         // Payment Types
         $payTbl->addBodyTr(HTMLTable::makeTd('Pay With:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($payTypes, $defaultPayType, FALSE), array('name'=>'PayTypeSel' . $index, 'class'=>'hhk-feeskeys')), array('colspan'=>'2')));
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($payTypes, $defaultPayType, FALSE), array('name'=>'PayTypeSel', 'class'=>'hhk-feeskeys')), array('colspan'=>'2')));
 
 
         // Cash Amt Tendered
         $payTbl->addBodyTr(
              HTMLTable::makeTd($labels->getString('PaymentChooser', 'amtTenderedPrompt', 'Amount Tendered') . ': ', array('colspan'=>'2', 'style'=>'text-align:right;', 'class'=>'tdlabel'))
-                     .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtCashTendered' . $index, 'size'=>'6', 'style'=>'margin-right:.4em;text-align:right;', 'class'=>'hhk-feeskeys')), array('style'=>'text-align:right;'))
+                     .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtCashTendered', 'size'=>'6', 'style'=>'margin-right:.4em;text-align:right;', 'class'=>'hhk-feeskeys')), array('style'=>'text-align:right;'))
                      , array('style'=>'display:none;', 'class'=>'hhk-cashTndrd'));
         $payTbl->addBodyTr(
              HTMLTable::makeTd('', array('id'=>'tdCashMsg', 'colspan'=>'3', 'style'=>'color:red;'))
                      , array('style'=>'display:none;', 'class'=>'hhk-cashTndrd'));
         $payTbl->addBodyTr(
                 HTMLTable::makeTd('Change: ' , array('colspan'=>'2', 'style'=>'text-align:right;', 'class'=>'tdlabel'))
-                . HTMLTable::makeTd(HTMLContainer::generateMarkup('span','', array('id'=>'txtCashChange' . $index, 'style'=>'min-width:3em;')), array('style'=>'text-align:right;'))
+                . HTMLTable::makeTd(HTMLContainer::generateMarkup('span','', array('id'=>'txtCashChange', 'style'=>'min-width:3em;')), array('style'=>'text-align:right;'))
                 , array('style'=>'display:none;', 'class'=>'hhk-cashTndrd'));
 
         // Check number
         $payTbl->addBodyTr(
              HTMLTable::makeTd('Check Number: ', array('colspan'=>'2', 'class'=>'tdlabel'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtCheckNum' . $index, 'size'=>'10', 'class'=>'hhk-feeskeys')))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtCheckNum', 'size'=>'10', 'class'=>'hhk-feeskeys')))
                 , array('style'=>'display:none;', 'class'=>'hhk-cknum'));
 
         // Transfer account
         $payTbl->addBodyTr(
                 HTMLTable::makeTd('Transfer Acct:', array('colspan'=>'2', 'class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtTransferAcct' . $index, 'size'=>'10', 'class'=>'hhk-feeskeys')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtTransferAcct', 'size'=>'10', 'class'=>'hhk-feeskeys')))
                 , array('style'=>'display:none;', 'class'=>'hhk-transfer'));
 
         // credit info
-        if ($ccgw != '') {
+        if (isset($payTypes[PayType::Charge]) || isset($payTypes[PayType::ChargeAsCash])) {
 
-            self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $prefTokenId, $index);
+            if ($ccgw != '') {
 
-        } else {
+                self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $prefTokenId);
 
-            $payTbl->addBodyTr(
-                HTMLTable::makeTd('Card: ', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($chargeCards, '', TRUE), array('name'=>'selChargeType', 'style'=>'margin-right:.4em;', 'class'=>'hhk-feeskeys')))
-                .HTMLTable::makeTd(' Acct. #: '.HTMLInput::generateMarkup('', array('name'=>'txtChargeAcct' . $index, 'size'=>'4', 'title'=>'Only the last 4 digits.', 'class'=>'hhk-feeskeys')))
-                , array('style'=>'display:none;', 'class'=>'hhk-mcred'));
+            } else {
 
+                $payTbl->addBodyTr(
+                    HTMLTable::makeTd('Card: ', array('class'=>'tdlabel'))
+                    . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($chargeCards, '', TRUE), array('name'=>'selChargeType', 'style'=>'margin-right:.4em;', 'class'=>'hhk-feeskeys')))
+                    .HTMLTable::makeTd(' Acct. #: '.HTMLInput::generateMarkup('', array('name'=>'txtChargeAcct', 'size'=>'4', 'title'=>'Only the last 4 digits.', 'class'=>'hhk-feeskeys')))
+                    , array('style'=>'display:none;', 'class'=>'hhk-mcred'));
+
+            }
         }
 
         // Payment notes
         $payTbl->addBodyTr(HTMLTable::makeTh('Payment Notes', array('style'=>'text-align:left;min-width:250px;', 'colspan'=>'3')), array('class'=>'paySelectNotes'));
         $payTbl->addBodyTr(
-            HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea', '', array('name'=>'txtPayNotes' . $index, 'rows'=>1, 'style'=>'width:100%;', 'class'=>'hhk-feeskeys')), array('colspan'=>'3'))
+            HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea', '', array('name'=>'txtPayNotes', 'rows'=>1, 'style'=>'width:100%;', 'class'=>'hhk-feeskeys')), array('colspan'=>'3'))
             , array('class'=>'paySelectNotes'));
 
 
-        return $payTbl->generateMarkup(array('id' => 'tblPaySelect' . $index));
+        return $payTbl->generateMarkup(array('id' => 'tblPaySelect'));
     }
 
     protected static function showReturnSelection(\PDO $dbh, $defaultPayType, $payTypes, $chargeCards, $ccgw, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
-
-        unset($payTypes['ck']);
 
         $payTbl = new HTMLTable();
 
@@ -808,6 +827,12 @@ ORDER BY v.idVisit , v.Span;");
         $payTbl->addBodyTr(HTMLTable::makeTd('With:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($payTypes, $defaultPayType, FALSE), array('name'=>'rtnTypeSel', 'class'=>'hhk-feeskeys')), array('colspan'=>'2')));
 
+        // Check number
+        $payTbl->addBodyTr(
+             HTMLTable::makeTd('Check Number: ', array('colspan'=>'2', 'class'=>'tdlabel'))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtRtnCheckNum', 'size'=>'10', 'class'=>'hhk-feeskeys')))
+                , array('style'=>'display:none;', 'class'=>'hhk-cknum'));
+
         // Transfer account
         $payTbl->addBodyTr(
                 HTMLTable::makeTd('Transfer Acct:', array('colspan'=>'2', 'class'=>'tdlabel'))
@@ -816,18 +841,21 @@ ORDER BY v.idVisit , v.Span;");
 
 
         // credit info
-        if ($ccgw != '') {
+        if (isset($payTypes[PayType::Charge]) || isset($payTypes[PayType::ChargeAsCash])) {
 
-            self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $prefTokenId, ReturnIndex::ReturnIndex);
+            if ($ccgw != '') {
 
-        } else {
+                self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $prefTokenId, ReturnIndex::ReturnIndex);
 
-            $payTbl->addBodyTr(
-                HTMLTable::makeTd('Card: ', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($chargeCards, '', TRUE), array('name'=>'selRtnChargeType', 'style'=>'margin-right:.4em;', 'class'=>'hhk-feeskeys')))
-                .HTMLTable::makeTd(' Acct. #: '.HTMLInput::generateMarkup('', array('name'=>'txtRtnChargeAcct', 'size'=>'4', 'title'=>'Only the last 4 digits.', 'class'=>'hhk-feeskeys')))
-                , array('style'=>'display:none;', 'class'=>'hhk-mcredr'));
+            } else {
 
+                $payTbl->addBodyTr(
+                    HTMLTable::makeTd('Card: ', array('class'=>'tdlabel'))
+                    . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($chargeCards, '', TRUE), array('name'=>'selRtnChargeType', 'style'=>'margin-right:.4em;', 'class'=>'hhk-feeskeys')))
+                    .HTMLTable::makeTd(' Acct. #: '.HTMLInput::generateMarkup('', array('name'=>'txtRtnChargeAcct', 'size'=>'4', 'title'=>'Only the last 4 digits.', 'class'=>'hhk-feeskeys')))
+                    , array('style'=>'display:none;', 'class'=>'hhk-mcredr'));
+
+            }
         }
 
         // Payment notes

@@ -383,7 +383,7 @@ class PaymentSvcs {
             return $payResult;
         }
 
-        if ($invoice->getAmountToPay() < 0) {
+        if ($invoice->getAmountToPay() < 0 && $invoice->getSoldToId() != $uS->returnId) {
             $payResult = new PaymentResult(0, 0, 0);
             $payResult->setReplyMessage('warning:  Cannot Pay a negative amount. ');
             return $payResult;
