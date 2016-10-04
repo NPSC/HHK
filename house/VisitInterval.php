@@ -194,19 +194,19 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
 
     $addPaid = '';
 
-        if ($visit['addch'] > 0 && $visit['addch'] <= $visit['addpd']) {
+    if ($visit['addch'] > 0 && $visit['addch'] <= $visit['addpd']) {
 
-            $r['adjch'] = number_format($visit['addch'],2);
-            $addPaid = HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-circle-check', 'style'=>'float:left;', 'title'=>'Charges paid'));
+        $r['adjch'] = number_format($visit['addch'],2);
+        $addPaid = HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-circle-check', 'style'=>'float:left;', 'title'=>'Charges paid'));
 
-        } else if ($visit['addch'] > 0) {
+    } else if ($visit['addch'] > 0) {
 
-            $r['adjch'] = number_format($visit['addch'],2);
+        $r['adjch'] = number_format($visit['addch'],2);
 
-        } else {
+    } else {
 
-            $r['adjch'] = '';
-        }
+        $r['adjch'] = '';
+    }
 
 
 
@@ -397,13 +397,13 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     ifnull(rv.Visit_Fee, 0) as `Visit_Fee_Amount`,
     ifnull(n.Name_Last,'') as Name_Last,
     ifnull(n.Name_First,'') as Name_First,
-    ifnull(na.Address_1, '') as Address_1,
-    ifnull(na.Address_2, '') as Address_2,
-    ifnull(na.City, '') as City,
-    ifnull(na.State_Province, '') as State_Province,
-    ifnull(na.Country_Code, '') as Country,
-    ifnull(na.Postal_Code, '') as Postal_Code,
-    ifnull(na.Bad_Address, '') as Bad_Address,
+    concat(ifnull(na.Address_1, ''), '', ifnull(na.Address_2, ''))  as pAddr,
+    ifnull(na.City, '') as pCity,
+    ifnull(na.County, '') as pCounty,
+    ifnull(na.State_Province, '') as pState,
+    ifnull(na.Country_Code, '') as pCountry,
+    ifnull(na.Postal_Code, '') as pZip,
+    ifnull(na.Bad_Address, '') as pBad_Address,
     ifnull(r.Title, '') as Title,
     ifnull(np.Name_Last,'') as Patient_Last,
     ifnull(np.Name_First,'') as Patient_First,
@@ -461,7 +461,7 @@ from
         left join
     gen_lookups gl ON gl.`Table_Name` = 'Location' and gl.`Code` = hs.Location
         left join
-    name_address na on v.idPrimaryGuest = na.idName and n.Preferred_Mail_Address = na.Purpose
+    name_address na on ifnull(hs.idPatient, 0) = na.idName and np.Preferred_Mail_Address = na.Purpose
 where
      v.`Status` <> 'p'
     and DATE(v.Span_Start) < DATE('$end')
@@ -1148,6 +1148,23 @@ foreach ($hospList as $h) {
 $cFields[] = array('Visit Id', 'idVisit', 'checked', 'f', 'n', '', array('style'=>'text-align:center;'));
 $cFields[] = array("Primary Guest", 'idPrimaryGuest', 'checked', '', 's', '', array());
 $cFields[] = array("Patient", 'idPatient', 'checked', '', 's', '', array());
+
+// Patient address.
+if ($uS->PatientAddr) {
+
+    $pFields = array('pAddr', 'pCity');
+    $pTitles = array('Patient Address', 'Patient City');
+
+    if ($uS->county) {
+        $pFields[] = 'pCounty';
+        $pTitles[] = 'Patient County';
+    }
+
+    $pFields = array_merge($pFields, array('pState', 'pCountry', 'pZip'));
+    $pTitles = array_merge($pTitles, array('Patient State', 'Patient Country', 'Patient Zip'));
+
+    $cFields[] = array($pTitles, $pFields, '', '', 's', '', array());
+}
 
 if (count($aList) > 0) {
     $cFields[] = array("Hospital / Assoc", 'hospitalAssoc', 'checked', '', 's', '', array());

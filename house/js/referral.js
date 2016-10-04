@@ -1464,9 +1464,9 @@ $(document).ready(function() {
     $('#gstSearch').keypress(function(event) {
         $(this).removeClass('ui-state-highlight');
     });
-    
+
     $('#gstSearch').focus();
-    
+
     function getPatient(item) {
         if (resv.patAsGuest) {
             $('#hhk-patPromptQuery').text('Will ' + item.fullName + ' be staying at the House for at least one night?');
@@ -1482,13 +1482,15 @@ $(document).ready(function() {
                     }
                 })
                 .dialog('open');
+        } else {
+            loadGuest(item, 'p', resv.idPsg, false);
         }
     }
-    
+
     createAutoComplete($('#h_Search'), 3, {cmd: 'role'}, getPatient, lastXhr);
     // Phone number search
     createAutoComplete($('#h_phSearch'), 4, {cmd: 'role'}, getPatient, lastXhr);
-    
+
     if (resv.gpnl && resv.gpnl !== '') {
         loadGuest({id: resv.gpnl}, 'g', resv.idPsg);
     }

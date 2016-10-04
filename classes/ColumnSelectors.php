@@ -51,7 +51,13 @@ class ColumnSelectors {
             // Find it in the colums array
             for ($n = 0; $n < count($this->cols); $n++) {
 
-                if (isset($flds[$this->cols[$n][1]]) || $this->cols[$n][3] == 'f') {
+                if (is_array($this->cols[$n][1])) {
+                    $field = $this->cols[$n][1][0];
+                } else {
+                    $field = $this->cols[$n][1];
+                }
+
+                if (isset($flds[$field]) || $this->cols[$n][3] == 'f') {
                     $this->cols[$n][2] = 's';
                 } else {
                     $this->cols[$n][2] = '';
@@ -68,14 +74,20 @@ class ColumnSelectors {
 
         foreach ($this->cols as $c) {
 
-            $attrs = array('value'=>$c[1]);
+            if (is_array($c[1])) {
+                $attrs = array('value'=>$c[1][0]);
+                $val = $c[0][0];
+            } else {
+                $attrs = array('value'=>$c[1]);
+                $val = $c[0];
+            }
 
             if ($c[2] != '') {
                 $attrs['selected'] = 'selected';
             }
 
             if ($c[3] != 'f') {
-                $opts .= HTMLContainer::generateMarkup('option', $c[0], $attrs);
+                $opts .= HTMLContainer::generateMarkup('option', $val, $attrs);
                 $countr++;
             }
         }
@@ -116,7 +128,16 @@ class ColumnSelectors {
         foreach ($this->cols as $c) {
 
             if ($c[2] != '') {
-                $titles[] = $c[0];
+
+                if (!is_string($c[0])) {
+
+                    foreach ($c[0] as $f) {
+                        $titles[] = $f;
+                    }
+
+                } else {
+                    $titles[] = $c[0];
+                }
             }
         }
 
@@ -130,7 +151,19 @@ class ColumnSelectors {
         foreach ($this->cols as $c) {
 
             if ($c[2] != '') {
-                $titles[] = $c;
+
+                if (!is_string($c[1])) {
+
+                    for ($i = 0; $i < count($c[1]); $i++) {
+                        $d = $c;
+                        $d[1] = $c[1][$i];
+                        $d[0] = $c[0][$i];
+                        $titles[] = $d;
+                    }
+
+                } else {
+                    $titles[] = $c;
+                }
             }
         }
 

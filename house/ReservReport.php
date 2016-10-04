@@ -109,7 +109,22 @@ if (count($aList) > 0) {
 $cFields[] = array("Diagnosis", 'Diagnosis', 'checked', '', 's', '');
 $cFields[] = array("First", 'Name_First', 'checked', '', 's', '');
 $cFields[] = array("Last", 'Name_Last', 'checked', '', 's', '');
-$cFields[] = array('Address', 'Address', '', '', 's', '');
+
+// Address.
+$pFields = array('gAddr', 'gCity');
+$pTitles = array('Address', 'City');
+
+if ($uS->county) {
+    $pFields[] = 'gCounty';
+    $pTitles[] = 'County';
+}
+
+$pFields = array_merge($pFields, array('gState', 'gCountry', 'gZip'));
+$pTitles = array_merge($pTitles, array('State', 'Country', 'Zip'));
+
+$cFields[] = array($pTitles, $pFields, '', '', 's', '', array());
+
+
 $cFields[] = array("Room Phone", 'Phone', '', '', 's', '');
 $cFields[] = array("Guest Phone", 'Phone_Num', '', '', 's', '');
 $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
@@ -277,6 +292,12 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     $query = "select
     r.idReservation,
     r.idGuest,
+    concat(ifnull(na.Address_1, ''), '', ifnull(na.Address_2, ''))  as gAddr,
+    ifnull(na.City, '') as gCity,
+    ifnull(na.County, '') as gCounty,
+    ifnull(na.State_Province, '') as gState,
+    ifnull(na.Country_Code, '') as gCountry,
+    ifnull(na.Postal_Code, '') as gZip,
     np.Phone_Num,
     rm.Phone,
     ifnull(r.Actual_Arrival, r.Expected_Arrival) as `Arrival`,
@@ -305,8 +326,9 @@ from
         left join
     name n ON r.idGuest = n.idName
         left join
-    name_phone np ON n.idName = np.idName
-        and n.Preferred_Phone = np.Phone_Code
+    name_address na ON n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
+        left join
+    name_phone np ON n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
         left join
     hospital_stay hs ON r.idHospital_Stay = hs.idHospital_stay
         left join

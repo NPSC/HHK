@@ -19,6 +19,8 @@ class Duplicate {
 
     protected static function getNameDuplicates(\PDO $dbh, $mType) {
 
+        $rows = array();
+
         if ($mType == VolMemberType::ReferralAgent || $mType == VolMemberType::Doctor) {
 
             // get duplicate names
@@ -43,8 +45,6 @@ where
 group by LOWER(n.Name_Full)
 having count(n.idName) > 1
 order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
-
-            $rows = array();
 
             while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 

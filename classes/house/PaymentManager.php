@@ -211,17 +211,11 @@ class PaymentManager {
                 // Process overpayments
                 if ($overPaymemntAmt > 0 && $balanceWithCode != '' && $balanceWithCode != ExcessPay::Ignore) {
 
-                    $excessPayTitle = readGenLookupsPDO($dbh, 'ExcessPays');
-                    $invLineDesc = 'Donation';
-                    if (isset($excessPayTitle[$balanceWithCode])) {
-                        $invLineDesc = $excessPayTitle[$balanceWithCode][1];
-                    }
-
                     if ($balanceWithCode == ExcessPay::Hold) {
                         // Money on accoount
 
                         $invLine = new HoldInvoiceLine();
-                        $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, $overPaymemntAmt), 1, $invLineDesc);
+                        $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, $overPaymemntAmt), 1);
 
                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, $notes);
                         $this->invoice->addLine($dbh, $invLine, $uS->username);
@@ -234,7 +228,7 @@ class PaymentManager {
                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, $notes);
                         $this->invoice->addLine($dbh, $invLine, $uS->username);
 
-                    } else if ($balanceWithCode == ExcessPay::Refund) {
+                    } else if ($balanceWithCode == ExcessPay::Refund && $this->hasInvoice()) {
 
                         $credit = $this->guestCreditAmt + $this->depositRefundAmt + $this->moaRefundAmt;
 
@@ -286,7 +280,7 @@ class PaymentManager {
         }
 
 
-        if (is_null($this->invoice) === FALSE) {
+        if ($this->hasInvoice()) {
 
             // Money back?
             if ($this->pmp->getTotalPayment() < 0 && $this->pmp->getBalWith() != ExcessPay::Refund) {
@@ -303,6 +297,7 @@ class PaymentManager {
             } else {
 
                 $this->invoice->setAmountToPay($this->pmp->getTotalPayment());
+                $this->invoice->setSoldToId($this->pmp->getIdInvoicePayor());
                 $this->invoice->updateInvoiceStatus($dbh, $uS->username);
             }
 
@@ -384,9 +379,6 @@ class PaymentManager {
         }
 
         // Return from the Hosue
-        
-
-
         try {
 
             $rtnResult = PaymentSvcs::returnAmount($dbh, $this->invoice, $this->pmp, $paymentDate);

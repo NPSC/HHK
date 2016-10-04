@@ -664,7 +664,7 @@ class PaymentSvcs {
                 // Update invoice
                 $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
 
-                $rtnResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+                $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
                 $rtnResult->feePaymentAccepted($dbh, $uS, $cashResp, $invoice);
                 $rtnResult->setDisplayMessage('External Credit Refund Recorded.  ');
 
