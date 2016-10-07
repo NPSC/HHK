@@ -887,6 +887,10 @@ function verifyBalDisp() {
 
 function verifyAmtTendrd() {
     "use strict";
+    if ($('#PayTypeSel').length === 0) {
+        return true;
+    }
+    
     $('#tdCashMsg').hide('fade');
     if ($('#PayTypeSel').val() == 'ca') {
         

@@ -1631,9 +1631,10 @@ $(document).ready(function() {
         }
         
         // Verify cash amount tendered
-        if (verifyAmtTendrd() === false) {
+        if (verifyAmtTendrd !== undefined && verifyAmtTendrd() === false) {
             return;
         }
+        
         // Dates
         checkIn.resv.checkOut.setHours(10);
         var nowDate = new Date();
