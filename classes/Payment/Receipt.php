@@ -800,7 +800,7 @@ where
 
     }
 
-    public static function makePaymentsTable($invoices, $invLines, $subsidyId, &$totalAmt, $pmtDisclaimer, \Config_Lite $labels, $tdClass = '') {
+    public static function makePaymentsTable($invoices, $invLines, $subsidyId, $returnId, &$totalAmt, $pmtDisclaimer, \Config_Lite $labels, $tdClass = '') {
 
         // Markup
         $tbl = new HTMLTable();
@@ -817,10 +817,12 @@ where
 
         foreach ($invoices as $r) {
 
+            // House discounts
             if ($r['i']['Sold_To_Id'] == $subsidyId) {
                 continue;
             }
 
+            // Third party
             if ($r['i']['Bill_Agent'] == 'a') {
                 continue;
             }
@@ -886,10 +888,18 @@ where
                     $amtAttrs['style'] = $amtStyle;
                 }
 
+                $payMethod = $p['Payment_Method_Title'];
+
+                // Catch House returns/refunds
+                if ($r['i']['Sold_To_Id'] == $returnId) {
+                    $payMethod = 'House Refund ' . $payMethod;
+                    $addnl = '';
+                }
+
 
                 $payLines[] = HTMLTable::makeTd(($p['Payment_Date'] == '' ? '' : date('M j, Y', strtotime($p['Payment_Date']))), $attrs)
-                    .($addnl == '' ? HTMLTable::makeTd($p['Payment_Method_Title'], array_merge($attrs, array('colspan'=>'2'))) :
-                        (HTMLTable::makeTd($p['Payment_Method_Title'], $attrs) . HTMLTable::makeTd($addnl, $attrs)))
+                    .($addnl == '' ? HTMLTable::makeTd($payMethod, array_merge($attrs, array('colspan'=>'2'))) :
+                        (HTMLTable::makeTd($payMethod, $attrs) . HTMLTable::makeTd($addnl, $attrs)))
                     .HTMLTable::makeTd($p['Payment_Status_Title'], $attrs)
                     .HTMLTable::makeTd($amtMkup, $amtAttrs);
             }
@@ -1018,7 +1028,7 @@ where
 
                         $payor = $r['i']['Company'];
                         if ($payor == '') {
-                            $payor = $r['i']['Sold_To_Name'];
+                            $payor = $r['i']['First'] . ' ' . $r['i']['Last'];
                         }
 
                         $mattrs = array_merge($tdAttrs, array('style'=>'border-top: 2px solid #2E99DD;'));
@@ -1130,7 +1140,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         $tpTbl = self::makeThirdParyTable($pments, $invLines, $labels, $totalAmt);
         $totalThirdPayments = $totalCharge - $totalAmt;
 
-        $ptbl = self::makePaymentsTable($pments, $invLines, $uS->subsidyId, $totalAmt, $config->getString('financial', 'PaymentDisclaimer', ''), $labels);
+        $ptbl = self::makePaymentsTable($pments, $invLines, $uS->subsidyId, $uS->returnId, $totalAmt, $config->getString('financial', 'PaymentDisclaimer', ''), $labels);
         $totalGuestPayments = $totalCharge - $totalThirdPayments - $totalAmt;
 
         // Find patient name
@@ -1240,7 +1250,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
         $totalThirdPayments = $totalCharge - $totalAmt;
 
         // Payments
-        $ptbl = self::makePaymentsTable($pments, $invLines, $uS->subsidyId, $totalAmt, $config->getString('financial', 'PaymentDisclaimer', ''), $labels);
+        $ptbl = self::makePaymentsTable($pments, $invLines, $uS->subsidyId, $uS->returnId, $totalAmt, $config->getString('financial', 'PaymentDisclaimer', ''), $labels);
         $totalGuestPayments = $totalCharge - $totalThirdPayments - $totalAmt;
 
         // Find patient name

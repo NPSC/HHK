@@ -412,7 +412,9 @@ class SiteConfig {
 
                         // password cutout
                         if (($itemName == 'Password' || $itemName == 'BackupPassword' || $itemName == 'ReadonlyPassword') && $config->getString($secName, $itemName, '') != $val) {
-                            $val = encryptMessage($val);
+                            if ($val != '') {
+                                $val = encryptMessage($val);
+                            }
                         }
 
                         $config->set($secName, $itemName, $val);

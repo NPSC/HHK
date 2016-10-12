@@ -948,11 +948,11 @@ function showReceipt(dialogId, markup, title, width) {
     }
 
     pRecpt.children().remove();
-    pRecpt.append($(markup).addClass('PrintArea').css('max-width', (width + 'px') ));
+    pRecpt.append($(markup).addClass('ReceiptArea').css('max-width', (width + 'px') ));
     
     btn.button();
     btn.click(function() {
-        $(".PrintArea").printArea(opt);
+        $(".ReceiptArea").printArea(opt);
         pRecpt.dialog('close');
     });
     

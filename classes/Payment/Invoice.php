@@ -53,7 +53,7 @@ class Invoice {
         }
     }
 
-    public static function load1stPartyUnpaidInvoices(\PDO $dbh, $orderNumber) {
+    public static function load1stPartyUnpaidInvoices(\PDO $dbh, $orderNumber, $returnId = 0) {
 
         $orderNum = str_replace("'", '', $orderNumber);
 

@@ -233,6 +233,7 @@ function invLoadPc(nme, id, iid) {
                     dateFormat: 'M d, yy'
                 });
                 
+                isCheckedOut = false;
                 setupPayments(data.resc, '', '', 0, $('#pmtRcpt'));
                 
                 $('#keysfees').dialog('option', 'buttons', buttons);

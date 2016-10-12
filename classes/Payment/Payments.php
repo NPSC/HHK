@@ -462,7 +462,6 @@ class ReturnReply extends Payments {
             $payRs->Attempt->setNewVal($attempts);
             $payRs->Status_Code->setNewVal(PaymentStatusCode::Retrn);
             $payRs->Created_By->setNewVal($username);
-            $payRs->Notes->setNewVal($pr->payNotes);
 
         } else if ($payRs->idPayment->getStoredVal() > 0) {
 

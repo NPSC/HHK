@@ -364,19 +364,13 @@ class IndivMember extends Member {
 
 
         // No Return
-        $nrAttr = array('type'=>'checkbox', 'name'=>'cbnoReturn', 'title'=>'Flag for No Return');
-
-        if ($this->demogRS->No_Return->getStoredVal() != '') {
-            $nrAttr['checked'] = 'checked';
-        }
-
         $table->addBodyTr(
-            HTMLTable::makeTd('No Return: ' . HTMLInput::generateMarkup('', $nrAttr), array('class'=>'tdlabel', 'title'=>'Flag for No Return'))
+            HTMLTable::makeTd('No Return', array('class'=>'tdlabel', 'title'=>'Flag for No Return'))
             . HTMLTable::makeTd(
                     HTMLSelector::generateMarkup(
-                            HTMLSelector::doOptionsMkup($uS->nameLookups['NoReturnReason'], $this->demogRS->No_Return->getStoredVal(), FALSE)
-                                ,array('name'=>'selnoReturn', 'style'=>'display:none;'))
-                    , array('style'=>'display:table-cell;')
+                            HTMLSelector::doOptionsMkup($uS->nameLookups['NoReturnReason'], $this->getNoReturnDemog(), TRUE)
+                                ,array('name'=>'selnoReturn', 'title'=>'Set No Return reason'))
+                    , array('style'=>'display:table-cell;', 'title'=>'Set No Return reason')
                     )
             );
 
@@ -782,7 +776,7 @@ class IndivMember extends Member {
         }
 
         //  No Return
-        if (isset($post[$idPrefix.'cbnoReturn']) && isset($post[$idPrefix.'selnoReturn'])) {
+        if (isset($post[$idPrefix.'selnoReturn'])) {
 
             $reason = filter_var($post[$idPrefix.'selnoReturn'], FILTER_SANITIZE_STRING);
 
@@ -792,8 +786,6 @@ class IndivMember extends Member {
                 $this->demogRS->No_Return->setNewVal('');
             }
 
-        } else if (isset($post[$idPrefix.'selnoReturn'])) {
-            $this->demogRS->No_Return->setNewVal('');
         }
 
 

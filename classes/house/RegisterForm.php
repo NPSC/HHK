@@ -160,7 +160,7 @@ class RegisterForm {
 
         $mkup = HTMLContainer::generateMarkup('h2', 'Agreement', array('style'=>'border:none;border-bottom:1.5pt solid #98C723'));
 
-        require REL_BASE_DIR . 'conf' . DS . 'regSection.php';
+        require REL_BASE_DIR . 'conf' . DS . 'regSections.php';
 
         $mkup .= HTMLContainer::generateMarkup('div', $instructions, array('class'=>'MsoNormal', 'style'=>'width:900px;margin-left:auto;margin-right:auto;'));
 

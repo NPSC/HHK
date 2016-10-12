@@ -166,7 +166,7 @@ class TokenTX {
     }
 
 
-    public static function creditReturnToken(\PDO $dbh, $idGuest, $gwName, CreditReturnTokenRequest $returnSale, PaymentRS $payRs, $payNotes = '') {
+    public static function creditReturnToken(\PDO $dbh, $idGuest, $gwName, CreditReturnTokenRequest $returnSale, $payRs, $payNotes = '') {
 
         if (is_null($payRs) === FALSE && $payRs->idPayment->getStoredVal() == 0) {
             throw new Hk_Exception_Payment('DB Payment Id not given.  ');

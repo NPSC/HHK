@@ -49,7 +49,7 @@ $resultMessage = $alertMsg->createMarkup();
 
 $isGuestAdmin = ComponentAuthClass::is_Authorized('guestadmin');
 
-function doMarkupRow($r, $isLocal, $invoice_Statuses, &$total, &$tbl, &$sml, &$reportRows, $subsidyId) {
+function doMarkupRow($r, $isLocal, $invoice_Statuses, &$total, &$tbl, &$sml, &$reportRows, $subsidyId, $returnId) {
 
     $amt = $r['Amount'];
 
@@ -90,7 +90,7 @@ function doMarkupRow($r, $isLocal, $invoice_Statuses, &$total, &$tbl, &$sml, &$r
         $company = $r['Company'];
         $payorFirst = HTMLTable::makeTd('');
         $payorLast = HTMLTable::makeTd('');
-    } else if ($r['Billing_Agent'] == VolMemberType::BillingAgent) {
+    } else if ($r['Billing_Agent'] == VolMemberType::BillingAgent || $returnId = $r['Sold_To_Id']) {
         $company = $r['Company'];
         $payorFirst = HTMLTable::makeTd($r['Name_First']);
         $payorLast = HTMLTable::makeTd($r['Name_Last']);
@@ -479,7 +479,7 @@ where $whDeleted  $whDates  $whItem  $whStatus order by i.idInvoice, il.idInvoic
     // Now the data ...
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
-        doMarkupRow($r, $local, $statusList, $total, $tbl, $sml, $reportRows, $uS->subsidyId);
+        doMarkupRow($r, $local, $statusList, $total, $tbl, $sml, $reportRows, $uS->subsidyId, $uS->returnId);
 
     }
 

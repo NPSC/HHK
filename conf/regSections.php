@@ -11,7 +11,7 @@ $instructions = '<p style="margin-bottom:10px;">The (House Name) is a not-for-pr
     <li><span style="font-weight: bold;">Food must be stored properly</span> in sealed containers or in the refrigerator. Dispose of food properly at time of check out.</li>
     <li><span style="font-weight: bold;">Do not remove anything from the rooms.</span>  Everything has been generously donated to us and is for the comfort of all our guests.  If you find an item missing, please contact our office so that we can replace it before the next guest.</li>
     <li><span style="font-weight: bold;">Do not try to make any repairs yourself.</span> Please contact the House Manager or Front Desk for any problems with appliances, electrical outlets, or plumbing.</li>
-    <li>IMD Guest House strives to provide a supportive, welcoming community for its guests; <span style="font-weight: bold;">please help us by being respectful of all staff, volunteers, fellow guests, and residents.</span></li>
+    <li>The House strives to provide a supportive, welcoming community for its guests; <span style="font-weight: bold;">please help us by being respectful of all staff, volunteers, fellow guests, and residents.</span></li>
     <li><span style="font-weight: bold;">Check out time is 10 AM.</span> Drop off your key(s) at the Front Desk.</li>
 </ul>
 <p style="margin-top:10px;">Failure to follow any or all of these policies or to abuse the privilege of staying at the House in anyway can result in the forfeiture of the family&rsquo;s stay. Guests are responsible to communicate any issues or problems directly to (staff).</p>

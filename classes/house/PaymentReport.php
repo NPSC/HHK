@@ -179,7 +179,7 @@ class PaymentReport {
             // Payments
             foreach ($r['p'] as $p) {
 
-                self::doMarkupRow($r, $p, $sml, $reportRows, $uS->subsidyId);
+                self::doMarkupRow($r, $p, $sml, $reportRows, $uS->subsidyId, $uS->returnId);
 
             }
         }
@@ -194,7 +194,7 @@ class PaymentReport {
 
     }
 
-    protected static function doMarkupRow($r, $p, &$sml, &$reportRows, $subsidyId) {
+    protected static function doMarkupRow($r, $p, &$sml, &$reportRows, $subsidyId, $returnId) {
 
         $origAmt = $p['Payment_Amount'];
         $amt = 0;
@@ -287,9 +287,11 @@ class PaymentReport {
             $r['i']['Invoice_Number'] .= '-Deleted';
         }
 
+        // Set names for special
         if ($r['i']['Sold_To_Id'] == $subsidyId) {
             $payType = $r['i']['Invoice_Description'];
         }
+
 
         $n = 0;
         $flds = array(
@@ -297,7 +299,7 @@ class PaymentReport {
                 'value' => $r['i']['Sold_To_Id']
             ),
             $n++ => array('type' => "s",
-                'value' => ($r['i']['Bill_Agent'] == 'a' ? $r['i']['Company'] : '')
+                'value' => ($r['i']['Bill_Agent'] == 'a' || $r['i']['Sold_To_Id'] == $returnId ? $r['i']['Company'] : '')
             ),
             $n++ => array('type' => "s",
                 'value' => $r['i']['Last']

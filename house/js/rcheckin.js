@@ -174,9 +174,11 @@ function injectSlot(data) {
 function ckedIn(data) {
     "use strict";
     $("#divAlert1").hide();
+    
     if (data.warning) {
         flagAlertMessage(data.warning, true);
     }
+    
     if (data.xfer) {
         var xferForm = $('#xform');
         xferForm.children('input').remove();
@@ -191,6 +193,7 @@ function ckedIn(data) {
         }
         xferForm.submit();
     }
+    
     if (data.success) {
         //flagAlertMessage(data.success, false);
         var cDiv = $('#contentDiv');
@@ -200,12 +203,12 @@ function ckedIn(data) {
             cDiv.append($('<div id="print_button" style="float:left;">Print</div>'))
                     .append($('<div id="btnReg" style="float:left; margin-left:10px;">Check In Followup</div>'))
                     .append($('<div id="mesgReg" style="color: darkgreen; clear:left; font-size:1.5em;"></div>'))
-                    .append($('<div style="clear: left;" class="PrintArea"/>')
+                    .append($('<div style="clear: left;" class="RegArea"/>')
                             .append($(data.style)).append($(data.regform)));
 
             $("div#print_button, div#btnReg").button();
             $("div#print_button").click(function() {
-                $("div.PrintArea").printArea();
+                $("div.RegArea").printArea();
             });
             $('div#btnReg').click(function() {
                 getRegistrationDialog(data.reg, cDiv);
@@ -232,16 +235,7 @@ function ckedIn(data) {
         }
         
         if (data.receipt) {
-            var pRecpt = $('#pmtRcpt');
-            var btn = $("<div id='print_button'>Print</div>");
-            btn.button();
-            btn.click(function() {
-                $(".PrintArea").printArea();
-            });
-            pRecpt.children().remove();
-            pRecpt.append(btn);
-            pRecpt.append($(data.receipt).addClass('PrintArea'));
-            pRecpt.dialog('open');
+            showReceipt('#pmtRcpt', data.receipt);
         }
     }
 }

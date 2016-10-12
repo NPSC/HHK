@@ -582,7 +582,7 @@ class PaymentSvcs {
 
         if ($invoice->getAmountToPay() > 0) {
             $rtnResult = new ReturnResult(0, 0, 0);
-            $rtnResult->setReplyMessage('warning:  Cannot Return a this amount. ');
+            $rtnResult->setReplyMessage('warning:  Cannot Return this amount. ');
             return $rtnResult;
         }
 
@@ -623,9 +623,6 @@ class PaymentSvcs {
 
             case PayType::Charge:
 
-                $guest = new Guest($dbh, '', $invoice->getSoldToId());
-                $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
-
                 $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getRtnIdToken());
 
                 // Do we have a token?
@@ -636,9 +633,7 @@ class PaymentSvcs {
                     $returnRequest->setCardHolderName($tokenRS->CardHolderName->getStoredVal());
                     $returnRequest->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion);
                     $returnRequest->setInvoice($invoice->getInvoiceNumber());
-                    $returnRequest->setPurchaseAmount($amount)
-                    ->setAddress($addr["Address_1"])
-                    ->setZip($addr["Postal_Code"]);
+                    $returnRequest->setPurchaseAmount(abs($amount));
 
                     $returnRequest->setToken($tokenRS->Token->getStoredVal());
                     $returnRequest->setTokenId($tokenRS->idGuest_token->getStoredVal());

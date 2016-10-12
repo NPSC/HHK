@@ -213,352 +213,354 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                     return;
                 }
                 flagAlertMessage(data.error, true);
+                return;
                 
-            } else if (data.success) {
+            }
                 
-                var $diagbox = $('#keysfees');
+            var $diagbox = $('#keysfees');
 
-                $diagbox.children().remove();
-                $diagbox.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.success)));
-                $diagbox.find('.ckdate').datepicker({
-                    yearRange: '-01:+01',
+            $diagbox.children().remove();
+            $diagbox.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.success)));
+            $diagbox.find('.ckdate').datepicker({
+                yearRange: '-01:+01',
+                changeMonth: true,
+                changeYear: true,
+                autoSize: true,
+                numberOfMonths: 1,
+                maxDate: 0,
+                dateFormat: 'M d, yy',
+                onSelect: function() {
+                    this.lastShown = new Date().getTime();
+                },
+                beforeShow: function() {
+                    var time = new Date().getTime();
+                    return this.lastShown === undefined || time - this.lastShown > 500;
+                },
+                onClose: function () {
+                    $(this).change();
+                }
+            });
+
+            $diagbox.find('.ckdateFut').datepicker({
+                yearRange: '-01:+01',
+                changeMonth: true,
+                changeYear: true,
+                autoSize: true,
+                numberOfMonths: 1,
+                minDate: 0,
+                dateFormat: 'M d, yy',
+                onSelect: function() {
+                    this.lastShown = new Date().getTime();
+                },
+                beforeShow: function() {
+                    var time = new Date().getTime();
+                    return this.lastShown === undefined || time - this.lastShown > 500;
+                },
+                onClose: function () {
+                    $(this).change();
+                }
+            });
+
+            $diagbox.css('background-color', '#fff');
+
+            if (action === 'ref') {
+                $diagbox.css('background-color', '#FEFF9B');
+            }
+
+
+            if ($('.hhk-extVisitSw').length > 0) {
+                $('.hhk-extVisitSw').change(function () {
+                    if (this.checked) {
+                        $('.hhk-extendVisit').show('fade');
+                    } else {
+                        $('.hhk-extendVisit').hide('fade');
+                    }
+                });
+                $('.hhk-extVisitSw').change();
+            }
+
+            if ($('#rateChgCB').length > 0) {
+
+                var rateChangeDate = $('#chgRateDate');
+
+                rateChangeDate.datepicker({
                     changeMonth: true,
                     changeYear: true,
                     autoSize: true,
                     numberOfMonths: 1,
-                    maxDate: 0,
                     dateFormat: 'M d, yy',
-                    onSelect: function() {
-                        this.lastShown = new Date().getTime();
-                    },
-                    beforeShow: function() {
-                        var time = new Date().getTime();
-                        return this.lastShown === undefined || time - this.lastShown > 500;
-                    },
-                    onClose: function () {
-                        $(this).change();
-                    }
+                    maxDate: new Date(data.end),
+                    minDate: new Date(data.start)
                 });
-                
-                $diagbox.find('.ckdateFut').datepicker({
-                    yearRange: '-01:+01',
-                    changeMonth: true,
-                    changeYear: true,
-                    autoSize: true,
-                    numberOfMonths: 1,
-                    minDate: 0,
-                    dateFormat: 'M d, yy',
-                    onSelect: function() {
-                        this.lastShown = new Date().getTime();
-                    },
-                    beforeShow: function() {
-                        var time = new Date().getTime();
-                        return this.lastShown === undefined || time - this.lastShown > 500;
-                    },
-                    onClose: function () {
-                        $(this).change();
-                    }
-                });
-                
-                $diagbox.css('background-color', '#fff');
-                
-                if (action === 'ref') {
-                    $diagbox.css('background-color', '#FEFF9B');
-                }
-                            
-                
-                if ($('.hhk-extVisitSw').length > 0) {
-                    $('.hhk-extVisitSw').change(function () {
-                        if (this.checked) {
-                            $('.hhk-extendVisit').show('fade');
-                        } else {
-                            $('.hhk-extendVisit').hide('fade');
-                        }
-                    });
-                    $('.hhk-extVisitSw').change();
-                }
-                
-                if ($('#rateChgCB').length > 0) {
-                    
-                    var rateChangeDate = $('#chgRateDate');
-                    
-                    rateChangeDate.datepicker({
-                        changeMonth: true,
-                        changeYear: true,
-                        autoSize: true,
-                        numberOfMonths: 1,
-                        dateFormat: 'M d, yy',
-                        maxDate: new Date(data.end),
-                        minDate: new Date(data.start)
-                    });
-                    
-                    rateChangeDate.change(function () {
-                        if (this.value !== '') {
-                            rateChangeDate.siblings('input#rbReplaceRate').prop('checked', true);
-                        }
-                    });
-                    
-                    $('input#rbReplaceRate').change(function () {
-                        if (this.checked && rateChangeDate.val() === '') {
-                            rateChangeDate.val($.datepicker.formatDate('M d, yy', new Date()));
-                        } else {
-                            rateChangeDate.val('');
-                        }
-                    });
-                    
-                    $('#rateChgCB').change(function () {
-                        if (this.checked) {
-                            $('.changeRateTd').show('fade');
-                            $('#showRateTd').hide('fade');
-                        }else {
-                            $('.changeRateTd').hide('fade');
-                            $('#showRateTd').show('fade');
-                        }
-                    });
-                    
-                    $('#rateChgCB').change();
-                }
-                
-                $('#spnExPay').hide();
 
-                if ($('input.hhk-ckoutCB').length > 0) {
-                    // still checked in...
-                    
-                    $('#tblStays').on('change', 'input.hhk-ckoutCB', function() {
-                        
-                        var ckout = true,
-                            coTime = 1,
-                            today = new Date();
+                rateChangeDate.change(function () {
+                    if (this.value !== '') {
+                        rateChangeDate.siblings('input#rbReplaceRate').prop('checked', true);
+                    }
+                });
+
+                $('input#rbReplaceRate').change(function () {
+                    if (this.checked && rateChangeDate.val() === '') {
+                        rateChangeDate.val($.datepicker.formatDate('M d, yy', new Date()));
+                    } else {
+                        rateChangeDate.val('');
+                    }
+                });
+
+                $('#rateChgCB').change(function () {
+                    if (this.checked) {
+                        $('.changeRateTd').show('fade');
+                        $('#showRateTd').hide('fade');
+                    }else {
+                        $('.changeRateTd').hide('fade');
+                        $('#showRateTd').show('fade');
+                    }
+                });
+
+                $('#rateChgCB').change();
+            }
+
+            $('#spnExPay').hide();
+            isCheckedOut = false;
+
+            if ($('input.hhk-ckoutCB').length > 0) {
+                // still checked in...
+
+                $('#tblStays').on('change', 'input.hhk-ckoutCB', function() {
+
+                    var ckout = true,
+                        coTime = 1,
+                        today = new Date();
+
+                    if (this.checked === false) {
+                        $(this).next().val('');  // clear the checkout date field
+                    } else if ($(this).next().val() == '') {
+                        $(this).next().val($.datepicker.formatDate('M d, yy', new Date()));  // set the checkout date field
+                    }
+
+                    // Are we checking out?
+                    // Scan all checkout checkboxes
+                    $('input.hhk-ckoutCB').each(function () {
 
                         if (this.checked === false) {
-                            $(this).next().val('');  // clear the checkout date field
-                        } else if ($(this).next().val() == '') {
-                            $(this).next().val($.datepicker.formatDate('M d, yy', new Date()));  // set the checkout date field
-                        }
-                        
-                        // Are we checking out?
-                        // Scan all checkout checkboxes
-                        $('input.hhk-ckoutCB').each(function () {
-                            
-                            if (this.checked === false) {
-                                
+
+                            ckout = false;
+
+                        } else if ($(this).next().val() != '') {
+
+                            var d = new Date($(this).next().val());
+
+                            if (d.getTime() > today.getTime()) {
+                                $(this).next().val('');
                                 ckout = false;
-                                
-                            } else if ($(this).next().val() != '') {
-                                
-                                var d = new Date($(this).next().val());
-                                
-                                if (d.getTime() > today.getTime()) {
-                                    $(this).next().val('');
-                                    ckout = false;
-                                } else if (d.getTime() > coTime) {
-                                    coTime = d.getTime();
-                                }
-                                
-                            }
-                        });
-                        
-                        
-                        if (ckout === true) {
-                            
-                            isCheckedOut = true;
-                            // check to update the final amount...
-                            var today = new Date();
-                            var todayStr = today.getFullYear() + '-' + today.getMonth() + '-' + today.getDate();
-                            var coDate = new Date(coTime);
-                            var coDateStr = coDate.getFullYear() + '-' + coDate.getMonth() + '-' + coDate.getDate();
-                            var roomChgBal = parseFloat($('#spnCfBalDue').data('bal'));
-                            var vFeeChgBal = parseFloat($('#spnCfBalDue').data('vfee'));
-                            roomChgBal -= vFeeChgBal;
-                            
-                            if (coDate.getTime() > today.getTime()) {
-                                return false;
-                            }
-                            
-                            if (todayStr !== coDateStr && action !== 'ref') {
-                                // update dialog with new co date.
-                                $diagbox.children().remove();
-                                $diagbox.dialog('option', 'buttons', {});
-                                $diagbox.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog"/>')
-                                        .append($('<div class="ui-autocomplete-loading" style="width:5em;">Loading</div>')));
-                                viewVisit(idGuest, idVisit, buttons, title, 'ref', visitSpan, coDate.toDateString());
-                                return;
-                            }
-                            
-                            // hide deposit payment
-                            $('.hhk-kdrow').hide('fade');
-                            
-                            // Show final payment checkbox
-                            $('.hhk-finalPayment').show('fade');
-                            
-                            var kdamt = parseFloat($('#kdPaid').data('amt'));
-                            if (isNaN(kdamt)) {
-                                kdamt = 0;
-                            }
-                            
-                            if (kdamt > 0) {
-                                $('#DepRefundAmount').val((0 - kdamt).toFixed(2).toString());
-                                $('.hhk-refundDeposit').show('fade');
-                            } else {
-                                $('#DepRefundAmount').val('');
-                                $('.hhk-refundDeposit').hide('fade');
+                            } else if (d.getTime() > coTime) {
+                                coTime = d.getTime();
                             }
 
+                        }
+                    });
 
-                            if (roomChgBal < 0) {
-                                $('#guestCredit').val(roomChgBal.toFixed(2).toString());
-                                $('#feesCharges').val('');
-                                $('.hhk-RoomCharge').hide();
-                                $('.hhk-GuestCredit').show();
-                            } else {
-                                $('#feesCharges').val(roomChgBal.toFixed(2).toString());
-                                $('#guestCredit').val('');
-                                $('.hhk-GuestCredit').hide();
-                                $('.hhk-RoomCharge').show();
-                            }
-                            
-                            $('input#cbFinalPayment').change();
-                            
-                        } else if (action === 'ref') {
 
+                    if (ckout === true) {
+
+                        isCheckedOut = true;
+                        // check to update the final amount...
+                        var today = new Date();
+                        var todayStr = today.getFullYear() + '-' + today.getMonth() + '-' + today.getDate();
+                        var coDate = new Date(coTime);
+                        var coDateStr = coDate.getFullYear() + '-' + coDate.getMonth() + '-' + coDate.getDate();
+                        var roomChgBal = parseFloat($('#spnCfBalDue').data('bal'));
+                        var vFeeChgBal = parseFloat($('#spnCfBalDue').data('vfee'));
+                        roomChgBal -= vFeeChgBal;
+
+                        if (coDate.getTime() > today.getTime()) {
+                            return false;
+                        }
+
+                        if (todayStr !== coDateStr && action !== 'ref') {
+                            // update dialog with new co date.
                             $diagbox.children().remove();
                             $diagbox.dialog('option', 'buttons', {});
                             $diagbox.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog"/>')
                                     .append($('<div class="ui-autocomplete-loading" style="width:5em;">Loading</div>')));
-                            viewVisit(idGuest, idVisit, buttons, title, '', visitSpan);
+                            viewVisit(idGuest, idVisit, buttons, title, 'ref', visitSpan, coDate.toDateString());
                             return;
-                            
+                        }
+
+                        // hide deposit payment
+                        $('.hhk-kdrow').hide('fade');
+
+                        // Show final payment checkbox
+                        $('.hhk-finalPayment').show('fade');
+
+                        var kdamt = parseFloat($('#kdPaid').data('amt'));
+                        if (isNaN(kdamt)) {
+                            kdamt = 0;
+                        }
+
+                        if (kdamt > 0) {
+                            $('#DepRefundAmount').val((0 - kdamt).toFixed(2).toString());
+                            $('.hhk-refundDeposit').show('fade');
                         } else {
-                            
-                            isCheckedOut = false;
-                            $('.hhk-finalPayment').hide('fade');
-                            $('.hhk-GuestCredit').hide();
-                            $('.hhk-RoomCharge').hide();
-                            $('#feesCharges').val('');
-                            $('#guestCredit').val('');
-                            $('.hhk-refundDeposit').hide('fade');
                             $('#DepRefundAmount').val('');
-                            $('input#cbFinalPayment').prop('checked', false);
-                            $('input#cbFinalPayment').change();
+                            $('.hhk-refundDeposit').hide('fade');
                         }
-                    });
-                    
-                    $('#tblStays').on('change', 'input.hhk-ckoutDate', function() {
-                        
-                        if ($(this).val() != '') {
-                            var cb = $(this).prev();
-                            cb.prop('checked', true);
+
+
+                        if (roomChgBal < 0) {
+                            $('#guestCredit').val(roomChgBal.toFixed(2).toString());
+                            $('#feesCharges').val('');
+                            $('.hhk-RoomCharge').hide();
+                            $('.hhk-GuestCredit').show();
                         } else {
-                            $(this).prev().prop('checked',false);
+                            $('#feesCharges').val(roomChgBal.toFixed(2).toString());
+                            $('#guestCredit').val('');
+                            $('.hhk-GuestCredit').hide();
+                            $('.hhk-RoomCharge').show();
                         }
-                        $('input.hhk-ckoutCB').change();
-                    });
-                    
-                    $('input.hhk-ckoutCB').change();
-                    
-                } else if ($('#cbFinalPayment').length > 0) {
-                    
-                    isCheckedOut = true;
-                    var roomChgBal = parseFloat($('#spnCfBalDue').data('bal'));
-                    var vFeeChgBal = parseFloat($('#spnCfBalDue').data('vfee'));
-                    roomChgBal -= vFeeChgBal;
-                    
-                    $('.hhk-finalPayment').show();
-                    var kdamt = parseFloat($('#kdPaid').data('amt'));
 
-                    if (isNaN(kdamt)) {
-                         $('#DepRefundAmount').val('');
-                        $('.hhk-refundDeposit').hide('fade');
-                    } else {
-                         $('#DepRefundAmount').val((0 - kdamt).toFixed(2).toString());
-                        $('.hhk-refundDeposit').show('fade');
-                    }
+                        $('input#cbFinalPayment').change();
 
-                    if (roomChgBal < 0) {
-                        $('#guestCredit').val(roomChgBal.toFixed(2).toString());
-                        $('#feesCharges').val('');
-                        $('.hhk-RoomCharge').hide();
-                        $('.hhk-GuestCredit').show();
+                    } else if (action === 'ref') {
+
+                        $diagbox.children().remove();
+                        $diagbox.dialog('option', 'buttons', {});
+                        $diagbox.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog"/>')
+                                .append($('<div class="ui-autocomplete-loading" style="width:5em;">Loading</div>')));
+                        viewVisit(idGuest, idVisit, buttons, title, '', visitSpan);
+                        return;
+
                     } else {
-                        $('#feesCharges').val(roomChgBal.toFixed(2).toString());
-                        $('#guestCredit').val('');
+
+                        isCheckedOut = false;
+                        $('.hhk-finalPayment').hide('fade');
                         $('.hhk-GuestCredit').hide();
-                        $('.hhk-RoomCharge').show();
-                    }
-                    
-                    $diagbox.css('background-color', '#F2F2F2');
-                }
-                
-                
-                setupPayments(data.resc, $('#selResource'), $('#selRateCategory'), idVisit, $('#pmtRcpt'));
-                
-                var $btnFapp = $('#btnFapp');
-                if ($btnFapp.length > 0) {
-                    $btnFapp.button();
-                    $btnFapp.click(function () {
-                        getIncomeDiag($btnFapp.data('rid'));
-                    });
-                }
-                
-                $('#guestAdd').click(function () {
-                    $('.hhk-addGuest').toggle();
-                });
-                
-                var lstXhr;
-                $('#txtInvSearch').keypress(function (event) {
-                    var mm = $(this).val();
-                    if (event.keyCode == '13') {
-                        
-                        if (mm == '' || !isNumber(parseInt(mm, 10))) {
-                            
-                            alert("Don't press the return key unless you enter an Id.");
-                            event.preventDefault();
-                            
-                        } else {
-                            
-                            $.getJSON("../house/roleSearch.php", {cmd: "filter", 'basis':'ba', letters:mm},
-                            function(data) {
-                                try {
-                                    data = data[0];
-                                } catch (err) {
-                                    alert("Parser error - " + err.message);
-                                    return;
-                                }
-                                if (data && data.error) {
-                                    if (data.gotopage) {
-                                        response();
-                                        window.open(data.gotopage);
-                                    }
-                                    data.value = data.error;
-                                }
-                                getInvoicee(data, idVisit);
-                            });
-                            
-                        }
+                        $('.hhk-RoomCharge').hide();
+                        $('#feesCharges').val('');
+                        $('#guestCredit').val('');
+                        $('.hhk-refundDeposit').hide('fade');
+                        $('#DepRefundAmount').val('');
+                        $('input#cbFinalPayment').prop('checked', false);
+                        $('input#cbFinalPayment').change();
                     }
                 });
-                createAutoComplete($('#txtInvSearch'), 3, {cmd: "filter", 'basis':'ba'}, function (item) { getInvoicee(item, idVisit); }, lstXhr, false);
-                createAutoComplete($('#txtAddGuest'), 3, {cmd: "role"}, function (item) { getMember(item, idVisit, visitSpan); }, lstXhr);
 
-                if ($('#selRateCategory').length > 0) {
-                    $('#selRateCategory').change(function () {
-                        if ($(this).val() == 'x') {
-                            $('.hhk-fxFixed').show('fade');
-                            $('.hhk-fxAdj').hide('fade');
-                        } else {
-                            $('.hhk-fxFixed').hide('fade');
-                            $('.hhk-fxAdj').show('fade');
-                        }
-                    });
-                    $('#selRateCategory').change();
+                $('#tblStays').on('change', 'input.hhk-ckoutDate', function() {
+
+                    if ($(this).val() != '') {
+                        var cb = $(this).prev();
+                        cb.prop('checked', true);
+                    } else {
+                        $(this).prev().prop('checked',false);
+                    }
+                    $('input.hhk-ckoutCB').change();
+                });
+
+                $('input.hhk-ckoutCB').change();
+
+            } else if ($('#cbFinalPayment').length > 0) {
+
+                isCheckedOut = true;
+                var roomChgBal = parseFloat($('#spnCfBalDue').data('bal'));
+                var vFeeChgBal = parseFloat($('#spnCfBalDue').data('vfee'));
+                roomChgBal -= vFeeChgBal;
+
+                $('.hhk-finalPayment').show();
+                var kdamt = parseFloat($('#kdPaid').data('amt'));
+
+                if (isNaN(kdamt)) {
+                     $('#DepRefundAmount').val('');
+                    $('.hhk-refundDeposit').hide('fade');
+                } else {
+                     $('#DepRefundAmount').val((0 - kdamt).toFixed(2).toString());
+                    $('.hhk-refundDeposit').show('fade');
                 }
 
-                $diagbox.dialog('option', 'buttons', buttons);
-                $diagbox.dialog('option', 'title', title);
-                $diagbox.dialog('option', 'width', ($( window ).width() * .8));
-                $diagbox.dialog('option', 'height', $( window ).height());
-                $diagbox.dialog('open');
+                if (roomChgBal < 0) {
+                    $('#guestCredit').val(roomChgBal.toFixed(2).toString());
+                    $('#feesCharges').val('');
+                    $('.hhk-RoomCharge').hide();
+                    $('.hhk-GuestCredit').show();
+                } else {
+                    $('#feesCharges').val(roomChgBal.toFixed(2).toString());
+                    $('#guestCredit').val('');
+                    $('.hhk-GuestCredit').hide();
+                    $('.hhk-RoomCharge').show();
+                }
+
+                $diagbox.css('background-color', '#F2F2F2');
             }
+
+
+            setupPayments(data.resc, $('#selResource'), $('#selRateCategory'), idVisit, $('#pmtRcpt'));
+
+            var $btnFapp = $('#btnFapp');
+            if ($btnFapp.length > 0) {
+                $btnFapp.button();
+                $btnFapp.click(function () {
+                    getIncomeDiag($btnFapp.data('rid'));
+                });
+            }
+
+            $('#guestAdd').click(function () {
+                $('.hhk-addGuest').toggle();
+            });
+
+            var lstXhr;
+            $('#txtInvSearch').keypress(function (event) {
+                var mm = $(this).val();
+                if (event.keyCode == '13') {
+
+                    if (mm == '' || !isNumber(parseInt(mm, 10))) {
+
+                        alert("Don't press the return key unless you enter an Id.");
+                        event.preventDefault();
+
+                    } else {
+
+                        $.getJSON("../house/roleSearch.php", {cmd: "filter", 'basis':'ba', letters:mm},
+                        function(data) {
+                            try {
+                                data = data[0];
+                            } catch (err) {
+                                alert("Parser error - " + err.message);
+                                return;
+                            }
+                            if (data && data.error) {
+                                if (data.gotopage) {
+                                    response();
+                                    window.open(data.gotopage);
+                                }
+                                data.value = data.error;
+                            }
+                            getInvoicee(data, idVisit);
+                        });
+
+                    }
+                }
+            });
+            createAutoComplete($('#txtInvSearch'), 3, {cmd: "filter", 'basis':'ba'}, function (item) { getInvoicee(item, idVisit); }, lstXhr, false);
+            createAutoComplete($('#txtAddGuest'), 3, {cmd: "role"}, function (item) { getMember(item, idVisit, visitSpan); }, lstXhr);
+
+            if ($('#selRateCategory').length > 0) {
+                $('#selRateCategory').change(function () {
+                    if ($(this).val() == 'x') {
+                        $('.hhk-fxFixed').show('fade');
+                        $('.hhk-fxAdj').hide('fade');
+                    } else {
+                        $('.hhk-fxFixed').hide('fade');
+                        $('.hhk-fxAdj').show('fade');
+                    }
+                });
+                $('#selRateCategory').change();
+            }
+
+            $diagbox.dialog('option', 'buttons', buttons);
+            $diagbox.dialog('option', 'title', title);
+            $diagbox.dialog('option', 'width', ($( window ).width() * .8));
+            $diagbox.dialog('option', 'height', $( window ).height());
+            $diagbox.dialog('open');
+            
         }
     });
 }

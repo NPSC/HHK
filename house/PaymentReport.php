@@ -50,7 +50,7 @@ $resultMessage = $alertMsg->createMarkup();
 
 $isGuestAdmin = ComponentAuthClass::is_Authorized('guestadmin');
 
-function doMarkupRow($fltrdFields, $r, $p, $isLocal, &$totalOrig, &$total, $hospital, &$tbl, &$sml, &$reportRows, $subsidyId) {
+function doMarkupRow($fltrdFields, $r, $p, $isLocal, &$totalOrig, &$total, $hospital, &$tbl, &$sml, &$reportRows, $subsidyId, $returnId) {
 
     $origAmt = $p['Payment_Amount'];
     $amt = 0;
@@ -158,13 +158,23 @@ function doMarkupRow($fltrdFields, $r, $p, $isLocal, &$totalOrig, &$total, $hosp
 
 
     if ($r['i']['Sold_To_Id'] == $subsidyId) {
+
         $payType = 'House Discount';
         $payorLast = $r['i']['Company'];
         $payorFirst = '';
+
     } else if ($r['i']['Bill_Agent'] == 'a') {
+
         $payorLast = $r['i']['Company'];
         $payorFirst = $r['i']['Last'] . ', ' . $r['i']['First'];
+
+    } else if ($r['i']['Sold_To_Id'] == $returnId) {
+
+        $payorLast = $r['i']['Company'];
+        $payorFirst = '';
+
     } else {
+        
         $payorLast = HTMLContainer::generateMarkup('a', $r['i']['Last'], array('href'=>'GuestEdit.php?id=' . $r['i']['Sold_To_Id'], 'title'=>'Click to go to the Guest Edit page.'));
         $payorFirst = $r['i']['First'];
     }
@@ -724,7 +734,7 @@ where lp.idPayment > 0
             }
 
 
-            doMarkupRow($fltrdFields, $r, $p, $local, $totalOrig, $total, $hospital, $tbl, $sml, $reportRows, $uS->subsidyId);
+            doMarkupRow($fltrdFields, $r, $p, $local, $totalOrig, $total, $hospital, $tbl, $sml, $reportRows, $uS->subsidyId, $uS->returnId);
 
         }
     }

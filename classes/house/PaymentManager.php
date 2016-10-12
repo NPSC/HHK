@@ -283,6 +283,11 @@ class PaymentManager {
 
         if ($this->hasInvoice()) {
 
+            if ($this->pmp->getTotalPayment() == 0 && $this->pmp->getBalWith() == ExcessPay::Refund) {
+                // Adjust total payment
+                $this->pmp->setTotalPayment(0 - $this->pmp->getRefundAmount());
+            }
+
             // Money back?
             if ($this->pmp->getTotalPayment() < 0 && $this->pmp->getBalWith() != ExcessPay::Refund) {
 
@@ -428,7 +433,6 @@ class PaymentManagerPayment {
     protected $overPayment;
     protected $guestCredit;
     protected $refundAmount;
-//    protected $refundPayType;
     protected $totalRoomChg;
 
     protected $payInvoices;

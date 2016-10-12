@@ -132,11 +132,20 @@ $menuMarkup = $wInit->generatePageMenu();
 
 $config = new Config_Lite(ciCFG_FILE);
 $labl = new Config_Lite(LABEL_FILE);
-
+$confError = '';
 
 if (isset($_POST["btnSiteCnf"])) {
 
     addslashesextended($_POST);
+
+    // Check subsidyId and returnId - cannot be the same
+    $subsidyId = intval(filter_var($_POST['financial']['RoomSubsidyId'], FILTER_SANITIZE_NUMBER_INT), 10);
+    $refundId = intval(filter_var($_POST['financial']['ReturnPayorId'], FILTER_SANITIZE_NUMBER_INT), 10);
+
+    if ($subsidyId !== 0 && $subsidyId == $refundId) {
+        $confError = "Financial:  Subsidy Id and Return Id cannot be the same.";
+    }
+
     SiteConfig::saveConfig($config, $_POST);
     SiteConfig::saveSysConfig($dbh, $_POST);
 
@@ -254,11 +263,13 @@ if (isset($_FILES['zipfile'])) {
 
 }
 
+// Delete old files
 if (isset($_POST['btnDelBak'])) {
     $tabIndex = 1;
     Patch::deleteBakFiles('../', array('.git'));
 }
 
+// Save SQL
 if (isset($_POST['btnSaveSQL'])) {
 
     $tabIndex = 1;
@@ -273,6 +284,7 @@ if (isset($_POST['btnSaveSQL'])) {
 
 }
 
+// Payment credentials
 if (isset($_POST['btnPay'])) {
     $tabIndex = 2;
     $ccResultMessage = SiteConfig::savePaymentCredentials($dbh, $_POST);
@@ -357,6 +369,16 @@ $getWebReplyMessage = $webAlert->createMarkup();
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript">
             $(document).ready(function() {
+                
+                $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
+
+                    $('#financialRoomSubsidyId, #financialReturnPayorId').removeClass('ui-state-error');
+
+                    if ($('#financialRoomSubsidyId').val() != 0 && $('#financialRoomSubsidyId').val() === $('#financialReturnPayorId').val()) {
+                        $('#financialRoomSubsidyId, #financialReturnPayorId').addClass('ui-state-error');
+                        alert('Subsidy Id must be different than the Return Payor Id');
+                    }
+                });
                 var tabIndex = '<?php echo $tabIndex; ?>';
                 var tbs = $('#tabs').tabs();
                 tbs.tabs("option", "active", tabIndex);
@@ -379,6 +401,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
                     <li><a href="#labels">View Labels & Prompts</a></li>
                 </ul>
                 <div id="config" class="ui-tabs-hide" >
+                    <div style="color:red;font-size:1.5em;"><?php echo $confError; ?></div>
                     <form method="post" name="form4" action="">
                         <?php echo $conf; ?>
                         <div style="float:right;margin-right:40px;"><input type="reset" name="btnreset" value="Reset" style="margin-right:5px;"/><input type="submit" name="btnSiteCnf" value="Save Site Configuration"/></div>

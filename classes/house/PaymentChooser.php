@@ -33,6 +33,8 @@ class PaymentChooser {
         // Payment Type
         if (isset($post['PayTypeSel'])) {
             $payType = filter_var($post['PayTypeSel'], FILTER_SANITIZE_STRING);
+        } else if (isset($post['rtnTypeSel'])) {
+            $payType = filter_var($post['rtnTypeSel'], FILTER_SANITIZE_STRING);
         } else {
             return NULL;
         }
@@ -213,7 +215,7 @@ class PaymentChooser {
             $defaultPayType = $uS->DefaultPayType;
         }
 
-        $unpaidInvoices = Invoice::load1stPartyUnpaidInvoices($dbh, $visitCharge->getIdVisit());
+        $unpaidInvoices = Invoice::load1stPartyUnpaidInvoices($dbh, $visitCharge->getIdVisit(), $uS->returnId);
 
         $showRoomFees = TRUE;
         if ($uS->RoomPriceModel == ItemPriceCode::None) {
@@ -276,7 +278,6 @@ class PaymentChooser {
                 $defaultPayType,
                 $payTypes,
                 readGenLookupsPDO($dbh, 'Charge_Cards'),
-                $labels,
                 $uS->ccgw,
                 $idGuest, $idRegistration, $prefTokenId, 'r'),
                 array('id'=>'divReturnPay', 'style'=>'float:left;display:none;'));
@@ -822,7 +823,7 @@ ORDER BY v.idVisit , v.Span;");
 
         // Payment Amount
         $payTbl->addBodyTr(HTMLTable::makeTd('Return Amount:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name'=>'txtRtnAmount', 'readonly'=>'readonly', 'style'=>'text-align:right;border:none;')), array('colspan'=>'2', 'style'=>'text-align:right;')));
+                .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name'=>'txtRtnAmount', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'text-align:right;border:none;')), array('colspan'=>'2', 'style'=>'text-align:right;')));
         // Payment Types
         $payTbl->addBodyTr(HTMLTable::makeTd('With:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($payTypes, $defaultPayType, FALSE), array('name'=>'rtnTypeSel', 'class'=>'hhk-feeskeys')), array('colspan'=>'2')));

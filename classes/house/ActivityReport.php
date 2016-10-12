@@ -7,7 +7,7 @@
  * @category  house
  * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2015 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
@@ -714,7 +714,7 @@ where lp.idPayment > 0
                 $payTypeTitle = $labels->getString('statement', 'houseSubsidy', 'House Discount');
                 $nameTd = $r['Company'];
 
-            } else if ($r['Bill_Agent'] == 'a') {
+            } else if ($r['Bill_Agent'] == 'a' || $r['Sold_To_Id'] == $uS->returnId) {
                 // 3rd Party
                 $nameTd = $r['Company'];
 

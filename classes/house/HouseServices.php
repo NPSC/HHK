@@ -549,12 +549,13 @@ class HouseServices {
         $paymentManager = new PaymentManager(PaymentChooser::readPostedPayment($dbh, $post));
 
         // Is it a return payment?
-        if ($idPayor == $uS->returnId) {
+        if ($idPayor == $uS->returnId && is_null($paymentManager->pmp) === FALSE) {
 
             // Here is where we look for the reimbursment pay type.
             $paymentManager->pmp->setPayType($paymentManager->pmp->getRtnPayType());
             $paymentManager->pmp->setCheckNumber($paymentManager->pmp->getRtnCheckNumber());
             $paymentManager->pmp->setTransferAcct($paymentManager->pmp->getRtnTransferAcct());
+            $paymentManager->pmp->setBalWith(ExcessPay::Refund);
         }
 
         // Make payment
@@ -730,12 +731,13 @@ class HouseServices {
 
         if (is_null($invoice) === FALSE && $invoice->getStatus() == InvoiceStatus::Unpaid) {
 
-            if ($invoice->getAmountToPay() > 0) {
+            if ($invoice->getAmountToPay() > 0 || $idPayor == $uS->returnId) {
                 // Make guest payment
                 $payResult = $paymentManager->makeHousePayment($dbh, $postbackPage, $paymentManager->pmp->getPayDate());
 
             } else if ($invoice->getAmountToPay() < 0) {
                 // Make guest return
+
                 $payResult = $paymentManager->makeHouseReturn($dbh, $paymentManager->pmp->getPayDate());
             }
         }

@@ -247,7 +247,7 @@ $verifyHospDate = $uS->VerifyHospDate;
 
                 <?php echo $stayingMarkup; ?>
             </div>
-<?php echo $pInfo; ?>
+            <?php echo $pInfo; ?>
             <form  action="CheckIn.php" method="post"  id="form1">
                 <div id="hospitalSection" style="font-size:.9em; float:left; display:none; min-width: 500px;"  class="ui-widget hhk-panel hhk-visitdialog"></div>
                 <div id="patientSearch" style="clear:left;float:left;font-size: .9em;padding-left:0;<?php echo $pmDisplay; ?>" class="hhk-visitdialog">
@@ -276,28 +276,29 @@ $verifyHospDate = $uS->VerifyHospDate;
                     <input type="button" value="Check In" id="btnChkin" style="display:none;" />
                 </div>
             </form>
-            <div id="ecSearch"  style="display:none;">
-                <table>
-                    <tr>
-                        <td>Search: </td><td><input type="text" id="txtRelSch" size="15" value="" title="Type at least 3 letters to invoke the search."/></td>
-                    </tr>
-                    <tr><td><input type="hidden" value="" id="hdnEcSchPrefix"/></td></tr>
-                </table>
-            </div>
-            <div id="patientPrompt" class="hhk-tdbox-noborder" style="display:none;">
-                <p>Will this patient be staying at the House for at least one night?</p>
-            </div>
-            <div id="psgDialog" class="hhk-tdbox hhk-visitdialog" style="display:none"></div>
-            <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none"></div>
-            <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
-            <div id="resDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
         </div>  <!-- div id="contentDiv"-->
+        <div id="ecSearch"  style="display:none;">
+            <table>
+                <tr>
+                    <td>Search: </td><td><input type="text" id="txtRelSch" size="15" value="" title="Type at least 3 letters to invoke the search."/></td>
+                </tr>
+                <tr><td><input type="hidden" value="" id="hdnEcSchPrefix"/></td></tr>
+            </table>
+        </div>
+        <div id="patientPrompt" class="hhk-tdbox-noborder" style="display:none;">
+            <p>Will this patient be staying at the House for at least one night?</p>
+        </div>
+        <div id="psgDialog" class="hhk-tdbox hhk-visitdialog" style="display:none"></div>
+        <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none"></div>
+        <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
+        <div id="resDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
         <form name="xform" id="xform" method="post"></form>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="js/rcheckin-min.js<?php echo JS_V; ?>"></script>
         <script tyhpe="text/javascript">
