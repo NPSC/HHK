@@ -263,6 +263,32 @@ class cofResult extends PaymentResult {
 
 class ReturnResult extends PaymentResult {
 
+    public function returnAccepted(PDO $dbh, \Session $uS, PaymentResponse $rtnResp) {
+
+        // set status
+        $this->status = PaymentResult::ACCEPTED;
+
+        if ($rtnResp->getIdPayment() > 0 && $this->idInvoice > 0) {
+            // payment-invoice
+            $payInvRs = new PaymentInvoiceRS();
+            $payInvRs->Amount->setNewVal($rtnResp->getAmount());
+            $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
+            $payInvRs->Payment_Id->setNewVal($rtnResp->getIdPayment());
+            EditRS::insert($dbh, $payInvRs);
+
+        }
+        $config = new Config_Lite(ciCFG_FILE);
+
+        // Make out receipt
+        $this->receiptMarkup = Receipt::createReturnMarkup($dbh, $rtnResp, $uS->resourceURL . $config->getString('financial', 'receiptLogoUrl', ''), $uS->siteName, $uS->sId);
+
+        // Email receipt
+        try {
+            $this->displayMessage .= $this->emailReceipt($dbh);
+        } catch (Exception $ex) {
+            $this->displayMessage .= "Email Failed, Error = " . $ex->getMessage();
+        }
+    }
 }
 
 
@@ -553,7 +579,7 @@ class PaymentSvcs {
     }
 
     /**
-     * Return an Amount directly from an invoice
+     * Return an Amount directly from an invoice.  No payment record needed.
      *
      * @param \PDO $dbh
      * @param Invoice $invoice
@@ -642,9 +668,11 @@ class PaymentSvcs {
                     $tokenResp = TokenTX::creditReturnToken($dbh, $invoice->getSoldToId(), $uS->ccgw, $returnRequest, NULL, $pmp->getPayNotes());
 
                     // Analyze the result
-                    $rtnResult = self::AnalyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getRtnIdToken());
+                    $rtnResult = self::AnalyzeCredReturnResult($dbh, $tokenResp, $invoice, $pmp->getRtnIdToken());
                     $rtnResult->setDisplayMessage('Refund to Credit Card.  ');
 
+                } else {
+                    throw new Hk_Exception_Payment('Return Failed.  Credit card token not found.  ');
                 }
 
                 break;
@@ -1072,6 +1100,42 @@ class PaymentSvcs {
 
         $dataArray['success'] = $reply;
         return $dataArray;
+    }
+
+    public static function AnalyzeCreditReturnResult(\PDO $dbh, PaymentResponse $rtnResp, Invoice $invoice, $idToken = 0) {
+
+        $uS = Session::getInstance();
+
+        $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $idToken);
+
+        switch ($rtnResp->response->getStatus()) {
+
+            case MpStatusValues::Approved:
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, 0 - $rtnResp->response->getAuthorizeAmount(), $uS->username);
+
+                $rtnResult->returnAccepted($dbh, $uS, $rtnResp);
+                $rtnResult->setDisplayMessage('Refund by Credit Card.  ');
+
+                break;
+
+            case MpStatusValues::Declined:
+
+                $rtnResult->setStatus(PaymentResult::DENIED);
+                $rtnResult->feePaymentRejected($dbh, $uS, $payResp);
+                $rtnResult->setDisplayMessage('** The Return is Declined. **  Message: ' . $rtnResp->response->getDisplayMessage());
+
+                break;
+
+            default:
+
+                $rtnResult->setStatus(PaymentResult::ERROR);
+                $rtnResult->feePaymentError($dbh, $uS);
+                $rtnResult->setDisplayMessage('** Return Invalid or Error **  Message: ' . $rtnResp->response->getMessage());
+        }
+
+        return $rtnResult;
     }
 
     public static function voidReturnFees(\PDO $dbh, $idPayment, $bid, $paymentDate = '') {
