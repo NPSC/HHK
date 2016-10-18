@@ -5,7 +5,7 @@
  * @category  house
  * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2015 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
@@ -156,6 +156,8 @@ class GuestMember extends RoleMember {
         if ($uS->InsuranceChooser && $this->get_idName() > 0) {
             $this->getInsurance($dbh, $this->get_idName());
         }
+
+        return $msg;
     }
 
 

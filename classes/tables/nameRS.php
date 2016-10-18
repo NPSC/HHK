@@ -118,7 +118,7 @@ class NameAddressRS extends TableRS {
     public $Country;  // varchar(45) NOT NULL DEFAULT '',
     public $Country_Code;  // varchar(10) NOT NULL DEFAULT '',
     public $County;  // varchar(45) NOT NULL DEFAULT '',
-    public $Full_Address;  // varchar(255) NOT NULL DEFAULT '',
+    public $Set_Incomplete;  // bit(1) NOT NULL DEFAULT b'0',
     public $Mail_Code;  // varchar(5) NOT NULL DEFAULT '',
     public $Last_Verified;  // datetime DEFAULT NULL,
     public $Bad_Address;  // varchar(15) NOT NULL DEFAULT '',
@@ -139,10 +139,10 @@ class NameAddressRS extends TableRS {
         $this->Country = new DB_Field("Country", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Country_Code = new DB_Field("Country_Code", "", new DbStrSanitizer(10));
         $this->County = new DB_Field("County", "", new DbStrSanitizer(45));
-        $this->Full_Address = new DB_Field("Full_Address", "", new DbStrSanitizer(255));
         $this->Mail_Code = new DB_Field("Mail_Code", "", new DbStrSanitizer(5));
         $this->Last_Verified = new DB_Field("Last_Verified", NULL, new DbDateSanitizer("Y-m-d H:i:s"));
         $this->Bad_Address = new DB_Field("Bad_Address", "", new DbStrSanitizer(15), TRUE, TRUE);
+        $this->Set_Incomplete = new DB_Field('Set_Incomplete', 0, new DbBitSanitizer(), TRUE, TRUE);
 
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(5));
         $this->Last_Updated = new DB_Field("Last_Updated", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);

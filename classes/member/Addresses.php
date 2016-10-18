@@ -217,6 +217,15 @@ class Address extends ContactPoint{
         }
     }
 
+    public function getSet_Incomplete($code) {
+
+        if ($this->rSs[$code]->Set_Incomplete->getStoredVal() == 1) {
+            return TRUE;
+        }
+
+        return FALSE;
+    }
+
 
     /**
      * Returns an array of column-name => field-value from the stored values of the iTable pointed at by code.
@@ -242,6 +251,8 @@ class Address extends ContactPoint{
             $data['Country_Code'] = $this->rSs[$code]->Country_Code->getStoredVal();
             $data['Postal_Code'] = $this->rSs[$code]->Postal_Code->getStoredVal();
             $data['County'] = $this->rSs[$code]->County->getStoredVal();
+            $data['Set_Incomplete'] = $this->rSs[$code]->Set_Incomplete->getStoredVal();
+
         } else {
 
             $data['Address_1'] = '';
@@ -251,6 +262,7 @@ class Address extends ContactPoint{
             $data['Country_Code'] = '';
             $data['Postal_Code'] = '';
             $data['County'] = '';
+            $data['Set_Incomplete'] = '';
         }
 
         return $data;
@@ -345,7 +357,7 @@ class Address extends ContactPoint{
             'data-hhkindex'=>$addrIndex
             );
 
-                                // Zip
+        // Zip
         $table->addBodyTr(HTMLTable::makeTd('Zip', array('class'=>'tdlabel', 'title'=>'Enter Zip Code'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->Postal_Code->getStoredVal(), $zipAttr))
                 );
@@ -491,23 +503,27 @@ class Address extends ContactPoint{
     }
 
 
-    public function savePanel(PDO $dbh, $purpose, $post, $user, $idPrefix = '') {
+    public function savePanel(PDO $dbh, $purpose, $post, $user, $idPrefix = '', $incomplete = FALSE) {
 
         $indx = $idPrefix.'adr';
         if (isset($post[$indx][$purpose[0]]) === FALSE) {
             return;
         }
 
-        return $this->saveAddress($dbh, $post[$idPrefix.'adr'][$purpose[0]], $purpose, $user);
+        return $this->saveAddress($dbh, $post[$idPrefix.'adr'][$purpose[0]], $purpose, $incomplete, $user);
     }
 
 
-    public function saveAddress(PDO $dbh, array $p, $purpose, $user) {
+    public function saveAddress(PDO $dbh, array $p, $purpose, $incomplete, $user) {
 
         $message = '';
         // Set some convenience vars.
         $a = $this->rSs[$purpose[0]];
         $id = $this->name->get_idName();
+
+        if ($incomplete) {
+            $a->Set_Incomplete->setNewVal(1);
+        }
 
         // Address exists in DB?
         if ($a->idName_Address->getStoredVal() > 0) {
@@ -528,40 +544,36 @@ class Address extends ContactPoint{
             } else {
 
                 // Update the address
-                $rtn = $this->loadPostData($a, $p);
+                $this->loadPostData($a, $p);
 
-                if ($rtn == '') {
-                    $numRows = EditRS::update($dbh, $a, array($a->idName_Address));
-                    if ($numRows > 0) {
-                        NameLog::writeUpdate($dbh, $a, $id, $user, $purpose[1]);
-                        $message .= 'Address Updated.  ';
-                    }
-                } else {
-                    $message .=  $rtn;
+                if ($p['city'] != '' && $p['state'] != '' && $p['zip'] != '' && $p['address1'] != '') {
+                    $a->Set_Incomplete->setNewVal(0);
+                }
+
+                $numRows = EditRS::update($dbh, $a, array($a->idName_Address));
+                if ($numRows > 0) {
+                    NameLog::writeUpdate($dbh, $a, $id, $user, $purpose[1]);
+                    $message .= 'Address Updated.  ';
                 }
             }
 
         } else {
             // Address does not exist inthe DB.
             // Did the user fill in this address panel?
-            if ($p['city'] != '' || $p['state'] != '' || $p['zip'] != '' || $p['address1'] != '') {
+            if ($p['city'] != '' || $p['state'] != '' || $p['zip'] != '' || $p['address1'] != '' || $incomplete) {
 
                 // Insert a new address
-                $rtn = $this->loadPostData($a, $p);
+                $this->loadPostData($a, $p);
 
-                if ($rtn == '') {
+                $a->idName->setNewVal($id);
+                $a->Purpose->setNewVal($purpose[0]);
+                $naId = EditRS::insert($dbh, $a);
 
-                    $a->idName->setNewVal($id);
-                    $a->Purpose->setNewVal($purpose[0]);
-                    $naId = EditRS::insert($dbh, $a);
-
-                    if ($naId > 0) {
-                        NameLog::writeInsert($dbh, $a, $id, $user, $purpose[1]);
-                        $message .= 'Address Inserted.  ';
-                    }
-                } else {
-                    $message .=  $rtn;
+                if ($naId > 0) {
+                    NameLog::writeInsert($dbh, $a, $id, $user, $purpose[1]);
+                    $message .= 'Address Inserted.  ';
                 }
+
             }
         }
 
@@ -571,7 +583,12 @@ class Address extends ContactPoint{
 
     }
 
-
+    /**
+     *
+     * @param iTableRS $a
+     * @param array $p
+     * @throws Hk_Exception_Runtime
+     */
     protected function loadPostData(iTableRS $a, array $p) {
 
         if (is_a($this->cleanAddress, 'CleanAddress') === FALSE) {

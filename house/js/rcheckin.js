@@ -108,7 +108,7 @@ function injectSlot(data) {
         var acHdr = $('<div id="' + slot + 'memHdr"/>')
                 .append($(data.txtHdr))
                 .append($('<span id="' + slot + 'memMsg" style="float:left;color: red; margin-right:20px;margin-left:20px;"></span>'))
-                .append($('<span id="' + slot + 'drpDown" class="ui-icon ui-icon-circle-triangle-s" style="float:right;"></span>')
+                .append($('<span id="' + slot + 'drpDown" class="ui-icon ui-icon-circle-triangle-s" title="Open / Close" style="float:right;"></span>')
                     .click(function() {
                         var disp = acDiv.css('display');
                         if (disp === 'none') {
@@ -120,6 +120,7 @@ function injectSlot(data) {
                         }
                 })
         );
+
         // Remove Button
         if (data.rmvbtn) {
             var removeBtn = $('<input type="button" id="' + slot + 'removeMem" data-slot="' + slot + '" value="Remove" style="float:right;margin-right:.3em;padding: 0.2em 1em;" />');
@@ -127,12 +128,14 @@ function injectSlot(data) {
             removeBtn.button();
             acHdr.append(removeBtn);
         }
+        
         acHdr.append($('<div style="clear:both;"/>'));
         acHdr.addClass(slot + 'Slot ui-widget-header ui-state-default ui-corner-top').css('padding', '2px').css('min-width', '840px');
         
         $('.' + slot + 'Slot').remove();
         var accdDiv = $('div#guestAccordion');
         
+        // patient relationship selector
         var sel = acDiv.find('select#' + slot + 'selPatRel');
         if (sel.val() === 'slf') {
             accdDiv.prepend(acDiv);
@@ -142,6 +145,22 @@ function injectSlot(data) {
             accdDiv.append(acHdr);
             accdDiv.append(acDiv);
         }
+        
+        // Incomplete checkbox
+        var incAddr = acDiv.find('input#' + slot + 'incomplete');
+        if (incAddr.length > 0) {
+            incAddr.change(function() {
+                if ($(this).prop('checked')) {
+                    $('#' + slot + 'naAddrIcon').show();
+                } else {
+                    $('#' + slot + 'naAddrIcon').hide();
+                }
+            });
+            incAddr.change();
+        } else {
+            $('#' + slot + 'naAddrIcon').hide();
+        }
+        
         // Guest date
         $('div#guestAccordion .ckdate').datepicker();
         

@@ -68,6 +68,11 @@ ul#topMenu li a{
 .hhk-schrm:hover {
     font-size:150%;
 }
+.hhk-icon-redLight {   
+    width: 16px;
+    height: 16px;
+    background: transparent url("../../images/RedLight.png") center center no-repeat;
+}
 .hhk-relations td {
     background-color: #ffffff;
 }

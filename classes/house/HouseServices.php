@@ -1730,21 +1730,22 @@ class HouseServices {
 
 
 
-        // Add new room to the registration?
-        $addRoom = FALSE;
-        if ($resv->getAddRoom() > 0) {
-            $addRoom = TRUE;
-        }
+//        // Add new room to the registration?
+//        $addRoom = FALSE;
+//        if ($resv->getAddRoom() > 0) {
+//            $addRoom = TRUE;
+//        }
 
-        $idVisit = 0;
+        $idVisit = -1;
         $stmt = $dbh->query("Select idVisit from visit where idReservation = " . $resv->getIdReservation() . " limit 1;");
 
         if ($stmt->rowCount() > 0) {
             $rows = $stmt->fetchAll(PDO::FETCH_NUM);
             $idVisit = $rows[0][0];
-        } else if ($addRoom) {
-            $idVisit = -1;  // flag to add a new visit to the registration.
         }
+// else if ($addRoom) {
+//            $idVisit = -1;  // flag to add a new visit to the registration.
+//        }
 
         // create visit
         $visit = new Visit($dbh, $reg->getIdRegistration(), $idVisit, $chkinDT, $chkoutDT, $resc, $uS->username);

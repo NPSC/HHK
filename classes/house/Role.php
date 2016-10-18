@@ -117,7 +117,7 @@ abstract class Role {
 
         // Incomplete address
         $attr = array('type'=>'checkbox', 'name'=>$idPrefix.'incomplete');
-        if ($this->incompleteAddress) {
+        if ($this->addr->getSet_Incomplete(Address_Purpose::Home)) {
             $attr['checked'] = 'checked';
         }
 
@@ -175,20 +175,27 @@ abstract class Role {
 
         // Name
         $message .= $this->getNameObj()->saveChanges($dbh, $post);
+        $incomplete = FALSE;
+
+        // Guest Incomplete address
+        if (isset($post[$idPrefix.'incomplete'])) {
+            $incomplete = TRUE;
+        }
 
         // street Address
         $this->getAddrObj()->cleanAddress = new CleanAddress($dbh);
         $cdArray = $this->getAddrObj()->get_CodeArray();
-        $message .= $this->getAddrObj()->savePanel($dbh, $cdArray[Address_Purpose::Home], $post, $uname, $idPrefix);
+        $message .= $this->getAddrObj()->savePanel($dbh, $cdArray[Address_Purpose::Home], $post, $uname, $idPrefix, $incomplete);
 
         // set preferred mail address
         $this->getNameObj()->verifyPreferredAddress($dbh, $this->getAddrObj(), $uname);
 
-        // Guest Incomplete address
-        if (isset($post[$idPrefix.'incomplete'])) {
-            $this->setIncompleteAddr(TRUE);
+        // Set incomplete address
+        if ($this->getAddrObj()->getSet_Incomplete(Address_Purpose::Home)) {
+            $this->incompleteAddress = TRUE;
+        } else {
+            $this->incompleteAddress = FALSE;
         }
-
 
         // Phone
         $message .= $this->getPhonesObj()->savePost($dbh, $post, $uname, $idPrefix);
