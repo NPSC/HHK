@@ -666,7 +666,6 @@ ORDER BY v.idVisit , v.Span;");
                                 , array('style'=>'text-align:right;')), array('class'=>'hhk-refundDeposit'));
                 }
             }
-
         }
 
         // MOA money on account - held amount.
@@ -676,7 +675,7 @@ ORDER BY v.idVisit , v.Span;");
                 . HTMLTable::makeTd(
                         HTMLContainer::generateMarkup('label', "Apply", array('for'=>'keyDepRx', 'style'=>'margin-left:5px;margin-right:3px;'))
                         .HTMLInput::generateMarkup('', array('name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-amt'=>$heldAmount))
-                    .HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '($' . $heldAmount . ')' : ''), array('id'=>'spnHeldAmt')))
+                    .HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '($' . number_format($heldAmount, 2) . ')' : ''), array('id'=>'spnHeldAmt')))
                 .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
         }
 

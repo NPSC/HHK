@@ -103,8 +103,12 @@ abstract class Role {
         return  $rtn;
     }
 
+    protected function createThinAddrMu($class = '', $useCopyIcon = TRUE, $includeCounty = FALSE) {
 
-    protected function createMailAddrMU($class = "", $useCopyIcon = TRUE, $includeCounty = FALSE) {
+
+    }
+
+    protected function createMailAddrMU($class = "", $useCopyIcon = TRUE, $includeCounty = FALSE, $thinMode = FALSE) {
 
         $idPrefix = $this->getNameObj()->getIdPrefix();
 
@@ -136,7 +140,7 @@ abstract class Role {
                 HTMLContainer::generateMarkup(
                     'fieldset',
                     HTMLContainer::generateMarkup('legend', 'Home Address'.$copy.$trash, array('style'=>'font-weight:bold;'))
-                    . $this->addr->createPanelMarkup(Address_Purpose::Home, $this->addr->get_recordSet(Address_Purpose::Home), FALSE, $idPrefix, $class, $includeCounty, $lastUpdated)
+                    . $this->addr->createPanelMarkup(Address_Purpose::Home, $this->addr->get_recordSet(Address_Purpose::Home), FALSE, $idPrefix, $class, $includeCounty, $lastUpdated, $thinMode)
                     . $incomplete,
                     array('class'=>'hhk-panel')),
                     array('style'=>'float:left; margin-right:3px; font-size:0.9em;'));
@@ -144,7 +148,7 @@ abstract class Role {
     }
 
     protected function createPhoneEmailMU($idPrefix = '') {
-                // Phone & email
+        // Phone & email
         $ul = HTMLContainer::generateMarkup('ul',
             HTMLContainer::generateMarkup('li',
                 HTMLContainer::generateMarkup('a', 'Summary', array('href'=>"#".$idPrefix. "prefTab", 'title'=>"Show the preferred phone and Email")))
@@ -159,6 +163,23 @@ abstract class Role {
                 .HTMLContainer::generateMarkup('div', $this->getEmailsObj()->createMarkup("", $idPrefix), array('id'=>$idPrefix.'emailTab', 'class'=>'ui-tabs-hide'));
 
         return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('div', $ul . $divs, array('id'=>$idPrefix.'phEmlTabs', 'style'=>'font-size:.9em;')), array('style'=>'float:left;margin-top:5px;margin-right:5px;', 'class'=>'hhk-tdbox'));
+    }
+
+    protected function createThinPhoneEmailMu($idPrefix = '') {
+
+        $tbl = new HTMLTable();
+
+        $tr = '';
+        $p = $this->getPhonesObj()->get_CodeArray();
+        $tr .= $this->getPhonesObj()->createPhoneMarkup($p[Phone_Purpose::Cell], '', $idPrefix, FALSE);
+
+        $e = $this->getEmailsObj()->get_CodeArray();
+        $tr .= $this->getEmailsObj()->createEmailMarkup($e[Email_Purpose::Home], '', $idPrefix, FALSE);
+
+        $tbl->addBodyTr($tr);
+
+        return $tbl->generateMarkup();
+
     }
 
 

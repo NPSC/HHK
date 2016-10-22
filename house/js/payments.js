@@ -502,11 +502,12 @@ function amtPaid() {
 
             } else {
                 p.hsDiscAmt.val('');
+                totPay = vfee + kdep + invAmt + feePay;
             }
 
-            //if (hsPay > 0) {
-                $('.hhk-HouseDiscount').show('fade');
-            //}
+
+            $('.hhk-HouseDiscount').show('fade');
+
 
         }
 

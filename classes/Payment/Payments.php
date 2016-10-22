@@ -449,6 +449,7 @@ class ReturnReply extends Payments {
 
         if (is_null($payRs)) {
 
+            // REturn amount
             $payRs = new PaymentRS();
 
             $payRs->Amount->setNewVal($vr->getAuthorizeAmount());
@@ -460,7 +461,8 @@ class ReturnReply extends Payments {
             $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
             $payRs->Result->setNewVal(MpStatusValues::Approved);
             $payRs->Attempt->setNewVal($attempts);
-            $payRs->Status_Code->setNewVal(PaymentStatusCode::Retrn);
+            $payRs->Is_Refund->setNewVal(1);
+            $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
             $payRs->Created_By->setNewVal($username);
 
         } else if ($payRs->idPayment->getStoredVal() > 0) {

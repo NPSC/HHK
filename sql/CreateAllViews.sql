@@ -1145,6 +1145,7 @@ select
     ifnull(`p`.`Status_Code`, 0) AS `Payment_Status`,
     ifnull(`g2`.`Description`, '') AS `Payment_Status_Title`,
     ifnull(`p`.`Payment_Date`, 0) AS `Payment_Date`,
+    ifnull(`p`.`Is_Refund`, 0) as `Is_Refund`,
     ifnull(`p`.`idPayor`, 0) AS `Payment_idPayor`,
     ifnull(`p`.`Updated_By`, '') as `Payment_Updated_By`,
     ifnull(`p`.`Created_By`, '') as `Payment_Created_By`,

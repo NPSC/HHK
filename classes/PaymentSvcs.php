@@ -668,7 +668,7 @@ class PaymentSvcs {
                     $tokenResp = TokenTX::creditReturnToken($dbh, $invoice->getSoldToId(), $uS->ccgw, $returnRequest, NULL, $pmp->getPayNotes());
 
                     // Analyze the result
-                    $rtnResult = self::AnalyzeCredReturnResult($dbh, $tokenResp, $invoice, $pmp->getRtnIdToken());
+                    $rtnResult = self::AnalyzeCreditReturnResult($dbh, $tokenResp, $invoice, $pmp->getRtnIdToken());
                     $rtnResult->setDisplayMessage('Refund to Credit Card.  ');
 
                 } else {
@@ -1155,7 +1155,7 @@ class PaymentSvcs {
         EditRS::loadRow($pments[0], $payRs);
 
         // Already voided, or otherwise ineligible
-        if ($payRs->Status_Code->getStoredVal() != PaymentStatusCode::Retrn) {
+        if ($payRs->Status_Code->getStoredVal() != PaymentStatusCode::Retrn && $payRs->Is_Refund->getStoredVal() === 0) {
             return array('warning' => 'Return is ineligable for Voiding.  ', 'bid' => $bid);
         }
 

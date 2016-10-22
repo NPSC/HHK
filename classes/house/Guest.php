@@ -126,7 +126,7 @@ class Guest extends Role {
      * @param PDO $dbh
      * @return array  Various pieces of markup and info
      */
-    public function createMarkup(PDO $dbh, $includeRemoveBtn = FALSE, $restrictRelChooser = TRUE) {
+    public function createMarkup(PDO $dbh, $includeRemoveBtn = FALSE, $restrictRelChooser = TRUE, $thinMode = FALSE) {
 
         $uS = Session::getInstance();
         $idPrefix = $this->getNameObj()->getIdPrefix();
@@ -137,11 +137,15 @@ class Guest extends Role {
 
         // Home Address
         if ($uS->GuestAddr) {
-            $mk1 .= $this->createMailAddrMU($idPrefix . 'hhk-addr-val', TRUE, $uS->county);
+            $mk1 .= $this->createMailAddrMU($idPrefix . 'hhk-addr-val', TRUE, $uS->county, $thinMode);
         }
 
         // Phone and email
-        $mk1 .= $this->createPhoneEmailMU($idPrefix);
+        if ($thinMode) {
+            $mk1 .= $this->createThinPhoneEmailMu($idPrefix);
+        } else {
+            $mk1 .= $this->createPhoneEmailMU($idPrefix);
+        }
 
         // Add Emergency contact
         $search = HTMLContainer::generateMarkup('span', '', array('name'=>$idPrefix, 'class'=>'hhk-guestSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'float: right; margin-left:.3em;cursor:pointer;'));

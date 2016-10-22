@@ -271,30 +271,33 @@ $(document).ready(function () {
             
             $('#form1').find("select").not(".ignrSave").each(function () {
                 
-                if ($(this).data('bfhstates')) {
-                    
-                    if ($(this).data('state') !== $(this).val()) {
-                        isDirty = true;
-                        return false;
-                    }
-                } else if ($(this).data('bfhcountries')) {
-                    
-                    if ($(this).data('country') !== $(this).val()) {
-                        isDirty = true;
-                        return false;
-                    }
-                } else {
-                    
-                    // gotta look at each option
-                    $(this).children('option').each(function () {
+                if ($(this).parents('div.ignrSave').length === 0) {
+                
+                    if ($(this).data('bfhstates')) {
 
-                        if (this.defaultSelected !== undefined && this.selected !== undefined) {
-                            if (this.defaultSelected !== this.selected) {
-                                var nm = this.selected;
-                                isDirty = true;
-                            }
+                        if ($(this).data('state') !== $(this).val()) {
+                            isDirty = true;
+                            return false;
                         }
-                    });
+                    } else if ($(this).data('bfhcountries')) {
+
+                        if ($(this).data('country') !== $(this).val()) {
+                            isDirty = true;
+                            return false;
+                        }
+                    } else {
+
+                        // gotta look at each option
+                        $(this).children('option').each(function () {
+
+                            if (this.defaultSelected !== undefined && this.selected !== undefined) {
+                                if (this.defaultSelected !== this.selected) {
+                                    var nm = this.selected;
+                                    isDirty = true;
+                                }
+                            }
+                        });
+                    }
                 }
             });
             

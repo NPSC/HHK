@@ -508,6 +508,7 @@ where
                             'Payment_Status'=>$p['Payment_Status'],
                             'Payment_Status_Title'=>$p['Payment_Status_Title'],
                             'Payment_Date'=>$p['Payment_Date'],
+                            'Is_Refund'=>$p['Is_Refund'],
                             'Payment_idPayor'=>$p['Payment_idPayor'],
                             'Payment_Updated_By'=>$p['Payment_Updated_By'],
                             'Payment_Created_By'=>$p['Payment_Created_By'],
@@ -834,6 +835,10 @@ where
             foreach ($r['p'] as $p) {
 
                 $amt = floatval($p['Payment_Amount']) - floatval($p['Payment_Balance']);
+
+                if ($p['Is_Refund'] > 0) {
+                    $amt = 0 - $amt;
+                }
                 $amtStyle = 'text-align:right;';
 
                 if ($p['Payment_Status'] != PaymentStatusCode::Paid) {
