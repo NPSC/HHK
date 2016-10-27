@@ -56,6 +56,11 @@ function doMarkupRow($fltrdFields, $r, $p, $isLocal, &$totalOrig, &$total, $hosp
     $amt = 0;
     $payDetail = '';
     $payStatus = $p['Payment_Status_Title'];
+
+    if ($p['Is_Refund'] > 0) {
+        $payStatus = 'Refund';
+    }
+   
     $payStatusAttr = array();
     $payType = $p['Payment_Method_Title'];
     $attr['style'] = 'text-align:right;';
@@ -128,18 +133,10 @@ function doMarkupRow($fltrdFields, $r, $p, $isLocal, &$totalOrig, &$total, $hosp
             } else {
                 $amt = $origAmt - $p['Payment_Balance'];
             }
-            // Turn off void return until I figure this out.
-            //$voidContent = HTMLInput::generateMarkup('Void', array('type'=>'button', 'id'=>'btnvr'.$r['idFees'], 'class'=>'hhk-voidRetPmt', 'data-fid'=>$r['idFees']));
 
             break;
 
         case PaymentStatusCode::Paid:
-
-            if ($p['idPayment_Method'] === PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d')) {
-                $voidContent = HTMLInput::generateMarkup('Void', array('type'=>'button', 'id'=>'btnvr'.$p['idPayment'], 'class'=>'hhk-voidPmt', 'data-fid'=>$p['idPayment']));
-            } else {
-                $voidContent = HTMLInput::generateMarkup('Return', array('type'=>'button', 'id'=>'btnvr'.$p['idPayment'], 'class'=>'hhk-returnPmt', 'data-fid'=>$p['idPayment']));
-            }
 
             $amt = $p['Payment_Amount'] - $p['Payment_Balance'];
 
@@ -174,7 +171,7 @@ function doMarkupRow($fltrdFields, $r, $p, $isLocal, &$totalOrig, &$total, $hosp
         $payorFirst = '';
 
     } else {
-        
+
         $payorLast = HTMLContainer::generateMarkup('a', $r['i']['Last'], array('href'=>'GuestEdit.php?id=' . $r['i']['Sold_To_Id'], 'title'=>'Click to go to the Guest Edit page.'));
         $payorFirst = $r['i']['First'];
     }

@@ -95,10 +95,16 @@ class Guest extends Role {
             $birth = HTMLContainer::generateMarkup('div', $this->name->birthDateMarkup(), array('style'=>'float:left;'));
         }
 
+        // Build name.
+        $tbl = new HTMLTable();
+        $tbl->addHeaderTr($this->name->createMarkupHdr());
+        $tbl->addHeaderTr($this->name->createMarkupRow($this->patientRelationshipCode, $lockRelChooser));
+
+
         $mk1 = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('fieldset',
                         HTMLContainer::generateMarkup('legend', $this->title.' Name', array('style'=>'font-weight:bold;'))
-                        . $this->name->createMarkupTable($this->patientRelationshipCode, $lockRelChooser)
+                        . $tbl->generateMarkup()
                         . $birth
                         . ($useAdditionalMarkup ? HTMLContainer::generateMarkup('div', $this->name->additionalNameMarkup(), array('style'=>'float:left;')) : '')
                         . HTMLContainer::generateMarkup('div', $this->name->getContactLastUpdatedMU(new DateTime ($this->name->get_lastUpdated()), 'Name'), array('style'=>'float:right;'))
@@ -120,13 +126,28 @@ class Guest extends Role {
         return $mk1;
     }
 
+    public function createThinMarkup(\PDO $dbh, $includeRemoveBtn = FALSE, $restrictRelChooser = TRUE) {
+
+        $uS = Session::getInstance();
+        $idPrefix = $this->getNameObj()->getIdPrefix();
+
+        $mk1 = $this->createNameMu(TRUE, $restrictRelChooser);
+
+        if ($uS->GuestAddr) {
+            $mk1 .= $this->createMailAddrMU($idPrefix . 'hhk-addr-val', TRUE, $uS->county, $thinMode);
+        }
+
+        $mk1 .= $this->createThinPhoneEmailMu($idPrefix);
+
+    }
+
 
     /**
      *
      * @param PDO $dbh
      * @return array  Various pieces of markup and info
      */
-    public function createMarkup(PDO $dbh, $includeRemoveBtn = FALSE, $restrictRelChooser = TRUE, $thinMode = FALSE) {
+    public function createMarkup(PDO $dbh, $includeRemoveBtn = FALSE, $restrictRelChooser = TRUE) {
 
         $uS = Session::getInstance();
         $idPrefix = $this->getNameObj()->getIdPrefix();
@@ -137,15 +158,12 @@ class Guest extends Role {
 
         // Home Address
         if ($uS->GuestAddr) {
-            $mk1 .= $this->createMailAddrMU($idPrefix . 'hhk-addr-val', TRUE, $uS->county, $thinMode);
+            $mk1 .= $this->createMailAddrMU($idPrefix . 'hhk-addr-val', TRUE, $uS->county);
         }
 
         // Phone and email
-        if ($thinMode) {
-            $mk1 .= $this->createThinPhoneEmailMu($idPrefix);
-        } else {
-            $mk1 .= $this->createPhoneEmailMU($idPrefix);
-        }
+        $mk1 .= $this->createPhoneEmailMU($idPrefix);
+
 
         // Add Emergency contact
         $search = HTMLContainer::generateMarkup('span', '', array('name'=>$idPrefix, 'class'=>'hhk-guestSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'float: right; margin-left:.3em;cursor:pointer;'));
@@ -160,7 +178,7 @@ class Guest extends Role {
 
         // Header info
 
-        // Check dates
+        // Stay dates
         $nowDT = new DateTime();
         $nowDT->setTime(0, 0, 0);
         $cidAttr = array('name'=>$idPrefix . 'gstDate', 'class'=>'ckdate gstchkindate', 'readonly'=>'readonly');

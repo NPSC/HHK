@@ -34,12 +34,10 @@ class OpenXML {
     public static function createExcel($user, $title = '', $subject = '', $description = '') {
 
         // Set cache method
-        $cacheMethod = PHPExcel_CachedObjectStorageFactory:: cache_to_discISAM;  //PHPExcel_CachedObjectStorageFactory:: cache_to_phpTemp;
+        $cacheMethod = PHPExcel_CachedObjectStorageFactory:: cache_to_phpTemp;
 
-        $cacheSettings = array(
-            'dir' => REL_BASE_DIR . '/patch'
-        );
-        //$cacheSettings = array('memoryCacheSize' => '80MB');
+        $cacheSettings = array('memoryCacheSize' => '80MB');
+
         if (!PHPExcel_Settings::setCacheStorageMethod($cacheMethod, $cacheSettings)) {
             throw new Hk_Exception_Runtime('Cache method unavailable.');
         }

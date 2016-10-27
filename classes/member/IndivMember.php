@@ -7,7 +7,7 @@
  * @category  member
  * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2015 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
@@ -43,10 +43,20 @@ class IndivMember extends Member {
         return MemDesignation::Individual;
     }
 
+    /**
+     * Replaces first name with nickname if present.
+     *
+     * @return string
+     */
     public function getMemberName() {
         return ($this->get_nickName() != '' ? $this->get_nickName() : $this->get_firstName()) . " " . $this->get_lastName();
     }
 
+    /**
+     * Get the first and last name.
+     *
+     * @return string
+     */
     public function getMemberFrmlName() {
         return $this->get_firstName() . " " . $this->get_lastName();
     }

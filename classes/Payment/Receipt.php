@@ -893,19 +893,18 @@ where
                     $amtAttrs['style'] = $amtStyle;
                 }
 
-                $payMethod = $p['Payment_Method_Title'];
+                $payStatus = $p['Payment_Status_Title'];
 
                 // Catch House returns/refunds
-                if ($r['i']['Sold_To_Id'] == $returnId) {
-                    $payMethod = 'House Refund ' . $payMethod;
-                    $addnl = '';
+                if ($r['i']['Sold_To_Id'] == $returnId && $p['Is_Refund'] > 0) {
+                    $payStatus = 'Return';
                 }
 
 
                 $payLines[] = HTMLTable::makeTd(($p['Payment_Date'] == '' ? '' : date('M j, Y', strtotime($p['Payment_Date']))), $attrs)
-                    .($addnl == '' ? HTMLTable::makeTd($payMethod, array_merge($attrs, array('colspan'=>'2'))) :
-                        (HTMLTable::makeTd($payMethod, $attrs) . HTMLTable::makeTd($addnl, $attrs)))
-                    .HTMLTable::makeTd($p['Payment_Status_Title'], $attrs)
+                    .($addnl == '' ? HTMLTable::makeTd($p['Payment_Method_Title'], array_merge($attrs, array('colspan'=>'2'))) :
+                        (HTMLTable::makeTd($p['Payment_Method_Title'], $attrs) . HTMLTable::makeTd($addnl, $attrs)))
+                    .HTMLTable::makeTd($payStatus, $attrs)
                     .HTMLTable::makeTd($amtMkup, $amtAttrs);
             }
 

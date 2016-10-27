@@ -2195,15 +2195,7 @@ class ReservationSvcs {
             $resv->findResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $resv->getNumberGuests(), array('room','rmtroom','part'), TRUE);
         }
 
-        $resources = $resv->getAvailableResources();
-        $fixedRateAmount = 0;
-
-        if (isset($resources[$idResc])) {
-            $resc = $resources[$idResc];
-            $fixedRateAmount = $resc->getRate($uS->guestLookups['Static_Room_Rate']);
-        }
-
-        $dataArray['msg'] = self::processReservation($dbh, $resv, $idResc, $fixedRateAmount, $resv->getNumberGuests(), $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $isAuthorized, $uS->username, $uS->InitResvStatus);
+        $dataArray['msg'] = self::processReservation($dbh, $resv, $idResc, $resv->getFixedRoomRate(), $resv->getNumberGuests(), $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $isAuthorized, $uS->username, $uS->InitResvStatus);
 
         // New resservation lists
         if ($uS->Reservation) {

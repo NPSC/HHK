@@ -657,7 +657,7 @@ where lp.idPayment > 0
                     }
 
                     if ($p['idPayment_Method'] == PaymentMethod::Charge) {
-                        $voidContent .= HTMLInput::generateMarkup('Void-Return', array('type'=>'button', 'id'=>'btnvr'.$p['idPayment'], 'class'=>'hhk-voidReturnPmt', 'data-pid'=>$p['idPayment'], 'data-amt'=>$amt));
+                        $voidContent .= HTMLInput::generateMarkup('Void-Return', array('type'=>'button', 'id'=>'btnvr'.$p['idPayment'], 'class'=>'hhk-voidRefundPmt', 'data-pid'=>$p['idPayment'], 'data-amt'=>$amt));
                     }
 
                     $voidContent .= HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-script pmtRecpt', 'id'=>'pmticon'.$p['idPayment'], 'data-pid'=>$p['idPayment'], 'style'=>'cursor:pointer;float:right;', 'title'=>'View Payment Receipt'));
@@ -675,7 +675,7 @@ where lp.idPayment > 0
                         $payTypeTotals[$p['idPayment_Method']]['amount'] += $amt;
 
 
-                        if ($p['idPayment_Method'] == PaymentMethod::Charge) {
+                        if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d')) {
                             $voidContent .= HTMLInput::generateMarkup('Void Refund', array('type'=>'button', 'id'=>'btnvr'.$p['idPayment'], 'class'=>'hhk-voidRefundPmt', 'data-pid'=>$p['idPayment'], 'data-amt'=>$amt));
                         }
 

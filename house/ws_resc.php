@@ -195,7 +195,7 @@ $("#rptfeediv").on("click", ".hhk-voidPmt", function() {
 });
 
 // Void-return button
-$("#rptfeediv").on("click", ".hhk-voidReturnPmt", function () {
+$("#rptfeediv").on("click", ".hhk-voidRefundPmt", function () {
     var btn = $(this);
     if (btn.val() != "Saving..." && confirm("Void this Return?")) {
         btn.val("Saving...");

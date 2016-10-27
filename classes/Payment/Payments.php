@@ -549,6 +549,7 @@ class ReturnReply extends Payments {
             $payRs->Result->setNewVal(MpStatusValues::Declined);
             $payRs->Created_By->setNewVal($username);
             $payRs->Attempt->setNewVal($attempts);
+            $payRs->Is_Refund->setNewVal(1);
             $payRs->Amount->setNewVal($vr->getAuthorizeAmount());
             $payRs->Balance->setNewVal($vr->getAuthorizeAmount());
             $payRs->Notes->setNewVal($pr->payNotes);
@@ -647,6 +648,11 @@ class VoidReturnReply extends Payments {
 
         return $pr;
 
+    }
+
+    protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $userName, PaymentRs $payRs = NULL, $attempts = 1) {
+        // todo:  Return a timed out message - only works on un-captured transactions.
+        return $pr;
     }
 
 }

@@ -17,6 +17,8 @@
  */
 abstract class RoleMember extends IndivMember {
 
+    protected $showBirthDate;
+
     protected abstract function getMyMemberType();
 
     protected function getLanguages(\PDO $dbh, $nid) {
@@ -48,6 +50,83 @@ abstract class RoleMember extends IndivMember {
         }
     }
 
+    public function createMarkupHdr() {
+
+        return
+            HTMLTable::makeTh('Id')
+            .HTMLTable::makeTh('Prefix')
+            . HTMLTable::makeTh('First Name')
+            . HTMLTable::makeTh('Middle')
+            . HTMLTable::makeTh('Last Name')
+            .HTMLTable::makeTh('Suffix')
+            . HTMLTable::makeTh('Nickname');
+
+    }
+
+    public function createMarkupRow($editable = TRUE) {
+
+        $uS = Session::getInstance();
+        $idPrefix = $this->getIdPrefix();
+
+        // Id
+        $tr = HTMLTable::makeTd(HTMLInput::generateMarkup(($this->nameRS->idName->getStoredVal() == 0 ? '' : $this->nameRS->idName->getStoredVal())
+                        , array('name'=>$idPrefix.'idName', 'size'=>'3', 'readonly'=>'readonly', 'class'=>'ignrSave', 'style'=>'border:none;')));
+
+        $attrs = array('data-prefix'=>$idPrefix);
+
+        if (!$editable) {
+            $attrs['readonly'] = 'readonly';
+            $attrs['style'] = 'border:none;';
+        }
+
+        // Prefix
+        $attrs['name'] = $idPrefix.'selPrefix';
+        $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
+                HTMLSelector::doOptionsMkup(
+                        $uS->nameLookups[GL_TableNames::NamePrefix],
+                        $this->nameRS->Name_Prefix->getstoredVal(), TRUE),
+                $attrs));
+
+        // First Name
+        $attrs['name'] = $idPrefix.'txtFirstName';
+        $attrs['class'] = 'hhk-firstname';
+        $attrs['autofocus'] = 'autofocus';
+        $tr .= HTMLTable::makeTd(
+                HTMLInput::generateMarkup($this->nameRS->Name_First->getstoredVal(),
+                        $attrs));
+
+        // Middle Name
+        $attrs['name'] = $idPrefix.'txtMiddleName';
+        $attrs['size'] = '5';
+        unset($attrs['class']);
+        unset($attrs['autofocus']);
+        $tr .= HTMLTable::makeTd(
+                HTMLInput::generateMarkup($this->nameRS->Name_Middle->getstoredVal(),
+                        $attrs));
+
+        // Last Name
+        $attrs['name'] = $idPrefix.'txtLastName';
+        $attrs['class'] = 'hhk-lastname';
+        unset($attrs['size']);
+        $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($this->nameRS->Name_Last->getstoredVal(),
+               $attrs));
+
+        // Suffix
+        $attrs['name'] = $idPrefix.'selSuffix';
+        unset($attrs['class']);
+        $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
+                HTMLSelector::doOptionsMkup($uS->nameLookups[GL_TableNames::NameSuffix],
+                        $this->nameRS->Name_Suffix->getstoredVal(), TRUE),
+               $attrs));
+
+        // Nick Name
+        $attrs['name'] = $idPrefix.'txtNickname';
+        $attrs['size'] = '10';
+        $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($this->nameRS->Name_Nickname->getstoredVal(),
+                $attrs));
+
+        return $tr;
+    }
 
     public function saveChanges(\PDO $dbh, array $post) {
 
@@ -140,6 +219,8 @@ class GuestMember extends RoleMember {
             $this->getInsurance($dbh, $nid);
         }
 
+        $this->showBirthDate = $uS->PatientBirthDate;
+
     }
 
 
@@ -166,54 +247,27 @@ class GuestMember extends RoleMember {
         return VolMemberType::Guest;
     }
 
-    public function createMarkupTable($patientRelationship = '', $lockRelChooser = FALSE, $hideRelChooser = FALSE) {
+    public function createMarkupHdr($hideRelChooser = FALSE) {
 
-        $uS = Session::getInstance();
-        $idPrefix = $this->getIdPrefix();
-
-        $table = new HTMLTable();
-        $table->addHeaderTr(
-                HTMLTable::makeTh('Id')
-                .HTMLTable::makeTh('Prefix')
-                . HTMLTable::makeTh('First Name')
-                . HTMLTable::makeTh('Middle')
-                . HTMLTable::makeTh('Last Name')
-                .HTMLTable::makeTh('Suffix')
-                . HTMLTable::makeTh('Nickname')
-                . ($hideRelChooser === FALSE ? HTMLTable::makeTh('Relationship to Patient') : '')
-                );
-
-        // Id
-        $tr = HTMLTable::makeTd(HTMLInput::generateMarkup(($this->nameRS->idName->getStoredVal() == 0 ? '' : $this->nameRS->idName->getStoredVal())
-                        , array('name'=>$idPrefix.'idName', 'size'=>'3', 'readonly'=>'readonly', 'class'=>'ignrSave', 'style'=>'border:none;')));
-
-        // Prefix
-        $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup(
-                        $uS->nameLookups[GL_TableNames::NamePrefix],
-                        $this->nameRS->Name_Prefix->getstoredVal(), TRUE),
-                array('name'=>$idPrefix.'selPrefix')));
-
-        // First Name
-        $tr .= HTMLTable::makeTd(
-                HTMLInput::generateMarkup($this->nameRS->Name_First->getstoredVal(), array('name'=>$idPrefix.'txtFirstName', 'data-prefix'=>$idPrefix, 'class'=>'hhk-firstname', 'autofocus'=>'autofocus')));
-
-        // Middle Name
-        $tr .= HTMLTable::makeTd(
-                HTMLInput::generateMarkup($this->nameRS->Name_Middle->getstoredVal(), array('name'=>$idPrefix.'txtMiddleName', 'size'=>'5')));
-
-        // Last Name
-        $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($this->nameRS->Name_Last->getstoredVal(), array('name'=>$idPrefix.'txtLastName', 'data-prefix'=>$idPrefix, 'class'=>'hhk-lastname')));
-
-        // Suffix
-        $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup($uS->nameLookups[GL_TableNames::NameSuffix],
-                        $this->nameRS->Name_Suffix->getstoredVal(), TRUE), array('name'=>$idPrefix.'selSuffix')));
-
-        // Nick Name
-        $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($this->nameRS->Name_Nickname->getstoredVal(), array('name'=>$idPrefix.'txtNickname', 'data-prefix'=>$idPrefix, 'size'=>'10')));
+        $tr = parent::createMarkupHdr();
 
         if ($hideRelChooser === FALSE) {
+            $tr .= HTMLTable::makeTh('Relationship to Patient');
+        }
+
+        return $tr;
+
+    }
+
+
+    public function createMarkupRow($patientRelationship = '', $lockRelChooser = FALSE, $hideRelChooser = FALSE) {
+
+        $tr = parent::createMarkupRow(TRUE);
+
+        if ($hideRelChooser === FALSE) {
+
+            $uS = Session::getInstance();
+            $idPrefix = $this->getIdPrefix();
             $parray = $uS->guestLookups[GL_TableNames::PatientRel];
 
             // freeze control if patient is self.
@@ -241,9 +295,7 @@ class GuestMember extends RoleMember {
                      HTMLSelector::doOptionsMkup($parray, $patientRelationship, $allowEmpty), array('name'=>$idPrefix . 'selPatRel', 'data-prefix'=>$idPrefix, 'class'=>'patientRelch')));
         }
 
-        $table->addBodyTr($tr);
-
-        return $table->generateMarkup();
+        return $tr;
     }
 
     public function additionalNameMarkup() {
@@ -313,6 +365,8 @@ class PatientMember extends RoleMember {
             $this->getInsurance($dbh, $nid);
         }
 
+        $this->showBirthDate = $uS->PatientBirthDate;
+
     }
 
 
@@ -325,98 +379,26 @@ class PatientMember extends RoleMember {
         return new Psg($dbh, 0, $this->get_idName());
     }
 
-    public function createMarkupTable($patientEditable = TRUE) {
+    public function createMarkupHdr() {
 
-        $uS = Session::getInstance();
-        $idPrefix = $this->getIdPrefix();
+        $tr = parent::createMarkupHdr();
 
-        $table = new HTMLTable();
-        $table->addHeaderTr(
-                HTMLTable::makeTh('Id')
-                . HTMLTable::makeTh('Prefix')
-                . HTMLTable::makeTh('First Name')
-                . HTMLTable::makeTh('Middle')
-                . HTMLTable::makeTh('Last Name')
-                .HTMLTable::makeTh('Suffix')
-                . HTMLTable::makeTh('Nickname')
-                .($uS->PatientBirthDate ? HTMLTable::makeTh('Birth Date') : '')
-                );
-
-
-        // Id
-        $tr = HTMLTable::makeTd(HTMLInput::generateMarkup(($this->nameRS->idName->getStoredVal() == 0 ? '' : $this->nameRS->idName->getStoredVal())
-                        , array('name'=>$idPrefix.'idName', 'size'=>'3', 'readonly'=>'readonly', 'style'=>'border:none;')));
-
-        // Prefix
-        if ($patientEditable) {
-            $tr .= HTMLContainer::generateMarkup('td', HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup($uS->nameLookups[GL_TableNames::NamePrefix],
-                        $this->nameRS->Name_Prefix->getstoredVal(), TRUE), array('name'=>$idPrefix.'selPrefix')));
-        } else if ($this->nameRS->Name_Prefix->getstoredVal() != '') {
-            $tr .= HTMLTable::makeTd($uS->nameLookups[GL_TableNames::NamePrefix][$this->nameRS->Name_Prefix->getstoredVal()][1]);
-        } else {
-            $tr .= HTMLTable::makeTd('');
+        if ($this->showBirthDate === TRUE) {
+            $tr .= HTMLTable::makeTh('Birth Date');
         }
 
-        $fnArray = array('name'=>$idPrefix.'txtFirstName', 'class'=>'hhk-firstname', 'data-prefix'=>$idPrefix);
-        // First Name
-        if (!$patientEditable) {
-            $fnArray['readonly'] = 'readonly';
-            $fnArray['style'] = 'border:none;';
-        }
+        return $tr;
 
-        $tr .= HTMLContainer::generateMarkup('td',
-                HTMLInput::generateMarkup($this->nameRS->Name_First->getStoredVal(), $fnArray));
+    }
 
+    public function createPatientRow($editable = TRUE) {
 
-        // Middle Name
-        $mnArray = array('name'=>$idPrefix.'txtMiddleName', 'size'=>'5');
-
-        if (!$patientEditable) {
-            $mnArray['readonly'] = 'readonly';
-            $mnArray['style'] = 'border:none;';
-        }
-
-        $tr .= HTMLTable::makeTd(
-                HTMLInput::generateMarkup($this->nameRS->Name_Middle->getstoredVal(), $mnArray));
-
-
-        // Last Name
-        $lnArray = array('name'=>$idPrefix.'txtLastName', 'class'=>'hhk-lastname', 'data-prefix'=>$idPrefix);
-
-        if (!$patientEditable) {
-            $lnArray['readonly'] = 'readonly';
-            $lnArray['style'] = 'border:none;';
-        }
-
-        $tr .= HTMLContainer::generateMarkup('td',
-                HTMLInput::generateMarkup($this->nameRS->Name_Last->getStoredVal(), $lnArray));
-
-
-        // Suffix
-        if ($patientEditable) {
-            $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup($uS->nameLookups[GL_TableNames::NameSuffix],
-                        $this->nameRS->Name_Suffix->getstoredVal(), TRUE), array('name'=>$idPrefix.'selSuffix')));
-        } else if ($this->nameRS->Name_Suffix->getstoredVal() != '') {
-            $tr .= HTMLTable::makeTd($uS->nameLookups[GL_TableNames::NameSuffix][$this->nameRS->Name_Suffix->getstoredVal()][1]);
-        } else {
-            $tr .= HTMLTable::makeTd('');
-        }
-
-        // Nick Name
-        $nnArray = array('name'=>$idPrefix.'txtNickname', 'size'=>'10');
-
-        if (!$patientEditable) {
-            $nnArray['readonly'] = 'readonly';
-            $nnArray['style'] = 'border:none;';
-        }
-        $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($this->nameRS->Name_Nickname->getstoredVal(), $nnArray));
-
-
+        $tr = $this->createMarkupRow($editable);
 
         // Birth Date
-        if ($uS->PatientBirthDate) {
+        if ($this->showBirthDate) {
+
+            $idPrefix = $this->getIdPrefix();
 
             $bd = '';
 
@@ -424,7 +406,7 @@ class PatientMember extends RoleMember {
                 $bd = date('M j, Y', strtotime($this->nameRS->BirthDate->getStoredVal()));
             }
 
-            if ($patientEditable) {
+            if ($editable) {
                 $tr .= HTMLTable::makeTd(
                     HTMLInput::generateMarkup($bd, array('name'=>$idPrefix.'txtBirthDate', 'class'=>'ckbdate')));
             } else {
@@ -432,10 +414,7 @@ class PatientMember extends RoleMember {
             }
         }
 
-
-
-        $table->addBodyTr($tr);
-        return $table->generateMarkup();
+        return $tr;
     }
 
     public function saveChanges(\PDO $dbh, array $post) {

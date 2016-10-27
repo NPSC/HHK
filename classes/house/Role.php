@@ -50,19 +50,17 @@ abstract class Role {
         $this->name = $this->factory($dbh, $id);
         $this->name->setIdPrefix($idPrefix);
 
-        $this->build($dbh, $this->name);
+        $this->build($dbh);
 
     }
 
     protected abstract function factory(PDO $dbh, $id);
 
 
-    protected function build(PDO $dbh, RoleMember $roleMember) {
+    protected function build(PDO $dbh) {
 
         // get session instance
         $uS = Session::getInstance();
-
-        $this->name = $roleMember;
 
 
         if ($this->name->getMemberDesignation() != MemDesignation::Individual) {
@@ -108,7 +106,7 @@ abstract class Role {
 
     }
 
-    protected function createMailAddrMU($class = "", $useCopyIcon = TRUE, $includeCounty = FALSE, $thinMode = FALSE) {
+    protected function createMailAddrMU($class = "", $useCopyIcon = TRUE, $includeCounty = FALSE) {
 
         $idPrefix = $this->getNameObj()->getIdPrefix();
 
@@ -140,7 +138,7 @@ abstract class Role {
                 HTMLContainer::generateMarkup(
                     'fieldset',
                     HTMLContainer::generateMarkup('legend', 'Home Address'.$copy.$trash, array('style'=>'font-weight:bold;'))
-                    . $this->addr->createPanelMarkup(Address_Purpose::Home, $this->addr->get_recordSet(Address_Purpose::Home), FALSE, $idPrefix, $class, $includeCounty, $lastUpdated, $thinMode)
+                    . $this->addr->createPanelMarkup(Address_Purpose::Home, $this->addr->get_recordSet(Address_Purpose::Home), FALSE, $idPrefix, $class, $includeCounty, $lastUpdated)
                     . $incomplete,
                     array('class'=>'hhk-panel')),
                     array('style'=>'float:left; margin-right:3px; font-size:0.9em;'));

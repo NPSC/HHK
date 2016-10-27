@@ -167,8 +167,7 @@ $resultMessage = $alertMsg->createMarkup();
             <h1><?php echo $wInit->pageHeading; ?> <span id="spnStatus" sytle="margin-left:50px; display:inline;"></span></h1>
             <p id="ajaxError"></p>
             <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
-            <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
-            </div>
+
             <div style="clear:both"></div>
             <form  action="Family.php" method="post"  id="form1">
                 <div id="hospitalSection" style="font-size: .9em; padding-left:0;margin-top:0; float:left; display:none;"  class="ui-widget hhk-panel hhk-visitdialog"></div>
@@ -180,8 +179,6 @@ $resultMessage = $alertMsg->createMarkup();
                 </div>
                 <div id="guestSearch" style="padding-left:0;padding-top:0; clear:left; float:left;">
                     <?php echo $mk1; ?>
-                </div>
-                <div id="resvGuest" style="float:left; font-size:.9em; display:none; clear:left;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 </div>
                 <div id="resvStatus" style="float:left; font-size:.9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 </div>
@@ -216,22 +213,10 @@ $resultMessage = $alertMsg->createMarkup();
             <div id="psgDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;"></div>
             <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
         </div>  <!-- div id="contentDiv"-->
-        <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo STATE_COUNTRY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="js/family.js<?php echo JS_V; ?>"></script>
-        <script type="text/javascript">
-    var pmtMkup = "<?php echo $paymentMarkup; ?>";
-    var rctMkup = '<?php echo $receiptMarkup; ?>';
-    var isCheckedOut = false;
-    var resvTitle = '<?php echo $labels->getString('guestEdit', 'reservationTitle', 'Reservation'); ?>';
-    var reserv = new Reserv();
-    reserv.idReserv = '<?php echo $idReserv; ?>';
-    reserv.gpnl = '<?php echo $guestid; ?>';
-    reserv.patAsGuest = '<?php echo $uS->PatientAsGuest; ?>';
-        </script>
     </body>
 </html>
