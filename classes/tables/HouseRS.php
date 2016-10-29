@@ -17,8 +17,8 @@ class House_LogRS extends TableRS {
     public $User_Name;  // VARCHAR(45) NOT NULL DEFAULT '' ,
     public $Id1;  // INT NOT NULL DEFAULT 0 ,
     public $Id2;  // INT NOT NULL DEFAULT 0 ,
-    public $Id3;  // INT NOT NULL DEFAULT 0 ,
-    public $Id4;  // INT NOT NULL DEFAULT 0 ,
+    public $Str1;  // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public $Str2;  // VARCHAR(45) NOT NULL DEFAULT '' 0 ,
     public $Log_Text;  // VARCHAR(5000) NOT NULL DEFAULT '' ,
     public $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now()
 
@@ -29,10 +29,10 @@ class House_LogRS extends TableRS {
         $this->User_Name = new DB_Field("User_Name", "", new DbStrSanitizer(45));
         $this->Id1 = new DB_Field("Id1", 0, new DbIntSanitizer());
         $this->Id2 = new DB_Field("Id2", 0, new DbIntSanitizer());
-        $this->Id3 = new DB_Field("Id3", 0, new DbIntSanitizer());
-        $this->Id4 = new DB_Field("Id4", 0, new DbIntSanitizer());
+        $this->Str1 = new DB_Field("Str1", "", new DbStrSanitizer(45));
+        $this->Str2 = new DB_Field("Str2", "", new DbStrSanitizer(45));
         $this->Log_Text = new DB_Field("Log_Text", "", new DbStrSanitizer(5000));
-        $this->Timestamp = new DB_Field("Timestamp", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
+        $this->Timestamp = new DB_Field("Timestamp", NULL, new DbDateSanitizer("Y-m-d H:i:s"));
 
         parent::__construct($TableName);
 
@@ -202,9 +202,6 @@ class ResourceRS extends TableRS {
     }
 }
 
-/**
- *
- */
 class ResourceUseRS extends TableRS {
 
     /**
@@ -285,6 +282,31 @@ class ResourceUseRS extends TableRS {
     }
 }
 
+class CleaningLogRS extends TableRS {
+
+    public $idResource;   // int(11) NOT NULL DEFAULT '0',
+    public $idRoom;   // int(11) NOT NULL DEFAULT '0',
+    public $Type;   // varchar(45) NOT NULL DEFAULT '',
+    public $Status;   // varchar(5) NOT NULL DEFAULT '',
+    public $Notes;
+    public $Last_Cleaned;   // datetime DEFAULT NULL,
+    public $Username;   // varchar(45) NOT NULL DEFAULT ''
+    public $Timestamp;   // TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+
+    function __construct($TableName = 'cleaning_log') {
+        $this->idResource = new DB_Field('idResource', 0, new DbIntSanitizer());
+        $this->idRoom = new DB_Field('idRoom', 0, new DbIntSanitizer());
+        $this->Type = new DB_Field('Type', '', new DbStrSanitizer(45));
+        $this->Status = new DB_Field('Status', '', new DbStrSanitizer(5));
+        $this->Notes = new DB_Field('Notes', '', new DbStrSanitizer(2000));
+        $this->Username = new DB_Field('Username', '', new DbStrSanitizer(45));
+        $this->Last_Cleaned = new DB_Field('Last_Cleaned', NULL, new DbDateSanitizer("Y-m-d H:i:s"));
+        $this->Timestamp = new DB_Field('Timestamp', NULL, new DbDateSanitizer("Y-m-d H:i:s"));
+
+        // This line stays at the end of the function.
+        parent::__construct($TableName);
+    }
+}
 
 class WaitlistRS extends TableRS {
 
@@ -327,8 +349,8 @@ class WaitlistRS extends TableRS {
         $this->Contact_Name = new DB_Field("Contact_Name", "", new DbStrSanitizer(100), TRUE, TRUE);
         $this->Phone = new DB_Field("Phone", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Email = new DB_Field("Email", "", new DbStrSanitizer(100), TRUE, TRUE);
-        $this->Number_Adults = new DB_Field("Number_Adults", 0, new DbIntSanitizer());
-        $this->Number_Children = new DB_Field("Number_Children", 0, new DbIntSanitizer());
+        $this->Number_Adults = new DB_Field("Number_Adults", 0, new DbIntSanitizer(), TRUE, TRUE);
+        $this->Number_Children = new DB_Field("Number_Children", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Arrival_Date = new DB_Field("Arrival_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->Expected_Duration = new DB_Field("Expected_Duration", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(45), TRUE, TRUE);

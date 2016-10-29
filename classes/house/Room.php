@@ -245,8 +245,8 @@ class Room {
 
     public function deleteRoom(PDO $dbh, $username) {
 
-        $stmt = $dbh->prepare("delete from resource_room where idRoom = :id");
-        $stmt->execute(array(':id' => $this->getIdRoom()));
+        $stmt1 = $dbh->prepare("delete from resource_room where idRoom = :id");
+        $stmt1->execute(array(':id' => $this->getIdRoom()));
 
         $stmt = $dbh->prepare("delete from attribute_entity where idEntity = :id and Type = :tpe");
         $stmt->execute(array(':id' => $this->getIdRoom(), ':tpe' => Attribute_Types::Room));
@@ -263,7 +263,7 @@ class Room {
     }
 
 
-    public function saveRoom(\PDO $dbh, $username) {
+    public function saveRoom(\PDO $dbh, $username, $cleaning = FALSE, $cleanType = '') {
 
         $this->roomRS->Last_Updated->setNewVal(date("y-m-d H:i:s"));
         $this->roomRS->Updated_By->setNewVal($username);
@@ -274,8 +274,12 @@ class Room {
 
             if ($num > 0) {
 
-                $logText = HouseLog::getUpdateText($this->roomRS);
-                HouseLog::logRoom($dbh, $this->roomRS->idRoom->getStoredVal(), $logText, "update", $username);
+                if ($cleaning) {
+                    RoomLog::logCleaning($dbh, 0, $this->roomRS->idRoom->getStoredVal(), $cleanType, $this->roomRS->Status->getNewVal(), $this->roomRS->Notes->getNewVal(), $this->roomRS->Last_Cleaned->getNewVal(), $username);
+                } else {
+                    $logText = RoomLog::getUpdateText($this->roomRS);
+                    RoomLog::logRoom($dbh, $this->roomRS->idRoom->getStoredVal(), $logText, "update", $username);
+                }
 
             }
         } else {
@@ -284,10 +288,11 @@ class Room {
 
             if ($idRoom > 0) {
 
-                $logText = HouseLog::getInsertText($this->roomRS);
-                HouseLog::logRoom($dbh, $idRoom, $logText, "insert", $username);
+                $logText = RoomLog::getInsertText($this->roomRS);
+                RoomLog::logRoom($dbh, $idRoom, $logText, "insert", $username);
 
                 $this->roomRS->idRoom->setNewVal($idRoom);
+                $this->idRoom = $idRoom;
 
             }
         }

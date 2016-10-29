@@ -60,7 +60,7 @@ require (CLASSES . 'Purchase/RoomRate.php');
 require (CLASSES . 'FinAssistance.php');
 require (CLASSES . 'US_Holidays.php');
 
-require (HOUSE . 'HouseLog.php');
+require (HOUSE . 'RoomLog.php');
 
 $wInit = new webInit(WebPageCode::Service);
 

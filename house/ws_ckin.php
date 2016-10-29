@@ -70,7 +70,7 @@ require (HOUSE . 'Constraint.php');
 require (HOUSE . 'Doctor.php');
 require (HOUSE . 'Guest.php');
 require (HOUSE . 'Hospital.php');
-require (HOUSE . 'HouseLog.php');
+
 require (HOUSE . 'HouseServices.php');
 require (HOUSE . 'Patient.php');
 require (HOUSE . 'PaymentManager.php');
@@ -86,6 +86,7 @@ require (HOUSE . 'ReservationSvcs.php');
 require (HOUSE . 'RegisterForm.php');
 require (HOUSE . 'RegistrationForm.php');
 require (HOUSE . 'VisitLog.php');
+require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Vehicle.php');
 require (HOUSE . 'Visit.php');
 require (HOUSE . "visitViewer.php");

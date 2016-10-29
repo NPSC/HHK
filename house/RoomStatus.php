@@ -20,11 +20,12 @@ require (DB_TABLES . 'ReservationRS.php');
 require (DB_TABLES . 'AttributeRS.php');
 
 require (CLASSES . 'Notes.php');
+require (CLASSES . 'TableLog.php');
 require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');
 require (HOUSE . 'RoleMember.php');
 require (HOUSE . 'Role.php');
-require (HOUSE . 'HouseLog.php');
+require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Room.php');
 require (HOUSE . 'Resource.php');
 require (HOUSE . 'ResourceView.php');
@@ -127,6 +128,7 @@ if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
         foreach ($delRooms as $key => $p) {
 
             $idRoom = intval(filter_var($key, FILTER_SANITIZE_NUMBER_INT), 10);
+
             if ($idRoom == 0) {
                 continue;
             }
@@ -135,11 +137,11 @@ if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
                 $room = $rooms[$idRoom];
             } else {
                 $room = new Room($dbh, $idRoom);
-                $rooms[$idRoom] = $room;
+//                $rooms[$idRoom] = $room;
             }
 
             $room->setNotes('');
-            $room->saveRoom($dbh, $uS->username);
+            $room->saveRoom($dbh, $uS->username, TRUE);
         }
     }
 
@@ -171,7 +173,7 @@ if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
 
 
     foreach ($rooms as $r) {
-        $r->saveRoom($dbh, $uS->username);
+        $r->saveRoom($dbh, $uS->username, TRUE);
     }
 }
 
@@ -229,19 +231,19 @@ $cleanToday = ResourceView::roomsClean($dbh, $rows, 'tblcln', $uS->guestLookups[
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript">
-            $(document).ready(function() {
-                "use strict";
-    $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
-                var cTab = parseInt('<?php echo $currentTab; ?>', 10);
-                $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrint, #btnSubmitTable').button();
+    $(document).ready(function() {
+        "use strict";
+        $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
+        var cTab = parseInt('<?php echo $currentTab; ?>', 10);
+        $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrint, #btnSubmitTable').button();
 
-                $('#mainTabs').tabs();
-                $('#mainTabs').tabs("option", "active", cTab);
-                $('#tblFac').dataTable({"iDisplayLength": 50, "dom": '<"top"if>rt<"bottom"lp><"clear">', "order": [[0, "asc"]]});
-                $('#btnPrint').click(function () {
-                    window.open('ShowHsKpg.php', '_blank');
-                });
-            });
+        $('#mainTabs').tabs();
+        $('#mainTabs').tabs("option", "active", cTab);
+        $('#tblFac').dataTable({"iDisplayLength": 50, "dom": '<"top"if>rt<"bottom"lp><"clear">', "order": [[0, "asc"]]});
+        $('#btnPrint').click(function () {
+            window.open('ShowHsKpg.php', '_blank');
+        });
+    });
         </script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
@@ -258,6 +260,7 @@ $cleanToday = ResourceView::roomsClean($dbh, $rows, 'tblcln', $uS->guestLookups[
                     <li><a href="#clnToday">Rooms to be Cleaned</a></li>
                     <li><a href="#ckin">Guests Checking In</a></li>
                     <li><a href="#showAll">Show All Rooms</a></li>
+                    <li><a href="#showLog">Show Room Log</a></li>
                 </ul>
                 <div id="clnToday" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                     <?php echo $cleanToday; ?>
@@ -276,6 +279,9 @@ $cleanToday = ResourceView::roomsClean($dbh, $rows, 'tblcln', $uS->guestLookups[
                         <input type="reset" name="btnReset2" value="Reset" id="btnReset2" />
                         <input type="submit" name="btnSubmitTable" value="Save" id="btnSubmitTable" />
                     </div>
+                </div>
+                <div id="showLog">
+                    To be implemented...
                 </div>
             </div>
             </form>

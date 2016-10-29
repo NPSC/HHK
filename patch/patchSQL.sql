@@ -8,7 +8,11 @@ drop table if exists room_attribute;
 drop table if exists name_student;
 drop table if exists ssg;
 drop table if exists purchase_order;
+drop table if exists room_log;
 
+ALTER TABLE `house_log` 
+    CHANGE COLUMN `Id3` `Str1` VARCHAR(45) NOT NULL DEFAULT '' ,
+    CHANGE COLUMN `Id4` `Str2` VARCHAR(45) NOT NULL DEFAULT '' ;
 
 ALTER TABLE `name_address` 
     DROP COLUMN `Fax`,

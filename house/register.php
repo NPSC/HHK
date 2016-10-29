@@ -46,6 +46,7 @@ require (HOUSE . 'Resource.php');
 require (HOUSE . 'ResourceView.php');
 require (HOUSE . 'visitViewer.php');
 require (HOUSE . 'VisitLog.php');
+require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'RoomReport.php');
 
 require (CLASSES . 'CreateMarkupFromDB.php');

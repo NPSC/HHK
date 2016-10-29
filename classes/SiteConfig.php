@@ -398,7 +398,7 @@ class SiteConfig {
         return $tbl->generateMarkup() . $sctbl->generateMarkup();
     }
 
-    public static function saveConfig(Config_Lite $config, array $post) {
+    public static function saveConfig(\PDO $dbh, Config_Lite $config, array $post, $userName = '') {
 
         foreach ($post as $secName => $secArray) {
 
@@ -417,7 +417,13 @@ class SiteConfig {
                             }
                         }
 
+                        // log changes
+                        if ($config->getString($secName, $itemName, '') != $val) {
+                            HouseLog::logSiteConfig($dbh, $secName . ':' . $itemName, $val, $userName);
+                        }
+
                         $config->set($secName, $itemName, $val);
+
                     }
                 }
             }
@@ -553,16 +559,31 @@ class SiteConfig {
         $uS = Session::getInstance();
         $msg = '';
 
-        $query = "";
+        $glRs = new GenLookupsRS();
+        $glRs->Table_Name->setStoredVal('Pay_Type');
+        $glRs->Code->setStoredVal(PayType::Charge);
+        $rows = EditRS::select($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
 
-        if ($uS->ccgw != '') {
-            $query = "Update gen_lookups set Substitute = '" . PaymentMethod::Charge . "' where Table_Name = 'Pay_Type' and Code = '" . PayType::Charge . "'";
-        } else {
-            $query = "Update gen_lookups set Substitute = '" . PaymentMethod::ChgAsCash . "'  where Table_Name = 'Pay_Type' and Code = '" . PayType::Charge . "'";
+        if (count($rows) > 0) {
+            $glRs = new GenLookupsRS();
+            EditRS::loadRow($rows[0], $glRs);
+
+
+            if ($uS->ccgw != '') {
+                $glRs->Substitute->setNewVal(PaymentMethod::Charge);
+            } else {
+                $glRs->Substitute->setNewVal(PaymentMethod::ChgAsCash);
+            }
+
+
+            $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+
+            if ($ctr > 0) {
+                $logText = HouseLog::getUpdateText($glRs);
+                HouseLog::logGenLookups($dbh, 'Pay_Type', PayType::Charge, $logText, "update", $uS->username);
+                $msg = "Pay_Type Charge is updated.  ";
+            }
         }
-
-
-        $msg = $dbh->exec($query);
 
         return $msg;
     }

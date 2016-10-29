@@ -142,6 +142,21 @@ CREATE TABLE if not exists `cc_hosted_gateway` (
 
 
 
+-- -----------------------------------------------------
+-- Table `cleaning_log`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `cleaning_log` (
+  `idResource` int(11) NOT NULL DEFAULT '0',
+  `idRoom` int(11) NOT NULL DEFAULT '0',
+  `Type` varchar(45) NOT NULL DEFAULT '',
+  `Status` varchar(5) NOT NULL DEFAULT '',
+  `Notes` TEXT NULL ,
+  `Last_Cleaned` datetime DEFAULT NULL,
+  `Username` varchar(45) NOT NULL DEFAULT '',
+  `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=MyISAM ;
+
+
 
 -- -----------------------------------------------------
 -- Table `constraints`
@@ -1053,7 +1068,7 @@ CREATE TABLE if not exists `name_language` (
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idName`,`Language_Id`)
-);
+) ENGINE=InnoDB;
 
 
 

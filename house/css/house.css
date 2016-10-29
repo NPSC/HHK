@@ -8,7 +8,7 @@ body {
 .testbody {
     background-color: #FFCC9F;
 }
-#submitButtons {
+#submitButtons, .submitButtons {
     position: fixed;
     right: 30px;
     bottom: 20px;
@@ -17,7 +17,7 @@ body {
     border: 1px solid teal;
 }
 #submitButtons:hover { background-color: white; }
-.submitButtons {
+/*.submitButtons {
     position: static;
     float:right;
     margin-top:.3em;
@@ -25,7 +25,7 @@ body {
     z-index: 90000;
     border: 1px solid teal;
     }
-.submitButtons:hover { background-color: yellow; }
+.submitButtons:hover { background-color: yellow; }*/
 #divAlertMsg {
     z-index:9;
 }

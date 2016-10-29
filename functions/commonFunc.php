@@ -474,7 +474,10 @@ function saveGenLk(PDO $dbh, $tblName, array $desc, array $subt, $del, $type = a
         foreach ($desc as $k => $r) {
 
             $code = trim(filter_var($k, FILTER_SANITIZE_STRING));
-            if ($code == '') continue;
+
+            if ($code == '') {
+                continue;
+            }
 
             $glRs = new GenLookupsRS();
             $glRs->Table_Name->setStoredVal($tblName);
@@ -483,11 +486,16 @@ function saveGenLk(PDO $dbh, $tblName, array $desc, array $subt, $del, $type = a
             $rates = EditRS::select($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
 
             if (count($rates) == 1) {
+
+                $uS = Session::getInstance();
+
                 EditRS::loadRow($rates[0], $glRs);
 
                 if ($del != NULL && isset($del[$code])) {
                     // delete
                     EditRS::delete($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+                    $logText = HouseLog::getDeleteText($glRs, $tblName . $code);
+                    HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'delete', $uS->username);
 
                 } else {
                     // update
@@ -501,7 +509,12 @@ function saveGenLk(PDO $dbh, $tblName, array $desc, array $subt, $del, $type = a
                         $glRs->Type->setNewVal(filter_var($type[$code], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
                     }
 
-                    EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+                    $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+
+                    if ($ctr > 0) {
+                        $logText = HouseLog::getUpdateText($glRs, $tblName . $code);
+                        HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'update', $uS->username);
+                    }
                 }
             }
         }
@@ -529,6 +542,8 @@ function replaceGenLk(PDO $dbh, $tblName, array $desc, array $subt, $del, $repla
             $rates = EditRS::select($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
 
             if (count($rates) == 1) {
+                $uS = Session::getInstance();
+
                 EditRS::loadRow($rates[0], $glRs);
 
                 if ($del != NULL && isset($del[$code])) {
@@ -544,6 +559,8 @@ function replaceGenLk(PDO $dbh, $tblName, array $desc, array $subt, $del, $repla
                     }
 
                     EditRS::delete($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+                    $logText = HouseLog::getDeleteText($glRs, $tblName . $code);
+                    HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'delete', $uS->username);
 
                 } else {
                     // update
@@ -556,7 +573,12 @@ function replaceGenLk(PDO $dbh, $tblName, array $desc, array $subt, $del, $repla
                         $glRs->Substitute->setNewVal(filter_var($subt[$code], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
                     }
 
-                    EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+                    $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+
+                    if ($ctr > 0) {
+                        $logText = HouseLog::getUpdateText($glRs, $tblName . $code);
+                        HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'update', $uS->username);
+                    }
                 }
             }
         }

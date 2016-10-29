@@ -12,6 +12,8 @@
 require ("AdminIncludes.php");
 
 require CLASSES . 'SiteLog.php';
+require CLASSES . 'TableLog.php';
+require CLASSES . 'HouseLog.php';
 require CLASSES . 'CreateMarkupFromDB.php';
 require CLASSES . 'SiteConfig.php';
 require CLASSES . 'Patch.php';
@@ -146,7 +148,7 @@ if (isset($_POST["btnSiteCnf"])) {
         $confError = "Financial:  Subsidy Id and Return Id cannot be the same.";
     }
 
-    SiteConfig::saveConfig($config, $_POST);
+    SiteConfig::saveConfig($dbh, $config, $_POST, $uS->username);
     SiteConfig::saveSysConfig($dbh, $_POST);
 
     $config = Login::initializeSession(ciCFG_FILE);
@@ -154,7 +156,7 @@ if (isset($_POST["btnSiteCnf"])) {
 
 if (isset($_POST["btnLabelCnf"])) {
 
-    SiteConfig::saveConfig($labl, $_POST);
+    SiteConfig::saveConfig($dbh, $labl, $_POST, $uS->username);
 
 }
 
@@ -369,7 +371,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript">
             $(document).ready(function() {
-                
+
                 $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
 
                     $('#financialRoomSubsidyId, #financialReturnPayorId').removeClass('ui-state-error');
@@ -430,7 +432,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
                         <!-- The data encoding type, enctype, MUST be specified as below -->
                         <form enctype="multipart/form-data" action="" method="POST" name ="formp">
                             <!-- MAX_FILE_SIZE must precede the file input field -->
-                            <input type="hidden" name="MAX_FILE_SIZE" value="1000000" />
+                            <input type="hidden" name="MAX_FILE_SIZE" value="10000000" />
                             <!-- Name of input element determines name in $_FILES array -->
                             <p style="color:red;font-size: large;"><?php echo $errorMsg; ?></p>
                             <p>Select Patch File: <input name="patch" type="file" /></p><br/>

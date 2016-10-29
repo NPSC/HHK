@@ -6,7 +6,7 @@
  *
  * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2015 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
@@ -394,7 +394,7 @@ class Visit {
             if ($chgDT->format('Y-m-d') == date('Y-m-d')) {
                 foreach ($rooms as $r) {
                     $r->putDirty();
-                    $r->saveRoom($dbh, $uname);
+                    $r->saveRoom($dbh, $uname, TRUE);
                 }
             }
         }
@@ -821,7 +821,7 @@ class Visit {
             // Only if cleaning cycle is defined and > 0
             if (isset($rmCleans[$r->getCleaningCycleCode()]) && $rmCleans[$r->getCleaningCycleCode()][2] != '0') {
                 $r->putTurnOver();
-                $r->saveRoom($dbh, $username);
+                $r->saveRoom($dbh, $username, TRUE);
             }
         }
 

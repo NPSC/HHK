@@ -36,8 +36,8 @@ require (CLASSES . 'History.php');
 require (CLASSES . 'AuditLog.php');
 require (CLASSES . 'CleanAddress.php');
 require (CLASSES . 'CreateMarkupFromDB.php');
+
 require (HOUSE . 'psg.php');
-require (HOUSE . 'HouseLog.php');
 require (HOUSE . 'Role.php');
 require (HOUSE . 'Guest.php');
 require (HOUSE . 'Patient.php');
@@ -53,6 +53,7 @@ require (HOUSE . 'Visit.php');
 require (HOUSE . 'Vehicle.php');
 require (HOUSE . 'HouseServices.php');
 require (HOUSE . 'VisitLog.php');
+require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'RoomChooser.php');
 require (HOUSE . 'Resource.php');
 require (HOUSE . 'Room.php');

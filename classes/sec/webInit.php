@@ -278,6 +278,10 @@ class SysConfig {
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(':val'=>$value, ':key'=>$key));
 
+            $uS = Session::getInstance();
+            $logText = $key . ':' .$oldVal . '|_|' . $value;
+            HouseLog::logSysConfig($dbh, $key, $value, $logText, $uS->username);
+
         }
     }
 

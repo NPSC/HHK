@@ -15,8 +15,8 @@ require ("homeIncludes.php");
 
 require (CLASSES . 'History.php');
 
-require (HOUSE . 'HouseLog.php');
 require (HOUSE . 'VisitLog.php');
+require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Room.php');
 require (HOUSE . 'Resource.php');
 require (HOUSE . 'ResourceView.php');

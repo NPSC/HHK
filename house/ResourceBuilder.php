@@ -22,9 +22,11 @@ require (DB_TABLES . 'AttributeRS.php');
 require (DB_TABLES . 'ReservationRS.php');
 require (DB_TABLES . 'ItemRS.php');
 
-require (HOUSE . 'HouseLog.php');
+
 require (HOUSE . 'VisitLog.php');
+require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Room.php');
+require (CLASSES . 'HouseLog.php');
 require (CLASSES . 'Purchase/RoomRate.php');
 require (CLASSES . 'FinAssistance.php');
 require (HOUSE . 'Resource.php');
@@ -106,6 +108,8 @@ if (isset($_POST['table'])) {
 
                 EditRS::insert($dbh, $glRs);
 
+                $logText = HouseLog::getInsertText($glRs);
+                HouseLog::logGenLookups($dbh, $tableName, $c, $logText, "insert", $uS->username);
             }
 
             unset($_POST['txtDiag'][0]);
@@ -245,7 +249,15 @@ if (isset($_POST['table'])) {
                     $gluRs = new GenLookupsRS();
                     EditRS::loadRow($rw[0], $gluRs);
                     $gluRs->Substitute->setNewVal($use);
-                    EditRS::update($dbh, $gluRs, array($gluRs->Table_Name, $gluRs->Code));
+                    $upCtr = EditRS::update($dbh, $gluRs, array($gluRs->Table_Name, $gluRs->Code));
+
+                    if ($upCtr > 0) {
+
+                        $logText = HouseLog::getUpdateText($gluRs);
+                        HouseLog::logGenLookups($dbh, $tableName, $c, $logText, "update", $uS->username);
+
+                    }
+
                 }
 
             }
@@ -345,6 +357,8 @@ if (isset($_POST['btnkfSave'])) {
 
             EditRS::insert($dbh, $glRs);
 
+            $logText = HouseLog::getInsertText($glRs, 'Static_Room_Rate' . $newCode);
+            HouseLog::logGenLookups($dbh, 'Static_Room_Rate', $newCode, $logText, 'insert', $uS->username);
         }
 
         unset($_POST['srrDesc'][0]);
@@ -1102,6 +1116,7 @@ function flagAlertMessage(mess, wasError, scrollTo) {
         }
     }
 }
+
 function getRoomFees(cat) {
     if (cat != '' && cat != 'x') {
         // go get the total
@@ -1366,7 +1381,6 @@ $(document).ready(function() {
     "use strict";
     $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
     var tabIndex = parseInt('<?php echo $tabIndex; ?>');
-    var table;
     $.ajaxSetup({
         beforeSend: function() {
             $('body').css('cursor', "wait");
@@ -1451,7 +1465,7 @@ $(document).ready(function() {
     });
     $('.hhk-saveLookup').click(function () {
         var $btn = $(this).closest('form');
-        $.post('ResourceBuilder.php', $btn.serialize() + '&cmd=save' + '&table=' + $btn.find('select option:selected').text() + '&tp=' + $btn.find('select').val(),
+        $.post('ResourceBuilder.php', $btn.serialize() + '&cmd=save' + '&table=' + $btn.find('select.hhk-selLookup option:selected').text() + '&tp=' + $btn.find('select').val(),
             function(data) {
                 if (data) {
                     $btn.children('div').children().remove().end().append(data);
