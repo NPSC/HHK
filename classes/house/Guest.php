@@ -267,7 +267,7 @@ class Guest extends Role {
         $mk1 = '';
 
         // Guest Name
-        if ($uS->PatientAsGuest && $lockRelChooser === FALSE) {
+        if ($uS->PatientAsGuest && ($lockRelChooser === FALSE || $this->getPatientRelationshipCode() == '')) {
             // Dont lock the patient relationship chooser.
             $mk1 = $this->createNameMu(TRUE, FALSE);
         } else {
