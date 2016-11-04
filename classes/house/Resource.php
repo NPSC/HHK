@@ -236,8 +236,8 @@ order by r.Util_Priority;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
             $idResc = EditRS::insert($dbh, $this->resourceRS);
 
             if ($idResc > 0) {
-                $logText = HouseLog::getInsertText($this->resourceRS);
-                HouseLog::logResource($dbh, $idResc, $logText, "insert", $username);
+                $logText = RoomLog::getInsertText($this->resourceRS);
+                RoomLog::logResource($dbh, $idResc, $logText, "insert", $username);
             }
 
             $this->resourceRS->idResource->setNewVal($idResc);
@@ -247,8 +247,8 @@ order by r.Util_Priority;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
             $num = EditRS::update($dbh, $this->resourceRS, array($this->resourceRS->idResource));
 
             if ($num > 0) {
-                $logText = HouseLog::getUpdateText($this->resourceRS);
-                HouseLog::logResource($dbh, $this->getIdResource(), $logText, "update", $username);
+                $logText = RoomLog::getUpdateText($this->resourceRS);
+                RoomLog::logResource($dbh, $this->getIdResource(), $logText, "update", $username);
             }
         }
 
@@ -270,8 +270,8 @@ order by r.Util_Priority;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
         $cnt = EditRS::delete($dbh, $this->resourceRS, array($this->resourceRS->idResource));
 
         if ($cnt) {
-            $logText = HouseLog::getDeleteText($this->resourceRS, $this->getIdResource());
-            HouseLog::logResource($dbh, $this->getIdResource(), $logText, "delete", $username);
+            $logText = RoomLog::getDeleteText($this->resourceRS, $this->getIdResource());
+            RoomLog::logResource($dbh, $this->getIdResource(), $logText, "delete", $username);
 
             $this->resourceRS = new ResourceRS();
         }

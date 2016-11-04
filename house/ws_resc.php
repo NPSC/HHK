@@ -41,6 +41,7 @@ require (MEMBER . 'OrgMember.php');
 require(HOUSE . "psg.php");
 require(HOUSE . "visitViewer.php");
 require(HOUSE . "VisitLog.php");
+require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Registration.php');
 require (HOUSE . 'RoleMember.php');
 require (HOUSE . 'Role.php');
@@ -56,11 +57,12 @@ require (HOUSE . 'ActivityReport.php');
 require (HOUSE . 'Reservation_1.php');
 require (HOUSE . 'ReservationSvcs.php');
 
+require (CLASSES . 'HouseLog.php');
 require (CLASSES . 'Purchase/RoomRate.php');
 require (CLASSES . 'FinAssistance.php');
 require (CLASSES . 'US_Holidays.php');
 
-require (HOUSE . 'RoomLog.php');
+
 
 $wInit = new webInit(WebPageCode::Service);
 

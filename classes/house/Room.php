@@ -252,8 +252,8 @@ class Room {
         $stmt->execute(array(':id' => $this->getIdRoom(), ':tpe' => Attribute_Types::Room));
 
         if (EditRS::delete($dbh, $this->roomRS, array($this->roomRS->idRoom))) {
-            $logText = HouseLog::getDeleteText($this->roomRS, $this->getIdRoom());
-            HouseLog::logRoom($dbh, $this->roomRS->idRoom->getStoredVal(), $logText, "delete", $username);
+            $logText = RoomLog::getDeleteText($this->roomRS, $this->getIdRoom());
+            RoomLog::logRoom($dbh, $this->roomRS->idRoom->getStoredVal(), $logText, "delete", $username);
 
             $this->roomRS = new RoomRs();
             return true;

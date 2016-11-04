@@ -2226,7 +2226,7 @@ class ReservationSvcs {
 
             $resv = Reservation_1::instantiateFromIdReserv($dbh, $rid);
 
-            if ($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::UnCommitted || $resv->getStatus() == ReservationStatus::Waitlist || $resv->getStatus() == ReservationStatus::Imediate) {
+            if ($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::UnCommitted || $resv->getStatus() == ReservationStatus::Waitlist || $resv->getStatus() == ReservationStatus::Imediate || $resv->getStatus() == ReservationStatus::Canceled) {
 
                 // Okay to delete
                 $resv->deleteMe($dbh, $uS->username);
@@ -2234,7 +2234,7 @@ class ReservationSvcs {
                 $dataArray['result'] = $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' Deleted.';
 
             } else {
-                $dataArray['warning'] = $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' Status is not valid: "' . $resv->getStatusTitle() . '"';
+                $dataArray['warning'] = $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' status cannot be deleted: "' . $resv->getStatusTitle() . '"';
             }
 
         } else {

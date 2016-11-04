@@ -828,7 +828,7 @@ function loadGuest(incmg, role, idPsg, patientStaying) {
             if (data.static && data.static === 'y') {
                 
                 $('input#btnDone').hide();
-                $('input#btnDelete').hide();
+                $('input#btnDelete').show();
                 
             } else {
                 
