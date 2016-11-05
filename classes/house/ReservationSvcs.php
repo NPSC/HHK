@@ -70,7 +70,7 @@ class ReservationSvcs {
             if ($id > 0) {
 
                 // patient member defined.
-                $patient = new Patient($dbh, $idPrefix, $id);
+                $patient = new Patient($dbh, 'h_', $id);
                 $patientPsg = $patient->getPsgObj($dbh);
 
                 if ($patientPsg->getIdPsg() > 0) {
@@ -92,10 +92,10 @@ class ReservationSvcs {
             } else if ($chosenIdPsg > 0) {
 
                 $psg = new Psg($dbh, $chosenIdPsg);
-                $patient = new Patient($dbh, $idPrefix, $psg->getIdPatient());
+                $patient = new Patient($dbh, 'h_', $psg->getIdPatient());
 
             } else {
-                $patient = new Patient($dbh, $idPrefix, $id);
+                $patient = new Patient($dbh, 'h_', $id);
             }
 
             if ($resv->isNew() === FALSE) {
@@ -171,7 +171,7 @@ class ReservationSvcs {
         // Check for patient not staying
         if ($role == 'g' && $id > 0 && $id == $psg->getIdPatient() && $patientStaying === FALSE) {
 
-            $patient = new Patient($dbh, $idPrefix, $id);
+            $patient = new Patient($dbh, 'h_', $id);
             $hospitalStay = new HospitalStay($dbh, $patient->getIdName());
             $dataArray['hosp'] = Hospital::createReferralMarkup($dbh, $hospitalStay);
             $dataArray['rvstCode'] = $resv->getStatus();
