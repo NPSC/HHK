@@ -300,7 +300,7 @@ $verifyHospDate = $uS->VerifyHospDate;
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="js/rcheckin-min.js<?php echo JS_V; ?>"></script>
+        <script type="text/javascript" src="js/rcheckin.js<?php echo JS_V; ?>"></script>
         <script tyhpe="text/javascript">
     var chkIn;
     var postBkPg = '<?php echo $postBackPage; ?>';
@@ -316,6 +316,7 @@ $verifyHospDate = $uS->VerifyHospDate;
     chkIn.addGuestId = '<?php echo $addGuestId; ?>';
     chkIn.patAsGuest = '<?php echo $patAsGuest; ?>';
     chkIn.verifyHospDate = '<?php echo $verifyHospDate; ?>';
+    chkIn.fillEmergCont = '<?php echo isset($uS->EmergContactFill) ? $uS->EmergContactFill : 'true'; ?>';
     chkIn.forceNamePrefix = '<?php echo isset($uS->ForceNamePrefix) ? $uS->ForceNamePrefix : 'false'; ?>';
     chkIn.resv = new reservation;
         </script>

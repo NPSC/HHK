@@ -491,29 +491,39 @@ function processGuests(incmg) {
 
         } else {
             var patSection = $('div#patientSection'),
-                patname = '',
                 pcDiv = $(incmg.patient),
-                pHdr = $('<div class="ui-widget-header ui-corner-top" style="padding:2px;"/>')
-                    .append($('<span style="font-size:1.2em;">Patient: </span>'));
+                pHdr,
+                ciHdr,
+                inAddr;
+        
+            pcDiv.addClass('h_detail');
             
-            patname = pcDiv.find('#h_txtFirstName').val() + ' ' + pcDiv.find('#h_txtLastName').val();
-            
+            ciHdr = $('<div style="float:left;"/>')
+                    .append($('<span style="font-size:1.2em;">Patient: </span>'))
+                    .append($('<span id="h_hdrFirstName" style="font-size:1.2em;">' + pcDiv.find('#h_txtFirstName').val() + '</span>'))
+                    .append($('<span id="h_hdrLastName" style="font-size:1.2em;">' + pcDiv.find('#h_txtLastName').val() + '</span>'));
+
             if (checkIn.patAsGuest) {
-                pHdr.append($('<span style="font-size:1.2em;">' + patname + ' - Not staying tonight</span>'));
+                ciHdr.append($('<span style="font-size:1.2em;"> - Not staying tonight</span>'));
             }
             
-            pHdr.append($('<span id="h_drpDown" class="ui-icon ui-icon-circle-triangle-s" style="float:right; cursor:pointer; margin:right:3px;"></span>')
+            ciHdr.append($('<span id="h_naAddrIcon" class="hhk-icon-redLight" title="Incomplete Address" style="float:right;margin-top:2px;margin-left:5px;"><span>'));
+    
+            pHdr = $('<div class="ui-widget-header ui-corner-top" style="padding:2px;"/>').append(ciHdr)
+            .append($('<span id="h_memMsg" style="color: red; margin-right:20px;margin-left:20px;"></span>'))
+                .append($('<span id="h_drpDown" class="ui-icon ui-icon-circle-triangle-s" style="float:right; cursor:pointer; margin:right:3px;"></span>')
                 .click(function() {
                     var disp = pcDiv.css('display');
                     if (disp === 'none') {
                         pcDiv.show('blind');
                         pHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
                     } else {
-                        pcDiv.hide('blind');
+                        pcDiv.hide();
                         pHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
                     }
                 })
             );
+    
             // Remove Button
             if (incmg.rmvbtnp !== undefined && incmg.rmvbtnp === true && $('#h_Search').length > 0) {
 
@@ -545,6 +555,25 @@ function processGuests(incmg) {
                 var $states = $(this);
                 $states.bfhstates($states.data());
             });
+            
+            // Incomplete address icon
+            inAddr = pcDiv.find('input#h_incomplete');
+            if (inAddr.length > 0) {
+                
+                inAddr.change(function() {
+                    if ($(this).prop('checked')) {
+                        $('#h_naAddrIcon').show();
+                    } else {
+                        $('#h_naAddrIcon').hide();
+                    }
+                });
+                
+                inAddr.change();
+                
+            } else {
+                $('#h_naAddrIcon').hide();
+            }
+
 
             patSection.find('#h_phEmlTabs').tabs();
 
@@ -816,6 +845,10 @@ function verifyDone() {
     var pgCount = 0;
     var latestCkOut, earliestCkIn, emergContactCnt = 0;
     
+    if (!chkIn.fillEmergCont) {
+        emergContactCnt = 2;
+    }
+    
     if (checkIn.members.length === 0) {
         flagAlertMessage("Enter a Guest or Patient.", true);
         $('#' + checkIn.guestSearchPrefix + 'Search').addClass('ui-state-highlight');
@@ -911,6 +944,7 @@ function verifyDone() {
             flagAlertMessage(nameText + " is missing their patient relationship.", true);
             return false;
         }
+        
         // validate guest address
         if ($('#' + pan.idPrefix + 'incomplete').prop('checked') === false) {
             $('.' + pan.idPrefix + 'hhk-addr-val').each(function() {
@@ -928,6 +962,8 @@ function verifyDone() {
                 return false;
             }
         }
+        
+        // Emergency Contact
         if ($('#' + pan.idPrefix + 'cbEmrgLater').length > 0 && $('#' + pan.idPrefix + 'cbEmrgLater').prop('checked') === false && emergContactCnt < 1) {
             // check the emergency contact
             if ($('#' + pan.idPrefix + 'txtEmrgFirst').val() === '' && $('#' + pan.idPrefix + 'txtEmrgLast').val() === '') {
@@ -949,7 +985,6 @@ function verifyDone() {
                 $('.' + pan.idSlot + 'detail').show("blind");
                 return false;
             }
-        } else if ($('#' + pan.idPrefix + 'cbEmrgLater').length > 0) {
             emergContactCnt++;
         }
         

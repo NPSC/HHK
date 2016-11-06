@@ -98,7 +98,8 @@ if ($pge != "" && $pge != $page->get_Login_Page()) {
         // check authorization to next page
         if (ComponentAuthClass::is_Authorized($pge)) {
 
-            $dbh = null;
+            $dbh->exec("update `reservation` `r` left join `visit` `v` on `r`.`idReservation` = `v`.`idReservation` set `r`.`Status` = '" . ReservationStatus::Canceled . "' where `r`.`Status` = '" . ReservationStatus::Staying . "' and `v`.`idVisit` is NULL;");
+
             header('Location: ' . $pge);
             exit();
 

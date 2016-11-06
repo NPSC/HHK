@@ -25,6 +25,7 @@ ALTER TABLE `name_address`
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ForceNamePrefix', 'false', 'b', 'h', 'Force the name prefix to be entered');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ShowDiagTB', 'false', 'b', 'h', 'Show a diagnosis textbox above the diagmosis selector');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('IncludeLastDay','false','b','h','Include the departure day in room searches.');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('EmergContactFill', 'true', 'b', 'h', 'Insist on Filling in the emergency contact (or check the \"skip\")');
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('GuestAddr', 'true', 'b', 'h', 'False = do not collect guest address');
 UPDATE `sys_config` SET `Description`='Collect the patient address.' WHERE `Key`='PatientAddr';

@@ -776,7 +776,7 @@ function loadGuest(incmg, role, idPsg, patientStaying) {
             
             if (pan.idName == id) {
                 
-                if (role = 'p' && pan.isPatient === false) {
+                if (role === 'p' && pan.isPatient === false) {
                     flagAlertMessage("To make the guest also the patient, set this Guest's Patient Relationship to Patient.", true);
                     $('#pgselPatRel').addClass('ui-state-highlight');
                     return;

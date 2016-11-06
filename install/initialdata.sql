@@ -418,6 +418,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('DefaultRegisterTab', '0', 'i', 'h', 'Default active tab on register page, 0 = calendar, 1 = current Guests'),
 ('Doctor', 'true', 'b', 'h','Track doctors'),
 ('EmailBlockSize','200','i','r','Number of email addresses per block.'),
+('EmergContactFill', 'true', 'b', 'h', 'Insist on Filling in the emergency contact (or check the \"skip\")'),
 ('EmptyExtendLimit', '0', 'i', 'h','Extend visit (go on leave) limit # of days'),
 ('FutureLimit','1','i','v','Max years in the future volunteers can reserve shifts'),
 ('ForceNamePrefix', 'false', 'b', 'h', 'Force the name prefix to be entered'),

@@ -99,9 +99,12 @@ class ReservationSvcs {
             }
 
             if ($resv->isNew() === FALSE) {
+
                 $guests = self::getReservGuests($dbh, $resv->getIdReservation());
                 $dataArray['numGuests'] = count($guests);
+
             } else if ($patientStaying) {
+
                 $dataArray['numGuests'] = 2;
             }
 
@@ -169,7 +172,7 @@ class ReservationSvcs {
         }
 
         // Check for patient not staying
-        if ($role == 'g' && $id > 0 && $id == $psg->getIdPatient() && $patientStaying === FALSE) {
+        if ($role == 'g' && $id > 0 && $id == $psg->getIdPatient() && ($patientStaying === FALSE || $uS->PatientAsGuest === FALSE)) {
 
             $patient = new Patient($dbh, 'h_', $id);
             $hospitalStay = new HospitalStay($dbh, $patient->getIdName());

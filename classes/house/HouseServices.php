@@ -748,8 +748,6 @@ class HouseServices {
 
     public static function undoRoomChange(\PDO $dbh, Visit $visit, $uname) {
 
-        $uS = Session::getInstance();
-
         // Reservation
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $visit->getReservationId(), $visit->getIdVisit());
 
@@ -2405,7 +2403,7 @@ class HouseServices {
             $dataArray['hosp'] = Hospital::createReferralMarkup($dbh, $hospitalStay);
 
             // Patient markup
-            if ($patientStaying === FALSE && $idPatient > 0 && ($idPatient != $guest->getIdName() || $uS->PatientAsGuest === FALSE)) {
+            if ($patientStaying !== TRUE && $idPatient > 0 && ($idPatient != $guest->getIdName() || $uS->PatientAsGuest === FALSE)) {
                 // Patient is not a guest
                 $patient = new Patient($dbh, 'h_', $idPatient);
                 $dataArray['patient'] = $patient->createMarkup(FALSE);
