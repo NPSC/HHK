@@ -845,6 +845,7 @@ function verifyDone() {
     var pgCount = 0;
     var latestCkOut, earliestCkIn, emergContactCnt = 0;
     
+    // Optional Emergency Contact.
     if (!chkIn.fillEmergCont) {
         emergContactCnt = 2;
     }
@@ -1327,6 +1328,7 @@ $(document).ready(function() {
     var lastXhr;
     var checkIn = chkIn;
     var postBackPage = postBkPg;
+
     
     // Unsaved changes on form are caught here.
     $(window).bind('beforeunload', function() {
@@ -1354,7 +1356,10 @@ $(document).ready(function() {
     });
     // put the content beneth the menu.
     $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
+    
     $(':input[type="button"]').button();
+    
+    // Delete unfinished checkins
     if ($('#btnDelUnfinished').length !== 0) {
         $('#btnDelUnfinished').click(function () {
             $.post('ws_ckin.php', { cmd: 'dunf' }, function(data) {
@@ -1488,34 +1493,34 @@ $(document).ready(function() {
     $('div#guestAccordion, div#patientSection').on('click', '.hhk-addrCopy', function() {
 
         var prefix = $(this).attr('name');
+        
+        if (checkIn.addr && checkIn.addr.adraddress1 != '' && $('#' + prefix + 'adraddress1' + checkIn.adrPurpose).val() != checkIn.addr.adraddress1) {
+            $('#' + prefix + 'adraddress1' + checkIn.adrPurpose).val(checkIn.addr.adraddress1);
+            $('#' + prefix + 'adraddress2' + checkIn.adrPurpose).val(checkIn.addr.adraddress2);
+            $('#' + prefix + 'adrcity' + checkIn.adrPurpose).val(checkIn.addr.adrcity);
+            $('#' + prefix + 'adrcounty' + checkIn.adrPurpose).val(checkIn.addr.adrcounty);
+            $('#' + prefix + 'adrstate' + checkIn.adrPurpose).val(checkIn.addr.adrstate);
+            $('#' + prefix + 'adrcountry' + checkIn.adrPurpose).val(checkIn.addr.adrcountry);
+            $('#' + prefix + 'adrzip' + checkIn.adrPurpose).val(checkIn.addr.adrzip);
+            return;
+        }
+        
+        for (var i = 0; i < checkIn.members.length; i++) {
+            
+            if (checkIn.members[i] && checkIn.members[i].idPrefix !== prefix && $('#' + checkIn.members[i].idPrefix + 'adraddress1' + checkIn.adrPurpose).val() != '') {
 
-        if (checkIn.members.length < 2) {
-
-            if (checkIn.addr) {
-                $('#' + prefix + 'adraddress1' + checkIn.adrPurpose).val(checkIn.addr.adraddress1);
-                $('#' + prefix + 'adraddress2' + checkIn.adrPurpose).val(checkIn.addr.adraddress2);
-                $('#' + prefix + 'adrcity' + checkIn.adrPurpose).val(checkIn.addr.adrcity);
-                $('#' + prefix + 'adrcounty' + checkIn.adrPurpose).val(checkIn.addr.adrcounty);
-                $('#' + prefix + 'adrstate' + checkIn.adrPurpose).val(checkIn.addr.adrstate);
-                $('#' + prefix + 'adrcountry' + checkIn.adrPurpose).val(checkIn.addr.adrcountry);
-                $('#' + prefix + 'adrzip' + checkIn.adrPurpose).val(checkIn.addr.adrzip);
-            }
-
-        } else {
-
-            for (var i = 0; i < checkIn.members.length; i++) {
-                if (checkIn.members[i] && checkIn.members[i].idPrefix !== prefix) {
-                    $('#' + prefix + 'adraddress1' + checkIn.adrPurpose).val($('#' + checkIn.members[i].idPrefix + 'adraddress1' + checkIn.adrPurpose).val());
-                    $('#' + prefix + 'adraddress2' + checkIn.adrPurpose).val($('#' + checkIn.members[i].idPrefix + 'adraddress2' + checkIn.adrPurpose).val());
-                    $('#' + prefix + 'adrcity' + checkIn.adrPurpose).val($('#' + checkIn.members[i].idPrefix + 'adrcity' + checkIn.adrPurpose).val());
-                    $('#' + prefix + 'adrcounty' + checkIn.adrPurpose).val($('#' + checkIn.members[i].idPrefix + 'adrcounty' + checkIn.adrPurpose).val());
-                    $('#' + prefix + 'adrstate' + checkIn.adrPurpose).val($('#' + checkIn.members[i].idPrefix + 'adrstate' + checkIn.adrPurpose).val());
-                    $('#' + prefix + 'adrcountry' + checkIn.adrPurpose).val($('#' + checkIn.members[i].idPrefix + 'adrcountry' + checkIn.adrPurpose).val());
-                    $('#' + prefix + 'adrzip' + checkIn.adrPurpose).val($('#' + checkIn.members[i].idPrefix + 'adrzip' + checkIn.adrPurpose).val());
-                    break;
-                }
+                $('#' + prefix + 'adraddress1' + checkIn.adrPurpose).val($('#' + checkIn.members[i].idPrefix + 'adraddress1' + checkIn.adrPurpose).val());
+                $('#' + prefix + 'adraddress2' + checkIn.adrPurpose).val($('#' + checkIn.members[i].idPrefix + 'adraddress2' + checkIn.adrPurpose).val());
+                $('#' + prefix + 'adrcity' + checkIn.adrPurpose).val($('#' + checkIn.members[i].idPrefix + 'adrcity' + checkIn.adrPurpose).val());
+                $('#' + prefix + 'adrcounty' + checkIn.adrPurpose).val($('#' + checkIn.members[i].idPrefix + 'adrcounty' + checkIn.adrPurpose).val());
+                $('#' + prefix + 'adrstate' + checkIn.adrPurpose).val($('#' + checkIn.members[i].idPrefix + 'adrstate' + checkIn.adrPurpose).val());
+                $('#' + prefix + 'adrcountry' + checkIn.adrPurpose).val($('#' + checkIn.members[i].idPrefix + 'adrcountry' + checkIn.adrPurpose).val());
+                $('#' + prefix + 'adrzip' + checkIn.adrPurpose).val($('#' + checkIn.members[i].idPrefix + 'adrzip' + checkIn.adrPurpose).val());
+                
+                return;
             }
         }
+
     });
 
     $('div#guestAccordion, div#patientSection').on('click', '.hhk-addrErase', function() {

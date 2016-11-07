@@ -553,6 +553,9 @@ class ReservationSvcs {
 
             $psg->setNewMember($id, 0, $rel);
             $psg->savePSG($dbh, $psg->getIdPatient(), $uS->username);
+
+        } else if (!$uS->PatentAsGuest && $psg->getGuestRelationship($id) == RelLinkType::Self) {
+            return array('error'=>'Patients are not allowed to be guests at our House.  ');
         }
 
         $arrivalDT = new DateTIme($resv->getExpectedArrival());
