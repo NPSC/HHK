@@ -21,6 +21,7 @@ require SEC . 'Login.php';
 require SEC . 'ChallengeGenerator.php';
 require CLASSES . 'US_Holidays.php';
 require DB_TABLES . 'MercuryRS.php';
+require DB_TABLES . 'GenLookupsRS.php';
 
 require (FUNCTIONS . 'mySqlFunc.php');
 
