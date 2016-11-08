@@ -50,17 +50,14 @@ $resultMessage = $alertMsg->createMarkup();
 
 $isGuestAdmin = ComponentAuthClass::is_Authorized('guestadmin');
 
-function doMarkupRow($fltrdFields, $r, $p, $isLocal, &$totalOrig, &$total, $hospital, &$tbl, &$sml, &$reportRows, $subsidyId, $returnId) {
+function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$tbl, &$sml, &$reportRows, $subsidyId, $returnId) {
 
     $origAmt = $p['Payment_Amount'];
     $amt = 0;
     $payDetail = '';
     $payStatus = $p['Payment_Status_Title'];
 
-    if ($p['Is_Refund'] > 0) {
-        $payStatus = 'Refund';
-    }
-   
+
     $payStatusAttr = array();
     $payType = $p['Payment_Method_Title'];
     $attr['style'] = 'text-align:right;';
@@ -90,62 +87,47 @@ function doMarkupRow($fltrdFields, $r, $p, $isLocal, &$totalOrig, &$total, $hosp
         case PaymentStatusCode::VoidSale:
             $attr['style'] .= 'color:grey;';
             $payStatusAttr = array('style'=>'text-align:right;');
+            $amt = 0;
 
-            if (isset($p['auth'])) {
-                foreach ($p['auth'] as $pa) {
-                    if ($pa['PA_Status_Code'] == PaymentStatusCode::VoidSale) {
-                        $amt = $origAmt - $pa['Approved_Amount'];
-                    }
-                }
-            } else {
-                $amt = $origAmt - $p['Payment_Balance'];
-            }
+            break;
+
+        case PaymentStatusCode::VoidReturn:
+            $attr['style'] .= 'color:grey;';
+            $payStatusAttr = array('style'=>'text-align:right;');
+            $amt = 0;
+            $origAmt = 0 - $origAmt;
 
             break;
 
         case PaymentStatusCode::Reverse:
             $attr['style'] .= 'color:grey;';
             $payStatusAttr = array('style'=>'text-align:right;');
-
-            if (isset($p['auth'])) {
-                foreach ($p['auth'] as $pa) {
-                    if ($pa['PA_Status_Code'] == PaymentStatusCode::Reverse) {
-                        $amt = $origAmt - $pa['Approved_Amount'];
-                    }
-                }
-            } else {
-                $amt = $origAmt - $p['Payment_Balance'];
-            }
+            $amt = 0;
 
             break;
 
-        case PaymentStatusCode::Retrn:
+        case PaymentStatusCode::Retrn:  // Return payment
             $attr['style'] .= 'color:red;';
             $payStatusAttr = array('style'=>'text-align:right;');
-
-
-            if (isset($p['auth'])) {
-                foreach ($p['auth'] as $pa) {
-                    if ($pa['PA_Status_Code'] == PaymentStatusCode::Retrn) {
-                        $amt = $origAmt - $pa['Approved_Amount'];
-                    }
-                }
-            } else {
-                $amt = $origAmt - $p['Payment_Balance'];
-            }
 
             break;
 
         case PaymentStatusCode::Paid:
 
-            $amt = $p['Payment_Amount'] - $p['Payment_Balance'];
+            if ($p['Is_Refund'] == 1) {
+                $origAmt = 0 - $origAmt;
+                $payStatus = 'Refund';
+            }
+
+            $amt = $origAmt;
+
 
             break;
 
         case PaymentStatusCode::Declined:
             $attr['style'] .= 'color:grey;';
             $payStatusAttr = array('style'=>'text-align:right;');
-            $amt = $origAmt - $p['Payment_Balance'];
+            $amt = 0;
 
             break;
 
@@ -164,11 +146,6 @@ function doMarkupRow($fltrdFields, $r, $p, $isLocal, &$totalOrig, &$total, $hosp
 
         $payorLast = $r['i']['Company'];
         $payorFirst = $r['i']['Last'] . ', ' . $r['i']['First'];
-
-    } else if ($r['i']['Sold_To_Id'] == $returnId) {
-
-        $payorLast = $r['i']['Company'];
-        $payorFirst = '';
 
     } else {
 
@@ -200,9 +177,6 @@ function doMarkupRow($fltrdFields, $r, $p, $isLocal, &$totalOrig, &$total, $hosp
 
     $dateDT = new DateTime($p['Payment_Date']);
 
-    $totalOrig += $origAmt;
-    $total += $amt;
-
     $g = array(
         'idHospital' => $hospital,
         'Title' => $r['i']['Room'],
@@ -232,22 +206,6 @@ function doMarkupRow($fltrdFields, $r, $p, $isLocal, &$totalOrig, &$total, $hosp
 
         $tbl->addBodyTr($tr);
 
-//        $tbl->addBodyTr(
-//                $payorLast
-//                .$payorFirst
-//                .HTMLTable::makeTd($dateDT->format('M j, Y'))
-//                .HTMLTable::makeTd($invoiceMkup)
-//                .HTMLTable::makeTd($r['i']['Room'], array('style'=>'text-align:center;'))
-//                .HTMLTable::makeTd($hospital)
-//                .HTMLTable::makeTd($r['i']['Patient_Last'])
-//                .HTMLTable::makeTd($r['i']['Patient_First'])
-//                .HTMLTable::makeTd($payType)
-//                .HTMLTable::makeTd($payDetail)
-//                .HTMLTable::makeTd($payStatus, $payStatusAttr)
-//                .HTMLTable::makeTd(number_format($origAmt, 2), $attr)
-//                .HTMLTable::makeTd(number_format($amt, 2), $attr)
-//                .HTMLTable::makeTd($p['Payment_Note'])
-//                );
 
     } else {
 
@@ -273,58 +231,6 @@ function doMarkupRow($fltrdFields, $r, $p, $isLocal, &$totalOrig, &$total, $hosp
         foreach ($fltrdFields as $f) {
             $flds[$n++] = array('type' => $f[4], 'value' => $g[$f[1]], 'style'=>$f[5]);
         }
-//        $n = 0;
-//        $flds = array(
-//            $n++ => array('type' => "n",
-//                'value' => $r['i']['Sold_To_Id']
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => ($r['i']['Bill_Agent'] == 'a' ? $r['i']['Company'] : '')
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $r['i']['Last']
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $r['i']['First']
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $hospital
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $r['i']['Patient_Last']
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $r['i']['Patient_First']
-//            ),
-//            $n++ => array('type' => "n",
-//                'value' => PHPExcel_Shared_Date::PHPToExcel(strtotime($p['Payment_Date'])),
-//                'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $r['i']['Invoice_Number']
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $r['i']['Room']
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $payType
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $payDetail
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $payStatus
-//            ),
-//            $n++ => array('type' => "n",
-//                'value' => $origAmt
-//            ),
-//            $n++ => array('type' => "n",
-//                'value' => $amt
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $p['Payment_Note']
-//            )
-//        );
 
         $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
 
@@ -702,10 +608,6 @@ where lp.idPayment > 0
         $reportRows++;
     }
 
-    $totalOrig = 0.0;
-    $total = 0.0;
-
-
     $name_lk = $uS->nameLookups;
     $name_lk['Pay_Status'] = readGenLookupsPDO($dbh, 'Pay_Status');
     $uS->nameLookups = $name_lk;
@@ -731,7 +633,7 @@ where lp.idPayment > 0
             }
 
 
-            doMarkupRow($fltrdFields, $r, $p, $local, $totalOrig, $total, $hospital, $tbl, $sml, $reportRows, $uS->subsidyId, $uS->returnId);
+            doMarkupRow($fltrdFields, $r, $p, $local, $hospital, $tbl, $sml, $reportRows, $uS->subsidyId, $uS->returnId);
 
         }
     }
@@ -741,7 +643,7 @@ where lp.idPayment > 0
     // Finalize and print.
     if ($local) {
 
-        $headerTable->addBodyTr(HTMLTable::makeTd('Total Payments:: ', array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($total,2), array('style'=>'font-weight:bold;')));
+        //$headerTable->addBodyTr(HTMLTable::makeTd('Total Payments:: ', array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($total,2), array('style'=>'font-weight:bold;')));
 
         $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt'));
         $mkTable = 1;

@@ -502,7 +502,6 @@ where
 
                     $payments[$idPayment] = array('idPayment'=>$p['idPayment'],
                             'Payment_Amount'=>$p['Payment_Amount'],
-                            'Payment_Balance'=>$p['Payment_Balance'],
                             'idPayment_Method'=>$p['idPayment_Method'],
                             'Payment_Method_Title'=>$p['Payment_Method_Title'],
                             'Payment_Status'=>$p['Payment_Status'],
@@ -834,7 +833,7 @@ where
             // Payments
             foreach ($r['p'] as $p) {
 
-                $amt = floatval($p['Payment_Amount']) - floatval($p['Payment_Balance']);
+                $amt = floatval($p['Payment_Amount']);  // - floatval($p['Payment_Balance']);
 
                 if ($p['Is_Refund'] > 0) {
                     $amt = 0 - $amt;

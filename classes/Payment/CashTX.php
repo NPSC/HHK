@@ -121,7 +121,7 @@ class CashTX {
 
         // Payment record
         $payRs->Status_Code->setNewVal(PaymentStatusCode::Retrn);
-        $payRs->Balance->setNewVal($payRs->Amount->getStoredVal());
+//        $payRs->Balance->setNewVal($payRs->Amount->getStoredVal());
         $payRs->Updated_By->setNewVal($username);
         $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
@@ -310,7 +310,7 @@ class ChargeAsCashTX {
 
         // Payment record
         $payRs->Status_Code->setNewVal(PaymentStatusCode::Retrn);
-        $payRs->Balance->setNewVal($payRs->Amount->getStoredVal());
+//        $payRs->Balance->setNewVal($payRs->Amount->getStoredVal());
         $payRs->Updated_By->setNewVal($username);
         $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 

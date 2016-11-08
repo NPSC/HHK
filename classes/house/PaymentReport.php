@@ -225,56 +225,37 @@ class PaymentReport {
 
             case PaymentStatusCode::VoidSale:
 
-                if (isset($p['auth'])) {
-                    foreach ($p['auth'] as $pa) {
-                        if ($pa['PA_Status_Code'] == PaymentStatusCode::VoidSale) {
-                            $amt = $origAmt - $pa['Approved_Amount'];
-                        }
-                    }
-                } else {
-                    $amt = $origAmt - $p['Payment_Balance'];
-                }
+                $amt = 0;
+                break;
+
+            case PaymentStatusCode::VoidReturn:
+                $amt = 0;
+                $origAmt = 0 - $origAmt;
 
                 break;
 
             case PaymentStatusCode::Reverse:
 
-                if (isset($p['auth'])) {
-
-                    foreach ($p['auth'] as $pa) {
-                        if ($pa['PA_Status_Code'] == PaymentStatusCode::Reverse) {
-                            $amt = $origAmt - $pa['Approved_Amount'];
-                        }
-                    }
-
-                } else {
-                    $amt = $origAmt - $p['Payment_Balance'];
-                }
-
+                $amt = 0;
                 break;
 
             case PaymentStatusCode::Retrn:
 
-                if (isset($p['auth'])) {
-                    foreach ($p['auth'] as $pa) {
-                        if ($pa['PA_Status_Code'] == PaymentStatusCode::Retrn) {
-                            $amt = $origAmt - $pa['Approved_Amount'];
-                        }
-                    }
-                } else {
-                    $amt = $origAmt - $p['Payment_Balance'];
-                }
-
+                $amt = 0;
                 break;
 
             case PaymentStatusCode::Paid:
 
-                $amt = $p['Payment_Amount'] - $p['Payment_Balance'];
+                if ($p['Is_Refund'] == 1) {
+                    $origAmt = 0 - $origAmt;
+                }
+
+                $amt = $origAmt;
 
                 break;
 
             case PaymentStatusCode::Declined:
-                $amt = $origAmt - $p['Payment_Balance'];
+                $amt = $origAmt;
 
                 break;
 

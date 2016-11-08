@@ -603,42 +603,29 @@ where lp.idPayment > 0
             $stat = '';
             $attr['style'] = 'text-align:right;';
 
-            $voidContent = '';
-            $amt = 0;
+            $voidContent = HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-script pmtRecpt', 'id'=>'pmticon'.$p['idPayment'], 'data-pid'=>$p['idPayment'], 'style'=>'cursor:pointer;float:right;', 'title'=>'View Payment Receipt'));
+            $amt = $p['Payment_Amount'];
 
             switch ($p['Payment_Status']) {
 
                 case PaymentStatusCode::VoidSale:
                     $stat = 'Void';
-                    $attr['style'] .= 'color:grey;';
+                    $attr['style'] .= 'color:red;';
 
-                    if (isset($p['auth'])) {
-                        foreach ($p['auth'] as $pa) {
-                            if ($pa['PA_Status_Code'] == PaymentStatusCode::VoidSale) {
-                                $amt = $pa['Approved_Amount'];
-                            }
-                        }
-                    } else {
-                        $amt = $p['Payment_Balance'];
-                    }
-                    $voidContent .= HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-script pmtRecpt', 'id'=>'pmticon'.$p['idPayment'], 'data-pid'=>$p['idPayment'], 'style'=>'cursor:pointer;float:right;', 'title'=>'View Payment Receipt'));
+
+                    break;
+
+                case PaymentStatusCode::VoidReturn:
+                    $stat = 'Voided Return';
+                    $attr['style'] .= 'color:red;';
+                    $amt = 0 - $amt;
 
                     break;
 
                 case PaymentStatusCode::Reverse:
                     $stat = 'Reverse';
-                    $attr['style'] .= 'color:grey;';
+                    $attr['style'] .= 'color:red;';
 
-                    if (isset($p['auth'])) {
-                        foreach ($p['auth'] as $pa) {
-                            if ($pa['PA_Status_Code'] == PaymentStatusCode::Reverse) {
-                                $amt = $pa['Approved_Amount'];
-                            }
-                        }
-                    } else {
-                        $amt = $p['Payment_Balance'];
-                    }
-                    $voidContent .= HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-script pmtRecpt', 'id'=>'pmticon'.$p['idPayment'], 'data-pid'=>$p['idPayment'], 'style'=>'cursor:pointer;float:right;', 'title'=>'View Payment Receipt'));
 
                     break;
 
@@ -646,21 +633,11 @@ where lp.idPayment > 0
                     $stat = 'Return';
                     $attr['style'] .= 'color:red;';
 
-                    if (isset($p['auth'])) {
-                        foreach ($p['auth'] as $pa) {
-                            if ($pa['PA_Status_Code'] == PaymentStatusCode::Retrn) {
-                                $amt += $pa['Approved_Amount'];
-                            }
-                        }
-                    } else {
-                        $amt = $p['Payment_Balance'];
-                    }
 
-                    if ($p['idPayment_Method'] == PaymentMethod::Charge) {
+                    if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d')) {
                         $voidContent .= HTMLInput::generateMarkup('Void-Return', array('type'=>'button', 'id'=>'btnvr'.$p['idPayment'], 'class'=>'hhk-voidRefundPmt', 'data-pid'=>$p['idPayment'], 'data-amt'=>$amt));
                     }
 
-                    $voidContent .= HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-script pmtRecpt', 'id'=>'pmticon'.$p['idPayment'], 'data-pid'=>$p['idPayment'], 'style'=>'cursor:pointer;float:right;', 'title'=>'View Payment Receipt'));
 
                     break;
 
@@ -670,7 +647,6 @@ where lp.idPayment > 0
 
                         $stat = 'Refund';
                         $p['Payment_Status'] = PaymentStatusCode::Retrn;
-                        $amt = $p['Payment_Amount'] - $p['Payment_Balance'];
                         $amt = 0 - $amt;
                         $payTypeTotals[$p['idPayment_Method']]['amount'] += $amt;
 
@@ -679,21 +655,18 @@ where lp.idPayment > 0
                             $voidContent .= HTMLInput::generateMarkup('Void Refund', array('type'=>'button', 'id'=>'btnvr'.$p['idPayment'], 'class'=>'hhk-voidRefundPmt', 'data-pid'=>$p['idPayment'], 'data-amt'=>$amt));
                         }
 
-                        $voidContent .= HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-script pmtRecpt', 'id'=>'pmticon'.$p['idPayment'], 'data-pid'=>$p['idPayment'], 'style'=>'cursor:pointer;float:right;', 'title'=>'View Refund Receipt'));
 
                     } else {
 
-                        $amt = $p['Payment_Amount'] - $p['Payment_Balance'];
                         $payTypeTotals[$p['idPayment_Method']]['amount'] += $amt;
                         $stat = HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-check', 'style'=>'float:left;', 'title'=>'Paid'));
 
                         if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d')) {
-                            $voidContent = HTMLInput::generateMarkup('Void', array('type'=>'button', 'id'=>'btnvr'.$p['idPayment'], 'class'=>'hhk-voidPmt', 'data-pid'=>$p['idPayment']));
+                            $voidContent .= HTMLInput::generateMarkup('Void', array('type'=>'button', 'id'=>'btnvr'.$p['idPayment'], 'class'=>'hhk-voidPmt', 'data-pid'=>$p['idPayment']));
                         } else {
-                            $voidContent = HTMLInput::generateMarkup('Return', array('type'=>'button', 'id'=>'btnvr'.$p['idPayment'], 'class'=>'hhk-returnPmt', 'data-pid'=>$p['idPayment'], 'data-amt'=>$amt));
+                            $voidContent .= HTMLInput::generateMarkup('Return', array('type'=>'button', 'id'=>'btnvr'.$p['idPayment'], 'class'=>'hhk-returnPmt', 'data-pid'=>$p['idPayment'], 'data-amt'=>$amt));
                         }
 
-                        $voidContent .= HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-script pmtRecpt', 'id'=>'pmticon'.$p['idPayment'], 'data-pid'=>$p['idPayment'], 'style'=>'cursor:pointer;float:right;', 'title'=>'View Payment Receipt'));
                     }
 
                     break;
@@ -702,7 +675,7 @@ where lp.idPayment > 0
 
                     $stat = 'Declined';
                     $attr['style'] .= 'color:gray;';
-                    $amt = $p['Payment_Balance'];
+
 
                     break;
 
@@ -731,7 +704,7 @@ where lp.idPayment > 0
                 $payTypeTitle = $labels->getString('statement', 'houseSubsidy', 'House Discount');
                 $nameTd = $r['Company'];
 
-            } else if ($r['Bill_Agent'] == 'a' || $r['Sold_To_Id'] == $uS->returnId) {
+            } else if ($r['Bill_Agent'] == 'a') {
                 // 3rd Party
                 $nameTd = $r['Company'];
 

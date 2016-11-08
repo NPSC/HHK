@@ -92,7 +92,7 @@ abstract class PaymentResponse {
  *
  * @author Eric
  */
-abstract class Payments {
+abstract class CreditPayments {
 
     public static function processReply(\PDO $dbh, PaymentResponse $pr, $userName, PaymentRs $payRs = NULL, $attempts = 1) {
 
@@ -154,7 +154,7 @@ abstract class Payments {
 
 }
 
-class SaleReply extends Payments {
+class SaleReply extends CreditPayments {
 
 
     protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, PaymentRs $pRs = NULL, $attempts = 1) {
@@ -202,7 +202,6 @@ class SaleReply extends Payments {
         }
 
         $payRs->Amount->setNewVal($vr->getAuthorizeAmount());
-        $payRs->Balance->setNewVal(0.0);
         $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
         $payRs->idPayor->setNewVal($pr->idPayor);
         $payRs->idTrans->setNewVal($pr->getIdTrans());
@@ -270,7 +269,6 @@ class SaleReply extends Payments {
         $payRs->Created_By->setNewVal($username);
         $payRs->Attempt->setNewVal($attempts);
         $payRs->Amount->setNewVal($vr->getAuthorizeAmount());
-        $payRs->Balance->setNewVal($vr->getAuthorizeAmount());
         $payRs->Notes->setNewVal($pr->payNotes);
 
         $idPmt = EditRS::insert($dbh, $payRs);
@@ -311,7 +309,7 @@ class SaleReply extends Payments {
 }
 
 
-class VoidReply extends Payments {
+class VoidReply extends CreditPayments {
 
     protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, PaymentRs $payRs = NULL, $attempts = 1){
 
@@ -323,8 +321,6 @@ class VoidReply extends Payments {
 
         // Payment record
         $payRs->Status_Code->setNewVal(PaymentStatusCode::VoidSale);
-        $bal = $payRs->Balance->getStoredVal() + $vr->getAuthorizeAmount();
-        $payRs->Balance->setNewVal($bal);
         $payRs->Updated_By->setNewVal($username);
         $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
@@ -379,7 +375,7 @@ class VoidReply extends Payments {
     }
 }
 
-class ReverseReply extends Payments {
+class ReverseReply extends CreditPayments {
 
     protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, PaymentRs $payRs = NULL, $attempts = 1){
 
@@ -391,8 +387,6 @@ class ReverseReply extends Payments {
 
         // Payment record
         $payRs->Status_Code->setNewVal(PaymentStatusCode::Reverse);
-        $bal = $payRs->Balance->getStoredVal() + $vr->getAuthorizeAmount();
-        $payRs->Balance->setNewVal($bal);
         $payRs->Updated_By->setNewVal($username);
         $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
@@ -441,7 +435,7 @@ class ReverseReply extends Payments {
 }
 
 
-class ReturnReply extends Payments {
+class ReturnReply extends CreditPayments {
 
     protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, PaymentRs $payRs = NULL, $attempts = 1){
 
@@ -449,11 +443,10 @@ class ReturnReply extends Payments {
 
         if (is_null($payRs)) {
 
-            // REturn amount
+            // New Return payment
             $payRs = new PaymentRS();
 
             $payRs->Amount->setNewVal($vr->getAuthorizeAmount());
-            $payRs->Balance->setNewVal(0.0);
             $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
             $payRs->idPayor->setNewVal($pr->idPayor);
             $payRs->idTrans->setNewVal($pr->getIdTrans());
@@ -469,8 +462,6 @@ class ReturnReply extends Payments {
 
             // Update existing Payment record
             $payRs->Status_Code->setNewVal(PaymentStatusCode::Retrn);
-            $bal = $payRs->Balance->getStoredVal();
-            $payRs->Balance->setNewVal($bal + $vr->getAuthorizeAmount());
             $payRs->Updated_By->setNewVal($username);
             $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
@@ -592,7 +583,7 @@ class ReturnReply extends Payments {
 
 }
 
-class VoidReturnReply extends Payments {
+class VoidReturnReply extends CreditPayments {
 
     protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, PaymentRs $payRs = NULL, $attempts = 1){
 
@@ -602,12 +593,21 @@ class VoidReturnReply extends Payments {
 
         $vr = $pr->response;
 
-        // Payment record
-        $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
-        $bal = $payRs->Balance->getStoredVal();
-        $payRs->Balance->setNewVal($bal - $vr->getAuthorizeAmount());
+        // Is a payment returned, or is this a stand-alone return?
+        if ($payRs->Is_Refund->getStoredVal() == 1) {
+
+            // Stand-alone return payment.
+            $payRs->Status_Code->setNewVal(PaymentStatusCode::VoidReturn);
+
+        } else {
+
+            // Return an exsiting Payment record
+            $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
+        }
+
         $payRs->Updated_By->setNewVal($username);
         $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+
 
         // payment Note
         if ($pr->payNotes != '') {

@@ -250,10 +250,10 @@ class PaymentManager {
                             $this->pmp->setChargeCard($this->pmp->getRtnChargeCard());
                             $this->pmp->setTransferAcct($this->pmp->getRtnTransferAcct());
 
-                            if ($uS->returnId < 1) {
-                                throw new Hk_Exception_Payment('ReturnPayorId not set in the site configuration file');
-                            }
-                            $this->pmp->setIdInvoicePayor($uS->returnId);
+//                            if ($uS->returnId < 1) {
+//                                throw new Hk_Exception_Payment('ReturnPayorId not set in the site configuration file');
+//                            }
+//                            $this->pmp->setIdInvoicePayor($uS->returnId);
 
                         }
                     }
