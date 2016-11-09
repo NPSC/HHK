@@ -75,11 +75,8 @@ class Receipt {
             $tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($line->getAmount(), 2), array('style'=>'font-size:.8em;')));
         }
 
-        if ($invoice->getAmount() < 0) {
-            $tbl->addBodyTr(HTMLTable::makeTd("Total Reimbursed:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($invoice->getAmount()), 2), array('class'=>'hhk-tdTotals')));
-        } else {
-            $tbl->addBodyTr(HTMLTable::makeTd("Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($invoice->getAmount(), 2), array('class'=>'hhk-tdTotals')));
-        }
+        $tbl->addBodyTr(HTMLTable::makeTd("Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($invoice->getAmount(), 2), array('class'=>'hhk-tdTotals')));
+
 
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);
@@ -841,7 +838,7 @@ where
                 $amtStyle = 'text-align:right;';
 
                 if ($p['Payment_Status'] != PaymentStatusCode::Paid) {
-                    $amtMkup = HTMLContainer::generateMarkup('span', number_format(floatval($p['Payment_Balance']), 2), array('style'=>'color:red;'));
+                    $amtMkup = HTMLContainer::generateMarkup('span', number_format(floatval($p['Payment_Amount']), 2), array('style'=>'color:red;'));
                     $amtStyle = 'text-align:left;';
                 } else {
                     $amtMkup = number_format($amt, 2);

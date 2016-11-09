@@ -482,6 +482,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     $whStatus = '';
     $payStatusText = '';
+    $rtnIncluded = FALSE;
+
     foreach ($statusSelections as $s) {
         if ($s != '') {
             // Set up query where part.
@@ -489,6 +491,10 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 $whStatus = "'" . $s . "'";
             } else {
                 $whStatus .= ",'".$s . "'";
+            }
+
+            if ($s == PaymentStatusCode::Retrn) {
+                $rtnIncluded = TRUE;
             }
 
             if ($payStatusText == '') {
@@ -500,7 +506,13 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     }
 
     if ($whStatus != '') {
-        $whStatus = " and lp.Payment_Status in (" . $whStatus . ") ";
+
+        if ($rtnIncluded) {
+            $whStatus = " and (lp.Payment_Status in (" . $whStatus . ") or (lp.Is_Refund = 1 && lp.Payment_Status = '" . PaymentStatusCode::Paid. "')) ";
+        } else {
+            $whStatus = " and lp.Payment_Status in (" . $whStatus . ") ";
+        }
+
     } else {
         $payStatusText = 'All';
     }

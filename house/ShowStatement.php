@@ -68,46 +68,6 @@ $emtableMarkup = '';
 $emAddr = '';
 
 
-function createScript() {
-    return "
-    $('#btnPrint, #btnEmail').button();
-    $('#btnEmail').click(function () {
-        if ($('#btnEmail').val() == 'Sending...') {
-            return;
-        }
-        $('#emMsg').text('');
-        if ($('#txtEmail').val() === '') {
-            $('#emMsg').text('Enter an Email Address.  ').css('color', 'red');
-            return;
-        }
-        if ($('#txtSubject').val() === '') {
-            $('#emMsg').text('Enter a Subject line.').css('color', 'red');
-            return;
-        }
-        $('#btnEmail').val('Sending...');
-        $.post('ShowStatement.php', $('#formEm').serialize() + '&cmd=email' + '&reg=' + $(this).data('reg') + '&vid=' + $(this).data('vid'), function(data) {
-            $('#btnEmail').val('Send Email');
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert('Bad JSON Encoding');
-                return;
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.open(data.gotopage, '_self');
-                }
-            }
-            if (data.msg) {
-                $('#emMsg').text(data.msg).css('color', 'red');
-            }
-        });
-    });
-    $('#btnPrint').click(function() {
-        $('div.PrintArea').printArea();
-    });";
-}
-
 if (isset($_REQUEST["vid"])) {
     $idVisit = intval(filter_var($_REQUEST["vid"], FILTER_SANITIZE_NUMBER_INT), 10);
 }
@@ -146,7 +106,7 @@ if (isset($_REQUEST['reg'])) {
         $stmtMarkup = 'No Information.';
     }
 
-$stmtMarkup = HTMLContainer::generateMarkup('div', $stmtMarkup, array('style'=>'clear:left;max-width: 800px;font-size:.9em;', 'class'=>'PrintArea ui-widget ui-widget-content ui-corner-all hhk-panel'));
+$stmtMarkup = HTMLContainer::generateMarkup('div', $stmtMarkup, array('id'=>'divStmt', 'style'=>'clear:left;max-width: 800px;font-size:.9em;', 'class'=>'PrintArea ui-widget ui-widget-content ui-corner-all hhk-panel'));
 
 
 $emSubject = $wInit->siteName . " Guest Statement";
@@ -252,14 +212,58 @@ if ($msg != '') {
         <script type='text/javascript'>
 $(document).ready(function() {
     "use strict";
-    <?php echo createScript(); ?>
+    $('#btnPrint, #btnEmail').button();
+    $('#btnEmail').click(function () {
+        if ($('#btnEmail').val() == 'Sending...') {
+            return;
+        }
+        $('#emMsg').text('');
+        if ($('#txtEmail').val() === '') {
+            $('#emMsg').text('Enter an Email Address.  ').css('color', 'red');
+            return;
+        }
+        if ($('#txtSubject').val() === '') {
+            $('#emMsg').text('Enter a Subject line.').css('color', 'red');
+            return;
+        }
+        $('#btnEmail').val('Sending...');
+        $.post('ShowStatement.php', $('#formEm').serialize() + '&cmd=email' + '&reg=' + $(this).data('reg') + '&vid=' + $(this).data('vid'), function(data) {
+            $('#btnEmail').val('Send Email');
+            try {
+                data = $.parseJSON(data);
+            } catch (err) {
+                alert('Bad JSON Encoding');
+                return;
+            }
+            if (data.error) {
+                if (data.gotopage) {
+                    window.open(data.gotopage, '_self');
+                }
+            }
+            if (data.msg) {
+                $('#emMsg').text(data.msg).css('color', 'red');
+            }
+        });
+    });
+
+    var opt = {mode: 'popup',
+        popClose: true,
+        popHt      : $('#divStmt').height(),
+        popWd      : $('#divStmt').width(),
+        popX       : 20,
+        popY       : 20,
+        popTitle   : 'Guest Statement'};
+
+    $('#btnPrint').click(function() {
+        $('div.PrintArea').printArea(opt);
+    });
 });
 </script>
     </head>
     <body>
         <div id="contentDiv">
-<?php echo $msg; ?>
-<?php echo $emtableMarkup; ?>
+            <?php echo $msg; ?>
+            <?php echo $emtableMarkup; ?>
             <div class="hhk-tdbox hhk-visitdialog">
                 <?php echo $stmtMarkup; ?>
             </div>

@@ -162,7 +162,7 @@ class RegisterForm {
 
         require REL_BASE_DIR . 'conf' . DS . 'regSections.php';
 
-        $mkup .= HTMLContainer::generateMarkup('div', $instructions, array('class'=>'MsoNormal', 'style'=>'width:900px;margin-left:auto;margin-right:auto;'));
+        $mkup .= HTMLContainer::generateMarkup('div', $instructions);
 
         $usedNames = array();
 
@@ -338,7 +338,7 @@ class RegisterForm {
 
         $uS = Session::getInstance();
 
-        $mkup = "<div style='width:900px;margin-left:auto;margin-right:auto;margin-bottom:30px;'>";
+        $mkup = "<div style='width:800px;margin-bottom:30px; margin-left:10px; margin-right:10p'>";
         $mkup .= self::titleBlock($roomTitle, $expectedDeparture, $rate, $title, $agent, $uS->RoomPriceModel);
 
         $mkup .= self::notesBlock($notes);

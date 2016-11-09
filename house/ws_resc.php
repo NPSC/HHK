@@ -596,7 +596,7 @@ WHERE
 
         foreach ($invoices as $r) {
 
-            $tbl->addHeaderTr(HTMLTable::makeTh('Date').HTMLTable::makeTh('Method').HTMLTable::makeTh('Status').HTMLTable::makeTh('Amount').HTMLTable::makeTh('Balance'));
+            $tbl->addHeaderTr(HTMLTable::makeTh('Date').HTMLTable::makeTh('Method').HTMLTable::makeTh('Status').HTMLTable::makeTh('Amount'));
 
             // Payments
             foreach ($r['p'] as $p) {
@@ -606,7 +606,6 @@ WHERE
                     .HTMLTable::makeTd($p['Payment_Method_Title'], array('class'=>'tdlabel'))
                     .HTMLTable::makeTd($p['Payment_Status_Title'], array('class'=>'tdlabel'))
                     . HTMLTable::makeTd(number_format($p['Payment_Amount'], 2), array('style'=>'text-align:right;'))
-                    . HTMLTable::makeTd(number_format($p['Payment_Balance'], 2), array('style'=>'text-align:right;'))
                         );
             }
 

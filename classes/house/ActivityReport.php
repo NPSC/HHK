@@ -468,6 +468,7 @@ class ActivityReport {
             $totals[$s[0]] = array('amount'=>0.00, 'count'=>0, 'title'=>$s[1], 'active'=>$active);
         }
 
+        $rtnIncluded = FALSE;
 
         foreach ($feeStatuses as $s) {
             if ($s != '') {
@@ -476,6 +477,10 @@ class ActivityReport {
                     $whStatus = "'" . $s . "'";
                 } else {
                     $whStatus .= ",'".$s . "'";
+                }
+
+                if ($s == PaymentStatusCode::Retrn) {
+                    $rtnIncluded = TRUE;
                 }
 
                 $totals[$s]['active'] = 'y';
@@ -488,7 +493,12 @@ class ActivityReport {
         }
 
         if ($whStatus != '') {
-            $whStatus = " and lp.Payment_Status in (" . $whStatus . ") ";
+
+            if ($rtnIncluded) {
+                $whStatus = " and (lp.Payment_Status in (" . $whStatus . ") or (lp.Is_Refund = 1 && lp.Payment_Status = '" . PaymentStatusCode::Paid. "')) ";
+            } else {
+                $whStatus = " and lp.Payment_Status in (" . $whStatus . ") ";
+            }
         }
 
 
@@ -609,7 +619,7 @@ where lp.idPayment > 0
             switch ($p['Payment_Status']) {
 
                 case PaymentStatusCode::VoidSale:
-                    $stat = 'Void';
+                    $stat = 'Void Sale';
                     $attr['style'] .= 'color:red;';
 
 

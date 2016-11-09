@@ -79,7 +79,6 @@ class Login {
         $ssn->sconf = $config->getString('site', 'SysConfigTable', 'sys_config');
         $ssn->sId = $config->getString('site', 'Site_Id', '');
         $ssn->subsidyId = $config->getString('financial', 'RoomSubsidyId', '0');
-        $ssn->returnId = $config->getString('financial', 'ReturnPayorId', '0');
 
         $ssn->tutURL = $config->getString('site', 'Tutorial_URL', '');
         $ssn->adminEmailAddr = $config->getString('house', 'Admin_Address', '');

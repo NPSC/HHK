@@ -409,7 +409,7 @@ class PaymentSvcs {
             return $payResult;
         }
 
-        if ($invoice->getAmountToPay() < 0 && $invoice->getSoldToId() != $uS->returnId) {
+        if ($invoice->getAmountToPay() < 0) {
             $payResult = new PaymentResult(0, 0, 0);
             $payResult->setReplyMessage('warning:  Cannot Pay a negative amount. ');
             return $payResult;
@@ -1588,8 +1588,13 @@ class PaymentSvcs {
 
         $dataArray = array();
         $config = new Config_Lite(ciCFG_FILE);
+        $statusCode = $payRs->Status_Code->getStoredVal();
 
-        switch ($payRs->Status_Code->getStoredVal()) {
+        if ($statusCode == PaymentStatusCode::Paid && $payRs->Is_Refund->getStoredVal() > 0) {
+            $statusCode = PaymentStatusCode::Retrn;
+        }
+
+        switch ($statusCode) {
 
             case PaymentStatusCode::Paid:
 
@@ -1598,6 +1603,10 @@ class PaymentSvcs {
 
             case PaymentStatusCode::VoidSale:
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $payResp, $uS->resourceURL . 'images/receiptlogo.png', $uS->siteName, $uS->sId)));
+                break;
+
+            case PaymentStatusCode::VoidReturn:
+                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $payResp, $uS->resourceURL . 'images/receiptlogo.png', $uS->siteName, $uS->sId, 'Void Return')));
                 break;
 
             case PaymentStatusCode::Reverse:

@@ -731,7 +731,7 @@ class HouseServices {
 
         if (is_null($invoice) === FALSE && $invoice->getStatus() == InvoiceStatus::Unpaid) {
 
-            if ($invoice->getAmountToPay() > 0 || $idPayor == $uS->returnId) {
+            if ($invoice->getAmountToPay() > 0) {
                 // Make guest payment
                 $payResult = $paymentManager->makeHousePayment($dbh, $postbackPage, $paymentManager->pmp->getPayDate());
 

@@ -153,10 +153,10 @@ switch ($uS->RegForm) {
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
-        <style type="text/css" media="print">
+<!--        <style type="text/css" media="print">
             .PrintArea {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
             @page { margin: 1cm; }
-        </style>
+        </style>-->
         <?php echo $sty; ?>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
@@ -164,9 +164,16 @@ switch ($uS->RegForm) {
         <script type='text/javascript'>
 $(document).ready(function() {
     "use strict";
+    var opt = {mode: 'popup',
+        popClose: true,
+        popHt      : $('div#PrintArea').height(),
+        popWd      : 950,
+        popX       : 20,
+        popY       : 20,
+        popTitle   : 'Guest Registration Form'};
     $('#btnPrint').button();
     $('#btnPrint').click(function() {
-        $('div#PrintArea').printArea();
+        $('div#PrintArea').printArea(opt);
     });
 });
 </script>
