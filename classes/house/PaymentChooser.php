@@ -244,8 +244,7 @@ class PaymentChooser {
                     $visitCharge->getIdVisit(),
                     readGenLookupsPDO($dbh, 'ExcessPays'),
                     $uS->VisitExcessPaid,
-                    $uS->DefaultCkBalStmt,
-                    $visitCharge->getDepositPayType()
+                    $uS->DefaultCkBalStmt
                 )
                 , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
                 );
@@ -328,7 +327,7 @@ class PaymentChooser {
                         HTMLContainer::generateMarkup('label', 'Pay', array('for'=>$i['Invoice_Number'].'unpaidCb', 'style'=>'margin-left:5px;margin-right:3px;'))
                         .HTMLInput::generateMarkup('', array('name'=>$i['Invoice_Number'].'unpaidCb', 'type'=>'checkbox', 'data-invnum'=>$i['Invoice_Number'], 'data-invamt'=>$i['Balance'], 'class'=>'hhk-feeskeys hhk-payInvCb', 'style'=>'margin-right:.4em;', 'title'=>'Check to pay this invoice.'))
                         .HTMLContainer::generateMarkup('span', '($'. number_format($i['Balance'], 2) . ')', array('style'=>'font-style: italic;')))
-                    .HTMLTable::makeTd('$'. HTMLInput::generateMarkup('', array('name'=>$i['Invoice_Number'].'invPayAmt', 'size'=>'4', 'class'=>'hhk-feeskeys hhk-payInvAmt','style'=>'text-align:right;')), array('style'=>'text-align:right;'));
+                    .HTMLTable::makeTd('$'. HTMLInput::generateMarkup('', array('name'=>$i['Invoice_Number'].'invPayAmt', 'size'=>'8', 'class'=>'hhk-feeskeys hhk-payInvAmt','style'=>'text-align:right;')), array('style'=>'text-align:right;'));
 
                 $trs[] = $unpaid;
             }
@@ -564,7 +563,7 @@ ORDER BY v.idVisit , v.Span;");
     }
 
     protected static function createPaymentMarkup($showRoomFees, $useKeyDeposit, $keyDepAmount, $keyDepPaid, $useVisitFee, $visitFeeAmt, $visitFeePaid, $heldAmount, $payVFeeFirst,
-            $showFinalPaymentCB, array $unpaidInvoices, $labels,  $idVisit = 0, $excessPays = array(), $defaultExcessPays = ExcessPay::Ignore, $defaultCkFinalPayCB = FALSE, $depositReturnType = '') {
+            $showFinalPaymentCB, array $unpaidInvoices, $labels,  $idVisit = 0, $excessPays = array(), $defaultExcessPays = ExcessPay::Ignore, $defaultCkFinalPayCB = FALSE) {
 
         $feesTbl = new HTMLTable();
 
@@ -619,7 +618,7 @@ ORDER BY v.idVisit , v.Span;");
 
                 $visitFee .= HTMLTable::makeTd(HTMLContainer::generateMarkup('label', "Pay", array('for'=>'visitFeeCb', 'style'=>'margin-left:5px;margin-right:3px;'))
                     .HTMLInput::generateMarkup('', $vfAttr) . HTMLContainer::generateMarkup('span', ($visitFeeAmt > 0 ? '($' . $visitFeeAmt . ')' : ''), array('id'=>'spnvfeeAmt', 'data-amt'=>$visitFeeAmt)))
-                    .HTMLTable::makeTd( '$'. HTMLInput::generateMarkup($visitFeeAmt, array('name'=>'visitFeeAmt', 'size'=>'8', 'style'=>'border:none;text-align:right;', 'class'=>'hhk-feeskeys', 'title'=>$vFeeTitle.' amount')), array('style'=>'text-align:right;'));
+                    .HTMLTable::makeTd( '$'. HTMLInput::generateMarkup($visitFeeAmt, array('name'=>'visitFeeAmt', 'size'=>'8', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;', 'class'=>'hhk-feeskeys', 'title'=>$vFeeTitle.' amount')), array('style'=>'text-align:right;'));
             }
 
             if ($visitFee != '') {
@@ -650,22 +649,10 @@ ORDER BY v.idVisit , v.Span;");
 
             // Deposit Return Amount
             if ($keyDepPaid > 0) {
-
-                if ($depositReturnType == PayType::Charge) {
-
-                    $feesTbl->addBodyTr(
-                        HTMLTable::makeTd('Deposit Refund:', array('class'=>'tdlabel'))
-                        .HTMLTable::makeTd(HTMLInput::generateMarkup('Return Charge', array('type'=>'button', 'id'=>'btndepRefund', 'style'=>'font-size:0.8em;')), array('style'=>'text-align:center;'))
-                        .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'DepRefundAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;'))
-                                , array('style'=>'text-align:right;')), array('class'=>'hhk-refundDeposit'));
-
-                } else {
-
-                    $feesTbl->addBodyTr(
-                        HTMLTable::makeTd('Deposit Refund:', array('class'=>'tdlabel', 'colspan'=>'2'))
-                        .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'DepRefundAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;'))
-                                , array('style'=>'text-align:right;')), array('class'=>'hhk-refundDeposit'));
-                }
+                $feesTbl->addBodyTr(
+                    HTMLTable::makeTd('Deposit Refund:', array('class'=>'tdlabel', 'colspan'=>'2'))
+                    .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'DepRefundAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;'))
+                            , array('style'=>'text-align:right;')), array('class'=>'hhk-refundDeposit'));
             }
         }
 
@@ -691,7 +678,8 @@ ORDER BY v.idVisit , v.Span;");
         if ($showRoomFees) {
             $feesTbl->addBodyTr(HTMLTable::makeTd('Room Fees:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd('Days: ' . HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'1', 'data-vid'=>$idVisit)), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay')));
+                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
+                , array('class'=>'hhk-RoomFees'));
         }
 
         // House Discount Amount
@@ -723,7 +711,7 @@ ORDER BY v.idVisit , v.Span;");
                 , array('style'=>'display:none;', 'class'=>'hhk-minPayment'));
 
 
-
+        // Extra payment & distribution Selector
         if ($defaultExcessPays !== ExcessPay::Ignore && count($excessPays) > 0) {
 
             $feesTbl->addBodyTr(HTMLTable::makeTh('Overpayment Amount:', array('class'=>'tdlabel', 'colspan'=>'2'))
@@ -738,6 +726,7 @@ ORDER BY v.idVisit , v.Span;");
 
         }
 
+        // Invoice Notes
         $feesTbl->addBodyTr(
             HTMLTable::makeTh('Invoice Notes', array('colspan'=>'3', 'style'=>'text-align:left;'))
                 , array('style'=>'display:none;', 'class'=>'hhk-minPayment'));

@@ -263,7 +263,8 @@ class cofResult extends PaymentResult {
 
 class ReturnResult extends PaymentResult {
 
-    public function returnAccepted(PDO $dbh, \Session $uS, PaymentResponse $rtnResp) {
+    //public function feePaymentAccepted(PDO $dbh, \Session $uS, PaymentResponse $payResp, \Invoice $invoice)
+    public function feePaymentAccepted(PDO $dbh, \Session $uS, PaymentResponse $rtnResp, Invoice $invoice) {
 
         // set status
         $this->status = PaymentResult::ACCEPTED;
@@ -619,7 +620,8 @@ class PaymentSvcs {
             return $rtnResult;
         }
 
-        $amount = $invoice->getAmountToPay();
+        // Use positive amounts for return amount (This is not return payment.)
+        $amount = abs($invoice->getAmountToPay());
         $rtnResult = NULL;
 
 
@@ -659,7 +661,7 @@ class PaymentSvcs {
                     $returnRequest->setCardHolderName($tokenRS->CardHolderName->getStoredVal());
                     $returnRequest->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion);
                     $returnRequest->setInvoice($invoice->getInvoiceNumber());
-                    $returnRequest->setPurchaseAmount(abs($amount));
+                    $returnRequest->setPurchaseAmount($amount);
 
                     $returnRequest->setToken($tokenRS->Token->getStoredVal());
                     $returnRequest->setTokenId($tokenRS->idGuest_token->getStoredVal());
@@ -705,6 +707,20 @@ class PaymentSvcs {
                 $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
                 $rtnResult->feePaymentAccepted($dbh, $uS, $cashResp, $invoice);
                 $rtnResult->setDisplayMessage('Cash Return.  ');
+                break;
+
+            case PayType::Check:
+
+                $ckResp = new CheckResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getRtnCheckNumber(), $pmp->getPayNotes());
+
+                CheckTX::returnAmount($dbh, $ckResp, $uS->username, $paymentDate);
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, $ckResp->getAmount(), $uS->username);
+
+                $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+                $rtnResult->feePaymentAccepted($dbh, $uS, $ckResp, $invoice);
+                $rtnResult->setDisplayMessage('Check Cut for Return.  ');
                 break;
 
             case PayType::Invoice:
@@ -1115,7 +1131,7 @@ class PaymentSvcs {
                 // Update invoice
                 $invoice->updateInvoiceBalance($dbh, 0 - $rtnResp->response->getAuthorizeAmount(), $uS->username);
 
-                $rtnResult->returnAccepted($dbh, $uS, $rtnResp);
+                $rtnResult->feePaymentAccepted($dbh, $uS, $rtnResp, $invoice);
                 $rtnResult->setDisplayMessage('Refund by Credit Card.  ');
 
                 break;

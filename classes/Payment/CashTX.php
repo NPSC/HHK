@@ -90,6 +90,7 @@ class CashTX {
         $payRs->Notes->setNewVal($pr->payNotes);
         $payRs->idPayment_Method->setNewVal(PaymentMethod::Cash);
         $payRs->Attempt->setNewVal(1);
+        $payRs->Is_Refund->setNewVal(1);
         $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
         $payRs->Created_By->setNewVal($userName);
 
@@ -266,6 +267,7 @@ class ChargeAsCashTX {
         $payRs->Notes->setNewVal($pr->payNotes);
         $payRs->idPayment_Method->setNewVal(PaymentMethod::ChgAsCash);
         $payRs->Attempt->setNewVal(1);
+        $payRs->Is_Refund->setNewVal(1);
         $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
         $payRs->Created_By->setNewVal($username);
 
@@ -284,7 +286,6 @@ class ChargeAsCashTX {
             $pDetailRS->Card_Type->setNewVal($cType);
             $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
             $pDetailRS->Invoice_Number->setNewVal($pr->getInvoice());
-
             $pDetailRS->Updated_By->setNewVal($username);
             $pDetailRS->Last_Updated->setNewVal($paymentDate);
             $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Paid);

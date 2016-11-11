@@ -255,7 +255,6 @@ var payCtrls = function () {
     t.overPay = $('#txtOverPayAmt');
     t.guestCredit = $('#guestCredit');
     t.selBalTo = $('#selexcpay');
-    t.btndepRefund = $('#btndepRefund');
     
 };
 
@@ -484,6 +483,7 @@ function amtPaid() {
 
         } else {
 
+            // Manage Underpayment
             $('.hhk-Overpayment').hide();
             overPayAmt = 0;
             
@@ -650,13 +650,7 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
     
     var p = new payCtrls();
     
-    if (p.btndepRefund.length > 0) {
-        p.btndepRefund.button();
-        p.btndepRefund.click(function () {
-            
-        });
-    }
-    
+
     if (p.selBalTo.length > 0) {
         p.selBalTo.change(function () {
             amtPaid();
@@ -680,7 +674,7 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
             amtPaid();
         });
     }
-
+    
     if (p.invoiceCb.length > 0) {
 
         p.invoiceCb.change(function() {

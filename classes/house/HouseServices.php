@@ -549,12 +549,12 @@ class HouseServices {
         $paymentManager = new PaymentManager(PaymentChooser::readPostedPayment($dbh, $post));
 
         // Is it a return payment?
-        if ($idPayor == $uS->returnId && is_null($paymentManager->pmp) === FALSE) {
+        if (is_null($paymentManager->pmp) === FALSE && $paymentManager->pmp->getTotalPayment() < 0) {
 
             // Here is where we look for the reimbursment pay type.
-            $paymentManager->pmp->setPayType($paymentManager->pmp->getRtnPayType());
-            $paymentManager->pmp->setCheckNumber($paymentManager->pmp->getRtnCheckNumber());
-            $paymentManager->pmp->setTransferAcct($paymentManager->pmp->getRtnTransferAcct());
+            $paymentManager->pmp->setRtnPayType($paymentManager->pmp->getPayType());
+            $paymentManager->pmp->setRtnCheckNumber($paymentManager->pmp->getCheckNumber());
+            $paymentManager->pmp->setRtnTransferAcct($paymentManager->pmp->getTransferAcct());
             $paymentManager->pmp->setBalWith(ExcessPay::Refund);
         }
 

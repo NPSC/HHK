@@ -78,6 +78,43 @@ class CheckTX {
 
     }
 
+    public static function returnAmount(\PDO $dbh, CheckResponse &$pr, $userName, $paymentDate) {
+
+        // Record transaction
+        $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::Retrn, TransMethod::Check);
+        $pr->setIdTrans($transRs->idTrans->getStoredVal());
+
+
+        // Record Payment
+        $payRs = new PaymentRS();
+        $payRs->Amount->setNewVal($pr->getAmount());
+        $payRs->Payment_Date->setNewVal($paymentDate);
+        $payRs->idPayor->setNewVal($pr->idPayor);
+        $payRs->idTrans->setNewVal($pr->getIdTrans());
+        $payRs->Notes->setNewVal($pr->payNotes);
+        $payRs->idPayment_Method->setNewVal(PaymentMethod::Check);
+        $payRs->Attempt->setNewVal(1);
+        $payRs->Is_Refund->setNewVal(1);
+        $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
+        $payRs->Created_By->setNewVal($userName);
+
+        $idPayment = EditRS::insert($dbh, $payRs);
+        $payRs->idPayment->setNewVal($idPayment);
+        EditRS::updateStoredVals($payRs);
+        $pr->paymentRs = $payRs;
+
+        if ($idPayment > 0) {
+
+            // Check table
+            $ckRs = new PaymentInfoCheckRS();
+            $ckRs->Check_Date->setNewVal($paymentDate);
+            $ckRs->Check_Number->setNewVal($pr->checkNumber);
+            $ckRs->idPayment->setNewVal($idPayment);
+
+            EditRS::insert($dbh, $ckRs);
+        }
+    }
+
     public static function checkReturn(\PDO $dbh, \CheckResponse &$pr, $username, PaymentRS $payRs) {
 
         // Record transaction
@@ -91,7 +128,6 @@ class CheckTX {
 
         // Payment record
         $payRs->Status_Code->setNewVal(PaymentStatusCode::Retrn);
-//        $payRs->Balance->setNewVal($payRs->Amount->getStoredVal());
         $payRs->Updated_By->setNewVal($username);
         $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
@@ -179,6 +215,44 @@ class TransferTX {
 
     }
 
+    public static function returnAmount(\PDO $dbh, \TransferResponse &$pr, $userName, $paymentDate) {
+
+        // Record transaction
+        $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::Retrn, TransMethod::Transfer);
+        $pr->setIdTrans($transRs->idTrans->getStoredVal());
+
+
+        // Record Payment
+        $payRs = new PaymentRS();
+        $payRs->Amount->setNewVal($pr->getAmount());
+        $payRs->Payment_Date->setNewVal($paymentDate);
+        $payRs->idPayor->setNewVal($pr->idPayor);
+        $payRs->idTrans->setNewVal($pr->getIdTrans());
+        $payRs->Notes->setNewVal($pr->payNotes);
+        $payRs->idPayment_Method->setNewVal(PaymentMethod::Transfer);
+        $payRs->Attempt->setNewVal(1);
+        $payRs->Is_Refund->setNewVal(1);
+        $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
+        $payRs->Created_By->setNewVal($userName);
+
+        $idPayment = EditRS::insert($dbh, $payRs);
+        $payRs->idPayment->setNewVal($idPayment);
+        EditRS::updateStoredVals($payRs);
+        $pr->paymentRs = $payRs;
+
+        if ($idPayment > 0) {
+
+            // Check table
+            $ckRs = new PaymentInfoCheckRS();
+            $ckRs->Check_Date->setNewVal($paymentDate);
+            $ckRs->Check_Number->setNewVal($pr->checkNumber);
+            $ckRs->idPayment->setNewVal($idPayment);
+
+            EditRS::insert($dbh, $ckRs);
+        }
+
+    }
+
     public static function transferReturn(\PDO $dbh, \TransferResponse &$pr, $username, PaymentRS $payRs) {
 
         // Record transaction
@@ -192,7 +266,6 @@ class TransferTX {
 
         // Payment record
         $payRs->Status_Code->setNewVal(PaymentStatusCode::Retrn);
-//        $payRs->Balance->setNewVal($payRs->Amount->getStoredVal());
         $payRs->Updated_By->setNewVal($username);
         $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 

@@ -221,6 +221,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
             $diagbox.children().remove();
             $diagbox.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.success)));
+            
             $diagbox.find('.ckdate').datepicker({
                 yearRange: '-01:+01',
                 changeMonth: true,
@@ -267,7 +268,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 $diagbox.css('background-color', '#FEFF9B');
             }
 
-
+            // set up Visit extension
             if ($('.hhk-extVisitSw').length > 0) {
                 $('.hhk-extVisitSw').change(function () {
                     if (this.checked) {
@@ -279,6 +280,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 $('.hhk-extVisitSw').change();
             }
 
+            // Set up rate changer
             if ($('#rateChgCB').length > 0) {
 
                 var rateChangeDate = $('#chgRateDate');
@@ -322,6 +324,19 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
             $('#spnExPay').hide();
             isCheckedOut = false;
+            
+
+            var roomChgBal = 0.00;
+            var vFeeChgBal = 0.00;
+            
+            if ($('#spnCfBalDue').length > 0) {
+                roomChgBal = parseFloat($('#spnCfBalDue').data('bal'));
+                vFeeChgBal = parseFloat($('#spnCfBalDue').data('vfee'));
+                
+                roomChgBal -= vFeeChgBal;
+            }
+
+
 
             if ($('input.hhk-ckoutCB').length > 0) {
                 // still checked in...
@@ -369,9 +384,6 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                         var todayStr = today.getFullYear() + '-' + today.getMonth() + '-' + today.getDate();
                         var coDate = new Date(coTime);
                         var coDateStr = coDate.getFullYear() + '-' + coDate.getMonth() + '-' + coDate.getDate();
-                        var roomChgBal = parseFloat($('#spnCfBalDue').data('bal'));
-                        var vFeeChgBal = parseFloat($('#spnCfBalDue').data('vfee'));
-                        roomChgBal -= vFeeChgBal;
 
                         if (coDate.getTime() > today.getTime()) {
                             return false;
@@ -461,11 +473,10 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
             } else if ($('#cbFinalPayment').length > 0) {
 
                 isCheckedOut = true;
-                var roomChgBal = parseFloat($('#spnCfBalDue').data('bal'));
-                var vFeeChgBal = parseFloat($('#spnCfBalDue').data('vfee'));
-                roomChgBal -= vFeeChgBal;
 
                 $('.hhk-finalPayment').show();
+                
+                // Key Deposit
                 var kdamt = parseFloat($('#kdPaid').data('amt'));
 
                 if (isNaN(kdamt)) {
@@ -494,6 +505,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
             setupPayments(data.resc, $('#selResource'), $('#selRateCategory'), idVisit, $('#pmtRcpt'));
 
+            // Financial Application
             var $btnFapp = $('#btnFapp');
             if ($btnFapp.length > 0) {
                 $btnFapp.button();
@@ -506,6 +518,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 $('.hhk-addGuest').toggle();
             });
 
+            // Billing agent chooser set up
             var lstXhr;
             $('#txtInvSearch').keypress(function (event) {
                 var mm = $(this).val();
@@ -641,6 +654,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         }
     });
     
+    // Confirm checking out
     if (ckoutlist.length > 0) {
         var cnfMsg = 'Check Out:\n' + ckoutlist.join('\n');
         if ($('#EmptyExtend').val() === '1' && $('#extendCb').prop('checked') && ckoutlist.length >= $('#currGuests').val()) {
@@ -652,6 +666,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         }
     }
     
+    // Confirm remove guests
     if (removeList.length > 0) {
         if (confirm('Remove:\n' + removeList.join('\n') + '?') === false) {
             $('#keysfees').dialog("close");
@@ -661,6 +676,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     
     $('#keyDepAmt').removeClass('ui-state-highlight');
     
+    // Room Change?
     if ($('#resvResource').length > 0) {
         
         resvResc = $('#resvResource').val();
