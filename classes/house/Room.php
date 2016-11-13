@@ -5,7 +5,7 @@
  *
  * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
@@ -16,7 +16,12 @@
  */
 class Room {
 
+    /**
+     *
+     * @var RoomRs
+     */
     public $roomRS;
+
     protected $currOccupants = 0;
     protected $idRoom;
 
@@ -107,67 +112,6 @@ class Room {
         return $this->roomRS->Max_Occupants->getStoredVal();
     }
 
-//    public function isInService() {
-//        return $this->roomRS->State->getStoredVal() == RoomService::InService;
-//    }
-//
-//    public function putInService() {
-//
-//        if ($this->isInService() === FALSE) {
-//            $this->setService(RoomService::InService);
-//        }
-//        return;
-//    }
-//
-//    public function putOutOfService() {
-//
-//        if ($this->isInService() === TRUE) {
-//            $this->setService(RoomService::OutOfService);
-//        }
-//        return;
-//    }
-//
-//    protected function setService($roomState) {
-//
-//        $this->roomRS->State->setNewVal($roomState);
-//        return;
-//    }
-//
-//    // Checks both Inservice and Available.
-//    public function isRoomAvailable() {
-//        return $this->isAvailable();
-//    }
-//
-//    Public function isAvailable() {
-//        if ($this->roomRS->Availability->getStoredVal() == RoomAvailable::Available) {
-//            return TRUE;
-//        } else {
-//            return FALSE;
-//        }
-//    }
-//
-//    public function putAvailable() {
-//
-//        if ($this->isAvailable() === FALSE) {
-//            $this->setAvailability(RoomAvailable::Available);
-//        }
-//        return;
-//    }
-//
-//    public function putUnavailable() {
-//
-//        if ($this->isAvailable() === TRUE) {
-//            $this->setAvailability(RoomAvailable::Unavailable);
-//        }
-//        return;
-//    }
-//
-//    protected function setAvailability($roomState) {
-//
-//        $this->roomRS->Availability->setNewVal($roomState);
-//        return;
-//    }
-
     public function isClean() {
         return $this->roomRS->Status->getStoredVal() == RoomState::Clean;
     }
@@ -208,14 +152,6 @@ class Room {
     public function getStatus() {
         return $this->roomRS->Status->getStoredVal();
     }
-
-//    public function getAvailability() {
-//        return $this->roomRS->Availability->getStoredVal();
-//    }
-//
-//    public function getService() {
-//        return $this->roomRS->State->getStoredVal();
-//    }
 
     public function setCurrentOcc($val) {
         $this->currOccupants = $val;
@@ -271,6 +207,7 @@ class Room {
         if ($this->roomRS->idRoom->getStoredVal() > 0) {
             // update
             $num = EditRS::update($dbh, $this->roomRS, array($this->roomRS->idRoom));
+            EditRS::updateStoredVals($this->roomRS);
 
             if ($num > 0) {
 
@@ -297,7 +234,7 @@ class Room {
             }
         }
 
-        EditRS::updateStoredVals($this->roomRS);
+
 
     }
 

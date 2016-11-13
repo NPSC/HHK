@@ -31,3 +31,5 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VAL
 UPDATE `sys_config` SET `Description`='Collect the patient address.' WHERE `Key`='PatientAddr';
 
 update gen_lookups set Code = '700' where Table_Name = 'Role_Codes' and Code = '1000';
+
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Visit_Status', '1', 'On Leave');

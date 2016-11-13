@@ -28,8 +28,8 @@ require (DB_TABLES . 'PaymentsRS.php');
 require CLASSES . 'AuditLog.php';
 require CLASSES . 'History.php';
 require (CLASSES . 'CreateMarkupFromDB.php');
+require (CLASSES . 'Notes.php');
 
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require (PMT . 'Invoice.php');
 require (PMT . 'InvoiceLine.php');
 require (PMT . 'Receipt.php');
@@ -68,7 +68,7 @@ $wInit = new webInit(WebPageCode::Service);
 
 /* @var $dbh PDO */
 $dbh = $wInit->dbh;
-
+$guestAdmin = ComponentAuthClass::is_Authorized("guestadmin");
 addslashesextended($_REQUEST);
 $c = "";
 
@@ -453,6 +453,35 @@ $(document).mousedown(function (event) {
 
         $events['curres'] = 'y';
         $events['msg'] = 'Room Clean state changed';
+        break;
+
+    case 'cleanStat':
+
+        $tbl = '';
+        if (isset($_REQUEST['tbl'])) {
+            $tbl = filter_var($_REQUEST['tbl'], FILTER_SANITIZE_STRING);
+        }
+
+        $date = '';
+        if (isset($_REQUEST['dte'])) {
+            $date = filter_var($_REQUEST['dte'], FILTER_SANITIZE_STRING);
+        }
+
+        switch ($tbl) {
+            case 'roomTable':
+                $events['roomTable'] = ResourceView::roomsClean($dbh, '', $guestAdmin);
+                break;
+
+            case 'dirtyTable':
+                $events['dirtyTable'] = ResourceView::roomsClean($dbh, RoomState::Dirty, $guestAdmin);
+                break;
+
+            case 'outTable':
+                $events['outTable'] = ResourceView::showCoList($dbh, $date);
+                break;
+
+        }
+
         break;
 
     default:

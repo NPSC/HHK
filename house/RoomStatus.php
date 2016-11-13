@@ -178,43 +178,53 @@ if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
 }
 
 
-$stmt = $dbh->query("select DISTINCT
-    r.idRoom,
-ifnull(v.idVisit, 0) as idVisit,
-    r.Title,
-    r.`Status`,
-    r.`State`,
-    r.`Availability`,
-    r.`Cleaning_Cycle_Code`,
-    ifnull(n.Name_Full, '') as `Name`,
-    ifnull(v.Arrival_Date, '') as `Arrival`,
-    ifnull(v.Expected_Departure, '') as `Expected_Departure`,
-    r.Last_Cleaned,
-    r.Notes
-from
-    room r
-        left join
-    resource_room rr ON r.idRoom = rr.idRoom
-        left join
-    visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
-        left join
-    name n ON v.idPrimaryGuest = n.idName
-        left join resource re on rr.idResource = re.idResource
-where re.`Type` != '". ResourceTypes::Partition ."' and re.`Type` != '" .ResourceTypes::Block. "';");
-
-
-$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-$roomTable = ResourceView::roomsClean($dbh, $rows, 'tblFac', $uS->guestLookups[GL_TableNames::RoomStatus], '', $guestAdmin);
-
 $checkingIn = Reservation_1::showListByStatus($dbh, '', '', ReservationStatus::Committed, TRUE, NULL, 1, TRUE);
 
 if ($checkingIn == '') {
     $checkingIn = "<p style='margin-left:60px;'>-None-</p>";
 }
 
-reset($rows);
-$cleanToday = ResourceView::roomsClean($dbh, $rows, 'tblcln', $uS->guestLookups[GL_TableNames::RoomStatus], RoomState::Dirty, $guestAdmin);
+// Room table
+$cgCols = array(
+    array("data" => "Room" ),
+    array("data" => "Status" ),
+    array("data"=>"Action"),
+    array("data"=>"Occupant"),
+    array("data" => "Checked In", 'type'=>'date' ),
+    array("data" => "Expected Checkout" , 'type'=>'date'),
+    array("data" => "Last Cleaned" ),
+    array("data"=>"Notes")
+    );
+
+$roomTable = new HTMLTable();
+$hdrRow = '';
+
+foreach ($cgCols as $c) {
+    $hdrRow .= HTMLTable::makeTh($c['data']);
+}
+
+$roomTable->addHeaderTr($hdrRow);
+$roomTable->addFooterTr($hdrRow);
+
+// Checking out table
+$outCols = array(
+    array("data" => "Room" ),
+    array("data"=>"Visit Status"),
+    array("data"=>"Primary Guest"),
+    array("data" => "Arrival Date", 'type'=>'date' ),
+    array("data" => "Expected Checkout" , 'type'=>'date'),
+    array("data"=>"Notes")
+);
+
+$ckOutTable = new HTMLTable();
+$hdrRow = '';
+
+foreach ($outCols as $c) {
+    $hdrRow .= HTMLTable::makeTh($c['data']);
+}
+
+$ckOutTable->addHeaderTr($hdrRow);
+$ckOutTable->addFooterTr($hdrRow);
 
 ?>
 <!DOCTYPE html>
@@ -231,19 +241,75 @@ $cleanToday = ResourceView::roomsClean($dbh, $rows, 'tblcln', $uS->guestLookups[
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript">
-    $(document).ready(function() {
-        "use strict";
-        $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
-        var cTab = parseInt('<?php echo $currentTab; ?>', 10);
-        $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrint, #btnSubmitTable').button();
+$(document).ready(function() {
+    "use strict";
+    var cTab = parseInt('<?php echo $currentTab; ?>', 10);
+    var cgCols = $.parseJSON('<?php echo json_encode($cgCols); ?>');
+    var outCols = $.parseJSON('<?php echo json_encode($outCols); ?>');
+    var coDate = new Date();
 
-        $('#mainTabs').tabs();
-        $('#mainTabs').tabs("option", "active", cTab);
-        $('#tblFac').dataTable({"iDisplayLength": 50, "dom": '<"top"if>rt<"bottom"lp><"clear">', "order": [[0, "asc"]]});
-        $('#btnPrint').click(function () {
-            window.open('ShowHsKpg.php', '_blank');
-        });
+    $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
+    $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrint, #btnSubmitTable, #prtCkOut').button();
+    $('#mainTabs').tabs();
+    $('#mainTabs').tabs("option", "active", cTab);
+
+    $('#ckoutDate').datepicker({
+        yearRange: '-1:+01',
+        changeMonth: true,
+        changeYear: true,
+        autoSize: true,
+        numberOfMonths: 1,
+        dateFormat: 'M d, yy',
+        onClose: function(dateText) {
+            var d = new Date(dateText);
+            if (d != coDate) {
+                coDate = d;
+                $('#outTable').DataTable().ajax.url('ws_resc.php?cmd=cleanStat&tbl=outTable&dte=' + $.datepicker.formatDate("yy-mm-dd", coDate));
+                $('#outTable').DataTable().ajax.reload();
+            }
+        }
     });
+
+    $('#ckoutDate').datepicker('setDate', coDate);
+
+    $.extend($.fn.dataTable.defaults, {
+        "dom": '<"top"if>rt<"bottom"lp><"clear">',
+        "iDisplayLength": 50,
+        "aLengthMenu": [[25, 50, -1], [25, 50, "All"]],
+        "order": [[ 0, 'asc' ]]
+    });
+
+    $('#roomTable').DataTable({
+       ajax: {
+           url: 'ws_resc.php?cmd=cleanStat&tbl=roomTable',
+           dataSrc: 'roomTable'
+       },
+       "deferRender": true,
+       "columns": cgCols
+    });
+
+    $('#dirtyTable').DataTable({
+       ajax: {
+           url: 'ws_resc.php?cmd=cleanStat&tbl=dirtyTable',
+           dataSrc: 'dirtyTable'
+       },
+       "deferRender": true,
+       "columns": cgCols
+    });
+
+    $('#outTable').DataTable({
+       ajax: {
+           url: 'ws_resc.php?cmd=cleanStat&tbl=outTable&dte=' + $.datepicker.formatDate("yy-mm-dd", coDate),
+           dataSrc: 'outTable'
+       },
+       "deferRender": true,
+       "columns": outCols
+    });
+
+    $('#btnPrint').click(function () {
+        window.open('ShowHsKpg.php', '_blank');
+    });
+});
         </script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
@@ -257,13 +323,14 @@ $cleanToday = ResourceView::roomsClean($dbh, $rows, 'tblcln', $uS->guestLookups[
             <form action="RoomStatus.php" method="post"  id="form1" name="form1" >
             <div id="mainTabs" style="font-size: .8em;" class="hhk-tdbox">
                 <ul>
-                    <li><a href="#clnToday">Rooms to be Cleaned</a></li>
+                    <li><a href="#clnToday">Rooms set Dirty</a></li>
                     <li><a href="#ckin">Guests Checking In</a></li>
+                    <li><a href="#ckout">Guests Checking Out</a></li>
                     <li><a href="#showAll">Show All Rooms</a></li>
                     <li><a href="#showLog">Show Room Log</a></li>
                 </ul>
                 <div id="clnToday" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
-                    <?php echo $cleanToday; ?>
+                    <?php echo $roomTable->generateMarkup(array('id'=>'dirtyTable')); ?>
                     <div class="ui-corner-all submitButtons">
                         <input type="reset" name="btnReset1" value="Reset" id="btnReset1" />
                         <input type="submit" name="btnSubmitClean" value="Save" id="btnSubmitClean" />
@@ -272,8 +339,15 @@ $cleanToday = ResourceView::roomsClean($dbh, $rows, 'tblcln', $uS->guestLookups[
                 <div id="ckin"   class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                     <?php echo $checkingIn; ?>
                 </div>
+                <div id="ckout"   class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
+                    <p>
+                        <span>Checkout Date: </span><input id="ckoutDate" class="ckdate"/>
+                        <input type="button" value="Print" id="prtCkOut" style="margin:3px;"/>
+                    </p>
+                    <?php echo $ckOutTable->generateMarkup(array('id'=>'outTable')); ?>
+                </div>
                 <div id="showAll">
-                    <?php echo $roomTable; ?>
+                    <?php echo $roomTable->generateMarkup(array('id'=>'roomTable')); ?>
                     <div class="ui-corner-all submitButtons">
                         <input type="button" value="Print" name="btnPrint" id="btnPrint" />
                         <input type="reset" name="btnReset2" value="Reset" id="btnReset2" />

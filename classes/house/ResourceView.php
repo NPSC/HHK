@@ -840,22 +840,32 @@ order by r.Title;");
         return $style . $tbl->generateMarkup(array('id'=>'tblRescList', 'class'=>'display'));
     }
 
-    public static function roomsClean(\PDO $dbh, $rows, $tblId, $statuses, $filter = '', $guestAdmin = FALSE, $printOnly = FALSE) {
+    public static function dirtyOccupiedRooms(\PDO $dbh) {
+
+        $uS = Session::getInstance();
+        $cleanDays = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
 
         $today = new DateTime();
         $today->setTime(0,0,0);
 
-        $tbl = new HTMLTable();
-        $cleanDays = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
+        $stmt = $dbh->query("select DISTINCT
+            r.*,
+            v.idVisit,
+            ifnull(v.Arrival_Date, '') as `Arrival`
+        from
+            room r
+                left join
+            resource_room rr ON r.idRoom = rr.idRoom
+                join
+            visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "';");
 
-        // Loop rooms.
-        foreach ($rows as $r) {
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
             $roomRs = new RoomRs();
             EditRS::loadRow($r, $roomRs);
             $rm = new Room($dbh, 0, $roomRs);
 
-            // Put dirty if room active for longer than $days.
+            // Put dirty if room active for longer than days.
             if ($r['idVisit'] > 0 && $r['Status'] == RoomState::Clean && isset($cleanDays[$rm->getCleaningCycleCode()])) {
 
                 $arrDT = $today;
@@ -881,22 +891,57 @@ order by r.Title;");
                 if ($days > 0 && $today->diff($lastCleanedDT, TRUE)->days >= $days) {
                     // Set room dirty
                     $rm->putDirty();
-                    $rm->saveRoom($dbh, 'hhk');
-                    $r['Status'] = RoomState::Dirty;
-
+                    $rm->saveRoom($dbh, $uS->username, TRUE);
                 }
             }
+        }
+    }
+
+    public static function roomsClean(\PDO $dbh, $filter = '', $guestAdmin = FALSE, $printOnly = FALSE) {
+
+        $today = new DateTime();
+        $today->setTime(0,0,0);
+
+        $returnRows = array();
+
+        $stmt = $dbh->query("select DISTINCT
+            r.idRoom,
+        ifnull(v.idVisit, 0) as idVisit,
+            r.Title,
+            r.`Status`,
+            ifnull(g.Description, 'Unknown') as `Status_Text`,
+            r.`Cleaning_Cycle_Code`,
+            ifnull(n.Name_Full, '') as `Name`,
+            ifnull(v.Arrival_Date, '') as `Arrival`,
+            ifnull(v.Expected_Departure, '') as `Expected_Departure`,
+            r.Last_Cleaned,
+            r.Notes
+        from
+            room r
+                left join
+            resource_room rr ON r.idRoom = rr.idRoom
+                left join
+            visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
+                left join
+            name n ON v.idPrimaryGuest = n.idName
+                left join
+            gen_lookups g on g.Table_Name = 'Room_Status' and g.Code = R.Status");
+
+
+        // Loop rooms.
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
             if ($filter == RoomState::Dirty && !($r['Status'] == RoomState::Dirty || $r['Status'] == RoomState::TurnOver)) {
                 continue;
             }
 
+            $fixedRows = array();
             $stat = '';
             $isDirty = FALSE;
 
             // Mangle room status
             if ($r['Status'] == RoomState::TurnOver) {
-                $stat = HTMLContainer::generateMarkup('span', $statuses[$r['Status']][1], array('style'=>'background-color:yellow;'));
+                $stat = HTMLContainer::generateMarkup('span', $r['Status_Text'], array('style'=>'background-color:yellow;'));
                 $isDirty = TRUE;
             } else if ($r['idVisit'] > 0 && $r['Status'] == RoomState::Dirty) {
                 $stat = HTMLContainer::generateMarkup('span', 'Active-Dirty', array('style'=>'background-color:#E3FF14;'));
@@ -907,7 +952,7 @@ order by r.Title;");
                 $stat = HTMLContainer::generateMarkup('span', 'Dirty', array('style'=>'background-color:yellow;'));
                 $isDirty = TRUE;
             } else {
-                $stat = HTMLContainer::generateMarkup('span', $statuses[$r['Status']][1]);
+                $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);
             }
 
             // Expected Departure
@@ -922,7 +967,7 @@ order by r.Title;");
                     $edAttr['style'] = 'color:red;';
                 }
 
-                $expDep = HTMLTable::makeTd($expDepDT->format('D, M j'), $edAttr);
+                $expDep = HTMLTable::makeTd($expDepDT->format('D, M j, Y'), $edAttr);
 
             } else {
                 $expDep = HTMLTable::makeTd('');
@@ -963,34 +1008,78 @@ order by r.Title;");
                             .HTMLContainer::generateMarkup('label', 'Delete Notes', array('for'=>$filter.'cbDeln' . $r['idRoom'], 'style'=>'margin-left:.2em;'))
                         );
 
-                $action = HTMLTable::makeTd($action);
             }
 
-            $tbl->addBodyTr(
-                HTMLTable::makeTd($rm->getTitle())
-                . HTMLTable::makeTd($stat)
-                . $action
-               . HTMLTable::makeTd($r['Name'])
-               . HTMLTable::makeTd($r['Arrival'] == '' ? '' : date('D, M j', strtotime($r['Arrival'])))
-               . $expDep
-               . HTMLTable::makeTd($r['Last_Cleaned'] == '' ? '' : date('D, M j', strtotime($r['Last_Cleaned'])))
-               . ($printOnly ? '' : HTMLTable::makeTd($notes, array('style'=>'min-width:300px;')))
+            $fixedRows['Room'] = $r['Title'];
+            $fixedRows['Status'] = $stat;
+            $fixedRows['Action'] = $action;
+            $fixedRows['Occupant'] = $r['Name'];
+            $fixedRows['Checked In'] = $r['Arrival'] == '' ? '' : date('D, M j', strtotime($r['Arrival']));
+            $fixedRows['Expected Checkout'] = $expDep;
+            $fixedRows['Last Cleaned'] = $r['Last_Cleaned'] == '' ? '' : date('D, M j', strtotime($r['Last_Cleaned']));
+            $fixedRows['Notes'] = ($printOnly ? '' : HTMLTable::makeTd($notes, array('style'=>'min-width:300px;')));
+
+            $returnRows[] = $fixedRows;
+        }
+
+        return $returnRows;
+    }
+
+    public static function showCoList(PDO $dbh, $coDate) {
+
+        $returnRows = array();
+
+        if ($coDate == '') {
+            return $returnRows;
+        }
+
+        $stmt = $dbh->query("select DISTINCT
+        r.idRoom,
+        ifnull(v.idVisit, 0) as idVisit,
+        r.`Title`,
+        ifnull(n.Name_Full, '') as `Name`,
+        v.Arrival_Date,
+        ifnull(DATE(v.Span_End), DATE(dateDefaultNow(v.Expected_Departure))) as `Departure_Date`,
+        g.`Description` as `Visit_Status`,
+        r.`Last_Cleaned`,
+        r.`Notes`
+    from
+        room r
+            left join
+        resource_room rr ON r.idRoom = rr.idRoom
+            join
+        visit v ON rr.idResource = v.idResource and v.`Status` in ('" . VisitStatus::CheckedIn . "', '" . VisitStatus::CheckedOut . "', '" . VisitStatus::NewSpan . "')
+            left join
+        name n ON v.idPrimaryGuest = n.idName
+            left join
+        gen_lookups g on g.Table_Name = 'Visit_Status' and g.Code = v.`Status`
+    where ifnull(DATE(v.Span_End), DATE(dateDefaultNow(v.Expected_Departure))) = Date('$coDate');");
+
+
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
+        // reverse output
+        $lines = explode("\n", $r['Notes']);
+        $reverse = "";
+
+        for ($i = (count($lines) - 1); $i >= 0; $i--) {
+            $reverse .= $lines[$i] . "<br/>";
+        }
+
+
+
+            $returnRows[] = array(
+                'Room' => $r['Title'],
+                'Visit Status' => $r['Visit_Status'],
+                'Primary Guest' => $r['Name'],
+                'Arrival Date' => date('M j, Y', strtotime($r['Arrival_Date'])),
+                'Expected Checkout' => date('M j, Y', strtotime($r['Departure_Date'])),
+                'Notes' => $reverse
             );
 
         }
 
-        $tbl->addHeaderTr(
-            HTMLTable::makeTh('Room')
-            . HTMLTable::makeTh('Status')
-            .($printOnly ? '' : HTMLTable::makeTh('Action'))
-            . HTMLTable::makeTh('Occupant')
-            .HTMLTable::makeTh('Check In')
-            .HTMLTable::makeTh('Expected Check Out')
-            .HTMLTable::makeTh('Last Cleaned')
-            .($printOnly ? '' : HTMLTable::makeTh('Notes'))
-        );
-
-        return $tbl->generateMarkup(array('id'=>$tblId, 'class'=>'display'));
+        return $returnRows;
     }
 
 

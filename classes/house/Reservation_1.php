@@ -812,23 +812,32 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
 
         if (is_null($idResc) === FALSE) {
 
-            $stmt = $dbh->prepare("select * from vresv_patient where DATE(`Expected_Arrival`) <= DATE(:dte) and Status = '$reservStatus'  and idResource = :idr order by `Expected_Arrival`");
+            $stmt = $dbh->prepare("select * from vresv_patient where ifnull(DATE(Actual_Arrival), DATE(`Expected_Arrival`)) <= DATE(:dte) and Status = '$reservStatus'  and idResource = :idr order by `Expected_Arrival`");
             $stmt->execute(array(':idr'=>$idResc, ':dte'=>$dateAhead->format('Y-m-d')));
 
         } else {
 
-            $stmt = $dbh->prepare("select * from vresv_patient where DATE(`Expected_Arrival`) <= DATE(:dte) and Status = '$reservStatus' order by `Expected_Arrival`");
+            $stmt = $dbh->prepare("select * from vresv_patient where ifnull(DATE(Actual_Arrival), DATE(`Expected_Arrival`)) <= DATE(:dte) and Status = '$reservStatus' order by `Expected_Arrival`");
             $stmt->execute(array(':dte'=>$dateAhead->format('Y-m-d')));
         }
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return self::showList($dbh, $rows, $editPage, $checkinPage, $reservStatus, $shoDirtyRooms, $showConstraints);
+
+    }
+
+    public static function showList(PDO $dbh, $rows, $editPage, $checkinPage, $reservStatus = ReservationStatus::Committed, $shoDirtyRooms = FALSE, $showConstraints = FALSE) {
+
+        $rooms = array();
+
+        $noCleaning = '';
 
         // Check-in button text
         $buttonText = 'Add Guest';
         if ($reservStatus == ReservationStatus::Committed  || $reservStatus == ReservationStatus::Imediate) {
             $buttonText = 'Check In';
         }
-
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $noCleaning = '';
 
         if (count($rows) > 0) {
 
@@ -843,8 +852,9 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
 
                 unset($cleanCodes);
 
+                // Get the list of rooms
                 $stmt = $dbh->query("select rr.idResource, r.* from resource_room rr left join room r on rr.idRoom = r.idRoom");
-                $rooms = array();
+
                 while ($rm = $stmt->fetch(PDO::FETCH_ASSOC)) {
                     $rooms[$rm['idResource']] = $rm;
                 }
@@ -858,6 +868,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
                     .HTMLTable::makeTh('Patient')
                     .HTMLTable::makeTh('Guests')
                     .HTMLTable::makeTh('Arrival Date')
+                    .HTMLTable::makeTh('Expected Departure')
                     .HTMLTable::makeTh('Room')
                     .HTMLTable::makeTh('Nights')
                     .($showConstraints ? HTMLTable::makeTh('Additional Items') : ''));
@@ -887,8 +898,6 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
                     }
 
                     if ($shoDirtyRooms) {
-//                        $stmt = $dbh->query("select r.* from resource_room rr left join room r on rr.idRoom = r.idRoom where rr.idResource = " . $resv->getIdResource());
-//                        $rooms = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                         if (isset($rooms[$resv->getIdResource()])) {
                             $roomRs = new RoomRs();
@@ -927,7 +936,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
                     $pname = $r['Patient_Name'];
                 }
 
-                $guestAttrs = array('title'=>'Click to view guest details');
+                $guestAttrs = array();
                 $guestName = '';
 
                 if ($editPage != '') {
@@ -947,6 +956,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
                         .HTMLTable::makeTd($pname)
                         .HTMLTable::makeTd($resv->getNumberGuests($dbh), array('style'=>'text-align:center;'))
                         .HTMLTable::makeTd($resv->getActualArrival() != '' ? date('M j, Y', strtotime($resv->getActualArrival())) : date('M j, Y', strtotime($resv->getExpectedArrival())))
+                        .HTMLTable::makeTd($resv->getActualDeparture() != '' ? date('M j, Y', strtotime($resv->getActualDeparture())) : date('M j, Y', strtotime($resv->getExpectedDeparture())))
                         .HTMLTable::makeTd($resv->getRoomTitle($dbh) . $dirtyRoom, $roomAttr)
                         .HTMLTable::makeTd($resv->getExpectedDays(), array('style'=>'text-align:center;'))
                         .$constList

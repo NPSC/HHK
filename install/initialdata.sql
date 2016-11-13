@@ -332,6 +332,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Visit_Status','co','Checked Out','',''),
 ('Visit_Status','cp','Room Rate Changed','',''),
 ('Visit_Status','n','Room Changed','',''),
+('Visit_Status', '1', 'On Leave','',''),
 
 ('Vol_Activities','1','Greeter','green,white',''),
 ('Vol_Activities','5','Fundraising','black,white',''),

@@ -819,7 +819,7 @@ class Visit {
         foreach ($rooms as $r) {
 
             // Only if cleaning cycle is defined and > 0
-            if (isset($rmCleans[$r->getCleaningCycleCode()]) && $rmCleans[$r->getCleaningCycleCode()][2] != '0') {
+            if (isset($rmCleans[$r->getCleaningCycleCode()]) && $rmCleans[$r->getCleaningCycleCode()][2] > 0) {
                 $r->putTurnOver();
                 $r->saveRoom($dbh, $username, TRUE);
             }
