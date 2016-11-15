@@ -68,6 +68,46 @@ $emtableMarkup = '';
 $emAddr = '';
 
 
+function createScript() {
+    return "
+    $('#btnPrint, #btnEmail').button();
+    $('#btnEmail').click(function () {
+        if ($('#btnEmail').val() == 'Sending...') {
+            return;
+        }
+        $('#emMsg').text('');
+        if ($('#txtEmail').val() === '') {
+            $('#emMsg').text('Enter an Email Address.  ').css('color', 'red');
+            return;
+        }
+        if ($('#txtSubject').val() === '') {
+            $('#emMsg').text('Enter a Subject line.').css('color', 'red');
+            return;
+        }
+        $('#btnEmail').val('Sending...');
+        $.post('ShowStatement.php', $('#formEm').serialize() + '&cmd=email' + '&reg=' + $(this).data('reg') + '&vid=' + $(this).data('vid'), function(data) {
+            $('#btnEmail').val('Send Email');
+            try {
+                data = $.parseJSON(data);
+            } catch (err) {
+                alert('Bad JSON Encoding');
+                return;
+            }
+            if (data.error) {
+                if (data.gotopage) {
+                    window.open(data.gotopage, '_self');
+                }
+            }
+            if (data.msg) {
+                $('#emMsg').text(data.msg).css('color', 'red');
+            }
+        });
+    });
+    $('#btnPrint').click(function() {
+        $('div.PrintArea').printArea();
+    });";
+}
+
 if (isset($_REQUEST["vid"])) {
     $idVisit = intval(filter_var($_REQUEST["vid"], FILTER_SANITIZE_NUMBER_INT), 10);
 }
@@ -76,35 +116,35 @@ if (isset($_REQUEST['reg'])) {
     $idRegistration = intval(filter_var($_REQUEST['reg'], FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
-    $logoUrl = $uS->resourceURL . 'images/registrationLogo.png';
+$logoUrl = $uS->resourceURL . 'images/registrationLogo.png';
 
-    if ($idRegistration > 0) {
+if ($idRegistration > 0) {
 
-        $stmt1 = $dbh->prepare("select * from `vvisit_stmt` where `idRegistration` = :idreg order by `idVisit`, `Span`");
-        $stmt1->execute(array(':idreg'=>$idRegistration));
-        $spans = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+    $stmt1 = $dbh->prepare("select * from `vvisit_stmt` where `idRegistration` = :idreg order by `idVisit`, `Span`");
+    $stmt1->execute(array(':idreg'=>$idRegistration));
+    $spans = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
-        $guest = new Guest($dbh, '', $spans[(count($spans) - 1)]['idPrimaryGuest']);
-        $name = $guest->getNameObj();
-
-
-        $stmtMarkup = Receipt::createComprehensiveStatements($dbh, $spans, $idRegistration, $name->get_fullName(), $logoUrl);
+    $guest = new Guest($dbh, '', $spans[(count($spans) - 1)]['idPrimaryGuest']);
+    $name = $guest->getNameObj();
 
 
-    } else if ($idVisit > 0) {
-
-        $visit = new Visit($dbh, 0, $idVisit);
+    $stmtMarkup = Receipt::createComprehensiveStatements($dbh, $spans, $idRegistration, $name->get_fullName(), $logoUrl);
 
 
-        // Generate Statement
-        $guest = new Guest($dbh, '', $visit->getPrimaryGuestId());
-        $name = $guest->getNameObj();
+} else if ($idVisit > 0) {
 
-        $stmtMarkup = Receipt::createStatementMarkup($dbh, $idVisit, $logoUrl, $name->get_fullName());
+    $visit = new Visit($dbh, 0, $idVisit);
 
-    } else {
-        $stmtMarkup = 'No Information.';
-    }
+
+    // Generate Statement
+    $guest = new Guest($dbh, '', $visit->getPrimaryGuestId());
+    $name = $guest->getNameObj();
+
+    $stmtMarkup = Receipt::createStatementMarkup($dbh, $idVisit, $logoUrl, $name->get_fullName());
+
+} else {
+    $stmtMarkup = 'No Information.';
+}
 
 $stmtMarkup = HTMLContainer::generateMarkup('div', $stmtMarkup, array('id'=>'divStmt', 'style'=>'clear:left;max-width: 800px;font-size:.9em;', 'class'=>'PrintArea ui-widget ui-widget-content ui-corner-all hhk-panel'));
 

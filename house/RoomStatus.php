@@ -55,6 +55,9 @@ $wInit->sessionLoadGuestLkUps();
 
 $guestAdmin = ComponentAuthClass::is_Authorized("guestadmin");
 
+// update room cleaning status for existing guest rooms.
+ResourceView::dirtyOccupiedRooms($dbh);
+
 $resultMessage = "";
 $currentTab = 2;
 
@@ -241,16 +244,114 @@ $ckOutTable->addFooterTr($hdrRow);
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript">
+var dtCols = [
+    {
+        "aTargets": [ 0 ],
+        "bVisible": false,
+        "mDataProp": "idRoom"
+    },
+    {
+        "aTargets": [ 1 ],
+        "sTitle": "Room",
+        "bSearchable": false,
+        "bSortable": true,
+        "mDataProp": "Title"
+    },
+    {
+        "aTargets": [ 2 ],
+        "sTitle": "Status",
+        "bSearchable": false,
+        "bSortable": true,
+        "mDataProp": "Status_Text"
+    },
+    {
+        "aTargets": [ 3 ],
+        "sTitle": "Last Cleaned",
+        "sType": "date",
+        "mDataProp": function (source, type, val) {
+            "use strict";
+            if (type === 'set') {
+                source.Last_Cleaned = val;
+                return null;
+            } else if (type === 'display') {
+                if (source.Date_display === undefined) {
+                    if (source.Last_Cleaned !== null) {
+                        var dt = new Date(Date.parse(source.Last_Cleaned));
+                        source.Date_display = $.datepicker.formatDate("D M d, yy", dt)  //(dt.getMonth() + 1) + '/' + dt.getDate() + '/' + dt.getFullYear() + ' ' + dt.getHours() + ':' + dt.getMinutes();
+                    } else {
+                        source.Date_display = '';
+                    }
+
+                }
+                return source.Date_display;
+            }
+            return source.Last_Cleaned;
+        }
+    },
+     {
+        "aTargets": [ 4 ],
+        "sTitle": "Notes",
+        "bSearchable": false,
+        "bSortable": false,
+        "mDataProp": "Notes"
+    },
+    {
+        "aTargets": [ 5 ],
+        "sTitle": "User",
+        "bSortable": true,
+        "mDataProp": "Username"
+    },
+    {
+        "aTargets": [ 6 ],
+        "sTitle": "Timestamp",
+        "sType": "date",
+        "mDataProp": function (source, type, val) {
+            "use strict";
+            if (type === 'set') {
+                source.Timestamp = val;
+                return null;
+            } else if (type === 'display') {
+                if (source.Timestamp_display === undefined) {
+                    source.Timestamp = new Date(Date.parse(source.Timestamp));
+                    source.Timestamp_display = $.datepicker.formatDate("D M d, yy", source.Timestamp);
+
+                }
+                return source.Timestamp_display;
+            }
+            return source.Timestamp;
+        }
+    }
+];
 $(document).ready(function() {
     "use strict";
     var cTab = parseInt('<?php echo $currentTab; ?>', 10);
     var cgCols = $.parseJSON('<?php echo json_encode($cgCols); ?>');
     var outCols = $.parseJSON('<?php echo json_encode($outCols); ?>');
+    var listEvtTable;
     var coDate = new Date();
 
     $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
     $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrint, #btnSubmitTable, #prtCkOut').button();
-    $('#mainTabs').tabs();
+    $('#mainTabs').tabs({
+        beforeActivate: function (event, ui) {
+            if (ui.newPanel.length > 0) {
+                if (ui.newPanel.selector === '#showLog' && !listEvtTable) {
+                    listEvtTable = $('#dataTbl').dataTable({
+                        "aoColumnDefs": dtCols,
+                        "bServerSide": true,
+                        "bProcessing": true,
+                        "bDeferRender": true,
+                        "oLanguage": {"sSearch": "Search Log Text:"},
+                        "aaSorting": [[6,'asc']],
+                        "iDisplayLength": 25,
+                        "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                        "Dom": '<"top"ilf>rt<"bottom"ip>',
+                        "sAjaxSource": 'ws_resc.php?cmd=clnlog'
+                    });
+                }
+            }
+        }
+    });
     $('#mainTabs').tabs("option", "active", cTab);
 
     $('#ckoutDate').datepicker({
@@ -327,7 +428,7 @@ $(document).ready(function() {
                     <li><a href="#ckin">Guests Checking In</a></li>
                     <li><a href="#ckout">Guests Checking Out</a></li>
                     <li><a href="#showAll">Show All Rooms</a></li>
-                    <li><a href="#showLog">Show Room Log</a></li>
+                    <li><a href="#showLog">Show Cleaning Log</a></li>
                 </ul>
                 <div id="clnToday" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                     <?php echo $roomTable->generateMarkup(array('id'=>'dirtyTable')); ?>
@@ -354,8 +455,8 @@ $(document).ready(function() {
                         <input type="submit" name="btnSubmitTable" value="Save" id="btnSubmitTable" />
                     </div>
                 </div>
-                <div id="showLog">
-                    To be implemented...
+                <div id="showLog" class="ignrSave">
+                  <table cellpadding="0" cellspacing="0" border="0" class="display" id="dataTbl"></table>
                 </div>
             </div>
             </form>

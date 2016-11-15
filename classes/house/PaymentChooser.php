@@ -381,7 +381,7 @@ class PaymentChooser {
                 . $mkup, array('class'=>'hhk-panel hhk-kdrow', 'style'=>'float:left;'));
     }
 
-    public static function createHousePaymentMarkup(array $discounts, array $addnls, $idVisit) {
+    public static function createHousePaymentMarkup(array $discounts, array $addnls, $idVisit, $arrivalDate = '') {
 
         if (count($discounts) < 1 && count($addnls) < 1) {
             return '';
@@ -416,11 +416,30 @@ class PaymentChooser {
         $feesTbl->addBodyTr(
                 HTMLTable::makeTd('Select', array('class'=>'tdlabel')) . HTMLTable::makeTd($select));
 
-        $feesTbl->addBodyTr(HTMLTable::makeTd('Amount: ', array('class'=>'tdlabel'))
-            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'housePayment', 'size'=>'8', 'data-vid'=>$idVisit))));
+        $feesTbl->addBodyTr(
+                HTMLTable::makeTd('Amount: ', array('class'=>'tdlabel'))
+                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'housePayment', 'size'=>'8', 'data-vid'=>$idVisit))));
 
+        $feesTbl->addBodyTr(
+                HTMLTable::makeTd('Date: ', array('class'=>'tdlabel'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'housePaymentDate', 'class'=>'ckdate', 'data-vid'=>$idVisit))));
 
-        return $feesTbl->generateMarkup(array('style'=>'clear:left;margin-bottom:7px;'));
+        $javaScript = '<script type="text/javascript">'
+                . '$("#housePaymentDate").datepicker({'
+                . 'yearRange: "-1:+01",
+changeMonth: true,
+changeYear: true,
+autoSize: true,
+numberOfMonths: 1,
+dateFormat: "M d, yy" ';
+
+        if ($arrivalDate != '') {
+            $javaScript .= ',minDate: new Date("' . $arrivalDate . '")';
+        }
+
+        $javaScript .= ' }); $("#housePaymentDate").datepicker("setDate", new Date());</script>';
+
+        return $feesTbl->generateMarkup(array('style'=>'clear:left;margin-bottom:7px;')) . $javaScript;
 
     }
 

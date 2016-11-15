@@ -848,16 +848,16 @@ order by r.Title;");
         $today = new DateTime();
         $today->setTime(0,0,0);
 
-        $stmt = $dbh->query("select DISTINCT
-            r.*,
-            v.idVisit,
-            ifnull(v.Arrival_Date, '') as `Arrival`
-        from
-            room r
-                left join
-            resource_room rr ON r.idRoom = rr.idRoom
-                join
-            visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "';");
+        $stmt = $dbh->query("select
+    r.*,
+    v.idVisit,
+    ifnull(v.Arrival_Date, '') as `Arrival`
+from
+    room r
+        left join
+    resource_room rr ON r.idRoom = rr.idRoom
+        join
+    visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "';");
 
         while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
@@ -904,28 +904,28 @@ order by r.Title;");
 
         $returnRows = array();
 
-        $stmt = $dbh->query("select DISTINCT
-            r.idRoom,
-        ifnull(v.idVisit, 0) as idVisit,
-            r.Title,
-            r.`Status`,
-            ifnull(g.Description, 'Unknown') as `Status_Text`,
-            r.`Cleaning_Cycle_Code`,
-            ifnull(n.Name_Full, '') as `Name`,
-            ifnull(v.Arrival_Date, '') as `Arrival`,
-            ifnull(v.Expected_Departure, '') as `Expected_Departure`,
-            r.Last_Cleaned,
-            r.Notes
-        from
-            room r
-                left join
-            resource_room rr ON r.idRoom = rr.idRoom
-                left join
-            visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
-                left join
-            name n ON v.idPrimaryGuest = n.idName
-                left join
-            gen_lookups g on g.Table_Name = 'Room_Status' and g.Code = R.Status");
+        $stmt = $dbh->query("select
+    r.idRoom,
+    ifnull(v.idVisit, 0) as idVisit,
+    r.Title,
+    r.`Status`,
+    ifnull(g.Description, 'Unknown') as `Status_Text`,
+    r.`Cleaning_Cycle_Code`,
+    ifnull(n.Name_Full, '') as `Name`,
+    ifnull(v.Arrival_Date, '') as `Arrival`,
+    ifnull(v.Expected_Departure, '') as `Expected_Departure`,
+    r.Last_Cleaned,
+    r.Notes
+from
+    room r
+        left join
+    resource_room rr ON r.idRoom = rr.idRoom
+        left join
+    visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
+        left join
+    name n ON v.idPrimaryGuest = n.idName
+        left join
+    gen_lookups g on g.Table_Name = 'Room_Status' and g.Code = R.Status");
 
 
         // Loop rooms.
@@ -1033,7 +1033,7 @@ order by r.Title;");
             return $returnRows;
         }
 
-        $stmt = $dbh->query("select DISTINCT
+        $stmt = $dbh->query("select
         r.idRoom,
         ifnull(v.idVisit, 0) as idVisit,
         r.`Title`,
@@ -1082,6 +1082,31 @@ order by r.Title;");
         return $returnRows;
     }
 
+    public static function CleanLog(PDO $dbh, $id, $get) {
+
+        require(CLASSES . 'DataTableServer.php');
+
+        $aColumns = array('idRoom', 'Title', 'Type', 'Status_Text', 'Last_Cleaned', 'Notes', 'Username', 'Timestamp');
+        $sIndexColumn = "";
+        $sTable = "vcleaning_log";
+
+        // filter by Id ...
+        if ($id > 0) {
+            $get["bSearchable_0"] = "true";
+            $get["sSearch_0"] = $id;
+        }
+
+        $log = DataTableServer::createOutput($dbh, $aColumns, $sIndexColumn, $sTable, $get);
+
+        // format the date column
+        for ($i = 0; $i < count($log['aaData']); $i++) {
+
+            $log['aaData'][$i]["Timestamp"] = date("c", strtotime($log['aaData'][$i]["Timestamp"]));
+
+        }
+
+        return $log;
+    }
 
 }
 

@@ -863,6 +863,7 @@ $uS->guestId = $id;
                         <?php if ($uS->TrackAuto) { ?>
                         <li><a href="#vvehicle">Vehicles</a></li>
                         <?php } ?>
+                        <li><a href="#vchangelog">Change Log</a></li>
                     </ul>
                     <div id="vpsg" class="ui-tabs-hide"  style="display:none;">
                         <div id="divPSGContainer"><?php echo $psgTabMarkup; ?></div>
@@ -877,6 +878,9 @@ $uS->guestId = $id;
                         <div id="resvAccordion">
                         <?php echo $reservMarkup; ?>
                         </div>
+                    </div>
+                    <div id="vchangelog" class="ignrSave">
+                      <table cellpadding="0" cellspacing="0" border="0" id="dataTbl"></table>
                     </div>
                     <div id="vfin"></div>
                     <div id="vVisits" class="ui-tabs-hide" style="min-width: 600px; display:none">
@@ -939,10 +943,10 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript">
-            var memData = <?php echo json_encode($memberData); ?>;
+            var memberData = <?php echo json_encode($memberData); ?>;
             var psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);
             var rctMkup = '<?php echo $receiptMarkup; ?>';
         </script>
-        <script type="text/javascript" src="js/guestload-min.js<?php echo JS_V; ?>"></script>
+        <script type="text/javascript" src="js/guestload.js<?php echo JS_V; ?>"></script>
     </body>
 </html>

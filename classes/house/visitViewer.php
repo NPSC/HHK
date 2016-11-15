@@ -120,7 +120,7 @@ class VisitView {
         }
 
         // Arrival text
-        $tr = HTMLTable::makeTd(date('M j, Y', strtotime($r['Arrival_Date'])));
+        $tr = HTMLTable::makeTd(HTMLContainer::generateMarkup('span', date('M j, Y', strtotime($r['Arrival_Date'])), array('id'=>'spanvArrDate')));
         $th = HTMLTable::makeTh('First Arrival');
 
         $departureText = "";

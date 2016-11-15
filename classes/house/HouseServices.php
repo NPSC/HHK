@@ -590,7 +590,7 @@ class HouseServices {
         return $dataArray;
     }
 
-    public static function saveHousePayment(\PDO $dbh, $idItem, $ord, $amt, $discount, $addnlCharge) {
+    public static function saveHousePayment(\PDO $dbh, $idItem, $ord, $amt, $discount, $addnlCharge, $adjDate) {
 
         $uS = Session::getInstance();
         $dataArray = array();
@@ -602,6 +602,12 @@ class HouseServices {
         $visit = new Visit($dbh, 0, $ord);
         $amount = floatval($amt);
         $invoice = NULL;
+
+        if ($adjDate != '') {
+            $invDate = date('Y-m-d H:i:s', strtotime($adjDate));
+        } else {
+            $invDate = date('Y-m-d H:i:s');
+        }
 
 
         if ($idItem == ItemId::Discount) {
@@ -624,7 +630,7 @@ class HouseServices {
                     $visit->getIdVisit(),
                     $visit->getSpan(),
                     '',
-                    date('Y-m-d H:i:s'),
+                    $invDate,
                     $uS->username);
 
                 $invoice->addLine($dbh, $invLine, $uS->username);
@@ -658,7 +664,7 @@ class HouseServices {
                         $visit->getIdVisit(),
                         $visit->getSpan(),
                         '',
-                        date('Y-m-d H:i:s'),
+                        $invDate,
                         $uS->username);
 
                 }
@@ -666,7 +672,7 @@ class HouseServices {
                 $invoice->addLine($dbh, $invLine, $uS->username);
                 $invoice->updateInvoiceStatus($dbh, $uS->username);
 
-                $dataArray['msg'] = $codes[$addnlCharge][1] . ' Charge Applied. ';
+                $dataArray['msg'] = $codes[$addnlCharge][1] . ' Charge is Invoiced. ';
 
             } else {
                 $dataArray['msg'] = 'Charge code not found: ' . $addnlCharge;

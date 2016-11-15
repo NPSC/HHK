@@ -59,59 +59,61 @@ function isNumber(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
 var dtCols = [
-{
-    "aTargets": [ 0 ],
-    "sTitle": "Date",
-    "sType": "date",
-    "mDataProp": function (source, type, val) {
-        "use strict";
-        if (type === 'set') {
-            source.LogDate = val;
-            return null;
-        } else if (type === 'display') {
-            if (source.Date_display === undefined) {
-                var dt = new Date(Date.parse(source.LogDate));
-                source.Date_display = (dt.getMonth() + 1) + '/' + dt.getDate() + '/' + dt.getFullYear() + ' ' + dt.getHours() + ':' + dt.getMinutes();
+    {
+        "aTargets": [ 0 ],
+        "sTitle": "Date",
+        "sType": "date",
+        "mDataProp": function (source, type, val) {
+            "use strict";
+            if (type === 'set') {
+                source.LogDate = val;
+                return null;
+            } else if (type === 'display') {
+                if (source.Date_display === undefined) {
+                    var dt = new Date(Date.parse(source.LogDate));
+                    source.Date_display = (dt.getMonth() + 1) + '/' + dt.getDate() + '/' + dt.getFullYear() + ' ' + dt.getHours() + ':' + dt.getMinutes();
+                    
+                }
+                return source.Date_display;
             }
-            return source.Date_display;
+            return source.LogDate;
         }
-        return source.LogDate;
+    },
+    {
+        "aTargets": [ 1 ],
+        "sTitle": "Type",
+        "bSearchable": false,
+        "bSortable": false,
+        "mDataProp": "LogType"
+    },
+    {
+        "aTargets": [ 2 ],
+        "sTitle": "Sub-Type",
+        "bSearchable": false,
+        "bSortable": false,
+        "mDataProp": "Subtype"
+    },
+     {
+        "aTargets": [ 3 ],
+        "sTitle": "User",
+        "bSearchable": false,
+        "bSortable": false,
+        "mDataProp": "User"
+    },
+    {
+        "aTargets": [ 4 ],
+        "bVisible": false,
+        "mDataProp": "idName"
+    },
+    {
+        "aTargets": [ 5 ],
+        "sTitle": "Log Text",
+        "bSortable": false,
+        "mDataProp": "LogText"
     }
-},
-{
-    "aTargets": [ 1 ],
-    "sTitle": "Type",
-    "bSearchable": false,
-    "bSortable": false,
-    "mDataProp": "LogType"
-},
-{
-    "aTargets": [ 2 ],
-    "sTitle": "Sub-Type",
-    "bSearchable": false,
-    "bSortable": false,
-    "mDataProp": "Subtype"
-},
-{
-    "aTargets": [ 3 ],
-    "sTitle": "User",
-    "bSearchable": false,
-    "bSortable": false,
-    "mDataProp": "User"
-},
-{
-    "aTargets": [ 4 ],
-    "bVisible": false,
-    "mDataProp": "idName"
-},
-{
-    "aTargets": [ 5 ],
-    "sTitle": "Log Text",
-    "bSortable": false,
-    "mDataProp": "LogText"
-}
 
 ];
+
 function updateVisitMessage(header, body, vPrefix) {
     //$('#visitMsg').toggle("clip");
     $('#' + vPrefix + 'h3VisitMsgHdr').text(header);
@@ -244,9 +246,12 @@ function cardOnFile(id, idGroup, idPsg) {
 // Init j-query.
 $(document).ready(function () {
     "use strict";
+    var memData = memberData;
     var savePressed = false;
     var nextVeh = 1;
-
+    var listJSON = '../admin/ws_gen.php?cmd=chglog&uid=' + memData.id;
+    var listEvtTable;
+    
     // Unsaved changes on form are caught here.
     $(window).bind('beforeunload', function () {
         // skip if the save button was pressed
@@ -316,7 +321,6 @@ $(document).ready(function () {
         cache: false
     });
     $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
-    var listEvtTable;
     $("#divFuncTabs").tabs({
         collapsible: true,
     });
@@ -427,10 +431,11 @@ $(document).ready(function () {
         if (this.value.length > 2 && listEvtTable)
             listEvtTable.fnFilter( this.value, 5 );
     });
+    
     $('#divNametabs').tabs({
         beforeActivate: function (event, ui) {
             var tbl = $('#vvisitLog').find('table');
-            if (ui.newTab.index() == 3 && tbl.length == 0) {
+            if (ui.newTab.index() === 3 && tbl.length === 0) {
                 $.post('ws_ckin.php', {cmd: 'gtvlog', idReg: memData.idReg}, function (data) {
                     if (data) {
                         try {
@@ -465,9 +470,25 @@ $(document).ready(function () {
         collapsible: true,
         beforeActivate: function (event, ui) {
             if (ui.newPanel.length > 0) {
+                
                 if (ui.newPanel.selector === '#vfin') {
                     getIncomeDiag(0, memData.idReg);
                     event.preventDefault();
+                }
+                
+                if (ui.newPanel.selector === '#vchangelog' && !listEvtTable) {
+                    listEvtTable = $('#dataTbl').dataTable({
+                        "aoColumnDefs": dtCols,
+                        "bServerSide": true,
+                        "bProcessing": true,
+                        "bDeferRender": true,
+                        "oLanguage": {"sSearch": "Search Log Text:"},
+                        "aaSorting": [[0,'desc']],
+                        "iDisplayLength": 25,
+                        "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                        "Dom": '<"top"ilf>rt<"bottom"ip>',
+                        "sAjaxSource": listJSON
+                    });
                 }
             }
         }

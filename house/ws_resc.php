@@ -484,6 +484,16 @@ $(document).mousedown(function (event) {
 
         break;
 
+    case "clnlog" :
+
+        $idRoom = 0;
+        if (isset($_REQUEST["rid"])) {
+            $idRoom = filter_var(urldecode($_REQUEST["rid"]), FILTER_VALIDATE_INT);
+        }
+
+        $events = ResourceView::CleanLog($dbh, $idRoom, $_GET);
+        break;
+
     default:
         $events = array("error" => "Bad Command: \"" . $c . "\"");
 }

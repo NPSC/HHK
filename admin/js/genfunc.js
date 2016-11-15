@@ -269,7 +269,7 @@ var dtCols = [
                 if (source.Date_display === undefined) {
                     var dt = new Date(Date.parse(source.LogDate));
                     source.Date_display = (dt.getMonth() + 1) + '/' + dt.getDate() + '/' + dt.getFullYear() + ' ' + dt.getHours() + ':' + dt.getMinutes();
-                        //$.fullCalendar.formatDate(dt, "M/d/yyyy h:mmtt");
+                    
                 }
                 return source.Date_display;
             }

@@ -361,6 +361,33 @@ from
 
 
 -- -----------------------------------------------------
+-- View `vcleaning_log`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vcleaning_log` AS
+    SELECT 
+        rr.idResource,
+        c.`idRoom`,
+        r.`Title`,
+        r.`Cleaning_Cycle_Code`,
+        c.`Type`,
+        c.`Status`,
+        c.`Last_Cleaned`,
+        c.`Notes`,
+        g.`Description` AS `Status_Text`,
+        c.`Username`,
+        c.`Timestamp`
+    FROM
+        cleaning_log c
+            LEFT JOIN
+        room r ON c.idRoom = r.idRoom
+            LEFT JOIN
+        resource_room rr ON c.idRoom = rr.idRoom
+            LEFT JOIN
+        gen_lookups g ON g.Table_Name = 'Room_Status'
+            AND g.Code = c.`Status`;
+
+
+-- -----------------------------------------------------
 -- View `vcredit_payments`
 -- -----------------------------------------------------
 CREATE or replace VIEW `vcredit_payments` AS

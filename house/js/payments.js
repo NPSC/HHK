@@ -28,7 +28,8 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
     $.post('ws_ckin.php',
             {
                 cmd: 'getHPay',
-                ord: orderNumber
+                ord: orderNumber,
+                arrDate: $('#spanvArrDate').text()
             },
         function(data) {
           if (data) {
@@ -43,6 +44,7 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
+                
                 flagAlertMessage(data.error, true);
                 
             } else if (data.markup) {
@@ -52,7 +54,8 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                         
                         var amt = parseFloat($('#housePayment').val().replace('$', '').replace(',', '')),
                             vid = $('#housePayment').data('vid'),
-                            item = '';
+                            item = '',
+                            adjDate = $.datepicker.formatDate("yy-mm-dd", $('#housePaymentDate').datepicker('getDate'));
                             
                         if (isNaN(amt)) {
                             amt = 0;
@@ -64,7 +67,7 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                             item = $('#cbAdjustPmt2').data('item');
                         }
                         
-                        saveDiscountPayment(vid, item, amt, $('#selHouseDisc').val(), $('#selAddnlChg').val());
+                        saveDiscountPayment(vid, item, amt, $('#selHouseDisc').val(), $('#selAddnlChg').val(), adjDate);
                         $(this).dialog('close');
                     },
                     "Cancel": function() {
@@ -128,9 +131,10 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
  * @param {type} amt
  * @param {type} discount
  * @param {type} addnlCharge
+ * @param {type} adjDate
  * @returns {undefined}
  */
-function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge) {
+function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjDate) {
     "use strict";
     $.post('ws_ckin.php',
             {
@@ -139,7 +143,8 @@ function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge) {
                 item: item,
                 amt: amt,
                 dsc: discount,
-                chg: addnlCharge
+                chg: addnlCharge,
+                adjDate: adjDate
             },
         function(data) {
           if (data) {

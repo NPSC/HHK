@@ -207,12 +207,13 @@ class Room {
         if ($this->roomRS->idRoom->getStoredVal() > 0) {
             // update
             $num = EditRS::update($dbh, $this->roomRS, array($this->roomRS->idRoom));
-            EditRS::updateStoredVals($this->roomRS);
 
             if ($num > 0) {
 
+                EditRS::updateStoredVals($this->roomRS);
+
                 if ($cleaning) {
-                    RoomLog::logCleaning($dbh, 0, $this->roomRS->idRoom->getStoredVal(), $cleanType, $this->roomRS->Status->getNewVal(), $this->roomRS->Notes->getNewVal(), $this->roomRS->Last_Cleaned->getNewVal(), $username);
+                    RoomLog::logCleaning($dbh, 0, $this->roomRS->idRoom->getStoredVal(), $cleanType, $this->roomRS->Status->getStoredVal(), $this->roomRS->Notes->getStoredVal(), $this->roomRS->Last_Cleaned->getStoredVal(), $username);
                 } else {
                     $logText = RoomLog::getUpdateText($this->roomRS);
                     RoomLog::logRoom($dbh, $this->roomRS->idRoom->getStoredVal(), $logText, "update", $username);
@@ -229,13 +230,11 @@ class Room {
                 RoomLog::logRoom($dbh, $idRoom, $logText, "insert", $username);
 
                 $this->roomRS->idRoom->setNewVal($idRoom);
+                EditRS::updateStoredVals($this->roomRS);
                 $this->idRoom = $idRoom;
 
             }
         }
-
-
-
     }
 
 }

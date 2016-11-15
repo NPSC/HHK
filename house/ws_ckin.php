@@ -626,6 +626,9 @@ try {
 
         if (isset($_POST['ord'])) {
 
+            $ordNum = intval(filter_var($_POST['ord'], FILTER_SANITIZE_NUMBER_INT), 10);
+            $arrDate = '';
+
             $discounts = readGenLookupsPDO($dbh, 'House_Discount');
             $addnls = readGenLookupsPDO($dbh, 'Addnl_Charge');
 
@@ -637,9 +640,11 @@ try {
                 $events['addnl'][$a[0]] = $a[2];
             }
 
-            $ordNum = intval(filter_var($_POST['ord'], FILTER_SANITIZE_NUMBER_INT), 10);
+            if (isset($_POST['arrDate'])) {
+                $arrDate = filter_var($_POST['arrDate'],FILTER_SANITIZE_STRING);
+            }
 
-            $events['markup'] = PaymentChooser::createHousePaymentMarkup($discounts, $addnls, $ordNum);
+            $events['markup'] = PaymentChooser::createHousePaymentMarkup($discounts, $addnls, $ordNum, $arrDate);
 
         } else {
             $events = array('error'=>'Visit Id is missing.  ');
@@ -675,7 +680,12 @@ try {
             $addnlCharge = filter_var($_POST['chg'], FILTER_SANITIZE_STRING);
         }
 
-        $events = HouseServices::saveHousePayment($dbh, $idItem, $ord, $amt, $discount, $addnlCharge);
+        $adjDate = '';
+        if (isset($_POST['adjDate'])) {
+            $adjDate = filter_var($_POST['adjDate'], FILTER_SANITIZE_STRING);
+        }
+
+        $events = HouseServices::saveHousePayment($dbh, $idItem, $ord, $amt, $discount, $addnlCharge, $adjDate);
 
         break;
 

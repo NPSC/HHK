@@ -244,11 +244,11 @@ class ActivityReport {
     public static function HospStayLog(PDO $dbh, $startDate, $endDate, $idPsg = 0) {
 
         $uS = Session::getInstance();
+        $idP = intval($idPsg, 10);
 
-        if ($idPsg > 0) {
+        if ($idP > 0) {
 
-            $idPsg = intval($idPsg, 10);
-            $stmt = $dbh->query("select * from vhospitalstay_log where idPsg = $idPsg;");
+            $stmt = $dbh->query("select * from vhospitalstay_log where idPsg = $idP;");
 
         } else if ($startDate != '' && $endDate != '') {
 
@@ -425,6 +425,33 @@ class ActivityReport {
 
     }
 
+
+
+    public static function RoomCleanLog(PDO $dbh, $startDate, $endDate, $idRoom = 0) {
+
+        $uS = Session::getInstance();
+        $idR = intval($idRoom, 10);
+
+        if ($idR > 0) {
+
+            $stmt = $dbh->query("select * from vcleaning_log where idRoom = $idR;");
+
+        } else if ($startDate != '' && $endDate != '') {
+
+            $query = "select * from vcleaning_log where DATE(Timestamp) >= DATE(:start) and DATE(Timestamp) <= DATE(:end) order by idRoom, Timestamp;";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute(array(':start'=>$startDate, ':end'=>$endDate));
+
+        } else {
+            return 'Error- Missing dates and/or room Id.  ';
+        }
+
+
+
+
+
+
+    }
 
 
     /**

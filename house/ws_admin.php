@@ -53,13 +53,6 @@ try {
 
 switch ($c) {
 
-    case "chglog" :
-
-        $id = filter_var(urldecode($_REQUEST["uid"]), FILTER_VALIDATE_INT);
-
-        $events = changeLog($dbh, $id, $_GET);
-        break;
-
     case "visitlog" :
 
         $id = filter_var(urldecode($_REQUEST["uid"]), FILTER_VALIDATE_INT);
@@ -288,31 +281,6 @@ function newRelationLink(PDO $dbh, $id, $rId, $relCode) {
 
 }
 
-
-function changeLog(PDO $dbh, $id, $get) {
-
-    require(CLASSES . 'DataTableServer.php');
-
-    $aColumns = array("LogDate", "LogType", "Subtype", "User", "idName", "LogText");
-    $sIndexColumn = "";
-    $sTable = "vaudit_log";
-
-    // filter by Id ...
-    if ($id > 0) {
-        $get["bSearchable_4"] = "true";
-        $get["sSearch_4"] = $id;
-    }
-    $log = DataTableServer::createOutput($dbh, $aColumns, $sIndexColumn, $sTable, $get);
-
-    // format the date column
-    for ($i = 0; $i < count($log['aaData']); $i++) {
-
-        $log['aaData'][$i]["LogDate"] = date("c", strtotime($log['aaData'][$i]["LogDate"]));
-
-    }
-
-    return $log;
-}
 
 function changePW(\PDO $dbh, $oldPw, $newPw, $uname, $id) {
 
