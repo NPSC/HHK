@@ -426,34 +426,6 @@ class ActivityReport {
     }
 
 
-
-    public static function RoomCleanLog(PDO $dbh, $startDate, $endDate, $idRoom = 0) {
-
-        $uS = Session::getInstance();
-        $idR = intval($idRoom, 10);
-
-        if ($idR > 0) {
-
-            $stmt = $dbh->query("select * from vcleaning_log where idRoom = $idR;");
-
-        } else if ($startDate != '' && $endDate != '') {
-
-            $query = "select * from vcleaning_log where DATE(Timestamp) >= DATE(:start) and DATE(Timestamp) <= DATE(:end) order by idRoom, Timestamp;";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute(array(':start'=>$startDate, ':end'=>$endDate));
-
-        } else {
-            return 'Error- Missing dates and/or room Id.  ';
-        }
-
-
-
-
-
-
-    }
-
-
     /**
      *
      * @param PDO $dbh
