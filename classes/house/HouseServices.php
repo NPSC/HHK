@@ -9,7 +9,7 @@
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @link      https://github.com/NPSC/HHK
  */
 
 class HouseServices {
@@ -539,7 +539,6 @@ class HouseServices {
         $postbackPage = '';
         $dataArray = array();
         $creditCheckOut = array();
-        $uS = Session::getInstance();
 
         if (isset($post['pbp'])) {
             $postbackPage = filter_var($post['pbp'], FILTER_SANITIZE_STRING);
@@ -634,6 +633,8 @@ class HouseServices {
                     $uS->username);
 
                 $invoice->addLine($dbh, $invLine, $uS->username);
+
+                // Pay the invoice
                 $invoice->updateInvoiceBalance($dbh, $amount, $uS->username);
 
                 $dataArray['msg'] = $codes[$discount][1] . ' Discount Applied.  ';
@@ -672,39 +673,24 @@ class HouseServices {
                 $invoice->addLine($dbh, $invLine, $uS->username);
                 $invoice->updateInvoiceStatus($dbh, $uS->username);
 
-                $dataArray['msg'] = $codes[$addnlCharge][1] . ' Charge is Invoiced. ';
+                if ($invoice->getAmount() == 0) {
+
+                    // We can pay it now and return a receipt.
+                    $paymentManager = new PaymentManager(new PaymentManagerPayment(PayType::Cash));
+                    $payResult = $paymentManager->makeHousePayment($dbh, '', $invDate);
+
+                    if (is_null($payResult->getReceiptMarkup()) === FALSE && $payResult->getReceiptMarkup() != '') {
+                        $dataArray['receipt'] = HTMLContainer::generateMarkup('div', $payResult->getReceiptMarkup());
+                        $dataArray['reply'] = $payResult->getReplyMessage();
+                    }
+
+                } else {
+                    $dataArray['msg'] = $codes[$addnlCharge][1] . ' Charge is Invoiced. ';
+                }
 
             } else {
-                $dataArray['msg'] = 'Charge code not found: ' . $addnlCharge;
+                $dataArray['msg'] = 'Additional Charge code not found: ' . $addnlCharge;
             }
-        }
-
-        // Return markup?
-        if (is_null($invoice) === FALSE) {
-
-            if ($invoice->getBalance() > 0) {
-
-                $unpaidInvoices[] = array(
-                    'idInvoice'=>$invoice->getIdInvoice(),
-                    'Invoice_Number'=>$invoice->getInvoiceNumber(),
-                    'Balance'=>$invoice->getBalance(),
-                    'Amount'=>$invoice->getAmount()
-                );
-
-                $dataArray['invNum'] = $invoice->getInvoiceNumber();
-                $ary = PaymentChooser::createUnpaidInvoiceMarkup($unpaidInvoices);
-                $dataArray['pay'] = $ary[0];
-            }
-
-            $visitCharge = new VisitCharges($visit->getIdVisit());
-            $visitCharge->sumPayments($dbh)->sumCurrentRoomCharge($dbh, PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel));
-
-            $showGuestNights = FALSE;
-            if ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
-                $showGuestNights = TRUE;
-            }
-
-            $dataArray['CurrFees'] = VisitView::createCurrentFees($visit->getVisitStatus(), $visitCharge, $uS->VisitFee, TRUE, $showGuestNights);
         }
 
         return $dataArray;
@@ -737,13 +723,12 @@ class HouseServices {
 
         if (is_null($invoice) === FALSE && $invoice->getStatus() == InvoiceStatus::Unpaid) {
 
-            if ($invoice->getAmountToPay() > 0) {
+            if ($invoice->getAmountToPay() >= 0) {
                 // Make guest payment
                 $payResult = $paymentManager->makeHousePayment($dbh, $postbackPage, $paymentManager->pmp->getPayDate());
 
             } else if ($invoice->getAmountToPay() < 0) {
                 // Make guest return
-
                 $payResult = $paymentManager->makeHouseReturn($dbh, $paymentManager->pmp->getPayDate());
             }
         }
@@ -926,67 +911,94 @@ class HouseServices {
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $visit->getReservationId(), $visit->getIdVisit());
 
 
-        $startDt = date('Y-m-d 23:59:59', strtotime($visit->getSpanStart()));
+        $startDT = new DateTime($visit->getSpanStart());
+        $startDT->setTime(23, 59, 59);
+
 
         // Check room availability
-        if ($resv->isResourceOpen($dbh, $visit->getidResource(), $startDt, $newExpectedDT->format('Y-m-d 01:00:00'), 1, array('room', 'rmtroom', 'part'), TRUE, TRUE)) {
+        $availResc = $resv->isResourceOpen($dbh, $visit->getidResource(), $startDT->format('Y-m-d H:i:s'), $newExpectedDT->format('Y-m-d 01:00:00'), 1, array('room', 'rmtroom', 'part'), TRUE, TRUE);
 
-            // Undo reservation termination
-            $resv->setActualDeparture('');
-            $resv->setExpectedDeparture($newExpectedDT->format('Y-m-d 10:00:00'));
-            $resv->setStatus(ReservationStatus::Staying);
+        if ($availResc === FALSE) {
+            $reply .= 'Cannot undo checkout, the room is not available.  ';
+            return $reply;
+        }
 
-            $resv->saveReservation($dbh, 0, $uname);
+        $idPsg = $resv->getIdPsg($dbh);
 
+        // Check for pending reservations
+        $resvs = ReservationSvcs::getCurrentReservations($dbh, $resv->getIdReservation(), 0, $idPsg, $startDT, $newExpectedDT);
 
-            // Undo visit checkout
-            $visit->visitRS->Actual_Departure->setNewVal('');
-            $visit->visitRS->Span_End->setNewVal('');
-            $visit->visitRS->Expected_Departure->setNewVal($newExpectedDT->format('Y-m-d 10:00:00'));
-            $visit->visitRS->Status->setNewVal(VisitStatus::CheckedIn);
-            $visit->visitRS->Key_Dep_Disposition->setNewVal('');
-            $visit->visitRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
-            $visit->visitRS->Updated_By->setNewVal($uname);
+        foreach ($resvs as $rv) {
 
-            $updateCounter = EditRS::update($dbh, $visit->visitRS, array($visit->visitRS->idVisit, $visit->visitRS->Span));
+            // another concurrent reservation already there
+            if ($rv['idPsg'] == $idPsg) {
 
-            if ($updateCounter != 1) {
-                throw new Hk_Exception_Runtime('Visit table update failed. Checkout is not undone.');
+                $type = 'Reservaion';
+
+                if ($rv['Status'] == ReservationStatus::Staying) {
+                    $type = 'Visit';
+                }
+
+                $reply .=  "Cannot undo checkout, this family has a conflicting $type.  ";
+                return $reply;
             }
+        }
 
-            $logText = VisitLog::getUpdateText($visit->visitRS);
-            EditRS::updateStoredVals($visit->visitRS);
-            VisitLog::logVisit($dbh, $visit->getIdVisit(), $visit->visitRS->Span->getStoredVal(), $visit->visitRS->idResource->getStoredVal(), $visit->visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
-            $reply .= "Checkout is undone.  ";
 
-            // Update stays
-            $visit->loadStays($dbh, VisitStatus::CheckedOut);
-            foreach ($visit->stays as $s) {
 
-                if (date('Y-m-d', strtotime($s->Span_End_Date->getStoredVal())) == $actDeptDT->format('Y-m-d')) {
+        // Undo reservation termination
+        $resv->setActualDeparture('');
+        $resv->setExpectedDeparture($newExpectedDT->format('Y-m-d 10:00:00'));
+        $resv->setStatus(ReservationStatus::Staying);
 
-                    // Undo stay checkout
-                    $s->Checkout_Date->setNewVal('');
-                    $s->Span_End_Date->setNewVal('');
-                    $s->Status->setNewVal(VisitStatus::CheckedIn);
-                    $s->Expected_Co_Date->setNewVal($newExpectedDT->format('Y-m-d 10:00:00'));
+        $resv->saveReservation($dbh, 0, $uname);
 
-                    // cancel on-leave
-                    $s->On_Leave->setNewVal(0);
 
-                    $s->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
-                    $s->Updated_By->setNewVal($uname);
+        // Undo visit checkout
+        $visit->visitRS->Actual_Departure->setNewVal('');
+        $visit->visitRS->Span_End->setNewVal('');
+        $visit->visitRS->Expected_Departure->setNewVal($newExpectedDT->format('Y-m-d 10:00:00'));
+        $visit->visitRS->Status->setNewVal(VisitStatus::CheckedIn);
+        $visit->visitRS->Key_Dep_Disposition->setNewVal('');
+        $visit->visitRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+        $visit->visitRS->Updated_By->setNewVal($uname);
 
-                    $cnt = EditRS::update($dbh, $s, array($s->idStays, $s->Visit_Span));
-                    if ($cnt > 0) {
-                        $logText = VisitLog::getUpdateText($s);
-                        EditRS::updateStoredVals($s);
-                        VisitLog::logStay($dbh, $s->idVisit->getStoredVal(), $s->Visit_Span->getStoredVal(), $s->idRoom->getStoredVal(), $s->idStays->getStoredVal(), $s->idName->getStoredVal(), $visit->getIdRegistration(), $logText, "update", $uname);
-                    }
+        $updateCounter = EditRS::update($dbh, $visit->visitRS, array($visit->visitRS->idVisit, $visit->visitRS->Span));
+
+        if ($updateCounter != 1) {
+            throw new Hk_Exception_Runtime('Visit table update failed. Checkout is not undone.');
+        }
+
+        $logText = VisitLog::getUpdateText($visit->visitRS);
+        EditRS::updateStoredVals($visit->visitRS);
+        VisitLog::logVisit($dbh, $visit->getIdVisit(), $visit->visitRS->Span->getStoredVal(), $visit->visitRS->idResource->getStoredVal(), $visit->visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
+        $reply .= "Checkout is undone.  ";
+
+        // Update stays
+        $visit->loadStays($dbh, VisitStatus::CheckedOut);
+        foreach ($visit->stays as $s) {
+
+            if (date('Y-m-d', strtotime($s->Span_End_Date->getStoredVal())) == $actDeptDT->format('Y-m-d')) {
+
+                // Undo stay checkout
+                $s->Checkout_Date->setNewVal('');
+                $s->Span_End_Date->setNewVal('');
+                $s->Status->setNewVal(VisitStatus::CheckedIn);
+                $s->Expected_Co_Date->setNewVal($newExpectedDT->format('Y-m-d 10:00:00'));
+
+                // cancel on-leave
+                $s->On_Leave->setNewVal(0);
+
+                $s->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+                $s->Updated_By->setNewVal($uname);
+
+                $cnt = EditRS::update($dbh, $s, array($s->idStays, $s->Visit_Span));
+                if ($cnt > 0) {
+                    $logText = VisitLog::getUpdateText($s);
+                    EditRS::updateStoredVals($s);
+                    VisitLog::logStay($dbh, $s->idVisit->getStoredVal(), $s->Visit_Span->getStoredVal(), $s->idRoom->getStoredVal(), $s->idStays->getStoredVal(), $s->idName->getStoredVal(), $visit->getIdRegistration(), $logText, "update", $uname);
                 }
             }
-        } else {
-            $reply .= 'Cannot undo checkout, the room is not available.  ';
         }
 
         return $reply;
@@ -2152,6 +2164,8 @@ class HouseServices {
                     if ($rcount[0][0] < $uS->RoomsPerPatient) {
                         // Include Additional Room Query
                         $dataArray['adnlrm'] = RoomChooser::moreRoomsMarkup($rcount[0][0], $addRoom);
+                    } else {
+                        $dataArray['adnlrm'] = HTMLContainer::generateMarkup('p', 'Already using the maximum of ' . $uS->RoomsPerPatient . ' rooms per patient.', array('style'=>'margin:.3em;'));
                     }
                 }
 
@@ -2207,15 +2221,6 @@ class HouseServices {
                     $patient = new Patient($dbh, 'h_', $id);
                     $psg = $patient->getPsgObj($dbh);
                     $idPsg = $psg->getIdPsg();
-
-//                    if ($uS->OpenCheckin && $psg->getIdPsg() > 0) {
-//                        // check for existing reservation
-//
-//                        $resArray = ReservationSvcs::reservationChooser($dbh, 0, $psg->getIdPsg(), $uS->guestLookups['ReservStatus'], $labels, $uS->ResvEarlyArrDays);
-//                        if (count($resArray) > 0) {
-//                            return $resArray;
-//                        }
-//                    }
 
                     $dataArray['patient'] = $patient->createMarkup();
                     $dataArray['idPsg'] = $psg->getIdPsg();
@@ -2278,6 +2283,8 @@ class HouseServices {
             if ($rcount[0][0] < $uS->RoomsPerPatient) {
                 // Include Additional Room Query
                 $dataArray['adnlrm'] = RoomChooser::moreRoomsMarkup($rcount[0][0], $addRoom);
+            } else {
+                $dataArray['adnlrm'] = HTMLContainer::generateMarkup('p', 'Already using the maximum of ' . $uS->RoomsPerPatient . ' rooms per patient.', array('style'=>'margin:.3em;'));
             }
         }
 

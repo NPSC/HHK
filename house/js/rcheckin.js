@@ -7,7 +7,7 @@
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -634,25 +634,37 @@ function processGuests(incmg) {
  */
 function psgChooser(data) {
     "use strict";
-    var idGuest = data.idGuest;
+    var idGuest = data.idGuest,
+        role = data.role;
 
     $('#psgDialog')
             .children().remove().end().append($(data.choosePsg))
             .dialog('option', 'buttons', {
                 Open: function() {
-                    var setStaying = false;
+                    var setStaying = false,
+                        pid = $('#psgDialog input[name=cbselpsg]:checked').data('pid'),
+                        ngid = $('#psgDialog input[name=cbselpsg]:checked').data('ngid');
+                
                     chkIn.idPsg = $('#psgDialog input[name=cbselpsg]:checked').val();
                     
+                    // Is the patient staying?
                     if ($('#cbpstayy').length > 0 && chkIn.idPsg > 0) {
-                        if ($('#cbpstayy').prop('checked') == false && $('#cbpstayn').prop('checked') == false) {
+                        // Have to check yes or no...
+                        if ($('#cbpstayy').prop('checked') === false && $('#cbpstayn').prop('checked') === false) {
                             $('#spnstaymsg').text('Choose Yes or No');
                             $('.pstaytd').addClass('ui-state-highlight');
                             return;
                         }
+                        
                         setStaying = $('#cbpstayy').prop('checked');
+                        
+                        if (pid === idGuest) {
+                            role = 'p';
+                        }
                     }
                     
-                    loadGuest(idGuest, chkIn.idPsg, 'g', setStaying);
+                    loadGuest(idGuest, chkIn.idPsg, role, setStaying);
+                    
                     $('#psgDialog').dialog('close');
                 },
                 Cancel: function () {

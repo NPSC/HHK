@@ -925,7 +925,7 @@ from
         left join
     name n ON v.idPrimaryGuest = n.idName
         left join
-    gen_lookups g on g.Table_Name = 'Room_Status' and g.Code = R.Status");
+    gen_lookups g on g.Table_Name = 'Room_Status' and g.Code = r.Status");
 
 
         // Loop rooms.

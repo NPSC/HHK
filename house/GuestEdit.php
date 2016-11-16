@@ -947,6 +947,6 @@ $uS->guestId = $id;
             var psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);
             var rctMkup = '<?php echo $receiptMarkup; ?>';
         </script>
-        <script type="text/javascript" src="js/guestload.js<?php echo JS_V; ?>"></script>
+        <script type="text/javascript" src="js/guestload-min.js<?php echo JS_V; ?>"></script>
     </body>
 </html>

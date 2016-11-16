@@ -162,31 +162,20 @@ function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjD
                 flagAlertMessage(data.error, true);
             }
             
-            if (data.msg && data.msg != '') {
-                updateVisitMessage('Adjust Payment', data.msg);
+            if (data.msg && data.msg !== '') {
+                flagAlertMessage(false, data.msg);
             }
             
-            if (data.CurrFees !== undefined && data.CurrFees != '') {
-                $('#divCurrFees').children().remove().end().append(data.CurrFees);
-            }
-            
-            if (data.pay && data.pay != '') {
-                $('#payTodayTbl').prepend($(data.pay));
+            if (data.receipt && data.receipt !== '') {
                 
-                var invnum = data.invNum;
-                if ($('#' + invnum + 'unpaidCb').length > 0) {
-                    $('#' + invnum + 'unpaidCb').change(function() {
-                        amtPaid();
-                    });
+                if ($('#keysfees').length > 0) {
+                    $('#keysfees').dialog("close");
                 }
 
-                if ($('#' + invnum + 'invPayAmt').length > 0) {
-                    $('#' + invnum + 'invPayAmt').change(function() {
-                        amtPaid();
-                    });
-                }
+                showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
             }
-        }
+            
+         }
     });
 }
 

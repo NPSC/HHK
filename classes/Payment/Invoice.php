@@ -576,7 +576,7 @@ where
 
     public function updateInvoiceStatus(\PDO $dbh, $username) {
 
-            if ($this->invRs->Balance->getStoredVal() == 0) {
+            if ($this->invRs->Amount->getStoredVal() > 0 && $this->invRs->Balance->getStoredVal() == 0) {
                 $this->invRs->Status->setNewVal(InvoiceStatus::Paid);
             } else {
                 $this->invRs->Status->setNewVal(InvoiceStatus::Unpaid);
@@ -656,13 +656,10 @@ where
         return $this->amountToPay;
     }
 
+    // Call on payment only.
     public function updateInvoiceBalance(PDO $dbh, $paymentAmount, $user) {
         // positive payment amounts reduce a  balance.
         // Neg payments increase a  bal.
-
-        if ($paymentAmount == 0) {
-            return;
-        }
 
         if ($this->idInvoice > 0) {
 
@@ -688,9 +685,7 @@ where
 
         } else {
             throw new Hk_Exception_Payment('Cannot update a blank invoice record.  ');
-
         }
-
     }
 
     public function deleteInvoice(\PDO $dbh, $user) {

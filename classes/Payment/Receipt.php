@@ -8,7 +8,7 @@
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
- * @link
+ * @link      https://github.com/NPSC/HHK
  */
 
 Define('NEWLINE', "\n");
@@ -560,7 +560,7 @@ where
         }
     }
 
-    public static function makeOrdersRatesTable(\PDO $dbh, $rates, &$totalAmt, \PriceModel $priceModel, \Config_Lite $labels, array $invLines, &$numberNites) {
+    public static function makeOrdersRatesTable($rates, &$totalAmt, \PriceModel $priceModel, \Config_Lite $labels, array $invLines, &$numberNites) {
 
         $tbl = new HTMLTable();
 
@@ -1133,7 +1133,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
 
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable($dbh, $rates, $totalAmt, $priceModel, $labels, $invLines, $totalNights);
+        $tbl = self::makeOrdersRatesTable($rates, $totalAmt, $priceModel, $labels, $invLines, $totalNights);
         $totalCharge = $totalAmt;
 
         // Thirdparty payments
@@ -1242,7 +1242,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
         $config = new Config_Lite(ciCFG_FILE);
 
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable($dbh, self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, $totalNights);
+        $tbl = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, $totalNights);
         $totalCharge = $totalAmt;
 
         // Thirdparty payments

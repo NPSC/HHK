@@ -8,7 +8,8 @@
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
-  */
+ * @link      https://github.com/NPSC/HHK
+ *   */
 
 /**
  * Description of ReservationSvcs
@@ -455,7 +456,7 @@ class ReservationSvcs {
             if ($guest->getIdName() == $r['idPatient']) {
                 $pname = 'Myself';
             } else {
-                $pname = $r['PatientName'];
+                $pname = $r['Patient_Name'];
             }
 
             $trs[] = HTMLTable::makeTd(HTMLInput::generateMarkup('Add Guest', array('type'=>'button', 'style'=>'margin-left:.4em;', 'class'=>'hhk-checkinNow', 'data-rid'=>$r['idReservation'])))
@@ -2023,7 +2024,7 @@ class ReservationSvcs {
     }
 
 
-    public static function psgChooserMkup(\PDO $dbh, $ngRss, $patientAtHouseFlag, $offerNew = TRUE) {
+    public static function psgChooserMkup(\PDO $dbh, array $ngRss, $patientAsGuest, $offerNew = TRUE) {
 
         $tbl = new HTMLTable();
         $tbl->addHeaderTr(HTMLTable::makeTh('Who is the Patient?', array('colspan'=>'2')));
@@ -2034,7 +2035,7 @@ class ReservationSvcs {
 
             $psg = new Psg($dbh, $n->idPsg->getStoredVal());
 
-            $attrs = array('type'=>'radio', 'value'=>$psg->getIdPsg(), 'name'=>'cbselpsg');
+            $attrs = array('type'=>'radio', 'value'=>$psg->getIdPsg(), 'name'=>'cbselpsg', 'data-pid'=>$psg->getIdPatient(), 'data-ngid'=>$n->idName->getStoredVal());
             if ($firstOne) {
                 $attrs['checked'] = 'checked';
                 $firstOne = FALSE;
@@ -2050,10 +2051,10 @@ class ReservationSvcs {
         if ($offerNew) {
             $tbl->addBodyTr(
                 HTMLTable::makeTd('New Patient', array('class'=>'tdlabel'))
-               .HTMLTable::makeTd(HTMLInput::generateMarkup('-1', array('type'=>'radio', 'name'=>'cbselpsg'))));
+               .HTMLTable::makeTd(HTMLInput::generateMarkup('-1', array('type'=>'radio', 'name'=>'cbselpsg', 'data-pid'=>'0', 'data-ngid'=>'0'))));
         }
 
-        if ($patientAtHouseFlag) {
+        if ($patientAsGuest) {
 
             $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
             $tbl->addBodyTr(HTMLTable::makeTh('Is the Patient staying the First night (or longer)?', array('colspan'=>'2')));

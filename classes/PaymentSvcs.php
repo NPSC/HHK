@@ -9,7 +9,7 @@
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @link      https://github.com/NPSC/HHK
  */
 
 class PaymentResult {
@@ -405,9 +405,12 @@ class PaymentSvcs {
 
         // Check the payment amount.
         if ($invoice->getAmountToPay() == 0) {
-            $payResult = new PaymentResult(0, 0, 0);
-            $payResult->setReplyMessage('warning:  Invoice\'s Amount to Pay is 0');
-            return $payResult;
+
+            // Pay 0 amounts as cash.
+            $pmp->setPayType(PayType::Cash);
+//            $payResult = new PaymentResult(0, 0, 0);
+//            $payResult->setReplyMessage('warning:  Invoice\'s Amount to Pay is 0.00. ');
+//            return $payResult;
         }
 
         if ($invoice->getAmountToPay() < 0) {
@@ -1604,11 +1607,11 @@ class PaymentSvcs {
 
         $dataArray = array();
         $config = new Config_Lite(ciCFG_FILE);
-        $statusCode = $payRs->Status_Code->getStoredVal();
+            $statusCode = $payRs->Status_Code->getStoredVal();
 
-        if ($statusCode == PaymentStatusCode::Paid && $payRs->Is_Refund->getStoredVal() > 0) {
-            $statusCode = PaymentStatusCode::Retrn;
-        }
+            if ($statusCode == PaymentStatusCode::Paid && $payRs->Is_Refund->getStoredVal() > 0) {
+                $statusCode = PaymentStatusCode::Retrn;
+            }
 
         switch ($statusCode) {
 

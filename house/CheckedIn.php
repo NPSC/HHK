@@ -41,7 +41,7 @@ require (CLASSES . 'PaymentSvcs.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
 require (HOUSE . 'psg.php');
-require (HOUSE . 'HouseLog.php');
+
 require (HOUSE . 'Role.php');
 require (HOUSE . 'Guest.php');
 require (HOUSE . 'Patient.php');

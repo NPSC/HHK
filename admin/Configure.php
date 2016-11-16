@@ -143,11 +143,11 @@ if (isset($_POST["btnSiteCnf"])) {
 
     // Check subsidyId and returnId - cannot be the same
     $subsidyId = intval(filter_var($_POST['financial']['RoomSubsidyId'], FILTER_SANITIZE_NUMBER_INT), 10);
-    $refundId = intval(filter_var($_POST['financial']['ReturnPayorId'], FILTER_SANITIZE_NUMBER_INT), 10);
+    //$refundId = intval(filter_var($_POST['financial']['ReturnPayorId'], FILTER_SANITIZE_NUMBER_INT), 10);
 
-    if ($subsidyId !== 0 && $subsidyId == $refundId) {
-        $confError = "Financial:  Subsidy Id and Return Id cannot be the same.";
-    }
+//    if ($subsidyId !== 0 && $subsidyId == $refundId) {
+//        $confError = "Financial:  Subsidy Id and Return Id cannot be the same.";
+//    }
 
     SiteConfig::saveConfig($dbh, $config, $_POST, $uS->username);
     SiteConfig::saveSysConfig($dbh, $_POST);

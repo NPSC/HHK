@@ -200,7 +200,7 @@ $resultMessage = $alertMsg->createMarkup();
                 <div style="clear:both; padding:30px;"></div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em;">
                     <input type="button" id="btnDelete" value="Delete" style="display:none;"/>
-                    <input type="button" id="btnCkinForm" value='Show Check-in Form' style="display:none;"/>
+                    <input type="button" id="btnCkinForm" value='Show Registration Form' style="display:none;"/>
                     <input id='btnDone' type='button' value='Find a Room' style="display:none;"/>
                 </div>
             </form>
