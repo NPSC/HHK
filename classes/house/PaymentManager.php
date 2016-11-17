@@ -400,6 +400,10 @@ class PaymentManager {
 
     }
 
+    public function setInvoice($invoice) {
+        $this->invoice = $invoice;
+    }
+
     public function hasInvoice() {
         return !is_null($this->invoice);
     }

@@ -57,6 +57,30 @@ END -- ;
 
 
 
+-- --------------------------------------------------------
+--
+-- Procedure `delete_Invoice_payments`
+--
+
+DROP procedure IF EXISTS `delete_Invoice_payments`; -- ;
+
+CREATE PROCEDURE `delete_Invoice_payments` (idInv int, payType int)
+BEGIN
+
+create temporary table ptemp (idPay int);
+
+insert into ptemp (
+	select pi.Payment_Id from payment_invoice pi join payment p on pi.Payment_Id = p.idPayment
+    where pi.Invoice_Id = idInv and p.idPayment_method = payType and p.Amount = 0);
+
+delete from payment_invoice where Payment_Id in (select idPay from ptemp);
+delete from payment where idPayment in (select idPay from ptemp);
+
+drop temporary table ptemp;
+    
+END -- ;
+
+
 
 -- --------------------------------------------------------
 --

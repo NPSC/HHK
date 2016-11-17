@@ -699,6 +699,11 @@ where
 
             case InvoiceStatus::Paid:
 
+                if ($this->getAmount() == 0) {
+                    // Delete any 0-amount CASH payment records...
+                    $dbh->exec("CALL `delete_Invoice_payments`(" . $this->idInvoice . ", " . PaymentMethod::Cash . ");");
+                }
+
                 if ($this->countPayments($dbh) == 0) {
                     return $this->_deleteInvoice($dbh, $user);
                 }
@@ -708,7 +713,7 @@ where
             case InvoiceStatus::Unpaid:
 
                 if ($this->getAmount() != 0 && $this->getBalance() != $this->getAmount()) {
-                    throw new Hk_Exception_Payment('Partially paid invoices cannot be deleted. Remove the payments first.');
+                    throw new Hk_Exception_Payment('Unpaid or partially paid invoices cannot be deleted. Remove the payments first.');
                 }
 
                 return $this->_deleteInvoice($dbh, $user);
@@ -725,6 +730,7 @@ where
 
             $id = $this->idInvoice;
             $dbh->exec("update invoice set Deleted = 1, Last_Updated = now(), Updated_By = '$user' where idInvoice = $id");
+            $dbh->exec("update invoice_line set Deleted = 1 where Invoice_Id = $id");
 
             $this->loadInvoice($dbh, $id);
             return TRUE;

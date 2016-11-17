@@ -162,8 +162,9 @@ function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjD
                 flagAlertMessage(data.error, true);
             }
             
-            if (data.msg && data.msg !== '') {
-                flagAlertMessage(false, data.msg);
+            if (data.reply && data.reply != '') {
+                flagAlertMessage(data.reply, false);
+                $('#keysfees').dialog("close");
             }
             
             if (data.receipt && data.receipt !== '') {

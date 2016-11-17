@@ -47,10 +47,11 @@ define("VER", $config->getString("code", "Build", ""));
 /*
  * if test version, put a big TEST on the page
  */
-if ($testVersion == true)
+if ($testVersion == true) {
     $testHeader = "<span style='color:red;'>Test Version</span>";
-else
+} else {
     $testHeader = "$pageTitle";
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -99,6 +100,9 @@ body {
         margin: 7px 5px;
         z-index: 99;
     }
+    li {
+        font-family: arial,sans-serif;
+    }
     </style>
     </head>
     <body>
@@ -114,7 +118,7 @@ body {
                 <div style="margin: auto; float:left; width:450px;">
                     <a href="http://hospitalityhousekeeper.org/" target="blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="images/hhkLogo.png"></a>
                     <div style="clear:left; margin-bottom: 20px;"></div>
-                    <ul style="margin: 20px; line-height: 1.5em;">
+                    <ul style="margin: 20px; line-height: 1.9em;">
                         <li><a href="<?php echo $adminURL; ?>">Administration Site</a></li>
                         <?php if ($volunteerURL != '') { ?>
                         <li><a href="<?php echo $volunteerURL; ?>">Volunteers' Site</a></li>

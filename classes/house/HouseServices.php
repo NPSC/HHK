@@ -637,10 +637,10 @@ class HouseServices {
                 // Pay the invoice
                 $invoice->updateInvoiceBalance($dbh, $amount, $uS->username);
 
-                $dataArray['msg'] = $codes[$discount][1] . ' Discount Applied.  ';
+                $dataArray['reply'] = $codes[$discount][1] . ' Discount Applied.  ';
 
             } else {
-                $dataArray['msg'] = 'Discount code not found: ' . $discount;
+                $dataArray['reply'] = 'Discount code not found: ' . $discount;
             }
 
         }
@@ -677,19 +677,20 @@ class HouseServices {
 
                     // We can pay it now and return a receipt.
                     $paymentManager = new PaymentManager(new PaymentManagerPayment(PayType::Cash));
+                    $paymentManager->setInvoice($invoice);
                     $payResult = $paymentManager->makeHousePayment($dbh, '', $invDate);
 
                     if (is_null($payResult->getReceiptMarkup()) === FALSE && $payResult->getReceiptMarkup() != '') {
                         $dataArray['receipt'] = HTMLContainer::generateMarkup('div', $payResult->getReceiptMarkup());
-                        $dataArray['reply'] = $payResult->getReplyMessage();
+                        $dataArray['reply'] = $codes[$addnlCharge][1] . ': item recorded. ';
                     }
 
                 } else {
-                    $dataArray['msg'] = $codes[$addnlCharge][1] . ' Charge is Invoiced. ';
+                    $dataArray['reply'] = $codes[$addnlCharge][1] . ' additional charge is invoiced. ';
                 }
 
             } else {
-                $dataArray['msg'] = 'Additional Charge code not found: ' . $addnlCharge;
+                $dataArray['reply'] = 'Additional Charge code not found: ' . $addnlCharge;
             }
         }
 

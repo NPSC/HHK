@@ -111,7 +111,7 @@ function doMarkupRow($r, $isLocal, $hospital, $statusTxt, &$tbl, &$sml, &$report
     if ($r['Status'] == InvoiceStatus::Carried && $r['Deleted'] == 0) {
 
         $r['Balance'] = 0;
-        
+
         $statusMkup = HTMLContainer::generateMarkup('span',
                 HTMLContainer::generateMarkup('span', $statusTxt . ' by ' . HTMLContainer::generateMarkup('a', $r['Delegated_Invoice_Number'], array('href'=>'ShowInvoice.php?invnum='.$r['Delegated_Invoice_Number'], 'target'=>'_blank')), array('style'=>'float:left;'))
                 .HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment invAction', 'id'=>'invicond'.$r['Delegated_Invoice_Id'], 'data-iid'=>$r['Delegated_Invoice_Id'], 'data-stat'=>'view', 'style'=>'cursor:pointer;', 'title'=>'View Items'))
@@ -650,7 +650,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
         } else {
 
             // Totals
-            $totalPaid += $r['Amount'] - $r['Balance'];;
+            $totalPaid += $r['Amount'] - $r['Balance'];
             $totalBalance += $r['Balance'];
             $totalAmount += $r['Amount'];
         }
@@ -848,7 +848,6 @@ function invoiceAction(idInvoice, action, eid) {
             }
             if (data.delete) {
                 flagAlertMessage(data.delete, false);
-                $('#btnHere').click();
             }
             if (data.markup) {
                 var contr = $(data.markup);
