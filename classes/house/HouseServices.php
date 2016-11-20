@@ -2220,7 +2220,7 @@ class HouseServices {
                 if ($patientStaying === FALSE || $uS->PatientAsGuest === FALSE) {
 
                     $patient = new Patient($dbh, 'h_', $id);
-                    $psg = $patient->getPsgObj($dbh);
+                    $psg = $patient->getPatientPsg();
                     $idPsg = $psg->getIdPsg();
 
                     $dataArray['patient'] = $patient->createMarkup();
@@ -2269,7 +2269,7 @@ class HouseServices {
         }
 
         // guest already staying?
-        if ($guest->isCurrentlyStaying()) {
+        if ($guest->isCurrentlyStaying($dbh)) {
 
             $nameObj = $guest->getNameObj();
             return array('error' => $nameObj->get_fullName() . ' is already checked in.  ');
@@ -2437,7 +2437,7 @@ class HouseServices {
                     return $dataArray;
                 }
 
-            } else if ($resv->isNew () && $idPatient > 0 && $idPatient != $guest->getIdName() && $patientStaying && $havePatient === FALSE) {
+            } else if ($resv->isNew() && $idPatient > 0 && $idPatient != $guest->getIdName() && $patientStaying && $havePatient === FALSE) {
 
                 $patient = new Guest($dbh, $idPrefix.'p', $idPatient);
                 $patient->setPatientRelationshipCode(RelLinkType::Self);
@@ -2496,7 +2496,7 @@ class HouseServices {
 
                         $g = new Guest($dbh, $k, $k);
 
-                        if ($g->isCurrentlyStaying()) {
+                        if ($g->isCurrentlyStaying($dbh)) {
                             Continue;
                         }
 
@@ -2679,7 +2679,7 @@ from
         }
 
         // Patient
-        if (is_a($chkinGroup->patient, 'Guest') === FALSE && $chkinGroup->patient->isCurrentlyStaying($dbh, $chkinGroup->patient->getIdName()) === FALSE) {
+        if (is_a($chkinGroup->patient, 'Guest') === FALSE && $chkinGroup->patient->isCurrentlyStaying($dbh) === FALSE) {
             $dataArray['patient'] = $chkinGroup->patient->createMarkup(FALSE);
         }
 

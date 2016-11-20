@@ -72,7 +72,7 @@ class ReservationSvcs {
 
                 // patient member defined.
                 $patient = new Patient($dbh, 'h_', $id);
-                $patientPsg = $patient->getPsgObj($dbh);
+                $patientPsg = $patient->getPatientPsg();
 
                 if ($patientPsg->getIdPsg() > 0) {
 

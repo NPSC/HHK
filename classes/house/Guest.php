@@ -16,27 +16,6 @@
  */
 class Guest extends Role {
 
-    /**
-     *
-     * @var EmergencyContact
-     */
-    protected $emergContact;
-
-    /**
-     *
-     * @var Psg
-     */
-    protected $psg;
-
-    protected $title;
-    protected $currentlyStaying;
-    public $status = '';
-    protected $checkinDate;
-    protected $expectedCheckOut;
-    protected $incompleteEmergContact = FALSE;
-    protected $patientRelationshipCode = '';
-    public $patientRelId = 0;
-
 
     /**
      *
@@ -48,36 +27,10 @@ class Guest extends Role {
 
         $this->title = 'Guest';
 
-        $this->emergContact = new EmergencyContact($dbh, $id);
-
-        $this->currentlyStaying = $this->checkCurrentStay($dbh, $id);
+        $this->patientPsg = NULL;
 
         return new GuestMember($dbh, MemBasis::Indivual, $id);
     }
-
-
-
-    public function loadPatientRel() {
-
-        $psg = $this->psg;
-        if (isset($psg->psgMembers[$this->getIdName()])) {
-            $this->patientRelId = $psg->psgMembers[$this->getIdName()]->idPatient_Relationship->getStoredVal();
-            $this->patientRelationshipCode = $psg->psgMembers[$this->getIdName()]->Relationship_Code->getStoredVal();
-        }
-    }
-
-    /**
-     *
-     * @param PDO $dbh
-     * @return Psg
-     */
-    public function getPsgObj(PDO $dbh) {
-        if (is_null($this->psg)) {
-            $this->psg = Psg::instantiateFromGuestId($dbh, $this->getIdName());
-        }
-        return $this->psg;
-    }
-
 
     /**
      * Generate the name table in a fieldset.
@@ -86,14 +39,6 @@ class Guest extends Role {
      * @return string HTML div markup
      */
     protected function createNameMU($useAdditionalMarkup = FALSE, $lockRelChooser = FALSE) {
-
-        $uS = Session::getInstance();
-
-        // patient?
-        $birth = '';
-        if ($this->patientRelationshipCode == RelLinkType::Self && $uS->PatientBirthDate) {
-            $birth = HTMLContainer::generateMarkup('div', $this->name->birthDateMarkup(), array('style'=>'float:left;'));
-        }
 
         // Build name.
         $tbl = new HTMLTable();
@@ -105,7 +50,7 @@ class Guest extends Role {
                 HTMLContainer::generateMarkup('fieldset',
                         HTMLContainer::generateMarkup('legend', $this->title.' Name', array('style'=>'font-weight:bold;'))
                         . $tbl->generateMarkup()
-                        . $birth
+                        . HTMLContainer::generateMarkup('div', $this->name->birthDateMarkup(), array('style'=>'float:left;'))
                         . ($useAdditionalMarkup ? HTMLContainer::generateMarkup('div', $this->name->additionalNameMarkup(), array('style'=>'float:left;')) : '')
                         . HTMLContainer::generateMarkup('div', $this->name->getContactLastUpdatedMU(new DateTime ($this->name->get_lastUpdated()), 'Name'), array('style'=>'float:right;'))
                         , array('class'=>'hhk-panel')),
@@ -126,22 +71,6 @@ class Guest extends Role {
         return $mk1;
     }
 
-    public function createThinMarkup(\PDO $dbh, $includeRemoveBtn = FALSE, $restrictRelChooser = TRUE) {
-
-        $uS = Session::getInstance();
-        $idPrefix = $this->getNameObj()->getIdPrefix();
-
-        $mk1 = $this->createNameMu(TRUE, $restrictRelChooser);
-
-        if ($uS->GuestAddr) {
-            $mk1 .= $this->createMailAddrMU($idPrefix . 'hhk-addr-val', TRUE, $uS->county, $thinMode);
-        }
-
-        $mk1 .= $this->createThinPhoneEmailMu($idPrefix);
-
-    }
-
-
     /**
      *
      * @param PDO $dbh
@@ -156,14 +85,7 @@ class Guest extends Role {
 
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;min-height:10px;'));
 
-        // Home Address
-        if ($uS->GuestAddr) {
-            $mk1 .= $this->createMailAddrMU($idPrefix . 'hhk-addr-val', TRUE, $uS->county);
-        }
-
-        // Phone and email
-        $mk1 .= $this->createPhoneEmailMU($idPrefix);
-
+        $mk1 .= $this->createAddsBLock();
 
         // Add Emergency contact
         $search = HTMLContainer::generateMarkup('span', '', array('name'=>$idPrefix, 'class'=>'hhk-guestSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'float: right; margin-left:.3em;cursor:pointer;'));
@@ -237,8 +159,6 @@ class Guest extends Role {
 
     public function createAddToResvMarkup() {
 
-        $uS = Session::getInstance();
-        $idPrefix = $this->getNameObj()->getIdPrefix();
         $mk1 = '';
 
         // Guest Name
@@ -246,13 +166,7 @@ class Guest extends Role {
 
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
-        // Home Address
-        if ($uS->GuestAddr) {
-            $mk1 .= $this->createMailAddrMU($idPrefix . 'hhk-addr-val', TRUE, $uS->county);
-        }
-
-        // Phone & email
-        $mk1 .= $this->createPhoneEmailMU($idPrefix);
+        $mk1 .= $this->createAddsBLock();
 
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
@@ -275,15 +189,7 @@ class Guest extends Role {
         }
 
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
-
-        // Home Address
-        if ($uS->GuestAddr) {
-            $mk1 .= $this->createMailAddrMU($idPrefix . 'hhk-addr-val', TRUE, $uS->county);
-        }
-
-        // Phone & email
-        $mk1 .= $this->createPhoneEmailMU($idPrefix);
-
+        $mk1 .= $this->createAddsBLock();
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
         // Header info
@@ -318,7 +224,6 @@ class Guest extends Role {
         return $rtn;
 
     }
-
 
     /**
      *
@@ -362,59 +267,7 @@ class Guest extends Role {
         return $message;
     }
 
-    public function getCurrentVisitId(PDO $dbh) {
-
-        if ($this->getIdName() > 0) {
-
-            $query = "select ifnull(idVisit, 0) as `idVisit` from stays where `Status` = :stat and idName = :id;";
-            $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-            $stmt->execute(array(":stat"=>  VisitStatus::CheckedIn, ":id"=>$this->getIdName()));
-            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
-
-            if (isset($rows)) {
-                return $rows[0][0];
-            }
-        }
-
-        return 0;
-    }
-
-
-    /**
-     *
-     * @param PDO $dbh
-     * @return boolean
-     */
-    public static function checkCurrentStay(PDO $dbh, $id, $status = VisitStatus::CheckedIn) {
-
-        if ($id > 0) {
-
-            $query = "select count(*) from stays where `Status` = :stat and idName = :id;";
-            $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-            $stmt->execute(array(":stat"=> $status, ":id"=>$id));
-            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
-
-            if (isset($rows) && $rows[0][0] > 0) {
-                return TRUE;
-            }
-        }
-
-        return FALSE;
-    }
-
-    public function isCurrentlyStaying() {
-        return $this->currentlyStaying;
-    }
-
-    public function getPatientRelationshipCode() {
-        return $this->patientRelationshipCode;
-    }
-
-    public function setPatientRelationshipCode($v) {
-        $this->patientRelationshipCode = $v;
-    }
-
-    public function getCheckinDate() {
+   public function getCheckinDate() {
         if (is_null($this->checkinDate)) {
             return '';
         }
@@ -479,10 +332,6 @@ class Guest extends Role {
 
             $this->expectedCheckOut = new DateTime($dt . ' 10:00:00');
         }
-    }
-
-    public function getEmergContactObj() {
-        return $this->emergContact;
     }
 
     public function setTitle($title) {

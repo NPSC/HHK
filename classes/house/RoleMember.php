@@ -322,27 +322,35 @@ class GuestMember extends RoleMember {
         return $table->generateMarkup();
     }
 
-    public function birthDateMarkup() {
+    public function birthDateMarkup($overRide = FALSE) {
 
-        $table = new HTMLTable();
-        $bd = '';
+        $mkup = '';
 
-        if ($this->nameRS->BirthDate->getStoredVal() != '') {
-            $bd = date('M j, Y', strtotime($this->nameRS->BirthDate->getStoredVal()));
+        if ($this->showBirthDate || $overRide) {
+
+            $table = new HTMLTable();
+            $bd = '';
+
+            if ($this->nameRS->BirthDate->getStoredVal() != '') {
+                $bd = date('M j, Y', strtotime($this->nameRS->BirthDate->getStoredVal()));
+            }
+
+            $table->addBodyTr(
+                HTMLTable::makeTd('Birth Date', array('class'=>'tdlabel'))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($bd, array('name'=>$this->getIdPrefix().'txtBirthDate', 'class'=>'ckbdate')))
+                 );
+
+            $mkup = $table->generateMarkup();
+
         }
 
-        $table->addBodyTr(
-            HTMLTable::makeTd('Birth Date', array('class'=>'tdlabel'))
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($bd, array('name'=>$this->getIdPrefix().'txtBirthDate', 'class'=>'ckbdate')))
-             );
-
-        return $table->generateMarkup();
+        return $mkup;
 
     }
 
-    public function getPsgObj(PDO $dbh) {
-        return PSG::instantiateFromGuestId($dbh, $this->get_idName());
-    }
+//    public function getPsgObj(PDO $dbh) {
+//        return PSG::instantiateFromGuestId($dbh, $this->get_idName());
+//    }
 
 
 }
@@ -375,10 +383,10 @@ class PatientMember extends RoleMember {
     }
 
 
-    public function getPsgObj(PDO $dbh) {
-        return new Psg($dbh, 0, $this->get_idName());
-    }
-
+//    public function getPsgObj(PDO $dbh) {
+//        return new Psg($dbh, 0, $this->get_idName());
+//    }
+//
     public function createMarkupHdr() {
 
         $tr = parent::createMarkupHdr();
@@ -391,9 +399,10 @@ class PatientMember extends RoleMember {
 
     }
 
-    public function createPatientRow($editable = TRUE) {
+    public function createMarkupRow($editable = TRUE) {
 
-        $tr = $this->createMarkupRow($editable);
+        $tr = parent::createMarkupRow($editable);
+
 
         // Birth Date
         if ($this->showBirthDate) {

@@ -56,7 +56,7 @@ class CheckInGroup {
 
                 $guest->save($dbh, $post, $uS->username);
 
-                if ($guest->isCurrentlyStaying() === FALSE) {
+                if ($guest->isCurrentlyStaying($dbh) === FALSE) {
                     $this->newGuests[$guest->getIdName()] = $guest;
                 }
 
@@ -66,7 +66,7 @@ class CheckInGroup {
                     $this->psg = new Psg($dbh, 0, $guest->getIdName());
                     $this->psg->setNewMember($guest->getIdName(), 0, RelLinkType::Self);
 
-                    if ($guest->isCurrentlyStaying()) {
+                    if ($guest->isCurrentlyStaying($dbh)) {
 
                         // guest is the patient of a current visit
                         $this->patient = new Patient($dbh, 'h_', $guest->getIdName());
@@ -102,14 +102,14 @@ class CheckInGroup {
             $this->patient = new Patient($dbh, 'h_', $idp);
             $this->patient->save($dbh, $post, $uS->username);
 
-            $this->psg = $this->patient->getPsgObj($dbh);
+            $this->psg = $this->patient->getPatientPsg();
 
         } else if ($idHospitalStay > 0) {
 
             $hospStay = new HospitalStay($dbh, 0, $idHospitalStay);
 
             $this->patient = new Patient($dbh, 'h_', $hospStay->getIdPatient());
-            $this->psg = $this->patient->getPsgObj($dbh);
+            $this->psg = $this->patient->getPatientPsg();
 
         } else {
 

@@ -47,7 +47,7 @@ class Waitlist {
 
         $guest = new Guest($dbh, 'g', $idGuest);
 
-        $psg = $guest->getPsgObj($dbh);
+        $psg = $guest->getPatientPsg();
 
         $wlRS->idPatient->setNewVal($psg->getIdPatient());
         $wlRS->Hospital->setNewVal('');

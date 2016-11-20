@@ -211,7 +211,7 @@ class RegisterForm {
         return $mkup;
     }
 
-    protected static function guestBlock(array $guests, array $relationText) {
+    protected static function guestBlock(\PDO $dbh, array $guests, array $relationText) {
         $mkup = "<table style='border-collapse:collapse;border:none'>
             <tr><td colspan='6' style='border:none;border-bottom:1.5pt solid #98C723;padding-left:0;'><h2>Guests</h2></td></tr>";
 
@@ -227,7 +227,7 @@ class RegisterForm {
                 $phoneCell["Phone_Num"] = 'House Phone';
             }
             $email = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
-            $emrg = $guest->getEmergContactObj();
+            $emrg = $guest->getEmergContactObj($dbh);
 
             $mkup .= "
  <tr>
@@ -334,7 +334,7 @@ class RegisterForm {
 
     }
 
-    public static function generateDocument($title, \Role $patient, array $guests,  $houseName, $hospital, $hospRoom, $patientRelCodes, $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $creditRecord = '', $notes = '') {
+    public static function generateDocument(\PDO $dbh, $title, \Role $patient, array $guests,  $houseName, $hospital, $hospRoom, $patientRelCodes, $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $creditRecord = '', $notes = '') {
 
         $uS = Session::getInstance();
 
@@ -343,7 +343,7 @@ class RegisterForm {
 
         $mkup .= self::notesBlock($notes);
 
-        $mkup .= self::guestBlock($guests, $patientRelCodes);
+        $mkup .= self::guestBlock($dbh, $guests, $patientRelCodes);
 
         $guestNames = array();
         // for each guest
@@ -625,7 +625,7 @@ p.label {
 
         $rate = (1 + $rateAdj) * $priceModel->amountCalculator(1, $idRate, $rateCat, $pledgedRate);
 
-        return RegisterForm::generateDocument($title, $patient, $guests, $uS->siteName, $hospital, $hospRoom, $uS->guestLookups[GL_TableNames::PatientRel], $vehs, $agent, $rate, $roomTitle, $depDate, $creditReport, $notes);
+        return RegisterForm::generateDocument($dbh, $title, $patient, $guests, $uS->siteName, $hospital, $hospRoom, $uS->guestLookups[GL_TableNames::PatientRel], $vehs, $agent, $rate, $roomTitle, $depDate, $creditReport, $notes);
 
     }
 }

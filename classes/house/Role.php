@@ -43,9 +43,31 @@ abstract class Role {
 
     protected $incompleteAddress = FALSE;
     protected $useHousePhone = FALSE;
+    /**
+     *
+     * @var EmergencyContact
+     */
+    protected $emergContact;
+
+    /**
+     *
+     * @var Psg
+     */
+    protected $patientPsg;
+    protected $idVisit;
+    protected $title;
+    protected $currentlyStaying;
+    public $status = '';
+    protected $checkinDate;
+    protected $expectedCheckOut;
+    protected $incompleteEmergContact = FALSE;
+    protected $patientRelationshipCode = '';
 
     function __construct(PDO $dbh, $idPrefix, $id) {
 
+        $this->currentlyStaying = NULL;
+        $this->idVisit = NULL;
+        $this->emergContact = NULL;
 
         $this->name = $this->factory($dbh, $id);
         $this->name->setIdPrefix($idPrefix);
@@ -99,11 +121,6 @@ abstract class Role {
         $rtn['hdr'] = HTMLContainer::generateMarkup('h2', $frst, array('id'=>'h2srch'.$prefix, 'class'=>$prefix.'Slot ui-widget-header ui-state-default ui-corner-all'));
         $rtn['idPrefix'] = $prefix;
         return  $rtn;
-    }
-
-    protected function createThinAddrMu($class = '', $useCopyIcon = TRUE, $includeCounty = FALSE) {
-
-
     }
 
     protected function createMailAddrMU($class = "", $useCopyIcon = TRUE, $includeCounty = FALSE) {
@@ -180,6 +197,27 @@ abstract class Role {
 
     }
 
+        // Address, email and Phone
+    protected function createAddsBLock($overrideAddrFlag = FALSE) {
+
+        $mkup = '';
+        $uS = Session::getInstance();
+
+        // Don't show address if patient and flag is set.
+        if ($this->patientRelationshipCode != RelLinkType::Self || $uS->PatientAddr || $overrideAddrFlag) {
+
+            // Home Address
+            if ($uS->GuestAddr || $overrideAddrFlag) {
+                $mkup .= $this->createMailAddrMU($this->getNameObj()->getIdPrefix() . 'hhk-addr-val', TRUE, $uS->county);
+            }
+
+            // Phone and email
+            $mkup .= $this->createPhoneEmailMU($this->getNameObj()->getIdPrefix());
+        }
+
+        return $mkup;
+    }
+
 
     /**
      *
@@ -225,6 +263,40 @@ abstract class Role {
         return $message;
     }
 
+        /**
+     *
+     * @param PDO $dbh
+     * @return boolean
+     */
+    protected function checkCurrentStay(PDO $dbh) {
+
+        if ($this->getIdName() > 0) {
+
+            $query = "select idVisit from stays where `Status` = :stat and idName = :id;";
+            $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+            $stmt->execute(array(":stat"=> VisitStatus::CheckedIn, ":id"=>$this->getIdName()));
+            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+
+            if (count($rows) > 0 && $rows[0][0] > 0) {
+                $this->idVisit = $rows[0][0];
+                $this->currentlyStaying = TRUE;
+            } else {
+                $this->idVisit = 0;
+                $this->currentlyStaying = FALSE;
+            }
+        }
+
+    }
+
+    public function getCurrentVisitId(PDO $dbh) {
+
+        if (is_null($this->idVisit)) {
+            $this->checkCurrentStay($dbh);
+        }
+
+        return $this->idVisit;
+    }
+
 
     public function getNoReturn() {
         $uS = Session::getInstance();
@@ -243,6 +315,37 @@ abstract class Role {
         } else {
             $this->incompleteAddress = FALSE;
         }
+    }
+
+    public function isCurrentlyStaying(\PDO $dbh) {
+
+        if (is_null($this->currentlyStaying)) {
+            $this->checkCurrentStay($dbh);
+        }
+
+        return $this->currentlyStaying;
+    }
+
+    public function getPatientPsg() {
+        return $this->psg;
+    }
+
+    public function loadPatientRel() {
+
+        $psg = $this->getPatientPsg();
+
+        if (is_null($psg) === FALSE && isset($psg->psgMembers[$this->getIdName()])) {
+            $this->patientRelationshipCode = $psg->psgMembers[$this->getIdName()]->Relationship_Code->getStoredVal();
+        }
+    }
+
+    public function getEmergContactObj(\PDO $dbh) {
+
+        if (is_null($this->emergContact)) {
+            $this->emergContact = new EmergencyContact($dbh, $this->getIdName());
+        }
+
+        return $this->emergContact;
     }
 
     public function getIdName() {
@@ -271,6 +374,14 @@ abstract class Role {
 
     public function getHousePhone() {
         return $this->useHousePhone;
+    }
+
+    public function getPatientRelationshipCode() {
+        return $this->patientRelationshipCode;
+    }
+
+    public function setPatientRelationshipCode($v) {
+        $this->patientRelationshipCode = $v;
     }
 
 
