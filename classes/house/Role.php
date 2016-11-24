@@ -327,17 +327,17 @@ abstract class Role {
     }
 
     public function getPatientPsg() {
-        return $this->psg;
+        return $this->patientPsg;
     }
 
-    public function loadPatientRel() {
-
-        $psg = $this->getPatientPsg();
-
-        if (is_null($psg) === FALSE && isset($psg->psgMembers[$this->getIdName()])) {
-            $this->patientRelationshipCode = $psg->psgMembers[$this->getIdName()]->Relationship_Code->getStoredVal();
-        }
-    }
+//    public function loadPatientRel() {
+//
+//        $psg = $this->getPatientPsg();
+//
+//        if (is_null($psg) === FALSE && isset($psg->psgMembers[$this->getIdName()])) {
+//            $this->patientRelationshipCode = $psg->psgMembers[$this->getIdName()]->Relationship_Code->getStoredVal();
+//        }
+//    }
 
     public function getEmergContactObj(\PDO $dbh) {
 

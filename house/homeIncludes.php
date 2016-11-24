@@ -105,8 +105,8 @@ define('JQ_DT_JS', 'js/datatables.min.js' . JS_V);
 define('PRINT_AREA_JS', "js/jquery.PrintArea.js" . JS_V);
 define('VERIFY_ADDRS_JS', "js/verifyAddrs-min.js" . JS_V);
 define('STATE_COUNTRY_JS', "js/stateCountry.js" . JS_V);
-define('PAYMENT_JS', "js/payments-min.js" . JS_V);
-define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JS_V);
+define('PAYMENT_JS', "js/payments.js" . JS_V);
+define('VISIT_DIALOG_JS', "js/visitDialog.js" . JS_V);
 define('RESV_JS', "js/resv.js" . JS_V);
 define('MD5_JS', 'js/md5-min.js');
 

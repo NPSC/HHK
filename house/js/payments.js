@@ -439,6 +439,7 @@ function amtPaid() {
 
             $('.hhk-HouseDiscount').hide();
             p.hsDiscAmt.val('');
+            p.finalPaymentCb.prop('checked', false);
 
             
             overPayAmt = 0 - (totCharges - feePay);

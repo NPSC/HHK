@@ -56,7 +56,6 @@ class PaymentManager {
 
         $uS = Session::getInstance();
         $this->invoice = NULL;
-        $roomCharges = 0;
 
 
         if ($idPayor <= 0) {
@@ -97,7 +96,7 @@ class PaymentManager {
             }
 
 
-            // Deposit Refunds
+            // Deposit Refunds - only if checked out...
             if ($visit->getVisitStatus() == VisitStatus::CheckedOut && abs($this->pmp->getDepositRefundAmt()) > 0) {
                 // Return the deposit
                 $this->depositRefundAmt = abs($this->pmp->getDepositRefundAmt());
@@ -127,21 +126,28 @@ class PaymentManager {
                 }
             }
 
-            // Room Charges
-            if ($visit->getVisitStatus() == VisitStatus::CheckedOut) {
-                // Checked out or checking out...
+            // Just use what they are willing to pay as the charge.
+            $roomCharges = $this->pmp->getRatePayment();
 
-                if ($this->pmp->getTotalRoomChg() > 0 && $this->pmp->getFinalPaymentFlag() == FALSE && $this->pmp->getTotalPayment() == 0) {
-                    $roomCharges = min(array(($this->depositRefundAmt + $this->moaRefundAmt - $this->pmp->getVisitFeePayment()), $this->pmp->getTotalRoomChg()));
+            // Room Charges are different for checked out
+            if ($this->pmp->getTotalRoomChg() > 0 && $visit->getVisitStatus() == VisitStatus::CheckedOut) {
+                // Checked out or checking out... Room charges.
 
-                } else if ($this->pmp->getTotalRoomChg() > 0 && $this->pmp->getFinalPaymentFlag() == FALSE) {
-                    $roomCharges = min(array($this->pmp->getRatePayment(), $this->pmp->getTotalRoomChg()));
-                } else {
-                    $roomCharges = $this->pmp->getTotalRoomChg();
+                $roomCharges = $this->pmp->getTotalRoomChg();
+
+                // room payments higher than room charges means we are paying the whole room charge.
+                // room payments lower than room Charges means we can only charge the payment amount.
+                // Reduce the room charges by the deposit and any MOA.
+                if ($this->pmp->getFinalPaymentFlag() == FALSE) {
+                    // No House Disc.
+
+                    $maxRoomPayment = $roomCharges - ($this->depositRefundAmt + $this->moaRefundAmt);
+
+                    if ($this->pmp->getRatePayment() < $maxRoomPayment) {
+                        $roomCharges = $this->pmp->getRatePayment();
+                    }
+
                 }
-
-            } else {
-                $roomCharges = $this->pmp->getRatePayment();
             }
 
             // Any charges?
@@ -433,6 +439,7 @@ class PaymentManagerPayment {
     protected $guestCredit;
     protected $refundAmount;
     protected $totalRoomChg;
+    protected $payInvoicesAmt;
 
     protected $payInvoices;
     protected $payType;
@@ -482,6 +489,7 @@ class PaymentManagerPayment {
 
 
         $this->payInvoices = array();
+        $this->payInvoicesAmt = 0;
         $this->idInvoicePayor = 0;
         $this->setPayType($payType);
         $this->newCardOnFile = FALSE;
@@ -498,19 +506,27 @@ class PaymentManagerPayment {
         return $this->payInvoices;
     }
 
-    public function addInvoiceByNumber(\PDO $dbh, $invoiceNumber) {
+    public function addInvoiceByNumber(\PDO $dbh, $invoiceNumber, $paymentAmt) {
 
         if ($invoiceNumber != '' && $invoiceNumber != 0) {
             $invoice = new Invoice($dbh, $invoiceNumber);
-            $this->addInvoice($invoice);
+            if (abs($paymentAmt) > abs($invoice->getBalance())) {
+                $paymentAmt = $invoice->getBalance();
+            }
+            $this->addInvoice($invoice, $paymentAmt);
         }
     }
 
-    public function addInvoice(Invoice $invoice) {
+    protected function addInvoice(Invoice $invoice, $paymentAmt) {
 
         if ($invoice->getStatus() == InvoiceStatus::Unpaid)  {
             $this->payInvoices[] = $invoice;
+            $this->payInvoicesAmt += $paymentAmt;
         }
+    }
+
+    public function getPayInvoicesAmt() {
+        return $this->payInvoicesAmt;
     }
 
     public function getBalWith() {

@@ -46,7 +46,6 @@ class Patient extends Role {
 
     public function createReservationMarkup($patientEditable = TRUE) {
 
-
         // Name
         $mk1 = $this->createNameMU($patientEditable);
 

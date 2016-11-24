@@ -170,15 +170,15 @@ class RegisterForm {
 
             if (!isset($usedNames[$gname])) {
 
-                $mkup .= "<p class=MsoNormal style='margin-top:12pt;margin-right:0;margin-bottom:0;margin-left:.5in;line-height:normal'>
-                    <span style='font-size:10pt'>" . $gname . "&nbsp;&nbsp; ___________________________________</span></p>";
+                $mkup .= "<p class=MsoNormal style='margin-top:12pt;margin-right:0;margin-bottom:0;margin-left:.5in;line-height:normal'>"
+                    . "<span style='font-size:10pt'>" . $gname . "&ensp; ___________________________________</span></p>";
                 $usedNames[$gname] = 'y';
             }
         }
 
         // one more blank line
         $mkup .= "<p class=MsoNormal style='margin-top:12pt;margin-right:0;margin-bottom:0;margin-left:.5in;line-height:normal'>
-            <span style='font-size:10pt'>________________________________&nbsp;&nbsp; ___________________________________</span></p>";
+            <span style='font-size:10pt'>________________________________&emsp; ___________________________________</span></p>";
 
 
         return $mkup;

@@ -418,13 +418,20 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                             $('.hhk-refundDeposit').hide('fade');
                         }
 
-
+                        
                         if (roomChgBal < 0) {
+                            
                             $('#guestCredit').val(roomChgBal.toFixed(2).toString());
                             $('#feesCharges').val('');
                             $('.hhk-RoomCharge').hide();
                             $('.hhk-GuestCredit').show();
+                            // force pay cleaning fee if unpaid...
+                            if ($('#visitFeeCb').length > 0 && Math.abs(roomChgBal) >= vFeeChgBal) {
+                                $('#visitFeeCb').prop('checked', true).prop('disabled', true);
+                            }
+
                         } else {
+                            
                             $('#feesCharges').val(roomChgBal.toFixed(2).toString());
                             $('#guestCredit').val('');
                             $('.hhk-GuestCredit').hide();

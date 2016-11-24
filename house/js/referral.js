@@ -7,7 +7,7 @@
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -290,7 +290,7 @@ function injectSlot(data) {
                 
                 $('div#patientSection').hide('blind');
                 acHdr.removeClass('ui-state-default');
-                acHdr.find('#pgspnHdrLabel').text('Patient/Primary Guest: ');
+                acHdr.find('#pgspnHdrLabel').text((resv.patAsGuest ? 'Patient/' : '') + 'Primary Guest: ');
                 resv.patSection = false;
 
             } else {

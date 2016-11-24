@@ -182,7 +182,8 @@ class PaymentChooser {
         foreach ($post as $key => $p) {
             if (($num = strstr($key, 'unpaidCb', TRUE)) !== FALSE) {
                 $num = filter_var($num, FILTER_SANITIZE_STRING);
-                $pmp->addInvoiceByNumber($dbh, $num);
+                $amt = floatval(filter_var($post[$num . 'invPayAmt'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+                $pmp->addInvoiceByNumber($dbh, $num, $amt);
             }
         }
 
@@ -695,7 +696,7 @@ ORDER BY v.idVisit , v.Span;");
 
 
         if ($showRoomFees) {
-            $feesTbl->addBodyTr(HTMLTable::makeTd('Room Fees:', array('class'=>'tdlabel'))
+            $feesTbl->addBodyTr(HTMLTable::makeTd('Pay Room Fees:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd('Days: ' . HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'1', 'data-vid'=>$idVisit)), array('style'=>'text-align:center;'))
                 .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
                 , array('class'=>'hhk-RoomFees'));
@@ -722,7 +723,8 @@ ORDER BY v.idVisit , v.Span;");
         // Amount to pay
         $feesTbl->addBodyTr(
             HTMLTable::makeTh(HTMLContainer::generateMarkup('span', 'Payment Amount:', array('id'=>'spnPayTitle')), array('colspan'=>'2', 'class'=>'tdlabel'))
-            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'totalPayment', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;font-weight:bold;', 'readonly'=>'readonly')), array('style'=>'text-align:right;border-top:2px solid #2E99DD;border-bottom:2px solid #2E99DD;')));
+            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'totalPayment', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;font-weight:bold;', 'readonly'=>'readonly'))
+                    , array('style'=>'text-align:right;border-top:2px solid #2E99DD;border-bottom:2px solid #2E99DD;')));
 
        // Payment Date
         $feesTbl->addBodyTr(HTMLTable::makeTd('Pay Date:', array('colspan'=>'2', 'class'=>'tdlabel'))
@@ -734,7 +736,8 @@ ORDER BY v.idVisit , v.Span;");
         if ($defaultExcessPays !== ExcessPay::Ignore && count($excessPays) > 0) {
 
             $feesTbl->addBodyTr(HTMLTable::makeTh('Overpayment Amount:', array('class'=>'tdlabel', 'colspan'=>'2'))
-                    .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name'=>'txtOverPayAmt', 'style'=>'border:none;text-align:right;font-weight:bold;', 'data-amt'=>'0', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'size'=>'8')), array('style'=>'text-align:right;'))
+                    .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name'=>'txtOverPayAmt', 'style'=>'border:none;text-align:right;font-weight:bold;', 'data-amt'=>'0', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'size'=>'8'))
+                            , array('style'=>'text-align:right;'))
                     , array('class'=>'hhk-Overpayment'));
 
             $sattrs = array('id'=>'selexcpay', 'style'=>'margin-left:3px;', 'class'=>'hhk-feeskeys');
@@ -765,8 +768,8 @@ ORDER BY v.idVisit , v.Span;");
         $payTbl = new HTMLTable();
 
         // Payment Amount
-        $payTbl->addBodyTr(HTMLTable::makeTd('Payment Amount:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnPayAmount')), array('colspan'=>'2', 'style'=>'text-align:right;')));
+        $payTbl->addBodyTr(HTMLTable::makeTd('Payment Amount:', array('class'=>'tdlabel', 'style'=>'font-weight:bold;'))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnPayAmount')), array('colspan'=>'2', 'style'=>'font-weight:bold;')));
         // Payment Types
         $payTbl->addBodyTr(HTMLTable::makeTd('Pay With:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($payTypes, $defaultPayType, FALSE), array('name'=>'PayTypeSel', 'class'=>'hhk-feeskeys')), array('colspan'=>'2')));
@@ -830,8 +833,8 @@ ORDER BY v.idVisit , v.Span;");
         $payTbl = new HTMLTable();
 
         // Payment Amount
-        $payTbl->addBodyTr(HTMLTable::makeTd('Return Amount:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name'=>'txtRtnAmount', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'text-align:right;border:none;')), array('colspan'=>'2', 'style'=>'text-align:right;')));
+        $payTbl->addBodyTr(HTMLTable::makeTd('Return Amount:', array('class'=>'tdlabel', 'style'=>'font-weight:bold;'))
+                .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name'=>'txtRtnAmount', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'font-weight:bold;border:none;')), array('colspan'=>'2', 'style'=>'text-align:right;')));
         // Payment Types
         $payTbl->addBodyTr(HTMLTable::makeTd('With:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($payTypes, $defaultPayType, FALSE), array('name'=>'rtnTypeSel', 'class'=>'hhk-feeskeys')), array('colspan'=>'2')));

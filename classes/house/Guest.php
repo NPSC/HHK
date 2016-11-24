@@ -90,7 +90,7 @@ class Guest extends Role {
         // Add Emergency contact
         $search = HTMLContainer::generateMarkup('span', '', array('name'=>$idPrefix, 'class'=>'hhk-guestSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'float: right; margin-left:.3em;cursor:pointer;'));
 
-        $ec = $this->emergContact;
+        $ec = $this->getEmergContactObj($dbh);
         $mk1 .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Emergency Contact for Guest' . $search, array('style'=>'font-weight:bold;'))
                 . $ec->createMarkup($ec, removeOptionGroups($uS->nameLookups[GL_TableNames::RelTypes]), $idPrefix, $this->incompleteEmergContact), array('class'=>'hhk-panel')),
@@ -242,7 +242,7 @@ class Guest extends Role {
             $this->useHousePhone = TRUE;
         }
 
-        $ec = $this->getEmergContactObj();
+        $ec = $this->getEmergContactObj($dbh);
         if (is_null($ec) === FALSE) {
             $ec->save($dbh, $this->getIdName(), $post, $uname, $idPrefix);
         }

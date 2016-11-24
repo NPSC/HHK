@@ -236,11 +236,14 @@ class Hospital {
             $myDiagnosis = $hstay->getDiagnosisCode();
 
             // Use Diagnosis as a text box?
-            if ($uS->ShowDiagTB || ($hstay->getDiagnosisCode() != '' && isset($diags[$myDiagnosis]) === FALSE)) {
-                $diagtbl->addBodyTr(
-                    HTMLTable::makeTd(HTMLInput::generateMarkup($hstay->getDiagnosis(), array('name'=>'txtDiagnosis'))));
+            if ($uS->ShowDiagTB) {
+                if ($myDiagnosis == '' || ($myDiagnosis != '' && isset($diags[$myDiagnosis]) === FALSE)) {
 
-                $myDiagnosis = '';
+                    $diagtbl->addBodyTr(
+                        HTMLTable::makeTd(HTMLInput::generateMarkup($hstay->getDiagnosis(), array('name'=>'txtDiagnosis'))));
+
+                    $myDiagnosis = '';
+                }
             }
 
 

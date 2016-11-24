@@ -182,20 +182,19 @@ $resultMessage = $alertMsg->createMarkup();
                 <div id="guestSearch" style="padding-left:0;padding-top:0; clear:left; float:left;">
                     <?php echo $mk1; ?>
                 </div>
+                <div id="rescList" style="clear:left; float:left; font-size: .9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
+                </div>
+                <div id="rate" style="float:left; font-size: .9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
+                </div>
                 <div id="resvGuest" style="float:left; font-size:.9em; display:none; clear:left;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 </div>
                 <div id="resvStatus" style="float:left; font-size:.9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 </div>
                 <div id="notesGuest" style="float:left; font-size:.9em; display:none; width: 400px;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 </div>
-                <div id="rescList" style="clear:left; float:left; font-size: .9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
+                <div id="pay" style="float:left; font-size: .9em; display:none; clear:left;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 </div>
-                <div id="rate" style="float:left; font-size: .9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
-                </div>
-                <div style="clear:both"></div>
-                <div id="pay" style="float:left; font-size: .9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
-                </div>
-                <div id="vehicle" style="clear:left;float:left; font-size: .9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox">
+                <div id="vehicle" style="float:left; font-size: .9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox">
                 </div>
                 <div style="clear:both; padding:30px;"></div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em;">
