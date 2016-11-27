@@ -35,7 +35,7 @@ function initPDO($override = FALSE) {
 
     try {
         $dbh = new PDO(
-                "mysql:host=".$ssn->databaseURL.";dbname=" . $ssn->databaseName . ";charset=Latin1",
+                "mysql:host=".$ssn->databaseURL.";dbname=" . $ssn->databaseName,
                 $dbuName,
                 $dbPw,
                 array(PDO::ATTR_PERSISTENT => true)

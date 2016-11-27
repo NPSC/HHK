@@ -51,6 +51,9 @@ class Patient extends Role {
 
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
+        // set relatinoship code - used in address block.
+        $this->setPatientRelationshipCode(RelLinkType::Self);
+
         $mk1 .= $this->createAddsBLock();
 
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('id'=>'patStayContainer'));
