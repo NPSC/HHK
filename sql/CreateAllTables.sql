@@ -730,8 +730,8 @@ CREATE TABLE if not exists `item_type_map`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `language` (
   `idLanguage` int(11) NOT NULL AUTO_INCREMENT,
-  `Title` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `ISO_639_1` varchar(5) COLLATE utf8_unicode_ci NOT NULL,
+  `Title` varchar(255) NOT NULL,
+  `ISO_639_1` varchar(5) NOT NULL,
   `Display` INT(1) NOT NULL DEFAULT 0 ,
   PRIMARY KEY (`idLanguage`)
 ) ENGINE=InnoDB AUTO_INCREMENT=553;
