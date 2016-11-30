@@ -55,18 +55,23 @@ $labels = new Config_Lite(LABEL_FILE);
 
 
 
-function getPeopleReport(\PDO $dbh, $local, $start, $end) {
+function getPeopleReport(\PDO $dbh, $local, $start, $end, $extIdFlag = FALSE) {
+
+    $whExt = '';
+    if ($extIdFlag) {
+        $whExt = "ifnull(vg.External_Id, '') = '' and ";
+    }
 
     $uS = Session::getInstance();
     $transferIds = [];
 
-    $query = "select vg.Id, vg.Prefix, vg.First as `Guest First`, vg.Last as `Guest Last`, vg.Suffix, ifnull(vg.BirthDate, '') as `Birth Date`, "
-        . " vg.Address, vg.City, vg.County, vg.State, vg.Zip, CASE WHEN vg.Country = '' THEN 'US' ELSE vg.Country END as `Country`, vg.Phone, vg.Email, "
+    $query = "select vg.External_Id, vg.Id, CASE WHEN vg.Relationship_Code = 'slf' THEN 'p' ELSE '' END as `Patient`, concat(vg.Prefix, ' ', vg.First, ' ', vg.Last, ' ', vg.Suffix) as `Name`, ifnull(vg.BirthDate, '') as `Birth Date`, "
+        . " concat(vg.Address, ', ', vg.City, ', ', vg.County, ' ', vg.State, ' ', vg.Zip) as `Address`,  vg.Phone, vg.Email, vg.idPsg,"
         . " max(ifnull(s.Span_Start_Date, '')) as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure` "
         . " from stays s
         join
     vguest_listing vg on vg.Id = s.idName
-where ifnull(vg.External_Id, '') = '' and ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end') "
+where $whExt ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end') "
             . " GROUP BY vg.Id";
 
     $stmt = $dbh->query($query);
@@ -120,7 +125,7 @@ where ifnull(vg.External_Id, '') = '' and ifnull(DATE(s.Span_End_Date), DATE(now
 
         if ($local) {
 
-            //$r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
+            $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
 
             if (isset($r['Birth Date']) && $r['Birth Date'] != '') {
                 $r['Birth Date'] = date('M j, Y', strtotime($r['Birth Date']));
@@ -131,9 +136,10 @@ where ifnull(vg.External_Id, '') = '' and ifnull(DATE(s.Span_End_Date), DATE(now
             if ($r['Departure'] != '') {
                 $r['Departure'] = date('M j, Y', strtotime($r['Departure']));
             }
-            unset($r['idPsg']);
 
-
+            if ($r['Patient'] != '') {
+                $r['Patient'] = '&#x2714;';
+            }
 
             $rows[] = $r;
 
@@ -330,8 +336,28 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo STATE_COUNTRY_JS; ?>"></script>
 <script type="text/javascript">
+function flagAlertMessage(mess, wasError) {
+    "use strict";
+    var spn = document.getElementById('alrMessage');
+
+    if (!wasError) {
+        // define the success  message markup
+        $('#alrResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
+        $('#alrIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
+        spn.innerHTML = "<strong>Success: </strong>" + mess;
+        $("#divAlert1").show("scale horizontal");
+        window.scrollTo(0, 5);
+    } else {
+        // define the error markup
+        $('alrResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
+        $('#alrIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
+        spn.innerHTML = "<strong>Alert: </strong>" + mess;
+        $("#divAlert1").show("pulsate");
+        window.scrollTo(0, 5);
+    }
+}
     $(document).ready(function() {
-    $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
+        $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
         var makeTable = '<?php echo $mkTable; ?>';
         var transferIds = <?php echo json_encode($transferIds); ?>;
         $('#btnHere, #btnExcel').button();
@@ -343,7 +369,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                 $('#tblrpt').dataTable({
                     "iDisplayLength": 50,
                     "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                    "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
+                    "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
                 });
             }
             catch (err) { }
@@ -355,10 +381,13 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
             $('#TxButton').button().click(function () {
                 var parms = {
                     cmd: 'xfer',
-                    ids: transferIds,
+                    ids: transferIds
                 };
+                $('#TxButton').text('Working...');
+
                 var posting = $.post('ws_tran.php', parms);
                 posting.done(function(incmg) {
+                    $('#TxButton').text('Transfer');
                     if (!incmg) {
                         alert('Bad Reply from Server');
                         return;

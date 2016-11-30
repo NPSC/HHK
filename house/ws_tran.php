@@ -55,7 +55,7 @@ switch ($c) {
             $transfer = new TransferMembers($config->getString('transfer', 'User'), $config->getString('transfer', 'Password'), $customFields);
 
             try {
-                $reply = $transfer->sendList($dbh, $ids);
+                $reply = $transfer->sendList($dbh, $ids, $uS->username);
                 $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'newAccts');
 
             } catch (Exception $ex) {
