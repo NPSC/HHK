@@ -48,7 +48,7 @@ class Neon {
      * Retrieves the session ID
      */
 
-    private function getSession() {
+    public function getSession() {
         return $this->userSession;
     }
 
@@ -56,7 +56,7 @@ class Neon {
      * Saves the session ID
      */
 
-    private function setSession($session) {
+    public function setSession($session) {
         $this->userSession = $session;
     }
 
@@ -65,6 +65,8 @@ class Neon {
      */
 
     public function login(array $keys) {
+
+        $this->setSession('');
 
         if (isset($keys['orgId']) && isset($keys['apiKey'])) {
 

@@ -873,10 +873,7 @@ select
     ifnull(`g1`.`Description`, '') AS `Prefix`,
     `n`.`Name_First` AS `First`,
     `n`.`Name_Middle` AS `Middle`,
-    (case
-        when (`n`.`Record_Company` = 0) then `n`.`Name_Last`
-        else `n`.`Company`
-    end) AS `Last`,
+    `n`.`Name_Last` AS `Last`,
     ifnull(`g2`.`Description`, '') AS `Suffix`,
     (case when (ifnull(`np`.`Phone_Extension`, '') = '') then ifnull(`np`.`Phone_Num`, '')
         else concat_ws('x', `np`.`Phone_Num`, `np`.`Phone_Extension`)
@@ -893,7 +890,8 @@ select
     `g3`.`Description` as `Patient Rel.`,
     `ng`.`Relationship_Code`,
     `ng`.`idPsg`,
-    `nd`.`No_Return`as `ngStatus`
+    `nd`.`No_Return`as `ngStatus`,
+    `n`.`External_Id`
 from `name_guest` `ng` 
 	left join `name` `n` on `ng`.`idName` = `n`.`idName`
     left join `name_address` `na` ON `ng`.`idName` = `na`.`idName`

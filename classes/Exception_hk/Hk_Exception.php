@@ -41,6 +41,11 @@ class Hk_Exception_Payment
               implements Hk_Exception {
 }
 
+class Hk_Exception_Upload
+              extends RuntimeException
+              implements Hk_Exception {
+}
+
 class Hk_Exception_Duplicate
         extends Exception implements Hk_Exception {
 
