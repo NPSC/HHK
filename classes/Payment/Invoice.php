@@ -546,9 +546,14 @@ where
 
     }
 
+    /** Sums invoice line amounts and updates invoice amount total and balance
+     *
+     * @param \PDO $dbh
+     * @param string $user
+     */
     protected function updateInvoiceAmount(\PDO $dbh, $user) {
 
-        $stmt = $dbh->query("Select sum(il.Amount) from invoice_line il where il.Deleted = 0 and il.Invoice_Id = " . $this->idInvoice);
+        $stmt = $dbh->query("Select sum(Amount) from invoice_line where Deleted = 0 and Invoice_Id = " . $this->idInvoice);
         $rows = $stmt->fetchAll();
 
 
@@ -576,7 +581,7 @@ where
 
     public function updateInvoiceStatus(\PDO $dbh, $username) {
 
-            if ($this->invRs->Amount->getStoredVal() > 0 && $this->invRs->Balance->getStoredVal() == 0) {
+            if ($this->invRs->Amount->getStoredVal() != 0 && $this->invRs->Balance->getStoredVal() == 0) {
                 $this->invRs->Status->setNewVal(InvoiceStatus::Paid);
             } else {
                 $this->invRs->Status->setNewVal(InvoiceStatus::Unpaid);
@@ -684,7 +689,7 @@ where
             EditRS::updateStoredVals($this->invRs);
 
         } else {
-            throw new Hk_Exception_Payment('Cannot update a blank invoice record.  ');
+            throw new Hk_Exception_Payment('Cannot make payments on a blank invoice record.  ');
         }
     }
 

@@ -130,23 +130,29 @@ class PaymentManager {
             $roomCharges = $this->pmp->getRatePayment();
 
             // Room Charges are different for checked out
-            if ($this->pmp->getTotalRoomChg() > 0 && $visit->getVisitStatus() == VisitStatus::CheckedOut) {
+            if ($visit->getVisitStatus() == VisitStatus::CheckedOut) {
                 // Checked out or checking out... Room charges.
 
-                $roomCharges = $this->pmp->getTotalRoomChg();
+                if ($this->pmp->getTotalRoomChg() > 0) {
 
-                // room payments higher than room charges means we are paying the whole room charge.
-                // room payments lower than room Charges means we can only charge the payment amount.
-                // Reduce the room charges by the deposit and any MOA.
-                if ($this->pmp->getFinalPaymentFlag() == FALSE) {
-                    // No House Disc.
+                    $roomCharges = $this->pmp->getTotalRoomChg();
 
-                    $maxRoomPayment = $roomCharges - ($this->depositRefundAmt + $this->moaRefundAmt);
+                    // room payments higher than room charges means we are paying the whole room charge.
+                    // room payments lower than room Charges means we can only charge the payment amount.
+                    // Reduce the room charges by the deposit and any MOA.
+                    if ($this->pmp->getFinalPaymentFlag() == FALSE) {
+                        // No House Disc.
 
-                    if ($this->pmp->getRatePayment() < $maxRoomPayment) {
-                        $roomCharges = $this->pmp->getRatePayment();
+                        $maxRoomPayment = $roomCharges - ($this->depositRefundAmt + $this->moaRefundAmt);
+
+                        if ($this->pmp->getRatePayment() < $maxRoomPayment) {
+                            $roomCharges = $this->pmp->getRatePayment();
+                        }
+
                     }
-
+                } else {
+                    // Checked out, and no room charges to pay.
+                    $roomCharges = 0;
                 }
             }
 

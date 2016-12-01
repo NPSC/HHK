@@ -6,11 +6,37 @@ DROP FUNCTION IF EXISTS `dateDefaultNow`; -- ;
 CREATE FUNCTION `dateDefaultNow`(dt DateTime) RETURNS datetime
 BEGIN
 
-RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() else dt end;
+    RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() else dt end;
 
 END -- ;
 
 
+
+-- --------------------------------------------------------
+--
+-- Procedure `delete_inv_payment`
+--
+DROP procedure IF EXISTS `delete_inv_payment`; -- ;
+
+CREATE PROCEDURE `delete_inv_payment`(inv_number varchar(45))
+BEGIN
+
+    DECLARE idPay int;
+    DECLARE idInv int;
+
+    select i.idInvoice into idInv from invoice i where i.Invoice_Number = inv_number;
+
+    select p.idPayment into idPay
+    from payment p left join payment_invoice pi on p.idPayment = pi.Payment_Id
+    where pi.Invoice_Id = idInv;
+
+
+    delete from payment where idPayment = idPay;
+    delete from payment_invoice where Payment_Id = idPay;
+    update invoice set Deleted = 1 where idInvoice = idInv;
+    update invoice_line set Deleted = 1 where Invoice_Id = idInv;
+
+END -- ;
 
 
 
