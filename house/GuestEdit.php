@@ -633,7 +633,7 @@ if ($psg->getIdPsg() > 0) {
             $reservRs = new ReservationRS();
             EditRS::loadRow($r, $reservRs);
 
-            $reserv = new Reservation_1($dbh, $reservRs, 0);
+            $reserv = new Reservation_1($reservRs);
             $rtbl = new HTMLTable();
             $rtbl->addHeaderTr(HTMLTable::makeTh('Id').HTMLTable::makeTh('Status').HTMLTable::makeTh('Arrival').HTMLTable::makeTh('Depart').HTMLTable::makeTh('Room').HTMLTable::makeTh('Rate'));
 

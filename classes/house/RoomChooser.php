@@ -317,26 +317,32 @@ class RoomChooser {
 
         $tbl = new HTMLTable();
 
-        $tbl->addHeaderTr(HTMLTable::makeTh("Total Guests") . HTMLTable::makeTh('Room'));
+        $tbl->addHeaderTr(HTMLTable::makeTh("Total Guests") . HTMLTable::makeTh('Room', array('id'=>'hhk-roomChsrtitle')));
 
         $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->getTotalGuests(), array('id'=>'spnNumGuests','style'=>'font-weight:bold;')), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resources, $idResourceChosen), array('name'=>'selResource', 'class'=>$classId)))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span',
+                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resources, $idResourceChosen), array('name'=>'selResource', 'class'=>$classId)), array('id'=>'spanSelResc'))
+                        )
                 );
 
-
-        if ($errorMessage != '') {
-            $errorMessage = HTMLContainer::generateMarkup('p',
-                                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-info', 'style'=>'float: left; margin-right: .3em;'))
-                                . $errorMessage, array('class'=>'ui-state-highlight'));
+        // set up room suitability message area
+        $errArray = array('class'=>'ui-state-highlight', 'id'=>'hhkroomMsg');
+        if ($errorMessage == '') {
+            $errArray['style'] = 'display:none;';
         }
+
+        $errorMarkup = HTMLContainer::generateMarkup('p',
+                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-info', 'style'=>'float: left; margin-right: .3em;'))
+                . $errorMessage, $errArray);
+
 
         // fieldset wrapper
         $mk1 = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('fieldset',
                         HTMLContainer::generateMarkup('legend', 'Room Chooser', array('style'=>'font-weight:bold;'))
                         . $tbl->generateMarkup(array('id'=>'tblRescList'))
-                        . $errorMessage
+                        . $errorMarkup
                         . HTMLContainer::generateMarkup('div', $constraintMkup, array('style'=>'clear:left; float:left;')),
                         array('class'=>'hhk-panel')),
                         array('style'=>'float:left;'));
@@ -388,7 +394,7 @@ class RoomChooser {
         $tbl = new HTMLTable();
         $hasCtrls = FALSE;
 
-        $rhasCtrls = self::makeConstraintsCheckboxes(new ConstraintsReservation($dbh, $resvId, $oldResvId), $tbl, $disableCtrl, $classId);
+        $rhasCtrls = self::makeConstraintsCheckboxes(new ConstraintsReservation($dbh, $resvId, $oldResvId), $tbl, $disableCtrl, $classId . ' hhk-constraintsCB');
         $vhasCtrls = self::makeConstraintsCheckboxes(new ConstraintsVisit($dbh, $resvId, $oldResvId), $tbl, $disableCtrl, $classId);
 
         if ($rhasCtrls || $vhasCtrls) {
@@ -396,7 +402,7 @@ class RoomChooser {
         }
 
         if ($hasCtrls) {
-            $rtn = $tbl->generateMarkup();
+            $rtn = $tbl->generateMarkup(array('id'=>'hhk-constraintsTbl'));
         } else {
             $rtn = '';
         }
@@ -410,7 +416,7 @@ class RoomChooser {
 
         foreach ($constraints->getConstraints() as $c) {
 
-            $attrs = array('type'=>'checkbox', 'id'=>'cbRS'.$c['idConstraint'], 'name'=>'cbRS['.$c['idConstraint'] . ']');
+            $attrs = array('type'=>'checkbox', 'id'=>'cbRS'.$c['idConstraint'], 'name'=>'cbRS['.$c['idConstraint'] . ']', 'data-cnid'=>$c['idConstraint']);
 
             if ($c['isActive'] == 1) {
                 $attrs['checked'] = 'checked';

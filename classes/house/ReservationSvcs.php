@@ -2117,13 +2117,7 @@ class ReservationSvcs {
         return $dataArray;
     }
 
-    public static function getRoomList(\PDO $dbh, $idResv, $eid, $isAuthorized) {
-
-        if ($idResv < 1) {
-            return array('error'=>'Reservation Id is not set.');
-        }
-
-        $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
+    public static function getRoomList(\PDO $dbh, Reservation_1 $resv, $eid, $isAuthorized) {
 
         if ($isAuthorized) {
             $resv->findGradedResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $resv->getNumberGuests(), array('room','rmtroom','part'), TRUE);
@@ -2176,14 +2170,41 @@ class ReservationSvcs {
             $selSize = 4;
         }
 
+        $dataArray['ctrl'] = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resources, $idResourceChosen), array('name'=>'selResource'));
         $dataArray['container'] = HTMLContainer::generateMarkup('div',
-        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resources, $idResourceChosen), array('id'=>'selRoom', 'size'=>$selSize))
+            HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resources, $idResourceChosen), array('id'=>'selRoom', 'size'=>$selSize))
                 , array('id'=>'pudiv', 'class'=>"ui-widget ui-widget-content ui-helper-clearfix ui-corner-all", 'style'=>"font-size:0.9em;position: absolute; z-index: 1; display: block;"));  // top:".$y."px; left:".$xa."px;
         $dataArray['eid'] = $eid;
         $dataArray['msg'] = $errorMessage;
-        $dataArray['rid'] = $idResv;
+        $dataArray['rid'] = $resv->getIdReservation();
 
         return $dataArray;
+    }
+
+    public static function reviseConstraints(\PDO $dbh, $idResv, $idResc, $numGuests, $expArr, $expDep, $cbs, $isAuthorized = FALSE) {
+
+        // update reservation's constraints
+        if ($idResv < 1) {
+            return array('error'=>'Reservation Id is not set.');
+        }
+
+        if (count($cbs) < 1) {
+            return array(''=>'');
+        }
+
+        $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
+        $resv->setNumberGuests($numGuests);
+        $resv->setIdResource($idResc);
+        $resv->setExpectedArrival($expArr);
+        $resv->setExpectedDeparture($expDep);
+
+        $resv->saveConstraints($dbh, $cbs);
+
+        $results = ReservationSvcs::getRoomList($dbh, $resv, '', $isAuthorized);
+
+        return array('selectr'=>$results['ctrl'], 'idResource' => $idResc, 'msg'=>$results['msg']);
+
+
     }
 
     public static function setNewRoom(\PDO $dbh, $idResv, $idResc, $isAuthorized) {

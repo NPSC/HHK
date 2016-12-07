@@ -452,8 +452,7 @@ CREATE TABLE if not exists `gen_securitygroup` (
 CREATE TABLE if not exists `guest_token` (
   `idGuest_token` int(11) NOT NULL AUTO_INCREMENT,
   `idGuest` int(11) NOT NULL DEFAULT '0',
-  `idReservation` int(11) NOT NULL DEFAULT '0',
-  `idVisit` int(11) NOT NULL DEFAULT '0',
+  `Running_Total` decimal(10,2) NOT NULL DEFAULT '0.00',
   `idRegistration` int(11) NOT NULL DEFAULT '0',
   `Token` varchar(100) NOT NULL DEFAULT '',
   `Granted_Date` datetime DEFAULT NULL,

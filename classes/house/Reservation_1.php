@@ -32,11 +32,21 @@ class Reservation_1 {
     protected $untestedResources = array();
     protected $resultMessage = '';
 
-    public function __construct(\PDO $dbh, ReservationRS $reservRs, $idVisit) {
+    protected $idResource;
+    protected $expectedArrival;
+    protected $expectedDeparture;
+    protected $numGuests;
+    protected $roomTitle;
+
+    public function __construct(ReservationRS $reservRs) {
 
         $this->reservRs = $reservRs;
-        $this->idVisit = $idVisit;
-        $this->getConstraints($dbh);
+        $this->idVisit = -1;
+        $this->expectedArrival = $reservRs->Expected_Arrival->getStoredVal();
+        $this->expectedDeparture = $reservRs->Expected_Departure->getStoredVal();
+        $this->numGuests = $reservRs->Number_Guests->getStoredVal();
+        $this->idResource = $reservRs->idResource->getStoredVal();
+        $this->roomTitle = '';
 
     }
 
@@ -57,10 +67,10 @@ class Reservation_1 {
      * Returns specified reservation ID with max span id.
      *
      * @param PDO $dbh
-     * @param integer $idReserv
+     * @param integer $idResv
      * @return \Reservation_1
      */
-    public static function instantiateFromIdReserv(\PDO $dbh, $idResv, $idVisit = 0) {
+    public static function instantiateFromIdReserv(\PDO $dbh, $idResv) {
 
         $resvRs = new ReservationRS();
 
@@ -72,22 +82,11 @@ class Reservation_1 {
             $rows = EditRS::select($dbh, $resvRs, array($resvRs->idReservation));
 
             if (count($rows) > 0) {
-
                 EditRS::loadRow($rows[0], $resvRs);
-
-                if ($idVisit == 0) {
-
-                    $stmt = $dbh->query("Select idVisit from visit where idReservation = $idReserv");
-                    $lines = $stmt->fetchAll(PDO::FETCH_NUM);
-
-                    if (count($lines) > 0) {
-                        $idVisit = $lines[0][0];
-                    }
-                }
             }
         }
 
-        return new Reservation_1($dbh, $resvRs, $idVisit);
+        return new Reservation_1($resvRs);
     }
 
 
@@ -220,7 +219,7 @@ class Reservation_1 {
         $vConst = new ConstraintsVisit($dbh, $this->getIdReservation());
         $vConst->saveConstraints($dbh, $capturedConstraints);
 
-        $this->reservConstraints = $this->loadReservationConstraints($dbh, $this->getIdReservation());
+        $this->getConstraints($dbh, TRUE);  //reservConstraints = $this->loadReservationConstraints($dbh, $this->getIdReservation());
 
     }
 
@@ -229,9 +228,15 @@ class Reservation_1 {
         $this->reservRs->Updated_By->setNewVal($uname);
         $this->reservRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
+        $this->reservRs->Number_Guests->setNewVal($this->getNumberGuests());
+        $this->reservRs->Expected_Arrival->setNewVal($this->getExpectedArrival());
+        $this->reservRs->Expected_Departure->setNewVal($this->getExpectedDeparture());
+        $this->reservRs->idResource->setNewVal($this->getIdResource());
 
+        // Insert or Update
         if ($this->reservRs->idReservation->getStoredVal() == 0) {
 
+            // INSERT
             $this->reservRs->idRegistration->setNewVal($idReg);
 
             $idResv = EditRS::insert($dbh, $this->reservRs);
@@ -243,15 +248,16 @@ class Reservation_1 {
                     $this->reservRs->idRegistration->getStoredVal(),
                     $this->reservRs->idHospital_Stay->getStoredVal(),
                     $this->reservRs->idResource->getStoredVal(),
-                    0, //$this->reservRs->idRoom_rate->getStoredVal(),
+                    0, //Room Rate Id: $this->reservRs->idRoom_rate->getStoredVal(),
                     $this->reservRs->idGuest->getStoredVal(),
                     $logText, "insert", $uname);
 
             // Load constraints with new Id.
-            $this->reservConstraints = $this->loadReservationConstraints($dbh, $this->getIdReservation());
+            $this->getConstraints($dbh, TRUE);  //reservConstraints = $this->loadReservationConstraints($dbh, $this->getIdReservation());
 
         } else {
 
+            // UPDATE
             $updt = EditRS::update($dbh, $this->reservRs, array($this->reservRs->idReservation));
 
             if ($updt == 1) {
@@ -282,7 +288,7 @@ class Reservation_1 {
             ReservationLog::logReservation($dbh, $this->reservRs->idReservation->getStoredVal(),
                 $this->reservRs->idRegistration->getStoredVal(),
                 $this->reservRs->idHospital_Stay->getStoredVal(),
-                $this->reservRs->idResource->getStoredVal(),
+                $this->getIdResource(),
                 0, //$this->reservRs->idRoom_rate->getStoredVal(),
                 $this->reservRs->idGuest->getStoredVal(),
                 $logText, "delete", $uname);
@@ -565,7 +571,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
         $omitVisit = '';
         if ($omitSelf && $this->getIdReservation() > 0) {
             $omitTxt = " and r.idReservation != " . $this->getIdReservation();
-            $omitVisit = " and v.idVisit != " . $this->idVisit;
+            $omitVisit = " and v.idVisit != " . $this->getIdVisit($dbh);
         }
 
         // Find resources in use
@@ -606,21 +612,9 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
     protected function testResources(PDO $dbh, $rescRows) {
 
         $resources = array();
-        $notRoomIds = array();
 
         $roomIds = $this->getConstrainedRoomsArray($dbh);
 
-        // Collect not attributes
-        foreach ($roomIds as $k => $v) {
-            if ($v == 'not') {
-                $notRoomIds[$k] = $v;
-            }
-        }
-
-        // Remove notroomids from the rooms
-        foreach ($notRoomIds as $k => $v) {
-            unset($roomIds[$k]);
-        }
 
          // Make resource objs, test the room id's
         foreach ($rescRows as $r) {
@@ -635,12 +629,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
             // look for bad rooms
             foreach ($rescRooms as $roomObj) {
 
-                if (isset($notRoomIds[$roomObj->getIdRoom()])) {
-                    // room is bad, skip resource.
-                    continue 2;
-                }
-
-                if (isset($roomIds[$roomObj->getIdRoom()])) {
+                if (isset($roomIds[$roomObj->getIdRoom()]) || isset($roomIds[0])) {
                     $rmIncludes[$roomObj->getIdRoom()] = $roomObj->getIdRoom();
                 }
             }
@@ -669,114 +658,22 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
 
         $roomIds = array();
 
-        // Find any constrained rooms
-        $stmt = $dbh->prepare("select ae.idEntity, ca.Operation, count(ae.idEntity) as `c` from attribute_entity ae join constraint_attribute ca ON ae.idAttribute = ca.idAttribute
-            and ae.`Type` = '" . Attribute_Types::Room . "' join constraint_entity ce ON ca.idConstraint = ce.idConstraint and ce.`Type` = :rtype and ce.idEntity = :rid "
-                . "group by ae.idEntity having `c` = :num;");
+        // Find any constrained rooms.  Comes back with roomId = 0 for no constraints
+        $stmt = $dbh->query("call constraint_room(" . $this->getIdReservation() . " );");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $rvRooms = $this->loadConstrainedRoomIds($dbh, $stmt, Constraint_Type::Reservation, $this->getIdReservation());
-
-        $assocRooms = $this->loadConstrainedRoomIds($dbh, $stmt, Constraint_Type::Hospital, $this->getIdAssociation());
-
-        // if we have constraints, put them into our roomids array
-        if (count($assocRooms) > 0 && count($rvRooms) > 0) {
-
-            // Collect all 'not's
-            foreach ($assocRooms as $idRoom => $operation) {
-
-                if ($operation == 'not') {
-                    $roomIds[$idRoom] = $operation;
-                    unset($assocRooms[$idRoom]);
-                }
-            }
-
-            foreach ($rvRooms as $idRoom => $operation) {
-                if ($operation == 'not') {
-                    $roomIds[$idRoom] = $operation;
-                    unset($rvRooms[$idRoom]);
-                }
-            }
-        }
-
-        // These array counts may have changed.
-        if (count($assocRooms) > 0 && count($rvRooms) > 0) {
-            $this->mergeRoomArrays(array_intersect_key($rvRooms, $assocRooms), $roomIds);
-        } else if (count($assocRooms) > 0 && count($rvRooms) == 0) {
-            $this->mergeRoomArrays($assocRooms, $roomIds);
-        } else if (count($assocRooms) == 0 && count($rvRooms) > 0) {
-            $this->mergeRoomArrays($rvRooms, $roomIds);
+        foreach ($rows as $r) {
+            $roomIds[$r['idEntity']] = '';
         }
 
         return $roomIds;
     }
 
-    protected function mergeRoomArrays($target, &$roomIds) {
-
-            foreach ($target as $idRoom => $operation) {
-
-                if ($operation == 'not') {
-
-                    $roomIds[$idRoom] = $operation;
-
-                } else if (isset($roomIds[$idRoom]) === FALSE) {
-
-                    $roomIds[$idRoom] = $operation;
-
-                }
-            }
-
-    }
-
-    protected function loadConstrainedRoomIds(\PDO $dbh, \PDOStatement $stmt, $type, $id) {
-
-        $roomIds = array();
-
-        if ($id > 0) {
-
-            $constEntity = ConstraintsEntity::constructByType($dbh, $id, $type);
-            $consts = $constEntity->getActiveConstraintsArray();
-            $n = count($consts);
-
-            if ($n > 0) {
-                $stmt->bindParam(':rtype', $type, PDO::PARAM_STR);
-                $stmt->bindParam(':rid', $id, PDO::PARAM_INT);
-                $stmt->bindParam(':num', $n, PDO::PARAM_INT);
-                $stmt->execute();
-
-                while ($r = $stmt->fetch(PDO::FETCH_NUM)) {
-                    $roomIds[$r[0]] = $r[1];
-                }
-
-            } else {
-                // Load all the rooms
-                $rmStmt = $dbh->query("select distinct idRoom from resource_room where idResource > 0");
-
-                while ($r = $rmStmt->fetch(PDO::FETCH_NUM)) {
-                    $roomIds[$r[0]] = '';
-                }
-            }
-        }
-
-        return $roomIds;
-    }
 
     public function testResource(\PDO $dbh, \Resource $resc) {
 
         $pass = FALSE;
         $roomIds = $this->getConstrainedRoomsArray($dbh);
-        $notRoomIds = array();
-
-        // Collect not attributes
-        foreach ($roomIds as $k => $v) {
-            if ($v == 'not') {
-                $notRoomIds[$k] = $v;
-            }
-        }
-
-        // Remove them from the rooms
-        foreach ($notRoomIds as $k => $v) {
-            unset($roomIds[$k]);
-        }
 
         $rescRooms = $resc->getRooms();
         $rmIncludes = array();
@@ -784,12 +681,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
         // look for bad rooms
         foreach ($rescRooms as $roomObj) {
 
-            if (isset($notRoomIds[$roomObj->getIdRoom()])) {
-                // room is bad, skip resource.
-                continue;
-            }
-
-            if (isset($roomIds[$roomObj->getIdRoom()])) {
+            if (isset($roomIds[$roomObj->getIdRoom()]) || isset($roomIds[0])) {
                 $rmIncludes[$roomObj->getIdRoom()] = $roomObj->getIdRoom();
             }
         }
@@ -799,6 +691,25 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
         }
 
         return $pass;
+    }
+
+
+    public function getConstraints(\PDO $dbh, $refresh = FALSE) {
+
+        if (is_null($this->reservConstraints) || $refresh) {
+            $this->reservConstraints = new ConstraintsReservation($dbh, $this->getIdReservation());
+        }
+
+        return $this->reservConstraints;
+    }
+
+    public static function isActionStatus($reservStatus) {
+
+        if ($reservStatus == ReservationStatus::Checkedout || $reservStatus == ReservationStatus::Staying || $reservStatus == ReservationStatus::Committed || $reservStatus == ReservationStatus::UnCommitted) {
+            return TRUE;
+        }
+
+        return FALSE;
     }
 
     public static function showListByStatus(PDO $dbh, $editPage, $checkinPage, $reservStatus = ReservationStatus::Committed, $shoDirtyRooms = FALSE, $idResc = NULL, $daysAhead = 2, $showConstraints = FALSE) {
@@ -877,7 +788,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
 
                 $rvRs = new ReservationRS();
                 EditRS::loadRow($r, $rvRs);
-                $resv = new Reservation_1($dbh, $rvRs, 0);
+                $resv = new Reservation_1($rvRs);
 
                 $guestMember = GuestMember::GetDesignatedMember($dbh, $resv->getIdGuest(), MemBasis::Indivual);
 
@@ -1044,37 +955,6 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
         return FALSE;
     }
 
-    /**
-     *
-     * @param \PDO $dbh
-     * @param int $idReserv
-     * @return \ConstraintsReservation
-     */
-    public static function loadReservationConstraints(\PDO $dbh, $idReserv) {
-
-        return new ConstraintsReservation($dbh, $idReserv);
-
-    }
-
-    public function getConstraints(\PDO $dbh) {
-
-        if (is_null($this->reservConstraints)) {
-            $this->reservConstraints = $this->loadReservationConstraints($dbh, $this->getIdReservation());
-        }
-
-        return $this->reservConstraints;
-    }
-
-    public static function isActionStatus($reservStatus) {
-
-        if ($reservStatus == ReservationStatus::Checkedout || $reservStatus == ReservationStatus::Staying || $reservStatus == ReservationStatus::Committed || $reservStatus == ReservationStatus::UnCommitted) {
-            return TRUE;
-        }
-
-        return FALSE;
-    }
-
-
     public function isNew() {
         if ($this->reservRs->idReservation->getStoredVal() > 0) {
             return FALSE;
@@ -1160,7 +1040,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
     public function setExpectedArrival($v) {
         if ($v != '') {
             $arr = date('Y-m-d 16:00:00', strtotime($v));
-            $this->reservRs->Expected_Arrival->setNewVal($arr);
+            $this->expectedArrival = $arr;
         }
         return $this;
     }
@@ -1168,7 +1048,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
     public function setExpectedDeparture($v) {
         if ($v != '') {
             $arr = date('Y-m-d 10:00:00', strtotime($v));
-            $this->reservRs->Expected_Departure->setNewVal($arr);
+            $this->expectedDeparture = $arr;
         }
         return $this;
     }
@@ -1238,7 +1118,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
     }
 
     public function setIdResource($v) {
-        $this->reservRs->idResource->setNewVal($v);
+        $this->idResource = $v;
         return $this;
     }
 
@@ -1294,7 +1174,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
     }
 
     public function setNumberGuests($v) {
-        $this->reservRs->Number_Guests->setNewVal($v);
+        $this->numGuests = $v;
         return $this;
     }
 
@@ -1315,13 +1195,21 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
         }
     }
 
-    public function getIdVisit() {
-        return $this->idVisit;
-    }
+    public function getIdVisit(\PDO $dbh) {
 
-    public function setIdVisit($idVisit) {
-        $this->idVisit = $idVisit;
-        return $this;
+        if ($this->idVisit < 0 && $this->getIdReservation() > 0) {
+
+            $stmt = $dbh->query("Select idVisit from visit where idReservation = " . $this->getIdReservation());
+            $lines = $stmt->fetchAll(PDO::FETCH_NUM);
+
+            if (count($lines) > 0) {
+                $this->idVisit = $lines[0][0];
+            } else {
+                $this->idVisit = 0;
+            }
+        }
+
+        return $this->idVisit;
     }
 
     public function getReservationRS() {
@@ -1336,7 +1224,8 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
     }
 
     public function getIdResource() {
-        return $this->reservRs->idResource->getStoredVal();
+        //return $this->reservRs->idResource->getStoredVal();
+        return $this->idResource;
     }
 
     public function getIdGuest() {
@@ -1387,22 +1276,14 @@ from stays s join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
 where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdReservation());
 
             $rows = $stmt->fetchAll(PDO::FETCH_NUM);
-            $numGuests = 0;
+            $this->numGuests = 0;
 
             if (count($rows > 0)) {
-                $numGuests = $rows[0][0];
+                $this->numGuests = $rows[0][0];
             }
-
-            return $numGuests;
-
-        } else {
-
-            if ($this->reservRs->Number_Guests->getStoredVal() == 0) {
-                return $this->reservRs->Number_Guests->getNewVal();
-            }
-
-            return $this->reservRs->Number_Guests->getStoredVal();
         }
+
+        return $this->numGuests;
     }
 
     public function getStatus() {
@@ -1414,11 +1295,11 @@ where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdRe
     }
 
     public function getExpectedArrival() {
-        return $this->reservRs->Expected_Arrival->getStoredVal();
+        return $this->expectedArrival;
     }
 
     public function getExpectedDeparture() {
-        return $this->reservRs->Expected_Departure->getStoredVal();
+        return $this->expectedDeparture;
     }
 
     public function getActualArrival() {
@@ -1431,18 +1312,18 @@ where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdRe
 
     public function getRoomTitle(PDO $dbh) {
 
-        if ($this->getIdResource() > 0) {
+        if ($this->getIdResource() > 0 && $this->roomTitle == '') {
             $resourceRS = new ResourceRS();
             $resourceRS->idResource->setStoredVal($this->getIdResource());
             $rows = EditRS::select($dbh, $resourceRS, array($resourceRS->idResource));
 
             if (count($rows) == 1) {
                 EditRS::loadRow($rows[0], $resourceRS);
-                return $resourceRS->Title->getStoredVal();
+                $this->roomTitle = $resourceRS->Title->getStoredVal();
             }
         }
 
-        return '';
+        return $this->roomTitle;
     }
 
     public function getExpectedDays() {

@@ -135,21 +135,24 @@ class PaymentManager {
 
                 if ($this->pmp->getTotalRoomChg() > 0) {
 
-                    $roomCharges = $this->pmp->getTotalRoomChg();
+                    if ($this->pmp->getFinalPaymentFlag() == TRUE) {
 
-                    // room payments higher than room charges means we are paying the whole room charge.
-                    // room payments lower than room Charges means we can only charge the payment amount.
-                    // Reduce the room charges by the deposit and any MOA.
-                    if ($this->pmp->getFinalPaymentFlag() == FALSE) {
-                        // No House Disc.
+                        // Charge the entire amount due
+                        $roomCharges = $this->pmp->getTotalRoomChg();
 
-                        $maxRoomPayment = $roomCharges - ($this->depositRefundAmt + $this->moaRefundAmt);
+                    } else {
 
-                        if ($this->pmp->getRatePayment() < $maxRoomPayment) {
+                        // Reduce the room charges by the deposit and any MOA.
+                        $modifiedCharges = $this->pmp->getTotalRoomChg() - ($this->depositRefundAmt + $this->moaRefundAmt);
+
+                        if ($modifiedCharges > 0 && $this->pmp->getRatePayment() <= $modifiedCharges) {
                             $roomCharges = $this->pmp->getRatePayment();
+                        } else {
+                            // Limit payment to the maximum charged.
+                            $roomCharges = max(array($modifiedCharges, 0));
                         }
-
                     }
+
                 } else {
                     // Checked out, and no room charges to pay.
                     $roomCharges = 0;

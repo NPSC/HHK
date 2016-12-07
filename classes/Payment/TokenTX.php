@@ -33,7 +33,7 @@ class TokenTX {
 
         if (strtolower($gwName) == 'test') {
             $cstReq->setAddress('4')->setZip('30329')->setOperatorID('test');
-            $trace = TRUE;
+            //$trace = TRUE;
         }
 
         $gway = Gateway::getGateway($dbh, $gwName);
@@ -85,7 +85,7 @@ class TokenTX {
         if (strtolower($gwName) == 'test') {
 
             $voidSale->setOperatorID('test');
-            $trace = TRUE;
+            //$trace = TRUE;
 
         } else {
             $voidSale->setOperatorID($uS->username);
@@ -131,7 +131,7 @@ class TokenTX {
 
         if (strtolower($gwName) == 'test') {
             $reverseSale->setOperatorID('test');
-            $trace = TRUE;
+            //$trace = TRUE;
         } else {
             $reverseSale->setOperatorID($uS->username);
         }
@@ -177,7 +177,7 @@ class TokenTX {
 
         if (strtolower($gwName) == 'test') {
             $returnSale->setOperatorID('test');
-            $trace = TRUE;
+            //$trace = TRUE;
        } else {
             $returnSale->setOperatorID($uS->username);
         }
@@ -224,7 +224,7 @@ class TokenTX {
 
         if (strtolower($gwName) == 'test') {
             $returnVoid->setOperatorID('test');
-            $trace = TRUE;
+            //$trace = TRUE;
         }
 
         $gway = Gateway::getGateway($dbh, $gwName);
@@ -261,6 +261,10 @@ class TokenTX {
 
 class TokenResponse extends PaymentResponse {
 
+    /**
+     *
+     * @var CreditTokenResponse
+     */
     public $response;
     public $idToken = '';
 

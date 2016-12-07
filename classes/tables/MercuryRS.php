@@ -20,8 +20,7 @@ class Guest_TokenRS extends TableRS {
 
     public $idGuest_token;   // int(11) NOT NULL AUTO_INCREMENT,
     public $idGuest;   // int(11) NOT NULL DEFAULT '0',
-    public $idReservation;   // int(11) NOT NULL DEFAULT '0',
-    public $idVisit;   // int(11) NOT NULL DEFAULT '0',
+    public $Running_Total;  // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $idRegistration;   // int(11) NOT NULL DEFAULT '0',
     public $Token;   // varchar(100) NOT NULL DEFAULT '',
     public $Granted_Date;   // datetime DEFAULT NULL,
@@ -43,8 +42,7 @@ class Guest_TokenRS extends TableRS {
     function __construct($TableName = "guest_token") {
         $this->idGuest_token = new DB_Field("idGuest_token", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->idGuest = new DB_Field("idGuest", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->idReservation = new DB_Field("idReservation", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->idVisit = new DB_Field("idVisit", 0, new DbIntSanitizer(), TRUE, TRUE);
+        $this->Running_Total = new DB_Field('Running_Total', 0, new DbDecimalSanitizer(), TRUE, TRUE);
         $this->idRegistration = new DB_Field("idRegistration", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Token = new DB_Field("Token", "", new DbStrSanitizer(100), TRUE, TRUE);
         $this->Granted_Date = new DB_Field("Granted_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);

@@ -317,7 +317,7 @@ function injectSlot(data) {
             $('#' + data.idPrefix + 'phEmlTabs').tabs("option", "disabled", [0]);
         }
 
-        gstDate = $('#' + data.idPrefix + 'gstDate'), 
+        gstDate = $('#' + data.idPrefix + 'gstDate');
         gstCoDate = $('#' + data.idPrefix + 'gstCoDate');
 
         gstCoDate.datepicker("destroy");
@@ -344,8 +344,8 @@ function injectSlot(data) {
                 try {
                     date1 = $.datepicker.parseDate($.datepicker._defaults.dateFormat, gstDate.val());
                     date2 = $.datepicker.parseDate($.datepicker._defaults.dateFormat, gstCoDate.val());
-                } catch (e) {
-                }
+                } catch (e) { }
+                
                 if (!date1 || date2) {
                     gstDate.val(dateText);
                     gstCoDate.val("");
@@ -413,6 +413,9 @@ function injectSlot(data) {
                 $('.hhk-docInfo').hide();
             }
         }
+        
+        // hospital changes may incure room availability
+        // Oh, well.  Maybe next iteration.
         
         $('#hospitalSection').show('blind');
         
@@ -505,6 +508,7 @@ function injectSlot(data) {
         if (data.resv !== undefined) {
             
             $('#resvStatus').children().remove().end().append($(data.resv)).show();
+            
             $('.hhk-viewResvActivity').click(function () {
               $.post('ws_ckin.php', {cmd:'viewActivity', rid: $(this).data('rid')}, function(data) {
                 data = $.parseJSON(data);
@@ -526,6 +530,11 @@ function injectSlot(data) {
                 }
                 });
                 
+            });
+            
+            // Room selector update for constraints changes.
+            $('input.hhk-constraintsCB').change( function () {
+                updateRoomChooser(resv.idReserv, $('#spnNumGuests').text(), $('#pggstDate').val(), $('#pggstCoDate').val());
             });
 
             $('#btnShowCnfrm').button();
@@ -568,6 +577,9 @@ function injectSlot(data) {
         
         $('#selResource').change(function () {
             $('#selRateCategory').change();
+            
+            var selected = $("option:selected", this);
+            selected.parent()[0].label === "Not Suitable" ? $('#hhkroomMsg').text("Not Suitable").show(): $('#hhkroomMsg').hide(); 
         });
     }
 
@@ -1371,7 +1383,7 @@ $(document).ready(function() {
         var prefix = $(this).attr('name'),
             otfix = 'h_';
             
-        if (prefix == 'h_') {
+        if (prefix === 'h_') {
             otfix = 'pg';
         }
         

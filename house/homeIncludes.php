@@ -89,7 +89,7 @@ define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 define('HOUSE', CLASSES . 'house' . DS);
 define('MEMBER', CLASSES . 'member' . DS);
 
-define('JS_V', '?v=7');
+define('JS_V', '?v=8');
 define('CSS_V', '?v=3');
 
 // paths

@@ -61,6 +61,10 @@ Class MpTranType {
     const Sale = 'Sale';
     const PreAuth = 'PreAuth';
     const ReturnAmt = 'Return';
+    const Void = 'VoidSale';
+    const VoidReturn = 'VoidReturn';
+    const Reverse = 'ReverseSale';
+    const CardOnFile = 'COF';
 }
 
 Class MpTokenTransaction {
@@ -591,6 +595,7 @@ abstract class MercResponse {
      */
     protected $result;
 
+    protected $tranType;
 
     /**
      * The child is expected to define $result.
@@ -626,6 +631,15 @@ abstract class MercResponse {
             return $this->result;
         }
         return array();
+    }
+
+    public function getTranType() {
+        return $this->tranType;
+    }
+
+
+    public function getAuthorizeAmount() {
+        return 0;
     }
 
 }
@@ -791,6 +805,8 @@ class VerifyCiResponse extends MercResponse {
         else {
             throw new Hk_Exception_Payment("VerifyCardInfoResult is missing from the payment gateway response.  ");
         }
+
+        $this->tranType = MpTranType::CardOnFile;
     }
 
     public function getCardId() {
@@ -1130,6 +1146,8 @@ class VerifyCkOutResponse extends MercResponse {
         } else {
             throw new Hk_Exception_Payment("VerifyPaymentResult is missing from the payment gateway response.  ");
         }
+
+        $this->tranType = MpTranType::Sale;
 
     }
 
@@ -1506,7 +1524,7 @@ class CreditSaleTokenRequest extends MercTokenRequest {
 class CreditVoidSaleTokenRequest extends MercTokenRequest {
 
     protected function execute(\SoapClient $txClient, array $data) {
-        return new CreditTokenResponse($txClient->CreditVoidSaleToken($data), 'CreditVoidSaleTokenResult');
+        return new CreditTokenResponse($txClient->CreditVoidSaleToken($data), 'CreditVoidSaleTokenResult', MpTranType::Void);
     }
 
     public function setRefNo($v) {
@@ -1552,7 +1570,7 @@ class CreditReturnTokenRequest extends MercTokenRequest {
 class CreditVoidReturnTokenRequest extends MercTokenRequest {
 
     protected function execute(\SoapClient $txClient, array $data) {
-        return new CreditTokenResponse($txClient->CreditVoidReturnToken($data), 'CreditVoidReturnTokenResult');
+        return new CreditTokenResponse($txClient->CreditVoidReturnToken($data), 'CreditVoidReturnTokenResult', MpTranType::VoidReturn);
     }
 
     public function setPurchaseAmount($v) {
@@ -1582,7 +1600,7 @@ class CreditVoidReturnTokenRequest extends MercTokenRequest {
 class CreditReversalTokenRequest extends MercTokenRequest {
 
     protected function execute(\SoapClient $txClient, array $data) {
-        return new CreditTokenResponse($txClient->CreditReversalToken($data), 'CreditReversalTokenResult');
+        return new CreditTokenResponse($txClient->CreditReversalToken($data), 'CreditReversalTokenResult', MpTranType::Reverse);
     }
 
     public function setPurchaseAmount($v) {
@@ -1814,10 +1832,6 @@ class CreditTokenResponse extends MercResponse {
             return $this->result->Token;
         }
         return '';
-    }
-
-    public function getTranType() {
-        return $this->tranType;
     }
 
 }

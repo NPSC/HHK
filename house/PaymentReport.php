@@ -50,7 +50,7 @@ $resultMessage = $alertMsg->createMarkup();
 
 $isGuestAdmin = ComponentAuthClass::is_Authorized('guestadmin');
 
-function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$tbl, &$sml, &$reportRows, $subsidyId, $returnId) {
+function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$total, &$tbl, &$sml, &$reportRows, $subsidyId) {
 
     $origAmt = $p['Payment_Amount'];
     $amt = 0;
@@ -205,6 +205,7 @@ function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$tbl, &$sml, &$
         }
 
         $tbl->addBodyTr($tr);
+        $total += $amt;
 
 
     } else {
@@ -322,7 +323,6 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     if (isset($_POST['btnExcel'])) {
         $local = FALSE;
     }
-
 
     // set the column selectors
     $colSelector->setColumnSelectors($_POST);
@@ -623,6 +623,7 @@ where lp.idPayment > 0
     $name_lk = $uS->nameLookups;
     $name_lk['Pay_Status'] = readGenLookupsPDO($dbh, 'Pay_Status');
     $uS->nameLookups = $name_lk;
+    $total = 0;
 
     // Now the data ...
     foreach ($invoices as $r) {
@@ -645,7 +646,7 @@ where lp.idPayment > 0
             }
 
 
-            doMarkupRow($fltrdFields, $r, $p, $local, $hospital, $tbl, $sml, $reportRows, $uS->subsidyId, $uS->returnId);
+            doMarkupRow($fltrdFields, $r, $p, $local, $hospital, $total, $tbl, $sml, $reportRows, $uS->subsidyId, $uS->returnId);
 
         }
     }
@@ -655,7 +656,7 @@ where lp.idPayment > 0
     // Finalize and print.
     if ($local) {
 
-        //$headerTable->addBodyTr(HTMLTable::makeTd('Total Payments:: ', array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($total,2), array('style'=>'font-weight:bold;')));
+        $headerTable->addBodyTr(HTMLTable::makeTd('Total Amount: ', array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($total,2), array('style'=>'font-weight:bold;')));
 
         $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt'));
         $mkTable = 1;

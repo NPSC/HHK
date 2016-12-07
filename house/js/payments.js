@@ -449,6 +449,9 @@ function amtPaid() {
 
                 if (totCharges >= 0) {
 
+                    if (feePay !== totCharges) {
+                        alert('Pay Room Fees amount is reduced to: $' + totCharges.toFixed(2).toString());
+                    }
                     feePay = totCharges;
                     overPayAmt = 0;
                     p.selBalTo.val('');
@@ -457,6 +460,9 @@ function amtPaid() {
 
                 } else {
 
+                    if (feePay > 0) {
+                        alert('Pay Room Fees amount is reduced to: $0.00');
+                    }
                     overPayAmt -= feePay;
                     feePay = 0;
                     $('#divReturnPay').show('fade');

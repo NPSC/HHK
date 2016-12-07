@@ -659,6 +659,10 @@ class PaymentSvcs {
                 // Do we have a token?
                 if (CreditToken::hasToken($tokenRS)) {
 
+                    if ($tokenRS->Running_Total->getStoredVal() < $amount) {
+                        throw new Hk_Exception_Payment('Return Failed.  Maximum return for this card is: $' . number_format($tokenRS->Running_Total->getStoredVal(), 2));
+                    }
+
                     // Set up request
                     $returnRequest = new CreditReturnTokenRequest();
                     $returnRequest->setCardHolderName($tokenRS->CardHolderName->getStoredVal());

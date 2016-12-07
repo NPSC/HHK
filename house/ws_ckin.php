@@ -133,9 +133,9 @@ try {
 
         case 'rmlist':
 
-            $idresv = 0;
+            $idResv = 0;
             if (isset($_POST['rid'])) {
-                $idresv = intval(filter_var($_POST['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
+                $idResv = intval(filter_var($_POST['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
             $x = 0;
@@ -143,7 +143,15 @@ try {
                 $x = filter_var($_POST['x'], FILTER_SANITIZE_STRING);
             }
 
-            $events = ReservationSvcs::getRoomList($dbh, $idresv, $x, $guestAdmin);
+            if ($idResv > 0) {
+
+                $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
+                $events = ReservationSvcs::getRoomList($dbh, $resv, $x, $guestAdmin);
+
+            } else {
+                $events =  array('error'=>'Reservation Id is not set.');
+            }
+
             break;
 
         case 'setRoom':
@@ -159,6 +167,43 @@ try {
             }
 
             $events = ReservationSvcs::setNewRoom($dbh, $idresv, $idResc, $guestAdmin);
+            break;
+
+        case 'newConstraint':
+
+            $idResv = 0;
+            if (isset($_POST['rid'])) {
+                $idResv = intval(filter_var($_POST['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $idResc = 0;
+            if (isset($_POST['idr'])) {
+                $idResc = intval(filter_var($_POST['idr'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $numGuests = 0;
+            if (isset($_POST['numguests'])) {
+                $numGuests = intval(filter_var($_POST['numguests'], FILTER_SANITIZE_NUMBER_INT));
+            }
+
+            $expArr = '';
+            if (isset($_POST['expArr'])) {
+                $expArr = filter_var($_POST['expArr'], FILTER_SANITIZE_STRING);
+            }
+
+            $expDep = '';
+            if (isset($_POST['expDep'])) {
+                $expDep = filter_var($_POST['expDep'], FILTER_SANITIZE_STRING);
+            }
+
+            $cbs = '';
+            if (isset($_POST['cbRS'])) {
+                $cbs = $_POST;
+            }
+
+
+            $events = ReservationSvcs::reviseConstraints($dbh, $idResv, $idResc, $numGuests, $expArr, $expDep, $cbs, $guestAdmin);
+
             break;
 
         case 'dunf':

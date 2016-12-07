@@ -48,7 +48,6 @@ abstract class Resource {
     public function loadRooms(PDO $dbh, $idResource) {
 
         $rooms = array();
-        $status = '';
 
          // Load rooms if not a new resource
         $stmt = $dbh->prepare("select r.*
@@ -408,7 +407,7 @@ class ResourceTypes {
 
     const Partition = 'part';
     const Room = 'room';
-    const Block = 'block';
+    //const Block = 'block';
     const RmtRoom = 'rmtroom';
 
 }
@@ -476,51 +475,51 @@ class RemoteResource extends RoomResource {
 
 }
 
-class BlockResource extends Resource {
-
-    public function testAllocateRoom($numGuests, $overRideMax = FALSE) {
-
-        if ($this->isNewResource()) {
-            throw new Hk_Exception_Runtime('Allocating rooms in an invalid Resource at Resource->allocateRoom.');
-        }
-
-        foreach ($this->rooms as $rm) {
-
-            $reqOcc = $room->getCurrentOcc() + $numGuests;
-
-            if (($reqOcc <= $this->getMaxOccupants() || $overRideMax)) {
-                RETURN TRUE;
-            }
-
-        }
-
-        return FALSE;
-    }
-
-    public function allocateRoom($numGuests, $overRideMax = FALSE) {
-
-        if ($this->isNewResource()) {
-            throw new Hk_Exception_Runtime('Allocating rooms in an invalid Resource at Resource->allocateRoom.');
-        }
-
-        foreach ($this->rooms as $rm) {
-
-            $reqOcc = $room->getCurrentOcc() + $numGuests;
-
-            if (($reqOcc <= $this->getMaxOccupants() || $overRideMax)) {
-                $room->setCurrentOcc($reqOcc);
-                return $room;
-            }
-
-        }
-
-        return NULL;
-    }
-
-    public function saveRooms(\PDO $dbh, $rooms) {
-        throw new Hk_Exception_Runtime('Block Resource Save Rooms Not Implemented.');
-    }
-}
+//class BlockResource extends Resource {
+//
+//    public function testAllocateRoom($numGuests, $overRideMax = FALSE) {
+//
+//        if ($this->isNewResource()) {
+//            throw new Hk_Exception_Runtime('Allocating rooms in an invalid Resource at Resource->allocateRoom.');
+//        }
+//
+//        foreach ($this->rooms as $rm) {
+//
+//            $reqOcc = $room->getCurrentOcc() + $numGuests;
+//
+//            if (($reqOcc <= $this->getMaxOccupants() || $overRideMax)) {
+//                RETURN TRUE;
+//            }
+//
+//        }
+//
+//        return FALSE;
+//    }
+//
+//    public function allocateRoom($numGuests, $overRideMax = FALSE) {
+//
+//        if ($this->isNewResource()) {
+//            throw new Hk_Exception_Runtime('Allocating rooms in an invalid Resource at Resource->allocateRoom.');
+//        }
+//
+//        foreach ($this->rooms as $rm) {
+//
+//            $reqOcc = $room->getCurrentOcc() + $numGuests;
+//
+//            if (($reqOcc <= $this->getMaxOccupants() || $overRideMax)) {
+//                $room->setCurrentOcc($reqOcc);
+//                return $room;
+//            }
+//
+//        }
+//
+//        return NULL;
+//    }
+//
+//    public function saveRooms(\PDO $dbh, $rooms) {
+//        throw new Hk_Exception_Runtime('Block Resource Save Rooms Not Implemented.');
+//    }
+//}
 
 class PartitionResource extends Resource {
 

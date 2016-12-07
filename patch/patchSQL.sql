@@ -21,6 +21,11 @@ ALTER TABLE `name_address`
     DROP COLUMN `Company`,
     CHANGE COLUMN `Preferred_Mail` `Set_Incomplete` BIT(1) NOT NULL DEFAULT b'0' COMMENT '' ;
 
+ALTER TABLE `guest_token` 
+    DROP COLUMN `idVisit`,
+    DROP COLUMN `idReservation`,
+    ADD COLUMN `Running_Total` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT '' AFTER `idRegistration`;
+
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ForceNamePrefix', 'false', 'b', 'h', 'Force the name prefix to be entered');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ShowDiagTB', 'false', 'b', 'h', 'Show a diagnosis textbox above the diagmosis selector');

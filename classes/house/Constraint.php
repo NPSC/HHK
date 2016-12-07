@@ -372,7 +372,7 @@ class ConstraintAttributes {
     /**
      *
      * @param \PDO $dbh
-     * @param int $id
+     * @param \Constraint $constraint
      */
     public function __construct(\PDO $dbh, \Constraint $constraint) {
 

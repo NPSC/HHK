@@ -43,6 +43,9 @@ class CreditToken {
         $gtRs->Tran_Type->setNewVal($vr->getTranType());
         $gtRs->Token->setNewVal($vr->getToken());
 
+        $runTot = self::calculateRunningTotal($gtRs->Running_Total->getStoredVal(), $vr->getAuthorizeAmount(), $vr->getTranType());
+        $gtRs->Running_Total->setNewVal($runTot);
+
         // Write
         if ($gtRs->idGuest_token->getStoredVal() > 0) {
             // Update
@@ -54,6 +57,39 @@ class CreditToken {
         }
 
         return $idToken;
+    }
+
+    protected static function calculateRunningTotal($runTot, $rawAmount, $tranType) {
+
+        $total = 0;
+        $amount = abs($rawAmount);
+
+        switch ($tranType) {
+
+            case MpTranType::Sale:
+                $total = max(array( ($runTot + $amount), 0) );
+                break;
+
+            case MpTranType::ReturnAmt:
+                $total = max(array( ($runTot - $amount), 0) );
+                break;
+
+            case MpTranType::Void:
+                $total = max(array( ($runTot - $amount), 0) );
+                break;
+
+            case MpTranType::Reverse:
+                $total = max(array( ($runTot - $amount), 0) );
+                break;
+
+            case MpTranType::VoidReturn:
+
+                $total = max(array( ($runTot + $amount), 0) );
+                break;
+
+        }
+
+        return $total;
     }
 
 
@@ -73,6 +109,9 @@ class CreditToken {
             $gtRs->Granted_Date->setNewVal(date('Y-m-d H:i:s'));
             $gtRs->Status->setNewVal($vr->response->getStatus());
             $gtRs->StatusMessage->setNewVal($vr->response->getMessage());
+
+            $runTot = self::calculateRunningTotal($gtRs->Running_Total->getStoredVal(), $vr->getAmount(), $vr->response->getTranType());
+            $gtRs->Running_Total->setNewVal($runTot);
 
             EditRS::update($dbh, $gtRs, array($gtRs->idGuest_token));
             EditRS::updateStoredVals($gtRs);
