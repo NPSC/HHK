@@ -16,9 +16,9 @@ END -- ;
 --
 -- Procedure `constraint_room`
 --
-DROP procedure IF EXISTS `constraint_room`;
+DROP procedure IF EXISTS `constraint_room`; -- ;
 
-CREATE PROCEDURE `constraint_room` (IN resvId int)
+CREATE PROCEDURE `constraint_room` (resvId int)
 BEGIN
 
 Declare hospId int;

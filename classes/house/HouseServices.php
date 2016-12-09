@@ -2488,7 +2488,7 @@ class HouseServices {
 
                     // Guest must be in the psg
                     if (isset($psg->psgMembers[$k]) === FALSE) {
-                        throw new Hk_Exception_Runtime('Guest is not a member of the PSG! ');
+                        throw new Hk_Exception_Runtime('Guest is not a member of the PSG! Golly, this is not supposted to happen.');
                     }
 
                     // omit primary guest

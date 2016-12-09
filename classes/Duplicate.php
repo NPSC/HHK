@@ -48,29 +48,29 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
 
             while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
-                $name = $r['Name_Full'];
+                //$name = $r['Name_Full'];
 
-                $stmt2 = $dbh->query("select
-        n.idName as `Id`,
-        n.Name_Full as `Name`,
-        concat(na.City, na.State_Province) as `adr`
-    from
-        `name` n
-            left join
-        name_address na ON n.idName = na.idName
-            and n.Preferred_Mail_Address = na.Purpose
-            left join
-        name_guest ng ON n.idName = ng.idName
-    where
-        ng.Status = 'a' and LOWER(n.Name_Full) = '" . strtolower($name) . "' and ng.idName is not null and n.Member_Status = 'a'
-    group by LOWER(adr)
-    having count(n.idName) > 1");
-
-                $pats = $stmt2->fetchAll(PDO::FETCH_ASSOC);
-
-                if (count($pats) > 0) {
+//                $stmt2 = $dbh->query("select
+//        n.idName as `Id`,
+//        n.Name_Full as `Name`,
+//        concat(na.City, na.State_Province) as `adr`
+//    from
+//        `name` n
+//            left join
+//        name_address na ON n.idName = na.idName
+//            and n.Preferred_Mail_Address = na.Purpose
+//            left join
+//        name_guest ng ON n.idName = ng.idName
+//    where
+//        ng.Status = 'a' and LOWER(n.Name_Full) = '" . strtolower($name) . "' and ng.idName is not null and n.Member_Status = 'a'
+//    group by LOWER(adr)
+//    having count(n.idName) > 1");
+//
+//                $pats = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+//
+//                if (count($pats) > 0) {
                     $rows[] = $r;
-                }
+//                }
 
             }
 

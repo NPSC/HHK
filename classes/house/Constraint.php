@@ -171,17 +171,21 @@ class Constraints {
         foreach ($const->getAttributes() as $a) {
 
             $parms = array('id'=>'cbat_'.$a['idAttribute'], 'type'=>'checkbox', 'data-idat'=>$a['idAttribute'], 'class'=>$cls);
-            $notParms = array('id'=>'cbnat_'.$a['idAttribute'], 'type'=>'checkbox', 'data-idat'=>$a['idAttribute'], 'class'=>$cls);
+            //$notParms = array('id'=>'cbnat_'.$a['idAttribute'], 'type'=>'checkbox', 'data-idat'=>$a['idAttribute'], 'class'=>$cls);
 
             if ($a['isActive'] > 0) {
                 $parms['checked'] = 'checked';
             }
 
-            if ($a['isActive'] > 0 && $a['Operation'] == 'not') {
-                $notParms['checked'] = 'checked';
-            }
+//            if ($a['isActive'] > 0 && $a['Operation'] == 'not') {
+//                $notParms['checked'] = 'checked';
+//            }
 
-            $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $parms). HTMLContainer::generateMarkup('span', 'Not:', array('style'=>'margin-left:.9em;')) . HTMLInput::generateMarkup('', $notParms), array('style'=>'text-align:center;padding-right:0;padding-left:0;'));
+            $tr .= HTMLTable::makeTd(
+                    HTMLInput::generateMarkup('', $parms)
+//                    . HTMLContainer::generateMarkup('span', 'Not:', array('style'=>'margin-left:.9em;'))
+//                    . HTMLInput::generateMarkup('', $notParms)
+                    , array('style'=>'text-align:center;padding-right:0;padding-left:0;'));
         }
 
         return array('row'=>$tr);

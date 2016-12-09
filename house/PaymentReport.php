@@ -131,8 +131,6 @@ function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$total, &$tbl, 
 
             break;
 
-        default:
-            $stat = 'Undefined';
     }
 
 
@@ -185,6 +183,7 @@ function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$total, &$tbl, 
         'Pay_Type' => $payType,
         'Detail' => $payDetail,
         'Status' => $payStatus,
+        'By' => $p['Payment_Created_By'],
         'Notes'=>$p['Payment_Note']
     );
 
@@ -309,6 +308,7 @@ $cFields[] = array("Detail", 'Detail', 'checked', '', 's', '', array());
 $cFields[] = array("Status", 'Status', 'checked', '', 's', '', array());
 $cFields[] = array("Original Amount", 'Orig_Amount', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)' , array('style'=>'text-align:right;'));
 $cFields[] = array("Amount", 'Amount', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+$cFields[] = array("By", 'By', 'checked', '', 's', '', array());
 $cFields[] = array("Notes", 'Notes', 'checked', '', 's', '', array());
 
 $colSelector = new ColumnSelectors($cFields, 'selFld');

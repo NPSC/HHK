@@ -408,9 +408,6 @@ class PaymentSvcs {
 
             // Pay 0 amounts as cash.
             $pmp->setPayType(PayType::Cash);
-//            $payResult = new PaymentResult(0, 0, 0);
-//            $payResult->setReplyMessage('warning:  Invoice\'s Amount to Pay is 0.00. ');
-//            return $payResult;
         }
 
         if ($invoice->getAmountToPay() < 0) {
@@ -694,7 +691,7 @@ class PaymentSvcs {
                 ChargeAsCashTX::refundAmount($dbh, $cashResp, $uS->username, $paymentDate);
 
                 // Update invoice
-                $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
+                $invoice->updateInvoiceBalance($dbh, (0 - $cashResp->getAmount()), $uS->username);
 
                 $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
                 $rtnResult->feePaymentAccepted($dbh, $uS, $cashResp, $invoice);
@@ -709,7 +706,7 @@ class PaymentSvcs {
                 CashTX::returnAmount($dbh, $cashResp, $uS->username, $paymentDate);
 
                 // Update invoice
-                $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
+                $invoice->updateInvoiceBalance($dbh, (0 - $cashResp->getAmount()), $uS->username);
 
                 $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
                 $rtnResult->feePaymentAccepted($dbh, $uS, $cashResp, $invoice);
@@ -723,7 +720,7 @@ class PaymentSvcs {
                 CheckTX::returnAmount($dbh, $ckResp, $uS->username, $paymentDate);
 
                 // Update invoice
-                $invoice->updateInvoiceBalance($dbh, $ckResp->getAmount(), $uS->username);
+                $invoice->updateInvoiceBalance($dbh, (0 - $ckResp->getAmount()), $uS->username);
 
                 $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
                 $rtnResult->feePaymentAccepted($dbh, $uS, $ckResp, $invoice);

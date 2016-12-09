@@ -97,7 +97,7 @@ class PaymentManager {
 
 
             // Deposit Refunds - only if checked out...
-            if ($visit->getVisitStatus() == VisitStatus::CheckedOut && abs($this->pmp->getDepositRefundAmt()) > 0) {
+            if ($visit->getVisitStatus() == VisitStatus::CheckedOut && abs($this->pmp->getDepositRefundAmt()) > 0 && ($this->pmp->getBalWith() != '' && $this->pmp->getBalWith() != ExcessPay::Ignore)) {
                 // Return the deposit
                 $this->depositRefundAmt = abs($this->pmp->getDepositRefundAmt());
 
