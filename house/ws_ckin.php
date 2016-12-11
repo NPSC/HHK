@@ -38,7 +38,7 @@ require (CLASSES . 'FinAssistance.php');
 
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
 require (PMT . 'Payments.php');
 require (PMT . 'TokenTX.php');
