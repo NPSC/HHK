@@ -41,7 +41,7 @@ group by n.Name_Full having count(n.idName) > 1;");
 from
     `name` n join name_guest ng on n.idName = ng.idName and ng.Relationship_Code = 'slf'
 where
-    n.Member_Status = 'a' and n.Record_Member = 1
+    n.Member_Status in ('a','d') and n.Record_Member = 1
 group by LOWER(n.Name_Full)
 having count(n.idName) > 1
 order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
@@ -81,7 +81,7 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
 from
     `name` n join name_guest ng on n.idName = ng.idName
 where
-    n.Member_Status = 'a' and n.Record_Member = 1
+    n.Member_Status in ('a','d') and n.Record_Member = 1
 group by LOWER(n.Name_Full), ng.idPsg
 having count(n.idName) > 1
 order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");

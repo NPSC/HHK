@@ -834,6 +834,27 @@ $(document).ready(function () {
         nowdt.setTime(nowdt.getTime() - (3 * 86400000));
         $('#txtfeestart').datepicker('setDate', nowdt);
     }
+    
+        // Member search letter input box
+    $('#txtsearch').keypress(function (event) {
+        var mm = $(this).val();
+        if (event.keyCode == '13') {
+            if (mm === '' || !isNumber(parseInt(mm, 10))) {
+                alert("Don't press the return key unless you enter an Id.");
+                event.preventDefault();
+            } else {
+                window.location.assign("GuestEdit.php?id=" + mm);
+            }
+        }
+    });
+    createAutoComplete($('#txtsearch'), 3, {cmd: "role",  mode: 'mo'}, 
+        function(item) { 
+            var cid = item.id;
+            if (cid !== 0) {
+                window.location.assign("GuestEdit.php?id=" + cid);
+            }
+        },
+        null, false);
 
     $('#calendar').hhkCalendar({
         defaultView: 'twoweeks',

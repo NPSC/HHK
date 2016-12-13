@@ -398,7 +398,10 @@ try {
 <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <div style="float:left; margin-right: 100px; margin-top:10px;">
-                <h2><?php echo $wInit->pageHeading; ?><?php echo RoomReport::getGlobalNightsCounter($dbh, $totalRest); ?><?php echo RoomReport::getGlobalStaysCounter($dbh); ?></h2>
+                <h2><?php echo $wInit->pageHeading; ?><?php echo RoomReport::getGlobalNightsCounter($dbh, $totalRest); ?><?php echo RoomReport::getGlobalStaysCounter($dbh); ?>
+                <span style="margin-left:10px; font-size: .65em; background:#EFDBC2;">Name Search:
+                <input type="text" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" /></span>
+                </h2>
             </div>
             <div id="divAlertMsg" style="clear:left;"><?php echo $resultMessage; ?></div>
             <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">

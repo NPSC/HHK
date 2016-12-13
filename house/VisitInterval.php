@@ -410,6 +410,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     ifnull(hs.idPsg, 0) as idPsg,
     ifnull(hs.idHospital, 0) as idHospital,
     ifnull(hs.idAssociation, 0) as idAssociation,
+    ifnull(nra.Name_Full, '') as Referral_Agent,
     ifnull(g.Description, '') as Diagnosis,
     ifnull(gl.Description, '') as Location,
     ifnull(rm.Rate_Code, '') as Rate_Code,
@@ -456,6 +457,8 @@ from
     hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
         left join
     name np ON hs.idPatient = np.idName
+        left join
+    name nra ON hs.idReferralAgent = nra.idName
         left join
     gen_lookups g ON g.`Table_Name` = 'Diagnosis' and g.`Code` = hs.Diagnosis
         left join
@@ -1165,6 +1168,8 @@ if ($uS->PatientAddr) {
 
     $cFields[] = array($pTitles, $pFields, '', '', 's', '', array());
 }
+
+$cFields[] = array($labels->getString('hospital', 'referralAgent', 'Ref. Agent'), 'Referral_Agent', 'checked', '', 's', '', array());
 
 if (count($aList) > 0) {
     $cFields[] = array("Hospital / Assoc", 'hospitalAssoc', 'checked', '', 's', '', array());
