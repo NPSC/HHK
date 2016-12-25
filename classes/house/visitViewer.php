@@ -25,14 +25,17 @@ class VisitView {
      * @return array
      */
     public static function loadActiveVisits(PDO $dbh, $idReg) {
+
         $rows = array();
-        if ($idReg > 0) {
 
-            $query = "select * from vspan_listing where (Actual_Span_Nights > 0 or DATE(Arrival_Date) = DATE(now())) and idRegistration = :reg order by Span_Start DESC;";
-            $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-            $stmt->bindValue(':reg', $idReg, PDO::PARAM_INT);
+        $id = intval($idReg, 10);
 
-            $stmt->execute();
+        if ($id > 0) {
+
+            $query = "select * from vspan_listing where "
+                    . "(Actual_Span_Nights > 0 or `Status` = '". VisitStatus::CheckedIn . "' or DATE(Arrival_Date) = DATE(now()))"
+                    . " and idRegistration = $id order by Span_Start DESC;";
+            $stmt = $dbh->query($query);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
         return $rows;
@@ -47,16 +50,18 @@ class VisitView {
      * @return array
      */
     public static function loadGuestStays(PDO $dbh, $idGuest) {
+
         $rows = array();
-        if ($idGuest > 0) {
 
-            $query = "select * from vstays_listing where idName = :id order by Checkin_Date desc;";
-            $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-            $stmt->bindValue(':id', $idGuest, PDO::PARAM_INT);
+        $id = intval($idGuest, 10);
 
-            $stmt->execute();
+        if ($id > 0) {
+
+            $query = "select * from vstays_listing where idName = $id order by Checkin_Date desc;";
+            $stmt = $dbh->query($query);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
+
         return $rows;
     }
 
@@ -363,13 +368,16 @@ class VisitView {
         $ckOutTitle = '';
         $sTable = new HTMLTable();
         $priGuests = array();
+        $rows = array();
 
-        // load stays for this visit
-        $stmt = $dbh->prepare("select * from `vstays_listing` where `idVisit` = :vid and `Visit_Span` = :spn order by `Status`, `Span_Start_Date` desc;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-        $stmt->bindValue(':vid', $idVisit, PDO::PARAM_INT);
-        $stmt->bindValue(':spn', $span, PDO::PARAM_INT);
-        $stmt->execute();
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $idV = intval($idVisit, 10);
+        $idS = intval($span, 10);
+
+        if ($idV > 0 && $idS > -1) {
+            // load stays for this visit
+            $stmt = $dbh->query("select * from `vstays_listing` where `idVisit` = $idVisit and `Visit_Span` = $span order by `Status`, `Span_Start_Date` desc;");
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
 
 
         foreach ($rows as $r) {
@@ -581,7 +589,7 @@ class VisitView {
 
     }
 
-    public static function createPaymentMarkup(PDO $dbh, $r, VisitCharges $visitCharge, $idGuest = 0, $action = '', $coDate = '') {
+    public static function createPaymentMarkup(\PDO $dbh, $r, VisitCharges $visitCharge, $idGuest = 0, $action = '') {
 
         // Notes action = return nothing.
         if ($action == 'no' || $action == 'cf'|| $action == 'cr'|| $action == 'tr') {

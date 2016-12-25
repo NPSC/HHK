@@ -401,14 +401,14 @@ function injectSlot(data) {
         $('#txtEntryDate, #txtExitDate').datepicker();
         
         if ($('#txtAgentSch').length > 0) {
-            createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', basis: 'ra'}, getAgent, lstXhr);
+            createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', basis: 'ra'}, getAgent);
             if ($('#a_txtLastName').val() === '') {
                 $('.hhk-agentInfo').hide();
             }
         }
         
         if ($('#txtDocSch').length > 0) {
-            createAutoComplete($('#txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc, lstXhr);
+            createAutoComplete($('#txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc);
             if ($('#d_txtLastName').val() === '') {
                 $('.hhk-docInfo').hide();
             }
@@ -598,15 +598,14 @@ function injectSlot(data) {
         
         $('#resvGuest').children().remove().end().append($(data.adguests)).show();
         
-        var lstXhr;
         
         $('.hhk-addResv').button({ icons: { primary: "ui-icon-plusthick" }, text: true});
         $('.hhk-delResv').button({ icons: { primary: "ui-icon-minusthick" }, text: true});
         
         if (!data.static || data.static !== 'y') {
             
-            createAutoComplete($('#txtAddGuest'), 3, {cmd: 'role'}, additionalGuest, lstXhr);
-            createAutoComplete($('#txtAddPhone'), 5, {cmd: 'role'}, additionalGuest, lstXhr);
+            createAutoComplete($('#txtAddGuest'), 3, {cmd: 'role'}, additionalGuest);
+            createAutoComplete($('#txtAddPhone'), 5, {cmd: 'role'}, additionalGuest);
             
             $('.hhk-addResv').click(function () {
                 var item = {id: $(this).data('id'), value: $(this).data('name')};
@@ -1468,10 +1467,10 @@ $(document).ready(function() {
         loadGuest(item, 'g', resv.idPsg, resv.patStaying);
     }
 
-    createAutoComplete($('#gstSearch'), 3, {cmd: 'role'}, getGuest, lastXhr);
+    createAutoComplete($('#gstSearch'), 3, {cmd: 'role'}, getGuest);
     
     // Phone number search
-    createAutoComplete($('#gstphSearch'), 4, {cmd: 'role'}, getGuest, lastXhr);
+    createAutoComplete($('#gstphSearch'), 4, {cmd: 'role'}, getGuest);
     
     $('#gstSearch').keypress(function(event) {
         $(this).removeClass('ui-state-highlight');
@@ -1499,9 +1498,9 @@ $(document).ready(function() {
         }
     }
 
-    createAutoComplete($('#h_Search'), 3, {cmd: 'role'}, getPatient, lastXhr);
+    createAutoComplete($('#h_Search'), 3, {cmd: 'role'}, getPatient);
     // Phone number search
-    createAutoComplete($('#h_phSearch'), 4, {cmd: 'role'}, getPatient, lastXhr);
+    createAutoComplete($('#h_phSearch'), 4, {cmd: 'role'}, getPatient);
 
     if (resv.gpnl && resv.gpnl !== '') {
         loadGuest({id: resv.gpnl}, 'g', resv.idPsg);

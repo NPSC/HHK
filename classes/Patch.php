@@ -191,7 +191,12 @@ class Patch {
 
         $result = "";
 
-        $cfupdates = new Config_Lite($configUpdateFile);
+        try {
+            $cfupdates = new Config_Lite($configUpdateFile);
+        } catch (Config_Lite_Exception_Runtime $ex) {
+            $result = $ex->getMessage();
+            return $result;
+        }
 
         foreach ($cfupdates as $secName => $secArray) {
 

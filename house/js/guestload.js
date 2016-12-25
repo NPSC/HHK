@@ -10,54 +10,11 @@
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
-
-/**
- * 
- * @param {string} t
- * @returns {undefined}
- */
-function updateTips(t) {
-    "use strict";
-    tips.text(t).addClass("ui-state-highlight");
-//    setTimeout(function() {
-//        tips.removeClass( "ui-state-highlight", 360000 );
-//    }, 500 );
-}
-
-function errorOnZero(o, n) {
-    "use strict";
-    if (o.val() == "" || o.val() == "0" || o.val() == "00") {
-        o.addClass("ui-state-error");
-        updateTips(n + " cannot be zero");
-        return false;
-    } else {
-        return true;
-    }
-}
-
-function checkLength(o, n, min, max) {
-    "use strict";
-    if (o.val().length > max || o.val().length < min) {
-        o.addClass("ui-state-error");
-        if (o.val().length == 0) {
-            updateTips("Fill in the " + n);
-        }else if (min == max) {
-            updateTips("The " + n + " must be " + max + " characters.");
-        } else if (o.val().length > max) {
-            updateTips("The " + n + " length is to long");
-        } else {
-            updateTips("The " + n + " length must be between " + min + " and " + max + ".");
-        }
-        return false;
-    } else {
-        return true;
-    }
-}
-
 function isNumber(n) {
     "use strict";
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
+
 var dtCols = [
     {
         "aTargets": [ 0 ],
@@ -322,7 +279,7 @@ $(document).ready(function () {
     });
     $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
     $("#divFuncTabs").tabs({
-        collapsible: true,
+        collapsible: true
     });
     // relationship dialog
     $("#submit").dialog({
@@ -561,7 +518,7 @@ $(document).ready(function () {
     createZipAutoComplete($('input.hhk-zipsearch'), 'ws_admin.php', zipXhr);
     // Main form submit button.  Disable page during POST
     $('#btnSubmit').click(function () {
-        if ($(this).val() == 'Saving>>>>') {
+        if ($(this).val() === 'Saving>>>>') {
             return false;
         }
         savePressed = true;
@@ -593,136 +550,32 @@ $(document).ready(function () {
             selectedList: 3
         });
     });
-    
-    var lstXhr;
-    createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', add: 'phone', basis: 'ra'}, getAgent, lstXhr);
+
+    createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', add: 'phone', basis: 'ra'}, getAgent);
     if ($('#a_txtLastName').val() === '') {
         $('.hhk-agentInfo').hide();
     }
-    createAutoComplete($('#txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc, lstXhr);
+    
+    createAutoComplete($('#txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc);
     if ($('#d_txtLastName').val() === '') {
         $('.hhk-docInfo').hide();
     }
-    var lastXhr;
-    var oldData;
-    $('#txtsearch').autocomplete({
-        source: function (request, response) {
-            if (isNumber(parseInt(request.term, 10))) {
-                response();
-                return;
-            }
-            if (request.term.search(' ') == (request.term.length - 1) || request.term.search(',') == (request.term.length - 1)) {
-                response(oldData);
-            } else {
-                var inpt = {
-                    cmd: "role",
-                    mode: 'mo',
-                    letters: request.term
-                };
+    
+    createAutoComplete($('#txtsearch'), 3, {cmd: 'role', mode: 'mo'}, 
+        function (item) {
+             window.location.assign("GuestEdit.php?id=" + item.id);
+        });
+        
+    createAutoComplete($('#txtPhsearch'), 5, {cmd: 'role', mode: 'mo'}, 
+        function (item) {
+            window.location.assign("GuestEdit.php?id=" + item.id);
+        });
 
-                lastXhr = $.getJSON("roleSearch.php", inpt,
-                    function(data, status, xhr) {
-                        if (xhr === lastXhr) {
-                            if (data.error) {
-                                if (data.gotopage) {
-                                    window.open(data.gotopage, '_self');
-                                }
-                                data.value = data.error;
-                            }
-                            response(data);
-                            oldData = data;
-                        }
-                    }
-                );
-            }
-        },
-        minLength: 3,
-        select: function( event, ui ) {
-            if (!ui.item) {
-                return;
-            }
-            var cid = ui.item.id;
-            if (cid !== 0) {
-                window.location.assign("GuestEdit.php?id=" + cid);
-            }
-        }
+    createAutoComplete($('#txtRelSch'), 3, {cmd: 'srrel', basis: $('#hdnRelCode').val(), id: memData.id}, function (item) {
+        $.post('ws_admin.php', {'rId':item.id, 'id':memData.id, 'rc':$('#hdnRelCode').val(), 'cmd':'newRel'}, relationReturn);
     });
-    $('#txtPhsearch').autocomplete({
-        source: function (request, response) {
-            var inpt = {
-                cmd: "role",
-                mode: 'mo',
-                letters: request.term
-            };
 
-            lastXhr = $.getJSON("roleSearch.php", inpt,
-                function(data, status, xhr) {
-                    if (xhr === lastXhr) {
-                        if (data.error) {
-                            if (data.gotopage) {
-                                window.open(data.gotopage, '_self');
-                            }
-                            data.value = data.error;
-                        }
-                        response(data);
-                    }
-                }
-            );
-        },
-        minLength: 5,
-        select: function( event, ui ) {
-            if (!ui.item) {
-                return;
-            }
-            var cid = ui.item.id;
-            if (cid !== 0) {
-                window.location.assign("GuestEdit.php?id=" + cid);
-            }
-        }
-    });
-    $('#txtRelSch').autocomplete({
-        source: function (request, response) {
-            // get more data
-            if (request.term.search(' ') == (request.term.length - 1) || request.term.search(',') == (request.term.length - 1)) {
-                response(oldData);
-            } else {
-            var inpt = {
-                cmd: "srrel",
-                letters: request.term,
-                basis: $('#hdnRelCode').val(),
-                id: memData.id,
-                nonly: '1'
-            };
-            lastXhr = $.getJSON("roleSearch.php", inpt,
-                function(data, status, xhr) {
-                    if (xhr === lastXhr) {
-                        if (data.error) {
-                            if (data.gotopage) {
-                                window.open(data.gotopage, '_self');
-                            }
-                            data.value = data.error;
-                        }
-                        response(data);
-                        oldData = data;
-                    } else {
-                        response();
-                    }
-            });
-        }
-        },
-        minLength: 3,
-        select: function( event, ui ) {
-            if (!ui.item) {
-                return;
-            }
-            $('#submit').dialog('close');
-
-            var cid = parseInt(ui.item.id, 10);
-            if (isNumber(cid)) {
-                $.post('ws_admin.php', {'rId':cid, 'id':memData.id, 'rc':$('#hdnRelCode').val(), 'cmd':'newRel'}, relationReturn);
-            }
-        }
-    });
+    
     // Excludes tab "Check-all" button
     $('input.hhk-check-button').click(function () {
         if ($(this).prop('id') == 'exAll') {

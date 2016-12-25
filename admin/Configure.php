@@ -28,35 +28,35 @@ require (FUNCTIONS . 'mySqlFunc.php');
 function checkZipFile($upFile) {
 
 
-        // Undefined | Multiple Files | $_FILES Corruption Attack
-        // If this request falls under any of them, treat it invalid.
-        if (
-            !isset($_FILES[$upFile]['error']) ||
-            is_array($_FILES[$upFile]['error'])
-        ) {
-            throw new RuntimeException('Invalid parameters.');
-        }
+    // Undefined | Multiple Files | $_FILES Corruption Attack
+    // If this request falls under any of them, treat it invalid.
+    if (
+        !isset($_FILES[$upFile]['error']) ||
+        is_array($_FILES[$upFile]['error'])
+    ) {
+        throw new RuntimeException('Invalid parameters.');
+    }
 
-        // Check $_FILES['upfile']['error'] value.
-        switch ($_FILES[$upFile]['error']) {
-            case UPLOAD_ERR_OK:
-                break;
-            case UPLOAD_ERR_NO_FILE:
-                throw new RuntimeException('No file sent.');
-            case UPLOAD_ERR_INI_SIZE:
-            case UPLOAD_ERR_FORM_SIZE:
-                throw new RuntimeException('Exceeded filesize limit.');
-            default:
-                throw new RuntimeException('Unknown errors.');
-        }
-
-        // You should also check filesize here.
-        if ($_FILES[$upFile]['size'] > 10000000) {
+    // Check $_FILES['upfile']['error'] value.
+    switch ($_FILES[$upFile]['error']) {
+        case UPLOAD_ERR_OK:
+            break;
+        case UPLOAD_ERR_NO_FILE:
+            throw new RuntimeException('No file sent.');
+        case UPLOAD_ERR_INI_SIZE:
+        case UPLOAD_ERR_FORM_SIZE:
             throw new RuntimeException('Exceeded filesize limit.');
-        }
+        default:
+            throw new RuntimeException('Unknown errors.');
+    }
 
-        // DO NOT TRUST $_FILES['upfile']['mime'] VALUE !!
-        // Check MIME Type by yourself.
+    // You should also check filesize here.
+    if ($_FILES[$upFile]['size'] > 10000000) {
+        throw new RuntimeException('Exceeded filesize limit.');
+    }
+
+    // DO NOT TRUST $_FILES['upfile']['mime'] VALUE !!
+    // Check MIME Type by yourself.
 //        $finfo = new finfo(FILEINFO_MIME_TYPE);
 //        if (false === $ext = array_search(
 //            $finfo->file($_FILES[$upFile]['tmp_name']),
@@ -70,9 +70,9 @@ function checkZipFile($upFile) {
 //            throw new RuntimeException('Invalid file format.');
 //        }
 
-        // You should name it uniquely.
-        // DO NOT USE $_FILES['upfile']['name'] WITHOUT ANY VALIDATION !!
-        // On this example, obtain safe unique name from its binary data.
+    // You should name it uniquely.
+    // DO NOT USE $_FILES['upfile']['name'] WITHOUT ANY VALIDATION !!
+    // On this example, obtain safe unique name from its binary data.
 //        if (!move_uploaded_file(
 //            $_FILES[$upFile]['tmp_name'],
 //            sprintf('./uploads/%s.%s',
@@ -143,11 +143,6 @@ if (isset($_POST["btnSiteCnf"])) {
 
     // Check subsidyId and returnId - cannot be the same
     $subsidyId = intval(filter_var($_POST['financial']['RoomSubsidyId'], FILTER_SANITIZE_NUMBER_INT), 10);
-    //$refundId = intval(filter_var($_POST['financial']['ReturnPayorId'], FILTER_SANITIZE_NUMBER_INT), 10);
-
-//    if ($subsidyId !== 0 && $subsidyId == $refundId) {
-//        $confError = "Financial:  Subsidy Id and Return Id cannot be the same.";
-//    }
 
     SiteConfig::saveConfig($dbh, $config, $_POST, $uS->username);
     SiteConfig::saveSysConfig($dbh, $_POST);
@@ -203,18 +198,21 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
             $resultAccumulator .= $patch->updateViewsSps($mysqli, '../sql/CreateAllTables.sql');
 
             // Run patches
-            $vquery = file_get_contents('../patch/patchSQL.sql');
-            $resultArray = multiQuery($mysqli, $vquery);
+            if (file_exists('../patch/patchSQL.sql')) {
 
-            $errorCount = 0;
-            foreach ($resultArray as $err) {
+                $vquery = file_get_contents('../patch/patchSQL.sql');
+                $resultArray = multiQuery($mysqli, $vquery);
 
-                if ($err['errno'] == 1062 || $err['errno'] == 1060) {
-                    continue;
+                $errorCount = 0;
+                foreach ($resultArray as $err) {
+
+                    if ($err['errno'] == 1062 || $err['errno'] == 1060) {
+                        continue;
+                    }
+
+                    $errorMsg .= $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+                    $errorCount++;
                 }
-
-                $errorMsg .= $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-                $errorCount++;
             }
 
             // Update views and sp's

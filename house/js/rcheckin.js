@@ -462,11 +462,11 @@ function processGuests(incmg) {
         $('#txtEntryDate, #txtExitDate').datepicker();
         
         var lstXhr;
-        createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', add: 'phone', basis: 'ra'}, getAgent, lstXhr);
+        createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', add: 'phone', basis: 'ra'}, getAgent);
         if ($('#a_txtLastName').val() === '') {
             $('.hhk-agentInfo').hide();
         }
-        createAutoComplete($('#txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc, lstXhr);
+        createAutoComplete($('#txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc);
         if ($('#d_txtLastName').val() === '') {
             $('.hhk-docInfo').hide();
         }
@@ -1318,7 +1318,7 @@ function validateCar(cnum) {
  * @param {object} item Autocomplete object.
  * @returns {undefined}
  */
-function getRel(item) {
+function getECRel(item) {
     "use strict";
     $('#ecSearch').dialog('close');
     var cid = parseInt(item.id, 10);
@@ -1752,15 +1752,14 @@ $(document).ready(function() {
         $('#hhk-chkedIn').toggle('blind');
     });
     
-    createAutoComplete($('#txtRelSch'), 3, {cmd: 'filter', add: 'phone', basis: 'g'}, getRel, lastXhr);
+    createAutoComplete($('#txtRelSch'), 3, {cmd: 'filter', add: 'phone', basis: 'g'}, getECRel, lastXhr);
+    
     createAutoComplete($('#' + checkIn.guestSearchPrefix + 'Search'), 3, {cmd: 'role'}, function (item) {
             loadGuest(item.id, checkIn.idPsg, 'g', checkIn.patientStaying);
-        }, 
-        lastXhr);
+        });
     createAutoComplete($('#' + checkIn.guestSearchPrefix + 'phSearch'), 5, {cmd: 'role'}, function (item) {
             loadGuest(item.id, checkIn.idPsg, 'g', checkIn.patientStaying);
-        }, 
-        lastXhr);
+        });
         
     function getPatient(item) {
         if (item.id > 0) {
@@ -1790,8 +1789,8 @@ $(document).ready(function() {
         }
     }
     
-    createAutoComplete($('#' + checkIn.patientPrefix + 'Search'), 3, {cmd: 'role'}, getPatient, lastXhr);
-    createAutoComplete($('#' + checkIn.patientPrefix + 'phSearch'), 5, {cmd: 'role'}, getPatient, lastXhr);
+    createAutoComplete($('#' + checkIn.patientPrefix + 'Search'), 3, {cmd: 'role'}, getPatient);
+    createAutoComplete($('#' + checkIn.patientPrefix + 'phSearch'), 5, {cmd: 'role'}, getPatient);
     
     $('#' + checkIn.guestSearchPrefix + 'Search').keypress(function(event) {
         $(this).removeClass('ui-state-highlight');

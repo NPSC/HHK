@@ -580,6 +580,22 @@ try {
 
         break;
 
+    case 'changePatient':
+
+        $idPsg = 0;
+        if (isset($_GET['psg'])) {
+            $idPsg = intval(filter_var($_GET['psg'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $idGuest = 0;
+        if (isset($_GET['gid'])) {
+            $idGuest = intval(filter_var($_GET['gid'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $events = HouseServices::changePatient($dbh, $idPsg, $idGuest, $uS->username);
+
+        break;
+
     case "savePage":
 
         $memData = filter_var_array($_POST, FILTER_SANITIZE_STRING);
@@ -601,7 +617,6 @@ try {
 
         $events = ReservationSvcs::getIncomeDialog($dbh, $idresv, $idreg);
         break;
-
 
     case "savefap":
 
@@ -652,7 +667,6 @@ try {
         $events = HouseServices::saveFees($dbh, $idVisit, $span, $guestAdmin, $_REQUEST, $postbackPage);
 
         break;
-
 
     // View Activity
     case 'viewActivity':

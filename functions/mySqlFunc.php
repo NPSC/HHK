@@ -33,7 +33,7 @@ function openMysqli(PDO $dbh, Session $uS) {
 function multiQuery(mysqli $mysqli, $query, $delimiter = ";", $splitAt = ';') {
     $msg = array();
 
-    if (trim($query) == '') {
+    if ($query === FALSE || trim($query) == '') {
         return $msg;
     }
 

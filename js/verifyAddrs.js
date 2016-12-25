@@ -42,7 +42,7 @@ function createZipAutoComplete(txtCtrl, wsUrl, lastXhr) {
         }
     });
 }
-function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, lastXhr, shoNew) {
+function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNew) {
     "use strict";
     var oldData;
     var lxhr;

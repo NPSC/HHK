@@ -20,7 +20,7 @@ class Register {
      * @param string $endTime
      * @return array
      */
-    public static function getRegister(PDO $dbh, $startTime, $endTime) {
+    public static function getRegister(\PDO $dbh, $startTime, $endTime) {
 
         $uS = Session::getInstance();
         $events = array();
@@ -46,7 +46,7 @@ class Register {
         $qu = "select r.*, ru.idResource_use
 from resource r
 	left join
-resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and ru.Start_Date <= '" . $beginDate->format('Y-m-d 00:00:00') . "' and ru.End_Date >= '" . $endDate->format('Y-m-d 00:00:00') . "'
+resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and DATE(ru.Start_Date) <= DATE('" . $beginDate->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $endDate->format('Y-m-d') . "')
  where ru.idResource_use is null
  order by Util_Priority;";
         $rstmt = $dbh->query($qu);
@@ -89,9 +89,8 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
 
         // Room statuses
         $query1 = "select ru.*, g.Description as `StatusTitle` from resource_use ru left join gen_lookups g on g.Table_Name = 'Resource_Status' and g.Code = ru.Status
-where DATE(Start_Date) < DATE(:endDate) and ifnull(DATE(End_Date), DATE(now())) > DATE(:beginDate);";
-        $stmtrs = $dbh->prepare($query1, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-        $stmtrs->execute($parms);
+where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(End_Date), DATE(now())) > DATE('" . $beginDate->format('Y-m-d') . "');";
+        $stmtrs = $dbh->query($query1);
 
         while ($r = $stmtrs->fetch(PDO::FETCH_ASSOC)) {
 

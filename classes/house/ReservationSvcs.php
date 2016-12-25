@@ -552,7 +552,7 @@ class ReservationSvcs {
                 }
             }
 
-            $psg->setNewMember($id, 0, $rel);
+            $psg->setNewMember($id, $rel);
             $psg->savePSG($dbh, $psg->getIdPatient(), $uS->username);
 
         } else if (!$uS->PatientAsGuest && $psg->getGuestRelationship($id) == RelLinkType::Self) {
@@ -777,8 +777,8 @@ class ReservationSvcs {
                     // Guest-Patient is not a patient of the psg
 
                     // Switch patient with this guest.
-                    $psg->setNewMember($psg->getIdPatient(), 0, RelLinkType::Friend);
-                    $psg->setNewMember($guest->getIdName(), 0, RelLinkType::Self);
+                    $psg->setNewMember($psg->getIdPatient(), RelLinkType::Friend);
+                    $psg->setNewMember($guest->getIdName(), RelLinkType::Self);
 
                     $psg->savePSG($dbh, $guest->getIdName(), $uS->username);
 
@@ -800,7 +800,7 @@ class ReservationSvcs {
                 }
 
                 $psg = new Psg($dbh, $idPsg);
-                $psg->setNewMember($guest->getIdName(), 0, RelLinkType::Self);
+                $psg->setNewMember($guest->getIdName(), RelLinkType::Self);
                 $psg->savePSG($dbh, $guest->getIdName(), $uS->username);
             }
 
@@ -826,8 +826,8 @@ class ReservationSvcs {
             }
 
             $psg = new Psg($dbh, $idPsg);
-            $psg->setNewMember($guest->getIdName(), 0, $newRel);
-            $psg->setNewMember($patient->getIdName(), 0, RelLinkType::Self);
+            $psg->setNewMember($guest->getIdName(), $newRel);
+            $psg->setNewMember($patient->getIdName(), RelLinkType::Self);
             $psg->savePSG($dbh, $patient->getIdName(), $uS->username);
 
             $dataArray['patient'] = $patient->createReservationMarkup();

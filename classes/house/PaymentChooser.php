@@ -253,12 +253,13 @@ class PaymentChooser {
         $payTypes = removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]);
         unset($payTypes[PayType::Transfer]);
 
+        $chargeCards = readGenLookupsPDO($dbh, 'Charge_Cards');
 
         // Collect panels for payments
         $panelMkup = self::showPaySelection($dbh,
                 $defaultPayType,
                 $payTypes,
-                readGenLookupsPDO($dbh, 'Charge_Cards'),
+                $chargeCards,
                 $labels,
                 $uS->ccgw,
                 $idGuest, $idRegistration, $prefTokenId);
@@ -278,7 +279,7 @@ class PaymentChooser {
         $mkup .= HTMLContainer::generateMarkup('div', self::showReturnSelection($dbh,
                 $defaultPayType,
                 $payTypes,
-                readGenLookupsPDO($dbh, 'Charge_Cards'),
+                $chargeCards,
                 $uS->ccgw,
                 $idGuest, $idRegistration, $prefTokenId, 'r'),
                 array('id'=>'divReturnPay', 'style'=>'float:left;display:none;'));
@@ -501,8 +502,12 @@ dateFormat: "M d, yy" ';
 
         $uS = Session::getInstance();
 
-        // Collect any unpaid invoices
-        $stmt = $dbh->query("SELECT
+        $idInvoice = intval($iid, 10);
+
+        if ($idInvoice > 0) {
+
+            // Collect any unpaid invoices
+            $stmt = $dbh->query("SELECT
     i.idInvoice,
     i.`Invoice_Number`,
     i.`Balance`,
@@ -522,61 +527,62 @@ FROM
         LEFT JOIN
     name ng ON v.idPrimaryGuest = ng.idName
 WHERE
-    i.idInvoice = $iid AND i.Status = '" . InvoiceStatus::Unpaid . "'
+    i.idInvoice = $idInvoice AND i.Status = '" . InvoiceStatus::Unpaid . "'
         AND i.Deleted = 0
 ORDER BY v.idVisit , v.Span;");
 
-        $unpaidInvoices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $unpaidInvoices = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if (count($unpaidInvoices) > 0) {
+            if (count($unpaidInvoices) > 0) {
 
-            if ($unpaidInvoices[0]['Company'] != '' && $unpaidInvoices[0]['Name_Full'] != '') {
-                $name = $unpaidInvoices[0]['Company'] . ',  c/o ' . $unpaidInvoices[0]['Name_Full'];
-            } else if ($unpaidInvoices[0]['Company'] != '' && $unpaidInvoices[0]['Name_Full'] == '') {
-                $name = $unpaidInvoices[0]['Company'];
-            } else {
-                $name = $unpaidInvoices[0]['Name_Full'];
+                if ($unpaidInvoices[0]['Company'] != '' && $unpaidInvoices[0]['Name_Full'] != '') {
+                    $name = $unpaidInvoices[0]['Company'] . ',  c/o ' . $unpaidInvoices[0]['Name_Full'];
+                } else if ($unpaidInvoices[0]['Company'] != '' && $unpaidInvoices[0]['Name_Full'] == '') {
+                    $name = $unpaidInvoices[0]['Company'];
+                } else {
+                    $name = $unpaidInvoices[0]['Name_Full'];
+                }
+
+                $labels = new Config_Lite(LABEL_FILE);
+
+                $mkup = HTMLContainer::generateMarkup('div',
+                        self::createPaymentMarkup(
+                                FALSE,
+                                FALSE,
+                                0,
+                                0,
+                                FALSE,
+                                0,
+                                0,
+                                0,
+                                FALSE,
+                                FALSE,
+                                $unpaidInvoices,
+                                $labels)
+                        , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
+                );
+
+                $payTypes = removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]);
+                unset($payTypes[PayType::Invoice]);
+
+                // House return invoices
+                if ($id == $uS->returnId) {
+                    unset($payTypes[PayType::Charge]);
+                    unset($payTypes[PayType::ChargeAsCash]);
+                    $panelMkup = self::showReturnSelection($dbh, PayType::Check, $payTypes, array(), $uS->ccgw,
+                        $id, 0, 0, '');
+
+                } else {
+                    // payment types panel
+                    $panelMkup = self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, readGenLookupsPDO($dbh, 'Charge_Cards'), $labels, $uS->ccgw,
+                        $id, 0, $prefTokenId, '');
+                }
+
+                $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
+
+                return HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Paying Today: ' . $name, array('style'=>'font-weight:bold;'))
+                        . $mkup, array('id'=>'hhk-PayToday', 'class'=>'hhk-panel', 'style'=>'float:left;'));
             }
-
-            $labels = new Config_Lite(LABEL_FILE);
-
-            $mkup = HTMLContainer::generateMarkup('div',
-                    self::createPaymentMarkup(
-                            FALSE,
-                            FALSE,
-                            0,
-                            0,
-                            FALSE,
-                            0,
-                            0,
-                            0,
-                            FALSE,
-                            FALSE,
-                            $unpaidInvoices,
-                            $labels)
-                    , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
-            );
-
-            $payTypes = removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]);
-            unset($payTypes[PayType::Invoice]);
-
-            // House return invoices
-            if ($id == $uS->returnId) {
-                unset($payTypes[PayType::Charge]);
-                unset($payTypes[PayType::ChargeAsCash]);
-                $panelMkup = self::showReturnSelection($dbh, PayType::Check, $payTypes, array(), $uS->ccgw,
-                    $id, 0, 0, '');
-
-            } else {
-                // payment types panel
-                $panelMkup = self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, readGenLookupsPDO($dbh, 'Charge_Cards'), $labels, $uS->ccgw,
-                    $id, 0, $prefTokenId, '');
-            }
-
-            $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
-
-            return HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Paying Today: ' . $name, array('style'=>'font-weight:bold;'))
-                    . $mkup, array('id'=>'hhk-PayToday', 'class'=>'hhk-panel', 'style'=>'float:left;'));
         }
 
         return HTMLContainer('h3', "No unpaid invoices found.");

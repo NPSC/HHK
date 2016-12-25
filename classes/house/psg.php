@@ -64,7 +64,7 @@ class CheckInGroup {
 
                     // Guest is also the patient - get psg
                     $this->psg = new Psg($dbh, 0, $guest->getIdName());
-                    $this->psg->setNewMember($guest->getIdName(), 0, RelLinkType::Self);
+                    $this->psg->setNewMember($guest->getIdName(), RelLinkType::Self);
 
                     if ($guest->isCurrentlyStaying($dbh)) {
 
@@ -132,7 +132,7 @@ class CheckInGroup {
 
         foreach ($this->newGuests as $guest) {
 
-            $this->psg->setNewMember($guest->getIdName(), 0, $guest->getPatientRelationshipCode());
+            $this->psg->setNewMember($guest->getIdName(), $guest->getPatientRelationshipCode());
         }
 
         $this->psg->savePSG($dbh, $this->patient->getIdName(), $username, $notes);
@@ -179,21 +179,19 @@ class Psg {
 
     }
 
-    public function setNewMember($idGuest, $legalCustody = 0, $relationshipCode = '') {
+    public function setNewMember($idGuest, $relationshipCode) {
 
         if ($idGuest > 0) {
 
             if (isset($this->psgMembers[$idGuest])) {
 
                 $this->psgMembers[$idGuest]->Relationship_Code->setNewVal($relationshipCode);
-                //$this->psgMembers[$idGuest]->Legal_Custody->setNewVal($legalCustody);
 
             } else {
 
                 $ngRs = new Name_GuestRS();
                 $ngRs->idName->setNewVal($idGuest);
                 $ngRs->Relationship_Code->setNewVal($relationshipCode);
-                //$ngRs->Legal_Custody->setNewVal($legalCustody);
                 $ngRs->Status->setNewVal(NameGuestStatus::Active);
                 $this->psgMembers[$idGuest] = $ngRs;
             }
@@ -273,37 +271,6 @@ class Psg {
         }
     }
 
-    public static function loadViews(PDO $dbh, $Guest_Id, $idPsg = 0) {
-
-        if ($Guest_Id > 0) {
-
-            // Get PSG Data
-            $query = "Select * from vpsg_guest
-                where idGuest = :idName;";
-
-            $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-            $stmt->execute(array(":idName" => $Guest_Id));
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            if ($stmt->rowCount() >= 1) {
-
-                return $rows[0];
-            }
-        } else if ($idPsg > 0) {
-            // Get PSG Data
-            $query = "Select * from vpsg_guest
-                where idPsg = :idP order by isPatient DESC;";
-
-            $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-            $stmt->execute(array(":idP" => $idPsg));
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            return $rows;
-
-        }
-        return array();
-    }
-
     public function createEditMarkup(PDO $dbh, $relList, $labels, $pageName = 'GuestEdit.php', $id = 0, $shoChgLog = FALSE) {
 
         // Edit Div
@@ -324,15 +291,39 @@ class Psg {
         $nTable->addBodyTr(HTMLTable::makeTd(Notes::markupShell($this->psgRS->Notes->getStoredVal(), 'txtPSGNotes')));
 
         // Members section
-        $mTable = new HTMLTable();
-        $mTable->addHeaderTr(HTMLTable::makeTh('Remove').HTMLTable::makeTh('Id').HTMLTable::makeTh('Name').HTMLTable::makeTh('Relationship to Patient').HTMLTable::makeTh('Guardian').HTMLTable::makeTh('Phone'));
-        $rows = $this->loadViews($dbh, 0, $this->getIdPsg());
-
         $relListLessSlf = $relList;
         unset($relListLessSlf[RelLinkType::Self]);
+        // Members that are not patients anywhere
+        $notPatients = array();
+        $changePatientMU = '';
+
+        $mTable = new HTMLTable();
+        $mTable->addHeaderTr(HTMLTable::makeTh('Remove').HTMLTable::makeTh('Id').HTMLTable::makeTh('Name').HTMLTable::makeTh('Relationship to Patient').HTMLTable::makeTh('Guardian').HTMLTable::makeTh('Phone'));
+
+        $stmt = $dbh->query("SELECT
+            ng.idName AS `idGuest`,
+            ng.Relationship_Code,
+            ng.Legal_Custody,
+            IFNULL(p2.idPsg, 0) AS `idPsg2`,
+            IFNULL(n.Name_Full, '') AS `Name_Full`,
+            IFNULL(np.Phone_Num, '') AS `Preferred_Phone`
+        FROM
+            name_guest ng
+                JOIN
+            psg p ON ng.idPsg = p.idPsg
+                LEFT JOIN
+            psg p2 ON ng.idName = p2.idPatient
+                JOIN
+            name n ON n.idName = ng.idName
+                LEFT JOIN
+            name_phone np ON np.idName = n.idName
+                AND n.Preferred_Phone = np.Phone_Code
+        WHERE
+            ng.idPsg = " . $this->getIdPsg() . " ;");
 
 
-        foreach ($rows as $r) {
+
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
             if ($r['idGuest'] == $id) {
                 $ent = HTMLContainer::generateMarkup('a', $r['idGuest'], array('href'=>$pageName.'?id='.$r['idGuest'].'&psg='.$this->getIdPsg(), 'class'=>'ui-state-highlight'));
@@ -350,13 +341,13 @@ class Psg {
 
                 $rem = '';
                 $rel = HTMLContainer::generateMarkup('span', $relList[RelLinkType::Self][1], array('style'=>'font-weight:bold;'));
-                $nme = HTMLContainer::generateMarkup('span', $r['Name_First'] . ' ' . $r['Name_Last'], array('style'=>'font-weight:bold;'));
+                $nme = HTMLContainer::generateMarkup('span', $r['Name_Full'], array('style'=>'font-weight:bold;'));
 
             } else {
 
                 $rem = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'delpMem['.$r['idGuest'].']'));
                 $rel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($relListLessSlf, $r['Relationship_Code'], FALSE), array('name'=>'selPrel['.$r['idGuest'].']'));
-                $nme = $r['Name_First'] . ' ' . $r['Name_Last'];
+                $nme = $r['Name_Full'];
             }
 
             $mTable->addBodyTr(
@@ -367,6 +358,11 @@ class Psg {
                     .HTMLTable::makeTd($grd, array('style'=>'text-align:center;'))
                     .HTMLTable::makeTd($r['Preferred_Phone'])
                     );
+
+            // Members that are not patients anywhere
+            if ($r['idPsg2'] == 0) {
+                $notPatients[] = array('0'=>$r['idGuest'], '1'=>$r['Name_Full']);
+            }
         }
 
         $memMkup =  HTMLContainer::generateMarkup('div',
@@ -383,14 +379,29 @@ class Psg {
         }
 
         $lastConfirmed =  HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('fieldset',
-                        HTMLContainer::generateMarkup('legend', $labels->getString('guestEdit', 'psgTab', 'Patient Support Group').' Info Last Confirmed', array('style'=>'font-weight:bold;'))
-                        . HTMLContainer::generateMarkup('label', 'Update:', array('for'=>'cbLastConfirmed'))
-                        . HTMLInput::generateMarkup('', array('name'=>'cbLastConfirmed', 'type'=>'checkbox','style'=>'margin-left:.3em;'))
-                        . HTMLInput::generateMarkup($lastConfDate, array('name'=>'txtLastConfirmed', 'class'=>'ckdate','style'=>'margin-left:1em;'))
-                        , array('class'=>'hhk-panel')),
-                array('style'=>'float:left;'));
+            HTMLContainer::generateMarkup('fieldset',
+                    HTMLContainer::generateMarkup('legend', $labels->getString('guestEdit', 'psgTab', 'Patient Support Group').' Info Last Confirmed', array('style'=>'font-weight:bold;'))
+                    . HTMLContainer::generateMarkup('label', 'Update:', array('for'=>'cbLastConfirmed'))
+                    . HTMLInput::generateMarkup('', array('name'=>'cbLastConfirmed', 'type'=>'checkbox','style'=>'margin-left:.3em;'))
+                    . HTMLInput::generateMarkup($lastConfDate, array('name'=>'txtLastConfirmed', 'class'=>'ckdate','style'=>'margin-left:1em;'))
+                    , array('class'=>'hhk-panel')),
+            array('style'=>'float:left;'));
 
+
+        // change patient Selector
+        if (count($notPatients) > 0) {
+
+            $changePatientMU = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('fieldset',
+                        HTMLContainer::generateMarkup('legend', 'Change Patient', array('style'=>'font-weight:bold;'))
+                        . HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($notPatients, '', TRUE), array('id'=>'selChangePsgPat', 'data-psg'=>$this->getIdPsg()))
+                        , array('class'=>'hhk-panel','title'=>'Change the patient to another person in this PSG.')),
+            array('style'=>'float:left;'))
+            . "<script type='text/javascript'>$(document).ready(function() { $('#selChangePsgPat').change(function () {changePsgPatient($(this).data('psg'), $(this).val(), $(this).children('option:selected').text());});});</script>";
+        }
+
+
+        // Change log
         $c = '';
         $v = '';
         if ($shoChgLog) {
@@ -430,14 +441,13 @@ class Psg {
         $editDiv = $pTable
                 .$table
                 . $memMkup
-                . $lastConfirmed
+                . $lastConfirmed . $changePatientMU
                 . $nTable->generateMarkup(array('style'=>'clear:left;width:700px;float:left;'))
                 . $c . $v;
 
         return $editDiv;
 
     }
-
 
     protected function saveMembers(PDO $dbh, $uname) {
 
@@ -490,14 +500,14 @@ class Psg {
         }
 
 
-        $this->psgRS->idPatient->setNewVal($idPatient);
-        $this->psgRS->Status->setNewVal('a');
         $this->psgRS->Updated_By->setNewVal($uname);
         $this->psgRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
 
 
         if ($this->psgRS->idPsg->getStoredVal() === 0) {
 
+            $this->psgRS->idPatient->setNewVal($idPatient);
+            $this->psgRS->Status->setNewVal('a');
             $idPsg = EditRS::insert($dbh, $this->psgRS);
 
             $this->psgRS->idPsg->setNewVal($idPsg);
@@ -505,7 +515,7 @@ class Psg {
             $logText = VisitLog::getInsertText($this->psgRS);
             VisitLog::logPsg($dbh, $idPsg, $idPatient, $logText, "insert", $uname);
 
-            $this->setNewMember($idPatient, 0, RelLinkType::Self);
+            $this->setNewMember($idPatient, RelLinkType::Self);
 
         } else {
 

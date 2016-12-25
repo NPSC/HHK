@@ -26,20 +26,19 @@ class HouseServices {
      *
      * @return array
      */
-    public static function getVisitFees(\PDO $dbh, $idGuest, $idVisit, $span, $isAdmin, $action = '', $coDate = '') {
+    public static function getVisitFees(\PDO $dbh, $idGuest, $idV, $idSpan, $isAdmin, $action = '', $coDate = '') {
 
         $uS = Session::getInstance();
 
-        if ($idVisit < 1) {
-            return array("error" => "Neither Guest or Visit was selected.");
+        $idVisit = intval($idV, 10);
+        $span = intval($idSpan, 10);
+
+        if ($idVisit < 1 || $span < 0) {
+            return array("error" => "A Visit is not selected: " . $idV . "-" . $idSpan);
         }
 
-        $query = "select * from vspan_listing where idVisit = :idv and Span = :spn;";
-        $stmt1 = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-        $stmt1->bindValue(':idv', $idVisit, PDO::PARAM_INT);
-        $stmt1->bindValue(':spn', $span, PDO::PARAM_INT);
-
-        $stmt1->execute();
+        $query = "select * from vspan_listing where idVisit = $idVisit and Span = $span;";
+        $stmt1 = $dbh->query($query);
         $rows = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
         $dataArray = '';
@@ -90,6 +89,7 @@ class HouseServices {
         $mkup = HTMLInput::generateMarkup($r['Current_Guests'], array('id' => 'currGuests', 'type' => 'hidden'))
                 .HTMLInput::generateMarkup($uS->EmptyExtendLimit, array('id' =>'EmptyExtend', 'type' => 'hidden'));
 
+        // Get main visit markup section
         $mkup .= HTMLContainer::generateMarkup('div',
                 VisitView::createActiveMarkup(
                         $dbh,
@@ -128,14 +128,14 @@ class HouseServices {
         } else if ($action == 'pf') {
 
             $mkup .= HTMLContainer::generateMarkup('div',
-                    VisitView::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action, $coDate), array('style' => 'min-width:600px;clear:left;'));
+                    VisitView::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
 
         } else {
             $mkup = HTMLContainer::generateMarkup('div',
                     VisitView::createStaysMarkup($dbh, $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $action, $coDate) . $mkup, array('id'=>'divksStays'));
 
             $mkup .= HTMLContainer::generateMarkup('div',
-                    VisitView::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action, $coDate), array('style' => 'min-width:600px;clear:left;'));
+                    VisitView::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
         }
 
         $mkup .= HTMLContainer::generateMarkup('div', VisitView::visitMessageArea('', ''), array('id' => 'visitMsg', 'class' => 'hhk-VisitMessage'));
@@ -1167,7 +1167,7 @@ class HouseServices {
 
             // Attach to PSG if not
             if (isset($psg->psgMembers[$guest->getIdName()]) === FALSE) {
-                $psg->setNewMember($guest->getIdName(), 0, $guest->getPatientRelationshipCode());
+                $psg->setNewMember($guest->getIdName(), $guest->getPatientRelationshipCode());
                 $psg->savePSG($dbh, $psg->getIdPatient(), $uS->username);
             }
 
@@ -2989,4 +2989,42 @@ from
         return array('vlog' => $lTable->generateMarkup());
     }
 
+    public static function changePatient(\PDO $dbh, $psgId, $newPatientId, $username, $replaceRelationship = RelLinkType::Friend) {
+
+        $idPsg = intval($psgId, 10);
+        $patientId = intval($newPatientId, 10);
+
+        // Id's valid
+        if ($idPsg < 1 || $patientId < 1) {
+            return array('warning' => 'PSG or Patient not set.  ');
+        }
+
+        $stmt = $dbh->query("Select count(idName) from name_guest where idName = $patientId and Relationship_Code = '" . RelLinkType::Self . "';");
+        $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+
+        // New patient cannot already be a member of this or another PSG.
+        if ($rows[0][0] > 0) {
+            return array('warning' => 'Guest is already a patient in this or another PSG.  ');
+        }
+
+        $psg = new Psg($dbh, $idPsg);
+
+        // New patient must already be a member of this PSG.
+        if (isset($psg->psgMembers[$patientId]) === FALSE) {
+            return array('warning' => 'Guest is not a member of this PSG.  ');
+        }
+
+        $oldPatient = $psg->getIdPatient();
+
+        $psg->setNewMember($patientId, RelLinkType::Self);
+        $psg->setNewMember($oldPatient, $replaceRelationship);
+
+        $psg->savePSG($dbh, $patientId, $username, 'Patient Changed from ' . $oldPatient . ' to ' . $patientId);
+
+        // Get labels
+        $labels = new Config_Lite(LABEL_FILE);
+
+        return array('result'=> $psg->createEditMarkup($dbh, $uS->guestLookups[GL_TableNames::PatientRel], $labels));
+
+    }
 }

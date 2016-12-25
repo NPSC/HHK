@@ -347,7 +347,7 @@ if (isset($_POST["btnSubmit"])) {
                     foreach ($_POST['selPrel'] as $k => $v) {
                         $k = intval(filter_var($k, FILTER_SANITIZE_NUMBER_INT),10);
                         $v = filter_var($v, FILTER_SANITIZE_STRING);
-                        $psg->setNewMember($k, 0, $v);
+                        $psg->setNewMember($k, $v);
                     }
                 }
 

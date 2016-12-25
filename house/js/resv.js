@@ -122,8 +122,6 @@ function getIncomeDiag(idResv, idReg) {
                     return false;
                 });
             }
-        })
-        .fail(function(jqxhr) {
         });
 }
 function setupRates(ckIn, idResource) {
@@ -305,4 +303,26 @@ function updateRoomChooser(idReserv, numGuests, arrivalDate, departureDate) {
 
     });
 
+}
+function changePsgPatient(idPsg, idGuest, patientName) {
+    "use strict";
+    if (!confirm('Change PSG patient to: ' + patientName)) {
+        return;
+    }
+    $.getJSON("ws_ckin.php", {psg: idPsg, gid: idGuest, cmd: 'changePatient'})
+        .done(function(data) {
+            if (data.error) {
+                if (data.gotopage) {
+                    window.location.assign(data.gotopage);
+                }
+                flagAlertMessage(data.error, true);
+                return;
+            } else if (data.warning) {
+                flagAlertMessage(data.warning, false);
+
+            } else if (data.result) {
+                $('#divPSGContainer').children().remove();
+                $('#divPSGContainer').append($(data.result));
+            }
+        });
 }

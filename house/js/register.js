@@ -854,7 +854,7 @@ $(document).ready(function () {
                 window.location.assign("GuestEdit.php?id=" + cid);
             }
         },
-        null, false);
+        false);
 
     $('#calendar').hhkCalendar({
         defaultView: 'twoweeks',

@@ -559,8 +559,8 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                     }
                 }
             });
-            createAutoComplete($('#txtInvSearch'), 3, {cmd: "filter", 'basis':'ba'}, function (item) { getInvoicee(item, idVisit); }, lstXhr, false);
-            createAutoComplete($('#txtAddGuest'), 3, {cmd: "role"}, function (item) { getMember(item, idVisit, visitSpan); }, lstXhr);
+            createAutoComplete($('#txtInvSearch'), 3, {cmd: "filter", 'basis':'ba'}, function (item) { getInvoicee(item, idVisit); }, false);
+            createAutoComplete($('#txtAddGuest'), 3, {cmd: "role"}, function (item) { getMember(item, idVisit, visitSpan); });
 
             if ($('#selRateCategory').length > 0) {
                 $('#selRateCategory').change(function () {
