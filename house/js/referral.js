@@ -599,8 +599,8 @@ function injectSlot(data) {
         $('#resvGuest').children().remove().end().append($(data.adguests)).show();
         
         
-        $('.hhk-addResv').button({ icons: { primary: "ui-icon-plusthick" }, text: true});
-        $('.hhk-delResv').button({ icons: { primary: "ui-icon-minusthick" }, text: true});
+        $('.hhk-addResv, .hhk-delResv').button();
+
         
         if (!data.static || data.static !== 'y') {
             

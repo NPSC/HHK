@@ -72,7 +72,7 @@ class ReservationSvcs {
 
                 // patient member defined.
                 $patient = new Patient($dbh, 'h_', $id);
-                $patientPsg = $patient->getPatientPsg();
+                $patientPsg = $patient->getPatientPsg($dbh);
 
                 if ($patientPsg->getIdPsg() > 0) {
 
@@ -1408,12 +1408,31 @@ class ReservationSvcs {
     public static function moreGuestsTable(\PDO $dbh, Reservation_1 $resv, array $guests, $psg, $nonActiveButtons, $editPage = "GuestEdit.php") {
 
         $uS = Session::getInstance();
-
-        $rows = $psg->loadViews($dbh, 0, $psg->getIdPsg());
-
         $tbl = new HTMLTable();
 
-        foreach ($rows as $r) {
+        $stmt = $dbh->query("SELECT
+            ng.idName AS `idGuest`,
+            ng.Relationship_Code,
+            ng.Legal_Custody,
+            IFNULL(p2.idPsg, 0) AS `idPsg2`,
+            IFNULL(n.Name_Full, '') AS `Name_Full`,
+            IFNULL(np.Phone_Num, '') AS `Preferred_Phone`
+        FROM
+            name_guest ng
+                JOIN
+            psg p ON ng.idPsg = p.idPsg
+                LEFT JOIN
+            psg p2 ON ng.idName = p2.idPatient
+                JOIN
+            name n ON n.idName = ng.idName
+                LEFT JOIN
+            name_phone np ON np.idName = n.idName
+                AND n.Preferred_Phone = np.Phone_Code
+        WHERE
+            ng.idPsg = " . $psg->getIdPsg() . " ;");
+
+
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
             // Filter out primary guest
             if (isset($guests[$r['idGuest']]) && $guests[$r['idGuest']] == '1') {
@@ -1421,13 +1440,13 @@ class ReservationSvcs {
             }
 
             if (isset($guests[$r['idGuest']])) {
-                $btn = HTMLContainer::generateMarkup('button', 'Remove', array('id'=>'btnDelGuest'.$r['idGuest'], 'type'=>'button', 'data-name'=>$r['Name_First'] . ' ' . $r['Name_Last'], 'data-id'=>$r['idGuest'], 'class'=>'hhk-delResv', 'title'=>'Remove from the reservation'));
-                $ent = HTMLContainer::generateMarkup('a', $r['Name_First'] . ' ' . $r['Name_Last'], array('href'=>$editPage.'?id='.$r['idGuest'].'&psg='.$psg->getIdPsg(), 'class'=>'ui-state-highlight'));
+                $btn = HTMLContainer::generateMarkup('button', 'Remove', array('id'=>'btnDelGuest'.$r['idGuest'], 'type'=>'button', 'data-name'=>$r['Name_Full'], 'data-id'=>$r['idGuest'], 'class'=>'hhk-delResv', 'title'=>'Remove from the reservation'));
+                $ent = HTMLContainer::generateMarkup('a', $r['Name_Full'], array('href'=>$editPage.'?id='.$r['idGuest'].'&psg='.$psg->getIdPsg(), 'class'=>'ui-state-highlight'));
                 $rel = HTMLTable::makeTd($uS->guestLookups[GL_TableNames::PatientRel][$r['Relationship_Code']][1]);
                 $ph = HTMLTable::makeTd($r['Preferred_Phone']);
             } else {
-                $btn = HTMLContainer::generateMarkup('button', 'Add', array('id'=>'btnAdd'.$r['idGuest'], 'type'=>'button', 'data-name'=>$r['Name_First'] . ' ' . $r['Name_Last'], 'data-id'=>$r['idGuest'], 'class'=>'hhk-addResv', 'title'=>'Add to the reservation'));
-                $ent = HTMLContainer::generateMarkup('a', $r['Name_First'] . ' ' . $r['Name_Last'], array('href'=>$editPage.'?id='.$r['idGuest'].'&psg='.$psg->getIdPsg(), 'style'=>'color:#B5BECF;'));
+                $btn = HTMLContainer::generateMarkup('button', 'Add', array('id'=>'btnAdd'.$r['idGuest'], 'type'=>'button', 'data-name'=>$r['Name_Full'], 'data-id'=>$r['idGuest'], 'class'=>'hhk-addResv', 'title'=>'Add to the reservation'));
+                $ent = HTMLContainer::generateMarkup('a', $r['Name_Full'], array('href'=>$editPage.'?id='.$r['idGuest'].'&psg='.$psg->getIdPsg(), 'style'=>'color:#B5BECF;'));
                 $rel = HTMLTable::makeTd($uS->guestLookups[GL_TableNames::PatientRel][$r['Relationship_Code']][1], array('style'=>'color:#B5BECF;'));
                 $ph = HTMLTable::makeTd($r['Preferred_Phone'], array('style'=>'color:#B5BECF;'));
             }

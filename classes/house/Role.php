@@ -326,18 +326,9 @@ abstract class Role {
         return $this->currentlyStaying;
     }
 
-    public function getPatientPsg() {
+    public function getPatientPsg(PDO $dbh) {
         return $this->patientPsg;
     }
-
-//    public function loadPatientRel() {
-//
-//        $psg = $this->getPatientPsg();
-//
-//        if (is_null($psg) === FALSE && isset($psg->psgMembers[$this->getIdName()])) {
-//            $this->patientRelationshipCode = $psg->psgMembers[$this->getIdName()]->Relationship_Code->getStoredVal();
-//        }
-//    }
 
     public function getEmergContactObj(\PDO $dbh) {
 

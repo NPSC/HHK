@@ -2220,7 +2220,7 @@ class HouseServices {
                 if ($patientStaying === FALSE || $uS->PatientAsGuest === FALSE) {
 
                     $patient = new Patient($dbh, 'h_', $id);
-                    $psg = $patient->getPatientPsg();
+                    $psg = $patient->getPatientPsg($dbh);
                     $idPsg = $psg->getIdPsg();
 
                     $dataArray['patient'] = $patient->createMarkup();
@@ -2989,7 +2989,7 @@ from
         return array('vlog' => $lTable->generateMarkup());
     }
 
-    public static function changePatient(\PDO $dbh, $psgId, $newPatientId, $username, $replaceRelationship = RelLinkType::Friend) {
+    public static function changePatient(\PDO $dbh, $psgId, $newPatientId, $relationships, $username, $replaceRelationship = RelLinkType::Friend) {
 
         $idPsg = intval($psgId, 10);
         $patientId = intval($newPatientId, 10);
@@ -3016,15 +3016,28 @@ from
 
         $oldPatient = $psg->getIdPatient();
 
+        // Update the PSG with a the changed patient
         $psg->setNewMember($patientId, RelLinkType::Self);
         $psg->setNewMember($oldPatient, $replaceRelationship);
 
+        $psg->psgRS->idPatient->setNewVal($patientId);
+
         $psg->savePSG($dbh, $patientId, $username, 'Patient Changed from ' . $oldPatient . ' to ' . $patientId);
+
+        // Hospital stay
+        $hsnum = $dbh->exec("update hospital_stay set idPatient = $patientId where idPsg = $idPsg;");
+
+        // member type
+        $patientMem = new PatientMember($dbh, MemBasis::Indivual, $patientId);
+        $patientMem->saveMemberType($dbh, $username);
+
+        $guestMem = new GuestMember($dbh, MemBasis::Indivual, $oldPatient);
+        $guestMem->saveMemberType($dbh, $username);
 
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
 
-        return array('result'=> $psg->createEditMarkup($dbh, $uS->guestLookups[GL_TableNames::PatientRel], $labels));
+        return array('result'=> $psg->createEditMarkup($dbh, $relationships, $labels));
 
     }
 }

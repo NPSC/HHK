@@ -20,9 +20,18 @@ class Patient extends Role {
 
     protected function factory(PDO $dbh, $id) {
         $this->title = 'Patient';
-        $this->patientPsg = new Psg($dbh, 0, $id);
+        $this->patientPsg = NULL;
 
         return new PatientMember($dbh, MemBasis::Indivual, $id);
+    }
+
+    public function getPatientPsg(PDO $dbh) {
+
+        if (is_null($this->patientPsg)) {
+            $this->patientPsg = new Psg($dbh, 0, $id);
+        }
+
+        return $this->patientPsg;
     }
 
 

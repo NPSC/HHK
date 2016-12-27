@@ -382,11 +382,6 @@ class PatientMember extends RoleMember {
         return VolMemberType::Patient;
     }
 
-
-//    public function getPsgObj(PDO $dbh) {
-//        return new Psg($dbh, 0, $this->get_idName());
-//    }
-//
     public function createMarkupHdr() {
 
         $tr = parent::createMarkupHdr();

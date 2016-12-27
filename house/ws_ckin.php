@@ -592,7 +592,7 @@ try {
             $idGuest = intval(filter_var($_GET['gid'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $events = HouseServices::changePatient($dbh, $idPsg, $idGuest, $uS->username);
+        $events = HouseServices::changePatient($dbh, $idPsg, $idGuest, $uS->guestLookups[GL_TableNames::PatientRel], $uS->username);
 
         break;
 

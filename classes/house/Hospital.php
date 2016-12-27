@@ -442,6 +442,7 @@ class HospitalStay {
             if (count($rows) === 1) {
                 EditRS::loadRow($rows[0], $hstay);
             }
+
         } else if ($idHospitalStay > 0) {
 
             $stmt = $dbh->query("Select * from hospital_stay where idHospital_stay=$idHs");

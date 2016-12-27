@@ -102,14 +102,14 @@ class CheckInGroup {
             $this->patient = new Patient($dbh, 'h_', $idp);
             $this->patient->save($dbh, $post, $uS->username);
 
-            $this->psg = $this->patient->getPatientPsg();
+            $this->psg = $this->patient->getPatientPsg($dbh);
 
         } else if ($idHospitalStay > 0) {
 
             $hospStay = new HospitalStay($dbh, 0, $idHospitalStay);
 
             $this->patient = new Patient($dbh, 'h_', $hospStay->getIdPatient());
-            $this->psg = $this->patient->getPatientPsg();
+            $this->psg = $this->patient->getPatientPsg($dbh);
 
         } else {
 
@@ -490,13 +490,9 @@ class Psg {
 
         $sanNotes = filter_var($notes, FILTER_SANITIZE_STRING);
 
-        if ($uname != '') {
-            $uname =  ', ' . $uname;
-        }
-
         if ($sanNotes != '') {
             $oldNotes = (is_null($this->psgRS->Notes->getStoredVal()) ? '' : $this->psgRS->Notes->getStoredVal());
-            $this->psgRS->Notes->setNewVal($oldNotes . "\r\n" . date('m-d-Y') . $uname . ' - ' . $sanNotes);
+            $this->psgRS->Notes->setNewVal($oldNotes . "\r\n" . date('m-d-Y') . ($uname != '' ? ', '.$uname : $uname) . ' - ' . $sanNotes);
         }
 
 
