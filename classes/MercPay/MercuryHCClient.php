@@ -2,19 +2,16 @@
 /**
  * MercuryHCClient.php
  *
- *
- * @category  Payments
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @link      https://github.com/NPSC/HHK
  */
+
+namespace npsc;
 
 /**
 * Non Profit Software Corporation HostedCheckout PHP Client
 *
-* ©2013-2016 Non Profit Software Corporation - all rights reserved.
+* ©2013-2017 Non Profit Software Corporation - all rights reserved.
 *
 * Disclaimer:
 * This software and all specifications and documentation contained

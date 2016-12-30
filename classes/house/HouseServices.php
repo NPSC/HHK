@@ -3,12 +3,9 @@
 /**
  * HouseServices.php
  *
- *
- * @category  House
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
