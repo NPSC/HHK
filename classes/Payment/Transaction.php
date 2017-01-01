@@ -8,7 +8,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-namespace npsc;
 
 /**
  * Description of Transaction
@@ -17,7 +16,7 @@ namespace npsc;
  */
 class Transaction {
 
-    public static function recordTransaction(\PDO $dbh, \PaymentResponse $vr, $gwName, $transType, $transMethod) {
+    public static function recordTransaction(\PDO $dbh, PaymentResponse $vr, $gwName, $transType, $transMethod) {
 
         // Record transaction
         $transRs = new TransRs();

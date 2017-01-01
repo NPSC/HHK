@@ -2,12 +2,10 @@
 /**
  * donate.php
  *
- * @category  member
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 require ("AdminIncludes.php");

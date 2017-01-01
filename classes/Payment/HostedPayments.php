@@ -8,7 +8,7 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-namespace npsc;
+
 
 /**
  * CardInfo - Create markup for  the Hosted CC portal.
@@ -17,7 +17,7 @@ namespace npsc;
  */
 class CardInfo {
 
-    public static function sendToPortal(PDO $dbh, $gw, $idPayor, $idGroup, InitCiRequest $initCi) {
+    public static function sendToPortal(\PDO $dbh, $gw, $idPayor, $idGroup, InitCiRequest $initCi) {
 
         $dataArray = array();
         $trace = FALSE;
@@ -57,7 +57,7 @@ class CardInfo {
     }
 
 
-    public static function portalReply(PDO $dbh, $gw, $cardId, $post) {
+    public static function portalReply(\PDO $dbh, $gw, $cardId, $post) {
 
         $cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $cardId);
 
@@ -105,7 +105,7 @@ class CardInfo {
 class CardInfoResponse extends PaymentResponse {
 
 
-    function __construct(\VerifyCiResponse $verifyCiResponse, $idPayor, $idGroup) {
+    function __construct(VerifyCiResponse $verifyCiResponse, $idPayor, $idGroup) {
         $this->response = $verifyCiResponse;
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
@@ -122,7 +122,7 @@ class CardInfoResponse extends PaymentResponse {
 
 class HostedCheckout {
 
-    public static function sendToPortal(PDO $dbh, $gw, $idPayor, $idGroup, $invoiceNumber, InitCkOutRequest $initCoRequest) {
+    public static function sendToPortal(\PDO $dbh, $gw, $idPayor, $idGroup, $invoiceNumber, InitCkOutRequest $initCoRequest) {
 
         $dataArray = array();
         $trace = FALSE;
@@ -165,7 +165,7 @@ class HostedCheckout {
         return $dataArray;
     }
 
-    public static function portalReply(PDO $dbh, $gw, $paymentId, $payNotes) {
+    public static function portalReply(\PDO $dbh, $gw, $paymentId, $payNotes) {
 
         $uS = Session::getInstance();
 

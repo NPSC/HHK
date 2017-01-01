@@ -2,14 +2,10 @@
 /**
  * Index.php
  *
- *
- *
- * @category  house
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 include ("homeIncludes.php");
 require (SEC . 'UserClass.php');
@@ -98,7 +94,7 @@ if ($pge != "" && $pge != $page->get_Login_Page()) {
         // check authorization to next page
         if (ComponentAuthClass::is_Authorized($pge)) {
 
-            $dbh->exec("update `reservation` `r` left join `visit` `v` on `r`.`idReservation` = `v`.`idReservation` set `r`.`Status` = '" . ReservationStatus::Canceled . "' where `r`.`Status` = '" . ReservationStatus::Staying . "' and `v`.`idVisit` is NULL;");
+            //$dbh->exec("update `reservation` `r` left join `visit` `v` on `r`.`idReservation` = `v`.`idReservation` set `r`.`Status` = '" . ReservationStatus::Canceled . "' where `r`.`Status` = '" . ReservationStatus::Staying . "' and `v`.`idVisit` is NULL;");
 
             header('Location: ' . $pge);
             exit();

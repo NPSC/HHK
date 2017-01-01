@@ -2,12 +2,10 @@
 /**
  * NameSch.php
  *
- * @category  member
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
 require (CLASSES . 'CreateMarkupFromDB.php');
@@ -39,8 +37,8 @@ $recHistory = History::getMemberHistoryMarkup($dbh);
 $volHistory = 'f';
 if (isset($uS->siteList[WebSiteCode::Volunteer])) {
     // Vol history
-    $now = new DateTime();
-    $volHistory = CreateMarkupFromDB::generateHTML_Table(History::getVolEventsMarkup($dbh, $now->sub(new DateInterval('P3D'))), 'volH');
+    $now = new \DateTime();
+    $volHistory = CreateMarkupFromDB::generateHTML_Table(History::getVolEventsMarkup($dbh, $now->sub(new \DateInterval('P3D'))), 'volH');
 }
 
 ?>

@@ -2,12 +2,10 @@
 /**
  * commonFunc.php
  *
- * @category  Utility
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 function initPDO($override = FALSE) {
@@ -34,21 +32,21 @@ function initPDO($override = FALSE) {
     }
 
     try {
-        $dbh = new PDO(
+        $dbh = new \PDO(
                 "mysql:host=".$ssn->databaseURL.";dbname=" . $ssn->databaseName,
                 $dbuName,
                 $dbPw,
-                array(PDO::ATTR_PERSISTENT => true)
+                array(\PDO::ATTR_PERSISTENT => true)
                 );
 
-        $dbh->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-        $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $dbh->setAttribute(PDO::ATTR_CASE, PDO::CASE_NATURAL);
+        $dbh->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
+        $dbh->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $dbh->setAttribute(\PDO::ATTR_CASE, \PDO::CASE_NATURAL);
 
         // Syncromize PHP and mySQL timezones
         syncTimeZone($dbh);
 
-    } catch (PDOException $e) {
+    } catch (\PDOException $e) {
         print "Error!: " . $e->getMessage() . "<br/>";
         $ssn->destroy();
         die();
@@ -72,7 +70,7 @@ function initDB() {
 
 function syncTimeZone(\PDO $dbh) {
 
-    $now = new DateTime();
+    $now = new \DateTime();
     $mins = $now->getOffset() / 60;
     $sgn = ($mins < 0 ? -1 : 1);
     $mins = abs($mins);
@@ -119,7 +117,6 @@ function stripslashes_gpc(&$value) {
 }
 
 function prepareEmail(Config_Lite $config) {
-
 
     $mail = new PHPMailer;
     $mailService = $config->getString('email_server', 'Type', 'mail');
@@ -183,25 +180,25 @@ function setTimeZone($uS, $strDate) {
     }
 
     if (isset($uS->tz) === FALSE || $uS->tz == '') {
-        throw new Exception('Session Timezone var (tz) not set.');
+        throw new \Exception('Session Timezone var (tz) not set.');
     }
 
     if ($strDate != '') {
 
         try {
-            $theDT = new DateTime($strDate);
-            $theDT->setTimezone(new DateTimeZone($uS->tz));
-        } catch (Exception $ex) {
-            $theDT = new DateTime();
+            $theDT = new \DateTime($strDate);
+            $theDT->setTimezone(new \DateTimeZone($uS->tz));
+        } catch (\Exception $ex) {
+            $theDT = new \DateTime();
         }
 
     } else {
 
         try {
-            $theDT = new DateTime();
-            $theDT->setTimezone(new DateTimeZone($uS->tz));
+            $theDT = new \DateTime();
+            $theDT->setTimezone(new \DateTimeZone($uS->tz));
         } catch (Exception $ex) {
-            $theDT = new DateTime();
+            $theDT = new \DateTime();
         }
     }
 
@@ -210,7 +207,7 @@ function setTimeZone($uS, $strDate) {
 }
 
 
-function incCounter(PDO $dbh, $counterName) {
+function incCounter(\PDO $dbh, $counterName) {
 
         $dbh->query("CALL IncrementCounter('$counterName', @num);");
 
@@ -233,7 +230,7 @@ function checkHijack($uS) {
     }
 }
 
-function setHijack(PDO $dbh, $uS, $code = "") {
+function setHijack(\PDO $dbh, $uS, $code = "") {
 
     $id = $uS->uid;
     $query = "update w_users set Verify_Address = '$code' where idName = $id;";
@@ -390,40 +387,32 @@ function readGenLookups($con, $tbl, $orderBy = "Code") {
     return $genArray;
 }
 
-function readGenLookupsPDO(PDO $dbh, $tbl, $orderBy = "Code") {
+function readGenLookupsPDO(\PDO $dbh, $tbl, $orderBy = "Code") {
 
-    $query = "SELECT Code, Description, Substitute, Type FROM gen_lookups WHERE Table_Name = :tbl order by `$orderBy`;";
-    $stmt = $dbh->prepare($query);
-    $stmt->bindParam(':tbl', $tbl, PDO::PARAM_STR);
+    $safeTbl = str_replace("'", '', $tbl);
+    $query = "SELECT Code, Description, Substitute, Type FROM gen_lookups WHERE Table_Name = '$safeTbl' order by `$orderBy`;";
+    $stmt = $dbh->query($query);
 
     $genArray = array();
 
-    if ($stmt->execute()) {
-        foreach ($stmt->fetchAll() as $row) {
-            $genArray[$row["Code"]] = $row;
-        }
-    } else {
-
+    while ($row = $stmt->fetch(\PDO::FETCH_BOTH)) {
+        $genArray[$row["Code"]] = $row;
     }
+
     return $genArray;
 }
 
 
-function readLookups(PDO $dbh, $tbl, $orderBy = "Code") {
+function readLookups(\PDO $dbh, $tbl, $orderBy = "Code") {
 
-    $query = "SELECT Code, Title FROM lookups WHERE Category = :tbl and `Use` = 'y' order by `$orderBy`;";
-    $stmt = $dbh->prepare($query);
-    $stmt->bindParam(':tbl', $tbl, PDO::PARAM_STR);
-
+    $query = "SELECT Code, Title FROM lookups WHERE Category = '$tbl' and `Use` = 'y' order by `$orderBy`;";
+    $stmt = $dbh->query($query);
     $genArray = array();
 
-    if ($stmt->execute()) {
-        foreach ($stmt->fetchAll() as $row) {
-            $genArray[$row["Code"]] = $row;
-        }
-    } else {
-
+    while ($row = $stmt->fetch(\PDO::FETCH_BOTH)) {
+        $genArray[$row["Code"]] = $row;
     }
+
     return $genArray;
 }
 
@@ -467,7 +456,7 @@ function removeOptionGroups($gArray) {
     return $clean;
 }
 
-function saveGenLk(PDO $dbh, $tblName, array $desc, array $subt, $del, $type = array()) {
+function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $type = array()) {
 
     if (isset($desc)) {
 
@@ -521,7 +510,7 @@ function saveGenLk(PDO $dbh, $tblName, array $desc, array $subt, $del, $type = a
     }
 }
 
-function replaceGenLk(PDO $dbh, $tblName, array $desc, array $subt, $del, $replace, array $replaceWith) {
+function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $replace, array $replaceWith) {
 
     $rowsAffected = 0;
 
@@ -586,5 +575,3 @@ function replaceGenLk(PDO $dbh, $tblName, array $desc, array $subt, $del, $repla
 
     return $rowsAffected;
 }
-
-

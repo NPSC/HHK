@@ -8,7 +8,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-namespace npsc;
 
 class CheckResponse extends PaymentResponse {
 
@@ -40,7 +39,7 @@ class CheckResponse extends PaymentResponse {
  */
 class CheckTX {
 
-    public static function checkSale(\PDO $dbh, \CheckResponse &$pr, $userName, $paymentDate) {
+    public static function checkSale(\PDO $dbh, CheckResponse &$pr, $userName, $paymentDate) {
 
         // Record transaction
         $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::Sale, TransMethod::Check);
@@ -177,7 +176,7 @@ class TransferResponse extends PaymentResponse {
 
 class TransferTX {
 
-    public static function sale(\PDO $dbh, \TransferResponse &$pr, $userName, $paymentDate) {
+    public static function sale(\PDO $dbh, TransferResponse &$pr, $userName, $paymentDate) {
 
         // Record transaction
         $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::Sale, TransMethod::Transfer);
@@ -214,7 +213,7 @@ class TransferTX {
 
     }
 
-    public static function returnAmount(\PDO $dbh, \TransferResponse &$pr, $userName, $paymentDate) {
+    public static function returnAmount(\PDO $dbh, TransferResponse &$pr, $userName, $paymentDate) {
 
         // Record transaction
         $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::Retrn, TransMethod::Transfer);
@@ -252,7 +251,7 @@ class TransferTX {
 
     }
 
-    public static function transferReturn(\PDO $dbh, \TransferResponse &$pr, $username, PaymentRS $payRs) {
+    public static function transferReturn(\PDO $dbh, TransferResponse &$pr, $username, PaymentRS $payRs) {
 
         // Record transaction
         $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::Retrn, TransMethod::Transfer);

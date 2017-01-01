@@ -1,9 +1,12 @@
 <?php
 
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Register.php
+ *
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -24,8 +27,8 @@ class Register {
 
         $uS = Session::getInstance();
         $events = array();
-        $p1d = new DateInterval('P1D');
-        $today = new DateTime();
+        $p1d = new \DateInterval('P1D');
+        $today = new \DateTime();
         $today->setTime(0, 0, 0);
 
 
@@ -33,8 +36,8 @@ class Register {
             return $events;
         }
 
-        $beginDate = new DateTime(date("Y-m-d", $startTime));
-        $endDate = new DateTime(date("Y-m-d", $endTime));
+        $beginDate = new \DateTime(date("Y-m-d", $startTime));
+        $endDate = new \DateTime(date("Y-m-d", $endTime));
 
         // Get events within time span.
         $parms = array(
@@ -53,7 +56,7 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
         $rescs = array();
         $level = 0;
 
-        foreach ($rstmt->fetchAll(PDO::FETCH_ASSOC) as $re) {
+        foreach ($rstmt->fetchAll(\PDO::FETCH_ASSOC) as $re) {
             $re["_level_"] = $level++;
             $rescs[$re["idResource"]] = $re;
         }
@@ -73,7 +76,7 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
         $hospitals = array(0 => array('idHospital'=>0, 'Background_Color'=>'blue', 'Text_Color'=>'white'));
         if ($uS->RegColors) {
             $hstmt = $dbh->query("Select idHospital, Reservation_Style as Background_Color, Stay_Style as Text_Color from hospital where Title != '(None)'");
-            foreach ($hstmt->fetchAll(PDO::FETCH_ASSOC) as $h) {
+            foreach ($hstmt->fetchAll(\PDO::FETCH_ASSOC) as $h) {
                 $hospitals[$h['idHospital']] = $h;
             }
         }
@@ -92,19 +95,19 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
 where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(End_Date), DATE(now())) > DATE('" . $beginDate->format('Y-m-d') . "');";
         $stmtrs = $dbh->query($query1);
 
-        while ($r = $stmtrs->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmtrs->fetch(\PDO::FETCH_ASSOC)) {
 
             if ($r["idResource"] == 0 || isset($rescs[$r["idResource"]]) === FALSE) {
                 continue;
             }
 
-            $startDT = new DateTime($r['Start_Date']);
-            $endDT = new DateTime($r['End_Date']);
+            $startDT = new \DateTime($r['Start_Date']);
+            $endDT = new \DateTime($r['End_Date']);
             $endDT->setTime(10, 0, 0);
             $endDT->sub($p1d);
 
             // Determine if the resource is in use "TODAY"
-            $now = new DateTime();
+            $now = new \DateTime();
             if (($startDT <= $now && $endDT >= $now) || $startDT->format('Y-m-d') == $now->format('Y-m-d')) {
                 $rescUsed[$r["idResource"]] = 'y';
             }
@@ -138,15 +141,15 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
     DATE(Arrival_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(Actual_Departure), case when DATE(now()) > DATE(Expected_Departure) then DATE(now()) else DATE(Expected_Departure) end) >= DATE('" .$beginDate->format('Y-m-d') . "');";
         $stmtv = $dbh->query($query);
 
-        while ($r = $stmtv->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmtv->fetch(\PDO::FETCH_ASSOC)) {
 
             if ($r["idResource"] == 0 || isset($rescs[$r["idResource"]]) === FALSE) {
                 continue;
             }
 
-            $startDT = new DateTime($r['Arrival_Date']);
+            $startDT = new \DateTime($r['Arrival_Date']);
             $extended = FALSE;
-            $now = new DateTime();
+            $now = new \DateTime();
             $now->setTime(23, 59, 59);
             $s = array();
 
@@ -158,9 +161,9 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                     continue;
                 }
 
-                $endDT = new DateTime($r['Actual_Departure']);
-                $dtend = new DateTime($r['Actual_Departure']);
-                $dtendDate = new DateTime($r['Actual_Departure']);
+                $endDT = new \DateTime($r['Actual_Departure']);
+                $dtend = new \DateTime($r['Actual_Departure']);
+                $dtendDate = new \DateTime($r['Actual_Departure']);
                 $dtendDate->setTime(10, 0, 0);
                 $endDT->sub($p1d);
 
@@ -168,8 +171,8 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
             } else {
 
                 // Expected Departure
-                $dtend = new DateTime($r['Expected_Departure']);
-                $dtendDate = new DateTime($r['Expected_Departure']);
+                $dtend = new \DateTime($r['Expected_Departure']);
+                $dtendDate = new \DateTime($r['Expected_Departure']);
                 $dtendDate->setTime(10, 0, 0);
 
                 if ($now > $dtendDate) {
@@ -177,7 +180,7 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                     $dtend = $now;
                     $extended = TRUE;
                 } else {
-                    $endDT = new DateTime($r['Expected_Departure']);
+                    $endDT = new \DateTime($r['Expected_Departure']);
                     $endDT->sub($p1d);
                 }
             }
@@ -350,7 +353,7 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
 
             $eventId = 9000;
 
-            while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
 
                 if ($r['Status'] == ReservationStatus::Waitlist && $r["idResource"] > 0) {
@@ -366,16 +369,16 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                 }
 
 
-                $startDT = new DateTime($r['Arrival_Date']);
-                $stDT = new DateTime($r['Arrival_Date']);
+                $startDT = new \DateTime($r['Arrival_Date']);
+                $stDT = new \DateTime($r['Arrival_Date']);
                 $stDT->setTime(10, 0, 0);
 
                 $extended = FALSE;
-                $now = new DateTime();
+                $now = new \DateTime();
                 $s = array();
 
-                $endDT = new DateTime($r['Expected_Departure']);
-                $clDate = new DateTime($r['Expected_Departure']);
+                $endDT = new \DateTime($r['Expected_Departure']);
+                $clDate = new \DateTime($r['Expected_Departure']);
                 $clDate->setTime(10, 0, 0);
 
 
@@ -578,7 +581,7 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                     $clDate->setTime(10, 0, 0);
                 }
 
-                $endDT->sub(new DateInterval("P1D"));
+                $endDT->sub(new \DateInterval("P1D"));
 
 
                 $s['id'] = 'v' . $eventId++;

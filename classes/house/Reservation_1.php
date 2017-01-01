@@ -2,13 +2,10 @@
 /**
  * Reservation_1.php
  *
- *
- * @category  House
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -92,11 +89,11 @@ class Reservation_1 {
 
     public function move(\PDO $dbh, $startDelta, $endDelta, $uname, $forceNewResource = FALSE) {
 
-        $startInterval = new DateInterval('P' . abs($startDelta) . 'D');
-        $endInterval = new DateInterval('P' . abs($endDelta) . 'D');
+        $startInterval = new \DateInterval('P' . abs($startDelta) . 'D');
+        $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
 
-        $newStartDT = new DateTime($this->getExpectedArrival());
-        $newEndDt = new DateTime($this->getExpectedDeparture());
+        $newStartDT = new \DateTime($this->getExpectedArrival());
+        $newEndDt = new \DateTime($this->getExpectedDeparture());
 
         if ($endDelta < 0 || $startDelta < 0) {
 
@@ -106,8 +103,8 @@ class Reservation_1 {
 
             // Validity check
             if ($endDelta < 0 && $startDelta == 0) {
-                $endDATE = new DateTime($newEndDt->format('Y-m-d 00:00:00'));
-                $startDATE = new DateTime($newStartDT->format('Y-m-d 00:00:00'));
+                $endDATE = new \DateTime($newEndDt->format('Y-m-d 00:00:00'));
+                $startDATE = new \DateTime($newStartDT->format('Y-m-d 00:00:00'));
                 if ($endDATE <= $startDATE) {
                     $this->resultMessage = "The End date precedes the Start date.  ";
                     return FALSE;
@@ -123,8 +120,8 @@ class Reservation_1 {
 
             // Validity check
             if ($startDelta > 0 && $endDelta == 0) {
-                $endDATE = new DateTime($newEndDt->format('Y-m-d 00:00:00'));
-                $startDATE = new DateTime($newStartDT->format('Y-m-d 00:00:00'));
+                $endDATE = new \DateTime($newEndDt->format('Y-m-d 00:00:00'));
+                $startDATE = new \DateTime($newStartDT->format('Y-m-d 00:00:00'));
                 if ($endDATE <= $startDATE) {
                     $this->resultMessage = "The End date precedes the Start date.  ";
                     return FALSE;
@@ -333,11 +330,11 @@ class Reservation_1 {
 
     protected static function adjustStartDate($stringDate, $startHolidays, $endHolidays, $boDays) {
 
-        $arDate = new DateTime($stringDate);
+        $arDate = new \DateTime($stringDate);
 
         // Initially check holidays
         while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
-            $arDate->sub(new DateInterval('P1D'));
+            $arDate->sub(new \DateInterval('P1D'));
         }
 
         $dateInfo = getDate($arDate->format('U'));
@@ -347,14 +344,14 @@ class Reservation_1 {
         while (array_search($dateInfo['wday'], $boDays) !== FALSE && $limit-- > 0) {
             // move the beginning of the stay back a day
 
-            $arDate->sub(new DateInterval('P1D'));
+            $arDate->sub(new \DateInterval('P1D'));
             $dateInfo = getDate($arDate->format('U'));
 
         }
 
         // Finally check holidays again
         while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
-            $arDate->sub(new DateInterval('P1D'));
+            $arDate->sub(new \DateInterval('P1D'));
         }
 
         return $arDate->format('Y-m-d H:i:s');
@@ -366,11 +363,11 @@ class Reservation_1 {
 
     protected static function adjustEndDate($stringDate, $startHolidays, $endHolidays, $boDays) {
 
-        $arDate = new DateTime($stringDate);
+        $arDate = new \DateTime($stringDate);
 
         // add all consecutive holidays
         while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
-            $arDate->add(new DateInterval('P1D'));
+            $arDate->add(new \DateInterval('P1D'));
         }
 
 
@@ -380,13 +377,13 @@ class Reservation_1 {
         // Add all consecutive non work weekdays
         while (array_search($dateInfo['wday'], $boDays) !== FALSE && $limit-- > 0) {
             // add a day to the end of the stay
-            $arDate->add(new DateInterval('P1D'));
+            $arDate->add(new \DateInterval('P1D'));
             $dateInfo = getDate($arDate->format('U'));
         }
 
         // Finally, check for holidays again.
         while ($startHolidays->is_holiday($arDate->format('U')) || $endHolidays->is_holiday($arDate->format('U'))) {
-            $arDate->add(new DateInterval('P1D'));
+            $arDate->add(new \DateInterval('P1D'));
         }
 
         return $arDate->format('Y-m-d H:i:s');
@@ -714,11 +711,11 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
 
     public static function showListByStatus(PDO $dbh, $editPage, $checkinPage, $reservStatus = ReservationStatus::Committed, $shoDirtyRooms = FALSE, $idResc = NULL, $daysAhead = 2, $showConstraints = FALSE) {
 
-        $dateAhead = new DateTime();
+        $dateAhead = new \DateTime();
 
 
         if ($daysAhead > 0) {
-            $dateAhead->add(new DateInterval('P' . $daysAhead . 'D'));
+            $dateAhead->add(new \DateInterval('P' . $daysAhead . 'D'));
         }
 
         if (is_null($idResc) === FALSE) {
@@ -792,9 +789,9 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
 
                 $guestMember = GuestMember::GetDesignatedMember($dbh, $resv->getIdGuest(), MemBasis::Indivual);
 
-                $today = new DateTime();
+                $today = new \DateTime();
                 $today->setTime(23, 59, 59);
-                $expArr = new DateTime($resv->getExpectedArrival());
+                $expArr = new \DateTime($resv->getExpectedArrival());
 
                 $star = '';
                 $dirtyRoom = '';
@@ -1329,9 +1326,9 @@ where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdRe
     public function getExpectedDays() {
 
         if ($this->getExpectedArrival() != '' && $this->getExpectedDeparture() != '') {
-            $ad = new DateTime($this->getExpectedArrival());
+            $ad = new \DateTime($this->getExpectedArrival());
             $ad->setTime(11, 0, 0);
-            $dd = new DateTime($this->getExpectedDeparture());
+            $dd = new \DateTime($this->getExpectedDeparture());
             $dd->setTime(11, 0, 0);
 
             return $dd->diff($ad, TRUE)->days;
@@ -1342,9 +1339,9 @@ where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdRe
     public static function getExpectedDaysDT($startDT, $endDT) {
 
         if (is_a($startDT, 'DateTime') && is_a($endDT, 'DateTime')){
-            $ad = new DateTime($startDT->format('Y-m-d H:i:s'));
+            $ad = new \DateTime($startDT->format('Y-m-d H:i:s'));
             $ad->setTime(11, 0, 0);
-            $dd = new DateTime($endDT->format('Y-m-d H:i:s'));
+            $dd = new \DateTime($endDT->format('Y-m-d H:i:s'));
             $dd->setTime(11, 0, 0);
 
             return $dd->diff($ad, TRUE)->days;

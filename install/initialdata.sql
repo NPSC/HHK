@@ -1,3 +1,7 @@
+-- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+-- @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+-- @license   MIT
+-- @link      https://github.com/NPSC/HHK
 
 REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`) VALUES
 ('Address_Purpose','1','Home','i',''),
@@ -546,7 +550,7 @@ replace INTO invoice_line_type (id, Description, Order_Position) VALUES
 REPLACE INTO `insurance_type` (`idInsurance_type`, `Title`, `Is_Primary`, `Multiselect`, `List_Order`) VALUES 
 ('h', 'Primary', '1', '10', '10'),
 ('p', 'Private', '0', '1', '20');
-
+-- ;
 
 --
 -- insert super user
@@ -555,18 +559,9 @@ REPLACE into name (idName, Name_Last, Member_Type, Member_Status, Record_Member)
 	values (-1, 'admin', 'ai', 'a', 1);
 -- ;
 
-
---
--- Dumping data for table `w_auth`
---
 REPLACE INTO `w_auth` (`idName`,`Role_Id`,`Organization_Id`,`Policy_id`,`Updated_By`,`Last_Updated`,`User_Name`,`Status`) 
     VALUES (-1,'10','p',0,'admin',now(),'admin','a');
 -- ;
-
-
---
--- Dumping data for table `w_users`
---
 
 REPLACE INTO `w_users` VALUES (-1,'admin','539e17171312c324d3c23908f85f3149','a','','','','','done',NULL,'','',NULL,now());
 -- ;
@@ -601,7 +596,7 @@ REPLACE INTO `counter` VALUES
 --
 -- Mercury Hosted Gateway
 --
-Insert INTO `cc_hosted_gateway` (`cc_name`, `Merchant_Id`, `Password`, `Credit_Url`, `Trans_Url`, `CardInfo_Url`, `Checkout_Url`, `Mobile_CardInfo_Url`, `Mobile_Checkout_Url`) 
+REPLACE INTO `cc_hosted_gateway` (`cc_name`, `Merchant_Id`, `Password`, `Credit_Url`, `Trans_Url`, `CardInfo_Url`, `Checkout_Url`, `Mobile_CardInfo_Url`, `Mobile_Checkout_Url`) 
 VALUES 
 ('Test', '', '', 'https://hc.mercurydev.net/hcws/hcservice.asmx?WSDL', 'https://hc.mercurydev.net/tws/TransactionService.asmx?WSDL', 'https://hc.mercurydev.net/CardInfo.aspx', 'https://hc.mercurydev.net/Checkout.aspx', 'https://hc.mercurydev.net/mobile/mCardInfo.aspx', 'https://hc.mercurydev.net/mobile/mCheckout.aspx'),
 ('Production', '', '', 'https://hc.mercurypay.com/hcws/hcservice.asmx?WSDL', 'https://hc.mercurypay.com/tws/transactionservice.asmx?WSDL', 'https://hc.mercurypay.com/CardInfo.aspx', 'https://hc.mercurypay.com/Checkout.aspx', 'https://hc.mercurypay.com/mobile/mCardInfo.aspx', 'https://hc.mercurypay.com/mobile/mCheckout.aspx');

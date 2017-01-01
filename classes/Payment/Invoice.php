@@ -8,7 +8,7 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-namespace npsc;
+
 
 /**
  * Description of Invoice
@@ -25,7 +25,7 @@ class Invoice {
     protected $delegatedStatus;
 
 
-    function __construct(PDO $dbh, $invoiceNumber = '') {
+    function __construct(\PDO $dbh, $invoiceNumber = '') {
 
         $this->invRs = new InvoiceRs();
         $this->idInvoice = 0;
@@ -41,7 +41,7 @@ class Invoice {
             $stmt = $dbh->query("select i.*, ifnull(di.Invoice_Number, '') as Delegated_Invoice_Number, ifnull(di.Status, '') as Delegated_Invoice_Status
                 from invoice i left join invoice di on i.Delegated_Invoice_Id = di.idInvoice
                 where i.Invoice_Number = '$invoiceNumber'");
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) == 1) {
                 $this->loadFromRow($rows[0]);
@@ -74,7 +74,7 @@ WHERE
         AND i.Deleted = 0
         AND nv.idName IS NULL;");
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
     }
 
@@ -91,7 +91,7 @@ WHERE
 
     }
 
-    public function loadInvoice(PDO $dbh, $idInvoice = 0, $idPayment = 0) {
+    public function loadInvoice(\PDO $dbh, $idInvoice = 0, $idPayment = 0) {
 
         $this->invoiceNum = '';
 
@@ -101,7 +101,7 @@ WHERE
  from invoice i left join invoice di on i.Delegated_Invoice_Id = di.idInvoice
  where i.idInvoice = '$idInvoice'");
 
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         } else if ($idPayment > 0) {
 
@@ -109,7 +109,7 @@ WHERE
                     . "from payment_invoice pi join invoice i on pi.Invoice_Id = i.idInvoice "
                     . "left join invoice di on i.Delegated_Invoice_Id = di.idInvoice "
                     . "where pi.Payment_Id = $idPayment");
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         }
 
@@ -140,7 +140,7 @@ WHERE
 
         if ($id > 0) {
             $stmt = $dbh->query("select count(*) from invoice_line where Deleted = 0 and Invoice_Id = $id");
-            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
             if (count($rows) > 0) {
                 $count = $rows[0][0];
@@ -217,7 +217,7 @@ from
 where
     v.idVisit = " . $this->getOrderNumber());
 
-        $rows = $pstmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $pstmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if(count($rows) > 0){
             $idAssoc = $rows[0]['idAssociation'];
@@ -353,7 +353,7 @@ from
 where
     n.idName = $idName");
 
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) == 1) {
 
@@ -393,7 +393,7 @@ where
 
     }
 
-    public static function getBillToAddress(PDO $dbh, $idName) {
+    public static function getBillToAddress(\PDO $dbh, $idName) {
 
         $adrTbl = new HTMLTable();
 
@@ -436,7 +436,7 @@ from
 where
     n1.idName = $idName");
 
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) == 1) {
 
@@ -594,7 +594,7 @@ where
             EditRS::updateStoredVals($this->invRs);
     }
 
-    public function newInvoice(PDO $dbh, $amount, $soldToId, $idGroup, $orderNumber, $suborderNumber, $notes, $invoiceDate, $username, $description = '') {
+    public function newInvoice(\PDO $dbh, $amount, $soldToId, $idGroup, $orderNumber, $suborderNumber, $notes, $invoiceDate, $username, $description = '') {
 
         $invRs = new InvoiceRs();
         $invRs->Amount->setNewVal($amount);
@@ -661,7 +661,7 @@ where
     }
 
     // Call on payment only.
-    public function updateInvoiceBalance(PDO $dbh, $paymentAmount, $user) {
+    public function updateInvoiceBalance(\PDO $dbh, $paymentAmount, $user) {
         // positive payment amounts reduce a  balance.
         // Neg payments increase a  bal.
 
@@ -747,7 +747,7 @@ where
 
         $cnt = 0;
         $stmt = $dbh->query("select count(*) from payment_invoice pi where pi.Invoice_Id = " . $this->idInvoice);
-        $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         if (count($rows) > 0) {
             $cnt = $rows[0][0];
@@ -760,7 +760,7 @@ where
         return incCounter($dbh, 'invoice');
     }
 
-    public static function getIdFromInvNum(PDO $dbh, $invNum) {
+    public static function getIdFromInvNum(\PDO $dbh, $invNum) {
 
         $idInvoice = 0;
 

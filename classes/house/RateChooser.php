@@ -1,13 +1,11 @@
 <?php
 /**
- * RoomPricing.php
+ * RateChooser.php
  *
- *
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2015 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -72,7 +70,7 @@ class RateChooser {
     public function getPriceModel() {
         return $this->priceModel;
     }
-    
+
     public function createChangeRateMarkup(\PDO $dbh, \VisitRs $vRs, $isAdmin = FALSE) {
 
         $attrFixed = array('class'=>'hhk-fxFixed', 'style'=>'margin-left:.5em; ');

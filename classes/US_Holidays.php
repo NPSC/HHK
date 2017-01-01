@@ -1,13 +1,11 @@
 <?php
 /**
- * SysConst.php
+ * US_Holidays.php
  *
- * @category  Code Support
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -16,29 +14,30 @@
  * @author Eric
  */
 class US_Holidays {
+
     private $year, $list;
     const ONE_DAY = 86400; // Number of seconds in one day
     const Federal = 'f';
     const Designated = 'dh';
 
-    function __construct(PDO $dbh, $year = null) {
+    function __construct(\PDO $dbh, $year = null) {
 
         $this->year = (is_null($year))? (int) date("Y") : (int) $year;
 
         if (! is_int($this->year) || $this->year < 1997)
         {
-            throw new Exception($year.' is not a valid year. Valid values are integers greater than 1996.');
+            throw new \Exception($year.' is not a valid year. Valid values are integers greater than 1996.');
         }
 
         $stmt = $dbh->query("Select dh1, dh2, dh3, dh4 from desig_holidays where Year = ".$this->year);
-        $dhs = $stmt->fetchall(PDO::FETCH_ASSOC);
+        $dhs = $stmt->fetchall(\PDO::FETCH_ASSOC);
 
         if (count($dhs) == 0) {
             $dhs[0]['dh1'] = ''; $dhs[0]['dh2'] = ''; $dhs[0]['dh3'] = ''; $dhs[0]['dh4'] = '';
         }
 
         $stmt = $dbh->query("Select Code, Substitute from gen_lookups where Table_Name = 'Holiday'");
-        $hols = $stmt->fetchall(PDO::FETCH_ASSOC);
+        $hols = $stmt->fetchall(\PDO::FETCH_ASSOC);
 
         if (count($hols) == 0) {
             throw new Hk_Exception_Runtime('Holidays are not defined.  ');

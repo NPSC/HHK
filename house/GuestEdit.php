@@ -2,14 +2,10 @@
 /**
  * GuestEdit.php
  *
- *
- *
- * @category  house
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
 
@@ -626,7 +622,7 @@ if ($psg->getIdPsg() > 0) {
     // Reservation
     if ($uS->Reservation) {
         $stmt = $dbh->query("select * from reservation where idRegistration = ". $registration->getIdRegistration() . " order by idReservation desc");
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
 
         foreach ($rows as $r) {
@@ -639,7 +635,7 @@ if ($psg->getIdPsg() > 0) {
 
             // Get the room rate category names
             $stmt = $dbh->query("Select FA_Category, Title, Reduced_Rate_1 from room_rate");
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $categoryTitles = array();
             foreach ($rows as $r) {
                 $categoryTitles[$r['FA_Category']] = array(0 => $r['FA_Category'], 1 => $r['Title'] . ($r['Reduced_Rate_1'] == 0 ? '' :  ': $' . number_format($r['Reduced_Rate_1'], 0)));
@@ -855,7 +851,7 @@ $uS->guestId = $id;
                         <?php if ($uS->Reservation) { ?>
                         <li><a href="#vreserv"><?php echo $labels->getString('guestEdit', 'reservationTab', 'Reservations'); ?></a></li>
                         <?php } if ($uS->IncomeRated) {  ?>
-                        <li id="fin"><a href="#vfin">Financial Assistance</a></li>
+                        <li id="fin"><a href="#vfin">Financial Assistance...</a></li>
                         <?php } if ($memberFlag && $uS->RoomPriceModel != ItemPriceCode::None) {  ?>
                         <li><a href="ws_resc.php?cmd=payRpt&id=<?php echo $registration->getIdRegistration(); ?>" title="Payment History">Payments</a></li>
                         <?php } ?>

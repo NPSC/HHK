@@ -8,8 +8,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-namespace npsc;
-
 /**
  * Description of Price
  *
@@ -996,7 +994,7 @@ class Price3Steps extends PriceModel {
 
         $query = "Select Code, Substitute from gen_lookups where Table_Name = '" . Price3Steps::TABLE_NAME . "'";
         $stmt = $dbh->query($query);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $pers = array();
 

@@ -2,12 +2,10 @@
 /**
  * WebUser.php
  *
- * @category  Member
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2015 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -17,7 +15,7 @@
  */
 class WebUser {
 
-    public static function loadWebUserRS(PDO $dbh, $id) {
+    public static function loadWebUserRS(\PDO $dbh, $id) {
         $wUserRS = new W_usersRS();
 
         if ($id > 0) {
@@ -35,7 +33,7 @@ class WebUser {
         return $wUserRS;
     }
 
-    public static function getWebUserMarkup(PDO $dbh, $id, $maintFlag, $wUserRS = NULL) {
+    public static function getWebUserMarkup(\PDO $dbh, $id, $maintFlag, $wUserRS = NULL) {
         // Web User page
         if (is_null($wUserRS)) {
             $wUserRS = self::loadWebUserRs($dbh, $id);
@@ -121,7 +119,7 @@ class WebUser {
     }
 
 
-    public static function getSecurityGroupMarkup(PDO $dbh, $id, $allowFlag) {
+    public static function getSecurityGroupMarkup(\PDO $dbh, $id, $allowFlag) {
 
         $stmt = $dbh->query("select `Group_Code` as `Code`, `Title` as `Description` from w_groups");
         $grps = $stmt->fetchAll();
@@ -138,7 +136,7 @@ class WebUser {
 //            return "";
 //        }
 
-        foreach ($stmt->fetchAll(PDO::FETCH_NUM) as $r) {
+        foreach ($stmt->fetchAll(\PDO::FETCH_NUM) as $r) {
             $aArray[$r[0]] = $r[1];
         }
 
@@ -168,7 +166,7 @@ class WebUser {
     }
 
 
-    public static function saveUname(PDO $dbh, $admin, $parms, $maintFlag) {
+    public static function saveUname(\PDO $dbh, $admin, $parms, $maintFlag) {
 
         $reply = array();
         $success = '';
@@ -286,7 +284,7 @@ class WebUser {
             // Group Code security table
             //$sArray = readGenLookups($dbh, "Group_Code");
             $stmt = $dbh->query("select Group_Code as Code, Description from w_groups");
-            $groups = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $groups = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             foreach ($groups as $g) {
                 $sArray[$g['Code']] = $g;

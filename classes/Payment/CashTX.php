@@ -1,5 +1,4 @@
 <?php
-
 /**
  * CashTX.php
  *
@@ -8,8 +7,6 @@
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
-
-namespace npsc;
 
 
 class CashResponse extends PaymentResponse {

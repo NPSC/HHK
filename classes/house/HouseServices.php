@@ -36,7 +36,7 @@ class HouseServices {
 
         $query = "select * from vspan_listing where idVisit = $idVisit and Span = $span;";
         $stmt1 = $dbh->query($query);
-        $rows = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
 
         $dataArray = '';
 
@@ -108,17 +108,17 @@ class HouseServices {
 
             $dataArray['resc'] = Resource::roomListJSON($dbh);
 
-            $expDepDT = new DateTime($r['Expected_Departure']);
+            $expDepDT = new \DateTime($r['Expected_Departure']);
             $expDepDT->setTime(10, 0, 0);
-            $now = new DateTime();
+            $now = new \DateTime();
             $now->setTime(10, 0, 0);
 
             if ($expDepDT < $now) {
-                $expDepDT = $now->add(new DateInterval('P1D'));
+                $expDepDT = $now->add(new \DateInterval('P1D'));
             }
 
             $reserv = Reservation_1::instantiateFromIdReserv($dbh, $r['idReservation'], $idVisit);
-            $roomChooser = new RoomChooser($dbh, $reserv, 0, new DateTime(), $expDepDT);
+            $roomChooser = new RoomChooser($dbh, $reserv, 0, new \DateTime(), $expDepDT);
             $mkup .= $roomChooser->createChangeRoomsMarkup($dbh, $visitCharge, $idGuest, $isAdmin);
 
         // Pay fees
@@ -140,13 +140,13 @@ class HouseServices {
 
 
         if ($r['Span_End'] != '') {
-            $vspanEndDT = new DateTime($r['Span_End']);
+            $vspanEndDT = new \DateTime($r['Span_End']);
         } else {
-            $vspanEndDT = new DateTime();
+            $vspanEndDT = new \DateTime();
         }
 
         $vspanEndDT->setTime(23, 59, 59);
-        $vspanStartDT = new DateTime($r['Span_Start']);
+        $vspanStartDT = new \DateTime($r['Span_Start']);
 
         $dataArray['start'] = $vspanStartDT->format('c');
         $dataArray['end'] = $vspanEndDT->format('c');
@@ -201,7 +201,7 @@ class HouseServices {
 
                 //Add notes to psg Notes
                 $stmt = $dbh->query("Select p.* from registration rg join psg p on rg.idPsg = p.idPsg where rg.idRegistration = " . $visit->getIdRegistration());
-                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                 if (count($rows) > 0) {
 
@@ -266,14 +266,14 @@ class HouseServices {
             // Get the new expected co date.
             if (isset($post['txtUndoDate'])) {
 
-                $newExpectedDT = new DateTime(filter_var($post['txtUndoDate'], FILTER_SANITIZE_STRING));
-                $newExpectedDT->setTimezone(new DateTimeZone($uS->tz));
+                $newExpectedDT = new \DateTime(filter_var($post['txtUndoDate'], FILTER_SANITIZE_STRING));
+                $newExpectedDT->setTimezone(new \DateTimeZone($uS->tz));
 
             } else {
 
-                $newExpectedDT = new DateTime();
-                $newExpectedDT->setTimezone(new DateTimeZone($uS->tz));
-                $newExpectedDT->add(new DateInterval('P1D'));
+                $newExpectedDT = new \DateTime();
+                $newExpectedDT->setTimezone(new \DateTimeZone($uS->tz));
+                $newExpectedDT->add(new \DateInterval('P1D'));
             }
 
             $reply .= self::undoCheckout($dbh, $visit, $newExpectedDT, $uS->username);
@@ -352,34 +352,34 @@ class HouseServices {
 
                         $resc = Resource::getResourceObj($dbh, $newRescId);
 
-                        $now = new DateTime();
+                        $now = new \DateTime();
 
                         if (isset($post['rbReplaceRoomrpl'])) {
 
-                            $chRoomDT = new DateTime($visit->getSpanStart());
+                            $chRoomDT = new \DateTime($visit->getSpanStart());
 
                         } else {
 
                             if (isset($post['resvChangeDate']) && $post['resvChangeDate'] != '') {
 
                                 $chDT = setTimeZone($uS, filter_var($post['resvChangeDate'], FILTER_SANITIZE_STRING));
-                                $chRoomDT = new DateTime($chDT->format('Y-m-d') . ' ' . $now->format('H:i:s'));
+                                $chRoomDT = new \DateTime($chDT->format('Y-m-d') . ' ' . $now->format('H:i:s'));
 
                             } else {
                                 $chRoomDT = $now;
                             }
                         }
 
-                        $departDT = new DateTime($visit->getExpectedDeparture());
+                        $departDT = new \DateTime($visit->getExpectedDeparture());
                         $departDT->setTime(10, 0, 0);
-                        $now2 = new DateTime();
+                        $now2 = new \DateTime();
                         $now2->setTime(10, 0, 0);
 
                         if ($departDT < $now2) {
                             $departDT = $now2;
                         }
 
-                        $arriveDT = new DateTime($visit->getSpanStart());
+                        $arriveDT = new \DateTime($visit->getSpanStart());
 
                         if ($chRoomDT < $arriveDT || $chRoomDT > $now) {
 
@@ -450,7 +450,7 @@ class HouseServices {
                         $cDT = setTimeZone($uS, $coDate);
                         $dt = $cDT->format('Y-m-d');
                         $now = date('H:i:s');
-                        $coDT = new DateTime($dt . ' ' . $now);
+                        $coDT = new \DateTime($dt . ' ' . $now);
 
                         $reply .= $visit->checkOutGuest($dbh, $id, $coDT->format('Y-m-d H:i:s'), $notes, TRUE, $newDisposition);
                         $returnCkdIn = TRUE;
@@ -764,15 +764,15 @@ class HouseServices {
         // Dates
         if ($nextVisitRs->Span_End->getStoredVal() == '') {
 
-            $expDepDT = new DateTime($nextVisitRs->Expected_Departure->getStoredVal());
-            $now = new DateTime();
+            $expDepDT = new \DateTime($nextVisitRs->Expected_Departure->getStoredVal());
+            $now = new \DateTime();
 
             if ($now > $expDepDT) {
                 $expDepDT = $now;
             }
 
         } else {
-            $expDepDT = new DateTime($nextVisitRs->Span_End->getStoredVal());
+            $expDepDT = new \DateTime($nextVisitRs->Span_End->getStoredVal());
         }
 
         $startDt = date('Y-m-d 23:59:59', strtotime($visit->getSpanStart()));
@@ -887,7 +887,7 @@ class HouseServices {
 
     }
 
-    public static function undoCheckout(PDO $dbh, Visit $visit, \DateTime $newExpectedDT, $uname) {
+    public static function undoCheckout(\PDO $dbh, Visit $visit, \DateTime $newExpectedDT, $uname) {
 
         $reply = '';
 
@@ -896,10 +896,10 @@ class HouseServices {
         }
 
         // only allow 15 days to undo the checkout
-        $actDeptDT = new DateTime($visit->getActualDeparture());
+        $actDeptDT = new \DateTime($visit->getActualDeparture());
 
-        $fulcrumDT = new DateTime();
-        $fulcrumDT->sub(new DateInterval('P15D'));
+        $fulcrumDT = new \DateTime();
+        $fulcrumDT->sub(new \DateInterval('P15D'));
 
         if ($actDeptDT < $fulcrumDT) {
             $reply .= 'Cannot undo a checkout after 15 days.  ';
@@ -909,7 +909,7 @@ class HouseServices {
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $visit->getReservationId(), $visit->getIdVisit());
 
 
-        $startDT = new DateTime($visit->getSpanStart());
+        $startDT = new \DateTime($visit->getSpanStart());
         $startDT->setTime(23, 59, 59);
 
 
@@ -1002,7 +1002,7 @@ class HouseServices {
         return $reply;
     }
 
-    public static function changeRoomRate(PDO $dbh, Visit $visit, $post) {
+    public static function changeRoomRate(\PDO $dbh, Visit $visit, $post) {
 
         $uS = Session::getInstance();
         $reply = '';
@@ -1013,7 +1013,7 @@ class HouseServices {
         $rateCategory = '';
         $rateAdj = 0;
         $assignedRate = 0;
-        $now = new DateTime();
+        $now = new \DateTime();
         $now->setTime(0, 0, 0);
 
         if (isset($post['rbReplaceRate'])) {
@@ -1027,7 +1027,7 @@ class HouseServices {
             if (isset($post['chgRateDate']) && $post['chgRateDate'] != '') {
 
                 $chDT = setTimeZone($uS, filter_var($post['chgRateDate'], FILTER_SANITIZE_STRING));
-                $chRateDT = new DateTime($chDT->format('Y-m-d'));
+                $chRateDT = new \DateTime($chDT->format('Y-m-d'));
 
             } else {
                 $chRateDT = $now;
@@ -1035,21 +1035,21 @@ class HouseServices {
 
         } else {
             // set date to start of span
-            $chRateDT = new DateTime($visitRs->Span_Start->getStoredVal());
+            $chRateDT = new \DateTime($visitRs->Span_Start->getStoredVal());
         }
 
         $chRateDT->setTime(0, 0, 0);
 
         // Date check
-        $departDT = new DateTime(($visitRs->Span_End->getStoredVal() == '' ? $visitRs->Expected_Departure->getStoredVal() : $visitRs->Span_End->getStoredVal()));
+        $departDT = new \DateTime(($visitRs->Span_End->getStoredVal() == '' ? $visitRs->Expected_Departure->getStoredVal() : $visitRs->Span_End->getStoredVal()));
 
         if ($visit->getVisitStatus() == VisitStatus::CheckedIn && $departDT < $now) {
             $departDT = $now;
-            $departDT->add(new DateInterval('P1D'));
+            $departDT->add(new \DateInterval('P1D'));
         }
 
         $departDT->setTime(0, 0, 0);
-        $arriveDT = new DateTime($visitRs->Span_Start->getStoredVal());
+        $arriveDT = new \DateTime($visitRs->Span_Start->getStoredVal());
         $arriveDT->setTime(0, 0, 0);
 
         if ($chRateDT < $arriveDT || $chRateDT >= $departDT) {
@@ -1087,9 +1087,9 @@ class HouseServices {
 
 
 
-        $chgRtDT = new DateTime($chRateDT->format('Y-m-d'));
+        $chgRtDT = new \DateTime($chRateDT->format('Y-m-d'));
         $chgRtDT->setTime(0, 0, 0);
-        $arrDT = new DateTime($arriveDT->format('Y-m-d'));
+        $arrDT = new \DateTime($arriveDT->format('Y-m-d'));
         $arrDT->setTime(0, 0, 0);
 
 
@@ -1136,14 +1136,14 @@ class HouseServices {
 
 
         // Arrival Date
-        $arrDate = new DateTime($visitRs->Span_Start->getStoredVal());
+        $arrDate = new \DateTime($visitRs->Span_Start->getStoredVal());
 
         // Departure Date
         if ($visitRs->Span_End->getStoredVal() != '') {
-            $depDate = new DateTime($visitRs->Span_End->getStoredVal());
+            $depDate = new \DateTime($visitRs->Span_End->getStoredVal());
         } else {
-            $depDate = new DateTime($visitRs->Expected_Departure->getStoredVal());
-            $today = new DateTime();
+            $depDate = new \DateTime($visitRs->Expected_Departure->getStoredVal());
+            $today = new \DateTime();
 
             if ($depDate < $today) {
                 $depDate = $today;
@@ -1211,14 +1211,14 @@ class HouseServices {
                 if (array_key_exists($sRs->idRoom->getStoredVal(), $rooms)) {
 
                     // Only during the dates of the new stay
-                    $stayStrt = new DateTime($sRs->Span_Start_Date->getStoredVal());
+                    $stayStrt = new \DateTime($sRs->Span_Start_Date->getStoredVal());
                     $stayStrt->setTime(0,0,0);
 
                     if ($sRs->Span_End_Date->getStoredVal() != '') {
-                        $stayEnd = new DateTime($sRs->Span_End_Date->getStoredVal());
+                        $stayEnd = new \DateTime($sRs->Span_End_Date->getStoredVal());
                     } else {
-                        $stayEnd = new DateTime($sRs->Expected_Co_Date->getStoredVal());
-                        $today = new DateTime();
+                        $stayEnd = new \DateTime($sRs->Expected_Co_Date->getStoredVal());
+                        $today = new \DateTime();
                         if ($stayEnd < $today) {
                             $stayEnd = $today;
                         }
@@ -1250,7 +1250,7 @@ class HouseServices {
             $stmt = $dbh->query("Select count(idName) from stays "
                     . "where idName = " . $guest->getIdName() . " and DATEDIFF(ifnull(Span_End_Date, Expected_Co_Date), Span_Start_Date) != 0 "
                     . " and DATE('" . $ckinDT->format('Y-m-d H:m:s') . "') < ifnull(DATE(Span_End_Date), DATE(Expected_Co_Date)) and DATE('$ckoutDate') > DATE(Span_Start_Date)");
-            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
             if (isset($rows[0][0]) && $rows[0][0] > 0) {
                 return array('error' => $nameObj->get_fullName() . ' is already included in a different visit.  ');
@@ -1461,7 +1461,7 @@ class HouseServices {
      * @param int $dayDelta
      * @return array
      */
-    public static function moveVisit(PDO $dbh, $idVisit, $span, $startDelta, $endDelta) {
+    public static function moveVisit(\PDO $dbh, $idVisit, $span, $startDelta, $endDelta) {
 
         $uS = Session::getInstance();
         $dataArray = array();
@@ -1505,9 +1505,9 @@ class HouseServices {
 
         $uS = Session::getInstance();
 
-        $rCkinDT = new DateTime(($resv->getActualArrival() == '' ? $resv->getExpectedArrival() : $resv->getActualArrival()));
+        $rCkinDT = new \DateTime(($resv->getActualArrival() == '' ? $resv->getExpectedArrival() : $resv->getActualArrival()));
         $rCkinDT->setTime(0, 0, 0);
-        $rCkoutDT = new DateTime($resv->getExpectedDeparture());
+        $rCkoutDT = new \DateTime($resv->getExpectedDeparture());
         $rCkoutDT->setTime(23, 59, 59);
 
         if ($resv->getStatus() == ReservationStatus::Committed && $rCkinDT->diff($chkinDT)->days > $uS->ResvEarlyArrDays) {
@@ -1536,7 +1536,7 @@ class HouseServices {
         }
 
         $days = array();
-        $p1d = new DateInterval('P1D');
+        $p1d = new \DateInterval('P1D');
 
         foreach ($guests as $guest) {
 
@@ -1544,7 +1544,7 @@ class HouseServices {
                 throw new Hk_Exception_Runtime('A check-in date cannot be AFTER the check-out date.  ');
             }
 
-            $trackerDT = new DateTime($guest->getCheckinDT()->format('Y-m-d H:i:s'));
+            $trackerDT = new \DateTime($guest->getCheckinDT()->format('Y-m-d H:i:s'));
 
             // Mark the days at the house
             while ($trackerDT <= $guest->getExpectedCheckOutDT()) {
@@ -1560,9 +1560,9 @@ class HouseServices {
         }
 
         // Continous Visit?
-        $trackerDT = new DateTime($chkinDT->format('Y-m-d H:i:s'));
+        $trackerDT = new \DateTime($chkinDT->format('Y-m-d H:i:s'));
         $mostGuests = 1;
-        $mostGuestStartDT = new DateTime($chkinDT->format('Y-m-d H:i:s'));
+        $mostGuestStartDT = new \DateTime($chkinDT->format('Y-m-d H:i:s'));
 
         while ($trackerDT <= $chkoutDT) {
 
@@ -1573,7 +1573,7 @@ class HouseServices {
 
             if ($days[$today] > $mostGuests) {
                 $mostGuests++;
-                $mostGuestStartDT = new DateTime($today);
+                $mostGuestStartDT = new \DateTime($today);
             }
 
             $trackerDT->add($p1d);
@@ -1583,13 +1583,13 @@ class HouseServices {
     /**
      * Check-in guests main logic
      *
-     * @param PDO $dbh
+     * @param \PDO $dbh
      * @param array $post
      * @param bool $isAuthorized
      * @return array of new markup and variables for post check-in processing
      * @throws Hk_Exception_Runtime
      */
-    public static function saveCheckinPage(PDO $dbh, $post, $isAuthorized = FALSE) {
+    public static function saveCheckinPage(\PDO $dbh, $post, $isAuthorized = FALSE) {
 
         $uS = Session::getInstance();
         $dataArray = array();
@@ -1643,7 +1643,7 @@ class HouseServices {
         //
         // dates
         //
-        $today = new DateTime();
+        $today = new \DateTime();
         $today->setTime(0, 0, 0);
 
         // Visit dates
@@ -1654,7 +1654,7 @@ class HouseServices {
                 $chkoutDT = setTimeZone($uS, filter_var($post['ckoutdt'], FILTER_SANITIZE_STRING));
 
                 // Edit checkin date for later hour of checkin if posting the check in late.
-                $tCkinDT = new DateTime($chkinDT->format('Y-m-d 00:00:00'));
+                $tCkinDT = new \DateTime($chkinDT->format('Y-m-d 00:00:00'));
 
                 if ($chkinDT->format('H') < 16 && $today > $tCkinDT) {
                     $chkinDT->setTime(16,0,0);
@@ -2042,7 +2042,7 @@ class HouseServices {
         return $dataArray;
     }
 
-    public static function getMember(PDO $dbh, $idReserv, $id, $role, $idPrefix, $idPsg, $patientStaying, $havePatient, $addRoom) {
+    public static function getMember(\PDO $dbh, $idReserv, $id, $role, $idPrefix, $idPsg, $patientStaying, $havePatient, $addRoom) {
 
         $uS = Session::getInstance();
         $guest = null;
@@ -2307,7 +2307,7 @@ class HouseServices {
 
                 // check for existing reservation
                 $stmt = $dbh->query("Select idReservation from reservation where idHospital_Stay = " . $hospitalStay->getIdHospital_Stay() . " and Status = '" . ReservationStatus::Staying . "';");
-                $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+                $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 if (count($rows) > 0) {
 
@@ -2329,7 +2329,7 @@ class HouseServices {
 
                 // Look for a previous reservation to copy from ...
                 $stmt = $dbh->query("select r.idReservation, max(r.Expected_Arrival) from reservation r  where r.idGuest = " . $guest->getIdName() . " order by r.idGuest");
-                $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+                $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 if (count($rows > 0)) {
                     $oldResvId = $rows[0][0];
@@ -2358,17 +2358,17 @@ class HouseServices {
 
 
         // Arrival Date
-        $arrDate = new DateTime($resv->getActualArrival() == '' ? $resv->getExpectedArrival() : $resv->getActualArrival());
-        $depDate = new DateTime($resv->getExpectedDeparture());
+        $arrDate = new \DateTime($resv->getActualArrival() == '' ? $resv->getExpectedArrival() : $resv->getActualArrival());
+        $depDate = new \DateTime($resv->getExpectedDeparture());
 
         if ($resv->getStatus() == ReservationStatus::Staying) {
-            $arrDate = new DateTime();
+            $arrDate = new \DateTime();
         }
 
         $arrDate->setTime(0, 0, 0);
         $depDate->setTime(0, 0, 0);
 
-        $nowDT = new DateTime();
+        $nowDT = new \DateTime();
         $nowDT->setTime(0,0,0);
 
         if ($depDate <= $arrDate || $depDate <= $nowDT) {
@@ -2468,7 +2468,7 @@ class HouseServices {
 
         $numNewGuests = 1;
 
-        $roomChooser = new RoomChooser($dbh, $resv, $numNewGuests, new DateTime($arrDateStr), new DateTime($depDateStr));
+        $roomChooser = new RoomChooser($dbh, $resv, $numNewGuests, new \DateTime($arrDateStr), new \DateTime($depDateStr));
 
         if ($resv->getStatus() != ReservationStatus::Staying) {
             // load additional guests
@@ -2585,7 +2585,7 @@ from
             left join name_guest ng on s.idName = ng.idName and rg.idPsg = ng.idPsg
     where s.`Status` = '" . VisitStatus::CheckedIn . "' and v.idRegistration = $idReg;";
         $stmt = $dbh->query($query);
-        $stays = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stays = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         return $stays;
     }
@@ -2637,7 +2637,7 @@ from
         return $markup;
     }
 
-    public static function saveMembers(PDO $dbh, $post, $isAuthorized) {
+    public static function saveMembers(\PDO $dbh, $post, $isAuthorized) {
 
         $uS = Session::getInstance();
         $dataArray = array();
@@ -2691,7 +2691,7 @@ from
         $hospitalStay = new HospitalStay($dbh, $psg->getIdPatient());
         Hospital::saveHospitalMarkup($dbh, $psg, $hospitalStay, $post);
 
-        $today = new DateTime();
+        $today = new \DateTime();
         $today->setTime(0, 0, 0);
 
         // clean Dates
@@ -2997,7 +2997,7 @@ from
         }
 
         $stmt = $dbh->query("Select count(idName) from name_guest where idName = $patientId and Relationship_Code = '" . RelLinkType::Self . "';");
-        $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         // New patient cannot already be a member of this or another PSG.
         if ($rows[0][0] > 0) {

@@ -3,12 +3,9 @@
 /**
  * PaymentSvcs.php
  *
- *
- * @category  House
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
@@ -40,7 +37,7 @@ class PaymentResult {
         $this->idToken = $idToken;
     }
 
-    public function feePaymentAccepted(PDO $dbh, \Session $uS, PaymentResponse $payResp, \Invoice $invoice) {
+    public function feePaymentAccepted(\PDO $dbh, Session $uS, PaymentResponse $payResp, Invoice $invoice) {
 
         // set status
         $this->status = PaymentResult::ACCEPTED;
@@ -70,7 +67,7 @@ class PaymentResult {
 
     }
 
-    public function feePaymentRejected(PDO $dbh, \Session $uS, PaymentResponse $payResp) {
+    public function feePaymentRejected(\PDO $dbh, Session $uS, PaymentResponse $payResp) {
 
 
 
@@ -84,12 +81,12 @@ class PaymentResult {
 
     }
 
-    public function feePaymentError(PDO $dbh, \Session $uS) {
+    public function feePaymentError(\PDO $dbh, Session $uS) {
 
 
     }
 
-    public function feePaymentInvoiced(\PDO $dbh, \Invoice $invoice) {
+    public function feePaymentInvoiced(\PDO $dbh, Invoice $invoice) {
 
         $this->invoiceMarkup = $invoice->createMarkup($dbh);
 
@@ -123,7 +120,7 @@ WHERE r.Email_Receipt = 1 and
         $stmt = $dbh->prepare($query);
         $stmt->execute(array(':idreg'=>$this->idRegistration, ':id'=>$this->idName));
 
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) > 0 && $rows[0]['Email'] != '') {
             $toAddr = $rows[0]['Email'];
@@ -263,8 +260,7 @@ class cofResult extends PaymentResult {
 
 class ReturnResult extends PaymentResult {
 
-    //public function feePaymentAccepted(PDO $dbh, \Session $uS, PaymentResponse $payResp, \Invoice $invoice)
-    public function feePaymentAccepted(PDO $dbh, \Session $uS, PaymentResponse $rtnResp, Invoice $invoice) {
+    public function feePaymentAccepted(\PDO $dbh, Session $uS, PaymentResponse $rtnResp, Invoice $invoice) {
 
         // set status
         $this->status = PaymentResult::ACCEPTED;
@@ -301,7 +297,7 @@ class ReturnResult extends PaymentResult {
  */
 class PaymentSvcs {
 
-    public static function initCardOnFile(PDO $dbh, $gw, $pageTitle, $idGuest, $idGroup, $cardHolderName, $postBackPage) {
+    public static function initCardOnFile(\PDO $dbh, $gw, $pageTitle, $idGuest, $idGroup, $cardHolderName, $postBackPage) {
 
         $uS = Session::getInstance();
 
@@ -340,7 +336,7 @@ class PaymentSvcs {
         return CardInfo::sendToPortal($dbh, $gw, $idGuest, $idGroup, $initCi);
     }
 
-    protected static function initHostedPayment(PDO $dbh, $gw, $pageTitle, \Invoice $invoice, $cardHolderName, $address, $zipCode, $postPage, $tranType = MpTranType::Sale) {
+    protected static function initHostedPayment(\PDO $dbh, $gw, $pageTitle, \Invoice $invoice, $cardHolderName, $address, $zipCode, $postPage, $tranType = MpTranType::Sale) {
 
         $uS = Session::getInstance();
 
@@ -781,7 +777,7 @@ class PaymentSvcs {
 
         // Find hte detail record.
         $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
-        $arows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($arows) < 1) {
             return array('warning' => 'Payment Detail record not found.  Unable to Void this purchase. ', 'bid' => $bid);
@@ -839,7 +835,7 @@ class PaymentSvcs {
 
         // Find hte detail record.
         $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
-        $arows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($arows) < 1) {
             return array('warning' => 'Payment Detail record not found.  Unable to Reverse this purchase. ', 'bid' => $bid);
@@ -949,7 +945,7 @@ class PaymentSvcs {
 
                 // Find hte detail record.
                 $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
-                $arows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                 if (count($arows) < 1) {
                     return array('warning' => 'Payment Detail record not found.  Unable to Return. ', 'bid' => $bid);
@@ -1199,7 +1195,7 @@ class PaymentSvcs {
 
         // Find hte detail record.
         $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
-        $arows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($arows) < 1) {
             return array('warning' => 'Payment Detail record not found.  Unable to Void this Return. ', 'bid' => $bid);
@@ -1374,7 +1370,7 @@ class PaymentSvcs {
         return $dataArray;
     }
 
-    public static function getInfoFromCardId(PDO $dbh, $cardId) {
+    public static function getInfoFromCardId(\PDO $dbh, $cardId) {
 
         $infoArray = array();
 
@@ -1382,7 +1378,7 @@ class PaymentSvcs {
         $stmt = $dbh->prepare($query);
         $stmt->execute(array(':cid'=>$cardId));
 
-        $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         if (count($rows) > 0) {
 
@@ -1576,7 +1572,7 @@ class PaymentSvcs {
             case PaymentMethod::Charge:
 
                 $stmt = $dbh->query("SELECT * FROM payment_auth where idPayment = $idPayment order by idPayment_auth");
-                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                 if (count($rows) < 1) {
                     return array('warning'=>'Charge payment record not found.');
@@ -1592,7 +1588,7 @@ class PaymentSvcs {
             case PaymentMethod::ChgAsCash:
 
                 $stmt = $dbh->query("SELECT * FROM payment_auth where idPayment = $idPayment order by idPayment_auth");
-                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                 if (count($rows) < 1) {
                     return array('warning'=>'Charge payment record not found.');

@@ -2,12 +2,10 @@
 /**
  * PageEdit.php
  *
- * @category  Configuration
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 require_once ("AdminIncludes.php");
@@ -18,7 +16,7 @@ require_once(REL_BASE_DIR . "classes" . DS . "selCtrl.php");
 $wInit = new webInit();
 
 $dbh = $wInit->dbh;
-//$dbh = new PDO($dsn, $username, $passwd, $options);
+
 $page = $wInit->page;
 
 $pageTitle = $wInit->pageTitle;

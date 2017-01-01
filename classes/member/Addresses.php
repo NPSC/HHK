@@ -2,13 +2,10 @@
 /**
  * Addresses.php
  *
- *
- * @category  Donations
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -88,7 +85,7 @@ abstract class ContactPoint {
      * @param Member $name
      * @param array $codes
      */
-    function __construct(PDO $dbh, Member $name, array $codes) {
+    function __construct(\PDO $dbh, Member $name, array $codes) {
 
         $this->name = $name;
 
@@ -130,11 +127,11 @@ abstract class ContactPoint {
     /**
      * The extending objects must each load their type of record set.
      */
-    protected abstract function loadRecords(PDO $dbh);
+    protected abstract function loadRecords(\PDO $dbh);
 
     public abstract function createMarkup($inputClass = "");
 
-    public abstract function savePost(PDO $dbh, array $post, $user);
+    public abstract function savePost(\PDO $dbh, array $post, $user);
 
     public abstract function get_Data($code = "");
 
@@ -172,7 +169,7 @@ class Address extends ContactPoint{
      */
     public $cleanAddress;
 
-    protected function loadRecords(PDO $dbh) {
+    protected function loadRecords(\PDO $dbh) {
 
         $adRS = new NameAddressRS();
         $id = $this->name->get_idName();
@@ -489,7 +486,7 @@ class Address extends ContactPoint{
 
             $addrLastUpdated = '';
             if ($this->getLastUpdated($addrIndex) != '') {
-                $addrLastUpdated = $this->name->getContactLastUpdatedMU(new DateTime($this->getLastUpdated($addrIndex)), 'This Address');
+                $addrLastUpdated = $this->name->getContactLastUpdatedMU(new \DateTime($this->getLastUpdated($addrIndex)), 'This Address');
             }
 
             $table = $this->createPanelMarkup($addrIndex, $this->rSs[$addrIndex], $showBadAddrCkBox, '', '', $includeCounty, $addrLastUpdated);
@@ -532,7 +529,7 @@ class Address extends ContactPoint{
      * @return string
      * @throws Hk_Exception_InvalidArguement
      */
-    public function savePost(PDO $dbh, array $post, $user, $idPrefix = '') {
+    public function savePost(\PDO $dbh, array $post, $user, $idPrefix = '') {
 
         $message = '';
         $id = $this->name->get_idName();
@@ -554,7 +551,7 @@ class Address extends ContactPoint{
     }
 
 
-    public function savePanel(PDO $dbh, $purpose, $post, $user, $idPrefix = '', $incomplete = FALSE) {
+    public function savePanel(\PDO $dbh, $purpose, $post, $user, $idPrefix = '', $incomplete = FALSE) {
 
         $indx = $idPrefix.'adr';
         if (isset($post[$indx][$purpose[0]]) === FALSE) {
@@ -565,7 +562,7 @@ class Address extends ContactPoint{
     }
 
 
-    public function saveAddress(PDO $dbh, array $p, $purpose, $incomplete, $user) {
+    public function saveAddress(\PDO $dbh, array $p, $purpose, $incomplete, $user) {
 
         $message = '';
         // Set some convenience vars.
@@ -699,7 +696,7 @@ class Address extends ContactPoint{
 
     }
 
-    public function checkZip(PDO $dbh, iTableRS $a, array $p) {
+    public function checkZip(\PDO $dbh, iTableRS $a, array $p) {
         // zip code, city and state
         $zip = strtoupper(trim(filter_var($p['zip'], FILTER_SANITIZE_STRING)));
         $city = trim(filter_var($p['city'], FILTER_SANITIZE_STRING));
@@ -710,7 +707,7 @@ class Address extends ContactPoint{
             // check zip code
             $stmt = $dbh->prepare("select City, Acceptable_Cities, State from postal_Codes where Zip_Code = :zip");
             $stmt->execute(array(':zip'=>$zip));
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) == 0) {
                 return "Zip Code does not exist.  ";
@@ -761,7 +758,7 @@ class Address extends ContactPoint{
 class Phones extends ContactPoint {
 
 
-    protected function loadRecords(PDO $dbh) {
+    protected function loadRecords(\PDO $dbh) {
 
         $id = $this->name->get_idName();
         $phRS = new NamePhoneRS();
@@ -943,7 +940,7 @@ class Phones extends ContactPoint {
         return $trContents;
     }
 
-    public function savePost(PDO $dbh, array $post, $user, $idPrefix = '') {
+    public function savePost(\PDO $dbh, array $post, $user, $idPrefix = '') {
 
         $message = '';
         $id = $this->name->get_idName();
@@ -962,7 +959,7 @@ class Phones extends ContactPoint {
         return $message;
     }
 
-    public function SavePhoneNumber(PDO $dbh, $post, $purpose, $user, $idPrefix = "") {
+    public function SavePhoneNumber(\PDO $dbh, $post, $purpose, $user, $idPrefix = "") {
 
         if (isset($post[$idPrefix.'txtPhone'][$purpose[0]]) === FALSE) {
             return;
@@ -1045,7 +1042,7 @@ class Phones extends ContactPoint {
  */
 class Emails extends ContactPoint {
 
-    protected function loadRecords(PDO $dbh) {
+    protected function loadRecords(\PDO $dbh) {
 
         $id = $this->name->get_idName();
         $emRS = new NameEmailRS();
@@ -1197,7 +1194,7 @@ class Emails extends ContactPoint {
     }
 
 
-    public function savePost(PDO $dbh, array $post, $user, $idPrefix = '') {
+    public function savePost(\PDO $dbh, array $post, $user, $idPrefix = '') {
 
         $message = '';
         $id = $this->name->get_idName();

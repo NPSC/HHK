@@ -1,16 +1,11 @@
 <?php
-
 /**
  * DataTableServer.php
  *
- *
- *
- * @category  member
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 /**
  * Description of DataTableServer
@@ -19,9 +14,8 @@
  */
 class DataTableServer {
 
-    public static function createOutput(PDO $dbh, array $aColumns, $sIndexColumn, $sTable, array $dtp) {
+    public static function createOutput(\PDO $dbh, array $aColumns, $sIndexColumn, $sTable, array $dtp) {
 
-        $parms = array();
         //
         // Paging
         //
@@ -129,7 +123,7 @@ class DataTableServer {
              "aaData" => array()
         );
 
-        while ($aRow = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($aRow = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             $row = array();
             for ($i = 0; $i < count($aColumns); $i++) {

@@ -1,3 +1,7 @@
+-- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+-- @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+-- @license   MIT
+-- @link      https://github.com/NPSC/HHK
 
 -- Must create vmember_listing first as it is used by most of the rest of hte views
 -- -----------------------------------------------------

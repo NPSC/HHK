@@ -1,9 +1,12 @@
 <?php
 
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * RoomChooser.php
+ *
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -141,7 +144,7 @@ class RoomChooser {
     }
 
 
-    public function createCheckinMarkup(PDO $dbh, $isAuthorized, $constraintsDisabled = FALSE, $omitSelf = TRUE) {
+    public function createCheckinMarkup(\PDO $dbh, $isAuthorized, $constraintsDisabled = FALSE, $omitSelf = TRUE) {
 
         if ($this->resv->getStatus() === ReservationStatus::Committed || $this->resv->getStatus() === ReservationStatus::Imediate || $this->resv->getStatus() === ReservationStatus::Waitlist) {
 
@@ -159,7 +162,7 @@ class RoomChooser {
         }
     }
 
-    public function createResvMarkup(PDO $dbh, $isAuthorized, $constraintsDisabled = FALSE, $classId = '') {
+    public function createResvMarkup(\PDO $dbh, $isAuthorized, $constraintsDisabled = FALSE, $classId = '') {
 
         if (($this->resv->getStatus() === ReservationStatus::Committed || $this->resv->getStatus() === ReservationStatus::UnCommitted || $this->resv->getStatus() === ReservationStatus::Waitlist || $this->resv->isNew())) {
 
@@ -178,7 +181,7 @@ class RoomChooser {
     }
 
 
-    public function createChangeRoomsMarkup(PDO $dbh, VisitCharges $visitCharge, $idGuest, $isAuthorized) {
+    public function createChangeRoomsMarkup(\PDO $dbh, VisitCharges $visitCharge, $idGuest, $isAuthorized) {
 
         $uS = Session::getInstance();
 
@@ -256,7 +259,7 @@ class RoomChooser {
     }
 
 
-    protected function createChooserMarkup(PDO $dbh, $constraintsDisabled, $classId = '') {
+    protected function createChooserMarkup(\PDO $dbh, $constraintsDisabled, $classId = '') {
 
         $resources = array();
         $errorMessage = '';
@@ -446,7 +449,7 @@ class RoomChooser {
     }
 
 
-    public static function roomAmtCalculation(PDO $dbh, $post) {
+    public static function roomAmtCalculation(\PDO $dbh, $post) {
 
         $uS = Session::getInstance();
         $income = 0;

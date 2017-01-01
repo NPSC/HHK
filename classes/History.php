@@ -2,14 +2,10 @@
 /**
  * History.php
  *
- * Encapsulates common functionality for DB access
- *
- * @category  Utility
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2015 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -20,7 +16,7 @@
 class History {
 
 
-    public static function addToGuestHistoryList(PDO $dbh, $id, $role) {
+    public static function addToGuestHistoryList(\PDO $dbh, $id, $role) {
         if ($id > 0 && $role < WebRole::Guest) {
             $query = "INSERT INTO member_history (idName, Guest_Access_Date) VALUES ($id, now())
         ON DUPLICATE KEY UPDATE Guest_Access_Date = now();";
@@ -30,7 +26,7 @@ class History {
         }
     }
 
-    public static function addToMemberHistoryList(PDO $dbh, $id, $role) {
+    public static function addToMemberHistoryList(\PDO $dbh, $id, $role) {
         if ($id > 0 && $role < WebRole::Guest) {
             $query = "INSERT INTO member_history (idName, Admin_Access_Date) VALUES ($id, now())
         ON DUPLICATE KEY UPDATE Admin_Access_Date = now();";
@@ -40,7 +36,7 @@ class History {
         }
     }
 
-    public static function getHistoryMarkup(PDO $dbh, $view, $page) {
+    public static function getHistoryMarkup(\PDO $dbh, $view, $page) {
 
         if ($view == "") {
             throw new Hk_Exception_InvalidArguement("Database view name must be defined.");
@@ -60,7 +56,7 @@ class History {
                 );
 
 
-        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             // Build the address
             $addr = $row["Address_1"];
@@ -104,15 +100,15 @@ class History {
         return HTMLContainer::generateMarkup("div", $table->generateMarkup(), array('class'=>'hhk-history-list'));
     }
 
-    public static function getGuestHistoryMarkup(PDO $dbh, $page = "GuestEdit.php") {
+    public static function getGuestHistoryMarkup(\PDO $dbh, $page = "GuestEdit.php") {
         return self::getHistoryMarkup($dbh, "vguest_history_records", $page);
     }
-    public static function getMemberHistoryMarkup(PDO $dbh, $page = "NameEdit.php") {
+    public static function getMemberHistoryMarkup(\PDO $dbh, $page = "NameEdit.php") {
         return self::getHistoryMarkup($dbh, "vadmin_history_records", $page);
     }
 
 
-    public static function getReservedGuestsMarkup(PDO $dbh, $status = ReservationStatus::Committed, $page = "Referral.php", $includeAction = TRUE) {
+    public static function getReservedGuestsMarkup(\PDO $dbh, $status = ReservationStatus::Committed, $page = "Referral.php", $includeAction = TRUE) {
 
         $roomRates = RoomRate::makeDescriptions($dbh);
 
@@ -121,9 +117,9 @@ class History {
 
         $returnRows = array();
         $uS = Session::getInstance();
-        $nowDT = new DateTime();
+        $nowDT = new \DateTime();
 
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             $fixedRows = array();
             $gName = $r['Guest Name'];
@@ -155,7 +151,7 @@ class History {
 
 
             // Days
-            $stDay = new DateTime($r['Arrival_Date']);
+            $stDay = new \DateTime($r['Arrival_Date']);
             $stDay->setTime(10, 0, 0);
 
 
@@ -164,7 +160,7 @@ class History {
             // Departure Date
             if ($r['Expected_Departure'] != '') {
 
-                $edDay = new DateTime($r['Expected_Departure']);
+                $edDay = new \DateTime($r['Expected_Departure']);
                 $edDay->setTime(10, 0, 0);
 
                 $fixedRows['Nights'] = $edDay->diff($stDay, TRUE)->days;
@@ -213,7 +209,7 @@ class History {
 
     }
 
-    public static function getCheckedInGuestMarkup(PDO $dbh, $page = "GuestEdit.php", $includeAction = TRUE) {
+    public static function getCheckedInGuestMarkup(\PDO $dbh, $page = "GuestEdit.php", $includeAction = TRUE) {
 
         $uS = Session::getInstance();
 
@@ -227,7 +223,7 @@ class History {
         return self::getCheckedInMarkup($dbh, $uS->ccgw, $hospList, $page, $includeAction);
     }
 
-    public static function getCheckedInMarkup(PDO $dbh, $creditGw, $hospitals, $page, $includeAction = TRUE) {
+    public static function getCheckedInMarkup(\PDO $dbh, $creditGw, $hospitals, $page, $includeAction = TRUE) {
 
         $uS = Session::getInstance();
 
@@ -260,7 +256,7 @@ class History {
         $hdArry = readGenLookupsPDO($dbh, "House_Discount");
 
 
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             $fixedRows = array();
 
@@ -296,12 +292,12 @@ class History {
 
                 $daysOnLv = intval($r['On_Leave']);
 
-                $now = new DateTime();
+                $now = new \DateTime();
                 $now->setTime(0, 0, 0);
 
-                $stDay = new DateTime($r['Span_Start_Date']);
+                $stDay = new \DateTime($r['Span_Start_Date']);
                 $stDay->setTime(0, 0, 0);
-                $stDay->add(new DateInterval('P' . $daysOnLv . 'D'));
+                $stDay->add(new \DateInterval('P' . $daysOnLv . 'D'));
 
                 if ($now > $stDay) {
                     // Past Due
@@ -318,9 +314,9 @@ class History {
             $fixedRows['Checked-In'] = date('D, M j, Y', strtotime($r['Checked-In']));
 
             // Days
-            $stDay = new DateTime($r['Checked-In']);
+            $stDay = new \DateTime($r['Checked-In']);
             $stDay->setTime(10, 0, 0);
-            $edDay = new DateTime(date('Y-m-d 10:00:00'));
+            $edDay = new \DateTime(date('Y-m-d 10:00:00'));
             //$edDay->setTime(11, 0, 0);
             $fixedRows['Nights'] = $edDay->diff($stDay, TRUE)->days;
 
@@ -395,11 +391,11 @@ class History {
     }
 
 
-    public static function getVolEventsMarkup(PDO $dbh, DateTime $startDate) {
+    public static function getVolEventsMarkup(\PDO $dbh, \DateTime $startDate) {
 
         $query = "select * from vrecent_calevents where `Last Updated` > '" .$startDate->format('Y-m-d'). "' order by Category, `Last Updated`;";
         $stmt = $dbh->query($query);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $fixedRows = array();
 
         foreach ($rows as $r) {

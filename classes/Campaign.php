@@ -1,20 +1,18 @@
 <?php
 /**
- * campaign.php
+ * Campaign.php
  *
- * @category  Reports
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 class Campaign {
 
     protected $campRS;
 
 
-    public static function CampaignSelOptionMarkup(PDO $dbh, $campCode, $newOpt, $shoDisabled = true) {
+    public static function CampaignSelOptionMarkup(\PDO $dbh, $campCode, $newOpt, $shoDisabled = true) {
         // Load the selector control with all the campaigns.
         $query = "";
 
@@ -31,7 +29,7 @@ class Campaign {
         $futureOpt = "";
         $CampOpt = "";
 
-        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row2) {
+        foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row2) {
 
             $cCode = $row2["Campaign_Code"];
             $cTitle = $row2["Title"];
@@ -236,7 +234,7 @@ class Campaign {
     }
 
 
-    public function __construct(PDO $dbh, $campCode = "") {
+    public function __construct(\PDO $dbh, $campCode = "") {
 
         $campRS = new CampaignRS();
         $campRS->Campaign_Code->setStoredVal($campCode);

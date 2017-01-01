@@ -2,13 +2,10 @@
 /**
  * ResourceView.php
  *
- *
- * @category  House
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -17,7 +14,7 @@
  */
 class ResourceView {
 
-    public static function resourceTable(PDO $dbh, $showPartitions) {
+    public static function resourceTable(\PDO $dbh, $showPartitions) {
 
         $rooms = array();
 
@@ -25,7 +22,7 @@ class ResourceView {
         $attrs = $attribute->getAttributesByType(Attribute_Types::Resource);
 
         $rmAtrStmt = $dbh->query("Select idEntity, idAttribute from attribute_entity where `Type` = '" . Attribute_Types::Resource . "'");
-        $roomAttrs = $rmAtrStmt->fetchAll(PDO::FETCH_ASSOC);
+        $roomAttrs = $rmAtrStmt->fetchAll(\PDO::FETCH_ASSOC);
 
 
         $stmt = $dbh->query("Select
@@ -58,7 +55,7 @@ order by r.Title;");
         $idResc = 0;
         $numResc = $stmt->rowCount();
 
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             if ($showPartitions === FALSE) {
                 unset($r['Part. Size']);
@@ -121,7 +118,7 @@ order by r.Title;");
 
     }
 
-    public static function roomTable(PDO $dbh, $keyDeposit = FALSE) {
+    public static function roomTable(\PDO $dbh, $keyDeposit = FALSE) {
 
         $rooms = array();
         // Get labels
@@ -131,7 +128,7 @@ order by r.Title;");
         $attrs = $attribute->getAttributesByType(Attribute_Types::Room);
 
         $rmAtrStmt = $dbh->query("Select idEntity, idAttribute from attribute_entity where `Type` = '" . Attribute_Types::Room . "'");
-        $roomAttrs = $rmAtrStmt->fetchAll(PDO::FETCH_ASSOC);
+        $roomAttrs = $rmAtrStmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $depositCol = '';
         $depositTitle = $labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit');
@@ -153,7 +150,7 @@ order by r.Title;");
 
         $numResc = $stmt->rowCount();
 
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             $ra = array();
             foreach ($roomAttrs as $ras) {
@@ -204,7 +201,7 @@ order by r.Title;");
 
     }
 
-    public static function saveResc_Room(PDO $dbh, $id, $type, $post, $user, $showPartitions, $keyDeposit, $visitFee) {
+    public static function saveResc_Room(\PDO $dbh, $id, $type, $post, $user, $showPartitions, $keyDeposit, $visitFee) {
 
             if ($type == 'room') {
 
@@ -243,7 +240,7 @@ order by r.Title;");
         /* var \HTMLTable */
         $tbl = new HTMLTable();
 
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'cbDel[' . $r['idResource_use'] . ']', 'type'=>'checkbox')))
@@ -317,8 +314,8 @@ order by r.Title;");
                 }
             }
 
-            $stDT = new DateTime($startDate);
-            $enDT = new DateTime($endDate);
+            $stDT = new \DateTime($startDate);
+            $enDT = new \DateTime($endDate);
 
             // Check for resource in use
             $query = "select r.idResource from reservation r where r.Status in "
@@ -336,7 +333,7 @@ order by r.Title;");
 
             $inUse = FALSE;
 
-            while ($r = $stmt->fetch(PDO::FETCH_NUM)) {
+            while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
                 if ($r[0] == $id) {
                     $inUse = TRUE;
                 }
@@ -372,9 +369,9 @@ order by r.Title;");
             $ruRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
             $ruRs->Updated_By->setNewVal($uS->username);
 
-            $endDT = new DateTime($endDate);
+            $endDT = new \DateTime($endDate);
             $endDT->setTime(0, 0, 0);
-            $now = new DateTime();
+            $now = new \DateTime();
             $now->setTime(0, 0, 0);
 
             $moveResv = FALSE;
@@ -389,7 +386,7 @@ order by r.Title;");
                 if ($num > 0) {
                     $reload = TRUE;
                     if ($moveResv) {
-                        $reply .= ReservationSvcs::moveResvAway($dbh, new DateTime($startDate), $endDT, $id, $uS->username);
+                        $reply .= ReservationSvcs::moveResvAway($dbh, new \DateTime($startDate), $endDT, $id, $uS->username);
                     }
                 }
 
@@ -398,7 +395,7 @@ order by r.Title;");
                 $idRescUse = EditRS::insert($dbh, $ruRs);
                 $reload = TRUE;
                 if ($moveResv) {
-                    $reply .= ReservationSvcs::moveResvAway($dbh, new DateTime($startDate), $endDT, $id, $uS->username);
+                    $reply .= ReservationSvcs::moveResvAway($dbh, new \DateTime($startDate), $endDT, $id, $uS->username);
                 }
             }
         }
@@ -406,7 +403,7 @@ order by r.Title;");
         return array('reload'=>$reload, 'msg' => $reply);
     }
 
-    public static function deleteResc_Room(PDO $dbh, $id, $type, $user) {
+    public static function deleteResc_Room(\PDO $dbh, $id, $type, $user) {
 
 
         if ($type == 'room') {
@@ -445,7 +442,7 @@ order by r.Title;");
 
     }
 
-    public static function saveRoom(PDO $dbh, $idRoom, $post, $user, $keyDeposit, $visitFee) {
+    public static function saveRoom(\PDO $dbh, $idRoom, $post, $user, $keyDeposit, $visitFee) {
 
         $room = new Room($dbh, $idRoom);
         $rTitle = '';
@@ -557,7 +554,7 @@ order by r.Title;");
         return array("roomList"=>self::roomTable($dbh, $keyDeposit, $visitFee));
     }
 
-    public static function saveResc(PDO $dbh, $idResc, $post, $username, $showPartitions) {
+    public static function saveResc(\PDO $dbh, $idResc, $post, $username, $showPartitions) {
 
         $rType = '';
         $rTitle = '';
@@ -666,7 +663,7 @@ order by r.Title;");
 
     }
 
-    public static function roomDialog(PDO $dbh, $idRoom, $roomTypes, $roomCategories, $rateCodes, $keyDepositCodes, $keyDeposit) {
+    public static function roomDialog(\PDO $dbh, $idRoom, $roomTypes, $roomCategories, $rateCodes, $keyDepositCodes, $keyDeposit) {
 
         $roomRs = new RoomRs();
         $roomRs->idRoom->setStoredVal($idRoom);
@@ -731,7 +728,7 @@ order by r.Title;");
         return array('row'=>$tr);
     }
 
-    public static function resourceDialog(PDO $dbh, $idResc, $resourceTypes, $hospitals) {
+    public static function resourceDialog(\PDO $dbh, $idResc, $resourceTypes, $hospitals) {
 
         $resc = Resource::getResourceObj($dbh, $idResc, ResourceTypes::Room);
 
@@ -800,7 +797,7 @@ order by r.Title;");
         return array('row'=>$tr);
     }
 
-    public static function roomListHtml(PDO $dbh, $cleanStatuses, $roomTypes, $roomCategories, $staticRates, $useKeyDeposit = FALSE, $keyDepositCodes = array()) {
+    public static function roomListHtml(\PDO $dbh, $cleanStatuses, $roomTypes, $roomCategories, $staticRates, $useKeyDeposit = FALSE, $keyDepositCodes = array()) {
         $tbl = new HTMLTable();
 
         // Get labels
@@ -818,7 +815,7 @@ order by r.Title;");
 
         $stmt = $dbh->prepare("Select * from room");
         $stmt->execute();
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($rows as $r) {
 
@@ -845,7 +842,7 @@ order by r.Title;");
         $uS = Session::getInstance();
         $cleanDays = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
 
-        $today = new DateTime();
+        $today = new \DateTime();
         $today->setTime(0,0,0);
 
         $stmt = $dbh->query("select
@@ -859,7 +856,7 @@ from
         join
     visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "';");
 
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             $roomRs = new RoomRs();
             EditRS::loadRow($r, $roomRs);
@@ -872,12 +869,12 @@ from
                 $lastCleanedDT = $today;
 
                 if ($r['Arrival'] != '') {
-                    $arrDT = new DateTime($r['Arrival']);
+                    $arrDT = new \DateTime($r['Arrival']);
                     $arrDT->setTime(0, 0, 0);
                 }
 
                 if ($r['Last_Cleaned'] != '') {
-                    $lastCleanedDT = new DateTime($r['Last_Cleaned']);
+                    $lastCleanedDT = new \DateTime($r['Last_Cleaned']);
                     $lastCleanedDT->setTime(0, 0, 0);
                 }
 
@@ -899,7 +896,7 @@ from
 
     public static function roomsClean(\PDO $dbh, $filter = '', $guestAdmin = FALSE, $printOnly = FALSE) {
 
-        $today = new DateTime();
+        $today = new \DateTime();
         $today->setTime(0,0,0);
 
         $returnRows = array();
@@ -929,7 +926,7 @@ from
 
 
         // Loop rooms.
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             if ($filter == RoomState::Dirty && !($r['Status'] == RoomState::Dirty || $r['Status'] == RoomState::TurnOver)) {
                 continue;
@@ -958,7 +955,7 @@ from
             // Expected Departure
             if ($r['Expected_Departure'] != '') {
 
-                $expDepDT = new DateTime($r['Expected_Departure']);
+                $expDepDT = new \DateTime($r['Expected_Departure']);
                 $expDepDT->setTime(0, 0, 0);
 
                 $edAttr = array();
@@ -1025,7 +1022,7 @@ from
         return $returnRows;
     }
 
-    public static function showCoList(PDO $dbh, $coDate) {
+    public static function showCoList(\PDO $dbh, $coDate) {
 
         $returnRows = array();
 
@@ -1056,7 +1053,7 @@ from
     where ifnull(DATE(v.Span_End), DATE(dateDefaultNow(v.Expected_Departure))) = Date('$coDate');");
 
 
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
         // reverse output
         $lines = explode("\n", $r['Notes']);
@@ -1082,7 +1079,7 @@ from
         return $returnRows;
     }
 
-    public static function CleanLog(PDO $dbh, $id, $get) {
+    public static function CleanLog(\PDO $dbh, $id, $get) {
 
         require(CLASSES . 'DataTableServer.php');
 

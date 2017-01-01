@@ -2,12 +2,10 @@
 /**
  * Guest.php
  *
- * @category  house
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2015 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -23,7 +21,7 @@ class Guest extends Role {
      * @param type $id
      * @return GuestMember
      */
-    protected function factory(PDO $dbh, $id) {
+    protected function factory(\PDO $dbh, $id) {
 
         $this->title = 'Guest';
 
@@ -52,7 +50,7 @@ class Guest extends Role {
                         . $tbl->generateMarkup()
                         . HTMLContainer::generateMarkup('div', $this->name->birthDateMarkup(), array('style'=>'float:left;'))
                         . ($useAdditionalMarkup ? HTMLContainer::generateMarkup('div', $this->name->additionalNameMarkup(), array('style'=>'float:left;')) : '')
-                        . HTMLContainer::generateMarkup('div', $this->name->getContactLastUpdatedMU(new DateTime ($this->name->get_lastUpdated()), 'Name'), array('style'=>'float:right;'))
+                        . HTMLContainer::generateMarkup('div', $this->name->getContactLastUpdatedMU(new \DateTime ($this->name->get_lastUpdated()), 'Name'), array('style'=>'float:right;'))
                         , array('class'=>'hhk-panel')),
                         array('style'=>'float:left; margin-right:.5em; font-size:.9em;'));
 
@@ -76,7 +74,7 @@ class Guest extends Role {
      * @param PDO $dbh
      * @return array  Various pieces of markup and info
      */
-    public function createMarkup(PDO $dbh, $includeRemoveBtn = FALSE, $restrictRelChooser = TRUE) {
+    public function createMarkup(\PDO $dbh, $includeRemoveBtn = FALSE, $restrictRelChooser = TRUE) {
 
         $uS = Session::getInstance();
         $idPrefix = $this->getNameObj()->getIdPrefix();
@@ -101,7 +99,7 @@ class Guest extends Role {
         // Header info
 
         // Stay dates
-        $nowDT = new DateTime();
+        $nowDT = new \DateTime();
         $nowDT->setTime(0, 0, 0);
         $cidAttr = array('name'=>$idPrefix . 'gstDate', 'class'=>'ckdate gstchkindate', 'readonly'=>'readonly');
 
@@ -194,7 +192,7 @@ class Guest extends Role {
 
         // Header info
         // Check dates
-        $nowDT = new DateTime();
+        $nowDT = new \DateTime();
         $cidAttr = array('name'=>$idPrefix . 'gstDate', 'size'=>'11', 'class'=>'dprange');
         if (is_null($this->getCheckinDT()) === FALSE && $this->getCheckinDT() < $nowDT) {
             $cidAttr['class'] .= ' ui-state-highlight';
@@ -231,7 +229,7 @@ class Guest extends Role {
      * @param array $post
      * @return string Message for end user.
      */
-    public function save(PDO $dbh, array $post, $uname) {
+    public function save(\PDO $dbh, array $post, $uname) {
 
         $message = parent::save($dbh, $post, $uname);
 
@@ -289,12 +287,12 @@ class Guest extends Role {
         if ($stringDate != '') {
             $uS = Session::getInstance();
 
-            $ciDT = new DateTime($stringDate);
-            $ciDT->setTimezone(new DateTimeZone($uS->tz));
+            $ciDT = new \DateTime($stringDate);
+            $ciDT->setTimezone(new \DateTimeZone($uS->tz));
             $dt = $ciDT->format('Y-m-d');
             $now = date($time);
 
-            $this->checkinDate = new DateTime($dt . ' ' . $now);
+            $this->checkinDate = new \DateTime($dt . ' ' . $now);
         }
     }
 
@@ -302,11 +300,11 @@ class Guest extends Role {
         if ($stringDate != '') {
             $uS = Session::getInstance();
 
-            $ciDT = new DateTime($stringDate);
-            $ciDT->setTimezone(new DateTimeZone($uS->tz));
+            $ciDT = new \DateTime($stringDate);
+            $ciDT->setTimezone(new \DateTimeZone($uS->tz));
             $dt = $ciDT->format('Y-m-d 16:00:00');
 
-            $this->checkinDate = new DateTime($dt);
+            $this->checkinDate = new \DateTime($dt);
         }
 
     }
@@ -326,11 +324,11 @@ class Guest extends Role {
         if ($stringDate != '') {
             $uS = Session::getInstance();
 
-            $ciDT = new DateTime($stringDate);
-            $ciDT->setTimezone(new DateTimeZone($uS->tz));
+            $ciDT = new \DateTime($stringDate);
+            $ciDT->setTimezone(new \DateTimeZone($uS->tz));
             $dt = $ciDT->format('Y-m-d');
 
-            $this->expectedCheckOut = new DateTime($dt . ' 10:00:00');
+            $this->expectedCheckOut = new \DateTime($dt . ' 10:00:00');
         }
     }
 

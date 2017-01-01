@@ -1,16 +1,11 @@
 <?php
-
 /**
  * SiteLog.php
  *
- *
- *
- * @category  Configuration
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -20,7 +15,7 @@
  */
 class SiteLog {
 
-    public static function logPatch(PDO $dbh, $logText, $GIT_Id = '') {
+    public static function logPatch(\PDO $dbh, $logText, $GIT_Id = '') {
 
 
         self::writeLog($dbh, "Patch", $logText, $GIT_Id);

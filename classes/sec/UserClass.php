@@ -2,18 +2,16 @@
 /**
  * UserClass.php
  *
- * @category  Site
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 class UserClass {
 
     public $logMessage = '';
 
-    public function _checkLogin(PDO $dbh, $username, $password, $remember = FALSE) {
+    public function _checkLogin(\PDO $dbh, $username, $password, $remember = FALSE) {
          // instantiate a ChallengeGenerator object
         $chlgen = new ChallengeGenerator(FALSE);
 
@@ -61,7 +59,7 @@ class UserClass {
         return FALSE;
     }
 
-    public function updateDbPassword(PDO $dbh, $id, $oldPw, $newPw) {
+    public function updateDbPassword(\PDO $dbh, $id, $oldPw, $newPw) {
 
         $ssn = Session::getInstance();
 
@@ -81,29 +79,29 @@ class UserClass {
         return FALSE;
     }
 
-    protected static function getUserCredentials(PDO $dbh, $username) {
+    protected static function getUserCredentials(\PDO $dbh, $username) {
 
         $query = "SELECT u.*, a.Role_Id as Role_Id FROM w_users u join w_auth a on u.idName = a.idName  WHERE u.Status='a' and u.User_Name = :uname";
-        $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+        $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         $stmt->execute(array(":uname" => $username));
 
         if ($stmt->rowCount() > 0) {
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             return $rows[0];
         }
 
         return NULL;
     }
 
-    protected static function setSecurityGroups(PDO $dbh, $id, $housePc = FALSE) {
+    protected static function setSecurityGroups(\PDO $dbh, $id, $housePc = FALSE) {
 
         $grpArray = array();
         $query = "SELECT s.Group_Code, case when w.Cookie_Restricted = 1 then '1' else '0' end as `Cookie_Restricted` FROM id_securitygroup s join w_groups w on s.Group_Code = w.Group_Code WHERE s.idName = :id";
-        $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+        $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         $stmt->execute(array(":id" => $id));
 
         if ($stmt->rowCount() > 0) {
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             foreach ($rows as $r) {
 
@@ -116,7 +114,7 @@ class UserClass {
         return $grpArray;
     }
 
-    protected static function _setSession(PDO $dbh, Session $ssn, &$r, $init = true) {
+    protected static function _setSession(\PDO $dbh, Session $ssn, &$r, $init = true) {
 
         $ssn->uid = $r["idName"];
         $ssn->username = htmlspecialchars($r["User_Name"]);
@@ -145,7 +143,7 @@ class UserClass {
         }
     }
 
-    protected static function _checkSession(PDO $dbh, Session $ssn) {
+    protected static function _checkSession(\PDO $dbh, Session $ssn) {
 
         if (isset($ssn->username)) {
             $parms = array(
@@ -158,12 +156,12 @@ class UserClass {
             $query = "SELECT u.*, a.Role_Id as Role_Id FROM w_users u join w_auth a on u.idName = a.idName WHERE u.Status='a' and " .
             "(u.User_Name = :uname) AND (u.Cookie = :cook) AND " .
             "(u.Session = :ssn) AND (u.Ip = :adr)";
-            $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+            $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
             $stmt->execute($parms);
 
 
             if ($stmt->rowCount() > 0) {
-                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                 $this->_setSession($dbh, $ssn, $rows[0], false, false);
                 return true;

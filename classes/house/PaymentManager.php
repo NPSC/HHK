@@ -2,12 +2,10 @@
 /**
  * PaymentManager.php
  *
- *
- * @category  House
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
   */
 
 /**
@@ -168,13 +166,13 @@ class PaymentManager {
                         ->sumCurrentRoomCharge($dbh, $this->pmp->priceModel, $roomCharges, TRUE);
 
 
-                $paidThruDT = new DateTime($visit->getArrivalDate());
-                $paidThruDT->add(new DateInterval('P' . $this->pmp->visitCharges->getNightsPaid() . 'D'));
+                $paidThruDT = new \DateTime($visit->getArrivalDate());
+                $paidThruDT->add(new \DateInterval('P' . $this->pmp->visitCharges->getNightsPaid() . 'D'));
                 $paidThruDT->setTime(0, 0, 0);
 
-                $endPricingDT = new DateTime($paidThruDT->format('Y-m-d H:i:s'));
+                $endPricingDT = new \DateTime($paidThruDT->format('Y-m-d H:i:s'));
                 $endPricingDT->setTime(0, 0, 0);
-                $endPricingDT->add(new DateInterval('P' . $this->pmp->visitCharges->getNightsToPay() . "D"));
+                $endPricingDT->add(new \DateInterval('P' . $this->pmp->visitCharges->getNightsToPay() . "D"));
 
                 $lodging = new Item($dbh, ItemId::Lodging, $roomCharges);
                 $invLine = new RecurringInvoiceLine();

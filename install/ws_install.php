@@ -2,11 +2,10 @@
 /**
  * ws_install.php
  *
- * @category  Install
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
 
@@ -58,16 +57,16 @@ function testdb($post) {
 
 
     try {
-        $dbh = new PDO(
+        $dbh = new \PDO(
                 'mysql:host=' . $dbURL . ';dbname=' . $dbName . '',
                 $dbUser,
                 $pw,
-                array(PDO::ATTR_PERSISTENT => true)
+                array(\PDO::ATTR_PERSISTENT => true)
                 );
 
-        $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $serverInfo = $dbh->getAttribute(PDO::ATTR_SERVER_VERSION);
-        $driver = $dbh->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $dbh->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $serverInfo = $dbh->getAttribute(\PDO::ATTR_SERVER_VERSION);
+        $driver = $dbh->getAttribute(\PDO::ATTR_DRIVER_NAME);
 
     } catch (PDOException $e) {
         return array("error" => $e->getMessage() . "<br/>");
@@ -75,4 +74,4 @@ function testdb($post) {
 
     return array('success'=>'Good! Server version ' . $serverInfo . '; ' . $driver);
 }
-?>
+

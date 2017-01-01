@@ -2,12 +2,10 @@
 /**
  * member.php
  *
- * @category  Member
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -44,7 +42,7 @@ abstract class Member {
      * @param NameRS $nRS
      * @throws Hk_Exception_Runtime
      */
-    public function __construct(PDO $dbh, $defaultMemberBasis, $nid = 0, NameRS $nRS = null) {
+    public function __construct(\PDO $dbh, $defaultMemberBasis, $nid = 0, NameRS $nRS = null) {
 
         $uS = Session::getInstance();
 
@@ -106,7 +104,7 @@ abstract class Member {
      * @return \IndivMember|\OrgMember
      * @throws Hk_Exception_UnexpectedValue
      */
-    public static function GetDesignatedMember(PDO $dbh, $nid, $defaultMemberBasis) {
+    public static function GetDesignatedMember(\PDO $dbh, $nid, $defaultMemberBasis) {
 
         $uS = Session::getInstance();
         $desig = "";
@@ -151,7 +149,7 @@ abstract class Member {
      * @return \NameRS
      * @throws Hk_Exception_Runtime
      */
-    protected static function loadNameRS(PDO $dbh, $nid) {
+    protected static function loadNameRS(\PDO $dbh, $nid) {
         $nRS = new NameRS();
 
         if ($nid > 0) {
@@ -395,7 +393,7 @@ abstract class Member {
      * @throws Hk_Exception_UnexpectedValue
      * @throws Hk_Exception_Runtime
      */
-    public function saveChanges(PDO $dbh, array $post) {
+    public function saveChanges(\PDO $dbh, array $post) {
 
         // Convenience var
         $n = $this->nameRS;
@@ -666,7 +664,7 @@ abstract class Member {
     }
 
 
-    public function verifyPreferredAddress($dbh, ContactPoint $cp, $uname) {
+    public function verifyPreferredAddress(\PDO $dbh, ContactPoint $cp, $uname) {
 
         $msg = "";
         $foundOne = FALSE;
@@ -718,7 +716,7 @@ abstract class Member {
      * @param PDO $dbh
      * @return string
      */
-    protected function isMemberDeletable(PDO $dbh) {
+    protected function isMemberDeletable(\PDO $dbh) {
 
         $result = "";   // Set $result with a text message to decline the status change
 
@@ -733,7 +731,7 @@ abstract class Member {
         $stmt->execute(array(':id'=>$this->nameRS->idName));
 
         if ($stmt->rowCount() > 0) {
-            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
             if ($rows[0][0] > 0) {
                 $result = "Member shows $" . number_format($rows[0][0], 2) . " in donations.";
             }
@@ -747,7 +745,7 @@ abstract class Member {
      * @param string $user
      * @return bool
      */
-    public function retireAllVolunteer(PDO $dbh, $user) {
+    public function retireAllVolunteer(\PDO $dbh, $user) {
 
         // Retire all volunteer stints
         $query = "update name_volunteer2 set Vol_Status = 'i', Vol_End = now(), Updated_By=:byuser, Last_Updated=now()
@@ -763,7 +761,7 @@ abstract class Member {
      * @param string $user
      * @return bool
      */
-    public function deleteWebLogin(PDO $dbh, $user) {
+    public function deleteWebLogin(\PDO $dbh, $user) {
 
         // delete web login
         $query = "call del_webuser(:id, :byuser);";

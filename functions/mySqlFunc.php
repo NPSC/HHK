@@ -2,18 +2,16 @@
 /**
  * mySqlFunc.php
  *
- * @category  Utility
- * @package   Hospitality HouseKeeper
- * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+* @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 
-function openMysqli(PDO $dbh, Session $uS) {
+function openMysqli(\PDO $dbh, Session $uS) {
 
-    $driver = $dbh->getAttribute(PDO::ATTR_DRIVER_NAME);
+    $driver = $dbh->getAttribute(\PDO::ATTR_DRIVER_NAME);
 
     if ($driver != 'mysql') {
         return 'Driver not mysql. ';

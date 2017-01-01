@@ -2,14 +2,10 @@
 /**
  * PDOdata.php
  *
- * Encapsulates common functionality for DB access
- *
- * @category  Utility
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -215,7 +211,7 @@ class DbDecimalSanitizer implements iDbFieldSanitizer {
      * @return int
      */
     public function getDbType(){
-        return PDO::PARAM_STR;
+        return \PDO::PARAM_STR;
     }
 
 }
@@ -238,7 +234,7 @@ class DbIntSanitizer implements iDbFieldSanitizer {
      * @return int
      */
     public function getDbType(){
-        return PDO::PARAM_INT;
+        return \PDO::PARAM_INT;
     }
 
 }
@@ -266,7 +262,7 @@ class DbBitSanitizer implements iDbFieldSanitizer {
      * @return int
      */
     public function getDbType(){
-        return PDO::PARAM_BOOL;
+        return \PDO::PARAM_BOOL;
     }
 
 }
@@ -320,9 +316,9 @@ class DbDateSanitizer implements iDbFieldSanitizer {
      */
     public function getDbType() {
         if ($this->isNull === false) {
-            return PDO::PARAM_STR;
+            return \PDO::PARAM_STR;
         } else {
-            return PDO::PARAM_NULL;
+            return \PDO::PARAM_NULL;
         }
     }
 
@@ -502,7 +498,7 @@ class EditRS {
      * @param string $combiner
      * @return array
      */
-    public static function select(PDO $dbh, iTableRS $rs, array $whereDbFieldArray, $combiner = "and", array $orderByDbFieldArray = array(), $ascending = TRUE) {
+    public static function select(\PDO $dbh, iTableRS $rs, array $whereDbFieldArray, $combiner = "and", array $orderByDbFieldArray = array(), $ascending = TRUE) {
         $paramList = array();
         $query = "";
         $whClause = "";
@@ -514,7 +510,7 @@ class EditRS {
 
             if ($dbF instanceof DB_Field) {
                 // use for array containing DataField objects
-                if ($dbF->getDbType() == PDO::PARAM_BOOL) {
+                if ($dbF->getDbType() == \PDO::PARAM_BOOL) {
                     $whClause .= " " . $combiner . " " . $dbF->getCol() . "=" . $dbF->getStoredVal();
                 } else {
                     $whClause .= " " . $combiner . " " . $dbF->getCol() . "=" . $dbF->getParam();
@@ -557,9 +553,9 @@ class EditRS {
             $query .= " where " . $whClause;
         }
 
-        $volStmt = $dbh->prepare($query . $orderBy, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+        $volStmt = $dbh->prepare($query . $orderBy, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         $volStmt->execute($paramList);
-        return $volStmt->fetchAll(PDO::FETCH_ASSOC);
+        return $volStmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
 
@@ -617,7 +613,7 @@ class EditRS {
      * @param array $whereDbFieldArray
      * @return int
      */
-    public static function update(PDO $dbh, iTableRS $rs, array $whereDbFieldArray) {
+    public static function update(\PDO $dbh, iTableRS $rs, array $whereDbFieldArray) {
         $setList = array();
         $paramList = array();
         $query = "";
@@ -631,10 +627,10 @@ class EditRS {
 
                 if (!is_null($dbF->getNewVal()) && $dbF->getNewVal() != $dbF->getStoredVal()) {
                     // make
-                    if ($dbF->getDbType() == PDO::PARAM_BOOL) {
+                    if ($dbF->getDbType() == \PDO::PARAM_BOOL) {
                         // Stupid PDO doesnt like bit(1) types - use the value directly instead of using a parameter
                         $setList[] = $dbF->getCol() . "=" . $dbF->getNewVal();
-                    } else if ($dbF->getDbType() == PDO::PARAM_NULL) {
+                    } else if ($dbF->getDbType() == \PDO::PARAM_NULL) {
                         $setList[] = $dbF->getCol() . "=null";
                     } else {
                         $setList[] = $dbF->getCol() . "=" . $dbF->getParam();
@@ -661,7 +657,7 @@ class EditRS {
 
             // now run through the where parameter array
             foreach ($whereDbFieldArray as $dbF) {
-                if ($dbF->getDbType() == PDO::PARAM_BOOL) {
+                if ($dbF->getDbType() == \PDO::PARAM_BOOL) {
                     $whClause .= " and " . $dbF->getCol() . "=" . $dbF->getStoredVal();
                 } else {
                     $whClause .= " and " . $dbF->getCol() . "=" . $dbF->getParam();
@@ -698,7 +694,7 @@ class EditRS {
      * @param iTableRS $rs
      * @return int
      */
-    public static function insert(PDO $dbh, iTableRS $rs) {
+    public static function insert(\PDO $dbh, iTableRS $rs) {
         $colList = "";
         $valueList = "";
         $paramList = array();
@@ -712,10 +708,10 @@ class EditRS {
                     // make
                     $colList .= "," . $dbF->getCol();
 
-                    if ($dbF->getDbType() == PDO::PARAM_BOOL) {
+                    if ($dbF->getDbType() == \PDO::PARAM_BOOL) {
                         // Stupid PDO doesnt like bit(1) types - use the value directly instead of using a parameter
                         $valueList .= "," . $dbF->getNewVal();
-                    } else if ($dbF->getDbType() == PDO::PARAM_NULL) {
+                    } else if ($dbF->getDbType() == \PDO::PARAM_NULL) {
                         $valueList .= ",null";
                     } else {
                         $valueList .= "," . $dbF->getParam();
@@ -750,7 +746,7 @@ class EditRS {
     }
 
 
-    public static function delete(PDO $dbh, iTableRS $rs, array $whereDbFieldArray, $combiner = "and") {
+    public static function delete(\PDO $dbh, iTableRS $rs, array $whereDbFieldArray, $combiner = "and") {
         $paramList = array();
         $query = "";
         $whClause = "";
@@ -762,7 +758,7 @@ class EditRS {
 
             if ($dbF instanceof DB_Field) {
                 // use for array containing DataField objects
-                if ($dbF->getDbType() == PDO::PARAM_BOOL) {
+                if ($dbF->getDbType() == \PDO::PARAM_BOOL) {
                     $whClause .= " " . $combiner . " " . $dbF->getCol() . "=" . $dbF->getStoredVal();
                 } else {
                     $whClause .= " " . $combiner . " " . $dbF->getCol() . "=" . $dbF->getParam();

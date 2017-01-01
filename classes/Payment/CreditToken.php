@@ -8,7 +8,7 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-namespace npsc;
+
 
 /**
  * Description of CreditToken
@@ -17,7 +17,7 @@ namespace npsc;
  */
 class CreditToken {
 
-    public static function storeToken(PDO $dbh, $idRegistration, $idPayor, MercResponse $vr) {
+    public static function storeToken(\PDO $dbh, $idRegistration, $idPayor, MercResponse $vr) {
 
         $cardNum = str_ireplace('x', '', $vr->getMaskedAccount());
 
@@ -92,7 +92,7 @@ class CreditToken {
     }
 
 
-    public static function updateToken(PDO $dbh, PaymentResponse $vr) {
+    public static function updateToken(\PDO $dbh, PaymentResponse $vr) {
 
         $gtRs = new Guest_TokenRS();
         $gtRs->idGuest_token->setStoredVal($vr->idToken);
@@ -120,7 +120,7 @@ class CreditToken {
     }
 
 
-    public static function getRegTokenRSs(PDO $dbh, $idRegistration, $idGuest = 0) {
+    public static function getRegTokenRSs(\PDO $dbh, $idRegistration, $idGuest = 0) {
 
         $rsRows = array();
 
@@ -130,7 +130,7 @@ class CreditToken {
             $stmt = $dbh->query("select t.* from guest_token t left join name_volunteer2 nv on t.idGuest = nv.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'ba'
 where t.idRegistration = $idRegistration and nv.idName is null");
 
-            while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
                 $gtRs = new Guest_TokenRS();
                 EditRS::loadRow($r, $gtRs);
@@ -157,7 +157,7 @@ where t.idRegistration = $idRegistration and nv.idName is null");
 
     }
 
-    public static function findTokenRS(PDO $dbh, $gid, $cardHolderName, $cardType, $maskedAccount) {
+    public static function findTokenRS(\PDO $dbh, $gid, $cardHolderName, $cardType, $maskedAccount) {
 
         $gtRs = new Guest_TokenRS();
         $gtRs->idGuest->setStoredVal($gid);
@@ -183,7 +183,7 @@ where t.idRegistration = $idRegistration and nv.idName is null");
         return $gtRs;
     }
 
-    public static function getTokenRsFromId(PDO $dbh, $idToken) {
+    public static function getTokenRsFromId(\PDO $dbh, $idToken) {
 
         $gtRs = new Guest_TokenRS();
 

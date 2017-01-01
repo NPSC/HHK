@@ -3,12 +3,10 @@
 /**
  * Pages.php
  *
- * @category  Site
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -18,7 +16,7 @@
  */
 class Pages {
 
-    public static function deletePage(PDO $dbh, $pageId) {
+    public static function deletePage(\PDO $dbh, $pageId) {
 
         if ($pageId > 0) {
 
@@ -36,7 +34,7 @@ class Pages {
         return array("error" => "Bad Page Id.");
     }
 
-    public static function editPages(PDO $dbh, $pa) {
+    public static function editPages(\PDO $dbh, $pa) {
 
         $pageRs = new PageRS();
 
@@ -166,7 +164,7 @@ class Pages {
         return $events;
     }
 
-    public static function getPages(PDO $dbh, $site) {
+    public static function getPages(\PDO $dbh, $site) {
         $query = "SELECT
 `p`.`idPage`,
 `p`.`File_Name`,
@@ -186,7 +184,7 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
 
         $stmt = $dbh->prepare($query);
         $stmt->execute(array(':site' => $site));
-        $pageRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $pageRows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $tbl = new HTMLTable();
         //$markup = "<table  id='tblPages' class='display'><thead><tr>";
@@ -253,7 +251,7 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
         return array("success" => $tbl->generateMarkup(array('id'=>'tblPages', 'class'=>'display')), "parent" => $menuParent);
     }
 
-    public static function editSite(PDO $dbh, $fields) {
+    public static function editSite(\PDO $dbh, $fields) {
         $siteCode = '';
 
         if (isset($fields["inSiteCode"])) {
@@ -323,5 +321,3 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
     }
 
 }
-
-?>

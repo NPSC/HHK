@@ -2,12 +2,10 @@
 /**
  * visitViewer.php
  *
- *
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -20,11 +18,11 @@ class VisitView {
     /**
      * This actually loads all visit spans of any status.
      *
-     * @param PDO $dbh
+     * @param \PDO $dbh
      * @param int $idReg
      * @return array
      */
-    public static function loadActiveVisits(PDO $dbh, $idReg) {
+    public static function loadActiveVisits(\PDO $dbh, $idReg) {
 
         $rows = array();
 
@@ -36,7 +34,7 @@ class VisitView {
                     . "(Actual_Span_Nights > 0 or `Status` = '". VisitStatus::CheckedIn . "' or DATE(Arrival_Date) = DATE(now()))"
                     . " and idRegistration = $id order by Span_Start DESC;";
             $stmt = $dbh->query($query);
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
         return $rows;
     }
@@ -49,7 +47,7 @@ class VisitView {
      * @param int $idGuest
      * @return array
      */
-    public static function loadGuestStays(PDO $dbh, $idGuest) {
+    public static function loadGuestStays(\PDO $dbh, $idGuest) {
 
         $rows = array();
 
@@ -59,7 +57,7 @@ class VisitView {
 
             $query = "select * from vstays_listing where idName = $id order by Checkin_Date desc;";
             $stmt = $dbh->query($query);
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
 
         return $rows;
@@ -311,9 +309,9 @@ class VisitView {
         // Make undo checkout button.  Only allow undo for 5 days after end of visit.
         if ($r['Status'] == VisitStatus::CheckedOut && $isAdmin) {
 
-            $actualDepartDT = new DateTime($r['Actual_Departure']);
-            $actualDepartDT->add(new DateInterval('P15D'));
-            $nowDT = new DateTime();
+            $actualDepartDT = new \DateTime($r['Actual_Departure']);
+            $actualDepartDT->add(new \DateInterval('P15D'));
+            $nowDT = new \DateTime();
             $spnMkup = '';
             $ctitle = '';
 
@@ -376,7 +374,7 @@ class VisitView {
         if ($idV > 0 && $idS > -1) {
             // load stays for this visit
             $stmt = $dbh->query("select * from `vstays_listing` where `idVisit` = $idVisit and `Visit_Span` = $span order by `Status`, `Span_Start_Date` desc;");
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
 
 
@@ -400,7 +398,7 @@ class VisitView {
 
 
             try {
-                $ckinDT = new DateTime($r['Checkin_Date']);
+                $ckinDT = new \DateTime($r['Checkin_Date']);
                 $ckinDT->setTime(0, 0, 0);
             } catch (Exception $ex) {
 
@@ -436,7 +434,7 @@ class VisitView {
                 $hdrPgRb = HTMLTable::makeTh('Pri', array('title'=>'Primary Guest'));
             }
 
-            $stDayDT = new DateTime($r['Span_Start_Date']);
+            $stDayDT = new \DateTime($r['Span_Start_Date']);
             $stDayDT->setTime(0, 0, 0);
 
             $chkInTitle = 'Checked In';
@@ -445,9 +443,9 @@ class VisitView {
             if ($r["Visit_Status"] == VisitStatus::CheckedIn && $r['Status'] == VisitStatus::CheckedIn) {
 
                 if ($action == 'ref' && $coDate != '') {
-                    $edDay = new DateTime($coDate);
+                    $edDay = new \DateTime($coDate);
                 } else {
-                    $edDay = new DateTime(date('Y-m-d'));
+                    $edDay = new \DateTime(date('Y-m-d'));
                 }
 
                 $edDay->setTime(0, 0, 0);
@@ -464,7 +462,7 @@ class VisitView {
 
             } else {
 
-                $edDay = new DateTime($r['Span_End_Date']);
+                $edDay = new \DateTime($r['Span_End_Date']);
                 $edDay->setTime(0, 0, 0);
 
                 $days = $edDay->diff($stDayDT, TRUE)->days;
@@ -854,7 +852,7 @@ class VisitView {
      * @param string $idPrefix
      * @return string
      */
-    public static function removeStays(PDO $dbh, $idVisit, $span, $idGuest, $uname) {
+    public static function removeStays(\PDO $dbh, $idVisit, $span, $idGuest, $uname) {
 
         $reply = '';
 
@@ -921,14 +919,14 @@ class VisitView {
             // Adjust visit start and end dates, if needed
             if (count($stays) != $countStays) {
 
-                $earliestStart = new DateTime('2900-01-01');
-                $latestEnd = new DateTime('1984-01-01');
+                $earliestStart = new \DateTime('2900-01-01');
+                $latestEnd = new \DateTime('1984-01-01');
 
                 // Find the earlyest start and latest end of the remaining stays.
                 foreach ($remainingStays as $sRs) {
 
-                    $st = new DateTime($sRs->Span_Start_Date->getStoredVal());
-                    $ed = new DateTime($sRs->Span_End_Date->getStoredVal());
+                    $st = new \DateTime($sRs->Span_Start_Date->getStoredVal());
+                    $ed = new \DateTime($sRs->Span_End_Date->getStoredVal());
 
                     if ($st < $earliestStart) {
                         $earliestStart = $st;
@@ -994,7 +992,7 @@ class VisitView {
      * @param string $uname
      * @return string
      */
-    public static function moveVisit(PDO $dbh, $idVisit, $span, $startDelta, $endDelta, $uname) {
+    public static function moveVisit(\PDO $dbh, $idVisit, $span, $startDelta, $endDelta, $uname) {
 
         if ($startDelta == 0 && $endDelta == 0) {
             return '';
@@ -1066,13 +1064,13 @@ class VisitView {
         }
 
         $visits = array();
-        $startInterval = new DateInterval('P' . abs($startDelta) . 'D');
-        $endInterval = new DateInterval('P' . abs($endDelta) . 'D');
-        $now = new DateTime();
-        $tonight = new DateTime();
+        $startInterval = new \DateInterval('P' . abs($startDelta) . 'D');
+        $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
+        $now = new \DateTime();
+        $tonight = new \DateTime();
         $tonight->setTime(23, 59, 59);
 
-        $today = new DateTime();
+        $today = new \DateTime();
         $today->setTime(10, 0, 0);
 
         // change visit span dates
@@ -1093,7 +1091,7 @@ class VisitView {
                 $newEndDt = setTimeZone(NULL, $vRs->Span_End->getStoredVal());
             }
 
-            $modEndDt = new DateTime($newEndDt->format('Y-m-d H:i:s'));
+            $modEndDt = new \DateTime($newEndDt->format('Y-m-d H:i:s'));
 
 
             if ($endDelta < 0 || $startDelta < 0) {
@@ -1321,16 +1319,16 @@ class VisitView {
      */
     protected static function moveStaysDates($stays, $startDelta, $endDelta) {
 
-        $startInterval = new DateInterval('P' . abs($startDelta) . 'D');
-        $endInterval = new DateInterval('P' . abs($endDelta) . 'D');
-        $today = new DateTime();
+        $startInterval = new \DateInterval('P' . abs($startDelta) . 'D');
+        $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
+        $today = new \DateTime();
         $today->setTime(10, 0, 0);
 
         foreach ($stays as $stayRS) {
 
-            $firstArrival = new DateTime($stayRS->Checkin_Date->getStoredVal());
-            $expectedDeparture = new DateTime($stayRS->Expected_Co_Date->getStoredVal());
-            $newStartDT = new DateTime($stayRS->Span_Start_Date->getStoredVal());
+            $firstArrival = new \DateTime($stayRS->Checkin_Date->getStoredVal());
+            $expectedDeparture = new \DateTime($stayRS->Expected_Co_Date->getStoredVal());
+            $newStartDT = new \DateTime($stayRS->Span_Start_Date->getStoredVal());
 
             if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
@@ -1365,13 +1363,13 @@ class VisitView {
             }
 
             // Validity check
-            $endDATE = new DateTime($newEndDt->format('Y-m-d 00:00:00'));
-            $startDATE = new DateTime($newStartDT->format('Y-m-d 00:00:00'));
+            $endDATE = new \DateTime($newEndDt->format('Y-m-d 00:00:00'));
+            $startDATE = new \DateTime($newStartDT->format('Y-m-d 00:00:00'));
             if ($endDATE < $startDATE) {
                 return "The stay End date comes before the Start date.  ";
             }
 
-            $tday = new DateTime($today->format('Y-m-d 00:00:00'));
+            $tday = new \DateTime($today->format('Y-m-d 00:00:00'));
             if ($stayRS->Status->getStoredVal() != VisitStatus::CheckedIn && $endDATE > $tday) {
                 return "At least one guest, Id = " . $stayRS->idName->getStoredVal() . ", will have checked out into the future.  ";
             }
@@ -1402,7 +1400,7 @@ class VisitView {
      * @param int $idRegistration
      * @param sring $uname
      */
-    protected static function saveStaysDates(PDO $dbh, $stays, $idRegistration, $uname) {
+    protected static function saveStaysDates(\PDO $dbh, $stays, $idRegistration, $uname) {
 
 
         foreach ($stays as $stayRS) {

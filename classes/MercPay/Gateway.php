@@ -8,7 +8,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-namespace npsc;
 /**
  * Description of Gateway
  *

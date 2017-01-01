@@ -3,14 +3,10 @@
 /**
  * memberSearch.php
  *
- *
- *
- * @category  member
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2015 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -55,7 +51,7 @@ class MemberSearch {
         }
     }
 
-    public function volunteerCmteFilter(PDO $dbh, $basis, $fltr, $additional = '') {
+    public function volunteerCmteFilter(\PDO $dbh, $basis, $fltr, $additional = '') {
         $events = array();
 
         $operation = 'OR';
@@ -75,10 +71,10 @@ class MemberSearch {
     $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk))
     order by n.Name_Last, n.Name_First;";
 
-                $stmt = $dbh->prepare($query2, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
                 $stmt->execute(array(':vcat' => $prts[0], ':vcode' => $prts[1], ':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
 
-                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
                 foreach ($rows as $row2) {
                     $namArray = array();
 
@@ -108,7 +104,7 @@ left join name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpo
 where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1  and (LOWER(n.Name_Last) like :ltrln
 $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Name_Last, n.Name_First;";
 
-            $stmt = $dbh->prepare($query2, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+            $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
             $stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -151,12 +147,12 @@ FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category 
 where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1  and ((LOWER(n.Name_Last) like :ltrln or LOWER(n.Company) like :ltrco)
 $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Company, n.Name_Last, n.Name_First;";
 
-                $stmt = $dbh->prepare($query2, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
                 $stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First, ':ltrco'=>$this->Company));
             }
 
 
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             foreach ($rows as $r) {
 
@@ -187,9 +183,9 @@ left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone
 where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1  and (LOWER(n.Name_Last) like :ltrln
 $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Name_Last, n.Name_First;";
 
-            $stmt = $dbh->prepare($query2, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+            $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
             $stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             foreach ($rows as $r) {
 
@@ -217,9 +213,9 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Patient . "'
 where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1  and (LOWER(n.Name_Last) like :ltrln
 $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Name_Last, n.Name_First;";
-            $stmt = $dbh->prepare($query2, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+            $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
             $stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             foreach ($rows as $row2) {
                 $namArray = array();
@@ -240,7 +236,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         return $events;
     }
 
-    public function searchLinks(PDO $dbh, $basis, $id, $namesOnly = FALSE) {
+    public function searchLinks(\PDO $dbh, $basis, $id, $namesOnly = FALSE) {
         $events = array();
 
         $operation = 'OR';
@@ -258,9 +254,9 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 WHERE n.idName>0 and n.Member_Status not in ('u','TBD','p') and
                 (LOWER(n.Name_Last) like :ltrln $operation
                 (LOWER(n.Name_NickName) like :ltrnk OR LOWER(n.Name_First) like :ltrfn) OR LOWER(n.Company) like :ltrco) order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
                 $stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First, ':ltrco' => $this->Name_First));
-                $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+                $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
                     $namArray = array();
@@ -294,9 +290,9 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 FROM name n left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 WHERE n.idName>0 and n.idName <> :id and n.Member_Status<>'u' and n.Member_Status<>'TBD' and (LOWER(n.Name_Last) like :ltrln
                 $operation (LOWER(n.Name_First) like :ltrfn  OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
                 $stmt->execute(array(':id' => $id, ':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
-                $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+                $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
 
@@ -326,9 +322,9 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 from name_email e join name n on e.idName = n.idName
                 left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 where n.idName>0 and n.Member_Status<>'u' and Member_Status<>'TBD' and  LOWER(e.Email) like :ltr order by n.Member_Status, e.Email";
-                $stmt = $dbh->prepare($query2, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
                 $stmt->execute(array(':ltr' => $this->Name_First));
-                $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+                $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
                     $namArray = array();
@@ -348,9 +344,9 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
             WHERE (LOWER(n.Name_Last) like :ltrln $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) and n.Record_Member = 1
                 and n.Member_Status in ('a','d','in') and n.idName <> :id2 and r.idRelationship is null order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
                 $stmt->execute(array(':id' => $id, ':id2' => $id, ':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
-                $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+                $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
                     $namArray = array();
@@ -372,9 +368,9 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 WHERE (LOWER(n.Name_Last) like :ltrln $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) and n.Record_Member = 1
                 and n.Member_Status in ('a','d','in') and n.idName <> :id2 and r.idRelationship is null order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
                 $stmt->execute(array(':id' => $id, ':id2' => $id, ':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
-                $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+                $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
                     $namArray = array();
@@ -397,9 +393,9 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 WHERE (LOWER(n.Name_Last) like :ltrln $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) and n.Record_Member = 1 and ifnull(r.Group_Code,'0') not in
                 (Select Group_Code from relationship where idname = :id)
                 and n.Member_Status in ('a','d','in') and n.idName <> :id2 order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
                 $stmt->execute(array(':id' => $id, ':id2' => $id, ':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
-                $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+                $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
                     $namArray = array();
@@ -417,9 +413,9 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             case RelLinkType::Company:
                 $query2 = "select idName as Id, Company from name where Record_Company=1 and Member_Status ='a' and idName>0 and idName <> :id and LOWER(Company) like :ltr order by Member_Status, Company;";
-                $stmt = $dbh->prepare($query2, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
                 $stmt->execute(array(':id' => $id, ':ltr' => $this->Name_First));
-                $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+                $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
                     $namArray = array();
@@ -439,9 +435,9 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 WHERE (LOWER(n.Name_Last) like :ltrln $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) and n.Record_Member = 1
                 and n.Member_Status in ('a','d','in') and n.idName>0 and n.idName <> :id and r.idRelationship is null order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
                 $stmt->execute(array(':id' => $id, ':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
-                $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+                $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
                     $namArray = array();
@@ -461,9 +457,9 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             FROM name n left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
             WHERE n.Company_Id = 0 and n.Member_Status in ('a','in') and n.Record_Member = 1 and n.idName <> :id and (LOWER(n.Name_Last) like :ltrln
                 $operation (LOWER(n.Name_First) like :ltrfn  OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
                 $stmt->execute(array(':id' => $id, ':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
-                $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+                $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
                     $namArray = array();
@@ -486,9 +482,9 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 WHERE (LOWER(n.Name_Last) like :ltrln $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) and n.Record_Member = 1 and ifnull(r.Group_Code,'0') not in
                 (Select Group_Code from relationship where idname = :id)
                 and n.Member_Status in ('a','d','in') and n.idName <> :id2 order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
                 $stmt->execute(array(':id' => $id, ':id2' => $id, ':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
-                $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+                $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
                     $namArray = array();
@@ -520,7 +516,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         return $events;
     }
 
-    public function roleSearch(PDO $dbh, $mode = '') {
+    public function roleSearch(\PDO $dbh, $mode = '') {
 
         $operation = 'OR';
         if ($this->twoParts) {
@@ -536,9 +532,9 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 and (LOWER(n.Name_Last) like :ltrln"
                 . " $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk) OR np.Phone_Search like :phnum) order by n.Name_Last, n.Name_First;";
 
-        $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+        $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         $stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First, ':phnum' => $this->Name_First));
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $events = array();
 
@@ -578,7 +574,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
      * @param array $post
      * @throws Hk_Exception_Runtime
      */
-    public static function searchName(PDO $dbh, $memDesignation, $nameLast, $nameFirst = '', $email = '', $phone = '') {
+    public static function searchName(\PDO $dbh, $memDesignation, $nameLast, $nameFirst = '', $email = '', $phone = '') {
 
         $email = strtolower($email);
         $phone = strtolower($phone);
@@ -644,7 +640,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         $stmt = $dbh->prepare($query);
         $stmt->execute($parms);
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     public static function createDuplicatesDiv(array $dups) {

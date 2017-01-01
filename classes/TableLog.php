@@ -2,14 +2,10 @@
 /**
  * TableLog.php
  *
- *
- *
- * @category  Configuration
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -67,7 +63,7 @@ abstract class TableLog {
     }
 
 
-    protected static function insertLog(PDO $dbh, TableRS $logRS) {
+    protected static function insertLog(\PDO $dbh, TableRS $logRS) {
 
         $rt = EditRS::insert($dbh, $logRS);
         return $rt;

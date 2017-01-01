@@ -8,8 +8,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-namespace npsc;
-
 /**
  * Description of Item
  *
@@ -35,7 +33,7 @@ class Item {
     protected function loadRecord(\PDO $dbh) {
 
         $stmt = $dbh->query("select * from item where idItem = " . $this->idItem);
-        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $items = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($items) == 0) {
             throw new Hk_Exception_Runtime('Item not found. Item Id = '. $this->idItem);
@@ -57,7 +55,7 @@ class Item {
     public static function loadItems(\PDO $dbh) {
 
         $stmt = $dbh->query("select idItem, Description from item where Deleted = 0");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
 

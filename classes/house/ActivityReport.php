@@ -2,14 +2,10 @@
 /**
  * ActivityReport.php
  *
- * Guest Tracking report & markup
- *
- * @category  house
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 
@@ -22,14 +18,14 @@ class ActivityReport {
      * @param string $endDate
      * @return string HTML table markup
      */
-    public static function staysLog(PDO $dbh, $startDate, $endDate) {
+    public static function staysLog(\PDO $dbh, $startDate, $endDate) {
 
         $query = "select * from vstays_log where (DATE(Timestamp) >= :start and DATE(Timestamp) <= :end);";
 
         $stmt = $dbh->prepare($query);
         $stmt->execute(array(':start'=>$startDate, ':end'=>$endDate));
 
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $visitId = 0;
         $spanId = 0;
         $visitIcon = "<span class='ui-icon ui-icon-folder-open' style='float: left; margin-right: .3em;' title='Open Visit Viewer'></span>";
@@ -141,7 +137,7 @@ class ActivityReport {
     }
 
 
-    public static function reservLog(PDO $dbh, $startDate, $endDate, $resvId = 0) {
+    public static function reservLog(\PDO $dbh, $startDate, $endDate, $resvId = 0) {
 
         $uS = Session::getInstance();
 
@@ -157,7 +153,7 @@ class ActivityReport {
         }
 
 
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $reservId = 0;
 
         $reservIcon = "<span class='ui-icon ui-icon-folder-open' style='float: left; margin-right: .3em;' title='Open Reservtion Viewer'></span>";
@@ -241,7 +237,7 @@ class ActivityReport {
     }
 
 
-    public static function HospStayLog(PDO $dbh, $startDate, $endDate, $idPsg = 0) {
+    public static function HospStayLog(\PDO $dbh, $startDate, $endDate, $idPsg = 0) {
 
         $uS = Session::getInstance();
         $idP = intval($idPsg, 10);
@@ -266,7 +262,7 @@ class ActivityReport {
 
         $stmtd = $dbh->query("select n.idName, n.Name_Full from `name` n join name_volunteer2 nv on n.idName = nv.idName where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'doc'");
         $doctors = array();
-        while ($d = $stmtd->fetch(PDO::FETCH_ASSOC)) {
+        while ($d = $stmtd->fetch(\PDO::FETCH_ASSOC)) {
             $doctors[$d['idName']] = $d['Name_Full'];
         }
 
@@ -275,7 +271,7 @@ class ActivityReport {
         $tbl = new HTMLTable();
         $tbl->addHeaderTr(HTMLTable::makeTh("Action"). HTMLTable::makeTh("Date"). HTMLTable::makeTh("By"));
 
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $logData = array();
 
             if ($r['Log_Text'] == '') {
@@ -433,7 +429,7 @@ class ActivityReport {
      * @param string $endDate
      * @return string HTML table markup
      */
-    public static function feesLog(PDO $dbh, $startDT, $endDT, $feeStatuses, $selectedPayTypes, $idReg, $title = 'Recent Payments Report', $showDeletedInv = TRUE) {
+    public static function feesLog(\PDO $dbh, $startDT, $endDT, $feeStatuses, $selectedPayTypes, $idReg, $title = 'Recent Payments Report', $showDeletedInv = TRUE) {
 
         $uS = Session::getInstance();
         $whStatus = '';
@@ -510,7 +506,7 @@ class ActivityReport {
 
         // get payment methods
         $stmtp = $dbh->query("select * from payment_method");
-        while ($t = $stmtp->fetch(PDO::FETCH_NUM)) {
+        while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
             if ($t[0] > 0) {
                 $payTypeTotals[$t[0]] = array('amount'=>0.00, 'count'=>0, 'title'=>$t[1], 'active'=>$active);
             }
@@ -843,7 +839,7 @@ where lp.idPayment > 0
 
     }
 
-    public static function unpaidInvoiceLog(PDO $dbh, $includeAction = TRUE) {
+    public static function unpaidInvoiceLog(\PDO $dbh, $includeAction = TRUE) {
 
         $uS = Session::getInstance();
 
@@ -902,7 +898,7 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
         $invStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
 
 
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             // Hospital
             $hospital = '';

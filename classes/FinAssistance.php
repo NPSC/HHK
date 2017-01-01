@@ -2,12 +2,10 @@
 /**
  * FinAssistance.php
  *
- *
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2015 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -25,7 +23,7 @@ class FinAssistance {
     protected $rrates;
 
 
-    function __construct(PDO $dbh, $idRegistration, $category = '') {
+    function __construct(\PDO $dbh, $idRegistration, $category = '') {
 
         $uS = Session::getInstance();
 
@@ -123,7 +121,7 @@ class FinAssistance {
     }
 
 
-    public function saveDialogMarkup(PDO $dbh, $newStatus, $newCategory, $reason, $faStatDate, $notes, $uname) {
+    public function saveDialogMarkup(\PDO $dbh, $newStatus, $newCategory, $reason, $faStatDate, $notes, $uname) {
 
         $uS = Session::getInstance();
 
@@ -292,7 +290,7 @@ class FinAssistance {
         return $this->finAppRs->FA_Applied_Date->getStoredVal();
     }
 
-    public function getEstAmount(PDO $dbh, $days, $category, $pledgedRate = 0) {
+    public function getEstAmount(\PDO $dbh, $days, $category, $pledgedRate = 0) {
         return self::amountCalculator($dbh, $days, $category, $pledgedRate);
     }
 
@@ -304,7 +302,7 @@ class FinAssistance {
         return $this->finAppRs->idRegistration->getStoredVal();
     }
 
-    public static function getAssistanceCategory(PDO $dbh, $income, $hhSize) {
+    public static function getAssistanceCategory(\PDO $dbh, $income, $hhSize) {
 
         if ($hhSize > 8) {
             $hhSize = 8;;
@@ -314,7 +312,7 @@ class FinAssistance {
         $stmt = $dbh->prepare($query);
         $stmt->execute(array(':size'=>$hhSize));
 
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $cat = '';
 
         if (count($rows) == 1) {

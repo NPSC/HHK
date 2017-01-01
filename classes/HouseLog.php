@@ -1,5 +1,12 @@
 <?php
-
+/*
+ * HouseLog.php
+ *
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
+ */
 
 /**
  * Description of HouseLog
@@ -8,7 +15,7 @@
  */
 class HouseLog extends TableLog {
 
-    public static function logGenLookups(PDO $dbh, $tableName, $code, $logText, $subType, $userName) {
+    public static function logGenLookups(\PDO $dbh, $tableName, $code, $logText, $subType, $userName) {
 
         if (self::checkLogText($logText) === FALSE) {
             return TRUE;
@@ -26,7 +33,7 @@ class HouseLog extends TableLog {
 
     }
 
-    public static function logSysConfig(PDO $dbh, $key, $value, $logText, $userName) {
+    public static function logSysConfig(\PDO $dbh, $key, $value, $logText, $userName) {
 
         $logRS = new House_LogRS();
         $logRS->Log_Type->setNewVal('sys_config');
@@ -40,7 +47,7 @@ class HouseLog extends TableLog {
 
     }
 
-    public static function logSiteConfig(PDO $dbh, $key, $value, $userName, $subType = 'update') {
+    public static function logSiteConfig(\PDO $dbh, $key, $value, $userName, $subType = 'update') {
 
         $logRS = new House_LogRS();
         $logRS->Log_Type->setNewVal('Site Config File');

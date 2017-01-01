@@ -2,12 +2,10 @@
 /**
  * Misc.php
  *
- * @category  Configuraton
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2015 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 require ("AdminIncludes.php");
@@ -26,7 +24,7 @@ try {
 }
 
 $dbh = $wInit->dbh;
-$dbcon = initDB();
+//$dbcon = initDB();
 
 
 $pageTitle = $wInit->pageTitle;
@@ -41,9 +39,9 @@ $uname = $uS->username;
 
 addslashesextended($_POST);
 
-function getGenLookups(PDO $dbh) {
+function getGenLookups(\PDO $dbh) {
     $stmt = $dbh->query("select distinct Table_Name from gen_lookups;");
-    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+    $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
     $markup = "<option value=''>Select</option>";
 
@@ -55,7 +53,7 @@ function getGenLookups(PDO $dbh) {
     return $markup;
 }
 
-function getChangeLog($dbcon, $naIndex, $stDate = "", $endDate = "") {
+function getChangeLog(\PDO $dbh, $naIndex, $stDate = "", $endDate = "") {
 
     // sanity test for how much data you want
     if ($stDate == "" && $endDate == "" && $naIndex < 1) {
@@ -85,7 +83,7 @@ function getChangeLog($dbcon, $naIndex, $stDate = "", $endDate = "") {
 
     $query = "SELECT * FROM name_log WHERE 1=1 " . $whereName . $logDates . " order by Date_Time desc limit 100;";
 
-    $result2 = queryDB($dbcon, $query, true);
+    $result2 = $dbh->query($query);
 
     $data = "<table id='dataTbl' class='display'><thead><tr>
             <th>Date</th>
@@ -95,7 +93,7 @@ function getChangeLog($dbcon, $naIndex, $stDate = "", $endDate = "") {
             <th>Member Id</th>
             <th>Log Text</th></tr></thead><tbody>";
 
-    while ($row2 = mysqli_fetch_array($result2)) {
+    while ($row2 = $result2->fetch(\PDO::FETCH_ASSOC)) {
 
         $data .= "<tr>
                 <td>" . date("Y-m-d H:i:s", strtotime($row2['Timestamp'])) . "</td>
@@ -105,7 +103,7 @@ function getChangeLog($dbcon, $naIndex, $stDate = "", $endDate = "") {
                 <td>" . $row2['idName'] . "</td>
                 <td>" . $row2['Log_Text'] . "</td></tr>";
     }
-    mysqli_free_result($result2);
+
 
     // activity table has volunteer data
     $query = "select a.idName, a.Effective_Date, a.Action_Codes, a.Other_Code, a.Source_Code, g.Description as Code, g2.Description as Category, ifnull(g3.Description, '') as Rank
@@ -114,8 +112,9 @@ left join gen_lookups g2 on g2.Table_Name = 'Vol_Category' and substring_index(P
 left join gen_lookups g3 on g3.Table_Name = 'Vol_Rank' and g3.Code = a.Other_Code
         where a.Type = 'vol' $whereName $whDates order by a.Effective_Date desc limit 100;";
 
-    $result2 = queryDB($dbcon, $query, true);
-    while ($row2 = mysqli_fetch_array($result2)) {
+    $result3 = $dbh->query($query);
+
+    while ($row2 = $result3->fetch(\PDO::FETCH_ASSOC)) {
 
         $data .= "<tr>
                 <td>" . date("Y-m-d H:i:s", strtotime($row2['Effective_Date'])) . "</td>
@@ -125,7 +124,6 @@ left join gen_lookups g3 on g3.Table_Name = 'Vol_Rank' and g3.Code = a.Other_Cod
                 <td>" . $row2['idName'] . "</td>
                 <td>" . $row2['Category'] . "/" . $row2["Code"] . ", Rank = " . $row2["Rank"] . "</td></tr>";
     }
-    mysqli_free_result($result2);
 
 
     return $data . "</tbody></table>";
@@ -137,7 +135,8 @@ if (isset($_POST["table"])) {
 
     $tableName = substr(filter_var($_POST["table"], FILTER_SANITIZE_STRING), 0, 45);
 
-    $res = queryDB($dbcon, "Select Code, Description, Substitute from gen_lookups where Table_Name='" . $tableName . "'");
+    $res = $dbh->query("Select Code, Description, Substitute from gen_lookups where Table_Name='" . $tableName . "'");
+
     $code = array(
         "Code" => "",
         "Description" => "",
@@ -145,7 +144,7 @@ if (isset($_POST["table"])) {
     );
 
     $tabl = array();
-    while ($rw = mysqli_fetch_row($res)) {
+    while ($rw = $res->fetch(\PDO::FETCH_NUM)) {
 
         $code["Code"] = $rw[0];
         $code["Description"] = $rw[1];
@@ -158,50 +157,28 @@ if (isset($_POST["table"])) {
 }
 
 if (isset($_POST["cmd"])) {
-    if ($_POST["cmd"] == "move") {
 
+    if ($_POST["cmd"] == "move") {
 
         $list = arrayify(filter_var_array($_POST["list"]));
         $query = "";
 
         foreach ($list as $item) {
-            //if (ValidateNameId::isValidId($dbcon, $item["donToId"])) {
+
             if ($item["donToId"] > 0) {
                 $query .= " call sp_move_donation (" . $item["donToId"] . ", " . $item["delId"] . ", '$uname'); ";
             }
         }
 
         if ($query != "") {
-            if (mysqli_multi_query($dbcon, $query)) {
-                do {
-                    if (($res = mysqli_store_result($dbcon))) {
-                        while ($rw = mysqli_fetch_assoc($res)) {
 
-                        }
-                        mysqli_free_result($res);
-                    } else {
-                        // db problem
-//                        $rtrn = array("error"=>"Database Error: row retrieval error");
-//                        echo( json_encode($rtrn));
-//                        exit();
-                    }
-                } while (mysqli_next_result($dbcon));
-
-                $rtrn = array("success" => "ok");
-                echo( json_encode($rtrn));
-                exit();
-            } else {
-                // db problem
-                $rtrn = array("error" => "Database Error: query failure");
-                echo( json_encode($rtrn));
-                exit();
-            }
         } else {
             $rtrn = array("success" => "But nothing was updated");
             echo( json_encode($rtrn));
             exit();
         }
     }
+
     $rtrn = array("error" => "bad command");
     echo( json_encode($rtrn));
     exit();
@@ -247,27 +224,12 @@ if (isset($_POST['setCookie'])) {
 
 }
 
-function getFieldLengths($con, $table) {
-    // get the field lengths
-    $query = "select * from $table limit 1";
-    $colLength = array();
-    $res = queryDB($con, $query);
-    if (!is_array($res)) {
-        $finfo = mysqli_fetch_fields($res);
-        foreach ($finfo as $field) {
-           $colLength[$field->name] = $field->length;
-        }
-    }
-    return $colLength;
-}
-
-
 // Check for Gen_Lookups post
 if (isset($_POST["btnGenLookups"])) {
+
     $accordIndex = 0;
     $lookUpAlert = new alertMessage("lookUpAlert");
     $lookUpAlert->set_Context(alertMessage::Alert);
-    $flen = getFieldLengths($dbcon, "gen_lookups");
 
     $code = filter_var($_POST["txtCode"], FILTER_SANITIZE_STRING);
     //$code = substr($code, 0, $flen["Code"]);
@@ -278,39 +240,32 @@ if (isset($_POST["btnGenLookups"])) {
     $selTbl = filter_var($_POST["selLookup"], FILTER_SANITIZE_STRING);
     //$selTbl = substr($selTbl, 0, $flen["Table_Name"]);
     $selCode = filter_var($_POST["selCode"], FILTER_SANITIZE_STRING);
-    $selCode = substr($selCode, 0, $flen["Code"]);
+
 
     if ($selTbl == "") {
         $lookUpAlert->set_Text("The Table_Name must be filled in");
-    } else if (strlen($selTbl) > $flen["Table_Name"]) {
-        $lookUpAlert->set_Text("The Table_Name too long: " . $selTbl);
     } else if ($code == "") {
         $lookUpAlert->set_Text("The Code must be filled in");
-    } else if (strlen($code) > $flen["Code"]) {
-        $lookUpAlert->set_Text("The Code is too long: " . $code);
-    } else if (strlen($subt > $flen["Substitute"])) {
-        $lookUpAlert->set_Text("The Additional Text is too long: " . $subt);
-    } else if ($desc != "" && strlen($desc) < $flen["Description"]) {
+    } else if ($desc != "") {
 
         // Is the table_name there?
-        $query = "select count(*) from gen_lookups where Table_Name='" . $selTbl . "';";
-        $res = queryDB($dbcon, $query);
-        $row = mysqli_fetch_row($res);
 
-        if ($row[0] == 0) {
+        $res = $dbh->query("select count(*) from gen_lookups where Table_Name='" . $selTbl . "';");
+        $rows = $res->fetchAll(PDO::FETCH_NUM);
+
+        if ($rows[0][0] == 0) {
             $lookUpAlert->set_Text("That Table_Name does not exist.");
         } else {
 
             // Is the Code there?
             $query = "select count(*) from gen_lookups where Table_Name='" . $selTbl . "' and Code='" . $code . "';";
-            $res1 = queryDB($dbcon, $query);
-            $row = mysqli_fetch_row($res1);
+            $res1 = $dbh->query($query);
+            $row = $res1->fetchAll(PDO::FETCH_NUM);
 
-            $query = "";
-            if ($row[0] == 0 && $selCode == "n_$") {
+            if ($row[0][0] == 0 && $selCode == "n_$") {
                 // add a new code with desc.
                 $query = "insert into gen_lookups (Table_Name, Code, Description, Substitute) values ('" . $selTbl . "', '" . $code . "', '" . $desc . "', '" . $subt . "');";
-            } else if ($row[0] > 0 && $selCode != "n_$") {
+            } else if ($row[0][0] > 0 && $selCode != "n_$") {
                 // just update the description
                 $query = "update gen_lookups set Description='" . $desc . "', Substitute='" . $subt . "' where Table_Name='" . $selTbl . "' and Code='" . $code . "';";
             } else {
@@ -318,7 +273,7 @@ if (isset($_POST["btnGenLookups"])) {
             }
 
             if ($query != "") {
-                queryDB($dbcon, $query);
+                $dbh->exec($query);
                 $lookUpAlert->set_Context(alertMessage::Success);
                 $lookUpAlert->set_Text("Okay");
             }
@@ -332,7 +287,7 @@ if (isset($_POST["btnGenLookups"])) {
  */
 $markup = "";
 if (isset($_POST["btnGenLog"])) {
-    $accordIndex = 2;
+    $accordIndex = 3;
     $sDate = filter_var($_POST["sdate"], FILTER_SANITIZE_STRING);
     if ($sDate != '') {
         $sDate = date("Y-m-d", strtotime($sDate));
@@ -342,7 +297,7 @@ if (isset($_POST["btnGenLog"])) {
         $eDate = date("Y-m-d 23:59:59", strtotime($eDate));
     }
 
-    $markup = getChangeLog($dbcon, 0, $sDate, $eDate);
+    $markup = getChangeLog($dbh, 0, $sDate, $eDate);
 
 }
 
@@ -353,7 +308,7 @@ if (isset($_POST['btnClnPhone'])) {
     $stmt = $dbh->query("select idName, Phone_Code, Phone_Num from name_phone where Phone_Num <> '';");
     $n = 0;
 
-    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
         $new = preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $r['Phone_Num']);
 
@@ -372,7 +327,7 @@ if (isset($_POST['btnClnNames'])) {
     $stmt = $dbh->query("select * from `name` where idName > 0 and Record_Member = 1 and Name_Last <> '';");
     $c = 0;
 
-    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
         if ($r['Name_Last'] != ucfirst(strtolower($r['Name_Last'])) || $r['Name_First'] != ucfirst(strtolower($r['Name_First']))) {
 
@@ -435,60 +390,76 @@ if (isset($_POST['btnClnNames'])) {
 
 // Database backup on demand
 $bkupMsg = "";
-$ignoreTables = array();
-$to = $config->get("backup", "BackupEmailAddr", "");
+$ignoreTables = array(
+    1 => 'postal_codes',
+    2 => 'street_suffix',
+    3 => 'secondary_unit_desig',
+    4 => 'mail_listing',
+    5 => 'member_history',
+);
+
+
+$to = $config->get('backup', 'BackupEmailAddr', '');
+
 if (isset($_POST["btnDoBackup"])) {
+
     $accordIndex = 2;
     $bkupAlert = new alertMessage("bkupAlert");
     $bkupAlert->set_Context(alertMessage::Alert);
 
-    $siteName = $config->get("site", "Site_Name", "Hospitality HouseKeeper");
-    $from = $config->get("backup", "FromEmailAddr", "");      // Email address message will show as coming from.
+    $siteName = $config->get('site', 'Site_Name', 'Hospitality HouseKeeper');
+    $from = $config->get('backup', 'FromEmailAddr', '');      // Email address message will show as coming from.
 
-    $dbuser = $config->get("backup", "BackupUser", "");
-    $dbpwd = decryptMessage($config->get("backup", "BackupPassword", ""));
+    $dbuser = $config->get('backup', 'BackupUser', '');
+    $dbpwd = $config->get('backup', 'BackupPassword', '');
 
     $dbConfig = $config->getSection('db');
+
     if (is_array($dbConfig)) {
         $dbUrl = $dbConfig['URL'];
-//        $dbuser = $dbConfig['User'];
-//        $dbpwd = decryptMessage($dbConfig['Password']);
         $dbname = $dbConfig['Schema'];
     }
 
-    $datestamp = date("Y_m_d");
+    if ($dbuser == '' || $dbpwd == '') {
+        $bkupMsg = $bkupAlert->createMarkup('Backup username or password is missing.');
+    } else {
 
-    $filename = REL_BASE_DIR . 'patch' . DS . 'backup.sql.gz';
+        $dbpwd = decryptMessage($dbpwd);
 
-    // ignore tables
-    $igtables = '';
-    foreach ($ignoreTables as $t) {
-        $igtables = " --ignore-table=$dbname.$t";
+        $datestamp = date("Y_m_d");
+
+        $filename = REL_BASE_DIR . 'patch' . DS . 'backup.sql.gz';
+
+        // ignore tables
+        $igtables = '';
+        foreach ($ignoreTables as $t) {
+            $igtables = " --ignore-table=$dbname.$t";
+        }
+
+        $return_var = '';
+
+        // Backup database
+        $command = "mysqldump  --host=$dbUrl --skip-lock-tables --single-transaction $igtables --user=$dbuser --password='$dbpwd' $dbname | gzip > $filename";
+        passthru($command, $return_var);
+
+
+        //$attachmentname = array_pop(explode("/", $filename));   // If a path was included, strip it out for the attachment name
+        $attachmentname = 'backup_' . $datestamp . '.sql.gz';
+        $message = "Compressed database backup file $attachmentname attached.\r\n\r\n";
+
+        $mail = prepareEmail($config);
+
+        $mail->From = $from;
+        $mail->FromName = $config->getString('site', 'Site_Name', 'Hospitality HouseKeeper');
+        $mail->addAddress($to);     // Add a recipient
+        $mail->Subject = $siteName . " DB backup file - " . $datestamp;
+        $mail->msgHTML($message);
+        $mail->addAttachment($filename, $attachmentname, 'base64', '', 'attachment');
+        $mail->send();
+
+
+        $bkupMsg = $bkupAlert->createMarkup('Result: ' . $return_var . ";  Email Error: " . $mail->ErrorInfo);
     }
-
-    $return_var = '';
-
-    // Backup database
-    $command = "mysqldump  --host=$dbUrl --skip-lock-tables --single-transaction $igtables --user=$dbuser --password='$dbpwd' $dbname | gzip > $filename";
-    passthru($command, $return_var);
-
-
-    //$attachmentname = array_pop(explode("/", $filename));   // If a path was included, strip it out for the attachment name
-    $attachmentname = 'backup_' . $datestamp . '.sql.gz';
-    $message = "Compressed database backup file $attachmentname attached.\r\n\r\n";
-
-    $mail = prepareEmail($config);
-
-    $mail->From = $from;
-    $mail->FromName = $config->getString('site', 'Site_Name', 'Hospitality HouseKeeper');
-    $mail->addAddress($to);     // Add a recipient
-    $mail->Subject = $siteName . " DB backup file - " . $datestamp;
-    $mail->msgHTML($message);
-    $mail->addAttachment($filename, $attachmentname, 'base64', '', 'attachment');
-    $mail->send();
-
-
-    $bkupMsg = $bkupAlert->createMarkup('Result: ' . $return_var . ";  Email Error: " . $mail->ErrorInfo);
 }
 
 /*
@@ -496,14 +467,13 @@ if (isset($_POST["btnDoBackup"])) {
  */
 $delIdListing = "";
 
-$query = "select idName from name where name.Member_Status = 'u' || name.Member_Status = 'TBD';";
-$res = queryDB($dbcon, $query);
-if (!is_array($res)) {
-    while ($r = mysqli_fetch_row($res)) {
+
+$res = $dbh->query("select idName from name where name.Member_Status = 'u' || name.Member_Status = 'TBD';");
+
+    while ($r = $res->fetch(\PDO::FETCH_ASSOC)) {
         $delIdListing .= "<a href='NameEdit.php?id=" . $r[0] . "'>" . $r[0] . "</a> ";
     }
-    mysqli_free_result($res);
-}
+
 if ($delIdListing == "") {
     $delIdListing = "No records.";
 }
@@ -516,21 +486,19 @@ $donMoveNames = "";
 
 // Check for existing donation records
 $query = "select d.Donor_Id, sum(d.Amount), n.Name_Last_First from donations d left join name n on d.Donor_Id = n.idName where d.Status='a' and (n.Member_Status = 'u' or n.Member_Status = 'TBD') group by d.Donor_Id;";
-$res = queryDB($dbcon, $query);
+$res = $dbh->query($query);
 
-if (!is_array($res)) {
-    while ($r = mysqli_fetch_row($res)) {
+
+    while ($r = $res->fetch(\PDO::FETCH_ASSOC)) {
         $donMoveNames .= "<tr><td>($r[0]) $r[2]</td><td class='tdBox'><input type='text' id='t_$r[0]' name='$r[0]' size='5' class='srchChars' title='Enter at least 3 characters to invoke search' />
           <select id='s_$r[0]' name='$r[0]' class='Selector'><option value='0'></option></select></td></tr>";
         $ids .= $r[0] . ",  ";
         $total += $r[1];
     }
-    mysqli_free_result($res);
-}
 
 // Check for existing stays
 $staysStmt = $dbh->query("select n.idName, n.Name_Last_First from stays s left join name n on n.idName = s.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD') group by s.idName");
-   while ($r = $staysStmt->fetch(PDO::FETCH_ASSOC)) {
+   while ($r = $staysStmt->fetch(\PDO::FETCH_ASSOC)) {
        $stayIds .= $r['idName'] . ', ';
        $numStays++;
    }
@@ -552,53 +520,75 @@ if (isset($_POST["btnDelDups"])) {
 
         // delete the name and associated records.
         $query = "call delete_names_u_tbd;";
-        $res = queryDB($dbcon, $query);
+        $res = $dbh->exec($query);
 
-        if ($res === false) {
-            $delDupsAlert->set_Context(alertMessage::Alert);
-            $delDupsAlert->set_Text("Database Error.");
-        } else {
-
-            //$numRows = mysqli_affected_rows($res);
-            $delDupsAlert->set_Context(alertMessage::Success);
-            $delDupsAlert->set_Text("Oday.  Uh-oh, I must have a dold.");
-        }
+        $delDupsAlert->set_Context(alertMessage::Success);
+        $delDupsAlert->set_Text("Oday.  Uh-oh, I must have a dold.");
     }
     $delNamesMsg = $delDupsAlert->createMarkup();
+}
+
+function readErrorFile($fname) {
+
+    if (file_exists($fname)) {
+        $contents = nl2br(file_get_contents($fname));
+    } else {
+        $contents = '<span>Error Log is Empty.</span>';
+    }
+
+    return $contents;
 }
 
 /*
  *  List Errors
  */
 $contents = "";
-if (isset($_POST["btnAdminErrors"]) || isset($_POST['btnHouseErrors']) || isset($_POST["btnVolErrors"])) {
+if (isset($_POST["btnSvrErrors"])) {
+
     $accordIndex = 5;
-    $fname = '';
-    $logname = '';
+    $volSiteURL = $config->getString("site", 'Volunteer_URL', '');
+    $houseSiteUrl = $config->getString("site", 'House_URL', '');
 
-    if (isset($_POST["btnAdminErrors"])) {
-        $fname = "error_log";
-        $logname = "Admin";
-    } else if (isset($_POST['btnHouseErrors'])) {
-        $fname = "../house/error_log";
-        $logname = "Guest Tracking";
-    } else if (isset($_POST["btnVolErrors"])) {
-        $fname = "../volunteer/error_log";
-        $logname = "Volunteer";
+    // Admin errors
+    $contents = "<h3>Administration Site Error Log</h3>";
+    $contents .= readErrorFile('error_log');
+
+    // House errors
+    if ($houseSiteUrl != '') {
+        $contents .= "<h3>House Site Error Log</h3>";
+        $contents .= readErrorFile('../house/error_log');
     }
 
-    if (file_exists($fname)) {
-        if ($_REQUEST['mode'] == 'del') {
-            unlink($fname);
-        } else {
-            //$contents = "<div style='margin-bottom: 1em;'><a href='?mode=del'>Erase $logname error_log</a></div>" . nl2br(file_get_contents($fname));
-            $contents = nl2br(file_get_contents($fname));
-        }
-    } else {
-        $contents = $logname . ' Error Log is Empty.';
+    // Volunteer errors
+    if ($volSiteURL != '') {
+        $contents .= "<h3>Volunteer Site Error Log</h3>";
+        $contents .= readErrorFile('../volunteer/error_log');
     }
+
 }
 
+// Delete Server Error Logs
+if (isset($_POST["btnDelErrors"])) {
+
+    $accordIndex = 5;
+    $contents = '';
+
+    if (file_exists('error_log')) {
+        unlink('error_log');
+        $contents .= 'Admin Error File Deleted.';
+    }
+
+    if (file_exists('../house/error_log')) {
+        unlink('../house/error_log');
+        $contents .= 'House Error File Deleted.';
+    }
+
+    if (file_exists('../volunteer/error_log')) {
+        unlink('../volunteer/error_log');
+        $contents .= 'Volunteer Error File Deleted.';
+    }
+
+}
 
 // View user log
 $log = '';
@@ -642,7 +632,7 @@ if (isset($_POST['btnAccess'])) {
 
     $stmt = $dbh->query("Select w.idName as Id, l.* from w_user_log l left join w_users w on l.Username = w.User_Name $whereStr order by Access_Date DESC Limit 100;");
 
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     $edRows = array();
 
     foreach ($rows as $r) {
@@ -675,13 +665,9 @@ $getWebReplyMessage = $webAlert->createMarkup();
 
 
 $selLookups = getGenLookups($dbh);
-
-if ($dbcon != null)
-    closeDB($dbcon);
 ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-    "http://www.w3.org/TR/html4/loose.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
@@ -1082,9 +1068,8 @@ if ($dbcon != null)
                             <tr><td colspan="2" style="background-color: transparent;"><h3>View Server Error Files</h3></td></tr>
                             <tr>
                                 <td style="text-align:right;">
-                                    <input type="submit" name="btnAdminErrors" value="View Admin Error Log"/>
-                                    <input type="submit" name="btnHouseErrors" value="View Guest Tracking Error Log" style="margin-left:10px;"/>
-                                    <input type="submit" name="btnVolErrors" value="View Volunteer Error Log" style="margin-left:10px;"/>
+                                    <input type="submit" name="btnSvrErrors" value="View Error Logs"/>
+                                    <input type="submit" name="btnDelErrors" value="Delete Error Logs" style="margin-left:40px;"/>
                                 </td>
                             </tr>
                         </table>

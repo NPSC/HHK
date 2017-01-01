@@ -2,12 +2,10 @@
 /**
  * psg.php
  *
- * @category  house
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2015 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 /**
  * Description of psg:  Class for patient support group
@@ -28,7 +26,7 @@ class CheckInGroup {
     }
 
 
-    public function saveMembers(PDO $dbh, $idHospitalStay, $post) {
+    public function saveMembers(\PDO $dbh, $idHospitalStay, $post) {
 
         $uS = Session::getInstance();
         $this->patient = NULL;
@@ -124,7 +122,7 @@ class CheckInGroup {
     }
 
 
-    public function savePsg(PDO $dbh, $notes, $username) {
+    public function savePsg(\PDO $dbh, $notes, $username) {
 
         if (is_null($this->psg)) {
             throw new Hk_Exception_Runtime('The PSG must be defined (CheckInGroup).  ');
@@ -155,7 +153,7 @@ class Psg {
     public $psgRS;
     public $psgMembers = array();
 
-    public function __construct(PDO $dbh, $idPsg = 0, $idPatient = 0) {
+    public function __construct(\PDO $dbh, $idPsg = 0, $idPatient = 0) {
 
         $this->psgRS = new PSG_RS();
         $fldArray = array();
@@ -198,7 +196,7 @@ class Psg {
         }
     }
 
-    protected function loadExistingMembers(PDO $dbh) {
+    protected function loadExistingMembers(\PDO $dbh) {
 
         $ngRS = new Name_GuestRS();
         $this->psgMembers = array();
@@ -217,7 +215,7 @@ class Psg {
         }
     }
 
-    public static function instantiateFromGuestId(PDO $dbh, $idGuest) {
+    public static function instantiateFromGuestId(\PDO $dbh, $idGuest) {
 
         $ngRS = new Name_GuestRS();
         $idPsg = 0;
@@ -236,7 +234,7 @@ class Psg {
 
     }
 
-    public static function getNameGuests(PDO $dbh, $idGuest) {
+    public static function getNameGuests(\PDO $dbh, $idGuest) {
 
         $ngRS = new Name_GuestRS();
         $ngs = array();
@@ -254,7 +252,7 @@ class Psg {
         return $ngs;
     }
 
-    public function removeGuest(PDO $dbh, $idGuest, $uname) {
+    public function removeGuest(\PDO $dbh, $idGuest, $uname) {
 
         $ngRs = $this->psgMembers[$idGuest];
 
@@ -271,7 +269,7 @@ class Psg {
         }
     }
 
-    public function createEditMarkup(PDO $dbh, $relList, $labels, $pageName = 'GuestEdit.php', $id = 0, $shoChgLog = FALSE) {
+    public function createEditMarkup(\PDO $dbh, $relList, $labels, $pageName = 'GuestEdit.php', $id = 0, $shoChgLog = FALSE) {
 
         // Edit Div
         $hArray = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, $this->getIdPatient()));
@@ -323,7 +321,7 @@ class Psg {
 
 
 
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             if ($r['idGuest'] == $id) {
                 $ent = HTMLContainer::generateMarkup('a', $r['idGuest'], array('href'=>$pageName.'?id='.$r['idGuest'].'&psg='.$this->getIdPsg(), 'class'=>'ui-state-highlight'));
@@ -374,7 +372,7 @@ class Psg {
 
         $lastConfDate = $this->psgRS->Info_Last_Confirmed->getStoredVal();
         if ($lastConfDate != '') {
-            $lcdDT = new DateTime($lastConfDate);
+            $lcdDT = new \DateTime($lastConfDate);
             $lastConfDate = $lcdDT->format('M j, Y');
         }
 
@@ -449,7 +447,7 @@ class Psg {
 
     }
 
-    protected function saveMembers(PDO $dbh, $uname) {
+    protected function saveMembers(\PDO $dbh, $uname) {
 
         if ($this->getIdPsg() == 0) {
             return;
@@ -482,7 +480,7 @@ class Psg {
 
     }
 
-    public function savePSG(PDO $dbh, $idPatient, $uname, $notes = '') {
+    public function savePSG(\PDO $dbh, $idPatient, $uname, $notes = '') {
 
         if ($idPatient == 0) {
             return;
@@ -529,16 +527,15 @@ class Psg {
         return;
     }
 
-    public function countCurrentGuests(PDO $dbh) {
+    public function countCurrentGuests(\PDO $dbh) {
 
         $query = "select count(*) "
                 . " from stays s join visit v on s.idVisit = v.idVisit"
                 . " join registration r on v.idRegistration = r.idRegistration"
-                . " where r.idPsg = :psg and s.Status='" . VisitStatus::CheckedIn . "'";
+                . " where r.idPsg = '" . $this->getIdPsg() . "' and s.Status='" . VisitStatus::CheckedIn . "'";
 
-        $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-        $stmt->execute(array(':psg' => $this->getIdPsg()));
-        $cnt = $stmt->fetchAll(PDO::FETCH_NUM);
+        $stmt = $dbh->query($query);
+        $cnt = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         return $cnt[0][0];
     }
@@ -619,7 +616,7 @@ class Psg {
         return $this->psgRS->idPsg->getStoredVal();
     }
 
-    public function getPatientName(PDO $dbh) {
+    public function getPatientName(\PDO $dbh) {
 
         $uS = Session::getInstance();
         $nameRS = new NameRS();

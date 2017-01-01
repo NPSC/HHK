@@ -2,12 +2,10 @@
 /**
  * PaymentChooser.php
  *
- *
- * @category  House
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
   */
 
 
@@ -531,7 +529,7 @@ WHERE
         AND i.Deleted = 0
 ORDER BY v.idVisit , v.Span;");
 
-            $unpaidInvoices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $unpaidInvoices = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($unpaidInvoices) > 0) {
 

@@ -3,14 +3,10 @@
 /**
  * SiteConfig.php
  *
- *
- *
- * @category  Configuration
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2015 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -21,7 +17,7 @@
  */
 class SiteConfig {
 
-    public static function createHolidaysMarkup(PDO $dbh, $resultMessage) {
+    public static function createHolidaysMarkup(\PDO $dbh, $resultMessage) {
 
 //        $stmt = $dbh->query("Select dh1, dh2, dh3, dh4, dh5 from desig_holidays where Year = ".$this->year);
 //        $dhs = $stmt->fetchall(PDO::FETCH_ASSOC);
@@ -105,7 +101,7 @@ class SiteConfig {
 
         // Week days
         $stmt = $dbh->query("Select Code, Substitute from gen_lookups where Table_Name = 'Non_Cleaning_Day'");
-        $wds = $stmt->fetchall(PDO::FETCH_ASSOC);
+        $wds = $stmt->fetchall(\PDO::FETCH_ASSOC);
 
         $wdTbl = new HTMLTable();
         $wdTbl->addHeaderTr(HTMLTable::makeTh('Weekday').HTMLTable::makeTh('Non-Cleaning'));
@@ -197,12 +193,12 @@ class SiteConfig {
 
     }
 
-    public static function saveHolidays(PDO $dbh, $post, $uname) {
+    public static function saveHolidays(\PDO $dbh, $post, $uname) {
         $resultMsg = '';
 
         // Turn fed holidays on or off
         $stmt = $dbh->query("Select Code, Substitute from gen_lookups where Table_Name = 'Holiday'");
-        $hols = $stmt->fetchall(PDO::FETCH_ASSOC);
+        $hols = $stmt->fetchall(\PDO::FETCH_ASSOC);
         $ctrl = array();
 
         if (isset($post['cbhol'])) {
@@ -358,7 +354,7 @@ class SiteConfig {
         return $tbl;
     }
 
-    public static function createMarkup(PDO $dbh, Config_Lite $config, Config_Lite $titles = NULL) {
+    public static function createMarkup(\PDO $dbh, Config_Lite $config, Config_Lite $titles = NULL) {
 
         $tbl = self::createCliteMarkup($config, $titles);
 
@@ -369,7 +365,7 @@ class SiteConfig {
 
         $sctbl->addBodyTr(HTMLTable::makeTh('Sys Config', array('colspan' => '3', 'style'=>'text-align:left;')));
 
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             $attr = array(
                 'name' => 'sys_config' . '[' . $r['Key'] . ']'
@@ -433,7 +429,7 @@ class SiteConfig {
 
     }
 
-    public static function saveSysConfig(PDO $dbh, array $post) {
+    public static function saveSysConfig(\PDO $dbh, array $post) {
 
         // save sys config
         foreach ($post['sys_config'] as $itemName => $val) {
@@ -447,12 +443,12 @@ class SiteConfig {
 
     }
 
-    public static function createPaymentCredentialsMarkup(PDO $dbh, $resultMessage) {
+    public static function createPaymentCredentialsMarkup(\PDO $dbh, $resultMessage) {
 
         $uS = Session::getInstance();
 
         $stmt = $dbh->query("Select * from cc_hosted_gateway");
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $tbl = new HTMLTable();
 
@@ -491,7 +487,7 @@ class SiteConfig {
         return $tbl->generateMarkup() . $ptbl->generateMarkup(array('class'=>'hhk-tdbox'));
     }
 
-    public static function savePaymentCredentials(PDO $dbh, $post) {
+    public static function savePaymentCredentials(\PDO $dbh, $post) {
 
         $msg = '';
         $ccRs = new Cc_Hosted_GatewayRS();
@@ -554,7 +550,7 @@ class SiteConfig {
         return $msg;
     }
 
-    public static function updatePayTypes(PDO $dbh) {
+    public static function updatePayTypes(\PDO $dbh) {
 
         $uS = Session::getInstance();
         $msg = '';

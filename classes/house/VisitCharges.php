@@ -2,13 +2,11 @@
 /**
  * VisitCharge.php
  *
- *
- * @category  House
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
-  */
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
+ */
 
 /**
  * Description of VisitCharge
@@ -50,7 +48,7 @@ class VisitCharges {
         // Get current nights .
         $stmt1 = $dbh->prepare("select * from `vvisit_stmt` where `idVisit` = :idvisit and `Status` != 'p' order by `Span`");
         $stmt1->execute(array(':idvisit'=>$this->idVisit));
-        $spans = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+        $spans = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($spans) == 0) {
             return 'Visit Id "' . $this->idVisit . '" Not Found.  ';
@@ -65,7 +63,7 @@ class VisitCharges {
         // Get current nights .
         $stmt1 = $dbh->prepare("select * from `vvisit_stmt` where `idVisit` = :idvisit and `Status` != 'p' order by `Span`");
         $stmt1->execute(array(':idvisit'=>$this->idVisit));
-        $spans = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+        $spans = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($spans) == 0) {
             return 'Visit Id "' . $this->idVisit . '" Not Found.  ';
@@ -73,9 +71,9 @@ class VisitCharges {
 
         $span = $spans[(count($spans) - 1)];
 
-        $arrDT = new DateTime($span['Span_Start']);
+        $arrDT = new \DateTime($span['Span_Start']);
         $arrDT->setTime(0, 0, 0);
-        $depDT = new DateTime($coDate);
+        $depDT = new \DateTime($coDate);
 
         $span['Expected_Departure'] = $depDT->format('Y-m-d H:i:s');
 
@@ -305,7 +303,7 @@ where
                 . " order by il.idInvoice_Line";
         $stmt = $dbh->query($query);
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
     }
 
@@ -333,7 +331,7 @@ where
         return $this->depositPayType;
     }
 
-    
+
     public function getItemInvPayments($idItem) {
         if (isset($this->itemSums[$idItem])) {
             return $this->itemSums[$idItem][InvoiceStatus::Paid];
@@ -479,9 +477,9 @@ class SpanRateData {
         // any future days?
         if ($r['status'] == VisitStatus::CheckedIn) {
 
-            $expDepDT = new DateTime($r['expEnd']);
+            $expDepDT = new \DateTime($r['expEnd']);
             $expDepDT->setTime(0, 0, 0);
-            $now = new DateTime();
+            $now = new \DateTime();
             $now->setTime(0, 0, 0);
 
             if ($expDepDT > $now) {

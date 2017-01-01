@@ -8,7 +8,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-namespace npsc;
 
 Define('NEWLINE', "\n");
 
@@ -249,7 +248,7 @@ where
 
             $stmt->execute(array(':idv'=>$invoice->getOrderNumber(), ':spn'=>$invoice->getSuborderNumber()));
 
-            $r = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $r = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $data = $r[0];
 
                 if ($data['Assoc'] != '' && $data['Assoc'] != '(None)') {
@@ -291,7 +290,7 @@ where
 
                 $stmt->execute(array(':idv'=>$orderNumber));
 
-                while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
                     if ($r['Assoc'] != '' && $r['Assoc'] != '(None)') {
                         $hsNames = $r['Assoc'] . '/' . $r['Hospital'];
@@ -307,7 +306,7 @@ where
         return $hsNames;
     }
 
-    public static function getAddressTable(PDO $dbh, $idName) {
+    public static function getAddressTable(\PDO $dbh, $idName) {
 
         $mkup = '';
 
@@ -316,7 +315,7 @@ where
             $stmt = $dbh->query("select n.Company, a.Address_1, a.Address_2, a.City, a.State_Province, a.Postal_Code, p.Phone_Num, n.Web_Site
     from name n left join name_address a on n.idName = a.idName and n.Preferred_Mail_Address = a.Purpose left join name_phone p on n.idName = p.idName and n.Preferred_Phone = p.Phone_Code where n.idName = $idName");
 
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) == 1) {
 
@@ -350,8 +349,8 @@ where
         foreach ($spans as $v) {
 
             // Set expected departure to now if earlier than "today"
-            $expDepDT = new DateTime($v['Expected_Departure']);
-            $now = new DateTime();
+            $expDepDT = new \DateTime($v['Expected_Departure']);
+            $now = new \DateTime();
             $now->setTime(0, 0, 0);
 
             if ($expDepDT < $now) {
@@ -414,7 +413,7 @@ where
         return $rates;
     }
 
-    public static function processPayments(PDOStatement $stmt, array $extraCols = array()) {
+    public static function processPayments(\PDOStatement $stmt, array $extraCols = array()) {
 
         $idInvoice = 0;
         $idPayment = 0;
@@ -426,7 +425,7 @@ where
         $paymtAuths = array();
 
         // Organize the data
-        while ($p = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($p = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             if ($p['idInvoice'] != $idInvoice) {
                 // Next Invoice
@@ -559,7 +558,7 @@ where
         }
     }
 
-    public static function makeOrdersRatesTable($rates, &$totalAmt, \PriceModel $priceModel, \Config_Lite $labels, array $invLines, &$numberNites) {
+    public static function makeOrdersRatesTable($rates, &$totalAmt, PriceModel $priceModel, Config_Lite $labels, array $invLines, &$numberNites) {
 
         $tbl = new HTMLTable();
 
@@ -984,7 +983,7 @@ where
         return $tbl;
     }
 
-    public static function makeThirdParyTable($invoices, $invLines,  \Config_Lite $labels, &$totAmt, $tdClass = '') {
+    public static function makeThirdParyTable($invoices, $invLines,  Config_Lite $labels, &$totAmt, $tdClass = '') {
 
         $tbl = new HTMLTable();
         $totalPment = 0.0;
@@ -1128,7 +1127,7 @@ from vlist_inv_pments lp
 from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
 where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by i.idGroup, il.Invoice_Id, il.idInvoice_line");
 
-        $invLines = $ilStmt->fetchAll(PDO::FETCH_ASSOC);
+        $invLines = $ilStmt->fetchAll(\PDO::FETCH_ASSOC);
 
 
         // Visits and Rates
@@ -1190,7 +1189,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
             $stmt = $dbh->prepare("select * from vvisit_stmt where idVisit = :idvisit order by `Span`");
             $stmt->execute(array(':idvisit'=>$idVisit));
-            $spans = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $spans = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         } else {
             return 'Missing Input pararmeters.  ';
@@ -1230,7 +1229,7 @@ from vlist_inv_pments lp
 from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
 where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, il.idInvoice_line");
 
-        $invLines = $ilStmt->fetchAll(PDO::FETCH_ASSOC);
+        $invLines = $ilStmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $totalAmt = 0.00;
         $totalNights = 0;
@@ -1257,7 +1256,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
         if ($idPsg > 0){
 
             $pstmt = $dbh->query("select n.Name_First, n.Name_Last from name n left join hospital_stay hs on n.idName = hs.idPatient where hs.idPsg = $idPsg");
-            $rows = $pstmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $pstmt->fetchAll(\PDO::FETCH_ASSOC);
             if (count($rows) > 0) {
                 $patientName = $rows[0]['Name_First'] . ' ' . $rows[0]['Name_Last'];
             }

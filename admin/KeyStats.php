@@ -2,12 +2,10 @@
 /**
  * KeyStats.php
  *
- * @category  Reports
- * @package   Hospitality HouseKeeper
- * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+-- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+-- @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+-- @license   MIT
+-- @link      https://github.com/NPSC/HHK
  */
 require_once ("AdminIncludes.php");
 
@@ -28,7 +26,7 @@ $menuMarkup = $wInit->generatePageMenu();
 // get the categories
 $query = "select Code, Description from gen_lookups where Table_Name = 'Vol_Category' order by Description;";
     $stmt = $dbh->query($query);
-    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+    $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$res = queryDB($dbcon, $query);
 $typedata = "";
 
@@ -42,7 +40,7 @@ foreach ($rows as $r) {
                 where n.idName > 0 and v.Vol_Status = 'a' and ifnull(v.Vol_End,'2999/10/1') > now()
                 group by v.Vol_Code;";
     $stmt = $dbh->query($query);
-    $rows2 = $stmt->fetchAll(PDO::FETCH_NUM);
+    $rows2 = $stmt->fetchAll(\PDO::FETCH_NUM);
     //$result2 = queryDB($dbcon, $query, true);
 
     $cntr = 0;
@@ -65,7 +63,7 @@ $query = "select ifnull(g.Description,'Not Assigned') as Description, count(n.Me
                 where n.idName > 0
                 group by n.Member_Status";
     $stmt = $dbh->query($query);
-    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+    $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$result2 = queryDB($dbcon, $query, true);
 $statusdata = "";
 
@@ -82,7 +80,7 @@ $query = "select ifnull(g.Description,'Not Assigned') as Description, count(n.Me
                 where n.idName > 0 and n.Member_Status = 'a'
                 group by n.Member_Type";
     $stmt = $dbh->query($query);
-    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+    $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$result2 = queryDB($dbcon, $query, true);
 $basisdata = "";
 $basisChartData = "";
@@ -111,7 +109,7 @@ $query = "select  (
                 where n.idName > 0 and v1.Vol_Code = 'g'
                 ) * 100 as prcent;";
     $stmt = $dbh->query($query);
-    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+    $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$result2 = queryDB($dbcon, $query, true);
 $rw = $rows[0];
 
@@ -128,7 +126,7 @@ $query = "select  (
                 where n.idName > 0 and v1.Vol_Code = 'Vol' and v1.Vol_Status='a')
                 * 100 as prcent;";
     $stmt = $dbh->query($query);
-    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+    $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$result2 = queryDB($dbcon, $query, true);
 $rw = $rows[0];
 
@@ -141,14 +139,14 @@ $volunteer = number_format(100 - $rw[0], 2);
 $query = "select count(n.idName) from name n left join name_volunteer2 v on n.idName = v.idName
         where n.idName > 0 and v.idName is null and n.Member_Status = 'a';";
     $stmt = $dbh->query($query);
-    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+    $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$result2 = queryDB($dbcon, $query);
 $rw =$rows[0];
 
 $notVolunteers = $rw[0];
 
     $stmt = $dbh->query($query);
-    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+    $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$result2 = queryDB($dbcon, "Select count(n.idName) from name n where n.idName > 0 and n.Member_Status = 'a'");
 $rw = $rows[0];
 
@@ -173,7 +171,7 @@ $preHeader = "<tr><th colspan='2'>";
 // get "good" status types
 $query = "Select Description from gen_lookups where Table_Name = 'mem_status' and Substitute = 'm' order by Code;";
     $stmt = $dbh->query($query);
-    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+    $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$res = queryDB($dbcon, $query);
 
 foreach ($rows as $rw) {
@@ -188,7 +186,7 @@ $header .= "<th style='border-right: 1px solid #D4CCB0;'>Sub Total</th>";
 // get "bad" status types
 $query = "Select Description from gen_lookups where Table_Name = 'mem_status' and Substitute <> 'm' order by Code;";
     $stmt = $dbh->query($query);
-    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+    $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 //$res = queryDB($dbcon, $query);
 
 foreach ($rows as $rw) {
@@ -212,7 +210,7 @@ left join gen_lookups gs on gs.Table_Name = 'mem_status' and gs.Code = n.Member_
 where v.Vol_Status = 'a'
 group by v.Vol_Category, v.Vol_Code, n.Member_Status with rollup;";
     $stmt = $dbh->query($query);
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 //$res = queryDB($dbcon, $query);
 
 foreach ($rows as $rw) {

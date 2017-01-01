@@ -2,12 +2,9 @@
 /**
  * ReservationSvcs.php
  *
- *
- * @category  House
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
  * @link      https://github.com/NPSC/HHK
  *   */
 
@@ -286,7 +283,7 @@ class ReservationSvcs {
             }
 
             // Room Chooser
-            $roomChooser = new RoomChooser($dbh, $resv, $resv->getNumberGuests(), new DateTime($guest->getExpectedCheckinDate()), $guest->getExpectedCheckOutDT());
+            $roomChooser = new RoomChooser($dbh, $resv, $resv->getNumberGuests(), new \DateTime($guest->getExpectedCheckinDate()), $guest->getExpectedCheckOutDT());
             $roomChooser->setOldResvId($oldResvId);
             $dataArray['resc'] = $roomChooser->CreateResvMarkup($dbh, $isAuthorized);
 
@@ -373,7 +370,7 @@ class ReservationSvcs {
 
 
             $trs = array();
-            $today = new DateTime();
+            $today = new \DateTime();
             $today->setTime(0, 0, 0);
 
             while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -389,7 +386,7 @@ class ReservationSvcs {
                             HTMLInput::generateMarkup('Open ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('type'=>'button'))
                             , array('style'=>'text-decoration:none;', 'href'=>'Referral.php?rid='.$resvRs->idReservation->getStoredVal()));
 
-                $expArrDT = new DateTime($resvRs->Expected_Arrival->getStoredVal());
+                $expArrDT = new \DateTime($resvRs->Expected_Arrival->getStoredVal());
                 $expArrDT->setTime(0, 0, 0);
 
                 if ($resvRs->Status->getStoredVal() == ReservationStatus::Staying) {
@@ -445,7 +442,7 @@ class ReservationSvcs {
 
         $trs = array();
 
-        $expArrDT = new DateTime($expectedArrivalDate);
+        $expArrDT = new \DateTime($expectedArrivalDate);
 
         // Check for existing visits
         $stmt = $dbh->query("select * "
@@ -559,15 +556,15 @@ class ReservationSvcs {
             return array('error'=>'Patients are not allowed to be guests at our House.  ');
         }
 
-        $arrivalDT = new DateTIme($resv->getExpectedArrival());
-        $departureDT = new DateTime($resv->getExpectedDeparture());
+        $arrivalDT = new \DateTIme($resv->getExpectedArrival());
+        $departureDT = new \DateTime($resv->getExpectedDeparture());
 
         if ($resv->getActualArrival() != '') {
-            $arrivalDT = new DateTIme($resv->getActualArrival());
+            $arrivalDT = new \DateTIme($resv->getActualArrival());
         }
 
         if ($resv->getActualDeparture() != '') {
-            $departureDT = new DateTime($resv->getActualDeparture());
+            $departureDT = new D\ateTime($resv->getActualDeparture());
         }
 
         // Check for existing reservations within the time period.
@@ -616,7 +613,7 @@ class ReservationSvcs {
 
         }
 
-        $roomChooser = new RoomChooser($dbh, $resv, ($resv->getNumberGuests() + 1), new DateTime($resv->getExpectedArrival()), new DateTime($resv->getExpectedDeparture()));
+        $roomChooser = new RoomChooser($dbh, $resv, ($resv->getNumberGuests() + 1), new \DateTime($resv->getExpectedArrival()), new \DateTime($resv->getExpectedDeparture()));
         $rescs = $roomChooser->findResources($dbh, ComponentAuthClass::is_Authorized("guestadmin"));
 
         if ($resv->getIdResource() > 0 && isset($rescs[$resv->getIdResource()]) === FALSE) {
@@ -855,8 +852,8 @@ class ReservationSvcs {
         }
 
         // Set dates
-        $arrivalDT = new DateTime($resv->getExpectedArrival());
-        $departureDT = new DateTime($resv->getExpectedDeparture());
+        $arrivalDT = new \DateTime($resv->getExpectedArrival());
+        $departureDT = new \DateTime($resv->getExpectedDeparture());
 
         // Verify Primary guest
         if ($resv->isNew()) {
@@ -866,8 +863,8 @@ class ReservationSvcs {
             $resv->setExpectedDeparture($guest->getExpectedCheckOut());
             $resv->setExpectedPayType($uS->DefaultPayType);
 
-            $arrivalDT = new DateTime($guest->getExpectedCheckinDate());
-            $departureDT = new DateTime($guest->getExpectedCheckOut());
+            $arrivalDT = new \DateTime($guest->getExpectedCheckinDate());
+            $departureDT = new \DateTime($guest->getExpectedCheckOut());
 
         } else if ($resv->getIdGuest() != $guest->getIdName()) {
             throw new Hk_Exception_Runtime("Primary Guest Id Mis-match for this reservation! ");
@@ -875,7 +872,7 @@ class ReservationSvcs {
 
 
         if ($resv->getActualArrival() != '') {
-            $arrivalDT = new DateTIme($resv->getActualArrival());
+            $arrivalDT = new \DateTIme($resv->getActualArrival());
         }
 
         // Check for existing reservations within the time period.
@@ -1076,7 +1073,7 @@ class ReservationSvcs {
 
         $chooserMessage = '';
 
-        $roomChooser = new RoomChooser($dbh, $resv, $resv->getNumberGuests(), new DateTime($resv->getExpectedArrival()), new DateTime($resv->getExpectedDeparture()));
+        $roomChooser = new RoomChooser($dbh, $resv, $resv->getNumberGuests(), new \DateTime($resv->getExpectedArrival()), new \DateTime($resv->getExpectedDeparture()));
 
         // Process reservation
         if ($resv->getStatus() == ReservationStatus::Pending || $resv->isActive()) {
@@ -1284,10 +1281,10 @@ class ReservationSvcs {
             // Dates changed?  Number of guests changed?
             } else if ($resv->getStatus() != ReservationStatus::Pending) {
 
-                $rStart = new DateTime($resv->getExpectedArrival());
-                $rEnd = new DateTime($resv->getExpectedDeparture());
-                $chkinDT = new DateTime($chkinDate);
-                $chkoutDT = new DateTime($chkoutDate);
+                $rStart = new \DateTime($resv->getExpectedArrival());
+                $rEnd = new \DateTime($resv->getExpectedDeparture());
+                $chkinDT = new \DateTime($chkinDate);
+                $chkoutDT = new \DateTime($chkoutDate);
 
                 if ($chkinDT->format('Y-m-d') != $rStart->format('Y-m-d')
                     || $chkoutDT->format('Y-m-d') != $rEnd->format('Y-m-d')

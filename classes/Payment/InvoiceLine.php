@@ -8,7 +8,7 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-namespace npsc;
+
 
 /**
  * Description of InvoiceLine
@@ -35,7 +35,7 @@ abstract class InvoiceLine {
     }
 
 
-    public function loadRecord(\InvoiceLineRS $invoiceLine) {
+    public function loadRecord(InvoiceLineRS $invoiceLine) {
 
         $this->setItemId($invoiceLine->Item_Id->getStoredVal());
         $this->description = $invoiceLine->Description->getStoredVal();

@@ -2,12 +2,10 @@
 /**
  * WebInit.php
  *
- * @category  Site
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -129,7 +127,7 @@ class webInit {
             where `Table_Name` in ('Address_Purpose','Email_Purpose','Gender','rel_type', 'Age_Bracket', 'NoReturnReason', 'Income_Bracket', 'Education_Level', 'Media_Source', 'Ethnicity', 'Special_Needs', 'Member_Basis','mem_status','Name_Prefix','Name_Suffix','Phone_Type', 'Pay_Type', 'Salutation', 'Role_Codes') order by `Table_Name`, `Code`;";
         $stmt = $this->dbh->query($query);
 
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $nameLookups = array();
 
         foreach ($rows as $r) {
@@ -175,7 +173,7 @@ class webInit {
             order by `Table_Name`, `Description`;";
         $stmt = $this->dbh->query($query);
 
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $nameLookups = array();
 
         foreach ($rows as $r) {
@@ -211,7 +209,7 @@ class webInit {
 
         $stmt = $this->dbh->query("select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
             where `Table_Name` in ('Vol_Category', 'Vol_Rank') order by `Table_Name`, `Description`;");
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $nameLookups = array();
 
         foreach ($rows as $r) {
@@ -238,7 +236,7 @@ class SysConfig {
         }
 
         $stmt = $dbh->query("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in ($category) order by `Key`");
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($rows as $r) {
 
@@ -251,7 +249,7 @@ class SysConfig {
 
     }
 
-    public static function getKeyValue(PDO $dbh, $tableName, $key) {
+    public static function getKeyValue(\PDO $dbh, $tableName, $key) {
 
         if ($tableName == '' || $key == '') {
             throw new Hk_Exception_Runtime('System Configuration database table name or key not specified.  ');
@@ -268,7 +266,7 @@ class SysConfig {
 
     }
 
-    public static function saveKeyValue(PDO $dbh, $tableName, $key, $value) {
+    public static function saveKeyValue(\PDO $dbh, $tableName, $key, $value) {
 
         $oldVal = self::getKeyValue($dbh, $tableName, $key);
 

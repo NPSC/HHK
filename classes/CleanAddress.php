@@ -2,20 +2,17 @@
 /**
  * CleanAddress.php
  *
- *
- * @category  Reports
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 class CleanAddress {
 
     protected $stSuffixes;
     protected $secAbvrs;
 
-    function __construct(PDO $dbh) {
+    function __construct(\PDO $dbh) {
         $this->stSuffixes = $this->getStreetSuffix($dbh);
         $this->secAbvrs = $this->getSecondary($dbh);
 
@@ -231,7 +228,7 @@ class CleanAddress {
         return array(0=>$newAdr, 1=>$secAdr);
     }
 
-    public static function getStreetSuffix(PDO $dbh) {
+    public static function getStreetSuffix(\PDO $dbh) {
         $lst = array();
         $stmt = $dbh->query("select Common, TitleCaps from street_suffix order by Common");
 
@@ -241,7 +238,7 @@ class CleanAddress {
         return $lst;
     }
 
-    public static function getSecondary(PDO $dbh) {
+    public static function getSecondary(\PDO $dbh) {
         $lst = array();
         $stmt = $dbh->query("select Common, TitleCaps from secondary_unit_desig order by Common");
 
@@ -252,5 +249,3 @@ class CleanAddress {
     }
 
 }
-
-?>

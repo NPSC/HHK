@@ -1,14 +1,11 @@
 <?php
-
 /**
  * Visit.php
  *
- *
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -33,7 +30,7 @@ class Visit {
      * @param Resource $resource
      * @throws Hk_Exception_Runtime
      */
-    function __construct(PDO $dbh, $idReg, $idVisit, DateTime $arrivalDT = NULL, DateTime $departureDT = NULL, Resource $resource = NULL, $userName = '', $span = -1, $forceNew = FALSE) {
+    function __construct(\PDO $dbh, $idReg, $idVisit, DateTime $arrivalDT = NULL, DateTime $departureDT = NULL, Resource $resource = NULL, $userName = '', $span = -1, $forceNew = FALSE) {
 
         $this->visitRSs = $this->loadVisits($dbh, $idReg, $idVisit, $span, $forceNew);
 
@@ -55,7 +52,7 @@ class Visit {
 
             // New Visit
             // Compare dates
-            $nowDT = new DateTime();
+            $nowDT = new \DateTime();
             $nowDT->setTime(0, 0, 0);
 
             if ($arrivalDT > $departureDT) {
@@ -93,7 +90,7 @@ class Visit {
      * @return \VisitRs
      * @throws Hk_Exception_Runtime
      */
-    protected function loadVisits(PDO $dbh, $idReg, $idVisit, $span = -1, $forceNew = FALSE) {
+    protected function loadVisits(\PDO $dbh, $idReg, $idVisit, $span = -1, $forceNew = FALSE) {
 
         $visitRS = new VisitRs();
         $visits = array();
@@ -189,8 +186,8 @@ class Visit {
 
         // Measure against visit span start date
         if ($this->visitRS->Span_Start->getStoredVal() != '') {
-            $spanStartDT = new DateTime($this->visitRS->Span_Start->getStoredVal());
-            $ssDT = new DateTime($spanStartDate);
+            $spanStartDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
+            $ssDT = new \DateTime($spanStartDate);
             $spanStartDT->setTime(0, 0, 0);
             if ($ssDT < $spanStartDT) {
                 throw new Hk_Exception_Runtime('Stay start date (' . $spanStartDate . ') earlier than visit span start date (' . $spanStartDT->format('Y-m-d H:i:s') . ').  ');
@@ -218,8 +215,8 @@ class Visit {
         if ($expectedCO == '') {
             throw new Hk_Exception_UnexpectedValue("The Expected Departure date is not set.");
         } else {
-            $stayCoDt = new DateTime($expectedCO);
-            $visitCoDt = new DateTime($this->getExpectedDeparture());
+            $stayCoDt = new \DateTime($expectedCO);
+            $visitCoDt = new \DateTime($this->getExpectedDeparture());
             if ($stayCoDt > $visitCoDt) {
                 $this->visitRS->Expected_Departure->setNewVal($stayCoDt->format('Y-m-d 10:00:00'));
             }
@@ -274,7 +271,7 @@ class Visit {
         }
     }
 
-    public function changeRooms(PDO $dbh, Resource $resc, $uname, \DateTime $chgDT, $isAdmin, $depDisposition) {
+    public function changeRooms(\PDO $dbh, Resource $resc, $uname, \DateTime $chgDT, $isAdmin, $depDisposition) {
 
         $rtnMessage = '';
 
@@ -291,19 +288,19 @@ class Visit {
         }
 
         // Change date cannot be earlier than span start date.
-        $spanStartDT = new DateTime($this->visitRS->Span_Start->getStoredVal());
+        $spanStartDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
         $spanStartDT->setTime(0,0,0);
         if ($chgDT < $spanStartDT) {
             return "Error - Change Rooms failed: Change Date is prior to Visit Span start date.  ";
         }
 
-        $expDepDT = new DateTime($this->getExpectedDeparture());
+        $expDepDT = new \DateTime($this->getExpectedDeparture());
         $expDepDT->setTime(10, 0, 0);
-        $now = new DateTime();
+        $now = new \DateTime();
         $now->setTime(10, 0, 0);
 
         if ($expDepDT < $now) {
-            $expDepDT = $now->add(new DateInterval('P1D'));
+            $expDepDT = $now->add(new \DateInterval('P1D'));
         }
 
 
@@ -347,7 +344,7 @@ class Visit {
         }
 
         // if room change date = span start date, just replace the room in the visit record.
-        $roomChangeDate = new DateTime($chgDT->format('Y-m-d'));
+        $roomChangeDate = new \DateTime($chgDT->format('Y-m-d'));
         $roomChangeDate->setTime(0,0,0);
 
         if ($spanStartDT == $roomChangeDate) {
@@ -442,7 +439,7 @@ class Visit {
         return $rtnMessage;
     }
 
-    public static function replaceRoomRate(PDO $dbh, \VisitRs $visitRs, $newRateCategory, $pledgedRate, $rateAdjust, $uname) {
+    public static function replaceRoomRate(\PDO $dbh, \VisitRs $visitRs, $newRateCategory, $pledgedRate, $rateAdjust, $uname) {
 
         $uS = Session::getInstance();
 
@@ -493,7 +490,7 @@ class Visit {
         return $reply;
     }
 
-    public function changePledgedRate(PDO $dbh, $newRateCategory, $pledgedRate, $rateAdjust, $uname, \DateTime $chgDT, $useRateGlide = TRUE, $stayOnLeave = 0) {
+    public function changePledgedRate(\PDO $dbh, $newRateCategory, $pledgedRate, $rateAdjust, $uname, \DateTime $chgDT, $useRateGlide = TRUE, $stayOnLeave = 0) {
 
         if ($this->getResource($dbh) != NULL) {
 
@@ -528,15 +525,15 @@ class Visit {
         }
     }
 
-    protected function createNewSpan(PDO $dbh, Resource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $uname, $changeDate, $useRateGlide = TRUE, $stayOnLeave = 0, $idRoomRate = 0) {
+    protected function createNewSpan(\PDO $dbh, Resource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $uname, $changeDate, $useRateGlide = TRUE, $stayOnLeave = 0, $idRoomRate = 0) {
 
         $glideDays = 0;
 
         if ($useRateGlide) {
             // Calculate days of old span
-            $stDT = new DateTime($this->visitRS->Span_Start->getStoredVal());
+            $stDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
             $stDT->setTime(0, 0, 0);
-            $endDT = new DateTime($changeDate);
+            $endDT = new \DateTime($changeDate);
             $endDT->setTime(0, 0, 0);
             $glideDays = $this->visitRS->Rate_Glide_Credit->getStoredVal() + $endDT->diff($stDT, TRUE)->days;
         }
@@ -625,7 +622,7 @@ class Visit {
 
     }
 
-    public function checkOutGuest(PDO $dbh, $idGuest, $dateDeparted = "", $notes = "", $sendEmail = TRUE, $newDepositDisposition = '') {
+    public function checkOutGuest(\PDO $dbh, $idGuest, $dateDeparted = "", $notes = "", $sendEmail = TRUE, $newDepositDisposition = '') {
 
         $stayRS = NULL;
 
@@ -648,8 +645,8 @@ class Visit {
         // Check out date
         if ($dateDeparted == "") {
 
-            $dateDepartedDT = new DateTime();
-            $depDate = new DateTime();
+            $dateDepartedDT = new \DateTime();
+            $depDate = new \DateTime();
 
         } else {
 
@@ -659,7 +656,7 @@ class Visit {
         }
 
         $depDate->setTime(0, 0, 0);
-        $today = new DateTime();
+        $today = new \DateTime();
         $today->setTime(0, 0, 0);
 
         if ($depDate > $today) {
@@ -667,7 +664,7 @@ class Visit {
         }
 
         // Earlier than checkin date
-        $ciDate = new DateTime($stayRS->Checkin_Date->getStoredVal());
+        $ciDate = new \DateTime($stayRS->Checkin_Date->getStoredVal());
         $ciDate->setTime(0, 0, 0);
 
         if ($depDate < $ciDate) {
@@ -675,7 +672,7 @@ class Visit {
         }
 
         // Earliser than span start date (see mod below to remove this)
-        $stDate = new DateTime($stayRS->Span_Start_Date->getStoredVal());
+        $stDate = new \DateTime($stayRS->Span_Start_Date->getStoredVal());
         $stDate->setTime(0, 0, 0);
 
         if ($depDate < $stDate) {
@@ -773,7 +770,7 @@ class Visit {
         return "Guest Id " . $idGuest . " checked out on " . $dateDepartedDT->format('m-d-Y') . ".  " . $msg;
     }
 
-    protected function checkStaysEndVisit(\PDO $dbh, $username, DateTime $dateDeparted, $sendEmail = TRUE, $newDepositDisposition = '') {
+    protected function checkStaysEndVisit(\PDO $dbh, $username, \DateTime $dateDeparted, $sendEmail = TRUE, $newDepositDisposition = '') {
 
         $msg = '';
         $uS = Session::getInstance();
@@ -788,7 +785,7 @@ class Visit {
             // Get the latest checkout date
             if ($stayRS->Span_End_Date->getStoredVal() != '') {
 
-                $dt = new DateTime($stayRS->Span_End_Date->getStoredVal());
+                $dt = new \DateTime($stayRS->Span_End_Date->getStoredVal());
 
                 if ($dt > $dateDeparted) {
                     $dateDeparted = $dt;
@@ -851,7 +848,7 @@ class Visit {
                 $rooms = array();
                 $stmt2 = $dbh->query("select idResource, Title from resource;");
 
-                while ($rw = $stmt2->fetch(PDO::FETCH_ASSOC)) {
+                while ($rw = $stmt2->fetch(\PDO::FETCH_ASSOC)) {
                     $rooms[$rw['idResource']] = $rw['Title'];
                 }
 
@@ -866,7 +863,7 @@ class Visit {
                 where s.idVisit = :vst and s.Status = :stat;";
                 $stmt = $dbh->prepare($query);
                 $stmt->execute(array(':vst' => $this->getIdVisit(), ':stat' => VisitStatus::CheckedOut));
-                $gsts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $gsts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                 $gMarkup = '<html><body><h3>Guest Checkout</h3><p>Departure Date: ' . $dateDeparted->format('g:ia D M jS, Y') . ';  from ' . $roomTitle . '</p>';
 
@@ -928,21 +925,21 @@ class Visit {
         return $msg;
     }
 
-    public function checkOutVisit(PDO $dbh, $dateDeparted = "", $keyDepositDisp = '', $sendEmail = TRUE) {
+    public function checkOutVisit(\PDO $dbh, $dateDeparted = "", $keyDepositDisp = '', $sendEmail = TRUE) {
         $msg = "";
 
         // Check out date
         if ($dateDeparted == "") {
-            $dateDepartedDT = new DateTime();
-            $depDate = new DateTime();
+            $dateDepartedDT = new \DateTime();
+            $depDate = new \DateTime();
             $depDate->setTime(0, 0, 0);
         } else {
-            $dateDepartedDT = new DateTime($dateDeparted);
-            $depDate = new DateTime($dateDeparted);
+            $dateDepartedDT = new \DateTime($dateDeparted);
+            $depDate = new \DateTime($dateDeparted);
             $depDate->setTime(0, 0, 0);
         }
 
-        $nowDate = new DateTime();
+        $nowDate = new \DateTime();
         $nowDate->setTime(0, 0, 0);
 
         if ($depDate > $nowDate) {
@@ -950,7 +947,7 @@ class Visit {
         }
 
         // CO date validity
-        $stDate = new DateTime($this->getArrivalDate());
+        $stDate = new \DateTime($this->getArrivalDate());
 
         if ($dateDepartedDT < $stDate) {
             return "But Checkout Failed: The checkout date is before the checkin date.  ";
@@ -983,19 +980,19 @@ class Visit {
 
         $isChanged = FALSE;
         $rtnMsg = '';
-        $nowDT = new DateTime();
+        $nowDT = new \DateTime();
         $nowDT->setTime(0, 0, 0);
 
 
         // Init the latest departure date for the visit
-        $lastDepartureDT = new DateTime($this->getArrivalDate());
+        $lastDepartureDT = new \DateTime($this->getArrivalDate());
         $departureDateUpdated = FALSE;
 
         foreach ($this->stays as $stayRS) {
 
             $guestId = $stayRS->idName->getStoredVal();
 
-            $ecoDT = new DateTime($stayRS->Expected_Co_Date->getStoredVal());
+            $ecoDT = new \DateTime($stayRS->Expected_Co_Date->getStoredVal());
             $ecoDT->setTime(0, 0, 0);
 
             // Get the new date
@@ -1025,7 +1022,7 @@ class Visit {
                     Continue;
                 }
 
-                $ecoDT = new DateTime($coDT->format('Y-m-d 00:00:00'));
+                $ecoDT = new \DateTime($coDT->format('Y-m-d 00:00:00'));
 
             } else {
                 continue;
@@ -1039,7 +1036,7 @@ class Visit {
             }
 
             // make span end date
-            $spnEndDT = new DateTime($stayRS->Span_Start_Date->getStoredVal());
+            $spnEndDT = new \DateTime($stayRS->Span_Start_Date->getStoredVal());
             $spnEndDT->setTime(0, 0, 0);
 
             // Earlier than check in date?
@@ -1096,7 +1093,7 @@ class Visit {
                 $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
 
                 // Move other reservations to alternative rooms
-                $rtnMsg .= ReservationSvcs::moveResvAway($dbh, new DateTime($this->getArrivalDate()), $lastDepartureDT, $this->getidResource(), $uname);
+                $rtnMsg .= ReservationSvcs::moveResvAway($dbh, new \DateTime($this->getArrivalDate()), $lastDepartureDT, $this->getidResource(), $uname);
             }
 
             return array('message'=>$rtnMsg, 'isChanged' => $isChanged);
@@ -1116,12 +1113,12 @@ class Visit {
 
         $retDT = setTimeZone(NULL, $extendReturnDate);
         $retDT->setTime(0, 0, 0);
-        $now = new DateTime();
+        $now = new \DateTime();
         $now->setTime(0, 0, 0);
         $timeNow = date('H:i:s');
 
         $dt = $retDT->format('Y-m-d');
-        $coDT = new DateTime($dt . ' ' . $timeNow);
+        $coDT = new \DateTime($dt . ' ' . $timeNow);
 
 
         if ($returning === FALSE) {
@@ -1192,7 +1189,7 @@ class Visit {
         $dt = $cDT->format('Y-m-d');
         $timeNow = date('H:i:s');
 
-        $coDT = new DateTime($dt . ' ' . $timeNow);
+        $coDT = new \DateTime($dt . ' ' . $timeNow);
 
         if ($noCharge) {
 
@@ -1242,7 +1239,7 @@ class Visit {
 
     }
 
-    public static function loadStaysStatic(PDO $dbh, $idVisit, $span, $statusFilter = VisitStatus::CheckedIn) {
+    public static function loadStaysStatic(\PDO $dbh, $idVisit, $span, $statusFilter = VisitStatus::CheckedIn) {
 
         $stays = array();
 
@@ -1266,7 +1263,7 @@ class Visit {
         return $stays;
     }
 
-    public function loadStays(PDO $dbh, $statusFilter = VisitStatus::CheckedIn) {
+    public function loadStays(\PDO $dbh, $statusFilter = VisitStatus::CheckedIn) {
 
         unset($this->stays);
         $this->stays = self::loadStaysStatic($dbh, $this->getIdVisit(), $this->getSpan(), $statusFilter);
@@ -1373,7 +1370,7 @@ class Visit {
         return $this->visitRS->Rate_Category->getStoredVal();
     }
 
-    public function getRoomTitle(PDO $dbh) {
+    public function getRoomTitle(\PDO $dbh) {
 
         if ($this->getIdResource() > 0) {
 

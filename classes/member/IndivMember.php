@@ -2,14 +2,10 @@
 /**
  * IndivMember.php
  *
- *
- *
- * @category  member
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -410,7 +406,7 @@ class IndivMember extends Member {
             $stmt = $dbh->query("Select idLanguage, Title, ISO_639_1 from language where Display = 1");
             $defaultLangId = '';
 
-            while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
                 $langs[$r['idLanguage']] = array(0=>$r['idLanguage'], 1=>$r['Title'] . ' (' . $r['ISO_639_1'] . ')');
 
@@ -467,7 +463,7 @@ class IndivMember extends Member {
         $stmt = $dbh->query("select * from insurance order by `Type`, `Title`");
         $ins = array();
 
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $ins[$r['Type']][$r['idInsurance']] = array(0=>$r['idInsurance'], 1=>$r['Title']);
         }
 
@@ -475,7 +471,7 @@ class IndivMember extends Member {
         $stmt2 = $dbh->query("Select * from `insurance_type` order by `List_Order`");
         $insTypes = array();
 
-        while ($r = $stmt2->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt2->fetch(\PDO::FETCH_ASSOC)) {
             $insTypes[$r['idInsurance_type']] = $r;
         }
 
@@ -574,7 +570,7 @@ class IndivMember extends Member {
     }
 
 
-    public function loadRealtionships(PDO $dbh) {
+    public function loadRealtionships(\PDO $dbh) {
 
        return array(
             RelLinkType::Sibling => new Siblings($dbh, $this->get_idName()),
@@ -887,7 +883,7 @@ class IndivMember extends Member {
         $stmt2 = $dbh->query("Select * from `insurance_type` order by `List_Order`");
         $insTypes = array();
 
-        while ($r = $stmt2->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt2->fetch(\PDO::FETCH_ASSOC)) {
             $insTypes[$r['idInsurance_type']] = $r;
         }
 

@@ -2,12 +2,10 @@
 /**
  * Hospital.php
  *
- * @category  house
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2015 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 /**
  * Description of Hospital
@@ -17,7 +15,7 @@
 class Hospital {
 
 
-    public static function loadHospitals(PDO $dbh) {
+    public static function loadHospitals(\PDO $dbh) {
 
         $hospRs = new Hospital_RS();
         return EditRS::select($dbh, $hospRs, array());
@@ -115,13 +113,13 @@ class Hospital {
      * @param array $post
      *
      */
-    public static function saveHospitalMarkup(PDO $dbh, Psg $psg, HospitalStay $hstay, array $post) {
+    public static function saveHospitalMarkup(\PDO $dbh, Psg $psg, HospitalStay $hstay, array $post) {
 
         return self::saveReferralMarkup($dbh, $psg, $hstay, $post);
     }
 
 
-    public static function createReferralMarkup(PDO $dbh, HospitalStay $hstay, $showExitDate = TRUE) {
+    public static function createReferralMarkup(\PDO $dbh, HospitalStay $hstay, $showExitDate = TRUE) {
 
         $uS = Session::getInstance();
         $referralAgentMarkup = '';
@@ -333,7 +331,7 @@ $(document).ready(function () {
     }
 
 
-    public static function saveReferralMarkup(PDO $dbh, Psg $psg, HospitalStay $hstay, array $post) {
+    public static function saveReferralMarkup(\PDO $dbh, Psg $psg, HospitalStay $hstay, array $post) {
 
         $uS = Session::getInstance();
 
@@ -351,11 +349,11 @@ $(document).ready(function () {
             $dateStr = filter_var($post['txtEntryDate'], FILTER_SANITIZE_STRING);
 
             if ($dateStr != '') {
-                $enDT = new DateTime($dateStr);
-                $enDT->setTimezone(new DateTimeZone($uS->tz));
+                $enDT = new \DateTime($dateStr);
+                $enDT->setTimezone(new \DateTimeZone($uS->tz));
             } else {
-                $enDT = new DateTime();
-                $enDT->setTimezone(new DateTimeZone($uS->tz));
+                $enDT = new \DateTime();
+                $enDT->setTimezone(new \DateTimeZone($uS->tz));
             }
 
             $hstay->setArrivalDate($enDT->format('Y-m-d H:i:s'));
@@ -365,8 +363,8 @@ $(document).ready(function () {
             $dateStr = filter_var($post['txtExitDate'], FILTER_SANITIZE_STRING);
 
             if ($dateStr != '') {
-                $enDT = new DateTime($dateStr);
-                $enDT->setTimezone(new DateTimeZone($uS->tz));
+                $enDT = new \DateTime($dateStr);
+                $enDT->setTimezone(new \DateTimeZone($uS->tz));
                 $hstay->setExpectedDepartureDate($enDT->format('Y-m-d H:i:s'));
             }
         }
@@ -427,7 +425,7 @@ class HospitalStay {
 
     protected $hstayRs;
 
-    function __construct(PDO $dbh, $idPatient, $idHospitalStay = 0) {
+    function __construct(\PDO $dbh, $idPatient, $idHospitalStay = 0) {
 
         $hstay = new Hospital_StayRs();
 
@@ -437,7 +435,7 @@ class HospitalStay {
         if ($idP > 0) {
 
             $stmt = $dbh->query("Select *, max(Arrival_Date) from hospital_stay where idPatient=$idP group by idHospital_Stay");
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) === 1) {
                 EditRS::loadRow($rows[0], $hstay);
@@ -446,7 +444,7 @@ class HospitalStay {
         } else if ($idHospitalStay > 0) {
 
             $stmt = $dbh->query("Select * from hospital_stay where idHospital_stay=$idHs");
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) === 1) {
                 EditRS::loadRow($rows[0], $hstay);
@@ -469,7 +467,7 @@ class HospitalStay {
 
     }
 
-    public function save(PDO $dbh, Psg $psg, $idAgent, $uname) {
+    public function save(\PDO $dbh, Psg $psg, $idAgent, $uname) {
 
         if (is_null($psg) || $psg->getIdPsg() == 0) {
             return;
