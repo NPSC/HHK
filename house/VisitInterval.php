@@ -12,42 +12,8 @@ require ("homeIncludes.php");
 
 require (CLASSES . 'ColumnSelectors.php');
 require CLASSES . 'OpenXML.php';
-
-
-require (DB_TABLES . 'MercuryRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'ActivityRS.php');
-require (DB_TABLES . 'visitRS.php');
-
-
-require (CLASSES . 'MercPay/MercuryHCClient.php');
-require (CLASSES . 'MercPay/Gateway.php');
-
-require (CLASSES . 'Purchase/Item.php');
 require(CLASSES . 'Purchase/RoomRate.php');
 
-require (PMT . 'Payments.php');
-require (PMT . 'HostedPayments.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'Invoice.php');
-require (PMT . 'InvoiceLine.php');
-require (PMT . 'CreditToken.php');
-require (PMT . 'CheckTX.php');
-require (PMT . 'CashTX.php');
-require (PMT . 'Transaction.php');
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . "Addresses.php");
-require (MEMBER . "EmergencyContact.php");
-
-require (CLASSES . 'PaymentSvcs.php');
-require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-
-require (HOUSE . 'PaymentManager.php');
-require (HOUSE . 'PaymentChooser.php');
 
 
 try {
@@ -100,7 +66,7 @@ $isGuestAdmin = ComponentAuthClass::is_Authorized('guestadmin');
  * @param Boolean $visitFee  Flag to show/hide visit fees
 
  */
-function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departureDT, \HTMLTable &$tbl, $local, &$sml, &$reportRows, $rateTitles, $uS, $visitFee = FALSE) {
+function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departureDT, HTMLTable &$tbl, $local, &$sml, &$reportRows, $rateTitles, $uS, $visitFee = FALSE) {
 
     $arrivalDT = new DateTime($r['Arrival_Date']);
 
@@ -559,8 +525,8 @@ where
     $nites = array();
 
     //$reportStartDT = new DateTime($start . ' 00:00:00');
-    $reportEndDT = new DateTime($end . ' 00:00:00');
-    $now = new DateTime();
+    $reportEndDT = new \DateTime($end . ' 00:00:00');
+    $now = new \DateTime();
     $now->setTime(0, 0, 0);
 
     $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
@@ -570,7 +536,7 @@ where
     $rateTitles = RoomRate::makeDescriptions($dbh);
 
 
-    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
         // records ordered by idVisit.
         if ($curVisit != $r['idVisit']) {
@@ -588,7 +554,7 @@ where
                 $totalGuestNights += $visit['gnit'];
 
                 // Set expected departure to now if earlier than "today"
-                $expDepDT = new DateTime($savedr['Expected_Departure']);
+                $expDepDT = new \DateTime($savedr['Expected_Departure']);
                 $expDepDT->setTime(0,0,0);
 
                 if ($expDepDT < $now) {
@@ -597,7 +563,7 @@ where
                     $expDepStr = $expDepDT->format('Y-m-d');
                 }
 
-                $departureDT = new DateTime($savedr['Actual_Departure'] != '' ? $savedr['Actual_Departure'] : $expDepStr);
+                $departureDT = new \DateTime($savedr['Actual_Departure'] != '' ? $savedr['Actual_Departure'] : $expDepStr);
 
                 $paid = $visit['gpd'] + $visit['thdpd'] + $visit['hpd'];
                 $unpaid = ($visit['chg'] + $visit['preCh']) - $paid;
@@ -785,7 +751,7 @@ where
         $totalGuestNights += $visit['gnit'];
 
         // Set expected departure to now if earlier than "today"
-        $expDepDT = new DateTime($savedr['Expected_Departure']);
+        $expDepDT = new \DateTime($savedr['Expected_Departure']);
         $expDepDT->setTime(0,0,0);
 
         if ($expDepDT < $now) {
@@ -794,7 +760,7 @@ where
             $expDepStr = $expDepDT->format('Y-m-d');
         }
 
-        $departureDT = new DateTime($savedr['Actual_Departure'] != '' ? $savedr['Actual_Departure'] : $expDepStr);
+        $departureDT = new \DateTime($savedr['Actual_Departure'] != '' ? $savedr['Actual_Departure'] : $expDepStr);
 
         $paid = $visit['gpd'] + $visit['thdpd'] + $visit['hpd'];
 
@@ -1077,19 +1043,55 @@ where ru.Start_Date <= '$end' and ifnull(ru.End_Date, now()) > '$start';";
 
 }
 
+
 $receiptMarkup = '';
 $paymentMarkup = '';
 $payFailPage = $wInit->page->get_ScriptFilename();
 
-$payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST);
+if (isset($_POST['CardID']) || isset($_POST['PaymentID'])) {
 
-if (is_null($payResult) === FALSE) {
+    require (DB_TABLES . 'MercuryRS.php');
+    require (DB_TABLES . 'PaymentsRS.php');
+    require (DB_TABLES . 'nameRS.php');
+    require (DB_TABLES . 'ActivityRS.php');
+    require (DB_TABLES . 'visitRS.php');
 
-    $receiptMarkup = $payResult->getReceiptMarkup();
+    require (CLASSES . 'MercPay/MercuryHCClient.php');
+    require (CLASSES . 'MercPay/Gateway.php');
 
-    $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+    require (CLASSES . 'Purchase/Item.php');
+
+    require (PMT . 'Payments.php');
+    require (PMT . 'HostedPayments.php');
+    require (PMT . 'Receipt.php');
+    require (PMT . 'Invoice.php');
+    require (PMT . 'InvoiceLine.php');
+    require (PMT . 'CreditToken.php');
+    require (PMT . 'CheckTX.php');
+    require (PMT . 'CashTX.php');
+    require (PMT . 'Transaction.php');
+
+    require (MEMBER . 'Member.php');
+    require (MEMBER . 'IndivMember.php');
+    require (MEMBER . 'OrgMember.php');
+    require (MEMBER . "Addresses.php");
+    require (MEMBER . "EmergencyContact.php");
+
+    require (CLASSES . 'PaymentSvcs.php');
+    require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+
+    require (HOUSE . 'PaymentManager.php');
+    require (HOUSE . 'PaymentChooser.php');
+
+    $payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST);
+
+    if (is_null($payResult) === FALSE) {
+
+        $receiptMarkup = $payResult->getReceiptMarkup();
+
+        $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+    }
 }
-
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
 $headerTable = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
@@ -1106,7 +1108,6 @@ $year = date('Y');
 $months = array(date('n'));     // logically overloaded.
 $txtStart = '';
 $txtEnd = '';
-$status = '';
 $statsTable = '';
 $start = '';
 $end = '';
@@ -1184,7 +1185,7 @@ if (count($diags) > 0) {
     $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 's', '', array());
 }
 
-$cFields[] = array("Status", 'Status', 'checked', 'f', 's', '', array());
+
 $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array());
 $cFields[] = array("Depart", 'Departure', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array());
 $cFields[] = array("Room", 'Title', 'checked', '', 's', '', array('style'=>'text-align:center;'));
@@ -1366,7 +1367,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     if ($start != '' && $end != '') {
 
-        $tblArray = doReport($dbh, $colSelector, $start, $end, $whHosp, $whAssoc, count($aList), $local, $uS->VisitFee, $labels);
+        $tblArray = doReport($dbh, $colSelector, $start, $end, $whHosp, $whAssoc, count($aList), $local, $uS->VisitFee);
 
         $dataTable = $tblArray['data'];
         $statsTable = $tblArray['stats'];
