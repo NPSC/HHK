@@ -737,6 +737,9 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
 
     public static function showList(PDO $dbh, $rows, $editPage, $checkinPage, $reservStatus = ReservationStatus::Committed, $shoDirtyRooms = FALSE, $showConstraints = FALSE) {
 
+        // Get labels
+        $labels = new Config_Lite(LABEL_FILE);
+
         $rooms = array();
 
         $noCleaning = '';
@@ -773,7 +776,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
             $tbl->addHeaderTr(
                     ($checkinPage == '' ? '' : HTMLTable::makeTh(''))
                     .HTMLTable::makeTh('Primary Guest')
-                    .HTMLTable::makeTh('Patient')
+                    .HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient'))
                     .HTMLTable::makeTh('Guests')
                     .HTMLTable::makeTh('Arrival Date')
                     .HTMLTable::makeTh('Expected Departure')

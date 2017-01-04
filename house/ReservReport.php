@@ -26,7 +26,7 @@ $pageTitle = $wInit->pageTitle;
 
 // get session instance
 $uS = Session::getInstance();
-
+$labels = new Config_Lite(LABEL_FILE);
 $menuMarkup = $wInit->generatePageMenu();
 
 // Load the session with member-based lookups
@@ -97,7 +97,7 @@ foreach ($hospList as $h) {
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style
 $cFields[] = array('Resv Id', 'idReservation', 'checked', 'f', 'n', '');
 $cFields[] = array("Room", 'Room', 'checked', '', 's', '');
-$cFields[] = array('Hospital', 'Hospital', 'checked', '', 's', '');
+$cFields[] = array($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'), 'Hospital', 'checked', '', 's', '');
 
 if (count($aList) > 0) {
     $cFields[] = array("Association", 'Assoc', 'checked', '', 's', '');

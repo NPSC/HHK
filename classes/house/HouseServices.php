@@ -27,6 +27,9 @@ class HouseServices {
 
         $uS = Session::getInstance();
 
+        // Get labels
+        $labels = new Config_Lite(LABEL_FILE);
+
         $idVisit = intval($idV, 10);
         $span = intval($idSpan, 10);
 
@@ -129,7 +132,7 @@ class HouseServices {
 
         } else {
             $mkup = HTMLContainer::generateMarkup('div',
-                    VisitView::createStaysMarkup($dbh, $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $action, $coDate) . $mkup, array('id'=>'divksStays'));
+                    VisitView::createStaysMarkup($dbh, $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coDate) . $mkup, array('id'=>'divksStays'));
 
             $mkup .= HTMLContainer::generateMarkup('div',
                     VisitView::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
@@ -1159,6 +1162,9 @@ class HouseServices {
 
         if (isset($post[$prefix.'txtLastName'])) {
 
+            // Get labels
+            $labels = new Config_Lite(LABEL_FILE);
+
             // save the guest
             $guest->save($dbh, $post, $uS->username);
 
@@ -1283,7 +1289,7 @@ class HouseServices {
             $logText = VisitLog::getInsertText($stayRS);
             VisitLog::logStay($dbh, $idVisit, $visitSpan, $stayRS->idRoom->getNewVal(), $idStays, $guest->getIdName(), $visitRs->idRegistration->getStoredVal(), $logText, "insert", $uS->username);
 
-            $dataArray['stays'] = VisitView::createStaysMarkup($dbh, $idVisit, $visitSpan, $visitRs->idPrimaryGuest->getStoredVal(), FALSE, $guest->getIdName());
+            $dataArray['stays'] = VisitView::createStaysMarkup($dbh, $idVisit, $visitSpan, $visitRs->idPrimaryGuest->getStoredVal(), FALSE, $guest->getIdName(), $labels);
 
         } else {
             // send back a guest dialog to collect name, address, etc.
@@ -1624,7 +1630,10 @@ class HouseServices {
         $chkinGroup->saveMembers($dbh, $resv->getIdHospitalStay(), $post);
 
         if (is_null($chkinGroup->patient)) {
-            throw new Hk_Exception_Runtime('Patient not specified.  ');
+            // Get labels
+            $labels = new Config_Lite(LABEL_FILE);
+
+            throw new Hk_Exception_Runtime($labels->getString('MemberType', 'patient', 'Patient') . ' not specified.  ');
         }
 
         // any new guests?
@@ -2163,7 +2172,7 @@ class HouseServices {
                         // Include Additional Room Query
                         $dataArray['adnlrm'] = RoomChooser::moreRoomsMarkup($rcount[0][0], $addRoom);
                     } else {
-                        $dataArray['adnlrm'] = HTMLContainer::generateMarkup('p', 'Already using the maximum of ' . $uS->RoomsPerPatient . ' rooms per patient.', array('style'=>'margin:.3em;'));
+                        $dataArray['adnlrm'] = HTMLContainer::generateMarkup('p', 'Already using the maximum of ' . $uS->RoomsPerPatient . ' rooms per ' . $labels->getString('MemberType', 'patient', 'Patient'), array('style'=>'margin:.3em;'));
                     }
                 }
 
@@ -2282,7 +2291,7 @@ class HouseServices {
                 // Include Additional Room Query
                 $dataArray['adnlrm'] = RoomChooser::moreRoomsMarkup($rcount[0][0], $addRoom);
             } else {
-                $dataArray['adnlrm'] = HTMLContainer::generateMarkup('p', 'Already using the maximum of ' . $uS->RoomsPerPatient . ' rooms per patient.', array('style'=>'margin:.3em;'));
+                $dataArray['adnlrm'] = HTMLContainer::generateMarkup('p', 'Already using the maximum of ' . $uS->RoomsPerPatient . ' rooms per ' . $labels->getString('MemberType', 'patient', 'Patient'), array('style'=>'margin:.3em;'));
             }
         }
 
@@ -2596,6 +2605,9 @@ from
             return '';
         }
 
+        // Get labels
+        $labels = new Config_Lite(LABEL_FILE);
+
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
         $hasRows = FALSE;
@@ -2626,7 +2638,7 @@ from
         }
 
         if ($hasRows) {
-            $tbl->addHeaderTr(HTMLTable::makeTh('Name').HTMLTable::makeTh('Patient Relation').HTMLTable::makeTh('Room').HTMLTable::makeTh('Checked In'));
+            $tbl->addHeaderTr(HTMLTable::makeTh('Name').HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient') . ' Relation').HTMLTable::makeTh('Room').HTMLTable::makeTh('Checked In'));
 
             $markup = HTMLContainer::generateMarkup('div',
                     HTMLContainer::generateMarkup('fieldset',
@@ -2670,7 +2682,7 @@ from
         if (is_null($chkinGroup->patient)) {
 
             // no patient.
-            $dataArray['warning'] = 'A Patient must be specified.  ';
+            $dataArray['warning'] = 'A ' . $labels->getString('MemberType', 'patient', 'Patient') . ' must be specified.  ';
             $dataArray['hvPat'] = FALSE;
             return $dataArray;
         }
@@ -2836,7 +2848,7 @@ from
 
             // If there are other reservations, then we may be adding a room
             if (count($visits) >= $uS->RoomsPerPatient) {
-                throw new Hk_Exception_Runtime('Maximum Rooms per patient is exceeded.  ');
+                throw new Hk_Exception_Runtime('Maximum Rooms per ' . $labels->getString('MemberType', 'patient', 'Patient') . ' is exceeded.  ');
             }
 
             // We need a primary guest.
@@ -2990,10 +3002,13 @@ from
 
         $idPsg = intval($psgId, 10);
         $patientId = intval($newPatientId, 10);
+        // Get labels
+        $labels = new Config_Lite(LABEL_FILE);
+
 
         // Id's valid
         if ($idPsg < 1 || $patientId < 1) {
-            return array('warning' => 'PSG or Patient not set.  ');
+            return array('warning' => 'PSG or ' . $labels->getString('MemberType', 'patient', 'Patient') . ' not set.  ');
         }
 
         $stmt = $dbh->query("Select count(idName) from name_guest where idName = $patientId and Relationship_Code = '" . RelLinkType::Self . "';");
@@ -3001,7 +3016,7 @@ from
 
         // New patient cannot already be a member of this or another PSG.
         if ($rows[0][0] > 0) {
-            return array('warning' => 'Guest is already a patient in this or another PSG.  ');
+            return array('warning' => 'Guest is already a ' . $labels->getString('MemberType', 'patient', 'Patient') . ' in this or another PSG.  ');
         }
 
         $psg = new Psg($dbh, $idPsg);
@@ -3019,7 +3034,7 @@ from
 
         $psg->psgRS->idPatient->setNewVal($patientId);
 
-        $psg->savePSG($dbh, $patientId, $username, 'Patient Changed from ' . $oldPatient . ' to ' . $patientId);
+        $psg->savePSG($dbh, $patientId, $username, $labels->getString('MemberType', 'patient', 'Patient') . ' Changed from ' . $oldPatient . ' to ' . $patientId);
 
         // Hospital stay
         $hsnum = $dbh->exec("update hospital_stay set idPatient = $patientId where idPsg = $idPsg;");

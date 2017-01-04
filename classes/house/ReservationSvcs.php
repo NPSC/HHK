@@ -78,7 +78,7 @@ class ReservationSvcs {
                         // Verify PSG
                         if ($resv->getIdPsg($dbh) != $patientPsg->getIdPsg()) {
                             // PSG mis-match.
-                            return array('error'=>'Patient does not belong to this guest\'s Patient Support Group');
+                            return array('error'=>$labels->getString('MemberType', 'patient', 'Patient') . ' does not belong to this guest\'s ' . $labels->getString('MemberType', 'patient', 'Patient') . ' Support Group');
                         }
                     }
 
@@ -510,7 +510,7 @@ class ReservationSvcs {
         $idPsg = $resv->getIdPsg($dbh);
 
         if ($idPsg == 0) {
-            return array('error'=>'Undefined patient support group.  ');
+            return array('error'=>'Undefined ' . $labels->getString('MemberType', 'patient', 'Patient') . ' support group.  ');
         }
 
         $psg = new Psg($dbh, $idPsg);
@@ -831,7 +831,7 @@ class ReservationSvcs {
 
         } else {
             // uh-oh.  no patient defined.
-            $dataArray['warning'] = 'A Patient must be defined.  ';
+            $dataArray['warning'] = 'A ' . $labels->getString('MemberType', 'patient', 'Patient') . ' must be defined.  ';
             return $dataArray;
         }
 
@@ -1456,7 +1456,7 @@ class ReservationSvcs {
                     );
         }
 
-        $tbl->addHeaderTr(HTMLTable::makeTh('').HTMLTable::makeTh('Guest Name').HTMLTable::makeTh('Patient Relationship').HTMLTable::makeTh('Phone'));
+        $tbl->addHeaderTr(HTMLTable::makeTh('').HTMLTable::makeTh('Guest Name').HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient') . ' Relationship').HTMLTable::makeTh('Phone'));
 
         if ($nonActiveButtons === FALSE) {
             $tbl->addFooter(
@@ -2042,8 +2042,11 @@ class ReservationSvcs {
 
     public static function psgChooserMkup(\PDO $dbh, array $ngRss, $patientAsGuest, $offerNew = TRUE) {
 
+        // Get labels
+        $labels = new Config_Lite(LABEL_FILE);
+
         $tbl = new HTMLTable();
-        $tbl->addHeaderTr(HTMLTable::makeTh('Who is the Patient?', array('colspan'=>'2')));
+        $tbl->addHeaderTr(HTMLTable::makeTh('Who is the ' . $labels->getString('MemberType', 'patient', 'Patient') . '?', array('colspan'=>'2')));
 
         $firstOne = TRUE;
 
@@ -2066,14 +2069,14 @@ class ReservationSvcs {
         // Add new PSG choice
         if ($offerNew) {
             $tbl->addBodyTr(
-                HTMLTable::makeTd('New Patient', array('class'=>'tdlabel'))
+                HTMLTable::makeTd('New ' . $labels->getString('MemberType', 'patient', 'Patient'), array('class'=>'tdlabel'))
                .HTMLTable::makeTd(HTMLInput::generateMarkup('-1', array('type'=>'radio', 'name'=>'cbselpsg', 'data-pid'=>'0', 'data-ngid'=>'0'))));
         }
 
         if ($patientAsGuest) {
 
             $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
-            $tbl->addBodyTr(HTMLTable::makeTh('Is the Patient staying the First night (or longer)?', array('colspan'=>'2')));
+            $tbl->addBodyTr(HTMLTable::makeTh('Is the ' . $labels->getString('MemberType', 'patient', 'Patient') . ' staying the First night (or longer)?', array('colspan'=>'2')));
 
             $tbl->addBodyTr(
                     HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Yes, at least the First night', array('for'=>'cbpstayy')), array('class'=>'tdlabel'))

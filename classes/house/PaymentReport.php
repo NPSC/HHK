@@ -167,6 +167,7 @@ class PaymentReport {
         $hdr[$n++] = "Status";
         $hdr[$n++] = "Original Amount";
         $hdr[$n++] = "Amount";
+        $hdr[$n++] = "Notes";
 
         OpenXML::writeHeaderRow($sml, $hdr);
         $reportRows++;
@@ -315,6 +316,9 @@ class PaymentReport {
             ),
             $n++ => array('type' => "n",
                 'value' => $amt
+            ),
+            $n++ => array('type' => "s",
+                'value' => $p['Payment_Note']
             )
         );
 

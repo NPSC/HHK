@@ -130,7 +130,7 @@ if ($idGuest > 0) {
 
 
 // Patient
-$pMkarray = Role::createSearchHeaderMkup("h_", 'Patient Search: ');
+$pMkarray = Role::createSearchHeaderMkup("h_", $labels->getString('MemberType', 'patient', 'Patient') . ' Search: ');
 $pmkup = $pMkarray['hdr'];
 
 
@@ -226,6 +226,7 @@ $resultMessage = $alertMsg->createMarkup();
     var isCheckedOut = false;
     var resvTitle = '<?php echo $labels->getString('guestEdit', 'reservationTitle', 'Reservation'); ?>';
     var reserv = new Reserv();
+    reserv.patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
     reserv.idReserv = '<?php echo $idReserv; ?>';
     reserv.gpnl = '<?php echo $guestid; ?>';
     reserv.patAsGuest = '<?php echo $uS->PatientAsGuest; ?>';

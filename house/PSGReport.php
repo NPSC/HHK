@@ -380,10 +380,7 @@ order by ng.idPsg";
 
     $rowCount = $stmt->rowCount();
 
-    if ($local) {
-        $tbl = new HTMLTable();
-
-    } else {
+    if (!$local) {
 
         $reportRows = 1;
         $file = 'PSGReport';

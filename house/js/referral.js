@@ -290,7 +290,7 @@ function injectSlot(data) {
                 
                 $('div#patientSection').hide('blind');
                 acHdr.removeClass('ui-state-default');
-                acHdr.find('#pgspnHdrLabel').text((resv.patAsGuest ? 'Patient/' : '') + 'Primary Guest: ');
+                acHdr.find('#pgspnHdrLabel').text((resv.patAsGuest ? resv.patientLabel + '/' : '') + 'Primary Guest: ');
                 resv.patSection = false;
 
             } else {
@@ -432,7 +432,7 @@ function injectSlot(data) {
 
         // Header
         var pcHdr = $('<div id="h_divGsthdr" style="padding:2px;"/>')
-                .append($('<span style="font-size:1.5em;">Patient: </span>'))
+                .append($('<span style="font-size:1.5em;">' + resv.patientLabel + ': </span>'))
                 .append($('<span id="h_hdrFirstName" style="font-size:1.5em;">' + pcDiv.find('#h_txtFirstName').val() + ' ' + '</span>'))
                 .append($('<span id="h_hdrLastName" style="font-size:1.5em;">' + pcDiv.find('#h_txtLastName').val() + '</span>'))
                 .append($('<span style="font-size:1.5em;">' + (data.patStay ? ' (staying)' : '') + '</span>'))
@@ -788,7 +788,7 @@ function loadGuest(incmg, role, idPsg, patientStaying) {
             if (pan.idName == id) {
                 
                 if (role === 'p' && pan.isPatient === false) {
-                    flagAlertMessage("To make the guest also the patient, set this Guest's Patient Relationship to Patient.", true);
+                    flagAlertMessage("To make the guest also the " + resv.patientLabel + ", set this Guest's " + resv.patientLabel + " Relationship to " + resv.patientLabel + ".", true);
                     $('#pgselPatRel').addClass('ui-state-highlight');
                     return;
                 }
@@ -1016,7 +1016,7 @@ function verifyDone(reserv) {
         }
 
         if (isMissing) {
-            flagAlertMessage("Enter a first and last name for the " + (pan.idPrefix === 'h_' ? 'Patient' : 'Primary Guest') + ".", true);
+            flagAlertMessage("Enter a first and last name for the " + (pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + ".", true);
             gstMsg.text("Incomplete Name");
             $('#' + pan.idPrefix + 'divGstpnl').show('blind');
             $('#' + pan.idPrefix + 'divGsthdr').removeClass('ui-corner-all').addClass('ui-corner-top');
@@ -1037,7 +1037,7 @@ function verifyDone(reserv) {
             });
 
             if (isMissing) {
-                flagAlertMessage((pan.idPrefix === 'h_' ? 'Patient' : 'Primary Guest') + " (" + nameText + ") is missing some or all of their address.", true);
+                flagAlertMessage((pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") is missing some or all of their address.", true);
                 $('#' + pan.idPrefix + 'divGstpnl').show('blind');
                 $('#' + pan.idPrefix + 'divGsthdr').removeClass('ui-corner-all').addClass('ui-corner-top');
                 return false;
@@ -1048,8 +1048,8 @@ function verifyDone(reserv) {
         if ($('#' + pan.idPrefix + 'selPatRel').val() == '') {
 
             $('#' + pan.idPrefix + 'selPatRel').addClass('ui-state-error');
-            gstMsg.text("Set Primary Guest - Patient Relationship");
-            flagAlertMessage("Primary Guest (" + nameText + ") is missing their relationship to the patient.", true);
+            gstMsg.text("Set Primary Guest - " + resv.patientLabel + " Relationship");
+            flagAlertMessage("Primary Guest (" + nameText + ") is missing their relationship to the " + resv.patientLabel + ".", true);
             $('#' + pan.idPrefix + 'divGstpnl').show('blind');
             $('#' + pan.idPrefix + 'divGsthdr').removeClass('ui-corner-all').addClass('ui-corner-top');
             return false;
@@ -1065,7 +1065,7 @@ function verifyDone(reserv) {
 
                 $('#' + pan.idPrefix + 'gstDate').addClass('ui-state-error');
                 gstMsg.text("Enter guest check in date.");
-                flagAlertMessage((pan.idPrefix === 'h_' ? 'Patient' : 'Primary Guest') + " (" + nameText + ") is missing their check-in date.", true);
+                flagAlertMessage((pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") is missing their check-in date.", true);
                 return false;
 
             } else {
@@ -1075,7 +1075,7 @@ function verifyDone(reserv) {
                 if (isNaN(ciDate.getTime())) {
                     $('#' + pan.idPrefix + 'gstDate').addClass('ui-state-error');
                     gstMsg.text("Guest check-in date error.");
-                    flagAlertMessage((pan.idPrefix === 'h_' ? 'Patient' : 'Primary Guest') + " (" + nameText + ") is missing their check-in date.", true);
+                    flagAlertMessage((pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") is missing their check-in date.", true);
                     return false;
                 }
             }
@@ -1088,7 +1088,7 @@ function verifyDone(reserv) {
 
                 $('#' + pan.idPrefix + 'gstCoDate').addClass('ui-state-error');
                 gstMsg.text("Enter guest check out date.");
-                flagAlertMessage((pan.idPrefix === 'h_' ? 'Patient' : 'Primary Guest') + " (" + nameText + ") is missing their Expected Departure date.  Are they staying forever?", true);
+                flagAlertMessage((pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") is missing their Expected Departure date.  Are they staying forever?", true);
                 return false;
 
             } else {
@@ -1098,14 +1098,14 @@ function verifyDone(reserv) {
                 if (isNaN(coDate.getTime())) {
                     $('#' + pan.idPrefix + 'gstCoDate').addClass('ui-state-error');
                     gstMsg.text("Guest Expected Departure date error.");
-                    flagAlertMessage((pan.idPrefix === 'h_' ? 'Patient' : 'Primary Guest') + " (" + nameText + ") is missing their Expected Departure date.  Are they staying forever?", true);
+                    flagAlertMessage((pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") is missing their Expected Departure date.  Are they staying forever?", true);
                     return false;
                 }
 
                 if (ciDate > coDate) {
                     $('#' + pan.idPrefix + 'gstDate').addClass('ui-state-error');
                     gstMsg.text("Check in date is after check out date.");
-                    flagAlertMessage((pan.idPrefix === 'h_' ? 'Patient' : 'Primary Guest') + " (" + nameText + ") check in date is after their expected departure date.  (Real life is a causal system.)", true);
+                    flagAlertMessage((pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") check in date is after their expected departure date.  (Real life is a causal system.)", true);
                     return false;
                 }
             }
@@ -1116,7 +1116,7 @@ function verifyDone(reserv) {
     }
 
     if (havePatient === false) {
-        flagAlertMessage("A patient is not selected", true);
+        flagAlertMessage("A " + resv.patientLabel + " is not selected", true);
         return false
     }
     
@@ -1325,7 +1325,7 @@ $(document).ready(function() {
         resizable: true,
         width: 500,
         modal: true,
-        title: 'Patient Support Group Chooser',
+        title: resv.patientLabel + ' Support Group Chooser',
         close: function (event, ui) {$('div#submitButtons').show();},
         open: function (event, ui) {$('div#submitButtons').hide();}
     });

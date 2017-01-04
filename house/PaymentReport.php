@@ -25,7 +25,7 @@ $pageTitle = $wInit->pageTitle;
 
 // get session instance
 $uS = Session::getInstance();
-
+$labels = new Config_Lite(LABEL_FILE);
 $menuMarkup = $wInit->generatePageMenu();
 
 // Load the session with member - based lookups
@@ -297,9 +297,9 @@ $cFields[] = array("Payor First", 'First', 'checked', '', 's', '', array());
 $cFields[] = array("Date", 'Payment_Date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array());
 $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 's', '', array());
 $cFields[] = array("Room", 'Title', 'checked', '', 's', '', array('style'=>'text-align:center;'));
-$cFields[] = array("Hospital", 'idHospital', 'checked', '', 's', '', array());
-$cFields[] = array("Patient Last", 'Patient_Last', '', '', 's', '', array());
-$cFields[] = array("Patient First", 'Patient_First', '', '', 's', '', array());
+$cFields[] = array($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'), 'idHospital', 'checked', '', 's', '', array());
+$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Last", 'Patient_Last', '', '', 's', '', array());
+$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." First", 'Patient_First', '', '', 's', '', array());
 $cFields[] = array("Pay Type", 'Pay_Type', 'checked', '', 's', '', array());
 $cFields[] = array("Detail", 'Detail', 'checked', '', 's', '', array());
 $cFields[] = array("Status", 'Status', 'checked', '', 's', '', array());
@@ -470,7 +470,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
     }
 
-    $headerTable->addBodyTr(HTMLTable::makeTd('Hospitals: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrHosps));
+    $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital').'s: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrHosps));
 
     if (count($aList) > 0) {
         $headerTable->addBodyTr(HTMLTable::makeTd('Associations: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrAssocs));
@@ -852,11 +852,11 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                     </table>
                     <table style="float: left;">
                         <tr>
-                            <th colspan="2">Hospital Filter</th>
+                            <th colspan="2"><?php echo $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'); ?> Filter</th>
                         </tr>
                         <?php if (count($aList) > 0) { ?><tr>
                             <th>Associations</th>
-                            <th>Hospitals</th>
+                            <th><?php echo $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'); ?>s</th>
                         </tr><?php } ?>
                         <tr>
                             <?php if (count($aList) > 0) { ?><td><?php echo $assocs; ?></td><?php } ?>

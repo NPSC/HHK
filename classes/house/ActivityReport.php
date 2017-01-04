@@ -318,7 +318,7 @@ class ActivityReport {
                 $psgId = $r['idPsg'];
                 $tbl->addBodyTr(HTMLTable::makeTd(
                 HTMLContainer::generateMarkup('span', 'PSG Id: ' . $psgId . $reservIcon
-                        . HTMLContainer::generateMarkup('a', 'Patient: ' . $r['Name_First'] . " " . $r['Name_Last'], array('href'=>'GuestEdit.php?id=' . $r['idName'], 'style'=>'margin-left:1em;')), array('class'=>'hhk-viewvisit', 'data-patientid'=>$r['idName'])), array('colspan'=>'7', 'style'=>'background-color: lightgrey;')));
+                        . HTMLContainer::generateMarkup('a', $labels->getString('MemberType', 'patient', 'Patient') . ': ' . $r['Name_First'] . " " . $r['Name_Last'], array('href'=>'GuestEdit.php?id=' . $r['idName'], 'style'=>'margin-left:1em;')), array('class'=>'hhk-viewvisit', 'data-patientid'=>$r['idName'])), array('colspan'=>'7', 'style'=>'background-color: lightgrey;')));
             }
 
             $trow = '';
@@ -841,7 +841,10 @@ where lp.idPayment > 0
 
     public static function unpaidInvoiceLog(\PDO $dbh, $includeAction = TRUE) {
 
-        $uS = Session::getInstance();
+        // Get labels
+       $labels = new Config_Lite(LABEL_FILE);
+
+       $uS = Session::getInstance();
 
         $query = "SELECT
 `i`.`idInvoice`,
@@ -888,8 +891,8 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
                 .HTMLTable::makeTh('Bill Date')
                 .HTMLTable::makeTh('Payor')
                 .HTMLTable::makeTh('Room')
-                .HTMLTable::makeTh('Hospital')
-                .HTMLTable::makeTh('Patient')
+                .HTMLTable::makeTh($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'))
+                .HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient'))
                 .HTMLTable::makeTh('Amount')
                 .HTMLTable::makeTh('Payments')
                 .HTMLTable::makeTh('Balance')

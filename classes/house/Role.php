@@ -61,7 +61,7 @@ abstract class Role {
     protected $incompleteEmergContact = FALSE;
     protected $patientRelationshipCode = '';
 
-    function __construct(PDO $dbh, $idPrefix, $id) {
+    function __construct(\PDO $dbh, $idPrefix, $id) {
 
         $this->currentlyStaying = NULL;
         $this->idVisit = NULL;
@@ -74,10 +74,10 @@ abstract class Role {
 
     }
 
-    protected abstract function factory(PDO $dbh, $id);
+    protected abstract function factory(\PDO $dbh, $id);
 
 
-    protected function build(PDO $dbh) {
+    protected function build(\PDO $dbh) {
 
         // get session instance
         $uS = Session::getInstance();
@@ -219,11 +219,11 @@ abstract class Role {
 
     /**
      *
-     * @param PDO $dbh
+     * @param \PDO $dbh
      * @param array $post
      * @return string Message for end user.
      */
-    public function save(PDO $dbh, array $post, $uname) {
+    public function save(\PDO $dbh, array $post, $uname) {
 
         $message = "";
         $idPrefix = $this->getNameObj()->getIdPrefix();
@@ -263,33 +263,32 @@ abstract class Role {
 
         /**
      *
-     * @param PDO $dbh
+     * @param \PDO $dbh
      * @return boolean
      */
-    protected function checkCurrentStay(PDO $dbh) {
+    public static function checkCurrentStay(\PDO $dbh, $idName) {
 
-        if ($this->getIdName() > 0) {
+        $id = intval($idName, 10);
+        $idVisit = 0;
 
-            $query = "select idVisit from stays where `Status` = :stat and idName = :id;";
-            $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-            $stmt->execute(array(":stat"=> VisitStatus::CheckedIn, ":id"=>$this->getIdName()));
-            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+        if ($id > 0) {
+
+            $query = "select idVisit from stays where `Status` = '" . VisitStatus::CheckedIn . "' and idName = " . $id;
+            $stmt = $dbh->query($query);
+            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
             if (count($rows) > 0 && $rows[0][0] > 0) {
-                $this->idVisit = $rows[0][0];
-                $this->currentlyStaying = TRUE;
-            } else {
-                $this->idVisit = 0;
-                $this->currentlyStaying = FALSE;
+                $idVisit = $rows[0][0];
             }
         }
 
+        return $idVisit;
     }
 
-    public function getCurrentVisitId(PDO $dbh) {
+    public function getCurrentVisitId(\PDO $dbh) {
 
         if (is_null($this->idVisit)) {
-            $this->checkCurrentStay($dbh);
+            $this->setCurrentIdVisit(self::checkCurrentStay($dbh, $this->getIdName()));
         }
 
         return $this->idVisit;
@@ -318,7 +317,7 @@ abstract class Role {
     public function isCurrentlyStaying(\PDO $dbh) {
 
         if (is_null($this->currentlyStaying)) {
-            $this->checkCurrentStay($dbh);
+            $this->setCurrentIdVisit(self::checkCurrentStay($dbh, $this->getIdName()));
         }
 
         return $this->currentlyStaying;
@@ -373,5 +372,17 @@ abstract class Role {
         $this->patientRelationshipCode = $v;
     }
 
+    protected function setCurrentIdVisit($idVisit) {
+
+        $idv = intval($idVisit, 10);
+        if ($idv > 0) {
+            $this->currentlyStaying = TRUE;
+            $this->idVisit = $idv;
+        } else {
+            $this->currentlyStaying = FALSE;
+            $this->idVisit = 0;
+        }
+
+    }
 
 }

@@ -1043,6 +1043,8 @@ where ru.Start_Date <= '$end' and ifnull(ru.End_Date, now()) > '$start';";
 
 }
 
+// Get labels
+$labels = new Config_Lite(LABEL_FILE);
 
 $receiptMarkup = '';
 $paymentMarkup = '';
@@ -1097,8 +1099,6 @@ $mkTable = '';  // var handed to javascript to make the report table or not.
 $headerTable = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 $dataTable = '';
 
-// Get labels
-$labels = new Config_Lite(LABEL_FILE);
 
 $hospitalSelections = array('');
 $assocSelections = array('');
@@ -1148,21 +1148,21 @@ foreach ($hospList as $h) {
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms
 $cFields[] = array('Visit Id', 'idVisit', 'checked', 'f', 'n', '', array('style'=>'text-align:center;'));
 $cFields[] = array("Primary Guest", 'idPrimaryGuest', 'checked', '', 's', '', array());
-$cFields[] = array("Patient", 'idPatient', 'checked', '', 's', '', array());
+$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient'), 'idPatient', 'checked', '', 's', '', array());
 
 // Patient address.
 if ($uS->PatientAddr) {
 
     $pFields = array('pAddr', 'pCity');
-    $pTitles = array('Patient Address', 'Patient City');
+    $pTitles = array($labels->getString('MemberType', 'patient', 'Patient').' Address', $labels->getString('MemberType', 'patient', 'Patient').' City');
 
     if ($uS->county) {
         $pFields[] = 'pCounty';
-        $pTitles[] = 'Patient County';
+        $pTitles[] = $labels->getString('MemberType', 'patient', 'Patient').' County';
     }
 
     $pFields = array_merge($pFields, array('pState', 'pCountry', 'pZip'));
-    $pTitles = array_merge($pTitles, array('Patient State', 'Patient Country', 'Patient Zip'));
+    $pTitles = array_merge($pTitles, array($labels->getString('MemberType', 'patient', 'Patient').' State', $labels->getString('MemberType', 'patient', 'Patient').' Country', $labels->getString('MemberType', 'patient', 'Patient').' Zip'));
 
     $cFields[] = array($pTitles, $pFields, '', '', 's', '', array());
 }
@@ -1172,7 +1172,7 @@ $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Ref. Agent')
 if (count($aList) > 0) {
     $cFields[] = array("Hospital / Assoc", 'hospitalAssoc', 'checked', '', 's', '', array());
 } else {
-    $cFields[] = array('Hospital', 'hospitalAssoc', 'checked', '', 's', '', array());
+    $cFields[] = array($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'), 'hospitalAssoc', 'checked', '', 's', '', array());
 }
 
 $locations = readGenLookupsPDO($dbh, 'Location');

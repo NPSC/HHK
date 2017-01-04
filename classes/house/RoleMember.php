@@ -245,12 +245,12 @@ class GuestMember extends RoleMember {
         return VolMemberType::Guest;
     }
 
-    public function createMarkupHdr($hideRelChooser = FALSE) {
+    public function createMarkupHdr(Config_Lite $labels = NULL, $hideRelChooser = FALSE) {
 
         $tr = parent::createMarkupHdr();
 
         if ($hideRelChooser === FALSE) {
-            $tr .= HTMLTable::makeTh('Relationship to Patient');
+            $tr .= HTMLTable::makeTh('Relationship to ' . $labels->getString('MemberType', 'patient', 'Patient'));
         }
 
         return $tr;

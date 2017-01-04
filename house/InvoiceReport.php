@@ -65,6 +65,7 @@ $alertMsg->set_Text("help");
 $resultMessage = $alertMsg->createMarkup();
 
 $isGuestAdmin = ComponentAuthClass::is_Authorized('guestadmin');
+$labels = new Config_Lite(LABEL_FILE);
 
 function doMarkupRow($r, $isLocal, $hospital, $statusTxt, &$tbl, &$sml, &$reportRows, $subsidyId) {
 
@@ -458,7 +459,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
             $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
         }
 
-        $headerTable->addBodyTr(HTMLTable::makeTd('Hospitals: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrHosps));
+        $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital').'s: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrHosps));
 
         if (count($aList) > 0) {
             $headerTable->addBodyTr(HTMLTable::makeTd('Associations: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrAssocs));
@@ -558,7 +559,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
     if (count($aList) > 0) {
         $hospHeader = 'Hospital / Assoc';
     } else {
-        $hospHeader = 'Hospital';
+        $hospHeader = $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital');
     }
 
     if ($local) {
@@ -571,7 +572,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
                 .HTMLTable::makeTh('Billed')
                 .HTMLTable::makeTh('Room')
                 .HTMLTable::makeTh($hospHeader)
-                .HTMLTable::makeTh('Patient')
+                .HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient'))
                 .HTMLTable::makeTh('Amount')
                 .HTMLTable::makeTh('Payments')
                 .HTMLTable::makeTh('Balance')
@@ -595,7 +596,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
         $hdr[$n++] = "Billed";
         $hdr[$n++] = "Room";
         $hdr[$n++] = $hospHeader;
-        $hdr[$n++] = "Patient";
+        $hdr[$n++] = $labels->getString('MemberType', 'patient', 'Patient');
         $hdr[$n++] = "Amount";
         $hdr[$n++] = "Balance";
         $hdr[$n++] = "Notes";
@@ -964,11 +965,11 @@ $(document).ready(function() {
                     </table>
                     <table style="float: left;">
                         <tr>
-                            <th colspan="2">Hospital Filter</th>
+                            <th colspan="2"><?php echo $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'); ?> Filter</th>
                         </tr>
                         <?php if (count($aList) > 0) { ?><tr>
                             <th>Associations</th>
-                            <th>Hospitals</th>
+                            <th><?php echo $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'); ?>s</th>
                         </tr><?php } ?>
                         <tr>
                             <?php if (count($aList) > 0) { ?><td><?php echo $assocs; ?></td><?php } ?>

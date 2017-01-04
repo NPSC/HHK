@@ -37,12 +37,16 @@ class Receipt {
 
         $info = self::getVisitInfo($dbh, $invoice);
 
+        // Get labels
+        $labels = new Config_Lite(LABEL_FILE);
+
+
         if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
         }
 
         if (isset($info['Patient']) && $info['Patient'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Patient: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Patient']));
+            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Patient']));
         }
 
         $idPriGuest = 0;
@@ -56,7 +60,7 @@ class Receipt {
         }
 
         if (isset($info['HospName']) && $info['HospName'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Hospital: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['HospName']));
+            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['HospName']));
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd("Visit Id: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($invoice->getOrderNumber() . '-' . $invoice->getSuborderNumber()));
@@ -97,6 +101,9 @@ class Receipt {
 
     public static function createVoidMarkup(\PDO $dbh, PaymentResponse $payResp, $logoUrl, $siteName, $siteId, $type = 'Void Sale') {
 
+        // Get labels
+        $labels = new Config_Lite(LABEL_FILE);
+
         $rec = self::getHouseIconMarkup($logoUrl, $siteName);
 
         $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;margin-left:20px;'));
@@ -112,7 +119,7 @@ class Receipt {
         }
 
         if (isset($info['Patient']) && $info['Patient'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Patient: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Patient']));
+            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Patient']));
         }
 
         $idPriGuest = 0;
@@ -126,7 +133,7 @@ class Receipt {
         }
 
         if (isset($info['HospName']) && $info['HospName'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Hospital: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['HospName']));
+            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['HospName']));
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd("Visit Id: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($invoice->getOrderNumber() . '-' . $invoice->getSuborderNumber()));
@@ -155,6 +162,9 @@ class Receipt {
 
     public static function createReturnMarkup(\PDO $dbh, PaymentResponse $payResp, $logoUrl, $siteName, $siteId) {
 
+        // Get labels
+        $labels = new Config_Lite(LABEL_FILE);
+
         $rec = self::getHouseIconMarkup($logoUrl, $siteName);
 
         $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;margin-left:20px;'));
@@ -170,7 +180,7 @@ class Receipt {
         }
 
         if (isset($info['Patient']) && $info['Patient'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Patient: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Patient']));
+            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Patient']));
         }
 
         $idPriGuest = 0;
@@ -184,7 +194,7 @@ class Receipt {
         }
 
         if (isset($info['HospName']) && $info['HospName'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Hospital: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['HospName']));
+            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['HospName']));
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd("Visit Id: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($invoice->getOrderNumber() . '-' . $invoice->getSuborderNumber()));
@@ -1293,7 +1303,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
         $tbl = new HTMLTable();
 
         $tbl->addBodyTr(HTMLTable::makeTd('Guest:', array('class'=>'tdlabel')) . HTMLTable::makeTd($guestName));
-        $tbl->addBodyTr(HTMLTable::makeTd('Patient:', array('class'=>'tdlabel')) . HTMLTable::makeTd($patientName));
+        $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($patientName));
         $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('statement', 'psgLabel', 'Patient Support Group') . ' Id: ' . $idPsg, array('colspan'=>'2', 'style'=>'font-size:.8em;')));
         $tbl->addBodyTr(HTMLTable::makeTd('Provider:', array('class'=>'tdlabel')) . HTMLTable::makeTd($hospital));
 

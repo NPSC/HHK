@@ -36,11 +36,11 @@ class Guest extends Role {
      * @param PDO $dbh
      * @return string HTML div markup
      */
-    protected function createNameMU($useAdditionalMarkup = FALSE, $lockRelChooser = FALSE) {
+    protected function createNameMU(Config_Lite $labels, $useAdditionalMarkup = FALSE, $lockRelChooser = FALSE) {
 
         // Build name.
         $tbl = new HTMLTable();
-        $tbl->addHeaderTr($this->name->createMarkupHdr());
+        $tbl->addHeaderTr($this->name->createMarkupHdr($labels));
         $tbl->addHeaderTr($this->name->createMarkupRow($this->patientRelationshipCode, $lockRelChooser));
 
 
@@ -78,8 +78,10 @@ class Guest extends Role {
 
         $uS = Session::getInstance();
         $idPrefix = $this->getNameObj()->getIdPrefix();
+        $labels = new Config_Lite(LABEL_FILE);
 
-        $mk1 = $this->createNameMu(TRUE, $restrictRelChooser);
+
+        $mk1 = $this->createNameMu($labels, TRUE, $restrictRelChooser);
 
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;min-height:10px;'));
 
@@ -108,7 +110,7 @@ class Guest extends Role {
         }
 
         $stayDates = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('span', ($this->getPatientRelationshipCode() == RelLinkType::Self ? 'Patient: ' : 'Guest: '), array('id'=>$idPrefix . 'spnHdrLabel', 'style'=>'font-size:1.2em;'))
+                HTMLContainer::generateMarkup('span', ($this->getPatientRelationshipCode() == RelLinkType::Self ? $labels->getString('MemberType', 'patient', 'Patient') . ': ' : 'Guest: '), array('id'=>$idPrefix . 'spnHdrLabel', 'style'=>'font-size:1.2em;'))
                .HTMLContainer::generateMarkup('span', $this->getNameObj()->get_firstName(), array('id'=>$idPrefix . 'hdrFirstName', 'name'=>'hdrFirstName', 'style'=>'font-size:1.5em;color:black;'))
                .HTMLContainer::generateMarkup('span', ' '.$this->getNameObj()->get_lastName(), array('id'=>$idPrefix . 'hdrLastName', 'name'=>'hdrLastName', 'style'=>'margin-right:10px;font-size:1.5em;color:black;'))
                . HTMLContainer::generateMarkup('span', ' Check In: '. HTMLInput::generateMarkup((is_null($this->getCheckinDT()) ? '' : $this->getCheckinDT()->format('M j, Y')), $cidAttr), array('style'=>'margin-left:.5em;'))
@@ -177,13 +179,14 @@ class Guest extends Role {
         $uS = Session::getInstance();
         $idPrefix = $this->getNameObj()->getIdPrefix();
         $mk1 = '';
+        $labels = new Config_Lite(LABEL_FILE);
 
         // Guest Name
         if ($uS->PatientAsGuest && ($lockRelChooser === FALSE || $this->getPatientRelationshipCode() == '')) {
             // Dont lock the patient relationship chooser.
-            $mk1 = $this->createNameMu(TRUE, FALSE);
+            $mk1 = $this->createNameMu($labels, TRUE, FALSE);
         } else {
-            $mk1 = $this->createNameMu(TRUE, TRUE);
+            $mk1 = $this->createNameMu($labels, TRUE, TRUE);
         }
 
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));

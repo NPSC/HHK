@@ -682,7 +682,7 @@ if (isset($_POST['btnItemSave'])) {
 //
 
 // hospital tab title
-$hospitalTabTitle = $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospitals & Associations');
+$hospitalTabTitle = $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospitals & Associations') . 's';
 
 // Room pricing model
 $rPrices = readGenLookupsPDO($dbh, 'Price_Model');

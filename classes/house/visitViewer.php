@@ -208,11 +208,11 @@ class VisitView {
         }
 
         // Patient Name
-        $th .= HTMLTable::makeTh('Hospital');
+        $th .= HTMLTable::makeTh($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'));
         $tr .= HTMLTable::makeTd($hname);
 
         if ($r['Patient_Name'] != '') {
-            $th .= HTMLTable::makeTh('Patient');
+            $th .= HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient'));
             $tr .= HTMLTable::makeTd($r['Patient_Name']);
         }
 
@@ -357,7 +357,7 @@ class VisitView {
      * @param string $action
      * @return string
      */
-    public static function createStaysMarkup(\PDO $dbh, $idVisit, $span, $idPrimaryGuest, $isAdmin, $idGuest, $action = '', $coDate = '') {
+    public static function createStaysMarkup(\PDO $dbh, $idVisit, $span, $idPrimaryGuest, $isAdmin, $idGuest, Config_Lite $labels, $action = '', $coDate = '') {
 
         $uS = Session::getInstance();
 
@@ -546,7 +546,7 @@ class VisitView {
         // Table header
         $th = ($hdrPgRb == '' ? '' : $hdrPgRb)
             . HTMLTable::makeTh('Name')
-            . HTMLTable::makeTh('Patient Relation')
+            . HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient') . ' Relation')
             . HTMLTable::makeTh('Status')
             . HTMLTable::makeTh('Room')
             . HTMLTable::makeTh($chkInTitle);

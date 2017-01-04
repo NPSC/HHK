@@ -220,8 +220,8 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
 }
 
 $cgCols[] = array("data" => "Phone" );
-$cgCols[] = array("data" => "Hospital" );
-$cgCols[] = array("data" => "Patient" );
+$cgCols[] = array("data" => $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') );
+$cgCols[] = array("data" => $labels->getString('MemberType', 'patient', 'Patient') );
 
 
 $currTable = new HTMLTable();
@@ -262,8 +262,8 @@ if ($uS->Reservation) {
     }
 
     $rvCols[] = array("data" => "Occupants" );
-    $rvCols[] = array("data" => "Hospital" );
-    $rvCols[] = array("data" => "Patient" );
+    $rvCols[] = array("data" => $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') );
+    $rvCols[] = array("data" => $labels->getString('MemberType', 'patient', 'Patient') );
 
     $hdrRow = '';
 
@@ -305,8 +305,8 @@ if ($uS->Reservation) {
     }
 
     $wlCols[] = array("data" => "Occupants" );
-    $wlCols[] = array("data" => "Hospital" );
-    $wlCols[] = array("data" => "Patient" );
+    $wlCols[] = array("data" => $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') );
+    $wlCols[] = array("data" => $labels->getString('MemberType', 'patient', 'Patient') );
 
     $whdrRow = '';
 
@@ -336,7 +336,7 @@ if ($uS->RegColors == 'hospital') {
             $hospSpans .= HTMLContainer::generateMarkup('span', $r['Title'], array('class'=>'spnHosp', 'data-id'=>$r['idHospital'], 'style' => 'background-color:' . $r['Reservation_Style'] . ';color:' . $r['Stay_Style'] . ';'));
         }
 
-        $colorKey = HTMLContainer::generateMarkup('span', 'Hospitals: ');
+        $colorKey = HTMLContainer::generateMarkup('span', $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . 's: ');
         // All button
         $colorKey .= HTMLContainer::generateMarkup('span', 'All', array('class'=>'spnHosp', 'data-id'=>0, 'style' => 'border:solid 3px black;font-size:120%;background-color:fff;color:000;'));
 

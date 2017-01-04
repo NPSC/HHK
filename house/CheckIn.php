@@ -132,7 +132,7 @@ if ($uS->OpenCheckin && $idReserv == 0) {
     // Patient markup
     if ($idPatient == 0) {
 
-        $pMkarray = Role::createSearchHeaderMkup("h_", 'Patient Search: ', FALSE);
+        $pMkarray = Role::createSearchHeaderMkup("h_", $labels->getString('MemberType', 'patient', 'Patient') . ' Search: ', FALSE);
         $pmkup = $pMkarray['hdr'];
         $pmDisplay = 'display:none;';
 
@@ -306,6 +306,7 @@ $verifyHospDate = $uS->VerifyHospDate;
     chkIn.members = [];
     chkIn.currentGuests = 0;
     chkIn.guestPrefix = 1;
+    chkIn.patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
     chkIn.gpnl = '<?php echo $guestid; ?>';
     chkIn.ppnl = '<?php echo $patientId; ?>';
     chkIn.idPsg = '<?php echo $psgId; ?>';

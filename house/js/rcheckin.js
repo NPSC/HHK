@@ -486,7 +486,7 @@ function processGuests(incmg) {
         
         if (cnt > 0) {
             
-            flagAlertMessage("One of the guests is already set as the patient.  ", true);
+            flagAlertMessage("One of the guests is already set as the " + checkIn.patientLabel + ".  ", true);
             checkIn.patient = null;
 
         } else {
@@ -499,7 +499,7 @@ function processGuests(incmg) {
             pcDiv.addClass('h_detail');
             
             ciHdr = $('<div style="float:left;"/>')
-                    .append($('<span style="font-size:1.2em;">Patient: </span>'))
+                    .append($('<span style="font-size:1.2em;">' + checkIn.patientLabel + ': </span>'))
                     .append($('<span id="h_hdrFirstName" style="font-size:1.2em;">' + pcDiv.find('#h_txtFirstName').val() + '</span>'))
                     .append($('<span id="h_hdrLastName" style="font-size:1.2em;">' + pcDiv.find('#h_txtLastName').val() + '</span>'));
 
@@ -529,7 +529,7 @@ function processGuests(incmg) {
 
                 var removeBtn = $('<input type="button" id="remPatient"  value="Remove" style="float:right;margin-right:.3em;padding: 0.2em 1em;" />');
                 removeBtn.click(function () {
-                    if (confirm("Remove Patient?")) {
+                    if (confirm("Remove " + checkIn.patientLabel + "?")) {
                         removePatient();
                         $('#patientSearch').show("blind");
                         $('#hospitalSection').hide("blind");
@@ -693,7 +693,7 @@ function loadGuest(id, idPsg, role, patientStaying) {
         // patient?
         if (checkIn.patient !== null && checkIn.patient.idName == id){
             
-            if (confirm('The patient is already set as NOT staying at the house tonight.  Is the patient staying here tonight after all?')) {
+            if (confirm('The ' + checkIn.patientLabel + ' is already set as NOT staying at the house tonight.  Is the ' + checkIn.patientLabel + ' staying here tonight after all?')) {
                 
                 removePatient();
                 patientStaying = true;
@@ -863,7 +863,7 @@ function verifyDone() {
     }
     
     if (checkIn.members.length === 0) {
-        flagAlertMessage("Enter a Guest or Patient.", true);
+        flagAlertMessage("Enter a Guest or " + checkIn.patientLabel + ".", true);
         $('#' + checkIn.guestSearchPrefix + 'Search').addClass('ui-state-highlight');
         return false;
     }
@@ -876,7 +876,7 @@ function verifyDone() {
     });
 
     if (!checkIn.patient && pgCount === 0 && !checkIn.havePatient) {
-        flagAlertMessage("Enter a Patient.", true);
+        flagAlertMessage("Enter a " + checkIn.patientLabel + ".", true);
         return false;
     }
     
@@ -943,7 +943,7 @@ function verifyDone() {
         }
         
         if (isMissing) {
-            flagAlertMessage("Enter a first and last name for each guest & patient.", true);
+            flagAlertMessage("Enter a first and last name for each guest & " + checkIn.patientLabel + ".", true);
             $('.' + pan.idSlot + 'detail').show("blind");
             gstMsg.text("Incomplete Name");
             return false;
@@ -952,9 +952,9 @@ function verifyDone() {
         // Check patient relationship
         if ($('#' + pan.idPrefix + 'selPatRel').length > 0 && $('#' + pan.idPrefix + 'selPatRel').val() === '') {
             $('#' + pan.idPrefix + 'selPatRel').addClass('ui-state-error');
-            gstMsg.text("Set Patient Relationship");
+            gstMsg.text("Set " + checkIn.patientLabel + " Relationship");
             $('.' + pan.idSlot + 'detail').show("blind");
-            flagAlertMessage(nameText + " is missing their patient relationship.", true);
+            flagAlertMessage(nameText + " is missing their " + checkIn.patientLabel + " relationship.", true);
             return false;
         }
         
@@ -1388,7 +1388,7 @@ $(document).ready(function() {
 
     $('#atblgetter, #stblgetter').DataTable();
     $.datepicker.setDefaults({
-        yearRange: '-1:+02',
+        yearRange: '-5:+02',
         changeMonth: true,
         changeYear: true,
         autoSize: true,
@@ -1400,7 +1400,7 @@ $(document).ready(function() {
         resizable: true,
         width: 400,
         modal: true,
-        title: 'Patient Selection'
+        title: checkIn.patientLabel + ' Selection'
     });
     $("#resDialog").dialog({
         autoOpen: false,
@@ -1567,7 +1567,7 @@ $(document).ready(function() {
                 cnt++;
                 if (cnt > 1) {
                     $(this).val('');
-                    flagAlertMessage('Only one guest can also be the patient.', true);
+                    flagAlertMessage('Only one guest can also be the ' + checkIn.patientLabel + '.', true);
                 } else {
                     $('div#hospitalSection').show("blind");
                     checkIn.patientStaying = true;
@@ -1575,7 +1575,7 @@ $(document).ready(function() {
                     $('#' + $(this).data('prefix') + 'memHdr').removeClass('ui-state-default');
                     $('div#patientSection').hide("blind");
                     $('div#patientSearch').hide("blind");
-                    $('span#' + $(this).data('prefix') + 'spnHdrLabel').text('Patient: ');
+                    $('span#' + $(this).data('prefix') + 'spnHdrLabel').text(checkIn.patientLabel);
                     
                 }
             } else {
@@ -1766,7 +1766,7 @@ $(document).ready(function() {
             for (var i = 0; i < checkIn.members.length; i++) {
                 var pan = checkIn.members[i];
                 if (pan.idName === item.id) {
-                    flagAlertMessage('This person is already added.  Use the Patient Relationship selector to select "Patient".', true);
+                    flagAlertMessage('This person is already added.  Use the ' + checkIn.patientLabel + ' Relationship selector to select "' + checkIn.patientLabel + '".', true);
                     return;
                 }
             }
