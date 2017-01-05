@@ -130,9 +130,6 @@ body {
                         <li><a href="<?php echo $trainingURL; ?>">Training & Demonstration</a></li>
                             <?php } ?>
                     </ul>
-                    <div style="padding-top: 20px;margin-left:50px;">
-                          <a href ="volunteer/register_web.php" ><span style="font-size: 1em;color: #4E4E4E;">Register for access</span></a>
-                    </div>
                     <div style="margin-top: 100px;">
                         <hr>
                         <div><a href ="http://nonprofitsoftwarecorp.org" ><div class="nplogo"></div></a></div>

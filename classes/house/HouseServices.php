@@ -3046,9 +3046,6 @@ from
         $guestMem = new GuestMember($dbh, MemBasis::Indivual, $oldPatient);
         $guestMem->saveMemberType($dbh, $username);
 
-        // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
-
         return array('result'=> $psg->createEditMarkup($dbh, $relationships, $labels));
 
     }

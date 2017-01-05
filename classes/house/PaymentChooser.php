@@ -100,12 +100,20 @@ class PaymentChooser {
 
         // Payment Notes.
         if (isset($post['txtPayNotes'])) {
-            $pmp->setPayNotes(filter_var($post['txtPayNotes'], FILTER_SANITIZE_STRING));
-        }
 
-        // Return Payment Notes.
-        if (isset($post['txtRtnNotes'])) {
-            $pmp->setPayNotes(filter_var($post['txtRtnNotes'], FILTER_SANITIZE_STRING));
+            $payNotes = filter_var($post['txtPayNotes'], FILTER_SANITIZE_STRING);
+
+            if ($payNotes != '') {
+
+                $pmp->setPayNotes($payNotes);
+
+            } else {
+
+                // Return Payment Notes.
+                if (isset($post['txtRtnNotes'])) {
+                    $pmp->setPayNotes(filter_var($post['txtRtnNotes'], FILTER_SANITIZE_STRING));
+                }
+            }
         }
 
         // Charge Acct - External Swipe
