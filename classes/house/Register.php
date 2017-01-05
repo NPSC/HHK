@@ -39,12 +39,6 @@ class Register {
         $beginDate = new \DateTime(date("Y-m-d", $startTime));
         $endDate = new \DateTime(date("Y-m-d", $endTime));
 
-        // Get events within time span.
-        $parms = array(
-            ":beginDate" => $beginDate->format('Y-m-d'),
-            ":endDate" => $endDate->format('Y-m-d'));
-
-
         // Get list of resources
         $qu = "select r.*, ru.idResource_use
 from resource r
@@ -398,7 +392,7 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
 
 
                 // Start date fall on a holiday or is a non work weekday?
-                if ($myHolidays->is_holiday($stDT->format('U')) || array_search($dateInfo['wday'], $nonClean) !== FALSE) {
+                if ($validHolidays === TRUE && ($myHolidays->is_holiday($stDT->format('U')) || array_search($dateInfo['wday'], $nonClean) !== FALSE)) {
 
                     $stDT->sub($p1d);
 
@@ -497,33 +491,35 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                     $validHolidays = FALSE;
                 }
 
+                if ($validHolidays) {
+                    // End date fall on a holiday?
+                    while ($myHolidays->is_holiday($clDate->format('U'))) {
 
-                // End date fall on a holiday?
-                while ($myHolidays->is_holiday($clDate->format('U'))) {
-                    $c = array(
-                        'id' => 'H' . $eventId++,
-                        'idReservation' => 0,
-                        'start' => $clDate->format('Y-m-d\TH:i:00'),
-                        'end' => $clDate->format('Y-m-d\TH:i:00'),
-                        'idHosp' => 0,
-                        'title' => HTMLContainer::generateMarkup('span', $rescs[$r["idResource"]]['Title'], array('style'=>'white-space:nowrap;')),
-                        'allDay' => 1,
-                        'backgroundColor' => 'black',
-                        'textColor' => 'white',
-                        'borderColor' => 'Yellow',
-                        "level" => $rescs[$r["idResource"]]["_level_"]
-                    );
-                    $events[] = $c;
+                        $c = array(
+                            'id' => 'H' . $eventId++,
+                            'idReservation' => 0,
+                            'start' => $clDate->format('Y-m-d\TH:i:00'),
+                            'end' => $clDate->format('Y-m-d\TH:i:00'),
+                            'idHosp' => 0,
+                            'title' => HTMLContainer::generateMarkup('span', $rescs[$r["idResource"]]['Title'], array('style'=>'white-space:nowrap;')),
+                            'allDay' => 1,
+                            'backgroundColor' => 'black',
+                            'textColor' => 'white',
+                            'borderColor' => 'Yellow',
+                            "level" => $rescs[$r["idResource"]]["_level_"]
+                        );
 
-                    // Determine if the resource is in use "TODAY"
-                    if ($clDate->format('Y-m-d') == $now->format('Y-m-d')) {
-                        $rescUsed[$r["idResource"]] = 'y';
+                        $events[] = $c;
+
+                        // Determine if the resource is in use "TODAY"
+                        if ($clDate->format('Y-m-d') == $now->format('Y-m-d')) {
+                            $rescUsed[$r["idResource"]] = 'y';
+                        }
+
+                        $clDate->add($p1d);
+                        $clDate->setTime(10, 0, 0);
                     }
-
-                    $clDate->add($p1d);
-                    $clDate->setTime(10, 0, 0);
                 }
-
                 // end date fall on non-cleaning day?
                 $dateInfo = getDate(strtotime($r['Expected_Departure']));
                 $limit = 5;
