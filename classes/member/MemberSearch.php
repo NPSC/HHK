@@ -664,4 +664,21 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         }
     }
 
+    public function getName_First() {
+        return $this->Name_First;
+    }
+
+    public function getName_Last() {
+        return $this->Name_Last;
+    }
+
+    public function getPhone() {
+        return $this->Phone;
+    }
+
+    public function getCompany() {
+        return $this->Company;
+    }
+
+
 }

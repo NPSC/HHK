@@ -294,7 +294,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     $sTbl = new HTMLTable();
 
 
-    $results = getPeopleReport($dbh, $local, $start, $end);
+    $results = getPeopleReport($dbh, $local, $start, $end, FALSE);
     $dataTable = $results['mkup'];
     $transferIds = $results['xfer'];
 
@@ -331,7 +331,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo STATE_COUNTRY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
 <script type="text/javascript">
 function flagAlertMessage(mess, wasError) {
     "use strict";
@@ -352,6 +352,10 @@ function flagAlertMessage(mess, wasError) {
         $("#divAlert1").show("pulsate");
         window.scrollTo(0, 5);
     }
+}
+function searchRemote(item) {
+    $('#txtRSearch').val('');
+    alert('item=' + item.id);
 }
     $(document).ready(function() {
         $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
@@ -437,10 +441,12 @@ function flagAlertMessage(mess, wasError) {
         });
 
         $('#selCalendar').change();
+
+    createAutoComplete($('#txtRSearch'), 3, {cmd: 'sch', mode: 'name'}, function (item) {searchRemote(item);}, false, '../house/ws_tran.php');
     });
  </script>
     </head>
-    <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
+    <body <?php if ($wInit->testVersion) { echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
@@ -467,6 +473,13 @@ function flagAlertMessage(mess, wasError) {
                                 <input type="text" value="<?php echo $txtStart; ?>" name="stDate" id="stDate" class="ckdate dates" style="margin-right:.3em;"/>
                                 <span class="dates" style="margin-right:.3em;">End:</span>
                                 <input type="text" value="<?php echo $txtEnd; ?>" name="enDate" id="enDate" class="ckdate dates"/></td>
+                        </tr>
+                    </table>
+                    <table style="float:left;">
+                        <tr>
+                            <td>Last Name Search</td>
+                            <td><input id="txtRSearch" type="text" /></td>
+
                         </tr>
                     </table>
                     <table style="width:100%; margin-top: 15px;">

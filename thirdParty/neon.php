@@ -126,24 +126,11 @@ class Neon {
 
         $result = $this->go($request);
 
-        if (isset($result['operationResult']) && $result['operationResult'] == 'FAIL') {
-
-            echo 'Result: "' . $result['operationResult'] . '", Date: ' . date('M j, Y H:i:s', strtotime($result['responseDateTime'])). "<br/>";
-
-            foreach ($result['errors'] as $key => $errors) {
-
-                echo $key . "<br/>";
-
-                foreach ($errors as $e) {
-                    echo $e['errorCode'] . ': ' . $e['errorMessage'] . "<br/>";
-                }
-
-            }
-        } else if (isset($result['operationResult']) && $result['operationResult'] == 'ERROR') {
-            echo 'Result: "' . $result['operationResult'] . '", Error Message: ' . $result['errorMessage'];
+        if (isset($result['individualAccount'])) {
+            return $result['individualAccount'];
         }
-
-        return $result['individualAccount'];
+        
+        return array();
     }
 
     /*

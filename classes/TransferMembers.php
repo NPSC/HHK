@@ -19,6 +19,7 @@ class TransferMembers {
     protected $password;
     protected $customFields;
     protected $errorMessage;
+    protected $pageNumber;
 
     public function __construct($userId, $password, array $customFieldIds) {
         $this->webService = new Neon();
@@ -26,10 +27,86 @@ class TransferMembers {
         $this->password = $password;
         $this->customFields = $customFieldIds;
         $this->errorMessage = '';
+        $this->pageNumber = 1;
     }
 
     public function __destruct() {
         $this->closeTarget();
+    }
+
+    public function searchAccount($searchCriteria) {
+
+        $replys = [];
+
+        // Log in with the web service
+        $this->openTarget($this->userId, $this->password);
+
+        $msearch = new MemberSearch($searchCriteria['letters']);
+        $standardFields = array('Account ID', 'Account Type', 'Deceased', 'Prefix', 'First Name', 'Middle Name', 'Last Name', 'Suffix', 'Preferred Name', 'Address Line 1', 'City', 'State', 'Zip Code');
+
+        $search = array(
+          'method' => 'account/listAccounts',
+          'criteria' => array(
+            //array( 'First Name', 'CONTAIN', str_replace('%', '', $msearch->getName_First())),
+            array( 'Last Name', 'CONTAIN', str_replace('%', '', $msearch->getName_Last())),
+          ),
+          'columns' => array(
+            'standardFields' => $standardFields,
+            'customFields' => array(),
+          ),
+          'page' => array(
+            'currentPage' => $this->pageNumber,
+            'pageSize' => 20,
+            'sortColumn' => 'Last Name',
+            'sortDirection' => 'ASC',
+          ),
+        );
+
+        $result = $this->webService->search($search);
+
+        if ($this->checkError($result)) {
+
+            $replys['error'] = $this->errorMessage;
+
+        } else {
+
+            foreach ($result as $r) {
+
+                $namArray['id'] = $r["Account ID"];
+                $namArray['fullName'] = $r["First Name"] . ' ' . $r["Last Name"];
+                $namArray['value'] = ($r['Prefix'] != '' ? $r['Prefix'] . ' ' : '' )
+                    . $r["Last Name"] . ", " . $r["First Name"]
+                    . ($r['Suffix'] != '' ? ', ' . $r['Suffix'] : '' )
+                    . ($r['Preferred Name'] != '' ? ' (' . $r['Preferred Name'] . ')' : '' )
+                    . ($r['Deceased'] !== 'No' ? ' [Deceased] ' : '')
+                    . ($r['City'] != '' ? '; ' . $r['City'] : '')
+                    . ($r['State'] != '' ? ', ' . $r['State'] : '')
+                    . ($r['Zip Code'] != '' ? ', ' . $r['Zip Code'] : '');
+
+                $replys[] = $namArray;
+
+            }
+
+            if (count($replys) === 0) {
+                $replys[] = array("id" => 0, "value" => "No one found.");
+            }
+        }
+
+        return $replys;
+    }
+
+    public function retrieveAccount($accountId) {
+
+        // Log in with the web service
+        $this->openTarget($this->userId, $this->password);
+
+        $account = $this->webService->getIndividualAccount($accountId);
+
+        if ($this->checkError($account)) {
+            throw new Hk_Exception_Runtime($this->errorMessage);
+        }
+
+        return $account;
     }
 
     public function sendList(\PDO $dbh, array $sourceIds, $username) {

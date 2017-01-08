@@ -42,14 +42,21 @@ function createZipAutoComplete(txtCtrl, wsUrl, lastXhr) {
         }
     });
 }
-function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNew) {
+
+function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNew, searchURL) {
     "use strict";
     var oldData;
     var lxhr;
-    var prevTerm = null;
+    var prevTerm = 0;
+    
     if (shoNew === undefined || shoNew === null) {
         shoNew = true;
     }
+    
+    if (searchURL === undefined || searchURL === null) {
+        searchURL = "../house/roleSearch.php";
+    }
+    
     txtCtrl.autocomplete({
         source: function(request, response) {
             
@@ -57,10 +64,10 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
             if (request.term.length < minChars) {
                 
                 oldData = null;
-                prevTerm = null;
+                prevTerm = request.term.length;
                 response();
                 
-            } else if (request.term.length >= minChars && oldData && prevTerm) {
+            } else if (request.term.length >= minChars && oldData) {
 
                 var bldr, 
                     terms = request.term.replace(',', '').split(" "),
@@ -83,18 +90,19 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
                     filtered.push({'id':0, 'value':'New Person'});
                 }
                 
+                prevTerm = request.term.length;
                 response( filtered );
                 
-            } else if (request.term.length === minChars) {
+            } else if (request.term.length === minChars && prevTerm < minChars) {
                 
                 txtCtrl.autocomplete( "option", "delay", 350 );
                 oldData = null;
                 inputParms.letters = request.term;
-                prevTerm = null;
+                prevTerm = request.term.length;
                 
-                lxhr = $.getJSON("../house/roleSearch.php", inputParms,
+                lxhr = $.getJSON(searchURL, inputParms,
                     function(data, status, xhr) {
-                        
+                        txtCtrl.autocomplete( "option", "delay", 0 );
                         if (xhr === lxhr) {
                             
                             if (data && data.error) {
@@ -104,21 +112,28 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
                                     window.open(data.gotopage);
                                 }
                                 
-                                data.value = data.error;
-                            }
-                            
-                            if (data) {
-                                oldData = data;
-                                prevTerm = request.term;
+                                oldData = null;
                                 response(data);
-                                txtCtrl.autocomplete( "option", "delay", 0 );
+
+                            } else  if (data) {
+                                
+                                oldData = data;
+                                response(data);
+                                
                             }
                             
                         } else {
-                            prevTerm = request.term;
-                            response(oldData);
+                            //prevTerm = request.term;
+                            if (oldData !== null) {
+                                response(oldData);
+                            } else {
+                                response();
+                            }
                         }
                 } );
+            } else {
+                prevTerm = request.term.length
+                response();
             }
         },
         position: { my: "left top", at: "left bottom", collision: "flip" },
@@ -126,9 +141,8 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
         delay: 0,
         select: function(event, ui) {
             if (!ui.item) {
-                return;
+                selectFunction(ui.item);
             }
-            selectFunction(ui.item);
         }
     });
 }
