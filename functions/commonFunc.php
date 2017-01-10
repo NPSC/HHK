@@ -54,20 +54,6 @@ function initPDO($override = FALSE) {
     return $dbh;
 }
 
-function initDB() {
-    $ssn = Session::getInstance();
-    /* Get Sectors from session */
-    if (!isset($ssn->databaseURL)) {
-        die('Missing Database Initialization (initDB)');
-    }
-
-    // Open the connection
-    $mysqli = mysqli_connect($ssn->databaseURL, $ssn->databaseUName, $ssn->databasePWord) or die('initDB cannot connect to the database because: ' . mysqli_error($mysqli));
-    mysqli_select_db($mysqli, $ssn->databaseName);
-
-    return $mysqli;
-}
-
 function syncTimeZone(\PDO $dbh) {
 
     $now = new \DateTime();
@@ -79,37 +65,6 @@ function syncTimeZone(\PDO $dbh) {
     $offset = sprintf('%+d:%02d', $hrs*$sgn, $mins);
     $dbh->exec("SET time_zone='$offset';");
 
-}
-
-/*
-  DB Closing method.
-  Pass the connection variable
-  obtained through initDB().
- */
-function closeDB($connection) {
-        mysqli_close($connection);
-}
-
-function queryDB($dbcon, $query, $silence=true, $errCode = "0") {
-
-    if (!$silence)
-        ECHO "<br />At queryDB, query=" . $query . "<br />";
-
-    // Connection exists?
-    if ($dbcon == null) {
-            trigger_error("Error  db connection object is not defined. at queryDB, Query = " . $query);
-            $errors = array("error" => "db connection object is not defined");
-            return $errors;
-    }
-    else  {
-        // Connection exists, so leave it alone.
-        if (($QDBres = mysqli_query($dbcon, $query)) === false) {
-            trigger_error("My Error: ".mysqli_error($dbcon)."; at queryDB query= " . $query);
-            $errors = array("error" => mysqli_error($dbcon));
-            return $errors;
-        }
-    }
-    return $QDBres;
 }
 
 function stripslashes_gpc(&$value) {

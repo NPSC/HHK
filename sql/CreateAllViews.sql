@@ -929,6 +929,7 @@ CREATE  OR REPLACE VIEW `vguest_search_neon` AS
         `n`.`Name_Middle` AS `Middle Name`,
         `n`.`Name_Last` AS `Last Name`,
         n.BirthDate AS `_BirthDate`,
+        n.Date_Deceased,
         IFNULL(`g2`.`Description`, '') AS `Suffix`,
         IFNULL(`np`.`Phone_Num`, '') AS `Phone Number`,
         IFNULL(`np`.Phone_Code, '') AS `_Phone Type`,
@@ -940,7 +941,8 @@ CREATE  OR REPLACE VIEW `vguest_search_neon` AS
         IFNULL(`na`.`Country_Code`, '') AS `_Country Code`,
         IFNULL(`na`.`Postal_Code`, '') AS `Zip Code`,
         IFNULL(ng.Relationship_Code, '') AS `_Relationship Code`,
-        IFNULL(ng.idPsg, '') AS `_idPsg`
+        IFNULL(ng.idPsg, '') AS `_idPsg`,
+        IFNULL(nd.No_Return, '') as `No Return`
     FROM
         `name_guest` `ng`
         LEFT JOIN `name` `n` ON `ng`.`idName` = `n`.`idName`
@@ -950,6 +952,7 @@ CREATE  OR REPLACE VIEW `vguest_search_neon` AS
             AND (`n`.`Preferred_Email` = `ne`.`Purpose`)
         LEFT JOIN `name_phone` `np` ON `ng`.`idName` = `np`.`idName`
             AND (`n`.`Preferred_Phone` = `np`.`Phone_Code`)
+        left join `name_demog` nd on n.idName = nd.idName
         LEFT JOIN `gen_lookups` `g1` ON `n`.`Name_Prefix` = `g1`.`Code`
             AND (`g1`.`Table_Name` = 'Name_Prefix')
         LEFT JOIN `gen_lookups` `g2` ON `n`.`Name_Suffix` = `g2`.`Code`

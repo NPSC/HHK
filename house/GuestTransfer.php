@@ -35,6 +35,15 @@ $wInit->sessionLoadGuestLkUps();
 
 $config = new Config_Lite(ciCFG_FILE);
 
+$webServices = $config->getString('webServices', 'ContactManager', '');
+if ($webServices != '') {
+
+    $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
+
+} else {
+    throw new Hk_Exception_Runtime('Web Services Configuration file is missing. ');
+}
+
 // Instantiate the alert message control
 $alertMsg = new alertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
@@ -315,6 +324,8 @@ $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($month
 $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, $config->getString('site', 'Start_Year', '2010'), $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'5'));
 $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>count($calOpts)));
 
+$wsLogo = $wsConfig->getString('credentials', 'Logo_URI', '');
+$wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
 ?>
 <!DOCTYPE html>
 <html>
@@ -353,15 +364,74 @@ function flagAlertMessage(mess, wasError) {
         window.scrollTo(0, 5);
     }
 }
-function searchRemote(item) {
+function getRemote(item) {
     $('#txtRSearch').val('');
-    alert('item=' + item.id);
+
+    var posting = $.post('ws_tran.php', {cmd:'getAcct', accountId:item.id});
+    posting.done(function(incmg) {
+
+        if (!incmg) {
+            alert('Bad Reply from Server');
+            return;
+        }
+        try {
+        incmg = $.parseJSON(incmg);
+        } catch (err) {
+            alert('Bad JSON Encoding');
+            return;
+        }
+
+        if (incmg.error) {
+            if (incmg.gotopage) {
+                window.open(incmg.gotopage, '_self');
+            }
+            // Stop Processing and return.
+            flagAlertMessage(incmg.error, true);
+            return;
+        }
+
+        if (incmg.data) {
+            $('dev#retrieve').text(incmg.data);
+        }
+    });
+
 }
     $(document).ready(function() {
         $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
         var makeTable = '<?php echo $mkTable; ?>';
         var transferIds = <?php echo json_encode($transferIds); ?>;
-        $('#btnHere, #btnExcel').button();
+        $('#btnHere, #btnCustFields').button();
+
+        $('#btnCustFields').click(function () {
+
+            var posting = $.post('ws_tran.php', {cmd:'listCustFields'});
+            posting.done(function(incmg) {
+
+                if (!incmg) {
+                    alert('Bad Reply from Server');
+                    return;
+                }
+                try {
+                incmg = $.parseJSON(incmg);
+                } catch (err) {
+                    alert('Bad JSON Encoding');
+                    return;
+                }
+
+                if (incmg.error) {
+                    if (incmg.gotopage) {
+                        window.open(incmg.gotopage, '_self');
+                    }
+                    // Stop Processing and return.
+                    flagAlertMessage(incmg.error, true);
+                    return;
+                }
+
+                if (incmg.data) {
+                    $('div#retrieve').children().remove().end().html(incmg.data);
+                }
+            });
+        });
 
         if (makeTable === '1') {
             $('div#printArea').show();
@@ -442,7 +512,7 @@ function searchRemote(item) {
 
         $('#selCalendar').change();
 
-    createAutoComplete($('#txtRSearch'), 3, {cmd: 'sch', mode: 'name'}, function (item) {searchRemote(item);}, false, '../house/ws_tran.php');
+    createAutoComplete($('#txtRSearch'), 3, {cmd: 'sch', mode: 'name'}, function (item) {getRemote(item);}, false, '../house/ws_tran.php');
     });
  </script>
     </head>
@@ -450,6 +520,7 @@ function searchRemote(item) {
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
+            <a href="<?php echo $wsLink; ?>" style="float:left;" title="Click to log in."><div style="height:55px; width:130px; background: url(<?php echo $wsLogo; ?>) left top no-repeat; background-size:contain;"></div></a>
             <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="GuestTransfer.php" method="post">
@@ -485,10 +556,11 @@ function searchRemote(item) {
                     <table style="width:100%; margin-top: 15px;">
                         <tr>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
-                            <td><input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/></td>
+                            <td><input type="button" name="btnCustFields" id="btnCustFields" value="List Custom Fields"/></td>
                         </tr>
                     </table>
                 </form>
+                <div id="retrieve"></div>
             </div>
             <div style="clear:both;"></div>
             <div id="divPrintButton" style="display:none;margin-top:6px;margin-bottom:3px;">

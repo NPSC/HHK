@@ -21,7 +21,7 @@ class TransferMembers {
     protected $errorMessage;
     protected $pageNumber;
 
-    public function __construct($userId, $password, array $customFieldIds) {
+    public function __construct($userId, $password, array $customFieldIds = array()) {
         $this->webService = new Neon();
         $this->userId = $userId;
         $this->password = $password;
@@ -68,9 +68,9 @@ class TransferMembers {
 
             $replys['error'] = $this->errorMessage;
 
-        } else {
+        } else if (isset($result['searchResults'])) {
 
-            foreach ($result as $r) {
+            foreach ($result['searchResults'] as $r) {
 
                 $namArray['id'] = $r["Account ID"];
                 $namArray['fullName'] = $r["First Name"] . ' ' . $r["Last Name"];
@@ -90,6 +90,8 @@ class TransferMembers {
             if (count($replys) === 0) {
                 $replys[] = array("id" => 0, "value" => "No one found.");
             }
+        } else {
+            $replys[] = array("id" => 0, "value" => "No one found.");
         }
 
         return $replys;
@@ -109,7 +111,29 @@ class TransferMembers {
         return $account;
     }
 
-    public function sendList(\PDO $dbh, array $sourceIds, $username) {
+    public function listCustomFields() {
+
+        $request = array(
+            'method' => 'common/listCustomFields',
+            'parameters' => array('searchCriteria.component' => 'Individual')
+        );
+
+        // Log in with the web service
+        $this->openTarget($this->userId, $this->password);
+        $result = $this->webService->go($request);
+
+        if ($this->checkError($result)) {
+            throw new Hk_Exception_Runtime($this->errorMessage);
+        }
+
+        if (isset($result['customFields']['customField'])) {
+            return $result['customFields']['customField'];
+        }
+
+        return array();
+    }
+
+    public function sendList(\PDO $dbh, array $sourceIds, array $customFields, $username) {
 
         $replys = [];
 
@@ -141,7 +165,7 @@ class TransferMembers {
             } else {
 
                 // Create new contact
-                $result = $this->createAccount($r);
+                $result = $this->createAccount($r, $customFields);
 
                 if ($this->checkError($result)) {
                     $r['External_Id'] = $this->errorMessage;
@@ -151,7 +175,7 @@ class TransferMembers {
 
                 $accountId = filter_var($result['accountId'], FILTER_SANITIZE_SPECIAL_CHARS);
 
-                $this->updateNameRecord($dbh, $r['idName'], $accountId, $username);
+                $this->updateLocalNameRecord($dbh, $r['idName'], $accountId, $username);
 
                 $r['External_Id'] = $accountId;
                 $replys[] = $r;
@@ -163,7 +187,7 @@ class TransferMembers {
 
     }
 
-    protected function updateNameRecord(\PDO $dbh, $idName, $externalId, $username) {
+    protected function updateLocalNameRecord(\PDO $dbh, $idName, $externalId, $username) {
 
         if ($externalId != '') {
             $nameRs = new NameRS();
@@ -180,7 +204,7 @@ class TransferMembers {
         }
     }
 
-    protected function createAccount(array $r) {
+    protected function createAccount(array $r, array $customFields) {
 
         $phoneMapping = array(
             Phone_Purpose::Cell => 'Mobile',
@@ -195,9 +219,6 @@ class TransferMembers {
             'individualAccount.source.name' => 'HHK',
             'responseType' => 'JSON',
 
-            'individualAccount.customFieldDataList.customFieldData.fieldId' => '87',
-            'individualAccount.customFieldDataList.customFieldData.fieldOptionId' => '',
-            'individualAccount.customFieldDataList.customFieldData.fieldValue' => $r['_idPsg'],
 
             'individualAccount.primaryContact.firstName' => $r['First Name'],
             'individualAccount.primaryContact.lastName' => $r['Last Name'],
@@ -231,6 +252,37 @@ class TransferMembers {
         } else {
             $param['individualAccount.individualTypes.individualType.name'] = 'Guest';
         }
+
+        if (isset($customFields['PSG_ID'])) {
+            $param['individualAccount.customFieldDataList.customFieldData.fieldId'] = $customFields['PSG_ID'];
+            $param['individualAccount.customFieldDataList.customFieldData.fieldOptionId'] = '';
+            $param['individualAccount.customFieldDataList.customFieldData.fieldValue'] = $r['_idPsg'];
+        }
+
+        if (isset($customFields['PSG_Relationship'])) {
+            $param['individualAccount.customFieldDataList.customFieldData.fieldId'] = $customFields['PSG_Relationship'];
+            $param['individualAccount.customFieldDataList.customFieldData.fieldOptionId'] = '';
+            $param['individualAccount.customFieldDataList.customFieldData.fieldValue'] = $r['_idPsg'];
+        }
+
+        if (isset($customFields['No_Return'])) {
+            $param['individualAccount.customFieldDataList.customFieldData.fieldId'] = $customFields['No_Return'];
+            $param['individualAccount.customFieldDataList.customFieldData.fieldOptionId'] = '';
+            $param['individualAccount.customFieldDataList.customFieldData.fieldValue'] = ($r['No_Return'] == '' ? 'false' : 'true');
+        }
+
+        if (isset($customFields['HHK_ID'])) {
+            $param['individualAccount.customFieldDataList.customFieldData.fieldId'] = $customFields['HHK_ID'];
+            $param['individualAccount.customFieldDataList.customFieldData.fieldOptionId'] = '';
+            $param['individualAccount.customFieldDataList.customFieldData.fieldValue'] = $r['_idName'];
+        }
+
+        if (isset($customFields['Deceased_Date'])) {
+            $param['individualAccount.customFieldDataList.customFieldData.fieldId'] = $customFields['Deceased_Date'];
+            $param['individualAccount.customFieldDataList.customFieldData.fieldOptionId'] = '';
+            $param['individualAccount.customFieldDataList.customFieldData.fieldValue'] = $r['Date_Deceased'];
+        }
+
 
         $request = array(
           'method' => 'account/createIndividualAccount',

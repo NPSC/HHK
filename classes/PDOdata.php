@@ -18,11 +18,6 @@ interface iDbFieldSanitizer {
 
 interface iTableRS {
     public function getTableName();
-//    public function setLoaded();
-//    public function setDirty();
-//    public function setClean();
-//    public function isLoaded();
-//    public function isDirty();
 }
 
 abstract class TableRS implements iTableRS {
@@ -32,31 +27,8 @@ abstract class TableRS implements iTableRS {
      */
     protected $tableName;
 
-    /**
-     *
-     * @var string Database record loaded status
-     */
-    //protected $loadState;
-
-    /**
-     *
-     * @var string Local object 'data changed' state
-     */
-    //protected $dataState;
-
-    const Is_Default = 'n';
-    const Is_Loaded = 's';
-    const Is_Dirty = 'x';
-    const Is_Clean = 'c';
-
-    /**
-     *
-     * @param string $TableName  Database table name
-     */
     public function __construct($TableName = '') {
         $this->tableName = $TableName;
-//        $this->loadState = self::Is_Default;
-//        $this->dataState = self::Is_Clean;
 
         foreach($this as $prop) {
             if (is_a($prop, 'DB_Field')) {
@@ -65,73 +37,11 @@ abstract class TableRS implements iTableRS {
         }
     }
 
+
     public function getTableName() {
         return $this->tableName;
     }
 
-//    public function setLoaded() {
-//        $this->loadState = self::Is_Loaded;
-//        $this->dataState = self::Is_Clean;
-//        return $this;
-//    }
-//
-//    public function setDirty() {
-//        $this->dataState = self::Is_Dirty;
-//        return $this;
-//    }
-//
-//    public function setClean() {
-//        $this->dataState = self::Is_Clean;
-//        return $this;
-//    }
-
-    /**
-     * Has this object been loaded from the DB
-     *
-     * @return boolean
-     */
-//    public function isLoaded() {
-//        if ($this->loadState !== self::Is_Default) {
-//            return TRUE;
-//        }
-//        return FALSE;
-//    }
-
-    /**
-     * Is the data in this object changed?
-     *
-     * @return boolean
-     */
-//    public function isDirty() {
-//        if ($this->loadState !== self::Is_Clean){
-//            return TRUE;
-//        }
-//        return FALSE;
-//    }
-
-    /**
-     * Is this a new record to insert?
-     *
-     * @return boolean
-     */
-//    public function mustInsert() {
-//        if ($this->loadState === self::Is_Default && $this->dataState === self::Is_Dirty) {
-//            return TRUE;
-//        }
-//        return FALSE;
-//    }
-
-    /**
-     * Is this an existing DB record that needs updating?
-     *
-     * @return boolean
-     */
-//    public function mustUpdate() {
-//        if ($this->loadState === self::Is_Loaded && $this->dataState === self::Is_Dirty) {
-//            return TRUE;
-//        }
-//        return FALSE;
-//    }
 }
 
 /**

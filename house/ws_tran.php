@@ -10,7 +10,10 @@
 
 require ("homeIncludes.php");
 require (CLASSES . "TransferMembers.php");
-require ('../thirdParty/neon.php');
+require (CLASSES . "SiteConfig.php");
+require CLASSES . 'TableLog.php';
+require CLASSES . 'HouseLog.php';
+require (THIRD_PARTY . 'neon.php');
 require (CLASSES . 'CreateMarkupFromDB.php');
 require (MEMBER . 'MemberSearch.php');
 
@@ -27,6 +30,16 @@ $uS = Session::getInstance();
 $config = new Config_Lite(ciCFG_FILE);
 
 
+$webServices = $config->getString('webServices', 'ContactManager', '');
+if ($webServices != '') {
+
+    $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
+
+} else {
+    throw new Hk_Exception_Runtime('Web Services Configuration file is missing. ');
+}
+
+
 if (isset($_REQUEST["cmd"])) {
     $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
 }
@@ -34,6 +47,7 @@ if (isset($_REQUEST["cmd"])) {
 $events = array();
 try {
 
+    $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), $wsConfig->getString('credentials', 'Password'));
 
 switch ($c) {
 
@@ -46,11 +60,6 @@ switch ($c) {
         }
 
         if (count($ids) > 0) {
-
-
-            $customFields = array('PSG_Id_1'=> $config->getString('custom_fields', 'PSG_Id_1'));
-
-            $transfer = new TransferMembers($config->getString('transfer', 'User'), $config->getString('transfer', 'Password'), $customFields);
 
             try {
                 $reply = $transfer->sendList($dbh, $ids, $uS->username);
@@ -73,11 +82,66 @@ switch ($c) {
 
         $searchCriteria = filter_input_array( INPUT_GET, $arguments );        $letters = '';
 
-        $transfer = new TransferMembers($config->getString('transfer', 'User'), $config->getString('transfer', 'Password'), array());
 
         try {
             $events = $transfer->searchAccount($searchCriteria);
         } catch (Execption $ex) {
+            $events = array("error" => "Transfer Error: " . $ex->getMessage());
+        }
+
+        break;
+
+    case 'listCustFields':
+
+        try {
+            $results = $transfer->listCustomFields();
+
+            $tbl = new HTMLTable();
+            $custom_fields = array();
+            $options = array(
+                'No_Return' => array(),
+                'PSG_Relationship' => array()
+            );
+
+            foreach ($results as $v) {
+
+                $tr = '';
+                $th = '';
+
+                foreach ($v as $k => $r) {
+
+                    if (is_array($r) === FALSE) {
+                        $tr .= HTMLTable::makeTd($r);
+
+                        $th .= HTMLTable::makeTh($k);
+
+                } else if ($k == 'fieldOptions' && isset($options[$v['fieldName']])) {
+
+                        foreach ($r['fieldOptions']['fieldOption'] as $op) {
+
+                            if ($op['name'] == 'No_Return') {
+                                
+                            }
+                        }
+
+                    }
+
+                }
+
+                $tbl->addBodyTr( $tr );
+                $custom_fields[$v['fieldName']] = $v['fieldId'];
+
+            }
+
+            $confData = array('custom_fields' => $custom_fields);
+
+            SiteConfig::saveConfig($dbh, $wsConfig, $confData, $uS->username);
+
+            $tbl->addHeader($th);
+
+            $events = array('data'=>$tbl->generateMarkup());
+
+        } catch (Hk_Exception_Runtime $ex) {
             $events = array("error" => "Transfer Error: " . $ex->getMessage());
         }
 
@@ -90,7 +154,6 @@ switch ($c) {
             $accountId = intval(filter_var($_GET['accountId'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $transfer = new TransferMembers($config->getString('transfer', 'User'), $config->getString('transfer', 'Password'), array());
         $result = $transfer->retrieveAccount($accountId);
 
         if ($result['accountId'] == $accountId) {
