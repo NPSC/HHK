@@ -148,7 +148,7 @@ if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)
     $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
 }
 
-
+$history = new History();
 
 // Page Return
 if (isset($_POST['btnDlCurGuests'])) {
@@ -158,17 +158,17 @@ if (isset($_POST['btnDlCurGuests'])) {
 }
 if (isset($_POST['btnDlConfRes'])) {
     // Confirmed Reservations
-    $rows = History::getReservedGuestsMarkup($dbh, ReservationStatus::Committed, '', FALSE);
+    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Committed, '', FALSE);
     doExcelDownLoad($rows, 'ConfirmedResv');
 }
 if (isset($_POST['btnDlUcRes'])) {
     // Unconfirmed Reservations
-    $rows = History::getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, '', FALSE);
+    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, '', FALSE);
     doExcelDownLoad($rows, 'UnconfirmedResv');
 }
 if (isset($_POST['btnDlWlist'])) {
     // Waitlist
-    $rows = History::getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, '', FALSE);
+    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, '', FALSE);
     doExcelDownLoad($rows, 'Waitlist');
 }
 if (isset($_POST['btnFeesDl'])) {
@@ -248,6 +248,8 @@ $wlCols = array();
 
 if ($uS->Reservation) {
 
+    $locations = readGenLookupsPDO($dbh, 'Location');
+
     $rvCols = array(
         array("data" => "Action" ),
         array("data" => "Guest" ),
@@ -263,6 +265,11 @@ if ($uS->Reservation) {
 
     $rvCols[] = array("data" => "Occupants" );
     $rvCols[] = array("data" => $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') );
+
+    if (count($locations) > 0) {
+        $rvCols[] = array("data" => $labels->getString('hospital', 'location', 'Unit') );
+    }
+
     $rvCols[] = array("data" => $labels->getString('MemberType', 'patient', 'Patient') );
 
     $hdrRow = '';
@@ -306,6 +313,11 @@ if ($uS->Reservation) {
 
     $wlCols[] = array("data" => "Occupants" );
     $wlCols[] = array("data" => $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') );
+
+    if (count($locations) > 0) {
+        $wlCols[] = array("data" => $labels->getString('hospital', 'location', 'Unit') );
+    }
+
     $wlCols[] = array("data" => $labels->getString('MemberType', 'patient', 'Patient') );
 
     $whdrRow = '';

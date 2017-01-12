@@ -9,10 +9,13 @@
  */
 
 require ("homeIncludes.php");
+require (DB_TABLES . 'nameRS.php');
+
 require (CLASSES . "TransferMembers.php");
 require (CLASSES . "SiteConfig.php");
 require CLASSES . 'TableLog.php';
 require CLASSES . 'HouseLog.php';
+require CLASSES . 'AuditLog.php';
 require (THIRD_PARTY . 'neon.php');
 require (CLASSES . 'CreateMarkupFromDB.php');
 require (MEMBER . 'MemberSearch.php');
@@ -31,6 +34,7 @@ $config = new Config_Lite(ciCFG_FILE);
 
 
 $webServices = $config->getString('webServices', 'ContactManager', '');
+
 if ($webServices != '') {
 
     $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
@@ -47,7 +51,7 @@ if (isset($_REQUEST["cmd"])) {
 $events = array();
 try {
 
-    $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), $wsConfig->getString('credentials', 'Password'));
+    $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
 
 switch ($c) {
 
@@ -61,8 +65,10 @@ switch ($c) {
 
         if (count($ids) > 0) {
 
+            $customFields = $wsConfig->getSection('custom_fields');
+
             try {
-                $reply = $transfer->sendList($dbh, $ids, $uS->username);
+                $reply = $transfer->sendList($dbh, $ids, $customFields, $uS->username);
                 $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'newAccts');
 
             } catch (Exception $ex) {
@@ -98,47 +104,28 @@ switch ($c) {
 
             $tbl = new HTMLTable();
             $custom_fields = array();
-            $options = array(
-                'No_Return' => array(),
-                'PSG_Relationship' => array()
-            );
+            $th = '';
 
             foreach ($results as $v) {
 
                 $tr = '';
                 $th = '';
 
-                foreach ($v as $k => $r) {
+                if ($wsConfig->has('custom_fields', $v['fieldName'])) {
 
-                    if (is_array($r) === FALSE) {
-                        $tr .= HTMLTable::makeTd($r);
+                    foreach ($v as $k => $r) {
 
-                        $th .= HTMLTable::makeTh($k);
-
-                } else if ($k == 'fieldOptions' && isset($options[$v['fieldName']])) {
-
-                        foreach ($r['fieldOptions']['fieldOption'] as $op) {
-
-                            if ($op['name'] == 'No_Return') {
-                                
-                            }
+                        if (is_array($r) === FALSE) {
+                            $tr .= HTMLTable::makeTd($r);
+                            $th .= HTMLTable::makeTh($k);
                         }
-
                     }
 
+                    $tbl->addBodyTr( $tr );
                 }
-
-                $tbl->addBodyTr( $tr );
-                $custom_fields[$v['fieldName']] = $v['fieldId'];
-
             }
 
-            $confData = array('custom_fields' => $custom_fields);
-
-            SiteConfig::saveConfig($dbh, $wsConfig, $confData, $uS->username);
-
             $tbl->addHeader($th);
-
             $events = array('data'=>$tbl->generateMarkup());
 
         } catch (Hk_Exception_Runtime $ex) {

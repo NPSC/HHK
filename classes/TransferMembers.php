@@ -115,7 +115,7 @@ class TransferMembers {
 
         $request = array(
             'method' => 'common/listCustomFields',
-            'parameters' => array('searchCriteria.component' => 'Individual')
+            'parameters' => array('searchCriteria.component' => 'Account')
         );
 
         // Log in with the web service
@@ -175,7 +175,7 @@ class TransferMembers {
 
                 $accountId = filter_var($result['accountId'], FILTER_SANITIZE_SPECIAL_CHARS);
 
-                $this->updateLocalNameRecord($dbh, $r['idName'], $accountId, $username);
+                $this->updateLocalNameRecord($dbh, $r['HHK_ID'], $accountId, $username);
 
                 $r['External_Id'] = $accountId;
                 $replys[] = $r;
@@ -253,34 +253,17 @@ class TransferMembers {
             $param['individualAccount.individualTypes.individualType.name'] = 'Guest';
         }
 
-        if (isset($customFields['PSG_ID'])) {
-            $param['individualAccount.customFieldDataList.customFieldData.fieldId'] = $customFields['PSG_ID'];
-            $param['individualAccount.customFieldDataList.customFieldData.fieldOptionId'] = '';
-            $param['individualAccount.customFieldDataList.customFieldData.fieldValue'] = $r['_idPsg'];
-        }
+        // Custom Parameters
+        $customParamStr = '';
 
-        if (isset($customFields['PSG_Relationship'])) {
-            $param['individualAccount.customFieldDataList.customFieldData.fieldId'] = $customFields['PSG_Relationship'];
-            $param['individualAccount.customFieldDataList.customFieldData.fieldOptionId'] = '';
-            $param['individualAccount.customFieldDataList.customFieldData.fieldValue'] = $r['_idPsg'];
-        }
+        foreach ($customFields as $k => $v) {
+            $cparam = array(
+                'individualAccount.customFieldDataList.customFieldData.fieldId' => $v,
+                'individualAccount.customFieldDataList.customFieldData.fieldOptionId' => '',
+                'individualAccount.customFieldDataList.customFieldData.fieldValue' => $r[$k]
+            );
 
-        if (isset($customFields['No_Return'])) {
-            $param['individualAccount.customFieldDataList.customFieldData.fieldId'] = $customFields['No_Return'];
-            $param['individualAccount.customFieldDataList.customFieldData.fieldOptionId'] = '';
-            $param['individualAccount.customFieldDataList.customFieldData.fieldValue'] = ($r['No_Return'] == '' ? 'false' : 'true');
-        }
-
-        if (isset($customFields['HHK_ID'])) {
-            $param['individualAccount.customFieldDataList.customFieldData.fieldId'] = $customFields['HHK_ID'];
-            $param['individualAccount.customFieldDataList.customFieldData.fieldOptionId'] = '';
-            $param['individualAccount.customFieldDataList.customFieldData.fieldValue'] = $r['_idName'];
-        }
-
-        if (isset($customFields['Deceased_Date'])) {
-            $param['individualAccount.customFieldDataList.customFieldData.fieldId'] = $customFields['Deceased_Date'];
-            $param['individualAccount.customFieldDataList.customFieldData.fieldOptionId'] = '';
-            $param['individualAccount.customFieldDataList.customFieldData.fieldValue'] = $r['Date_Deceased'];
+            $customParamStr .= '&' . http_build_query($cparam);
         }
 
 
@@ -289,7 +272,7 @@ class TransferMembers {
           'parameters' => $param,
           );
 
-        return $this->webService->go($request);
+        return $this->webService->go($request, $customParamStr);
 
     }
 
@@ -378,7 +361,7 @@ class TransferMembers {
 
         if (count($idList) > 0) {
 
-            return $dbh->query("Select * from $tableName where _idName in (" . implode(',', $idList) . ") ");
+            return $dbh->query("Select * from $tableName where HHK_ID in (" . implode(',', $idList) . ") ");
 
         }
 

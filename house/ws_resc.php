@@ -357,21 +357,23 @@ $(document).mousedown(function (event) {
             $tbl = filter_var($_REQUEST['tbl'], FILTER_SANITIZE_STRING);
         }
 
+        $history = new History();
+
         switch ($tbl) {
             case 'curres':
                 $events['curres'] = History::getCheckedInGuestMarkup($dbh, "GuestEdit.php", TRUE);
                 break;
 
             case 'reservs':
-                $events['reservs'] = History::getReservedGuestsMarkup($dbh, ReservationStatus::Committed, "Referral.php", TRUE);
+                $events['reservs'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Committed, "Referral.php", TRUE);
                 break;
 
             case 'unreserv':
-                $events['unreserv'] = History::getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, "Referral.php", TRUE);
+                $events['unreserv'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, "Referral.php", TRUE);
                 break;
 
             case 'waitlist':
-                $events['waitlist'] = History::getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, "Referral.php", TRUE);
+                $events['waitlist'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, "Referral.php", TRUE);
                 break;
 
         }

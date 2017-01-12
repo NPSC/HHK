@@ -922,14 +922,14 @@ where
 -- -----------------------------------------------------
 CREATE  OR REPLACE VIEW `vguest_search_neon` AS
     SELECT 
-        `n`.`idName` AS `_idName`,
+        `n`.`idName` AS `HHK_ID`,
         `n`.`External_Id` AS `Account ID`,
         IFNULL(`g1`.`Description`, '') AS `Prefix`,
         `n`.`Name_First` AS `First Name`,
         `n`.`Name_Middle` AS `Middle Name`,
         `n`.`Name_Last` AS `Last Name`,
         n.BirthDate AS `_BirthDate`,
-        n.Date_Deceased,
+        n.Date_Deceased AS `Deceased_Date`,
         IFNULL(`g2`.`Description`, '') AS `Suffix`,
         IFNULL(`np`.`Phone_Num`, '') AS `Phone Number`,
         IFNULL(`np`.Phone_Code, '') AS `_Phone Type`,
@@ -941,8 +941,9 @@ CREATE  OR REPLACE VIEW `vguest_search_neon` AS
         IFNULL(`na`.`Country_Code`, '') AS `_Country Code`,
         IFNULL(`na`.`Postal_Code`, '') AS `Zip Code`,
         IFNULL(ng.Relationship_Code, '') AS `_Relationship Code`,
-        IFNULL(ng.idPsg, '') AS `_idPsg`,
-        IFNULL(nd.No_Return, '') as `No Return`
+        IFNULL(g3.Description, '') AS `PSG_Relationship`,
+        IFNULL(ng.idPsg, '') AS `PSG_ID`,
+        IFNULL(g4.Description, '') as `No_Return`
     FROM
         `name_guest` `ng`
         LEFT JOIN `name` `n` ON `ng`.`idName` = `n`.`idName`
@@ -957,6 +958,10 @@ CREATE  OR REPLACE VIEW `vguest_search_neon` AS
             AND (`g1`.`Table_Name` = 'Name_Prefix')
         LEFT JOIN `gen_lookups` `g2` ON `n`.`Name_Suffix` = `g2`.`Code`
             AND (`g2`.`Table_Name` = 'Name_Suffix')
+        LEFT JOIN `gen_lookups` `g3` ON ng.Relationship_Code = `g3`.`Code`
+            AND (`g3`.`Table_Name` = 'Patient_Rel_Type')
+        LEFT JOIN `gen_lookups` `g4` ON nd.No_Return = `g4`.`Code`
+            AND (`g4`.`Table_Name` = 'NoReturnReason')
     WHERE
         ((`ng`.`idName` > 0)
             AND (`n`.`Record_Member` = 1)
@@ -1601,6 +1606,7 @@ CREATE or Replace VIEW `vreservation_events` AS
         ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
         case when ifnull(hs.idAssociation, 0) > 0 and h.Title = '(None)' then 0 else ifnull(hs.idAssociation, 0) end
          as `idAssociation`,
+	ifnull(gl.Description, '') as `Location`,
         ifnull(`re`.`Title`, '') AS `Room Title`,
         r.idRegistration,
         r.Confirmation,
@@ -1621,7 +1627,9 @@ CREATE or Replace VIEW `vreservation_events` AS
             left join 
         `name` n2 ON hs.idPatient = n2.idName
             left join
-        gen_lookups gs on gs.`Table_Name` = 'Name_Suffix' and gs.`Code` = n.Name_Suffix;
+        gen_lookups gs on gs.`Table_Name` = 'Name_Suffix' and gs.`Code` = n.Name_Suffix
+            left join
+        gen_lookups gl on gl.`Table_Name` = 'Location' and gl.`Code` = hs.Location;
 
 
 

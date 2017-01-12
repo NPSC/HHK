@@ -15,6 +15,9 @@ require CLASSES . 'HouseLog.php';
 require CLASSES . 'CreateMarkupFromDB.php';
 require CLASSES . 'SiteConfig.php';
 require CLASSES . 'Patch.php';
+require (CLASSES . "TransferMembers.php");
+require (THIRD_PARTY . 'neon.php');
+
 require SEC . 'Login.php';
 require SEC . 'ChallengeGenerator.php';
 require CLASSES . 'US_Holidays.php';
@@ -133,6 +136,13 @@ $menuMarkup = $wInit->generatePageMenu();
 
 $config = new Config_Lite(ciCFG_FILE);
 $labl = new Config_Lite(LABEL_FILE);
+
+try {
+    $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $config->getString('webServices', 'ContactManager', ''));
+} catch (Config_Lite_Exception_Runtime $ex) {
+    $wsConfig = NULL;
+}
+
 $confError = '';
 
 if (isset($_POST["btnSiteCnf"])) {
@@ -150,8 +160,38 @@ if (isset($_POST["btnSiteCnf"])) {
 
 if (isset($_POST["btnLabelCnf"])) {
 
+    $tabIndex = 5;
     SiteConfig::saveConfig($dbh, $labl, $_POST, $uS->username);
 
+}
+
+if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
+
+    $tabIndex = 6;
+
+    $post = $_POST['credentials'];
+
+    SiteConfig::saveConfig($dbh, $wsConfig, $post, $uS->username);
+
+    $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
+
+    try {
+        $results = $transfer->listCustomFields();
+        $custom_fields = array();
+
+        foreach ($results as $v) {
+            if ($wsConfig->has('custom_fields', $v['fieldName'])) {
+                $custom_fields[$v['fieldName']] = $v['fieldId'];
+            }
+        }
+
+        // Write Custom Field Ids to the config file.
+        $confData = array('custom_fields' => $custom_fields);
+        SiteConfig::saveConfig($dbh, $wsConfig, $confData, $uS->username);
+
+    } catch (Hk_Exception_Runtime $ex) {
+        $events = array("error" => "Transfer Error: " . $ex->getMessage());
+    }
 }
 
 if (isset($_POST["btnUlPatch"])) {
@@ -346,6 +386,11 @@ $conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . '
 
 $labels = SiteConfig::createCliteMarkup($labl)->generateMarkup();
 
+$externals = '';
+if (is_null($wsConfig) === FALSE) {
+    $externals = SiteConfig::createCliteMarkup($wsConfig)->generateMarkup();
+}
+
 $webAlert = new alertMessage("webContainer");
 $webAlert->set_DisplayAttr("none");
 $webAlert->set_Context(alertMessage::Success);
@@ -355,6 +400,7 @@ $webAlert->set_txtSpanId("webMessage");
 $webAlert->set_Text("oh-oh");
 
 $getWebReplyMessage = $webAlert->createMarkup();
+$serviceName = $config->getString('webServices', 'Service_Name', '');
 ?>
 <!DOCTYPE html>
 <html>
@@ -367,22 +413,23 @@ $getWebReplyMessage = $webAlert->createMarkup();
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript">
-            $(document).ready(function() {
+$(document).ready(function() {
 
-                $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
+    $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
 
-                    $('#financialRoomSubsidyId, #financialReturnPayorId').removeClass('ui-state-error');
+        $('#financialRoomSubsidyId, #financialReturnPayorId').removeClass('ui-state-error');
 
-                    if ($('#financialRoomSubsidyId').val() != 0 && $('#financialRoomSubsidyId').val() === $('#financialReturnPayorId').val()) {
-                        $('#financialRoomSubsidyId, #financialReturnPayorId').addClass('ui-state-error');
-                        alert('Subsidy Id must be different than the Return Payor Id');
-                    }
-                });
-                var tabIndex = '<?php echo $tabIndex; ?>';
-                var tbs = $('#tabs').tabs();
-                tbs.tabs("option", "active", tabIndex);
-                $('#tabs').show();
-            });
+        if ($('#financialRoomSubsidyId').val() != 0 && $('#financialRoomSubsidyId').val() === $('#financialReturnPayorId').val()) {
+            $('#financialRoomSubsidyId, #financialReturnPayorId').addClass('ui-state-error');
+            alert('Subsidy Id must be different than the Return Payor Id');
+        }
+    });
+
+    var tabIndex = '<?php echo $tabIndex; ?>';
+    var tbs = $('#tabs').tabs();
+    tbs.tabs("option", "active", tabIndex);
+    $('#tabs').show();
+});
         </script>
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
@@ -398,6 +445,8 @@ $getWebReplyMessage = $webAlert->createMarkup();
                     <li><a href="#holidays">Set Holidays</a></li>
                     <li><a href="#loadZip">Load Zip Code Distance Data</a></li>
                     <li><a href="#labels">View Labels & Prompts</a></li>
+                    <?php if ($serviceName != '') {
+                    echo '<li><a href="#external">' . $serviceName . '</a></li>';} ?>
                 </ul>
                 <div id="config" class="ui-tabs-hide" >
                     <div style="color:red;font-size:1.5em;"><?php echo $confError; ?></div>
@@ -411,6 +460,13 @@ $getWebReplyMessage = $webAlert->createMarkup();
                         <?php echo $labels; ?>
                         <div style="float:right;margin-right:40px;"><input type="reset" name="btnreset" value="Reset" style="margin-right:5px;"/><input type="submit" name="btnLabelCnf" value="Save Labels"/></div>
                     </form>
+                </div>
+                <div id="external" class="ui-tabs-hide" >
+                    <form method="post" name="formext" action="">
+                        <?php echo $externals; ?>
+                        <div style="float:right;margin-right:40px;"><input type="submit" name="btnExtCnf" value="Save"/></div>
+                    </form>
+
                 </div>
                 <div id="pay" class="ui-tabs-hide" >
                     <form method="post" name="form2" action="">

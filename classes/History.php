@@ -15,6 +15,9 @@
  */
 class History {
 
+    protected $resvEvents;
+    protected $roomRates;
+    protected $locations;
 
     public static function addToGuestHistoryList(\PDO $dbh, $id, $role) {
         if ($id > 0 && $role < WebRole::Guest) {
@@ -108,20 +111,35 @@ class History {
     }
 
 
-    public static function getReservedGuestsMarkup(\PDO $dbh, $status = ReservationStatus::Committed, $page = "Referral.php", $includeAction = TRUE) {
+    public function getReservedGuestsMarkup(\PDO $dbh, $status = ReservationStatus::Committed, $page = "Referral.php", $includeAction = TRUE) {
 
-        $roomRates = RoomRate::makeDescriptions($dbh);
+        if (is_null($this->roomRates)) {
+            $this->roomRates = RoomRate::makeDescriptions($dbh);
+        }
 
-        $query = "select * from vreservation_events where Status = '$status' order by Arrival_Date";
-        $stmt = $dbh->query($query);
+        if (is_null($this->resvEvents)) {
 
-        $returnRows = array();
+            $query = "select * from vreservation_events where Status = '$status' order by Arrival_Date";
+            $stmt = $dbh->query($query);
+            $this->resvEvents = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }
+
+
+        if (is_null($this->locations)) {
+            $this->locations = readGenLookupsPDO($dbh, 'Location');
+        }
+
+        return $this->createMarkup($status, $page, $includeAction);
+    }
+
+    protected function createMarkup($status, $page, $includeAction) {
+
         $uS = Session::getInstance();
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
+        $returnRows = array();
 
-
-        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+        foreach ($this->resvEvents as $r) {
 
             $fixedRows = array();
             $gName = $r['Guest Name'];
@@ -180,8 +198,8 @@ class History {
             }
 
             // Rate
-            if ($uS->RoomPriceModel != ItemPriceCode::None && isset($roomRates[$r['idRoom_rate']])) {
-                $fixedRows['Rate'] = $roomRates[$r['idRoom_rate']];
+            if ($uS->RoomPriceModel != ItemPriceCode::None && isset($this->roomRates[$r['idRoom_rate']])) {
+                $fixedRows['Rate'] = $this->roomRates[$r['idRoom_rate']];
             } else {
                 $fixedRows['Rate'] = '';
             }
@@ -199,6 +217,11 @@ class History {
             }
 
             $fixedRows[$labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital')] = $hospital;
+
+            // Hospital Location
+            if (count($this->locations) > 0) {
+                $fixedRows[$labels->getString('hospital', 'location', 'Unit')] = $r['Location'];
+            }
 
             // Patient Name
             $fixedRows[$labels->getString('MemberType', 'patient', 'Patient')] = $r['Patient Name'];
