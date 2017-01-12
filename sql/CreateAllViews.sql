@@ -922,28 +922,29 @@ where
 -- -----------------------------------------------------
 CREATE  OR REPLACE VIEW `vguest_search_neon` AS
     SELECT 
-        `n`.`idName` AS `HHK_ID`,
+        `n`.`idName` AS `_HHK_ID`,
         `n`.`External_Id` AS `Account ID`,
         IFNULL(`g1`.`Description`, '') AS `Prefix`,
         `n`.`Name_First` AS `First Name`,
         `n`.`Name_Middle` AS `Middle Name`,
         `n`.`Name_Last` AS `Last Name`,
         n.BirthDate AS `_BirthDate`,
-        n.Date_Deceased AS `Deceased_Date`,
+        n.Date_Deceased AS `_Deceased_Date`,
         IFNULL(`g2`.`Description`, '') AS `Suffix`,
         IFNULL(`np`.`Phone_Num`, '') AS `Phone Number`,
         IFNULL(`np`.Phone_Code, '') AS `_Phone Type`,
         IFNULL(`ne`.`Email`, '') AS `Email`,
-        IFNULL(`na`.`Address_1`, '') AS `Address Line 1`,
+        IFNULL(`na`.`Address_1`, '') AS `_Address Line 1`,
         IFNULL(`na`.`Address_2`, '') AS `_Address Line 2`,
         IFNULL(`na`.`City`, '') AS `City`,
+        IFNULL(`na`.`County`, '') AS `_County`,
         IFNULL(`na`.`State_Province`, '') AS `_State Code`,
         IFNULL(`na`.`Country_Code`, '') AS `_Country Code`,
         IFNULL(`na`.`Postal_Code`, '') AS `Zip Code`,
         IFNULL(ng.Relationship_Code, '') AS `_Relationship Code`,
-        IFNULL(g3.Description, '') AS `PSG_Relationship`,
-        IFNULL(ng.idPsg, '') AS `PSG_ID`,
-        IFNULL(g4.Description, '') as `No_Return`
+        IFNULL(g3.Description, '') AS `_PSG_Relationship`,
+        IFNULL(ng.idPsg, '') AS `_PSG_ID`,
+        IFNULL(g4.Description, '') as `_No_Return`
     FROM
         `name_guest` `ng`
         LEFT JOIN `name` `n` ON `ng`.`idName` = `n`.`idName`
@@ -965,7 +966,8 @@ CREATE  OR REPLACE VIEW `vguest_search_neon` AS
     WHERE
         ((`ng`.`idName` > 0)
             AND (`n`.`Record_Member` = 1)
-            AND (`n`.`Member_Status` IN ('a' , 'd', 'in')));
+            AND (`n`.`Member_Status` IN ('a' , 'd', 'in')))
+    Group By n.idName;
 
 
 

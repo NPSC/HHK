@@ -93,7 +93,7 @@ class Neon {
      * General purpose API request to be executed after login
      */
 
-    public function go(array $request, $customParams = '') {
+    public function go(array $request) {
 
         if (isset($request['method'])) {
 
@@ -103,8 +103,8 @@ class Neon {
                 $str = http_build_query($request['parameters']);
             }
 
-            if ($customParams != '') {
-                $str .= $customParams;
+            if (isset($request['customParmeters']) && $request['customParmeters'] != '') {
+                $str .= $request['customParmeters'];
             }
 
             $parameters = 'responseType=json&userSessionId=' . $this->getSession() . '&' . $str;

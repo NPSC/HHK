@@ -396,6 +396,7 @@ function getRemote(item) {
     });
 
 }
+
     $(document).ready(function() {
         $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
         var makeTable = '<?php echo $mkTable; ?>';
@@ -450,15 +451,17 @@ function getRemote(item) {
             });
 
             $('#TxButton').button().click(function () {
+
                 var parms = {
                     cmd: 'xfer',
                     ids: transferIds
                 };
-                $('#TxButton').text('Working...');
+
+                $('#TxButton').val('Working...');
 
                 var posting = $.post('ws_tran.php', parms);
                 posting.done(function(incmg) {
-                    $('#TxButton').text('Transfer');
+                    $('#TxButton').val('Transfer');
                     if (!incmg) {
                         alert('Bad Reply from Server');
                         return;
@@ -481,8 +484,13 @@ function getRemote(item) {
 
                     if (incmg.data) {
 
-                        $('#printArea').replaceWith(incmg.data);
-
+                        $('#divTable').children().remove();
+                        $('#divTable').append($(incmg.data));
+                        $('#tblrpt').dataTable({
+                            "iDisplayLength": 50,
+                            "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                            "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
+                        });
                     }
                 });
             });
@@ -520,7 +528,7 @@ function getRemote(item) {
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <a href="<?php echo $wsLink; ?>" style="float:left;" title="Click to log in."><div style="height:55px; width:130px; background: url(<?php echo $wsLogo; ?>) left top no-repeat; background-size:contain;"></div></a>
+            <a href="<?php echo $wsLink; ?>" style="float:left;margin-top:15px;" title="Click to log in."><div style="height:55px; width:130px; background: url(<?php echo $wsLogo; ?>) left top no-repeat; background-size:contain;"></div></a>
             <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="GuestTransfer.php" method="post">
@@ -569,7 +577,9 @@ function getRemote(item) {
             </div>
             <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
                 <div style="margin-bottom:.5em;"><?php echo $settingstable; ?></div>
+                <div id="divTable">
                 <?php echo $dataTable; ?>
+                </div>
             </div>
         </div>
     </body>

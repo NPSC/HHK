@@ -111,6 +111,10 @@ class TransferMembers {
         return $account;
     }
 
+    public function updateAccount(\PDO $dbh, $accountData, $idName) {
+        
+    }
+
     public function listCustomFields() {
 
         $request = array(
@@ -150,17 +154,26 @@ class TransferMembers {
 
             $result = $this->searchTarget($r);
 
+            $f = array();
+
+            foreach ($r as $k => $v) {
+
+                if ($k != '' && $k[0] != '_' ) {
+                    $f[$k] = $v;
+                }
+            }
+
             if ($this->checkError($result)) {
-                $r['External_Id'] = $this->errorMessage;
-                $replys[] = $r;
+                $f['Result'] = $this->errorMessage;
+                $replys[] = $f;
                 continue;
             }
 
             if( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] >= 1 ) {
 
                 // We have a similar contact.
-                $r['External_Id'] = 'Previously Transferred.';
-                $replys[] = $r;
+                $f['Result'] = 'Previously Transferred.';
+                $replys[] = $f;
 
             } else {
 
@@ -168,17 +181,17 @@ class TransferMembers {
                 $result = $this->createAccount($r, $customFields);
 
                 if ($this->checkError($result)) {
-                    $r['External_Id'] = $this->errorMessage;
-                    $replys[] = $r;
+                    $f['Result'] = $this->errorMessage;
+                    $replys[] = $f;
                     continue;
                 }
 
                 $accountId = filter_var($result['accountId'], FILTER_SANITIZE_SPECIAL_CHARS);
 
-                $this->updateLocalNameRecord($dbh, $r['HHK_ID'], $accountId, $username);
+                $this->updateLocalNameRecord($dbh, $r['_HHK_ID'], $accountId, $username);
 
-                $r['External_Id'] = $accountId;
-                $replys[] = $r;
+                $f['Result'] = $accountId;
+                $replys[] = $f;
 
             }
         }
@@ -218,29 +231,79 @@ class TransferMembers {
             'originDetail' => $this->userId,
             'individualAccount.source.name' => 'HHK',
             'responseType' => 'JSON',
-
-
-            'individualAccount.primaryContact.firstName' => $r['First Name'],
-            'individualAccount.primaryContact.lastName' => $r['Last Name'],
-            'individualAccount.primaryContact.middleName' => $r['Middle Name'],
-            'individualAccount.primaryContact.prefix' => $r['Prefix'],
-            'individualAccount.primaryContact.suffix' => $r['Suffix'],
-
-            'individualAccount.primaryContact.email1' => $r['Email'],
-            'individualAccount.primaryContact.phone1' => $r['Phone Number'],
-
-            'individualAccount.primaryContact.addresses.address.isPrimaryAddress' => 'true',
-            'individualAccount.primaryContact.addresses.address.addressType.name' => 'Home',
-            'individualAccount.primaryContact.addresses.address.addressLine1' => $r['Address Line 1'],
-            'individualAccount.primaryContact.addresses.address.addressLine2' => $r['_Address Line 2'],
-            'individualAccount.primaryContact.addresses.address.city' => $r['City'],
-            'individualAccount.primaryContact.addresses.address.state.code' => $r['_State Code'],
-            'individualAccount.primaryContact.addresses.address.country.id' => ($r['_Country Code'] == 'US' ? '1' : ''),
-            'individualAccount.primaryContact.addresses.address.zipCode' => $r['Zip Code'],
         );
 
-        if (isset($r['_Phone_Type']) && $r['_Phone_Type'] != '' && isset($phoneMapping[$r['_Phone Type']])) {
-            $param['individualAccount.primaryContact.phone1Type'] = $phoneMapping[$r['_Phone_Type']];
+        if (isset($r['First Name']) && $r['First Name'] != '') {
+            $param['individualAccount.primaryContact.firstName'] = $r['First Name'];
+        }
+
+        if (isset($r['Last Name']) && $r['Last Name'] != '') {
+            $param['individualAccount.primaryContact.lastName'] = $r['Last Name'];
+        }
+
+        if (isset($r['Middle Name']) && $r['Middle Name'] != '') {
+            $param['individualAccount.primaryContact.middleName'] = $r['Middle Name'];
+        }
+
+        if (isset($r['Preferred Name']) && $r['Preferred Name'] != '') {
+            $param['individualAccount.primaryContact.preferredName'] = $r['Preferred Name'];
+        }
+
+        if (isset($r['Prefix']) && $r['Prefix'] != '') {
+            $param['individualAccount.primaryContact.prefix'] = $r['Prefix'];
+        }
+
+        if (isset($r['Suffix']) && $r['Suffix'] != '') {
+            $param['individualAccount.primaryContact.suffix'] = $r['Suffix'];
+        }
+
+        if (isset($r['Email']) && $r['Email'] != '') {
+            $param['individualAccount.primaryContact.email1'] = $r['Email'];
+        }
+
+        // Phone
+        if (isset($r['Phone Number']) && $r['Phone Number'] != '') {
+
+            $param['individualAccount.primaryContact.phone1'] = $phoneMapping[$r['Phone Number']];
+
+            if (isset($r['_Phone Type']) && $r['_Phone Type'] != '' && isset($phoneMapping[$r['_Phone Type']])) {
+                $param['individualAccount.primaryContact.phone1Type'] = $phoneMapping[$r['_Phone Type']];
+            }
+
+        }
+
+        // Address
+        if (isset($r['_Address Line 1']) && $r['_Address Line 1'] != '') {
+
+            $param['individualAccount.primaryContact.addresses.address.isPrimaryAddress'] = 'true';
+            $param['individualAccount.primaryContact.addresses.address.addressType.name'] = 'Home';
+
+            $param['individualAccount.primaryContact.addresses.address.addressLine1'] = $r['_Address Line 1'];
+
+            if (isset($r['_Address Line 2']) && $r['_Address Line 2'] != '') {
+                $param['individualAccount.primaryContact.addresses.address.addressLine2'] = $r['_Address Line 2'];
+            }
+
+            if (isset($r['City']) && $r['City'] != '') {
+                $param['individualAccount.primaryContact.addresses.address.city'] = $r['City'];
+            }
+
+            if (isset($r['_State Code']) && $r['_State Code'] != '') {
+                $param['individualAccount.primaryContact.addresses.address.state.code'] = $r['_State Code'];
+            }
+
+            if (isset($r['_County']) && $r['_County'] != '') {
+                $param['individualAccount.primaryContact.addresses.address.county'] = $r['_County'];
+            }
+
+            if (isset($r['_Country Code']) && $r['_Country Code'] != '') {
+                $param['individualAccount.primaryContact.addresses.address.country.id'] = ($r['_Country Code'] == 'US' ? '1' : '');
+            }
+
+            if (isset($r['Zip Code']) && $r['Zip Code'] != '') {
+                $param['individualAccount.primaryContact.addresses.address.zipCode'] = $r['Zip Code'];
+            }
+
         }
 
         if (isset($r['_BirthDate']) && $r['_BirthDate'] != '') {
@@ -257,22 +320,27 @@ class TransferMembers {
         $customParamStr = '';
 
         foreach ($customFields as $k => $v) {
-            $cparam = array(
-                'individualAccount.customFieldDataList.customFieldData.fieldId' => $v,
-                'individualAccount.customFieldDataList.customFieldData.fieldOptionId' => '',
-                'individualAccount.customFieldDataList.customFieldData.fieldValue' => $r[$k]
-            );
 
-            $customParamStr .= '&' . http_build_query($cparam);
+            if ($r['_'.$k] != '') {
+
+                $cparam = array(
+                    'individualAccount.customFieldDataList.customFieldData.fieldId' => $v,
+                    'individualAccount.customFieldDataList.customFieldData.fieldOptionId' => '',
+                    'individualAccount.customFieldDataList.customFieldData.fieldValue' => $r['_'.$k]
+                );
+
+                $customParamStr .= '&' . http_build_query($cparam);
+            }
         }
 
 
         $request = array(
           'method' => 'account/createIndividualAccount',
           'parameters' => $param,
+          'customParmeters' => $customParamStr
           );
 
-        return $this->webService->go($request, $customParamStr);
+        return $this->webService->go($request);
 
     }
 
@@ -361,7 +429,7 @@ class TransferMembers {
 
         if (count($idList) > 0) {
 
-            return $dbh->query("Select * from $tableName where HHK_ID in (" . implode(',', $idList) . ") ");
+            return $dbh->query("Select * from $tableName where _HHK_ID in (" . implode(',', $idList) . ") ");
 
         }
 

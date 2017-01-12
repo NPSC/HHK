@@ -69,7 +69,7 @@ switch ($c) {
 
             try {
                 $reply = $transfer->sendList($dbh, $ids, $customFields, $uS->username);
-                $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'newAccts');
+                $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblrpt');
 
             } catch (Exception $ex) {
                 $events = array("error" => "Transfer Error: " . $ex->getMessage());
@@ -144,15 +144,31 @@ switch ($c) {
         $result = $transfer->retrieveAccount($accountId);
 
         if ($result['accountId'] == $accountId) {
+            $events['data'] = $result;
+        }
 
-            $events['metadata'] = array(
-                'createdDateTime'=> $result['createdDateTime'],
-                'createdBy' => $result['createdBy'],
-                'lastModifiedDateTime' => $result['lastModifiedDateTime'],
-                'lastModifiedBy' => $result['lastModifiedBy'],
-                );
+        break;
 
-            $events['name'] = array();
+    case 'update':
+
+        $accountId = '';
+        if (isset($_GET['accountId'])) {
+            $accountId = intval(filter_var($_GET['accountId'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $id = '';
+        if (isset($_GET['id'])) {
+            $id = intval(filter_var($_GET['id'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if ($id > 0 && $accountId > 0) {
+
+            $result = $transfer->retrieveAccount($accountId);
+
+            $updateResult = $transfer->updateAccount($dbh, $result, $id);
+
+            $events = array('result'=>$updateResult);
+
         }
 
         break;

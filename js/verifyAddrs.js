@@ -140,7 +140,7 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
         minLength: (minChars < 1 ? 0 : minChars - 1),
         delay: 0,
         select: function(event, ui) {
-            if (!ui.item) {
+            if (ui.item) {
                 selectFunction(ui.item);
             }
         }

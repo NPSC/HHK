@@ -10,6 +10,8 @@
 
 require ("homeIncludes.php");
 require (PMT . 'Receipt.php');
+require (CLASSES . 'ColumnSelectors.php');
+require_once CLASSES . 'OpenXML.php';
 
 
 try {
@@ -32,6 +34,7 @@ $wInit->sessionLoadGenLkUps();
 $wInit->sessionLoadGuestLkUps();
 
 $config = new Config_Lite(ciCFG_FILE);
+$labels = new Config_Lite(LABEL_FILE);
 
 // Instantiate the alert message control
 $alertMsg = new alertMessage("divAlert1");
@@ -46,7 +49,7 @@ $resultMessage = $alertMsg->createMarkup();
 
 $isGuestAdmin = ComponentAuthClass::is_Authorized('guestadmin');
 
-function doMarkupRow($r, $isLocal, $invoice_Statuses, &$total, &$tbl, &$sml, &$reportRows, $subsidyId, $returnId) {
+function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, &$total, &$tbl, &$sml, &$reportRows, $subsidyId, $returnId) {
 
     $amt = $r['Amount'];
 
@@ -85,68 +88,55 @@ function doMarkupRow($r, $isLocal, $invoice_Statuses, &$total, &$tbl, &$sml, &$r
     // Names
     if ($r['Sold_To_Id'] == $subsidyId) {
         $company = $r['Company'];
-        $payorFirst = HTMLTable::makeTd('');
-        $payorLast = HTMLTable::makeTd('');
+        $payorFirst = '';
+        $payorLast = '';
     } else if ($r['Billing_Agent'] == VolMemberType::BillingAgent || $returnId = $r['Sold_To_Id']) {
         $company = $r['Company'];
-        $payorFirst = HTMLTable::makeTd($r['Name_First']);
-        $payorLast = HTMLTable::makeTd($r['Name_Last']);
+        $payorFirst = $r['Name_First'];
+        $payorLast = $r['Name_Last'];
     } else {
-        $payorLast = HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>'GuestEdit.php?id=' . $r['Sold_To_Id'], 'title'=>'Click to go to the Guest Edit page.')));
-        $payorFirst = HTMLTable::makeTd($r['Name_First']);
+        $payorLast = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>'GuestEdit.php?id=' . $r['Sold_To_Id'], 'title'=>'Click to go to the Guest Edit page.'));
+        $payorFirst = $r['Name_First'];
         $company = '';
     }
+
+    $g = array(
+        'vid'=>$r['Order_Number'] . '-' . $r['Suborder_Number'],
+        'Company'=>$company,
+        'Last'=>$payorLast,
+        'First'=>$payorFirst,
+        'Status' => $invoiceStatus,
+        'Diagnosis' => (isset($diagnoses[$r['Diagnosis']]) ? $diagnoses[$r['Diagnosis']][1] : ''),
+        'Description' => $r['Description'],
+        'Invoice_Number' => $r['Invoice_Number'],
+        'Amount' => $amt,
+    );
 
     $total += $amt;
 
     if ($isLocal) {
 
-        $tbl->addBodyTr(
-                HTMLTable::makeTd($r['Order_Number'] . '-' . $r['Suborder_Number'])
-                .HTMLTable::makeTd($company)
-                .$payorLast
-                .$payorFirst
-                .HTMLTable::makeTd($dateDT->format('M j, Y'))
-                .HTMLTable::makeTd($r['Description'])
-                .HTMLTable::makeTd($invoiceMkup)
-                .HTMLTable::makeTd($invoiceStatus, $payStatusAttr)
+        $g['Amount'] = HTMLContainer::generateMarkup('span', number_format($amt, 2), $attr);
+        $g['Invoice_Number'] = $invoiceMkup;
+        $g['Status'] = HTMLContainer::generateMarkup('span', $invoiceStatus, $payStatusAttr);
+        $g['Date'] = $dateDT->format('M j, Y');
 
-                .HTMLTable::makeTd(number_format($amt, 2), $attr)
-                );
+        $tr = '';
+        foreach ($fltrdFields as $f) {
+            $tr .= HTMLTable::makeTd($g[$f[1]], $f[6]);
+        }
+
+        $tbl->addBodyTr($tr);
 
     } else {
 
+        $g['Date'] = PHPExcel_Shared_Date::PHPToExcel(strtotime($r['Invoice_Date']));
+
         $n = 0;
-        $flds = array(
-            $n++ => array('type' => "s",
-                'value' => $r['Order_Number'] . '-' . $r['Suborder_Number']
-            ),
-            $n++ => array('type' => "s",
-                'value' => ($r['Billing_Agent'] == VolMemberType::BillingAgent ? $r['Company'] : '')
-            ),
-            $n++ => array('type' => "s",
-                'value' => $r['Name_Last']
-            ),
-            $n++ => array('type' => "s",
-                'value' => $r['Name_First']
-            ),
-            $n++ => array('type' => "n",
-                'value' => PHPExcel_Shared_Date::PHPToExcel(strtotime($r['Invoice_Date'])),
-                'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14
-            ),
-             $n++ => array('type' => "s",
-                'value' => $r['Description']
-            ),
-           $n++ => array('type' => "s",
-                'value' => $r['Invoice_Number']
-            ),
-            $n++ => array('type' => "s",
-                'value' => $invoiceStatus
-            ),
-            $n++ => array('type' => "n",
-                'value' => $amt
-            )
-        );
+
+        foreach ($fltrdFields as $f) {
+            $flds[$n++] = array('type' => $f[4], 'value' => $g[$f[1]], 'style'=>$f[5]);
+        }
 
         $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
 
@@ -163,6 +153,7 @@ $statusSelections = array();
 $itemSelections = array();
 $calSelection = '19';
 $showDeleted = FALSE;
+$diagSelections = array();
 
 $year = date('Y');
 $months = array(date('n'));       // logically overloaded.
@@ -185,6 +176,28 @@ if ($uS->fy_diff_Months == 0) {
 }
 
 $statusList = readGenLookupsPDO($dbh, 'Invoice_Status');
+
+$diags = readGenLookupsPDO($dbh, 'Diagnosis');
+
+// Report column-selector
+// array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms
+$cFields[] = array('Visit Id', 'vid', 'checked', '', 's', '', array());
+$cFields[] = array("Organization", 'Company', 'checked', '', 's', '', array());
+$cFields[] = array('Last', 'Last', 'checked', '', 's', '', array());
+$cFields[] = array("First", 'First', 'checked', '', 's', '', array());
+$cFields[] = array("Date", 'Date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array());
+$cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 's', '', array());
+$cFields[] = array("Description", 'Description', 'checked', '', 's', '', array());
+
+if (count($diags) > 0) {
+    $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', '', '', 's', '', array());
+}
+
+$cFields[] = array("Status", 'Status', 'checked', '', 's', '', array());
+$cFields[] = array("Amount", 'Amount', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+//$cFields[] = array("By", 'By', 'checked', '', 's', '', array());
+
+$colSelector = new ColumnSelectors($cFields, 'selFld');
 
 
 // Items
@@ -223,6 +236,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     $headerTable = new HTMLTable();
     $headerTable->addBodyTr(HTMLTable::makeTd('Report Generated: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y')));
 
+    // set the column selectors
+    $colSelector->setColumnSelectors($_POST);
+
     $local = TRUE;
     if (isset($_POST['btnExcel'])) {
         $local = FALSE;
@@ -230,6 +246,15 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     if (isset($_POST['cbShoDel'])) {
         $showDeleted = TRUE;
+    }
+
+    if (isset($_POST['selDiag'])) {
+
+        $reqs = $_POST['selDiag'];
+
+        if (is_array($reqs)) {
+            $diagSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+        }
     }
 
 
@@ -391,13 +416,35 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     $headerTable->addBodyTr(HTMLTable::makeTd('Items: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($itemText));
 
+    $whDiags = '';
+    $tdDiags = '';
+
+    foreach ($diagSelections as $a) {
+        if ($a != '') {
+            if ($whDiags == '') {
+                $whDiags .= "'" . $a . "'";
+                $tdDiags .= $diags[$a][1];
+            } else {
+                $whDiags .= ",'". $a . "'";
+                $tdDiags .= ', ' . $diags[$a][1];
+            }
+        }
+    }
+
+    if ($whDiags != '') {
+        $whDiags = " and hs.Diagnosis in (".$whDiags.") ";
+    } else {
+        $tdDiags = 'All';
+    }
+
+    $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'diagnosis', 'Diagnosis') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdDiags));
 
         $query = "select
     il.idInvoice_Line,
     i.idInvoice,
     i.Invoice_Number,
     i.Delegated_Invoice_Id,
-    i.Amount as `Invoice_Amount`,
+    i.`Amount` as `Invoice_Amount`,
     i.Sold_To_Id,
     i.idGroup,
     i.Order_Number,
@@ -405,61 +452,61 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     i.Invoice_Date,
     i.`Status`,
     i.Carried_Amount,
-    i.Balance,
-    i.Deleted as Invoice_Deleted,
-    il.Price,
-    il.Amount,
-    il.Quantity,
-    il.Description,
+    i.`Balance`,
+    i.`Deleted` as `Invoice_Deleted`,
+    il.`Price`,
+    il.`Amount`,
+    il.`Quantity`,
+    il.`Description`,
     il.Item_Id,
     il.Period_Start,
     il.Period_End,
-    il.Deleted as Line_Deleted,
-
-    ifnull(n.Name_Last, '') as Name_Last,
-    ifnull(n.Name_First, '') as Name_First,
-    ifnull(n.Company, '') as Company,
+    il.`Deleted` as `Line_Deleted`,
+    ifnull(hs.Diagnosis, '') as `Diagnosis`,
+    ifnull(n.Name_Last, '') as `Name_Last`,
+    ifnull(n.Name_First, '') as `Name_First`,
+    ifnull(n.`Company`, '') as `Company`,
     ifnull(nv.Vol_Code, '') as `Billing_Agent`
 from
     invoice_line il join invoice i ON il.Invoice_Id = i.idInvoice
     left join `name` n on i.Sold_To_Id = n.idName
+    left join visit v on i.Order_Number = v.idVisit
+    left join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
     left join name_volunteer2 nv on nv.idName = n.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::BillingAgent . "'
-where $whDeleted  $whDates  $whItem  $whStatus order by i.idInvoice, il.idInvoice_Line";
+where $whDeleted  $whDates  $whItem  $whStatus $whDiags order by i.idInvoice, il.idInvoice_Line";
 
     $stmt = $dbh->query($query);
 
     $tbl = null;
     $sml = null;
     $reportRows = 0;
+    $fltrdTitles = $colSelector->getFilteredTitles();
 
 
     if ($local) {
 
         $tbl = new HTMLTable();
-        $tbl->addHeaderTr(HTMLTable::makeTh('Visit Id').HTMLTable::makeTh('Organization').HTMLTable::makeTh('Last').HTMLTable::makeTh('First').HTMLTable::makeTh('Date').HTMLTable::makeTh('Item').HTMLTable::makeTh('Inv #')
-                .HTMLTable::makeTh('Status').HTMLTable::makeTh('Amount'));
+        $th = '';
+
+        foreach ($fltrdTitles as $t) {
+            $th .= HTMLTable::makeTh($t);
+        }
+        $tbl->addHeaderTr($th);
 
     } else {
 
-        require_once CLASSES . 'OpenXML.php';
 
         $reportRows = 1;
-        $file = 'PaymentReport';
-        $sml = OpenXML::createExcel($uS->username, 'Payment Report');
+        $file = 'ItemReport';
+        $sml = OpenXML::createExcel($uS->username, 'Item Report');
 
         // build header
         $hdr = array();
         $n = 0;
 
-        $hdr[$n++] = "Visit Id";
-        $hdr[$n++] = "Organization";
-        $hdr[$n++] = "Last";
-        $hdr[$n++] = "First";
-        $hdr[$n++] = "Date";
-        $hdr[$n++] = "Item";
-        $hdr[$n++] = "Invoice Number";
-        $hdr[$n++] = "Status";
-        $hdr[$n++] = "Amount";
+        foreach ($fltrdTitles as $t) {
+            $hdr[$n++] = $t;
+        }
 
         OpenXML::writeHeaderRow($sml, $hdr);
         $reportRows++;
@@ -476,7 +523,7 @@ where $whDeleted  $whDates  $whItem  $whStatus order by i.idInvoice, il.idInvoic
     // Now the data ...
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
-        doMarkupRow($r, $local, $statusList, $total, $tbl, $sml, $reportRows, $uS->subsidyId, $uS->returnId);
+        doMarkupRow($colSelector->getFilteredFields(), $r, $local, $statusList, $diags, $total, $tbl, $sml, $reportRows, $uS->subsidyId, $uS->returnId);
 
     }
 
@@ -485,7 +532,7 @@ where $whDeleted  $whDates  $whItem  $whStatus order by i.idInvoice, il.idInvoic
     // Finalize and print.
     if ($local) {
 
-        $tbl->addFooterTr(HTMLTable::makeTd('', array('colspan'=>'7'))
+        $tbl->addFooterTr(HTMLTable::makeTd('', array('colspan'=> (count($fltrdTitles) - 2)))
             .HTMLTable::makeTd('Total:', array('style'=>'text-align:right;font-weight:bold; border-top:2px solid black;'))
             .HTMLTable::makeTd('$'.number_format($total,2), array('style'=>'text-align:right;font-weight:bold; border-top:2px solid black;'))
             );
@@ -517,7 +564,7 @@ $statusSelector = HTMLSelector::generateMarkup(
                 HTMLSelector::doOptionsMkup($statusList, $statusSelections), array('name' => 'selPayStatus[]', 'size' => '6', 'multiple' => 'multiple'));
 
 $itemSelector = HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup($itemList, $itemSelections), array('name' => 'selItems[]', 'size' => '6', 'multiple' => 'multiple'));
+                HTMLSelector::doOptionsMkup($itemList, $itemSelections), array('name' => 'selItems[]', 'size' => (count($itemList) + 1), 'multiple' => 'multiple'));
 
 $dAttrs = array('name'=>'cbShoDel', 'id'=>'cbShoDel', 'type'=>'checkbox', 'style'=>'margin-right:.3em;');
 
@@ -530,6 +577,16 @@ $shoDeletedCb = HTMLInput::generateMarkup('', $dAttrs)
 $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>$monSize, 'multiple'=>'multiple'));
 $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, $config->getString('site', 'Start_Year', '2010'), $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'5'));
 $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
+
+$selDiag = '';
+if (count($diags) > 0) {
+
+    $selDiag = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($diags, $diagSelections, TRUE),
+        array('name'=>'selDiag[]', 'multiple'=>'multiple', 'size'=>min(count($diags)+1, 12)));
+}
+
+
+$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;'));
 
 ?>
 <!DOCTYPE html>
@@ -585,7 +642,17 @@ function invoiceAction(idInvoice, action, eid, container, show) {
     $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
         var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';
         var makeTable = '<?php echo $mkTable; ?>';
-        $('#btnHere, #btnExcel').button();
+        $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
+        $('#cbColClearAll').click(function () {
+            $('#selFld option').each(function () {
+                $(this).prop('selected', false);
+            });
+        });
+        $('#cbColSelAll').click(function () {
+            $('#selFld option').each(function () {
+                $(this).prop('selected', true);
+            });
+        });
         $('.ckdate').datepicker({
             yearRange: '-05:+01',
             changeMonth: true,
@@ -623,7 +690,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                     "iDisplayLength": 50,
                     "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                     "dom": '<"top"ilf>rt<"bottom"ilp><"clear">',
-                    "order": [[ 3, 'asc' ]]
+                    "order": [[ 2, 'asc' ]]
                 });
             } catch (err) {
 
@@ -638,7 +705,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
     });
  </script>
     </head>
-    <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
+    <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
         <h2><?php echo $wInit->pageHeading; ?></h2>
@@ -669,7 +736,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                     </table>
                     <table style="float: left;">
                         <tr>
-                            <th colspan="2">Invoice Status</th>
+                            <th>Invoice Status</th>
                         </tr>
                         <tr>
                            <td><?php echo $statusSelector; ?></td>
@@ -677,12 +744,23 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                     </table>
                     <table style="float: left;">
                         <tr>
-                            <th colspan="2">Item Filter</th>
+                            <th>Item Filter</th>
                         </tr>
                         <tr>
                            <td><?php echo $itemSelector; ?></td>
                         </tr>
                     </table>
+                    <?php if (count($diags) > 0) { ?>
+                    <table style="float:left;">
+                        <tr>
+                            <th><?php echo $labels->getString('hospital', 'diagnosis', 'Diagnosis'); ?></th>
+                        </tr>
+                        <tr>
+                            <td><?php echo $selDiag; ?></td>
+                        </tr>
+                    </table>
+                    <?php } ?>
+                    <?php echo $columSelector; ?>
                     <table style="width:100%; clear:both;">
                         <tr>
                             <td style="width:50%;"><?php echo $shoDeletedCb; ?></td>
