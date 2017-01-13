@@ -391,7 +391,7 @@ function getRemote(item) {
         }
 
         if (incmg.data) {
-            $('dev#retrieve').text(incmg.data);
+            $('div#retrieve').html(incmg.data);
         }
     });
 
@@ -452,6 +452,10 @@ function getRemote(item) {
 
             $('#TxButton').button().click(function () {
 
+                if ($('#TxButton').val() === 'Working...') {
+                    return;
+                }
+
                 var parms = {
                     cmd: 'xfer',
                     ids: transferIds
@@ -461,7 +465,7 @@ function getRemote(item) {
 
                 var posting = $.post('ws_tran.php', parms);
                 posting.done(function(incmg) {
-                    $('#TxButton').val('Transfer');
+                    $('#TxButton').val('Transfer').css('disabled', true);
                     if (!incmg) {
                         alert('Bad Reply from Server');
                         return;

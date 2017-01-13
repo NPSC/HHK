@@ -922,52 +922,99 @@ where
 -- -----------------------------------------------------
 CREATE  OR REPLACE VIEW `vguest_search_neon` AS
     SELECT 
-        `n`.`idName` AS `_HHK_ID`,
+        `n`.`idName` AS `HHK_ID`,
         `n`.`External_Id` AS `Account ID`,
         IFNULL(`g1`.`Description`, '') AS `Prefix`,
         `n`.`Name_First` AS `First Name`,
         `n`.`Name_Middle` AS `Middle Name`,
         `n`.`Name_Last` AS `Last Name`,
-        n.BirthDate AS `_BirthDate`,
-        n.Date_Deceased AS `_Deceased_Date`,
         IFNULL(`g2`.`Description`, '') AS `Suffix`,
-        IFNULL(`np`.`Phone_Num`, '') AS `Phone Number`,
-        IFNULL(`np`.Phone_Code, '') AS `_Phone Type`,
         IFNULL(`ne`.`Email`, '') AS `Email`,
-        IFNULL(`na`.`Address_1`, '') AS `_Address Line 1`,
-        IFNULL(`na`.`Address_2`, '') AS `_Address Line 2`,
         IFNULL(`na`.`City`, '') AS `City`,
-        IFNULL(`na`.`County`, '') AS `_County`,
-        IFNULL(`na`.`State_Province`, '') AS `_State Code`,
-        IFNULL(`na`.`Country_Code`, '') AS `_Country Code`,
-        IFNULL(`na`.`Postal_Code`, '') AS `Zip Code`,
-        IFNULL(ng.Relationship_Code, '') AS `_Relationship Code`,
-        IFNULL(g3.Description, '') AS `_PSG_Relationship`,
-        IFNULL(ng.idPsg, '') AS `_PSG_ID`,
-        IFNULL(g4.Description, '') as `_No_Return`
+        IFNULL(`na`.`Postal_Code`, '') AS `Zip Code`
     FROM
-        `name_guest` `ng`
-        LEFT JOIN `name` `n` ON `ng`.`idName` = `n`.`idName`
-        LEFT JOIN `name_address` `na` ON `ng`.`idName` = `na`.`idName`
+        `name` `n` 
+        LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName`
             AND (`n`.`Preferred_Mail_Address` = `na`.`Purpose`)
-        LEFT JOIN `name_email` `ne` ON `ng`.`idName` = `ne`.`idName`
+        LEFT JOIN `name_email` `ne` ON `n`.`idName` = `ne`.`idName`
             AND (`n`.`Preferred_Email` = `ne`.`Purpose`)
-        LEFT JOIN `name_phone` `np` ON `ng`.`idName` = `np`.`idName`
+        LEFT JOIN `name_phone` `np` ON `n`.`idName` = `np`.`idName`
             AND (`n`.`Preferred_Phone` = `np`.`Phone_Code`)
-        left join `name_demog` nd on n.idName = nd.idName
         LEFT JOIN `gen_lookups` `g1` ON `n`.`Name_Prefix` = `g1`.`Code`
             AND (`g1`.`Table_Name` = 'Name_Prefix')
         LEFT JOIN `gen_lookups` `g2` ON `n`.`Name_Suffix` = `g2`.`Code`
             AND (`g2`.`Table_Name` = 'Name_Suffix')
-        LEFT JOIN `gen_lookups` `g3` ON ng.Relationship_Code = `g3`.`Code`
+    WHERE
+        `n`.`idName` > 0
+        AND n.idName in (select idName from name_guest)
+            AND (`n`.`Record_Member` = 1)
+            AND (`n`.`Member_Status` IN ('a' , 'd', 'in'));
+
+
+
+-- -----------------------------------------------------
+-- View `vguest_data_neon`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vguest_data_neon` AS
+    SELECT 
+        `n`.`idName` AS `HHK_ID`,
+        IFNULL(`g1`.`Description`, '') AS `Prefix`,
+        `n`.`Name_First` AS `First Name`,
+        `n`.`Name_Middle` AS `Middle Name`,
+        `n`.`Name_Last` AS `Last Name`,
+        `n`.`Name_Nickname` AS `Preferred Name`,
+        n.BirthDate AS `BirthDate`,
+        n.Date_Deceased AS `Deceased_Date`,
+        IFNULL(`g2`.`Description`, '') AS `Suffix`,
+        IFNULL(`np`.`Phone_Num`, '') AS `Phone Number`,
+        IFNULL(`np`.Phone_Code, '') AS `Phone Type`,
+        IFNULL(`ne`.`Email`, '') AS `Email`,
+        IFNULL(`na`.`Address_1`, '') AS `Address Line 1`,
+        IFNULL(`na`.`Address_2`, '') AS `Address Line 2`,
+        IFNULL(`na`.`City`, '') AS `City`,
+        IFNULL(`na`.`County`, '') AS `County`,
+        IFNULL(`na`.`State_Province`, '') AS `State Code`,
+        IFNULL(`na`.`Country_Code`, '') AS `Country Code`,
+        IFNULL(cc.External_Id, 0) AS `Country Id`,
+        IFNULL(`na`.`Postal_Code`, '') AS `Zip Code`,
+        IFNULL(ng.Relationship_Code, '') AS `Relationship Code`,
+        IFNULL(g3.Description, '') AS `PSG_Relationship`,
+        IFNULL(ng.idPsg, '') AS `PSG_ID`,
+        IFNULL(g4.Description, '') AS `No_Return`
+    FROM
+        `name_guest` `ng`
+            LEFT JOIN
+        `name` `n` ON `ng`.`idName` = `n`.`idName`
+            LEFT JOIN
+        `name_address` `na` ON `ng`.`idName` = `na`.`idName`
+            AND (`n`.`Preferred_Mail_Address` = `na`.`Purpose`)
+            LEFT JOIN
+        `name_email` `ne` ON `ng`.`idName` = `ne`.`idName`
+            AND (`n`.`Preferred_Email` = `ne`.`Purpose`)
+            LEFT JOIN
+        `name_phone` `np` ON `ng`.`idName` = `np`.`idName`
+            AND (`n`.`Preferred_Phone` = `np`.`Phone_Code`)
+            LEFT JOIN
+        `name_demog` nd ON n.idName = nd.idName
+            LEFT JOIN
+        `country_code` `cc` ON `na`.`Country_Code` = `cc`.`ISO_3166-1-alpha-2`
+            LEFT JOIN
+        `gen_lookups` `g1` ON `n`.`Name_Prefix` = `g1`.`Code`
+            AND (`g1`.`Table_Name` = 'Name_Prefix')
+            LEFT JOIN
+        `gen_lookups` `g2` ON `n`.`Name_Suffix` = `g2`.`Code`
+            AND (`g2`.`Table_Name` = 'Name_Suffix')
+            LEFT JOIN
+        `gen_lookups` `g3` ON ng.Relationship_Code = `g3`.`Code`
             AND (`g3`.`Table_Name` = 'Patient_Rel_Type')
-        LEFT JOIN `gen_lookups` `g4` ON nd.No_Return = `g4`.`Code`
+            LEFT JOIN
+        `gen_lookups` `g4` ON nd.No_Return = `g4`.`Code`
             AND (`g4`.`Table_Name` = 'NoReturnReason')
     WHERE
         ((`ng`.`idName` > 0)
             AND (`n`.`Record_Member` = 1)
             AND (`n`.`Member_Status` IN ('a' , 'd', 'in')))
-    Group By n.idName;
+    GROUP BY n.idName;
 
 
 

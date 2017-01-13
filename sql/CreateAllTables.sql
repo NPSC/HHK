@@ -218,6 +218,17 @@ CREATE TABLE if not exists `counter` (
 
 
 -- -----------------------------------------------------
+-- Table `country_code`
+-- -----------------------------------------------------
+CREATE TABLE `country_code` (
+  `Country_Name` varchar(145) NOT NULL,
+  `ISO_3166-1-alpha-2` varchar(5) NOT NULL,
+  `External_Id` int(11) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`ISO_3166-1-alpha-2`)
+) ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table `desig_holidays`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `desig_holidays` (

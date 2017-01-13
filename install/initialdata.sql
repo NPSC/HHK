@@ -723,6 +723,52 @@ REPLACE INTO `language` VALUES (1,'Abkhazian','ab',0),(2,'Afar','aa',0),(3,'Afri
 (391,'Panjabi','pa',0),(394,'Pashto','ps',0),(396,'Persian','fa',0),(402,'Polish','pl',0),(403,'Portuguese','pt',0),(406,'Punjabi','pa',0),(407,'Pushto','ps',0),
 (408,'Quechua','qu',0),(414,'Romanian','ro',0),(415,'Romansh','rm',0),(417,'Rundi','rn',0),(418,'Russian','ru',0),(423,'Samoan','sm',0),(425,'Sango','sg',0),(426,'Sanskrit','sa',0),
 (428,'Sardinian','sc',0),(432,'Scottish Gaelic','gd',0),(436,'Serbian','sr',0),(439,'Shona','sn',0),(440,'Sichuan Yi','ii',0),(445,'Sindhi','sd',0),(446,'Sinhala','si',0),
-(447,'Sinhalese','si',0),(453,'Slovak','sk',0),(454,'Slovenian','sl',0),(456,'Somali','so',0),(461,'Sotho, Southern','st',0),(463,'South Ndebele','nr',0),(466,'Spanish','es',1),(471,'Sundanese','su',0),(473,'Swahili','sw',0),(474,'Swati','ss',0),(475,'Swedish','sv',0),(478,'Tagalog','tl',0),(479,'Tahitian','ty',0),(481,'Tajik','tg',0),(483,'Tamil','ta',0),(484,'Tatar','tt',0),(485,'Telugu','te',0),(488,'Thai','th',0),(489,'Tibetan','bo',0),(491,'Tigrinya','ti',0),(499,'Tonga (Tonga Islands)','to',0),(501,'Tsonga','ts',0),(502,'Tswana','tn',0),(505,'Turkish','tr',0),(507,'Turkmen','tk',0),(510,'Twi','tw',0),(513,'Uighur','ug',0),(514,'Ukrainian','uk',0),(519,'Urdu','ur',0),(520,'Uyghur','ug',0),(521,'Uzbek','uz',0),(523,'Valencian','ca',0),(524,'Venda','ve',0),(525,'Vietnamese','vi',0),(526,'VolapÃ¼k','vo',0),(529,'Walloon','wa',0),(532,'Welsh','cy',0),(533,'Western Frisian','fy',0),(537,'Wolof','wo',0),(538,'Xhosa','xh',0),(542,'Yiddish','yi',0),(543,'Yoruba','yo',0),(550,'Zhuang','za',0),(551,'Zulu','zu',0);
+(447,'Sinhalese','si',0),(453,'Slovak','sk',0),(454,'Slovenian','sl',0),(456,'Somali','so',0),(461,'Sotho, Southern','st',0),(463,'South Ndebele','nr',0),(466,'Spanish','es',1),
+(471,'Sundanese','su',0),(473,'Swahili','sw',0),(474,'Swati','ss',0),(475,'Swedish','sv',0),(478,'Tagalog','tl',0),(479,'Tahitian','ty',0),(481,'Tajik','tg',0),(483,'Tamil','ta',0),
+(484,'Tatar','tt',0),(485,'Telugu','te',0),(488,'Thai','th',0),(489,'Tibetan','bo',0),(491,'Tigrinya','ti',0),(499,'Tonga (Tonga Islands)','to',0),(501,'Tsonga','ts',0),
+(502,'Tswana','tn',0),(505,'Turkish','tr',0),(507,'Turkmen','tk',0),(510,'Twi','tw',0),(513,'Uighur','ug',0),(514,'Ukrainian','uk',0),(519,'Urdu','ur',0),(520,'Uyghur','ug',0),
+(521,'Uzbek','uz',0),(523,'Valencian','ca',0),(524,'Venda','ve',0),(525,'Vietnamese','vi',0),(526,'VolapÃ¼k','vo',0),(529,'Walloon','wa',0),(532,'Welsh','cy',0),
+(533,'Western Frisian','fy',0),(537,'Wolof','wo',0),(538,'Xhosa','xh',0),(542,'Yiddish','yi',0),(543,'Yoruba','yo',0),(550,'Zhuang','za',0),(551,'Zulu','zu',0);
 -- ;
 
+--
+-- Dumping data for table `country_code`
+--
+
+INSERT INTO `country_code` VALUES ('ANDORRA','AD',7),('UNITED ARAB EMIRATES','AE',223),('AFGHANISTAN','AF',3),('ANTIGUA AND BARBUDA','AG',10),('ANGUILLA','AI',242),('ALBANIA','AL',4),
+('ARMENIA','AM',12),('ANGOLA','AO',8),('ANTARCTICA','AQ',9),('ARGENTINA','AR',11),('AMERICAN SAMOA','AS',6),('AUSTRIA','AT',15),('AUSTRALIA','AU',14),('ARUBA','AW',13),
+('ALAND ISLANDS','AX',0),('AZERBAIJAN','AZ',16),('BOSNIA AND HERZEGOVINA','BA',28),('BARBADOS','BB',20),('BANGLADESH','BD',19),('BELGIUM','BE',22),('BURKINA FASO','BF',35),
+('BULGARIA','BG',34),('BAHRAIN','BH',18),('BURUNDI','BI',36),('BENIN','BJ',24),('SAINT BARTHELEMY','BL',0),('BERMUDA','BM',25),('BRUNEI DARUSSALAM','BN',33),
+('BOLIVIA, PLURINATIONAL STATE OF','BO',27),('BONAIRE, SINT EUSTATIUS AND SABA','BQ',0),('BRAZIL','BR',31),('BAHAMAS','BS',17),('BHUTAN','BT',26),('BOUVET ISLAND','BV',30),
+('BOTSWANA','BW',29),('BELARUS','BY',21),('BELIZE','BZ',23),('CANADA','CA',2),('COCOS (KEELING) ISLANDS','CC',46),('CONGO, THE DEMOCRATIC REPUBLIC OF THE','CD',49),
+('CENTRAL AFRICAN REPUBLIC','CF',41),('CONGO','CG',0),('SWITZERLAND','CH',206),('COTE D\'IVOIRE','CI',106),('COOK ISLANDS','CK',50),('CHILE','CL',43),('CAMEROON','CM',38),
+('CHINA','CN',44),('COLOMBIA','CO',47),('COSTA RICA','CR',51),('CUBA','CU',53),('CAPE VERDE','CV',39),('CURACAO','CW',0),('CHRISTMAS ISLAND','CX',45),('CYPRUS','CY',54),
+('CZECH REPUBLIC','CZ',55),('GERMANY','DE',80),('DJIBOUTI','DJ',57),('DENMARK','DK',56),('DOMINICA','DM',58),('DOMINICAN REPUBLIC','DO',59),('ALGERIA','DZ',5),('ECUADOR','EC',61),
+('ESTONIA','EE',66),('EGYPT','EG',62),('WESTERN SAHARA','EH',235),('ERITREA','ER',65),('SPAIN','ES',199),('ETHIOPIA','ET',67),('FINLAND','FI',71),('FIJI','FJ',70),
+('FALKLAND ISLANDS (MALVINAS)','FK',68),('MICRONESIA, FEDERATED STATES OF','FM',138),('FAROE ISLANDS','FO',69),('FRANCE','FR',73),('GABON','GA',77),('UNITED KINGDOM','GB',224),
+('GRENADA','GD',86),('GEORGIA','GE',79),('FRENCH GUIANA','GF',75),('GUERNSEY','GG',0),('GHANA','GH',81),('GIBRALTAR','GI',82),('GREENLAND','GL',85),('GAMBIA','GM',78),
+('GUINEA','GN',90),('GUADELOUPE','GP',87),('EQUATORIAL GUINEA','GQ',64),('GREECE','GR',84),('SOUTH GEORGIA AND THE SOUTH SANDWICH ISLANDS','GS',179),('GUATEMALA','GT',89),
+('GUAM','GU',88),('GUINEA-BISSAU','GW',91),('GUYANA','GY',92),('HONG KONG','HK',96),('HEARD ISLAND AND MCDONALD ISLANDS','HM',94),('HONDURAS','HN',95),('CROATIA','HR',52),
+('HAITI','HT',93),('HUNGARY','HU',97),('INDONESIA','ID',100),('IRELAND','IE',103),('ISRAEL','IL',104),('ISLE OF MAN','IM',0),('INDIA','IN',99),('BRITISH INDIAN OCEAN TERRITORY','IO',32),
+('IRAQ','IQ',102),('IRAN, ISLAMIC REPUBLIC OF','IR',101),('ICELAND','IS',98),('ITALY','IT',105),('JERSEY','JE',0),('JAMAICA','JM',107),('JORDAN','JO',109),('JAPAN','JP',108),
+('KENYA','KE',111),('KYRGYZSTAN','KG',114),('CAMBODIA','KH',37),('KIRIBATI','KI',112),('COMOROS','KM',48),('SAINT KITTS AND NEVIS','KN',181),('KOREA, DEMOCRATIC PEOPLE\'S REPUBLIC OF','KP',0),
+('KOREA, REPUBLIC OF','KR',198),('KUWAIT','KW',113),('CAYMAN ISLANDS','KY',40),('KAZAKHSTAN','KZ',110),('LAO PEOPLE\'S DEMOCRATIC REPUBLIC','LA',115),('LEBANON','LB',117),
+('SAINT LUCIA','LC',182),('LIECHTENSTEIN','LI',121),('SRI LANKA','LK',200),('LIBERIA','LR',119),('LESOTHO','LS',118),('LITHUANIA','LT',122),('LUXEMBOURG','LU',123),('LATVIA','LV',116),
+('LIBYA','LY',120),('MOROCCO','MA',143),('MONACO','MC',140),('MOLDOVA, REPUBLIC OF','MD',139),('MONTENEGRO','ME',0),('SAINT MARTIN (FRENCH PART)','MF',0),('MADAGASCAR','MG',126),
+('MARSHALL ISLANDS','MH',132),('MACEDONIA, THE FORMER YUGOSLAV REPUBLIC OF','MK',125),('MALI','ML',130),('MYANMAR','MM',145),('MONGOLIA','MN',141),('MACAO','MO',124),
+('NORTHERN MARIANA ISLANDS','MP',159),('MARTINIQUE','MQ',133),('MAURITANIA','MR',134),('MONTSERRAT','MS',142),('MALTA','MT',131),('MAURITIUS','MU',135),('MALDIVES','MV',129),
+('MALAWI','MW',127),('MEXICO','MX',137),('MALAYSIA','MY',128),('MOZAMBIQUE','MZ',144),('NAMIBIA','NA',146),('NEW CALEDONIA','NC',151),('NIGER','NE',154),('NORFOLK ISLAND','NF',157),
+('NIGERIA','NG',155),('NICARAGUA','NI',153),('NETHERLANDS','NL',149),('NORWAY','NO',160),('NEPAL','NP',148),('NAURU','NR',147),('NIUE','NU',156),('NEW ZEALAND','NZ',152),
+('OMAN','OM',161),('PANAMA','PA',164),('PERU','PE',167),('FRENCH POLYNESIA','PF',171),('PAPUA NEW GUINEA','PG',165),('PHILIPPINES','PH',168),('PAKISTAN','PK',162),('POLAND','PL',170),
+('SAINT PIERRE AND MIQUELON','PM',183),('PITCAIRN','PN',169),('PUERTO RICO','PR',173),('PALESTINE, STATE OF','PS',0),('PORTUGAL','PT',172),('PALAU','PW',163),('PARAGUAY','PY',166),
+('QATAR','QA',174),('REUNION','RE',175),('ROMANIA','RO',176),('SERBIA','RS',0),('RUSSIAN FEDERATION','RU',177),('RWANDA','RW',178),('SAUDI ARABIA','SA',188),('SOLOMON ISLANDS','SB',195),
+('SEYCHELLES','SC',190),('SUDAN','SD',201),('SWEDEN','SE',205),('SINGAPORE','SG',192),('SAINT HELENA, ASCENSION AND TRISTAN DA CUNHA','SH',180),('SLOVENIA','SI',194),
+('SVALBARD AND JAN MAYEN','SJ',203),('SLOVAKIA','SK',193),('SIERRA LEONE','SL',191),('SAN MARINO','SM',187),('SENEGAL','SN',189),('SOMALIA','SO',196),('SURINAME','SR',202),
+('SOUTH SUDAN','SS',243),('SAO TOME AND PRINCIPE','ST',184),('EL SALVADOR','SV',63),('SINT MAARTEN (DUTCH PART)','SX',245),('SYRIAN ARAB REPUBLIC','SY',207),('SWAZILAND','SZ',204),
+('TURKS AND CAICOS ISLANDS','TC',219),('CHAD','TD',42),('FRENCH SOUTHERN TERRITORIES','TF',76),('TOGO','TG',212),('THAILAND','TH',211),('TAJIKISTAN','TJ',208),('TOKELAU','TK',213),
+('TIMOR-LESTE','TL',60),('TURKMENISTAN','TM',218),('TUNISIA','TN',216),('TONGA','TO',214),('TURKEY','TR',217),('TRINIDAD AND TOBAGO','TT',215),('TUVALU','TV',220),
+('TAIWAN, PROVINCE OF CHINA','TW',209),('TANZANIA, UNITED REPUBLIC OF','TZ',210),('UKRAINE','UA',222),('UGANDA','UG',221),('UNITED STATES MINOR OUTLYING ISLANDS','UM',226),
+('UNITED STATES','US',1),('URUGUAY','UY',225),('UZBEKISTAN','UZ',227),('HOLY SEE (VATICAN CITY STATE)','VA',229),('SAINT VINCENT AND THE GRENADINES','VC',185),
+('VENEZUELA, BOLIVARIAN REPUBLIC OF','VE',230),('VIRGIN ISLANDS, BRITISH','VG',232),('VIRGIN ISLANDS, U.S.','VI',233),('VIET NAM','VN',231),('VANUATU','VU',228),
+('WALLIS AND FUTUNA','WF',234),('SAMOA','WS',186),('YEMEN','YE',236),('MAYOTTE','YT',136),('SOUTH AFRICA','ZA',197),('ZAMBIA','ZM',239),('ZIMBABWE','ZW',240);
+-- ;

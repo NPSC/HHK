@@ -189,6 +189,21 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
         $confData = array('custom_fields' => $custom_fields);
         SiteConfig::saveConfig($dbh, $wsConfig, $confData, $uS->username);
 
+        // Load Countries
+        $countries = $transfer->getCountryIds();
+
+        $stmt = $dbh->prepare('Update country_code set External_Id=:eid where LOWER(Country_Name) like LOWER(:cnam)', array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+
+        foreach ($countries as $k => $v) {
+
+            $stmt->bindParam(':eid', $k, PDO::PARAM_INT);
+            $stmt->bindParam(':cnam', $v, PDO::PARAM_INT);
+            $stmt->execute();
+            $stmt->fetchAll();
+
+        }
+
+
     } catch (Hk_Exception_Runtime $ex) {
         $events = array("error" => "Transfer Error: " . $ex->getMessage());
     }
@@ -388,7 +403,7 @@ $labels = SiteConfig::createCliteMarkup($labl)->generateMarkup();
 
 $externals = '';
 if (is_null($wsConfig) === FALSE) {
-    $externals = SiteConfig::createCliteMarkup($wsConfig)->generateMarkup();
+    $externals = SiteConfig::createCliteMarkup($wsConfig, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'neonTitles.cfg'))->generateMarkup();
 }
 
 $webAlert = new alertMessage("webContainer");
@@ -464,7 +479,7 @@ $(document).ready(function() {
                 <div id="external" class="ui-tabs-hide" >
                     <form method="post" name="formext" action="">
                         <?php echo $externals; ?>
-                        <div style="float:right;margin-right:40px;"><input type="submit" name="btnExtCnf" value="Save"/></div>
+                        <div style="float:right;margin-right:40px;">(Saving reads Neon Custom Field Id's and Country Id's.) <input type="submit" name="btnExtCnf" value="Save"/></div>
                     </form>
 
                 </div>

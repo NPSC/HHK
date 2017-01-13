@@ -20,6 +20,8 @@ class TransferMembers {
     protected $customFields;
     protected $errorMessage;
     protected $pageNumber;
+    protected $countries;
+    protected $states;
 
     public function __construct($userId, $password, array $customFieldIds = array()) {
         $this->webService = new Neon();
@@ -28,6 +30,8 @@ class TransferMembers {
         $this->customFields = $customFieldIds;
         $this->errorMessage = '';
         $this->pageNumber = 1;
+        $this->countries = NULL;
+        $this->states = NULL;
     }
 
     public function __destruct() {
@@ -112,8 +116,50 @@ class TransferMembers {
     }
 
     public function updateAccount(\PDO $dbh, $accountData, $idName) {
-        
+
+
+        // Log in with the web service
+        $this->openTarget($this->userId, $this->password);
+
+
+
+
+        $request = array(
+            'method' => 'account/updateIndividualAccount',
+
+        );
+
+
+        $result = $this->webService->go($request);
+
+        if ($this->checkError($result)) {
+            throw new Hk_Exception_Runtime($this->errorMessage);
+        }
+
+
+
     }
+
+    public function unwindResponse(&$line, $results, $prefix = '') {
+
+        foreach ($results as $k => $v) {
+
+            if (is_array($v)) {
+
+                $newPrefix = $prefix . $k . '.';
+
+                unwindResponse($line, $v, $newPrefix);
+
+            } else {
+
+                $line .= $prefix . $k . '=' . $v . '<br/>';
+            }
+
+        }
+
+        return;
+    }
+
 
     public function listCustomFields() {
 
@@ -137,6 +183,32 @@ class TransferMembers {
         return array();
     }
 
+    public function getCountryIds() {
+
+        $countries = array();
+
+        $request = array(
+            'method' => 'account/listCountries',
+        );
+
+        // Log in with the web service
+        $this->openTarget($this->userId, $this->password);
+        $result = $this->webService->go($request);
+
+        if ($this->checkError($result)) {
+            throw new Hk_Exception_Runtime($this->errorMessage);
+        }
+
+        if (isset($result['countries']['country'])) {
+
+            foreach ($result['countries']['country'] as $c) {
+                $countries[$c['id']] = $c['name'];
+            }
+        }
+
+        return $countries;
+    }
+
     public function sendList(\PDO $dbh, array $sourceIds, array $customFields, $username) {
 
         $replys = [];
@@ -152,13 +224,13 @@ class TransferMembers {
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            $result = $this->searchTarget($r);
+            $result = $this->searchTarget($customFields, $r);
 
             $f = array();
 
             foreach ($r as $k => $v) {
 
-                if ($k != '' && $k[0] != '_' ) {
+                if ($k != '') {
                     $f[$k] = $v;
                 }
             }
@@ -172,13 +244,25 @@ class TransferMembers {
             if( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] >= 1 ) {
 
                 // We have a similar contact.
+
+                // Make sure the external Id is defined locally
+                if ($r['Account ID'] == '' && $result['searchResults'][0]['Account ID'] != '') {
+                    $this->updateLocalNameRecord($dbh, $r['HHK_ID'], $result['searchResults'][0]['Account ID'], $username);
+                    $f['Account ID'] = $result['searchResults'][0]['Account ID'];
+                }
+
                 $f['Result'] = 'Previously Transferred.';
                 $replys[] = $f;
 
+
             } else {
 
+                // Get member data record
+                $stmt2 = $this->loadSourceDB($dbh, array($r['HHK_ID']), '`vguest_data_neon`');
+                $rows = $stmt2->fetchAll();
+
                 // Create new contact
-                $result = $this->createAccount($r, $customFields);
+                $result = $this->createAccount($rows[0], $customFields);
 
                 if ($this->checkError($result)) {
                     $f['Result'] = $this->errorMessage;
@@ -188,9 +272,10 @@ class TransferMembers {
 
                 $accountId = filter_var($result['accountId'], FILTER_SANITIZE_SPECIAL_CHARS);
 
-                $this->updateLocalNameRecord($dbh, $r['_HHK_ID'], $accountId, $username);
+                $this->updateLocalNameRecord($dbh, $r['HHK_ID'], $accountId, $username);
 
-                $f['Result'] = $accountId;
+                $f['Result'] = 'New Contact';
+                $f['Account ID'] = $accountId;
                 $replys[] = $f;
 
             }
@@ -264,40 +349,40 @@ class TransferMembers {
         // Phone
         if (isset($r['Phone Number']) && $r['Phone Number'] != '') {
 
-            $param['individualAccount.primaryContact.phone1'] = $phoneMapping[$r['Phone Number']];
+            $param['individualAccount.primaryContact.phone1'] = $r['Phone Number'];
 
-            if (isset($r['_Phone Type']) && $r['_Phone Type'] != '' && isset($phoneMapping[$r['_Phone Type']])) {
-                $param['individualAccount.primaryContact.phone1Type'] = $phoneMapping[$r['_Phone Type']];
+            if (isset($r['Phone Type']) && $r['Phone Type'] != '' && isset($phoneMapping[$r['Phone Type']])) {
+                $param['individualAccount.primaryContact.phone1Type'] = $phoneMapping[$r['Phone Type']];
             }
 
         }
 
         // Address
-        if (isset($r['_Address Line 1']) && $r['_Address Line 1'] != '') {
+        if (isset($r['Address Line 1']) && $r['Address Line 1'] != '') {
 
             $param['individualAccount.primaryContact.addresses.address.isPrimaryAddress'] = 'true';
             $param['individualAccount.primaryContact.addresses.address.addressType.name'] = 'Home';
 
-            $param['individualAccount.primaryContact.addresses.address.addressLine1'] = $r['_Address Line 1'];
+            $param['individualAccount.primaryContact.addresses.address.addressLine1'] = $r['Address Line 1'];
 
-            if (isset($r['_Address Line 2']) && $r['_Address Line 2'] != '') {
-                $param['individualAccount.primaryContact.addresses.address.addressLine2'] = $r['_Address Line 2'];
+            if (isset($r['Address Line 2']) && $r['Address Line 2'] != '') {
+                $param['individualAccount.primaryContact.addresses.address.addressLine2'] = $r['Address Line 2'];
             }
 
             if (isset($r['City']) && $r['City'] != '') {
                 $param['individualAccount.primaryContact.addresses.address.city'] = $r['City'];
             }
 
-            if (isset($r['_State Code']) && $r['_State Code'] != '') {
-                $param['individualAccount.primaryContact.addresses.address.state.code'] = $r['_State Code'];
+            if (isset($r['State Code']) && $r['State Code'] != '') {
+                $param['individualAccount.primaryContact.addresses.address.state.code'] = $r['State Code'];
             }
 
-            if (isset($r['_County']) && $r['_County'] != '') {
-                $param['individualAccount.primaryContact.addresses.address.county'] = $r['_County'];
+            if (isset($r['County']) && $r['County'] != '') {
+                $param['individualAccount.primaryContact.addresses.address.county'] = $r['County'];
             }
 
-            if (isset($r['_Country Code']) && $r['_Country Code'] != '') {
-                $param['individualAccount.primaryContact.addresses.address.country.id'] = ($r['_Country Code'] == 'US' ? '1' : '');
+            if (isset($r['Country Id']) && $r['Country Id'] != '') {
+                $param['individualAccount.primaryContact.addresses.address.country.id'] = $r['Country Id'];
             }
 
             if (isset($r['Zip Code']) && $r['Zip Code'] != '') {
@@ -306,11 +391,11 @@ class TransferMembers {
 
         }
 
-        if (isset($r['_BirthDate']) && $r['_BirthDate'] != '') {
-            $param['individualAccount.primaryContact.dob'] = date('Y-m-d', strtotime($r['_BirthDate']));
+        if (isset($r['BirthDate']) && $r['BirthDate'] != '') {
+            $param['individualAccount.primaryContact.dob'] = date('Y-m-d', strtotime($r['BirthDate']));
         }
 
-        if (isset($r['_Relationship_Code']) && $r['_Relationship_Code'] == RelLinkType::Self) {
+        if (isset($r['Relationship Code']) && $r['Relationship Code'] == RelLinkType::Self) {
             $param['individualAccount.individualTypes.individualType.name'] = 'Patient';
         } else {
             $param['individualAccount.individualTypes.individualType.name'] = 'Guest';
@@ -321,12 +406,12 @@ class TransferMembers {
 
         foreach ($customFields as $k => $v) {
 
-            if ($r['_'.$k] != '') {
+            if ($r[$k] != '') {
 
                 $cparam = array(
                     'individualAccount.customFieldDataList.customFieldData.fieldId' => $v,
                     'individualAccount.customFieldDataList.customFieldData.fieldOptionId' => '',
-                    'individualAccount.customFieldDataList.customFieldData.fieldValue' => $r['_'.$k]
+                    'individualAccount.customFieldDataList.customFieldData.fieldValue' => $r[$k]
                 );
 
                 $customParamStr .= '&' . http_build_query($cparam);
@@ -350,11 +435,12 @@ class TransferMembers {
      * @param array $outputParms Use defined field names
      * @return array
      */
-    protected function searchTarget(array $searchCriteria, array $outputParms = []) {
+    protected function searchTarget(array $customFields, array $searchCriteria, array $outputParms = []) {
 
         if (count($outputParms) == 0) {
-            $outputParms = array('Account ID', 'Account Type', 'Prefix', 'First Name', 'Middle Name', 'Last Name', 'Suffix', 'Address Line 1', 'City', 'State' );
+            $outputParms = array('Account ID', 'Account Type', 'Prefix', 'First Name', 'Middle Name', 'Last Name', 'Suffix', 'Address Line 1', 'City', 'State', 'Zip Code' );
         }
+
         $search = array(
             'method' => 'account/listAccounts',
             'columns' => array(
@@ -370,7 +456,9 @@ class TransferMembers {
 
         foreach ($searchCriteria as $k => $v) {
 
-            if ($k != '' && $k[0] != '_' && $v != '') {
+            if ((isset($customFields[$k]) && $customFields[$k] != '')) {
+                $search['criteria'][] = array($customFields[$k], 'EQUAL', $v);
+            } else if ($k != '' && $v != '' && intval($v, 10) != 0) {
                 $search['criteria'][] = array($k, 'EQUAL', $v);
             }
         }
@@ -429,7 +517,7 @@ class TransferMembers {
 
         if (count($idList) > 0) {
 
-            return $dbh->query("Select * from $tableName where _HHK_ID in (" . implode(',', $idList) . ") ");
+            return $dbh->query("Select * from $tableName where HHK_ID in (" . implode(',', $idList) . ") ");
 
         }
 

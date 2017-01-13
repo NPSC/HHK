@@ -137,28 +137,29 @@ switch ($c) {
     case 'getAcct':
 
         $accountId = '';
-        if (isset($_GET['accountId'])) {
-            $accountId = intval(filter_var($_GET['accountId'], FILTER_SANITIZE_NUMBER_INT), 10);
+        if (isset($_POST['accountId'])) {
+            $accountId = intval(filter_var($_POST['accountId'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
         $result = $transfer->retrieveAccount($accountId);
 
-        if ($result['accountId'] == $accountId) {
-            $events['data'] = $result;
-        }
+        unwindResponse($parms, $result);
+
+        $events['data'] = $parms;
+
 
         break;
 
     case 'update':
 
         $accountId = '';
-        if (isset($_GET['accountId'])) {
-            $accountId = intval(filter_var($_GET['accountId'], FILTER_SANITIZE_NUMBER_INT), 10);
+        if (isset($_POST['accountId'])) {
+            $accountId = intval(filter_var($_POST['accountId'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
         $id = '';
-        if (isset($_GET['id'])) {
-            $id = intval(filter_var($_GET['id'], FILTER_SANITIZE_NUMBER_INT), 10);
+        if (isset($_POST['id'])) {
+            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
         if ($id > 0 && $accountId > 0) {
@@ -197,4 +198,26 @@ if (is_array($events)) {
 
 exit();
 
+
+function unwindResponse(&$line, $results, $prefix = '') {
+
+
+    foreach ($results as $k => $v) {
+
+        if (is_array($v)) {
+
+            $newPrefix = $prefix . $k . '.';
+
+            unwindResponse($line, $v, $newPrefix);
+
+        } else {
+
+            $line .= $prefix . $k . '=' . $v . '<br/>';
+        }
+
+    }
+
+
+    return;
+}
 
