@@ -51,7 +51,7 @@ if (isset($_REQUEST["cmd"])) {
 $events = array();
 try {
 
-    $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
+    $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')), $wsConfig->getSection('custom_fields'));
 
 switch ($c) {
 
@@ -65,10 +65,8 @@ switch ($c) {
 
         if (count($ids) > 0) {
 
-            $customFields = $wsConfig->getSection('custom_fields');
-
             try {
-                $reply = $transfer->sendList($dbh, $ids, $customFields, $uS->username);
+                $reply = $transfer->sendList($dbh, $ids, $uS->username);
                 $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblrpt');
 
             } catch (Exception $ex) {
@@ -136,17 +134,41 @@ switch ($c) {
 
     case 'getAcct':
 
+        $str = '';
         $accountId = '';
         if (isset($_POST['accountId'])) {
             $accountId = intval(filter_var($_POST['accountId'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $result = $transfer->retrieveAccount($accountId);
+        $source = 'remote';
+        if (isset($_POST['src']) && $_POST['src'] === 'hhk') {
 
-        unwindResponse($parms, $result);
+                $stmt2 = $transfer->loadSourceDB($dbh, $accountId, '`vguest_data_neon`');
+                if (is_null($stmt2)) {
+                    $str = 'Error';
+                } else {
 
-        $events['data'] = $parms;
+                    $rows = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
+                    foreach ($rows[0] as $k => $v) {
+                        $str .= $k . '=' . $v . '<br/>';
+                    }
+                }
+
+        } else {
+
+            $result = $transfer->retrieveAccount($accountId);
+
+            $parms = array();
+            $transfer->unwindResponse($parms, $result);
+
+
+            foreach ($parms as $k => $v) {
+                $str .= $k . '=' . $v . '<br/>';
+            }
+        }
+
+        $events['data'] = $str;
 
         break;
 
@@ -197,27 +219,4 @@ if (is_array($events)) {
 }
 
 exit();
-
-
-function unwindResponse(&$line, $results, $prefix = '') {
-
-
-    foreach ($results as $k => $v) {
-
-        if (is_array($v)) {
-
-            $newPrefix = $prefix . $k . '.';
-
-            unwindResponse($line, $v, $newPrefix);
-
-        } else {
-
-            $line .= $prefix . $k . '=' . $v . '<br/>';
-        }
-
-    }
-
-
-    return;
-}
 

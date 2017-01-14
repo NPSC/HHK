@@ -35,8 +35,9 @@ $wInit->sessionLoadGuestLkUps();
 
 $config = new Config_Lite(ciCFG_FILE);
 
+$serviceName = $config->getString('webServices', 'Service_Name', '');
 $webServices = $config->getString('webServices', 'ContactManager', '');
-if ($webServices != '') {
+if ($serviceName != '' && $webServices != '') {
 
     $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
 
@@ -337,7 +338,10 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
         <?php echo TOP_NAV_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
-        <style>.hhk-rowseparater { border-top: 2px #0074c7 solid !important; }</style>
+        <style>
+            .hhk-rowseparater { border-top: 2px #0074c7 solid !important; }
+            #aLoginLink:hover {background-color: #337a8e; }
+        </style>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
@@ -364,12 +368,10 @@ function flagAlertMessage(mess, wasError) {
         window.scrollTo(0, 5);
     }
 }
-function getRemote(item) {
-    $('#txtRSearch').val('');
+function getRemote(item, source) {
 
-    var posting = $.post('ws_tran.php', {cmd:'getAcct', accountId:item.id});
+    var posting = $.post('ws_tran.php', {cmd:'getAcct', src:source, accountId:item.id});
     posting.done(function(incmg) {
-
         if (!incmg) {
             alert('Bad Reply from Server');
             return;
@@ -392,9 +394,50 @@ function getRemote(item) {
 
         if (incmg.data) {
             $('div#retrieve').html(incmg.data);
+
+            if (source === 'remote') {
+                $('div#retrieve').prepend($('<h3>Remote Data</h3>'));
+                $('#txtRSearch').val('');
+
+            } else {
+                var updteRemote = $('<input type="button" id="btnUpdate" value="Update Remote" />');
+
+                updteRemote.button().click(function () {
+
+                    var postUpdate = $.post('ws_tran.php', {cmd:'update', accountId:data.accountId, id:data.id});
+
+                    postUpdate.done(function(incmg) {
+                        if (!incmg) {
+                            alert('Bad Reply from Server');
+                            return;
+                        }
+
+                        try {
+                            incmg = $.parseJSON(incmg);
+                        } catch (err) {
+                            alert('Bad JSON Encoding');
+                            return;
+                        }
+
+                        if (incmg.error) {
+                            if (incmg.gotopage) {
+                                window.open(incmg.gotopage, '_self');
+                            }
+                            // Stop Processing and return.
+                            flagAlertMessage(incmg.error, true);
+                            return;
+                        }
+
+                        if (incmg.result) {
+                            
+                        }
+                    });
+                });
+                $('div#retrieve').prepend($('<h3>Local (HHK) Data </h3>').append(updteRemote));
+                $('#txtSearch').val('');
+            }
         }
     });
-
 }
 
     $(document).ready(function() {
@@ -405,9 +448,15 @@ function getRemote(item) {
 
         $('#btnCustFields').click(function () {
 
+            if ($('#btnCustFields').val() === 'Working...') {
+                return;
+            }
+
+            $('#btnCustFields').val('Working...');
+
             var posting = $.post('ws_tran.php', {cmd:'listCustFields'});
             posting.done(function(incmg) {
-
+                $('#btnCustFields').val('List');
                 if (!incmg) {
                     alert('Bad Reply from Server');
                     return;
@@ -450,7 +499,7 @@ function getRemote(item) {
                 $("div#printArea").printArea();
             });
 
-            $('#TxButton').button().click(function () {
+            $('#TxButton').button().show().click(function () {
 
                 if ($('#TxButton').val() === 'Working...') {
                     return;
@@ -465,7 +514,7 @@ function getRemote(item) {
 
                 var posting = $.post('ws_tran.php', parms);
                 posting.done(function(incmg) {
-                    $('#TxButton').val('Transfer').css('disabled', true);
+                    $('#TxButton').val('Transfer').hide();
                     if (!incmg) {
                         alert('Bad Reply from Server');
                         return;
@@ -524,7 +573,8 @@ function getRemote(item) {
 
         $('#selCalendar').change();
 
-    createAutoComplete($('#txtRSearch'), 3, {cmd: 'sch', mode: 'name'}, function (item) {getRemote(item);}, false, '../house/ws_tran.php');
+    createAutoComplete($('#txtRSearch'), 3, {cmd: 'sch', mode: 'name'}, function (item) {getRemote(item, 'remote');}, false, '../house/ws_tran.php');
+    createAutoComplete($('#txtSearch'), 3, {cmd: 'role', mode: 'mo'}, function (item) {getRemote(item, 'hhk');}, false);
     });
  </script>
     </head>
@@ -532,7 +582,7 @@ function getRemote(item) {
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <a href="<?php echo $wsLink; ?>" style="float:left;margin-top:15px;" title="Click to log in."><div style="height:55px; width:130px; background: url(<?php echo $wsLogo; ?>) left top no-repeat; background-size:contain;"></div></a>
+            <a id='aLoginLink' href="<?php echo $wsLink; ?>" style="float:left;margin-top:15px;margin-left:5px;margin-right:5px;padding-left:5px;padding-right:5px;" title="Click to log in."><div style="height:55px; width:130px; background: url(<?php echo $wsLogo; ?>) left top no-repeat; background-size:contain;"></div></a>
             <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="GuestTransfer.php" method="post">
@@ -560,15 +610,22 @@ function getRemote(item) {
                     </table>
                     <table style="float:left;">
                         <tr>
-                            <td>Last Name Search</td>
+                            <th><?php echo $serviceName; ?> <span style="font-weight: bold;">Last Name</span> Search</th>
                             <td><input id="txtRSearch" type="text" /></td>
-
+                        </tr>
+                        <tr>
+                            <th>Local (HHK) Name Search</th>
+                            <td><input id="txtSearch" type="text" /></td>
+                        </tr>
+                        <tr>
+                            <th>List <?php echo $serviceName; ?> Custom Fields</th>
+                            <td><input type="button" name="btnCustFields" id="btnCustFields" value="List"/></td>
                         </tr>
                     </table>
                     <table style="width:100%; margin-top: 15px;">
                         <tr>
-                            <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
-                            <td><input type="button" name="btnCustFields" id="btnCustFields" value="List Custom Fields"/></td>
+                            <td><input type="submit" name="btnHere" id="btnHere" value="Get Records"/></td>
+
                         </tr>
                     </table>
                 </form>
