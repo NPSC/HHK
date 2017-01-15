@@ -1155,6 +1155,18 @@ CREATE TABLE if not exists `name_volunteer2` (
 ) ENGINE=InnoDB;
 
 
+-- -----------------------------------------------------
+-- Table `neon_indiv_type`
+-- -----------------------------------------------------
+CREATE TABLE `neon_indiv_type` (
+  `Neon_Id` INT NOT NULL COMMENT '',
+  `Neon_Name` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
+  `Vol_Type_Code` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
+  `Timestamp` TIMESTAMP NOT NULL DEFAULT now() COMMENT '',
+  PRIMARY KEY (`Neon_Id`)  COMMENT ''
+) ENGINE=InnoDB;
+
+
 
 -- -----------------------------------------------------
 -- Table `page`

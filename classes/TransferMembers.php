@@ -123,31 +123,36 @@ class TransferMembers {
 
 
         // Get member data record
-        $stmt2 = $this->loadSourceDB($dbh, $r['HHK_ID'], '`vguest_data_neon`');
+        $stmt2 = $this->loadSourceDB($dbh, $idName, '`vguest_data_neon`');
         if (is_null($stmt2)) {
             return array('result'=>'member Id not found: ' . $idName);
         }
 
-        $localRows = $stmt2->fetchAll();
+        $localRows = $stmt2->fetchAll(PDO::FETCH_ASSOC);
         $r = $localRows[0];
 
         if ($r['accountId'] != $accountData['accountId']) {
             return array('result'=>'Account Id mismatch: local Id = ' . $r['accountId'] . ' remote Id = ' . $accountData['accountId']);
         }
 
-        $param['individualAccount.accountId'] = $accountData['accountId'];
+        $unwound = array();
+        $this->unwindResponse($unwound, $accountData);
+
+        $param['individualAccount.accountId'] = $unwound['accountId'];
 
         // Name, phone, email
-        $this->fillPcName($r, $param);
+        $this->fillPcName($r, $param, $unwound);
 
         // Address
-        $this->fillPcAddr($r, $param);
+        $this->fillPcAddr($r, $param, $unwound);
 
         // Other crap
-        $this->fillIndividualAccount($r);
+        $this->fillOther($r, $param, $unwound);
+
+        $paramStr = $this->fillIndividualAccount($r, $param, $unwound);
 
         // Custom Parameters
-        $customParamStr = $this->fillCustomFields($r);
+        $paramStr .= $this->fillCustomFields($r);
 
         // Log in with the web service
         $this->openTarget($this->userId, $this->password);
@@ -155,17 +160,17 @@ class TransferMembers {
         $request = array(
            'method' => 'account/updateIndividualAccount',
           'parameters' => $param,
-          'customParmeters' => $customParamStr
+          'customParmeters' => $paramStr
         );
 
-        $msg = '';
+        $msg = 'Updated ' . $r['firstName'] . ' ' . $r['lastName'];
         $result = $this->webService->go($request);
 
         if ($this->checkError($result)) {
             $msg = $this->errorMessage;
         }
 
-        return array('result' => $msg);
+        return $msg;
 
     }
 
@@ -177,6 +182,13 @@ class TransferMembers {
                 $newPrefix = $prefix . $k . '.';
                 $this->unwindResponse($line, $v, $newPrefix);
             } else {
+                if (is_bool($v)) {
+                    if ($v) {
+                        $v = 'true';
+                    } else {
+                        $v = 'false';
+                    }
+                }
                 $line[$prefix . $k] = $v;
             }
         }
@@ -226,6 +238,32 @@ class TransferMembers {
         if (isset($result['countries']['country'])) {
 
             foreach ($result['countries']['country'] as $c) {
+                $countries[$c['id']] = $c['name'];
+            }
+        }
+
+        return $countries;
+    }
+
+    public function listIndividualTypes() {
+
+        $countries = array();
+
+        $request = array(
+            'method' => 'account/listIndividualTypes',
+        );
+
+        // Log in with the web service
+        $this->openTarget($this->userId, $this->password);
+        $result = $this->webService->go($request);
+
+        if ($this->checkError($result)) {
+            throw new Hk_Exception_Runtime($this->errorMessage);
+        }
+
+        if (isset($result['individualTypes']['individualType'])) {
+
+            foreach ($result['individualTypes']['individualType'] as $c) {
                 $countries[$c['id']] = $c['name'];
             }
         }
@@ -385,7 +423,7 @@ class TransferMembers {
 
         foreach ($codes as $c) {
 
-            if (isset($r[$c]) && $r[$c] != '') {
+            if (isset($r[$c])) {
                 $param[$basePc . $c] = $r[$c];
             } else if (isset($origValues[$pc . $c])) {
                 $param[$basePc . $c] = $origValues[$pc . $c];
@@ -396,9 +434,24 @@ class TransferMembers {
 
     protected function fillIndividualAccount($r, &$param, $origValues = array()) {
 
+        $indCodes = array(
+            'id',
+            'name',
+        );
+
+        $base = 'individualAccount.';
+        $indBase = 'individualTypes.individualType.';
+
+        foreach ($origValues[$indBase] as $v) {
+
+            if (isset($v['id']))
+        }
+
+    }
+
+    protected function fillOther($r, &$param, $origValues = array()) {
+
         $codes = array(
-            'individualTypes.individualType.id',
-            'individualTypes.individualType.name',
             'noSolicitation',
             'url',
             'login.username',
@@ -415,7 +468,7 @@ class TransferMembers {
 
         foreach ($codes as $c) {
 
-            if (isset($r[$c]) && $r[$c] != '') {
+            if (isset($r[$c])) {
                 $param[$base . $c] = $r[$c];
             } else if (isset($origValues[$c])) {
                 $param[$base . $c] = $origValues[$c];
@@ -426,6 +479,7 @@ class TransferMembers {
     protected function fillPcAddr($r, &$param, $origValues = array()) {
 
         $codes = array(
+            'addressId',
             'isPrimaryAddress',
             'isShippingAddress',
             'addressType.name',
@@ -449,13 +503,12 @@ class TransferMembers {
 
         foreach ($codes as $c) {
 
-            if (isset($r[$c]) && $r[$c] != '') {
+            if (isset($r[$c])) {
                 $param[$basePc . $c] = $r[$c];
-            } else if (isset($origValues[$pc . $c])) {
-                $param[$basePc . $c] = $origValues[$pc . $c];
+            } else if (isset($origValues[$pc . '0.' . $c])) {
+                $param[$basePc . $c] = $origValues[$pc . '0.' . $c];
             }
         }
-
     }
 
     protected function fillCustomFields($r) {
@@ -499,16 +552,18 @@ class TransferMembers {
 
         }
 
-        $this->fillIndividualAccount($r, $param);
+        $paramStr = $this->fillIndividualAccount($r, $param);
+
+        $this->fillOther($r, $param);
 
         // Custom Parameters
-        $customParamStr = $this->fillCustomFields($r);
+        $paramStr .= $this->fillCustomFields($r);
 
 
         $request = array(
           'method' => 'account/createIndividualAccount',
           'parameters' => $param,
-          'customParmeters' => $customParamStr
+          'customParmeters' => $paramStr
           );
 
         return $this->webService->go($request);
@@ -566,7 +621,7 @@ class TransferMembers {
             }
 
         } else if (isset($result['operationResult']) && $result['operationResult'] == 'ERROR') {
-            $errorMsg .= 'Result: "' . $result['operationResult'] . '", Error Message: ' . $result['errorMessage'];
+            $errorMsg .= 'Result: ' . $result['operationResult'] . ', Error Message: ' . $result['errorMessage'];
 
         } else if ( isset( $result['operationResult'] ) && $result['operationResult'] != 'SUCCESS' ) {
 

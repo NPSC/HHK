@@ -351,6 +351,7 @@ class SiteConfig {
             }
         }
 
+        $tbl->addFooterTr(HTMLTable::makeTd('', array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
         return $tbl;
     }
 

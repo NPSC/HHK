@@ -368,6 +368,40 @@ function flagAlertMessage(mess, wasError) {
         window.scrollTo(0, 5);
     }
 }
+
+function updateClick(id, accountId) {
+
+    var postUpdate = $.post('ws_tran.php', {cmd:'update', accountId:accountId, id:id});
+
+    postUpdate.done(function(incmg) {
+        $('#btnUpdate').val('Update Remote');
+        if (!incmg) {
+            alert('Bad Reply from Server');
+            return;
+        }
+
+        try {
+            incmg = $.parseJSON(incmg);
+        } catch (err) {
+            alert('Bad JSON Encoding');
+            return;
+        }
+
+        if (incmg.error) {
+            if (incmg.gotopage) {
+                window.open(incmg.gotopage, '_self');
+            }
+            // Stop Processing and return.
+            flagAlertMessage(incmg.error, true);
+            return;
+        }
+
+        if (incmg.result) {
+            flagAlertMessage(incmg.result, false);
+        }
+    });
+
+}
 function getRemote(item, source) {
 
     var posting = $.post('ws_tran.php', {cmd:'getAcct', src:source, accountId:item.id});
@@ -403,36 +437,14 @@ function getRemote(item, source) {
                 var updteRemote = $('<input type="button" id="btnUpdate" value="Update Remote" />');
 
                 updteRemote.button().click(function () {
-
-                    var postUpdate = $.post('ws_tran.php', {cmd:'update', accountId:data.accountId, id:data.id});
-
-                    postUpdate.done(function(incmg) {
-                        if (!incmg) {
-                            alert('Bad Reply from Server');
-                            return;
-                        }
-
-                        try {
-                            incmg = $.parseJSON(incmg);
-                        } catch (err) {
-                            alert('Bad JSON Encoding');
-                            return;
-                        }
-
-                        if (incmg.error) {
-                            if (incmg.gotopage) {
-                                window.open(incmg.gotopage, '_self');
-                            }
-                            // Stop Processing and return.
-                            flagAlertMessage(incmg.error, true);
-                            return;
-                        }
-
-                        if (incmg.result) {
-                            
-                        }
-                    });
+                    $("#divAlert1").hide();
+                    if ($(this).val() === 'Working...') {
+                        return;
+                    }
+                    $(this).val('Working...');
+                    updateClick(item.id, incmg.accountId);
                 });
+
                 $('div#retrieve').prepend($('<h3>Local (HHK) Data </h3>').append(updteRemote));
                 $('#txtSearch').val('');
             }
@@ -447,7 +459,7 @@ function getRemote(item, source) {
         $('#btnHere, #btnCustFields').button();
 
         $('#btnCustFields').click(function () {
-
+            $("#divAlert1").hide();
             if ($('#btnCustFields').val() === 'Working...') {
                 return;
             }
@@ -500,7 +512,7 @@ function getRemote(item, source) {
             });
 
             $('#TxButton').button().show().click(function () {
-
+                $("#divAlert1").hide();
                 if ($('#TxButton').val() === 'Working...') {
                     return;
                 }

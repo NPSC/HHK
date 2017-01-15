@@ -71,13 +71,6 @@ var dtCols = [
 
 ];
 
-function updateVisitMessage(header, body, vPrefix) {
-    //$('#visitMsg').toggle("clip");
-    $('#' + vPrefix + 'h3VisitMsgHdr').text(header);
-    $('#' + vPrefix + 'spnVisitMsg').text(body);
-    $('#' + vPrefix + 'visitMsg').effect("pulsate");
-}
-
 function relationReturn(data) {
 
     data = $.parseJSON(data);

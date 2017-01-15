@@ -153,6 +153,10 @@ switch ($c) {
                     foreach ($rows[0] as $k => $v) {
                         $str .= $k . '=' . $v . '<br/>';
                     }
+
+                    if (isset($rows[0]['accountId'])){
+                        $events['accountId'] = $rows[0]['accountId'];
+                    }
                 }
 
         } else {

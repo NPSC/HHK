@@ -176,6 +176,7 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
     $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
 
     try {
+        // Custom fields
         $results = $transfer->listCustomFields();
         $custom_fields = array();
 
@@ -189,6 +190,26 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
         $confData = array('custom_fields' => $custom_fields);
         SiteConfig::saveConfig($dbh, $wsConfig, $confData, $uS->username);
 
+    } catch (Hk_Exception_Runtime $ex) {
+        $events = array("error" => "Transfer Error: " . $ex->getMessage());
+    }
+
+    if (isset($_POST['selIT'])) {
+
+        foreach ($_POST['selIT'] as $k => $v) {
+
+            $neonId = intval(filter_var($k, FILTER_SANITIZE_NUMBER_INT), 10);
+            if ($neonId > 0) {
+                $vol = filter_var($v, FILTER_SANITIZE_SPECIAL_CHARS);
+                $dbh->exec("Update neon_indiv_type set Vol_Type_Code = '$vol' where Neon_Id = $neonId");
+            }
+        }
+    }
+}
+
+if (isset($_POST['btnExtCountrys']) && is_null($wsConfig) === FALSE) {
+
+    try {
         // Load Countries
         $countries = $transfer->getCountryIds();
 
@@ -202,7 +223,6 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
             $stmt->fetchAll();
 
         }
-
 
     } catch (Hk_Exception_Runtime $ex) {
         $events = array("error" => "Transfer Error: " . $ex->getMessage());
@@ -403,7 +423,41 @@ $labels = SiteConfig::createCliteMarkup($labl)->generateMarkup();
 
 $externals = '';
 if (is_null($wsConfig) === FALSE) {
+
     $externals = SiteConfig::createCliteMarkup($wsConfig, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'neonTitles.cfg'))->generateMarkup();
+
+    $stmt = $dbh->query("Select * from neon_indiv_type;");
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // First load?
+    if (count($rows) == 0 || isset($_POST['btnExtIndiv'])) {
+
+        $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
+        // Load Individual types
+        $types = $transfer->listIndividualTypes();
+        foreach ($types as $k => $v) {
+            $dbh->exec("Replace into neon_indiv_type (Neon_Id, Neon_Name) values('$k', '$v');");
+        }
+
+        // reload
+        $stmt = $dbh->query("Select * from neon_indiv_type;");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    }
+
+    $vt = removeOptionGroups(readGenLookupsPDO($dbh, 'Vol_Type'));
+
+    $nTbl = new HTMLTable();
+    $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Member Type').HTMLTable::makeTh('Neon Name').HTMLTable::makeTh('Neon Id'));
+    foreach ($rows as $r) {
+        $nTbl->addBodyTr(
+            HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($vt, $r['Vol_Type_Code']), array('name'=>'selIT['.$r['Neon_Id'].']')))
+            .HTMLTable::makeTd($r['Neon_Name'])
+            .HTMLTable::makeTd($r['Neon_Id'])
+        );
+    }
+
+    $externals .= HTMLContainer::generateMarkup('p', 'Neon Individual Type Mapping', array('sytle'=>'font-weight:bold;margin-tpo:10px;')) . $nTbl->generateMarkup();
 }
 
 $webAlert = new alertMessage("webContainer");
@@ -479,9 +533,12 @@ $(document).ready(function() {
                 <div id="external" class="ui-tabs-hide" >
                     <form method="post" name="formext" action="">
                         <?php echo $externals; ?>
-                        <div style="float:right;margin-right:40px;">(Saving reads Neon Custom Field Id's and Country Id's.) <input type="submit" name="btnExtCnf" value="Save"/></div>
+                        <div style="float:right;margin-right:40px;">
+                            <input type="submit" style='margin-right:10px;' name="btnExtIndiv" value="Reload Neon Individual Id's"/>
+                            <input type="submit" style='margin-right:10px;' name="btnExtCountrys" value="Get Neon Country Id's"/>
+                            <input type="submit" name="btnExtCnf" value="Save"/>
+                        </div>
                     </form>
-
                 </div>
                 <div id="pay" class="ui-tabs-hide" >
                     <form method="post" name="form2" action="">

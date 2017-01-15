@@ -1005,11 +1005,12 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
         END) AS `state.code`,
         IFNULL(`cc`.`External_Id`, '') AS `country.id`,
         IFNULL(`na`.`Postal_Code`, '') AS `zipCode`,
-        (CASE WHEN `ng`.`Relationship_Code` = 'slf' THEN 'Patient' ELSE 'Guest' END) AS `individualTypes.individualType.name`,
+        IFNULL(`ni`.`Neon_Id`, '') AS `individualTypes.individualType.id`,
         IFNULL(`g3`.`Description`, '') AS `PSG_Relationship`,
         IFNULL(`ng`.`idPsg`, '') AS `PSG_ID`,
         IFNULL(`g4`.`Description`, '') AS `No_Return`,
-        'HHK' as `source.name`
+        'HHK' as `source.name`,
+        COUNT(`nv`.`idName`) as `Vol_Count`
     FROM
         `name_guest` `ng`
             LEFT JOIN
@@ -1040,14 +1041,17 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
         `gen_lookups` `g4` ON `nd`.`No_Return` = `g4`.`Code`
             AND (`g4`.`Table_Name` = 'NoReturnReason')
             LEFT JOIN
-        `gen_lookups` `g5` ON `n`.`Gender` = `g5`.`Code`
+        `gen_lookups` `g5` ON `n`.`Gender` = `g5`.`Code` AND `n`.`Gender` in ('m','f')
             AND (`g5`.`Table_Name` = 'Gender')
+            LEFT JOIN
+		`name_volunteer2` `nv` on `ng`.`idName` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type' AND `nv`.`Vol_Code` in ('g', 'p')
+            LEFT JOIN
+        `neon_indiv_type` `ni` ON  `nv`.`Vol_Code` = `ni`.`Vol_Type_Code`
     WHERE
         ((`ng`.`idName` > 0)
             AND (`n`.`Record_Member` = 1)
             AND (`n`.`Member_Status` IN ('a' , 'd', 'in')))
     GROUP BY n.idName;
-
 
 
 -- -----------------------------------------------------
