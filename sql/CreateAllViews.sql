@@ -1005,24 +1005,21 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
         END) AS `state.code`,
         IFNULL(`cc`.`External_Id`, '') AS `country.id`,
         IFNULL(`na`.`Postal_Code`, '') AS `zipCode`,
-        IFNULL(`ni`.`Neon_Id`, '') AS `individualTypes.individualType.id`,
-        IFNULL(`g3`.`Description`, '') AS `PSG_Relationship`,
-        IFNULL(`ng`.`idPsg`, '') AS `PSG_ID`,
+        IFNULL(`ni`.`Neon_Id`, '') AS `individualType.id`,
+     --   IFNULL(`g3`.`Description`, '') AS `PSG_Relationship`,
+     --   IFNULL(`ng`.`idPsg`, '') AS `PSG_ID`,
         IFNULL(`g4`.`Description`, '') AS `No_Return`,
-        'HHK' as `source.name`,
-        COUNT(`nv`.`idName`) as `Vol_Count`
+        'HHK' as `source.name`
     FROM
-        `name_guest` `ng`
+        `name` `n`
             LEFT JOIN
-        `name` `n` ON `ng`.`idName` = `n`.`idName`
-            LEFT JOIN
-        `name_address` `na` ON `ng`.`idName` = `na`.`idName`
+        `name_address` `na` ON `n`.`idName` = `na`.`idName`
             AND (`n`.`Preferred_Mail_Address` = `na`.`Purpose`)
             LEFT JOIN
-        `name_email` `ne` ON `ng`.`idName` = `ne`.`idName`
+        `name_email` `ne` ON `n`.`idName` = `ne`.`idName`
             AND (`n`.`Preferred_Email` = `ne`.`Purpose`)
             LEFT JOIN
-        `name_phone` `np` ON `ng`.`idName` = `np`.`idName`
+        `name_phone` `np` ON `n`.`idName` = `np`.`idName`
             AND (`n`.`Preferred_Phone` = `np`.`Phone_Code`)
             LEFT JOIN
         `name_demog` `nd` ON `n`.`idName` = `nd`.`idName`
@@ -1035,23 +1032,20 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
         `gen_lookups` `g2` ON `n`.`Name_Suffix` = `g2`.`Code`
             AND (`g2`.`Table_Name` = 'Name_Suffix')
             LEFT JOIN
-        `gen_lookups` `g3` ON `ng`.`Relationship_Code` = `g3`.`Code`
-            AND (`g3`.`Table_Name` = 'Patient_Rel_Type')
-            LEFT JOIN
         `gen_lookups` `g4` ON `nd`.`No_Return` = `g4`.`Code`
             AND (`g4`.`Table_Name` = 'NoReturnReason')
             LEFT JOIN
         `gen_lookups` `g5` ON `n`.`Gender` = `g5`.`Code` AND `n`.`Gender` in ('m','f')
             AND (`g5`.`Table_Name` = 'Gender')
             LEFT JOIN
-		`name_volunteer2` `nv` on `ng`.`idName` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type' AND `nv`.`Vol_Code` in ('g', 'p')
+		`name_volunteer2` `nv` on `n`.`idName` = `nv`.`idName` AND `nv`.`Vol_Category` = 'Vol_Type' AND `nv`.`Vol_Code` in ('p', 'g')
             LEFT JOIN
         `neon_indiv_type` `ni` ON  `nv`.`Vol_Code` = `ni`.`Vol_Type_Code`
     WHERE
-        ((`ng`.`idName` > 0)
+        `n`.`idName` > 0
+        AND n.idName in (select idName from name_guest)
             AND (`n`.`Record_Member` = 1)
-            AND (`n`.`Member_Status` IN ('a' , 'd', 'in')))
-    GROUP BY n.idName;
+            AND (`n`.`Member_Status` IN ('a' , 'd', 'in'));
 
 
 -- -----------------------------------------------------

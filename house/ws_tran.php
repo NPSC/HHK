@@ -143,19 +143,19 @@ switch ($c) {
         $source = 'remote';
         if (isset($_POST['src']) && $_POST['src'] === 'hhk') {
 
-                $stmt2 = $transfer->loadSourceDB($dbh, $accountId, '`vguest_data_neon`');
-                if (is_null($stmt2)) {
-                    $str = 'Error';
+                $row = $transfer->loadSourceDB($dbh, $accountId);
+
+                if (is_null($row)) {
+                    $str = 'Error - HHK Id not found';
+
                 } else {
 
-                    $rows = $stmt2->fetchAll(PDO::FETCH_ASSOC);
-
-                    foreach ($rows[0] as $k => $v) {
+                    foreach ($row as $k => $v) {
                         $str .= $k . '=' . $v . '<br/>';
                     }
 
-                    if (isset($rows[0]['accountId'])){
-                        $events['accountId'] = $rows[0]['accountId'];
+                    if (isset($row['accountId'])){
+                        $events['accountId'] = $row['accountId'];
                     }
                 }
 

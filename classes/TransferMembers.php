@@ -123,13 +123,11 @@ class TransferMembers {
 
 
         // Get member data record
-        $stmt2 = $this->loadSourceDB($dbh, $idName, '`vguest_data_neon`');
-        if (is_null($stmt2)) {
+        $r = $this->loadSourceDB($dbh, $idName);
+        if (is_null($r)) {
             return array('result'=>'member Id not found: ' . $idName);
         }
 
-        $localRows = $stmt2->fetchAll(PDO::FETCH_ASSOC);
-        $r = $localRows[0];
 
         if ($r['accountId'] != $accountData['accountId']) {
             return array('result'=>'Account Id mismatch: local Id = ' . $r['accountId'] . ' remote Id = ' . $accountData['accountId']);
@@ -149,7 +147,7 @@ class TransferMembers {
         // Other crap
         $this->fillOther($r, $param, $unwound);
 
-        $paramStr = $this->fillIndividualAccount($r, $param, $unwound);
+        $paramStr = $this->fillIndividualAccount($r);
 
         // Custom Parameters
         $paramStr .= $this->fillCustomFields($r);
@@ -278,7 +276,7 @@ class TransferMembers {
         // Log in with the web service
         $this->openTarget($this->userId, $this->password);
 
-        $stmt = $this->loadSourceDB($dbh, $sourceIds, '`vguest_search_neon`');
+        $stmt = $this->loadSearchDB($dbh, $sourceIds);
 
         if (is_null($stmt)) {
             return array('error'=>'No local data.');
@@ -331,15 +329,13 @@ class TransferMembers {
                 // Nothing found - create a new account at remote
 
                 // Get member data record
-                $stmt2 = $this->loadSourceDB($dbh, $r['HHK_ID'], '`vguest_data_neon`');
-                if (is_null($stmt2)) {
+                $row = $this->loadSourceDB($dbh, $r['HHK_ID']);
+                if (is_null($row)) {
                     continue;
                 }
 
-                $rows = $stmt2->fetchAll(\PDO::FETCH_ASSOC);
-
                 // Create new account
-                $result = $this->createAccount($rows[0]);
+                $result = $this->createAccount($row);
 
                 if ($this->checkError($result)) {
                     $f['Result'] = $this->errorMessage;
@@ -410,7 +406,6 @@ class TransferMembers {
             'phone3',
             'phone3Type',
             'fax',
-            'dob',
             'gender.name',
             'deceased',
             'title',
@@ -430,23 +425,33 @@ class TransferMembers {
             }
         }
 
+        // dob must be missing if not defined
+        if (isset($r['dob']) && $r['dob'] != '') {
+            $param[$basePc . 'dob'] = $r['dob'];
+        } else if (isset($origValues[$pc . 'dob']) && $origValues[$pc . 'dob'] != '') {
+            $param[$basePc . 'dob'] = $origValues[$pc . 'dob'];
+        }
     }
 
-    protected function fillIndividualAccount($r, &$param, $origValues = array()) {
+    protected function fillIndividualAccount($r) {
 
-        $indCodes = array(
-            'id',
-            'name',
-        );
+        $base = 'individualAccount.individualTypes.';
+        $indBase = 'individualType.id';
+        $str = '';
 
-        $base = 'individualAccount.';
-        $indBase = 'individualTypes.individualType.';
-
-        foreach ($origValues[$indBase] as $v) {
-
-            if (isset($v['id']))
+        if (isset($r[$indBase]) && $r[$indBase] > 0) {
+            $param[$base . $indBase] = $r[$indBase];
+            $str .= '&' . http_build_query($param);
         }
 
+
+
+        if (isset($r[$indBase . '2']) && $r[$indBase . '2'] > 0) {
+            $param[$base . $indBase] = $r[$indBase . '2'];
+            $str .= '&' . http_build_query($param);
+        }
+
+        return $str;
     }
 
     protected function fillOther($r, &$param, $origValues = array()) {
@@ -638,33 +643,41 @@ class TransferMembers {
 
     }
 
-    public function loadSourceDB(\PDO $dbh, $sourceIds, $tableName) {
+    protected function loadSearchDB(\PDO $dbh, $sourceIds) {
 
-        $idList = array();
-        $parm = '';
-
-        if (is_array($sourceIds)) {
-
-            // clean up the ids
-            foreach ($sourceIds as $s) {
-                if (intval($s, 10) > 0){
-                    $idList[] = intval($s, 10);
-                }
+        // clean up the ids
+        foreach ($sourceIds as $s) {
+            if (intval($s, 10) > 0){
+                $idList[] = intval($s, 10);
             }
+        }
 
-            if (count($idList) > 0) {
-                $parm = " in (" . implode(',', $idList) . ") ";
-            }
+        if (count($idList) > 0) {
 
-        } else if (is_int($sourceIds)) {
-
-            $parm = "=".$sourceIds;
+            $parm = " in (" . implode(',', $idList) . ") ";
+            return $dbh->query("Select * from vguest_search_neon where HHK_ID $parm");
 
         }
 
-        if ($parm != '') {
+        return NULL;
+    }
 
-            return $dbh->query("Select * from $tableName where HHK_ID $parm");
+    public function loadSourceDB(\PDO $dbh, $idName) {
+
+        $parm = intval($idName, 10);
+
+        if ($parm > 0) {
+
+            $stmt = $dbh->query("Select * from vguest_data_neon where HHK_ID = $parm");
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            if (count($rows) > 1) {
+                $rows[0]['individualType.id2'] = $rows[1]['individualType.id'];
+            } else {
+                $rows[0]['individualType.id2'] = '';
+            }
+
+            return $rows[0];
 
         }
 
