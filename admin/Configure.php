@@ -210,31 +210,6 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
     }
 }
 
-if (isset($_POST['btnExtCountrys']) && is_null($wsConfig) === FALSE) {
-
-    $tabIndex = 6;
-    try {
-        // Load Countries
-        $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
-        $countries = $transfer->getCountryIds();
-
-        $stmt = $dbh->prepare("Update country_code set External_Id=:eid where LOWER(Country_Name) = :cnam", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-
-        foreach ($countries as $k => $v) {
-
-            $nam = strtolower($v);
-            $stmt->bindParam(':eid', $k);
-            $stmt->bindParam(':cnam', $nam);
-            $stmt->execute();
-            $stmt->fetchAll();
-
-        }
-
-    } catch (Hk_Exception_Runtime $ex) {
-        $events = array("error" => "Transfer Error: " . $ex->getMessage());
-    }
-}
-
 if (isset($_POST["btnUlPatch"])) {
     $tabIndex = 1;
 }
@@ -541,7 +516,6 @@ $(document).ready(function() {
                         <?php echo $externals; ?>
                         <div style="float:right;margin-right:40px;">
                             <input type="submit" style='margin-right:10px;' name="btnExtIndiv" value="Reload Neon Individual Id's"/>
-                            <input type="submit" style='margin-right:10px;' name="btnExtCountrys" value="Get Neon Country Id's"/>
                             <input type="submit" name="btnExtCnf" value="Save"/>
                         </div>
                     </form>
