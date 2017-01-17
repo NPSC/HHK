@@ -20,22 +20,16 @@ class TransferMembers {
     protected $customFields;
     protected $errorMessage;
     protected $pageNumber;
-    protected $countries;
-    protected $states;
 
     public function __construct($userId, $password, array $customFields = array()) {
-        $this->webService = new Neon();
+
         $this->userId = $userId;
         $this->password = $password;
         $this->customFields = $customFields;
         $this->errorMessage = '';
         $this->pageNumber = 1;
-        $this->countries = NULL;
-        $this->states = NULL;
-    }
-
-    public function __destruct() {
-        $this->closeTarget();
+        $this->txMethod = '';
+        $this->txParams = '';
     }
 
     public function searchAccount($searchCriteria) {
@@ -347,8 +341,8 @@ class TransferMembers {
 
                 $this->updateLocalNameRecord($dbh, $r['HHK_ID'], $accountId, $username);
 
-                if ($rows[0]['accountId'] != '') {
-                    $f['Result'] = 'Contact was deleted at the remote system';
+                if ($row['accountId'] != '') {
+                    $f['Result'] = 'Contact was missing at the remote system';
                 } else {
                     $f['Result'] = 'New Contact';
                 }
@@ -399,17 +393,21 @@ class TransferMembers {
             'email1',
             'email2',
             'email3',
+            'fax',
+            'gender.name',
+            'deceased',
+            'title',
+            'department',
+        );
+
+        $nonEmptyCodes = array(
+            'dob',
             'phone1',
             'phone1Type',
             'phone2',
             'phone2Type',
             'phone3',
             'phone3Type',
-            'fax',
-            'gender.name',
-            'deceased',
-            'title',
-            'department',
         );
 
         $base = 'individualAccount.';
@@ -425,11 +423,13 @@ class TransferMembers {
             }
         }
 
-        // dob must be missing if not defined
-        if (isset($r['dob']) && $r['dob'] != '') {
-            $param[$basePc . 'dob'] = $r['dob'];
-        } else if (isset($origValues[$pc . 'dob']) && $origValues[$pc . 'dob'] != '') {
-            $param[$basePc . 'dob'] = $origValues[$pc . 'dob'];
+        foreach ($nonEmptyCodes as $c) {
+        // these codes must be missing if not defined
+            if (isset($r[$c]) && $r[$c] != '') {
+                $param[$basePc . $c] = $r[$c];
+            } else if (isset($origValues[$pc . $c]) && $origValues[$pc . $c] != '') {
+                $param[$basePc . $c] = $origValues[$pc . $c];
+            }
         }
     }
 
@@ -440,10 +440,9 @@ class TransferMembers {
         $str = '';
 
         if (isset($r[$indBase]) && $r[$indBase] > 0) {
-            $param[$base . $indBase] = $r[$indBase];
-            $str .= '&' . http_build_query($param);
+            //$param[$base . $indBase] = $r[$indBase];
+            $str = '&individualAccount.individualTypes.individualType.id=' . $r[$indBase];
         }
-
 
 
         if (isset($r[$indBase . '2']) && $r[$indBase . '2'] > 0) {
@@ -557,7 +556,7 @@ class TransferMembers {
 
         }
 
-        $paramStr = $this->fillIndividualAccount($r, $param);
+        $paramStr = $this->fillIndividualAccount($r);
 
         $this->fillOther($r, $param);
 
@@ -635,6 +634,7 @@ class TransferMembers {
 
         $this->errorMessage = $errorMsg;
 
+
         if ($errorMsg != '') {
             return TRUE;
         } else {
@@ -687,17 +687,18 @@ class TransferMembers {
 
     protected function openTarget($userId, $apiKey) {
 
-        $uS = Session::getInstance();
-
-        // Previous session established?
-        if (isset($uS->ulsessid) && $uS->ulsessid != '') {
-            $this->webService->setSession($uS->ulsessid);
-            return TRUE;
-        }
-
+//        $uS = Session::getInstance();
+//
+//        // Previous session established?
+//        if (isset($uS->ulsessid) && $uS->ulsessid != '') {
+//            $this->webService->setSession($uS->ulsessid);
+//            return TRUE;
+//        }
+//
 
         $keys = array('orgId'=>$userId, 'apiKey'=>$apiKey);
 
+        $this->webService = new Neon();
         $loginResult = $this->webService->login($keys);
 
 
@@ -709,19 +710,27 @@ class TransferMembers {
             throw new Hk_Exception_Upload('API Session Id is missing');
         }
 
-        $uS->ulsessid = $loginResult['userSessionId'];
+//        $uS->ulsessid = $loginResult['userSessionId'];
 
         return TRUE;
     }
 
     protected function closeTarget() {
 
-        $uS = Session::getInstance();
-        $uS->ulsessid = '';
+//        $uS = Session::getInstance();
+//        $uS->ulsessid = '';
 
         $this->webService->go( array( 'method' => 'common/logout' ) );
         $this->webService->setSession('');
 
+    }
+
+    public function getTxMethod() {
+        return $this->webService->txMethod;
+    }
+
+    public function getTxParams() {
+        return $this->webService->txParams;
     }
 
 

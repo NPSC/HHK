@@ -45,9 +45,7 @@ function createZipAutoComplete(txtCtrl, wsUrl, lastXhr) {
 
 function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNew, searchURL) {
     "use strict";
-    var oldData;
-    var lxhr;
-    var prevTerm = 0;
+    var cache = {};
     
     if (shoNew === undefined || shoNew === null) {
         shoNew = true;
@@ -60,15 +58,10 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
     txtCtrl.autocomplete({
         source: function(request, response) {
             
-            // Check the number of letters
-            if (request.term.length < minChars) {
+            var term = request.term.substr(0,minChars);
+            if ( term in cache ) {
                 
-                oldData = null;
-                prevTerm = request.term.length;
-                response();
-                
-            } else if (request.term.length >= minChars && oldData) {
-
+                txtCtrl.autocomplete( "option", "delay", 0 );
                 var bldr, 
                     terms = request.term.replace(',', '').split(" "),
                     matcher,
@@ -82,63 +75,41 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
                 }
                 
                 matcher = new RegExp( bldr , "i" );
-                filtered = $.grep( oldData, function( item ){
+                filtered = $.grep( cache[ term ], function( item ){
                     return matcher.test( item.value );
                 });
+                
+                if (filtered.length === 0) {
+                    filtered.push({'id':0, 'value':'No one found'});
+                    cache = {};
+                }
                 
                 if (shoNew) {
                     filtered.push({'id':0, 'value':'New Person'});
                 }
                 
-                prevTerm = request.term.length;
                 response( filtered );
-                
-            } else if (request.term.length === minChars && prevTerm < minChars) {
-                
-                txtCtrl.autocomplete( "option", "delay", 350 );
-                oldData = null;
-                inputParms.letters = request.term;
-                prevTerm = request.term.length;
-                
-                lxhr = $.getJSON(searchURL, inputParms,
-                    function(data, status, xhr) {
-                        txtCtrl.autocomplete( "option", "delay", 0 );
-                        if (xhr === lxhr) {
-                            
-                            if (data && data.error) {
-                                
-                                if (data.gotopage) {
-                                    response();
-                                    window.open(data.gotopage);
-                                }
-                                
-                                oldData = null;
-                                response(data);
 
-                            } else  if (data) {
-                                
-                                oldData = data;
-                                response(data);
-                                
-                            }
-                            
-                        } else {
-                            //prevTerm = request.term;
-                            if (oldData !== null) {
-                                response(oldData);
-                            } else {
-                                response();
-                            }
-                        }
-                } );
-            } else {
-                prevTerm = request.term.length
-                response();
+                return;
             }
+
+            txtCtrl.autocomplete( "option", "delay", 120 );
+            inputParms.letters = request.term;
+            $.getJSON( searchURL, inputParms, function( data, status, xhr ) {
+                
+                if (data.gotopage) {
+                    response();
+                    window.open(data.gotopage);
+                }
+
+              cache[ term ] = data;
+              response( data );
+            });
+
         },
         position: { my: "left top", at: "left bottom", collision: "flip" },
-        minLength: (minChars < 1 ? 0 : minChars - 1),
-        delay: 0,
+        minLength: minChars, 
+
         select: function(event, ui) {
             if (ui.item) {
                 selectFunction(ui.item);

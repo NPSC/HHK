@@ -63,6 +63,10 @@ switch ($c) {
             $ids = filter_var_array($_REQUEST['ids'], FILTER_SANITIZE_NUMBER_INT);
         }
 
+        if (isset($_POST['id'])) {
+            $ids[] = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
         if (count($ids) > 0) {
 
             try {

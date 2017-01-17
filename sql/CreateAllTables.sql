@@ -220,7 +220,7 @@ CREATE TABLE if not exists `counter` (
 -- -----------------------------------------------------
 -- Table `country_code`
 -- -----------------------------------------------------
-CREATE TABLE `country_code` (
+CREATE TABLE if not exists `country_code` (
   `Country_Name` varchar(145) NOT NULL,
   `ISO_3166-1-alpha-2` varchar(5) NOT NULL,
   `External_Id` int(11) NOT NULL DEFAULT '0',
@@ -1158,7 +1158,7 @@ CREATE TABLE if not exists `name_volunteer2` (
 -- -----------------------------------------------------
 -- Table `neon_indiv_type`
 -- -----------------------------------------------------
-CREATE TABLE `neon_indiv_type` (
+CREATE TABLE if not exists `neon_indiv_type` (
   `Neon_Id` INT NOT NULL COMMENT '',
   `Neon_Name` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
   `Vol_Type_Code` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',

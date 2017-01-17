@@ -136,11 +136,14 @@ $menuMarkup = $wInit->generatePageMenu();
 
 $config = new Config_Lite(ciCFG_FILE);
 $labl = new Config_Lite(LABEL_FILE);
+$wsConfig = NULL;
 
-try {
-    $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $config->getString('webServices', 'ContactManager', ''));
-} catch (Config_Lite_Exception_Runtime $ex) {
-    $wsConfig = NULL;
+if ($config->has('webServices', 'Service_Name') && $config->getString('webServices', 'Service_Name', '') != '')  {
+    try {
+        $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $config->getString('webServices', 'ContactManager', ''));
+    } catch (Config_Lite_Exception_Runtime $ex) {
+        $wsConfig = NULL;
+    }
 }
 
 $confError = '';
@@ -209,16 +212,19 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
 
 if (isset($_POST['btnExtCountrys']) && is_null($wsConfig) === FALSE) {
 
+    $tabIndex = 6;
     try {
         // Load Countries
+        $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
         $countries = $transfer->getCountryIds();
 
-        $stmt = $dbh->prepare('Update country_code set External_Id=:eid where LOWER(Country_Name) like LOWER(:cnam)', array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+        $stmt = $dbh->prepare("Update country_code set External_Id=:eid where LOWER(Country_Name) = :cnam", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
 
         foreach ($countries as $k => $v) {
 
-            $stmt->bindParam(':eid', $k, PDO::PARAM_INT);
-            $stmt->bindParam(':cnam', $v, PDO::PARAM_INT);
+            $nam = strtolower($v);
+            $stmt->bindParam(':eid', $k);
+            $stmt->bindParam(':cnam', $nam);
             $stmt->execute();
             $stmt->fetchAll();
 

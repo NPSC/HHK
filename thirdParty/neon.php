@@ -17,27 +17,31 @@ class Neon {
      */
 
     private $userSession;
+    public $txMethod;
+    public $txParams;
+    public $rxResult;
 
     private function api($request) {
 
-        $method = $request['method'];
-        $parameters = $request['parameters'];
-        $url = 'https://api.neoncrm.com/neonws/services/api/' . $method;
+        $this->txMethod = $request['method'];
+        $this->txParams = $request['parameters'];
+        $url = 'https://api.neoncrm.com/neonws/services/api/' . $this->txMethod;
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POST, TRUE);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $parameters);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $this->txParams);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Required for WAMP only
 
-        $result = curl_exec($ch);
+        $this->rxResult = curl_exec($ch);
+
         curl_close($ch);
 
-        $reply = json_decode($result, TRUE);
+        $reply = json_decode($this->rxResult, TRUE);
 
         if (is_null($reply)) {
-            return array('result'=> array('operationResult'=>'ERROR', 'errorMessage'=>$result));
+            return array('result'=> array('operationResult'=>'ERROR', 'errorMessage'=>$this->rxResult));
         }
 
         return $reply;
