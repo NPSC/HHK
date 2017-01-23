@@ -127,7 +127,7 @@ $tabIndex = 0;
 $resultAccumulator = '';
 $ccResultMessage = '';
 $holResultMessage = '';
-
+$externalErrMsg = '';
 
 // get session instance
 $uS = Session::getInstance();
@@ -172,9 +172,7 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
 
     $tabIndex = 6;
 
-    $post = $_POST['credentials'];
-
-    SiteConfig::saveConfig($dbh, $wsConfig, $post, $uS->username);
+    SiteConfig::saveConfig($dbh, $wsConfig, $_POST, $uS->username);
 
     $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
 
@@ -193,21 +191,23 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
         $confData = array('custom_fields' => $custom_fields);
         SiteConfig::saveConfig($dbh, $wsConfig, $confData, $uS->username);
 
-    } catch (Hk_Exception_Runtime $ex) {
-        $events = array("error" => "Transfer Error: " . $ex->getMessage());
-    }
+        if (isset($_POST['selIT'])) {
 
-    if (isset($_POST['selIT'])) {
+            foreach ($_POST['selIT'] as $k => $v) {
 
-        foreach ($_POST['selIT'] as $k => $v) {
+                $neonId = intval(filter_var($k, FILTER_SANITIZE_NUMBER_INT), 10);
 
-            $neonId = intval(filter_var($k, FILTER_SANITIZE_NUMBER_INT), 10);
-            if ($neonId > 0) {
-                $vol = filter_var($v, FILTER_SANITIZE_SPECIAL_CHARS);
-                $dbh->exec("Update neon_indiv_type set Vol_Type_Code = '$vol' where Neon_Id = $neonId");
+                if ($neonId > 0) {
+                    $vol = filter_var($v, FILTER_SANITIZE_SPECIAL_CHARS);
+                    $dbh->exec("Update neon_indiv_type set Vol_Type_Code = '$vol' where Neon_Id = $neonId");
+                }
             }
         }
+
+    } catch (Hk_Exception_Upload $ex) {
+        $externalErrMsg = "Transfer Error: " . $ex->getMessage();
     }
+
 }
 
 if (isset($_POST["btnUlPatch"])) {
@@ -414,8 +414,10 @@ if (is_null($wsConfig) === FALSE) {
     if (count($rows) == 0 || isset($_POST['btnExtIndiv'])) {
 
         $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
+
         // Load Individual types
         $types = $transfer->listIndividualTypes();
+
         foreach ($types as $k => $v) {
             $dbh->exec("Replace into neon_indiv_type (Neon_Id, Neon_Name) values('$k', '$v');");
         }
@@ -511,7 +513,9 @@ $(document).ready(function() {
                         <div style="float:right;margin-right:40px;"><input type="reset" name="btnreset" value="Reset" style="margin-right:5px;"/><input type="submit" name="btnLabelCnf" value="Save Labels"/></div>
                     </form>
                 </div>
+                <?php if ($serviceName != '') { ?>
                 <div id="external" class="ui-tabs-hide" >
+                    <div style="color:red;font-size: large;" id="divextnlerror"><?php echo $externalErrMsg; ?></div>
                     <form method="post" name="formext" action="">
                         <?php echo $externals; ?>
                         <div style="float:right;margin-right:40px;">
@@ -520,6 +524,7 @@ $(document).ready(function() {
                         </div>
                     </form>
                 </div>
+                <?php } ?>
                 <div id="pay" class="ui-tabs-hide" >
                     <form method="post" name="form2" action="">
                         <?php echo $payments; ?>

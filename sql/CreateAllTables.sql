@@ -564,8 +564,8 @@ CREATE  TABLE if not exists `house_log` (
   `User_Name` VARCHAR(45) NOT NULL DEFAULT '' ,
   `Id1` INT NOT NULL DEFAULT 0 ,
   `Id2` INT NOT NULL DEFAULT 0 ,
-  `Id3` INT NOT NULL DEFAULT 0 ,
-  `Id4` INT NOT NULL DEFAULT 0 ,
+  `Str1` VARCHAR(45) NOT NULL DEFAULT '' ,
+  `Str2` VARCHAR(45) NOT NULL DEFAULT '' ,
   `Log_Text` VARCHAR(5000) NOT NULL DEFAULT '' ,
   `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
  ) ENGINE=InnoDB;
@@ -1329,16 +1329,16 @@ CREATE  TABLE if not exists `postal_codes` (
 -- -----------------------------------------------------
 CREATE TABLE if not exists `psg` (
   `idPsg` INT(11) NOT NULL AUTO_INCREMENT ,
+  `idPatient` INT NOT NULL DEFAULT 0 ,
   `Title` VARCHAR(45) NOT NULL DEFAULT '' ,
   `Status` VARCHAR(5) NOT NULL DEFAULT '' ,
-  `idPatient` INT NOT NULL DEFAULT 0 ,
   `Primary_Language` INT NOT NULL DEFAULT 0 COMMENT '',
   `Language_Notes` TEXT NULL DEFAULT NULL COMMENT '' ,
   `Notes` TEXT NULL DEFAULT NULL ,
   `Last_Updated` DATETIME NULL DEFAULT NULL ,
   `Updated_By` VARCHAR(45) NOT NULL DEFAULT '' ,
   `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
-  PRIMARY KEY (`idPsg`) )
+  PRIMARY KEY (`idPsg`, `idPatient`) )
 ENGINE = InnoDB AUTO_INCREMENT = 10;
 
 

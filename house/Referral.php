@@ -219,7 +219,7 @@ $resultMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
-        <script type="text/javascript" src="js/referral-min.js<?php echo JS_V; ?>"></script>
+        <script type="text/javascript" src="js/referral.js<?php echo JS_V; ?>"></script>
         <script type="text/javascript">
     var pmtMkup = "<?php echo $paymentMarkup; ?>";
     var rctMkup = '<?php echo $receiptMarkup; ?>';

@@ -155,7 +155,7 @@ class ReservationSvcs {
 
             // Reservation-Guests list
             $dataArray['adguests'] = HTMLContainer::generateMarkup('fieldset',
-                ReservationSvcs::moreGuestsTable($dbh, $resv, $guests, $psg, $static), array('class'=>'hhk-panel'));
+                ReservationSvcs::moreGuestsTable($dbh, $resv, $guests, $psg, $labels, $static), array('class'=>'hhk-panel'));
 
             // Check for patient in additional guests list
             if (isset($guests[$psg->getIdPatient()]) || $resv->getIdGuest() == $psg->getIdPatient()) {
@@ -222,7 +222,7 @@ class ReservationSvcs {
         } else {
 
             if ($resv->getExpectedDays() < 1) {
-                $dataArray['warn'] = 'Reservation dates are the same or backwards.';
+                $dataArray['warning'] = 'Reservation dates are the same or backwards.';
             }
         }
 
@@ -528,6 +528,7 @@ class ReservationSvcs {
                 // send back a guest dialog to collect name, address, etc.
                 $dataArray['addtguest'] = HTMLContainer::generateMarkup('div', $guest->createAddToResvMarkup()
                         , array('id'=>'diagAddGuest', 'class'=>'hhk-tdbox hhk-visitdialog'));
+                $dataArray['addr'] = HouseServices::createAddrObj($dbh, $resv->getIdGuest());
                 return $dataArray;
             }
         }
@@ -639,7 +640,7 @@ class ReservationSvcs {
         }
 
         $dataArray['adguests'] = HTMLContainer::generateMarkup('fieldset',
-                ReservationSvcs::moreGuestsTable($dbh, $resv, $guests, $psg, FALSE), array('class'=>'hhk-panel'));
+                ReservationSvcs::moreGuestsTable($dbh, $resv, $guests, $psg, $labels, FALSE), array('class'=>'hhk-panel'));
 
 
         return $dataArray;
@@ -1195,7 +1196,7 @@ class ReservationSvcs {
         $dataArray['patStay'] = $patientStaying;
 
         $dataArray['adguests'] = HTMLContainer::generateMarkup('fieldset',
-                    ReservationSvcs::moreGuestsTable($dbh, $resv, self::getReservGuests($dbh, $resv->getIdReservation()), $psg, FALSE)
+                    ReservationSvcs::moreGuestsTable($dbh, $resv, self::getReservGuests($dbh, $resv->getIdReservation()), $psg, $labels, FALSE)
                     , array('class'=>'hhk-panel'));
 
 
@@ -1402,7 +1403,7 @@ class ReservationSvcs {
 
     }
 
-    public static function moreGuestsTable(\PDO $dbh, Reservation_1 $resv, array $guests, $psg, $nonActiveButtons, $editPage = "GuestEdit.php") {
+    public static function moreGuestsTable(\PDO $dbh, Reservation_1 $resv, array $guests, $psg, $labels, $nonActiveButtons, $editPage = "GuestEdit.php") {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
@@ -1496,7 +1497,7 @@ class ReservationSvcs {
 
     }
 
-    public static function removeResvGuest(\PDO $dbh, $id, $idReserv, $uname = '') {
+    public static function removeResvGuest(\PDO $dbh, $id, $idReserv, $labels, $uname = '') {
 
         $resGuestRs = new Reservation_GuestRS();
         $resGuestRs->idReservation->setStoredVal($idReserv);
@@ -1527,7 +1528,7 @@ class ReservationSvcs {
         }
 
         $dataArray['adguests'] = HTMLContainer::generateMarkup('fieldset',
-                ReservationSvcs::moreGuestsTable($dbh, $resv, $guests, $psg, FALSE), array('class'=>'hhk-panel'));
+                ReservationSvcs::moreGuestsTable($dbh, $resv, $guests, $psg, $labels, FALSE), array('class'=>'hhk-panel'));
 
         return $dataArray;
     }
@@ -1886,7 +1887,7 @@ class ReservationSvcs {
             return array("error" => "Reservation not moved.");
         }
 
-        if (abs($endDelta) > 21 || abs($startDelta) > 21) {
+        if (abs($endDelta) > ($uS->CalViewWeeks * 7) || abs($startDelta) > ($uS->CalViewWeeks * 7)) {
             return array("error" => 'Move refused, change too large: Start Delta = ' . $startDelta . ', End Delta = ' . $endDelta);
         }
 

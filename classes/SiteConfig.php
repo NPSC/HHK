@@ -395,7 +395,7 @@ class SiteConfig {
         return $tbl->generateMarkup() . $sctbl->generateMarkup();
     }
 
-    public static function saveConfig(\PDO $dbh, Config_Lite $config, array $post, $userName = '') {
+    public static function saveConfig($dbh, Config_Lite $config, array $post, $userName = '') {
 
         foreach ($post as $secName => $secArray) {
 
@@ -415,7 +415,7 @@ class SiteConfig {
                         }
 
                         // log changes
-                        if ($config->getString($secName, $itemName, '') != $val) {
+                        if ($config->getString($secName, $itemName, '') != $val && is_null($dbh) === FALSE) {
                             HouseLog::logSiteConfig($dbh, $secName . ':' . $itemName, $val, $userName);
                         }
 

@@ -29,6 +29,7 @@ var defaults = {
 
 	// display
 	defaultView: 'twoweeks',
+        viewDays: 28,
 	aspectRatio: 4.6,
 	header: {
 		left: 'title',
@@ -2154,7 +2155,7 @@ function TwoWeeksView(element, calendar) {
         //var start = cloneDate(date, true);
         //start.setDate(1);
         var start = addDays(cloneDate(date), -((date.getDay() - opt('firstDay') + 7) % 7));
-        var end = addDays(cloneDate(start), 21);
+        var end = addDays(cloneDate(start), calendar.options.viewDays);
 
         var visStart = cloneDate(start);
         //var visStart = date;
@@ -2186,7 +2187,7 @@ function TwoWeeksView(element, calendar) {
         t.end = end;
         t.visStart = visStart;
         t.visEnd = visEnd;
-        renderBasic(1, 1, 21, true);
+        renderBasic(1, 1, calendar.options.viewDays, true);
     }
 }
 

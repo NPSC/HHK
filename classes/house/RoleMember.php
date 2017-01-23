@@ -266,12 +266,12 @@ class GuestMember extends RoleMember {
 
             $uS = Session::getInstance();
             $idPrefix = $this->getIdPrefix();
-            $parray = $uS->guestLookups[GL_TableNames::PatientRel];
+            $parray = removeOptionGroups($uS->guestLookups[GL_TableNames::PatientRel]);
 
             // freeze control if patient is self.
             if ($lockRelChooser) {
                 if ($patientRelationship == RelLinkType::Self) {
-                    $parray = array($patientRelationship => $uS->guestLookups[GL_TableNames::PatientRel][$patientRelationship]);
+                    $parray = array($patientRelationship => $parray[$patientRelationship]);
                 } else {
                     unset($parray[RelLinkType::Self]);
                 }

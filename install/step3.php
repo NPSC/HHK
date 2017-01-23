@@ -15,6 +15,9 @@ require(SEC . 'Login.php');
 require (SEC . 'UserClass.php');
 require(SEC . 'ChallengeGenerator.php');
 require (CLASSES . 'Purchase/PriceModel.php');
+require (CLASSES . 'TableLog.php');
+require (CLASSES . 'HouseLog.php');
+require CLASSES . 'AuditLog.php';
 
 try {
 

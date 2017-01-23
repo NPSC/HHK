@@ -160,9 +160,10 @@ class Guest extends Role {
     public function createAddToResvMarkup() {
 
         $mk1 = '';
+        $labels = new Config_Lite(LABEL_FILE);
 
         // Guest Name
-        $mk1 .= $this->createNameMu(TRUE, TRUE);
+        $mk1 .= $this->createNameMu($labels, TRUE, TRUE);
 
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 

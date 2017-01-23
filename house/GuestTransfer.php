@@ -356,7 +356,7 @@ function flagAlertMessage(mess, wasError) {
         // define the success  message markup
         $('#alrResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
         $('#alrIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
-        spn.innerHTML = "<strong>Success: </strong>" + mess;
+        spn.innerHTML = "<strong>Result: </strong>" + mess;
         $("#divAlert1").show("scale horizontal");
         window.scrollTo(0, 5);
     } else {
@@ -369,8 +369,42 @@ function flagAlertMessage(mess, wasError) {
     }
 }
 
-function updateRemote(id, accountId) {
+function updateLocal(id) {
+    var postUpdate = $.post('ws_tran.php', {cmd:'rmvAcctId', id:id});
 
+    postUpdate.done(function(incmg) {
+        $('div#retrieve').children().remove();
+        $('div#retrieve').html('');
+
+        if (!incmg) {
+            alert('Bad Reply from Server');
+            return;
+        }
+
+        try {
+            incmg = $.parseJSON(incmg);
+        } catch (err) {
+            alert('Bad JSON Encoding');
+            return;
+        }
+
+        if (incmg.error) {
+            if (incmg.gotopage) {
+                window.open(incmg.gotopage, '_self');
+            }
+            // Stop Processing and return.
+            flagAlertMessage(incmg.error, true);
+            return;
+        }
+
+        if (incmg.result) {
+            flagAlertMessage(incmg.result, false);
+
+        }
+    });
+}
+
+function updateRemote(id, accountId) {
 
     var postUpdate = $.post('ws_tran.php', {cmd:'update', accountId:accountId, id:id});
 
@@ -397,12 +431,33 @@ function updateRemote(id, accountId) {
             return;
         }
 
-        if (incmg.result) {
+        if (incmg.warning) {
+
+            var updteLocal = $('<input type="button" id="btnLocal" value="" />');
+            $('#btnUpdate').hide();
+
+            flagAlertMessage(incmg.warning, true);
+
+            updteLocal.val('Remove Remote Account Id from Local Record');
+
+            updteLocal.button().click(function () {
+                $("#divAlert1").hide();
+                if ($(this).val() === 'Working...') {
+                    return;
+                }
+                $(this).val('Working...');
+
+                updateLocal(id);
+            });
+
+            $('div#retrieve').prepend(updteLocal);
+
+        } else if (incmg.result) {
             flagAlertMessage(incmg.result, false);
         }
     });
-
 }
+
 function transferRemote(transferIds) {
     var parms = {
         cmd: 'xfer',
@@ -433,9 +488,12 @@ function transferRemote(transferIds) {
         }
 
         if (incmg.data) {
+            $('div#retrieve').children().remove();
+            $('div#retrieve').html('');
 
             $('#divTable').children().remove();
             $('#divTable').append($(incmg.data));
+            $('#tblrpt').dataTable().destroy();
             $('#tblrpt').dataTable({
                 "iDisplayLength": 50,
                 "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
@@ -445,7 +503,10 @@ function transferRemote(transferIds) {
     });
 
 }
+
 function getRemote(item, source) {
+    $('div#printArea').hide();
+    $('#divPrintButton').hide();
 
     var posting = $.post('ws_tran.php', {cmd:'getAcct', src:source, accountId:item.id});
     posting.done(function(incmg) {
@@ -470,7 +531,7 @@ function getRemote(item, source) {
         }
 
         if (incmg.data) {
-            var command;
+            $('div#retrieve').children().remove();
             $('div#retrieve').html(incmg.data);
 
             if (source === 'remote') {
@@ -492,7 +553,7 @@ function getRemote(item, source) {
 
                         transferRemote([item.id]);
                     });
-                } else {
+                } else if (incmg.accountId) {
                     updteRemote.val('Update Remote');
                     updteRemote.button().click(function () {
                         $("#divAlert1").hide();
@@ -502,7 +563,10 @@ function getRemote(item, source) {
                         $(this).val('Working...');
                         updateRemote(item.id, incmg.accountId);
                     });
+                } else {
+                    updteRemote = '';
                 }
+
                 $('div#retrieve').prepend($('<h3>Local (HHK) Data </h3>').append(updteRemote));
                 $('#txtSearch').val('');
             }
@@ -515,43 +579,6 @@ function getRemote(item, source) {
         var makeTable = '<?php echo $mkTable; ?>';
         var transferIds = <?php echo json_encode($transferIds); ?>;
         $('#btnHere, #btnCustFields').button();
-
-        $('#btnCustFields').click(function () {
-            $("#divAlert1").hide();
-            if ($('#btnCustFields').val() === 'Working...') {
-                return;
-            }
-
-            $('#btnCustFields').val('Working...');
-
-            var posting = $.post('ws_tran.php', {cmd:'listCustFields'});
-            posting.done(function(incmg) {
-                $('#btnCustFields').val('List');
-                if (!incmg) {
-                    alert('Bad Reply from Server');
-                    return;
-                }
-                try {
-                incmg = $.parseJSON(incmg);
-                } catch (err) {
-                    alert('Bad JSON Encoding');
-                    return;
-                }
-
-                if (incmg.error) {
-                    if (incmg.gotopage) {
-                        window.open(incmg.gotopage, '_self');
-                    }
-                    // Stop Processing and return.
-                    flagAlertMessage(incmg.error, true);
-                    return;
-                }
-
-                if (incmg.data) {
-                    $('div#retrieve').children().remove().end().html(incmg.data + incmg.txMethod + incmg.txParams);
-                }
-            });
-        });
 
         if (makeTable === '1') {
             $('div#printArea').show();
@@ -581,7 +608,7 @@ function getRemote(item, source) {
         }
 
         $('.ckdate').datepicker({
-            yearRange: '-05:+01',
+            yearRange: '-07:+01',
             changeMonth: true,
             changeYear: true,
             autoSize: true,
@@ -612,7 +639,7 @@ function getRemote(item, source) {
     <body <?php if ($wInit->testVersion) { echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <h2><?php echo $wInit->pageHeading; ?></h2>
+            <h2><?php echo $wInit->pageHeading; ?>  <span style="font-size: .7em;"><a href="Set up Neon CRM.htm" target="_blank">(Instructions)</a></span></h2>
             <a id='aLoginLink' href="<?php echo $wsLink; ?>" style="float:left;margin-top:15px;margin-left:5px;margin-right:5px;padding-left:5px;padding-right:5px;" title="Click to log in."><div style="height:55px; width:130px; background: url(<?php echo $wsLogo; ?>) left top no-repeat; background-size:contain;"></div></a>
             <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
@@ -647,10 +674,6 @@ function getRemote(item, source) {
                         <tr>
                             <th>Local (HHK) Name Search</th>
                             <td><input id="txtSearch" type="text" /></td>
-                        </tr>
-                        <tr>
-                            <th>List <?php echo $serviceName; ?> Custom Fields</th>
-                            <td><input type="button" name="btnCustFields" id="btnCustFields" value="List"/></td>
                         </tr>
                     </table>
                     <table style="width:100%; margin-top: 15px;">

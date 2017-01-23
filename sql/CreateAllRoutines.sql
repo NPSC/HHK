@@ -103,11 +103,13 @@ CREATE PROCEDURE `delete_names_u_tbd`()
 
 BEGIN
 delete na from name_address na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+delete na from name_crypto na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 delete na from name_demog na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 delete na from name_email na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 delete na from name_phone na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+delete na from name_insurance na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+delete na from name_language na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 delete na from name_guest na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from name_crypto na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 delete na from name_volunteer2 na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 delete na from volunteer_hours na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 update donations d left join name n on d.Care_Of_Id = n.idName set d.Care_Of_Id = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
@@ -606,6 +608,9 @@ BEGIN
     update vehicle set 
             idRegistration = goodReg
     where idRegistration = badReg;
+
+    delete from registration where idRegistration = badReg;
+    delete from psg where idPsg = dupIdPsg;
 
     call remove_dup_guest(goodIdP, badIdP);
 

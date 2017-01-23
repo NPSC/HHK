@@ -994,15 +994,15 @@ class VisitView {
      */
     public static function moveVisit(\PDO $dbh, $idVisit, $span, $startDelta, $endDelta, $uname) {
 
+        $uS = Session::getInstance();
+
         if ($startDelta == 0 && $endDelta == 0) {
             return '';
         }
 
-        if (abs($endDelta) > 21 || abs($startDelta) > 21) {
+        if (abs($endDelta) > ($uS->CalViewWeeks * 7) || abs($startDelta) > ($uS->CalViewWeeks * 7)) {
             return 'Move refused, change too large: Start Delta = ' . $startDelta . ', End Delta = ' . $endDelta;
         }
-
-        $uS = Session::getInstance();
 
         // get visit recordsets, order by span
         $visitRS = new VisitRs();
@@ -1013,6 +1013,9 @@ class VisitView {
         if (count($visitRcrds) < 1) {
             return 'Visit not found';
         }
+
+        $startInterval = new \DateInterval('P' . abs($startDelta) . 'D');
+        $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
 
         $spans = array();
         $stays = array();
@@ -1064,8 +1067,6 @@ class VisitView {
         }
 
         $visits = array();
-        $startInterval = new \DateInterval('P' . abs($startDelta) . 'D');
-        $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
         $now = new \DateTime();
         $tonight = new \DateTime();
         $tonight->setTime(23, 59, 59);
@@ -1193,6 +1194,12 @@ class VisitView {
             if ($stayMsg != '') {
                 return $stayMsg;
             }
+        }
+
+        // Check for pre-existing reservations
+        $resvs = ReservationSvcs::getCurrentReservations($dbh, $visitRcrds[0]['idReservation'], $visitRcrds[0]['idPrimaryGuest'], 0, $firstArrival, $newEndDt);
+        if (count($resvs) > 0) {
+            return "The Move overlaps another reservation or visit.  ";
         }
 
         $actualDepart = NULL;

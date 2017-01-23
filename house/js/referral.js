@@ -78,6 +78,7 @@ function additionalGuest(item) {
         };
         $.post('ws_ckin.php',parms,
         function(data) {
+            
             "use strict";
             var resv = reserv;
             try {
@@ -86,10 +87,12 @@ function additionalGuest(item) {
                 alert("Parser error - " + err.message);
                 return;
             }
+            
             if (!data) {
                 alert('Bad Reply from Server');
                 return;
             }
+            
             if (data.error) {
                 if (data.gotopage) {
                     window.open(data.gotopage, '_self');
@@ -97,11 +100,17 @@ function additionalGuest(item) {
                 flagAlertMessage(data.error, true);
                 return;
             }
+            
             $('#txtAddGuest').val('');
             if (data.newRoom && data.newRoom > 1) {
                 flagAlertMessage('<a href="Referral.php?rid=' + data.newRoom + '">View New Reservation</a>', false);
                 return;
             }
+            
+            if (data.addr) {
+                resv.addr = data.addr;
+            }
+            
             if (data.addtguest && data.addtguest !== '') {
                 
                 $('#diagAddGuest').remove();
@@ -155,6 +164,17 @@ function additionalGuest(item) {
                 
                 $('#diagAddGuest').on('click', '.hhk-addrCopy', function() {
                     var prefix = $(this).attr('name');
+                    
+                    if (resv.addr && resv.addr.adraddress1 != '' && $('#' + prefix + 'adraddress1' + resv.adrPurpose).val() != resv.addr.adraddress1) {
+                        $('#' + prefix + 'adraddress1' + resv.adrPurpose).val(resv.addr.adraddress1);
+                        $('#' + prefix + 'adraddress2' + resv.adrPurpose).val(resv.addr.adraddress2);
+                        $('#' + prefix + 'adrcity' + resv.adrPurpose).val(resv.addr.adrcity);
+                        $('#' + prefix + 'adrcounty' + resv.adrPurpose).val(resv.addr.adrcounty);
+                        $('#' + prefix + 'adrstate' + resv.adrPurpose).val(resv.addr.adrstate);
+                        $('#' + prefix + 'adrcountry' + resv.adrPurpose).val(resv.addr.adrcountry);
+                        $('#' + prefix + 'adrzip' + resv.adrPurpose).val(resv.addr.adrzip);
+                        return;
+                    }
                     
                     if (resv.members.length < 1) {
                         return;
@@ -1382,6 +1402,16 @@ $(document).ready(function() {
         var prefix = $(this).attr('name'),
             otfix = 'h_';
             
+        if (resv.addr && resv.addr.adraddress1 != '' && $('#' + prefix + 'adraddress1' + resv.adrPurpose).val() != resv.addr.adraddress1) {
+            $('#' + prefix + 'adraddress1' + resv.adrPurpose).val(resv.addr.adraddress1);
+            $('#' + prefix + 'adraddress2' + resv.adrPurpose).val(resv.addr.adraddress2);
+            $('#' + prefix + 'adrcity' + resv.adrPurpose).val(resv.addr.adrcity);
+            $('#' + prefix + 'adrcounty' + resv.adrPurpose).val(resv.addr.adrcounty);
+            $('#' + prefix + 'adrstate' + resv.adrPurpose).val(resv.addr.adrstate);
+            $('#' + prefix + 'adrcountry' + resv.adrPurpose).val(resv.addr.adrcountry);
+            $('#' + prefix + 'adrzip' + resv.adrPurpose).val(resv.addr.adrzip);
+            return;
+        }
         if (prefix === 'h_') {
             otfix = 'pg';
         }

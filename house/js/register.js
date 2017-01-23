@@ -855,9 +855,10 @@ $(document).ready(function () {
             }
         },
         false);
-
+    var vdays = parseInt(viewDays, 10);
     $('#calendar').hhkCalendar({
         defaultView: 'twoweeks',
+        viewDays: vdays,
         hospitalSelector: null,
         theme: true,
         contentHeight: parseInt(roomCnt) * 28,

@@ -256,7 +256,7 @@ class Psg {
 
         $ngRs = $this->psgMembers[$idGuest];
 
-        if ($ngRs->Relationship_Code->getStoredVal() != RelLinkType::Self && Guest::checkCurrentStay($dbh, $idGuest) === FALSE) {
+        if ($ngRs->Relationship_Code->getStoredVal() != RelLinkType::Self && Guest::checkPsgStays($dbh, $idGuest, $this->getIdPsg()) === FALSE) {
 
             $count = EditRS::delete($dbh, $ngRs, array($ngRs->idName, $ngRs->idPsg));
 
@@ -265,8 +265,11 @@ class Psg {
                 VisitLog::logNameGuest($dbh, $this->getIdPsg(), $idGuest, $logText, "delete", $uname);
 
                 unset($this->psgMembers[$idGuest]);
+                return TRUE;
             }
         }
+
+        return FALSE;
     }
 
     public function createEditMarkup(\PDO $dbh, $relList, $labels, $pageName = 'GuestEdit.php', $id = 0, $shoChgLog = FALSE) {

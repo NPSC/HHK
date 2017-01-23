@@ -145,6 +145,7 @@ switch ($c) {
         }
 
         $source = 'remote';
+
         if (isset($_POST['src']) && $_POST['src'] === 'hhk') {
 
                 $row = $transfer->loadSourceDB($dbh, $accountId);
@@ -192,6 +193,8 @@ switch ($c) {
             $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
+        try {
+
         if ($id > 0 && $accountId > 0) {
 
             $result = $transfer->retrieveAccount($accountId);
@@ -200,10 +203,29 @@ switch ($c) {
 
             $events = array('result'=>$updateResult);
 
+        } else {
+            $events = array('warning'=>'Both the account id and the HHK id must be present.  Remote Account Id=' . $accountId . ', HHK Id =' . $id);
+        }
+
+        } catch (Hk_Exception_Runtime $hex) {
+            $events = array('warning'=>$hex->getMessage());
         }
 
         break;
 
+    case 'rmvAcctId':
+
+        $id = '';
+        if (isset($_POST['id'])) {
+            $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if ($id > 0) {
+            $num = $dbh->exec("update `name` set `External_Id` = '' where `idName` = $id;");
+            $events = array('result'=>$num . ' records updated.');
+        }
+
+        break;
 
     default:
         $events = array("error" => "Bad Command");

@@ -112,19 +112,23 @@ class TransferMembers {
     public function updateAccount(\PDO $dbh, $accountData, $idName) {
 
         if ($idName < 1) {
-            return array('result'=>'member Id not specified: ' . $idName);
+            throw new Hk_Exception_Runtime('member Id not specified: ' . $idName);
         }
 
 
         // Get member data record
         $r = $this->loadSourceDB($dbh, $idName);
         if (is_null($r)) {
-            return array('result'=>'member Id not found: ' . $idName);
+            throw new Hk_Exception_Runtime('member Id not found: ' . $idName);
         }
 
 
+        if (isset($accountData['accountId']) === FALSE) {
+            throw new Hk_Exception_Runtime('Remote account id not found: ' . $r['accountId']);
+        }
+
         if ($r['accountId'] != $accountData['accountId']) {
-            return array('result'=>'Account Id mismatch: local Id = ' . $r['accountId'] . ' remote Id = ' . $accountData['accountId']);
+            throw new Hk_Exception_Runtime('Account Id mismatch: local Id = ' . $r['accountId'] . ' remote Id = ' . $accountData['accountId']);
         }
 
         $unwound = array();
@@ -673,8 +677,10 @@ class TransferMembers {
 
             if (count($rows) > 1) {
                 $rows[0]['individualType.id2'] = $rows[1]['individualType.id'];
-            } else {
+            } else if (count($rows) == 1) {
                 $rows[0]['individualType.id2'] = '';
+            }   else {
+                $rows[0]['No Data'] = '';
             }
 
             return $rows[0];

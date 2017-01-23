@@ -537,7 +537,7 @@ try {
             $idReserv = intval(filter_var($_POST["rid"], FILTER_SANITIZE_STRING), 10);
         }
 
-        $events = ReservationSvcs::removeResvGuest($dbh, $id, $idReserv, $uS->username);
+        $events = ReservationSvcs::removeResvGuest($dbh, $id, $idReserv, $labels, $uS->username);
         break;
 
     case "addResv":

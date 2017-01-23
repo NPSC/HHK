@@ -461,7 +461,7 @@ function processGuests(incmg) {
         
         $('#txtEntryDate, #txtExitDate').datepicker();
         
-        var lstXhr;
+
         createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', add: 'phone', basis: 'ra'}, getAgent);
         if ($('#a_txtLastName').val() === '') {
             $('.hhk-agentInfo').hide();
@@ -1388,7 +1388,7 @@ $(document).ready(function() {
 
     $('#atblgetter, #stblgetter').DataTable();
     $.datepicker.setDefaults({
-        yearRange: '-5:+02',
+        yearRange: '-7:+02',
         changeMonth: true,
         changeYear: true,
         autoSize: true,

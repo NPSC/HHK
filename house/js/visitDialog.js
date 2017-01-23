@@ -223,7 +223,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
             $diagbox.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.success)));
             
             $diagbox.find('.ckdate').datepicker({
-                yearRange: '-01:+01',
+                yearRange: '-07:+01',
                 changeMonth: true,
                 changeYear: true,
                 autoSize: true,

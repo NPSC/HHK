@@ -285,6 +285,28 @@ abstract class Role {
         return $idVisit;
     }
 
+    public static function checkPsgStays(\PDO $dbh, $idName, $PSG_Id) {
+
+        $id = intval($idName, 10);
+        $idPsg = intval($PSG_Id, 10);
+
+        if ($id > 0 && $idPsg > 0) {
+
+            $query = "Select count(s.idStays)
+from stays s join visit v on s.idVisit = v.idVisit
+	left join registration r on v.idRegistration = r.idRegistration
+where r.idPsg = $idPsg and s.idName = " . $id;
+            $stmt = $dbh->query($query);
+            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+            if (count($rows) > 0 && $rows[0][0] > 0) {
+                return TRUE;
+            }
+        }
+
+        return FALSE;
+    }
+
     public function getCurrentVisitId(\PDO $dbh) {
 
         if (is_null($this->idVisit)) {

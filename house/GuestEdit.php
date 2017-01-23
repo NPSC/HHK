@@ -111,7 +111,13 @@ $guestTabIndex = 0;
 $memberFlag = ComponentAuthClass::is_Authorized("guestadmin");
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new alertMessage("divAlert2");
+$alertMsg->set_DisplayAttr("none");
+$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_iconId("alrIcon");
+$alertMsg->set_styleId("alrResponse");
+$alertMsg->set_txtSpanId("alrMessage");
+$alertMsg->set_Text("uh-oh");
 
 
 
@@ -127,6 +133,7 @@ if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)
 
         $alertMsg->set_Context(alertMessage::Alert);
         $alertMsg->set_Text($payResult->getDisplayMessage());
+        $alertMsg->set_DisplayAttr("block");
         $resultMessage = $alertMsg->createMarkup();
     }
 }
@@ -175,6 +182,7 @@ if (isset($_POST["hdnid"])) {
    if ($uS->guestId != $id) {
         $alertMsg->set_Context(alertMessage::Alert);
         $alertMsg->set_Text("Posted id does not match what the server remembers.");
+        $alertMsg->set_DisplayAttr("block");
         $resultMessage = $alertMsg->createMarkup();
         $id = 0;
    }
@@ -205,6 +213,7 @@ try {
 
     $alertMsg->set_Context(alertMessage::Notice);
     $alertMsg->set_Text($hkex->getMessage());
+    $alertMsg->set_DisplayAttr("block");
     $resultMessage = $alertMsg->createMarkup();
 
     $id = 0;
@@ -238,6 +247,7 @@ if ($idPsg > 0) {
 
         $alertMsg->set_Context(alertMessage::Alert);
         $alertMsg->set_Text('Guest is not a memeber of the PSG indicated on the URL (GET param).  ');
+        $alertMsg->set_DisplayAttr("block");
         $resultMessage = $alertMsg->createMarkup();
 
         $idPsg = 0;
@@ -253,7 +263,7 @@ if ($idPsg == 0) {
 
         // Select psg
         $tbl = new HTMLTable();
-        $tbl->addHeaderTr(HTMLTable::makeTh('Patient'));
+        $tbl->addHeaderTr(HTMLTable::makeTh('Who is the Patient?'));
 
         foreach ($ngRss as $n) {
 
@@ -314,25 +324,21 @@ if (isset($_POST["btnSubmit"])) {
 
             $delMe = FALSE;
 
-            // psg
+            // Delete member
             if (isset($_POST['delpMem'])) {
 
                 foreach ($_POST['delpMem'] as $k => $v) {
 
                     $k = intval(filter_var($k, FILTER_SANITIZE_NUMBER_INT),10);
 
-//                    // does guest have stays with this PSG?
-//                    $query = "select count(*) from visit v join registration on  where  and idName = :id;";
-//                    $stmt = $dbh->query($query);
-//                    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
-//
-//                    if (isset($rows) && $rows[0][0] > 0) {
-//                        return TRUE;
-//                    }
+                    if ($psg->removeGuest($dbh, $k, $uname)) {
+                        $msg .= 'Member removed from PSG.  ';
 
-                    $psg->removeGuest($dbh, $k, $uname);
-                    if ($k == $id) {
-                        $delMe = TRUE;
+                        if ($k == $id) {
+                            $delMe = TRUE;
+                        }
+                    } else {
+                        $msg .= 'Member cannot be removed from PSG.  ';
                     }
                 }
 
@@ -381,13 +387,15 @@ if (isset($_POST["btnSubmit"])) {
             $msg .= $psg->savePSG($dbh, $psg->getIdPatient(), $uname, $psgNotes);
 
             if ($delMe) {
-                $psg = new Psg($dbh);
+                exit(
+                    HTMLContainer::generateMarkup('h2', 'Deleted from PSG.  ' . HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'GuestEdit.php?id='.$id)))
+                );
             }
 
             // Registration
             $registration->extractRegistration($dbh, $_POST);
             $registration->extractVehicleFlag($_POST);
-            $msg = $registration->saveRegistrationRs($dbh, $psg->getIdPsg(), $uname);
+            $msg .= $registration->saveRegistrationRs($dbh, $psg->getIdPsg(), $uname);
 
 
             if ($uS->TrackAuto && $registration->getNoVehicle() == 0) {
@@ -449,8 +457,9 @@ if (isset($_POST["btnSubmit"])) {
         }
 
         // success
-        $alertMsg->set_Context(alertMessage::Success);
+        $alertMsg->set_Context(alertMessage::Notice);
         $alertMsg->set_Text($msg);
+        $alertMsg->set_DisplayAttr("block");
         $resultMessage = $alertMsg->createMarkup();
 
 
@@ -458,6 +467,7 @@ if (isset($_POST["btnSubmit"])) {
 
         $alertMsg->set_Context(alertMessage::Alert);
         $alertMsg->set_Text($ex->getMessage());
+        $alertMsg->set_DisplayAttr("block");
         $resultMessage = $alertMsg->createMarkup();
 
     }
@@ -722,15 +732,15 @@ $currentCheckedIn = CreateMarkupFromDB::generateHTML_Table(History::getCheckedIn
 
 
 // Instantiate the alert message control
-//$alertMsg = new alertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("uh-oh");
+$xhrMsg = new alertMessage("divAlert1");
+$xhrMsg->set_DisplayAttr("none");
+$xhrMsg->set_Context(alertMessage::Success);
+$xhrMsg->set_iconId("alrIcon");
+$xhrMsg->set_styleId("alrResponse");
+$xhrMsg->set_txtSpanId("alrMessage");
+$xhrMsg->set_Text("uh-oh");
 
-$alertMessage = $alertMsg->createMarkup();
+$alertMessage = $xhrMsg->createMarkup();
 
 // Save guest Id.
 $uS->guestId = $id;
@@ -781,7 +791,7 @@ $uS->guestId = $id;
             <div style="clear:both;"></div>
             <?php if ($showSearchOnly === FALSE) { ?>
             <form action="GuestEdit.php" method="post" id="form1" name="form1" >
-                <?php echo $resultMessage ?><?php echo $alertMessage; ?>
+                <?php echo $resultMessage;  echo $alertMessage; ?>
                 <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
                     <?php echo $nameMarkup; ?>
                     <?php echo $contactLastUpdated; ?>

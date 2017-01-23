@@ -25,7 +25,7 @@ class Patient extends Role {
     public function getPatientPsg(PDO $dbh) {
 
         if (is_null($this->patientPsg)) {
-            $this->patientPsg = new Psg($dbh, 0, $id);
+            $this->patientPsg = new Psg($dbh, 0, $this->getIdName());
         }
 
         return $this->patientPsg;

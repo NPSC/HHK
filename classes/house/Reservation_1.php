@@ -79,6 +79,7 @@ class Reservation_1 {
             $rows = EditRS::select($dbh, $resvRs, array($resvRs->idReservation));
 
             if (count($rows) > 0) {
+                $resvRs = new ReservationRS();
                 EditRS::loadRow($rows[0], $resvRs);
             }
         }
@@ -129,9 +130,15 @@ class Reservation_1 {
             }
         }
 
+        // Check for pre-existing visits
+        $resvs = ReservationSvcs::getCurrentReservations($dbh, $this->getIdReservation(), $this->getIdGuest(), 0, $newStartDT, $newEndDt);
+        if (count($resvs) > 0) {
+            $this->resultMessage = "The Move overlaps another reservation or visit.  ";
+            return FALSE;
+        }
+
         // Check for vacant rooms
         $rescs = $this->findResources($dbh, $newStartDT->format('Y-m-d 17:00:00'), $newEndDt->format('Y-m-d 09:00:00'), $this->getNumberGuests(), array('room','rmtroom','part'), TRUE);
-
 
         if (count($rescs) > 0) {
 

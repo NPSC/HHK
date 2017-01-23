@@ -356,6 +356,16 @@ if ($uS->RegColors == 'hospital') {
     }
 }
 
+// View density
+$weeks = $uS->CalViewWeeks;
+if ($weeks < 1) {
+    $weeks = 1;
+} else if ($weeks > 4) {
+    $weeks = 4;
+}
+
+$viewWeeks = '';  //HTMLContainer::generateMarkup('span', 'View ' . HTMLInput::generateMarkup($weeks, array('size'=>'1', 'id'=>'txtViewWeeks')) . ' weeks', array('style'=>'margin-right:5px;'));
+
 // instantiate a ChallengeGenerator object
 try {
     $chlgen = new ChallengeGenerator();
@@ -436,7 +446,7 @@ try {
                     <?php } } ?>
                 </ul>
                 <div id="vcal" style="margin-top: 10px; font-size: .8em; clear:left; display:none;">
-                    <?php echo $colorKey; ?>
+                    <?php echo $viewWeeks; echo $colorKey; ?>
                     <div id="calendar"></div>
                 </div>
                 <div id="vstays" class="hhk-tdbox" style="font-size:.8em; padding-bottom: 1.5em; display:none;">
@@ -556,6 +566,7 @@ try {
             var rvCols = $.parseJSON('<?php echo json_encode($rvCols); ?>');
             var wlCols = $.parseJSON('<?php echo json_encode($wlCols); ?>');
             var challVar = '<?php echo $challengeVar; ?>';
+            var viewDays = '<?php echo ($weeks * 7); ?>';
         </script>
         <script type="text/javascript" src="js/register-min.js<?php echo JS_V; ?>"></script>
 </html>

@@ -1314,7 +1314,7 @@ class HouseServices {
         return $dataArray;
     }
 
-    protected static function createAddrObj(\PDO $dbh, $idName) {
+    public static function createAddrObj(\PDO $dbh, $idName) {
 
         $guest = new Guest($dbh, '', $idName);
         $addrObj = $guest->getAddrObj();

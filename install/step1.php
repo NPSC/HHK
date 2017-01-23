@@ -57,7 +57,7 @@ $result = "";
 if (isset($_POST['btnSave'])) {
     addslashesextended($_POST);
     try {
-        SiteConfig::saveConfig($dbh, $config, $_POST, 'admin');
+        SiteConfig::saveConfig(NULL, $config, $_POST, 'admin');
         $result = "Config file saved.  ";
     } catch (Exception $ex) {
         $result = $ex->getMessage();
