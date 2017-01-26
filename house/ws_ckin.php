@@ -537,7 +537,11 @@ try {
             $idReserv = intval(filter_var($_POST["rid"], FILTER_SANITIZE_STRING), 10);
         }
 
+        // Get labels
+        $labels = new Config_Lite(LABEL_FILE);
+
         $events = ReservationSvcs::removeResvGuest($dbh, $id, $idReserv, $labels, $uS->username);
+        
         break;
 
     case "addResv":

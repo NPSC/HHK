@@ -1178,7 +1178,6 @@ function Reserv() {
 
 $(document).ready(function() {
     "use strict";
-    var lastXhr;
     var resv = reserv;
 
     $.ajaxSetup({

@@ -431,7 +431,7 @@ if (is_null($wsConfig) === FALSE) {
     $vt = removeOptionGroups(readGenLookupsPDO($dbh, 'Vol_Type'));
 
     $nTbl = new HTMLTable();
-    $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Member Type').HTMLTable::makeTh('Neon Name').HTMLTable::makeTh('Neon Id'));
+    $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Member Type').HTMLTable::makeTh('NeonCRM Name').HTMLTable::makeTh('NeonCRM Id'));
     foreach ($rows as $r) {
         $nTbl->addBodyTr(
             HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($vt, $r['Vol_Type_Code']), array('name'=>'selIT['.$r['Neon_Id'].']')))
@@ -440,7 +440,7 @@ if (is_null($wsConfig) === FALSE) {
         );
     }
 
-    $externals .= HTMLContainer::generateMarkup('p', 'Neon Individual Type Mapping', array('sytle'=>'font-weight:bold;margin-tpo:10px;')) . $nTbl->generateMarkup();
+    $externals .= HTMLContainer::generateMarkup('p', 'NeonCRM Individual Type Mapping', array('sytle'=>'font-weight:bold;margin-tpo:10px;')) . $nTbl->generateMarkup();
 }
 
 $webAlert = new alertMessage("webContainer");
@@ -519,7 +519,7 @@ $(document).ready(function() {
                     <form method="post" name="formext" action="">
                         <?php echo $externals; ?>
                         <div style="float:right;margin-right:40px;">
-                            <input type="submit" style='margin-right:10px;' name="btnExtIndiv" value="Reload Neon Individual Id's"/>
+                            <input type="submit" style='margin-right:10px;' name="btnExtIndiv" value="Reload NeonCRM Individual Id's"/>
                             <input type="submit" name="btnExtCnf" value="Save"/>
                         </div>
                     </form>

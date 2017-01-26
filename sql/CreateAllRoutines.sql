@@ -190,7 +190,7 @@ END
 --
 -- Procedure `getVolCategoryCodes`
 --
-DROP procedure IF EXISTS `getVolCategoryCodes` -- ;
+DROP procedure IF EXISTS `getVolCategoryCodes`; -- ;
 
 CREATE PROCEDURE `getVolCategoryCodes`
 (
@@ -367,7 +367,7 @@ END -- ;
 --
 -- Procedure `selectvolcategory`
 --
-drop procedure IF EXISTS `selectvolcategory` -- ;
+drop procedure IF EXISTS `selectvolcategory`; -- ;
 
 CREATE PROCEDURE `selectvolcategory`
 (
@@ -405,7 +405,7 @@ END -- ;
 --
 -- Procedure `sp_move_donation`
 --
-drop procedure IF EXISTS `sp_move_donation` -- ;
+drop procedure IF EXISTS `sp_move_donation`; -- ;
 
 CREATE PROCEDURE sp_move_donation
 (
@@ -433,7 +433,7 @@ END -- ;
 --
 -- Procedure `del_webuser`
 --
-DROP procedure IF EXISTS `del_webuser` -- ;
+DROP procedure IF EXISTS `del_webuser`; -- ;
 
 CREATE PROCEDURE `del_webuser`
 (
@@ -459,7 +459,7 @@ END -- ;
 --
 -- Procedure `sp_move_vol_categories`
 --
-DROP procedure IF EXISTS `sp_move_vol_categories` -- ;
+DROP procedure IF EXISTS `sp_move_vol_categories`; -- ;
 
 CREATE PROCEDURE `sp_move_vol_categories`
 (
@@ -503,7 +503,7 @@ END -- ;
 --
 -- Procedure `remove_dup_guest`
 --
-drop procedure if exists `remove_dup_guest` -- ;
+drop procedure if exists `remove_dup_guest`; -- ;
 
 CREATE PROCEDURE `remove_dup_guest`(goodId int, badId int)
 BEGIN
@@ -555,6 +555,7 @@ BEGIN
 	Member_Status = 'TBD' 
         where idName = badId;
 
+    call `delete_names_u_tbd`;
 END -- ;
 
 
@@ -564,7 +565,7 @@ END -- ;
 --
 -- Procedure `combinePSG`
 --
-drop procedure if exists `combinePSG` -- ;
+drop procedure if exists `combinePSG`; -- ;
 
 CREATE PROCEDURE `combinePSG`(keepIdPsg int(11), dupIdPsg int(11))
 BEGIN
@@ -611,6 +612,8 @@ BEGIN
 
     delete from registration where idRegistration = badReg;
     delete from psg where idPsg = dupIdPsg;
+    delete from hospital_stay where idPsg = dupIdPsg;
+    delete from waitlist where idPsg = dupIdPsg;
 
     call remove_dup_guest(goodIdP, badIdP);
 
@@ -622,7 +625,7 @@ END -- ;
 -- Procedure `delImediateResv`
 --
 
-DROP procedure IF EXISTS `delImediateResv` -- ;
+DROP procedure IF EXISTS `delImediateResv`; -- ;
 
 CREATE PROCEDURE `delImediateResv` ()
 BEGIN

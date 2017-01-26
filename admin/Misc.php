@@ -196,7 +196,7 @@ $accordIndex = 0;
 $cookieReply = '';
 
 if (isset($_COOKIE['housepc'])) {
-    $cookieReply = "Access is set on this PC" . $_COOKIE['housepc']['value'];
+    $cookieReply = "Access is set on this PC " . $_COOKIE['housepc']['value'];
 }
 
 if (isset($_POST['setCookie'])) {
@@ -468,9 +468,9 @@ if (isset($_POST["btnDoBackup"])) {
 $delIdListing = "";
 
 
-$res = $dbh->query("select idName from name where name.Member_Status = 'u' || name.Member_Status = 'TBD';");
+$res3 = $dbh->query("select idName from name where name.Member_Status = 'u' || name.Member_Status = 'TBD';");
 
-    while ($r = $res->fetch(\PDO::FETCH_ASSOC)) {
+    while ($r = $res3->fetch(\PDO::FETCH_NUM)) {
         $delIdListing .= "<a href='NameEdit.php?id=" . $r[0] . "'>" . $r[0] . "</a> ";
     }
 
@@ -489,7 +489,7 @@ $query = "select d.Donor_Id, sum(d.Amount), n.Name_Last_First from donations d l
 $res = $dbh->query($query);
 
 
-    while ($r = $res->fetch(\PDO::FETCH_ASSOC)) {
+    while ($r = $res->fetch(\PDO::FETCH_NUM)) {
         $donMoveNames .= "<tr><td>($r[0]) $r[2]</td><td class='tdBox'><input type='text' id='t_$r[0]' name='$r[0]' size='5' class='srchChars' title='Enter at least 3 characters to invoke search' />
           <select id='s_$r[0]' name='$r[0]' class='Selector'><option value='0'></option></select></td></tr>";
         $ids .= $r[0] . ",  ";

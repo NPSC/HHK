@@ -1048,7 +1048,7 @@ class PaymentSvcs {
                 // Determine amount to return
                 if ($returnAmt > $payRs->Amount->getStoredVal()) {
                     return array('warning' => 'Return Failed.  Return amount ($' . number_format($returnAmt,2) . ') is larger than the original purchase amount ($' . number_format($payRs->Amount->getStoredVal(), 2) . ').  ', 'bid' => $bid);
-                } else if ($returnAmt <= 0) {
+                } else if ($returnAmt <= 0 && $payRs->Is_Refund->getStoredVal() == 0) {
                     return array('warning' => 'Return Failed.  Return amount must be larger than 0.  ', 'bid' => $bid);
                 }
 
