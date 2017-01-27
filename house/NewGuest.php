@@ -43,6 +43,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     n.Name_Middle,
     n.Name_Last,
     IFNULL(g2.Description, '') AS `Name_Suffix`,
+    CASE when s.idName = v.idPrimaryGuest then 'Pri' else '' end as `Primary`,
     CASE when IFNULL(na.Address_2, '') = '' THEN IFNULL(na.Address_1, '') ELSE CONCAT(IFNULL(na.Address_1, ''), ' ', IFNULL(na.Address_2, '')) END AS `Address`,
     IFNULL(na.City, '') AS `City`,
     IFNULL(na.County, '') AS `County`,
@@ -56,6 +57,8 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     MIN(DATE(s.Checkin_Date)) AS `First Stay`
 FROM
     stays s
+        JOIN
+    visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
         JOIN
     `name` n ON s.idName = n.idname
         LEFT JOIN
@@ -113,8 +116,8 @@ ORDER BY `First Stay`";
 
         $reportRows = 1;
 
-        $file = 'VisitReport';
-        $sml = OpenXML::createExcel('', 'Visit Report');
+        $file = 'NewGuests';
+        $sml = OpenXML::createExcel('', 'New Guests');
 
         // build header
         $hdr = array();
@@ -155,7 +158,7 @@ ORDER BY `First Stay`";
         if ($local) {
 
             $r['idName'] = HTMLContainer::generateMarkup('a', $r['idName'], array('href'=>'GuestEdit.php?id=' . $r['idName'] . '&psg=' . $r['idPsg']));
-            unset($r['idPsg']);
+
             $r['First Stay'] = $arrivalDT->format('M j, Y');
 
             $tr = '';
@@ -168,7 +171,7 @@ ORDER BY `First Stay`";
         } else {
 
             $r['First Stay'] = PHPExcel_Shared_Date::PHPToExcel($arrivalDT);
-            unset($r['idPsg']);
+
 
             $n = 0;
             $flds = array();
@@ -269,6 +272,7 @@ $cFields[] = array("First", 'Name_First', 'checked', '', 's', '', array());
 $cFields[] = array("Middle", 'Name_Middle', 'checked', '', 's', '', array());
 $cFields[] = array("Last", 'Name_Last', 'checked', '', 's', '', array());
 $cFields[] = array("Suffix", 'Name_Suffix', 'checked', '', 's', '', array());
+$cFields[] = array("Primary Guest", 'Primary', 'checked', '', 's', '', array());
 
     $pFields = array('Address', 'City');
     $pTitles = array('Address', 'City');
@@ -286,6 +290,7 @@ $cFields[] = array("Suffix", 'Name_Suffix', 'checked', '', 's', '', array());
 $cFields[] = array("First Stay", 'First Stay', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array());
 
 $cFields[] = array("Patient Relation", 'Relationship', 'checked', '', 's', '', array());
+$cFields[] = array("Patient Group Id", 'idPsg', 'checked', '', 's', '', array());
 
 if (count($aList) > 0) {
     $cFields[] = array("Hospital / Assoc", 'hospitalAssoc', 'checked', '', 's', '', array());
@@ -574,12 +579,12 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
     });
  </script>
     </head>
-    <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
+    <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
             <div id="vnewguests" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
-                <p>Shows the number of guests STARTING their stay during the selected period.  This may not be the same number as the total number of guests at the house.</p>
+                <p style="margin:5px;">Shows the number of guests STARTING their stay during the selected period.  This may not be the same number as the total number of guests at the house.</p>
                 <form id="fcat" action="NewGuest.php" method="post">
                     <table style="float: left;">
                         <tr>
