@@ -116,63 +116,54 @@ class Patch {
         return $result;
     }
 
-    public static function updateViewsSps($mysqli, $tfile, $vFile = '', $spFile = '') {
+    public static function updateWithSqlStmts(\PDO $dbh, $tfile, $type = '') {
 
-        $message = '';
+        $message = $type . ' filename is missing.  ';
 
         if ($tfile != '') {
 
             $tquery = file_get_contents($tfile);
-            $tresult = multiQuery($mysqli, $tquery);
+            $tresult = self::multiQueryPDO($dbh, $tquery);
 
             if (count($tresult) > 0) {
+
+                $message = '';
 
                 foreach ($tresult as $err) {
                     $message .= $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
                 }
 
-                return 'Tables update failed:  ' . $message;
+                return $type . ' update failed:  ' . $message;
             }
 
-            $message = "Tables created... ";
+            $message = $type . " created... ";
 
         }
 
-        if ($vFile != '') {
+        return $message;
 
-            $vquery = file_get_contents($vFile);
-            $result = multiQuery($mysqli, $vquery);
+    }
 
-            if (count($result) > 0) {
+    public static function updateSps(\PDO $dbh, $spFile){
 
-                $message .= ' Views failed:   ';
-
-                foreach ($result as $err) {
-                    $message .= $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-                }
-
-            } else {
-
-                $message .= " Views created... ";
-            }
-        }
-
+        $message = 'Stored Procedure Filename is missing.  ';
 
         if ($spFile != '') {
 
             $spquery = file_get_contents($spFile);
-            $result = multiQuery($mysqli, $spquery, '$$', '-- ;');
+            //$result = multiQuery($mysqli, $spquery, '$$', '-- ;');
+            $result = self::multiQueryPDO($dbh, $spquery, '$$', '-- ;');
 
             if (count($result) > 0) {
 
-                $message .= " SP's Failed:   ";
+                $message = "**Stored Procedures Failed:   ";
 
                 foreach ($result as $err) {
                     $message .= $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
                 }
 
             } else {
-                $message .= "SP's created.  ";
+                $message = "Stored Procedures created.  ";
             }
         }
 
@@ -325,6 +316,31 @@ class Patch {
 
         return $result;
     }
+
+    public static function multiQueryPDO(\PDO $dbh, $query, $delimiter = ";", $splitAt = ';') {
+        $msg = array();
+
+        if ($query === FALSE || trim($query) == '') {
+            return $msg;
+        }
+
+        $qParts = explode($splitAt, $query);
+
+        foreach ($qParts as $q) {
+
+            $q = trim($q);
+            if ($q == '' || $q == $delimiter || $q == 'DELIMITER') {
+                continue;
+            }
+
+            if ($dbh->exec($q) === FALSE) {
+                $msg[] = array('error'=>$dbh->errorInfo(), 'errno'=> $dbh->errorCode(), 'query'=> $q );
+            }
+        }
+
+        return $msg;
+    }
+
 
 }
 

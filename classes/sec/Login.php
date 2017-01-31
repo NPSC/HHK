@@ -98,6 +98,7 @@ class Login {
             $ssn->databaseUName = $dbConfig['User'];
             $ssn->databasePWord = decryptMessage($dbConfig['Password']);
             $ssn->databaseName = $dbConfig['Schema'];
+            $ssn->dbms = $dbConfig['DBMS'];
         } else {
             $ssn->destroy();
             throw new Hk_Exception_Runtime("Bad Database Configurtion");

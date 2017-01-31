@@ -6,7 +6,7 @@
  * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+
  */
 
 require_once ("InstallIncludes.php");
@@ -37,11 +37,15 @@ exit();
 
 function testdb($post) {
 
+    $dbms = '';
     $dbURL = '';
     $dbUser = '';
     $pw = '';
     $dbName = '';
 
+    if (isset($post['dbms'])) {
+        $dbms = filter_var($post['dbms'], FILTER_SANITIZE_STRING);
+    }
     if (isset($post['dburl'])) {
         $dbURL = filter_var($post['dburl'], FILTER_SANITIZE_STRING);
     }
@@ -57,12 +61,29 @@ function testdb($post) {
 
 
     try {
-        $dbh = new \PDO(
-                'mysql:host=' . $dbURL . ';dbname=' . $dbName . '',
-                $dbUser,
-                $pw,
-                array(\PDO::ATTR_PERSISTENT => true)
-                );
+
+        switch ($dbms) {
+
+            case 'MS_SQL':
+                $dbh = initMS_SQL($dbURL, $dbName, $dbUser, $pw);
+                break;
+
+            case 'MYSQL':
+                $dbh = initMY_SQL($dbURL, $dbName, $dbUser, $pw);
+                break;
+
+            default:
+
+        }
+
+
+
+//        $dbh = new \PDO(
+//                'mysql:host=' . $dbURL . ';dbname=' . $dbName . '',
+//                $dbUser,
+//                $pw,
+//                array(\PDO::ATTR_PERSISTENT => true)
+//                );
 
         $dbh->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $serverInfo = $dbh->getAttribute(\PDO::ATTR_SERVER_VERSION);

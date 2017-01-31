@@ -301,6 +301,24 @@ class TransferMembers {
                 continue;
             }
 
+            // Check for NEON not finding the account Id
+            if ( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] == 0 && $r['Account Id'] != '') {
+
+                // search again without the Neon Acct Id
+                $r['Account Id'] = '';
+
+                // Search target system
+                $result = $this->searchTarget($r);
+
+                if ($this->checkError($result)) {
+                    $f['Result'] = $this->errorMessage;
+                    $replys[] = $f;
+                    continue;
+                }
+
+            }
+
+            // Test results
             if ( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] == 1 ) {
 
                 // We have a similar contact.
@@ -346,7 +364,7 @@ class TransferMembers {
                 $this->updateLocalNameRecord($dbh, $r['HHK_ID'], $accountId, $username);
 
                 if ($row['accountId'] != '') {
-                    $f['Result'] = 'Contact was missing at the remote system';
+                    $f['Result'] = 'Contact was recreated at the remote system.';
                 } else {
                     $f['Result'] = 'New Contact';
                 }
@@ -356,7 +374,7 @@ class TransferMembers {
             } else {
 
                 //huh?
-                $f['Result'] = 'Huh? Number of returned records not defined.';
+                $f['Result'] = 'API ERROR: The Number of returned records is not defined.';
                 $replys[] = $f;
             }
 
@@ -546,7 +564,7 @@ class TransferMembers {
     protected function createAccount(array $r) {
 
         $param = array(
-            'originDetail' => $this->userId,
+            'originDetail' => 'Hospitality HouseKeeper Connector',
         );
 
         $this->fillPcName($r, $param);
@@ -597,10 +615,7 @@ class TransferMembers {
         // Apply search criteria
         foreach ($searchCriteria as $k => $v) {
 
-            // Special handling for custom fields.
-            if ((isset($this->customFields[$k]) && $this->customFields[$k] != '')) {
-                //$search['criteria'][] = array($this->customFields[$k], 'EQUAL', $v);
-            } else if ($k != '' && $v != '') {
+            if (isset($this->customFields[$k]) == FALSE && $k != '' && $v != '') {
                 $search['criteria'][] = array($k, 'EQUAL', $v);
             }
         }
@@ -693,14 +708,9 @@ class TransferMembers {
 
     protected function openTarget($userId, $apiKey) {
 
-//        $uS = Session::getInstance();
-//
-//        // Previous session established?
-//        if (isset($uS->ulsessid) && $uS->ulsessid != '') {
-//            $this->webService->setSession($uS->ulsessid);
-//            return TRUE;
-//        }
-//
+        if (function_exists('curl_version') === FALSE) {
+            throw new Hk_Exception_Upload('PHP configuration error: cURL functions are missing.');
+        }
 
         $keys = array('orgId'=>$userId, 'apiKey'=>$apiKey);
 
@@ -716,15 +726,10 @@ class TransferMembers {
             throw new Hk_Exception_Upload('API Session Id is missing');
         }
 
-//        $uS->ulsessid = $loginResult['userSessionId'];
-
         return TRUE;
     }
 
     protected function closeTarget() {
-
-//        $uS = Session::getInstance();
-//        $uS->ulsessid = '';
 
         $this->webService->go( array( 'method' => 'common/logout' ) );
         $this->webService->setSession('');

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * commonFunc.php
  *
@@ -7,7 +8,6 @@
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
-
 function initPDO($override = FALSE) {
     $ssn = Session::getInstance();
     /* Get Sectors from session */
@@ -17,6 +17,7 @@ function initPDO($override = FALSE) {
 
     $dbuName = $ssn->databaseUName;
     $dbPw = $ssn->databasePWord;
+
 
     if ($ssn->rolecode >= WebRole::Guest && $override === FALSE) {
         // Get the site configuration object
@@ -32,12 +33,20 @@ function initPDO($override = FALSE) {
     }
 
     try {
-        $dbh = new \PDO(
-                "mysql:host=".$ssn->databaseURL.";dbname=" . $ssn->databaseName,
-                $dbuName,
-                $dbPw,
-                array(\PDO::ATTR_PERSISTENT => true)
-                );
+
+        switch ($ssn->dbms) {
+
+            case 'MS_SQL':
+                $dbh = initMS_SQL($ssn->databaseURL, $ssn->databaseName, $dbuName, $dbPw);
+                break;
+
+            case 'MYSQL':
+                $dbh = initMY_SQL($ssn->databaseURL, $ssn->databaseName, $dbuName, $dbPw);
+                break;
+
+            default:
+
+        }
 
         $dbh->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
         $dbh->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
@@ -51,7 +60,24 @@ function initPDO($override = FALSE) {
         $ssn->destroy();
         die();
     }
+
     return $dbh;
+}
+
+function initMS_SQL($dbURL, $dbName, $dbuName, $dbPw) {
+    //$serverName = "(local)\sqlexpress";
+
+    /* Connect using Windows Authentication. */
+    return new \PDO("sqlsrv:server=$dbURL;Database=$dbName", $dbuName, $dbPw);
+
+}
+
+function initMy_SQL($dbURL, $dbName, $dbuName, $dbPw) {
+
+    return new \PDO(
+        "mysql:host=" . $dbURL . ";dbname=" . $dbName, $dbuName, $dbPw, array(\PDO::ATTR_PERSISTENT => true)
+    );
+
 }
 
 function syncTimeZone(\PDO $dbh) {
@@ -62,9 +88,8 @@ function syncTimeZone(\PDO $dbh) {
     $mins = abs($mins);
     $hrs = floor($mins / 60);
     $mins -= $hrs * 60;
-    $offset = sprintf('%+d:%02d', $hrs*$sgn, $mins);
+    $offset = sprintf('%+d:%02d', $hrs * $sgn, $mins);
     $dbh->exec("SET time_zone='$offset';");
-
 }
 
 function stripslashes_gpc(&$value) {
@@ -105,7 +130,6 @@ function prepareEmail(Config_Lite $config) {
         case 'mail':
             $mail->isMail();
             break;
-
     }
 
     return $mail;
@@ -116,17 +140,15 @@ function addslashesextended(&$arr_r) {
 
     if (get_magic_quotes_gpc()) {
         array_walk_recursive($arr_r, 'stripslashes_gpc');
-
     }
 }
+
 function stripSlashesExtended(&$arr_r) {
 
     if (get_magic_quotes_gpc()) {
         array_walk_recursive($arr_r, 'stripslashes_gpc');
-
     }
 }
-
 
 function setTimeZone($uS, $strDate) {
 
@@ -146,7 +168,6 @@ function setTimeZone($uS, $strDate) {
         } catch (\Exception $ex) {
             $theDT = new \DateTime();
         }
-
     } else {
 
         try {
@@ -158,23 +179,21 @@ function setTimeZone($uS, $strDate) {
     }
 
     return $theDT;
-
 }
-
 
 function incCounter(\PDO $dbh, $counterName) {
 
-        $dbh->query("CALL IncrementCounter('$counterName', @num);");
+    $dbh->query("CALL IncrementCounter('$counterName', @num);");
 
-        foreach ($dbh->query("SELECT @num") as $row) {
-            $rptId = $row[0];
-        }
+    foreach ($dbh->query("SELECT @num") as $row) {
+        $rptId = $row[0];
+    }
 
-        if ($rptId == 0) {
-            throw new Hk_Exception_Runtime("Increment counter not set up for $counterName.");
-        }
+    if ($rptId == 0) {
+        throw new Hk_Exception_Runtime("Increment counter not set up for $counterName.");
+    }
 
-        return $rptId;
+    return $rptId;
 }
 
 function checkHijack($uS) {
@@ -239,84 +258,84 @@ function getYearOptionsMarkup($slctd, $startYear, $fyMonths, $showAllYears = TRU
     return $markup;
 }
 
-
-function getKey() { return "017d609a4b2d8910685595C8";  }
+function getKey() {
+    return "017d609a4b2d8910685595C8";
+}
 
 function getIV() {
     return "fYfhHeDm";
 }
 
-
 function encryptMessage($input) {
     $key = getKey();
     $iv = getIV();
-    $bit_check=8;// bit amount for diff algor.
+    $bit_check = 8; // bit amount for diff algor.
 
-    return encrypt($input,$key,$iv,$bit_check);
+    return encrypt($input, $key, $iv, $bit_check);
 }
 
 function getNotesKey($keyPart) {
     return "E4HD9h4DhS56DY" . trim($keyPart) . "3Nf";
 }
 
-
 function encryptNotes($input, $pw) {
     $crypt = "";
     if ($pw != "" && $input != "") {
         $key = getNotesKey($pw);
         $iv = getIV();
-        $bit_check=8;// bit amount for diff algor.
-        $crypt = encrypt($input,$key,$iv,$bit_check);
+        $bit_check = 8; // bit amount for diff algor.
+        $crypt = encrypt($input, $key, $iv, $bit_check);
     }
 
     return $crypt;
 }
 
 function decryptMessage($encrypt) {
-    $iv = getIV();// 8 bit IV
-    $bit_check=8;// bit amount for diff algor.
+    $iv = getIV(); // 8 bit IV
+    $bit_check = 8; // bit amount for diff algor.
 
-    return decrypt($encrypt,getKey(),$iv,$bit_check);
+    return decrypt($encrypt, getKey(), $iv, $bit_check);
 }
 
 function decryptNotes($encrypt, $pw) {
     $clear = "";
 
     if ($pw != "" && $encrypt != "") {
-        $iv = getIV();// 8 bit IV
-        $bit_check=8;// bit amount for diff algor.
+        $iv = getIV(); // 8 bit IV
+        $bit_check = 8; // bit amount for diff algor.
         $key = getNotesKey($pw);
-        $clear = decrypt($encrypt,$key,$iv,$bit_check);
+        $clear = decrypt($encrypt, $key, $iv, $bit_check);
     }
 
     return $clear;
 }
 
-function encrypt($text,$key,$iv,$bit_check) {
-    $text_num =str_split($text,$bit_check);
+function encrypt($text, $key, $iv, $bit_check) {
+    $text_num = str_split($text, $bit_check);
 
     $text_num = $bit_check - strlen($text_num[count($text_num) - 1]);
 
-    for ($i=0; $i<$text_num; $i++)
-    {$text = $text . chr($text_num);}
+    for ($i = 0; $i < $text_num; $i++) {
+        $text = $text . chr($text_num);
+    }
 
-    $cipher = mcrypt_module_open(MCRYPT_TRIPLEDES,'','cbc','');
+    $cipher = mcrypt_module_open(MCRYPT_TRIPLEDES, '', 'cbc', '');
     mcrypt_generic_init($cipher, $key, $iv);
-    $decrypted = mcrypt_generic($cipher,$text);
+    $decrypted = mcrypt_generic($cipher, $text);
     mcrypt_generic_deinit($cipher);
     return base64_encode($decrypted);
 }
 
-function decrypt($encrypted_text,$key,$iv,$bit_check){
-    $cipher = mcrypt_module_open(MCRYPT_TRIPLEDES,'','cbc','');
+function decrypt($encrypted_text, $key, $iv, $bit_check) {
+    $cipher = mcrypt_module_open(MCRYPT_TRIPLEDES, '', 'cbc', '');
     mcrypt_generic_init($cipher, $key, $iv);
     $decrypted = mdecrypt_generic($cipher, base64_decode($encrypted_text));
     mcrypt_generic_deinit($cipher);
-    $last_char=substr($decrypted,-1);
+    $last_char = substr($decrypted, -1);
 
-    for($i=1; $i < $bit_check; $i++){
-        if(chr($i)==$last_char){
-            $decrypted=substr($decrypted, 0, strlen($decrypted) - $i);
+    for ($i = 1; $i < $bit_check; $i++) {
+        if (chr($i) == $last_char) {
+            $decrypted = substr($decrypted, 0, strlen($decrypted) - $i);
             break;
         }
     }
@@ -357,7 +376,6 @@ function readGenLookupsPDO(\PDO $dbh, $tbl, $orderBy = "Code") {
     return $genArray;
 }
 
-
 function readLookups(\PDO $dbh, $tbl, $orderBy = "Code") {
 
     $query = "SELECT Code, Title FROM lookups WHERE Category = '$tbl' and `Use` = 'y' order by `$orderBy`;";
@@ -391,7 +409,6 @@ function doOptionsMkup($gArray, $sel, $offerBlank = true) {
     }
 
     return $data;
-
 }
 
 function DoLookups($con, $tbl, $sel, $offerBlank = true) {
@@ -405,7 +422,7 @@ function removeOptionGroups($gArray) {
     $clean = array();
     if (is_array($gArray)) {
         foreach ($gArray as $s) {
-            $clean[$s[0]] = array($s[0],$s[1]);
+            $clean[$s[0]] = array($s[0], $s[1]);
         }
     }
     return $clean;
@@ -440,7 +457,6 @@ function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $type = 
                     EditRS::delete($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
                     $logText = HouseLog::getDeleteText($glRs, $tblName . $code);
                     HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'delete', $uS->username);
-
                 } else {
                     // update
                     if (isset($desc[$code]) && $desc[$code] != '') {
@@ -505,7 +521,6 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $repl
                     EditRS::delete($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
                     $logText = HouseLog::getDeleteText($glRs, $tblName . $code);
                     HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'delete', $uS->username);
-
                 } else {
                     // update
                     if (isset($desc[$code]) && $desc[$code] != '') {

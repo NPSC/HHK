@@ -29,22 +29,6 @@ $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
 
-// Load the session with member - based lookups
-$wInit->sessionLoadGenLkUps();
-$wInit->sessionLoadGuestLkUps();
-
-$config = new Config_Lite(ciCFG_FILE);
-
-$serviceName = $config->getString('webServices', 'Service_Name', '');
-$webServices = $config->getString('webServices', 'ContactManager', '');
-if ($serviceName != '' && $webServices != '') {
-
-    $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
-
-} else {
-    throw new Hk_Exception_Runtime('Web Services Configuration file is missing. ');
-}
-
 // Instantiate the alert message control
 $alertMsg = new alertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
@@ -53,6 +37,25 @@ $alertMsg->set_iconId("alrIcon");
 $alertMsg->set_styleId("alrResponse");
 $alertMsg->set_txtSpanId("alrMessage");
 $alertMsg->set_Text("help");
+
+// Load the session with member - based lookups
+$wInit->sessionLoadGenLkUps();
+$wInit->sessionLoadGuestLkUps();
+
+$config = new Config_Lite(ciCFG_FILE);
+
+$serviceName = $config->getString('webServices', 'Service_Name', '');
+$webServices = $config->getString('webServices', 'ContactManager', '');
+
+if ($serviceName != '' && $webServices != '') {
+    $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
+} else {
+    exit('<h2>HHK configuration error:  Web Services Configuration file is missing. Trying to open ' . REL_BASE_DIR . 'conf' . DS .  $webServices . '</h2>');
+}
+
+if (function_exists('curl_version') === FALSE) {
+    exit('<h2>PHP configuration error: cURL functions are missing. </h2>');
+}
 
 $resultMessage = $alertMsg->createMarkup();
 
@@ -493,7 +496,9 @@ function transferRemote(transferIds) {
 
             $('#divTable').children().remove();
             $('#divTable').append($(incmg.data));
-            $('#tblrpt').dataTable().destroy();
+            if ($('#tblrpt').length > 0) {
+                $('#tblrpt').dataTable().destroy();
+            }
             $('#tblrpt').dataTable({
                 "iDisplayLength": 50,
                 "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],

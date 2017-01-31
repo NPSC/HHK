@@ -240,6 +240,7 @@ class ActivityReport {
     public static function HospStayLog(\PDO $dbh, $startDate, $endDate, $idPsg = 0) {
 
         $uS = Session::getInstance();
+        $labels = new Config_Lite(LABEL_FILE);
         $idP = intval($idPsg, 10);
 
         if ($idP > 0) {

@@ -89,7 +89,8 @@ $configuration = createMarkup($config);
             dburl: document.getElementById('dbURL').value,
             dbuser: document.getElementById('dbUser').value,
             dbPW: document.getElementById('dbPassword').value,
-            dbSchema: document.getElementById('dbSchema').value
+            dbSchema: document.getElementById('dbSchema').value,
+            dbms: document.getElementById('dbDBMS').value
         };
         $.post('ws_install.php',
             parms,

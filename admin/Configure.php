@@ -246,16 +246,16 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
             // Update labels file
             $resultAccumulator .= $patch->loadConfigUpdates('../patch/patchLabel.cfg', $labl);
 
-            $mysqli = openMysqli($dbh, $uS);
+            //$mysqli = openMysqli($dbh, $uS);
 
             // Update Tables
-            $resultAccumulator .= $patch->updateViewsSps($mysqli, '../sql/CreateAllTables.sql');
+            $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
 
             // Run patches
             if (file_exists('../patch/patchSQL.sql')) {
 
-                $vquery = file_get_contents('../patch/patchSQL.sql');
-                $resultArray = multiQuery($mysqli, $vquery);
+                //$vquery = file_get_contents('../patch/patchSQL.sql');
+                $resultArray = $patch->updateWithSqlStmts($dbh, '.../patch/patchSQL.sql', "Updates");  //multiQuery($mysqli, $vquery);
 
                 $errorCount = 0;
                 foreach ($resultArray as $err) {
@@ -269,11 +269,18 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
                 }
             }
 
-            // Update views and sp's
+            // Update views
             if ($errorCount < 1) {
-                $resultAccumulator .= $patch->updateViewsSps($mysqli, '', '../sql/CreateAllViews.sql', '../sql/CreateAllRoutines.sql');
+                $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllViews.sql', 'Views');
             } else {
-                $errorMsg .= '**Views and Stored Procedures not updated**  ';
+                $errorMsg .= '**Views not updated**  ';
+            }
+
+            // Update SPs
+            if ($errorCount < 1) {
+                $resultAccumulator .= $patch->updateSps($dbh, '../sql/CreateAllRoutines.sql');
+            } else {
+                $errorMsg .= '** Stored Procedures not updated**  ';
             }
 
             // Update pay types
@@ -329,8 +336,13 @@ if (isset($_POST['btnSaveSQL'])) {
 
     $tabIndex = 1;
 
-    $mysqli = openMysqli($dbh, $uS);
-    $resultAccumulator = Patch::updateViewsSps($mysqli, '../sql/CreateAllTables.sql', '../sql/CreateAllViews.sql', '../sql/CreateAllRoutines.sql');
+    // Update Tables
+    $resultAccumulator .= Patch::updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
+    $resultAccumulator .= Patch::updateWithSqlStmts($dbh, '../sql/CreateAllViews.sql', 'Views');
+    $resultAccumulator .= Patch::updateSps($dbh, '../sql/CreateAllRoutines.sql');
+
+    //$mysqli = openMysqli($dbh, $uS);
+    //$resultAccumulator = Patch::updateViewsSps($mysqli, '../sql/CreateAllTables.sql', '../sql/CreateAllViews.sql', '../sql/CreateAllRoutines.sql');
 
     // Log update.
     $logText = "Save SQL.  " . $resultAccumulator;
