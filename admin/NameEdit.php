@@ -490,8 +490,8 @@ $alertMessage = $alertMsg->createMarkup();
                         <?php echo $volTabNames; ?>
                         <?php if ($donationsFlag) { echo "<li id='donblank'><a href='#vdonblank'>Donations...</a></li>\n"; } ?>
                         <li><a href="#vnotes">Notes</a></li>
-                        <li><a href="#vwuser">Web Account...</a></li>
-                        <li><a href="#vchangelog">Change Log</a></li>
+                        <li id="wbuser"><a href="#vwuser">Web Account...</a></li>
+                        <li id="changelog"><a href="#vchangelog">Change Log</a></li>
                     </ul>
                     <div id="vhistory" style="background:#EFDBC2;">
                             <?php echo $recHistory; ?>

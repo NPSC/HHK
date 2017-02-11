@@ -9,13 +9,13 @@ div#global-title {
     top: 0;
     width: 100%;
     z-index: 20;
-/*    background: url("../images/jq-global-nav.png") repeat-x scroll 0 bottom #1B1B1B;*/
     background: url("redmond/images/ui-bg_gloss-wave_55_5c9ccc_500x100.png") repeat-x scroll 0 bottom #5c9ccc;
-}
-#global-nav nav {
     height: 39px;
 }
-#global-nav nav ul {
+#global-nav #navContainer {
+    float:right;
+}
+#global-nav #nav ul {
     border-left: 1px solid rgba(97, 159, 205, 0.35);
     border-right: 1px solid rgba(255, 255, 255, 0.098);
     display: inline;
@@ -24,10 +24,10 @@ div#global-title {
     margin: 0;
     text-align: left;
 }
-#global-nav nav ul.links {
+#global-nav #nav ul.links {
     float: left;
 }
-#global-nav nav ul li {
+#global-nav #nav ul li {
     border-left: 1px solid rgba(255, 255, 255, 0.098);
     border-right: 1px solid rgba(97, 159, 205, 0.35);
     cursor: pointer;
@@ -36,21 +36,17 @@ div#global-title {
     font-family: segoe ui,Arial,sans-serif;
     font-weight: bold;
     position: relative;
-    /*text-shadow: 0 0 2px #000000;*/
     top: 2px;
     transition: all 0.2s ease 0s;
 }
-.ie #global-nav nav ul li {
-    top: 2px;
-}
-#global-nav nav ul li:hover {
+#global-nav #nav ul li:hover {
     background-color: #3E6D8F;
     color: #ffffff;
 }
-#global-nav nav ul li i {
+#global-nav #nav ul li i {
     height: 1em;
 }
-#global-nav nav ul li a {
+#global-nav #nav ul li a {
     color: #ffffff;
     display: block;
     font-style: normal;
@@ -59,61 +55,58 @@ div#global-title {
     padding: 8px 12px;
     text-decoration: none;
 }
-#global-nav nav ul li ul {
+#global-nav #nav ul li ul {
     box-shadow: 0 4px 5px rgba(97, 159, 205, 0.4);
     display: none;
     left: -2px;
     opacity: 0;
     padding: 0;
     position: absolute;
-    top: 30px;
+    top: 35px;
     transition: opacity 0.2s ease 0s;
     visibility: hidden;
     width: 140px;
     z-index: 400;
 }
-#global-nav nav ul li ul.wide {
+#global-nav #nav ul li ul.wide {
     width: 260px;
 }
-#global-nav nav ul li ul li {
+#global-nav #nav ul li ul li {
     background-color: #3E6D8F;
     color: #FFFFFF;
     display: block;
     float: none;
     top:0;
 }
-#global-nav nav ul li ul li.hhk-myPage {
+#global-nav #nav ul li ul li.hhk-myPage {
     background-color: #345E7A;
     border: solid 1px black;
 }
 
-#global-nav nav ul li ul li:hover {
+#global-nav #nav ul li ul li:hover {
     background-color: #223D4F;
 }
-#global-nav nav ul li:hover ul {
+#global-nav #nav ul li:hover ul {
     display: block;
     opacity: 1;
     visibility: visible;
 }
-#global-nav nav ul.projects li.project {
-    /*background: url("../images/jq-nav-icons.png") repeat scroll -6px 0 rgba(0, 0, 0, 0);*/
-    height: 22px;
-    padding: 0;
-    margin-top: 5px;
-    text-indent: -9999px;
-    width: 22px;
-    z-index: 10;
-}
-#global-nav nav ul.projects li.project a {
-    display: block;
-    background-color: white;
-    padding:0;
-    padding-top:1px;
-    height: 20px;
-}
-#global-nav nav ul.projects li.project a span {
-    margin:2px;
-}
 li.hhk-myMenuTop {
     background-color: #3E6D8F;
 }
+	#icons {
+		margin: 0;
+		padding: 0;
+	}
+	#icons li {
+		margin: 2px;
+		position: relative;
+		padding: 4px 0;
+		cursor: pointer;
+		float: left;
+		list-style: none;
+	}
+	#icons span.ui-icon {
+		float: left;
+		margin: 0 4px;
+	}

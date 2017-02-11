@@ -9,13 +9,13 @@ div#global-title {
     top: 0;
     width: 100%;
     z-index: 20;
-
-    background-color: #459E00;
-}
-#global-nav nav {
+    background: url("ss/images/ui-bg_highlight-hard_15_459e00_1x100.png") repeat-x scroll 0 bottom #459E00;
     height: 39px;
 }
-#global-nav nav ul {
+#global-nav #navContainer {
+    float:right;
+}
+#global-nav #nav ul {
     border-left: 1px solid rgba(0, 0, 0, 0.35);
     border-right: 1px solid rgba(255, 255, 255, 0.098);
     display: inline;
@@ -24,10 +24,10 @@ div#global-title {
     margin: 0;
     text-align: left;
 }
-#global-nav nav ul.links {
+#global-nav #nav ul.links {
     float: left;
 }
-#global-nav nav ul li {
+#global-nav #nav ul li {
     border-left: 1px solid rgba(255, 255, 255, 0.098);
     border-right: 1px solid rgba(0, 0, 0, 0.35);
     cursor: pointer;
@@ -36,21 +36,17 @@ div#global-title {
     font-family: segoe ui,Arial,sans-serif;
     font-weight: bold;
     position: relative;
-    /*text-shadow: 0 0 2px #000000;*/
     top: 1px;
     transition: all 0.2s ease 0s;
 }
-.ie #global-nav nav ul li {
-    top: 2px;
-}
-#global-nav nav ul li:hover {
+#global-nav #nav ul li:hover {
     background-color: #2d6700;
     color: #ffffff;
 }
-#global-nav nav ul li i {
+#global-nav #nav ul li i {
     height: 1em;
 }
-#global-nav nav ul li a {
+#global-nav #nav ul li a {
     color: #ffffff;
     display: block;
     font-style: normal;
@@ -59,60 +55,57 @@ div#global-title {
     padding: 8px 12px;
     text-decoration: none;
 }
-#global-nav nav ul li ul {
+#global-nav #nav ul li ul {
     box-shadow: 0 4px 5px rgba(0, 0, 0, 0.4);
     display: none;
     left: -2px;
     opacity: 0;
     padding: 0;
     position: absolute;
-    top: 31px;
+    top: 35px;
     transition: opacity 0.2s ease 0s;
     visibility: hidden;
     width: 140px;
     z-index: 400;
 }
-#global-nav nav ul li ul.wide {
+#global-nav #nav ul li ul.wide {
     width: 260px;
 }
-#global-nav nav ul li ul li {
+#global-nav #nav ul li ul li {
     background-color: #2d6700;
     color: #FFFFFF;
     display: block;
     float: none;
 }
-#global-nav nav ul li ul li.hhk-myPage {
+#global-nav #nav ul li ul li.hhk-myPage {
     background-color: #1D4300;
     border: solid 1px black;
 }
-#global-nav nav ul li ul li:hover {
+#global-nav #nav ul li ul li:hover {
     background-color: #1d4300;
 }
-#global-nav nav ul li:hover ul {
+#global-nav #nav ul li:hover ul {
     display: block;
     opacity: 1;
     visibility: visible;
 }
-#global-nav nav ul.projects li.project {
-    height: 22px;
-    padding: 0;
-    margin-top: 6px;
-    text-indent: -9999px;
-    width: 22px;
-    z-index: 10;
-}
-#global-nav nav ul.projects li.project a {
-    display: block;
-    background-color: white;
-    padding:0;
-    padding-top:1px;
-    height: 20px;
-}
-#global-nav nav ul.projects li.project a span {
-    margin:2px;
-
-}
 li.hhk-myMenuTop {
     background-color: #2D6700;
 }
+	#icons {
+		margin: 0;
+		padding: 0;
+	}
+	#icons li {
+		margin: 2px;
+		position: relative;
+		padding: 4px 0;
+		cursor: pointer;
+		float: left;
+		list-style: none;
+	}
+	#icons span.ui-icon {
+		float: left;
+		margin: 0 4px;
+	}
 

@@ -471,7 +471,7 @@ function transferRemote(transferIds) {
     posting.done(function(incmg) {
         $('#TxButton').val('Transfer').hide();
         if (!incmg) {
-            alert('Bad Reply from Server');
+            alert('Bad Reply from HHK Web Server');
             return;
         }
         try {
@@ -516,7 +516,7 @@ function getRemote(item, source) {
     var posting = $.post('ws_tran.php', {cmd:'getAcct', src:source, accountId:item.id});
     posting.done(function(incmg) {
         if (!incmg) {
-            alert('Bad Reply from Server');
+            alert('Bad Reply from HHK Web Server');
             return;
         }
         try {
@@ -683,7 +683,7 @@ function getRemote(item, source) {
                     </table>
                     <table style="width:100%; margin-top: 15px;">
                         <tr>
-                            <td><input type="submit" name="btnHere" id="btnHere" value="Get Records"/></td>
+                            <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records"/></td>
 
                         </tr>
                     </table>

@@ -1176,6 +1176,8 @@ CREATE TABLE if not exists `page` (
   `File_Name` varchar(65) NOT NULL,
   `Login_Page_Id` int(11) NOT NULL DEFAULT '0',
   `Title` varchar(45) NOT NULL DEFAULT '',
+  `Product_Code` VARCHAR(4) NOT NULL DEFAULT '',
+  `Hide` INT(1) NOT NULL DEFAULT 0,
   `Web_Site` varchar(5) NOT NULL DEFAULT '',
   `Menu_Parent` varchar(45) NOT NULL DEFAULT '',
   `Menu_Position` varchar(45) NOT NULL DEFAULT '',

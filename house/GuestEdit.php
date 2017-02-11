@@ -534,7 +534,6 @@ History::addToGuestHistoryList($dbh, $id, $uS->rolecode);
 
 
 $visitList = "";
-$visitLog = '';
 $psgOnly = FALSE;
 $regTabMarkup = "";
 $psgTabMarkup = "";
@@ -715,10 +714,12 @@ $memberData['idPsg'] = $psg->getIdPsg();
 $memberData['idReg'] = $registration->getIdRegistration();
 $memberData['psgOnly'] = $psgOnly;
 
+$idReg = $registration->getIdRegistration();
 
 } else {
     // Show just the search message.
     $guestName = "<h2 style='font-size:2em;'>Search for a Guest/Patient:</h2>";
+    $idReg = 0;
 }
 
 
@@ -776,7 +777,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
     </head>
-    <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
+    <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <div style="float:left; margin-right: 90px; margin-top:5px;">
@@ -799,13 +800,13 @@ $uS->guestId = $id;
                 <div style="clear:both;"></div>
                 <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
                 <div class="hhk-showonload hhk-tdbox" style="display:none;" >
-                    <div id="divNametabs" class="hhk-tdbox hhk-member-detail" style="min-width: 850px;">
+                <div id="divNametabs" class="hhk-tdbox hhk-member-detail" style="min-width: 850px;">
                     <ul>
                         <li><a href="#nameTab" title="Addresses, Phone Numbers, Email Addresses">Contact Info</a></li>
                         <li><a href="#demoTab" title="Guest Demographics">Demographics</a></li>
                         <li><a href="#exclTab" title="Exclude Addresses"><?php echo $ta['tabIcon']; ?> Exclude</a></li>
                         <?php if ($memberFlag) {  ?>
-                        <li><a href="#vvisitLog">Activity Log</a></li>
+                        <li id="visitLog"><a href="#vvisitLog">Activity Log</a></li>
                         <?php } ?>
                     </ul>
                     <div id="demoTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
@@ -815,9 +816,7 @@ $uS->guestId = $id;
                         <?php echo $ExcludeTab; ?>
                     </div>
                     <?php if ($memberFlag) {  ?>
-                    <div id="vvisitLog"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
-                        <?php echo $visitLog; ?>
-                    </div>
+                    <div id="vvisitLog"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;"></div>
                     <?php } ?>
                     <div id="nameTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
                         <div class="hhk-showonload hhk-tdbox" style="display:none;" >
@@ -836,7 +835,7 @@ $uS->guestId = $id;
                                     <div id="emailTab" class="ui-tabs-hide" >
                                         <?php echo $emailMkup; ?>
                                     </div>
-                                </div>
+                            </div>
                             <div id="addrsTabs" class="ui-tabs-hide hhk-member-detail" >
                                 <?php echo $addrPanelMkup; ?>
                             </div>
@@ -850,7 +849,7 @@ $uS->guestId = $id;
                         </div>
                     </div>
                 </div>
-                    </div>
+                </div>
                 <div style="clear:both;"></div>
                 <?php if ($id > 0) {  ?>
                 <div id="psgList" class="hhk-showonload hhk-tdbox hhk-member-detail hhk-visitdialog" style="display:none;">
@@ -865,11 +864,11 @@ $uS->guestId = $id;
                         <?php } if ($memberFlag && $uS->RoomPriceModel != ItemPriceCode::None) {  ?>
                         <li><a href="ws_resc.php?cmd=payRpt&id=<?php echo $registration->getIdRegistration(); ?>" title="Payment History">Payments</a></li>
                         <?php } ?>
-                        <li><a href="ShowStatement.php?cmd=show&reg=<?php echo $registration->getIdRegistration(); ?>" title="Comprehensive Statement">Statement</a></li>
+                        <li><a href="ShowStatement.php?cmd=show&reg=<?php echo $idReg; ?>" title="Comprehensive Statement">Statement</a></li>
                         <?php if ($uS->TrackAuto) { ?>
                         <li><a href="#vvehicle">Vehicles</a></li>
                         <?php } ?>
-                        <li><a href="#vchangelog">Change Log</a></li>
+                        <li id="chglog"><a href="#vchangelog">Change Log</a></li>
                     </ul>
                     <div id="vpsg" class="ui-tabs-hide"  style="display:none;">
                         <div id="divPSGContainer"><?php echo $psgTabMarkup; ?></div>
@@ -886,7 +885,7 @@ $uS->guestId = $id;
                         </div>
                     </div>
                     <div id="vchangelog" class="ignrSave">
-                      <table cellpadding="0" cellspacing="0" border="0" id="dataTbl"></table>
+                      <table id="dataTbl" cellpadding="0" cellspacing="0" border="0"></table>
                     </div>
                     <div id="vfin"></div>
                     <div id="vVisits" class="ui-tabs-hide" style="min-width: 600px; display:none">

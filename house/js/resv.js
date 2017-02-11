@@ -37,91 +37,94 @@ function getDoc(item) {
     }
     $('.hhk-docInfo').show();
 }
+function gotIncomeDiag(idResv, idReg, data) {
+    if (data.error) {
+        if (data.gotopage) {
+            window.location.assign(data.gotopage);
+        }
+        flagAlertMessage(data.error, true);
+        return;
+    }
+    if (data.incomeDiag) {
+        var buttons = {
+            Save: function() {
+                $.post('ws_ckin.php', $('#formf').serialize() + '&cmd=savefap' + '&rid=' + idResv + '&rgId=' + idReg, function(data) {
+                    try {
+                        data = $.parseJSON(data);
+                    } catch (err) {
+                        alert('Bad JSON Encoding');
+                        return;
+                    }
+                    if (data.gotopage) {
+                        window.location.assign(data.gotopage);
+                    }
+                    if (data.error) {
+                        flagAlertMessage(data.error, true);
+                    }
+                    if (data.rstat && data.rstat == true) {
+                        var selCat = $('#selRateCategory');
+                        if (data.rcat && data.rcat != '' && selCat.length > 0) {
+                            selCat.val(data.rcat);
+                            selCat.change();
+                        }
+                    }
+                });
+                $(this).dialog("close");
+            },
+            "Exit": function() {
+                $(this).dialog("close");
+            }
+        };
+        $("#faDialog").children().remove().end().append($(data.incomeDiag)).dialog("option", "buttons", buttons).dialog('open');
+        $('.ckdate').datepicker();
+        $('#txtFaIncome, #txtFaSize').change(function () {
+            var income = $('#txtFaIncome'),
+                size = $('#txtFaSize');
+            if (income.val() === '' || size.val() === '') {
+                return;
+            }
+            var inc = income.val().replace(',', ''),
+                sizeVal = size.val(),
+                errmsg = $('#spnErrorMsg');
+            errmsg.text('');
+            $('#txtFaIncome, #txtFaSize, #spnErrorMsg').removeClass('ui-state-highlight');
+            if (isNaN(inc)) {
+                $('#txtFaIncome').addClass('ui-state-highlight');
+                errmsg.text('Fill in the Household Income').addClass('ui-state-highlight');
+                return false;
+            }
+            if (sizeVal == '0' || isNaN(sizeVal)) {
+                size.addClass('ui-state-highlight');
+                errmsg.text('Fill in the Household Size').addClass('ui-state-highlight');
+                return false;
+            }
+            $('#spnFaCatTitle').hide();
+            $.post('ws_ckin.php', {
+                cmd: 'rtcalc',
+                income: inc,
+                hhsize: sizeVal,
+                nites: 0
+            }, function(data) {
+                data = $.parseJSON(data);
+                if (data.gotopage) {
+                    window.location.assign(data.gotopage);
+                }
+                if (data.catTitle) {
+                    $('#spnFaCatTitle').text(data.catTitle).show('slide horizontal');
+                }
+                if (data.cat) {
+                    $('#hdnRateCat').val(data.cat);
+                }
+            });
+            return false;
+        });
+    }
+}
 function getIncomeDiag(idResv, idReg) {
     "use strict";
     $.getJSON("ws_ckin.php", {rid: idResv, rgId: idReg, cmd: 'getincmdiag'})
         .done(function(data) {
-            if (data.error) {
-                if (data.gotopage) {
-                    window.location.assign(data.gotopage);
-                }
-                flagAlertMessage(data.error, true);
-                return;
-            }
-            if (data.incomeDiag) {
-                var buttons = {
-                    Save: function() {
-                        $.post('ws_ckin.php', $('#formf').serialize() + '&cmd=savefap' + '&rid=' + idResv + '&rgId=' + idReg, function(data) {
-                            try {
-                                data = $.parseJSON(data);
-                            } catch (err) {
-                                alert('Bad JSON Encoding');
-                                return;
-                            }
-                            if (data.gotopage) {
-                                window.location.assign(data.gotopage);
-                            }
-                            if (data.error) {
-                                flagAlertMessage(data.error, true);
-                            }
-                            if (data.rstat && data.rstat == true) {
-                                var selCat = $('#selRateCategory');
-                                if (data.rcat && data.rcat != '' && selCat.length > 0) {
-                                    selCat.val(data.rcat);
-                                    selCat.change();
-                                }
-                            }
-                        });
-                        $(this).dialog("close");
-                    },
-                    "Exit": function() {
-                        $(this).dialog("close");
-                    }
-                };
-                $("#faDialog").children().remove().end().append($(data.incomeDiag)).dialog("option", "buttons", buttons).dialog('open');
-                $('.ckdate').datepicker();
-                $('#txtFaIncome, #txtFaSize').change(function () {
-                    var income = $('#txtFaIncome'),
-                        size = $('#txtFaSize');
-                    if (income.val() === '' || size.val() === '') {
-                        return;
-                    }
-                    var inc = income.val().replace(',', ''),
-                        sizeVal = size.val(),
-                        errmsg = $('#spnErrorMsg');
-                    errmsg.text('');
-                    $('#txtFaIncome, #txtFaSize, #spnErrorMsg').removeClass('ui-state-highlight');
-                    if (isNaN(inc)) {
-                        $('#txtFaIncome').addClass('ui-state-highlight');
-                        errmsg.text('Fill in the Household Income').addClass('ui-state-highlight');
-                        return false;
-                    }
-                    if (sizeVal == '0' || isNaN(sizeVal)) {
-                        size.addClass('ui-state-highlight');
-                        errmsg.text('Fill in the Household Size').addClass('ui-state-highlight');
-                        return false;
-                    }
-                    $('#spnFaCatTitle').hide();
-                    $.post('ws_ckin.php', {
-                        cmd: 'rtcalc',
-                        income: inc,
-                        hhsize: sizeVal,
-                        nites: 0
-                    }, function(data) {
-                        data = $.parseJSON(data);
-                        if (data.gotopage) {
-                            window.location.assign(data.gotopage);
-                        }
-                        if (data.catTitle) {
-                            $('#spnFaCatTitle').text(data.catTitle).show('slide horizontal');
-                        }
-                        if (data.cat) {
-                            $('#hdnRateCat').val(data.cat);
-                        }
-                    });
-                    return false;
-                });
-            }
+            gotIncomeDiag(idResv, idReg, data);
         });
 }
 function setupRates(ckIn, idResource) {

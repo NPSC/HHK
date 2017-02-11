@@ -151,6 +151,8 @@ class PageRS extends TableRS {
     public $File_Name;  // varchar(65) NOT NULL,
     public $Login_Page_Id;  // int(11) NOT NULL DEFAULT '0',
     public $Title;  // varchar(45) NOT NULL DEFAULT '',
+    public $Product_Code;  // VARCHAR(4) NOT NULL DEFAULT '' AFTER `Title`,
+    public $Hide;  // INT(1) NOT NULL DEFAULT 0 AFTER `Type`;
     public $Web_Site;  // varchar(5) NOT NULL DEFAULT '',
     public $Menu_Parent;  // varchar(45) NOT NULL DEFAULT '',
     public $Menu_Position;  // varchar(45) NOT NULL DEFAULT '',
@@ -163,7 +165,9 @@ class PageRS extends TableRS {
         $this->idPage = new DB_Field("idPage", 0, new DbIntSanitizer());
         $this->File_Name = new DB_Field("File_Name", "", new DbStrSanitizer(65), TRUE, TRUE);
         $this->Login_Page_Id = new DB_Field("Login_Page_Id", 0, new DbIntSanitizer());
+        $this->Hide = new DB_Field("Hide", 0, new DbIntSanitizer());
         $this->Title = new DB_Field("Title", "", new DbStrSanitizer(45), TRUE, TRUE);
+        $this->Product_Code = new DB_Field("Product_Code", "", new DbStrSanitizer(4), TRUE, TRUE);
         $this->Web_Site = new DB_Field("Web_Site", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Menu_Parent = new DB_Field("Menu_Parent", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Menu_Position = new DB_Field("Menu_Position", "", new DbStrSanitizer(45), TRUE, TRUE);

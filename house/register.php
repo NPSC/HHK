@@ -389,9 +389,29 @@ try {
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
-  <style>
-  li.ui-menu-item li.ui-menu-item { width: 100px; }
-  #version {
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/hhkcalendar-min.js<?php echo JS_V; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo STATE_COUNTRY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MD5_JS; ?>"></script>
+        <script type="text/javascript">
+            var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';
+            var pmtMkup = "<?php echo $paymentMarkup; ?>";
+            var rctMkup = '<?php echo $receiptMarkup; ?>';
+            var roomCnt = '<?php echo $roomCount; ?>';
+            var defaultTab = '<?php echo $uS->DefaultRegisterTab; ?>';
+            var cgCols = $.parseJSON('<?php echo json_encode($cgCols); ?>');
+            var rvCols = $.parseJSON('<?php echo json_encode($rvCols); ?>');
+            var wlCols = $.parseJSON('<?php echo json_encode($wlCols); ?>');
+            var challVar = '<?php echo $challengeVar; ?>';
+            var viewDays = '<?php echo ($weeks * 7); ?>';
+        </script>
+        <script type="text/javascript" src="js/register.js<?php echo JS_V; ?>"></script>
+<style>
+   #version {
     height: 15px;
     position: absolute;
     right: 2px;
@@ -399,15 +419,15 @@ try {
     font-size: .6em;
     padding: 0 6px;
     cursor:pointer;
-}
-#version:hover { background-color: yellow; }
-.hhk-justify-r {
-    text-align: right;
-}
-.hhk-justify-c {
-    text-align: center;
-}
-  </style>
+    }
+    #version:hover { background-color: yellow; }
+    .hhk-justify-r {
+        text-align: right;
+    }
+    .hhk-justify-c {
+        text-align: center;
+    }
+</style>
     </head>
     <body <?php
     if ($wInit->testVersion) {
@@ -427,7 +447,7 @@ try {
             </div>
             <div style="clear:both;"></div>
             <form name="frmdownload" action="#" method="post">
-            <div id="mainTabs" style="display:none;font-size: .8em;">
+            <div id="mainTabs" style="display:none;font-size:.8em;">
                 <ul>
                     <li><a href="#vcal">Calendar</a></li>
                     <li><a href="#vstays">Current Guests</a></li>
@@ -445,26 +465,26 @@ try {
                         <li><a href="#vInv">Unpaid Invoices</a></li>
                     <?php } } ?>
                 </ul>
-                <div id="vcal" style="margin-top: 10px; font-size: .8em; clear:left; display:none;">
+                <div id="vcal" style="margin-top: 10px; clear:left; display:none;">
                     <?php echo $viewWeeks; echo $colorKey; ?>
                     <div id="calendar"></div>
                 </div>
-                <div id="vstays" class="hhk-tdbox" style="font-size:.8em; padding-bottom: 1.5em; display:none;">
+                <div id="vstays" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
                     <?php echo $currentCheckedIn; ?>
                 </div>
 <?php if ($uS->ShowUncfrmdStatusTab) { ?>
-                <div id="vuncon" class="hhk-tdbox" style="font-size:.8em; padding-bottom: 1.5em; display:none;">
+                <div id="vuncon" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
                     <?php echo $uncommittedReservations; ?>
                 </div>
 <?php } ?>
-                <div id="vresvs" class="hhk-tdbox" style="font-size:.8em; padding-bottom: 1.5em; display:none;">
+                <div id="vresvs" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
                     <?php echo $currentReservations; ?>
                 </div>
-                <div id="vwls" class="hhk-tdbox" style="font-size:.8em; padding-bottom: 1.5em; display:none;">
+                <div id="vwls" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
 <?php echo $waitlist; ?>
                 </div>
 <?php if ($isGuestAdmin) { ?>
-                <div id="vactivity" class="hhk-tdbox hhk-visitdialog" style="font-size:.8em; display:none;">
+                <div id="vactivity" class="hhk-tdbox hhk-visitdialog" style="display:none;">
                     <table><tr>
                             <th>Reports</th><th>Dates</th>
                         </tr><tr>
@@ -482,7 +502,7 @@ try {
                         </tr></table>
                     <div id="rptdiv" class="hhk-visitdialog"></div>
                 </div>
-                <div id="vfees" class="hhk-tdbox hhk-visitdialog" style="font-size:.9em; display:none;">
+                <div id="vfees" class="hhk-tdbox hhk-visitdialog" style="display:none;">
                     <table>
                         <tr>
                             <th>Date Range</th>
@@ -503,7 +523,7 @@ try {
                     </table>
                     <div id="rptfeediv" class="hhk-visitdialog"></div>
                 </div>
-                <div id="vInv" class="hhk-tdbox hhk-visitdialog" style="font-size:.9em; display:none;">
+                <div id="vInv" class="hhk-tdbox hhk-visitdialog" style="display:none;">
                     <input type="button" id="btnInvGo" value="Refresh"/>
                       <div id="rptInvdiv" class="hhk-visitdialog"></div>
                 </div>
@@ -528,6 +548,7 @@ try {
                 </tr>
             </table>
         </div>
+        <div class="gmenu"></div>
         <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
         <div id="cardonfile" style="font-size: .9em; display:none;"></div>
@@ -548,25 +569,4 @@ try {
             </table>
         </div>
     </body>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/hhkcalendar-min.js<?php echo JS_V; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo STATE_COUNTRY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MD5_JS; ?>"></script>
-        <script type="text/javascript">
-            var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';
-            var pmtMkup = "<?php echo $paymentMarkup; ?>";
-            var rctMkup = '<?php echo $receiptMarkup; ?>';
-            var roomCnt = '<?php echo $roomCount; ?>';
-            var defaultTab = '<?php echo $uS->DefaultRegisterTab; ?>';
-            var cgCols = $.parseJSON('<?php echo json_encode($cgCols); ?>');
-            var rvCols = $.parseJSON('<?php echo json_encode($rvCols); ?>');
-            var wlCols = $.parseJSON('<?php echo json_encode($wlCols); ?>');
-            var challVar = '<?php echo $challengeVar; ?>';
-            var viewDays = '<?php echo ($weeks * 7); ?>';
-        </script>
-        <script type="text/javascript" src="js/register-min.js<?php echo JS_V; ?>"></script>
 </html>

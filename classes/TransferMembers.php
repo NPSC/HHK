@@ -112,14 +112,14 @@ class TransferMembers {
     public function updateAccount(\PDO $dbh, $accountData, $idName) {
 
         if ($idName < 1) {
-            throw new Hk_Exception_Runtime('member Id not specified: ' . $idName);
+            throw new Hk_Exception_Runtime('HHK Member Id not specified: ' . $idName);
         }
 
 
         // Get member data record
         $r = $this->loadSourceDB($dbh, $idName);
         if (is_null($r)) {
-            throw new Hk_Exception_Runtime('member Id not found: ' . $idName);
+            throw new Hk_Exception_Runtime('HHK Member Id not found: ' . $idName);
         }
 
 
@@ -277,7 +277,7 @@ class TransferMembers {
         $stmt = $this->loadSearchDB($dbh, $sourceIds);
 
         if (is_null($stmt)) {
-            return array('error'=>'No local data.');
+            return array('error'=>'No local records were found.');
         }
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -336,7 +336,7 @@ class TransferMembers {
             } else if ( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] > 1 ) {
 
                 // We have more than one contact...
-                $f['Result'] = 'Multiple Contacts.';
+                $f['Result'] = 'Multiple Accounts.';
                 $replys[] = $f;
 
 
@@ -364,9 +364,9 @@ class TransferMembers {
                 $this->updateLocalNameRecord($dbh, $r['HHK_ID'], $accountId, $username);
 
                 if ($row['accountId'] != '') {
-                    $f['Result'] = 'Contact was recreated at the remote system.';
+                    $f['Result'] = 'New NeonCRM Account';
                 } else {
-                    $f['Result'] = 'New Contact';
+                    $f['Result'] = 'New NeonCRM Account';
                 }
                 $f['Account ID'] = $accountId;
                 $replys[] = $f;

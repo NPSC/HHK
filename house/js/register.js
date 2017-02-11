@@ -1,3 +1,5 @@
+/* global pmtMkup */
+
 /**
  * register.js
  *
@@ -811,7 +813,7 @@ $(document).ready(function () {
 
     $('.ckdate').datepicker();
 
-    var tabs = $('#mainTabs').tabs({
+    $('#mainTabs').tabs({
         // Fetch hte calender events when the calendar is visible.
         activate: function (event, ui) {
             if (ui.newTab.index() === 0) {
@@ -854,7 +856,8 @@ $(document).ready(function () {
                 window.location.assign("GuestEdit.php?id=" + cid);
             }
         },
-        false);
+        false
+    );
     var vdays = parseInt(viewDays, 10);
     $('#calendar').hhkCalendar({
         defaultView: 'twoweeks',

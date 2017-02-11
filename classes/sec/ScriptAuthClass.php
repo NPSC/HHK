@@ -177,8 +177,8 @@ class ScriptAuthClass extends SecurityComponent {
 
         //$markup = "<script type='text/javascript' src='" . $resourceURL . "js/topNav.js'></script>";
 
-        $markup = "<header><section id='global-nav'><nav><div class='constrain'>" . self::getSiteIcons($uS->ssl, $uS->siteList, $uS->tutURL);
-        $markup .= "<div id='global-title'>$pageHeader</div><div style='float:right;'>";
+        $markup = "<header id='global-nav'>" . self::getSiteIcons($uS->ssl, $uS->siteList, $uS->tutURL);
+        $markup .= "<div id='global-title'>$pageHeader</div><div id='navContainer'><div id='nav'>";
         // process
         foreach ($menu["0"] as $item) {
 
@@ -221,7 +221,7 @@ class ScriptAuthClass extends SecurityComponent {
             $markup .= "</li></ul>";
         }
 
-        $markup .= "</div></div></nav></section></header>
+        $markup .= "</div></div></header>
             <div id='version'>User:" . $uS->username . ", Build:" . $uS->ver . "</div>";
 
         return $markup;
@@ -230,7 +230,7 @@ class ScriptAuthClass extends SecurityComponent {
 
     protected static function getSiteIcons($isSSL, $siteList, $tutorialURL) {
 
-        $mu = "<ul class='projects'>";
+        $mu = "<ul id='icons' style='float:left;padding-top:5px;' class='ui-widget ui-helper-clearfix'>";
         $siteCount = 0;
         $proto = 'http://';
         if ($isSSL) {
@@ -242,8 +242,8 @@ class ScriptAuthClass extends SecurityComponent {
             if ($r["Site_Code"] != "r" && (self::is_Admin() || self::does_User_Code_Match($r["Groups"]))) {
                 $siteCount++;
                 // put in the site list.
-                $mu .= "<li class='project'>"
-                      . "<a title='" . $r["Description"] . "' class=' ui-corner-all' href='" . $proto . $r["HTTP_Host"] . $r["Relative_Address"] . $r["Default_Page"] . "'>"
+                $mu .= "<li class='ui-widget-header ui-corner-all'>"
+                      . "<a title='" . $r["Description"] . "'  href='" . $proto . $r["HTTP_Host"] . $r["Relative_Address"] . $r["Default_Page"] . "'>"
                         . "<span class='" . $r["Class"] . "' ></span></a>"
                       . "</li>";
             }
@@ -253,8 +253,8 @@ class ScriptAuthClass extends SecurityComponent {
         if ($tutorialURL != '') {
             $siteCount++;
             // put in the site list.
-            $mu .= "<li class='project'>"
-                  . "<a title='Tutorial Site' class=' ui-corner-all' href='" . $tutorialURL . "' target='blank'>"
+            $mu .= "<li class='ui-widget-header ui-corner-all'>"
+                  . "<a title='Tutorial Site'  href='" . $tutorialURL . "' target='blank'>"
                   . "<span class='ui-icon ui-icon-video' ></span></a>"
                   . "</li>";
         }
@@ -265,6 +265,18 @@ class ScriptAuthClass extends SecurityComponent {
             // Only 1 site = no markup.
             $mu = '';
         }
+
+        $mu .= '<script>// Hover states on the static widgets
+$( "#icons li" ).hover(
+	function() {
+		$( this ).addClass( "ui-state-hover" );
+	},
+	function() {
+		$( this ).removeClass( "ui-state-hover" );
+	}
+);
+</script>';
+
 
         return $mu;
     }

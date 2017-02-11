@@ -72,7 +72,7 @@ $(document).ready(function () {
         collapsible: true,
         beforeActivate: function (event, ui) {
             if (ui.newPanel.length > 0) {
-                if (ui.newPanel.selector === '#vchangelog' && !listEvtTable) {
+                if (ui.newTab.prop('id') === 'changelog' && !listEvtTable) {
                     listEvtTable = $('#dataTbl').dataTable({
                     "aoColumnDefs": dtCols,
                     "bServerSide": true,
@@ -87,7 +87,7 @@ $(document).ready(function () {
                     });
                 }
                 // Donation dialog setup
-                if (ui.newPanel.selector === '#vdonblank' && userData.donFlag) {
+                if (ui.newTab.prop('id') === 'donblank' && userData.donFlag) {
                     donName = memData.memName;
                     if (memData.memDesig == 'i' && memData.coId > 0) {
                         donName = donName + '  (' + memData.coName + ')';
@@ -101,7 +101,8 @@ $(document).ready(function () {
                     $('#vdon').dialog('open');
                     event.preventDefault();
                 }
-                if (ui.newPanel.selector === '#vwuser') {
+                
+                if (ui.newTab.prop('id') === 'wbuser') {
                     $('#vwebUser').dialog("option", "title", 'Web Access Info for ' + memData.memName);
                     $('#vwebUser').dialog('open');
                     event.preventDefault();

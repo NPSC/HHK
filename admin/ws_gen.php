@@ -110,26 +110,6 @@ try {
 
             break;
 
-        case "edpage":
-            $parms = $_REQUEST["parms"];
-            if (($parms = filter_var_array($parms)) === false) {
-                $events = array("error" => "Bad input");
-            } else if (SecurityComponent::is_TheAdmin()) {
-                $events = Pages::editPages($dbh, $parms);
-            } else {
-                $events = array("error" => "Pages Access denied");
-            }
-
-            break;
-
-        case "delpage":
-
-            $pageId = filter_var($_REQUEST["pid"], FILTER_SANITIZE_NUMBER_INT);
-
-            if (SecurityComponent::is_TheAdmin()) {
-                $events = Pages::deletePage($dbh, $pageId);
-            }
-            break;
 
         case "recent":
 

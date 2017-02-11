@@ -1,3 +1,5 @@
+/* global getDoc, memberData, rctMkup, psgTabIndex, getAgent */
+
 /**
  * guestload.js
  *
@@ -383,9 +385,13 @@ $(document).ready(function () {
     });
     
     $('#divNametabs').tabs({
+        
         beforeActivate: function (event, ui) {
+            
             var tbl = $('#vvisitLog').find('table');
-            if (ui.newTab.index() === 3 && tbl.length === 0) {
+            
+            if (ui.newTab.prop('id') === 'visitLog' && tbl.length === 0) {
+                
                 $.post('ws_ckin.php', {cmd: 'gtvlog', idReg: memData.idReg}, function (data) {
                     if (data) {
                         try {
@@ -403,11 +409,11 @@ $(document).ready(function () {
                             $('#vvisitLog').append($(data.vlog));
                         }
                     }
-                })
+                });
             }
         },
         collapsible: true
-        });
+    });
     $('#btnSubmit, #btnReset, #btnCred').button();
     $('#btnCred').click(function () {
         cardOnFile($(this).data('id'), $(this).data('idreg'), memData.idPsg);
@@ -421,12 +427,12 @@ $(document).ready(function () {
         beforeActivate: function (event, ui) {
             if (ui.newPanel.length > 0) {
                 
-                if (ui.newPanel.selector === '#vfin') {
+                if (ui.newTab.prop('id') === 'fin') {
                     getIncomeDiag(0, memData.idReg);
                     event.preventDefault();
                 }
                 
-                if (ui.newPanel.selector === '#vchangelog' && !listEvtTable) {
+                if (ui.newTab.prop('id') === 'chglog' && !listEvtTable) {
                     listEvtTable = $('#dataTbl').dataTable({
                         "aoColumnDefs": dtCols,
                         "bServerSide": true,
@@ -468,7 +474,7 @@ $(document).ready(function () {
     } else {
         // Existing member
         var tbIndex = parseInt($('#addrsTabs').children('ul').data('actidx'), 10);
-        if (isNaN(tbIndex)) {tbIndex = 0}
+        if (isNaN(tbIndex)) {tbIndex = 0;}
         $('#addrsTabs').tabs("option", "active", tbIndex);
     }
     $.datepicker.setDefaults({
@@ -571,7 +577,7 @@ $(document).ready(function () {
     
     // Excludes tab "Check-all" button
     $('input.hhk-check-button').click(function () {
-        if ($(this).prop('id') == 'exAll') {
+        if ($(this).prop('id') === 'exAll') {
             $('input.hhk-ex').prop('checked', true);
         } else {
             $('input.hhk-ex').prop('checked', false);

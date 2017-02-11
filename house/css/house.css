@@ -2,9 +2,6 @@
     margin: 0px;
     padding: 0px;
 }
-body {
-    font-size: 90%;
-}
 .testbody {
     background-color: #FFCC9F;
 }
@@ -17,15 +14,6 @@ body {
     border: 1px solid teal;
 }
 #submitButtons:hover { background-color: white; }
-/*.submitButtons {
-    position: static;
-    float:right;
-    margin-top:.3em;
-    padding: 5px 10px;
-    z-index: 90000;
-    border: 1px solid teal;
-    }
-.submitButtons:hover { background-color: yellow; }*/
 #divAlertMsg {
     z-index:9;
 }

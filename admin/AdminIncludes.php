@@ -47,13 +47,13 @@ define('SEC', CLASSES . 'sec' . DS);
 define('PMT', CLASSES . 'Payment' . DS);
 define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 
-define('JS_V', '?v=3');
-define('CSS_V', '?v=2');
+define('JS_V', '?v=4');
+define('CSS_V', '?v=3');
 
 define('JQ_UI_CSS', 'css/ss/jquery-ui.min.css' . CSS_V);
 define('JQ_DT_CSS', 'css/datatables.min.css' . CSS_V);
 define('JQ_UI_JS', 'js/jquery-ui.min.js'.JS_V);
-define('JQ_JS', 'js/jquery-1.11.3.min.js'.JS_V);
+define('JQ_JS', 'js/jquery-3.1.1.min.js'.JS_V);
 define('JQ_DT_JS', 'js/datatables.min.js'.JS_V);
 define('PRINT_AREA_JS', "js/jquery.PrintArea.js".JS_V);
 define('MD5_JS', "js/md5-min.js".JS_V);

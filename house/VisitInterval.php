@@ -114,6 +114,9 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
         $hosp = $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
     }
 
+    $r['Doctor'] = $r['Doctor_Last'] . ($r['Doctor_First'] == '' ? '' : ', ' . $r['Doctor_First']);
+
+
     $r['hospitalAssoc'] = $hospital;
     $r['assoc'] = $assoc;
     $r['hosp'] = $hosp;
@@ -370,6 +373,8 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     ifnull(r.Title, '') as Title,
     ifnull(np.Name_Last,'') as Patient_Last,
     ifnull(np.Name_First,'') as Patient_First,
+    ifnull(nd.Name_Last,'') as Doctor_Last,
+    ifnull(nd.Name_First,'') as Doctor_First,
     ifnull(hs.idPsg, 0) as idPsg,
     ifnull(hs.idHospital, 0) as idHospital,
     ifnull(hs.idAssociation, 0) as idAssociation,
@@ -420,6 +425,8 @@ from
     hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
         left join
     name np ON hs.idPatient = np.idName
+        left join
+    name nd ON hs.idDoctor = nd.idName
         left join
     name nra ON hs.idReferralAgent = nra.idName
         left join
@@ -1173,6 +1180,10 @@ if (count($aList) > 0) {
     $cFields[] = array("Hospital / Assoc", 'hospitalAssoc', 'checked', '', 's', '', array());
 } else {
     $cFields[] = array($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'), 'hospitalAssoc', 'checked', '', 's', '', array());
+}
+
+if ($uS->Doctor) {
+    $cFields[] = array("Doctor", 'Doctor', '', '', 's', '', array());
 }
 
 $locations = readGenLookupsPDO($dbh, 'Location');
