@@ -820,7 +820,7 @@ class IndivMember extends Member {
             $langs = array();
             $langs2 = array();
 
-            if (isset($post[$idPrefix.'selLanguage']) && $this->get_idName() > 0) {
+            if (isset($post[$idPrefix.'selLanguage'])) {
                 $langs = filter_var_array($post[$idPrefix.'selLanguage'], FILTER_SANITIZE_NUMBER_INT);
                 $langs2 = array_flip($langs);
             }

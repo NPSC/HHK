@@ -1,4 +1,4 @@
-/* global pmtMkup */
+/* global pmtMkup, rvCols, wlCols, roomCnt, viewDays, rctMkup, defaultTab, isGuestAdmin */
 
 /**
  * register.js
@@ -626,6 +626,7 @@ $(document).ready(function () {
         cache: false
     });
     $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
+    $(document).tooltip();
     if (pmtMkup !== '') {
         $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
     }
@@ -815,11 +816,10 @@ $(document).ready(function () {
 
     $('#mainTabs').tabs({
         // Fetch hte calender events when the calendar is visible.
-        activate: function (event, ui) {
-            if (ui.newTab.index() === 0) {
+        beforeActivate: function (event, ui) {
+            if (ui.newTab.prop('id') === 'liCal') {
                 $('#calendar').hhkCalendar('render');
-            }
-            if (ui.newTab.index() == ($(this).find( ".ui-tabs-nav" ).children('li').length - 1)) {
+            } else if (ui.newTab.prop('id') === 'liInvoice') {
                 $('#btnInvGo').click();
             }
         }

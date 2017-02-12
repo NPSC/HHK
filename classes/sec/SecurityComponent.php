@@ -24,7 +24,8 @@ abstract class SecurityComponent {
 
             $sl = array();
             if ($stmt->rowCount() > 0) {
-                foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+
+                while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
                     $site = array(
                         "Site_Code" => $r["Site_Code"],
                         "Relative_Address" => $r["Relative_Address"],
@@ -73,6 +74,8 @@ abstract class SecurityComponent {
 
             if (isset($uS->webSite)) {
 
+                $wsCode = strtolower($uS->webSite["Site_Code"]);
+
                 // Get list of pages
                 $query = "select
                     p.idPage as idPage,
@@ -93,17 +96,16 @@ abstract class SecurityComponent {
                         left join
                     page_securitygroup s ON p.idPage = s.idPage
                 where
-                    p.Web_Site = :wcode
-                order by p.Type , p.Menu_Parent , p.Menu_Position;";
+                    p.Web_Site = '$wsCode' and p.Hide = 0
+                order by p.Type, p.Menu_Parent, p.Menu_Position;";
 
-                $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-                $stmt->execute(array(":wcode" => strtolower($uS->webSite["Site_Code"])));
+                $stmt = $dbh->query($query);
 
                 if ($stmt->rowCount() > 0) {
                     $wp = array();
                     $lastId = 0;
 
-                    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+                    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
                         if ($lastId == $r['idPage']) {
 

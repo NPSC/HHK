@@ -18,7 +18,16 @@ class Pages {
 
     public static function editPages(\PDO $dbh, $post) {
 
-        foreach ($post['txtPageTitle'] as $$k => $v) {
+        $website = '';
+        $secGroups = array();
+
+        // Get list of security groups
+        $stmtg = $dbh->query("Select Group_Code, Title, '' as Substitute from w_groups");
+        while ($r = $stmtg->fetch(PDO::FETCH_NUM)) {
+            $secGroups[$r[0]] = $r;
+        }
+
+        foreach ($post['txtIdPage'] as $k => $v) {
 
             $pageId = intval(filter_var($k, FILTER_SANITIZE_STRING), 10);
 
@@ -35,15 +44,27 @@ class Pages {
             }
 
             EditRS::loadRow($rows[0], $pageRs);
+            $website = $pageRs->Web_Site->getStoredVal();
 
-            $pageRs->Title->setNewVal(filter_var($v, FILTER_SANITIZE_STRING));
-
-            if (isset($post['cbHide'][$pageId])) {
-                $pageRs->Hide->setNewVal(filter_var($post['cbHide'][$pageId], FILTER_SANITIZE_NUMBER_INT));
+            // Title
+            if (isset($post['txtPageTitle'][$pageId])) {
+                $pageRs->Title->setNewVal(filter_var($post['txtPageTitle'][$pageId], FILTER_SANITIZE_STRING));
             }
 
-            $pageRs->Menu_Parent->setNewVal($post['selParentId'][$pageId]);
-            $pageRs->Menu_Position->setNewVal($post['txtParentPosition'][$pageId]);
+            // Hidden page
+            if (isset($post['cbHide'][$pageId])) {
+                $pageRs->Hide->setNewVal(1);
+            } else {
+                $pageRs->Hide->setNewVal(0);
+            }
+
+            // menu parent/ menu position
+            if (isset($post['selParentId'][$pageId])) {
+                $pageRs->Menu_Parent->setNewVal(filter_var($post['selParentId'][$pageId], FILTER_SANITIZE_STRING));
+            }
+            if (isset($post['txtParentPosition'][$pageId])) {
+                $pageRs->Menu_Position->setNewVal(filter_var($post['txtParentPosition'][$pageId], FILTER_SANITIZE_STRING));
+            }
 
             $pageRs->Updated_By->setNewVal('admin');
             $pageRs->Last_Updated->setNewVal(date('y-m-d H:i:s'));
@@ -55,13 +76,14 @@ class Pages {
             if (isset($post["selSecCode"][$pageId])) {
 
                 $newGroupCodes = filter_var_array($post["selSecCode"][$pageId], FILTER_SANITIZE_STRING);
+                $flipped = array_flip($newGroupCodes);
+                $existingCodes = array();
 
                 // Get existing security group codes
                 $psgRs = new Page_SecurityGroupRS();
                 $psgRs->idPage->setStoredVal($pageId);
                 $psgRows = EditRS::select($dbh, $psgRs, array($psgRs->idPage));
 
-                $existingCodes = array();
 
                 // Remove any codes from the new codes array
                 foreach ($psgRows as $r) {
@@ -69,31 +91,33 @@ class Pages {
                     $oldpsgRs = new Page_SecurityGroupRS();
                     EditRS::loadRow($r, $oldpsgRs);
 
-                    // Delete missing codes
-                    if (array_search($oldpsgRs->Group_Code->getStoredVal(), $newGroupCodes) === FALSE) {
+                    if (!isset($flipped[$oldpsgRs->Group_Code->getStoredVal()])) {
+
                         // Delete this security group code.
                         EditRS::delete($dbh, $oldpsgRs, array($oldpsgRs->Group_Code, $oldpsgRs->idPage));
                     } else {
-                        $existingCodes[] = $oldpsgRs->Group_Code->getStoredVal();
+                        $existingCodes[$oldpsgRs->Group_Code->getStoredVal()] = $oldpsgRs->Group_Code->getStoredVal();
                     }
                 }
 
                 // Add any new codes.
                 foreach ($newGroupCodes as $c) {
 
-                    if ($c != '' && array_search($c, $existingCodes) === FALSE) {
-
-                        // New code not found, add it
-                        $psgRs = new Page_SecurityGroupRS();
-                        $psgRs->Group_Code->setNewVal($c);
-                        $psgRs->idPage->setNewVal($pageId);
-
-                        EditRS::insert($dbh, $psgRs);
-
+                    if ($c == '' || isset($secGroups[$c]) === FALSE || isset($existingCodes[$c])) {
+                        continue;
                     }
+
+                    // New code not found, add it
+                    $psgRs = new Page_SecurityGroupRS();
+                    $psgRs->Group_Code->setNewVal($c);
+                    $psgRs->idPage->setNewVal($pageId);
+
+                    EditRS::insert($dbh, $psgRs);
                 }
             }
          }
+
+         return $website;
 
     }
 
@@ -126,7 +150,7 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
     left join gen_lookups gt on p.Type = gt.Code and gt.TABLE_NAME='Page_Type'
     left join w_groups gs on s.Group_Code = gs.Group_Code
     where p.Web_Site = :site
- order by p.Menu_Parent, p.Menu_Position, p.idPage;";
+ order by p.idPage;";
 
         $stmt = $dbh->prepare($query);
         $stmt->execute(array(':site' => $site));
@@ -161,37 +185,37 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
         $secGroups = array();
 
         // Get list of security groups
-        $stmtg = $dbh->query("Select Group_Code as `Code`, Title as `Description`, '' as Substitute from w_groups");
+        $stmtg = $dbh->query("Select Group_Code, Title, '' as Substitute from w_groups");
         while ($r = $stmtg->fetch(PDO::FETCH_NUM)) {
             $secGroups[$r[0]] = $r;
         }
 
         $pageId = 0;
         $lastRow = '';
-        $auths = '';
+        $auths = array();
 
         foreach ($pageRows as $rw) {
 
             if ($rw['idPage'] != $pageId) {
 
-                $pageId = $rw['idPage'];
-
                 // Clean up last row
                 if ($lastRow != '') {
                     $lastRow .= HTMLTable::makeTd(
-                    HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($secGroups, $auths, FALSE), array('name'=>'selSecCode'))
+                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($secGroups, $auths, FALSE), array('name'=>'selSecCode[' . $pageId . '][]', 'class'=>'hhk-multisel', 'multiple'=>'multiple'))
                             );
                     $tbl->addBodyTr( $lastRow, array('class'=>'trPages'));
 
                 }
 
+                $pageId = $rw['idPage'];
+
                 // Set up for new page entry
-                $lastRow = HTMLTable::makeTd(HTMLInput::generateMarkup($rw['idPage'], array('name'=>'txtIdPage', 'readonly'=>'readonly', 'style'=>'background-color:transparent;text-align:right;', 'size'=>'5')))
+                $lastRow = HTMLTable::makeTd(HTMLInput::generateMarkup($pageId, array('name'=>'txtIdPage[' . $pageId . ']', 'readonly'=>'readonly', 'style'=>'background-color:transparent;text-align:right;', 'size'=>'5')))
                         .HTMLTable::makeTd($rw["Type_Description"])
                         .HTMLTable::makeTd($rw["File_Name"]);
 
 
-                $hideAttr = array('type'=>'checkbox', 'name'=>'cbHide[' . $rw['idPage'] . ']');
+                $hideAttr = array('type'=>'checkbox', 'name'=>'cbHide[' . $pageId . ']');
 
                 if ($r['Hide'] > 0) {
                     $hideAttr['checked'] = 'checked';
@@ -199,10 +223,10 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
 
                 if ($rw['Type'] == WebPageCode::Page && $rw['File_Name'] != 'index.php') {
 
-                    $lastRow .= HTMLTable::makeTd(HTMLInput::generateMarkup($rw["Title"], array('name'=>'txtPageTitle[' . $rw['idPage'] . ']', 'size'=>'20')))
+                    $lastRow .= HTMLTable::makeTd(HTMLInput::generateMarkup($rw["Title"], array('name'=>'txtPageTitle[' . $pageId . ']', 'size'=>'20')))
                         .HTMLTable::makeTd(HTMLInput::generateMarkup('', $hideAttr))
-                        .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($parentMenus, $rw["Menu_Parent"], FALSE), array('name'=>'selParentId[' . $rw['idPage'] . ']')))
-                        .HTMLTable::makeTd(HTMLInput::generateMarkup($rw["Menu_Position"], array('name'=>'txtParentPosition[' . $rw['idPage'] . ']', 'size'=>'2')));
+                        .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($parentMenus, $rw["Menu_Parent"], FALSE), array('name'=>'selParentId[' . $pageId . ']', 'class'=>'hhk-selmenu')))
+                        .HTMLTable::makeTd(HTMLInput::generateMarkup($rw["Menu_Position"], array('name'=>'txtParentPosition[' . $pageId . ']', 'size'=>'2')));
 
                 } else {
 
@@ -213,17 +237,17 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
                 }
 
                 $auths = array();
-                $auths[$rw['Group_Code']] = $rw["Security_Description"];
+                $auths[] = $rw['Group_Code'];
 
             } else {
-                $auths[$rw['Group_Code']]  = $rw["Security_Description"];
+                $auths[]  = $rw['Group_Code'];
             }
         }
 
         // Clean up last row
         if ($lastRow != '') {
                     $lastRow .= HTMLTable::makeTd(
-                    HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($secGroups, $auths, FALSE), array('name'=>'selSecCode'))
+                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($secGroups, $auths, FALSE), array('name'=>'selSecCode[' . $pageId . '][]', 'class'=>'hhk-multisel', 'multiple'=>'multiple'))
                             );
             $tbl->addBodyTr( $lastRow, array('class'=>'trPages'));
 

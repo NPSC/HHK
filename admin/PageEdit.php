@@ -9,8 +9,9 @@
  */
 
 require_once ("AdminIncludes.php");
+require (DB_TABLES . 'WebSecRS.php');
 
-
+require(SEC . 'Pages.php');
 require_once(REL_BASE_DIR . "classes" . DS . "selCtrl.php");
 
 $wInit = new webInit();
@@ -26,9 +27,27 @@ $menuMarkup = $wInit->generatePageMenu();
 
 
 $siteMarkup = "";
+$webSite = '';
 
+// Instantiate the alert message control
+$alertMsg = new alertMessage("divAlert1");
+$alertMsg->set_DisplayAttr("none");
+$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_iconId("alrIcon");
+$alertMsg->set_styleId("alrResponse");
+$alertMsg->set_txtSpanId("alrMessage");
+$alertMsg->set_Text("uh-oh");
+
+// Edit pages
 if (isset($_POST["btnSubmit"])) {
 
+    if (SecurityComponent::is_TheAdmin()) {
+        $webSite = Pages::editPages($dbh, $_POST);
+    } else {
+        $alertMsg->set_Text("Unauthorized for Edit");
+        $alertMsg->set_Context(alertMessage::Notice);
+        $alertMsg->set_DisplayAttr("block");
+    }
 }
 
 // create web site table
@@ -62,22 +81,9 @@ $siteMarkup = "<table><tr><th>View Pages</th><th>Site</th><th>Edit</th>
     <th>Code</th><th>Host Address</th><th>Rel. Address</th><th>Authorization</th><th>CSS</th>
     <th>Default Page</th><th>Index Page</th><th>Updated By</th><th>Last Updated</th></tr>" . $siteMarkup . "</table>";
 
-$pageTypes = DoLookups($dbh, "Page_Type", '', false);
-
 $stmtp = $dbh->query("select Group_Code as Code, Title as Description from w_groups");
 $grps = $stmtp->fetchAll(\PDO::FETCH_NUM);
 $securityCodes = doOptionsMkup($grps, 'xz');
-
-
-
-// Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("uh-oh");
 
 $resultMessage = $alertMsg->createMarkup();
 $getSiteReplyMessage = '';
@@ -91,9 +97,11 @@ $getSiteReplyMessage = '';
         <link href="css/default.css" rel="stylesheet" type="text/css" />
         <link href="<?php echo JQ_DT_CSS ?>" rel="stylesheet" type="text/css" />
 <?php echo TOP_NAV_CSS; ?>
+<?php echo MULTISELECT_CSS; ?>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/jquery.multiselect.min.js"></script>
         <script type="text/javascript">
     function flagAlertMessage(mess, wasError) {
         "use strict";
@@ -133,7 +141,7 @@ $getSiteReplyMessage = '';
 
                 $('#sitepages').children().remove().end().append($(data.success));
                 $('#frmPages').show();
-                $('#btnNewPage').css("display", "block");
+
 
                 try {
                     $('#tblPages').dataTable({
@@ -143,13 +151,20 @@ $getSiteReplyMessage = '';
                     });
                 } catch (err) {}
 
+                $('select.hhk-multisel').each( function () {
+                    $(this).multiselect({
+                        selectedList: 3
+                    });
+                });
+
             })
             .fail();
 
     }
     // Init j-query and the page blocker.
     $(document).ready(function() {
-        $(document).tooltip();
+
+        var website = '<?php echo $webSite; ?>';
         $.ajaxSetup ({
             beforeSend: function() {
                 $('body').css('cursor', "wait");
@@ -160,7 +175,7 @@ $getSiteReplyMessage = '';
             cache: false
         });
 
-        $('.editSite, .loadPages, #btnReset, #btnSubmit, #btnNewPage').button();
+        $('.editSite, .loadPages, #btnReset, #btnSubmit').button();
 
         $('#siteDialog').dialog({
             autoOpen: false,
@@ -189,8 +204,13 @@ $getSiteReplyMessage = '';
         });
 
         $('input.loadPages').click(function() {
+            $("#divAlert1").hide();
             getPages($(this).attr("name"));
         });
+
+        if (website != '') {
+            getPages(website);
+        }
 
         $('input.editSite').click(function() {
             // input control is in a td in a tr.
@@ -225,9 +245,8 @@ $getSiteReplyMessage = '';
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <div class="ui-widget ui-widget-content ui-corner-all hhk-member-detail" style="margin-bottom: 10px; margin-right: 10px;">
                 <?php echo $siteMarkup; ?>
-                <input type="button" id="btnNewPage" value="New Page" title="Create a new page." style="display:none;"/>
             </div>
-            <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
+            <div id="divAlertMsg" style="clear:both;"><?php echo $resultMessage; ?></div>
             <form id="frmPages" action="#" method="post" style="display:none;">
                 <div id="sitepages" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail" style="margin-bottom: 10px;"></div>
                 <div id="divSubmitButtons" class="ui-corner-all">

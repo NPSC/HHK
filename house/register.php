@@ -342,17 +342,15 @@ if ($uS->RegColors == 'hospital') {
     $stmt = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)'");
 
     if ($stmt->rowCount() > 1) {
-        $hospSpans = '';
-
-        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
-            $hospSpans .= HTMLContainer::generateMarkup('span', $r['Title'], array('class'=>'spnHosp', 'data-id'=>$r['idHospital'], 'style' => 'background-color:' . $r['Reservation_Style'] . ';color:' . $r['Stay_Style'] . ';'));
-        }
 
         $colorKey = HTMLContainer::generateMarkup('span', $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . 's: ');
         // All button
         $colorKey .= HTMLContainer::generateMarkup('span', 'All', array('class'=>'spnHosp', 'data-id'=>0, 'style' => 'border:solid 3px black;font-size:120%;background-color:fff;color:000;'));
 
-        $colorKey .= $hospSpans;
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            $colorKey .= HTMLContainer::generateMarkup('span', $r['Title'], array('class'=>'spnHosp', 'data-id'=>$r['idHospital'], 'style' => 'background-color:' . $r['Reservation_Style'] . ';color:' . $r['Stay_Style'] . ';'));
+        }
+
     }
 }
 
@@ -409,7 +407,7 @@ try {
             var challVar = '<?php echo $challengeVar; ?>';
             var viewDays = '<?php echo ($weeks * 7); ?>';
         </script>
-        <script type="text/javascript" src="js/register.js<?php echo JS_V; ?>"></script>
+        <script type="text/javascript" src="js/register-min.js<?php echo JS_V; ?>"></script>
 <style>
    #version {
     height: 15px;
@@ -436,7 +434,7 @@ try {
     ?>>
 <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <div style="float:left; margin-right: 100px; margin-top:10px;">
+            <div style="float:left; margin-top:10px;">
                 <h2><?php echo $wInit->pageHeading; ?><?php echo RoomReport::getGlobalNightsCounter($dbh, $totalRest); ?><?php echo RoomReport::getGlobalStaysCounter($dbh); ?>
                 <span style="margin-left:10px; font-size: .65em; background:#EFDBC2;">Name Search:
                 <input type="text" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" /></span>
@@ -449,7 +447,7 @@ try {
             <form name="frmdownload" action="#" method="post">
             <div id="mainTabs" style="display:none;font-size:.8em;">
                 <ul>
-                    <li><a href="#vcal">Calendar</a></li>
+                    <li id="liCal"><a href="#vcal">Calendar</a></li>
                     <li><a href="#vstays">Current Guests</a></li>
                     <?php if ($uS->Reservation) { ?>
                         <li><a href="#vresvs"><?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?></a></li>
@@ -462,10 +460,10 @@ try {
                         <li><a href="#vactivity">Recent Activity</a></li>
                         <?php if ($uS->RoomPriceModel != ItemPriceCode::None) { ?>
                         <li><a href="#vfees"><?php echo $labels->getString('register', 'recentPayTab', 'Recent Payments'); ?></a></li>
-                        <li><a href="#vInv">Unpaid Invoices</a></li>
+                        <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
                     <?php } } ?>
                 </ul>
-                <div id="vcal" style="margin-top: 10px; clear:left; display:none;">
+                <div id="vcal" style="clear:left; padding: .6em 1em; display:none;">
                     <?php echo $viewWeeks; echo $colorKey; ?>
                     <div id="calendar"></div>
                 </div>
