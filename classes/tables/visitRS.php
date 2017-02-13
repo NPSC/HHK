@@ -36,6 +36,7 @@ class VisitRs extends TableRS {
     public $Span_End;  // datetime DEFAULT NULL,
     public $Expected_Rate;   // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $Pledged_Rate;   // decimal(10,2) NOT NULL DEFAULT '0.00',
+    public $Amount_Per_Guest;  // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $idRoom_rate;  // int(11) NOT NULL DEFAULT '0',
     public $Rate_Category;  // varchar(5) NOT NULL DEFAULT '',
     public $Rate_Glide_Credit;  // int(11) not null default '0',
@@ -59,6 +60,7 @@ class VisitRs extends TableRS {
         $this->Key_Deposit = new DB_Field("Key_Deposit", "0.00", new DbDecimalSanitizer(), TRUE, TRUE);
         $this->Expected_Rate = new DB_Field("Expected_Rate", "0.00", new DbDecimalSanitizer(), TRUE, TRUE);
         $this->Pledged_Rate = new DB_Field("Pledged_Rate", "0.00", new DbDecimalSanitizer(), TRUE, TRUE);
+        $this->Amount_Per_Guest = new DB_Field("Amount_Per_Guest", "0.00", new DbDecimalSanitizer(), TRUE, TRUE);
         $this->idRoom_rate = new DB_Field('idRoom_Rate', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Expected_Departure = new DB_Field("Expected_Departure", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->Rate_Category = new DB_Field("Rate_Category", "", new DbStrSanitizer(5), TRUE, TRUE);

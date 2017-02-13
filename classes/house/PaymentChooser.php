@@ -432,6 +432,10 @@ class PaymentChooser {
                 HTMLTable::makeTd('Date: ', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'housePaymentDate', 'class'=>'ckdate', 'data-vid'=>$idVisit))));
 
+        $feesTbl->addBodyTr(
+                HTMLTable::makeTd('Notes: ', array('class'=>'tdlabel'))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea', '', array('name'=>'housePaymentNote', 'rows'=>'2', 'cols'=>'40', 'data-vid'=>$idVisit))));
+
         $javaScript = '<script type="text/javascript">'
                 . '$("#housePaymentDate").datepicker({'
                 . 'yearRange: "-1:+01",

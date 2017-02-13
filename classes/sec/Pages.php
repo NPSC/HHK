@@ -217,7 +217,7 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
 
                 $hideAttr = array('type'=>'checkbox', 'name'=>'cbHide[' . $pageId . ']');
 
-                if ($r['Hide'] > 0) {
+                if ($rw['Hide'] > 0) {
                     $hideAttr['checked'] = 'checked';
                 }
 

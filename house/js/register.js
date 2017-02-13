@@ -626,11 +626,13 @@ $(document).ready(function () {
         cache: false
     });
     $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
-    $(document).tooltip();
+
     if (pmtMkup !== '') {
         $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
     }
+    
     $(':input[type="button"], :input[type="submit"]').button();
+    
     $.datepicker.setDefaults({
         yearRange: '-10:+02',
         changeMonth: true,
@@ -639,16 +641,19 @@ $(document).ready(function () {
         numberOfMonths: 2,
         dateFormat: 'M d, yy'
     });
+    
     $('#vstays').on('click', '.stpayFees', function (event) {
         event.preventDefault();
         $("#divAlert1, #paymentMessage").hide();
         payFee($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
     });
+    
     $('#vstays').on('click', '.applyDisc', function (event) {
         event.preventDefault();
         $("#divAlert1, #paymentMessage").hide();
         getApplyDiscDiag($(this).data('vid'), $('#pmtRcpt'));
     });
+    
     $('#vstays, #vresvs, #vwls, #vuncon').on('click', '.stupCredit', function (event) {
         event.preventDefault();
         $("#divAlert1, #paymentMessage").hide();

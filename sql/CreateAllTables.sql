@@ -1815,6 +1815,7 @@ CREATE TABLE if not exists `visit` (
   `Return_Date` datetime DEFAULT NULL,
   `Expected_Rate` decimal(10,2) NOT NULL DEFAULT '0.00',
   `Pledged_Rate` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `Amount_Per_Guest` decimal(10,2) NOT NULL DEFAULT '0.00',
   `idRoom_Rate` int(11) NOT NULL DEFAULT '0',
   `Rate_Category` varchar(5) NOT NULL DEFAULT '',
   `Rate_Glide_Credit` int(11) not null default '0',

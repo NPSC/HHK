@@ -233,8 +233,6 @@ class Patch {
 
             } else {
 
-                $fname = $fileinfo->getRealPath();
-
                 if ($fileinfo->getExtension() == $oldExtension) {
                     unlink($fileinfo->getRealPath());
                 }
