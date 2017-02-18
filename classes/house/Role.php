@@ -345,10 +345,6 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return $this->currentlyStaying;
     }
 
-    public function getPatientPsg(PDO $dbh) {
-        return $this->patientPsg;
-    }
-
     public function getEmergContactObj(\PDO $dbh) {
 
         if (is_null($this->emergContact)) {

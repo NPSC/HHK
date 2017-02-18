@@ -186,6 +186,11 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
         $r['Arrival'] = $arrivalDT->format('M j, Y');
         $r['Departure'] = $departureDT->format('M j, Y');
 
+        if ($r['pBirth'] != '') {
+            $pBirthDT = new DateTime($r['pBirth']);
+            $r['pBirth'] = $pBirthDT->format('M j, Y');
+        }
+
         $now = new DateTime();
         $now->setTime(0,0,0);
         $expDepart = new DateTime($r['Expected_Departure']);
@@ -227,15 +232,26 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
         $r['Departure'] = PHPExcel_Shared_Date::PHPToExcel($departureDT);
         $r['idPatient'] = $r['Patient_Last'] . ', ' . $r['Patient_First'];
 
+        if ($r['pBirth'] != '') {
+            $pBirthDT = new DateTime($r['pBirth']);
+            $r['pBirth'] = PHPExcel_Shared_Date::PHPToExcel($pBirthDT);
+        } else {
+            $r['pBirth'] = '';
+        }
+
         $n = 0;
         $flds = array();
 
         foreach ($fltrdFields as $f) {
+            if ($r[$f[1]] == '' && $f[5] != '') {
+                $f[5] = '';
+                $f[4] = 's';
+            }
+
             $flds[$n++] = array('type' => $f[4], 'value' => $r[$f[1]], 'style'=>$f[5]);
         }
 
         $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
-
 
     }
 }
@@ -373,6 +389,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     ifnull(r.Title, '') as Title,
     ifnull(np.Name_Last,'') as Patient_Last,
     ifnull(np.Name_First,'') as Patient_First,
+    ifnull(np.BirthDate, '') as pBirth,
     ifnull(nd.Name_Last,'') as Doctor_Last,
     ifnull(nd.Name_First,'') as Doctor_First,
     ifnull(hs.idPsg, 0) as idPsg,
@@ -1174,6 +1191,8 @@ if ($uS->PatientAddr) {
     $cFields[] = array($pTitles, $pFields, '', '', 's', '', array());
 }
 
+$cFields[] = array("Patient DOB", 'pBirth', '', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array());
+
 $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Ref. Agent'), 'Referral_Agent', 'checked', '', 's', '', array());
 
 if (count($aList) > 0) {
@@ -1211,12 +1230,9 @@ if (count($adjusts) > 0) {
 }
 
 
-$amtChecked = 'checked';
-if ($uS->RoomPriceModel == ItemPriceCode::None) {
-    $amtChecked = '';
-}
-
 $cFields[] = array("Nights", 'nights', 'checked', '', 'n', '', array('style'=>'text-align:center;'));
+
+$amtChecked = 'checked';
 
 if ($uS->RoomPriceModel !== ItemPriceCode::None) {
 

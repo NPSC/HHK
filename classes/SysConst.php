@@ -73,7 +73,7 @@ class GL_TableNames {
     const AddrPurpose = 'Address_Purpose';
     const EmailPurpose = 'Email_Purpose';
     const PhonePurpose = 'Phone_Type';
-    const Gender = 'Gender';
+    //const Gender = 'Gender';
     const MemberBasis = 'Member_Basis';
     const MemberStatus = 'mem_status';
     const NamePrefix = 'Name_Prefix';
@@ -90,10 +90,10 @@ class GL_TableNames {
 //    const FeesPayType = 'FeesPayType';
     const KeyDispositions = 'Key_Disposition';
     const SalutationCodes = 'Salutation';
-    const AgeBracket = 'Age_Bracket';
-    const IncomeBracket = 'Income_Bracket';
-    const Ethnicity = 'Ethnicity';
-    const SpecialNeeds = 'Special_Needs';
+    //const AgeBracket = 'Age_Bracket';
+    //const IncomeBracket = 'Income_Bracket';
+    //const Ethnicity = 'Ethnicity';
+    //const SpecialNeeds = 'Special_Needs';
 
     const RoomType = 'Room_Type';
     const RoomStatus = 'Room_Status';

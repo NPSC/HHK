@@ -53,12 +53,21 @@ class GuestReport {
 
         // Set up user selected demographics categoryeis.
         $demoCategorys = array();
-        $demoCats = readGenLookupsPDO($dbh, 'Demographics');
 
-        foreach ($demoCats as $d) {
+        $fields = '';
+
+        foreach (readGenLookupsPDO($dbh, 'Demographics') as $d) {
 
             if (strtolower($d[2]) == 'y') {
-                $demoCategorys[$d[1]] = $d[1];
+
+
+                if ($d[0] == 'Gender') {
+                    $fields .= "ifnull(n.`Gender`,'') as `Gender`,";
+                } else {
+                    $fields .= "ifnull(nd.`" . $d[0] . "`, '') as `" . $d[0] . "`,";
+                }
+
+                $demoCategorys[$d[0]] = $d[0];
             }
         }
 
@@ -111,13 +120,8 @@ class GuestReport {
             '-',
             MONTH(s.Span_Start_Date),
             '-01') AS `In_Date`,
-    n.Gender,
     na.Postal_Code,
-    nd.Age_Bracket,
-    nd.Ethnicity,
-    nd.Income_Bracket,
-    nd.Education_Level,
-    nd.Media_Source,
+    $fields
     ng.idPsg,
     YEAR(s.Span_Start_Date) AS fy,
     hs.idHospital,

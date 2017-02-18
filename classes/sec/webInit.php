@@ -124,7 +124,7 @@ class webInit {
     public function reloadGenLkUps($uS) {
 
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
-            where `Table_Name` in ('Address_Purpose','Email_Purpose','Gender','rel_type', 'Age_Bracket', 'NoReturnReason', 'Income_Bracket', 'Education_Level', 'Media_Source', 'Ethnicity', 'Special_Needs', 'Member_Basis','mem_status','Name_Prefix','Name_Suffix','Phone_Type', 'Pay_Type', 'Salutation', 'Role_Codes') order by `Table_Name`, `Code`;";
+            where `Table_Name` in ('Address_Purpose','Email_Purpose','rel_type', 'NoReturnReason', 'Member_Basis','mem_status','Name_Prefix','Name_Suffix','Phone_Type', 'Pay_Type', 'Salutation', 'Role_Codes') order by `Table_Name`, `Code`;";
         $stmt = $this->dbh->query($query);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -132,6 +132,18 @@ class webInit {
 
         foreach ($rows as $r) {
             $nameLookups[$r['Table_Name']][$r['Code']] = array($r['Code'],$r['Description'],$r['Substitute']);
+        }
+
+        // Demographics
+        $demos = readGenLookupsPDO($this->dbh, 'Demographics', 'Order');
+
+        foreach ($demos as $d) {
+
+            $entries = readGenLookupsPDO($this->dbh, $d[0], 'Order');
+
+            foreach ($entries as $e) {
+                $nameLookups[$d[0]][$e['Code']] = array($e['Code'],$e['Description'],$e['Substitute']);
+            }
         }
 
         $uS->nameLookups = $nameLookups;

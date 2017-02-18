@@ -204,6 +204,13 @@ if ($uS->Reservation) {
     $roomCount += 5;
 }
 
+$divFontSize = '';
+if ($roomCount > 20) {
+    $divFontSize = 'font-size:.8em;';
+} else if ($roomCount > 10) {
+    $divFontSize = 'font-size:.9em;';
+}
+
 // Current guests columns
 $cgCols = array(
     array("data" => "Action" ),
@@ -445,7 +452,7 @@ try {
             </div>
             <div style="clear:both;"></div>
             <form name="frmdownload" action="#" method="post">
-            <div id="mainTabs" style="display:none;font-size:.8em;">
+            <div id="mainTabs" style="display:none; <?php echo $divFontSize; ?>">
                 <ul>
                     <li id="liCal"><a href="#vcal">Calendar</a></li>
                     <li><a href="#vstays">Current Guests</a></li>
@@ -463,26 +470,26 @@ try {
                         <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
                     <?php } } ?>
                 </ul>
-                <div id="vcal" style="clear:left; padding: .6em 1em; display:none;">
+                <div id="vcal" style="clear:left; padding: .6em 1em; display:none; <?php echo $divFontSize; ?>">
                     <?php echo $viewWeeks; echo $colorKey; ?>
                     <div id="calendar"></div>
                 </div>
-                <div id="vstays" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
+                <div id="vstays" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; <?php echo $divFontSize; ?>">
                     <?php echo $currentCheckedIn; ?>
                 </div>
 <?php if ($uS->ShowUncfrmdStatusTab) { ?>
-                <div id="vuncon" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
+                <div id="vuncon" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; <?php echo $divFontSize; ?>">
                     <?php echo $uncommittedReservations; ?>
                 </div>
 <?php } ?>
-                <div id="vresvs" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
+                <div id="vresvs" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; <?php echo $divFontSize; ?>">
                     <?php echo $currentReservations; ?>
                 </div>
-                <div id="vwls" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
+                <div id="vwls" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; <?php echo $divFontSize; ?>">
 <?php echo $waitlist; ?>
                 </div>
 <?php if ($isGuestAdmin) { ?>
-                <div id="vactivity" class="hhk-tdbox hhk-visitdialog" style="display:none;">
+                <div id="vactivity" class="hhk-tdbox hhk-visitdialog" style="display:none; <?php echo $divFontSize; ?>">
                     <table><tr>
                             <th>Reports</th><th>Dates</th>
                         </tr><tr>
@@ -500,7 +507,7 @@ try {
                         </tr></table>
                     <div id="rptdiv" class="hhk-visitdialog"></div>
                 </div>
-                <div id="vfees" class="hhk-tdbox hhk-visitdialog" style="display:none;">
+                <div id="vfees" class="hhk-tdbox hhk-visitdialog" style="display:none; <?php echo $divFontSize; ?>">
                     <table>
                         <tr>
                             <th>Date Range</th>
@@ -521,7 +528,7 @@ try {
                     </table>
                     <div id="rptfeediv" class="hhk-visitdialog"></div>
                 </div>
-                <div id="vInv" class="hhk-tdbox hhk-visitdialog" style="display:none;">
+                <div id="vInv" class="hhk-tdbox hhk-visitdialog" style="display:none; <?php echo $divFontSize; ?>">
                     <input type="button" id="btnInvGo" value="Refresh"/>
                       <div id="rptInvdiv" class="hhk-visitdialog"></div>
                 </div>

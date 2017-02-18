@@ -439,10 +439,11 @@ CREATE TABLE if not exists `gateway_transaction` (
 -- -----------------------------------------------------
 CREATE TABLE if not exists `gen_lookups` (
   `Table_Name` varchar(45) NOT NULL,
-  `Code` varchar(65) NOT NULL DEFAULT '',
+  `Code` varchar(65) NOT NULL,
   `Description` varchar(255) NOT NULL DEFAULT '',
   `Substitute` varchar(255) NOT NULL DEFAULT '',
   `Type` varchar(4) NOT NULL DEFAULT '',
+  `Order` INT NOT NULL DEFAULT 0,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`Table_Name`,`Code`)
 ) ENGINE=InnoDB;

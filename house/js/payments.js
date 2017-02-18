@@ -55,7 +55,8 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                         var amt = parseFloat($('#housePayment').val().replace('$', '').replace(',', '')),
                             vid = $('#housePayment').data('vid'),
                             item = '',
-                            adjDate = $.datepicker.formatDate("yy-mm-dd", $('#housePaymentDate').datepicker('getDate'));
+                            adjDate = $.datepicker.formatDate("yy-mm-dd", $('#housePaymentDate').datepicker('getDate')),
+                            notes = $('#housePaymentNote').val();
                             
                         if (isNaN(amt)) {
                             amt = 0;
@@ -67,7 +68,7 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                             item = $('#cbAdjustPmt2').data('item');
                         }
                         
-                        saveDiscountPayment(vid, item, amt, $('#selHouseDisc').val(), $('#selAddnlChg').val(), adjDate);
+                        saveDiscountPayment(vid, item, amt, $('#selHouseDisc').val(), $('#selAddnlChg').val(), adjDate, notes);
                         $(this).dialog('close');
                     },
                     "Cancel": function() {
@@ -132,9 +133,10 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
  * @param {type} discount
  * @param {type} addnlCharge
  * @param {type} adjDate
+ * @param {string} notes
  * @returns {undefined}
  */
-function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjDate) {
+function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjDate, notes) {
     "use strict";
     $.post('ws_ckin.php',
             {
@@ -144,7 +146,8 @@ function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjD
                 amt: amt,
                 dsc: discount,
                 chg: addnlCharge,
-                adjDate: adjDate
+                adjDate: adjDate,
+                notes: notes
             },
         function(data) {
           if (data) {

@@ -541,7 +541,7 @@ try {
         $labels = new Config_Lite(LABEL_FILE);
 
         $events = ReservationSvcs::removeResvGuest($dbh, $id, $idReserv, $labels, $uS->username);
-        
+
         break;
 
     case "addResv":
@@ -746,7 +746,12 @@ try {
             $adjDate = filter_var($_POST['adjDate'], FILTER_SANITIZE_STRING);
         }
 
-        $events = HouseServices::saveHousePayment($dbh, $idItem, $ord, $amt, $discount, $addnlCharge, $adjDate);
+        $notes = '';
+        if (isset($_POST['notes'])) {
+            $notes = filter_var($_POST['notes'], FILTER_SANITIZE_STRING);
+        }
+
+        $events = HouseServices::saveHousePayment($dbh, $idItem, $ord, $amt, $discount, $addnlCharge, $adjDate, $notes);
 
         break;
 

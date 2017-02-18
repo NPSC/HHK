@@ -66,6 +66,7 @@ if (isset($_POST['table'])) {
 
     $cmd = '';
     $type = '';
+    $order = 0;
 
     if (isset($_POST['cmd'])) {
         $cmd = filter_var($_POST['cmd'], FILTER_SANITIZE_STRING);
@@ -87,8 +88,13 @@ if (isset($_POST['table'])) {
                 $aText = filter_var($_POST['txtDiagAmt'][0], FILTER_SANITIZE_STRING);
             }
 
+            $orderNumber = 0;
+            if (isset($_POST['txtDOrder'][0])) {
+                $orderNumber = intval(filter_var($_POST['txtDOrder'][0], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
             // Check for an entry with the same description
-            $stmt = $dbh->query("Select count(*) from gen_lookups where `Table_Name` = '$tableName' and LOWER(`Description`) = '" .strtolower($dText) . "';");
+            $stmt = $dbh->query("Select count(*) from gen_lookups where `Table_Name` = '$tableName' and LOWER(`Description`) = '" . strtolower($dText) . "';");
             $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
             if ($rows[0][0] == 0) {
@@ -101,11 +107,12 @@ if (isset($_POST['table'])) {
                 $glRs->Description->setNewVal($dText);
                 $glRs->Substitute->setNewVal($aText);
                 $glRs->Type->setNewVal($type);
+                $glRs->Order->setNewVal($orderNumber);
 
                 EditRS::insert($dbh, $glRs);
 
                 $logText = HouseLog::getInsertText($glRs);
-                HouseLog::logGenLookups($dbh, $tableName, $c, $logText, "insert", $uS->username);
+                HouseLog::logGenLookups($dbh, $tableName, $newCode, $logText, "insert", $uS->username);
             }
 
             unset($_POST['txtDiag'][0]);
@@ -113,105 +120,83 @@ if (isset($_POST['table'])) {
 
         $rep = NULL;
 
-        switch ($tableName) {
+        $demos = readGenLookupsPDO($dbh, 'Demographics');
 
-        case 'Media_Source':
+        if (isset($demos[$tableName])) {
 
-            $rep = function($dbh, $newId, $oldId){
-                return $dbh->exec("update name_demog set Media_Source = '$newId' where Media_Source = '$oldId';");
-            };
-            break;
+            if ($tableName == 'Gender') {
+                $rep = function($dbh, $newId, $oldId, $tableName) {
+                    return $dbh->exec("update name set `$tableName` = '$newId' where `$tableName` = '$oldId';");
+                };
+            } else {
+                $rep = function($dbh, $newId, $oldId, $tableName) {
+                    return $dbh->exec("update name_demog set `$tableName` = '$newId' where `$tableName` = '$oldId';");
+                };
+            }
 
-        case 'Age_Bracket':
+        } else {
+            switch ($tableName) {
 
-            $rep = function($dbh, $newId, $oldId){
-                return $dbh->exec("update name_demog set Age_Bracket = '$newId' where Age_Bracket = '$oldId';");
-            };
-            break;
+                case 'Patient_Rel_Type':
 
-        case 'Income_Bracket':
+                    $rep = function($dbh, $newId, $oldId) {
+                        return $dbh->exec("update name_guest set Relationship_Code = '$newId' where Relationship_Code = '$oldId';");
+                    };
 
-            $rep = function($dbh, $newId, $oldId){
-                return $dbh->exec("update name_demog set Income_Bracket = '$newId' where Income_Bracket = '$oldId';");
-            };
+                    $verify = "Select n.Relationship_Code from name_guest n left join gen_lookups g on n.Relationship_Code = g.Code Where g.Table_Name = 'Patient_Rel_Type' and g.Code is null;";
+                    break;
 
-            $verify = "select nd.Income_Bracket from name_demog nd left join gen_lookups g on nd.Income_Bracket = g.Code where g.Table_Name = 'Income_Bracket' and g.Code is null;";
-            break;
+                case 'Diagnosis':
 
-        case 'Ethnicity':
+                    $rep = function($dbh, $newId, $oldId) {
+                        return $dbh->exec("update hospital_stay set Diagnosis = '$newId' where Diagnosis = '$oldId';");
+                    };
 
-            $rep = function($dbh, $newId, $oldId){
-                return $dbh->exec("update name_demog set Ethnicity = '$newId' where Ethnicity = '$oldId';");
-            };
-            break;
+                    $verify = "select hs.Diagnosis from hospital_stay hs left join gen_lookups g on hs.Diagnosis = g.Code where g.Table_Name = 'Diagnosis' and g.Code is null;";
+                    break;
 
-        case 'Gender':
+                case 'Location':
 
-            $rep = function($dbh, $newId, $oldId){
-                return $dbh->exec("update name set Gender = '$newId' where Gender = '$oldId';");
-            };
-            break;
+                    $rep = function($dbh, $newId, $oldId) {
+                        return $dbh->exec("update hospital_stay set Location = '$newId' where Location = '$oldId';");
+                    };
+                    break;
 
-        case 'Patient_Rel_Type':
+                case 'OSS_Codes':
 
-            $rep = function($dbh, $newId, $oldId){
-                return $dbh->exec("update name_guest set Relationship_Code = '$newId' where Relationship_Code = '$oldId';");
-            };
+                    $rep = function($dbh, $newId, $oldId) {
+                        return $dbh->exec("update resource_use set OSS_Code = '$newId' where OSS_Code = '$oldId';");
+                    };
+                    break;
 
-            $verify = "Select n.Relationship_Code from name_guest n left join gen_lookups g on n.Relationship_Code = g.Code Where g.Table_Name = 'Patient_Rel_Type' and g.Code is null;";
-            break;
+                case 'Utilization_Category':
 
-        case 'Diagnosis':
+                    $rep = function($dbh, $newId, $oldId) {
+                        return $dbh->exec("update resource set Utilization_Category = '$newId' where Utilization_Category = '$oldId';");
+                    };
+                    break;
 
-            $rep = function($dbh, $newId, $oldId){
-                return $dbh->exec("update hospital_stay set Diagnosis = '$newId' where Diagnosis = '$oldId';");
-            };
+                case 'Ins_Type':
 
-            $verify = "select hs.Diagnosis from hospital_stay hs left join gen_lookups g on hs.Diagnosis = g.Code where g.Table_Name = 'Diagnosis' and g.Code is null;";
-            break;
+                    $rep = function($dbh, $newId, $oldId) {
+                        return $dbh->exec("update insurance set `Type` = '$newId' where `Type` = '$oldId';");
+                    };
+                    break;
 
-        case 'Location':
+                case 'Room_Cleaning_Days':
 
-            $rep = function($dbh, $newId, $oldId){
-                return $dbh->exec("update hospital_stay set Location = '$newId' where Location = '$oldId';");
-            };
-            break;
+                    $rep = function($dbh, $newId, $oldId) {
+                        return $dbh->exec("update room set `Cleaning_Cycle_Code` = '$newId' where `Cleaning_Cycle_Code` = '$oldId';");
+                    };
+                    break;
 
-        case 'OSS_Codes':
+                case 'NoReturnReason':
 
-            $rep = function($dbh, $newId, $oldId){
-                return $dbh->exec("update resource_use set OSS_Code = '$newId' where OSS_Code = '$oldId';");
-            };
-            break;
-
-        case 'Utilization_Category':
-
-            $rep = function($dbh, $newId, $oldId){
-                return $dbh->exec("update resource set Utilization_Category = '$newId' where Utilization_Category = '$oldId';");
-            };
-            break;
-
-        case 'Ins_Type':
-
-            $rep = function($dbh, $newId, $oldId){
-                return $dbh->exec("update insurance set `Type` = '$newId' where `Type` = '$oldId';");
-            };
-            break;
-
-        case 'Room_Cleaning_Days':
-
-            $rep = function($dbh, $newId, $oldId){
-                return $dbh->exec("update room set `Cleaning_Cycle_Code` = '$newId' where `Cleaning_Cycle_Code` = '$oldId';");
-            };
-            break;
-
-        case 'NoReturnReason':
-
-            $rep = function($dbh, $newId, $oldId){
-                return $dbh->exec("update name_demog set `No_Return` = '$newId' where `No_Return` = '$oldId';");
-            };
-            break;
-
+                    $rep = function($dbh, $newId, $oldId) {
+                        return $dbh->exec("update name_demog set `No_Return` = '$newId' where `No_Return` = '$oldId';");
+                    };
+                    break;
+            }
         }
 
         $amounts = array();
@@ -223,7 +208,7 @@ if (isset($_POST['table'])) {
         }
 
         $codeArray = filter_var_array($_POST['txtDiag'], FILTER_SANITIZE_STRING);
-
+        $orderNums = filter_var_array($_POST['txtDOrder'], FILTER_SANITIZE_NUMBER_INT);
 
         if ($type === 'm') {
 
@@ -235,6 +220,12 @@ if (isset($_POST['table'])) {
                     $use = '';
                 }
 
+                if (isset($_POST['txtDOrder'][$c])) {
+                    $orderNumber = intval(filter_var($_POST['txtDOrder'][$c], FILTER_SANITIZE_NUMBER_INT), 10);
+                } else {
+                    $orderNumber = 0;
+                }
+
                 $gluRs = new GenLookupsRS();
                 $gluRs->Table_Name->setStoredVal($tableName);
                 $gluRs->Code->setStoredVal($c);
@@ -242,40 +233,42 @@ if (isset($_POST['table'])) {
                 $rw = EditRS::select($dbh, $gluRs, array($gluRs->Table_Name, $gluRs->Code));
 
                 if (count($rw) == 1) {
+
                     $gluRs = new GenLookupsRS();
                     EditRS::loadRow($rw[0], $gluRs);
+
                     $gluRs->Substitute->setNewVal($use);
+                    $gluRs->Order->setNewVal($orderNumber);
+
                     $upCtr = EditRS::update($dbh, $gluRs, array($gluRs->Table_Name, $gluRs->Code));
 
                     if ($upCtr > 0) {
 
                         $logText = HouseLog::getUpdateText($gluRs);
                         HouseLog::logGenLookups($dbh, $tableName, $c, $logText, "update", $uS->username);
-
                     }
-
                 }
-
             }
         } else {
-            replaceGenLk($dbh, $tableName, $codeArray, $amounts, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : NULL), $rep, (isset($_POST['cbDiagDel']) ? $_POST['selDiagDel'] : array()));
+            replaceGenLk($dbh, $tableName, $codeArray, $amounts, $orderNums, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : NULL), $rep, (isset($_POST['cbDiagDel']) ? $_POST['selDiagDel'] : array()));
         }
     }
 
-    $diags = readGenLookupsPDO($dbh, $tableName, 'Description');
+    $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
 
     $tbl = new HTMLTable();
 
     if ($type == 'm') {
-        $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries') . HTMLTable::makeTh('Use');
+        $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries') . HTMLTable::makeTh('Order') . HTMLTable::makeTh('Use');
     } else {
-        $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries') . ($type == 'u' ? '' : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With')) . ($type == 'ha' ? HTMLTable::makeTh('Amount') : '') . ($type == 'ca' ? HTMLTable::makeTh('Days') : '');
+        $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries') . HTMLTable::makeTh('Order') . ($type == 'u' ? '' : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With')) . ($type == 'ca' ? HTMLTable::makeTh('Amount') : '') . ($type == 'ha' ? HTMLTable::makeTh('Days') : '');
     }
 
     $tbl->addHeaderTr($hdrTr);
 
     foreach ($diags as $d) {
 
+        // Remove this item from the replacement entries.
         $tDiags = removeOptionGroups($diags);
         unset($tDiags[$d[0]]);
 
@@ -283,7 +276,7 @@ if (isset($_POST['table'])) {
 
         if ($type == 'm') {
 
-            $ary = array('name'=>'cbDiagDel[' . $d[0] . ']', 'type'=>'checkbox', 'class'=>'hhkdiagdelcb');
+            $ary = array('name' => 'cbDiagDel[' . $d[0] . ']', 'type' => 'checkbox', 'class' => 'hhkdiagdelcb');
 
             if (strtolower($d[2]) == 'y') {
                 $ary['checked'] = 'checked';
@@ -291,28 +284,35 @@ if (isset($_POST['table'])) {
 
             $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', $ary));
 
+        } else if ($type == 'd' && $d[0] == 'z') {
+
+            $cbDelMU = HTMLTable::makeTd('');
+
         } else if ($type != 'u') {
 
-            $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'cbDiagDel[' . $d[0] . ']', 'type'=>'checkbox', 'class'=>'hhkdiagdelcb', 'data-did'=>'selDiagDel[' . $d[0] . ']')));
+            $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'cbDiagDel[' . $d[0] . ']', 'type' => 'checkbox', 'class' => 'hhkdiagdelcb', 'data-did' => 'selDiagDel[' . $d[0] . ']')));
         }
 
-        $tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup($d[1], array('name'=>'txtDiag[' . $d[0] . ']')))
-            .$cbDelMU
-            .($type != 'm' ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($tDiags, ''), array('name'=>'selDiagDel[' . $d[0] . ']'))) : '')
-            .($type == 'ha' || $type == 'ca' ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[2], array('size'=>'7', 'style'=>'text-align:right;', 'name'=>'txtDiagAmt[' . $d[0] . ']'))) : '')
+        $tbl->addBodyTr(
+                HTMLTable::makeTd(HTMLInput::generateMarkup($d[1], array('name' => 'txtDiag[' . $d[0] . ']')))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($d[4], array('name' => 'txtDOrder[' . $d[0] . ']', 'size'=>'3')))
+                . $cbDelMU
+                . ($type != 'm' && $type != 'u' ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($tDiags, ''), array('name' => 'selDiagDel[' . $d[0] . ']'))) : '')
+                . ($type == 'ha' || $type == 'ca' ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[2], array('size' => '7', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[' . $d[0] . ']'))) : '')
         );
-
     }
 
     if ($type != 'u' && $type != 'm') {
         // new entry row
-        $tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtDiag[0]')))
-            . HTMLTable::makeTd('New', array('colspan'=>2))
-            . ($type == 'ha' || $type == 'ca' ? HTMLTable::makeTd(HTMLInput::generateMarkup('', array('size'=>'7', 'style'=>'text-align:right;', 'name'=>'txtDiagAmt[0]'))) : '')
+        $tbl->addBodyTr(
+                HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDiag[0]')))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDOrder[0]', 'size'=>'3')))
+                . HTMLTable::makeTd('New', array('colspan' => 2))
+                . ($type == 'ha' || $type == 'ca' ? HTMLTable::makeTd(HTMLInput::generateMarkup('', array('size' => '7', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[0]'))) : '')
         );
     }
 
-    echo($tbl->generateMarkup(array('style'=>'margin:7px;')));
+    echo($tbl->generateMarkup(array('style' => 'margin:7px;')));
 
     exit();
 }
@@ -338,7 +338,7 @@ if (isset($_POST['btnkfSave'])) {
         $dAmt = filter_var($_POST['srrAmt'][0], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
 
         // Check for an entry with the same description
-        $stmt = $dbh->query("Select count(*) from gen_lookups where `Table_Name` = 'Static_Room_Rate' and LOWER(`Description`) = '" .strtolower($dText) . "';");
+        $stmt = $dbh->query("Select count(*) from gen_lookups where `Table_Name` = 'Static_Room_Rate' and LOWER(`Description`) = '" . strtolower($dText) . "';");
         $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
         if ($rows[0][0] == 0) {
@@ -395,7 +395,7 @@ if (isset($_POST['btnkfSave'])) {
             $vfDefault = filter_var($_POST['vfrbdefault'], FILTER_SANITIZE_STRING);
             $vFees = readGenLookupsPDO($dbh, 'Visit_Fee_Code');
 
-            foreach($vFees as $v) {
+            foreach ($vFees as $v) {
 
                 if ($v[0] == $vfDefault) {
 
@@ -419,7 +419,6 @@ if (isset($_POST['btnkfSave'])) {
                     EditRS::update($dbh, $itemRs, array($itemRs->idItem));
                 }
             }
-
         }
     }
 
@@ -429,7 +428,7 @@ if (isset($_POST['btnkfSave'])) {
         $vfDefault = filter_var($_POST['ptrbdefault'], FILTER_SANITIZE_STRING);
         $vFees = readGenLookupsPDO($dbh, 'Pay_Type');
 
-        foreach($vFees as $v) {
+        foreach ($vFees as $v) {
 
             if ($v[0] == $vfDefault && $v[0] != PayType::Invoice) {
 
@@ -445,7 +444,6 @@ if (isset($_POST['btnkfSave'])) {
     if (isset($_POST['epdesc'][$uS->VisitExcessPaid])) {
 
         saveGenLk($dbh, 'ExcessPays', $_POST['epdesc'], array(), NULL);
-
     }
 
 
@@ -475,9 +473,7 @@ if (isset($_POST['btnkfSave'])) {
 
             EditRS::update($dbh, $faRs, array($faRs->idFa_category));
         }
-
     }
-
 }
 
 if (isset($_POST['btnhSave'])) {
@@ -525,13 +521,13 @@ if (isset($_POST['btnhSave'])) {
             $rCSS = filter_var($_POST['hColor'][$idHosp], FILTER_SANITIZE_STRING);
         }
 
-         // Text Color
+        // Text Color
         $vCSS = '';
         if (isset($_POST['hText'][$idHosp])) {
             $vCSS = filter_var($_POST['hText'][$idHosp], FILTER_SANITIZE_STRING);
         }
 
-       // New Hospital?
+        // New Hospital?
         if ($title == '' || $type == '') {
             // No new hospitals this time
             continue;
@@ -571,7 +567,6 @@ if (isset($_POST['btnhSave'])) {
 
             $cHosp = new ConstraintsHospital($dbh, $idHosp);
             $cHosp->saveConstraints($dbh, $capturedAttributes);
-
         } else {
             //insert
             EditRS::insert($dbh, $hospRs);
@@ -619,7 +614,7 @@ if (isset($_POST['btnAttrSave'])) {
             $cat = '';
         }
 
-       // New Attr?
+        // New Attr?
         if ($title == '' || $type == '') {
             // No new hospitals this time
             continue;
@@ -672,15 +667,12 @@ if (isset($_POST['btnItemSave'])) {
 
                 $dbh->exec("update `item` set `Description` = '$desc' where `idItem` = " . $i['idItem']);
             }
-
         }
     }
-
 }
 //
 // Generate tab content
 //
-
 // hospital tab title
 $hospitalTabTitle = $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospitals & Associations') . 's';
 
@@ -691,7 +683,7 @@ $kTbl->addHeaderTr(HTMLTable::makeTh('Selected Model'));
 
 $kTbl->addBodyTr(HTMLTable::makeTd($rPrices[$uS->RoomPriceModel][1]));
 
-$pricingModelTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Room Pricing Model', array('style'=>'font-weight:bold;')) . $kTbl->generateMarkup(array('style'=>'margin:7px;')), array('style'=>'margin:7px;'));
+$pricingModelTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Room Pricing Model', array('style' => 'font-weight:bold;')) . $kTbl->generateMarkup(array('style' => 'margin:7px;')), array('style' => 'margin:7px;'));
 
 $rescTable = ResourceView::resourceTable($dbh, $uS->ShrRm);
 $roomTable = ResourceView::roomTable($dbh, $uS->KeyDeposit, $uS->VisitFee);
@@ -705,25 +697,24 @@ $fTbl = $priceModel->getEditMarkup($dbh, $uS->RoomRateDefault);
 $rp = readGenLookupsPDO($dbh, 'Static_Room_Rate', 'Description');
 
 $sTbl = new HTMLTable();
-$sTbl->addHeaderTr(HTMLTable::makeTh('Description').HTMLTable::makeTh('Amount'));
+$sTbl->addHeaderTr(HTMLTable::makeTh('Description') . HTMLTable::makeTh('Amount'));
 
 foreach ($rp as $r) {
     $sTbl->addBodyTr(
-            HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array('name'=>'srrDesc['.$r[0].']', 'size'=>'16')))
-            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup($r[2], array('name'=>'srrAmt['.$r[0].']', 'size'=>'6', 'class'=>'number-only')))
-            );
+            HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array('name' => 'srrDesc[' . $r[0] . ']', 'size' => '16')))
+            . HTMLTable::makeTd('$' . HTMLInput::generateMarkup($r[2], array('name' => 'srrAmt[' . $r[0] . ']', 'size' => '6', 'class' => 'number-only')))
+    );
 }
 
-$sTbl->addBodyTr(HTMLTable::makeTd('New static room rate:', array('colspan'=>'3')));
+$sTbl->addBodyTr(HTMLTable::makeTd('New static room rate:', array('colspan' => '3')));
 $sTbl->addBodyTr(
-        HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'srrDesc[0]', 'size'=>'16')))
-        .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'srrAmt[0]', 'size'=>'6', 'class'=>'number-only')))
-        );
+        HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'srrDesc[0]', 'size' => '16')))
+        . HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name' => 'srrAmt[0]', 'size' => '6', 'class' => 'number-only')))
+);
 
 
-$sMarkup = HTMLContainer::generateMarkup('fieldset',
-    HTMLContainer::generateMarkup('legend', 'Static Room Rate', array('style'=>'font-weight:bold;')) .
-    $sTbl->generateMarkup(array('style'=>'float:left;margin:7px;')), array('style'=>'clear:left;float:left;margin:7px;'));
+$sMarkup = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Static Room Rate', array('style' => 'font-weight:bold;')) .
+                $sTbl->generateMarkup(array('style' => 'float:left;margin:7px;')), array('style' => 'clear:left;float:left;margin:7px;'));
 
 
 // Rate Calculator
@@ -735,35 +726,32 @@ if ($priceModel->hasRateCalculator()) {
 
     $tbl->addHeaderTr(
             HTMLTable::makeTh('Room Rate')
-            .HTMLTable::makeTh('Credit')
-        .($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily ? HTMLTable::makeTh('Guest Nights') : HTMLTable::makeTh('Nights'))
-        .HTMLTable::makeTh('Total'));
+            . HTMLTable::makeTh('Credit')
+            . ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily ? HTMLTable::makeTh('Guest Nights') : HTMLTable::makeTh('Nights'))
+            . HTMLTable::makeTh('Total'));
 
-    $attrFixed = array('id'=>'spnRateTB', 'class'=>'hhk-fxFixed', 'style'=>'margin-left:.5em;display:none;');
+    $attrFixed = array('id' => 'spnRateTB', 'class' => 'hhk-fxFixed', 'style' => 'margin-left:.5em;display:none;');
     $rateCategories = RoomRate::makeSelectorOptions($priceModel);
 
 
     $tbl->addBodyTr(
-        HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), ''), array('name'=>'selRateCategory'))
-        .HTMLContainer::generateMarkup('span', '$' . HTMLInput::generateMarkup('', array('name'=>'txtFixedRate', 'size'=>'4')), $attrFixed))
-        . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtCredit', 'size'=>'4')), array('style'=>'text-align:center;'))
-        . HTMLTable::makeTd(HTMLInput::generateMarkup('1', array('name'=>'txtNites', 'size'=>'4')), array('style'=>'text-align:center;'))
-        . HTMLTable::makeTd('$'.HTMLContainer::generateMarkup('span', '0', array('name'=>'spnAmount')), array('style'=>'text-align:center;'))
-        );
+            HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), ''), array('name' => 'selRateCategory'))
+                    . HTMLContainer::generateMarkup('span', '$' . HTMLInput::generateMarkup('', array('name' => 'txtFixedRate', 'size' => '4')), $attrFixed))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtCredit', 'size' => '4')), array('style' => 'text-align:center;'))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup('1', array('name' => 'txtNites', 'size' => '4')), array('style' => 'text-align:center;'))
+            . HTMLTable::makeTd('$' . HTMLContainer::generateMarkup('span', '0', array('name' => 'spnAmount')), array('style' => 'text-align:center;'))
+    );
 
-    $rcMarkup = HTMLContainer::generateMarkup('fieldset',
-        HTMLContainer::generateMarkup('legend', 'Room Rate Calculator', array('style'=>'font-weight:bold;')) .
-        $tbl->generateMarkup(array('style'=>'float:left;margin:7px;')), array('style'=>'clear:left;float:left;margin:7px;'));
-
+    $rcMarkup = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Room Rate Calculator', array('style' => 'font-weight:bold;')) .
+                    $tbl->generateMarkup(array('style' => 'float:left;margin:7px;')), array('style' => 'clear:left;float:left;margin:7px;'));
 }
 
 // Wrap rate table and rate calculator
-$feesTable = HTMLContainer::generateMarkup('fieldset',
-    HTMLContainer::generateMarkup('legend', 'Room Rates', array('style'=>'font-weight:bold;'))
-    . $fTbl->generateMarkup(array('style'=>'margin:7px;'))
-    . $rcMarkup
-    . $sMarkup
-    , array('style'=>'clear:left;float:left;margin:7px;'));
+$feesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Room Rates', array('style' => 'font-weight:bold;'))
+                . $fTbl->generateMarkup(array('style' => 'margin:7px;'))
+                . $rcMarkup
+                . $sMarkup
+                , array('style' => 'clear:left;float:left;margin:7px;'));
 
 
 // Visit Fees - cleaning fees
@@ -773,11 +761,11 @@ if ($uS->VisitFee) {
 
     $kFees = readGenLookupsPDO($dbh, 'Visit_Fee_Code');
     $kTbl = new HTMLTable();
-    $kTbl->addHeaderTr(HTMLTable::makeTh('Default') . HTMLTable::makeTh('Description').HTMLTable::makeTh('Amount'));
+    $kTbl->addHeaderTr(HTMLTable::makeTh('Default') . HTMLTable::makeTh('Description') . HTMLTable::makeTh('Amount'));
 
     foreach ($kFees as $r) {
 
-        $ptAttrs = array('type'=>'radio', 'name'=>'vfrbdefault');
+        $ptAttrs = array('type' => 'radio', 'name' => 'vfrbdefault');
 
         if ($uS->DefaultVisitFee == $r[0]) {
             $ptAttrs['checked'] = 'checked';
@@ -786,13 +774,13 @@ if ($uS->VisitFee) {
         }
 
         $kTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup($r[0], $ptAttrs), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array('name'=>'vfdesc['.$r[0].']', 'size'=>'16')))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup($r[2], array('name'=>'vfrate['.$r[0].']', 'size'=>'6', 'class'=>'number-only')))
-                );
+                HTMLTable::makeTd(HTMLInput::generateMarkup($r[0], $ptAttrs), array('style' => 'text-align:center;'))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array('name' => 'vfdesc[' . $r[0] . ']', 'size' => '16')))
+                . HTMLTable::makeTd('$' . HTMLInput::generateMarkup($r[2], array('name' => 'vfrate[' . $r[0] . ']', 'size' => '6', 'class' => 'number-only')))
+        );
     }
 
-    $visitFeesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee') . ' Amount', array('style'=>'font-weight:bold;')) . $kTbl->generateMarkup(array('style'=>'margin:7px;')), array('style'=>'float:left;margin:7px;'));
+    $visitFeesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee') . ' Amount', array('style' => 'font-weight:bold;')) . $kTbl->generateMarkup(array('style' => 'margin:7px;')), array('style' => 'float:left;margin:7px;'));
 }
 
 
@@ -805,33 +793,30 @@ if ($uS->IncomeRated) {
     $faRs = new Fa_CategoryRs();
     $faRows = EditRS::select($dbh, $faRs, array());
 
-    $faTbl->addHeaderTr(HTMLTable::makeTh('Household Size').HTMLTable::makeTh('A').HTMLTable::makeTh('B').HTMLTable::makeTh('C').HTMLTable::makeTh('D'));
+    $faTbl->addHeaderTr(HTMLTable::makeTh('Household Size') . HTMLTable::makeTh('A') . HTMLTable::makeTh('B') . HTMLTable::makeTh('C') . HTMLTable::makeTh('D'));
     foreach ($faRows as $r) {
         $faTbl->addBodyTr(
-                HTMLTable::makeTd($r['HouseHoldSize'], array('style' =>'text-align:center;'))
-                .HTMLTable::makeTd('< $'.HTMLInput::generateMarkup(number_format($r['Income_A']), array('name'=>'faIa['.$r['idFa_category'].']', 'size'=>'4')))
-                .HTMLTable::makeTd('<= $'.HTMLInput::generateMarkup(number_format($r['Income_B']), array('name'=>'faIb['.$r['idFa_category'].']', 'size'=>'4')))
-                .HTMLTable::makeTd('<= $'.HTMLInput::generateMarkup(number_format($r['Income_C']), array('name'=>'faIc['.$r['idFa_category'].']', 'size'=>'4')))
-                .HTMLTable::makeTd('> '.number_format($r['Income_C']))
-                );
+                HTMLTable::makeTd($r['HouseHoldSize'], array('style' => 'text-align:center;'))
+                . HTMLTable::makeTd('< $' . HTMLInput::generateMarkup(number_format($r['Income_A']), array('name' => 'faIa[' . $r['idFa_category'] . ']', 'size' => '4')))
+                . HTMLTable::makeTd('<= $' . HTMLInput::generateMarkup(number_format($r['Income_B']), array('name' => 'faIb[' . $r['idFa_category'] . ']', 'size' => '4')))
+                . HTMLTable::makeTd('<= $' . HTMLInput::generateMarkup(number_format($r['Income_C']), array('name' => 'faIc[' . $r['idFa_category'] . ']', 'size' => '4')))
+                . HTMLTable::makeTd('> ' . number_format($r['Income_C']))
+        );
     }
 
-    $faTbl->addBodyTr(HTMLTable::makeTd('Key:  "<=" means Income Amount is Less Than or Equal To', array('colspan'=>'5')));
+    $faTbl->addBodyTr(HTMLTable::makeTd('Key:  "<=" means Income Amount is Less Than or Equal To', array('colspan' => '5')));
 
     // fa calculator
     $fin = new FinAssistance($dbh, 0);
     $calcTbl = $fin->createRateCalcMarkup();
 
-    $fcTable = HTMLContainer::generateMarkup('fieldset',
-            HTMLContainer::generateMarkup('legend', 'Financial Assistance Rate Calculator', array('style'=>'font-weight:bold;')) .
-            $calcTbl->generateMarkup(array('style'=>'float:left;margin:7px;')), array('style'=>'clear:left;float:left;margin:7px;'));
+    $fcTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Financial Assistance Rate Calculator', array('style' => 'font-weight:bold;')) .
+                    $calcTbl->generateMarkup(array('style' => 'float:left;margin:7px;')), array('style' => 'clear:left;float:left;margin:7px;'));
 
-    $faMarkup = HTMLContainer::generateMarkup('fieldset',
-            HTMLContainer::generateMarkup('legend', 'Financial Assistance Breakpoints', array('style'=>'font-weight:bold;'))
-            . $faTbl->generateMarkup(array('style'=>'float:left;margin:7px;'))
-            . $fcTable
-            , array('style'=>'float:left;margin:7px;'));
-
+    $faMarkup = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Financial Assistance Breakpoints', array('style' => 'font-weight:bold;'))
+                    . $faTbl->generateMarkup(array('style' => 'float:left;margin:7px;'))
+                    . $fcTable
+                    , array('style' => 'float:left;margin:7px;'));
 }
 
 // Key deposit options
@@ -841,19 +826,18 @@ $rateTableTabTitle = 'Room Rates';
 if ($uS->KeyDeposit) {
     $kFees = readGenLookupsPDO($dbh, 'Key_Deposit_Code');
     $kTbl = new HTMLTable();
-    $kTbl->addHeaderTr(HTMLTable::makeTh('Description').HTMLTable::makeTh('Amount'));  //.HTMLTable::makeTh('Delete'));
+    $kTbl->addHeaderTr(HTMLTable::makeTh('Description') . HTMLTable::makeTh('Amount'));  //.HTMLTable::makeTh('Delete'));
 
     foreach ($kFees as $r) {
         $kTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array('name'=>'kdesc['.$r[0].']', 'size'=>'16')))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup($r[2], array('name'=>'krate['.$r[0].']', 'size'=>'6', 'class'=>'number-only')))
-                );
+                HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array('name' => 'kdesc[' . $r[0] . ']', 'size' => '16')))
+                . HTMLTable::makeTd('$' . HTMLInput::generateMarkup($r[2], array('name' => 'krate[' . $r[0] . ']', 'size' => '6', 'class' => 'number-only')))
+        );
     }
 
-    $keysTable = HTMLContainer::generateMarkup('fieldset',
-            HTMLContainer::generateMarkup('legend', $labels->getString('resourceBuilder', 'keyDepositLabel', 'Key Deposit').' Amounts', array('style'=>'font-weight:bold;'))
-            . $kTbl->generateMarkup(array('style'=>'margin:7px;'))
-            , array('style'=>'float:left;margin:7px;'));
+    $keysTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', $labels->getString('resourceBuilder', 'keyDepositLabel', 'Key Deposit') . ' Amounts', array('style' => 'font-weight:bold;'))
+                    . $kTbl->generateMarkup(array('style' => 'margin:7px;'))
+                    , array('style' => 'float:left;margin:7px;'));
 
     $rateTableTabTitle .= ' & ' . $labels->getString('resourceBuilder', 'keyDepositLabel', 'Key Deposit') . 's';
 }
@@ -866,11 +850,11 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
 
     $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
     $ptTbl = new HTMLTable();
-    $ptTbl->addHeaderTr( HTMLTable::makeTh('Default').HTMLTable::makeTh('Description'));
+    $ptTbl->addHeaderTr(HTMLTable::makeTh('Default') . HTMLTable::makeTh('Description'));
 
     foreach ($payTypes as $r) {
 
-        $ptAttrs = array('type'=>'radio', 'name'=>'ptrbdefault');
+        $ptAttrs = array('type' => 'radio', 'name' => 'ptrbdefault');
 
         if ($uS->DefaultPayType == $r[0]) {
             $ptAttrs['checked'] = 'checked';
@@ -879,12 +863,12 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
         }
 
         $ptTbl->addBodyTr(
-                HTMLTable::makeTd(($r[0] == PayType::Invoice ? '' : HTMLInput::generateMarkup($r[0], $ptAttrs)), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array('name'=>'ptdesc['.$r[0].']', 'size'=>'16')))
-                );
+                HTMLTable::makeTd(($r[0] == PayType::Invoice ? '' : HTMLInput::generateMarkup($r[0], $ptAttrs)), array('style' => 'text-align:center;'))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array('name' => 'ptdesc[' . $r[0] . ']', 'size' => '16')))
+        );
     }
 
-    $payTypesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Pay Types', array('style'=>'font-weight:bold;')) . $ptTbl->generateMarkup(array('style'=>'margin:7px;')), array('style'=>'float:left;margin:7px;'));
+    $payTypesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Pay Types', array('style' => 'font-weight:bold;')) . $ptTbl->generateMarkup(array('style' => 'margin:7px;')), array('style' => 'float:left;margin:7px;'));
 }
 
 // Hospitals and associations
@@ -899,17 +883,17 @@ $hospConstraints = $constraints->getConstraintsByType(Constraint_Type::Hospital)
 
 
 $hTbl = new HTMLTable();
-$hths = HTMLTable::makeTh('Id').HTMLTable::makeTh('Title').HTMLTable::makeTh('Type').HTMLTable::makeTh('Description').HTMLTable::makeTh('Color').HTMLTable::makeTh('Text Color');
+$hths = HTMLTable::makeTh('Id') . HTMLTable::makeTh('Title') . HTMLTable::makeTh('Type') . HTMLTable::makeTh('Description') . HTMLTable::makeTh('Color') . HTMLTable::makeTh('Text Color');
 foreach ($hospConstraints as $c) {
     $hths .= HTMLTable::makeTh($c->getTitle());
 }
 
-$hths .= HTMLTable::makeTh('Last Updated').HTMLTable::makeTh('Delete');
+$hths .= HTMLTable::makeTh('Last Updated') . HTMLTable::makeTh('Delete');
 $hTbl->addHeaderTr($hths);
 
 foreach ($hrows as $h) {
 
-    $hattr = array('name'=>'hstat['.$h['idHospital'].']', 'type'=>'checkbox');
+    $hattr = array('name' => 'hstat[' . $h['idHospital'] . ']', 'type' => 'checkbox');
     if ($h['Status'] == 'a') {
         $hattr['checked'] = 'checked';
     }
@@ -919,35 +903,35 @@ foreach ($hrows as $h) {
 
 
     $htds = HTMLTable::makeTd($h['idHospital'])
-            .HTMLTable::makeTd(HTMLInput::generateMarkup($h['Title'], array('name'=>'hTitle['.$h['idHospital'].']')))
-            .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hospTypes, $h['Type'], FALSE), array('name'=>'hType['.$h['idHospital'].']')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup($h['Description'], array('name'=>'hDesc['.$h['idHospital'].']', 'size'=>'25')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup($h['Reservation_Style'], array('name'=>'hColor['.$h['idHospital'].']', 'class'=>'color', 'size'=>'5')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup($h['Stay_Style'], array('name'=>'hText['.$h['idHospital'].']', 'class'=>'color', 'size'=>'5')));
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Title'], array('name' => 'hTitle[' . $h['idHospital'] . ']')))
+            . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hospTypes, $h['Type'], FALSE), array('name' => 'hType[' . $h['idHospital'] . ']')))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Description'], array('name' => 'hDesc[' . $h['idHospital'] . ']', 'size' => '25')))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Reservation_Style'], array('name' => 'hColor[' . $h['idHospital'] . ']', 'class' => 'color', 'size' => '5')))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Stay_Style'], array('name' => 'hText[' . $h['idHospital'] . ']', 'class' => 'color', 'size' => '5')));
 
     foreach ($hConst as $a) {
-        $cbAttrs = array('name'=>'hpattr['.$h['idHospital'].'][' . $a['idConstraint'] . ']', 'type'=>'checkbox');
+        $cbAttrs = array('name' => 'hpattr[' . $h['idHospital'] . '][' . $a['idConstraint'] . ']', 'type' => 'checkbox');
         if ($a['isActive'] == 1) {
             $cbAttrs['checked'] = 'checked';
         }
-        $htds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $cbAttrs), array('style'=>'text-align:center;'));
+        $htds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $cbAttrs), array('style' => 'text-align:center;'));
     }
 
 
     $htds .= HTMLTable::makeTd(date('M j, Y', strtotime($h['Last_Updated'] == '' ? $h['Timestamp'] : $h['Last_Updated'])))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'hdel['.$h['idHospital'].']', 'type'=>'checkbox')), array('style'=>'text-align:center;'));
+            . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'hdel[' . $h['idHospital'] . ']', 'type' => 'checkbox')), array('style' => 'text-align:center;'));
 
-   $hTbl->addBodyTr($htds);
+    $hTbl->addBodyTr($htds);
 }
 
 // new hospital
 $hTbl->addBodyTr(HTMLTable::makeTd('')
-        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'hTitle[0]')))
-        .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hospTypes, ''), array('name'=>'hType[0]')))
-        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'hDesc[0]')))
-        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'hColor[0]', 'size'=>'5')))
-        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'hText[0]', 'size'=>'5')))
-        .HTMLTable::makeTd('Create New', array('colspan'=>'4'))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'hTitle[0]')))
+        . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hospTypes, ''), array('name' => 'hType[0]')))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'hDesc[0]')))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'hColor[0]', 'size' => '5')))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'hText[0]', 'size' => '5')))
+        . HTMLTable::makeTd('Create New', array('colspan' => '4'))
 );
 
 $hospTable = $hTbl->generateMarkup();
@@ -960,25 +944,25 @@ $arows = $attributes->getAttributes();
 $attrTypes = $attributes->getAttributeTypes();
 
 $aTbl = new HTMLTable();
-$aTbl->addHeaderTr(HTMLTable::makeTh('Id').HTMLTable::makeTh('Title').HTMLTable::makeTh('Type').HTMLTable::makeTh('Category').HTMLTable::makeTh('Last Updated').HTMLTable::makeTh('Delete'));
+$aTbl->addHeaderTr(HTMLTable::makeTh('Id') . HTMLTable::makeTh('Title') . HTMLTable::makeTh('Type') . HTMLTable::makeTh('Category') . HTMLTable::makeTh('Last Updated') . HTMLTable::makeTh('Delete'));
 
 foreach ($arows as $h) {
 
     $aTbl->addBodyTr(HTMLTable::makeTd($h['idAttribute'])
-            .HTMLTable::makeTd(HTMLInput::generateMarkup($h['Title'], array('name'=>'atTitle['.$h['idAttribute'].']', 'size'=>'30')))
-            .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($attrTypes, $h['Type'], FALSE), array('name'=>'atType['.$h['idAttribute'].']')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup($h['Category'], array('name'=>'atCat['.$h['idAttribute'].']')))
-            .HTMLTable::makeTd($h['Last_Updated'] == '' ? '' : date('M j, Y', strtotime($h['Last_Updated'])))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'atdel['.$h['idAttribute'].']', 'type'=>'checkbox')))
-            );
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Title'], array('name' => 'atTitle[' . $h['idAttribute'] . ']', 'size' => '30')))
+            . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($attrTypes, $h['Type'], FALSE), array('name' => 'atType[' . $h['idAttribute'] . ']')))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Category'], array('name' => 'atCat[' . $h['idAttribute'] . ']')))
+            . HTMLTable::makeTd($h['Last_Updated'] == '' ? '' : date('M j, Y', strtotime($h['Last_Updated'])))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'atdel[' . $h['idAttribute'] . ']', 'type' => 'checkbox')))
+    );
 }
 
 // new attribute
 $aTbl->addBodyTr(HTMLTable::makeTd('')
-        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'atTitle[0]')))
-        .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($attrTypes, ''), array('name'=>'atType[0]')))
-        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'atCat[0]')))
-        .HTMLTable::makeTd('Create New', array('colspan'=>'2'))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'atTitle[0]')))
+        . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($attrTypes, ''), array('name' => 'atType[0]')))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'atCat[0]')))
+        . HTMLTable::makeTd('Create New', array('colspan' => '2'))
 );
 
 $attrTable = $aTbl->generateMarkup();
@@ -991,14 +975,24 @@ $constraintTable = $constraints->createConstraintTable($dbh);
 
 
 // Demographics
-$stmt = $dbh->query("select distinct `Type`, Table_Name from gen_lookups where `Type` = 'd';");
+$stmt = $dbh->query("SELECT DISTINCT
+    `g`.`Table_Name`, g2.Description
+FROM
+    `gen_lookups` `g`
+        JOIN
+    `gen_lookups` `g2` ON `g`.`Table_Name` = `g2`.`Code`
+        AND `g2`.`Table_Name` = 'Demographics'
+        AND `g2`.`Substitute` = 'y'
+WHERE
+    `g`.`Type` = 'd';");
+
 $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
-$selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''), array('name'=>'selDemoLookup', 'class'=>'hhk-selLookup'));
+$selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''), array('name' => 'selDemoLookup', 'data-type'=>'d', 'class' => 'hhk-selLookup'));
 $lookupErrMsg = '';
 
 
-// Lookup categories
+// General Lookup categories
 $stmt2 = $dbh->query("select distinct `Type`, `Table_Name` from gen_lookups where `Type` in ('h','u', 'ha', 'm');");
 $rows2 = $stmt2->fetchAll(PDO::FETCH_NUM);
 
@@ -1010,19 +1004,17 @@ foreach ($rows2 as $r) {
     }
 
     $lkups[] = $r;
-
 }
 
-$selLookups = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($lkups, ''), array('name'=>'sellkLookup', 'class'=>'hhk-selLookup'));
+$selLookups = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($lkups, ''), array('name' => 'sellkLookup', 'class' => 'hhk-selLookup'));
 
 
 // Additional charges and discounts
-
 // Lookup categories
 $stmt3 = $dbh->query("select distinct `Type`, `Table_Name` from gen_lookups where `Type` = 'ca';");
 $rows3 = $stmt3->fetchAll(PDO::FETCH_NUM);
 
-$seldiscs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows3, ''), array('name'=>'seldiscs', 'class'=>'hhk-selLookup'));
+$seldiscs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows3, ''), array('name' => 'seldiscs', 'class' => 'hhk-selLookup'));
 
 
 // Items
@@ -1030,21 +1022,19 @@ $seldiscs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows3, '')
 $sitems = $dbh->query("Select idItem, Description from item;");
 $items = $sitems->fetchAll(PDO::FETCH_NUM);
 
-    $itbl = new HTMLTable();
-    $itbl->addHeaderTr(HTMLTable::makeTh(count($items) . ' Items'));
+$itbl = new HTMLTable();
+$itbl->addHeaderTr(HTMLTable::makeTh(count($items) . ' Items'));
 
-    foreach ($items as $d) {
+foreach ($items as $d) {
 
-        if ($d[0] == ItemId::AddnlCharge) {
-            $itbl->addBodyTr(HTMLTable::makeTd('(Additional Charges)'));
-        } else {
-            $itbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup($d[1], array('name'=>'txtItem[' . $d[0] . ']'))));
-        }
-
+    if ($d[0] == ItemId::AddnlCharge) {
+        $itbl->addBodyTr(HTMLTable::makeTd('(Additional Charges)'));
+    } else {
+        $itbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup($d[1], array('name' => 'txtItem[' . $d[0] . ']'))));
     }
+}
 
-$itemTable = $itbl->generateMarkup(array('style'=>'float:left;'));  // . $ttbl->generateMarkup();
-
+$itemTable = $itbl->generateMarkup(array('style' => 'float:left;'));  // . $ttbl->generateMarkup();
 // Instantiate the alert message control
 $alertMsg = new alertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
@@ -1055,17 +1045,16 @@ $alertMsg->set_txtSpanId("alrMessage");
 $alertMsg->set_Text("uh-oh");
 
 $resultMessage = $alertMsg->createMarkup();
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo JQ_DT_CSS; ?>
-        <?php echo TOP_NAV_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
+<?php echo JQ_UI_CSS; ?>
+<?php echo JQ_DT_CSS; ?>
+<?php echo TOP_NAV_CSS; ?>
+<?php echo HOUSE_CSS; ?>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <style>
             @media screen {
@@ -1080,412 +1069,429 @@ $resultMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
         <script type="text/javascript">
-function isNumber(n) {
-    "use strict";
-    return !isNaN(parseFloat(n)) && isFinite(n);
-}
-function alertCallback(containerId) {
-    "use strict";
-    setTimeout(function () {
-        $("#" + containerId + ":visible").removeAttr("style").fadeOut(500);
-    }, 5500
-    );
-}
-function flagAlertMessage(mess, wasError, scrollTo) {
-    "use strict";
-    var spn = document.getElementById('alrMessage');
+            function isNumber(n) {
+                "use strict";
+                return !isNaN(parseFloat(n)) && isFinite(n);
+            }
+            function alertCallback(containerId) {
+                "use strict";
+                setTimeout(function () {
+                    $("#" + containerId + ":visible").removeAttr("style").fadeOut(500);
+                }, 5500
+                        );
+            }
+            function flagAlertMessage(mess, wasError, scrollTo) {
+                "use strict";
+                var spn = document.getElementById('alrMessage');
 
-    if (!wasError) {
-        // define the error message markup
-        $('#alrResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
-        $('#alrIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
-        spn.innerHTML = "<strong>Success: </strong>" + mess;
-        $("#divAlert1").show("slide", {}, 500, alertCallback('divAlert1'));
-    } else {
-        // define the success message markup
-        $('alrResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
-        $('#alrIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
-        spn.innerHTML = "<strong>Alert: </strong>" + mess;
-        $("#divAlert1").show("pulsate", alertCallback('divAlert1'), 200);
-        if (scrollTo) {
-            window.scrollTo(0, (scrollTo - 45));
-        }
-    }
-}
-
-function getRoomFees(cat) {
-    if (cat != '' && cat != 'x') {
-        // go get the total
-        var ds = parseInt($('#txtNites').val(), 10);
-        if (isNaN(ds)) {
-            ds = 0;
-        }
-        var ct= parseInt($('#txtCredit').val(), 10);
-        if (isNaN(ct)) {
-            ct = 0;
-        }
-        $('#spnAmount').text('').addClass('ui-autocomplete-loading');
-        $.post('ws_ckin.php', {
-            cmd: 'rtcalc',
-            rcat: cat,
-            nites: ds,
-            credit: ct
-        }, function(data) {
-            $('#spnAmount').text('').removeClass('ui-autocomplete-loading');
-            data = $.parseJSON(data);
-            if (data.error) {
-                if (data.gotopage) {
-                    window.open(data.gotopage, '_self');
-                }
-                flagAlertMessage(data.error, true);
-                return;
-            }
-            if (data.amt) {
-                $('#spnAmount').text(data.amt);
-            }
-            if (data.cat) {
-                $('#selRateCategory').val(cat);
-            }
-        });
-    }
-}
-function setupRates() {
-    "use strict";
-    $('#txtFixedRate').change(function() {
-        if ($('#selRateCategory').val() == 'x') {
-            var amt = parseFloat($(this).val());
-            if (isNaN(amt) || amt < 0) {
-                amt = parseFloat($(this).prop("defaultValue"));
-                if (isNaN(amt) || amt < 0)
-                    amt = 0;
-                $(this).val(amt);
-            }
-            var ds = parseInt($('#txtNites').val(), 10);
-            if (isNaN(ds)) {
-                ds = 0;
-            }
-            $('#spnAmount').text(amt * ds);
-        }
-    });
-    $('#txtNites, #txtCredit').change(function () {
-        getRoomFees($('#selRateCategory').val());
-    });
-    $('#selRateCategory').change(function () {
-        if ($(this).val() == 'x') {
-            $('.hhk-fxFixed').show();
-        } else {
-            $('.hhk-fxFixed').hide();
-            getRoomFees($(this).val());
-        }
-        $('#txtFixedRate').change();
-    });
-    $('#selRateCategory').change();
-}
-var savedRow;
-function getResource(idResc, type, trow) {
-    "use strict";
-    if ($('#cancelbtn').length > 0) {
-        $('#cancelbtn').click();
-    }
-    $.post('ws_resc.php', {
-        cmd: 'getResc',
-        tp: type,
-        id: idResc
-    }, function(data) {
-        if (data) {
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.open(data.gotopage, '_self');
-                }
-                flagAlertMessage(data.error, true);
-                return;
-            }
-            if (data.row) {
-                savedRow = trow.children();
-                trow.children().remove().end().append($(data.row));
-                $('#savebtn').button().click(function () {
-                    var btn = $(this);
-                    saveResource(btn.data('id'), btn.data('type'), btn.data('cls'));
-                });
-                $('#cancelbtn').button().click(function () {
-                    trow.children().remove().end().append(savedRow);
-                    $('.reNewBtn').button();
-                });
-            }
-        }
-    });
-}
-function getStatusEvent(idResc, type, title) {
-    "use strict";
-    $.post('ws_resc.php', {
-        cmd: 'getStatEvent',
-        tp: type,
-        title: title,
-        id: idResc
-    }, function(data) {
-        if (data) {
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.open(data.gotopage, '_self');
-                }
-                flagAlertMessage(data.error, true);
-                return;
-            }
-            if (data.tbl) {
-                $('#statEvents').children().remove().end().append($(data.tbl));
-                $('.ckdate').datepicker({autoSize: true, dateFormat: 'M d, yy'});
-                var buttons = {
-                    "Save": function () {
-                        saveStatusEvent(idResc, type);
-                    },
-                    'Cancel': function () {
-                        $(this).dialog('close');
+                if (!wasError) {
+                    // define the error message markup
+                    $('#alrResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
+                    $('#alrIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
+                    spn.innerHTML = "<strong>Success: </strong>" + mess;
+                    $("#divAlert1").show("slide", {}, 500, alertCallback('divAlert1'));
+                } else {
+                    // define the success message markup
+                    $('alrResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
+                    $('#alrIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
+                    spn.innerHTML = "<strong>Alert: </strong>" + mess;
+                    $("#divAlert1").show("pulsate", alertCallback('divAlert1'), 200);
+                    if (scrollTo) {
+                        window.scrollTo(0, (scrollTo - 45));
                     }
-                };
-                $('#statEvents').dialog('option', 'buttons', buttons);
-                $('#statEvents').dialog('open');
-            }
-        }
-    });
-}
-function saveStatusEvent(idResc, type) {
-    "use strict";
-    $.post('ws_resc.php', $('#statForm').serialize() + '&cmd=saveStatEvent' + '&id=' + idResc + '&tp=' + type,
-        function(data) {
-        $('#statEvents').dialog('close');
-        if (data) {
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.open(data.gotopage, '_self');
                 }
-                flagAlertMessage(data.error, true);
-                return;
             }
 
-            if (data.msg && data.msg != '') {
-                flagAlertMessage(data.msg, false);
-            }
-
-        }
-    });
-}
-function deleteResource(idresc, type, trow, message) {
-    "use strict";
-    if (confirm('Delete?') === false) {
-        return;
-    }
-    $.post('ws_resc.php', {
-        cmd: 'rdel',
-        tp: type,
-        id: idresc
-    }, function(data) {
-        if (data) {
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.open(data.gotopage, '_self');
+            function getRoomFees(cat) {
+                if (cat != '' && cat != 'x') {
+                    // go get the total
+                    var ds = parseInt($('#txtNites').val(), 10);
+                    if (isNaN(ds)) {
+                        ds = 0;
+                    }
+                    var ct = parseInt($('#txtCredit').val(), 10);
+                    if (isNaN(ct)) {
+                        ct = 0;
+                    }
+                    $('#spnAmount').text('').addClass('ui-autocomplete-loading');
+                    $.post('ws_ckin.php', {
+                        cmd: 'rtcalc',
+                        rcat: cat,
+                        nites: ds,
+                        credit: ct
+                    }, function (data) {
+                        $('#spnAmount').text('').removeClass('ui-autocomplete-loading');
+                        data = $.parseJSON(data);
+                        if (data.error) {
+                            if (data.gotopage) {
+                                window.open(data.gotopage, '_self');
+                            }
+                            flagAlertMessage(data.error, true);
+                            return;
+                        }
+                        if (data.amt) {
+                            $('#spnAmount').text(data.amt);
+                        }
+                        if (data.cat) {
+                            $('#selRateCategory').val(cat);
+                        }
+                    });
                 }
-                flagAlertMessage(data.error, true);
-                return;
             }
-            if (data.success) {
-                flagAlertMessage('Record Deleted.', false);
-                trow.remove();
+            function setupRates() {
+                "use strict";
+                $('#txtFixedRate').change(function () {
+                    if ($('#selRateCategory').val() == 'x') {
+                        var amt = parseFloat($(this).val());
+                        if (isNaN(amt) || amt < 0) {
+                            amt = parseFloat($(this).prop("defaultValue"));
+                            if (isNaN(amt) || amt < 0)
+                                amt = 0;
+                            $(this).val(amt);
+                        }
+                        var ds = parseInt($('#txtNites').val(), 10);
+                        if (isNaN(ds)) {
+                            ds = 0;
+                        }
+                        $('#spnAmount').text(amt * ds);
+                    }
+                });
+                $('#txtNites, #txtCredit').change(function () {
+                    getRoomFees($('#selRateCategory').val());
+                });
+                $('#selRateCategory').change(function () {
+                    if ($(this).val() == 'x') {
+                        $('.hhk-fxFixed').show();
+                    } else {
+                        $('.hhk-fxFixed').hide();
+                        getRoomFees($(this).val());
+                    }
+                    $('#txtFixedRate').change();
+                });
+                $('#selRateCategory').change();
             }
-        }
-    });
-}
-function saveResource(idresc, type, clas) {
-    "use strict";
-    var parms = {};
-    $('.' + clas).each(function() {
-
-        if ($(this).attr('type') === 'radio' || $(this).attr('type') === 'checkbox') {
-            if (this.checked !== false) {
-                parms[$(this).attr('id')] = 'on';
-            }
-        } else {
-            parms[$(this).attr('id')] = $(this).val();
-        }
-    });
-    $.post('ws_resc.php', {
-        cmd: 'redit',
-        tp: type,
-        id: idresc,
-        parm: parms
-    }, function(data) {
-        if (data) {
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.open(data.gotopage, '_self');
+            var savedRow;
+            function getResource(idResc, type, trow) {
+                "use strict";
+                if ($('#cancelbtn').length > 0) {
+                    $('#cancelbtn').click();
                 }
-                flagAlertMessage(data.error, true);
-                return;
-            } else if (data.roomList) {
-                $('#roomTable').children().remove().end().append($(data.roomList));
-                $('#tblroom').dataTable({
+                $.post('ws_resc.php', {
+                    cmd: 'getResc',
+                    tp: type,
+                    id: idResc
+                }, function (data) {
+                    if (data) {
+                        try {
+                            data = $.parseJSON(data);
+                        } catch (err) {
+                            alert("Parser error - " + err.message);
+                            return;
+                        }
+                        if (data.error) {
+                            if (data.gotopage) {
+                                window.open(data.gotopage, '_self');
+                            }
+                            flagAlertMessage(data.error, true);
+                            return;
+                        }
+                        if (data.row) {
+                            savedRow = trow.children();
+                            trow.children().remove().end().append($(data.row));
+                            $('#savebtn').button().click(function () {
+                                var btn = $(this);
+                                saveResource(btn.data('id'), btn.data('type'), btn.data('cls'));
+                            });
+                            $('#cancelbtn').button().click(function () {
+                                trow.children().remove().end().append(savedRow);
+                                $('.reNewBtn').button();
+                            });
+                        }
+                    }
+                });
+            }
+            function getStatusEvent(idResc, type, title) {
+                "use strict";
+                $.post('ws_resc.php', {
+                    cmd: 'getStatEvent',
+                    tp: type,
+                    title: title,
+                    id: idResc
+                }, function (data) {
+                    if (data) {
+                        try {
+                            data = $.parseJSON(data);
+                        } catch (err) {
+                            alert("Parser error - " + err.message);
+                            return;
+                        }
+                        if (data.error) {
+                            if (data.gotopage) {
+                                window.open(data.gotopage, '_self');
+                            }
+                            flagAlertMessage(data.error, true);
+                            return;
+                        }
+                        if (data.tbl) {
+                            $('#statEvents').children().remove().end().append($(data.tbl));
+                            $('.ckdate').datepicker({autoSize: true, dateFormat: 'M d, yy'});
+                            var buttons = {
+                                "Save": function () {
+                                    saveStatusEvent(idResc, type);
+                                },
+                                'Cancel': function () {
+                                    $(this).dialog('close');
+                                }
+                            };
+                            $('#statEvents').dialog('option', 'buttons', buttons);
+                            $('#statEvents').dialog('open');
+                        }
+                    }
+                });
+            }
+            function saveStatusEvent(idResc, type) {
+                "use strict";
+                $.post('ws_resc.php', $('#statForm').serialize() + '&cmd=saveStatEvent' + '&id=' + idResc + '&tp=' + type,
+                        function (data) {
+                            $('#statEvents').dialog('close');
+                            if (data) {
+                                try {
+                                    data = $.parseJSON(data);
+                                } catch (err) {
+                                    alert("Parser error - " + err.message);
+                                    return;
+                                }
+                                if (data.error) {
+                                    if (data.gotopage) {
+                                        window.open(data.gotopage, '_self');
+                                    }
+                                    flagAlertMessage(data.error, true);
+                                    return;
+                                }
+
+                                if (data.msg && data.msg != '') {
+                                    flagAlertMessage(data.msg, false);
+                                }
+
+                            }
+                        });
+            }
+            function deleteResource(idresc, type, trow, message) {
+                "use strict";
+                if (confirm('Delete?') === false) {
+                    return;
+                }
+                $.post('ws_resc.php', {
+                    cmd: 'rdel',
+                    tp: type,
+                    id: idresc
+                }, function (data) {
+                    if (data) {
+                        try {
+                            data = $.parseJSON(data);
+                        } catch (err) {
+                            alert("Parser error - " + err.message);
+                            return;
+                        }
+                        if (data.error) {
+                            if (data.gotopage) {
+                                window.open(data.gotopage, '_self');
+                            }
+                            flagAlertMessage(data.error, true);
+                            return;
+                        }
+                        if (data.success) {
+                            flagAlertMessage('Record Deleted.', false);
+                            trow.remove();
+                        }
+                    }
+                });
+            }
+            function saveResource(idresc, type, clas) {
+                "use strict";
+                var parms = {};
+                $('.' + clas).each(function () {
+
+                    if ($(this).attr('type') === 'radio' || $(this).attr('type') === 'checkbox') {
+                        if (this.checked !== false) {
+                            parms[$(this).attr('id')] = 'on';
+                        }
+                    } else {
+                        parms[$(this).attr('id')] = $(this).val();
+                    }
+                });
+                $.post('ws_resc.php', {
+                    cmd: 'redit',
+                    tp: type,
+                    id: idresc,
+                    parm: parms
+                }, function (data) {
+                    if (data) {
+                        try {
+                            data = $.parseJSON(data);
+                        } catch (err) {
+                            alert("Parser error - " + err.message);
+                            return;
+                        }
+                        if (data.error) {
+                            if (data.gotopage) {
+                                window.open(data.gotopage, '_self');
+                            }
+                            flagAlertMessage(data.error, true);
+                            return;
+                        } else if (data.roomList) {
+                            $('#roomTable').children().remove().end().append($(data.roomList));
+                            $('#tblroom').dataTable({
+                                "dom": '<"top"if>rt<"bottom"lp><"clear">',
+                                "iDisplayLength": 20,
+                                "aLengthMenu": [[20, 50, -1], [20, 50, "All"]],
+                                "language": {"emptyTable": "No data available in table"}
+                            });
+                        } else if (data.rescList) {
+                            $('#rescTable').children().remove().end().append($(data.rescList));
+                            $('#tblresc').dataTable({
+                                "dom": '<"top"if>rt<"bottom"lp><"clear">',
+                                "iDisplayLength": 20,
+                                "aLengthMenu": [[20, 50, -1], [20, 50, "All"]],
+                                "language": {"emptyTable": "No data available in table"}
+                            });
+                        } else if (data.constList) {
+                            $('#constr').children().remove().end().append($(data.constList));
+                        }
+                        $('.reNewBtn').button();
+                    }
+                });
+            }
+            $(document).ready(function () {
+                "use strict";
+                $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
+                var tabIndex = parseInt('<?php echo $tabIndex; ?>');
+                $.ajaxSetup({
+                    beforeSend: function () {
+                        $('body').css('cursor', "wait");
+                    },
+                    complete: function () {
+                        $('body').css('cursor', "auto");
+                    },
+                    cache: false
+                });
+                $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn').button();
+                $('#txtFaIncome, #txtFaSize').change(function () {
+                    var inc = $('#txtFaIncome').val().replace(',', ''),
+                            size = $('#txtFaSize').val(),
+                            errmsg = $('#spnErrorMsg');
+                    errmsg.text('');
+                    $('#txtFaIncome, #txtFaSize, #spnErrorMsg').removeClass('ui-state-highlight');
+                    if (inc == '' || size == '') {
+                        $('#spnFaCatTitle').text('');
+                        $('#hdnRateCat').val('');
+                        return false;
+                    }
+                    if (inc == '' || inc == '0' || isNaN(inc)) {
+                        $('#txtFaIncome').addClass('ui-state-highlight');
+                        errmsg.text('Fill in the Household Income').addClass('ui-state-highlight');
+                        return false;
+                    }
+                    if (size == '' || size == '0' || isNaN(size)) {
+                        $('#txtFaSize').addClass('ui-state-highlight');
+                        errmsg.text('Fill in the Household Size').addClass('ui-state-highlight');
+                        return false;
+                    }
+                    $.post('ws_ckin.php', {
+                        cmd: 'rtcalc',
+                        income: inc,
+                        hhsize: size,
+                        nites: 0
+                    }, function (data) {
+                        data = $.parseJSON(data);
+                        if (data.catTitle) {
+                            $('#spnFaCatTitle').text(data.catTitle);
+                        }
+                        if (data.cat) {
+                            $('#hdnRateCat').val(data.cat);
+                        }
+                    });
+                    return false;
+                });
+                setupRates();
+                $('#mainTabs').tabs();
+                $('#mainTabs').tabs("option", "active", tabIndex);
+                $('#statEvents').dialog({
+                    autoOpen: false,
+                    resizable: true,
+                    width: 800,
+                    modal: true,
+                    title: 'Manage Status Events'
+                });
+                $('div#mainTabs').on('click', '.reEditBtn, .reNewBtn', function () {
+                    getResource($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
+                });
+                $('div#mainTabs').on('click', '.reDelBtn', function () {
+                    deleteResource($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
+                });
+                $('div#mainTabs').on('click', '.reStatBtn', function () {
+                    getStatusEvent($(this).attr('name'), $(this).data('enty'), $(this).data('title'));
+                });
+                $('#tblroom, #tblresc').dataTable({
                     "dom": '<"top"if>rt<"bottom"lp><"clear">',
                     "iDisplayLength": 20,
                     "aLengthMenu": [[20, 50, -1], [20, 50, "All"]],
                     "language": {"emptyTable": "No data available in table"}
                 });
-            } else if (data.rescList) {
-                $('#rescTable').children().remove().end().append($(data.rescList));
-                $('#tblresc').dataTable({
-                    "dom": '<"top"if>rt<"bottom"lp><"clear">',
-                    "iDisplayLength": 20,
-                    "aLengthMenu": [[20, 50, -1], [20, 50, "All"]],
-                    "language": {"emptyTable": "No data available in table"}
+                $('.hhk-selLookup').change(function () {
+                    var $sel = $(this),
+                        table = $(this).find("option:selected").text(),
+                        type = $(this).val();
+
+                    if ($sel.data('type') === 'd') {
+                        table = $sel.val();
+                        type = 'd';
+                    }
+
+                    $.post('ResourceBuilder.php', {table: table, cmd: "load", tp: type},
+                            function (data) {
+                                $sel.closest('form').children('div').children().remove();
+                                if (data) {
+                                    $sel.closest('form').children('div').append(data);
+                                }
+                            });
                 });
-            } else if (data.constList) {
-                $('#constr').children().remove().end().append($(data.constList));
-            }
-            $('.reNewBtn').button();
-        }
-    });
-}
-$(document).ready(function() {
-    "use strict";
-    $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
-    var tabIndex = parseInt('<?php echo $tabIndex; ?>');
-    $.ajaxSetup({
-        beforeSend: function() {
-            $('body').css('cursor', "wait");
-        },
-        complete: function() {
-            $('body').css('cursor', "auto");
-        },
-        cache: false
-    });
-    $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn').button();
-    $('#txtFaIncome, #txtFaSize').change(function () {
-        var inc = $('#txtFaIncome').val().replace(',', ''),
-            size = $('#txtFaSize').val(),
-            errmsg = $('#spnErrorMsg');
-        errmsg.text('');
-        $('#txtFaIncome, #txtFaSize, #spnErrorMsg').removeClass('ui-state-highlight');
-        if (inc == '' || size == '') {
-            $('#spnFaCatTitle').text('');
-            $('#hdnRateCat').val('');
-            return false;
-        }
-        if (inc == '' || inc == '0' || isNaN(inc)) {
-            $('#txtFaIncome').addClass('ui-state-highlight');
-            errmsg.text('Fill in the Household Income').addClass('ui-state-highlight');
-            return false;
-        }
-        if (size == '' || size == '0' || isNaN(size)) {
-            $('#txtFaSize').addClass('ui-state-highlight');
-            errmsg.text('Fill in the Household Size').addClass('ui-state-highlight');
-            return false;
-        }
-        $.post('ws_ckin.php', {
-            cmd: 'rtcalc',
-            income: inc,
-            hhsize: size,
-            nites: 0
-        }, function(data) {
-            data = $.parseJSON(data);
-            if (data.catTitle) {
-                $('#spnFaCatTitle').text(data.catTitle);
-            }
-            if (data.cat) {
-                $('#hdnRateCat').val(data.cat);
-            }
-        });
-        return false;
-    });
-    setupRates();
-    $('#mainTabs').tabs();
-    $('#mainTabs').tabs("option", "active", tabIndex);
-    $('#statEvents').dialog({
-        autoOpen: false,
-        resizable: true,
-        width: 800,
-        modal: true,
-        title: 'Manage Status Events'
-    });
-    $('div#mainTabs').on('click', '.reEditBtn, .reNewBtn', function () {
-        getResource($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
-    });
-    $('div#mainTabs').on('click', '.reDelBtn', function () {
-        deleteResource($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
-    });
-    $('div#mainTabs').on('click', '.reStatBtn', function () {
-        getStatusEvent($(this).attr('name'), $(this).data('enty'), $(this).data('title'));
-    });
-    $('#tblroom, #tblresc').dataTable({
-        "dom": '<"top"if>rt<"bottom"lp><"clear">',
-        "iDisplayLength": 20,
-        "aLengthMenu": [[20, 50, -1], [20, 50, "All"]],
-        "language": {"emptyTable": "No data available in table"}
-    });
-    $('.hhk-selLookup').change( function() {
-        var $sel = $(this);
-        $.post('ResourceBuilder.php', {table: $(this).find("option:selected").text(), cmd: "load", tp: $(this).val()},
-            function (data) {
-                $sel.closest('form').children('div').children().remove()
-                if (data) {
-                    $sel.closest('form').children('div').append(data);
-                }
+                $('.hhk-saveLookup').click(function () {
+                    var $btn = $(this).closest('form');
+                    var sel = $btn.find('select.hhk-selLookup');
+                    var table = sel.find('option:selected').text(),
+                        type = $btn.find('select').val();
+
+                    if (sel.data('type') === 'd') {
+                        table = sel.val();
+                        type = 'd';
+                    }
+
+                    $.post('ResourceBuilder.php', $btn.serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
+                            function(data) {
+                                if (data) {
+                                    $btn.children('div').children().remove().end().append(data);
+                                }
+                            });
+                }).button();
+                verifyAddrs('#roomTable');
+                $('input.number-only').change(function () {
+                    if (isNumber(this.value) === false) {
+                        $(this).val('0');
+                    }
+                    $(this).val(parseInt(this.value));
+                });
+                $('#mainTabs').show();
             });
-    });
-    $('.hhk-saveLookup').click(function () {
-        var $btn = $(this).closest('form');
-        $.post('ResourceBuilder.php', $btn.serialize() + '&cmd=save' + '&table=' + $btn.find('select.hhk-selLookup option:selected').text() + '&tp=' + $btn.find('select').val(),
-            function(data) {
-                if (data) {
-                    $btn.children('div').children().remove().end().append(data);
-                }
-            });
-    }).button();
-    verifyAddrs('#roomTable');
-    $('input.number-only').change(function() {
-        if (isNumber(this.value) === false) {
-            $(this).val('0');
-        }
-        $(this).val(parseInt(this.value));
-    });
-    $('#mainTabs').show();
-});
-</script>
+        </script>
     </head>
-    <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
-        <?php echo $menuMarkup; ?>
+    <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
+<?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <div style="float:left; margin-right: 100px; margin-top:10px;">
                 <h1><?php echo $wInit->pageHeading; ?></h1>
             </div>
-            <?php echo $resultMessage ?>
+<?php echo $resultMessage ?>
             <div id="mainTabs" style="font-size: .9em; clear:left; display:none;" class="hhk-member-detail">
                 <ul>
                     <li><a href="#rescTable">Resources</a></li>
@@ -1498,72 +1504,72 @@ $(document).ready(function() {
                     <li><a href="#constr">Constraints</a></li>
                 </ul>
                 <div id="rescTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
-                    <?php echo $rescTable; ?>
+<?php echo $rescTable; ?>
                 </div>
                 <div id="roomTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
-                    <?php echo $roomTable; ?>
+<?php echo $roomTable; ?>
                 </div>
                 <div id="lkTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
                     <div style="float:left;">
-                    <h3>Demographics</h3>
-                    <form id="formdemo">
-                        <table>
+                        <h3>Demographics</h3>
+                        <form id="formdemo">
+                            <table>
                                 <th>Demographic</th>
                                 <td><?php echo $selDemos; ?></td>
-                            </tr>
-                        </table>
-                        <div id="divdemo"></div>
-                        <span style="margin:10px;float:right;"><input type="button" id='btndemoSave' class="hhk-saveLookup" data-type="d" value="Save"/></span>
-                    </form>
+                                </tr>
+                            </table>
+                            <div id="divdemo"></div>
+                            <span style="margin:10px;float:right;"><input type="button" id='btndemoSave' class="hhk-saveLookup" data-type="d" value="Save"/></span>
+                        </form>
                     </div>
                     <div style="float:left; margin-left:30px;">
                         <h3>General Lookups</h3>
-                    <form id="formlk">
-                        <table><tr>
-                            <th>Category</th>
-                            <td><?php echo $selLookups; ?></td>
-                        </tr></table>
-                        <div id="divlk"></div>
-                        <span style="margin:10px;float:right;"><input type="button" id='btnlkSave' class="hhk-saveLookup"data-type="h" value="Save"/></span>
-                    </form></div>
+                        <form id="formlk">
+                            <table><tr>
+                                    <th>Category</th>
+                                    <td><?php echo $selLookups; ?></td>
+                                </tr></table>
+                            <div id="divlk"></div>
+                            <span style="margin:10px;float:right;"><input type="button" id='btnlkSave' class="hhk-saveLookup"data-type="h" value="Save"/></span>
+                        </form></div>
                     <div style="float:left; margin-left:30px;">
                         <h3>Discounts & Additional Charges</h3>
-                    <form id="formdisc">
-                        <table><tr>
-                            <th>Category</th>
-                            <td><?php echo $seldiscs; ?></td>
-                        </tr></table>
-                        <div id="divdisc"></div>
-                        <span style="margin:10px;float:right;"><input type="button" id='btndiscSave' class="hhk-saveLookup" data-type="ha" value="Save"/></span>
-                    </form>
+                        <form id="formdisc">
+                            <table><tr>
+                                    <th>Category</th>
+                                    <td><?php echo $seldiscs; ?></td>
+                                </tr></table>
+                            <div id="divdisc"></div>
+                            <span style="margin:10px;float:right;"><input type="button" id='btndiscSave' class="hhk-saveLookup" data-type="ha" value="Save"/></span>
+                        </form>
                     </div>
                 </div>
                 <div id="rateTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <p style="padding:3px;background-color: #FFEDA8;float:left;">Make changes directly into the text boxes below and press 'Save'.</p>
                     <form method="POST" action="ResourceBuilder.php" name="form1">
                         <div style="clear:left;float:left;"><?php echo $pricingModelTable; ?></div>
-                        <?php echo $visitFeesTable . $keysTable . $payTypesTable . $feesTable . $faMarkup; ?>
+<?php echo $visitFeesTable . $keysTable . $payTypesTable . $feesTable . $faMarkup; ?>
                         <div style="clear:both"></div>
                         <span style="margin:10px;float:right;"><input type="submit" id='btnkfSave' name="btnkfSave" value="Save"/></span>
                     </form>
                 </div>
                 <div id="hospTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <form method="POST" action="ResourceBuilder.php" name="formh">
-                        <?php echo $hospTable; ?>
+<?php echo $hospTable; ?>
                         <div style="clear:both"></div>
                         <span style="margin:10px;float:right;"><input type="submit" id='btnhSave' name="btnhSave" value="Save"/></span>
                     </form>
                 </div>
                 <div id="itemTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <form method="POST" action="ResourceBuilder.php" name="formitem">
-                        <?php echo $itemTable; ?>
+<?php echo $itemTable; ?>
                         <div style="clear:both"></div>
                         <span style="margin:10px;float:right;"><input type="submit" id='btnItemSave' name="btnItemSave" value="Save"/></span>
                     </form>
                 </div>
                 <div id="attrTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <form method="POST" action="ResourceBuilder.php" name="format">
-                        <?php echo $attrTable; ?>
+<?php echo $attrTable; ?>
                         <div style="clear:both"></div>
                         <span style="margin:10px;float:right;"><input type="submit" id='btnAttrSave' name="btnAttrSave" value="Save"/></span>
                     </form>

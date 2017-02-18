@@ -240,6 +240,41 @@ abstract class Member {
 
     public abstract function createDemographicsPanel(\PDO $dbh);
 
+    public function getDemographicsEntry($tableName) {
+
+        $val = '';
+        if ($tableName == 'Gender') {
+            $val = $this->nameRS->Gender->getStoredVal();
+        } else {
+
+            foreach ($this->demogRS as $k => $v) {
+
+                if ($k == $tableName) {
+                    $val = $v->getStoredVal();
+                }
+            }
+        }
+
+        return $val;
+    }
+
+    public function getDemographicField($tableName) {
+
+        if ($tableName == 'Gender') {
+            return $this->nameRS->Gender;
+        } else {
+
+            foreach ($this->demogRS as $k => $v) {
+
+                if ($k == $tableName) {
+                    return $v;
+                }
+            }
+        }
+
+        return NULL;
+    }
+
     public function createAdminPanel() {
 
         $table = new HTMLTable();

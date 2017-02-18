@@ -1,390 +1,390 @@
-REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`) VALUES
-('Address_Purpose','1','Home','i',''),
-('Address_Purpose','2','Work','i',''),
-('Address_Purpose','3','Alt','i',''),
-('Address_Purpose','4','Office','o',''),
-('Address_Purpose','b','Billing','o',''),
-
-('Addnl_Charge', 'ac1', 'Lost Key', '25', 'ca'),
-('Addnl_Charge', 'ac2', 'Room Damage', '100', 'ca'),
-
-('Age_Bracket','2','Infant','','d'),
-('Age_Bracket','4','Minor','','d'),
-('Age_Bracket','6','Adult','','d'),
-('Age_Bracket','8','Senior','','d'),
-('Age_Bracket','z','Unknown','','d'),
-
-('anomalyTypes','ba','Bad City','`City`=\'\'',''),
-('anomalyTypes','bs','Bad State','`State`=\'\'',''),
-('anomalyTypes','sa','Bad Street Address','`Street Address`=\'\'',''),
-('anomalyTypes','z','Bad Zip Code','Zip=\'\' or Zip=\'0\' or LENGTH(Zip)<5',''),
-
-('Attribute_Type', '1', 'Room', '',''),
-('Attribute_Type', '2', 'Hospital', '',''),
-
-('Cal_Event_Status','a','Active','',''),
-('Cal_Event_Status','d','Deleted','',''),
-('Cal_Event_Status','t','Logged','',''),
-('Cal_Hide_Add_Members','Vol_Activities1','n','',''),
-('Cal_House','Vol_Activitieshou','House Calendar','',''),
-('Cal_Select','Vol_Activities1','n','',''),
-('Cal_Show_Delete_Email','Vol_Activities1','y','',''),
-
-('Campaign_Status','a','Active','',''),
-('Campaign_Status','c','Closed','',''),
-('Campaign_Status','d','Disabled','',''),
-
-('Campaign_Type','as','Normal','',''),
-('Campaign_Type','pct','Percent Cut Out','',''),
-('Campaign_Type','ink','In Kind','',''),
-('Campaign_Type', 'sch', 'Scholarship', '',''),
-
-('Constraint_Type', 'hos', 'Hospital', '',''),
-('Constraint_Type', 'rv', 'Reservation','',''),
-('Constraint_Type', 'v', 'Visit', '',''),
-
-('Category_Types', '1', 'Items', '',''),
-('Category_Types', '2', 'Tax', '',''),
-('Category_Types', '3', 'Penalty', '',''),
-
-('Charge_Cards', '1', 'Visa', '',''),
-('Charge_Cards', '2', 'M/C', '',''),
-('Charge_Cards', '3', 'Discover','', ''),
-('Charge_Cards', '4', 'Am Ex', '',''),
-
-('Demographics', 'a', 'Age_Bracket', 'y','m'),
-('Demographics', 'e', 'Ethnicity', 'y','m'),
-('Demographics', 'g', 'Gender', 'y','m'),
-('Demographics', 'i', 'Income_Bracket', 'y','m'),
-('Demographics', 'l', 'Education_Level', 'y','m'),
-('Demographics', 'sn', 'Special_Needs', '','m'),
-('Demographics', 'ms', 'Media_Source', '','m'),
-
-('Diagnosis','0','Other','','h'),
-('Diagnosis','0','Breast Cancer','','h'),
-('Diagnosis','0','Prostate Cancer','','h'),
-('Diagnosis','0','Lung Cancer','','h'),
-('Diagnosis','0','Glioma','','h'),
-
-('Dir_Type_Selector_Code','d','Directory','',''),
-('Dir_Type_Selector_Code','e','Email Addresses','',''),
-('Dir_Type_Selector_Code','m','Mailing List','',''),
-
-('Distance_Range','50','Up to 50 miles','2',''),
-('Distance_Range','100','51 to 100 miles','3',''),
-('Distance_Range','150','101 to 150 miles','4',''),
-('Distance_Range','200','151 to 200 miles','5',''),
-('Distance_Range','30000','More Than 200 miles','7',''),
-
-('Dormant_Selector_Code','act','Active Only','',''),
-('Dormant_Selector_Code','both','Dormant & Active','',''),
-('Dormant_Selector_Code','dor','Dormant Only','',''),
-
-('Education_Level','01','Highschool','','d'),
-('Education_Level','02','College','','d'),
-('Education_Level','z','Unknown','','d'),
-
-('Email_Purpose','1','Home','i',''),
-('Email_Purpose','2','Work','i',''),
-('Email_Purpose','3','Alt','i',''),
-('Email_Purpose','4','Office','o',''),
-
-('Ethnicity','c','Caucasian','','d'),
-('Ethnicity','f','African-American','','d'),
-('Ethnicity','h','Hispanic','','d'),
-('Ethnicity','k','Asia-Pacific','','d'),
-('Ethnicity','x','Other','','d'),
-('Ethnicity','z','Unknown','','d'),
-
-('E_Shell_Status','a','Active','',''),
-('E_Shell_Status','d','Disabled','',''),
-
-('ExcessPays', 'd', 'Room Fund','','u'),
-('ExcessPays', 'e', 'Hold','','u'),
-('ExcessPays', 'i', 'Ignore','','u'),
-('ExcessPays', 'r', 'Refund','','u'),
-
-('FB_Status','a','Active','',''),
-('FB_Status','d','Disabled','',''),
-('FB_Status','w','Waiting','',''),
-('FB_Status','x','Prohibited','',''),
-
-
-('Gender','f','Female','','d'),
-('Gender','m','Male','','d'),
-('Gender','t','Other','','d'),
-('Gender','z','Unknown','','d'),
-
-('Guest_Survey', 'Survey_Date','', '',''),
-
-('Holiday', '0', 'New Years Day','',''),
-('Holiday', '1', 'Martin Luther King Birthday','',''),
-('Holiday', '2', 'Washington Birthday','',''),
-('Holiday', '3', 'Memorial Day','',''),
-('Holiday', '4', 'Independance Day','',''),
-('Holiday', '5', 'Labor Day','',''),
-('Holiday', '6', 'Columbus Day','',''),
-('Holiday', '7', 'Vetereans Day','',''),
-('Holiday', '8', 'Thanksgiving Day','',''),
-('Holiday', '9', 'Christmas Day','',''),
-('Holiday', '10', 'Designated 1', '',''),
-('Holiday', '11', 'Designated 2', '',''),
-('Holiday', '12', 'Designated 3', '',''),
-('Holiday', '13', 'Designated 4', '',''),
-
-('Hospital_Type', 'h', 'Hospital','',''),
-('Hospital_Type', 'a', 'Association','',''),
-
-('HourReportType','d','Open & Logged','',''),
-('HourReportType','l','Only Logged Hours','',''),
-('HourReportType','ul','Only Open Hours','',''),
-
-('House_Discount', 'hd1', 'Service Issue','10', 'ca'),
-('House_Discount', 'hd2', 'Facilities Issue','15', 'ca'),
-
-('Income_Bracket', 'ib1', 'Rich', '', 'd'),
-('Income_Bracket', 'ib2', 'Poor', '', 'd'),
-('Income_Bracket', 'z', 'Unknown', '', 'd'),
-
-('Invoice_Status', 'p', 'Paid', '',''),
-('Invoice_Status', 'up', 'Unpaid', '',''),
-('Invoice_Status', 'c', 'Carried', '',''),
-
-('Key_Deposit_Code','k0','None','0',''),
-('Key_Deposit_Code','k1','House','20',''),
-
-('Key_Disposition', '1', 'Retained', '', 'u'),
-('Key_Disposition', '2', 'Refunded', '', 'u'),
-('Key_Disposition', '3', 'Donated', '', 'u'),
-('Key_Disposition', '4', 'Paid Room Fees', '', 'u'),
-
-('Language_Proficiency', '5', 'Native','', 'h'),
-('Language_Proficiency', '3', 'Professional','', 'h'),
-('Language_Proficiency', '2', 'Limited','', 'h'),
-('Language_Proficiency', 'l', 'Elementary','', 'h'),
-
-('Location', 'lo1', 'Cardiac','', 'h'),
-('Location', 'lo2', 'Peds','', 'h'),
-
-('Media_Source', 'na', 'News Article','','d'),
-('Media_Source', 'hs', 'Hospital Staff','','d'),
-('Media_Source', 'fr', 'Friend','','d'),
-('Media_Source', 'hhn', 'HHN','','d'),
-('Media_Source', 'ws', 'Web Search','','d'),
-('Media_Source', 'z', 'Unknown','','d'),
-
-('Member_Basis','ai','Individual','i',''),
-('Member_Basis','c','Company','o',''),
-('Member_Basis','np','Non Profit','o',''),
-('Member_Basis','og','Government','o',''),
-
-('mem_status','a','Active','m',''),
-('mem_status','d','Deceased','m',''),
-('mem_status','in','Inactive','m',''),
-('mem_status','p','Pending','',''),
-('mem_status','TBD','To be deleted','',''),
-('mem_status','u','Duplicate','',''),
-
-('Name_Prefix','dr','Dr.','',''),
-('Name_Prefix','mi','Miss.','',''),
-('Name_Prefix','mr','Mr.','',''),
-('Name_Prefix','mrs','Mrs.','',''),
-('Name_Prefix','ms','Ms.','',''),
-('Name_Prefix','rev','Rev.','',''),
-('Name_Prefix','The','The','',''),
-
-('Name_Suffix','D.D.S.','D.D.S.','',''),
-('Name_Suffix','esq','Esq.','',''),
-('Name_Suffix','ii','II','',''),
-('Name_Suffix','iii','III','',''),
-('Name_Suffix','jd','Jd.','',''),
-('Name_Suffix','jr','Jr.','',''),
-('Name_Suffix','md','MD.','',''),
-('Name_Suffix','phd','Ph.D.','',''),
-
-('NoReturnReason', 'n1', 'Irresponsible', '', 'u'),
-
-('OOS_Codes', 'sb', 'Sewer Backup','','h'),
-('OOS_Codes', 'ar', 'Appliance Repair','','h'),
-('OOS_Codes', 'sr', 'Structural Repair','','h'),
-('OOS_Codes', 'cd', 'Cleaning Delay','','h'),
-
-('Order_Status','a','Active','',''),
-('Order_Status','f','Finished','',''),
-('Order_Status','s','Suspended','',''),
-('Order_Status','sa','Suspended-Ageing','',''),
-
-('Page_Type','c','Component','',''),
-('Page_Type','p','Web Page','',''),
-('Page_Type','s','Web Service','',''),
-
-('Patient_Rel_Type','chd','Child','','d'),
-('Patient_Rel_Type','frd','Friend','','d'),
-('Patient_Rel_Type','par','Parent','','d'),
-('Patient_Rel_Type','rltv','Relative','','d'),
-('Patient_Rel_Type','sib','Sibling','','d'),
-('Patient_Rel_Type','sp','Partner','','d'),
-('Patient_Rel_Type','pc','Paid Caregiver','','d'),
-('Patient_Rel_Type','slf','Patient','','d'),
-
-('Pay_Status', 'c', 'Cleared', '',''),
-('Pay_Status', 'p', 'Pending', '',''),
-('Pay_Status', 'd', 'Denied', '',''),
-('Pay_Status', 'er', 'Error', '',''),
-('Pay_Status', 'v', 'Void', '',''),
-('Pay_Status', 'r', 'Returned', '',''),
-
-('Payment_Status', 's', 'Paid', '',''),
-('Payment_Status', 'v', 'Void', '',''),
-('Payment_Status', 'r', 'Return', '',''),
-('Payment_Status', 'vr', 'Void Return', '',''),
-('Payment_Status', 'd', 'Declined', '',''),
-
-('Pay_Type','ca','Cash','1',''),
-('Pay_Type','cc','Credit Card','4',''),
-('Pay_Type','ck','Check','3',''),
-('Pay_Type','in','Invoice','',''),
-('Pay_Type','tf','Transfer','5',''),
-
-('Period_Unit', '1', 'Day','',''),
-('Period_Unit', '2', 'Week','',''),
-('Period_Unit', '3', 'Month','',''),
-('Period_Unit', '4', 'Year','',''),
-
-('Phone_Type','dh','Home','i',''),
-('Phone_Type','gw','Work','i',''),
-('Phone_Type','hw','Office','o',''),
-('Phone_Type','mc','Cell','i',''),
-('Phone_Type','xf','Fax','',''),
-
-('Price_Model','b','Basic','',''),
-('Price_Model','d','Daily','',''),
-('Price_Model','g', 'Guest Day','',''),
-('Price_Model','ns','3 Step','',''),
-('Price_Model','p','Perpetual Step','',''),
-('Price_Model','bl','n-Day Block','',''),
-('Price_Model','xx','None','',''),
-
-('Rate_Block', '7', 'Wk', '1',''),
-('Rate_Block', '14', '2 Weeks', '',''),
-
-('Rate_Period', '1', 'Reduced Rate 1', '7',''),
-('Rate_Period', '2', 'Reduced Rate 2', '14',''),
-('Rate_Period', '3', 'Reduced Rate 3', '19999',''),
-
-('rel_type','chd','Child','par',''),
-('rel_type','par','Parent','chd',''),
-('rel_type','rltv','Relative','',''),
-('rel_type','sib','Sibling','sib',''),
-('rel_type','sp','Partner','sp',''),
-('rel_type','frd','Friend','sp',''),
-
-('Resource_Status','a','Available','',''),
-('Resource_Status','oos','Out of Service','',''),
-('Resource_Status','un','Unavailable','',''),
-('Resource_Status','dld','Delayed','',''),
-
-('Resource_Type','block','Block','',''),
-('Resource_Type','part','Partition','',''),
-('Resource_Type','rmtroom','Remote Room','',''),
-('Resource_Type','room','Room','',''),
-
-('Role_Codes','10','Admin User','',''),
-('Role_Codes','100','Web User','',''),
-('Role_Codes','700','Guest','',''),
-
-('Room_Category','dh','House','',''),
-('Room_Category','gada','Hospital','',''),
-('Room_Category','jph','Private Host','',''),
-('Room_Category','nm','Motel','',''),
-
-('Room_Cleaning_Days', 'a', 'Disabled', '0', 'ha'),
-('Room_Cleaning_Days', 'b', '7 Days', '7', 'ha'),
-('Room_Cleaning_Days', 'nz', 'Disabled', '0', 'ha'),
-
-('Room_Status', 'a', 'Clean', '',''),
-('Room_Status', 'dty', 'Dirty', '',''),
-('Room_Status', 'to', 'Turn Over', '',''),
-
-('Room_Type','r','Room','',''),
-('Room_Type','s','Suite','',''),
-
-('Salutation','fln','First &Last','',''),
-('Salutation','fno','First Name','',''),
-('Salutation','for','Formal','',''),
-('Salutation','mm','Retro-Mr. & Mrs.','',''),
-
-('Special_Needs','c','Cancer','','d'),
-('Special_Needs','f','Dev. Challenged','','d'),
-('Special_Needs','z','Unknown','','d'),
-
-('Static_Room_Rate','rb','Regular Rate','10',''),
-
-('Utilization_Category', 'uc1', 'Standard', '', 'h'),
-
-('validMemStatus','a','Active','',''),
-('validMemStatus','d','Deceased','',''),
-('validMemStatus','in','Inactive','',''),
-
-('Verify_User_Address','done','Verified','',''),
-('Verify_User_Address','y','Waiting for verification','',''),
-
-('Visit_Fee_Code', '1', 'Cleaning Fee','15',''),
-('Visit_Fee_Code', '2', '','0',''),
-
-('Visit_Status','a','Checked In','',''),
-('Visit_Status','co','Checked Out','',''),
-('Visit_Status','cp','Room Rate Changed','',''),
-('Visit_Status','n','Room Changed','',''),
-('Visit_Status', '1', 'On Leave','',''),
-
-('Vol_Activities','1','Greeter','green,white',''),
-('Vol_Activities','5','Fundraising','black,white',''),
-('Vol_Activities','6','Special Event Planning/Organizing','',''),
-('Vol_Activities','8','Lawn Care','',''),
-('Vol_Activities','9','Gardening','',''),
-('Vol_Activities','ccom','Cookie Committee','yellow,darkgreen',''),
-
-
-('Vol_Category','Vol_Activities','Volunteer Activities','Vol_Type.Vol',''),
-('Vol_Category','Vol_Skills','Volunteer Skills','Vol_Type.Vol',''),
-('Vol_Category','Vol_Type','Member Type','',''),
-
-('Vol_Rank','c','Chair','',''),
-('Vol_Rank','cc','Co-Chair','',''),
-('Vol_Rank','m','Member','',''),
-
-
-('Vol_Skills','D','Solicitation or Fundraising','green,white',''),
-('Vol_Skills','E','Cooking/Catering','',''),
-('Vol_Skills','G','Handyperson','',''),
-('Vol_Skills','H','Painting','',''),
-('Vol_Skills','I','Electrical','',''),
-('Vol_Skills','J','Plumbing','',''),
-('Vol_Skills','K','Roofing','',''),
-('Vol_Skills','L','Carpentry','orange,darkblue',''),
-
-('Vol_Status','a','Active','',''),
-('Vol_Status','i','Retired','',''),
-
-('Vol_Type','d','Donor','',''),
-('Vol_Type','g','Guest','',''),
-('Vol_Type','p','Patient','yellow,black',''),
-('Vol_Type','Vol','Volunteer','',''),
-('Vol_Type', 'doc', 'Doctor','',''),
-('Vol_Type', 'ra', 'Agent','',''),
-('Vol_Type', 'ba', 'Billing Agent', '',''),
-
-('Web_User_Status','a','active','',''),
-('Web_User_Status','d','Disabled','',''),
-('Web_User_Status','w','Waiting','',''),
-('Web_User_Status','x','Prohibited','',''),
-
-('WL_Final_Status','hf','House Full','',''),
-('WL_Final_Status','lc','Lost Contact','',''),
-('WL_Final_Status','se','Elsewhere','',''),
-('WL_Status','a','Active','',''),
-('WL_Status','in','Inactive','',''),
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES
+('Address_Purpose','1','Home','i','',10),
+('Address_Purpose','2','Work','i','',20),
+('Address_Purpose','3','Alt','i','',30),
+('Address_Purpose','4','Office','o','',40),
+('Address_Purpose','b','Billing','o','',50),
+
+('Addnl_Charge', 'ac1', 'Lost Key', '25', 'ca',0),
+('Addnl_Charge', 'ac2', 'Room Damage', '100', 'ca',0),
+
+('Age_Bracket','2','Infant','','d',0),
+('Age_Bracket','4','Minor','','d',0),
+('Age_Bracket','6','Adult','','d',0),
+('Age_Bracket','8','Senior','','d',0),
+('Age_Bracket','z','Unknown','','d',1000),
+
+('anomalyTypes','ba','Bad City','`City`=\'\'','',0),
+('anomalyTypes','bs','Bad State','`State`=\'\'','',0),
+('anomalyTypes','sa','Bad Street Address','`Street Address`=\'\'','',0),
+('anomalyTypes','z','Bad Zip Code','Zip=\'\' or Zip=\'0\' or LENGTH(Zip)<5','',0),
+
+('Attribute_Type', '1', 'Room', '','',0),
+('Attribute_Type', '2', 'Hospital', '','',0),
+
+('Cal_Event_Status','a','Active','','',0),
+('Cal_Event_Status','d','Deleted','','',0),
+('Cal_Event_Status','t','Logged','','',0),
+('Cal_Hide_Add_Members','Vol_Activities1','n','','',0),
+('Cal_House','Vol_Activitieshou','House Calendar','','',0),
+('Cal_Select','Vol_Activities1','n','','',0),
+('Cal_Show_Delete_Email','Vol_Activities1','y','','',0),
+
+('Campaign_Status','a','Active','','',0),
+('Campaign_Status','c','Closed','','',0),
+('Campaign_Status','d','Disabled','','',0),
+
+('Campaign_Type','as','Normal','','',0),
+('Campaign_Type','pct','Percent Cut Out','','',0),
+('Campaign_Type','ink','In Kind','','',0),
+('Campaign_Type', 'sch', 'Scholarship', '','',0),
+
+('Constraint_Type', 'hos', 'Hospital', '','',0),
+('Constraint_Type', 'rv', 'Reservation','','',0),
+('Constraint_Type', 'v', 'Visit', '','',0),
+
+('Category_Types', '1', 'Items', '','',0),
+('Category_Types', '2', 'Tax', '','',0),
+('Category_Types', '3', 'Penalty', '','',0),
+
+('Charge_Cards', '1', 'Visa', '','',0),
+('Charge_Cards', '2', 'M/C', '','',0),
+('Charge_Cards', '3', 'Discover','', '',0),
+('Charge_Cards', '4', 'Am Ex', '','',0),
+
+('Demographics', 'a', 'Age_Bracket', 'y','m',5),
+('Demographics', 'e', 'Ethnicity', 'y','m',10),
+('Demographics', 'g', 'Gender', 'y','m',15),
+('Demographics', 'i', 'Income_Bracket', 'y','m',25),
+('Demographics', 'l', 'Education_Level', 'y','m',20),
+('Demographics', 'sn', 'Special_Needs', '','m',35),
+('Demographics', 'ms', 'Media_Source', '','m',30),
+
+('Diagnosis','0','Other','','h',0),
+('Diagnosis','0','Breast Cancer','','h',0),
+('Diagnosis','0','Prostate Cancer','','h',0),
+('Diagnosis','0','Lung Cancer','','h',0),
+('Diagnosis','0','Glioma','','h',0),
+
+('Dir_Type_Selector_Code','d','Directory','','',0),
+('Dir_Type_Selector_Code','e','Email Addresses','','',0),
+('Dir_Type_Selector_Code','m','Mailing List','','',0),
+
+('Distance_Range','50','Up to 50 miles','2','',10),
+('Distance_Range','100','51 to 100 miles','3','',20),
+('Distance_Range','150','101 to 150 miles','4','',30),
+('Distance_Range','200','151 to 200 miles','5','',40),
+('Distance_Range','30000','More Than 200 miles','7','',50),
+
+('Dormant_Selector_Code','act','Active Only','','',0),
+('Dormant_Selector_Code','both','Dormant & Active','','',0),
+('Dormant_Selector_Code','dor','Dormant Only','','',0),
+
+('Education_Level','01','Highschool','','d',0),
+('Education_Level','02','College','','d',0),
+('Education_Level','z','Unknown','','d',1000),
+
+('Email_Purpose','1','Home','i','',10),
+('Email_Purpose','2','Work','i','',20),
+('Email_Purpose','3','Alt','i','',30),
+('Email_Purpose','4','Office','o','',40),
+
+('Ethnicity','c','Caucasian','','d',0),
+('Ethnicity','f','African-American','','d',0),
+('Ethnicity','h','Hispanic','','d',0),
+('Ethnicity','k','Asia-Pacific','','d',0),
+('Ethnicity','x','Other','','d',0),
+('Ethnicity','z','Unknown','','d',1000),
+
+('E_Shell_Status','a','Active','','',0),
+('E_Shell_Status','d','Disabled','','',0),
+
+('ExcessPays', 'd', 'Room Fund','','u',0),
+('ExcessPays', 'e', 'Hold','','u',0),
+('ExcessPays', 'i', 'Ignore','','u',0),
+('ExcessPays', 'r', 'Refund','','u',0),
+
+('FB_Status','a','Active','','',0),
+('FB_Status','d','Disabled','','',0),
+('FB_Status','w','Waiting','','',0),
+('FB_Status','x','Prohibited','','',0),
+
+
+('Gender','f','Female','','d',0),
+('Gender','m','Male','','d',0),
+('Gender','t','Other','','d',0),
+('Gender','z','Unknown','','d',1000),
+
+('Guest_Survey', 'Survey_Date','', '','',0),
+
+('Holiday', '0', 'New Years Day','','',0),
+('Holiday', '1', 'Martin Luther King Birthday','','',0),
+('Holiday', '2', 'Washington Birthday','','',0),
+('Holiday', '3', 'Memorial Day','','',0),
+('Holiday', '4', 'Independance Day','','',0),
+('Holiday', '5', 'Labor Day','','',0),
+('Holiday', '6', 'Columbus Day','','',0),
+('Holiday', '7', 'Vetereans Day','','',0),
+('Holiday', '8', 'Thanksgiving Day','','',0),
+('Holiday', '9', 'Christmas Day','','',0),
+('Holiday', '10', 'Designated 1', '','',0),
+('Holiday', '11', 'Designated 2', '','',0),
+('Holiday', '12', 'Designated 3', '','',0),
+('Holiday', '13', 'Designated 4', '','',0),
+
+('Hospital_Type', 'h', 'Hospital','','',0),
+('Hospital_Type', 'a', 'Association','','',0),
+
+('HourReportType','d','Open & Logged','','',0),
+('HourReportType','l','Only Logged Hours','','',0),
+('HourReportType','ul','Only Open Hours','','',0),
+
+('House_Discount', 'hd1', 'Service Issue','10', 'ca',0),
+('House_Discount', 'hd2', 'Facilities Issue','15', 'ca',0),
+
+('Income_Bracket', 'ib1', 'Rich', '', 'd',0),
+('Income_Bracket', 'ib2', 'Poor', '', 'd',0),
+('Income_Bracket', 'z', 'Unknown', '', 'd',1000),
+
+('Invoice_Status', 'p', 'Paid', '','',0),
+('Invoice_Status', 'up', 'Unpaid', '','',0),
+('Invoice_Status', 'c', 'Carried', '','',0),
+
+('Key_Deposit_Code','k0','None','0','',0),
+('Key_Deposit_Code','k1','House','20','',0),
+
+('Key_Disposition', '1', 'Retained', '', 'u',0),
+('Key_Disposition', '2', 'Refunded', '', 'u',0),
+('Key_Disposition', '3', 'Donated', '', 'u',0),
+('Key_Disposition', '4', 'Paid Room Fees', '', 'u',0),
+
+('Language_Proficiency', '5', 'Native','', 'h',0),
+('Language_Proficiency', '3', 'Professional','', 'h',0),
+('Language_Proficiency', '2', 'Limited','', 'h',0),
+('Language_Proficiency', 'l', 'Elementary','', 'h',0),
+
+('Location', 'lo1', 'Cardiac','', 'h',0),
+('Location', 'lo2', 'Peds','', 'h',0),
+
+('Media_Source', 'na', 'News Article','','d',0),
+('Media_Source', 'hs', 'Hospital Staff','','d',0),
+('Media_Source', 'fr', 'Friend','','d',0),
+('Media_Source', 'hhn', 'HHN','','d',0),
+('Media_Source', 'ws', 'Web Search','','d',0),
+('Media_Source', 'z', 'Unknown','','d',1000),
+
+('Member_Basis','ai','Individual','i','',10),
+('Member_Basis','c','Company','o','',20),
+('Member_Basis','np','Non Profit','o','',30),
+('Member_Basis','og','Government','o','',40),
+
+('mem_status','a','Active','m','',10),
+('mem_status','d','Deceased','m','',20),
+('mem_status','in','Inactive','m','',30),
+('mem_status','p','Pending','','',40),
+('mem_status','TBD','To be deleted','','',50),
+('mem_status','u','Duplicate','','',60),
+
+('Name_Prefix','dr','Dr.','','',0),
+('Name_Prefix','mi','Miss.','','',0),
+('Name_Prefix','mr','Mr.','','',0),
+('Name_Prefix','mrs','Mrs.','','',0),
+('Name_Prefix','ms','Ms.','','',0),
+('Name_Prefix','rev','Rev.','','',0),
+('Name_Prefix','The','The','','',0),
+
+('Name_Suffix','D.D.S.','D.D.S.','','',0),
+('Name_Suffix','esq','Esq.','','',0),
+('Name_Suffix','ii','II','','',0),
+('Name_Suffix','iii','III','','',0),
+('Name_Suffix','jd','Jd.','','',0),
+('Name_Suffix','jr','Jr.','','',0),
+('Name_Suffix','md','MD.','','',0),
+('Name_Suffix','phd','Ph.D.','','',0),
+
+('NoReturnReason', 'n1', 'Irresponsible', '', 'u',0),
+
+('OOS_Codes', 'sb', 'Sewer Backup','','h',0),
+('OOS_Codes', 'ar', 'Appliance Repair','','h',0),
+('OOS_Codes', 'sr', 'Structural Repair','','h',0),
+('OOS_Codes', 'cd', 'Cleaning Delay','','h',0),
+
+('Order_Status','a','Active','','',0),
+('Order_Status','f','Finished','','',0),
+('Order_Status','s','Suspended','','',0),
+('Order_Status','sa','Suspended-Ageing','','',0),
+
+('Page_Type','c','Component','','',0),
+('Page_Type','p','Web Page','','',0),
+('Page_Type','s','Web Service','','',0),
+
+('Patient_Rel_Type','chd','Child','','d',0),
+('Patient_Rel_Type','frd','Friend','','d',0),
+('Patient_Rel_Type','par','Parent','','d',0),
+('Patient_Rel_Type','rltv','Relative','','d',0),
+('Patient_Rel_Type','sib','Sibling','','d',0),
+('Patient_Rel_Type','sp','Partner','','d',0),
+('Patient_Rel_Type','pc','Paid Caregiver','','d',0),
+('Patient_Rel_Type','slf','Patient','','d',0),
+
+('Pay_Status', 'c', 'Cleared', '','',0),
+('Pay_Status', 'p', 'Pending', '','',0),
+('Pay_Status', 'd', 'Denied', '','',0),
+('Pay_Status', 'er', 'Error', '','',0),
+('Pay_Status', 'v', 'Void', '','',0),
+('Pay_Status', 'r', 'Returned', '','',0),
+
+('Payment_Status', 's', 'Paid', '','',0),
+('Payment_Status', 'v', 'Void', '','',0),
+('Payment_Status', 'r', 'Return', '','',0),
+('Payment_Status', 'vr', 'Void Return', '','',0),
+('Payment_Status', 'd', 'Declined', '','',0),
+
+('Pay_Type','ca','Cash','1','',0),
+('Pay_Type','cc','Credit Card','4','',0),
+('Pay_Type','ck','Check','3','',0),
+('Pay_Type','in','Invoice','','',0),
+('Pay_Type','tf','Transfer','5','',0),
+
+('Period_Unit', '1', 'Day','','',0),
+('Period_Unit', '2', 'Week','','',0),
+('Period_Unit', '3', 'Month','','',0),
+('Period_Unit', '4', 'Year','','',0),
+
+('Phone_Type','dh','Home','i','',10),
+('Phone_Type','gw','Work','i','',20),
+('Phone_Type','hw','Office','o','',30),
+('Phone_Type','mc','Cell','i','',40),
+('Phone_Type','xf','Fax','','',50),
+
+('Price_Model','b','Basic','','',0),
+('Price_Model','d','Daily','','',0),
+('Price_Model','g', 'Guest Day','','',0),
+('Price_Model','ns','3 Step','','',0),
+('Price_Model','p','Perpetual Step','','',0),
+('Price_Model','bl','n-Day Block','','',0),
+('Price_Model','xx','None','','',0),
+
+('Rate_Block', '7', 'Wk', '1','',0),
+('Rate_Block', '14', '2 Weeks', '','',0),
+
+('Rate_Period', '1', 'Reduced Rate 1', '7','',0),
+('Rate_Period', '2', 'Reduced Rate 2', '14','',0),
+('Rate_Period', '3', 'Reduced Rate 3', '19999','',0),
+
+('rel_type','chd','Child','par','',0),
+('rel_type','par','Parent','chd','',0),
+('rel_type','rltv','Relative','','',0),
+('rel_type','sib','Sibling','sib','',0),
+('rel_type','sp','Partner','sp','',0),
+('rel_type','frd','Friend','sp','',0),
+
+('Resource_Status','a','Available','','',0),
+('Resource_Status','oos','Out of Service','','',0),
+('Resource_Status','un','Unavailable','','',0),
+('Resource_Status','dld','Delayed','','',0),
+
+('Resource_Type','block','Block','','',0),
+('Resource_Type','part','Partition','','',0),
+('Resource_Type','rmtroom','Remote Room','','',0),
+('Resource_Type','room','Room','','',0),
+
+('Role_Codes','10','Admin User','','',0),
+('Role_Codes','100','Web User','','',0),
+('Role_Codes','700','Guest','','',0),
+
+('Room_Category','dh','House','','',0),
+('Room_Category','gada','Hospital','','',0),
+('Room_Category','jph','Private Host','','',0),
+('Room_Category','nm','Motel','','',0),
+
+('Room_Cleaning_Days', 'a', '7 Days', '7', 'ha',10),
+('Room_Cleaning_Days', 'b', '14 Days', '14', 'ha',20),
+('Room_Cleaning_Days', 'nz', 'Disabled', '0', 'ha',1000),
+
+('Room_Status', 'a', 'Clean', '','',0),
+('Room_Status', 'dty', 'Dirty', '','',0),
+('Room_Status', 'to', 'Turn Over', '','',0),
+
+('Room_Type','r','Room','','',10),
+('Room_Type','s','Suite','','',20),
+
+('Salutation','fln','First &Last','','',0),
+('Salutation','fno','First Name','','',0),
+('Salutation','for','Formal','','',0),
+('Salutation','mm','Retro-Mr. & Mrs.','','',0),
+
+('Special_Needs','c','Cancer','','d',0),
+('Special_Needs','f','Dev. Challenged','','d',0),
+('Special_Needs','z','Unknown','','d',1000),
+
+('Static_Room_Rate','rb','Regular Rate','10','',0),
+
+('Utilization_Category', 'uc1', 'Standard', '', 'h',0),
+
+('validMemStatus','a','Active','','',0),
+('validMemStatus','d','Deceased','','',0),
+('validMemStatus','in','Inactive','','',0),
+
+('Verify_User_Address','done','Verified','','',0),
+('Verify_User_Address','y','Waiting for verification','','',0),
+
+('Visit_Fee_Code', '1', 'Cleaning Fee','15','',0),
+('Visit_Fee_Code', '2', '','0','',0),
+
+('Visit_Status','a','Checked In','','',0),
+('Visit_Status','co','Checked Out','','',0),
+('Visit_Status','cp','Room Rate Changed','','',0),
+('Visit_Status','n','Room Changed','','',0),
+('Visit_Status', '1', 'On Leave','','',0),
+
+('Vol_Activities','1','Greeter','green,white','',0),
+('Vol_Activities','5','Fundraising','black,white','',0),
+('Vol_Activities','6','Special Event Planning/Organizing','','',0),
+('Vol_Activities','8','Lawn Care','','',0),
+('Vol_Activities','9','Gardening','','',0),
+('Vol_Activities','ccom','Cookie Committee','yellow,darkgreen','',0),
+
+
+('Vol_Category','Vol_Activities','Volunteer Activities','Vol_Type.Vol','',0),
+('Vol_Category','Vol_Skills','Volunteer Skills','Vol_Type.Vol','',0),
+('Vol_Category','Vol_Type','Member Type','','',0),
+
+('Vol_Rank','c','Chair','','',0),
+('Vol_Rank','cc','Co-Chair','','',0),
+('Vol_Rank','m','Member','','',0),
+
+
+('Vol_Skills','D','Solicitation or Fundraising','green,white','',0),
+('Vol_Skills','E','Cooking/Catering','','',0),
+('Vol_Skills','G','Handyperson','','',0),
+('Vol_Skills','H','Painting','','',0),
+('Vol_Skills','I','Electrical','','',0),
+('Vol_Skills','J','Plumbing','','',0),
+('Vol_Skills','K','Roofing','','',0),
+('Vol_Skills','L','Carpentry','orange,darkblue','',0),
+
+('Vol_Status','a','Active','','',0),
+('Vol_Status','i','Retired','','',0),
+
+('Vol_Type','d','Donor','','',0),
+('Vol_Type','g','Guest','','',0),
+('Vol_Type','p','Patient','yellow,black','',0),
+('Vol_Type','Vol','Volunteer','','',0),
+('Vol_Type', 'doc', 'Doctor','','',0),
+('Vol_Type', 'ra', 'Agent','','',0),
+('Vol_Type', 'ba', 'Billing Agent', '','',0),
+
+('Web_User_Status','a','active','','',0),
+('Web_User_Status','d','Disabled','','',0),
+('Web_User_Status','w','Waiting','','',0),
+('Web_User_Status','x','Prohibited','','',0),
+
+('WL_Final_Status','hf','House Full','','',0),
+('WL_Final_Status','lc','Lost Contact','','',0),
+('WL_Final_Status','se','Elsewhere','','',0),
+('WL_Status','a','Active','','',0),
+('WL_Status','in','Inactive','','',0),
 ('WL_Status','st','Stayed','','');
 -- ;
 

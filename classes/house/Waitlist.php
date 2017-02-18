@@ -45,18 +45,13 @@ class Waitlist {
 
         $guest = new Guest($dbh, 'g', $idGuest);
 
-        $psg = $guest->getPatientPsg();
-
-        $wlRS->idPatient->setNewVal($psg->getIdPatient());
         $wlRS->Hospital->setNewVal('');
-        $wlRS->idPsg->setNewVal($psg->getIdPsg());
-
 
         $wlRS->Arrival_Date->setNewVal($rDate->format('Y-m-d H:i:s'));
         $wlRS->Number_Adults->setNewVal(1);
         $wlRS->idGuest->setNewVal($idGuest);
         $phObj = $guest->getPhonesObj();
-        $phData = $phObj->get_Data();;    // gets preferred numbers.
+        $phData = $phObj->get_Data();    // gets preferred numbers.
         $wlRS->Phone->setNewVal($phData["Phone_Num"]);
 
         $wlRS->Status->setNewVal('a');

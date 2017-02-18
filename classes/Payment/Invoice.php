@@ -692,11 +692,76 @@ where
         }
     }
 
+
+    protected function unwindCarriedInv(\PDO $dbh, $id, &$invIds) {
+
+        $stmt = $dbh->query("select idInvoice from invoice where Delegated_Invoice_Id = " . $id);
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+        foreach ($rows as $r) {
+
+            $invIds[] = $r[0];
+            $this->unwindCarriedInv($dbh, $r[0], $invIds);
+        }
+
+    }
+
+
+    protected function deleteCarriedInvoice(\PDO $dbh, $user) {
+
+        if ($this->invRs->Carried_Amount->getStoredVal() == 0) {
+            throw new Hk_Exception_Payment('This invoice has no carried amount. ');
+        }
+
+        // Get all the carried invoices
+        $invIds = array();
+        $this->unwindCarriedInv($dbh, $this->idInvoice, $invIds);
+
+        $whAssoc = '';
+        foreach ($invIds as $a) {
+
+           if ($a != 0) {
+
+               if ($whAssoc == '') {
+                   $whAssoc .= $a;
+               } else {
+                   $whAssoc .= ",". $a;
+               }
+           }
+        }
+
+        $query = "select count(p.idPayment)
+From payment p join payment_invoice pi on p.idPayment = pi.Payment_Id and p.Status_Code = 's' and p.Is_Refund = 0
+where pi.Invoice_Id in ($whAssoc)";
+
+        $stmn = $dbh->query($query);
+        $rows = $stmn->fetchAll(PDO::FETCH_NUM);
+
+        if (count($rows) > 0 && $rows[0][0] > 0) {
+            throw new Hk_Exception_Payment('Unpaid or partially paid invoices cannot be deleted. Remove the payments first.');
+        }
+
+        $bolDeld = TRUE;
+        foreach ($invIds as $id) {
+
+            if ($this->_deleteInvoice($dbh, $id, $user) === FALSE) {
+                $bolDeld = FALSE;
+            }
+        }
+
+        // Dekete delegated invoice
+        if ($bolDeld) {
+            return $this->deleteMe($dbh, $user);
+        }
+
+        return FALSE;
+    }
+
     public function deleteInvoice(\PDO $dbh, $user) {
 
         // dont allow until I fix thsi
         if ($this->invRs->Carried_Amount->getStoredVal() != 0) {
-            throw new Hk_Exception_Payment('Cannot delete an invoice with a carried amount (yet). ');
+            return $this->deleteCarriedInvoice($dbh, $user);
         }
 
         switch ($this->getStatus()) {
@@ -709,7 +774,7 @@ where
                 }
 
                 if ($this->countPayments($dbh) == 0) {
-                    return $this->_deleteInvoice($dbh, $user);
+                    return $this->deleteMe($dbh, $user);
                 }
 
                 break;
@@ -720,7 +785,7 @@ where
                     throw new Hk_Exception_Payment('Unpaid or partially paid invoices cannot be deleted. Remove the payments first.');
                 }
 
-                return $this->_deleteInvoice($dbh, $user);
+                return $this->deleteMe($dbh, $user);
 
         }
 
@@ -728,15 +793,24 @@ where
 
     }
 
-    private function _deleteInvoice(\PDO $dbh, $user) {
+    protected function deleteMe(\PDO $dbh, $user) {
 
-        if ($this->idInvoice > 0) {
+        $result = $this->_deleteInvoice($dbh, $this->idInvoice, $user);
 
-            $id = $this->idInvoice;
+        if ($result) {
+            $this->loadInvoice($dbh, $this->idInvoice);
+        }
+
+        return $result;
+    }
+
+    private function _deleteInvoice(\PDO $dbh, $id, $user) {
+
+        if ($id > 0) {
+
             $dbh->exec("update invoice set Deleted = 1, Last_Updated = now(), Updated_By = '$user' where idInvoice = $id");
             $dbh->exec("update invoice_line set Deleted = 1 where Invoice_Id = $id");
 
-            $this->loadInvoice($dbh, $id);
             return TRUE;
         }
 

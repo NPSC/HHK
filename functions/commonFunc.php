@@ -344,27 +344,17 @@ function decrypt($encrypted_text, $key, $iv, $bit_check) {
 
 function readGenLookups($con, $tbl, $orderBy = "Code") {
 
-    $query = "SELECT Code, Description, Substitute, Type FROM gen_lookups WHERE Table_Name = '" . $tbl . "' order by $orderBy;";
-
     if (!is_a($con, 'mysqli')) {
         return readGenLookupsPDO($con, $tbl, $orderBy);
     } else {
-        $res = queryDB($con, $query, true);
+        throw new Hk_Exception_Runtime('Non-PDO access not supported.  ');
     }
-
-    $genArray = array();
-
-    while ($row = mysqli_fetch_array($res)) {
-        $genArray[$row["Code"]] = $row;
-    }
-    mysqli_free_result($res);
-    return $genArray;
 }
 
 function readGenLookupsPDO(\PDO $dbh, $tbl, $orderBy = "Code") {
 
     $safeTbl = str_replace("'", '', $tbl);
-    $query = "SELECT Code, Description, Substitute, Type FROM gen_lookups WHERE Table_Name = '$safeTbl' order by `$orderBy`;";
+    $query = "SELECT `Code`, `Description`, `Substitute`, `Type`, `Order` FROM `gen_lookups` WHERE `Table_Name` = '$safeTbl' order by `$orderBy`;";
     $stmt = $dbh->query($query);
 
     $genArray = array();
@@ -378,7 +368,7 @@ function readGenLookupsPDO(\PDO $dbh, $tbl, $orderBy = "Code") {
 
 function readLookups(\PDO $dbh, $tbl, $orderBy = "Code") {
 
-    $query = "SELECT Code, Title FROM lookups WHERE Category = '$tbl' and `Use` = 'y' order by `$orderBy`;";
+    $query = "SELECT `Code`, `Title` FROM `lookups` WHERE `Category` = '$tbl' and `Use` = 'y' order by `$orderBy`;";
     $stmt = $dbh->query($query);
     $genArray = array();
 
@@ -481,7 +471,7 @@ function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $type = 
     }
 }
 
-function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $replace, array $replaceWith) {
+function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $order, $del, $replace, array $replaceWith) {
 
     $rowsAffected = 0;
 
@@ -511,7 +501,7 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $repl
                     // delete
                     if (is_null($replace) === FALSE) {
 
-                        $rowCount = $replace($dbh, $replaceWith[$code], $code);
+                        $rowCount = $replace($dbh, $replaceWith[$code], $code, $tblName);
 
                         if ($rowCount !== FALSE) {
                             $rowsAffected += $rowCount;
@@ -530,6 +520,11 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $repl
                     if (isset($subt[$code])) {
 
                         $glRs->Substitute->setNewVal(filter_var($subt[$code], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+                    }
+
+                    if (isset($order[$code])) {
+
+                        $glRs->Order->setNewVal(intval(filter_var($order[$code], FILTER_SANITIZE_NUMBER_INT), 10));
                     }
 
                     $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));

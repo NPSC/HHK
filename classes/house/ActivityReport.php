@@ -974,12 +974,12 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
 
             if ($includeAction) {
                 $actionTd =  HTMLTable::makeTd(HTMLContainer::generateMarkup(
-                    'ul', HTMLContainer::generateMarkup('li', '<a href="#">Action</a>' .
+                    'ul', HTMLContainer::generateMarkup('li', 'Action' .
                         HTMLContainer::generateMarkup('ul',
-                           HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'Pay', array('href'=>'#', 'class'=>'invLoadPc', 'data-name'=>$payor, 'data-id'=>$r['Sold_To_Id'], 'data-iid'=>$r['idInvoice'])))
-                           . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'Set Billed', array('href'=>'#', 'id'=>'aidSetNotes' . $r['Invoice_Number'], 'class'=>'invSetBill', 'data-name'=>$payor, 'data-inb'=>$r['Invoice_Number'])))
-                           . ($r['Payment_Attempts'] > 0 ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'Show Payments', array('id'=>'ainvsp'.$r['idInvoice'], 'href'=>'#', 'class'=>'invAction', 'data-stat'=>'vpmt', 'data-iid'=>$r['idInvoice']))) : '')
-                           . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'Delete', array('id'=>'ainv'.$r['idInvoice'], 'href'=>'#', 'class'=>'invAction', 'data-stat'=>'del', 'data-iid'=>$r['idInvoice'])))
+                           HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Pay', array('class'=>'invLoadPc', 'data-name'=>$payor, 'data-id'=>$r['Sold_To_Id'], 'data-iid'=>$r['idInvoice'])))
+                           . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Set Billed', array('id'=>'aidSetNotes' . $r['Invoice_Number'], 'class'=>'invSetBill', 'data-name'=>$payor, 'data-inb'=>$r['Invoice_Number'])))
+                           . ($r['Payment_Attempts'] > 0 ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Show Payments', array('id'=>'ainvsp'.$r['idInvoice'], 'class'=>'invAction', 'data-stat'=>'vpmt', 'data-iid'=>$r['idInvoice']))) : '')
+                           . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Delete', array('id'=>'ainv'.$r['idInvoice'], 'class'=>'invAction', 'data-stat'=>'del', 'data-iid'=>$r['idInvoice'])))
                      )), array('class' => 'gmenu')));
             }
 

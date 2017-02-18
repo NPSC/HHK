@@ -222,7 +222,7 @@ class IndivMember extends Member {
         $uS = Session::getInstance();
         $idPrefix = $this->idPrefix;
 
-        $demos = readGenLookupsPDO($dbh, 'Demographics');
+        $demos = readGenLookupsPDO($dbh, 'Demographics', 'Order');
 
         $table = new HTMLTable();
 
@@ -238,83 +238,23 @@ class IndivMember extends Member {
                 . HTMLTable::makeTd($this->prepBirthMonthMarkup($this->get_bmonth()), array('style'=>'display:table-cell;'))
                 );
 
-        if (isset($demos['g']) && $demos['g'][2] == 'y') {
-            $table->addBodyTr(
-                HTMLTable::makeTd('Gender:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(
+        foreach ($demos as $d) {
+
+            if ($d[2] == 'y') {
+
+                $table->addBodyTr(
+                    HTMLTable::makeTd($d[1], array('class'=>'tdlabel'))
+                    . HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(
-                                HTMLSelector::doOptionsMkup($uS->nameLookups[GL_TableNames::Gender], $this->nameRS->Gender->getStoredVal()),
-                                array('name'=>'selGender')
+                                HTMLSelector::doOptionsMkup($uS->nameLookups[$d[0]], $this->getDemographicsEntry($d[0])),
+                                array('name'=>'sel_' . $d[0])
                                 )
                         , array('style'=>'display:table-cell;')
                         )
                 );
+            }
         }
 
-        if (isset($demos['a']) && $demos['a'][2] == 'y') {
-            $table->addBodyTr(
-                HTMLTable::makeTd('Age Range:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(
-                        HTMLSelector::generateMarkup(
-                                HTMLSelector::doOptionsMkup($uS->nameLookups[GL_TableNames::AgeBracket], $this->demogRS->Age_Bracket->getStoredVal()),
-                                array('name'=>'selAgeRange')
-                                )
-                        , array('style'=>'display:table-cell;')
-                        )
-                );
-        }
-
-        if (isset($demos['i']) && $demos['i'][2] == 'y') {
-            $table->addBodyTr(
-                HTMLTable::makeTd('Income Level:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(
-                        HTMLSelector::generateMarkup(
-                                HTMLSelector::doOptionsMkup($uS->nameLookups[GL_TableNames::IncomeBracket], $this->demogRS->Income_Bracket->getStoredVal()),
-                                array('name'=>'selIncomeBracket')
-                                )
-                        , array('style'=>'display:table-cell;')
-                        )
-                );
-        }
-
-        if (isset($demos['1']) && $demos['1'][2] == 'y') {
-            $table->addBodyTr(
-                HTMLTable::makeTd('Education Level:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(
-                        HTMLSelector::generateMarkup(
-                                HTMLSelector::doOptionsMkup($uS->nameLookups['Education_Level'], $this->demogRS->Education_Level->getStoredVal()),
-                                array('name'=>'selEducationLevel')
-                                )
-                        , array('style'=>'display:table-cell;')
-                        )
-                );
-        }
-
-        if (isset($demos['e']) && $demos['e'][2] == 'y') {
-            $table->addBodyTr(
-                HTMLTable::makeTd('Ethnicity:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(
-                        HTMLSelector::generateMarkup(
-                                HTMLSelector::doOptionsMkup($uS->nameLookups[GL_TableNames::Ethnicity], $this->demogRS->Ethnicity->getStoredVal()),
-                                array('name'=>'selEthnicity')
-                                )
-                        , array('style'=>'display:table-cell;')
-                        )
-                );
-        }
-
-        if (isset($demos['sn']) && $demos['sn'][2] == 'y') {
-            $table->addBodyTr(
-                HTMLTable::makeTd('Special Needs:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(
-                        HTMLSelector::generateMarkup(
-                                HTMLSelector::doOptionsMkup($uS->nameLookups[GL_TableNames::SpecialNeeds], $this->demogRS->Special_Needs->getStoredVal()),
-                                array('name'=>'selNeeds')
-                                )
-                        , array('style'=>'display:table-cell;')
-                        )
-                );
-        }
 
         $table->addBodyTr(
                 HTMLTable::makeTd('Previous Name:', array('class'=>'tdlabel'))
@@ -327,18 +267,6 @@ class IndivMember extends Member {
                         )
                 );
 
-        if (isset($demos['ms']) && $demos['ms'][2] == 'y') {
-            $table->addBodyTr(
-                HTMLTable::makeTd('Media Source:', array('class'=>'tdlabel', 'title'=>'How did you hear of us?'))
-                . HTMLTable::makeTd(
-                        HTMLSelector::generateMarkup(
-                                HTMLSelector::doOptionsMkup($uS->nameLookups['Media_Source'], $this->demogRS->Media_Source->getStoredVal()),
-                                array('name'=>'selMedia', 'title'=>'How did you hear of us?')
-                                )
-                        , array('style'=>'display:table-cell;')
-                        )
-                );
-        }
 
         // Newsletter
         $nlAttr = array('type'=>'checkbox', 'name'=>'cbnewsltr', 'title'=>'Receive our newsletter?');
@@ -421,10 +349,6 @@ class IndivMember extends Member {
             foreach ($this->languageRSs as $lRs) {
                 $choices[$lRs->Language_Id->getStoredVal()] = $lRs->Language_Id->getStoredVal();
             }
-
-//            if (count($choices) < 1) {
-//                $choices[$defaultLangId] = $defaultLangId;
-//            }
 
             $tbl2->addBodyTr(
                 HTMLTable::makeTd('Languages:', array('class'=>'tdlabel', 'title'=>'Choose languages'))
@@ -736,40 +660,21 @@ class IndivMember extends Member {
             }
         }
 
-        //  Gender
-        if (isset($post[$idPrefix.'selGender'])) {
-            $n->Gender->setNewVal(filter_var($post[$idPrefix.'selGender'], FILTER_SANITIZE_STRING));
+
+        $demos = readGenLookupsPDO($dbh, 'Demographics');
+
+        foreach ($demos as $d) {
+
+            if (isset($post['sel_' . $d[0]])) {
+
+                $field = $this->getDemographicField($d[0]);
+
+                if (is_null($field) === FALSE) {
+                    $field->setNewVal(filter_var($post['sel_' . $d[0]], FILTER_SANITIZE_STRING));
+                }
+            }
         }
 
-        //  Age
-        if (isset($post[$idPrefix.'selAgeRange'])) {
-            $this->demogRS->Age_Bracket->setNewVal(filter_var($post[$idPrefix.'selAgeRange'], FILTER_SANITIZE_STRING));
-        }
-
-        //  Income
-        if (isset($post[$idPrefix.'selIncomeBracket'])) {
-            $this->demogRS->Income_Bracket->setNewVal(filter_var($post[$idPrefix.'selIncomeBracket'], FILTER_SANITIZE_STRING));
-        }
-
-        //  Education
-        if (isset($post[$idPrefix.'selEducationLevel'])) {
-            $this->demogRS->Education_Level->setNewVal(filter_var($post[$idPrefix.'selEducationLevel'], FILTER_SANITIZE_STRING));
-        }
-
-        //  Ethnicity
-        if (isset($post[$idPrefix.'selEthnicity'])) {
-            $this->demogRS->Ethnicity->setNewVal(filter_var($post[$idPrefix.'selEthnicity'], FILTER_SANITIZE_STRING));
-        }
-
-        //  Special Needs
-        if (isset($post[$idPrefix.'selNeeds'])) {
-            $this->demogRS->Special_Needs->setNewVal(filter_var($post[$idPrefix.'selNeeds'], FILTER_SANITIZE_STRING));
-        }
-
-        //  Media Source
-        if (isset($post[$idPrefix.'selMedia'])) {
-            $this->demogRS->Media_Source->setNewVal(filter_var($post[$idPrefix.'selMedia'], FILTER_SANITIZE_STRING));
-        }
 
         //  Languages
         if ($uS->LangChooser) {

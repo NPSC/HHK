@@ -589,7 +589,7 @@ class HouseServices {
         return $dataArray;
     }
 
-    public static function saveHousePayment(\PDO $dbh, $idItem, $ord, $amt, $discount, $addnlCharge, $adjDate) {
+    public static function saveHousePayment(\PDO $dbh, $idItem, $ord, $amt, $discount, $addnlCharge, $adjDate, $notes) {
 
         $uS = Session::getInstance();
         $dataArray = array();
@@ -628,7 +628,7 @@ class HouseServices {
                     $visit->getIdRegistration(),
                     $visit->getIdVisit(),
                     $visit->getSpan(),
-                    '',
+                    $notes,
                     $invDate,
                     $uS->username);
 
@@ -664,7 +664,7 @@ class HouseServices {
                         $visit->getIdRegistration(),
                         $visit->getIdVisit(),
                         $visit->getSpan(),
-                        '',
+                        $notes,
                         $invDate,
                         $uS->username);
 
