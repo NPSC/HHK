@@ -122,8 +122,8 @@ if ($idGuest > 0) {
     // Guest Search markup
     $gMk = Role::createSearchHeaderMkup("gst", "Primary Guest: ");
 
-    $mk1 = HTMLContainer::generateMarkup('h3', $labels->getString('checkin', 'guestInstructions', 'Start with the Primary Guest')) . $gMk['hdr'];
-
+    $mk1 = HTMLContainer::generateMarkup('h3', $labels->getString('checkin', 'guestInstructions', 'Start with the Primary Guest'));
+    $mk1 .= $gMk['hdr'];
     $guestid = "";
 
 }
@@ -158,6 +158,9 @@ $resultMessage = $alertMsg->createMarkup();
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
+        <style>
+            .ui-menu-item {width:300px;font-size:.8em;}
+        </style>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
@@ -176,7 +179,7 @@ $resultMessage = $alertMsg->createMarkup();
                 </div>
                 <div id="guestAccordion" style="font-size: .9em; padding-left:0; margin-top:0; margin-bottom:1em; clear:left; float:left; min-width: 810px;" class="hhk-panel  hhk-visitdialog">
                 </div>
-                <div id="guestSearch" style="padding-left:0;padding-top:0; clear:left; float:left;">
+                <div id="guestSearch" style="padding-left:0;padding-top:0; clear:left; float:left; font-size: .9em;">
                     <?php echo $mk1; ?>
                 </div>
                 <div id="rescList" style="clear:left; float:left; font-size: .9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
@@ -219,7 +222,7 @@ $resultMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
-        <script type="text/javascript" src="js/referral.js<?php echo JS_V; ?>"></script>
+        <script type="text/javascript" src="js/referral-min.js<?php echo JS_V; ?>"></script>
         <script type="text/javascript">
     var pmtMkup = "<?php echo $paymentMarkup; ?>";
     var rctMkup = '<?php echo $receiptMarkup; ?>';

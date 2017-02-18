@@ -109,7 +109,6 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
         },
         position: { my: "left top", at: "left bottom", collision: "flip" },
         minLength: minChars, 
-
         select: function(event, ui) {
             if (ui.item) {
                 selectFunction(ui.item);

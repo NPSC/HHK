@@ -1,3 +1,5 @@
+/* global reserv */
+
 /**
  * referral.js
  *
@@ -5,7 +7,7 @@
  * @category  house
  * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -933,8 +935,10 @@ function psgChooser(data) {
  */
 function resvPicker(data) {
     "use strict";
-    var resv = reserv;
-    var faDiag = $("#resDialog");
+    var resv = reserv,
+        buttons = {},
+        faDiag = $("#resDialog");
+
     faDiag.children().remove();
     faDiag.append($(data.resCh));
     
@@ -943,17 +947,65 @@ function resvPicker(data) {
     $('#resDialog .hhk-checkinNow').click(function () {
         window.open('CheckIn.php?rid=' + $(this).data('rid') + '&gid=' + data.id, '_self');
     });
-  
-    var buttons = {
-        "New": function() {
+    
+    if (data.addtnlRoom) {
+        buttons['Additional Room'] = function() {
+            
+            var parms = {
+                cmd: 'addResv',
+                id: data.id,
+                rid: 0,
+                psg: data.idPsg,
+                arr: data.arr,
+                dep: data.dep,
+                addRoom: true};
+        
+            $.post('ws_ckin.php',parms,
+                function(data) {
+
+                "use strict";
+                var resv = reserv;
+                try {
+                    data = $.parseJSON(data);
+                } catch (err) {
+                    alert("Parser error - " + err.message);
+                    return;
+                }
+
+                if (!data) {
+                    alert('Bad Reply from Server');
+                    return;
+                }
+
+                if (data.error) {
+                    if (data.gotopage) {
+                        window.open(data.gotopage, '_self');
+                    }
+                    flagAlertMessage(data.error, true);
+                    return;
+                }
+
+                $('#txtAddGuest').val('');
+                if (data.newRoom && data.newRoom > 1) {
+                    $('#submitButtons').hide();
+                    flagAlertMessage('<a href="Referral.php?rid=' + data.newRoom + '">View ' + data.newButtonLabel + '</a>', false);
+                    return;
+                }
+            });
+            
+            $(this).dialog("close");
+        };
+    }
+    
+    if (data.newButtonLabel) {
+        buttons[data.newButtonLabel] = function() {
             resv.idReserv = -1;
             $(this).dialog("close");
             loadGuest(data, resv.role, data.idPsg, resv.patStaying);
-        },
-        "Exit": function() {
-            $(this).dialog("close");
-        }
-    };
+        };
+    }
+    
+    buttons['Exit'] = function() {$(this).dialog("close");};
 
     faDiag.dialog('option', 'buttons', buttons);
     faDiag.dialog('option', 'title', data.title);
@@ -972,7 +1024,7 @@ function verifyDone(reserv) {
     hideAlertMessage();
     var havePatient = false;
 
-    if ($('#selResvStatus').val() == 'c' || $('#selResvStatus').val() == 'td' || $('#selResvStatus').val() == 'ns') {
+    if ($('#selResvStatus').val() === 'c' || $('#selResvStatus').val() === 'td' || $('#selResvStatus').val() === 'ns') {
         return true;
     }
 
@@ -1191,7 +1243,7 @@ $(document).ready(function() {
     });
     
     $(window).bind('beforeunload', function() {
-        if ($('#btnDone').val() == 'Saving >>>>') {
+        if ($('#btnDone').val() === 'Saving >>>>') {
             return;
         }
         var isDirty = false;
@@ -1469,7 +1521,7 @@ $(document).ready(function() {
     
     $('#btnDone').click(function() {
         
-        if ($(this).val() == 'Saving >>>>') {
+        if ($(this).val() === 'Saving >>>>') {
             return;
         }
         

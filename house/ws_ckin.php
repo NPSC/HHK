@@ -556,6 +556,11 @@ try {
             $idReserv = intval(filter_var($_POST["rid"], FILTER_SANITIZE_STRING), 10);
         }
 
+        $idPsg = 0;
+        if (isset($_POST["psg"])) {
+            $idPsg = intval(filter_var($_POST["psg"], FILTER_SANITIZE_STRING), 10);
+        }
+
         $addRoom = FALSE;
         if (isset($_POST['addRoom'])) {
             $addRoom = filter_Var($_POST['addRoom'], FILTER_VALIDATE_BOOLEAN);
@@ -563,7 +568,7 @@ try {
 
         $post = filter_var_array($_POST, FILTER_SANITIZE_STRING);
 
-        $events = ReservationSvcs::addResv($dbh, $idReserv, $id, $addRoom, $post);
+        $events = ReservationSvcs::addResv($dbh, $idPsg, $idReserv, $id, $addRoom, $post);
         break;
 
     case "makeResv":

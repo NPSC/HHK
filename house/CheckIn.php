@@ -216,13 +216,16 @@ $verifyHospDate = $uS->VerifyHospDate;
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
+        <?php echo JQ_DT_CSS; ?>
 <?php echo JQ_UI_CSS; ?>
 <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS; ?>
 <?php echo TOP_NAV_CSS; ?>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <style>
+            .ui-menu-item {width:300px;font-size:.8em;}
+        </style>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
@@ -234,7 +237,7 @@ $verifyHospDate = $uS->VerifyHospDate;
             <div style="clear:both"></div>
             <p id="ajaxError"></p>
             <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
-            <div id="divResvList" style="float:left;font-size:.9em;min-width:1000px;<?php echo $reservListDisplay; ?>" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
+            <div id="divResvList" style="float:left;font-size:.8em;min-width:1000px;<?php echo $reservListDisplay; ?>" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 <?php echo $immediateMarkup; if ($uS->Reservation) { ?>
                 <h3 id="hhk-confResvHdr" style='margin-bottom:15px;padding:5px;background-color: #D3D3D3;' title="Click to show or hide the Confirmed Reservations"><?php echo $labels->getString('checkin', 'confirmedReservations', 'Confirmed Reservations'); ?>
                     <span class="ui-icon ui-icon-triangle-1-e" style="float:right;"></span></h3>

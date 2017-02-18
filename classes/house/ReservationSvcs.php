@@ -434,19 +434,22 @@ class ReservationSvcs {
         return array();
     }
 
-    protected static function visitChooser(\PDO $dbh, Guest $guest, $idPsg, $expectedArrivalDate, \Config_Lite $labels) {
+    protected static function visitChooser(\PDO $dbh, Guest $guest, $idPsg, \DateTime $expArrDT, \DateTime $expDepDT, \Config_Lite $labels, $roomsPerPatient) {
 
-        if ($idPsg < 1 || $expectedArrivalDate == '') {
+        if ($idPsg < 1) {
             return array();
         }
 
         $trs = array();
-
-        $expArrDT = new \DateTime($expectedArrivalDate);
+        $addRoom = FALSE;
 
         // Check for existing visits
         $stmt = $dbh->query("select * "
                 . "from vvisit_patient where idPsg = $idPsg and DATE(Expected_Departure) > DATE('" . $expArrDT->format('Y-m-d') . "') order by Expected_Departure");
+
+        if ($stmt->rowCount() < $roomsPerPatient) {
+            $addRoom = TRUE;
+        }
 
         while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
@@ -479,7 +482,17 @@ class ReservationSvcs {
 
             $mrkup =  HTMLContainer::generateMarkup('p', 'Guest: ' . $name->get_fullName()) . $tbl->generateMarkup();
 
-            return array('resCh'=>$mrkup, 'idPsg'=>$idPsg, 'id'=>$guest->getIdName(), 'title'=>'Existing Visits', 'newButtonLabel'=>$labels->getString('referral', 'newButtonLabel', 'New Reservation'));
+            return array(
+                'resCh'=>$mrkup,
+                'idPsg'=>$idPsg,
+                'id'=>$guest->getIdName(),
+                'title'=>'Existing Visits',
+                'newButtonLabel'=>$labels->getString('referral', 'newButtonLabel', 'New Reservation'),
+                'addtnlRoom'=>$addRoom,
+                'gname'=>$name->get_fullName(),
+                'arr' => $expArrDT->format('Y-m-d'),
+                'dep' => $expDepDT->format('Y-m-d'),
+                    );
         }
 
         return array();
@@ -493,7 +506,7 @@ class ReservationSvcs {
      * @param array $post
      * @return type
      */
-    public static function addResv(\PDO $dbh, $idReserv, $id, $addRoom, array $post = array()) {
+    public static function addResv(\PDO $dbh, $idPsg, $idReserv, $id, $addRoom, array $post = array()) {
 
         $uS = Session::getInstance();
 
@@ -507,7 +520,9 @@ class ReservationSvcs {
             return array('error'=>'Cannot use an old ' . $labels->getString('guestEdit', 'reservationTitle', 'reservation'));
         }
 
-        $idPsg = $resv->getIdPsg($dbh);
+        if ($idPsg == 0) {
+            $idPsg = $resv->getIdPsg($dbh);
+        }
 
         if ($idPsg == 0) {
             return array('error'=>'Undefined ' . $labels->getString('MemberType', 'patient', 'Patient') . ' support group.  ');
@@ -557,15 +572,27 @@ class ReservationSvcs {
             return array('error'=>'Patients are not allowed to be guests at our House.  ');
         }
 
-        $arrivalDT = new \DateTIme($resv->getExpectedArrival());
-        $departureDT = new \DateTime($resv->getExpectedDeparture());
+        if ($resv->isNew()) {
+
+            if (isset($post['arr'])) {
+                $arrivalDT = new \DateTIme($post['arr']);
+                $departureDT = new \DateTime($post['dep']);
+            } else {
+                return array('error'=>'The arrival and/or departure dates are  not set.  ');
+            }
+
+        } else {
+
+            $arrivalDT = new \DateTIme($resv->getExpectedArrival());
+            $departureDT = new \DateTime($resv->getExpectedDeparture());
+        }
 
         if ($resv->getActualArrival() != '') {
             $arrivalDT = new \DateTIme($resv->getActualArrival());
         }
 
         if ($resv->getActualDeparture() != '') {
-            $departureDT = new D\ateTime($resv->getActualDeparture());
+            $departureDT = new \DateTime($resv->getActualDeparture());
         }
 
         // Check for existing reservations within the time period.
@@ -595,7 +622,36 @@ class ReservationSvcs {
             $newResv = Reservation_1::instantiateFromIdReserv($dbh, 0);
             $newResv->setAddRoom(1);
 
-            $newResv->setIdHospitalStay($resv->getIdHospitalStay());
+            $idHospStay = 0;
+            $idReg = 0;
+
+            if ($resv->getIdHospitalStay() == 0 && $idPsg > 0) {
+                // see i fthe PSG has it
+                $stmtp = $dbh->query("Select IFNULL(idHospital_stay, 0) from hospital_stay where idPsg = $idPsg Limit 0,1");
+                $rw = $stmtp->fetchAll(\PDO::FETCH_NUM);
+                if (isset($rw[0][0])) {
+                    $idHospStay = intval($rw[0][0]);
+                }
+            } else {
+                $idHospStay = $resv->getIdHospitalStay();
+            }
+
+            if ($resv->getIdRegistration() == 0 && $idPsg > 0) {
+                // see i fthe PSG has it
+                $stmtp = $dbh->query("Select IFNULL(idHospital_stay, 0) from hospital_stay where idPsg = $idPsg Limit 0,1");
+                $rw = $stmtp->fetchAll(\PDO::FETCH_NUM);
+                if (isset($rw[0][0])) {
+                    $idReg = intval($rw[0][0]);
+                }
+            } else {
+                $idReg = $resv->getIdRegistration();
+            }
+
+            if ($idReg == 0 || $idHospStay == 0) {
+                return array('error'=>'The hospital stay or registration are not set.  ');
+            }
+
+            $newResv->setIdHospitalStay($idHospStay);
             $newResv->setNumberGuests(1);
             $newResv->setIdGuest($id);
 
@@ -604,10 +660,10 @@ class ReservationSvcs {
             $newResv->setVisitFee($resv->getVisitFee());
 
             $newResv->setStatus(ReservationStatus::Waitlist);
-            $newResv->setExpectedArrival($resv->getExpectedArrival());
-            $newResv->setExpectedDeparture($resv->getExpectedDeparture());
+            $newResv->setExpectedArrival($arrivalDT->format('Y-m-d'));
+            $newResv->setExpectedDeparture($departureDT->format('Y-m-d'));
 
-            $newResv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
+            $newResv->saveReservation($dbh, $idReg, $uS->username);
             ReservationSvcs::saveReservationGuest($dbh, $newResv->getIdReservation(), $id, TRUE);
 
             return array('newRoom'=>$newResv->getIdReservation());
@@ -739,7 +795,7 @@ class ReservationSvcs {
         // Existing visit?
         if ($idReserv == 0 && $idPsg > 0) {
 
-            $events = self::visitChooser($dbh, $guest, $idPsg, $guest->getExpectedCheckinDate(), $labels);
+            $events = self::visitChooser($dbh, $guest, $idPsg, $guest->getCheckinDT(), $guest->getExpectedCheckOutDT(), $labels, $uS->RoomsPerPatient);
 
             if (count($events) > 0) {
                 return array_merge($dataArray, $events);
