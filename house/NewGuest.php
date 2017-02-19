@@ -43,7 +43,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     n.Name_Middle,
     n.Name_Last,
     IFNULL(g2.Description, '') AS `Name_Suffix`,
-    CASE when s.idName = v.idPrimaryGuest then 'Pri' else '' end as `Primary`,
+    CASE when s.idName = v.idPrimaryGuest then 'Primary Guest' else '' end as `Primary`,
     CASE when IFNULL(na.Address_2, '') = '' THEN IFNULL(na.Address_1, '') ELSE CONCAT(IFNULL(na.Address_1, ''), ' ', IFNULL(na.Address_2, '')) END AS `Address`,
     IFNULL(na.City, '') AS `City`,
     IFNULL(na.County, '') AS `County`,
@@ -584,7 +584,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
             <div id="vnewguests" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
-                <p style="margin:5px;">Shows the number of guests STARTING their stay during the selected period.  This may not be the same number as the total number of guests at the house.</p>
+                <p class="ui-state-active" style="max-width: 750px; margin:9px;padding:4px;">Shows the number of guests STARTING their stay during the selected period.  This may not be the same number as the total number of guests at the house.</p>
                 <form id="fcat" action="NewGuest.php" method="post">
                     <table style="float: left;">
                         <tr>

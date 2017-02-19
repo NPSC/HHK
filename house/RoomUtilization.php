@@ -120,6 +120,7 @@ $resultMessage = "";
         $(document).ready(function() {
             "use strict";
             $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
+            $('#btnByGuest, #btnByRoom').button();
         });
         </script>
     </head>

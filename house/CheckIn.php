@@ -210,6 +210,8 @@ $alertMsg->set_Text("uh-oh");
 $resultMessage = $alertMsg->createMarkup();
 $patAsGuest = $uS->PatientAsGuest;
 $verifyHospDate = $uS->VerifyHospDate;
+
+$confReserv = $labels->getString('register', 'reservationTab', 'Confirmed Reservations');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -237,15 +239,16 @@ $verifyHospDate = $uS->VerifyHospDate;
             <div style="clear:both"></div>
             <p id="ajaxError"></p>
             <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
-            <div id="divResvList" style="float:left;font-size:.8em;min-width:1000px;<?php echo $reservListDisplay; ?>" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
+            <div id="divresvWrapper" style="display: none;">
+            <div id="divResvList" style="font-size:.7em; <?php echo $reservListDisplay; ?>" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 <?php echo $immediateMarkup; if ($uS->Reservation) { ?>
-                <h3 id="hhk-confResvHdr" style='margin-bottom:15px;padding:5px;background-color: #D3D3D3;' title="Click to show or hide the Confirmed Reservations"><?php echo $labels->getString('checkin', 'confirmedReservations', 'Confirmed Reservations'); ?>
+                <h3 id="hhk-confResvHdr" style='margin-bottom:15px;padding:5px;background-color: #D3D3D3;' title="Click to show or hide the <?php echo $confReserv; ?>"><?php echo $confReserv; ?>
                     <span class="ui-icon ui-icon-triangle-1-e" style="float:right;"></span></h3>
                 <?php echo $committedMarkup; } ?>
                 <h3 id="hhk-chkedInHdr" style='padding:5px;background-color: #D3D3D3;' title="Click to show or hide the Checked-In Guests">Checked-In Guests
                     <span class="ui-icon ui-icon-triangle-1-e" style="float:right;"></span></h3>
-
                 <?php echo $stayingMarkup; ?>
+            </div>
             </div>
             <?php echo $pInfo; ?>
             <form  action="CheckIn.php" method="post"  id="form1">

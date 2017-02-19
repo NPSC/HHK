@@ -203,9 +203,9 @@ class Guest extends Role {
         }
 
         $header = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('span', $this->title.': ', array('id'=>$idPrefix . 'spnHdrLabel', 'style'=>'font-size:1.5em;'))
-               .HTMLContainer::generateMarkup('span', $this->getNameObj()->get_firstName(), array('id'=>$idPrefix . 'hdrFirstName', 'name'=>'hdrFirstName', 'style'=>'font-size:1.5em;'))
-               .HTMLContainer::generateMarkup('span', ' '.$this->getNameObj()->get_lastName(), array('id'=>$idPrefix . 'hdrLastName', 'name'=>'hdrLastName', 'style'=>'font-size:1.5em;'))
+                HTMLContainer::generateMarkup('span', $this->title.': ', array('id'=>$idPrefix . 'spnHdrLabel', 'style'=>'font-size:1.2em;'))
+               .HTMLContainer::generateMarkup('span', $this->getNameObj()->get_firstName(), array('id'=>$idPrefix . 'hdrFirstName', 'name'=>'hdrFirstName', 'style'=>'font-size:1.2em;'))
+               .HTMLContainer::generateMarkup('span', ' '.$this->getNameObj()->get_lastName(), array('id'=>$idPrefix . 'hdrLastName', 'name'=>'hdrLastName', 'style'=>'font-size:1.2em;'))
                .HTMLContainer::generateMarkup('span', ' Check In: '.
                        HTMLInput::generateMarkup((is_null($this->getCheckinDT()) ? '' : $this->getCheckinDT()->format('M j, Y')), $cidAttr), array('style'=>'margin-left:1.5em;'))
                .HTMLContainer::generateMarkup('span', 'Expected Departure: '.

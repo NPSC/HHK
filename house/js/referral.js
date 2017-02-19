@@ -765,7 +765,7 @@ function loadResources(data, saveBtnText) {
     }
 
     if (data.resCh) {
-        resvPicker(data);
+        resvPicker(data, $("#resDialog"));
         return;
     }
 
@@ -931,24 +931,24 @@ function psgChooser(data) {
 /**
  * 
  * @param {object} data
+ * @param {jQuery} $faDiag
  * @returns {undefined}
  */
-function resvPicker(data) {
+function resvPicker(data, $faDiag) {
     "use strict";
     var resv = reserv,
-        buttons = {},
-        faDiag = $("#resDialog");
+        buttons = {};
 
-    faDiag.children().remove();
-    faDiag.append($(data.resCh));
+    $faDiag.children().remove();
+    $faDiag.append($(data.resCh));
+    $faDiag.children().find('input:button').button();
     
-    faDiag.children().find('input:button').button();
-    
-    $('#resDialog .hhk-checkinNow').click(function () {
+    $faDiag.children().find('.hhk-checkinNow').click(function () {
         window.open('CheckIn.php?rid=' + $(this).data('rid') + '&gid=' + data.id, '_self');
     });
     
     if (data.addtnlRoom) {
+        
         buttons['Additional Room'] = function() {
             
             var parms = {
@@ -962,9 +962,7 @@ function resvPicker(data) {
         
             $.post('ws_ckin.php',parms,
                 function(data) {
-
                 "use strict";
-                var resv = reserv;
                 try {
                     data = $.parseJSON(data);
                 } catch (err) {
@@ -1007,9 +1005,9 @@ function resvPicker(data) {
     
     buttons['Exit'] = function() {$(this).dialog("close");};
 
-    faDiag.dialog('option', 'buttons', buttons);
-    faDiag.dialog('option', 'title', data.title);
-    faDiag.dialog('open');
+    $faDiag.dialog('option', 'buttons', buttons);
+    $faDiag.dialog('option', 'title', data.title);
+    $faDiag.dialog('open');
 
 }
 

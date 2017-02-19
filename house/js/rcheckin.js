@@ -1,3 +1,5 @@
+/* global getAgent, getDoc */
+
 /**
  * rcheckin.js
  *
@@ -5,7 +7,7 @@
  * @category  house
  * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -71,23 +73,20 @@ function removePatient() {
 /**
  * 
  * @param {object} data
+ * @param {jQuery} $faDiag jQueryUI dialog box widget
  * @returns {undefined}
  */
-function resvPicker(data) {
+function resvPicker(data, $faDiag) {
     "use strict";
-    var faDiag = $("#resDialog");
-    var checkIn = chkIn;
-    checkIn.role = data.role;
-    faDiag.children().remove();
-    faDiag.append($(data.resCh));
+    $faDiag.children().remove();
+    $faDiag.append($(data.resCh));
+    $faDiag.children().find('input:button').button();
     
-    $('#resDialog :button').button();
-    
-    $('#resDialog .hhk-checkinNow').click(function () {
-        window.open('CheckIn.php?rid=' + $(this).data('rid'), '_self')
+    $faDiag.children().find('.hhk-checkinNow').click(function () {
+        window.open('CheckIn.php?rid=' + $(this).data('rid'), '_self');
     });
     
-    faDiag.dialog('open');
+    $faDiag.dialog('open');
 }
 /**
  * 
@@ -130,7 +129,7 @@ function injectSlot(data) {
         }
         
         acHdr.append($('<div style="clear:both;"/>'));
-        acHdr.addClass(slot + 'Slot ui-widget-header ui-state-default ui-corner-top').css('padding', '2px').css('min-width', '840px');
+        acHdr.addClass(slot + 'Slot ui-widget-header ui-state-default ui-corner-top').css('padding', '2px').css('min-width', '840px').css('margin-top', '5px');
         
         $('.' + slot + 'Slot').remove();
         var accdDiv = $('div#guestAccordion');
@@ -454,13 +453,12 @@ function processGuests(incmg) {
             if ($('#selHospital').val() != "") {
                 $('#divHdrHosp').click();
             }
-            
+
         } else {
             $('#hospitalSection').children().remove().end().append($(incmg.hosp)).show("blind");        
         }
-        
+
         $('#txtEntryDate, #txtExitDate').datepicker();
-        
 
         createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', add: 'phone', basis: 'ra'}, getAgent);
         if ($('#a_txtLastName').val() === '') {
@@ -777,7 +775,7 @@ function loadGuest(id, idPsg, role, patientStaying) {
             checkIn.idGuest = incmg.id;
             checkIn.idPsg = incmg.idPsg;
             checkIn.role = incmg.role;
-            resvPicker(incmg);
+            resvPicker(incmg, $("#resDialog"));
             return;
         }
         
@@ -858,7 +856,7 @@ function verifyDone() {
     var latestCkOut, earliestCkIn, emergContactCnt = 0;
     
     // Optional Emergency Contact.
-    if (!chkIn.fillEmergCont) {
+    if (!checkIn.fillEmergCont) {
         emergContactCnt = 2;
     }
     
@@ -1379,6 +1377,7 @@ $(document).ready(function() {
             });
         });
     }
+
     $.extend($.fn.dataTable.defaults, {
         "dom": '<"top"if>rt<"bottom"lp><"clear">',
         "iDisplayLength": 25,
@@ -1387,6 +1386,7 @@ $(document).ready(function() {
     });
 
     $('#atblgetter, #stblgetter').DataTable();
+    
     $.datepicker.setDefaults({
         yearRange: '-7:+02',
         changeMonth: true,
@@ -1395,6 +1395,7 @@ $(document).ready(function() {
         numberOfMonths: 2,
         dateFormat: 'M d, yy'
     });
+    
     $("#psgDialog").dialog({
         autoOpen: false,
         resizable: true,
@@ -1556,11 +1557,13 @@ $(document).ready(function() {
         var cnt = 0;
         $("#divAlert1").hide();
         checkIn.patientStaying = null;
+        
         if (checkIn.patient !== null && checkIn.patient !== undefined) {
             checkIn.patientStaying = false;
+            checkIn.havePatient = true;
             cnt++;
         }
-        
+
         $('.patientRelch').each(function(indx) {
             
             if ($(this).val() === 'slf') {
@@ -1571,19 +1574,19 @@ $(document).ready(function() {
                 } else {
                     $('div#hospitalSection').show("blind");
                     checkIn.patientStaying = true;
-
+                    checkIn.havePatient = true;
                     $('#' + $(this).data('prefix') + 'memHdr').removeClass('ui-state-default');
                     $('div#patientSection').hide("blind");
                     $('div#patientSearch').hide("blind");
-                    $('span#' + $(this).data('prefix') + 'spnHdrLabel').text(checkIn.patientLabel);
-                    
+                    $('span#' + $(this).data('prefix') + 'spnHdrLabel').text(checkIn.patientLabel + ': ');
+
                 }
             } else {
                 $('#' + $(this).data('prefix') + 'memHdr').addClass('ui-state-default');
                 $('span#' + $(this).data('prefix') + 'spnHdrLabel').text('Guest: ');
             }
         });
-        
+
         if (cnt === 0) {
             $('div#patientSearch').show("blind");
             $('div#hospitalSection').hide("blind");
@@ -1805,4 +1808,5 @@ $(document).ready(function() {
     if (checkIn.idReserv > 0) {
         loadGuest(checkIn.addGuestId, 0, 'r', checkIn.patientStaying);
     }
+    $('#divresvWrapper').show();
 });

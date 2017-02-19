@@ -49,7 +49,7 @@ $resultMessage = $alertMsg->createMarkup();
 
 $isGuestAdmin = ComponentAuthClass::is_Authorized('guestadmin');
 
-function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, &$total, &$tbl, &$sml, &$reportRows, $subsidyId, $returnId) {
+function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, $locations, &$total, &$tbl, &$sml, &$reportRows, $subsidyId, $returnId) {
 
     $amt = $r['Amount'];
 
@@ -107,6 +107,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, 
         'First'=>$payorFirst,
         'Status' => $invoiceStatus,
         'Diagnosis' => (isset($diagnoses[$r['Diagnosis']]) ? $diagnoses[$r['Diagnosis']][1] : ''),
+        'Location' => (isset($locations[$r['Location']]) ? $locations[$r['Location']][1] : ''),
         'Description' => $r['Description'],
         'Invoice_Number' => $r['Invoice_Number'],
         'Amount' => $amt,
@@ -177,7 +178,7 @@ if ($uS->fy_diff_Months == 0) {
 
 $statusList = readGenLookupsPDO($dbh, 'Invoice_Status');
 
-$diags = readGenLookupsPDO($dbh, 'Diagnosis');
+
 
 // Report column-selector
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms
@@ -189,6 +190,12 @@ $cFields[] = array("Date", 'Date', 'checked', '', 'n', PHPExcel_Style_NumberForm
 $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 's', '', array());
 $cFields[] = array("Description", 'Description', 'checked', '', 's', '', array());
 
+$locations = readGenLookupsPDO($dbh, 'Location');
+if (count($locations) > 0) {
+    $cFields[] = array($labels->getString('statement', 'location', 'Location'), 'Location', '', '', 's', '', array());
+}
+
+$diags = readGenLookupsPDO($dbh, 'Diagnosis');
 if (count($diags) > 0) {
     $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', '', '', 's', '', array());
 }
@@ -463,6 +470,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     il.Period_End,
     il.`Deleted` as `Line_Deleted`,
     ifnull(hs.Diagnosis, '') as `Diagnosis`,
+    ifnull(hs.Location, '') as `Location`,
     ifnull(n.Name_Last, '') as `Name_Last`,
     ifnull(n.Name_First, '') as `Name_First`,
     ifnull(n.`Company`, '') as `Company`,
@@ -523,7 +531,7 @@ where $whDeleted  $whDates  $whItem  $whStatus $whDiags order by i.idInvoice, il
     // Now the data ...
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
-        doMarkupRow($colSelector->getFilteredFields(), $r, $local, $statusList, $diags, $total, $tbl, $sml, $reportRows, $uS->subsidyId, $uS->returnId);
+        doMarkupRow($colSelector->getFilteredFields(), $r, $local, $statusList, $diags, $locations, $total, $tbl, $sml, $reportRows, $uS->subsidyId, $uS->returnId);
 
     }
 

@@ -331,7 +331,7 @@ $(document).ready(function() {
     $('#mainTabs').tabs({
         beforeActivate: function (event, ui) {
             if (ui.newPanel.length > 0) {
-                if (ui.newPanel.selector === '#showLog' && !listEvtTable) {
+                if (ui.newTab.prop('id') === 'lishoCL' && !listEvtTable) {
                     listEvtTable = $('#dataTbl').dataTable({
                         "aoColumnDefs": dtCols,
                         "bServerSide": true,
@@ -406,6 +406,7 @@ $(document).ready(function() {
     $('#btnPrint').click(function () {
         window.open('ShowHsKpg.php', '_blank');
     });
+    $('div#mainTabs').show();
 });
         </script>
     </head>
@@ -418,13 +419,13 @@ $(document).ready(function() {
             <?php echo $resultMessage ?>
             <div style="clear:both;"></div>
             <form action="RoomStatus.php" method="post"  id="form1" name="form1" >
-            <div id="mainTabs" style="font-size: .8em;" class="hhk-tdbox">
+            <div id="mainTabs" style="font-size: .8em; display:none;" class="hhk-tdbox">
                 <ul>
                     <li><a href="#clnToday">Rooms set Dirty</a></li>
                     <li><a href="#ckin">Guests Checking In</a></li>
                     <li><a href="#ckout">Guests Checking Out</a></li>
                     <li><a href="#showAll">Show All Rooms</a></li>
-                    <li><a href="#showLog">Show Cleaning Log</a></li>
+                    <li id="lishoCL"><a href="#showLog">Show Cleaning Log</a></li>
                 </ul>
                 <div id="clnToday" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                     <?php echo $roomTable->generateMarkup(array('id'=>'dirtyTable')); ?>

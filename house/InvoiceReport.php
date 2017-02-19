@@ -208,7 +208,7 @@ $assocSelections = array();
 $invStatus = array();
 $calSelection = '19';
 $baSelections = array();
-$baSelector = 'None';
+$baSelector = '';
 
 $year = date('Y');
 $months = array(date('n'));       // logically overloaded.
@@ -985,6 +985,7 @@ $(document).ready(function() {
                             <td><?php echo $invStatusSelector; ?></td>
                         </tr>
                     </table>
+                    <?php if ($baSelector != '') { ?>
                     <table style="float: left;">
                         <tr>
                             <th>Billing Agent</th>
@@ -994,6 +995,7 @@ $(document).ready(function() {
                             <td><?php echo $baSelector; ?></td>
                         </tr>
                     </table>
+                    <?php } ?>
                     <table style="width:100%; clear:both;">
                         <tr>
                             <td><?php echo $shoDeletedCb; ?></td>

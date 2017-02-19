@@ -2303,17 +2303,13 @@ class ReservationSvcs {
 
         // New resservation lists
         if ($uS->Reservation) {
-            if ($resv->getStatus() == ReservationStatus::Committed) {
-                $dataArray['reservs'] = 'y';
-            }
+            $dataArray['reservs'] = 'y';
+            $dataArray['waitlist'] = 'y';
 
-            if ($resv->getStatus() == ReservationStatus::UnCommitted) {
+            if ($uS->ShowUncfrmdStatusTab) {
                 $dataArray['unreserv'] = 'y';
             }
 
-            if ($resv->getStatus() == ReservationStatus::Waitlist) {
-                $dataArray['waitlist'] = 'y';
-            }
         }
 
         return $dataArray;

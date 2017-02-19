@@ -103,7 +103,16 @@ if (count($aList) > 0) {
     $cFields[] = array("Association", 'Assoc', 'checked', '', 's', '');
 }
 
-$cFields[] = array("Diagnosis", 'Diagnosis', 'checked', '', 's', '');
+$locations = readGenLookupsPDO($dbh, 'Location');
+if (count($locations) > 0) {
+    $cFields[] = array($labels->getString('statement', 'location', 'Location'), 'Location', 'checked', '', 's', '', array());
+}
+
+$diags = readGenLookupsPDO($dbh, 'Diagnosis');
+if (count($diags) > 0) {
+    $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 's', '', array());
+}
+
 $cFields[] = array("First", 'Name_First', 'checked', '', 's', '');
 $cFields[] = array("Last", 'Name_Last', 'checked', '', 's', '');
 
@@ -305,16 +314,17 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     ifnull(n.Name_Last, '') as Name_Last,
     ifnull(n.Name_First, '') as Name_First,
     re.Title as `Room`,
-    re.Type,
-    re.Status as `RescStatus`,
-    re.Category,
-    rr.Title as `Rate`,
+    re.`Type`,
+    re.`Status` as `RescStatus`,
+    re.`Category`,
+    rr.`Title` as `Rate`,
     rr.FA_Category,
     g.Title as 'Status_Title',
     hs.idPsg,
     hs.idHospital,
     hs.idAssociation,
-    ifnull(gl.Description, '') as Diagnosis,
+    ifnull(gl.`Description`, '') as `Diagnosis`,
+    ifnull(g2.`Description`, '') as `Location`,
     r.Last_Updated as `Status_Date`
 from
     reservation r
@@ -338,6 +348,9 @@ from
         left join
     gen_lookups gl ON gl.Table_Name = 'Diagnosis'
         and gl.`Code` = hs.Diagnosis
+        LEFT JOIN
+    gen_lookups g2 ON g2.Table_Name = 'Location'
+        and g2.`Code` = hs.`Location`
 where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistration";
 
     $stmt = $dbh->query($query);

@@ -49,7 +49,10 @@ foreach (readGenLookupsPDO($dbh, 'Demographics') as $d) {
             $fields .= "ifnull(nd.`" . $d[0] . "`, '') as `" . $d[0] . "`,";
         }
 
-        $demos[$d[0]]['lookups'] = readGenLookupsPDO($dbh, $d[0], 'Order');
+        $demos[$d[0]] = array(
+            'title' => $d[1],
+            'list' => readGenLookupsPDO($dbh, $d[0], 'Order'),
+        );
     }
 }
 
@@ -74,15 +77,15 @@ function getDemographicField($tableName, $recordSet) {
 
 if (isset($_POST['btnnotind'])) {
 
-    foreach ($demos as $d) {
+    foreach ($demos as $j => $d) {
 
-        if (isset($_POST['sel' . $d[0]])) {
+        if (isset($_POST['sel' . $j])) {
 
-            foreach ($_POST['sel' . $d[0]] as $k => $v) {
+            foreach ($_POST['sel' . $j] as $k => $v) {
 
                 $id = intval(filter_var($k, FILTER_SANITIZE_NUMBER_INT), 10);
 
-                if ($d[0] == 'Gender') {
+                if ($j == 'Gender') {
                     $nameRS = new NameRS();
                 } else {
                     $nameRS = new NameDemogRS();
@@ -95,7 +98,7 @@ if (isset($_POST['btnnotind'])) {
 
                     EditRS::loadRow($rows[0], $nameRS);
 
-                    $dbField = getDemographicField($d[0], $nameRS);
+                    $dbField = getDemographicField($j, $nameRS);
 
                     if (isset($_POST['cbUnkn'][$k])) {
                         $dbField->setNewVal('z');
@@ -140,8 +143,8 @@ while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
     $tr = HTMLTable::makeTd($r['idName']) . HTMLTable::makeTd($r['Name_Full']);
 
-    foreach ($demos as $d) {
-        $tr.= HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($d['lookups'], ($r[$d[0]] == '' ? '' : $d['lookups'][$r[$d[0]]][0])), array('name' => 'sel' . $d[0] . '[' . $r['idName'] . ']')));
+    foreach ($demos as $k => $d) {
+        $tr.= HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($d['list'], $r[$k]), array('name' => 'sel' . $k . '[' . $r['idName'] . ']')));
     }
 
     $tr .=  HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbUnkn[' . $r['idName'] . ']')), array('style'=>'text-align:center;'));
@@ -152,7 +155,7 @@ $th = HTMLTable::makeTh("Id") . HTMLTable::makeTh("Name");
 
 // Header
 foreach ($demos as $d) {
-    $th .= HTMLTable::makeTh($d[1]);
+    $th .= HTMLTable::makeTh($d['title']);
 }
 
 $tbl->addHeaderTr($th . HTMLTable::makeTh('Unknown'));

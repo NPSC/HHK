@@ -869,7 +869,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
                 }
 
                 $tbl->addBodyTr(
-                    ($checkinPage == '' ? '' : HTMLTable::makeTd($star, array('style'=>'text-align:center;font-size:.8em;', 'title'=>'Check a new guest in to this room')))
+                    ($checkinPage == '' ? '' : HTMLTable::makeTd($star, array('style'=>'text-align:center;font-size:.9em;', 'title'=>'Check a new guest in to this room')))
                         .HTMLTable::makeTd($guestName)
                         .HTMLTable::makeTd($pname)
                         .HTMLTable::makeTd($resv->getNumberGuests($dbh), array('style'=>'text-align:center;'))
@@ -882,7 +882,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
 
             }
 
-            return $tbl->generateMarkup(array('id'=>$reservStatus . 'tblgetter'));
+            return $tbl->generateMarkup(array('id'=>$reservStatus . 'tblgetter', 'style'=>'width:100%;'));
 
         } else {
             return "";
