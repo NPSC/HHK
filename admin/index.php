@@ -64,7 +64,7 @@ try {
 } catch (PDOException $ex) {
 
     $ssn->destroy();
-    exit("Error - Database problem accessing page.");
+    exit("Error - Database problem accessing page: " . $ex->getMessage());
 }
 
 $login->checkPost($dbh, $_POST);

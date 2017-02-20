@@ -250,14 +250,33 @@ class Patch {
             $colCounter = 0;
             $table = new HTMLTable();
             $tr = "";
+            $missingDir = '';
 
-            while (($entry = zip_read($zip)) !== false) {
+            while (($entry = zip_read($zip)) !== FALSE) {
 
 
-                if (strpos(zip_entry_name($entry), "/") !== false) {
+                if (strpos(zip_entry_name($entry), "/") !== FALSE) {
 
                     $last = strrpos(zip_entry_name($entry), "/");
                     $dir = substr(zip_entry_name($entry), 0, $last);
+
+                    // Directory must exist
+                    if (is_dir($dir) === FALSE && $missingDir != $dir) {
+
+                        if ($colCounter >= 2) {
+                            $table->addBodyTr($tr);
+                            $colCounter = 0;
+                            $tr = '';
+                        }
+
+                        $tr .= HTMLTable::makeTd('Cannot create directory: ' . $dir);
+                        $colCounter++;
+                        $missingDir = $dir;
+
+                        continue;
+                    }
+
+
                     $file = substr(zip_entry_name($entry), strrpos(zip_entry_name($entry), "/") + 1);
 
 

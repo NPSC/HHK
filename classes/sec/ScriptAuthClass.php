@@ -22,7 +22,7 @@ class ScriptAuthClass extends SecurityComponent {
     private $hostName = "";
     private $siteURL = "";
 
-    function __construct(PDO $dbh) {
+    function __construct(\PDO $dbh) {
 
         $scriptName = filter_var($_SERVER['SCRIPT_NAME'], FILTER_SANITIZE_STRING);
         $serverName = filter_var($_SERVER['SERVER_NAME'], FILTER_SANITIZE_URL);

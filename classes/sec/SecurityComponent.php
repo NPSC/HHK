@@ -10,7 +10,7 @@
 abstract class SecurityComponent {
 
 
-    protected static function loadWebSite(PDO $dbh, $HTTP_Host, $doc_root) {
+    protected static function loadWebSite(\PDO $dbh, $HTTP_Host, $doc_root) {
 
         $uS = Session::getInstance();
         $HTTP_Host = strtolower($HTTP_Host);
@@ -25,7 +25,7 @@ abstract class SecurityComponent {
             $sl = array();
             if ($stmt->rowCount() > 0) {
 
-                while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
                     $site = array(
                         "Site_Code" => $r["Site_Code"],
                         "Relative_Address" => $r["Relative_Address"],
@@ -75,6 +75,8 @@ abstract class SecurityComponent {
             if (isset($uS->webSite)) {
 
                 $wsCode = strtolower($uS->webSite["Site_Code"]);
+                $where = " where p.Web_Site = '$wsCode' and p.Hide = 0 ";
+                $orderBy = " order by p.Type, p.Menu_Parent, p.Menu_Position";
 
                 // Get list of pages
                 $query = "select
@@ -94,18 +96,20 @@ abstract class SecurityComponent {
                         left join
                     page p1 ON p.Login_Page_Id = p1.idPage
                         left join
-                    page_securitygroup s ON p.idPage = s.idPage
-                where
-                    p.Web_Site = '$wsCode' and p.Hide = 0
-                order by p.Type, p.Menu_Parent, p.Menu_Position;";
+                    page_securitygroup s ON p.idPage = s.idPage";
 
-                $stmt = $dbh->query($query);
+                try {
+                    $stmt = $dbh->query($query . $where . $orderBy);
+                } catch (PDOException $pex) {
+                    $where = " where p.Web_Site = '$wsCode' ";
+                    $stmt = $dbh->query($query . $where . $orderBy);
+                }
 
                 if ($stmt->rowCount() > 0) {
                     $wp = array();
                     $lastId = 0;
 
-                    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
                         if ($lastId == $r['idPage']) {
 

@@ -16,7 +16,7 @@ require (CLASSES . "SiteConfig.php");
 require CLASSES . 'TableLog.php';
 require CLASSES . 'HouseLog.php';
 require CLASSES . 'AuditLog.php';
-require (THIRD_PARTY . 'neon.php');
+
 require (CLASSES . 'CreateMarkupFromDB.php');
 require (MEMBER . 'MemberSearch.php');
 
@@ -38,6 +38,7 @@ $webServices = $config->getString('webServices', 'ContactManager', '');
 if ($webServices != '') {
 
     $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
+    require (THIRD_PARTY . 'neon.php');
 
 } else {
     throw new Hk_Exception_Runtime('Web Services Configuration file is missing. ');

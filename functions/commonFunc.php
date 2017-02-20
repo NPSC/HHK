@@ -45,6 +45,8 @@ function initPDO($override = FALSE) {
                 break;
 
             default:
+                // Use mysql
+                $dbh = initMY_SQL($ssn->databaseURL, $ssn->databaseName, $dbuName, $dbPw);
 
         }
 

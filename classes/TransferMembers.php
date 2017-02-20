@@ -34,7 +34,7 @@ class TransferMembers {
 
     public function searchAccount($searchCriteria) {
 
-        $replys = [];
+        $replys = array();
 
         // Log in with the web service
         $this->openTarget($this->userId, $this->password);
@@ -269,7 +269,7 @@ class TransferMembers {
 
     public function sendList(\PDO $dbh, array $sourceIds, $username) {
 
-        $replys = [];
+        $replys = array();
 
         // Log in with the web service
         $this->openTarget($this->userId, $this->password);

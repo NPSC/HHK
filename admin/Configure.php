@@ -16,7 +16,6 @@ require CLASSES . 'CreateMarkupFromDB.php';
 require CLASSES . 'SiteConfig.php';
 require CLASSES . 'Patch.php';
 require (CLASSES . "TransferMembers.php");
-require (THIRD_PARTY . 'neon.php');
 
 require SEC . 'Login.php';
 require SEC . 'ChallengeGenerator.php';
@@ -139,6 +138,9 @@ $labl = new Config_Lite(LABEL_FILE);
 $wsConfig = NULL;
 
 if ($config->has('webServices', 'Service_Name') && $config->getString('webServices', 'Service_Name', '') != '')  {
+    
+    require (THIRD_PARTY . 'neon.php');
+
     try {
         $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $config->getString('webServices', 'ContactManager', ''));
     } catch (Config_Lite_Exception_Runtime $ex) {
