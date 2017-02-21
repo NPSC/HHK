@@ -18,6 +18,12 @@ class Patch {
     public $oldVersion = '';
     public $newVersion = '';
 
+    public $results;
+
+    public function __construct() {
+        $this->results = array();
+    }
+
     public function verifyUpLoad($zipFile, $versionFileName, $origBuild) {
 
         $result = '';
@@ -93,7 +99,7 @@ class Patch {
         return $result;
     }
 
-    public static function loadFiles($fileRoot, $filePathName) {
+    public function loadFiles($fileRoot, $filePathName) {
 
         $result = "";
 
@@ -111,14 +117,15 @@ class Patch {
         }
 
         // Renames existing files to *.bak and copies in new versions.
-        $result .= self::unzip($filePathName, $skipDirs);
+        $result .= $this->unzip($filePathName, $skipDirs);
 
         return $result;
     }
 
-    public static function updateWithSqlStmts(\PDO $dbh, $tfile, $type = '') {
+    public function updateWithSqlStmts(\PDO $dbh, $tfile, $type = '') {
 
         $message = $type . ' filename is missing.  ';
+        $this->results = array();
 
         if ($tfile != '') {
 
@@ -130,13 +137,13 @@ class Patch {
                 $message = '';
 
                 foreach ($tresult as $err) {
-                    $message .= $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+                    $this->results[] = $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
                 }
 
                 return $type . ' update failed:  ' . $message;
             }
 
-            $message = $type . " created... ";
+            $message = $type . " created. ";
 
         }
 
@@ -144,7 +151,7 @@ class Patch {
 
     }
 
-    public static function updateSps(\PDO $dbh, $spFile){
+    public function updateSps(\PDO $dbh, $spFile){
 
         $message = 'Stored Procedure Filename is missing.  ';
 
@@ -170,7 +177,7 @@ class Patch {
         return $message;
     }
 
-    public static function loadConfigUpdates($configUpdateFile, Config_Lite $config) {
+    public function loadConfigUpdates($configUpdateFile, Config_Lite $config) {
 
         if ($configUpdateFile == '') {
             return '';
@@ -240,7 +247,7 @@ class Patch {
         }
     }
 
-    protected static function unzip($file, array $skipDirs, $rootDir = 'hhk', $oldExtension = 'bak') {
+    protected function unzip($file, array $skipDirs, $rootDir = 'hhk', $oldExtension = 'bak') {
 
         $result = '';
         $zip = zip_open($file);

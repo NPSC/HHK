@@ -138,7 +138,7 @@ $labl = new Config_Lite(LABEL_FILE);
 $wsConfig = NULL;
 
 if ($config->has('webServices', 'Service_Name') && $config->getString('webServices', 'Service_Name', '') != '')  {
-    
+
     require (THIRD_PARTY . 'neon.php');
 
     try {
@@ -248,33 +248,43 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
             // Update labels file
             $resultAccumulator .= $patch->loadConfigUpdates('../patch/patchLabel.cfg', $labl);
 
-            //$mysqli = openMysqli($dbh, $uS);
-
             // Update Tables
             $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
+
+            foreach ($patch->results as $err) {
+                $errorMsg .= 'Create Table Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+            }
 
             // Run patches
             if (file_exists('../patch/patchSQL.sql')) {
 
                 //$vquery = file_get_contents('../patch/patchSQL.sql');
-                $resultArray = $patch->updateWithSqlStmts($dbh, '.../patch/patchSQL.sql', "Updates");  //multiQuery($mysqli, $vquery);
+                $resultAccumulator = $patch->updateWithSqlStmts($dbh, '.../patch/patchSQL.sql', "Updates");
 
                 $errorCount = 0;
-                foreach ($resultArray as $err) {
+                foreach ($patch->results as $err) {
 
                     if ($err['errno'] == 1062 || $err['errno'] == 1060) {
                         continue;
                     }
 
-                    $errorMsg .= $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+                    $errorMsg .= 'Patch Update Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
                     $errorCount++;
                 }
             }
 
             // Update views
             if ($errorCount < 1) {
+
                 $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllViews.sql', 'Views');
+
+                foreach ($patch->results as $err) {
+
+                    $errorMsg .= 'Create Views Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+
+                }
             } else {
+
                 $errorMsg .= '**Views not updated**  ';
             }
 
@@ -338,13 +348,21 @@ if (isset($_POST['btnSaveSQL'])) {
 
     $tabIndex = 1;
 
-    // Update Tables
-    $resultAccumulator .= Patch::updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
-    $resultAccumulator .= Patch::updateWithSqlStmts($dbh, '../sql/CreateAllViews.sql', 'Views');
-    $resultAccumulator .= Patch::updateSps($dbh, '../sql/CreateAllRoutines.sql');
+    $patch = new Patch();
 
-    //$mysqli = openMysqli($dbh, $uS);
-    //$resultAccumulator = Patch::updateViewsSps($mysqli, '../sql/CreateAllTables.sql', '../sql/CreateAllViews.sql', '../sql/CreateAllRoutines.sql');
+    // Update Tables
+    $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
+    foreach ($patch->results as $err) {
+        $errorMsg .= 'Create Table Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+    }
+
+
+    $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllViews.sql', 'Views');
+    foreach ($patch->results as $err) {
+        $errorMsg .= 'Create View Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+    }
+
+    $resultAccumulator .= $patch->updateSps($dbh, '../sql/CreateAllRoutines.sql');
 
     // Log update.
     $logText = "Save SQL.  " . $resultAccumulator;

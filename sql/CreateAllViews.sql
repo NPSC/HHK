@@ -468,7 +468,7 @@ CREATE OR REPLACE VIEW `vcurrent_residents` AS
         LEFT JOIN `visit` `v` ON (((`s`.`idVisit` = `v`.`idVisit`)
             AND (`s`.`Visit_Span` = `v`.`Span`))))
         LEFT JOIN `name` `m` ON ((`s`.`idName` = `m`.`idName`)))
-        LEFT JOIN `name_Phone` `np` ON `np`.`idName` = `m`.`idName` and `np`.`Phone_Code` = `m`.`Preferred_Phone`
+        LEFT JOIN `name_phone` `np` ON `np`.`idName` = `m`.`idName` and `np`.`Phone_Code` = `m`.`Preferred_Phone`
         LEFT JOIN `room` `r` ON ((`s`.`idRoom` = `r`.`idRoom`)))
         LEFT JOIN `hospital_stay` `hs` ON ((`v`.`idHospital_stay` = `hs`.`idHospital_stay`)))
         LEFT JOIN `name` `mp` ON ((`hs`.`idPatient` = `mp`.`idName`)))
