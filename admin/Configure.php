@@ -15,7 +15,6 @@ require CLASSES . 'HouseLog.php';
 require CLASSES . 'CreateMarkupFromDB.php';
 require CLASSES . 'SiteConfig.php';
 require CLASSES . 'Patch.php';
-require (CLASSES . "TransferMembers.php");
 
 require SEC . 'Login.php';
 require SEC . 'ChallengeGenerator.php';
@@ -127,6 +126,7 @@ $resultAccumulator = '';
 $ccResultMessage = '';
 $holResultMessage = '';
 $externalErrMsg = '';
+$serviceName = '';
 
 // get session instance
 $uS = Session::getInstance();
@@ -140,12 +140,15 @@ $wsConfig = NULL;
 if ($config->has('webServices', 'Service_Name') && $config->getString('webServices', 'Service_Name', '') != '')  {
 
     require (THIRD_PARTY . 'neon.php');
+    require (CLASSES . "TransferMembers.php");
 
     try {
         $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $config->getString('webServices', 'ContactManager', ''));
     } catch (Config_Lite_Exception_Runtime $ex) {
         $wsConfig = NULL;
     }
+
+    $serviceName = $config->getString('webServices', 'Service_Name', '');
 }
 
 $confError = '';
@@ -242,6 +245,10 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
             // Replace files
             $resultAccumulator .= $patch->loadFiles('../', $uploadfile);
 
+            foreach ($patch->results as $err) {
+                $errorMsg .= 'Patch File Copy Error: ' . $err['error'] . '<br/>';
+            }
+
             // Update config file
             $resultAccumulator .= $patch->loadConfigUpdates('../patch/patchSite.cfg', $config);
 
@@ -255,10 +262,9 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
                 $errorMsg .= 'Create Table Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
             }
 
-            // Run patches
+            // Run SQL patches
             if (file_exists('../patch/patchSQL.sql')) {
 
-                //$vquery = file_get_contents('../patch/patchSQL.sql');
                 $resultAccumulator = $patch->updateWithSqlStmts($dbh, '.../patch/patchSQL.sql', "Updates");
 
                 $errorCount = 0;
@@ -306,7 +312,7 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
             SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
 
         } else {
-            throw new Hk_Exception_Runtime("Problem moving uploaded file.  ");
+            throw new Hk_Exception_Runtime("Problem moving uploaded patch file.  ");
         }
 
     } catch (Exception $hex) {
@@ -484,7 +490,7 @@ $webAlert->set_txtSpanId("webMessage");
 $webAlert->set_Text("oh-oh");
 
 $getWebReplyMessage = $webAlert->createMarkup();
-$serviceName = $config->getString('webServices', 'Service_Name', '');
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -516,7 +522,7 @@ $(document).ready(function() {
 });
         </script>
     </head>
-    <body <?php if ($testVersion) echo "class='testbody'"; ?>>
+    <body <?php if ($testVersion) {echo "class='testbody'";} ?>>
 <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>

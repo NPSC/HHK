@@ -820,7 +820,6 @@ $(document).ready(function () {
     $('.ckdate').datepicker();
 
     $('#mainTabs').tabs({
-        // Fetch hte calender events when the calendar is visible.
         beforeActivate: function (event, ui) {
             if (ui.newTab.prop('id') === 'liCal') {
                 $('#calendar').hhkCalendar('render');
@@ -885,11 +884,6 @@ $(document).ready(function () {
         year: d.getFullYear(),
         month: d.getMonth(),
         ignoreTimezone: true,
-        loading: function (isLoading) {
-            if (!isLoading) {
-                $('body').css('cursor', "auto");
-            }
-        },
         eventSources: [{
                 url: eventJSONString,
                 ignoreTimezone: true

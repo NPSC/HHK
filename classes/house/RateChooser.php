@@ -108,6 +108,12 @@ class RateChooser {
                 $rateCat = $rateCategories[$vRs->Rate_Category->getStoredVal()];
             }
 
+            $visitStart = 'Start of Visit';
+            if ($vRs->Span->getStoredVal() > 0) {
+                $visitStart = 'Start of Visit Span (' . date('M d, Y', strtotime($vRs->Span_Start->getStoredVal())) . ')';
+            }
+
+
             $rateTbl->addBodyTr(HTMLTable::makeTh('Room Rate ('
                 . HTMLContainer::generateMarkup('label', 'Edit', array('for'=>'rateChgCB', 'style'=>'margin-right:.5em;'))
                 . HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'rateChgCB', 'class'=>'hhk-feeskeys'))
@@ -120,7 +126,7 @@ class RateChooser {
 
                 .HTMLTable::makeTh('As Of: ', array('class'=>'changeRateTd', 'style'=>'display:none;'))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('rpl', array('name'=>'rbReplaceRate', 'type'=>'radio', 'checked'=>'checked', 'class'=>'hhk-feeskeys'))
-                    .HTMLContainer::generateMarkup('span', 'Start of Visit', array('style'=>'margin-left:.3em;')), array('class'=>'changeRateTd', 'style'=>'display:none;'))
+                    .HTMLContainer::generateMarkup('span', $visitStart, array('style'=>'margin-left:.3em;')), array('class'=>'changeRateTd', 'style'=>'display:none;'))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('new', array('name'=>'rbReplaceRate', 'type'=>'radio', 'class'=>'hhk-feeskeys'))
                     .HTMLContainer::generateMarkup('span', 'Date', array('style'=>'margin-left:.3em; margin-right:.3em;'))
                     .HTMLInput::generateMarkup('', array('name'=>'chgRateDate', 'class'=>'hhk-feeskeys'))
@@ -136,6 +142,139 @@ class RateChooser {
 
         return $rateTbl;
     }
+
+    public function changeRoomRate(\PDO $dbh, Visit $visit, $post) {
+
+        $uS = Session::getInstance();
+        $reply = '';
+        $replaceMode = '';
+
+        $visitRs = $visit->visitRS;
+        $chRateDT = NULL;
+        $rateCategory = '';
+        $rateAdj = 0;
+        $assignedRate = 0;
+        $today = new \DateTime();
+        $today->setTime(0, 0, 0);
+
+        if (isset($post['rbReplaceRate'])) {
+            $replaceMode = filter_var($post['rbReplaceRate'], FILTER_SANITIZE_STRING);
+        } else {
+            return 'Replacement Mode not set.  ';
+        }
+
+        // Effective Date
+        if ($replaceMode == 'new') {
+
+            if (isset($post['chgRateDate']) && $post['chgRateDate'] != '') {
+
+                $chDT = setTimeZone($uS, filter_var($post['chgRateDate'], FILTER_SANITIZE_STRING));
+                $chRateDT = new \DateTime($chDT->format('Y-m-d'));
+
+            } else {
+                $chRateDT = $today;
+            }
+
+        } else {
+            // set date to start of span
+            $chRateDT = new \DateTime($visitRs->Span_Start->getStoredVal());
+        }
+
+        if (is_null($chRateDT)) {
+            return 'Change Rate Date not set.  ';
+        }
+
+        $chRateDT->setTime(0, 0, 0);
+
+        // Find the departure date
+        $departDT = null;
+        if ($visitRs->Span_End->getStoredVal() != '') {
+            $departDT = new \DateTime($visitRs->Span_End->getStoredVal());
+        }
+
+        // Find end date
+        if ($visit->getVisitStatus() == VisitStatus::CheckedIn) {
+
+            // Expected Departure date
+            $departDT = $today;
+            if ($visitRs->Expected_Departure->getStoredVal() != '') {
+                $departDT = new \DateTime($visitRs->Expected_Departure->getStoredVal());
+            }
+
+            if ($departDT <= $today) {
+                $departDT = new \DateTime($today->format('Y-m-d'));
+                $departDT->add(new \DateInterval('P1D'));
+            }
+        }
+
+        $departDT->setTime(0, 0, 0);
+
+        // Span Start date
+        $SpanStartDT = new \DateTime($visitRs->Span_Start->getStoredVal());
+        $SpanStartDT->setTime(0, 0, 0);
+
+        if ($chRateDT < $SpanStartDT || $chRateDT >= $departDT) {
+            return "The change rate date must be within the visit timeframe, between " . $SpanStartDT->format('M j, Y') . ' and ' . $departDT->format('M j, Y');
+        }
+
+
+        // Check rate change inputs
+        if (isset($post['selRateCategory'])) {
+            $rateCategory = filter_var($post['selRateCategory'], FILTER_SANITIZE_STRING);
+        }
+
+        if ($rateCategory == '') {
+            return "The new rate category is nissing.  ";
+        }
+
+        if (isset($post['txtadjAmount'])) {
+            $rateAdj = intval(filter_var($post['txtadjAmount'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if ($rateCategory == RoomRateCategorys::Fixed_Rate_Category) {
+
+            $rateAdj = 0;
+
+            if (isset($post['txtFixedRate'])) {
+                $assignedRate = filter_var($post['txtFixedRate'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+            }
+        }
+
+        // Rates Changed?
+        if ($visitRs->Rate_Category->getStoredVal() === $rateCategory) {
+            // return if either amounts are set
+            if ($rateCategory == RoomRateCategorys::Fixed_Rate_Category) {
+                if ($visitRs->Pledged_Rate->getStoredVal() == $assignedRate) {
+                    return '';
+                }
+            } else if ($visitRs->Expected_Rate->getStoredVal() == $rateAdj) {
+                return '';
+            }
+        }
+
+
+        // Go ahead...
+        if ($replaceMode == 'rpl' || $chRateDT == $SpanStartDT) {
+
+            // Replace the span's rate
+            $reply .= Visit::replaceRoomRate($dbh, $visitRs, $rateCategory, $assignedRate, $rateAdj, $uS->username);
+
+        } else if ($visitRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
+
+            // Add a new rate span to this visit
+            $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $uS->username, $chRateDT, ($uS->RateGlideExtend > 0 ? TRUE : FALSE));
+
+        } else {
+
+            // Split existing visit span into two
+            $reply .= 'Change Room Rate failed.  ';
+        }
+
+        return $reply;
+
+    }
+
+
 
     public function createCheckinMarkup(\PDO $dbh, \Reservation_1 $resv, $numNights, $visitFeeTitle) {
 

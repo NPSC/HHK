@@ -204,11 +204,9 @@ if ($uS->Reservation) {
     $roomCount += 5;
 }
 
-$divFontSize = '';
+$divFontSize = 'font-size:.9em;';
 if ($roomCount > 20) {
     $divFontSize = 'font-size:.8em;';
-} else if ($roomCount > 10) {
-    $divFontSize = 'font-size:.9em;';
 }
 
 // Current guests columns

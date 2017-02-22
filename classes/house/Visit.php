@@ -173,6 +173,24 @@ class Visit {
         return $upCtr;
     }
 
+    public static function updateVisitRecordStatic(\PDO $dbh, VisitRs $visitRS, $uname = '') {
+
+        $visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+        $visitRS->Updated_By->setNewVal($uname);
+
+        $upCtr = EditRS::update($dbh, $visitRS, array($visitRS->idVisit, $visitRS->Span));
+
+        if ($upCtr > 0) {
+            $logText = VisitLog::getUpdateText($visitRS);
+
+            EditRS::updateStoredVals($visitRS);
+            VisitLog::logVisit($dbh, $visitRS->idVisit->getStoredVal(), $visitRS->Span->getStoredVal(), $visitRS->idResource->getStoredVal(), $visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
+
+        }
+
+        return $upCtr;
+    }
+
     public function addGuestStay($idGuest, $checkinDate, $spanStartDate, $expectedCO = '', $stayOnLeave = 0) {
 
         // If guest already has an active stay ...
@@ -232,7 +250,7 @@ class Visit {
 
     }
 
-    public function checkin(PDO $dbh, $username) {
+    public function checkin(\PDO $dbh, $username) {
 
         // Verify data
         if ($this->resource->getIdResource() == 0 || $this->getIdRegistration() == 0 || $this->getArrivalDate() == "" || $this->getExpectedDeparture() == "" || count($this->stays) < 1) {
@@ -250,7 +268,7 @@ class Visit {
         return TRUE;
     }
 
-    protected function checkInStays(PDO $dbh, $username) {
+    protected function checkInStays(\PDO $dbh, $username) {
 
         foreach ($this->stays as $stayRS) {
 
@@ -439,53 +457,75 @@ class Visit {
         return $rtnMessage;
     }
 
-    public static function replaceRoomRate(\PDO $dbh, \VisitRs $visitRs, $newRateCategory, $pledgedRate, $rateAdjust, $uname) {
+    public static function replaceRoomRate(\PDO $dbh, VisitRs $visitRs, $newRateCategory, $pledgedRate, $rateAdjust, $uname) {
 
         $uS = Session::getInstance();
+        $reply = "";
 
         // Get the idRoomRate
         $pm = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
         $rateRs = $pm->getCategoryRateRs(0, $newRateCategory);
 
 
-        if ($visitRs->idReservation->getStoredVal() > 0) {
-
-            $resv = Reservation_1::instantiateFromIdReserv($dbh, $visitRs->idReservation->getStoredVal());
-
-            $resv->setFixedRoomRate($pledgedRate);
-            $resv->setRateAdjust($rateAdjust);
-            $resv->setRoomRateCategory($newRateCategory);
-            $resv->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
-
-            $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
-        }
-
         $visitRs->Pledged_Rate->setNewVal($pledgedRate);
         $visitRs->Rate_Category->setNewVal($newRateCategory);
         $visitRs->Expected_Rate->setNewVal($rateAdjust);
         $visitRs->idRoom_rate->setNewVal($rateRs->idRoom_rate->getStoredVal());
 
-        $visitRs->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-        $visitRs->Updated_By->setNewVal($uname);
-
-        $upCtr = EditRS::update($dbh, $visitRs, array($visitRs->idVisit, $visitRs->Span));
+        $upCtr = self::updateVisitRecordStatic($dbh, $visitRs, $uname);
 
         if ($upCtr > 0) {
-            $logText = VisitLog::getUpdateText($visitRs);
-
-            EditRS::updateStoredVals($visitRs);
-            VisitLog::logVisit($dbh, $visitRs->idVisit->getStoredVal(), $visitRs->Span->getStoredVal(), $visitRs->idResource->getStoredVal(), $visitRs->idRegistration->getStoredVal(), $logText, "update", $uname);
-
-        }
-
-        if ($upCtr > 0) {
-
             $reply = "Room Rate Replaced.  ";
-
-        } else {
-
-            $reply = "";
         }
+
+
+        if ($visitRs->Status->getStoredVal() == VisitStatus::CheckedIn || $visitRs->Status->getStoredVal() == VisitStatus::CheckedOut) {
+
+            // This is the last span.
+            if ($visitRs->idReservation->getStoredVal() > 0) {
+
+                $resv = Reservation_1::instantiateFromIdReserv($dbh, $visitRs->idReservation->getStoredVal());
+
+                $resv->setFixedRoomRate($pledgedRate);
+                $resv->setRateAdjust($rateAdjust);
+                $resv->setRoomRateCategory($newRateCategory);
+                $resv->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
+
+                $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
+            }
+
+        } else if ($visitRs->Status->getStoredVal() != VisitStatus::ChangeRate) {
+
+            // Check the remaining spans until a change rate
+            $visRS = new VisitRs();
+            $visRS->idVisit->setStoredVal($visitRs->idVisit->getStoredVal());
+            $rows = EditRS::select($dbh, $visRS, Array($visRS->idVisit));
+
+            $idSpan = $visitRs->Span->getStoredVal();
+
+            foreach ($rows as $rs) {
+
+                $vrs = new VisitRs();
+                EditRS::loadRow($rs, $vrs);
+
+                if ($vrs->Span->getStoredVal() > $idSpan && $vrs->Status->getStoredVal() != VisitStatus::ChangeRate) {
+
+                    // Change the rate
+                    $vrs->Pledged_Rate->setNewVal($pledgedRate);
+                    $vrs->Rate_Category->setNewVal($newRateCategory);
+                    $vrs->Expected_Rate->setNewVal($rateAdjust);
+                    $vrs->idRoom_rate->setNewVal($rateRs->idRoom_rate->getStoredVal());
+
+                    $upCtr = self::updateVisitRecordStatic($dbh, $vrs, $uname);
+                    $idSpan = $vrs->Span->getStoredVal();
+
+                } else if ($vrs->Span->getStoredVal() > $idSpan && $vrs->Status->getStoredVal() == VisitStatus::ChangeRate) {
+                    break;
+                }
+            }
+
+        }
+
 
         return $reply;
     }
@@ -538,6 +578,8 @@ class Visit {
             $glideDays = $this->visitRS->Rate_Glide_Credit->getStoredVal() + $endDT->diff($stDT, TRUE)->days;
         }
 
+        $newSpanStatus = $this->visitRS->Status->getStoredVal();
+
         $this->visitRS->Span_End->setNewVal($changeDate);
         $this->visitRS->Status->setNewVal($visitStatus);
 
@@ -564,7 +606,7 @@ class Visit {
         $this->visitRS->Span->setNewVal($newSpan);
         $this->visitRS->Span_End->setNewVal('');
         $this->visitRS->Span_Start->setNewVal($changeDate);
-        $this->visitRS->Status->setNewVal(VisitStatus::CheckedIn);
+        $this->visitRS->Status->setNewVal($newSpanStatus);
         $this->visitRS->Key_Dep_Disposition->setNewVal('');
         $this->visitRS->Pledged_Rate->setNewVal($pledgedRate);
         $this->visitRS->Rate_Category->setNewVal($newRateCategory);
@@ -588,11 +630,11 @@ class Visit {
 
         EditRS::updateStoredVals($this->visitRS);
 
-        $this->replaceStays($dbh, $visitStatus, $changeDate, $uname, $stayOnLeave);
+        $this->replaceStays($dbh, $newSpanStatus, $visitStatus, $changeDate, $uname, $stayOnLeave);
 
     }
 
-    public function replaceStays(\PDO $dbh, $visitStatus, $changeDate, $uname, $stayOnLeave = 0) {
+    protected function replaceStays(\PDO $dbh, $newSpanStatus, $visitStatus, $changeDate, $uname, $stayOnLeave = 0) {
 
         $oldStays = $this->stays;
         $this->stays = array();
@@ -601,7 +643,7 @@ class Visit {
 
         foreach ($oldStays as $stayRS) {
 
-            if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
+            if ($stayRS->Status->getStoredVal() == $newSpanStatus) {
 
                 // end current stay
                 $stayRS->Status->setNewVal($visitStatus);
@@ -712,9 +754,9 @@ class Visit {
                 // Get guest names
                 $query = "Select Name_First, Name_Last
                     from `name` where idName = :vst; ";
-                $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
                 $stmt->execute(array(':vst' => $idGuest));
-                $gsts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $gsts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                 $gMarkup = '<html><body><h3>Guest Checkout</h3><p>Departure Date: ' . date('g:ia D M jS, Y', strtotime($stayRS->Checkout_Date->getStoredVal())) . ';  from ' . $roomTitle . '</p>';
 

@@ -157,7 +157,7 @@ class HouseServices {
         return $dataArray;
     }
 
-    public static function saveFees(\PDO $dbh, $idVisit, $span, $isAdmin, array $post, $postbackPage, $returnCkdIn = FALSE) {
+    public static function saveFees(\PDO $dbh, $idVisit, $span, $isGuestAdmin, array $post, $postbackPage, $returnCkdIn = FALSE) {
 
         $uS = Session::getInstance();
         $dataArray = array();
@@ -235,8 +235,9 @@ class HouseServices {
         }
 
         // Change room rate
-        if ($isAdmin && isset($post['rateChgCB']) && isset($post['extendCb']) === FALSE) {
-            $reply .= HouseServices::changeRoomRate($dbh, $visit, $post);
+        if ($isGuestAdmin && isset($post['rateChgCB']) && isset($post['extendCb']) === FALSE) {
+            $rateChooser = new RateChooser($dbh);
+            $reply .= $rateChooser->changeRoomRate($dbh, $visit, $post);
             $returnCkdIn = TRUE;
         }
 
@@ -395,7 +396,7 @@ class HouseServices {
                                 $depDisposition = filter_var($post["selDepDisposition"], FILTER_SANITIZE_STRING);
                             }
 
-                            $reply .= $visit->changeRooms($dbh, $resc, $uS->username, $chRoomDT, $isAdmin, $depDisposition);
+                            $reply .= $visit->changeRooms($dbh, $resc, $uS->username, $chRoomDT, $isGuestAdmin, $depDisposition);
                             $returnCkdIn = TRUE;
                             $returnReserv = TRUE;
                         }
@@ -796,6 +797,14 @@ class HouseServices {
             return 'The room is unavailable. ';
         }
 
+        // Get new room cleaning status to copy to original room
+        $resc = Resource::getResourceObj($dbh, $nextVisitRs->idResource->getStoredVal());
+        $rooms = $resc->getRooms();
+        $room = array_shift($rooms);
+        $roomStatus = $room->getStatus();
+
+        // Transaction
+        //$result = $dbh->exec("Begin Trans;");
 
         // Undo visit checkout
         $visit->visitRS->Actual_Departure->setNewVal($nextVisitRs->Actual_Departure->getStoredVal());
@@ -803,18 +812,11 @@ class HouseServices {
         $visit->visitRS->Expected_Departure->setNewVal($expDepDT->format('Y-m-d 10:00:00'));
         $visit->visitRS->Status->setNewVal($nextVisitRs->Status->getStoredVal());
         $visit->visitRS->Key_Dep_Disposition->setNewVal($nextVisitRs->Key_Dep_Disposition->getStoredVal());
-        $visit->visitRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
-        $visit->visitRS->Updated_By->setNewVal($uname);
-
-        $updateCounter = EditRS::update($dbh, $visit->visitRS, array($visit->visitRS->idVisit, $visit->visitRS->Span));
+        $updateCounter = $visit->updateVisitRecord($dbh, $uname);
 
         if ($updateCounter != 1) {
             throw new Hk_Exception_Runtime('Visit table update failed. Checkout is not undone.');
         }
-
-        $logText = VisitLog::getUpdateText($visit->visitRS);
-        EditRS::updateStoredVals($visit->visitRS);
-        VisitLog::logVisit($dbh, $visit->getIdVisit(), $visit->visitRS->Span->getStoredVal(), $visit->visitRS->idResource->getStoredVal(), $visit->visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
 
         // update Reservation
         $resv->setIdResource($visit->getidResource());
@@ -822,6 +824,8 @@ class HouseServices {
 
         // remove the next visit
         EditRS::delete($dbh, $nextVisitRs, array($nextVisitRs->idVisit, $nextVisitRs->Span));
+        $logDelText = VisitLog::getDeleteText($nextVisitRs, $nextVisitRs->idVisit);
+        VisitLog::logVisit($dbh, $nextVisitRs->idVisit->getStoredVal(), $nextVisitRs->Span->getStoredVal(), $nextVisitRs->idResource->getStoredVal(), $$nextVisitRs->idRegistration->getStoredVal(), $logDelText, "delete", $uname);
 
 
         // original stays with status = changeRoom.
@@ -882,6 +886,13 @@ class HouseServices {
             }
 
         }
+
+        // Update room cleaning status of this room
+        $resc2 = Resource::getResourceObj($dbh, $visit->getidResource());
+        $rooms2 = $resc2->getRooms();
+        $room2 = array_shift($rooms2);
+        $room2->setStatus($roomStatus);
+        $room2->saveRoom($dbh, $uname, TRUE, $roomStatus);
 
         // Update invoices
         $dbh->exec("Update invoice set Suborder_Number = " . $visit->getSpan() . " where Order_Number = " . $visit->getIdVisit() . " and Suborder_Number != ". $visit->getSpan());
@@ -1002,114 +1013,15 @@ class HouseServices {
             }
         }
 
-        return $reply;
-    }
 
-    public static function changeRoomRate(\PDO $dbh, Visit $visit, $post) {
-
-        $uS = Session::getInstance();
-        $reply = '';
-        $replaceMode = '';
-
-        $visitRs = $visit->visitRS;
-
-        $rateCategory = '';
-        $rateAdj = 0;
-        $assignedRate = 0;
-        $now = new \DateTime();
-        $now->setTime(0, 0, 0);
-
-        if (isset($post['rbReplaceRate'])) {
-            $replaceMode = filter_var($post['rbReplaceRate'], FILTER_SANITIZE_STRING);
-        } else {
-            return 'Replacement Date not set.  ';
-        }
-
-        if ($replaceMode == 'new') {
-
-            if (isset($post['chgRateDate']) && $post['chgRateDate'] != '') {
-
-                $chDT = setTimeZone($uS, filter_var($post['chgRateDate'], FILTER_SANITIZE_STRING));
-                $chRateDT = new \DateTime($chDT->format('Y-m-d'));
-
-            } else {
-                $chRateDT = $now;
-            }
-
-        } else {
-            // set date to start of span
-            $chRateDT = new \DateTime($visitRs->Span_Start->getStoredVal());
-        }
-
-        $chRateDT->setTime(0, 0, 0);
-
-        // Date check
-        $departDT = new \DateTime(($visitRs->Span_End->getStoredVal() == '' ? $visitRs->Expected_Departure->getStoredVal() : $visitRs->Span_End->getStoredVal()));
-
-        if ($visit->getVisitStatus() == VisitStatus::CheckedIn && $departDT < $now) {
-            $departDT = $now;
-            $departDT->add(new \DateInterval('P1D'));
-        }
-
-        $departDT->setTime(0, 0, 0);
-        $arriveDT = new \DateTime($visitRs->Span_Start->getStoredVal());
-        $arriveDT->setTime(0, 0, 0);
-
-        if ($chRateDT < $arriveDT || $chRateDT >= $departDT) {
-            return "The change rate date must be within the visit timeframe, between " . $arriveDT->format('M j, Y') . ' and ' . $departDT->format('M j, Y');
-        }
-
-        if (isset($post['selRateCategory'])) {
-            $rateCategory = filter_var($post['selRateCategory'], FILTER_SANITIZE_STRING);
-        }
-
-        if (isset($post['txtadjAmount'])) {
-            $rateAdj = intval(filter_var($post['txtadjAmount'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if ($rateCategory == RoomRateCategorys::Fixed_Rate_Category) {
-
-            $rateAdj = 0;
-
-            if (isset($post['txtFixedRate'])) {
-                $assignedRate = filter_var($post['txtFixedRate'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-            }
-        }
-
-        // Rates Changed?
-        if ($visitRs->Rate_Category->getStoredVal() === $rateCategory) {
-            // return if either amounts are set
-            if ($rateCategory == RoomRateCategorys::Fixed_Rate_Category) {
-                if ($visitRs->Pledged_Rate->getStoredVal() == $assignedRate) {
-                    return '';
-                }
-            } else if ($visitRs->Expected_Rate->getStoredVal() == $rateAdj) {
-                return '';
-            }
-        }
-
-
-
-        $chgRtDT = new \DateTime($chRateDT->format('Y-m-d'));
-        $chgRtDT->setTime(0, 0, 0);
-        $arrDT = new \DateTime($arriveDT->format('Y-m-d'));
-        $arrDT->setTime(0, 0, 0);
-
-
-        if ($replaceMode == 'rpl' || $chgRtDT == $arrDT) {
-
-            $reply .= Visit::replaceRoomRate($dbh, $visitRs, $rateCategory, $assignedRate, $rateAdj, $uS->username);
-
-        } else if ($visitRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
-
-            $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $uS->username, $chRateDT, ($uS->RateGlideExtend > 0 ? TRUE : FALSE));
-
-        } else {
-            $reply .= 'Change Room Rate failed.  ';
-        }
+        // Update room cleaning status of this room
+        $resc2 = Resource::getResourceObj($dbh, $visit->getidResource());
+        $rooms2 = $resc2->getRooms();
+        $room2 = array_shift($rooms2);
+        $room2->setStatus(RoomState::Clean);
+        $room2->saveRoom($dbh, $uname, TRUE, RoomState::Clean);
 
         return $reply;
-
     }
 
     public static function addVisitStay(\PDO $dbh, $idVisit, $visitSpan, $idGuest, $post) {

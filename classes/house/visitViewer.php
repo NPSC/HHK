@@ -234,6 +234,7 @@ class VisitView {
         $table->addHeaderTr($th);
         $tblMarkup = $table->generateMarkup(array('id' => 'tblActiveVisit', 'style'=>'width:99%;'));
 
+        // Change Rate markup
         if ($uS->RoomPriceModel != ItemPriceCode::None && $action != 'ref') {
 
             $rateChooser = new RateChooser($dbh);
@@ -306,14 +307,13 @@ class VisitView {
 
         $undoCkoutButton = '';
 
+
         // Make undo checkout button.  Only allow undo for 5 days after end of visit.
         if ($r['Status'] == VisitStatus::CheckedOut && $isAdmin) {
 
             $actualDepartDT = new \DateTime($r['Actual_Departure']);
             $actualDepartDT->add(new \DateInterval('P15D'));
             $nowDT = new \DateTime();
-            $spnMkup = '';
-            $ctitle = '';
 
             if ($actualDepartDT >= $nowDT) {
 
@@ -322,21 +322,17 @@ class VisitView {
                         . HTMLContainer::generateMarkup('span', 'New Expected Departure Date: ', array('style'=>'margin-right: 0.3em; margin-left:0.3em;'))
                         . HTMLInput::generateMarkup('', array('id'=>'txtUndoDate', 'class'=>'ckdateFut hhk-feeskeys'));
 
-                $ctitle = 'Undo Checkout';
-
-            } else if ($r['Status'] == VisitStatus::NewSpan) {
-
-                $spnMkup = HTMLContainer::generateMarkup('label', '- Undo Room Change', array('for'=>'undoRmChg'))
-                        . HTMLInput::generateMarkup('', array('id'=>'undoRmChg', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.3em;margin-left:0.3em;'));
-
-                $ctitle = 'Undo Room Change';
+                $undoCkoutButton = HTMLContainer::generateMarkup('span', $spnMkup, array('style'=>'margin:0 1em;', 'title'=>'Undo Checkout'));
             }
 
+        } else if ($r['Status'] == VisitStatus::NewSpan) {
 
-            if ($spnMkup != '') {
-                $undoCkoutButton = HTMLContainer::generateMarkup('span', $spnMkup, array('style'=>'margin:0 1em;', 'title'=>$ctitle));
-            }
+            $spnMkup = HTMLContainer::generateMarkup('label', '- Undo Room Change', array('for'=>'undoRmChg'))
+                    . HTMLInput::generateMarkup('', array('id'=>'undoRmChg', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.3em;margin-left:0.3em;'));
+
+            $undoCkoutButton = HTMLContainer::generateMarkup('span', $spnMkup, array('style'=>'margin:0 1em;', 'title'=>'Undo Room Change'));
         }
+
 
 
         return

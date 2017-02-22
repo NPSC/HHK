@@ -130,6 +130,7 @@ class Patch {
         if ($tfile != '') {
 
             $tquery = file_get_contents($tfile);
+
             $tresult = self::multiQueryPDO($dbh, $tquery);
 
             if (count($tresult) > 0) {
@@ -140,7 +141,7 @@ class Patch {
                     $this->results[] = $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
                 }
 
-                return $type . ' update failed:  ' . $message;
+                return $type . ' failed:  ' . $message;
             }
 
             $message = $type . " created. ";
@@ -250,6 +251,8 @@ class Patch {
     protected function unzip($file, array $skipDirs, $rootDir = 'hhk', $oldExtension = 'bak') {
 
         $result = '';
+        $this->results = array();
+
         $zip = zip_open($file);
 
         if (is_resource($zip)) {
@@ -257,7 +260,6 @@ class Patch {
             $colCounter = 0;
             $table = new HTMLTable();
             $tr = "";
-            $missingDir = '';
 
             while (($entry = zip_read($zip)) !== FALSE) {
 
@@ -266,24 +268,6 @@ class Patch {
 
                     $last = strrpos(zip_entry_name($entry), "/");
                     $dir = substr(zip_entry_name($entry), 0, $last);
-
-                    // Directory must exist
-                    if (is_dir($dir) === FALSE && $missingDir != $dir) {
-
-                        if ($colCounter >= 2) {
-                            $table->addBodyTr($tr);
-                            $colCounter = 0;
-                            $tr = '';
-                        }
-
-                        $tr .= HTMLTable::makeTd('Cannot create directory: ' . $dir);
-                        $colCounter++;
-                        $missingDir = $dir;
-
-                        continue;
-                    }
-
-
                     $file = substr(zip_entry_name($entry), strrpos(zip_entry_name($entry), "/") + 1);
 
 
@@ -312,17 +296,19 @@ class Patch {
                         // copy the new version in
                         $fileSize = file_put_contents($relDir . "/" . $file, zip_entry_read($entry, zip_entry_filesize($entry)));
 
-                        if ($fileSize === false) {
-                            throw new Hk_Exception_Runtime("Unable to write file: $relDir/$file");
-                        }
-
                         if ($colCounter >= 2) {
                             $table->addBodyTr($tr);
                             $colCounter = 0;
                             $tr = '';
                         }
 
-                        $tr .= HTMLTable::makeTd($relDir . "/" . $file);
+                        if ($fileSize === false) {
+                            $tr .= HTMLTable::makeTd("Unable to write file: $relDir/$file");
+                            $this->results[] = array('error'=>"Unable to write file: $relDir/$file", 'errno'=> '', 'query'=> '' );
+                        } else {
+                            $tr .= HTMLTable::makeTd($relDir . "/" . $file);
+                        }
+
                         $colCounter++;
                     }
                 }
