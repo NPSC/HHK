@@ -129,50 +129,55 @@ class VisitView {
         $departureText = "";
         $days = "";
 
+        switch ($r['Status']) {
+            case VisitStatus::CheckedIn:
 
-        if ($r['Status'] == VisitStatus::CheckedIn) {
-            $depHeader = "Expected End";
-            $daysHeader = "Exp. Nights";
+                $depHeader = "Expected End";
+                $daysHeader = "Exp. Nights";
 
-            if ($action == 'ref') {
-                // deal with changed checkout date
-                $deptDT = setTimeZone($uS, $coDate);
-                $deptDT->setTime(0, 0, 0);
-                $arrivalDT = setTimeZone($uS, $r['Arrival_Date']);
-                $arrivalDT->setTime(0, 0, 0);
-                $days = $deptDT->diff($arrivalDT, TRUE)->days;
-                $departureText = $deptDT->format('M, j, Y');
+                if ($action == 'ref') {
+                    // deal with changed checkout date
+                    $deptDT = setTimeZone($uS, $coDate);
+                    $deptDT->setTime(0, 0, 0);
+                    $arrivalDT = setTimeZone($uS, $r['Arrival_Date']);
+                    $arrivalDT->setTime(0, 0, 0);
+                    $days = $deptDT->diff($arrivalDT, TRUE)->days;
+                    $departureText = $deptDT->format('M, j, Y');
 
-            } else {
+                } else {
 
-                $departureText = date('M j, Y', strtotime($r['Expected_Departure']));
-                $days = $r['Expected_Nights'];
-            }
+                    $departureText = date('M j, Y', strtotime($r['Expected_Departure']));
+                    $days = $r['Expected_Nights'];
+                }
+                break;
 
-        } else if ($r['Status'] == VisitStatus::NewSpan) {
+            case VisitStatus::NewSpan:
 
-            $depHeader = "Room Changed";
-            $daysHeader = "Nights";
-            $departureText = date('M j, Y', strtotime($r['Span_End']));
-            $days = $r['Actual_Span_Nights'];
+                $depHeader = "Room Changed";
+                $daysHeader = "Span Nights";
+                $departureText = date('M j, Y', strtotime($r['Span_End']));
+                $days = $r['Actual_Span_Nights'];
+                break;
 
-        } else if ($r['Status'] == VisitStatus::ChangeRate) {
+            case VisitStatus::ChangeRate:
 
-            $depHeader = "Changed Room Rate";
-            $daysHeader = "Nights";
-            $departureText = date('M j, Y', strtotime($r['Span_End']));
-            $days = $r['Actual_Span_Nights'];
+                $depHeader = "Changed Room Rate";
+                $daysHeader = "Span Nights";
+                $departureText = date('M j, Y', strtotime($r['Span_End']));
+                $days = $r['Actual_Span_Nights'];
+                break;
 
-        } else if ($r['Status'] == VisitStatus::Pending) {
+            case VisitStatus::CheckedOut:
+                $depHeader = "Actual End";
+                $daysHeader = "Actual Nights";
+                $departureText = date('M j, Y', strtotime($r['Actual_Departure']));
+                $days = $r['Actual_Nights'];
 
-            return HTMLContainer::generateMarkup('h2', "System Error:  Incomplete Visit Record.  Contact your support people.", array("style" => 'color:red;'));
+                break;
 
-        } else {
+            default:
+                return HTMLContainer::generateMarkup('h2', "System Error:  Incomplete Visit Record.  Contact your support people.", array("style" => 'color:red;'));
 
-            $depHeader = "Actual End";
-            $daysHeader = "Nights";
-            $departureText = date('M j, Y', strtotime($r['Actual_Departure']));
-            $days = $r['Actual_Nights'];
         }
 
         if ($action != 'co') {
@@ -359,6 +364,7 @@ class VisitView {
 
         $includeAction = FALSE;
         $useRemoveHdr = FALSE;
+        $someoneCheckedIn = FALSE;
         $ckOutTitle = '';
         $sTable = new HTMLTable();
         $priGuests = array();
@@ -436,24 +442,44 @@ class VisitView {
             $chkInTitle = 'Checked In';
 
             // Action button depends on status
-            if ($r["Visit_Status"] == VisitStatus::CheckedIn && $r['Status'] == VisitStatus::CheckedIn) {
+            if ($r["Visit_Status"] == VisitStatus::CheckedIn) {
 
-                if ($action == 'ref' && $coDate != '') {
-                    $edDay = new \DateTime($coDate);
+                if ($r['Status'] == VisitStatus::CheckedIn) {
+
+                    $someoneCheckedIn = TRUE;
+
+                    if ($action == 'ref' && $coDate != '') {
+                        $edDay = new \DateTime($coDate);
+                    } else {
+                        $edDay = new \DateTime(date('Y-m-d'));
+                    }
+
+                    $edDay->setTime(0, 0, 0);
+                    $days = $edDay->diff($stDayDT, TRUE)->days;
+
+                    $getCkOutDate = HTMLInput::generateMarkup($edDay->format('M j, Y'), array('id' => 'stayCkOutDate_' . $r['idName'], 'name' =>'[stayCkOutDate][' . $r['idName'] . ']', 'class' => 'ckdate hhk-ckoutDate', 'readonly'=>'readonly'));
+                    $ckOutDate = HTMLInput::generateMarkup(date('M j, Y', strtotime($r['Expected_Co_Date'])), array('id' => 'stayExpCkOut_' . $r['idName'], 'name' => '[stayExpCkOut][' . $r['idName'] . ']', 'class' => 'ckdateFut hhk-expckout', 'readonly'=>'readonly'));
+                    $ckOutTitle = "Exp'd Check Out";
+                    $actionButton = HTMLInput::generateMarkup('', $cbAttr) . $getCkOutDate;
+
+                    if ($action == 'co' || $action == 'ref' || $action == '') {
+                        $includeAction = TRUE;
+                    }
+
                 } else {
-                    $edDay = new \DateTime(date('Y-m-d'));
-                }
 
-                $edDay->setTime(0, 0, 0);
-                $days = $edDay->diff($stDayDT, TRUE)->days;
+                    $edDay = new \DateTime($r['Span_End_Date']);
+                    $edDay->setTime(0, 0, 0);
 
-                $getCkOutDate = HTMLInput::generateMarkup($edDay->format('M j, Y'), array('id' => 'stayCkOutDate_' . $r['idName'], 'name' =>'[stayCkOutDate][' . $r['idName'] . ']', 'class' => 'ckdate hhk-ckoutDate', 'readonly'=>'readonly'));
-                $ckOutDate = HTMLInput::generateMarkup(date('M j, Y', strtotime($r['Expected_Co_Date'])), array('id' => 'stayExpCkOut_' . $r['idName'], 'name' => '[stayExpCkOut][' . $r['idName'] . ']', 'class' => 'ckdateFut hhk-expckout', 'readonly'=>'readonly'));
-                $ckOutTitle = "Exp'd Check Out";
-                $actionButton = HTMLInput::generateMarkup('', $cbAttr) . $getCkOutDate;
+                    $days = $edDay->diff($stDayDT, TRUE)->days;
 
-                if ($action == 'co' || $action == 'ref' || $action == '') {
-                    $includeAction = TRUE;
+                    // Don't show 0-day checked - out stays.
+                    if ($days == 0 && !$uS->ShowZeroDayStays) {
+                        continue;
+                    }
+
+                    $ckOutDate = HTMLContainer::generateMarkup('span', $r['Span_End_Date'] != '' ? date('M j, Y H:i', strtotime($r['Span_End_Date'])) : '');
+
                 }
 
             } else {
@@ -464,15 +490,23 @@ class VisitView {
                 $days = $edDay->diff($stDayDT, TRUE)->days;
 
                 // Don't show 0-day checked - out stays.
-                if ($days == 0) {
+                if ($days == 0 && !$uS->ShowZeroDayStays) {
                     continue;
                 }
 
-                if ($ckOutTitle == '') {
+                switch ($r['Visit_Status']) {
+                    case VisitStatus::ChangeRate:
+                        $ckOutTitle = "Rate Changed";
+                        break;
 
-                    // Set if there are no expected checkouts
-                    $ckOutTitle = ($r['On_Leave'] > 0 ? 'Ending' : 'Checked Out');
-                    $chkInTitle = ($r['On_Leave'] > 0 ? 'Starting' : 'Checked In');
+                    case VisitStatus::NewSpan:
+                        $ckOutTitle = "Room Changed";
+                        break;
+
+                    case VisitStatus::CheckedOut:
+                        $ckOutTitle = "Checked Out";
+                        break;
+
                 }
 
                 $ckOutDate = HTMLContainer::generateMarkup('span', $r['Span_End_Date'] != '' ? date('M j, Y H:i', strtotime($r['Span_End_Date'])) : '');
@@ -493,9 +527,9 @@ class VisitView {
 
 
             $tr = ($hdrPgRb == '' ? '' : HTMLTable::makeTd($pgRb))
-
-                    .HTMLTable::makeTd($idMarkup)
-
+                // idName
+                .HTMLTable::makeTd($idMarkup)
+                // Relationship
                 .HTMLTable::makeTd($rel)
 
                 // Status
@@ -537,6 +571,13 @@ class VisitView {
             }
 
             $sTable->addBodyTr($tr);
+        }
+
+        // Adjust headers in this condition
+        if ($someoneCheckedIn === FALSE && $r["Visit_Status"] == VisitStatus::CheckedIn) {
+            // Set if there are no expected checkouts
+            $ckOutTitle = ($r['On_Leave'] > 0 ? 'Ending' : 'Checked Out');
+            $chkInTitle = ($r['On_Leave'] > 0 ? 'Starting' : 'Checked In');
         }
 
         // Table header

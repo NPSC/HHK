@@ -1,7 +1,6 @@
-
 ALTER TABLE `psg` 
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (`idPsg`, `idPatient`)  COMMENT '';
+ADD PRIMARY KEY (`idPsg`, `idPatient`);
 
 ALTER TABLE `page` 
 ADD COLUMN `Product_Code` VARCHAR(4) NOT NULL DEFAULT '' AFTER `Title`,
@@ -14,6 +13,7 @@ ALTER TABLE `visit`
 ADD COLUMN `Amount_Per_Guest` DECIMAL(10,2) NOT NULL DEFAULT '0.00' AFTER `Pledged_Rate`;
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CalViewWeeks', '3', 'i', 'h', 'Number of weeks showing in the Calendar Page');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ShowZeroDayStays', 'false', 'b', 'h', 'Include 0-day stays and visits in Reports and Pages');
 
 Update gen_lookups set `Order` = 5, `Code` = `Description`, `Description` = 'Age Bracket' where Table_Name = 'Demographics' and Code = 'a';
 Update gen_lookups set `Order` = 10, `Code` = `Description`, `Description` = 'Ethnicity' where Table_Name = 'Demographics' and Code = 'e';

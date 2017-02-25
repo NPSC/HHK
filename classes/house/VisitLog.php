@@ -19,7 +19,7 @@ class VisitLog extends TableLog {
     const Stay = 'stay';
 
 
-    public static function logPsg(PDO $dbh, $idPsg, $idPatient, $logText, $subType, $userName) {
+    public static function logPsg(\PDO $dbh, $idPsg, $idPatient, $logText, $subType, $userName) {
 
         if (self::checkLogText($logText) === FALSE) {
             return TRUE;
@@ -39,7 +39,7 @@ class VisitLog extends TableLog {
 
     }
 
-    public static function logNameGuest(PDO $dbh, $idPsg, $idGuest, $logText, $subType, $userName) {
+    public static function logNameGuest(\PDO $dbh, $idPsg, $idGuest, $logText, $subType, $userName) {
 
         if (self::checkLogText($logText) === FALSE) {
             return TRUE;
@@ -57,7 +57,7 @@ class VisitLog extends TableLog {
 
     }
 
-    public static function logRegistration(PDO $dbh, $idPsg, $idRegistration, $logText, $subType, $userName) {
+    public static function logRegistration(\PDO $dbh, $idPsg, $idRegistration, $logText, $subType, $userName) {
 
         if (self::checkLogText($logText) === FALSE) {
             return TRUE;
@@ -75,7 +75,7 @@ class VisitLog extends TableLog {
 
     }
 
-    public static function logVisit(PDO $dbh, $idVisit, $Span, $idResc, $idRegistration, $logText, $subType, $userName) {
+    public static function logVisit(\PDO $dbh, $idVisit, $Span, $idResc, $idRegistration, $logText, $subType, $userName) {
 
         if (self::checkLogText($logText) === FALSE) {
             return TRUE;
@@ -95,7 +95,7 @@ class VisitLog extends TableLog {
 
     }
 
-    public static function logStay(PDO $dbh, $idVisit, $Span, $idRoom, $idStay, $idGuest, $idRegistration, $logText, $subType, $userName) {
+    public static function logStay(\PDO $dbh, $idVisit, $Span, $idRoom, $idStay, $idGuest, $idRegistration, $logText, $subType, $userName) {
 
         if (self::checkLogText($logText) === FALSE) {
             return TRUE;
@@ -128,7 +128,7 @@ class ReservationLog extends TableLog {
     const FinApplication = 'fin_application';
 
 
-    public static function logReservation(PDO $dbh, $idResv, $idReg, $idhstay, $idResc, $idRoomRate, $idGuest, $logText, $subType, $userName) {
+    public static function logReservation(\PDO $dbh, $idResv, $idReg, $idhstay, $idResc, $idRoomRate, $idGuest, $logText, $subType, $userName) {
 
         if (self::checkLogText($logText) === FALSE) {
             return TRUE;
@@ -153,7 +153,7 @@ class ReservationLog extends TableLog {
 
     }
 
-    public static function logFinAppl(PDO $dbh, $idResv, $idGuest, $idRoomRate, $logText, $subType, $userName) {
+    public static function logFinAppl(\PDO $dbh, $idResv, $idGuest, $idRoomRate, $logText, $subType, $userName) {
 
         if (self::checkLogText($logText) === FALSE) {
             return TRUE;
@@ -175,7 +175,7 @@ class ReservationLog extends TableLog {
     }
 
 
-    public static function logHospStay(PDO $dbh, $idhstay, $idPatient, $idAgent, $idPsg,  $logText, $subType, $userName) {
+    public static function logHospStay(\PDO $dbh, $idhstay, $idPatient, $idAgent, $idPsg,  $logText, $subType, $userName) {
 
         if (self::checkLogText($logText) === FALSE) {
             return TRUE;

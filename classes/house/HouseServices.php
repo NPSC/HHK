@@ -824,8 +824,8 @@ class HouseServices {
 
         // remove the next visit
         EditRS::delete($dbh, $nextVisitRs, array($nextVisitRs->idVisit, $nextVisitRs->Span));
-        $logDelText = VisitLog::getDeleteText($nextVisitRs, $nextVisitRs->idVisit);
-        VisitLog::logVisit($dbh, $nextVisitRs->idVisit->getStoredVal(), $nextVisitRs->Span->getStoredVal(), $nextVisitRs->idResource->getStoredVal(), $$nextVisitRs->idRegistration->getStoredVal(), $logDelText, "delete", $uname);
+        $logDelText = VisitLog::getDeleteText($nextVisitRs, $nextVisitRs->idVisit->getStoredVal());
+        VisitLog::logVisit($dbh, $nextVisitRs->idVisit->getStoredVal(), $nextVisitRs->Span->getStoredVal(), $nextVisitRs->idResource->getStoredVal(), $nextVisitRs->idRegistration->getStoredVal(), $logDelText, "delete", $uname);
 
 
         // original stays with status = changeRoom.
@@ -1664,13 +1664,6 @@ class HouseServices {
         }
 
 
-
-//        // Add new room to the registration?
-//        $addRoom = FALSE;
-//        if ($resv->getAddRoom() > 0) {
-//            $addRoom = TRUE;
-//        }
-
         $idVisit = -1;
         $stmt = $dbh->query("Select idVisit from visit where idReservation = " . $resv->getIdReservation() . " limit 1;");
 
@@ -1678,9 +1671,6 @@ class HouseServices {
             $rows = $stmt->fetchAll(PDO::FETCH_NUM);
             $idVisit = $rows[0][0];
         }
-// else if ($addRoom) {
-//            $idVisit = -1;  // flag to add a new visit to the registration.
-//        }
 
         // create visit
         $visit = new Visit($dbh, $reg->getIdRegistration(), $idVisit, $chkinDT, $chkoutDT, $resc, $uS->username);

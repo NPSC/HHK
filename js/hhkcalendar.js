@@ -1586,29 +1586,29 @@ function formatDates(date1, date2, format, options) {
 
 
 var dateFormatters = {
-	s	: function(d)	{ return d.getSeconds() },
-	ss	: function(d)	{ return zeroPad(d.getSeconds()) },
-	m	: function(d)	{ return d.getMinutes() },
-	mm	: function(d)	{ return zeroPad(d.getMinutes()) },
-	h	: function(d)	{ return d.getHours() % 12 || 12 },
-	hh	: function(d)	{ return zeroPad(d.getHours() % 12 || 12) },
-	H	: function(d)	{ return d.getHours() },
-	HH	: function(d)	{ return zeroPad(d.getHours()) },
-	d	: function(d)	{ return d.getDate() },
-	dd	: function(d)	{ return zeroPad(d.getDate()) },
-	ddd	: function(d,o)	{ return o.dayNamesShort[d.getDay()] },
-	dddd: function(d,o)	{ return o.dayNames[d.getDay()] },
-	M	: function(d)	{ return d.getMonth() + 1 },
-	MM	: function(d)	{ return zeroPad(d.getMonth() + 1) },
-	MMM	: function(d,o)	{ return o.monthNamesShort[d.getMonth()] },
-	MMMM: function(d,o)	{ return o.monthNames[d.getMonth()] },
-	yy	: function(d)	{ return (d.getFullYear()+'').substring(2) },
-	yyyy: function(d)	{ return d.getFullYear() },
-	t	: function(d)	{ return d.getHours() < 12 ? 'a' : 'p' },
-	tt	: function(d)	{ return d.getHours() < 12 ? 'am' : 'pm' },
-	T	: function(d)	{ return d.getHours() < 12 ? 'A' : 'P' },
-	TT	: function(d)	{ return d.getHours() < 12 ? 'AM' : 'PM' },
-	u	: function(d)	{ return formatDate(d, "yyyy-MM-dd'T'HH:mm:ss'Z'") },
+	s	: function(d)	{ return d.getSeconds(); },
+	ss	: function(d)	{ return zeroPad(d.getSeconds()); },
+	m	: function(d)	{ return d.getMinutes(); },
+	mm	: function(d)	{ return zeroPad(d.getMinutes()); },
+	h	: function(d)	{ return d.getHours() % 12 || 12; },
+	hh	: function(d)	{ return zeroPad(d.getHours() % 12 || 12); },
+	H	: function(d)	{ return d.getHours(); },
+	HH	: function(d)	{ return zeroPad(d.getHours()); },
+	d	: function(d)	{ return d.getDate(); },
+	dd	: function(d)	{ return zeroPad(d.getDate()); },
+	ddd	: function(d,o)	{ return o.dayNamesShort[d.getDay()]; },
+	dddd: function(d,o)	{ return o.dayNames[d.getDay()]; },
+	M	: function(d)	{ return d.getMonth() + 1; },
+	MM	: function(d)	{ return zeroPad(d.getMonth() + 1); },
+	MMM	: function(d,o)	{ return o.monthNamesShort[d.getMonth()]; },
+	MMMM: function(d,o)	{ return o.monthNames[d.getMonth()]; },
+	yy	: function(d)	{ return (d.getFullYear()+'').substring(2); },
+	yyyy: function(d)	{ return d.getFullYear(); },
+	t	: function(d)	{ return d.getHours() < 12 ? 'a' : 'p'; },
+	tt	: function(d)	{ return d.getHours() < 12 ? 'am' : 'pm'; },
+	T	: function(d)	{ return d.getHours() < 12 ? 'A' : 'P'; },
+	TT	: function(d)	{ return d.getHours() < 12 ? 'AM' : 'PM'; },
+	u	: function(d)	{ return formatDate(d, "yyyy-MM-dd'T'HH:mm:ss'Z'"); },
 	S	: function(d)	{
 		var date = d.getDate();
 		if (date > 10 && date < 20) {
@@ -1994,140 +1994,140 @@ function firstDefined() {
 }
 
 
-fcViews.month = MonthView;
-
-function MonthView(element, calendar) {
-	var t = this;
-
-
-	// exports
-	t.render = render;
-
-
-	// imports
-	BasicView.call(t, element, calendar, 'month');
-	var opt = t.opt;
-	var renderBasic = t.renderBasic;
-	var formatDate = calendar.formatDate;
-
-
-
-	function render(date, delta) {
-		if (delta) {
-			addMonths(date, delta);
-			date.setDate(1);
-		}
-		var start = cloneDate(date, true);
-		start.setDate(1);
-		var end = addMonths(cloneDate(start), 1);
-		var visStart = cloneDate(start);
-		var visEnd = cloneDate(end);
-		var firstDay = opt('firstDay');
-		var nwe = opt('weekends') ? 0 : 1;
-		if (nwe) {
-			skipWeekend(visStart);
-			skipWeekend(visEnd, -1, true);
-		}
-		addDays(visStart, -((visStart.getDay() - Math.max(firstDay, nwe) + 7) % 7));
-		addDays(visEnd, (7 - visEnd.getDay() + Math.max(firstDay, nwe)) % 7);
-		var rowCnt = Math.round((visEnd - visStart) / (DAY_MS * 7));
-		if (opt('weekMode') == 'fixed') {
-			addDays(visEnd, (6 - rowCnt) * 7);
-			rowCnt = 6;
-		}
-		t.title = formatDate(start, opt('titleFormat'));
-		t.start = start;
-		t.end = end;
-		t.visStart = visStart;
-		t.visEnd = visEnd;
-		renderBasic(6, rowCnt, nwe ? 5 : 7, true);
-	}
-
-
-}
-
-fcViews.basicWeek = BasicWeekView;
-
-function BasicWeekView(element, calendar) {
-	var t = this;
-
-
-	// exports
-	t.render = render;
-
-
-	// imports
-	BasicView.call(t, element, calendar, 'basicWeek');
-	var opt = t.opt;
-	var renderBasic = t.renderBasic;
-	var formatDates = calendar.formatDates;
-
-
-
-	function render(date, delta) {
-		if (delta) {
-			addDays(date, delta * 7);
-		}
-		var start = addDays(cloneDate(date), -((date.getDay() - opt('firstDay') + 7) % 7));
-		var end = addDays(cloneDate(start), 7);
-		var visStart = cloneDate(start);
-		var visEnd = cloneDate(end);
-		var weekends = opt('weekends');
-		if (!weekends) {
-			skipWeekend(visStart);
-			skipWeekend(visEnd, -1, true);
-		}
-		t.title = formatDates(
-			visStart,
-			addDays(cloneDate(visEnd), -1),
-			opt('titleFormat')
-		);
-		t.start = start;
-		t.end = end;
-		t.visStart = visStart;
-		t.visEnd = visEnd;
-		renderBasic(1, 1, weekends ? 7 : 5, false);
-	}
-
-
-}
-
-fcViews.basicDay = BasicDayView;
-
-//TODO: when calendar's date starts out on a weekend, shouldn't happen
-
-
-function BasicDayView(element, calendar) {
-	var t = this;
-
-
-	// exports
-	t.render = render;
-
-
-	// imports
-	BasicView.call(t, element, calendar, 'basicDay');
-	var opt = t.opt;
-	var renderBasic = t.renderBasic;
-	var formatDate = calendar.formatDate;
-
-
-
-	function render(date, delta) {
-		if (delta) {
-			addDays(date, delta);
-			if (!opt('weekends')) {
-				skipWeekend(date, delta < 0 ? -1 : 1);
-			}
-		}
-		t.title = formatDate(date, opt('titleFormat'));
-		t.start = t.visStart = cloneDate(date, true);
-		t.end = t.visEnd = addDays(cloneDate(t.start), 1);
-		renderBasic(1, 1, 1, false);
-	}
-
-
-}
+//fcViews.month = MonthView;
+//
+//function MonthView(element, calendar) {
+//	var t = this;
+//
+//
+//	// exports
+//	t.render = render;
+//
+//
+//	// imports
+//	BasicView.call(t, element, calendar, 'month');
+//	var opt = t.opt;
+//	var renderBasic = t.renderBasic;
+//	var formatDate = calendar.formatDate;
+//
+//
+//
+//	function render(date, delta) {
+//		if (delta) {
+//			addMonths(date, delta);
+//			date.setDate(1);
+//		}
+//		var start = cloneDate(date, true);
+//		start.setDate(1);
+//		var end = addMonths(cloneDate(start), 1);
+//		var visStart = cloneDate(start);
+//		var visEnd = cloneDate(end);
+//		var firstDay = opt('firstDay');
+//		var nwe = opt('weekends') ? 0 : 1;
+//		if (nwe) {
+//			skipWeekend(visStart);
+//			skipWeekend(visEnd, -1, true);
+//		}
+//		addDays(visStart, -((visStart.getDay() - Math.max(firstDay, nwe) + 7) % 7));
+//		addDays(visEnd, (7 - visEnd.getDay() + Math.max(firstDay, nwe)) % 7);
+//		var rowCnt = Math.round((visEnd - visStart) / (DAY_MS * 7));
+//		if (opt('weekMode') == 'fixed') {
+//			addDays(visEnd, (6 - rowCnt) * 7);
+//			rowCnt = 6;
+//		}
+//		t.title = formatDate(start, opt('titleFormat'));
+//		t.start = start;
+//		t.end = end;
+//		t.visStart = visStart;
+//		t.visEnd = visEnd;
+//		renderBasic(6, rowCnt, nwe ? 5 : 7, true);
+//	}
+//
+//
+//}
+//
+//fcViews.basicWeek = BasicWeekView;
+//
+//function BasicWeekView(element, calendar) {
+//	var t = this;
+//
+//
+//	// exports
+//	t.render = render;
+//
+//
+//	// imports
+//	BasicView.call(t, element, calendar, 'basicWeek');
+//	var opt = t.opt;
+//	var renderBasic = t.renderBasic;
+//	var formatDates = calendar.formatDates;
+//
+//
+//
+//	function render(date, delta) {
+//		if (delta) {
+//			addDays(date, delta * 7);
+//		}
+//		var start = addDays(cloneDate(date), -((date.getDay() - opt('firstDay') + 7) % 7));
+//		var end = addDays(cloneDate(start), 7);
+//		var visStart = cloneDate(start);
+//		var visEnd = cloneDate(end);
+//		var weekends = opt('weekends');
+//		if (!weekends) {
+//			skipWeekend(visStart);
+//			skipWeekend(visEnd, -1, true);
+//		}
+//		t.title = formatDates(
+//			visStart,
+//			addDays(cloneDate(visEnd), -1),
+//			opt('titleFormat')
+//		);
+//		t.start = start;
+//		t.end = end;
+//		t.visStart = visStart;
+//		t.visEnd = visEnd;
+//		renderBasic(1, 1, weekends ? 7 : 5, false);
+//	}
+//
+//
+//}
+//
+//fcViews.basicDay = BasicDayView;
+//
+////TODO: when calendar's date starts out on a weekend, shouldn't happen
+//
+//
+//function BasicDayView(element, calendar) {
+//	var t = this;
+//
+//
+//	// exports
+//	t.render = render;
+//
+//
+//	// imports
+//	BasicView.call(t, element, calendar, 'basicDay');
+//	var opt = t.opt;
+//	var renderBasic = t.renderBasic;
+//	var formatDate = calendar.formatDate;
+//
+//
+//
+//	function render(date, delta) {
+//		if (delta) {
+//			addDays(date, delta);
+//			if (!opt('weekends')) {
+//				skipWeekend(date, delta < 0 ? -1 : 1);
+//			}
+//		}
+//		t.title = formatDate(date, opt('titleFormat'));
+//		t.start = t.visStart = cloneDate(date, true);
+//		t.end = t.visEnd = addDays(cloneDate(t.start), 1);
+//		renderBasic(1, 1, 1, false);
+//	}
+//
+//
+//}
 
 fcViews.twoweeks = TwoWeeksView;
 

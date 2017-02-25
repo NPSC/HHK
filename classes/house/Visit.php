@@ -191,7 +191,7 @@ class Visit {
         return $upCtr;
     }
 
-    public function addGuestStay($idGuest, $checkinDate, $spanStartDate, $expectedCO = '', $stayOnLeave = 0) {
+    public function addGuestStay($idGuest, $checkinDate, $stayStartDate, $expectedCO = '', $stayOnLeave = 0) {
 
         // If guest already has an active stay ...
         foreach ($this->stays as $sRS) {
@@ -205,26 +205,19 @@ class Visit {
         // Measure against visit span start date
         if ($this->visitRS->Span_Start->getStoredVal() != '') {
             $spanStartDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
-            $ssDT = new \DateTime($spanStartDate);
+            $ssDT = new \DateTime($stayStartDate);
             $spanStartDT->setTime(0, 0, 0);
             if ($ssDT < $spanStartDT) {
-                throw new Hk_Exception_Runtime('Stay start date (' . $spanStartDate . ') earlier than visit span start date (' . $spanStartDT->format('Y-m-d H:i:s') . ').  ');
+                throw new Hk_Exception_Runtime('Stay start date (' . $stayStartDate . ') is earlier than visit span start date (' . $spanStartDT->format('Y-m-d H:i:s') . ').  ');
             }
         }
 
-
+        // Check room size
         $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants);
         if (is_null($rm)) {
             throw new Hk_Exception_Runtime('Room is full.  ');
         }
 
-        // Create a new stay in memory
-        $stayRS = new StaysRS();
-
-        $stayRS->idName->setNewVal($idGuest);
-        $stayRS->idRoom->setNewVal($rm->getIdRoom());
-        $stayRS->Checkin_Date->setNewVal(date("Y-m-d H:i:s", strtotime($checkinDate)));
-        $stayRS->Span_Start_Date->setNewVal(date("Y-m-d H:i:s", strtotime($spanStartDate)));
 
         if ($expectedCO == '') {
             $expectedCO = $this->getExpectedDeparture();
@@ -232,15 +225,24 @@ class Visit {
 
         if ($expectedCO == '') {
             throw new Hk_Exception_UnexpectedValue("The Expected Departure date is not set.");
-        } else {
-            $stayCoDt = new \DateTime($expectedCO);
-            $visitCoDt = new \DateTime($this->getExpectedDeparture());
-            if ($stayCoDt > $visitCoDt) {
-                $this->visitRS->Expected_Departure->setNewVal($stayCoDt->format('Y-m-d 10:00:00'));
-            }
         }
 
-        $stayRS->Expected_Co_Date->setNewVal(date("Y-m-d 10:00:00", strtotime($expectedCO)));
+        $stayCoDt = new \DateTime($expectedCO);
+        $visitCoDt = new \DateTime($this->getExpectedDeparture());
+
+        if ($stayCoDt > $visitCoDt) {
+            $this->visitRS->Expected_Departure->setNewVal($stayCoDt->format('Y-m-d 10:00:00'));
+        }
+
+
+        // Create a new stay in memory
+        $stayRS = new StaysRS();
+
+        $stayRS->idName->setNewVal($idGuest);
+        $stayRS->idRoom->setNewVal($rm->getIdRoom());
+        $stayRS->Checkin_Date->setNewVal(date("Y-m-d H:i:s", strtotime($checkinDate)));
+        $stayRS->Span_Start_Date->setNewVal(date("Y-m-d H:i:s", strtotime($stayStartDate)));
+        $stayRS->Expected_Co_Date->setNewVal($stayCoDt->format('Y-m-d 10:00:00'));
 
         $stayRS->On_Leave->setNewVal($stayOnLeave);
 
@@ -263,12 +265,12 @@ class Visit {
         $this->updateVisitRecord($dbh, $username);
 
         // Save Stays
-        $this->checkInStays($dbh, $username);
+        $this->saveNewStays($dbh, $username);
 
         return TRUE;
     }
 
-    protected function checkInStays(\PDO $dbh, $username) {
+    protected function saveNewStays(\PDO $dbh, $username) {
 
         foreach ($this->stays as $stayRS) {
 
@@ -402,7 +404,7 @@ class Visit {
         } else {
 
             // Change rooms on date given.
-            $this->createNewSpan($dbh, $resc, VisitStatus::NewSpan, $this->getRateCategory(), $this->getIdRoomRate(), $this->getPledgedRate(), $this->visitRS->Expected_Rate->getStoredVal(), $uname, $chgDT->format('Y-m-d H:i:s'));
+            $this->createNewSpan($dbh, $resc, VisitStatus::NewSpan, $this->getRateCategory(), $this->getIdRoomRate(), $this->getPledgedRate(), $this->visitRS->Expected_Rate->getStoredVal(), $uname, $chgDT->format('Y-m-d H:i:s'), (intval($this->visitRS->Span->getStoredVal(), 10) + 1));
             $rtnMessage .= 'Guests Changed Rooms.  ';
 
             // Change date today?
@@ -532,40 +534,56 @@ class Visit {
 
     public function changePledgedRate(\PDO $dbh, $newRateCategory, $pledgedRate, $rateAdjust, $uname, \DateTime $chgDT, $useRateGlide = TRUE, $stayOnLeave = 0) {
 
-        if ($this->getResource($dbh) != NULL) {
+        $uS = Session::getInstance();
+        $this->getResource($dbh);
+
+        // Get the idRoomRate
+        $pm = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+        $rateRs = $pm->getCategoryRateRs(0, $newRateCategory);
+
+        // Temporarily override max occupants, as the room will seem to double.
+        $tempOverrideMaxOcc = $this->overrideMaxOccupants;
+        $this->overrideMaxOccupants = true;
+
+        $this->createNewSpan($dbh, $this->resource, VisitStatus::ChangeRate, $newRateCategory, $rateRs->idRoom_rate->getStoredVal(), $pledgedRate, $rateAdjust, $uname, $chgDT->format('Y-m-d H:i:s'), (intval($this->visitRS->Span->getStoredVal(), 10) + 1), $useRateGlide, $stayOnLeave);
+        $this->overrideMaxOccupants = $tempOverrideMaxOcc;
 
 
-            $uS = Session::getInstance();
+        // change reservation entry
+        $resv = Reservation_1::instantiateFromIdReserv($dbh, $this->visitRS->idReservation->getStoredVal());
 
-            // Get the idRoomRate
-            $pm = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
-            $rateRs = $pm->getCategoryRateRs(0, $newRateCategory);
+        if ($resv->isNew() === FALSE) {
+            $resv->setFixedRoomRate($pledgedRate);
+            $resv->setRateAdjust($rateAdjust);
+            $resv->setRoomRateCategory($newRateCategory);
+            $resv->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
 
-            // Temporarily override max occupants, as the room will seem to double.
-            $tempOverrideMaxOcc = $this->overrideMaxOccupants;
-            $this->overrideMaxOccupants = true;
-
-            $this->createNewSpan($dbh, $this->resource, VisitStatus::ChangeRate, $newRateCategory, $rateRs->idRoom_rate->getStoredVal(), $pledgedRate, $rateAdjust, $uname, $chgDT->format('Y-m-d H:i:s'), $useRateGlide, $stayOnLeave, $rateRs->idRoom_rate->getStoredVal());
-            $this->overrideMaxOccupants = $tempOverrideMaxOcc;
-
-
-            // change reservation entry
-            $resv = Reservation_1::instantiateFromIdReserv($dbh, $this->visitRS->idReservation->getStoredVal());
-
-            if ($resv->isNew() === FALSE) {
-                $resv->setFixedRoomRate($pledgedRate);
-                $resv->setRateAdjust($rateAdjust);
-                $resv->setRoomRateCategory($newRateCategory);
-                $resv->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
-
-                $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
-            }
-
-            return "Room Rate Changed.  ";
+            $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
         }
+
+        return "Room Rate Changed.  ";
+
     }
 
-    protected function createNewSpan(\PDO $dbh, Resource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $uname, $changeDate, $useRateGlide = TRUE, $stayOnLeave = 0, $idRoomRate = 0) {
+    /**
+     * Cloaes the old span with $visitStatus, and starts a new one with the same status as the replaced span.
+     *
+     * @param \PDO $dbh
+     * @param Resource $resc
+     * @param type $visitStatus
+     * @param type $newRateCategory
+     * @param type $newRateId
+     * @param type $pledgedRate
+     * @param type $rateAdjust
+     * @param type $uname
+     * @param type $changeDate
+     * @param type $newSpan
+     * @param type $useRateGlide
+     * @param type $stayOnLeave
+     * @param type $idRoomRate
+     * @throws Hk_Exception_Runtime
+     */
+    protected function createNewSpan(\PDO $dbh, Resource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $uname, $changeDate, $newSpan, $useRateGlide = TRUE, $stayOnLeave = 0) {
 
         $glideDays = 0;
 
@@ -600,8 +618,6 @@ class Visit {
         $this->resource = $resc;
 
         // Create new visit span
-        $newSpan = intval($this->visitRS->Span->getStoredVal(), 10) + 1;
-
         $this->visitRS->idResource->setNewVal($resc->getIdResource());
         $this->visitRS->Span->setNewVal($newSpan);
         $this->visitRS->Span_End->setNewVal('');
@@ -613,11 +629,6 @@ class Visit {
         $this->visitRS->idRoom_rate->setNewVal($newRateId);
         $this->visitRS->Expected_Rate->setNewVal($rateAdjust);
         $this->visitRS->Rate_Glide_Credit->setNewVal($glideDays);
-
-        if ($idRoomRate > 0) {
-            $this->visitRS->idRoom_rate->setNewVal($idRoomRate);
-        }
-
 
         $idVisit = EditRS::insert($dbh, $this->visitRS);
 
@@ -656,12 +667,36 @@ class Visit {
                 VisitLog::logStay($dbh, $this->getIdVisit(), $stayRS->Visit_Span->getStoredVal(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(), $stayRS->idName->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
 
                 EditRS::updateStoredVals($stayRS);
-                $this->addGuestStay($stayRS->idName->getStoredVal(), $stayRS->Checkin_Date->getStoredVal(), $changeDate, $stayRS->Expected_Co_Date->getStoredVal(), $stayOnLeave);
+                $this->addStay($stayRS, $changeDate,$newSpanStatus, $stayOnLeave);
             }
         }
 
-        $this->checkInStays($dbh, $uname);
+        $this->saveNewStays($dbh, $uname);
 
+    }
+
+    protected function addStay(StaysRS $oldStay, $newSpanStart, $newStatus, $stayOnLeave) {
+
+        // Check room size
+        $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants);
+        if (is_null($rm)) {
+            throw new Hk_Exception_Runtime('Room is full.  ');
+        }
+
+        // Create a new stay in memory
+        $stayRS = new StaysRS();
+
+        $stayRS->idName->setNewVal($oldStay->idName->getStoredVal());
+        $stayRS->idRoom->setNewVal($rm->getIdRoom());
+        $stayRS->Checkin_Date->setNewVal($oldStay->Checkin_Date->getStoredVal());
+        $stayRS->Span_Start_Date->setNewVal(date("Y-m-d H:i:s", strtotime($newSpanStart)));
+        $stayRS->Expected_Co_Date->setNewVal($oldStay->Expected_Co_Date->getStoredVal());
+
+        $stayRS->On_Leave->setNewVal($stayOnLeave);
+
+        $stayRS->Status->setNewVal($newStatus);
+        $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+        $this->stays[] = $stayRS;
     }
 
     public function checkOutGuest(\PDO $dbh, $idGuest, $dateDeparted = "", $notes = "", $sendEmail = TRUE, $newDepositDisposition = '') {
@@ -1337,6 +1372,7 @@ class Visit {
     }
 
     public function getResource($dbh = null) {
+
         if (is_null($this->resource) || is_a($this->resource, 'Resource') === FALSE) {
             if ($this->visitRS->idResource->getStoredVal() > 0 && is_a($dbh, 'PDO')) {
                 $this->resource = Resource::getResourceObj($dbh, $this->visitRS->idResource->getStoredVal());

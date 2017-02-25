@@ -465,6 +465,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('SolicitBuffer','90','i','r','Timeout in days after visit checkout before solicit report will show new guests'),
 ('ShowUncfrmdStatusTab', 'true', 'b', 'h', 'Show the Unconfirmed reservations tab on the House Register page'),
 ('ShrRm', 'false', 'b', 'h','Use the share rooms feature'),
+('ShowZeroDayStays', 'false', 'b', 'h', 'Include 0-day stays and visits in Reports and Pages'),
 ('TrackAuto','true','b','h','Track vehicles'),
 ('VisitFee', 'false', 'b', 'h','Use the visit fee (cleaning fee) feature'),
 ('VisitExcessPaid', 'i', 's', 'h','Default place for excess visit payments'),

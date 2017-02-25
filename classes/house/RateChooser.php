@@ -256,22 +256,76 @@ class RateChooser {
         // Go ahead...
         if ($replaceMode == 'rpl' || $chRateDT == $SpanStartDT) {
 
-            // Replace the span's rate
+            // Replace this span's rate - and any further spans not change rate themselves.
             $reply .= Visit::replaceRoomRate($dbh, $visitRs, $rateCategory, $assignedRate, $rateAdj, $uS->username);
 
         } else if ($visitRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
-            // Add a new rate span to this visit
+            // Add a new rate span to the end this visit
             $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $uS->username, $chRateDT, ($uS->RateGlideExtend > 0 ? TRUE : FALSE));
 
         } else {
 
             // Split existing visit span into two
-            $reply .= 'Change Room Rate failed.  ';
+            $reply = $this->splitVisitSpan($dbh, $visit, $rateCategory, $assignedRate, $rateAdj, $uS->username, $chRateDT, ($uS->RateGlideExtend > 0 ? TRUE : FALSE));
+
         }
 
         return $reply;
 
+    }
+
+    protected function splitVisitSpan(\PDO $dbh, Visit $visit, $rateCategory, $assignedRate, $rateAdj, $uname, $chRateDT) {
+
+        $reply = '';
+        $idVisit = $visit->getIdVisit();
+
+        // get all the spans ordered by spanId, declining.
+        $vrss = new VisitRs();
+        $vrss->idVisit->setStoredVal($idVisit);
+        $spans = EditRS::select($dbh, $vrss, array($vrss->idVisit), 'and', array($vrss->Span), FALSE);
+
+
+        foreach ($spans as $s) {
+
+            $spanRs = new VisitRs();
+            EditRS::loadRow($s, $spanRs);
+            $spanId = $spanRs->Span->getStoredVal();
+
+            if ($spanId > $visit->getSpan()) {
+
+                // Increment the Visit span id
+                $upcount = $dbh->exec("UPDATE `visit` SET `Span`= '" . ($spanId + 1) . "' WHERE `idVisit`='$idVisit' and `Span`='$spanId'");
+
+                if ($upcount != 1) {
+                    $reply .= "Error on visit update, span Id = " . $spanId;
+                    continue;
+                }
+
+                // update stays span id
+                $stayRs = new StaysRS();
+                $stayRs->idVisit->setStoredVal($visit->getIdVisit());
+                $stayRs->Visit_Span->setStoredVal($spanId);
+                $stys = EditRS::select($dbh, $stayRs, array($stayRs->idVisit, $stayRs->Visit_Span));
+
+                foreach ($stys as $stay) {
+
+                    $stayRs = new StaysRS();
+                    EditRS::loadRow($stay, $stayRs);
+
+                    $stayRs->Visit_Span->setNewVal($spanId + 1);
+                    $stayRs->Updated_By->setNewVal($uname);
+                    $stayRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+
+                    EditRS::update($dbh, $stayRs, array($stayRs->idStays));
+                }
+            }
+        }
+
+        // split the given span
+        $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $uname, $chRateDT);
+
+        return $reply;
     }
 
 

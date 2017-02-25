@@ -3,13 +3,10 @@
 /**
  * register.js
  *
- *
- * @category  house
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @link      https://github.com/NPSC/HHK
  */
 
 /**
@@ -616,15 +613,15 @@ $(document).ready(function () {
     var wsAddress = 'ws_ckin.php';
     var eventJSONString = wsAddress + '?cmd=register';
     var hindx = 0;
-    $.ajaxSetup({
-        beforeSend: function () {
-            $('body').css('cursor', "wait");
-        },
-        complete: function () {
-            $('body').css('cursor', "auto");
-        },
-        cache: false
-    });
+//    $.ajaxSetup({
+//        beforeSend: function () {
+//            $('body').css('cursor', "wait");
+//        },
+//        complete: function () {
+//            $('body').css('cursor', "auto");
+//        },
+//        cache: false
+//    });
     $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
 
     if (pmtMkup !== '') {
@@ -819,16 +816,6 @@ $(document).ready(function () {
 
     $('.ckdate').datepicker();
 
-    $('#mainTabs').tabs({
-        beforeActivate: function (event, ui) {
-            if (ui.newTab.prop('id') === 'liCal') {
-                $('#calendar').hhkCalendar('render');
-            } else if (ui.newTab.prop('id') === 'liInvoice') {
-                $('#btnInvGo').click();
-            }
-        }
-    });
-
     if ($('#txtactstart').val() === '') {
         var nowdt = new Date();
         nowdt.setTime(nowdt.getTime() - (5 * 86400000));
@@ -862,7 +849,9 @@ $(document).ready(function () {
         },
         false
     );
+    
     var vdays = parseInt(viewDays, 10);
+    
     $('#calendar').hhkCalendar({
         defaultView: 'twoweeks',
         viewDays: vdays,
@@ -1330,7 +1319,20 @@ $(document).ready(function () {
         }
     });
 
+    $('#mainTabs').tabs({
+        beforeActivate: function (event, ui) {
+            if (ui.newTab.prop('id') === 'liInvoice') {
+                $('#btnInvGo').click();
+            }
+        },
+        activate: function (event, ui) {
+            if (ui.newTab.prop('id') === 'liCal') {
+                $('#calendar').hhkCalendar('render');
+            }
+        }
+    });
     $('#mainTabs').show();
     $('#mainTabs').tabs("option", "active", defaultTab);
     $('#calendar').hhkCalendar('render');
+
 });
