@@ -144,6 +144,7 @@ class HouseServices {
 
         if ($r['Span_End'] != '') {
             $vspanEndDT = new \DateTime($r['Span_End']);
+            $vspanEndDT->sub(new DateInterval('P1D'));
         } else {
             $vspanEndDT = new \DateTime();
         }

@@ -262,12 +262,12 @@ class RateChooser {
         } else if ($visitRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
             // Add a new rate span to the end this visit
-            $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $uS->username, $chRateDT, ($uS->RateGlideExtend > 0 ? TRUE : FALSE));
+            $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $uS->username, $chDT, ($uS->RateGlideExtend > 0 ? TRUE : FALSE));
 
         } else {
 
             // Split existing visit span into two
-            $reply = $this->splitVisitSpan($dbh, $visit, $rateCategory, $assignedRate, $rateAdj, $uS->username, $chRateDT, ($uS->RateGlideExtend > 0 ? TRUE : FALSE));
+            $reply = $this->splitVisitSpan($dbh, $visit, $rateCategory, $assignedRate, $rateAdj, $uS->username, $chDT);
 
         }
 
@@ -275,7 +275,7 @@ class RateChooser {
 
     }
 
-    protected function splitVisitSpan(\PDO $dbh, Visit $visit, $rateCategory, $assignedRate, $rateAdj, $uname, $chRateDT) {
+    protected function splitVisitSpan(\PDO $dbh, Visit $visit, $rateCategory, $assignedRate, $rateAdj, $uname, \DateTime $changeDT) {
 
         $reply = '';
         $idVisit = $visit->getIdVisit();
@@ -318,12 +318,14 @@ class RateChooser {
                     $stayRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
                     EditRS::update($dbh, $stayRs, array($stayRs->idStays));
+                    $logText = VisitLog::getUpdateText($stayRs);
+                    VisitLog::logStay($dbh, $visit->getIdVisit(), ($spanId + 1), $stayRs->idRoom->getNewVal(), $stayRs->idStays->getStoredVal(), $stayRs->idName->getNewVal(), $visit->getIdRegistration(), $logText, "update", $uname);
                 }
             }
         }
 
         // split the given span
-        $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $uname, $chRateDT);
+        $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $uname, $changeDT);
 
         return $reply;
     }

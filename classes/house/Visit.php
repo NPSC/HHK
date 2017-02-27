@@ -586,6 +586,19 @@ class Visit {
     protected function createNewSpan(\PDO $dbh, Resource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $uname, $changeDate, $newSpan, $useRateGlide = TRUE, $stayOnLeave = 0) {
 
         $glideDays = 0;
+        $this->stays = array();
+
+        // Load all stays for this span
+        $stayRs = new StaysRS();
+        $stayRs->idVisit->setStoredVal($this->getIdVisit());
+        $stayRs->Visit_Span->setStoredVal($this->getSpan());
+        $stays = EditRS::select($dbh, $stayRs, array($stayRs->idVisit, $stayRs->Visit_Span));
+
+        foreach ($stays as $s) {
+            $sRs = new StaysRS();
+            EditRS::loadRow($s, $sRs);
+            $this->stays[] = $sRs;
+        }
 
         if ($useRateGlide) {
             // Calculate days of old span
@@ -596,16 +609,13 @@ class Visit {
             $glideDays = $this->visitRS->Rate_Glide_Credit->getStoredVal() + $endDT->diff($stDT, TRUE)->days;
         }
 
+        // End old span
         $newSpanStatus = $this->visitRS->Status->getStoredVal();
-
+        $newSpanEnd = $this->visitRS->Span_End->getStoredVal();
         $this->visitRS->Span_End->setNewVal($changeDate);
         $this->visitRS->Status->setNewVal($visitStatus);
 
-        $cnt = $this->updateVisitRecord($dbh, $uname);
-
-        if ($cnt == 0) {
-            throw new Hk_Exception_Runtime('Visit Span update failed.');
-        }
+        $this->updateVisitRecord($dbh, $uname);
 
 
         // set all new values for visit rs
@@ -620,15 +630,15 @@ class Visit {
         // Create new visit span
         $this->visitRS->idResource->setNewVal($resc->getIdResource());
         $this->visitRS->Span->setNewVal($newSpan);
-        $this->visitRS->Span_End->setNewVal('');
+        $this->visitRS->Span_End->setNewVal($newSpanEnd);
         $this->visitRS->Span_Start->setNewVal($changeDate);
         $this->visitRS->Status->setNewVal($newSpanStatus);
-        $this->visitRS->Key_Dep_Disposition->setNewVal('');
         $this->visitRS->Pledged_Rate->setNewVal($pledgedRate);
         $this->visitRS->Rate_Category->setNewVal($newRateCategory);
         $this->visitRS->idRoom_rate->setNewVal($newRateId);
         $this->visitRS->Expected_Rate->setNewVal($rateAdjust);
         $this->visitRS->Rate_Glide_Credit->setNewVal($glideDays);
+        $this->visitRS->Timestamp->setNewVal(date('Y-m-d H:i:s'));
 
         $idVisit = EditRS::insert($dbh, $this->visitRS);
 
@@ -641,24 +651,51 @@ class Visit {
 
         EditRS::updateStoredVals($this->visitRS);
 
-        $this->replaceStays($dbh, $newSpanStatus, $visitStatus, $changeDate, $uname, $stayOnLeave);
+        $this->replaceStays($dbh, $visitStatus, $uname, $stayOnLeave);
 
     }
 
-    protected function replaceStays(\PDO $dbh, $newSpanStatus, $visitStatus, $changeDate, $uname, $stayOnLeave = 0) {
+    protected function replaceStays(\PDO $dbh, $oldStayStatus, $uname, $stayOnLeave = 0) {
 
         $oldStays = $this->stays;
         $this->stays = array();
 
         $this->getResource($dbh);
+        $visitSpanStartDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
+        $visitSpanStartDT->setTime(0, 0, 0);
 
         foreach ($oldStays as $stayRS) {
 
-            if ($stayRS->Status->getStoredVal() == $newSpanStatus) {
+            $stayStartDT = new \DateTime($stayRS->Span_Start_Date->getStoredVal());
+            $stayStartDT->setTime(0, 0, 0);
 
-                // end current stay
-                $stayRS->Status->setNewVal($visitStatus);
-                $stayRS->Span_End_Date->setNewVal($changeDate);
+            $stayEndDT = NULL;
+            if ($stayRS->Span_End_Date->getStoredVal() != '') {
+                $stayEndDT = new \DateTime($stayRS->Span_End_Date->getStoredVal());
+                $stayEndDT->setTime(0, 0, 0);
+            }
+
+            if ($stayStartDT == $visitSpanStartDT) {
+                // Special case - just update the span id and status
+                $stayRS->Visit_Span->setNewVal($this->visitRS->Span->getStoredVal());
+
+                if ($stayRS->Status->getStoredVal() != VisitStatus::CheckedOut) {
+                    $stayRS->Status->setNewVal($this->visitRS->Status->getStoredVal());
+                }
+
+                $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+                $stayRS->Updated_By->setNewVal($uname);
+
+                EditRS::update($dbh, $stayRS, array($stayRS->idStays));
+                $logText = VisitLog::getUpdateText($stayRS);
+                VisitLog::logStay($dbh, $this->getIdVisit(), $stayRS->Visit_Span->getStoredVal(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(), $stayRS->idName->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
+
+            } else if ($stayStartDT < $visitSpanStartDT && (is_null($stayEndDT) || $stayEndDT > $visitSpanStartDT)) {
+                // Split the stay
+
+                // Close old stay
+                $stayRS->Status->setNewVal($oldStayStatus);
+                $stayRS->Span_End_Date->setNewVal($this->visitRS->Span_Start->getStoredVal());
                 $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
                 $stayRS->Updated_By->setNewVal($uname);
 
@@ -667,7 +704,9 @@ class Visit {
                 VisitLog::logStay($dbh, $this->getIdVisit(), $stayRS->Visit_Span->getStoredVal(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(), $stayRS->idName->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
 
                 EditRS::updateStoredVals($stayRS);
-                $this->addStay($stayRS, $changeDate,$newSpanStatus, $stayOnLeave);
+
+                // Make second half of the stay
+                $this->addStay($stayRS, $stayOnLeave);
             }
         }
 
@@ -675,7 +714,7 @@ class Visit {
 
     }
 
-    protected function addStay(StaysRS $oldStay, $newSpanStart, $newStatus, $stayOnLeave) {
+    protected function addStay(StaysRS $oldStay, $stayOnLeave) {
 
         // Check room size
         $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants);
@@ -689,12 +728,14 @@ class Visit {
         $stayRS->idName->setNewVal($oldStay->idName->getStoredVal());
         $stayRS->idRoom->setNewVal($rm->getIdRoom());
         $stayRS->Checkin_Date->setNewVal($oldStay->Checkin_Date->getStoredVal());
-        $stayRS->Span_Start_Date->setNewVal(date("Y-m-d H:i:s", strtotime($newSpanStart)));
+        $stayRS->Checkout_Date->setNewVal($this->visitRS->Actual_Departure->getStoredVal());
+        $stayRS->Span_Start_Date->setNewVal($this->visitRS->Span_Start->getStoredVal());
+        $stayRS->Span_End_Date->setNewVal($this->visitRS->Span_End->getStoredVal());
         $stayRS->Expected_Co_Date->setNewVal($oldStay->Expected_Co_Date->getStoredVal());
 
         $stayRS->On_Leave->setNewVal($stayOnLeave);
+        $stayRS->Status->setNewVal($this->visitRS->Status->getStoredVal());
 
-        $stayRS->Status->setNewVal($newStatus);
         $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
         $this->stays[] = $stayRS;
     }
@@ -1179,6 +1220,36 @@ class Visit {
         return array('message'=>$rtnMsg);
     }
 
+    protected function onLeaveStays(\PDO $dbh, $visitStatus, $changeDate, $uname, $stayOnLeave = 0) {
+
+        $oldStays = $this->stays;
+        $this->stays = array();
+
+        $this->getResource($dbh);
+
+        foreach ($oldStays as $stayRS) {
+
+            if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
+
+                // end current stay
+                $stayRS->Status->setNewVal($visitStatus);
+                $stayRS->Span_End_Date->setNewVal($changeDate);
+                $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+                $stayRS->Updated_By->setNewVal($uname);
+
+                EditRS::update($dbh, $stayRS, array($stayRS->idStays));
+                $logText = VisitLog::getUpdateText($stayRS);
+                VisitLog::logStay($dbh, $this->getIdVisit(), $stayRS->Visit_Span->getStoredVal(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(), $stayRS->idName->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
+
+                EditRS::updateStoredVals($stayRS);
+                $this->addGuestStay($stayRS->idName->getStoredVal(), $stayRS->Checkin_Date->getStoredVal(), $changeDate, $stayRS->Expected_Co_Date->getStoredVal(), $stayOnLeave);
+            }
+        }
+
+        $this->checkInStays($dbh, $uname);
+
+    }
+
     public function endLeave(\PDO $dbh, $returning, $extendReturnDate, $newDisposition) {
 
         $reply = '';
@@ -1234,7 +1305,7 @@ class Visit {
 
             } else {
                 // Check out all guest, check back in.
-                $this->replaceStays($dbh, VisitStatus::CheckedOut, $retDT->format('Y-m-d H:i:s'), $uS->username, FALSE);
+                $this->onLeaveStays($dbh, VisitStatus::CheckedOut, $retDT->format('Y-m-d H:i:s'), $uS->username, FALSE);
 
             }
         }
@@ -1308,7 +1379,7 @@ class Visit {
             EditRS::delete($dbh, $vol, array($vol->idVisit));
 
             // Check out all guest, check back in with OnLeave set.
-            $this->replaceStays($dbh, VisitStatus::CheckedOut, $coDT->format('Y-m-d H:i:s'), $uS->username, $extDays);
+            $this->onLeaveStays($dbh, VisitStatus::CheckedOut, $coDT->format('Y-m-d H:i:s'), $uS->username, $extDays);
             $reply .= 'Guests on Leave.  ';
         }
 

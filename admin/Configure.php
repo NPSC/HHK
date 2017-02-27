@@ -2,10 +2,10 @@
 /**
  * Configure.php
  *
--- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
--- @copyright 2010-2017 <nonprofitsoftwarecorp.org>
--- @license   MIT
--- @link      https://github.com/NPSC/HHK
+  -- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+  -- @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+  -- @license   MIT
+  -- @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
 
@@ -30,8 +30,8 @@ function checkZipFile($upFile) {
     // Undefined | Multiple Files | $_FILES Corruption Attack
     // If this request falls under any of them, treat it invalid.
     if (
-        !isset($_FILES[$upFile]['error']) ||
-        is_array($_FILES[$upFile]['error'])
+            !isset($_FILES[$upFile]['error']) ||
+            is_array($_FILES[$upFile]['error'])
     ) {
         throw new RuntimeException('Invalid parameters.');
     }
@@ -68,7 +68,6 @@ function checkZipFile($upFile) {
 //        )) {
 //            throw new RuntimeException('Invalid file format.');
 //        }
-
     // You should name it uniquely.
     // DO NOT USE $_FILES['upfile']['name'] WITHOUT ANY VALIDATION !!
     // On this example, obtain safe unique name from its binary data.
@@ -81,7 +80,6 @@ function checkZipFile($upFile) {
 //        )) {
 //            throw new RuntimeException('Failed to move uploaded file.');
 //        }
-
 }
 
 function readZipFile($file) {
@@ -137,13 +135,13 @@ $config = new Config_Lite(ciCFG_FILE);
 $labl = new Config_Lite(LABEL_FILE);
 $wsConfig = NULL;
 
-if ($config->has('webServices', 'Service_Name') && $config->getString('webServices', 'Service_Name', '') != '')  {
+if ($config->has('webServices', 'Service_Name') && $config->getString('webServices', 'Service_Name', '') != '') {
 
     require (THIRD_PARTY . 'neon.php');
     require (CLASSES . "TransferMembers.php");
 
     try {
-        $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $config->getString('webServices', 'ContactManager', ''));
+        $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''));
     } catch (Config_Lite_Exception_Runtime $ex) {
         $wsConfig = NULL;
     }
@@ -170,7 +168,6 @@ if (isset($_POST["btnLabelCnf"])) {
 
     $tabIndex = 5;
     SiteConfig::saveConfig($dbh, $labl, $_POST, $uS->username);
-
 }
 
 if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
@@ -208,11 +205,9 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
                 }
             }
         }
-
     } catch (Hk_Exception_Upload $ex) {
         $externalErrMsg = "Transfer Error: " . $ex->getMessage();
     }
-
 }
 
 if (isset($_POST["btnUlPatch"])) {
@@ -221,7 +216,7 @@ if (isset($_POST["btnUlPatch"])) {
 
 if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
     $tabIndex = 1;
-
+    $errorCount = 0;
     $uploadFileName = $_FILES['patch']['name'];
 
     // Log attempt.
@@ -232,12 +227,11 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
 
         checkZipFile('patch');
 
-        $uploadfile = '..' . DS .'patch' . DS . 'upload.zip';
+        $uploadfile = '..' . DS . 'patch' . DS . 'upload.zip';
 
         if (move_uploaded_file($_FILES['patch']['tmp_name'], $uploadfile)) {
 
             // patch system
-
             // Verify file and build #
             $patch = new Patch();
             $resultAccumulator .= $patch->verifyUpLoad($uploadfile, 'hhk/patch/patchSite.cfg', $uS->ver);
@@ -267,7 +261,7 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
 
                 $resultAccumulator = $patch->updateWithSqlStmts($dbh, '.../patch/patchSQL.sql', "Updates");
 
-                $errorCount = 0;
+
                 foreach ($patch->results as $err) {
 
                     if ($err['errno'] == 1062 || $err['errno'] == 1060) {
@@ -287,7 +281,6 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
                 foreach ($patch->results as $err) {
 
                     $errorMsg .= 'Create Views Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-
                 }
             } else {
 
@@ -308,20 +301,17 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
             }
 
             // Log update.
-            $logText = "Loaded software patch - " .$uploadFileName . "; " . $errorMsg;
+            $logText = "Loaded software patch - " . $uploadFileName . "; " . $errorMsg;
             SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
-
         } else {
             throw new Hk_Exception_Runtime("Problem moving uploaded patch file.  ");
         }
-
     } catch (Exception $hex) {
         $errorMsg .= $hex->getMessage();
         // Log failure.
-        $logText = "Fail software patch - " .$uploadFileName . $errorMsg;
+        $logText = "Fail software patch - " . $uploadFileName . $errorMsg;
         SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
     }
-
 }
 
 // Zip code file
@@ -335,12 +325,10 @@ if (isset($_FILES['zipfile'])) {
         $resultMsg .= SiteConfig::loadZipCodeFile($dbh, readZipFile($_FILES['zipfile']['tmp_name']));
 
         SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Loaded. ' . $resultMsg, $config->getString('code', 'GIT_Id', ''));
-
     } catch (Exception $hex) {
         $resultMsg .= $hex->getMessage();
         SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Failed. ' . $resultMsg, $config->getString('code', 'GIT_Id', ''));
     }
-
 }
 
 // Delete old files
@@ -373,8 +361,6 @@ if (isset($_POST['btnSaveSQL'])) {
     // Log update.
     $logText = "Save SQL.  " . $resultAccumulator;
     SiteLog::writeLog($dbh, 'DB', $logText, $config->getString('code', 'GIT_Id', ''));
-
-
 }
 
 // Payment credentials
@@ -384,7 +370,6 @@ if (isset($_POST['btnPay'])) {
 
     unset($uS->nameLookups);
     $wInit->reloadGenLkUps($uS);
-
 }
 
 $logs = '';
@@ -404,7 +389,6 @@ if (isset($_POST['btnLogs'])) {
     }
 
     $logs = CreateMarkupFromDB::generateHTML_Table($edRows, 'syslog');
-
 }
 
 
@@ -463,22 +447,21 @@ if (is_null($wsConfig) === FALSE) {
         // reload
         $stmt = $dbh->query("Select * from neon_indiv_type;");
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
     }
 
     $vt = removeOptionGroups(readGenLookupsPDO($dbh, 'Vol_Type'));
 
     $nTbl = new HTMLTable();
-    $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Member Type').HTMLTable::makeTh('NeonCRM Name').HTMLTable::makeTh('NeonCRM Id'));
+    $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Member Type') . HTMLTable::makeTh('NeonCRM Name') . HTMLTable::makeTh('NeonCRM Id'));
     foreach ($rows as $r) {
         $nTbl->addBodyTr(
-            HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($vt, $r['Vol_Type_Code']), array('name'=>'selIT['.$r['Neon_Id'].']')))
-            .HTMLTable::makeTd($r['Neon_Name'])
-            .HTMLTable::makeTd($r['Neon_Id'])
+                HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($vt, $r['Vol_Type_Code']), array('name' => 'selIT[' . $r['Neon_Id'] . ']')))
+                . HTMLTable::makeTd($r['Neon_Name'])
+                . HTMLTable::makeTd($r['Neon_Id'])
         );
     }
 
-    $externals .= HTMLContainer::generateMarkup('p', 'NeonCRM Individual Type Mapping', array('sytle'=>'font-weight:bold;margin-tpo:10px;')) . $nTbl->generateMarkup();
+    $externals .= HTMLContainer::generateMarkup('p', 'NeonCRM Individual Type Mapping', array('sytle' => 'font-weight:bold;margin-tpo:10px;')) . $nTbl->generateMarkup();
 }
 
 $webAlert = new alertMessage("webContainer");
@@ -490,7 +473,6 @@ $webAlert->set_txtSpanId("webMessage");
 $webAlert->set_Text("oh-oh");
 
 $getWebReplyMessage = $webAlert->createMarkup();
-
 ?>
 <!DOCTYPE html>
 <html>
@@ -503,31 +485,31 @@ $getWebReplyMessage = $webAlert->createMarkup();
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript">
-$(document).ready(function() {
+            $(document).ready(function () {
 
-    $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
+                $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
 
-        $('#financialRoomSubsidyId, #financialReturnPayorId').removeClass('ui-state-error');
+                    $('#financialRoomSubsidyId, #financialReturnPayorId').removeClass('ui-state-error');
 
-        if ($('#financialRoomSubsidyId').val() != 0 && $('#financialRoomSubsidyId').val() === $('#financialReturnPayorId').val()) {
-            $('#financialRoomSubsidyId, #financialReturnPayorId').addClass('ui-state-error');
-            alert('Subsidy Id must be different than the Return Payor Id');
-        }
-    });
+                    if ($('#financialRoomSubsidyId').val() != 0 && $('#financialRoomSubsidyId').val() === $('#financialReturnPayorId').val()) {
+                        $('#financialRoomSubsidyId, #financialReturnPayorId').addClass('ui-state-error');
+                        alert('Subsidy Id must be different than the Return Payor Id');
+                    }
+                });
 
-    var tabIndex = '<?php echo $tabIndex; ?>';
-    var tbs = $('#tabs').tabs();
-    tbs.tabs("option", "active", tabIndex);
-    $('#tabs').show();
-});
+                var tabIndex = '<?php echo $tabIndex; ?>';
+                var tbs = $('#tabs').tabs();
+                tbs.tabs("option", "active", tabIndex);
+                $('#tabs').show();
+            });
         </script>
     </head>
     <body <?php if ($testVersion) {echo "class='testbody'";} ?>>
-<?php echo $menuMarkup; ?>
+    <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
-        <?php echo $getWebReplyMessage; ?>
-        <div id="tabs" class="hhk-member-detail" style="display:none;">
+            <?php echo $getWebReplyMessage; ?>
+            <div id="tabs" class="hhk-member-detail" style="display:none;">
                 <ul>
                     <li><a href="#config">View Site Configuration</a></li>
                     <li><a href="#patch">Patch</a></li>
@@ -535,8 +517,7 @@ $(document).ready(function() {
                     <li><a href="#holidays">Set Holidays</a></li>
                     <li><a href="#loadZip">Load Zip Code Distance Data</a></li>
                     <li><a href="#labels">View Labels & Prompts</a></li>
-                    <?php if ($serviceName != '') {
-                    echo '<li><a href="#external">' . $serviceName . '</a></li>';} ?>
+                    <?php if ($serviceName != '') {echo '<li><a href="#external">' . $serviceName . '</a></li>';} ?>
                 </ul>
                 <div id="config" class="ui-tabs-hide" >
                     <div style="color:red;font-size:1.5em;"><?php echo $confError; ?></div>
@@ -551,18 +532,18 @@ $(document).ready(function() {
                         <div style="float:right;margin-right:40px;"><input type="reset" name="btnreset" value="Reset" style="margin-right:5px;"/><input type="submit" name="btnLabelCnf" value="Save Labels"/></div>
                     </form>
                 </div>
-                <?php if ($serviceName != '') { ?>
-                <div id="external" class="ui-tabs-hide" >
-                    <div style="color:red;font-size: large;" id="divextnlerror"><?php echo $externalErrMsg; ?></div>
-                    <form method="post" name="formext" action="">
-                        <?php echo $externals; ?>
-                        <div style="float:right;margin-right:40px;">
-                            <input type="submit" style='margin-right:10px;' name="btnExtIndiv" value="Reload NeonCRM Individual Id's"/>
-                            <input type="submit" name="btnExtCnf" value="Save"/>
+                    <?php if ($serviceName != '') { ?>
+                        <div id="external" class="ui-tabs-hide" >
+                            <div style="color:red;font-size: large;" id="divextnlerror"><?php echo $externalErrMsg; ?></div>
+                            <form method="post" name="formext" action="">
+                                <?php echo $externals; ?>
+                                <div style="float:right;margin-right:40px;">
+                                    <input type="submit" style='margin-right:10px;' name="btnExtIndiv" value="Reload NeonCRM Individual Id's"/>
+                                    <input type="submit" name="btnExtCnf" value="Save"/>
+                                </div>
+                            </form>
                         </div>
-                    </form>
-                </div>
-                <?php } ?>
+                    <?php } ?>
                 <div id="pay" class="ui-tabs-hide" >
                     <form method="post" name="form2" action="">
                         <?php echo $payments; ?>
@@ -582,7 +563,6 @@ $(document).ready(function() {
                             <!-- MAX_FILE_SIZE must precede the file input field -->
                             <input type="hidden" name="MAX_FILE_SIZE" value="10000000" />
                             <!-- Name of input element determines name in $_FILES array -->
-                            <p style="color:red;font-size: large;"><?php echo $errorMsg; ?></p>
                             <p>Select Patch File: <input name="patch" type="file" /></p><br/>
 
                             <div style="float:left;margin-left:200px;"><input type="submit" name='btnUlPatch' value="Upload & Execute Patch" /></div>
@@ -590,6 +570,8 @@ $(document).ready(function() {
 
                     </div>
                     <div style='clear:both;'>
+                        <p style="color:red;"><?php echo $errorMsg; ?></p>
+
                         <form method="post" action="" name="form1">
                             <p>URL: <?php echo $uS->databaseURL; ?></p>
                             <p>Schema: <?php echo $uS->databaseName; ?></p>
@@ -616,7 +598,6 @@ $(document).ready(function() {
 
                         <div style="float:right;margin-right:40px;"><input type="submit" value="Go" /></div>
                     </form>
-
                 </div>
             </div>
         </div>

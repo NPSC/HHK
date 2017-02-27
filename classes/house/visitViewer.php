@@ -369,7 +369,10 @@ class VisitView {
         $sTable = new HTMLTable();
         $priGuests = array();
         $rows = array();
-
+        $hdrPgRb = '';
+        $chkInTitle = '';
+        $visitStatus = '';
+        $onLeave = 0;
         $idV = intval($idVisit, 10);
         $idS = intval($span, 10);
 
@@ -382,6 +385,8 @@ class VisitView {
 
         foreach ($rows as $r) {
 
+            $visitStatus = $rows[0]['Visit_Status'];
+            $onLeave = $r['On_Leave'];
             $days = 0;
 
             $actionButton = "";
@@ -574,10 +579,10 @@ class VisitView {
         }
 
         // Adjust headers in this condition
-        if ($someoneCheckedIn === FALSE && $r["Visit_Status"] == VisitStatus::CheckedIn) {
+        if ($someoneCheckedIn === FALSE && $visitStatus == VisitStatus::CheckedIn) {
             // Set if there are no expected checkouts
-            $ckOutTitle = ($r['On_Leave'] > 0 ? 'Ending' : 'Checked Out');
-            $chkInTitle = ($r['On_Leave'] > 0 ? 'Starting' : 'Checked In');
+            $ckOutTitle = ($onLeave > 0 ? 'Ending' : 'Checked Out');
+            $chkInTitle = ($onLeave > 0 ? 'Starting' : 'Checked In');
         }
 
         // Table header
@@ -609,7 +614,7 @@ class VisitView {
 
         // Make add guest button
         $guestAddButton = '';
-        if ($isAdmin && $r["Visit_Status"] != VisitStatus::CheckedIn) {
+        if ($isAdmin && $visitStatus != VisitStatus::CheckedIn) {
 
             $guestAddButton = HTMLContainer::generateMarkup('span', '', array('id'=>'guestAdd', 'class'=>'ui-icon ui-icon-circle-plus', 'style'=>'float:left;margin-left: 1.3em; cursor:pointer;', 'title'=>'Add a Guest to this visit'))
                     .HTMLContainer::generateMarkup('span', 'Add Guest', array('style'=>'float:left;margin-left: 0.3em; display:none;', 'class'=>'hhk-addGuest'))
@@ -1231,6 +1236,8 @@ class VisitView {
             if ($stayMsg != '') {
                 return $stayMsg;
             }
+
+
         }
 
         // Check for pre-existing reservations
