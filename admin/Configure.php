@@ -259,7 +259,7 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
             // Run SQL patches
             if (file_exists('../patch/patchSQL.sql')) {
 
-                $resultAccumulator = $patch->updateWithSqlStmts($dbh, '.../patch/patchSQL.sql', "Updates");
+                $resultAccumulator = $patch->updateWithSqlStmts($dbh, '../patch/patchSQL.sql', "Updates");
 
 
                 foreach ($patch->results as $err) {

@@ -124,32 +124,25 @@ class Patch {
 
     public function updateWithSqlStmts(\PDO $dbh, $tfile, $type = '') {
 
-        $message = $type . ' filename is missing.  ';
         $this->results = array();
 
-        if ($tfile != '') {
-
-            $tquery = file_get_contents($tfile);
-
-            $tresult = self::multiQueryPDO($dbh, $tquery);
-
-            if (count($tresult) > 0) {
-
-                $message = '';
-
-                foreach ($tresult as $err) {
-                    $this->results[] = $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-                }
-
-                return $type . ' failed:  ' . $message;
-            }
-
-            $message = $type . " created. ";
-
+        if ($tfile == '') {
+            return 'Filename is missing.  ';
         }
 
-        return $message;
+        $tquery = file_get_contents($tfile);
 
+        $tresult = self::multiQueryPDO($dbh, $tquery);
+
+        if (count($tresult) > 0) {
+
+            foreach ($tresult as $err) {
+                $this->results[$err['errno']] = $err;
+            }
+
+        } else {
+            return $type . ' Successful';
+        }
     }
 
     public function updateSps(\PDO $dbh, $spFile){
@@ -343,8 +336,12 @@ class Patch {
                 continue;
             }
 
-            if ($dbh->exec($q) === FALSE) {
-                $msg[] = array('error'=>$dbh->errorInfo(), 'errno'=> $dbh->errorCode(), 'query'=> $q );
+            try {
+                if ($dbh->exec($q) === FALSE) {
+                    $msg[] = array('error'=>$dbh->errorInfo(), 'errno'=> $dbh->errorCode(), 'query'=> $q );
+                }
+            } catch (PDOException $pex) {
+                // do nothing
             }
         }
 
