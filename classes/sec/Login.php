@@ -77,6 +77,7 @@ class Login {
         $ssn->subsidyId = $config->getString('financial', 'RoomSubsidyId', '0');
 
         $ssn->tutURL = $config->getString('site', 'Tutorial_URL', '');
+        $ssn->HufURL = $config->getString('site', 'HUF_URL', '');
         $ssn->adminEmailAddr = $config->getString('house', 'Admin_Address', '');
         $ssn->noreplyAddr = $config->getString('house', 'NoReply', '');
         $ssn->adminSiteURL = $config->get('site', 'Admin_URL', '');

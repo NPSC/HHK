@@ -232,13 +232,15 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
         if (move_uploaded_file($_FILES['patch']['tmp_name'], $uploadfile)) {
 
             // patch system
-            // Verify file and build #
             $patch = new Patch();
-            $resultAccumulator .= $patch->verifyUpLoad($uploadfile, 'hhk/patch/patchSite.cfg', $uS->ver);
+
+            // Verify file and build #.  Throws an error on problems.
+            $patch->verifyUpLoad($uploadfile, 'hhk/patch/patchSite.cfg', $uS->ver);
 
             // Replace files
             $resultAccumulator .= $patch->loadFiles('../', $uploadfile);
 
+            // Annotate any missed files.
             foreach ($patch->results as $err) {
                 $errorMsg .= 'Patch File Copy Error: ' . $err['error'] . '<br/>';
             }
@@ -259,7 +261,7 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
             // Run SQL patches
             if (file_exists('../patch/patchSQL.sql')) {
 
-                $resultAccumulator = $patch->updateWithSqlStmts($dbh, '../patch/patchSQL.sql', "Updates");
+                $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../patch/patchSQL.sql', "Updates");
 
 
                 foreach ($patch->results as $err) {
@@ -289,7 +291,12 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
 
             // Update SPs
             if ($errorCount < 1) {
-                $resultAccumulator .= $patch->updateSps($dbh, '../sql/CreateAllRoutines.sql');
+                $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures');
+
+                foreach ($patch->results as $err) {
+
+                    $errorMsg .= 'Create Stored Procedures Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+                }
             } else {
                 $errorMsg .= '** Stored Procedures not updated**  ';
             }
@@ -303,11 +310,13 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
             // Log update.
             $logText = "Loaded software patch - " . $uploadFileName . "; " . $errorMsg;
             SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
+
         } else {
             throw new Hk_Exception_Runtime("Problem moving uploaded patch file.  ");
         }
+
     } catch (Exception $hex) {
-        $errorMsg .= $hex->getMessage();
+        $errorMsg .= '***' . $hex->getMessage();
         // Log failure.
         $logText = "Fail software patch - " . $uploadFileName . $errorMsg;
         SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
@@ -356,7 +365,7 @@ if (isset($_POST['btnSaveSQL'])) {
         $errorMsg .= 'Create View Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
     }
 
-    $resultAccumulator .= $patch->updateSps($dbh, '../sql/CreateAllRoutines.sql');
+    $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures');
 
     // Log update.
     $logText = "Save SQL.  " . $resultAccumulator;

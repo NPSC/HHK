@@ -26,7 +26,6 @@ class Patch {
 
     public function verifyUpLoad($zipFile, $versionFileName, $origBuild) {
 
-        $result = '';
         $fname = '..' . DS .'patch' . DS . 'patchVer.cfg';
         $fileSize = 0;
         $this->oldVersion = $origBuild;
@@ -96,7 +95,6 @@ class Patch {
             throw new Hk_Exception_Runtime("The build number of this update (" . $newBuild . ") is lower than this site's build number (" . $origBuilds[2] . ").  ");
         }
 
-        return $result;
     }
 
     public function loadFiles($fileRoot, $filePathName) {
@@ -127,7 +125,7 @@ class Patch {
         $this->results = array();
 
         if ($tfile == '') {
-            return 'Filename is missing.  ';
+            return $type . ' Filename is missing.  ';
         }
 
         $tquery = file_get_contents($tfile);
@@ -141,34 +139,8 @@ class Patch {
             }
 
         } else {
-            return $type . ' Successful';
+            return $type . ' Successful<br/>';
         }
-    }
-
-    public function updateSps(\PDO $dbh, $spFile){
-
-        $message = 'Stored Procedure Filename is missing.  ';
-
-        if ($spFile != '') {
-
-            $spquery = file_get_contents($spFile);
-            //$result = multiQuery($mysqli, $spquery, '$$', '-- ;');
-            $result = self::multiQueryPDO($dbh, $spquery, '$$', '-- ;');
-
-            if (count($result) > 0) {
-
-                $message = "**Stored Procedures Failed:   ";
-
-                foreach ($result as $err) {
-                    $message .= $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-                }
-
-            } else {
-                $message = "Stored Procedures created.  ";
-            }
-        }
-
-        return $message;
     }
 
     public function loadConfigUpdates($configUpdateFile, Config_Lite $config) {
@@ -287,7 +259,12 @@ class Patch {
                         }
 
                         // copy the new version in
-                        $fileSize = file_put_contents($relDir . "/" . $file, zip_entry_read($entry, zip_entry_filesize($entry)));
+                        try {
+                            $fileSize = file_put_contents($relDir . "/" . $file, zip_entry_read($entry, zip_entry_filesize($entry)));
+                        } catch (Exception $ex) {
+                            $this->results[] = array('error'=>"Unable to put file: $relDir/$file" . " Msg: " . $ex->getMessage(), 'errno'=> '', 'query'=> '' );
+                            continue;
+                        }
 
                         if ($colCounter >= 2) {
                             $table->addBodyTr($tr);
@@ -296,7 +273,7 @@ class Patch {
                         }
 
                         if ($fileSize === false) {
-                            $tr .= HTMLTable::makeTd("Unable to write file: $relDir/$file");
+                            $tr .= HTMLTable::makeTd("File not written: $relDir/$file");
                             $this->results[] = array('error'=>"Unable to write file: $relDir/$file", 'errno'=> '', 'query'=> '' );
                         } else {
                             $tr .= HTMLTable::makeTd($relDir . "/" . $file);
@@ -324,7 +301,7 @@ class Patch {
         $msg = array();
 
         if ($query === FALSE || trim($query) == '') {
-            return $msg;
+            return $msg[] = array('error'=>'Empty query file ', 'errno'=> '', 'query'=> $query );
         }
 
         $qParts = explode($splitAt, $query);

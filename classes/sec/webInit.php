@@ -104,7 +104,7 @@ class webInit {
 
     public function generatePageMenu() {
         // generate menu markup if page type = 'p'
-        return $this->page->generateMenu($this->menuTitle, $this->resourceURL);
+        return $this->page->generateMenu($this->menuTitle);
 
     }
 
