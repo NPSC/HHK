@@ -291,7 +291,7 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
 
             // Update SPs
             if ($errorCount < 1) {
-                $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures');
+                $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
 
                 foreach ($patch->results as $err) {
 

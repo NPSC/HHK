@@ -120,7 +120,7 @@ class Patch {
         return $result;
     }
 
-    public function updateWithSqlStmts(\PDO $dbh, $tfile, $type = '') {
+    public function updateWithSqlStmts(\PDO $dbh, $tfile, $type = '', $delimiter = ';', $splitAt = ';') {
 
         $this->results = array();
 
@@ -130,7 +130,7 @@ class Patch {
 
         $tquery = file_get_contents($tfile);
 
-        $tresult = self::multiQueryPDO($dbh, $tquery);
+        $tresult = self::multiQueryPDO($dbh, $tquery, $delimiter, $splitAt);
 
         if (count($tresult) > 0) {
 
@@ -298,6 +298,7 @@ class Patch {
     }
 
     public static function multiQueryPDO(\PDO $dbh, $query, $delimiter = ";", $splitAt = ';') {
+
         $msg = array();
 
         if ($query === FALSE || trim($query) == '') {
