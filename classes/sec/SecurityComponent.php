@@ -10,11 +10,11 @@
 abstract class SecurityComponent {
 
 
-    protected static function loadWebSite(\PDO $dbh, $HTTP_Host, $doc_root) {
+    protected static function loadWebSite(\PDO $dbh, $host, $root) {
 
         $uS = Session::getInstance();
-        $HTTP_Host = strtolower($HTTP_Host);
-        $doc_root = strtolower($doc_root);
+        $HTTP_Host = strtolower($host);
+        $doc_root = strtolower($root);
 
         // Load all the web sites.
         if (isset($uS->siteList) === FALSE) {
@@ -60,90 +60,89 @@ abstract class SecurityComponent {
         if (isset($uS->webSite) && $uS->webSite["Relative_Address"] == $doc_root && $uS->webSite["HTTP_Host"] == $HTTP_Host) {
 
             return $uS->webSite;
-        } else {
-
-            unset($uS->webSite);
-            unset($uS->webPages);
-
-            foreach ($uS->siteList as $ws) {
-                if (trim($ws["Relative_Address"]) == trim($doc_root) && trim($ws["HTTP_Host"]) == trim($HTTP_Host)) {
-                    $uS->webSite = $ws;
-                }
-            }
-
-
-            if (isset($uS->webSite)) {
-
-                $wsCode = strtolower($uS->webSite["Site_Code"]);
-                $where = " where p.Web_Site = '$wsCode' and p.Hide = 0 ";
-                $orderBy = " order by p.Type, p.Menu_Parent, p.Menu_Position";
-
-                // Get list of pages
-                $query = "select
-                    p.idPage as idPage,
-                    p.File_Name,
-                    p.Title as Title,
-                    p.Type as Type,
-                    p.Menu_Parent,
-                    p.Menu_Position,
-                    case
-                        when p.Login_Page_Id > 0 then p1.File_Name
-                        else ''
-                    end as Login_Page,
-                    ifnull(s.Group_Code, '') as Group_Code
-                from
-                    page p
-                        left join
-                    page p1 ON p.Login_Page_Id = p1.idPage
-                        left join
-                    page_securitygroup s ON p.idPage = s.idPage";
-
-                try {
-                    $stmt = $dbh->query($query . $where . $orderBy);
-                } catch (PDOException $pex) {
-                    $where = " where p.Web_Site = '$wsCode' ";
-                    $stmt = $dbh->query($query . $where . $orderBy);
-                }
-
-                if ($stmt->rowCount() > 0) {
-                    $wp = array();
-                    $lastId = 0;
-
-                    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-
-                        if ($lastId == $r['idPage']) {
-
-                            $wp[$r['File_Name']]['Codes'][] = $r['Group_Code'];
-
-                        } else {
-
-                            $wp[$r['File_Name']] = array(
-                                'idPage' => $r['idPage'],
-                                'Title' => $r['Title'],
-                                'Type' => $r['Type'],
-                                'Parent' => $r['Menu_Parent'],
-                                'Position' => $r['Menu_Position'],
-                                'Login' => $r['Login_Page'],
-                                'Codes' => array($r['Group_Code'])
-                            );
-                        }
-
-                        $lastId = $r['idPage'];
-                    }
-
-                    $uS->webPages = $wp;
-                } else {
-                    throw new Hk_Exception_Runtime("Web pages list not found.");
-                }
-            } else {
-
-                throw new Hk_Exception_Runtime("web_sites not found.  Host: " . $HTTP_Host . "  Doc Root: " . $doc_root);
-            }
-
-            return $uS->webSite;
         }
 
-        return array();
+        // Load Site
+        unset($uS->webSite);
+        unset($uS->webPages);
+
+        foreach ($uS->siteList as $ws) {
+            if (trim($ws["Relative_Address"]) == trim($doc_root) && trim($ws["HTTP_Host"]) == trim($HTTP_Host)) {
+                $uS->webSite = $ws;
+            }
+        }
+
+
+        if (isset($uS->webSite)) {
+
+            $wsCode = strtolower($uS->webSite["Site_Code"]);
+            $where = " where p.Web_Site = '$wsCode' and p.Hide = 0 ";
+            $orderBy = " order by p.Type, p.Menu_Parent, p.Menu_Position";
+
+            // Get list of pages
+            $query = "select
+                p.idPage as idPage,
+                p.File_Name,
+                p.Title as Title,
+                p.Type as Type,
+                p.Menu_Parent,
+                p.Menu_Position,
+                case
+                    when p.Login_Page_Id > 0 then p1.File_Name
+                    else ''
+                end as Login_Page,
+                ifnull(s.Group_Code, '') as Group_Code
+            from
+                page p
+                    left join
+                page p1 ON p.Login_Page_Id = p1.idPage
+                    left join
+                page_securitygroup s ON p.idPage = s.idPage";
+
+            try {
+                $stmt = $dbh->query($query . $where . $orderBy);
+            } catch (PDOException $pex) {
+                $where = " where p.Web_Site = '$wsCode' ";
+                $stmt = $dbh->query($query . $where . $orderBy);
+            }
+
+            if ($stmt->rowCount() > 0) {
+                $wp = array();
+                $lastId = 0;
+
+                while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+                    if ($lastId == $r['idPage']) {
+
+                        $wp[$r['File_Name']]['Codes'][] = $r['Group_Code'];
+
+                    } else {
+
+                        $wp[$r['File_Name']] = array(
+                            'idPage' => $r['idPage'],
+                            'Title' => $r['Title'],
+                            'Type' => $r['Type'],
+                            'Parent' => $r['Menu_Parent'],
+                            'Position' => $r['Menu_Position'],
+                            'Login' => $r['Login_Page'],
+                            'Codes' => array($r['Group_Code'])
+                        );
+                    }
+
+                    $lastId = $r['idPage'];
+                }
+
+                $uS->webPages = $wp;
+            } else {
+                throw new Hk_Exception_Runtime("Web pages list not found.");
+            }
+        } else {
+
+            throw new Hk_Exception_Runtime("web_sites not found.  Host: " . $HTTP_Host . "  Doc Root: " . $doc_root);
+        }
+
+        return $uS->webSite;
+
     }
 
     /*

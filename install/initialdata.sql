@@ -52,13 +52,13 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Charge_Cards', '3', 'Discover','', '',0),
 ('Charge_Cards', '4', 'Am Ex', '','',0),
 
-('Demographics', 'a', 'Age_Bracket', 'y','m',5),
-('Demographics', 'e', 'Ethnicity', 'y','m',10),
-('Demographics', 'g', 'Gender', 'y','m',15),
-('Demographics', 'i', 'Income_Bracket', 'y','m',25),
-('Demographics', 'l', 'Education_Level', 'y','m',20),
-('Demographics', 'sn', 'Special_Needs', '','m',35),
-('Demographics', 'ms', 'Media_Source', '','m',30),
+('Demographics', 'Age_Bracket', 'Age Bracket', 'y','m',5),
+('Demographics', 'Ethnicity', 'Ethnicity', 'y','m',10),
+('Demographics', 'Gender', 'Gender', 'y','m',15),
+('Demographics', 'Income_Bracket', 'Income Bracket', 'y','m',25),
+('Demographics', 'Education_Level', 'Education Level', 'y','m',20),
+('Demographics', 'Special_Needs', 'Special Needs', '','m',35),
+('Demographics', 'Media_Source', 'Media Source', '','m',30),
 
 ('Diagnosis','0','Other','','h',0),
 ('Diagnosis','0','Breast Cancer','','h',0),
@@ -176,8 +176,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Member_Basis','ai','Individual','i','',10),
 ('Member_Basis','c','Company','o','',20),
 ('Member_Basis','np','Non Profit','o','',30),
-('Member_Basis','og','Government','o','',40),
+('Member_Basis','og','Government','o','',40);
 
+
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES
 ('mem_status','a','Active','m','',10),
 ('mem_status','d','Deceased','m','',20),
 ('mem_status','in','Inactive','m','',30),
@@ -207,7 +209,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('OOS_Codes', 'sb', 'Sewer Backup','','h',0),
 ('OOS_Codes', 'ar', 'Appliance Repair','','h',0),
 ('OOS_Codes', 'sr', 'Structural Repair','','h',0),
-('OOS_Codes', 'cd', 'Cleaning Delay','','h',0),
+('OOS_Codes', 'cd', 'Access Blocked','','h',0),
 
 ('Order_Status','a','Active','','',0),
 ('Order_Status','f','Finished','','',0),
@@ -385,11 +387,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('WL_Final_Status','se','Elsewhere','','',0),
 ('WL_Status','a','Active','','',0),
 ('WL_Status','in','Inactive','','',0),
-('WL_Status','st','Stayed','','');
--- ;
+('WL_Status','st','Stayed','','',0);
 
 
-REPLACE INTO `lookups` VALUES 
+REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`,`Timestamp`) VALUES 
 ('FinAppStatus','a','Granted','y','y','','','2013-11-19 17:27:35'),
 ('FinAppStatus','n','Not Granted','y','y','','','2013-11-19 17:27:35'),
 ('RegistrationAtribute','Sig_Card','Guest Signature','y','y','','','2013-11-13 00:59:31'),
@@ -406,7 +407,6 @@ REPLACE INTO `lookups` VALUES
 ('ReservStatus','td','Turned Down','y','y','','ui-icon-arrowreturnthick-1-s','2013-11-14 17:57:58'),
 ('ReservStatus', 'im', 'Immediate', 'y', 'y', '', 'ui-icon-check', NULL),
 ('ReservStatus','w','Waitlist','y','y','','ui-icon-arrowstop-1-e','2013-11-14 17:57:58');
--- ;
 
 
 
@@ -414,6 +414,7 @@ REPLACE INTO `lookups` VALUES
 -- insert System configuration
 --
 REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES 
+('CalViewWeeks','3','i','h','Number of weeks showing in the calendar view'),
 ('CardSwipe','false','b','f','Use POS terminal'),
 ('ConfirmFile','hhk.html','s','h','Reservation Confirmation file template name'),
 ('ConcatVisitNotes', 'true', 'b', 'h', 'Show notes combined from all previous visits when true.'),
@@ -470,7 +471,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('VisitFee', 'false', 'b', 'h','Use the visit fee (cleaning fee) feature'),
 ('VisitExcessPaid', 'i', 's', 'h','Default place for excess visit payments'),
 ('VerifyHospDate', 'true', 'b', 'h','Insist on hospital treatment date entry');
--- ;
+
 
 
 replace into `item` (`idItem`, `Internal_Number`, `Entity_Id`, `Gl_Code`, `Description`) values 
@@ -485,7 +486,7 @@ replace into `item` (`idItem`, `Internal_Number`, `Entity_Id`, `Gl_Code`, `Descr
 ('9', 'a1', '0', '7', ''),
 ('10', 'n3', '0',  '8', 'Lodging MOA'),
 ('11', 'd2', '0', '4', 'Waive');
--- ;
+
 
 
 Replace INTO `item_price` (`idItem_price`, `Item_Id`, `Currency_Id`, `Price`, `ModelCode`) VALUES 
@@ -500,20 +501,20 @@ Replace INTO `item_price` (`idItem_price`, `Item_Id`, `Currency_Id`, `Price`, `M
 ('9', '9', '0', '0', ''),
 ('10', '10', '0', '0', ''),
 ('11', '11', '0', '0', '');
--- ;
 
 
-replace into `item_type` values 
+
+replace into `item_type` (`idItem_Type`,`Category_Type`,`Type_Description`,`Internal`,`Order_Line_Type_Id`) values 
 (1, 1, 'Items', 0, 0),
 (2, 1, 'Tax', 0, 0),
 (3, 1, 'Refundable', 0,0),
 (4, 2, 'Duration', 0, 0),
 (5, '1', 'Refund', 0, '0'),
 (6, '1', 'Discount', 0, '0');
--- ;
 
 
-INSERT INTO `item_type_map` values
+
+INSERT INTO `item_type_map` (`Item_Id`,`Type_Id`) values
 (1,4),
 (2,1),
 (3,3),
@@ -524,7 +525,7 @@ INSERT INTO `item_type_map` values
 (8,6),
 (9,1),
 (10, 3);
--- ;
+
 
 
 INSERT INTO `payment_method` (`idPayment_method`, `Method_Name`) VALUES 
@@ -533,7 +534,7 @@ INSERT INTO `payment_method` (`idPayment_method`, `Method_Name`) VALUES
 ('3', 'Check'),
 ('4', 'ChgAsCash'),
 ('5', 'Transfer');
--- ;
+
 
 
 
@@ -545,13 +546,13 @@ replace INTO invoice_line_type (id, Description, Order_Position) VALUES
 (5,'sub account',5),
 (6,'item one-time',3),
 ('7', 'reimburse', '9');
--- ;
+
 
 
 REPLACE INTO `insurance_type` (`idInsurance_type`, `Title`, `Is_Primary`, `Multiselect`, `List_Order`) VALUES 
 ('h', 'Primary', '1', '10', '10'),
 ('p', 'Private', '0', '1', '20');
--- ;
+
 
 --
 -- insert super user
@@ -562,16 +563,21 @@ REPLACE into name (idName, Name_Last, Member_Type, Member_Status, Record_Member)
 
 REPLACE INTO `w_auth` (`idName`,`Role_Id`,`Organization_Id`,`Policy_id`,`Updated_By`,`Last_Updated`,`User_Name`,`Status`) 
     VALUES (-1,'10','p',0,'admin',now(),'admin','a');
--- ;
 
-REPLACE INTO `w_users` VALUES (-1,'admin','539e17171312c324d3c23908f85f3149','a','','','','','done',NULL,'','',NULL,now());
--- ;
+
+
+REPLACE INTO `w_users` 
+(`idName`,`User_Name`,`Enc_PW`,`Status`,`Certificate`,`Cookie`,`Session`,`Ip`,`Verify_Address`,`Last_Login`,`Hash_PW`,`Updated_By`,`Last_Updated`,`Timestamp`)
+VALUES 
+(-1,'admin','539e17171312c324d3c23908f85f3149','a','','','','','done',NULL,'','',NULL,now());
 
 
 --
 -- Table `w_groups`
 --
-REPLACE INTO `w_groups` VALUES
+REPLACE INTO `w_groups` 
+(`Group_Code`,`Title`,`Description`,`Default_Access_Level`,`Max_Level`,`Min_Access_Level`,`Cookie_Restricted`,`Password_Policy`,`Last_Updated`,`Updated_By`,`Timestamp`) 
+VALUES
 ('db','Maintenance','Configure metadata.','','','','\0','','2013-08-07 16:19:17','admin','2013-07-28 16:34:25'),
 ('dm','Donation Management','Donation Management','','','','\0','','2013-08-07 16:11:22','admin','2013-07-28 16:34:25'),
 ('dna','Donors (No Amounts)','View lists of donors but without donation amounts','','','','\0','','2013-08-07 16:16:10','admin','2013-07-28 16:34:25'),
@@ -580,18 +586,17 @@ REPLACE INTO `w_groups` VALUES
 ('mm','Member Management','Member Management, basic access to admin site.','','','','\0','','2013-08-07 16:19:40','admin','2013-07-28 16:34:25'),
 ('pub','Public','Public','','','','\0','','2013-08-07 16:11:22','admin','2013-07-28 16:34:25'),
 ('v','Volunteer','Volunteer site.','','','','\0','','2013-08-07 16:19:17','admin','2013-07-28 16:34:25');
--- ;
+
 
 
 --
 -- Dumping data for table `counter`
 --
-REPLACE INTO `counter` VALUES
+REPLACE INTO `counter` (`seqn`,`Table_Name`,`Next`,`Last_Updated`) VALUES
 (1,'relationship',10,NULL),
 (4,'repeater',10,NULL),
 (5,'codes',100,NULL),
 (6, 'invoice', 1000, NULL);
--- ;
 
 
 --
@@ -601,28 +606,30 @@ REPLACE INTO `cc_hosted_gateway` (`cc_name`, `Merchant_Id`, `Password`, `Credit_
 VALUES 
 ('Test', '', '', 'https://hc.mercurydev.net/hcws/hcservice.asmx?WSDL', 'https://hc.mercurydev.net/tws/TransactionService.asmx?WSDL', 'https://hc.mercurydev.net/CardInfo.aspx', 'https://hc.mercurydev.net/Checkout.aspx', 'https://hc.mercurydev.net/mobile/mCardInfo.aspx', 'https://hc.mercurydev.net/mobile/mCheckout.aspx'),
 ('Production', '', '', 'https://hc.mercurypay.com/hcws/hcservice.asmx?WSDL', 'https://hc.mercurypay.com/tws/transactionservice.asmx?WSDL', 'https://hc.mercurypay.com/CardInfo.aspx', 'https://hc.mercurypay.com/Checkout.aspx', 'https://hc.mercurypay.com/mobile/mCardInfo.aspx', 'https://hc.mercurypay.com/mobile/mCheckout.aspx');
--- ;
 
 
-REPLACE into transaction_type values
+
+REPLACE into `transaction_type` (`idtransaction_type`,`Title`,`Effect`,`Code`) values
 (1, 'Sale', '', 's'),
 (2, 'Void', '', 'vs'),
 (3, 'Return', '', 'r'),
 (4, 'Void Return', '', 'vr');
--- ;
+
 
 --
 -- Dumping data for table `street_suffix`
 --
-REPLACE INTO `street_suffix` VALUES ('ALLEE','ALY','Aly'),('ALLEY','ALY','Aly'),('ALLY','ALY','Aly'),('ALY','ALY','Aly'),('ANEX','ANX','Anx'),('ANNEX','ANX','Anx'),('ANNX','ANX','Anx'),('ANX','ANX','Anx'),('ARC','ARC','Arc'),('ARCADE','ARC','Arc'),('AV','AVE','Ave'),('AVE','AVE','Ave'),('AVEN','AVE','Ave'),('AVENU','AVE','Ave'),('AVENUE','AVE','Ave'),('AVN','AVE','Ave'),('AVNUE','AVE','Ave'),('BAYOO','BYU','Byu'),('BAYOU','BYU','Byu'),('BCH','BCH','Bch'),('BEACH','BCH','Bch'),('BEND','BND','Bnd'),('BND','BND','Bnd'),('BLF','BLF','Blf'),('BLUF','BLF','Blf'),('BLUFF','BLF','Blf'),('BLUFFS','BLFS','Blfs'),('BOT','BTM','Btm'),('BOTTM','BTM','Btm'),('BOTTOM','BTM','Btm'),('BTM','BTM','Btm'),('BLVD','BLVD','Blvd'),('BOUL','BLVD','Blvd'),('BOULEVARD','BLVD','Blvd'),('BOULV','BLVD','Blvd'),('BR','BR','Br'),('BRANCH','BR','Br'),('BRNCH','BR','Br'),('BRDGE','BRG','Brg'),('BRG','BRG','Brg'),('BRIDGE','BRG','Brg'),('BRK','BRK','Brk'),('BROOK','BRK','Brk'),('BROOKS','BRKS','Brks'),('BURG','BG','Bg'),('BURGS','BGS','Bgs'),('BYP','BYP','Byp'),('BYPA','BYP','Byp'),('BYPAS','BYP','Byp'),('BYPASS','BYP','Byp'),('BYPS','BYP','Byp'),('CAMP','CP','Cp'),('CMP','CP','Cp'),('CP','CP','Cp'),('CANYN','CYN','Cyn'),('CANYON','CYN','Cyn'),('CNYN','CYN','Cyn'),('CYN','CYN','Cyn'),('CAPE','CPE','Cpe'),('CPE','CPE','Cpe'),('CAUSEWAY','CSWY','Cswy'),('CAUSWAY','CSWY','Cswy'),('CSWY','CSWY','Cswy'),('CEN','CTR','Ctr'),('CENT','CTR','Ctr'),('CENTER','CTR','Ctr'),('CENTR','CTR','Ctr'),('CENTRE','CTR','Ctr'),('CNTER','CTR','Ctr'),('CNTR','CTR','Ctr'),('CTR','CTR','Ctr'),('CENTERS','CTRS','Ctrs'),('CIR','CIR','Cir'),('CIRC','CIR','Cir'),('CIRCL','CIR','Cir'),('CIRCLE','CIR','Cir'),('CRCL','CIR','Cir'),('CRCLE','CIR','Cir'),('CIRCLES','CIRS','Cirs'),('CLF','CLF','Clf'),('CLIFF','CLF','Clf'),('CLFS','CLFS','Clfs'),('CLIFFS','CLFS','Clfs'),('CLB','CLB','Clb'),('CLUB','CLB','Clb'),('COMMON','CMN','Cmn'),('COR','COR','Cor'),('CORNER','COR','Cor'),('CORNERS','CORS','Cors'),('CORS','CORS','Cors'),('COURSE','CRSE','Crse'),('CRSE','CRSE','Crse'),('COURT','CT','Ct'),('CRT','CT','Ct'),('CT','CT','Ct'),('COURTS','CTS','Cts'),('CTS','CTS','Cts'),('COVE','CV','Cv'),('CV','CV','Cv'),('COVES','CVS','Cvs'),('CK','CRK','Crk'),('CR','CRK','Crk'),('CREEK','CRK','Crk'),('CRK','CRK','Crk'),('CRECENT','CRES','Cres'),('CRES','CRES','Cres'),('CRESCENT','CRES','Cres'),('CRESENT','CRES','Cres'),('CRSCNT','CRES','Cres'),('CRSENT','CRES','Cres'),('CRSNT','CRES','Cres'),('CREST','CRST','Crst'),('CROSSING','XING','Xing'),('CRSSING','XING','Xing'),('CRSSNG','XING','Xing'),('XING','XING','Xing'),('CROSSROAD','XRD','Xrd'),('CURVE','CURV','Curv'),('DALE','DL','Dl'),('DL','DL','Dl'),('DAM','DM','Dm'),('DM','DM','Dm'),('DIV','DV','Dv'),('DIVIDE','DV','Dv'),('DV','DV','Dv'),('DVD','DV','Dv'),('DR','DR','Dr'),('DRIV','DR','Dr'),('DRIVE','DR','Dr'),('DRV','DR','Dr'),('DRIVES','DRS','Drs'),('EST','EST','Est'),('ESTATE','EST','Est'),('ESTATES','ESTS','Ests'),('ESTS','ESTS','Ests'),('EXP','EXPY','Expy'),('EXPR','EXPY','Expy'),('EXPRESS','EXPY','Expy'),('EXPRESSWAY','EXPY','Expy'),('EXPW','EXPY','Expy'),('EXPY','EXPY','Expy'),('EXT','EXT','Ext'),('EXTENSION','EXT','Ext'),('EXTN','EXT','Ext'),('EXTNSN','EXT','Ext'),('EXTENSIONS','EXTS','Exts'),('EXTS','EXTS','Exts'),('FALL','FALL','Fall'),('FALLS','FLS','Fls'),('FLS','FLS','Fls'),('FERRY','FRY','Fry'),('FRRY','FRY','Fry'),('FRY','FRY','Fry'),('FIELD','FLD','Fld'),('FLD','FLD','Fld'),('FIELDS','FLDS','Flds'),('FLDS','FLDS','Flds'),('FLAT','FLT','Flt'),('FLT','FLT','Flt'),('FLATS','FLTS','Flts'),('FLTS','FLTS','Flts'),('FORD','FRD','Frd'),('FRD','FRD','Frd'),('FORDS','FRDS','Frds'),('FOREST','FRST','Frst'),('FORESTS','FRST','Frst'),('FRST','FRST','Frst'),('FORG','FRG','Frg'),('FORGE','FRG','Frg'),('FRG','FRG','Frg'),('FORGES','FRGS','Frgs'),('FORK','FRK','Frk'),('FRK','FRK','Frk'),('FORKS','FRKS','Frks'),('FRKS','FRKS','Frks'),('FORT','FT','Ft'),('FRT','FT','Ft'),('FT','FT','Ft'),('FREEWAY','FWY','Fwy'),('FREEWY','FWY','Fwy'),('FRWAY','FWY','Fwy'),('FRWY','FWY','Fwy'),('FWY','FWY','Fwy'),('GARDEN','GDN','Gdn'),('GARDN','GDN','Gdn'),('GDN','GDN','Gdn'),('GRDEN','GDN','Gdn'),('GRDN','GDN','Gdn'),('GARDENS','GDNS','Gdns'),('GDNS','GDNS','Gdns'),('GRDNS','GDNS','Gdns'),('GATEWAY','GTWY','Gtwy'),('GATEWY','GTWY','Gtwy'),('GATWAY','GTWY','Gtwy'),('GTWAY','GTWY','Gtwy'),('GTWY','GTWY','Gtwy'),('GLEN','GLN','Gln'),('GLN','GLN','Gln'),('GLENS','GLNS','Glns'),('GREEN','GRN','Grn'),('GRN','GRN','Grn'),('GREENS','GRNS','Grns'),('GROV','GRV','Grv'),('GROVE','GRV','Grv'),('GRV','GRV','Grv'),('GROVES','GRVS','Grvs'),('HARB','HBR','Hbr'),('HARBOR','HBR','Hbr'),('HARBR','HBR','Hbr'),('HBR','HBR','Hbr'),('HRBOR','HBR','Hbr'),('HARBORS','HBRS','Hbrs'),('HAVEN','HVN','Hvn'),('HAVN','HVN','Hvn'),('HVN','HVN','Hvn'),('HEIGHT','HTS','Hts'),('HEIGHTS','HTS','Hts'),('HGTS','HTS','Hts'),('HT','HTS','Hts'),('HTS','HTS','Hts'),('HIGHWAY','HWY','Hwy'),('HIGHWY','HWY','Hwy'),('HIWAY','HWY','Hwy'),('HIWY','HWY','Hwy'),('HWAY','HWY','Hwy'),('HWY','HWY','Hwy'),('HILL','HL','Hl'),('HL','HL','Hl'),('HILLS','HLS','Hls'),('HLS','HLS','Hls'),('HLLW','HOLW','Holw'),('HOLLOW','HOLW','Holw'),('HOLLOWS','HOLW','Holw'),('HOLW','HOLW','Holw'),('HOLWS','HOLW','Holw'),('INLET','INLT','Inlt'),('INLT','INLT','Inlt'),('IS','IS','Is'),('ISLAND','IS','Is'),('ISLND','IS','Is'),('ISLANDS','ISS','Iss'),('ISLNDS','ISS','Iss'),('ISS','ISS','Iss'),('ISLE','ISLE','Isle'),('ISLES','ISLE','Isle'),('JCT','JCT','Jct'),('JCTION','JCT','Jct'),('JCTN','JCT','Jct'),('JUNCTION','JCT','Jct'),('JUNCTN','JCT','Jct'),('JUNCTON','JCT','Jct'),('JCTNS','JCTS','Jcts'),('JCTS','JCTS','Jcts'),('JUNCTIONS','JCTS','Jcts'),('KEY','KY','Ky'),('KY','KY','Ky'),('KEYS','KYS','Kys'),('KYS','KYS','Kys'),('KNL','KNL','Knl'),('KNOL','KNL','Knl'),('KNOLL','KNL','Knl'),('KNLS','KNLS','Knls'),('KNOLLS','KNLS','Knls'),('LAKE','LK','Lk'),('LK','LK','Lk'),('LAKES','LKS','Lks'),('LKS','LKS','Lks'),('LAND','LAND','Land'),('LANDING','LNDG','Lndg'),('LNDG','LNDG','Lndg'),('LNDNG','LNDG','Lndg'),('LA','LN','Ln'),('LANE','LN','Ln'),('LANES','LN','Ln'),('LN','LN','Ln'),('LGT','LGT','Lgt'),('LIGHT','LGT','Lgt'),('LIGHTS','LGTS','Lgts'),('LF','LF','Lf'),('LOAF','LF','Lf'),('LCK','LCK','Lck'),('LOCK','LCK','Lck'),('LCKS','LCKS','Lcks'),('LOCKS','LCKS','Lcks'),('LDG','LDG','Ldg'),('LDGE','LDG','Ldg'),('LODG','LDG','Ldg'),('LODGE','LDG','Ldg'),('LOOP','LOOP','Loop'),('LOOPS','LOOP','Loop'),('MALL','MALL','Mall'),('MANOR','MNR','Mnr'),('MNR','MNR','Mnr'),('MANORS','MNRS','Mnrs'),('MNRS','MNRS','Mnrs'),('MDW','MDW','Mdw'),('MEADOW','MDW','Mdw'),('MDWS','MDWS','Mdws'),('MEADOWS','MDWS','Mdws'),('MEDOWS','MDWS','Mdws'),('MEWS','MEWS','Mews'),('MILL','ML','Ml'),('ML','ML','Ml'),('MILLS','MLS','Mls'),('MLS','MLS','Mls'),('MISSION','MSN','Msn'),('MISSN','MSN','Msn'),('MSN','MSN','Msn'),('MSSN','MSN','Msn'),('MOTORWAY','MTWY','Mtwy'),('MNT','MT','Mt'),('MOUNT','MT','Mt'),('MT','MT','Mt'),('MNTAIN','MTN','Mtn'),('MNTN','MTN','Mtn'),('MOUNTAIN','MTN','Mtn'),('MOUNTIN','MTN','Mtn'),('MTIN','MTN','Mtn'),('MTN','MTN','Mtn'),('MNTNS','MTNS','Mtns'),('MOUNTAINS','MTNS','Mtns'),('NCK','NCK','Nck'),('NECK','NCK','Nck'),('ORCH','ORCH','Orch'),('ORCHARD','ORCH','Orch'),('ORCHRD','ORCH','Orch'),('OVAL','OVAL','Oval'),('OVL','OVAL','Oval'),('OVERPASS','OPAS','Opas'),('PARK','PARK','Park'),('PK','PARK','Park'),('PRK','PARK','Park'),('PARKS','PARK','Park'),('PARKWAY','PKWY','Pkwy'),('PARKWY','PKWY','Pkwy'),('PKWAY','PKWY','Pkwy'),('PKWY','PKWY','Pkwy'),('PKY','PKWY','Pkwy'),('PARKWAYS','PKWY','Pkwy'),('PKWYS','PKWY','Pkwy'),('PASS','PASS','Pass'),('PASSAGE','PSGE','Psge'),('PATH','PATH','Path'),('PATHS','PATH','Path'),('PIKE','PIKE','Pike'),('PIKES','PIKE','Pike'),('PINE','PNE','Pne'),('PINES','PNES','Pnes'),('PNES','PNES','Pnes'),('PL','PL','Pl'),('PLACE','PL','Pl'),('PLAIN','PLN','Pln'),('PLN','PLN','Pln'),('PLAINES','PLNS','Plns'),('PLAINS','PLNS','Plns'),('PLNS','PLNS','Plns'),('PLAZA','PLZ','Plz'),('PLZ','PLZ','Plz'),('PLZA','PLZ','Plz'),('POINT','PT','Pt'),('PT','PT','Pt'),('POINTS','PTS','Pts'),('PTS','PTS','Pts'),('PORT','PRT','Prt'),('PRT','PRT','Prt'),('PORTS','PRTS','Prts'),('PRTS','PRTS','Prts'),('PR','PR','Pr'),('PRAIRIE','PR','Pr'),('PRARIE','PR','Pr'),('PRR','PR','Pr'),('RAD','RADL','Radl'),('RADIAL','RADL','Radl'),('RADIEL','RADL','Radl'),('RADL','RADL','Radl'),('RAMP','RAMP','Ramp'),('RANCH','RNCH','Rnch'),('RANCHES','RNCH','Rnch'),('RNCH','RNCH','Rnch'),('RNCHS','RNCH','Rnch'),('RAPID','RPD','Rpd'),('RPD','RPD','Rpd'),('RAPIDS','RPDS','Rpds'),('RPDS','RPDS','Rpds'),('REST','RST','Rst'),('RST','RST','Rst'),('RDG','RDG','Rdg'),('RDGE','RDG','Rdg'),('RIDGE','RDG','Rdg'),('RDGS','RDGS','Rdgs'),('RIDGES','RDGS','Rdgs'),('RIV','RIV','Riv'),('RIVER','RIV','Riv'),('RIVR','RIV','Riv'),('RVR','RIV','Riv'),('RD','RD','Rd'),('ROAD','RD','Rd'),('RDS','RDS','Rds'),('ROADS','RDS','Rds'),('ROUTE','RTE','Rte'),('ROW','ROW','Row'),('RUE','RUE','Rue'),('RUN','RUN','Run'),('SHL','SHL','Shl'),('SHOAL','SHL','Shl'),('SHLS','SHLS','Shls'),('SHOALS','SHLS','Shls'),('SHOAR','SHR','Shr'),('SHORE','SHR','Shr'),('SHR','SHR','Shr'),('SHOARS','SHRS','Shrs'),('SHORES','SHRS','Shrs'),('SHRS','SHRS','Shrs'),('SKYWAY','SKWY','Skwy'),('SPG','SPG','Spg'),('SPNG','SPG','Spg'),('SPRING','SPG','Spg'),('SPRNG','SPG','Spg'),('SPGS','SPGS','Spgs'),('SPNGS','SPGS','Spgs'),('SPRINGS','SPGS','Spgs'),('SPRNGS','SPGS','Spgs'),('SPUR','SPUR','Spur'),('SPURS','SPUR','Spur'),('SQ','SQ','Sq'),('SQR','SQ','Sq'),('SQRE','SQ','Sq'),('SQU','SQ','Sq'),('SQUARE','SQ','Sq'),('SQRS','SQS','Sqs'),('SQUARES','SQS','Sqs'),('STA','STA','Sta'),('STATION','STA','Sta'),('STATN','STA','Sta'),('STN','STA','Sta'),('STRA','STRA','Stra'),('STRAV','STRA','Stra'),('STRAVE','STRA','Stra'),('STRAVEN','STRA','Stra'),('STRAVENUE','STRA','Stra'),('STRAVN','STRA','Stra'),('STRVN','STRA','Stra'),('STRVNUE','STRA','Stra'),('STREAM','STRM','Strm'),('STREME','STRM','Strm'),('STRM','STRM','Strm'),('ST','ST','St'),('STR','ST','St'),('STREET','ST','St'),('STRT','ST','St'),('STREETS','STS','Sts'),('SMT','SMT','Smt'),('SUMIT','SMT','Smt'),('SUMITT','SMT','Smt'),('SUMMIT','SMT','Smt'),('TER','TER','Ter'),('TERR','TER','Ter'),('TERRACE','TER','Ter'),('THROUGHWAY','TRWY','Trwy'),('TRACE','TRCE','Trce'),('TRACES','TRCE','Trce'),('TRCE','TRCE','Trce'),('TRACK','TRAK','Trak'),('TRACKS','TRAK','Trak'),('TRAK','TRAK','Trak'),('TRK','TRAK','Trak'),('TRKS','TRAK','Trak'),('TRAFFICWAY','TRFY','Trfy'),('TRFY','TRFY','Trfy'),('TR','TRL','Trl'),('TRAIL','TRL','Trl'),('TRAILS','TRL','Trl'),('TRL','TRL','Trl'),('TRLS','TRL','Trl'),('TUNEL','TUNL','Tunl'),('TUNL','TUNL','Tunl'),('TUNLS','TUNL','Tunl'),('TUNNEL','TUNL','Tunl'),('TUNNELS','TUNL','Tunl'),('TUNNL','TUNL','Tunl'),('TPK','TPKE','Tpke'),('TPKE','TPKE','Tpke'),('TRNPK','TPKE','Tpke'),('TRPK','TPKE','Tpke'),('TURNPIKE','TPKE','Tpke'),('TURNPK','TPKE','Tpke'),('UNDERPASS','UPAS','Upas'),('UN','UN','Un'),('UNION','UN','Un'),('UNIONS','UNS','Uns'),('VALLEY','VLY','Vly'),('VALLY','VLY','Vly'),('VLLY','VLY','Vly'),('VLY','VLY','Vly'),('VALLEYS','VLYS','Vlys'),('VLYS','VLYS','Vlys'),('VDCT','VIA','Via'),('VIA','VIA','Via'),('VIADCT','VIA','Via'),('VIADUCT','VIA','Via'),('VIEW','VW','Vw'),('VW','VW','Vw'),('VIEWS','VWS','Vws'),('VWS','VWS','Vws'),('VILL','VLG','Vlg'),('VILLAG','VLG','Vlg'),('VILLAGE','VLG','Vlg'),('VILLG','VLG','Vlg'),('VILLIAGE','VLG','Vlg'),('VLG','VLG','Vlg'),('VILLAGES','VLGS','Vlgs'),('VLGS','VLGS','Vlgs'),('VILLE','VL','Vl'),('VL','VL','Vl'),('VIS','VIS','Vis'),('VIST','VIS','Vis'),('VISTA','VIS','Vis'),('VST','VIS','Vis'),('VSTA','VIS','Vis'),('WALK','WALK','Walk'),('WALKS','WALK','Walk'),('WALL','WALL','Wall'),('WAY','WAY','Way'),('WY','WAY','Way'),('WAYS','WAYS','Ways'),('WELL','WL','Wl'),('WELLS','WLS','Wls'),('WLS','WLS','Wls');
--- ;
+REPLACE INTO `street_suffix` (`Common`,`Standard`,`TitleCaps`) VALUES 
+('ALLEE','ALY','Aly'),('ALLEY','ALY','Aly'),('ALLY','ALY','Aly'),('ALY','ALY','Aly'),('ANEX','ANX','Anx'),('ANNEX','ANX','Anx'),('ANNX','ANX','Anx'),('ANX','ANX','Anx'),('ARC','ARC','Arc'),('ARCADE','ARC','Arc'),('AV','AVE','Ave'),('AVE','AVE','Ave'),('AVEN','AVE','Ave'),('AVENU','AVE','Ave'),('AVENUE','AVE','Ave'),('AVN','AVE','Ave'),('AVNUE','AVE','Ave'),('BAYOO','BYU','Byu'),('BAYOU','BYU','Byu'),('BCH','BCH','Bch'),('BEACH','BCH','Bch'),('BEND','BND','Bnd'),('BND','BND','Bnd'),('BLF','BLF','Blf'),('BLUF','BLF','Blf'),('BLUFF','BLF','Blf'),('BLUFFS','BLFS','Blfs'),('BOT','BTM','Btm'),('BOTTM','BTM','Btm'),('BOTTOM','BTM','Btm'),('BTM','BTM','Btm'),('BLVD','BLVD','Blvd'),('BOUL','BLVD','Blvd'),('BOULEVARD','BLVD','Blvd'),('BOULV','BLVD','Blvd'),('BR','BR','Br'),('BRANCH','BR','Br'),('BRNCH','BR','Br'),('BRDGE','BRG','Brg'),('BRG','BRG','Brg'),('BRIDGE','BRG','Brg'),('BRK','BRK','Brk'),('BROOK','BRK','Brk'),('BROOKS','BRKS','Brks'),('BURG','BG','Bg'),('BURGS','BGS','Bgs'),('BYP','BYP','Byp'),('BYPA','BYP','Byp'),('BYPAS','BYP','Byp'),('BYPASS','BYP','Byp'),('BYPS','BYP','Byp'),('CAMP','CP','Cp'),('CMP','CP','Cp'),('CP','CP','Cp'),('CANYN','CYN','Cyn'),('CANYON','CYN','Cyn'),('CNYN','CYN','Cyn'),('CYN','CYN','Cyn'),('CAPE','CPE','Cpe'),('CPE','CPE','Cpe'),('CAUSEWAY','CSWY','Cswy'),('CAUSWAY','CSWY','Cswy'),('CSWY','CSWY','Cswy'),('CEN','CTR','Ctr'),('CENT','CTR','Ctr'),('CENTER','CTR','Ctr'),('CENTR','CTR','Ctr'),('CENTRE','CTR','Ctr'),('CNTER','CTR','Ctr'),('CNTR','CTR','Ctr'),('CTR','CTR','Ctr'),('CENTERS','CTRS','Ctrs'),('CIR','CIR','Cir'),('CIRC','CIR','Cir'),('CIRCL','CIR','Cir'),('CIRCLE','CIR','Cir'),('CRCL','CIR','Cir'),('CRCLE','CIR','Cir'),('CIRCLES','CIRS','Cirs'),('CLF','CLF','Clf'),('CLIFF','CLF','Clf'),('CLFS','CLFS','Clfs'),('CLIFFS','CLFS','Clfs'),('CLB','CLB','Clb'),('CLUB','CLB','Clb'),('COMMON','CMN','Cmn'),('COR','COR','Cor'),('CORNER','COR','Cor'),('CORNERS','CORS','Cors'),('CORS','CORS','Cors'),('COURSE','CRSE','Crse'),('CRSE','CRSE','Crse'),('COURT','CT','Ct'),('CRT','CT','Ct'),('CT','CT','Ct'),('COURTS','CTS','Cts'),('CTS','CTS','Cts'),('COVE','CV','Cv'),('CV','CV','Cv'),('COVES','CVS','Cvs'),('CK','CRK','Crk'),('CR','CRK','Crk'),('CREEK','CRK','Crk'),('CRK','CRK','Crk'),('CRECENT','CRES','Cres'),('CRES','CRES','Cres'),('CRESCENT','CRES','Cres'),('CRESENT','CRES','Cres'),('CRSCNT','CRES','Cres'),('CRSENT','CRES','Cres'),('CRSNT','CRES','Cres'),('CREST','CRST','Crst'),('CROSSING','XING','Xing'),('CRSSING','XING','Xing'),('CRSSNG','XING','Xing'),('XING','XING','Xing'),('CROSSROAD','XRD','Xrd'),('CURVE','CURV','Curv'),('DALE','DL','Dl'),('DL','DL','Dl'),('DAM','DM','Dm'),('DM','DM','Dm'),('DIV','DV','Dv'),('DIVIDE','DV','Dv'),('DV','DV','Dv'),('DVD','DV','Dv'),('DR','DR','Dr'),('DRIV','DR','Dr'),('DRIVE','DR','Dr'),('DRV','DR','Dr'),('DRIVES','DRS','Drs'),('EST','EST','Est'),('ESTATE','EST','Est'),('ESTATES','ESTS','Ests'),('ESTS','ESTS','Ests'),('EXP','EXPY','Expy'),('EXPR','EXPY','Expy'),('EXPRESS','EXPY','Expy'),('EXPRESSWAY','EXPY','Expy'),('EXPW','EXPY','Expy'),('EXPY','EXPY','Expy'),('EXT','EXT','Ext'),('EXTENSION','EXT','Ext'),('EXTN','EXT','Ext'),('EXTNSN','EXT','Ext'),('EXTENSIONS','EXTS','Exts'),('EXTS','EXTS','Exts'),('FALL','FALL','Fall'),('FALLS','FLS','Fls'),('FLS','FLS','Fls'),('FERRY','FRY','Fry'),('FRRY','FRY','Fry'),('FRY','FRY','Fry'),('FIELD','FLD','Fld'),('FLD','FLD','Fld'),('FIELDS','FLDS','Flds'),('FLDS','FLDS','Flds'),('FLAT','FLT','Flt'),('FLT','FLT','Flt'),('FLATS','FLTS','Flts'),('FLTS','FLTS','Flts'),('FORD','FRD','Frd'),('FRD','FRD','Frd'),('FORDS','FRDS','Frds'),('FOREST','FRST','Frst'),('FORESTS','FRST','Frst'),('FRST','FRST','Frst'),('FORG','FRG','Frg'),('FORGE','FRG','Frg'),('FRG','FRG','Frg'),('FORGES','FRGS','Frgs'),('FORK','FRK','Frk'),('FRK','FRK','Frk'),('FORKS','FRKS','Frks'),('FRKS','FRKS','Frks'),('FORT','FT','Ft'),('FRT','FT','Ft'),('FT','FT','Ft'),('FREEWAY','FWY','Fwy'),('FREEWY','FWY','Fwy'),('FRWAY','FWY','Fwy'),('FRWY','FWY','Fwy'),('FWY','FWY','Fwy'),('GARDEN','GDN','Gdn'),('GARDN','GDN','Gdn'),('GDN','GDN','Gdn'),('GRDEN','GDN','Gdn'),('GRDN','GDN','Gdn'),('GARDENS','GDNS','Gdns'),('GDNS','GDNS','Gdns'),('GRDNS','GDNS','Gdns'),('GATEWAY','GTWY','Gtwy'),('GATEWY','GTWY','Gtwy'),('GATWAY','GTWY','Gtwy'),('GTWAY','GTWY','Gtwy'),('GTWY','GTWY','Gtwy'),('GLEN','GLN','Gln'),('GLN','GLN','Gln'),('GLENS','GLNS','Glns'),('GREEN','GRN','Grn'),('GRN','GRN','Grn'),('GREENS','GRNS','Grns'),('GROV','GRV','Grv'),('GROVE','GRV','Grv'),('GRV','GRV','Grv'),('GROVES','GRVS','Grvs'),('HARB','HBR','Hbr'),('HARBOR','HBR','Hbr'),('HARBR','HBR','Hbr'),('HBR','HBR','Hbr'),('HRBOR','HBR','Hbr'),('HARBORS','HBRS','Hbrs'),('HAVEN','HVN','Hvn'),('HAVN','HVN','Hvn'),('HVN','HVN','Hvn'),('HEIGHT','HTS','Hts'),('HEIGHTS','HTS','Hts'),('HGTS','HTS','Hts'),('HT','HTS','Hts'),('HTS','HTS','Hts'),('HIGHWAY','HWY','Hwy'),('HIGHWY','HWY','Hwy'),('HIWAY','HWY','Hwy'),('HIWY','HWY','Hwy'),('HWAY','HWY','Hwy'),('HWY','HWY','Hwy'),('HILL','HL','Hl'),('HL','HL','Hl'),('HILLS','HLS','Hls'),('HLS','HLS','Hls'),('HLLW','HOLW','Holw'),('HOLLOW','HOLW','Holw'),('HOLLOWS','HOLW','Holw'),('HOLW','HOLW','Holw'),('HOLWS','HOLW','Holw'),('INLET','INLT','Inlt'),('INLT','INLT','Inlt'),('IS','IS','Is'),('ISLAND','IS','Is'),('ISLND','IS','Is'),('ISLANDS','ISS','Iss'),('ISLNDS','ISS','Iss'),('ISS','ISS','Iss'),('ISLE','ISLE','Isle'),('ISLES','ISLE','Isle'),('JCT','JCT','Jct'),('JCTION','JCT','Jct'),('JCTN','JCT','Jct'),('JUNCTION','JCT','Jct'),('JUNCTN','JCT','Jct'),('JUNCTON','JCT','Jct'),('JCTNS','JCTS','Jcts'),('JCTS','JCTS','Jcts'),('JUNCTIONS','JCTS','Jcts'),('KEY','KY','Ky'),('KY','KY','Ky'),('KEYS','KYS','Kys'),('KYS','KYS','Kys'),('KNL','KNL','Knl'),('KNOL','KNL','Knl'),('KNOLL','KNL','Knl'),('KNLS','KNLS','Knls'),('KNOLLS','KNLS','Knls'),('LAKE','LK','Lk'),('LK','LK','Lk'),('LAKES','LKS','Lks'),('LKS','LKS','Lks'),('LAND','LAND','Land'),('LANDING','LNDG','Lndg'),('LNDG','LNDG','Lndg'),('LNDNG','LNDG','Lndg'),('LA','LN','Ln'),('LANE','LN','Ln'),('LANES','LN','Ln'),('LN','LN','Ln'),('LGT','LGT','Lgt'),('LIGHT','LGT','Lgt'),('LIGHTS','LGTS','Lgts'),('LF','LF','Lf'),('LOAF','LF','Lf'),('LCK','LCK','Lck'),('LOCK','LCK','Lck'),('LCKS','LCKS','Lcks'),('LOCKS','LCKS','Lcks'),('LDG','LDG','Ldg'),('LDGE','LDG','Ldg'),('LODG','LDG','Ldg'),('LODGE','LDG','Ldg'),('LOOP','LOOP','Loop'),('LOOPS','LOOP','Loop'),('MALL','MALL','Mall'),('MANOR','MNR','Mnr'),('MNR','MNR','Mnr'),('MANORS','MNRS','Mnrs'),('MNRS','MNRS','Mnrs'),('MDW','MDW','Mdw'),('MEADOW','MDW','Mdw'),('MDWS','MDWS','Mdws'),('MEADOWS','MDWS','Mdws'),('MEDOWS','MDWS','Mdws'),('MEWS','MEWS','Mews'),('MILL','ML','Ml'),('ML','ML','Ml'),('MILLS','MLS','Mls'),('MLS','MLS','Mls'),('MISSION','MSN','Msn'),('MISSN','MSN','Msn'),('MSN','MSN','Msn'),('MSSN','MSN','Msn'),('MOTORWAY','MTWY','Mtwy'),('MNT','MT','Mt'),('MOUNT','MT','Mt'),('MT','MT','Mt'),('MNTAIN','MTN','Mtn'),('MNTN','MTN','Mtn'),('MOUNTAIN','MTN','Mtn'),('MOUNTIN','MTN','Mtn'),('MTIN','MTN','Mtn'),('MTN','MTN','Mtn'),('MNTNS','MTNS','Mtns'),('MOUNTAINS','MTNS','Mtns'),('NCK','NCK','Nck'),('NECK','NCK','Nck'),('ORCH','ORCH','Orch'),('ORCHARD','ORCH','Orch'),('ORCHRD','ORCH','Orch'),('OVAL','OVAL','Oval'),('OVL','OVAL','Oval'),('OVERPASS','OPAS','Opas'),('PARK','PARK','Park'),('PK','PARK','Park'),('PRK','PARK','Park'),('PARKS','PARK','Park'),('PARKWAY','PKWY','Pkwy'),('PARKWY','PKWY','Pkwy'),('PKWAY','PKWY','Pkwy'),('PKWY','PKWY','Pkwy'),('PKY','PKWY','Pkwy'),('PARKWAYS','PKWY','Pkwy'),('PKWYS','PKWY','Pkwy'),('PASS','PASS','Pass'),('PASSAGE','PSGE','Psge'),('PATH','PATH','Path'),('PATHS','PATH','Path'),('PIKE','PIKE','Pike'),('PIKES','PIKE','Pike'),('PINE','PNE','Pne'),('PINES','PNES','Pnes'),('PNES','PNES','Pnes'),('PL','PL','Pl'),('PLACE','PL','Pl'),('PLAIN','PLN','Pln'),('PLN','PLN','Pln'),('PLAINES','PLNS','Plns'),('PLAINS','PLNS','Plns'),('PLNS','PLNS','Plns'),('PLAZA','PLZ','Plz'),('PLZ','PLZ','Plz'),('PLZA','PLZ','Plz'),('POINT','PT','Pt'),('PT','PT','Pt'),('POINTS','PTS','Pts'),('PTS','PTS','Pts'),('PORT','PRT','Prt'),('PRT','PRT','Prt'),('PORTS','PRTS','Prts'),('PRTS','PRTS','Prts'),('PR','PR','Pr'),('PRAIRIE','PR','Pr'),('PRARIE','PR','Pr'),('PRR','PR','Pr'),('RAD','RADL','Radl'),('RADIAL','RADL','Radl'),('RADIEL','RADL','Radl'),('RADL','RADL','Radl'),('RAMP','RAMP','Ramp'),('RANCH','RNCH','Rnch'),('RANCHES','RNCH','Rnch'),('RNCH','RNCH','Rnch'),('RNCHS','RNCH','Rnch'),('RAPID','RPD','Rpd'),('RPD','RPD','Rpd'),('RAPIDS','RPDS','Rpds'),('RPDS','RPDS','Rpds'),('REST','RST','Rst'),('RST','RST','Rst'),('RDG','RDG','Rdg'),('RDGE','RDG','Rdg'),('RIDGE','RDG','Rdg'),('RDGS','RDGS','Rdgs'),('RIDGES','RDGS','Rdgs'),('RIV','RIV','Riv'),('RIVER','RIV','Riv'),('RIVR','RIV','Riv'),('RVR','RIV','Riv'),('RD','RD','Rd'),('ROAD','RD','Rd'),('RDS','RDS','Rds'),('ROADS','RDS','Rds'),('ROUTE','RTE','Rte'),('ROW','ROW','Row'),('RUE','RUE','Rue'),('RUN','RUN','Run'),('SHL','SHL','Shl'),('SHOAL','SHL','Shl'),('SHLS','SHLS','Shls'),('SHOALS','SHLS','Shls'),('SHOAR','SHR','Shr'),('SHORE','SHR','Shr'),('SHR','SHR','Shr'),('SHOARS','SHRS','Shrs'),('SHORES','SHRS','Shrs'),('SHRS','SHRS','Shrs'),('SKYWAY','SKWY','Skwy'),('SPG','SPG','Spg'),('SPNG','SPG','Spg'),('SPRING','SPG','Spg'),('SPRNG','SPG','Spg'),('SPGS','SPGS','Spgs'),('SPNGS','SPGS','Spgs'),('SPRINGS','SPGS','Spgs'),('SPRNGS','SPGS','Spgs'),('SPUR','SPUR','Spur'),('SPURS','SPUR','Spur'),('SQ','SQ','Sq'),('SQR','SQ','Sq'),('SQRE','SQ','Sq'),('SQU','SQ','Sq'),('SQUARE','SQ','Sq'),('SQRS','SQS','Sqs'),('SQUARES','SQS','Sqs'),('STA','STA','Sta'),('STATION','STA','Sta'),('STATN','STA','Sta'),('STN','STA','Sta'),('STRA','STRA','Stra'),('STRAV','STRA','Stra'),('STRAVE','STRA','Stra'),('STRAVEN','STRA','Stra'),('STRAVENUE','STRA','Stra'),('STRAVN','STRA','Stra'),('STRVN','STRA','Stra'),('STRVNUE','STRA','Stra'),('STREAM','STRM','Strm'),('STREME','STRM','Strm'),('STRM','STRM','Strm'),('ST','ST','St'),('STR','ST','St'),('STREET','ST','St'),('STRT','ST','St'),('STREETS','STS','Sts'),('SMT','SMT','Smt'),('SUMIT','SMT','Smt'),('SUMITT','SMT','Smt'),('SUMMIT','SMT','Smt'),('TER','TER','Ter'),('TERR','TER','Ter'),('TERRACE','TER','Ter'),('THROUGHWAY','TRWY','Trwy'),('TRACE','TRCE','Trce'),('TRACES','TRCE','Trce'),('TRCE','TRCE','Trce'),('TRACK','TRAK','Trak'),('TRACKS','TRAK','Trak'),('TRAK','TRAK','Trak'),('TRK','TRAK','Trak'),('TRKS','TRAK','Trak'),('TRAFFICWAY','TRFY','Trfy'),('TRFY','TRFY','Trfy'),('TR','TRL','Trl'),('TRAIL','TRL','Trl'),('TRAILS','TRL','Trl'),('TRL','TRL','Trl'),('TRLS','TRL','Trl'),('TUNEL','TUNL','Tunl'),('TUNL','TUNL','Tunl'),('TUNLS','TUNL','Tunl'),('TUNNEL','TUNL','Tunl'),('TUNNELS','TUNL','Tunl'),('TUNNL','TUNL','Tunl'),('TPK','TPKE','Tpke'),('TPKE','TPKE','Tpke'),('TRNPK','TPKE','Tpke'),('TRPK','TPKE','Tpke'),('TURNPIKE','TPKE','Tpke'),('TURNPK','TPKE','Tpke'),('UNDERPASS','UPAS','Upas'),('UN','UN','Un'),('UNION','UN','Un'),('UNIONS','UNS','Uns'),('VALLEY','VLY','Vly'),('VALLY','VLY','Vly'),('VLLY','VLY','Vly'),('VLY','VLY','Vly'),('VALLEYS','VLYS','Vlys'),('VLYS','VLYS','Vlys'),('VDCT','VIA','Via'),('VIA','VIA','Via'),('VIADCT','VIA','Via'),('VIADUCT','VIA','Via'),('VIEW','VW','Vw'),('VW','VW','Vw'),('VIEWS','VWS','Vws'),('VWS','VWS','Vws'),('VILL','VLG','Vlg'),('VILLAG','VLG','Vlg'),('VILLAGE','VLG','Vlg'),('VILLG','VLG','Vlg'),('VILLIAGE','VLG','Vlg'),('VLG','VLG','Vlg'),('VILLAGES','VLGS','Vlgs'),('VLGS','VLGS','Vlgs'),('VILLE','VL','Vl'),('VL','VL','Vl'),('VIS','VIS','Vis'),('VIST','VIS','Vis'),('VISTA','VIS','Vis'),('VST','VIS','Vis'),('VSTA','VIS','Vis'),('WALK','WALK','Walk'),('WALKS','WALK','Walk'),('WALL','WALL','Wall'),('WAY','WAY','Way'),('WY','WAY','Way'),('WAYS','WAYS','Ways'),('WELL','WL','Wl'),('WELLS','WLS','Wls'),('WLS','WLS','Wls');
+
 
 
 --
 -- Dumping data for table `secondary_unit_desig`
 --
-REPLACE INTO `secondary_unit_desig` VALUES ('APARTMENT','APT','','Apt'),('BASEMENT','BSMT','\0','Bsmt'),('BUILDING','BLDG','','Bldg'),('DEPARTMENT','DEPT','','Dept'),('FLOOR','FL','','Fl'),('FRONT','FRNT','\0','Frnt'),('HANGER','HNGR','','Hngr'),('KEY','KEY','','Key'),('LOBBY','LBBY','\0','Lbby'),('LOT','LOT','','Lot'),('LOWER','LOWR','\0','Lowr'),('OFFICE','OFC','\0','Ofc'),('PENTHOUSE','PH','\0','Ph'),('PIER','PIER','','Pier'),('REAR','REAR','\0','Rear'),('SIDE','SIDE','\0','Side'),('SLIP','SLIP','','Slip'),('SPACE','SPC','','Spc'),('STOP','STOP','','Stop'),('SUITE','STE','','Ste'),('TRAILER','TRLR','','Trlr'),('UNIT','UNIT','','Unit'),('UPPER','UPPR','\0','Uppr'),('APT','APT','\0','Apt'),('BLDG','BLDG','','Bldg'),('DEPT','DEPT','','Dept'),('FL','FL','','Fl'),('FRNT','FRNT','\0','Frnt'),('HNGR','HNGR','','Hngr'),('LBBY','LBBY','\0','Lbby'),('LOWR','LOWR','\0','Lowr'),('OFC','OFC','\0','Ofc'),('PH','PH','\0','Ph'),('SPC','SPC','','Spc'),('STE','STE','','Ste'),('TRLR','TRLR','','Trlr'),('UPPR','UPPR','\0','Uppr'),('RM','RM','','Rm'),('ROOM','RM','','Rm');
--- ;
+REPLACE INTO `secondary_unit_desig` (`Common`,`Standard`,`Range_Required`,`TitleCaps`) VALUES 
+('APARTMENT','APT','','Apt'),('BASEMENT','BSMT','\0','Bsmt'),('BUILDING','BLDG','','Bldg'),('DEPARTMENT','DEPT','','Dept'),('FLOOR','FL','','Fl'),('FRONT','FRNT','\0','Frnt'),('HANGER','HNGR','','Hngr'),('KEY','KEY','','Key'),('LOBBY','LBBY','\0','Lbby'),('LOT','LOT','','Lot'),('LOWER','LOWR','\0','Lowr'),('OFFICE','OFC','\0','Ofc'),('PENTHOUSE','PH','\0','Ph'),('PIER','PIER','','Pier'),('REAR','REAR','\0','Rear'),('SIDE','SIDE','\0','Side'),('SLIP','SLIP','','Slip'),('SPACE','SPC','','Spc'),('STOP','STOP','','Stop'),('SUITE','STE','','Ste'),('TRAILER','TRLR','','Trlr'),('UNIT','UNIT','','Unit'),('UPPER','UPPR','\0','Uppr'),('APT','APT','\0','Apt'),('BLDG','BLDG','','Bldg'),('DEPT','DEPT','','Dept'),('FL','FL','','Fl'),('FRNT','FRNT','\0','Frnt'),('HNGR','HNGR','','Hngr'),('LBBY','LBBY','\0','Lbby'),('LOWR','LOWR','\0','Lowr'),('OFC','OFC','\0','Ofc'),('PH','PH','\0','Ph'),('SPC','SPC','','Spc'),('STE','STE','','Ste'),('TRLR','TRLR','','Trlr'),('UPPR','UPPR','\0','Uppr'),('RM','RM','','Rm'),('ROOM','RM','','Rm');
+
 
 
 
@@ -631,7 +638,7 @@ REPLACE INTO `secondary_unit_desig` VALUES ('APARTMENT','APT','','Apt'),('BASEM
 --
 REPLACE INTO `hospital` (`Title`,`Type`,`Status`) values
 ('Hospital', 'h', 'a');
--- ;
+
 
 --
 -- Dumping data for table `fa_category`
@@ -645,43 +652,49 @@ REPLACE INTO `fa_category` (`idFa_category`, `HouseHoldSize`, `Income_A`, `Incom
 ('6', '6', '3159', '5001', '7107', '7108', 'a'),
 ('7', '7', '3561', '5637', '7716', '8012', 'a'),
 ('8', '8', '3983', '6274', '8587', '8917', 'a');
--- ;
+
 
 
 --
 -- Dumping data for table `web_sites`
 --
-REPLACE INTO `web_sites` VALUES
+REPLACE INTO `web_sites` 
+(`idweb_sites`,`Site_Code`,`Description`,`Relative_Address`,`Required_Group_Code`,`Path_To_CSS`,`Path_To_JS`,`Last_Updated`,`Updated_By`,`Default_Page`,`Index_Page`,`HTTP_Host`)
+ VALUES
 (1,'a','Admin','/admin/','mm','ui-icon ui-icon-gear','',now(),'admin','NameSch.php','index.php','localhost'),
 (2,'h','House','/house/','g,ga','ui-icon ui-icon-person','',now(),'admin','register.php','index.php','localhost'),
 (3,'v','Volunteer','/volunteer/','v','ui-icon ui-icon-heart','',now(),'admin','VolAction.php','index.php','localhost'),
 (4,'r','Root','/','pub','','',now(),'admin','','','localhost');
--- ;
+
 
 
 --
 -- Dumping data for table `page`
 --
 
-INSERT INTO `page` VALUES (1,'index.php',0,'Welcome','','r','','','p',0,'','','2011-09-28 15:52:50','2011-09-29 01:52:50'),(2,'index.php',0,'','','a','','','p',0,'','admin','2011-09-28 15:52:50','2011-09-21 21:00:18'),(3,'NameEdit.php',2,'Edit Members','','a','','','p',0,'','admin','2014-07-25 12:27:19','2011-09-21 21:01:42'),(4,'EventShells.php',2,'Repeat Events','','a','35','f','p',0,'','','0000-00-00 00:00:00','2011-09-21 23:52:06'),(5,'KeyStats.php',2,'Key Stats','','a','67','g','p',0,'','admin','2012-06-11 14:28:56','2011-09-21 23:52:06'),(6,'Misc.php',2,'Miscellaneous','','a','34','a','p',0,'','admin','2012-04-09 12:04:46','2011-09-21 23:52:06'),(7,'PageEdit.php',2,'Edit Pages','','a','34','e','p',0,'','','0000-00-00 00:00:00','2011-09-21 23:52:06'),(8,'RegisterUser.php',2,'Register Web Users','','a','35','e','p',0,'','admin','2012-03-15 08:51:37','2011-09-21 23:52:06'),(9,'CategoryEdit.php',2,'Edit Categories','','a','34','d','p',0,'','admin','2012-01-18 11:55:50','2011-09-21 23:52:06'),
+INSERT INTO `page` 
+(`idPage`,`File_Name`,`Login_Page_Id`,`Title`,`Product_Code`,`Web_Site`,`Menu_Parent`,`Menu_Position`,`Type`,`Hide`,`Validity_Code`,`Updated_By`,`Last_Updated`,`Timestamp`) 
+VALUES 
+(1,'index.php',0,'Welcome','','r','','','p',0,'','','2011-09-28 15:52:50','2011-09-29 01:52:50'),(2,'index.php',0,'','','a','','','p',0,'','admin','2011-09-28 15:52:50','2011-09-21 21:00:18'),(3,'NameEdit.php',2,'Edit Members','','a','','','p',0,'','admin','2014-07-25 12:27:19','2011-09-21 21:01:42'),(4,'EventShells.php',2,'Repeat Events','','a','35','f','p',0,'','','0000-00-00 00:00:00','2011-09-21 23:52:06'),(5,'KeyStats.php',2,'Key Stats','','a','67','g','p',0,'','admin','2012-06-11 14:28:56','2011-09-21 23:52:06'),(6,'Misc.php',2,'Miscellaneous','','a','34','a','p',0,'','admin','2012-04-09 12:04:46','2011-09-21 23:52:06'),(7,'PageEdit.php',2,'Edit Pages','','a','34','e','p',0,'','','0000-00-00 00:00:00','2011-09-21 23:52:06'),(8,'RegisterUser.php',2,'Register Web Users','','a','35','e','p',0,'','admin','2012-03-15 08:51:37','2011-09-21 23:52:06'),(9,'CategoryEdit.php',2,'Edit Categories','','a','34','d','p',0,'','admin','2012-01-18 11:55:50','2011-09-21 23:52:06'),
 (10,'VolListing.php',2,'Web Users','','a','35','c','p',0,'','admin','2011-10-31 14:41:12','2011-09-21 23:52:06'),(11,'campaignEdit.php',2,'Edit Campaigns','','a','34','c','p',0,'','','0000-00-00 00:00:00','2011-09-21 23:56:43'),(12,'campaignReport.php',2,'Campaigns','','a','32','d','p',0,'','','0000-00-00 00:00:00','2011-09-21 23:56:43'),(13,'checkDateReport.php',2,'Check Date','','a','32','j','p',0,'','','0000-00-00 00:00:00','2011-09-21 23:56:43'),(14,'directory.php',2,'Directory','','a','32','a','p',0,'','','0000-00-00 00:00:00','2011-09-21 23:56:43'),(15,'donate.php',0,'','','a','','','s',0,'','','0000-00-00 00:00:00','2011-09-21 23:56:43'),(16,'donationReport.php',2,'Donations','','a','32','b','p',0,'','admin','2011-12-12 11:32:31','2011-09-21 23:56:43'),(18,'liveGetCamp.php',0,'','','a','','','s',0,'','','0000-00-00 00:00:00','2011-09-21 23:56:43'),(19,'liveNameSearch.php',0,'','','a','','','s',0,'','','0000-00-00 00:00:00','2011-09-21 23:56:43'),
 (20,'ws_Report.php',0,'','','a','','','s',0,'','','0000-00-00 00:00:00','2011-09-21 23:56:43'),(21,'ws_gen.php',0,'','','a','','','s',0,'','','0000-00-00 00:00:00','2011-09-21 23:56:43'),(22,'VolNameEdit.php',26,'My Volunteer Info','','v','0','d','p',0,'','admin','2011-09-28 15:40:54','2011-09-22 00:01:58'),(23,'forgotpw.php',26,'Forgot My Password','','v','','','p',0,'','admin','2011-09-28 15:54:43','2011-09-22 00:01:58'),(24,'gCalFeed.php',0,'','','v','','','s',0,'','','0000-00-00 00:00:00','2011-09-22 00:01:58'),(26,'index.php',0,'','','v','','','p',0,'','admin','2011-09-28 15:50:30','2011-09-22 00:01:58'),(27,'register_web.php',26,'Register','','v','','','p',0,'','admin','2011-09-28 15:53:57','2011-09-22 00:01:58'),(28,'ws_reg_user.php',0,'','','v','','','s',0,'','','0000-00-00 00:00:00','2011-09-22 00:01:58'),(29,'ws_vol.php',0,'','','v','','','s',0,'','','0000-00-00 00:00:00','2011-09-22 00:01:58'),
 (31,'index.php',0,'','','h','','','p',0,'','admin','2011-09-28 15:52:16','2011-09-22 00:03:58'),(32,'_directory.php',2,'Reports','','a','0','e','p',0,'','','0000-00-00 00:00:00','2011-09-22 17:20:36'),(33,'categoryReport.php',2,'Categories','','a','32','f','p',0,'','admin','2013-12-10 13:09:01','2011-09-22 17:25:04'),(34,'_Misc.php',2,'DB Maintenance','','a','0','k','p',0,'','admin','2011-10-13 10:42:35','2011-09-22 17:26:38'),(35,'_VolListing.php',2,'Web Users','','a','0','j','p',0,'','admin','2011-10-31 14:40:58','2011-09-22 17:27:25'),(36,'NameEdit_Donations',0,'','','a','','','c',0,'','','0000-00-00 00:00:00','2011-09-23 13:07:22'),(37,'NameEdit_Maint',0,'','','a','','','c',0,'','admin','2011-09-26 15:15:27','2011-09-27 16:24:53'),(39,'ws_gen_Maint',0,'','','a','','','c',0,'','admin','2011-09-26 15:41:54','2011-09-27 18:41:54'),
 (45,'VolNameSearch.php',0,'','','v','','','s',0,'','admin','2011-10-09 19:24:53','2011-10-10 22:24:53'),(46,'guestadmin',0,'','','h','','','c',0,'','admin','2013-07-23 14:26:44','2011-10-15 12:01:45'),(47,'guestaccess',0,'','','v','','','c',0,'','admin','2011-10-17 15:23:29','2011-10-18 18:23:29'),(48,'PrivacyGroup',0,'','','a','','','c',0,'','admin','2011-10-31 20:38:16','2011-11-01 23:38:16'),(49,'recent.php',2,'Recent Changes','','a','67','r','p',0,'','admin','2012-06-11 14:29:48','2011-11-03 16:20:26'),
 (50,'nonReportables.php',2,'Non-Reportables','','a','67','v','p',0,'','admin','2012-06-11 14:29:29','2011-12-04 00:06:32'),(51,'donorReport.php',2,'Donors','','a','32','c','p',0,'','admin','2011-12-24 17:42:31','2011-12-13 18:59:14'),(55,'MemEdit.php',0,'','','v','','none','p',0,'','admin','2012-02-07 16:36:02','2012-02-08 23:36:02'),(56,'Cat_Donor',0,'','','a','','','c',0,'','admin','2012-02-29 11:19:02','2012-03-01 18:19:02'),(57,'anomalies.php',2,'Anomaly report','','a','67','k','p',0,'','admin','2012-06-11 14:29:18','2012-03-09 04:28:42'),(59,'ws_admin.php',0,'','','h','','','s',0,'','admin','2013-02-25 17:01:00','2012-03-11 21:33:23'),
 (60,'guestaccess',0,'','','a','','','c',0,'','admin','2012-03-26 14:04:37','2012-03-27 17:04:37'),(62,'roleSearch.php',0,'','','h','','','s',0,'','admin','2013-11-12 19:35:00','2012-03-31 13:46:51'),(65,'timeReport.php',2,'Time Reports','','a','32','u','p',0,'','admin','2012-06-04 13:47:31','2012-06-05 16:47:31'),(66,'NameSch.php',2,'Members','','a','0','d','p',0,'','admin','2015-01-27 11:46:08','2012-06-12 17:22:04'),(67,'_KeyStats.php',2,'Key Stats','','a','0','g','p',0,'','admin','2012-06-11 14:28:41','2012-06-12 17:28:41'),(68,'VolAction.php',26,'Activities','','v','0','b','p',0,'','admin','2012-09-03 16:37:32','2012-06-12 18:21:41'),(69,'_index.php?log=lo',0,'Log Out','','a','0','z','p',0,'','admin','2012-06-17 13:07:24','2012-06-18 16:05:10'),
-(70,'_index.php?log=lo',0,'Log Out','','v','0','z','p',0,'','admin','2012-06-17 13:08:23','2012-06-18 16:05:10'),(71,'_index.php?log=lo',0,'Log Out','','h','0','z','p',0,'','admin','2012-06-17 13:08:36','2012-06-18 16:05:10'),(72,'CheckIn.php',31,'Check In','','h','0','f','p',0,'','admin','2014-09-08 09:13:58','2012-10-20 19:12:53'),(74,'register.php',31,'House Register','','h','79','b','p',0,'','admin','2017-02-12 15:37:50','2012-12-08 20:25:34'),(75,'ws_register',0,'','','h','','','s',0,'','admin','2012-12-10 16:09:36','2012-12-11 23:09:36'),(76,'ws_ckin.php',0,'','','h','','','s',0,'','admin','2012-12-20 16:42:05','2012-12-21 23:42:05'),(77,'RoomView.php',31,'Room Viewer','','h','79','d','p',0,'','admin','2017-02-12 15:37:50','2013-01-03 07:54:45'),(79,'_register.php',31,'House','','h','0','d','p',0,'','admin','2013-01-02 01:48:49','2013-01-03 08:48:49'),
+(70,'_index.php?log=lo',0,'Log Out','','v','0','z','p',0,'','admin','2012-06-17 13:08:23','2012-06-18 16:05:10'),(71,'_index.php?log=lo',0,'Log Out','','h','0','z','p',0,'','admin','2012-06-17 13:08:36','2012-06-18 16:05:10'),(72,'CheckIn.php',31,'Check In','','h','0','f','p',0,'','admin','2014-09-08 09:13:58','2012-10-20 19:12:53'),(74,'register.php',31,'House Register','','h','79','b','p',0,'','admin','2017-02-12 15:37:50','2012-12-08 20:25:34'),(75,'ws_register',0,'','','h','','','s',0,'','admin','2012-12-10 16:09:36','2012-12-11 23:09:36'),(76,'ws_ckin.php',0,'','','h','','','s',0,'','admin','2012-12-20 16:42:05','2012-12-21 23:42:05'),(77,'RoomView.php',31,'Room Viewer','','h','79','d','p',1,'','admin','2017-02-12 15:37:50','2013-01-03 07:54:45'),(79,'_register.php',31,'House','','h','0','d','p',0,'','admin','2013-01-02 01:48:49','2013-01-03 08:48:49'),
 (80,'HouseCal.php',26,'','','v','','','p',0,'','admin','2013-03-03 17:31:24','2013-03-05 00:30:30'),(81,'ResourceBuilder.php',31,'Resource Builder','','h','79','l','p',0,'','admin','2017-02-12 15:37:50','2013-03-26 16:19:56'),(82,'ws_resc.php',0,'','','h','','','s',0,'','admin','2013-03-25 15:01:03','2013-03-26 18:01:03'),(83,'RoomUtilization.php',31,'Room Report','','h','102','e','p',0,'','admin','2017-02-12 15:37:50','2013-04-02 16:43:00'),(84,'memberManagement',0,'','','h','','','c',0,'','admin','2013-06-06 11:17:02','2013-06-07 14:17:02'),(87,'ws_reg.php',0,'','','r','','','s',0,'','admin','2013-08-04 13:40:29','2013-08-05 16:40:29'),(88,'AuthGroupEdit.php',2,'Edit Authorization','','a','34','j','p',0,'','admin','2013-08-07 15:13:41','2013-08-08 18:13:05'),(89,'Configure.php',2,'Site Configuration','','a','34','g','p',0,'','admin','2013-08-17 10:11:05','2013-08-18 13:10:27'),
 (92,'GuestDemog.php',31,'Missing Demographics','','h','102','f','p',0,'','admin','2017-02-12 15:37:50','2013-09-04 13:23:02'),(93,'GuestEdit.php',31,'Guest Edit','','h','0','j','p',0,'','admin','2014-03-05 15:49:04','2013-09-04 13:25:10'),(94,'ShowRegForm.php',31,'Registration Form','','h','','','p',0,'','admin','2017-02-12 15:37:50','2013-10-22 06:58:41'),(95,'Referral.php',31,'Reservation','','h','0','e','p',0,'','admin','2014-03-15 12:39:32','2013-11-07 14:32:21'),(96,'CheckedIn.php',31,'','','h','','','p',0,'','admin','2017-02-12 15:37:50','2013-12-02 19:54:22'),(99,'PaymentResult.php',31,'Payment Result','','h','','','p',0,'','admin','2017-02-12 16:23:39','2013-12-17 08:14:11'),
 (100,'ShowStatement.php',31,'Guest Statement','','h','','','p',0,'','admin','2017-02-12 15:37:50','2014-01-30 14:39:16'),(101,'RoomStatus.php',31,'Housekeeping','','h','79','p','p',0,'','admin','2017-02-12 15:37:50','2014-02-26 03:46:18'),(102,'_GuestReport.php',31,'Reports','','h','0','h','p',0,'','admin','2014-03-15 12:35:58','2014-03-06 08:46:56'),(104,'ReservReport.php',31,'Reservations Report','','h','102','b','p',0,'','admin','2017-02-12 15:37:51','2014-03-16 03:37:09'),(105,'PaymentTx.php',2,'Credit Transactions Report','','a','32','v','p',0,'','admin','2015-01-27 12:19:09','2014-08-14 03:25:03'),(106,'Duplicates.php',2,'Duplicates','','a','32','o','p',0,'','admin','2014-08-27 13:43:20','2014-08-28 04:43:21'),(107,'PSGReport.php',31,'People Reports','','h','102','k','p',0,'','admin','2017-02-12 15:37:51','2014-11-14 09:25:35'),(108,'Waitlist.php',31,'Anticipated Visits','','h','0','g','p',0,'','admin','2015-01-17 14:14:40','2015-01-18 01:14:40'),(109,'PaymentReport.php',31,'Payment Report','','h','102','m','p',0,'','admin','2017-02-12 15:37:51','2015-02-10 01:59:12'),
 (110,'VisitInterval.php',31,'Visit Interval Report','','h','102','c','p',0,'','admin','2017-02-12 15:37:51','2015-02-17 22:47:21'),(111,'GuestView.php',31,'Guests & Vehicles','','h','79','v','p',0,'','admin','2017-02-12 15:37:51','2015-02-19 22:53:11'),(113,'DRaHospReport.php',31,'Doctors, Hospitals','','h','102','l','p',0,'','admin','2017-02-12 15:37:51','2015-05-15 22:22:26'),(114,'ShowInvoice.php',31,'Show Invoice','','h','','','p',0,'','admin','2017-02-12 15:37:51','2015-06-22 23:05:44'),(115,'InvoiceReport.php',31,'Invoice Report','','h','102','n','p',0,'','admin','2017-02-12 15:37:51','2015-07-29 03:32:12'),(116,'ShowHsKpg.php',31,'Housekeeping','','h','','','p',0,'','admin','2017-02-12 15:37:51','2015-08-11 01:00:39'),(117,'PrtRegForm.php',31,'Print Registration Forms','','h','','','p',0,'','admin','2017-02-12 15:37:51','2015-09-05 21:47:07'),(118,'occDemo.php',31,'Guest Demographics','','h','102','g','p',0,'','admin','2017-02-12 15:37:51','2015-10-30 18:31:30'),(119,'ItemReport.php',31,'Item Report','','h','102','s','p',0,'','admin','2017-02-12 15:37:51','2015-12-03 21:28:20'),
 (120,'AccessLog.php',2,'User Access Log','','a','35','d','p',0,'','admin','2016-08-21 11:37:15','2016-08-21 16:37:15'),(121,'GuestTransfer.php',31,'Guest Transfer','','h','79','x','p',1,'','admin','2017-02-12 15:37:51','2016-11-28 18:13:39'),(122,'NewGuest.php',31,'New Guests','','h','102','i','p',0,'','admin','2017-02-12 15:37:51','2017-01-02 19:28:06');
--- ;
+
 
 --
 -- Dumping data for table `page_securitygroup`
 --
-INSERT INTO `page_securitygroup` VALUES (1,'pub','2011-09-29 19:03:46'),(2,'pub','2011-09-24 12:14:44'),(3,'mm','2011-09-22 00:21:42'),(4,'mm','2011-09-22 00:21:42'),(5,'mm','2011-09-22 00:21:42'),(6,'db','2011-09-22 00:21:42'),(7,'db','2011-09-22 00:21:42'),(8,'mm','2011-09-22 00:21:42'),(9,'db','2011-09-22 00:21:42'),
+INSERT INTO `page_securitygroup` (`idPage`,`Group_Code`,`Timestamp`) VALUES 
+(1,'pub','2011-09-29 19:03:46'),(2,'pub','2011-09-24 12:14:44'),(3,'mm','2011-09-22 00:21:42'),(4,'mm','2011-09-22 00:21:42'),(5,'mm','2011-09-22 00:21:42'),(6,'db','2011-09-22 00:21:42'),(7,'db','2011-09-22 00:21:42'),(8,'mm','2011-09-22 00:21:42'),(9,'db','2011-09-22 00:21:42'),
 (10,'mm','2011-09-22 00:21:42'),(11,'db','2011-09-22 00:21:42'),(12,'dm','2011-09-22 00:21:42'),(13,'mm','2011-09-22 00:21:42'),(14,'mm','2011-09-22 00:21:42'),(15,'dm','2011-09-22 00:21:42'),(16,'dm','2011-09-22 00:21:42'),(18,'mm','2011-09-22 00:21:42'),(19,'mm','2011-09-22 00:21:42'),
 (20,'dm','2011-09-22 00:21:42'),(21,'mm','2011-09-22 00:21:42'),(22,'v','2011-09-22 00:24:43'),(23,'pub','2011-09-29 19:01:12'),(24,'v','2011-09-22 00:24:43'),(26,'pub','2011-09-24 12:15:17'),(27,'pub','2011-09-29 19:02:08'),(28,'pub','2011-09-29 19:02:08'),(29,'v','2011-09-22 00:24:43'),
 (31,'pub','2011-09-24 12:15:48'),(32,'mm','2011-09-22 19:36:57'),(33,'ga','2013-12-11 12:12:07'),(33,'mm','2011-09-22 19:48:59'),(34,'db','2011-09-22 19:36:57'),(35,'mm','2011-09-22 19:36:57'),(36,'dm','2011-09-24 14:22:47'),(37,'db','2011-09-27 16:24:53'),(39,'db','2011-09-27 18:41:54'),
@@ -694,12 +707,13 @@ INSERT INTO `page_securitygroup` VALUES (1,'pub','2011-09-29 19:03:46'),(2,'pub'
 (100,'mm','2017-02-12 21:41:35'),(101,'g','2017-02-12 20:49:21'),(101,'ga','2014-02-26 03:46:18'),(102,'g','2017-02-12 20:27:43'),(102,'ga','2014-03-06 08:46:56'),(104,'g','2017-02-12 20:50:26'),(104,'ga','2017-02-12 20:28:45'),(105,'db','2014-08-14 03:25:03'),(106,'mm','2014-08-28 04:43:21'),(107,'g','2017-02-12 20:50:57'),(107,'ga','2014-11-14 09:25:35'),(108,'g','2017-02-12 20:51:32'),(108,'ga','2015-01-18 01:14:40'),(109,'g','2017-02-12 21:37:51'),(109,'ga','2015-02-10 01:59:12'),
 (110,'g','2017-02-12 21:38:20'),(110,'ga','2015-02-17 22:47:21'),(111,'g','2017-02-12 21:41:42'),(111,'ga','2015-02-19 22:53:11'),(113,'ga','2015-05-15 22:22:26'),(114,'ga','2017-02-12 20:49:21'),(115,'ga','2015-07-29 03:32:12'),(116,'g','2017-02-12 21:41:42'),(116,'ga','2017-02-12 20:49:21'),(117,'ga','2015-09-05 21:47:07'),(118,'ga','2015-10-30 18:31:30'),(119,'g','2017-02-12 21:37:51'),(119,'ga','2015-12-03 21:28:20'),
 (120,'mm','2016-08-21 16:37:15'),(121,'g','2017-02-12 21:38:20'),(121,'ga','2016-11-28 18:13:39'),(122,'g','2017-02-12 20:30:54'),(122,'ga','2017-01-02 19:28:06');
--- ;
+
 
 --
 -- Dumping data for table `language`
 --
-REPLACE INTO `language` VALUES (1,'Abkhazian','ab',0),(2,'Afar','aa',0),(3,'Afrikaans','af',0),(4,'Akan','ak',0),(6,'Albanian','sq',0),(7,'Amharic','am',0),
+REPLACE INTO `language` (`idLanguage`,`Title`,`ISO_639_1`,`Display`) VALUES
+ (1,'Abkhazian','ab',0),(2,'Afar','aa',0),(3,'Afrikaans','af',0),(4,'Akan','ak',0),(6,'Albanian','sq',0),(7,'Amharic','am',0),
 (10,'Arabic','ar',0),(11,'Aragonese','an',0),(14,'Armenian','hy',0),(18,'Assamese','as',0),(24,'Avaric','av',0),(25,'Avestan','ae',0),(27,'Aymara','ay',0),(28,'Azerbaijani','az',0),
 (33,'Bambara','bm',0),(38,'Bashkir','ba',0),(39,'Basque','eu',0),(43,'Belarusian','be',0),(45,'Bengali','bn',0),(48,'Bihari languages','bh',0),(52,'Bislama','bi',0),
 (57,'BokmÃ¥l, Norwegian','nb',0),(58,'Bosnian','bs',0),(60,'Breton','br',0),(62,'Bulgarian','bg',0),(64,'Burmese','my',0),(66,'Castilian','es',0),(67,'Catalan','ca',0),
@@ -729,13 +743,14 @@ REPLACE INTO `language` VALUES (1,'Abkhazian','ab',0),(2,'Afar','aa',0),(3,'Afri
 (502,'Tswana','tn',0),(505,'Turkish','tr',0),(507,'Turkmen','tk',0),(510,'Twi','tw',0),(513,'Uighur','ug',0),(514,'Ukrainian','uk',0),(519,'Urdu','ur',0),(520,'Uyghur','ug',0),
 (521,'Uzbek','uz',0),(523,'Valencian','ca',0),(524,'Venda','ve',0),(525,'Vietnamese','vi',0),(526,'VolapÃ¼k','vo',0),(529,'Walloon','wa',0),(532,'Welsh','cy',0),
 (533,'Western Frisian','fy',0),(537,'Wolof','wo',0),(538,'Xhosa','xh',0),(542,'Yiddish','yi',0),(543,'Yoruba','yo',0),(550,'Zhuang','za',0),(551,'Zulu','zu',0);
--- ;
+
 
 --
 -- Dumping data for table `country_code`
 --
 
-INSERT INTO `country_code` VALUES ('ANDORRA','AD',7),('UNITED ARAB EMIRATES','AE',223),('AFGHANISTAN','AF',3),('ANTIGUA AND BARBUDA','AG',10),('ANGUILLA','AI',242),('ALBANIA','AL',4),
+INSERT INTO `country_code` (`Country_Name`,`ISO_3166-1-alpha-2`,`External_Id`) VALUES
+ ('ANDORRA','AD',7),('UNITED ARAB EMIRATES','AE',223),('AFGHANISTAN','AF',3),('ANTIGUA AND BARBUDA','AG',10),('ANGUILLA','AI',242),('ALBANIA','AL',4),
 ('ARMENIA','AM',12),('ANGOLA','AO',8),('ANTARCTICA','AQ',9),('ARGENTINA','AR',11),('AMERICAN SAMOA','AS',6),('AUSTRIA','AT',15),('AUSTRALIA','AU',14),('ARUBA','AW',13),
 ('ALAND ISLANDS','AX',0),('AZERBAIJAN','AZ',16),('BOSNIA AND HERZEGOVINA','BA',28),('BARBADOS','BB',20),('BANGLADESH','BD',19),('BELGIUM','BE',22),('BURKINA FASO','BF',35),
 ('BULGARIA','BG',34),('BAHRAIN','BH',18),('BURUNDI','BI',36),('BENIN','BJ',24),('SAINT BARTHELEMY','BL',0),('BERMUDA','BM',25),('BRUNEI DARUSSALAM','BN',33),

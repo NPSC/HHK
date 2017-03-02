@@ -2022,7 +2022,7 @@ class HouseServices {
 
             $havePatient = TRUE;
 
-            if ($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::Imediate) {
+            if ($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::Imediate || $resv->getStatus() == ReservationStatus::Waitlist) {
                 // Check in a reservation
                 $guest = new Guest($dbh, $idPrefix, $resv->getIdGuest());
 

@@ -297,6 +297,7 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
 
                     $errorMsg .= 'Create Stored Procedures Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
                 }
+
             } else {
                 $errorMsg .= '** Stored Procedures not updated**  ';
             }
@@ -365,7 +366,11 @@ if (isset($_POST['btnSaveSQL'])) {
         $errorMsg .= 'Create View Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
     }
 
-    $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures');
+    $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
+    foreach ($patch->results as $err) {
+        $errorMsg .= 'Create Stored Procedures Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+    }
+
 
     // Log update.
     $logText = "Save SQL.  " . $resultAccumulator;

@@ -63,10 +63,10 @@ try {
 
     $page = new ScriptAuthClass($dbh);
 
-} catch (PDOException $ex) {
+} catch (Exception $ex) {
 
     $ssn->destroy();
-    exit("Error - Database problem accessing web page table: " . $ex->getMessage());
+    exit("Error accessing web page: " . $ex->getMessage());
 }
 
 $login->checkPost($dbh, $_POST);

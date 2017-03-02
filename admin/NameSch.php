@@ -53,6 +53,7 @@ if (isset($uS->siteList[WebSiteCode::Volunteer])) {
         <link href="<?php echo FULLC_CSS; ?>" rel="stylesheet" type="text/css" />
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/verifyAddrs-min.js"></script>
         <script type="text/javascript">
     function isNumber(n) {
         "use strict";
@@ -69,52 +70,34 @@ if (isset($uS->siteList[WebSiteCode::Volunteer])) {
                 }
             }
         });
-        $('#txtsearch').autocomplete({
-            source: function (request, response) {
-                // Don't send for numbers
-                if (isNumber(parseInt(request.term, 10))) {
-                    response();
-                }
-                var schType = 'm';
-                if ($('#rbmemEmail').prop("checked")) {
-                    schType = 'e';
-                }
-                // get more data
-                var inpt = {
-                    cmd: "srrel",
-                    letters: request.term,
-                    basis: schType,
-                    id: 0
-                };
-                lastXhr = $.getJSON("liveNameSearch.php", inpt,
-                    function(data, status, xhr) {
-                     if (xhr === lastXhr) {
-                        if (data.error) {
-                            data.value = data.error;
-                        }
 
-                        response(data);
-                    }
-                    });
-            },
-            minLength: 3,
-            select: function( event, ui ) {
-                if (!ui.item) {
-                    return;
-                }
-                if (ui.item.id == 'i') {
-                    // New Individual
-                    window.location = "NameEdit.php?cmd=newind";
-                } else if (ui.item.id == 'o') {
-                    window.location = "NameEdit.php?cmd=neworg";
-                }
-
-                var cid = parseInt(ui.item.id, 10);
-                if (isNumber(cid)) {
-                    window.location = "NameEdit.php?id=" + cid;
-                }
+    createAutoComplete($('#txtsearch'), 3, {cmd: "srrel", id: 0},
+        function( item ) {
+            if (item.id === 'i') {
+                // New Individual
+                window.location = "NameEdit.php?cmd=newind";
+            } else if (item.id === 'o') {
+                window.location = "NameEdit.php?cmd=neworg";
             }
-        });
+
+            var cid = parseInt(item.id, 10);
+            if (isNumber(cid)) {
+                window.location = "NameEdit.php?id=" + cid;
+            }
+        },
+        true,
+        "liveNameSearch.php",
+        $('#txtBasis')
+    );
+
+    $('input[name="msearch"]').click(function () {
+        if ($('#rbmemName').prop('checked')) {
+            $('#txtBasis').val('m');
+        } else {
+            $('#txtBasis').val('e');
+        }
+    });
+
         $('#txtsearch').keypress(function (event) {
             var mm = $(this).val();
             if (event.keyCode == '13') {
@@ -166,9 +149,9 @@ if (isset($uS->siteList[WebSiteCode::Volunteer])) {
                 <div style="float: left; border-width: 1px; border-color: gray; border-style: ridge; padding: 2px;">
                     <span>Search: </span>
                     <span style="margin: 0 10px;">
-                        <label for="rbmemName">Name</label><input type="radio" name="msearch" checked="checked" id="rbmemName" />
-                        <label for="rbmemEmail">Email</label><input type="radio" name="msearch" id="rbmemEmail" />
-                    </span>
+                        <label for="rbmemName">Name</label><input type="radio" name="msearch" checked="checked" id="rbmemName" value="m" />
+                        <label for="rbmemEmail">Email</label><input type="radio" name="msearch" id="rbmemEmail" value="e" />
+                    </span><input type="hidden" id="txtBasis" value="m"/>
                     <input type="text" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
                 </div>
             </div>

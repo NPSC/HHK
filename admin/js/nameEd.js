@@ -126,8 +126,7 @@ $(document).ready(function () {
         if (isNaN(tbIndex)) {tbIndex = 0}
         $('#addrsTabs').tabs("option", "active", tbIndex);
     }
-    // Relationship tab control
-    $('#linkTabs').tabs({ collapsible: true});
+
     // relationship dialog
     $("#submit").dialog({
         autoOpen: false,
@@ -484,94 +483,35 @@ $(document).ready(function () {
 //    // Don't let user choose a blank address as preferred.'
     addrPrefs(memData);
     verifyAddrs('div#divaddrTabs');
-    $('#txtsearch').autocomplete({
-        source: function (request, response) {
-            if (isNumber(parseInt(request.term, 10))) {
-                response();
-            } else {
-                var schType = 'm';
-                if ($('#rbmemEmail').prop("checked")) {
-                    schType = 'e';
-                }
-                // get more data
-                var inpt = {
-                    cmd: "srrel",
-                    letters: request.term,
-                    basis: schType,
-                    id: 0
-                };
-                lastXhr = $.getJSON("liveNameSearch.php", inpt,
-                    function(data, status, xhr) {
-                        if (xhr === lastXhr) {
-                            if (data.error) {
-                                data.value = data.error;
-                            }
-                            response(data);
-                        } else {
-                            response();
-                        }
-                    });
-            }
-        },
-        minLength: 3,
-        select: function( event, ui ) {
-            if (!ui.item) {
-                return;
-            }
 
-            if (ui.item.id == 'i') {
+    createAutoComplete($('#txtsearch'), 3, {cmd: "srrel", basis: ($('#rbmemEmail').prop("checked") ? 'e' : 'm'), id: 0}, 
+        function( item ) {
+            if (item.id === 'i') {
                 // New Individual
                 window.location = "NameEdit.php?cmd=newind";
-            } else if (ui.item.id == 'o') {
+            } else if (item.id === 'o') {
                 window.location = "NameEdit.php?cmd=neworg";
             }
 
-            var cid = parseInt(ui.item.id, 10);
+            var cid = parseInt(item.id, 10);
             if (isNumber(cid)) {
                 window.location = "NameEdit.php?id=" + cid;
             }
-        }
-    });
-    $('#txtRelSch').autocomplete({
-        source: function (request, response) {
-            if (isNumber(parseInt(request.term, 10))) {
-                response();
-            } else {
-                // get more data
-                var inpt = {
-                    cmd: "srrel",
-                    letters: request.term,
-                    basis: $('#hdnRelCode').val(),
-                    id: memData.id,
-                    nonly: '1'
-                };
-                lastXhr = $.getJSON("liveNameSearch.php", inpt,
-                    function(data, status, xhr) {
-                        if (xhr === lastXhr) {
-                            if (data.error) {
-                                data.value = data.error;
-                            }
-                            response(data);
-                        } else {
-                            response();
-                        }
-                    });
-            }
-        },
-        minLength: 3,
-        select: function( event, ui ) {
-            if (!ui.item) {
-                return;
-            }
-            $('input#txtRelSch').val('');
-            $('#submit').dialog('close');
+        }, 
+        true, 
+        "liveNameSearch.php"
+    );
 
-            var cid = parseInt(ui.item.id, 10);
-            if (isNumber(cid)) {
-                $.post('ws_gen.php', {'rId':cid, 'id':memData.id, 'rc':$('#hdnRelCode').val(), 'cmd':'newRel'}, relationReturn);
-            }
-        }
-    });
+    createAutoComplete($('#txtRelSch'), 3, {cmd: 'srrel', id: memData.id, nonly: '1'}, 
+        function (item) {
+            $('#submit').dialog('close');
+            $.post('ws_gen.php', {'rId':item.id, 'id':memData.id, 'rc':$('#hdnRelCode').val(), 'cmd':'newRel'}, relationReturn);
+        },
+        false,
+        "liveNameSearch.php",
+        $('#hdnRelCode')
+    );
+
     // Member search letter input box
     $('#txtsearch').keypress(function (event) {
         var mm = $(this).val();

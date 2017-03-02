@@ -450,23 +450,14 @@ class IndivMember extends Member {
      */
     public function createRelationsTabs(array $rel, $page = "NameEdit.php") {
 
-        $relTab = HTMLContainer::generateMarkup('div', $rel[RelLinkType::Spouse]->createMarkup($page), array('style'=>'float:left; margin-left:20px;'))
+        $relTab = $this->createOrgMarkup($rel, $page)
+                 .HTMLContainer::generateMarkup('div', $rel[RelLinkType::Spouse]->createMarkup($page), array('style'=>'float:left; margin-left:20px;'))
                 .HTMLContainer::generateMarkup('div',$rel[RelLinkType::Sibling]->createMarkup($page), array('style'=>'float:left; margin-left:20px;'))
                 . HTMLContainer::generateMarkup('div',$rel[RelLinkType::Parnt]->createMarkup($page), array('style'=>'float:left; margin-left:20px;'))
                 . HTMLContainer::generateMarkup('div',$rel[RelLinkType::Child]->createMarkup($page), array('style'=>'float:left; margin-left:20px;'))
                 . HTMLContainer::generateMarkup('div',$rel[RelLinkType::Relative]->createMarkup($page), array('style'=>'float:left; margin-left:20px;'));
 
-        $coTab = $this->createOrgMarkup($rel, $page);
-
-        $ul = HTMLContainer::generateMarkup('ul',
-            HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'Relatives', array('href'=>'#relvs')))
-            . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'Company', array('href'=>'#copt')))
-            );
-
-        $coptDiv = HTMLContainer::generateMarkup('div', $coTab, array('id'=>'copt', 'class'=>'ui-tabs-hide'));
-        $relDiv = HTMLContainer::generateMarkup('div', $relTab, array('id'=>'relvs', 'class'=>'ui-tabs-hide'));
-
-        return $ul . $coptDiv . $relDiv;
+        return $relTab;
     }
 
     /**

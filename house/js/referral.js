@@ -1018,11 +1018,14 @@ function resvPicker(data, $faDiag) {
  */
 function verifyDone(reserv) {
     "use strict";
-    var resv = reserv;
+    var resv = reserv,
+        havePatient = false,
+        $selStatus = $('#selResvStatus');
+    
     hideAlertMessage();
-    var havePatient = false;
 
-    if ($('#selResvStatus').val() === 'c' || $('#selResvStatus').val() === 'td' || $('#selResvStatus').val() === 'ns') {
+    // Cancel, no show, turned down
+    if ($selStatus.val() === 'c' || $selStatus.val() === 'td' || $selStatus.val() === 'ns') {
         return true;
     }
 
@@ -1031,7 +1034,13 @@ function verifyDone(reserv) {
         $('#gstSearch').addClass('ui-state-highlight').show('blind');
         return false;
     }
-
+    
+    // User set status to "Confirmed" or unconfirmed and no room set.
+    if ( ($('#selResource').val() === '' || $('#selResource').val() === "0") && ($selStatus.val() === 'a' || $selStatus.val() === 'uc')) {
+        flagAlertMessage("Select a room before confirming and saving.  ", true, 0);
+        $('#selResource').addClass('ui-state-highlight');
+        return false;
+    }
 
     // check Hospital
     $('#hospitalSection').find('.ui-state-error').each(function() {

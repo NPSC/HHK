@@ -61,10 +61,10 @@ try {
 
     $page = new ScriptAuthClass($dbh);
 
-} catch (PDOException $ex) {
+} catch (Exception $ex) {
 
     $ssn->destroy();
-    exit("Error - Database problem accessing page: " . $ex->getMessage());
+    exit("Error accessing page: " . $ex->getMessage());
 }
 
 $login->checkPost($dbh, $_POST);

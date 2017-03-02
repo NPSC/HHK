@@ -1337,6 +1337,7 @@ CREATE TABLE if not exists `psg` (
   `Status` VARCHAR(5) NOT NULL DEFAULT '' ,
   `Primary_Language` INT NOT NULL DEFAULT 0 COMMENT '',
   `Language_Notes` TEXT NULL DEFAULT NULL COMMENT '' ,
+  `Info_Last_Confirmed` DATETIME NULL DEFAULT NULL,
   `Notes` TEXT NULL DEFAULT NULL ,
   `Last_Updated` DATETIME NULL DEFAULT NULL ,
   `Updated_By` VARCHAR(45) NOT NULL DEFAULT '' ,

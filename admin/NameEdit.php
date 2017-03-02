@@ -455,7 +455,7 @@ $alertMessage = $alertMsg->createMarkup();
                     <?php echo $nameMarkup; ?>
                 </div>
                 <div style="clear:both;"></div>
-                <div id="linkTabs" class="hhk-member-detail hhk-showonload" style="display:none;">
+                <div id="linkTabs" class="ui-widget ui-widget-content ui-corner-all" style="font-size:0.95em; float:left; padding: 0.7em 1.0em;">
                         <?php echo $relationsMarkup; ?>
                 </div>
                 <div style="clear:both;"></div>

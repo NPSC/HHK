@@ -753,7 +753,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
 
         // Check-in button text
         $buttonText = 'Add Guest';
-        if ($reservStatus == ReservationStatus::Committed  || $reservStatus == ReservationStatus::Imediate) {
+        if ($reservStatus == ReservationStatus::Committed  || $reservStatus == ReservationStatus::Imediate || $reservStatus == ReservationStatus::Waitlist) {
             $buttonText = 'Check In';
         }
 
@@ -831,7 +831,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
                 }
 
                 $constList = '';
-                if ($showConstraints && ($reservStatus == ReservationStatus::Committed  || $reservStatus == ReservationStatus::Imediate)) {
+                if ($showConstraints && ($reservStatus == ReservationStatus::Committed  || $reservStatus == ReservationStatus::Imediate || $reservStatus == ReservationStatus::Waitlist)) {
 
                     // Get constraints
                     $constraints = new ConstraintsVisit($dbh, $resv->getIdReservation(), 0);

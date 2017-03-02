@@ -40,7 +40,7 @@ class MemberSearch {
             }
 
             $this->twoParts = TRUE;
-            $this->Company = '%';
+            $this->Company = strtolower(trim($letters)) . '%';
 
         } else {
 
@@ -248,8 +248,8 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         switch ($basis) {
 
             case "m":
-                //                  0          1             2             3            4                 5             6
-                $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, n.Company, n.Record_Member, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!') as `Descrip`
+                //                  0          1             2             3            4                 5                         6
+                $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, n.Company, n.Record_Company, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
                 FROM name n left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 WHERE n.idName>0 and n.Member_Status not in ('u','TBD','p') and
                 (LOWER(n.Name_Last) like :ltrln $operation
@@ -263,7 +263,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
                     $namArray['id'] = $row2[0];
 
-                    if ($row2[4] == '1' || ord($row2[4]) == 1) {
+                    if ($row2[4] == '0') {
                         $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
                             return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
                         }, $row2[1] . ", " . $row2[2]);
@@ -286,7 +286,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             case "ind":
                 //                  0          1             2             3            4                 5             6
-                $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, n.Company, n.Record_Member, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!') as `Descrip`
+                $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, n.Company, n.Record_Company, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!') as `Descrip`
                 FROM name n left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 WHERE n.idName>0 and n.idName <> :id and n.Member_Status<>'u' and n.Member_Status<>'TBD' and (LOWER(n.Name_Last) like :ltrln
                 $operation (LOWER(n.Name_First) like :ltrfn  OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Member_Status, n.Name_Last, n.Name_First;";
@@ -300,7 +300,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
                     $namArray['id'] = $row2[0];
 
-                    if ($row2[4] == '1' || ord($row2[4]) == 1) {
+                    if ($row2[4] == '0') {
                         $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
                             return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
                         }, $row2[1] . ", " . $row2[2]);
@@ -318,7 +318,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 break;
 
             case "e":
-                $query2 = "select e.idName, e.Email, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!') as `Descrip`
+                $query2 = "select e.idName, e.Email, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
                 from name_email e join name n on e.idName = n.idName
                 left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 where n.idName>0 and n.Member_Status<>'u' and Member_Status<>'TBD' and  LOWER(e.Email) like :ltr order by n.Member_Status, e.Email";
@@ -339,7 +339,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             case RelLinkType::Parnt:
                 //  parents                    0               1           2               3                               4
-                $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!') as `Descrip`
+                $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
             FROM name n left join relationship r on n.idName = r.Target_Id and :id = r.idName and r.Relation_Type = 'par'
             left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
             WHERE (LOWER(n.Name_Last) like :ltrln $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) and n.Record_Member = 1
@@ -363,7 +363,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             case RelLinkType::Child:
                 // chekdren                   0               1           2                   3                           4
-                $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!') as `Descrip`
+                $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
                 FROM name n left join relationship r on n.idName = r.idName and :id = r.Target_Id and r.Relation_Type = 'par'
                 left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 WHERE (LOWER(n.Name_Last) like :ltrln $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) and n.Record_Member = 1
@@ -387,7 +387,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             case RelLinkType::Sibling:
                 //                      0               1              2            3                               4
-                $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!') as `Descrip`
+                $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
             FROM name n left join relationship r on n.idName = r.idName and r.Relation_Type = 'sib'
             left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 WHERE (LOWER(n.Name_Last) like :ltrln $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) and n.Record_Member = 1 and ifnull(r.Group_Code,'0') not in
@@ -430,7 +430,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 break;
 
             case RelLinkType::Spouse:
-                $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!') as `Descrip`
+                $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
                 FROM name n left join relationship r on (n.idName = r.idName or n.idName = r.Target_Id) and r.Relation_Type = 'sp'
                 left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 WHERE (LOWER(n.Name_Last) like :ltrln $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) and n.Record_Member = 1
@@ -453,7 +453,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 break;
 
             case RelLinkType::Employee:
-                $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!') as `Descrip`
+                $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
             FROM name n left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
             WHERE n.Company_Id = 0 and n.Member_Status in ('a','in') and n.Record_Member = 1 and n.idName <> :id and (LOWER(n.Name_Last) like :ltrln
                 $operation (LOWER(n.Name_First) like :ltrfn  OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Member_Status, n.Name_Last, n.Name_First;";
@@ -476,7 +476,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             case RelLinkType::Relative:
                 //                  0                   1           2                   3                       4
-                $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!') as `Descrip`
+                $query2 = "SELECT n.idName as Id, n.Name_Last, n.Name_First, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
             FROM name n left join relationship r on n.idName = r.idName and r.Relation_Type = 'rltv'
             left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 WHERE (LOWER(n.Name_Last) like :ltrln $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) and n.Record_Member = 1 and ifnull(r.Group_Code,'0') not in

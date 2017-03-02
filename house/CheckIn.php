@@ -70,6 +70,7 @@ $gInfo = '';
 $stayingMarkup = '';
 $committedMarkup = '';
 $immediateMarkup = '';
+$wListMarkup = '';
 $patientId = '';
 $guestid = '';
 $psgId = 0;
@@ -182,9 +183,21 @@ if ($idGuest > 0) {
             $inside = "<p style='margin-left:60px;'>-None are imminent-</p>";
         }
 
-        $committedMarkup = HTMLContainer::generateMarkup('div', $inside, array('id'=>'hhk-confResv'));
+        $committedMarkup = HTMLContainer::generateMarkup('h3', $labels->getString('register', 'reservationTab', 'Confirmed Reservations') . HTMLContainer::generateMarkup('span', '', array('style'=>'float:right;', 'class'=>'ui-icon ui-icon-triangle-1-e')), array('id'=>'hhk-confResvHdr', 'style'=>'margin-bottom:15px;padding:5px;background-color: #D3D3D3;', 'title'=>'Click to show or hide the ' . $labels->getString('register', 'reservationTab', 'Confirmed Reservations')))
+            . HTMLContainer::generateMarkup('div', $inside, array('id'=>'hhk-confResv', 'style'=>'margin-bottom:5px;'));
     }
 
+    if ($uS->Reservation && $uS->OpenCheckin) {
+
+        $inside = Reservation_1::showListByStatus($dbh, 'Referral.php', 'CheckIn.php', ReservationStatus::Waitlist, TRUE, NULL, 2, TRUE);
+
+        if ($inside != '') {
+            $wListMarkup = HTMLContainer::generateMarkup('h3', 'Wait List' . HTMLContainer::generateMarkup('span', '', array('style'=>'float:right;', 'class'=>'ui-icon ui-icon-triangle-1-e')), array('id'=>'hhk-wListResvHdr'
+                , 'style'=>'margin-bottom:15px;padding:5px;background-color: #D3D3D3;', 'title'=>'Click to show or hide the wait list'))
+                    . HTMLContainer::generateMarkup('div', $inside, array('id'=>'hhk-wListResv', 'style'=>'margin-bottom:5px;'));
+
+        }
+    }
 
     $stayingMarkup = HTMLContainer::generateMarkup('div', Reservation_1::showListByStatus($dbh, 'GuestEdit.php', 'CheckIn.php', ReservationStatus::Staying), array('id'=>'hhk-chkedIn'));
     if ($stayingMarkup == '') {
@@ -241,10 +254,9 @@ $confReserv = $labels->getString('register', 'reservationTab', 'Confirmed Reserv
             <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
             <div id="divresvWrapper" style="display: none;">
             <div id="divResvList" style="font-size:.7em; <?php echo $reservListDisplay; ?>" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
-                <?php echo $immediateMarkup; if ($uS->Reservation) { ?>
-                <h3 id="hhk-confResvHdr" style='margin-bottom:15px;padding:5px;background-color: #D3D3D3;' title="Click to show or hide the <?php echo $confReserv; ?>"><?php echo $confReserv; ?>
-                    <span class="ui-icon ui-icon-triangle-1-e" style="float:right;"></span></h3>
-                <?php echo $committedMarkup; } ?>
+                <?php echo $immediateMarkup; ?>
+                <?php echo $committedMarkup; ?>
+                <?php echo $wListMarkup; ?>
                 <h3 id="hhk-chkedInHdr" style='padding:5px;background-color: #D3D3D3;' title="Click to show or hide the Checked-In Guests">Checked-In Guests
                     <span class="ui-icon ui-icon-triangle-1-e" style="float:right;"></span></h3>
                 <?php echo $stayingMarkup; ?>
@@ -260,9 +272,11 @@ $confReserv = $labels->getString('register', 'reservationTab', 'Confirmed Reserv
                 <div id="stays" style="clear:left;float:left; font-size: .9em; display:none; " class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog"></div>
                 <div id="addRoom" style="clear:left;float:left; font-size: .9em; display:none; " class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog"></div>
                 <div id="guestAccordion" style="clear:left;font-size:.9em; margin-top:0;float:left;" class="ui-widget hhk-panel hhk-visitdialog"></div>
-            <?php echo $gInfo; ?>
-                <div id="guestSearch" style="clear:left;float:left;font-size: .9em;padding-left:0;<?php echo $gSearchDisplay; ?>" class="hhk-panel">
-<?php echo $mk1; ?>
+                <div id="guestSearchWrapper" style="display: none;">
+                    <?php echo $gInfo; ?>
+                    <div id="guestSearch" style="clear:left;float:left;font-size: .9em;padding-left:0;<?php echo $gSearchDisplay; ?>" class="hhk-panel">
+                        <?php echo $mk1; ?>
+                    </div>
                 </div>
                 <div id="vehicle" style="clear:left;float:left; font-size: .9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox">
                 </div>

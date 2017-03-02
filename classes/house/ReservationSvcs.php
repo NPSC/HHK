@@ -1394,7 +1394,7 @@ class ReservationSvcs {
 
         $tbl2->addBodyTr(
                 ($showPayWith ? HTMLTable::makeTh('Pay With') . $moaHeader : '')
-                .HTMLTable::makeTh('Verbal Confirmation')
+                .HTMLTable::makeTh('Verbal Affirmation')
                 .($resv->getStatus() == ReservationStatus::UnCommitted ? HTMLTable::makeTh('Status', array('class'=>'ui-state-highlight')) : HTMLTable::makeTh('Status'))
                 );
 

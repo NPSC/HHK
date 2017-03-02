@@ -679,7 +679,9 @@ class PriceGuestDay extends PriceModel {
         $fTbl->addHeaderTr(
             HTMLTable::makeTh('Title')
             .HTMLTable::makeTh('Default')
-            .HTMLTable::makeTh('Rate/Guest')
+            .HTMLTable::makeTh('Rate/1st Guest')
+            .HTMLTable::makeTh('Rate/2nd Guest')
+            .HTMLTable::makeTh('Rate/3rd or more guests')
             );
 
         // Room rates
@@ -699,6 +701,8 @@ class PriceGuestDay extends PriceModel {
                 HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'13')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup($r->FA_Category->getStoredVal(), $attrs) . ' (' . $r->FA_Category->getStoredVal() . ')')
                 .HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_1->getStoredVal(), 2), array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'3')), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_2->getStoredVal(), 2), array('name'=>'rr2['.$r->idRoom_rate->getStoredVal().']', 'size'=>'3')), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_3->getStoredVal(), 2), array('name'=>'rr3['.$r->idRoom_rate->getStoredVal().']', 'size'=>'3')), array('style'=>'text-align:center;'))
             );
         }
 

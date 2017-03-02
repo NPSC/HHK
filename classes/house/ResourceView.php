@@ -220,7 +220,7 @@ order by r.Title;");
 
         if ($type == 'resc') {
             $whid = 'idResource';
-            $title = 'Resource ' . $title;
+            $title = 'Room ' . $title;
         } else {
             $whid = 'idRoom';
             $title = 'Room ' . $title;

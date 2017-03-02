@@ -43,7 +43,7 @@ function createZipAutoComplete(txtCtrl, wsUrl, lastXhr) {
     });
 }
 
-function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNew, searchURL) {
+function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNew, searchURL, $basisCtrl) {
     "use strict";
     var cache = {};
     
@@ -95,6 +95,9 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
 
             txtCtrl.autocomplete( "option", "delay", 120 );
             inputParms.letters = request.term;
+            if ($basisCtrl.length > 0) {
+                inputParms.basis = $basisCtrl.val();
+            }
             $.getJSON( searchURL, inputParms, function( data, status, xhr ) {
                 
                 if (data.gotopage) {

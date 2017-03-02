@@ -272,9 +272,8 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
 
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="../js/jquery.plugin.min.js"></script>
-        <script type="text/javascript" src="../js/jquery.gchart.min.js"></script>
-        <script type="text/javascript">
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
 $(document).ready(function () {
     "use strict";
     $('.ckdate').datepicker({
@@ -299,28 +298,64 @@ $(document).ready(function () {
     });
     $('#selCalendar').change();
     $('#btnByRoom').button();
-    try {
-    var nits = $.parseJSON('<?php echo $nights; ?>'),
-        oos = $.parseJSON('<?php echo $oos; ?>'),
-        axBottom = $.parseJSON('<?php echo $axisBottom; ?>'),
-        title = '<?php echo $title; ?>',
-        rmCount = '<?php echo $roomCount; ?>',
-        yr = '<?php echo $year; ?>';
 
-	$('#roomMonth').gchart({
-            type: 'line',
-            maxValue: rmCount,
-		title: title,
-                titleColor: 'green',
-		backgroundColor: $.gchart.gradient('horizontal', 'ccffff', 'ccffff00'),
-		series: [$.gchart.series(yr, nits, 'black'),
-                        $.gchart.series((yr - 1), oos, 'red')],
-		axes: [$.gchart.axis('bottom', axBottom, 'black'),
-		$.gchart.axis('left', 0, rmCount, 'red', 'right')
-		],
-		legend: 'right'});
+    // Load the Visualization API and the corechart package.
+    google.charts.load('current', {'packages':['corechart']});
 
-            } catch (err) {}
+    // Callback that creates and populates a data table,
+    // instantiates the pie chart, passes in the data and
+    // draws it.
+    function drawChart() {
+
+        // Create the data table.
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Topping');
+        data.addColumn('number', 'Slices');
+        data.addRows([
+          ['Mushrooms', 3],
+          ['Onions', 1],
+          ['Olives', 1],
+          ['Zucchini', 1],
+          ['Pepperoni', 2]
+        ]);
+
+        // Set chart options
+        var options = {'title':'<?php echo $title; ?>',
+                       'width':400,
+                       'height':300};
+
+        // Instantiate and draw our chart, passing in some options.
+        var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+
+    }
+
+    // Set a callback to run when the Google Visualization API is loaded.
+    google.charts.setOnLoadCallback(drawChart);
+
+
+//    try {
+//    var nits = $.parseJSON('<?php echo $nights; ?>'),
+//        oos = $.parseJSON('<?php echo $oos; ?>'),
+//        axBottom = $.parseJSON('<?php echo $axisBottom; ?>'),
+//        title = '<?php echo $title; ?>',
+//        rmCount = '<?php echo $roomCount; ?>',
+//        yr = '<?php echo $year; ?>';
+//
+//	$('#roomMonth').gchart({
+//            type: 'line',
+//            maxValue: rmCount,
+//		title: title,
+//                titleColor: 'green',
+//		backgroundColor: $.gchart.gradient('horizontal', 'ccffff', 'ccffff00'),
+//		series: [$.gchart.series(yr, nits, 'black'),
+//                        $.gchart.series((yr - 1), oos, 'red')],
+//		axes: [$.gchart.axis('bottom', axBottom, 'black'),
+//		$.gchart.axis('left', 0, rmCount, 'red', 'right')
+//		],
+//		legend: 'right'});
+//
+//            } catch (err) {}
 });
     </script>
     </head>
@@ -377,7 +412,7 @@ $(document).ready(function () {
                 </div>
             </form>
             <div style="clear:both;"></div>
-            <div id="roomMonth"></div>
+            <div id="chart_div"></div>
 
         </div>  <!-- div id="contentDiv"-->
     </body>

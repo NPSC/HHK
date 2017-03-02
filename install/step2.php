@@ -33,42 +33,40 @@ $pageTitle = $ssn->siteName;
 // define db connection obj
 $dbh = initPDO();
 
-$driver = $dbh->getAttribute(PDO::ATTR_DRIVER_NAME);
-if ($driver != 'mysql') {
-    echo('Driver not mysql.  Manually load the database.');
-    exit();
-}
-
-//$stmt = $dbh->query("show variables like 'max_allowed_packet';");
-//$rows = $stmt->fetchAll();
-//$maxPacketSize = $rows[0][1];
-
 $errorMsg = '';
 $resultAccumulator = "";
 
 // Check for returns
 if (isset($_POST['btnSave'])) {
 
-
     try {
-        $mysqli = new mysqli($ssn->databaseURL, $ssn->databaseUName, $ssn->databasePWord, $ssn->databaseName);
-    } catch (mysqli_sql_exception $ex) {
-        $errorMsg = "Connect failed: " . $ex->getMessage();
+
+
+        $patch = new Patch();
+
+        // Update Tables
+        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
+        foreach ($patch->results as $err) {
+            $errorMsg .= 'Create Table Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+        }
+
+
+        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllViews.sql', 'Views');
+        foreach ($patch->results as $err) {
+            $errorMsg .= 'Create View Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+        }
+
+        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
+        foreach ($patch->results as $err) {
+            $errorMsg .= 'Create Stored Procedures Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+        }
+
+    } catch (Exception $hex) {
+        $errorMsg .= '***' . $hex->getMessage();
+
     }
 
-    /* check connection */
-    if ($mysqli->connect_error) {
-
-        $errorMsg .= "Connect failed: " . $mysqli->connect_error;
-
-    } else {
-
-        $resultAccumulator .= Patch::updateViewsSps($mysqli, '../sql/CreateAllTables.sql', '../sql/CreateAllViews.sql', '../sql/CreateAllRoutines.sql');
-
-    }
-}
-
-if (isset($_POST['btnNext'])) {
+} else if (isset($_POST['btnNext'])) {
     header('location:step3.php');
 }
 ?>
@@ -91,6 +89,7 @@ if (isset($_POST['btnNext'])) {
                     <p>Schema: <?php echo $ssn->databaseName; ?></p>
                     <p>User: <?php echo $ssn->databaseUName; ?></p>
                     <p><?php echo $resultAccumulator; ?></p>
+                    
                     <input type="submit" name="btnSave" id="btnSave" value="Install DB" style="margin-left:700px;margin-top:20px;"/>
                     <input type="submit" name="btnNext" id="btnNext" value="Next" style="margin-left:7px;margin-top:20px;"/>
                 </form>

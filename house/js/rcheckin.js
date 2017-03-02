@@ -1385,7 +1385,7 @@ $(document).ready(function() {
         "order": [[ 4, 'asc' ]]
     });
 
-    $('#atblgetter, #stblgetter').DataTable();
+    $('#atblgetter, #stblgetter, #wtblgetter').DataTable();
     
     $.datepicker.setDefaults({
         yearRange: '-7:+02',
@@ -1754,6 +1754,9 @@ $(document).ready(function() {
     $('#hhk-chkedInHdr').click(function () {
         $('#hhk-chkedIn').toggle('blind');
     });
+    $('#hhk-wListResvHdr').click(function () {
+        $('#hhk-wListResv').toggle('blind');
+    });
     
     createAutoComplete($('#txtRelSch'), 3, {cmd: 'filter', add: 'phone', basis: 'g'}, getECRel, lastXhr);
     
@@ -1808,5 +1811,6 @@ $(document).ready(function() {
     if (checkIn.idReserv > 0) {
         loadGuest(checkIn.addGuestId, 0, 'r', checkIn.patientStaying);
     }
+    $('#guestSearchWrapper').show();
     $('#divresvWrapper').show();
 });
