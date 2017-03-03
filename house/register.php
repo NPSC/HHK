@@ -196,9 +196,13 @@ foreach ($uS->nameLookups[GL_TableNames::PayType] as $p) {
 $payTypeSelector = HTMLSelector::generateMarkup(
                 HTMLSelector::doOptionsMkup($payTypes, ''), array('name' => 'selPayType[]', 'id' => 'selPayType', 'size' => '4', 'multiple' => 'multiple'));
 
-$stmt = $dbh->query("Select count(*) from resource");
-$rows = $stmt->fetchAll(PDO::FETCH_NUM);
-$roomCount = $rows[0][0];
+if (isset($uS->roomCount) === FALSE) {
+    $stmt = $dbh->query("Select count(*) from resource");
+    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+    $uS->roomCount = $rows[0][0];
+}
+
+$roomCount = $uS->roomCount;
 
 if ($uS->Reservation) {
     $roomCount += 5;
@@ -340,22 +344,25 @@ if ($uS->Reservation) {
             . HTMLContainer::generateMarkup('div', $wlTable->generateMarkup(array('id'=> 'waitlist')), array('id' => 'divwaitlist'));
 }
 
-// Hospital color key
+// Hospital Selector
 $colorKey = '';
-if ($uS->RegColors == 'hospital') {
+$stmth = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)'");
 
-    $stmt = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)'");
+if ($stmth->rowCount() > 1) {
 
-    if ($stmt->rowCount() > 1) {
+    $colorKey = HTMLContainer::generateMarkup('span', $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . 's: ');
+    // All button
+    $colorKey .= HTMLContainer::generateMarkup('span', 'All', array('class'=>'spnHosp', 'data-id'=>0, 'style' => 'border:solid 3px black;font-size:120%;background-color:fff;color:000;'));
 
-        $colorKey = HTMLContainer::generateMarkup('span', $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . 's: ');
-        // All button
-        $colorKey .= HTMLContainer::generateMarkup('span', 'All', array('class'=>'spnHosp', 'data-id'=>0, 'style' => 'border:solid 3px black;font-size:120%;background-color:fff;color:000;'));
+    while ($r = $stmth->fetch(\PDO::FETCH_ASSOC)) {
 
-        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
-            $colorKey .= HTMLContainer::generateMarkup('span', $r['Title'], array('class'=>'spnHosp', 'data-id'=>$r['idHospital'], 'style' => 'background-color:' . $r['Reservation_Style'] . ';color:' . $r['Stay_Style'] . ';'));
+        $attrs = array('class'=>'spnHosp', 'data-id'=>$r['idHospital']);
+
+        if ($uS->RegColors == 'hospital') {
+            $attrs['style'] = 'background-color:' . $r['Reservation_Style'] . ';color:' . $r['Stay_Style'] . ';';
         }
 
+        $colorKey .= HTMLContainer::generateMarkup('span', $r['Title'], $attrs);
     }
 }
 
@@ -363,8 +370,8 @@ if ($uS->RegColors == 'hospital') {
 $weeks = $uS->CalViewWeeks;
 if ($weeks < 1) {
     $weeks = 1;
-} else if ($weeks > 4) {
-    $weeks = 4;
+} else if ($weeks > 5) {
+    $weeks = 5;
 }
 
 $viewWeeks = '';  //HTMLContainer::generateMarkup('span', 'View ' . HTMLInput::generateMarkup($weeks, array('size'=>'1', 'id'=>'txtViewWeeks')) . ' weeks', array('style'=>'margin-right:5px;'));
@@ -374,7 +381,7 @@ try {
     $chlgen = new ChallengeGenerator();
     $challengeVar = $chlgen->getChallengeVar("challenge");
 } catch (Exception $e) {
-
+    //
 }
 
 ?>
@@ -429,6 +436,10 @@ try {
     }
     .hhk-justify-c {
         text-align: center;
+    }
+    .fc-content {
+        height: 680px;
+        overflow-y: auto;
     }
 </style>
     </head>

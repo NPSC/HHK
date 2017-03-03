@@ -30,3 +30,4 @@ update gen_lookups set Type = 'h' where `Table_Name` = 'Diagnosis';
 update gen_lookups set `Order` = 1000 where `Type` = 'd' and `Code` = 'z';
 
 update `page` set `Hide` = 1 where `File_Name` = 'RoomView.php';
+

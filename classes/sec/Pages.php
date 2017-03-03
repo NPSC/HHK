@@ -18,7 +18,9 @@ class Pages {
 
     public static function editPages(\PDO $dbh, $post) {
 
+        $uS = Session::getInstance();
         $website = '';
+        $loginPageId = 0;
         $secGroups = array();
 
         // Get list of security groups
@@ -27,24 +29,78 @@ class Pages {
             $secGroups[$r[0]] = $r;
         }
 
+        $siteList = $uS->siteList;
+
+        if (isset($post['hdnWebSite'])) {
+            $website = filter_var($post['hdnWebSite'], FILTER_SANITIZE_STRING);
+        }
+
+        if (isset($siteList[$website]) === FALSE) {
+            throw new Hk_Exception_Runtime("Web site code not found");
+        }
+
+        if (isset($post['hdnloginPageId'])) {
+            $loginPageId = intval(filter_var($post['hdnloginPageId'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if ($loginPageId < 1) {
+            throw new Hk_Exception_Runtime("Login Page Id not found");
+        }
+
+        $pageTypes = readGenLookupsPDO($dbh, 'Page_Type');
+
         foreach ($post['txtIdPage'] as $k => $v) {
 
             $pageId = intval(filter_var($k, FILTER_SANITIZE_STRING), 10);
+            $newGroupCodes = array();
 
-            if ($pageId < 1) {
+            if ($pageId < 0) {
                 continue;
             }
 
             $pageRs = new PageRS();
-            $pageRs->idPage->setStoredVal($pageId);
-            $rows = EditRS::select($dbh, $pageRs, array($pageRs->idPage));
 
-            if (count($rows) != 1) {
-                throw new Hk_Exception_Runtime("Page not found, id= ". $pageId);
+            if ($pageId > 0) {
+                $pageRs->idPage->setStoredVal($pageId);
+                $rows = EditRS::select($dbh, $pageRs, array($pageRs->idPage));
+
+                if (count($rows) != 1) {
+                    throw new Hk_Exception_Runtime("Page not found, id= ". $pageId);
+                }
+
+                EditRS::loadRow($rows[0], $pageRs);
+
+            } else {
+                // New page
+
+                $pageRs->Web_Site->setNewVal($website);
+
+                // Page type
+                if (isset($post['selPageType'][$pageId])) {
+                    $pgType = filter_var($post['selPageType'][$pageId], FILTER_SANITIZE_STRING);
+                }
+
+                if (isset($pageTypes[$pgType])) {
+                    $pageRs->Type->setNewVal($pgType);
+                } else {
+                    continue;
+                }
+
+                // Login page Id
+                if ($pgType == WebPageCode::Page) {
+                    $pageRs->Login_Page_Id->setNewVal($loginPageId);
+                } else {
+                    $pageRs->Login_Page_Id->setNewVal(0);
+                }
+
+                // File Name
+                if (isset($post['txtFileName'][$pageId]) && $post['txtFileName'][$pageId] != '') {
+                    // TODO Does the file exists?
+                    $pageRs->File_Name->setNewVal(filter_var($post['txtFileName'][$pageId], FILTER_SANITIZE_STRING));
+                } else {
+                    continue;
+                }
             }
-
-            EditRS::loadRow($rows[0], $pageRs);
-            $website = $pageRs->Web_Site->getStoredVal();
 
             // Title
             if (isset($post['txtPageTitle'][$pageId])) {
@@ -66,16 +122,24 @@ class Pages {
                 $pageRs->Menu_Position->setNewVal(filter_var($post['txtParentPosition'][$pageId], FILTER_SANITIZE_STRING));
             }
 
+            if (isset($post["selSecCode"][$pageId])) {
+                $newGroupCodes = filter_var_array($post["selSecCode"][$pageId], FILTER_SANITIZE_STRING);
+            }
+
+
             $pageRs->Updated_By->setNewVal('admin');
             $pageRs->Last_Updated->setNewVal(date('y-m-d H:i:s'));
 
-            // uupdate page record.
-            EditRS::update($dbh, $pageRs, array($pageRs->idPage));
+            if ($pageId == 0) {
+                $pageId = EditRS::insert($dbh, $pageRs);
+            } else {
+                // uupdate page record.
+                EditRS::update($dbh, $pageRs, array($pageRs->idPage));
+            }
 
             // Secrutiy codes.
-            if (isset($post["selSecCode"][$pageId])) {
+            if (count($newGroupCodes) > 0) {
 
-                $newGroupCodes = filter_var_array($post["selSecCode"][$pageId], FILTER_SANITIZE_STRING);
                 $flipped = array_flip($newGroupCodes);
                 $existingCodes = array();
 
@@ -124,14 +188,12 @@ class Pages {
     public static function getPages(\PDO $dbh, $site) {
 
         $uS = Session::getInstance();
-
+        $indexPageId = 0;
         $siteList = $uS->siteList;
 
         if (isset($siteList[$site]) == FALSE) {
             throw new Hk_Exception_Runtime("Web site code not found: " . $site);
         }
-
-
 
         $query = "SELECT
 `p`.`idPage`,
@@ -162,6 +224,10 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
 
             if ($r['Menu_Parent'] === '0' && $r['File_Name'] != 'index.php') {
                 $parentMenus[$r['idPage']] = array(0=>$r['idPage'], 1=>$r['Title'], 2=>'');
+            }
+
+            if ($r['File_Name'] == 'index.php') {
+                $indexPageId = $r['idPage'];
             }
         }
 
@@ -246,14 +312,33 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
 
         // Clean up last row
         if ($lastRow != '') {
-                    $lastRow .= HTMLTable::makeTd(
+            $lastRow .= HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($secGroups, $auths, FALSE), array('name'=>'selSecCode[' . $pageId . '][]', 'class'=>'hhk-multisel', 'multiple'=>'multiple'))
                             );
             $tbl->addBodyTr( $lastRow, array('class'=>'trPages'));
 
         }
 
-        $mkup = HTMLContainer::generateMarkup('h2', $siteList[$site]['Description'] . ' Pages') . $tbl->generateMarkup(array('id'=>'tblPages', 'class'=>'display'));
+        $pageTypes = readGenLookupsPDO($dbh, 'Page_Type');
+
+        // New Page
+        $newRow = HTMLTable::makeTd(HTMLInput::generateMarkup('New', array('name'=>'txtIdPage[0]', 'readonly'=>'readonly', 'style'=>'background-color:transparent;text-align:center;', 'size'=>'5')))
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($pageTypes, ''), array('name'=>'selPageType[0]')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtFileName[0]', 'size'=>'15')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtPageTitle[0]', 'size'=>'20')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbHide[0]')))
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($parentMenus, '', FALSE), array('name'=>'selParentId[0]', 'class'=>'hhk-selmenu')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtParentPosition[0]', 'size'=>'2')))
+                . HTMLTable::makeTd(
+                    HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($secGroups, '', FALSE), array('name'=>'selSecCode[0][]', 'class'=>'hhk-multisel', 'multiple'=>'multiple'))
+                );
+
+        $tbl->addBodyTr( $newRow, array('class'=>'trPages'));
+
+        $mkup = HTMLContainer::generateMarkup('h2', $siteList[$site]['Description'] . ' Pages')
+                . HTMLInput::generateMarkup($site, array('name'=>'hdnWebSite', 'type'=>'hidden'))
+                . HTMLInput::generateMarkup($indexPageId, array('name'=>'hdnloginPageId', 'type'=>'hidden'))
+                . $tbl->generateMarkup(array('id'=>'tblPages', 'class'=>'display'));
 
         return array('site'=>$site, "success" => $mkup);
     }

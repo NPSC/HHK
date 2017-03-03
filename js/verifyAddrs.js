@@ -94,10 +94,14 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
             }
 
             txtCtrl.autocomplete( "option", "delay", 120 );
+            
             inputParms.letters = request.term;
-            if ($basisCtrl.length > 0) {
+            
+            // Get basis from active control
+            if ($basisCtrl !== undefined && $basisCtrl.length > 0) {
                 inputParms.basis = $basisCtrl.val();
             }
+            
             $.getJSON( searchURL, inputParms, function( data, status, xhr ) {
                 
                 if (data.gotopage) {

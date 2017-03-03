@@ -42,8 +42,20 @@ $alertMsg->set_Text("uh-oh");
 if (isset($_POST["btnSubmit"])) {
 
     if (SecurityComponent::is_TheAdmin()) {
-        $webSite = Pages::editPages($dbh, $_POST);
+
+        try {
+
+            $webSite = Pages::editPages($dbh, $_POST);
+
+        } catch (Exception $ex) {
+
+            $alertMsg->set_Text("Error: " . $ex->getMessage());
+            $alertMsg->set_Context(alertMessage::Alert);
+            $alertMsg->set_DisplayAttr("block");
+
+        }
     } else {
+
         $alertMsg->set_Text("Unauthorized for Edit");
         $alertMsg->set_Context(alertMessage::Notice);
         $alertMsg->set_DisplayAttr("block");
