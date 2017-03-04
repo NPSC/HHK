@@ -249,13 +249,13 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             case "m":
                 //                  0          1             2             3            4                 5                         6
-                $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, n.Company, n.Record_Company, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
+                $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, n.Company, case when n.Record_Company = 1 then 't' else '' end, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!')
                 FROM name n left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 WHERE n.idName>0 and n.Member_Status not in ('u','TBD','p') and
-                (LOWER(n.Name_Last) like :ltrln $operation
-                (LOWER(n.Name_NickName) like :ltrnk OR LOWER(n.Name_First) like :ltrfn) OR LOWER(n.Company) like :ltrco) order by n.Member_Status, n.Name_Last, n.Name_First;";
-                $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-                $stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First, ':ltrco' => $this->Name_First));
+                (LOWER(n.Name_Last) like '" . $this->Name_Last . "' $operation
+                (LOWER(n.Name_NickName) like '" . $this->Name_First . "' OR LOWER(n.Name_First) like '" . $this->Name_First . "') OR LOWER(n.Company) like '" . $this->Company . "') order by n.Member_Status, n.Name_Last, n.Name_First;";
+                $stmt = $dbh->query($query2);
+                //$stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First, ':ltrco' => $this->Company));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
@@ -263,7 +263,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
                     $namArray['id'] = $row2[0];
 
-                    if ($row2[4] == '0') {
+                    if ($row2[4] == '') {
                         $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
                             return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
                         }, $row2[1] . ", " . $row2[2]);
@@ -286,7 +286,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             case "ind":
                 //                  0          1             2             3            4                 5             6
-                $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, n.Company, n.Record_Company, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!') as `Descrip`
+                $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, n.Company, case when n.Record_Company = 1 then 't' else '' end, ifnull(n.Member_Status,'x'), ifnull(g.Description,'Undefined!') as `Descrip`
                 FROM name n left join gen_lookups g on g.Table_Name='mem_status' and g.Code = n.Member_Status
                 WHERE n.idName>0 and n.idName <> :id and n.Member_Status<>'u' and n.Member_Status<>'TBD' and (LOWER(n.Name_Last) like :ltrln
                 $operation (LOWER(n.Name_First) like :ltrfn  OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Member_Status, n.Name_Last, n.Name_First;";
@@ -300,7 +300,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
                     $namArray['id'] = $row2[0];
 
-                    if ($row2[4] == '0') {
+                    if ($row2[4] == '') {
                         $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
                             return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
                         }, $row2[1] . ", " . $row2[2]);

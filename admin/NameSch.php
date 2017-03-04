@@ -51,6 +51,9 @@ if (isset($uS->siteList[WebSiteCode::Volunteer])) {
         <link href="css/default.css" rel="stylesheet" type="text/css" />
 <?php echo TOP_NAV_CSS; ?>
         <link href="<?php echo FULLC_CSS; ?>" rel="stylesheet" type="text/css" />
+        <style>
+            .ui-menu-item {min-width: 380px;}
+        </style>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/verifyAddrs-min.js"></script>
@@ -71,7 +74,10 @@ if (isset($uS->siteList[WebSiteCode::Volunteer])) {
             }
         });
 
-    createAutoComplete($('#txtsearch'), 3, {cmd: "srrel", id: 0},
+    createAutoComplete(
+        $('#txtsearch'),
+        3,
+        {cmd: "srrel", id: 0},
         function( item ) {
             if (item.id === 'i') {
                 // New Individual
@@ -85,7 +91,7 @@ if (isset($uS->siteList[WebSiteCode::Volunteer])) {
                 window.location = "NameEdit.php?id=" + cid;
             }
         },
-        true,
+        false,
         "liveNameSearch.php",
         $('#txtBasis')
     );

@@ -42,6 +42,10 @@ abstract class Relation {
     /** @var RelationCode  */
     protected $relCode;
 
+    protected $trash;
+    protected $careof;
+    protected $addCareof;
+
     /**
      *
      * @param PDO $dbh
@@ -54,6 +58,11 @@ abstract class Relation {
         $this->relCode = $this->loadRelCode();
 
         $this->relNames = $this->loadRecords($dbh);
+
+        $this->trash = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash', 'title'=>'Delete Link', 'style'=>'float: left; margin-right:.3em;margin-top:.2em;'));
+        $this->careof = HTMLContainer::generateMarkup('span', '', array('name'=>'delcareof', 'class'=>'ui-icon ui-icon-mail-closed', 'style'=>'float: left; margin-right:.3em;margin-top:.2em;'));
+        $this->addCareof = HTMLContainer::generateMarkup('span', '', array('name'=>'addcareof', 'class'=>'ui-icon ui-icon-plus', 'style'=>'float: left; margin-right:.3em;margin-top:.2em;'));
+
     }
 
     public static function instantiateRelation(PDO $dbh, $relCode, $idName) {
@@ -186,7 +195,6 @@ abstract class Relation {
     public function createMarkup($page = 'NameEdit.php') {
 
         $table = new HTMLTable();
-        $trash = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash', 'title'=>'Delete Link', 'style'=>'float: left; margin-right:.3em;'));
 
         $table->addHeaderTr(HTMLTable::makeTh($this->relCode->getTitle(), array('colspan'=>'2')));
 
@@ -200,7 +208,7 @@ abstract class Relation {
                 }
 
                 $table->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $rName["Name"], array('href'=>$page.'?id='.$rName['Id'], 'class'=>$deceasedClass, 'title'=>'Click to Edit this Member')), array('class'=>'hhk-rel-td'))
-                    .HTMLTable::makeTd($trash, array('name'=>$rName['Id'], 'class'=>'hhk-rel-td hhk-deletelink', 'title'=>'Delete ' . $this->relCode->getTitle() . ' Link to ' . $rName["Name"])));
+                    .HTMLTable::makeTd($this->trash, array('name'=>$rName['Id'], 'class'=>'hhk-rel-td hhk-deletelink', 'title'=>'Delete ' . $this->relCode->getTitle() . ' Link to ' . $rName["Name"])));
         }
         }
 
@@ -559,26 +567,6 @@ class Partner extends Relation {
     protected $statusTitle;
     protected $status;
 
-//    protected function loadRecords(PDO $dbh) {
-//
-//        $rels = array();
-//
-//        $stmt = $dbh->prepare($this->getQuery(), array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-//        $stmt->execute(array(":id" => $this->getIdName(), ":tpe" => $this->relCode->getCode()));
-//
-//        if ($stmt->rowCount() > 0) {
-//
-//            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
-//                $rs = new relationsRS();
-//                EditRS::loadRow($r, $rs);
-//                $rels[] = array('Id' => $r["Id"], 'Name' => $r["Name"], 'rs' => $rs);
-//                $this->statusTitle = $r['Status_Text'];
-//                $this->status = $r['sp_Status'];
-//            }
-//        }
-//        return $rels;
-//    }
-
     protected function loadRelCode() {
 
         return new RelationCode(array('Code'=>RelLinkType::Spouse, 'Description'=>'Partner'));
@@ -800,9 +788,6 @@ where c.Id = :id;";
     public function createMarkup($page = 'NameEdit.php') {
 
         $table = new HTMLTable();
-        $trash = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash', 'style'=>'float: left; margin-right:.3em;'));
-        $careof = HTMLContainer::generateMarkup('span', '', array('name'=>'delcareof', 'class'=>'ui-icon ui-icon-mail-closed', 'style'=>'float: left; margin-right:.3em;'));
-        $addCareof = HTMLContainer::generateMarkup('span', '', array('name'=>'addcareof', 'class'=>'ui-icon ui-icon-plus', 'style'=>'float: left; margin-right:.3em;'));
 
         $htmlId = $this->idPrefex . $this->getHtmlId();
 
@@ -826,9 +811,9 @@ where c.Id = :id;";
 
 
                 $table->addBodyTr(
-                    HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $rName["Name"], array('href'=>$page.'?id='.$rName['Id'], 'class'=>$deceasedClass, 'title'=>'Click to Edit this Member')))
-                    .HTMLTable::makeTd($trash, array('name'=>$rName['Id'], 'class'=>'hhk-deletelink', 'title'=>'Delete ' . $this->relCode->getTitle() . ' Link to ' . $rName["Name"]))
-                    .HTMLTable::makeTd($cof ? $careof : $addCareof, array('name'=>$rName['Id'], 'class'=>'hhk-careoflink', 'title'=>$cof ? 'Remove Care-Of for ' . $rName["Name"] : 'Make ' . $rName["Name"] . ' a Care/Of'))
+                    HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $rName["Name"], array('href'=>$page.'?id='.$rName['Id'], 'class'=>$deceasedClass, 'title'=>'Click to Edit ' . $rName["Name"], 'style'=>'padding-left: .3em;padding-right:.3em;')))
+                    .HTMLTable::makeTd($this->trash, array('name'=>$rName['Id'], 'class'=>'ui-widget-header hhk-deletelink', 'title'=>'Delete ' . $this->relCode->getTitle() . ' Link to ' . $rName["Name"]))
+                    .HTMLTable::makeTd($cof ? $this->careof : $this->addCareof, array('name'=>$rName['Id'], 'class'=>'hhk-careoflink', 'title'=>$cof ? 'Remove Care-Of for ' . $rName["Name"] : 'Make ' . $rName["Name"] . ' a Care/Of'))
                     );
             }
         }

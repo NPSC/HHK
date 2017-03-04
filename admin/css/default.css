@@ -36,11 +36,6 @@ body.testbody {
     margin-top:5px;
     display:inline-block;
 }
-.hhk-relations td:hover {
-    background-color: #67b021;
-    color: whitesmoke;
-    cursor:pointer;
-}
 .hhk-gotoweb {
     background-color: #ffffff;
     padding-top: 3px;

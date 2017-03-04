@@ -498,7 +498,7 @@ $(document).ready(function () {
                 window.location = "NameEdit.php?id=" + cid;
             }
         }, 
-        true, 
+        false, 
         "liveNameSearch.php"
     );
 
@@ -613,6 +613,16 @@ $(document).ready(function () {
 
         theUl.parent().height(sumpx + 40);
     });
+
+// Hover states on the static widgets
+$( ".hhk-relations td, .hhk-gotoweb" ).hover(
+	function() {
+		$( this ).addClass( "ui-state-hover" );
+	},
+	function() {
+		$( this ).removeClass( "ui-state-hover" );
+	}
+);
 
 });
 

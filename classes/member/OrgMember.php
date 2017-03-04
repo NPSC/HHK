@@ -128,15 +128,15 @@ class OrgMember extends Member {
     public function createRelationsTabs(array $rel, $page = "NameEdit.php") {
 
 
-        $relTab = HTMLContainer::generateMarkup('div',$rel[RelLinkType::Employee]->createMarkup($page), array('style'=>'float:left; margin-left:20px;'));
+        $relTab = HTMLContainer::generateMarkup('div',$rel[RelLinkType::Employee]->createMarkup($page), array('style'=>'float:left; '));
 
-        $ul = HTMLContainer::generateMarkup('ul',
-            HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'Employees', array('href'=>'#empl')))
-            );
+//        $ul = HTMLContainer::generateMarkup('ul',
+//            HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'Employees', array('href'=>'#empl')))
+//            );
 
         $relDiv = HTMLContainer::generateMarkup('div', $relTab, array('id'=>'empl', 'class'=>'ui-tabs-hide'));
 
-        return $ul . $relDiv;
+        return $relDiv;
     }
 
 

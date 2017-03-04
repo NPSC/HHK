@@ -426,8 +426,11 @@ $alertMessage = $alertMsg->createMarkup();
         <link href="css/default.css" rel="stylesheet" type="text/css" />
         <link href="<?php echo JQ_DT_CSS; ?>" rel="stylesheet" type="text/css" />
         <?php echo MULTISELECT_CSS; ?>
+        <style>
+            .ui-menu-item {min-width: 400px;}
+        </style>
 
-<?php echo TOP_NAV_CSS; ?>
+        <?php echo TOP_NAV_CSS; ?>
         <link href="css/volCtrl.css" rel="stylesheet" type="text/css" />
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
@@ -503,7 +506,7 @@ $alertMessage = $alertMsg->createMarkup();
                         <?php echo $notesMarkup; ?>
                     </div>
                     <div id="vchangelog" class="ignrSave">
-                      <table cellpadding="0" cellspacing="0" border="0" class="display" id="dataTbl"></table>
+                      <table cellpadding="0" cellspacing="0" border="0" class="display ignrSave" id="dataTbl"></table>
                     </div>
                     <div id="vdonblank"> </div>
                     <div id="vwuser"> </div>

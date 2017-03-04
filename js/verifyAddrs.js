@@ -43,6 +43,72 @@ function createZipAutoComplete(txtCtrl, wsUrl, lastXhr) {
     });
 }
 
+function _source(request, response, cache, shoNew, txtCtrl, inputParms, $basisCtrl, minChars, searchURL) {
+
+    var term = request.term.substr(0,minChars);
+    if ( term in cache ) {
+
+        txtCtrl.autocomplete( "option", "delay", 4 );
+        var bldr, 
+            terms = request.term.replace(',', '').split(" "),
+            matcher,
+            filtered;
+
+        if (terms.length > 1) {
+            bldr = '\\b(' + $.ui.autocomplete.escapeRegex( terms[0] ) + ').+\\b(' + $.ui.autocomplete.escapeRegex( terms[1] ) + ')'
+                    + '|\\b(' + $.ui.autocomplete.escapeRegex( terms[1] ) + ').+\\b(' + $.ui.autocomplete.escapeRegex( terms[0] ) + ')';
+        } else {
+            bldr = '\\b(' + $.ui.autocomplete.escapeRegex( request.term ) + ')';
+        }
+
+        matcher = new RegExp( bldr , "i" );
+        filtered = $.grep( cache[ term ], function( item ){
+            return matcher.test( item.value );
+        });
+
+        var t;
+        for (t in cache[term]) {
+            if (cache[term][t].id === 'i' || cache[term][t].id === 'o') {
+                filtered.push(cache[term][t]);
+            }
+        }
+
+        if (filtered.length === 0) {
+            filtered.push({'id':'n', 'value':'No one found'});
+            cache = {};
+        }
+
+
+        if (shoNew) {
+            filtered.push({'id':0, 'value':'New Person'});
+        }
+
+        response( filtered );
+
+    } else {
+
+        txtCtrl.autocomplete( "option", "delay", 120 );
+
+        inputParms.letters = request.term;
+
+        // Get basis from active control
+        if ($basisCtrl !== undefined && $basisCtrl.length > 0) {
+            inputParms.basis = $basisCtrl.val();
+        }
+
+        $.getJSON( searchURL, inputParms, function( data, status, xhr ) {
+
+            if (data.gotopage) {
+                response();
+                window.open(data.gotopage);
+            }
+
+            cache[ term ] = data;
+            response( data );
+        });
+    }
+}
+        
 function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNew, searchURL, $basisCtrl) {
     "use strict";
     var cache = {};
@@ -57,62 +123,7 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
     
     txtCtrl.autocomplete({
         source: function(request, response) {
-            
-            var term = request.term.substr(0,minChars);
-            if ( term in cache ) {
-                
-                txtCtrl.autocomplete( "option", "delay", 0 );
-                var bldr, 
-                    terms = request.term.replace(',', '').split(" "),
-                    matcher,
-                    filtered;
-                
-                if (terms.length > 1) {
-                    bldr = '\\b(' + $.ui.autocomplete.escapeRegex( terms[0] ) + ').+\\b(' + $.ui.autocomplete.escapeRegex( terms[1] ) + ')'
-                            + '|\\b(' + $.ui.autocomplete.escapeRegex( terms[1] ) + ').+\\b(' + $.ui.autocomplete.escapeRegex( terms[0] ) + ')';
-                } else {
-                    bldr = '\\b(' + $.ui.autocomplete.escapeRegex( request.term ) + ')';
-                }
-                
-                matcher = new RegExp( bldr , "i" );
-                filtered = $.grep( cache[ term ], function( item ){
-                    return matcher.test( item.value );
-                });
-                
-                if (filtered.length === 0) {
-                    filtered.push({'id':0, 'value':'No one found'});
-                    cache = {};
-                }
-                
-                if (shoNew) {
-                    filtered.push({'id':0, 'value':'New Person'});
-                }
-                
-                response( filtered );
-
-                return;
-            }
-
-            txtCtrl.autocomplete( "option", "delay", 120 );
-            
-            inputParms.letters = request.term;
-            
-            // Get basis from active control
-            if ($basisCtrl !== undefined && $basisCtrl.length > 0) {
-                inputParms.basis = $basisCtrl.val();
-            }
-            
-            $.getJSON( searchURL, inputParms, function( data, status, xhr ) {
-                
-                if (data.gotopage) {
-                    response();
-                    window.open(data.gotopage);
-                }
-
-              cache[ term ] = data;
-              response( data );
-            });
-
+            _source(request, response, cache, shoNew, txtCtrl, inputParms, $basisCtrl, minChars, searchURL)
         },
         position: { my: "left top", at: "left bottom", collision: "flip" },
         minLength: minChars, 
@@ -120,7 +131,8 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
             if (ui.item) {
                 selectFunction(ui.item);
             }
-        }
+        },
+        delay: 120
     });
 }
 function verifyAddrs(container) {
