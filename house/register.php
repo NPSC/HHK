@@ -348,7 +348,7 @@ if ($uS->Reservation) {
 $colorKey = '';
 $stmth = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)'");
 
-if ($stmth->rowCount() > 1) {
+if ($stmth->rowCount() > 1 && strtolower($uS->RegColors) == 'hospital') {
 
     $colorKey = HTMLContainer::generateMarkup('span', $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . 's: ');
     // All button

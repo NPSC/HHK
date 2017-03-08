@@ -50,6 +50,11 @@ body.testbody {
     padding: 0.7em 0.7em;
     font-size: 0.9em;
 }
+.hhk-loginLabel {
+    text-align:right;
+    padding: 5px;
+}
+
 .hhk-deceased {
     background-color: yellow;
 }

@@ -52,7 +52,7 @@ define('CSS_V', '?v=2');
 define('JQ_UI_CSS', 'css/sunny/jquery-ui.min.css' . CSS_V);
 define('JQ_DT_CSS', 'css/datatables.min.css' . CSS_V);
 define('JQ_UI_JS', 'js/jquery-ui.min.js' . JS_V);
-define('JQ_JS', 'js/jquery-1.11.3.min.js' . JS_V);
+define('JQ_JS', 'js/jquery-3.1.1.min.js' . JS_V);
 define('JQ_DT_JS', 'js/datatables.min.js' . JS_V);
 define('FULLC_JS', 'js/fullcalendar.min.js' . JS_V);
 define('FULLC_CSS', 'css/fullcalendar.css' . CSS_V);

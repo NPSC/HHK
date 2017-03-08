@@ -12,21 +12,25 @@ require (SEC . 'UserClass.php');
 require(SEC . 'ChallengeGenerator.php');
 require(SEC . 'Login.php');
 
+// get session instance
+$uS = Session::getInstance();
 
 
 // Logout command?
 if (isset($_GET["log"])) {
+
     $log = filter_var($_GET["log"], FILTER_SANITIZE_STRING);
+
     if ($log == "lo") {
-        // get session instance
-        $ssn = Session::getInstance();
-        $ssn->destroy();
+
+        $uS->destroy(TRUE);
         header('location:index.php');
         exit();
     }
 }
 
 
+// Access the login object, set session vars,
 try {
 
     $login = new Login();
@@ -40,79 +44,36 @@ try {
 }
 
 
-// get session instance
-$ssn = Session::getInstance();
-
-
-// disclamer
-$disclaimer = $config->get("site", "Disclaimer", "");
-
-$volSiteURL = $config->get("site", "Volunteer_URL", "");
-$tutorialSiteURL = $config->getString('site', 'Tutorial_URL'. '');
-$build = 'Build:' . $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
-
-$pageTitle = $ssn->siteName;
-
 // define db connection obj
 $dbh = initPDO(TRUE);
 
 
-
 // Load the page information
 try {
-
     $page = new ScriptAuthClass($dbh);
-
 } catch (Exception $ex) {
-
-    $ssn->destroy();
-    exit("Error accessing web page: " . $ex->getMessage());
-}
-
-$login->checkPost($dbh, $_POST);
-
-
-// Get next page address
-if (isset($_GET["xf"])) {
-
-    $loc = urldecode($_GET["xf"]);
-    $pge = filter_var($loc, FILTER_SANITIZE_STRING);
-    $login->setAction($page->get_Login_Page() . "?xf=" . $pge);
-
-} else {
-
-    $pge = $page->get_Default_Page();
-    $login->setAction($page->get_Login_Page());
-
+    $uS->destroy(true);
+    exit("Error accessing web page data table: " . $ex->getMessage());
 }
 
 
-if ($pge != "" && $pge != $page->get_Login_Page()) {
-
-    if (isset($ssn->logged)) {
-        // they are logged in.
-        // check authorization to next page
-        if (ComponentAuthClass::is_Authorized($pge)) {
-
-            //$dbh->exec("update `reservation` `r` left join `visit` `v` on `r`.`idReservation` = `v`.`idReservation` set `r`.`Status` = '" . ReservationStatus::Canceled . "' where `r`.`Status` = '" . ReservationStatus::Staying . "' and `v`.`idVisit` is NULL;");
-
-            header('Location: ' . $pge);
-            exit();
-
-        } else {
-
-            $ssn->destroy();
-            $login->setValidateMsg("Unauthorized for page: " . $pge);
-        }
-    }
-} else {
-
-    $login->setValidateMsg("Missing default page!");
+if (isset($_POST['txtUname'])) {
+    $events = $login->checkPost($dbh, $_POST, $page->get_Default_Page());
+    echo json_encode($events);
+    exit();
 }
+
+// disclamer
+$disclaimer = $config->get("site", "Disclaimer", "");
+$volSiteURL = $config->get("site", "Volunteer_URL", "");
+$tutorialSiteURL = $config->getString('site', 'Tutorial_URL'. '');
+$build = 'Build:' . $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
+
+$pageTitle = $uS->siteName;
 
 $icons = array();
 
-foreach ($ssn->siteList as $r) {
+foreach ($uS->siteList as $r) {
 
     if ($r["Site_Code"] != "r") {
         $icons[$r["Site_Code"]] = "<span class='" . $r["Class"] . "' style='float: left; margin-left:.3em;margin-top:2px;'></span>";
@@ -139,9 +100,20 @@ if ($tutorialSiteURL != '') {
 
 $copyYear = date('Y');
 
-
-
 $loginMkup = $login->loginForm();
+
+$cspURL = $uS->siteList[$page->get_Site_Code()]['HTTP_Host'];
+
+header('X-Frame-Options: SAMEORIGIN');
+header("Content-Security-Policy: default-src $cspURL; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+header("X-Content-Security-Policy: default-src $cspURL; style-src $cspURL 'unsafe-inline';"); // IE 10+
+
+$isHttps = !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off';
+if ($isHttps)
+{
+  header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
+}
+
 ?>
 <!DOCTYPE HTML>
 <html>
@@ -152,8 +124,11 @@ $loginMkup = $login->loginForm();
         <?php echo HOUSE_CSS; ?>
         <script type="text/javascript" src="../<?php echo MD5_JS; ?>"></script>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <script type="text/javascript" src="<?php echo $uS->resourceURL; ?><?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $uS->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $uS->resourceURL; ?>js/login.js"></script>
     </head>
-    <body onload="javascript:loadBody();" <?php if ($ssn->testVersion) { echo "class='testbody'"; } ?>>
+    <body <?php if ($uS->testVersion) { echo "class='testbody'"; } ?>>
         <div id="page">
             <div class='pageSpacer'>
                 <h2 style="color:white"><?php echo $pageTitle; ?></h2>

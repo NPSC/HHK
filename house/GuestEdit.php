@@ -756,22 +756,6 @@ $uS->guestId = $id;
 <?php echo TOP_NAV_CSS; ?>
 <?php echo MULTISELECT_CSS; ?>
 <?php echo HOUSE_CSS; ?>
-<style>
-    .hhk-view-visit {
-        padding:5px;
-        cursor:pointer;
-    }
-    .hhk-view-visit:hover {
-        background-color: #d0e5f5;
-        background-image: url("css/redmond/images/ui-bg_glass_75_d0e5f5_1x400.png");
-        background-repeat: repeat-x;
-        background-attachment: scroll;
-        background-position: 50% 50%;
-        background-clip: border-box;
-        background-origin: padding-box;
-        background-size: auto auto;
-    }
-</style>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <?php echo JQ_DT_CSS; ?>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>

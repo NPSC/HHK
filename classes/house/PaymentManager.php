@@ -95,7 +95,7 @@ class PaymentManager {
 
 
             // Deposit Refunds - only if checked out...
-            if ($visit->getVisitStatus() == VisitStatus::CheckedOut && abs($this->pmp->getDepositRefundAmt()) > 0 && ($this->pmp->getBalWith() != '' && $this->pmp->getBalWith() != ExcessPay::Ignore)) {
+            if ($visit->getVisitStatus() == VisitStatus::CheckedOut && abs($this->pmp->getDepositRefundAmt()) > 0 && $this->pmp->getBalWith() != ExcessPay::Ignore) {
                 // Return the deposit
                 $this->depositRefundAmt = abs($this->pmp->getDepositRefundAmt());
 
@@ -143,11 +143,12 @@ class PaymentManager {
                         // Reduce the room charges by the deposit and any MOA.
                         $modifiedCharges = $this->pmp->getTotalRoomChg() - ($this->depositRefundAmt + $this->moaRefundAmt);
 
-                        if ($modifiedCharges > 0 && $this->pmp->getRatePayment() <= $modifiedCharges) {
+                        if ($modifiedCharges > 0 && $this->pmp->getRatePayment() < $modifiedCharges) {
+                            // We are paying less in room fees than what is due, so only charge what we are paying.
                             $roomCharges = $this->pmp->getRatePayment();
                         } else {
-                            // Limit payment to the maximum charged.
-                            $roomCharges = max(array($modifiedCharges, 0));
+
+                            $roomCharges = $this->pmp->getTotalRoomChg();
                         }
                     }
 
@@ -207,11 +208,10 @@ class PaymentManager {
                 // Overpayments
                 $this->guestCreditAmt = abs($this->pmp->getGuestCredit());
                 $overPaymemntAmt = abs($this->pmp->getOverPayment());
-                $balanceWithCode = $this->pmp->getBalWith();
 
                 // Credit some room fees?
                 if ($this->guestCreditAmt > 0 &&
-                        (($balanceWithCode != '' && $balanceWithCode != ExcessPay::Ignore) || $overPaymemntAmt == 0)) {
+                        ($this->pmp->getBalWith() != ExcessPay::Ignore || $overPaymemntAmt == 0)) {
 
                     $invLine = new OneTimeInvoiceLine();
                     $invLine->createNewLine(new Item($dbh, ItemId::LodgingReversal, (0 - $this->guestCreditAmt)), 1, 'Lodging');
@@ -222,9 +222,9 @@ class PaymentManager {
 
 
                 // Process overpayments
-                if ($overPaymemntAmt > 0 && $balanceWithCode != '' && $balanceWithCode != ExcessPay::Ignore) {
+                if ($overPaymemntAmt > 0 && $this->pmp->getBalWith() != ExcessPay::Ignore) {
 
-                    if ($balanceWithCode == ExcessPay::Hold) {
+                    if ($this->pmp->getBalWith() == ExcessPay::Hold) {
                         // Money on accoount
 
                         $invLine = new HoldInvoiceLine();
@@ -233,7 +233,7 @@ class PaymentManager {
                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, $notes);
                         $this->invoice->addLine($dbh, $invLine, $uS->username);
 
-                    } else if ($balanceWithCode == ExcessPay::RoomFund) {
+                    } else if ($this->pmp->getBalWith() == ExcessPay::RoomFund) {
                         // make a donation payment
                         $invLine = new OneTimeInvoiceLine();
                         $invLine->createNewLine(new Item($dbh, ItemId::LodgingDonate, $overPaymemntAmt), 1);
@@ -241,7 +241,7 @@ class PaymentManager {
                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, $notes);
                         $this->invoice->addLine($dbh, $invLine, $uS->username);
 
-                    } else if ($balanceWithCode == ExcessPay::Refund && $this->hasInvoice()) {
+                    } else if ($this->pmp->getBalWith() == ExcessPay::Refund && $this->hasInvoice()) {
 
                         $credit = $this->guestCreditAmt + $this->depositRefundAmt + $this->moaRefundAmt;
 

@@ -108,6 +108,11 @@ h2.logo {
 table.hhk-badAddress {
     background-color: lightsalmon;
 }
+.hhk-loginLabel {
+    text-align:right;
+    padding: 5px;
+}
+
 .ui-autocomplete-loading { background: white url('../../images/ui-anim_basic_16x16.gif') right center no-repeat; }
 #version {
     height: 25px;
@@ -117,6 +122,10 @@ table.hhk-badAddress {
     font-size: .6em;
     padding: 0 6px;
 }
+#content {
+    margin: 20px 10px;
+}
+
 div#divSubmitButtons {
     position: fixed;
     bottom: 1px;

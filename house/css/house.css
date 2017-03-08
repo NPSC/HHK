@@ -17,6 +17,25 @@
 #divAlertMsg {
     z-index:9;
 }
+    .hhk-view-visit {
+        padding:5px;
+        cursor:pointer;
+    }
+.hhk-view-visit:hover {
+    background-color: #d0e5f5;
+    background-image: url("css/redmond/images/ui-bg_glass_75_d0e5f5_1x400.png");
+    background-repeat: repeat-x;
+    background-attachment: scroll;
+    background-position: 50% 50%;
+    background-clip: border-box;
+    background-origin: padding-box;
+    background-size: auto auto;
+}
+.hhk-loginLabel {
+    text-align:right;
+    padding: 5px;
+}
+
 .hhk-addrCopy, .hhk-addrErase, .hhk-fincalc {
     cursor:pointer;
 }

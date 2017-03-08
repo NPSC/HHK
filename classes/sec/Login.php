@@ -17,11 +17,8 @@ class Login {
 
     protected $userName = '';
     protected $validateMsg = '';
-    protected $action = '';
 
     function __construct() {
-
-        $this->action = 'index.php';
 
     }
 
@@ -31,12 +28,6 @@ class Login {
         $ssn = Session::getInstance();
         // Preset the timezone to suppress errors on hte subject.
         date_default_timezone_set('America/Chicago');
-
-        // Short circuit
-        $chal = new ChallengeGenerator(FALSE);
-        if ($chal->testTries() === FALSE) {
-            exit('<h3>Too many tries</h3>');
-        }
 
         // Get the site configuration object
         try {
@@ -108,47 +99,54 @@ class Login {
         return $config;
     }
 
-    public function checkPost(\PDO $dbh, $post) {
+    public function checkPost(\PDO $dbh, $post, $defaultPage) {
 
-        if (isset($post["btnLogn"])) {
+        $this->validateMsg = '';
+        $events = array();
 
-            $this->validateMsg = '';
-            $password = '';
-
-            if (isset($post["txtUname"])) {
-
-                $this->userName = strtolower(filter_var($post["txtUname"], FILTER_SANITIZE_STRING));
-
-                if ($this->userName == "") {
-                    $this->validateMsg = "Enter a User Name.  ";
-                }
-
-            } else {
-                $this->validateMsg .= "Enter a User Name.  ";
-            }
-
-            if (isset($post["challenge"])) {
-
-                $password = filter_var($post["challenge"], FILTER_SANITIZE_STRING);
-
-                if ($password == "") {
-                    $this->validateMsg .= "Enter a password.";
-                }
-
-            } else {
-                $this->validateMsg .= "Enter a password.";
-            }
-
-
-            if ($this->validateMsg == "") {
-
-                $u = new UserClass();
-
-                if ($u->_checkLogin($dbh, $this->userName, $password, false) === FALSE) {
-                    $this->validateMsg = $u->logMessage;
-                }
-            }
+        $chal = new ChallengeGenerator(FALSE);
+        if ($chal->testTries() === FALSE) {
+            return array('mess'=>'Too many invalid login attempts.', 'stop'=>'y');
         }
+
+
+        // Get next page address
+        if (isset($_GET["xf"])) {
+            $pge = filter_var(urldecode($_GET["xf"]), FILTER_SANITIZE_STRING);
+        } else {
+            $pge = $defaultPage;
+        }
+
+
+        if (isset($post["txtUname"]) && isset($post["challenge"])) {
+
+            $this->userName = strtolower(filter_var($post["txtUname"], FILTER_SANITIZE_STRING));
+
+            $password = filter_var($post["challenge"], FILTER_SANITIZE_STRING);
+
+            $u = new UserClass();
+
+            if ($u->_checkLogin($dbh, $this->userName, $password, false) === FALSE) {
+
+                $this->validateMsg .= $u->logMessage;
+
+            } else {
+
+                if (ComponentAuthClass::is_Authorized($pge)) {
+                    $events['page'] = $pge;
+                } else {
+
+                    $this->validateMsg .= "Unauthorized for page: " . $pge;
+                }
+            }
+
+            $events['mess'] = $this->getValidateMsg();
+
+            $chal->setChallengeVar();
+            $events['chall'] = $chal->getChallengeVar();
+        }
+
+        return $events;
 
     }
 
@@ -159,25 +157,28 @@ class Login {
             $this->setUserName($uname);
         }
 
-        $form = $this->loginJavaScript();
+        $tbl = new HTMLTable();
+        $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->validateMsg, array('id'=>'valMsg', 'style'=>'color:red;')), array('colspan'=>'2')));
+        $tbl->addBodyTr(
+            HTMLTable::makeTh('User Name:', array('class'=>'hhk-loginLabel'))
+            .HTMLTable::makeTd(
+                    HTMLInput::generateMarkup($this->userName, array('id'=>'txtUname', 'size'=>'15')))
+            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errUname')))
+        );
+        $tbl->addBodyTr(
+            HTMLTable::makeTh('Password:', array('class'=>'hhk-loginLabel'))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'txtPW', 'size'=>'15', 'type'=>'password')))
+            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errPW'))
+                    . HTMLInput::generateMarkup($this->getChallengeVar(), array('type'=>'hidden', 'id'=>'challenge')))
+        );
+        $tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Login', array('id'=>'btnLogn', 'type'=>'button')), array('colspan'=>'2', 'class'=>'hhk-loginLabel')));
 
-        $form .= "<div style='margin:25px;'><form id='lginForm' action='" . $this->getAction() . "' method='post' onsubmit='javascript:return checkForm();'>
-<table><tr>
-    <td colspan='2'><span id='valMsg' style='color: red;'>" . $this->validateMsg . "</span></td>
-</tr><tr>
-    <th style='text-align:right;padding:5px;'>User Name: </th><td><input type='text' size ='15' name='txtUname' id='txtUname' value='" . $this->userName . "'  /></td>
-</tr><tr>
-    <th style='text-align:right;padding:5px;'>Password: </th><td><input type='password' size='15' name='txtPW' id='txtPW' value=''  />
-    <input type='hidden' name='challenge' id='challenge' value=''  /></td>
-</tr><tr>
-    <td colspan='2' style='padding-top: 15px; text-align: right;'><input type='submit' name='btnLogn' value='Login' /></td>
-</tr></table></form></div>";
 
-        return $form;
+        return HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin:25px', 'id'=>'divLoginCtls'));
 
     }
 
-    protected function loginJavaScript() {
+    protected function getChallengeVar() {
 
         // get session instance
         $uS = Session::getInstance();
@@ -193,51 +194,7 @@ class Login {
         $chlgen->setChallengeVar();
         $challengeVar = $chlgen->getChallengeVar();
 
-        $script = "<script type='text/javascript'>
-function loadBody() {
-    var psw = document.getElementById('txtPW');
-    psw.value = '';
-    var uname = document.getElementById('txtUname');
-    uname.focus();
-}
-function checkForm() {
-    var usrid = document.getElementById('txtUname');
-    if (!usrid || !usrid.value) {
-        showError(usrid, '-Enter your Username');
-        return false;
-    }
-    var psw = document.getElementById('txtPW');
-    if (!psw || !psw.value) {
-        showError(psw, '-Enter your password');
-        return false;
-    }
-    var chlng = document.getElementById('challenge');
-    chlng.value = hex_md5(hex_md5(psw.value) + '$challengeVar');
-    psw.value = '';
-    return true;
-}
-function showError(obj, message) {
-    document.getElementById('valMsg').innerHTML = '';
-    if (!obj.errorNode) {
-        obj.onclick = hideError;
-        var p = document.createElement('span');
-        //p.style.marginLeft = '60px';
-        p.style.color = 'red';
-        p.appendChild(document.createTextNode(message));
-        obj.parentNode.appendChild(p);
-        obj.errorNode = p;
-        obj.focus();
-    }
-    return;
-}
-function hideError() {
-    this.parentNode.removeChild(this.errorNode);
-    this.errorNode = null;
-    this.onchange = null;
-}
-</script>";
-
-        return $script;
+        return $challengeVar;
     }
 
     public function getUserName() {
@@ -256,13 +213,6 @@ function hideError() {
         $this->validateMsg = $validateMsg;
     }
 
-    public function getAction() {
-        return $this->action;
-    }
-
-    public function setAction($action) {
-        $this->action = $action;
-    }
 
 }
 

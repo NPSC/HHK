@@ -51,6 +51,14 @@ if ($testVersion == true) {
     $testHeader = "<span style='color:red;'>Test Version</span>";
 } else {
     $testHeader = "$pageTitle";
+    header('X-Frame-Options: SAMEORIGIN');
+    header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+    header("X-Content-Security-Policy: default-src 'self'; script-src 'self' style-src 'self' 'unsafe-inline';"); // IE 10+
+    $isHttps = !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off';
+    if ($isHttps)
+    {
+      header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -59,51 +67,7 @@ if ($testVersion == true) {
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <link rel="icon" type="image/png" href="images/hhkIcon.png" />
-        <style type="text/css">
-* {
-    margin: 0px;
-    padding: 0px;
-}
-body {
-    font-size: 100%;
-}
-    .nplogo {
-        background-image: url("images/NPSClogoSm.png");
-        background-repeat: no-repeat;
-        width: 258px;
-        height: 55px;
-        margin-top:5px;
-        display:inline-block;
-    }
-    .pageSpacer {
-        height:60px;
-        width: 100%;
-        position:static;
-        top: 0;
-        left: 0;
-    }
-    .topNavigation {
-        clear:both;
-        margin: 0;
-        padding:0;
-        width:100%;
-        height:60px;
-        z-index:99;
-        background-color: #6BA5D1;
-        position: fixed;
-    }
-    h2.hhk-title {
-        position: absolute;
-        top: 7px;
-        color: white;
-        font-size: 2em;
-        margin: 7px 5px;
-        z-index: 99;
-    }
-    li {
-        font-family: arial,sans-serif;
-    }
-    </style>
+        <link href='root.css' rel='stylesheet' type='text/css' />
     </head>
     <body>
         <div id="page">
@@ -116,7 +80,7 @@ body {
             <div style="float:right;font-size: .6em;margin-right:2px;"><?php echo $build; ?></div>
             <div id="content" style="clear:both; margin-left: 100px;margin-top:10px;">
                 <div style="margin: auto; float:left; width:450px;">
-                    <a href="http://hospitalityhousekeeper.org/" target="blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="images/hhkLogo.png"></a>
+                    <a href="http://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="images/hhkLogo.png"></a>
                     <div style="clear:left; margin-bottom: 20px;"></div>
                     <ul style="margin: 20px; line-height: 1.9em;">
                         <li><a href="<?php echo $adminURL; ?>">Administration Site</a></li>

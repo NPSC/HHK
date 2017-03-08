@@ -58,7 +58,7 @@ class ChallengeGenerator{
     }
   }
   // private method "getRandomString()"
-  function getRandomString($length=40){
+  static function getRandomString($length=40){
     if(!is_int($length)||$length<1){
       $length = 40;
     }
