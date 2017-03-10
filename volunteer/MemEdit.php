@@ -394,8 +394,9 @@ function getVolGroupList($rows, $volGroup, $page = "MemEdit.php") {
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <link href="css/publicStyle.css" rel="stylesheet" type="text/css" />
         <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_JS; ?>"></script>
-<?php echo TOP_NAV_CSS; ?>
+
         <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?> >
             <?php echo $menuMarkup; ?>

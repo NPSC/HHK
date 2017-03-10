@@ -29,7 +29,7 @@ class webInit {
      *
      * @param string $Page_Type
      */
-    function __construct($Page_Type = WebPageCode::Page, $timezone = '') {
+    function __construct($Page_Type = WebPageCode::Page, $addCSP = TRUE) {
 
         // find out what page we are on
         $parts = explode("/", filter_input(INPUT_SERVER, "SCRIPT_NAME", FILTER_SANITIZE_STRING));
@@ -42,10 +42,7 @@ class webInit {
         $uS = Session::getInstance();
 
         // set timezone
-        if ($timezone == '') {
-            $timezone = $uS->tz;
-        }
-        date_default_timezone_set($timezone);
+        date_default_timezone_set($uS->tz);
 
         // Run as test?
         $this->testVersion = $uS->testVersion;
@@ -92,12 +89,17 @@ class webInit {
             }
         }
 
-        header('X-Frame-Options: SAMEORIGIN');
-        $isHttps = !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off';
-        if ($isHttps) {
-          header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
-        }
+        if ($addCSP) {
+            $cspURL = $uS->siteList[$this->page->get_Site_Code()]['HTTP_Host'];
+            header("Content-Security-Policy: default-src $cspURL; script-src $cspURL 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+            header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // IE 10+
 
+            header('X-Frame-Options: SAMEORIGIN');
+            $isHttps = !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off';
+            if ($isHttps) {
+              header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
+            }
+        }
     }
 
 

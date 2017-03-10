@@ -331,9 +331,10 @@ $userDataEnc = json_encode($userData);
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <link href="<?php echo FULLC_CSS; ?>" rel="stylesheet" type="text/css" />
         <link href="css/publicStyle.css" rel="stylesheet" type="text/css" />
-        <?php echo TOP_NAV_CSS; ?>
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <style type="text/css">
             @media print {
                 .prtClass {display:block;}
@@ -520,17 +521,6 @@ $userDataEnc = json_encode($userData);
     <script type="text/javascript">
         $(document).ready(function() {
             "use strict";
-            $.ajaxSetup ({
-                beforeSend: function() {
-                    //$('#loader').show()
-                    $('body').css('cursor', "wait");
-                },
-                complete: function(){
-                    $('body').css('cursor', "auto");
-                    //$('#loader').hide()
-                },
-                cache: false
-            });
 
             var d=new Date();
             var catData = $.parseJSON('<?php echo $categoryData; ?>');

@@ -61,41 +61,17 @@ $wlMarkup = Waitlist::createDialog(
         <title><?php echo $pageTitle; ?></title>
     <?php echo JQ_UI_CSS; ?>
         <?php echo JQ_DT_CSS ?>
-    <?php echo TOP_NAV_CSS; ?>
+
         <?php echo HOUSE_CSS; ?>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
 function isNumber(n) {
     "use strict";
     return !isNaN(parseFloat(n)) && isFinite(n);
-}
-function alertCallback(containerId) {
-    "use strict";
-    setTimeout(function () {
-        $("#" + containerId + ":visible").removeAttr("style").fadeOut(500);
-    }, 3500
-    );
-}
-function flagAlertMessage(mess, wasError) {
-    "use strict";
-    var spn = document.getElementById('alrMessage');
-
-    if (!wasError) {
-        // define the error message markup
-        $('#alrResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
-        $('#alrIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
-        spn.innerHTML = "<strong>Success: </strong>" + mess;
-        $("#divAlert1").show("slide", {}, 500, alertCallback('divAlert1'));
-    } else {
-        // define the success message markup
-        $('alrResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
-        $('#alrIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
-        spn.innerHTML = "<strong>Alert: </strong>" + mess;
-        $("#divAlert1").show("pulsate", {}, 200, alertCallback('divAlert1'));
-    }
 }
 var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', ];
 var waitListTable;
@@ -293,15 +269,6 @@ $(document).ready(function () {
     var wListJSON = wsAddress + '?cmd=wlist&ao=1';
     var eventJSONString = wsAddress + '?cmd=resvlist';
     var lastXhr;
-    $.ajaxSetup({
-        beforeSend: function () {
-            $('body').css('cursor', "wait");
-        },
-        complete: function () {
-            $('body').css('cursor', "auto");
-        },
-        cache: false
-    });
     $('#cbActiveOnly').change(function () {
         if (this.checked) {
             wListJSON = wsAddress + '?cmd=wlist&ao=1';

@@ -5,7 +5,7 @@
  * @category  Volunteer
  * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
@@ -236,12 +236,13 @@ $userDataEnc = json_encode($userData);
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $siteName; ?></title>
-<?php echo TOP_NAV_CSS; ?>
+
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <link href="<?php echo FULLC_CSS; ?>" rel="stylesheet" type="text/css" />
         <link href="css/publicStyle.css" rel="stylesheet" type="text/css" />
         <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
     </head>
     <body>
         <div>
@@ -400,17 +401,6 @@ $userDataEnc = json_encode($userData);
         <script type="text/javascript">
             $(document).ready(function() {
                 "use strict";
-                $.ajaxSetup({
-                    beforeSend: function() {
-                        //$('#loader').show()
-                        $('body').css('cursor', "wait");
-                    },
-                    complete: function() {
-                        $('body').css('cursor', "auto");
-                        //$('#loader').hide()
-                    },
-                    cache: false
-                });
 
                 var d = new Date();
                 var catData = $.parseJSON('<?php echo $categoryData; ?>');

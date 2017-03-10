@@ -146,36 +146,12 @@ $resultMessage = $alertMsg->createMarkup();
         <title><?php echo $pageTitle; ?></title>
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <link href="css/default.css" rel="stylesheet" type="text/css" />
-<?php echo TOP_NAV_CSS; ?>
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
 // Init j-query
-/**
- *
- * @param {string} mess
- * @param {boolean} wasError
- * @returns {undefined}
- */
-function flagAlertMessage(mess, wasError) {
-    "use strict";
-    var spn = document.getElementById('alrMessage');
-    if (!wasError) {
-        // define the error message markup
-        $('#alrResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
-        $('#alrIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
-        spn.innerHTML = "<strong>Result: </strong>" + mess;
-        $("#divAlert1").show("pulsate", {}, 400);
-        window.scrollTo(0, 5);
-    } else {
-        // define the success message markup
-        $('alrResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
-        $('#alrIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
-        spn.innerHTML = "<strong>Alert: </strong>" + mess;
-        $("#divAlert1").show("pulsate", {}, 400);
-        window.scrollTo(0, 5);
-    }
-}
 $(document).ready(function () {
     $('#selmtype').change(function() {
         $('#divExpansion').children().remove();

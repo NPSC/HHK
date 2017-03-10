@@ -742,7 +742,7 @@ $useVisitDatesCb = HTMLInput::generateMarkup('', $vAttrs)
         <meta charset="UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
-        <?php echo TOP_NAV_CSS; ?>
+
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
@@ -750,6 +750,7 @@ $useVisitDatesCb = HTMLInput::generateMarkup('', $vAttrs)
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
 function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement) {
     var dialg =  $(idDiag);
@@ -807,25 +808,6 @@ function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement)
     dialg.dialog('option', 'width', 500);
     dialg.dialog('open');
 }
-function flagAlertMessage(mess, wasError) {
-    "use strict";
-    var spn = document.getElementById('alrMessage');
-    if (!wasError) {
-        // define the success message markup
-        $('#alrResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
-        $('#alrIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
-        spn.innerHTML = "<strong>Success: </strong>" + mess;
-        $("#divAlert1").show("slide");
-        window.scrollTo(0, 5);
-    } else {
-        // define the error message markup
-        $('alrResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
-        $('#alrIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
-        spn.innerHTML = "<strong>Alert: </strong>" + mess;
-        $("#divAlert1").show("pulsate");
-        window.scrollTo(0, 5);
-    }
-}
 
 function invoiceAction(idInvoice, action, eid) {
     $.post('ws_resc.php', {cmd: 'invAct', iid: idInvoice, x:eid, action: action},
@@ -860,7 +842,6 @@ function invoiceAction(idInvoice, action, eid) {
     });
 }
 $(document).ready(function() {
-    $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
     var makeTable = '<?php echo $mkTable; ?>';
     $('#btnHere, #btnExcel').button();
     $('.ckdate').datepicker({

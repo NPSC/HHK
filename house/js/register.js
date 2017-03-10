@@ -613,16 +613,6 @@ $(document).ready(function () {
     var wsAddress = 'ws_ckin.php';
     var eventJSONString = wsAddress + '?cmd=register';
     var hindx = 0;
-//    $.ajaxSetup({
-//        beforeSend: function () {
-//            $('body').css('cursor', "wait");
-//        },
-//        complete: function () {
-//            $('body').css('cursor', "auto");
-//        },
-//        cache: false
-//    });
-    $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
 
     if (pmtMkup !== '') {
         $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);

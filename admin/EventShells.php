@@ -11,12 +11,12 @@
 require_once ("AdminIncludes.php");
 
 $wInit = new webInit();
-$dbcon = initDB();
+
 $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;
 
 $menuMarkup = $wInit->generatePageMenu();
-
+$evtShellMarkup = '';
 
 function getEvtShellMarkup($res) {
     if (mysqli_num_rows($res) > 0) {
@@ -63,10 +63,10 @@ function getEvtShellMarkup($res) {
 
 // create event shells
 $query = "Select * from vshells";
-$res = queryDB($dbcon, $query);
-$evtShellMarkup = getEvtShellMarkup($res);
-
-closeDB($dbcon);
+//$res = queryDB($dbcon, $query);
+//$evtShellMarkup = getEvtShellMarkup($res);
+//
+//closeDB($dbcon);
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
     "http://www.w3.org/TR/html4/loose.dtd">
@@ -77,10 +77,11 @@ closeDB($dbcon);
         <link href="css/default.css" rel="stylesheet" type="text/css" />
         <link href="<?php echo JQ_DT_CSS; ?>" rel="stylesheet" type="text/css" />
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
-<?php echo TOP_NAV_CSS; ?>
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
     $(document).ready(function() {
         try {

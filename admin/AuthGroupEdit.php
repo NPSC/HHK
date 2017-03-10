@@ -95,10 +95,11 @@ $tbl->addHeaderTr(HTMLTable::makeTh('Group Code') . HTMLTable::makeTh('Title') .
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
-<?php echo TOP_NAV_CSS; ?>
+
         <link href="css/default.css" rel="stylesheet" type="text/css" />
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
         <?php echo $menuMarkup; ?>

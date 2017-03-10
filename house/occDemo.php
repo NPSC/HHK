@@ -211,7 +211,6 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-        <?php echo TOP_NAV_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
         <style>
             .hhk-tdTitle {
@@ -223,6 +222,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
     // Init j-query and the page blocker.
     $(document).ready(function() {

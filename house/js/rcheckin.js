@@ -14,32 +14,6 @@
 
 /**
  * 
- * @param {string} mess
- * @param {boolean} wasError
- * @returns {undefined}
- */
-function flagAlertMessage(mess, wasError) {
-    "use strict";
-    var spn = document.getElementById('alrMessage');
-
-    if (!wasError) {
-        // define the success  message markup
-        $('#alrResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
-        $('#alrIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
-        spn.innerHTML = "<strong>Success: </strong>" + mess;
-        $("#divAlert1").show("scale horizontal");
-        window.scrollTo(0, 5);
-    } else {
-        // define the error markup
-        $('alrResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
-        $('#alrIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
-        spn.innerHTML = "<strong>Alert: </strong>" + mess;
-        $("#divAlert1").show("pulsate");
-        window.scrollTo(0, 5);
-    }
-}
-/**
- * 
  * @param {int} idPrefix The prefix of the slot class name.
  * @returns {undefined}
  */
@@ -1339,7 +1313,6 @@ $(document).ready(function() {
     var checkIn = chkIn;
     var postBackPage = postBkPg;
 
-    
     // Unsaved changes on form are caught here.
     $(window).bind('beforeunload', function() {
         var isDirty = false;
@@ -1352,20 +1325,6 @@ $(document).ready(function() {
             return 'You have unsaved changes.';
         }
     });
-    $.ajaxSetup({
-        beforeSend: function() {
-            $('body').css('cursor', "wait");
-        },
-        complete: function() {
-            $('body').css('cursor', "auto");
-        },
-        cache: false
-    });
-    $('#ajaxError').ajaxError(function(event, jqXHR, ajaxSettings) {
-        flagAlertMessage('AJAX Error', true);
-    });
-    // put the content beneth the menu.
-    $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
     
     $(':input[type="button"]').button();
     

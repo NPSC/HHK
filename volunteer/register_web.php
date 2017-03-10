@@ -58,7 +58,6 @@ try {
 }
 
 
-
 $donAlert = new alertMessage("donateResponseContainer");
 $donAlert->set_DisplayAttr("none");
 $donAlert->set_Context(alertMessage::Success);
@@ -68,6 +67,19 @@ $donAlert->set_txtSpanId("donResultMessage");
 $donAlert->set_Text("working");
 
 $getDonReplyMessage = $donAlert->createMarkup();
+
+$cspURL = $ssn->siteList[$page->get_Site_Code()]['HTTP_Host'];
+
+header('X-Frame-Options: SAMEORIGIN');
+header("Content-Security-Policy: default-src $cspURL www.google.com; script-src $cspURL www.google.com www.gstatic.com 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+header("X-Content-Security-Policy: default-src $cspURL www.google.com; script-src $cspURL www.google.com www.gstatic.com 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // IE 10+
+
+$isHttps = !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off';
+if ($isHttps)
+{
+  header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
+}
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -123,17 +135,6 @@ $(document).ready(function() {
     var rexEmail = /^[A-Z0-9._%+-]+@(?:[A-Z0-9-]+\.)+[A-Z]{2,4}$/i;
     var regPhone = /^(?:(?:[\+]?([\d]{1,3}(?:[ ]+|[\-.])))?[(]?([2-9][\d]{2})[\-\/)]?(?:[ ]+)?)?([2-9][0-9]{2})[\-.\/)]?(?:[ ]+)?([\d]{4})(?:(?:[ ]+|[xX]|(i:ext[\.]?)){1,2}([\d]{1,5}))?$/;
     var psw = $('#txtPW');
-    $.ajaxSetup({
-        beforeSend: function() {
-            //$('#loader').show()
-            $('body').css('cursor', "wait");
-        },
-        complete: function() {
-            $('body').css('cursor', "auto");
-            //$('#loader').hide()
-        },
-        cache: false
-    });
     $(':input:first').focus();
 
     $('button', '.btnCancel').button();

@@ -44,22 +44,13 @@ $selYearOptions = getYearOptionsMarkup($yearSelected, $startYear, $fyMonths);
         <title><?php echo $pageTitle; ?></title>
         <link href="css/default.css" rel="stylesheet" type="text/css" />
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
-<?php echo TOP_NAV_CSS; ?>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
             // Init j-query
             $(document).ready(function() {
-                $.ajaxSetup ({
-                    beforeSend: function() {
-                        $('body').css('cursor', "wait");
-                    },
-                    complete: function(){
-                        $('body').css('cursor', "auto");
-                    },
-                    cache: false
-                });
                 $('#btnCamp').click( function() {
                     var rb;
                     if ($('#rb_Cal_fy').prop('checked') ) {

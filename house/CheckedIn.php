@@ -160,10 +160,11 @@ if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <link href="css/house.css" rel="stylesheet" type="text/css" />
-        <?php echo TOP_NAV_CSS; ?>
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <?php echo $sty; ?>
@@ -219,7 +220,6 @@ if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)
     }
     $(document).ready(function() {
         "use strict";
-    $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
         var idReg = '<?php echo $idRegistration; ?>';
         var rctMkup = '<?php echo $receiptMarkup; ?>';
         $("div#print_button, div#btnReg").button();

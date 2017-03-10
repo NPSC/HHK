@@ -14,7 +14,8 @@ require CLASSES . 'CreateMarkupFromDB.php';
 require CLASSES . 'OpenXML.php';
 
 try {
-    $wInit = new webInit();
+    // Do not add CSP.
+    $wInit = new webInit(WebPageCode::Page, FALSE);
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }
@@ -330,6 +331,17 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
 
 $wsLogo = $wsConfig->getString('credentials', 'Logo_URI', '');
 $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
+
+$cspURL = $uS->siteList[$wInit->page->get_Site_Code()]['HTTP_Host'];
+header("Content-Security-Policy: default-src $cspURL; img-src $cspURL www.neoncrm.com; script-src $cspURL 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // IE 10+
+
+header('X-Frame-Options: SAMEORIGIN');
+$isHttps = !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off';
+if ($isHttps) {
+  header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
+}
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -338,7 +350,7 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
         <title><?php echo $pageTitle; ?></title>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <?php echo JQ_UI_CSS; ?>
-        <?php echo TOP_NAV_CSS; ?>
+
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <style>
@@ -350,28 +362,8 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
-function flagAlertMessage(mess, wasError) {
-    "use strict";
-    var spn = document.getElementById('alrMessage');
-
-    if (!wasError) {
-        // define the success  message markup
-        $('#alrResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
-        $('#alrIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
-        spn.innerHTML = "<strong>Result: </strong>" + mess;
-        $("#divAlert1").show("scale horizontal");
-        window.scrollTo(0, 5);
-    } else {
-        // define the error markup
-        $('alrResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
-        $('#alrIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
-        spn.innerHTML = "<strong>Alert: </strong>" + mess;
-        $("#divAlert1").show("pulsate");
-        window.scrollTo(0, 5);
-    }
-}
-
 function updateLocal(id) {
     var postUpdate = $.post('ws_tran.php', {cmd:'rmvAcctId', id:id});
 
@@ -580,7 +572,6 @@ function getRemote(item, source) {
 }
 
     $(document).ready(function() {
-        $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
         var makeTable = '<?php echo $mkTable; ?>';
         var transferIds = <?php echo json_encode($transferIds); ?>;
         $('#btnHere, #btnCustFields').button();

@@ -85,8 +85,8 @@ define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 define('HOUSE', CLASSES . 'house' . DS);
 define('MEMBER', CLASSES . 'member' . DS);
 
-define('JS_V', '?v=2');
-define('CSS_V', '?v=4');
+define('JS_V', '?v=3');
+define('CSS_V', '?v=3');
 
 // paths
 define('JQ_UI_CSS', '<link href="css/redmond/jquery-ui.min.css' . CSS_V . '" rel="stylesheet" type="text/css" />');
@@ -105,6 +105,7 @@ define('PAYMENT_JS', "js/payments-min.js" . JS_V);
 define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JS_V);
 define('RESV_JS', "js/resv.js" . JS_V);
 define('MD5_JS', 'js/md5-min.js');
+define('PAG_JS', 'js/pag.js');
 
 
 date_default_timezone_set('America/Chicago');

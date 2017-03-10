@@ -232,13 +232,14 @@ $ckOutTable->addFooterTr($hdrRow);
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
-        <?php echo TOP_NAV_CSS; ?>
+
         <link href="css/house.css" rel="stylesheet" type="text/css" />
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <?php echo JQ_DT_CSS ?>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
 var dtCols = [
     {
@@ -326,7 +327,6 @@ $(document).ready(function() {
     var listEvtTable;
     var coDate = new Date();
 
-    $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
     $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrint, #btnSubmitTable, #prtCkOut').button();
     $('#mainTabs').tabs({
         beforeActivate: function (event, ui) {

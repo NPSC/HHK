@@ -230,7 +230,7 @@ class ScriptAuthClass extends SecurityComponent {
 
     protected static function getSiteIcons($isSSL, $siteList, $tutorialURL, $hufURL) {
 
-        $mu = "<ul id='icons' style='float:left;padding-top:5px;' class='ui-widget ui-helper-clearfix'>";
+        $mu = "<ul id='ulIcons' style='float:left;padding-top:5px;' class='ui-widget ui-helper-clearfix'>";
         $siteCount = 0;
         $proto = 'http://';
         if ($isSSL) {
@@ -276,20 +276,8 @@ class ScriptAuthClass extends SecurityComponent {
             $mu = '';
         }
 
-        $mu .= '<script>// Hover states on the static widgets
-$( "#icons li" ).hover(
-	function() {
-		$( this ).addClass( "ui-state-hover" );
-	},
-	function() {
-		$( this ).removeClass( "ui-state-hover" );
-	}
-);
-</script>';
+        return HTMLContainer::generateMarkup('div', $mu, array('id'=>'divNavIcons'));
 
-
-        return $mu;
     }
-
 
 }

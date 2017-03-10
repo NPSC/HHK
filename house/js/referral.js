@@ -14,43 +14,6 @@
 
 /**
  * 
- * @param {string} containerId
- * @returns {undefined}
- */
-function hideAlertMessage(containerId) {
-        "use strict";
-    if (!containerId) {
-        containerId = 'divAlert1';
-    }
-    $("#" + containerId + ":visible").removeAttr("style").hide();
-}
-/**
- * 
- * @param {string} mess
- * @param {boolean} wasError
- * @returns {undefined}
- */
-function flagAlertMessage(mess, wasError) {
-    "use strict";
-    var spn = document.getElementById('alrMessage');
-    if (!wasError) {
-        // define the success message markup
-        $('#alrResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
-        $('#alrIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
-        spn.innerHTML = "<strong>Success: </strong>" + mess;
-        $("#divAlert1").show("slide");
-        window.scrollTo(0, 5);
-    } else {
-        // define the error message markup
-        $('alrResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
-        $('#alrIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
-        spn.innerHTML = "<strong>Alert: </strong>" + mess;
-        $("#divAlert1").show("pulsate");
-        window.scrollTo(0, 5);
-    }
-}
-/**
- * 
  * @param {object} item
  * @returns {undefined}
  */
@@ -847,7 +810,7 @@ function loadGuest(incmg, role, idPsg, patientStaying) {
                 flagAlertMessage(data.warning, true);
             }
             if (data.resCh) {
-                resvPicker(data);
+                resvPicker(data, $("#resDialog"));
                 return;
             }
             if (data.choosePsg) {
@@ -1238,16 +1201,6 @@ function Reserv() {
 $(document).ready(function() {
     "use strict";
     var resv = reserv;
-
-    $.ajaxSetup({
-        beforeSend: function() {
-            $('body').css('cursor', "wait");
-        },
-        complete: function() {
-            $('body').css('cursor', "auto");
-        },
-        cache: false
-    });
     
     $(window).bind('beforeunload', function() {
         if ($('#btnDone').val() === 'Saving >>>>') {
@@ -1278,7 +1231,6 @@ $(document).ready(function() {
         }
     });
     
-    $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
     $('#btnDone, #btnCkinForm, #btnDelete').button();
     
     $('#btnCkinForm').click(function () {
@@ -1288,7 +1240,7 @@ $(document).ready(function() {
     });
     
     $('#btnDelete').click(function () {
-        if ($(this).val() == 'Deleting >>>>') {
+        if ($(this).val() === 'Deleting >>>>') {
             return;
         }
         

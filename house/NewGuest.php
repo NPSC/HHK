@@ -512,7 +512,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <meta charset="UTF-8">
         <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
-        <?php echo TOP_NAV_CSS; ?>
+
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
@@ -520,9 +520,10 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
     $(document).ready(function() {
-        $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
+        
         var makeTable = '<?php echo $mkTable; ?>';
         $('.ckdate').datepicker({
             yearRange: '-05:+01',

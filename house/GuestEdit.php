@@ -753,7 +753,7 @@ $uS->guestId = $id;
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
 <?php echo JQ_UI_CSS; ?>
-<?php echo TOP_NAV_CSS; ?>
+
 <?php echo MULTISELECT_CSS; ?>
 <?php echo HOUSE_CSS; ?>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
@@ -928,6 +928,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/addrPrefs-min.js<?php echo JS_V; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/jquery.multiselect.min.js"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>

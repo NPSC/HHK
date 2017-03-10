@@ -108,33 +108,13 @@ $getSiteReplyMessage = '';
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <link href="css/default.css" rel="stylesheet" type="text/css" />
         <link href="<?php echo JQ_DT_CSS ?>" rel="stylesheet" type="text/css" />
-<?php echo TOP_NAV_CSS; ?>
 <?php echo MULTISELECT_CSS; ?>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/jquery.multiselect.min.js"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
-    function flagAlertMessage(mess, wasError) {
-        "use strict";
-        var spn = document.getElementById('alrMessage');
-        if (!wasError) {
-            // define the success message markup
-            $('#alrResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
-            $('#alrIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
-            spn.innerHTML = "<strong>Success: </strong>" + mess;
-            $("#divAlert1").show("slide");
-            window.scrollTo(0, 5);
-        } else {
-            // define the error message markup
-            $('alrResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
-            $('#alrIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
-            spn.innerHTML = "<strong>Alert: </strong>" + mess;
-            $("#divAlert1").show("pulsate");
-            window.scrollTo(0, 5);
-        }
-    }
-
     function getPages(site) {
         "use strict";
 
@@ -177,15 +157,6 @@ $getSiteReplyMessage = '';
     $(document).ready(function() {
 
         var website = '<?php echo $webSite; ?>';
-        $.ajaxSetup ({
-            beforeSend: function() {
-                $('body').css('cursor', "wait");
-            },
-            complete: function(){
-                $('body').css('cursor', "auto");
-            },
-            cache: false
-        });
 
         $('.editSite, .loadPages, #btnReset, #btnSubmit').button();
 

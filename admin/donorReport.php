@@ -118,11 +118,12 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
         <link href="css/default.css" rel="stylesheet" type="text/css" />
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <link href="<?php echo JQ_DT_CSS; ?>" rel="stylesheet" type="text/css" />
-<?php echo TOP_NAV_CSS; ?>
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
             // Init j-query and the page blocker.
         $(document).ready(function() {

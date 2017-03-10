@@ -1452,7 +1452,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <meta charset="UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
-        <?php echo TOP_NAV_CSS; ?>
+
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
@@ -1465,23 +1465,15 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
     $(document).ready(function() {
-        $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
+
         var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';
         var makeTable = '<?php echo $mkTable; ?>';
         var pmtMkup = "<?php echo $paymentMarkup; ?>";
         var rctMkup = '<?php echo $receiptMarkup; ?>';
         var payFailPage = '<?php echo $payFailPage; ?>';
-        $.ajaxSetup({
-            beforeSend: function() {
-                $('body').css('cursor', "wait");
-            },
-            complete: function() {
-                $('body').css('cursor', "auto");
-            },
-            cache: false
-        });
         $('.ckdate').datepicker({
             yearRange: '-05:+02',
             changeMonth: true,

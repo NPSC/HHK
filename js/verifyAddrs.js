@@ -135,6 +135,7 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
         delay: 120
     });
 }
+
 function verifyAddrs(container) {
     "use strict";
     $(container).on('change', 'input.hhk-emailInput', function() {

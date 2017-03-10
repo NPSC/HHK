@@ -276,25 +276,25 @@ function getPieChartMarkup($title, $chartId, $width = "335", $height = "120") {
         <link href="css/default.css" rel="stylesheet" type="text/css" />
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <link href="<?php echo JQ_DT_CSS; ?>" rel="stylesheet" type="text/css" />
-<?php echo TOP_NAV_CSS; ?>
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
-        <script type="text/javascript" src="../js/jquery.gchart.js"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
             // Init j-query.
             $(document).ready(function() {
-                var gdData = [$.gchart.series([<?php echo $guestDonors; ?>, <?php echo($guest); ?>])];
-                var vdData = [$.gchart.series([<?php echo $DonorVolunteers; ?>, <?php echo($volunteer); ?>])];
-                var notVolData = [$.gchart.series([<?php echo $notVolunteers; ?>, <?php echo($totalMembers); ?>])];
-
-                gdData[0].color = ['327E04'];
-                notVolData[0].color = ['002EE6'];
+//                var gdData = [$.gchart.series([<?php echo $guestDonors; ?>, <?php echo($guest); ?>])];
+//                var vdData = [$.gchart.series([<?php echo $DonorVolunteers; ?>, <?php echo($volunteer); ?>])];
+//                var notVolData = [$.gchart.series([<?php echo $notVolunteers; ?>, <?php echo($totalMembers); ?>])];
+//
+//                gdData[0].color = ['327E04'];
+//                notVolData[0].color = ['002EE6'];
 
                 $( "#tabs" ).tabs();
-                $("#gdChart").gchart({series: gdData, backgroundColor: 'f5f3e5', dataLabels: ['Guest Donors', 'Guests']});
-                $("#vdChart").gchart({series: vdData, backgroundColor: 'f5f3e5', dataLabels: ['Vol. Donors', 'Volunteers']});
-                $("#nvChart").gchart({series: notVolData, backgroundColor: 'f5f3e5', dataLabels: ['Unregistered', 'Registered']});
+//                $("#gdChart").gchart({series: gdData, backgroundColor: 'f5f3e5', dataLabels: ['Guest Donors', 'Guests']});
+//                $("#vdChart").gchart({series: vdData, backgroundColor: 'f5f3e5', dataLabels: ['Vol. Donors', 'Volunteers']});
+//                $("#nvChart").gchart({series: notVolData, backgroundColor: 'f5f3e5', dataLabels: ['Unregistered', 'Registered']});
                 detailsDT = $('#dataTbl').dataTable({
                     "aoColumnDefs": [{
                             "sType": 'numeric',

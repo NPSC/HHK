@@ -171,15 +171,16 @@ $form = HTMLContainer::generateMarkup('form', $tbl->generateMarkup(array(), "- S
         <title><?php echo $pageTitle; ?></title>
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_UI_CSS; ?>
-        <?php echo TOP_NAV_CSS; ?>
+
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
-         <script type="text/javascript">
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript">
     $(document).ready(function() {
         "use strict";
         $('#btnnotind').button();
-    $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
+
     });
         </script>
     </head>

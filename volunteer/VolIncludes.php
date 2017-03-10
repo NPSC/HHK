@@ -45,8 +45,8 @@ define('PMT', CLASSES . 'Payment' . DS);
 define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 define('MEMBER', CLASSES . 'member' . DS);
 
-define('JS_V', '?v=2');
-define('CSS_V', '?v=2');
+define('JS_V', '?v=3');
+define('CSS_V', '?v=3');
 
 // paths
 define('JQ_UI_CSS', 'css/sunny/jquery-ui.min.css' . CSS_V);
@@ -55,6 +55,7 @@ define('JQ_UI_JS', 'js/jquery-ui.min.js' . JS_V);
 define('JQ_JS', 'js/jquery-3.1.1.min.js' . JS_V);
 define('JQ_DT_JS', 'js/datatables.min.js' . JS_V);
 define('FULLC_JS', 'js/fullcalendar.min.js' . JS_V);
+define('PAG_JS', 'js/pag.js' . JS_V);
 define('FULLC_CSS', 'css/fullcalendar.css' . CSS_V);
 
 define('PRINT_AREA_JS', "js/jquery.PrintArea.js" . JS_V);

@@ -89,8 +89,7 @@ switch ($c) {
             'mode'  => FILTER_SANITIZE_SPECIAL_CHARS,
         );
 
-        $searchCriteria = filter_input_array( INPUT_GET, $arguments );        $letters = '';
-
+        $searchCriteria = filter_input_array( INPUT_GET, $arguments );
 
         try {
             $events = $transfer->searchAccount($searchCriteria);

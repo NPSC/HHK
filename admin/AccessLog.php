@@ -18,7 +18,6 @@ $testVersion = $wInit->testVersion;
 
 $menuMarkup = $wInit->generatePageMenu();
 
-
 // View user log
 $log = '';
 $users = array();
@@ -89,9 +88,10 @@ $usernames = HTMLSelector::generateMarkup(HTMLSelector::getLookups($dbh, "select
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
 
         <link href="css/default.css" rel="stylesheet" type="text/css" />
-<?php echo TOP_NAV_CSS; ?>
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
 
         <script type="text/javascript">
 $(document).ready(function() {

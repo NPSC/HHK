@@ -109,17 +109,18 @@ $resultMessage = "";
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
-        <?php echo TOP_NAV_CSS; ?>
+
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
         $(document).ready(function() {
             "use strict";
-            $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
+            
             $('#btnByGuest, #btnByRoom').button();
         });
         </script>

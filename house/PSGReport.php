@@ -1056,7 +1056,7 @@ $selCountry = HTMLSelector::generateMarkup('', $coAttr);
         <title><?php echo $pageTitle; ?></title>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <?php echo JQ_UI_CSS; ?>
-        <?php echo TOP_NAV_CSS; ?>
+
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <style>.hhk-rowseparater { border-top: 2px #0074c7 solid !important; }</style>
@@ -1065,9 +1065,10 @@ $selCountry = HTMLSelector::generateMarkup('', $coAttr);
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo STATE_COUNTRY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
     $(document).ready(function() {
-    $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
+
         var makeTable = '<?php echo $mkTable; ?>';
         $('#btnHere, #btnExcel').button();
         if (makeTable === '1') {

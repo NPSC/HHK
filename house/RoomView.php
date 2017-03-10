@@ -263,7 +263,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
 <?php echo JQ_UI_CSS; ?>
-<?php echo TOP_NAV_CSS; ?>
+
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
     <link href='css/house.css' rel='stylesheet' type='text/css' />
         <style>
@@ -273,6 +273,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
 $(document).ready(function () {
     "use strict";

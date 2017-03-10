@@ -1053,7 +1053,7 @@ $resultMessage = $alertMsg->createMarkup();
         <title><?php echo $pageTitle; ?></title>
 <?php echo JQ_UI_CSS; ?>
 <?php echo JQ_DT_CSS; ?>
-<?php echo TOP_NAV_CSS; ?>
+
 <?php echo HOUSE_CSS; ?>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <style>
@@ -1068,38 +1068,11 @@ $resultMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
             function isNumber(n) {
                 "use strict";
                 return !isNaN(parseFloat(n)) && isFinite(n);
-            }
-            function alertCallback(containerId) {
-                "use strict";
-                setTimeout(function () {
-                    $("#" + containerId + ":visible").removeAttr("style").fadeOut(500);
-                }, 5500
-                        );
-            }
-            function flagAlertMessage(mess, wasError, scrollTo) {
-                "use strict";
-                var spn = document.getElementById('alrMessage');
-
-                if (!wasError) {
-                    // define the error message markup
-                    $('#alrResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
-                    $('#alrIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
-                    spn.innerHTML = "<strong>Success: </strong>" + mess;
-                    $("#divAlert1").show("slide", {}, 500, alertCallback('divAlert1'));
-                } else {
-                    // define the success message markup
-                    $('alrResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
-                    $('#alrIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
-                    spn.innerHTML = "<strong>Alert: </strong>" + mess;
-                    $("#divAlert1").show("pulsate", alertCallback('divAlert1'), 200);
-                    if (scrollTo) {
-                        window.scrollTo(0, (scrollTo - 45));
-                    }
-                }
             }
 
             function getRoomFees(cat) {
@@ -1364,17 +1337,8 @@ $resultMessage = $alertMsg->createMarkup();
             }
             $(document).ready(function () {
                 "use strict";
-                $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
+
                 var tabIndex = parseInt('<?php echo $tabIndex; ?>');
-                $.ajaxSetup({
-                    beforeSend: function () {
-                        $('body').css('cursor', "wait");
-                    },
-                    complete: function () {
-                        $('body').css('cursor', "auto");
-                    },
-                    cache: false
-                });
                 $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn').button();
                 $('#txtFaIncome, #txtFaSize').change(function () {
                     var inc = $('#txtFaIncome').val().replace(',', ''),

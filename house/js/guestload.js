@@ -3,14 +3,10 @@
 /**
  * guestload.js
  *
- *  This file is streamed in with the page itself.
- *
- * @category  House
- * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @link      https://github.com/NPSC/HHK
  */
 function isNumber(n) {
     "use strict";
@@ -263,19 +259,11 @@ $(document).ready(function () {
             }
         }
     });
-    $.ajaxSetup({
-        beforeSend: function () {
-            $('body').css('cursor', "wait");
-        },
-        complete: function () {
-            $('body').css('cursor', "auto");
-        },
-        cache: false
-    });
-    $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
+    
     $("#divFuncTabs").tabs({
         collapsible: true
     });
+    
     // relationship dialog
     $("#submit").dialog({
         autoOpen: false,
@@ -288,6 +276,7 @@ $(document).ready(function () {
             }
         }
     });
+    
     $('#keysfees').dialog({
         autoOpen: false,
         resizable: true,
@@ -295,12 +284,14 @@ $(document).ready(function () {
         close: function (event, ui) {$('div#submitButtons').show();},
         open: function (event, ui) {$('div#submitButtons').hide();}
     });
+    
     $('#pmtRcpt').dialog({
         autoOpen: false,
         resizable: true,
         modal: true,
         title: 'Payment Receipt'
     });
+    
     $("#faDialog").dialog({
         autoOpen: false,
         resizable: true,
@@ -308,9 +299,11 @@ $(document).ready(function () {
         modal: true,
         title: 'Income Chooser'
     });
+    
     if (rctMkup !== '') {
         showReceipt('#pmtRcpt', rctMkup);
     }
+    
     $('.hhk-view-visit').click(function () {
         var vid = $(this).data('vid');
         var gid = $(this).data('gid');
@@ -333,12 +326,14 @@ $(document).ready(function () {
          viewVisit(gid, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
          $('#divAlert1').hide();
     });
+    
     $('#resvAccordion').accordion({
         heightStyle: "content",
         collapsible: true,
         active: false,
         icons: false
     });
+    
     // relationship events
     $('div.hhk-relations').each(function () {
         var schLinkCode = $(this).attr('name');

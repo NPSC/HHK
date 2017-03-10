@@ -392,7 +392,7 @@ try {
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
-        <?php echo TOP_NAV_CSS; ?>
+
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <link href='css/fullcalendar.css'  rel='stylesheet' type='text/css' />
         <?php echo HOUSE_CSS; ?>
@@ -403,6 +403,7 @@ try {
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>

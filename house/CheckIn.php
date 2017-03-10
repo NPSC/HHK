@@ -232,12 +232,13 @@ $confReserv = $labels->getString('register', 'reservationTab', 'Confirmed Reserv
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_DT_CSS; ?>
-<?php echo JQ_UI_CSS; ?>
-<?php echo HOUSE_CSS; ?>
-<?php echo TOP_NAV_CSS; ?>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
+        <?php echo JQ_UI_CSS; ?>
+        <?php echo HOUSE_CSS; ?>
+
+    <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <style>
             .ui-menu-item {width:300px;font-size:.8em;}
         </style>

@@ -120,11 +120,12 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
         <link href="css/default.css" rel="stylesheet" type="text/css" />
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <link href="<?php echo JQ_DT_CSS; ?>" rel="stylesheet" type="text/css" />
-<?php echo TOP_NAV_CSS; ?>
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
             var listTable;
             var makeTable = <?php echo $makeTable; ?>;
@@ -150,75 +151,6 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
                     $('div#printArea').css('display', 'block');
                     try {
                         listTable = $('#tblDonor').dataTable({
-//                            "aoColumnDefs": [
-//                                {"aTargets": [ 4 ],
-//                                 "mDataProp": function ( source, type, val ) {
-//
-//                                    if (type === 'set') {
-//                                        source.g = val;
-//                                        if (rollup == 'f') {
-//                                            // Store the computed dislay and filter values for efficiency
-//                                            source.g_display = val=="" ? "" : "$" + addCommas(val);
-//                                            source.g_filter  = val=="" ? "" : "$" + addCommas(val) + " " + val;
-//                                        } else {
-//                                            source.g_display = val;
-//                                            source.g_filter  = val;
-//                                        }
-//                                        return;
-//                                    }
-//                                    else if (type === 'display') {
-//                                        return source.g_display;
-//                                    }
-//                                    else if (type === 'filter') {
-//                                        return source.g_filter;
-//                                    }
-//                                    // 'sort' and 'type' both just use the integer
-//                                    return source.g;
-//                                }},
-//                                {"aTargets": [ 5 ],
-//                                 "mDataProp": function ( source, type, val ) {
-//
-//                                    if (type === 'set') {
-//                                        source.tot = val;
-//                                        if (rollup == 't') {
-//                                            source.tot_display = val=="" ? "" : "$" + addCommas(val);
-//                                            source.tot_filter  = val=="" ? "" : "$" + addCommas(val) + " " + val;
-//                                        } else {
-//                                            // Store the computed dislay and filter values for efficiency
-//                                            source.tot_display = val=="0.0" ? "" : val + '%';
-//                                            source.tot_filter  = val=="0.0" ? "" : val + " " + val;
-//                                         }
-//                                        return;
-//                                    }
-//                                    else if (type === 'display') {
-//                                        return source.tot_display;
-//                                    }
-//                                    else if (type === 'filter') {
-//                                        return source.tot_filter;
-//                                    }
-//                                    // 'sort' and 'type' both just use the integer
-//                                    return source.tot;
-//                                }},
-//                                {"aTargets": [ 6 ],
-//                                 "mDataProp": function ( source, type, val ) {
-//
-//                                    if (type === 'set') {
-//                                        source.hou = val;
-//                                        // Store the computed dislay and filter values for efficiency
-//                                        source.hou_display = val=="" ? "" : "$" + addCommas(val);
-//                                        source.hou_filter  = val=="" ? "" : "$" + addCommas(val) + " " + val;
-//                                        return;
-//                                    }
-//                                    else if (type === 'display') {
-//                                        return source.hou_display;
-//                                    }
-//                                    else if (type === 'filter') {
-//                                        return source.hou_filter;
-//                                    }
-//                                    // 'sort' and 'type' both just use the integer
-//                                    return source.hou;
-//                                }}
-//                            ],
                             "iDisplayLength": 50,
                             "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                             "dom": '<"top"ilf>rt<"bottom"ip>'

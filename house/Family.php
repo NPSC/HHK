@@ -154,9 +154,10 @@ $resultMessage = $alertMsg->createMarkup();
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-        <?php echo TOP_NAV_CSS; ?>
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
