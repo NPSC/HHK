@@ -115,7 +115,7 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-        <link href="css/default.css" rel="stylesheet" type="text/css" />
+        <?php echo DEFAULT_CSS; ?>
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <link href="<?php echo JQ_DT_CSS; ?>" rel="stylesheet" type="text/css" />
 

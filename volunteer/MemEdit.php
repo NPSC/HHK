@@ -392,7 +392,7 @@ function getVolGroupList($rows, $volGroup, $page = "MemEdit.php") {
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
-        <link href="css/publicStyle.css" rel="stylesheet" type="text/css" />
+        <?php echo PUBLIC_CSS; ?>
         <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>

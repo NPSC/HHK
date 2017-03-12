@@ -91,7 +91,6 @@ define('CSS_V', '?v=3');
 // paths
 define('JQ_UI_CSS', '<link href="css/redmond/jquery-ui.min.css' . CSS_V . '" rel="stylesheet" type="text/css" />');
 define('JQ_DT_CSS', '<link href="css/datatables.min.css' . CSS_V . '" rel="stylesheet" type="text/css" />');
-define('TOP_NAV_CSS', "<link href='css/topNav.css" . CSS_V . "' rel='stylesheet' type='text/css' />");
 define('MULTISELECT_CSS', "<link href='css/jquery.multiselect.css" . CSS_V . "' rel='stylesheet' type='text/css' />");
 define('HOUSE_CSS', "<link href='css/house.css" . CSS_V . "' rel='stylesheet' type='text/css' />");
 

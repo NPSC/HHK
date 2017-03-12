@@ -103,7 +103,7 @@ if ($isHttps)
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-        <link href="css/publicStyle.css" rel="stylesheet" type="text/css" />
+        <?php echo PUBLIC_CSS; ?>
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
 
         <script type="text/javascript" src="../js/md5-min.js"></script>

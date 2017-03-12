@@ -59,7 +59,7 @@ define('PAG_JS', 'js/pag.js' . JS_V);
 define('FULLC_CSS', 'css/fullcalendar.css' . CSS_V);
 
 define('PRINT_AREA_JS', "js/jquery.PrintArea.js" . JS_V);
-define('TOP_NAV_CSS', "<link href='css/topNav.css" . CSS_V . "' rel='stylesheet' type='text/css' />");
+define('PUBLIC_CSS', "<link href='css/publicStyle.css" . CSS_V . "' rel='stylesheet' type='text/css' />");
 
 date_default_timezone_set('America/Chicago');
 

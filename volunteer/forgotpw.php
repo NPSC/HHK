@@ -143,7 +143,7 @@ if (isset($_POST["btnSum"])) {
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title></title>
-        <link href="css/publicStyle.css" rel="stylesheet" type="text/css" />
+        <?php echo PUBLIC_CSS; ?>
     </head>
     <body>
         <?php echo $testHeader; ?>

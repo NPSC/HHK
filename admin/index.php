@@ -127,7 +127,7 @@ if ($isHttps)
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
-        <link href="css/default.css" rel="stylesheet" type="text/css" />
+        <?php echo DEFAULT_CSS; ?>
         <script type="text/javascript" src="../js/md5-min.js"></script>
         <script type="text/javascript" src="<?php echo $uS->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $uS->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>

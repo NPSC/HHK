@@ -87,7 +87,7 @@ $usernames = HTMLSelector::generateMarkup(HTMLSelector::getLookups($dbh, "select
         <title><?php echo $pageTitle; ?></title>
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
 
-        <link href="css/default.css" rel="stylesheet" type="text/css" />
+        <?php echo DEFAULT_CSS; ?>
 
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
@@ -110,7 +110,7 @@ $(document).ready(function() {
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <form method="POST">
-            <div class="hhk-tdbox hhk-member-detail hhk-visitdialog">
+            <div class="ui-widget ui-widget-content hhk-tdbox" style="float:left;">
                 <table>
                     <tr>
                         <td >Choose a date (leave empty for most recent entries):</td>

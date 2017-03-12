@@ -52,15 +52,15 @@ define('CSS_V', '?v=5');
 
 define('JQ_UI_CSS', 'css/ss/jquery-ui.min.css' . CSS_V);
 define('JQ_DT_CSS', 'css/datatables.min.css' . CSS_V);
+define('MULTISELECT_CSS', "<link href='css/jquery.multiselect.css" . CSS_V . "' rel='stylesheet' type='text/css' />");
+define('DEFAULT_CSS', "<link href='css/default.css" . CSS_V . "' rel='stylesheet' type='text/css' />");
+
 define('JQ_UI_JS', 'js/jquery-ui.min.js'.JS_V);
 define('JQ_JS', 'js/jquery-3.1.1.min.js'.JS_V);
 define('JQ_DT_JS', 'js/datatables.min.js'.JS_V);
 define('PRINT_AREA_JS', "js/jquery.PrintArea.js".JS_V);
 define('PAG_JS', "js/pag.js".JS_V);
 define('MD5_JS', "js/md5-min.js".JS_V);
-define('MULTISELECT_CSS', "<link href='css/jquery.multiselect.css" . CSS_V . "' rel='stylesheet' type='text/css' />");
-
-define('TOP_NAV_CSS', "<link href='css/topNav.css" . CSS_V . "' rel='stylesheet' type='text/css' />");
 
 date_default_timezone_set('America/Chicago');
 
