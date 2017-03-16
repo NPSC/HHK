@@ -25,12 +25,8 @@ define('SEC', CLASSES . 'sec' . DS);
 define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 
 
-define('JQ_UI_CSS', 'css/ss/jquery-ui-1.9.2.custom.min.css');
-define('JQ_DT_CSS', 'css/jquery.datatables.css');
 define('JQ_UI_JS', 'js/jquery-ui.min.js');
 define('JQ_JS', 'js/jquery-3.1.1.min.js');
-define('JQ_DT_JS', 'js/jquery.datatables.min.js');
-define('PRINT_AREA_JS', "../js/jquery.PrintArea.js");
 define('MD5_JS', "js/md5-min.js");
 
 define('TOP_NAV_CSS', "<link href='css/topNav.css' rel='stylesheet' type='text/css' />");

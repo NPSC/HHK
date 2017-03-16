@@ -15,6 +15,10 @@ ADD COLUMN `Order` INT NOT NULL DEFAULT 0 AFTER `Type`;
 ALTER TABLE `visit` 
 ADD COLUMN `Amount_Per_Guest` DECIMAL(10,2) NOT NULL DEFAULT '0.00' AFTER `Pledged_Rate`;
 
+ALTER TABLE `house_log` 
+CHANGE COLUMN `Id3` `Str1` VARCHAR(45) NOT NULL DEFAULT '' ,
+CHANGE COLUMN `Id4` `Str2` VARCHAR(45) NOT NULL DEFAULT '' ;
+
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CalViewWeeks', '3', 'i', 'h', 'Number of weeks showing in the Calendar Page');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ShowZeroDayStays', 'false', 'b', 'h', 'Include 0-day stays and visits in Reports and Pages');
 

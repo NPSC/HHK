@@ -85,12 +85,19 @@ if (isset($_POST['btnSave'])) {
             <div id="content" style="margin:10px; width:100%;">
                 <div><span style="color:red;"><?php echo $errorMsg; ?></span></div>
                 <form method="post" action="step2.php" name="form1" id="form1">
-                    <p>URL: <?php echo $ssn->databaseURL; ?></p>
-                    <p>Schema: <?php echo $ssn->databaseName; ?></p>
-                    <p>User: <?php echo $ssn->databaseUName; ?></p>
-                    <p><?php echo $resultAccumulator; ?></p>
-                    
-                    <input type="submit" name="btnSave" id="btnSave" value="Install DB" style="margin-left:700px;margin-top:20px;"/>
+                <table>
+                    <tr>
+                        <th style='text-align: right;'>URL:</th><td><?php echo $ssn->databaseURL; ?></td>
+                    </tr><tr>
+                        <th style='text-align: right;'>Schema:</th><td><?php echo $ssn->databaseName; ?></td>
+                    </tr><tr>
+                        <th style='text-align: right;'>User:</th><td><?php echo $ssn->databaseUName; ?></td>
+                    </tr>
+                </table><br/>
+
+                <p><?php echo $resultAccumulator; ?></p>
+
+                    <input type="submit" name="btnSave" id="btnSave" value="Install DB" style="margin-left:300px;margin-top:20px;"/>
                     <input type="submit" name="btnNext" id="btnNext" value="Next" style="margin-left:7px;margin-top:20px;"/>
                 </form>
             </div>

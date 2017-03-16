@@ -10,6 +10,10 @@
  */
 
 require_once ("InstallIncludes.php");
+require (CLASSES . 'PDOdata.php');
+require (DB_TABLES . 'WebSecRS.php');
+require (DB_TABLES . 'HouseRS.php');
+require (SEC . 'UserClass.php');
 
 
 addslashesextended($_POST);
@@ -17,17 +21,63 @@ addslashesextended($_POST);
 //Check request
 if (isset($_POST['cmd'])) {
     $c = filter_var($_POST['cmd'], FILTER_SANITIZE_STRING);
-} else {
-    exit("Missing Request");
 }
 
 $events = array();
+$dbh = initPDO();
+
 
 // switch on command...
 if ($c == "testdb") {
 
     $events = testdb($_POST);
 
+
+} else if ($c == 'loadmd') {
+
+    $errorMsg = '';
+
+    // Load initialization data
+    $filedata = file_get_contents('initialdata.sql');
+    $parts = explode('-- ;', $filedata);
+
+    foreach ($parts as $q) {
+        if ($q != '') {
+            try {
+                $dbh->exec($q);
+            } catch (PDOException $pex) {
+                $errorMsg .= $pex->getMessage() . '.  ';
+            }
+        }
+    }
+
+    // Update websites table
+    try {
+        $config = new Config_Lite(ciCFG_FILE);
+        updateWebSites($dbh, $config);
+
+    } catch (Exception $ex) {
+        $ssn->destroy();
+        $errorMsg .= $ex . " Configurtion file path = " . ciCFG_FILE . '.  ';
+    }
+
+
+    // Update admin password
+    if (isset($_POST['new'])) {
+
+        $newPw = filter_var($_POST['new'], FILTER_SANITIZE_STRING);
+
+        $uclass = new UserClass();
+        if ($uclass->setPassword($dbh, -1, $newPw)) {
+            $events['result'] = "Admin Password set.  ";
+        } else {
+            $errorMsg .= "Admin Password set.  ";
+        }
+    }
+
+    if ($errorMsg != '') {
+        $events['error'] = $errorMsg;
+    }
 
 }
 
@@ -76,15 +126,6 @@ function testdb($post) {
 
         }
 
-
-
-//        $dbh = new \PDO(
-//                'mysql:host=' . $dbURL . ';dbname=' . $dbName . '',
-//                $dbUser,
-//                $pw,
-//                array(\PDO::ATTR_PERSISTENT => true)
-//                );
-
         $dbh->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $serverInfo = $dbh->getAttribute(\PDO::ATTR_SERVER_VERSION);
         $driver = $dbh->getAttribute(\PDO::ATTR_DRIVER_NAME);
@@ -94,5 +135,60 @@ function testdb($post) {
     }
 
     return array('success'=>'Good! Server version ' . $serverInfo . '; ' . $driver);
+}
+
+function updateWebSites(\PDO $dbh, Config_Lite $config) {
+
+    // Update website table
+    $webRS = new Web_SitesRS();
+    $rows = EditRS::select($dbh, $webRS, array());
+
+    foreach ($rows as $w) {
+
+        $webRS = new Web_SitesRS();
+        EditRS::loadRow($w, $webRS);
+
+        $host = '';
+
+        switch ($webRS->Site_Code->getStoredVal()) {
+
+            case 'a':
+                $host = $config->getString('site', 'Admin_URL', '');
+                break;
+
+
+            case 'h':
+                $host = $config->getString('site', 'House_URL', '');
+                break;
+
+            case 'v':
+                $host = $config->getString('site', 'Volunteer_URL', '');
+
+                if ($host == '') {
+                    // delete the volunteer row.
+                    EditRS::delete($dbh, $webRS, array($webRS->Site_Code));
+                }
+
+                break;
+
+            case 'r':
+                $host = $config->getString('site', 'Site_URL', '');
+                break;
+        }
+
+        if ($host == '') {
+            continue;
+        }
+
+        $url = parse_url($host);
+
+        $webRS->HTTP_Host->setNewVal($url['host']);
+
+        if (isset($url['path'])) {
+            $webRS->Relative_Address->setNewVal($url['path']);
+        }
+
+        EditRS::update($dbh, $webRS, array($webRS->idweb_sites));
+    }
 }
 

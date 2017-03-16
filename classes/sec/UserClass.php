@@ -79,6 +79,21 @@ class UserClass {
         return FALSE;
     }
 
+    public function setPassword(\PDO $dbh, $id, $newPw) {
+
+        if ($newPw != '' && $id != 0) {
+
+            $query = "update w_users set Last_Updated = now(), Updated_By = 'install', Enc_PW = :newPw where idName = :id;";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute(array(':newPw'=>$newPw, ':id'=>$id));
+
+            if ($stmt->rowCount() == 1) {
+                return TRUE;
+            }
+        }
+        return FALSE;
+    }
+
     protected static function getUserCredentials(\PDO $dbh, $username) {
 
         $query = "SELECT u.*, a.Role_Id as Role_Id FROM w_users u join w_auth a on u.idName = a.idName  WHERE u.Status='a' and u.User_Name = :uname";

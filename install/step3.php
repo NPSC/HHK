@@ -12,12 +12,13 @@ require (CLASSES . 'PDOdata.php');
 require (DB_TABLES . 'WebSecRS.php');
 require (DB_TABLES . 'HouseRS.php');
 require(SEC . 'Login.php');
-require (SEC . 'UserClass.php');
-require(SEC . 'ChallengeGenerator.php');
+
+
 require (CLASSES . 'Purchase/PriceModel.php');
 require (CLASSES . 'TableLog.php');
 require (CLASSES . 'HouseLog.php');
 require CLASSES . 'AuditLog.php';
+
 
 try {
 
@@ -44,7 +45,7 @@ SysConfig::getCategory($dbh, $ssn, "'h'", $ssn->sconf);
 $pageTitle = $ssn->siteName;
 
 $errorMsg = '';
-$resultAccumulator = "";
+
 
 
 if (isset($_POST['btnNext'])) {
@@ -53,82 +54,9 @@ if (isset($_POST['btnNext'])) {
 
 
 $rPrices = readGenLookupsPDO($dbh, 'Price_Model');
-
-// Check for returns
-if (isset($_POST['btnSave'])) {
-
-    $filedata = file_get_contents('initialdata.sql');
-    $parts = explode('-- ;', $filedata);
-
-    foreach ($parts as $q) {
-        if ($q != '') {
-            try {
-                $dbh->exec($q);
-            } catch (PDOException $pex) {
-                $errorMsg .= $pex->getMessage();
-            }
-        }
-    }
-
-    if ($errorMsg == '') {
-        $resultAccumulator = 'Okay.';
-    }
-
-
-}
-
 $hostURL = $config->getString('site', 'Site_URL');
-
 $url = parse_url($hostURL);
 
-if (isset($_POST['btnWeb'])) {
-    // Update website table
-    $webRS = new Web_SitesRS();
-    $rows = EditRS::select($dbh, $webRS, array());
-
-    foreach ($rows as $w) {
-
-        $webRS = new Web_SitesRS();
-        EditRS::loadRow($w, $webRS);
-
-        $host = '';
-
-        switch ($webRS->Site_Code->getStoredVal()) {
-
-            case 'a':
-                $host = $config->getString('site', 'Admin_URL', '');
-                break;
-
-
-            case 'h':
-                $host = $config->getString('site', 'House_URL', '');
-                break;
-
-            case 'v':
-                $host = $config->getString('site', 'Volunteer_URL', '');
-                break;
-
-            case 'r':
-                $host = $config->getString('site', 'Site_URL', '');
-                break;
-        }
-
-        if ($host == '') {
-            continue;
-        }
-
-        $url = parse_url($host);
-
-        $webRS->HTTP_Host->setNewVal($url['host']);
-
-        if (isset($url['path'])) {
-            $webRS->Relative_Address->setNewVal($url['path']);
-        }
-
-        EditRS::update($dbh, $webRS, array($webRS->idweb_sites));
-    }
-
-}
 
 if (isset($_POST['btnRoom'])) {
 
@@ -185,17 +113,61 @@ if (isset($_POST['btnRoom'])) {
 
 $modelSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rPrices, $rPrices[$ssn->RoomPriceModel][0], TRUE), array('name'=>'selModel'));
 
-
 ?>
 <!DOCTYPE HTML>
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-        <style>
-            .tblhdr {background-color: tomato}
-            .tdtitle {width: 22%; text-align: right; margin-right:3px;}
-        </style>
+        <script type="text/javascript" src="../<?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="../<?php echo MD5_JS; ?>"></script>
+        <script type="text/javascript" src="../js/install.js"></script>
+        <script type="text/javascript">
+    $(document).ready(function() {
+        "use strict";
+
+        $('#btnSave').click(function () {
+            var $pw1 = $('#txtpw1'),
+                $pw2 = $('#txtpw2');
+
+            if (checkStrength($pw1)) {
+
+                if ($pw1.val() !== $pw2.val()) {
+                    $('#spanpwerror').text('Passwords are not the same.');
+                    return;
+                }
+
+            } else {
+                $('#spanpwerror').text("Password must have 8 characters including at least one uppercase and one lower case alphabetical character and one number.");
+                return;
+            }
+
+            $pw1.val('');
+            $pw2.val('');
+
+            $.post('ws_install.php', {cmd: 'loadmd', 'new': hex_md5($pw1.val())}, function (data) {
+                if (data) {
+                    try {
+                        data = $.parseJSON(data);
+                    } catch (err) {
+                        alert("Parser error - " + err.message);
+                        return;
+                    }
+
+                    if (data.result) {
+                        $('#spanDone').text(data.result);
+                        $(this).prop('disabled', true);
+                    }
+
+                    if (data.error) {
+                        $('#spanpwerror').text(data.error);
+                    }
+                }
+            });
+
+        });
+    });
+        </script>
     </head>
     <body>
         <div id="page" style="width:900px;">
@@ -205,22 +177,33 @@ $modelSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rPrices, $
             </div><div class='pageSpacer'></div>
             <div id="content" style="margin:10px; width:100%;">
                 <div><span style="color:red;"><?php echo $errorMsg; ?></span></div>
-                <form method="post" action="step3.php" name="form1" id="form1">
-                    <p>URL: <?php echo $ssn->databaseURL; ?></p>
-                    <p>Schema: <?php echo $ssn->databaseName; ?></p>
-                    <p>User: <?php echo $ssn->databaseUName; ?></p>
-                    <p>Host: <?php echo $url['host'] ?></p>
-                    <p><?php echo $resultAccumulator; ?></p>
 
-                    <input type="submit" name="btnSave" id="btnSave" value="1. Load Metadata" style="margin-top:20px;"/>
-                    <input type="submit" name="btnWeb" id="btnSave" value="2. Update Web-Sites Table" style="margin-left:7px;margin-top:20px;margin-bottom:10px;"/>
+                <table>
+                    <tr>
+                        <th style='text-align: right;'>URL:</th><td><?php echo $ssn->databaseURL; ?></td>
+                    </tr><tr>
+                        <th style='text-align: right;'>Schema:</th><td><?php echo $ssn->databaseName; ?></td>
+                    </tr><tr>
+                        <th style='text-align: right;'>User:</th><td><?php echo $ssn->databaseUName; ?></td>
+                    </tr>
+                </table><br/>
+
                     <fieldset>
-                        <legend>3. Create Rooms</legend>
+                        <legend>1.  Load Metadata</legend>
+                        <p>Admin account password: <input type='password' name='txtpw1'/><span id='spanpwerror' style='color:red; margin-left: .5em;'></span></p>
+                        <p>Admin account password again: <input type='password' name='txtpw2'/></p>
+
+                        <input type="button" id="btnSave" value="Load Metadata" style="margin:20px;"/><span id='spanDone' style='font-weight: bold;'></span>
+                    </fieldset>
+
+                <form method="post" action="step3.php" name="form1" id="form1">
+                    <fieldset>
+                        <legend>2. Create Rooms</legend>
                         How Many: <input type="text" name="txtRooms" size="5" style="margin-top:20px;margin-right:10px;"/>
                         Select Room Rate Plan: <?php echo $modelSel; ?>
                         <input type="submit" name="btnRoom" id="btnRoom" value="Install Rooms" style="margin-left:17px;margin-top:20px;"/>
                     </fieldset>
-                    <input type="submit" name="btnNext" id="btnNext" value="Next" style="margin-left:17px;margin-top:20px;"/>
+                    <input type="submit" name="btnNext" id="btnNext" value="3.  Done" style="margin-left:17px;margin-top:20px;"/>
                 </form>
             </div>
         </div>

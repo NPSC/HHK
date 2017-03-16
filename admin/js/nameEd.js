@@ -53,15 +53,6 @@ $(document).ready(function () {
             }
         }
     });
-    $.ajaxSetup({
-        beforeSend: function () {
-            $('body').css('cursor', "wait");
-        },
-        complete: function () {
-            $('body').css('cursor', "auto");
-        },
-        cache: false
-    });
     // phone - email tabs block
     $('#phEmlTabs').tabs();
     $('#demographicTabs').tabs();
@@ -235,7 +226,7 @@ $(document).ready(function () {
 
                 if (checkStrength(pw1)) {
 
-                    if (pw1.val() != pw2.val()) {
+                    if (pw1.val() !== pw2.val()) {
                         updateTips(tips, "New passwords do not match");
                         return;
                     }
