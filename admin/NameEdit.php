@@ -345,6 +345,8 @@ $recHistory = History::getMemberHistoryMarkup($dbh);
  * Donations
  */
 
+$donateMkup = '';
+
 // but if $id = 0, disable the donation tab
 if ($id != 0 && $donationsFlag) {
 

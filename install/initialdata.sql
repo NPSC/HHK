@@ -419,7 +419,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('ConcatVisitNotes', 'true', 'b', 'h', 'Show notes combined from all previous visits when true.'),
 ('DefaultPayType','ca','s','f','Default payment type for paying today UI'),
 ('DefaultVisitFee', '1', 's', 'h', 'Default Visit Fee selected on new check-in and reservation pages.'),
-('DefaultCkBalStmt', 'false', 'b', 'h', 'Check the Balenace Statement checkbox by default'),
+('DefaultCkBalStmt', 'false', 'b', 'h', 'Check the Balance Statement checkbox by default'),
 ('DefaultRegisterTab', '0', 'i', 'h', 'Default active tab on register page, 0 = calendar, 1 = current Guests'),
 ('Doctor', 'true', 'b', 'h','Track doctors'),
 ('EmailBlockSize','200','i','r','Number of email addresses per block.'),
@@ -432,9 +432,9 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('IncludeLastDay','false','b','h','Include the departure day in room searches.'),
 ('IncomeRated', 'true', 'b', 'h','Use Income chooser rate assistance'),
 ('InitResvStatus', 'a', 's', 'h','Initial reservation status setting, confirmed or unconfirmed'),
-('InsuranceChooser', 'true', 'b', 'h', 'Show patient insurance chooser'),
-('KeyDeposit','true','b','h','Use Room or Key deposit'),
-('LangChooser', 'true', 'b', 'h', 'Show member language chooser'),
+('InsuranceChooser', 'false', 'b', 'h', 'Show patient insurance chooser'),
+('KeyDeposit','false','b','h','Use Room or Key deposit'),
+('LangChooser', 'false', 'b', 'h', 'Show member language chooser'),
 ('MajorDonation','500','i','d','Major donator trigger amount'),
 ('MaxDonate','100000','i','d','Maximum amount amount for a single payment'),
 ('MaxExpected','60','i','h','Maximum Expected days out for a visit'),
@@ -453,13 +453,13 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('RegColors','hospital','s','h','Calendar page ribbon colors based on hospital or room'),
 ('RegForm','1','i','h','1 = Registration form style 1, 2 = style 2'),
 ('RegFormNoRm', 'false', 'b', 'h','Do not show the room number on the registration form before check-in'),
-('ResvEarlyArrDays', '5', 'i', 'h','# Days before reservation to show check-in button on reservation chooser'),
+('ResvEarlyArrDays', '2', 'i', 'h','# Days before reservation to show check-in button on reservation chooser'),
 ('Reservation','true','b','h','Use reservations'),
-('RoomPriceModel', 'ns', 's', 'h','Room rate price model - Do not change!'),
+('RoomPriceModel', 'd', 's', 'h','Room rate price model - Do not change!'),
 ('RoomsPerPatient', '2', 'i', 'h','# simultaneous rooms per patient allowed'),
 ('RoomRateDefault', 'e', 's', 'h', 'Default room rate category (a, b, c, d, e, x)'),
 ('SessionTimeout', '30', 'i', 'f', 'Number of minutes until an idle session get automatically logged out, 0 = never log out'),
-('ShowDiagTB', 'false', 'b', 'h', 'Show the diagnosis textbox'),
+('ShowDiagTB', 'false', 'b', 'h', 'Show the diagnosis textbox (in addition to the diagnosis selector)'),
 ('ShoStaysCtr', 'true', 'b', 'h', 'Show the stays counter on the House Calendar page'),
 ('ShowLodgDates', 'true', 'b', 'h','Show dates on lodging invoice lines'),
 ('SolicitBuffer','90','i','r','Timeout in days after visit checkout before solicit report will show new guests'),
@@ -561,10 +561,11 @@ REPLACE INTO `insurance_type` (`idInsurance_type`, `Title`, `Is_Primary`, `Multi
 
 
 --
--- insert super user
+-- insert users
 --
-REPLACE into name (idName, Name_Last, Member_Type, Member_Status, Record_Member)
-	values (-1, 'admin', 'ai', 'a', 1);
+REPLACE into name (idName, Name_Last, Name_First, Member_Type, Member_Status, Record_Member) values 
+(-1, 'admin', '', 'ai', 'a', 1),
+(10, 'Crane', 'Eric', 'ai', 'a', 1);
 -- ;
 
 REPLACE INTO `w_auth` (`idName`,`Role_Id`,`Organization_Id`,`Policy_id`,`Updated_By`,`Last_Updated`,`User_Name`,`Status`) 

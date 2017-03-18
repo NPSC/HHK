@@ -22,6 +22,9 @@ CHANGE COLUMN `Id4` `Str2` VARCHAR(45) NOT NULL DEFAULT '' ;
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CalViewWeeks', '3', 'i', 'h', 'Number of weeks showing in the Calendar Page');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ShowZeroDayStays', 'false', 'b', 'h', 'Include 0-day stays and visits in Reports and Pages');
 
+update sys_config set Description = 'Check the Balance Statement checkbox by default' where Key = 'DefaultCkBalStmt';
+update sys_config set Description = 'Show the diagnosis textbox (in addition to the diagnosis selector)' where Key = 'ShowDiagTB';
+
 Update gen_lookups set `Order` = 5, `Code` = `Description`, `Description` = 'Age Bracket' where `Table_Name` = 'Demographics' and `Code` = 'a';
 Update gen_lookups set `Order` = 10, `Code` = `Description`, `Description` = 'Ethnicity' where `Table_Name` = 'Demographics' and `Code` = 'e';
 Update gen_lookups set `Order` = 15, `Code` = `Description`, `Description` = 'Gender' where `Table_Name` = 'Demographics' and `Code` = 'g';

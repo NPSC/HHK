@@ -350,7 +350,7 @@ $stmth = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style fr
 
 if ($stmth->rowCount() > 1 && strtolower($uS->RegColors) == 'hospital') {
 
-    $colorKey = HTMLContainer::generateMarkup('span', $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . 's: ');
+    $colorKey = HTMLContainer::generateMarkup('span', $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . ': ');
     // All button
     $colorKey .= HTMLContainer::generateMarkup('span', 'All', array('class'=>'spnHosp', 'data-id'=>0, 'style' => 'border:solid 3px black;font-size:120%;background-color:fff;color:000;'));
 

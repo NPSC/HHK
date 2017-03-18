@@ -75,6 +75,57 @@ if (isset($_POST['btnSave'])) {
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
+        <script type="text/javascript" src="../<?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="../<?php echo MD5_JS; ?>"></script>
+        <script type="text/javascript" src="../js/install.js"></script>
+<script type="text/javascript">
+    $(document).ready(function() {
+        "use strict";
+
+        $('#btnMeta').click(function () {
+            var pw1 = $('#txtpw1'),
+                pw2 = $('#txtpw2');
+            var pword;
+            pword = pw1.val();
+
+            if (checkStrength(pword)) {
+
+                if (pword !== pw2.val()) {
+                    $('#spanpwerror').text('Passwords are not the same.');
+                    return;
+                }
+
+            } else {
+                $('#spanpwerror').text("Password must have 8 or more characters including at least one uppercase and one lower case alphabetical character and one number and one of ! @ # $ % ^ & * ( ) - = _ + ~ . , \" < > / ? ; : ' | [ ] { }");
+                return;
+            }
+
+            $.post('ws_install.php', {cmd: 'loadmd', 'new': hex_md5(pword)}, function (data) {
+                if (data) {
+                    try {
+                        data = $.parseJSON(data);
+                    } catch (err) {
+                        alert("Parser error - " + err.message);
+                        return;
+                    }
+
+                    if (data.result) {
+                        $('#spanDone').text(data.result);
+                        $(this).prop('disabled', true);
+                    }
+
+                    if (data.error) {
+                        $('#spanpwerror').text(data.error);
+                    }
+                }
+            });
+
+            pw1.val('');
+            pw2.val('');
+
+        });
+    });
+        </script>
     </head>
     <body>
         <div id="page" style="width:900px;">
@@ -97,7 +148,16 @@ if (isset($_POST['btnSave'])) {
 
                 <p><?php echo $resultAccumulator; ?></p>
 
-                    <input type="submit" name="btnSave" id="btnSave" value="Install DB" style="margin-left:300px;margin-top:20px;"/>
+                <input type="submit" name="btnSave" id="btnSave" value="1.  Install DB" style="margin-left:10px;margin-bottom:30px;"/>
+
+                    <fieldset>
+                        <legend>2,  Load Metadata</legend>
+                        <p>Admin account password: <input type='password' id='txtpw1'/><span id='spanpwerror' style='color:red; margin-left: .5em;'></span></p>
+                        <p>Admin account password again: <input type='password' id='txtpw2'/></p>
+
+                        <input type="button" id="btnMeta" value="Load Metadata" style="margin:20px;"/><span id='spanDone' style='font-weight: bold;'></span>
+                    </fieldset>
+
                     <input type="submit" name="btnNext" id="btnNext" value="Next" style="margin-left:7px;margin-top:20px;"/>
                 </form>
             </div>

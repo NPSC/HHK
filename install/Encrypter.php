@@ -54,14 +54,6 @@ if (isset($_POST['btndec'])) {
                 <p><?php echo $clearTxt; ?></p>
                 <input type="submit" name="btndec" value="DEcrypt" />
             </div>
-            <div style="margin:10px;">
-                URL: <input name="dbURL" type="text" value="<?php if (isset($_POST['dbURL'])) {echo $_POST['dbURL'];} ?>" /><br>
-                User: <input name="dbUser" type="text" value="<?php if (isset($_POST['dbUser'])) {echo $_POST['dbUser'];} ?>" /><br>
-                PW: <input name="dbPw" type="text" value="<?php if (isset($_POST['dbPw'])) {echo $_POST['dbPw'];} ?>" /><br>
-                Schema: <input name="dbSchema" type="text" value="<?php if (isset($_POST['dbSchema'])) {echo $_POST['dbSchema'];} ?>" /><br>
-                <p><?php echo $errorMsg; ?></p>
-                <input type="submit" name="btnSave" />
-            </div>
         </div>
         </form>
     </body>

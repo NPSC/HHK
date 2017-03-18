@@ -47,13 +47,12 @@ function testDb(parms) {
     );
 }
 
-function checkStrength(pwCtrl) {
-    var strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})");
+function checkStrength(pwTxt) {
+    var strongRegex = /^.*(?=.{8,50})(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\!\@\#\$\%\^\&\*\(\)\-\=\_\+\~\.\,\<\>\/\?\;\:\'\"\\\|\[\]\{\}]).*$/g;
     var rtn = true;
-    if(strongRegex.test(pwCtrl.val())) {
-        pwCtrl.css('background-color', 'green');
+    if(strongRegex.test(pwTxt)) {
+        rtn = true;
     } else {
-        pwCtrl.css('background-color', 'red');
         rtn = false;
     }
     return rtn;

@@ -258,9 +258,9 @@ class ReservationSvcs {
             // Patient is someone other than the guest
             $patient = new Patient($dbh, 'h_', $idPatient);
             $dataArray['patient'] = $patient->createReservationMarkup();
-            $dataArray['patStay'] = $patientStaying;
         }
 
+        $dataArray['patStay'] = $patientStaying;
         $dataArray = array_merge($dataArray, $guest->createReservationMarkup($patientStaying));
         $dataArray['notes'] = $guest->createNotesMU($resv->getNotes(), 'txtRnotes', $labels);
 
@@ -966,8 +966,6 @@ class ReservationSvcs {
         $numGuests = 1;
         if ($resv->isNew() === FALSE) {
             $numGuests = count($allGuests);
-        } else if ($resv->isNew() && $patientStaying) {
-            $numGuests++;
         }
 
         $resv->setNumberGuests($numGuests);

@@ -24,7 +24,6 @@ if (isset($_POST['cmd'])) {
 }
 
 $events = array();
-$dbh = initPDO();
 
 
 // switch on command...
@@ -35,13 +34,18 @@ if ($c == "testdb") {
 
 } else if ($c == 'loadmd') {
 
+    $dbh = initPDO();
     $errorMsg = '';
 
+    try {
     // Load initialization data
     $filedata = file_get_contents('initialdata.sql');
     $parts = explode('-- ;', $filedata);
 
     foreach ($parts as $q) {
+
+        $q = trim($q);
+
         if ($q != '') {
             try {
                 $dbh->exec($q);
@@ -73,6 +77,9 @@ if ($c == "testdb") {
         } else {
             $errorMsg .= "Admin Password set.  ";
         }
+    }
+    } catch (Exception $ex) {
+        $errorMsg .= "Installer Error: " . $ex->getMessage();
     }
 
     if ($errorMsg != '') {

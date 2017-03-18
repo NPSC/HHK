@@ -670,11 +670,12 @@ if (isset($_POST['btnItemSave'])) {
         }
     }
 }
+
 //
 // Generate tab content
 //
 // hospital tab title
-$hospitalTabTitle = $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospitals & Associations') . 's';
+$hospitalTabTitle = $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospitals & Associations');
 
 // Room pricing model
 $rPrices = readGenLookupsPDO($dbh, 'Price_Model');

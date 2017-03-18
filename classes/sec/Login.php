@@ -63,7 +63,7 @@ class Login {
         $ssn->ver = $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
         $ssn->ssl = $ssl;
         $ssn->mode = $config->getString('site', 'Mode', 'live');
-        $ssn->sconf = $config->getString('site', 'SysConfigTable', 'sys_config');
+        $ssn->sconf = 'sys_config';
         $ssn->sId = $config->getString('site', 'Site_Id', '');
         $ssn->subsidyId = $config->getString('financial', 'RoomSubsidyId', '0');
 

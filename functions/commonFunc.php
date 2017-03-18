@@ -12,7 +12,7 @@ function initPDO($override = FALSE) {
     $ssn = Session::getInstance();
     /* Get Sectors from session */
     if (!isset($ssn->databaseURL)) {
-        die('<br/>Missing Database Initialization (initPDO)<br/>');
+        die('<br/>Missing Database Session Initialization (initPDO)<br/>');
     }
 
     $dbuName = $ssn->databaseUName;
@@ -25,7 +25,7 @@ function initPDO($override = FALSE) {
             $config = new Config_Lite(ciCFG_FILE);
         } catch (Exception $ex) {
             $ssn->destroy();
-            throw new Hk_Exception_Runtime("Configurtion file is missing: " . $ex);
+            die("Configurtion file is missing: " . $ex);
         }
 
         $dbuName = $config->getString('db', 'ReadonlyUser', '');
