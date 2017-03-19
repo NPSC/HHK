@@ -47,6 +47,7 @@ $pageTitle = $ssn->siteName;
 $errorMsg = '';
 
 if (isset($_POST['btnNext'])) {
+    $ssn->destroy(true);
     header('location:../index.php');
 }
 
@@ -106,25 +107,31 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
     }
 
     $siteId = $ssn->sId;
+    $houseName = $ssn->siteName;
 
     if ($siteId > 0) {
 
         $stmt = $dbh->query("Select count(`idName`) from `name` where `idName` = $siteId");
         $row = $stmt->fetchAll(PDO::FETCH_NUM);
 
-        $houseName = $ssn->siteName;
 
         if (isset($row[0]) && $row[0][0] == 0 && $houseName != '') {
-            $dbh->exec("insert into `name` (`idName`, `Company`, `Member_Type`, `Member_Status`, `Record_Company`, `Last_Updated`, `Updated_By`) values ($siteId, '$houseName', 'np', 'a', 1, now(). 'admin')");
+            $dbh->exec("insert into `name` (`idName`, `Company`, `Member_Type`, `Member_Status`, `Record_Company`, `Last_Updated`, `Updated_By`) values ($siteId, '$houseName', 'np', 'a', 1, now(), 'admin')");
         }
 
     } else {
 
-        $siteId = $dbh->exec("insert into `name` (`Company`, `Member_Type`, `Member_Status`, `Record_Company`, `Last_Updated`, `Updated_By`) values ('$houseName', 'np', 'a', 1, now(). 'admin')");
+        $numRcrds = $dbh->exec("insert into `name` (`Company`, `Member_Type`, `Member_Status`, `Record_Company`, `Last_Updated`, `Updated_By`) values ('$houseName', 'np', 'a', 1, now(), 'admin')");
+        if ($numRcrds != 1) {
+            // problem
+            exit('Insert of house name record failed.  ');
+        }
+
+        $siteId = $dbh->lastInsertId();
         $ssn->sId = $siteId;
 
         // log changes
-        if ($config->getString('site', 'Site_Id', '') != $val && is_null($dbh) === FALSE) {
+        if ($config->getString('site', 'Site_Id', '') != $siteId && is_null($dbh) === FALSE) {
             HouseLog::logSiteConfig($dbh, 'site' . ':' . 'Site_Id', $siteId, 'admin');
         }
 
@@ -137,7 +144,7 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
         $ssn->subsidyId = $siteId;
 
         // log changes
-        if ($config->getString('financial', 'RoomSubsidyId', '') != $val && is_null($dbh) === FALSE) {
+        if ($config->getString('financial', 'RoomSubsidyId', '') != $siteId && is_null($dbh) === FALSE) {
             HouseLog::logSiteConfig($dbh, 'financial' . ':' . 'RoomSubsidyId', $siteId, 'admin');
         }
 
