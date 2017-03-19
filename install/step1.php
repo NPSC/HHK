@@ -115,7 +115,7 @@ $configuration = createMarkup($config);
                 <h2 class="logo">Hospitality HouseKeeper Installation Process
 
                 </h2>
-                <h3>Step One: Configuration File</h3>
+                <h3>Step One: Configure Site</h3>
             </div><div class='pageSpacer'></div>
             <div id="content" style="margin:10px; width:100%;">
                 <span style="color:red;"><?php echo $result; ?></span>

@@ -104,6 +104,47 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
         PriceModel::installRates($dbh, $rateCode);
 
     }
+
+    $siteId = $ssn->sId;
+
+    if ($siteId > 0) {
+
+        $stmt = $dbh->query("Select count(`idName`) from `name` where `idName` = $siteId");
+        $row = $stmt->fetchAll(PDO::FETCH_NUM);
+
+        $houseName = $ssn->siteName;
+
+        if (isset($row[0]) && $row[0][0] == 0 && $houseName != '') {
+            $dbh->exec("insert into `name` (`idName`, `Company`, `Member_Type`, `Member_Status`, `Record_Company`, `Last_Updated`, `Updated_By`) values ($siteId, '$houseName', 'np', 'a', 1, now(). 'admin')");
+        }
+
+    } else {
+
+        $siteId = $dbh->exec("insert into `name` (`Company`, `Member_Type`, `Member_Status`, `Record_Company`, `Last_Updated`, `Updated_By`) values ('$houseName', 'np', 'a', 1, now(). 'admin')");
+        $ssn->sId = $siteId;
+
+        // log changes
+        if ($config->getString('site', 'Site_Id', '') != $val && is_null($dbh) === FALSE) {
+            HouseLog::logSiteConfig($dbh, 'site' . ':' . 'Site_Id', $siteId, 'admin');
+        }
+
+        $config->set('site', 'Site_Id', $siteId);
+        $config->save();
+
+    }
+
+    if ($ssn->subsidyId == 0 && $siteId > 0) {
+        $ssn->subsidyId = $siteId;
+
+        // log changes
+        if ($config->getString('financial', 'RoomSubsidyId', '') != $val && is_null($dbh) === FALSE) {
+            HouseLog::logSiteConfig($dbh, 'financial' . ':' . 'RoomSubsidyId', $siteId, 'admin');
+        }
+
+        $config->set('financial', 'RoomSubsidyId', $siteId);
+        $config->save();
+    }
+
 }
 
 $modelSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rPrices, '', TRUE), array('name'=>'selModel'));
@@ -119,21 +160,10 @@ $modelSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rPrices, '
         <div id="page" style="width:900px;">
             <div>
                 <h2 class="logo">Hospitality HouseKeeper Installation Process</h2>
-                <h3>Step Three: Load Meta-data</h3>
+                <h3>Step Three: Initialize House</h3>
             </div><div class='pageSpacer'></div>
             <div id="content" style="margin:10px; width:100%;">
                 <div><span style="color:red;"><?php echo $errorMsg; ?></span></div>
-
-                <table>
-                    <tr>
-                        <th style='text-align: right;'>URL:</th><td><?php echo $ssn->databaseURL; ?></td>
-                    </tr><tr>
-                        <th style='text-align: right;'>Schema:</th><td><?php echo $ssn->databaseName; ?></td>
-                    </tr><tr>
-                        <th style='text-align: right;'>User:</th><td><?php echo $ssn->databaseUName; ?></td>
-                    </tr>
-                </table><br/>
-
 
                 <form method="post" action="step3.php" name="form1" id="form1">
                     <fieldset>

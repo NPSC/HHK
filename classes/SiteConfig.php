@@ -125,12 +125,42 @@ class SiteConfig {
         return HTMLContainer::generateMarkup('h3', 'Annual Non-Cleaning Days') . $tbl->generateMarkup() . HTMLContainer::generateMarkup('h3', 'Weekly Non-Cleaning Days', array('style'=>'margin-top:12px;')) . $wdTbl->generateMarkup();
     }
 
-    public static function loadZipCodeFile(\PDO $dbh, $content) {
+    public static function checkZipFile($upFile) {
+
+
+        // Undefined | Multiple Files | $_FILES Corruption Attack
+        // If this request falls under any of them, treat it invalid.
+        if (
+                !isset($_FILES[$upFile]['error']) ||
+                is_array($_FILES[$upFile]['error'])
+        ) {
+            throw new RuntimeException('Invalid Zip File parameters.');
+        }
+
+        // Check $_FILES['upfile']['error'] value.
+        switch ($_FILES[$upFile]['error']) {
+            case UPLOAD_ERR_OK:
+                break;
+            case UPLOAD_ERR_NO_FILE:
+                throw new RuntimeException('Upload File was not received.');
+            case UPLOAD_ERR_INI_SIZE:
+            case UPLOAD_ERR_FORM_SIZE:
+                throw new RuntimeException('Exceeded upload filesize limit.');
+            default:
+                throw new RuntimeException('Unknown file upload errors.');
+        }
+
+        // You should also check filesize here.
+        if ($_FILES[$upFile]['size'] > 10000000) {
+            throw new RuntimeException('Exceeded filesize limit.');
+        }
+
+    }
+
+    public static function loadZipCodeFile(\PDO $dbh, $file) {
 
         $resultMsg = '';
-        $lines = explode("\n", $content);
-
-        $content = '';
+        $lines = explode("\n", self::readZipFile($file));
 
         // Remove the first line - headings
         array_shift($lines);
@@ -192,6 +222,31 @@ class SiteConfig {
         return "Success, " . $recordCounter . " zip codes loaded.";
 
     }
+
+    protected static function readZipFile($file) {
+
+    $zip = Zip_open($file);
+
+    if (is_resource($zip)) {
+
+        $entry = zip_read($zip);
+        $na = zip_entry_name($entry);
+
+        $content = zip_entry_read($entry, zip_entry_filesize($entry));
+
+        zip_entry_close($entry);
+        zip_close($zip);
+
+        if ($content === FALSE) {
+            throw new Hk_Exception_Runtime("Problem reading zip file: $na.  ");
+        }
+    } else {
+        throw new Hk_Exception_Runtime("Problem opening zip file.  Error code = $zip.  ");
+    }
+
+    return $content;
+}
+
 
     public static function saveHolidays(\PDO $dbh, $post, $uname) {
         $resultMsg = '';

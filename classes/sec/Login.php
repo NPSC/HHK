@@ -73,7 +73,6 @@ class Login {
         $ssn->noreplyAddr = $config->getString('house', 'NoReply', '');
         $ssn->adminSiteURL = $config->get('site', 'Admin_URL', '');
         $ssn->ccgw = $config->getString('financial', 'CC_Gateway', '');
-        $ssn->county = $config->getBool('site', 'IncludeCounty', FALSE);
 
         // Set Timezone
         date_default_timezone_set($ssn->tz);

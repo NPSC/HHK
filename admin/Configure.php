@@ -24,88 +24,6 @@ require DB_TABLES . 'GenLookupsRS.php';
 
 require (FUNCTIONS . 'mySqlFunc.php');
 
-function checkZipFile($upFile) {
-
-
-    // Undefined | Multiple Files | $_FILES Corruption Attack
-    // If this request falls under any of them, treat it invalid.
-    if (
-            !isset($_FILES[$upFile]['error']) ||
-            is_array($_FILES[$upFile]['error'])
-    ) {
-        throw new RuntimeException('Invalid parameters.');
-    }
-
-    // Check $_FILES['upfile']['error'] value.
-    switch ($_FILES[$upFile]['error']) {
-        case UPLOAD_ERR_OK:
-            break;
-        case UPLOAD_ERR_NO_FILE:
-            throw new RuntimeException('No file sent.');
-        case UPLOAD_ERR_INI_SIZE:
-        case UPLOAD_ERR_FORM_SIZE:
-            throw new RuntimeException('Exceeded filesize limit.');
-        default:
-            throw new RuntimeException('Unknown errors.');
-    }
-
-    // You should also check filesize here.
-    if ($_FILES[$upFile]['size'] > 10000000) {
-        throw new RuntimeException('Exceeded filesize limit.');
-    }
-
-    // DO NOT TRUST $_FILES['upfile']['mime'] VALUE !!
-    // Check MIME Type by yourself.
-//        $finfo = new finfo(FILEINFO_MIME_TYPE);
-//        if (false === $ext = array_search(
-//            $finfo->file($_FILES[$upFile]['tmp_name']),
-//            array(
-//                'jpg' => 'image/jpeg',
-//                'png' => 'image/png',
-//                'gif' => 'image/gif',
-//            ),
-//            true
-//        )) {
-//            throw new RuntimeException('Invalid file format.');
-//        }
-    // You should name it uniquely.
-    // DO NOT USE $_FILES['upfile']['name'] WITHOUT ANY VALIDATION !!
-    // On this example, obtain safe unique name from its binary data.
-//        if (!move_uploaded_file(
-//            $_FILES[$upFile]['tmp_name'],
-//            sprintf('./uploads/%s.%s',
-//                sha1_file($_FILES['upfile']['tmp_name']),
-//                $ext
-//            )
-//        )) {
-//            throw new RuntimeException('Failed to move uploaded file.');
-//        }
-}
-
-function readZipFile($file) {
-
-    $zip = Zip_open($file);
-
-    if (is_resource($zip)) {
-
-        $entry = zip_read($zip);
-        $na = zip_entry_name($entry);
-
-        $content = zip_entry_read($entry, zip_entry_filesize($entry));
-
-        zip_entry_close($entry);
-        zip_close($zip);
-
-        if ($content === FALSE) {
-            throw new Hk_Exception_Runtime("Problem reading zip file: $na.  ");
-        }
-    } else {
-        throw new Hk_Exception_Runtime("Problem opening zip file.  Error code = $zip.  ");
-    }
-
-    return $content;
-}
-
 try {
     $wInit = new webInit();
 } catch (Exception $exw) {
@@ -330,11 +248,12 @@ if (isset($_FILES['zipfile'])) {
 
     try {
 
-        checkZipFile('zipfile');
+        SiteLog::checkZipFile('zipfile');
 
-        $resultMsg .= SiteConfig::loadZipCodeFile($dbh, readZipFile($_FILES['zipfile']['tmp_name']));
+        $resultMsg .= SiteConfig::loadZipCodeFile($dbh, $_FILES['zipfile']['tmp_name']);
 
         SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Loaded. ' . $resultMsg, $config->getString('code', 'GIT_Id', ''));
+
     } catch (Exception $hex) {
         $resultMsg .= $hex->getMessage();
         SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Failed. ' . $resultMsg, $config->getString('code', 'GIT_Id', ''));
