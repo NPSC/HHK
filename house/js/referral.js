@@ -93,6 +93,50 @@ function additionalGuest(item) {
                     open: function (event, ui) {$('div#submitButtons').hide();},
                     buttons: {
                         Save: function() {
+                            var isMissing = false;
+                            
+                            $('#adgstMsg').text('');
+                            
+                            // Check patient relationship
+                            if ($('#bselPatRel').val() == '') {
+                                $('#bselPatRel').addClass('ui-state-error');
+                                isMissing = true;
+                            } else {
+                                $('#bselPatRel').removeClass('ui-state-error');
+                            }
+                            // guest first and last name
+                            if ($('#btxtFirstName').val() == '') {
+                                $('#btxtFirstName').addClass('ui-state-error');
+                                isMissing = true;
+                            } else {
+                                $('#btxtFirstName').removeClass('ui-state-error');
+                            }
+
+                            if ($('#btxtLastName').val() == '') {
+                                $('#btxtLastName').addClass('ui-state-error');
+                                isMissing = true;
+                            } else {
+                                $('#btxtLastName').removeClass('ui-state-error');
+                            }
+
+                            // validate guest address
+                            if ($('#bincomplete').prop('checked') === false) {
+
+                                $('.bhhk-addr-val').each(function() {
+                                    
+                                    if ($(this).val() === "" && !$(this).hasClass('bfh-states')) {
+                                        $(this).addClass('ui-state-error');
+                                        isMissing = true;
+                                    } else {
+                                        $(this).removeClass('ui-state-error');
+                                    }
+                                });
+                            }
+                            if (isMissing) {
+                                $('#adgstMsg').text('Fix missing information');
+                                return;
+                            }
+
                             $.post('ws_ckin.php', $('#fAddGuest').serialize() + '&cmd=addResv' + '&rid=' + resv.idReserv + '&addRoom=' + resv.addRoom, function(data) {
                                 data = $.parseJSON(data);
                                 if (data.error) {

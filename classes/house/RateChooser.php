@@ -156,6 +156,9 @@ class RateChooser {
         $assignedRate = 0;
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
+        $now = new DateTime();
+        $hr = $now->format('H');
+        $min = $now->format('m');
 
         if (isset($post['rbReplaceRate'])) {
             $replaceMode = filter_var($post['rbReplaceRate'], FILTER_SANITIZE_STRING);
@@ -170,6 +173,7 @@ class RateChooser {
 
                 $chDT = setTimeZone($uS, filter_var($post['chgRateDate'], FILTER_SANITIZE_STRING));
                 $chRateDT = new \DateTime($chDT->format('Y-m-d'));
+                $chDT->setTime($hr, $min, 0);
 
             } else {
                 $chRateDT = $today;

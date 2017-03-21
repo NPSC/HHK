@@ -541,7 +541,8 @@ class ReservationSvcs {
 
             } else {
                 // send back a guest dialog to collect name, address, etc.
-                $dataArray['addtguest'] = HTMLContainer::generateMarkup('div', $guest->createAddToResvMarkup()
+                $dataArray['addtguest'] =
+                        HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('div', '', array('id'=>'adgstMsg', 'style'=>'color:red')) . $guest->createAddToResvMarkup()
                         , array('id'=>'diagAddGuest', 'class'=>'hhk-tdbox hhk-visitdialog'));
                 $dataArray['addr'] = HouseServices::createAddrObj($dbh, $resv->getIdGuest());
                 return $dataArray;
@@ -1488,6 +1489,11 @@ class ReservationSvcs {
 
             // Filter out primary guest
             if (isset($guests[$r['idGuest']]) && $guests[$r['idGuest']] == '1') {
+                continue;
+            }
+
+            // filter out patient if excluded from house
+            if ($r['Relationship_Code'] == RelLinkType::Self && $uS->PatientAsGuest === FALSE) {
                 continue;
             }
 

@@ -340,12 +340,15 @@ order by r.Title;");
             }
 
             if ($inUse) {
-                $reply .= 'An existing visit or status record conflicts with the dates entered.  ';
+
+                if ($idRescUse == 0) {
+                    $reply .= 'An existing visit or status record conflicts with the dates entered.  ';
+                }
                 continue;
             }
 
-            $ruRs->Start_Date->setNewVal($startDate);
-            $ruRs->End_Date->setNewVal($endDate);
+            $ruRs->Start_Date->setNewVal($stDT->format('Y-m-d 10:00:00'));
+            $ruRs->End_Date->setNewVal($enDT->format('Y-m-d 10:00:00'));
 
             if ($type == 'resc') {
 
@@ -369,14 +372,14 @@ order by r.Title;");
             $ruRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
             $ruRs->Updated_By->setNewVal($uS->username);
 
-            $endDT = new \DateTime($endDate);
-            $endDT->setTime(0, 0, 0);
+            $enDT->setTime(10, 0, 0);
+            $stDT->setTime(10,0,0);
             $now = new \DateTime();
-            $now->setTime(0, 0, 0);
+            $now->setTime(10, 0, 0);
 
             $moveResv = FALSE;
 
-            if ($endDT >= $now) {
+            if ($enDT >= $now) {
                 $moveResv = TRUE;
             }
 
@@ -386,7 +389,7 @@ order by r.Title;");
                 if ($num > 0) {
                     $reload = TRUE;
                     if ($moveResv) {
-                        $reply .= ReservationSvcs::moveResvAway($dbh, new \DateTime($startDate), $endDT, $id, $uS->username);
+                        $reply .= ReservationSvcs::moveResvAway($dbh, $stDT, $enDT, $id, $uS->username);
                     }
                 }
 
@@ -395,7 +398,7 @@ order by r.Title;");
                 $idRescUse = EditRS::insert($dbh, $ruRs);
                 $reload = TRUE;
                 if ($moveResv) {
-                    $reply .= ReservationSvcs::moveResvAway($dbh, new \DateTime($startDate), $endDT, $id, $uS->username);
+                    $reply .= ReservationSvcs::moveResvAway($dbh, $stDT, $enDT, $id, $uS->username);
                 }
             }
         }

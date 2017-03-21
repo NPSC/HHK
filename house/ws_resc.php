@@ -204,10 +204,10 @@ $("#rptfeediv").on("click", ".hhk-voidRefundPmt", function () {
 $("#rptfeediv").on("click", ".hhk-returnPmt", function() {
     var btn = $(this);
     if (btn.val() != "Saving...") {
-        btn.val("Saving...");
         var amt = parseFloat(btn.data("amt"));
-        //var rtn = prompt("Amount to return:", amt.toFixed(2).toString());
-        if (confirm("Return $" + amt.toFixed(2).toString() + "?")) {  //rtn !== null) {
+
+        if (confirm("Return $" + amt.toFixed(2).toString() + "?")) {
+            btn.val("Saving...");
             sendVoidReturn(btn.attr("id"), "r", btn.data("pid"), amt);
         }
     }

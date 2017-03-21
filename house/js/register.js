@@ -1111,10 +1111,11 @@ $(document).ready(function () {
                     $('#rptfeediv').on('click', '.hhk-returnPmt', function () {
                         var btn = $(this);
                         if (btn.val() != 'Saving...') {
-                            btn.val('Saving...');
+                            
                             var amt = parseFloat($(this).data('amt'));
                             //var rtn = prompt('Amount to return:', amt.toFixed(2).toString());
                             if (confirm('Return $' + amt.toFixed(2).toString() + '?')) {  //rtn !== null) {
+                                btn.val('Saving...');
                                 sendVoidReturn(btn.attr('id'), 'r', btn.data('pid'), amt);
                             }
                         }

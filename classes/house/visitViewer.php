@@ -103,7 +103,6 @@ class VisitView {
 
                 $kdRow .= HTMLTable::makeTd(($keyDepAmount == 0 ? "" : "$")
                         .HTMLContainer::generateMarkup('span', $depAmtText, array('id' => 'kdPaid', 'style'=>'margin-right:7px;', 'data-amt'=>$keyDepAmount)));
-                        //.HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($dispositions, $r['Key_Dep_Disposition'], TRUE), array('id' => 'selKeyDisposition', 'class' => 'hhk-feeskeys')));
 
                 $kdHeader .= HTMLTable::makeTh($labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit'));
 
