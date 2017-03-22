@@ -1,23 +1,31 @@
+ALTER TABLE `name_address` 
+    DROP COLUMN `Fax`,
+    DROP COLUMN `Preferred_Mail`,
+    DROP COLUMN `Phone`,
+    DROP COLUMN `Full_Address`,
+    DROP COLUMN `Company`,
+    ADD COLUMN `Set_Incomplete` BIT(1) NULL DEFAULT 0 AFTER `Mail_Code`;
+
 ALTER TABLE `psg` 
-DROP PRIMARY KEY,
-ADD PRIMARY KEY (`idPsg`, `idPatient`);
+    DROP PRIMARY KEY,
+    ADD PRIMARY KEY (`idPsg`, `idPatient`);
 
 ALTER TABLE `psg`
-ADD COLUMN `Info_Last_Confirmed` DATETIME NULL DEFAULT NULL AFTER `Language_Notes`;
+    ADD COLUMN `Info_Last_Confirmed` DATETIME NULL DEFAULT NULL AFTER `Language_Notes`;
 
 ALTER TABLE `page` 
-ADD COLUMN `Product_Code` VARCHAR(4) NOT NULL DEFAULT '' AFTER `Title`,
-ADD COLUMN `Hide` INT(1) NOT NULL DEFAULT 0 AFTER `Type`;
+    ADD COLUMN `Product_Code` VARCHAR(4) NOT NULL DEFAULT '' AFTER `Title`,
+    ADD COLUMN `Hide` INT(1) NOT NULL DEFAULT 0 AFTER `Type`;
 
 ALTER TABLE `gen_lookups` 
-ADD COLUMN `Order` INT NOT NULL DEFAULT 0 AFTER `Type`;
+    ADD COLUMN `Order` INT NOT NULL DEFAULT 0 AFTER `Type`;
 
 ALTER TABLE `visit` 
-ADD COLUMN `Amount_Per_Guest` DECIMAL(10,2) NOT NULL DEFAULT '0.00' AFTER `Pledged_Rate`;
+    ADD COLUMN `Amount_Per_Guest` DECIMAL(10,2) NOT NULL DEFAULT '0.00' AFTER `Pledged_Rate`;
 
 ALTER TABLE `house_log` 
-CHANGE COLUMN `Id3` `Str1` VARCHAR(45) NOT NULL DEFAULT '' ,
-CHANGE COLUMN `Id4` `Str2` VARCHAR(45) NOT NULL DEFAULT '' ;
+    CHANGE COLUMN `Id3` `Str1` VARCHAR(45) NOT NULL DEFAULT '' ,
+    CHANGE COLUMN `Id4` `Str2` VARCHAR(45) NOT NULL DEFAULT '' ;
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CalViewWeeks', '3', 'i', 'h', 'Number of weeks showing in the Calendar Page');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ShowZeroDayStays', 'false', 'b', 'h', 'Include 0-day stays and visits in Reports and Pages');

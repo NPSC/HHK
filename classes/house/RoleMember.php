@@ -142,8 +142,7 @@ abstract class RoleMember extends IndivMember {
      * Save the member type - 'vol_Types'
      *
      * @param PDO $dbh
-     * @param string $vcat Volunteer Category
-     * @param string $vcode Volunteer Code
+     * @param string $uname
      * @return boolean
      */
     public function saveMemberType(PDO $dbh, $uname) {
