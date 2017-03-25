@@ -266,6 +266,10 @@ if (isset($_POST['btnDelBak'])) {
     Patch::deleteBakFiles('../', array('.git'));
 }
 
+if (isset($_POST['delInstallDir'])) {
+    $tabIndex = 1;
+    Patch::deleteDirectory('../install');
+}
 // Save SQL
 if (isset($_POST['btnSaveSQL'])) {
 
@@ -352,6 +356,10 @@ if (count($rows) > 0 && $rows[0][0] != '') {
     $zipLoadDate = '';
 }
 
+$delInstallDir = '';
+if (is_dir('../install')) {
+    $delInstallDir = HTMLContainer::generateMarkup('p', HTMLInput::generateMarkup('Delete Install Directory', array('name'=>'delInstallDir', 'type'=>'submit')));
+}
 
 $conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));
 
@@ -510,7 +518,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
                             <p>URL: <?php echo $uS->databaseURL; ?></p>
                             <p>Schema: <?php echo $uS->databaseName; ?></p>
                             <p>User: <?php echo $uS->databaseUName; ?></p>
-
+                            <?php echo $delInstallDir; ?>
                             <input type="submit" name="btnLogs" value="View Patch Log" style="margin-left:100px;margin-top:20px;"/>
                             <input type="submit" name="btnSaveSQL" id="btnSave" value="Re-Create Tables, Views and SP's" style="margin-left:20px;margin-top:20px;"/>
                             <input type="submit" name="btnDelBak" id="btnSave" value="Delete .bak Files" style="margin-left:20px;margin-top:20px;"/>

@@ -191,7 +191,7 @@ $cgCols = array(
     array("data"=>"Occupant"),
     array("data" => "Checked In", 'type'=>'date' ),
     array("data" => "Expected Checkout" , 'type'=>'date'),
-    array("data" => "Last Cleaned" ),
+    array("data" => "Last Cleaned", 'type'=>'date' ),
     array("data"=>"Notes")
     );
 

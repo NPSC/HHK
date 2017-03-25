@@ -343,6 +343,7 @@ function changeLog(PDO $dbh, $id, $get) {
         $get["bSearchable_4"] = "true";
         $get["sSearch_4"] = $id;
     }
+
     $log = DataTableServer::createOutput($dbh, $aColumns, $sIndexColumn, $sTable, $get);
 
     // format the date column

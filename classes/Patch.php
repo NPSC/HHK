@@ -213,6 +213,24 @@ class Patch {
         }
     }
 
+    public static function deleteDirectory($directory) {
+
+        $fit = new FilesystemIterator($directory, FilesystemIterator::UNIX_PATHS | FilesystemIterator::CURRENT_AS_FILEINFO);
+
+        foreach ($fit as $fileinfo) {
+
+            if ($fileinfo->isDir()) {
+
+                self::deleteDirectory($directory.$fileinfo->getFilename().DS);
+                unlink($fileinfo->getRealPath());
+
+            } else {
+                unlink($fileinfo->getRealPath());
+            }
+        }
+
+    }
+
     protected function unzip($file, array $skipDirs, $rootDir = 'hhk', $oldExtension = 'bak') {
 
         $result = '';

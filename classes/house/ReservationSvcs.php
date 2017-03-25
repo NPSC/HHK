@@ -185,7 +185,7 @@ class ReservationSvcs {
 
         // No return?
         if ($guest->getNoReturn() != '' && $static === FALSE) {
-            $dataArray['warning'] = 'Guest "' .$guest->getNameObj()->get_FullName() . '" is flagged for No Return.  Reason: ' . $guest->getNoReturn();
+            $dataArray['error'] = 'Guest "' .$guest->getNameObj()->get_FullName() . '" is flagged for No Return.  Reason: ' . $guest->getNoReturn();
         }
 
         $guest->setPatientRelationshipCode($psg->getGuestRelationship($guest->getIdName()));
@@ -805,7 +805,7 @@ class ReservationSvcs {
 
         // No return?
         if ($guest->getNoReturn() != '') {
-            $dataArray['warning'] = 'Guest "' .$guest->getNameObj()->get_FullName() . '" is flagged for No Return.  Reason: ' . $guest->getNoReturn();
+            $dataArray['error'] = 'Guest "' .$guest->getNameObj()->get_FullName() . '" is flagged for No Return.  Reason: ' . $guest->getNoReturn();
         }
 
 
