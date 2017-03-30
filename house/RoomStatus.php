@@ -241,82 +241,52 @@ $ckOutTable->addFooterTr($hdrRow);
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
-var dtCols = [
-    {
-        "aTargets": [ 0 ],
-        "bVisible": false,
-        "mDataProp": "idRoom"
-    },
-    {
-        "aTargets": [ 1 ],
-        "sTitle": "Room",
-        "bSearchable": false,
-        "bSortable": true,
-        "mDataProp": "Title"
-    },
-    {
-        "aTargets": [ 2 ],
-        "sTitle": "Status",
-        "bSearchable": false,
-        "bSortable": true,
-        "mDataProp": "Status_Text"
-    },
-    {
-        "aTargets": [ 3 ],
-        "sTitle": "Last Cleaned",
-        "sType": "date",
-        "mDataProp": function (source, type, val) {
-            "use strict";
-            if (type === 'set') {
-                source.Last_Cleaned = val;
-                return null;
-            } else if (type === 'display') {
-                if (source.Date_display === undefined) {
-                    if (source.Last_Cleaned !== null) {
-                        var dt = new Date(Date.parse(source.Last_Cleaned));
-                        source.Date_display = $.datepicker.formatDate("D M d, yy", dt)  //(dt.getMonth() + 1) + '/' + dt.getDate() + '/' + dt.getFullYear() + ' ' + dt.getHours() + ':' + dt.getMinutes();
-                    } else {
-                        source.Date_display = '';
-                    }
+function dateRender(data, type) {
+    // If display or filter data is requested, format the date
+    if ( type === 'display' || type === 'filter' ) {
+        var d;
+        if (!isNaN(data)) {
+            d = new Date( data * 1000 );
+        } else {
+            d = new Date(Date.parse(data));
+        }
+        return d.getDate() +'-'+ (d.getMonth()+1) +'-'+ d.getFullYear();
+    }
 
-                }
-                return source.Date_display;
-            }
-            return source.Last_Cleaned;
+    // Otherwise the data type requested (`type`) is type detection or
+    // sorting data, for which we want to use the integer, so just return
+    // that, unaltered
+    return data;
+
+}
+
+var dtColDefs = [
+    {
+        "targets": [ 0 ],
+        'title': 'Room',
+        "searchable": false,
+        "sortable": true
+    },
+    {
+        "targets": [ 1 ],
+        'title': 'Type',
+        "searchable": false,
+        "sortable": true
+    },
+    {
+        "targets": [ 2, 5 ],
+        render: function ( data, type, row ) {
+            return dateRender(data, type);
         }
     },
      {
-        "aTargets": [ 4 ],
-        "sTitle": "Notes",
-        "bSearchable": false,
-        "bSortable": false,
-        "mDataProp": "Notes"
+        "targets": [ 3 ],
+        "searchable": false,
+        "sortable": false
     },
     {
-        "aTargets": [ 5 ],
-        "sTitle": "User",
-        "bSortable": true,
-        "mDataProp": "Username"
-    },
-    {
-        "aTargets": [ 6 ],
-        "sTitle": "Timestamp",
-        "sType": "date",
-        "mDataProp": function (source, type, val) {
-            "use strict";
-            if (type === 'set') {
-                source.Timestamp = val;
-                return null;
-            } else if (type === 'display') {
-                if (source.Timestamp_display === undefined) {
-                    source.Timestamp = new Date(Date.parse(source.Timestamp));
-                    source.Timestamp_display = $.datepicker.formatDate("D M d, yy", source.Timestamp);
-
-                }
-                return source.Timestamp_display;
-            }
-            return source.Timestamp;
-        }
+        "targets": [ 4 ],
+        "sortable": true
     }
 ];
 $(document).ready(function() {
@@ -327,22 +297,27 @@ $(document).ready(function() {
     var listEvtTable;
     var coDate = new Date();
 
+    $.extend($.fn.dataTable.defaults, {
+        "dom": '<"top"if>rt<"bottom"lp><"clear">',
+        "DisplayLength": 50,
+        "LengthMenu": [[25, 50, -1], [25, 50, "All"]],
+        "order": [[ 0, 'asc' ]]
+    });
+
     $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrint, #btnSubmitTable, #prtCkOut').button();
     $('#mainTabs').tabs({
         beforeActivate: function (event, ui) {
             if (ui.newPanel.length > 0) {
                 if (ui.newTab.prop('id') === 'lishoCL' && !listEvtTable) {
                     listEvtTable = $('#dataTbl').dataTable({
-                        "aoColumnDefs": dtCols,
-                        "bServerSide": true,
-                        "bProcessing": true,
-                        "bDeferRender": true,
-                        "oLanguage": {"sSearch": "Search Log Text:"},
-                        "aaSorting": [[6,'asc']],
-                        "iDisplayLength": 25,
-                        "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                        "Dom": '<"top"ilf>rt<"bottom"ip>',
-                        "sAjaxSource": 'ws_resc.php?cmd=clnlog'
+                        "processing": true,
+                        "serverSide": true,
+                        "ajax": {
+                            "url": "ws_resc.php?cmd=clnlog",
+                            "type": "POST"
+                        },
+                        "columnDefs": dtColDefs,
+                        "deferRender": true,
                     });
                 }
             }
@@ -369,14 +344,8 @@ $(document).ready(function() {
 
     $('#ckoutDate').datepicker('setDate', coDate);
 
-    $.extend($.fn.dataTable.defaults, {
-        "dom": '<"top"if>rt<"bottom"lp><"clear">',
-        "iDisplayLength": 50,
-        "aLengthMenu": [[25, 50, -1], [25, 50, "All"]],
-        "order": [[ 0, 'asc' ]]
-    });
 
-    $('#roomTable').DataTable({
+    $('#roomTable').dataTable({
        ajax: {
            url: 'ws_resc.php?cmd=cleanStat&tbl=roomTable',
            dataSrc: 'roomTable'
@@ -385,7 +354,7 @@ $(document).ready(function() {
        "columns": cgCols
     });
 
-    $('#dirtyTable').DataTable({
+    $('#dirtyTable').dataTable({
        ajax: {
            url: 'ws_resc.php?cmd=cleanStat&tbl=dirtyTable',
            dataSrc: 'dirtyTable'
@@ -394,7 +363,7 @@ $(document).ready(function() {
        "columns": cgCols
     });
 
-    $('#outTable').DataTable({
+    $('#outTable').dataTable({
        ajax: {
            url: 'ws_resc.php?cmd=cleanStat&tbl=outTable&dte=' + $.datepicker.formatDate("yy-mm-dd", coDate),
            dataSrc: 'outTable'

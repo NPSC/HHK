@@ -5,9 +5,9 @@
  * @category  Reports
  * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @link      https://github.com/hhk
  */
 function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dormancyCtrl, selCtrl &$volStatusCtrl, $guestBlackOutDays = 61) { //, &$sortCtrl) {
     $volCat = new VolCats();
@@ -211,7 +211,8 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
 
             if ($showDetails) {
                 $hdr[$n++] = "Begin";
-                $hdr[$n++] = "Active";
+                $hdr[$n++] = 'Retire';
+                $hdr[$n++] = "Status";
                 $hdr[$n++] = "Description";
                 $hdr[$n++] = "Role";
                 $hdr[$n++] = "Notes";
@@ -259,7 +260,7 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
                 <th>Phone</th>
                 <th>Email</th>";
             if ($showDetails) {
-                $headr .= "<th>Begin</th><th>Active</th><th>Description</th><th>Role</th><th>Note</th>
+                $headr .= "<th>Begin</th><th>Retire</th><th>Status</th><th>Description</th><th>Role</th><th>Note</th>
                     </tr></thead>";
             } else {
                 $headr .= "</tr></thead>";
@@ -304,7 +305,8 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
                 );
 
                 if ($showDetails) {
-                    $flds[$n++] = array('type' => "s", 'value' => date('m/d/Y', strtotime($rw["Vol_Begin"])));
+                    $flds[$n++] = array('type' => "s", 'value' => ($rw["Vol_Begin"] == '' ? '' : date('m/d/Y', strtotime($rw["Vol_Begin"]))));
+                    $flds[$n++] = array('type' => "s", 'value' => ($rw["Vol_End"] == '' ? '' : date('m/d/Y', strtotime($rw["Vol_End"]))));
                     $flds[$n++] = array('type' => "s", 'value' => $rw["Vol_Status_Title"]);
                     $flds[$n++] = array('type' => "s", 'value' => $rw["Description"]);
                     $flds[$n++] = array('type' => "s", 'value' => $rw["Vol_Rank_Title"]);
@@ -334,22 +336,20 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
 
                 if ($showDetails) {
 
-                    if (trim($rw["Vol_Status"]) == "a") {
-                        $txtreport .= "<td>" . date('Y-m-d', strtotime($rw["Vol_Begin"])) . "</td><td>" . $rw["Vol_Status_Title"] . "</td>";
-                    } else if (trim($rw["Vol_Status"]) == "i") {
-                        $txtreport .= "<td>&nbsp;</td><td>" . $rw["Vol_Status_Title"] . "</td>";
-                    } else {
-                        $txtreport .= "<td>&nbsp;</td><td>" . $rw["Vol_Status_Title"] . "</td>";
-                    }
+                    $txtreport .= "<td>" . ($rw["Vol_Begin"] == '' ? '' : date('M j, Y', strtotime($rw["Vol_Begin"]))) . "</td>";
+                    $txtreport .= "<td>" . ($rw["Vol_End"] == '' ? '' : date('M j, Y', strtotime($rw["Vol_End"]))) . "</td>";
+
+                    $txtreport .= "<td>" . $rw["Vol_Status_Title"] . "</td>";
 
                     $txtreport .= "<td>" . $rw["Description"] . "</td>";
 
                     $txtreport .= "<td>" . $rw["Vol_Rank_Title"] . "</td>";
 
-                    if ($rw["Vol_Notes"] != "")
+                    if ($rw["Vol_Notes"] != "") {
                         $txtreport .= "<td><span title='" . $rw["Vol_Notes"] . "'>#</span></td>";
-                    else
+                    } else {
                         $txtreport .= "<td>&nbsp;</td>";
+                    }
                 }
 
                 $txtreport .= "</tr>";
@@ -414,11 +414,9 @@ vm.Id AS Id,
         when (vm.Bad_Address = LOWER('true')) then ''
         else vm.PostalCode
     end as PostalCode,
-    c.Dormant_Title AS Dormant_Title,
+
     c.Vol_Status_Title,
     c.Vol_Code_Title as Description,
-    c.Dormant_Begin_Active AS Begin_Active,
-    c.Dormant_End_Active AS End_Active,
     c.Vol_Notes AS Vol_Notes,
     vm.Member_Type AS Member_Type,
     c.Vol_Begin AS Vol_Begin,
@@ -431,4 +429,3 @@ vm.Id AS Id,
     return $query;
 }
 
-?>

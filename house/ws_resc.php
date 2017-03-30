@@ -489,7 +489,7 @@ $(document).mousedown(function (event) {
             $idRoom = filter_var(urldecode($_REQUEST["rid"]), FILTER_VALIDATE_INT);
         }
 
-        $events = ResourceView::CleanLog($dbh, $idRoom, $_GET);
+        $events = ResourceView::CleanLog($dbh, $idRoom, $_POST);
         break;
 
     default:
