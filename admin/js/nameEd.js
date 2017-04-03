@@ -65,16 +65,18 @@ $(document).ready(function () {
             if (ui.newPanel.length > 0) {
                 if (ui.newTab.prop('id') === 'changelog' && !listEvtTable) {
                     listEvtTable = $('#dataTbl').dataTable({
-                    "aoColumnDefs": dtCols,
-                    "bServerSide": true,
-                    "bProcessing": true,
-                    "bDeferRender": true,
-                    "oLanguage": {"sSearch": "Search Log Text:"},
-                    "aaSorting": [[0,'desc']],
-                    "iDisplayLength": 25,
-                    "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                    "columnDefs": dtCols,
+                    "serverSide": true,
+                    "processing": true,
+                    "deferRender": true,
+                    "language": {"sSearch": "Search Log Text:"},
+                    "sorting": [[0,'desc']],
+                    "displayLength": 25,
+                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                     "Dom": '<"top"ilf>rt<"bottom"ip>',
-                    "sAjaxSource": listJSON
+                    ajax: {
+                        url: listJSON
+                    }
                     });
                 }
                 // Donation dialog setup

@@ -509,7 +509,7 @@ $alertMessage = $alertMsg->createMarkup();
                         <?php echo $notesMarkup; ?>
                     </div>
                     <div id="vchangelog" class="ignrSave">
-                      <table cellpadding="0" cellspacing="0" border="0" class="display ignrSave" id="dataTbl"></table>
+                      <table style="width:100%;" class="display ignrSave" id="dataTbl"></table>
                     </div>
                     <div id="vdonblank"> </div>
                     <div id="vwuser"> </div>

@@ -245,12 +245,17 @@ function dateRender(data, type) {
     // If display or filter data is requested, format the date
     if ( type === 'display' || type === 'filter' ) {
         var d;
+        if (data === null) {
+            return '';
+        }
+
         if (!isNaN(data)) {
             d = new Date( data * 1000 );
         } else {
             d = new Date(Date.parse(data));
         }
-        return d.getDate() +'-'+ (d.getMonth()+1) +'-'+ d.getFullYear();
+
+        return (d.getMonth()+1) +'/'+ (d.getDate() < 10 ? '0'+ d.getDate() : d.getDate()) +'/'+ d.getFullYear();
     }
 
     // Otherwise the data type requested (`type`) is type detection or
@@ -262,31 +267,55 @@ function dateRender(data, type) {
 
 var dtColDefs = [
     {
-        "targets": [ 0 ],
+        'targets': [ 0 ],
+        'data': 'Room',
         'title': 'Room',
-        "searchable": false,
-        "sortable": true
+        'searchable': true,
+        'sortable': true
     },
     {
-        "targets": [ 1 ],
+        'targets': [ 1 ],
+        'data': 'Type',
         'title': 'Type',
-        "searchable": false,
-        "sortable": true
+        'searchable': false,
+        'sortable': true
     },
     {
-        "targets": [ 2, 5 ],
+        'targets': [ 2 ],
+        'data': 'Status',
+        'title': 'Status',
+        'searchable': false,
+        'sortable': true
+    },
+     {
+        "targets": [ 3 ],
+        'data': 'Last Cleaned',
+        'title': 'Last Cleaned',
         render: function ( data, type, row ) {
             return dateRender(data, type);
         }
     },
-     {
-        "targets": [ 3 ],
-        "searchable": false,
-        "sortable": false
+    {
+        'targets': [ 4 ],
+        'data': 'Notes',
+        'title': 'Notes',
+        'searchable': true,
+        'sortable': false
     },
     {
-        "targets": [ 4 ],
-        "sortable": true
+        'targets': [ 5 ],
+        'data': 'User',
+        'title': 'User',
+        'sortable': true,
+        'searchable': true
+    },
+    {
+        "targets": [ 6 ],
+        'data': 'Timestamp',
+        'title': 'Timestamp',
+        render: function ( data, type, row ) {
+            return dateRender(data, type);
+        }
     }
 ];
 $(document).ready(function() {
@@ -299,17 +328,24 @@ $(document).ready(function() {
 
     $.extend($.fn.dataTable.defaults, {
         "dom": '<"top"if>rt<"bottom"lp><"clear">',
-        "DisplayLength": 50,
-        "LengthMenu": [[25, 50, -1], [25, 50, "All"]],
+        "displayLength": 50,
+        "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
         "order": [[ 0, 'asc' ]]
     });
 
     $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrint, #btnSubmitTable, #prtCkOut').button();
+
+    $('#dataTbl tfoot th').each( function () {
+        var title = $(this).text();
+        $(this).html( '<input type="text" placeholder="Search '+title+'" />' );
+    } );
+
     $('#mainTabs').tabs({
         beforeActivate: function (event, ui) {
             if (ui.newPanel.length > 0) {
                 if (ui.newTab.prop('id') === 'lishoCL' && !listEvtTable) {
-                    listEvtTable = $('#dataTbl').dataTable({
+
+                    listEvtTable = $('#dataTbl').DataTable({
                         "processing": true,
                         "serverSide": true,
                         "ajax": {
@@ -318,7 +354,35 @@ $(document).ready(function() {
                         },
                         "columnDefs": dtColDefs,
                         "deferRender": true,
+                        "order": [[6, 'desc']],
+                        initComplete: function () {
+
+                            this.columns().every( function () {
+
+                                if (this.searchable){
+
+                                    var title = $(this).text();
+                                    $(this).html( title + '<br/><input type="text" placeholder="Search '+title+'" />' );
+                                }
+
+                            } );
+
+                        }
                     });
+
+
+                    // Apply the search
+//                    listEvtTable.columns().every( function () {
+//                        var that = this;
+//
+//                        $( 'input', this.footer() ).on( 'keyup change', function () {
+//                            if ( that.search() !== this.value ) {
+//                                that
+//                                    .search( this.value )
+//                                    .draw();
+//                            }
+//                        } );
+//                    } );
                 }
             }
         }
@@ -397,7 +461,7 @@ $(document).ready(function() {
                     <li id="lishoCL"><a href="#showLog">Show Cleaning Log</a></li>
                 </ul>
                 <div id="clnToday" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
-                    <?php echo $roomTable->generateMarkup(array('id'=>'dirtyTable')); ?>
+                    <?php echo $roomTable->generateMarkup(array('id'=>'dirtyTable', 'style'=>'width:100%;')); ?>
                     <div class="ui-corner-all submitButtons">
                         <input type="reset" name="btnReset1" value="Reset" id="btnReset1" />
                         <input type="submit" name="btnSubmitClean" value="Save" id="btnSubmitClean" />
@@ -411,10 +475,10 @@ $(document).ready(function() {
                         <span>Checkout Date: </span><input id="ckoutDate" class="ckdate"/>
                         <input type="button" value="Print" id="prtCkOut" style="margin:3px;"/>
                     </p>
-                    <?php echo $ckOutTable->generateMarkup(array('id'=>'outTable')); ?>
+                    <?php echo $ckOutTable->generateMarkup(array('id'=>'outTable', 'style'=>'width:100%;')); ?>
                 </div>
                 <div id="showAll">
-                    <?php echo $roomTable->generateMarkup(array('id'=>'roomTable')); ?>
+                    <?php echo $roomTable->generateMarkup(array('id'=>'roomTable', 'style'=>'width:100%;')); ?>
                     <div class="ui-corner-all submitButtons">
                         <input type="button" value="Print" name="btnPrint" id="btnPrint" />
                         <input type="reset" name="btnReset2" value="Reset" id="btnReset2" />
@@ -422,7 +486,7 @@ $(document).ready(function() {
                     </div>
                 </div>
                 <div id="showLog" class="ignrSave">
-                  <table cellpadding="0" cellspacing="0" border="0" class="display" id="dataTbl"></table>
+                  <table style="width:100%;" class="display" id="dataTbl"></table>
                 </div>
             </div>
             </form>

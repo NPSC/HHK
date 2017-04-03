@@ -263,7 +263,6 @@ function searchZip(PDO $dbh, $zip) {
     return $events;
 }
 
-
 function adminChangePW(PDO $dbh, $adminPw, $newPw, $wUserId) {
 
     $event = array();
@@ -332,27 +331,20 @@ function newRelationLink(PDO $dbh, $id, $rId, $relCode) {
 
 function changeLog(PDO $dbh, $id, $get) {
 
-    require(CLASSES . 'DataTableServer.php');
+        require(CLASSES . 'DataTableServer.php');
 
-    $aColumns = array("LogDate", "LogType", "Subtype", "User", "idName", "LogText");
-    $sIndexColumn = "";
-    $sTable = "vaudit_log";
+        $columns = array(
 
-    // filter by Id ...
-    if ($id > 0) {
-        $get["bSearchable_4"] = "true";
-        $get["sSearch_4"] = $id;
-    }
+            array( 'db' => 'LogDate',  'dt' => 'Date' ),
+            array( 'db' => 'LogType',   'dt' => 'Type' ),
+            array( 'db' => 'Subtype',     'dt' => 'Sub-Type' ),
+            array( 'db'  => 'User', 'dt' => 'User' ),
+            array( 'db'  => 'idName', 'dt' => 'Id' ),
+            array( 'db' => 'LogText', 'dt' => 'Log Text')
+        );
 
-    $log = DataTableServer::createOutput($dbh, $aColumns, $sIndexColumn, $sTable, $get);
+        return SSP::complex ( $get, $dbh, "vaudit_log", 'idName', $columns, $whereResult=null, $whereAll="idName=$id" );
 
-    // format the date column
-    for ($i = 0; $i < count($log['aaData']); $i++) {
-
-        $log['aaData'][$i]["LogDate"] = date("c", strtotime($log['aaData'][$i]["LogDate"]));
-    }
-
-    return $log;
 }
 
 function recentReport(PDO $dbh, $parms, $donationsFlag) {

@@ -1091,32 +1091,13 @@ from
             array( 'db' => 'Title',  'dt' => 'Room' ),
             array( 'db' => 'Type',   'dt' => 'Type' ),
             array( 'db' => 'Status_Text',     'dt' => 'Status' ),
-            array(
-                    'db'        => 'Last_Cleaned',
-                    'dt'        => 'Last Cleaned',
-            ),
+            array( 'db'  => 'Last_Cleaned', 'dt' => 'Last Cleaned' ),
             array( 'db' => 'Notes',   'dt' => 'Notes' ),
             array( 'db' => 'Username',     'dt' => 'User' ),
-            array(
-                    'db'        => 'Timestamp',
-                    'dt'        => 'Timestamp',
-            )
+            array( 'db' => 'Timestamp', 'dt' => 'Timestamp')
         );
 
-
-        $sTable = "vcleaning_log";
-
-        $log = SSP::simple($get, $dbh, $sTable, 'idRoom', $columns);
-        //$log = DataTableServer::createOutput($dbh, $aColumns, $sIndexColumn, $sTable, $get);
-
-//        // format the date column
-//        for ($i = 0; $i < count($log['aaData']); $i++) {
-//
-//            $log['aaData'][$i]["Timestamp"] = date("c", strtotime($log['aaData'][$i]["Timestamp"]));
-//
-//        }
-
-        return $log;
+        return SSP::simple($get, $dbh, "vcleaning_log", 'idRoom', $columns);
     }
 
 }

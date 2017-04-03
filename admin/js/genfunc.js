@@ -255,58 +255,71 @@ function relationReturn(data) {
 function manageRelation(id, rId, relCode, cmd) {
     $.post('ws_gen.php', {'id':id, 'rId':rId, 'rc':relCode, 'cmd':cmd}, relationReturn);
 }
+function dateRender(data, type) {
+    // If display or filter data is requested, format the date
+    if ( type === 'display' || type === 'filter' ) {
+        var d;
+        if (data === null) {
+            return '';
+        }
+
+        if (!isNaN(data)) {
+            d = new Date( data * 1000 );
+        } else {
+            d = new Date(Date.parse(data));
+        }
+
+        return (d.getMonth()+1) +'/'+ (d.getDate() < 10 ? '0'+ d.getDate() : d.getDate()) +'/'+ d.getFullYear();
+    }
+
+    // Otherwise the data type requested (`type`) is type detection or
+    // sorting data, for which we want to use the integer, so just return
+    // that, unaltered
+    return data;
+
+}
+
+
 var dtCols = [
     {
-        "aTargets": [ 0 ],
-        "sTitle": "Date",
-        "sType": "date",
-        "mDataProp": function (source, type, val) {
-            "use strict";
-            if (type === 'set') {
-                source.LogDate = val;
-                return null;
-            } else if (type === 'display') {
-                if (source.Date_display === undefined) {
-                    var dt = new Date(Date.parse(source.LogDate));
-                    source.Date_display = (dt.getMonth() + 1) + '/' + dt.getDate() + '/' + dt.getFullYear() + ' ' + dt.getHours() + ':' + dt.getMinutes();
-                    
-                }
-                return source.Date_display;
-            }
-            return source.LogDate;
+        "targets": [ 0 ],
+        "title": "Date",
+        'data': 'Date',
+        render: function ( data, type ) {
+            return dateRender(data, type);
         }
     },
     {
-        "aTargets": [ 1 ],
-        "sTitle": "Type",
-        "bSearchable": false,
-        "bSortable": false,
-        "mDataProp": "LogType"
+        "targets": [ 1 ],
+        "title": "Type",
+        "searchable": false,
+        "sortable": false,
+        "data": "Type"
     },
     {
-        "aTargets": [ 2 ],
-        "sTitle": "Sub-Type",
-        "bSearchable": false,
-        "bSortable": false,
-        "mDataProp": "Subtype"
+        "targets": [ 2 ],
+        "title": "Sub-Type",
+        "searchable": false,
+        "sortable": false,
+        "data": "Sub-Type"
     },
      {
-        "aTargets": [ 3 ],
-        "sTitle": "User",
-        "bSearchable": false,
-        "bSortable": false,
-        "mDataProp": "User"
+        "targets": [ 3 ],
+        "title": "User",
+        "searchable": false,
+        "sortable": false,
+        "data": "User"
     },
     {
-        "aTargets": [ 4 ],
-        "bVisible": false,
-        "mDataProp": "idName"
+        "targets": [ 4 ],
+        "visible": false,
+        "data": "Id"
     },
     {
-        "aTargets": [ 5 ],
-        "sTitle": "Log Text",
-        "bSortable": false,
-        "mDataProp": "LogText"
+        "targets": [ 5 ],
+        "title": "Log Text",
+        "sortable": false,
+        "data": "Log Text"
     }
 
 ];
