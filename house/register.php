@@ -202,10 +202,10 @@ if (isset($uS->roomCount) === FALSE) {
     $uS->roomCount = $rows[0][0];
 }
 
-$roomCount = $uS->roomCount;
+$roomCount = max(array($uS->roomCount, 5));
 
 if ($uS->Reservation) {
-    $roomCount += 5;
+    $roomCount += 9;
 }
 
 $divFontSize = 'font-size:.9em;';

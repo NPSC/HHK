@@ -847,7 +847,7 @@ $(document).ready(function () {
         viewDays: vdays,
         hospitalSelector: null,
         theme: true,
-        contentHeight: parseInt(roomCnt) * 28,
+        contentHeight: parseInt(roomCnt) * 30,
         header: {
             left: 'title',
             center: 'goto',

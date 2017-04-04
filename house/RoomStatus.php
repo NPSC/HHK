@@ -355,34 +355,7 @@ $(document).ready(function() {
                         "columnDefs": dtColDefs,
                         "deferRender": true,
                         "order": [[6, 'desc']],
-                        initComplete: function () {
-
-                            this.columns().every( function () {
-
-                                if (this.searchable){
-
-                                    var title = $(this).text();
-                                    $(this).html( title + '<br/><input type="text" placeholder="Search '+title+'" />' );
-                                }
-
-                            } );
-
-                        }
                     });
-
-
-                    // Apply the search
-//                    listEvtTable.columns().every( function () {
-//                        var that = this;
-//
-//                        $( 'input', this.footer() ).on( 'keyup change', function () {
-//                            if ( that.search() !== this.value ) {
-//                                that
-//                                    .search( this.value )
-//                                    .draw();
-//                            }
-//                        } );
-//                    } );
                 }
             }
         }

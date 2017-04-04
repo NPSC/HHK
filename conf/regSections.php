@@ -1,5 +1,7 @@
 <?php
 
+$agreemtLabel = 'Agreement';
+
 $instructions = '<p style="margin-bottom:10px;">The (House Name) is a not-for-profit healthcare hospitality house. The Guest House is <span style="font-style: italic;">strictly a lodging facility for referred patients that are actively receiving care at our partner institutions and their families/friends.</span></p>
 <ul style="list-style-type:disc;margin-left: 20px;">
     <li><span style="font-weight: bold;">All guests must register at the Front Desk</span></li>

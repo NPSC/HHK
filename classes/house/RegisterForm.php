@@ -15,9 +15,13 @@
  */
 class RegisterForm {
 
-    protected static function titleBlock($roomTitle, $expectedDeparture, $rate, $title, $agent, $priceModelCode) {
+    protected static function titleBlock($roomTitle, $expectedDeparture, $rate, $title, $agent, $priceModelCode, $houseAddr = '') {
 
         $mkup = "<h2>" . $title . " </h2>";
+
+        if ($houseAddr != '') {
+            $mkup .= '<p class="label" style="text-align:left;">' . $houseAddr . '</p>';
+        }
 
         $mkup .= "<table cellspacing=0 cellpadding=0 style='border-collapse:collapse;border:none'>
  <tr>
@@ -152,12 +156,12 @@ class RegisterForm {
 
     }
 
-    protected static function AgreementBlock(array $guestNames) {
+    protected static function AgreementBlock(array $guestNames, $agreemtLabel = '', $instructions = '') {
 
-        $mkup = HTMLContainer::generateMarkup('h2', 'Agreement', array('style'=>'border:none;border-bottom:1.5pt solid #98C723'));
-
+        // The following defines $agreemtLabel and $instructions.
         require REL_BASE_DIR . 'conf' . DS . 'regSections.php';
 
+        $mkup = HTMLContainer::generateMarkup('h2', $agreemtLabel, array('style'=>'border:none;border-bottom:1.5pt solid #98C723'));
         $mkup .= HTMLContainer::generateMarkup('div', $instructions);
 
         $usedNames = array();
@@ -330,12 +334,12 @@ class RegisterForm {
 
     }
 
-    public static function generateDocument(\PDO $dbh, $title, \Role $patient, array $guests,  $houseName, $hospital, $hospRoom, $patientRelCodes, $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $creditRecord = '', $notes = '') {
+    public static function generateDocument(\PDO $dbh, $title, \Role $patient, array $guests,  $houseAddr, $hospital, $hospRoom, $patientRelCodes, $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $creditRecord = '', $notes = '') {
 
         $uS = Session::getInstance();
 
         $mkup = "<div style='width:800px;margin-bottom:30px; margin-left:10px; margin-right:10p'>";
-        $mkup .= self::titleBlock($roomTitle, $expectedDeparture, $rate, $title, $agent, $uS->RoomPriceModel);
+        $mkup .= self::titleBlock($roomTitle, $expectedDeparture, $rate, $title, $agent, $uS->RoomPriceModel, $houseAddr);
 
         $mkup .= self::notesBlock($notes);
 
@@ -621,7 +625,26 @@ p.label {
 
         $rate = (1 + $rateAdj) * $priceModel->amountCalculator(1, $idRate, $rateCat, $pledgedRate);
 
-        return RegisterForm::generateDocument($dbh, $title, $patient, $guests, $uS->siteName, $hospital, $hospRoom, $uS->guestLookups[GL_TableNames::PatientRel], $vehs, $agent, $rate, $roomTitle, $depDate, $creditReport, $notes);
+        $houseAddr = '';
+
+        $stmth = $dbh->query("select a.Address_1, a.Address_2, a.City, a.State_Province, a.Postal_Code
+    from name n left join name_address a on n.idName = a.idName and n.Preferred_Mail_Address = a.Purpose where n.idName = " . $uS->sId);
+
+        $rows = $stmth->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($rows) == 1) {
+
+            $street = $rows[0]['Address_1'];
+
+            if ($rows[0]['Address_2'] != '') {
+                $street .= ', ' . $rows[0]['Address_2'];
+            }
+
+            $houseAddr = $street . ' ' . $rows[0]['City'] . ', ' . $rows[0]['State_Province'] . ' ' . $rows[0]['Postal_Code'];
+
+        }
+
+        return RegisterForm::generateDocument($dbh, $title, $patient, $guests, $houseAddr, $hospital, $hospRoom, $uS->guestLookups[GL_TableNames::PatientRel], $vehs, $agent, $rate, $roomTitle, $depDate, $creditReport, $notes);
 
     }
 }
