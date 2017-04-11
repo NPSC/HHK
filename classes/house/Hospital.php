@@ -231,7 +231,7 @@ class Hospital {
 
             $diagtbl = new HTMLTable();
             $diagtbl->addBodyTr(
-                HTMLTable::makeTh($labels->getString('hospital', 'diagnosis', 'Diagnosis/Clinical Treatment Area'))
+                HTMLTable::makeTh($labels->getString('hospital', 'diagnosis', 'Diagnosis'))
             );
 
             $myDiagnosis = $hstay->getDiagnosisCode();

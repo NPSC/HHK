@@ -31,6 +31,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VAL
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ShowZeroDayStays', 'false', 'b', 'h', 'Include 0-day stays and visits in Reports and Pages');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('county', 'false', 'b', 'h', 'Include the County for addresses.');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CoTod', 'false', 'b', 'h', 'Edit the time of day of a checkout.');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('RateChangeAuth', 'false', 'b', 'h', 'true = Only authorized users can change the defailt room rate');
 
 update sys_config set Description = 'Check the Balance Statement checkbox by default' where Key = 'DefaultCkBalStmt';
 update sys_config set Description = 'Show the diagnosis textbox (in addition to the diagnosis selector)' where Key = 'ShowDiagTB';

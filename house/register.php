@@ -245,7 +245,7 @@ $currTable->addFooterTr($hdrRow);
 
 // Currently Checked In guests
 $currentCheckedIn = HTMLContainer::generateMarkup('h3', 'Current Guests' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlCurGuests', 'style'=>'margin-left:5em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
-        . HTMLContainer::generateMarkup('div', $currTable->generateMarkup(array('id'=>'curres')), array('id' => 'divcurres'));
+        . HTMLContainer::generateMarkup('div', $currTable->generateMarkup(array('id'=>'curres', 'style'=>'width:100%;')), array('id' => 'divcurres'));
 
 // Confirmed reservations and waitlist
 $currentReservations = '';
@@ -258,6 +258,7 @@ $wlCols = array();
 if ($uS->Reservation) {
 
     $locations = readGenLookupsPDO($dbh, 'Location');
+    $diags = readGenLookupsPDO($dbh, 'Diagnosis');
 
     $rvCols = array(
         array("data" => "Action" ),
@@ -277,6 +278,10 @@ if ($uS->Reservation) {
 
     if (count($locations) > 0) {
         $rvCols[] = array("data" => $labels->getString('hospital', 'location', 'Unit') );
+    }
+
+    if (count($diags) > 0) {
+        $rvCols[] = array("data" => $labels->getString('hospital', 'diagnosis', 'Diagnosis') );
     }
 
     $rvCols[] = array("data" => $labels->getString('MemberType', 'patient', 'Patient') );
@@ -300,11 +305,11 @@ if ($uS->Reservation) {
             $labels->getString('register', 'reservationTab', 'Confirmed Reservations') .
             HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlConfRes', 'style'=>'margin-left:5em;')) . $regButton
             , array('style' => 'background-color:#D3D3D3; padding:10px;'))
-            . HTMLContainer::generateMarkup('div', $currTable->generateMarkup(array('id'=> 'reservs')), array('id' => 'divreservs'));
+            . HTMLContainer::generateMarkup('div', $currTable->generateMarkup(array('id'=> 'reservs', 'style'=>'width:100%;')), array('id' => 'divreservs'));
 
     if ($uS->ShowUncfrmdStatusTab) {
         $uncommittedReservations = HTMLContainer::generateMarkup('h3', $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlUcRes', 'style'=>'margin-left:5em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
-            . HTMLContainer::generateMarkup('div', $currTable->generateMarkup(array('id'=> 'unreserv')), array('id' => 'divunreserv'));
+            . HTMLContainer::generateMarkup('div', $currTable->generateMarkup(array('id'=> 'unreserv', 'style'=>'width:100%;')), array('id' => 'divunreserv'));
     }
 
 
@@ -313,7 +318,8 @@ if ($uS->Reservation) {
         array("data" => "Guest" ),
         array("data" => "Expected Arrival" , 'type'=>'date'),
         array("data" => "Nights", 'className'=>'hhk-justify-c' ),
-        array("data" => "Expected Departure" , 'type'=>'date')
+        array("data" => "Expected Departure" , 'type'=>'date'),
+        array("data" => "Phone")
         );
 
     if ($uS->RoomPriceModel != ItemPriceCode::None) {
@@ -325,6 +331,9 @@ if ($uS->Reservation) {
 
     if (count($locations) > 0) {
         $wlCols[] = array("data" => $labels->getString('hospital', 'location', 'Unit') );
+    }
+    if (count($diags) > 0) {
+        $wlCols[] = array("data" => $labels->getString('hospital', 'diagnosis', 'Diagnosis') );
     }
 
     $wlCols[] = array("data" => $labels->getString('MemberType', 'patient', 'Patient') );
@@ -341,7 +350,7 @@ if ($uS->Reservation) {
 
 
     $waitlist = HTMLContainer::generateMarkup('h3', 'Waitlist' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlWlist', 'style'=>'margin-left:5em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
-            . HTMLContainer::generateMarkup('div', $wlTable->generateMarkup(array('id'=> 'waitlist')), array('id' => 'divwaitlist'));
+            . HTMLContainer::generateMarkup('div', $wlTable->generateMarkup(array('id'=> 'waitlist', 'style'=>'width:100%;')), array('id' => 'divwaitlist'));
 }
 
 // Hospital Selector
@@ -399,6 +408,7 @@ try {
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/hhkcalendar-min.js<?php echo JS_V; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>

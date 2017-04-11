@@ -1708,11 +1708,13 @@ CREATE or Replace VIEW `vreservation_events` AS
         ifnull(`n`.`Name_Full`, '') AS `Guest Name`,
         ifnull(`n`.`Name_First`, '') AS `Guest First`,
         ifnull((case when n.Name_Suffix = '' then n.Name_Last else concat(n.Name_Last, ' ', gs.Description) end), '') AS `Guest Last`,
+        ifnull(np.Phone_Num, '') as `Phone`,
         ifnull(`n2`.`Name_Full`, '') AS `Patient Name`,
         ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
         case when ifnull(hs.idAssociation, 0) > 0 and h.Title = '(None)' then 0 else ifnull(hs.idAssociation, 0) end
          as `idAssociation`,
 	ifnull(gl.Description, '') as `Location`,
+	ifnull(gd.Description, '') as `Diagnosis`,
         ifnull(`re`.`Title`, '') AS `Room Title`,
         r.idRegistration,
         r.Confirmation,
@@ -1725,17 +1727,21 @@ CREATE or Replace VIEW `vreservation_events` AS
             left join
         `hospital` `h` on hs.idAssociation = h.idHospital
             left join
-        resource re ON r.idResource = re.idResource
+        `resource` re ON r.idResource = re.idResource
             left join
         `name` `n` ON `r`.`idGuest` = `n`.`idName`
             left join
-        registration rg ON r.idRegistration = rg.idRegistration
+	`name_phone` np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
+			left join
+        `registration` rg ON r.idRegistration = rg.idRegistration
             left join 
         `name` n2 ON hs.idPatient = n2.idName
             left join
         gen_lookups gs on gs.`Table_Name` = 'Name_Suffix' and gs.`Code` = n.Name_Suffix
             left join
-        gen_lookups gl on gl.`Table_Name` = 'Location' and gl.`Code` = hs.Location;
+        gen_lookups gl on gl.`Table_Name` = 'Location' and gl.`Code` = hs.Location
+            left join
+        gen_lookups gd on gd.`Table_Name` = 'Diagnosis' and gd.`Code` = hs.Diagnosis;
 
 
 

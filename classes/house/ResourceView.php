@@ -967,10 +967,10 @@ from
                     $edAttr['style'] = 'color:red;';
                 }
 
-                $expDep = HTMLTable::makeTd($expDepDT->format('D, M j, Y'), $edAttr);
+                $expDep = $r['Expected_Departure'];  //HTMLTable::makeTd($r['Expected_Departure'], $edAttr);
 
             } else {
-                $expDep = HTMLTable::makeTd('');
+                $expDep = '';  //HTMLTable::makeTd('');
             }
 
 
@@ -1014,10 +1014,10 @@ from
             $fixedRows['Status'] = $stat;
             $fixedRows['Action'] = $action;
             $fixedRows['Occupant'] = $r['Name'];
-            $fixedRows['Checked In'] = $r['Arrival'] == '' ? '' : date('D, M j', strtotime($r['Arrival']));
-            $fixedRows['Expected Checkout'] = $expDep;
-            $fixedRows['Last Cleaned'] = $r['Last_Cleaned'] == '' ? '' : date('D, M j', strtotime($r['Last_Cleaned']));
-            $fixedRows['Notes'] = ($printOnly ? '' : HTMLTable::makeTd($notes, array('style'=>'min-width:300px;')));
+            $fixedRows['Checked_In'] = $r['Arrival'] == '' ? '' : $r['Arrival'];
+            $fixedRows['Expected_Checkout'] = $expDep;
+            $fixedRows['Last_Cleaned'] = $r['Last_Cleaned'] == '' ? '' : $r['Last_Cleaned'];
+            $fixedRows['Notes'] = ($printOnly ? '' : $notes);
 
             $returnRows[] = $fixedRows;
         }
@@ -1072,8 +1072,8 @@ from
                 'Room' => $r['Title'],
                 'Visit Status' => $r['Visit_Status'],
                 'Primary Guest' => $r['Name'],
-                'Arrival Date' => date('M j, Y', strtotime($r['Arrival_Date'])),
-                'Expected Checkout' => date('M j, Y', strtotime($r['Departure_Date'])),
+                'Arrival Date' => $r['Arrival_Date'] == '' ? '' : $r['Arrival_Date'],
+                'Expected Checkout' => $r['Departure_Date'] == '' ? '' : $r['Departure_Date'],
                 'Notes' => $reverse
             );
 

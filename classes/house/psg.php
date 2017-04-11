@@ -22,7 +22,7 @@ class CheckInGroup {
     function __construct() {
 
         $this->newGuests = array();
-        $this->patientCkgIn= FALSE;
+
     }
 
 
@@ -49,7 +49,7 @@ class CheckInGroup {
 
                 $name = $guest->getNameObj();
                 if ($name->get_status() == MemStatus::Deceased) {
-                     throw new Hk_Exception_UnexpectedValue('This Guest is marked as "Deceased".');
+                     throw new Hk_Exception_UnexpectedValue('The Guest (' . $name->get_fullName() . ') is marked as "Deceased".');
                 }
 
                 $guest->save($dbh, $post, $uS->username);

@@ -337,6 +337,7 @@ $confReserv = $labels->getString('register', 'reservationTab', 'Confirmed Reserv
     chkIn.verifyHospDate = '<?php echo $verifyHospDate; ?>';
     chkIn.fillEmergCont = '<?php echo isset($uS->EmergContactFill) ? $uS->EmergContactFill : 'true'; ?>';
     chkIn.forceNamePrefix = '<?php echo isset($uS->ForceNamePrefix) ? $uS->ForceNamePrefix : 'false'; ?>';
+    chkIn.patientBirthDate = '<?php echo $uS->PatientBirthDate; ?>';
     chkIn.resv = new reservation;
         </script>
     </body>

@@ -1994,141 +1994,6 @@ function firstDefined() {
 }
 
 
-//fcViews.month = MonthView;
-//
-//function MonthView(element, calendar) {
-//	var t = this;
-//
-//
-//	// exports
-//	t.render = render;
-//
-//
-//	// imports
-//	BasicView.call(t, element, calendar, 'month');
-//	var opt = t.opt;
-//	var renderBasic = t.renderBasic;
-//	var formatDate = calendar.formatDate;
-//
-//
-//
-//	function render(date, delta) {
-//		if (delta) {
-//			addMonths(date, delta);
-//			date.setDate(1);
-//		}
-//		var start = cloneDate(date, true);
-//		start.setDate(1);
-//		var end = addMonths(cloneDate(start), 1);
-//		var visStart = cloneDate(start);
-//		var visEnd = cloneDate(end);
-//		var firstDay = opt('firstDay');
-//		var nwe = opt('weekends') ? 0 : 1;
-//		if (nwe) {
-//			skipWeekend(visStart);
-//			skipWeekend(visEnd, -1, true);
-//		}
-//		addDays(visStart, -((visStart.getDay() - Math.max(firstDay, nwe) + 7) % 7));
-//		addDays(visEnd, (7 - visEnd.getDay() + Math.max(firstDay, nwe)) % 7);
-//		var rowCnt = Math.round((visEnd - visStart) / (DAY_MS * 7));
-//		if (opt('weekMode') == 'fixed') {
-//			addDays(visEnd, (6 - rowCnt) * 7);
-//			rowCnt = 6;
-//		}
-//		t.title = formatDate(start, opt('titleFormat'));
-//		t.start = start;
-//		t.end = end;
-//		t.visStart = visStart;
-//		t.visEnd = visEnd;
-//		renderBasic(6, rowCnt, nwe ? 5 : 7, true);
-//	}
-//
-//
-//}
-//
-//fcViews.basicWeek = BasicWeekView;
-//
-//function BasicWeekView(element, calendar) {
-//	var t = this;
-//
-//
-//	// exports
-//	t.render = render;
-//
-//
-//	// imports
-//	BasicView.call(t, element, calendar, 'basicWeek');
-//	var opt = t.opt;
-//	var renderBasic = t.renderBasic;
-//	var formatDates = calendar.formatDates;
-//
-//
-//
-//	function render(date, delta) {
-//		if (delta) {
-//			addDays(date, delta * 7);
-//		}
-//		var start = addDays(cloneDate(date), -((date.getDay() - opt('firstDay') + 7) % 7));
-//		var end = addDays(cloneDate(start), 7);
-//		var visStart = cloneDate(start);
-//		var visEnd = cloneDate(end);
-//		var weekends = opt('weekends');
-//		if (!weekends) {
-//			skipWeekend(visStart);
-//			skipWeekend(visEnd, -1, true);
-//		}
-//		t.title = formatDates(
-//			visStart,
-//			addDays(cloneDate(visEnd), -1),
-//			opt('titleFormat')
-//		);
-//		t.start = start;
-//		t.end = end;
-//		t.visStart = visStart;
-//		t.visEnd = visEnd;
-//		renderBasic(1, 1, weekends ? 7 : 5, false);
-//	}
-//
-//
-//}
-//
-//fcViews.basicDay = BasicDayView;
-//
-////TODO: when calendar's date starts out on a weekend, shouldn't happen
-//
-//
-//function BasicDayView(element, calendar) {
-//	var t = this;
-//
-//
-//	// exports
-//	t.render = render;
-//
-//
-//	// imports
-//	BasicView.call(t, element, calendar, 'basicDay');
-//	var opt = t.opt;
-//	var renderBasic = t.renderBasic;
-//	var formatDate = calendar.formatDate;
-//
-//
-//
-//	function render(date, delta) {
-//		if (delta) {
-//			addDays(date, delta);
-//			if (!opt('weekends')) {
-//				skipWeekend(date, delta < 0 ? -1 : 1);
-//			}
-//		}
-//		t.title = formatDate(date, opt('titleFormat'));
-//		t.start = t.visStart = cloneDate(date, true);
-//		t.end = t.visEnd = addDays(cloneDate(t.start), 1);
-//		renderBasic(1, 1, 1, false);
-//	}
-//
-//
-//}
-
 fcViews.twoweeks = TwoWeeksView;
 
 function TwoWeeksView(element, calendar) {
@@ -2142,42 +2007,35 @@ function TwoWeeksView(element, calendar) {
     BasicView.call(t, element, calendar, 'twoweeks');
     var opt = t.opt;
     var renderBasic = t.renderBasic;
-    var formatDate = calendar.formatDate;
-
 
 
     function render(date, delta) {
+        
+        var start, end, visStart, visEnd, histWeek;
+        
         if (delta) {
-            //addMonths(date, delta);
             addDays(date, delta * 7);
-            //date.setDate(1);
         }
-        //var start = cloneDate(date, true);
-        //start.setDate(1);
-        var start = addDays(cloneDate(date), -((date.getDay() - opt('firstDay') + 7) % 7));
-        var end = addDays(cloneDate(start), calendar.options.viewDays);
+        
+        if (date.getDay() > 3) {
+            histWeek = 0;
+        } else {
+            histWeek = 7;
+        }
 
-        var visStart = cloneDate(start);
-        //var visStart = date;
+        if (calendar.options.viewDays > 21) {
+            // add a history week
+            start = addDays(cloneDate(date), - (((date.getDay() - opt('firstDay') + 7) % 7) + histWeek));
+            end = addDays(cloneDate(start), calendar.options.viewDays);
+            
+        } else {
+            start = addDays(cloneDate(date), -((date.getDay() - opt('firstDay') + 7) % 7));
+            end = addDays(cloneDate(start), calendar.options.viewDays);
+        }
 
-        var visEnd = cloneDate(end);
-//            var firstDay = opt('firstDay');
-//            var nwe = opt('weekends') ? 0 : 1;
-//            if (nwe) {
-//                skipWeekend(visStart);
-//                skipWeekend(visEnd, -1, true);
-//            }
+        visStart = cloneDate(start);
+        visEnd = cloneDate(end);
 
-//            addDays(visStart, -((visStart.getDay() - firstDay + 7) % 7));
-//            addDays(visEnd, (7 - visEnd.getDay() + firstDay) % 7);
-        var rowCnt = 1;  //Math.round((visEnd - visStart) / (DAY_MS * 7));
-
-//        if (opt('weekMode') == 'fixed') {
-//            addDays(visEnd, (6 - rowCnt) * 7);
-            //rowCnt = 6;
-
-//        }
-        //t.title = formatDate(start, opt('titleFormat'));
         t.title = formatDates(
                 visStart,
                 addDays(cloneDate(visEnd), -1),
@@ -3799,7 +3657,7 @@ function HoverListener(coordinateGrid) {
 
 
 	function mouse(ev) {
-		_fixUIEvent(ev); // see below
+
 		var newCell = coordinateGrid.cell(ev.pageX, ev.pageY);
 		if (!newCell != !cell || newCell && (newCell.row != cell.row || newCell.col != cell.col)) {
 			if (newCell) {
@@ -3824,18 +3682,6 @@ function HoverListener(coordinateGrid) {
 }
 
 
-
-// this fix was only necessary for jQuery UI 1.8.16 (and jQuery 1.7 or 1.7.1)
-// upgrading to jQuery UI 1.8.17 (and using either jQuery 1.7 or 1.7.1) fixed the problem
-// but keep this in here for 1.8.16 users
-// and maybe remove it down the line
-
-function _fixUIEvent(event) { // for issue 1168
-	if (event.pageX === undefined) {
-		event.pageX = event.originalEvent.pageX;
-		event.pageY = event.originalEvent.pageY;
-	}
-}
 function HorizontalPositionCache(getElement) {
 
 	var t = this,

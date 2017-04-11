@@ -152,16 +152,12 @@ class ActivityReport {
             $stmt->execute(array(':start'=>$startDate, ':end'=>$endDate));
         }
 
-
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $reservId = 0;
-
         $reservIcon = "<span class='ui-icon ui-icon-folder-open' style='float: left; margin-right: .3em;' title='Open Reservtion Viewer'></span>";
-
         $tbl = new HTMLTable();
         $tbl->addHeaderTr(HTMLTable::makeTh("Room"). HTMLTable::makeTh("Guest"). HTMLTable::makeTh("Action"). HTMLTable::makeTh("Date"). HTMLTable::makeTh("By"));
 
-        foreach ($rows as $r) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $logData = array();
 
             if ($r['Log_Text'] != '') {

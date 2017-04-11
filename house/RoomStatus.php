@@ -189,7 +189,9 @@ $cgCols = array(
     array("data" => "Status" ),
     array("data"=>"Action"),
     array("data"=>"Occupant"),
-    array("data" => "Checked In", 'type'=>'date' ),
+    array("data" => "Checked In",
+        'type'=>'date',
+        'render'=> 'function ( data, type, row ) {return dateRender(data, type);})'),
     array("data" => "Expected Checkout" , 'type'=>'date'),
     array("data" => "Last Cleaned", 'type'=>'date' ),
     array("data"=>"Notes")
@@ -239,31 +241,127 @@ $ckOutTable->addFooterTr($hdrRow);
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MOMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
 function dateRender(data, type) {
     // If display or filter data is requested, format the date
     if ( type === 'display' || type === 'filter' ) {
-        var d;
-        if (data === null) {
+
+        if (data === null || data === '') {
             return '';
         }
 
-        if (!isNaN(data)) {
-            d = new Date( data * 1000 );
-        } else {
-            d = new Date(Date.parse(data));
-        }
-
-        return (d.getMonth()+1) +'/'+ (d.getDate() < 10 ? '0'+ d.getDate() : d.getDate()) +'/'+ d.getFullYear();
+        return moment(data).format('ddd, MMM Do YYYY');
     }
 
     // Otherwise the data type requested (`type`) is type detection or
     // sorting data, for which we want to use the integer, so just return
     // that, unaltered
     return data;
-
 }
+
+var cgCols = [
+    {
+        'data':'Room',
+        'title':'Room',
+        'searchable': true,
+        'sortable': true,
+        'type':'s'
+    },
+    {
+        'data':'Status',
+        'title':'Status',
+        'searchable': false,
+        'sortable': true
+    },
+    {
+        'data':'Action',
+        'title':'Action',
+        'searchable': false,
+        'sortable': false
+    },
+    {
+        'data':'Occupant',
+        'title':'Occupant',
+        'searchable': true,
+        'sortable': true
+    },
+    {
+        'data':'Checked_In',
+        'title':'Checked In',
+        'type':'date',
+        render: function ( data, type, row ) {return dateRender(data, type);},
+        'searchable': true,
+        'sortable': true
+    },
+    {
+        'data':'Expected_Checkout',
+        'title':'Expected Checkout',
+        'type':'date',
+        render: function ( data, type, row ) {return dateRender(data, type);},
+        'searchable': true,
+        'sortable': true
+    },
+    {
+        'data':'Last_Cleaned',
+        'title':'Last Cleaned',
+        'type':'date',
+        render: function ( data, type, row ) {return dateRender(data, type);},
+        'searchable': true,
+        'sortable': true
+    },
+    {
+        'data':'Notes',
+        'title':'Notes',
+        'searchable': true,
+        'sortable': false
+    }
+];
+
+var outCols = [
+    {
+        'data':'Room',
+        'title':'Room',
+        'searchable': true,
+        'sortable': true
+    },
+    {
+        'data':'Visit Status',
+        'title':'Status',
+        'searchable': false,
+        'sortable': true
+    },
+    {
+        'data':'Primary Guest',
+        'title':'Occupant',
+        'searchable': true,
+        'sortable': true
+    },
+    {
+        'data':'Arrival Date',
+        'title':'Checked In',
+        'type':'date',
+        render:function ( data, type ) {return dateRender(data, type);},
+        'searchable': true,
+        'sortable': true
+    },
+    {
+        'data':'Expected Checkout',
+        'title':'Expected Checkout',
+        'type':'date',
+        render:function ( data, type ) {return dateRender(data, type);},
+        'searchable': true,
+        'sortable': true
+    },
+    {
+        'data':'Notes',
+        'title':'Notes',
+        'searchable': true,
+        'sortable': false
+    }
+];
 
 var dtColDefs = [
     {
@@ -321,8 +419,6 @@ var dtColDefs = [
 $(document).ready(function() {
     "use strict";
     var cTab = parseInt('<?php echo $currentTab; ?>', 10);
-    var cgCols = $.parseJSON('<?php echo json_encode($cgCols); ?>');
-    var outCols = $.parseJSON('<?php echo json_encode($outCols); ?>');
     var listEvtTable;
     var coDate = new Date();
 
@@ -334,11 +430,6 @@ $(document).ready(function() {
     });
 
     $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrint, #btnSubmitTable, #prtCkOut').button();
-
-    $('#dataTbl tfoot th').each( function () {
-        var title = $(this).text();
-        $(this).html( '<input type="text" placeholder="Search '+title+'" />' );
-    } );
 
     $('#mainTabs').tabs({
         beforeActivate: function (event, ui) {
@@ -434,7 +525,7 @@ $(document).ready(function() {
                     <li id="lishoCL"><a href="#showLog">Show Cleaning Log</a></li>
                 </ul>
                 <div id="clnToday" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
-                    <?php echo $roomTable->generateMarkup(array('id'=>'dirtyTable', 'style'=>'width:100%;')); ?>
+                    <?php echo $roomTable->generateMarkup(array('id'=>'dirtyTable', 'class'=>' order-column display ', 'style'=>'width:100%;')); ?>
                     <div class="ui-corner-all submitButtons">
                         <input type="reset" name="btnReset1" value="Reset" id="btnReset1" />
                         <input type="submit" name="btnSubmitClean" value="Save" id="btnSubmitClean" />
@@ -448,10 +539,10 @@ $(document).ready(function() {
                         <span>Checkout Date: </span><input id="ckoutDate" class="ckdate"/>
                         <input type="button" value="Print" id="prtCkOut" style="margin:3px;"/>
                     </p>
-                    <?php echo $ckOutTable->generateMarkup(array('id'=>'outTable', 'style'=>'width:100%;')); ?>
+                    <?php echo $ckOutTable->generateMarkup(array('id'=>'outTable', 'class'=>' order-column display ', 'style'=>'width:100%;')); ?>
                 </div>
                 <div id="showAll">
-                    <?php echo $roomTable->generateMarkup(array('id'=>'roomTable', 'style'=>'width:100%;')); ?>
+                    <?php echo $roomTable->generateMarkup(array('id'=>'roomTable', 'class'=>' order-column display ', 'style'=>'width:100%;')); ?>
                     <div class="ui-corner-all submitButtons">
                         <input type="button" value="Print" name="btnPrint" id="btnPrint" />
                         <input type="reset" name="btnReset2" value="Reset" id="btnReset2" />
@@ -459,7 +550,7 @@ $(document).ready(function() {
                     </div>
                 </div>
                 <div id="showLog" class="ignrSave">
-                  <table style="width:100%;" class="display" id="dataTbl"></table>
+                  <table style="width:100%;" class='order-column display ' id="dataTbl"></table>
                 </div>
             </div>
             </form>

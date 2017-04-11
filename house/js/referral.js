@@ -1081,12 +1081,27 @@ function verifyDone(reserv) {
         var pan = reserv.members[i], ciDate, coDate;
         var gstMsg = $('#' + pan.idPrefix + 'memMsg');
 
-        // Have patient
+        gstMsg.text("");  // clear any error message
+
+        // Have patient?
         if (pan.idPrefix === 'h_') {
+            
             havePatient = true;
+            
+            if (reserv.patientBirthDate) {
+                
+                $('#h_txtBirthDate').removeClass('ui-state-error');
+                
+                if ($('#h_txtBirthDate').val() === '') {
+                    
+                    flagAlertMessage(resv.patientLabel + " needs a birth date.", true);
+                    gstMsg.text("Birth date");
+                    $('#h_txtBirthDate').addClass('ui-state-error');
+                    return false;
+                }
+            }
         }
 
-        gstMsg.text("");  // clear any error message
         var isMissing = false;
         var nameText = $('span#' + pan.idPrefix + 'hdrFirstName').text() + ' ' + $('span#' + pan.idPrefix + 'hdrLastName').text();
 
@@ -1131,7 +1146,7 @@ function verifyDone(reserv) {
         }
 
         // Check patient relationship
-        if ($('#' + pan.idPrefix + 'selPatRel').val() == '') {
+        if ($('#' + pan.idPrefix + 'selPatRel').val() === '') {
 
             $('#' + pan.idPrefix + 'selPatRel').addClass('ui-state-error');
             gstMsg.text("Set Primary Guest - " + resv.patientLabel + " Relationship");
@@ -1140,8 +1155,22 @@ function verifyDone(reserv) {
             $('#' + pan.idPrefix + 'divGsthdr').removeClass('ui-corner-all').addClass('ui-corner-top');
             return false;
 
-        } else if ($('#' + pan.idPrefix + 'selPatRel').val() == 'slf') {
+        } else if ($('#' + pan.idPrefix + 'selPatRel').val() === 'slf') {
+            
             havePatient = true;
+            
+            if (reserv.patientBirthDate) {
+                
+                $('#' + pan.idPrefix + 'txtBirthDate').removeClass('ui-state-error');
+                
+                if ($('#' + pan.idPrefix + 'txtBirthDate').val() === '') {
+                    
+                    flagAlertMessage(resv.patientLabel + " needs a birth date.", true);
+                    gstMsg.text("Birth date");
+                    $('#' + pan.idPrefix + 'txtBirthDate').addClass('ui-state-error');
+                    return false;
+                }
+            }
         }
 
         // Check in Date

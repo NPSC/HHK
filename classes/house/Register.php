@@ -341,8 +341,10 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
 
         // Check reservations
         if ($uS->Reservation) {
+
             $query = "select * from vreservation_events where Status in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Waitlist . "') "
-                    . " and DATE(Arrival_Date) < DATE('" . $endDate->format('Y-m-d') . "') and DATE(Expected_Departure) > DATE('" . $beginDate->format('Y-m-d') . "')";
+                    . " and DATE(Arrival_Date) < DATE('" . $endDate->format('Y-m-d') . "') and DATE(Expected_Departure) > DATE('" . $beginDate->format('Y-m-d') . "') order by Arrival_Date";
+
             $stmt = $dbh->query($query);
 
             $eventId = 9000;
@@ -350,10 +352,8 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
             while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
 
-                if ($r['Status'] == ReservationStatus::Waitlist && $r["idResource"] > 0) {
+                if ($r['Status'] == ReservationStatus::Waitlist) {
                     $r["idResource"] = 0;
-                    $rescs[0]["_level_"] ++;
-                } else if ($r["idResource"] == 0) {
                     $rescs[0]["_level_"] ++;
                 }
 

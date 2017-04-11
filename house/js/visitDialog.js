@@ -321,7 +321,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
                     if (this.checked === false) {
                         $(this).next().val('');  // clear the checkout date field
-                    } else if ($(this).next().val() == '') {
+                    } else if ($(this).next().val() === '') {
                         $(this).next().val($.datepicker.formatDate('M d, yy', new Date()));  // set the checkout date field
                     }
 
@@ -447,6 +447,14 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                     $('input.hhk-ckoutCB').change();
                 });
 
+                $('#cbCoAll').button().click(function () {
+                    
+                    $('input.hhk-ckoutCB').each(function () {
+                        $(this).prop('checked', true);
+                    });
+                    $('input.hhk-ckoutCB').change();
+                });
+                
                 $('input.hhk-ckoutCB').change();
 
             } else if ($('#cbFinalPayment').length > 0) {

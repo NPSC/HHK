@@ -597,7 +597,18 @@ class VisitView {
             . HTMLTable::makeTh('Nights');
         }
 
-        $th .= ($includeAction === TRUE ? HTMLTable::makeTh('Check Out') : '');
+        if ($includeAction) {
+
+            $td = 'Check Out';
+
+            // Checkout ALL button.
+            if (count($rows) > 1) {
+
+                $td .= HTMLInput::generateMarkup('All', array('id'=>'cbCoAll', 'type'=>'button', 'style'=>'margin-right:.5em;margin-left:.5em;')) . ' :o)';
+            }
+
+            $th .= HTMLTable::makeTh($td);
+        }
 
         if ($useRemoveHdr) {
             $th .= HTMLTable::makeTh('Remove');

@@ -188,7 +188,7 @@ function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$total, &$tbl, 
 
         $g['Last'] = $payorLast;
         $g['First'] = $payorFirst;
-        $g['Payment_Date'] = $dateDT->format('M j, Y');
+        $g['Payment_Date'] = ($p['Payment_Date'] == '' ? '' :$dateDT->format('M j, Y'));
         $g['Invoice_Number'] = $invoiceMkup;
 
         $g['Orig_Amount'] = number_format($origAmt, 2);

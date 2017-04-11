@@ -450,6 +450,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('PayVFeeFirst', 'false', 'b', 'h','Default check the visit fees payment checkbox'),
 ('PaymentLogoUrl','images/hostpaylogo.jpg','s','f','Path to payment page logo image file'),
 ('PreviousNights','0','i','h','Previous nights to add to nights counter'),
+('RateChangeAuth', 'false', 'b', 'h', 'true = Only authorized users can change the defailt room rate'),
 ('RateGlideExtend', '0', 'i', 'h','# of days for the Room Rate Glide to time out after visit check-out'),
 ('ReferralAgent', 'true', 'b', 'h','Track referral agents/social workers'),
 ('RegColors','hospital','s','h','Calendar page ribbon colors based on hospital or room'),

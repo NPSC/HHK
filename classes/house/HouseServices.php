@@ -1697,7 +1697,7 @@ class HouseServices {
         $visit->setPledgedRate($resv->getFixedRoomRate());
 
         // Category
-        if (isset($post['selRateCategory'])) {
+        if (isset($post['selRateCategory']) && ($isAuthorized || $uS->RateChangeAuth === FALSE)) {
 
             $rateCategory = filter_var($post['selRateCategory'], FILTER_SANITIZE_STRING);
 
@@ -1714,11 +1714,10 @@ class HouseServices {
                 $resv->setRoomRateCategory($rateCategory);
 
             }
-
         }
 
         // Adjustment amount
-        if (isset($post['txtadjAmount'])) {
+        if (isset($post['txtadjAmount']) && ($isAuthorized || $uS->RateChangeAuth === FALSE)) {
 
             if ($post['txtadjAmount'] === '0' || $post['txtadjAmount'] === '') {
                 $rateAdjust = 0;
@@ -1734,7 +1733,7 @@ class HouseServices {
         }
 
         // Pledged room rate
-        if (isset($post["txtFixedRate"])) {
+        if (isset($post["txtFixedRate"]) && ($isAuthorized || $uS->RateChangeAuth === FALSE)) {
 
             if ($post['txtFixedRate'] === '0' || $post['txtFixedRate'] === '') {
                 $fixedRate = 0;
@@ -2557,6 +2556,8 @@ from
         $uS = Session::getInstance();
         $dataArray = array();
         $dataArray['warning'] = '';
+        $labels = new Config_Lite(LABEL_FILE);
+
 
         // reservation
         $idReserv = 0;
@@ -2591,7 +2592,7 @@ from
         }
 
         // Patient
-        if (is_a($chkinGroup->patient, 'Guest') === FALSE && $chkinGroup->patient->isCurrentlyStaying($dbh) === FALSE) {
+        if ($chkinGroup->isPatientCkgIn() === FALSE) {
             $dataArray['patient'] = $chkinGroup->patient->createMarkup(FALSE);
         }
 
@@ -2737,8 +2738,6 @@ from
 
         // Load any stays
         $stays = self::loadStays($dbh, $reg->getIdRegistration());
-
-        $labels = new Config_Lite(LABEL_FILE);
 
         // Room empty?
         if ($roomChooser->getCurrentGuests() == 0) {

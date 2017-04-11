@@ -124,13 +124,18 @@ if (isset($_POST['btnnotind'])) {
 
 $query = "select distinct $fields
     n.idName,
-    n.Name_Full
+    n.Name_Full,
+    np.Name_Full as `Patient_Name`
 from
     name n
         join
-    stays s ON s.idName = n.idName
-        left join
     name_demog nd ON n.idName = nd.idName
+        left join
+    name_guest ng on n.idName = ng.idName
+        left join
+    psg p on ng.idPsg = p.idPsg
+        left join
+    name np on p.idPatient = np.idName
 where  n.Member_Status in ('a' , 'in', 'd')
         and $whDemos order by n.idName desc Limit 0, 25";
 
@@ -141,7 +146,7 @@ $tbl = new HTMLTable();
 // Rows
 while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-    $tr = HTMLTable::makeTd($r['idName']) . HTMLTable::makeTd($r['Name_Full']);
+    $tr = HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $r['idName'], array('href'=>'GuestEdit.php?id='.$r['idName']))) . HTMLTable::makeTd($r['Name_Full']) . HTMLTable::makeTd($r['Patient_Name']);
 
     foreach ($demos as $k => $d) {
         $tr.= HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($d['list'], $r[$k]), array('name' => 'sel' . $k . '[' . $r['idName'] . ']')));
@@ -151,7 +156,7 @@ while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
     $tbl->addBodyTr($tr);
 }
 
-$th = HTMLTable::makeTh("Id") . HTMLTable::makeTh("Name");
+$th = HTMLTable::makeTh("Id") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Patient");
 
 // Header
 foreach ($demos as $d) {
@@ -187,8 +192,8 @@ $form = HTMLContainer::generateMarkup('form', $tbl->generateMarkup(array(), "- S
     <body <?php if ($testVersion) {echo "class='testbody'";} ?> >
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <h1><?php echo $wInit->pageHeading; ?></h1>
-            <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog" style="padding:25px;margin-top:15px;">
+            <h2><?php echo $wInit->pageHeading; ?></h2>
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-member-detail hhk-visitdialog" style="font-size:.8em;padding:15px;margin-top:15px;">
                 <?php echo $form; ?>
             </div>
     </body>

@@ -146,12 +146,10 @@ if (isset($_POST["btnExcel"]) || isset($_POST["btnHere"])) {
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
+            <h2><?php echo $wInit->pageHeading; ?></h2>
             <div id="vdirectory"  class="ui-widget ui-widget-content ui-corner-all hhk-member-detail">
                 <form id="fDirectory" action="directory.php" method="post">
                     <table style="width:600px;">
-                        <tr>
-                            <td colspan="3"><h2><?php echo $wInit->pageHeading; ?></h2></td>
-                        </tr>
                         <tr>
                             <td>
                                 <?php echo $selDirType->createMarkup(3); ?>

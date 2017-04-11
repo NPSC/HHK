@@ -345,6 +345,21 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return $this->currentlyStaying;
     }
 
+    protected function setCurrentIdVisit($idVisit) {
+
+        $idv = intval($idVisit, 10);
+        if ($idv > 0) {
+            $this->currentlyStaying = TRUE;
+            $this->idVisit = $idv;
+        } else {
+            $this->currentlyStaying = FALSE;
+            $this->idVisit = 0;
+        }
+
+    }
+
+
+
     public function getEmergContactObj(\PDO $dbh) {
 
         if (is_null($this->emergContact)) {
@@ -388,19 +403,6 @@ where r.idPsg = $idPsg and s.idName = " . $id;
 
     public function setPatientRelationshipCode($v) {
         $this->patientRelationshipCode = $v;
-    }
-
-    protected function setCurrentIdVisit($idVisit) {
-
-        $idv = intval($idVisit, 10);
-        if ($idv > 0) {
-            $this->currentlyStaying = TRUE;
-            $this->idVisit = $idv;
-        } else {
-            $this->currentlyStaying = FALSE;
-            $this->idVisit = 0;
-        }
-
     }
 
 }

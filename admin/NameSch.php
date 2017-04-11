@@ -145,6 +145,7 @@ if (isset($uS->siteList[WebSiteCode::Volunteer])) {
             var gtDate = new Date($('#gotoDate').datepicker('getDate'));
             $('#calendar').fullCalendar('gotoDate', gtDate);
         });
+        $('#historyTabs').show();
     });
         </script>
     </head>
@@ -163,7 +164,7 @@ if (isset($uS->siteList[WebSiteCode::Volunteer])) {
                 </div>
             </div>
             <div style="clear:both; margin-top:50px"></div>
-            <div id="historyTabs" class="hhk-member-detail" style="margin-bottom: 10px;">
+            <div id="historyTabs" class="hhk-member-detail" style="margin-bottom: 10px; display:none;">
                 <ul>
                     <li><a href="#memHistory">Member History</a></li>
                     <?php if ($guestHistory != 'f') echo "<li><a href='" . "#resHistory" . "'>Current Guests</a></li>"; ?>

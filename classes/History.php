@@ -18,6 +18,7 @@ class History {
     protected $resvEvents;
     protected $roomRates;
     protected $locations;
+    protected $diags;
 
     public static function addToGuestHistoryList(\PDO $dbh, $id, $role) {
         if ($id > 0 && $role < WebRole::Guest) {
@@ -129,6 +130,10 @@ class History {
             $this->locations = readGenLookupsPDO($dbh, 'Location');
         }
 
+        if (is_null($this->diags)) {
+            $this->diags = readGenLookupsPDO($dbh, 'Diagnosis');
+        }
+
         return $this->createMarkup($status, $page, $includeAction);
     }
 
@@ -195,6 +200,11 @@ class History {
                 $fixedRows["Room"] = $r["Room Title"];
             }
 
+            // Phone?
+            if ($status == ReservationStatus::Waitlist) {
+                $fixedRows["Phone"] = $r["Phone"];
+            }
+
             // Rate
             if ($uS->RoomPriceModel != ItemPriceCode::None && isset($this->roomRates[$r['idRoom_rate']])) {
                 $fixedRows['Rate'] = $this->roomRates[$r['idRoom_rate']];
@@ -219,6 +229,11 @@ class History {
             // Hospital Location
             if (count($this->locations) > 0) {
                 $fixedRows[$labels->getString('hospital', 'location', 'Unit')] = $r['Location'];
+            }
+
+            // Diagnosis
+            if (count($this->diags) > 0) {
+                $fixedRows[$labels->getString('hospital', 'diagnosis', 'Diagnosis')] = $r['Diagnosis'];
             }
 
             // Patient Name

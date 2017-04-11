@@ -310,6 +310,7 @@ function loadReserv(incmg) {
         $('#btnChkin').show();
         $('#btnDone').hide();
     } else {
+        
         $('#btnChkin').hide();
         if (countGuests() > 0) {
             $('#btnDone').show();
@@ -893,10 +894,13 @@ function verifyDone() {
     
     // Check for valid guest(s)
     for (var i = 0; i < checkIn.members.length; i++) {
+        
         var pan = checkIn.members[i], ciDate, coDate;
         var gstMsg = $('#' + pan.idPrefix + 'memMsg');
+        
         gstMsg.text("");  // clear any error message
         var isMissing = false;
+        
         var nameText = $('span#' + pan.idPrefix + 'hdrFirstName').text() + ' ' + $('span#' + pan.idPrefix + 'hdrLastName').text();
 
         // guest first and last name
@@ -923,11 +927,28 @@ function verifyDone() {
 
         // Check patient relationship
         if ($('#' + pan.idPrefix + 'selPatRel').length > 0 && $('#' + pan.idPrefix + 'selPatRel').val() === '') {
+            
             $('#' + pan.idPrefix + 'selPatRel').addClass('ui-state-error');
             gstMsg.text("Set " + checkIn.patientLabel + " Relationship");
             $('.' + pan.idSlot + 'detail').show("blind");
             flagAlertMessage(nameText + " is missing their " + checkIn.patientLabel + " relationship.", true);
+            
             return false;
+            
+        } else if ($('#' + pan.idPrefix + 'selPatRel').val() === 'slf') {
+            
+            if (checkIn.patientBirthDate) {
+                
+                $('#' + pan.idPrefix + 'txtBirthDate').removeClass('ui-state-error');
+                
+                if ($('#' + pan.idPrefix + 'txtBirthDate').val() === '') {
+                    
+                    flagAlertMessage(checkIn.patientLabel + " needs a birth date.", true);
+                    gstMsg.text("Birth date");
+                    $('#' + pan.idPrefix + 'txtBirthDate').addClass('ui-state-error');
+                    return false;
+                }
+            }
         }
         
         // validate guest address
@@ -1232,7 +1253,7 @@ function gotMember(data) {
         $('#btnChkin, #btnDone').hide();
         return;
     }
-    if (data.warning && data.warning != '') {
+    if (data.warning && data.warning !== '') {
         // Don't stop.  Continue processing.
         flagAlertMessage(data.warning, true);
     }

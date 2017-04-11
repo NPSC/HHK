@@ -1006,7 +1006,7 @@ class ReservationSvcs {
 
 
         // Get the rate category
-        if (isset($post['selRateCategory'])) {
+        if (isset($post['selRateCategory']) && ($isAuthorized || $uS->RateChangeAuth === FALSE)) {
 
             $rateCat = filter_var($post['selRateCategory'], FILTER_SANITIZE_STRING);
 
@@ -1038,7 +1038,7 @@ class ReservationSvcs {
         if ($rateCategory == RoomRateCategorys::Fixed_Rate_Category) {
 
             // Check for rate setting amount.
-            if (isset($post['txtFixedRate'])) {
+            if (isset($post['txtFixedRate']) && ($isAuthorized || $uS->RateChangeAuth === FALSE)) {
 
                 if ($post['txtFixedRate'] === '0' || $post['txtFixedRate'] === '') {
                     $fixedRate = 0;
@@ -1054,7 +1054,7 @@ class ReservationSvcs {
                 $resv->setRateAdjust(0);
             }
 
-        } else if (isset($post['txtadjAmount'])) {
+        } else if (isset($post['txtadjAmount']) && ($isAuthorized || $uS->RateChangeAuth === FALSE)) {
 
             // Save rate adjustment
             if ($post['txtadjAmount'] === '0' || $post['txtadjAmount'] === '') {
