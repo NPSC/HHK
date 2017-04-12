@@ -202,7 +202,7 @@ if (isset($uS->roomCount) === FALSE) {
     $uS->roomCount = $rows[0][0];
 }
 
-$roomCount = max(array($uS->roomCount, 5));
+$roomCount = max(array($uS->roomCount, 10));
 
 if ($uS->Reservation) {
     $roomCount += 9;
@@ -348,8 +348,16 @@ if ($uS->Reservation) {
     $wlTable->addHeaderTr($whdrRow);
     $wlTable->addFooterTr($whdrRow);
 
+        // make registration form print button
+    $wlButton = HTMLContainer::generateMarkup('span', 'Date: ' . HTMLInput::generateMarkup(date('M j, Y'), array('id'=>'regwldate', 'class'=>'ckdate hhk-prtWL'))
+            . HTMLInput::generateMarkup('Print Wait List', array('id'=>'btnPrintWL', 'type'=>'button', 'data-page'=>'PrtWaitList.php', 'class'=>'hhk-prtWL', 'style'=>'margin-left:.3em;'))
+            , array('style'=>'margin-left:5em;padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5'));
 
-    $waitlist = HTMLContainer::generateMarkup('h3', 'Waitlist' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlWlist', 'style'=>'margin-left:5em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
+
+    $waitlist = HTMLContainer::generateMarkup('h3', 'Waitlist' .
+            HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlWlist', 'style'=>'margin-left:5em;'))
+            .$wlButton
+            , array('style' => 'background-color:#D3D3D3; padding:10px;'))
             . HTMLContainer::generateMarkup('div', $wlTable->generateMarkup(array('id'=> 'waitlist', 'style'=>'width:100%;')), array('id' => 'divwaitlist'));
 }
 

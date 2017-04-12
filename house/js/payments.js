@@ -7,7 +7,7 @@
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @link      https://github.com/NPSC
  */
 
 /**

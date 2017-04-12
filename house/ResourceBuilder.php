@@ -214,18 +214,6 @@ if (isset($_POST['table'])) {
 
             foreach ($codeArray as $c => $v) {
 
-                if (isset($_POST['cbDiagDel'][$c])) {
-                    $use = 'y';
-                } else {
-                    $use = '';
-                }
-
-                if (isset($_POST['txtDOrder'][$c])) {
-                    $orderNumber = intval(filter_var($_POST['txtDOrder'][$c], FILTER_SANITIZE_NUMBER_INT), 10);
-                } else {
-                    $orderNumber = 0;
-                }
-
                 $gluRs = new GenLookupsRS();
                 $gluRs->Table_Name->setStoredVal($tableName);
                 $gluRs->Code->setStoredVal($c);
@@ -237,6 +225,22 @@ if (isset($_POST['table'])) {
                     $gluRs = new GenLookupsRS();
                     EditRS::loadRow($rw[0], $gluRs);
 
+                    $use = '';
+                    if (isset($_POST['cbDiagDel'][$c])) {
+                        $use = 'y';
+                    }
+
+                    $orderNumber = 0;
+                    if (isset($_POST['txtDOrder'][$c])) {
+                        $orderNumber = intval(filter_var($_POST['txtDOrder'][$c], FILTER_SANITIZE_NUMBER_INT), 10);
+                    }
+
+                    $desc = '';
+                    if (isset($_POST['txtDiag'][$c])) {
+                        $desc = filter_var($_POST['txtDiag'][$c], FILTER_SANITIZE_STRING);
+                    }
+
+                    $gluRs->Description->setNewVal($desc);
                     $gluRs->Substitute->setNewVal($use);
                     $gluRs->Order->setNewVal($orderNumber);
 
@@ -1052,10 +1056,9 @@ $resultMessage = $alertMsg->createMarkup();
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-<?php echo JQ_UI_CSS; ?>
-<?php echo JQ_DT_CSS; ?>
-
-<?php echo HOUSE_CSS; ?>
+        <?php echo JQ_UI_CSS; ?>
+        <?php echo JQ_DT_CSS; ?>
+        <?php echo HOUSE_CSS; ?>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <style>
             @media screen {
@@ -1071,383 +1074,382 @@ $resultMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
-            function isNumber(n) {
-                "use strict";
-                return !isNaN(parseFloat(n)) && isFinite(n);
-            }
+    function isNumber(n) {
+        "use strict";
+        return !isNaN(parseFloat(n)) && isFinite(n);
+    }
 
-            function getRoomFees(cat) {
-                if (cat != '' && cat != 'x') {
-                    // go get the total
-                    var ds = parseInt($('#txtNites').val(), 10);
-                    if (isNaN(ds)) {
-                        ds = 0;
-                    }
-                    var ct = parseInt($('#txtCredit').val(), 10);
-                    if (isNaN(ct)) {
-                        ct = 0;
-                    }
-                    $('#spnAmount').text('').addClass('ui-autocomplete-loading');
-                    $.post('ws_ckin.php', {
-                        cmd: 'rtcalc',
-                        rcat: cat,
-                        nites: ds,
-                        credit: ct
-                    }, function (data) {
-                        $('#spnAmount').text('').removeClass('ui-autocomplete-loading');
-                        data = $.parseJSON(data);
-                        if (data.error) {
-                            if (data.gotopage) {
-                                window.open(data.gotopage, '_self');
-                            }
-                            flagAlertMessage(data.error, true);
-                            return;
-                        }
-                        if (data.amt) {
-                            $('#spnAmount').text(data.amt);
-                        }
-                        if (data.cat) {
-                            $('#selRateCategory').val(cat);
-                        }
-                    });
-                }
+    function getRoomFees(cat) {
+        if (cat != '' && cat != 'x') {
+            // go get the total
+            var ds = parseInt($('#txtNites').val(), 10);
+            if (isNaN(ds)) {
+                ds = 0;
             }
-            function setupRates() {
-                "use strict";
-                $('#txtFixedRate').change(function () {
-                    if ($('#selRateCategory').val() == 'x') {
-                        var amt = parseFloat($(this).val());
-                        if (isNaN(amt) || amt < 0) {
-                            amt = parseFloat($(this).prop("defaultValue"));
-                            if (isNaN(amt) || amt < 0)
-                                amt = 0;
-                            $(this).val(amt);
-                        }
-                        var ds = parseInt($('#txtNites').val(), 10);
-                        if (isNaN(ds)) {
-                            ds = 0;
-                        }
-                        $('#spnAmount').text(amt * ds);
-                    }
-                });
-                $('#txtNites, #txtCredit').change(function () {
-                    getRoomFees($('#selRateCategory').val());
-                });
-                $('#selRateCategory').change(function () {
-                    if ($(this).val() == 'x') {
-                        $('.hhk-fxFixed').show();
-                    } else {
-                        $('.hhk-fxFixed').hide();
-                        getRoomFees($(this).val());
-                    }
-                    $('#txtFixedRate').change();
-                });
-                $('#selRateCategory').change();
+            var ct = parseInt($('#txtCredit').val(), 10);
+            if (isNaN(ct)) {
+                ct = 0;
             }
-            var savedRow;
-            function getResource(idResc, type, trow) {
-                "use strict";
-                if ($('#cancelbtn').length > 0) {
-                    $('#cancelbtn').click();
-                }
-                $.post('ws_resc.php', {
-                    cmd: 'getResc',
-                    tp: type,
-                    id: idResc
-                }, function (data) {
-                    if (data) {
-                        try {
-                            data = $.parseJSON(data);
-                        } catch (err) {
-                            alert("Parser error - " + err.message);
-                            return;
-                        }
-                        if (data.error) {
-                            if (data.gotopage) {
-                                window.open(data.gotopage, '_self');
-                            }
-                            flagAlertMessage(data.error, true);
-                            return;
-                        }
-                        if (data.row) {
-                            savedRow = trow.children();
-                            trow.children().remove().end().append($(data.row));
-                            $('#savebtn').button().click(function () {
-                                var btn = $(this);
-                                saveResource(btn.data('id'), btn.data('type'), btn.data('cls'));
-                            });
-                            $('#cancelbtn').button().click(function () {
-                                trow.children().remove().end().append(savedRow);
-                                $('.reNewBtn').button();
-                            });
-                        }
+            $('#spnAmount').text('').addClass('ui-autocomplete-loading');
+            $.post('ws_ckin.php', {
+                cmd: 'rtcalc',
+                rcat: cat,
+                nites: ds,
+                credit: ct
+            }, function (data) {
+                $('#spnAmount').text('').removeClass('ui-autocomplete-loading');
+                data = $.parseJSON(data);
+                if (data.error) {
+                    if (data.gotopage) {
+                        window.open(data.gotopage, '_self');
                     }
-                });
-            }
-            function getStatusEvent(idResc, type, title) {
-                "use strict";
-                $.post('ws_resc.php', {
-                    cmd: 'getStatEvent',
-                    tp: type,
-                    title: title,
-                    id: idResc
-                }, function (data) {
-                    if (data) {
-                        try {
-                            data = $.parseJSON(data);
-                        } catch (err) {
-                            alert("Parser error - " + err.message);
-                            return;
-                        }
-                        if (data.error) {
-                            if (data.gotopage) {
-                                window.open(data.gotopage, '_self');
-                            }
-                            flagAlertMessage(data.error, true);
-                            return;
-                        }
-                        if (data.tbl) {
-                            $('#statEvents').children().remove().end().append($(data.tbl));
-                            $('.ckdate').datepicker({autoSize: true, dateFormat: 'M d, yy'});
-                            var buttons = {
-                                "Save": function () {
-                                    saveStatusEvent(idResc, type);
-                                },
-                                'Cancel': function () {
-                                    $(this).dialog('close');
-                                }
-                            };
-                            $('#statEvents').dialog('option', 'buttons', buttons);
-                            $('#statEvents').dialog('open');
-                        }
-                    }
-                });
-            }
-            function saveStatusEvent(idResc, type) {
-                "use strict";
-                $.post('ws_resc.php', $('#statForm').serialize() + '&cmd=saveStatEvent' + '&id=' + idResc + '&tp=' + type,
-                        function (data) {
-                            $('#statEvents').dialog('close');
-                            if (data) {
-                                try {
-                                    data = $.parseJSON(data);
-                                } catch (err) {
-                                    alert("Parser error - " + err.message);
-                                    return;
-                                }
-                                if (data.error) {
-                                    if (data.gotopage) {
-                                        window.open(data.gotopage, '_self');
-                                    }
-                                    flagAlertMessage(data.error, true);
-                                    return;
-                                }
-
-                                if (data.msg && data.msg != '') {
-                                    flagAlertMessage(data.msg, false);
-                                }
-
-                            }
-                        });
-            }
-            function deleteResource(idresc, type, trow, message) {
-                "use strict";
-                if (confirm('Delete?') === false) {
+                    flagAlertMessage(data.error, true);
                     return;
                 }
-                $.post('ws_resc.php', {
-                    cmd: 'rdel',
-                    tp: type,
-                    id: idresc
-                }, function (data) {
-                    if (data) {
-                        try {
-                            data = $.parseJSON(data);
-                        } catch (err) {
-                            alert("Parser error - " + err.message);
-                            return;
-                        }
-                        if (data.error) {
-                            if (data.gotopage) {
-                                window.open(data.gotopage, '_self');
-                            }
-                            flagAlertMessage(data.error, true);
-                            return;
-                        }
-                        if (data.success) {
-                            flagAlertMessage('Record Deleted.', false);
-                            trow.remove();
-                        }
-                    }
-                });
+                if (data.amt) {
+                    $('#spnAmount').text(data.amt);
+                }
+                if (data.cat) {
+                    $('#selRateCategory').val(cat);
+                }
+            });
+        }
+    }
+    function setupRates() {
+        "use strict";
+        $('#txtFixedRate').change(function () {
+            if ($('#selRateCategory').val() == 'x') {
+                var amt = parseFloat($(this).val());
+                if (isNaN(amt) || amt < 0) {
+                    amt = parseFloat($(this).prop("defaultValue"));
+                    if (isNaN(amt) || amt < 0)
+                        amt = 0;
+                    $(this).val(amt);
+                }
+                var ds = parseInt($('#txtNites').val(), 10);
+                if (isNaN(ds)) {
+                    ds = 0;
+                }
+                $('#spnAmount').text(amt * ds);
             }
-            function saveResource(idresc, type, clas) {
-                "use strict";
-                var parms = {};
-                $('.' + clas).each(function () {
-
-                    if ($(this).attr('type') === 'radio' || $(this).attr('type') === 'checkbox') {
-                        if (this.checked !== false) {
-                            parms[$(this).attr('id')] = 'on';
-                        }
-                    } else {
-                        parms[$(this).attr('id')] = $(this).val();
+        });
+        $('#txtNites, #txtCredit').change(function () {
+            getRoomFees($('#selRateCategory').val());
+        });
+        $('#selRateCategory').change(function () {
+            if ($(this).val() == 'x') {
+                $('.hhk-fxFixed').show();
+            } else {
+                $('.hhk-fxFixed').hide();
+                getRoomFees($(this).val());
+            }
+            $('#txtFixedRate').change();
+        });
+        $('#selRateCategory').change();
+    }
+    var savedRow;
+    function getResource(idResc, type, trow) {
+        "use strict";
+        if ($('#cancelbtn').length > 0) {
+            $('#cancelbtn').click();
+        }
+        $.post('ws_resc.php', {
+            cmd: 'getResc',
+            tp: type,
+            id: idResc
+        }, function (data) {
+            if (data) {
+                try {
+                    data = $.parseJSON(data);
+                } catch (err) {
+                    alert("Parser error - " + err.message);
+                    return;
+                }
+                if (data.error) {
+                    if (data.gotopage) {
+                        window.open(data.gotopage, '_self');
                     }
-                });
-                $.post('ws_resc.php', {
-                    cmd: 'redit',
-                    tp: type,
-                    id: idresc,
-                    parm: parms
-                }, function (data) {
-                    if (data) {
-                        try {
-                            data = $.parseJSON(data);
-                        } catch (err) {
-                            alert("Parser error - " + err.message);
-                            return;
-                        }
-                        if (data.error) {
-                            if (data.gotopage) {
-                                window.open(data.gotopage, '_self');
-                            }
-                            flagAlertMessage(data.error, true);
-                            return;
-                        } else if (data.roomList) {
-                            $('#roomTable').children().remove().end().append($(data.roomList));
-                            $('#tblroom').dataTable({
-                                "dom": '<"top"if>rt<"bottom"lp><"clear">',
-                                "iDisplayLength": 20,
-                                "aLengthMenu": [[20, 50, -1], [20, 50, "All"]],
-                                "language": {"emptyTable": "No data available in table"}
-                            });
-                        } else if (data.rescList) {
-                            $('#rescTable').children().remove().end().append($(data.rescList));
-                            $('#tblresc').dataTable({
-                                "dom": '<"top"if>rt<"bottom"lp><"clear">',
-                                "iDisplayLength": 20,
-                                "aLengthMenu": [[20, 50, -1], [20, 50, "All"]],
-                                "language": {"emptyTable": "No data available in table"}
-                            });
-                        } else if (data.constList) {
-                            $('#constr').children().remove().end().append($(data.constList));
-                        }
+                    flagAlertMessage(data.error, true);
+                    return;
+                }
+                if (data.row) {
+                    savedRow = trow.children();
+                    trow.children().remove().end().append($(data.row));
+                    $('#savebtn').button().click(function () {
+                        var btn = $(this);
+                        saveResource(btn.data('id'), btn.data('type'), btn.data('cls'));
+                    });
+                    $('#cancelbtn').button().click(function () {
+                        trow.children().remove().end().append(savedRow);
                         $('.reNewBtn').button();
+                    });
+                }
+            }
+        });
+    }
+    function getStatusEvent(idResc, type, title) {
+        "use strict";
+        $.post('ws_resc.php', {
+            cmd: 'getStatEvent',
+            tp: type,
+            title: title,
+            id: idResc
+        }, function (data) {
+            if (data) {
+                try {
+                    data = $.parseJSON(data);
+                } catch (err) {
+                    alert("Parser error - " + err.message);
+                    return;
+                }
+                if (data.error) {
+                    if (data.gotopage) {
+                        window.open(data.gotopage, '_self');
+                    }
+                    flagAlertMessage(data.error, true);
+                    return;
+                }
+                if (data.tbl) {
+                    $('#statEvents').children().remove().end().append($(data.tbl));
+                    $('.ckdate').datepicker({autoSize: true, dateFormat: 'M d, yy'});
+                    var buttons = {
+                        "Save": function () {
+                            saveStatusEvent(idResc, type);
+                        },
+                        'Cancel': function () {
+                            $(this).dialog('close');
+                        }
+                    };
+                    $('#statEvents').dialog('option', 'buttons', buttons);
+                    $('#statEvents').dialog('open');
+                }
+            }
+        });
+    }
+    function saveStatusEvent(idResc, type) {
+        "use strict";
+        $.post('ws_resc.php', $('#statForm').serialize() + '&cmd=saveStatEvent' + '&id=' + idResc + '&tp=' + type,
+                function (data) {
+                    $('#statEvents').dialog('close');
+                    if (data) {
+                        try {
+                            data = $.parseJSON(data);
+                        } catch (err) {
+                            alert("Parser error - " + err.message);
+                            return;
+                        }
+                        if (data.error) {
+                            if (data.gotopage) {
+                                window.open(data.gotopage, '_self');
+                            }
+                            flagAlertMessage(data.error, true);
+                            return;
+                        }
+
+                        if (data.msg && data.msg != '') {
+                            flagAlertMessage(data.msg, false);
+                        }
+
                     }
                 });
+    }
+    function deleteResource(idresc, type, trow, message) {
+        "use strict";
+        if (confirm('Delete?') === false) {
+            return;
+        }
+        $.post('ws_resc.php', {
+            cmd: 'rdel',
+            tp: type,
+            id: idresc
+        }, function (data) {
+            if (data) {
+                try {
+                    data = $.parseJSON(data);
+                } catch (err) {
+                    alert("Parser error - " + err.message);
+                    return;
+                }
+                if (data.error) {
+                    if (data.gotopage) {
+                        window.open(data.gotopage, '_self');
+                    }
+                    flagAlertMessage(data.error, true);
+                    return;
+                }
+                if (data.success) {
+                    flagAlertMessage('Record Deleted.', false);
+                    trow.remove();
+                }
             }
-            $(document).ready(function () {
-                "use strict";
+        });
+    }
+    function saveResource(idresc, type, clas) {
+        "use strict";
+        var parms = {};
+        $('.' + clas).each(function () {
 
-                var tabIndex = parseInt('<?php echo $tabIndex; ?>');
-                $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn').button();
-                $('#txtFaIncome, #txtFaSize').change(function () {
-                    var inc = $('#txtFaIncome').val().replace(',', ''),
-                            size = $('#txtFaSize').val(),
-                            errmsg = $('#spnErrorMsg');
-                    errmsg.text('');
-                    $('#txtFaIncome, #txtFaSize, #spnErrorMsg').removeClass('ui-state-highlight');
-                    if (inc == '' || size == '') {
-                        $('#spnFaCatTitle').text('');
-                        $('#hdnRateCat').val('');
-                        return false;
+            if ($(this).attr('type') === 'radio' || $(this).attr('type') === 'checkbox') {
+                if (this.checked !== false) {
+                    parms[$(this).attr('id')] = 'on';
+                }
+            } else {
+                parms[$(this).attr('id')] = $(this).val();
+            }
+        });
+        $.post('ws_resc.php', {
+            cmd: 'redit',
+            tp: type,
+            id: idresc,
+            parm: parms
+        }, function (data) {
+            if (data) {
+                try {
+                    data = $.parseJSON(data);
+                } catch (err) {
+                    alert("Parser error - " + err.message);
+                    return;
+                }
+                if (data.error) {
+                    if (data.gotopage) {
+                        window.open(data.gotopage, '_self');
                     }
-                    if (inc == '' || inc == '0' || isNaN(inc)) {
-                        $('#txtFaIncome').addClass('ui-state-highlight');
-                        errmsg.text('Fill in the Household Income').addClass('ui-state-highlight');
-                        return false;
-                    }
-                    if (size == '' || size == '0' || isNaN(size)) {
-                        $('#txtFaSize').addClass('ui-state-highlight');
-                        errmsg.text('Fill in the Household Size').addClass('ui-state-highlight');
-                        return false;
-                    }
-                    $.post('ws_ckin.php', {
-                        cmd: 'rtcalc',
-                        income: inc,
-                        hhsize: size,
-                        nites: 0
-                    }, function (data) {
-                        data = $.parseJSON(data);
-                        if (data.catTitle) {
-                            $('#spnFaCatTitle').text(data.catTitle);
-                        }
-                        if (data.cat) {
-                            $('#hdnRateCat').val(data.cat);
+                    flagAlertMessage(data.error, true);
+                    return;
+                } else if (data.roomList) {
+                    $('#roomTable').children().remove().end().append($(data.roomList));
+                    $('#tblroom').dataTable({
+                        "dom": '<"top"if>rt<"bottom"lp><"clear">',
+                        "iDisplayLength": 20,
+                        "aLengthMenu": [[20, 50, -1], [20, 50, "All"]],
+                        "language": {"emptyTable": "No data available in table"}
+                    });
+                } else if (data.rescList) {
+                    $('#rescTable').children().remove().end().append($(data.rescList));
+                    $('#tblresc').dataTable({
+                        "dom": '<"top"if>rt<"bottom"lp><"clear">',
+                        "iDisplayLength": 20,
+                        "aLengthMenu": [[20, 50, -1], [20, 50, "All"]],
+                        "language": {"emptyTable": "No data available in table"}
+                    });
+                } else if (data.constList) {
+                    $('#constr').children().remove().end().append($(data.constList));
+                }
+                $('.reNewBtn').button();
+            }
+        });
+    }
+    $(document).ready(function () {
+        "use strict";
+
+        var tabIndex = parseInt('<?php echo $tabIndex; ?>');
+        $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn').button();
+        $('#txtFaIncome, #txtFaSize').change(function () {
+            var inc = $('#txtFaIncome').val().replace(',', ''),
+                    size = $('#txtFaSize').val(),
+                    errmsg = $('#spnErrorMsg');
+            errmsg.text('');
+            $('#txtFaIncome, #txtFaSize, #spnErrorMsg').removeClass('ui-state-highlight');
+            if (inc == '' || size == '') {
+                $('#spnFaCatTitle').text('');
+                $('#hdnRateCat').val('');
+                return false;
+            }
+            if (inc == '' || inc == '0' || isNaN(inc)) {
+                $('#txtFaIncome').addClass('ui-state-highlight');
+                errmsg.text('Fill in the Household Income').addClass('ui-state-highlight');
+                return false;
+            }
+            if (size == '' || size == '0' || isNaN(size)) {
+                $('#txtFaSize').addClass('ui-state-highlight');
+                errmsg.text('Fill in the Household Size').addClass('ui-state-highlight');
+                return false;
+            }
+            $.post('ws_ckin.php', {
+                cmd: 'rtcalc',
+                income: inc,
+                hhsize: size,
+                nites: 0
+            }, function (data) {
+                data = $.parseJSON(data);
+                if (data.catTitle) {
+                    $('#spnFaCatTitle').text(data.catTitle);
+                }
+                if (data.cat) {
+                    $('#hdnRateCat').val(data.cat);
+                }
+            });
+            return false;
+        });
+        setupRates();
+        $('#mainTabs').tabs();
+        $('#mainTabs').tabs("option", "active", tabIndex);
+        $('#statEvents').dialog({
+            autoOpen: false,
+            resizable: true,
+            width: 800,
+            modal: true,
+            title: 'Manage Status Events'
+        });
+        $('div#mainTabs').on('click', '.reEditBtn, .reNewBtn', function () {
+            getResource($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
+        });
+        $('div#mainTabs').on('click', '.reDelBtn', function () {
+            deleteResource($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
+        });
+        $('div#mainTabs').on('click', '.reStatBtn', function () {
+            getStatusEvent($(this).attr('name'), $(this).data('enty'), $(this).data('title'));
+        });
+        $('#tblroom, #tblresc').dataTable({
+            "dom": '<"top"if>rt<"bottom"lp><"clear">',
+            "displayLength": 50,
+            "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
+        });
+        $('.hhk-selLookup').change(function () {
+            var $sel = $(this),
+                table = $(this).find("option:selected").text(),
+                type = $(this).val();
+
+            if ($sel.data('type') === 'd') {
+                table = $sel.val();
+                type = 'd';
+            }
+
+            $.post('ResourceBuilder.php', {table: table, cmd: "load", tp: type},
+                    function (data) {
+                        $sel.closest('form').children('div').children().remove();
+                        if (data) {
+                            $sel.closest('form').children('div').append(data);
                         }
                     });
-                    return false;
-                });
-                setupRates();
-                $('#mainTabs').tabs();
-                $('#mainTabs').tabs("option", "active", tabIndex);
-                $('#statEvents').dialog({
-                    autoOpen: false,
-                    resizable: true,
-                    width: 800,
-                    modal: true,
-                    title: 'Manage Status Events'
-                });
-                $('div#mainTabs').on('click', '.reEditBtn, .reNewBtn', function () {
-                    getResource($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
-                });
-                $('div#mainTabs').on('click', '.reDelBtn', function () {
-                    deleteResource($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
-                });
-                $('div#mainTabs').on('click', '.reStatBtn', function () {
-                    getStatusEvent($(this).attr('name'), $(this).data('enty'), $(this).data('title'));
-                });
-                $('#tblroom, #tblresc').dataTable({
-                    "dom": '<"top"if>rt<"bottom"lp><"clear">',
-                    "iDisplayLength": 20,
-                    "aLengthMenu": [[20, 50, -1], [20, 50, "All"]],
-                    "language": {"emptyTable": "No data available in table"}
-                });
-                $('.hhk-selLookup').change(function () {
-                    var $sel = $(this),
-                        table = $(this).find("option:selected").text(),
-                        type = $(this).val();
+        });
+        $('.hhk-saveLookup').click(function () {
+            var $btn = $(this).closest('form');
+            var sel = $btn.find('select.hhk-selLookup');
+            var table = sel.find('option:selected').text(),
+                type = $btn.find('select').val();
 
-                    if ($sel.data('type') === 'd') {
-                        table = $sel.val();
-                        type = 'd';
-                    }
+            if (sel.data('type') === 'd') {
+                table = sel.val();
+                type = 'd';
+            }
 
-                    $.post('ResourceBuilder.php', {table: table, cmd: "load", tp: type},
-                            function (data) {
-                                $sel.closest('form').children('div').children().remove();
-                                if (data) {
-                                    $sel.closest('form').children('div').append(data);
-                                }
-                            });
-                });
-                $('.hhk-saveLookup').click(function () {
-                    var $btn = $(this).closest('form');
-                    var sel = $btn.find('select.hhk-selLookup');
-                    var table = sel.find('option:selected').text(),
-                        type = $btn.find('select').val();
-
-                    if (sel.data('type') === 'd') {
-                        table = sel.val();
-                        type = 'd';
-                    }
-
-                    $.post('ResourceBuilder.php', $btn.serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
-                            function(data) {
-                                if (data) {
-                                    $btn.children('div').children().remove().end().append(data);
-                                }
-                            });
-                }).button();
-                verifyAddrs('#roomTable');
-                $('input.number-only').change(function () {
-                    if (isNumber(this.value) === false) {
-                        $(this).val('0');
-                    }
-                    $(this).val(parseInt(this.value));
-                });
-                $('#mainTabs').show();
-            });
+            $.post('ResourceBuilder.php', $btn.serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
+                    function(data) {
+                        if (data) {
+                            $btn.children('div').children().remove().end().append(data);
+                        }
+                    });
+        }).button();
+        verifyAddrs('#roomTable');
+        $('input.number-only').change(function () {
+            if (isNumber(this.value) === false) {
+                $(this).val('0');
+            }
+            $(this).val(parseInt(this.value));
+        });
+        $('#mainTabs').show();
+    });
         </script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>

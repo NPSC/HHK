@@ -390,16 +390,16 @@ class Psg {
 
 
         // change patient Selector
-        if (count($notPatients) > 0) {
-
-            $changePatientMU = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('fieldset',
-                        HTMLContainer::generateMarkup('legend', 'Change Patient', array('style'=>'font-weight:bold;'))
-                        . HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($notPatients, '', TRUE), array('id'=>'selChangePsgPat', 'data-psg'=>$this->getIdPsg()))
-                        , array('class'=>'hhk-panel','title'=>'Change the patient to another person in this PSG.')),
-            array('style'=>'float:left;'))
-            . "<script type='text/javascript'>$(document).ready(function() { $('#selChangePsgPat').change(function () {changePsgPatient($(this).data('psg'), $(this).val(), $(this).children('option:selected').text());});});</script>";
-        }
+//        if (count($notPatients) > 0) {
+//
+//            $changePatientMU = HTMLContainer::generateMarkup('div',
+//                HTMLContainer::generateMarkup('fieldset',
+//                        HTMLContainer::generateMarkup('legend', 'Change Patient', array('style'=>'font-weight:bold;'))
+//                        . HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($notPatients, '', TRUE), array('id'=>'selChangePsgPat', 'data-psg'=>$this->getIdPsg()))
+//                        , array('class'=>'hhk-panel','title'=>'Change the patient to another person in this PSG.')),
+//            array('style'=>'float:left;'))
+//            . "<script type='text/javascript'>$(document).ready(function() { $('#selChangePsgPat').change(function () {changePsgPatient($(this).data('psg'), $(this).val(), $(this).children('option:selected').text());});});</script>";
+//        }
 
 
         // Change log

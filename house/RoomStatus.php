@@ -61,6 +61,7 @@ if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
 
     $rooms = array();
     $prefix = '';
+    $currentTab = 3;
 
     if (isset($_POST['btnSubmitClean'])) {
         $prefix = RoomState::Dirty;

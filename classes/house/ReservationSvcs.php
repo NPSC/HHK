@@ -1412,7 +1412,7 @@ class ReservationSvcs {
 
         // Confirmation button
         $mk2 = '';
-        if ($resv->getStatus() == ReservationStatus::Committed) {
+        if ($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::Waitlist) {
             $mk2 .= HTMLInput::generateMarkup('Create Confirmation...', array('type'=>'button', 'id'=>'btnShowCnfrm', 'style'=>'margin:.3em;float:right;', 'data-rid'=>$resv->getIdReservation()));
         }
 

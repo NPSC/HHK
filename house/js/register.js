@@ -679,8 +679,8 @@ $(document).ready(function () {
 
     $.extend($.fn.dataTable.defaults, {
         "dom": '<"top"if>rt<"bottom"lp><"clear">',
-        "iDisplayLength": 50,
-        "aLengthMenu": [[25, 50, -1], [25, 50, "All"]],
+        "displayLength": 50,
+        "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
         "order": [[ 2, 'asc' ]]
     });
 
@@ -1177,19 +1177,27 @@ $(document).ready(function () {
                         $('#rptInvdiv').on('click', '.invAction', function (event) {
                             event.preventDefault();
                             $("#divAlert1, #paymentMessage").hide();
+                            
                             if ($(this).data('stat') == 'del') {
                                 if (!confirm('Delete this Invoice?')) {
                                     return;
                                 }
                             }
+                            
+                            // Check for email
+                            if ($(this).data('stat') === 'vem') {
+                                    window.open('ShowInvoice.php?invnum=' + $(this).data('inb'));
+                                    return;
+                            }
+   
                             invoiceAction($(this).data('iid'), $(this).data('stat'), event.target.id);
                             $('#rptInvdiv .gmenu').menu("collapse");
                         });
                         
                         $('#InvTable').dataTable({
                             "dom": '<"top"if>rt<"bottom"lp><"clear">',
-                            "iDisplayLength": 50,
-                            "aLengthMenu": [[20, 50, 100, -1], [20, 50, 100, "All"]],
+                            "displayLength": 50,
+                            "lengthMenu": [[20, 50, 100, -1], [20, 50, 100, "All"]],
                             "order": [[ 1, 'asc' ]]
                         });
                     }
@@ -1199,6 +1207,10 @@ $(document).ready(function () {
 
     $('#btnPrintRegForm').click(function () {
         window.open($(this).data('page') + '?d=' + $('#regckindate').val(), '_blank');
+    });
+
+    $('#btnPrintWL').click(function () {
+        window.open($(this).data('page') + '?d=' + $('#regwldate').val(), '_blank');
     });
 
     if (rctMkup !== '') {

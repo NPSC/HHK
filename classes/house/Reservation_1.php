@@ -137,59 +137,74 @@ class Reservation_1 {
             return FALSE;
         }
 
-        // Check for vacant rooms
-        $rescs = $this->findResources($dbh, $newStartDT->format('Y-m-d 17:00:00'), $newEndDt->format('Y-m-d 09:00:00'), $this->getNumberGuests(), array('room','rmtroom','part'), TRUE);
+        $rescs = array();
 
-        if (count($rescs) > 0) {
+        if ($this->getStatus() == ReservationStatus::Waitlist) {
 
             // move the reservation
             $this->setExpectedArrival($newStartDT->format('Y-m-d'));
             $this->setExpectedDeparture($newEndDt->format('Y-m-d'));
 
-            // If my original resource is unavailable, use another
-            $roomChanged = '';
-            if (isset($rescs[$this->getIdResource()]) === FALSE || $forceNewResource) {
-
-                $keys = array_keys($rescs);
-                $this->setIdResource($keys[0]);
-
-                $resc = $rescs[$keys[0]];
-                $roomChanged = 'to room ' . $resc->getTitle() . '.  ';
-
-                if ($this->getStatus() == ReservationStatus::Waitlist) {
-                    $this->setStatus(ReservationStatus::Committed);
-                    $roomChanged .= 'New status is ' . $this->getStatusTitle(ReservationStatus::Committed);
-                }
-
-            }
-
             $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
-
-            $this->resultMessage = 'Reservation changed ' . $roomChanged;
+            $this->resultMessage = 'Reservation moved';
             return TRUE;
 
         } else {
 
-            if ($forceNewResource) {
+            // Check for vacant rooms
+            $rescs = $this->findResources($dbh, $newStartDT->format('Y-m-d 17:00:00'), $newEndDt->format('Y-m-d 09:00:00'), $this->getNumberGuests(), array('room','rmtroom','part'), TRUE);
+
+            if (count($rescs) > 0) {
 
                 // move the reservation
                 $this->setExpectedArrival($newStartDT->format('Y-m-d'));
                 $this->setExpectedDeparture($newEndDt->format('Y-m-d'));
 
-                $this->setIdResource('0');
-                $this->setStatus(ReservationStatus::Waitlist);
+                // If my original resource is unavailable, use another
+                $roomChanged = '';
+                if (isset($rescs[$this->getIdResource()]) === FALSE || $forceNewResource) {
+
+                    $keys = array_keys($rescs);
+                    $this->setIdResource($keys[0]);
+
+                    $resc = $rescs[$keys[0]];
+                    $roomChanged = 'to room ' . $resc->getTitle() . '.  ';
+
+                    if ($this->getStatus() == ReservationStatus::Waitlist) {
+                        $this->setStatus(ReservationStatus::Committed);
+                        $roomChanged .= 'New status is ' . $this->getStatusTitle(ReservationStatus::Committed);
+                    }
+
+                }
 
                 $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
 
-                $this->resultMessage = 'Reservation waitlisted';
+                $this->resultMessage = 'Reservation changed ' . $roomChanged;
                 return TRUE;
 
             } else {
 
-                $this->resultMessage = 'The date range is not available.  ';
-                return FALSE;
+                if ($forceNewResource) {
+
+                    // move the reservation
+                    $this->setExpectedArrival($newStartDT->format('Y-m-d'));
+                    $this->setExpectedDeparture($newEndDt->format('Y-m-d'));
+
+                    $this->setIdResource('0');
+                    $this->setStatus(ReservationStatus::Waitlist);
+
+                    $this->saveReservation($dbh, $this->getIdRegistration(), $uname);
+
+                    $this->resultMessage = 'Reservation waitlisted';
+                    return TRUE;
+
+                } else {
+
+                    $this->resultMessage = 'The date range is not available.  ';
+                    return FALSE;
+                }
             }
-       }
+        }
 
         return FALSE;
     }

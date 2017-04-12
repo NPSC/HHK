@@ -112,15 +112,32 @@ class History {
     }
 
 
-    public function getReservedGuestsMarkup(\PDO $dbh, $status = ReservationStatus::Committed, $page = "Referral.php", $includeAction = TRUE) {
+    public function getReservedGuestsMarkup(\PDO $dbh, $status = ReservationStatus::Committed, $page = "Referral.php", $includeAction = TRUE, $start = '', $days = 1) {
 
         if (is_null($this->roomRates)) {
             $this->roomRates = RoomRate::makeDescriptions($dbh);
         }
 
+        $whDate = '';
+
+        if ($start != '') {
+            try {
+                $startDT = new DateTime(filter_var($start, FILTER_SANITIZE_STRING));
+                $days = intval($days);
+
+                $endDT = new DateTime(filter_var($start, FILTER_SANITIZE_STRING));
+                $endDT->add(new DateInterval('P' . $days . 'D'));
+
+                $whDate = " and DATE(Arrival_Date) >= DATE('" . $startDT->format('Y-m-d') . "') and DATE(Arrival_Date) <= DATE('" . $endDT->format('Y-m-d') . "') ";
+
+            } catch (Exception $ex) {
+                $whDate = '';
+            }
+        }
+
         if (is_null($this->resvEvents)) {
 
-            $query = "select * from vreservation_events where Status = '$status' order by Arrival_Date";
+            $query = "select * from vreservation_events where Status = '$status' $whDate order by Arrival_Date";
             $stmt = $dbh->query($query);
             $this->resvEvents = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }

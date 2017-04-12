@@ -766,7 +766,7 @@ ORDER BY v.idVisit , v.Span;");
 
         // Invoice Notes
         $feesTbl->addBodyTr(
-            HTMLTable::makeTh('Invoice Notes', array('colspan'=>'3', 'style'=>'text-align:left;'))
+            HTMLTable::makeTh('Invoice Notes (Public)', array('colspan'=>'3', 'style'=>'text-align:left;'))
                 , array('style'=>'display:none;', 'class'=>'hhk-minPayment'));
 
         $feesTbl->addBodyTr(
@@ -835,7 +835,7 @@ ORDER BY v.idVisit , v.Span;");
         }
 
         // Payment notes
-        $payTbl->addBodyTr(HTMLTable::makeTh('Payment Notes', array('style'=>'text-align:left;min-width:250px;', 'colspan'=>'3')), array('class'=>'paySelectNotes'));
+        $payTbl->addBodyTr(HTMLTable::makeTh('Payment Notes (Private)', array('style'=>'text-align:left;min-width:250px;', 'colspan'=>'3')), array('class'=>'paySelectNotes'));
         $payTbl->addBodyTr(
             HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea', '', array('name'=>'txtPayNotes', 'rows'=>1, 'style'=>'width:100%;', 'class'=>'hhk-feeskeys')), array('colspan'=>'3'))
             , array('class'=>'paySelectNotes'));
