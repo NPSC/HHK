@@ -343,8 +343,10 @@ where  ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DATE(s.Sp
 
 function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hospCodes, \Config_Lite $labels, $showAssoc, $showDiagnosis, $showLocation, $patBirthDate) {
 
+    $psgLabel = $labels->getString('statement', 'psgAbrev', 'PSG') . ' Id';
+
     $query = "Select DISTINCT
-    ng.idPsg as `PSG Id`,
+    ng.idPsg as `$psgLabel`,
     ifnull(ng.idName, 0) as `Id`,
     ifnull(n.Name_First,'') as `First`,
     ifnull(n.Name_Last,'') as `Last`,
@@ -383,7 +385,7 @@ order by ng.idPsg";
     if (!$local) {
 
         $reportRows = 1;
-        $file = 'PSGReport';
+        $file = $psgLabel . 'Report';
         $sml = OpenXML::createExcel('GuestTracker', 'PSG Report');
 
     }
@@ -469,9 +471,9 @@ order by ng.idPsg";
             }
         }
 
-        if ($psgId != $r['PSG Id']) {
-            $firstTd = $r['PSG Id'];
-            $psgId = $r['PSG Id'];
+        if ($psgId != $r[$psgLabel]) {
+            $firstTd = $r[$psgLabel];
+            $psgId = $r[$psgLabel];
         } else {
             $firstTd = '';
         }
@@ -479,7 +481,7 @@ order by ng.idPsg";
 
         if ($local) {
 
-            $r['PSG Id'] = $firstTd;
+            $r[$psgLabel] = $firstTd;
 
             if (isset($r['Birth Date'])) {
                 $r['Birth Date'] = $r['Birth Date'] == '' ? '' : date('M j, Y', strtotime($r['Birth Date']));
@@ -930,7 +932,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             case 'psg':
                 $rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $end, readGenLookupsPDO($dbh, 'Patient_Rel_Type'), $uS->guestLookups[GL_TableNames::Hospital], $labels, $showAssoc, $showDiag, $showLocation, $uS->PatientBirthDate);
                 $dataTable = $rptArry['table'];
-                $sTbl->addBodyTr(HTMLTable::makeTh('Patient Support Group Report', array('colspan'=>'4')));
+                $sTbl->addBodyTr(HTMLTable::makeTh($labels->getString('statement', 'psgLabel', 'PSG') . ' Report', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
                 $sTbl->addBodyTr(HTMLTable::makeTd('Hospitals', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
                 if ($showDiag) {
