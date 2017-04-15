@@ -2117,8 +2117,8 @@ select
     s.Visit_Span,
     s.idRoom,
     ifnull(r.Title,'') as `Room`,
-    (case when m.Name_Nickname = '' then m.Name_First else m.Name_Nickname end) as Name_First,
-    (case when m.Name_Suffix = '' then m.Name_Last else concat(m.Name_Last, ' ', m.Name_Suffix) end) as `Name_Last`,
+    (case when n.Name_Nickname = '' then n.Name_First else n.Name_Nickname end) as Name_First,
+    (case when n.Name_Suffix = '' then n.Name_Last else concat(n.Name_Last, ' ', n.Name_Suffix) end) as `Name_Last`,
     s.Status,
     v.Status as `Visit_Status`,
     v.idRegistration as `idRegistration`,
@@ -2131,16 +2131,12 @@ select
     s.Span_Start_Date,
     s.Span_End_Date,
     s.On_Leave,
-    case when s.Status = 'co' then 'transparant' else ifnull(re.Background_Color, 'white') end as backgroundColor,
-    case when s.Status = 'co' then 'black' else ifnull(re.Text_Color, 'black') end as textColor,
-    'black' as borderColor,
     rg.idPsg,
     ng.Relationship_Code
 from
-    stays s left join vmember_listing m ON s.idName = m.Id
+    stays s left join `name` n ON s.idName = n.idName
             left join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
             left join room r on s.idRoom = r.idRoom
-            left join resource re on re.idResource = v.idResource
             left join registration rg on v.idRegistration = rg.idRegistration
             left join name_guest ng on s.idName = ng.idName and rg.idPsg = ng.idPsg
             left join gen_lookups g on s.Status = g.`Code` and g.`Table_Name` = 'Visit_Status';

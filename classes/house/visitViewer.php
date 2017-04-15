@@ -540,10 +540,10 @@ class VisitView {
                 . HTMLTable::makeTd($r['On_Leave'] > 0 ? 'On Leave' : $r['Status_Title'])
 
                 // room
-                . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $r["Room"], array('style' => 'background-color:' . $r["backgroundColor"] . ';color:' . $r["textColor"] . ';')))
+                . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $r["Room"]))
 
                 // CheckIn date
-                . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', date('M j, Y H:i', strtotime($r['Span_Start_Date'])), array('id' => 'stayCkInDate_' . $r['idName'], 'name' => '[stayCkInDate][' . $r['idName'] . ']')));
+                . HTMLTable::makeTd(HTMLInput::generateMarkup(date('M j, Y H:i', strtotime($r['Span_Start_Date'])), array('id' => 'stayCkInDate_' . $r['idName'], 'name' => '[stayCkInDate][' . $r['idName'] . ']', 'class'=>'ckdate', 'readonly'=>'raadonly')));
 
 
             if ($action == '') {

@@ -740,7 +740,7 @@ class Visit {
         $this->stays[] = $stayRS;
     }
 
-    public function checkOutGuest(\PDO $dbh, $idGuest, $dateDeparted = "", $notes = "", $sendEmail = TRUE, $newDepositDisposition = '') {
+    public function checkOutGuest(\PDO $dbh, $idGuest, $dateDeparted = "", $notes = "", $sendEmail = TRUE) {
 
         $stayRS = NULL;
 
@@ -813,7 +813,7 @@ class Visit {
         EditRS::updateStoredVals($stayRS);
 
 
-        $msg = $this->checkStaysEndVisit($dbh, $uS->username, $dateDepartedDT, $sendEmail, $newDepositDisposition);
+        $msg = $this->checkStaysEndVisit($dbh, $uS->username, $dateDepartedDT, $sendEmail);
 
 
         // prepare email message if needed
@@ -888,7 +888,7 @@ class Visit {
         return "Guest Id " . $idGuest . " checked out on " . $dateDepartedDT->format('m-d-Y') . ".  " . $msg;
     }
 
-    protected function checkStaysEndVisit(\PDO $dbh, $username, \DateTime $dateDeparted, $sendEmail = TRUE, $newDepositDisposition = '') {
+    protected function checkStaysEndVisit(\PDO $dbh, $username, \DateTime $dateDeparted, $sendEmail = TRUE) {
 
         $msg = '';
         $uS = Session::getInstance();
@@ -920,7 +920,7 @@ class Visit {
         $this->visitRS->Actual_Departure->setNewVal($dateDeparted->format("Y-m-d H:i:s"));
         $this->visitRS->Span_End->setNewVal($dateDeparted->format("Y-m-d H:i:s"));
         $this->visitRS->Status->setNewVal(VisitStatus::CheckedOut);
-        $this->visitRS->Key_Dep_Disposition->setNewVal($newDepositDisposition);
+        //$this->visitRS->Key_Dep_Disposition->setNewVal($newDepositDisposition);
 
         $this->updateVisitRecord($dbh, $username);
 
@@ -1043,7 +1043,7 @@ class Visit {
         return $msg;
     }
 
-    public function checkOutVisit(\PDO $dbh, $dateDeparted = "", $keyDepositDisp = '', $sendEmail = TRUE) {
+    protected function checkOutVisit(\PDO $dbh, $dateDeparted = "") {
         $msg = "";
 
         // Check out date
@@ -1074,10 +1074,18 @@ class Visit {
         // Check out each stay
         foreach ($this->stays as $stayRS) {
             if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
-                $msg .= $this->checkOutGuest($dbh, $stayRS->idName->getStoredVal(), $dateDeparted, '', $sendEmail);
+                $msg .= $this->checkOutGuest($dbh, $stayRS->idName->getStoredVal(), $dateDeparted, '');
             }
         }
         return $msg;
+    }
+
+    public function moveStay(\PDO $dbh, $id, DateTime $newStartDT) {
+
+        // Move within visit arrival and departure?
+
+        // Move the visit
+        
     }
 
     /**
@@ -1250,7 +1258,7 @@ class Visit {
 
     }
 
-    public function endLeave(\PDO $dbh, $returning, $extendReturnDate, $newDisposition) {
+    public function endLeave(\PDO $dbh, $returning, $extendReturnDate) {
 
         $reply = '';
         $uS = Session::getInstance();
@@ -1276,7 +1284,7 @@ class Visit {
                 return 'Cannot checkout in the future.  ';
             }
 
-            $reply .= $this->checkOutVisit($dbh, $coDT->format('Y-m-d H:i:s'), $newDisposition);
+            $reply .= $this->checkOutVisit($dbh, $coDT->format('Y-m-d H:i:s'));
 
             // Delete any On-leave records.
             $vol = new Visit_onLeaveRS();

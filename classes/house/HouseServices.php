@@ -219,12 +219,6 @@ class HouseServices {
             }
         }
 
-        // Deposit disposition
-        $newDisposition = $visit->getKeyDepDisposition();
-        if (isset($post["selKeyDisposition"])) {
-            $newDisposition = filter_var($post["selKeyDisposition"], FILTER_SANITIZE_STRING);
-        }
-
         // Return Date
         if (isset($post['visRtn']) && $visit->getVisitStatus() == VisitStatus::CheckedIn) {
 
@@ -261,6 +255,30 @@ class HouseServices {
                         $reply .= 'Cleaning Fee Setting Updated.  ';
                     }
                 }
+            }
+        }
+
+        // Change Checkin date
+        if (isset($post['stayCkInDate_'])) {
+
+            // cannot checkin after today
+            $today = new DateTime();
+            $today->setTime(0, 0, 0);
+
+            foreach ($post['stayCkInDate_'] as $k => $v) {
+
+                $ckinDT = new DateTime($v);
+                $ckinDT->setTime(0, 0, 0);
+
+                if ($ckinDT == $today) {
+                    // No change
+                    continue;
+                } else if ($ckinDT > $today) {
+                    $reply .= 'Attempt to check into the future is not allowed.  ';
+                    continue;
+                }
+
+                $visit->moveStay($dbh, $k, $ckinDT);
             }
         }
 
@@ -343,7 +361,7 @@ class HouseServices {
                         $returning = FALSE;
                     }
 
-                    $reply .= $visit->endLeave($dbh, $returning, $extendReturnDate, $newDisposition);
+                    $reply .= $visit->endLeave($dbh, $returning, $extendReturnDate);
                     $returnCkdIn = TRUE;
                 }
 
@@ -457,7 +475,7 @@ class HouseServices {
                         $now = date('H:i:s');
                         $coDT = new \DateTime($dt . ' ' . $now);
 
-                        $reply .= $visit->checkOutGuest($dbh, $id, $coDT->format('Y-m-d H:i:s'), $notes, TRUE, $newDisposition);
+                        $reply .= $visit->checkOutGuest($dbh, $id, $coDT->format('Y-m-d H:i:s'), $notes, TRUE);
                         $returnCkdIn = TRUE;
 
                         // Only need Notes once.
