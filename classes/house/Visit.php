@@ -755,7 +755,7 @@ class Visit {
 
 
         if (is_null($stayRS) || $stayRS->idStays->getStoredVal() == 0) {
-            return "Checkout Failed: The guest was not checked in.  ";
+            return "Checkout Failed: The guest was not checked-in.  ";
         }
 
         $uS = Session::getInstance();
@@ -815,6 +815,10 @@ class Visit {
 
         $msg = $this->checkStaysEndVisit($dbh, $uS->username, $dateDepartedDT, $sendEmail);
 
+        // Get guest names
+        $stmt = $dbh->query("Select Name_Full from `name` where idName = $idGuest;");
+        $gsts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $guestName = $gsts[0][0];
 
         // prepare email message if needed
         try {
@@ -827,12 +831,6 @@ class Visit {
                 }
 
 
-                // Get guest names
-                $query = "Select Name_First, Name_Last
-                    from `name` where idName = :vst; ";
-                $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-                $stmt->execute(array(':vst' => $idGuest));
-                $gsts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                 $gMarkup = '<html><body><h3>Guest Checkout</h3><p>Departure Date: ' . date('g:ia D M jS, Y', strtotime($stayRS->Checkout_Date->getStoredVal())) . ';  from ' . $roomTitle . '</p>';
 
@@ -841,7 +839,7 @@ class Visit {
                     $tbl->addHeaderTr(HTMLTable::makeTh('Id') . HTMLTable::makeTh('Guest Name') . HTMLTable::makeTh('Checked-In') . HTMLTable::makeTh('Checked-Out'));
 
                     foreach ($gsts as $g) {
-                        $tbl->addBodyTr(HTMLTable::makeTd($idGuest) . HTMLTable::makeTd($g['Name_First'] . ' ' . $g['Name_Last'])
+                        $tbl->addBodyTr(HTMLTable::makeTd($idGuest) . HTMLTable::makeTd($guestName)
                                 . HTMLTable::makeTd(date('g:ia D M jS, Y', strtotime($stayRS->Checkin_Date->getStoredVal())))
                                 . HTMLTable::makeTd(date('g:ia D M jS, Y', strtotime($stayRS->Checkout_Date->getStoredVal()))));
                     }
@@ -885,7 +883,7 @@ class Visit {
             $msg .= $ex->getMessage();
         }
 
-        return "Guest Id " . $idGuest . " checked out on " . $dateDepartedDT->format('m-d-Y') . ".  " . $msg;
+        return $guestName . " checked out on " . $dateDepartedDT->format('M j, Y') . ".  " . $msg;
     }
 
     protected function checkStaysEndVisit(\PDO $dbh, $username, \DateTime $dateDeparted, $sendEmail = TRUE) {
@@ -1080,12 +1078,106 @@ class Visit {
         return $msg;
     }
 
-    public function moveStay(\PDO $dbh, $id, DateTime $newStartDT) {
+    /**
+     *
+     * @param \PDO $dbh
+     * @param array $newStayStartDates posted array of stay start dates
+     * @return string
+     */
+    public function moveStay(\PDO $dbh, $newStayStartDates) {
 
-        // Move within visit arrival and departure?
+        $uS = Session::getInstance();
+        $reply = '';
 
-        // Move the visit
-        
+        $today = new \DateTime();
+        $today->setTime(0, 0, 0);
+
+        $visitStart = new \DateTime($this->getSpanStart());
+        $visitStart->setTime(0, 0, 0);
+
+        if ($this->getVisitStatus() == VisitStatus::CheckedIn || $this->getSpanEnd() == '') {
+
+            $vend = new DateTime($this->getExpectedDeparture());
+
+            if ($vend < $today) {
+                $vend = new \DateTime($today->format('Y-m-d'));
+            }
+
+        } else {
+
+            $vend = new \DateTime($this->getSpanEnd());
+
+        }
+
+        $vend->setTime(0, 0, 0);
+
+        $stays = $this->loadStaysStatic($dbh, $this->getIdVisit(), $this->getSpan(), '');  // Loads all stays
+
+        foreach ($stays as $stayRs) {
+
+            if (isset($newStayStartDates[$stayRs->idStays->getStoredVal()])) {
+
+                $newStayStart = filter_var($newStayStartDates[$stayRs->idStays->getStoredVal()], FILTER_SANITIZE_STRING);
+
+                if ($newStayStart != '') {
+                    $ckinDT = new DateTime($newStayStart);
+                    $ckinDT->setTime(0, 0, 0);
+                } else {
+                    continue;
+                }
+
+                $stayStartDT = new \DateTime($stayRs->Span_Start_Date->getStoredVal());
+                $stayStartDT->setTime(0, 0, 0);
+
+                $stayEndDT = new \DateTime($stayRs->Span_End_Date->getStoredVal());
+                $stayEndDT->setTime(0, 0, 0);
+
+                //
+                if ($ckinDT == $stayStartDT) {
+                    // No Change
+                    continue;
+
+                } else if ($ckinDT < $visitStart && $this->getSpan() > 0) {
+                    //
+                    $reply .= 'Cannot check in before the visit span starts: ' . $visitStart->format('M j, Y') . '.  ';
+                    continue;
+
+                } else if ($ckinDT > $stayEndDT && $stayRs->Status->getStoredVal() != VisitStatus::CheckedIn) {
+                    //
+                    $reply .= "Cannot check the guest in after the guest's stay ends: " . $stayEndDT->format('M j, Y') . '.  ';
+                    continue;
+
+                } else if ($ckinDT > $vend) {
+                    //
+                    $reply .= 'Cannot check in after the visit span ends: ' . $vend->format('M j, Y') . '.  ';
+                    continue;
+
+                } else if ($ckinDT > $today) {
+                    // Future
+                    $reply .= 'Cannot change a checked-in date to a future date.  ';
+                    continue;
+                }
+
+                // Stay can be moved
+
+
+                // Move entire visit?
+                if ($ckinDT < $visitStart && $this->getSpan() == 0) {
+
+                    $startDelta = 0 - ($ckinDT->diff($visitStart, TRUE)->days);
+
+                    $reply .= VisitView::moveVisit($dbh, $this->getIdVisit(), $this->getSpan(), $startDelta, $startDelta, $uS->username);
+                    
+                } else {
+
+                    $stayRs->Span_Start_Date->setNewVal($ckinDT->format('m-d-Y H:i:s'));
+                    VisitView::saveStaysDates($dbh, array($stayRs), $this->getIdRegistration(), $uS->username);
+                    $reply .= 'Stay start date moved. ';
+                }
+
+            }
+        }
+        return $reply;
     }
 
     /**
@@ -1403,8 +1495,13 @@ class Visit {
             $stayRS = new StaysRS();
             $stayRS->idVisit->setStoredVal($idVisit);
             $stayRS->Visit_Span->setStoredVal($span);
-            $stayRS->Status->setStoredVal($statusFilter);
-            $rows = EditRS::select($dbh, $stayRS, array($stayRS->idVisit, $stayRS->Visit_Span, $stayRS->Status));
+
+            if ($statusFilter != '') {
+                $stayRS->Status->setStoredVal($statusFilter);
+                $rows = EditRS::select($dbh, $stayRS, array($stayRS->idVisit, $stayRS->Visit_Span, $stayRS->Status));
+            } else {
+                $rows = EditRS::select($dbh, $stayRS, array($stayRS->idVisit, $stayRS->Visit_Span));
+            }
 
             foreach ($rows as $r) {
 
@@ -1493,6 +1590,10 @@ class Visit {
 
     public function getSpanStart() {
         return $this->visitRS->Span_Start->getStoredVal();
+    }
+
+    public function getSpanEnd() {
+        return $this->visitRS->Span_End->getStoredVal();
     }
 
     public function getActualDeparture() {

@@ -543,7 +543,7 @@ class VisitView {
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $r["Room"]))
 
                 // CheckIn date
-                . HTMLTable::makeTd(HTMLInput::generateMarkup(date('M j, Y H:i', strtotime($r['Span_Start_Date'])), array('id' => 'stayCkInDate_' . $r['idName'], 'name' => '[stayCkInDate][' . $r['idName'] . ']', 'class'=>'ckdate', 'readonly'=>'raadonly')));
+                . HTMLTable::makeTd(HTMLInput::generateMarkup(date('M j, Y', strtotime($r['Span_Start_Date'])), array('id' => 'stayCkInDate_' . $r['idStays'], 'class'=>'hhk-stayckin ckdate', 'readonly'=>'raadonly')) . date('H:i', strtotime($r['Span_Start_Date'])));
 
 
             if ($action == '') {
@@ -1075,6 +1075,7 @@ class VisitView {
 
         // Pre-filter list of visit spans
         foreach ($visitRcrds as $r) {
+
             $vRs = new VisitRs();
             EditRS::loadRow($r, $vRs);
 
@@ -1099,10 +1100,10 @@ class VisitView {
             $stayRS->Visit_Span->setStoredVal($vRs->Span->getStoredVal());
             $rows = EditRS::select($dbh, $stayRS, array($stayRS->idVisit, $stayRS->Visit_Span));
 
-            foreach ($rows as $r) {
+            foreach ($rows as $st) {
 
                 $stayRS = new StaysRS();
-                EditRS::loadRow($r, $stayRS);
+                EditRS::loadRow($st, $stayRS);
                 $stays[$vRs->Span->getStoredVal()][] = $stayRS;
 
             }
@@ -1246,8 +1247,6 @@ class VisitView {
             if ($stayMsg != '') {
                 return $stayMsg;
             }
-
-
         }
 
         // Check for pre-existing reservations
@@ -1461,7 +1460,7 @@ class VisitView {
      * @param int $idRegistration
      * @param sring $uname
      */
-    protected static function saveStaysDates(\PDO $dbh, $stays, $idRegistration, $uname) {
+    public static function saveStaysDates(\PDO $dbh, $stays, $idRegistration, $uname) {
 
 
         foreach ($stays as $stayRS) {

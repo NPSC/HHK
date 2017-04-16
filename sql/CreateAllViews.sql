@@ -2122,7 +2122,6 @@ select
     s.Status,
     v.Status as `Visit_Status`,
     v.idRegistration as `idRegistration`,
-    v.Key_Dep_Disposition as `Key_Dep_Disposition`,
     v.DepositPayType as DepositPayType,
     g.Description as `Status_Title`,
     s.Checkin_Date,

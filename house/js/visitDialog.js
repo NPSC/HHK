@@ -596,6 +596,13 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         }
     });
     
+    $('input.hhk-stayckin').each(function() {
+        var parts = $(this).attr('id').split('_');
+        if (parts.length > 0) {
+            parms[parts[0] + '[' + parts[1] + ']'] = $(this).val();
+        }
+    });
+    
     // Undo checkout
     if ($('#undoCkout').length > 0 && $('#undoCkout').prop('checked')) {
         undoCheckout = true;

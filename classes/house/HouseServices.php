@@ -188,7 +188,6 @@ class HouseServices {
 
 
         // instantiate current visit
-        // This gets the most current SPAN!
         $visit = new Visit($dbh, 0, $idVisit, NULL, NULL, NULL, $uS->username, $span);
 
 
@@ -258,28 +257,9 @@ class HouseServices {
             }
         }
 
-        // Change Checkin date
-        if (isset($post['stayCkInDate_'])) {
-
-            // cannot checkin after today
-            $today = new DateTime();
-            $today->setTime(0, 0, 0);
-
-            foreach ($post['stayCkInDate_'] as $k => $v) {
-
-                $ckinDT = new DateTime($v);
-                $ckinDT->setTime(0, 0, 0);
-
-                if ($ckinDT == $today) {
-                    // No change
-                    continue;
-                } else if ($ckinDT > $today) {
-                    $reply .= 'Attempt to check into the future is not allowed.  ';
-                    continue;
-                }
-
-                $visit->moveStay($dbh, $k, $ckinDT);
-            }
+        // Change STAY Checkin date
+        if (isset($post['stayCkInDate'])) {
+            $reply .= $visit->moveStay($dbh, $post['stayCkInDate']);
         }
 
 
