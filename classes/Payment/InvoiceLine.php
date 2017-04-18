@@ -109,6 +109,18 @@ abstract class InvoiceLine {
 
     }
 
+    public static function deleteLine(\PDO $dbh, $idLine, $idButton) {
+
+        $num = $dbh->exec("Update invoice_line set Deleted = 1 where idInvoice_Line = $idLine");
+
+        if ($num > 0) {
+            return array('bid'=>$idButton, 'success'=>'Invoice Line is deleted.  ');
+        }
+
+        return array('bid'=>$idButton, 'warning'=>'Invoice line not found or already deleted.  ');
+
+    }
+
     public function updateLine(\PDO $dbh) {
 
         $affected = 0;

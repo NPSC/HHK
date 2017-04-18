@@ -311,6 +311,22 @@ try {
 
             break;
 
+        case 'delWaive':
+
+            $idLine = 0;
+            if (isset($_POST['pid'])) {
+                $idLine = intval(filter_var($_POST['pid'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $bid = '';
+            if (isset($_POST['bid'])) {
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+            }
+
+            $events = InvoiceLine::deleteLine($dbh, $idLine, $bid);
+
+            break;
+
     case "getReg":
 
         $idRegistration = 0;

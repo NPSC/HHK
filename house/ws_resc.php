@@ -180,8 +180,8 @@ try {
                     . '<script type= "text/javascript"> ' .
 "$('#feesTable').dataTable({
     'dom': '<\"ignrSave\"if>rt<\"ignrSave\"lp><\"clear\">',
-    'iDisplayLength': 50,
-    'aLengthMenu': [[25, 50, -1], [25, 50, 'All']]
+    'displayLength': 50,
+    'lengthMenu': [[25, 50, -1], [25, 50, 'All']]
 });" .
 '// Void/Return button
 $("#rptfeediv").on("click", ".hhk-voidPmt", function() {
@@ -192,12 +192,19 @@ $("#rptfeediv").on("click", ".hhk-voidPmt", function() {
     }
 });
 
-// Void-return button
 $("#rptfeediv").on("click", ".hhk-voidRefundPmt", function () {
     var btn = $(this);
     if (btn.val() != "Saving..." && confirm("Void this Return?")) {
         btn.val("Saving...");
         sendVoidReturn(btn.attr("id"), "vr", btn.data("pid"));
+    }
+});
+
+$("#rptfeediv").on("click", ".hhk-deleteWaive", function () {
+    var btn = $(this);
+    if (btn.val() != "Deleting..." && confirm("Delete?")) {
+        btn.val("Deleting...");
+        sendVoidReturn(btn.attr("id"), "d", btn.data("ilid"));
     }
 });
 

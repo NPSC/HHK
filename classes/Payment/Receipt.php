@@ -433,6 +433,7 @@ where
         $invoice = array();
         $payments = array();
         $paymtAuths = array();
+        $houseWaives = array();
 
         // Organize the data
         while ($p = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -449,7 +450,8 @@ where
 
                 if ($idInvoice > 0) {
                     // close last invoice
-                    $invoices[$idInvoice] = array('i'=>$invoice, 'p'=>$payments);
+                    $invoices[$idInvoice] = array('i'=>$invoice, 'p'=>$payments, 'h'=>$houseWaives);
+                    $houseWaives = array();
                 }
 
                 $idInvoice = $p['idInvoice'];
@@ -472,7 +474,7 @@ where
                     'Invoice_Balance'=>$p['Invoice_Balance'],
                     'Delegated_Invoice_Id'=>$p['Delegated_Invoice_Id'],
                     'Invoice_Deleted'=>$p['Deleted'],
-                    'Invoice_Updated_By'=>$p['Invoice_Updated_By']
+                    'Invoice_Updated_By'=>$p['Invoice_Updated_By'],
                     );
 
                 // add extra columns
@@ -540,6 +542,15 @@ where
                     );
                 }
             }
+
+            // House Waive
+            if ($p['il_Id'] > 0 && isset($houseWaives[$p['il_Id']]) === FALSE) {
+                $houseWaives[$p['il_Id']] = array(
+                    'id' => $p['il_Id'],
+                    'Amount' => $p['il_Amount'],
+                    'Desc' => $p['il_Description']
+                );
+            }
         }
 
 
@@ -554,7 +565,7 @@ where
 
         if ($idInvoice > 0) {
             // close last invoice
-            $invoices[$idInvoice] = array('i'=>$invoice, 'p'=>$payments);
+            $invoices[$idInvoice] = array('i'=>$invoice, 'p'=>$payments, 'h'=>$houseWaives);
         }
 
         return $invoices;

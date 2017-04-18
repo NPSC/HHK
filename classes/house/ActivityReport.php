@@ -753,6 +753,26 @@ where lp.idPayment > 0
                 $totals[$p['Payment_Status']]['count'] ++;
                 $payTypeTotals[$p['idPayment_Method']]['count'] ++;
             }
+
+            foreach ($i['h'] as $h) {
+
+                $voidContent = HTMLInput::generateMarkup('Delete', array('type' => 'button', 'id' => 'btndelwaive' . $h['id'], 'class' => 'hhk-deleteWaive', 'data-ilid' => $h['id']));
+
+                $tbl->addBodyTr(
+                    HTMLTable::makeTd($r['Room'])
+                    . HTMLTable::makeTd($uS->siteName)
+                    .HTMLTable::makeTd($invoiceMkup)
+                    .HTMLTable::makeTd($h['Desc'])
+                    .HTMLTable::makeTd('')
+                    .HTMLTable::makeTd('')
+                    .HTMLTable::makeTd(number_format(abs($h['Amount']), 2), array('style'=>'text-align:right;color:gray;'))
+                    .HTMLTable::makeTd($voidContent)
+                    .HTMLTable::makeTd(date('M j, Y', strtotime($r['Invoice_Date'])))
+                    .HTMLTable::makeTd($r['Invoice_Updated_By'])
+                    .HTMLTable::makeTd('')
+                );
+
+            }
         }
 
         $listing = $tbl->generateMarkup(array('id' => 'feesTable', 'style' => 'margin-top:10px;'));

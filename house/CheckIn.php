@@ -318,6 +318,7 @@ $confReserv = $labels->getString('register', 'reservationTab', 'Confirmed Reserv
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
         <script type="text/javascript" src="js/rcheckin-min.js<?php echo JS_V; ?>"></script>
         <script tyhpe="text/javascript">
     var chkIn;

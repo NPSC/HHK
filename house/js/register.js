@@ -96,6 +96,8 @@ function sendVoidReturn(btnid, vorr, idPayment, amt) {
         prms.amt = amt;
     } else if (vorr && vorr === 'vr') {
         prms.cmd = 'voidret';
+    } else if (vorr && vorr === 'd') {
+        prms.cmd = 'delWaive';
     }
     $.post('ws_ckin.php', prms, function (data) {
         var revMessage = '';

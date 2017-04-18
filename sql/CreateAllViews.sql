@@ -1328,6 +1328,9 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
         `i`.`Description` AS `Description`,
         `i`.`Deleted` AS `Deleted`,
         `i`.`Updated_By` AS `Invoice_Updated_By`,
+        ifnull(`il`.`idInvoice_Line`, '') as `il_Id`,
+        ifnull(`il`.`Description`, '') as `il_Description`,
+        ifnull(`il`.`Amount`, 0) as `il_Amount`,
         IFNULL(`g1`.`Description`, '') AS `Invoice_Status_Title`,
         IFNULL(`p`.`idPayment`, 0) AS `idPayment`,
         IFNULL(`p`.`Amount`, 0) AS `Payment_Amount`,
@@ -1351,19 +1354,20 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
         IFNULL(`pa`.`Status_Code`, '') AS `PA_Status_Code`,
         IFNULL(`pc`.`Check_Number`, '') AS `Check_Number`
     FROM
-        ((((((((`invoice` `i`
-        LEFT JOIN `payment_invoice` `pi` ON ((`i`.`idInvoice` = `pi`.`Invoice_Id`)))
-        LEFT JOIN `payment` `p` ON ((`pi`.`Payment_Id` = `p`.`idPayment`)))
-        LEFT JOIN `payment_auth` `pa` ON ((`pi`.`Payment_Id` = `pa`.`idPayment`)))
-        LEFT JOIN `payment_info_check` `pc` ON ((`pi`.`Payment_Id` = `pc`.`idPayment`)))
-        LEFT JOIN `payment_method` `pm` ON ((`p`.`idPayment_Method` = `pm`.`idPayment_method`)))
-        LEFT JOIN `name_volunteer2` `nv` ON (((`i`.`Sold_To_Id` = `nv`.`idName`)
+        `invoice` `i`
+        LEFT JOIN `invoice_line` `il` on `i`.`idInvoice` = `il`.`Invoice_Id` and `il`.`Item_Id` = 11 and `il`.`Deleted` < 1
+        LEFT JOIN `payment_invoice` `pi` ON `i`.`idInvoice` = `pi`.`Invoice_Id`
+        LEFT JOIN `payment` `p` ON `pi`.`Payment_Id` = `p`.`idPayment`
+        LEFT JOIN `payment_auth` `pa` ON `pi`.`Payment_Id` = `pa`.`idPayment`
+        LEFT JOIN `payment_info_check` `pc` ON `pi`.`Payment_Id` = `pc`.`idPayment`
+        LEFT JOIN `payment_method` `pm` ON `p`.`idPayment_Method` = `pm`.`idPayment_method`
+        LEFT JOIN `name_volunteer2` `nv` ON `i`.`Sold_To_Id` = `nv`.`idName`
             AND (`nv`.`Vol_Category` = 'Vol_Type')
-            AND (`nv`.`Vol_Code` = 'ba'))))
-        LEFT JOIN `gen_lookups` `g2` ON (((`p`.`Status_Code` = `g2`.`Code`)
-            AND (`g2`.`Table_Name` = 'Payment_Status'))))
-        LEFT JOIN `gen_lookups` `g1` ON (((`i`.`Status` = `g1`.`Code`)
-            AND (`g1`.`Table_Name` = 'Invoice_Status'))));
+            AND (`nv`.`Vol_Code` = 'ba')
+        LEFT JOIN `gen_lookups` `g2` ON `p`.`Status_Code` = `g2`.`Code`
+            AND (`g2`.`Table_Name` = 'Payment_Status')
+        LEFT JOIN `gen_lookups` `g1` ON `i`.`Status` = `g1`.`Code`
+            AND (`g1`.`Table_Name` = 'Invoice_Status');
 
 
 
