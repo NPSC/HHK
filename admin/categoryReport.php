@@ -7,10 +7,10 @@
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
-require_once ("AdminIncludes.php");
+require ("AdminIncludes.php");
 
-require_once(CLASSES . "chkBoxCtrlClass.php");
-require_once(CLASSES . "selCtrl.php");
+require(CLASSES . "chkBoxCtrlClass.php");
+require(CLASSES . "selCtrl.php");
 
 $wInit = new webInit();
 
@@ -66,10 +66,10 @@ if (isset($_POST["btnCat"]) || isset($_POST["btnCatDL"]) || isset($_POST["btnCSV
 
     ini_set('memory_limit', "128M");
 
-    require_once(CLASSES . "OpenXML.php");
-    require_once("functions" . DS . "CategoryReportMgr.php");
-    require_once ("classes" . DS . "VolCats.php");
-    require_once("classes" . DS . "Salutation.php");
+    require(CLASSES . "OpenXML.php");
+    require("functions" . DS . "CategoryReportMgr.php");
+    require ("classes" . DS . "VolCats.php");
+    require("classes" . DS . "Salutation.php");
 
         // Get the site configuration object
     try {
@@ -151,10 +151,10 @@ foreach ($catSelCtrls as $sel) {
                     $('div#printArea').css('display', 'block');
                     try {
                         listTable = $('#tblCategory').dataTable({
-                            "iDisplayLength": 50,
-                            "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                            "displayLength": 50,
+                            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                             "dom": '<"top"ilf>rt<"bottom"p>',
-                            "aaSorting": [[1,'asc'], [2,'asc']]
+                            "order": [[1,'asc'], [2,'asc']]
                         });
                     }
                     catch (err) {
@@ -219,7 +219,7 @@ foreach ($catSelCtrls as $sel) {
                 </form>
             </div>
             <div style="clear:both;"></div>
-            <div id="printArea" style="font-size:.9em;" class="ui-widget ui-widget-content" style="display:none;">
+            <div id="printArea" style="font-size:.9em;display:none;float:left;" class="ui-widget ui-widget-content">
                 <table style="margin-top:40px; margin-bottom:10px; min-width: 350px;">
                     <?php echo $catagoryHeadertable; ?>
                 </table>

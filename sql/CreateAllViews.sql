@@ -1705,6 +1705,7 @@ CREATE or Replace VIEW `vreservation_events` AS
         `r`.`Number_Guests` AS `Number_Guests`,
         `r`.`Room_Rate_Category` AS `Rate`,
         `r`.`idRoom_rate`,
+        `r`.`Fixed_Room_Rate`,
         ifnull(`n`.`Name_Full`, '') AS `Guest Name`,
         ifnull(`n`.`Name_First`, '') AS `Guest First`,
         ifnull((case when n.Name_Suffix = '' then n.Name_Last else concat(n.Name_Last, ' ', gs.Description) end), '') AS `Guest Last`,

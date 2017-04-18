@@ -1127,6 +1127,8 @@ class VisitView {
         $today = new \DateTime();
         $today->setTime(10, 0, 0);
 
+        reset($spans);
+
         // change visit span dates
         foreach ($spans as $s => $vRs) {
 

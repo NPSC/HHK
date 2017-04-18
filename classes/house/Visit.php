@@ -1167,10 +1167,11 @@ class Visit {
                     $startDelta = 0 - ($ckinDT->diff($visitStart, TRUE)->days);
 
                     $reply .= VisitView::moveVisit($dbh, $this->getIdVisit(), $this->getSpan(), $startDelta, $startDelta, $uS->username);
-                    
+
                 } else {
 
-                    $stayRs->Span_Start_Date->setNewVal($ckinDT->format('m-d-Y H:i:s'));
+                    $ckinDT = new DateTime($newStayStart);
+                    $stayRs->Span_Start_Date->setNewVal($ckinDT->format('Y-m-d H:i:s'));
                     VisitView::saveStaysDates($dbh, array($stayRs), $this->getIdRegistration(), $uS->username);
                     $reply .= 'Stay start date moved. ';
                 }

@@ -224,7 +224,12 @@ class History {
 
             // Rate
             if ($uS->RoomPriceModel != ItemPriceCode::None && isset($this->roomRates[$r['idRoom_rate']])) {
+
                 $fixedRows['Rate'] = $this->roomRates[$r['idRoom_rate']];
+
+                if ($r['Rate'] == RoomRateCategorys::Fixed_Rate_Category) {
+                    $fixedRows['Rate'] = '$' . number_format($r['Fixed_Room_Rate'], 2);
+                }
             } else {
                 $fixedRows['Rate'] = '';
             }

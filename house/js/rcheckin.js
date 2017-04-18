@@ -1360,8 +1360,8 @@ $(document).ready(function() {
 
     $.extend($.fn.dataTable.defaults, {
         "dom": '<"top"if>rt<"bottom"lp><"clear">',
-        "iDisplayLength": 25,
-        "aLengthMenu": [[25, 50, -1], [25, 50, "All"]],
+        "displayLength": 25,
+        "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
         "order": [[ 4, 'asc' ]]
     });
 
