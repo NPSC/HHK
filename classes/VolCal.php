@@ -349,7 +349,7 @@ class VolCal {
     public static function getListView(PDO $dbh, $startTime, $endTime, $vcc, UserCategories $cats) {
 
         $events = array();
-        $cols = array("E_Title", "E_Start", "E_End", "Name", "Category", "id", "E_Rpt_Id", "E_Status");
+        $cols = array('E_Title', 'E_Start', 'E_End', 'Name', 'Category', 'id', 'E_Rpt_Id', 'E_Status');
 
         if ($startTime == "") {
             $beginDate = date("Y-m-1"); // first of this month
@@ -440,34 +440,34 @@ class VolCal {
         $stmt->execute();
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $aaData = array();
+        $data = array();
 
         if ($stmt->rowCount() > 0) {
 
             foreach ($rows as $r) {
 
-                unset($aaData);
+                unset($data);
                 for ($i = 0; $i < count($cols); $i++) {
 
                     if ($cols[$i] == "E_Start") {
-                        $aaData[$cols[$i]] = date("c", strtotime($r[$cols[$i]]));
+                        $data[$cols[$i]] = date("c", strtotime($r[$cols[$i]]));
                     } else if ($cols[$i] == "E_End") {
-                        $aaData[$cols[$i]] = date("c", strtotime($r[$cols[$i]]));
+                        $data[$cols[$i]] = date("c", strtotime($r[$cols[$i]]));
                     } else if ($cols[$i] == "E_Status") {
                         if ($r[$cols[$i]] == Vol_Calendar_Status::Logged) {
-                            $aaData[$cols[$i]] = "<span class='ui-icon ui-icon-check'></span>";
+                            $data[$cols[$i]] = "<span class='ui-icon ui-icon-check'></span>";
                         } else {
-                            $aaData[$cols[$i]] = '';
+                            $data[$cols[$i]] = '';
                         }
                     } else {
-                        $aaData[$cols[$i]] = $r[$cols[$i]];
+                        $data[$cols[$i]] = $r[$cols[$i]];
                     }
                 }
-                $events["aaData"][] = $aaData;
+                $events["data"][] = $data;
             }
 
         } else {
-            $events["aaData"] = array();
+            $events["data"] = array();
         }
 
         $events["start"] = date("m/d/Y", strtotime($beginDate));

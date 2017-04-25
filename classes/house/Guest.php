@@ -81,7 +81,7 @@ class Guest extends Role {
         $labels = new Config_Lite(LABEL_FILE);
 
 
-        $mk1 = $this->createNameMu($labels, TRUE, $restrictRelChooser);
+        $mk1 = $this->createNameMu($labels, FALSE, $restrictRelChooser);
 
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;min-height:10px;'));
 
@@ -163,7 +163,7 @@ class Guest extends Role {
         $labels = new Config_Lite(LABEL_FILE);
 
         // Guest Name
-        $mk1 .= $this->createNameMu($labels, TRUE, TRUE);
+        $mk1 .= $this->createNameMu($labels, FALSE, TRUE);
 
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
@@ -185,9 +185,9 @@ class Guest extends Role {
         // Guest Name
         if ($uS->PatientAsGuest && ($lockRelChooser === FALSE || $this->getPatientRelationshipCode() == '')) {
             // Dont lock the patient relationship chooser.
-            $mk1 = $this->createNameMu($labels, TRUE, FALSE);
+            $mk1 = $this->createNameMu($labels, FALSE, FALSE);
         } else {
-            $mk1 = $this->createNameMu($labels, TRUE, TRUE);
+            $mk1 = $this->createNameMu($labels, FALSE, TRUE);
         }
 
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));

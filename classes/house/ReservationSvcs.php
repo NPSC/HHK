@@ -240,7 +240,7 @@ class ReservationSvcs {
         $dataArray['rvstatus'] = $resv->getStatusTitle($resv->getStatus());
         $dataArray['rvstCode'] = $resv->getStatus();
 
-        if ($resv->getStatus() == ReservationStatus::Committed) {
+        if ($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::UnCommitted || $resv->getStatus() == ReservationStatus::Waitlist) {
             $dataArray['showRegBtn'] = 'y';
         } else {
             $dataArray['showRegBtn'] = 'n';
@@ -1194,7 +1194,7 @@ class ReservationSvcs {
         $dataArray['rvstatus'] = $resv->getStatusTitle($resv->getStatus());
         $dataArray['rvstCode'] = $resv->getStatus();
 
-        if ($resv->getStatus() == ReservationStatus::Committed) {
+        if ($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::UnCommitted || $resv->getStatus() == ReservationStatus::Waitlist) {
             $dataArray['showRegBtn'] = 'y';
         } else {
             $dataArray['showRegBtn'] = 'n';

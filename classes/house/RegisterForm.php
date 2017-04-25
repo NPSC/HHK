@@ -435,9 +435,9 @@ p.label {
             $stays = $stmt->fetchAll(PDO::FETCH_NAMED);
 
             // If still 0, then ?
-            if (count($stays) == 0) {
-                throw new Hk_Exception_Runtime("No guests were found for this visit.  ");
-            }
+//            if (count($stays) == 0) {
+//                throw new Hk_Exception_Runtime("No guests were found for this visit.  ");
+//            }
 
             // visit
             $visit = new Visit($dbh, 0, $idVisit);
@@ -515,6 +515,23 @@ p.label {
         } else {
             return 'No Data';
         }
+
+        // Get constraints
+        $constraints = new ConstraintsVisit($dbh, $idReservation, 0);
+
+        if(count($constraints) > 0) {
+            $constrs = array();
+
+            foreach ($constraints->getConstraints() as $c) {
+
+                if ($c['isActive'] == 1) {
+                    $constrs[] = $c['Title'];
+                }
+            }
+
+            $notes .= '  Visit preperation: ' . implode(', ', $constrs) . '.  ';
+        }
+
 
         $hospRoom = '';
         $idHospital = '';

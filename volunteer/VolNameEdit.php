@@ -208,10 +208,14 @@ try {
         <link href="<?php echo JQ_DT_CSS; ?>" rel="stylesheet" type="text/css" />
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <?php echo PUBLIC_CSS; ?>
-
+<link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $resourceURL; ?>js/stateCountry.js"></script>
+        <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $resourceURL; ?>js/md5-min.js"></script>
+        <script type="text/javascript"><?php include_once("js/vNameEdit.js") ?></script>
     </head>
     <body>
 <?php echo $menuMarkup; ?>
@@ -267,9 +271,5 @@ try {
                 <div id="submit"></div>
             </div>
         </div>
-        <script type="text/javascript" src="<?php echo $resourceURL; ?>js/stateCountry.js"></script>
-        <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $resourceURL; ?>js/md5-min.js"></script>
-        <script type="text/javascript"><?php include_once("js/vNameEdit.js") ?></script>
     </body>
 </html>

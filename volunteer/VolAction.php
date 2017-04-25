@@ -331,192 +331,14 @@ $userDataEnc = json_encode($userData);
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <link href="<?php echo FULLC_CSS; ?>" rel="stylesheet" type="text/css" />
         <?php echo PUBLIC_CSS; ?>
-
+        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MOMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
-        <style type="text/css">
-            @media print {
-                .prtClass {display:block;}
-                .hhk-welcomeVol, #listTab, #volcatTab, #divnoPrt, #openShifts, #openShiftsLink, #ulnoPrt, header, #version {display:none;}
-            }
-        </style>
-    </head>
-    <body>
-            <?php echo $PageMenu; ?>
-        <div id="page">
-            <div id="volCalendar">
-                <div class="hhk-welcomeVol"><?php echo $welcomeMessage; ?></div>
-                <div id="divAlertMsg"><?php echo $calReplyMessage; ?></div>
-                <div id="mainTabs">
-                    <ul id="ulnoPrt">
-                        <li><a href="#calTab">Calendar View</a></li>
-                        <li><a href="#listTab">List View</a></li>
-                        <li><a href="#volcatTab">My Volunteer Categories</a></li>
-                    </ul>
-                    <div id="listTab" class="ui-tabs-hide hhk-border" style="display:none;">
-                            <div id="btnListRefresh" style="font-size: 0.9em; float: left;margin-bottom:7px; padding:3px;">
-                                <button>Refresh List</button>
-                            </div>
-                             <div style="font-size: 0.9em; float: left; padding-top:5px;">
-                                <label for="gotoListDate" style="margin-left:15px;">Go To Date: </label>
-                                <input type="text" id="gotoListDate" class="ckdate ignrSave" value=""/>
-                                <span id="listDateRange" style="margin-left:15px;">Starting from today through 1 year</span>
-                             </div>
-                        <div style="clear: both;"></div>
-                        <table cellpadding="0" cellspacing="0" border="0" class="display" id="dataTbl">
-                        </table>
-                    </div>
-                    <div id="calTab">
-                        <div id="divnoPrt" style="margin-bottom:7px; padding:3px; border-bottom: solid 1px;">
-                            <div id="btnRefresh" style="font-size: 0.9em; float: left;">
-                                <button>Refresh Calendar</button>
-                            </div>
-                            <div id="divSelCategory" style="float: left; margin-left:20px;">
-                                <?php echo $committeeSelector; ?>
-                            </div>
-                            <div style="font-size: 0.9em; float: left; padding-top:5px;">
-                                <label for="gotoDate" style="margin-left:15px;">Go To Date: </label>
-                                <input type="text" id="gotoDate" class="ckdate ignrSave" value=""/>
-                                <label for="includeHouseCal" style="margin-left:15px;">Include House Calendar</label>
-                                <input type="checkbox" id="includeHouseCal" class="ignrSave" checked="checked" />
-                            </div>
-                            <div style="clear: both;"></div>
-                        </div>
-                        <div id="openShiftsLink" style="display:none;"><a href="#openShifts">See Open Shifts</a></div>
-                        <div id="calendar" class="prtClass"></div>
-                        <div id="openShifts" class="hhk-border"></div>
-                    </div>
-                    <div id="volcatTab"  class="ui-tabs-hide hhk-border" style="display:none;">
-                            <table>
-                                <?php echo $volPanelMkup ?>
-                            </table>
-                    </div>
-                </div>
-                <div id="repeatReturn" style="display:none;">
-                    <table>
-                        <tr>
-                            <th colspan="2"><span id="spnRetMessage"></span></th>
-                        </tr>
-                        <tr>
-                            <td class="tdlabel">New Appointments:</td>
-                            <td><span id="spnRetNew"></span></td>
-                        </tr>
-                        <tr>
-                            <td class="tdlabel">Already Taken:</td>
-                            <td><span id="spnRetLost"></span></td>
-                        </tr>
-                        <tr>
-                            <td class="tdlabel">I already Had:</td>
-                            <td><span id="spnRetMine"></span></td>
-                        </tr>
-                        <tr>
-                            <td class="tdlabel">I took over:</td>
-                            <td><span id="spnRetReplaced"></span></td>
-                        </tr>
-                    </table>
-                </div>
-                <div id="checkDelete" style="display:none;">
-                    <table style="margin: 20px;">
-                        <tr>
-                            <td style="margin:5px; border:none;"><input type="radio" id="justthisone" name="oneorall"  checked="checked" /><label for="justthisone">Just this appointment</label></td>
-                        </tr>
-                        <tr>
-                            <td id="ckDelall" style="margin:5px; border:none;"><input type="radio" id="allofem" name="oneorall"/><label for="allofem">This and all future appointments</label></td>
-                        </tr>
-                        <tr>
-                            <td class="hhk-deljustme" style="margin:5px; border:none;"><input type="checkbox" id="delMe" name="meorboth" checked="checked" disabled="disabled" /><label for="delMe">Just Remove My Name</label></td>
-                        </tr>
-                        <tr>
-                            <td id="hhk-sendEmail" style="margin:5px; border:none; display:none;"><input type="checkbox" id="sendDelEmail" checked="checked"/><label for="sendDelEmail">Send Email Notice</label></td>
-                        </tr>
-                    </table>
-                </div>
-                <div id="dialog" class="hhk-border" style="display: none;">
-                    <table>
-                        <tr>
-                            <td colspan="2"><p class="validateTips"></p></td>
-                        </tr><tr>
-                            <td class="tdlabel">Title</td>
-                            <td title="Type or edit the title"><input type="text" id="eTitle" class="dis-me" value="" size="30" title="Type or edit the title"/></td>
-                        </tr><tr>
-                            <td class="tdlabel" title="Start date and time">Start</td>
-                            <td><input class="dis-me ckdate" type="text" id="eStart" value="" title="Click to change the start date"/>&nbsp;<select id="sHour" class="dis-me" title="Select the start time hour"><option value="0">12 (am)</option><option value="1">1 (am)</option><option value="2">2 (am)</option><option value="3">3 (am)</option><option value="4">4 (am)</option><option value="5">5 (am)</option><option value="6">6 (am)</option><option value="" selected="selected"></option><option value="7">7 (am)</option><option value="8">8 (am)</option><option value="9">9 (am)</option><option value="10">10 (am)</option><option value="11">11 (am)</option><option value="12">12 (pm)</option><option value="13">1 (pm)</option><option value="14">2 (pm)</option><option value="15">3 (pm)</option><option value="16">4 (pm)</option><option value="17">5 (pm)</option><option value="18">6 (pm)</option><option value="19">7 (pm)</option><option value="20">8 (pm)</option><option value="pm21">9 (pm)</option><option value="pm22">10 (pm)</option><option value="23">11 (pm)</option></select>
-                                &nbsp;:&nbsp;<select class="dis-me" id="sMin" title="Select the start time minutes"><option value="0">00</option><option value="5">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option></select></td>
-                        </tr><tr>
-                            <td class="tdlabel" title="End date and time">End</td>
-                            <td><input class="dis-me ckdate" type="text" id="eEnd" value="" title="Click to change the end date"/>&nbsp;<select id="eHour" class="dis-me" title="Select the end time hour"><option value="0">12 (am)</option><option value="1">1 (am)</option><option value="2">2 (am)</option><option value="3">3 (am)</option><option value="4">4 (am)</option><option value="5">5 (am)</option><option value="6">6 (am)</option><option value="" selected="selected"></option><option value="7">7 (am)</option><option value="8">8 (am)</option><option value="9">9 (am)</option><option value="10">10 (am)</option><option value="11">11 (am)</option><option value="12">12 (pm)</option><option value="13">1 (pm)</option><option value="14">2 (pm)</option><option value="15">3 (pm)</option><option value="16">4 (pm)</option><option value="17">5 (pm)</option><option value="18">6 (pm)</option><option value="19">7 (pm)</option><option value="20">8 (pm)</option><option value="21">9 (pm)</option><option value="22">10 (pm)</option><option value="23">11 (pm)</option></select>
-                                &nbsp;:&nbsp;<select class="dis-me" id="eMin" title="Select the end time minutes"><option value="0">00</option><option value="5">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option></select></td>
-                        </tr><tr>
-                            <td class="tdlabel">Duration</td>
-                            <td><input type="text" id="duration" class="ro" value="" size="17" readonly="readonly" title="Edit the Start and/or End times to accurately reflect your service duration"/><span class="logtime-display" style="margin-left:15px;" title="Check the box to acknowledge volunteer time served."><label for="cbLogTime" title="Check the box to acknowledge volunteer time served.">Log My Time: </label><input type="checkbox" id="cbLogTime" class="dis-me" title="Check the box to acknowledge volunteer time served." /></span></td>
-                        </tr><tr>
-                            <td class="tdlabel" title="Enter any notes or other reminders">Notes</td>
-                            <td><textarea id="eDesc" class="dis-me" rows="1" cols="30" title="Enter any notes or other reminders"></textarea><input type="hidden" id="eId" value="" /></td>
-                        </tr><tr>
-                            <td class="tdlabel">Name</td>
-                            <td><input type="text" id="memName" class="ro" value="" readonly="readonly" title="Volunteer's Name" />
-                                <span style="margin-right:5px; margin-left:10px;">Id</span>
-                                <input type="text" id="memId" class="ro" value="" size="3" readonly="readonly"/></td>
-                        </tr><tr>
-                            <td class="tdlabel shift-partner" title="Search for a partner for this shift.">Shift Partner</td>
-                            <td class="shift-partner"><input type="text" id="secondName" value="" class="dis-me" title="Type the first 3 letters of the first or last name." />
-                                <span style="margin-right:5px; margin-left:10px;">Id</span>
-                                <input type="text" id="secondId" class="ro" value="" size="3" readonly="readonly"/></td>
-                        </tr><tr>
-                            <td class="tdlabel category-wide"><label for="catWide">Include All</label></td>
-                            <td class="category-wide"><input type="checkbox" id="catWide" class="dis-me" title="Check to add this appointment to everyone's personal calendar." /></td>
-                        </tr><tr>
-                            <td class="tdlabel category-display">Category</td>
-                            <td class="category-display"><input type="text" id="memVcc" class="ro" size="25" readonly="readonly" title="Volunteer Category" /><span id="source"></span><input type="hidden" id="eCathdn" value="" /></td>
-                        </tr>
-                        <tr><td colspan="2"  class="repeater-display"></td></tr>
-                        <tr>
-                            <td colspan="2" class="repeater-display" style="border-width:0;margin:0;padding:0;">
-                                <div>
-                                    <table style="width:100%">
-                                        <tr>
-                                            <td colspan="4" style="border-top-width: 0;"><label for="cbRepeater">Create Repeat Assignments </label><input type="checkbox" id="cbRepeater" class="dis-me"/></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="tdlabel">Each</td>
-                                            <td><select id="selRepeaterUnits" class="repeater-disable dis-me" disabled="disabled"><option value="w1" selected="selected">Week</option><option value="w2">2 Weeks</option><option value="m1">Month</option></select></td>
-                                            <td class="tdlabel"><span style="margin-right:5px; margin-left:10px;">For</span></td>
-                                            <td><select id="selRepeaterMonths" class="repeater-disable dis-me" disabled="disabled"><option value="1" selected="selected">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select> Months</td>
-                                        </tr>
-                                        <tr class="monthDayChooser-display" style="text-align: center;">
-                                            <td colspan="4"><span id="txtRepWeek"></span></td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="2" style="margin:0; padding:0;">
-                                <div id="divRelievable" style="display:none;">
-                                    <label for="eMakeAvailable"><span id="lblMakeAvail" title="Check to allow others to serve this shift">Make Available:</span></label><input type="checkbox" id="eMakeAvailable" title="Check to allow others to serve this shift" />
-                                    <label for="eTmFixed"><span id="lblFixed" style="padding-left: 7px;" title="Check to disallow changes to the start or end times">Time Fixed:</span></label><input type="checkbox" id="eTmFixed" title="Check to disallow changes to the start or end times" />
-                                    <label for="eLocked"><span id="lblLocked" style="padding-left: 7px;" title="Check to disallow any changes">Locked:</span></label><input type="checkbox" id="eLocked" title="Check to disallow any changes"/>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="2" class="namesch-display" style="margin:0; padding:0;">
-                                <div><table style="width:100%"><tr>
-                                    <th title="Search for other members in this committee">Member Search</th>
-                                    <td title="Type the first 3 letters of the first or last name"><input type="text" id="txtsearch" size="20" class="dis-me" title="Type the first 3 letters of the first or last name" /></td>
-                                </tr></table></div>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-                <div id="dListmembers" class="hhk-border">
-                    <table id="tblListMembers" class="display" ><thead><tr><th>Last Name</th><th>First Name</th><th>Phone Number</th><th>Email Address</th><th>Position</th></tr></thead><tbody></tbody></table>
-                </div>
-            </div>
-        </div>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo FULLC_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
         <script type="text/javascript" src="js/volAction.js"></script>
     <script type="text/javascript">
         $(document).ready(function() {
@@ -534,25 +356,48 @@ $userDataEnc = json_encode($userData);
             var listJSON = wsAddress + "?c=list&myid=" + userData.myId;
             $('#mainTabs').tabs({
                 beforeActivate: function (event, ui) {
-                    if (ui.newTab.index() == 1 && listEvtTable == null) {
-                        listEvtTable = $('#dataTbl').dataTable({
-                            "aoColumnDefs": dtCols,
-                            "fnCreatedRow": function( nRow, aData, iDataIndex ) {
-                                $(nRow).click( function (event) {
-                                    listClickRow(aData.id, userData, catData, edm, listEvtTable, listJSON);
-                                })
-                            },
-                            "oLanguage": {"sEmptyTable": "No Catagories"},
-                            "bProcessing": true,
-                            "bDeferRender": true,
-                            "iDisplayLength": 30,
-                            "aLengthMenu": [[15, 30, 60, -1], [15, 30, 60, "All"]],
-                            "dom": '<"top"if>rt<"bottom"ip>',
-                            "aaSorting": [[2,'asc']],
-                            "sAjaxSource": listJSON
-                        });
+                    if (ui.newPanel.length > 0) {
+                        if (ui.newTab.prop('id') === 'lilisttab' && !listEvtTable) {
+
+                            listEvtTable = $('#dataTbl').DataTable({
+                                "processing": true,
+                                "ajax": {
+                                    "url": listJSON,
+                                    "type": "POST"
+                                },
+                                "columnDefs": dtCols,
+                                "deferRender": true,
+                                "order": [[2, 'desc']],
+                                "displayLength": 30,
+                                "lengthMenu": [[15, 30, 60, -1], [15, 30, 60, "All"]],
+                                "dom": '<"top"if>rt<"bottom"ip>'
+                            });
+                            $('#dataTbl').on( 'click', 'td', function () {
+                                listClickRow(aData.id, userData, catData, edm, wsAddress);
+                            });
+                        }
                     }
                 }
+//                beforeActivate: function (event, ui) {
+//                    if (ui.newTab.index() == 1 && listEvtTable == null) {
+//                        listEvtTable = $('#dataTbl').DataTable({
+//                            "columnDefs": dtCols,
+//                            "fnCreatedRow": function( nRow, aData, iDataIndex ) {
+//                                $(nRow).click( function (event) {
+//                                    listClickRow(aData.id, userData, catData, edm, listEvtTable, listJSON);
+//                                })
+//                            },
+//                            "language": {"sEmptyTable": "No Catagories"},
+//                            "processing": true,
+//                            "deferRender": true,
+//                            "displayLength": 30,
+//                            "lengthMenu": [[15, 30, 60, -1], [15, 30, 60, "All"]],
+//                            "dom": '<"top"if>rt<"bottom"ip>',
+//                            "aorting": [[2,'asc']],
+//                            "ajaxSource": listJSON
+//                        });
+//                    }
+//                }
             });
             $('#checkDelete').dialog({
                autoOpen: false,
@@ -812,7 +657,7 @@ $userDataEnc = json_encode($userData);
                             $('#openShiftsLink').css('display','block');
                             $('input.hhk-openshift').click(function () {
                                 var evt = $('#calendar').fullCalendar('clientEvents', $(this).attr('name'));
-                                if (evt[0] == null) {
+                                if (evt[0] === null) {
                                     $(this).remove();
                                     return;
                                 }
@@ -1030,9 +875,9 @@ $userDataEnc = json_encode($userData);
             });
             try {
                 var listTable = $('#tblListMembers').dataTable({
-                    "iDisplayLength": 20,
-                    "oLanguage": {"sEmptyTable": "No Contacts"},
-                    "sDom": '<"top">rt<"bottom">'
+                    "displayLength": 20,
+                    "language": {"emptyTable": "No Contacts"},
+                    "Dom": '<"top">rt<"bottom">'
                 });
             } catch (err) {}
 
@@ -1068,5 +913,186 @@ $('.inputForChair').click(function () {
 
         });
     </script>
+
+        <style type="text/css">
+            @media print {
+                .prtClass {display:block;}
+                .hhk-welcomeVol, #listTab, #volcatTab, #divnoPrt, #openShifts, #openShiftsLink, #ulnoPrt, header, #version {display:none;}
+            }
+        </style>
+    </head>
+    <body>
+            <?php echo $PageMenu; ?>
+        <div id="page">
+            <div id="volCalendar">
+                <div class="hhk-welcomeVol"><?php echo $welcomeMessage; ?></div>
+                <div id="divAlertMsg"><?php echo $calReplyMessage; ?></div>
+                <div id="mainTabs">
+                    <ul id="ulnoPrt">
+                        <li><a href="#calTab">Calendar View</a></li>
+                        <li id="lilisttab"><a href="#listTab">List View</a></li>
+                        <li><a href="#volcatTab">My Volunteer Categories</a></li>
+                    </ul>
+                    <div id="listTab" class="ui-tabs-hide hhk-border" style="display:none;">
+                            <div id="btnListRefresh" style="font-size: 0.9em; float: left;margin-bottom:7px; padding:3px;">
+                                <button>Refresh List</button>
+                            </div>
+                             <div style="font-size: 0.9em; float: left; padding-top:5px;">
+                                <label for="gotoListDate" style="margin-left:15px;">Go To Date: </label>
+                                <input type="text" id="gotoListDate" class="ckdate ignrSave" value=""/>
+                                <span id="listDateRange" style="margin-left:15px;">Starting from today through 1 year</span>
+                             </div>
+                        <div style="clear: both;"></div>
+                        <table cellpadding="0" cellspacing="0" border="0" class="display" id="dataTbl">
+                        </table>
+                    </div>
+                    <div id="calTab">
+                        <div id="divnoPrt" style="margin-bottom:7px; padding:3px; border-bottom: solid 1px;">
+                            <div id="btnRefresh" style="font-size: 0.9em; float: left;">
+                                <button>Refresh Calendar</button>
+                            </div>
+                            <div id="divSelCategory" style="float: left; margin-left:20px;">
+                                <?php echo $committeeSelector; ?>
+                            </div>
+                            <div style="font-size: 0.9em; float: left; padding-top:5px;">
+                                <label for="gotoDate" style="margin-left:15px;">Go To Date: </label>
+                                <input type="text" id="gotoDate" class="ckdate ignrSave" value=""/>
+                                <label for="includeHouseCal" style="margin-left:15px;">Include House Calendar</label>
+                                <input type="checkbox" id="includeHouseCal" class="ignrSave" checked="checked" />
+                            </div>
+                            <div style="clear: both;"></div>
+                        </div>
+                        <div id="openShiftsLink" style="display:none;"><a href="#openShifts">See Open Shifts</a></div>
+                        <div id="calendar" class="prtClass"></div>
+                        <div id="openShifts" class="hhk-border"></div>
+                    </div>
+                    <div id="volcatTab"  class="ui-tabs-hide hhk-border" style="display:none;">
+                            <table>
+                                <?php echo $volPanelMkup ?>
+                            </table>
+                    </div>
+                </div>
+                <div id="repeatReturn" style="display:none;">
+                    <table>
+                        <tr>
+                            <th colspan="2"><span id="spnRetMessage"></span></th>
+                        </tr>
+                        <tr>
+                            <td class="tdlabel">New Appointments:</td>
+                            <td><span id="spnRetNew"></span></td>
+                        </tr>
+                        <tr>
+                            <td class="tdlabel">Already Taken:</td>
+                            <td><span id="spnRetLost"></span></td>
+                        </tr>
+                        <tr>
+                            <td class="tdlabel">I already Had:</td>
+                            <td><span id="spnRetMine"></span></td>
+                        </tr>
+                        <tr>
+                            <td class="tdlabel">I took over:</td>
+                            <td><span id="spnRetReplaced"></span></td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="checkDelete" style="display:none;">
+                    <table style="margin: 20px;">
+                        <tr>
+                            <td style="margin:5px; border:none;"><input type="radio" id="justthisone" name="oneorall"  checked="checked" /><label for="justthisone">Just this appointment</label></td>
+                        </tr>
+                        <tr>
+                            <td id="ckDelall" style="margin:5px; border:none;"><input type="radio" id="allofem" name="oneorall"/><label for="allofem">This and all future appointments</label></td>
+                        </tr>
+                        <tr>
+                            <td class="hhk-deljustme" style="margin:5px; border:none;"><input type="checkbox" id="delMe" name="meorboth" checked="checked" disabled="disabled" /><label for="delMe">Just Remove My Name</label></td>
+                        </tr>
+                        <tr>
+                            <td id="hhk-sendEmail" style="margin:5px; border:none; display:none;"><input type="checkbox" id="sendDelEmail" checked="checked"/><label for="sendDelEmail">Send Email Notice</label></td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="dialog" class="hhk-border" style="display: none;">
+                    <table>
+                        <tr>
+                            <td colspan="2"><p class="validateTips"></p></td>
+                        </tr><tr>
+                            <td class="tdlabel">Title</td>
+                            <td title="Type or edit the title"><input type="text" id="eTitle" class="dis-me" value="" size="30" title="Type or edit the title"/></td>
+                        </tr><tr>
+                            <td class="tdlabel" title="Start date and time">Start</td>
+                            <td><input class="dis-me ckdate" type="text" id="eStart" value="" title="Click to change the start date"/>&nbsp;<select id="sHour" class="dis-me" title="Select the start time hour"><option value="0">12 (am)</option><option value="1">1 (am)</option><option value="2">2 (am)</option><option value="3">3 (am)</option><option value="4">4 (am)</option><option value="5">5 (am)</option><option value="6">6 (am)</option><option value="" selected="selected"></option><option value="7">7 (am)</option><option value="8">8 (am)</option><option value="9">9 (am)</option><option value="10">10 (am)</option><option value="11">11 (am)</option><option value="12">12 (pm)</option><option value="13">1 (pm)</option><option value="14">2 (pm)</option><option value="15">3 (pm)</option><option value="16">4 (pm)</option><option value="17">5 (pm)</option><option value="18">6 (pm)</option><option value="19">7 (pm)</option><option value="20">8 (pm)</option><option value="pm21">9 (pm)</option><option value="pm22">10 (pm)</option><option value="23">11 (pm)</option></select>
+                                &nbsp;:&nbsp;<select class="dis-me" id="sMin" title="Select the start time minutes"><option value="0">00</option><option value="5">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option></select></td>
+                        </tr><tr>
+                            <td class="tdlabel" title="End date and time">End</td>
+                            <td><input class="dis-me ckdate" type="text" id="eEnd" value="" title="Click to change the end date"/>&nbsp;<select id="eHour" class="dis-me" title="Select the end time hour"><option value="0">12 (am)</option><option value="1">1 (am)</option><option value="2">2 (am)</option><option value="3">3 (am)</option><option value="4">4 (am)</option><option value="5">5 (am)</option><option value="6">6 (am)</option><option value="" selected="selected"></option><option value="7">7 (am)</option><option value="8">8 (am)</option><option value="9">9 (am)</option><option value="10">10 (am)</option><option value="11">11 (am)</option><option value="12">12 (pm)</option><option value="13">1 (pm)</option><option value="14">2 (pm)</option><option value="15">3 (pm)</option><option value="16">4 (pm)</option><option value="17">5 (pm)</option><option value="18">6 (pm)</option><option value="19">7 (pm)</option><option value="20">8 (pm)</option><option value="21">9 (pm)</option><option value="22">10 (pm)</option><option value="23">11 (pm)</option></select>
+                                &nbsp;:&nbsp;<select class="dis-me" id="eMin" title="Select the end time minutes"><option value="0">00</option><option value="5">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option></select></td>
+                        </tr><tr>
+                            <td class="tdlabel">Duration</td>
+                            <td><input type="text" id="duration" class="ro" value="" size="17" readonly="readonly" title="Edit the Start and/or End times to accurately reflect your service duration"/><span class="logtime-display" style="margin-left:15px;" title="Check the box to acknowledge volunteer time served."><label for="cbLogTime" title="Check the box to acknowledge volunteer time served.">Log My Time: </label><input type="checkbox" id="cbLogTime" class="dis-me" title="Check the box to acknowledge volunteer time served." /></span></td>
+                        </tr><tr>
+                            <td class="tdlabel" title="Enter any notes or other reminders">Notes</td>
+                            <td><textarea id="eDesc" class="dis-me" rows="1" cols="30" title="Enter any notes or other reminders"></textarea><input type="hidden" id="eId" value="" /></td>
+                        </tr><tr>
+                            <td class="tdlabel">Name</td>
+                            <td><input type="text" id="memName" class="ro" value="" readonly="readonly" title="Volunteer's Name" />
+                                <span style="margin-right:5px; margin-left:10px;">Id</span>
+                                <input type="text" id="memId" class="ro" value="" size="3" readonly="readonly"/></td>
+                        </tr><tr>
+                            <td class="tdlabel shift-partner" title="Search for a partner for this shift.">Shift Partner</td>
+                            <td class="shift-partner"><input type="text" id="secondName" value="" class="dis-me" title="Type the first 3 letters of the first or last name." />
+                                <span style="margin-right:5px; margin-left:10px;">Id</span>
+                                <input type="text" id="secondId" class="ro" value="" size="3" readonly="readonly"/></td>
+                        </tr><tr>
+                            <td class="tdlabel category-wide"><label for="catWide">Include All</label></td>
+                            <td class="category-wide"><input type="checkbox" id="catWide" class="dis-me" title="Check to add this appointment to everyone's personal calendar." /></td>
+                        </tr><tr>
+                            <td class="tdlabel category-display">Category</td>
+                            <td class="category-display"><input type="text" id="memVcc" class="ro" size="25" readonly="readonly" title="Volunteer Category" /><span id="source"></span><input type="hidden" id="eCathdn" value="" /></td>
+                        </tr>
+                        <tr><td colspan="2"  class="repeater-display"></td></tr>
+                        <tr>
+                            <td colspan="2" class="repeater-display" style="border-width:0;margin:0;padding:0;">
+                                <div>
+                                    <table style="width:100%">
+                                        <tr>
+                                            <td colspan="4" style="border-top-width: 0;"><label for="cbRepeater">Create Repeat Assignments </label><input type="checkbox" id="cbRepeater" class="dis-me"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="tdlabel">Each</td>
+                                            <td><select id="selRepeaterUnits" class="repeater-disable dis-me" disabled="disabled"><option value="w1" selected="selected">Week</option><option value="w2">2 Weeks</option><option value="m1">Month</option></select></td>
+                                            <td class="tdlabel"><span style="margin-right:5px; margin-left:10px;">For</span></td>
+                                            <td><select id="selRepeaterMonths" class="repeater-disable dis-me" disabled="disabled"><option value="1" selected="selected">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select> Months</td>
+                                        </tr>
+                                        <tr class="monthDayChooser-display" style="text-align: center;">
+                                            <td colspan="4"><span id="txtRepWeek"></span></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="margin:0; padding:0;">
+                                <div id="divRelievable" style="display:none;">
+                                    <label for="eMakeAvailable"><span id="lblMakeAvail" title="Check to allow others to serve this shift">Make Available:</span></label><input type="checkbox" id="eMakeAvailable" title="Check to allow others to serve this shift" />
+                                    <label for="eTmFixed"><span id="lblFixed" style="padding-left: 7px;" title="Check to disallow changes to the start or end times">Time Fixed:</span></label><input type="checkbox" id="eTmFixed" title="Check to disallow changes to the start or end times" />
+                                    <label for="eLocked"><span id="lblLocked" style="padding-left: 7px;" title="Check to disallow any changes">Locked:</span></label><input type="checkbox" id="eLocked" title="Check to disallow any changes"/>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="namesch-display" style="margin:0; padding:0;">
+                                <div><table style="width:100%"><tr>
+                                    <th title="Search for other members in this committee">Member Search</th>
+                                    <td title="Type the first 3 letters of the first or last name"><input type="text" id="txtsearch" size="20" class="dis-me" title="Type the first 3 letters of the first or last name" /></td>
+                                </tr></table></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="dListmembers" class="hhk-border">
+                    <table id="tblListMembers" class="display" ><thead><tr><th>Last Name</th><th>First Name</th><th>Phone Number</th><th>Email Address</th><th>Position</th></tr></thead><tbody></tbody></table>
+                </div>
+            </div>
+        </div>
     </body>
 </html>

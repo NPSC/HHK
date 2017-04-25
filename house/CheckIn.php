@@ -183,7 +183,10 @@ if ($idGuest > 0) {
             $inside = "<p style='margin-left:60px;'>-None are imminent-</p>";
         }
 
-        $committedMarkup = HTMLContainer::generateMarkup('h3', $labels->getString('register', 'reservationTab', 'Confirmed Reservations') . HTMLContainer::generateMarkup('span', '', array('style'=>'float:right;', 'class'=>'ui-icon ui-icon-triangle-1-e')), array('id'=>'hhk-confResvHdr', 'style'=>'margin-bottom:15px;padding:5px;background-color: #D3D3D3;', 'title'=>'Click to show or hide the ' . $labels->getString('register', 'reservationTab', 'Confirmed Reservations')))
+        $committedMarkup = HTMLContainer::generateMarkup('h3', $labels->getString('register', 'reservationTab', 'Confirmed Reservations')
+                . HTMLContainer::generateMarkup('span', '', array('style'=>'float:right;', 'class'=>'ui-icon ui-icon-triangle-1-e')),
+                array('id'=>'hhk-confResvHdr', 'style'=>'margin-bottom:15px;padding:5px;background-color: #D3D3D3;', 'title'=>'Click to show or hide the '
+                    . $labels->getString('register', 'reservationTab', 'Confirmed Reservations')))
             . HTMLContainer::generateMarkup('div', $inside, array('id'=>'hhk-confResv', 'style'=>'margin-bottom:5px;'));
     }
 

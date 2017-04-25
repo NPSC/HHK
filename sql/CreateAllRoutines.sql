@@ -556,6 +556,10 @@ BEGIN
         where idName = badId;
 
     call `delete_names_u_tbd`;
+
+    insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)
+        values (now(), 'audit', 'update', 'sp', badId, 'Remove Dup Guest');
+
 END -- ;
 
 

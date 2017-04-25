@@ -5,9 +5,9 @@
  * @category  member
  * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
+ * @link      https://github.com/NPSC/HHK
  */
 
 //function $() {}
@@ -307,174 +307,91 @@ function handleListContacts(data, statusTxt, xhrObject, listTable) {
         }
     }
 }
+function dateRender(data, type) {
+    // If display or filter data is requested, format the date
+    if ( type === 'display' || type === 'filter' ) {
+
+        if (data === null || data === '') {
+            return '';
+        }
+
+        return moment(data).format('ddd, MMM Do YYYY');
+    }
+
+    // Otherwise the data type requested (`type`) is type detection or
+    // sorting data, for which we want to use the integer, so just return
+    // that, unaltered
+    return data;
+}
 
 var dtCols = [
     {
-        "aTargets": [ 0 ],
-        "bVisible": false,
-        "bSortable": false,
-        "bSearchable": false,
-        "mDataProp": function (source, type, val) {
-            "use strict";
-            if (type === 'set') {
-                source.id = val;
-                return null;
-            }
-            return source.id;
-        }
+        "targets": [ 0 ],
+        "visible": false,
+        "sortable": false,
+        "searchable": false,
+        "data":'id'
     },
     {
-        "aTargets": [ 1 ],
-        "sTitle": "Title",
-        "mDataProp": function (source, type, val) {
-            "use strict";
-            if (type === 'set') {
-                source.E_Title = val;
-                return null;
-            }
-            return source.E_Title;
-        }
+        "targets": [ 1 ],
+        "title": "Title",
+        "data": 'E_Title'
     },
     {
-        "aTargets": [ 2 ],
-        "sTitle": "Date",
-        "sType": "date",
-
-        "mDataProp": function (source, type, val) {
-            "use strict";
-            if (type === 'set') {
-                source.E_Start = val;
-                return null;
-            } else if (type === 'display') {
-                if (source.E_Start_display === undefined) {
-                    var dt = new Date(Date.parse(source.E_Start));
-                    source.E_Start_display = $.fullCalendar.formatDate(dt, "ddd, M/d/yyyy");
-                }
-                return source.E_Start_display;
-            }
-            return source.E_Start;
-        }
+        "targets": [ 2 ],
+        "title": "Date",
+        "type": "date",
+        render: function ( data, type, row ) {return dateRender(data, type);},
     },
     {
-        "aTargets": [ 3 ],
-        "sTitle": "Start",
-        "bSortable": false,
-        "sWidth": "50px",
-        "mDataProp": function (source, type, val) {
-            "use strict";
-            if (type === 'set') {
-                // We don't set this here.
-                return null;
-            } else if (type === 'display') {
-                if (source.E_StartTime_display == undefined) {
-                    var dt = new Date(Date.parse(source.E_Start));
-                    source.E_StartTime_display = $.fullCalendar.formatDate(dt, "h:mmtt");
-                }
-                return source.E_StartTime_display;
-            }
-
-            // 'sort', 'type' and undefined all just use the integer
-            return source.E_Start;
-        }
+        "targets": [ 3 ],
+        "title": "Start",
+        "sortable": false,
+        "width": "50px",
+        render: function ( data, type, row ) {return dateRender(data, type);},
     },
     {
-        "aTargets": [ 4 ],
-        "sTitle": "Stop",
-        "bSortable": false,
-        "sWidth": "50px",
-        "mDataProp": function (source, type, val) {
-            "use strict";
-            if (type === 'set') {
-                source.E_End = val;
-                return null;
-            } else if (type === 'display') {
-                if (source.E_EndTime_display == undefined) {
-                    var dt = new Date(Date.parse(source.E_End));
-                    source.E_EndTime_display = $.fullCalendar.formatDate(dt, "h:mmtt");
-                }
-                return source.E_EndTime_display;
-            }
-            return source.E_End;
-        }
+        "targets": [ 4 ],
+        "title": "Stop",
+        "sortable": false,
+        "width": "50px",
+        render: function ( data, type, row ) {return dateRender(data, type);},
     },
     {
-        "aTargets": [ 5 ],
-        "sTitle": "Hours",
-        "sType": "numeric",
-        "bSortable": true,
-        "sWidth": "50px",
-        "mDataProp": function (source, type, val) {
-            "use strict";
-            if (type === 'set') {
-                source.E_Time_Display = null;
-            }
-            if (source.E_Time_Display == undefined || source.E_Time_Display == null) {
-                var ds, de, dss, des, hours;
-                ds = new Date(Date.parse(source.E_Start));
-                de = new Date(Date.parse(source.E_End));
-                dss = ds.getTime();
-                des = de.getTime();
-                hours = (des - dss) / 3600000;
-                source.E_Time_Display = hours.toFixed(2);
-            }
-            return source.E_Time_Display;
-        }
+        "targets": [ 5 ],
+        "title": "Hours",
+        "type": "numeric",
+        "sortable": true,
+        "width": "50px",
+        data:'E_Time_Display'
     },
     {
-        "aTargets": [ 6 ],
-        "sTitle": "Category",
-        "mDataProp": function (source, type, val) {
-            "use strict";
-            if (type === 'set') {
-                source.Category = val;
-                return null;
-            }
-            return source.Category;
-        }
+        "targets": [ 6 ],
+        "title": "Category",
+        data: 'Category'
     },
     {
-        "aTargets": [ 7 ],
-        "sTitle": "Name",
-        "bVisible": false,
-        "bSortable": false,
-        "bSearchable": false,
-        "mDataProp": function (source, type, val) {
-            "use strict";
-            if (type === 'set') {
-                source.Name = val;
-                return null;
-            }
-            return source.Name;
-        }
+        "targets": [ 7 ],
+        "title": "Name",
+        "visible": false,
+        "sortable": false,
+        "searchable": false,
+        "data": 'Name'
     },
     {
-        "aTargets": [ 8 ],
-        "bVisible": false,
-        "bSortable": false,
-        "bSearchable": false,
-        "mDataProp": function (source, type, val) {
-            "use strict";
-            if (type === 'set') {
-                source.E_Rpt_Id = val;
-                return null;
-            }
-            return source.E_Rpt_Id;
-        }
+        "targets": [ 8 ],
+        "visible": false,
+        "sortable": false,
+        "searchable": false,
+        "data": 'E_Rpt_Id'
     },
     {
-        "aTargets": [ 9 ],
-        "sTitle": "Logged",
-        "bVisible": true,
-        "bSortable": true,
-        "bSearchable": false,
-        "mDataProp": function (source, type, val) {
-            "use strict";
-            if (type === 'set') {
-                source.E_Status = val;
-                return null;
-            }
-            return source.E_Status;
-        }
+        "targets": [ 9 ],
+        "title": "Logged",
+        "visible": true,
+        "sortable": true,
+        "searchable": false,
+        "data": 'E_Status'
     }
 ];
 
@@ -655,7 +572,7 @@ function resizeEvent(event, dayDelta, minuteDelta, revertFunc, myId, wsAddress) 
 
 function getCalendarList(listTable, listJSON, rangeSpan) {
     "use strict";
-    listTable.fnClearTable(true);
+    //listTable.fnClearTable(true);
     $.get(listJSON, {},
         function (data) {
 
@@ -673,7 +590,7 @@ function getCalendarList(listTable, listJSON, rangeSpan) {
                     if (rangeSpan) {
                         rangeSpan.text("Showing from " + data.start + " to " + data.end);
                     }
-                    listTable.fnAddData(data.aaData);
+                    //listTable.fnAddData(data.aaData);
                 }
             }
         }
@@ -681,15 +598,12 @@ function getCalendarList(listTable, listJSON, rangeSpan) {
 
 }
 
-function listClickRow(eid, userData, catData, edMkup, listTable, listJSON, wsAddress) {
+function listClickRow(eid, userData, catData, edMkup, wsAddress) {
     "use strict";
     edMkup.removeClass("ui-state-error");
     edMkup.tipsP.text("").removeClass("ui-state-highlight");
     edMkup.newEvent = false;
-
-    if (wsAddress == undefined || wsAddress == '') {
-        wsAddress = 'gCalFeed.php';
-    }
+   
     $.get(
         wsAddress,
         {
@@ -716,13 +630,6 @@ function listClickRow(eid, userData, catData, edMkup, listTable, listJSON, wsAdd
                         return;
                     }
 
-//                    if (data.nid != userData.myId && data.nid2 != userData.myId) {
-//                        // not my event anymore!
-//                        if (confirm("This is not your event any more.  Press OK to refresh this list.")) {
-//                            getCalendarList(listTable, listJSON);
-//                            return;
-//                        }
-//                    }
                     // convert to date objects
                     data.start = new Date(data.start);
                     data.end = new Date(data.end);
@@ -744,7 +651,7 @@ function listClickRow(eid, userData, catData, edMkup, listTable, listJSON, wsAdd
                         }
                     }
 
-                    if (catDataItem != null) {
+                    if (catDataItem !== null) {
                         clickEvent(null, userData, catDataItem, edMkup);
                     } else {
                         alert("You are not a member of this volunteer committee.");

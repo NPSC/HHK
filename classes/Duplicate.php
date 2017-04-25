@@ -411,7 +411,8 @@ WHERE
 
                 if ($nameLastFirst != '') {
 
-                    $stmt = $dbh->query("select idname from name where Name_Last_First = '$nameLastFirst'");
+                    $stmt = $dbh->query("select n.idName from name n join name_volunteer2 nv on n.idName = nv.idName
+where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::ReferralAgent . "' and n.Name_Last_First = '$nameLastFirst'");
 
                     while ($r = $stmt->fetch(PDO::FETCH_NUM)) {
 
@@ -443,7 +444,8 @@ WHERE
 
                 if ($nameLastFirst != '') {
 
-                    $stmt = $dbh->query("select idname from name where Name_Last_First = '$nameLastFirst'");
+                    $stmt = $dbh->query("select n.idName from name n join name_volunteer2 nv on n.idName = nv.idName
+where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor . "' and n.Name_Last_First = '$nameLastFirst'");
 
                     while ($r = $stmt->fetch(PDO::FETCH_NUM)) {
 
@@ -461,7 +463,6 @@ WHERE
                     }
                 }
             }
-
         }
 
         return $reply;
