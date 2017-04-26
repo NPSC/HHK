@@ -25,7 +25,7 @@ function additionalGuest(item) {
         for (var i = 0; i < resv.members.length; i++) {
             var pan = resv.members[i];
             if (pan.idName == item.id && pan.idPrefix == resv.patientPrefix && resv.patStaying == true) {
-                flagAlertMessage('This guest is already added.', true);
+                flagAlertMessage('Silly human, this guest is already added.', true);
                 return;
             }
         }
@@ -448,7 +448,7 @@ function injectSlot(data) {
         
         $('#hospitalSection').show('blind');
         
-        if ($('#selHospital').val() != '') {
+        if ($('#selHospital').val() !== '' && data.rvstCode && data.rvstCode !== '') {
             hHdr.click();
         }
     }
@@ -509,7 +509,7 @@ function injectSlot(data) {
                 .append(pcDiv)
                 .show('scale, horizontal');
 
-        if (pcDiv.find('#h_txtLastName').val() != '') {
+        if (pcDiv.find('#h_txtLastName').val() !== '') {
             $('#h_drpDown').click();
         }
 
@@ -933,6 +933,7 @@ function psgChooser(data) {
                 $('#psgDialog').dialog('close');
             }
         })
+        .dialog('option', 'title', 'Patient Details')
         .dialog('open');
 }
 /**
@@ -1593,7 +1594,10 @@ $(document).ready(function() {
 
     function getPatient(item) {
         if (resv.patAsGuest) {
-            $('#hhk-patPromptQuery').text('Will ' + item.fullName + ' be staying at the House for at least one night?');
+            if (item.fullName === undefined) {
+                item.fullName = 'the ' + resv.patientLabel;
+            }
+            $('#hhk-patPromptQuery').text('Is ' + item.fullName + ' staying the FIRST night (or longer)?');
             $('#patientPrompt')
                 .dialog('option', 'buttons', {
                     Yes: function() {

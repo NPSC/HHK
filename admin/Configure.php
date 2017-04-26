@@ -143,7 +143,8 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
 
     try {
 
-        checkZipFile('patch');
+
+        SiteConfig::checkZipFile('patch');
 
         $uploadfile = '..' . DS . 'patch' . DS . 'upload.zip';
 

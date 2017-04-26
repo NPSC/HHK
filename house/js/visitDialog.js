@@ -504,6 +504,13 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
             $('#guestAdd').click(function () {
                 $('.hhk-addGuest').toggle();
             });
+            
+            if ($('#btnAddGuest').length > 0) {
+                $('#btnAddGuest').button();
+                $('#btnAddGuest').click(function () {
+                    window.location.assign('CheckIn.php?rid=' + $(this).data('rid'));
+                });
+            }
 
             // Billing agent chooser set up
             var lstXhr;

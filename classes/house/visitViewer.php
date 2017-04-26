@@ -127,12 +127,13 @@ class VisitView {
 
         $departureText = "";
         $days = "";
+        $addGuestButton = '';
 
         switch ($r['Status']) {
             case VisitStatus::CheckedIn:
 
                 $depHeader = "Expected End";
-                $daysHeader = "Exp. Nights";
+                $daysHeader = "Expected Nights";
 
                 if ($action == 'ref') {
                     // deal with changed checkout date
@@ -148,6 +149,11 @@ class VisitView {
                     $departureText = date('M j, Y', strtotime($r['Expected_Departure']));
                     $days = $r['Expected_Nights'];
                 }
+
+                $addGuestButton = HTMLContainer::generateMarkup('div',
+                    HTMLInput::generateMarkup('Add Guest', array('id'=>'btnAddGuest', 'type'=>'button', 'data-rid'=>$r['idReservation'], 'title'=>'Add another guest to this visit.'))
+                    , array('style'=>'float:left;margin-left:.3em;'));
+
                 break;
 
             case VisitStatus::NewSpan:
@@ -306,7 +312,8 @@ class VisitView {
 
 
 
-        $tblMarkup .= HTMLContainer::generateMarkup('div','', array('style'=>'clear:both;'));
+
+        $tblMarkup .= $addGuestButton . HTMLContainer::generateMarkup('div','', array('style'=>'clear:both;'));
 
 
         $undoCkoutButton = '';
