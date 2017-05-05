@@ -265,13 +265,13 @@ where  ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DATE(s.Sp
             $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
 
             if (isset($r['Birth Date']) && $r['Birth Date'] != '') {
-                $r['Birth Date'] = date('M j, Y', strtotime($r['Birth Date']));
+                $r['Birth Date'] = date('Y/m/d', strtotime($r['Birth Date']));
             }
             if ($r['Arrival'] != '') {
-                $r['Arrival'] = date('M j, Y', strtotime($r['Arrival']));
+                $r['Arrival'] = date('Y/m/d', strtotime($r['Arrival']));
             }
             if ($r['Departure'] != '') {
-                $r['Departure'] = date('M j, Y', strtotime($r['Departure']));
+                $r['Departure'] = date('Y/m/d', strtotime($r['Departure']));
             }
             unset($r['idPsg']);
 
@@ -1078,8 +1078,8 @@ $selCountry = HTMLSelector::generateMarkup('', $coAttr);
             $('#divPrintButton').show();
             try {
                 $('#tblrpt').dataTable({
-                    "iDisplayLength": 50,
-                    "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                    "displayLength": 50,
+                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                     "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
                 });
             }

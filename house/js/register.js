@@ -608,6 +608,22 @@ function checkStrength(pwCtrl) {
     }
     return rtn;
 }
+function dateRender(data, type) {
+    // If display or filter data is requested, format the date
+    if ( type === 'display' || type === 'filter' ) {
+
+        if (data === null || data === '') {
+            return '';
+        }
+
+        return moment(data).format('ddd, MMM Do YYYY');
+    }
+
+    // Otherwise the data type requested (`type`) is type detection or
+    // sorting data, for which we want to use the integer, so just return
+    // that, unaltered
+    return data;
+}
 
 $(document).ready(function () {
     "use strict";
@@ -1083,9 +1099,15 @@ $(document).ready(function () {
                     $('#vfees').append($('<div id="rptfeediv"/>').append($(data.success)));
                     
                     $('#feesTable').dataTable({
+                        'columnDefs': [
+                            {'targets': 8,
+                             'type': 'date',
+                             'render': function ( data, type, row ) {return dateRender(data, type);}
+                            }
+                         ],
                         "dom": '<"top"if>rt<"bottom"lp><"clear">',
-                        "iDisplayLength": 50,
-                        "aLengthMenu": [[25, 50, -1], [25, 50, "All"]]
+                        "displayLength": 50,
+                        "lengthMenu": [[25, 50, -1], [25, 50, "All"]]
                     });
                     
                     $('#rptfeediv').on('click', '.invAction', function (event) {
@@ -1197,6 +1219,12 @@ $(document).ready(function () {
                         });
                         
                         $('#InvTable').dataTable({
+                            'columnDefs': [
+                                {'targets': [2,4],
+                                 'type': 'date',
+                                 'render': function ( data, type, row ) {return dateRender(data, type);}
+                                }
+                             ],
                             "dom": '<"top"if>rt<"bottom"lp><"clear">',
                             "displayLength": 50,
                             "lengthMenu": [[20, 50, 100, -1], [20, 50, 100, "All"]],

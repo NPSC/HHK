@@ -13,58 +13,64 @@ function isNumber(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
+function dateRender(data, type) {
+    // If display or filter data is requested, format the date
+    if ( type === 'display' || type === 'filter' ) {
+
+        if (data === null || data === '') {
+            return '';
+        }
+
+        return moment(data).format('MMM Do YYYY');
+    }
+
+    // Otherwise the data type requested (`type`) is type detection or
+    // sorting data, for which we want to use the integer, so just return
+    // that, unaltered
+    return data;
+}
+
+
 var dtCols = [
     {
-        "aTargets": [ 0 ],
-        "sTitle": "Date",
-        "sType": "date",
-        "mDataProp": function (source, type, val) {
-            "use strict";
-            if (type === 'set') {
-                source.LogDate = val;
-                return null;
-            } else if (type === 'display') {
-                if (source.Date_display === undefined) {
-                    var dt = new Date(Date.parse(source.LogDate));
-                    source.Date_display = (dt.getMonth() + 1) + '/' + dt.getDate() + '/' + dt.getFullYear() + ' ' + dt.getHours() + ':' + dt.getMinutes();
-                    
-                }
-                return source.Date_display;
-            }
-            return source.LogDate;
+        "targets": [ 0 ],
+        "title": "Date",
+        'data': 'Date',
+        render: function ( data, type ) {
+            return dateRender(data, type);
         }
     },
     {
-        "aTargets": [ 1 ],
-        "sTitle": "Type",
-        "bSearchable": false,
-        "bSortable": false,
-        "mDataProp": "LogType"
+        "targets": [ 1 ],
+        "title": "Type",
+        "searchable": false,
+        "sortable": false,
+        "data": "Type"
     },
     {
-        "aTargets": [ 2 ],
-        "sTitle": "Sub-Type",
-        "bSearchable": false,
-        "bSortable": false,
-        "mDataProp": "Subtype"
+        "targets": [ 2 ],
+        "title": "Sub-Type",
+        "searchable": false,
+        "sortable": false,
+        "data": "Sub-Type"
     },
      {
-        "aTargets": [ 3 ],
-        "sTitle": "User",
-        "bSearchable": false,
-        "bSortable": false,
-        "mDataProp": "User"
+        "targets": [ 3 ],
+        "title": "User",
+        "searchable": false,
+        "sortable": false,
+        "data": "User"
     },
     {
-        "aTargets": [ 4 ],
-        "bVisible": false,
-        "mDataProp": "idName"
+        "targets": [ 4 ],
+        "visible": false,
+        "data": "Id"
     },
     {
-        "aTargets": [ 5 ],
-        "sTitle": "Log Text",
-        "bSortable": false,
-        "mDataProp": "LogText"
+        "targets": [ 5 ],
+        "title": "Log Text",
+        "sortable": false,
+        "data": "Log Text"
     }
 
 ];
@@ -375,12 +381,6 @@ $(document).ready(function () {
         }
     });
     
-    $("#schLogText").keyup( function () {
-        /* Filter on the column (the index) of this element */
-        if (this.value.length > 2 && listEvtTable)
-            listEvtTable.fnFilter( this.value, 5 );
-    });
-    
     $('#divNametabs').tabs({
         
         beforeActivate: function (event, ui) {
@@ -429,18 +429,20 @@ $(document).ready(function () {
                     event.preventDefault();
                 }
                 
-                if (ui.newTab.prop('id') === 'chglog' && !listEvtTable) {
+                 if (ui.newTab.prop('id') === 'chglog' && !listEvtTable) {
                     listEvtTable = $('#dataTbl').dataTable({
-                        "aoColumnDefs": dtCols,
-                        "bServerSide": true,
-                        "bProcessing": true,
-                        "bDeferRender": true,
-                        "oLanguage": {"sSearch": "Search Log Text:"},
-                        "aaSorting": [[0,'desc']],
-                        "iDisplayLength": 25,
-                        "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                        "Dom": '<"top"ilf>rt<"bottom"ip>',
-                        "sAjaxSource": listJSON
+                    "columnDefs": dtCols,
+                    "serverSide": true,
+                    "processing": true,
+                    "deferRender": true,
+                    "language": {"sSearch": "Search Log Text:"},
+                    "sorting": [[0,'desc']],
+                    "displayLength": 25,
+                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                    "Dom": '<"top"ilf>rt<"bottom"ip>',
+                    ajax: {
+                        url: listJSON
+                    }
                     });
                 }
             }

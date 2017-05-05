@@ -120,7 +120,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, 
         $g['Amount'] = HTMLContainer::generateMarkup('span', number_format($amt, 2), $attr);
         $g['Invoice_Number'] = $invoiceMkup;
         $g['Status'] = HTMLContainer::generateMarkup('span', $invoiceStatus, $payStatusAttr);
-        $g['Date'] = $dateDT->format('M j, Y');
+        $g['Date'] = $dateDT->format('Y/m/d');
 
         $tr = '';
         foreach ($fltrdFields as $f) {
@@ -186,7 +186,7 @@ $cFields[] = array('Visit Id', 'vid', 'checked', '', 's', '', array());
 $cFields[] = array("Organization", 'Company', 'checked', '', 's', '', array());
 $cFields[] = array('Last', 'Last', 'checked', '', 's', '', array());
 $cFields[] = array("First", 'First', 'checked', '', 's', '', array());
-$cFields[] = array("Date", 'Date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array());
+$cFields[] = array("Date", 'Date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
 $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 's', '', array());
 $cFields[] = array("Description", 'Description', 'checked', '', 's', '', array());
 
@@ -478,10 +478,11 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 from
     invoice_line il join invoice i ON il.Invoice_Id = i.idInvoice
     left join `name` n on i.Sold_To_Id = n.idName
-    left join name_guest ng on i.Sold_To_Id = ng.idName
-    left join hospital_stay hs on hs.idPsg = ng.idPsg
+    left join registration rg on i.idGroup = rg.idRegistration
+    left join hospital_stay hs on hs.idPsg = rg.idPsg
+    left join name_guest ng on i.Sold_To_Id = ng.idName and rg.idPsg = ng.idPsg
     left join name_volunteer2 nv on nv.idName = n.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::BillingAgent . "'
-where $whDeleted  $whDates  $whItem  $whStatus $whDiags order by i.idInvoice, il.idInvoice_Line";
+where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags order by i.idInvoice, il.idInvoice_Line";
 
     $stmt = $dbh->query($query);
 
@@ -610,6 +611,8 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MOMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
@@ -647,9 +650,26 @@ function invoiceAction(idInvoice, action, eid, container, show) {
         }
     });
 }
+function dateRender(data, type) {
+    // If display or filter data is requested, format the date
+    if ( type === 'display' || type === 'filter' ) {
+
+        if (data === null || data === '') {
+            return '';
+        }
+
+        return moment(data).format('ddd, MMM Do YYYY');
+    }
+
+    // Otherwise the data type requested (`type`) is type detection or
+    // sorting data, for which we want to use the integer, so just return
+    // that, unaltered
+    return data;
+}
     $(document).ready(function() {
-        var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';
+
         var makeTable = '<?php echo $mkTable; ?>';
+        var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
         $('#cbColClearAll').click(function () {
             $('#selFld option').each(function () {
@@ -693,16 +713,19 @@ function invoiceAction(idInvoice, action, eid, container, show) {
         });
         if (makeTable === '1') {
             $('div#printArea').css('display', 'block');
-            try {
-                listTable = $('#tblrpt').dataTable({
-                    "iDisplayLength": 50,
-                    "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                    "dom": '<"top"ilf>rt<"bottom"ilp><"clear">',
-                    "order": [[ 2, 'asc' ]]
-                });
-            } catch (err) {
+            $('#tblrpt').dataTable({
+                'columnDefs': [
+                    {'targets': columnDefs,
+                     'type': 'date',
+                     'render': function ( data, type, row ) {return dateRender(data, type);}
+                    }
+                 ],
+                "displayLength": 50,
+                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                "dom": '<"top"ilf>rt<"bottom"ilp><"clear">',
+                "order": [[ 2, 'asc' ]]
+            });
 
-            }
             $('#printButton').button().click(function() {
                 $("div#printArea").printArea();
             });

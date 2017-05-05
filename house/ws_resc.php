@@ -181,7 +181,13 @@ try {
 "$('#feesTable').dataTable({
     'dom': '<\"ignrSave\"if>rt<\"ignrSave\"lp><\"clear\">',
     'displayLength': 50,
-    'lengthMenu': [[25, 50, -1], [25, 50, 'All']]
+    'lengthMenu': [[25, 50, -1], [25, 50, 'All']],
+    'columnDefs': [
+        {'targets': 8,
+         'type': 'date',
+         'render': function ( data, type, row ) {return dateRender(data, type);}
+        }
+    ]
 });" .
 '// Void/Return button
 $("#rptfeediv").on("click", ".hhk-voidPmt", function() {

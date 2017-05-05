@@ -743,7 +743,7 @@ where lp.idPayment > 0
 //                    HTMLInput::generateMarkup(number_format($amt,2), $attr)
 //                    , array('style'=>'text-align:right;'));
                 $trow .= HTMLTable::makeTd($voidContent);
-                $trow .= HTMLTable::makeTd(date('M j, Y', strtotime($p['Payment_Date'])));
+                $trow .= HTMLTable::makeTd(date('Y/m/d', strtotime($p['Payment_Date'])));
                 $trow .= HTMLTable::makeTd($p['Payment_Updated_By'] == '' ? $p['Payment_Created_By'] : $p['Payment_Updated_By']);
                 $trow .= HTMLTable::makeTd($p['Payment_Note']);
 
@@ -767,7 +767,7 @@ where lp.idPayment > 0
                     .HTMLTable::makeTd('')
                     .HTMLTable::makeTd(number_format(abs($h['Amount']), 2), array('style'=>'text-align:right;color:gray;'))
                     .HTMLTable::makeTd($voidContent)
-                    .HTMLTable::makeTd(date('M j, Y', strtotime($r['Invoice_Date'])))
+                    .HTMLTable::makeTd(date('Y/m/d', strtotime($r['Invoice_Date'])))
                     .HTMLTable::makeTd($r['Invoice_Updated_By'])
                     .HTMLTable::makeTd('')
                 );
@@ -947,7 +947,7 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
 
             $dateDT = new DateTime($r['Invoice_Date']);
 
-            $billDate = ($r['BillDate'] == '' ? '' : date('M j, Y', strtotime($r['BillDate'])));
+            $billDate = ($r['BillDate'] == '' ? '' : date('Y/m/d', strtotime($r['BillDate'])));
 
             $actionTd = '';
 
@@ -966,7 +966,7 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
 
             $tbl->addBodyTr($actionTd
                     . HTMLTable::makeTd($invoiceMkup, array('style' => 'text-align:center;'))
-                    . HTMLTable::makeTd($dateDT->format('M j, Y'))
+                    . HTMLTable::makeTd($dateDT->format('Y/m/d'))
                     . HTMLTable::makeTd($statusTxt)
                     . HTMLTable::makeTd($billDate, array('id' => 'trBillDate' . $r['Invoice_Number']))
                     . HTMLTable::makeTd($payor)

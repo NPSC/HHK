@@ -873,7 +873,7 @@ $uS->guestId = $id;
                         </div>
                     </div>
                     <div id="vchangelog" class="ignrSave">
-                      <table id="dataTbl" cellpadding="0" cellspacing="0" border="0"></table>
+                      <table style="width:100%;" id="dataTbl" cellpadding="0" cellspacing="0" border="0"></table>
                     </div>
                     <div id="vfin"></div>
                     <div id="vVisits" class="ui-tabs-hide" style="min-width: 600px; display:none">
@@ -927,6 +927,7 @@ $uS->guestId = $id;
         </div>  <!-- div id="contentDiv"-->
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
@@ -936,6 +937,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MOMENT_JS; ?>"></script>
         <script type="text/javascript">
             var memberData = <?php echo json_encode($memberData); ?>;
             var psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);

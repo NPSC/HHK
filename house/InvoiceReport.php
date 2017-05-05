@@ -141,7 +141,7 @@ function doMarkupRow($r, $isLocal, $hospital, $statusTxt, &$tbl, &$sml, &$report
 
         $tbl->addBodyTr(
                 HTMLTable::makeTd($invoiceMkup, array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd($dateDT->format('M j, Y'))
+                .HTMLTable::makeTd($dateDT->format('Y/m/d'))
                 .HTMLTable::makeTd($statusMkup)
                 .HTMLTable::makeTd($payor)
                 .HTMLTable::makeTd($billDate . $billIcon)
@@ -749,6 +749,8 @@ $useVisitDatesCb = HTMLInput::generateMarkup('', $vAttrs)
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MOMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
@@ -807,6 +809,22 @@ function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement)
     dialg.dialog('option', 'buttons', buttons);
     dialg.dialog('option', 'width', 500);
     dialg.dialog('open');
+}
+function dateRender(data, type) {
+    // If display or filter data is requested, format the date
+    if ( type === 'display' || type === 'filter' ) {
+
+        if (data === null || data === '') {
+            return '';
+        }
+
+        return moment(data).format('MMM Do YYYY');
+    }
+
+    // Otherwise the data type requested (`type`) is type detection or
+    // sorting data, for which we want to use the integer, so just return
+    // that, unaltered
+    return data;
 }
 
 function invoiceAction(idInvoice, action, eid) {
@@ -885,14 +903,20 @@ $(document).ready(function() {
 
     if (makeTable === '1') {
         $('div#printArea').css('display', 'block');
-        try {
-            listTable = $('#tblrpt').dataTable({
-                "iDisplayLength": 50,
-                "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top"ilf>rt<"bottom"ilp><"clear">'
-            });
-        }
-        catch (err) { }
+
+        $('#tblrpt').dataTable({
+            'columnDefs': [
+                {'targets':  1,
+                 'type': 'date',
+                 'render': function ( data, type, row ) {return dateRender(data, type);}
+                }
+             ],
+            "displayLength": 50,
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "dom": '<"top"ilf>rt<"bottom"ilp><"clear">'
+        });
+
+
         $('#printButton').button().click(function() {
             $("div#printArea").printArea();
         });

@@ -1327,6 +1327,22 @@ function getECRel(item) {
         $('#' + prefix + 'selEmrgRel').val('');
     }
 }
+function dateRender(data, type) {
+    // If display or filter data is requested, format the date
+    if ( type === 'display' || type === 'filter' ) {
+
+        if (data === null || data === '') {
+            return '';
+        }
+
+        return moment(data).format('ddd, MMM Do YYYY');
+    }
+
+    // Otherwise the data type requested (`type`) is type detection or
+    // sorting data, for which we want to use the integer, so just return
+    // that, unaltered
+    return data;
+}
 
 $(document).ready(function() {
     "use strict";
@@ -1365,7 +1381,14 @@ $(document).ready(function() {
         "order": [[ 4, 'asc' ]]
     });
 
-    $('#atblgetter, #stblgetter, #wtblgetter').DataTable();
+    $('#atblgetter, #stblgetter, #wtblgetter').DataTable({
+        'columnDefs': [
+            {'targets': [4,5],
+             'type': 'date',
+             'render': function ( data, type, row ) {return dateRender(data, type);}
+            }
+         ]
+     });
     
     $.datepicker.setDefaults({
         yearRange: '-7:+02',

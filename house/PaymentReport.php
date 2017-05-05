@@ -188,7 +188,7 @@ function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$total, &$tbl, 
 
         $g['Last'] = $payorLast;
         $g['First'] = $payorFirst;
-        $g['Payment_Date'] = ($p['Payment_Date'] == '' ? '' :$dateDT->format('M j, Y'));
+        $g['Payment_Date'] = ($p['Payment_Date'] == '' ? '' :$dateDT->format('Y/m/d 00:00:00'));
         $g['Invoice_Number'] = $invoiceMkup;
 
         $g['Orig_Amount'] = number_format($origAmt, 2);
@@ -291,10 +291,10 @@ if (count($hospList) > 0) {
 }
 
 // Report column-selector
-// array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms
+// array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms, DT Type
 $cFields[] = array('Payor Last', 'Last', 'checked', '', 's', '', array());
 $cFields[] = array("Payor First", 'First', 'checked', '', 's', '', array());
-$cFields[] = array("Date", 'Payment_Date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array());
+$cFields[] = array("Date", 'Payment_Date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
 $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 's', '', array());
 $cFields[] = array("Room", 'Title', 'checked', '', 's', '', array('style'=>'text-align:center;'));
 $cFields[] = array($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'), 'idHospital', 'checked', '', 's', '', array());
@@ -720,6 +720,8 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MOMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
@@ -757,10 +759,26 @@ function invoiceAction(idInvoice, action, eid, container, show) {
         }
     });
 }
-    $(document).ready(function() {
+function dateRender(data, type) {
+    // If display or filter data is requested, format the date
+    if ( type === 'display' || type === 'filter' ) {
 
-        var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';
+        if (data === null || data === '') {
+            return '';
+        }
+
+        return moment(data).format('ddd, MMM Do YYYY');
+    }
+
+    // Otherwise the data type requested (`type`) is type detection or
+    // sorting data, for which we want to use the integer, so just return
+    // that, unaltered
+    return data;
+}
+
+    $(document).ready(function() {
         var makeTable = '<?php echo $mkTable; ?>';
+        var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
         $('.ckdate').datepicker({
             yearRange: '-05:+01',
@@ -804,14 +822,18 @@ function invoiceAction(idInvoice, action, eid, container, show) {
         });
         if (makeTable === '1') {
             $('div#printArea').css('display', 'block');
-            try {
-                listTable = $('#tblrpt').dataTable({
-                    "iDisplayLength": 50,
-                    "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                    "dom": '<"top"ilf>rt<"bottom"ilp><"clear">',
-                });
-            }
-            catch (err) { }
+            $('#tblrpt').dataTable({
+                'columnDefs': [
+                    {'targets': columnDefs,
+                     'type': 'date',
+                     'render': function ( data, type, row ) {return dateRender(data, type);}
+                    }
+                 ],
+                "displayLength": 50,
+                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                "dom": '<"top"ilf>rt<"bottom"ilp><"clear">'
+            });
+
             $('#printButton').button().click(function() {
                 $("div#printArea").printArea();
             });

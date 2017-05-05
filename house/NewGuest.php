@@ -159,7 +159,7 @@ ORDER BY `First Stay`";
 
             $r['idName'] = HTMLContainer::generateMarkup('a', $r['idName'], array('href'=>'GuestEdit.php?id=' . $r['idName'] . '&psg=' . $r['idPsg']));
 
-            $r['First Stay'] = $arrivalDT->format('M j, Y');
+            $r['First Stay'] = $arrivalDT->format('Y/m/d H:i:s');
 
             $tr = '';
             foreach ($fltrdFields as $f) {
@@ -287,7 +287,7 @@ $cFields[] = array("Primary Guest", 'Primary', 'checked', '', 's', '', array());
 
     $cFields[] = array($pTitles, $pFields, '', '', 's', '', array());
 
-$cFields[] = array("First Stay", 'First Stay', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array());
+$cFields[] = array("First Stay", 'First Stay', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
 
 $cFields[] = array("Patient Relation", 'Relationship', 'checked', '', 's', '', array());
 $cFields[] = array("Patient Group Id", 'idPsg', 'checked', '', 's', '', array());
@@ -519,11 +519,30 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MOMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
+function dateRender(data, type) {
+    // If display or filter data is requested, format the date
+    if ( type === 'display' || type === 'filter' ) {
+
+        if (data === null || data === '') {
+            return '';
+        }
+
+        return moment(data).format('MMM Do YYYY');
+    }
+
+    // Otherwise the data type requested (`type`) is type detection or
+    // sorting data, for which we want to use the integer, so just return
+    // that, unaltered
+    return data;
+}
     $(document).ready(function() {
-        
+
+        var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
         var makeTable = '<?php echo $mkTable; ?>';
         $('.ckdate').datepicker({
             yearRange: '-05:+01',
@@ -565,13 +584,18 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
 
         if (makeTable === '1') {
             $('div#printArea').css('display', 'block');
-            try {
-                $('#tblrpt').dataTable({
-                    "iDisplayLength": 50,
-                    "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                    "dom": '<"top"ilf>rt<"bottom"ilp><"clear">',
-                });
-            } catch (err) { }
+
+            $('#tblrpt').dataTable({
+                'columnDefs': [
+                    {'targets': columnDefs,
+                     'type': 'date',
+                     'render': function ( data, type, row ) {return dateRender(data, type);}
+                    }
+                 ],
+                "displayLength": 50,
+                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                "dom": '<"top"ilf>rt<"bottom"ilp><"clear">',
+            });
 
             $('#printButton').button().click(function() {
                 $("div#printArea").printArea();

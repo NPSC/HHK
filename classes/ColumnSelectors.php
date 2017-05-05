@@ -28,6 +28,8 @@ class ColumnSelectors {
      */
     protected $controlName;
 
+    protected $columnDefs;
+
     /**
      *
      * @param array $cols
@@ -36,6 +38,7 @@ class ColumnSelectors {
     public function __construct(array $cols, $contrlName) {
         $this->cols = $cols;
         $this->controlName = $contrlName;
+        $this->columnDefs = array();
     }
 
 
@@ -100,7 +103,6 @@ class ColumnSelectors {
         $tbl = new HTMLTable();
 
         $tbl->addHeaderTr(HTMLTable::makeTh('Include Fields'));
-//        $tbl->addBodyTr($this->makeColumnSelectors());
 
         $tbl->addBodyTr(HTMLTable::makeTd($this->makeDropdown()));
 
@@ -144,6 +146,7 @@ class ColumnSelectors {
     public function getFilteredFields() {
 
         $titles = array();
+        $colIndex = 0;
 
         foreach ($this->cols as $c) {
 
@@ -156,16 +159,121 @@ class ColumnSelectors {
                         $d[1] = $c[1][$i];
                         $d[0] = $c[0][$i];
                         $titles[] = $d;
+                        if (isset($d[7]) && $d[7] == 'date') {
+                            $this->columnDefs[] = $colIndex;
+                        }
+                        $colIndex++;
                     }
 
                 } else {
                     $titles[] = $c;
+                    if (isset($c[7]) && $c[7] == 'date') {
+                        $this->columnDefs[] = $colIndex;
+                    }
+                    $colIndex++;
                 }
             }
+
+
         }
 
         return $titles;
     }
 
+    public function getColumnDefs() {
+
+        return $this->columnDefs;
+
+    }
+
 }
 
+
+class SelectColumn {
+
+    /**
+     *
+     * @var string
+     */
+    protected $title;
+
+    /** returned column name
+     *
+     * @var string
+     */
+    protected $fieldName;
+
+    /**
+     *
+     * @var bool
+     */
+    protected $isSelected;
+
+    /**
+     *
+     * @var bool
+     */
+    protected $isFixed;
+
+    /**
+     *
+     * @var string
+     */
+    protected $excelType;
+
+    /**
+     *
+     * @var string
+     */
+    protected $excelStyle;
+
+    /**
+     *
+     * @var string
+     */
+    protected $dataTablesType;
+
+    public function __construct($title, $fieldName, $isSelected, $isFixed, $excelType, $excelStyle, $dataTablesType = '') {
+        $this->title = $title;
+        $this->fieldName = $fieldName;
+        $this->isSelected = $isSelected;
+        $this->isFixed = $isFixed;
+        $this->excelType = $excelType;
+        $this->excelStyle = $excelStyle;
+        $this->dataTablesType = $dataTablesType;
+    }
+
+    public function addTitle(&$titles) {
+        if ($this->getIsSelected() || $this->getIsFixed()) {
+            $titles[] = $this->title;
+        }
+    }
+
+    public function addFieldName(&$fields) {
+        if ($this->getIsSelected() || $this->getIsFixed()) {
+            $fields[] = $this->fieldName;
+        }
+    }
+
+    public function getIsSelected() {
+        return $this->isSelected;
+    }
+
+    public function getIsFixed() {
+        return $this->isFixed;
+    }
+
+    public function getExcelType() {
+        return $this->excelType;
+    }
+
+    public function getExcelStyle() {
+        return $this->excelStyle;
+    }
+
+    public function getDataTablesType() {
+        return $this->dataTablesType;
+    }
+
+
+}

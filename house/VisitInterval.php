@@ -183,21 +183,18 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
 
         $r['idPrimaryGuest'] = HTMLContainer::generateMarkup('a', $r['Name_Last'] . ', ' . $r['Name_First'], array('href'=>'GuestEdit.php?id=' . $r['idPrimaryGuest'] . '&psg=' . $r['idPsg']));
         $r['idPatient'] = HTMLContainer::generateMarkup('a', $r['Patient_Last'] . ', ' . $r['Patient_First'], array('href'=>'GuestEdit.php?id=' . $r['idPatient'] . '&psg=' . $r['idPsg']));
-        $r['Arrival'] = $arrivalDT->format('M j, Y');
-        $r['Departure'] = $departureDT->format('M j, Y');
+        $r['Arrival'] = $arrivalDT->format('Y/m/d H:i:s');
+        $r['Departure'] = $departureDT->format('Y/m/d H:i:s');
 
         if ($r['pBirth'] != '') {
             $pBirthDT = new DateTime($r['pBirth']);
-            $r['pBirth'] = $pBirthDT->format('M j, Y');
+            $r['pBirth'] = $pBirthDT->format('Y/m/d H:i:s');
         }
 
         $now = new DateTime();
         $now->setTime(0,0,0);
         $expDepart = new DateTime($r['Expected_Departure']);
         $expDepart->setTime(0, 0, 0);
-        if ($expDepart < $now && $r['Status'] == VisitStatus::CheckedIn) {
-            $r['Departure'] = '>> ' . $r['Departure'];
-        }
 
         $r['Status'] = HTMLContainer::generateMarkup('span', $uS->guestLookups['Visit_Status'][$r['Status']][1], array('class'=>'hhk-getVDialog', 'style'=>'cursor:pointer;width:100%;text-decoration: underline;', 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span']));
 
@@ -1191,7 +1188,7 @@ if ($uS->PatientAddr) {
     $cFields[] = array($pTitles, $pFields, '', '', 's', '', array());
 }
 
-$cFields[] = array("Patient DOB", 'pBirth', '', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array());
+$cFields[] = array("Patient DOB", 'pBirth', '', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
 
 $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Ref. Agent'), 'Referral_Agent', 'checked', '', 's', '', array());
 
@@ -1216,8 +1213,8 @@ if (count($diags) > 0) {
 }
 
 
-$cFields[] = array("Arrive", 'Arrival', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array());
-$cFields[] = array("Depart", 'Departure', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array());
+$cFields[] = array("Arrive", 'Arrival', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
+$cFields[] = array("Depart", 'Departure', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
 $cFields[] = array("Room", 'Title', 'checked', '', 's', '', array('style'=>'text-align:center;'));
 
 if ($uS->VisitFee) {
@@ -1459,6 +1456,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
@@ -1466,11 +1464,29 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MOMENT_JS; ?>"></script>
 <script type="text/javascript">
+function dateRender(data, type) {
+    // If display or filter data is requested, format the date
+    if ( type === 'display' || type === 'filter' ) {
+
+        if (data === null || data === '') {
+            return '';
+        }
+
+        return moment(data).format('MMM Do YYYY');
+    }
+
+    // Otherwise the data type requested (`type`) is type detection or
+    // sorting data, for which we want to use the integer, so just return
+    // that, unaltered
+    return data;
+}
     $(document).ready(function() {
 
         var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';
         var makeTable = '<?php echo $mkTable; ?>';
+        var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
         var pmtMkup = "<?php echo $paymentMarkup; ?>";
         var rctMkup = '<?php echo $receiptMarkup; ?>';
         var payFailPage = '<?php echo $payFailPage; ?>';
@@ -1516,14 +1532,18 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         });
         if (makeTable === '1') {
             $('div#printArea').css('display', 'block');
-            try {
-                $('#tblrpt').dataTable({
-                    "iDisplayLength": 50,
-                    "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                    "dom": '<"top"ilf>rt<"bottom"ilp><"clear">',
-                });
-            }
-            catch (err) { }
+
+            $('#tblrpt').dataTable({
+                'columnDefs': [
+                    {'targets': columnDefs,
+                     'type': 'date',
+                     'render': function ( data, type, row ) {return dateRender(data, type);}
+                    }
+                 ],
+                "displayLength": 50,
+                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                "dom": '<"top"ilf>rt<"bottom"ilp><"clear">',
+            });
             $('div#printArea').on('click', '.hhk-getVDialog',
                 function () {
                 var buttons;

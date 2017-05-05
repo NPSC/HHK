@@ -438,7 +438,7 @@ try {
             var challVar = '<?php echo $challengeVar; ?>';
             var viewDays = '<?php echo ($weeks * 7); ?>';
         </script>
-        <script type="text/javascript" src="js/register-min.js<?php echo JS_V; ?>"></script>
+        <script type="text/javascript" src="js/register.js<?php echo JS_V; ?>"></script>
 <style>
    #version {
     height: 15px;

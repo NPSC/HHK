@@ -133,12 +133,12 @@ $cFields[] = array($pTitles, $pFields, '', '', 's', '', array());
 
 $cFields[] = array("Room Phone", 'Phone', '', '', 's', '');
 $cFields[] = array("Guest Phone", 'Phone_Num', '', '', 's', '');
-$cFields[] = array("Arrive", 'Arrival', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
-$cFields[] = array("Depart", 'Departure', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
+$cFields[] = array("Arrive", 'Arrival', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
+$cFields[] = array("Depart", 'Departure', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
 $cFields[] = array("Nights", 'Nights', 'checked', '', 'n', '');
 $cFields[] = array("Rate", 'FA_Category', 'checked', '', 's', '');
 $cFields[] = array("Status", 'Status_Title', 'checked', '', 's', '');
-$cFields[] = array("Status Date", 'Status_Date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
+$cFields[] = array("Status Date", 'Status_Date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
 
 $colSelector = new ColumnSelectors($cFields, 'selFld');
 
@@ -447,9 +447,9 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistratio
         if ($local) {
 
             $r['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>'Referral.php?rid=' . $r['idReservation']));
-            $r['Arrival'] = $arrivalDT->format('M j, Y');
-            $r['Departure'] = $departureDT->format('M j, Y');
-            $r['Status_Date'] = $statusDT->format('M j, Y');
+            $r['Arrival'] = $arrivalDT->format('Y/m/d H:i:s');
+            $r['Departure'] = $departureDT->format('Y/m/d H:i:s');
+            $r['Status_Date'] = $statusDT->format('Y/m/d H:i:s');
             $r['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>'GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
             $r['FA_Category'] = $rate;
 
@@ -535,14 +535,34 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MOMENT_JS; ?>"></script>
 <script type="text/javascript">
+function dateRender(data, type) {
+    // If display or filter data is requested, format the date
+    if ( type === 'display' || type === 'filter' ) {
+
+        if (data === null || data === '') {
+            return '';
+        }
+
+        return moment(data).format('MMM Do YYYY');
+    }
+
+    // Otherwise the data type requested (`type`) is type detection or
+    // sorting data, for which we want to use the integer, so just return
+    // that, unaltered
+    return data;
+}
+
     $(document).ready(function() {
 
-        var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';
+        var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
         var makeTable = '<?php echo $mkTable; ?>';
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
+
         $('.ckdate').datepicker({
             yearRange: '-05:+01',
             changeMonth: true,
@@ -551,6 +571,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
             numberOfMonths: 1,
             dateFormat: 'M d, yy'
         });
+
         $('#selCalendar').change(function () {
             $('#selIntYear').show();
             if ($(this).val() && $(this).val() != '19') {
@@ -566,22 +587,31 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
             }
         });
         $('#selCalendar').change();
+
         $('#cbColClearAll').click(function () {
             $('#selFld option').each(function () {
                 $(this).prop('selected', false);
             });
         });
+
         $('#cbColSelAll').click(function () {
             $('#selFld option').each(function () {
                 $(this).prop('selected', true);
             });
         });
+
         if (makeTable === '1') {
             $('div#printArea').css('display', 'block');
             try {
                 listTable = $('#tblrpt').dataTable({
-                    "iDisplayLength": 50,
-                    "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                'columnDefs': [
+                    {'targets': columnDefs,
+                     'type': 'date',
+                     'render': function ( data, type, row ) {return dateRender(data, type);}
+                    }
+                 ],
+                    "displayLength": 50,
+                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                     "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
                 });
             }
