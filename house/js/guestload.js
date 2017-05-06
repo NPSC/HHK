@@ -58,7 +58,7 @@ var dtCols = [
         "targets": [ 3 ],
         "title": "User",
         "searchable": false,
-        "sortable": false,
+        "sortable": true,
         "data": "User"
     },
     {
@@ -435,7 +435,7 @@ $(document).ready(function () {
                     "serverSide": true,
                     "processing": true,
                     "deferRender": true,
-                    "language": {"sSearch": "Search Log Text:"},
+                    "language": {"search": "Search Log Text:"},
                     "sorting": [[0,'desc']],
                     "displayLength": 25,
                     "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],

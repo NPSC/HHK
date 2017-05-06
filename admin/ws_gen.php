@@ -343,7 +343,7 @@ function changeLog(PDO $dbh, $id, $get) {
             array( 'db' => 'LogText', 'dt' => 'Log Text')
         );
 
-        return SSP::complex ( $get, $dbh, "vaudit_log", 'idName', $columns, $whereResult=null, $whereAll="idName=$id" );
+        return SSP::complex ( $get, $dbh, "vaudit_log", 'idName', $columns, null, "idName=$id" );
 
 }
 
