@@ -695,11 +695,13 @@ $(document).ready(function () {
         cgResvStatus($(this).data('rid'), $(this).data('stat'));
     });
 
-    $.extend($.fn.dataTable.defaults, {
+    $.extend(true, $.fn.dataTable.defaults, {
         "dom": '<"top"if>rt<"bottom"lp><"clear">',
         "displayLength": 50,
         "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
-        "order": [[ 2, 'asc' ]]
+        "order": [[ 2, 'asc' ]],
+        "processing": true,
+        "deferRender": true
     });
 
     $('#curres').DataTable({
@@ -707,7 +709,6 @@ $(document).ready(function () {
            url: 'ws_resc.php?cmd=getHist&tbl=curres',
            dataSrc: 'curres'
        },
-       "deferRender": true,
        "drawCallback": function (settings) {
             $('#curres .gmenu').menu();
        },
@@ -722,7 +723,6 @@ $(document).ready(function () {
        "drawCallback": function (settings) {
             $('#reservs .gmenu').menu();
        },
-       "deferRender": true,
        "columns": rvCols
     });
 
@@ -735,7 +735,6 @@ $(document).ready(function () {
            "drawCallback": function (settings) {
                 $('#unreserv .gmenu').menu();
            },
-           "deferRender": true,
            "columns": rvCols
         });
     }
@@ -748,7 +747,6 @@ $(document).ready(function () {
        "drawCallback": function (settings) {
             $('#waitlist .gmenu').menu();
        },
-       "deferRender": true,
        "columns": wlCols
     });
 

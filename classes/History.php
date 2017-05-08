@@ -195,7 +195,7 @@ class History {
             $stDay->setTime(10, 0, 0);
 
 
-                $fixedRows['Expected Arrival'] = $stDay->format('D, M j, Y');
+                $fixedRows['Expected Arrival'] = $stDay->format('c');
 
             // Departure Date
             if ($r['Expected_Departure'] != '') {
@@ -204,7 +204,7 @@ class History {
                 $edDay->setTime(10, 0, 0);
 
                 $fixedRows['Nights'] = $edDay->diff($stDay, TRUE)->days;
-                $fixedRows['Expected Departure'] = $edDay->format('M j, Y');
+                $fixedRows['Expected Departure'] = $edDay->format('c');
 
             } else {
 
@@ -373,7 +373,7 @@ class History {
 
 
             // Date?
-            $fixedRows['Checked-In'] = date('D, M j, Y', strtotime($r['Checked-In']));
+            $fixedRows['Checked In'] = date('c', strtotime($r['Checked-In']));
 
             // Days
             $stDay = new \DateTime($r['Checked-In']);
@@ -384,7 +384,7 @@ class History {
 
             // Expected Departure
             if ($r['Expected Depart'] != '') {
-                $fixedRows['Expected Departure'] = date('D, M j, Y', strtotime($r['Expected Depart']));
+                $fixedRows['Expected Departure'] = date('c', strtotime($r['Expected Depart']));
             } else {
                 $fixedRows['Expected Departure'] = '';
             }
@@ -407,9 +407,9 @@ class History {
                     $fixedRows['Rate'] = $roomRates[$r['idRoom_rate']]['Title'];
 
                     if ($roomRates[$r['idRoom_rate']]['FA_Category'] == RoomRateCategorys::Fixed_Rate_Category) {
-                        $fixedRows['Amount'] = number_format($r['Pledged_Rate'], (floor($r['Pledged_Rate']) != $r['Pledged_Rate'] ? 2 : 0));
+                        $fixedRows['Amount'] = '$' .number_format($r['Pledged_Rate'], 2);
                     } else {
-                        $fixedRows['Amount'] = ($roomRates[$r['idRoom_rate']]['Reduced_Rate_1'] == 0 ? '0' :  number_format($roomRates[$r['idRoom_rate']]['Reduced_Rate_1'], (floor($roomRates[$r['idRoom_rate']]['Reduced_Rate_1']) != $roomRates[$r['idRoom_rate']]['Reduced_Rate_1'] ? 2 : 0)));
+                        $fixedRows['Amount'] = '$' .($roomRates[$r['idRoom_rate']]['Reduced_Rate_1'] == 0 ? '0' :  number_format($roomRates[$r['idRoom_rate']]['Reduced_Rate_1'], 2));
                     }
 
                 } else {

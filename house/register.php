@@ -213,39 +213,10 @@ if ($roomCount > 20) {
     $divFontSize = 'font-size:.8em;';
 }
 
-// Current guests columns
-$cgCols = array(
-    array("data" => "Action" ),
-    array("data" => "Guest" ),
-    array("data" => "Checked-In", 'type'=>'date' ),
-    array("data" => "Nights", 'className'=>'hhk-justify-c' ),
-    array("data" => "Expected Departure" , 'type'=>'date'),
-    array("data" => "Room" )
-    );
-
-if ($uS->RoomPriceModel != ItemPriceCode::None) {
-    $cgCols[] = array("data" => "Rate" );
-    $cgCols[] = array("data" => "Amount", 'className'=>'hhk-justify-r' );
-}
-
-$cgCols[] = array("data" => "Phone" );
-$cgCols[] = array("data" => $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') );
-$cgCols[] = array("data" => $labels->getString('MemberType', 'patient', 'Patient') );
-
-
-$currTable = new HTMLTable();
-$hdrRow = '';
-
-foreach ($cgCols as $c) {
-    $hdrRow .= HTMLTable::makeTh($c['data']);
-}
-
-$currTable->addHeaderTr($hdrRow);
-$currTable->addFooterTr($hdrRow);
 
 // Currently Checked In guests
 $currentCheckedIn = HTMLContainer::generateMarkup('h3', 'Current Guests' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlCurGuests', 'style'=>'margin-left:5em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
-        . HTMLContainer::generateMarkup('div', $currTable->generateMarkup(array('id'=>'curres', 'style'=>'width:100%;')), array('id' => 'divcurres'));
+        . HTMLContainer::generateMarkup('div', "<table id='curres' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divcurres'));
 
 // Confirmed reservations and waitlist
 $currentReservations = '';
@@ -260,42 +231,6 @@ if ($uS->Reservation) {
     $locations = readGenLookupsPDO($dbh, 'Location');
     $diags = readGenLookupsPDO($dbh, 'Diagnosis');
 
-    $rvCols = array(
-        array("data" => "Action" ),
-        array("data" => "Guest" ),
-        array("data" => "Expected Arrival" , 'type'=>'date'),
-        array("data" => "Nights", 'className'=>'hhk-justify-c' ),
-        array("data" => "Expected Departure" , 'type'=>'date'),
-        array("data" => "Room" )
-        );
-
-    if ($uS->RoomPriceModel != ItemPriceCode::None) {
-        $rvCols[] = array("data" => "Rate" );
-    }
-
-    $rvCols[] = array("data" => "Occupants" );
-    $rvCols[] = array("data" => $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') );
-
-    if (count($locations) > 0) {
-        $rvCols[] = array("data" => $labels->getString('hospital', 'location', 'Unit') );
-    }
-
-    if (count($diags) > 0) {
-        $rvCols[] = array("data" => $labels->getString('hospital', 'diagnosis', 'Diagnosis') );
-    }
-
-    $rvCols[] = array("data" => $labels->getString('MemberType', 'patient', 'Patient') );
-
-    $hdrRow = '';
-
-    foreach ($rvCols as $c) {
-        $hdrRow .= HTMLTable::makeTh($c['data']);
-    }
-
-    $currTable = new HTMLTable();
-    $currTable->addHeaderTr($hdrRow);
-    $currTable->addFooterTr($hdrRow);
-
     // make registration form print button
     $regButton = HTMLContainer::generateMarkup('span', 'Check-in Date: ' . HTMLInput::generateMarkup('', array('id'=>'regckindate', 'class'=>'ckdate hhk-prtRegForm'))
             . HTMLInput::generateMarkup('Print Registration Forms', array('id'=>'btnPrintRegForm', 'type'=>'button', 'data-page'=>'PrtRegForm.php', 'class'=>'hhk-prtRegForm', 'style'=>'margin-left:.3em;'))
@@ -305,50 +240,15 @@ if ($uS->Reservation) {
             $labels->getString('register', 'reservationTab', 'Confirmed Reservations') .
             HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlConfRes', 'style'=>'margin-left:5em;')) . $regButton
             , array('style' => 'background-color:#D3D3D3; padding:10px;'))
-            . HTMLContainer::generateMarkup('div', $currTable->generateMarkup(array('id'=> 'reservs', 'style'=>'width:100%;')), array('id' => 'divreservs'));
+            . HTMLContainer::generateMarkup('div', "<table id='reservs' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divreservs'));
 
     if ($uS->ShowUncfrmdStatusTab) {
         $uncommittedReservations = HTMLContainer::generateMarkup('h3', $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlUcRes', 'style'=>'margin-left:5em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
-            . HTMLContainer::generateMarkup('div', $currTable->generateMarkup(array('id'=> 'unreserv', 'style'=>'width:100%;')), array('id' => 'divunreserv'));
+            . HTMLContainer::generateMarkup('div', "<table id='unreserv' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divunreserv'));
     }
 
 
-    $wlCols = array(
-        array("data" => "Action" ),
-        array("data" => "Guest" ),
-        array("data" => "Expected Arrival" , 'type'=>'date'),
-        array("data" => "Nights", 'className'=>'hhk-justify-c' ),
-        array("data" => "Expected Departure" , 'type'=>'date'),
-        array("data" => "Phone")
-        );
-
-    if ($uS->RoomPriceModel != ItemPriceCode::None) {
-        $wlCols[] = array("data" => "Rate" );
-    }
-
-    $wlCols[] = array("data" => "Occupants" );
-    $wlCols[] = array("data" => $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') );
-
-    if (count($locations) > 0) {
-        $wlCols[] = array("data" => $labels->getString('hospital', 'location', 'Unit') );
-    }
-    if (count($diags) > 0) {
-        $wlCols[] = array("data" => $labels->getString('hospital', 'diagnosis', 'Diagnosis') );
-    }
-
-    $wlCols[] = array("data" => $labels->getString('MemberType', 'patient', 'Patient') );
-
-    $whdrRow = '';
-
-    foreach ($wlCols as $c) {
-        $whdrRow .= HTMLTable::makeTh($c['data']);
-    }
-
-    $wlTable = new HTMLTable();
-    $wlTable->addHeaderTr($whdrRow);
-    $wlTable->addFooterTr($whdrRow);
-
-        // make registration form print button
+    // make registration form print button
     $wlButton = HTMLContainer::generateMarkup('span', 'Date: ' . HTMLInput::generateMarkup(date('M j, Y'), array('id'=>'regwldate', 'class'=>'ckdate hhk-prtWL'))
             . HTMLInput::generateMarkup('Print Wait List', array('id'=>'btnPrintWL', 'type'=>'button', 'data-page'=>'PrtWaitList.php', 'class'=>'hhk-prtWL', 'style'=>'margin-left:.3em;'))
             , array('style'=>'margin-left:5em;padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5'));
@@ -358,7 +258,7 @@ if ($uS->Reservation) {
             HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlWlist', 'style'=>'margin-left:5em;'))
             .$wlButton
             , array('style' => 'background-color:#D3D3D3; padding:10px;'))
-            . HTMLContainer::generateMarkup('div', $wlTable->generateMarkup(array('id'=> 'waitlist', 'style'=>'width:100%;')), array('id' => 'divwaitlist'));
+            . HTMLContainer::generateMarkup('div', "<table id='waitlist' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divwaitlist'));
 }
 
 // Hospital Selector
@@ -433,13 +333,66 @@ try {
             var rctMkup = '<?php echo $receiptMarkup; ?>';
             var roomCnt = '<?php echo $roomCount; ?>';
             var defaultTab = '<?php echo $uS->DefaultRegisterTab; ?>';
-            var cgCols = $.parseJSON('<?php echo json_encode($cgCols); ?>');
-            var rvCols = $.parseJSON('<?php echo json_encode($rvCols); ?>');
-            var wlCols = $.parseJSON('<?php echo json_encode($wlCols); ?>');
+            var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
             var challVar = '<?php echo $challengeVar; ?>';
             var viewDays = '<?php echo ($weeks * 7); ?>';
+
+            var cgCols = [
+                {data: 'Action', title: 'Action', sortable: false, searchable:false},
+                {data: 'Guest', title: 'Guest'},
+                {data: 'Checked In', title: 'Checked In', render: function (data, type) {return dateRender(data, type);}},
+                {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},
+                {data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type);}},
+                {data: 'Room', title: 'Room', className: 'hhk-justify-c'},
+                <?php if ($uS->RoomPriceModel != ItemPriceCode::None) { ?>
+                {data: 'Rate', title: 'Rate'},
+                {data: 'Amount', title: 'Amount', className: 'hhk-justify-r'},
+                <?php } ?>
+                {data: 'Phone', title: 'Phone'},
+                {data: 'Hospital', title: 'Hospital'},
+                {data: 'Patient', title: patientLabel},
+            ];
+
+            var rvCols = [
+                {data: 'Action', title: 'Action', sortable: false, searchable:false},
+                {data: 'Guest', title: 'Guest'},
+                {data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type);}},
+                {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},
+                {data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type);}},
+                {data: 'Room', title: 'Room', className: 'hhk-justify-c'},
+                <?php if ($uS->RoomPriceModel != ItemPriceCode::None) { ?>
+                {data: 'Rate', title: 'Rate'},
+                <?php } ?>
+                {data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'},
+                {data: 'Hospital', title: 'Hospital'},
+                <?php if (count($locations) > 0) { ?>
+                {data: 'Location', title: 'Location'},
+                <?php } if (count($diags) > 0) { ?>
+                {data: 'Diagnosis', title: 'Diagnosis'},
+                <?php } ?>
+                {data: 'Patient', title: patientLabel},
+            ];
+    
+            var wlCols = [
+                {data: 'Action', title: 'Action', sortable: false, searchable:false},
+                {data: 'Guest', title: 'Guest'},
+                {data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type);}},
+                {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},
+                {data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type);}},
+                <?php if ($uS->RoomPriceModel != ItemPriceCode::None) { ?>
+                {data: 'Rate', title: 'Rate'},
+                <?php } ?>
+                {data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'},
+                {data: 'Hospital', title: 'Hospital'},
+                <?php if (count($locations) > 0) { ?>
+                {data: 'Location', title: 'Location'},
+                <?php } if (count($diags) > 0) { ?>
+                {data: 'Diagnosis', title: 'Diagnosis'},
+                <?php } ?>
+                {data: 'Patient', title: patientLabel},
+            ];
         </script>
-        <script type="text/javascript" src="js/register-min.js<?php echo JS_V; ?>"></script>
+        <script type="text/javascript" src="js/register.js<?php echo JS_V; ?>"></script>
 <style>
    #version {
     height: 15px;

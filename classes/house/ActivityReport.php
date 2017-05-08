@@ -743,7 +743,7 @@ where lp.idPayment > 0
 //                    HTMLInput::generateMarkup(number_format($amt,2), $attr)
 //                    , array('style'=>'text-align:right;'));
                 $trow .= HTMLTable::makeTd($voidContent);
-                $trow .= HTMLTable::makeTd(date('Y/m/d', strtotime($p['Payment_Date'])));
+                $trow .= HTMLTable::makeTd(date('c', strtotime($p['Payment_Date'])));
                 $trow .= HTMLTable::makeTd($p['Payment_Updated_By'] == '' ? $p['Payment_Created_By'] : $p['Payment_Updated_By']);
                 $trow .= HTMLTable::makeTd($p['Payment_Note']);
 
@@ -947,7 +947,7 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
 
             $dateDT = new DateTime($r['Invoice_Date']);
 
-            $billDate = ($r['BillDate'] == '' ? '' : date('Y/m/d', strtotime($r['BillDate'])));
+            $billDate = ($r['BillDate'] == '' ? '' : date('c', strtotime($r['BillDate'])));
 
             $actionTd = '';
 
@@ -966,7 +966,7 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
 
             $tbl->addBodyTr($actionTd
                     . HTMLTable::makeTd($invoiceMkup, array('style' => 'text-align:center;'))
-                    . HTMLTable::makeTd($dateDT->format('Y/m/d'))
+                    . HTMLTable::makeTd($dateDT->format('c'))
                     . HTMLTable::makeTd($statusTxt)
                     . HTMLTable::makeTd($billDate, array('id' => 'trBillDate' . $r['Invoice_Number']))
                     . HTMLTable::makeTd($payor)
