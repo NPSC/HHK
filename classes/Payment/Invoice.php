@@ -177,13 +177,54 @@ WHERE
 
     public function addLine(\PDO $dbh, InvoiceLine $invLine, $user) {
 
-        if ($this->invRs->Deleted->getStoredVal() > 0) {
+        if ($this->isDeleted()) {
             throw new Hk_Exception_Runtime('Cannot add a line to a deleted Invoice.  ');
         }
 
         $invLine->setInvoiceId($this->getIdInvoice());
         $invLine->save($dbh);
         $this->updateInvoiceAmount($dbh, $user);
+    }
+
+    public function deleteLine(\PDO $dbh, $idInvoiceLine, $username) {
+
+        $lines = $this->getLines($dbh);
+        $result = FALSE;
+
+        foreach ($lines as $line) {
+
+            if ($line->getLineId() == $idInvoiceLine) {
+
+                $line->setDeleted();
+                $ct = $line->updateLine($dbh);
+
+                if ($ct > 0) {
+                    $this->updateInvoiceAmount($dbh, $username);
+                    $this->updateInvoiceStatus($dbh, $username);
+
+                    // Delete any zero amount payments for this Invoice.
+                    $stmt = $dbh->query("select p.idPayment, pi.idPayment_Invoice from payment_invoice pi join payment p on pi.Payment_Id = p.idPayment and p.Amount = 0
+where pi.Invoice_Id = " . $this->getIdInvoice());
+
+                    $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+                    if (count($rows) > 0) {
+                        $idPayment = intval($rows[0][0]);
+                        $idPayInv = intval($rows[0][1]);
+
+                        if ($idPayment > 0) {
+                            $dbh->exec("delete from payment where idPayment = $idPayment");
+                            $dbh->exec("delete from payment_invoice where idPayment_Invoice = $idPayInv");
+                        }
+                    }
+
+                    $result = TRUE;
+                }
+
+                break;
+            }
+        }
+
+        return $result;
     }
 
     public function createMarkup(\PDO $dbh) {
@@ -759,7 +800,7 @@ where pi.Invoice_Id in ($whAssoc)";
 
     public function deleteInvoice(\PDO $dbh, $user) {
 
-        // dont allow until I fix thsi
+        //
         if ($this->invRs->Carried_Amount->getStoredVal() != 0) {
             return $this->deleteCarriedInvoice($dbh, $user);
         }

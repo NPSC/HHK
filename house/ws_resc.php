@@ -208,9 +208,9 @@ $("#rptfeediv").on("click", ".hhk-voidRefundPmt", function () {
 
 $("#rptfeediv").on("click", ".hhk-deleteWaive", function () {
     var btn = $(this);
-    if (btn.val() != "Deleting..." && confirm("Delete?")) {
+    if (btn.val() != "Deleting..." && confirm("Delete this House Waive?")) {
         btn.val("Deleting...");
-        sendVoidReturn(btn.attr("id"), "d", btn.data("ilid"));
+        sendVoidReturn(btn.attr("id"), "d", btn.data("ilid"), btn.data("iid"));
     }
 });
 
@@ -589,7 +589,8 @@ function invoiceAction(\PDO $dbh, $iid, $action, $eid, $showBillTo = FALSE) {
     v.idVisit,
     v.Span,
     il.Description,
-    il.Amount as `LineAmount`
+    il.Amount as `LineAmount`,
+    il.Deleted as `Item_Deleted`
 FROM
     `invoice` i
         LEFT JOIN
@@ -609,10 +610,12 @@ WHERE
 
         foreach ($lines as $l) {
 
-            $tbl->addBodyTr(
+            if ($l['Item_Deleted'] == 0) {
+
+                $tbl->addBodyTr(
                     HTMLTable::makeTd($l['Description'], array('class'=>'tdlabel'))
                     . HTMLTable::makeTd(number_format($l['LineAmount'], 2), array('style'=>'text-align:right;')));
-
+            }
         }
 
 

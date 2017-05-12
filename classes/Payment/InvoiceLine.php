@@ -17,6 +17,7 @@
  */
 abstract class InvoiceLine {
 
+    protected $lineId;
     protected $amount;
     protected $quantity;
     protected $price;
@@ -34,9 +35,9 @@ abstract class InvoiceLine {
         $this->invLineRs = new InvoiceLineRS();
     }
 
-
     public function loadRecord(InvoiceLineRS $invoiceLine) {
 
+        $this->lineId = $invoiceLine->idInvoice_Line->getStoredVal();
         $this->setItemId($invoiceLine->Item_Id->getStoredVal());
         $this->description = $invoiceLine->Description->getStoredVal();
         $this->setPrice($invoiceLine->Price->getStoredVal());
@@ -109,28 +110,20 @@ abstract class InvoiceLine {
 
     }
 
-    public static function deleteLine(\PDO $dbh, $idLine, $idButton) {
-
-        $num = $dbh->exec("Update invoice_line set Deleted = 1 where idInvoice_Line = $idLine");
-
-        if ($num > 0) {
-            return array('bid'=>$idButton, 'success'=>'Invoice Line is deleted.  ');
-        }
-
-        return array('bid'=>$idButton, 'warning'=>'Invoice line not found or already deleted.  ');
-
-    }
-
     public function updateLine(\PDO $dbh) {
 
         $affected = 0;
         $this->invLineRs->Description->setNewVal($this->getDescription());
 
-        if ($this->invLineRs->idInvoice_Line->getStoredVal() > 0) {
+        if ($this->getLineId() > 0) {
             $affected = EditRS::update($dbh, $this->invLineRs, array($this->invLineRs->idInvoice_Line));
         }
 
         return $affected;
+    }
+
+    public function setDeleted() {
+        $this->invLineRs->Deleted->setNewVal(1);
     }
 
     public function getAmount() {
@@ -155,6 +148,10 @@ abstract class InvoiceLine {
 
     public function getTypeId() {
         return $this->typeId;
+    }
+
+    public function getLineId() {
+        return $this->lineId;
     }
 
     public function getInvoiceId() {

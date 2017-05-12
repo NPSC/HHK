@@ -575,6 +575,29 @@ where lp.idPayment > 0
 
             $r = $i['i'];
 
+            $invNumber = $r['Invoice_Number'];
+
+            if ($invNumber != '') {
+
+                $iAttr = array('href' => 'ShowInvoice.php?invnum=' . $r['Invoice_Number'], 'style' => 'float:left;', 'target' => '_blank');
+
+                if ($r['Invoice_Deleted'] > 0) {
+                    $iAttr['style'] = 'color:red;';
+                    $iAttr['title'] = 'Invoice is Deleted.';
+
+                } else if ($r['Invoice_Status'] != InvoiceStatus::Paid && $r['Invoice_Amount'] - $r['Invoice_Balance'] != 0) {
+
+                    $iAttr['title'] = 'Partial payment.';
+                    $invNumber .= HTMLContainer::generateMarkup('sup', '-p');
+                }
+
+                $invNumber = HTMLContainer::generateMarkup('a', $invNumber, $iAttr)
+                        . HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-comment invAction', 'id' => 'invicon' . $r['idInvoice'], 'data-iid' => $r['idInvoice'], 'style' => 'cursor:pointer;', 'title' => 'View Items'));
+            }
+
+            $invoiceMkup = HTMLContainer::generateMarkup('span', $invNumber, array("style" => 'white-space:nowrap'));
+
+
             foreach ($i['p'] as $p) {
 
                 $stat = '';
@@ -694,26 +717,6 @@ where lp.idPayment > 0
                 }
 
 
-                $invNumber = $r['Invoice_Number'];
-
-                if ($invNumber != '') {
-
-                    $iAttr = array('href' => 'ShowInvoice.php?invnum=' . $r['Invoice_Number'], 'style' => 'float:left;', 'target' => '_blank');
-
-                    if ($r['Invoice_Deleted'] > 0) {
-                        $iAttr['style'] = 'color:red;';
-                        $iAttr['title'] = 'Invoice is Deleted.';
-                    } else if ($r['Invoice_Balance'] != 0) {
-
-                        $iAttr['title'] = 'Partial payment.';
-                        $invNumber .= HTMLContainer::generateMarkup('sup', '-p');
-                    }
-
-                    $invNumber = HTMLContainer::generateMarkup('a', $invNumber, $iAttr)
-                            . HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-comment invAction', 'id' => 'invicon' . $p['idPayment'], 'data-iid' => $r['idInvoice'], 'style' => 'cursor:pointer;', 'title' => 'View Items'));
-                }
-
-                $invoiceMkup = HTMLContainer::generateMarkup('span', $invNumber, array("style" => 'white-space:nowrap'));
 
                 $payDetail = '';
                 if ($p['idPayment_Method'] == PaymentMethod::Charge || $p['idPayment_Method'] == PaymentMethod::ChgAsCash) {
@@ -756,7 +759,7 @@ where lp.idPayment > 0
 
             foreach ($i['h'] as $h) {
 
-                $voidContent = HTMLInput::generateMarkup('Delete', array('type' => 'button', 'id' => 'btndelwaive' . $h['id'], 'class' => 'hhk-deleteWaive', 'data-ilid' => $h['id']));
+                $voidContent = HTMLInput::generateMarkup('Delete', array('type' => 'button', 'id' => 'btndelwaive' . $h['id'], 'class' => 'hhk-deleteWaive', 'data-ilid' => $h['id'], 'data-iid' => $r['idInvoice']));
 
                 $tbl->addBodyTr(
                     HTMLTable::makeTd($r['Room'])
@@ -767,7 +770,7 @@ where lp.idPayment > 0
                     .HTMLTable::makeTd('')
                     .HTMLTable::makeTd(number_format(abs($h['Amount']), 2), array('style'=>'text-align:right;color:gray;'))
                     .HTMLTable::makeTd($voidContent)
-                    .HTMLTable::makeTd(date('Y/m/d', strtotime($r['Invoice_Date'])))
+                    .HTMLTable::makeTd(date('c', strtotime($r['Invoice_Date'])))
                     .HTMLTable::makeTd($r['Invoice_Updated_By'])
                     .HTMLTable::makeTd('')
                 );

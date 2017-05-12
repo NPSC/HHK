@@ -98,107 +98,6 @@ function manageRelation(id, rId, relCode, cmd) {
     $.post('ws_admin.php', {'id':id, 'rId':rId, 'rc':relCode, 'cmd':cmd}, relationReturn);
 }
 
-/**
- * 
- * @param {string} btnid
- * @param {string} vorr
- * @param {int} idPayment
- * @param {float} amt
- * @returns {undefined}
- */
-function sendVoidReturn(btnid, vorr, idPayment, amt) {
-    
-    var prms = {pid: idPayment, bid: btnid};
-    
-    if (vorr && vorr === 'v') {
-        prms.cmd = 'void';
-    } else if (vorr && vorr === 'rv') {
-        prms.cmd = 'revpmt';
-    } else if (vorr && vorr === 'r') {
-        prms.cmd = 'rtn';
-        prms.amt = amt;
-    } else if (vorr && vorr === 'vr') {
-        prms.cmd = 'voidret';
-    } else if (vorr && vorr === 'd') {
-        prms.cmd = 'delWaive';
-    }
-    $.post('ws_ckin.php', prms, function (data) {
-        var revMessage = '';
-        if (data) {
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-            }
-            if (data.bid) {
-                // clear button control
-                $('#' + data.bid).remove();
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.location.assign(data.gotopage);
-                }
-                flagAlertMessage(data.error, true);
-                return;
-            }
-            if (data.reversal && data.reversal !== '') {
-                revMessage = data.reversal;
-            }
-            if (data.warning) {
-                flagAlertMessage(revMessage + data.warning, true);
-                return;
-            }
-            if (data.success) {
-                 flagAlertMessage(revMessage + data.success, false);
-            }
-            if (data.receipt) {
-                showReceipt('#pmtRcpt', data.receipt, 'Receipt');
-            }
-        }
-    });
-}
-
-function cardOnFile(id, idGroup, idPsg) {
-    var parms = {cmd: 'cof', idGuest: id, idGrp: idGroup, pbp: 'GuestEdit.php?id=' + id + '&psg=' + idPsg};
-    $('#tblupCredit').find('input').each(function() {
-        if (this.checked) {
-            parms[$(this).attr('id')] = $(this).val();
-        }
-    });
-    // Go to the server for payment data, then come back and submit to new URL to enter credit info.
-    $.post('ws_ckin.php', parms,
-    function(data) {
-        if (data) {
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.open(data.gotopage, '_self');
-                }
-                flagAlertMessage(data.error, true);
-                return;
-            }
-            if (data.hostedError) {
-                flagAlertMessage(data.hostedError, true);
-            }
-            if (data.xfer) {
-                var xferForm = $('#xform');
-                xferForm.prop('action', data.xfer);
-                $('#CardID').val(data.cardId);
-                xferForm.submit();
-            }
-            if (data.success) {
-                flagAlertMessage(data.success, false);
-            }
-        }
-    });
-}
-
 // Init j-query.
 $(document).ready(function () {
     "use strict";
@@ -413,7 +312,7 @@ $(document).ready(function () {
     });
     $('#btnSubmit, #btnReset, #btnCred').button();
     $('#btnCred').click(function () {
-        cardOnFile($(this).data('id'), $(this).data('idreg'), memData.idPsg);
+        cardOnFile($(this).data('id'), $(this).data('idreg'), 'GuestEdit.php?id=' + id + '&psg=' + memData.idPsg);
     });
     // phone - email tabs block
     $('#phEmlTabs').tabs();

@@ -318,12 +318,25 @@ try {
                 $idLine = intval(filter_var($_POST['pid'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
+            $idInvoice = 0;
+            if (isset($_POST['iid'])) {
+                $idInvoice = intval(filter_var($_POST['iid'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
             $bid = '';
             if (isset($_POST['bid'])) {
                 $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
             }
 
-            $events = InvoiceLine::deleteLine($dbh, $idLine, $bid);
+            if ($idInvoice > 0 && $idLine > 0) {
+
+                $invoice = new Invoice($dbh);
+                $invoice->loadInvoice($dbh, $idInvoice);
+
+                if ($invoice->deleteLine($dbh, $idLine, $bid, $uS->username)) {
+                    $events = array('bid' => $bid, 'success' => 'House Payment Deleted.  ');
+                }
+            }
 
             break;
 

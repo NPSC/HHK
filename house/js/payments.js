@@ -249,6 +249,67 @@ function invoiceAction(idInvoice, action, eid, container, show) {
     });
 }
 
+/**
+ * 
+ * @param {string} btnid
+ * @param {string} vorr
+ * @param {int} idPayment
+ * @param {float} amt
+ * @returns {undefined}
+ */
+function sendVoidReturn(btnid, vorr, idPayment, amt) {
+    
+    var prms = {pid: idPayment, bid: btnid};
+    
+    if (vorr && vorr === 'v') {
+        prms.cmd = 'void';
+    } else if (vorr && vorr === 'rv') {
+        prms.cmd = 'revpmt';
+    } else if (vorr && vorr === 'r') {
+        prms.cmd = 'rtn';
+        prms.amt = amt;
+    } else if (vorr && vorr === 'vr') {
+        prms.cmd = 'voidret';
+    } else if (vorr && vorr === 'd') {
+        prms.cmd = 'delWaive';
+        prms.iid = amt;
+    }
+    $.post('ws_ckin.php', prms, function (data) {
+        var revMessage = '';
+        if (data) {
+            try {
+                data = $.parseJSON(data);
+            } catch (err) {
+                alert("Parser error - " + err.message);
+                return;
+            }
+            if (data.bid) {
+                // clear button control
+                $('#' + data.bid).remove();
+            }
+            if (data.error) {
+                if (data.gotopage) {
+                    window.location.assign(data.gotopage);
+                }
+                flagAlertMessage(data.error, true);
+                return;
+            }
+            if (data.reversal && data.reversal !== '') {
+                revMessage = data.reversal;
+            }
+            if (data.warning) {
+                flagAlertMessage(revMessage + data.warning, true);
+                return;
+            }
+            if (data.success) {
+                 flagAlertMessage(revMessage + data.success, false);
+            }
+            if (data.receipt) {
+                showReceipt('#pmtRcpt', data.receipt, 'Receipt');
+            }
+        }
+    });
+}
 
 var payCtrls = function () {
     var t = this;
@@ -1064,8 +1125,8 @@ function reprintReceipt(pid, idDialg) {
 }
 
 
-function cardOnFile(id, idGroup) {
-    var parms = {cmd: 'cof', idGuest: id, idGrp: idGroup, pbp: 'register.php'};
+function cardOnFile(id, idGroup, postBackPage) {
+    var parms = {cmd: 'cof', idGuest: id, idGrp: idGroup, pbp: postBackPage};
     $('#tblupCredit').find('input').each(function() {
         if (this.checked) {
             parms[$(this).attr('id')] = $(this).val();

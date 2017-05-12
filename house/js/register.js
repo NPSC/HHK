@@ -75,66 +75,6 @@ function cgResvStatus(rid, status) {
         }
     });
 }
-/**
- * 
- * @param {string} btnid
- * @param {string} vorr
- * @param {int} idPayment
- * @param {float} amt
- * @returns {undefined}
- */
-function sendVoidReturn(btnid, vorr, idPayment, amt) {
-    
-    var prms = {pid: idPayment, bid: btnid};
-    
-    if (vorr && vorr === 'v') {
-        prms.cmd = 'void';
-    } else if (vorr && vorr === 'rv') {
-        prms.cmd = 'revpmt';
-    } else if (vorr && vorr === 'r') {
-        prms.cmd = 'rtn';
-        prms.amt = amt;
-    } else if (vorr && vorr === 'vr') {
-        prms.cmd = 'voidret';
-    } else if (vorr && vorr === 'd') {
-        prms.cmd = 'delWaive';
-    }
-    $.post('ws_ckin.php', prms, function (data) {
-        var revMessage = '';
-        if (data) {
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-            }
-            if (data.bid) {
-                // clear button control
-                $('#' + data.bid).remove();
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.location.assign(data.gotopage);
-                }
-                flagAlertMessage(data.error, true);
-                return;
-            }
-            if (data.reversal && data.reversal !== '') {
-                revMessage = data.reversal;
-            }
-            if (data.warning) {
-                flagAlertMessage(revMessage + data.warning, true);
-                return;
-            }
-            if (data.success) {
-                 flagAlertMessage(revMessage + data.success, false);
-            }
-            if (data.receipt) {
-                showReceipt('#pmtRcpt', data.receipt, 'Receipt');
-            }
-        }
-    });
-}
 function invPay(id, pbp, dialg) {
     // cash payment
     if (verifyAmtTendrd() === false) {
@@ -1093,6 +1033,7 @@ $(document).ready(function () {
                     flagAlertMessage(data.error, true);
 
                 } else if (data.success) {
+                    
                     $('#rptfeediv').remove();
                     $('#vfees').append($('<div id="rptfeediv"/>').append($(data.success)));
                     
@@ -1108,6 +1049,7 @@ $(document).ready(function () {
                         "lengthMenu": [[25, 50, -1], [25, 50, "All"]]
                     });
                     
+                    // Invoice viewer
                     $('#rptfeediv').on('click', '.invAction', function (event) {
                         invoiceAction($(this).data('iid'), 'view', event.target.id);
                     });
@@ -1130,8 +1072,10 @@ $(document).ready(function () {
                         }
                     });
                     
+                    // Return button
                     $('#rptfeediv').on('click', '.hhk-returnPmt', function () {
                         var btn = $(this);
+                        
                         if (btn.val() != 'Saving...') {
                             
                             var amt = parseFloat($(this).data('amt'));
@@ -1140,6 +1084,16 @@ $(document).ready(function () {
                                 btn.val('Saving...');
                                 sendVoidReturn(btn.attr('id'), 'r', btn.data('pid'), amt);
                             }
+                        }
+                    });
+                    
+                    // Delete waive button
+                    $('#rptfeediv').on('click', '.hhk-deleteWaive', function () {
+                        var btn = $(this);
+                        
+                        if (btn.val() != 'Deleting...' && confirm('Delete this House payment?')) {
+                            btn.val('Deleting...');
+                            sendVoidReturn(btn.attr('id'), 'd', btn.data('ilid'), btn.data('iid'));
                         }
                     });
                     

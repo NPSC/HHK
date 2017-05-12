@@ -94,18 +94,25 @@ class RoomChooser {
         return $this->selectedResource;
     }
 
-    public static function moreRoomsMarkup($currentRoomCount, $isChecked) {
+    public static function moreRoomsMarkup($currentRoomCount, $isChecked, $currentlyCheckedIn = TRUE) {
 
         $attrs = array('id'=>'cbAddnlRoom', 'type'=>'checkbox', 'style'=>'margin-right:.3em;');
 
         if ($isChecked) {
             $attrs['checked'] = 'checked';
         }
+
+        $title = 'Currently reserving ';
+
+        if ($currentlyCheckedIn) {
+            $title = 'Currently using ';
+        }
+
         // fieldset wrapper
         $mk1 = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('fieldset',
                         HTMLContainer::generateMarkup('legend', 'Additional Room', array('style'=>'font-weight:bold;'))
-                        . HTMLContainer::generateMarkup('p', 'Currently reserving ' . $currentRoomCount . ' room' . ($currentRoomCount == 1 ? '' : 's'), array('style'=>'margin-bottom:10px;'))
+                        . HTMLContainer::generateMarkup('p', $title . $currentRoomCount . ' room' . ($currentRoomCount == 1 ? '' : 's'), array('style'=>'margin-bottom:10px;'))
                         . HTMLInput::generateMarkup('Put the new guests in a new room', $attrs)
                         . HTMLContainer::generateMarkup('label', 'Put the new guest(s) in a new room', array('for'=>'cbAddnlRoom'))
                         , array('class'=>'hhk-panel')),

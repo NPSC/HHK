@@ -1547,7 +1547,7 @@ class ReservationSvcs {
 
             if ($rcount[0][0] < $uS->RoomsPerPatient) {
                 // Include Additional Room Query
-                $additionalRoomMkup = RoomChooser::moreRoomsMarkup($rcount[0][0], FALSE);
+                $additionalRoomMkup = RoomChooser::moreRoomsMarkup($rcount[0][0], FALSE, FALSE);
             } else {
                 $additionalRoomMkup = HTMLContainer::generateMarkup('p', 'Already using the maximum of ' . $uS->RoomsPerPatient . ' rooms per patient.', array('style'=>'margin:.3em;'));
             }
