@@ -35,7 +35,10 @@
     text-align:right;
     padding: 5px;
 }
-
+.hhk-checkinHdr {
+    font-size:1.2em;
+    margin-top:3px;
+}
 .hhk-addrCopy, .hhk-addrErase, .hhk-fincalc {
     cursor:pointer;
 }
@@ -235,7 +238,7 @@ span.class_history {
     font-size: .75em;
 }
 .input-medium {
-    width: 150px;
+   width: 170px;
 }
 .ui-menu-item .ui-autocomplete {width:350px;font-size:.8em;}
 div#global-title {
@@ -334,11 +337,11 @@ div#global-title {
 li.hhk-myMenuTop {
     background-color: #3E6D8F;
 }
-#divNavIcons #ulIcons {
+#ulIcons {
     margin: 0;
     padding: 0;
 }
-#divNavIcons #ulIcons li {
+#ulIcons li {
     margin: 2px;
     position: relative;
     padding: 4px 0;
@@ -346,7 +349,7 @@ li.hhk-myMenuTop {
     float: left;
     list-style: none;
 }
-#divNavIcons #ulIcons span.ui-icon {
+#ulIcons span.ui-icon {
     float: left;
     margin: 0 4px;
 }

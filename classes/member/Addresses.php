@@ -325,7 +325,7 @@ class Address extends ContactPoint{
         // address 1
         $attr = array(
             'type'=>'text',
-            'size'=>'25',
+            'size'=>'27',
             'title'=>'Street Address',
             'id'=>$idPrefix.'adraddress1' . $addrIndex,
             'name'=>$idPrefix.'adr[' . $addrIndex . '][address1]',
@@ -416,7 +416,7 @@ class Address extends ContactPoint{
         $stAttr['name'] = $idPrefix.'adr[' . $addrIndex . '][state]';
         $stAttr['title'] = 'Select State or Province';
         $stAttr['style'] = 'margin-right:8px;';
-        $stAttr["class"] = $class . " input-medium bfh-states";
+        $stAttr["class"] = $class . " bfh-states";
         $stAttr['data-country'] = $idPrefix.'adrcountry' . $addrIndex;
         $stAttr['data-state'] = $adrRow->State_Province->getStoredVal();
 

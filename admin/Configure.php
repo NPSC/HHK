@@ -53,18 +53,20 @@ $config = new Config_Lite(ciCFG_FILE);
 $labl = new Config_Lite(LABEL_FILE);
 $wsConfig = NULL;
 
-if ($config->has('webServices', 'Service_Name') && $config->getString('webServices', 'Service_Name', '') != '') {
+if ($config->has('webServices', 'Service_Name') && $config->getString('webServices', 'Service_Name', '') != '' && $config->getString('webServices', 'ContactManager', '') != '') {
 
     require (THIRD_PARTY . 'neon.php');
     require (CLASSES . "TransferMembers.php");
 
-    try {
-        $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''));
-    } catch (Config_Lite_Exception_Runtime $ex) {
-        $wsConfig = NULL;
-    }
+    if (file_exists(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''))) {
+        try {
+            $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''));
+        } catch (Config_Lite_Exception_Runtime $ex) {
+            $wsConfig = NULL;
+        }
 
-    $serviceName = $config->getString('webServices', 'Service_Name', '');
+        $serviceName = $config->getString('webServices', 'Service_Name', '');
+    }
 }
 
 $confError = '';
@@ -375,20 +377,27 @@ if (is_null($wsConfig) === FALSE) {
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // First load?
-    if (count($rows) == 0 || isset($_POST['btnExtIndiv'])) {
+    if ((count($rows) == 0 || isset($_POST['btnExtIndiv'])) && $wsConfig->getString('credentials', 'User') != '' && $wsConfig->getString('credentials', 'Password') != '') {
+        $tabIndex = 6;
 
-        $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
+        try {
+            $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
 
-        // Load Individual types
-        $types = $transfer->listIndividualTypes();
+            // Load Individual types
+            $types = $transfer->listIndividualTypes();
 
-        foreach ($types as $k => $v) {
-            $dbh->exec("Replace into neon_indiv_type (Neon_Id, Neon_Name) values('$k', '$v');");
+            foreach ($types as $k => $v) {
+                $dbh->exec("Replace into neon_indiv_type (Neon_Id, Neon_Name) values('$k', '$v');");
+            }
+
+            // reload
+            $stmt = $dbh->query("Select * from neon_indiv_type;");
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        } catch (Hk_Exception_Upload $hkex) {
+            $externalErrMsg = "Transfer Error: " .$hkex->getMessage();
         }
 
-        // reload
-        $stmt = $dbh->query("Select * from neon_indiv_type;");
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     $vt = removeOptionGroups(readGenLookupsPDO($dbh, 'Vol_Type'));

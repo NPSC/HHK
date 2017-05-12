@@ -77,12 +77,16 @@ function injectSlot(data) {
         var acDiv = $('<div/>').append($(data.memMkup));
         acDiv.addClass(slot + 'Slot ' + slot + 'detail' + ' ui-widget-content ui-corner-bottom');
 
+        var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:3px;' class='ui-widget'/>")
+            .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+            .append($("<span id='" + data.idPrefix + "drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
+    
         // Header
         var acHdr = $('<div id="' + slot + 'memHdr"/>')
                 .append($(data.txtHdr))
                 .append($('<span id="' + slot + 'memMsg" style="float:left;color: red; margin-right:20px;margin-left:20px;"></span>'))
-                .append($('<span id="' + slot + 'drpDown" class="ui-icon ui-icon-circle-triangle-s" title="Open / Close" style="float:right;"></span>')
-                    .click(function() {
+                .append(expanderButton)
+                .click(function() {
                         var disp = acDiv.css('display');
                         if (disp === 'none') {
                             acDiv.show('blind');
@@ -91,12 +95,11 @@ function injectSlot(data) {
                             acDiv.hide('blind');
                             acHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
                         }
-                })
-        );
+                });
 
         // Remove Button
         if (data.rmvbtn) {
-            var removeBtn = $('<input type="button" id="' + slot + 'removeMem" data-slot="' + slot + '" value="Remove" style="float:right;margin-right:.3em;padding: 0.2em 1em;" />');
+            var removeBtn = $('<input type="button" id="' + slot + 'removeMem" data-slot="' + slot + '" value="Remove" style="margin-top:3px;float:right;margin-right:.3em;padding: 0.2em 1em;" />');
             removeBtn.addClass('removeMem');
             removeBtn.button();
             acHdr.append(removeBtn);
@@ -408,10 +411,16 @@ function processGuests(incmg) {
     if (incmg.hosp && ($hospSection.children().length === 0 || incmg.patient)) {
         if (incmg.hosp.div) {
             var hDiv = $(incmg.hosp.div).addClass('pgdetail ui-widget-content');
+            
+            var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:3px;' class='ui-widget'/>")
+                .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+                .append($("<span id='drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
+   
             var hHdr = $('<div id="divHdrHosp" style="padding:2px; cursor:pointer;"/>')
                     .append($(incmg.hosp.hdr))
-                    .append($('<span id="drpDown" class="ui-icon ui-icon-circle-triangle-s" style="float:right; margin:right:3px;"></span>')
-                    ).append($('<div style="clear:both;"/>'));
+                    .append(expanderButton)
+                    .append($('<div style="clear:both;"/>'));
+            
             hHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
             hHdr.click(function() {
                 var disp = hDiv.css('display');

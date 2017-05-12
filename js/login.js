@@ -22,58 +22,73 @@
  * THE SOFTWARE.
  */
 
+function sendHhkLogin() {
+    
+    var parms = {},
+        $uname = $('#txtUname'),
+        $psw = $('#txtPW'),
+        $btn = $('#btnLogn'),
+        $chall = $('#challenge');
+
+    $('#errUname, #errPW').hide();
+    $('#valMsg').text('');
+
+    if ($uname.val() === '') {
+        $('#errUname').text('-Enter your Username').show().css('color', 'red');
+        return;
+    }
+
+    if ($psw.val() === '') {
+        $('#errPW').text('-Enter your Password').css('color', 'red').show();
+        return;
+    }
+
+    parms = {
+        challenge: hex_md5(hex_md5($psw.val()) + $chall.val()),
+        txtUname: $uname.val()
+    };
+
+    $.post('index.php', parms, function (data){
+        try {
+            data = $.parseJSON(data);
+        } catch (err) {
+            alert(data);
+            $('#divLoginCtls').remove();
+            return;
+        }
+
+        if (data.page && data.page !== '') {
+            window.location.assign(data.page);
+        }
+
+        if (data.mess) {
+            $('#valMsg').text(data.mess);
+        }
+
+        if (data.chall && data.chall !== '') {
+            $chall.val(data.chall);
+        }
+
+        if (data.stop) {
+            $btn.hide();
+        }
+    });
+
+}
+
 $(document).ready(function () {
     var $psw = $('#txtPW'),
-        $uname = $('#txtUname'),
-        $chall = $('#challenge'),
         $btn = $('#btnLogn');
 
     $btn.button();
     $btn.click(function () {
-        var parms = {};
-        $('#errUname, #errPW').hide();
-        $('#valMsg').text('');
-
-        if ($uname.val() === '') {
-            $('#errUname').text('-Enter your Username').show().css('color', 'red');
-            return;
+        sendHhkLogin();
+    });
+    
+    $psw.keypress(function (event) {
+        if (event.keyCode == '13') {
+            sendHhkLogin();
         }
-
-        if ($psw.val() === '') {
-            $('#errPW').text('-Enter your Password').css('color', 'red').show();
-            return;
-        }
-
-        parms = {
-            challenge: hex_md5(hex_md5($psw.val()) + $chall.val()),
-            txtUname: $uname.val()
-        };
-
-        $.post('index.php', parms, function (data){
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert(data);
-                $('#divLoginCtls').remove();
-                return;
-            }
-
-            if (data.page && data.page !== '') {
-                window.location.assign(data.page);
-            }
-
-            if (data.mess) {
-                $('#valMsg').text(data.mess);
-            }
-            
-            if (data.chall && data.chall !== '') {
-                $chall.val(data.chall);
-            }
-            
-            if (data.stop) {
-                $btn.hide();
-            }
-        });
     });
 
     $('#divLoginCtls').on('click', '#errUname, #errPW', function () {

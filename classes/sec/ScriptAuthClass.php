@@ -237,22 +237,25 @@ class ScriptAuthClass extends SecurityComponent {
             $proto = 'https://';
         }
 
+        $siteMu = '';
         foreach ($siteList as $r) {
 
             if ($r["Site_Code"] != "r" && (self::is_Admin() || self::does_User_Code_Match($r["Groups"]))) {
                 $siteCount++;
                 // put in the site list.
-                $mu .= "<li class='ui-widget-header ui-corner-all' title='" . $r["Description"] . "'>"
+                $siteMu .= "<li class='ui-widget-header ui-corner-all' title='" . $r["Description"] . "'>"
                       . "<a  href='" . $proto . $r["HTTP_Host"] . $r["Relative_Address"] . $r["Default_Page"] . "'>"
                         . "<span class='" . $r["Class"] . "' ></span></a>"
                       . "</li>";
             }
         }
 
+        if ($siteCount > 1) {
+             $mu .= $siteMu;
+        }
+
         // Tutorial site
         if ($tutorialURL != '') {
-            $siteCount++;
-            // put in the site list.
             $mu .= "<li class='ui-widget-header ui-corner-all' title='Tutorial Site'>"
                   . "<a href='" . $tutorialURL . "' target='blank'>"
                   . "<span class='ui-icon ui-icon-video' ></span></a>"
@@ -261,20 +264,13 @@ class ScriptAuthClass extends SecurityComponent {
 
         // HHK Users Forum
         if ($hufURL != '') {
-            $siteCount++;
-            // put in the site list.
             $mu .= "<li class='ui-widget-header ui-corner-all' title='HHK Users Forum' >"
                   . "<a href='" . $hufURL . "' target='blank'>"
                   . "<span class='ui-icon ui-icon-flag' ></span></a>"
                   . "</li>";
         }
 
-        if ($siteCount > 1) {
-            $mu .= "</ul>";
-        } else {
-            // Only 1 site = no markup.
-            $mu = '';
-        }
+        $mu .= "</ul>";
 
         return HTMLContainer::generateMarkup('div', $mu, array('id'=>'divNavIcons'));
 

@@ -127,25 +127,6 @@ function getMember(item, idVisit, visitSpan) {
         });
     }
 }
-/**
- * 
- * @param {object} item
- * @param {int} orderNum
- * @returns {undefined}
- */
-function getInvoicee(item, orderNum) {
-    "use strict";
-    var cid = parseInt(item.id, 10);
-    if (isNaN(cid) === false && cid > 0) {
-        $('#txtInvName').val(item.value);
-        $('#txtInvId').val(cid);
-    } else {
-        $('#txtInvName').val('');
-        $('#txtInvId').val('');
-    }
-    $('#txtOrderNum').val(orderNum);
-    $('#txtInvSearch').val('');
-}
 
 var isCheckedOut = false;
 /**
@@ -512,41 +493,6 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 });
             }
 
-            // Billing agent chooser set up
-            var lstXhr;
-            $('#txtInvSearch').keypress(function (event) {
-                var mm = $(this).val();
-                if (event.keyCode == '13') {
-
-                    if (mm == '' || !isNumber(parseInt(mm, 10))) {
-
-                        alert("Don't press the return key unless you enter an Id.");
-                        event.preventDefault();
-
-                    } else {
-
-                        $.getJSON("../house/roleSearch.php", {cmd: "filter", 'basis':'ba', letters:mm},
-                        function(data) {
-                            try {
-                                data = data[0];
-                            } catch (err) {
-                                alert("Parser error - " + err.message);
-                                return;
-                            }
-                            if (data && data.error) {
-                                if (data.gotopage) {
-                                    response();
-                                    window.open(data.gotopage);
-                                }
-                                data.value = data.error;
-                            }
-                            getInvoicee(data, idVisit);
-                        });
-
-                    }
-                }
-            });
-            createAutoComplete($('#txtInvSearch'), 3, {cmd: "filter", 'basis':'ba'}, function (item) { getInvoicee(item, idVisit); }, false);
             createAutoComplete($('#txtAddGuest'), 3, {cmd: "role"}, function (item) { getMember(item, idVisit, visitSpan); });
 
             if ($('#selRateCategory').length > 0) {

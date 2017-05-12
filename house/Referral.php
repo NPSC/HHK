@@ -172,10 +172,10 @@ $resultMessage = $alertMsg->createMarkup();
             <form  action="Referral.php" method="post"  id="form1">
                 <div id="hospitalSection" style="font-size: .9em; padding-left:0;margin-top:0; float:left; display:none;"  class="ui-widget hhk-panel hhk-visitdialog"></div>
                 <div style="clear:both;"></div>
-                <div id="patientSection" style="display:none; font-size: .9em; padding-left:0; margin-top:0; clear:left; float:left; min-width: 610px;" class="hhk-panel  hhk-visitdialog">
+                <div id="patientSection" style="display:none; font-size: .9em; padding-left:0; margin-top:0; clear:left; float:left; min-width: 610px;" class="ui-widget hhk-panel  hhk-visitdialog">
                     <?php echo $pmkup; ?>
                 </div>
-                <div id="guestAccordion" style="font-size: .9em; padding-left:0; margin-top:0; margin-bottom:1em; clear:left; float:left; min-width: 810px;" class="hhk-panel  hhk-visitdialog">
+                <div id="guestAccordion" style="font-size: .9em; padding-left:0; margin-top:0; margin-bottom:1em; clear:left; float:left; min-width: 810px;" class="ui-widget hhk-panel  hhk-visitdialog">
                 </div>
                 <div id="guestSearch" style="padding-left:0;padding-top:0; clear:left; float:left; font-size: .9em;">
                     <?php echo $mk1; ?>
@@ -188,7 +188,7 @@ $resultMessage = $alertMsg->createMarkup();
                 </div>
                 <div id="resvStatus" style="float:left; font-size:.9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 </div>
-                <div id="notesGuest" style="float:left; font-size:.9em; display:none; width: 400px;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
+                <div id="notesGuest" style="float:left; font-size:.9em; display:none; width: 600px;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 </div>
                 <div id="pay" style="float:left; font-size: .9em; display:none; clear:left;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 </div>

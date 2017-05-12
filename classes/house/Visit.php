@@ -817,8 +817,12 @@ class Visit {
 
         // Get guest names
         $stmt = $dbh->query("Select Name_Full from `name` where idName = $idGuest;");
-        $gsts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        $guestName = $gsts[0][0];
+        $gsts = $stmt->fetchAll(\PDO::FETCH_NUM);
+        $guestName = '';
+
+        if (count($gsts) > 0) {
+            $guestName = $gsts[0][0];
+        }
 
         // prepare email message if needed
         try {

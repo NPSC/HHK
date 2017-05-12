@@ -321,14 +321,15 @@ $(document).ready(function () {
         if (isset($uS->guestLookups[GL_TableNames::Hospital])) {
             $hospList = $uS->guestLookups[GL_TableNames::Hospital];
         }
+
         $hospNameTxt = $hstay->getAssocHospNames($hospList);
 
         // Collapsing header
         $hdr = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('span', 'Hospital: ', array('style'=>'font-size:1.5em;'))
-                .HTMLContainer::generateMarkup('span', $hospNameTxt, array('id'=>'spnHospName', 'style'=>'font-size:1.5em;'))
+                HTMLContainer::generateMarkup('span', 'Hospital: ')
+                .HTMLContainer::generateMarkup('span', $hospNameTxt, array('id'=>'spnHospName'))
 
-                , array('style'=>'float:left;'));
+                , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
         return array('hdr'=>$hdr, 'div'=>$div);
     }

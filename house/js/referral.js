@@ -281,21 +281,29 @@ function injectSlot(data) {
 
         acDiv.addClass('Slot gstdetail');
         
+        var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+            .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+            .append($("<span id='" + data.idPrefix + "drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
+
+        
         // Header
         var acHdr = $('<div id="' + data.idPrefix +  'divGsthdr" style="padding:2px;"/>')
                 .append($(data.txtHdr))
-                .append($('<span id="' + data.idPrefix + 'drpDown" class="ui-icon ui-icon-circle-triangle-s" style="float:right; cursor:pointer; margin:right:3px;"></span>')
-                    .click(function() {
-                        var disp = acDiv.css('display');
-                        if (disp === 'none') {
-                            acDiv.show('blind');
-                            acHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
-                        } else {
-                            acDiv.hide('blind');
-                            acHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
-                        }
-                    })
-                ).append($('<div style="clear:both;"/>'));
+                .append($(expanderButton)) 
+                .append($('<div style="clear:both;"/>'))
+                .click(function() {
+                    var disp = acDiv.css('display');
+                    if (disp === 'none') {
+                        acDiv.show('blind');
+                        acHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
+                        $('#' + data.idPrefix + 'drpDown').removeClass('ui-icon-circle-triangle-s').addClass('ui-icon-circle-triangle-n');
+                    } else {
+                        acDiv.hide('blind');
+                        acHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
+                        $('#' + data.idPrefix + 'drpDown').removeClass('ui-icon-circle-triangle-n').addClass('ui-icon-circle-triangle-s');
+                    }
+                });
+
         
         acHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
         
@@ -318,8 +326,11 @@ function injectSlot(data) {
             if ($(this).val() === 'slf' || $(this).val() === '') {
                 
                 $('div#patientSection').hide('blind');
-                acHdr.removeClass('ui-state-default');
-                acHdr.find('#pgspnHdrLabel').text((resv.patAsGuest ? resv.patientLabel + '/' : '') + 'Primary Guest: ');
+                if ($(this).val() === 'slf') {
+                    acHdr.removeClass('ui-state-default');
+                    acHdr.find('#pgspnHdrLabel').text((resv.patAsGuest ? resv.patientLabel + '/' : '') + 'Primary Guest: ');
+                }
+                
                 resv.patSection = false;
 
             } else {
@@ -330,14 +341,16 @@ function injectSlot(data) {
             }
         });
 
-        $('input.dprange').click(function() {
+        $('input.dprange').click(function(event) {
             $("div#dtpkrDialog").toggle('scale, horizontal');
             $("#dtpkrDialog").position({
                 my: "left top",
                 at: "left bottom",
                 of: '#' + data.idPrefix + 'gstDate'
             });
+            event.stopPropagation();
         });
+        
         $('.ckdate').datepicker();
         $('#' + data.idPrefix + 'phEmlTabs').tabs();
 
@@ -352,6 +365,10 @@ function injectSlot(data) {
         gstCoDate.datepicker("destroy");
         gstCoDate.datepicker({
             minDate: 1
+        });
+        
+        gstCoDate.click( function (event) {
+            event.stopPropagation();
         });
 
         $("#dtpkrDialog").datepicker("destroy");
@@ -408,11 +425,14 @@ function injectSlot(data) {
     // Hospital
     if (data.hosp !== undefined) {
         var hDiv = $(data.hosp.div).addClass('ui-widget-content').prop('id', 'divhospDetail');
+        var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+            .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+            .append($("<span id='h_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
         var hHdr = $('<div id="divhospHdr" style="padding:2px; cursor:pointer;"/>')
                 .append($(data.hosp.hdr))
-                .append($('<span class="ui-icon ui-icon-circle-triangle-s" style="float:right; margin:right:3px;"></span>')
-                ).append('<div style="clear:both;"/>');
-        var lstXhr;
+                .append(expanderButton).append('<div style="clear:both;"/>');
+
+
         
         hHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
         hHdr.click(function() {
@@ -458,25 +478,30 @@ function injectSlot(data) {
         // Patient
         var patSection = $('div#patientSection'),
             pcDiv = $('<div id="h_divGstpnl" />').append($(data.patient));
+        var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+            .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+            .append($("<span id='h_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
 
         // Header
-        var pcHdr = $('<div id="h_divGsthdr" style="padding:2px;"/>')
-                .append($('<span style="font-size:1.5em;">' + resv.patientLabel + ': </span>'))
-                .append($('<span id="h_hdrFirstName" style="font-size:1.5em;">' + pcDiv.find('#h_txtFirstName').val() + ' ' + '</span>'))
-                .append($('<span id="h_hdrLastName" style="font-size:1.5em;">' + pcDiv.find('#h_txtLastName').val() + '</span>'))
-                .append($('<span style="font-size:1.5em;">' + (data.patStay ? ' (staying)' : '') + '</span>'))
-                .append($('<span id="h_drpDown" class="ui-icon ui-icon-circle-triangle-s" style="float:right; cursor:pointer; margin:right:3px;"></span>')
-                    .click(function() {
+        var pcHdr = $('<div id="h_divGsthdr" style="padding:4px;" class="hhk-checkinHdr"/>')
+                .append($('<span >' + resv.patientLabel + ': </span>'))
+                .append($('<span id="h_hdrFirstName">' + pcDiv.find('#h_txtFirstName').val() + ' ' + '</span>'))
+                .append($('<span id="h_hdrLastName">' + pcDiv.find('#h_txtLastName').val() + '</span>'))
+                .append($('<span">' + (data.patStay ? ' (staying)' : '') + '</span>'))
+                .append(expanderButton)
+                .append($('<div style="clear:both;"/>'))
+                .click(function() {
                         var disp = pcDiv.css('display');
                         if (disp === 'none') {
                             pcDiv.show('blind');
                             pcHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
+                            $('#h_drpDown').removeClass('ui-icon-circle-triangle-s').addClass('ui-icon-circle-triangle-n');
                         } else {
                             pcDiv.hide('blind');
                             pcHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
+                            $('#h_drpDown').removeClass('ui-icon-circle-triangle-n').addClass('ui-icon-circle-triangle-s');
                         }
-                    }))
-                .append($('<div style="clear:both;"/>'))
+                })
                 .addClass('ui-widget-header ui-corner-top');
 
 
@@ -1145,7 +1170,7 @@ function verifyDone(reserv) {
                 return false;
             }
         }
-
+        
         // Check patient relationship
         if ($('#' + pan.idPrefix + 'selPatRel').val() === '') {
 
@@ -1547,6 +1572,8 @@ $(document).ready(function() {
         }
         $('span#spnHospName').text(hosp + $('#selHospital').find('option:selected').text());
     });
+    
+    $('#selHospital').change();
     
     $('#closeDP').click(function() {
         $('#dtpkrDialog').hide();

@@ -14,6 +14,7 @@ require (DB_TABLES . 'ReservationRS.php');
 require (DB_TABLES . 'visitRS.php');
 require (DB_TABLES . 'MercuryRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
+require (DB_TABLES . 'AttributeRS.php');
 
 require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');
@@ -50,7 +51,7 @@ require (HOUSE . 'Reservation_1.php');
 require (HOUSE . 'RegisterForm.php');
 require (HOUSE . 'visitViewer.php');
 require (HOUSE . 'Visit.php');
-
+require (HOUSE . 'Constraint.php');
 require (HOUSE . 'Vehicle.php');
 require (HOUSE . 'Resource.php');
 require (HOUSE . 'Room.php');

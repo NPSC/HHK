@@ -888,8 +888,8 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
                         .HTMLTable::makeTd($guestName)
                         .HTMLTable::makeTd($pname)
                         .HTMLTable::makeTd($resv->getNumberGuests($dbh), array('style'=>'text-align:center;'))
-                        .HTMLTable::makeTd($resv->getActualArrival() != '' ? date('Y/m/d', strtotime($resv->getActualArrival())) : date('Y/m/d', strtotime($resv->getExpectedArrival())))
-                        .HTMLTable::makeTd($resv->getActualDeparture() != '' ? date('Y/m/d', strtotime($resv->getActualDeparture())) : date('Y/m/d', strtotime($resv->getExpectedDeparture())))
+                        .HTMLTable::makeTd($resv->getActualArrival() != '' ? date('c', strtotime($resv->getActualArrival())) : date('c', strtotime($resv->getExpectedArrival())))
+                        .HTMLTable::makeTd($resv->getActualDeparture() != '' ? date('c', strtotime($resv->getActualDeparture())) : date('c', strtotime($resv->getExpectedDeparture())))
                         .HTMLTable::makeTd($resv->getRoomTitle($dbh) . $dirtyRoom, $roomAttr)
                         .HTMLTable::makeTd($resv->getExpectedDays(), array('style'=>'text-align:center;'))
                         .$constList

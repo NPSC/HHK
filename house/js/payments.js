@@ -5,7 +5,7 @@
  * @category  house
  * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/NPSC
  */
@@ -183,6 +183,25 @@ function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjD
     });
 }
 
+/**
+ * 
+ * @param {object} item
+ * @param {int} orderNum
+ * @returns {undefined}
+ */
+function getInvoicee(item, orderNum) {
+    "use strict";
+    var cid = parseInt(item.id, 10);
+    if (isNaN(cid) === false && cid > 0) {
+        $('#txtInvName').val(item.value);
+        $('#txtInvId').val(cid);
+    } else {
+        $('#txtInvName').val('');
+        $('#txtInvId').val('');
+    }
+    $('#txtOrderNum').val(orderNum);
+    $('#txtInvSearch').val('');
+}
 
 function invoiceAction(idInvoice, action, eid, container, show) {
     "use strict";
@@ -819,6 +838,45 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
 
         invoiceAction($(this).data('iid'), $(this).data('stat'), event.target.id, '#keysfees', true);
     });
+    
+    // Billing agent chooser set up
+    if ($('#txtInvSearch').length > 0) {
+        
+        $('#txtInvSearch').keypress(function (event) {
+            
+            var mm = $(this).val();
+            if (event.keyCode == '13') {
+
+                if (mm == '' || !isNumber(parseInt(mm, 10))) {
+
+                    alert("Don't press the return key unless you enter an Id.");
+                    event.preventDefault();
+
+                } else {
+
+                    $.getJSON("../house/roleSearch.php", {cmd: "filter", 'basis':'ba', letters:mm},
+                    function(data) {
+                        try {
+                            data = data[0];
+                        } catch (err) {
+                            alert("Parser error - " + err.message);
+                            return;
+                        }
+                        if (data && data.error) {
+                            if (data.gotopage) {
+                                response();
+                                window.open(data.gotopage);
+                            }
+                            data.value = data.error;
+                        }
+                        getInvoicee(data, idVisit);
+                    });
+
+                }
+            }
+        });
+        createAutoComplete($('#txtInvSearch'), 3, {cmd: "filter", 'basis':'ba'}, function (item) { getInvoicee(item, idVisit); }, false);
+    }
 
     $('#daystoPay').change(function () {
         var days = parseInt($(this).val());
