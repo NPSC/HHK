@@ -349,7 +349,7 @@ try {
                 {data: 'Amount', title: 'Amount', className: 'hhk-justify-r'},
                 <?php } ?>
                 {data: 'Phone', title: 'Phone'},
-                {data: 'Hospital', title: 'Hospital'},
+                {data: 'Hospital', title: '<?php echo $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'); ?>'},
                 {data: 'Patient', title: patientLabel},
             ];
 
@@ -364,7 +364,7 @@ try {
                 {data: 'Rate', title: 'Rate'},
                 <?php } ?>
                 {data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'},
-                {data: 'Hospital', title: 'Hospital'},
+                {data: 'Hospital', title: '<?php echo $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'); ?>'},
                 <?php if (count($locations) > 0) { ?>
                 {data: 'Location', title: 'Location'},
                 <?php } if (count($diags) > 0) { ?>
@@ -372,7 +372,7 @@ try {
                 <?php } ?>
                 {data: 'Patient', title: patientLabel},
             ];
-    
+
             var wlCols = [
                 {data: 'Action', title: 'Action', sortable: false, searchable:false},
                 {data: 'Guest', title: 'Guest'},
@@ -383,7 +383,7 @@ try {
                 {data: 'Rate', title: 'Rate'},
                 <?php } ?>
                 {data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'},
-                {data: 'Hospital', title: 'Hospital'},
+                {data: 'Hospital', title: '<?php echo $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'); ?>'},
                 <?php if (count($locations) > 0) { ?>
                 {data: 'Location', title: 'Location'},
                 <?php } if (count($diags) > 0) { ?>

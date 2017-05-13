@@ -29,13 +29,36 @@ class ReservationSvcs {
 
 
         // Check for reserv id = 0, new resv or pick up old?
-        if ($idReserv == 0 && $id > 0 && $chosenIdPsg > 0) {
+        if ($idReserv == 0 && $id > 0) {
 
-            $dataArray = self::reservationChooser($dbh, $id, $chosenIdPsg, $uS->guestLookups['ReservStatus'], $labels, $uS->ResvEarlyArrDays);
+            $psgChooserMarkup = '';
 
-            if (count($dataArray) > 0) {
-                return $dataArray;
-            }
+            if ($chosenIdPsg == 0) {
+
+                $ngRss = Psg::getNameGuests($dbh, $id);
+
+                if (count($ngRss) == 1) {
+                    // Select psg
+                    $ngRs = $ngRss[0];
+                    $chosenIdPsg = $ngRs->idPsg->getStoredVal();
+                    $psgChooserMarkup = ReservationSvcs::psgChooserMkup($dbh, $ngRss, $uS->PatientAsGuest);
+                }
+           }
+
+           if ($chosenIdPsg > 0) {
+
+                $dataArray = self::reservationChooser($dbh, $id, $chosenIdPsg, $uS->guestLookups['ReservStatus'], $labels, $uS->ResvEarlyArrDays);
+
+                if (count($dataArray) > 0) {
+
+                    if ($psgChooserMarkup != '') {
+                        $dataArray['newPatient'] = 'New ' . $labels->getString('MemberType', 'patient', 'Patient');
+                        $dataArray['newPsgChooser'] = $psgChooserMarkup;
+                        $dataArray['idGuest'] = $id;
+                    }
+                    return $dataArray;
+                }
+           }
         }
 
         // Flag to force a new reservation.
@@ -117,7 +140,7 @@ class ReservationSvcs {
         $idPsg = $resv->getIdPsg($dbh);
 
         if ($idPsg == 0) {
-            // New Reservation...
+            //
             if ($chosenIdPsg == 0) {
 
                 $ngRss = Psg::getNameGuests($dbh, $id);
@@ -383,18 +406,18 @@ class ReservationSvcs {
                 EditRS::loadRow($r, $resvRs);
 
                 $checkinNow = HTMLContainer::generateMarkup('a',
-                            HTMLInput::generateMarkup('Open ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('type'=>'button'))
-                            , array('style'=>'text-decoration:none;', 'href'=>'Referral.php?rid='.$resvRs->idReservation->getStoredVal()));
+                            HTMLInput::generateMarkup('Open ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('type'=>'button', 'style'=>'margin-bottom:.3em;'))
+                            , array('style'=>'text-decoration:none;margin-right:.3em;', 'href'=>'Referral.php?rid='.$resvRs->idReservation->getStoredVal()));
 
                 $expArrDT = new \DateTime($resvRs->Expected_Arrival->getStoredVal());
                 $expArrDT->setTime(0, 0, 0);
 
                 if ($resvRs->Status->getStoredVal() == ReservationStatus::Staying) {
-                    $checkinNow = HTMLInput::generateMarkup('Add Guest', array('type'=>'button', 'style'=>'margin-left:.4em;', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
+                    $checkinNow = HTMLInput::generateMarkup('Add Guest', array('type'=>'button', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
                 } else if ($expArrDT->diff($today, TRUE)->days == 0) {
-                    $checkinNow .= HTMLInput::generateMarkup('Check-in Now', array('type'=>'button', 'style'=>'margin-left:.4em;', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
+                    $checkinNow .= HTMLInput::generateMarkup('Check-in Now', array('type'=>'button', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
                 } else if ($expArrDT->diff($today, TRUE)->days <= $offerCheckinDays) {
-                    $checkinNow .= HTMLInput::generateMarkup('Check-in Early', array('type'=>'button', 'style'=>'margin-left:.4em;', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
+                    $checkinNow .= HTMLInput::generateMarkup('Check-in Early', array('type'=>'button', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
                 }
 
 

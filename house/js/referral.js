@@ -884,7 +884,7 @@ function loadGuest(incmg, role, idPsg, patientStaying) {
             }
             if (data.choosePsg) {
                 resv.idGuest = data.idGuest;
-                psgChooser(data);
+                psgChooser(data.choosePsg);
                 return;
             }
             // Add guest to the page
@@ -937,11 +937,11 @@ function loadGuest(incmg, role, idPsg, patientStaying) {
  * @param {object} data
  * @returns {undefined}
  */
-function psgChooser(data) {
+function psgChooser(choosePsg) {
     "use strict";
     var resv = reserv;
     $('#psgDialog')
-        .children().remove().end().append($(data.choosePsg))
+        .children().remove().end().append($(choosePsg))
         .dialog('option', 'buttons', {
             Open: function() {
                 if ($('#cbpstayy').prop('checked') == false && $('#cbpstayn').prop('checked') == false) {
@@ -1025,6 +1025,14 @@ function resvPicker(data, $faDiag) {
             });
             
             $(this).dialog("close");
+        };
+    }
+    
+    if (data.newPatient) {
+        buttons[data.newPatient] = function() {
+            $(this).dialog("close");
+            resv.idGuest = data.idGuest;
+            psgChooser(data.newPsgChooser);
         };
     }
     

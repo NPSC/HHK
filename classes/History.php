@@ -246,20 +246,20 @@ class History {
                 $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
             }
 
-            $fixedRows[$labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital')] = $hospital;
+            $fixedRows['Hospital'] = $hospital;
 
             // Hospital Location
             if (count($this->locations) > 0) {
-                $fixedRows[$labels->getString('hospital', 'location', 'Unit')] = $r['Location'];
+                $fixedRows['Location'] = $r['Location'];
             }
 
             // Diagnosis
             if (count($this->diags) > 0) {
-                $fixedRows[$labels->getString('hospital', 'diagnosis', 'Diagnosis')] = $r['Diagnosis'];
+                $fixedRows['Diagnosis'] = $r['Diagnosis'];
             }
 
             // Patient Name
-            $fixedRows[$labels->getString('MemberType', 'patient', 'Patient')] = $r['Patient Name'];
+            $fixedRows['Patient'] = $r['Patient Name'];
 
             $returnRows[] = $fixedRows;
 
@@ -436,13 +436,13 @@ class History {
                 $hospital .= $hospitals[$r['idHospital']][1];
             }
 
-            $fixedRows[$labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital')] = $hospital;
+            $fixedRows['Hospital'] = $hospital;
 
             // Patient Name
-            $fixedRows[$labels->getString('MemberType', 'patient', 'Patient')] = $r['Patient'];
+            $fixedRows['Patient'] = $r['Patient'];
 
             if ($page != '') {
-                $fixedRows[$labels->getString('MemberType', 'patient', 'Patient')] = HTMLContainer::generateMarkup('span', $r['Patient'], array('class'=>'hhk-getPSGDialog', 'style'=>'cursor:pointer;width:100%;text-decoration: underline;', 'data-psg'=>$r['idPsg']));
+                $fixedRows['Patient'] = HTMLContainer::generateMarkup('span', $r['Patient'], array('class'=>'hhk-getPSGDialog', 'style'=>'cursor:pointer;width:100%;text-decoration: underline;', 'data-psg'=>$r['idPsg']));
             }
 
             $returnRows[] = $fixedRows;
