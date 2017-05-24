@@ -1192,10 +1192,14 @@ $cFields[] = array("Patient DOB", 'pBirth', '', '', 'n', PHPExcel_Style_NumberFo
 
 $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Ref. Agent'), 'Referral_Agent', 'checked', '', 's', '', array());
 
-if (count($aList) > 0) {
-    $cFields[] = array("Hospital / Assoc", 'hospitalAssoc', 'checked', '', 's', '', array());
-} else {
-    $cFields[] = array($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'), 'hospitalAssoc', 'checked', '', 's', '', array());
+// Hospital
+if ((count($aList) + count($hList)) > 1) {
+    
+    if (count($aList) > 0) {
+        $cFields[] = array("Hospital / Assoc", 'hospitalAssoc', 'checked', '', 's', '', array());
+    } else {
+        $cFields[] = array($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'), 'hospitalAssoc', 'checked', '', 's', '', array());
+    }
 }
 
 if ($uS->Doctor) {
@@ -1625,6 +1629,7 @@ function dateRender(data, type) {
                                 <input type="text" value="<?php echo $txtEnd; ?>" name="enDate" id="enDate" class="ckdate dates"/></td>
                         </tr>
                     </table>
+                    <?php if ((count($aList) + count($hList)) > 1) { ?>
                     <table style="float: left;">
                         <tr>
                             <th colspan="2">Hospitals</th>
@@ -1637,7 +1642,7 @@ function dateRender(data, type) {
                             <?php if (count($aList) > 1) { ?><td style="vertical-align: top;"><?php echo $assocs; ?></td><?php } ?>
                             <td style="vertical-align: top;"><?php echo $hospitals; ?></td>
                         </tr>
-                    </table>
+                    </table><?php } ?>
                     <?php echo $columSelector; ?>
                     <table style="width:100%; clear:both;">
                         <tr>

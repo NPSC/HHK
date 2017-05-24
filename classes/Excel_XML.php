@@ -135,34 +135,7 @@ class Excel_XML
                 return $this->sOutput;
         }
 
-        /**
-         * Compatibility: Add an array
-         *
-         * This method implements compatibility to version 1.1. Though using
-         * self::addWorksheet surely is an improvement, nobody should be
-         * forced to rewrite his code.
-         *
-         * @param array $data Data to be added
-         */
-        public function addArray($data)
-        {
-                $this->addWorksheet('Table1', $data);
-        }
 
-        /**
-         * Compatibility: Generate XML
-         *
-         * This method implements compatibility to version 1.1 and generates
-         * the excel file.
-         *
-         * @param string $filename Filename (without mimetype)
-         */
-        public function generateXML($filename)
-        {
-                $filename = $this->getWorkbookTitle($filename);
-                $filename .= '.xls';
-                $this->sendWorkbook($filename);
-        }
 
         /**
          * Workbook title correction
