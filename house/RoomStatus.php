@@ -254,7 +254,7 @@ function dateRender(data, type) {
             return '';
         }
 
-        return moment(data).format('ddd, MMM Do YYYY');
+        return moment(data).format('ddd, MMM D YYYY');
     }
 
     // Otherwise the data type requested (`type`) is type detection or
@@ -501,6 +501,15 @@ $(document).ready(function() {
        "columns": outCols
     });
 
+    $('#atblgetter').dataTable({
+        'columnDefs': [
+            {'targets': [3,4],
+             'type': 'date',
+             'render': function ( data, type ) {return dateRender(data, type);}
+            }
+        ]
+    });
+
     $('#btnPrint').click(function () {
         window.open('ShowHsKpg.php', '_blank');
     });
@@ -540,7 +549,7 @@ $(document).ready(function() {
                         <span>Checkout Date: </span><input id="ckoutDate" class="ckdate"/>
                         <input type="button" value="Print" id="prtCkOut" style="margin:3px;"/>
                     </p>
-                    <?php echo $ckOutTable->generateMarkup(array('id'=>'outTable', 'class'=>' order-column display ', 'style'=>'width:100%;')); ?>
+                    <table id='outTable' class=' order-column display ' style='width:100%;' ></table>
                 </div>
                 <div id="showAll">
                     <?php echo $roomTable->generateMarkup(array('id'=>'roomTable', 'class'=>' order-column display ', 'style'=>'width:100%;')); ?>

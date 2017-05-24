@@ -957,6 +957,17 @@ function verifyDone() {
                     $('#' + pan.idPrefix + 'txtBirthDate').addClass('ui-state-error');
                     return false;
                 }
+                
+                // check date value
+                var bDate = new Date($('#' + pan.idPrefix + 'txtBirthDate').val());
+                var today = new Date();
+                
+                if (bDate > today) {
+                    flagAlertMessage("The " + checkIn.patientLabel + " birth date cannot be in the future.", true);
+                    gstMsg.text("Birth date");
+                    $('#' + pan.idPrefix + 'txtBirthDate').addClass('ui-state-error');
+                    return false;
+                }
             }
         }
         

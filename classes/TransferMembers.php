@@ -32,6 +32,11 @@ class TransferMembers {
         $this->txParams = '';
     }
 
+    /** Last name search remote
+     * 
+     * @param string $searchCriteria A set of left most letters to search
+     * @return array Array of names as search result
+     */
     public function searchAccount($searchCriteria) {
 
         $replys = array();
@@ -95,6 +100,12 @@ class TransferMembers {
         return $replys;
     }
 
+    /**
+     * 
+     * @param mixed $accountId Remote account Id
+     * @return mixed The Remote account object.
+     * @throws Hk_Exception_Runtime
+     */
     public function retrieveAccount($accountId) {
 
         // Log in with the web service
@@ -109,6 +120,14 @@ class TransferMembers {
         return $account;
     }
 
+    /** Update Individual Account including name, phone, address and email
+     * 
+     * @param \PDO $dbh
+     * @param array $accountData
+     * @param int $idName
+     * @return string
+     * @throws Hk_Exception_Runtime
+     */
     public function updateAccount(\PDO $dbh, $accountData, $idName) {
 
         if ($idName < 1) {
@@ -267,6 +286,13 @@ class TransferMembers {
         return $countries;
     }
 
+    /**
+     * 
+     * @param \PDO $dbh
+     * @param array $sourceIds
+     * @param string $username
+     * @return array
+     */
     public function sendList(\PDO $dbh, array $sourceIds, $username) {
 
         $replys = array();

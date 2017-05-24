@@ -417,11 +417,11 @@ class ActivityReport {
 
         // Dates
         if ($startDT != NULL && $startDT != '') {
-            $whDates .= " and DATE(lp.Payment_Date) >= '" . $startDT->format('Y-m-d 00:00:00') . "' ";
+            $whDates .= " and DATE(`lp`.`Payment_Date`) >= DATE('" . $startDT->format('Y-m-d 00:00:00') . "') ";
         }
 
         if ($endDT != NULL && $endDT != '') {
-            $whDates .= " and DATE(lp.Payment_Date) <= '" . $endDT->format('Y-m-d 23:59:59') . "' ";
+            $whDates .= " and DATE(`lp`.`Payment_Date`) <= DATE('" . $endDT->format('Y-m-d 23:59:59') . "') ";
         }
 
         // Set up status totals array
@@ -438,7 +438,9 @@ class ActivityReport {
         $rtnIncluded = FALSE;
 
         foreach ($feeStatuses as $s) {
+            
             if ($s != '') {
+                
                 // Set up query where part.
                 if ($whStatus == '') {
                     $whStatus = "'" . $s . "'";
@@ -451,6 +453,7 @@ class ActivityReport {
                 }
 
                 $totals[$s]['active'] = 'y';
+                
                 if ($payStatusText == '') {
                     $payStatusText .= $totals[$s]['title'];
                 } else {
@@ -462,9 +465,9 @@ class ActivityReport {
         if ($whStatus != '') {
 
             if ($rtnIncluded) {
-                $whStatus = " and (lp.Payment_Status in (" . $whStatus . ") or (lp.Is_Refund = 1 && lp.Payment_Status = '" . PaymentStatusCode::Paid . "')) ";
+                $whStatus = " and (`lp`.`Payment_Status` in (" . $whStatus . ") or (`lp`.`Is_Refund` = 1 && `lp`.`Payment_Status` = '" . PaymentStatusCode::Paid . "')) ";
             } else {
-                $whStatus = " and lp.Payment_Status in (" . $whStatus . ") ";
+                $whStatus = " and `lp`.`Payment_Status` in (" . $whStatus . ") ";
             }
         }
 
@@ -504,37 +507,37 @@ class ActivityReport {
         }
 
         if ($whType != '') {
-            $whType = " and lp.idPayment_Method in (" . $whType . ") ";
+            $whType = " and `lp`.`idPayment_Method` in (" . $whType . ") ";
         }
 
         // Guest id selector
         if ($idReg > 0) {
-            $whId = " and lp.idGroup = $idReg ";
+            $whId = " and `lp`.`idGroup` = $idReg ";
         }
 
         if ($showDeletedInv === FALSE) {
-            $whId .= " and lp.Deleted = 0 ";
+            $whId .= " and `lp`.`Deleted` = 0 ";
         }
 
         $query = "Select
-    lp . *,
-    ifnull(n.Name_First, '') as `First`,
-    ifnull(n.Name_Last, '') as `Last`,
-    ifnull(n.Company, '') as `Company`,
-    ifnull(r.Title, '') as `Room`,
-    ifnull(re.idPsg, 0) as `idPsg`
+    lp.*,
+    ifnull(`n`.`Name_First`, '') as `First`,
+    ifnull(`n`.`Name_Last`, '') as `Last`,
+    ifnull(`n`.`Company`, '') as `Company`,
+    ifnull(`r`.`Title`, '') as `Room`,
+    ifnull(`re`.`idPsg`, 0) as `idPsg`
 from
-    vlist_inv_pments lp
+    `vlist_inv_pments` `lp`
         left join
-    `name` n ON lp.Sold_To_Id = n.idName
+    `name` `n` ON `lp`.`Sold_To_Id` = `n`.`idName`
         left join
-    visit v on lp.Order_Number = v.idVisit and lp.Suborder_Number = v.Span
+    `visit` `v` on `lp`.`Order_Number` = `v`.`idVisit` and `lp`.`Suborder_Number` = `v`.`Span`
 	left join
-    resource r ON v.idResource = r.idResource
+    `resource` `r` ON `v`.`idResource` = `r`.`idResource`
         left join
-    registration re on v.idRegistration = re.idRegistration
-where lp.idPayment > 0
- $whDates $whStatus $whType $whId order by lp.`idInvoice`, lp.`idPayment`, lp.`idPayment_auth`";
+    `registration` `re` on `v`.`idRegistration` = `re`.`idRegistration`
+where `lp`.`idPayment` > 0
+ $whDates $whStatus $whType $whId ;";
 
         $stmt = $dbh->query($query);
         $invoices = Receipt::processPayments($stmt, array('First', 'Last', 'Company', 'Room', 'idPsg'));

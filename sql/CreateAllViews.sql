@@ -1367,7 +1367,8 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
         LEFT JOIN `gen_lookups` `g2` ON `p`.`Status_Code` = `g2`.`Code`
             AND (`g2`.`Table_Name` = 'Payment_Status')
         LEFT JOIN `gen_lookups` `g1` ON `i`.`Status` = `g1`.`Code`
-            AND (`g1`.`Table_Name` = 'Invoice_Status');
+            AND (`g1`.`Table_Name` = 'Invoice_Status')
+    ORDER BY i.idInvoice, p.idPayment, pa.idPayment_auth;
 
 
 

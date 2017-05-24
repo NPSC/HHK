@@ -140,7 +140,7 @@ class PaymentReport {
             left join
         resource r ON v.idResource = r.idResource
     where lp.idPayment > 0
-      $whDates $whStatus $whType order by `idInvoice`, `idPayment`, `idPayment_auth`";
+      $whDates $whStatus $whType ";
 
         $stmt = $dbh->query($query);
         $invoices = Receipt::processPayments($stmt, array('First', 'Last', 'Company', 'Room'));

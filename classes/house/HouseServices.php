@@ -41,7 +41,7 @@ class HouseServices {
         $stmt1 = $dbh->query($query);
         $rows = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
 
-        $dataArray = '';
+        $dataArray = array();
 
 
         if (count($rows) == 0) {

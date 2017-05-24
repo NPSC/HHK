@@ -242,15 +242,17 @@ class History {
             $fixedRows['Patient'] = $r['Patient Name'];
 
             // Hospital
-            $hospital = '';
-            if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] != '(None)') {
-                $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] . ' / ';
-            }
-            if ($r['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
-                $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
-            }
+            if (count($uS->guestLookups[GL_TableNames::Hospital]) > 1) {
+                $hospital = '';
+                if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] != '(None)') {
+                    $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] . ' / ';
+                }
+                if ($r['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
+                    $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
+                }
 
-            $fixedRows['Hospital'] = $hospital;
+                $fixedRows['Hospital'] = $hospital;
+            }
 
             // Hospital Location
             $fixedRows['Location'] = $r['Location'];
@@ -266,7 +268,7 @@ class History {
 
     }
 
-    public static function getCheckedInGuestMarkup(\PDO $dbh, $page = "GuestEdit.php", $includeAction = TRUE) {
+    public static function getCheckedInGuestMarkup(\PDO $dbh, $page = "GuestEdit.php", $includeAction = TRUE, $static = FALSE) {
 
         $uS = Session::getInstance();
 
@@ -277,10 +279,10 @@ class History {
 
         //$roomRates = RoomRate::makeDescriptions($dbh);
 
-        return self::getCheckedInMarkup($dbh, $uS->ccgw, $hospList, $page, $includeAction);
+        return self::getCheckedInMarkup($dbh, $uS->ccgw, $hospList, $page, $includeAction, $static);
     }
 
-    public static function getCheckedInMarkup(\PDO $dbh, $creditGw, $hospitals, $page, $includeAction = TRUE) {
+    public static function getCheckedInMarkup(\PDO $dbh, $creditGw, $hospitals, $page, $includeAction = TRUE, $static = FALSE) {
 
         $uS = Session::getInstance();
 
@@ -318,7 +320,7 @@ class History {
             $fixedRows = array();
 
             // Action
-            if ($includeAction) {
+            if ($includeAction && !$static) {
                 if (isset($r['Action'])) {
                     $fixedRows['Action'] =  HTMLContainer::generateMarkup(
                         'ul', HTMLContainer::generateMarkup('li', 'Action' .
@@ -337,14 +339,14 @@ class History {
 
 
             // Build the page anchor
-            if ($page != '') {
+            if ($page != '' && !$static) {
                 $fixedRows['Guest'] = HTMLContainer::generateMarkup('a', $r['Guest'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg']));
             } else {
                 $fixedRows['Guest'] = $r['Guest'];
             }
 
             // Indicate On leave
-            if ($r['On_Leave'] > 0 && $page != '') {
+            if ($r['On_Leave'] > 0 && $page != '' && !$static) {
 
                 $daysOnLv = intval($r['On_Leave']);
 
@@ -367,7 +369,11 @@ class History {
 
 
             // Date?
-            $fixedRows['Checked In'] = date('c', strtotime($r['Checked-In']));
+            if ($static) {
+                $fixedRows['Checked In'] = date('M j, Y', strtotime($r['Checked-In']));
+            } else {
+                $fixedRows['Checked In'] = date('c', strtotime($r['Checked-In']));
+            }
 
             // Days
             $stDay = new \DateTime($r['Checked-In']);
@@ -378,7 +384,13 @@ class History {
 
             // Expected Departure
             if ($r['Expected Depart'] != '') {
-                $fixedRows['Expected Departure'] = date('c', strtotime($r['Expected Depart']));
+                
+                if ($static) {
+                    $fixedRows['Expected Departure'] = date('M j, Y', strtotime($r['Expected Depart']));
+                } else {
+                    $fixedRows['Expected Departure'] = date('c', strtotime($r['Expected Depart']));
+                }
+                
             } else {
                 $fixedRows['Expected Departure'] = '';
             }
@@ -422,15 +434,17 @@ class History {
 
 
             // Hospital
-            $hospital = '';
-            if ($r['idAssociation'] > 0 && isset($hospitals[$r['idAssociation']]) && $hospitals[$r['idAssociation']][1] != '(None)') {
-                $hospital .= $hospitals[$r['idAssociation']][1] . ' / ';
-            }
-            if ($r['idHospital'] > 0 && isset($hospitals[$r['idHospital']])) {
-                $hospital .= $hospitals[$r['idHospital']][1];
-            }
+            if (count($hospitals) > 1) {
+                $hospital = '';
+                if ($r['idAssociation'] > 0 && isset($hospitals[$r['idAssociation']]) && $hospitals[$r['idAssociation']][1] != '(None)') {
+                    $hospital .= $hospitals[$r['idAssociation']][1] . ' / ';
+                }
+                if ($r['idHospital'] > 0 && isset($hospitals[$r['idHospital']])) {
+                    $hospital .= $hospitals[$r['idHospital']][1];
+                }
 
-            $fixedRows['Hospital'] = $hospital;
+                $fixedRows['Hospital'] = $hospital;
+            }
 
             // Patient Name
             $fixedRows['Patient'] = $r['Patient'];

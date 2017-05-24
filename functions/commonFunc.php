@@ -9,8 +9,9 @@
  * @link      https://github.com/NPSC/HHK
  */
 function initPDO($override = FALSE) {
+    
     $ssn = Session::getInstance();
-    /* Get Sectors from session */
+
     if (!isset($ssn->databaseURL)) {
         die('<br/>Missing Database Session Initialization (initPDO)<br/>');
     }
@@ -261,19 +262,18 @@ function getYearOptionsMarkup($slctd, $startYear, $fyMonths, $showAllYears = TRU
 }
 
 function getKey() {
-    return "017d609a4b2d8910685595C8";
+    return "017d609a4b2d8910685595C8df";
 }
 
 function getIV() {
-    return "fYfhHeDm";
+    return "fYfhHeDmf j98UUy4";
 }
 
 function encryptMessage($input) {
     $key = getKey();
     $iv = getIV();
-    $bit_check = 8; // bit amount for diff algor.
 
-    return encrypt($input, $key, $iv, $bit_check);
+    return encrypt_decrypt('encrypt', $input, $key, $iv);
 }
 
 function getNotesKey($keyPart) {
@@ -285,64 +285,59 @@ function encryptNotes($input, $pw) {
     if ($pw != "" && $input != "") {
         $key = getNotesKey($pw);
         $iv = getIV();
-        $bit_check = 8; // bit amount for diff algor.
-        $crypt = encrypt($input, $key, $iv, $bit_check);
+
+        $crypt = encrypt_decrypt('encrypt', $input, $key, $iv);
     }
 
     return $crypt;
 }
 
 function decryptMessage($encrypt) {
-    $iv = getIV(); // 8 bit IV
-    $bit_check = 8; // bit amount for diff algor.
 
-    return decrypt($encrypt, getKey(), $iv, $bit_check);
+    return encrypt_decrypt('decrypt', $encrypt, getKey(), getIV());
 }
 
 function decryptNotes($encrypt, $pw) {
     $clear = "";
 
     if ($pw != "" && $encrypt != "") {
-        $iv = getIV(); // 8 bit IV
-        $bit_check = 8; // bit amount for diff algor.
+    
         $key = getNotesKey($pw);
-        $clear = decrypt($encrypt, $key, $iv, $bit_check);
+        $clear = encrypt_decrypt('decrypt', $encrypt, $key, getIV());
     }
 
     return $clear;
 }
 
-function encrypt($text, $key, $iv, $bit_check) {
-    $text_num = str_split($text, $bit_check);
-
-    $text_num = $bit_check - strlen($text_num[count($text_num) - 1]);
-
-    for ($i = 0; $i < $text_num; $i++) {
-        $text = $text . chr($text_num);
+/**
+ * simple method to encrypt or decrypt a plain text string
+ * initialization vector(IV) has to be the same when encrypting and decrypting
+ * 
+ * @param string $action: can be 'encrypt' or 'decrypt'
+ * @param string $string: string to encrypt or decrypt
+ *
+ * @return string
+ */
+function encrypt_decrypt($action, $string, $secret_key, $secret_iv) {
+    $output = false;
+    $encrypt_method = "AES-256-CBC";
+//    $secret_key = 'This is my secret key';
+//    $secret_iv = 'This is my secret iv';
+    // hash
+    $key = hash('sha256', $secret_key);
+    
+    // iv - encrypt method AES-256-CBC expects 16 bytes - else you will get a warning
+    $iv = substr(hash('sha256', $secret_iv), 0, 16);
+    if ( $action == 'encrypt' ) {
+        $output = openssl_encrypt($string, $encrypt_method, $key, 0, $iv);
+        $output = base64_encode($output);
+    } else if( $action == 'decrypt' ) {
+        $output = openssl_decrypt(base64_decode($string), $encrypt_method, $key, 0, $iv);
     }
-
-    $cipher = mcrypt_module_open(MCRYPT_TRIPLEDES, '', 'cbc', '');
-    mcrypt_generic_init($cipher, $key, $iv);
-    $decrypted = mcrypt_generic($cipher, $text);
-    mcrypt_generic_deinit($cipher);
-    return base64_encode($decrypted);
+    return $output;
 }
 
-function decrypt($encrypted_text, $key, $iv, $bit_check) {
-    $cipher = mcrypt_module_open(MCRYPT_TRIPLEDES, '', 'cbc', '');
-    mcrypt_generic_init($cipher, $key, $iv);
-    $decrypted = mdecrypt_generic($cipher, base64_decode($encrypted_text));
-    mcrypt_generic_deinit($cipher);
-    $last_char = substr($decrypted, -1);
 
-    for ($i = 1; $i < $bit_check; $i++) {
-        if (chr($i) == $last_char) {
-            $decrypted = substr($decrypted, 0, strlen($decrypted) - $i);
-            break;
-        }
-    }
-    return $decrypted;
-}
 
 function readGenLookups($con, $tbl, $orderBy = "Code") {
 

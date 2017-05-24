@@ -261,7 +261,8 @@ class SysConfig {
         foreach ($rows as $r) {
 
             $val = self::getTypedVal($r['Type'], $r['Value']);
-            $uS->$r['Key'] = $val;
+            $key = $r['Key'];
+            $uS->$key = $val;
         }
 
         unset($rows);

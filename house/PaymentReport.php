@@ -568,7 +568,7 @@ from
         left join
     name np on hs.idPatient = np.idName
 where lp.idPayment > 0
- $whHosp $whAssoc $whDates $whStatus $whType order by `idInvoice`, `idPayment`, `idPayment_auth`";
+ $whHosp $whAssoc $whDates $whStatus $whType ";
 
     $stmt = $dbh->query($query);
     $invoices = Receipt::processPayments($stmt, array('First', 'Last', 'Company', 'Room', 'idHospital', 'idAssociation', 'Patient_Last', 'Patient_First', 'Hosp_Arrival'));

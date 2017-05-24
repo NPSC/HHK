@@ -1132,6 +1132,17 @@ function verifyDone(reserv) {
                     $('#h_txtBirthDate').addClass('ui-state-error');
                     return false;
                 }
+                
+                // check date value
+                var bDate = new Date($('#h_txtBirthDate').val());
+                var today = new Date();
+                
+                if (bDate > today) {
+                    flagAlertMessage("The " + resv.patientLabel + " birth date cannot be in the future.", true);
+                    gstMsg.text("Birth date");
+                    $('#h_txtBirthDate').addClass('ui-state-error');
+                    return false;
+                }
             }
         }
 
