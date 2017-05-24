@@ -897,7 +897,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
 
             }
 
-            return $tbl->generateMarkup(array('id'=>$reservStatus . 'tblgetter', 'style'=>'width:100%;'));
+            return $tbl->generateMarkup(array('id'=>$reservStatus . 'tblgetter', 'style'=>'width:100%;', 'class'=>'display'));
 
         } else {
             return "";

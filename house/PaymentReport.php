@@ -297,7 +297,11 @@ $cFields[] = array("Payor First", 'First', 'checked', '', 's', '', array());
 $cFields[] = array("Date", 'Payment_Date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
 $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 's', '', array());
 $cFields[] = array("Room", 'Title', 'checked', '', 's', '', array('style'=>'text-align:center;'));
-$cFields[] = array($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'), 'idHospital', 'checked', '', 's', '', array());
+
+if ((count($hospList)) > 1) { 
+    $cFields[] = array($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'), 'idHospital', 'checked', '', 's', '', array());
+}
+
 $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Last", 'Patient_Last', '', '', 's', '', array());
 $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." First", 'Patient_First', '', '', 's', '', array());
 $cFields[] = array("Pay Type", 'Pay_Type', 'checked', '', 's', '', array());
@@ -655,7 +659,7 @@ where lp.idPayment > 0
 
         $headerTable->addBodyTr(HTMLTable::makeTd('Total Amount: ', array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($total,2), array('style'=>'font-weight:bold;')));
 
-        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt'));
+        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display'));
         $mkTable = 1;
         $hdrTbl = $headerTable->generateMarkup();
 
@@ -721,7 +725,6 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MOMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
@@ -759,24 +762,8 @@ function invoiceAction(idInvoice, action, eid, container, show) {
         }
     });
 }
-function dateRender(data, type) {
-    // If display or filter data is requested, format the date
-    if ( type === 'display' || type === 'filter' ) {
-
-        if (data === null || data === '') {
-            return '';
-        }
-
-        return moment(data).format('ddd, MMM D YYYY');
-    }
-
-    // Otherwise the data type requested (`type`) is type detection or
-    // sorting data, for which we want to use the integer, so just return
-    // that, unaltered
-    return data;
-}
-
     $(document).ready(function() {
+        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
         var makeTable = '<?php echo $mkTable; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
@@ -826,7 +813,7 @@ function dateRender(data, type) {
                 'columnDefs': [
                     {'targets': columnDefs,
                      'type': 'date',
-                     'render': function ( data, type, row ) {return dateRender(data, type);}
+                     'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
                     }
                  ],
                 "displayLength": 50,
@@ -873,6 +860,7 @@ function dateRender(data, type) {
                                 <input type="text" value="<?php echo $txtEnd; ?>" name="enDate" id="enDate" class="ckdate dates"/></td>
                         </tr>
                     </table>
+                    <?php if ((count($aList) + count($hList)) > 1) { ?>
                     <table style="float: left;">
                         <tr>
                             <th colspan="2"><?php echo $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'); ?> Filter</th>
@@ -885,7 +873,7 @@ function dateRender(data, type) {
                             <?php if (count($aList) > 0) { ?><td><?php echo $assocs; ?></td><?php } ?>
                             <td><?php echo $hospitals; ?></td>
                         </tr>
-                    </table>
+                    </table><?php } ?>
                     <table style="float: left;">
                         <tr>
                             <th colspan="2">Pay Type</th>

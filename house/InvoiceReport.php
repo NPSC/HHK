@@ -671,7 +671,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
                 .HTMLTable::makeTd('')
             );
 
-        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'style'=>'font-size:.8em;'));
+        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display', 'style'=>'font-size:.8em;'));
         $mkTable = 1;
 
         $headerTableMkup = $headerTable->generateMarkup();
@@ -750,7 +750,6 @@ $useVisitDatesCb = HTMLInput::generateMarkup('', $vAttrs)
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MOMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
@@ -810,23 +809,6 @@ function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement)
     dialg.dialog('option', 'width', 500);
     dialg.dialog('open');
 }
-function dateRender(data, type) {
-    // If display or filter data is requested, format the date
-    if ( type === 'display' || type === 'filter' ) {
-
-        if (data === null || data === '') {
-            return '';
-        }
-
-        return moment(data).format('MMM D YYYY');
-    }
-
-    // Otherwise the data type requested (`type`) is type detection or
-    // sorting data, for which we want to use the integer, so just return
-    // that, unaltered
-    return data;
-}
-
 function invoiceAction(idInvoice, action, eid) {
     $.post('ws_resc.php', {cmd: 'invAct', iid: idInvoice, x:eid, action: action},
       function(data) {
@@ -860,6 +842,7 @@ function invoiceAction(idInvoice, action, eid) {
     });
 }
 $(document).ready(function() {
+    var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
     var makeTable = '<?php echo $mkTable; ?>';
     $('#btnHere, #btnExcel').button();
     $('.ckdate').datepicker({
@@ -908,7 +891,7 @@ $(document).ready(function() {
             'columnDefs': [
                 {'targets':  1,
                  'type': 'date',
-                 'render': function ( data, type, row ) {return dateRender(data, type);}
+                 'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
                 }
              ],
             "displayLength": 50,

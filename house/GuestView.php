@@ -31,6 +31,7 @@ $menuMarkup = $wInit->generatePageMenu();
 // Load the session with member - based lookups
 $wInit->sessionLoadGenLkUps();
 $wInit->sessionLoadGuestLkUps();
+$labels = new Config_Lite(LABEL_FILE);
 
 
 $resultMessage = "";
@@ -48,8 +49,8 @@ foreach ($rows as $r) {
         'First Name' => $r['First Name'],
         'Room' => $r['Room'],
         'Phone' => $r['Phone'],
-        'Arrival' => date('M j, Y', strtotime($r['Arrival'])),
-        'Expected Departure' =>  date('M j, Y', strtotime($r['Expected Departure']))
+        'Arrival' => date('c', strtotime($r['Arrival'])),
+        'Expected Departure' =>  date('c', strtotime($r['Expected Departure']))
     );
 
     if ($uS->EmptyExtendLimit > 0) {
@@ -65,7 +66,7 @@ foreach ($rows as $r) {
         $g['Model'] = $r['Model'];
         $g['Color'] = $r['Color'];
         $g['State Reg.'] = $r['State Reg.'];
-        $g['License Plate'] = $r['License Plate'];
+        $g[$labels->getString('referral', 'licensePlate', 'License Plate')] = $r['License Plate'];
     }
 
     $guests[] = $g;
@@ -90,7 +91,7 @@ if ($uS->TrackAuto) {
     ifnull(v.Model, '') as `Model`,
     ifnull(v.Color, '') as `Color`,
     ifnull(v.State_Reg, '') as `State Reg.`,
-    ifnull(v.License_Number, '') as `License Plate`
+    ifnull(v.License_Number, '') as `" . $labels->getString('referral', 'licensePlate', 'License Plate') . "`
 from
 	vehicle v join reservation r on v.idRegistration = r.idRegistration
         left join
@@ -111,8 +112,8 @@ order by l.Title, `Arrival`");
 
     for ($i = 0; $i < count($vrows); $i++) {
 
-        $vrows[$i]['Arrival'] = date('M j, Y', strtotime($vrows[$i]['Arrival']));
-        $vrows[$i]['Expected Departure'] =  date('M j, Y', strtotime($vrows[$i]['Expected Departure']));
+        $vrows[$i]['Arrival'] = date('c', strtotime($vrows[$i]['Arrival']));
+        $vrows[$i]['Expected Departure'] =  date('c', strtotime($vrows[$i]['Expected Departure']));
     }
 
 
@@ -225,10 +226,19 @@ if ($uS->TrackAuto) {
         <script type="text/javascript">
     $(document).ready(function () {
         "use strict";
-    
+        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
         $('#btnEmail, #btnPrint, #btnEmailv, #btnPrintv').button();
-        $('#tblList').dataTable({"iDisplayLength": 50, "dom": '<"top"if>rt<"bottom"lp><"clear">', "order": [[0, 'asc']]});
-        $('#tblListv').dataTable({"iDisplayLength": 50, "ordering": false, "dom": '<"top"if>rt<"bottom"lp><"clear">'});
+        $('#tblList, #tblListv').dataTable({
+            "displayLength": 50, 
+            "dom": '<"top"if>rt<"bottom"lp><"clear">', 
+            "order": [[0, 'asc']],
+            'columnDefs': [
+                {'targets': [4,5],
+                 'type': 'date',
+                 'render': function ( data, type ) {return dateRender(data, type, dateFormat);}
+                }
+            ]
+        });
         $('#btnPrint').click(function() {
             $("div.PrintArea").printArea();
         });

@@ -155,7 +155,6 @@ class History {
         foreach ($this->resvEvents as $r) {
 
             $fixedRows = array();
-            $gName = $r['Guest Name'];
 
             // Action
             if ($includeAction && !$static) {
@@ -169,16 +168,17 @@ class History {
                            . ($includeAction && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted) ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Waitlist][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Waitlist, 'data-rid'=>$r['idReservation']))) : '')
                            . ($includeAction && $status == ReservationStatus::Committed ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::UnCommitted][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::UnCommitted, 'data-rid'=>$r['idReservation']))) : '')
                            . ($includeAction && $status == ReservationStatus::UnCommitted ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Committed][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Committed, 'data-rid'=>$r['idReservation']))) : '')
-                          . ($uS->ccgw != '' ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Credit Card', array('class'=>'stupCredit', 'data-id'=>$r['idGuest'], 'data-reg'=>$r['idRegistration'], 'data-name'=>$gName))) : '')
+                          . ($uS->ccgw != '' ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Credit Card', array('class'=>'stupCredit', 'data-id'=>$r['idGuest'], 'data-reg'=>$r['idRegistration'], 'data-name'=>$r['Guest Name']))) : '')
                     )), array('class' => 'gmenu'));
             }
 
+            $fixedRows['Guest First'] = $r['Guest First'];
 
             // Build the page anchor
             if ($page != '' && !$static) {
-                $fixedRows['Guest'] = HTMLContainer::generateMarkup('a', $gName, array('href'=>"$page?rid=" . $r["idReservation"]));
+                $fixedRows['Guest Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?rid=" . $r["idReservation"]));
             } else {
-                $fixedRows['Guest'] = $gName;
+                $fixedRows['Guest Last'] = $r['Guest Last'];
             }
 
 
@@ -240,6 +240,11 @@ class History {
 
             // Patient Name
             $fixedRows['Patient'] = $r['Patient Name'];
+            
+            if ($r['Patient_Staying'] > 0) {
+                $fixedRows['Patient'] .= HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>'Patient Planning to stay'));
+            }
+            
 
             // Hospital
             if (count($uS->guestLookups[GL_TableNames::Hospital]) > 1) {
@@ -337,12 +342,13 @@ class History {
                 }
             }
 
+            $fixedRows['Guest First'] = $r['Guest First'];
 
             // Build the page anchor
             if ($page != '' && !$static) {
-                $fixedRows['Guest'] = HTMLContainer::generateMarkup('a', $r['Guest'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg']));
+                $fixedRows['Guest Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg']));
             } else {
-                $fixedRows['Guest'] = $r['Guest'];
+                $fixedRows['Guest Last'] = $r['Guest Last'];
             }
 
             // Indicate On leave

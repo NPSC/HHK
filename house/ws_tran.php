@@ -38,7 +38,7 @@ $webServices = $config->getString('webServices', 'ContactManager', '');
 if ($webServices != '') {
 
     $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
-    require (THIRD_PARTY . 'neon.php');
+    require (CLASSES . 'neon.php');
 
 } else {
     throw new Hk_Exception_Runtime('Web Services Configuration file is missing. ');

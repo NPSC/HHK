@@ -10,10 +10,7 @@
 
 
 require THIRD_PARTY . 'PHPExcel.php';
-//require THIRD_PARTY . 'PHPExcel/Cell/AdvancedValueBinder.php';
-//require THIRD_PARTY . 'PHPExcel/IOFactory.php';
 
-//require CLASSES . 'Excel_XML.php';
 
 class OpenXML {
 

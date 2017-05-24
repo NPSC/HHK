@@ -548,22 +548,6 @@ function checkStrength(pwCtrl) {
     }
     return rtn;
 }
-function dateRender(data, type) {
-    // If display or filter data is requested, format the date
-    if ( type === 'display' || type === 'filter' ) {
-
-        if (data === null || data === '') {
-            return '';
-        }
-
-        return moment(data).format('ddd, MMM D YYYY');
-    }
-
-    // Otherwise the data type requested (`type`) is type detection or
-    // sorting data, for which we want to use the integer, so just return
-    // that, unaltered
-    return data;
-}
 
 $(document).ready(function () {
     "use strict";

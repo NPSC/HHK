@@ -55,7 +55,7 @@ $wsConfig = NULL;
 
 if ($config->has('webServices', 'Service_Name') && $config->getString('webServices', 'Service_Name', '') != '' && $config->getString('webServices', 'ContactManager', '') != '') {
 
-    require (THIRD_PARTY . 'neon.php');
+    require (CLASSES . 'neon.php');
     require (CLASSES . "TransferMembers.php");
 
     if (file_exists(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''))) {

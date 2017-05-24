@@ -13,31 +13,13 @@ function isNumber(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
-function dateRender(data, type) {
-    // If display or filter data is requested, format the date
-    if ( type === 'display' || type === 'filter' ) {
-
-        if (data === null || data === '') {
-            return '';
-        }
-
-        return moment(data).format('MMM D YYYY');
-    }
-
-    // Otherwise the data type requested (`type`) is type detection or
-    // sorting data, for which we want to use the integer, so just return
-    // that, unaltered
-    return data;
-}
-
-
 var dtCols = [
     {
         "targets": [ 0 ],
         "title": "Date",
         'data': 'Date',
         render: function ( data, type ) {
-            return dateRender(data, type);
+            return dateRender(data, type, dateFormat);
         }
     },
     {

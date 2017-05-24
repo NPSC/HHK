@@ -97,10 +97,14 @@ foreach ($hospList as $h) {
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style
 $cFields[] = array('Resv Id', 'idReservation', 'checked', 'f', 'n', '');
 $cFields[] = array("Room", 'Room', 'checked', '', 's', '');
-$cFields[] = array($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'), 'Hospital', 'checked', '', 's', '');
 
-if (count($aList) > 0) {
-    $cFields[] = array("Association", 'Assoc', 'checked', '', 's', '');
+if ((count($aList) + count($hList)) > 1) { 
+
+    $cFields[] = array($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'), 'Hospital', 'checked', '', 's', '');
+
+    if (count($aList) > 0) {
+        $cFields[] = array("Association", 'Assoc', 'checked', '', 's', '');
+    }
 }
 
 $locations = readGenLookupsPDO($dbh, 'Location');
@@ -482,7 +486,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistratio
     // Finish the report
     if ($local) {
 
-        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt'));
+        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display'));
         $mkTable = 1;
 
     } else {
@@ -538,27 +542,10 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MOMENT_JS; ?>"></script>
+
 <script type="text/javascript">
-function dateRender(data, type) {
-    // If display or filter data is requested, format the date
-    if ( type === 'display' || type === 'filter' ) {
-
-        if (data === null || data === '') {
-            return '';
-        }
-
-        return moment(data).format('MMM D YYYY');
-    }
-
-    // Otherwise the data type requested (`type`) is type detection or
-    // sorting data, for which we want to use the integer, so just return
-    // that, unaltered
-    return data;
-}
-
     $(document).ready(function() {
-
+        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
         var makeTable = '<?php echo $mkTable; ?>';
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
@@ -607,7 +594,7 @@ function dateRender(data, type) {
                 'columnDefs': [
                     {'targets': columnDefs,
                      'type': 'date',
-                     'render': function ( data, type, row ) {return dateRender(data, type);}
+                     'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
                     }
                  ],
                     "displayLength": 50,
@@ -660,6 +647,7 @@ function dateRender(data, type) {
                             <td><?php echo $statusSelector; ?></td>
                         </tr>
                     </table>
+                    <?php if ((count($aList) + count($hList)) > 1) { ?>
                     <table style="float: left;">
                         <tr>
                             <?php if (count($aList) > 0) echo '<th>Associations</th>';  ?>
@@ -670,7 +658,7 @@ function dateRender(data, type) {
                             <td style="vertical-align: top;"><?php echo $hospitals; ?></td>
                         </tr>
                     </table>
-                    <?php echo $columSelector; ?>
+                    <?php } echo $columSelector; ?>
                     <table style="width:100%; clear:both;">
                         <tr>
                             <td style="width:50%;"></td>

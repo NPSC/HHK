@@ -37,7 +37,7 @@ class Patient extends Role {
         // Build name.
         $tbl = new HTMLTable();
         $tbl->addHeaderTr($this->name->createMarkupHdr());
-        $tbl->addHeaderTr($this->name->createMarkupRow($patientEditable));
+        $tbl->addBodyTr($this->name->createMarkupRow($patientEditable));
 
         $mk1 = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('fieldset',

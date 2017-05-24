@@ -41,7 +41,8 @@ class Vehicle {
 
         $tbl = new HTMLTable();
 
-
+        $labels = new Config_Lite(LABEL_FILE);
+        
         foreach ($rows as $r) {
 
             $carRS = new VehicleRs();
@@ -107,7 +108,7 @@ class Vehicle {
                 .HTMLTable::makeTh('Model')
                 .HTMLTable::makeTh('Color')
                 .HTMLTable::makeTh('Registered')
-                .HTMLTable::makeTh('License Plate')
+                .HTMLTable::makeTh($labels->getString('referral', 'licensePlate', 'License Plate'))
                 .HTMLTable::makeTh('Notes')
                 .HTMLTable::makeTh('Delete')
                 );

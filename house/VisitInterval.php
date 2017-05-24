@@ -950,7 +950,7 @@ where
         $tbl->addFooterTr($tr);
 
 
-        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt'));
+        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display compact'));
         $statsTable = '';
 
         // Stats panel
@@ -1193,7 +1193,7 @@ $cFields[] = array("Patient DOB", 'pBirth', '', '', 'n', PHPExcel_Style_NumberFo
 $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Ref. Agent'), 'Referral_Agent', 'checked', '', 's', '', array());
 
 // Hospital
-if ((count($aList) + count($hList)) > 1) {
+if (count($hospList) > 1) {
     
     if (count($aList) > 0) {
         $cFields[] = array("Hospital / Assoc", 'hospitalAssoc', 'checked', '', 's', '', array());
@@ -1468,26 +1468,10 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MOMENT_JS; ?>"></script>
+
 <script type="text/javascript">
-function dateRender(data, type) {
-    // If display or filter data is requested, format the date
-    if ( type === 'display' || type === 'filter' ) {
-
-        if (data === null || data === '') {
-            return '';
-        }
-
-        return moment(data).format('MMM D YYYY');
-    }
-
-    // Otherwise the data type requested (`type`) is type detection or
-    // sorting data, for which we want to use the integer, so just return
-    // that, unaltered
-    return data;
-}
     $(document).ready(function() {
-
+        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
         var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';
         var makeTable = '<?php echo $mkTable; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
@@ -1541,7 +1525,7 @@ function dateRender(data, type) {
                 'columnDefs': [
                     {'targets': columnDefs,
                      'type': 'date',
-                     'render': function ( data, type, row ) {return dateRender(data, type);}
+                     'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
                     }
                  ],
                 "displayLength": 50,
@@ -1629,7 +1613,7 @@ function dateRender(data, type) {
                                 <input type="text" value="<?php echo $txtEnd; ?>" name="enDate" id="enDate" class="ckdate dates"/></td>
                         </tr>
                     </table>
-                    <?php if ((count($aList) + count($hList)) > 1) { ?>
+                    <?php if (count($hospList) > 1) { ?>
                     <table style="float: left;">
                         <tr>
                             <th colspan="2">Hospitals</th>

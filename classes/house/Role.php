@@ -116,7 +116,7 @@ abstract class Role {
                 .HTMLContainer::generateMarkup('span', 'Room Full', array('id'=>$prefix.'fullspan', 'style'=>'display:none;'));
 
         $rtn = array();
-        $rtn['hdr'] = HTMLContainer::generateMarkup('h2', $frst, array('id'=>'h2srch'.$prefix, 'class'=>$prefix.'Slot ui-widget-header ui-state-default ui-corner-all'));
+        $rtn['hdr'] = HTMLContainer::generateMarkup('h2', $frst, array('id'=>'h2srch'.$prefix, 'class'=>$prefix.'Slot ui-widget-header ui-state-default ui-corner-all hhk-checkinHdr'));
         $rtn['idPrefix'] = $prefix;
         return  $rtn;
     }

@@ -320,7 +320,7 @@ $confReserv = $labels->getString('register', 'reservationTab', 'Confirmed Reserv
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MOMENT_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
         <script type="text/javascript" src="js/rcheckin-min.js<?php echo JS_V; ?>"></script>
@@ -328,6 +328,7 @@ $confReserv = $labels->getString('register', 'reservationTab', 'Confirmed Reserv
     var chkIn;
     var postBkPg = '<?php echo $postBackPage; ?>';
     var isCheckedOut = false;
+    var dateFormat = '<?php echo $labels->getString("momentFormats", "reportDay", "ddd, MMM d YYYY"); ?>'; 
     chkIn = new CheckIn();
     chkIn.members = [];
     chkIn.currentGuests = 0;

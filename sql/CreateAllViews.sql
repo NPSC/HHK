@@ -421,6 +421,12 @@ CREATE OR REPLACE VIEW `vcurrent_residents` AS
                             ELSE CONCAT(`m`.`Name_Last`, ' ', `m`.`Name_Suffix`)
                         END),
                         '')) AS `Guest`,
+        (CASE WHEN (IFNULL(`m`.`Name_Nickname`, '') = '') THEN IFNULL(`m`.`Name_First`, '')
+              ELSE IFNULL(`m`.`Name_Nickname`, '')
+              END) as `Guest First`,
+        (CASE WHEN (`m`.`Name_Suffix` = '') THEN `m`.`Name_Last`
+              ELSE CONCAT(`m`.`Name_Last`, ' ', `m`.`Name_Suffix`)
+              END) as `Guest Last`,
         IFNULL(`np`.`Phone_Num`, '') AS `Phone`,
         (CASE
             WHEN (`v`.`Ext_Phone_Installed` = 1) THEN 'Y'
@@ -436,18 +442,7 @@ CREATE OR REPLACE VIEW `vcurrent_residents` AS
         IFNULL(`r`.`Status`, '') AS `Room_Status`,
         IFNULL(`r`.`idRoom`, 0) AS `RoomId`,
         IFNULL(`r`.`Cleaning_Cycle_Code`, '') AS `Cleaning_Cycle_Code`,
-        CONCAT((CASE
-                    WHEN (IFNULL(`mp`.`Name_Nickname`, '') = '') THEN IFNULL(`mp`.`Name_First`, '')
-                    ELSE IFNULL(`mp`.`Name_Nickname`, '')
-                END),
-                ' ',
-                IFNULL((CASE
-                            WHEN (`mp`.`Name_Suffix` = '') THEN `mp`.`Name_Last`
-                            ELSE CONCAT(`mp`.`Name_Last`,
-                                    ' ',
-                                    `mp`.`Name_Suffix`)
-                        END),
-                        '')) AS `Patient`,
+        `mp`.`Name_Last_First` as `Patient`,
         'hhk-curres' AS `Action`,
         IFNULL(`re`.`Background_Color`, 'white') AS `backColor`,
         IFNULL(`re`.`Text_Color`, 'black') AS `textColor`,
@@ -1715,7 +1710,7 @@ CREATE or Replace VIEW `vreservation_events` AS
         ifnull(`n`.`Name_First`, '') AS `Guest First`,
         ifnull((case when n.Name_Suffix = '' then n.Name_Last else concat(n.Name_Last, ' ', gs.Description) end), '') AS `Guest Last`,
         ifnull(np.Phone_Num, '') as `Phone`,
-        ifnull(`n2`.`Name_Full`, '') AS `Patient Name`,
+        ifnull((case when n2.Name_Suffix = '' then `n2`.`Name_Last_First` else concat(`n2`.`Name_Last_First`, ', ', gs2.Description) end), '') AS `Patient Name`,
         ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
         case when ifnull(hs.idAssociation, 0) > 0 and h.Title = '(None)' then 0 else ifnull(hs.idAssociation, 0) end
          as `idAssociation`,
@@ -1725,11 +1720,14 @@ CREATE or Replace VIEW `vreservation_events` AS
         r.idRegistration,
         r.Confirmation,
         r.Expected_Pay_Type,
-        ifnull(rg.idPsg, 0) as `idPsg`
+        ifnull(hs.idPsg, 0) as `idPsg`,
+        ifnull(rg.idGuest, 0) as `Patient_Staying`
     from
         `reservation` `r`
             left join
         `hospital_stay` `hs` ON `r`.`idHospital_Stay` = `hs`.`idHospital_stay`
+            left join
+        `reservation_guest` rg on r.idReservation = rg.idReservation and hs.idPatient = rg.idGuest
             left join
         `hospital` `h` on hs.idAssociation = h.idHospital
             left join
@@ -1737,18 +1735,17 @@ CREATE or Replace VIEW `vreservation_events` AS
             left join
         `name` `n` ON `r`.`idGuest` = `n`.`idName`
             left join
-	`name_phone` np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
-			left join
-        `registration` rg ON r.idRegistration = rg.idRegistration
+		`name_phone` np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
             left join 
         `name` n2 ON hs.idPatient = n2.idName
             left join
         gen_lookups gs on gs.`Table_Name` = 'Name_Suffix' and gs.`Code` = n.Name_Suffix
             left join
+        gen_lookups gs2 on gs2.`Table_Name` = 'Name_Suffix' and gs2.`Code` = n2.Name_Suffix
+            left join
         gen_lookups gl on gl.`Table_Name` = 'Location' and gl.`Code` = hs.Location
             left join
         gen_lookups gd on gd.`Table_Name` = 'Diagnosis' and gd.`Code` = hs.Diagnosis;
-
 
 
 

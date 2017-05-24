@@ -57,7 +57,8 @@ abstract class RoleMember extends IndivMember {
             . HTMLTable::makeTh('Middle')
             . HTMLTable::makeTh('Last Name')
             .HTMLTable::makeTh('Suffix')
-            . HTMLTable::makeTh('Nickname');
+            . HTMLTable::makeTh('Nickname')
+            . ($this->showBirthDate ? HTMLTable::makeTh('Birth Date') : '');
 
     }
 
@@ -123,6 +124,25 @@ abstract class RoleMember extends IndivMember {
         $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($this->nameRS->Name_Nickname->getstoredVal(),
                 $attrs));
 
+        // Birth Date
+        if ($this->showBirthDate) {
+
+            $idPrefix = $this->getIdPrefix();
+
+            $bd = '';
+
+            if ($this->nameRS->BirthDate->getStoredVal() != '') {
+                $bd = date('M j, Y', strtotime($this->nameRS->BirthDate->getStoredVal()));
+            }
+
+            if ($editable) {
+                $tr .= HTMLTable::makeTd(
+                    HTMLInput::generateMarkup($bd, array('name'=>$idPrefix.'txtBirthDate', 'class'=>'ckbdate')));
+            } else {
+                $tr .= HTMLTable::makeTd($bd);
+            }
+        }
+        
         return $tr;
     }
 
@@ -319,35 +339,6 @@ class GuestMember extends RoleMember {
         return $table->generateMarkup();
     }
 
-    public function birthDateMarkup($overRide = FALSE) {
-
-        $mkup = '';
-
-        if ($this->showBirthDate || $overRide) {
-
-            $table = new HTMLTable();
-            $bd = '';
-
-            if ($this->nameRS->BirthDate->getStoredVal() != '') {
-                $bd = date('M j, Y', strtotime($this->nameRS->BirthDate->getStoredVal()));
-            }
-
-            $table->addBodyTr(
-                HTMLTable::makeTd('Birth Date', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($bd, array('name'=>$this->getIdPrefix().'txtBirthDate', 'class'=>'ckbdate')))
-                 );
-
-            $mkup = $table->generateMarkup();
-
-        }
-
-        return $mkup;
-
-    }
-
-//    public function getPsgObj(PDO $dbh) {
-//        return PSG::instantiateFromGuestId($dbh, $this->get_idName());
-//    }
 
 
 }
@@ -379,44 +370,6 @@ class PatientMember extends RoleMember {
         return VolMemberType::Patient;
     }
 
-    public function createMarkupHdr() {
-
-        $tr = parent::createMarkupHdr();
-
-        if ($this->showBirthDate === TRUE) {
-            $tr .= HTMLTable::makeTh('Birth Date');
-        }
-
-        return $tr;
-
-    }
-
-    public function createMarkupRow($editable = TRUE) {
-
-        $tr = parent::createMarkupRow($editable);
-
-
-        // Birth Date
-        if ($this->showBirthDate) {
-
-            $idPrefix = $this->getIdPrefix();
-
-            $bd = '';
-
-            if ($this->nameRS->BirthDate->getStoredVal() != '') {
-                $bd = date('M j, Y', strtotime($this->nameRS->BirthDate->getStoredVal()));
-            }
-
-            if ($editable) {
-                $tr .= HTMLTable::makeTd(
-                    HTMLInput::generateMarkup($bd, array('name'=>$idPrefix.'txtBirthDate', 'class'=>'ckbdate')));
-            } else {
-                $tr .= HTMLTable::makeTd($bd);
-            }
-        }
-
-        return $tr;
-    }
 
     public function saveChanges(\PDO $dbh, array $post) {
 

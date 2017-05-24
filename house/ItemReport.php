@@ -546,7 +546,7 @@ where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags orde
             .HTMLTable::makeTd('$'.number_format($total,2), array('style'=>'text-align:right;font-weight:bold; border-top:2px solid black;'))
             );
 
-        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt'));
+        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display'));
         $mkTable = 1;
         $headerTableMu = $headerTable->generateMarkup();
 
@@ -612,7 +612,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MOMENT_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
@@ -650,24 +650,8 @@ function invoiceAction(idInvoice, action, eid, container, show) {
         }
     });
 }
-function dateRender(data, type) {
-    // If display or filter data is requested, format the date
-    if ( type === 'display' || type === 'filter' ) {
-
-        if (data === null || data === '') {
-            return '';
-        }
-
-        return moment(data).format('ddd, MMM D YYYY');
-    }
-
-    // Otherwise the data type requested (`type`) is type detection or
-    // sorting data, for which we want to use the integer, so just return
-    // that, unaltered
-    return data;
-}
     $(document).ready(function() {
-
+        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
         var makeTable = '<?php echo $mkTable; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
@@ -717,7 +701,7 @@ function dateRender(data, type) {
                 'columnDefs': [
                     {'targets': columnDefs,
                      'type': 'date',
-                     'render': function ( data, type, row ) {return dateRender(data, type);}
+                     'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
                     }
                  ],
                 "displayLength": 50,

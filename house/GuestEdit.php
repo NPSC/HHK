@@ -97,7 +97,7 @@ $menuMarkup = $wInit->generatePageMenu();
 // Load the session with member - based lookups
 
 $wInit->sessionLoadGuestLkUps();
-
+$labels = new Config_Lite(LABEL_FILE);
 
 $resultMessage = "";
 $id = 0;
@@ -732,7 +732,7 @@ $recHistory = History::getGuestHistoryMarkup($dbh);
 
 
 // Currently Checked In guests
-$currentCheckedIn = CreateMarkupFromDB::generateHTML_Table(History::getCheckedInGuestMarkup($dbh, 'GuestEdit.php', FALSE), 'curres');
+$currentCheckedIn = CreateMarkupFromDB::generateHTML_Table(History::getCheckedInGuestMarkup($dbh, 'GuestEdit.php', FALSE, TRUE), 'curres');
 
 
 
@@ -937,11 +937,12 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MOMENT_JS; ?>"></script>
+
         <script type="text/javascript">
             var memberData = <?php echo json_encode($memberData); ?>;
             var psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);
             var rctMkup = '<?php echo $receiptMarkup; ?>';
+            var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
         </script>
         <script type="text/javascript" src="js/guestload-min.js<?php echo JS_V; ?>"></script>
     </body>

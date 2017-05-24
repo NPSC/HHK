@@ -432,7 +432,6 @@ $alertMessage = $alertMsg->createMarkup();
             .ui-menu-item {min-width: 400px;}
         </style>
 
-
         <link href="css/volCtrl.css" rel="stylesheet" type="text/css" />
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>

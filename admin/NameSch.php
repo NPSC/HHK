@@ -29,7 +29,7 @@ $uS = Session::getInstance();
 $guestHistory = 'f';
 if (isset($uS->siteList[WebSiteCode::House])) {
     // Guest History tab markup
-    $guestHistory = CreateMarkupFromDB::generateHTML_Table(History::getCheckedInGuestMarkup($dbh, '../house/GuestEdit.php', FALSE), 'curres');
+    $guestHistory = CreateMarkupFromDB::generateHTML_Table(History::getCheckedInGuestMarkup($dbh, '../house/GuestEdit.php', FALSE, TRUE), 'curres');
 }
 
 $recHistory = History::getMemberHistoryMarkup($dbh);
@@ -171,12 +171,12 @@ if (isset($uS->siteList[WebSiteCode::Volunteer])) {
                     <?php if ($volHistory != 'f') echo "<li><a href='" . "#volHistory" . "'>Recent Event history</a></li>"; ?>
                     <li><a href="#important">Today's Events</a></li>
                 </ul>
-                <div id="memHistory">
+                <div id="memHistory" class="hhk-tdbox">
                     <h3>Member History</h3>
                     <?php echo $recHistory ?>
                 </div>
                 <?php if ($guestHistory != 'f') { ?>
-                <div id="resHistory">
+                <div id="resHistory" class="hhk-tdbox">
                     <h3>Current Guests</h3>
                     <?php echo $guestHistory; ?>
                 </div> <?php }; ?>

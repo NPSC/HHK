@@ -41,14 +41,13 @@ class Guest extends Role {
         // Build name.
         $tbl = new HTMLTable();
         $tbl->addHeaderTr($this->name->createMarkupHdr($labels));
-        $tbl->addHeaderTr($this->name->createMarkupRow($this->patientRelationshipCode, $lockRelChooser));
+        $tbl->addbodyTr($this->name->createMarkupRow($this->patientRelationshipCode, $lockRelChooser));
 
 
         $mk1 = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('fieldset',
                         HTMLContainer::generateMarkup('legend', $this->title.' Name', array('style'=>'font-weight:bold;'))
                         . $tbl->generateMarkup()
-                        . HTMLContainer::generateMarkup('div', $this->name->birthDateMarkup(), array('style'=>'float:left;'))
                         . ($useAdditionalMarkup ? HTMLContainer::generateMarkup('div', $this->name->additionalNameMarkup(), array('style'=>'float:left;')) : '')
                         . HTMLContainer::generateMarkup('div', $this->name->getContactLastUpdatedMU(new \DateTime ($this->name->get_lastUpdated()), 'Name'), array('style'=>'float:right;'))
                         , array('class'=>'hhk-panel')),

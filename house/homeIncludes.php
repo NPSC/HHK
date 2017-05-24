@@ -96,7 +96,7 @@ define('HOUSE_CSS', "<link href='css/house.css" . CSS_V . "' rel='stylesheet' ty
 
 define('JQ_UI_JS', 'js/jquery-ui.min.js' . JS_V);
 define('JQ_JS', 'js/jquery-3.1.1.min.js' . JS_V);
-define('MOMENT_JS', 'js/moment.min.js' . JS_V);
+
 define('JQ_DT_JS', 'js/jquery.dataTables.min.js' . JS_V);
 define('JQ_DTJQ_JS', 'js/dataTables.jqueryui.min.js' . JS_V);
 
