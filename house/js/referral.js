@@ -1077,10 +1077,9 @@ function verifyDone(reserv) {
     }
     
     // User set status to "Confirmed" or unconfirmed and no room set.
-    if ( ($('#selResource').val() === '' || $('#selResource').val() === "0") && ($selStatus.val() === 'a' || $selStatus.val() === 'uc')) {
-        flagAlertMessage("Select a room before confirming and saving.  ", true, 0);
-        $('#selResource').addClass('ui-state-highlight');
-        return false;
+    if ( ($('#selResource').val() === '' || $('#selResource').val() === "0")) {
+        $selStatus.val('w');
+        $selStatus.change();
     }
 
     // check Hospital

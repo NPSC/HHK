@@ -487,10 +487,11 @@ $getWebReplyMessage = $webAlert->createMarkup();
                     <?php if ($serviceName != '') { ?>
                         <div id="external" class="ui-tabs-hide" >
                             <div style="color:red;font-size: large;" id="divextnlerror"><?php echo $externalErrMsg; ?></div>
+                            <div style='margin: 5px;font-weight: bold;'><span ><a href="../house/SetupNeonCRM.htm" title='click me for instructions!' target="_blank">Instructions</a></span></div>
                             <form method="post" name="formext" action="">
                                 <?php echo $externals; ?>
                                 <div style="float:right;margin-right:40px;">
-                                    <input type="submit" style='margin-right:10px;' name="btnExtIndiv" value="Reload NeonCRM Individual Id's"/>
+                                    <input type="submit" style='margin-right:10px;' name="btnExtIndiv" value="Reload NeonCRM Custom Id's"/>
                                     <input type="submit" name="btnExtCnf" value="Save"/>
                                 </div>
                             </form>

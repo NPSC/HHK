@@ -141,7 +141,7 @@ function doMarkupRow($r, $isLocal, $hospital, $statusTxt, &$tbl, &$sml, &$report
 
         $tbl->addBodyTr(
                 HTMLTable::makeTd($invoiceMkup, array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd($dateDT->format('Y/m/d'))
+                .HTMLTable::makeTd($dateDT->format('c'))
                 .HTMLTable::makeTd($statusMkup)
                 .HTMLTable::makeTd($payor)
                 .HTMLTable::makeTd($billDate . $billIcon)
@@ -818,7 +818,7 @@ function dateRender(data, type) {
             return '';
         }
 
-        return moment(data).format('MMM Do YYYY');
+        return moment(data).format('MMM D YYYY');
     }
 
     // Otherwise the data type requested (`type`) is type detection or

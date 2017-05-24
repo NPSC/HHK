@@ -159,7 +159,7 @@ ORDER BY `First Stay`";
 
             $r['idName'] = HTMLContainer::generateMarkup('a', $r['idName'], array('href'=>'GuestEdit.php?id=' . $r['idName'] . '&psg=' . $r['idPsg']));
 
-            $r['First Stay'] = $arrivalDT->format('Y/m/d H:i:s');
+            $r['First Stay'] = $arrivalDT->format('c');
 
             $tr = '';
             foreach ($fltrdFields as $f) {
@@ -532,7 +532,7 @@ function dateRender(data, type) {
             return '';
         }
 
-        return moment(data).format('MMM Do YYYY');
+        return moment(data).format('MMM D YYYY');
     }
 
     // Otherwise the data type requested (`type`) is type detection or

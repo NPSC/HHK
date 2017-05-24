@@ -21,7 +21,7 @@ function dateRender(data, type) {
             return '';
         }
 
-        return moment(data).format('MMM Do YYYY');
+        return moment(data).format('MMM D YYYY');
     }
 
     // Otherwise the data type requested (`type`) is type detection or

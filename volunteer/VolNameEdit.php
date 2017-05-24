@@ -226,7 +226,7 @@ try {
                     <div id="editTab" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail">
 <?php echo $resultMessage ?>
                         <form action="VolNameEdit.php" method="post" id="formEd" name="formEd">
-                            <div class="ui-widget ui-widget-content ui-corner-all" style="font-size:0.95em; float:left; padding: 0.7em 1.0em;">
+                            <div class="ui-widget ui-widget-content ui-corner-all" style="float:left; padding: 0.7em 1.0em;">
 <?php echo $nameMarkup; ?>
                             </div>
                             <div style="clear:both;"></div>

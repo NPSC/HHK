@@ -58,6 +58,10 @@ class ReservationSvcs {
                     }
                     return $dataArray;
                 }
+
+                if ($psgChooserMarkup != '') {
+                    return array('choosePsg'=>$psgChooserMarkup, 'idGuest'=>$id);
+                }
            }
         }
 
@@ -1093,12 +1097,18 @@ class ReservationSvcs {
 
         // Set reservation status
         if ($reservStatus != '') {
+
             $resv->setStatus($reservStatus);
 
             // remove room if reservation is in waitlist
             if ($reservStatus == ReservationStatus::Waitlist) {
                 $resv->setIdResource(0);
             }
+        }
+
+        // Switch to waitlist status if room is 0
+        if ($resv->isActionStatus($reservStatus) && $idRescPosted = 0) {
+            $resv->setStatus(ReservationStatus::Waitlist);
         }
 
         if (isset($post['selPayType'])) {

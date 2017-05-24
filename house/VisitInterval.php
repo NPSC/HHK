@@ -183,12 +183,12 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
 
         $r['idPrimaryGuest'] = HTMLContainer::generateMarkup('a', $r['Name_Last'] . ', ' . $r['Name_First'], array('href'=>'GuestEdit.php?id=' . $r['idPrimaryGuest'] . '&psg=' . $r['idPsg']));
         $r['idPatient'] = HTMLContainer::generateMarkup('a', $r['Patient_Last'] . ', ' . $r['Patient_First'], array('href'=>'GuestEdit.php?id=' . $r['idPatient'] . '&psg=' . $r['idPsg']));
-        $r['Arrival'] = $arrivalDT->format('Y/m/d H:i:s');
-        $r['Departure'] = $departureDT->format('Y/m/d H:i:s');
+        $r['Arrival'] = $arrivalDT->format('c');
+        $r['Departure'] = $departureDT->format('c');
 
         if ($r['pBirth'] != '') {
             $pBirthDT = new DateTime($r['pBirth']);
-            $r['pBirth'] = $pBirthDT->format('Y/m/d H:i:s');
+            $r['pBirth'] = $pBirthDT->format('c');
         }
 
         $now = new DateTime();
@@ -1474,7 +1474,7 @@ function dateRender(data, type) {
             return '';
         }
 
-        return moment(data).format('MMM Do YYYY');
+        return moment(data).format('MMM D YYYY');
     }
 
     // Otherwise the data type requested (`type`) is type detection or

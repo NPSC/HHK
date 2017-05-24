@@ -463,6 +463,12 @@ class VolCal {
                         $data[$cols[$i]] = $r[$cols[$i]];
                     }
                 }
+
+                // add duration
+                $stDT = new \DateTime($r['E_Start']);
+                $enDT = new \DateTime($r['E_End']);
+                $data['E_Duration'] = $enDT->diff($stDT)->h;
+
                 $events["data"][] = $data;
             }
 
@@ -470,8 +476,8 @@ class VolCal {
             $events["data"] = array();
         }
 
-        $events["start"] = date("m/d/Y", strtotime($beginDate));
-        $events["end"] = date("m/d/Y", strtotime($endDate));
+//        $events["start"] = date("m/d/Y", strtotime($beginDate));
+//        $events["end"] = date("m/d/Y", strtotime($endDate));
         return $events;
     }
 

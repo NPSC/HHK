@@ -18,7 +18,6 @@ require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
 
 $wInit = new webInit(WebPageCode::Service);
-$dbcon = initDB();
 $dbh = $wInit->dbh;
 
 
@@ -47,7 +46,7 @@ switch ($c) {
         $codes = filter_var($codes, FILTER_SANITIZE_STRING);
 
         if ($id > 0) {
-            $events = listMembers($dbcon, $codes);
+            $events = listMembers($dbh, $codes);
         } else {
             $events = array("error" => "invalid Id");
         }
@@ -66,7 +65,7 @@ switch ($c) {
         $desc = filter_var($desc, FILTER_SANITIZE_STRING);
 
         if ($id > 0) {
-            $events = listChairs($dbcon, $codes, $desc);
+            $events = listChairs($dbh, $codes, $desc);
         } else {
             $events = array("error" => "invalid Id");
         }
@@ -103,7 +102,7 @@ switch ($c) {
         $events = array("error" => "Bad Command");
 }
 
-closeDB($dbcon);
+
 echo( json_encode($events) );
 exit();
 
@@ -230,70 +229,67 @@ function changePW(\PDO $dbh, $oldPw, $newPw, $uname, $id) {
     return $event;
 }
 
-function listChairs($dbcon, $codes, $desc) {
+function listChairs(\PDO $dbh, $codes, $desc) {
+
     if ($codes != "") {
         $parts = explode("|", $codes);
 
         if (count($parts) == 2) {
+
             $query = "select Name_Last, Name_First, PreferredPhone, PreferredEmail, Vol_Rank, Category, Description from vvol_categories2
                 where Vol_Status='a' and (Vol_Rank_Code = 'c' or Vol_Rank_Code = 'cc') and Category_Code='" . $parts[0] . "' and Vol_Code='" . $parts[1] . "';";
-            $res = queryDB($dbcon, $query);
+            $res = $dbh->query($query);
             $lines = array();
 
-            if (!is_array($res)) {
                 $aaData = array();
 
-                if (mysqli_num_rows($res) == 0) {
+                if ($res->rowCount() == 0) {
                     // No contacts
                     $lines["title"] = $desc;
-                    $lines["data"] = $aaData;
+                    $lines["data"] = '';
 
                 } else {
 
-                    while ($r = mysqli_fetch_array($res)) {
+                    while ($r = $res->fetch(\PDO::FETCH_ASSOC)) {
                         $aaData[] = array($r["Name_Last"], $r["Name_First"], $r["PreferredPhone"], $r["PreferredEmail"], $r["Vol_Rank"]);
                         $title = $r["Category"] . "/" . $r["Description"];
                     }
-                    mysqli_free_result($res);
+
                     $lines["data"] = $aaData;
                     $lines["title"] = $title;
                 }
                 return $lines;
-            } else {
-                return array("error" => $res);
-            }
         }
     }
     return array("error" => "invalid vol codes - " . $codes);
 }
 
 
-function listMembers($dbcon, $codes) {
+function listMembers(\PDO $dbh, $codes) {
     if ($codes != "") {
         $parts = explode("|", $codes);
 
         if (count($parts) == 2) {
+
             $query = "select Name_Last, Name_First, PreferredPhone, PreferredEmail, Vol_Rank, Category, Description from vvol_categories2
                 where Vol_Status='a' and Category_Code='" . $parts[0] . "' and Vol_Code='" . $parts[1] . "';";
-            $res = queryDB($dbcon, $query);
+            $res = $dbh->query($query);
             $lines = array();
 
-            if (!is_array($res)) {
-                $aaData = array();
 
-                while ($r = mysqli_fetch_array($res)) {
-                    $aaData[] = array($r["Name_Last"], $r["Name_First"], $r["PreferredPhone"], $r["PreferredEmail"], $r["Vol_Rank"]);
-                    $title = $r["Category"] . "/" . $r["Description"];
-                }
-                mysqli_free_result($res);
-                $lines["data"] = $aaData;
-                $lines["title"] = $title;
-                return $lines;
-            } else {
-                return array("error" => $res);
+            $aaData = array();
+
+            while ($r = $res->fetch(\PDO::FETCH_ASSOC)) {
+                $aaData[] = array($r["Name_Last"], $r["Name_First"], $r["PreferredPhone"], $r["PreferredEmail"], $r["Vol_Rank"]);
+                $title = $r["Category"] . "/" . $r["Description"];
             }
+
+            $lines["data"] = $aaData;
+            $lines["title"] = $title;
+            return $lines;
+
         }
     }
-    return array("error" => "invalid vol codes - " . $codes);
+    return array("error" => "invalid vol codes: " . $codes);
 }
 

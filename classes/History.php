@@ -112,7 +112,7 @@ class History {
     }
 
 
-    public function getReservedGuestsMarkup(\PDO $dbh, $status = ReservationStatus::Committed, $page = "Referral.php", $includeAction = TRUE, $start = '', $days = 1) {
+    public function getReservedGuestsMarkup(\PDO $dbh, $status = ReservationStatus::Committed, $page = "Referral.php", $includeAction = TRUE, $start = '', $days = 1, $static = FALSE) {
 
         if (is_null($this->roomRates)) {
             $this->roomRates = RoomRate::makeDescriptions($dbh);
@@ -142,19 +142,10 @@ class History {
             $this->resvEvents = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
 
-
-        if (is_null($this->locations)) {
-            $this->locations = readGenLookupsPDO($dbh, 'Location');
-        }
-
-        if (is_null($this->diags)) {
-            $this->diags = readGenLookupsPDO($dbh, 'Diagnosis');
-        }
-
-        return $this->createMarkup($status, $page, $includeAction);
+        return $this->createMarkup($status, $page, $includeAction, $static);
     }
 
-    protected function createMarkup($status, $page, $includeAction) {
+    protected function createMarkup($status, $page, $includeAction, $static = FALSE) {
 
         $uS = Session::getInstance();
         // Get labels
@@ -167,11 +158,12 @@ class History {
             $gName = $r['Guest Name'];
 
             // Action
-            if ($includeAction) {
+            if ($includeAction && !$static) {
                 $fixedRows['Action'] =  HTMLContainer::generateMarkup(
                     'ul', HTMLContainer::generateMarkup('li', 'Action' .
                         HTMLContainer::generateMarkup('ul',
-                           HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Canceled][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Canceled, 'data-rid'=>$r['idReservation'])))
+                           HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'View ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('href'=>'Referral.php?rid='.$r['idReservation'], 'style'=>'text-decoration:none;')))
+                           . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Canceled][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Canceled, 'data-rid'=>$r['idReservation'])))
                            . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::NoShow][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::NoShow, 'data-rid'=>$r['idReservation'])))
                            . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::TurnDown][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::TurnDown, 'data-rid'=>$r['idReservation'])))
                            . ($includeAction && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted) ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Waitlist][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Waitlist, 'data-rid'=>$r['idReservation']))) : '')
@@ -183,7 +175,7 @@ class History {
 
 
             // Build the page anchor
-            if ($page != '') {
+            if ($page != '' && !$static) {
                 $fixedRows['Guest'] = HTMLContainer::generateMarkup('a', $gName, array('href'=>"$page?rid=" . $r["idReservation"]));
             } else {
                 $fixedRows['Guest'] = $gName;
@@ -194,8 +186,11 @@ class History {
             $stDay = new \DateTime($r['Arrival_Date']);
             $stDay->setTime(10, 0, 0);
 
-
+            if ($static) {
+                $fixedRows['Expected Arrival'] = $stDay->format('n/d/Y');
+            } else {
                 $fixedRows['Expected Arrival'] = $stDay->format('c');
+            }
 
             // Departure Date
             if ($r['Expected_Departure'] != '') {
@@ -204,7 +199,13 @@ class History {
                 $edDay->setTime(10, 0, 0);
 
                 $fixedRows['Nights'] = $edDay->diff($stDay, TRUE)->days;
-                $fixedRows['Expected Departure'] = $edDay->format('c');
+
+                if ($static) {
+                    $fixedRows['Expected Departure'] = $stDay->format('n/d/Y');
+                } else {
+                    $fixedRows['Expected Departure'] = $edDay->format('c');
+                }
+
 
             } else {
 
@@ -213,9 +214,7 @@ class History {
             }
 
             // Room name?
-            if ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted) {
-                $fixedRows["Room"] = $r["Room Title"];
-            }
+            $fixedRows["Room"] = $r["Room Title"];
 
             // Phone?
             if ($status == ReservationStatus::Waitlist) {
@@ -223,19 +222,24 @@ class History {
             }
 
             // Rate
-            if ($uS->RoomPriceModel != ItemPriceCode::None && isset($this->roomRates[$r['idRoom_rate']])) {
+            if ($status != ReservationStatus::Waitlist) {
+                if ($uS->RoomPriceModel != ItemPriceCode::None && isset($this->roomRates[$r['idRoom_rate']])) {
 
-                $fixedRows['Rate'] = $this->roomRates[$r['idRoom_rate']];
+                    $fixedRows['Rate'] = $this->roomRates[$r['idRoom_rate']];
 
-                if ($r['Rate'] == RoomRateCategorys::Fixed_Rate_Category) {
-                    $fixedRows['Rate'] = '$' . number_format($r['Fixed_Room_Rate'], 2);
+                    if ($r['Rate'] == RoomRateCategorys::Fixed_Rate_Category && $r['Fixed_Room_Rate'] > 0) {
+                        $fixedRows['Rate'] = $this->roomRates[$r['idRoom_rate']] . ': $' . number_format($r['Fixed_Room_Rate'], 2);
+                    }
+                } else {
+                    $fixedRows['Rate'] = '';
                 }
-            } else {
-                $fixedRows['Rate'] = '';
             }
 
             // Number of guests
             $fixedRows["Occupants"] = $r["Number_Guests"];
+
+            // Patient Name
+            $fixedRows['Patient'] = $r['Patient Name'];
 
             // Hospital
             $hospital = '';
@@ -249,17 +253,10 @@ class History {
             $fixedRows['Hospital'] = $hospital;
 
             // Hospital Location
-            if (count($this->locations) > 0) {
-                $fixedRows['Location'] = $r['Location'];
-            }
+            $fixedRows['Location'] = $r['Location'];
 
             // Diagnosis
-            if (count($this->diags) > 0) {
-                $fixedRows['Diagnosis'] = $r['Diagnosis'];
-            }
-
-            // Patient Name
-            $fixedRows['Patient'] = $r['Patient Name'];
+            $fixedRows['Diagnosis'] = $r['Diagnosis'];
 
             $returnRows[] = $fixedRows;
 
@@ -286,9 +283,6 @@ class History {
     public static function getCheckedInMarkup(\PDO $dbh, $creditGw, $hospitals, $page, $includeAction = TRUE) {
 
         $uS = Session::getInstance();
-
-        // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
 
         $roomRates = array();
         $rateRs = new Room_RateRS();
@@ -406,16 +400,16 @@ class History {
 
                     $fixedRows['Rate'] = $roomRates[$r['idRoom_rate']]['Title'];
 
-                    if ($roomRates[$r['idRoom_rate']]['FA_Category'] == RoomRateCategorys::Fixed_Rate_Category) {
-                        $fixedRows['Amount'] = '$' .number_format($r['Pledged_Rate'], 2);
-                    } else {
-                        $fixedRows['Amount'] = '$' .($roomRates[$r['idRoom_rate']]['Reduced_Rate_1'] == 0 ? '0' :  number_format($roomRates[$r['idRoom_rate']]['Reduced_Rate_1'], 2));
+                    if ($roomRates[$r['idRoom_rate']]['FA_Category'] == RoomRateCategorys::Fixed_Rate_Category && $r['Pledged_Rate'] > 0) {
+                        $fixedRows['Rate'] .= ': $' .number_format($r['Pledged_Rate'], 2);
+                    } else if ($roomRates[$r['idRoom_rate']]['FA_Category'] == RoomRateCategorys::FlatRateCategory) {
+                        $fixedRows['Rate'] .= ': $' . number_format($roomRates[$r['idRoom_rate']]['Reduced_Rate_1'], 2);
                     }
 
                 } else {
 
-                    $fixedRows['Rate'] = ' ';
-                    $fixedRows['Amount'] = ' ';
+                    $fixedRows['Rate'] = '';
+
                 }
             }
 

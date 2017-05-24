@@ -447,9 +447,9 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistratio
         if ($local) {
 
             $r['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>'Referral.php?rid=' . $r['idReservation']));
-            $r['Arrival'] = $arrivalDT->format('Y/m/d H:i:s');
-            $r['Departure'] = $departureDT->format('Y/m/d H:i:s');
-            $r['Status_Date'] = $statusDT->format('Y/m/d H:i:s');
+            $r['Arrival'] = $arrivalDT->format('c');
+            $r['Departure'] = $departureDT->format('c');
+            $r['Status_Date'] = $statusDT->format('c');
             $r['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>'GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
             $r['FA_Category'] = $rate;
 
@@ -548,7 +548,7 @@ function dateRender(data, type) {
             return '';
         }
 
-        return moment(data).format('MMM Do YYYY');
+        return moment(data).format('MMM D YYYY');
     }
 
     // Otherwise the data type requested (`type`) is type detection or

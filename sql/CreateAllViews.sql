@@ -938,7 +938,7 @@ CREATE OR REPLACE VIEW `vguest_listing` AS
 CREATE OR REPLACE VIEW `vguest_search_neon` AS
     SELECT 
         `n`.`idName` AS `HHK_ID`,
-        `n`.`External_Id` AS `Account ID`,
+        `n`.`External_Id` AS `Account Id`,
         IFNULL(`g1`.`Description`, '') AS `Prefix`,
         `n`.`Name_First` AS `First Name`,
         `n`.`Name_Middle` AS `Middle Name`,

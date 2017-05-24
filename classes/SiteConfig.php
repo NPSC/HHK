@@ -366,7 +366,13 @@ class SiteConfig {
 
         foreach ($config as $section => $name) {
 
-            $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section), array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
+            if ($section == 'webServices') {
+                $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section)
+                        . '<span style="margin-left:10px;"><a href="../house/SetupNeonCRM.htm" target="_blank">(Instructions)</a></span>'
+                        , array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
+            } else {
+                $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section), array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
+            }
 
             if (is_array($name)) {
 

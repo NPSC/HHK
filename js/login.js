@@ -85,7 +85,7 @@ $(document).ready(function () {
         sendHhkLogin();
     });
     
-    $psw.keypress(function (event) {
+    $('#txtPW, #txtUname').keypress(function (event) {
         if (event.keyCode == '13') {
             sendHhkLogin();
         }
@@ -97,5 +97,5 @@ $(document).ready(function () {
 
 
     $psw.val('');
-    $uname.focus();
+    $('#txtUname').focus();
 });

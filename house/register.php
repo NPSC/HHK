@@ -346,10 +346,12 @@ try {
                 {data: 'Room', title: 'Room', className: 'hhk-justify-c'},
                 <?php if ($uS->RoomPriceModel != ItemPriceCode::None) { ?>
                 {data: 'Rate', title: 'Rate'},
-                {data: 'Amount', title: 'Amount', className: 'hhk-justify-r'},
+
                 <?php } ?>
                 {data: 'Phone', title: 'Phone'},
+                <?php if (count($uS->guestLookups[GL_TableNames::Hospital]) > 1) { ?>
                 {data: 'Hospital', title: '<?php echo $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'); ?>'},
+                <?php } ?>
                 {data: 'Patient', title: patientLabel},
             ];
 
@@ -364,11 +366,13 @@ try {
                 {data: 'Rate', title: 'Rate'},
                 <?php } ?>
                 {data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'},
+                <?php if (count($uS->guestLookups[GL_TableNames::Hospital]) > 1) { ?>
                 {data: 'Hospital', title: '<?php echo $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'); ?>'},
+                <?php } ?>
                 <?php if (count($locations) > 0) { ?>
-                {data: 'Location', title: 'Location'},
+                {data: 'Location', title: '<?php echo $labels->getString('hospital', 'location', 'Location'); ?>'},
                 <?php } if (count($diags) > 0) { ?>
-                {data: 'Diagnosis', title: 'Diagnosis'},
+                {data: 'Diagnosis', title: '<?php echo $labels->getString('hospital', 'diagnosis', 'Diagnosis'); ?>'},
                 <?php } ?>
                 {data: 'Patient', title: patientLabel},
             ];
@@ -379,20 +383,19 @@ try {
                 {data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type);}},
                 {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},
                 {data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type);}},
-                <?php if ($uS->RoomPriceModel != ItemPriceCode::None) { ?>
-                {data: 'Rate', title: 'Rate'},
-                <?php } ?>
                 {data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'},
+                <?php if (count($uS->guestLookups[GL_TableNames::Hospital]) > 1) { ?>
                 {data: 'Hospital', title: '<?php echo $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'); ?>'},
+                <?php } ?>
                 <?php if (count($locations) > 0) { ?>
-                {data: 'Location', title: 'Location'},
+                {data: 'Location', title: '<?php echo $labels->getString('hospital', 'location', 'Location'); ?>'},
                 <?php } if (count($diags) > 0) { ?>
-                {data: 'Diagnosis', title: 'Diagnosis'},
+                {data: 'Diagnosis', title: '<?php echo $labels->getString('hospital', 'diagnosis', 'Diagnosis'); ?>'},
                 <?php } ?>
                 {data: 'Patient', title: patientLabel},
             ];
         </script>
-        <script type="text/javascript" src="js/register.js<?php echo JS_V; ?>"></script>
+        <script type="text/javascript" src="js/register-min.js<?php echo JS_V; ?>"></script>
 <style>
    #version {
     height: 15px;

@@ -488,12 +488,12 @@ function transferRemote(transferIds) {
 
             $('#divTable').children().remove();
             $('#divTable').append($(incmg.data));
-            if ($('#tblrpt').length > 0) {
-                $('#tblrpt').dataTable().destroy();
-            }
+//            if ($('#tblrpt').length > 0) {
+//                $('#tblrpt').DataTable().destroy();
+//            }
             $('#tblrpt').dataTable({
-                "iDisplayLength": 50,
-                "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                "displayLength": 50,
+                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                 "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
             });
         }

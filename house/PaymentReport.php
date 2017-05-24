@@ -188,7 +188,7 @@ function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$total, &$tbl, 
 
         $g['Last'] = $payorLast;
         $g['First'] = $payorFirst;
-        $g['Payment_Date'] = ($p['Payment_Date'] == '' ? '' :$dateDT->format('Y/m/d 00:00:00'));
+        $g['Payment_Date'] = ($p['Payment_Date'] == '' ? '' :$dateDT->format('c'));
         $g['Invoice_Number'] = $invoiceMkup;
 
         $g['Orig_Amount'] = number_format($origAmt, 2);
@@ -767,7 +767,7 @@ function dateRender(data, type) {
             return '';
         }
 
-        return moment(data).format('ddd, MMM Do YYYY');
+        return moment(data).format('ddd, MMM D YYYY');
     }
 
     // Otherwise the data type requested (`type`) is type detection or

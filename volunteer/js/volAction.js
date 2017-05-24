@@ -277,7 +277,7 @@ function handleError(xhrObject, stat, thrwnError) {
     alert("Server error: " + stat + ", " + thrwnError);
 }
 
-function handleListContacts(data, statusTxt, xhrObject, listTable) {
+function handleListContacts(data, statusTxt) {
     "use strict";
     if (statusTxt != "success") {
         alert('Server had a problem.  ');
@@ -298,7 +298,7 @@ function handleListContacts(data, statusTxt, xhrObject, listTable) {
         if (dataObj.error) {
             alert('Application Error');
         } else if (dataObj.title) {
-            listTable.fnAddData(dataObj.data);
+            //listTable.fnAddData(dataObj.data);
             if (dataObj.title) {
                 title = dataObj.title;
             }
@@ -315,7 +315,23 @@ function dateRender(data, type) {
             return '';
         }
 
-        return moment(data).format('ddd, MMM Do YYYY');
+        return moment(data).format('ddd, MMM D YYYY');
+    }
+
+    // Otherwise the data type requested (`type`) is type detection or
+    // sorting data, for which we want to use the integer, so just return
+    // that, unaltered
+    return data;
+}
+function todRender(data, type) {
+    // If display or filter data is requested, format the date
+    if ( type === 'display' || type === 'filter' ) {
+
+        if (data === null || data === '') {
+            return '';
+        }
+
+        return moment(data).format('h:mm A');
     }
 
     // Otherwise the data type requested (`type`) is type detection or
@@ -335,27 +351,30 @@ var dtCols = [
     {
         "targets": [ 1 ],
         "title": "Title",
-        "data": 'E_Title'
+        "data": 'E_Title',
     },
     {
         "targets": [ 2 ],
+        "data": 'E_Start',
         "title": "Date",
         "type": "date",
         render: function ( data, type, row ) {return dateRender(data, type);},
     },
     {
         "targets": [ 3 ],
+        "data": 'E_Start',
         "title": "Start",
         "sortable": false,
         "width": "50px",
-        render: function ( data, type, row ) {return dateRender(data, type);},
+        render: function ( data, type, row ) {return todRender(data, type);},
     },
     {
         "targets": [ 4 ],
+        "data": 'E_End',
         "title": "Stop",
         "sortable": false,
         "width": "50px",
-        render: function ( data, type, row ) {return dateRender(data, type);},
+        render: function ( data, type, row ) {return todRender(data, type);},
     },
     {
         "targets": [ 5 ],
@@ -363,12 +382,12 @@ var dtCols = [
         "type": "numeric",
         "sortable": true,
         "width": "50px",
-        data:'E_Time_Display'
+        'data':'E_Duration'
     },
     {
         "targets": [ 6 ],
-        "title": "Category",
-        data: 'Category'
+        "data": 'Category',
+        "title": "Category"
     },
     {
         "targets": [ 7 ],
@@ -394,6 +413,7 @@ var dtCols = [
         "data": 'E_Status'
     }
 ];
+
 
 function updateDuration(edm) {
     "use strict";
@@ -570,33 +590,33 @@ function resizeEvent(event, dayDelta, minuteDelta, revertFunc, myId, wsAddress) 
     }
 }
 
-function getCalendarList(listTable, listJSON, rangeSpan) {
-    "use strict";
-    //listTable.fnClearTable(true);
-    $.get(listJSON, {},
-        function (data) {
-
-            if (data) {
-                try {
-                    data = $.parseJSON(data);
-                } catch (err) {
-                    alert("Data Parse Error");
-                    return;
-                }
-
-                if (data.error) {
-                    alert('Server Error: ' + data.error);
-                } else if (data.aaData) {
-                    if (rangeSpan) {
-                        rangeSpan.text("Showing from " + data.start + " to " + data.end);
-                    }
-                    //listTable.fnAddData(data.aaData);
-                }
-            }
-        }
-        );
-
-}
+//function getCalendarList(listTable, listJSON, rangeSpan) {
+//    "use strict";
+//    //listTable.fnClearTable(true);
+//    $.get(listJSON, {},
+//        function (data) {
+//
+//            if (data) {
+//                try {
+//                    data = $.parseJSON(data);
+//                } catch (err) {
+//                    alert("Data Parse Error");
+//                    return;
+//                }
+//
+//                if (data.error) {
+//                    alert('Server Error: ' + data.error);
+//                } else if (data.aaData) {
+//                    if (rangeSpan) {
+//                        rangeSpan.text("Showing from " + data.start + " to " + data.end);
+//                    }
+//                    //listTable.fnAddData(data.aaData);
+//                }
+//            }
+//        }
+//        );
+//
+//}
 
 function listClickRow(eid, userData, catData, edMkup, wsAddress) {
     "use strict";

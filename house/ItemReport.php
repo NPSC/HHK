@@ -120,7 +120,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, 
         $g['Amount'] = HTMLContainer::generateMarkup('span', number_format($amt, 2), $attr);
         $g['Invoice_Number'] = $invoiceMkup;
         $g['Status'] = HTMLContainer::generateMarkup('span', $invoiceStatus, $payStatusAttr);
-        $g['Date'] = $dateDT->format('Y/m/d');
+        $g['Date'] = $dateDT->format('c');
 
         $tr = '';
         foreach ($fltrdFields as $f) {
@@ -658,7 +658,7 @@ function dateRender(data, type) {
             return '';
         }
 
-        return moment(data).format('ddd, MMM Do YYYY');
+        return moment(data).format('ddd, MMM D YYYY');
     }
 
     // Otherwise the data type requested (`type`) is type detection or

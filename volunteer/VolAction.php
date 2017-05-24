@@ -337,14 +337,14 @@ $userDataEnc = json_encode($userData);
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo FULLC_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="js/volAction.js"></script>
     <script type="text/javascript">
         $(document).ready(function() {
             "use strict";
 
-            var d=new Date();
+            var d = new Date();
             var catData = $.parseJSON('<?php echo $categoryData; ?>');
             var userData = $.parseJSON('<?php echo $userDataEnc; ?>');
             var wsAddress = "gCalFeed.php";
@@ -372,33 +372,15 @@ $userDataEnc = json_encode($userData);
                                 "lengthMenu": [[15, 30, 60, -1], [15, 30, 60, "All"]],
                                 "dom": '<"top"if>rt<"bottom"ip>'
                             });
-                            $('#dataTbl').on( 'click', 'td', function () {
-                                listClickRow(aData.id, userData, catData, edm, wsAddress);
-                            });
+                            $('#listDateRange').text('Starting from this month through 1 year');
+////                            $('#dataTbl').on( 'click', 'td', function () {
+////                                //listClickRow(aData.id, userData, catData, edm, wsAddress);
+////                            });
                         }
                     }
                 }
-//                beforeActivate: function (event, ui) {
-//                    if (ui.newTab.index() == 1 && listEvtTable == null) {
-//                        listEvtTable = $('#dataTbl').DataTable({
-//                            "columnDefs": dtCols,
-//                            "fnCreatedRow": function( nRow, aData, iDataIndex ) {
-//                                $(nRow).click( function (event) {
-//                                    listClickRow(aData.id, userData, catData, edm, listEvtTable, listJSON);
-//                                })
-//                            },
-//                            "language": {"sEmptyTable": "No Catagories"},
-//                            "processing": true,
-//                            "deferRender": true,
-//                            "displayLength": 30,
-//                            "lengthMenu": [[15, 30, 60, -1], [15, 30, 60, "All"]],
-//                            "dom": '<"top"if>rt<"bottom"ip>',
-//                            "aorting": [[2,'asc']],
-//                            "ajaxSource": listJSON
-//                        });
-//                    }
-//                }
             });
+
             $('#checkDelete').dialog({
                autoOpen: false,
                 width: 400,
@@ -731,14 +713,17 @@ $userDataEnc = json_encode($userData);
                 $('#calendar').fullCalendar( 'refetchEvents');
             });
             $("#btnListRefresh").click( function () {
-                getCalendarList(listEvtTable, listJSON, $('#listDateRange'));
+                listEvtTable.ajax.reload();
             });
 
             $('#gotoListDate').change( function() {
                 var dp = new Date($('#gotoListDate').datepicker('getDate'));
                 var gt = "&start=" + (dp.getMonth() + 1) + "/" + dp.getDate() + "/" + dp.getFullYear();
-                getCalendarList(listEvtTable, (listJSON + gt), $('#listDateRange'));
+
+                listEvtTable.ajax.url(listJSON + gt).load();
+                $('#listDateRange').text('Starting from ' + (dp.getMonth() + 1) + "/" + dp.getDate() + "/" + dp.getFullYear() + ' through 1 year');
             });
+
             $('#gotoDate').change( function() {
                 var gtDate = new Date($('#gotoDate').datepicker('getDate'));
                 $('#calendar').fullCalendar('gotoDate', gtDate);
@@ -780,110 +765,98 @@ $userDataEnc = json_encode($userData);
                 $('#calendar').fullCalendar('addEventSource', eventJSONString);
 
         }
-            $('#selcustomCat').change( function() {
-                $('#divSelCategory').removeClass("ui-state-highlight");
-                calendarSourceString();
-                // Temp for google
-//                    if (cat == "Vol_Activities|1|" && userData.role == 10) {
-//                        $('#calendar').fullCalendar('removeEventSource', 'https://www.google.com/calendar/feeds/msqf5hcfshe9ftsihrgv9hnaos%40group.calendar.google.com/private-e3d808c313278e5ddb932c1b986683a7/basic');
-//                        $('#calendar').fullCalendar('addEventSource', 'https://www.google.com/calendar/feeds/msqf5hcfshe9ftsihrgv9hnaos%40group.calendar.google.com/private-e3d808c313278e5ddb932c1b986683a7/basic');
-//                    }
-            });
-            $('#includeHouseCal').change(function () {
-                calendarSourceString();
-            });
-            $('#secondName').autocomplete({
-                source: function (request, response) {
-                    var gvcc;
-                    if (edm.evt) {
-                        gvcc = edm.evt.vcc;
-                    } else {
-                        gvcc = get_vcc(catData[$('#selcustomCat').val()]);
-                    }
-                    if (gvcc != 'all55' && gvcc != '') {
-                        var inpt = {
-                            cmd: "filter",
-                            letters: request.term,
-                            basis: "m",
-                            id: userData.myId,
-                            filter: gvcc
-                        };
-                        $.getJSON("VolNameSearch.php", inpt,
-                            function(data, status, xhr) {
-                                if (data.error) {
-                                    data = [{"value" : data.error}];
-                                }
-                                response(data);
-                            }
-                        );
-                    } else {
-                        response([{}]);
-                    }
-                },
-                minLength: 3,
-                select: function( event, ui ) {
-                    if (ui.item && ui.item.id > 0) {
-                        edm.secondIdTB.val(ui.item.id);
-                    } else {
-                        edm.secondIdTB.val('');
-                    }
-                },
-                change: function (event, ui) {
-                    if ($(this).val() == '') {
-                        edm.secondIdTB.val('');
-                    }
+
+        $('#selcustomCat').change( function() {
+            $('#divSelCategory').removeClass("ui-state-highlight");
+            calendarSourceString();
+        });
+        $('#includeHouseCal').change(function () {
+            calendarSourceString();
+        });
+        $('#secondName').autocomplete({
+            source: function (request, response) {
+                var gvcc;
+                if (edm.evt) {
+                    gvcc = edm.evt.vcc;
+                } else {
+                    gvcc = get_vcc(catData[$('#selcustomCat').val()]);
                 }
-            });
-            $('#txtsearch').autocomplete({
-                source: function (request, response) {
-                    var gvcc;
-                    if (edm.evt) {
-                        gvcc = edm.evt.vcc;
-                    } else {
-                        gvcc = get_vcc(catData[$('#selcustomCat').val()]);
-                    }
-                    if (gvcc != 'all55' && gvcc != '') {
-                        var inpt = {
-                            cmd: "filter",
-                            letters: request.term,
-                            basis: "m",
-                            id: userData.myId,
-                            filter: gvcc
-                        };
-                        $.getJSON("VolNameSearch.php", inpt,
-                            function(data, status, xhr) {
-                                if (data.error) {
-                                    data = [{"value" : data.error}];
-                                }
-                                response(data);
+                if (gvcc != 'all55' && gvcc != '') {
+                    var inpt = {
+                        cmd: "filter",
+                        letters: request.term,
+                        basis: "m",
+                        id: userData.myId,
+                        filter: gvcc
+                    };
+                    $.getJSON("VolNameSearch.php", inpt,
+                        function(data, status, xhr) {
+                            if (data.error) {
+                                data = [{"value" : data.error}];
                             }
-                        );
-                    } else {
-                        response();
-                    }
-                },
-                minLength: 3,
-                select: function( event, ui ) {
-                    if (ui.item && ui.item.id > 0) {
-                        edm.memIdTB.val(ui.item.id);
-                        edm.memNameTB.val(ui.item.value);
-                        if (edm.evt.shlid > 0) {
-                            edm.titleTB.val(edm.memNameTB.val());
+                            response(data);
                         }
+                    );
+                } else {
+                    response([{}]);
+                }
+            },
+            minLength: 3,
+            select: function( event, ui ) {
+                if (ui.item && ui.item.id > 0) {
+                    edm.secondIdTB.val(ui.item.id);
+                } else {
+                    edm.secondIdTB.val('');
+                }
+            },
+            change: function (event, ui) {
+                if ($(this).val() == '') {
+                    edm.secondIdTB.val('');
+                }
+            }
+        });
+        $('#txtsearch').autocomplete({
+            source: function (request, response) {
+                var gvcc;
+                if (edm.evt) {
+                    gvcc = edm.evt.vcc;
+                } else {
+                    gvcc = get_vcc(catData[$('#selcustomCat').val()]);
+                }
+                if (gvcc != 'all55' && gvcc != '') {
+                    var inpt = {
+                        cmd: "filter",
+                        letters: request.term,
+                        basis: "m",
+                        id: userData.myId,
+                        filter: gvcc
+                    };
+                    $.getJSON("VolNameSearch.php", inpt,
+                        function(data, status, xhr) {
+                            if (data.error) {
+                                data = [{"value" : data.error}];
+                            }
+                            response(data);
+                        }
+                    );
+                } else {
+                    response();
+                }
+            },
+            minLength: 3,
+            select: function( event, ui ) {
+                if (ui.item && ui.item.id > 0) {
+                    edm.memIdTB.val(ui.item.id);
+                    edm.memNameTB.val(ui.item.value);
+                    if (edm.evt.shlid > 0) {
+                        edm.titleTB.val(edm.memNameTB.val());
                     }
                 }
-            });
-            try {
-                var listTable = $('#tblListMembers').dataTable({
-                    "displayLength": 20,
-                    "language": {"emptyTable": "No Contacts"},
-                    "Dom": '<"top">rt<"bottom">'
-                });
-            } catch (err) {}
+            }
+        });
 
 $('input.inptForList, input.inputForChair').button();
 $('input.inptForList').click(function () {
-    listTable.fnClearTable();
     var vcodes = $(this).attr("id");
     var inptName = $(this).attr("name");
     var desc = document.getElementById('vcgd' + vcodes);
@@ -940,11 +913,10 @@ $('.inputForChair').click(function () {
                              <div style="font-size: 0.9em; float: left; padding-top:5px;">
                                 <label for="gotoListDate" style="margin-left:15px;">Go To Date: </label>
                                 <input type="text" id="gotoListDate" class="ckdate ignrSave" value=""/>
-                                <span id="listDateRange" style="margin-left:15px;">Starting from today through 1 year</span>
+                                <span id="listDateRange" style="margin-left:15px;"></span>
                              </div>
                         <div style="clear: both;"></div>
-                        <table cellpadding="0" cellspacing="0" border="0" class="display" id="dataTbl">
-                        </table>
+                        <table cellpadding="0" cellspacing="0" border="0" width='100%' id="dataTbl"></table>
                     </div>
                     <div id="calTab">
                         <div id="divnoPrt" style="margin-bottom:7px; padding:3px; border-bottom: solid 1px;">
@@ -1090,7 +1062,7 @@ $('.inputForChair').click(function () {
                     </table>
                 </div>
                 <div id="dListmembers" class="hhk-border">
-                    <table id="tblListMembers" class="display" ><thead><tr><th>Last Name</th><th>First Name</th><th>Phone Number</th><th>Email Address</th><th>Position</th></tr></thead><tbody></tbody></table>
+                    <table id="tblListMembers" width="100%" ></table>
                 </div>
             </div>
         </div>
