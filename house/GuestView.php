@@ -7,9 +7,9 @@
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
-require_once ("homeIncludes.php");
+require ("homeIncludes.php");
 
-require_once (CLASSES . 'CreateMarkupFromDB.php');
+require (CLASSES . 'CreateMarkupFromDB.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
 

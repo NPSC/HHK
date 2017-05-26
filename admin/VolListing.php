@@ -105,57 +105,54 @@ $volReport = $markup;
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
-            $(document).ready(function() {
-                try {
-                    $('#dataTbl').dataTable({
-                        "iDisplayLength": 25,
-                        "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                        "Dom": '<"top"ilf>rt<"bottom"ip>'
-                    });
-                } catch (err) {
+    $(document).ready(function() {
+
+        $('#dataTbl').dataTable({
+            "displayLength": 25,
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "Dom": '<"top"ilf>rt<"bottom"ip>'
+        });
+        $('div#vollisting').on('change', 'input.delCkBox', function() {
+            if ($(this).prop('checked')) {
+                var rep = confirm("Delete this record?");
+                if (!rep) {
+                    $(this).prop('checked', false);
+                    return;
                 }
-                $('div#vollisting').on('change', 'input.delCkBox', function() {
-                    if ($(this).prop('checked')) {
-                        var rep = confirm("Delete this record?");
-                        if (!rep) {
-                            $(this).prop('checked', false);
-                            return;
-                        }
 
-                        var usr = $(this).attr('name');
-                        deletewu(usr);
+                var usr = $(this).attr('name');
+                deletewu(usr);
+            }
+        });
+        function deletewu(usr) {
+            $.get("liveNameSearch.php",
+                    {cmd: "delwu", id: usr},
+            function(data) {
+                if (data != null && data != "") {
+                    var names = $.parseJSON(data);
+                    if (names[0])
+                        names = names[0];
+
+                    if (names && names.success) {
+                        // all ok
+                        $('tr.trClass' + usr).css({'display': 'none'});
                     }
-                });
-                function deletewu(usr) {
-                    $.get("liveNameSearch.php",
-                            {cmd: "delwu", id: usr},
-                    function(data) {
-                        if (data != null && data != "") {
-                            var names = $.parseJSON(data);
-                            if (names[0])
-                                names = names[0];
-
-                            if (names && names.success) {
-                                // all ok
-                                $('tr.trClass' + usr).css({'display': 'none'});
-                            }
-                            else if (names.error) {
-                                alert("Web Server error: " + names.error);
-                            }
-                            else {
-                                alert("Empty data returned from the web server");
-                            }
-                        }
-                        else {
-                            alert('Nothing was returned from the web server');
-
-                        }
+                    else if (names.error) {
+                        alert("Web Server error: " + names.error);
                     }
-                    );
+                    else {
+                        alert("Empty data returned from the web server");
+                    }
                 }
-            });
+                else {
+                    alert('Nothing was returned from the web server');
 
-        </script>
+                }
+            }
+            );
+        }
+    });
+</script>
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
 <?php echo $menuMarkup; ?>

@@ -1107,7 +1107,7 @@ class ReservationSvcs {
         }
 
         // Switch to waitlist status if room is 0
-        if ($resv->isActionStatus($reservStatus) && $idRescPosted = 0) {
+        if ($resv->isActionStatus($reservStatus) && $idRescPosted == 0) {
             $resv->setStatus(ReservationStatus::Waitlist);
         }
 

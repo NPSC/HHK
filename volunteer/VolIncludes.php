@@ -30,6 +30,7 @@ define('THIRD_PARTY', $dirxx . DS);
 
 define('REL_BASE_DIR', ".." . DS);
 define('ciCFG_FILE', REL_BASE_DIR . 'conf' . DS . 'site.cfg' );
+define('LABEL_FILE', REL_BASE_DIR . 'conf' . DS . 'labels.cfg' );
 define( 'ADMIN_DIR', REL_BASE_DIR . "admin" . DS);
 define('REL_BASE_SITE', "../");
 define('CLASSES', REL_BASE_DIR . 'classes' . DS);
@@ -50,15 +51,15 @@ define('CSS_V', '?v=4');
 
 // paths
 define('JQ_UI_CSS', 'css/sunny/jquery-ui.min.css' . CSS_V);
-define('JQ_DT_CSS', 'css/dataTables.jqueryui.min.css' . CSS_V);
+define('JQ_DT_CSS', 'css/dataTables.min.css' . CSS_V);
 define('JQ_UI_JS', 'js/jquery-ui.min.js' . JS_V);
 define('JQ_JS', 'js/jquery-3.1.1.min.js' . JS_V);
-define('JQ_DT_JS', 'js/dataTables.jqueryui.min.js' . JS_V);
-define('JQ_DTJQ_JS', 'js/jquery.dataTables.min.js' . JS_V);
+define('JQ_DT_JS', 'js/dataTables.min.js' . JS_V);
+
 define('FULLC_JS', 'js/fullcalendar.min.js' . JS_V);
 define('PAG_JS', 'js/pag.js' . JS_V);
 define('FULLC_CSS', 'css/fullcalendar.css' . CSS_V);
-define('MOMENT_JS', 'js/moment.min.js' . JS_V);
+
 define('PRINT_AREA_JS', "js/jquery.PrintArea.js" . JS_V);
 define('PUBLIC_CSS', "<link href='css/publicStyle.css" . CSS_V . "' rel='stylesheet' type='text/css' />");
 

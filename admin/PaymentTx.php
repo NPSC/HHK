@@ -7,10 +7,10 @@
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
-require_once ("AdminIncludes.php");
+require ("AdminIncludes.php");
 
-require_once (DB_TABLES . 'PaymentsRS.php');
-require_once (DB_TABLES . 'MercuryRS.php');
+require (DB_TABLES . 'PaymentsRS.php');
+require (DB_TABLES . 'MercuryRS.php');
 
 
 $wInit = new webInit();

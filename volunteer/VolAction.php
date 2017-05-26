@@ -118,6 +118,7 @@ $wInit = new WebInit("p");
 
 $dbh = $wInit->dbh;
 $PageMenu = $wInit->generatePageMenu();
+$labels = new Config_Lite(LABEL_FILE);
 
 // Load the session with member - based lookups
 $wInit->sessionLoadGenLkUps();
@@ -304,8 +305,6 @@ if (count($rows) > 1) {
 $volPanelMkup = getVolUSerMarkup($dbh, $id);
 
 
-
-
 $calAlert = new alertMessage("calContainer");
 $calAlert->set_DisplayAttr("none");
 $calAlert->set_Context(alertMessage::Success);
@@ -321,8 +320,7 @@ $userDataEnc = json_encode($userData);
 
 
 ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-    "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html >
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -332,18 +330,17 @@ $userDataEnc = json_encode($userData);
         <link href="<?php echo FULLC_CSS; ?>" rel="stylesheet" type="text/css" />
         <?php echo PUBLIC_CSS; ?>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MOMENT_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo FULLC_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="js/volAction.js"></script>
     <script type="text/javascript">
+        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
         $(document).ready(function() {
             "use strict";
-
             var d = new Date();
             var catData = $.parseJSON('<?php echo $categoryData; ?>');
             var userData = $.parseJSON('<?php echo $userDataEnc; ?>');
@@ -356,7 +353,9 @@ $userDataEnc = json_encode($userData);
             var listJSON = wsAddress + "?c=list&myid=" + userData.myId;
             $('#mainTabs').tabs({
                 beforeActivate: function (event, ui) {
+
                     if (ui.newPanel.length > 0) {
+
                         if (ui.newTab.prop('id') === 'lilisttab' && !listEvtTable) {
 
                             listEvtTable = $('#dataTbl').DataTable({
@@ -372,17 +371,20 @@ $userDataEnc = json_encode($userData);
                                 "lengthMenu": [[15, 30, 60, -1], [15, 30, 60, "All"]],
                                 "dom": '<"top"if>rt<"bottom"ip>'
                             });
+
+                            $('#dataTbl').on( 'click', 'tbody tr', function () {
+                                var eid = listEvtTable.row(this).data();
+                                listClickRow(eid.id, userData, catData, edm, wsAddress);
+                            });
+
                             $('#listDateRange').text('Starting from this month through 1 year');
-////                            $('#dataTbl').on( 'click', 'td', function () {
-////                                //listClickRow(aData.id, userData, catData, edm, wsAddress);
-////                            });
                         }
                     }
                 }
             });
 
             $('#checkDelete').dialog({
-               autoOpen: false,
+                autoOpen: false,
                 width: 400,
                 resizable: false,
                 title: 'Delete Appointment',
@@ -511,13 +513,7 @@ $userDataEnc = json_encode($userData);
             $("#dListmembers").dialog({
                 autoOpen: false,
                 width: 750,
-                resizable: true,
-                buttons: {
-                    "Close": function () {
-                        $(this).dialog("close");
-                    }
-                },
-                close: function () {}
+                resizable: true
             });
             edm.startTB.change(function () {
                         edm.tipsP.text("").removeClass("ui-state-highlight");
@@ -610,7 +606,7 @@ $userDataEnc = json_encode($userData);
                 }
             })
             $('#calendar').fullCalendar({
-                aspectRatio: 1.6,
+                aspectRatio: 1.7,
                 theme: true,
                 header: {left: 'title', center: 'month,agendaWeek,agendaDay', right: 'today prev,next' },
                 allDayDefault: false,
@@ -861,20 +857,37 @@ $('input.inptForList').click(function () {
     var inptName = $(this).attr("name");
     var desc = document.getElementById('vcgd' + vcodes);
     desc = desc.innerHTML;
-    $.ajax({
-        type: "POST",
-        url: "ws_vol.php",
-        data: ({
+    $.post("ws_vol.php", {
             cmd: inptName,
-            uid: userData.myId,
             code: vcodes,
             desc: desc
-        }),
-        success: function (data, statusTxt, xhrObject) {
-            handleListContacts(data, statusTxt, xhrObject, listTable);
         },
-        error: handleError,
-        datatype: "json"
+    function(data) {
+        
+        try {
+            data = $.parseJSON(data);
+        } catch (err) {
+            alert('Bad JSON Encoding');
+            return;
+        }
+        
+        if (data.error) {
+            
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
+            }
+            flagCalAlertMessage(data.error, true);
+            return;
+            
+        } else if (data.table) {
+            
+            $('#' + data.removeId).remove();
+            var tbl = $(data.table);
+            $('#dListmembers').append(tbl);
+
+            $('#dListmembers').dialog("option", "title", "Contacts Listing for " + data.title);
+            $('#dListmembers').dialog("open");
+        }
     });
 });
 $('.inputForChair').click(function () {
@@ -884,7 +897,7 @@ $('.inputForChair').click(function () {
     window.location = 'MemEdit.php?vg=' + codes[1] + "|" + codes[2];
 });
 
-        });
+});
     </script>
 
         <style type="text/css">
@@ -910,13 +923,13 @@ $('.inputForChair').click(function () {
                             <div id="btnListRefresh" style="font-size: 0.9em; float: left;margin-bottom:7px; padding:3px;">
                                 <button>Refresh List</button>
                             </div>
-                             <div style="font-size: 0.9em; float: left; padding-top:5px;">
+                             <div style="float: left; padding-top:5px;">
                                 <label for="gotoListDate" style="margin-left:15px;">Go To Date: </label>
                                 <input type="text" id="gotoListDate" class="ckdate ignrSave" value=""/>
                                 <span id="listDateRange" style="margin-left:15px;"></span>
                              </div>
                         <div style="clear: both;"></div>
-                        <table cellpadding="0" cellspacing="0" border="0" width='100%' id="dataTbl"></table>
+                        <table class="display" cellpadding="0" cellspacing="0" border="0" width='100%' id="dataTbl"></table>
                     </div>
                     <div id="calTab">
                         <div id="divnoPrt" style="margin-bottom:7px; padding:3px; border-bottom: solid 1px;">
@@ -1062,7 +1075,7 @@ $('.inputForChair').click(function () {
                     </table>
                 </div>
                 <div id="dListmembers" class="hhk-border">
-                    <table id="tblListMembers" width="100%" ></table>
+                    <table id="tblListTable"></table>
                 </div>
             </div>
         </div>

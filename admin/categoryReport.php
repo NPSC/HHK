@@ -7,7 +7,7 @@
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
-require ("AdminIncludes.php");
+require("AdminIncludes.php");
 
 require(CLASSES . "chkBoxCtrlClass.php");
 require(CLASSES . "selCtrl.php");
@@ -114,7 +114,6 @@ foreach ($catSelCtrls as $sel) {
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">

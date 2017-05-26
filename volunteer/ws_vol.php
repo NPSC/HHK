@@ -38,37 +38,29 @@ $events = array();
 
 switch ($c) {
     case "list":
-        //get
-        $id = urldecode($_REQUEST["uid"]);
-        $id = filter_var($id, FILTER_SANITIZE_NUMBER_INT);
 
-        $codes = urldecode($_REQUEST["code"]);
-        $codes = filter_var($codes, FILTER_SANITIZE_STRING);
-
-        if ($id > 0) {
-            $events = listMembers($dbh, $codes);
-        } else {
-            $events = array("error" => "invalid Id");
+        $codes = '';
+        if (isset($_POST["code"])) {
+            $codes = filter_var($_POST["code"], FILTER_SANITIZE_STRING);
         }
+
+        $events = listMembers($dbh, $codes);
 
         break;
 
     case "chairs":
-        //get
-        $id = urldecode($_REQUEST["uid"]);
-        $id = filter_var($id, FILTER_SANITIZE_NUMBER_INT);
 
-        $codes = urldecode($_REQUEST["code"]);
-        $codes = filter_var($codes, FILTER_SANITIZE_STRING);
-
-        $desc = urldecode($_REQUEST["desc"]);
-        $desc = filter_var($desc, FILTER_SANITIZE_STRING);
-
-        if ($id > 0) {
-            $events = listChairs($dbh, $codes, $desc);
-        } else {
-            $events = array("error" => "invalid Id");
+        $codes = '';
+        if (isset($_POST["code"])) {
+            $codes = filter_var($_POST["code"], FILTER_SANITIZE_STRING);
         }
+
+        $desc = '';
+        if (isset($_POST["desc"])) {
+            $desc = filter_var($_POST["desc"], FILTER_SANITIZE_STRING);
+        }
+
+        $events = listChairs($dbh, $codes, $desc);
 
         break;
 
@@ -232,6 +224,8 @@ function changePW(\PDO $dbh, $oldPw, $newPw, $uname, $id) {
 function listChairs(\PDO $dbh, $codes, $desc) {
 
     if ($codes != "") {
+        
+        $title = $desc;
         $parts = explode("|", $codes);
 
         if (count($parts) == 2) {
@@ -239,34 +233,36 @@ function listChairs(\PDO $dbh, $codes, $desc) {
             $query = "select Name_Last, Name_First, PreferredPhone, PreferredEmail, Vol_Rank, Category, Description from vvol_categories2
                 where Vol_Status='a' and (Vol_Rank_Code = 'c' or Vol_Rank_Code = 'cc') and Category_Code='" . $parts[0] . "' and Vol_Code='" . $parts[1] . "';";
             $res = $dbh->query($query);
-            $lines = array();
 
-                $aaData = array();
+            $tbl = new HTMLTable();
+            $tbl->addHeaderTr(HTMLTable::makeTh('First').HTMLTable::makeTh('Last').HTMLTable::makeTh('Phone').HTMLTable::makeTh('Email').HTMLTable::makeTh('Role'));
 
-                if ($res->rowCount() == 0) {
-                    // No contacts
-                    $lines["title"] = $desc;
-                    $lines["data"] = '';
-
-                } else {
-
-                    while ($r = $res->fetch(\PDO::FETCH_ASSOC)) {
-                        $aaData[] = array($r["Name_Last"], $r["Name_First"], $r["PreferredPhone"], $r["PreferredEmail"], $r["Vol_Rank"]);
-                        $title = $r["Category"] . "/" . $r["Description"];
-                    }
-
-                    $lines["data"] = $aaData;
-                    $lines["title"] = $title;
-                }
-                return $lines;
-        }
+            while ($r = $res->fetch(\PDO::FETCH_ASSOC)) {
+                
+                $tbl->addBodyTr(
+                        $tbl->makeTd($r["Name_Last"])
+                        . $tbl->makeTd($r["Name_First"])
+                        . $tbl->makeTd($r["PreferredPhone"])
+                        . $tbl->makeTd($r["PreferredEmail"])
+                        . $tbl->makeTd($r["Vol_Rank"])
+                );
+                 
+                $title = $r["Category"] . "/" . $r["Description"];
+            }
+            
+            return array('table' => $tbl->generateMarkup(array('id'=>'tblListTable', 'style'=>'width:100%;')), 'title' => $title, 'removeId'=>'tblListTable');
+         }
     }
+    
     return array("error" => "invalid vol codes - " . $codes);
 }
 
 
 function listMembers(\PDO $dbh, $codes) {
+    
     if ($codes != "") {
+        
+        $title = '';
         $parts = explode("|", $codes);
 
         if (count($parts) == 2) {
@@ -274,22 +270,27 @@ function listMembers(\PDO $dbh, $codes) {
             $query = "select Name_Last, Name_First, PreferredPhone, PreferredEmail, Vol_Rank, Category, Description from vvol_categories2
                 where Vol_Status='a' and Category_Code='" . $parts[0] . "' and Vol_Code='" . $parts[1] . "';";
             $res = $dbh->query($query);
-            $lines = array();
 
-
-            $aaData = array();
+            $tbl = new HTMLTable();
+            $tbl->addHeaderTr(HTMLTable::makeTh('First').HTMLTable::makeTh('Last').HTMLTable::makeTh('Phone').HTMLTable::makeTh('Email').HTMLTable::makeTh('Role'));
 
             while ($r = $res->fetch(\PDO::FETCH_ASSOC)) {
-                $aaData[] = array($r["Name_Last"], $r["Name_First"], $r["PreferredPhone"], $r["PreferredEmail"], $r["Vol_Rank"]);
+                
+                $tbl->addBodyTr(
+                        HTMLTable::makeTd($r["Name_Last"])
+                        . HTMLTable::makeTd($r["Name_First"])
+                        . HTMLTable::makeTd($r["PreferredPhone"])
+                        . HTMLTable::makeTd($r["PreferredEmail"])
+                        . HTMLTable::makeTd($r["Vol_Rank"])
+                );
+                 
                 $title = $r["Category"] . "/" . $r["Description"];
             }
 
-            $lines["data"] = $aaData;
-            $lines["title"] = $title;
-            return $lines;
-
+            return array('table' => $tbl->generateMarkup(array('id'=>'tblListTable', 'style'=>'width:100%;')), 'title' => $title, 'removeId'=>'tblListTable');
         }
     }
+    
     return array("error" => "invalid vol codes: " . $codes);
 }
 

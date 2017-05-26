@@ -9,12 +9,9 @@
  */
 require ("homeIncludes.php");
 require (HOUSE . 'RoomReport.php');
-
 require (HOUSE . 'Room.php');
 require (HOUSE . 'Resource.php');
 require (HOUSE . 'ResourceView.php');
-
-
 
 try {
     $wInit = new webInit();

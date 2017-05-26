@@ -33,8 +33,6 @@ try {
 $dbh = $wInit->dbh;
 
 
-$pageTitle = $wInit->pageTitle;
-$testVersion = $wInit->testVersion;
 $resultMsg = '';
 $errorMsg = '';
 $tabIndex = 0;
@@ -47,7 +45,6 @@ $serviceName = '';
 // get session instance
 $uS = Session::getInstance();
 
-$menuMarkup = $wInit->generatePageMenu();
 
 $config = new Config_Lite(ciCFG_FILE);
 $labl = new Config_Lite(LABEL_FILE);
@@ -429,7 +426,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title><?php echo $pageTitle; ?></title>
+        <title><?php echo $wInit->pageTitle; ?></title>
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <?php echo DEFAULT_CSS; ?>
 
@@ -437,27 +434,27 @@ $getWebReplyMessage = $webAlert->createMarkup();
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
-            $(document).ready(function () {
+$(document).ready(function () {
 
-                $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
+    $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
 
-                    $('#financialRoomSubsidyId, #financialReturnPayorId').removeClass('ui-state-error');
+        $('#financialRoomSubsidyId, #financialReturnPayorId').removeClass('ui-state-error');
 
-                    if ($('#financialRoomSubsidyId').val() != 0 && $('#financialRoomSubsidyId').val() === $('#financialReturnPayorId').val()) {
-                        $('#financialRoomSubsidyId, #financialReturnPayorId').addClass('ui-state-error');
-                        alert('Subsidy Id must be different than the Return Payor Id');
-                    }
-                });
+        if ($('#financialRoomSubsidyId').val() != 0 && $('#financialRoomSubsidyId').val() === $('#financialReturnPayorId').val()) {
+            $('#financialRoomSubsidyId, #financialReturnPayorId').addClass('ui-state-error');
+            alert('Subsidy Id must be different than the Return Payor Id');
+        }
+    });
 
-                var tabIndex = '<?php echo $tabIndex; ?>';
-                var tbs = $('#tabs').tabs();
-                tbs.tabs("option", "active", tabIndex);
-                $('#tabs').show();
-            });
-        </script>
+    var tabIndex = '<?php echo $tabIndex; ?>';
+    var tbs = $('#tabs').tabs();
+    tbs.tabs("option", "active", tabIndex);
+    $('#tabs').show();
+});
+</script>
     </head>
-    <body <?php if ($testVersion) {echo "class='testbody'";} ?>>
-    <?php echo $menuMarkup; ?>
+    <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
+    <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <?php echo $getWebReplyMessage; ?>

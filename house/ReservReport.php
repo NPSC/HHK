@@ -532,14 +532,13 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <meta charset="UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
-
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
 
@@ -589,20 +588,17 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
 
         if (makeTable === '1') {
             $('div#printArea').css('display', 'block');
-            try {
-                listTable = $('#tblrpt').dataTable({
-                'columnDefs': [
-                    {'targets': columnDefs,
-                     'type': 'date',
-                     'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-                    }
-                 ],
-                    "displayLength": 50,
-                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                    "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
-                });
-            }
-            catch (err) { }
+            listTable = $('#tblrpt').dataTable({
+            'columnDefs': [
+                {'targets': columnDefs,
+                 'type': 'date',
+                 'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
+                }
+             ],
+                "displayLength": 50,
+                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
+            });
             $('#printButton').button().click(function() {
                 $("div#printArea").printArea();
             });

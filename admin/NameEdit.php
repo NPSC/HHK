@@ -568,7 +568,7 @@ $alertMessage = $alertMsg->createMarkup();
         </div>  <!-- div id="page"-->
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MD5_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/jquery.multiselect.min.js"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/stateCountry.js"></script>

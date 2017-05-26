@@ -7,11 +7,11 @@
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
-require_once ("AdminIncludes.php");
+require ("AdminIncludes.php");
 
-require_once (SEC . 'UserClass.php');
-require_once(SEC . 'ChallengeGenerator.php');
-require_once(SEC . 'Login.php');
+require (SEC . 'UserClass.php');
+require(SEC . 'ChallengeGenerator.php');
+require(SEC . 'Login.php');
 
 // get session instance
 $uS = Session::getInstance();

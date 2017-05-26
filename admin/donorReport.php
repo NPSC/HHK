@@ -8,11 +8,11 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-require_once ("AdminIncludes.php");
+require ("AdminIncludes.php");
 
-require_once(CLASSES . "chkBoxCtrlClass.php");
-require_once(CLASSES . "selCtrl.php");
-require_once(CLASSES . 'Campaign.php');
+require(CLASSES . "chkBoxCtrlClass.php");
+require(CLASSES . "selCtrl.php");
+require(CLASSES . 'Campaign.php');
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;
@@ -134,14 +134,14 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
 
             if (makeTable == 2) {
                 $('div#printArea').css('display', 'block');
-                try {
-                    listTable = $('#tblDonor').dataTable({
-                        "iDisplayLength": 50,
-                        "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]]
-                        , "dom": '<"top"ilf>rt<"bottom"p>',
-                        "aaSorting": [[2,'asc'], [3,'asc']]
-                    });
-                } catch (err) {}
+
+            listTable = $('#tblDonor').dataTable({
+                "displayLength": 50,
+                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]]
+                , "dom": '<"top"ilf>rt<"bottom"p>',
+                "order": [[2,'asc'], [3,'asc']]
+            });
+
             };
             $( ".ckdate" ).datepicker({
                 changeMonth: true,

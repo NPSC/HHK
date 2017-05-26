@@ -350,7 +350,6 @@ if ($isHttps) {
         <title><?php echo $pageTitle; ?></title>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <?php echo JQ_UI_CSS; ?>
-
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <style>
@@ -579,14 +578,12 @@ function getRemote(item, source) {
         if (makeTable === '1') {
             $('div#printArea').show();
             $('#divPrintButton').show();
-            try {
-                $('#tblrpt').dataTable({
-                    "iDisplayLength": 50,
-                    "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                    "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
-                });
-            }
-            catch (err) { }
+
+            $('#tblrpt').dataTable({
+                "iDisplayLength": 50,
+                "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
+            });
 
             $('#printButton').button().click(function() {
                 $("div#printArea").printArea();

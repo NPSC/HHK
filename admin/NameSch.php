@@ -64,7 +64,7 @@ if (isset($uS->siteList[WebSiteCode::Volunteer])) {
         return !isNaN(parseFloat(n)) && isFinite(n);
     }
     $(document).ready(function() {
-        var lastXhr;
+
         var d=new Date();
         $('#historyTabs').tabs({
             // Fetch hte calender events when the calendar is visible.

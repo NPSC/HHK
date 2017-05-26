@@ -15,7 +15,7 @@ function alertCallback() {
     "use strict";
 
     setTimeout(function () {
-        $("#calContainer:visible").removeAttr("style").fadeOut(700);
+        $("#calContainer").hide();
     }, 3000
     );
 }
@@ -30,13 +30,15 @@ function flagCalAlertMessage($mess, wasError) {
         $('#calResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
         $('#calIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
         spn.innerHTML = "<strong>Success: </strong>" + $mess;
-        $("#calContainer").show("slide", {}, 500, alertCallback);
+        $("#calContainer").show();
+        alertCallback();
     } else {
         // define the success message markup
         $('calResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
         $('#calIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
         spn.innerHTML = "<strong>Alert: </strong>" + $mess;
-        $("#calContainer").show("slide", {}, 500, alertCallback);
+        $("#calContainer").show();
+        alertCallback();
     }
 }
 
@@ -272,74 +274,6 @@ function get_vcc(catData) {
     return catData.Vol_Category + "|" + catData.Vol_Code + "|" + catData.Vol_Rank;
 }
 
-function handleError(xhrObject, stat, thrwnError) {
-    "use strict";
-    alert("Server error: " + stat + ", " + thrwnError);
-}
-
-function handleListContacts(data, statusTxt) {
-    "use strict";
-    if (statusTxt != "success") {
-        alert('Server had a problem.  ');
-    }
-    var dataObj, txt, title;
-
-    if (data) {
-        try {
-            dataObj = $.parseJSON(data);
-        } catch (err) {
-            txt = "There was an error on this page.\n\n";
-            txt += "Error description: " + err.message + "\n\n";
-            txt += "Click OK to continue.\n\n";
-            alert(txt);
-            return;
-        }
-
-        if (dataObj.error) {
-            alert('Application Error');
-        } else if (dataObj.title) {
-            //listTable.fnAddData(dataObj.data);
-            if (dataObj.title) {
-                title = dataObj.title;
-            }
-            $('#dListmembers').dialog("option", "title", "Contacts Listing for " + title);
-            $('#dListmembers').dialog("open");
-        }
-    }
-}
-function dateRender(data, type) {
-    // If display or filter data is requested, format the date
-    if ( type === 'display' || type === 'filter' ) {
-
-        if (data === null || data === '') {
-            return '';
-        }
-
-        return moment(data).format('ddd, MMM D YYYY');
-    }
-
-    // Otherwise the data type requested (`type`) is type detection or
-    // sorting data, for which we want to use the integer, so just return
-    // that, unaltered
-    return data;
-}
-function todRender(data, type) {
-    // If display or filter data is requested, format the date
-    if ( type === 'display' || type === 'filter' ) {
-
-        if (data === null || data === '') {
-            return '';
-        }
-
-        return moment(data).format('h:mm A');
-    }
-
-    // Otherwise the data type requested (`type`) is type detection or
-    // sorting data, for which we want to use the integer, so just return
-    // that, unaltered
-    return data;
-}
-
 var dtCols = [
     {
         "targets": [ 0 ],
@@ -358,7 +292,7 @@ var dtCols = [
         "data": 'E_Start',
         "title": "Date",
         "type": "date",
-        render: function ( data, type, row ) {return dateRender(data, type);},
+        render: function ( data, type, row ) {return dateRender(data, type, dateFormat);},
     },
     {
         "targets": [ 3 ],
@@ -366,7 +300,7 @@ var dtCols = [
         "title": "Start",
         "sortable": false,
         "width": "50px",
-        render: function ( data, type, row ) {return todRender(data, type);},
+        render: function ( data, type, row ) {return dateRender(data, type, 'h:mm A');},
     },
     {
         "targets": [ 4 ],
@@ -374,7 +308,7 @@ var dtCols = [
         "title": "Stop",
         "sortable": false,
         "width": "50px",
-        render: function ( data, type, row ) {return todRender(data, type);},
+        render: function ( data, type, row ) {return dateRender(data, type, 'h:mm A');},
     },
     {
         "targets": [ 5 ],
@@ -590,34 +524,6 @@ function resizeEvent(event, dayDelta, minuteDelta, revertFunc, myId, wsAddress) 
     }
 }
 
-//function getCalendarList(listTable, listJSON, rangeSpan) {
-//    "use strict";
-//    //listTable.fnClearTable(true);
-//    $.get(listJSON, {},
-//        function (data) {
-//
-//            if (data) {
-//                try {
-//                    data = $.parseJSON(data);
-//                } catch (err) {
-//                    alert("Data Parse Error");
-//                    return;
-//                }
-//
-//                if (data.error) {
-//                    alert('Server Error: ' + data.error);
-//                } else if (data.aaData) {
-//                    if (rangeSpan) {
-//                        rangeSpan.text("Showing from " + data.start + " to " + data.end);
-//                    }
-//                    //listTable.fnAddData(data.aaData);
-//                }
-//            }
-//        }
-//        );
-//
-//}
-
 function listClickRow(eid, userData, catData, edMkup, wsAddress) {
     "use strict";
     edMkup.removeClass("ui-state-error");
@@ -757,7 +663,7 @@ function calSelect(startDate, endDate, allDay, view, userData, catData, edMkup) 
 
 
     // do color if available
-    if (catData.Colors != "") {
+    if (catData.Colors !== undefined) {
         colors = catData.Colors.split(',');
         edMkup.mvccTB.css("background-color", colors[0]).css("color", colors[1]);
     } else {

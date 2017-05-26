@@ -555,10 +555,11 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <meta charset="UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
-
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
+        
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
@@ -571,14 +572,12 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         if (makeTable === '1') {
             $('div#printArea').show();
             $('#divPrintButton').show();
-            try {
-                $('#tblrpt').dataTable({
-                    "iDisplayLength": 50,
-                    "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                    "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
-                });
-            }
-            catch (err) { }
+
+            $('#tblrpt').dataTable({
+                "iDisplayLength": 50,
+                "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
+            });
             $('#printButton').button().click(function() {
                 $("div#printArea").printArea();
             });

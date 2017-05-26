@@ -81,14 +81,12 @@ if (count($rows) > 0) {
         <script type="text/javascript">
             // Init j-query
             $(document).ready(function() {
-                try {
-                    listTable = $('#tblCategory').dataTable({
-                        "iDisplayLength": 50,
-                        "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                        "dom": '<"top"ilf>rt<"bottom"ip>'
-                    });
-                }
-                catch (err) {}
+
+                listTable = $('#tblCategory').dataTable({
+                    "displayLength": 50,
+                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                    "dom": '<"top"ilf>rt<"bottom"ip>'
+                });
             });
         </script>
     </head>

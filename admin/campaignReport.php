@@ -8,10 +8,10 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-require_once ("AdminIncludes.php");
+require ("AdminIncludes.php");
 
-require_once(CLASSES . "chkBoxCtrlClass.php");
-require_once(CLASSES . "selCtrl.php");
+require(CLASSES . "chkBoxCtrlClass.php");
+require(CLASSES . "selCtrl.php");
 
 $wInit = new webInit();
 
@@ -46,7 +46,6 @@ $selYearOptions = getYearOptionsMarkup($yearSelected, $startYear, $fyMonths);
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">

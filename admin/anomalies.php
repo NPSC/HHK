@@ -8,11 +8,11 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-require_once ("AdminIncludes.php");
+require ("AdminIncludes.php");
 
-require_once(CLASSES . "chkBoxCtrlClass.php");
-require_once(CLASSES . "selCtrl.php");
-require_once(CLASSES . "OpenXML.php");
+require(CLASSES . "chkBoxCtrlClass.php");
+require(CLASSES . "selCtrl.php");
+require(CLASSES . "OpenXML.php");
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;
@@ -364,18 +364,17 @@ function doReports(PDO $dbh, chkBoxCtrlClass $cbMemStatus, chkBoxCtrlClass $cbRp
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
             // Init j-query
             $(document).ready(function() {
                 var useTable = '<?php echo $divDisp; ?>';
-                if (useTable == 'block') {
+                if (useTable === 'block') {
                     try {
                         listTable = $('#tblCategory').dataTable({
-                            "iDisplayLength": 50,
-                            "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                            "sDom": '<"top"ilfp>rt<"bottom"p>'
+                            "displayLength": 50,
+                            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                            "Dom": '<"top"ilfp>rt<"bottom"p>'
                         });
                     }
                     catch (err) {}

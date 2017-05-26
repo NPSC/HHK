@@ -113,11 +113,6 @@ if (isset($_POST['cmd'])) {
 }
 
 
-$pageTitle = $wInit->pageTitle;
-$testVersion = $wInit->testVersion;
-
-$menuMarkup = $wInit->generatePageMenu();
-
 $mtypes = array(
     array(0 => 'g', 1 => 'Guest'),
     array(0 => 'p', 1 => 'Patient'),
@@ -143,7 +138,7 @@ $resultMessage = $alertMsg->createMarkup();
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title><?php echo $pageTitle; ?></title>
+        <title><?php echo $wInit->pageTitle; ?></title>
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <?php echo DEFAULT_CSS; ?>
 
@@ -311,8 +306,8 @@ $(document).ready(function () {
 });
         </script>
     </head>
-    <body <?php if ($testVersion) {echo "class='testbody'";} ?>>
-        <?php echo $menuMarkup; ?>
+    <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
+        <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <div id="divAlertMsg" style="clear:left;"><?php echo $resultMessage; ?></div>

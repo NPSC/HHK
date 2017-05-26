@@ -37,8 +37,6 @@ $menuMarkup = $wInit->generatePageMenu();
 $config = new Config_Lite(ciCFG_FILE);
 $uname = $uS->username;
 
-addslashesextended($_POST);
-
 function getGenLookups(\PDO $dbh) {
     $stmt = $dbh->query("select distinct Table_Name from gen_lookups;");
     $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
@@ -697,14 +695,11 @@ $selLookups = getGenLookups($dbh);
                 });
                 $('#accordion').tabs();
                 $( '#accordion' ).tabs("option", "active", accordIndex);
-                if (accordIndex == 3){
+                if (accordIndex === 3){
                     $('#dataTbl').dataTable({
-                        "iDisplayLength": 50,
-                        "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                        "aoColumnDefs": [
-                            { "sWidth": "121px", "aTargets": [ 0 ] }
-                        ]
-                        , "sDom": '<"top"ilfp>rt<"bottom"p>'
+                        "displayLength": 50,
+                        "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                         "dom": '<"top"ilfp>rt<"bottom"p>'
                     });
                 }
                 $('#divMoveDon').dialog({

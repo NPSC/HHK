@@ -499,6 +499,7 @@ class VolCal {
         $EndDate = date('Y-m-d', $endTime + 86400);
 
         $pts = $cats->splitVcc($vcc);
+        
         if (count($pts) >= 2) {
 
             $query = "select * from vcategory_events
@@ -514,12 +515,12 @@ class VolCal {
             $myid = $cats->get_IdName();
 
             // get "all my events"
-            $query = "select * from vmy_events where E_Status <> 'd' and (idName = :id or idName2 = :id $hc)
+            $query = "select * from vmy_events where E_Status <> 'd' and (idName = $myid or idName2 = $myid $hc)
             and ((E_Start >= :bdt and E_Start <= :edt) or (E_End >= :bdt2 and E_End <= :edt2))
-            and (idName = :id or idName2 = :id2 or E_Show_All = 1 $hc);";
+            and (idName = $myid or idName2 = $myid or E_Show_All = 1 $hc);";
 
             $stmt = $dbh->prepare($query);
-            $stmt->execute(array(':bdt'=>$beginDate, ':edt'=>$EndDate, ':bdt2'=>$beginDate, ':edt2'=>$EndDate, ':id'=>$myid, ':id2'=>$myid));
+            $stmt->execute(array(':bdt'=>$beginDate, ':edt'=>$EndDate, ':bdt2'=>$beginDate, ':edt2'=>$EndDate));
         }
 
         // Get events within time span.

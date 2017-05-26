@@ -8,11 +8,11 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-require_once ("AdminIncludes.php");
+require ("AdminIncludes.php");
 require (DB_TABLES . 'WebSecRS.php');
 
 require(SEC . 'Pages.php');
-require_once(REL_BASE_DIR . "classes" . DS . "selCtrl.php");
+require(REL_BASE_DIR . "classes" . DS . "selCtrl.php");
 
 $wInit = new webInit();
 
@@ -113,7 +113,7 @@ $getSiteReplyMessage = '';
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/jquery.multiselect.min.js"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DTJQ_JS ?>"></script>
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
     function getPages(site) {
@@ -135,21 +135,17 @@ $getSiteReplyMessage = '';
                 $('#sitepages').children().remove().end().append($(data.success));
                 $('#frmPages').show();
 
-
-                try {
-                    $('#tblPages').dataTable({
-                        "iDisplayLength": 50,
-                        "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]]
-                        , "Dom": '<"top"ilf>rt<"bottom"ip>'
-                    });
-                } catch (err) {}
+                $('#tblPages').dataTable({
+                    "displayLength": 50,
+                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]]
+                    , "Dom": '<"top"ilf>rt<"bottom"ip>'
+                });
 
                 $('select.hhk-multisel').each( function () {
                     $(this).multiselect({
                         selectedList: 3
                     });
                 });
-
             })
             .fail();
 

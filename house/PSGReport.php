@@ -1058,10 +1058,10 @@ $selCountry = HTMLSelector::generateMarkup('', $coAttr);
         <title><?php echo $pageTitle; ?></title>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <?php echo JQ_UI_CSS; ?>
-
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <style>.hhk-rowseparater { border-top: 2px #0074c7 solid !important; }</style>
+        
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
@@ -1076,14 +1076,12 @@ $selCountry = HTMLSelector::generateMarkup('', $coAttr);
         if (makeTable === '1') {
             $('div#printArea').show();
             $('#divPrintButton').show();
-            try {
-                $('#tblrpt').dataTable({
-                    "displayLength": 50,
-                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                    "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
-                });
-            }
-            catch (err) { }
+
+            $('#tblrpt').dataTable({
+                "displayLength": 50,
+                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
+            });
             $('#printButton').button().click(function() {
                 $("div#printArea").printArea();
             });

@@ -205,7 +205,6 @@ try {
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-        <link href="<?php echo JQ_DT_CSS; ?>" rel="stylesheet" type="text/css" />
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <?php echo PUBLIC_CSS; ?>
 <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
@@ -213,7 +212,6 @@ try {
         <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $resourceURL; ?>js/stateCountry.js"></script>
-        <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $resourceURL; ?>js/md5-min.js"></script>
         <script type="text/javascript"><?php include_once("js/vNameEdit.js") ?></script>
     </head>
@@ -221,13 +219,13 @@ try {
 <?php echo $menuMarkup; ?>
         <div id="page">
             <div id="volNameEdit">
-                <h2 style="padding: 2px 5px;text-align: center;" class="ui-corner-all ui-state-active">Manage My Contact Information</h2>
-
                     <div id="editTab" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail">
 <?php echo $resultMessage ?>
+                        <h2 style="padding: 2px 5px;text-align: center;" class="ui-corner-all ui-state-active">Manage My Contact Information</h2>
                         <form action="VolNameEdit.php" method="post" id="formEd" name="formEd">
                             <div class="ui-widget ui-widget-content ui-corner-all" style="float:left; padding: 0.7em 1.0em;">
-<?php echo $nameMarkup; ?>
+                                
+                                <?php echo $nameMarkup; ?>
                             </div>
                             <div style="clear:both;"></div>
                             <div id="phEmlTabs" class="hhk-member-detail">

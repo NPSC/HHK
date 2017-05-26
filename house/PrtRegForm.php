@@ -108,11 +108,11 @@ if ($checkinDate == '') {
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
-            $(document).ready(function () {
-            "use strict";
-                    $('#btnPrintRegForm').button();
-                    $('.ckdate').datepicker();
-             });
+    $(document).ready(function () {
+    "use strict";
+    $('#btnPrintRegForm').button();
+    $('.ckdate').datepicker();
+     });
         </script>
     </head>
     <body>

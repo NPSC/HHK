@@ -8,14 +8,12 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-require_once ("AdminIncludes.php");
+require ("AdminIncludes.php");
+require (DB_TABLES . "DonateRS.php");
+require (CLASSES . "Campaign.php");
 
-
-require_once (DB_TABLES . "DonateRS.php");
-require_once (CLASSES . "Campaign.php");
-
-require_once(CLASSES . "chkBoxCtrlClass.php");
-require_once(CLASSES . "selCtrl.php");
+require(CLASSES . "chkBoxCtrlClass.php");
+require(CLASSES . "selCtrl.php");
 
 function saveCampaign(PDO $dbh, $campCode, $type, $post) {
 

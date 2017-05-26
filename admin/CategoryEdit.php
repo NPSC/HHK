@@ -7,17 +7,14 @@
 -- @license   MIT
 -- @link      https://github.com/NPSC/HHK
  */
-require_once ("AdminIncludes.php");
+require ("AdminIncludes.php");
 
-require_once (DB_TABLES . 'GenLookupsRS.php');
-require_once (DB_TABLES . 'nameRS.php');
+require (DB_TABLES . 'GenLookupsRS.php');
+require (DB_TABLES . 'nameRS.php');
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;
 
-$pageTitle = $wInit->pageTitle;
-$testVersion = $wInit->testVersion;
-$menuMarkup = $wInit->generatePageMenu();
 
 addslashesextended($_POST);
 
@@ -182,7 +179,7 @@ $vCatOptions = DoLookups($dbh, "Vol_Category", '', false);
 <html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title><?php echo $pageTitle; ?></title>
+        <title><?php echo $wInit->pageTitle; ?></title>
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
 
         <?php echo DEFAULT_CSS; ?>
@@ -190,76 +187,76 @@ $vCatOptions = DoLookups($dbh, "Vol_Category", '', false);
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
-            $(document).ready(function() {
-                var colr = new Object();
-                $('#selVol').change(function() {
-                    $.post('CategoryEdit.php',
-                            {ql: $(this).val()},
-                    function(data) {
-                        var codes = $.parseJSON(data);
-                        // remove any previous entries
-                        $("#selCode")
-                                .find('option')
-                                .remove();
-                        $("#selCode").append('<option value="vNew">New</option>');
-                        $("#vTypeRepl")
-                                .find('option')
-                                .remove();
-                        $("#vTypeRepl").append('<option value="vNone">-None-</option>');
-                        for (var nme in codes) {
-                            colr[codes[nme].Code] = codes[nme].Substitute;
-                            $("#selCode").append('<option value="' + codes[nme].Code + '">' + codes[nme].Description + '</option>');
-                            $("#vTypeRepl").append('<option value="' + codes[nme].Code + '">' + codes[nme].Description + '</option>');
-                        }
-                        $('input.hhk-vcat:text').val('');
-                        $("#vTypeDel").prop('checked', false);
-                        $('#vTypeRepl').prop('disabled', true);
-                        $('#btnvType').val("Save");
-                    });
-                });
+$(document).ready(function() {
+    var colr = new Object();
+    $('#selVol').change(function() {
+        $.post('CategoryEdit.php',
+                {ql: $(this).val()},
+        function(data) {
+            var codes = $.parseJSON(data);
+            // remove any previous entries
+            $("#selCode")
+                    .find('option')
+                    .remove();
+            $("#selCode").append('<option value="vNew">New</option>');
+            $("#vTypeRepl")
+                    .find('option')
+                    .remove();
+            $("#vTypeRepl").append('<option value="vNone">-None-</option>');
+            for (var nme in codes) {
+                colr[codes[nme].Code] = codes[nme].Substitute;
+                $("#selCode").append('<option value="' + codes[nme].Code + '">' + codes[nme].Description + '</option>');
+                $("#vTypeRepl").append('<option value="' + codes[nme].Code + '">' + codes[nme].Description + '</option>');
+            }
+            $('input.hhk-vcat:text').val('');
+            $("#vTypeDel").prop('checked', false);
+            $('#vTypeRepl').prop('disabled', true);
+            $('#btnvType').val("Save");
+        });
+    });
 
-                $('#vTypeDel').change(function() {
-                    if ($(this).prop('checked') && $('#selCode').val() !== "vNew" && $('#selCode').val() !== "") {
-                        $('#vTypeRepl').prop('disabled', false);
-                    } else {
-                        $('#vTypeRepl').prop('disabled', true);
-                    }
-                });
-                $('#selCode').change(function() {
-                    //var selCtrl = this;
+    $('#vTypeDel').change(function() {
+        if ($(this).prop('checked') && $('#selCode').val() !== "vNew" && $('#selCode').val() !== "") {
+            $('#vTypeRepl').prop('disabled', false);
+        } else {
+            $('#vTypeRepl').prop('disabled', true);
+        }
+    });
+    $('#selCode').change(function() {
+        //var selCtrl = this;
 
-                    if (this.value === "vNew") {
+        if (this.value === "vNew") {
 
-                        $('input.hhk-vcat:text').val('');
-                        $('#btnvType').val("Save");
-                    } else {
-                        $('#vTypeCode').val(this.value);
+            $('input.hhk-vcat:text').val('');
+            $('#btnvType').val("Save");
+        } else {
+            $('#vTypeCode').val(this.value);
 
-                        var tp = colr[this.value].split(',');
-                        if (tp.length === 2) {
-                            $('#vTypeFill').val(tp[0]);
-                            $('#vTypeText').val(tp[1]);
-                        } else {
-                            $('#vTypeFill').val('');
-                            $('#vTypeText').val('');
-                            ;
-                        }
-                        for (i = 0; i < this.options.length; i++) {
-                            if (this.options[i].selected) {
-                                $('#vTypeDesc').val(this.options[i].text);
-                            }
-                        }
-                        $('#btnvType').val("Update");
-                    }
+            var tp = colr[this.value].split(',');
+            if (tp.length === 2) {
+                $('#vTypeFill').val(tp[0]);
+                $('#vTypeText').val(tp[1]);
+            } else {
+                $('#vTypeFill').val('');
+                $('#vTypeText').val('');
+                ;
+            }
+            for (i = 0; i < this.options.length; i++) {
+                if (this.options[i].selected) {
+                    $('#vTypeDesc').val(this.options[i].text);
+                }
+            }
+            $('#btnvType').val("Update");
+        }
 
-                });
-            });
+    });
+});
         </script>
     </head>
-    <body <?php if ($testVersion) {
+    <body <?php if ($wInit->testVersion) {
             echo "class='testbody'";
         } ?>>
-<?php echo $menuMarkup; ?>
+<?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
 
