@@ -15,13 +15,13 @@ define('DS', DIRECTORY_SEPARATOR);
 define('MAX_IDLE_TIME', '1800');
 
 // FInd the third party directory
-$dirxx = '../thirdParty';
+$dirxx = '../turdParty';
 if (file_exists($dirxx) === FALSE) {
-    $dirxx = '../../thirdParty';
+    $dirxx = '../../turdParty';
     if (file_exists($dirxx) === FALSE) {
-        $dirxx = '../../../thirdParty';
+        $dirxx = '../../../turdParty';
         if (file_exists($dirxx) === FALSE) {
-            throw new Exception('Cannot find the thirdParty directory.');
+            throw new Exception('Cannot find the turdParty directory.');
         }
     }
 }
@@ -46,8 +46,8 @@ define('PMT', CLASSES . 'Payment' . DS);
 define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 define('MEMBER', CLASSES . 'member' . DS);
 
-define('JS_V', '?v=4');
-define('CSS_V', '?v=4');
+define('JS_V', '?v=5');
+define('CSS_V', '?v=5');
 
 // paths
 define('JQ_UI_CSS', 'css/sunny/jquery-ui.min.css' . CSS_V);

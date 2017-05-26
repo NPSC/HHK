@@ -16,13 +16,13 @@ define('P_ROOT', dirname(__FILE__) . DS );
 
 
 // FInd the third party directory
-$dirxx = '../thirdParty';
+$dirxx = '../turdParty';
 if (file_exists($dirxx) === FALSE) {
-    $dirxx = '../../thirdParty';
+    $dirxx = '../../turdParty';
     if (file_exists($dirxx) === FALSE) {
-        $dirxx = '../../../thirdParty';
+        $dirxx = '../../../turdParty';
         if (file_exists($dirxx) === FALSE) {
-            throw new Exception('Cannot find the thirdParty directory.');
+            throw new Exception('Cannot find the turdParty directory.');
         }
     }
 }
@@ -47,8 +47,8 @@ define('SEC', CLASSES . 'sec' . DS);
 define('PMT', CLASSES . 'Payment' . DS);
 define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 
-define('JS_V', '?v=11');
-define('CSS_V', '?v=11');
+define('JS_V', '?v=2');
+define('CSS_V', '?v=2');
 
 define('JQ_UI_CSS', 'css/ss/jquery-ui.min.css' . CSS_V);
 define('JQ_DT_CSS', 'css/dataTables.min.css' . CSS_V);

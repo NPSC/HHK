@@ -64,13 +64,13 @@ define('SEC', CLASSES . 'sec' . DS);
 define('PMT', CLASSES . 'Payment' . DS);
 
 // FInd the third party directory
-$dirxx = '../thirdParty';
+$dirxx = '../turdParty';
 if (file_exists($dirxx) === FALSE) {
-    $dirxx = '../../thirdParty';
+    $dirxx = '../../turdParty';
     if (file_exists($dirxx) === FALSE) {
-        $dirxx = '../../../thirdParty';
+        $dirxx = '../../../turdParty';
         if (file_exists($dirxx) === FALSE) {
-            throw new Exception('Cannot find the thirdParty directory.');
+            throw new Exception('Cannot find the turdParty directory.');
         }
     }
 }
@@ -85,8 +85,8 @@ define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 define('HOUSE', CLASSES . 'house' . DS);
 define('MEMBER', CLASSES . 'member' . DS);
 
-define('JS_V', '?v=11');
-define('CSS_V', '?v=11');
+define('JS_V', '?v=2');
+define('CSS_V', '?v=2');
 
 // paths
 define('JQ_UI_CSS', '<link href="css/redmond/jquery-ui.min.css' . CSS_V . '" rel="stylesheet" type="text/css" />');

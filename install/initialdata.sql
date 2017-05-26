@@ -204,7 +204,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Name_Suffix','md','MD.','','',0),
 ('Name_Suffix','phd','Ph.D.','','',0),
 
-('NoReturnReason', 'n1', 'Irresponsible', '', 'u',0),
+('NoReturnReason', 'n1', 'Irresponsible', '', 'h',0),
 
 ('OOS_Codes', 'sb', 'Sewer Backup','','h',0),
 ('OOS_Codes', 'ar', 'Appliance Repair','','h',0),

@@ -11,3 +11,6 @@ ALTER TABLE `stays`
 ALTER TABLE `stays` 
 	ADD INDEX `index_idName` (`idName` ASC);
 
+
+update gen_lookups set `Type` = 'h' where Table_Name = 'NoReturnReason';
+
