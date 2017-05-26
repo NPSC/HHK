@@ -619,7 +619,7 @@ $(document).ready(function () {
         cgResvStatus($(this).data('rid'), $(this).data('stat'));
     });
 
-    $.extend(true, $.fn.dataTable.defaults, {
+    $.extend( $.fn.dataTable.defaults, {
         "dom": '<"top"if>rt<"bottom"lp><"clear">',
         "displayLength": 50,
         "lengthMenu": [[25, 50, -1], [25, 50, "All"]],

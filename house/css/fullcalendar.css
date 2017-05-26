@@ -135,7 +135,6 @@ html .fc,
 .fc-cell-overlay { /* semi-transparent rectangle while dragging */
 	background: #9cf;
 	opacity: .2;
-	filter: alpha(opacity=20); /* for IE */
 	}
 	
 
@@ -186,8 +185,6 @@ html .fc,
 	position: relative;
 	float: left;
 	margin-top: -50%;
-	*margin-top: 0;
-	*top: -50%;
 	}
 	
 /* gloss effect */
@@ -209,7 +206,6 @@ html .fc,
 	border-color: #fff;
 	background: #444;
 	opacity: .09;
-	filter: alpha(opacity=9);
 	}
 	
 /* button states (determines colors)  */
@@ -445,12 +441,7 @@ table.fc-border-separate {
 	
 .fc-grid .fc-other-month .fc-day-number {
 	opacity: 0.3;
-	filter: alpha(opacity=30); /* for IE */
-	/* opacity with small font can sometimes look too faded
-	   might want to set the 'color' property instead
-	   making day-numbers bold also fixes the problem */
-	}
-	
+}	
 .fc-grid .fc-day-content {
 	clear: both;
 	padding: 2px 2px 1px; /* distance between events and day edges */
@@ -555,11 +546,6 @@ table.fc-border-separate {
 	border-top-style: dotted;
 	}
 	
-.fc-agenda-slots tr.fc-minor th.ui-widget-header {
-	*border-top-style: solid; /* doesn't work with background in IE6/7 */
-	}
-	
-
 
 /* Vertical Events
 ------------------------------------------------------------------------*/
@@ -590,13 +576,8 @@ table.fc-border-separate {
 	height: 100%;
 	background: #fff;
 	opacity: .3;
-	filter: alpha(opacity=30);
 	}
 	
-.fc .ui-draggable-dragging .fc-event-bg, /* TODO: something nicer like .fc-opacity */
-.fc-select-helper .fc-event-bg {
-	display: none\9; /* for IE6/7/8. nested opacity filters while dragging don't work */
-	}
 	
 /* resizable */
 	
@@ -615,5 +596,3 @@ table.fc-border-separate {
 .fc-agenda .ui-resizable-resizing { /* TODO: better selector */
 	_overflow: hidden;
 	}
-	
-	

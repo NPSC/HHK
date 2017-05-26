@@ -345,14 +345,14 @@ class History {
             $fixedRows['Guest First'] = $r['Guest First'];
 
             // Build the page anchor
-            if ($page != '' && !$static) {
+            if ($page != '') {
                 $fixedRows['Guest Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg']));
             } else {
                 $fixedRows['Guest Last'] = $r['Guest Last'];
             }
 
             // Indicate On leave
-            if ($r['On_Leave'] > 0 && $page != '' && !$static) {
+            if ($r['On_Leave'] > 0 && $page != '') {
 
                 $daysOnLv = intval($r['On_Leave']);
 
@@ -385,7 +385,7 @@ class History {
             $stDay = new \DateTime($r['Checked-In']);
             $stDay->setTime(10, 0, 0);
             $edDay = new \DateTime(date('Y-m-d 10:00:00'));
-            //$edDay->setTime(11, 0, 0);
+
             $fixedRows['Nights'] = $edDay->diff($stDay, TRUE)->days;
 
             // Expected Departure
@@ -455,7 +455,7 @@ class History {
             // Patient Name
             $fixedRows['Patient'] = $r['Patient'];
 
-            if ($page != '') {
+            if ($page != '' && !$static) {
                 $fixedRows['Patient'] = HTMLContainer::generateMarkup('span', $r['Patient'], array('class'=>'hhk-getPSGDialog', 'style'=>'cursor:pointer;width:100%;text-decoration: underline;', 'data-psg'=>$r['idPsg']));
             }
 

@@ -140,6 +140,10 @@ function injectSlot(data) {
         // Guest date
         $('div#guestAccordion .ckdate').datepicker();
         
+        $('div#guestAccordion .ckdate').click( function (event) {
+            event.stopPropagation();
+        });
+
         acDiv.find('select.bfh-countries').each(function() {
             var $countries = $(this);
             $countries.bfhcountries($countries.data());
@@ -1485,7 +1489,7 @@ $(document).ready(function() {
         }
     });
     
-    $('div#guestAccordion').on('click', 'input.removeMem', function() {
+    $('div#guestAccordion').on('click', 'input.removeMem', function(event) {
         var nme = $(this).data('slot');
         if (nme != checkIn.patientPrefix) {
             
@@ -1508,6 +1512,7 @@ $(document).ready(function() {
                 $('#gstpostPrompt').text('');
             }
         }
+        event.stopPropagation();;
     });
     
     $('div#guestAccordion, div#patientSection').on('click', '.hhk-addrCopy', function() {

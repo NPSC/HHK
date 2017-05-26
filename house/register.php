@@ -303,16 +303,16 @@ try {
 
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
-
-        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <link href='css/fullcalendar.css'  rel='stylesheet' type='text/css' />
         <?php echo HOUSE_CSS; ?>
+
+        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
@@ -347,7 +347,6 @@ try {
                 {data: 'Room', title: 'Room', className: 'hhk-justify-c'},
                 <?php if ($uS->RoomPriceModel != ItemPriceCode::None) { ?>
                 {data: 'Rate', title: 'Rate'},
-
                 <?php } ?>
                 {data: 'Phone', title: 'Phone'},
                 <?php if (count($uS->guestLookups[GL_TableNames::Hospital]) > 1) { ?>
