@@ -359,55 +359,58 @@ class SiteConfig {
         return $resultMsg;
     }
 
-    public static function createCliteMarkup(Config_Lite $config, Config_Lite $titles = NULL) {
+    public static function createCliteMarkup(Config_Lite $config, Config_Lite $titles = NULL, $onlySection = '') {
 
         $tbl = new HTMLTable();
         $inputSize = '40';
 
         foreach ($config as $section => $name) {
 
-            if ($section == 'webServices') {
-                $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section)
-                        . '<span style="margin-left:10px;"><a href="../house/SetupNeonCRM.htm" target="_blank">(Instructions)</a></span>'
-                        , array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
-            } else {
-                $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section), array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
-            }
+            if ($onlySection == '' || $onlySection == $section) {
 
-            if (is_array($name)) {
+                if ($section == 'webServices') {
+                    $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section)
+                            . '<span style="margin-left:10px;"><a href="../house/SetupNeonCRM.htm" target="_blank">(Instructions)</a></span>'
+                            , array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
+                } else {
+                    $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section), array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
+                }
 
-                foreach ($name as $key => $val) {
+                if (is_array($name)) {
 
-                    $attr = array(
-                        'name' => $section . '[' . $key . ']',
-                        'id' => $section . $key
-                    );
+                    foreach ($name as $key => $val) {
 
-                    if ($section == 'code') {
-                        $attr['readonly'] = 'Readonly';
+                        $attr = array(
+                            'name' => $section . '[' . $key . ']',
+                            'id' => $section . $key
+                        );
+
+                        if ($section == 'code') {
+                            $attr['readonly'] = 'Readonly';
+                        }
+
+                        if ($key == 'Disclaimer' || $key == 'PaymentDisclaimer') {
+                            $attr["rows"] = "3";
+                            $attr["cols"] = $inputSize;
+                            $inpt = HTMLCONTAINER::generateMarkup('textarea', $val, $attr);
+                        } else {
+                            $attr['size'] = $inputSize;
+                            $inpt = HTMLInput::generateMarkup($val, $attr);
+                        }
+
+                        if (is_null($titles)) {
+                            $desc = '';
+                        } else {
+                            $desc = $titles->getString($section, $key, '');
+                        }
+
+                        $tbl->addBodyTr(
+                                HTMLTable::makeTd($key.':', array('class' => 'tdlabel'))
+                                . HTMLTable::makeTd($inpt) . HTMLTable::makeTd($desc)
+                        );
+
+                        unset($attr);
                     }
-
-                    if ($key == 'Disclaimer' || $key == 'PaymentDisclaimer') {
-                        $attr["rows"] = "3";
-                        $attr["cols"] = $inputSize;
-                        $inpt = HTMLCONTAINER::generateMarkup('textarea', $val, $attr);
-                    } else {
-                        $attr['size'] = $inputSize;
-                        $inpt = HTMLInput::generateMarkup($val, $attr);
-                    }
-
-                    if (is_null($titles)) {
-                        $desc = '';
-                    } else {
-                        $desc = $titles->getString($section, $key, '');
-                    }
-
-                    $tbl->addBodyTr(
-                            HTMLTable::makeTd($key.':', array('class' => 'tdlabel'))
-                            . HTMLTable::makeTd($inpt) . HTMLTable::makeTd($desc)
-                    );
-
-                    unset($attr);
                 }
             }
         }

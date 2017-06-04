@@ -263,8 +263,11 @@ class VisitView {
         // Weekender button
         if ($r['Status'] == VisitStatus::CheckedIn && $extendVisitDays > 0 && $action != 'ref') {
             $etbl = new HTMLTable();
+            
+            $olStmt = $dbh->query("select sum(On_Leave) from `stays` where `stays`.`idVisit` = " . $r['idVisit'] . " and `stays`.`Status` = 'a' ");
+            $olRows = $olStmt->fetchAll();
 
-            if ($r['On_Leave'] > 0) {
+            if ($$olRows[0][0] > 0) {
 
                 $etbl->addHeaderTr(HTMLTable::makeTh(
                         HTMLContainer::generateMarkup('label', 'On Leave', array('for'=>'leaveRetCb', 'style'=>'margin-right:.5em;'))

@@ -1643,12 +1643,12 @@ CREATE or replace VIEW `vregister` AS
         concat(`v`.`idVisit`, v.Span) AS `id`,
         v.idVisit as idVisit,
         v.Span as `Span`,
-        `v`.`idRegistration` AS `idRegistration`,
-        `v`.`idResource` AS `idResource`,
+        `v`.`idRegistration`,
+        `v`.`idResource`,
         `v`.`Status` AS `Visit_Status`,
-        `v`.`Span_Start` AS `Arrival_Date`,
-        `v`.`Expected_Departure` AS `Expected_Departure`,
-        `v`.`Span_End` AS `Actual_Departure`,
+        `v`.`Span_Start`,
+        `v`.`Expected_Departure`,
+        `v`.`Span_End`,
         ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
         case when ifnull(hs.idAssociation, 0) > 0 and h.Title = '(None)' then 0 else ifnull(hs.idAssociation, 0) end as `idAssociation`,
         ifnull((case when n.Name_Suffix = '' then n.Name_Last else concat(n.Name_Last, ' ', gs.Description) end), '') as `Guest Last`
@@ -1699,7 +1699,7 @@ CREATE or Replace VIEW `vreservation_events` AS
         `r`.`idReservation` AS `idReservation`,
         `r`.`idResource` AS `idResource`,
         `r`.`Status` AS `Status`,
-        `r`.`Expected_Arrival` AS `Arrival_Date`,
+        `r`.`Expected_Arrival`, -- AS `Arrival_Date`,
         `r`.`Expected_Departure` AS `Expected_Departure`,
         `r`.`idGuest` AS `idGuest`,
         `r`.`Number_Guests` AS `Number_Guests`,
@@ -1735,7 +1735,7 @@ CREATE or Replace VIEW `vreservation_events` AS
             left join
         `name` `n` ON `r`.`idGuest` = `n`.`idName`
             left join
-		`name_phone` np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
+	`name_phone` np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
             left join 
         `name` n2 ON hs.idPatient = n2.idName
             left join
@@ -2065,33 +2065,6 @@ CREATE or replace VIEW `vspan_listing` AS
         `v`.`Rate_Category`,
         v.idRoom_rate,
         v.Rate_Glide_Credit,
-        (case
-            when
-                (`v`.`Status` = 'a')
-            then
-                (select 
-                        count(*)
-                    from
-                        `stays`
-                    where
-                        ((`stays`.`idVisit` = `v`.`idVisit`)
-                            and (`stays`.`Status` = 'a')))
-            else 0
-        end) AS `Current_Guests`,
-        (case
-            when
-                (`v`.`Status` = 'a')
-            then
-                (select 
-                        sum(On_Leave)
-                    from
-                        `stays`
-                    where
-                        ((`stays`.`idVisit` = `v`.`idVisit`)
-                            and (`stays`.`Status` = 'a')))
-            else 0
-        end) AS `On_Leave`,
-        ifnull(`g1`.`Description`, '') AS `Key_Disposition_Title`,
         ifnull(n.Name_Full, '') as `Patient_Name`,
 	ifnull(hs.idHospital, 0) as `idHospital`,
 	ifnull(hs.idAssociation, 0) as `idAssociation`
@@ -2102,8 +2075,6 @@ CREATE or replace VIEW `vspan_listing` AS
         left join `hospital_stay` `hs` ON `v`.`idHospital_stay` = `hs`.`idHospital_stay`
 	left join psg p on hs.idPsg = p.idPsg
         left join `name` n on hs.idPatient = n.idName
-        left join `gen_lookups` `g1` ON `g1`.`Table_Name` = 'Key_Disposition'
-            and `g1`.`Code` = `v`.`Key_Dep_Disposition`
         left join `gen_lookups` `g2` ON `g2`.`Table_Name` = 'Visit_Status'
             and `g2`.`Code` = `v`.`Status`;
 

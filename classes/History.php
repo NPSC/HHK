@@ -128,7 +128,7 @@ class History {
                 $endDT = new DateTime(filter_var($start, FILTER_SANITIZE_STRING));
                 $endDT->add(new DateInterval('P' . $days . 'D'));
 
-                $whDate = " and DATE(Arrival_Date) >= DATE('" . $startDT->format('Y-m-d') . "') and DATE(Arrival_Date) <= DATE('" . $endDT->format('Y-m-d') . "') ";
+                $whDate = " and DATE(Expected_Arrival) >= DATE('" . $startDT->format('Y-m-d') . "') and DATE(Expected_Arrival) <= DATE('" . $endDT->format('Y-m-d') . "') ";
 
             } catch (Exception $ex) {
                 $whDate = '';
@@ -137,7 +137,7 @@ class History {
 
         if (is_null($this->resvEvents)) {
 
-            $query = "select * from vreservation_events where Status = '$status' $whDate order by Arrival_Date";
+            $query = "select * from vreservation_events where Status = '$status' $whDate order by Expected_Arrival";
             $stmt = $dbh->query($query);
             $this->resvEvents = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
@@ -183,7 +183,7 @@ class History {
 
 
             // Days
-            $stDay = new \DateTime($r['Arrival_Date']);
+            $stDay = new \DateTime($r['Expected_Arrival']);
             $stDay->setTime(10, 0, 0);
 
             if ($static) {

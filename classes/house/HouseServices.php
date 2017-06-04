@@ -86,8 +86,7 @@ class HouseServices {
             $showAdjust = TRUE;
         }
 
-        $mkup = HTMLInput::generateMarkup($r['Current_Guests'], array('id' => 'currGuests', 'type' => 'hidden'))
-                .HTMLInput::generateMarkup($uS->EmptyExtendLimit, array('id' =>'EmptyExtend', 'type' => 'hidden'));
+        $mkup = HTMLInput::generateMarkup($uS->EmptyExtendLimit, array('id' =>'EmptyExtend', 'type' => 'hidden'));
 
         // Get main visit markup section
         $mkup .= HTMLContainer::generateMarkup('div',

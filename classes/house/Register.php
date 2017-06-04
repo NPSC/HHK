@@ -132,7 +132,7 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
 
         // Visits
         $query = "select * from vregister where Visit_Status <> '" . VisitStatus::Pending . "' and
-    DATE(Arrival_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(Actual_Departure), case when DATE(now()) > DATE(Expected_Departure) then DATE(now()) else DATE(Expected_Departure) end) >= DATE('" .$beginDate->format('Y-m-d') . "');";
+    DATE(Span_Start) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(Span_End), case when DATE(now()) > DATE(Expected_Departure) then DATE(now()) else DATE(Expected_Departure) end) >= DATE('" .$beginDate->format('Y-m-d') . "');";
         $stmtv = $dbh->query($query);
 
         while ($r = $stmtv->fetch(\PDO::FETCH_ASSOC)) {
@@ -141,23 +141,23 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                 continue;
             }
 
-            $startDT = new \DateTime($r['Arrival_Date']);
+            $startDT = new \DateTime($r['Span_Start']);
             $extended = FALSE;
             $now = new \DateTime();
             $now->setTime(23, 59, 59);
             $s = array();
 
 
-            if ($r['Actual_Departure'] != "") {
+            if ($r['Span_End'] != "") {
 
-                if (date('Y-m-d', strtotime($r['Arrival_Date'])) == date('Y-m-d', strtotime($r['Actual_Departure']))) {
+                if (date('Y-m-d', strtotime($r['Span_Start'])) == date('Y-m-d', strtotime($r['Span_End']))) {
                     // Dont need to see these on the register.
                     continue;
                 }
 
-                $endDT = new \DateTime($r['Actual_Departure']);
-                $dtend = new \DateTime($r['Actual_Departure']);
-                $dtendDate = new \DateTime($r['Actual_Departure']);
+                $endDT = new \DateTime($r['Span_End']);
+                $dtend = new \DateTime($r['Span_End']);
+                $dtendDate = new \DateTime($r['Span_End']);
                 $dtendDate->setTime(10, 0, 0);
                 $endDT->sub($p1d);
 
@@ -343,7 +343,7 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
         if ($uS->Reservation) {
 
             $query = "select * from vreservation_events where Status in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Waitlist . "') "
-                    . " and DATE(Arrival_Date) < DATE('" . $endDate->format('Y-m-d') . "') and DATE(Expected_Departure) > DATE('" . $beginDate->format('Y-m-d') . "') order by Arrival_Date";
+                    . " and DATE(Expected_Arrival) < DATE('" . $endDate->format('Y-m-d') . "') and DATE(Expected_Departure) > DATE('" . $beginDate->format('Y-m-d') . "') order by Expected_Arrival";
 
             $stmt = $dbh->query($query);
 
@@ -363,8 +363,8 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                 }
 
 
-                $startDT = new \DateTime($r['Arrival_Date']);
-                $stDT = new \DateTime($r['Arrival_Date']);
+                $startDT = new \DateTime($r['Expected_Arrival']);
+                $stDT = new \DateTime($r['Expected_Arrival']);
                 $stDT->setTime(10, 0, 0);
 
                 $extended = FALSE;
@@ -376,7 +376,7 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                 $clDate->setTime(10, 0, 0);
 
 
-                $dateInfo = getDate(strtotime($r['Arrival_Date']));
+                $dateInfo = getDate(strtotime($r['Expected_Arrival']));
 
                 // start date fall on a holiday?
                 $validHolidays = TRUE;

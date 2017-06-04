@@ -9,7 +9,7 @@
  * @link      https://github.com/NPSC/HHK
  */
 function initPDO($override = FALSE) {
-    
+
     $ssn = Session::getInstance();
 
     if (!isset($ssn->databaseURL)) {
@@ -26,7 +26,7 @@ function initPDO($override = FALSE) {
             $config = new Config_Lite(ciCFG_FILE);
         } catch (Exception $ex) {
             $ssn->destroy();
-            die("Configurtion file is missing: " . $ex);
+            header('location:../reset.php?r=' . $ex->getMessage());
         }
 
         $dbuName = $config->getString('db', 'ReadonlyUser', '');
@@ -59,8 +59,8 @@ function initPDO($override = FALSE) {
         syncTimeZone($dbh);
 
     } catch (\PDOException $e) {
-        print "Error!: " . $e->getMessage() . "<br/>";
         $ssn->destroy();
+        header('location:../reset.php?r=' . $e->getMessage());
         die();
     }
 
@@ -68,7 +68,6 @@ function initPDO($override = FALSE) {
 }
 
 function initMS_SQL($dbURL, $dbName, $dbuName, $dbPw) {
-    //$serverName = "(local)\sqlexpress";
 
     /* Connect using Windows Authentication. */
     return new \PDO("sqlsrv:server=$dbURL;Database=$dbName", $dbuName, $dbPw);
@@ -301,7 +300,7 @@ function decryptNotes($encrypt, $pw) {
     $clear = "";
 
     if ($pw != "" && $encrypt != "") {
-    
+
         $key = getNotesKey($pw);
         $clear = encrypt_decrypt('decrypt', $encrypt, $key, getIV());
     }
@@ -312,7 +311,7 @@ function decryptNotes($encrypt, $pw) {
 /**
  * simple method to encrypt or decrypt a plain text string
  * initialization vector(IV) has to be the same when encrypting and decrypting
- * 
+ *
  * @param string $action: can be 'encrypt' or 'decrypt'
  * @param string $string: string to encrypt or decrypt
  *
@@ -325,7 +324,7 @@ function encrypt_decrypt($action, $string, $secret_key, $secret_iv) {
 //    $secret_iv = 'This is my secret iv';
     // hash
     $key = hash('sha256', $secret_key);
-    
+
     // iv - encrypt method AES-256-CBC expects 16 bytes - else you will get a warning
     $iv = substr(hash('sha256', $secret_iv), 0, 16);
     if ( $action == 'encrypt' ) {
