@@ -1720,6 +1720,7 @@ CREATE or Replace VIEW `vreservation_events` AS
         r.idRegistration,
         r.Confirmation,
         r.Expected_Pay_Type,
+        r.`Timestamp`,
         ifnull(hs.idPsg, 0) as `idPsg`,
         ifnull(rg.idGuest, 0) as `Patient_Staying`
     from
@@ -2143,64 +2144,6 @@ order by l.idVisit, l.Span, l.idStay, l.Timestamp;
 
 
 
--- -----------------------------------------------------
--- View `vvisit_listing`
--- -----------------------------------------------------
-CREATE or replace VIEW `vvisit_listing` AS
-select
-    v.idVisit,
-    v.Span,
-    r.idPsg,
-        `r`.`Pref_Token_Id`,
-    v.idRegistration,
-    v.idReservation,
-    v.idResource,
-    v.idHospital_stay,
-    v.idPrimaryGuest,
-    v.Arrival_Date,
-    v.Key_Dep_Disposition,
-    v.DepositPayType,
-    v.Expected_Departure,
-    v.Actual_Departure,
-    v.Span_Start,
-    v.Span_End,
-    DATEDIFF(ifnull(v.Actual_Departure, now()), v.Arrival_Date) as `Actual_Nights`,
-    DATEDIFF(v.Expected_Departure, v.Arrival_Date) as `Expected_Nights`,
-    DATEDIFF(ifnull(v.Span_End, now()), v.Span_Start) as `Actual_Span_Nights`,
-    DATEDIFF(v.Expected_Departure, v.Span_Start) as `Expected_Span_Nights`,
-    v.Return_Date,
-    v.Ext_Phone_Installed,
-    v.OverRideMaxOcc,
-    p.Notes,
-    v.Status,
-    g2.Description as `Status_Title`,
-    v.Updated_By,
-    v.Last_Updated,
-    re.Title,
-    v.Pledged_Rate,
-    v.Rate_Category,
-    v.idRoom_rate,
-    rv.Visit_Fee,
-    v.Rate_Glide_Credit,
-    case when v.Status = 'a' then (select count(*) from stays where idVisit = v.idVisit and Status = 'a') else 0 end as `Current_Guests`,
-    ifnull(g1.Description, '') as `Key_Disposition_Title`
-from
-    visit v
-        left join reservation rv on v.idReservation = rv.idReservation
-        left join
-    resource re ON v.idResource = re.idResource
-        left join
-    registration r ON v.idRegistration = r.idRegistration
-        left join
-    psg p on r.idPsg = p.idPsg
-        left join
-    gen_lookups g1 ON g1.Table_Name = 'Key_Disposition'
-        and g1.Code = v.Key_Dep_Disposition
-        left join
-    gen_lookups g2 ON g2.Table_Name = 'Visit_Status'
-        and g2.Code = v.Status
-where v.Span = (select max(Span) from visit where visit.idVisit = v.idVisit);
-
 
 -- -----------------------------------------------------
 -- View `vvisit_patient`
@@ -2264,11 +2207,7 @@ select
     DATEDIFF(ifnull(v.Span_End, now()), v.Span_Start) as `Actual_Span_Nights`,
     ifnull(hs.idPsg, 0) as `idPsg`,
     ifnull(hs.idHospital, 0) as `idHospital`,
-    ifnull(hs.idAssociation, 0) as `idAssociation`,
-    (SELECT SUM(DATEDIFF(IFNULL(s.Span_End_Date, NOW()), s.Span_Start_Date))
-        FROM stays s
-        where s.idVisit = v.idVisit AND s.Visit_Span = v.Span)
-     as `Guest_Nights`
+    ifnull(hs.idAssociation, 0) as `idAssociation`
 from
     visit v
         left join

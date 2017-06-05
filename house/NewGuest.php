@@ -74,8 +74,8 @@ FROM
         LEFT JOIN
     gen_lookups g2 ON g2.`Table_Name` = 'Name_Suffix'
         AND g2.`Code` = n.Name_Suffix
-		left join
-	`gen_lookups` `g3` on `g3`.`Table_Name` = 'Patient_Rel_Type'
+	left join
+    `gen_lookups` `g3` on `g3`.`Table_Name` = 'Patient_Rel_Type'
         and `g3`.`Code` = `ng`.`Relationship_Code`
 WHERE
     n.Member_Status != 'TBD'
@@ -441,8 +441,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $numNewGuests = $dataArray['new'];
         $numAllGuests = $dataArray['all'];
         $numReturnGuests = max($numAllGuests - $numNewGuests, 0);
-
-        $ratio = 0;
+        
+        $newRatio = 0;
         if ($numAllGuests > 0) {
             $newRatio = ($numNewGuests / $numAllGuests) * 100;
         }

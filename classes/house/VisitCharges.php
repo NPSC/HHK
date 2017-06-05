@@ -46,8 +46,7 @@ class VisitCharges {
     public function sumCurrentRoomCharge(\PDO $dbh, PriceModel $priceModel, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
 
         // Get current nights .
-        $stmt1 = $dbh->prepare("select * from `vvisit_stmt` where `idVisit` = :idvisit and `Status` != 'p' order by `Span`");
-        $stmt1->execute(array(':idvisit'=>$this->idVisit));
+        $stmt1 = $dbh->query("select * from `vvisit_stmt` where `idVisit` = " . $this->idVisit . " and `Status` != 'p' order by `Span`");
         $spans = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($spans) == 0) {
@@ -61,8 +60,7 @@ class VisitCharges {
     public function sumDatedRoomCharge(\PDO $dbh, PriceModel $priceModel, $coDate, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
 
         // Get current nights .
-        $stmt1 = $dbh->prepare("select * from `vvisit_stmt` where `idVisit` = :idvisit and `Status` != 'p' order by `Span`");
-        $stmt1->execute(array(':idvisit'=>$this->idVisit));
+        $stmt1 = $dbh->prepare("select * from `vvisit_stmt` where `idVisit` = " . $this->idVisit . " and `Status` != 'p' order by `Span`");
         $spans = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($spans) == 0) {
@@ -457,7 +455,12 @@ class SpanRateData {
 
         // Figure days stayed
         $this->currentDays = abs($r['days']);
-        $this->currentGuestDays = abs($r['gdays']);
+        
+        if (isset($r['gdays'])) {
+            $this->currentGuestDays = abs($r['gdays']);
+        } else {
+            $this->currentGuestDays = abs($r['days']);
+        }
         $this->paid = $paid;
         $this->futureDays = 0;
         $this->futureCharge = 0.0;

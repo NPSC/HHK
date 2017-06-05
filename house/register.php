@@ -382,6 +382,7 @@ try {
                 {data: 'Action', title: 'Action', sortable: false, searchable:false},
                 {data: 'Guest First', title: 'Guest First'},
                 {data: 'Guest Last', title: 'Guest Last'},
+                {data: 'Timestamp', title: 'Timestamp', render: function (data, type) {return dateRender(data, type, dateFormat);}},
                 {data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type, dateFormat);}},
                 {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},
                 {data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}},
