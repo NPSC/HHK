@@ -1580,7 +1580,7 @@ class ReservationSvcs {
 
             if ($rcount[0][0] < $uS->RoomsPerPatient) {
                 // Include Additional Room Query
-                $additionalRoomMkup = RoomChooser::moreRoomsMarkup($rcount[0][0], FALSE, FALSE);
+                $additionalRoomMkup = RoomChooser::moreRoomsMarkup($rcount[0][0], FALSE, $resv->getStatus());
             } else {
                 $additionalRoomMkup = HTMLContainer::generateMarkup('p', 'Already using the maximum of ' . $uS->RoomsPerPatient . ' rooms per patient.', array('style'=>'margin:.3em;'));
             }
@@ -1663,7 +1663,7 @@ class ReservationSvcs {
         return 1;
     }
 
-    public static function getConfirmForm(\PDO $dbh, $idReservation, $amount, $sendEmail = FALSE, $notes = '-', $emailAddr = '') {
+    public static function getConfirmForm(\PDO $dbh, $idReservation, $amount, $sendEmail = FALSE, $notes = '-', $emailAddr = '', $sendWordDoc = FALSE) {
 
         if ($idReservation == 0) {
             return array('error'=>'Bad reservation Id: ' . $idReservation);
@@ -1678,6 +1678,24 @@ class ReservationSvcs {
 
         $expectedDays = $reserv->getExpectedDays($reserv->getExpectedArrival(), $reserv->getExpectedDeparture());
 
+        
+        if ($sendWordDoc) {
+            
+            require CLASSES . 'WordXML.php';
+            $doc = new WordXML();
+            
+            $doc->createNewDoc();
+            
+            header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+            header('Content-Disposition: attachment; filename="confirm.xlsx"');
+            header('Cache-Control: max-age=0');
+            
+            $doc->finalize();
+            exit();
+
+        }
+        
+        
         if ($emailAddr == '') {
             $emAddr = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
             $emailAddr = $emAddr["Email"];
@@ -1736,6 +1754,7 @@ class ReservationSvcs {
             }
 
         } else {
+
             $dataArray['confrv'] = $form;
             $dataArray['email'] = $emailAddr;
         }

@@ -38,6 +38,7 @@ require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
+
 require (PMT . 'Payments.php');
 require (PMT . 'TokenTX.php');
 require (PMT . 'HostedPayments.php');
@@ -221,6 +222,19 @@ try {
                 $amount = filter_var($_POST['amt'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
             }
 
+            $notes = '-';
+            if (isset($_POST['notes'])) {
+                $notes = filter_var($_POST['notes'], FILTER_SANITIZE_STRING);
+            }
+
+            $sendWord = FALSE;
+            if (isset($_POST['doc'])) {
+                $v = intval(filter_var($_POST['doc'], FILTER_SANITIZE_NUMBER_INT), 10);
+                if ($v == 1) {
+                    $sendWord = TRUE;
+                }
+            }
+
             $sendemail = FALSE;
             if (isset($_POST['eml'])) {
                 $v = intval(filter_var($_POST['eml'], FILTER_SANITIZE_NUMBER_INT), 10);
@@ -229,17 +243,12 @@ try {
                 }
             }
 
-            $notes = '-';
-            if (isset($_POST['notes'])) {
-                $notes = filter_var($_POST['notes'], FILTER_SANITIZE_STRING);
-            }
-
             $eaddr = '';
             if (isset($_POST['eaddr'])) {
                 $eaddr = filter_var($_POST['eaddr'], FILTER_SANITIZE_STRING);
             }
 
-            $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $amount, $sendemail, $notes, $eaddr);
+            $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $amount, $sendemail, $notes, $eaddr, $sendWord);
             break;
 
         case 'void':

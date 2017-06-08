@@ -170,9 +170,7 @@ $resultMessage = $alertMsg->createMarkup();
             </div>
             <div style="clear:both"></div>
             <form  action="Referral.php" method="post"  id="form1">
-                <div id="hospitalSection" style="font-size: .9em; padding-left:0;margin-top:0; float:left; display:none;"  class="ui-widget hhk-panel hhk-visitdialog"></div>
-                <div style="clear:both;"></div>
-                <div id="patientSection" style="display:none; font-size: .9em; padding-left:0; margin-top:0; clear:left; float:left; min-width: 610px;" class="ui-widget hhk-panel  hhk-visitdialog">
+                <div id="patientSection" style="display:none; font-size: .9em; padding-left:0; margin-top:0;margin-bottom:1em; clear:left; float:left; min-width: 810px;" class="ui-widget hhk-panel  hhk-visitdialog">
                     <?php echo $pmkup; ?>
                 </div>
                 <div id="guestAccordion" style="font-size: .9em; padding-left:0; margin-top:0; margin-bottom:1em; clear:left; float:left; min-width: 810px;" class="ui-widget hhk-panel  hhk-visitdialog">
@@ -180,6 +178,8 @@ $resultMessage = $alertMsg->createMarkup();
                 <div id="guestSearch" style="padding-left:0;padding-top:0; clear:left; float:left; font-size: .9em;">
                     <?php echo $mk1; ?>
                 </div>
+                <div id="hospitalSection" style="font-size: .9em; padding-left:0;margin-top:0; margin-bottom:1em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-panel hhk-visitdialog"></div>
+
                 <div id="rescList" style="clear:left; float:left; font-size: .9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 </div>
                 <div id="rate" style="float:left; font-size: .9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
@@ -220,7 +220,7 @@ $resultMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
-        <script type="text/javascript" src="js/referral-min.js<?php echo JS_V; ?>"></script>
+        <script type="text/javascript" src="js/referral.js<?php echo JS_V; ?>"></script>
         <script type="text/javascript">
     var pmtMkup = "<?php echo $paymentMarkup; ?>";
     var rctMkup = '<?php echo $receiptMarkup; ?>';
