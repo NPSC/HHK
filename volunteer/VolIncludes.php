@@ -15,13 +15,13 @@ define('DS', DIRECTORY_SEPARATOR);
 define('MAX_IDLE_TIME', '1800');
 
 // FInd the third party directory
-$dirxx = '../turdParty';
+$dirxx = '../vendor';
 if (file_exists($dirxx) === FALSE) {
-    $dirxx = '../../turdParty';
+    $dirxx = '../../vendor';
     if (file_exists($dirxx) === FALSE) {
-        $dirxx = '../../../turdParty';
+        $dirxx = '../../../vendor';
         if (file_exists($dirxx) === FALSE) {
-            throw new Exception('Cannot find the turdParty directory.');
+            throw new Exception('Cannot find the vendor directory.');
         }
     }
 }
