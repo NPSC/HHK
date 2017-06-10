@@ -30,40 +30,33 @@
  * @author Eric
  */
 
-require '../vendor/autoload.php';
+
 
 class WordXML {
     
     protected $templateProcessor;
     
-    public function createNewDoc() {
+    public function createNewDoc(array $replacements) {
         
-                
-        $this->templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor(REL_BASE_DIR . 'conf' . DS .'ConfirmationLetter.dotx');
-
-        $vals = $this->templateProcessor->getVariables();
+//        require '../vendor/autoload.php';
+//
+//        $this->templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor(REL_BASE_DIR . 'conf' . DS .'ConfirmationLetter.dotx');
+//        
+//        $vals = $this->templateProcessor->getVariables();
+//        
+//        foreach ($vals as $v) {
+//            
+//            if (isset($replacements[$v])) {
+//                $this->templateProcessor->setValue($v, $replacements[$v]);
+//            }
+//        }
         
-        $this->templateProcessor->setValue('GuestName', 'Mr. John Doe');
-        $this->templateProcessor->setValue('AddressBlock', 'Detroit'); 
-        $this->templateProcessor->setValue('expectedArrival', 'June 25, 1970');
-        $this->templateProcessor->setValue('dateToday', date('M j, Y'));
-        $this->templateProcessor->setValue('GreetingLine', 'Dear ' . 'John');
-        
-        $this->templateProcessor->saveAs('../patch/confdoc.dotx');
     }
-    
-    public function finalize() {
-        
-//        header("Content-Description: File Transfer");
-//        header('Content-Disposition: attachment; filename="' . $fileName . '"');
-//        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-//        header('Content-Transfer-Encoding: binary');
-//        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-//        header('Expires: 0');
- 
 
-        $xmlWriter = \PhpOffice\PhpWord\IOFactory::createWriter($this->templateProcessor, 'HTML');
-        $xmlWriter->save("php://output");
+    public function finalize() { 
+
+        
+        $this->templateProcessor->saveAs("php://output");
 
     }
 }

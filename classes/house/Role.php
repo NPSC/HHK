@@ -230,6 +230,8 @@ abstract class Role {
 
         // Name
         $message .= $this->getNameObj()->saveChanges($dbh, $post);
+        
+        
         $incomplete = FALSE;
 
         // Guest Incomplete address

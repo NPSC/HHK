@@ -217,6 +217,11 @@ try {
                 $idresv = intval(filter_var($_POST['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
+            $idGuest = 0;
+            if (isset($_POST['gid'])) {
+                $idGuest = intval(filter_var($_POST['gid'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
             $amount = 0.00;
             if (isset($_POST['amt'])) {
                 $amount = filter_var($_POST['amt'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
@@ -227,13 +232,6 @@ try {
                 $notes = filter_var($_POST['notes'], FILTER_SANITIZE_STRING);
             }
 
-            $sendWord = FALSE;
-            if (isset($_POST['doc'])) {
-                $v = intval(filter_var($_POST['doc'], FILTER_SANITIZE_NUMBER_INT), 10);
-                if ($v == 1) {
-                    $sendWord = TRUE;
-                }
-            }
 
             $sendemail = FALSE;
             if (isset($_POST['eml'])) {
@@ -248,7 +246,7 @@ try {
                 $eaddr = filter_var($_POST['eaddr'], FILTER_SANITIZE_STRING);
             }
 
-            $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $amount, $sendemail, $notes, $eaddr, $sendWord);
+            $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $idGuest, $amount, $sendemail, $notes, $eaddr);
             break;
 
         case 'void':

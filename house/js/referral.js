@@ -612,20 +612,25 @@ function injectSlot(data) {
 
             $('#btnShowCnfrm').button();
             $('#btnShowCnfrm').click(function () {
-                $.post('ws_ckin.php', {cmd:'confrv', rid: $(this).data('rid'), amt: $('#spnAmount').text(), notes: 'tb'}, function(data) {
-                    data = $.parseJSON(data);
-                    if (data.error) {
-                        if (data.gotopage) {
-                            window.open(data.gotopage, '_self');
-                        }
-                        flagAlertMessage(data.error, true);
-                        return;
-                    }
-                     if (data.confrv) {
+                $.post('ws_ckin.php', {cmd:'confrv', rid: $(this).data('rid'), amt: $('#spnAmount').text(), eml: '0'}, function(data) {
+                    
+//                    data = $.parseJSON(data);
+//                    
+//                    if (data.error) {
+//                        if (data.gotopage) {
+//                            window.open(data.gotopage, '_self');
+//                        }
+//                        flagAlertMessage(data.error, true);
+//                        return;
+//                    }
+                    
+                     if (data) {
+                         
                         $('div#submitButtons').hide();
-                        $("#confirmDialog").children().remove();
-                        $("#confirmDialog").append($(data.confrv))
-                            .append($('<div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><span>Email Address </span><input type="text" id="confEmail" value="' + data.email +'"/></div>'));
+                        $("#frmConfirm").children().remove();
+                        $("#frmConfirm").html(data)
+                            .append($('<div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><span>Email Address </span><input type="text" id="confEmail" value=""/></div>'));
+
                         $("#confirmDialog").dialog('open');
                     }
                 });
@@ -1457,16 +1462,12 @@ $(document).ready(function() {
         width: 850,
         modal: true,
         title: 'Confirmation Form',
-        close: function () {$('div#submitButtons').show(); $("#confirmDialog").children().remove();},
+        close: function () {$('div#submitButtons').show(); $("#frmConfirm").children().remove();},
         buttons: {
             'Download MS Word': function () {
-                $.post('ws_ckin.php', {cmd:'confrv', rid: $('#btnShowCnfrm').data('rid'), doc: '1', amt: $('#spnAmount').text(), notes: $('#tbCfmNotes').val()}, function(data) {
-                    data = $.parseJSON(data);
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
-                    }
-                });
-                $(this).dialog("close");
+                var $confForm = $("form#frmConfirm");
+                $confForm.append($('<input name="hdnCfmRid" type="hidden" value="' + $('#btnShowCnfrm').data('rid') + '"/>'))
+                $confForm.submit();
             },
             'Send Email': function() {
                 $.post('ws_ckin.php', {cmd:'confrv', rid: $('#btnShowCnfrm').data('rid'), eml: '1', eaddr: $('#confEmail').val(), amt: $('#spnAmount').text(), notes: $('#tbCfmNotes').val()}, function(data) {

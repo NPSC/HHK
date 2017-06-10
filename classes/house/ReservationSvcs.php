@@ -1663,7 +1663,7 @@ class ReservationSvcs {
         return 1;
     }
 
-    public static function getConfirmForm(\PDO $dbh, $idReservation, $amount, $sendEmail = FALSE, $notes = '-', $emailAddr = '', $sendWordDoc = FALSE) {
+    public static function getConfirmForm(\PDO $dbh, $idReservation, $idGuest, $amount, $sendEmail = FALSE, $notes = '', $emailAddr = '') {
 
         if ($idReservation == 0) {
             return array('error'=>'Bad reservation Id: ' . $idReservation);
@@ -1672,48 +1672,23 @@ class ReservationSvcs {
         $uS = Session::getInstance();
         $dataArray = array();
 
-        $reserv = Reservation_1::instantiateFromIdReserv($dbh, $idReservation);
-
-        $guest = new Guest($dbh, '', $reserv->getIdGuest());
-
-        $expectedDays = $reserv->getExpectedDays($reserv->getExpectedArrival(), $reserv->getExpectedDeparture());
-
-        
-        if ($sendWordDoc) {
-            
-            require CLASSES . 'WordXML.php';
-            $doc = new WordXML();
-            
-            $doc->createNewDoc();
-            
-            header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-            header('Content-Disposition: attachment; filename="confirm.xlsx"');
-            header('Cache-Control: max-age=0');
-            
-            $doc->finalize();
-            exit();
-
-        }
-        
-        
-        if ($emailAddr == '') {
-            $emAddr = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
-            $emailAddr = $emAddr["Email"];
-        }
 
         require(HOUSE . 'ConfirmationForm.php');
+        
+        $confirmForm = new ConfirmationForm($uS->ConfirmFile);
+        
+        $formNotes = $confirmForm->createNotes($notes, !$sendEmail);
+        
+        $form = $confirmForm->createForm($dbh, $idReservation, $idGuest, $amount, $formNotes);
 
-        $form = ConfirmationForm::createForm(
-                ConfirmationForm::getFormTemplate($uS->ConfirmFile),
-                $guest->getNameObj()->get_fullName(),
-                $reserv->getExpectedArrival(),
-                $reserv->getExpectedDeparture(),
-                $expectedDays,
-                floatval($amount),
-                $notes);
 
         if ($sendEmail) {
 
+            if ($emailAddr == '') {
+                $emAddr = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
+                $emailAddr = $emAddr["Email"];
+            }
+            
             if ($emailAddr != '') {
 
                 $config = new Config_Lite(ciCFG_FILE);
@@ -1754,6 +1729,9 @@ class ReservationSvcs {
             }
 
         } else {
+            
+            echo($form);
+            exit();
 
             $dataArray['confrv'] = $form;
             $dataArray['email'] = $emailAddr;
