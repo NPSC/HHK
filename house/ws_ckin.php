@@ -975,15 +975,24 @@ try {
 } catch (PDOException $ex) {
     $events = array("error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
 } catch (Hk_Exception $ex) {
-    $events = array("error" => "HouseKeeper Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
+    $events = array("error" => "HouseKeeper Server Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
 } catch (Exception $ex) {
-    $events = array("error" => "Programming Error: " . $ex->getMessage());
+    $events = array("error" => "Web Server Error: " . $ex->getMessage());
 }
 
 
 
 if (is_array($events)) {
-    echo (json_encode($events));
+    
+    $json = json_encode($events);
+    
+    if ($json !== FALSE) {
+        echo ($json);
+    } else {
+        $events = array("error" => "PHP json encoding error: " . json_last_error_msg());
+        echo json_encode($events);
+    }
+    
 } else {
     echo $events;
 }

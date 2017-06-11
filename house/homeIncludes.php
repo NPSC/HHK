@@ -63,14 +63,17 @@ define('SEC', CLASSES . 'sec' . DS);
  */
 define('PMT', CLASSES . 'Payment' . DS);
 
-// FInd the third party directory
+// FInd the vendor directory
 $dirxx = '../vendor';
 if (file_exists($dirxx) === FALSE) {
     $dirxx = '../../vendor';
     if (file_exists($dirxx) === FALSE) {
         $dirxx = '../../../vendor';
         if (file_exists($dirxx) === FALSE) {
-            throw new Exception('Cannot find the vendor directory.');
+            $dirxx = '../../../../vendor';
+            if (file_exists($dirxx) === FALSE) {
+                throw new Exception('Cannot find the vendor directory.');
+            }
         }
     }
 }

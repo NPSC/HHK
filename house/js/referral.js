@@ -614,28 +614,27 @@ function injectSlot(data) {
             $('#btnShowCnfrm').click(function () {
                 $.post('ws_ckin.php', {cmd:'confrv', rid: $(this).data('rid'), amt: $('#spnAmount').text(), eml: '0'}, function(data) {
                     
-//                    data = $.parseJSON(data);
-//                    
-//                    if (data.error) {
-//                        if (data.gotopage) {
-//                            window.open(data.gotopage, '_self');
-//                        }
-//                        flagAlertMessage(data.error, true);
-//                        return;
-//                    }
+                    data = $.parseJSON(data);
                     
-                     if (data) {
+                    if (data.error) {
+                        if (data.gotopage) {
+                            window.open(data.gotopage, '_self');
+                        }
+                        flagAlertMessage(data.error, true);
+                        return;
+                    }
+                    
+                     if (data.confrv) {
                          
                         $('div#submitButtons').hide();
                         $("#frmConfirm").children().remove();
-                        $("#frmConfirm").html(data)
-                            .append($('<div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><span>Email Address </span><input type="text" id="confEmail" value=""/></div>'));
+                        $("#frmConfirm").html(data.confrv)
+                            .append($('<div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><span>Email Address </span><input type="text" id="confEmail" value="'+data.email+'"/></div>'));
 
                         $("#confirmDialog").dialog('open');
                     }
                 });
             });
-
         }
         
         $('#btnDone').val('Save');

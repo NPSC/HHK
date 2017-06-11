@@ -92,21 +92,25 @@ if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)
 }
 
 if (isset($_POST['hdnCfmRid'])) {
-    
-    $idreserv = intval(filter_var($_POST['hdnCfmRid'], FILTER_SANITIZE_NUMBER_INT), 10);
 
+    $idReserv = intval(filter_var($_POST['hdnCfmRid'], FILTER_SANITIZE_NUMBER_INT), 10);
+    $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
+    
+    $idGuest = $resv->getIdGuest();
+    
+    $guest = new Guest($dbh, '', $idGuest);
+    
     $notes = '';
     if (isset($_POST['tbCfmNotes'])) {
         $notes = filter_var($_POST['tbCfmNotes'], FILTER_SANITIZE_STRING);
     }
-    
+
     require(HOUSE . 'ConfirmationForm.php');
 
     $confirmForm = new ConfirmationForm($uS->ConfirmFile);
 
     $formNotes = $confirmForm->createNotes($notes, FALSE);
-
-    $form = '<!DOCTYPE html>' . $confirmForm->createForm($dbh, $idreserv, NULL, 0, $formNotes);
+    $form = '<!DOCTYPE html>' . $confirmForm->createForm($dbh, $resv, $guest, 0, $formNotes);
     
     header('Content-Disposition: attachment; filename=confirm.doc');
     header("Content-Description: File Transfer");
@@ -115,9 +119,7 @@ if (isset($_POST['hdnCfmRid'])) {
     header('Expires: 0');
 
     echo($form);
-
     exit();
-
 }
 
 if (isset($uS->cofrid)) {
@@ -196,7 +198,7 @@ $resultMessage = $alertMsg->createMarkup();
             <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
             </div>
             <div style="clear:both"></div>
-           
+            <form  action="Referral.php" method="post"  id="form1">
                 <div id="patientSection" style="display:none; font-size: .9em; padding-left:0; margin-top:0;margin-bottom:1em; clear:left; float:left; min-width: 810px;" class="ui-widget hhk-panel  hhk-visitdialog">
                     <?php echo $pmkup; ?>
                 </div>
@@ -227,7 +229,7 @@ $resultMessage = $alertMsg->createMarkup();
                     <input type="button" id="btnCkinForm" value='Show Registration Form' style="display:none;"/>
                     <input id='btnDone' type='button' value='Find a Room' style="display:none;"/>
                 </div>
-
+            </form>
             <div id="patientPrompt" class="hhk-tdbox-noborder" style="display:none;">
                 <p id="hhk-patPromptQuery">Will this patient be staying at the House for at least one night?</p>
             </div>

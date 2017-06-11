@@ -27,24 +27,28 @@ class ConfirmationForm {
     const NIGHTS = 'Nites';
     const DATE_TODAY = 'DateToday';
     
+    protected $mime;
     protected $template;
     protected $replacements;
 
+
     function __construct($fileName) {
+        
+        $this->mime = array(
+            'html'      => 'text/html',
+            'htm'      => 'text/html',
+            'mht'      => 'text/html',
+            'mhtml'      => 'text/html',
+        );
+        
         $this->getFormTemplate($fileName);
+
     }
 
-    protected function makeReplacements(\PDO $dbh, $idReservation, $idGuest, $amount, $notes) {
+    protected function makeReplacements(\PDO $dbh, Reservation_1 $reserv, Guest $guest, $amount, $notes) {
 
-        $reserv = Reservation_1::instantiateFromIdReserv($dbh, $idReservation);
-
-        if (is_null($idGuest) || $idGuest == 0) {
-            $idGuest = $reserv->getIdGuest();
-        }
-        
-        $guest = new Guest($dbh, '', $idGuest);
         $addr = $guest->getAddrObj()->get_Data();
-        
+
         $this->replacements = array(
             ConfirmationForm::GUESTNAME => $guest->getNameObj()->get_fullName(),
             ConfirmationForm::ADDRESS => $addr['Address_1'] . ($addr['Address_2'] == '' ? '' : ' ' . $addr['Address_2']),
@@ -60,9 +64,9 @@ class ConfirmationForm {
         );
     }
 
-    public function createForm(\PDO $dbh, $idReservation, $idGuest, $amount, $notes = '') {
+    public function createForm(\PDO $dbh, $resv, $guest, $amount, $notes = '') {
         
-        $this->makeReplacements($dbh, $idReservation, $idGuest, $amount, $notes);
+        $this->makeReplacements($dbh, $resv, $guest, $amount, $notes);
 
         $vars = $this->getVariables();
         
@@ -91,7 +95,6 @@ class ConfirmationForm {
         return $macro;
     }
     
-
     public function getVariables() {
         
         $matches = array();
@@ -120,16 +123,25 @@ class ConfirmationForm {
     protected function getFormTemplate($fileName) {
 
         $path = REL_BASE_DIR . 'conf' . DS . $fileName;
+        $this->template = '';
 
         if (file_exists($path)) {
 
-            if (($text = file_get_contents($path)) === FALSE) {
-                throw new Hk_Exception_Runtime("Confirmation file template not read, path = " . $path);
+            $pathInfo = pathinfo($fileName);
+            
+            if (isset($this->mime[strtolower($pathInfo['extension'])]) === FALSE) {
+                throw new Hk_Exception_Runtime("Confirmation file extension not supported, file = " . $fileName);
             }
+            
+            if (($text = file_get_contents($path)) === FALSE) {
+                throw new Hk_Exception_Runtime("Confirmation file template not read, file = " . $fileName);
+            }
+            
+            $this->template = $text;
+
         } else {
-            throw new Hk_Exception_Runtime("Confirmation file template does not exist, path = " . $path);
+            throw new Hk_Exception_Runtime("Confirmation file template does not exist, file = " . $fileName);
         }
 
-        $this->template = $text;
     }
 }

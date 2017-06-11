@@ -1669,17 +1669,23 @@ class ReservationSvcs {
             return array('error'=>'Bad reservation Id: ' . $idReservation);
         }
 
+        require(HOUSE . 'ConfirmationForm.php');
         $uS = Session::getInstance();
         $dataArray = array();
-
-
-        require(HOUSE . 'ConfirmationForm.php');
         
+        $reserv = Reservation_1::instantiateFromIdReserv($dbh, $idReservation);
+        
+        if ($idGuest == 0) {
+            $idGuest = $reserv->getIdGuest();
+        }
+        
+        $guest = new Guest($dbh, '', $idGuest);
+
         $confirmForm = new ConfirmationForm($uS->ConfirmFile);
         
         $formNotes = $confirmForm->createNotes($notes, !$sendEmail);
         
-        $form = $confirmForm->createForm($dbh, $idReservation, $idGuest, $amount, $formNotes);
+        $form = $confirmForm->createForm($dbh, $reserv, $guest, $amount, $formNotes);
 
 
         if ($sendEmail) {
@@ -1729,11 +1735,8 @@ class ReservationSvcs {
             }
 
         } else {
-            
-            echo($form);
-            exit();
 
-            $dataArray['confrv'] = $form;
+            $dataArray['confrv'] = utf8_decode($form);
             $dataArray['email'] = $emailAddr;
         }
 
