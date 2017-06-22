@@ -745,7 +745,7 @@ $useVisitDatesCb = HTMLInput::generateMarkup('', $vAttrs)
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
-        
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
@@ -841,7 +841,7 @@ function invoiceAction(idInvoice, action, eid) {
     });
 }
 $(document).ready(function() {
-    var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
+    var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
     var makeTable = '<?php echo $mkTable; ?>';
     $('#btnHere, #btnExcel').button();
     $('.ckdate').datepicker({

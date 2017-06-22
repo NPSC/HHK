@@ -313,7 +313,7 @@ try {
         <?php echo HOUSE_CSS; ?>
 
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
-        
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
@@ -335,7 +335,7 @@ try {
             var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
             var challVar = '<?php echo $challengeVar; ?>';
             var viewDays = '<?php echo ($weeks * 7); ?>';
-            var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
+            var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
 
             var cgCols = [
                 {data: 'Action', title: 'Action', sortable: false, searchable:false},

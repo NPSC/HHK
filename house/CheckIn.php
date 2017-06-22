@@ -326,7 +326,7 @@ $confReserv = $labels->getString('register', 'reservationTab', 'Confirmed Reserv
     var chkIn;
     var postBkPg = '<?php echo $postBackPage; ?>';
     var isCheckedOut = false;
-    var dateFormat = '<?php echo $labels->getString("momentFormats", "reportDay", "ddd, MMM d YYYY"); ?>'; 
+    var dateFormat = '<?php echo $labels->getString("momentFormats", "reportDay", "ddd, MMM D YYYY"); ?>';
     chkIn = new CheckIn();
     chkIn.members = [];
     chkIn.currentGuests = 0;
