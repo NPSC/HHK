@@ -36,41 +36,84 @@ require ('classes' . DS. 'sec' .DS . 'sessionClass.php');
 require ('classes' . DS . 'SysConst.php');
 require ('classes' . DS . 'HTML_Controls.php');
 
+function testdb($ssn) {
+
+    try {
+
+        switch ($ssn->dbms) {
+
+            case 'MS_SQL':
+                $dbh = initMS_SQL($ssn->databaseURL, $ssn->databaseName, $ssn->databaseUName, $ssn->databasePWord);
+                break;
+
+            case 'MYSQL':
+                $dbh = initMY_SQL($ssn->databaseURL, $ssn->databaseName, $ssn->databaseUName, $ssn->databasePWord);
+                break;
+
+            default:
+                return "Bad Database Type: '" . $ssn->dbms . "'";
+
+        }
+
+    } catch (PDOException $e) {
+        return 'Database Error:  ' . $e;
+    }
+
+    return '';
+}
 
 // Get the site configuration object
 $config = new Config_Lite(ciCFG_FILE);
 
 // get session instance
-$uS = Session::getInstance();
-$result = '';
-$pageTitle = $config->getString("site", "Site_Name", "Hospitality House");
-$build = 'Build:' . $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
-$copyYear = date('Y');
+$ssn = Session::getInstance();
+
+
+try {
+
+    $dbConfig = $config->getSection('db');
+
+} catch (Exception $e) {
+
+    $ssn->destroy();
+    exit("Database configuration section (db) is missing: " . $e->getMessage());
+}
+
+
+if (is_array($dbConfig)) {
+    $ssn->databaseURL = $dbConfig['URL'];
+    $ssn->databaseUName = $dbConfig['User'];
+    $ssn->databasePWord = decryptMessage($dbConfig['Password']);
+    $ssn->databaseName = $dbConfig['Schema'];
+    $ssn->dbms = $dbConfig['DBMS'];
+} else {
+    $ssn->destroy();
+    exit("Bad Database Configuration Section (db)");
+}
+
+
+// Check database
+$result = testdb($ssn);
+
+if ($result == '') {
+    // database ok.
+    header('location: ' . $config->getString('site','Site_URL', ''));
+    exit();
+}
+
+//
+// Database credentials are wrong past here.
+//
+
 
 if (isset($_POST['btnSave'])) {
 
-    addslashesextended($_POST);
-
     try {
         SiteConfig::saveConfig(NULL, $config, $_POST, 'admin');
-        $result = "Config file saved.  ";
 
-        $dbConfig = $config->getSection('db');
-
-        if (is_array($dbConfig)) {
-            $ssn->databaseURL = $dbConfig['URL'];
-            $ssn->databaseUName = $dbConfig['User'];
-            $ssn->databasePWord = decryptMessage($dbConfig['Password']);
-            $ssn->databaseName = $dbConfig['Schema'];
-            $ssn->dbms = $dbConfig['DBMS'];
-        } else {
-            $ssn->destroy();
-            throw new Hk_Exception_Runtime("Bad Database Configurtion");
-        }
-
-        initPDO();
-
+        $ssn->destroy();
         header('location: ' . $config->getString('site','Site_URL', ''));
+        exit();
 
     } catch (Exception $ex) {
         $result = $ex->getMessage();
@@ -80,6 +123,10 @@ if (isset($_POST['btnSave'])) {
 if (isset($_GET['r'])) {
     $result = filter_var($_GET['r'], FILTER_SANITIZE_STRING);
 }
+
+$pageTitle = $config->getString("site", "Site_Name", "Hospitality House");
+$build = 'Build:' . $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
+$copyYear = date('Y');
 
 $tbl = SiteConfig::createCliteMarkup($config, new Config_Lite('conf' . DS . 'siteTitles.cfg'), 'db');
 

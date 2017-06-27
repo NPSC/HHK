@@ -343,8 +343,6 @@ class SiteConfig {
 
         }
 
-
-
         // Weekdays
         for ($d = 0; $d < 7; $d++) {
 
@@ -354,7 +352,6 @@ class SiteConfig {
                 $dbh->exec("delete from gen_lookups where `Table_Name`='Non_Cleaning_Day' and `Code`='$d'");
             }
         }
-
 
         return $resultMsg;
     }

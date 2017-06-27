@@ -1045,7 +1045,7 @@ class Visit {
         return $msg;
     }
 
-    protected function checkOutVisit(\PDO $dbh, $dateDeparted = "") {
+    public function checkOutVisit(\PDO $dbh, $dateDeparted = "") {
         $msg = "";
 
         // Check out date

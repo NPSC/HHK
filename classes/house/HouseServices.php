@@ -1045,7 +1045,6 @@ class HouseServices {
         EditRS::loadRow($visits[0], $visitRs);
 
         $guest = new Guest($dbh, $prefix, $idGuest);
-        $nameObj = $guest->getNameObj();
 
 
         // Arrival Date
@@ -1077,6 +1076,7 @@ class HouseServices {
 
             // save the guest
             $guest->save($dbh, $post, $uS->username);
+            $nameObj = $guest->getNameObj();
 
             // Attach to PSG if not
             if (isset($psg->psgMembers[$guest->getIdName()]) === FALSE) {

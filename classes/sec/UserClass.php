@@ -96,9 +96,13 @@ class UserClass {
 
     protected static function getUserCredentials(\PDO $dbh, $username) {
 
-        $query = "SELECT u.*, a.Role_Id as Role_Id FROM w_users u join w_auth a on u.idName = a.idName  WHERE u.Status='a' and u.User_Name = :uname";
-        $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-        $stmt->execute(array(":uname" => $username));
+        if (!is_string($username)) {
+            return NULL;
+        }
+
+        $uname = str_ireplace("'", "", $username);
+
+        $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id FROM w_users u join w_auth a on u.idName = a.idName  WHERE u.Status='a' and u.User_Name = '$uname'");
 
         if ($stmt->rowCount() > 0) {
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -108,24 +112,21 @@ class UserClass {
         return NULL;
     }
 
-    protected static function setSecurityGroups(\PDO $dbh, $id, $housePc = FALSE) {
+    protected static function setSecurityGroups(\PDO $dbh, $idName, $housePc = FALSE) {
+
+        $id = intval($idName, 10);
 
         $grpArray = array();
-        $query = "SELECT s.Group_Code, case when w.Cookie_Restricted = 1 then '1' else '0' end as `Cookie_Restricted` FROM id_securitygroup s join w_groups w on s.Group_Code = w.Group_Code WHERE s.idName = :id";
-        $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-        $stmt->execute(array(":id" => $id));
+        $query = "SELECT s.Group_Code, case when w.Cookie_Restricted = 1 then '1' else '0' end as `Cookie_Restricted` FROM id_securitygroup s join w_groups w on s.Group_Code = w.Group_Code WHERE s.idName = $id";
+        $stmt = $dbh->query($query);
 
-        if ($stmt->rowCount() > 0) {
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            foreach ($rows as $r) {
-
-                if ($r["Group_Code"] != "" && ($r['Cookie_Restricted'] == "0" || $housePc)) {
-                    $grpArray[] = $r["Group_Code"];
-                }
+            if ($r["Group_Code"] != "" && ($r['Cookie_Restricted'] == "0" || $housePc)) {
+                $grpArray[] = $r["Group_Code"];
             }
-
         }
+
         return $grpArray;
     }
 
@@ -149,43 +150,42 @@ class UserClass {
             $sessionId = session_id();
             $ip = filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP);
 
-            $query = "UPDATE w_users SET Session = :ssn, Ip = :adr, Last_Login=now() WHERE User_Name = :uname;";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute(array(":ssn" => $sessionId, ":adr" => $ip, ":uname" => $r["User_Name"]));
+            $query = "UPDATE w_users SET Session = '$sessionId', Ip = '$ip', Last_Login=now() WHERE User_Name = '" . $ssn->username . "'";
+            $stmt = $dbh->query($query);
 
             // Log access
-            $dbh->query("insert into w_user_log (Username, Access_Date, IP, Session_Id) values ('" . $r['User_Name'] . "', now(), '$ip', '')");
+            $dbh->query("insert into w_user_log (Username, Access_Date, IP, Session_Id) values ('" . $ssn->username . "', now(), '$ip', '')");
         }
     }
 
-    protected static function _checkSession(\PDO $dbh, Session $ssn) {
-
-        if (isset($ssn->username)) {
-            $parms = array(
-                ":uname" => $ssn->username,
-                ":cook" => $ssn->cookie,
-                ":ssn" => session_id(),
-                ":adr" => $_SERVER['REMOTE_ADDR']
-                );
-
-            $query = "SELECT u.*, a.Role_Id as Role_Id FROM w_users u join w_auth a on u.idName = a.idName WHERE u.Status='a' and " .
-            "(u.User_Name = :uname) AND (u.Cookie = :cook) AND " .
-            "(u.Session = :ssn) AND (u.Ip = :adr)";
-            $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-            $stmt->execute($parms);
-
-
-            if ($stmt->rowCount() > 0) {
-                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-                $this->_setSession($dbh, $ssn, $rows[0], false, false);
-                return true;
-
-            }
-        }
-        $this->_logout();
-        return false;
-    }
+//    protected static function _checkSession(\PDO $dbh, Session $ssn) {
+//
+//        if (isset($ssn->username)) {
+//            $parms = array(
+//                ":uname" => $ssn->username,
+//                ":cook" => $ssn->cookie,
+//                ":ssn" => session_id(),
+//                ":adr" => $_SERVER['REMOTE_ADDR']
+//                );
+//
+//            $query = "SELECT u.*, a.Role_Id as Role_Id FROM w_users u join w_auth a on u.idName = a.idName WHERE u.Status='a' and " .
+//            "(u.User_Name = :uname) AND (u.Cookie = :cook) AND " .
+//            "(u.Session = :ssn) AND (u.Ip = :adr)";
+//            $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+//            $stmt->execute($parms);
+//
+//
+//            if ($stmt->rowCount() > 0) {
+//                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+//
+//                $this->_setSession($dbh, $ssn, $rows[0], false, false);
+//                return true;
+//
+//            }
+//        }
+//        $this->_logout();
+//        return false;
+//    }
 
     public static function _logout() {
         $uS = Session::getInstance();

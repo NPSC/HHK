@@ -11,22 +11,23 @@
 function initPDO($override = FALSE) {
 
     $ssn = Session::getInstance();
+    $roleCode = $ssn->rolecode;
 
     if (!isset($ssn->databaseURL)) {
-        die('<br/>Missing Database Session Initialization (initPDO)<br/>');
+        die('<br/>Missing Database URL (initPDO)<br/>');
     }
 
     $dbuName = $ssn->databaseUName;
     $dbPw = $ssn->databasePWord;
 
 
-    if ($ssn->rolecode >= WebRole::Guest && $override === FALSE) {
+    if ($roleCode >= WebRole::Guest && $override === FALSE) {
         // Get the site configuration object
         try {
             $config = new Config_Lite(ciCFG_FILE);
         } catch (Exception $ex) {
             $ssn->destroy();
-            header('location:../reset.php?r=' . $ex->getMessage());
+            exit("<br/>Missing Database Session Initialization: " . $ex->getMessage());
         }
 
         $dbuName = $config->getString('db', 'ReadonlyUser', '');
@@ -59,7 +60,13 @@ function initPDO($override = FALSE) {
         syncTimeZone($dbh);
 
     } catch (\PDOException $e) {
+
         $ssn->destroy();
+
+        if ($roleCode >= WebRole::DefaultRole && $override === FALSE) {
+            exit("<br/>Database Error: " . $e->getMessage());
+        }
+
         header('location:../reset.php?r=' . $e->getMessage());
         die();
     }
