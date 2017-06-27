@@ -263,7 +263,7 @@ class VisitView {
         // Weekender button
         if ($r['Status'] == VisitStatus::CheckedIn && $extendVisitDays > 0 && $action != 'ref') {
             $etbl = new HTMLTable();
-            
+
             $olStmt = $dbh->query("select sum(On_Leave) from `stays` where `stays`.`idVisit` = " . $r['idVisit'] . " and `stays`.`Status` = 'a' ");
             $olRows = $olStmt->fetchAll();
 
@@ -1212,14 +1212,14 @@ class VisitView {
                 // Checked-Out visits cannot move their end date beyond todays date.
                 if ($vRs->Status->getStoredVal() == VisitStatus::CheckedOut) {
                     if ($newEndDt > $tonight) {
-                        return 'Checked-Out visits cannot move their end date beyond todays date';
+                        return 'Checked-Out visits cannot move their end date beyond todays date  Use Undo Checkout instead. ';
                     }
                 }
 
                 // Checked-in visits cannot move their start date beyond today's date.
                 if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
                     if ($newStartDT > $tonight) {
-                        return 'Checked-in visits cannot move their start date beyond todays date.';
+                        return 'Checked-in visits cannot move their start date beyond todays date. ';
                     }
                 }
             }
@@ -1227,14 +1227,14 @@ class VisitView {
 
             // Check visits first.
             $query = "select v.idResource from vregister v where v.Visit_Status <> :vstat and v.idVisit != :visit and v.idResource = :idr and
-        DATE(v.Arrival_Date) < :endDate
-        AND DATEDIFF(IFNULL(DATE(v.Actual_Departure),
+        DATE(v.Span_Start) < :endDate
+        AND DATEDIFF(IFNULL(DATE(v.Span_End),
                     CASE
                         WHEN NOW() > DATE(v.Expected_Departure) THEN ADDDATE(NOW(), 1)
                         ELSE DATE(v.Expected_Departure)
                     END),
-            v.Arrival_Date) != 0 and
-        ifnull(DATE(v.Actual_Departure), case when now() > DATE(v.Expected_Departure) then AddDate(now(), 1) else DATE(v.Expected_Departure) end) > :beginDate";
+            v.Span_Start) != 0 and
+        ifnull(DATE(v.Span_End), case when now() > DATE(v.Expected_Departure) then AddDate(now(), 1) else DATE(v.Expected_Departure) end) > :beginDate";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
                 ':beginDate'=>$newStartDT->format('Y-m-d'),

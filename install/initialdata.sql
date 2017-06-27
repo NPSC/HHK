@@ -471,7 +471,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('ShowZeroDayStays', 'false', 'b', 'h', 'Include 0-day stays and visits in Reports and Pages'),
 ('TrackAuto','true','b','h','Track vehicles'),
 ('VisitFee', 'false', 'b', 'h','Use the visit fee (cleaning fee) feature'),
-('VisitExcessPaid', 'i', 's', 'h','Default place for excess visit payments'),
+('VisitExcessPaid', 'r', 's', 'h','Default place for excess visit payments'),
 ('VerifyHospDate', 'true', 'b', 'h','Insist on hospital treatment date entry');
 -- ;
 

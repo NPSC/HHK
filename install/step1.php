@@ -27,10 +27,17 @@ require CLASSES . 'SiteConfig.php';
 
         $hostParts = explode(".", $serverName);
         if (strtolower($hostParts[0]) == "www") {
-            $hostParts[0] = "";
+            unset($hostParts[0]);
             $hostName = substr(implode(".", $hostParts), 1);
         } else {
             $hostName = $serverName;
+        }
+
+        if (empty($_SERVER['HTTPS']) || strtolower($_SERVER['HTTPS']) == 'off' ) {
+            // non-SSL access.
+            $protocol = 'http://';
+        } else {
+            $protocol = 'https://';
         }
 
         $path = "";
@@ -41,7 +48,7 @@ require CLASSES . 'SiteConfig.php';
 
         $stbl = new HTMLTable();
         $stbl->addBodyTr(HTMLTable::makeTh("Site URL") . HTMLTable::makeTd(
-                HTMLContainer::generateMarkup('span', "http://" . $hostName . $path, array('id'=>'spnSiteURL'))
+                HTMLContainer::generateMarkup('span', $protocol . $hostName . $path, array('id'=>'spnSiteURL'))
                 . HTMLInput::generateMarkup('Generate URLs', array('id'=>'btnGenURL', 'type'=>'button', 'data-host'=>$hostName, 'data-path'=>$path, 'style'=>'margin-left:5px;'))));
 
         $tbl = SiteConfig::createCliteMarkup($config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));  //new HTMLTable();
@@ -95,14 +102,19 @@ $configuration = createMarkup($config);
             testDb(parms);
         });
         $('#btnGenURL').click(function () {
+
             var link = $('#spnSiteURL').text();
             $('#siteSite_URL').val(link);
-            $('#siteVolunteer_URL').val(link + $('#siteVolunteer_Dir').val());
             $('#siteAdmin_URL').val(link + $('#siteAdmin_Dir').val());
+            $('#siteVolunteer_URL').val('');
+            $('#siteHouse_URL').val('');
+
+            if ($('#siteVolunteer_Dir').val() != '') {
+                $('#siteVolunteer_URL').val(link + $('#siteVolunteer_Dir').val());
+            }
+
             if ($('#siteHouse_Dir').val() != '') {
                 $('#siteHouse_URL').val(link + $('#siteHouse_Dir').val());
-            } else {
-                $('#siteHouse_URL').val('');
             }
         });
     });

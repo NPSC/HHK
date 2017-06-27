@@ -62,8 +62,6 @@ try {
 
 $dbh = $wInit->dbh;
 
-$pageTitle = $wInit->pageTitle;
-
 // get session instance
 $uS = Session::getInstance();
 
@@ -95,11 +93,11 @@ if (isset($_POST['hdnCfmRid'])) {
 
     $idReserv = intval(filter_var($_POST['hdnCfmRid'], FILTER_SANITIZE_NUMBER_INT), 10);
     $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
-    
+
     $idGuest = $resv->getIdGuest();
-    
+
     $guest = new Guest($dbh, '', $idGuest);
-    
+
     $notes = '';
     if (isset($_POST['tbCfmNotes'])) {
         $notes = filter_var($_POST['tbCfmNotes'], FILTER_SANITIZE_STRING);
@@ -111,7 +109,7 @@ if (isset($_POST['hdnCfmRid'])) {
 
     $formNotes = $confirmForm->createNotes($notes, FALSE);
     $form = '<!DOCTYPE html>' . $confirmForm->createForm($dbh, $resv, $guest, 0, $formNotes);
-    
+
     header('Content-Disposition: attachment; filename=confirm.doc');
     header("Content-Description: File Transfer");
     header('Content-Type: text/html');
@@ -180,7 +178,7 @@ $resultMessage = $alertMsg->createMarkup();
 <html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title><?php echo $pageTitle; ?></title>
+        <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
 

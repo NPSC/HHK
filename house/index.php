@@ -65,6 +65,12 @@ if (isset($_POST['txtUname'])) {
 
 // disclamer
 $disclaimer = $config->get("site", "Disclaimer", "");
+
+if ($uS->mode != Mode::Live) {
+    $disclaimer = 'Welcome to this demonstration version of Hospitality HouseKeeper! Do NOT use real guest or patient names.  This demonstration web site is not HIPAA complient and not intended to be used for storing Protected Health Information.';
+}
+
+
 $volSiteURL = $config->get("site", "Volunteer_URL", "");
 $tutorialSiteURL = $config->getString('site', 'Tutorial_URL'. '');
 $build = 'Build:' . $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
@@ -119,7 +125,7 @@ if ($isHttps)
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title><?php echo $pageTitle; ?></title>
+        <title><?php echo $uS->siteName; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <script type="text/javascript" src="../<?php echo MD5_JS; ?>"></script>
@@ -131,7 +137,7 @@ if ($isHttps)
     <body <?php if ($uS->testVersion) { echo "class='testbody'"; } ?>>
         <div id="page">
             <div class='pageSpacer'>
-                <h2 style="color:white"><?php echo $pageTitle; ?></h2>
+                <h2 style="color:white"><?php echo $uS->siteName; ?></h2>
             </div>
             <div style="float:right;font-size: .6em;margin-right:2px;"><?php echo $build; ?></div>
             <div id="contentDiv">

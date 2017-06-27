@@ -291,11 +291,6 @@ function encryptNotes($input, $pw) {
     return $crypt;
 }
 
-function decryptMessage($encrypt) {
-
-    return encrypt_decrypt('decrypt', $encrypt, getKey(), getIV());
-}
-
 function decryptNotes($encrypt, $pw) {
     $clear = "";
 
@@ -307,6 +302,12 @@ function decryptNotes($encrypt, $pw) {
 
     return $clear;
 }
+
+function decryptMessage($encrypt) {
+
+    return encrypt_decrypt('decrypt', $encrypt, getKey(), getIV());
+}
+
 
 /**
  * simple method to encrypt or decrypt a plain text string
@@ -328,8 +329,8 @@ function encrypt_decrypt($action, $string, $secret_key, $secret_iv) {
     // iv - encrypt method AES-256-CBC expects 16 bytes - else you will get a warning
     $iv = substr(hash('sha256', $secret_iv), 0, 16);
     if ( $action == 'encrypt' ) {
-        $output = openssl_encrypt($string, $encrypt_method, $key, 0, $iv);
-        $output = base64_encode($output);
+        $output = base64_encode(openssl_encrypt($string, $encrypt_method, $key, 0, $iv));
+
     } else if( $action == 'decrypt' ) {
         $output = openssl_decrypt(base64_decode($string), $encrypt_method, $key, 0, $iv);
     }
