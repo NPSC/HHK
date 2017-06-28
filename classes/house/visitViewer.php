@@ -322,22 +322,15 @@ class VisitView {
         $undoCkoutButton = '';
 
 
-        // Make undo checkout button.  Only allow undo for 5 days after end of visit.
+        // Make undo checkout button.
         if ($r['Status'] == VisitStatus::CheckedOut && $isAdmin) {
 
-            $actualDepartDT = new \DateTime($r['Actual_Departure']);
-            $actualDepartDT->add(new \DateInterval('P15D'));
-            $nowDT = new \DateTime();
+            $spnMkup = HTMLContainer::generateMarkup('label', '- Undo Checkout', array('for'=>'undoCkout'))
+                    . HTMLInput::generateMarkup('', array('id'=>'undoCkout', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.3em;margin-left:0.3em;'))
+                    . HTMLContainer::generateMarkup('span', 'New Expected Departure Date: ', array('style'=>'margin-right: 0.3em; margin-left:0.3em;'))
+                    . HTMLInput::generateMarkup('', array('id'=>'txtUndoDate', 'class'=>'ckdateFut hhk-feeskeys'));
 
-            if ($actualDepartDT >= $nowDT) {
-
-                $spnMkup = HTMLContainer::generateMarkup('label', '- Undo Checkout', array('for'=>'undoCkout'))
-                        . HTMLInput::generateMarkup('', array('id'=>'undoCkout', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.3em;margin-left:0.3em;'))
-                        . HTMLContainer::generateMarkup('span', 'New Expected Departure Date: ', array('style'=>'margin-right: 0.3em; margin-left:0.3em;'))
-                        . HTMLInput::generateMarkup('', array('id'=>'txtUndoDate', 'class'=>'ckdateFut hhk-feeskeys'));
-
-                $undoCkoutButton = HTMLContainer::generateMarkup('span', $spnMkup, array('style'=>'margin:0 1em;', 'title'=>'Undo Checkout'));
-            }
+            $undoCkoutButton = HTMLContainer::generateMarkup('span', $spnMkup, array('style'=>'margin:0 1em;', 'title'=>'Undo Checkout'));
 
         } else if ($r['Status'] == VisitStatus::NewSpan) {
 

@@ -910,12 +910,12 @@ class HouseServices {
         // only allow 15 days to undo the checkout
         $actDeptDT = new \DateTime($visit->getActualDeparture());
 
-        $fulcrumDT = new \DateTime();
-        $fulcrumDT->sub(new \DateInterval('P15D'));
-
-        if ($actDeptDT < $fulcrumDT) {
-            $reply .= 'Cannot undo a checkout after 15 days.  ';
-        }
+//        $fulcrumDT = new \DateTime();
+//        $fulcrumDT->sub(new \DateInterval('P15D'));
+//
+//        if ($actDeptDT < $fulcrumDT) {
+//            $reply .= 'Cannot undo a checkout after 15 days.  ';
+//        }
 
 
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $visit->getReservationId(), $visit->getIdVisit());

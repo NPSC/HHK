@@ -270,7 +270,7 @@ class Visit {
         return TRUE;
     }
 
-    protected function saveNewStays(\PDO $dbh, $username) {
+    public function saveNewStays(\PDO $dbh, $username) {
 
         foreach ($this->stays as $stayRS) {
 
@@ -1351,7 +1351,7 @@ class Visit {
             }
         }
 
-        $this->checkInStays($dbh, $uname);
+        $this->saveNewStays($dbh, $uname);
 
     }
 

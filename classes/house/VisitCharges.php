@@ -455,7 +455,7 @@ class SpanRateData {
 
         // Figure days stayed
         $this->currentDays = abs($r['days']);
-        
+
         if (isset($r['gdays'])) {
             $this->currentGuestDays = abs($r['gdays']);
         } else {
