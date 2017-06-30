@@ -1194,7 +1194,7 @@ $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Ref. Agent')
 
 // Hospital
 if (count($hospList) > 1) {
-    
+
     if (count($aList) > 0) {
         $cFields[] = array("Hospital / Assoc", 'hospitalAssoc', 'checked', '', 's', '', array());
     } else {
@@ -1456,7 +1456,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
-        
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
@@ -1470,7 +1470,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
 
 <script type="text/javascript">
     $(document).ready(function() {
-        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
+        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
         var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';
         var makeTable = '<?php echo $mkTable; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');

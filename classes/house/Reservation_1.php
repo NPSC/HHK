@@ -422,7 +422,7 @@ class Reservation_1 {
      * @param bool $omitSelf
      * @return array of resource objects
      */
-    public function findResources(PDO $dbh, $expectedArrival, $expectedDeparture, $numOccupants, array $resourceTypes, $omitSelf = FALSE) {
+    public function findResources(\PDO $dbh, $expectedArrival, $expectedDeparture, $numOccupants, array $resourceTypes, $omitSelf = FALSE) {
 
         $this->untestedResources = $this->loadAvailableResources($dbh, $expectedArrival, $expectedDeparture, $numOccupants, $resourceTypes, $omitSelf);
 
@@ -443,7 +443,7 @@ class Reservation_1 {
      * @param bool $omitSelf
      * @return array of Resource objects .
      */
-    public function findGradedResources(PDO $dbh, $expectedArrival, $expectedDeparture, $numOccupants, array $resourceTypes, $omitSelf = FALSE) {
+    public function findGradedResources(\PDO $dbh, $expectedArrival, $expectedDeparture, $numOccupants, array $resourceTypes, $omitSelf = FALSE) {
 
         $this->untestedResources = $this->loadAvailableResources($dbh, $expectedArrival, $expectedDeparture, $numOccupants, $resourceTypes, $omitSelf);
         $this->availableResources = array();
@@ -483,7 +483,7 @@ class Reservation_1 {
      * @param bool $omitSelf
      * @return boolean
      */
-    public function isResourceOpen(PDO $dbh, $idResource, $expectedArrival, $expectedDeparture, $numOccupants, array $resourceTypes, $omitSelf = FALSE, $isAuthorized = FALSE) {
+    public function isResourceOpen(\PDO $dbh, $idResource, $expectedArrival, $expectedDeparture, $numOccupants, array $resourceTypes, $omitSelf = FALSE, $isAuthorized = FALSE) {
 
         // Only check if its a real room
         if ($idResource > 0) {
@@ -502,7 +502,7 @@ class Reservation_1 {
 
     }
 
-    protected function loadAvailableResources(PDO $dbh, $expectedArrival, $expectedDeparture, $numOccupants, array $resourceTypes, $omitSelf = FALSE) {
+    protected function loadAvailableResources(\PDO $dbh, $expectedArrival, $expectedDeparture, $numOccupants, array $resourceTypes, $omitSelf = FALSE) {
 
         if ($expectedArrival == '' || $expectedDeparture == '') {
             return array();
@@ -525,13 +525,13 @@ class Reservation_1 {
 
 
         // Get the list of available resources
-        $stmtr = $dbh->prepare("select rc.*, sum(r.Max_Occupants) as `Max_Occupants`
+        $stmtr = $dbh->query("select rc.*, sum(r.Max_Occupants) as `Max_Occupants`
 from resource rc join resource_room rr on rc.idResource = rr.idResource left join `room` r on r.idRoom = rr.idRoom
-where $typeList group by rc.idResource having `Max_Occupants` >= :num order by rc.Util_Priority;");
-        $stmtr->execute(array(':num'=>$numOccupants));
+where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants order by rc.Util_Priority;");
+
         $rescRows = array();
 
-        foreach ($stmtr->fetchAll(PDO::FETCH_ASSOC) as $re) {
+        foreach ($stmtr->fetchAll(\PDO::FETCH_ASSOC) as $re) {
             $rescRows[$re["idResource"]] = $re;
         }
 
@@ -561,15 +561,14 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
         $statuses = "'" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Committed . "'";
 
         //
-        $query = "select r.idReservation from reservation r where r.idResource = :idr and r.Status in ($statuses) and ifnull(r.Actual_Arrival, r.Expected_Arrival) <= :dtend and ifnull(r.Actual_Departure, r.Expected_Departure) > :start";
-        $stmt = $dbh->prepare($query);
-        $stmt->execute(array(
-            ':start'=>$arr,
-            ':dtend'=>$dep,
-            ':idr'=>$idResource));
+        $query = "select r.idReservation from reservation r "
+                . "where r.idResource = $idResource and r.Status in ($statuses) and DATE(ifnull(r.Actual_Arrival, r.Expected_Arrival)) <= DATE('$dep') "
+                . "and DATE(ifnull(r.Actual_Departure, r.Expected_Departure)) > DATE('$arr')";
+        $stmt = $dbh->query($query);
+        
 
         // return an array of resourceId's
-        return $stmt->fetchAll(PDO::FETCH_NUM);
+        return $stmt->fetchAll(\PDO::FETCH_NUM);
 
     }
 
@@ -592,43 +591,36 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
             $omitTxt = " and r.idReservation != " . $this->getIdReservation();
             $omitVisit = " and v.idVisit != " . $this->getIdVisit($dbh);
         }
+        
+        $stat = "'" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "'";
+        $vStat = VisitStatus::Pending;
 
         // Find resources in use
         if ($uS->IncludeLastDay) {
 
             $query = "select r.idResource "
-                . "from reservation r where r.Status in ( :stt , :stt2) $omitTxt and DATE(r.Expected_Arrival) < DATE(:dtend) and DATE(r.Expected_Departure) > DATE(:start)
-    union select ru.idResource from resource_use ru where DATE(ru.Start_Date) < DATE(:ruend) and ifnull(DATE(ru.End_Date), DATE(now())) > DATE(:rustart)
-    union select v.idResource from visit v where v.Status <> :vstat $omitVisit and DATE(v.Arrival_Date) < DATE(:endDate) and
-    ifnull(AddDate(DATE(v.Span_End), -1), case when DATE(now()) >= DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) >= DATE(:beginDate)";
+                . "from reservation r where r.Status in ($stat) $omitTxt and DATE(r.Expected_Arrival) < DATE('$dep') and DATE(r.Expected_Departure) > DATE('$arr')
+    union select ru.idResource from resource_use ru where DATE(ru.Start_Date) < DATE('$dep') and ifnull(DATE(ru.End_Date), DATE(now())) > DATE('$arr')
+    union select v.idResource from visit v where v.Status <> '$vStat' $omitVisit and DATE(v.Arrival_Date) < DATE('$dep') and
+    ifnull(AddDate(DATE(v.Span_End), -1), case when DATE(now()) >= DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) >= DATE('$arr')";
 
         } else {
 
             $query = "select r.idResource "
-                . "from reservation r where r.Status in ( :stt , :stt2) $omitTxt and DATE(r.Expected_Arrival) < DATE(:dtend) and DATE(r.Expected_Departure) > DATE(:start)
-    union select ru.idResource from resource_use ru where DATE(ru.Start_Date) < DATE(:ruend) and ifnull(DATE(ru.End_Date), DATE(now())) > DATE(:rustart)
-    union select v.idResource from visit v where v.Status <> :vstat $omitVisit and DATE(v.Arrival_Date) < DATE(:endDate) and
-    ifnull(DATE(v.Span_End), case when DATE(now()) > DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) > DATE(:beginDate)";
+                . "from reservation r where r.Status in ($stat) $omitTxt and DATE(r.Expected_Arrival) < DATE('$dep') and DATE(r.Expected_Departure) > DATE('$arr')
+    union select ru.idResource from resource_use ru where DATE(ru.Start_Date) < DATE('$dep') and ifnull(DATE(ru.End_Date), DATE(now())) > DATE('$arr')
+    union select v.idResource from visit v where v.Status <> '$vStat' $omitVisit and DATE(v.Arrival_Date) < DATE('$dep') and
+    ifnull(DATE(v.Span_End), case when DATE(now()) > DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) > DATE('$arr')";
         }
 
-        $stmt = $dbh->prepare($query);
-        $stmt->execute(array(
-            ':start'=>$arr,
-            ':dtend'=>$dep,
-            ':rustart'=>$arr,
-            ':ruend'=>$dep,
-            ':beginDate'=>$arr,
-            ':endDate'=>$dep,
-            ':stt'=>ReservationStatus::Committed,
-            ':stt2'=>ReservationStatus::UnCommitted,
-            ':vstat'=>  VisitStatus::Pending));
+        $stmt = $dbh->query($query);
 
         // return an array of resourceId's
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
 
-    protected function testResources(PDO $dbh, $rescRows) {
+    protected function testResources(\PDO $dbh, $rescRows) {
 
         $resources = array();
 
@@ -679,7 +671,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
 
         // Find any constrained rooms.  Comes back with roomId = 0 for no constraints
         $stmt = $dbh->query("call constraint_room(" . $this->getIdReservation() . " );");
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($rows as $r) {
             $roomIds[$r['idEntity']] = '';
@@ -731,7 +723,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
         return FALSE;
     }
 
-    public static function showListByStatus(PDO $dbh, $editPage, $checkinPage, $reservStatus = ReservationStatus::Committed, $shoDirtyRooms = FALSE, $idResc = NULL, $daysAhead = 2, $showConstraints = FALSE) {
+    public static function showListByStatus(\PDO $dbh, $editPage, $checkinPage, $reservStatus = ReservationStatus::Committed, $shoDirtyRooms = FALSE, $idResc = NULL, $daysAhead = 2, $showConstraints = FALSE) {
 
         $dateAhead = new \DateTime();
 
@@ -751,13 +743,13 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
             $stmt->execute(array(':dte'=>$dateAhead->format('Y-m-d')));
         }
 
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         return self::showList($dbh, $rows, $editPage, $checkinPage, $reservStatus, $shoDirtyRooms, $showConstraints);
 
     }
 
-    public static function showList(PDO $dbh, $rows, $editPage, $checkinPage, $reservStatus = ReservationStatus::Committed, $shoDirtyRooms = FALSE, $showConstraints = FALSE) {
+    public static function showList(\PDO $dbh, $rows, $editPage, $checkinPage, $reservStatus = ReservationStatus::Committed, $shoDirtyRooms = FALSE, $showConstraints = FALSE) {
 
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
@@ -788,7 +780,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
                 // Get the list of rooms
                 $stmt = $dbh->query("select rr.idResource, r.* from resource_room rr left join room r on rr.idRoom = r.idRoom");
 
-                while ($rm = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                while ($rm = $stmt->fetch(\PDO::FETCH_ASSOC)) {
                     $rooms[$rm['idResource']] = $rm;
                 }
             }
@@ -984,7 +976,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
         return TRUE;
     }
 
-    public function getIdPsg(PDO $dbh) {
+    public function getIdPsg(\PDO $dbh) {
 
         if ($this->getIdRegistration() == 0) {
 
@@ -1015,7 +1007,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
 
         if ($idResv > 0) {
             $stmt = $dbh->query("select ifnull(rg.idPsg, 0) from reservation r left join registration rg on rg.idRegistration = r.idRegistration where r.idReservation = $id");
-            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
             if (count($rows) > 0) {
                 $idPsg = $rows[0][0];
@@ -1222,7 +1214,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
         if ($this->idVisit < 0 && $this->getIdReservation() > 0) {
 
             $stmt = $dbh->query("Select idVisit from visit where idReservation = " . $this->getIdReservation());
-            $lines = $stmt->fetchAll(PDO::FETCH_NUM);
+            $lines = $stmt->fetchAll(\PDO::FETCH_NUM);
 
             if (count($lines) > 0) {
                 $this->idVisit = $lines[0][0];
@@ -1297,7 +1289,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= :num order by r
 from stays s join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
 where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdReservation());
 
-            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
             $this->numGuests = 0;
 
             if (count($rows > 0)) {
@@ -1332,7 +1324,7 @@ where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdRe
         return $this->reservRs->Actual_Departure->getStoredVal();
     }
 
-    public function getRoomTitle(PDO $dbh) {
+    public function getRoomTitle(\PDO $dbh) {
 
         if ($this->getIdResource() > 0 && $this->roomTitle == '') {
             $resourceRS = new ResourceRS();

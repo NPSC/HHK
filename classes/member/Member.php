@@ -610,14 +610,14 @@ abstract class Member {
         }
 
         // Deceased status checkbox
-        if (isset($post['cbMarker_deceased'])) {
+        if (isset($post[$idPrefix.'cbMarker_deceased'])) {
 
-            if (isset($post['cbdeceased'])) {
+            if (isset($post[$idPrefix.'cbdeceased'])) {
                 // Member deceased
                 $n->Member_Status->setNewVal(MemStatus::Deceased);
 
-                if (isset($post['txtDeathDate']) && $post['txtDeathDate'] != '' && $n->Date_Deceased->getStoredVal() == '') {
-                    $ddec = filter_var($post['txtDeathDate'], FILTER_SANITIZE_STRING);
+                if (isset($post[$idPrefix.'txtDeathDate']) && $post[$idPrefix.'txtDeathDate'] != '' && $n->Date_Deceased->getStoredVal() == '') {
+                    $ddec = filter_var($post[$idPrefix.'txtDeathDate'], FILTER_SANITIZE_STRING);
                     $n->Date_Deceased->setNewVal($ddec);
                 }
 

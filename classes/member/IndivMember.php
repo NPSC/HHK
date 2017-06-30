@@ -229,14 +229,14 @@ class IndivMember extends Member {
         $table->addBodyTr(
                 HTMLTable::makeTd('Birth Date:', array('class'=>'tdlabel'))
                 . HTMLTable::makeTd(
-                        HTMLInput::generateMarkup(($this->get_birthDate() == '' ? '' : date('M j, Y', strtotime($this->get_birthDate()))), array('name'=>'txtBirthDate', 'class'=>'ckbdate'))
+                        HTMLInput::generateMarkup(($this->get_birthDate() == '' ? '' : date('M j, Y', strtotime($this->get_birthDate()))), array('name'=>$idPrefix.'txtBirthDate', 'class'=>'ckbdate'))
                 , array('style'=>'display:table-cell;'))
                 );
 
-        $table->addBodyTr(
-                HTMLTable::makeTd('Birth Month:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd($this->prepBirthMonthMarkup($this->get_bmonth()), array('style'=>'display:table-cell;'))
-                );
+//        $table->addBodyTr(
+//                HTMLTable::makeTd('Birth Month:', array('class'=>'tdlabel'))
+//                . HTMLTable::makeTd($this->prepBirthMonthMarkup($this->get_bmonth()), array('style'=>'display:table-cell;'))
+//                );
 
         foreach ($demos as $d) {
 
@@ -247,7 +247,7 @@ class IndivMember extends Member {
                     . HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(
                                 HTMLSelector::doOptionsMkup($uS->nameLookups[$d[0]], $this->getDemographicsEntry($d[0])),
-                                array('name'=>'sel_' . $d[0])
+                                array('name'=>$idPrefix.'sel_' . $d[0])
                                 )
                         , array('style'=>'display:table-cell;')
                         )
@@ -261,7 +261,7 @@ class IndivMember extends Member {
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $this->nameRS->Name_Previous,
-                                array('name'=>'txtPreviousName', 'size'=>'9')
+                                array('name'=>$idPrefix.'txtPreviousName', 'size'=>'9')
                                 )
                         , array('style'=>'display:table-cell;')
                         )
@@ -269,7 +269,7 @@ class IndivMember extends Member {
 
 
         // Newsletter
-        $nlAttr = array('type'=>'checkbox', 'name'=>'cbnewsltr', 'title'=>'Receive our newsletter?');
+        $nlAttr = array('type'=>'checkbox', 'name'=>$idPrefix.'cbnewsltr', 'title'=>'Receive our newsletter?');
         if ($this->demogRS->Newsletter->getStoredVal() > 0) {
             $nlAttr['checked'] = 'checked';
         }
@@ -284,7 +284,7 @@ class IndivMember extends Member {
 
 
         // Photo permissions
-        $ppAttr = array('type'=>'checkbox', 'name'=>'cbphotoperm', 'title'=>'Permission for using photos?');
+        $ppAttr = array('type'=>'checkbox', 'name'=>$idPrefix.'cbphotoperm', 'title'=>'Permission for using photos?');
         if ($this->demogRS->Photo_Permission->getStoredVal() > 0) {
             $ppAttr['checked'] = 'checked';
         }
@@ -303,7 +303,7 @@ class IndivMember extends Member {
             . HTMLTable::makeTd(
                     HTMLSelector::generateMarkup(
                             HTMLSelector::doOptionsMkup($uS->nameLookups['NoReturnReason'], $this->getNoReturnDemog(), TRUE)
-                                ,array('name'=>'selnoReturn', 'title'=>'Set No Return reason'))
+                                ,array('name'=>$idPrefix.'selnoReturn', 'title'=>'Set No Return reason'))
                     , array('style'=>'display:table-cell;', 'title'=>'Set No Return reason')
                     )
             );
@@ -312,7 +312,7 @@ class IndivMember extends Member {
         $tbl2 = new HTMLTable();
 
         // Deceased checkbox and date
-        $deAttr = array('type'=>'checkbox', 'name'=>'cbdeceased', 'title'=>'Check if deceased.');
+        $deAttr = array('type'=>'checkbox', 'name'=>$idPrefix.'cbdeceased', 'title'=>'Check if deceased.');
         $dateAttr = array('style'=>'display:none;', 'id'=>'disp_deceased');
 
         if ($this->get_status() == MemStatus::Deceased) {
@@ -321,9 +321,11 @@ class IndivMember extends Member {
         }
 
         $tbl2->addBodyTr(
-                HTMLTable::makeTd('Deceased: ' . HTMLInput::generateMarkup('', $deAttr) . HTMLInput::generateMarkup('', array('type'=>'hidden','name'=>'cbMarker_deceased')), array('class'=>'tdlabel', 'title'=>'Check if deceased.'))
+                HTMLTable::makeTd('Deceased: ' . HTMLInput::generateMarkup('', $deAttr)
+                        . HTMLInput::generateMarkup('0', array('type'=>'hidden','name'=>'cbMarker_deceased'))
+                        , array('class'=>'tdlabel', 'title'=>'Check if deceased.'))
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('div',
-                        'Date: ' . HTMLInput::generateMarkup(($this->get_DateDeceased() == '' ? '' : date('M j, Y', strtotime($this->get_DateDeceased()))), array('name'=>'txtDeathDate', 'class'=>'ckbdate')), $dateAttr))
+                        'Date: ' . HTMLInput::generateMarkup(($this->get_DateDeceased() == '' ? '' : date('M j, Y', strtotime($this->get_DateDeceased()))), array('name'=>$idPrefix.'txtDeathDate', 'class'=>'ckbdate')), $dateAttr))
                 );
 
         // Language
@@ -355,7 +357,7 @@ class IndivMember extends Member {
                 . HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(
                                 HTMLSelector::doOptionsMkup($langs, $choices, FALSE),
-                                array('name'=>'selLanguage[]', 'class'=>'hhk-multisel', 'title'=>'Choose languages', 'multiple'=>'multiple', 'size'=>'2')
+                                array('name'=>$idPrefix.'selLanguage[]', 'class'=>'hhk-multisel', 'title'=>'Choose languages', 'multiple'=>'multiple', 'size'=>'2')
                                 )
                         , array('style'=>'display:table-cell;')
                         )
@@ -656,12 +658,12 @@ class IndivMember extends Member {
 
         foreach ($demos as $d) {
 
-            if (isset($post['sel_' . $d[0]])) {
+            if (isset($post[$idPrefix.'sel_' . $d[0]])) {
 
                 $field = $this->getDemographicField($d[0]);
 
                 if (is_null($field) === FALSE) {
-                    $field->setNewVal(filter_var($post['sel_' . $d[0]], FILTER_SANITIZE_STRING));
+                    $field->setNewVal(filter_var($post[$idPrefix.'sel_' . $d[0]], FILTER_SANITIZE_STRING));
                 }
             }
         }

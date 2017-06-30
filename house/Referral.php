@@ -62,8 +62,6 @@ try {
 
 $dbh = $wInit->dbh;
 
-$pageTitle = $wInit->pageTitle;
-
 // get session instance
 $uS = Session::getInstance();
 
@@ -91,7 +89,36 @@ if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)
     $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
 }
 
+if (isset($_POST['hdnCfmRid'])) {
 
+    $idReserv = intval(filter_var($_POST['hdnCfmRid'], FILTER_SANITIZE_NUMBER_INT), 10);
+    $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
+
+    $idGuest = $resv->getIdGuest();
+
+    $guest = new Guest($dbh, '', $idGuest);
+
+    $notes = '';
+    if (isset($_POST['tbCfmNotes'])) {
+        $notes = filter_var($_POST['tbCfmNotes'], FILTER_SANITIZE_STRING);
+    }
+
+    require(HOUSE . 'ConfirmationForm.php');
+
+    $confirmForm = new ConfirmationForm($uS->ConfirmFile);
+
+    $formNotes = $confirmForm->createNotes($notes, FALSE);
+    $form = '<!DOCTYPE html>' . $confirmForm->createForm($dbh, $resv, $guest, 0, $formNotes);
+
+    header('Content-Disposition: attachment; filename=confirm.doc');
+    header("Content-Description: File Transfer");
+    header('Content-Type: text/html');
+    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+    header('Expires: 0');
+
+    echo($form);
+    exit();
+}
 
 if (isset($uS->cofrid)) {
     $idReserv = $uS->cofrid;
@@ -151,7 +178,7 @@ $resultMessage = $alertMsg->createMarkup();
 <html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title><?php echo $pageTitle; ?></title>
+        <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
 
@@ -170,9 +197,7 @@ $resultMessage = $alertMsg->createMarkup();
             </div>
             <div style="clear:both"></div>
             <form  action="Referral.php" method="post"  id="form1">
-                <div id="hospitalSection" style="font-size: .9em; padding-left:0;margin-top:0; float:left; display:none;"  class="ui-widget hhk-panel hhk-visitdialog"></div>
-                <div style="clear:both;"></div>
-                <div id="patientSection" style="display:none; font-size: .9em; padding-left:0; margin-top:0; clear:left; float:left; min-width: 610px;" class="ui-widget hhk-panel  hhk-visitdialog">
+                <div id="patientSection" style="display:none; font-size: .9em; padding-left:0; margin-top:0;margin-bottom:1em; clear:left; float:left; min-width: 810px;" class="ui-widget hhk-panel  hhk-visitdialog">
                     <?php echo $pmkup; ?>
                 </div>
                 <div id="guestAccordion" style="font-size: .9em; padding-left:0; margin-top:0; margin-bottom:1em; clear:left; float:left; min-width: 810px;" class="ui-widget hhk-panel  hhk-visitdialog">
@@ -180,6 +205,8 @@ $resultMessage = $alertMsg->createMarkup();
                 <div id="guestSearch" style="padding-left:0;padding-top:0; clear:left; float:left; font-size: .9em;">
                     <?php echo $mk1; ?>
                 </div>
+                <div id="hospitalSection" style="font-size: .9em; padding-left:0;margin-top:0; margin-bottom:1em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-panel hhk-visitdialog"></div>
+
                 <div id="rescList" style="clear:left; float:left; font-size: .9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 </div>
                 <div id="rate" style="float:left; font-size: .9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
@@ -210,7 +237,9 @@ $resultMessage = $alertMsg->createMarkup();
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="resDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
-            <div id="confirmDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;"></div>
+            <div id="confirmDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;">
+                <form id="frmConfirm" action="Referral.php" method="post"></form>
+            </div>
             <div id="psgDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;"></div>
             <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
         </div>  <!-- div id="contentDiv"-->

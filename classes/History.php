@@ -137,7 +137,7 @@ class History {
 
         if (is_null($this->resvEvents)) {
 
-            $query = "select * from vreservation_events where Status = '$status' $whDate order by Expected_Arrival";
+            $query = "select * from vreservation_events where Status = '$status' $whDate";
             $stmt = $dbh->query($query);
             $this->resvEvents = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
@@ -179,6 +179,19 @@ class History {
                 $fixedRows['Guest Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?rid=" . $r["idReservation"]));
             } else {
                 $fixedRows['Guest Last'] = $r['Guest Last'];
+            }
+            
+            // Date reservation is filed.
+            if ($status == ReservationStatus::Waitlist) {
+                
+                $bDay = new \DateTime($r['Timestamp']);
+                $bDay->setTime(10, 0, 0);
+
+                if ($static) {
+                    $fixedRows['Timestamp'] = $bDay->format('n/d/Y');
+                } else {
+                    $fixedRows['Timestamp'] = $bDay->format('c');
+                }
             }
 
 

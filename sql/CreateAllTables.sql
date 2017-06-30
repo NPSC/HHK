@@ -2077,6 +2077,9 @@ ALTER TABLE `reservation`
 ALTER TABLE `reservation` 
     ADD INDEX `Index_Expected_Departure` (`Expected_Departure` ASC);
 
+ALTER TABLE `resource_room` 
+    ADD INDEX `Index_idResource` (`idResource` ASC);
+
 ALTER TABLE `resource_use` 
     ADD INDEX `Index_idResource` (`idResource` ASC);
 

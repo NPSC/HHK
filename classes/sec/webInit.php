@@ -48,6 +48,14 @@ class webInit {
         $this->testVersion = $uS->testVersion;
         $this->siteName = $uS->siteName;
         $this->resourceURL = $uS->resourceURL;
+        $this->menuTitle = $this->siteName;
+        $this->pageTitle = $this->siteName;
+
+        // Demo or training version?
+        if ($uS->mode !== Mode::Live) {
+            $this->menuTitle = $this->siteName . " " . ucfirst($uS->mode);
+            $this->pageTitle = ucfirst($uS->mode) . " - " . $this->siteName;
+        }
 
         /*
         * if test version, put a big TEST on the page
@@ -55,9 +63,6 @@ class webInit {
         if ($this->testVersion !== FALSE) {
             $this->menuTitle = "TEST VERSION";
             $this->pageTitle = "TEST - " . $this->siteName;
-        } else {
-            $this->menuTitle = $this->siteName;
-            $this->pageTitle = $this->siteName;
         }
 
         // define db connection obj

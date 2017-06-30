@@ -94,7 +94,7 @@ class RoomChooser {
         return $this->selectedResource;
     }
 
-    public static function moreRoomsMarkup($currentRoomCount, $isChecked, $currentlyCheckedIn = TRUE) {
+    public static function moreRoomsMarkup($currentRoomCount, $isChecked, $currentStatus = ReservationStatus::Staying) {
 
         $attrs = array('id'=>'cbAddnlRoom', 'type'=>'checkbox', 'style'=>'margin-right:.3em;');
 
@@ -104,10 +104,22 @@ class RoomChooser {
 
         $title = 'Currently reserving ';
 
-        if ($currentlyCheckedIn) {
-            $title = 'Currently using ';
+        switch ($currentStatus) {
+            
+            case ReservationStatus::Staying:
+                $title = 'Currently using ';
+                break;
+            
+            case ReservationStatus::Committed:
+            case ReservationStatus::UnCommitted:
+                $title = 'Currently reserving ';
+                break;
+            
+            case ReservationStatus::Waitlist:
+                $title = 'Currently waitlisted for ';
+                break;
         }
-
+        
         // fieldset wrapper
         $mk1 = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('fieldset',

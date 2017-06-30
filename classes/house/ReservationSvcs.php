@@ -1580,7 +1580,7 @@ class ReservationSvcs {
 
             if ($rcount[0][0] < $uS->RoomsPerPatient) {
                 // Include Additional Room Query
-                $additionalRoomMkup = RoomChooser::moreRoomsMarkup($rcount[0][0], FALSE, FALSE);
+                $additionalRoomMkup = RoomChooser::moreRoomsMarkup($rcount[0][0], FALSE, $resv->getStatus());
             } else {
                 $additionalRoomMkup = HTMLContainer::generateMarkup('p', 'Already using the maximum of ' . $uS->RoomsPerPatient . ' rooms per patient.', array('style'=>'margin:.3em;'));
             }
@@ -1663,39 +1663,38 @@ class ReservationSvcs {
         return 1;
     }
 
-    public static function getConfirmForm(\PDO $dbh, $idReservation, $amount, $sendEmail = FALSE, $notes = '-', $emailAddr = '') {
+    public static function getConfirmForm(\PDO $dbh, $idReservation, $idGuest, $amount, $sendEmail = FALSE, $notes = '', $emailAddr = '') {
 
         if ($idReservation == 0) {
             return array('error'=>'Bad reservation Id: ' . $idReservation);
         }
 
+        require(HOUSE . 'ConfirmationForm.php');
         $uS = Session::getInstance();
         $dataArray = array();
-
+        
         $reserv = Reservation_1::instantiateFromIdReserv($dbh, $idReservation);
-
-        $guest = new Guest($dbh, '', $reserv->getIdGuest());
-
-        $expectedDays = $reserv->getExpectedDays($reserv->getExpectedArrival(), $reserv->getExpectedDeparture());
-
-        if ($emailAddr == '') {
-            $emAddr = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
-            $emailAddr = $emAddr["Email"];
+        
+        if ($idGuest == 0) {
+            $idGuest = $reserv->getIdGuest();
         }
+        
+        $guest = new Guest($dbh, '', $idGuest);
 
-        require(HOUSE . 'ConfirmationForm.php');
+        $confirmForm = new ConfirmationForm($uS->ConfirmFile);
+        
+        $formNotes = $confirmForm->createNotes($notes, !$sendEmail);
+        
+        $form = $confirmForm->createForm($dbh, $reserv, $guest, $amount, $formNotes);
 
-        $form = ConfirmationForm::createForm(
-                ConfirmationForm::getFormTemplate($uS->ConfirmFile),
-                $guest->getNameObj()->get_fullName(),
-                $reserv->getExpectedArrival(),
-                $reserv->getExpectedDeparture(),
-                $expectedDays,
-                floatval($amount),
-                $notes);
 
         if ($sendEmail) {
 
+            if ($emailAddr == '') {
+                $emAddr = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
+                $emailAddr = $emAddr["Email"];
+            }
+            
             if ($emailAddr != '') {
 
                 $config = new Config_Lite(ciCFG_FILE);
@@ -1736,7 +1735,8 @@ class ReservationSvcs {
             }
 
         } else {
-            $dataArray['confrv'] = $form;
+
+            $dataArray['confrv'] = utf8_decode($form);
             $dataArray['email'] = $emailAddr;
         }
 

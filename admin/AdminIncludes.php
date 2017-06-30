@@ -15,14 +15,17 @@ define( 'DS', DIRECTORY_SEPARATOR );
 define('P_ROOT', dirname(__FILE__) . DS );
 
 
-// FInd the third party directory
-$dirxx = '../turdParty';
+// FInd the vendor directory
+$dirxx = '../vendor';
 if (file_exists($dirxx) === FALSE) {
-    $dirxx = '../../turdParty';
+    $dirxx = '../../vendor';
     if (file_exists($dirxx) === FALSE) {
-        $dirxx = '../../../turdParty';
+        $dirxx = '../../../vendor';
         if (file_exists($dirxx) === FALSE) {
-            throw new Exception('Cannot find the turdParty directory.');
+            $dirxx = '../../../../vendor';
+            if (file_exists($dirxx) === FALSE) {
+                throw new Exception('Cannot find the vendor directory.');
+            }
         }
     }
 }

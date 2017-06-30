@@ -167,8 +167,14 @@ class PaymentManager {
                         ->sumCurrentRoomCharge($dbh, $this->pmp->priceModel, $roomCharges, TRUE);
 
 
+                $nitesPaid = $this->pmp->visitCharges->getNightsPaid();
+
+                if ($nitesPaid < 0) {
+                    $nitesPaid = 0;
+                }
+
                 $paidThruDT = new \DateTime($visit->getArrivalDate());
-                $paidThruDT->add(new \DateInterval('P' . $this->pmp->visitCharges->getNightsPaid() . 'D'));
+                $paidThruDT->add(new \DateInterval('P' . $nitesPaid . 'D'));
                 $paidThruDT->setTime(0, 0, 0);
 
                 $endPricingDT = new \DateTime($paidThruDT->format('Y-m-d H:i:s'));

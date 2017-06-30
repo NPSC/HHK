@@ -263,7 +263,7 @@ class VisitView {
         // Weekender button
         if ($r['Status'] == VisitStatus::CheckedIn && $extendVisitDays > 0 && $action != 'ref') {
             $etbl = new HTMLTable();
-            
+
             $olStmt = $dbh->query("select sum(On_Leave) from `stays` where `stays`.`idVisit` = " . $r['idVisit'] . " and `stays`.`Status` = 'a' ");
             $olRows = $olStmt->fetchAll();
 
@@ -322,22 +322,15 @@ class VisitView {
         $undoCkoutButton = '';
 
 
-        // Make undo checkout button.  Only allow undo for 5 days after end of visit.
+        // Make undo checkout button.
         if ($r['Status'] == VisitStatus::CheckedOut && $isAdmin) {
 
-            $actualDepartDT = new \DateTime($r['Actual_Departure']);
-            $actualDepartDT->add(new \DateInterval('P15D'));
-            $nowDT = new \DateTime();
+            $spnMkup = HTMLContainer::generateMarkup('label', '- Undo Checkout', array('for'=>'undoCkout'))
+                    . HTMLInput::generateMarkup('', array('id'=>'undoCkout', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.3em;margin-left:0.3em;'))
+                    . HTMLContainer::generateMarkup('span', 'New Expected Departure Date: ', array('style'=>'margin-right: 0.3em; margin-left:0.3em;'))
+                    . HTMLInput::generateMarkup('', array('id'=>'txtUndoDate', 'class'=>'ckdateFut hhk-feeskeys'));
 
-            if ($actualDepartDT >= $nowDT) {
-
-                $spnMkup = HTMLContainer::generateMarkup('label', '- Undo Checkout', array('for'=>'undoCkout'))
-                        . HTMLInput::generateMarkup('', array('id'=>'undoCkout', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.3em;margin-left:0.3em;'))
-                        . HTMLContainer::generateMarkup('span', 'New Expected Departure Date: ', array('style'=>'margin-right: 0.3em; margin-left:0.3em;'))
-                        . HTMLInput::generateMarkup('', array('id'=>'txtUndoDate', 'class'=>'ckdateFut hhk-feeskeys'));
-
-                $undoCkoutButton = HTMLContainer::generateMarkup('span', $spnMkup, array('style'=>'margin:0 1em;', 'title'=>'Undo Checkout'));
-            }
+            $undoCkoutButton = HTMLContainer::generateMarkup('span', $spnMkup, array('style'=>'margin:0 1em;', 'title'=>'Undo Checkout'));
 
         } else if ($r['Status'] == VisitStatus::NewSpan) {
 
@@ -1212,14 +1205,14 @@ class VisitView {
                 // Checked-Out visits cannot move their end date beyond todays date.
                 if ($vRs->Status->getStoredVal() == VisitStatus::CheckedOut) {
                     if ($newEndDt > $tonight) {
-                        return 'Checked-Out visits cannot move their end date beyond todays date';
+                        return 'Checked-Out visits cannot move their end date beyond todays date  Use Undo Checkout instead. ';
                     }
                 }
 
                 // Checked-in visits cannot move their start date beyond today's date.
                 if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
                     if ($newStartDT > $tonight) {
-                        return 'Checked-in visits cannot move their start date beyond todays date.';
+                        return 'Checked-in visits cannot move their start date beyond todays date. ';
                     }
                 }
             }
@@ -1227,14 +1220,14 @@ class VisitView {
 
             // Check visits first.
             $query = "select v.idResource from vregister v where v.Visit_Status <> :vstat and v.idVisit != :visit and v.idResource = :idr and
-        DATE(v.Arrival_Date) < :endDate
-        AND DATEDIFF(IFNULL(DATE(v.Actual_Departure),
+        DATE(v.Span_Start) < :endDate
+        AND DATEDIFF(IFNULL(DATE(v.Span_End),
                     CASE
                         WHEN NOW() > DATE(v.Expected_Departure) THEN ADDDATE(NOW(), 1)
                         ELSE DATE(v.Expected_Departure)
                     END),
-            v.Arrival_Date) != 0 and
-        ifnull(DATE(v.Actual_Departure), case when now() > DATE(v.Expected_Departure) then AddDate(now(), 1) else DATE(v.Expected_Departure) end) > :beginDate";
+            v.Span_Start) != 0 and
+        ifnull(DATE(v.Span_End), case when now() > DATE(v.Expected_Departure) then AddDate(now(), 1) else DATE(v.Expected_Departure) end) > :beginDate";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
                 ':beginDate'=>$newStartDT->format('Y-m-d'),

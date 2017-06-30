@@ -19,12 +19,6 @@ Define('NEWLINE', "\n");
  */
 class Receipt {
 
-//    public $guestObj;
-//    public $guestName;
-//    public $guestEmail;
-//    public $emailFlag;
-
-
     public static function createSaleMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, $logoUrl, PaymentResponse $payResp) {
 
         // Assemble the statement
@@ -393,7 +387,6 @@ where
                 'exdep'=>$v['Expected_Departure'],
                 'expEnd'=>$expDepStr,
                 'days'=>$v['Actual_Span_Nights'],
-                'gdays'=>$v['Guest_Nights'],
                 'vfa'=>$v['Visit_Fee_Amount']);
 
             if (isset($v['Name_First']) && isset($v['Name_Last'])) {
@@ -406,6 +399,10 @@ where
                 $rates[$rateCounter]['depAmt'] = $v['Deposit_Amount'];
             } else {
                 $rates[$rateCounter]['depAmt'] = 0;
+            }
+            
+            if (isset($v['Guest_Nights'])) {
+                $rates[$rateCounter]['gdays'] = $v['Guest_Nights'];
             }
 
             if (isset($v['AmountPaid'])) {
@@ -611,7 +608,8 @@ where
             $endDT->setTime(0,0,0);
             $days = $startDT->diff($endDT, TRUE)->days;
 
-            if ($r['days'] > 0) {
+            if ($r['days'] > 0 && isset($r['gdays'])) {
+                $guestNites += $r['gdays'];
                 $gDayRatio = $r['gdays'] / $r['days'];
             } else {
                 $gDayRatio = 1;
@@ -622,8 +620,7 @@ where
             $tiers = $priceModel->tiersCalculation($days, $r['idrate'], $r['cat'], $r['amt'], $r['adj'], floor($days * $gDayRatio));
 
             $numberNites += $days;
-            $guestNites += $r['gdays'];
-
+            
             // Mention rate aging ....
             if ($r['glide'] > 0 && $priceModel->getGlideApplied() && $r['span'] == 0) {
                 $tbl->addBodyTr(

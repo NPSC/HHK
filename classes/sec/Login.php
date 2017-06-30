@@ -62,7 +62,7 @@ class Login {
         $ssn->tz = $config->getString('calendar', 'TimeZone', 'America/Chicago');
         $ssn->ver = $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
         $ssn->ssl = $ssl;
-        $ssn->mode = $config->getString('site', 'Mode', 'live');
+        $ssn->mode = strtolower($config->getString('site', 'Mode', 'live'));
         $ssn->sconf = 'sys_config';
         $ssn->sId = $config->getString('site', 'Site_Id', '');
         $ssn->subsidyId = $config->getString('financial', 'RoomSubsidyId', '0');

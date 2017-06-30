@@ -70,6 +70,10 @@ function dateRender(data, type, format) {
         if (data === null || data === '') {
             return '';
         }
+        
+        if (!format || format === '') {
+            format = 'MMM D, YYYY';
+        }
 
         return moment(data).format(format);
     }

@@ -38,6 +38,7 @@ require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
+
 require (PMT . 'Payments.php');
 require (PMT . 'TokenTX.php');
 require (PMT . 'HostedPayments.php');
@@ -216,10 +217,21 @@ try {
                 $idresv = intval(filter_var($_POST['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
+            $idGuest = 0;
+            if (isset($_POST['gid'])) {
+                $idGuest = intval(filter_var($_POST['gid'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
             $amount = 0.00;
             if (isset($_POST['amt'])) {
                 $amount = filter_var($_POST['amt'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
             }
+
+            $notes = '-';
+            if (isset($_POST['notes'])) {
+                $notes = filter_var($_POST['notes'], FILTER_SANITIZE_STRING);
+            }
+
 
             $sendemail = FALSE;
             if (isset($_POST['eml'])) {
@@ -229,17 +241,12 @@ try {
                 }
             }
 
-            $notes = '-';
-            if (isset($_POST['notes'])) {
-                $notes = filter_var($_POST['notes'], FILTER_SANITIZE_STRING);
-            }
-
             $eaddr = '';
             if (isset($_POST['eaddr'])) {
                 $eaddr = filter_var($_POST['eaddr'], FILTER_SANITIZE_STRING);
             }
 
-            $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $amount, $sendemail, $notes, $eaddr);
+            $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $idGuest, $amount, $sendemail, $notes, $eaddr);
             break;
 
         case 'void':
@@ -968,15 +975,24 @@ try {
 } catch (PDOException $ex) {
     $events = array("error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
 } catch (Hk_Exception $ex) {
-    $events = array("error" => "HouseKeeper Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
+    $events = array("error" => "HouseKeeper Server Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
 } catch (Exception $ex) {
-    $events = array("error" => "Programming Error: " . $ex->getMessage());
+    $events = array("error" => "Web Server Error: " . $ex->getMessage());
 }
 
 
 
 if (is_array($events)) {
-    echo (json_encode($events));
+    
+    $json = json_encode($events);
+    
+    if ($json !== FALSE) {
+        echo ($json);
+    } else {
+        $events = array("error" => "PHP json encoding error: " . json_last_error_msg());
+        echo json_encode($events);
+    }
+    
 } else {
     echo $events;
 }

@@ -442,7 +442,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $numAllGuests = $dataArray['all'];
         $numReturnGuests = max($numAllGuests - $numNewGuests, 0);
 
-        $ratio = 0;
+        $newRatio = 0;
         if ($numAllGuests > 0) {
             $newRatio = ($numNewGuests / $numAllGuests) * 100;
         }
@@ -523,7 +523,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
     $(document).ready(function() {
-        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
+        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
         var makeTable = '<?php echo $mkTable; ?>';
         $('.ckdate').datepicker({
