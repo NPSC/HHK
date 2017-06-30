@@ -54,7 +54,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     IFNULL(ng.idPsg, 0) as `idPsg`,
     IFNULL(hs.idHospital, 0) AS `idHospital`,
     IFNULL(hs.idAssociation, 0) AS `idAssociation`,
-    MIN(DATE(s.Checkin_Date)) AS `First Stay`
+    MIN(s.Checkin_Date) AS `First Stay`
 FROM
     stays s
         JOIN
@@ -65,25 +65,25 @@ FROM
     name_address na ON n.idName = na.idName
         AND n.Preferred_Mail_Address = na.Purpose
         LEFT JOIN
-    name_guest ng ON s.idName = ng.idName
+    hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
         LEFT JOIN
-    hospital_stay hs ON ng.idPsg = hs.idPsg
+    `name_guest` ng ON s.idName = ng.idName and hs.idPsg = ng.idPsg
         LEFT JOIN
     gen_lookups g1 ON g1.`Table_Name` = 'Name_Prefix'
         AND g1.`Code` = n.Name_Prefix
         LEFT JOIN
     gen_lookups g2 ON g2.`Table_Name` = 'Name_Suffix'
         AND g2.`Code` = n.Name_Suffix
-		left join
-	`gen_lookups` `g3` on `g3`.`Table_Name` = 'Patient_Rel_Type'
+	left join
+    `gen_lookups` `g3` on `g3`.`Table_Name` = 'Patient_Rel_Type'
         and `g3`.`Code` = `ng`.`Relationship_Code`
 WHERE
     n.Member_Status != 'TBD'
         AND n.Record_Member = 1
         $whAssoc $whHosp
 GROUP BY s.idName
-HAVING `First Stay` >= DATE('$start')
-    AND `First Stay` < DATE('$end')
+HAVING DATE(`First Stay`) >= DATE('$start')
+    AND DATE(`First Stay`) < DATE('$end')
 ORDER BY `First Stay`";
 
     $stmt = $dbh->query($query);
@@ -515,7 +515,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
-        
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
