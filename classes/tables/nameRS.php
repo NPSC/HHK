@@ -228,7 +228,7 @@ class NameDemogRS extends TableRS {
     public $Income_Bracket;
     public $Education_Level;  // varchar(5) NOT NULL DEFAULT '',
     public $Newsletter;
-    public $Photo_Permission;  // TINYINT(1) NOT NULL DEFAULT 0
+    public $Photo_Permission;
     public $No_Return;  // VARCHAR(5) NOT NULL DEFAULT ''
     public $Ethnicity;  // varchar(45) NOT NULL DEFAULT '',
     public $Media_Source;  // varchar(5) NOT NULL DEFAULT '',
@@ -241,8 +241,8 @@ class NameDemogRS extends TableRS {
       function __construct($TableName = "name_demog") {
 
         $this->idName = new DB_Field("idName", 0, new DbIntSanitizer());
-        $this->Newsletter = new DB_Field("Newsletter", 0, new DbIntSanitizer());
-        $this->Photo_Permission = new DB_Field("Photo_Permission", 0, new DbIntSanitizer());
+        $this->Newsletter = new DB_Field("Newsletter", '', new DbStrSanitizer(5), TRUE, TRUE);
+        $this->Photo_Permission = new DB_Field("Photo_Permission", '', new DbStrSanitizer(5), TRUE, TRUE);
         $this->Gen_Notes = new DB_Field("Gen_Notes", "", new DbStrSanitizer(5000), TRUE, TRUE);
         $this->Contact_Date = new DB_Field("Contact_Date", NULL, new DbDateSanitizer("Y-m-d"), TRUE);
         $this->Orientation_Date = new DB_Field("Orientation_Date", NULL, new DbDateSanitizer("Y-m-d"), TRUE);

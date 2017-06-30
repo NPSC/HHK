@@ -204,6 +204,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Name_Suffix','md','MD.','','',0),
 ('Name_Suffix','phd','Ph.D.','','',0),
 
+
+('Newsletter', 'yes', 'Yes','', 'd', '100');
+('Newsletter', 'no', 'No','', 'd', '110');
+('Newsletter', 'z', 'Unknown', '', 'd', '1000');
+
 ('NoReturnReason', 'n1', 'Irresponsible', '', 'h',0),
 
 ('OOS_Codes', 'sb', 'Sewer Backup','','h',0),
@@ -258,6 +263,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Phone_Type','hw','Office','o','',30),
 ('Phone_Type','mc','Cell','i','',40),
 ('Phone_Type','xf','Fax','','',50),
+
+('Photo_Permission', 'yes', 'Yes', '', 'd', '100');
+('Photo_Permission', 'no', 'No', '', 'd', '110');
+('Photo_Permission', 'z', 'Unknown', '', 'd', '1000');
 
 ('Price_Model','b','Basic','','',0),
 ('Price_Model','d','Daily','','',0),
@@ -462,6 +471,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('RoomsPerPatient', '2', 'i', 'h','# simultaneous rooms per patient allowed'),
 ('RoomRateDefault', 'e', 's', 'h', 'Default room rate category (a, b, c, d, e, x)'),
 ('SessionTimeout', '30', 'i', 'f', 'Number of minutes until an idle session get automatically logged out, 0 = never log out'),
+('ShowDemographics', 'false', 'b', 'h', 'Show demographics selectors on Check in and Reservation pages'),
 ('ShowDiagTB', 'false', 'b', 'h', 'Show the diagnosis textbox (in addition to the diagnosis selector)'),
 ('ShoStaysCtr', 'true', 'b', 'h', 'Show the stays counter on the House Calendar page'),
 ('ShowLodgDates', 'true', 'b', 'h','Show dates on lodging invoice lines'),

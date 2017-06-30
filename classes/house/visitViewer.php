@@ -265,9 +265,9 @@ class VisitView {
             $etbl = new HTMLTable();
 
             $olStmt = $dbh->query("select sum(On_Leave) from `stays` where `stays`.`idVisit` = " . $r['idVisit'] . " and `stays`.`Status` = 'a' ");
-            $olRows = $olStmt->fetchAll();
+            $olRows = $olStmt->fetchAll(\PDO::FETCH_NUM);
 
-            if ($$olRows[0][0] > 0) {
+            if ($olRows[0][0] > 0) {
 
                 $etbl->addHeaderTr(HTMLTable::makeTh(
                         HTMLContainer::generateMarkup('label', 'On Leave', array('for'=>'leaveRetCb', 'style'=>'margin-right:.5em;'))

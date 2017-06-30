@@ -504,7 +504,7 @@ $nameMarkup = $tbl->generateMarkup();  //$name->createMarkupRow('', TRUE, FALSE)
 
 
 // Demographics
-$demogTab = $name->createDemographicsPanel($dbh);
+$demogTab = $name->createDemographicsPanel($dbh, FALSE, FALSE);
 
 // Excludes
 $ta = $name->createExcludesPanel();

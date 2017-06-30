@@ -146,6 +146,7 @@ if (isset($uS->siteList[WebSiteCode::Volunteer])) {
             $('#calendar').fullCalendar('gotoDate', gtDate);
         });
         $('#historyTabs').show();
+        $('#txtsearch').focus();
     });
         </script>
     </head>

@@ -230,8 +230,8 @@ abstract class Role {
 
         // Name
         $message .= $this->getNameObj()->saveChanges($dbh, $post);
-        
-        
+
+
         $incomplete = FALSE;
 
         // Guest Incomplete address
@@ -318,7 +318,6 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return $this->idVisit;
     }
 
-
     public function getNoReturn() {
         $uS = Session::getInstance();
 
@@ -359,8 +358,6 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         }
 
     }
-
-
 
     public function getEmergContactObj(\PDO $dbh) {
 

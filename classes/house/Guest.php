@@ -79,7 +79,6 @@ class Guest extends Role {
         $idPrefix = $this->getNameObj()->getIdPrefix();
         $labels = new Config_Lite(LABEL_FILE);
 
-
         $mk1 = $this->createNameMu($labels, FALSE, $restrictRelChooser);
 
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;min-height:10px;'));
@@ -95,6 +94,17 @@ class Guest extends Role {
                 . $ec->createMarkup($ec, removeOptionGroups($uS->nameLookups[GL_TableNames::RelTypes]), $idPrefix, $this->incompleteEmergContact), array('class'=>'hhk-panel')),
                 array('style'=>'float:left; margin-right:3px;'));
 
+
+        // Demographics
+        if ($uS->ShowDemographics) {
+
+            $mk1 .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
+                    HTMLContainer::generateMarkup('legend', 'Demographics', array('style'=>'font-weight:bold;'))
+                    . $this->getNameObj()->createDemographicsPanel($dbh, TRUE, FALSE), array('class'=>'hhk-panel')),
+                    array('style'=>'float:left; margin-right:3px;'));
+        }
+
+        // Clear float
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
         // Header info
@@ -264,7 +274,7 @@ class Guest extends Role {
         if (isset($post[$idPrefix.'cbEmrgLater'])) {
             $this->incompleteEmergContact = TRUE;
         }
-        
+
         // Also set patient member type if guest is the patient.
         if ($this->patientRelationshipCode == RelLinkType::Self) {
             $message .= $this->getNameObj()->saveMemberType($dbh, $uname, VolMemberType::Patient);

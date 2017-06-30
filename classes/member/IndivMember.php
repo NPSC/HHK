@@ -217,7 +217,7 @@ class IndivMember extends Member {
      *
       * @return string HTML table structure
      */
-    public function createDemographicsPanel(\PDO $dbh) {
+    public function createDemographicsPanel(\PDO $dbh, $limit = FALSE, $includeBirthDate = TRUE) {
 
         $uS = Session::getInstance();
         $idPrefix = $this->idPrefix;
@@ -226,18 +226,7 @@ class IndivMember extends Member {
 
         $table = new HTMLTable();
 
-        $table->addBodyTr(
-                HTMLTable::makeTd('Birth Date:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(
-                        HTMLInput::generateMarkup(($this->get_birthDate() == '' ? '' : date('M j, Y', strtotime($this->get_birthDate()))), array('name'=>$idPrefix.'txtBirthDate', 'class'=>'ckbdate'))
-                , array('style'=>'display:table-cell;'))
-                );
-
-//        $table->addBodyTr(
-//                HTMLTable::makeTd('Birth Month:', array('class'=>'tdlabel'))
-//                . HTMLTable::makeTd($this->prepBirthMonthMarkup($this->get_bmonth()), array('style'=>'display:table-cell;'))
-//                );
-
+        // Demographics
         foreach ($demos as $d) {
 
             if ($d[2] == 'y') {
@@ -255,47 +244,9 @@ class IndivMember extends Member {
             }
         }
 
-
-        $table->addBodyTr(
-                HTMLTable::makeTd('Previous Name:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(
-                        HTMLInput::generateMarkup(
-                                $this->nameRS->Name_Previous,
-                                array('name'=>$idPrefix.'txtPreviousName', 'size'=>'9')
-                                )
-                        , array('style'=>'display:table-cell;')
-                        )
-                );
-
-
-        // Newsletter
-        $nlAttr = array('type'=>'checkbox', 'name'=>$idPrefix.'cbnewsltr', 'title'=>'Receive our newsletter?');
-        if ($this->demogRS->Newsletter->getStoredVal() > 0) {
-            $nlAttr['checked'] = 'checked';
+        if ($limit) {
+            return $table->generateMarkup(array('style'=>'float:left;'));
         }
-
-        $table->addBodyTr(
-                HTMLTable::makeTd('Newsletter:', array('class'=>'tdlabel', 'title'=>'Receive our newsletter?'))
-                . HTMLTable::makeTd(
-                        HTMLInput::generateMarkup('', $nlAttr)
-                        , array('style'=>'display:table-cell;')
-                        )
-                );
-
-
-        // Photo permissions
-        $ppAttr = array('type'=>'checkbox', 'name'=>$idPrefix.'cbphotoperm', 'title'=>'Permission for using photos?');
-        if ($this->demogRS->Photo_Permission->getStoredVal() > 0) {
-            $ppAttr['checked'] = 'checked';
-        }
-        $table->addBodyTr(
-                HTMLTable::makeTd('Photo Permission:', array('class'=>'tdlabel', 'title'=>'Permission for using photos?'))
-                . HTMLTable::makeTd(
-                        HTMLInput::generateMarkup('', $ppAttr)
-                        , array('style'=>'display:table-cell;')
-                        )
-                );
-
 
         // No Return
         $table->addBodyTr(
@@ -310,6 +261,21 @@ class IndivMember extends Member {
 
         // Second row
         $tbl2 = new HTMLTable();
+
+        if ($includeBirthDate) {
+            // BirthDate
+            $tbl2->addBodyTr(
+                HTMLTable::makeTd('Birth Date:', array('class'=>'tdlabel'))
+                . HTMLTable::makeTd(
+                        HTMLInput::generateMarkup(($this->get_birthDate() == '' ? '' : date('M j, Y', strtotime($this->get_birthDate()))), array('name'=>$idPrefix.'txtBirthDate', 'class'=>'ckbdate'))
+                , array('style'=>'display:table-cell;'))
+                );
+
+//           $tbl2->addBodyTr(
+//                HTMLTable::makeTd('Birth Month:', array('class'=>'tdlabel'))
+//                . HTMLTable::makeTd($this->prepBirthMonthMarkup($this->get_bmonth()), array('style'=>'display:table-cell;'))
+//                );
+        }
 
         // Deceased checkbox and date
         $deAttr = array('type'=>'checkbox', 'name'=>$idPrefix.'cbdeceased', 'title'=>'Check if deceased.');
@@ -372,6 +338,18 @@ class IndivMember extends Member {
                         $this->createInsurancePanel($dbh, $idPrefix)
                         , array('style'=>'display:table-cell;', 'colspan'=>'3')));
         }
+
+        $tbl2->addBodyTr(
+        HTMLTable::makeTd('Previous Name:', array('class'=>'tdlabel'))
+        . HTMLTable::makeTd(
+                HTMLInput::generateMarkup(
+                        $this->nameRS->Name_Previous,
+                        array('name'=>$idPrefix.'txtPreviousName', 'size'=>'9')
+                        )
+                , array('style'=>'display:table-cell;')
+                )
+        );
+
 
         return $table->generateMarkup(array('style'=>'float:left; margin-right:10px;')) . $tbl2->generateMarkup(array('style'=>'float:left;'));
 
@@ -690,21 +668,6 @@ class IndivMember extends Member {
                 $this->demogRS->No_Return->setNewVal('');
             }
 
-        }
-
-
-        //  Newsletter
-        if (isset($post[$idPrefix.'cbnewsltr'])) {
-            $this->demogRS->Newsletter->setNewVal(1);
-        } else {
-            $this->demogRS->Newsletter->setNewVal(0);
-        }
-
-        //  Photo Permission
-        if (isset($post[$idPrefix.'cbphotoperm'])) {
-            $this->demogRS->Photo_Permission->setNewVal(1);
-        } else {
-            $this->demogRS->Photo_Permission->setNewVal(0);
         }
 
     }

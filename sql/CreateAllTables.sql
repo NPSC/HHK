@@ -992,10 +992,10 @@ CREATE TABLE if not exists `name_customer` (
 CREATE TABLE if not exists `name_demog` (
   `idName` int(11) NOT NULL,
   `Steering_Committee` tinyint(1) NOT NULL DEFAULT '0',
-  `Newsletter` tinyint(1) NOT NULL DEFAULT '0',
+  `Newsletter` varchar(5) NOT NULL DEFAULT '',
   `Key_Contact` tinyint(1) NOT NULL DEFAULT '0',
   `Legislative` tinyint(1) NOT NULL DEFAULT '0',
-  `Photo_Permission` TINYINT(1) NOT NULL DEFAULT 0,
+  `Photo_Permission` varchar(5) NOT NULL DEFAULT '',
   `Gen_Notes` text,
   `Contact_Date` date DEFAULT NULL,
   `Orientation` tinyint(1) NOT NULL DEFAULT '0',
