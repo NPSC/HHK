@@ -264,6 +264,11 @@ class Guest extends Role {
         if (isset($post[$idPrefix.'cbEmrgLater'])) {
             $this->incompleteEmergContact = TRUE;
         }
+        
+        // Also set patient member type if guest is the patient.
+        if ($this->patientRelationshipCode == RelLinkType::Self) {
+            $message .= $this->getNameObj()->saveMemberType($dbh, $uname, VolMemberType::Patient);
+        }
 
         return $message;
     }

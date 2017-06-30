@@ -14,14 +14,17 @@ define('P_BASE', dirname(__FILE__));
 define('DS', DIRECTORY_SEPARATOR);
 define('MAX_IDLE_TIME', '1800');
 
-// FInd the third party directory
-$dirxx = '../turdParty';
+// FInd the vendor directory
+$dirxx = '../vendor';
 if (file_exists($dirxx) === FALSE) {
-    $dirxx = '../../turdParty';
+    $dirxx = '../../vendor';
     if (file_exists($dirxx) === FALSE) {
-        $dirxx = '../../../turdParty';
+        $dirxx = '../../../vendor';
         if (file_exists($dirxx) === FALSE) {
-            throw new Exception('Cannot find the turdParty directory.');
+            $dirxx = '../../../../vendor';
+            if (file_exists($dirxx) === FALSE) {
+                throw new Exception('Cannot find the vendor directory.');
+            }
         }
     }
 }

@@ -1,16 +1,11 @@
 
 ALTER TABLE `stays` 
-	ADD INDEX `index_idVisit` (`idVisit` ASC);
+    DROP INDEX `index_idVisit` ;
 
-ALTER TABLE `stays` 
-	ADD INDEX `index_Span_Start` (`Span_Start_Date` ASC);
+ALTER TABLE `name` 
+    DROP INDEX `idName_UNIQUE` ;
 
-ALTER TABLE `stays` 
-	ADD INDEX `index_Span_End` (`Span_End_Date` ASC);
-
-ALTER TABLE `stays` 
-	ADD INDEX `index_idName` (`idName` ASC);
-
+DROP View `vvisit_listing`;
 
 update gen_lookups set `Type` = 'h' where Table_Name = 'NoReturnReason';
 

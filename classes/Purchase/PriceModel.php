@@ -222,9 +222,11 @@ abstract class PriceModel {
 
 
             case ItemPriceCode::PerGuestDaily;
-                $pm = new PriceGuestDay(PriceModel::getModelRoomRates($dbh, $modelCode));
-                $pm->priceModelCode = $modelCode;
-                return $pm;
+                throw new Hk_Exception_Runtime('Guest Days temporarily disabled.  ');
+                
+//                $pm = new PriceGuestDay(PriceModel::getModelRoomRates($dbh, $modelCode));
+//                $pm->priceModelCode = $modelCode;
+//                return $pm;
 
 
             case ItemPriceCode::NdayBlock:
@@ -535,6 +537,10 @@ class PriceBasic extends PriceModel {
 }
 
 class PriceGuestDay extends PriceModel {
+    
+    protected $query = "SELECT s.Visit_Span, DATEDIFF(IFNULL(s.Span_End_Date, NOW()), s.Span_Start_Date) as GDays
+        FROM stays s
+        where s.idVisit = 10";
 
     public function amountCalculator($nites, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $guestDays = 0) {
 

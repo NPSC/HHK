@@ -39,9 +39,10 @@ $resultMessage = "";
 
 // Guest listing
 $stmt = $dbh->query("select * from vguest_view");
-$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
 $guests = array();
+
 foreach ($rows as $r) {
 
     $g = array(
@@ -73,7 +74,11 @@ foreach ($rows as $r) {
 
 }
 
-$guestTable = CreateMarkupFromDB::generateHTML_Table($guests, 'tblList');
+if (count($guests) > 0) {
+    $guestTable = CreateMarkupFromDB::generateHTML_Table($guests, 'tblList');
+} else {
+    $guestTable = HTMLContainer::generateMarkup('h2', 'House is Empty.');
+}
 
 $vehicleTable = '';
 

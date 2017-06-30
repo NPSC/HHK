@@ -30,6 +30,15 @@ try {
     die($exw->getMessage());
 }
 
+// get session instance
+$uS = Session::getInstance();
+
+// Kick out 'Guest' Users
+if ($uS->rolecode > WebRole::WebUser) {
+    include("../errorPages/forbid.html");
+    exit();
+}
+
 $dbh = $wInit->dbh;
 
 
@@ -41,9 +50,6 @@ $ccResultMessage = '';
 $holResultMessage = '';
 $externalErrMsg = '';
 $serviceName = '';
-
-// get session instance
-$uS = Session::getInstance();
 
 
 $config = new Config_Lite(ciCFG_FILE);
@@ -173,6 +179,11 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
             $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
 
             foreach ($patch->results as $err) {
+
+                if ($err['errno'] == 1091 || $err['errno'] == 1061) {  // key not exist, Duplicate Key name
+                    continue;
+                }
+
                 $errorMsg .= 'Create Table Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
             }
 
@@ -280,6 +291,11 @@ if (isset($_POST['btnSaveSQL'])) {
     // Update Tables
     $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
     foreach ($patch->results as $err) {
+
+        if ($err['errno'] == 1091 || $err['errno'] == 1061) {  // key not exist, Duplicate Key name
+            continue;
+        }
+
         $errorMsg .= 'Create Table Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
     }
 

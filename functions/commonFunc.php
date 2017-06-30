@@ -9,24 +9,25 @@
  * @link      https://github.com/NPSC/HHK
  */
 function initPDO($override = FALSE) {
-    
+
     $ssn = Session::getInstance();
+    $roleCode = $ssn->rolecode;
 
     if (!isset($ssn->databaseURL)) {
-        die('<br/>Missing Database Session Initialization (initPDO)<br/>');
+        die('<br/>Missing Database URL (initPDO)<br/>');
     }
 
     $dbuName = $ssn->databaseUName;
     $dbPw = $ssn->databasePWord;
 
 
-    if ($ssn->rolecode >= WebRole::Guest && $override === FALSE) {
+    if ($roleCode >= WebRole::Guest && $override === FALSE) {
         // Get the site configuration object
         try {
             $config = new Config_Lite(ciCFG_FILE);
         } catch (Exception $ex) {
             $ssn->destroy();
-            die("Configurtion file is missing: " . $ex);
+            exit("<br/>Missing Database Session Initialization: " . $ex->getMessage());
         }
 
         $dbuName = $config->getString('db', 'ReadonlyUser', '');
@@ -59,8 +60,14 @@ function initPDO($override = FALSE) {
         syncTimeZone($dbh);
 
     } catch (\PDOException $e) {
-        print "Error!: " . $e->getMessage() . "<br/>";
+
         $ssn->destroy();
+
+        if ($roleCode >= WebRole::DefaultRole && $override === FALSE) {
+            exit("<br/>Database Error: " . $e->getMessage());
+        }
+
+        header('location:../reset.php?r=' . $e->getMessage());
         die();
     }
 
@@ -68,7 +75,6 @@ function initPDO($override = FALSE) {
 }
 
 function initMS_SQL($dbURL, $dbName, $dbuName, $dbPw) {
-    //$serverName = "(local)\sqlexpress";
 
     /* Connect using Windows Authentication. */
     return new \PDO("sqlsrv:server=$dbURL;Database=$dbName", $dbuName, $dbPw);
@@ -292,16 +298,11 @@ function encryptNotes($input, $pw) {
     return $crypt;
 }
 
-function decryptMessage($encrypt) {
-
-    return encrypt_decrypt('decrypt', $encrypt, getKey(), getIV());
-}
-
 function decryptNotes($encrypt, $pw) {
     $clear = "";
 
     if ($pw != "" && $encrypt != "") {
-    
+
         $key = getNotesKey($pw);
         $clear = encrypt_decrypt('decrypt', $encrypt, $key, getIV());
     }
@@ -309,10 +310,16 @@ function decryptNotes($encrypt, $pw) {
     return $clear;
 }
 
+function decryptMessage($encrypt) {
+
+    return encrypt_decrypt('decrypt', $encrypt, getKey(), getIV());
+}
+
+
 /**
  * simple method to encrypt or decrypt a plain text string
  * initialization vector(IV) has to be the same when encrypting and decrypting
- * 
+ *
  * @param string $action: can be 'encrypt' or 'decrypt'
  * @param string $string: string to encrypt or decrypt
  *
@@ -325,12 +332,12 @@ function encrypt_decrypt($action, $string, $secret_key, $secret_iv) {
 //    $secret_iv = 'This is my secret iv';
     // hash
     $key = hash('sha256', $secret_key);
-    
+
     // iv - encrypt method AES-256-CBC expects 16 bytes - else you will get a warning
     $iv = substr(hash('sha256', $secret_iv), 0, 16);
     if ( $action == 'encrypt' ) {
-        $output = openssl_encrypt($string, $encrypt_method, $key, 0, $iv);
-        $output = base64_encode($output);
+        $output = base64_encode(openssl_encrypt($string, $encrypt_method, $key, 0, $iv));
+
     } else if( $action == 'decrypt' ) {
         $output = openssl_decrypt(base64_decode($string), $encrypt_method, $key, 0, $iv);
     }

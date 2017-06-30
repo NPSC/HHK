@@ -69,3 +69,12 @@ body {
     li {
         font-family: arial,sans-serif;
     }
+table {
+    border-collapse:collapse;
+}
+
+    .hhk-tdbox td, .hhk-tdbox th {
+    border: 1px solid #D4CCB0;
+    vertical-align: middle;
+    padding: 5px 7px;
+}

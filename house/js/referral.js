@@ -86,7 +86,7 @@ function additionalGuest(item) {
                 acDiv.dialog({
                     autoOpen: false,
                     resizable: true,
-                    width: 900,
+                    width: 1000,
                     modal: true,
                     title: 'Additional Guest',
                     close: function (event, ui) {$('div#submitButtons').show();},
@@ -133,9 +133,28 @@ function additionalGuest(item) {
                                 });
                             }
                             if (isMissing) {
-                                $('#adgstMsg').text('Fix missing information');
+                                $('#adgstMsg').text('Fill in missing information');
                                 return;
                             }
+
+                            // Validate Phone Number
+                            isMissing = false;
+                            var testreg = /^([\(]{1}[0-9]{3}[\)]{1}[\.| |\-]{0,1}|^[0-9]{3}[\.|\-| ]?)?[0-9]{3}(\.|\-| )?[0-9]{4}$/;
+                            $('.hhk-phoneInput[id^="btxtPhone"]').each(function (){
+
+                                if ($.trim($(this).val()) != '' && testreg.test($(this).val()) === false) {
+                                    // error
+                                    $(this).addClass('ui-state-error');
+                                    isMissing = true;
+                                }        
+                            });
+
+                            if (isMissing) {
+                                $('#adgstMsg').text("Guest has an invalid phone number.  ");
+                                $('#diagAddGuest #bphEmlTabs').tabs("option", "active", 1);
+                                return false;
+                            }
+        
 
                             $.post('ws_ckin.php', $('#fAddGuest').serialize() + '&cmd=addResv' + '&rid=' + resv.idReserv + '&addRoom=' + resv.addRoom, function(data) {
                                 data = $.parseJSON(data);
@@ -593,8 +612,10 @@ function injectSlot(data) {
 
             $('#btnShowCnfrm').button();
             $('#btnShowCnfrm').click(function () {
-                $.post('ws_ckin.php', {cmd:'confrv', rid: $(this).data('rid'), amt: $('#spnAmount').text(), notes: 'tb'}, function(data) {
+                $.post('ws_ckin.php', {cmd:'confrv', rid: $(this).data('rid'), amt: $('#spnAmount').text(), eml: '0'}, function(data) {
+                    
                     data = $.parseJSON(data);
+                    
                     if (data.error) {
                         if (data.gotopage) {
                             window.open(data.gotopage, '_self');
@@ -602,16 +623,18 @@ function injectSlot(data) {
                         flagAlertMessage(data.error, true);
                         return;
                     }
+                    
                      if (data.confrv) {
+                         
                         $('div#submitButtons').hide();
-                        $("#confirmDialog").children().remove();
-                        $("#confirmDialog").append($(data.confrv))
-                            .append($('<div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><span>Email Address </span><input type="text" id="confEmail" value="' + data.email +'"/></div>'));
+                        $("#frmConfirm").children().remove();
+                        $("#frmConfirm").html(data.confrv)
+                            .append($('<div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><span>Email Address </span><input type="text" id="confEmail" value="'+data.email+'"/></div>'));
+
                         $("#confirmDialog").dialog('open');
                     }
                 });
             });
-
         }
         
         $('#btnDone').val('Save');
@@ -735,6 +758,7 @@ function injectSlot(data) {
     
     var lastXhr;
     createZipAutoComplete($('input.hhk-zipsearch'), 'ws_admin.php', lastXhr);
+    
 
 }
 /**
@@ -929,6 +953,7 @@ function loadGuest(incmg, role, idPsg, patientStaying) {
             }
             
             $('input#gstSearch').val('');
+            $('input#pggstDate').focus();
         }
     );
 }
@@ -1189,6 +1214,28 @@ function verifyDone(reserv) {
             }
         }
         
+        // Validate Phone Number
+        isMissing = false;
+        var faMesg = '';
+        var testreg = /^([\(]{1}[0-9]{3}[\)]{1}[\.| |\-]{0,1}|^[0-9]{3}[\.|\-| ]?)?[0-9]{3}(\.|\-| )?[0-9]{4}$/;
+        $('.hhk-phoneInput[id^="' + pan.idPrefix + 'txtPhone"]').each(function (){
+
+            if ($.trim($(this).val()) != '' && testreg.test($(this).val()) === false) {
+                // error
+                $(this).addClass('ui-state-error');
+                faMesg += (pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") has an invalid phone number.  ";
+                isMissing = true;
+            }        
+        });
+        
+        if (isMissing) {
+            flagAlertMessage(faMesg, true);
+            $('#' + pan.idPrefix + 'divGstpnl').show('blind');
+            $('#' + pan.idPrefix + 'divGsthdr').removeClass('ui-corner-all').addClass('ui-corner-top');
+            $('#' + pan.idPrefix + 'phEmlTabs').tabs("option", "active", 1);
+            return false;
+        }
+        
         // Check patient relationship
         if ($('#' + pan.idPrefix + 'selPatRel').val() === '') {
 
@@ -1414,8 +1461,13 @@ $(document).ready(function() {
         width: 850,
         modal: true,
         title: 'Confirmation Form',
-        close: function () {$('div#submitButtons').show(); $("#confirmDialog").children().remove();},
+        close: function () {$('div#submitButtons').show(); $("#frmConfirm").children().remove();},
         buttons: {
+            'Download MS Word': function () {
+                var $confForm = $("form#frmConfirm");
+                $confForm.append($('<input name="hdnCfmRid" type="hidden" value="' + $('#btnShowCnfrm').data('rid') + '"/>'))
+                $confForm.submit();
+            },
             'Send Email': function() {
                 $.post('ws_ckin.php', {cmd:'confrv', rid: $('#btnShowCnfrm').data('rid'), eml: '1', eaddr: $('#confEmail').val(), amt: $('#spnAmount').text(), notes: $('#tbCfmNotes').val()}, function(data) {
                     data = $.parseJSON(data);

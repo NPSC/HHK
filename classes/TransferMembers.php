@@ -33,7 +33,7 @@ class TransferMembers {
     }
 
     /** Last name search remote
-     * 
+     *
      * @param string $searchCriteria A set of left most letters to search
      * @return array Array of names as search result
      */
@@ -101,7 +101,7 @@ class TransferMembers {
     }
 
     /**
-     * 
+     *
      * @param mixed $accountId Remote account Id
      * @return mixed The Remote account object.
      * @throws Hk_Exception_Runtime
@@ -121,7 +121,7 @@ class TransferMembers {
     }
 
     /** Update Individual Account including name, phone, address and email
-     * 
+     *
      * @param \PDO $dbh
      * @param array $accountData
      * @param int $idName
@@ -174,8 +174,8 @@ class TransferMembers {
 
         $request = array(
            'method' => 'account/updateIndividualAccount',
-          'parameters' => $param,
-          'customParmeters' => $paramStr
+           'parameters' => $param,
+           'customParmeters' => $paramStr
         );
 
         $msg = 'Updated ' . $r['firstName'] . ' ' . $r['lastName'];
@@ -287,7 +287,7 @@ class TransferMembers {
     }
 
     /**
-     * 
+     *
      * @param \PDO $dbh
      * @param array $sourceIds
      * @param string $username
@@ -372,6 +372,7 @@ class TransferMembers {
 
                 // Get member data record
                 $row = $this->loadSourceDB($dbh, $r['HHK_ID']);
+
                 if (is_null($row)) {
                     continue;
                 }
@@ -483,19 +484,17 @@ class TransferMembers {
 
     protected function fillIndividualAccount($r) {
 
-        $base = 'individualAccount.individualTypes.';
+        //$base = 'individualAccount.individualTypes.';
         $indBase = 'individualType.id';
         $str = '';
 
         if (isset($r[$indBase]) && $r[$indBase] > 0) {
-            //$param[$base . $indBase] = $r[$indBase];
             $str = '&individualAccount.individualTypes.individualType.id=' . $r[$indBase];
         }
 
 
-        if (isset($r[$indBase . '2']) && $r[$indBase . '2'] > 0) {
-            $param[$base . $indBase] = $r[$indBase . '2'];
-            $str .= '&' . http_build_query($param);
+        if (isset($r['individualType.id2']) && $r['individualType.id2'] > 0) {
+            $str .= '&individualAccount.individualTypes.individualType.id=' . $r['individualType.id2'];
         }
 
         return $str;

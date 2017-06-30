@@ -165,13 +165,18 @@ abstract class RoleMember extends IndivMember {
      * @param string $uname
      * @return boolean
      */
-    public function saveMemberType(PDO $dbh, $uname) {
+    public function saveMemberType(PDO $dbh, $uname, $memberType = '') {
 
         if ($this->get_idName() === 0) {
             return FALSE;
         }
 
-        $vcode = $this->getMyMemberType();
+        if ($memberType != '') {
+            $vcode = $memberType;
+        } else {
+            $vcode = $this->getMyMemberType();
+        }
+        
         $vcat = VolMemberType::VolCategoryCode;
 
         if ($vcat == "" || $vcode == "") {

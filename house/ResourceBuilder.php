@@ -31,8 +31,6 @@ require (HOUSE . 'Attributes.php');
 require (HOUSE . 'Constraint.php');
 
 
-
-
 try {
     $wInit = new webInit();
 } catch (Exception $exw) {
@@ -48,6 +46,13 @@ $menuMarkup = $wInit->generatePageMenu();
 $wInit->sessionLoadGenLkUps();
 $wInit->sessionLoadGuestLkUps();
 $uS = Session::getInstance();
+
+// Kick out 'Guest' Users
+if ($uS->rolecode > WebRole::WebUser) {
+
+    exit("Unauthorized - " . HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'index.php')));
+}
+
 
 $tabIndex = 0;
 

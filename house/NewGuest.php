@@ -74,8 +74,8 @@ FROM
         LEFT JOIN
     gen_lookups g2 ON g2.`Table_Name` = 'Name_Suffix'
         AND g2.`Code` = n.Name_Suffix
-		left join
-	`gen_lookups` `g3` on `g3`.`Table_Name` = 'Patient_Rel_Type'
+	left join
+    `gen_lookups` `g3` on `g3`.`Table_Name` = 'Patient_Rel_Type'
         and `g3`.`Code` = `ng`.`Relationship_Code`
 WHERE
     n.Member_Status != 'TBD'
@@ -442,7 +442,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $numAllGuests = $dataArray['all'];
         $numReturnGuests = max($numAllGuests - $numNewGuests, 0);
 
-        $ratio = 0;
+        $newRatio = 0;
         if ($numAllGuests > 0) {
             $newRatio = ($numNewGuests / $numAllGuests) * 100;
         }
@@ -515,7 +515,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
-        
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
@@ -523,7 +523,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
     $(document).ready(function() {
-        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
+        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
         var makeTable = '<?php echo $mkTable; ?>';
         $('.ckdate').datepicker({

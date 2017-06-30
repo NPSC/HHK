@@ -48,16 +48,18 @@ class ScriptAuthClass extends SecurityComponent {
         // remove leading www if present.
         $hostParts = explode(".", $serverName);
         if (strtolower($hostParts[0]) == "www") {
-            $hostParts[0] = "";
+            unset($hostParts[0]);
             $this->hostName = implode(".", $hostParts);
-            // remove first dot
-            $this->hostName = substr($this->hostName, 1);
         } else {
             $this->hostName = $serverName;
         }
 
-        $this->siteURL = "https://" . $this->hostName . $this->path;
-
+        if (empty($_SERVER['HTTPS']) || strtolower($_SERVER['HTTPS']) == 'off' ) {
+            // non-SSL access.
+            $this->siteURL = "http://" . $this->hostName . $this->path;
+        } else {
+            $this->siteURL = "https://" . $this->hostName . $this->path;
+        }
 
         // try reading the web site table
         try {
