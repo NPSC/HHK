@@ -1672,19 +1672,19 @@ class ReservationSvcs {
         require(HOUSE . 'ConfirmationForm.php');
         $uS = Session::getInstance();
         $dataArray = array();
-        
+
         $reserv = Reservation_1::instantiateFromIdReserv($dbh, $idReservation);
-        
+
         if ($idGuest == 0) {
             $idGuest = $reserv->getIdGuest();
         }
-        
+
         $guest = new Guest($dbh, '', $idGuest);
 
         $confirmForm = new ConfirmationForm($uS->ConfirmFile);
-        
+
         $formNotes = $confirmForm->createNotes($notes, !$sendEmail);
-        
+
         $form = $confirmForm->createForm($dbh, $reserv, $guest, $amount, $formNotes);
 
 
@@ -1694,7 +1694,7 @@ class ReservationSvcs {
                 $emAddr = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
                 $emailAddr = $emAddr["Email"];
             }
-            
+
             if ($emailAddr != '') {
 
                 $config = new Config_Lite(ciCFG_FILE);

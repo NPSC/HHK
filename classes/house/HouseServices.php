@@ -2312,7 +2312,7 @@ class HouseServices {
                 // Include a patient section
 
                 $patient = new Patient($dbh, 'h_', $psg->getIdPatient());
-                $dataArray['patient'] = $patient->createMarkup(FALSE);
+                $dataArray['patient'] = $patient->createMarkup($dbh);
                 $dataArray['idPsg'] = $psg->getIdPsg();
                 $dataArray['rmvbtnp'] = FALSE;
             }
@@ -2325,7 +2325,7 @@ class HouseServices {
             if ($patientStaying !== TRUE && $idPatient > 0 && ($idPatient != $guest->getIdName() || $uS->PatientAsGuest === FALSE)) {
                 // Patient is not a guest
                 $patient = new Patient($dbh, 'h_', $idPatient);
-                $dataArray['patient'] = $patient->createMarkup(FALSE);
+                $dataArray['patient'] = $patient->createMarkup($dbh);
                 $dataArray['rmvbtnp'] = TRUE;
 
                 if ($idPatient == $guest->getIdName() && $uS->PatientAsGuest === FALSE) {
@@ -2349,7 +2349,7 @@ class HouseServices {
                 $patient->setCheckinDate($arrDateStr);
                 $patient->setExpectedCheckOut($depDateStr);
 
-                $dataArray['guests'][] = $patient->createMarkup($dbh, TRUE, TRUE);
+                $dataArray['guests'][] = $patient->createMarkup($dbh);
                 $havePatient = TRUE;
             }
 

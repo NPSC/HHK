@@ -18,6 +18,7 @@ class Patient extends Role {
     protected function factory(PDO $dbh, $id) {
         $this->title = 'Patient';
         $this->patientPsg = NULL;
+        $this->setPatientRelationshipCode(RelLinkType::Self);
 
         return new PatientMember($dbh, MemBasis::Indivual, $id);
     }
@@ -32,12 +33,12 @@ class Patient extends Role {
     }
 
 
-    protected function createNameMU($patientEditable = TRUE) {
+    protected function createNameMU() {
 
         // Build name.
         $tbl = new HTMLTable();
         $tbl->addHeaderTr($this->name->createMarkupHdr());
-        $tbl->addBodyTr($this->name->createMarkupRow($patientEditable));
+        $tbl->addBodyTr($this->name->createMarkupRow());
 
         $mk1 = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('fieldset',
@@ -50,29 +51,27 @@ class Patient extends Role {
         return $mk1;
     }
 
-    public function createReservationMarkup($patientEditable = TRUE) {
+
+    public function createReservationMarkup($lockRelChooser = FALSE) {
+
+        $uS = Session::getInstance();
 
         // Name
-        $mk1 = $this->createNameMU($patientEditable);
+        $mk1 = $this->createNameMU();
 
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
-        // set relatinoship code - used in address block.
-        $this->setPatientRelationshipCode(RelLinkType::Self);
-
-        $mk1 .= $this->createAddsBLock();
-
-        $mk1 .= HTMLContainer::generateMarkup('div', '', array('id'=>'patStayContainer'));
-
-        $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
-
+        if ($uS->PatientAddr) {
+            $mk1 .= $this->createAddsBLock();
+            $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
+        }
 
         return HTMLContainer::generateMarkup('div', $mk1, array('class'=>'ui-widget ui-widget-content ui-corner-bottom hhk-panel hhk-tdbox'));
     }
 
-    public function createMarkup($patientEditable = TRUE) {
+    public function createMarkup() {
 
-        return $this->createReservationMarkup($patientEditable);
+        return $this->createReservationMarkup();
     }
 }
 

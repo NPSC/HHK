@@ -33,7 +33,6 @@ abstract class RoleMember extends IndivMember {
         }
     }
 
-
     protected function getInsurance(\PDO $dbh, $nid) {
 
         $nInsRs = new Name_InsuranceRS();
@@ -62,7 +61,7 @@ abstract class RoleMember extends IndivMember {
 
     }
 
-    public function createMarkupRow($editable = TRUE) {
+    public function createMarkupRow() {
 
         $uS = Session::getInstance();
         $idPrefix = $this->getIdPrefix();
@@ -73,12 +72,7 @@ abstract class RoleMember extends IndivMember {
 
         $attrs = array('data-prefix'=>$idPrefix);
 
-        if (!$editable) {
-            $attrs['readonly'] = 'readonly';
-            $attrs['style'] = 'border:none;';
-        }
 
-        // Prefix
         $attrs['name'] = $idPrefix.'selPrefix';
         $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
                 HTMLSelector::doOptionsMkup(
@@ -127,22 +121,16 @@ abstract class RoleMember extends IndivMember {
         // Birth Date
         if ($this->showBirthDate) {
 
-            $idPrefix = $this->getIdPrefix();
-
             $bd = '';
 
             if ($this->nameRS->BirthDate->getStoredVal() != '') {
                 $bd = date('M j, Y', strtotime($this->nameRS->BirthDate->getStoredVal()));
             }
 
-            if ($editable) {
-                $tr .= HTMLTable::makeTd(
-                    HTMLInput::generateMarkup($bd, array('name'=>$idPrefix.'txtBirthDate', 'class'=>'ckbdate')));
-            } else {
-                $tr .= HTMLTable::makeTd($bd);
-            }
+            $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($bd, array('name'=>$idPrefix.'txtBirthDate', 'class'=>'ckbdate')));
+
         }
-        
+
         return $tr;
     }
 
@@ -176,7 +164,7 @@ abstract class RoleMember extends IndivMember {
         } else {
             $vcode = $this->getMyMemberType();
         }
-        
+
         $vcat = VolMemberType::VolCategoryCode;
 
         if ($vcat == "" || $vcode == "") {
@@ -226,7 +214,6 @@ abstract class RoleMember extends IndivMember {
 
 class GuestMember extends RoleMember {
 
-
     public function __construct(PDO $dbh, $defaultMemberBasis, $nid = 0, NameRS $nRS = NULL) {
 
         parent::__construct($dbh, $defaultMemberBasis, $nid, $nRS);
@@ -245,7 +232,6 @@ class GuestMember extends RoleMember {
 
     }
 
-
     public function saveChanges(\PDO $dbh, array $post) {
 
         $msg = parent::saveChanges($dbh, $post);
@@ -263,8 +249,6 @@ class GuestMember extends RoleMember {
         return $msg;
     }
 
-
-
     protected function getMyMemberType() {
         return VolMemberType::Guest;
     }
@@ -281,8 +265,7 @@ class GuestMember extends RoleMember {
 
     }
 
-
-    public function createMarkupRow($patientRelationship = '', $lockRelChooser = FALSE, $hideRelChooser = FALSE) {
+    public function createMarkupRow($patientRelationship = '', $hideRelChooser = FALSE, $lockRelChooser = FALSE) {
 
         $tr = parent::createMarkupRow(TRUE);
 
@@ -294,11 +277,13 @@ class GuestMember extends RoleMember {
 
             // freeze control if patient is self.
             if ($lockRelChooser) {
+
                 if ($patientRelationship == RelLinkType::Self) {
                     $parray = array($patientRelationship => $parray[$patientRelationship]);
                 } else {
                     unset($parray[RelLinkType::Self]);
                 }
+
                 if ($patientRelationship == '') {
                     $allowEmpty = TRUE;
                 } else {
@@ -320,34 +305,7 @@ class GuestMember extends RoleMember {
         return $tr;
     }
 
-    public function additionalNameMarkup() {
-
-        $uS = Session::getInstance();
-        $table = new HTMLTable();
-
-        // Newsletter attributes
-        $newsAttrs = array('name'=>$this->getIdPrefix() .'cbnewsltr', 'type'=>'checkbox');
-        if ($this->demogRS->Newsletter->getStoredVal() == 1) {
-            $newsAttrs['checked'] = 'checked';
-        }
-
-        // Media source & Newsletter
-        $table->addBodyTr(
-            HTMLTable::makeTd(HTMLContainer::generateMarkup('span', "How did you hear of us?"))
-            . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                        HTMLSelector::doOptionsMkup($uS->nameLookups['Media_Source'], $this->demogRS->Media_Source->getStoredVal()),
-                        array('name'=>$this->getIdPrefix() .'selMedia')))
-            . HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Newsletter', array('for'=>'cbNews', 'style'=>'margin-left:25px;')))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup('', $newsAttrs))
-             );
-
-        return $table->generateMarkup();
-    }
-
-
-
 }
-
 
 
 class PatientMember extends RoleMember {
@@ -358,42 +316,15 @@ class PatientMember extends RoleMember {
 
         $uS = Session::getInstance();
 
-       if ($uS->LangChooser && $nid > 0) {
-            $this->getLanguages($dbh, $nid);
-        }
-
-        if ($uS->InsuranceChooser && $nid > 0) {
-            $this->getInsurance($dbh, $nid);
-        }
-
         $this->showBirthDate = $uS->PatientBirthDate;
 
     }
-
 
     protected function getMyMemberType() {
         return VolMemberType::Patient;
     }
 
-
-    public function saveChanges(\PDO $dbh, array $post) {
-
-        $msg = parent::saveChanges($dbh, $post);
-
-        $uS = Session::getInstance();
-
-        if ($uS->LangChooser && $this->get_idName() > 0) {
-            $this->getLanguages($dbh, $this->get_idName());
-        }
-
-        if ($uS->InsuranceChooser && $this->get_idName() > 0) {
-            $this->getInsurance($dbh, $this->get_idName());
-        }
-    }
-
 }
-
-
 
 
 class AgentMember extends RoleMember {

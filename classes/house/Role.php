@@ -196,22 +196,16 @@ abstract class Role {
     }
 
         // Address, email and Phone
-    protected function createAddsBLock($overrideAddrFlag = FALSE) {
+    protected function createAddsBLock() {
 
         $mkup = '';
         $uS = Session::getInstance();
 
-        // Don't show address if patient and flag is set.
-        if ($this->patientRelationshipCode != RelLinkType::Self || $uS->PatientAddr || $overrideAddrFlag) {
+        // Street Address
+        $mkup .= $this->createMailAddrMU($this->getNameObj()->getIdPrefix() . 'hhk-addr-val', TRUE, $uS->county);
 
-            // Home Address
-            if ($uS->GuestAddr || $overrideAddrFlag) {
-                $mkup .= $this->createMailAddrMU($this->getNameObj()->getIdPrefix() . 'hhk-addr-val', TRUE, $uS->county);
-            }
-
-            // Phone and email
-            $mkup .= $this->createPhoneEmailMU($this->getNameObj()->getIdPrefix());
-        }
+        // Phone and email
+        $mkup .= $this->createPhoneEmailMU($this->getNameObj()->getIdPrefix());
 
         return $mkup;
     }

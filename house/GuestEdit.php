@@ -498,9 +498,9 @@ if ($name->isNew()) {
 // Name Edit Row
 $tbl = new HTMLTable();
 $tbl->addHeaderTr($name->createMarkupHdr($labels, TRUE));
-$tbl->addBodyTr($name->createMarkupRow('', TRUE, TRUE));
+$tbl->addBodyTr($name->createMarkupRow('', TRUE));
 
-$nameMarkup = $tbl->generateMarkup();  //$name->createMarkupRow('', TRUE, FALSE);
+$nameMarkup = $tbl->generateMarkup();
 
 
 // Demographics

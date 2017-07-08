@@ -36,19 +36,18 @@ class Guest extends Role {
      * @param PDO $dbh
      * @return string HTML div markup
      */
-    protected function createNameMU(Config_Lite $labels, $useAdditionalMarkup = FALSE, $lockRelChooser = FALSE) {
+
+    protected function createNameMU(Config_Lite $labels, $lockRelChooser = FALSE) {
 
         // Build name.
         $tbl = new HTMLTable();
         $tbl->addHeaderTr($this->name->createMarkupHdr($labels));
-        $tbl->addbodyTr($this->name->createMarkupRow($this->patientRelationshipCode, $lockRelChooser));
-
+        $tbl->addbodyTr($this->name->createMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser));
 
         $mk1 = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('fieldset',
                         HTMLContainer::generateMarkup('legend', $this->title.' Name', array('style'=>'font-weight:bold;'))
                         . $tbl->generateMarkup()
-                        . ($useAdditionalMarkup ? HTMLContainer::generateMarkup('div', $this->name->additionalNameMarkup(), array('style'=>'float:left;')) : '')
                         . HTMLContainer::generateMarkup('div', $this->name->getContactLastUpdatedMU(new \DateTime ($this->name->get_lastUpdated()), 'Name'), array('style'=>'float:right;'))
                         , array('class'=>'hhk-panel')),
                         array('style'=>'float:left; margin-right:.5em; font-size:.9em;'));
@@ -73,24 +72,26 @@ class Guest extends Role {
      * @param PDO $dbh
      * @return array  Various pieces of markup and info
      */
-    public function createMarkup(\PDO $dbh, $includeRemoveBtn = FALSE, $restrictRelChooser = TRUE) {
+    public function createMarkup(\PDO $dbh, $includeRemoveBtn = FALSE, $lockRelChooser = TRUE) {
 
         $uS = Session::getInstance();
         $idPrefix = $this->getNameObj()->getIdPrefix();
         $labels = new Config_Lite(LABEL_FILE);
 
-        $mk1 = $this->createNameMu($labels, FALSE, $restrictRelChooser);
+        $mk1 = $this->createNameMu($labels, $lockRelChooser);
 
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;min-height:10px;'));
 
-        $mk1 .= $this->createAddsBLock();
+        if($uS->GuestAddr) {
+            $mk1 .= $this->createAddsBLock();
+        }
 
         // Add Emergency contact
-        $search = HTMLContainer::generateMarkup('span', '', array('name'=>$idPrefix, 'class'=>'hhk-guestSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'float: right; margin-left:.3em;cursor:pointer;'));
-
+        $ecSearch = HTMLContainer::generateMarkup('span', '', array('name'=>$idPrefix, 'class'=>'hhk-guestSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'float: right; margin-left:.3em;cursor:pointer;'));
         $ec = $this->getEmergContactObj($dbh);
+
         $mk1 .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', 'Emergency Contact for Guest' . $search, array('style'=>'font-weight:bold;'))
+                HTMLContainer::generateMarkup('legend', 'Emergency Contact for Guest' . $ecSearch, array('style'=>'font-weight:bold;'))
                 . $ec->createMarkup($ec, removeOptionGroups($uS->nameLookups[GL_TableNames::RelTypes]), $idPrefix, $this->incompleteEmergContact), array('class'=>'hhk-panel')),
                 array('style'=>'float:left; margin-right:3px;'));
 
@@ -107,8 +108,6 @@ class Guest extends Role {
         // Clear float
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
-        // Header info
-
         // Stay dates
         $nowDT = new \DateTime();
         $nowDT->setTime(0, 0, 0);
@@ -122,29 +121,24 @@ class Guest extends Role {
                 HTMLContainer::generateMarkup('span', ($this->getPatientRelationshipCode() == RelLinkType::Self ? $labels->getString('MemberType', 'patient', 'Patient') . ': ' : 'Guest: '), array('id'=>$idPrefix . 'spnHdrLabel'))
                .HTMLContainer::generateMarkup('span', $this->getNameObj()->get_firstName(), array('id'=>$idPrefix . 'hdrFirstName', 'name'=>'hdrFirstName'))
                .HTMLContainer::generateMarkup('span', ' '.$this->getNameObj()->get_lastName(), array('id'=>$idPrefix . 'hdrLastName', 'name'=>'hdrLastName', 'style'=>'margin-right:10px;'))
-               . HTMLContainer::generateMarkup('span', ' Check In: '. HTMLInput::generateMarkup((is_null($this->getCheckinDT()) ? '' : $this->getCheckinDT()->format('M j, Y')), $cidAttr), array('style'=>'margin-left:.5em;'))
-               . HTMLContainer::generateMarkup('span', 'Expected Departure: '. HTMLInput::generateMarkup((is_null($this->getExpectedCheckOutDT()) ? '' : $this->getExpectedCheckOutDT()->format('M j, Y')), Array('name'=>$idPrefix . 'gstCoDate', 'class'=>'ckdate gstchkoutdate', 'readonly'=>'readonly')), array('style'=>'margin-left:.5em;'))
+//               . HTMLContainer::generateMarkup('span', ' Check In: '. HTMLInput::generateMarkup((is_null($this->getCheckinDT()) ? '' : $this->getCheckinDT()->format('M j, Y')), $cidAttr), array('style'=>'margin-left:.5em;'))
+//               . HTMLContainer::generateMarkup('span', 'Expected Departure: '. HTMLInput::generateMarkup((is_null($this->getExpectedCheckOutDT()) ? '' : $this->getExpectedCheckOutDT()->format('M j, Y')), Array('name'=>$idPrefix . 'gstCoDate', 'class'=>'ckdate gstchkoutdate', 'readonly'=>'readonly')), array('style'=>'margin-left:.5em;'))
                 . HTMLContainer::generateMarkup('span', '', array('id'=>$idPrefix . 'naAddrIcon', 'class'=>'hhk-icon-redLight', 'title'=>'Incomplete Address', 'style'=>'float:right;margin-top:4px;margin-left:3px;display:none;'))
                         , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
         $prevStays = '';
         if ($this->getIdName() != 0) {
+
             // get previous visit info
-            $stays = VisitView::loadGuestStays($dbh, $this->getIdName());
+            $query = "select * from vstays_listing where idName = " . $this->getIdName() . " order by Checkin_Date desc LIMIT 3;";
+            $stmt = $dbh->query($query);
 
-            if (count($stays) > 0) {
+            while ($s = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                $prevStays .= ($prevStays != '' ? ';  ' : '') .$s['Room'] . ", " . date('m-d-y', strtotime($s['Checkin_Date']));
+            }
 
-                $ctr = 0;
-                foreach ($stays as $s) {
-                    $prevStays .= ($ctr > 0 ? ';  ' : '') .$s['Room'] . ", " . date('m-d-y', strtotime($s['Checkin_Date']));
-                    if ($ctr++ > 3) {
-                        break;
-                    }
-                }
-
-                if ($ctr > 0) {
-                    $prevStays = HTMLContainer::generateMarkup('div', '(Previous stays:  ' . $prevStays . ')', array('style'=>'font-size:.87em;margin:4px;font-weight:normal;'));
-                }
+            if ($prevStays != '') {
+                $prevStays = HTMLContainer::generateMarkup('div', '(Previous stays:  ' . $prevStays . ')', array('style'=>'font-size:.87em;margin:4px;font-weight:normal;'));
             }
         }
 
@@ -160,7 +154,6 @@ class Guest extends Role {
             $rtn['rmvbtn'] = '1';
         }
 
-
         return $rtn;
 
     }
@@ -168,17 +161,19 @@ class Guest extends Role {
 
     public function createAddToResvMarkup() {
 
+        $uS = Session::getInstance();
         $mk1 = '';
         $labels = new Config_Lite(LABEL_FILE);
 
         // Guest Name
-        $mk1 .= $this->createNameMu($labels, FALSE, TRUE);
+        $mk1 .= $this->createNameMu($labels, TRUE);
 
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
-        $mk1 .= $this->createAddsBLock();
-
-        $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
+        if($uS->GuestAddr) {
+            $mk1 .= $this->createAddsBLock();
+            $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
+        }
 
         return HTMLContainer::generateMarkup('form', $mk1, array('name'=>'fAddGuest', 'method'=>'post'));
     }
@@ -194,31 +189,36 @@ class Guest extends Role {
         // Guest Name
         if ($uS->PatientAsGuest && ($lockRelChooser === FALSE || $this->getPatientRelationshipCode() == '')) {
             // Dont lock the patient relationship chooser.
-            $mk1 = $this->createNameMu($labels, FALSE, FALSE);
+            $lockRelChooser = FALSE;
         } else {
-            $mk1 = $this->createNameMu($labels, FALSE, TRUE);
+            $lockRelChooser = TRUE;
         }
 
+        $mk1 = $this->createNameMu($labels, $lockRelChooser);
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
-        $mk1 .= $this->createAddsBLock();
-        $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
+
+
+        if($uS->GuestAddr) {
+            $mk1 .= $this->createAddsBLock();
+            $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
+        }
 
         // Header info
         // Check dates
-        $nowDT = new \DateTime();
-        $cidAttr = array('name'=>$idPrefix . 'gstDate', 'class'=>'dprange', 'size'=>'13');
-        if (is_null($this->getCheckinDT()) === FALSE && $this->getCheckinDT() < $nowDT) {
-            $cidAttr['class'] .= ' ui-state-highlight';
-        }
+//        $nowDT = new \DateTime();
+//        $cidAttr = array('name'=>$idPrefix . 'gstDate', 'class'=>'dprange', 'size'=>'13');
+//        if (is_null($this->getCheckinDT()) === FALSE && $this->getCheckinDT() < $nowDT) {
+//            $cidAttr['class'] .= ' ui-state-highlight';
+//        }
 
         $header = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('span', $this->title.': ', array('id'=>$idPrefix . 'spnHdrLabel'))
                .HTMLContainer::generateMarkup('span', $this->getNameObj()->get_firstName(), array('id'=>$idPrefix . 'hdrFirstName', 'name'=>'hdrFirstName'))
                .HTMLContainer::generateMarkup('span', ' '.$this->getNameObj()->get_lastName(), array('id'=>$idPrefix . 'hdrLastName', 'name'=>'hdrLastName'))
-               .HTMLContainer::generateMarkup('span', 'Expected Check In: '.
-                       HTMLInput::generateMarkup((is_null($this->getCheckinDT()) ? '' : $this->getCheckinDT()->format('M j, Y')), $cidAttr), array('style'=>'margin-left:1.5em;'))
-               .HTMLContainer::generateMarkup('span', 'Expected Departure: '.
-                       HTMLInput::generateMarkup((is_null($this->getExpectedCheckOutDT()) ? '' : $this->getExpectedCheckOutDT()->format('M j, Y')), Array('name'=>$idPrefix . 'gstCoDate', 'class'=>'ckdate')), array('style'=>'margin-left:.5em;'))
+//               .HTMLContainer::generateMarkup('span', 'Expected Check In: '.
+//                       HTMLInput::generateMarkup((is_null($this->getCheckinDT()) ? '' : $this->getCheckinDT()->format('M j, Y')), $cidAttr), array('style'=>'margin-left:1.5em;'))
+//               .HTMLContainer::generateMarkup('span', 'Expected Departure: '.
+//                       HTMLInput::generateMarkup((is_null($this->getExpectedCheckOutDT()) ? '' : $this->getExpectedCheckOutDT()->format('M j, Y')), Array('name'=>$idPrefix . 'gstCoDate', 'class'=>'ckdate')), array('style'=>'margin-left:.5em;'))
 //               .HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('span', '', array('id'=>'memMsg', 'style'=>'color:red;float:right; margin-right:23px;')), array('style'=>'margin-right:23px;'))
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
