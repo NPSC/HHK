@@ -67,7 +67,7 @@ $emAddr = '';
 
 function createScript() {
     return "
-    $('#btnPrint, #btnEmail').button();
+    $('#btnPrint, #btnEmail, #btnWord').button();
     $('#btnEmail').click(function () {
         if ($('#btnEmail').val() == 'Sending...') {
             return;
@@ -100,18 +100,36 @@ function createScript() {
             }
         });
     });
+    var opt = {mode: 'popup',
+        popClose: true,
+        popHt      : $('#divStmt').height(),
+        popWd      : $('#divStmt').width(),
+        popX       : 20,
+        popY       : 20,
+        popTitle   : 'Guest Statement'};
+
     $('#btnPrint').click(function() {
-        $('div.PrintArea').printArea();
-    });";
+        $('div.PrintArea').printArea(opt);
+    });
+    ";
 }
 
-if (isset($_REQUEST["vid"])) {
+if (isset($_REQUEST['vid'])) {
     $idVisit = intval(filter_var($_REQUEST["vid"], FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
 if (isset($_REQUEST['reg'])) {
     $idRegistration = intval(filter_var($_REQUEST['reg'], FILTER_SANITIZE_NUMBER_INT), 10);
 }
+
+if (isset($_POST['hdnIdReg'])) {
+    $idRegistration = intval(filter_var($_REQUEST['hdnIdReg'], FILTER_SANITIZE_NUMBER_INT), 10);
+}
+
+if (isset($_POST['hdnIdVisit'])) {
+    $idVisit = intval(filter_var($_REQUEST["hdnIdVisit"], FILTER_SANITIZE_NUMBER_INT), 10);
+}
+
 
 $logoUrl = $uS->resourceURL . 'images/registrationLogo.png';
 
@@ -145,6 +163,28 @@ if ($idRegistration > 0) {
 
 $stmtMarkup = HTMLContainer::generateMarkup('div', $stmtMarkup, array('id'=>'divStmt', 'style'=>'clear:left;max-width: 800px;font-size:.9em;', 'class'=>'PrintArea ui-widget ui-widget-content ui-corner-all hhk-panel'));
 
+if (isset($_POST['btnWord'])) {
+
+
+    $form = "<!DOCTYPE html>"
+            . "<html>"
+                . "<head>"
+                    . "<style type='text/css'>" . file_get_contents('css/redmond/jquery-ui.min.css') . "</style>"
+                    . "<style type='text/css'>" . file_get_contents('css/house.css') . "</style>"
+                . "</head>"
+                . "<body><div class='PrintArea ui-widget ui-widget-content ui-corner-all hhk-panel'" . $stmtMarkup . '</div></body>'
+            . '</html>';
+
+    header('Content-Disposition: attachment; filename=Statement.doc');
+    header("Content-Description: File Transfer");
+    header('Content-Type: text/html');
+    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+    header('Expires: 0');
+
+    echo($form);
+    exit();
+
+}
 
 $emSubject = $wInit->siteName . " Guest Statement";
 
@@ -165,7 +205,13 @@ $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', arra
 
 $emtableMarkup .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('form',
         $emTbl->generateMarkup(array(), 'Email Guest Statement'), array('id'=>'formEm'))
-        .HTMLInput::generateMarkup('Print', array('id'=>'btnPrint', 'style'=>'margin-right:.3em;'))
+
+        .HTMLContainer::generateMarkup('form',
+                HTMLInput::generateMarkup('Print', array('id'=>'btnPrint', 'style'=>'margin-right:1em;'))
+                .HTMLInput::generateMarkup('Download MS Word', array('name'=>'btnWord', 'type'=>'submit'))
+                .HTMLInput::generateMarkup($idRegistration, array('name'=>'hdnIdReg', 'type'=>'hidden'))
+                .HTMLInput::generateMarkup($idVisit, array('name'=>'hdnIdVisit', 'type'=>'hidden'))
+                , array('name'=>'frmwrod','action'=>'ShowStatement.php', 'method'=>'post'))
         ,array('style'=>'margin-left:100px;margin-bottom:10px; float:left;', 'class'=>'ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox'));
 
 
@@ -249,7 +295,7 @@ if ($msg != '') {
         <script type='text/javascript'>
 $(document).ready(function() {
     "use strict";
-    $('#btnPrint, #btnEmail').button();
+    $('#btnPrint, #btnEmail, #btnWord').button();
     $('#btnEmail').click(function () {
         if ($('#btnEmail').val() == 'Sending...') {
             return;

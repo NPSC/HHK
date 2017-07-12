@@ -666,9 +666,9 @@ class ReservationSvcs {
 
             if ($resv->getIdRegistration() == 0 && $idPsg > 0) {
                 // see i fthe PSG has it
-                $stmtp = $dbh->query("Select IFNULL(idHospital_stay, 0) from hospital_stay where idPsg = $idPsg Limit 0,1");
+                $stmtp = $dbh->query("Select idRegistration from registration where idPsg = $idPsg ");
                 $rw = $stmtp->fetchAll(\PDO::FETCH_NUM);
-                if (isset($rw[0][0])) {
+                if (isset($rw[0][0]) && $rw[0][0] > 0) {
                     $idReg = intval($rw[0][0]);
                 }
             } else {
@@ -1614,7 +1614,7 @@ class ReservationSvcs {
 
         // Update reservation record
         $resv->setNumberGuests(count($guests));
-        $resv->saveReservation($dbh, 0, $uname);
+        $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
 
         if ($psg->getIdPatient() == $id) {
             $dataArray['patStay'] = false;

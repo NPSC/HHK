@@ -92,9 +92,13 @@ switch ($c) {
         if (isset($_GET['mode'])) {
             $mode = filter_var(urldecode($_GET['mode']), FILTER_SANITIZE_STRING);
         }
+        $gp = FALSE;
+        if (isset($_GET['gp']) && $_GET['gp'] == '1') {
+            $gp = TRUE;
+        }
 
         $memberSearch = new MemberSearch($letters);
-        $events = $memberSearch->roleSearch($dbh, $mode);
+        $events = $memberSearch->roleSearch($dbh, $mode, $gp);
 
         break;
 

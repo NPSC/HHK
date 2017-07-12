@@ -269,7 +269,7 @@ $confReserv = $labels->getString('register', 'reservationTab', 'Confirmed Reserv
             <?php echo $pInfo; ?>
             <form  action="CheckIn.php" method="post"  id="form1">
                 <div id="hospitalSection" style="font-size:.9em; float:left; display:none; min-width: 500px;"  class="ui-widget hhk-panel hhk-visitdialog"></div>
-                <div id="patientSearch" style="clear:left;float:left;font-size: .9em;padding-left:0;<?php echo $pmDisplay; ?>" class="hhk-visitdialog">
+                <div id="patientSearch" style="clear:left;float:left;padding-left:0;<?php echo $pmDisplay; ?>" class="hhk-visitdialog">
                 <?php echo $pmkup; ?>
                 </div>
                 <div id="patientSection" style="clear:left;float:left;font-size: .9em;padding-left:0;display:none;min-width: 500px;" class="hhk-visitdialog"></div>
@@ -278,7 +278,7 @@ $confReserv = $labels->getString('register', 'reservationTab', 'Confirmed Reserv
                 <div id="guestAccordion" style="clear:left;font-size:.9em; margin-top:0;float:left;" class="ui-widget hhk-panel hhk-visitdialog"></div>
                 <div id="guestSearchWrapper" style="display: none;">
                     <?php echo $gInfo; ?>
-                    <div id="guestSearch" style="clear:left;float:left;font-size: .9em;padding-left:0;<?php echo $gSearchDisplay; ?>" class="hhk-panel">
+                    <div id="guestSearch" style="clear:left;float:left;padding-left:0;<?php echo $gSearchDisplay; ?>" class="hhk-panel">
                         <?php echo $mk1; ?>
                     </div>
                 </div>

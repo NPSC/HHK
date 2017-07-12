@@ -197,12 +197,12 @@ $resultMessage = $alertMsg->createMarkup();
             </div>
             <div style="clear:both"></div>
             <form  action="Referral.php" method="post"  id="form1">
-                <div id="patientSection" style="display:none; font-size: .9em; padding-left:0; margin-top:0;margin-bottom:1em; clear:left; float:left; min-width: 810px;" class="ui-widget hhk-panel  hhk-visitdialog">
+                <div id="patientSection" style="display:none; padding-left:0; margin-top:0;margin-bottom:1em; clear:left; float:left; min-width: 810px;" class="ui-widget hhk-panel  hhk-visitdialog">
                     <?php echo $pmkup; ?>
                 </div>
                 <div id="guestAccordion" style="font-size: .9em; padding-left:0; margin-top:0; margin-bottom:1em; clear:left; float:left; min-width: 810px;" class="ui-widget hhk-panel  hhk-visitdialog">
                 </div>
-                <div id="guestSearch" style="padding-left:0;padding-top:0; clear:left; float:left; font-size: .9em;">
+                <div id="guestSearch" style="padding-left:0;padding-top:0; clear:left; float:left;">
                     <?php echo $mk1; ?>
                 </div>
                 <div id="hospitalSection" style="font-size: .9em; padding-left:0;margin-top:0; margin-bottom:1em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-panel hhk-visitdialog"></div>

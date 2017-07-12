@@ -277,7 +277,6 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
             $('#spnExPay').hide();
             isCheckedOut = false;
-            
 
             var roomChgBal = 0.00;
             var vFeeChgBal = 0.00;

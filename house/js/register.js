@@ -766,14 +766,18 @@ $(document).ready(function () {
                 alert("Don't press the return key unless you enter an Id.");
                 event.preventDefault();
             } else {
-                window.location.assign("GuestEdit.php?id=" + mm);
+                if (mm > 0) {
+                    window.location.assign("GuestEdit.php?id=" + mm);
+                }
+                event.preventDefault();
             }
         }
     });
-    createAutoComplete($('#txtsearch'), 3, {cmd: "role",  mode: 'mo'}, 
+    
+    createAutoComplete($('#txtsearch'), 3, {cmd: "role",  mode: 'mo', gp:'1'}, 
         function(item) { 
             var cid = item.id;
-            if (cid !== 0) {
+            if (cid > 0) {
                 window.location.assign("GuestEdit.php?id=" + cid);
             }
         },

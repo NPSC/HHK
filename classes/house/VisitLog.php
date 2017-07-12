@@ -128,7 +128,7 @@ class ReservationLog extends TableLog {
     const FinApplication = 'fin_application';
 
 
-    public static function logReservation(\PDO $dbh, $idResv, $idReg, $idhstay, $idResc, $idRoomRate, $idGuest, $logText, $subType, $userName) {
+    public static function logReservation(\PDO $dbh, $idResv, $idReg, $idhstay, $idResc, $idRoomRate, $idGuest, $logText, $subType, $userName, $idPsg = 0) {
 
         if (self::checkLogText($logText) === FALSE) {
             return TRUE;
@@ -145,6 +145,7 @@ class ReservationLog extends TableLog {
         $logRS->idResource->setNewVal($idResc);
         $logRS->idRoom_rate->setNewVal($idRoomRate);
         $logRS->idName->setNewVal($idGuest);
+        $logRS->idPsg->setNewVal($idPsg);
 
         $logRS->Log_Text->setNewVal($encodedText);
         $logRS->User_Name->setNewVal($userName);

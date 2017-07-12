@@ -216,7 +216,7 @@ class Receipt {
     public static function getHouseIconMarkup($logoUrl, $siteName) {
 
         return HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$siteName, 'width'=>'150')),
+                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>'', 'width'=>'150')),
                 array('style'=>'margin-bottom:10px;float:left;'));
 
     }
@@ -400,7 +400,7 @@ where
             } else {
                 $rates[$rateCounter]['depAmt'] = 0;
             }
-            
+
             if (isset($v['Guest_Nights'])) {
                 $rates[$rateCounter]['gdays'] = $v['Guest_Nights'];
             }
@@ -620,7 +620,7 @@ where
             $tiers = $priceModel->tiersCalculation($days, $r['idrate'], $r['cat'], $r['amt'], $r['adj'], floor($days * $gDayRatio));
 
             $numberNites += $days;
-            
+
             // Mention rate aging ....
             if ($r['glide'] > 0 && $priceModel->getGlideApplied() && $r['span'] == 0) {
                 $tbl->addBodyTr(
@@ -1173,7 +1173,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
         // Assemble the statement
         $rec = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>'House Icon', 'width'=>'220')),
+                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>'', 'width'=>'220')),
                 array('style'=>'margin-bottom:10px;float:left;'));
 
         $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $uS->sId), array('style'=>'float:left;margin-bottom:10px;margin-left:20px;'));
@@ -1281,7 +1281,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
         }
 
         $rec = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>'House Icon', 'width'=>'220')),
+                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>'', 'width'=>'220')),
                 array('style'=>'margin-bottom:10px;float:left;'));
 
         $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $uS->sId), array('style'=>'float:left;margin-bottom:10px;margin-left:20px;'));

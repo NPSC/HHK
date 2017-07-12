@@ -1,6 +1,6 @@
 <?php
 /**
- * Referral.php
+ * Reserve.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
@@ -51,9 +51,6 @@ require (HOUSE . 'Constraint.php');
 require (HOUSE . 'Attributes.php');
 
 
-
-
-
 try {
     $wInit = new webInit();
 } catch (Exception $exw) {
@@ -73,15 +70,41 @@ $wInit->sessionLoadGuestLkUps();
 
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
+$paymentMarkup = '';
+$receiptMarkup = '';
+
+// Hosted payment return
+if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)) === FALSE) {
+
+    $receiptMarkup = $payResult->getReceiptMarkup();
+    $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+}
+
 ?>
 <!DOCTYPE html>
 <html>
     <head>
         <meta charset="UTF-8">
-        <title></title>
+        <title><?php echo $wInit->pageTitle; ?></title>
+        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <link rel="stylesheet" href="css/daterangepicker.min.css">
+        <?php echo JQ_UI_CSS; ?>
+        <?php echo HOUSE_CSS; ?>
+        <script type="text/javascript" src="../js/jquery.daterangepicker.min.js"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
     </head>
-    <body>
+    <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
+        <?php echo $menuMarkup; ?>
+        <div id="contentDiv">
+            <h1><?php echo $wInit->pageHeading; ?> <span id="spnStatus" sytle="margin-left:50px; display:inline;"></span></h1>
+            <p id="ajaxError"></p>
+            <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
+            <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
+            </div>
+            <div style="clear:both"></div>
 
-
+        </div>
     </body>
 </html>

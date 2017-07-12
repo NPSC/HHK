@@ -5,6 +5,10 @@ ALTER TABLE `stays`
 ALTER TABLE `name` 
     DROP INDEX `idName_UNIQUE` ;
 
+ALTER TABLE `registration` 
+ADD INDEX `INDEX_idPsg` (`idPsg` ASC);
+
+
 DROP View `vvisit_listing`;
 
 ALTER TABLE `name_demog` 
@@ -18,6 +22,9 @@ update name_demog set Photo_Permission = '' where Photo_Permission = '0';
 update name_demog set Photo_Permission = 'yes' where Photo_Permission = '1';
 
 update gen_lookups set `Type` = 'h' where Table_Name = 'NoReturnReason';
+
+REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`) VALUES 
+('ReservStatus','h','To Hotel','y','y','','ui-icon-suitcase');
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ShowDemographics', 'false', 'b', 'h', 'Show demographics selectors on Check in and Reservation pages');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Demographics', 'Newsletter', 'Newsletter', 'y', 'm', '0');

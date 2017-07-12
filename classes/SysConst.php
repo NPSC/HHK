@@ -251,6 +251,7 @@ class ReservationStatus {
     const NoShow = 'ns';
     const TurnDown = 'td';
     const Canceled = 'c';
+    const ToHotel = 'h';
     const Pending = 'p';
     const Staying = 's';
     const Checkedout = 'co';

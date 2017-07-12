@@ -171,8 +171,16 @@ if ($msg != '') {
             $(document).ready(function () {
                 "use strict";
                 $('#btnPrint, #btnEmail').button();
+    var opt = {mode: 'popup',
+        popClose: true,
+        popHt      : $('#divBody').height(),
+        popWd      : $('#divBody').width(),
+        popX       : 20,
+        popY       : 20,
+        popTitle   : 'Print Invoice'};
+
                 $('#btnPrint').click(function () {
-                    $("div.PrintArea").printArea();
+                    $("div.PrintArea").printArea(opt);
                 });
             });
         </script>

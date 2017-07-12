@@ -565,7 +565,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
                 . "where r.idResource = $idResource and r.Status in ($statuses) and DATE(ifnull(r.Actual_Arrival, r.Expected_Arrival)) <= DATE('$dep') "
                 . "and DATE(ifnull(r.Actual_Departure, r.Expected_Departure)) > DATE('$arr')";
         $stmt = $dbh->query($query);
-        
+
 
         // return an array of resourceId's
         return $stmt->fetchAll(\PDO::FETCH_NUM);
@@ -591,7 +591,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
             $omitTxt = " and r.idReservation != " . $this->getIdReservation();
             $omitVisit = " and v.idVisit != " . $this->getIdVisit($dbh);
         }
-        
+
         $stat = "'" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "'";
         $vStat = VisitStatus::Pending;
 
@@ -962,7 +962,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
     public static function isRemovedStatus($reservStatus) {
 
-        if ($reservStatus == ReservationStatus::Canceled || $reservStatus == ReservationStatus::NoShow || $reservStatus == ReservationStatus::TurnDown) {
+        if ($reservStatus == ReservationStatus::Canceled || $reservStatus == ReservationStatus::NoShow || $reservStatus == ReservationStatus::TurnDown || $reservStatus == ReservationStatus::ToHotel) {
             return TRUE;
         }
 

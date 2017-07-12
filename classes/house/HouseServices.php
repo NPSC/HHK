@@ -961,7 +961,7 @@ class HouseServices {
         $resv->setExpectedDeparture($newExpectedDT->format('Y-m-d 10:00:00'));
         $resv->setStatus(ReservationStatus::Staying);
 
-        $resv->saveReservation($dbh, 0, $uname);
+        $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
 
 
         // Undo visit checkout

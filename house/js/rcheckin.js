@@ -161,7 +161,7 @@ function injectSlot(data) {
         var lastXhr;
         createZipAutoComplete($('input.hhk-zipsearch'), 'ws_admin.php', lastXhr);
         $('#gstprompt').text('Add Guest: ');
-//        $('#gstpostPrompt').text('(No additional guests? Press "Done Adding Guests" at the bottom of the screen.)');
+
     }
     return slot;
 }
@@ -196,6 +196,14 @@ function ckedIn(data) {
     if (data.success) {
         //flagAlertMessage(data.success, false);
         var cDiv = $('#contentDiv');
+        var opt = {mode: 'popup',
+            popClose: true,
+            popHt      : $('div#RegArea').height(),
+            popWd      : 950,
+            popX       : 20,
+            popY       : 20,
+            popTitle   : 'Guest Registration Form'};
+        
         cDiv.children().remove();
 
         if (data.regform && data.style) {
@@ -207,7 +215,7 @@ function ckedIn(data) {
 
             $("div#print_button, div#btnReg").button();
             $("div#print_button").click(function() {
-                $("div.RegArea").printArea();
+                $("div.RegArea").printArea(opt);
             });
             $('div#btnReg').click(function() {
                 getRegistrationDialog(data.reg, cDiv);
@@ -358,7 +366,7 @@ function processGuests(incmg) {
     
     if (incmg.idPsg) {
         if (checkIn.idPsg && checkIn.idPsg > 0 && incmg.idPsg > 0 && checkIn.idPsg != incmg.idPsg) {
-            flagAlertMessage('Dazed and confused!  Please try again. ', true);
+            flagAlertMessage('Something is wrong.  Please try again. ', true);
             checkIn.idPsg = 0;
             return false;
         }
@@ -1038,7 +1046,7 @@ function verifyDone() {
                 if (ciDate > nowdate) {
                     $('#' + pan.idPrefix + 'gstDate').addClass('ui-state-error');
                     gstMsg.text("The check-in date cannot be in the future.");
-                    flagAlertMessage(nameText + " cannot check into the future.  This is not the twilight zone.", true);
+                    flagAlertMessage(nameText + " cannot check-in to a future date.", true);
                     return false;
                 }
                 if (!earliestCkIn) {
@@ -1071,7 +1079,7 @@ function verifyDone() {
                 if (ciDate > coDate) {
                     $('#' + pan.idPrefix + 'gstDate').addClass('ui-state-error');
                     gstMsg.text("Check in date is after check out date.");
-                    flagAlertMessage(nameText + "  check in date is after their expected departure date.  We cannot reverse time (yet).", true);
+                    flagAlertMessage(nameText + "  check in date is after their expected departure date.", true);
                     return false;
                 }
             }
@@ -1772,14 +1780,31 @@ $(document).ready(function() {
     
     createAutoComplete($('#txtRelSch'), 3, {cmd: 'filter', add: 'phone', basis: 'g'}, getECRel, lastXhr);
     
-    createAutoComplete($('#' + checkIn.guestSearchPrefix + 'Search'), 3, {cmd: 'role'}, function (item) {
-            loadGuest(item.id, checkIn.idPsg, 'g', checkIn.patientStaying);
-        });
-    createAutoComplete($('#' + checkIn.guestSearchPrefix + 'phSearch'), 5, {cmd: 'role'}, function (item) {
-            loadGuest(item.id, checkIn.idPsg, 'g', checkIn.patientStaying);
-        });
+    createAutoComplete($('#' + checkIn.guestSearchPrefix + 'Search'), 3, {cmd: 'role', gp:'1'}, function (item) {
+        
+        if (item.No_Return !== undefined && item.No_Return !== '') {
+            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
+            return;
+        }
+
+        loadGuest(item.id, checkIn.idPsg, 'g', checkIn.patientStaying);
+    });
+    
+    createAutoComplete($('#' + checkIn.guestSearchPrefix + 'phSearch'), 5, {cmd: 'role', gp:'1'}, function (item) {
+        
+        if (item.No_Return !== undefined && item.No_Return !== '') {
+            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
+            return;
+        }
+
+        loadGuest(item.id, checkIn.idPsg, 'g', checkIn.patientStaying);
+    });
         
     function getPatient(item) {
+        if (item.No_Return !== undefined && item.No_Return !== '') {
+            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
+            return;
+        }
         if (item.id > 0) {
             for (var i = 0; i < checkIn.members.length; i++) {
                 var pan = checkIn.members[i];
@@ -1807,8 +1832,8 @@ $(document).ready(function() {
         }
     }
     
-    createAutoComplete($('#' + checkIn.patientPrefix + 'Search'), 3, {cmd: 'role'}, getPatient);
-    createAutoComplete($('#' + checkIn.patientPrefix + 'phSearch'), 5, {cmd: 'role'}, getPatient);
+    createAutoComplete($('#' + checkIn.patientPrefix + 'Search'), 3, {cmd: 'role', gp:'1'}, getPatient);
+    createAutoComplete($('#' + checkIn.patientPrefix + 'phSearch'), 5, {cmd: 'role', gp:'1'}, getPatient);
     
     $('#' + checkIn.guestSearchPrefix + 'Search').keypress(function(event) {
         $(this).removeClass('ui-state-highlight');

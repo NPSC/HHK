@@ -121,8 +121,8 @@ class Guest extends Role {
                 HTMLContainer::generateMarkup('span', ($this->getPatientRelationshipCode() == RelLinkType::Self ? $labels->getString('MemberType', 'patient', 'Patient') . ': ' : 'Guest: '), array('id'=>$idPrefix . 'spnHdrLabel'))
                .HTMLContainer::generateMarkup('span', $this->getNameObj()->get_firstName(), array('id'=>$idPrefix . 'hdrFirstName', 'name'=>'hdrFirstName'))
                .HTMLContainer::generateMarkup('span', ' '.$this->getNameObj()->get_lastName(), array('id'=>$idPrefix . 'hdrLastName', 'name'=>'hdrLastName', 'style'=>'margin-right:10px;'))
-//               . HTMLContainer::generateMarkup('span', ' Check In: '. HTMLInput::generateMarkup((is_null($this->getCheckinDT()) ? '' : $this->getCheckinDT()->format('M j, Y')), $cidAttr), array('style'=>'margin-left:.5em;'))
-//               . HTMLContainer::generateMarkup('span', 'Expected Departure: '. HTMLInput::generateMarkup((is_null($this->getExpectedCheckOutDT()) ? '' : $this->getExpectedCheckOutDT()->format('M j, Y')), Array('name'=>$idPrefix . 'gstCoDate', 'class'=>'ckdate gstchkoutdate', 'readonly'=>'readonly')), array('style'=>'margin-left:.5em;'))
+               . HTMLContainer::generateMarkup('span', ' Check In: '. HTMLInput::generateMarkup((is_null($this->getCheckinDT()) ? '' : $this->getCheckinDT()->format('M j, Y')), $cidAttr), array('style'=>'margin-left:.5em;'))
+               . HTMLContainer::generateMarkup('span', 'Expected Departure: '. HTMLInput::generateMarkup((is_null($this->getExpectedCheckOutDT()) ? '' : $this->getExpectedCheckOutDT()->format('M j, Y')), Array('name'=>$idPrefix . 'gstCoDate', 'class'=>'ckdate gstchkoutdate', 'readonly'=>'readonly')), array('style'=>'margin-left:.5em;'))
                 . HTMLContainer::generateMarkup('span', '', array('id'=>$idPrefix . 'naAddrIcon', 'class'=>'hhk-icon-redLight', 'title'=>'Incomplete Address', 'style'=>'float:right;margin-top:4px;margin-left:3px;display:none;'))
                         , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
@@ -205,21 +205,21 @@ class Guest extends Role {
 
         // Header info
         // Check dates
-//        $nowDT = new \DateTime();
-//        $cidAttr = array('name'=>$idPrefix . 'gstDate', 'class'=>'dprange', 'size'=>'13');
-//        if (is_null($this->getCheckinDT()) === FALSE && $this->getCheckinDT() < $nowDT) {
-//            $cidAttr['class'] .= ' ui-state-highlight';
-//        }
+        $nowDT = new \DateTime();
+        $cidAttr = array('name'=>$idPrefix . 'gstDate', 'class'=>'dprange', 'size'=>'13');
+        if (is_null($this->getCheckinDT()) === FALSE && $this->getCheckinDT() < $nowDT) {
+            $cidAttr['class'] .= ' ui-state-highlight';
+        }
 
         $header = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('span', $this->title.': ', array('id'=>$idPrefix . 'spnHdrLabel'))
                .HTMLContainer::generateMarkup('span', $this->getNameObj()->get_firstName(), array('id'=>$idPrefix . 'hdrFirstName', 'name'=>'hdrFirstName'))
                .HTMLContainer::generateMarkup('span', ' '.$this->getNameObj()->get_lastName(), array('id'=>$idPrefix . 'hdrLastName', 'name'=>'hdrLastName'))
-//               .HTMLContainer::generateMarkup('span', 'Expected Check In: '.
-//                       HTMLInput::generateMarkup((is_null($this->getCheckinDT()) ? '' : $this->getCheckinDT()->format('M j, Y')), $cidAttr), array('style'=>'margin-left:1.5em;'))
-//               .HTMLContainer::generateMarkup('span', 'Expected Departure: '.
-//                       HTMLInput::generateMarkup((is_null($this->getExpectedCheckOutDT()) ? '' : $this->getExpectedCheckOutDT()->format('M j, Y')), Array('name'=>$idPrefix . 'gstCoDate', 'class'=>'ckdate')), array('style'=>'margin-left:.5em;'))
-//               .HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('span', '', array('id'=>'memMsg', 'style'=>'color:red;float:right; margin-right:23px;')), array('style'=>'margin-right:23px;'))
+               .HTMLContainer::generateMarkup('span', 'Expected Check In: '.
+                       HTMLInput::generateMarkup((is_null($this->getCheckinDT()) ? '' : $this->getCheckinDT()->format('M j, Y')), $cidAttr), array('style'=>'margin-left:1.5em;'))
+               .HTMLContainer::generateMarkup('span', 'Expected Departure: '.
+                       HTMLInput::generateMarkup((is_null($this->getExpectedCheckOutDT()) ? '' : $this->getExpectedCheckOutDT()->format('M j, Y')), Array('name'=>$idPrefix . 'gstCoDate', 'class'=>'ckdate')), array('style'=>'margin-left:.5em;'))
+               .HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('span', '', array('id'=>'memMsg', 'style'=>'color:red;float:right; margin-right:23px;')), array('style'=>'margin-right:23px;'))
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
 

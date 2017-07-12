@@ -73,14 +73,13 @@ function _source(request, response, cache, shoNew, txtCtrl, inputParms, $basisCt
             }
         }
 
-        if (filtered.length === 0) {
-            filtered.push({'id':'n', 'value':'No one found'});
-            cache = {};
-        }
-
-
         if (shoNew) {
             filtered.push({'id':0, 'value':'New Person'});
+        }
+        
+         if (filtered.length === 0) {
+            filtered.push({'id':'n', 'value':'No one found'});
+            cache = {};
         }
 
         response( filtered );

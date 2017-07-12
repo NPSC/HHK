@@ -403,6 +403,7 @@ $(document).ready(function () {
         savePressed = true;
         $(this).val('Saving>>>>');
     });
+    
     // Member search letter input box
     $('#txtsearch').keypress(function (event) {
         var mm = $(this).val();
@@ -411,10 +412,14 @@ $(document).ready(function () {
                 alert("Don't press the return key unless you enter an Id.");
                 event.preventDefault();
             } else {
-                window.location.assign("GuestEdit.php?id=" + mm);
+                if (mm > 0) {
+                    window.location.assign("GuestEdit.php?id=" + mm);
+               }
+               event.preventDefault();
             }
         }
     });
+    
     // Date of death
     $('#cbdeceased').change(function () {
         if ($(this).prop('checked')) {
@@ -440,14 +445,18 @@ $(document).ready(function () {
         $('.hhk-docInfo').hide();
     }
     
-    createAutoComplete($('#txtsearch'), 3, {cmd: 'role', mode: 'mo'}, 
+    createAutoComplete($('#txtsearch'), 3, {cmd: 'role', mode: 'mo', gp:'1'}, 
         function (item) {
-             window.location.assign("GuestEdit.php?id=" + item.id);
+            if (item.id > 0) {
+                window.location.assign("GuestEdit.php?id=" + item.id);
+            }
         });
         
-    createAutoComplete($('#txtPhsearch'), 5, {cmd: 'role', mode: 'mo'}, 
+    createAutoComplete($('#txtPhsearch'), 5, {cmd: 'role', mode: 'mo', gp:'1'}, 
         function (item) {
-            window.location.assign("GuestEdit.php?id=" + item.id);
+            if (item.id > 0) {
+                window.location.assign("GuestEdit.php?id=" + item.id);
+            }
         });
 
     createAutoComplete($('#txtRelSch'), 3, {cmd: 'srrel', basis: $('#hdnRelCode').val(), id: memData.id}, function (item) {

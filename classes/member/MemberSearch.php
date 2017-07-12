@@ -516,34 +516,47 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         return $events;
     }
 
-    public function roleSearch(\PDO $dbh, $mode = '') {
+    public function roleSearch(\PDO $dbh, $mode = '', $guestPatient = FALSE) {
 
         $operation = 'OR';
         if ($this->twoParts) {
             $operation = 'AND';
         }
 
-        $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State` from "
+        $filter = '';
+        if ($guestPatient) {
+            $filter = " and ng.idName is not null ";
+        }
+
+        $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname,"
+                . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
+                . " ifnull(gr.Description, '') as `No_Return` "
+                . " from "
                 . " name n left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code"
                 . " left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose"
+                . " left join name_demog nd on n.idName = nd.idName"
+                . " left join name_guest ng on n.idName = ng.idName"
                 . " left join gen_lookups g on g.Table_Name = 'Name_Suffix' and g.Code = n.Name_Suffix"
                 . " left join gen_lookups gp on gp.Table_Name = 'Name_Prefix' and gp.Code = n.Name_Prefix"
                 . " left join gen_lookups gs on gs.Table_Name = 'mem_status' and gs.Code = n.Member_Status"
-                . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 and (LOWER(n.Name_Last) like :ltrln"
-                . " $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk) OR np.Phone_Search like :phnum) order by n.Name_Last, n.Name_First;";
+                . " left join gen_lookups gr on gr.Table_Name = 'NoReturnReason' and gr.Code = nd.No_Return"
+                . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 $filter "
+                . " and (LOWER(n.Name_Last) like '" . $this->Name_Last . "'"
+                . " $operation (LOWER(n.Name_First) like '" . $this->Name_First . "' OR LOWER(n.Name_NickName) like '" . $this->Name_First . "') OR np.Phone_Search like '" . $this->Name_First . "') order by n.Name_Last, n.Name_First;";
 
-        $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-        $stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First, ':phnum' => $this->Name_First));
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $stmt = $dbh->query($query);
 
         $events = array();
 
-        foreach ($rows as $row2) {
+        while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $namArray = array();
 
             $namArray['id'] = $row2["idName"];
             $namArray['fullName'] = $row2["Name_First"] . ' ' . $row2["Name_Last"];
-            $namArray['value'] = ($row2['Name_Prefix'] != '' ? $row2['Name_Prefix'] . ' ' : '' )
+            $namArray['No_Return'] = $row2['No_Return'];
+            $namArray['value'] =
+                ($row2['No_Return'] != '' ? $row2['No_Return'] . '; ' : '')
+                . ($row2['Name_Prefix'] != '' ? $row2['Name_Prefix'] . ' ' : '' )
                 . $row2["Name_Last"] . ", " . $row2["Name_First"]
                 . ($row2['Name_Suffix'] != '' ? ', ' . $row2['Name_Suffix'] : '' )
                 . ($row2['Name_Nickname'] != '' ? ' (' . $row2['Name_Nickname'] . ')' : '' )

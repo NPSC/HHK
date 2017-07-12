@@ -50,7 +50,7 @@ class VisitCharges {
         $spans = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($spans) == 0) {
-            return 'Visit Id "' . $this->idVisit . '" Not Found.  ';
+            throw new Hk_Exception_Runtime('Visit Id "' . $this->idVisit . '" Not Found.  ');
         }
 
         return $this->getVisitData($spans, $priceModel, $newPayment, $calcDaysPaid, $givenPaid);
@@ -60,11 +60,11 @@ class VisitCharges {
     public function sumDatedRoomCharge(\PDO $dbh, PriceModel $priceModel, $coDate, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
 
         // Get current nights .
-        $stmt1 = $dbh->prepare("select * from `vvisit_stmt` where `idVisit` = " . $this->idVisit . " and `Status` != 'p' order by `Span`");
+        $stmt1 = $dbh->query("select * from `vvisit_stmt` where `idVisit` = " . $this->idVisit . " and `Status` != 'p' order by `Span`");
         $spans = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($spans) == 0) {
-            return 'Visit Id "' . $this->idVisit . '" Not Found.  ';
+            throw new Hk_Exception_Runtime('Visit Id "' . $this->idVisit . '" Not Found.  ');
         }
 
         $span = $spans[(count($spans) - 1)];

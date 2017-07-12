@@ -25,7 +25,7 @@ function additionalGuest(item) {
         for (var i = 0; i < resv.members.length; i++) {
             var pan = resv.members[i];
             if (pan.idName == item.id && pan.idPrefix == resv.patientPrefix && resv.patStaying == true) {
-                flagAlertMessage('Silly human, this guest is already added.', true);
+                flagAlertMessage('This guest is already added.', true);
                 return;
             }
         }
@@ -291,7 +291,7 @@ function delAdditionalGuest(item) {
 function injectSlot(data) {
     "use strict";
     var resv = reserv;
-    
+
     if (data.memMkup && data.txtHdr) {
         var accdDiv = $('div#guestAccordion'),
             acDiv = $('<div id="' + data.idPrefix +  'divGstpnl" />').append($(data.memMkup)),
@@ -299,12 +299,12 @@ function injectSlot(data) {
             gstCoDate;
 
         acDiv.addClass('Slot gstdetail');
-        
+
         var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
             .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
             .append($("<span id='" + data.idPrefix + "drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
 
-        
+
         // Header
         var acHdr = $('<div id="' + data.idPrefix +  'divGsthdr" style="padding:2px;"/>')
                 .append($(data.txtHdr))
@@ -323,9 +323,9 @@ function injectSlot(data) {
                     }
                 });
 
-        
+
         acHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
-        
+
         // Guest
         accdDiv.children().remove();
         accdDiv.append(acHdr);
@@ -1091,7 +1091,7 @@ function verifyDone(reserv) {
     hideAlertMessage();
 
     // Cancel, no show, turned down
-    if ($selStatus.val() === 'c' || $selStatus.val() === 'td' || $selStatus.val() === 'ns') {
+    if ($selStatus.val() === 'c' || $selStatus.val() === 'td' || $selStatus.val() === 'ns' || $selStatus.val() === 'h') {
         return true;
     }
 
@@ -1294,7 +1294,7 @@ function verifyDone(reserv) {
 
                 $('#' + pan.idPrefix + 'gstCoDate').addClass('ui-state-error');
                 gstMsg.text("Enter guest check out date.");
-                flagAlertMessage((pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") is missing their Expected Departure date.  Are they staying forever?", true);
+                flagAlertMessage((pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") is missing their Expected Departure date.", true);
                 return false;
 
             } else {
@@ -1304,14 +1304,14 @@ function verifyDone(reserv) {
                 if (isNaN(coDate.getTime())) {
                     $('#' + pan.idPrefix + 'gstCoDate').addClass('ui-state-error');
                     gstMsg.text("Guest Expected Departure date error.");
-                    flagAlertMessage((pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") is missing their Expected Departure date.  Are they staying forever?", true);
+                    flagAlertMessage((pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") is missing their Expected Departure date", true);
                     return false;
                 }
 
                 if (ciDate > coDate) {
                     $('#' + pan.idPrefix + 'gstDate').addClass('ui-state-error');
                     gstMsg.text("Check in date is after check out date.");
-                    flagAlertMessage((pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") check in date is after their expected departure date.  (Real life is a causal system.)", true);
+                    flagAlertMessage((pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") check in date is after their expected departure date.", true);
                     return false;
                 }
             }
@@ -1325,7 +1325,7 @@ function verifyDone(reserv) {
         flagAlertMessage("A " + resv.patientLabel + " is not selected", true);
         return false
     }
-    
+
     return true;
 }
 
@@ -1678,16 +1678,14 @@ $(document).ready(function() {
         loadGuest(item, 'g', resv.idPsg, resv.patStaying);
     }
 
-    createAutoComplete($('#gstSearch'), 3, {cmd: 'role'}, getGuest);
+    createAutoComplete($('#gstSearch'), 3, {cmd: 'role', gp:'1'}, getGuest);
     
     // Phone number search
-    createAutoComplete($('#gstphSearch'), 4, {cmd: 'role'}, getGuest);
+    createAutoComplete($('#gstphSearch'), 4, {cmd: 'role', gp:'1'}, getGuest);
     
     $('#gstSearch').keypress(function(event) {
         $(this).removeClass('ui-state-highlight');
     });
-
-    $('#gstSearch').focus();
 
     function getPatient(item) {
         if (resv.patAsGuest) {
@@ -1712,11 +1710,14 @@ $(document).ready(function() {
         }
     }
 
-    createAutoComplete($('#h_Search'), 3, {cmd: 'role'}, getPatient);
+    createAutoComplete($('#h_Search'), 3, {cmd: 'role', gp:'1'}, getPatient);
     // Phone number search
-    createAutoComplete($('#h_phSearch'), 4, {cmd: 'role'}, getPatient);
+    createAutoComplete($('#h_phSearch'), 4, {cmd: 'role', gp:'1'}, getPatient);
 
     if (resv.gpnl && resv.gpnl !== '') {
         loadGuest({id: resv.gpnl}, 'g', resv.idPsg);
     }
+    
+    $('#gstSearch').focus();
+
 });
