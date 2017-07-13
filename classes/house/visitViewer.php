@@ -607,7 +607,7 @@ class VisitView {
             // Checkout ALL button.
             if (count($rows) > 1) {
 
-                $td .= HTMLInput::generateMarkup('All', array('id'=>'cbCoAll', 'type'=>'button', 'style'=>'margin-right:.5em;margin-left:.5em;')) . ' :o)';
+                $td .= HTMLInput::generateMarkup('All', array('id'=>'cbCoAll', 'type'=>'button', 'style'=>'margin-right:.5em;margin-left:.5em;'));
             }
 
             $th .= HTMLTable::makeTh($td);

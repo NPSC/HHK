@@ -367,15 +367,15 @@ function injectSlot(data) {
 
         $('#guestSearch').hide();
     }
-    
+
     if (data.expDates !== undefined && data.expDates !== '') {
-        
+
         $('#datesSection').children().remove();
         $('#datesSection').append($(data.expDates));
-        
+
         var gstDate = $('#' + data.idPrefix + 'gstDate'),
             gstCoDate = $('#' + data.idPrefix + 'gstCoDate');
-    
+
         $('#spnRangePicker').dateRangePicker(
 	{
             format: 'MMM D, YYYY',
@@ -395,12 +395,9 @@ function injectSlot(data) {
                 gstCoDate.val(s2);
             }
 	});
-        
-        $('#spnRangePicker').data('dateRangePicker')
-                .setDateRange(gstDate.val(),gstCoDate.val());
-        
+
         $('#datesSection').show();
-        
+
     } else {
         $('#datesSection').hide();
     }
