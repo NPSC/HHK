@@ -46,7 +46,7 @@ class Patient extends Role {
                         . $tbl->generateMarkup()
                         . HTMLContainer::generateMarkup('div', $this->name->getContactLastUpdatedMU(new DateTime ($this->name->get_lastUpdated()), 'Name'), array('style'=>'float:right;'))
                         , array('class'=>'hhk-panel'))
-                , array('style'=>'float:left; margin-right:.5em; font-size:.9em;'));
+                , array('style'=>'float:left; margin-right:.5em;margin-bottom:.4em; font-size:.9em;'));
 
         return $mk1;
     }

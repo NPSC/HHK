@@ -181,8 +181,9 @@ $resultMessage = $alertMsg->createMarkup();
         <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-
+        <link rel="stylesheet" href="css/daterangepicker.min.css">
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
@@ -197,15 +198,17 @@ $resultMessage = $alertMsg->createMarkup();
             </div>
             <div style="clear:both"></div>
             <form  action="Referral.php" method="post"  id="form1">
-                <div id="patientSection" style="display:none; padding-left:0; margin-top:0;margin-bottom:1em; clear:left; float:left; min-width: 810px;" class="ui-widget hhk-panel  hhk-visitdialog">
+                <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
+                </div>
+                <div id="patientSection" style="display:none; padding-left:0; margin-top:0;margin-bottom:.3em; clear:left; float:left; min-width: 810px;" class="ui-widget hhk-visitdialog">
                     <?php echo $pmkup; ?>
                 </div>
-                <div id="guestAccordion" style="font-size: .9em; padding-left:0; margin-top:0; margin-bottom:1em; clear:left; float:left; min-width: 810px;" class="ui-widget hhk-panel  hhk-visitdialog">
+                <div id="guestAccordion" style="padding-left:0; margin-top:0; margin-bottom:1.5em; clear:left; float:left; min-width: 810px;" class="ui-widget hhk-visitdialog">
                 </div>
                 <div id="guestSearch" style="padding-left:0;padding-top:0; clear:left; float:left;">
                     <?php echo $mk1; ?>
                 </div>
-                <div id="hospitalSection" style="font-size: .9em; padding-left:0;margin-top:0; margin-bottom:1em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-panel hhk-visitdialog"></div>
+                <div id="hospitalSection" style="font-size: .9em; padding-left:0;margin-top:0; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
 
                 <div id="rescList" style="clear:left; float:left; font-size: .9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 </div>
@@ -249,7 +252,8 @@ $resultMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
-        <script type="text/javascript" src="js/referral-min.js<?php echo JS_V; ?>"></script>
+        <script type="text/javascript" src="../js/jquery.daterangepicker.min.js"></script>
+        <script type="text/javascript" src="js/referral.js<?php echo JS_V; ?>"></script>
         <script type="text/javascript">
     var pmtMkup = "<?php echo $paymentMarkup; ?>";
     var rctMkup = '<?php echo $receiptMarkup; ?>';

@@ -123,7 +123,7 @@ class UserClass {
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             if ($r["Group_Code"] != "" && ($r['Cookie_Restricted'] == "0" || $housePc)) {
-                $grpArray[] = $r["Group_Code"];
+                $grpArray[$r["Group_Code"]] = $r["Group_Code"];
             }
         }
 

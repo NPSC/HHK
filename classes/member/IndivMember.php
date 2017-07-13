@@ -86,7 +86,7 @@ class IndivMember extends Member {
         // Id
         $tr = HTMLContainer::generateMarkup('td',
                 HTMLInput::generateMarkup(($this->nameRS->idName->getStoredVal() == 0 ? '' : $this->nameRS->idName->getStoredVal())
-                        , array('name'=>$idPrefix.'idName', 'readonly'=>'readonly', 'size'=>'5', 'style'=>'border:none;background-color:transparent;'))
+                        , array('name'=>$idPrefix.'idName', 'readonly'=>'readonly', 'size'=>'7', 'style'=>'border:none;background-color:transparent;'))
                 );
 
         // Prefix

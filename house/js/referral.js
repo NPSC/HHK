@@ -294,9 +294,7 @@ function injectSlot(data) {
 
     if (data.memMkup && data.txtHdr) {
         var accdDiv = $('div#guestAccordion'),
-            acDiv = $('<div id="' + data.idPrefix +  'divGstpnl" />').append($(data.memMkup)),
-            gstDate,
-            gstCoDate;
+            acDiv = $('<div id="' + data.idPrefix +  'divGstpnl" />').append($(data.memMkup));
 
         acDiv.addClass('Slot gstdetail');
 
@@ -360,17 +358,6 @@ function injectSlot(data) {
             }
         });
 
-        $('input.dprange').click(function(event) {
-            $("div#dtpkrDialog").toggle('scale, horizontal');
-            $("#dtpkrDialog").position({
-                my: "left top",
-                at: "left bottom",
-                of: '#' + data.idPrefix + 'gstDate'
-            });
-            event.stopPropagation();
-        });
-        
-        $('.ckdate').datepicker();
         $('#' + data.idPrefix + 'phEmlTabs').tabs();
 
         if (data.idName === 0) {
@@ -378,64 +365,53 @@ function injectSlot(data) {
             $('#' + data.idPrefix + 'phEmlTabs').tabs("option", "disabled", [0]);
         }
 
-        gstDate = $('#' + data.idPrefix + 'gstDate');
-        gstCoDate = $('#' + data.idPrefix + 'gstCoDate');
-
-        gstCoDate.datepicker("destroy");
-        gstCoDate.datepicker({
-            minDate: 1
-        });
-        
-        gstCoDate.click( function (event) {
-            event.stopPropagation();
-        });
-
-        $("#dtpkrDialog").datepicker("destroy");
-
-        $("#dtpkrDialog").datepicker({
-            numberOfMonths: 2,
-            minDate: 0,
-            beforeShowDay: function(date) {
-                var date1, date2;
-                try {
-                    date1 = $.datepicker.parseDate($.datepicker._defaults.dateFormat, gstDate.val());
-                    date2 = $.datepicker.parseDate($.datepicker._defaults.dateFormat, gstCoDate.val());
-                } catch (e) {
-                }
-                return [true, date1 && ((date.getTime() === date1.getTime()) || (date2 && date >= date1 && date <= date2)) ? "dp-highlight" : ""];
-            },
-            onSelect: function(dateText, inst) {
-                var date1, date2;
-                try {
-                    date1 = $.datepicker.parseDate($.datepicker._defaults.dateFormat, gstDate.val());
-                    date2 = $.datepicker.parseDate($.datepicker._defaults.dateFormat, gstCoDate.val());
-                } catch (e) { }
-                
-                if (!date1 || date2) {
-                    gstDate.val(dateText);
-                    gstCoDate.val("");
-                } else {
-                    gstCoDate.val(dateText);
-                    $('div#dtpkrDialog').hide('fade');
-                }
-            }
-        });
-
-        $(document).mousedown(function (event) {
-            var target = $(event.target);
-            if ( target[0].id !== 'dtpkrDialog' && target.parents("#" + 'dtpkrDialog').length === 0) {
-                $('#dtpkrDialog').hide('fade');
-            }
-        });
-
         $('#guestSearch').hide();
     }
+    
+    if (data.expDates !== undefined && data.expDates !== '') {
+        
+        $('#datesSection').children().remove();
+        $('#datesSection').append($(data.expDates));
+        
+        var gstDate = $('#' + data.idPrefix + 'gstDate'),
+            gstCoDate = $('#' + data.idPrefix + 'gstCoDate');
+    
+        $('#spnRangePicker').dateRangePicker(
+	{
+            format: 'MMM D, YYYY',
+            separator : ' to ',
+            minDays: 1,
+            getValue: function()
+            {
+                if (gstDate.val() && gstCoDate.val() ) {
+                    return gstDate.val() + ' to ' + gstCoDate.val();
+                } else {
+                    return '';
+                }
+            },
+            setValue: function(s,s1,s2)
+            {
+                gstDate.val(s1);
+                gstCoDate.val(s2);
+            }
+	});
+        
+        $('#spnRangePicker').data('dateRangePicker')
+                .setDateRange(gstDate.val(),gstCoDate.val());
+        
+        $('#datesSection').show();
+        
+    } else {
+        $('#datesSection').hide();
+    }
 
-    if (data.notes) {
+    if (data.notes !== undefined) {
         $('#notesGuest').children().remove().end().append($(data.notes)).show();
     }
 
-    resv.patStaying = data.patStay;
+    if (data.patStay !== undefined) {
+        resv.patStaying = data.patStay;
+    }
 
     if (data.idPsg) {
         resv.idPsg = data.idPsg;
@@ -506,7 +482,7 @@ function injectSlot(data) {
                 .append($('<span >' + resv.patientLabel + ': </span>'))
                 .append($('<span id="h_hdrFirstName">' + pcDiv.find('#h_txtFirstName').val() + ' ' + '</span>'))
                 .append($('<span id="h_hdrLastName">' + pcDiv.find('#h_txtLastName').val() + '</span>'))
-                .append($('<span">' + (data.patStay ? ' (staying)' : '') + '</span>'))
+                .append($('<span id="h_hdrMsg">' + (data.patStay ? ' (staying)' : '') + '</span>'))
                 .append(expanderButton)
                 .append($('<div style="clear:both;"/>'))
                 .click(function() {
@@ -674,11 +650,14 @@ function injectSlot(data) {
     if (data.adguests) {
         
         $('#resvGuest').children().remove().end().append($(data.adguests)).show();
-        
-        
         $('.hhk-addResv, .hhk-delResv').button();
-
         
+        if (resv.patStaying) {
+            $('#h_hdrMsg').text('(Staying)');
+        } else {
+            $('#h_hdrMsg').text('');
+        }
+
         if (!data.static || data.static !== 'y') {
             
             createAutoComplete($('#txtAddGuest'), 3, {cmd: 'role'}, additionalGuest);
@@ -1675,6 +1654,12 @@ $(document).ready(function() {
     });
     
     function getGuest(item) {
+        
+        if (item.No_Return !== undefined && item.No_Return !== '') {
+            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
+            return;
+        }
+
         loadGuest(item, 'g', resv.idPsg, resv.patStaying);
     }
 
@@ -1688,6 +1673,12 @@ $(document).ready(function() {
     });
 
     function getPatient(item) {
+        
+        if (item.No_Return !== undefined && item.No_Return !== '') {
+            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
+            return;
+        }
+        
         if (resv.patAsGuest) {
             if (item.fullName === undefined) {
                 item.fullName = 'the ' + resv.patientLabel;

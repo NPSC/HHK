@@ -529,7 +529,9 @@ p.label {
                 }
             }
 
-            $notes .= '  Visit preperation: ' . implode(', ', $constrs) . '.  ';
+            if (count($constrs) > 0) {
+                $notes .= '  Visit preperation: ' . implode(', ', $constrs) . '.  ';
+            }
         }
 
 

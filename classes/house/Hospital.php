@@ -155,7 +155,7 @@ class Hospital {
                 . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][Phone_Purpose::Work][1] . ': ' .
                         HTMLInput::generateMarkup(
                                 $wPhone["Phone_Num"],
-                                array('id'=>'a_txtPhone'.Phone_Purpose::Work, 'name'=>'a_txtPhone[' . Phone_Purpose::Work . ']', 'size'=>'13', 'class'=>'hhk-phoneInput hhk-agentInfo'))
+                                array('id'=>'a_txtPhone'.Phone_Purpose::Work, 'name'=>'a_txtPhone[' . Phone_Purpose::Work . ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo'))
                         , array('style'=>'text-align:right;')
                         )
                 );
@@ -164,18 +164,18 @@ class Hospital {
                 HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $agent->getNameObj()->get_firstName(),
-                                array('name'=>'a_txtFirstName', 'size'=>'15', 'class'=>'hhk-agentInfo'))
+                                array('name'=>'a_txtFirstName', 'size'=>'17', 'class'=>'hhk-agentInfo'))
                         .HTMLInput::generateMarkup($agent->getIdName(), array('name'=>'a_idName', 'type'=>'hidden'))
                         )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $agent->getNameObj()->get_lastName(),
-                                array('name'=>'a_txtLastName', 'size'=>'15', 'class'=>'hhk-agentInfo'))
+                                array('name'=>'a_txtLastName', 'size'=>'17', 'class'=>'hhk-agentInfo'))
                         )
                 . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][Phone_Purpose::Cell][1] . ': ' .
                         HTMLInput::generateMarkup(
                                 $cPhone["Phone_Num"],
-                                array('id'=>'a_txtPhone'.Phone_Purpose::Cell, 'name'=>'a_txtPhone[' .Phone_Purpose::Cell. ']', 'size'=>'13', 'class'=>'hhk-phoneInput hhk-agentInfo'))
+                                array('id'=>'a_txtPhone'.Phone_Purpose::Cell, 'name'=>'a_txtPhone[' .Phone_Purpose::Cell. ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo'))
                         , array('style'=>'text-align:right;')
                         )
                 . HTMLTable::makeTd(

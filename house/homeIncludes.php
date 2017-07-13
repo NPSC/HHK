@@ -88,8 +88,8 @@ define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 define('HOUSE', CLASSES . 'house' . DS);
 define('MEMBER', CLASSES . 'member' . DS);
 
-define('JS_V', '?v=2');
-define('CSS_V', '?v=2');
+define('JS_V', '?v=3');
+define('CSS_V', '?v=3');
 
 // paths
 define('JQ_UI_CSS', '<link href="css/redmond/jquery-ui.min.css' . CSS_V . '" rel="stylesheet" type="text/css" />');
@@ -97,9 +97,9 @@ define('JQ_DT_CSS', '<link href="css/datatables.min.css' . CSS_V . '" rel="style
 define('MULTISELECT_CSS', "<link href='css/jquery.multiselect.css" . CSS_V . "' rel='stylesheet' type='text/css' />");
 define('HOUSE_CSS', "<link href='css/house.css" . CSS_V . "' rel='stylesheet' type='text/css' />");
 
-define('JQ_UI_JS', 'js/jquery-ui.min.js');
+define('JQ_UI_JS', 'js/jquery-ui.min.js' . JS_V);
 define('JQ_JS', 'js/jquery-3.1.1.min.js');
-define('JQ_DT_JS', 'js/datatables.min.js');
+define('JQ_DT_JS', 'js/datatables.min.js' . JS_V);
 
 define('PRINT_AREA_JS', "js/jquery.PrintArea.js" . JS_V);
 define('VERIFY_ADDRS_JS', "js/verifyAddrs-min.js" . JS_V);
@@ -108,7 +108,7 @@ define('PAYMENT_JS', "js/payments-min.js" . JS_V);
 define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JS_V);
 define('RESV_JS', "js/resv.js" . JS_V);
 define('MD5_JS', 'js/md5-min.js');
-define('PAG_JS', 'js/pag.js');
+define('PAG_JS', 'js/pag.js' . JS_V);
 
 
 date_default_timezone_set('America/Chicago');

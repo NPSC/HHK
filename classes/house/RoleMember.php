@@ -68,7 +68,7 @@ abstract class RoleMember extends IndivMember {
 
         // Id
         $tr = HTMLTable::makeTd(HTMLInput::generateMarkup(($this->nameRS->idName->getStoredVal() == 0 ? '' : $this->nameRS->idName->getStoredVal())
-                        , array('name'=>$idPrefix.'idName', 'size'=>'3', 'readonly'=>'readonly', 'class'=>'ignrSave', 'style'=>'border:none;')));
+                        , array('name'=>$idPrefix.'idName', 'size'=>'7', 'readonly'=>'readonly', 'class'=>'ignrSave', 'style'=>'border:none;')));
 
         $attrs = array('data-prefix'=>$idPrefix);
 
@@ -114,7 +114,7 @@ abstract class RoleMember extends IndivMember {
 
         // Nick Name
         $attrs['name'] = $idPrefix.'txtNickname';
-        $attrs['size'] = '10';
+        $attrs['size'] = '12';
         $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($this->nameRS->Name_Nickname->getstoredVal(),
                 $attrs));
 

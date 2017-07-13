@@ -106,6 +106,9 @@ $psg = NULL;
 $uname = $uS->username;
 $receipt = '';
 $guestTabIndex = 0;
+$guestName = '';
+$memberData = array();
+$showSearchOnly = TRUE;
 
 
 $memberFlag = ComponentAuthClass::is_Authorized("guestadmin");
@@ -158,20 +161,6 @@ if (isset($_GET['psg'])) {
 
 }
 
-/*
- *  Check for new member command on get line
- *
- */
-$setForNew = false;
-$cmd = filter_input(INPUT_GET, 'cmd', FILTER_SANITIZE_STRING);
-if (is_null($cmd) === FALSE) {
-
-    if ($cmd == "new") {
-        $setForNew = true;
-    }
-}
-
-
 
 /*
 * This is the ID that the previous page instance saved for us.
@@ -189,37 +178,51 @@ if (isset($_POST["hdnid"])) {
 }
 
 
-$showSearchOnly = TRUE;
-if ($id > 0 || $setForNew) {
-    $showSearchOnly = FALSE;
-}
+if ($id > 0) {
 
-$guestName = '';
-$memberData = array();
+    // Check psg
+    $ngRss = Psg::getNameGuests($dbh, $id);
+
+    if (count($ngRss) === 0) {
+
+        $userCodes = $uS->groupcodes;
+
+        // Not a patient or guest.
+        $alertMsg->set_Context(alertMessage::Notice);
+        $alertMsg->set_Text('Person is not a patient or guest.  ' . (isset($userCodes['mm']) || $wInit->page->is_Admin() ? HTMLContainer::generateMarkup('a', 'Go to Member Edit', array('href'=>'../admin/NameEdit.php?id='.$id)) : ''));
+        $alertMsg->set_DisplayAttr("block");
+        $resultMessage = $alertMsg->createMarkup();
+        $id = 0;
+        $showSearchOnly = TRUE;
+
+    } else {
+
+        // Is a patient or guest.
+        $showSearchOnly = FALSE;
+
+        // Get the name data.
+        try {
+
+            $name = new GuestMember($dbh, MemBasis::Indivual, $id, NULL);
+            $name->setIdPrefix('');
+            $id = $name->get_idName();
+
+        } catch (Exception $hkex) {
+
+            $alertMsg->set_Context(alertMessage::Notice);
+            $alertMsg->set_Text($hkex->getMessage());
+            $alertMsg->set_DisplayAttr("block");
+            $resultMessage = $alertMsg->createMarkup();
+            $id = 0;
+            $showSearchOnly = TRUE;
+
+        }
+    }
+
+}
 
 
 if ($showSearchOnly === FALSE) {
-
-
-
-// Get the name data.
-try {
-
-    $name = new GuestMember($dbh, MemBasis::Indivual, $id, NULL);
-    $name->setIdPrefix('');
-    $id = $name->get_idName();
-
-} catch (Exception $hkex) {
-
-    $alertMsg->set_Context(alertMessage::Notice);
-    $alertMsg->set_Text($hkex->getMessage());
-    $alertMsg->set_DisplayAttr("block");
-    $resultMessage = $alertMsg->createMarkup();
-
-    $id = 0;
-    $name = new GuestMember($dbh, MemBasis::Indivual, $id);
-
-}
 
 
 $address = new Address($dbh, $name, $uS->nameLookups[GL_TableNames::AddrPurpose]);
@@ -228,8 +231,7 @@ $emails = new Emails($dbh, $name, $uS->nameLookups[GL_TableNames::EmailPurpose])
 
 $psgmkup = '';
 
-// Check psg
-$ngRss = Psg::getNameGuests($dbh, $id);
+
 
 // Check that the guest is a member of the indicated PSG.
 if ($idPsg > 0) {
@@ -778,9 +780,10 @@ $uS->guestId = $id;
                 <input type="text" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" />
             </div>
             <div style="clear:both;"></div>
+            <?php echo $resultMessage;  echo $alertMessage; ?>
             <?php if ($showSearchOnly === FALSE) { ?>
             <form action="GuestEdit.php" method="post" id="form1" name="form1" >
-                <?php echo $resultMessage;  echo $alertMessage; ?>
+
                 <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
                     <?php echo $nameMarkup; ?>
                     <?php echo $contactLastUpdated; ?>

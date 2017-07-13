@@ -889,7 +889,7 @@ class Phones extends ContactPoint {
         $attr['name'] = $idPrefix.'txtPhone[' . $p[0] . ']';
         $attr['title'] = 'Enter a phone number';
         $attr['class'] = 'hhk-phoneInput ' . $inputClass;
-        $attr['size'] = '14';
+        $attr['size'] = '16';
 
         $tdContents = HTMLInput::generateMarkup($this->rSs[$p[0]]->Phone_Num->getStoredVal(), $attr);
 
@@ -898,7 +898,7 @@ class Phones extends ContactPoint {
             $attr['id'] = $idPrefix.'txtExtn' . $p[0];
             $attr['name'] = $idPrefix.'txtExtn[' . $p[0] . ']';
             $attr['title'] = 'If needed, enter an Extension here';
-            $attr['size'] = '3';
+            $attr['size'] = '5';
 
             if ($inputClass != '') {
                 $attr['class'] = $inputClass;
