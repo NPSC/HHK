@@ -218,7 +218,7 @@ class Guest extends Role {
 
          // Check dates
         $nowDT = new \DateTime();
-        $cidAttr = array('name'=>$idPrefix . 'gstDate', );
+        $cidAttr = array('name'=>$idPrefix . 'gstDate', 'readonly'=>'readonly' );
         if (is_null($this->getCheckinDT()) === FALSE && $this->getCheckinDT() < $nowDT) {
             $cidAttr['class'] = ' ui-state-highlight';
         }
@@ -228,7 +228,7 @@ class Guest extends Role {
                     HTMLInput::generateMarkup((is_null($this->getCheckinDT()) ? '' : $this->getCheckinDT()->format('M j, Y')), $cidAttr), array('style'=>'margin-left:1.5em;'))
                .HTMLContainer::generateMarkup('span', 'Expected Departure: '.
                     HTMLInput::generateMarkup((is_null($this->getExpectedCheckOutDT()) ? '' : $this->getExpectedCheckOutDT()->format('M j, Y'))
-                            , Array('name'=>$idPrefix . 'gstCoDate')), array('style'=>'margin-left:.5em;'))
+                            , Array('name'=>$idPrefix . 'gstCoDate', 'readonly'=>'readonly')), array('style'=>'margin-left:.5em;'))
                  , array('style'=>'float:left;', 'id'=>'spnRangePicker'));
 
         $rtn['txtHdr'] = $header;

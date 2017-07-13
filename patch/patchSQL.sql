@@ -1,9 +1,4 @@
 
-ALTER TABLE `stays` 
-    DROP INDEX `index_idVisit` ;
-
-ALTER TABLE `name` 
-    DROP INDEX `idName_UNIQUE` ;
 
 ALTER TABLE `registration` 
 ADD INDEX `INDEX_idPsg` (`idPsg` ASC);
