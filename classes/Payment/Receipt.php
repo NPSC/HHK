@@ -19,12 +19,12 @@ Define('NEWLINE', "\n");
  */
 class Receipt {
 
-    public static function createSaleMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, $logoUrl, PaymentResponse $payResp) {
+    public static function createSaleMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, PaymentResponse $payResp) {
 
         // Assemble the statement
-        $rec = self::getHouseIconMarkup($logoUrl, $siteName);
+        $rec = self::getHouseIconMarkup();
 
-        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;margin-left:20px;'));
+        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;'));
 
         $tbl = new HTMLTable();
         $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Receipt", array('colspan'=>'2')));
@@ -93,14 +93,14 @@ class Receipt {
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'display:block;padding:10px;'));
     }
 
-    public static function createVoidMarkup(\PDO $dbh, PaymentResponse $payResp, $logoUrl, $siteName, $siteId, $type = 'Void Sale') {
+    public static function createVoidMarkup(\PDO $dbh, PaymentResponse $payResp, $siteName, $siteId, $type = 'Void Sale') {
 
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
 
-        $rec = self::getHouseIconMarkup($logoUrl, $siteName);
+        $rec = self::getHouseIconMarkup();
 
-        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;margin-left:20px;'));
+        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;'));
 
         $tbl = new HTMLTable();
         $tbl->addBodyTr(HTMLTable::makeTh($siteName . ' ' . $type . " Receipt", array('colspan'=>'2')));
@@ -154,14 +154,14 @@ class Receipt {
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
     }
 
-    public static function createReturnMarkup(\PDO $dbh, PaymentResponse $payResp, $logoUrl, $siteName, $siteId) {
+    public static function createReturnMarkup(\PDO $dbh, PaymentResponse $payResp, $siteName, $siteId) {
 
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
 
-        $rec = self::getHouseIconMarkup($logoUrl, $siteName);
+        $rec = self::getHouseIconMarkup();
 
-        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;margin-left:20px;'));
+        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;'));
 
         $tbl = new HTMLTable();
         $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Return Receipt", array('colspan'=>'2')));
@@ -213,17 +213,26 @@ class Receipt {
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
     }
 
-    public static function getHouseIconMarkup($logoUrl, $siteName) {
+    public static function getHouseIconMarkup() {
 
-        return HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>'', 'width'=>'150')),
-                array('style'=>'margin-bottom:10px;float:left;'));
+        $uS = Session::getInstance();
+        $config = new Config_Lite(ciCFG_FILE);
+        $logoUrl = $config->getString('financial', 'receiptLogoFile', '');
+        $rec = '';
+
+        // Don't write img if logo URL not sepcified
+        if ($logoUrl != '') {
+
+            $rec .= HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('img', '', array('src'=>$uS->resourceURL . 'images' . DS . $logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$config->getString('financial', 'receiptLogoWidth', '150'))),
+                array('style'=>'margin-bottom:10px;margin-right:20px;float:left;'));
+        }
+
+        return $rec;
 
     }
 
     public static function getVisitInfo(\PDO $dbh, Invoice $invoice) {
-
-        $data = array();
 
         try {
 
@@ -262,16 +271,13 @@ where
                 }
 
         } catch (PDOException $pex) {
-            // do nothing.
+            $data = array();
         }
-
 
         return $data;
     }
 
     public static function getHospitalNames(\PDO $dbh, $orderNumber) {
-
-        $hsNames = '';
 
         // Find the hospital
         if ($orderNumber > 0) {
@@ -303,7 +309,7 @@ where
                     }
                 }
             } catch (PDOException $pex) {
-                // do nothing.
+                $hsNames = '';
             }
         }
 
@@ -885,9 +891,9 @@ where
                     $p['Payment_Method_Title'] = 'Credit Card';
 
 
-                } else if ($p['idPayment_Method'] == PaymentMethod::Check) {
+                } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer) {
 
-                    $addnl = '#' . $p['Check_Number'];
+                    $addnl = ($p['Check_Number'] == '' ? ' ' : '#' . $p['Check_Number']);
                 }
 
                 // Add top border for each new invoice.
@@ -1098,7 +1104,7 @@ where
         }
     }
 
-    public static function createComprehensiveStatements(\PDO $dbh, $spans, $idRegistration, $guestName, $logoUrl) {
+    public static function createComprehensiveStatements(\PDO $dbh, $spans, $idRegistration, $guestName) {
 
         $uS = Session::getInstance();
 
@@ -1171,15 +1177,21 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         }
 
 
-        // Assemble the statement
-        $rec = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>'', 'width'=>'220')),
-                array('style'=>'margin-bottom:10px;float:left;'));
+        // Build the statement
+        $logoUrl = $config->getString('financial', 'statementLogoFile', '');
+        $rec = '';
 
-        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $uS->sId), array('style'=>'float:left;margin-bottom:10px;margin-left:20px;'));
+        // Don't write img if logo URL not sepcified
+        if ($logoUrl != '') {
 
+            $rec .= HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('img', '', array('src'=>$uS->resourceURL . 'images' . DS . $logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$config->getString('financial', 'statementLogoWidth', '220'))),
+                array('style'=>'margin-bottom:10px;margin-right:20px;float:left;'));
+        }
+
+        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $uS->sId), array('style'=>'float:left;margin-bottom:10px;'));
         $rec .= HTMLContainer::generateMarkup('h2', 'Comprehensive Statement of Account', array('style'=>'clear:both;'));
-        $rec .= HTMLContainer::generateMarkup('h4', 'Prepared '.date('M jS, Y'), array('style'=>'margin-bottom:10px;'));
+
 
         $rec .= self::makeSummaryDiv($guestName, $patientName, $hospital, $idPsg, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, Registration::loadLodgingBalance($dbh, $idRegistration), $totalNights);
 
@@ -1198,7 +1210,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
     }
 
-    public static function createStatementMarkup(\PDO $dbh, $idVisit, $logoUrl, $guestName) {
+    public static function createStatementMarkup(\PDO $dbh, $idVisit, $guestName) {
 
         $uS = Session::getInstance();
         $spans = array();
@@ -1280,14 +1292,22 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
             }
         }
 
-        $rec = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>'', 'width'=>'220')),
-                array('style'=>'margin-bottom:10px;float:left;'));
 
-        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $uS->sId), array('style'=>'float:left;margin-bottom:10px;margin-left:20px;'));
+        // Build the statement
+        $logoUrl = $config->getString('financial', 'statementLogoFile', '');
+        $rec = '';
+
+        // Don't write img if logo URL not sepcified
+        if ($logoUrl != '') {
+
+            $rec .= HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('img', '', array('src'=>$uS->resourceURL . 'images' . DS . $logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$config->getString('financial', 'statementLogoWidth', '220'))),
+                array('style'=>'margin-bottom:10px;margin-right:20px;float:left;'));
+        }
+
+        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $uS->sId), array('style'=>'float:left;margin-bottom:10px;'));
 
         $rec .= HTMLContainer::generateMarkup('h2', 'Statement of Account', array('style'=>'clear:both;'));
-        $rec .= HTMLContainer::generateMarkup('h4', 'Prepared '.date('M jS, Y'), array('style'=>'margin-bottom:10px;'));
 
         $rec .= self::makeSummaryDiv($guestName, $patientName, $hospital, $idPsg, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, Registration::loadLodgingBalance($dbh, $idRegistration), $totalNights);
 
@@ -1357,8 +1377,12 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
                 . HTMLTable::makeTd('($'. number_format($MOABalance, 2) . ')', array('style'=>'text-align:right;')));
         }
 
-        $rec = $tbl->generateMarkup(array('style'=>'float:left;'), '&nbsp;') .
-                $sTbl->generateMarkup(array('style'=>'float:left;margin-left:100px;'), HTMLContainer::generateMarkup('span', 'Statement Summary', array('style'=>'font-weight:bold;')));
+        $rec = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array(),
+                    HTMLContainer::generateMarkup('span', 'Prepared '.date('M jS, Y'), array('style'=>'font-weight:bold;')))
+                    , array('style'=>'float:left;'))
+                . HTMLContainer::generateMarkup('div', $sTbl->generateMarkup(array(),
+                    HTMLContainer::generateMarkup('span', 'Statement Summary', array('style'=>'font-weight:bold;')))
+                    , array('style'=>'float:left;margin-left:100px;'));
 
         return HTMLContainer::generateMarkup('div', $rec, array('style'=>'clear:both;')).HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
     }

@@ -56,7 +56,7 @@ class PaymentResult {
         $config = new Config_Lite(ciCFG_FILE);
 
         // Make out receipt
-        $this->receiptMarkup = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $uS->resourceURL . $config->getString('financial', 'receiptLogoUrl', ''), $payResp);
+        $this->receiptMarkup = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
 
         // Email receipt
         try {
@@ -277,7 +277,7 @@ class ReturnResult extends PaymentResult {
         $config = new Config_Lite(ciCFG_FILE);
 
         // Make out receipt
-        $this->receiptMarkup = Receipt::createReturnMarkup($dbh, $rtnResp, $uS->resourceURL . $config->getString('financial', 'receiptLogoUrl', ''), $uS->siteName, $uS->sId);
+        $this->receiptMarkup = Receipt::createReturnMarkup($dbh, $rtnResp, $uS->siteName, $uS->sId);
 
         // Email receipt
         try {
@@ -873,7 +873,7 @@ class PaymentSvcs {
 
                         $reply .= 'Payment is reversed.  ';
                         $csResp->idVisit = $invoice->getOrderNumber();
-                        $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->resourceURL . 'images/receiptlogo.png', $uS->siteName, $uS->sId, 'Reverse Sale')));
+                        $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId, 'Reverse Sale')));
                         $dataArray['success'] = $reply;
 
                         break;
@@ -991,7 +991,7 @@ class PaymentSvcs {
 
                             $reply .= 'Payment is Returned.  ';
                             $csResp->idVisit = $invoice->getOrderNumber();
-                            $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $csResp, $uS->resourceURL . 'images/receiptlogo.png', $uS->siteName, $uS->sId)));
+                            $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
 
                             break;
 
@@ -1028,7 +1028,7 @@ class PaymentSvcs {
                 $reply .= 'Payment is Returned.  ';
 
                 $cashResp->idVisit = $invoice->getOrderNumber();
-                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->resourceURL . 'images/receiptlogo.png', $uS->siteName, $uS->sId)));
+                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
 
                 break;
 
@@ -1062,11 +1062,22 @@ class PaymentSvcs {
                 $reply .= 'Payment is Returned.  ';
 
                 $cashResp->idVisit = $invoice->getOrderNumber();
-                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->resourceURL . 'images/receiptlogo.png', $uS->siteName, $uS->sId)));
+                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
 
                 break;
 
             case PaymentMethod::Check:
+
+                // Find hte detail record.
+                $pAuthRs = new PaymentInfoCheckRS();
+                $pAuthRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
+                $arows = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment));
+
+                if (count($arows) != 1) {
+                    throw new Hk_Exception_Payment('Payment Detail record not found. ');
+                }
+
+                EditRS::loadRow($arows[0], $pAuthRs);
 
                 // Determine amount to return
                 if ($returnAmt > $payRs->Amount->getStoredVal()) {
@@ -1075,7 +1086,7 @@ class PaymentSvcs {
                     return array('warning' => 'Return Failed.  Return amount must be larger than 0.  ', 'bid' => $bid);
                 }
 
-                $cashResp = new CheckResponse($returnAmt, $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber());
+                $cashResp = new CheckResponse($returnAmt, $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Check_Number->getStoredVal());
 
                 CheckTX::checkReturn($dbh, $cashResp, $uS->username, $payRs);
 
@@ -1085,10 +1096,21 @@ class PaymentSvcs {
                 $reply .= 'Payment is Returned.  ';
 
                 $cashResp->idVisit = $invoice->getOrderNumber();
-                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->resourceURL . 'images/receiptlogo.png', $uS->siteName, $uS->sId)));
+                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
                 break;
 
             case PaymentMethod::Transfer:
+
+                // Find hte detail record.
+                $pAuthRs = new PaymentInfoCheckRS();
+                $pAuthRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
+                $arows = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment));
+
+                if (count($arows) != 1) {
+                    throw new Hk_Exception_Payment('Payment Detail record not found. ');
+                }
+
+                EditRS::loadRow($arows[0], $pAuthRs);
 
                 // Determine amount to return
                 if ($returnAmt > $payRs->Amount->getStoredVal()) {
@@ -1097,7 +1119,7 @@ class PaymentSvcs {
                     return array('warning' => 'Return Failed.  Return amount must be larger than 0.  ', 'bid' => $bid);
                 }
 
-                $cashResp = new TransferResponse($returnAmt, $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber());
+                $cashResp = new TransferResponse($returnAmt, $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Check_Number->getStoredVal());
 
                 TransferTX::transferReturn($dbh, $cashResp, $uS->username, $payRs);
 
@@ -1107,7 +1129,7 @@ class PaymentSvcs {
                 $reply .= 'Payment is Returned.  ';
 
                 $cashResp->idVisit = $invoice->getOrderNumber();
-                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->resourceURL . 'images/receiptlogo.png', $uS->siteName, $uS->sId)));
+                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
                 break;
 
             default:
@@ -1333,7 +1355,7 @@ class PaymentSvcs {
                     $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizeAmount(), $uS->username);
 
                     $csResp->idVisit = $invoice->getOrderNumber();
-                    $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->resourceURL . 'images/receiptlogo.png', $uS->siteName, $uS->sId)));
+                    $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
                     $dataArray['success'] = 'Payment is void.  ';
 
                     break;
@@ -1346,7 +1368,7 @@ class PaymentSvcs {
                         $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizeAmount(), $uS->username);
 
                         $csResp->idVisit = $invoice->getOrderNumber();
-                        $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->resourceURL . 'images/receiptlogo.png', $uS->siteName, $uS->sId)));
+                        $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
                         $dataArray['success'] = 'Payment is void.  ';
 
                     } else {
@@ -1614,23 +1636,23 @@ class PaymentSvcs {
 
             case PaymentStatusCode::Paid:
 
-                $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $uS->resourceURL . $config->getString('financial', 'receiptLogoUrl', ''), $payResp);
+                $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
                 break;
 
             case PaymentStatusCode::VoidSale:
-                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $payResp, $uS->resourceURL . 'images/receiptlogo.png', $uS->siteName, $uS->sId)));
+                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $payResp, $uS->siteName, $uS->sId)));
                 break;
 
             case PaymentStatusCode::VoidReturn:
-                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $payResp, $uS->resourceURL . 'images/receiptlogo.png', $uS->siteName, $uS->sId, 'Void Return')));
+                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $payResp, $uS->siteName, $uS->sId, 'Void Return')));
                 break;
 
             case PaymentStatusCode::Reverse:
-                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $payResp, $uS->resourceURL . 'images/receiptlogo.png', $uS->siteName, $uS->sId, 'Reverse Sale')));
+                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $payResp, $uS->siteName, $uS->sId, 'Reverse Sale')));
                 break;
 
             case PaymentStatusCode::Retrn:
-                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $payResp, $uS->resourceURL . 'images/receiptlogo.png', $uS->siteName, $uS->sId)));
+                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $payResp, $uS->siteName, $uS->sId)));
                 break;
 
         }

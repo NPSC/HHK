@@ -171,9 +171,11 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
 
             // Update config file
             $resultAccumulator .= $patch->loadConfigUpdates('../patch/patchSite.cfg', $config);
+            $resultAccumulator .= $patch->deleteConfigItems('../patch/deleteSiteItems.cfg', $config);
 
             // Update labels file
             $resultAccumulator .= $patch->loadConfigUpdates('../patch/patchLabel.cfg', $labl);
+            $resultAccumulator .= $patch->deleteConfigItems('../patch/deleteLabelItems.cfg', $labl);
 
             // Update Tables
             $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");

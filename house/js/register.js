@@ -623,7 +623,7 @@ $(document).ready(function () {
         "dom": '<"top"if>rt<"bottom"lp><"clear">',
         "displayLength": 50,
         "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
-        "order": [[ 2, 'asc' ]],
+        "order": [[ 3, 'asc' ]],
         "processing": true,
         "deferRender": true
     });
@@ -668,6 +668,7 @@ $(document).ready(function () {
            url: 'ws_resc.php?cmd=getHist&tbl=waitlist',
            dataSrc: 'waitlist'
        },
+       "order": [[ 4, 'asc' ]],
        "drawCallback": function (settings) {
             $('#waitlist .gmenu').menu();
        },

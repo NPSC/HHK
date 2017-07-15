@@ -77,7 +77,7 @@ if ($testVersion == true) {
                     <?php echo $pageTitle; ?>
                 </h2>
             </div><div class='pageSpacer'></div>
-            <div style="float:right;font-size: .6em;margin-right:2px;"><?php echo $build; ?></div>
+            <div style="float:right;font-size: .6em;margin-right:5px;"><?php echo $build; ?></div>
             <div id="content" style="clear:both; margin-left: 100px;margin-top:10px;">
                 <div style="margin: auto; float:left; width:450px;">
                     <a href="http://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="images/hhkLogo.png"></a>

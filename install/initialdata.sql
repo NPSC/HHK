@@ -476,6 +476,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('ShowDiagTB', 'false', 'b', 'h', 'Show the diagnosis textbox (in addition to the diagnosis selector)'),
 ('ShoStaysCtr', 'true', 'b', 'h', 'Show the stays counter on the House Calendar page'),
 ('ShowLodgDates', 'true', 'b', 'h','Show dates on lodging invoice lines'),
+('ShowTxPayType', 'false', 'b', 'h', 'Always Show the Transfer pay type'),
 ('SolicitBuffer','90','i','r','Timeout in days after visit checkout before solicit report will show new guests'),
 ('ShowUncfrmdStatusTab', 'true', 'b', 'h', 'Show the Unconfirmed reservations tab on the House Register page'),
 ('ShrRm', 'false', 'b', 'h','Use the share rooms feature'),

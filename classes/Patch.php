@@ -149,6 +149,10 @@ class Patch {
             return '';
         }
 
+        if (file_exists($configUpdateFile) === FALSE) {
+            return '';
+        }
+
         $result = "";
 
         try {
@@ -167,6 +171,49 @@ class Patch {
 
                     $config->set($secName, $itemName, $val);
                     $result .= $secName . "." . $itemName . " = " . $val . "<br/>";
+                }
+            }
+        }
+
+        try {
+            $config->save();
+
+        } catch (Config_Lite_Exception_Runtime $ex) {
+
+            $result .= $ex  . "<br/>";
+        }
+
+        return $result;
+    }
+
+    public static function deleteConfigItems($configDeleteFile, Config_Lite $config) {
+
+        if ($configDeleteFile == '') {
+            return '';
+        }
+
+        if (file_exists($configDeleteFile) === FALSE) {
+            return '';
+        }
+
+        $result = "";
+
+        try {
+            $cfdeletes = new Config_Lite($configDeleteFile);
+        } catch (Config_Lite_Exception_Runtime $ex) {
+            $result = $ex->getMessage();
+            return $result;
+        }
+
+        foreach ($cfdeletes as $secName => $secArray) {
+
+            foreach ($secArray as $itemName => $val) {
+
+                // Only update if the target file has the section or item
+                if ($config->has($secName, $itemName) === TRUE) {
+
+                    $config->remove($secName, $itemName);
+                    $result .= $secName . "." . $itemName . " deleted<br/>";
                 }
             }
         }
@@ -228,6 +275,9 @@ class Patch {
                 unlink($fileinfo->getRealPath());
             }
         }
+
+        // Finally the top directory
+        unlink($directory);
 
     }
 

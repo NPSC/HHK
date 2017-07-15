@@ -22,6 +22,8 @@ REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`) V
 ('ReservStatus','h','To Hotel','y','y','','ui-icon-suitcase');
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ShowDemographics', 'false', 'b', 'h', 'Show demographics selectors on Check in and Reservation pages');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ShowTxPayType', 'false', 'b', 'h', 'Always Show the Transfer pay type');
+
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Demographics', 'Newsletter', 'Newsletter', 'y', 'm', '0');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Demographics', 'Photo_Permission', 'Photo Permission', 'y', 'm', '0');
 

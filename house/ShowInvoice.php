@@ -82,6 +82,28 @@ try {
         $msg .= 'No Information.';
     }
 
+    if (isset($_POST['btnWord'])) {
+
+
+        $form = "<!DOCTYPE html>"
+                . "<html>"
+                    . "<head>"
+                        . "<style type='text/css'>" . file_get_contents('css/redmond/jquery-ui.min.css') . "</style>"
+                        . "<style type='text/css'>" . file_get_contents('css/house.css') . "</style>"
+                    . "</head>"
+                    . "<body><div class='ui-widget ui-widget-content ui-corner-all hhk-panel'" . $stmtMarkup . '</div></body>'
+                . '</html>';
+
+        header('Content-Disposition: attachment; filename=Invoice.doc');
+        header("Content-Description: File Transfer");
+        header('Content-Type: text/html');
+        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+        header('Expires: 0');
+
+        echo($form);
+        exit();
+
+    }
 
     if (isset($_POST['txtEmail'])) {
         $emAddr = filter_var($_POST['txtEmail'], FILTER_SANITIZE_EMAIL);
@@ -168,9 +190,9 @@ if ($msg != '') {
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
         <script type='text/javascript'>
-            $(document).ready(function () {
-                "use strict";
-                $('#btnPrint, #btnEmail').button();
+$(document).ready(function () {
+    "use strict";
+    $('#btnPrint, #btnEmail, #btnWord').button();
     var opt = {mode: 'popup',
         popClose: true,
         popHt      : $('#divBody').height(),
@@ -179,10 +201,10 @@ if ($msg != '') {
         popY       : 20,
         popTitle   : 'Print Invoice'};
 
-                $('#btnPrint').click(function () {
-                    $("div.PrintArea").printArea(opt);
-                });
-            });
+    $('#btnPrint').click(function () {
+        $("div.PrintArea").printArea(opt);
+    });
+});
         </script>
     </head>
     <body>
@@ -193,8 +215,10 @@ if ($msg != '') {
             <div style='margin-left:100px;margin-bottom:10px; clear:left; float:left;' class='hhk-noprint ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox'>
                 <form name="formEm" method="Post" action="ShowInvoice.php">
                 <?php echo $emtableMarkup; ?>
+                    <input type="button" value="Print" id='btnPrint' style="margin-right:.3em;margin-top:.5em;"/>
+                    <input type="submit" value="Download MS Word" name='btnWord' id='btnWord' style="margin-right:.3em;margin-top:.5em;"/>
                 </form>
-                <input type="button" value="Print" id='btnPrint' style="margin-right:.3em;"/>
+
             </div>
             <div id="divBody" style="max-width: 800px; clear:left;" class='PrintArea ui-widget ui-widget-content ui-corner-all hhk-panel'>
                     <?php echo $stmtMarkup; ?>

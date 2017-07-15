@@ -139,7 +139,7 @@ if ($isHttps)
             <div class='pageSpacer'>
                 <h2 style="color:white"><?php echo $uS->siteName; ?></h2>
             </div>
-            <div style="float:right;font-size: .6em;margin-right:2px;"><?php echo $build; ?></div>
+            <div style="float:right;font-size: .6em;margin-right:5px;"><?php echo $build; ?></div>
             <div id="contentDiv">
                     <a href="http://hospitalityhousekeeper.org/" target="blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="../images/hhkLogo.png"></a>
                     <div style="clear:left; margin-bottom: 20px;"></div>

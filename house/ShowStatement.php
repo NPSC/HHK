@@ -131,8 +131,6 @@ if (isset($_POST['hdnIdVisit'])) {
 }
 
 
-$logoUrl = $uS->resourceURL . 'images/registrationLogo.png';
-
 if ($idRegistration > 0) {
 
     $stmt1 = $dbh->prepare("select * from `vvisit_stmt` where `idRegistration` = :idreg order by `idVisit`, `Span`");
@@ -143,7 +141,7 @@ if ($idRegistration > 0) {
     $name = $guest->getNameObj();
 
 
-    $stmtMarkup = Receipt::createComprehensiveStatements($dbh, $spans, $idRegistration, $name->get_fullName(), $logoUrl);
+    $stmtMarkup = Receipt::createComprehensiveStatements($dbh, $spans, $idRegistration, $name->get_fullName());
 
 
 } else if ($idVisit > 0) {
@@ -155,7 +153,7 @@ if ($idRegistration > 0) {
     $guest = new Guest($dbh, '', $visit->getPrimaryGuestId());
     $name = $guest->getNameObj();
 
-    $stmtMarkup = Receipt::createStatementMarkup($dbh, $idVisit, $logoUrl, $name->get_fullName());
+    $stmtMarkup = Receipt::createStatementMarkup($dbh, $idVisit, $name->get_fullName());
 
 } else {
     $stmtMarkup = 'No Information.';
@@ -172,7 +170,7 @@ if (isset($_POST['btnWord'])) {
                     . "<style type='text/css'>" . file_get_contents('css/redmond/jquery-ui.min.css') . "</style>"
                     . "<style type='text/css'>" . file_get_contents('css/house.css') . "</style>"
                 . "</head>"
-                . "<body><div class='PrintArea ui-widget ui-widget-content ui-corner-all hhk-panel'" . $stmtMarkup . '</div></body>'
+                . "<body><div class='ui-widget ui-widget-content ui-corner-all hhk-panel'" . $stmtMarkup . '</div></body>'
             . '</html>';
 
     header('Content-Disposition: attachment; filename=Statement.doc');

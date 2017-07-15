@@ -87,7 +87,7 @@ class PaymentChooser {
         }
 
         if (isset($post['txtRtnTransferAcct'])) {
-            $pmp->setTransferAcct(filter_var($post['txtRtnTransferAcct'], FILTER_SANITIZE_STRING));
+            $pmp->setRtnTransferAcct(filter_var($post['txtRtnTransferAcct'], FILTER_SANITIZE_STRING));
         }
 
         // Charge Card - External Swipe
@@ -257,7 +257,10 @@ class PaymentChooser {
                 );
 
         $payTypes = removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]);
-        unset($payTypes[PayType::Transfer]);
+
+        if ($uS->ShowTxPayType == FALSE) {
+            unset($payTypes[PayType::Transfer]);
+        }
 
         $chargeCards = readGenLookupsPDO($dbh, 'Charge_Cards');
 
@@ -576,17 +579,17 @@ ORDER BY v.idVisit , v.Span;");
                 unset($payTypes[PayType::Invoice]);
 
                 // House return invoices
-                if ($id == $uS->returnId) {
-                    unset($payTypes[PayType::Charge]);
-                    unset($payTypes[PayType::ChargeAsCash]);
-                    $panelMkup = self::showReturnSelection($dbh, PayType::Check, $payTypes, array(), $uS->ccgw,
-                        $id, 0, 0, '');
-
-                } else {
+//                if ($id == $uS->returnId) {
+//                    unset($payTypes[PayType::Charge]);
+//                    unset($payTypes[PayType::ChargeAsCash]);
+//                    $panelMkup = self::showReturnSelection($dbh, PayType::Check, $payTypes, array(), $uS->ccgw,
+//                        $id, 0, 0, '');
+//
+//                } else {
                     // payment types panel
                     $panelMkup = self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, readGenLookupsPDO($dbh, 'Charge_Cards'), $labels, $uS->ccgw,
                         $id, 0, $prefTokenId, '');
-                }
+//                }
 
                 $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
 

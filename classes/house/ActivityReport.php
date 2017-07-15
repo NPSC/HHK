@@ -438,9 +438,9 @@ class ActivityReport {
         $rtnIncluded = FALSE;
 
         foreach ($feeStatuses as $s) {
-            
+
             if ($s != '') {
-                
+
                 // Set up query where part.
                 if ($whStatus == '') {
                     $whStatus = "'" . $s . "'";
@@ -453,7 +453,7 @@ class ActivityReport {
                 }
 
                 $totals[$s]['active'] = 'y';
-                
+
                 if ($payStatusText == '') {
                     $payStatusText .= $totals[$s]['title'];
                 } else {
@@ -537,7 +537,7 @@ from
         left join
     `registration` `re` on `v`.`idRegistration` = `re`.`idRegistration`
 where `lp`.`idPayment` > 0
- $whDates $whStatus $whType $whId ;";
+ $whDates $whStatus $whType $whId Order By lp.idInvoice;";
 
         $stmt = $dbh->query($query);
         $invoices = Receipt::processPayments($stmt, array('First', 'Last', 'Company', 'Room', 'idPsg'));

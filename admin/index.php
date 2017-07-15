@@ -59,14 +59,18 @@ if (isset($_POST['txtUname'])) {
     exit();
 }
 
+// disclamer
+$disclaimer = $config->get("site", "Disclaimer", "");
+
+if ($uS->mode != Mode::Live) {
+    $disclaimer = 'Welcome to this demonstration version of Hospitality HouseKeeper! Do NOT use real guest or patient names.  This demonstration web site is not HIPAA complient and not intended to be used for storing Protected Health Information.';
+}
+
 
 $volSiteURL = $config->getString("site", 'Volunteer_URL', '');
 $houseSiteUrl = $config->getString("site", 'House_URL', '');
 $tutorialSiteURL = $config->getString('site', 'Tutorial_URL'. '');
 $build = 'Build:' . $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
-
-// disclamer
-$disclaimer = $config->get('site', 'Disclaimer', '');
 
 $pageTitle = $uS->siteName;
 
@@ -137,6 +141,7 @@ if ($isHttps)
         <div id="page">
             <div class='pageSpacer'>
                 <h2 style="color:white;"><?php echo $pageTitle; ?></h2></div>
+            <div style="float:right;font-size: .6em;margin-right:5px;"><?php echo $build; ?></div>
             <div id="content">
                     <a href="http://hospitalityhousekeeper.org/" target="blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="../images/hhkLogo.png"></a>
                     <div style="clear:left; margin-bottom: 20px;"></div>
