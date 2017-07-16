@@ -393,9 +393,9 @@ function getVolGroupList($rows, $volGroup, $page = "MemEdit.php") {
         <title><?php echo $pageTitle; ?></title>
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <?php echo PUBLIC_CSS; ?>
-        <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?> >
             <?php echo $menuMarkup; ?>
@@ -497,7 +497,7 @@ function getVolGroupList($rows, $volGroup, $page = "MemEdit.php") {
                 </table>
             </div>
         </div>  <!-- div id="page"-->
-        <script type="text/javascript" src="<?php echo $resourceURL; ?>js/stateCountry.js"></script>
+        <script type="text/javascript" src="../js/stateCountry.js"></script>
         <script type="text/javascript"><?php include_once("js/memEdit.js") ?></script>
     </body>
 </html>

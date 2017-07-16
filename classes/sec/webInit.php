@@ -47,7 +47,7 @@ class webInit {
         // Run as test?
         $this->testVersion = $uS->testVersion;
         $this->siteName = $uS->siteName;
-        $this->resourceURL = $uS->resourceURL;
+
         $this->menuTitle = $this->siteName;
         $this->pageTitle = $this->siteName;
 

@@ -88,9 +88,9 @@ if ($isHttps)
         <title><?php echo $pageTitle; ?></title>
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <?php echo PUBLIC_CSS; ?>
-        <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $resourceURL; ?>js/md5-min.js"></script>
+        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="../js/md5-min.js"></script>
         <style type="text/css">
             .lblFor {
                 text-align: right;

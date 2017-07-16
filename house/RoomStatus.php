@@ -195,10 +195,10 @@ if ($checkingIn == '') {
         <link href="css/house.css" rel="stylesheet" type="text/css" />
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <?php echo JQ_DT_CSS ?>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
 var cgCols = [

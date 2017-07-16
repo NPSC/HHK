@@ -13,8 +13,6 @@ require CLASSES . 'CreateMarkupFromDB.php';
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;
-$pageTitle = $wInit->pageTitle;
-$testVersion = $wInit->testVersion;
 
 $menuMarkup = $wInit->generatePageMenu();
 
@@ -84,14 +82,14 @@ $usernames = HTMLSelector::generateMarkup(HTMLSelector::getLookups($dbh, "select
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title><?php echo $pageTitle; ?></title>
+        <title><?php echo $wInit->pageTitle; ?></title>
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
 
         <?php echo DEFAULT_CSS; ?>
 
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
         <script type="text/javascript">
 $(document).ready(function() {
@@ -105,7 +103,7 @@ $(document).ready(function() {
 });
         </script>
     </head>
-    <body <?php if ($testVersion) echo "class='testbody'"; ?>>
+    <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
 <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>

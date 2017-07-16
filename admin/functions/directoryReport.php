@@ -80,7 +80,7 @@ function DirCkExcludes($r, $type = '') {
 }
 
 
-function dirReport(PDO $dbh, chkBoxCtrlClass $cbBasisDir, chkBoxCtrlClass $cbRelationDir, selCtrl $selDirType, $guestBlackOutDays, $emailBlockSize = 200) {
+function dirReport(\PDO $dbh, chkBoxCtrlClass $cbBasisDir, chkBoxCtrlClass $cbRelationDir, selCtrl $selDirType, $guestBlackOutDays, $emailBlockSize = 200) {
 
     ini_set('memory_limit', "128M");
 
@@ -140,20 +140,12 @@ function dirReport(PDO $dbh, chkBoxCtrlClass $cbBasisDir, chkBoxCtrlClass $cbRel
 // Directory
     if ($dordr == "'d'") {
 
-        $query = "select distinct vm2.*
-from vmember_directory vm2
-left join name_volunteer2 nv on vm2.Id = nv.idName and nv.Vol_Status = 'a' and nv.Vol_Category = 'Vol_Type'
-where ifnull(nv.Vol_Code, '') not in ('p', 'g') $wClause
-order by vm2.Name_Last, vm2.Name_First;";
+        $query = "select distinct vm2.* from vmember_directory vm2
+ left join name_volunteer2 nv on vm2.Id = nv.idName and nv.Vol_Status = 'a' and nv.Vol_Category = 'Vol_Type'
+ where ifnull(nv.Vol_Code, '') not in ('p', 'g') $wClause
+ order by vm2.Name_Last, vm2.Name_First;";
 
         $stmt = $dbh->query($query);
-//        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // Load array keys with id
-//        for ($i = 0; $i < count($rows); $i++) {
-//            $rows[$rows[$i]['Id']] = $rows[$i];
-//            unset($rows[$i]);
-//        }
         $lineCtr = 1;
 
         // Header
@@ -190,7 +182,7 @@ order by vm2.Name_Last, vm2.Name_First;";
             $showEmployee = true;
         //}
 
-            while ( $rw = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            while ( $rw = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
  //           foreach ($rows as $rw) {
              // Check for Company Here
@@ -346,7 +338,7 @@ group by vm2.idName
             $sml = OpenXML::createExcel('', 'Email Directory');
 
             // foreach ($rows as $rw) {
-            while ($rw = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            while ($rw = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
                 $flds = array(
                      0 => array('type' => "s", 'value' => $rw['Email']),
@@ -370,7 +362,7 @@ group by vm2.idName
 
             $numRcrds = 0;
             $multiplier = 1;
-            while ($rw = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            while ($rw = $stmt->fetch(\PDO::FETCH_ASSOC)) {
                 if ($firstRecord) {
                     $txtreport .= $rw['Email'];
                     $firstRecord = false;
@@ -394,4 +386,4 @@ group by vm2.idName
 
 }
 
-?>
+

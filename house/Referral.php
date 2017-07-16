@@ -184,9 +184,9 @@ $resultMessage = $alertMsg->createMarkup();
         <link rel="stylesheet" href="css/daterangepicker.min.css">
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
 
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
@@ -247,9 +247,9 @@ $resultMessage = $alertMsg->createMarkup();
             <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
         </div>  <!-- div id="contentDiv"-->
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo STATE_COUNTRY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo VERIFY_ADDRS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo VERIFY_ADDRS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="../js/jquery.daterangepicker.min.js"></script>

@@ -11,7 +11,7 @@ require ("AdminIncludes.php");
 require (CLASSES . 'CreateMarkupFromDB.php');
 require (CLASSES . 'Purchase/RoomRate.php');
 require (CLASSES . 'History.php');
-define('FULLC_JS', 'js/fullcalendar.min.js');
+define('FULLC_JS', '../js/fullcalendar.min.js');
 define('FULLC_CSS', 'css/fullcalendar.css');
 
 $wInit = new webInit();
@@ -54,10 +54,10 @@ if (isset($uS->siteList[WebSiteCode::Volunteer])) {
         <style>
             .ui-menu-item {min-width: 380px;}
         </style>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/verifyAddrs-min.js"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="../js/verifyAddrs-min.js"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
     function isNumber(n) {
         "use strict";
@@ -202,6 +202,6 @@ if (isset($uS->siteList[WebSiteCode::Volunteer])) {
                 </div>
             </div>
         </div>  <!-- div id="page"-->
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo FULLC_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo FULLC_JS; ?>"></script>
     </body>
 </html>

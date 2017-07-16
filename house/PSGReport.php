@@ -1061,13 +1061,13 @@ $selCountry = HTMLSelector::generateMarkup('', $coAttr);
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <style>.hhk-rowseparater { border-top: 2px #0074c7 solid !important; }</style>
-        
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo STATE_COUNTRY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
+
+        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
     $(document).ready(function() {
 

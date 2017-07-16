@@ -208,11 +208,11 @@ try {
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <?php echo PUBLIC_CSS; ?>
 <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
-        <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $resourceURL; ?>js/stateCountry.js"></script>
-        <script type="text/javascript" src="<?php echo $resourceURL; ?>js/md5-min.js"></script>
+        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="../js/stateCountry.js"></script>
+        <script type="text/javascript" src="../js/md5-min.js"></script>
         <script type="text/javascript"><?php include_once("js/vNameEdit.js") ?></script>
     </head>
     <body>
@@ -224,7 +224,7 @@ try {
                         <h2 style="padding: 2px 5px;text-align: center;" class="ui-corner-all ui-state-active">Manage My Contact Information</h2>
                         <form action="VolNameEdit.php" method="post" id="formEd" name="formEd">
                             <div class="ui-widget ui-widget-content ui-corner-all" style="float:left; padding: 0.7em 1.0em;">
-                                
+
                                 <?php echo $nameMarkup; ?>
                             </div>
                             <div style="clear:both;"></div>

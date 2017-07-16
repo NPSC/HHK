@@ -133,9 +133,9 @@ if ($isHttps)
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <?php echo DEFAULT_CSS; ?>
         <script type="text/javascript" src="../js/md5-min.js"></script>
-        <script type="text/javascript" src="<?php echo $uS->resourceURL; ?><?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $uS->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $uS->resourceURL; ?>js/login.js"></script>
+        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="../js/login.js"></script>
     </head>
     <body <?php if ($uS->testVersion) {echo "class='testbody'";} ?> >
         <div id="page">

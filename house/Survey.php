@@ -243,9 +243,9 @@ order by h.idPsg, na.Address_1, na.Address_2";
         <?php echo JQ_UI_CSS; ?>
 
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?> >
             <?php echo $menuMarkup; ?>

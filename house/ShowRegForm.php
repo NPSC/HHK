@@ -128,7 +128,7 @@ switch ($uS->RegForm) {
 
     case '2':
         //
-        $reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, $wInit->resourceURL . 'images/registrationLogo.png', $uS->mode);
+        $reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, '../images/registrationLogo.png', $uS->mode);
 
         $sty = $reservArray['style'];
         $regForm = $reservArray['doc'];
@@ -154,9 +154,9 @@ switch ($uS->RegForm) {
             @page { margin: 1cm; }
         </style>-->
         <?php echo $sty; ?>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type='text/javascript'>
 $(document).ready(function() {
     "use strict";

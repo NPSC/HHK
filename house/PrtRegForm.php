@@ -104,9 +104,9 @@ if ($checkinDate == '') {
         <link href="css/house.css" rel="stylesheet" type="text/css" />
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <?php echo $sty; ?>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
     $(document).ready(function () {
     "use strict";

@@ -331,11 +331,11 @@ $userDataEnc = json_encode($userData);
         <?php echo PUBLIC_CSS; ?>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
 
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo FULLC_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo FULLC_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="js/volAction.js"></script>
     <script type="text/javascript">
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
@@ -863,24 +863,24 @@ $('input.inptForList').click(function () {
             desc: desc
         },
     function(data) {
-        
+
         try {
             data = $.parseJSON(data);
         } catch (err) {
             alert('Bad JSON Encoding');
             return;
         }
-        
+
         if (data.error) {
-            
+
             if (data.gotopage) {
                 window.open(data.gotopage, '_self');
             }
             flagCalAlertMessage(data.error, true);
             return;
-            
+
         } else if (data.table) {
-            
+
             $('#' + data.removeId).remove();
             var tbl = $(data.table);
             $('#dListmembers').append(tbl);

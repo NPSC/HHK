@@ -304,7 +304,7 @@ class PaymentSvcs {
         $config = new Config_Lite(ciCFG_FILE);
         $houseUrl = $config->getString('site', 'House_URL', '');
         $siteUrl = $config->getString('site', 'Site_URL', '');
-        $logo = $uS->PaymentLogoUrl;
+        $logo = $config->getString('financial', 'PmtPageLogoUrl', '');
 
         if ($houseUrl == '' || $siteUrl == '') {
             throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
@@ -344,7 +344,7 @@ class PaymentSvcs {
         $config = new Config_Lite(ciCFG_FILE);
         $houseUrl = $config->getString('site', 'House_URL', '');
         $siteUrl = $config->getString('site', 'Site_URL', '');
-        $logo = $uS->PaymentLogoUrl;
+        $logo = $config->getString('financial', 'PmtPageLogoUrl', '');
 
         if ($houseUrl == '' || $siteUrl == '') {
             throw new Hk_Exception_Runtime("The site/house URL is missing.  ");

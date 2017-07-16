@@ -433,9 +433,9 @@ $alertMessage = $alertMsg->createMarkup();
         </style>
 
         <link href="css/volCtrl.css" rel="stylesheet" type="text/css" />
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
             <?php echo $menuMarkup; ?>
@@ -566,14 +566,14 @@ $alertMessage = $alertMsg->createMarkup();
                 <?php echo $webUserDialogMarkup; ?>
             </div>
         </div>  <!-- div id="page"-->
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo MD5_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
 
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?><?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/jquery.multiselect.min.js"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/stateCountry.js"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/verifyAddrs-min.js"></script>
-        <script type="text/javascript" src="<?php echo $wInit->resourceURL; ?>js/addrPrefs-min.js"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="../js/jquery.multiselect.min.js"></script>
+        <script type="text/javascript" src="../js/stateCountry.js"></script>
+        <script type="text/javascript" src="../js/verifyAddrs-min.js"></script>
+        <script type="text/javascript" src="../js/addrPrefs-min.js"></script>
         <script type="text/javascript" src="js/genfunc.js"></script>
         <script type="text/javascript" src="../house/js/resv.js"></script>
         <script type="text/javascript"><?php include_once("js/nameEd.js") ?></script>
