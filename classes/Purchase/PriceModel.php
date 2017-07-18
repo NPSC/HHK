@@ -38,6 +38,14 @@ abstract class PriceModel {
 
     }
 
+    public function loadVisitNights(\PDO $dbh, $idVisit) {
+
+        // Get current nights .
+        $stmt1 = $dbh->query("select * from `vvisit_stmt` where `idVisit` = $idVisit and `Status` != 'p' order by `Span`");
+
+        return $stmt1->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
     public abstract function amountCalculator($nites, $idRoomRate, $rateCatetgory = '', $pledgedRate = 0, $guestDays = 0);
 
     public function daysPaidCalculator($amount, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $rateAdjust = 0, $aveGuestPerDay = 1) {
@@ -144,7 +152,7 @@ abstract class PriceModel {
         return $tiers;
     }
 
-    public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator) {
+    public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator, &$totalGuestNites) {
 
         foreach ($tiers as $t) {
 
@@ -222,11 +230,11 @@ abstract class PriceModel {
 
 
             case ItemPriceCode::PerGuestDaily;
-                throw new Hk_Exception_Runtime('Guest Days temporarily disabled.  ');
-                
-//                $pm = new PriceGuestDay(PriceModel::getModelRoomRates($dbh, $modelCode));
-//                $pm->priceModelCode = $modelCode;
-//                return $pm;
+                //throw new Hk_Exception_Runtime('Guest Days temporarily disabled.  ');
+
+                $pm = new PriceGuestDay(PriceModel::getModelRoomRates($dbh, $modelCode));
+                $pm->priceModelCode = $modelCode;
+                return $pm;
 
 
             case ItemPriceCode::NdayBlock:
@@ -537,10 +545,30 @@ class PriceBasic extends PriceModel {
 }
 
 class PriceGuestDay extends PriceModel {
-    
-    protected $query = "SELECT s.Visit_Span, DATEDIFF(IFNULL(s.Span_End_Date, NOW()), s.Span_Start_Date) as GDays
-        FROM stays s
-        where s.idVisit = 10";
+
+    public function loadVisitNights(\PDO $dbh, $idVisit) {
+
+        $spans = parent::loadVisitNights($dbh, $idVisit);
+
+        $stmt = $dbh->query("SELECT s.Visit_Span, SUM(DATEDIFF(IFNULL(s.Span_End_Date, NOW()), s.Span_Start_Date)) AS GDays FROM stays s WHERE s.idVisit = $idVisit GROUP BY s.Visit_Span");
+
+        $stays = array();
+
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $stays[$r['Visit_Span']] = $r['GDays'];
+        }
+
+        for ($n=0; $n<count($spans); $n++) {
+
+            if (isset($stays[$spans[$n]['Span']])) {
+                $spans[$n]['Guest_Nights'] = $stays[$spans[$n]['Span']];
+            }
+
+        }
+
+        return $spans;
+
+    }
 
     public function amountCalculator($nites, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $guestDays = 0) {
 
@@ -613,11 +641,12 @@ class PriceGuestDay extends PriceModel {
         return $tiers;
     }
 
-    public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator) {
+    public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator, &$totalGuestNites) {
 
         foreach ($tiers as $t) {
 
             $totalAmt += $t['amt'];
+            $totalGuestNites += $t['gdays'];
             $startDate = $startDT->format('M j, Y');
             $startDT->add(new DateInterval('P' . $t['days'] . 'D'));
             $endDate = new DateTime($startDT->format('y-m-d 00:00:00'));
@@ -1688,7 +1717,7 @@ class PriceNdayBlock extends PriceModel {
         return $tiers;
     }
 
-    public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator) {
+    public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator, &$totalGuestNites) {
 
         foreach ($tiers as $t) {
 

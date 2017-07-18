@@ -15,55 +15,6 @@
  */
 class VisitView {
 
-    /**
-     * This actually loads all visit spans of any status.
-     *
-     * @param \PDO $dbh
-     * @param int $idReg
-     * @return array
-     */
-    public static function loadActiveVisits(\PDO $dbh, $idReg) {
-
-        $rows = array();
-
-        $id = intval($idReg, 10);
-
-        if ($id > 0) {
-
-            $query = "select * from vspan_listing where "
-                    . "(Actual_Span_Nights > 0 or `Status` = '". VisitStatus::CheckedIn . "' or DATE(Arrival_Date) = DATE(now()))"
-                    . " and idRegistration = $id order by Span_Start DESC;";
-            $stmt = $dbh->query($query);
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        }
-        return $rows;
-    }
-
-
-    /**
-     * Load all the stays recorded for a guest.
-     *
-     * @param PDO $dbh
-     * @param int $idGuest
-     * @return array
-     */
-    public static function loadGuestStays(\PDO $dbh, $idGuest) {
-
-        $rows = array();
-
-        $id = intval($idGuest, 10);
-
-        if ($id > 0) {
-
-            $query = "select * from vstays_listing where idName = $id order by Checkin_Date desc;";
-            $stmt = $dbh->query($query);
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        }
-
-        return $rows;
-    }
-
-
     public static function createActiveMarkup(\PDO $dbh, array $r, VisitCharges $visitCharge, $dispositions, $keyDepFlag, $visitFeeFlag, $noReturnDateFlag, $isAdmin,
             $extendVisitDays, $action, $coDate, $showAdjust) {
 

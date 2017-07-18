@@ -572,8 +572,26 @@ if ($psg->getIdPsg() > 0) {
     }
 
     // Look for visits
-    $visitRows = VisitView::loadActiveVisits($dbh, $registration->getIdRegistration());
-    $stays = VisitView::loadGuestStays($dbh, $id);
+
+    $visitRows = array();
+    if ($registration->getIdRegistration() > 0) {
+
+        $query = "select * from vspan_listing where "
+                . "(Actual_Span_Nights > 0 or `Status` = '". VisitStatus::CheckedIn . "' or DATE(Arrival_Date) = DATE(now()))"
+                . " and idRegistration = " . $registration->getIdRegistration() . " order by Span_Start DESC;";
+        $stmt = $dbh->query($query);
+        $visitRows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+
+    $stays = array();
+    if ($id > 0) {
+        $query = "select * from vstays_listing where idName = $id order by Checkin_Date desc;";
+        $stmt = $dbh->query($query);
+        $stays = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+
 
     if (count($visitRows) > 0) {
 

@@ -44,29 +44,16 @@ class VisitCharges {
 
 
     public function sumCurrentRoomCharge(\PDO $dbh, PriceModel $priceModel, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
-
-        // Get current nights .
-        $stmt1 = $dbh->query("select * from `vvisit_stmt` where `idVisit` = " . $this->idVisit . " and `Status` != 'p' order by `Span`");
-        $spans = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($spans) == 0) {
-            throw new Hk_Exception_Runtime('Visit Id "' . $this->idVisit . '" Not Found.  ');
-        }
-
-        return $this->getVisitData($spans, $priceModel, $newPayment, $calcDaysPaid, $givenPaid);
+        return $this->getVisitData($priceModel->loadVisitNights($dbh, $this->idVisit), $priceModel, $newPayment, $calcDaysPaid, $givenPaid);
     }
 
 
     public function sumDatedRoomCharge(\PDO $dbh, PriceModel $priceModel, $coDate, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
 
         // Get current nights .
-        $stmt1 = $dbh->query("select * from `vvisit_stmt` where `idVisit` = " . $this->idVisit . " and `Status` != 'p' order by `Span`");
-        $spans = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
+        $spans = $priceModel->loadVisitNights($dbh, $this->idVisit);
 
-        if (count($spans) == 0) {
-            throw new Hk_Exception_Runtime('Visit Id "' . $this->idVisit . '" Not Found.  ');
-        }
-
+        // Access the last span
         $span = $spans[(count($spans) - 1)];
 
         $arrDT = new \DateTime($span['Span_Start']);

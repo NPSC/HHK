@@ -615,7 +615,7 @@ where
             $days = $startDT->diff($endDT, TRUE)->days;
 
             if ($r['days'] > 0 && isset($r['gdays'])) {
-                $guestNites += $r['gdays'];
+                //$guestNites += $r['gdays'];
                 $gDayRatio = $r['gdays'] / $r['days'];
             } else {
                 $gDayRatio = 1;
@@ -637,7 +637,7 @@ where
 
             }
 
-            $priceModel->tiersMarkup($r, $totalAmt, $tbl, $tiers, $startDT, $separator);
+            $priceModel->tiersMarkup($r, $totalAmt, $tbl, $tiers, $startDT, $separator, $guestNites);
             $separator = '';
 
 
@@ -1104,9 +1104,10 @@ where
         }
     }
 
-    public static function createComprehensiveStatements(\PDO $dbh, $spans, $idRegistration, $guestName) {
+    public static function createComprehensiveStatements(\PDO $dbh, $spans, $idRegistration, $guestName, $priceModel) {
 
         $uS = Session::getInstance();
+
 
         if (count($spans) == 0) {
             return 'Visits Not Found.  ';
@@ -1128,7 +1129,6 @@ where
 
         $totalAmt = 0.00;
         $totalNights = 0;
-        $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
         // Get labels & config
         $labels = new Config_Lite(LABEL_FILE);
@@ -1214,13 +1214,10 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
         $uS = Session::getInstance();
         $spans = array();
+        $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
         if ($idVisit > 0) {
-
-            $stmt = $dbh->prepare("select * from vvisit_stmt where idVisit = :idvisit order by `Span`");
-            $stmt->execute(array(':idvisit'=>$idVisit));
-            $spans = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
+            $spans = $priceModel->loadVisitNights($dbh, $idVisit);
         } else {
             return 'Missing Input pararmeters.  ';
         }
@@ -1263,7 +1260,6 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
 
         $totalAmt = 0.00;
         $totalNights = 0;
-        $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);

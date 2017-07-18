@@ -133,15 +133,33 @@ if (isset($_POST['hdnIdVisit'])) {
 
 if ($idRegistration > 0) {
 
-    $stmt1 = $dbh->prepare("select * from `vvisit_stmt` where `idRegistration` = :idreg order by `idVisit`, `Span`");
-    $stmt1->execute(array(':idreg'=>$idRegistration));
+    $stmt1 = $dbh->query("select * from `vvisit_stmt` where `idRegistration` = $idRegistration order by `idVisit`, `Span`");
     $spans = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+
+    $stmt = $dbh->query("SELECT s.idVisit, s.Visit_Span, SUM(DATEDIFF(IFNULL(s.Span_End_Date, NOW()), s.Span_Start_Date)) AS GDays
+ FROM stays s join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
+ WHERE v.idRegistration = $idRegistration GROUP BY s.idVisit, s.Visit_Span");
+
+    $stays = array();
+
+    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $stays[$r['idVisit']][$r['Visit_Span']] = $r['GDays'];
+    }
+
+    for ($n=0; $n<count($spans); $n++) {
+
+        if (isset($stays[$spans[$n]['idVisit']][$spans[$n]['Span']])) {
+            $spans[$n]['Guest_Nights'] = $stays[$spans[$n]['idVisit']][$spans[$n]['Span']];
+        }
+
+    }
+
 
     $guest = new Guest($dbh, '', $spans[(count($spans) - 1)]['idPrimaryGuest']);
     $name = $guest->getNameObj();
 
-
-    $stmtMarkup = Receipt::createComprehensiveStatements($dbh, $spans, $idRegistration, $name->get_fullName());
+    $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+    $stmtMarkup = Receipt::createComprehensiveStatements($dbh, $spans, $idRegistration, $name->get_fullName(), $priceModel);
 
 
 } else if ($idVisit > 0) {
