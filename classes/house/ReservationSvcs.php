@@ -322,7 +322,7 @@ class ReservationSvcs {
 
                 $dataArray['rate'] = $rateChooser->createResvMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
                 // Array with amount calculated for each rate.
-                $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate());
+                $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
                 // Array with key deposit info
                 $dataArray['rooms'] = $rateChooser->makeRoomsArray($roomChooser, $uS->guestLookups['Static_Room_Rate'], $uS->guestLookups[GL_TableNames::KeyDepositCode]);
 
@@ -721,6 +721,12 @@ class ReservationSvcs {
             $patient = new Patient($dbh, 'h_', $id);
             $dataArray['patient'] = $patient->createReservationMarkup();
             $dataArray['patStay'] = TRUE;
+        }
+
+        // Return new rate table?
+        if ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
+            $rateChooser = new RateChooser($dbh);
+            $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
         }
 
         $dataArray['adguests'] = HTMLContainer::generateMarkup('fieldset',
@@ -1250,7 +1256,7 @@ class ReservationSvcs {
             $dataArray['pay'] = PaymentChooser::createResvMarkup($dbh, $guest->getIdName(), $reg, removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]), $resv->getExpectedPayType(), $uS->ccgw);
 
             // Array with amount calculated for each rate.
-            $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate());
+            $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
 
             // Rate Chooser
             $dataArray['rate'] = $rateChooser->createResvMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
@@ -1592,6 +1598,7 @@ class ReservationSvcs {
 
     public static function removeResvGuest(\PDO $dbh, $id, $idReserv, $labels, $uname = '') {
 
+        $uS = Session::getInstance();
         $resGuestRs = new Reservation_GuestRS();
         $resGuestRs->idReservation->setStoredVal($idReserv);
         $resGuestRs->idGuest->setStoredVal($id);
@@ -1618,6 +1625,12 @@ class ReservationSvcs {
 
         if ($psg->getIdPatient() == $id) {
             $dataArray['patStay'] = false;
+        }
+
+        // Return new rate table?
+        if ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
+            $rateChooser = new RateChooser($dbh);
+            $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
         }
 
         $dataArray['adguests'] = HTMLContainer::generateMarkup('fieldset',

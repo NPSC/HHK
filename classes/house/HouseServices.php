@@ -2787,7 +2787,7 @@ from
                 }
 
                 // Rate Chooser
-                $dataArray['rate'] = $rateChooser->createCheckinMarkup($dbh, $resv, $resv->getExpectedDaysDT($chkinDT, $chkoutDT), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
+                $dataArray['rate'] = $rateChooser->createCheckinMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
 
                 // Payment Chooser
                 if ($uS->PayAtCkin) {
@@ -2819,7 +2819,7 @@ from
         // Array with key deposit info
         $dataArray['rooms'] = $rateChooser->makeRoomsArray($roomChooser, $uS->guestLookups['Static_Room_Rate'], $uS->guestLookups[GL_TableNames::KeyDepositCode]);
         // Array with amount calculated for each rate.
-        $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDaysDT($chkinDT, $chkoutDT), $reg->getIdRegistration(), $resv->getFixedRoomRate());
+        $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $reg->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
 
         if ($uS->VisitFee) {
             // Visit Fee Array

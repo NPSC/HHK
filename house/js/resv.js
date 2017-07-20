@@ -127,7 +127,7 @@ function getIncomeDiag(idResv, idReg) {
             gotIncomeDiag(idResv, idReg, data);
         });
 }
-function setupRates(ckIn, idResource) {
+function setupRates(ckIn) {
     "use strict";
     if ($('#selVisitFee').length > 0) {
         $('#selVisitFee').change(function() {
@@ -183,7 +183,6 @@ function setupRates(ckIn, idResource) {
     });
     $('#txtadjAmount').change(function () {
         var amt = 0,
-            guests = 1,
             category = $('#selRateCategory');
         if (category.val() != 'x') {
             var adj = parseFloat($(this).val());
@@ -206,13 +205,7 @@ function setupRates(ckIn, idResource) {
                 if (isNaN(amt) || amt < 0) {
                     amt = 0;
                 }
-                if (category.val() == 'dg') {
-                    guests = parseInt($('#spnNumGuests').text(), 10);
-                    if (guests < 1) {
-                        guests = 1;
-                    }
-                }
-                var newAmt = (amt * (1 + adj/100) * guests);
+                var newAmt = (amt * (1 + adj/100));
                 $('#spnLodging').text('$' + newAmt);
                 newAmt += fa;
                 $('#spnAmount').text('$' + newAmt);

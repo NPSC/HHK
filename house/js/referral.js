@@ -31,16 +31,20 @@ function additionalGuest(item) {
         }
     }
     if (confirm("Add " + item.value + "?")) {
+        
         resv.addRoom = false;
+        
         if ($('#cbAddnlRoom').prop('checked')) {
             resv.addRoom = true;
         }
+        
         var parms = {
             cmd: 'addResv',
             id: item.id,
             rid: resv.idReserv,
             addRoom: resv.addRoom
         };
+        
         $.post('ws_ckin.php',parms,
         function(data) {
             
@@ -239,6 +243,7 @@ function additionalGuest(item) {
                 
             } else {
                 injectSlot(data);
+                $('#selRateCategory').change();
             }
         });
     }
@@ -280,6 +285,7 @@ function delAdditionalGuest(item) {
                 return;
             }
             injectSlot(data);
+            $('#selRateCategory').change();
         });
     }
 }

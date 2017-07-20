@@ -443,7 +443,7 @@ class RateChooser {
     }
 
 
-    public function makeRateArray(\PDO $dbh, $numNights, $idRegistration, $pledgedRate = 0) {
+    public function makeRateArray(\PDO $dbh, $numNights, $idRegistration, $pledgedRate = 0, $guestNites = 0) {
         // category, rate
 
         $catAmounts = array();
@@ -453,7 +453,7 @@ class RateChooser {
 
         foreach ($this->priceModel->getActiveModelRoomRates() as $r) {
 
-            $catAmounts[$r->FA_Category->getStoredVal()] = $this->priceModel->amountCalculator($numNights, 0, $r->FA_Category->getStoredVal(), $pledgedRate);
+            $catAmounts[$r->FA_Category->getStoredVal()] = $this->priceModel->amountCalculator($numNights, 0, $r->FA_Category->getStoredVal(), $pledgedRate, $guestNites);
 
         }
 

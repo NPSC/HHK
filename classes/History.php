@@ -215,7 +215,7 @@ class History {
                 $fixedRows['Nights'] = $edDay->diff($stDay, TRUE)->days;
 
                 if ($static) {
-                    $fixedRows['Expected Departure'] = $stDay->format('n/d/Y');
+                    $fixedRows['Expected Departure'] = $edDay->format('n/d/Y');
                 } else {
                     $fixedRows['Expected Departure'] = $edDay->format('c');
                 }

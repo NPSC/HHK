@@ -223,13 +223,13 @@ abstract class PriceModel {
                 return $pm;
 
 
-            case ItemPriceCode::Dailey;
+            case ItemPriceCode::Dailey:
                 $pm = new PriceDailey(PriceModel::getModelRoomRates($dbh, $modelCode));
                 $pm->priceModelCode = $modelCode;
                 return $pm;
 
 
-            case ItemPriceCode::PerGuestDaily;
+            case ItemPriceCode::PerGuestDaily:
                 //throw new Hk_Exception_Runtime('Guest Days temporarily disabled.  ');
 
                 $pm = new PriceGuestDay(PriceModel::getModelRoomRates($dbh, $modelCode));
@@ -577,11 +577,17 @@ class PriceGuestDay extends PriceModel {
             return $nites * $pledgedRate;
         }
 
+
         $rrateRs = $this->getCategoryRateRs($idRoomRate, $rateCategory);
 
-        $amount = $rrateRs->Reduced_Rate_1->getStoredVal() * $guestDays;
-        return $amount;
+        $amount = $rrateRs->Reduced_Rate_1->getStoredVal() * $nites;
+        $guestDays -= $nites;
 
+        if ($guestDays > 0) {
+            $amount += $rrateRs->Reduced_Rate_2->getStoredVal() * $guestDays;
+        }
+
+        return $amount;
     }
 
     public function daysPaidCalculator($amount, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $rateAdjust = 0, $aveGuestPerDay = 1) {
@@ -635,24 +641,35 @@ class PriceGuestDay extends PriceModel {
 
         $adjRatio = (1 + $rateAdjust/100);
 
-        $amount = $rrateRs->Reduced_Rate_1->getStoredVal() * $guestDays * $adjRatio;
-        $tiers[] = array('rate'=>$rrateRs->Reduced_Rate_1->getStoredVal() * $adjRatio, 'days'=>$days, 'amt'=>$amount, 'gdays'=>$guestDays);
+        $amount = $rrateRs->Reduced_Rate_1->getStoredVal() * $days * $adjRatio;
+        $tiers[] = array('rate'=>$rrateRs->Reduced_Rate_1->getStoredVal() * $adjRatio, 'days'=>$days, 'amt'=>$amount, 'gdays'=>$days);
+
+        $guestDays -= $days;
+
+        if ($guestDays > 0) {
+            $amount = $rrateRs->Reduced_Rate_2->getStoredVal() * $guestDays * $adjRatio;
+            $tiers[] = array('rate'=>$rrateRs->Reduced_Rate_2->getStoredVal() * $adjRatio, 'days'=>$days, 'amt'=>$amount, 'gdays'=>$guestDays);
+        }
 
         return $tiers;
     }
 
     public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator, &$totalGuestNites) {
 
+        $startDate = $startDT->format('M j, Y');
+        $startDT->add(new DateInterval('P' . $tiers[0]['days'] . 'D'));
+        $endDate = new DateTime($startDT->format('y-m-d 00:00:00'));
+        $endDateStr = $startDT->format('M j, Y');
+
+        $today = new DateTime();
+        $today->setTime(0, 0, 0);
+
+        $guestEnu = 1;
+
         foreach ($tiers as $t) {
 
             $totalAmt += $t['amt'];
             $totalGuestNites += $t['gdays'];
-            $startDate = $startDT->format('M j, Y');
-            $startDT->add(new DateInterval('P' . $t['days'] . 'D'));
-            $endDate = new DateTime($startDT->format('y-m-d 00:00:00'));
-
-            $today = new DateTime();
-            $today->setTime(0, 0, 0);
 
             if ($today < $endDate) {
                 $gDays = $t['gdays'] . ' (Est.)';
@@ -666,13 +683,15 @@ class PriceGuestDay extends PriceModel {
                  HTMLTable::makeTd($r['vid'] . '-' . $r['span'], array('style'=>'text-align:center;' . $separator))
                 .HTMLTable::makeTd($r['title'], array('style'=>$separator))
                 .HTMLTable::makeTd($startDate, array('style'=>$separator))
-                .HTMLTable::makeTd($startDT->format('M j, Y'), array('style'=>$separator))
+                .HTMLTable::makeTd($endDateStr, array('style'=>$separator))
                 .HTMLTable::makeTd(number_format($t['rate'], 2), array('style'=>'text-align:right;' . $separator))
-                .HTMLTable::makeTd($t['days'], array('style'=>'text-align:center;' . $separator))
+                .HTMLTable::makeTd('#'.$guestEnu++, array('style'=>'text-align:center;' . $separator))
                 .HTMLTable::makeTd($gDays, array('style'=>'text-align:center;' . $separator))
                 .HTMLTable::makeTd($total, array('style'=>'text-align:right;' . $separator))
             );
 
+            $endDateStr = '';
+            $startDate = '';
             $separator = '';
 
         }
@@ -681,15 +700,15 @@ class PriceGuestDay extends PriceModel {
     public function rateHeaderMarkup(&$tbl, $labels) {
 
         $tbl->addHeaderTr(HTMLTable::makeTh('Visit Id').HTMLTable::makeTh('Room').HTMLTable::makeTh('Start').HTMLTable::makeTh('End')
-            .HTMLTable::makeTh($labels->getString('statement', 'rateHeader', 'Rate')).HTMLTable::makeTh('Nights').HTMLTable::makeTh('Guest Nights').HTMLTable::makeTh($labels->getString('statement', 'chargeHeader', 'Charge')));
+            .HTMLTable::makeTh($labels->getString('statement', 'rateHeader', 'Rate')).HTMLTable::makeTh('Guest').HTMLTable::makeTh('Guest Nights').HTMLTable::makeTh($labels->getString('statement', 'chargeHeader', 'Charge')));
 
     }
 
     public function rateTotalMarkup(&$tbl, $desc, $numberNites, $totalAmt, $guestNites) {
 
         // Room Fee totals
-        $tbl->addBodyTr(HTMLTable::makeTd($desc, array('colspan'=>'5', 'class'=>'tdlabel hhk-tdTotals', 'style'=>'font-weight:bold;'))
-            .HTMLTable::makeTd($numberNites, array('class'=>'hhk-tdTotals', 'style'=>'text-align:center;font-weight:bold;'))
+        $tbl->addBodyTr(HTMLTable::makeTd($desc, array('colspan'=>'6', 'class'=>'tdlabel hhk-tdTotals', 'style'=>'font-weight:bold;'))
+            //.HTMLTable::makeTd($numberNites, array('class'=>'hhk-tdTotals', 'style'=>'text-align:center;font-weight:bold;'))
             .HTMLTable::makeTd($guestNites, array('class'=>'hhk-tdTotals', 'style'=>'text-align:center;font-weight:bold;'))
             .HTMLTable::makeTd('$'. $totalAmt, array('class'=>'hhk-tdTotals', 'style'=>'text-align:right;font-weight:bold;')));
 
@@ -715,8 +734,7 @@ class PriceGuestDay extends PriceModel {
             HTMLTable::makeTh('Title')
             .HTMLTable::makeTh('Default')
             .HTMLTable::makeTh('Rate/1st Guest')
-            .HTMLTable::makeTh('Rate/2nd Guest')
-            .HTMLTable::makeTh('Rate/3rd or more guests')
+            .HTMLTable::makeTh('Rate/2nd or more guests')
             );
 
         // Room rates
@@ -733,11 +751,10 @@ class PriceGuestDay extends PriceModel {
             }
 
             $fTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'13')))
+                HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'17')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup($r->FA_Category->getStoredVal(), $attrs) . ' (' . $r->FA_Category->getStoredVal() . ')')
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_1->getStoredVal(), 2), array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'3')), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_2->getStoredVal(), 2), array('name'=>'rr2['.$r->idRoom_rate->getStoredVal().']', 'size'=>'3')), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_3->getStoredVal(), 2), array('name'=>'rr3['.$r->idRoom_rate->getStoredVal().']', 'size'=>'3')), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_1->getStoredVal(), 2), array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6')), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_2->getStoredVal(), 2), array('name'=>'rr2['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6')), array('style'=>'text-align:center;'))
             );
         }
 
