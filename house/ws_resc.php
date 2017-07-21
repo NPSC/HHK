@@ -82,6 +82,19 @@ try {
 
     switch ($c) {
 
+     case 'vehsch':
+
+            if (isset($_REQUEST['tag'])) {
+
+                $tag = filter_var_array($_REQUEST['tag'], FILTER_SANITIZE_STRING);
+
+
+            }
+
+            return array();
+
+         break;
+
     case 'actrpt':
 
         if (isset($_REQUEST["start"]) && $_REQUEST["start"] != '') {

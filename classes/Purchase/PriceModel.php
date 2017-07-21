@@ -38,7 +38,7 @@ abstract class PriceModel {
 
     }
 
-    public function loadVisitNights(\PDO $dbh, $idVisit) {
+    public function loadVisitNights(\PDO $dbh, $idVisit, $end_Date = '') {
 
         // Get current nights .
         $stmt1 = $dbh->query("select * from `vvisit_stmt` where `idVisit` = $idVisit and `Status` != 'p' order by `Span`");
@@ -546,16 +546,20 @@ class PriceBasic extends PriceModel {
 
 class PriceGuestDay extends PriceModel {
 
-    public function loadVisitNights(\PDO $dbh, $idVisit) {
+    public function loadVisitNights(\PDO $dbh, $idVisit, $endDate = '') {
 
         $spans = parent::loadVisitNights($dbh, $idVisit);
 
-        $stmt = $dbh->query("SELECT s.Visit_Span, SUM(DATEDIFF(IFNULL(s.Span_End_Date, NOW()), s.Span_Start_Date)) AS GDays FROM stays s WHERE s.idVisit = $idVisit GROUP BY s.Visit_Span");
+        if ($endDate != '') {
+            $stmt = $dbh->query("SELECT s.Visit_Span, SUM(DATEDIFF(IFNULL(DATE(s.Span_End_Date), DATE('$endDate')), DATE(s.Span_Start_Date))) AS GDays FROM stays s WHERE s.idVisit = $idVisit GROUP BY s.Visit_Span");
+        } else {
+            $stmt = $dbh->query("SELECT s.Visit_Span, SUM(DATEDIFF(IFNULL(DATE(s.Span_End_Date), DATE(NOW())), DATE(s.Span_Start_Date))) AS GDays FROM stays s WHERE s.idVisit = $idVisit GROUP BY s.Visit_Span");
+        }
 
         $stays = array();
 
         while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $stays[$r['Visit_Span']] = $r['GDays'];
+            $stays[$r['Visit_Span']] = $r['GDays'] < 0 ? 0 : $r['GDays'];
         }
 
         for ($n=0; $n<count($spans); $n++) {
@@ -602,12 +606,25 @@ class PriceGuestDay extends PriceModel {
         $rrateRs = $this->getCategoryRateRs($idRoomRate, $rateCategory);
 
         // Short circuit for fixed rate x
-        if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category && $pledgedRate > 0) {
-            $this->remainderAmt = $amount % $pledgedRate;
-            return floor($amount / $pledgedRate);
+        if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category) {
+            if ($pledgedRate > 0) {
+                $this->remainderAmt = $amount % $pledgedRate;
+                return floor($amount / $pledgedRate);
+            }
+            return 0;
         }
 
         // Flat rate
+        if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory) {
+            if ($rrateRs->Reduced_Rate_1->getStoredVal() > 0) {
+                $rate = (1 + $rateAdjust / 100) * $rrateRs->Reduced_Rate_1->getStoredVal();
+                $this->remainderAmt = $amount % $rate;
+                return floor($amount / $rate);
+            }
+            return 0;
+        }
+
+        // the rest
         if ($rrateRs->Reduced_Rate_1->getStoredVal() > 0) {
             $rate = (1 + $rateAdjust / 100) * $rrateRs->Reduced_Rate_1->getStoredVal();
             $this->remainderAmt = $amount % $rate;
@@ -635,7 +652,7 @@ class PriceGuestDay extends PriceModel {
 
         // Short circuit for fixed rate x
         if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category) {
-            $tiers[] = array('rate'=> $pledgedRate, 'days'=>$days, 'amt'=>($days * $pledgedRate), 'gdays'=>$guestDays);
+            $tiers[] = array('rate'=> $pledgedRate, 'days'=>$days, 'amt'=>($days * $pledgedRate), 'gdays'=>0);
             return $tiers;
         }
 
@@ -664,7 +681,7 @@ class PriceGuestDay extends PriceModel {
         $today = new DateTime();
         $today->setTime(0, 0, 0);
 
-        $guestEnu = 1;
+        $guestEnu = 'First';
 
         foreach ($tiers as $t) {
 
@@ -672,12 +689,13 @@ class PriceGuestDay extends PriceModel {
             $totalGuestNites += $t['gdays'];
 
             if ($today < $endDate) {
-                $gDays = $t['gdays'] . ' (Est.)';
+                $gDays = $t['gdays'] == 0 ? '' : $t['gdays'] . ' (Est.)';
                 $total = number_format($t['amt'], 2) . ' (Est.)';
             } else {
-                $gDays = $t['gdays'];
+                $gDays = $t['gdays'] == 0 ? '' : $t['gdays'];
                 $total = number_format($t['amt'], 2);
             }
+
 
             $tbl->addBodyTr(
                  HTMLTable::makeTd($r['vid'] . '-' . $r['span'], array('style'=>'text-align:center;' . $separator))
@@ -685,7 +703,7 @@ class PriceGuestDay extends PriceModel {
                 .HTMLTable::makeTd($startDate, array('style'=>$separator))
                 .HTMLTable::makeTd($endDateStr, array('style'=>$separator))
                 .HTMLTable::makeTd(number_format($t['rate'], 2), array('style'=>'text-align:right;' . $separator))
-                .HTMLTable::makeTd('#'.$guestEnu++, array('style'=>'text-align:center;' . $separator))
+                .HTMLTable::makeTd($guestEnu, array('style'=>'text-align:center;' . $separator))
                 .HTMLTable::makeTd($gDays, array('style'=>'text-align:center;' . $separator))
                 .HTMLTable::makeTd($total, array('style'=>'text-align:right;' . $separator))
             );
@@ -693,6 +711,7 @@ class PriceGuestDay extends PriceModel {
             $endDateStr = '';
             $startDate = '';
             $separator = '';
+            $guestEnu = 'Others';
 
         }
     }

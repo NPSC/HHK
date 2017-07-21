@@ -30,6 +30,33 @@ class Vehicle {
 
     }
 
+    public static function searchTag(\PDO $dbh, $tag) {
+
+        if ($tag != '') {
+
+            $tag = addslashes($tag) . '%';
+            $stmt = $dbh->query("select v.*, n.Name_Full from vehicle v left join name n on v.idName = n.idName where v.License_Number like '$tag'");
+
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($rows as $row2) {
+                $namArray = array();
+
+                $namArray['id'] = $row2["idVehicle"];
+                $namArray['value'] = $row2["License_Number"] . $row2['Make'] . $row2['Model'] . $row2['Color'] . $row2['State_Reg'];
+                $namArray['name'] = $row2["Name_Full"];
+
+                $events[] = $namArray;
+            }
+
+            if (count($events) == 0) {
+                $events[] = array("id" => 0, "value" => "Nothing Returned");
+            }
+
+            return $events;
+         }
+    }
+
     public static function createVehicleMarkup(PDO $dbh, $idReg, $noVehicle = 0) {
 
         // work on the state
@@ -42,7 +69,7 @@ class Vehicle {
         $tbl = new HTMLTable();
 
         $labels = new Config_Lite(LABEL_FILE);
-        
+
         foreach ($rows as $r) {
 
             $carRS = new VehicleRs();

@@ -51,7 +51,7 @@ class VisitCharges {
     public function sumDatedRoomCharge(\PDO $dbh, PriceModel $priceModel, $coDate, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
 
         // Get current nights .
-        $spans = $priceModel->loadVisitNights($dbh, $this->idVisit);
+        $spans = $priceModel->loadVisitNights($dbh, $this->idVisit, $coDate);
 
         // Access the last span
         $span = $spans[(count($spans) - 1)];
