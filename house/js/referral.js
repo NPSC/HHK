@@ -1348,6 +1348,16 @@ $(document).ready(function() {
     "use strict";
     var resv = reserv;
     
+    $.widget( "ui.autocomplete", $.ui.autocomplete, {
+        _resizeMenu: function() {
+            var ul = this.menu.element;
+            ul.outerWidth( Math.max(
+                    ul.width( "" ).outerWidth() + 1,
+                    this.element.outerWidth()
+            ) * 1.1 );
+        }
+    });
+    
     $(window).bind('beforeunload', function() {
         if ($('#btnDone').val() === 'Saving >>>>') {
             return;

@@ -242,9 +242,6 @@ $confReserv = $labels->getString('register', 'reservationTab', 'Confirmed Reserv
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <style>
-            .ui-menu-item {width:300px;font-size:.8em;}
-        </style>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>

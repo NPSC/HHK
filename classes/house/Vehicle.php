@@ -32,19 +32,40 @@ class Vehicle {
 
     public static function searchTag(\PDO $dbh, $tag) {
 
+        $events = array();
+
         if ($tag != '') {
 
             $tag = addslashes($tag) . '%';
-            $stmt = $dbh->query("select v.*, n.Name_Full from vehicle v left join name n on v.idName = n.idName where v.License_Number like '$tag'");
+            $stmt = $dbh->query("SELECT COUNT(v.idVehicle),
+    v.*,
+    IFNULL(r.Title, '') AS `Room`,
+    IFNULL(vs.idVisit, 0) AS `idVisit`,
+    IFNULL(n.Name_Full, '') AS `Patient`,
+    IFNULL(n.idName, 0) AS `idName`
+FROM
+    vehicle v
+        LEFT JOIN
+    visit vs ON vs.`Status` = 'a'
+        AND vs.idRegistration = v.idRegistration
+        LEFT JOIN
+    resource r ON vs.idResource = r.idResource
+		LEFT JOIN
+	registration rg on v.idRegistration = rg.idRegistration
+		LEFT JOIN
+	name_guest ng on rg.idPsg = ng.idPsg and ng.Relationship_Code = 'slf'
+		LEFT JOIN
+	`name` n on ng.idName = n.idName
+WHERE
+    v.License_Number LIKE '$tag' GROUP BY v.idVehicle");
 
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            foreach ($rows as $row2) {
-                $namArray = array();
+            foreach ($rows as $r) {
+                $namArray = $r;
 
-                $namArray['id'] = $row2["idVehicle"];
-                $namArray['value'] = $row2["License_Number"] . $row2['Make'] . $row2['Model'] . $row2['Color'] . $row2['State_Reg'];
-                $namArray['name'] = $row2["Name_Full"];
+                $namArray['id'] = $r["idName"];
+                $namArray['value'] = $r["License_Number"] . ': ' . $r['Make'] . ' ' . $r['Model'] . ', Color: ' . $r['Color'] . ', State Registration: ' . $r['State_Reg'];
 
                 $events[] = $namArray;
             }
@@ -52,9 +73,9 @@ class Vehicle {
             if (count($events) == 0) {
                 $events[] = array("id" => 0, "value" => "Nothing Returned");
             }
+        }
 
-            return $events;
-         }
+        return $events;
     }
 
     public static function createVehicleMarkup(PDO $dbh, $idReg, $noVehicle = 0) {

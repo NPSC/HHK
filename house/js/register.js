@@ -556,6 +556,16 @@ $(document).ready(function () {
     var eventJSONString = wsAddress + '?cmd=register';
     var hindx = 0;
 
+    $.widget( "ui.autocomplete", $.ui.autocomplete, {
+        _resizeMenu: function() {
+            var ul = this.menu.element;
+            ul.outerWidth( Math.max(
+                    ul.width( "" ).outerWidth() + 1,
+                    this.element.outerWidth()
+            ) * 1.1 );
+        }
+    });
+    
     if (pmtMkup !== '') {
         $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
     }
@@ -1188,7 +1198,6 @@ $(document).ready(function () {
         showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt');
     }
     
-    $('.gmenu').menu();
 
     $('#version').click(function () {
         $('div#dchgPw').find('input').removeClass("ui-state-error").val('');

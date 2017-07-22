@@ -107,7 +107,7 @@ function _source(request, response, cache, shoNew, txtCtrl, inputParms, $basisCt
         });
     }
 }
-        
+      
 function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNew, searchURL, $basisCtrl) {
     "use strict";
     var cache = {};

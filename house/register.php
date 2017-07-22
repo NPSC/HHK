@@ -420,6 +420,7 @@ try {
         height: 680px;
         overflow-y: auto;
     }
+    .ui-menu-item-wrapper {min-width: 120px;}
 </style>
     </head>
     <body <?php

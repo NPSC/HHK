@@ -1366,6 +1366,16 @@ $(document).ready(function() {
     var checkIn = chkIn;
     var postBackPage = postBkPg;
 
+    $.widget( "ui.autocomplete", $.ui.autocomplete, {
+        _resizeMenu: function() {
+            var ul = this.menu.element;
+            ul.outerWidth( Math.max(
+                    ul.width( "" ).outerWidth() + 1,
+                    this.element.outerWidth()
+            ) * 1.1 );
+        }
+    });
+
     // Unsaved changes on form are caught here.
     $(window).bind('beforeunload', function() {
         var isDirty = false;

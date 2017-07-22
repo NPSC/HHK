@@ -84,14 +84,12 @@ try {
 
      case 'vehsch':
 
-            if (isset($_REQUEST['tag'])) {
-
-                $tag = filter_var_array($_REQUEST['tag'], FILTER_SANITIZE_STRING);
-
+            if (isset($_REQUEST['letters'])) {
+                require (HOUSE . 'Vehicle.php');
+                $tag = filter_var($_REQUEST['letters'], FILTER_SANITIZE_STRING);
+                $events = Vehicle::searchTag($dbh, $tag);
 
             }
-
-            return array();
 
          break;
 

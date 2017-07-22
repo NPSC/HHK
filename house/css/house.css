@@ -240,8 +240,7 @@ span.class_history {
 .input-medium {
    width: 170px;
 }
-.ui-menu-item .ui-autocomplete {width:350px;font-size:.8em;}
-.ui-menu-item-wrapper {min-width:100px;}
+
 div#global-title {
     float:left;
     color: white;

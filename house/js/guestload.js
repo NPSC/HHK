@@ -89,6 +89,16 @@ $(document).ready(function () {
     var listJSON = '../admin/ws_gen.php?cmd=chglog&uid=' + memData.id;
     var listEvtTable;
     
+    $.widget( "ui.autocomplete", $.ui.autocomplete, {
+        _resizeMenu: function() {
+            var ul = this.menu.element;
+            ul.outerWidth( Math.max(
+                    ul.width( "" ).outerWidth() + 1,
+                    this.element.outerWidth()
+            ) * 1.1 );
+        }
+    });
+    
     // Unsaved changes on form are caught here.
     $(window).bind('beforeunload', function () {
         // skip if the save button was pressed

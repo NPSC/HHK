@@ -2062,11 +2062,17 @@ ALTER TABLE `invoice`
 ALTER TABLE `name` 
     ADD INDEX `Index_Name` (`Name_Last` ASC, `Name_First` ASC),
 
+ALTER TABLE `name_guest` 
+    ADD INDEX `INDEX_IdPsg` (`idPsg` ASC);
+
 ALTER TABLE `payment_auth` 
     ADD INDEX `Index_idPayment` (`idPayment` ASC);
 
 ALTER TABLE `payment_info_check` 
     ADD INDEX `Index_idPayment` (`idPayment` ASC);
+
+ALTER TABLE `registration` 
+    ADD INDEX `Index_idPsg` (`idPsg` ASC);
 
 ALTER TABLE `reservation` 
     ADD INDEX `Index_idregistration` (`idRegistration` ASC);
@@ -2091,6 +2097,13 @@ ALTER TABLE `stays`
     ADD INDEX `index_Span_End` (`Span_End_Date` ASC);
 ALTER TABLE `stays` 
     ADD INDEX `index_idName` (`idName` ASC);
+
+ALTER TABLE `vehicle` 
+    ADD INDEX `INDEX_LICENSE` (`License_Number` ASC);
+ALTER TABLE `vehicle` 
+    ADD INDEX `INDEX_IdNAME` (`idName` ASC);
+ALTER TABLE `vehicle` 
+    ADD INDEX `INDEX_REG` (`idRegistration` ASC);
 
 ALTER TABLE `visit` 
     ADD INDEX `Index_idPrimaryGuest` (`idPrimaryGuest` ASC);

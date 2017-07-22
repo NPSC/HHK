@@ -226,6 +226,7 @@ if ($uS->TrackAuto) {
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo VERIFY_ADDRS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
@@ -250,6 +251,43 @@ if ($uS->TrackAuto) {
         $('#btnPrintv').click(function() {
             $("div.PrintAreav").printArea();
         });
+
+        function dispVehicle(item) {
+
+            if (item.id > 0) {
+
+                var $tr = $('<tr />');
+
+                $tr.append($('<td>' + item.License_Number + '</td>'))
+                    .append($('<td>' + item.Make + '</td>'))
+                    .append($('<td>' + item.Model + '</td>'))
+                    .append($('<td>' + item.Color + '</td>'))
+                    .append($('<td>' + item.State_Reg + '</td>'))
+                    .append($('<td><a href="GuestEdit.php?id=' + item.id + '">' + item.Patient + '</a></td>'))
+                    .append($('<td>' + item.Room + '</td>'));
+
+                $('#tbl').append($tr);
+
+            }
+        }
+
+        $.widget( "ui.autocomplete", $.ui.autocomplete, {
+            _resizeMenu: function() {
+		var ul = this.menu.element;
+		ul.outerWidth( Math.max(
+
+			// Firefox wraps long text (possibly a rounding bug)
+			// so we add 1px to avoid the wrapping (#7513)
+			ul.width( "" ).outerWidth() + 1,
+			this.element.outerWidth()
+		) * 1.1 );
+            }
+        });
+        createAutoComplete($('#schTag'), 3, {cmd: 'vehsch'},
+            dispVehicle,
+            false, 'ws_resc.php'
+        );
+
         $('#mainTabs').tabs();
         $('#mainTabs').show();
     });
@@ -268,6 +306,7 @@ if ($uS->TrackAuto) {
                     <li><a href="#tabGuest">Resident Guests</a></li>
                     <?php if ($uS->TrackAuto) { ?>
                     <li><a href="#tabVeh">Vehicles</a></li>
+                    <li><a href="#tabsrch"><?php echo $labels->getString('referral', 'licensePlate', 'License Plate'); ?> Search</a></li>
                     <?php } ?>
                 </ul>
                 <div id="tabGuest" class="hhk-tdbox" style=" padding-bottom: 1.5em; display:none;">
@@ -284,8 +323,26 @@ if ($uS->TrackAuto) {
                     <input type="button" value="Print" id='btnPrintv' name='btnPrintv' style="margin-right:.3em;"/>
                     <div class="PrintAreav"><?php echo $vehicleTable; ?></div>
                 </div>
+                <div id="tabsrch" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
+                    Search <?php echo $labels->getString('referral', 'licensePlate', 'License Plate'); ?>:
+                            <input type="text" id="schTag" />
+                    <div id="divResults" style="margin-top:1em;">
+                        <table id="tbl">
+                            <thead>
+                                <tr>
+                                    <th><?php echo $labels->getString('referral', 'licensePlate', 'License Plate'); ?></th>
+                                    <th>Make</th>
+                                    <th>Model</th>
+                                    <th>Color</th>
+                                    <th>Registered</th>
+                                    <th>Patient</th>
+                                    <th>Room</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
             </div>
-
         </div>  <!-- div id="contentDiv"-->
     </body>
 </html>
