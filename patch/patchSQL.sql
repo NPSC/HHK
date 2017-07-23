@@ -1,9 +1,5 @@
 
 
-ALTER TABLE `registration` 
-ADD INDEX `INDEX_idPsg` (`idPsg` ASC);
-
-
 DROP View `vvisit_listing`;
 
 ALTER TABLE `name_demog` 
