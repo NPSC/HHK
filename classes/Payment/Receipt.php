@@ -1042,7 +1042,7 @@ where
 
                 $numPayments++;
                 $first = TRUE;
-                $descs = '';
+                $descs = array();
 
                 foreach ($myLines as $l) {
 

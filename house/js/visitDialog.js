@@ -702,11 +702,12 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 flagAlertMessage(data.error, true);
             }            
             
-            paymentReply(data, true);
-            
             if (typeof refreshdTables !== 'undefined') {
                 refreshdTables(data);
             }
+
+            paymentReply(data, true);
+
     });
 }
 
@@ -748,8 +749,8 @@ function paymentReply (data, updateCal) {
             showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
         }
         
-        if (data.invoice && data.invoice !== '') {
-            showReceipt('#pmtRcpt', data.invoice, 'Invoice', 800);
+        if (data.invoiceNumber && data.invoiceNumber !== '') {
+            window.open('ShowInvoice.php?invnum=' + data.invoiceNumber);
         }
     }
 

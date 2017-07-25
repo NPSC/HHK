@@ -392,51 +392,76 @@ if (is_null($wsConfig) === FALSE) {
 
     $externals = SiteConfig::createCliteMarkup($wsConfig, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'neonTitles.cfg'))->generateMarkup();
 
+    if ($wsConfig->getString('credentials', 'User') != '' && $wsConfig->getString('credentials', 'Password') != '') {
     try {
-        $stmt = $dbh->query("Select * from neon_indiv_type;");
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $dbh->query("Select * from neon_lists;");
 
-        // First load?
-        if ((count($rows) == 0 || isset($_POST['btnExtIndiv'])) && $wsConfig->getString('credentials', 'User') != '' && $wsConfig->getString('credentials', 'Password') != '') {
-            $tabIndex = 6;
+        while ($list = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            try {
-                $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
+            $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
+            $neonItems = $transfer->listNeonType($list['Method'], $list['List_Name'], $list['List_Item']);
 
-                // Load Individual types
-                $types = $transfer->listIndividualTypes();
+            $hhkLookup = removeOptionGroups(readGenLookupsPDO($dbh, $list['HHK_Lookup']));
 
-                foreach ($types as $k => $v) {
-                    $dbh->exec("Replace into neon_indiv_type (Neon_Id, Neon_Name) values('$k', '$v');");
-                }
+            $stmtList = $dbh->query("Select * from neon_type_map where List_Name = '" . $list['List_Name'] . "'");
+            $mappedItems = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
 
-                // reload
-                $stmt = $dbh->query("Select * from neon_indiv_type;");
-                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $nTbl = new HTMLTable();
+            $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh('NeonCRM Name') . HTMLTable::makeTh('NeonCRM Id'));
 
-            } catch (Hk_Exception_Upload $hkex) {
-                $externalErrMsg = "Transfer Error: " .$hkex->getMessage();
+            foreach ($neonId as $n) {
+
+                $nTbl->addBodyTr(
+                    HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hhkLookup, $r['HHK_Type_Code']), array('name' => 'sel' . $list['List_Name'] . '[' . $r['Neon_Type_Code'] . ']')))
+                    . HTMLTable::makeTd($r['Neon_Name'])
+                    . HTMLTable::makeTd($r['Neon_Type_Code'])
+                );
             }
 
         }
 
-        $vt = removeOptionGroups(readGenLookupsPDO($dbh, 'Vol_Type'));
+        // First load?
+//        if ((count($rows) == 0 || isset($_POST['btnExtIndiv'])) && $wsConfig->getString('credentials', 'User') != '' && $wsConfig->getString('credentials', 'Password') != '') {
+//            $tabIndex = 6;
+//
+//            try {
+//                $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
+//
+//                // Load Individual types
+//                $types = $transfer->listIndividualTypes();
+//
+//                foreach ($types as $k => $v) {
+//                    $dbh->exec("Replace into neon_indiv_type (Neon_Id, Neon_Name) values('$k', '$v');");
+//                }
+//
+//                // reload
+//                $stmt = $dbh->query("Select * from neon_indiv_type;");
+//                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+//
+//            } catch (Hk_Exception_Upload $hkex) {
+//                $externalErrMsg = "Transfer Error: " .$hkex->getMessage();
+//            }
+//
+//        }
+//
+//        $vt = removeOptionGroups(readGenLookupsPDO($dbh, 'Vol_Type'));
+//
+//        $nTbl = new HTMLTable();
+//        $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Member Type') . HTMLTable::makeTh('NeonCRM Name') . HTMLTable::makeTh('NeonCRM Id'));
+//        foreach ($rows as $r) {
+//            $nTbl->addBodyTr(
+//                    HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($vt, $r['Vol_Type_Code']), array('name' => 'selIT[' . $r['Neon_Id'] . ']')))
+//                    . HTMLTable::makeTd($r['Neon_Name'])
+//                    . HTMLTable::makeTd($r['Neon_Id'])
+//            );
+//        }
+//
+//        $externals .= HTMLContainer::generateMarkup('p', 'NeonCRM Individual Type Mapping', array('sytle' => 'font-weight:bold;margin-tpo:10px;')) . $nTbl->generateMarkup();
 
-        $nTbl = new HTMLTable();
-        $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Member Type') . HTMLTable::makeTh('NeonCRM Name') . HTMLTable::makeTh('NeonCRM Id'));
-        foreach ($rows as $r) {
-            $nTbl->addBodyTr(
-                    HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($vt, $r['Vol_Type_Code']), array('name' => 'selIT[' . $r['Neon_Id'] . ']')))
-                    . HTMLTable::makeTd($r['Neon_Name'])
-                    . HTMLTable::makeTd($r['Neon_Id'])
-            );
-        }
-
-        $externals .= HTMLContainer::generateMarkup('p', 'NeonCRM Individual Type Mapping', array('sytle' => 'font-weight:bold;margin-tpo:10px;')) . $nTbl->generateMarkup();
     } catch (PDOException $pe) {
         $externalErrMsg = "Transfer Error: " .$pe->getMessage();
     }
-
+    }
 }
 
 $webAlert = new alertMessage("webContainer");

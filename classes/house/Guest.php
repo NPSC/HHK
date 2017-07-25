@@ -179,7 +179,7 @@ class Guest extends Role {
     }
 
 
-    public function createReservationMarkup($lockRelChooser = FALSE) {
+    public function createReservationMarkup($lockRelChooser = FALSE, $waitListText = '') {
 
         $uS = Session::getInstance();
         $idPrefix = $this->getNameObj()->getIdPrefix();
@@ -197,11 +197,21 @@ class Guest extends Role {
         $mk1 = $this->createNameMu($labels, $lockRelChooser);
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
-
+        //Guest Address
         if($uS->GuestAddr) {
             $mk1 .= $this->createAddsBLock();
-            $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
         }
+
+        // Waitlist notes
+        if ($uS->UseWLnotes) {
+
+            $mk1 .= HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'waitlistNotesLabel', 'Waitlist Notes'), array('style'=>'font-weight:bold;'))
+                . HTMLContainer::generateMarkup('textarea', $waitListText, array('name'=>'taCkinNotes', 'rows'=>'3', 'cols'=>'55')),
+                array('class'=>'hhk-panel', 'style'=>'font-size:.9em;'));
+            }
+
+        $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
 
        // Header info
@@ -213,22 +223,23 @@ class Guest extends Role {
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
 
-        // Finish the markup
+
         $rtn = array();
 
          // Check dates
         $nowDT = new \DateTime();
-        $cidAttr = array('name'=>$idPrefix . 'gstDate', 'readonly'=>'readonly' );
+        $nowDT->setTime(0, 0, 0);
+        $cidAttr = array('name'=>'gstDate', 'readonly'=>'readonly', 'size'=>'14' );
         if (is_null($this->getCheckinDT()) === FALSE && $this->getCheckinDT() < $nowDT) {
             $cidAttr['class'] = ' ui-state-highlight';
         }
 
         $rtn['expDates'] = HTMLContainer::generateMarkup('span',
                 HTMLContainer::generateMarkup('span', 'Expected Check In: '.
-                    HTMLInput::generateMarkup((is_null($this->getCheckinDT()) ? '' : $this->getCheckinDT()->format('M j, Y')), $cidAttr), array('style'=>'margin-left:1.5em;'))
+                    HTMLInput::generateMarkup((is_null($this->getCheckinDT()) ? '' : $this->getCheckinDT()->format('M j, Y')), $cidAttr))
                .HTMLContainer::generateMarkup('span', 'Expected Departure: '.
                     HTMLInput::generateMarkup((is_null($this->getExpectedCheckOutDT()) ? '' : $this->getExpectedCheckOutDT()->format('M j, Y'))
-                            , Array('name'=>$idPrefix . 'gstCoDate', 'readonly'=>'readonly')), array('style'=>'margin-left:.5em;'))
+                            , Array('name'=>'gstCoDate', 'readonly'=>'readonly', 'size'=>'14')), array('style'=>'margin-left:.7em;'))
                  , array('style'=>'float:left;', 'id'=>'spnRangePicker'));
 
         $rtn['txtHdr'] = $header;
@@ -298,7 +309,7 @@ class Guest extends Role {
         if (is_null($this->checkinDate)) {
             return '';
         }
-        return $this->checkinDate->format('Y-m-d 16:00:00');
+        return $this->checkinDate->format('Y-m-d H:i:s');
     }
 
     public function getCheckinDT() {
@@ -335,7 +346,7 @@ class Guest extends Role {
         if (is_null($this->expectedCheckOut)) {
             return '';
         }
-        return $this->expectedCheckOut->format('Y-m-d 10:00:00');
+        return $this->expectedCheckOut->format('Y-m-d H:i:s');
     }
 
     public function getExpectedCheckOutDT() {

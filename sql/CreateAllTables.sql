@@ -1155,17 +1155,32 @@ CREATE TABLE if not exists `name_volunteer2` (
 ) ENGINE=InnoDB;
 
 
--- -----------------------------------------------------
--- Table `neon_indiv_type`
--- -----------------------------------------------------
-CREATE TABLE if not exists `neon_indiv_type` (
-  `Neon_Id` INT NOT NULL COMMENT '',
-  `Neon_Name` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
-  `Vol_Type_Code` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
-  `Timestamp` TIMESTAMP NOT NULL DEFAULT now() COMMENT '',
-  PRIMARY KEY (`Neon_Id`)  COMMENT ''
-) ENGINE=InnoDB;
 
+-- -----------------------------------------------------
+-- Table `neon_lists`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `neon_lists` (
+  `Method` VARCHAR(45) NOT NULL DEFAULT '',
+  `List_Name` VARCHAR(45) NOT NULL,
+  `List_Item` VARCHAR(45) NOT NULL DEFAULT '',
+  `HHk_Lookup` VARCHAR(45) NOT NULL DEFAULT '',
+  PRIMARY KEY (`List_Name`))
+ENGINE = MyISAM;
+
+
+-- -----------------------------------------------------
+-- Table `neon_type_map`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `neon_type_map` (
+  `idNeon_type_map` INT NOT NULL AUTO_INCREMENT,
+  `List_Name` VARCHAR(45) NOT NULL,
+  `Neon_Name` VARCHAR(45) NOT NULL DEFAULT '',
+  `Neon_Type_Code` VARCHAR(45) NOT NULL DEFAULT '',
+  `HHK_Type_Code` VARCHAR(45) NOT NULL DEFAULT '',
+  `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
+  `Last_Updated` DATETIME NULL,
+  `Timestamp` TIMESTAMP NOT NULL DEFAULT now(),
+  PRIMARY KEY (`idNeon_type_map`));
 
 
 -- -----------------------------------------------------
@@ -2053,6 +2068,8 @@ ALTER TABLE `hospital_stay`
     ADD INDEX `Index_idPatient` (`idPatient` ASC);
 ALTER TABLE `hospital_stay` 
     ADD INDEX `Index_idPsg` (`idPsg` ASC);
+ALTER TABLE `hospital_stay` 
+    ADD INDEX `Index_idHospital_Stay` (`idHospital_stay` ASC);
 
 ALTER TABLE `invoice` 
     ADD INDEX `Index_Order_SO_Number` (`Order_Number` ASC, `Suborder_Number` ASC);
@@ -2082,6 +2099,10 @@ ALTER TABLE `reservation`
     ADD INDEX `Index_Expected_Arrival` (`Expected_Arrival` ASC);
 ALTER TABLE `reservation` 
     ADD INDEX `Index_Expected_Departure` (`Expected_Departure` ASC);
+ALTER TABLE `reservation` 
+    ADD INDEX `Index_idReservation` (`idReservation` ASC);
+ALTER TABLE `reservation`
+    ADD INDEX `Index_idHosptial_Stay` (`idHospital_Stay` ASC);
 
 ALTER TABLE `resource_room` 
     ADD INDEX `Index_idResource` (`idResource` ASC);

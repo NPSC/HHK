@@ -36,7 +36,7 @@ if ($checkinDate == '') {
 
 $history = new History();
 
-$rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, '', FALSE, $checkinDate, 0, TRUE);
+$rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, '', FALSE, $checkinDate, 0, TRUE, 'Order BY `Patient Name`');
 
 $regForm = CreateMarkupFromDB::generateHTML_Table($rows, 'tbl');
 
@@ -71,10 +71,10 @@ $regForm = CreateMarkupFromDB::generateHTML_Table($rows, 'tbl');
     <body>
 
             <h2><?php echo $wInit->pageHeading . ' For ' . $checkinDate; ?></h2>
-            <div style='margin-left:100px;margin-bottom:10px; clear:left; float:left;' class='hhk-noprint ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox'>
+            <div style='margin-left:50px;margin-bottom:10px; clear:left; float:left;' class='hhk-noprint ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox'>
                 <input type="button" value="Print" id='btnPrint' style="margin-right:.3em;"/>
             </div>
-            <div id="divBody" style="clear:left; float:left; font-size: .8em;" class='PrintArea ui-widget ui-widget-content hhk-tdbox'>
+            <div id="divBody" style="clear:left; float:left; font-size: .9em;" class='PrintArea ui-widget ui-widget-content hhk-tdbox'>
 
                 <?php echo $regForm; ?>
             </div>

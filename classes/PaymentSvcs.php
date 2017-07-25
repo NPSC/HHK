@@ -21,6 +21,7 @@ class PaymentResult {
     protected $invoiceMarkup = '';
     protected $forwardHostedPayment;
     protected $idInvoice = 0;
+    protected $invoiceNumber = '';
     protected $replyMessage = '';
 
     const ACCEPTED = 'a';
@@ -53,7 +54,6 @@ class PaymentResult {
 
         }
 
-        $config = new Config_Lite(ciCFG_FILE);
 
         // Make out receipt
         $this->receiptMarkup = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
@@ -88,7 +88,8 @@ class PaymentResult {
 
     public function feePaymentInvoiced(\PDO $dbh, Invoice $invoice) {
 
-        $this->invoiceMarkup = $invoice->createMarkup($dbh);
+        //$this->invoiceMarkup = $invoice->createMarkup($dbh);
+        $this->invoiceNumber = $invoice->getInvoiceNumber();
 
     }
 
@@ -197,6 +198,10 @@ WHERE r.Email_Receipt = 1 and
         return $this->idInvoice;
     }
 
+    public function getInvoiceNumber() {
+        return $this->invoiceNumber;
+    }
+
     public function getIdToken() {
         return $this->idToken;
     }
@@ -274,7 +279,6 @@ class ReturnResult extends PaymentResult {
             EditRS::insert($dbh, $payInvRs);
 
         }
-        $config = new Config_Lite(ciCFG_FILE);
 
         // Make out receipt
         $this->receiptMarkup = Receipt::createReturnMarkup($dbh, $rtnResp, $uS->siteName, $uS->sId);

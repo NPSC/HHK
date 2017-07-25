@@ -112,7 +112,7 @@ class History {
     }
 
 
-    public function getReservedGuestsMarkup(\PDO $dbh, $status = ReservationStatus::Committed, $page = "Referral.php", $includeAction = TRUE, $start = '', $days = 1, $static = FALSE) {
+    public function getReservedGuestsMarkup(\PDO $dbh, $status = ReservationStatus::Committed, $page = "Referral.php", $includeAction = TRUE, $start = '', $days = 1, $static = FALSE, $orderBy = '') {
 
         if (is_null($this->roomRates)) {
             $this->roomRates = RoomRate::makeDescriptions($dbh);
@@ -137,7 +137,7 @@ class History {
 
         if (is_null($this->resvEvents)) {
 
-            $query = "select * from vreservation_events where Status = '$status' $whDate";
+            $query = "select * from vreservation_events where Status = '$status' $whDate $orderBy";
             $stmt = $dbh->query($query);
             $this->resvEvents = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
@@ -278,6 +278,10 @@ class History {
 
             // Diagnosis
             $fixedRows['Diagnosis'] = $r['Diagnosis'];
+
+            if ($status == ReservationStatus::Waitlist) {
+                $fixedRows['WL Notes'] = $r['Checkin_Notes'];
+            }
 
             $returnRows[] = $fixedRows;
 

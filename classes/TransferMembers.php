@@ -260,12 +260,12 @@ class TransferMembers {
         return $countries;
     }
 
-    public function listIndividualTypes() {
+    public function listNeonType($method, $listName, $listItem) {
 
-        $countries = array();
+        $types = array();
 
         $request = array(
-            'method' => 'account/listIndividualTypes',
+            'method' => $method,
         );
 
         // Log in with the web service
@@ -273,70 +273,19 @@ class TransferMembers {
         $result = $this->webService->go($request);
 
         if ($this->checkError($result)) {
-            throw new Hk_Exception_Runtime($this->errorMessage);
+            throw new Hk_Exception_Runtime('Method:' . $method . ', List Name: ' . $listName . ', Error Message: ' .$this->errorMessage);
         }
 
-        if (isset($result['individualTypes']['individualType'])) {
+        if (isset($result[$listName][$listItem])) {
 
-            foreach ($result['individualTypes']['individualType'] as $c) {
-                $countries[$c['id']] = $c['name'];
+            foreach ($result[$listName][$listItem] as $c) {
+                $types[$c['id']] = $c['name'];
             }
         }
 
-        return $countries;
+        return $types;
     }
 
-    public function listFunds() {
-
-        $funds = array();
-
-        $request = array(
-            'method' => 'donation/listFunds',
-        );
-
-        // Log in with the web service
-        $this->openTarget($this->userId, $this->password);
-        $result = $this->webService->go($request);
-
-        if ($this->checkError($result)) {
-            throw new Hk_Exception_Runtime($this->errorMessage);
-        }
-
-        if (isset($result['listFunds']['funds'])) {
-
-            foreach ($result['listFunds']['funds'] as $c) {
-                $funds[$c['id']] = $c['name'];
-            }
-        }
-
-        return $funds;
-    }
-
-    public function listPayTenders() {
-
-        $funds = array();
-
-        $request = array(
-            'method' => 'common/listTenders',
-        );
-
-        // Log in with the web service
-        $this->openTarget($this->userId, $this->password);
-        $result = $this->webService->go($request);
-
-        if ($this->checkError($result)) {
-            throw new Hk_Exception_Runtime($this->errorMessage);
-        }
-
-        if (isset($result['tenders']['tender'])) {
-
-            foreach ($result['tenders']['tender'] as $c) {
-                $funds[$c['id']] = $c['name'];
-            }
-        }
-
-        return $funds;
-    }
 
     public function recordGuestPayment(\PDO $dbh) {
 

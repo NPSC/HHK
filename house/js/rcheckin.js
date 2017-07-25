@@ -209,16 +209,20 @@ function ckedIn(data) {
         if (data.regform && data.style) {
             cDiv.append($('<div id="print_button" style="float:left;">Print</div>'))
                     .append($('<div id="btnReg" style="float:left; margin-left:10px;">Check In Followup</div>'))
+                    .append($('<div id="btnStmt" style="float:left; margin-left:10px;">Show Statement</div>'))
                     .append($('<div id="mesgReg" style="color: darkgreen; clear:left; font-size:1.5em;"></div>'))
                     .append($('<div style="clear: left;" class="RegArea"/>')
                             .append($(data.style)).append($(data.regform)));
 
-            $("div#print_button, div#btnReg").button();
+            $("div#print_button, div#btnReg, div#btnStmt").button();
             $("div#print_button").click(function() {
                 $("div.RegArea").printArea(opt);
             });
             $('div#btnReg').click(function() {
                 getRegistrationDialog(data.reg, cDiv);
+            });
+            $('div#btnStmt').click(function() {
+                window.open('ShowStatement.php?vid=' + data.vid, '_blank');
             });
         }
         
@@ -244,6 +248,11 @@ function ckedIn(data) {
         if (data.receipt) {
             showReceipt('#pmtRcpt', data.receipt);
         }
+        
+        if (data.invoiceNumber && data.invoiceNumber !== '') {
+            window.open('ShowInvoice.php?invnum=' + data.invoiceNumber);
+        }
+
     }
 }
 function offerShare(incmg, ckIn) {

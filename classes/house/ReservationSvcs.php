@@ -288,7 +288,7 @@ class ReservationSvcs {
         }
 
         $dataArray['patStay'] = $patientStaying;
-        $dataArray = array_merge($dataArray, $guest->createReservationMarkup($patientStaying));
+        $dataArray = array_merge($dataArray, $guest->createReservationMarkup($patientStaying, $resv->getCheckinNotes()));
         $dataArray['notes'] = $guest->createNotesMU($resv->getNotes(), 'txtRnotes', $labels);
 
 
@@ -821,9 +821,11 @@ class ReservationSvcs {
         }
 
         $guest->save($dbh, $post, $uS->username);
+        $guest->setExpectedCheckinDate($post['ciDate']);
+        $guest->setExpectedCheckOut($post['coDate']);
 
         // primary guest markup
-        $dataArray = $guest->createReservationMarkup($patientStaying);
+        $dataArray = $guest->createReservationMarkup($patientStaying, $resv->getCheckinNotes());
 
 
         // Existing visit?
@@ -1226,6 +1228,11 @@ class ReservationSvcs {
         // Start defining the return markup
         //
 
+        // re-create guest markup
+        foreach ($guest->createReservationMarkup($patientStaying, $resv->getCheckinNotes()) as $k => $v) {
+            $dataArray[$k] = $v;
+        }
+
         $dataArray['hosp'] = Hospital::createReferralMarkup($dbh, $hstay);
 
         $dataArray['idReserv'] = $resv->getIdReservation();
@@ -1414,6 +1421,7 @@ class ReservationSvcs {
 
     protected static function createStatusChooser(Reservation_1 $resv, array $limResvStatuses, array $payTypes, \Config_Lite $labels, $showPayWith, $moaBal) {
 
+        $uS = Session::getInstance();
         $tbl2 = new HTMLTable();
         // Pay option, verbal confirmation
 
@@ -1446,8 +1454,9 @@ class ReservationSvcs {
                 );
 
 
-
-        $tbl2->addBodyTr(HTMLTable::makeTd('Check-in Note:',array('class'=>'tdlabel')).HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea',$resv->getCheckinNotes(), array('name'=>'taCkinNotes', 'rows'=>'1', 'cols'=>'40')),array('colspan'=>'3')));
+        if ($uS->UseWLnotes === FALSE) {
+            $tbl2->addBodyTr(HTMLTable::makeTd('Check-in Note:',array('class'=>'tdlabel')).HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea',$resv->getCheckinNotes(), array('name'=>'taCkinNotes', 'rows'=>'1', 'cols'=>'40')),array('colspan'=>'3')));
+        }
 
         // Confirmation button
         $mk2 = '';

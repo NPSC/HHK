@@ -109,6 +109,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('FB_Status','w','Waiting','','',0),
 ('FB_Status','x','Prohibited','','',0),
 
+('Fund', '1', 'External Donation', '', 'h', '100')
 
 ('Gender','f','Female','','d',0),
 ('Gender','m','Male','','d',0),
@@ -482,6 +483,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('ShrRm', 'false', 'b', 'h','Use the share rooms feature'),
 ('ShowZeroDayStays', 'false', 'b', 'h', 'Include 0-day stays and visits in Reports and Pages'),
 ('TrackAuto','true','b','h','Track vehicles'),
+('UseWLnotes', 'false', 'b', 'h', 'Use wait list notes feature on reservations'),
 ('VisitFee', 'false', 'b', 'h','Use the visit fee (cleaning fee) feature'),
 ('VisitExcessPaid', 'd', 's', 'h','Default place for excess visit payments'),
 ('VerifyHospDate', 'true', 'b', 'h','Insist on hospital treatment date entry');
@@ -612,6 +614,10 @@ VALUES
 ('v','Volunteer','Volunteer site.','','','','\0','','2013-08-07 16:19:17','admin','2013-07-28 16:34:25');
 -- ;
 
+INSERT INTO `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) VALUES 
+('account/listIndividualTypes', 'individualTypes', 'individualType', 'Vol_Type'),
+('donation/listFunds', 'funds', 'fund', 'Fund'),
+('common/listTenders', 'tenders', 'tender', 'Pay_Type');
 
 
 --

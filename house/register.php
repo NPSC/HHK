@@ -158,17 +158,17 @@ if (isset($_POST['btnDlCurGuests'])) {
 }
 if (isset($_POST['btnDlConfRes'])) {
     // Confirmed Reservations
-    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Committed, '', FALSE);
+    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Committed, '', FALSE, '', 1, TRUE);
     doExcelDownLoad($rows, 'ConfirmedResv');
 }
 if (isset($_POST['btnDlUcRes'])) {
     // Unconfirmed Reservations
-    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, '', FALSE);
+    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, '', FALSE, '', 1, TRUE);
     doExcelDownLoad($rows, 'UnconfirmedResv');
 }
 if (isset($_POST['btnDlWlist'])) {
     // Waitlist
-    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, '', FALSE);
+    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, '', FALSE, '', 1, TRUE);
     doExcelDownLoad($rows, 'Waitlist');
 }
 if (isset($_POST['btnFeesDl'])) {
@@ -250,7 +250,7 @@ if ($uS->Reservation) {
 
     // make registration form print button
     $wlButton = HTMLContainer::generateMarkup('span', 'Date: ' . HTMLInput::generateMarkup(date('M j, Y'), array('id'=>'regwldate', 'class'=>'ckdate hhk-prtWL'))
-            . HTMLInput::generateMarkup('Print Wait List', array('id'=>'btnPrintWL', 'type'=>'button', 'data-page'=>'PrtWaitList.php', 'class'=>'hhk-prtWL', 'style'=>'margin-left:.3em;'))
+            . HTMLInput::generateMarkup('Print Wait List', array('id'=>'btnPrintWL', 'type'=>'button', 'data-page'=>'PrtWaitList.php', 'class'=>'hhk-prtWL', 'style'=>'margin-left:.3em;font-size:.85em;'))
             , array('style'=>'margin-left:5em;padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5'));
 
 
@@ -396,6 +396,10 @@ try {
                 {data: 'Diagnosis', title: '<?php echo $labels->getString('hospital', 'diagnosis', 'Diagnosis'); ?>'},
                 <?php } ?>
                 {data: 'Patient', title: patientLabel},
+                <?php if ($uS->UseWLnotes) { ?>
+                {data: 'WL Notes', title: '<?php echo $labels->getString('referral', 'waitlistNotesLabel', 'WL Notes'); ?>'},
+                <?php } ?>
+
             ];
         </script>
         <script type="text/javascript" src="js/register-min.js<?php echo JS_V; ?>"></script>
@@ -441,7 +445,7 @@ try {
             </div>
             <div style="clear:both;"></div>
             <form name="frmdownload" action="#" method="post">
-            <div id="mainTabs" style="display:none; <?php echo $divFontSize; ?>">
+            <div id="mainTabs" style="display:none;font-size:.9em;">
                 <ul>
                     <li id="liCal"><a href="#vcal">Calendar</a></li>
                     <li><a href="#vstays">Current Guests</a></li>

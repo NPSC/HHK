@@ -19,6 +19,7 @@ REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`) V
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ShowDemographics', 'false', 'b', 'h', 'Show demographics selectors on Check in and Reservation pages');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ShowTxPayType', 'false', 'b', 'h', 'Always Show the Transfer pay type');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('UseWLnotes', 'false', 'b', 'h', 'Use wait list notes feature on reservations');
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Demographics', 'Newsletter', 'Newsletter', 'y', 'm', '0');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Demographics', 'Photo_Permission', 'Photo Permission', 'y', 'm', '0');
@@ -29,3 +30,9 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`)
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Newsletter', 'yes', 'Yes', 'd', '100');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Newsletter', 'no', 'No', 'd', '110');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Newsletter', 'z', 'Unknown', 'd', '1000');
+
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Fund', '1', 'External Donation', 'h', '100');
+
+INSERT INTO `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) VALUES ('account/listIndividualTypes', 'individualTypes', 'individualType', 'Vol_Type');
+INSERT INTO `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) VALUES ('donation/listFunds', 'funds', 'fund', 'Fund');
+INSERT INTO `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) VALUES ('common/listTenders', 'tenders', 'tender', 'Pay_Type');

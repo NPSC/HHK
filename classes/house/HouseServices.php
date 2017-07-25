@@ -483,11 +483,10 @@ class HouseServices {
                 }
 
                 // New Invoice
-                if (is_null($payResult->getInvoiceMarkup()) === FALSE && $payResult->getInvoiceMarkup() != '') {
-                    $dataArray['invoice'] = HTMLContainer::generateMarkup('div', $payResult->getInvoiceMarkup());
+                if (is_null($payResult->getInvoiceNumber()) === FALSE && $payResult->getInvoiceNumber() != '') {
+                    $dataArray['invoiceNumber'] = $payResult->getInvoiceNumber();
                 }
             }
-
         }
 
         // Undo Room Change
@@ -573,8 +572,8 @@ class HouseServices {
             }
 
             // New Invoice
-            if (is_null($payResult->getInvoiceMarkup()) === FALSE && $payResult->getInvoiceMarkup() != '') {
-                $dataArray['invoice'] = HTMLContainer::generateMarkup('div', $payResult->getInvoiceMarkup());
+            if (is_null($payResult->getInvoiceNumber()) === FALSE && $payResult->getInvoiceNumber() != '') {
+                $dataArray['invoiceNumber'] = $payResult->getInvoiceNumber();
             }
         }
 
@@ -1848,8 +1847,8 @@ class HouseServices {
             }
 
             // New Invoice
-            if (is_null($payResult->getInvoiceMarkup()) === FALSE && $payResult->getInvoiceMarkup() != '') {
-                $dataArray['invoice'] = HTMLContainer::generateMarkup('div', $payResult->getInvoiceMarkup());
+            if (is_null($payResult->getInvoiceNumber()) === FALSE && $payResult->getInvoiceNumber() != '') {
+                $dataArray['invoiceNumber'] = $payResult->getInvoiceNumber();
             }
         }
 
@@ -1939,10 +1938,10 @@ class HouseServices {
         // Checked out already?
         if ($chkoutDT < $today) {
             $dataArray['ckmeout'] = $chkoutDT->format('Y-m-d');
-            $dataArray['vid'] = $visit->getIdVisit();
             $dataArray['gid'] = $visit->getPrimaryGuestId();
         }
 
+        $dataArray['vid'] = $visit->getIdVisit();
         $dataArray['regDialog'] = HTMLContainer::generateMarkup('div', $reg2->createRegMarkup($dbh, FALSE), array('class' => "ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"));
         $dataArray['success'] = "Checked-In.  " . $reply;
         $dataArray['reg'] = $reg2->getIdRegistration();

@@ -198,7 +198,7 @@ $resultMessage = $alertMsg->createMarkup();
             </div>
             <div style="clear:both"></div>
             <form  action="Referral.php" method="post"  id="form1">
-                <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
+                <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel">
                 </div>
                 <div id="patientSection" style="display:none; padding-left:0; margin-top:0;margin-bottom:.3em; clear:left; float:left; min-width: 810px;" class="ui-widget hhk-visitdialog">
                     <?php echo $pmkup; ?>

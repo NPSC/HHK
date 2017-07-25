@@ -90,7 +90,7 @@ function additionalGuest(item) {
                 acDiv.dialog({
                     autoOpen: false,
                     resizable: true,
-                    width: 1000,
+                    width: 1100,
                     modal: true,
                     title: 'Additional Guest',
                     close: function (event, ui) {$('div#submitButtons').show();},
@@ -379,8 +379,8 @@ function injectSlot(data) {
         $('#datesSection').children().remove();
         $('#datesSection').append($(data.expDates));
 
-        var gstDate = $('#' + data.idPrefix + 'gstDate'),
-            gstCoDate = $('#' + data.idPrefix + 'gstCoDate');
+        var gstDate = $('#gstDate'),
+            gstCoDate = $('#gstCoDate');
 
         $('#spnRangePicker').dateRangePicker(
 	{
@@ -404,8 +404,6 @@ function injectSlot(data) {
 
         $('#datesSection').show();
 
-    } else {
-        $('#datesSection').hide();
     }
 
     if (data.notes !== undefined) {
@@ -1068,7 +1066,9 @@ function verifyDone(reserv) {
     "use strict";
     var resv = reserv,
         havePatient = false,
-        $selStatus = $('#selResvStatus');
+        $selStatus = $('#selResvStatus'),
+        $arrDate = $('#gstDate'),
+        $deptDate = $('#gstCoDate');
     
     hideAlertMessage();
 
@@ -1089,26 +1089,47 @@ function verifyDone(reserv) {
         $selStatus.change();
     }
 
-    // check Hospital
-    $('#hospitalSection').find('.ui-state-error').each(function() {
-        $(this).removeClass('ui-state-error');
-    });
-    if ($('#selHospital').length > 0 && $('#hospitalSection:visible').length > 0) {
-        
-        if ($('#selHospital').val() == "" ) {
-            
-            $('#selHospital').addClass('ui-state-error');
+    // Check in Date
+    if ($arrDate.val() === '') {
 
-            flagAlertMessage("Select a hospital.", true, 0);
-            
-            $('#divhospDetail').show('blind');
-            $('#divhospHdr').removeClass('ui-corner-all').addClass('ui-corner-top');
+        $arrDate.addClass('ui-state-error');
+        flagAlertMessage("This " + resvTitle + " is missing the check-in date.", true);
+        return false;
+
+    } else {
+
+        resv.ciDate = new Date($arrDate.val());
+
+        if (isNaN(resv.ciDate.getTime())) {
+            $arrDate.addClass('ui-state-error');
+            flagAlertMessage("This " + resvTitle + " is missing the check-in date.", true);
             return false;
         }
     }
 
-    $('#divhospDetail').hide('blind');
-    $('#divhospHdr').removeClass('ui-corner-top').addClass('ui-corner-all');
+    // Check-out date
+    if ($deptDate.val() == '') {
+        $deptDate.addClass('ui-state-error');
+        flagAlertMessage("This " + resvTitle + " is missing the expected departure date.", true);
+        return false;
+
+    } else {
+
+        resv.coDate = new Date($deptDate.val());
+
+        if (isNaN(resv.coDate.getTime())) {
+            $deptDate.addClass('ui-state-error');
+            flagAlertMessage("This " + resvTitle + " is missing the expected departure date", true);
+            return false;
+        }
+
+        if (resv.ciDate > resv.coDate) {
+            $arrDate.addClass('ui-state-error');
+            flagAlertMessage("This " + resvTitle + "'s check-in date is after the expected departure date.", true);
+            return false;
+        }
+    }
+
 
     // Remove guest highlights
     $('#guestAccordion').find('.ui-state-error').each(function() {
@@ -1118,7 +1139,7 @@ function verifyDone(reserv) {
     // Check for valid guest(s)
     for (var i = 0; i < reserv.members.length; i++) {
 
-        var pan = reserv.members[i], ciDate, coDate;
+        var pan = reserv.members[i];
         var gstMsg = $('#' + pan.idPrefix + 'memMsg');
 
         gstMsg.text("");  // clear any error message
@@ -1246,58 +1267,6 @@ function verifyDone(reserv) {
             }
         }
 
-        // Check in Date
-        if ($('#' + pan.idPrefix + 'gstDate').length > 0) {
-
-            if ($('#' + pan.idPrefix + 'gstDate').val() == '') {
-
-                $('#' + pan.idPrefix + 'gstDate').addClass('ui-state-error');
-                gstMsg.text("Enter guest check in date.");
-                flagAlertMessage((pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") is missing their check-in date.", true);
-                return false;
-
-            } else {
-
-                ciDate = new Date($('#' + pan.idPrefix + 'gstDate').val());
-
-                if (isNaN(ciDate.getTime())) {
-                    $('#' + pan.idPrefix + 'gstDate').addClass('ui-state-error');
-                    gstMsg.text("Guest check-in date error.");
-                    flagAlertMessage((pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") is missing their check-in date.", true);
-                    return false;
-                }
-            }
-        }
-        
-        // Check-out date
-        if ($('#' + pan.idPrefix + 'gstCoDate').length > 0) {
-
-            if ($('#' + pan.idPrefix + 'gstCoDate').val() == '') {
-
-                $('#' + pan.idPrefix + 'gstCoDate').addClass('ui-state-error');
-                gstMsg.text("Enter guest check out date.");
-                flagAlertMessage((pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") is missing their Expected Departure date.", true);
-                return false;
-
-            } else {
-
-                coDate = new Date($('#' + pan.idPrefix + 'gstCoDate').val());
-
-                if (isNaN(coDate.getTime())) {
-                    $('#' + pan.idPrefix + 'gstCoDate').addClass('ui-state-error');
-                    gstMsg.text("Guest Expected Departure date error.");
-                    flagAlertMessage((pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") is missing their Expected Departure date", true);
-                    return false;
-                }
-
-                if (ciDate > coDate) {
-                    $('#' + pan.idPrefix + 'gstDate').addClass('ui-state-error');
-                    gstMsg.text("Check in date is after check out date.");
-                    flagAlertMessage((pan.idPrefix === 'h_' ? resv.patientLabel : 'Primary Guest') + " (" + nameText + ") check in date is after their expected departure date.", true);
-                    return false;
-                }
-            }
-        }
 
         $('#' + pan.idPrefix + 'divGstpnl').hide('blind');
         $('#' + pan.idPrefix + 'divGsthdr').removeClass('ui-corner-top').addClass('ui-corner-all');
@@ -1307,6 +1276,28 @@ function verifyDone(reserv) {
         flagAlertMessage("A " + resv.patientLabel + " is not selected", true);
         return false
     }
+
+    // check Hospital
+    $('#hospitalSection').find('.ui-state-error').each(function() {
+        $(this).removeClass('ui-state-error');
+    });
+    if ($('#selHospital').length > 0 && $('#hospitalSection:visible').length > 0) {
+        
+        if ($('#selHospital').val() == "" ) {
+            
+            $('#selHospital').addClass('ui-state-error');
+
+            flagAlertMessage("Select a hospital.", true, 0);
+            
+            $('#divhospDetail').show('blind');
+            $('#divhospHdr').removeClass('ui-corner-all').addClass('ui-corner-top');
+            return false;
+        }
+    }
+
+    $('#divhospDetail').hide('blind');
+    $('#divhospHdr').removeClass('ui-corner-top').addClass('ui-corner-all');
+
 
     return true;
 }
@@ -1342,6 +1333,8 @@ function Reserv() {
    t.patAsGuest;
    t.role;
    t.patSection;
+   t.ciDate;
+   t.coDate;
 }
 
 $(document).ready(function() {
@@ -1636,11 +1629,7 @@ $(document).ready(function() {
     });
     
     $('#selHospital').change();
-    
-    $('#closeDP').click(function() {
-        $('#dtpkrDialog').hide();
-    });
-    
+        
     $('#btnDone').click(function() {
         
         if ($(this).val() === 'Saving >>>>') {
@@ -1652,7 +1641,7 @@ $(document).ready(function() {
         if (verifyDone(resv) === true) {
                         
             var btnVal = $(this).val(),
-                cmdStr = '&cmd=makeResv' + '&idPsg=' + resv.idPsg + '&rid=' + resv.idReserv + '&patStay=' + resv.patStaying;
+                cmdStr = '&cmd=makeResv' + '&idPsg=' + resv.idPsg + '&rid=' + resv.idReserv + '&patStay=' + resv.patStaying + '&ciDate=' + resv.ciDate.toJSON() + '&coDate=' + resv.coDate.toJSON();
                 
             $(this).val('Saving >>>>');
 
