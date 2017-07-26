@@ -205,7 +205,7 @@ $resultMessage = $alertMsg->createMarkup();
                 </div>
                 <div id="guestAccordion" style="padding-left:0; margin-top:0; margin-bottom:1.5em; clear:left; float:left; min-width: 810px;" class="ui-widget hhk-visitdialog">
                 </div>
-                <div id="guestSearch" style="padding-left:0;padding-top:0; clear:left; float:left;">
+                <div id="guestSearch" style="padding-left:0;padding-top:0; margin-bottom:1.5em; clear:left; float:left;">
                     <?php echo $mk1; ?>
                 </div>
                 <div id="hospitalSection" style="font-size: .9em; padding-left:0;margin-top:0; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
