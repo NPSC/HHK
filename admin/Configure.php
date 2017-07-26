@@ -458,9 +458,9 @@ if (is_null($wsConfig) === FALSE) {
 //
 //        $externals .= HTMLContainer::generateMarkup('p', 'NeonCRM Individual Type Mapping', array('sytle' => 'font-weight:bold;margin-tpo:10px;')) . $nTbl->generateMarkup();
 
-    } catch (PDOException $pe) {
-        $externalErrMsg = "Transfer Error: " .$pe->getMessage();
-    }
+        } catch (Exception $pe) {
+            $externalErrMsg = "Transfer Error: " .$pe->getMessage();
+        }
     }
 }
 

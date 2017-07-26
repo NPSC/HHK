@@ -2099,8 +2099,6 @@ ALTER TABLE `reservation`
     ADD INDEX `Index_Expected_Arrival` (`Expected_Arrival` ASC);
 ALTER TABLE `reservation` 
     ADD INDEX `Index_Expected_Departure` (`Expected_Departure` ASC);
-ALTER TABLE `reservation` 
-    ADD INDEX `Index_idReservation` (`idReservation` ASC);
 ALTER TABLE `reservation`
     ADD INDEX `Index_idHosptial_Stay` (`idHospital_Stay` ASC);
 

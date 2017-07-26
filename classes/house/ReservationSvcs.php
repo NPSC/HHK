@@ -391,9 +391,9 @@ class ReservationSvcs {
 
             $idPatient = 0;
 
-                $stmt = $dbh->query("select * from vresv_patient "
-                    . "where Status in ('".ReservationStatus::Staying."','".ReservationStatus::Committed."','".ReservationStatus::Imediate."','".ReservationStatus::UnCommitted."','".ReservationStatus::Waitlist."') "
-                    . "and idPsg=$idPsg order by `Expected_Arrival`");
+            $stmt = $dbh->query("select * from vresv_patient "
+                . "where Status in ('".ReservationStatus::Staying."','".ReservationStatus::Committed."','".ReservationStatus::Imediate."','".ReservationStatus::UnCommitted."','".ReservationStatus::Waitlist."') "
+                . "and idPsg=$idPsg order by `Expected_Arrival`");
 
 
             $trs = array();
@@ -455,7 +455,7 @@ class ReservationSvcs {
 
                 $mrkup .= $tbl->generateMarkup();
 
-                return array('resCh'=>$mrkup, 'idPsg'=>$idPsg, 'id'=>$id, 'title'=>$labels->getString('referral', 'reservationChooserTitle', 'Reservation Chooser'), 'newButtonLabel'=>$labels->getString('referral', 'newButtonLabel', 'New Reservation'));
+                return array('resCh'=>$mrkup, 'idPsg'=>$idPsg, 'idPatient'=>$idPatient, 'id'=>$id, 'title'=>$labels->getString('referral', 'reservationChooserTitle', 'Reservation Chooser'), 'newButtonLabel'=>$labels->getString('referral', 'newButtonLabel', 'New Reservation'));
             }
         }
         return array();
