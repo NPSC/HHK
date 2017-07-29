@@ -194,6 +194,13 @@ abstract class Role {
 
     }
 
+    public function createThinMarkup(HTMLTable &$tbl, $lockRelChooser) {
+
+        $tbl->addbodyTr($this->name->createMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser));
+
+    }
+
+
         // Address, email and Phone
     protected function createAddsBLock() {
 
@@ -361,6 +368,26 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return $this->emergContact;
     }
 
+    public function getExpectedDatesControl() {
+
+
+        $nowDT = new \DateTime();
+        $nowDT->setTime(0, 0, 0);
+        $cidAttr = array('name'=>'gstDate', 'readonly'=>'readonly', 'size'=>'14' );
+        if (is_null($this->getCheckinDT()) === FALSE && $this->getCheckinDT() < $nowDT) {
+            $cidAttr['class'] = ' ui-state-highlight';
+        }
+
+        return HTMLContainer::generateMarkup('span',
+                HTMLContainer::generateMarkup('span', 'Expected Check In: '.
+                    HTMLInput::generateMarkup((is_null($this->getCheckinDT()) ? '' : $this->getCheckinDT()->format('M j, Y')), $cidAttr))
+               .HTMLContainer::generateMarkup('span', 'Expected Departure: '.
+                    HTMLInput::generateMarkup((is_null($this->getExpectedCheckOutDT()) ? '' : $this->getExpectedCheckOutDT()->format('M j, Y'))
+                            , Array('name'=>'gstCoDate', 'readonly'=>'readonly', 'size'=>'14')), array('style'=>'margin-left:.7em;'))
+                 , array('style'=>'float:left;', 'id'=>'spnRangePicker'));
+
+    }
+    
     public function getIdName() {
         return $this->name->get_idName();
     }

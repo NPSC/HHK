@@ -40,6 +40,7 @@ class ReserveData {
     protected $patLabel;
     protected $addrPurpose;
     protected $resvEarlyArrDays;
+    protected $psgTitle;
 
     function __construct($post) {
 
@@ -63,6 +64,7 @@ class ReserveData {
         $this->patAsGuestFlag = $uS->PatientAsGuest;
         $this->patBirthDateFlag = $uS->PatientBirthDate;
         $this->patLabel = $labels->getString('MemberType', 'patient', 'Patient');
+        $this->psgTitle = $labels->getString('statement', 'psgLabel', 'Patient Support Group');
         $this->addrPurpose = '1';
 
     }
@@ -70,6 +72,7 @@ class ReserveData {
     public function toArray() {
 
         return array(
+            'id' => $this->getId(),
             'rid' => $this->getIdResv(),
             'idPsg' => $this->getIdPsg(),
             'patLabel' => $this->getPatLabel(),
@@ -109,17 +112,24 @@ class ReserveData {
         return $this->resvEarlyArrDays;
     }
 
+    public function getPsgTitle() {
+        return $this->psgTitle;
+    }
+
 
     public function setIdResv($idResv) {
         $this->idResv = $idResv;
+        return $this;
     }
 
     public function setIdPsg($idPsg) {
         $this->idPsg = $idPsg;
+        return $this;
     }
 
     public function setId($id) {
         $this->id = $id;
+        return $this;
     }
 
 }

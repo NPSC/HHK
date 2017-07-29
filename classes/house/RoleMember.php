@@ -19,37 +19,9 @@ abstract class RoleMember extends IndivMember {
 
     protected abstract function getMyMemberType();
 
-    protected function getLanguages(\PDO $dbh, $nid) {
+    public function createMarkupHdr($labels = NULL, $hideRelChooser = TRUE) {
 
-        $nlangRs = new Name_LanguageRS();
-        $nlangRs->idName->setStoredVal($nid);
-
-        $rows = EditRS::select($dbh, $nlangRs, array($nlangRs->idName));
-
-        foreach ($rows as $r) {
-            $nlangRs = new Name_LanguageRS();
-            EditRS::loadRow($r, $nlangRs);
-            $this->languageRSs[$nlangRs->Language_Id->getStoredVal()] = $nlangRs;
-        }
-    }
-
-    protected function getInsurance(\PDO $dbh, $nid) {
-
-        $nInsRs = new Name_InsuranceRS();
-        $nInsRs->idName->setStoredVal($nid);
-
-        $rows = EditRS::select($dbh, $nInsRs, array($nInsRs->idName));
-
-        foreach ($rows as $r) {
-            $nInsRs = new Name_InsuranceRS();
-            EditRS::loadRow($r, $nInsRs);
-            $this->insuranceRSs[$nInsRs->Insurance_Id->getStoredVal()] = $nInsRs;
-        }
-    }
-
-    public function createMarkupHdr() {
-
-        return
+        $tr =
             HTMLTable::makeTh('Id')
             .HTMLTable::makeTh('Prefix')
             . HTMLTable::makeTh('First Name')
@@ -59,6 +31,21 @@ abstract class RoleMember extends IndivMember {
             . HTMLTable::makeTh('Nickname')
             . ($this->showBirthDate ? HTMLTable::makeTh('Birth Date') : '');
 
+
+        if ($hideRelChooser === FALSE) {
+
+            $patTitle = 'Patient';
+
+            if (is_string($labels)) {
+                $patTitle = $labels;
+            } else if (is_a($labels, 'Config_Lite')) {
+                $patTitle = $labels->getString('MemberType', 'patient', 'Patient');
+            }
+
+            $tr .= HTMLTable::makeTh('Relationship to ' . $patTitle);
+        }
+
+        return $tr;
     }
 
     public function createMarkupRow() {
@@ -253,26 +240,20 @@ class GuestMember extends RoleMember {
         return VolMemberType::Guest;
     }
 
-    public function createMarkupHdr(Config_Lite $labels = NULL, $hideRelChooser = FALSE) {
+    public function createMarkupHdr( $labels = NULL, $hideRelChooser = FALSE) {
 
-        $tr = parent::createMarkupHdr();
-
-        if ($hideRelChooser === FALSE) {
-            $tr .= HTMLTable::makeTh('Relationship to ' . $labels->getString('MemberType', 'patient', 'Patient'));
-        }
-
-        return $tr;
+        return parent::createMarkupHdr($labels, $hideRelChooser);
 
     }
 
     public function createMarkupRow($patientRelationship = '', $hideRelChooser = FALSE, $lockRelChooser = FALSE) {
 
-        $tr = parent::createMarkupRow(TRUE);
+        $tr = parent::createMarkupRow();
 
         if ($hideRelChooser === FALSE) {
 
             $uS = Session::getInstance();
-            $idPrefix = $this->getIdPrefix();
+
             $parray = removeOptionGroups($uS->guestLookups[GL_TableNames::PatientRel]);
 
             // freeze control if patient is self.
@@ -299,7 +280,7 @@ class GuestMember extends RoleMember {
 
             // Patient relationship
             $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                     HTMLSelector::doOptionsMkup($parray, $patientRelationship, $allowEmpty), array('name'=>$idPrefix . 'selPatRel', 'data-prefix'=>$idPrefix, 'class'=>'patientRelch')));
+                     HTMLSelector::doOptionsMkup($parray, $patientRelationship, $allowEmpty), array('name'=>$this->getIdPrefix() . 'selPatRel', 'data-prefix'=>$this->getIdPrefix(), 'class'=>'patientRelch')));
         }
 
         return $tr;

@@ -672,6 +672,33 @@ class IndivMember extends Member {
 
     }
 
+    protected function getLanguages(\PDO $dbh, $nid) {
+
+        $nlangRs = new Name_LanguageRS();
+        $nlangRs->idName->setStoredVal($nid);
+
+        $rows = EditRS::select($dbh, $nlangRs, array($nlangRs->idName));
+
+        foreach ($rows as $r) {
+            $nlangRs = new Name_LanguageRS();
+            EditRS::loadRow($r, $nlangRs);
+            $this->languageRSs[$nlangRs->Language_Id->getStoredVal()] = $nlangRs;
+        }
+    }
+
+    protected function getInsurance(\PDO $dbh, $nid) {
+
+        $nInsRs = new Name_InsuranceRS();
+        $nInsRs->idName->setStoredVal($nid);
+
+        $rows = EditRS::select($dbh, $nInsRs, array($nInsRs->idName));
+
+        foreach ($rows as $r) {
+            $nInsRs = new Name_InsuranceRS();
+            EditRS::loadRow($r, $nInsRs);
+            $this->insuranceRSs[$nInsRs->Insurance_Id->getStoredVal()] = $nInsRs;
+        }
+    }
 
     protected function saveLanguages(\PDO $dbh, $post, $idPrefix, $username) {
 
@@ -734,7 +761,6 @@ class IndivMember extends Member {
         }
 
     }
-
 
     protected function saveInsurance(\PDO $dbh, $post, $idPrefix, $username) {
 
@@ -821,36 +847,8 @@ class IndivMember extends Member {
         }
     }
 
-    public function getAgeRange() {
-        return $this->demogRS->Age_Bracket->getStoredVal();
-    }
-
-    public function setAgeRange($v) {
-        $this->demogRS->Age_Bracket->setNewVal($v);
-    }
-
-    public function getEthnicity() {
-        return $this->demogRS->Ethnicity->getStoredVal();
-    }
-
-    public function getMediaSource() {
-        return $this->demogRS->Media_Source->getStoredVal();
-    }
-
     public function getNoReturnDemog() {
         return $this->demogRS->No_Return->getStoredVal();
-    }
-
-    public function setMediaSource($v) {
-        $this->demogRS->Media_Source->setNewVal($v);
-    }
-
-     public function getNewsletter() {
-        return $this->demogRS->Newsletter->getStoredVal();
-    }
-
-    public function setNewsletter($v) {
-        $this->demogRS->Newsletter->setNewVal($v);
     }
 
 

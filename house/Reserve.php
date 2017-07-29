@@ -147,6 +147,8 @@ $resvObjEncoded = json_encode($resvObj->toArray());
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VERIFY_ADDRS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
@@ -164,7 +166,8 @@ $resvObjEncoded = json_encode($resvObj->toArray());
 
             <form action="Referral.php" method="post"  id="form1">
                 <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
-                <div id="familySection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
+                <div id="famSection" style="font-size: .9em; clear:left; float:left; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
+                <div id="hospitalSection" style="font-size: .9em; padding-left:0;margin-top:0; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
 
             </form>
             <div id="pmtRcpt" style="font-size: .9em; display:none;"><?php echo $receiptMarkup; ?></div>
@@ -175,7 +178,30 @@ $resvObjEncoded = json_encode($resvObj->toArray());
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
 
         <script type="text/javascript">
-var reserv = $.parseJSON('<?php echo $resvObjEncoded; ?>');
+
+
+function getReserve(sdata) {
+
+    sdata.cmd = 'getresv';
+    $('div#guestSearch').hide();
+
+    $.post('ws_resv.php', sdata, function(data) {
+
+        try {
+            data = $.parseJSON(data);
+        } catch (err) {
+            flagAlertMessage(err.message, true);
+            return;
+        }
+
+        if (data.gotopage) {
+            window.open(data.gotopage, '_self');
+        }
+
+        loadResv(data);
+    });
+
+}
 
 function resvPicker(data, $faDiag) {
     "use strict";
@@ -193,7 +219,6 @@ function resvPicker(data, $faDiag) {
     if (data.psgChooser && data.psgChooser !== '') {
         buttons[data.patLabel] = function() {
             $(this).dialog("close");
-
             psgChooser(data);
         };
     }
@@ -202,7 +227,7 @@ function resvPicker(data, $faDiag) {
         buttons[data.resvTitle] = function() {
             resv.idReserv = -1;
             $(this).dialog("close");
-            loadGuest(data, resv.role, data.idPsg, (data.idPatient === data.id ? true : resv.patStaying));
+            loadResv(data);
         };
     }
 
@@ -221,9 +246,9 @@ function psgChooser(data) {
         .children().remove().end().append($(data.psgChooser))
         .dialog('option', 'buttons', {
             Open: function() {
-                data.idPsg = $('#psgDialog input[name=cbselpsg]:checked').val();
-
+                //data.idPsg = $('#psgDialog input[name=cbselpsg]:checked').val();
                 $('#psgDialog').dialog('close');
+                getReserve({idPsg: $('#psgDialog input[name=cbselpsg]:checked').val(), id: data.id});
             },
             Cancel: function () {
                 $('#gstSearch').val('');
@@ -235,18 +260,143 @@ function psgChooser(data) {
 
 function loadResv(data) {
 
+    if (data.xfer) {
+        var xferForm = $('#xform');
+        xferForm.children('input').remove();
+        xferForm.prop('action', data.xfer);
+        if (data.paymentId && data.paymentId != '') {
+            xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
+        } else if (data.cardId && data.cardId != '') {
+            xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
+        } else {
+            flagAlertMessage('PaymentId and CardId are missing!', true);
+            return;
+        }
+        xferForm.submit();
+    }
+
     if (data.resvChooser && data.resvChooser !== '') {
         resvPicker(data, $('resDialog'));
+        return;
     } else if (data.psgChooser && data.psgChooser !== '') {
         psgChooser(data)
+        return;
     }
+
+    if (data.famSection) {
+
+        var fDiv = $(data.famSection.div).addClass('ui-widget-content').prop('id', 'divfamDetail');
+        var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+            .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+            .append($("<span id='f_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
+        var fHdr = $('<div id="divfamHdr" style="padding:2px; cursor:pointer;"/>')
+                .append($(data.famSection.hdr))
+                .append(expanderButton).append('<div style="clear:both;"/>');
+
+        fHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
+        fHdr.click(function() {
+            if (fDiv.css('display') === 'none') {
+                fDiv.show('blind');
+                fHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
+            } else {
+                fDiv.hide('blind');
+                fHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
+            }
+        });
+
+        $('#famSection')
+                .empty()
+                .append(fHdr).append(fDiv)
+                .show();
+
+
+        if (data.famSection.expDates !== undefined && data.famSection.expDates !== '') {
+
+            $('#datesSection').children().remove();
+            $('#datesSection').append($(data.famSection.expDates));
+
+            var gstDate = $('#gstDate'),
+                gstCoDate = $('#gstCoDate');
+
+            $('#spnRangePicker').dateRangePicker(
+            {
+                format: 'MMM D, YYYY',
+                separator : ' to ',
+                minDays: 1,
+                getValue: function()
+                {
+                    if (gstDate.val() && gstCoDate.val() ) {
+                        return gstDate.val() + ' to ' + gstCoDate.val();
+                    } else {
+                        return '';
+                    }
+                },
+                setValue: function(s,s1,s2)
+                {
+                    gstDate.val(s1);
+                    gstCoDate.val(s2);
+                }
+            });
+
+            $('#datesSection').show();
+
+        }
+    }
+
+    // Hospital
+    if (data.hosp !== undefined) {
+        var hDiv = $(data.hosp.div).addClass('ui-widget-content').prop('id', 'divhospDetail');
+        var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+            .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+            .append($("<span id='h_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
+        var hHdr = $('<div id="divhospHdr" style="padding:2px; cursor:pointer;"/>')
+                .append($(data.hosp.hdr))
+                .append(expanderButton).append('<div style="clear:both;"/>');
+
+        hHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
+
+        hHdr.click(function() {
+            if (hDiv.css('display') === 'none') {
+                hDiv.show('blind');
+                hHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
+            } else {
+                hDiv.hide('blind');
+                hHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
+            }
+        });
+
+        $('#hospitalSection').empty().append(hHdr).append(hDiv);
+
+        $('#txtEntryDate, #txtExitDate').datepicker();
+
+        if ($('#txtAgentSch').length > 0) {
+            createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', basis: 'ra'}, getAgent);
+            if ($('#a_txtLastName').val() === '') {
+                $('.hhk-agentInfo').hide();
+            }
+        }
+
+        if ($('#txtDocSch').length > 0) {
+            createAutoComplete($('#txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc);
+            if ($('#d_txtLastName').val() === '') {
+                $('.hhk-docInfo').hide();
+            }
+        }
+
+        $('#hospitalSection').show('blind');
+        if ($('#selHospital').val() !== '' && data.rvstCode && data.rvstCode !== '') {
+            hHdr.click();
+        }
+    }
+
+
 }
+
 
 $(document).ready(function() {
     "use strict";
     var $guestSearch = $('#gstSearch');
-    var resv = reserv;
-
+    var resv = $.parseJSON('<?php echo $resvObjEncoded; ?>');
 
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
@@ -267,7 +417,8 @@ $(document).ready(function() {
         close: function (event, ui) {$('div#submitButtons').show();},
         open: function (event, ui) {$('div#submitButtons').hide();}
     });
-    function getReserv(item) {
+
+    function getGuest(item) {
 
         if (item.No_Return !== undefined && item.No_Return !== '') {
             flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
@@ -282,36 +433,19 @@ $(document).ready(function() {
             return;
         }
 
-        resv.cmd = 'getresv';
-
-        $.post('ws_resv.php', resv, function(data) {
-
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                flagAlertMessage(err.message, true);
-                return;
-            }
-
-            if (data.gotopage) {
-                window.open(data.gotopage, '_self');
-            }
-
-            loadResv(data);
-        });
-
+        getReserve(resv);
     }
 
     if (parseInt(resv.id, 10) > 0 || parseInt(resv.rid, 10) > 0) {
 
-        getReserv(resv);
+        getReserve(resv);
 
     } else {
 
-        createAutoComplete($guestSearch, 3, {cmd: 'role', gp:'1'}, getReserv);
+        createAutoComplete($guestSearch, 3, {cmd: 'role', gp:'1'}, getGuest);
 
         // Phone number search
-        createAutoComplete($('#gstphSearch'), 4, {cmd: 'role', gp:'1'}, getReserv);
+        createAutoComplete($('#gstphSearch'), 4, {cmd: 'role', gp:'1'}, getGuest);
 
         $guestSearch.keypress(function(event) {
             $(this).removeClass('ui-state-highlight');

@@ -7,6 +7,10 @@
  */
 abstract class Reservation {
 
+    const RESV_CHOOSER = 'resvChooser';
+    const PSG_CHOOSER = 'psgChooser';
+    const FAM_SECTION = 'famSection';
+
     /**
      *
      * @var ReserveData
@@ -22,19 +26,46 @@ abstract class Reservation {
 
     public static function reservationFactoy(\PDO $dbh, ReserveData $rData) {
 
-        if ($rData->getIdResv() === 0) {
-            // Reservation not yet defined
+        // idPsg < 0
+        if ($rData->getidPsg() < 0) {
 
+            //new Psg
+            $rData->setIdPsg(0);
+            //new Resv
+            $rData->setIdResv(0);
+
+            return new BlankReservation($rData, new ReservationRS());
+
+        // idResv < 0
+        } else if ($rData->getIdResv() < 0 && $rData->getidPsg() > 0) {
+
+            // New Resv
+            $rData->setIdResv(0);
+
+            return new BlankReservation($rData, new ReservationRS());
+
+        // undetermined resv and psg, look at guest id
+        } else if ($rData->getIdResv() == 0 && $rData->getidPsg() == 0) {
+
+            // Depends on GUest Id
             if ($rData->getId() > 0) {
-                // Person defined
+                // Search
                 return new ReserveSearcher($rData, new ReservationRS());
-            } else {
-                return new BlankReservation($rData, new ReservationRS());
             }
 
-        } else {
-            // Reservation defined.
+            // New resv, new psg, new guest
+            return new BlankReservation($rData, new ReservationRS());
 
+
+        // Guest, PSG, no reservation specified.
+        } else if ($rData->getidPsg() > 0 && $rData->getIdResv() == 0) {
+
+            return new ReserveSearcher($rData, new ReservationRS());
+
+        // Got a defined resv.
+        } else if ($rData->getIdResv() > 0) {
+
+            // Load reservation
             $rRs = new ReservationRS();
             $rRs->idReservation->setStoredVal($rData->getIdResv());
             $rows = EditRS::select($dbh, $rRs, array($rRs->idReservation));
@@ -54,8 +85,11 @@ abstract class Reservation {
             }
 
             return new StaticReservation($rData, $rRs);
-
         }
+
+        // invalid parameters
+        throw new Hk_Exception_Runtime("Reservation parameters are invalid.  ");
+
     }
 
     public abstract function createMarkup(\PDO $dbh);
@@ -65,6 +99,9 @@ abstract class Reservation {
 class ActiveReservation extends Reservation {
 
     public function createMarkup(\PDO $dbh) {
+
+        $data = $this->reserveData->toArray();
+        $fam = new Family($dbh, $this->reserveData);
 
     }
 
@@ -86,39 +123,62 @@ class StayingReservation extends Reservation {
 
 }
 
-
-class ReserveSearcher extends Reservation {
+class BlankReservation extends Reservation {
 
     public function createMarkup(\PDO $dbh) {
 
-        $psgChooserMarkup = '';
-        $resvMarkup = '';
+        $data = $this->reserveData->toArray();
+
+        $family = new Family($dbh, $this->reserveData);
+
+        $data[Reservation::FAM_SECTION] = $family->createFamilyMarkup();
+
+        // Hospital
+        $hospitalStay = new HospitalStay($dbh, $family->getPatientId());
+
+        $data['hosp'] = Hospital::createReferralMarkup($dbh, $hospitalStay);
+
+
+        return $data;
+    }
+
+}
+
+class ReserveSearcher extends BlankReservation {
+
+    public function createMarkup(\PDO $dbh) {
 
         // Search for a PSG
         if ($this->reserveData->getidPsg() == 0) {
 
             $ngRss = Psg::getNameGuests($dbh, $this->reserveData->getId());
 
-            if (count($ngRss) == 1) {
-                // Select psg
-                $ngRs = $ngRss[0];
-                $this->reserveData->setIdPsg($ngRs->idPsg->getStoredVal());
-                $psgChooserMarkup = $this->psgChooserMkup($dbh, $ngRss);
+            if (count($ngRss) > 0) {
+
+                $data = $this->reserveData->toArray();
+
+                // psg chooser
+                $data[Reservation::PSG_CHOOSER] = $this->psgChooserMkup($dbh, $ngRss);
+
+                if (count($ngRss) == 1) {
+                    // Add a reservation chooser
+                    $ngRs = $ngRss[0];
+                    $this->reserveData->setIdPsg($ngRs->idPsg->getStoredVal());
+                    $data[Reservation::RESV_CHOOSER] = $this->reservationChooser($dbh);
+                }
+
+            } else {
+                $data = parent::createMarkup($dbh);
             }
-       }
 
-       // if PSG is defined, search reservations.
-       if ($this->reserveData->getidPsg() > 0) {
+        } else {
 
-            $resvMarkup = $this->reservationChooser($dbh);
+            $data = parent::createMarkup($dbh);
+            $data[Reservation::RESV_CHOOSER] = $this->reservationChooser($dbh);
 
-       }
+        }
 
-       $data = $this->reserveData->toArray();
-       $data['resvChooser'] = $resvMarkup;
-       $data['psgChooser'] = $psgChooserMarkup;
-
-       return $data;
+        return $data;
     }
 
     protected function reservationChooser(\PDO $dbh) {
@@ -127,7 +187,6 @@ class ReserveSearcher extends Reservation {
 
         $reservStatuses = $uS->guestLookups['ReservStatus'];
 
-        $idPatient = 0;
         $mrkup = '';
 
         $stmt = $dbh->query("select * from vresv_patient "
@@ -140,10 +199,6 @@ class ReserveSearcher extends Reservation {
         $today->setTime(0, 0, 0);
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-
-            if ($r['idPatient'] > 0) {
-                $idPatient = $r['idPatient'];
-            }
 
             $resvRs = new ReservationRS();
             EditRS::loadRow($r, $resvRs);
@@ -182,7 +237,7 @@ class ReserveSearcher extends Reservation {
                 $tbl->addBodyTr($tr);
             }
 
-            $tbl->addHeaderTr(HTMLTable::makeTh('').HTMLTable::makeTh('Status').HTMLTable::makeTh('Room').HTMLTable::makeTh('Patient').HTMLTable::makeTh('Expected Arrival').HTMLTable::makeTh('Expected Departure')
+            $tbl->addHeaderTr(HTMLTable::makeTh('').HTMLTable::makeTh('Status').HTMLTable::makeTh('Room').HTMLTable::makeTh($this->reserveData->getPatLabel()).HTMLTable::makeTh('Expected Arrival').HTMLTable::makeTh('Expected Departure')
                     .HTMLTable::makeTh('# Guests'));
 
             $mrkup .= $tbl->generateMarkup();
@@ -203,7 +258,7 @@ class ReserveSearcher extends Reservation {
 
             $psg = new Psg($dbh, $n->idPsg->getStoredVal());
 
-            $attrs = array('type'=>'radio', 'value'=>$psg->getIdPsg(), 'id'=>'cbselpsg');
+            $attrs = array('type'=>'radio', 'value'=>$psg->getIdPsg(), 'name'=>'cbselpsg');
             if ($firstOne) {
                 $attrs['checked'] = 'checked';
                 $firstOne = FALSE;
@@ -230,10 +285,3 @@ class ReserveSearcher extends Reservation {
 }
 
 
-class BlankReservation extends Reservation {
-
-    public function createMarkup(\PDO $dbh) {
-
-    }
-
-}

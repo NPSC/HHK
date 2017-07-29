@@ -178,7 +178,6 @@ class Guest extends Role {
         return HTMLContainer::generateMarkup('form', $mk1, array('name'=>'fAddGuest', 'method'=>'post'));
     }
 
-
     public function createReservationMarkup($lockRelChooser = FALSE, $waitListText = '') {
 
         $uS = Session::getInstance();
@@ -226,22 +225,7 @@ class Guest extends Role {
 
         $rtn = array();
 
-         // Check dates
-        $nowDT = new \DateTime();
-        $nowDT->setTime(0, 0, 0);
-        $cidAttr = array('name'=>'gstDate', 'readonly'=>'readonly', 'size'=>'14' );
-        if (is_null($this->getCheckinDT()) === FALSE && $this->getCheckinDT() < $nowDT) {
-            $cidAttr['class'] = ' ui-state-highlight';
-        }
-
-        $rtn['expDates'] = HTMLContainer::generateMarkup('span',
-                HTMLContainer::generateMarkup('span', 'Expected Check In: '.
-                    HTMLInput::generateMarkup((is_null($this->getCheckinDT()) ? '' : $this->getCheckinDT()->format('M j, Y')), $cidAttr))
-               .HTMLContainer::generateMarkup('span', 'Expected Departure: '.
-                    HTMLInput::generateMarkup((is_null($this->getExpectedCheckOutDT()) ? '' : $this->getExpectedCheckOutDT()->format('M j, Y'))
-                            , Array('name'=>'gstCoDate', 'readonly'=>'readonly', 'size'=>'14')), array('style'=>'margin-left:.7em;'))
-                 , array('style'=>'float:left;', 'id'=>'spnRangePicker'));
-
+        $rtn['expDates'] = $this->getExpectedDatesControl();
         $rtn['txtHdr'] = $header;
         $rtn['memMkup'] = HTMLContainer::generateMarkup('div', $mk1, array('class'=>'ui-widget ui-widget-content ui-corner-bottom hhk-panel hhk-tdbox'));
         $rtn['idPrefix'] = $idPrefix;
