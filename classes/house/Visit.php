@@ -781,14 +781,6 @@ class Visit {
             return "Checkout failed:  Cannot checkout in the future.";
         }
 
-        // Earlier than checkin date
-        $ciDate = new \DateTime($stayRS->Checkin_Date->getStoredVal());
-        $ciDate->setTime(0, 0, 0);
-
-        if ($depDate < $ciDate) {
-            return "Checkout Failed: The checkout date was before the checkin date.  ";
-        }
-
         // Earliser than span start date (see mod below to remove this)
         $stDate = new \DateTime($stayRS->Span_Start_Date->getStoredVal());
         $stDate->setTime(0, 0, 0);

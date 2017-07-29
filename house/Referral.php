@@ -234,9 +234,6 @@ $resultMessage = $alertMsg->createMarkup();
             <div id="patientPrompt" class="hhk-tdbox-noborder" style="display:none;">
                 <p id="hhk-patPromptQuery">Will this patient be staying at the House for at least one night?</p>
             </div>
-            <div id="dtpkrDialog" style="position: absolute; display:none; background-color:#6CA5D1; padding:4px;">
-                <div style="height: 16px; width:100%;background-color:#EBF5FD;"><span id="closeDP" class="ui-icon ui-icon-closethick" style="cursor: pointer; float:right;"></span></div>
-            </div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="resDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>

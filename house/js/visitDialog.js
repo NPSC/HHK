@@ -196,7 +196,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
             });
 
             $diagbox.find('.ckdateFut').datepicker({
-                yearRange: '-01:+01',
+                yearRange: '-02:+01',
                 changeMonth: true,
                 changeYear: true,
                 autoSize: true,

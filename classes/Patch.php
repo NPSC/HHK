@@ -103,7 +103,7 @@ class Patch {
 
         $skipDirs = array('.git', 'install');
 
-        self::deleteBakFiles($fileRoot, $skipDirs);
+        self::deleteBakFiles($fileRoot);
 
          // Detect guest tracking subunit
         if (is_dir($fileRoot . "house") === FALSE) {
@@ -229,25 +229,13 @@ class Patch {
         return $result;
     }
 
-    public static function deleteBakFiles($directory, array $skipDirs = array(), $oldExtension = 'bak') {
+    public static function deleteBakFiles($directory, $oldExtension = 'bak') {
 
         $fit = new FilesystemIterator($directory, FilesystemIterator::UNIX_PATHS | FilesystemIterator::CURRENT_AS_FILEINFO);
 
         foreach ($fit as $fileinfo) {
 
             if ($fileinfo->isDir()) {
-
-                // Not these files
-                $flag = FALSE;
-                foreach ($skipDirs as $d) {
-                    if (stripos($fileinfo->getFilename(), $d) !== false) {
-                        $flag = true;
-                    }
-                }
-
-                if ($flag) {
-                    continue;
-                }
 
                 self::deleteBakFiles($directory.$fileinfo->getFilename().DS, $skipDirs, $oldExtension);
 

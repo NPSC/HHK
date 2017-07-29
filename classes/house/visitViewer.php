@@ -497,7 +497,7 @@ class VisitView {
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $r["Room"]))
 
                 // CheckIn date
-                . HTMLTable::makeTd(HTMLInput::generateMarkup(date('M j, Y', strtotime($r['Span_Start_Date'])), array('id' => 'stayCkInDate_' . $r['idStays'], 'class'=>'hhk-stayckin ckdate', 'readonly'=>'raadonly')) . date('H:i', strtotime($r['Span_Start_Date'])));
+                . HTMLTable::makeTd(HTMLInput::generateMarkup(date('M j, Y', strtotime($r['Span_Start_Date'])), array('id' => 'stayCkInDate_' . $r['idName'], 'class'=>'hhk-stayckin ckdate', 'readonly'=>'raadonly')) . date('H:i', strtotime($r['Span_Start_Date'])));
 
 
             if ($action == '') {

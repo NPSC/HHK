@@ -9,6 +9,16 @@ $(document).ready(function () {
     var savePressed = false;
     var forceNamePrefix = '<?php echo isset($uS->ForceNamePrefix) ? $uS->ForceNamePrefix : "false"; ?>';
 
+    $.widget( "ui.autocomplete", $.ui.autocomplete, {
+        _resizeMenu: function() {
+            var ul = this.menu.element;
+            ul.outerWidth( Math.max(
+                    ul.width( "" ).outerWidth() + 1,
+                    this.element.outerWidth()
+            ) * 1.1 );
+        }
+    });
+    
     // Unsaved changes on form are caught here.
     $(window).bind('beforeunload', function () {
         // Did user press the save button?

@@ -51,9 +51,6 @@ if (isset($uS->siteList[WebSiteCode::Volunteer])) {
         <?php echo DEFAULT_CSS; ?>
 
         <link href="<?php echo FULLC_CSS; ?>" rel="stylesheet" type="text/css" />
-        <style>
-            .ui-menu-item {min-width: 380px;}
-        </style>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="../js/verifyAddrs-min.js"></script>
@@ -64,6 +61,16 @@ if (isset($uS->siteList[WebSiteCode::Volunteer])) {
         return !isNaN(parseFloat(n)) && isFinite(n);
     }
     $(document).ready(function() {
+
+    $.widget( "ui.autocomplete", $.ui.autocomplete, {
+        _resizeMenu: function() {
+            var ul = this.menu.element;
+            ul.outerWidth( Math.max(
+                    ul.width( "" ).outerWidth() + 1,
+                    this.element.outerWidth()
+            ) * 1.1 );
+        }
+    });
 
         var d=new Date();
         $('#historyTabs').tabs({

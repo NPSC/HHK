@@ -428,9 +428,6 @@ $alertMessage = $alertMsg->createMarkup();
         <?php echo DEFAULT_CSS; ?>
         <link href="<?php echo JQ_DT_CSS; ?>" rel="stylesheet" type="text/css" />
         <?php echo MULTISELECT_CSS; ?>
-        <style>
-            .ui-menu-item {min-width: 400px;}
-        </style>
 
         <link href="css/volCtrl.css" rel="stylesheet" type="text/css" />
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
