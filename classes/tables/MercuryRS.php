@@ -101,7 +101,7 @@ class Cc_Hosted_GatewayRS extends TableRS {
     public $idcc_gateway;  // int(11) NOT NULL AUTO_INCREMENT,
     public $cc_name;  // varchar(45) NOT NULL,
     public $Merchant_Id;  // varchar(45) NOT NULL DEFAULT '',
-    public $Password;  // varchar(45) NOT NULL DEFAULT '',
+    public $Password;  // varchar(245) NOT NULL DEFAULT '',
     public $Credit_Url;  // varchar(145) NOT NULL DEFAULT '',
     public $Trans_Url;  // varchar(145) NOT NULL DEFAULT '',
     public $CardInfo_Url;  // varchar(145) NOT NULL DEFAULT '',
@@ -121,7 +121,7 @@ class Cc_Hosted_GatewayRS extends TableRS {
         $this->idcc_gateway = new DB_Field("idcc_gateway", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->cc_name = new DB_Field("cc_name", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Merchant_Id = new DB_Field("Merchant_Id", "", new DbStrSanitizer(45), TRUE, TRUE);
-        $this->Password = new DB_Field("Password", "", new DbStrSanitizer(45), TRUE, TRUE);
+        $this->Password = new DB_Field("Password", "", new DbStrSanitizer(245), TRUE, TRUE);
         $this->Credit_Url = new DB_Field("Credit_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->Trans_Url = new DB_Field("Trans_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->CardInfo_Url = new DB_Field("CardInfo_Url", "", new DbStrSanitizer(145), TRUE, TRUE);

@@ -177,8 +177,6 @@ class ScriptAuthClass extends SecurityComponent {
         }
 
 
-        //$markup = "<script type='text/javascript' src='" . $resourceURL . "js/topNav.js'></script>";
-
         $markup = "<header id='global-nav'>" . self::getSiteIcons($uS->ssl, $uS->siteList, $uS->tutURL, $uS->HufURL);
         $markup .= "<div id='global-title'>$pageHeader</div><div id='navContainer'><div id='nav'>";
         // process
@@ -256,7 +254,7 @@ class ScriptAuthClass extends SecurityComponent {
             }
         }
 
-        if ($siteCount > 1) {
+        if ($siteCount > 0) {
              $mu .= $siteMu;
         }
 

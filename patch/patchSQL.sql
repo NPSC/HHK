@@ -7,6 +7,9 @@ ALTER TABLE `name_demog`
 ALTER TABLE `name_demog` 
     CHANGE COLUMN `Photo_Permission` `Photo_Permission` VARCHAR(5) NOT NULL DEFAULT '' ;
 
+ALTER TABLE `cc_hosted_gateway` 
+    CHANGE COLUMN `Password` `Password` VARCHAR(245) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL DEFAULT '' ;
+
 update name_demog set Newsletter = '' where Newsletter = '0';
 update name_demog set Newsletter = 'yes' where Newsletter = '1';
 update name_demog set Photo_Permission = '' where Photo_Permission = '0';

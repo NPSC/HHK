@@ -206,9 +206,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Name_Suffix','phd','Ph.D.','','',0),
 
 
-('Newsletter', 'yes', 'Yes','', 'd', '100');
-('Newsletter', 'no', 'No','', 'd', '110');
-('Newsletter', 'z', 'Unknown', '', 'd', '1000');
+('Newsletter', 'yes', 'Yes','', 'd', '100'),
+('Newsletter', 'no', 'No','', 'd', '110'),
+('Newsletter', 'z', 'Unknown', '', 'd', '1000'),
 
 ('NoReturnReason', 'n1', 'Irresponsible', '', 'h',0),
 
@@ -265,9 +265,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Phone_Type','mc','Cell','i','',40),
 ('Phone_Type','xf','Fax','','',50),
 
-('Photo_Permission', 'yes', 'Yes', '', 'd', '100');
-('Photo_Permission', 'no', 'No', '', 'd', '110');
-('Photo_Permission', 'z', 'Unknown', '', 'd', '1000');
+('Photo_Permission', 'yes', 'Yes', '', 'd', '100'),
+('Photo_Permission', 'no', 'No', '', 'd', '110'),
+('Photo_Permission', 'z', 'Unknown', '', 'd', '1000'),
 
 ('Price_Model','b','Basic','','',0),
 ('Price_Model','d','Daily','','',0),

@@ -126,7 +126,7 @@ CREATE TABLE if not exists `cc_hosted_gateway` (
   `idcc_gateway` int(11) NOT NULL AUTO_INCREMENT,
   `cc_name` varchar(45) NOT NULL,
   `Merchant_Id` varchar(45) NOT NULL DEFAULT '',
-  `Password` varchar(45) NOT NULL DEFAULT '',
+  `Password` varchar(245) NOT NULL DEFAULT '',
   `Credit_Url` varchar(145) NOT NULL DEFAULT '',
   `Trans_Url` varchar(145) NOT NULL DEFAULT '',
   `CardInfo_Url` varchar(145) NOT NULL DEFAULT '',

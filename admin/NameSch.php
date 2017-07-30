@@ -26,19 +26,32 @@ $menuMarkup = $wInit->generatePageMenu();
 
 $uS = Session::getInstance();
 
-$guestHistory = 'f';
-if (isset($uS->siteList[WebSiteCode::House])) {
-    // Guest History tab markup
-    $guestHistory = CreateMarkupFromDB::generateHTML_Table(History::getCheckedInGuestMarkup($dbh, '../house/GuestEdit.php', FALSE, TRUE), 'curres');
+try {
+    $guestHistory = 'f';
+    if (isset($uS->siteList[WebSiteCode::House])) {
+        // Guest History tab markup
+        $guestHistory = CreateMarkupFromDB::generateHTML_Table(History::getCheckedInGuestMarkup($dbh, '../house/GuestEdit.php', FALSE, TRUE), 'curres');
+    }
+
+    $recHistory = History::getMemberHistoryMarkup($dbh);
+
+} catch (Exception $ex) {
+    $recHistory = $ex->getMessage();
 }
 
-$recHistory = History::getMemberHistoryMarkup($dbh);
 
 $volHistory = 'f';
-if (isset($uS->siteList[WebSiteCode::Volunteer])) {
-    // Vol history
-    $now = new \DateTime();
-    $volHistory = CreateMarkupFromDB::generateHTML_Table(History::getVolEventsMarkup($dbh, $now->sub(new \DateInterval('P3D'))), 'volH');
+
+try {
+
+    if (isset($uS->siteList[WebSiteCode::Volunteer])) {
+        // Vol history
+        $now = new \DateTime();
+        $volHistory = CreateMarkupFromDB::generateHTML_Table(History::getVolEventsMarkup($dbh, $now->sub(new \DateInterval('P3D'))), 'volH');
+    }
+
+} catch (Exception $ex) {
+    $volHistory = $ex->getMessage();
 }
 
 ?>
