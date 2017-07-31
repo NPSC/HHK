@@ -47,10 +47,6 @@ abstract class Role {
      */
     protected $emergContact;
 
-    /**
-     *
-     * @var Psg
-     */
     protected $patientPsg;
     protected $idVisit;
     protected $title;
@@ -194,9 +190,36 @@ abstract class Role {
 
     }
 
-    public function createThinMarkup(HTMLTable &$tbl, $lockRelChooser) {
+    public function createThinMarkup($staying, $lockRelChooser) {
 
-        $tbl->addbodyTr($this->name->createMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser));
+        $tr = $this->name->createMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser);
+
+        $cbStay = array(
+            'type'=>'checkbox',
+            'name'=>$this->getIdName() .'cbStay',
+            'class' => 'hhk-cbStay',
+        );
+
+        if ($staying == '1') {
+            $cbStay['checked'] = 'checked';
+        }
+
+        if ($this->getNoReturn() != '') {
+            // Set for no return
+            $tr .= HTMLTable::makeTd('No Return', array('title'=>$this->getNoReturn()));
+
+        } else if ($staying == 'x') {
+            // This person cannot stay
+            $tr .= HTMLTable::makeTd('');
+
+        } else {
+
+            $tr .= HTMLTable::makeTd(
+                HTMLContainer::generateMarkup('label', 'Staying', array('for'=>$this->getIdName() . 'cbStay'))
+                . HTMLInput::generateMarkup('', $cbStay));
+        }
+
+        return $tr;
 
     }
 
@@ -387,7 +410,7 @@ where r.idPsg = $idPsg and s.idName = " . $id;
                  , array('style'=>'float:left;', 'id'=>'spnRangePicker'));
 
     }
-    
+
     public function getIdName() {
         return $this->name->get_idName();
     }

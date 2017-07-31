@@ -8,32 +8,27 @@
 class Family {
 
     protected $members;
+    protected $roleObj;
     protected $rData;
+    protected $patientId;
 
     public function __construct(\PDO $dbh, ReserveData $rData) {
 
         $this->rData = $rData;
+        $this->patientId = 0;
+
         $this->loadMembers($dbh);
 
     }
 
-    public function getPatientId(){
-
-        foreach ($this->members as $m) {
-            if (is_a($m, 'Patient')) {
-                return $m->getIdName();
-            }
-        }
-
-        return 0;
-    }
-
     protected function loadMembers(\PDO $dbh) {
 
+        $uS = Session::getInstance();
         $this->members = array();
 
         if ($this->rData->getidPsg() > 0) {
 
+            // PSG is defined
             $ngRs = new Name_GuestRS();
             $ngRs->idPsg->setStoredVal($this->rData->getidPsg());
             $rows = EditRS::select($dbh, $ngRs, array($ngRs->idPsg));
@@ -43,51 +38,88 @@ class Family {
                 EditRS::loadRow($r, $ngrs);
 
                 if ($ngrs->Relationship_Code->getStoredVal() == RelLinkType::Self) {
-                    $this->members[$ngrs->idName->getStoredVal()] = new Patient($dbh, $ngrs->idName->getStoredVal(), $ngrs->idName->getStoredVal());
+                    $this->roleObj[$ngrs->idName->getStoredVal()] = new Patient($dbh, $ngrs->idName->getStoredVal(), $ngrs->idName->getStoredVal());
+                    $this->members[$ngrs->idName->getStoredVal()]['role'] = 'p';
+                    $this->members[$ngrs->idName->getStoredVal()]['stay'] = ($uS->PatientAsGuest ? '0' : 'x');
+                    $this->patientId = $ngrs->idName->getStoredVal();
                 } else {
-                    $this->members[$ngrs->idName->getStoredVal()] = new Guest($dbh, $ngrs->idName->getStoredVal(), $ngrs->idName->getStoredVal());
+                    $this->roleObj[$ngrs->idName->getStoredVal()] = new Guest($dbh, $ngrs->idName->getStoredVal(), $ngrs->idName->getStoredVal());
+                    $this->members[$ngrs->idName->getStoredVal()]['role'] = 'g';
+                    $this->members[$ngrs->idName->getStoredVal()]['stay'] = '0';
                 }
             }
         }
 
         // Load new member?
         if ($this->rData->getId() > 0 && isset($this->members[$this->rData->getId()]) === FALSE) {
-            $this->members[$this->rData->getId()] = new Guest($dbh, $this->rData->getId(), $this->rData->getId());
+            $this->roleObj[$this->rData->getId()] = new Guest($dbh, $this->rData->getId(), $this->rData->getId());
+            $this->members[$this->rData->getId()]['role'] = '';
+            $this->members[$this->rData->getId()]['stay'] = '0';
         }
 
         // Load empty member
-        $this->members[0] = new Guest($dbh, '0', 0);
+        $this->roleObj[0] = new Guest($dbh, '0', 0);
+        $this->members[0]['role'] = '';
+        $this->members[0]['stay'] = '0';
 
 
+        // Update who is staying
+        $this->loadResvGuests($dbh);
+    }
+
+    protected function loadResvGuests(\PDO $dbh) {
+
+        if ($this->rData->getIdResv() > 0) {
+
+            $resvGuestRs = new Reservation_GuestRS();
+            $resvGuestRs->idReservation->setStoredVal($this->rData->getIdResv());
+            $rgs = EditRS::select($dbh, $resvGuestRs, array($resvGuestRs->idReservation));
+
+            foreach ($rgs as $g) {
+
+                if (isset($this->members[$g['idGuest']]) && $this->members[$g['idGuest']]['stay'] != 'x') {
+                    $this->members[$g['idGuest']]['stay'] = '1';
+                }
+            }
+        }
     }
 
     public function createFamilyMarkup() {
 
         $tbl = new HTMLTable();
-        $addHdr = TRUE;
-        $expDatesControl = '';
+        $tbl->addHeaderTr($this->roleObj[0]->getNameObj()->createMarkupHdr($this->rData->getPatLabel(), FALSE) . HTMLTable::makeTh('Staying'));
 
-        foreach ($this->members as $m) {
 
-            $name = $m->getNameObj();
+        if ($this->getPatientId() > 0) {
 
-            if ($addHdr) {
-                $tbl->addHeaderTr($name->createMarkupHdr($this->rData->getPatLabel(), FALSE));
-                $addHdr = FALSE;
-                $expDatesControl = $m->getExpectedDatesControl();;
-            }
-
-            $tbl->addBodyTr($m->createThinMarkup($tbl, ($this->rData->getidPsg() == 0 ? FALSE : TRUE)));
+            $name = $this->roleObj[$this->getPatientId()]->getNameObj();
+            $tbl->addBodyTr($this->roleObj[$this->getPatientId()]->createThinMarkup($this->members[$this->getPatientId()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)));
         }
 
-        $div = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-panel hhk-tdbox'));
+        foreach ($this->roleObj as $m) {
+
+            if ($m->getIdName() > 0 && $m->getIdName() == $this->getPatientId()) {
+                continue;
+            }
+
+            $name = $m->getNameObj();
+            $tbl->addBodyTr($m->createThinMarkup($this->members[$m->getIdName()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)));
+        }
+
+        $div = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('id'=>'tblFamily')), array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-panel hhk-tdbox'));
 
         $hdr = HTMLContainer::generateMarkup('div',
             HTMLContainer::generateMarkup('span', 'Visitors ')
+            . HTMLInput::generateMarkup('Add More', array('type'=>'button', 'id'=>'addMoreVisitors'))
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
-        return array('hdr'=>$hdr, 'div'=>$div, 'expDates'=>$expDatesControl);
+        return array('hdr'=>$hdr, 'div'=>$div);
 
+    }
+
+
+    public function getPatientId() {
+        return $this->patientId;
     }
 
 

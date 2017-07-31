@@ -139,6 +139,7 @@ $resvObjEncoded = json_encode($resvObj->toArray());
         <link rel="stylesheet" href="css/daterangepicker.min.css">
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
+        <style>.ui-icon-background, .ui-state-active .ui-icon-background {background-color:#fff;}</style>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
@@ -285,6 +286,7 @@ function loadResv(data) {
 
     if (data.famSection) {
 
+        var newRow;
         var fDiv = $(data.famSection.div).addClass('ui-widget-content').prop('id', 'divfamDetail');
         var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
             .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
@@ -309,39 +311,51 @@ function loadResv(data) {
                 .append(fHdr).append(fDiv)
                 .show();
 
+        fDiv.tooltip();
+        $('.hhk-cbStay').checkboxradio();
 
-        if (data.famSection.expDates !== undefined && data.famSection.expDates !== '') {
 
-            $('#datesSection').children().remove();
-            $('#datesSection').append($(data.famSection.expDates));
+        $('#addMoreVisitors').button().click(function (event) {
+            event.stopPropagation();
+            var trlast = $('#tblFamily tbody tr:last');
+            trlast.clone().appendTo($('#tblFamily tbody'));
+        });
 
-            var gstDate = $('#gstDate'),
-                gstCoDate = $('#gstCoDate');
-
-            $('#spnRangePicker').dateRangePicker(
-            {
-                format: 'MMM D, YYYY',
-                separator : ' to ',
-                minDays: 1,
-                getValue: function()
-                {
-                    if (gstDate.val() && gstCoDate.val() ) {
-                        return gstDate.val() + ' to ' + gstCoDate.val();
-                    } else {
-                        return '';
-                    }
-                },
-                setValue: function(s,s1,s2)
-                {
-                    gstDate.val(s1);
-                    gstCoDate.val(s2);
-                }
-            });
-
-            $('#datesSection').show();
-
-        }
     }
+
+    // Expected Dates Control
+    if (data.expDates !== undefined && data.expDates !== '') {
+
+        $('#datesSection').children().remove();
+        $('#datesSection').append($(data.expDates));
+
+        var gstDate = $('#gstDate'),
+            gstCoDate = $('#gstCoDate');
+
+        $('#spnRangePicker').dateRangePicker(
+        {
+            format: 'MMM D, YYYY',
+            separator : ' to ',
+            minDays: 1,
+            getValue: function()
+            {
+                if (gstDate.val() && gstCoDate.val() ) {
+                    return gstDate.val() + ' to ' + gstCoDate.val();
+                } else {
+                    return '';
+                }
+            },
+            setValue: function(s,s1,s2)
+            {
+                gstDate.val(s1);
+                gstCoDate.val(s2);
+            }
+        });
+
+        $('#datesSection').show();
+
+    }
+
 
     // Hospital
     if (data.hosp !== undefined) {

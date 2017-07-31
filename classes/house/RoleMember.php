@@ -305,6 +305,17 @@ class PatientMember extends RoleMember {
         return VolMemberType::Patient;
     }
 
+    public function createMarkupRow($patientRelationship = '', $hideRelChooser = FALSE) {
+
+        $tr = parent::createMarkupRow();
+
+        if ($hideRelChooser === FALSE) {
+            $tr .= HTMLTable::makeTd('');
+        }
+
+        return $tr;
+    }
+
 }
 
 

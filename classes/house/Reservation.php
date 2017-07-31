@@ -93,6 +93,32 @@ abstract class Reservation {
     }
 
     public abstract function createMarkup(\PDO $dbh);
+
+    protected function createExpDatesControl() {
+
+        $cidAttr = array('name'=>'gstDate', 'readonly'=>'readonly', 'size'=>'14' );
+
+        if ($this->reservRs->Expected_Arrival->getStoredVal() != '') {
+
+            $nowDT = new \DateTime();
+            $nowDT->setTime(0, 0, 0);
+
+            $expArrDT = new \DateTime($this->reservRs->Expected_Arrival->getStoredVal());
+
+            if (is_null($expArrDT) === FALSE && $expArrDT < $nowDT) {
+                $cidAttr['class'] = ' ui-state-highlight';
+            }
+        }
+
+        return HTMLContainer::generateMarkup('span',
+                HTMLContainer::generateMarkup('span', 'Expected Check In: '.
+                    HTMLInput::generateMarkup($this->reservRs->Expected_Arrival->getStoredVal(), $cidAttr))
+                .HTMLContainer::generateMarkup('span', 'Expected Departure: '.
+                    HTMLInput::generateMarkup($this->reservRs->Expected_Departure->getStoredVal(), array('name'=>'gstCoDate', 'readonly'=>'readonly', 'size'=>'14'))
+                    , array('style'=>'margin-left:.7em;'))
+                , array('style'=>'float:left;', 'id'=>'spnRangePicker'));
+
+    }
 }
 
 
@@ -132,6 +158,9 @@ class BlankReservation extends Reservation {
         $family = new Family($dbh, $this->reserveData);
 
         $data[Reservation::FAM_SECTION] = $family->createFamilyMarkup();
+
+        // Resv Expected dates
+        $data['expDates'] = $this->createExpDatesControl();
 
         // Hospital
         $hospitalStay = new HospitalStay($dbh, $family->getPatientId());
