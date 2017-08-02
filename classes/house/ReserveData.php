@@ -31,16 +31,26 @@
  */
 class ReserveData {
 
+    const RESV_CHOOSER = 'resvChooser';
+    const PSG_CHOOSER = 'psgChooser';
+    const FAM_SECTION = 'famSection';
+    const FULL_NAME = 'fullName';
+
     protected $idResv = 0;
     protected $id = 0;
     protected $idPsg = 0;
+    protected $fullName = '';
     protected $resvTitle;
     protected $patAsGuestFlag;
     protected $patBirthDateFlag;
     protected $patLabel;
+    protected $notesLabel;
     protected $addrPurpose;
     protected $resvEarlyArrDays;
     protected $psgTitle;
+    protected $resvChooser;
+    protected $psgChooser;
+    protected $familySection;
 
     function __construct($post) {
 
@@ -59,25 +69,51 @@ class ReserveData {
             $this->idPsg = intval(filter_var($post['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
+        if (isset($post['fullName'])) {
+            $this->fullName = filter_var($post['fullName'], FILTER_SANITIZE_STRING);
+        }
+
         $this->resvTitle = $labels->getString('guestEdit', 'reservationTitle', 'Reservation');
         $this->resvEarlyArrDays = $uS->ResvEarlyArrDays;
         $this->patAsGuestFlag = $uS->PatientAsGuest;
         $this->patBirthDateFlag = $uS->PatientBirthDate;
         $this->patLabel = $labels->getString('MemberType', 'patient', 'Patient');
         $this->psgTitle = $labels->getString('statement', 'psgLabel', 'Patient Support Group');
+        $this->notesLabel = $labels->getString('referral', 'notesLabel', 'Reservation Notes');
         $this->addrPurpose = '1';
+        $this->resvChooser = '';
+        $this->psgChooser = '';
+        $this->familySection = '';
 
     }
 
     public function toArray() {
 
-        return array(
+        $rtn =  array(
             'id' => $this->getId(),
             'rid' => $this->getIdResv(),
             'idPsg' => $this->getIdPsg(),
             'patLabel' => $this->getPatLabel(),
             'resvTitle' => $this->getResvTitle(),
         );
+
+        if ($this->resvChooser != '') {
+            $rtn[ReserveData::RESV_CHOOSER] = $this->resvChooser;
+        }
+
+        if ($this->psgChooser != '') {
+            $rtn[ReserveData::PSG_CHOOSER] = $this->psgChooser;
+        }
+
+        if ($this->familySection != '') {
+            $rtn[ReserveData::FAM_SECTION] = $this->familySection;
+        }
+
+        if ($this->fullName != '') {
+            $rtn[ReserveData::FULL_NAME] = $this->fullName;
+        }
+
+        return $rtn;
     }
 
     public function getIdResv() {
@@ -108,6 +144,10 @@ class ReserveData {
         return $this->patLabel;
     }
 
+    public function getNotesLabel() {
+        return $this->notesLabel;
+    }
+
     public function getResvEarlyArrDays() {
         return $this->resvEarlyArrDays;
     }
@@ -131,5 +171,22 @@ class ReserveData {
         $this->id = $id;
         return $this;
     }
+
+    public function setResvChooser($resvChooser) {
+        $this->resvChooser = $resvChooser;
+        return $this;
+    }
+
+    public function setPsgChooser($psgChooser) {
+        $this->psgChooser = $psgChooser;
+        return $this;
+    }
+
+    public function setFamilySection($p) {
+        $this->familySection = $p;
+        return $this;
+    }
+
+
 
 }

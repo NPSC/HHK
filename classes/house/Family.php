@@ -39,11 +39,13 @@ class Family {
 
                 if ($ngrs->Relationship_Code->getStoredVal() == RelLinkType::Self) {
                     $this->roleObj[$ngrs->idName->getStoredVal()] = new Patient($dbh, $ngrs->idName->getStoredVal(), $ngrs->idName->getStoredVal());
+                    $this->roleObj[$ngrs->idName->getStoredVal()]->setPatientRelationshipCode($ngrs->Relationship_Code->getStoredVal());
                     $this->members[$ngrs->idName->getStoredVal()]['role'] = 'p';
                     $this->members[$ngrs->idName->getStoredVal()]['stay'] = ($uS->PatientAsGuest ? '0' : 'x');
                     $this->patientId = $ngrs->idName->getStoredVal();
                 } else {
                     $this->roleObj[$ngrs->idName->getStoredVal()] = new Guest($dbh, $ngrs->idName->getStoredVal(), $ngrs->idName->getStoredVal());
+                    $this->roleObj[$ngrs->idName->getStoredVal()]->setPatientRelationshipCode($ngrs->Relationship_Code->getStoredVal());
                     $this->members[$ngrs->idName->getStoredVal()]['role'] = 'g';
                     $this->members[$ngrs->idName->getStoredVal()]['stay'] = '0';
                 }
@@ -90,6 +92,7 @@ class Family {
         $tbl->addHeaderTr($this->roleObj[0]->getNameObj()->createMarkupHdr($this->rData->getPatLabel(), FALSE) . HTMLTable::makeTh('Staying'));
 
 
+        // Put the patient first.
         if ($this->getPatientId() > 0) {
 
             $name = $this->roleObj[$this->getPatientId()]->getNameObj();
@@ -98,6 +101,7 @@ class Family {
 
         foreach ($this->roleObj as $m) {
 
+            // Skip the patient
             if ($m->getIdName() > 0 && $m->getIdName() == $this->getPatientId()) {
                 continue;
             }
@@ -112,6 +116,15 @@ class Family {
             HTMLContainer::generateMarkup('span', 'Visitors ')
             . HTMLInput::generateMarkup('Add More', array('type'=>'button', 'id'=>'addMoreVisitors'))
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
+
+                // Waitlist notes
+        if ($uS->UseWLnotes) {
+
+            $mk1 .= HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'waitlistNotesLabel', 'Waitlist Notes'), array('style'=>'font-weight:bold;'))
+                . HTMLContainer::generateMarkup('textarea', $waitListText, array('name'=>'taCkinNotes', 'rows'=>'3', 'cols'=>'55')),
+                array('class'=>'hhk-panel', 'style'=>'font-size:.9em;'));
+            }
 
         return array('hdr'=>$hdr, 'div'=>$div);
 

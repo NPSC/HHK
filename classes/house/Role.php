@@ -200,8 +200,15 @@ abstract class Role {
             'class' => 'hhk-cbStay',
         );
 
+        $lblStay = array(
+            'for'=>$this->getIdName() . 'cbStay',
+            'id' => $this->getIdName() . 'lblStay',
+            'data-stay' => '0',
+            'class' => 'hhk-lblStay',
+        );
+
         if ($staying == '1') {
-            $cbStay['checked'] = 'checked';
+            $lblStay['data-stay'] = '1';
         }
 
         if ($this->getNoReturn() != '') {
@@ -215,7 +222,7 @@ abstract class Role {
         } else {
 
             $tr .= HTMLTable::makeTd(
-                HTMLContainer::generateMarkup('label', 'Staying', array('for'=>$this->getIdName() . 'cbStay'))
+                HTMLContainer::generateMarkup('label', 'Stay', $lblStay)
                 . HTMLInput::generateMarkup('', $cbStay));
         }
 
