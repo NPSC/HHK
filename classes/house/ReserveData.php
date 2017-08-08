@@ -44,7 +44,7 @@ class ReserveData {
     protected $patAsGuestFlag;
     protected $patBirthDateFlag;
     protected $patLabel;
-    protected $notesLabel;
+    protected $wlNotesLabel;
     protected $addrPurpose;
     protected $resvEarlyArrDays;
     protected $psgTitle;
@@ -79,7 +79,7 @@ class ReserveData {
         $this->patBirthDateFlag = $uS->PatientBirthDate;
         $this->patLabel = $labels->getString('MemberType', 'patient', 'Patient');
         $this->psgTitle = $labels->getString('statement', 'psgLabel', 'Patient Support Group');
-        $this->notesLabel = $labels->getString('referral', 'notesLabel', 'Reservation Notes');
+        $this->wlNotesLabel = $labels->getString('referral', 'notesLabel', 'Reservation Notes');
         $this->addrPurpose = '1';
         $this->resvChooser = '';
         $this->psgChooser = '';
@@ -144,8 +144,8 @@ class ReserveData {
         return $this->patLabel;
     }
 
-    public function getNotesLabel() {
-        return $this->notesLabel;
+    public function getWlNotesLabel() {
+        return $this->wlNotesLabel;
     }
 
     public function getResvEarlyArrDays() {

@@ -138,7 +138,6 @@ class ActiveReservation extends BlankReservation {
 
         $data = parent::createMarkup($dbh);
 
-        $data['notes'] = $guest->createNotesMU($resv->getNotes(), 'txtRnotes', $labels);
 
 
         return $data;
@@ -169,7 +168,7 @@ class BlankReservation extends Reservation {
 
         $family = new Family($dbh, $this->reserveData);
 
-        $this->reserveData->setFamilySection($family->createFamilyMarkup());
+        $this->reserveData->setFamilySection($family->createFamilyMarkup($this->reservRs));
 
         $data = $this->reserveData->toArray();
 

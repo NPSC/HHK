@@ -86,9 +86,12 @@ class Family {
         }
     }
 
-    public function createFamilyMarkup() {
+    public function createFamilyMarkup(ReservationRS $resvRs) {
 
+        $uS = Session::getInstance();
         $tbl = new HTMLTable();
+        $mk1 = '';
+
         $tbl->addHeaderTr($this->roleObj[0]->getNameObj()->createMarkupHdr($this->rData->getPatLabel(), FALSE) . HTMLTable::makeTh('Staying'));
 
 
@@ -110,21 +113,21 @@ class Family {
             $tbl->addBodyTr($m->createThinMarkup($this->members[$m->getIdName()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)));
         }
 
-        $div = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('id'=>'tblFamily')), array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-panel hhk-tdbox'));
-
         $hdr = HTMLContainer::generateMarkup('div',
             HTMLContainer::generateMarkup('span', 'Visitors ')
             . HTMLInput::generateMarkup('Add More', array('type'=>'button', 'id'=>'addMoreVisitors'))
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
-                // Waitlist notes
+        // Waitlist notes
         if ($uS->UseWLnotes) {
 
-            $mk1 .= HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'waitlistNotesLabel', 'Waitlist Notes'), array('style'=>'font-weight:bold;'))
-                . HTMLContainer::generateMarkup('textarea', $waitListText, array('name'=>'taCkinNotes', 'rows'=>'3', 'cols'=>'55')),
-                array('class'=>'hhk-panel', 'style'=>'font-size:.9em;'));
+            $mk1 = HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', $this->rData->getWlNotesLabel(), array('style'=>'font-weight:bold;'))
+                . HTMLContainer::generateMarkup('textarea', $resvRs->Checkin_Notes->getStoredVal(), array('name'=>'taCkinNotes', 'rows'=>'2', 'cols'=>'75')),
+                array('class'=>'hhk-panel', 'style'=>'clear:both; margin-top:10px; font-size:.9em;'));
             }
+
+        $div = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('id'=>'tblFamily')) . $mk1, array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-panel hhk-tdbox'));
 
         return array('hdr'=>$hdr, 'div'=>$div);
 
