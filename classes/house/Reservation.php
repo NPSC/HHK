@@ -7,9 +7,6 @@
  */
 abstract class Reservation {
 
-    const RESV_CHOOSER = 'resvChooser';
-    const PSG_CHOOSER = 'psgChooser';
-    const FAM_SECTION = 'famSection';
 
     /**
      *
@@ -66,15 +63,17 @@ abstract class Reservation {
         } else if ($rData->getIdResv() > 0) {
 
             // Load reservation
-            $rRs = new ReservationRS();
-            $rRs->idReservation->setStoredVal($rData->getIdResv());
-            $rows = EditRS::select($dbh, $rRs, array($rRs->idReservation));
+            $stmt = $dbh->query("Select r.*, rg.idPsg from reservation r left join registration rg on r.idRegistration = rg.idRegistration where r.idReservation = " . $rData->getIdResv());
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             if (count($rows) != 1) {
                 throw new Hk_Exception_Runtime("Reservation Id not found.  ");
             }
 
+            $rRs = new ReservationRS();
             EditRS::loadRow($rows[0], $rRs);
+
+            $rData->setIdPsg($rows[0]['idPsg']);
 
             if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
                 return new ActiveReservation($rData, $rRs);
@@ -92,6 +91,16 @@ abstract class Reservation {
 
     }
 
+    protected function notesMarkup($notes) {
+
+        return HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('fieldset',
+                    HTMLContainer::generateMarkup('legend', $this->reserveData->getNotesLabel())
+                    . Notes::markupShell($notes, 'txtRnotes'),
+                    array('class'=>'hhk-panel')));
+
+    }
+
     public abstract function createMarkup(\PDO $dbh);
 
     protected function createExpDatesControl() {
@@ -104,6 +113,7 @@ abstract class Reservation {
             $nowDT->setTime(0, 0, 0);
 
             $expArrDT = new \DateTime($this->reservRs->Expected_Arrival->getStoredVal());
+            $expDepDT = new \DateTime($this->reservRs->Expected_Departure->getStoredVal());
 
             if (is_null($expArrDT) === FALSE && $expArrDT < $nowDT) {
                 $cidAttr['class'] = ' ui-state-highlight';
@@ -112,9 +122,9 @@ abstract class Reservation {
 
         return HTMLContainer::generateMarkup('span',
                 HTMLContainer::generateMarkup('span', 'Expected Check In: '.
-                    HTMLInput::generateMarkup($this->reservRs->Expected_Arrival->getStoredVal(), $cidAttr))
+                    HTMLInput::generateMarkup(($this->reservRs->Expected_Arrival->getStoredVal() == '' ? '' : $expArrDT->format('M j, Y')), $cidAttr))
                 .HTMLContainer::generateMarkup('span', 'Expected Departure: '.
-                    HTMLInput::generateMarkup($this->reservRs->Expected_Departure->getStoredVal(), array('name'=>'gstCoDate', 'readonly'=>'readonly', 'size'=>'14'))
+                    HTMLInput::generateMarkup(($this->reservRs->Expected_Departure->getStoredVal() == '' ? '' : $expDepDT->format('M j, Y')), array('name'=>'gstCoDate', 'readonly'=>'readonly', 'size'=>'14'))
                     , array('style'=>'margin-left:.7em;'))
                 , array('style'=>'float:left;', 'id'=>'spnRangePicker'));
 
@@ -122,12 +132,15 @@ abstract class Reservation {
 }
 
 
-class ActiveReservation extends Reservation {
+class ActiveReservation extends BlankReservation {
 
     public function createMarkup(\PDO $dbh) {
 
-        $data = $this->reserveData->toArray();
-        $fam = new Family($dbh, $this->reserveData);
+        $data = parent::createMarkup($dbh);
+
+
+
+        return $data;
 
     }
 
@@ -153,11 +166,11 @@ class BlankReservation extends Reservation {
 
     public function createMarkup(\PDO $dbh) {
 
-        $data = $this->reserveData->toArray();
-
         $family = new Family($dbh, $this->reserveData);
 
-        $data[Reservation::FAM_SECTION] = $family->createFamilyMarkup();
+        $this->reserveData->setFamilySection($family->createFamilyMarkup($this->reservRs));
+
+        $data = $this->reserveData->toArray();
 
         // Resv Expected dates
         $data['expDates'] = $this->createExpDatesControl();
@@ -177,37 +190,36 @@ class ReserveSearcher extends BlankReservation {
 
     public function createMarkup(\PDO $dbh) {
 
+        $ngRss = array();
+
         // Search for a PSG
         if ($this->reserveData->getidPsg() == 0) {
+            // idPsg not set
 
             $ngRss = Psg::getNameGuests($dbh, $this->reserveData->getId());
 
-            if (count($ngRss) > 0) {
+            $this->reserveData->setPsgChooser($this->psgChooserMkup($dbh, $ngRss));
 
-                $data = $this->reserveData->toArray();
-
-                // psg chooser
-                $data[Reservation::PSG_CHOOSER] = $this->psgChooserMkup($dbh, $ngRss);
-
-                if (count($ngRss) == 1) {
-                    // Add a reservation chooser
-                    $ngRs = $ngRss[0];
-                    $this->reserveData->setIdPsg($ngRs->idPsg->getStoredVal());
-                    $data[Reservation::RESV_CHOOSER] = $this->reservationChooser($dbh);
-                }
-
-            } else {
-                $data = parent::createMarkup($dbh);
+            if (count($ngRss) == 1) {
+                // Add a reservation chooser
+                $ngRs = $ngRss[0];
+                $this->reserveData->setIdPsg($ngRs->idPsg->getStoredVal());
+                $this->reserveData->setResvChooser($this->reservationChooser($dbh));
             }
 
         } else {
+            // idPsg is set
 
-            $data = parent::createMarkup($dbh);
-            $data[Reservation::RESV_CHOOSER] = $this->reservationChooser($dbh);
+            if (($mk = $this->reservationChooser($dbh)) === '') {
+                // No reservations, set up for new reservation.
+                return parent::createMarkup($dbh);
+            }
 
+            $this->reserveData->setResvChooser($mk);
         }
 
-        return $data;
+        return $this->reserveData->toArray();
+
     }
 
     protected function reservationChooser(\PDO $dbh) {
@@ -234,7 +246,7 @@ class ReserveSearcher extends BlankReservation {
 
             $checkinNow = HTMLContainer::generateMarkup('a',
                         HTMLInput::generateMarkup('Open ' . $this->reserveData->getResvTitle(), array('type'=>'button', 'style'=>'margin-bottom:.3em;'))
-                        , array('style'=>'text-decoration:none;margin-right:.3em;', 'href'=>'Referral.php?rid='.$resvRs->idReservation->getStoredVal()));
+                        , array('style'=>'text-decoration:none;margin-right:.3em;', 'href'=>'Reserve.php?rid='.$resvRs->idReservation->getStoredVal()));
 
             $expArrDT = new \DateTime($resvRs->Expected_Arrival->getStoredVal());
             $expArrDT->setTime(0, 0, 0);

@@ -139,6 +139,7 @@ $resvObjEncoded = json_encode($resvObj->toArray());
         <link rel="stylesheet" href="css/daterangepicker.min.css">
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
+<!--        Fix the ugly checkboxes-->
         <style>.ui-icon-background, .ui-state-active .ui-icon-background {background-color:#fff;}</style>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
@@ -169,6 +170,15 @@ $resvObjEncoded = json_encode($resvObj->toArray());
                 <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
                 <div id="famSection" style="font-size: .9em; clear:left; float:left; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
                 <div id="hospitalSection" style="font-size: .9em; padding-left:0;margin-top:0; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
+                <div id="resvStatus" style="float:left; font-size:.9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog"></div>
+                <div id="notesGuest" style="float:left; font-size:.9em; display:none; width: 600px;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog"></div>
+                <div id="vehicle" style="float:left; font-size: .9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"></div>
+
+                <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
+                    <input type="button" id="btnDelete" value="Delete" style="display:none;"/>
+                    <input type="button" id="btnCkinForm" value='Show Registration Form' style="display:none;"/>
+                    <input id='btnDone' type='button' value='Find a Room' style="display:none;"/>
+                </div>
 
             </form>
             <div id="pmtRcpt" style="font-size: .9em; display:none;"><?php echo $receiptMarkup; ?></div>
@@ -180,6 +190,143 @@ $resvObjEncoded = json_encode($resvObj->toArray());
 
         <script type="text/javascript">
 
+function familySection(data) {
+
+    var newRow;
+    var fDiv = $(data.famSection.div).addClass('ui-widget-content').prop('id', 'divfamDetail');
+    var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+        .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+        .append($("<span id='f_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
+    var fHdr = $('<div id="divfamHdr" style="padding:2px; cursor:pointer;"/>')
+            .append($(data.famSection.hdr))
+            .append(expanderButton).append('<div style="clear:both;"/>');
+
+    fHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
+    fHdr.click(function() {
+        if (fDiv.css('display') === 'none') {
+            fDiv.show('blind');
+            fHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
+        } else {
+            fDiv.hide('blind');
+            fHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
+        }
+    });
+
+    $('#famSection')
+            .empty()
+            .append(fHdr)
+            .append(fDiv)
+            .show();
+
+    //fDiv.tooltip();
+    $('.hhk-cbStay').checkboxradio();
+
+    $('.hhk-lblStay').each(function () {
+        if ($(this).data('stay') == '1') {
+            $(this).click();
+        }
+    });
+
+    $('#addMoreVisitors').button().click(function (event) {
+        event.stopPropagation();
+        var trlast = $('#tblFamily tbody tr:last');
+        trlast.clone().appendTo($('#tblFamily tbody'));
+    });
+
+}
+
+function expectedDateRange(data) {
+
+    $('#datesSection').children().remove();
+    $('#datesSection').append($(data.expDates));
+
+    var gstDate = $('#gstDate'),
+        gstCoDate = $('#gstCoDate');
+
+    $('#spnRangePicker').dateRangePicker(
+    {
+        format: 'MMM D, YYYY',
+        separator : ' to ',
+        minDays: 1,
+        getValue: function()
+        {
+            if (gstDate.val() && gstCoDate.val() ) {
+                return gstDate.val() + ' to ' + gstCoDate.val();
+            } else {
+                return '';
+            }
+        },
+        setValue: function(s,s1,s2)
+        {
+            gstDate.val(s1);
+            gstCoDate.val(s2);
+        }
+    });
+
+    $('#datesSection').show();
+}
+
+function hospitalSection(hosp) {
+
+    var hDiv = $(hosp.div).addClass('ui-widget-content').prop('id', 'divhospDetail');
+    var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+        .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+        .append($("<span id='h_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
+    var hHdr = $('<div id="divhospHdr" style="padding:2px; cursor:pointer;"/>')
+            .append($(hosp.hdr))
+            .append(expanderButton).append('<div style="clear:both;"/>');
+
+    hHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
+
+    hHdr.click(function() {
+        if (hDiv.css('display') === 'none') {
+            hDiv.show('blind');
+            hHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
+        } else {
+            hDiv.hide('blind');
+            hHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
+        }
+    });
+
+    $('#hospitalSection').empty().append(hHdr).append(hDiv);
+
+    $('#txtEntryDate, #txtExitDate').datepicker();
+
+    if ($('#txtAgentSch').length > 0) {
+        createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', basis: 'ra'}, getAgent);
+        if ($('#a_txtLastName').val() === '') {
+            $('.hhk-agentInfo').hide();
+        }
+    }
+
+    if ($('#txtDocSch').length > 0) {
+        createAutoComplete($('#txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc);
+        if ($('#d_txtLastName').val() === '') {
+            $('.hhk-docInfo').hide();
+        }
+    }
+
+    $('#hospitalSection').show('blind');
+    if ($('#selHospital').val() !== '') {
+        hHdr.click();
+    }
+}
+
+function transferToGw(data) {
+
+    var xferForm = $('#xform');
+    xferForm.children('input').remove();
+    xferForm.prop('action', data.xfer);
+    if (data.paymentId && data.paymentId != '') {
+        xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
+    } else if (data.cardId && data.cardId != '') {
+        xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
+    } else {
+        flagAlertMessage('PaymentId and CardId are missing!', true);
+        return;
+    }
+    xferForm.submit();
+}
 
 function getReserve(sdata) {
 
@@ -206,36 +353,39 @@ function getReserve(sdata) {
 
 function resvPicker(data, $faDiag) {
     "use strict";
-    var resv = reserv,
-        buttons = {};
+    var buttons = {};
 
-    $faDiag.children().remove();
-    $faDiag.append($(data.resCh));
-    $faDiag.children().find('input:button').button();
+    $faDiag.empty()
+        .append($(data.resvChooser))
+        .children().find('input:button').button();
 
     $faDiag.children().find('.hhk-checkinNow').click(function () {
         window.open('CheckIn.php?rid=' + $(this).data('rid') + '&gid=' + data.id, '_self');
     });
 
     if (data.psgChooser && data.psgChooser !== '') {
-        buttons[data.patLabel] = function() {
+        buttons[data.patLabel + ' Chooser'] = function() {
             $(this).dialog("close");
             psgChooser(data);
         };
     }
 
     if (data.resvTitle) {
-        buttons[data.resvTitle] = function() {
-            resv.idReserv = -1;
+        buttons['New ' + data.resvTitle] = function() {
+            data.rid = -1;
             $(this).dialog("close");
-            loadResv(data);
+            getReserve(data);
         };
     }
 
-    buttons['Exit'] = function() {$(this).dialog("close");};
+    buttons['Exit'] = function() {
+        $(this).dialog("close");
+        $('div#guestSearch').show();
+        $('#gstSearch').val('').focus();
+    };
 
     $faDiag.dialog('option', 'buttons', buttons);
-    $faDiag.dialog('option', 'title', data.title);
+    $faDiag.dialog('option', 'title', data.resvTitle + ' Chooser For: ' + data.fullName);
     $faDiag.dialog('open');
 
 }
@@ -244,40 +394,31 @@ function psgChooser(data) {
     "use strict";
 
     $('#psgDialog')
-        .children().remove().end().append($(data.psgChooser))
+        .empty()
+        .append($(data.psgChooser))
         .dialog('option', 'buttons', {
             Open: function() {
-                //data.idPsg = $('#psgDialog input[name=cbselpsg]:checked').val();
                 $('#psgDialog').dialog('close');
                 getReserve({idPsg: $('#psgDialog input[name=cbselpsg]:checked').val(), id: data.id});
             },
             Cancel: function () {
-                $('#gstSearch').val('');
                 $('#psgDialog').dialog('close');
+                $('div#guestSearch').show();
+                $('#gstSearch').val('');
             }
         })
+        .dialog('option', 'title', data.patLabel + ' Chooser For: ' + data.fullName)
         .dialog('open');
 }
 
 function loadResv(data) {
 
     if (data.xfer) {
-        var xferForm = $('#xform');
-        xferForm.children('input').remove();
-        xferForm.prop('action', data.xfer);
-        if (data.paymentId && data.paymentId != '') {
-            xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
-        } else if (data.cardId && data.cardId != '') {
-            xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
-        } else {
-            flagAlertMessage('PaymentId and CardId are missing!', true);
-            return;
-        }
-        xferForm.submit();
+        transferToGw(data);
     }
 
     if (data.resvChooser && data.resvChooser !== '') {
-        resvPicker(data, $('resDialog'));
+        resvPicker(data, $('#resDialog'));
         return;
     } else if (data.psgChooser && data.psgChooser !== '') {
         psgChooser(data)
@@ -285,122 +426,17 @@ function loadResv(data) {
     }
 
     if (data.famSection) {
-
-        var newRow;
-        var fDiv = $(data.famSection.div).addClass('ui-widget-content').prop('id', 'divfamDetail');
-        var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
-            .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
-            .append($("<span id='f_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
-        var fHdr = $('<div id="divfamHdr" style="padding:2px; cursor:pointer;"/>')
-                .append($(data.famSection.hdr))
-                .append(expanderButton).append('<div style="clear:both;"/>');
-
-        fHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
-        fHdr.click(function() {
-            if (fDiv.css('display') === 'none') {
-                fDiv.show('blind');
-                fHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
-            } else {
-                fDiv.hide('blind');
-                fHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
-            }
-        });
-
-        $('#famSection')
-                .empty()
-                .append(fHdr).append(fDiv)
-                .show();
-
-        fDiv.tooltip();
-        $('.hhk-cbStay').checkboxradio();
-
-
-        $('#addMoreVisitors').button().click(function (event) {
-            event.stopPropagation();
-            var trlast = $('#tblFamily tbody tr:last');
-            trlast.clone().appendTo($('#tblFamily tbody'));
-        });
-
+        familySection(data);
     }
 
     // Expected Dates Control
     if (data.expDates !== undefined && data.expDates !== '') {
-
-        $('#datesSection').children().remove();
-        $('#datesSection').append($(data.expDates));
-
-        var gstDate = $('#gstDate'),
-            gstCoDate = $('#gstCoDate');
-
-        $('#spnRangePicker').dateRangePicker(
-        {
-            format: 'MMM D, YYYY',
-            separator : ' to ',
-            minDays: 1,
-            getValue: function()
-            {
-                if (gstDate.val() && gstCoDate.val() ) {
-                    return gstDate.val() + ' to ' + gstCoDate.val();
-                } else {
-                    return '';
-                }
-            },
-            setValue: function(s,s1,s2)
-            {
-                gstDate.val(s1);
-                gstCoDate.val(s2);
-            }
-        });
-
-        $('#datesSection').show();
-
+        expectedDateRange(data);
     }
-
 
     // Hospital
     if (data.hosp !== undefined) {
-        var hDiv = $(data.hosp.div).addClass('ui-widget-content').prop('id', 'divhospDetail');
-        var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
-            .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
-            .append($("<span id='h_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
-        var hHdr = $('<div id="divhospHdr" style="padding:2px; cursor:pointer;"/>')
-                .append($(data.hosp.hdr))
-                .append(expanderButton).append('<div style="clear:both;"/>');
-
-        hHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
-
-        hHdr.click(function() {
-            if (hDiv.css('display') === 'none') {
-                hDiv.show('blind');
-                hHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
-            } else {
-                hDiv.hide('blind');
-                hHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
-            }
-        });
-
-        $('#hospitalSection').empty().append(hHdr).append(hDiv);
-
-        $('#txtEntryDate, #txtExitDate').datepicker();
-
-        if ($('#txtAgentSch').length > 0) {
-            createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', basis: 'ra'}, getAgent);
-            if ($('#a_txtLastName').val() === '') {
-                $('.hhk-agentInfo').hide();
-            }
-        }
-
-        if ($('#txtDocSch').length > 0) {
-            createAutoComplete($('#txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc);
-            if ($('#d_txtLastName').val() === '') {
-                $('.hhk-docInfo').hide();
-            }
-        }
-
-        $('#hospitalSection').show('blind');
-        if ($('#selHospital').val() !== '' && data.rvstCode && data.rvstCode !== '') {
-            hHdr.click();
-        }
+        hospitalSection(data.hosp);
     }
 
 
@@ -422,12 +458,28 @@ $(document).ready(function() {
         }
     });
 
+    $('#btnDone, #btnCkinForm, #btnDelete').button();
+
+    $('#btnCkinForm').click(function () {
+        if ($(this).data('rid') > 0) {
+            window.open('ShowRegForm.php?rid=' + $(this).data('rid'), '_blank');
+        }
+    });
+
+    $("#resDialog").dialog({
+        autoOpen: false,
+        resizable: true,
+        width: 900,
+        modal: true,
+    });
+
+
     $("#psgDialog").dialog({
         autoOpen: false,
         resizable: true,
         width: 500,
         modal: true,
-        title: resv.patLabel + ' Support Group Chooser',
+        title: resv.patLabel + ' Chooser',
         close: function (event, ui) {$('div#submitButtons').show();},
         open: function (event, ui) {$('div#submitButtons').hide();}
     });
@@ -446,6 +498,8 @@ $(document).ready(function() {
         } else {
             return;
         }
+
+        resv.fullName = item.fullName;
 
         getReserve(resv);
     }
