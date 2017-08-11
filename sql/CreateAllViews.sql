@@ -1021,32 +1021,32 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
         END) AS `state.code`,
         IFNULL(`cc`.`External_Id`, '') AS `country.id`,
         IFNULL(`na`.`Postal_Code`, '') AS `zipCode`,
-        IFNULL(`ni`.`Neon_Id`, '') AS `individualType.id`,
+        IFNULL(`ni`.`Neon_Type_Code`, '') AS `individualType.id`,
         IFNULL(`g4`.`Description`, '') AS `No_Return`,
         'HHK' AS `source.name`
     FROM
-        (((((((((((`name` `n`
-        LEFT JOIN `name_address` `na` ON (((`n`.`idName` = `na`.`idName`)
-            AND (`n`.`Preferred_Mail_Address` = `na`.`Purpose`))))
-        LEFT JOIN `name_email` `ne` ON (((`n`.`idName` = `ne`.`idName`)
-            AND (`n`.`Preferred_Email` = `ne`.`Purpose`))))
-        LEFT JOIN `name_phone` `np` ON (((`n`.`idName` = `np`.`idName`)
-            AND (`n`.`Preferred_Phone` = `np`.`Phone_Code`))))
-        LEFT JOIN `name_demog` `nd` ON ((`n`.`idName` = `nd`.`idName`)))
-        LEFT JOIN `country_code` `cc` ON ((`na`.`Country_Code` = `cc`.`ISO_3166-1-alpha-2`)))
-        LEFT JOIN `gen_lookups` `g1` ON (((`n`.`Name_Prefix` = `g1`.`Code`)
-            AND (`g1`.`Table_Name` = 'Name_Prefix'))))
-        LEFT JOIN `gen_lookups` `g2` ON (((`n`.`Name_Suffix` = `g2`.`Code`)
-            AND (`g2`.`Table_Name` = 'Name_Suffix'))))
-        LEFT JOIN `gen_lookups` `g4` ON (((`nd`.`No_Return` = `g4`.`Code`)
-            AND (`g4`.`Table_Name` = 'NoReturnReason'))))
-        LEFT JOIN `gen_lookups` `g5` ON (((`n`.`Gender` = `g5`.`Code`)
-            AND (`n`.`Gender` IN ('m' , 'f'))
-            AND (`g5`.`Table_Name` = 'Gender'))))
-        LEFT JOIN `name_volunteer2` `nv` ON (((`n`.`idName` = `nv`.`idName`)
-            AND (`nv`.`Vol_Category` = 'Vol_Type')
-            AND (`nv`.`Vol_Code` IN ('p' , 'g')))))
-        LEFT JOIN `neon_indiv_type` `ni` ON ((`nv`.`Vol_Code` = `ni`.`Vol_Type_Code`)))
+        `name` `n`
+        LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName`
+            AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
+        LEFT JOIN `name_email` `ne` ON `n`.`idName` = `ne`.`idName`
+            AND `n`.`Preferred_Email` = `ne`.`Purpose`
+        LEFT JOIN `name_phone` `np` ON `n`.`idName` = `np`.`idName`
+            AND `n`.`Preferred_Phone` = `np`.`Phone_Code`
+        LEFT JOIN `name_demog` `nd` ON `n`.`idName` = `nd`.`idName`
+        LEFT JOIN `country_code` `cc` ON `na`.`Country_Code` = `cc`.`ISO_3166-1-alpha-2`
+        LEFT JOIN `gen_lookups` `g1` ON `n`.`Name_Prefix` = `g1`.`Code`
+            AND `g1`.`Table_Name` = 'Name_Prefix'
+        LEFT JOIN `gen_lookups` `g2` ON `n`.`Name_Suffix` = `g2`.`Code`
+            AND `g2`.`Table_Name` = 'Name_Suffix'
+        LEFT JOIN `gen_lookups` `g4` ON `nd`.`No_Return` = `g4`.`Code`
+            AND `g4`.`Table_Name` = 'NoReturnReason'
+        LEFT JOIN `gen_lookups` `g5` ON `n`.`Gender` = `g5`.`Code`
+            AND `n`.`Gender` IN ('m' , 'f')
+            AND `g5`.`Table_Name` = 'Gender'
+        LEFT JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName`
+            AND `nv`.`Vol_Category` = 'Vol_Type'
+            AND `nv`.`Vol_Code` IN ('p' , 'g')
+        LEFT JOIN `neon_type_map` `ni` ON ni.Neon_Name = 'individualType' and `nv`.`Vol_Code` = `ni`.`HHK_Type_Code`
     WHERE
         ((`n`.`idName` > 0)
             AND `n`.`idName` IN (SELECT 

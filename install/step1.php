@@ -124,9 +124,8 @@ $configuration = createMarkup($config);
         <div id="page" style="width:900px;">
             <div class="topNavigation"></div>
             <div>
-                <h2 class="logo">Hospitality HouseKeeper Installation Process
-
-                </h2>
+                <h2 class="logo">Hospitality HouseKeeper Installation Process</h2>
+                <a href="showini.php">Show PHP Initialization</a>
                 <h3>Step One: Configure Site</h3>
             </div><div class='pageSpacer'></div>
             <div id="content" style="margin:10px; width:100%;">

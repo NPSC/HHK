@@ -46,6 +46,10 @@ function initPDO($override = FALSE) {
                 $dbh = initMY_SQL($ssn->databaseURL, $ssn->databaseName, $dbuName, $dbPw);
                 break;
 
+            case 'ODBC':
+                return initODBC($ssn->databaseURL, $ssn->databaseName, $dbuName, $dbPw);
+
+
             default:
                 // Use mysql
                 $dbh = initMY_SQL($ssn->databaseURL, $ssn->databaseName, $dbuName, $dbPw);
@@ -76,8 +80,15 @@ function initPDO($override = FALSE) {
 
 function initMS_SQL($dbURL, $dbName, $dbuName, $dbPw) {
 
-    /* Connect using Windows Authentication. */
+    
     return new \PDO("sqlsrv:server=$dbURL;Database=$dbName", $dbuName, $dbPw);
+
+}
+
+function initODBC($dbURL, $dbName, $dbuName, $dbPw) {
+
+    /* Connect using Windows Authentication. */
+    return new \PDO("odbc:$dbURL");
 
 }
 

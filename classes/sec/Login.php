@@ -58,7 +58,7 @@ class Login {
         // Load session
         $ssn->testVersion = $config->getBool('site', 'Run_As_Test', true);
         $ssn->siteName = $config->getString('site','Site_Name', 'Hospitality HouseKeeper');
-        //$ssn->resourceURL = $config->getString('site','Site_URL', '');
+        $ssn->resourceURL = $config->getString('site','Site_URL', '');
         $ssn->tz = $config->getString('calendar', 'TimeZone', 'America/Chicago');
         $ssn->ver = $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
         $ssn->ssl = $ssl;

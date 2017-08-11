@@ -129,7 +129,13 @@ function testdb($post) {
                 $dbh = initMY_SQL($dbURL, $dbName, $dbUser, $pw);
                 break;
 
+            case 'ODBC':
+                $dbh = initODBC($dbURL, $dbName, $dbUser, $pw);
+                return array('success'=>'Good!');
+                break;
+
             default:
+                return array("error" => "Bad DBMS: " . $dbms . "<br/>");
 
         }
 
