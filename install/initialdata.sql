@@ -47,10 +47,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Category_Types', '2', 'Tax', '','',0),
 ('Category_Types', '3', 'Penalty', '','',0),
 
-('Charge_Cards', '1', 'Visa', '','',0),
-('Charge_Cards', '2', 'M/C', '','',0),
-('Charge_Cards', '3', 'Discover','', '',0),
-('Charge_Cards', '4', 'Am Ex', '','',0),
+('Charge_Cards', '1', 'Visa', 'VISA','',0),
+('Charge_Cards', '2', 'M/C', 'M/C','',0),
+('Charge_Cards', '3', 'Discover','DCVR', '',0),
+('Charge_Cards', '4', 'Am Ex', 'AMEX','',0),
 
 ('Demographics', 'Age_Bracket', 'Age Bracket', 'y','m',5),
 ('Demographics', 'Ethnicity', 'Ethnicity', 'y','m',10),
@@ -109,7 +109,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('FB_Status','w','Waiting','','',0),
 ('FB_Status','x','Prohibited','','',0),
 
-('Fund', '1', 'External Donation', '', 'h', '100')
+('Fund', '1', 'External Donation', '', 'u', '100')
 
 ('Gender','f','Female','','d',0),
 ('Gender','m','Male','','d',0),
@@ -618,7 +618,7 @@ INSERT INTO `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) VALU
 ('account/listIndividualTypes', 'individualTypes', 'individualType', 'Vol_Type'),
 ('donation/listFunds', 'funds', 'fund', 'Fund'),
 ('common/listTenders', 'tenders', 'tender', 'Pay_Type');
-
+-- ;
 
 --
 -- Dumping data for table `counter`

@@ -24,6 +24,7 @@ class PaymentRS extends TableRS {
     public $Is_Preauth;   // tinyint(4) DEFAULT NULL,
     public $Status_Code;   // varchar(5) NOT NULL DEFAULT ''
     public $Notes;  // TEXT NULL DEFAULT NULL,,
+    public $External_Id;  // VARCHAR(45) NOT NULL DEFAULT ''
     public $Created_By;   // varchar(45) NOT NULL DEFAULT '',
     public $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
     public $Last_Updated;   // datetime DEFAULT NULL,
@@ -43,6 +44,7 @@ class PaymentRS extends TableRS {
         $this->Is_Refund = new DB_Field("Is_Refund", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Is_Preauth = new DB_Field("Is_Preauth", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Status_Code = new DB_Field("Status_Code", "", new DbStrSanitizer(5), TRUE, TRUE);
+        $this->External_Id = new DB_Field("External_Id", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Notes = new DB_Field("Notes", '', new DbStrSanitizer(2000), TRUE, True);
         $this->Created_By = new DB_Field("Created_By", '', new DbStrSanitizer(45), TRUE, True);
 

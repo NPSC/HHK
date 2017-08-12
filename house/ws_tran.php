@@ -10,6 +10,7 @@
 
 require ("homeIncludes.php");
 require (DB_TABLES . 'nameRS.php');
+require (DB_TABLES . 'PaymentsRS.php');
 
 require (CLASSES . "TransferMembers.php");
 require (CLASSES . "SiteConfig.php");
@@ -79,6 +80,13 @@ switch ($c) {
             }
 
         }
+
+        break;
+
+    case 'payments':
+
+        $reply = $transfer->sendDonation($dbh, $uS->username, '');
+        $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
 
         break;
 

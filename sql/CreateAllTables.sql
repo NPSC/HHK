@@ -1240,6 +1240,7 @@ CREATE TABLE if not exists `payment` (
   `Data1` varchar(15) NOT NULL DEFAULT '',
   `Data2` varchar(15) NOT NULL DEFAULT '',
   `Notes` TEXT NULL DEFAULT NULL,
+  `External_Id` VARCHAR(45) NOT NULL DEFAULT '',
   `Created_By` varchar(45) NOT NULL DEFAULT '',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Last_Updated` datetime DEFAULT NULL,

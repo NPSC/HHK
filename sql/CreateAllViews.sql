@@ -1058,6 +1058,47 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
 
 
 -- -----------------------------------------------------
+-- View `vguest_neon_payment`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vguest_neon_payment` AS
+    SELECT 
+	p.idPayment,
+	n.idName as `hhkId`,
+	n.External_Id as `accountId`,
+        IFNULL(DATE_FORMAT(p.Payment_Date, '%Y-%m-%d'), '') as `date`,
+        'HHK' as `source.name`,
+        case when p.Is_Refund = 1 then (0 - (p.Amount - p.Balance)) else 
+       (p.Amount - p.Balance) end as `amount`,
+       ifnull(np.Neon_Type_Code, '') as `fund.id`,
+       ifnull(nt.Neon_Type_Code, '') as `tenderType.id`,
+       p.Notes as `note`,
+       ifnull(pa.Acct_Number, '') as `cardNumber`,
+       ifnull(nc.Neon_Type_Code, '') as `cardType.name`,
+       ifnull(gt.CardHolderName, '') as `cardHolder`,
+       ifnull(pc.Check_Number, '') as `CheckNumber`
+    FROM
+        payment p 
+        left join payment_auth pa on p.idPayment = pa.idPayment
+        left join payment_info_check pc on p.idPayment = pc.idPayment
+        
+        left join name n on p.idPayor = n.idName
+        
+        left join guest_token gt on p.idToken = gt.idGuest_token
+        
+        left join neon_type_map np on np.List_Name = 'funds' 
+        
+        left join gen_lookups gp on gp.`Table_Name` = 'Pay_Type' and gp.Substitute = p.idPayment_Method
+        left join neon_type_map nt on nt.List_Name = 'tenders' and nt.HHK_Type_Code = gp.Code
+        
+        left join gen_lookups gc on gc.`Table_Name` = 'Charge_Cards' and gc.Substitute = pa.Card_Type
+        left join neon_type_map nc on nc.List_Name = 'creditCardTypes' and nc.HHK_Type_Code = gc.Code
+        
+    WHERE
+        p.Status_Code = 's' and p.External_Id = '' and p.idPayment_Method in (1, 2, 3, 4);
+
+
+
+-- -----------------------------------------------------
 -- View `vguest_view`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_view` AS

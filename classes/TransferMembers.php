@@ -279,17 +279,96 @@ class TransferMembers {
         if (isset($result[$listName][$listItem])) {
 
             foreach ($result[$listName][$listItem] as $c) {
-                $types[$c['id']] = $c['name'];
+                if (isset($c['id'])) {
+                    $types[$c['id']] = $c['name'];
+                } else if (isset($c['code'])) {
+                    $types[$c['code']] = $c['name'];
+                }
             }
         }
 
         return $types;
     }
 
+    public function sendDonation(\PDO $dbh, $username, $whereClause = '') {
 
-    public function recordGuestPayment(\PDO $dbh) {
+        $replys = array();
+        $idMap = array();
+
+        $stmt = $dbh->query("Select * from vguest_neon_payment $whereClause");
+
+        // Log in with the web service
+        $this->openTarget($this->userId, $this->password);
+
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
+            // Is the account defined?
+            if ($r['accountId'] == '' && isset($idMap[$r['hhkId']])) {
+                // Already made a new Neon account.
+                $r['accountId'] = $idMap[$r['hhkId']];
+
+            } else if ($r['accountId'] == '') {
+
+                $acctReply = $this->sendList($dbh, array($r['hhkId']), $username);
+
+                if (isset($acctReply[0]['Account ID']) && $acctReply[0]['Account ID'] != '') {
+
+                    $r['accountId'] = $acctReply[0]['Account ID'];
+                    $idMap[$r['hhkId']] = $acctReply[0]['Account ID'];
+
+                } else {
+
+                    $replys[] = $acctReply[0];
+                    continue;
+                }
+            }
+
+            $result = $this->createDonation($r);
+
+            if ($this->checkError($result)) {
+//                $f = array();
+//                $this->unwindResponse($f, $result);
+                $f['Donation Result'] = $this->errorMessage;
+                $replys[] = $f;
+                continue;
+            }
 
 
+            if (isset($result['donationId'])) {
+
+                try {
+
+                    $this->updateLocalPaymentRecord($dbh, $r['idPayment'], $result['donationId'], $username);
+                    $replys[] = array('Donation Result'=>'New Donation successful.  ');
+
+                } catch (Hk_Exception_Upload $uex) {
+
+                    $replys[] = array('Donation Result'=>$uex->getMessage());
+                }
+            } else {
+                $replys[] = array('Donation Result'=>'Huh?  The donation Id was not set...  ');
+            }
+
+        }
+
+        return $replys;
+
+    }
+
+    protected function createDonation($r) {
+
+        $param = array();
+
+        $this->fillDonation($r, $param);
+        $this->fillPayment($r, $param);
+
+        $request = array(
+          'method' => 'donation/createDonation',
+          'parameters' => $param,
+
+          );
+
+        return $this->webService->go($request);
 
     }
 
@@ -420,7 +499,7 @@ class TransferMembers {
 
     protected function updateLocalNameRecord(\PDO $dbh, $idName, $externalId, $username) {
 
-        if ($externalId != '') {
+        if ($externalId != '' && $idName > 0) {
             $nameRs = new NameRS();
             $nameRs->idName->setStoredVal($idName);
             $rows = EditRS::select($dbh, $nameRs, array($nameRs->idName));
@@ -433,6 +512,82 @@ class TransferMembers {
                 NameLog::writeUpdate($dbh, $nameRs, $nameRs->idName->getStoredVal(), $username);
             }
         }
+    }
+
+    protected function updateLocalPaymentRecord(\PDO $dbh, $idPayment, $externalId, $username) {
+
+        if ($externalId != '' && $idPayment > 0) {
+            $payRs = new PaymentRS();
+            $payRs->idPayment->setStoredVal($idPayment);
+            $rows = EditRS::select($dbh, $payRs, array($payRs->idPayment));
+
+            EditRS::loadRow($rows[0], $payRs);
+
+            if ($payRs->External_Id->getStoredVal() != '' && $payRs->External_Id->getStoredVal() != $externalId) {
+                throw new Hk_Exception_Upload("HHK Payment Record (idPayment = $idPayment) already has a Neon Donation Id = " . $payRs->External_Id->getStoredVal());
+            }
+
+            $payRs->External_Id->setNewVal($externalId);
+            $payRs->Updated_By->setNewVal($username);
+            $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+            EditRS::update($dbh, $payRs, array($payRs->idPayment));
+
+        }
+    }
+
+    protected function fillDonation($r, &$param) {
+
+        $codes = array(
+            'accountId',
+            'amount',
+            'date',
+            'fund.id',
+            'source.name',
+        );
+
+        $base = 'donation.';
+
+        foreach ($codes as $c) {
+
+            if (isset($r[$c]) && $r[$c] != '') {
+                $param[$base . $c] = $r[$c];
+            }
+        }
+    }
+
+    protected function fillPayment($r, &$param) {
+
+        $codes = array(
+            'amount',
+            'tenderType.id',
+            'note',
+        );
+
+        $base = 'Payment.';
+
+        foreach ($codes as $c) {
+
+            if (isset($r[$c]) && $r[$c] != '') {
+                $param[$base . $c] = $r[$c];
+            }
+        }
+
+        switch ($r['tenderType.id']) {
+
+            // Charge
+            case '2':
+                $param[$base . 'creditCardOfflinePayment.cardNumber'] = '444444444444' . $r['cardNumber'];
+                $param[$base . 'creditCardOfflinePayment.cardHolder'] = $r['cardHolder'];
+                $param[$base . 'creditCardOfflinePayment.cardType.name'] = $r['cardType.name'];
+                break;
+
+            // Check
+            case '3':
+                $param[$base . 'checkPayment.CheckNumber'] = $r['CheckNumber'];
+                break;
+
+        }
+
     }
 
     protected function fillPcName($r, &$param, $origValues = array()) {

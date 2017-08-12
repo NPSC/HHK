@@ -199,6 +199,7 @@ where $whExt ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DAT
 
 $mkTable = '';
 $dataTable = '';
+$paymentsTable = '';
 $settingstable = '';
 $year = date('Y');
 $months = array(date('n'));     // logically overloaded.
@@ -500,6 +501,46 @@ function transferRemote(transferIds) {
 
 }
 
+function transferPayments($btn) {
+
+    var parms = {
+        cmd: 'payments'
+    };
+
+    var posting = $.post('ws_tran.php', parms);
+    posting.done(function(incmg) {
+        $btn.val('Transfer Payments');
+
+        if (!incmg) {
+            alert('Bad Reply from HHK Web Server');
+            return;
+        }
+
+        try {
+            incmg = $.parseJSON(incmg);
+        } catch (err) {
+            alert('Bad JSON Encoding');
+            return;
+        }
+
+        if (incmg.error) {
+            if (incmg.gotopage) {
+                window.open(incmg.gotopage, '_self');
+            }
+            // Stop Processing and return.
+            flagAlertMessage(incmg.error, true);
+            return;
+        }
+
+        if (incmg.data) {
+
+            $('#payTable').empty().append($(incmg.data)).show();
+
+        }
+
+    });
+}
+
 function getRemote(item, source) {
     $('div#printArea').hide();
     $('#divPrintButton').hide();
@@ -573,7 +614,7 @@ function getRemote(item, source) {
     $(document).ready(function() {
         var makeTable = '<?php echo $mkTable; ?>';
         var transferIds = <?php echo json_encode($transferIds); ?>;
-        $('#btnHere, #btnCustFields').button();
+        $('#btnHere, #btnCustFields, #btnPayments').button();
 
         if (makeTable === '1') {
             $('div#printArea').show();
@@ -624,8 +665,17 @@ function getRemote(item, source) {
 
         $('#selCalendar').change();
 
-    createAutoComplete($('#txtRSearch'), 3, {cmd: 'sch', mode: 'name'}, function (item) {getRemote(item, 'remote');}, false, '../house/ws_tran.php');
-    createAutoComplete($('#txtSearch'), 3, {cmd: 'role', mode: 'mo'}, function (item) {getRemote(item, 'hhk');}, false);
+        $('#btnPayments').click(function () {
+            if ($(this).val() === 'Transferring ...') {
+                return;
+            }
+            $(this).val('Transferring ...');
+            $('#payTable').hide();
+            transferPayments($(this));
+        });
+
+        createAutoComplete($('#txtRSearch'), 3, {cmd: 'sch', mode: 'name'}, function (item) {getRemote(item, 'remote');}, false, '../house/ws_tran.php');
+        createAutoComplete($('#txtSearch'), 3, {cmd: 'role', mode: 'mo'}, function (item) {getRemote(item, 'hhk');}, false);
     });
  </script>
     </head>
@@ -672,13 +722,14 @@ function getRemote(item, source) {
                     <table style="width:100%; margin-top: 15px;">
                         <tr>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records"/></td>
-
+                            <td><input type="button" id="btnPayments" value="Transfer Payments"/></td>
                         </tr>
                     </table>
                 </form>
                 <div id="retrieve"></div>
             </div>
             <div style="clear:both;"></div>
+            <div id="payTable" style="display:none;margin-top:6px;margin-bottom:3px;"></div>
             <div id="divPrintButton" style="display:none;margin-top:6px;margin-bottom:3px;">
                 <input id="printButton" value="Print" type="button" />
                 <input id="TxButton" value="Transfer" type="button" style="margin-left:2em;"/>

@@ -148,7 +148,7 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
 
                     if (isset($mappedItems[$hhkTypeCode])) {
                         // Update
-                        $coount = $dbh->exec("update neon_type_map set Neon_Type_Code = '$n' where HHK_Type_Code = '$hhkTypeCode'");
+                        $count = $dbh->exec("update neon_type_map set Neon_Type_Code = '$n' where HHK_Type_Code = '$hhkTypeCode' and List_Name = '" . $list['List_Name'] . "'");
                     } else {
                         // Insert
                         $idTypeMap = $dbh->exec("Insert into neon_type_map (List_Name, Neon_Name, Neon_Type_Code, HHK_Type_Code, Updated_By, Last_Updated) "
