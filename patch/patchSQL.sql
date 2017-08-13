@@ -2,6 +2,9 @@
 ALTER TABLE `payment` 
     ADD COLUMN `External_Id` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Notes`;
 
+ALTER TABLE `neon_type_map` 
+    ADD COLUMN `Neon_Type_Name` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Neon_Type_Code`;
+
 
 UPDATE `gen_lookups` SET `Substitute`='VISA' WHERE `Table_Name`='Charge_Cards' and`Code`='1';
 UPDATE `gen_lookups` SET `Substitute`='M/C' WHERE `Table_Name`='Charge_Cards' and`Code`='2';

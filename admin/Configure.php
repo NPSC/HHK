@@ -148,11 +148,11 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
 
                     if (isset($mappedItems[$hhkTypeCode])) {
                         // Update
-                        $count = $dbh->exec("update neon_type_map set Neon_Type_Code = '$n' where HHK_Type_Code = '$hhkTypeCode' and List_Name = '" . $list['List_Name'] . "'");
+                        $count = $dbh->exec("update neon_type_map set Neon_Type_Code = '$n', Neon_Type_name = '$k' where HHK_Type_Code = '$hhkTypeCode' and List_Name = '" . $list['List_Name'] . "'");
                     } else {
                         // Insert
-                        $idTypeMap = $dbh->exec("Insert into neon_type_map (List_Name, Neon_Name, Neon_Type_Code, HHK_Type_Code, Updated_By, Last_Updated) "
-                                . "values ('" . $list['List_Name'] . "', '" . $list['List_Item'] . "', '" . $n . "', '" . $hhkTypeCode . "', '" . $uS->username . "', now() );");
+                        $idTypeMap = $dbh->exec("Insert into neon_type_map (List_Name, Neon_Name, Neon_Type_Code, Neon_Type_Name, HHK_Type_Code, Updated_By, Last_Updated) "
+                                . "values ('" . $list['List_Name'] . "', '" . $list['List_Item'] . "', '" . $n . "', '" . $k . "', '" . $hhkTypeCode . "', '" . $uS->username . "', now() );");
                     }
                 }
             }

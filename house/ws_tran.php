@@ -85,7 +85,16 @@ switch ($c) {
 
     case 'payments':
 
-        $reply = $transfer->sendDonation($dbh, $uS->username, '');
+        $st = '';
+        if (isset($_REQUEST["wh"])) {
+            $st = filter_var($_REQUEST["st"], FILTER_SANITIZE_STRING);
+        }
+        $en = '';
+        if (isset($_REQUEST["en"])) {
+            $en = filter_var($_REQUEST["en"], FILTER_SANITIZE_STRING);
+        }
+
+        $reply = $transfer->sendDonation($dbh, $uS->username, $st, $en);
         $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
 
         break;

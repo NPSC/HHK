@@ -1176,6 +1176,7 @@ CREATE TABLE if not exists `neon_type_map` (
   `List_Name` VARCHAR(45) NOT NULL,
   `Neon_Name` VARCHAR(45) NOT NULL DEFAULT '',
   `Neon_Type_Code` VARCHAR(45) NOT NULL DEFAULT '',
+  `Neon_Type_Name` VARCHAR(45) NOT NULL DEFAULT '',
   `HHK_Type_Code` VARCHAR(45) NOT NULL DEFAULT '',
   `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
   `Last_Updated` DATETIME NULL,

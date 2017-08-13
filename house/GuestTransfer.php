@@ -11,6 +11,7 @@
 require ("homeIncludes.php");
 
 require CLASSES . 'CreateMarkupFromDB.php';
+require CLASSES . 'TransferMembers.php';
 require CLASSES . 'OpenXML.php';
 
 try {
@@ -51,7 +52,7 @@ $webServices = $config->getString('webServices', 'ContactManager', '');
 if ($serviceName != '' && $webServices != '') {
     $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
 } else {
-    exit('<h2>HHK configuration error:  Web Services Configuration file is missing. Trying to open ' . REL_BASE_DIR . 'conf' . DS .  $webServices . '</h2>');
+    exit('<h2>HHK configuration error:  Web Services Configuration file is missing. Trying to open file name: ' . REL_BASE_DIR . 'conf' . DS .  $webServices . '</h2>');
 }
 
 if (function_exists('curl_version') === FALSE) {
@@ -64,7 +65,27 @@ $isGuestAdmin = ComponentAuthClass::is_Authorized('guestadmin');
 
 $labels = new Config_Lite(LABEL_FILE);
 
+function getPaymentReport(\PDO $dbh, $start, $end) {
 
+    $whereClause = " and DATE(`Payment Date`) >= DATE('$start') and DATE(`Payment Date`) <= DATE('$end') ";
+    $stmt = $dbh->query("Select * from vneon_payment_display where 1=1 $whereClause");
+    $rows = array();
+
+    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+        $r['HHK Id'] = HTMLContainer::generateMarkup('a', $r['HHK Id'], array('href'=>'GuestEdit.php?id=' . $r['HHK Id']));
+
+        if (isset($r['Payment Date']) && $r['Payment Date'] != '') {
+            $r['Payment Date'] = date('M j, Y', strtotime($r['Payment Date']));
+        }
+
+        $rows[] = $r;
+
+    }
+
+    return CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
+
+}
 
 function getPeopleReport(\PDO $dbh, $local, $start, $end, $extIdFlag = FALSE) {
 
@@ -120,8 +141,6 @@ where $whExt ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DAT
                 // HEader row
                 $keys = array_keys($r);
                 foreach ($keys as $k) {
-
-
                     $hdr[$n++] =  $k;
                 }
 
@@ -201,6 +220,7 @@ $mkTable = '';
 $dataTable = '';
 $paymentsTable = '';
 $settingstable = '';
+$searchTabel = '';
 $year = date('Y');
 $months = array(date('n'));     // logically overloaded.
 $txtStart = '';
@@ -225,7 +245,7 @@ if ($uS->fy_diff_Months == 0) {
 
 
 // Process report.
-if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
+if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments'])) {
 
     $local = TRUE;
     if (isset($_POST['btnExcel'])) {
@@ -304,21 +324,42 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     }
 
 
+    if (isset($_POST['btnHere'])) {
 
-    // Create settings markup
-    $sTbl = new HTMLTable();
-
-
-    $results = getPeopleReport($dbh, $local, $start, $end, FALSE);
-    $dataTable = $results['mkup'];
-    $transferIds = $results['xfer'];
+        // Get HHK records result table.
+        $results = getPeopleReport($dbh, $local, $start, $end, FALSE);
+        $dataTable = $results['mkup'];
+        $transferIds = $results['xfer'];
 
 
-    $sTbl->addBodyTr(HTMLTable::makeTh('Guest Transfer', array('colspan'=>'4')));
-    $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
-    $settingstable = $sTbl->generateMarkup();
+        // Create settings markup
+        $sTbl = new HTMLTable();
+        $sTbl->addBodyTr(HTMLTable::makeTh('Guest Transfer Timeframe', array('colspan'=>'4')));
+        $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
+        $settingstable = $sTbl->generateMarkup(array('style'=>'float:left;'));
 
-    $mkTable = 1;
+        // Create search criteria markup
+        $searchCriteria = TransferMembers::getSearchFields($dbh);
+
+        $tr = '';
+        foreach ($searchCriteria as $s) {
+            $tr .= HTMLTable::makeTd($s);
+        }
+
+        $scTbl = new HTMLTable();
+        $scTbl->addHeaderTr(HTMLTable::makeTh($serviceName . ' Search Criteria', array('colspan'=>count($searchCriteria))));
+        $scTbl->addBodyTr($tr);
+        $searchTabel = $scTbl->generateMarkup(array('style'=>'float:left; margin-left:2em;'));
+
+        $mkTable = 1;
+
+    } else if (isset($_POST['btnGetPayments'])) {
+
+        $dataTable = getPaymentReport($dbh, $start, $end);
+
+        $mkTable = 2;
+
+    }
 
 }
 
@@ -501,13 +542,16 @@ function transferRemote(transferIds) {
 
 }
 
-function transferPayments($btn) {
+function transferPayments($btn, start, end) {
 
     var parms = {
-        cmd: 'payments'
+        cmd: 'payments',
+        st: start,
+        en: end
     };
 
     var posting = $.post('ws_tran.php', parms);
+
     posting.done(function(incmg) {
         $btn.val('Transfer Payments');
 
@@ -614,20 +658,25 @@ function getRemote(item, source) {
     $(document).ready(function() {
         var makeTable = '<?php echo $mkTable; ?>';
         var transferIds = <?php echo json_encode($transferIds); ?>;
-        $('#btnHere, #btnCustFields, #btnPayments').button();
+        var start = '<?php echo $start; ?>';
+        var end = '<?php echo $end; ?>';
+        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
+
+        $('#btnHere, #btnCustFields, #btnGetPayments').button();
+
+        $('#printButton').button().click(function() {
+            $("div#printArea").printArea();
+        });
 
         if (makeTable === '1') {
             $('div#printArea').show();
             $('#divPrintButton').show();
+            $('#btnPay').hide();
 
             $('#tblrpt').dataTable({
-                "iDisplayLength": 50,
-                "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                "displayLength": 50,
+                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                 "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
-            });
-
-            $('#printButton').button().click(function() {
-                $("div#printArea").printArea();
             });
 
             $('#TxButton').button().show().click(function () {
@@ -639,7 +688,36 @@ function getRemote(item, source) {
                 transferRemote(transferIds);
 
             });
+        } else if (makeTable === '2') {
+
+            $('div#printArea').show();
+            $('#divPrintButton').show();
+            $('#TxButton').hide();
+
+            $('#tblrpt').dataTable({
+                'columnDefs': [
+                    {'targets': [4],
+                     'type': 'date',
+                     'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
+                    }
+                ],
+                "displayLength": 50,
+                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
+            });
+
+            $('#btnPay').button().show().click(function () {
+                $("#divAlert1").hide();
+                if ($(this).val() === 'Transferring ...') {
+                    return;
+                }
+                $(this).val('Transferring ...');
+
+                transferPayments($(this), start, end);
+            });
+
         }
+
 
         $('.ckdate').datepicker({
             yearRange: '-07:+01',
@@ -664,15 +742,6 @@ function getRemote(item, source) {
         });
 
         $('#selCalendar').change();
-
-        $('#btnPayments').click(function () {
-            if ($(this).val() === 'Transferring ...') {
-                return;
-            }
-            $(this).val('Transferring ...');
-            $('#payTable').hide();
-            transferPayments($(this));
-        });
 
         createAutoComplete($('#txtRSearch'), 3, {cmd: 'sch', mode: 'name'}, function (item) {getRemote(item, 'remote');}, false, '../house/ws_tran.php');
         createAutoComplete($('#txtSearch'), 3, {cmd: 'role', mode: 'mo'}, function (item) {getRemote(item, 'hhk');}, false);
@@ -722,20 +791,21 @@ function getRemote(item, source) {
                     <table style="width:100%; margin-top: 15px;">
                         <tr>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records"/></td>
-                            <td><input type="button" id="btnPayments" value="Transfer Payments"/></td>
+                            <td><input type="submit" name="btnGetPayments" id="btnGetPayments" value="Get HHK Payments"/></td>
                         </tr>
                     </table>
                 </form>
                 <div id="retrieve"></div>
             </div>
             <div style="clear:both;"></div>
-            <div id="payTable" style="display:none;margin-top:6px;margin-bottom:3px;"></div>
+
             <div id="divPrintButton" style="display:none;margin-top:6px;margin-bottom:3px;">
                 <input id="printButton" value="Print" type="button" />
-                <input id="TxButton" value="Transfer" type="button" style="margin-left:2em;"/>
+                <input id="TxButton" value="Transfer Guests" type="button" style="margin-left:2em;"/>
+                <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
             </div>
             <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
-                <div style="margin-bottom:.5em;"><?php echo $settingstable; ?></div>
+                <div style="margin-bottom:.8em; float:left;"><?php echo $settingstable . $searchTabel; ?></div>
                 <div id="divTable">
                 <?php echo $dataTable; ?>
                 </div>

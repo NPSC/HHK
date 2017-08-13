@@ -137,13 +137,14 @@ class TransferMembers {
 
         // Get member data record
         $r = $this->loadSourceDB($dbh, $idName);
+
+
         if (is_null($r)) {
             throw new Hk_Exception_Runtime('HHK Member Id not found: ' . $idName);
         }
 
-
         if (isset($accountData['accountId']) === FALSE) {
-            throw new Hk_Exception_Runtime('Remote account id not found: ' . $r['accountId']);
+            throw new Hk_Exception_Runtime('Remote account id not found for: ' . $r['accountId']);
         }
 
         if ($r['accountId'] != $accountData['accountId']) {
@@ -290,12 +291,17 @@ class TransferMembers {
         return $types;
     }
 
-    public function sendDonation(\PDO $dbh, $username, $whereClause = '') {
+    public function sendDonation(\PDO $dbh, $username, $start = '', $end = '') {
 
         $replys = array();
         $idMap = array();
+        $whereClause = '';
 
-        $stmt = $dbh->query("Select * from vguest_neon_payment $whereClause");
+        if ($start != '' && $end != '') {
+            $whereClause = " and DATE(`date`) >= DATE('$start') and DATE(`date`) <= DATE('$end') ";
+        }
+
+        $stmt = $dbh->query("Select * from vguest_neon_payment where External_Id = '' $whereClause");
 
         // Log in with the web service
         $this->openTarget($this->userId, $this->password);
@@ -309,6 +315,7 @@ class TransferMembers {
 
             } else if ($r['accountId'] == '') {
 
+                // Search and create a new account if needed.
                 $acctReply = $this->sendList($dbh, array($r['hhkId']), $username);
 
                 if (isset($acctReply[0]['Account ID']) && $acctReply[0]['Account ID'] != '') {
@@ -318,16 +325,16 @@ class TransferMembers {
 
                 } else {
 
+                    // Some kind of problem like multiple accounts found.
                     $replys[] = $acctReply[0];
                     continue;
                 }
             }
 
+            // Make the donation with the HHK payment record.
             $result = $this->createDonation($r);
 
             if ($this->checkError($result)) {
-//                $f = array();
-//                $this->unwindResponse($f, $result);
                 $f['Donation Result'] = $this->errorMessage;
                 $replys[] = $f;
                 continue;
@@ -345,10 +352,11 @@ class TransferMembers {
 
                     $replys[] = array('Donation Result'=>$uex->getMessage());
                 }
+
             } else {
+
                 $replys[] = array('Donation Result'=>'Huh?  The donation Id was not set...  ');
             }
-
         }
 
         return $replys;
@@ -437,11 +445,16 @@ class TransferMembers {
 
                 // Make sure the external Id is defined locally
                 if ($result['searchResults'][0]['Account ID'] != '') {
+
                     $this->updateLocalNameRecord($dbh, $r['HHK_ID'], $result['searchResults'][0]['Account ID'], $username);
                     $f['Account ID'] = $result['searchResults'][0]['Account ID'];
+                    $f['Result'] = 'Previously Transferred.';
+
+                } else {
+
+                    $f['Result'] = 'Account Id is empty.';
                 }
 
-                $f['Result'] = 'Previously Transferred.';
                 $replys[] = $f;
 
 
@@ -866,6 +879,15 @@ class TransferMembers {
         }
 
         return NULL;
+    }
+
+    public static function getSearchFields(\PDO $dbh, $tableName = 'vguest_search_neon') {
+
+        $stmt = $dbh->query("Select * from `$tableName` LIMIT 1;");
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return array_keys($rows[0]);
+
     }
 
     public function loadSourceDB(\PDO $dbh, $idName) {
