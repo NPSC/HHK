@@ -180,6 +180,7 @@ function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$total, &$tbl, 
         'Pay_Type' => $payType,
         'Detail' => $payDetail,
         'Status' => $payStatus,
+        'Payment_External_Id'=>$p['Payment_External_Id'],
         'By' => $p['Payment_Created_By'],
         'Notes'=>$p['Payment_Note']
     );
@@ -309,6 +310,12 @@ $cFields[] = array("Detail", 'Detail', 'checked', '', 's', '', array());
 $cFields[] = array("Status", 'Status', 'checked', '', 's', '', array());
 $cFields[] = array("Original Amount", 'Orig_Amount', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)' , array('style'=>'text-align:right;'));
 $cFields[] = array("Amount", 'Amount', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+
+// Show External Id (external payment record id)
+if ($config->getString('webServices', 'ContactManager', '') != '') {
+    $cFields[] = array('External Id', 'Payment_External_Id', '', '', 's', '', array());
+}
+
 $cFields[] = array("By", 'By', 'checked', '', 's', '', array());
 $cFields[] = array("Notes", 'Notes', 'checked', '', 's', '', array());
 

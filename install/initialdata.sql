@@ -617,7 +617,8 @@ VALUES
 INSERT INTO `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) VALUES 
 ('account/listIndividualTypes', 'individualTypes', 'individualType', 'Vol_Type'),
 ('donation/listFunds', 'funds', 'fund', 'Fund'),
-('common/listTenders', 'tenders', 'tender', 'Pay_Type');
+('common/listTenders', 'tenders', 'tender', 'Pay_Type'),
+('common/listCreditCardTypes', 'creditCardTypes', 'creditCardType', 'Charge_Cards');
 -- ;
 
 --

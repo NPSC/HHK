@@ -48,7 +48,7 @@ class CreateMarkupFromDB {
 
             foreach ($r as $col) {
 
-                $mkupRow .= "<td$tdClass>" . ($col == '' ? '&nbsp;' : $col) . "</td>";
+                $mkupRow .= "<td$tdClass>" . ($col == '' ? ' ' : $col) . "</td>";
             }
 
             $tbody .= "<tr>" . $mkupRow . "</tr>";

@@ -76,7 +76,7 @@ function getPaymentReport(\PDO $dbh, $start, $end) {
         $r['HHK Id'] = HTMLContainer::generateMarkup('a', $r['HHK Id'], array('href'=>'GuestEdit.php?id=' . $r['HHK Id']));
 
         if (isset($r['Payment Date']) && $r['Payment Date'] != '') {
-            $r['Payment Date'] = date('M j, Y', strtotime($r['Payment Date']));
+            $r['Payment Date'] = date('c', strtotime($r['Payment Date']));
         }
 
         $rows[] = $r;
@@ -158,13 +158,13 @@ where $whExt ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DAT
             $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
 
             if (isset($r['Birth Date']) && $r['Birth Date'] != '') {
-                $r['Birth Date'] = date('M j, Y', strtotime($r['Birth Date']));
+                $r['Birth Date'] = date('c', strtotime($r['Birth Date']));
             }
             if ($r['Arrival'] != '') {
-                $r['Arrival'] = date('M j, Y', strtotime($r['Arrival']));
+                $r['Arrival'] = date('c', strtotime($r['Arrival']));
             }
             if ($r['Departure'] != '') {
-                $r['Departure'] = date('M j, Y', strtotime($r['Departure']));
+                $r['Departure'] = date('c', strtotime($r['Departure']));
             }
 
             if ($r['Patient'] != '') {
@@ -409,8 +409,7 @@ function updateLocal(id) {
     var postUpdate = $.post('ws_tran.php', {cmd:'rmvAcctId', id:id});
 
     postUpdate.done(function(incmg) {
-        $('div#retrieve').children().remove();
-        $('div#retrieve').html('');
+        $('div#retrieve').empty();
 
         if (!incmg) {
             alert('Bad Reply from Server');
@@ -508,7 +507,7 @@ function transferRemote(transferIds) {
             return;
         }
         try {
-        incmg = $.parseJSON(incmg);
+            incmg = $.parseJSON(incmg);
         } catch (err) {
             alert('Bad JSON Encoding');
             return;
@@ -524,19 +523,8 @@ function transferRemote(transferIds) {
         }
 
         if (incmg.data) {
-            $('div#retrieve').children().remove();
-            $('div#retrieve').html('');
-
-            $('#divTable').children().remove();
-            $('#divTable').append($(incmg.data));
-//            if ($('#tblrpt').length > 0) {
-//                $('#tblrpt').DataTable().destroy();
-//            }
-            $('#tblrpt').dataTable({
-                "displayLength": 50,
-                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
-            });
+            $('div#retrieve').empty();
+            $('#divTable').empty().append($(incmg.data));
         }
     });
 
@@ -576,10 +564,14 @@ function transferPayments($btn, start, end) {
             return;
         }
 
+        $('div#retrieve').empty();
+
         if (incmg.data) {
+            $('#divTable').empty().append($(incmg.data)).show();
+        }
 
-            $('#payTable').empty().append($(incmg.data)).show();
-
+        if (incmg.members) {
+            $('#divMembers').empty().append($(incmg.members)).show();
         }
 
     });
@@ -655,97 +647,105 @@ function getRemote(item, source) {
     });
 }
 
-    $(document).ready(function() {
-        var makeTable = '<?php echo $mkTable; ?>';
-        var transferIds = <?php echo json_encode($transferIds); ?>;
-        var start = '<?php echo $start; ?>';
-        var end = '<?php echo $end; ?>';
-        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
+$(document).ready(function() {
+    var makeTable = '<?php echo $mkTable; ?>';
+    var transferIds = <?php echo json_encode($transferIds); ?>;
+    var start = '<?php echo $start; ?>';
+    var end = '<?php echo $end; ?>';
+    var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
 
-        $('#btnHere, #btnCustFields, #btnGetPayments').button();
+    $('#btnHere, #btnCustFields, #btnGetPayments').button();
 
-        $('#printButton').button().click(function() {
-            $("div#printArea").printArea();
-        });
-
-        if (makeTable === '1') {
-            $('div#printArea').show();
-            $('#divPrintButton').show();
-            $('#btnPay').hide();
-
-            $('#tblrpt').dataTable({
-                "displayLength": 50,
-                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
-            });
-
-            $('#TxButton').button().show().click(function () {
-                $("#divAlert1").hide();
-                if ($('#TxButton').val() === 'Working...') {
-                    return;
-                }
-                $('#TxButton').val('Working...');
-                transferRemote(transferIds);
-
-            });
-        } else if (makeTable === '2') {
-
-            $('div#printArea').show();
-            $('#divPrintButton').show();
-            $('#TxButton').hide();
-
-            $('#tblrpt').dataTable({
-                'columnDefs': [
-                    {'targets': [4],
-                     'type': 'date',
-                     'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-                    }
-                ],
-                "displayLength": 50,
-                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
-            });
-
-            $('#btnPay').button().show().click(function () {
-                $("#divAlert1").hide();
-                if ($(this).val() === 'Transferring ...') {
-                    return;
-                }
-                $(this).val('Transferring ...');
-
-                transferPayments($(this), start, end);
-            });
-
-        }
-
-
-        $('.ckdate').datepicker({
-            yearRange: '-07:+01',
-            changeMonth: true,
-            changeYear: true,
-            autoSize: true,
-            numberOfMonths: 1,
-            dateFormat: 'M d, yy'
-        });
-
-        $('#selCalendar').change(function () {
-            if ($(this).val() && $(this).val() != '19') {
-                $('#selIntMonth').hide();
-            } else {
-                $('#selIntMonth').show();
-            }
-            if ($(this).val() && $(this).val() != '18') {
-                $('.dates').hide();
-            } else {
-                $('.dates').show();
-            }
-        });
-
-        $('#selCalendar').change();
-
-        createAutoComplete($('#txtRSearch'), 3, {cmd: 'sch', mode: 'name'}, function (item) {getRemote(item, 'remote');}, false, '../house/ws_tran.php');
-        createAutoComplete($('#txtSearch'), 3, {cmd: 'role', mode: 'mo'}, function (item) {getRemote(item, 'hhk');}, false);
+    $('#printButton').button().click(function() {
+        $("div#printArea").printArea();
     });
+
+    if (makeTable === '1') {
+        $('div#printArea').show();
+        $('#divPrintButton').show();
+        $('#btnPay').hide();
+        $('#divMembers').empty();
+
+        $('#tblrpt').dataTable({
+           'columnDefs': [
+                {'targets': [4, 9, 10],
+                 'type': 'date',
+                 'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
+                }
+            ],
+            "displayLength": 50,
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
+        });
+
+        $('#TxButton').button().show().click(function () {
+            $("#divAlert1").hide();
+            if ($('#TxButton').val() === 'Working...') {
+                return;
+            }
+            $('#TxButton').val('Working...');
+            transferRemote(transferIds);
+
+        });
+    } else if (makeTable === '2') {
+
+        $('div#printArea').show();
+        $('#divPrintButton').show();
+        $('#TxButton').hide();
+        $('#divMembers').empty();
+
+        $('#tblrpt').dataTable({
+            'columnDefs': [
+                {'targets': [5],
+                 'type': 'date',
+                 'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
+                }
+            ],
+            "displayLength": 50,
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
+        });
+
+        $('#btnPay').button().show().click(function () {
+            $("#divAlert1").hide();
+            if ($(this).val() === 'Transferring ...') {
+                return;
+            }
+            $(this).val('Transferring ...');
+
+            transferPayments($(this), start, end);
+        });
+
+    }
+
+
+    $('.ckdate').datepicker({
+        yearRange: '-07:+01',
+        changeMonth: true,
+        changeYear: true,
+        autoSize: true,
+        numberOfMonths: 1,
+        dateFormat: 'M d, yy'
+    });
+
+    $('#selCalendar').change(function () {
+        if ($(this).val() && $(this).val() != '19') {
+            $('#selIntMonth').hide();
+        } else {
+            $('#selIntMonth').show();
+        }
+        if ($(this).val() && $(this).val() != '18') {
+            $('.dates').hide();
+        } else {
+            $('.dates').show();
+        }
+    });
+
+    $('#selCalendar').change();
+
+    createAutoComplete($('#txtRSearch'), 3, {cmd: 'sch', mode: 'name'}, function (item) {getRemote(item, 'remote');}, false, '../house/ws_tran.php');
+    createAutoComplete($('#txtSearch'), 3, {cmd: 'role', mode: 'mo'}, function (item) {getRemote(item, 'hhk');}, false);
+});
  </script>
     </head>
     <body <?php if ($wInit->testVersion) { echo "class='testbody'";} ?>>
@@ -807,8 +807,9 @@ function getRemote(item, source) {
             <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
                 <div style="margin-bottom:.8em; float:left;"><?php echo $settingstable . $searchTabel; ?></div>
                 <div id="divTable">
-                <?php echo $dataTable; ?>
+                    <?php echo $dataTable; ?>
                 </div>
+                <div id="divMembers"></div>
             </div>
         </div>
     </body>

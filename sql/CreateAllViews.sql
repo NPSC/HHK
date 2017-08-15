@@ -1107,18 +1107,18 @@ CREATE OR REPLACE VIEW `vneon_payment_display` AS
 	p.idPayment,
 	p.External_Id,
 	n.idName as `HHK Id`,
+        n.Name_Full as `Name`,
 	n.External_Id as `Account Id`,
         IFNULL(DATE_FORMAT(p.Payment_Date, '%Y-%m-%d'), '') as `Payment Date`,
-        'HHK' as `source.name`,
         case when p.Is_Refund = 1 then (0 - (p.Amount - p.Balance)) else 
        (p.Amount - p.Balance) end as `Amount`,
        ifnull(np.Neon_Type_Name, '') as `Neon Fund`,
        ifnull(nt.Neon_Type_Name, '') as `Payment Method`,
-       ifnull(pa.Acct_Number, '') as `Card Number`,
-       ifnull(nc.Neon_Type_Name, '') as `Card Type`,
-       ifnull(gt.CardHolderName, '') as `Card Holder`,
-       ifnull(pc.Check_Number, '') as `Check Number`,
-		p.Notes as `Notes`
+       case when p.idPayment_Method = 1 then '' when p.idPayment_Method = 3 then ifnull(pc.Check_Number, '') else concat(
+       ifnull(pa.Acct_Number, ''),'; ',
+       ifnull(nc.Neon_Type_Name, ''),'; ',
+       ifnull(gt.CardHolderName, '')) end as `Detail`,
+	p.Notes as `Notes`
 
     FROM
         payment p 
@@ -1426,6 +1426,7 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
         IFNULL(`p`.`Updated_By`, '') AS `Payment_Updated_By`,
         IFNULL(`p`.`Created_By`, '') AS `Payment_Created_By`,
         IFNULL(`p`.`Notes`, '') AS `Payment_Note`,
+        IFNULL(`p`.`External_Id`, '') AS `Payment_External_Id`,
         IFNULL(`pa`.`idPayment_auth`, 0) AS `idPayment_auth`,
         IFNULL(`pa`.`Customer_Id`, 0) AS `Charge_Customer_Id`,
         IFNULL(`pa`.`Acct_Number`, `p`.`Data2`) AS `Masked_Account`,

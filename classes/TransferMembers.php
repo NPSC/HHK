@@ -20,6 +20,8 @@ class TransferMembers {
     protected $customFields;
     protected $errorMessage;
     protected $pageNumber;
+    protected $replies;
+    protected $memberReplies;
 
     public function __construct($userId, $password, array $customFields = array()) {
 
@@ -294,19 +296,37 @@ class TransferMembers {
     public function sendDonation(\PDO $dbh, $username, $start = '', $end = '') {
 
         $replys = array();
+        $this->memberReplies = array();
         $idMap = array();
         $whereClause = '';
 
-        if ($start != '' && $end != '') {
-            $whereClause = " and DATE(`date`) >= DATE('$start') and DATE(`date`) <= DATE('$end') ";
+        if ($start != '') {
+            $whereClause = " and DATE(`date`) >= DATE('$start') ";
+        }
+
+        if ($end != '') {
+            $whereClause .= " and DATE(`date`) <= DATE('$end') ";
         }
 
         $stmt = $dbh->query("Select * from vguest_neon_payment where External_Id = '' $whereClause");
+
+        if ($stmt->rowCount() < 1) {
+            return array(array('Donation Result'=>'No new HHK payments found to transfer.  '));
+        }
 
         // Log in with the web service
         $this->openTarget($this->userId, $this->password);
 
         while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
+            $f = array();
+
+            // Prefill output array
+            foreach ($r as $k => $v) {
+                if ($k != '') {
+                    $f[$k] = $v;
+                }
+            }
 
             // Is the account defined?
             if ($r['accountId'] == '' && isset($idMap[$r['hhkId']])) {
@@ -316,17 +336,21 @@ class TransferMembers {
             } else if ($r['accountId'] == '') {
 
                 // Search and create a new account if needed.
-                $acctReply = $this->sendList($dbh, array($r['hhkId']), $username);
+                $acctReplys = $this->sendList($dbh, array($r['hhkId']), $username);
 
-                if (isset($acctReply[0]['Account ID']) && $acctReply[0]['Account ID'] != '') {
+                if (isset($acctReplys[0]['Account ID']) && $acctReplys[0]['Account ID'] != '') {
 
-                    $r['accountId'] = $acctReply[0]['Account ID'];
-                    $idMap[$r['hhkId']] = $acctReply[0]['Account ID'];
+                    // A new account is created.
+                    $this->memberReplies[] = $acctReplys[0];
+                    $r['accountId'] = $acctReplys[0]['Account ID'];
+                    $f['accountId'] = $acctReplys[0]['Account ID'] . '*';
+                    $idMap[$r['hhkId']] = $acctReplys[0]['Account ID'];
 
                 } else {
 
                     // Some kind of problem like multiple accounts found.
-                    $replys[] = $acctReply[0];
+                    $f['Result'] = $acctReplys[0];
+                    $replys[] = $f;
                     continue;
                 }
             }
@@ -335,7 +359,7 @@ class TransferMembers {
             $result = $this->createDonation($r);
 
             if ($this->checkError($result)) {
-                $f['Donation Result'] = $this->errorMessage;
+                $f['Result'] = $this->errorMessage;
                 $replys[] = $f;
                 continue;
             }
@@ -346,17 +370,21 @@ class TransferMembers {
                 try {
 
                     $this->updateLocalPaymentRecord($dbh, $r['idPayment'], $result['donationId'], $username);
-                    $replys[] = array('Donation Result'=>'New Donation successful.  ');
+                    $f['Result'] = 'Success';
+                    $f['External_Id'] = $result['donationId'];
+
 
                 } catch (Hk_Exception_Upload $uex) {
 
-                    $replys[] = array('Donation Result'=>$uex->getMessage());
+                    $f['Result'] = $uex->getMessage();
                 }
 
             } else {
 
-                $replys[] = array('Donation Result'=>'Huh?  The donation Id was not set...  ');
+                $f['Result'] = 'Huh?  The donation Id was not set';
             }
+
+            $replys[] = $f;
         }
 
         return $replys;
@@ -953,5 +981,11 @@ class TransferMembers {
         return $this->webService->txParams;
     }
 
+    public function getReplies() {
+        return $this->replies;
+    }
 
+    public function getMemberReplies() {
+        return $this->memberReplies;
+    }
 }
