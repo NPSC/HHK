@@ -522,6 +522,7 @@ where
                             'Payment_Updated_By'=>$p['Payment_Updated_By'],
                             'Payment_Created_By'=>$p['Payment_Created_By'],
                             'Check_Number'=>$p['Check_Number'],
+                            'Payment_External_Id'=>$p['Payment_External_Id'],
                             'Payment_Note'=>$p['Payment_Note']
                             );
 

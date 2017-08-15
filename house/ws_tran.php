@@ -86,7 +86,7 @@ switch ($c) {
     case 'payments':
 
         $st = '';
-        if (isset($_REQUEST["wh"])) {
+        if (isset($_REQUEST["st"])) {
             $st = filter_var($_REQUEST["st"], FILTER_SANITIZE_STRING);
         }
         $en = '';
@@ -96,6 +96,11 @@ switch ($c) {
 
         $reply = $transfer->sendDonation($dbh, $uS->username, $st, $en);
         $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
+
+        $newMembers = $transfer->getMemberReplies();
+        if (count($newMembers) > 0) {
+            $events['members'] = CreateMarkupFromDB::generateHTML_Table($newMembers, 'tblrpt');
+        }
 
         break;
 

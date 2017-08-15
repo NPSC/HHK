@@ -412,8 +412,14 @@ class ActivityReport {
         $payStatusText = '';
         $payTypeTotals = array();
         $payTypeText = '';
+        $showExternlId = FALSE;
 
         $labels = new Config_Lite(LABEL_FILE);
+        $config = new Config_Lite(ciCFG_FILE);
+
+        if($config->getString('webServices', 'ContactManager', '') != '') {
+            $showExternlId = TRUE;
+        }
 
         // Dates
         if ($startDT != NULL && $startDT != '') {
@@ -571,6 +577,7 @@ where `lp`.`idPayment` > 0
                 . HTMLTable::makeTh("Action")
                 . HTMLTable::makeTh("Date")
                 . HTMLTable::makeTh("By")
+                . ($showExternlId ? HTMLTable::makeTh("Ext. Id") : '')
                 . HTMLTable::makeTh('Notes'));
 
 
@@ -746,11 +753,12 @@ where `lp`.`idPayment` > 0
                 $trow .= HTMLTable::makeTd($payDetail);
                 $trow .= HTMLTable::makeTd($stat);
                 $trow .= HTMLTable::makeTd(number_format($amt, 2), $attr);
-//                    HTMLInput::generateMarkup(number_format($amt,2), $attr)
-//                    , array('style'=>'text-align:right;'));
                 $trow .= HTMLTable::makeTd($voidContent);
                 $trow .= HTMLTable::makeTd(date('c', strtotime($p['Payment_Date'])));
                 $trow .= HTMLTable::makeTd($p['Payment_Updated_By'] == '' ? $p['Payment_Created_By'] : $p['Payment_Updated_By']);
+                if ($showExternlId) {
+                    $trow .= HTMLTable::makeTd($p['Payment_External_Id']);
+                }
                 $trow .= HTMLTable::makeTd($p['Payment_Note']);
 
                 $tbl->addBodyTr($trow);
