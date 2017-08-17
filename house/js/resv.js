@@ -9,7 +9,6 @@ function getAgent(item) {
         $('#a_txtPhonegw').val(item.wphone);
         $('#a_txtEmail1').val(item.email);
         $('#a_idName').val(cid);
-        $('#txtAgentSch').val('');
     } else {
         $('#a_txtFirstName').val('');
         $('#a_txtLastName').val('');
@@ -17,7 +16,6 @@ function getAgent(item) {
         $('#a_txtPhonegw').val('');
         $('#a_txtEmail1').val('');
         $('#a_idName').val('0');
-        $('#txtAgentSch').val('');        
     }
     $('.hhk-agentInfo').show();
 }
@@ -28,12 +26,10 @@ function getDoc(item) {
         $('#d_txtFirstName').val(item.first);
         $('#d_txtLastName').val(item.last);
         $('#d_idName').val(cid);
-        $('#txtDocSch').val('');
     } else {
         $('#d_txtFirstName').val('');
         $('#d_txtLastName').val('');
         $('#d_idName').val('0');
-        $('#txtDocSch').val('');
     }
     $('.hhk-docInfo').show();
 }

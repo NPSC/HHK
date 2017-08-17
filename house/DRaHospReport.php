@@ -55,10 +55,16 @@ $isGuestAdmin = ComponentAuthClass::is_Authorized('guestadmin');
 $labels = new Config_Lite(LABEL_FILE);
 
 
-function getDoctors(\PDO $dbh, $local, $whClause, $hospitals, $start, $end) {
+function getRecords(\PDO $dbh, $local, $type, $colNameTitle, $whClause, $hospitals, $start, $end) {
 
-    $query = "select hs.idDoctor as `Id`, concat(n.Name_Last, ', ', n.Name_First) as `Doctor`, ifnull(hs.idHospital, 'Sub Total') as `Hospital`, count(hs.idHospital_stay) as `# Patients`
-from hospital_stay hs left join `name` n  ON hs.idDoctor = n.idName
+    if ($type == VolMemberType::Doctor) {
+        $Id = 'idDoctor';
+    } else if ($type == VolMemberType::ReferralAgent) {
+        $Id = 'idReferralAgent';
+    }
+
+    $query = "select hs.$Id as `Id`, concat(n.Name_Last, ', ', n.Name_First) as `FirstLast`, ifnull(hs.idHospital, 'Sub Total') as `Hospital`, count(hs.idHospital_stay) as `Patients`
+from hospital_stay hs left join `name` n  ON hs.$Id = n.idName
 left join reservation rv on hs.idHospital_stay = rv.idHospital_Stay
 where rv.`Status` in ('" . ReservationStatus::Checkedout . "', '" . ReservationStatus::Staying . "') "
  . " and ifnull(rv.Actual_Departure, rv.Expected_Departure) > '$start' and ifnull(rv.Actual_Arrival, rv.Expected_Arrival) < '$end '  $whClause
@@ -69,13 +75,13 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
     if ($local) {
 
         $tbl = new HTMLTable();
-        $tbl->addHeaderTr(HTMLTable::makeTh('Id') . HTMLTable::makeTh('Doctor') . HTMLTable::makeTh('Hospital') . HTMLTable::makeTh('# Patients'));
+        $tbl->addHeaderTr(HTMLTable::makeTh('Id') . HTMLTable::makeTh($colNameTitle) . HTMLTable::makeTh('Hospital') . HTMLTable::makeTh('Patients'));
 
     } else {
 
         $reportRows = 1;
         $file = 'DoctorReport';
-        $sml = OpenXML::createExcel('Guest Tracker', 'Doctor Report');
+        $sml = OpenXML::createExcel('Guest Tracker', $colNameTitle . ' Report');
 
         // build header
         $hdr = array();
@@ -83,9 +89,9 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
         // HEader row
         $hdr[$n++] =  'Id';
-        $hdr[$n++] =  'Doctor';
+        $hdr[$n++] =  $colNameTitle;
         $hdr[$n++] =  'Hospital';
-        $hdr[$n++] =  '# Patients';
+        $hdr[$n++] =  'Patients';
 
         OpenXML::writeHeaderRow($sml, $hdr);
         $reportRows++;
@@ -106,7 +112,7 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
             if ($rowCounter < $numRows) {
                 if ($r['Id'] > 0 && $lastId != $r['Id']) {
                     $id = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'../admin/NameEdit.php?id=' . $r['Id']));
-                    $doc = $r['Doctor'];
+                    $doc = $r['FirstLast'];
                 }
 
                 $lastId = $r['Id'];
@@ -129,7 +135,7 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
                     HTMLTable::makeTd($id)
                     .HTMLTable::makeTd($doc)
                     .HTMLTable::makeTd($hosp, $harray)
-                    .HTMLTable::makeTd($r['# Patients'], array('style'=>'text-align:center;')));
+                    .HTMLTable::makeTd($r['Patients'], array('style'=>'text-align:center;')));
 
         } else {
 
@@ -139,7 +145,7 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
             if ($rowCounter < $numRows) {
                 if ($r['Id'] > 0 && $lastId != $r['Id']) {
                     $id = $r['Id'];
-                    $doc = $r['Doctor'];
+                    $doc = $r['FirstLast'];
                 }
 
                 $lastId = $r['Id'];
@@ -164,7 +170,7 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
             $flds[0] = array('type' => "s", 'value' => $id);
             $flds[1] = array('type' => "s", 'value' => $doc);
             $flds[2] = array('type' => "s", 'value' => $hosp);
-            $flds[3] = array('type' => "n", 'value' => $r['# Patients']);
+            $flds[3] = array('type' => "n", 'value' => $r['Patients']);
 
 
             $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
@@ -193,102 +199,66 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
 }
 
-function getReferralAgents(\PDO $dbh, $local, $start, $end, \Config_Lite $labels) {
 
-    $agentTitle = $labels->getString('hospital', 'referralAgent', 'Referral Agent');
+function blanksOnly(\PDO $dbh, $type, $colNameTitle, $whClause, $hospitals, $start, $end) {
 
-    $query = "select hs.idReferralAgent as `Id`, concat(ifnull(n.Name_First, ''), ' ', ifnull(n.Name_Last, '')) as `$agentTitle`, count(hs.idHospital_stay) as `Patients Referred`
-from hospital_stay hs left join name n on hs.idReferralAgent = n.idName
-left join reservation rv on hs.idHospital_stay = rv.idHospital_Stay
-where rv.`Status` in ('" . ReservationStatus::Checkedout . "', '" . ReservationStatus::Staying . "') "
- . "and ifnull(rv.Actual_Departure, rv.Expected_Departure) > '$start' and ifnull(rv.Actual_Arrival, rv.Expected_Arrival) < '$end '
-group by hs.idReferralAgent order by n.Name_last, n.Name_First;";
+    $class = '';
+    $htmlId = '';
+
+    if ($type == VolMemberType::Doctor) {
+        $Id = 'idDoctor';
+        $prefix = 'd';
+        $class = 'hhk-docInfo';
+        $htmlId = 'txtDocSch';
+    } else if ($type == VolMemberType::ReferralAgent) {
+        $Id = 'idReferralAgent';
+        $prefix = 'a';
+        $class = 'hhk-agentInfo';
+        $htmlId = 'txtAgentSch';
+    }
+
+    $query = "select hs.idPatient as `Patient Id`, n.Name_Full as `Patient Name`, hs.idHospital as `Hospital`, hs.idPsg
+from hospital_stay hs left join `name` n on hs.idPatient = n.idName
+where hs.$Id = 0  $whClause LIMIT 100";
 
     $stmt = $dbh->query($query);
 
-    if (!$local) {
-
-        $reportRows = 1;
-        $file = 'PSGReport';
-        $sml = OpenXML::createExcel('Guest Tracker', $agentTitle . ' Report');
-
-    }
-
     $rows = array();
-    $firstRow = TRUE;
 
-    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-        if ($firstRow) {
+        $r['Patient Id'] = HTMLContainer::generateMarkup('a', $r['Patient Id'], array('href'=>'GuestEdit.php?id=' . $r['Patient Id'] . '&psg=' . $r['idPsg']));
 
-            $firstRow = FALSE;
-
-            if ($local === FALSE) {
-
-                // build header
-                $hdr = array();
-                $n = 0;
-
-                // HEader row
-                $keys = array_keys($r);
-                foreach ($keys as $k) {
-                    $hdr[$n++] =  $k;
-                }
-
-                OpenXML::writeHeaderRow($sml, $hdr);
-                $reportRows++;
-            }
+        if (isset($hospitals[$r['Hospital']])) {
+            $r['Hospital'] = $hospitals[$r['Hospital']][1];
         }
 
-        if ($local) {
+//        $r['Search'] = HTMLContainer::generateMarkup('span', $colNameTitle, array('style'=>'float:left;'))
+//            . HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup('', array('id'=>$htmlId, 'data-pid'=>$r['Patient Id'], 'size'=>'13', 'title'=>'Type 3 characters to start the search.')), array('title'=>'Search', 'style'=>'float: left; margin-left:0.3em;'));
 
-            if ($r['Id'] > 0) {
-                $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'../admin/NameEdit.php?id=' . $r['Id']));
-            } else {
-                $r['Id'] = '';
-                $r['Referral Agent'] = '-None-';
-            }
+//        $r['First Name'] = HTMLInput::generateMarkup('', array('name'=>$prefix.'_txtFirstName['.$r['Patient Id'].']', 'size'=>'15', 'class'=>$class))
+//                    .HTMLInput::generateMarkup('0', array('name'=>$prefix.'_idName['.$r['Patient Id'].']', 'type'=>'hidden'));
+//
+//        $r['Last Name'] = HTMLInput::generateMarkup('', array('name'=>$prefix.'_txtLastName['.$r['Patient Id'].']', 'size'=>'15', 'class'=>$class));
+//
 
-            $rows[] = $r;
+        unset($r['idPsg']);
 
-        } else {
-
-            $n = 0;
-            $flds = array();
-
-            foreach ($r as $col) {
-
-                $flds[$n++] = array('type' => "s", 'value' => $col);
-            }
-
-            $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
-        }
-
+        $rows[] = $r;
     }
 
-    if ($local) {
-
-        $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
-        return $dataTable;
-
-
-    } else {
-
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        OpenXML::finalizeExcel($sml);
-        exit();
-
+    if (count($rows) > 0) {
+        return CreateMarkupFromDB::generateHTML_Table($rows, '');
     }
 
 }
 
-
 $assocSelections = array();
 $hospitalSelections = '';
 $mkTable = '';
+$memType = '';
+$type = '';
+$cbBlank = '';
 $dataTable = '';
 $settingstable = '';
 $rptSetting = 'd';
@@ -492,27 +462,44 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $sTbl = new HTMLTable();
         $sTbl->addBodyTr(HTMLTable::makeTh('Report Characteristics', array('colspan'=>'4')));
 
-
+        $colTitle = '';
+        $blanksOnly = FALSE;
 
         $rptSetting = filter_var($_POST['rbReport'], FILTER_SANITIZE_STRING);
+
+        if (isset($_POST['cbBlanksOnly'])) {
+            $blanksOnly = TRUE;
+            $cbBlank = "checked";
+        }
 
 
         switch ($rptSetting) {
 
-
             case 'd':
-                $dataTable = getDoctors($dbh, $local, $whHosp, $hospList, $start, $end);
-                $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
-                $sTbl->addBodyTr(HTMLTable::makeTd('Hospitals', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc);
-                $settingstable = $sTbl->generateMarkup();
+                $type = VolMemberType::Doctor;
+                $colTitle = 'Doctor';
+
                 break;
 
             case 'r':
-                $dataTable = getReferralAgents($dbh, $local, $start, $end, $labels);
-                $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
-                $settingstable = $sTbl->generateMarkup();
+                $type = VolMemberType::ReferralAgent;
+                $colTitle = $labels->getString('hospital', 'referralAgent', 'Referral Agent');
+
                 break;
         }
+
+        if ($blanksOnly) {
+            $dataTable = blanksOnly($dbh, $type, $colTitle, $whHosp, $hospList, $start, $end);
+            $memType = $type;
+        } else {
+            $dataTable = getRecords($dbh, $local, $type, $colTitle, $whHosp, $hospList, $start, $end);
+            $memType = '';
+        }
+
+        $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
+        $sTbl->addBodyTr(HTMLTable::makeTd('Hospitals', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc);
+        $settingstable = $sTbl->generateMarkup();
+
 
         $mkTable = 1;
     }
@@ -563,12 +550,20 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-<script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo VERIFY_ADDRS_JS; ?>"></script>
+        <script type="text/javascript" src="js/resv.js"></script>
+
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
 <script type="text/javascript">
     $(document).ready(function() {
         var makeTable = '<?php echo $mkTable; ?>';
+        var doc = '<?php echo VolMemberType::Doctor; ?>';
+        var agent = '<?php echo VolMemberType::ReferralAgent; ?>';
+        var memType = '<?php echo $memType; ?>';
+
         $('#btnHere, #btnExcel').button();
+
         if (makeTable === '1') {
             $('div#printArea').show();
             $('#divPrintButton').show();
@@ -581,7 +576,33 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
             $('#printButton').button().click(function() {
                 $("div#printArea").printArea();
             });
+
+//            if (memType === agent) {
+//
+//                createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', add: 'phone', basis: 'ra'}, getAgent);
+//
+//                if ($('#a_txtLastName').val() === '') {
+//                    $('.hhk-agentInfo').hide();
+//                }
+//            } else if (memType === doc) {
+//
+//                createAutoComplete($('#txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc);
+//
+//                if ($('#d_txtLastName').val() === '') {
+//                    $('.hhk-docInfo').hide();
+//                }
+//            }
         }
+
+        $('#cbBlanksOnly').click(function () {
+            if ($(this).prop('checked') === true) {
+                $('#btnExcel').hide();
+            } else {
+                $('#btnExcel').show();
+            }
+        });
+
+
         $('.ckdate').datepicker({
             yearRange: '-05:+01',
             changeMonth: true,
@@ -660,8 +681,9 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                             <td><?php echo $hospitals; ?></td>
                         </tr>
                     </table>
-                    <table style="width:100%; margin-top: 15px;">
+                    <table style="clear:left; margin-top: 15px;">
                         <tr>
+                            <td><input type="checkbox" name="cbBlanksOnly" id="cbBlanksOnly" <?php echo $cbBlank; ?>/><label for="cbBlanksOnly"> Only Show Patients without an assignment </label></td>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
                             <td><input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/></td>
                         </tr>

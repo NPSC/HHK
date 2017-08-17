@@ -428,7 +428,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('CardSwipe','false','b','f','Use POS terminal'),
 ('ConfirmFile','hhk.html','s','h','Reservation Confirmation file template name'),
 ('ConcatVisitNotes', 'true', 'b', 'h', 'Show notes combined from all previous visits when true.'),
-('county', 'false', 'b', 'h', 'Include the County for addresses.'),
+('county', 'false', 'b', 'h', 'Include the County in addresses.'),
 ('CoTod', 'false', 'b', 'h', 'Edit the time of day of a checkout.'),
 ('DefaultPayType','ca','s','f','Default payment type for paying today UI'),
 ('DefaultVisitFee', '1', 's', 'h', 'Default Visit Fee selected on new check-in and reservation pages.'),

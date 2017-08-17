@@ -968,8 +968,13 @@ ORDER BY v.idVisit , v.Span;");
 
         $tblInvoice->addBodyTr(
                 HTMLTable::makeTd('Invoicee:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtInvName' . $index, 'size'=>'35', 'readonly'=>'readonly')) . HTMLInput::generateMarkup('', array('name'=>'txtInvId' . $index, 'class'=>'hhk-feeskeys', 'type'=>'hidden')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtInvName' . $index, 'size'=>'35', 'readonly'=>'readonly'))
+                        . HTMLInput::generateMarkup('', array('name'=>'txtInvId' . $index, 'class'=>'hhk-feeskeys', 'type'=>'hidden')))
                 );
+
+        $tblInvoice->addBodyTr(
+             HTMLTable::makeTd('', array('id'=>'tdInvceeMsg', 'colspan'=>'3', 'style'=>'color:red;display:none;')));
+
 
         return $tblInvoice->generateMarkup(array('id' => 'tblInvoice' . $index));
 
