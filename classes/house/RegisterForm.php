@@ -15,7 +15,7 @@
  */
 class RegisterForm {
 
-    protected static function titleBlock($roomTitle, $expectedDeparture, $rate, $title, $agent, $priceModelCode, $houseAddr = '') {
+    protected static function titleBlock($roomTitle, $expectedDeparture, $rate, $title, $agent, $priceModelCode, $houseAddr = '', $roomFeeTitle = 'Pledged Fee') {
 
         $mkup = "<h2>" . $title . " </h2>";
 
@@ -40,9 +40,9 @@ class RegisterForm {
  </tr>
  <tr>
   <td width=306 colspan=2 style='width:2.55in;border:solid windowtext 1pt; border-top:none;'>
-  " . ($priceModelCode == ItemPriceCode::None ? '' : "<p class='label'>Pledged Fee</p>") ."</td>
+  " . ($priceModelCode == ItemPriceCode::None ? '' : "<p class='label'>$roomFeeTitle</p>") ."</td>
   <td width=153 style='width:91.8pt;border-top:none;border-left:none; border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
-  " . ($priceModelCode == ItemPriceCode::None ? '' : "<p class=MsoNormal style='margin-bottom:0;line-height: normal'>"  . number_format($rate, 2) . "</p>") ."</td>
+  " . ($priceModelCode == ItemPriceCode::None ? '' : "<p class=MsoNormal style='margin-bottom:0;line-height: normal'>$"  . number_format($rate, 2) . "</p>") ."</td>
   <td width=180 style='width:1.5in;border-top:none;border-left:none;border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
   <p class='label'>Agent</p>
   </td>
@@ -58,8 +58,8 @@ class RegisterForm {
     protected static function patientBlock(\Role $patient, $hospital, $hospRoom) {
 
         $bd = '';
-        if ($patient->getNameObj()->get_birthDate() != '') {
-            $bd = ' (' . date('M j, Y', strtotime($patient->getNameObj()->get_birthDate())) . ')';
+        if ($patient->getRoleMember()->get_birthDate() != '') {
+            $bd = ' (' . date('M j, Y', strtotime($patient->getRoleMember()->get_birthDate())) . ')';
         }
 
         $mkup = "<h2>Patient</h2>
@@ -72,7 +72,7 @@ class RegisterForm {
   <p class='label'>Name</p>
   </td>
   <td style='width:180pt;border-top:1.5pt solid #98C723; border-left:none;border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
-  <p class=MsoNormal style='margin-bottom:0;line-height: normal'>" . $patient->getNameObj()->get_fullName() . $bd . "</p>
+  <p class=MsoNormal style='margin-bottom:0;line-height: normal'>" . $patient->getRoleMember()->get_fullName() . $bd . "</p>
   </td>
   <td style='border-top:1.5pt solid #98C723; border-left:none;border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
   <p class='label'>Hospital</p>
@@ -218,7 +218,7 @@ class RegisterForm {
         // for each guest
         foreach ($guests as $guest) {
 
-            $name = $guest->getNameObj();
+            $name = $guest->getRoleMember();
 
             $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
             //$phoneHome = $guest->phones->get_data(Phone_Purpose::Home);
@@ -334,12 +334,12 @@ class RegisterForm {
 
     }
 
-    public static function generateDocument(\PDO $dbh, $title, \Role $patient, array $guests,  $houseAddr, $hospital, $hospRoom, $patientRelCodes, $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $creditRecord = '', $notes = '') {
+    protected static function generateDocument(\PDO $dbh, $title, \Role $patient, array $guests,  $houseAddr, $hospital, $hospRoom, $patientRelCodes, $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $creditRecord = '', $notes = '', $roomFeeTitle = 'Pledged Fee') {
 
         $uS = Session::getInstance();
 
         $mkup = "<div style='width:800px;margin-bottom:30px; margin-left:10px; margin-right:10p'>";
-        $mkup .= self::titleBlock($roomTitle, $expectedDeparture, $rate, $title, $agent, $uS->RoomPriceModel, $houseAddr);
+        $mkup .= self::titleBlock($roomTitle, $expectedDeparture, $rate, $title, $agent, $uS->RoomPriceModel, $houseAddr, $roomFeeTitle);
 
         $mkup .= self::notesBlock($notes);
 
@@ -348,7 +348,7 @@ class RegisterForm {
         $guestNames = array();
         // for each guest
         foreach ($guests as $guest) {
-            $guestNames[] = $guest->getNameObj()->get_fullName();
+            $guestNames[] = $guest->getRoleMember()->get_fullName();
         }
 
         // Patient
@@ -415,6 +415,7 @@ p.label {
     public static function prepareReceipt(PDO $dbh, $idVisit, $idReservation = 0) {
 
         $uS = Session::getInstance();
+        $labels = new Config_Lite(LABEL_FILE);
         $guests = array();
         $depDate = '';
         $reg = NULL;
@@ -663,7 +664,7 @@ p.label {
 
         }
 
-        return RegisterForm::generateDocument($dbh, $title, $patient, $guests, $houseAddr, $hospital, $hospRoom, $uS->guestLookups[GL_TableNames::PatientRel], $vehs, $agent, $rate, $roomTitle, $depDate, $creditReport, $notes);
+        return RegisterForm::generateDocument($dbh, $title, $patient, $guests, $houseAddr, $hospital, $hospRoom, $uS->guestLookups[GL_TableNames::PatientRel], $vehs, $agent, $rate, $roomTitle, $depDate, $creditReport, $notes, $labels->getString('register', 'rateTitle','Pledged Fee'));
 
     }
 }

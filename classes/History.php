@@ -252,11 +252,13 @@ class History {
             // Number of guests
             $fixedRows["Occupants"] = $r["Number_Guests"];
 
+            $patientTitle = $labels->getString('MemberType', 'patient', 'Patient');
+
             // Patient Name
             $fixedRows['Patient'] = $r['Patient Name'];
 
             if ($r['Patient_Staying'] > 0) {
-                $fixedRows['Patient'] .= HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>'Patient Planning to stay'));
+                $fixedRows['Patient'] .= HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>"$patientTitle Planning to stay"));
             }
 
 
@@ -279,9 +281,20 @@ class History {
             // Diagnosis
             $fixedRows['Diagnosis'] = $r['Diagnosis'];
 
-            if ($status == ReservationStatus::Waitlist) {
+            if ($status == ReservationStatus::Waitlist && $uS->UseWLnotes) {
                 $fixedRows['WL Notes'] = $r['Checkin_Notes'];
             }
+
+            if ($status == ReservationStatus::Waitlist && $static && $uS->UseWLnotes) {
+
+                unset($fixedRows['Patient']);
+                $fixedRows = array('Patient' => $r['Patient Name']) + $fixedRows;
+
+                if ($r['Patient_Staying'] > 0) {
+                    $fixedRows['Patient'] .= HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>"$patientTitle Planning to stay"));
+                }
+            }
+
 
             $returnRows[] = $fixedRows;
 

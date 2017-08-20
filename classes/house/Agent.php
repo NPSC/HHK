@@ -15,18 +15,30 @@
  */
 class Agent extends Role{
 
-    protected function factory(PDO $dbh, $id) {
-        return new AgentMember($dbh, MemBasis::Indivual, $id);
-    }
+    public function __construct(\PDO $dbh, $idPrefix, $id, $title = 'Referral Agent') {
 
+        $this->currentlyStaying = NULL;
+        $this->idVisit = NULL;
+        $this->emergContact = NULL;
+        $this->title = $title;
+        $this->patientPsg = NULL;
+
+        $this->roleMember = new AgentMember($dbh, MemBasis::Indivual, $id);
+        $this->roleMember->setIdPrefix($idPrefix);
+
+        if ($this->roleMember->getMemberDesignation() != MemDesignation::Individual) {
+            throw new Hk_Exception_Runtime("Must be individuals, not organizations");
+        }
+
+    }
 
     public function save(PDO $dbh, array $post, $uname) {
 
         $message = "";
-        $idPrefix = $this->getNameObj()->getIdPrefix();
+        $idPrefix = $this->getRoleMember()->getIdPrefix();
 
         // Name
-        $message .= $this->getNameObj()->saveChanges($dbh, $post);
+        $message .= $this->getRoleMember()->saveChanges($dbh, $post);
 
         // Phone
         $message .= $this->getPhonesObj()->savePost($dbh, $post, $uname, $idPrefix);

@@ -126,7 +126,7 @@ abstract class Reservation {
                 .HTMLContainer::generateMarkup('span', 'Expected Departure: '.
                     HTMLInput::generateMarkup(($this->reservRs->Expected_Departure->getStoredVal() == '' ? '' : $expDepDT->format('M j, Y')), array('name'=>'gstCoDate', 'readonly'=>'readonly', 'size'=>'14'))
                     , array('style'=>'margin-left:.7em;'))
-                , array('style'=>'float:left;', 'id'=>'spnRangePicker'));
+                , array('style'=>'float:left; font-size:.9em;', 'id'=>'spnRangePicker'));
 
     }
 }

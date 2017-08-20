@@ -19,7 +19,7 @@ abstract class Role {
      *
      * @var RoleMember
      */
-    protected $name;
+    protected $roleMember;
 
     /**
      *
@@ -57,37 +57,6 @@ abstract class Role {
     protected $incompleteEmergContact = FALSE;
     protected $patientRelationshipCode = '';
 
-    function __construct(\PDO $dbh, $idPrefix, $id) {
-
-        $this->currentlyStaying = NULL;
-        $this->idVisit = NULL;
-        $this->emergContact = NULL;
-
-        $this->name = $this->factory($dbh, $id);
-        $this->name->setIdPrefix($idPrefix);
-
-        $this->build($dbh);
-
-    }
-
-    protected abstract function factory(\PDO $dbh, $id);
-
-
-    protected function build(\PDO $dbh) {
-
-        // get session instance
-        $uS = Session::getInstance();
-
-
-        if ($this->name->getMemberDesignation() != MemDesignation::Individual) {
-            throw new Hk_Exception_Runtime("Must be individuals, not organizations");
-        }
-
-        $this->addr = new Address($dbh, $this->name, $uS->nameLookups[GL_TableNames::AddrPurpose]);
-        $this->phones = new Phones($dbh, $this->name, $uS->nameLookups[GL_TableNames::PhonePurpose]);
-        $this->emails = new Emails($dbh, $this->name, $uS->nameLookups[GL_TableNames::EmailPurpose]);
-
-    }
 
     /**
      *
@@ -118,7 +87,7 @@ abstract class Role {
 
     protected function createMailAddrMU($class = "", $useCopyIcon = TRUE, $includeCounty = FALSE) {
 
-        $idPrefix = $this->getNameObj()->getIdPrefix();
+        $idPrefix = $this->getRoleMember()->getIdPrefix();
 
         $trash = HTMLContainer::generateMarkup('span', '', array('name'=>$idPrefix, 'id'=>$idPrefix.'t', 'class'=>'hhk-addrErase ui-icon ui-icon-trash', 'title'=>'Erase', 'style'=>'float: right; margin-left:.3em;'));
         $copy = '';
@@ -129,7 +98,7 @@ abstract class Role {
 
         // Incomplete address
         $attr = array('type'=>'checkbox', 'name'=>$idPrefix.'incomplete');
-        if ($this->addr->getSet_Incomplete(Address_Purpose::Home)) {
+        if ($this->getAddrObj()->getSet_Incomplete(Address_Purpose::Home)) {
             $attr['checked'] = 'checked';
         }
 
@@ -139,16 +108,16 @@ abstract class Role {
 
 
         // Last Updated
-        $lastUpdated = $this->addr->getLastUpdated();
+        $lastUpdated = $this->getAddrObj()->getLastUpdated();
         if ($lastUpdated != '') {
-            $lastUpdated = $this->name->getContactLastUpdatedMU(new DateTime($this->addr->getLastUpdated()));
+            $lastUpdated = $this->roleMember->getContactLastUpdatedMU(new DateTime($this->getAddrObj()->getLastUpdated()));
         }
 
         return HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup(
                     'fieldset',
                     HTMLContainer::generateMarkup('legend', 'Home Address'.$copy.$trash, array('style'=>'font-weight:bold;'))
-                    . $this->addr->createPanelMarkup(Address_Purpose::Home, $this->addr->get_recordSet(Address_Purpose::Home), FALSE, $idPrefix, $class, $includeCounty, $lastUpdated)
+                    . $this->addr->createPanelMarkup(Address_Purpose::Home, $this->getAddrObj()->get_recordSet(Address_Purpose::Home), FALSE, $idPrefix, $class, $includeCounty, $lastUpdated)
                     . $incomplete,
                     array('class'=>'hhk-panel')),
                     array('style'=>'float:left; margin-right:3px; font-size:0.9em;'));
@@ -173,60 +142,139 @@ abstract class Role {
         return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('div', $ul . $divs, array('id'=>$idPrefix.'phEmlTabs', 'style'=>'font-size:.9em;')), array('style'=>'float:left;margin-top:5px;margin-right:5px;', 'class'=>'hhk-tdbox'));
     }
 
-    protected function createThinPhoneEmailMu($idPrefix = '') {
+    public function createThinAddrHdr($includeCounty = FALSE) {
 
-        $tbl = new HTMLTable();
+        return HTMLTable::makeTh('Address')
+                . HTMLTable::makeTh('')
+                . HTMLTable::makeTh('Zip')
+                . HTMLTable::makeTh('City')
+                . ($includeCounty ? HTMLTable::makeTh('County') : '')
+                . HTMLTable::makeTh('State')
+                . HTMLTable::makeTh('Country');
 
-        $tr = '';
-        $p = $this->getPhonesObj()->get_CodeArray();
-        $tr .= $this->getPhonesObj()->createPhoneMarkup($p[Phone_Purpose::Cell], '', $idPrefix, FALSE);
+    }
 
-        $e = $this->getEmailsObj()->get_CodeArray();
-        $tr .= $this->getEmailsObj()->createEmailMarkup($e[Email_Purpose::Home], '', $idPrefix, FALSE);
+    public function createThinAddrMU($includeCounty = FALSE) {
 
-        $tbl->addBodyTr($tr);
+        $idPrefix = $this->getRoleMember()->getIdPrefix();
+        $addrIndex = Address_Purpose::Home;
+        $adrRow = $this->getAddrObj()->get_recordSet($addrIndex);
+        $rowTr = '';
 
-        return $tbl->generateMarkup();
+        // address 1
+        $attr = array(
+            'type'=>'text',
+            'size'=>'27',
+            'title'=>'Street Address',
+            'id'=>$idPrefix.'adraddress1' . $addrIndex,
+            'name'=>$idPrefix.'adr[' . $addrIndex . '][address1]',
+            );
+
+
+        $rowTr .= HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->Address_1->getStoredVal(), $attr));
+
+        // Address 2
+        $attr['id'] = $idPrefix.'adraddress2' . $addrIndex;
+        $attr['name'] = $idPrefix.'adr[' . $addrIndex . '][address2]';
+        $attr['title'] = 'Apt, Suite, Mail Stop';
+        $attr['size'] = '17';
+
+        $rowTr .= HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->Address_2->getStoredVal(), $attr));
+
+        // & Zip
+        $zipAttr = array(
+            'id'=>$idPrefix.'adrzip'.$addrIndex,
+            'name'=>$idPrefix.'adr['.$addrIndex.'][zip]',
+            'type'=>'text',
+            'size'=>'10',
+            'class'=>'ckzip hhk-zipsearch ',
+            'title'=>'Enter Postal Code',
+            'data-hhkprefix'=>$idPrefix,
+            'data-hhkindex'=>$addrIndex
+            );
+
+        $rowTr .= HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->Postal_Code->getStoredVal(), $zipAttr));
+
+        // City
+        $attr['id'] = $idPrefix.'adrcity' . $addrIndex;
+        $attr['name'] = $idPrefix.'adr[' . $addrIndex . '][city]';
+        $attr['title'] = 'City Name';
+        $attr['class']= '';
+
+        $rowTr .= HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->City->getStoredVal(), $attr));
+
+        // County
+        if ($includeCounty) {
+            $attr['id'] = $idPrefix.'adrcounty' . $addrIndex;
+            $attr['name'] = $idPrefix.'adr[' . $addrIndex . '][county]';
+            $attr['title'] = 'County Name';
+            $attr['class']= '';
+
+            $rowTr .= HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->County->getStoredVal(), $attr));
+        }
+
+        // State
+        $stAttr['id'] = $idPrefix.'adrstate' . $addrIndex;
+        $stAttr['name'] = $idPrefix.'adr[' . $addrIndex . '][state]';
+        $stAttr['title'] = 'Select State or Province';
+        $stAttr['style'] = 'margin-right:8px;';
+        $stAttr["class"] = "bfh-states";
+        $stAttr['data-country'] = $idPrefix.'adrcountry' . $addrIndex;
+        $stAttr['data-state'] = $adrRow->State_Province->getStoredVal();
+
+        $rowTr .= HTMLTable::makeTd(HTMLSelector::generateMarkup('', $stAttr));
+
+        // Country
+        $coAttr['id'] = $idPrefix.'adrcountry' . $addrIndex;
+        $coAttr['name'] = $idPrefix.'adr[' . $addrIndex . '][country]';
+        $coAttr['title'] = 'Select Country';
+        $coAttr['class'] = 'input-medium bfh-countries';
+        $coAttr['data-country'] = ($adrRow->Country_Code->getStoredVal() == '' ? 'US' : $adrRow->Country_Code->getStoredVal());
+
+        $rowTr .= HTMLTable::makeTd(HTMLSelector::generateMarkup('', $coAttr));
+
+
+        return $rowTr;
 
     }
 
     public function createThinMarkup($staying, $lockRelChooser) {
 
-        $tr = $this->name->createMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser);
+        $td = '';
 
-        $cbStay = array(
-            'type'=>'checkbox',
-            'name'=>$this->getIdName() .'cbStay',
-            'class' => 'hhk-cbStay',
-        );
-
-        $lblStay = array(
-            'for'=>$this->getIdName() . 'cbStay',
-            'id' => $this->getIdName() . 'lblStay',
-            'data-stay' => '0',
-            'class' => 'hhk-lblStay',
-        );
-
-        if ($staying == '1') {
-            $lblStay['data-stay'] = '1';
-        }
-
+        // Staying button
         if ($this->getNoReturn() != '') {
             // Set for no return
-            $tr .= HTMLTable::makeTd('No Return', array('title'=>$this->getNoReturn()));
+            $td = HTMLTable::makeTd('No Return', array('title'=>$this->getNoReturn()));
 
         } else if ($staying == 'x') {
             // This person cannot stay
-            $tr .= HTMLTable::makeTd('');
+            $td = HTMLTable::makeTd('');
 
         } else {
 
-            $tr .= HTMLTable::makeTd(
+            $cbStay = array(
+                'type'=>'checkbox',
+                'name'=>$this->getIdName() .'cbStay',
+                'class' => 'hhk-cbStay',
+            );
+
+            $lblStay = array(
+                'for'=>$this->getIdName() . 'cbStay',
+                'id' => $this->getIdName() . 'lblStay',
+                'data-stay' => ($staying == '1' ? '1' : '0'),
+                'class' => 'hhk-lblStay',
+            );
+
+            $td = HTMLTable::makeTd(
                 HTMLContainer::generateMarkup('label', 'Stay', $lblStay)
                 . HTMLInput::generateMarkup('', $cbStay));
         }
 
-        return $tr;
+        // Phone
+        $ph = HTMLTable::makeTd($this->getPhonesObj()->get_Data()['Phone_Num']);
+
+        return $td . $this->roleMember->createThinMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser) . $ph;
 
     }
 
@@ -238,10 +286,10 @@ abstract class Role {
         $uS = Session::getInstance();
 
         // Street Address
-        $mkup .= $this->createMailAddrMU($this->getNameObj()->getIdPrefix() . 'hhk-addr-val', TRUE, $uS->county);
+        $mkup .= $this->createMailAddrMU($this->getRoleMember()->getIdPrefix() . 'hhk-addr-val', TRUE, $uS->county);
 
         // Phone and email
-        $mkup .= $this->createPhoneEmailMU($this->getNameObj()->getIdPrefix());
+        $mkup .= $this->createPhoneEmailMU($this->getRoleMember()->getIdPrefix());
 
         return $mkup;
     }
@@ -256,10 +304,10 @@ abstract class Role {
     public function save(\PDO $dbh, array $post, $uname) {
 
         $message = "";
-        $idPrefix = $this->getNameObj()->getIdPrefix();
+        $idPrefix = $this->getRoleMember()->getIdPrefix();
 
         // Name
-        $message .= $this->getNameObj()->saveChanges($dbh, $post);
+        $message .= $this->getRoleMember()->saveChanges($dbh, $post);
 
 
         $incomplete = FALSE;
@@ -275,7 +323,7 @@ abstract class Role {
         $message .= $this->getAddrObj()->savePanel($dbh, $cdArray[Address_Purpose::Home], $post, $uname, $idPrefix, $incomplete);
 
         // set preferred mail address
-        $this->getNameObj()->verifyPreferredAddress($dbh, $this->getAddrObj(), $uname);
+        $this->getRoleMember()->verifyPreferredAddress($dbh, $this->getAddrObj(), $uname);
 
         // Set incomplete address
         if ($this->getAddrObj()->getSet_Incomplete(Address_Purpose::Home)) {
@@ -351,8 +399,8 @@ where r.idPsg = $idPsg and s.idName = " . $id;
     public function getNoReturn() {
         $uS = Session::getInstance();
 
-        if (isset($uS->nameLookups['NoReturnReason'][$this->name->getNoReturnDemog()])) {
-            return $uS->nameLookups['NoReturnReason'][$this->name->getNoReturnDemog()][1];
+        if (isset($uS->nameLookups['NoReturnReason'][$this->roleMember->getNoReturnDemog()])) {
+            return $uS->nameLookups['NoReturnReason'][$this->roleMember->getNoReturnDemog()][1];
         }
 
         return '';
@@ -419,27 +467,43 @@ where r.idPsg = $idPsg and s.idName = " . $id;
     }
 
     public function getIdName() {
-        return $this->name->get_idName();
+        return $this->roleMember->get_idName();
     }
 
-    public function getNameObj() {
-        return $this->name;
+    public function getRoleMember() {
+        return $this->roleMember;
     }
 
     public function getAddrObj() {
+
+        if (is_null($this->addr)) {
+            $dbh = initPDO();
+            $uS = Session::getInstance();
+            $this->addr = new Address($dbh, $this->roleMember, $uS->nameLookups[GL_TableNames::AddrPurpose]);
+        }
         return $this->addr;
     }
 
     public function getPhonesObj() {
+        if (is_null($this->phones)) {
+            $dbh = initPDO();
+            $uS = Session::getInstance();
+            $this->phones = new Phones($dbh, $this->roleMember, $uS->nameLookups[GL_TableNames::PhonePurpose]);
+        }
         return $this->phones;
     }
 
     public function getEmailsObj() {
+        if (is_null($this->emails)) {
+            $dbh = initPDO();
+            $uS = Session::getInstance();
+            $this->emails = new Emails($dbh, $this->roleMember, $uS->nameLookups[GL_TableNames::EmailPurpose]);
+        }
         return $this->emails;
     }
 
     public function isNew() {
-        return $this->name->isNew();
+        return $this->roleMember->isNew();
     }
 
     public function getHousePhone() {

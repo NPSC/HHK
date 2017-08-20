@@ -156,7 +156,7 @@ if ($idRegistration > 0) {
 
 
     $guest = new Guest($dbh, '', $spans[(count($spans) - 1)]['idPrimaryGuest']);
-    $name = $guest->getNameObj();
+    $name = $guest->getRoleMember();
 
     $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
     $stmtMarkup = Receipt::createComprehensiveStatements($dbh, $spans, $idRegistration, $name->get_fullName(), $priceModel);
@@ -169,7 +169,7 @@ if ($idRegistration > 0) {
 
     // Generate Statement
     $guest = new Guest($dbh, '', $visit->getPrimaryGuestId());
-    $name = $guest->getNameObj();
+    $name = $guest->getRoleMember();
 
     $stmtMarkup = Receipt::createStatementMarkup($dbh, $idVisit, $name->get_fullName());
 
@@ -224,7 +224,7 @@ $emtableMarkup .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMa
 
         .HTMLContainer::generateMarkup('form',
                 HTMLInput::generateMarkup('Print', array('id'=>'btnPrint', 'style'=>'margin-right:1em;'))
-                .HTMLInput::generateMarkup('Download MS Word', array('name'=>'btnWord', 'type'=>'submit'))
+                .HTMLInput::generateMarkup('Download to MS Word', array('name'=>'btnWord', 'type'=>'submit'))
                 .HTMLInput::generateMarkup($idRegistration, array('name'=>'hdnIdReg', 'type'=>'hidden'))
                 .HTMLInput::generateMarkup($idVisit, array('name'=>'hdnIdVisit', 'type'=>'hidden'))
                 , array('name'=>'frmwrod','action'=>'ShowStatement.php', 'method'=>'post'))

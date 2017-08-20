@@ -322,27 +322,64 @@ where
 
         if ($idName > 0) {
 
-            $stmt = $dbh->query("select n.Company, a.Address_1, a.Address_2, a.City, a.State_Province, a.Postal_Code, p.Phone_Num, n.Web_Site
-    from name n left join name_address a on n.idName = a.idName and n.Preferred_Mail_Address = a.Purpose left join name_phone p on n.idName = p.idName and n.Preferred_Phone = p.Phone_Code where n.idName = $idName");
+            $stmt = $dbh->query("SELECT
+    n.Company,
+    CASE
+        WHEN a.Address_2 != '' THEN a.Address_1
+        ELSE CONCAT(a.Address_1, ' ', a.Address_2)
+    END AS `Address`,
+    IFNULL(a.City, '') AS `City`,
+    IFNULL(a.State_Province, '') AS `State`,
+    IFNULL(a.Postal_Code, '') AS `Zip`,
+    IFNULL(p.Phone_Num, '') AS `Phone`,
+    IFNULL(e.Email, '') AS `Email`,
+    IFNULL(n.Web_Site, '') AS `Web_Site`
+FROM
+    name n
+        LEFT JOIN
+    name_address a ON n.idName = a.idName
+        AND n.Preferred_Mail_Address = a.Purpose
+        LEFT JOIN
+    name_phone p ON n.idName = p.idName
+        AND n.Preferred_Phone = p.Phone_Code
+        LEFT JOIN
+    name_email e ON n.idName = e.idName
+        AND n.Preferred_Email = e.Purpose
+WHERE
+    n.idName = $idName");
 
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) == 1) {
 
-                $street = $rows[0]['Address_1'];
-
-                if ($rows[0]['Address_2'] != '') {
-                    $street .= ', ' . $rows[0]['Address_2'];
-                }
                 $adrTbl = new HTMLTable();
 
-                $adrTbl->addBodyTr(HTMLTable::makeTd($rows[0]['Company']));
-                $adrTbl->addBodyTr(HTMLTable::makeTd($street));
-                $adrTbl->addBodyTr(HTMLTable::makeTd($rows[0]['City'] . ', ' . $rows[0]['State_Province'] . ' ' . $rows[0]['Postal_Code']));
-                if ($rows[0]['Phone_Num'] != '') {
-                    $adrTbl->addBodyTr(HTMLTable::makeTd('Phone: ' . $rows[0]['Phone_Num']));
+                $street = $rows[0]['Address'];
+
+
+                if ($rows[0]['City'] != '') {
+                    $rows[0]['City'] .= ', ';
                 }
-                $adrTbl->addBodyTr(HTMLTable::makeTd($rows[0]['Web_Site']));
+
+                $adrTbl->addBodyTr(HTMLTable::makeTd($rows[0]['Company'], array('style'=>'font-size:1.1em;')));
+
+                if ($street != '') {
+                    $adrTbl->addBodyTr(HTMLTable::makeTd($street));
+                }
+
+                $adrTbl->addBodyTr(HTMLTable::makeTd($rows[0]['City'] . $rows[0]['State'] . ' ' . $rows[0]['Zip']));
+
+                if ($rows[0]['Phone'] != '') {
+                    $adrTbl->addBodyTr(HTMLTable::makeTd('Phone: ' . $rows[0]['Phone']));
+                }
+
+                if ($rows[0]['Email'] != '') {
+                    $adrTbl->addBodyTr(HTMLTable::makeTd($rows[0]['Email']));
+                }
+
+                if ($rows[0]['Web_Site'] != '') {
+                    $adrTbl->addBodyTr(HTMLTable::makeTd($rows[0]['Web_Site']));
+                }
 
                 $mkup = $adrTbl->generateMarkup();
             }
@@ -1190,8 +1227,8 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
                 array('style'=>'margin-bottom:10px;margin-right:20px;float:left;'));
         }
 
-        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $uS->sId), array('style'=>'float:left;margin-bottom:10px;'));
-        $rec .= HTMLContainer::generateMarkup('h2', 'Comprehensive Statement of Account', array('style'=>'clear:both;'));
+        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $uS->sId), array('style'=>'float:left;margin-bottom:1em;'));
+        $rec .= HTMLContainer::generateMarkup('h2', 'Comprehensive Statement of Account', array('style'=>'clear:both;margin-bottom:1em;'));
 
 
         $rec .= self::makeSummaryDiv($guestName, $patientName, $hospital, $idPsg, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, Registration::loadLodgingBalance($dbh, $idRegistration), $totalNights);
@@ -1302,9 +1339,9 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
                 array('style'=>'margin-bottom:10px;margin-right:20px;float:left;'));
         }
 
-        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $uS->sId), array('style'=>'float:left;margin-bottom:10px;'));
+        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $uS->sId), array('style'=>'float:left;margin-bottom:1em;'));
 
-        $rec .= HTMLContainer::generateMarkup('h2', 'Statement of Account', array('style'=>'clear:both;'));
+        $rec .= HTMLContainer::generateMarkup('h2', 'Statement of Account', array('style'=>'clear:both;margin-bottom:1em;'));
 
         $rec .= self::makeSummaryDiv($guestName, $patientName, $hospital, $idPsg, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, Registration::loadLodgingBalance($dbh, $idRegistration), $totalNights);
 
@@ -1329,7 +1366,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
 
         $tbl->addBodyTr(HTMLTable::makeTd('Guest:', array('class'=>'tdlabel')) . HTMLTable::makeTd($guestName));
         $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($patientName));
-        $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('statement', 'psgLabel', 'Patient Support Group') . ' Id: ' . $idPsg, array('colspan'=>'2', 'style'=>'font-size:.8em;')));
+        //$tbl->addBodyTr(HTMLTable::makeTd($labels->getString('statement', 'psgLabel', 'Patient Support Group') . ' Id: ' . $idPsg, array('colspan'=>'2', 'style'=>'font-size:.8em;')));
         $tbl->addBodyTr(HTMLTable::makeTd('Provider:', array('class'=>'tdlabel')) . HTMLTable::makeTd($hospital));
 
         // Set up balance prompt ..

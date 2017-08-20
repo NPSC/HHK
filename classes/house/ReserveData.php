@@ -79,7 +79,7 @@ class ReserveData {
         $this->patBirthDateFlag = $uS->PatientBirthDate;
         $this->patLabel = $labels->getString('MemberType', 'patient', 'Patient');
         $this->psgTitle = $labels->getString('statement', 'psgLabel', 'Patient Support Group');
-        $this->wlNotesLabel = $labels->getString('referral', 'notesLabel', 'Reservation Notes');
+        $this->wlNotesLabel = $labels->getString('referral', 'waitlistNotesLabel', 'Waitlist Notes');
         $this->addrPurpose = '1';
         $this->resvChooser = '';
         $this->psgChooser = '';
@@ -89,7 +89,7 @@ class ReserveData {
 
     public function toArray() {
 
-        $rtn =  array(
+        $rtnData =  array(
             'id' => $this->getId(),
             'rid' => $this->getIdResv(),
             'idPsg' => $this->getIdPsg(),
@@ -98,22 +98,22 @@ class ReserveData {
         );
 
         if ($this->resvChooser != '') {
-            $rtn[ReserveData::RESV_CHOOSER] = $this->resvChooser;
+            $rtnData[ReserveData::RESV_CHOOSER] = $this->resvChooser;
         }
 
         if ($this->psgChooser != '') {
-            $rtn[ReserveData::PSG_CHOOSER] = $this->psgChooser;
+            $rtnData[ReserveData::PSG_CHOOSER] = $this->psgChooser;
         }
 
         if ($this->familySection != '') {
-            $rtn[ReserveData::FAM_SECTION] = $this->familySection;
+            $rtnData[ReserveData::FAM_SECTION] = $this->familySection;
         }
 
         if ($this->fullName != '') {
-            $rtn[ReserveData::FULL_NAME] = $this->fullName;
+            $rtnData[ReserveData::FULL_NAME] = $this->fullName;
         }
 
-        return $rtn;
+        return $rtnData;
     }
 
     public function getIdResv() {

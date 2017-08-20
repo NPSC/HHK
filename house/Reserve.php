@@ -137,6 +137,7 @@ $resvObjEncoded = json_encode($resvObj->toArray());
         <title><?php echo $wInit->pageTitle; ?></title>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <link rel="stylesheet" href="css/daterangepicker.min.css">
+
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
 <!--        Fix the ugly checkboxes-->
@@ -168,7 +169,7 @@ $resvObjEncoded = json_encode($resvObj->toArray());
 
             <form action="Referral.php" method="post"  id="form1">
                 <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
-                <div id="famSection" style="font-size: .9em; clear:left; float:left; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
+                <div id="famSection" style="font-size: .9em; clear:left; float:left; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget"></div>
                 <div id="hospitalSection" style="font-size: .9em; padding-left:0;margin-top:0; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
                 <div id="resvStatus" style="float:left; font-size:.9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog"></div>
                 <div id="notesGuest" style="float:left; font-size:.9em; display:none; width: 600px;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog"></div>
@@ -192,7 +193,7 @@ $resvObjEncoded = json_encode($resvObj->toArray());
 
 function familySection(data) {
 
-    var newRow;
+
     var fDiv = $(data.famSection.div).addClass('ui-widget-content').prop('id', 'divfamDetail');
     var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
         .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
@@ -218,8 +219,9 @@ function familySection(data) {
             .append(fDiv)
             .show();
 
-    //fDiv.tooltip();
-    $('.hhk-cbStay').checkboxradio();
+    $('.hhk-cbStay').checkboxradio({
+        classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
+    });
 
     $('.hhk-lblStay').each(function () {
         if ($(this).data('stay') == '1') {
@@ -227,11 +229,15 @@ function familySection(data) {
         }
     });
 
-    $('#addMoreVisitors').button().click(function (event) {
-        event.stopPropagation();
-        var trlast = $('#tblFamily tbody tr:last');
-        trlast.clone().appendTo($('#tblFamily tbody'));
+    $('.ckbdate').datepicker({
+        yearRange: '-99:+00',
+        changeMonth: true,
+        changeYear: true,
+        autoSize: true,
+        maxDate: 0,
+        dateFormat: 'M d, yy'
     });
+
 
 }
 
@@ -268,7 +274,7 @@ function expectedDateRange(data) {
 
 function hospitalSection(hosp) {
 
-    var hDiv = $(hosp.div).addClass('ui-widget-content').prop('id', 'divhospDetail');
+    var hDiv = $(hosp.div).addClass('ui-widget-content').prop('id', 'divhospDetail').hide();
     var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
         .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
         .append($("<span id='h_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
@@ -306,8 +312,8 @@ function hospitalSection(hosp) {
         }
     }
 
-    $('#hospitalSection').show('blind');
-    if ($('#selHospital').val() !== '') {
+    $('#hospitalSection').show();
+    if ($('#selHospital').val() === '') {
         hHdr.click();
     }
 }
@@ -486,6 +492,7 @@ $(document).ready(function() {
 
     function getGuest(item) {
 
+        hideAlertMessage();
         if (item.No_Return !== undefined && item.No_Return !== '') {
             flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
             return;
@@ -516,6 +523,7 @@ $(document).ready(function() {
         createAutoComplete($('#gstphSearch'), 4, {cmd: 'role', gp:'1'}, getGuest);
 
         $guestSearch.keypress(function(event) {
+            hideAlertMessage();
             $(this).removeClass('ui-state-highlight');
         });
 
