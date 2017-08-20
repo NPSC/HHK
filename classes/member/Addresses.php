@@ -291,7 +291,7 @@ class Address extends ContactPoint{
      * @param bool $showBadAddrCkBox
      * @return string
      */
-    public function createPanelMarkup($addrIndex, NameAddressRS $adrRow, $showBadAddrCkBox = FALSE, $idPrefix = "", $class = "", $includeCounty = FALSE, $lastUpdated = '', $thinMode = FALSE) {
+    public function createPanelMarkup($addrIndex, NameAddressRS $adrRow, $showBadAddrCkBox = FALSE, $idPrefix = "", $class = "", $includeCounty = FALSE, $lastUpdated = '') {
 
         $badAddrClass = "";
 
@@ -316,11 +316,8 @@ class Address extends ContactPoint{
          }
 
 
-
         // Address table
         $table = new HTMLTable();
-        $hdrTr = '';
-        $rowTr = '';
 
         // address 1
         $attr = array(
@@ -332,14 +329,9 @@ class Address extends ContactPoint{
             'class'=>$class
             );
 
-        if ($thinMode) {
-            $hdrTr .= HTMLTable::makeTd('Street', array('class'=>'tdlabel', 'title'=>'Street Address'));
-            $rowTr .= HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->Address_1->getStoredVal(), $attr));
-        } else {
-            $table->addBodyTr(HTMLTable::makeTd('Street', array('class'=>'tdlabel', 'title'=>'Street Address'))
-                . HTMLTable::makeTd(
-                        HTMLInput::generateMarkup($adrRow->Address_1->getStoredVal(), $attr)));
-        }
+        $table->addBodyTr(HTMLTable::makeTd('Street', array('class'=>'tdlabel', 'title'=>'Street Address'))
+            . HTMLTable::makeTd(
+                    HTMLInput::generateMarkup($adrRow->Address_1->getStoredVal(), $attr)));
 
         // Address 2
         $attr['id'] = $idPrefix.'adraddress2' . $addrIndex;
@@ -347,14 +339,9 @@ class Address extends ContactPoint{
         $attr['title'] = 'Apt, Suite, Mail Stop';
         $attr['class'] = "";
 
-        if ($thinMode) {
-            $hdrTr .= HTMLTable::makeTd('', array('class'=>'tdlabel', 'title'=>'Apt, Suite, Mail Stop'));
-            $rowTr .= HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->Address_2->getStoredVal(), $attr));
-        } else {
-            $table->addBodyTr(HTMLTable::makeTd('', array('class'=>'tdlabel', 'title'=>'Apt, Suite, Mail Stop'))
-                . HTMLTable::makeTd(
-                        HTMLInput::generateMarkup($adrRow->Address_2->getStoredVal(), $attr)));
-        }
+        $table->addBodyTr(HTMLTable::makeTd('', array('class'=>'tdlabel', 'title'=>'Apt, Suite, Mail Stop'))
+            . HTMLTable::makeTd(
+                    HTMLInput::generateMarkup($adrRow->Address_2->getStoredVal(), $attr)));
 
         // & Zip
         $zipAttr = array(
@@ -369,14 +356,9 @@ class Address extends ContactPoint{
             );
 
         // Zip
-        if ($thinMode) {
-            $hdrTr .= HTMLTable::makeTd('Zip', array('class'=>'tdlabel', 'title'=>'Enter Postal Code'));
-            $rowTr .= HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->Postal_Code->getStoredVal(), $zipAttr));
-        } else {
-            $table->addBodyTr(HTMLTable::makeTd('Zip', array('class'=>'tdlabel', 'title'=>'Enter Zip Code'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->Postal_Code->getStoredVal(), $zipAttr))
-                );
-        }
+        $table->addBodyTr(HTMLTable::makeTd('Zip', array('class'=>'tdlabel', 'title'=>'Enter Zip Code'))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->Postal_Code->getStoredVal(), $zipAttr)));
+
 
         // City
         $attr['id'] = $idPrefix.'adrcity' . $addrIndex;
@@ -384,15 +366,10 @@ class Address extends ContactPoint{
         $attr['title'] = 'City Name';
         $attr['class']= $class;
 
-        if ($thinMode) {
-            $hdrTr .= HTMLTable::makeTd('City', array('class'=>'tdlabel', 'title'=>'City Name'));
-            $rowTr .= HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->City->getStoredVal(), $attr));
-        } else {
 
-            $table->addBodyTr(HTMLTable::makeTd('City', array('class'=>'tdlabel', 'title'=>'City Name'))
-                . HTMLTable::makeTd(
-                        HTMLInput::generateMarkup($adrRow->City->getStoredVal(), $attr)));
-        }
+        $table->addBodyTr(HTMLTable::makeTd('City', array('class'=>'tdlabel', 'title'=>'City Name'))
+            . HTMLTable::makeTd(
+                    HTMLInput::generateMarkup($adrRow->City->getStoredVal(), $attr)));
 
         // County
         if ($includeCounty) {
@@ -401,14 +378,10 @@ class Address extends ContactPoint{
             $attr['title'] = 'County Name';
             $attr['class']= '';
 
-            if ($thinMode) {
-                $hdrTr .= HTMLTable::makeTd('County', array('class'=>'tdlabel', 'title'=>'County Name'));
-                $rowTr .= HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->County->getStoredVal(), $attr));
-            } else {
-                $table->addBodyTr(HTMLTable::makeTd('County', array('class'=>'tdlabel', 'title'=>'County Name'))
-                        . HTMLTable::makeTd(
-                                HTMLInput::generateMarkup($adrRow->County->getStoredVal(), $attr)));
-            }
+            $table->addBodyTr(HTMLTable::makeTd('County', array('class'=>'tdlabel', 'title'=>'County Name'))
+                    . HTMLTable::makeTd(
+                            HTMLInput::generateMarkup($adrRow->County->getStoredVal(), $attr)));
+
         }
 
         // State
@@ -420,13 +393,9 @@ class Address extends ContactPoint{
         $stAttr['data-country'] = $idPrefix.'adrcountry' . $addrIndex;
         $stAttr['data-state'] = $adrRow->State_Province->getStoredVal();
 
-        if ($thinMode) {
-            $hdrTr .= HTMLTable::makeTd('State', array('class'=>'tdlabel', 'title'=>'Select State or Province'));
-            $rowTr .= HTMLTable::makeTd(HTMLSelector::generateMarkup('', $stAttr));
-        } else {
-            $table->addBodyTr(HTMLTable::makeTd('State', array('class'=>'tdlabel', 'title'=>'Select State or Province'))
-                . HTMLTable::makeTd(HTMLSelector::generateMarkup('', $stAttr)));
-        }
+        $table->addBodyTr(HTMLTable::makeTd('State', array('class'=>'tdlabel', 'title'=>'Select State or Province'))
+            . HTMLTable::makeTd(HTMLSelector::generateMarkup('', $stAttr)));
+
 
         // Country
         $coAttr['id'] = $idPrefix.'adrcountry' . $addrIndex;
@@ -435,34 +404,17 @@ class Address extends ContactPoint{
         $coAttr['class'] = $class . ' input-medium bfh-countries';
         $coAttr['data-country'] = ($adrRow->Country_Code->getStoredVal() == '' ? 'US' : $adrRow->Country_Code->getStoredVal());
 
-        if ($thinMode) {
 
-            $hdrTr .= HTMLTable::makeTd('Country', array('class'=>'tdlabel', 'title'=>'Select Country'));
-            $rowTr .= HTMLTable::makeTd(HTMLSelector::generateMarkup('', $coAttr)
-                // Bad Address Checkbox
-                . $badAddrMarkup
-                . HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;')));
-
-        } else {
-
-            $table->addBodyTr(HTMLTable::makeTd('Country', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(HTMLSelector::generateMarkup('', $coAttr)
-                // Bad Address Checkbox
-                . $badAddrMarkup
-                . HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'))
-                ));
-        }
-
-        if ($thinMode) {
-            $table->addHeaderTr($hdrTr);
-            $table->addBodyTr($rowTr);
-        }
+        $table->addBodyTr(HTMLTable::makeTd('Country', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd(HTMLSelector::generateMarkup('', $coAttr)
+            // Bad Address Checkbox
+            . $badAddrMarkup
+            . HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'))
+            ));
 
         return $table->generateMarkup(array('class'=>$badAddrClass)) . $lastUpdated;
 
     }
-
-
 
 
     /**

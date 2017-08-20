@@ -206,6 +206,22 @@ table {
     margin-top: 5px;
 
 }
+.hhk-unselected-text {
+    color: #d0e5f5;
+}
+.hhk-table tbody tr.odd {
+  background-color: #ebebeb;
+}
+.hhk-table tbody tr.odd.selected {
+  background-color: #acbad4;
+}
+.hhk-table tbody tr:hover {
+  background-color: #f6f6f6;
+}
+.hhk-table tbody tr:hover.selected {
+  background-color: #aab7d1;
+}
+
 .hhk-panel .hhk-panel {
     margin: 0;
 }

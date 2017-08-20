@@ -35,7 +35,7 @@ class RegistrationForm {
         $doc .= $this->makeGuestRegSection();
 
         $doc .= $this->makePrimaryGuest($priGuest);
-        $fullNames[] = $priGuest->getNameObj()->get_fullName();
+        $fullNames[] = $priGuest->getRoleMember()->get_fullName();
 
         // additional guests
         if (count($addtionalGuests) > 0) {
@@ -44,7 +44,7 @@ class RegistrationForm {
             $guest = array_shift($addtionalGuests);
             $doc .= $this->makeFirstAdditionalGuest($guest);
 
-            $fullNames[] = $guest->getNameObj()->get_fullName();
+            $fullNames[] = $guest->getRoleMember()->get_fullName();
 
             // set index to count the remainder
             $index = 3;
@@ -53,7 +53,7 @@ class RegistrationForm {
             foreach ($addtionalGuests as $g) {
 
                 $doc .= self::makeAdditionalGuest($g, $index++);
-                $fullNames[] = $g->getNameObj()->get_fullName();
+                $fullNames[] = $g->getRoleMember()->get_fullName();
             }
 
             if ($index < 5) {
@@ -253,7 +253,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
 
     public function makeFirstAdditionalGuest(\Guest $guest) {
 
-        $name = $guest->getNameObj();
+        $name = $guest->getRoleMember();
 
         return $this->makeFirstAdditional($name->get_firstName(), $name->get_lastName(), $guest->getCheckinDate(), $guest->getPatientRelationshipCode(), '', '');
 
@@ -261,7 +261,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
 
     public function makeAdditionalGuest(\Guest $guest, $index) {
 
-        $name = $guest->getNameObj();
+        $name = $guest->getRoleMember();
         $uS = Session::getInstance();
 
         $relat = '';
@@ -299,7 +299,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
 
     public function makePrimaryGuest(\Guest $guest) {
 
-        $name = $guest->getNameObj();
+        $name = $guest->getRoleMember();
         $addr = $guest->getAddrObj();
         $phone = $guest->getPhonesObj();
         $email = $guest->getEmailsObj();

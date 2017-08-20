@@ -15,12 +15,22 @@
  */
 class Patient extends Role {
 
-    protected function factory(PDO $dbh, $id) {
-        $this->title = 'Patient';
+    public function __construct(\PDO $dbh, $idPrefix, $id, $title = 'Patient') {
+
+        $this->currentlyStaying = NULL;
+        $this->idVisit = NULL;
+        $this->emergContact = NULL;
+        $this->title = $title;
         $this->patientPsg = NULL;
         $this->setPatientRelationshipCode(RelLinkType::Self);
 
-        return new PatientMember($dbh, MemBasis::Indivual, $id);
+        $this->roleMember = new PatientMember($dbh, MemBasis::Indivual, $id);
+        $this->roleMember->setIdPrefix($idPrefix);
+
+        if ($this->roleMember->getMemberDesignation() != MemDesignation::Individual) {
+            throw new Hk_Exception_Runtime("Must be individuals, not organizations");
+        }
+
     }
 
     public function getPatientPsg(PDO $dbh) {
@@ -37,14 +47,14 @@ class Patient extends Role {
 
         // Build name.
         $tbl = new HTMLTable();
-        $tbl->addHeaderTr($this->name->createMarkupHdr());
-        $tbl->addBodyTr($this->name->createMarkupRow());
+        $tbl->addHeaderTr($this->roleMember->createMarkupHdr(NULL, TRUE));
+        $tbl->addBodyTr($this->roleMember->createMarkupRow('', TRUE));
 
         $mk1 = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('fieldset',
                         HTMLContainer::generateMarkup('legend', $this->title.' Name', array('style'=>'font-weight:bold;'))
                         . $tbl->generateMarkup()
-                        . HTMLContainer::generateMarkup('div', $this->name->getContactLastUpdatedMU(new DateTime ($this->name->get_lastUpdated()), 'Name'), array('style'=>'float:right;'))
+                        . HTMLContainer::generateMarkup('div', $this->roleMember->getContactLastUpdatedMU(new DateTime ($this->roleMember->get_lastUpdated()), 'Name'), array('style'=>'float:right;'))
                         , array('class'=>'hhk-panel'))
                 , array('style'=>'float:left; margin-right:.5em;margin-bottom:.4em; font-size:.9em;'));
 

@@ -1075,7 +1075,7 @@ class HouseServices {
 
             // save the guest
             $guest->save($dbh, $post, $uS->username);
-            $nameObj = $guest->getNameObj();
+            $nameObj = $guest->getRoleMember();
 
             // Attach to PSG if not
             if (isset($psg->psgMembers[$guest->getIdName()]) === FALSE) {
@@ -2169,13 +2169,13 @@ class HouseServices {
 
         // Exit no return guests.
         if ($guest->getNoReturn() != '') {
-            return array('error'=>'Guest "' .$guest->getNameObj()->get_FullName() . '" is flagged for No Return.  Reason: ' . $guest->getNoReturn());
+            return array('error'=>'Guest "' .$guest->getRoleMember()->get_FullName() . '" is flagged for No Return.  Reason: ' . $guest->getNoReturn());
         }
 
         // guest already staying?
         if ($guest->isCurrentlyStaying($dbh)) {
 
-            $nameObj = $guest->getNameObj();
+            $nameObj = $guest->getRoleMember();
             return array('error' => $nameObj->get_fullName() . ' is already checked in.  ');
         }
 

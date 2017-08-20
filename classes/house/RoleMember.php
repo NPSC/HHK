@@ -16,15 +16,14 @@
 abstract class RoleMember extends IndivMember {
 
     protected $showBirthDate;
+    protected $patientRelCode;
 
     protected abstract function getMyMemberType();
 
-    public function createMarkupHdr($labels = NULL, $hideRelChooser = TRUE) {
+    public function createThinMarkupHdr($labels = NULL, $hideRelChooser = TRUE) {
 
         $tr =
-            HTMLTable::makeTh('Id')
-            .HTMLTable::makeTh('Prefix')
-            . HTMLTable::makeTh('First Name')
+             HTMLTable::makeTh('First Name')
             . HTMLTable::makeTh('Middle')
             . HTMLTable::makeTh('Last Name')
             .HTMLTable::makeTh('Suffix')
@@ -48,51 +47,63 @@ abstract class RoleMember extends IndivMember {
         return $tr;
     }
 
-    public function createMarkupRow() {
+    public function createMarkupHdr($labels = NULL, $hideRelChooser = TRUE) {
+
+        $tr =
+            HTMLTable::makeTh('Id')
+            .HTMLTable::makeTh('Prefix');
+
+        return $tr . $this->createThinMarkupHdr($labels, $hideRelChooser);
+
+    }
+
+    public function createMarkupRow($patientRelationship = '', $hideRelChooser = TRUE, $lockRelChooser = FALSE) {
 
         $uS = Session::getInstance();
-        $idPrefix = $this->getIdPrefix();
 
         // Id
-        $tr = HTMLTable::makeTd(HTMLInput::generateMarkup(($this->nameRS->idName->getStoredVal() == 0 ? '' : $this->nameRS->idName->getStoredVal())
-                        , array('name'=>$idPrefix.'idName', 'size'=>'7', 'readonly'=>'readonly', 'class'=>'ignrSave', 'style'=>'border:none;')));
+        $tr = HTMLTable::makeTd($this->get_idName() == 0 ? '' : $this->get_idName());
 
-        $attrs = array('data-prefix'=>$idPrefix);
-
-
-        $attrs['name'] = $idPrefix.'selPrefix';
+        // Name Prefix
         $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
                 HTMLSelector::doOptionsMkup(
                         $uS->nameLookups[GL_TableNames::NamePrefix],
                         $this->nameRS->Name_Prefix->getstoredVal(), TRUE),
-                $attrs));
+                array('data-prefix'=>$this->getIdPrefix(), 'name' => $this->getIdPrefix().'selPrefix')));
+
+        return $tr . $this->createThinMarkupRow($patientRelationship, $hideRelChooser, $lockRelChooser);
+    }
+
+    public function createThinMarkupRow($patientRelationship = '', $hideRelChooser = TRUE, $lockRelChooser = FALSE) {
+
+        $uS = Session::getInstance();
+
+        $attrs = array('data-prefix'=>$this->getIdPrefix());
 
         // First Name
-        $attrs['name'] = $idPrefix.'txtFirstName';
+        $attrs['name'] = $this->getIdPrefix().'txtFirstName';
         $attrs['class'] = 'hhk-firstname';
         $attrs['autofocus'] = 'autofocus';
-        $tr .= HTMLTable::makeTd(
-                HTMLInput::generateMarkup($this->nameRS->Name_First->getstoredVal(),
-                        $attrs));
+        $tr = HTMLTable::makeTd(
+                HTMLInput::generateMarkup(($this->get_idName() == 0 ? '' : $this->get_idName())
+                        , array('name'=>$this->getIdPrefix().'idName', 'type'=>'hidden', 'class'=>'ignrSave'))
+                .HTMLInput::generateMarkup($this->nameRS->Name_First->getstoredVal(), $attrs));
 
         // Middle Name
-        $attrs['name'] = $idPrefix.'txtMiddleName';
+        $attrs['name'] = $this->getIdPrefix().'txtMiddleName';
         $attrs['size'] = '5';
         unset($attrs['class']);
         unset($attrs['autofocus']);
-        $tr .= HTMLTable::makeTd(
-                HTMLInput::generateMarkup($this->nameRS->Name_Middle->getstoredVal(),
-                        $attrs));
+        $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($this->nameRS->Name_Middle->getstoredVal(), $attrs));
 
         // Last Name
-        $attrs['name'] = $idPrefix.'txtLastName';
+        $attrs['name'] = $this->getIdPrefix().'txtLastName';
         $attrs['class'] = 'hhk-lastname';
         unset($attrs['size']);
-        $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($this->nameRS->Name_Last->getstoredVal(),
-               $attrs));
+        $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($this->nameRS->Name_Last->getstoredVal(), $attrs));
 
         // Suffix
-        $attrs['name'] = $idPrefix.'selSuffix';
+        $attrs['name'] = $this->getIdPrefix().'selSuffix';
         unset($attrs['class']);
         $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
                 HTMLSelector::doOptionsMkup($uS->nameLookups[GL_TableNames::NameSuffix],
@@ -100,10 +111,9 @@ abstract class RoleMember extends IndivMember {
                $attrs));
 
         // Nick Name
-        $attrs['name'] = $idPrefix.'txtNickname';
+        $attrs['name'] = $this->getIdPrefix().'txtNickname';
         $attrs['size'] = '12';
-        $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($this->nameRS->Name_Nickname->getstoredVal(),
-                $attrs));
+        $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($this->nameRS->Name_Nickname->getstoredVal(), $attrs));
 
         // Birth Date
         if ($this->showBirthDate) {
@@ -114,9 +124,45 @@ abstract class RoleMember extends IndivMember {
                 $bd = date('M j, Y', strtotime($this->nameRS->BirthDate->getStoredVal()));
             }
 
-            $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($bd, array('name'=>$idPrefix.'txtBirthDate', 'class'=>'ckbdate')));
+            $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($bd, array('name'=>$this->getIdPrefix().'txtBirthDate', 'class'=>'ckbdate')));
 
         }
+
+        if ($hideRelChooser === FALSE) {
+
+            $uS = Session::getInstance();
+
+            $parray = removeOptionGroups($uS->guestLookups[GL_TableNames::PatientRel]);
+
+            // freeze control if patient is self.
+            if ($lockRelChooser) {
+
+                if ($patientRelationship == RelLinkType::Self) {
+                    $parray = array($patientRelationship => $parray[$patientRelationship]);
+                } else {
+                    unset($parray[RelLinkType::Self]);
+                }
+
+                if ($patientRelationship == '') {
+                    $allowEmpty = TRUE;
+                } else {
+                    $allowEmpty = FALSE;
+                }
+            } else {
+
+                $allowEmpty = TRUE;
+                if ($uS->PatientAsGuest === FALSE) {
+                    unset($parray[RelLinkType::Self]);
+                }
+            }
+
+            // Patient relationship
+            $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
+                     HTMLSelector::doOptionsMkup($parray, $patientRelationship, $allowEmpty), array('name'=>$this->getIdPrefix() . 'selPatRel', 'data-prefix'=>$this->getIdPrefix(), 'class'=>'patientRelch')));
+        } else {
+            $tr .= HTMLTable::makeTd('');
+        }
+
 
         return $tr;
     }
@@ -195,6 +241,14 @@ abstract class RoleMember extends IndivMember {
         return TRUE;
     }
 
+    public function setPatientRelCode($v) {
+        $this->patientRelCode = $v;
+    }
+
+    public function getPatientRelCode() {
+        return $this->patientRelCode;
+    }
+
 }
 
 
@@ -239,53 +293,6 @@ class GuestMember extends RoleMember {
     protected function getMyMemberType() {
         return VolMemberType::Guest;
     }
-
-    public function createMarkupHdr( $labels = NULL, $hideRelChooser = FALSE) {
-
-        return parent::createMarkupHdr($labels, $hideRelChooser);
-
-    }
-
-    public function createMarkupRow($patientRelationship = '', $hideRelChooser = FALSE, $lockRelChooser = FALSE) {
-
-        $tr = parent::createMarkupRow();
-
-        if ($hideRelChooser === FALSE) {
-
-            $uS = Session::getInstance();
-
-            $parray = removeOptionGroups($uS->guestLookups[GL_TableNames::PatientRel]);
-
-            // freeze control if patient is self.
-            if ($lockRelChooser) {
-
-                if ($patientRelationship == RelLinkType::Self) {
-                    $parray = array($patientRelationship => $parray[$patientRelationship]);
-                } else {
-                    unset($parray[RelLinkType::Self]);
-                }
-
-                if ($patientRelationship == '') {
-                    $allowEmpty = TRUE;
-                } else {
-                    $allowEmpty = FALSE;
-                }
-            } else {
-
-                $allowEmpty = TRUE;
-                if ($uS->PatientAsGuest === FALSE) {
-                    unset($parray[RelLinkType::Self]);
-                }
-            }
-
-            // Patient relationship
-            $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                     HTMLSelector::doOptionsMkup($parray, $patientRelationship, $allowEmpty), array('name'=>$this->getIdPrefix() . 'selPatRel', 'data-prefix'=>$this->getIdPrefix(), 'class'=>'patientRelch')));
-        }
-
-        return $tr;
-    }
-
 }
 
 
@@ -305,15 +312,10 @@ class PatientMember extends RoleMember {
         return VolMemberType::Patient;
     }
 
-    public function createMarkupRow($patientRelationship = '', $hideRelChooser = FALSE) {
+    public function createThinMarkupRow($patientRelationship = '', $hideRelChooser = TRUE, $lockRelChooser = FALSE) {
 
-        $tr = parent::createMarkupRow();
+        return parent::createThinMarkupRow($this->getPatientRelCode(), TRUE, $lockRelChooser);
 
-        if ($hideRelChooser === FALSE) {
-            $tr .= HTMLTable::makeTd('');
-        }
-
-        return $tr;
     }
 
 }

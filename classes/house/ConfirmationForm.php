@@ -50,7 +50,7 @@ class ConfirmationForm {
         $addr = $guest->getAddrObj()->get_Data();
 
         $this->replacements = array(
-            ConfirmationForm::GUESTNAME => $guest->getNameObj()->get_fullName(),
+            ConfirmationForm::GUESTNAME => $guest->getRoleMember()->get_fullName(),
             ConfirmationForm::ADDRESS => $addr['Address_1'] . ($addr['Address_2'] == '' ? '' : ' ' . $addr['Address_2']),
             ConfirmationForm::CITY => $addr['City'],
             ConfirmationForm::STATE => $addr['State_Province'],

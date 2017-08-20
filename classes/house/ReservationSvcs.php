@@ -212,7 +212,7 @@ class ReservationSvcs {
 
         // No return?
         if ($guest->getNoReturn() != '' && $static === FALSE) {
-            $dataArray['error'] = 'Guest "' .$guest->getNameObj()->get_FullName() . '" is flagged for No Return.  Reason: ' . $guest->getNoReturn();
+            $dataArray['error'] = 'Guest "' .$guest->getRoleMember()->get_FullName() . '" is flagged for No Return.  Reason: ' . $guest->getNoReturn();
         }
 
         $guest->setPatientRelationshipCode($psg->getGuestRelationship($guest->getIdName()));
@@ -505,7 +505,7 @@ class ReservationSvcs {
 
             $tbl->addHeaderTr(HTMLTable::makeTh('').HTMLTable::makeTh('Room').HTMLTable::makeTh('Arrival').HTMLTable::makeTh('Expected Departure').HTMLTable::makeTh('Patient').HTMLTable::makeTh('# Guests'));
 
-            $name = $guest->getNameObj();
+            $name = $guest->getRoleMember();
 
             $mrkup =  HTMLContainer::generateMarkup('p', 'Guest: ' . $name->get_fullName()) . $tbl->generateMarkup();
 
@@ -578,7 +578,7 @@ class ReservationSvcs {
 
         if ($guest->getNoReturn() != '') {
 
-            return array('error'=>'Guest "' .$guest->getNameObj()->get_FullName() . '" is flagged for No Return.  Reason: ' . $guest->getNoReturn());
+            return array('error'=>'Guest "' .$guest->getRoleMember()->get_FullName() . '" is flagged for No Return.  Reason: ' . $guest->getNoReturn());
         }
 
         // Set as member of PSG if needed.
@@ -815,7 +815,7 @@ class ReservationSvcs {
 
         $guest = new Guest($dbh, 'pg', $id);
 
-        $name = $guest->getNameObj();
+        $name = $guest->getRoleMember();
         if ($name->get_status() == MemStatus::Deceased) {
             return array('error'=>'This Guest is marked as "Deceased".');
         }
@@ -840,7 +840,7 @@ class ReservationSvcs {
 
         // No return?
         if ($guest->getNoReturn() != '') {
-            $dataArray['error'] = 'Guest "' .$guest->getNameObj()->get_FullName() . '" is flagged for No Return.  Reason: ' . $guest->getNoReturn();
+            $dataArray['error'] = 'Guest "' .$guest->getRoleMember()->get_FullName() . '" is flagged for No Return.  Reason: ' . $guest->getNoReturn();
         }
 
 

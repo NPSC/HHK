@@ -163,13 +163,13 @@ class Hospital {
             $ratbl->addBodyTr(
                 HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
-                                $agent->getNameObj()->get_firstName(),
+                                $agent->getRoleMember()->get_firstName(),
                                 array('name'=>'a_txtFirstName', 'size'=>'17', 'class'=>'hhk-agentInfo'))
                         .HTMLInput::generateMarkup($agent->getIdName(), array('name'=>'a_idName', 'type'=>'hidden'))
                         )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
-                                $agent->getNameObj()->get_lastName(),
+                                $agent->getRoleMember()->get_lastName(),
                                 array('name'=>'a_txtLastName', 'size'=>'17', 'class'=>'hhk-agentInfo'))
                         )
                 . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][Phone_Purpose::Cell][1] . ': ' .
@@ -208,15 +208,15 @@ class Hospital {
             $doc = new Doctor($dbh, 'd_', $hstay->getDoctorId());
 
             $dtbl->addBodyTr(
-                HTMLTable::makeTd(($doc->getNameObj()->get_lastName() == '' ? '' : 'Dr. ') .
+                HTMLTable::makeTd(($doc->getRoleMember()->get_lastName() == '' ? '' : 'Dr. ') .
                         HTMLInput::generateMarkup(
-                                $doc->getNameObj()->get_firstName(),
+                                $doc->getRoleMember()->get_firstName(),
                                 array('name'=>'d_txtFirstName', 'size'=>'15', 'class'=>'hhk-docInfo'))
                         .HTMLInput::generateMarkup($doc->getIdName(), array('name'=>'d_idName', 'type'=>'hidden'))
                     )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
-                                $doc->getNameObj()->get_lastName(),
+                                $doc->getRoleMember()->get_lastName(),
                                 array('name'=>'d_txtLastName', 'size'=>'15', 'class'=>'hhk-docInfo'))
                         )
              );

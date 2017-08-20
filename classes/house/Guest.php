@@ -21,13 +21,21 @@ class Guest extends Role {
      * @param type $id
      * @return GuestMember
      */
-    protected function factory(\PDO $dbh, $id) {
+    public function __construct(\PDO $dbh, $idPrefix, $id, $title = 'Guest') {
 
-        $this->title = 'Guest';
-
+        $this->currentlyStaying = NULL;
+        $this->idVisit = NULL;
+        $this->emergContact = NULL;
+        $this->title = $title;
         $this->patientPsg = NULL;
 
-        return new GuestMember($dbh, MemBasis::Indivual, $id);
+        $this->roleMember = new GuestMember($dbh, MemBasis::Indivual, $id);
+        $this->roleMember->setIdPrefix($idPrefix);
+
+        if ($this->roleMember->getMemberDesignation() != MemDesignation::Individual) {
+            throw new Hk_Exception_Runtime("Must be individuals, not organizations");
+        }
+
     }
 
     /**
@@ -36,19 +44,18 @@ class Guest extends Role {
      * @param PDO $dbh
      * @return string HTML div markup
      */
-
     protected function createNameMU(Config_Lite $labels, $lockRelChooser = FALSE) {
 
         // Build name.
         $tbl = new HTMLTable();
-        $tbl->addHeaderTr($this->name->createMarkupHdr($labels));
-        $tbl->addbodyTr($this->name->createMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser));
+        $tbl->addHeaderTr($this->roleMember->createMarkupHdr($labels, FALSE));
+        $tbl->addbodyTr($this->roleMember->createMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser));
 
         $mk1 = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('fieldset',
                         HTMLContainer::generateMarkup('legend', $this->title.' Name', array('style'=>'font-weight:bold;'))
                         . $tbl->generateMarkup()
-                        . HTMLContainer::generateMarkup('div', $this->name->getContactLastUpdatedMU(new \DateTime ($this->name->get_lastUpdated()), 'Name'), array('style'=>'float:right;'))
+                        . HTMLContainer::generateMarkup('div', $this->roleMember->getContactLastUpdatedMU(new \DateTime ($this->roleMember->get_lastUpdated()), 'Name'), array('style'=>'float:right;'))
                         , array('class'=>'hhk-panel')),
                         array('style'=>'float:left; margin-right:.5em;margin-bottom:.4em; font-size:.9em;'));
 
@@ -75,7 +82,7 @@ class Guest extends Role {
     public function createMarkup(\PDO $dbh, $includeRemoveBtn = FALSE, $lockRelChooser = TRUE) {
 
         $uS = Session::getInstance();
-        $idPrefix = $this->getNameObj()->getIdPrefix();
+        $idPrefix = $this->getRoleMember()->getIdPrefix();
         $labels = new Config_Lite(LABEL_FILE);
 
         $mk1 = $this->createNameMu($labels, $lockRelChooser);
@@ -101,7 +108,7 @@ class Guest extends Role {
 
             $mk1 .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
                     HTMLContainer::generateMarkup('legend', 'Demographics', array('style'=>'font-weight:bold;'))
-                    . $this->getNameObj()->createDemographicsPanel($dbh, TRUE, FALSE), array('class'=>'hhk-panel')),
+                    . $this->getRoleMember()->createDemographicsPanel($dbh, TRUE, FALSE), array('class'=>'hhk-panel')),
                     array('style'=>'float:left; margin-right:3px;'));
         }
 
@@ -119,8 +126,8 @@ class Guest extends Role {
 
         $stayDates = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('span', ($this->getPatientRelationshipCode() == RelLinkType::Self ? $labels->getString('MemberType', 'patient', 'Patient') . ': ' : 'Guest: '), array('id'=>$idPrefix . 'spnHdrLabel'))
-               .HTMLContainer::generateMarkup('span', $this->getNameObj()->get_firstName(), array('id'=>$idPrefix . 'hdrFirstName', 'name'=>'hdrFirstName'))
-               .HTMLContainer::generateMarkup('span', ' '.$this->getNameObj()->get_lastName(), array('id'=>$idPrefix . 'hdrLastName', 'name'=>'hdrLastName', 'style'=>'margin-right:10px;'))
+               .HTMLContainer::generateMarkup('span', $this->getRoleMember()->get_firstName(), array('id'=>$idPrefix . 'hdrFirstName', 'name'=>'hdrFirstName'))
+               .HTMLContainer::generateMarkup('span', ' '.$this->getRoleMember()->get_lastName(), array('id'=>$idPrefix . 'hdrLastName', 'name'=>'hdrLastName', 'style'=>'margin-right:10px;'))
                . HTMLContainer::generateMarkup('span', ' Check In: '. HTMLInput::generateMarkup((is_null($this->getCheckinDT()) ? '' : $this->getCheckinDT()->format('M j, Y')), $cidAttr), array('style'=>'margin-left:.5em;'))
                . HTMLContainer::generateMarkup('span', 'Expected Departure: '. HTMLInput::generateMarkup((is_null($this->getExpectedCheckOutDT()) ? '' : $this->getExpectedCheckOutDT()->format('M j, Y')), Array('name'=>$idPrefix . 'gstCoDate', 'class'=>'ckdate gstchkoutdate', 'readonly'=>'readonly')), array('style'=>'margin-left:.5em;'))
                 . HTMLContainer::generateMarkup('span', '', array('id'=>$idPrefix . 'naAddrIcon', 'class'=>'hhk-icon-redLight', 'title'=>'Incomplete Address', 'style'=>'float:right;margin-top:4px;margin-left:3px;display:none;'))
@@ -181,7 +188,7 @@ class Guest extends Role {
     public function createReservationMarkup($lockRelChooser = FALSE, $waitListText = '') {
 
         $uS = Session::getInstance();
-        $idPrefix = $this->getNameObj()->getIdPrefix();
+        $idPrefix = $this->getRoleMember()->getIdPrefix();
         $mk1 = '';
         $labels = new Config_Lite(LABEL_FILE);
 
@@ -216,8 +223,8 @@ class Guest extends Role {
        // Header info
         $header = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('span', $this->title.': ', array('id'=>$idPrefix . 'spnHdrLabel'))
-               .HTMLContainer::generateMarkup('span', $this->getNameObj()->get_firstName(), array('id'=>$idPrefix . 'hdrFirstName', 'name'=>'hdrFirstName'))
-               .HTMLContainer::generateMarkup('span', ' '.$this->getNameObj()->get_lastName(), array('id'=>$idPrefix . 'hdrLastName', 'name'=>'hdrLastName'))
+               .HTMLContainer::generateMarkup('span', $this->getRoleMember()->get_firstName(), array('id'=>$idPrefix . 'hdrFirstName', 'name'=>'hdrFirstName'))
+               .HTMLContainer::generateMarkup('span', ' '.$this->getRoleMember()->get_lastName(), array('id'=>$idPrefix . 'hdrLastName', 'name'=>'hdrLastName'))
                .HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('span', '', array('id'=>'memMsg', 'style'=>'color:red;float:right; margin-right:23px;')), array('style'=>'margin-right:23px;'))
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
@@ -245,7 +252,7 @@ class Guest extends Role {
 
         $message = parent::save($dbh, $post, $uname);
 
-        $idPrefix = $this->getNameObj()->getIdPrefix();
+        $idPrefix = $this->getRoleMember()->getIdPrefix();
 
         // Use House Phone?
         if (isset($post[$idPrefix . 'rbPhPref']) && filter_var($post[$idPrefix . 'rbPhPref'], FILTER_SANITIZE_STRING) == 'yr') {
@@ -276,7 +283,7 @@ class Guest extends Role {
 
         // Also set patient member type if guest is the patient.
         if ($this->patientRelationshipCode == RelLinkType::Self) {
-            $message .= $this->getNameObj()->saveMemberType($dbh, $uname, VolMemberType::Patient);
+            $message .= $this->getRoleMember()->saveMemberType($dbh, $uname, VolMemberType::Patient);
         }
 
         return $message;

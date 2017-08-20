@@ -38,7 +38,7 @@ class Family {
                 EditRS::loadRow($r, $ngrs);
 
                 if ($ngrs->Relationship_Code->getStoredVal() == RelLinkType::Self) {
-                    $this->roleObj[$ngrs->idName->getStoredVal()] = new Patient($dbh, $ngrs->idName->getStoredVal(), $ngrs->idName->getStoredVal());
+                    $this->roleObj[$ngrs->idName->getStoredVal()] = new Patient($dbh, $ngrs->idName->getStoredVal(), $ngrs->idName->getStoredVal(), $this->rData->getPatLabel());
                     $this->roleObj[$ngrs->idName->getStoredVal()]->setPatientRelationshipCode($ngrs->Relationship_Code->getStoredVal());
                     $this->members[$ngrs->idName->getStoredVal()]['role'] = 'p';
                     $this->members[$ngrs->idName->getStoredVal()]['stay'] = ($uS->PatientAsGuest ? '0' : 'x');
@@ -60,7 +60,7 @@ class Family {
         }
 
         // Load empty member
-        $this->roleObj[0] = new Guest($dbh, '0', 0);
+        $this->roleObj[0] = new Guest($dbh, 'a', 0);
         $this->members[0]['role'] = '';
         $this->members[0]['stay'] = '0';
 
@@ -86,37 +86,66 @@ class Family {
         }
     }
 
+    protected function getAddresses() {
+
+        $addrs = array();
+
+        foreach ($this->roleObj as $m) {
+
+            $addrObj = $m->getAddrObj();
+            $addr = $addrObj->get_Data(Address_Purpose::Home);
+
+            $addr['Purpose'] = Address_Purpose::Home;
+
+            $addr['Email'] = $m->getEmailsObj()->get_Data(Email_Purpose::Home)['Email'];
+
+            $addrs[$m->getIdName()] = $addr;
+
+        }
+
+        return $addrs;
+    }
+
     public function createFamilyMarkup(ReservationRS $resvRs) {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
         $mk1 = '';
+        $rowClass = 'odd';
 
-        $tbl->addHeaderTr($this->roleObj[0]->getNameObj()->createMarkupHdr($this->rData->getPatLabel(), FALSE) . HTMLTable::makeTh('Staying'));
+        $tbl->addHeaderTr(HTMLTable::makeTh('Staying') . $this->roleObj[0]->getRoleMember()->createThinMarkupHdr($this->rData->getPatLabel(), FALSE) . HTMLTable::makeTh('Phone') . HTMLTable::makeTh('Addr'));
+
 
 
         // Put the patient first.
         if ($this->getPatientId() > 0) {
 
-            $name = $this->roleObj[$this->getPatientId()]->getNameObj();
-            $tbl->addBodyTr($this->roleObj[$this->getPatientId()]->createThinMarkup($this->members[$this->getPatientId()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)));
+            $tbl->addBodyTr($this->roleObj[$this->getPatientId()]->createThinMarkup($this->members[$this->getPatientId()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)), array('class'=>$rowClass));
+
         }
 
+        // List each member
         foreach ($this->roleObj as $m) {
 
-            // Skip the patient
+            // Skip the patient who was taken care of above
             if ($m->getIdName() > 0 && $m->getIdName() == $this->getPatientId()) {
                 continue;
             }
 
-            $name = $m->getNameObj();
-            $tbl->addBodyTr($m->createThinMarkup($this->members[$m->getIdName()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)));
+            if ($rowClass == 'odd') {
+                $rowClass = 'even';
+            } else if ($rowClass == 'even') {
+                $rowClass = 'odd';
+            }
+
+            //$name = $m->getNameObj();
+            $tbl->addBodyTr($m->createThinMarkup($this->members[$m->getIdName()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)), array('class'=>$rowClass));
         }
 
-        $hdr = HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup('span', 'Visitors ')
-            . HTMLInput::generateMarkup('Add More', array('type'=>'button', 'id'=>'addMoreVisitors'))
-            , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
+        $adrTbl = new HTMLTable();
+        $adrTbl->addHeaderTr($m->createThinAddrHdr($uS->county));
+        $adrTbl->addBodyTr($m->createThinAddrMU($uS->county));
+
 
         // Waitlist notes
         if ($uS->UseWLnotes) {
@@ -124,12 +153,16 @@ class Family {
             $mk1 = HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', $this->rData->getWlNotesLabel(), array('style'=>'font-weight:bold;'))
                 . HTMLContainer::generateMarkup('textarea', $resvRs->Checkin_Notes->getStoredVal(), array('name'=>'taCkinNotes', 'rows'=>'2', 'cols'=>'75')),
-                array('class'=>'hhk-panel', 'style'=>'clear:both; margin-top:10px; font-size:.9em;'));
+                array('class'=>'hhk-panel', 'style'=>'clear:both; float:left; margin-top:10px; font-size:.9em;'));
             }
 
-        $div = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('id'=>'tblFamily')) . $mk1, array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-panel hhk-tdbox'));
+        $hdr = HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('span', 'Visitors ')
+            , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
-        return array('hdr'=>$hdr, 'div'=>$div);
+        $div = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('id'=>'tblFamily', 'class'=>'hhk-table')) . $mk1, array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-panel hhk-tdbox'));
+
+        return array('hdr'=>$hdr, 'div'=>$div, 'addrs'=>$this->getAddresses(), 'adrTbl' => $adrTbl->generateMarkup());
 
     }
 

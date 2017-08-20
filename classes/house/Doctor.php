@@ -15,18 +15,31 @@
  */
 class Doctor extends Role{
 
-    protected function factory(PDO $dbh, $id) {
-        return new DoctorMember($dbh, MemBasis::Indivual, $id);
+    public function __construct(\PDO $dbh, $idPrefix, $id, $title = 'Doctor') {
+
+        $this->currentlyStaying = NULL;
+        $this->idVisit = NULL;
+        $this->emergContact = NULL;
+        $this->title = $title;
+        $this->patientPsg = NULL;
+
+        $this->roleMember = new DoctorMember($dbh, MemBasis::Indivual, $id);
+        $this->roleMember->setIdPrefix($idPrefix);
+
+        if ($this->roleMember->getMemberDesignation() != MemDesignation::Individual) {
+            throw new Hk_Exception_Runtime("Must be individuals, not organizations");
+        }
+
     }
 
 
     public function save(PDO $dbh, array $post, $uname) {
 
         // Name
-        $idPrefix = $this->getNameObj()->getIdPrefix();
+        $idPrefix = $this->getRoleMember()->getIdPrefix();
         //$post[$idPrefix.'selPrefix'] = 'dr';
 
-        $message = $this->getNameObj()->saveChanges($dbh, $post);
+        $message = $this->getRoleMember()->saveChanges($dbh, $post);
 
         // Phone
         $message .= $this->getPhonesObj()->savePost($dbh, $post, $uname, $idPrefix);

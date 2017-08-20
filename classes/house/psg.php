@@ -47,7 +47,7 @@ class CheckInGroup {
                 //Save guest
                 $guest = new Guest($dbh, $prefix, $idg);
 
-                $name = $guest->getNameObj();
+                $name = $guest->getRoleMember();
                 if ($name->get_status() == MemStatus::Deceased) {
                      throw new Hk_Exception_UnexpectedValue('The Guest (' . $name->get_fullName() . ') is marked as "Deceased".');
                 }

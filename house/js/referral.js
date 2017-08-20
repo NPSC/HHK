@@ -587,6 +587,7 @@ function injectSlot(data) {
                 updateRoomChooser(resv.idReserv, $('#spnNumGuests').text(), $('#pggstDate').val(), $('#pggstCoDate').val());
             });
 
+            //
             $('#btnShowCnfrm').button();
             $('#btnShowCnfrm').click(function () {
                 $.post('ws_ckin.php', {cmd:'confrv', rid: $(this).data('rid'), amt: $('#spnAmount').text(), eml: '0'}, function(data) {
