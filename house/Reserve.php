@@ -194,6 +194,8 @@ $resvObjEncoded = json_encode($resvObj->toArray());
 
 function familySection(data) {
 
+
+
     var fDiv = $(data.famSection.div).addClass('ui-widget-content').prop('id', 'divfamDetail');
     var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
         .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")

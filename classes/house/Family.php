@@ -113,6 +113,7 @@ class Family {
         $mk1 = '';
         $rowClass = 'odd';
 
+
         $tbl->addHeaderTr(HTMLTable::makeTh('Staying') . $this->roleObj[0]->getRoleMember()->createThinMarkupHdr($this->rData->getPatLabel(), FALSE) . HTMLTable::makeTh('Phone') . HTMLTable::makeTh('Addr'));
 
 
