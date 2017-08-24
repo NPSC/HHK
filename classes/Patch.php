@@ -58,7 +58,7 @@ class Patch {
 
 
         if ($fileSize <= 0) {
-            throw new Hk_Exception_Runtime("Patch version file not found or empty.  ");
+            throw new Hk_Exception_Runtime("Patch file not found or empty.  ");
         }
 
 
@@ -237,7 +237,7 @@ class Patch {
 
             if ($fileinfo->isDir()) {
 
-                self::deleteBakFiles($directory.$fileinfo->getFilename().DS, $skipDirs, $oldExtension);
+                self::deleteBakFiles($directory.$fileinfo->getFilename().DS, $oldExtension);
 
             } else {
 

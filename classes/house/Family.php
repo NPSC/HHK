@@ -110,7 +110,6 @@ class Family {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
-        $mk1 = '';
         $rowClass = 'odd';
 
 
@@ -139,31 +138,32 @@ class Family {
                 $rowClass = 'odd';
             }
 
-            //$name = $m->getNameObj();
             $tbl->addBodyTr($m->createThinMarkup($this->members[$m->getIdName()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)), array('class'=>$rowClass));
         }
 
-        $adrTbl = new HTMLTable();
-        $adrTbl->addHeaderTr($m->createThinAddrHdr($uS->county));
-        $adrTbl->addBodyTr($m->createThinAddrMU($uS->county));
+        $mk1 = $this->roleObj[0]->createAddsBLock();
+
+//        $adrTbl = new HTMLTable();
+//        $adrTbl->addHeaderTr($m->createThinAddrHdr($uS->county));
+//        $adrTbl->addBodyTr($m->createThinAddrMU($uS->county));
 
 
         // Waitlist notes
         if ($uS->UseWLnotes) {
 
-            $mk1 = HTMLContainer::generateMarkup('fieldset',
+            $mk1 .= HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', $this->rData->getWlNotesLabel(), array('style'=>'font-weight:bold;'))
                 . HTMLContainer::generateMarkup('textarea', $resvRs->Checkin_Notes->getStoredVal(), array('name'=>'taCkinNotes', 'rows'=>'2', 'cols'=>'75')),
                 array('class'=>'hhk-panel', 'style'=>'clear:both; float:left; margin-top:10px; font-size:.9em;'));
             }
 
         $hdr = HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup('span', 'Visitors ')
+            HTMLContainer::generateMarkup('span', 'Family ')
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
         $div = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('id'=>'tblFamily', 'class'=>'hhk-table')) . $mk1, array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-panel hhk-tdbox'));
 
-        return array('hdr'=>$hdr, 'div'=>$div, 'addrs'=>$this->getAddresses(), 'adrTbl' => $adrTbl->generateMarkup());
+        return array('hdr'=>$hdr, 'div'=>$div, 'addrs'=>$this->getAddresses());
 
     }
 

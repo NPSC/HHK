@@ -68,7 +68,7 @@ $labels = new Config_Lite(LABEL_FILE);
 function getPaymentReport(\PDO $dbh, $start, $end) {
 
     $whereClause = " and DATE(`Payment Date`) >= DATE('$start') and DATE(`Payment Date`) <= DATE('$end') ";
-    $stmt = $dbh->query("Select * from vneon_payment_display where 1=1 $whereClause");
+    $stmt = $dbh->query("Select * from `vneon_payment_display` where 1=1 $whereClause");
     $rows = array();
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {

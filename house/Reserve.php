@@ -170,7 +170,7 @@ $resvObjEncoded = json_encode($resvObj->toArray());
             <form action="Referral.php" method="post"  id="form1">
                 <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
                 <div id="famSection" style="font-size: .9em; clear:left; float:left; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget"></div>
-                <div id="addrSection" style="font-size: .9em; clear:left; float:left; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget"></div>
+
                 <div id="hospitalSection" style="font-size: .9em; padding-left:0;margin-top:0; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
                 <div id="resvStatus" style="float:left; font-size:.9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog"></div>
                 <div id="notesGuest" style="float:left; font-size:.9em; display:none; width: 600px;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog"></div>
@@ -194,7 +194,9 @@ $resvObjEncoded = json_encode($resvObj->toArray());
 
 function familySection(data) {
 
-
+    if (data.famSection === undefined) {
+        return;
+    }
 
     var fDiv = $(data.famSection.div).addClass('ui-widget-content').prop('id', 'divfamDetail');
     var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
@@ -214,14 +216,6 @@ function familySection(data) {
             fHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
         }
     });
-
-    if (data.adrTbl) {
-
-        $('#addrSection')
-            .empty()
-            .append($(data.adrTbl));
-
-    }
 
     $('#famSection')
             .empty()
@@ -248,6 +242,21 @@ function familySection(data) {
         dateFormat: 'M d, yy'
     });
 
+    // set country and state selectors
+    $('.hhk-addrPanel').find('select.bfh-countries').each(function() {
+        var $countries = $(this);
+        $countries.bfhcountries($countries.data());
+    });
+
+    $('.hhk-addrPanel').find('select.bfh-states').each(function() {
+        var $states = $(this);
+        $states.bfhstates($states.data());
+    });
+
+    $('#divAddr #aphEmlTabs').tabs();
+    verifyAddrs('#divAddr');
+    var lastXhr;
+    createZipAutoComplete($('#divAddr input.hhk-zipsearch'), 'ws_admin.php', lastXhr);
 
 }
 
@@ -466,7 +475,7 @@ function Props(properties) {
 }
 
 
-function Member(name, address)
+
 
 
 $(document).ready(function() {

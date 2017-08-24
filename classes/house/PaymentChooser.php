@@ -262,7 +262,7 @@ class PaymentChooser {
             unset($payTypes[PayType::Transfer]);
         }
 
-        $chargeCards = readGenLookupsPDO($dbh, 'Charge_Cards');
+        $chargeCards = removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards'));
 
         // Collect panels for payments
         $panelMkup = self::showPaySelection($dbh,
@@ -381,7 +381,7 @@ class PaymentChooser {
         );
 
         // payment types panel
-        $panelMkup = self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, readGenLookupsPDO($dbh, 'Charge_Cards'), $labels, $uS->ccgw,
+        $panelMkup = self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')), $labels, $uS->ccgw,
                 $idGuest, $idRegistration, $prefTokenId);
 
         $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
@@ -587,7 +587,7 @@ ORDER BY v.idVisit , v.Span;");
 //
 //                } else {
                     // payment types panel
-                    $panelMkup = self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, readGenLookupsPDO($dbh, 'Charge_Cards'), $labels, $uS->ccgw,
+                    $panelMkup = self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')), $labels, $uS->ccgw,
                         $id, 0, $prefTokenId, '');
 //                }
 

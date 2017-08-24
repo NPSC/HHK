@@ -73,6 +73,7 @@ if ($uS->mode != Mode::Live) {
 
 $volSiteURL = $config->get("site", "Volunteer_URL", "");
 $tutorialSiteURL = $config->getString('site', 'Tutorial_URL'. '');
+$trainingSiteURL = $config->getString('site', 'Training_URL'. '');
 $build = 'Build:' . $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
 
 $pageTitle = $uS->siteName;
@@ -92,6 +93,7 @@ $volLinkMkup = '';
 $houseLinkMkup = '';
 $tutorialMkup = '';
 
+
 if ($volSiteURL != '' && isset($icons['v'])) {
     $volLinkMkup = HTMLContainer::generateMarkup('div',
         HTMLContainer::generateMarkup('p',
@@ -99,9 +101,13 @@ if ($volSiteURL != '' && isset($icons['v'])) {
 }
 
 if ($tutorialSiteURL != '') {
-    $tutorialMkup = HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup('h3', 'Tutorial Videos')
-            . HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'You Tube Videos', array('href'=>$tutorialSiteURL)), array('style'=>'margin-left:15px;')), array('style'=>'margin-top:35px;'));
+    $tutorialMkup .= HTMLContainer::generateMarkup('div',
+             HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'You Tube Video Tutorials', array('href'=>$tutorialSiteURL)), array('style'=>'margin-left:15px;')), array('style'=>'margin-top:25px;'));
+}
+
+if ($trainingSiteURL != '') {
+    $tutorialMkup .= HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'HHK Playground', array('href'=>$trainingSiteURL)), array('style'=>'margin-left:15px;')), array('style'=>'margin-top:25px;'));
 }
 
 $copyYear = date('Y');
@@ -147,7 +153,7 @@ if ($isHttps)
                     <div><?php echo $siteName; ?>
                         <p style="margin-left:6px; width: 50%;"><?php echo $disclaimer ?></p>
                     </div>
-                    <?php echo $loginMkup;  echo $volLinkMkup;  echo $tutorialMkup; ?>
+                    <?php echo $loginMkup;  echo $volLinkMkup;  echo $tutorialMkup;?>
                 </div>
                 <div style="clear:left;"></div>
                 <div style="margin-top: 100px;width:500px;">

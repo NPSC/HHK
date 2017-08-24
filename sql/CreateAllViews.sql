@@ -1081,19 +1081,13 @@ CREATE OR REPLACE VIEW `vguest_neon_payment` AS
         payment p 
         left join payment_auth pa on p.idPayment = pa.idPayment
         left join payment_info_check pc on p.idPayment = pc.idPayment
-        
         left join name n on p.idPayor = n.idName
-        
         left join guest_token gt on p.idToken = gt.idGuest_token
-        
         left join neon_type_map np on np.List_Name = 'funds' 
-        
         left join gen_lookups gp on gp.`Table_Name` = 'Pay_Type' and gp.Substitute = p.idPayment_Method
         left join neon_type_map nt on nt.List_Name = 'tenders' and nt.HHK_Type_Code = gp.Code
-        
         left join gen_lookups gc on gc.`Table_Name` = 'Charge_Cards' and gc.Substitute = pa.Card_Type
         left join neon_type_map nc on nc.List_Name = 'creditCardTypes' and nc.HHK_Type_Code = gc.Code
-        
     WHERE
         p.Status_Code = 's' and p.idPayment_Method in (1, 2, 3, 4);
 
@@ -1104,41 +1098,56 @@ CREATE OR REPLACE VIEW `vguest_neon_payment` AS
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vneon_payment_display` AS
     SELECT 
-	p.idPayment,
-	p.External_Id,
-	n.idName as `HHK Id`,
-        n.Name_Full as `Name`,
-	n.External_Id as `Account Id`,
-        IFNULL(DATE_FORMAT(p.Payment_Date, '%Y-%m-%d'), '') as `Payment Date`,
-        case when p.Is_Refund = 1 then (0 - (p.Amount - p.Balance)) else 
-       (p.Amount - p.Balance) end as `Amount`,
-       ifnull(np.Neon_Type_Name, '') as `Neon Fund`,
-       ifnull(nt.Neon_Type_Name, '') as `Payment Method`,
-       case when p.idPayment_Method = 1 then '' when p.idPayment_Method = 3 then ifnull(pc.Check_Number, '') else concat(
-       ifnull(pa.Acct_Number, ''),'; ',
-       ifnull(nc.Neon_Type_Name, ''),'; ',
-       ifnull(gt.CardHolderName, '')) end as `Detail`,
-	p.Notes as `Notes`
-
+        p.idPayment as `HHK Payment Id`,
+        p.External_Id as `External Payment Id`,
+        n.idName AS `HHK Id`,
+        n.Name_Full AS `Name`,
+        n.External_Id AS `Account Id`,
+        IFNULL(DATE_FORMAT(p.Payment_Date, '%Y-%m-%d'),
+                '') AS `Payment Date`,
+        CASE
+            WHEN p.Is_Refund = 1 THEN (0 - (p.Amount - p.Balance))
+            ELSE (p.Amount - p.Balance)
+        END AS `Amount`,
+        IFNULL(np.Neon_Type_Name, '') AS `Neon Fund`,
+        IFNULL(nt.Neon_Type_Name, '') AS `Payment Method`,
+        CASE
+            WHEN p.idPayment_Method = 1 THEN ''
+            WHEN p.idPayment_Method = 3 THEN IFNULL(pc.Check_Number, '')
+            ELSE CONCAT(IFNULL(pa.Acct_Number, ''),
+                    '; ',
+                    IFNULL(nc.Neon_Type_Name, ''),
+                    '; ',
+                    IFNULL(gt.CardHolderName, ''))
+        END AS `Detail`,
+        p.Notes AS `Notes`
     FROM
-        payment p 
-        left join payment_auth pa on p.idPayment = pa.idPayment
-        left join payment_info_check pc on p.idPayment = pc.idPayment
-        
-        left join name n on p.idPayor = n.idName
-        
-        left join guest_token gt on p.idToken = gt.idGuest_token
-        
-        left join neon_type_map np on np.List_Name = 'funds' 
-        
-        left join gen_lookups gp on gp.`Table_Name` = 'Pay_Type' and gp.Substitute = p.idPayment_Method
-        left join neon_type_map nt on nt.List_Name = 'tenders' and nt.HHK_Type_Code = gp.Code
-        
-        left join gen_lookups gc on gc.`Table_Name` = 'Charge_Cards' and gc.Substitute = pa.Card_Type
-        left join neon_type_map nc on nc.List_Name = 'creditCardTypes' and nc.HHK_Type_Code = gc.Code
-        
+        payment p
+            LEFT JOIN
+        payment_auth pa ON p.idPayment = pa.idPayment
+            LEFT JOIN
+        payment_info_check pc ON p.idPayment = pc.idPayment
+            LEFT JOIN
+        name n ON p.idPayor = n.idName
+            LEFT JOIN
+        guest_token gt ON p.idToken = gt.idGuest_token
+            LEFT JOIN
+        neon_type_map np ON np.List_Name = 'funds'
+            LEFT JOIN
+        gen_lookups gp ON gp.`Table_Name` = 'Pay_Type'
+            AND gp.Substitute = p.idPayment_Method
+            LEFT JOIN
+        neon_type_map nt ON nt.List_Name = 'tenders'
+            AND nt.HHK_Type_Code = gp.Code
+            LEFT JOIN
+        gen_lookups gc ON gc.`Table_Name` = 'Charge_Cards'
+            AND gc.Substitute = pa.Card_Type
+            LEFT JOIN
+        neon_type_map nc ON nc.List_Name = 'creditCardTypes'
+            AND nc.HHK_Type_Code = gc.Code
     WHERE
-        p.Status_Code = 's' and p.idPayment_Method in (1, 2, 3, 4);
+        p.Status_Code = 's'
+            AND p.idPayment_Method IN (1 , 2, 3, 4);
 
 
 

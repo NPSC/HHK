@@ -306,7 +306,7 @@ if (isset($_FILES['zipfile'])) {
 // Delete old files
 if (isset($_POST['btnDelBak'])) {
     $tabIndex = 1;
-    Patch::deleteBakFiles('../', '.bak');
+    Patch::deleteBakFiles('../', 'bak');
 }
 
 if (isset($_POST['delInstallDir'])) {

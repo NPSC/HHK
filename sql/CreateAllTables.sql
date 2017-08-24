@@ -1163,7 +1163,7 @@ CREATE TABLE if not exists `neon_lists` (
   `Method` VARCHAR(45) NOT NULL DEFAULT '',
   `List_Name` VARCHAR(45) NOT NULL,
   `List_Item` VARCHAR(45) NOT NULL DEFAULT '',
-  `HHk_Lookup` VARCHAR(45) NOT NULL DEFAULT '',
+  `HHK_Lookup` VARCHAR(45) NOT NULL DEFAULT '',
   PRIMARY KEY (`List_Name`))
 ENGINE = MyISAM;
 

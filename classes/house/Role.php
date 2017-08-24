@@ -120,7 +120,7 @@ abstract class Role {
                     . $this->addr->createPanelMarkup(Address_Purpose::Home, $this->getAddrObj()->get_recordSet(Address_Purpose::Home), FALSE, $idPrefix, $class, $includeCounty, $lastUpdated)
                     . $incomplete,
                     array('class'=>'hhk-panel')),
-                    array('style'=>'float:left; margin-right:3px; font-size:0.9em;'));
+                    array('style'=>'float:left; margin-right:3px; font-size:0.9em;', 'class'=>'hhk-addrPanel'));
 
     }
 
@@ -273,7 +273,7 @@ abstract class Role {
 
         // Phone
         $ph = HTMLTable::makeTd($this->getPhonesObj()->get_Data()['Phone_Num']);
-        
+
         // Address
         $ad = HTMLTable::makeTd($this->getIdName());
 
@@ -283,7 +283,7 @@ abstract class Role {
 
 
         // Address, email and Phone
-    protected function createAddsBLock() {
+    public function createAddsBLock() {
 
         $mkup = '';
         $uS = Session::getInstance();
