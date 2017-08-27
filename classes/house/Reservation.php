@@ -129,6 +129,88 @@ abstract class Reservation {
                 , array('style'=>'float:left; font-size:.9em;', 'id'=>'spnRangePicker'));
 
     }
+
+    protected function resvSection(\PDO $dbh, $labels, $isAuthorized = TRUE) {
+
+        $uS = Session::getInstance();
+
+        $resv = new Reservation_1($this->reservRs);
+
+        $roomChooser = new RoomChooser($dbh, $resv, $resv->getNumberGuests(), $resv->getExpectedArrival(), $resv->getExpectedDeparture());
+        //$roomChooser->setOldResvId($oldResvId);
+        $dataArray['rChooser'] = $roomChooser->CreateResvMarkup($dbh, $isAuthorized);
+
+        $showPayWith = TRUE;
+
+        // Rate Chooser
+        if ($uS->RoomPriceModel != ItemPriceCode::None) {
+
+            $rateChooser = new RateChooser($dbh);
+
+            $dataArray['rate'] = $rateChooser->createResvMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
+            // Array with amount calculated for each rate.
+            $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
+            // Array with key deposit info
+            $dataArray['rooms'] = $rateChooser->makeRoomsArray($roomChooser, $uS->guestLookups['Static_Room_Rate'], $uS->guestLookups[GL_TableNames::KeyDepositCode]);
+
+            if ($uS->VisitFee) {
+                // Visit Fee Array
+                $dataArray['vfee'] = $rateChooser::makeVisitFeeArray($dbh);
+            }
+
+//            $dataArray['pay'] =
+//                    PaymentChooser::createResvMarkup($dbh, $guest->getIdName(), $reg, removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]), $resv->getExpectedPayType(), $uS->ccgw);
+
+        } else {
+            // Price Model - NONE
+            $showPayWith = FALSE;
+        }
+
+
+        // Reservation Data
+        $dataArray['rstat'] = ReservationSvcs::createStatusChooser(
+                $resv,
+                $resv->getChooserStatuses($uS->guestLookups['ReservStatus']),
+                $uS->nameLookups[GL_TableNames::PayType],
+                $labels,
+                $showPayWith,
+                Registration::loadLodgingBalance($dbh, $resv->getIdRegistration()));
+
+        // Reservation notes
+        $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
+                        HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'notesLabel', 'Reservation Notes'), array('style'=>'font-weight:bold;'))
+                        . Notes::markupShell($resv->getNotes(), 'txtRnotes'), array('style'=>'float:left; width:50%;', 'class'=>'hhk-panel'));
+
+        // Vehicles
+        if ($uS->TrackAuto) {
+            $dataArray['vehicle'] = $this->vehicleMarkup($dbh);
+        }
+
+        // Collapsing header
+        $hdr = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('span', 'Reservation ')
+                .HTMLContainer::generateMarkup('span', '', array('id'=>'spnResvStatus'))
+                , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
+
+
+        return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
+    }
+
+    protected function vehicleMarkup(\PDO $dbh) {
+
+        $regId = $this->reservRs->idRegistration->getStoredVal();
+
+        $reg = new Registration($dbh, 0, $regId);
+
+        $noVeh = $reg->getNoVehicle();
+
+        if ($reg->isNew()) {
+            $noVeh = '1';
+        }
+
+        return Vehicle::createVehicleMarkup($dbh, $reg->getIdRegistration(), $noVeh);
+
+    }
 }
 
 
@@ -136,8 +218,11 @@ class ActiveReservation extends BlankReservation {
 
     public function createMarkup(\PDO $dbh) {
 
+        $uS = Session::getInstance();
+
         $data = parent::createMarkup($dbh);
 
+        $data['resv'] = $this->resvSection($dbh, new Config_Lite(LABEL_FILE));
 
 
         return $data;
@@ -179,7 +264,6 @@ class BlankReservation extends Reservation {
         $hospitalStay = new HospitalStay($dbh, $family->getPatientId());
 
         $data['hosp'] = Hospital::createReferralMarkup($dbh, $hospitalStay);
-
 
         return $data;
     }

@@ -314,7 +314,7 @@ $(document).ready(function () {
 
         $divClearStyle = HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
-        $div = HTMLContainer::generateMarkup('div', $hospitalMkup . $referralAgentMarkup . $doctorMarkup . $diagMarkup . $locMarkup . $hstayLog . $divClearStyle, array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-panel hhk-tdbox'));
+        $div = HTMLContainer::generateMarkup('div', $hospitalMkup . $referralAgentMarkup . $doctorMarkup . $diagMarkup . $locMarkup . $hstayLog . $divClearStyle, array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-tdbox'));
 
         // prepare hospital names
         $hospList = array();

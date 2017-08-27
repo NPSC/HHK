@@ -111,16 +111,26 @@ class Family {
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
         $rowClass = 'odd';
+        $mk1 = '';
 
 
-        $tbl->addHeaderTr(HTMLTable::makeTh('Staying') . $this->roleObj[0]->getRoleMember()->createThinMarkupHdr($this->rData->getPatLabel(), FALSE) . HTMLTable::makeTh('Phone') . HTMLTable::makeTh('Addr'));
-
+        $tbl->addHeaderTr(
+                HTMLTable::makeTh('Staying')
+                . $this->roleObj[0]->getRoleMember()->createThinMarkupHdr($this->rData->getPatLabel(), FALSE)
+                . HTMLTable::makeTh('Phone')
+                . HTMLTable::makeTh('Addr'));
 
 
         // Put the patient first.
         if ($this->getPatientId() > 0) {
 
-            $tbl->addBodyTr($this->roleObj[$this->getPatientId()]->createThinMarkup($this->members[$this->getPatientId()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)), array('class'=>$rowClass));
+            $tbl->addBodyTr(
+                    $this->roleObj[$this->getPatientId()]->createThinMarkup($this->members[$this->getPatientId()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE))
+                    , array('class'=>$rowClass));
+
+            if ($uS->PatientAddr) {
+                $tbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd($this->roleObj[$this->getPatientId()]->createAddsBLock(), array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow', 'style'=>'display:none;'));
+            }
 
         }
 
@@ -139,9 +149,11 @@ class Family {
             }
 
             $tbl->addBodyTr($m->createThinMarkup($this->members[$m->getIdName()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)), array('class'=>$rowClass));
+
+            $tbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd($m->createAddsBLock(), array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow', 'style'=>'display:none;'));
         }
 
-        $mk1 = $this->roleObj[0]->createAddsBLock();
+
 
 //        $adrTbl = new HTMLTable();
 //        $adrTbl->addHeaderTr($m->createThinAddrHdr($uS->county));
@@ -161,7 +173,7 @@ class Family {
             HTMLContainer::generateMarkup('span', 'Family ')
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
-        $div = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('id'=>'tblFamily', 'class'=>'hhk-table')) . $mk1, array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-panel hhk-tdbox'));
+        $div = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('id'=>'tblFamily', 'class'=>'hhk-table')) . $mk1, array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-tdbox'));
 
         return array('hdr'=>$hdr, 'div'=>$div, 'addrs'=>$this->getAddresses());
 

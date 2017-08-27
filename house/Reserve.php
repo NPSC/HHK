@@ -172,9 +172,8 @@ $resvObjEncoded = json_encode($resvObj->toArray());
                 <div id="famSection" style="font-size: .9em; clear:left; float:left; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget"></div>
 
                 <div id="hospitalSection" style="font-size: .9em; padding-left:0;margin-top:0; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
-                <div id="resvStatus" style="float:left; font-size:.9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog"></div>
-                <div id="notesGuest" style="float:left; font-size:.9em; display:none; width: 600px;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog"></div>
-                <div id="vehicle" style="float:left; font-size: .9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"></div>
+                <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; min-width: 810px;" class="ui-widget "></div>
+                <div id="vehSection" style="float:left; font-size: .9em; display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox"></div>
 
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <input type="button" id="btnDelete" value="Delete" style="display:none;"/>
@@ -190,7 +189,40 @@ $resvObjEncoded = json_encode($resvObj->toArray());
         </div>
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
 
-        <script type="text/javascript">
+<script type="text/javascript">
+function setupVehicle(veh) {
+    var nextVehId = 1;
+    var $cbVeh = veh.find('#cbNoVehicle');
+    var $nextVeh = veh.find('#btnNextVeh');
+    var $tblVeh = veh.find('#tblVehicle');
+
+    $cbVeh.change(function() {
+        if (this.checked) {
+            $tblVeh.hide('scale, horizontal');
+        } else {
+            $tblVeh.show('scale, horizontal');
+        }
+    });
+    $cbVeh.change();
+    $nextVeh.button();
+
+    $nextVeh.click(function () {
+        veh.find('#trVeh' + nextVehId).show('fade');
+        nextVehId++;
+        if (nextVehId > 4) {
+            $nextVeh.hide('fade');
+        }
+    });
+
+}
+
+function setupRate(rateSec) {
+
+}
+
+function setupRoom(roomSec) {
+
+}
 
 function familySection(data) {
 
@@ -242,6 +274,22 @@ function familySection(data) {
         dateFormat: 'M d, yy'
     });
 
+    // toggle address row
+    $('.hhk-togAddr').button().click(function () {
+
+        if ($(this).parents('tr').next('tr').css('display') === 'none') {
+            //$('tr.hhk-addrRow').hide();
+            //$('.hhk-togAddr').val('Show');
+            $(this).parents('tr').next('tr').show();
+            $(this).val('Hide');
+        } else {
+            $(this).parents('tr').next('tr').hide();
+            $(this).val('Show');
+            //$('tr.hhk-addrRow').hide();
+            //$('.hhk-togAddr').val('Show');
+        }
+    });
+
     // set country and state selectors
     $('.hhk-addrPanel').find('select.bfh-countries').each(function() {
         var $countries = $(this);
@@ -253,10 +301,13 @@ function familySection(data) {
         $states.bfhstates($states.data());
     });
 
-    $('#divAddr #aphEmlTabs').tabs();
-    verifyAddrs('#divAddr');
-    var lastXhr;
-    createZipAutoComplete($('#divAddr input.hhk-zipsearch'), 'ws_admin.php', lastXhr);
+    $('.hhk-phemtabs').tabs();
+    verifyAddrs('.hhk-addrPanel');
+
+    $('input.hhk-zipsearch').each(function() {
+        var lastXhr;
+        createZipAutoComplete($(this), 'ws_admin.php', lastXhr);
+    });
 
 }
 
@@ -335,6 +386,55 @@ function hospitalSection(hosp) {
     if ($('#selHospital').val() === '') {
         hHdr.click();
     }
+}
+
+function resvSection(resv) {
+
+    var rDiv = $('<div id="divResvDetail" style="padding:2px; float:left;" class="ui-widget-content ui-corner-bottom hhk-tdbox"/>');
+
+    var roomSec = $(resv.rdiv.rChooser);
+    rDiv.append(roomSec);
+    setupRoom(roomSec);
+
+    // Rate section
+    if (resv.rdiv.rate !== undefined) {
+        var rateSec = $(resv.rdiv.rate);
+        rDiv.append(rateSec);
+        setupRate(rateSec);
+    }
+
+    // Stat and notes sections
+    rDiv.append($(resv.rdiv.rstat)).append($(resv.rdiv.notes));
+
+    // Vehicle section
+    if (resv.rdiv.vehicle !== undefined) {
+        var veh = $(resv.rdiv.vehicle)
+        rDiv.append(veh);
+        setupVehicle(veh);
+    }
+
+    // Header
+    var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+        .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+        .append($("<span id='r_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
+    var rHdr = $('<div id="divResvHdr" style="padding:2px; cursor:pointer;"/>')
+            .append($(resv.hdr))
+            .append(expanderButton).append('<div style="clear:both;"/>');
+
+    rHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
+
+    rHdr.click(function() {
+        if (rDiv.css('display') === 'none') {
+            rDiv.show('blind');
+            rHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
+        } else {
+            rDiv.hide('blind');
+            rHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
+        }
+    });
+
+    // Add to the page.
+    $('#resvSection').empty().append(rHdr).append(rDiv).show();
 }
 
 function transferToGw(data) {
@@ -464,6 +564,10 @@ function loadResv(data) {
         hospitalSection(data.hosp);
     }
 
+    // Reservation
+    if (data.resv !== undefined) {
+        resvSection(data.resv);
+    }
 
 }
 

@@ -139,7 +139,7 @@ abstract class Role {
                 .HTMLContainer::generateMarkup('div', $this->getPhonesObj()->createMarkup("", $idPrefix, TRUE, $this->getHousePhone()), array('id'=>$idPrefix.'phonesTab', 'class'=>'ui-tabs-hide'))
                 .HTMLContainer::generateMarkup('div', $this->getEmailsObj()->createMarkup("", $idPrefix), array('id'=>$idPrefix.'emailTab', 'class'=>'ui-tabs-hide'));
 
-        return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('div', $ul . $divs, array('id'=>$idPrefix.'phEmlTabs', 'style'=>'font-size:.9em;')), array('style'=>'float:left;margin-top:5px;margin-right:5px;', 'class'=>'hhk-tdbox'));
+        return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('div', $ul . $divs, array('id'=>$idPrefix.'phEmlTabs', 'class'=>'hhk-phemtabs', 'style'=>'font-size:.9em;')), array('style'=>'float:left;margin-top:5px;margin-right:5px;', 'class'=>'hhk-tdbox'));
     }
 
     public function createThinAddrHdr($includeCounty = FALSE) {
@@ -275,7 +275,7 @@ abstract class Role {
         $ph = HTMLTable::makeTd($this->getPhonesObj()->get_Data()['Phone_Num']);
 
         // Address
-        $ad = HTMLTable::makeTd($this->getIdName());
+        $ad = HTMLTable::makeTd(HTMLInput::generateMarkup('Show', array('type'=>'button', 'id'=>$this->getIdName() . 'toggleAddr', 'class'=>'hhk-togAddr')));
 
         return $td . $this->roleMember->createThinMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser) . $ph . $ad;
 

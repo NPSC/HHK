@@ -56,6 +56,15 @@ class RoomChooser {
         $this->resv = $resv;
         $this->selectedResource = NULL;
         $this->maxOccupants = 0;
+
+        if (is_null($chkinDT) === FALSE && is_string($chkinDT)) {
+            $chkinDT = new DateTime($chkinDT);
+        }
+
+        if (is_null($chkoutDT) === FALSE && is_string($chkoutDT)) {
+            $chkoutDT = new DateTime($chkoutDT);
+        }
+
         $this->checkinDT = $chkinDT;
         $this->checkoutDT = $chkoutDT;
 
@@ -105,21 +114,21 @@ class RoomChooser {
         $title = 'Currently reserving ';
 
         switch ($currentStatus) {
-            
+
             case ReservationStatus::Staying:
                 $title = 'Currently using ';
                 break;
-            
+
             case ReservationStatus::Committed:
             case ReservationStatus::UnCommitted:
                 $title = 'Currently reserving ';
                 break;
-            
+
             case ReservationStatus::Waitlist:
                 $title = 'Currently waitlisted for ';
                 break;
         }
-        
+
         // fieldset wrapper
         $mk1 = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('fieldset',
@@ -366,11 +375,12 @@ class RoomChooser {
                         . $tbl->generateMarkup(array('id'=>'tblRescList'))
                         . $errorMarkup
                         . HTMLContainer::generateMarkup('div', $constraintMkup, array('style'=>'clear:left; float:left;')),
-                        array('class'=>'hhk-panel')),
-                        array('style'=>'float:left;'));
+                        array('class'=>'hhk-panel'))
+                        , array('style'=>'float:left;')
+                );
 
 
-        return HTMLContainer::generateMarkup('div', $mk1, array('style'=>'clear:both;'));
+        return $mk1;
     }
 
     protected function createStaticMarkup(\PDO $dbh) {

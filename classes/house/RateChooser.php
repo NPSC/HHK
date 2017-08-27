@@ -375,7 +375,7 @@ class RateChooser {
 
             return HTMLContainer::generateMarkup('fieldset',
                     HTMLContainer::generateMarkup('legend', 'Rate Chooser', array('style'=>'font-weight:bold;'))
-                    . $markup);
+                    . $markup, array('style'=>'float:left;', 'class'=>'hhk-panel'));
 
         } else {
             return $this->createStaticMarkup($dbh, $resv, $visitFeeTitle);

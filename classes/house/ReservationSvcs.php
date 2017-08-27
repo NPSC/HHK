@@ -1419,7 +1419,7 @@ class ReservationSvcs {
     }
 
 
-    protected static function createStatusChooser(Reservation_1 $resv, array $limResvStatuses, array $payTypes, \Config_Lite $labels, $showPayWith, $moaBal) {
+    public static function createStatusChooser(Reservation_1 $resv, array $limResvStatuses, array $payTypes, \Config_Lite $labels, $showPayWith, $moaBal) {
 
         $uS = Session::getInstance();
         $tbl2 = new HTMLTable();
@@ -1470,7 +1470,7 @@ class ReservationSvcs {
                     HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'statusLabel', 'Reservation Status'), array('style'=>'font-weight:bold;'))
                     . $tbl2->generateMarkup() . $mk2,
                     array('class'=>'hhk-panel'))
-            , array('style'=>'float:left;'));
+            , array('style'=>'clear:left; float:left;'));
 
     }
 
