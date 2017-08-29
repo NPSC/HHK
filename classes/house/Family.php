@@ -56,13 +56,15 @@ class Family {
         if ($this->rData->getId() > 0 && isset($this->members[$this->rData->getId()]) === FALSE) {
             $this->roleObj[$this->rData->getId()] = new Guest($dbh, $this->rData->getId(), $this->rData->getId());
             $this->members[$this->rData->getId()]['role'] = '';
-            $this->members[$this->rData->getId()]['stay'] = '0';
+            $this->members[$this->rData->getId()]['stay'] = '1';
         }
 
-        // Load empty member
-        $this->roleObj[0] = new Guest($dbh, 'a', 0);
-        $this->members[0]['role'] = '';
-        $this->members[0]['stay'] = '0';
+        // Load empty member?
+        if ($this->rData->getId() == 0) {
+            $this->roleObj[0] = new Guest($dbh, '0', 0);
+            $this->members[0]['role'] = '';
+            $this->members[0]['stay'] = '1';
+        }
 
 
         // Update who is staying
@@ -153,14 +155,14 @@ class Family {
             $tbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd($m->createAddsBLock(), array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow', 'style'=>'display:none;'));
         }
 
+        // Guest search
+        $mk1 .= HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('span', 'Add people - Name Search: ')
+                .HTMLInput::generateMarkup('', array('id'=>'txtPersonSearch', 'title'=>'Enter the first three characters of the person\'s last name'))
+                , array('id'=>'divPersonSearch', 'style'=>'margin-top:10px;'));
 
 
-//        $adrTbl = new HTMLTable();
-//        $adrTbl->addHeaderTr($m->createThinAddrHdr($uS->county));
-//        $adrTbl->addBodyTr($m->createThinAddrMU($uS->county));
-
-
-        // Waitlist notes
+        // Waitlist notes?
         if ($uS->UseWLnotes) {
 
             $mk1 .= HTMLContainer::generateMarkup('fieldset',
@@ -169,6 +171,7 @@ class Family {
                 array('class'=>'hhk-panel', 'style'=>'clear:both; float:left; margin-top:10px; font-size:.9em;'));
             }
 
+            // Header
         $hdr = HTMLContainer::generateMarkup('div',
             HTMLContainer::generateMarkup('span', 'Family ')
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));

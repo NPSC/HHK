@@ -208,6 +208,15 @@ class Guest extends Role {
             $mk1 .= $this->createAddsBLock();
         }
 
+        // Demographics
+        if ($uS->ShowDemographics) {
+
+            $mk1 .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
+                    HTMLContainer::generateMarkup('legend', 'Demographics', array('style'=>'font-weight:bold;'))
+                    . $this->getRoleMember()->createDemographicsPanel($dbh, TRUE, FALSE), array('class'=>'hhk-panel')),
+                    array('style'=>'float:left; margin-right:3px;'));
+        }
+
         // Waitlist notes
         if ($uS->UseWLnotes) {
 

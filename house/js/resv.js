@@ -126,6 +126,7 @@ function getIncomeDiag(idResv, idReg) {
 function setupRates(ckIn) {
     "use strict";
     if ($('#selVisitFee').length > 0) {
+        
         $('#selVisitFee').change(function() {
             $('#selRateCategory').change();
             if ($('#visitFeeCb').length > 0) {
@@ -147,8 +148,10 @@ function setupRates(ckIn) {
                 $('#visitFeeCb').change();
             }
         });
+        
         $('#selVisitFee').change();
     }
+    
     $('#txtFixedRate').change(function() {
         if ($('#selRateCategory').val() == 'x') {
             var amt = parseFloat($(this).val());

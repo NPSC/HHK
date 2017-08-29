@@ -1046,7 +1046,7 @@ function resvPicker(data, $faDiag) {
         buttons[data.newButtonLabel] = function() {
             resv.idReserv = -1;
             $(this).dialog("close");
-            loadGuest(data, resv.role, data.idPsg, (data.idPatient === data.id ? true : resv.patStaying));
+            loadGuest(data, resv.role, data.idPsg, (data.idPatient == data.id ? true : resv.patStaying));
         };
     }
     

@@ -102,7 +102,7 @@ define('JQ_JS', '../js/jquery-3.1.1.min.js');
 define('JQ_DT_JS', '../js/datatables.min.js' . JS_V);
 
 define('PRINT_AREA_JS', "../js/jquery.PrintArea.js" . JS_V);
-define('VERIFY_ADDRS_JS', "../js/verifyAddrs-min.js" . JS_V);
+define('VERIFY_ADDRS_JS', "../js/verifyAddrs.js" . JS_V);
 define('STATE_COUNTRY_JS', "../js/stateCountry.js" . JS_V);
 define('PAYMENT_JS', "js/payments-min.js" . JS_V);
 define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JS_V);

@@ -137,7 +137,13 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
 
 function verifyAddrs(container) {
     "use strict";
-    $(container).on('change', 'input.hhk-emailInput', function() {
+    var $container;
+    if (typeof(container) === 'string') {
+        $container = $(container);
+    } else {
+        $container = container;
+    }
+    $container.on('change', 'input.hhk-emailInput', function() {
         var rexEmail = /^[A-Z0-9._%+\-]+@(?:[A-Z0-9]+\.)+[A-Z]{2,4}$/i;
         if ($.trim($(this).val()) !== '' && rexEmail.test($(this).val()) === false) {
             $(this).addClass('ui-state-error');
@@ -146,7 +152,7 @@ function verifyAddrs(container) {
         }
     });
     
-    $(container).on('change', 'input.hhk-phoneInput', function() {
+    $container.on('change', 'input.hhk-phoneInput', function() {
         // inspect each phone number text box for correctness
         var testreg = /^([\(]{1}[0-9]{3}[\)]{1}[\.| |\-]{0,1}|^[0-9]{3}[\.|\-| ]?)?[0-9]{3}(\.|\-| )?[0-9]{4}$/;
         var regexp = /^(?:(?:[\+]?([\d]{1,3}(?:[ ]+|[\-.])))?[(]?([2-9][\d]{2})[\-\/)]?(?:[ ]+)?)?([2-9][0-9]{2})[\-.\/)]?(?:[ ]+)?([\d]{4})(?:(?:[ ]+|[xX]|(i:ext[\.]?)){1,2}([\d]{1,5}))?$/;
@@ -181,7 +187,7 @@ function verifyAddrs(container) {
         }
     });
     
-    $(container).on('change', 'input.ckzip', function() {
+    $container.on('change', 'input.ckzip', function() {
         var postCode = /^(?:[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][ABD-HJLNP-UW-Z]{2}|[ABCEGHJKLMNPRSTVXY][0-9][A-Z] [0-9][A-Z][0-9]|[0-9]{5}(?:\-[0-9]{4})?)$/i;
         if ($(this).val() !== "" && !postCode.test($(this).val())) {
             $(this).addClass('ui-state-error');
