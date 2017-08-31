@@ -20,7 +20,7 @@ abstract class RoleMember extends IndivMember {
 
     protected abstract function getMyMemberType();
 
-    public function createThinMarkupHdr($labels = NULL, $hideRelChooser = TRUE) {
+    public static function createThinMarkupHdr($labels = NULL, $hideRelChooser = TRUE, $showBirthDate = TRUE) {
 
         $tr =
              HTMLTable::makeTh('First Name')
@@ -28,7 +28,7 @@ abstract class RoleMember extends IndivMember {
             . HTMLTable::makeTh('Last Name')
             .HTMLTable::makeTh('Suffix')
             . HTMLTable::makeTh('Nickname')
-            . ($this->showBirthDate ? HTMLTable::makeTh('Birth Date') : '');
+            . ($showBirthDate ? HTMLTable::makeTh('Birth Date') : '');
 
 
         if ($hideRelChooser === FALSE) {
@@ -53,7 +53,7 @@ abstract class RoleMember extends IndivMember {
             HTMLTable::makeTh('Id')
             .HTMLTable::makeTh('Prefix');
 
-        return $tr . $this->createThinMarkupHdr($labels, $hideRelChooser);
+        return $tr . $this->createThinMarkupHdr($labels, $hideRelChooser, $this->showBirthDate);
 
     }
 

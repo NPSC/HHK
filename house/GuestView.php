@@ -121,8 +121,11 @@ order by l.Title, `Arrival`");
         $vrows[$i]['Expected Departure'] =  date('c', strtotime($vrows[$i]['Expected Departure']));
     }
 
-
-    $vehicleTable = CreateMarkupFromDB::generateHTML_Table($vrows, 'tblListv');
+    if (count($vrows) > 0) {
+        $vehicleTable = CreateMarkupFromDB::generateHTML_Table($vrows, 'tblListv');
+    } else {
+        $vehicleTable = HTMLContainer::generateMarkup('h2', 'No vehicles present.');
+    }
 
 }
 

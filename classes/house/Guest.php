@@ -185,11 +185,11 @@ class Guest extends Role {
         return HTMLContainer::generateMarkup('form', $mk1, array('name'=>'fAddGuest', 'method'=>'post'));
     }
 
-    public function createReservationMarkup($lockRelChooser = FALSE, $waitListText = '') {
+    public function createReservationMarkup(\PDO $dbh, $lockRelChooser = FALSE, $waitListText = '') {
 
         $uS = Session::getInstance();
         $idPrefix = $this->getRoleMember()->getIdPrefix();
-        $mk1 = '';
+
         $labels = new Config_Lite(LABEL_FILE);
 
         // Guest Name

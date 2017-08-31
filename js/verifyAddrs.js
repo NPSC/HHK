@@ -143,8 +143,9 @@ function verifyAddrs(container) {
     } else {
         $container = container;
     }
+    
     $container.on('change', 'input.hhk-emailInput', function() {
-        var rexEmail = /^[A-Z0-9._%+\-]+@(?:[A-Z0-9]+\.)+[A-Z]{2,4}$/i;
+        var rexEmail = /^[A-Z0-9._%+\-]+@(?:[A-Z0-9]+\.)+[A-Z]{2,20}$/i;
         if ($.trim($(this).val()) !== '' && rexEmail.test($(this).val()) === false) {
             $(this).addClass('ui-state-error');
         } else {

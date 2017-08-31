@@ -253,7 +253,7 @@ class BlankReservation extends Reservation {
 
         $family = new Family($dbh, $this->reserveData);
 
-        $this->reserveData->setFamilySection($family->createFamilyMarkup($this->reservRs));
+        $this->reserveData->setFamilySection($family->createFamilyMarkup($dbh, $this->reservRs));
 
         $data = $this->reserveData->toArray();
 
@@ -330,7 +330,7 @@ class ReserveSearcher extends BlankReservation {
 
             $checkinNow = HTMLContainer::generateMarkup('a',
                         HTMLInput::generateMarkup('Open ' . $this->reserveData->getResvTitle(), array('type'=>'button', 'style'=>'margin-bottom:.3em;'))
-                        , array('style'=>'text-decoration:none;margin-right:.3em;', 'href'=>'Reserve.php?rid='.$resvRs->idReservation->getStoredVal()));
+                        , array('style'=>'text-decoration:none;margin-right:.3em;', 'href'=>'Reserve.php?rid='.$resvRs->idReservation->getStoredVal().'&id='.$this->reserveData->getId()));
 
             $expArrDT = new \DateTime($resvRs->Expected_Arrival->getStoredVal());
             $expArrDT->setTime(0, 0, 0);

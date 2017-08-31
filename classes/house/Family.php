@@ -7,6 +7,8 @@
  */
 class Family {
 
+    const FAM_TABLE_ID = 'tblFamily';
+
     protected $members;
     protected $roleObj;
     protected $rData;
@@ -26,6 +28,7 @@ class Family {
         $uS = Session::getInstance();
         $this->members = array();
 
+        // Load any existing PSG members.
         if ($this->rData->getidPsg() > 0) {
 
             // PSG is defined
@@ -60,7 +63,7 @@ class Family {
         }
 
         // Load empty member?
-        if ($this->rData->getId() == 0) {
+        if ($this->rData->getId() === 0) {
             $this->roleObj[0] = new Guest($dbh, '0', 0);
             $this->members[0]['role'] = '';
             $this->members[0]['stay'] = '1';
@@ -108,7 +111,34 @@ class Family {
         return $addrs;
     }
 
-    public function createFamilyMarkup(ReservationRS $resvRs) {
+    public function addPerson(\PDO $dbh) {
+
+        $uS = Session::getInstance();
+        $addPerson = array();
+
+        if (isset($this->roleObj[$this->rData->getId()])) {
+
+            $m = $this->roleObj[$this->rData->getId()];
+
+            $nameTr = HTMLContainer::generateMarkup('tr', $m->createThinMarkup($this->members[$m->getIdName()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)));
+
+            // Demographics
+            if ($uS->ShowDemographics) {
+                $demoMu = $this->getDemographicsMarkup($dbh, $m);
+            } else {
+                $demoMu = '';
+            }
+
+            // Add addresses and demo's
+            $addressTr = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($m->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>'hhk-addrRow'));
+
+            $addPerson = array('ntr'=>$nameTr, 'atr'=>$addressTr, 'tblId'=>FAMILY::FAM_TABLE_ID, 'addrs'=>$this->getAddresses());
+        }
+
+        return array('addPerson' => $addPerson);
+
+    }
+    public function createFamilyMarkup(\PDO $dbh, ReservationRS $resvRs) {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
@@ -118,7 +148,7 @@ class Family {
 
         $tbl->addHeaderTr(
                 HTMLTable::makeTh('Staying')
-                . $this->roleObj[0]->getRoleMember()->createThinMarkupHdr($this->rData->getPatLabel(), FALSE)
+                . RoleMember::createThinMarkupHdr($this->rData->getPatLabel(), FALSE, $this->rData->getPatBirthDateFlag())
                 . HTMLTable::makeTh('Phone')
                 . HTMLTable::makeTh('Addr'));
 
@@ -130,8 +160,15 @@ class Family {
                     $this->roleObj[$this->getPatientId()]->createThinMarkup($this->members[$this->getPatientId()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE))
                     , array('class'=>$rowClass));
 
+            // Demographics
+            if ($uS->ShowDemographics) {
+                $demoMu = $this->getDemographicsMarkup($dbh, $this->roleObj[$this->getPatientId()]);
+            } else {
+                $demoMu = '';
+            }
+
             if ($uS->PatientAddr) {
-                $tbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd($this->roleObj[$this->getPatientId()]->createAddsBLock(), array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow', 'style'=>'display:none;'));
+                $tbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd($this->roleObj[$this->getPatientId()]->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow', 'style'=>'display:none;'));
             }
 
         }
@@ -152,7 +189,15 @@ class Family {
 
             $tbl->addBodyTr($m->createThinMarkup($this->members[$m->getIdName()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)), array('class'=>$rowClass));
 
-            $tbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd($m->createAddsBLock(), array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow', 'style'=>'display:none;'));
+            // Demographics
+            if ($uS->ShowDemographics) {
+                $demoMu = $this->getDemographicsMarkup($dbh, $m);
+            } else {
+                $demoMu = '';
+            }
+
+            // Add addresses and demo's
+            $tbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd($m->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow', 'style'=>'display:none;'));
         }
 
         // Guest search
@@ -176,9 +221,18 @@ class Family {
             HTMLContainer::generateMarkup('span', 'Family ')
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
-        $div = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('id'=>'tblFamily', 'class'=>'hhk-table')) . $mk1, array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-tdbox'));
+        $div = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('id'=>FAMILY::FAM_TABLE_ID, 'class'=>'hhk-table')) . $mk1, array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-tdbox'));
 
         return array('hdr'=>$hdr, 'div'=>$div, 'addrs'=>$this->getAddresses());
+
+    }
+
+    protected function getDemographicsMarkup(\PDO $dbh, $m) {
+
+        return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
+        HTMLContainer::generateMarkup('legend', 'Demographics', array('style'=>'font-weight:bold;'))
+        . $m->getRoleMember()->createDemographicsPanel($dbh, TRUE, FALSE), array('class'=>'hhk-panel')),
+        array('style'=>'float:left; margin-right:3px;'));
 
     }
 

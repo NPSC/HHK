@@ -288,7 +288,7 @@ class ReservationSvcs {
         }
 
         $dataArray['patStay'] = $patientStaying;
-        $dataArray = array_merge($dataArray, $guest->createReservationMarkup($patientStaying, $resv->getCheckinNotes()));
+        $dataArray = array_merge($dataArray, $guest->createReservationMarkup($dbh, $patientStaying, $resv->getCheckinNotes()));
         $dataArray['notes'] = $guest->createNotesMU($resv->getNotes(), 'txtRnotes', $labels);
 
 
@@ -825,7 +825,7 @@ class ReservationSvcs {
         $guest->setExpectedCheckOut($post['coDate']);
 
         // primary guest markup
-        $dataArray = $guest->createReservationMarkup($patientStaying, $resv->getCheckinNotes());
+        $dataArray = $guest->createReservationMarkup($dbh, $patientStaying, $resv->getCheckinNotes());
 
 
         // Existing visit?
@@ -1229,7 +1229,7 @@ class ReservationSvcs {
         //
 
         // re-create guest markup
-        foreach ($guest->createReservationMarkup($patientStaying, $resv->getCheckinNotes()) as $k => $v) {
+        foreach ($guest->createReservationMarkup($dbh, $patientStaying, $resv->getCheckinNotes()) as $k => $v) {
             $dataArray[$k] = $v;
         }
 

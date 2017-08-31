@@ -37,7 +37,7 @@ class ReserveData {
     const FULL_NAME = 'fullName';
 
     protected $idResv = 0;
-    protected $id = 0;
+    protected $id;
     protected $idPsg = 0;
     protected $fullName = '';
     protected $resvTitle;

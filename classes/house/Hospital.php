@@ -40,9 +40,6 @@ class Hospital {
 
         $uS = Session::getInstance();
 
-        // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
-
         $hospList = $uS->guestLookups[GL_TableNames::Hospital];
         $hList = array();
         $aList = array();
@@ -67,7 +64,7 @@ class Hospital {
 
         $table->addHeaderTr(
                 (count($aList) > 0 ? HTMLTable::makeTh('Association') : '')
-                .HTMLTable::makeTh($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'))
+                .HTMLTable::makeTh('Hospital')
                 .HTMLTable::makeTh('Room')
                 .HTMLTable::makeTh('Treatment Start')
                 .($showExitDate ? HTMLTable::makeTh('Treatment End') : '')

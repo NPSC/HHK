@@ -134,14 +134,10 @@ if (isset($_GET['rid'])) {
 }
 
 
-if ($idReserv > 0) {
+if ($idReserv > 0 || $idGuest > 0) {
 
     $mk1 = "<h2>Loading...</h2>";
     $resvObj->setIdResv($idReserv);
-
-} else if ($idGuest > 0) {
-
-    $mk1 = "<h2>Loading...</h2>";
     $resvObj->setId($idGuest);
 
 } else {
@@ -381,6 +377,65 @@ function setupRoom(idReserv) {
 
 }
 
+function newGuestMarkup(data) {
+
+    if (data.tblId) {
+
+        var $famTbl = $('#' + data.tblId);
+
+        $famTbl.append($(data.ntr)).append($(data.atr));
+
+        $('.hhk-cbStay').checkboxradio({
+            classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
+        });
+
+        $('.hhk-lblStay').each(function () {
+            if ($(this).data('stay') == '1') {
+                $(this).click();
+            }
+        });
+
+        $('.ckbdate').datepicker({
+            yearRange: '-99:+00',
+            changeMonth: true,
+            changeYear: true,
+            autoSize: true,
+            maxDate: 0,
+            dateFormat: 'M d, yy'
+        });
+
+        $('.hhk-togAddr').button();
+
+    }
+}
+
+function addGuest(item, idReserv) {
+
+    hideAlertMessage();
+
+    // Check for guest already added.
+    //
+
+    if (item.No_Return !== undefined && item.No_Return !== '') {
+        flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
+        return;
+    }
+
+    var resv = {};
+
+    if (typeof item.id !== 'undefined') {
+        resv.id = item.id;
+    } else {
+        return;
+    }
+
+    resv.rid = idReserv;
+    resv.cmd = 'addThinGuest';
+
+    getReserve(resv);
+
+}
+
 function familySection(data) {
 
     if (data.famSection === undefined) {
@@ -457,14 +512,15 @@ function familySection(data) {
 
     $('.hhk-phemtabs').tabs();
 
-    $('.hhk-addrPanel').each(function () {
-        verifyAddrs($(this));
-    });
-
+    verifyAddrs('#divfamDetail');
 
     $('input.hhk-zipsearch').each(function() {
         var lastXhr;
         createZipAutoComplete($(this), 'ws_admin.php', lastXhr);
+    });
+
+    createAutoComplete($('#txtPersonSearch'), 3, {cmd: 'role', gp:'1'}, function (item) {
+        addGuest(item, data.rid);
     });
 
 }
@@ -639,6 +695,7 @@ function resvPicker(data, $faDiag) {
     if (data.resvTitle) {
         buttons['New ' + data.resvTitle] = function() {
             data.rid = -1;
+            data.cmd = 'getresv';
             $(this).dialog("close");
             getReserve(data);
         };
@@ -665,7 +722,7 @@ function psgChooser(data) {
         .dialog('option', 'buttons', {
             Open: function() {
                 $('#psgDialog').dialog('close');
-                getReserve({idPsg: $('#psgDialog input[name=cbselpsg]:checked').val(), id: data.id});
+                getReserve({idPsg: $('#psgDialog input[name=cbselpsg]:checked').val(), id: data.id, cmd: 'getresv'});
             },
             Cancel: function () {
                 $('#psgDialog').dialog('close');
@@ -678,9 +735,6 @@ function psgChooser(data) {
 }
 
 function getReserve(sdata) {
-
-    sdata.cmd = 'getresv';
-    $('div#guestSearch').hide();
 
     $.post('ws_resv.php', sdata, function(data) {
 
@@ -695,8 +749,14 @@ function getReserve(sdata) {
             window.open(data.gotopage, '_self');
         }
 
+        if (data.error) {
+            flagAlertMessage(data.error, true);
+        }
+
         loadResv(data);
     });
+
+    $('div#guestSearch').hide();
 
 }
 
@@ -731,13 +791,16 @@ function loadResv(data) {
     // Reservation
     if (data.resv !== undefined) {
         resvSection(data);
+
+        // String together some events
+        $('#famSection').on('click', '.hhk-lblStay', function () {
+
+        });
     }
 
-    // String together some events
-    $('#famSection').on('click', '.hhk-lblStay', function () {
-
-    });
-
+    if (data.addPerson !== undefined) {
+        newGuestMarkup(data.addPerson);
+    }
 
 }
 
@@ -843,12 +906,15 @@ $(document).ready(function() {
         }
 
         resv.fullName = item.fullName;
+        resv.cmd = 'getresv';
 
         getReserve(resv);
+
     }
 
     if (parseInt(resv.id, 10) > 0 || parseInt(resv.rid, 10) > 0) {
 
+        resv.cmd = 'getresv';
         getReserve(resv);
 
     } else {

@@ -133,6 +133,16 @@ try {
 
         break;
 
+    case "addThinGuest":
+
+        $rData = new ReserveData($_POST);
+
+        $family = new Family($dbh, $rData);
+
+        $events = $family->addPerson($dbh);
+
+        break;
+
     default:
         $events = array("error" => "Bad Command: \"" . $c . "\"");
 }
