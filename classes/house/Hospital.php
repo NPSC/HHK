@@ -141,7 +141,7 @@ class Hospital {
             $ratbl->addBodyTr(
                 HTMLTable::makeTh(HTMLContainer::generateMarkup('span', $labels->getString('hospital', 'referralAgent', 'Referral Agent'), array('style'=>'float:left;')).
                         HTMLContainer::generateMarkup('span', '', array('name'=>'agentSearch', 'class'=>'hhk-agentSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'float: left; margin-left:1.3em;'))
-                        . HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup('', array('id'=>'txtAgentSch', 'class'=>'ignrSave', 'size'=>'13', 'title'=>'Type 3 characters to start the search.')), array('title'=>'Search', 'style'=>'float: left; margin-left:0.3em;'))
+                        . HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup('', array('id'=>'txtAgentSch', 'class'=>'ignrSave', 'size'=>'16', 'title'=>'Type 3 characters to start the search.')), array('title'=>'Search', 'style'=>'float: left; margin-left:0.3em;'))
                         , array('colspan'=>2))
                 .HTMLTable::makeTh('Phone')
                 .HTMLTable::makeTh('Email', array('rowspan'=>'2', 'style'=>'vertical-align:bottom;')));
@@ -193,7 +193,7 @@ class Hospital {
                 HTMLTable::makeTh(HTMLContainer::generateMarkup('span', 'Doctor', array('style'=>'float:left;'))
                     .HTMLContainer::generateMarkup('span', '', array('name'=>'doctorSearch', 'class'=>'hhk-docSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'float: left; margin-left:1.3em;'))
                     .HTMLContainer::generateMarkup('span',
-                        HTMLInput::generateMarkup('', array('id'=>'txtDocSch', 'class'=>'ignrSave', 'size'=>'13', 'title'=>'Type 3 characters to start the search.')), array('title'=>'Search', 'style'=>'float: left; margin-left:0.3em;'))
+                        HTMLInput::generateMarkup('', array('id'=>'txtDocSch', 'class'=>'ignrSave', 'size'=>'16', 'title'=>'Type 3 characters to start the search.')), array('title'=>'Search', 'style'=>'float: left; margin-left:0.3em;'))
                         , array('colspan'=>'2'))
             );
 
@@ -208,13 +208,13 @@ class Hospital {
                 HTMLTable::makeTd(($doc->getRoleMember()->get_lastName() == '' ? '' : 'Dr. ') .
                         HTMLInput::generateMarkup(
                                 $doc->getRoleMember()->get_firstName(),
-                                array('name'=>'d_txtFirstName', 'size'=>'15', 'class'=>'hhk-docInfo'))
+                                array('name'=>'d_txtFirstName', 'size'=>'17', 'class'=>'hhk-docInfo'))
                         .HTMLInput::generateMarkup($doc->getIdName(), array('name'=>'d_idName', 'type'=>'hidden'))
                     )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $doc->getRoleMember()->get_lastName(),
-                                array('name'=>'d_txtLastName', 'size'=>'15', 'class'=>'hhk-docInfo'))
+                                array('name'=>'d_txtLastName', 'size'=>'17', 'class'=>'hhk-docInfo'))
                         )
              );
 

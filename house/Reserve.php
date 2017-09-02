@@ -202,14 +202,14 @@ $resvObjEncoded = json_encode($resvObj->toArray());
 
             <form action="Referral.php" method="post"  id="form1">
                 <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
-                <div id="famSection" style="font-size: .9em; clear:left; float:left; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget"></div>
+                <div id="famSection" style="font-size: .9em; clear:left; float:left; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
 
                 <div id="hospitalSection" style="font-size: .9em; padding-left:0;margin-top:0; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
                 <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
 
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <input type="button" id="btnDelete" value="Delete" style="display:none;"/>
-                    <input type="button" id="btnCkinForm" value='Show Registration Form' style="display:none;"/>
+                    <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
                     <input id='btnDone' type='button' value='Find a Room' style="display:none;"/>
                 </div>
 
@@ -227,186 +227,58 @@ $resvObjEncoded = json_encode($resvObj->toArray());
         </div>
 
 <script type="text/javascript">
-function setupVehicle(veh) {
-    var nextVehId = 1;
-    var $cbVeh = veh.find('#cbNoVehicle');
-    var $nextVeh = veh.find('#btnNextVeh');
-    var $tblVeh = veh.find('#tblVehicle');
-
-    $cbVeh.change(function() {
-        if (this.checked) {
-            $tblVeh.hide('scale, horizontal');
-        } else {
-            $tblVeh.show('scale, horizontal');
-        }
-    });
-    $cbVeh.change();
-    $nextVeh.button();
-
-    $nextVeh.click(function () {
-        veh.find('#trVeh' + nextVehId).show('fade');
-        nextVehId++;
-        if (nextVehId > 4) {
-            $nextVeh.hide('fade');
-        }
-    });
-
-}
-
-function setupRate(data) {
-
-    var reserve = {};
-    if ($('#btnFapp').length > 0) {
-
-        $("#faDialog").dialog({
-            autoOpen: false,
-            resizable: true,
-            width: 650,
-            modal: true,
-            title: 'Income Chooser',
-            close: function () {$('div#submitButtons').show();},
-            open: function () {$('div#submitButtons').hide();},
-            buttons: {
-                Save: function() {
-                    $.post('ws_ckin.php', $('#formf').serialize() + '&cmd=savefap' + '&rid=' + data.rid, function(rdata) {
-                        try {
-                            rdata = $.parseJSON(rdata);
-                        } catch (err) {
-                            alert('Bad JSON Encoding');
-                            return;
-                        }
-                        if (rdata.gotopage) {
-                            window.open(rdata.gotopage, '_self');
-                        }
-                        if (rdata.rstat && rdata.rstat == true) {
-                            var selCat = $('#selRateCategory');
-                            if (rdata.rcat && rdata.rcat != '' && selCat.length > 0) {
-                                selCat.val(rdata.rcat);
-                                selCat.change();
-                            }
-                        }
-                    });
-                    $(this).dialog("close");
-                },
-                "Exit": function() {
-                    $(this).dialog("close");
-                }
-            }
-        });
-
-        $('#btnFapp').button().click(function() {
-            getIncomeDiag(data.rid);
-        });
-    }
-
-    reserve.rateList = data.resv.rdiv.ratelist;
-    reserve.resources = data.resv.rdiv.rooms;
-    reserve.visitFees = data.resv.rdiv.vfee;
-
-    setupRates(reserve, $('#selResource').val());
-
-    $('#selResource').change(function () {
-        $('#selRateCategory').change();
-
-        var selected = $("option:selected", this);
-        selected.parent()[0].label === "Not Suitable" ? $('#hhkroomMsg').text("Not Suitable").show(): $('#hhkroomMsg').hide();
-    });
-
-}
-
-function setupRoom(idReserv) {
-
-    // Reservation history button
-    $('.hhk-viewResvActivity').click(function () {
-      $.post('ws_ckin.php', {cmd:'viewActivity', rid: $(this).data('rid')}, function(data) {
-        data = $.parseJSON(data);
-
-        if (data.error) {
-
-            if (data.gotopage) {
-                window.open(data.gotopage, '_self');
-            }
-            flagAlertMessage(data.error, true);
-            return;
-        }
-         if (data.activity) {
-
-            $('div#submitButtons').hide();
-            $("#activityDialog").children().remove();
-            $("#activityDialog").append($(data.activity));
-            $("#activityDialog").dialog('open');
-        }
-        });
-
-    });
-
-    // Room selector update for constraints changes.
-    $('input.hhk-constraintsCB').change( function () {
-        updateRoomChooser(idReserv, $('#spnNumGuests').text(), $('#gstDate').val(), $('#gstCoDate').val());
-    });
-
-    // Show confirmation form button.
-    $('#btnShowCnfrm').button().click(function () {
-        var amount = $('#spnAmount').text();
-        if (amount === '') {
-            amount = 0;
-        }
-        $.post('ws_ckin.php', {cmd:'confrv', rid: $(this).data('rid'), amt: amount, eml: '0'}, function(data) {
-
-            data = $.parseJSON(data);
-
-            if (data.error) {
-                if (data.gotopage) {
-                    window.open(data.gotopage, '_self');
-                }
-                flagAlertMessage(data.error, true);
-                return;
-            }
-
-             if (data.confrv) {
-
-                $('div#submitButtons').hide();
-                $("#frmConfirm").children().remove();
-                $("#frmConfirm").html(data.confrv)
-                    .append($('<div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><span>Email Address </span><input type="text" id="confEmail" value="'+data.email+'"/></div>'));
-
-                $("#confirmDialog").dialog('open');
-            }
-        });
-    });
-
-}
 
 function newGuestMarkup(data) {
 
-    if (data.tblId) {
+    var $countries, $states, $famTbl;
 
-        var $famTbl = $('#' + data.tblId);
-
-        $famTbl.append($(data.ntr)).append($(data.atr));
-
-        $('.hhk-cbStay').checkboxradio({
-            classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
-        });
-
-        $('.hhk-lblStay').each(function () {
-            if ($(this).data('stay') == '1') {
-                $(this).click();
-            }
-        });
-
-        $('.ckbdate').datepicker({
-            yearRange: '-99:+00',
-            changeMonth: true,
-            changeYear: true,
-            autoSize: true,
-            maxDate: 0,
-            dateFormat: 'M d, yy'
-        });
-
-        $('.hhk-togAddr').button();
-
+    if (data.tblId === undefined || data.tblId == '') {
+        return;
     }
+
+    $famTbl = $('#' + data.tblId);
+
+    if ($famTbl.length === 0) {
+        return;
+    }
+
+    $famTbl.append($(data.ntr)).append($(data.atr));
+
+    $('#' + data.pref + 'cbStay').checkboxradio({
+        classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
+    });
+
+    $('#' + data.pref + 'lblStay').each(function () {
+        if ($(this).data('stay') == '1') {
+            $(this).click();
+        }
+    });
+
+    $('.ckbdate').datepicker({
+        yearRange: '-99:+00',
+        changeMonth: true,
+        changeYear: true,
+        autoSize: true,
+        maxDate: 0,
+        dateFormat: 'M d, yy'
+    });
+
+    $('#' + data.pref + 'toggleAddr').button();
+
+    // set country and state selectors
+    $countries = $('#' + data.pref + 'adrcountry1');
+    $countries.bfhcountries($countries.data());
+
+    $states = $('#' + data.pref + 'adrstate1');
+    $states.bfhstates($states.data());
+
+    $('#' + data.pref + 'phEmlTabs').tabs();
+
+    $('input#' + data.pref + 'adrzip1').each(function() {
+        var lastXhr;
+        createZipAutoComplete($(this), 'ws_admin.php', lastXhr);
+    });
+
 }
 
 function addGuest(item, idReserv) {
@@ -436,105 +308,107 @@ function addGuest(item, idReserv) {
 
 }
 
-function familySection(data) {
+var FamilySection = function (data) {
 
-    if (data.famSection === undefined) {
-        return;
-    }
+    this.setUp = function($wrapper) {
 
-    var fDiv = $(data.famSection.div).addClass('ui-widget-content').prop('id', 'divfamDetail');
-    var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
-        .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
-        .append($("<span id='f_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
-    var fHdr = $('<div id="divfamHdr" style="padding:2px; cursor:pointer;"/>')
-            .append($(data.famSection.hdr))
-            .append(expanderButton).append('<div style="clear:both;"/>');
-
-    fHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
-    fHdr.click(function() {
-        if (fDiv.css('display') === 'none') {
-            fDiv.show('blind');
-            fHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
-        } else {
-            fDiv.hide('blind');
-            fHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
+        if (data.famSection === undefined) {
+            return;
         }
-    });
 
-    $('#famSection')
-            .empty()
-            .append(fHdr)
-            .append(fDiv)
-            .show();
+        var fDiv = $(data.famSection.div).addClass('ui-widget-content').prop('id', 'divfamDetail');
+        var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+            .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+            .append($("<span id='f_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
+        var fHdr = $('<div id="divfamHdr" style="padding:2px; cursor:pointer;"/>')
+                .append($(data.famSection.hdr))
+                .append(expanderButton).append('<div style="clear:both;"/>');
 
-    $('.hhk-cbStay').checkboxradio({
-        classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
-    });
+        fHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
+        fHdr.click(function() {
+            if (fDiv.css('display') === 'none') {
+                fDiv.show('blind');
+                fHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
+            } else {
+                fDiv.hide('blind');
+                fHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
+            }
+        });
 
-    $('.hhk-lblStay').each(function () {
-        if ($(this).data('stay') == '1') {
-            $(this).click();
-        }
-    });
+        $wrapper
+                .empty()
+                .append(fHdr)
+                .append(fDiv)
+                .show();
 
-    $('.ckbdate').datepicker({
-        yearRange: '-99:+00',
-        changeMonth: true,
-        changeYear: true,
-        autoSize: true,
-        maxDate: 0,
-        dateFormat: 'M d, yy'
-    });
+        $('.hhk-cbStay').checkboxradio({
+            classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
+        });
 
-    $('.hhk-togAddr').button();
-    // toggle address row
-    $('#divfamDetail').on('click', '.hhk-togAddr', function () {
+        $('.hhk-lblStay').each(function () {
+            if ($(this).data('stay') == '1') {
+                $(this).click();
+            }
+        });
 
-        if ($(this).parents('tr').next('tr').css('display') === 'none') {
-            $(this).parents('tr').next('tr').show();
-            $(this).val('Hide');
-        } else {
-            $(this).parents('tr').next('tr').hide();
-            $(this).val('Show');
-        }
-    });
+        $('.ckbdate').datepicker({
+            yearRange: '-99:+00',
+            changeMonth: true,
+            changeYear: true,
+            autoSize: true,
+            maxDate: 0,
+            dateFormat: 'M d, yy'
+        });
 
-    // set country and state selectors
-    $('.hhk-addrPanel').find('select.bfh-countries').each(function() {
-        var $countries = $(this);
-        $countries.bfhcountries($countries.data());
-    });
+        $('.hhk-togAddr').button();
+        // toggle address row
+        $('#divfamDetail').on('click', '.hhk-togAddr', function () {
 
-    $('.hhk-addrPanel').find('select.bfh-states').each(function() {
-        var $states = $(this);
-        $states.bfhstates($states.data());
-    });
+            if ($(this).parents('tr').next('tr').css('display') === 'none') {
+                $(this).parents('tr').next('tr').show();
+                $(this).val('Hide');
+            } else {
+                $(this).parents('tr').next('tr').hide();
+                $(this).val('Show');
+            }
+        });
 
-    $('.hhk-phemtabs').tabs();
+        // set country and state selectors
+        $('.hhk-addrPanel').find('select.bfh-countries').each(function() {
+            var $countries = $(this);
+            $countries.bfhcountries($countries.data());
+        });
 
-    verifyAddrs('#divfamDetail');
+        $('.hhk-addrPanel').find('select.bfh-states').each(function() {
+            var $states = $(this);
+            $states.bfhstates($states.data());
+        });
 
-    $('input.hhk-zipsearch').each(function() {
-        var lastXhr;
-        createZipAutoComplete($(this), 'ws_admin.php', lastXhr);
-    });
+        $('.hhk-phemtabs').tabs();
 
-    createAutoComplete($('#txtPersonSearch'), 3, {cmd: 'role', gp:'1'}, function (item) {
-        addGuest(item, data.rid);
-    });
+        verifyAddrs('#divfamDetail');
+
+        $('input.hhk-zipsearch').each(function() {
+            var lastXhr;
+            createZipAutoComplete($(this), 'ws_admin.php', lastXhr);
+        });
+
+        createAutoComplete($('#txtPersonSearch'), 3, {cmd: 'role', gp:'1'}, function (item) {
+            addGuest(item, data.rid);
+        });
+    };
 
 }
 
-function expectedDateRange(data) {
+function expectedDateRange(expDates, $dateSection) {
 
-    $('#datesSection').children().remove();
-    $('#datesSection').append($(data.expDates));
+    $dateSection.empty();
+    $dateSection.append($(expDates));
 
     var gstDate = $('#gstDate'),
         gstCoDate = $('#gstCoDate');
 
-    $('#spnRangePicker').dateRangePicker(
-    {
+    $('#spnRangePicker').dateRangePicker({
         format: 'MMM D, YYYY',
         separator : ' to ',
         minDays: 1,
@@ -553,11 +427,12 @@ function expectedDateRange(data) {
         }
     });
 
-    $('#datesSection').show();
+    $dateSection.show();
 }
 
 function hospitalSection(hosp) {
 
+    var $hospSection = $('div#hospitalSection');
     var hDiv = $(hosp.div).addClass('ui-widget-content').prop('id', 'divhospDetail').hide();
     var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
         .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
@@ -578,9 +453,15 @@ function hospitalSection(hosp) {
         }
     });
 
-    $('#hospitalSection').empty().append(hHdr).append(hDiv);
+    $hospSection.empty().append(hHdr).append(hDiv);
 
-    $('#txtEntryDate, #txtExitDate').datepicker();
+    $('#txtEntryDate, #txtExitDate').datepicker({
+        yearRange: '-01:+01',
+        changeMonth: true,
+        changeYear: true,
+        autoSize: true,
+        dateFormat: 'M d, yy'
+    });
 
     if ($('#txtAgentSch').length > 0) {
         createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', basis: 'ra'}, getAgent);
@@ -596,66 +477,228 @@ function hospitalSection(hosp) {
         }
     }
 
-    $('#hospitalSection').show();
+    $hospSection.on('change', '#selHospital, #selAssoc', function() {
+        var hosp = $('#selAssoc').find('option:selected').text();
+        if (hosp != '') {
+            hosp += '/ ';
+        }
+        $('span#spnHospName').text(hosp + $('#selHospital').find('option:selected').text());
+    });
+
+
+    $hospSection.show();
+
     if ($('#selHospital').val() === '') {
         hHdr.click();
     }
 }
 
-function resvSection(data) {
+var Reservation = function (data) {
 
     var resv = data.resv;
     var $rDiv, $veh, $rHdr, $expanderButton;
 
+    function setupVehicle(veh) {
+        var nextVehId = 1;
+        var $cbVeh = veh.find('#cbNoVehicle');
+        var $nextVeh = veh.find('#btnNextVeh');
+        var $tblVeh = veh.find('#tblVehicle');
 
-    $rDiv = $('<div id="divResvDetail" style="padding:2px; float:left;" class="ui-widget-content ui-corner-bottom hhk-tdbox"/>');
-    $rDiv.append($(resv.rdiv.rChooser));
+        $cbVeh.change(function() {
+            if (this.checked) {
+                $tblVeh.hide('scale, horizontal');
+            } else {
+                $tblVeh.show('scale, horizontal');
+            }
+        });
 
-    // Rate section
-    if (resv.rdiv.rate !== undefined) {
-        $rDiv.append($(resv.rdiv.rate));
+        $cbVeh.change();
+        $nextVeh.button();
+
+        $nextVeh.click(function () {
+            veh.find('#trVeh' + nextVehId).show('fade');
+            nextVehId++;
+            if (nextVehId > 4) {
+                $nextVeh.hide('fade');
+            }
+        });
+
     }
 
-    // Stat and notes sections
-    $rDiv.append($(resv.rdiv.rstat)).append($(resv.rdiv.notes));
+    function setupRate(data) {
 
-    // Vehicle section
-    if (resv.rdiv.vehicle !== undefined) {
-        $veh = $(resv.rdiv.vehicle)
-        $rDiv.append($veh);
-        setupVehicle($veh);
-    }
+        var reserve = {};
+        if ($('#btnFapp').length > 0) {
 
-    // Header
-    $expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
-        .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
-        .append($("<span id='r_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
-    $rHdr = $('<div id="divResvHdr" style="padding:2px; cursor:pointer;"/>')
-            .append($(resv.hdr))
-            .append($expanderButton).append('<div style="clear:both;"/>');
+            $("#faDialog").dialog({
+                autoOpen: false,
+                resizable: true,
+                width: 650,
+                modal: true,
+                title: 'Income Chooser',
+                close: function () {$('div#submitButtons').show();},
+                open: function () {$('div#submitButtons').hide();},
+                buttons: {
+                    Save: function() {
+                        $.post('ws_ckin.php', $('#formf').serialize() + '&cmd=savefap' + '&rid=' + data.rid, function(rdata) {
+                            try {
+                                rdata = $.parseJSON(rdata);
+                            } catch (err) {
+                                alert('Bad JSON Encoding');
+                                return;
+                            }
+                            if (rdata.gotopage) {
+                                window.open(rdata.gotopage, '_self');
+                            }
+                            if (rdata.rstat && rdata.rstat == true) {
+                                var selCat = $('#selRateCategory');
+                                if (rdata.rcat && rdata.rcat != '' && selCat.length > 0) {
+                                    selCat.val(rdata.rcat);
+                                    selCat.change();
+                                }
+                            }
+                        });
+                        $(this).dialog("close");
+                    },
+                    "Exit": function() {
+                        $(this).dialog("close");
+                    }
+                }
+            });
 
-    $rHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
-
-    $rHdr.click(function() {
-        if ($rDiv.css('display') === 'none') {
-            $rDiv.show('blind');
-            $rHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
-        } else {
-            $rDiv.hide('blind');
-            $rHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
+            $('#btnFapp').button().click(function() {
+                getIncomeDiag(data.rid);
+            });
         }
-    });
 
-    // Add to the page.
-    $('#resvSection').empty().append($rHdr).append($rDiv).show();
+        reserve.rateList = data.resv.rdiv.ratelist;
+        reserve.resources = data.resv.rdiv.rooms;
+        reserve.visitFees = data.resv.rdiv.vfee;
 
-    setupRoom(data.rid);
+        setupRates(reserve, $('#selResource').val());
 
-    if (resv.rdiv.rate !== undefined) {
-        setupRate(data);
+        $('#selResource').change(function () {
+            $('#selRateCategory').change();
+
+            var selected = $("option:selected", this);
+            selected.parent()[0].label === "Not Suitable" ? $('#hhkroomMsg').text("Not Suitable").show(): $('#hhkroomMsg').hide();
+        });
+
     }
 
-}
+    function setupRoom(idReserv) {
+
+        // Reservation history button
+        $('.hhk-viewResvActivity').click(function () {
+          $.post('ws_ckin.php', {cmd:'viewActivity', rid: $(this).data('rid')}, function(data) {
+            data = $.parseJSON(data);
+
+            if (data.error) {
+
+                if (data.gotopage) {
+                    window.open(data.gotopage, '_self');
+                }
+                flagAlertMessage(data.error, true);
+                return;
+            }
+             if (data.activity) {
+
+                $('div#submitButtons').hide();
+                $("#activityDialog").children().remove();
+                $("#activityDialog").append($(data.activity));
+                $("#activityDialog").dialog('open');
+            }
+            });
+
+        });
+
+        // Room selector update for constraints changes.
+        $('input.hhk-constraintsCB').change( function () {
+            updateRoomChooser(idReserv, $('#spnNumGuests').text(), $('#gstDate').val(), $('#gstCoDate').val());
+        });
+
+        // Show confirmation form button.
+        $('#btnShowCnfrm').button().click(function () {
+            var amount = $('#spnAmount').text();
+            if (amount === '') {
+                amount = 0;
+            }
+            $.post('ws_ckin.php', {cmd:'confrv', rid: $(this).data('rid'), amt: amount, eml: '0'}, function(data) {
+
+                data = $.parseJSON(data);
+
+                if (data.error) {
+                    if (data.gotopage) {
+                        window.open(data.gotopage, '_self');
+                    }
+                    flagAlertMessage(data.error, true);
+                    return;
+                }
+
+                 if (data.confrv) {
+
+                    $('div#submitButtons').hide();
+                    $("#frmConfirm").children().remove();
+                    $("#frmConfirm").html(data.confrv)
+                        .append($('<div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><span>Email Address </span><input type="text" id="confEmail" value="'+data.email+'"/></div>'));
+
+                    $("#confirmDialog").dialog('open');
+                }
+            });
+        });
+
+    }
+
+    this.setUp = function($wrapper) {
+
+        $rDiv = $('<div id="divResvDetail" style="padding:2px; float:left;" class="ui-widget-content ui-corner-bottom hhk-tdbox"/>');
+        $rDiv.append($(resv.rdiv.rChooser));
+
+        // Rate section
+        if (resv.rdiv.rate !== undefined) {
+            $rDiv.append($(resv.rdiv.rate));
+        }
+
+        // Stat and notes sections
+        $rDiv.append($(resv.rdiv.rstat)).append($(resv.rdiv.notes));
+
+        // Vehicle section
+        if (resv.rdiv.vehicle !== undefined) {
+            $veh = $(resv.rdiv.vehicle);
+            $rDiv.append($veh);
+            setupVehicle($veh);
+        }
+
+        // Header
+        $expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+            .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+            .append($("<span id='r_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
+        $rHdr = $('<div id="divResvHdr" style="padding:2px; cursor:pointer;"/>')
+                .append($(resv.hdr))
+                .append($expanderButton).append('<div style="clear:both;"/>');
+
+        $rHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
+
+        $rHdr.click(function() {
+            if ($rDiv.css('display') === 'none') {
+                $rDiv.show('blind');
+                $rHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
+            } else {
+                $rDiv.hide('blind');
+                $rHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
+            }
+        });
+
+        // Add to the page.
+        $wrapper.empty().append($rHdr).append($rDiv).show();
+
+        setupRoom(data.rid);
+
+        if (resv.rdiv.rate !== undefined) {
+            setupRate(data);
+        }
+    };
+};
 
 function transferToGw(data) {
 
@@ -775,12 +818,19 @@ function loadResv(data) {
     }
 
     if (data.famSection) {
-        familySection(data);
+
+        var familySection = new FamilySection(data);
+        familySection.setUp($('#famSection'));
+
+        people.addList(data.famSection.mem, 'pref');
+        addrs.addList(data.famSection.addrs, 'pref');
+
+        $('#btnDone').show();
     }
 
     // Expected Dates Control
     if (data.expDates !== undefined && data.expDates !== '') {
-        expectedDateRange(data);
+        expectedDateRange(data.expDates, $('#datesSection'));
     }
 
     // Hospital
@@ -790,20 +840,67 @@ function loadResv(data) {
 
     // Reservation
     if (data.resv !== undefined) {
-        resvSection(data);
+
+        var reserv = new Reservation(data);
+        reserv.setUp($('#resvSection'));
 
         // String together some events
         $('#famSection').on('click', '.hhk-lblStay', function () {
 
         });
+
+        $('#btnDone').val('Save').show();
     }
 
     if (data.addPerson !== undefined) {
-        newGuestMarkup(data.addPerson);
+
+        if (people.addItem({role: '', stay: '1', id: data.addPerson.id})) {
+            addrs.addItem(data.addPerson.addrs[data.addPerson.pref]);
+            newGuestMarkup(data.addPerson);
+        }
     }
 
 }
 
+function Items () {
+
+    var _list = {};
+    var _index = '';
+    var t = this;
+    t.hasItem = hasItem;
+
+    this.list = function () {
+        return _list;
+    };
+
+    this.addList = function(theList, indexProperty) {
+        _index = indexProperty;
+        _list = theList;
+    };
+
+    this.addItem = function(item) {
+
+        if (hasItem(item) === false) {
+            _list[item[_index]] = item;
+            return true;
+        }
+
+        return false;
+    };
+
+    function hasItem(item) {
+
+        if (_list[item[_index]] !== undefined) {
+            return true;
+        }
+
+        return false;
+    };
+
+}
+
+var people = new Items();
+var addrs = new Items();
 
 $(document).ready(function() {
     "use strict";
@@ -820,12 +917,29 @@ $(document).ready(function() {
         }
     });
 
-    $('#btnDone, #btnCkinForm, #btnDelete').button();
+    $('#btnDone, #btnShowReg, #btnDelete').button();
 
-    $('#btnCkinForm').click(function () {
+    $('#btnShowReg').click(function () {
         if ($(this).data('rid') > 0) {
             window.open('ShowRegForm.php?rid=' + $(this).data('rid'), '_blank');
         }
+    });
+
+    $('#btnDone').click(function () {
+
+        if ($(this).val() === 'Saving >>>>') {
+            return;
+        }
+
+        $(this).val('Saving >>>>');
+
+        // Patient defined?
+
+        // Someone checking in?
+        $('.hhk-cbStay').each(function () {
+            var ckd = $(this).prop('checked');
+        });
+
     });
 
     $("#resDialog").dialog({

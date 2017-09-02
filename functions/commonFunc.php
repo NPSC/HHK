@@ -1,5 +1,4 @@
 <?php
-
 /**
  * commonFunc.php
  *
@@ -14,7 +13,7 @@ function initPDO($override = FALSE) {
     $roleCode = $ssn->rolecode;
 
     if (!isset($ssn->databaseURL)) {
-        die('<br/>Missing Database URL (initPDO)<br/>');
+        die('<p>Missing Database URL (initPDO)</p>');
     }
 
     $dbuName = $ssn->databaseUName;
@@ -27,7 +26,7 @@ function initPDO($override = FALSE) {
             $config = new Config_Lite(ciCFG_FILE);
         } catch (Exception $ex) {
             $ssn->destroy();
-            exit("<br/>Missing Database Session Initialization: " . $ex->getMessage());
+            exit("<p>Missing Database Session Initialization: " . $ex->getMessage() . "</p>");
         }
 
         $dbuName = $config->getString('db', 'ReadonlyUser', '');
@@ -80,7 +79,7 @@ function initPDO($override = FALSE) {
 
 function initMS_SQL($dbURL, $dbName, $dbuName, $dbPw) {
 
-    
+
     return new \PDO("sqlsrv:server=$dbURL;Database=$dbName", $dbuName, $dbPw);
 
 }

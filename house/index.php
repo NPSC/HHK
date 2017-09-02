@@ -44,7 +44,7 @@ try {
 }
 
 
-// define db connection obj
+// Override user credentials
 $dbh = initPDO(TRUE);
 
 

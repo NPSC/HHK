@@ -18,9 +18,6 @@ class Login {
     protected $userName = '';
     protected $validateMsg = '';
 
-    function __construct() {
-
-    }
 
     public static function initializeSession($configFileName) {
 
@@ -73,6 +70,9 @@ class Login {
         $ssn->noreplyAddr = $config->getString('house', 'NoReply', '');
         $ssn->adminSiteURL = $config->get('site', 'Admin_URL', '');
         $ssn->ccgw = $config->getString('financial', 'CC_Gateway', '');
+
+        // Initialize role code
+        $ssn->rolecode = WebRole::Guest;
 
         // Set Timezone
         date_default_timezone_set($ssn->tz);

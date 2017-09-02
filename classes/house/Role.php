@@ -255,13 +255,14 @@ abstract class Role {
 
             $cbStay = array(
                 'type'=>'checkbox',
-                'name'=>$this->getIdName() .'cbStay',
+                'name'=>$this->getRoleMember()->getIdPrefix() .'cbStay',
+                'id'=>$this->getRoleMember()->getIdPrefix() .'cbStay',
                 'class' => 'hhk-cbStay',
             );
 
             $lblStay = array(
-                'for'=>$this->getIdName() . 'cbStay',
-                'id' => $this->getIdName() . 'lblStay',
+                'for'=>$this->getRoleMember()->getIdPrefix() . 'cbStay',
+                'id' => $this->getRoleMember()->getIdPrefix() . 'lblStay',
                 'data-stay' => ($staying == '1' ? '1' : '0'),
                 'class' => 'hhk-lblStay',
             );
@@ -274,10 +275,7 @@ abstract class Role {
         // Phone
         $ph = HTMLTable::makeTd($this->getPhonesObj()->get_Data()['Phone_Num']);
 
-        // Address
-        $ad = HTMLTable::makeTd(HTMLInput::generateMarkup('Show', array('type'=>'button', 'id'=>$this->getIdName() . 'toggleAddr', 'class'=>'hhk-togAddr')));
-
-        return $td . $this->roleMember->createThinMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser) . $ph . $ad;
+        return $td . $this->roleMember->createThinMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser) . $ph;
 
     }
 

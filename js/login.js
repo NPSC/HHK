@@ -70,7 +70,7 @@ function sendHhkLogin() {
         }
 
         if (data.stop) {
-            $btn.hide();
+            $btn.remove();
         }
     });
 

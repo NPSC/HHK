@@ -61,6 +61,22 @@ class Patient extends Role {
         return $mk1;
     }
 
+    public function createThinMarkup($staying, $lockRelChooser) {
+
+        $uS = Session::getInstance();
+
+        $mu = parent::createThinMarkup($staying, $lockRelChooser);
+
+
+        if ($uS->PatientAddr) {
+            // Address
+            $mu .= HTMLTable::makeTd(HTMLInput::generateMarkup('Show', array('type'=>'button', 'id'=>$this->getRoleMember()->getIdPrefix() . 'toggleAddr', 'class'=>'hhk-togAddr')));
+        } else {
+            $mu .= HTMLTable::makeTd('');
+        }
+
+        return $mu;
+    }
 
     public function createReservationMarkup($lockRelChooser = FALSE) {
 

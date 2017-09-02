@@ -10,7 +10,7 @@ class Family {
     const FAM_TABLE_ID = 'tblFamily';
 
     protected $members;
-    protected $roleObj;
+    protected $roleObjs;
     protected $rData;
     protected $patientId;
 
@@ -18,6 +18,13 @@ class Family {
 
         $this->rData = $rData;
         $this->patientId = 0;
+
+        $uS = Session::getInstance();
+
+        // Prefix
+        if (isset($uS->addPerPrefix) === FALSE) {
+            $uS->addPerPrefix = 1;
+        }
 
         $this->loadMembers($dbh);
 
@@ -35,38 +42,64 @@ class Family {
             $ngRs = new Name_GuestRS();
             $ngRs->idPsg->setStoredVal($this->rData->getidPsg());
             $rows = EditRS::select($dbh, $ngRs, array($ngRs->idPsg));
+            $target = NULL;
 
             foreach ($rows as $r) {
+
                 $ngrs = new Name_GuestRS();
                 EditRS::loadRow($r, $ngrs);
+                $uS->addPerPrefix++;
+
+                // Set target prefix if found.
+                if ($ngrs->idName->getStoredVal() == $this->rData->getId()) {
+                    $target = $uS->addPerPrefix;
+                }
 
                 if ($ngrs->Relationship_Code->getStoredVal() == RelLinkType::Self) {
-                    $this->roleObj[$ngrs->idName->getStoredVal()] = new Patient($dbh, $ngrs->idName->getStoredVal(), $ngrs->idName->getStoredVal(), $this->rData->getPatLabel());
-                    $this->roleObj[$ngrs->idName->getStoredVal()]->setPatientRelationshipCode($ngrs->Relationship_Code->getStoredVal());
-                    $this->members[$ngrs->idName->getStoredVal()]['role'] = 'p';
-                    $this->members[$ngrs->idName->getStoredVal()]['stay'] = ($uS->PatientAsGuest ? '0' : 'x');
+                    // patient
+                    $this->roleObjs[$ngrs->idName->getStoredVal()] = new Patient($dbh, $uS->addPerPrefix, $ngrs->idName->getStoredVal(), $this->rData->getPatLabel());
+                    $this->roleObjs[$ngrs->idName->getStoredVal()]->setPatientRelationshipCode($ngrs->Relationship_Code->getStoredVal());
+
+                    $this->members[$uS->addPerPrefix]['role'] = 'p';
+                    $this->members[$uS->addPerPrefix]['stay'] = ($uS->PatientAsGuest ? '0' : 'x');
+                    $this->members[$uS->addPerPrefix]['id'] = $ngrs->idName->getStoredVal();
+
                     $this->patientId = $ngrs->idName->getStoredVal();
+
                 } else {
-                    $this->roleObj[$ngrs->idName->getStoredVal()] = new Guest($dbh, $ngrs->idName->getStoredVal(), $ngrs->idName->getStoredVal());
-                    $this->roleObj[$ngrs->idName->getStoredVal()]->setPatientRelationshipCode($ngrs->Relationship_Code->getStoredVal());
-                    $this->members[$ngrs->idName->getStoredVal()]['role'] = 'g';
-                    $this->members[$ngrs->idName->getStoredVal()]['stay'] = '0';
+                    // guest
+                    $this->roleObjs[$ngrs->idName->getStoredVal()] = new Guest($dbh, $uS->addPerPrefix, $ngrs->idName->getStoredVal());
+                    $this->roleObjs[$ngrs->idName->getStoredVal()]->setPatientRelationshipCode($ngrs->Relationship_Code->getStoredVal());
+
+                    $this->members[$uS->addPerPrefix]['role'] = 'g';
+                    $this->members[$uS->addPerPrefix]['stay'] = '0';
+                    $this->members[$uS->addPerPrefix]['id'] = $ngrs->idName->getStoredVal();
                 }
             }
         }
 
-        // Load new member?
-        if ($this->rData->getId() > 0 && isset($this->members[$this->rData->getId()]) === FALSE) {
-            $this->roleObj[$this->rData->getId()] = new Guest($dbh, $this->rData->getId(), $this->rData->getId());
-            $this->members[$this->rData->getId()]['role'] = '';
-            $this->members[$this->rData->getId()]['stay'] = '1';
+        // Load new to PSG member?
+        if ($this->rData->getId() > 0 && isset($this->members[$target]) === FALSE) {
+
+            $uS->addPerPrefix++;
+
+            $this->roleObjs[$this->rData->getId()] = new Guest($dbh, $uS->addPerPrefix, $this->rData->getId());
+
+            $this->members[$uS->addPerPrefix]['role'] = '';
+            $this->members[$uS->addPerPrefix]['stay'] = '1';
+            $this->members[$uS->addPerPrefix]['id'] = $this->rData->getId();
         }
 
         // Load empty member?
         if ($this->rData->getId() === 0) {
-            $this->roleObj[0] = new Guest($dbh, '0', 0);
-            $this->members[0]['role'] = '';
-            $this->members[0]['stay'] = '1';
+
+            $uS->addPerPrefix++;
+
+            $this->roleObjs[0] = new Guest($dbh, $uS->addPerPrefix, 0);
+
+            $this->members[$uS->addPerPrefix]['role'] = '';
+            $this->members[$uS->addPerPrefix]['stay'] = '1';
+            $this->members[$uS->addPerPrefix]['id'] = '0';
         }
 
 
@@ -77,34 +110,49 @@ class Family {
     protected function loadResvGuests(\PDO $dbh) {
 
         if ($this->rData->getIdResv() > 0) {
-
+            // Existing reservation...
             $resvGuestRs = new Reservation_GuestRS();
             $resvGuestRs->idReservation->setStoredVal($this->rData->getIdResv());
             $rgs = EditRS::select($dbh, $resvGuestRs, array($resvGuestRs->idReservation));
 
             foreach ($rgs as $g) {
 
-                if (isset($this->members[$g['idGuest']]) && $this->members[$g['idGuest']]['stay'] != 'x') {
-                    $this->members[$g['idGuest']]['stay'] = '1';
+                foreach ($this->members as $pref => $mem) {
+
+                    if ($mem['id'] == $g['idGuest'] && $mem['stay'] !== 'x') {
+                        $this->members[$pref]['stay'] = '1';
+                        break;
+                    }
+                }
+            }
+
+        } else {
+            // New reservation, so set the stay for the targeted guest.
+            foreach ($this->members as $pref => $mem) {
+
+                if ($mem['id'] == $this->rData->getId() && $mem['stay'] !== 'x') {
+                    $this->members[$pref]['stay'] = '1';
+                    break;
                 }
             }
         }
     }
 
-    protected function getAddresses() {
+    protected function getAddresses($roles) {
 
         $addrs = array();
 
-        foreach ($this->roleObj as $m) {
+        foreach ($roles as $role) {
 
-            $addrObj = $m->getAddrObj();
+            $addrObj = $role->getAddrObj();
             $addr = $addrObj->get_Data(Address_Purpose::Home);
 
             $addr['Purpose'] = Address_Purpose::Home;
 
-            $addr['Email'] = $m->getEmailsObj()->get_Data(Email_Purpose::Home)['Email'];
+            $addr['Email'] = $role->getEmailsObj()->get_Data(Email_Purpose::Home)['Email'];
+            $addr['idName'] = $role->getIdName();
 
-            $addrs[$m->getIdName()] = $addr;
+            $addrs[$role->getRoleMember()->getIdPrefix()] = $addr;
 
         }
 
@@ -116,28 +164,29 @@ class Family {
         $uS = Session::getInstance();
         $addPerson = array();
 
-        if (isset($this->roleObj[$this->rData->getId()])) {
+        if (isset($this->roleObjs[$this->rData->getId()])) {
 
-            $m = $this->roleObj[$this->rData->getId()];
+            $role = $this->roleObjs[$this->rData->getId()];
 
-            $nameTr = HTMLContainer::generateMarkup('tr', $m->createThinMarkup($this->members[$m->getIdName()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)));
+            $nameTr = HTMLContainer::generateMarkup('tr', $role->createThinMarkup($this->members[$role->getRoleMember()->getIdPrefix()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)));
 
             // Demographics
             if ($uS->ShowDemographics) {
-                $demoMu = $this->getDemographicsMarkup($dbh, $m);
+                $demoMu = $this->getDemographicsMarkup($dbh, $role);
             } else {
                 $demoMu = '';
             }
 
             // Add addresses and demo's
-            $addressTr = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($m->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>'hhk-addrRow'));
+            $addressTr = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>'hhk-addrRow', 'style'=>'display:none;'));
 
-            $addPerson = array('ntr'=>$nameTr, 'atr'=>$addressTr, 'tblId'=>FAMILY::FAM_TABLE_ID, 'addrs'=>$this->getAddresses());
+            $addPerson = array('id'=>$this->rData->getId(), 'ntr'=>$nameTr, 'atr'=>$addressTr, 'tblId'=>FAMILY::FAM_TABLE_ID, 'pref'=>$role->getRoleMember()->getIdPrefix(), 'addrs'=>$this->getAddresses(array($role)));
         }
 
         return array('addPerson' => $addPerson);
 
     }
+
     public function createFamilyMarkup(\PDO $dbh, ReservationRS $resvRs) {
 
         $uS = Session::getInstance();
@@ -156,30 +205,35 @@ class Family {
         // Put the patient first.
         if ($this->getPatientId() > 0) {
 
+            $role = $this->roleObjs[$this->getPatientId()];
+            $idPrefix = $role->getRoleMember()->getIdPrefix();
+
             $tbl->addBodyTr(
-                    $this->roleObj[$this->getPatientId()]->createThinMarkup($this->members[$this->getPatientId()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE))
+                    $role->createThinMarkup($this->members[$idPrefix]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE))
                     , array('class'=>$rowClass));
 
             // Demographics
             if ($uS->ShowDemographics) {
-                $demoMu = $this->getDemographicsMarkup($dbh, $this->roleObj[$this->getPatientId()]);
+                $demoMu = $this->getDemographicsMarkup($dbh, $role);
             } else {
                 $demoMu = '';
             }
 
             if ($uS->PatientAddr) {
-                $tbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd($this->roleObj[$this->getPatientId()]->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow', 'style'=>'display:none;'));
+                $tbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow', 'style'=>'display:none;'));
             }
 
         }
 
         // List each member
-        foreach ($this->roleObj as $m) {
+        foreach ($this->roleObjs as $role) {
 
             // Skip the patient who was taken care of above
-            if ($m->getIdName() > 0 && $m->getIdName() == $this->getPatientId()) {
+            if ($role->getIdName() > 0 && $role->getIdName() == $this->getPatientId()) {
                 continue;
             }
+
+            $idPrefix = $role->getRoleMember()->getIdPrefix();
 
             if ($rowClass == 'odd') {
                 $rowClass = 'even';
@@ -187,17 +241,17 @@ class Family {
                 $rowClass = 'odd';
             }
 
-            $tbl->addBodyTr($m->createThinMarkup($this->members[$m->getIdName()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)), array('class'=>$rowClass));
+            $tbl->addBodyTr($role->createThinMarkup($this->members[$idPrefix]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)), array('class'=>$rowClass));
 
             // Demographics
             if ($uS->ShowDemographics) {
-                $demoMu = $this->getDemographicsMarkup($dbh, $m);
+                $demoMu = $this->getDemographicsMarkup($dbh, $role);
             } else {
                 $demoMu = '';
             }
 
             // Add addresses and demo's
-            $tbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd($m->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow', 'style'=>'display:none;'));
+            $tbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow', 'style'=>'display:none;'));
         }
 
         // Guest search
@@ -223,16 +277,16 @@ class Family {
 
         $div = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('id'=>FAMILY::FAM_TABLE_ID, 'class'=>'hhk-table')) . $mk1, array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-tdbox'));
 
-        return array('hdr'=>$hdr, 'div'=>$div, 'addrs'=>$this->getAddresses());
+        return array('hdr'=>$hdr, 'div'=>$div, 'mem'=>$this->members, 'addrs'=>$this->getAddresses($this->roleObjs));
 
     }
 
-    protected function getDemographicsMarkup(\PDO $dbh, $m) {
+    protected function getDemographicsMarkup(\PDO $dbh, $role) {
 
         return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
-        HTMLContainer::generateMarkup('legend', 'Demographics', array('style'=>'font-weight:bold;'))
-        . $m->getRoleMember()->createDemographicsPanel($dbh, TRUE, FALSE), array('class'=>'hhk-panel')),
-        array('style'=>'float:left; margin-right:3px;'));
+            HTMLContainer::generateMarkup('legend', 'Demographics', array('style'=>'font-weight:bold;'))
+                . $role->getRoleMember()->createDemographicsPanel($dbh, TRUE, FALSE), array('class'=>'hhk-panel')),
+            array('style'=>'float:left; margin-right:3px;'));
 
     }
 
