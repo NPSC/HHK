@@ -24,25 +24,21 @@ abstract class Reservation {
     public static function reservationFactoy(\PDO $dbh, ReserveData $rData) {
 
         // idPsg < 0
-        if ($rData->getidPsg() < 0) {
+        if ($rData->getForceNewPsg()) {
 
-            //new Psg
-            $rData->setIdPsg(0);
             //new Resv
             $rData->setIdResv(0);
 
             return new BlankReservation($rData, new ReservationRS());
 
         // idResv < 0
-        } else if ($rData->getIdResv() < 0 && $rData->getidPsg() > 0) {
+        } else if ($rData->getForceNewResv() && $rData->getIdPsg() > 0) {
 
             // New Resv
-            $rData->setIdResv(0);
-
             return new BlankReservation($rData, new ReservationRS());
 
         // undetermined resv and psg, look at guest id
-        } else if ($rData->getIdResv() == 0 && $rData->getidPsg() == 0) {
+        } else if ($rData->getIdResv() == 0 && $rData->getIdPsg() == 0) {
 
             // Depends on GUest Id
             if ($rData->getId() > 0) {
@@ -55,7 +51,7 @@ abstract class Reservation {
 
 
         // Guest, PSG, no reservation specified.
-        } else if ($rData->getidPsg() > 0 && $rData->getIdResv() == 0) {
+        } else if ($rData->getIdPsg() > 0 && $rData->getIdResv() == 0) {
 
             return new ReserveSearcher($rData, new ReservationRS());
 
@@ -277,7 +273,7 @@ class ReserveSearcher extends BlankReservation {
         $ngRss = array();
 
         // Search for a PSG
-        if ($this->reserveData->getidPsg() == 0) {
+        if ($this->reserveData->getIdPsg() == 0) {
             // idPsg not set
 
             $ngRss = Psg::getNameGuests($dbh, $this->reserveData->getId());
@@ -316,7 +312,7 @@ class ReserveSearcher extends BlankReservation {
 
         $stmt = $dbh->query("select * from vresv_patient "
             . "where Status in ('".ReservationStatus::Staying."','".ReservationStatus::Committed."','".ReservationStatus::Imediate."','".ReservationStatus::UnCommitted."','".ReservationStatus::Waitlist."') "
-            . "and idPsg= " . $this->reserveData->getidPsg() . " order by `Expected_Arrival`");
+            . "and idPsg= " . $this->reserveData->getIdPsg() . " order by `Expected_Arrival`");
 
 
         $trs = array();
@@ -383,14 +379,14 @@ class ReserveSearcher extends BlankReservation {
 
             $psg = new Psg($dbh, $n->idPsg->getStoredVal());
 
-            $attrs = array('type'=>'radio', 'value'=>$psg->getIdPsg(), 'name'=>'cbselpsg');
+            $attrs = array('type'=>'radio', 'value'=>$psg->getIdPsg(), 'name'=>'cbselpsg', 'id'=>$psg->getIdPsg().'cbselpsg');
             if ($firstOne) {
                 $attrs['checked'] = 'checked';
                 $firstOne = FALSE;
             }
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTd($psg->getPatientName($dbh), array('class'=>'tdlabel'))
+                    HTMLTable::makeTd(HTMLContainer::generateMarkup('label', $psg->getPatientName($dbh), array('for'=>$psg->getIdPsg().'cbselpsg')), array('class'=>'tdlabel'))
                     .HTMLTable::makeTd(HTMLInput::generateMarkup('', $attrs)));
 
         }
@@ -398,8 +394,8 @@ class ReserveSearcher extends BlankReservation {
         // Add new PSG choice
         if ($offerNew) {
             $tbl->addBodyTr(
-                HTMLTable::makeTd('New ' . $this->reserveData->getPatLabel(), array('class'=>'tdlabel'))
-               .HTMLTable::makeTd(HTMLInput::generateMarkup('-1', array('type'=>'radio', 'name'=>'cbselpsg', 'data-pid'=>'0', 'data-ngid'=>'0'))));
+                HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'New ' . $this->reserveData->getPatLabel(), array('for'=>'1_cbselpsg')), array('class'=>'tdlabel'))
+               .HTMLTable::makeTd(HTMLInput::generateMarkup('-1', array('type'=>'radio', 'name'=>'cbselpsg', 'id'=>'1_cbselpsg', 'data-pid'=>'0', 'data-ngid'=>'0'))));
         }
 
 

@@ -227,8 +227,7 @@ $resvObjEncoded = json_encode($resvObj->toArray());
         </div>
 
 <script type="text/javascript">
-
-function newGuestMarkup(data) {
+function newGuestMarkup (data) {
 
     var $countries, $states, $famTbl;
 
@@ -281,34 +280,34 @@ function newGuestMarkup(data) {
 
 }
 
-function addGuest(item, idReserv) {
+function FamilySection(data) {
 
-    hideAlertMessage();
+    function addGuest(item, data) {
 
-    // Check for guest already added.
-    //
+        hideAlertMessage();
 
-    if (item.No_Return !== undefined && item.No_Return !== '') {
-        flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
-        return;
+        // Check for guest already added.
+        //
+
+        if (item.No_Return !== undefined && item.No_Return !== '') {
+            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
+            return;
+        }
+
+        if (typeof item.id === 'undefined') {
+            return;
+        }
+
+        var resv = {
+            id: item.id,
+            rid: data.rid,
+            idPsg: data.idPsg,
+            cmd: 'addThinGuest'
+        };
+
+        getReserve(resv);
+
     }
-
-    var resv = {};
-
-    if (typeof item.id !== 'undefined') {
-        resv.id = item.id;
-    } else {
-        return;
-    }
-
-    resv.rid = idReserv;
-    resv.cmd = 'addThinGuest';
-
-    getReserve(resv);
-
-}
-
-var FamilySection = function (data) {
 
     this.setUp = function($wrapper) {
 
@@ -393,12 +392,21 @@ var FamilySection = function (data) {
             createZipAutoComplete($(this), 'ws_admin.php', lastXhr);
         });
 
+        // Relationship chooser
+        $('#divfamDetail').on('change', '.patientRelch', function () {
+            if ($(this).val() === 'slf') {
+                people.list[$(this).data('prefix')].role = 'p';
+            } else {
+                people.list[$(this).data('prefix')].role = 'g';
+            }
+        });
+
         createAutoComplete($('#txtPersonSearch'), 3, {cmd: 'role', gp:'1'}, function (item) {
-            addGuest(item, data.rid);
+            addGuest(item, data);
         });
     };
 
-}
+};
 
 function expectedDateRange(expDates, $dateSection) {
 
@@ -430,9 +438,8 @@ function expectedDateRange(expDates, $dateSection) {
     $dateSection.show();
 }
 
-function hospitalSection(hosp) {
+function hospitalSection(hosp, $hospSection) {
 
-    var $hospSection = $('div#hospitalSection');
     var hDiv = $(hosp.div).addClass('ui-widget-content').prop('id', 'divhospDetail').hide();
     var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
         .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
@@ -493,10 +500,12 @@ function hospitalSection(hosp) {
     }
 }
 
-var Reservation = function (data) {
+function Reservation(data) {
 
     var resv = data.resv;
     var $rDiv, $veh, $rHdr, $expanderButton;
+    var t = this;
+
 
     function setupVehicle(veh) {
         var nextVehId = 1;
@@ -692,6 +701,8 @@ var Reservation = function (data) {
         // Add to the page.
         $wrapper.empty().append($rHdr).append($rDiv).show();
 
+        t.$totalGuests = $('#spnNumGuests');
+
         setupRoom(data.rid);
 
         if (resv.rdiv.rate !== undefined) {
@@ -716,25 +727,29 @@ function transferToGw(data) {
     xferForm.submit();
 }
 
-function resvPicker(data, $faDiag) {
+function resvPicker(data, $resvDiag, $psgDiag) {
     "use strict";
     var buttons = {};
 
-    $faDiag.empty()
+    // reset then fill the reservation dialog
+    $resvDiag.empty()
         .append($(data.resvChooser))
         .children().find('input:button').button();
 
-    $faDiag.children().find('.hhk-checkinNow').click(function () {
+    // Set up 'Check-in Now' button
+    $resvDiag.children().find('.hhk-checkinNow').click(function () {
         window.open('CheckIn.php?rid=' + $(this).data('rid') + '&gid=' + data.id, '_self');
     });
 
+    // Set up go to PSG chooser button
     if (data.psgChooser && data.psgChooser !== '') {
         buttons[data.patLabel + ' Chooser'] = function() {
             $(this).dialog("close");
-            psgChooser(data);
+            psgChooser(data, $psgDiag);
         };
     }
 
+    // Set up New Reservation button.
     if (data.resvTitle) {
         buttons['New ' + data.resvTitle] = function() {
             data.rid = -1;
@@ -750,27 +765,27 @@ function resvPicker(data, $faDiag) {
         $('#gstSearch').val('').focus();
     };
 
-    $faDiag.dialog('option', 'buttons', buttons);
-    $faDiag.dialog('option', 'title', data.resvTitle + ' Chooser For: ' + data.fullName);
-    $faDiag.dialog('open');
+    $resvDiag.dialog('option', 'buttons', buttons);
+    $resvDiag.dialog('option', 'title', data.resvTitle + ' Chooser For: ' + data.fullName);
+    $resvDiag.dialog('open');
 
 }
 
-function psgChooser(data) {
+function psgChooser(data, $dialog) {
     "use strict";
 
-    $('#psgDialog')
+    $dialog
         .empty()
         .append($(data.psgChooser))
         .dialog('option', 'buttons', {
             Open: function() {
-                $('#psgDialog').dialog('close');
-                getReserve({idPsg: $('#psgDialog input[name=cbselpsg]:checked').val(), id: data.id, cmd: 'getresv'});
+                $(this).dialog('close');
+                getReserve({idPsg: $dialog.find('input[name=cbselpsg]:checked').val(), id: data.id, cmd: 'getresv'});
             },
             Cancel: function () {
-                $('#psgDialog').dialog('close');
+                $(this).dialog('close');
                 $('div#guestSearch').show();
-                $('#gstSearch').val('');
+                $('#gstSearch').val('').focus();
             }
         })
         .dialog('option', 'title', data.patLabel + ' Chooser For: ' + data.fullName)
@@ -810,10 +825,10 @@ function loadResv(data) {
     }
 
     if (data.resvChooser && data.resvChooser !== '') {
-        resvPicker(data, $('#resDialog'));
+        resvPicker(data, $('#resDialog'), $('#psgDialog'));
         return;
     } else if (data.psgChooser && data.psgChooser !== '') {
-        psgChooser(data);
+        psgChooser(data, $('#psgDialog'));
         return;
     }
 
@@ -822,8 +837,8 @@ function loadResv(data) {
         var familySection = new FamilySection(data);
         familySection.setUp($('#famSection'));
 
-        people.addList(data.famSection.mem, 'pref');
-        addrs.addList(data.famSection.addrs, 'pref');
+        people.makeList(data.famSection.mem, 'pref');
+        addrs.makeList(data.famSection.addrs, 'pref');
 
         $('#btnDone').show();
     }
@@ -835,7 +850,7 @@ function loadResv(data) {
 
     // Hospital
     if (data.hosp !== undefined) {
-        hospitalSection(data.hosp);
+        hospitalSection(data.hosp, $('div#hospitalSection'));
     }
 
     // Reservation
@@ -845,8 +860,15 @@ function loadResv(data) {
         reserv.setUp($('#resvSection'));
 
         // String together some events
-        $('#famSection').on('click', '.hhk-lblStay', function () {
+        $('#famSection').on('change', '.hhk-cbStay', function () {
+            var tot = findNumGuests();
+            reserv.$totalGuests.text(tot);
 
+            if (tot > 0) {
+                reserv.$totalGuests.parent().removeClass('ui-state-highlight');
+            } else {
+                reserv.$totalGuests.parent().addClass('ui-state-highlight');
+            }
         });
 
         $('#btnDone').val('Save').show();
@@ -854,12 +876,25 @@ function loadResv(data) {
 
     if (data.addPerson !== undefined) {
 
+        // Clear the person search textbox.
+        $('#txtPersonSearch').val('');
+
         if (people.addItem({role: '', stay: '1', id: data.addPerson.id})) {
             addrs.addItem(data.addPerson.addrs[data.addPerson.pref]);
             newGuestMarkup(data.addPerson);
         }
     }
 
+}
+
+function findNumGuests() {
+    var numGuests = 0;
+    $('.hhk-cbStay').each(function () {
+        if ($(this).prop('checked')) {
+            numGuests++;
+        }
+    });
+    return numGuests;
 }
 
 function Items () {
@@ -873,7 +908,7 @@ function Items () {
         return _list;
     };
 
-    this.addList = function(theList, indexProperty) {
+    this.makeList = function(theList, indexProperty) {
         _index = indexProperty;
         _list = theList;
     };
@@ -896,6 +931,15 @@ function Items () {
 
         return false;
     };
+
+    function findItem(property, value) {
+        for (var i in _list) {
+            if (i[property] == value) {
+                return i;
+            }
+        }
+        return null;
+    }
 
 }
 
@@ -931,14 +975,32 @@ $(document).ready(function() {
             return;
         }
 
-        $(this).val('Saving >>>>');
+        hideAlertMessage();
 
-        // Patient defined?
+        // Count patients
+        var numPat = 0;
+        for (var i in people.list()) {
+            if (people.list()[i].role === 'p') {
+                numPat++;
+            }
+        }
+
+        // Only one patient allowed.
+        if (numPat < 1) {
+            flagAlertMessage('Choose a ' + resv.patLabel + '.', true);
+            return;
+        } else if (numPat > 1) {
+            flagAlertMessage('Only 1 ' + resv.patLabel + ' is allowed.', true);
+            return;
 
         // Someone checking in?
-        $('.hhk-cbStay').each(function () {
-            var ckd = $(this).prop('checked');
-        });
+        if (findNumGuests() < 1) {
+            flagAlertMessage('There are no guests actually staying.  Pick someone to stay.', true);
+            return;
+        }
+
+
+        $(this).val('Saving >>>>');
 
     });
 
@@ -946,7 +1008,7 @@ $(document).ready(function() {
         autoOpen: false,
         resizable: true,
         width: 900,
-        modal: true,
+        modal: true
     });
 
     $('#confirmDialog').dialog({

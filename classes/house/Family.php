@@ -36,13 +36,13 @@ class Family {
         $this->members = array();
 
         // Load any existing PSG members.
-        if ($this->rData->getidPsg() > 0) {
+        if ($this->rData->getIdPsg() > 0) {
 
             // PSG is defined
             $ngRs = new Name_GuestRS();
-            $ngRs->idPsg->setStoredVal($this->rData->getidPsg());
+            $ngRs->idPsg->setStoredVal($this->rData->getIdPsg());
             $rows = EditRS::select($dbh, $ngRs, array($ngRs->idPsg));
-            $target = NULL;
+            $target = FALSE;
 
             foreach ($rows as $r) {
 
@@ -52,7 +52,7 @@ class Family {
 
                 // Set target prefix if found.
                 if ($ngrs->idName->getStoredVal() == $this->rData->getId()) {
-                    $target = $uS->addPerPrefix;
+                    $target = TRUE;
                 }
 
                 if ($ngrs->Relationship_Code->getStoredVal() == RelLinkType::Self) {
@@ -76,11 +76,23 @@ class Family {
                     $this->members[$uS->addPerPrefix]['id'] = $ngrs->idName->getStoredVal();
                 }
             }
-        }
 
-        // Load new to PSG member?
-        if ($this->rData->getId() > 0 && isset($this->members[$target]) === FALSE) {
+            // Load new member to existing PSG?
+            if ($this->rData->getId() > 0 && !$target) {
 
+                $uS->addPerPrefix++;
+
+                $this->roleObjs[$this->rData->getId()] = new Guest($dbh, $uS->addPerPrefix, $this->rData->getId());
+
+                $this->members[$uS->addPerPrefix]['role'] = 'g';
+                $this->members[$uS->addPerPrefix]['stay'] = '1';
+                $this->members[$uS->addPerPrefix]['id'] = $this->rData->getId();
+            }
+
+        // Flag for new PSG for existing guest
+        } else if ($this->rData->getForceNewPsg()) {
+
+            // forced New PSG
             $uS->addPerPrefix++;
 
             $this->roleObjs[$this->rData->getId()] = new Guest($dbh, $uS->addPerPrefix, $this->rData->getId());
@@ -88,7 +100,9 @@ class Family {
             $this->members[$uS->addPerPrefix]['role'] = '';
             $this->members[$uS->addPerPrefix]['stay'] = '1';
             $this->members[$uS->addPerPrefix]['id'] = $this->rData->getId();
+
         }
+
 
         // Load empty member?
         if ($this->rData->getId() === 0) {
@@ -98,7 +112,7 @@ class Family {
             $this->roleObjs[0] = new Guest($dbh, $uS->addPerPrefix, 0);
 
             $this->members[$uS->addPerPrefix]['role'] = '';
-            $this->members[$uS->addPerPrefix]['stay'] = '1';
+            $this->members[$uS->addPerPrefix]['stay'] = '0';
             $this->members[$uS->addPerPrefix]['id'] = '0';
         }
 
@@ -168,7 +182,7 @@ class Family {
 
             $role = $this->roleObjs[$this->rData->getId()];
 
-            $nameTr = HTMLContainer::generateMarkup('tr', $role->createThinMarkup($this->members[$role->getRoleMember()->getIdPrefix()]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)));
+            $nameTr = HTMLContainer::generateMarkup('tr', $role->createThinMarkup($this->members[$role->getRoleMember()->getIdPrefix()]['stay'], ($this->rData->getIdPsg() == 0 ? FALSE : TRUE)));
 
             // Demographics
             if ($uS->ShowDemographics) {
@@ -209,7 +223,7 @@ class Family {
             $idPrefix = $role->getRoleMember()->getIdPrefix();
 
             $tbl->addBodyTr(
-                    $role->createThinMarkup($this->members[$idPrefix]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE))
+                    $role->createThinMarkup($this->members[$idPrefix]['stay'], ($this->rData->getIdPsg() == 0 ? FALSE : TRUE))
                     , array('class'=>$rowClass));
 
             // Demographics
@@ -241,7 +255,7 @@ class Family {
                 $rowClass = 'odd';
             }
 
-            $tbl->addBodyTr($role->createThinMarkup($this->members[$idPrefix]['stay'], ($this->rData->getidPsg() == 0 ? FALSE : TRUE)), array('class'=>$rowClass));
+            $tbl->addBodyTr($role->createThinMarkup($this->members[$idPrefix]['stay'], ($this->rData->getIdPsg() == 0 ? FALSE : TRUE)), array('class'=>$rowClass));
 
             // Demographics
             if ($uS->ShowDemographics) {

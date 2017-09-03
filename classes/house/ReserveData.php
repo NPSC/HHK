@@ -39,6 +39,8 @@ class ReserveData {
     protected $idResv = 0;
     protected $id;
     protected $idPsg = 0;
+    protected $forceNewPsg = FALSE;
+    protected $forceNewResv = FALSE;
     protected $fullName = '';
     protected $resvTitle;
     protected $patAsGuestFlag;
@@ -58,15 +60,15 @@ class ReserveData {
         $labels = new Config_Lite(LABEL_FILE);
 
         if (isset($post['rid'])) {
-            $this->idResv = intval(filter_var($post['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
+            $this->setIdResv(intval(filter_var($post['rid'], FILTER_SANITIZE_NUMBER_INT), 10));
         }
 
         if (isset($post['id'])) {
-            $this->id = intval(filter_var($post['id'], FILTER_SANITIZE_NUMBER_INT), 10);
+            $this->setId(intval(filter_var($post['id'], FILTER_SANITIZE_NUMBER_INT), 10));
         }
 
         if (isset($post['idPsg'])) {
-            $this->idPsg = intval(filter_var($post['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
+            $this->setIdPsg(intval(filter_var($post['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10));
         }
 
         if (isset($post['fullName'])) {
@@ -124,7 +126,7 @@ class ReserveData {
         return $this->id;
     }
 
-    public function getidPsg() {
+    public function getIdPsg() {
         return $this->idPsg;
     }
 
@@ -156,14 +158,34 @@ class ReserveData {
         return $this->psgTitle;
     }
 
+    public function getForceNewPsg() {
+        return $this->forceNewPsg;
+    }
+
+    public function getForceNewResv() {
+        return $this->forceNewResv;
+    }
 
     public function setIdResv($idResv) {
-        $this->idResv = $idResv;
+        if ($idResv < 0) {
+            $this->idResv = 0;
+            $this->forceNewResv = TRUE;
+        } else {
+            $this->idResv = $idResv;
+            $this->forceNewResv = FALSE;
+        }
         return $this;
     }
 
     public function setIdPsg($idPsg) {
-        $this->idPsg = $idPsg;
+
+        if($idPsg < 0) {
+            $this->forceNewPsg = TRUE;
+            $this->idPsg = 0;
+        } else {
+            $this->idPsg = $idPsg;
+            $this->forceNewPsg = FALSE;
+        }
         return $this;
     }
 
