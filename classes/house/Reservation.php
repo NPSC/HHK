@@ -214,8 +214,6 @@ class ActiveReservation extends BlankReservation {
 
     public function createMarkup(\PDO $dbh) {
 
-        $uS = Session::getInstance();
-
         $data = parent::createMarkup($dbh);
 
         $data['resv'] = $this->resvSection($dbh, new Config_Lite(LABEL_FILE));

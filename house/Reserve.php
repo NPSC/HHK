@@ -210,7 +210,7 @@ $resvObjEncoded = json_encode($resvObj->toArray());
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <input type="button" id="btnDelete" value="Delete" style="display:none;"/>
                     <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
-                    <input id='btnDone' type='button' value='Find a Room' style="display:none;"/>
+                    <input id='btnDone' type='button' value='Continue' style="display:none;"/>
                 </div>
 
             </form>
@@ -227,729 +227,864 @@ $resvObjEncoded = json_encode($resvObj->toArray());
         </div>
 
 <script type="text/javascript">
-function newGuestMarkup (data) {
-
-    var $countries, $states, $famTbl;
-
-    if (data.tblId === undefined || data.tblId == '') {
-        return;
-    }
-
-    $famTbl = $('#' + data.tblId);
-
-    if ($famTbl.length === 0) {
-        return;
-    }
-
-    $famTbl.append($(data.ntr)).append($(data.atr));
-
-    $('#' + data.pref + 'cbStay').checkboxradio({
-        classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
-    });
-
-    $('#' + data.pref + 'lblStay').each(function () {
-        if ($(this).data('stay') == '1') {
-            $(this).click();
-        }
-    });
-
-    $('.ckbdate').datepicker({
-        yearRange: '-99:+00',
-        changeMonth: true,
-        changeYear: true,
-        autoSize: true,
-        maxDate: 0,
-        dateFormat: 'M d, yy'
-    });
-
-    $('#' + data.pref + 'toggleAddr').button();
-
-    // set country and state selectors
-    $countries = $('#' + data.pref + 'adrcountry1');
-    $countries.bfhcountries($countries.data());
-
-    $states = $('#' + data.pref + 'adrstate1');
-    $states.bfhstates($states.data());
-
-    $('#' + data.pref + 'phEmlTabs').tabs();
-
-    $('input#' + data.pref + 'adrzip1').each(function() {
-        var lastXhr;
-        createZipAutoComplete($(this), 'ws_admin.php', lastXhr);
-    });
-
-}
-
-function FamilySection(data) {
-
-    function addGuest(item, data) {
-
-        hideAlertMessage();
-
-        // Check for guest already added.
-        //
-
-        if (item.No_Return !== undefined && item.No_Return !== '') {
-            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
-            return;
-        }
-
-        if (typeof item.id === 'undefined') {
-            return;
-        }
-
-        var resv = {
-            id: item.id,
-            rid: data.rid,
-            idPsg: data.idPsg,
-            cmd: 'addThinGuest'
-        };
-
-        getReserve(resv);
-
-    }
-
-    this.setUp = function($wrapper) {
-
-        if (data.famSection === undefined) {
-            return;
-        }
-
-        var fDiv = $(data.famSection.div).addClass('ui-widget-content').prop('id', 'divfamDetail');
-        var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
-            .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
-            .append($("<span id='f_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
-        var fHdr = $('<div id="divfamHdr" style="padding:2px; cursor:pointer;"/>')
-                .append($(data.famSection.hdr))
-                .append(expanderButton).append('<div style="clear:both;"/>');
-
-        fHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
-        fHdr.click(function() {
-            if (fDiv.css('display') === 'none') {
-                fDiv.show('blind');
-                fHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
-            } else {
-                fDiv.hide('blind');
-                fHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
-            }
-        });
-
-        $wrapper
-                .empty()
-                .append(fHdr)
-                .append(fDiv)
-                .show();
-
-        $('.hhk-cbStay').checkboxradio({
-            classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
-        });
-
-        $('.hhk-lblStay').each(function () {
-            if ($(this).data('stay') == '1') {
-                $(this).click();
-            }
-        });
-
-        $('.ckbdate').datepicker({
-            yearRange: '-99:+00',
-            changeMonth: true,
-            changeYear: true,
-            autoSize: true,
-            maxDate: 0,
-            dateFormat: 'M d, yy'
-        });
-
-        $('.hhk-togAddr').button();
-        // toggle address row
-        $('#divfamDetail').on('click', '.hhk-togAddr', function () {
-
-            if ($(this).parents('tr').next('tr').css('display') === 'none') {
-                $(this).parents('tr').next('tr').show();
-                $(this).val('Hide');
-            } else {
-                $(this).parents('tr').next('tr').hide();
-                $(this).val('Show');
-            }
-        });
-
-        // set country and state selectors
-        $('.hhk-addrPanel').find('select.bfh-countries').each(function() {
-            var $countries = $(this);
-            $countries.bfhcountries($countries.data());
-        });
-
-        $('.hhk-addrPanel').find('select.bfh-states').each(function() {
-            var $states = $(this);
-            $states.bfhstates($states.data());
-        });
-
-        $('.hhk-phemtabs').tabs();
-
-        verifyAddrs('#divfamDetail');
-
-        $('input.hhk-zipsearch').each(function() {
-            var lastXhr;
-            createZipAutoComplete($(this), 'ws_admin.php', lastXhr);
-        });
-
-        // Relationship chooser
-        $('#divfamDetail').on('change', '.patientRelch', function () {
-            if ($(this).val() === 'slf') {
-                people.list[$(this).data('prefix')].role = 'p';
-            } else {
-                people.list[$(this).data('prefix')].role = 'g';
-            }
-        });
-
-        createAutoComplete($('#txtPersonSearch'), 3, {cmd: 'role', gp:'1'}, function (item) {
-            addGuest(item, data);
-        });
-    };
-
-};
-
-function expectedDateRange(expDates, $dateSection) {
-
-    $dateSection.empty();
-    $dateSection.append($(expDates));
-
-    var gstDate = $('#gstDate'),
-        gstCoDate = $('#gstCoDate');
-
-    $('#spnRangePicker').dateRangePicker({
-        format: 'MMM D, YYYY',
-        separator : ' to ',
-        minDays: 1,
-        getValue: function()
-        {
-            if (gstDate.val() && gstCoDate.val() ) {
-                return gstDate.val() + ' to ' + gstCoDate.val();
-            } else {
-                return '';
-            }
-        },
-        setValue: function(s,s1,s2)
-        {
-            gstDate.val(s1);
-            gstCoDate.val(s2);
-        }
-    });
-
-    $dateSection.show();
-}
-
-function hospitalSection(hosp, $hospSection) {
-
-    var hDiv = $(hosp.div).addClass('ui-widget-content').prop('id', 'divhospDetail').hide();
-    var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
-        .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
-        .append($("<span id='h_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
-    var hHdr = $('<div id="divhospHdr" style="padding:2px; cursor:pointer;"/>')
-            .append($(hosp.hdr))
-            .append(expanderButton).append('<div style="clear:both;"/>');
-
-    hHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
-
-    hHdr.click(function() {
-        if (hDiv.css('display') === 'none') {
-            hDiv.show('blind');
-            hHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
-        } else {
-            hDiv.hide('blind');
-            hHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
-        }
-    });
-
-    $hospSection.empty().append(hHdr).append(hDiv);
-
-    $('#txtEntryDate, #txtExitDate').datepicker({
-        yearRange: '-01:+01',
-        changeMonth: true,
-        changeYear: true,
-        autoSize: true,
-        dateFormat: 'M d, yy'
-    });
-
-    if ($('#txtAgentSch').length > 0) {
-        createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', basis: 'ra'}, getAgent);
-        if ($('#a_txtLastName').val() === '') {
-            $('.hhk-agentInfo').hide();
-        }
-    }
-
-    if ($('#txtDocSch').length > 0) {
-        createAutoComplete($('#txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc);
-        if ($('#d_txtLastName').val() === '') {
-            $('.hhk-docInfo').hide();
-        }
-    }
-
-    $hospSection.on('change', '#selHospital, #selAssoc', function() {
-        var hosp = $('#selAssoc').find('option:selected').text();
-        if (hosp != '') {
-            hosp += '/ ';
-        }
-        $('span#spnHospName').text(hosp + $('#selHospital').find('option:selected').text());
-    });
-
-
-    $hospSection.show();
-
-    if ($('#selHospital').val() === '') {
-        hHdr.click();
-    }
-}
-
-function Reservation(data) {
-
-    var resv = data.resv;
-    var $rDiv, $veh, $rHdr, $expanderButton;
+function PageManager(initData) {
     var t = this;
 
+    var patLabel = initData.patLabel;
+    var resvTitle = initData.resvTitle;
 
-    function setupVehicle(veh) {
-        var nextVehId = 1;
-        var $cbVeh = veh.find('#cbNoVehicle');
-        var $nextVeh = veh.find('#btnNextVeh');
-        var $tblVeh = veh.find('#tblVehicle');
+    var people = new Items();
+    var addrs = new Items();
+    var familySection = new FamilySection($('#famSection'));
+    var resvSection = new ResvSection($('#resvSection'));
+    var hospSection = new HospitalSection($('#hospitalSection'));
+    var expDatesSection = new ExpDatesSection($('#datesSection'));
 
-        $cbVeh.change(function() {
-            if (this.checked) {
-                $tblVeh.hide('scale, horizontal');
-            } else {
-                $tblVeh.show('scale, horizontal');
-            }
-        });
+    // Exports
+    t.getReserve = getReserve;
+    t.verifyInput = verifyInput;
 
-        $cbVeh.change();
-        $nextVeh.button();
 
-        $nextVeh.click(function () {
-            veh.find('#trVeh' + nextVehId).show('fade');
-            nextVehId++;
-            if (nextVehId > 4) {
-                $nextVeh.hide('fade');
-            }
-        });
 
-    }
+    function FamilySection($wrapper) {
+        var t = this;
 
-    function setupRate(data) {
+        // Exports
+        t.findStaysChecked = findStaysChecked;
+        t.setupComplete = false;
 
-        var reserve = {};
-        if ($('#btnFapp').length > 0) {
-
-            $("#faDialog").dialog({
-                autoOpen: false,
-                resizable: true,
-                width: 650,
-                modal: true,
-                title: 'Income Chooser',
-                close: function () {$('div#submitButtons').show();},
-                open: function () {$('div#submitButtons').hide();},
-                buttons: {
-                    Save: function() {
-                        $.post('ws_ckin.php', $('#formf').serialize() + '&cmd=savefap' + '&rid=' + data.rid, function(rdata) {
-                            try {
-                                rdata = $.parseJSON(rdata);
-                            } catch (err) {
-                                alert('Bad JSON Encoding');
-                                return;
-                            }
-                            if (rdata.gotopage) {
-                                window.open(rdata.gotopage, '_self');
-                            }
-                            if (rdata.rstat && rdata.rstat == true) {
-                                var selCat = $('#selRateCategory');
-                                if (rdata.rcat && rdata.rcat != '' && selCat.length > 0) {
-                                    selCat.val(rdata.rcat);
-                                    selCat.change();
-                                }
-                            }
-                        });
-                        $(this).dialog("close");
-                    },
-                    "Exit": function() {
-                        $(this).dialog("close");
-                    }
+        function findStaysChecked() {
+            var numGuests = 0;
+            $('.hhk-cbStay').each(function () {
+                if ($(this).prop('checked')) {
+                    numGuests++;
                 }
             });
-
-            $('#btnFapp').button().click(function() {
-                getIncomeDiag(data.rid);
-            });
+            return numGuests;
         }
 
-        reserve.rateList = data.resv.rdiv.ratelist;
-        reserve.resources = data.resv.rdiv.rooms;
-        reserve.visitFees = data.resv.rdiv.vfee;
+        function addGuest(item, data) {
 
-        setupRates(reserve, $('#selResource').val());
+            hideAlertMessage();
 
-        $('#selResource').change(function () {
-            $('#selRateCategory').change();
+            // Check for guest already added.
+            //
 
-            var selected = $("option:selected", this);
-            selected.parent()[0].label === "Not Suitable" ? $('#hhkroomMsg').text("Not Suitable").show(): $('#hhkroomMsg').hide();
-        });
+            if (item.No_Return !== undefined && item.No_Return !== '') {
+                flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
+                return;
+            }
+
+            if (typeof item.id === 'undefined') {
+                return;
+            }
+
+            var resv = {
+                id: item.id,
+                rid: data.rid,
+                idPsg: data.idPsg,
+                cmd: 'addThinGuest'
+            };
+
+            getReserve(resv);
+
+        }
+
+        t.setUp = function(data) {
+
+            if (data.famSection === undefined) {
+                return;
+            }
+
+            var fDiv = $(data.famSection.div).addClass('ui-widget-content').prop('id', 'divfamDetail');
+            var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+                .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+                .append($("<span id='f_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
+            var fHdr = $('<div id="divfamHdr" style="padding:2px; cursor:pointer;"/>')
+                    .append($(data.famSection.hdr))
+                    .append(expanderButton).append('<div style="clear:both;"/>');
+
+            fHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
+            fHdr.click(function() {
+                if (fDiv.css('display') === 'none') {
+                    fDiv.show('blind');
+                    fHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
+                } else {
+                    fDiv.hide('blind');
+                    fHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
+                }
+            });
+
+            $wrapper
+                    .empty()
+                    .append(fHdr)
+                    .append(fDiv)
+                    .show();
+
+            $('.hhk-cbStay').checkboxradio({
+                classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
+            });
+
+            $('.hhk-lblStay').each(function () {
+                if ($(this).data('stay') == '1') {
+                    $(this).click();
+                }
+            });
+
+            $('.ckbdate').datepicker({
+                yearRange: '-99:+00',
+                changeMonth: true,
+                changeYear: true,
+                autoSize: true,
+                maxDate: 0,
+                dateFormat: 'M d, yy'
+            });
+
+            $('.hhk-togAddr').button();
+            // toggle address row
+            $('#divfamDetail').on('click', '.hhk-togAddr', function () {
+
+                if ($(this).parents('tr').next('tr').css('display') === 'none') {
+                    $(this).parents('tr').next('tr').show();
+                    $(this).val('Hide');
+                } else {
+                    $(this).parents('tr').next('tr').hide();
+                    $(this).val('Show');
+                }
+            });
+
+            // set country and state selectors
+            $('.hhk-addrPanel').find('select.bfh-countries').each(function() {
+                var $countries = $(this);
+                $countries.bfhcountries($countries.data());
+            });
+
+            $('.hhk-addrPanel').find('select.bfh-states').each(function() {
+                var $states = $(this);
+                $states.bfhstates($states.data());
+            });
+
+            $('.hhk-phemtabs').tabs();
+
+            verifyAddrs('#divfamDetail');
+
+            $('input.hhk-zipsearch').each(function() {
+                var lastXhr;
+                createZipAutoComplete($(this), 'ws_admin.php', lastXhr);
+            });
+
+            // Relationship chooser
+            $('#divfamDetail').on('change', '.patientRelch', function () {
+                if ($(this).val() === 'slf') {
+                    people.list[$(this).data('prefix')].role = 'p';
+                } else {
+                    people.list[$(this).data('prefix')].role = 'g';
+                }
+            });
+
+            createAutoComplete($('#txtPersonSearch'), 3, {cmd: 'role', gp:'1'}, function (item) {
+                addGuest(item, data);
+            });
+
+            setupComplete = true;
+        };
+
+        t.newGuestMarkup = function(data) {
+
+            var $countries, $states, $famTbl;
+
+            if (data.tblId === undefined || data.tblId == '') {
+                return;
+            }
+
+            $famTbl = $wrapper.find('#' + data.tblId);
+
+            if ($famTbl.length === 0) {
+                return;
+            }
+
+            $famTbl.append($(data.ntr)).append($(data.atr));
+
+            $('#' + data.pref + 'cbStay').checkboxradio({
+                classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
+            });
+
+            $('#' + data.pref + 'lblStay').each(function () {
+                if ($(this).data('stay') == '1') {
+                    $(this).click();
+                }
+            });
+
+            $('.ckbdate').datepicker({
+                yearRange: '-99:+00',
+                changeMonth: true,
+                changeYear: true,
+                autoSize: true,
+                maxDate: 0,
+                dateFormat: 'M d, yy'
+            });
+
+            $('#' + data.pref + 'toggleAddr').button();
+
+            // set country and state selectors
+            $countries = $('#' + data.pref + 'adrcountry1');
+            $countries.bfhcountries($countries.data());
+
+            $states = $('#' + data.pref + 'adrstate1');
+            $states.bfhstates($states.data());
+
+            $('#' + data.pref + 'phEmlTabs').tabs();
+
+            $('input#' + data.pref + 'adrzip1').each(function() {
+                var lastXhr;
+                createZipAutoComplete($(this), 'ws_admin.php', lastXhr);
+            });
+
+        };
+
+        t.verify = function() {
+
+        };
+    }
+
+    function ExpDatesSection($dateSection) {
+
+        var t = this;
+        t.setupComplete = false;
+
+        var resvTitle;
+
+        t.setUp = function(expDates) {
+
+            $dateSection.empty();
+            $dateSection.append($(expDates));
+
+            var gstDate = $('#gstDate'),
+                gstCoDate = $('#gstCoDate');
+
+            $('#spnRangePicker').dateRangePicker({
+                format: 'MMM D, YYYY',
+                separator : ' to ',
+                minDays: 1,
+                getValue: function()
+                {
+                    if (gstDate.val() && gstCoDate.val() ) {
+                        return gstDate.val() + ' to ' + gstCoDate.val();
+                    } else {
+                        return '';
+                    }
+                },
+                setValue: function(s,s1,s2)
+                {
+                    gstDate.val(s1);
+                    gstCoDate.val(s2);
+                }
+            });
+
+            $dateSection.show();
+
+            setupComplete = true;
+        };
+
+        t.verify = function() {
+
+            var $arrDate = $('#gstDate'),
+                $deptDate = $('#gstCoDate'),
+                ciDate, coDate;
+
+            // Check in Date
+            if ($arrDate.val() === '') {
+
+                $arrDate.addClass('ui-state-error');
+                flagAlertMessage("This " + resvTitle + " is missing the check-in date.", true);
+                return false;
+
+            } else {
+
+                ciDate = new Date($arrDate.val());
+
+                if (isNaN(ciDate.getTime())) {
+                    $arrDate.addClass('ui-state-error');
+                    flagAlertMessage("This " + resvTitle + " is missing the check-in date.", true);
+                    return false;
+                }
+            }
+
+            // Check-out date
+            if ($deptDate.val() == '') {
+                $deptDate.addClass('ui-state-error');
+                flagAlertMessage("This " + resvTitle + " is missing the expected departure date.", true);
+                return false;
+
+            } else {
+
+                coDate = new Date($deptDate.val());
+
+                if (isNaN(coDate.getTime())) {
+                    $deptDate.addClass('ui-state-error');
+                    flagAlertMessage("This " + resvTitle + " is missing the expected departure date", true);
+                    return false;
+                }
+
+                if (ciDate > coDate) {
+                    $arrDate.addClass('ui-state-error');
+                    flagAlertMessage("This " + resvTitle + "'s check-in date is after the expected departure date.", true);
+                    return false;
+                }
+            }
+
+        };
 
     }
 
-    function setupRoom(idReserv) {
+    function HospitalSection($hospSection) {
+        var t = this;
+        t.setupComplete = false;
 
-        // Reservation history button
-        $('.hhk-viewResvActivity').click(function () {
-          $.post('ws_ckin.php', {cmd:'viewActivity', rid: $(this).data('rid')}, function(data) {
-            data = $.parseJSON(data);
+        t.setUp = function(hosp) {
 
-            if (data.error) {
+            var hDiv = $(hosp.div).addClass('ui-widget-content').prop('id', 'divhospDetail').hide();
+            var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+                .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+                .append($("<span id='h_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
+            var hHdr = $('<div id="divhospHdr" style="padding:2px; cursor:pointer;"/>')
+                    .append($(hosp.hdr))
+                    .append(expanderButton).append('<div style="clear:both;"/>');
 
-                if (data.gotopage) {
-                    window.open(data.gotopage, '_self');
+            hHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
+
+            hHdr.click(function() {
+                if (hDiv.css('display') === 'none') {
+                    hDiv.show('blind');
+                    hHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
+                } else {
+                    hDiv.hide('blind');
+                    hHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
                 }
-                flagAlertMessage(data.error, true);
-                return;
-            }
-             if (data.activity) {
-
-                $('div#submitButtons').hide();
-                $("#activityDialog").children().remove();
-                $("#activityDialog").append($(data.activity));
-                $("#activityDialog").dialog('open');
-            }
             });
 
-        });
+            $hospSection.empty().append(hHdr).append(hDiv);
 
-        // Room selector update for constraints changes.
-        $('input.hhk-constraintsCB').change( function () {
-            updateRoomChooser(idReserv, $('#spnNumGuests').text(), $('#gstDate').val(), $('#gstCoDate').val());
-        });
+            $('#txtEntryDate, #txtExitDate').datepicker({
+                yearRange: '-01:+01',
+                changeMonth: true,
+                changeYear: true,
+                autoSize: true,
+                dateFormat: 'M d, yy'
+            });
 
-        // Show confirmation form button.
-        $('#btnShowCnfrm').button().click(function () {
-            var amount = $('#spnAmount').text();
-            if (amount === '') {
-                amount = 0;
+            if ($('#txtAgentSch').length > 0) {
+                createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', basis: 'ra'}, getAgent);
+                if ($('#a_txtLastName').val() === '') {
+                    $('.hhk-agentInfo').hide();
+                }
             }
-            $.post('ws_ckin.php', {cmd:'confrv', rid: $(this).data('rid'), amt: amount, eml: '0'}, function(data) {
 
+            if ($('#txtDocSch').length > 0) {
+                createAutoComplete($('#txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc);
+                if ($('#d_txtLastName').val() === '') {
+                    $('.hhk-docInfo').hide();
+                }
+            }
+
+            $hospSection.on('change', '#selHospital, #selAssoc', function() {
+                var hosp = $('#selAssoc').find('option:selected').text();
+                if (hosp != '') {
+                    hosp += '/ ';
+                }
+                $('span#spnHospName').text(hosp + $('#selHospital').find('option:selected').text());
+            });
+
+
+            $hospSection.show();
+
+            if ($('#selHospital').val() === '') {
+                hHdr.click();
+            }
+
+            setupComplete = true;
+        };
+
+        t.verify = function() {
+
+        };
+
+    }
+
+    function ResvSection($wrapper) {
+        var t = this;
+        var $rDiv, $veh, $rHdr, $expanderButton;
+        t.setupComplete = false;
+
+        function setupVehicle(veh) {
+            var nextVehId = 1;
+            var $cbVeh = veh.find('#cbNoVehicle');
+            var $nextVeh = veh.find('#btnNextVeh');
+            var $tblVeh = veh.find('#tblVehicle');
+
+            $cbVeh.change(function() {
+                if (this.checked) {
+                    $tblVeh.hide('scale, horizontal');
+                } else {
+                    $tblVeh.show('scale, horizontal');
+                }
+            });
+
+            $cbVeh.change();
+            $nextVeh.button();
+
+            $nextVeh.click(function () {
+                veh.find('#trVeh' + nextVehId).show('fade');
+                nextVehId++;
+                if (nextVehId > 4) {
+                    $nextVeh.hide('fade');
+                }
+            });
+
+        }
+
+        function setupRate(data) {
+
+            var reserve = {};
+            if ($('#btnFapp').length > 0) {
+
+                $("#faDialog").dialog({
+                    autoOpen: false,
+                    resizable: true,
+                    width: 650,
+                    modal: true,
+                    title: 'Income Chooser',
+                    close: function () {$('div#submitButtons').show();},
+                    open: function () {$('div#submitButtons').hide();},
+                    buttons: {
+                        Save: function() {
+                            $.post('ws_ckin.php', $('#formf').serialize() + '&cmd=savefap' + '&rid=' + data.rid, function(rdata) {
+                                try {
+                                    rdata = $.parseJSON(rdata);
+                                } catch (err) {
+                                    alert('Bad JSON Encoding');
+                                    return;
+                                }
+                                if (rdata.gotopage) {
+                                    window.open(rdata.gotopage, '_self');
+                                }
+                                if (rdata.rstat && rdata.rstat == true) {
+                                    var selCat = $('#selRateCategory');
+                                    if (rdata.rcat && rdata.rcat != '' && selCat.length > 0) {
+                                        selCat.val(rdata.rcat);
+                                        selCat.change();
+                                    }
+                                }
+                            });
+                            $(this).dialog("close");
+                        },
+                        "Exit": function() {
+                            $(this).dialog("close");
+                        }
+                    }
+                });
+
+                $('#btnFapp').button().click(function() {
+                    getIncomeDiag(data.rid);
+                });
+            }
+
+            reserve.rateList = data.resv.rdiv.ratelist;
+            reserve.resources = data.resv.rdiv.rooms;
+            reserve.visitFees = data.resv.rdiv.vfee;
+
+            setupRates(reserve, $('#selResource').val());
+
+            $('#selResource').change(function () {
+                $('#selRateCategory').change();
+
+                var selected = $("option:selected", this);
+                selected.parent()[0].label === "Not Suitable" ? $('#hhkroomMsg').text("Not Suitable").show(): $('#hhkroomMsg').hide();
+            });
+
+        }
+
+        function setupRoom(idReserv) {
+
+            // Reservation history button
+            $('.hhk-viewResvActivity').click(function () {
+              $.post('ws_ckin.php', {cmd:'viewActivity', rid: $(this).data('rid')}, function(data) {
                 data = $.parseJSON(data);
 
                 if (data.error) {
+
                     if (data.gotopage) {
                         window.open(data.gotopage, '_self');
                     }
                     flagAlertMessage(data.error, true);
                     return;
                 }
-
-                 if (data.confrv) {
+                 if (data.activity) {
 
                     $('div#submitButtons').hide();
-                    $("#frmConfirm").children().remove();
-                    $("#frmConfirm").html(data.confrv)
-                        .append($('<div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><span>Email Address </span><input type="text" id="confEmail" value="'+data.email+'"/></div>'));
+                    $("#activityDialog").children().remove();
+                    $("#activityDialog").append($(data.activity));
+                    $("#activityDialog").dialog('open');
+                }
+                });
 
-                    $("#confirmDialog").dialog('open');
+            });
+
+            // Room selector update for constraints changes.
+            $('input.hhk-constraintsCB').change( function () {
+                updateRoomChooser(idReserv, $('#spnNumGuests').text(), $('#gstDate').val(), $('#gstCoDate').val());
+            });
+
+            // Show confirmation form button.
+            $('#btnShowCnfrm').button().click(function () {
+                var amount = $('#spnAmount').text();
+                if (amount === '') {
+                    amount = 0;
+                }
+                $.post('ws_ckin.php', {cmd:'confrv', rid: $(this).data('rid'), amt: amount, eml: '0'}, function(data) {
+
+                    data = $.parseJSON(data);
+
+                    if (data.error) {
+                        if (data.gotopage) {
+                            window.open(data.gotopage, '_self');
+                        }
+                        flagAlertMessage(data.error, true);
+                        return;
+                    }
+
+                     if (data.confrv) {
+
+                        $('div#submitButtons').hide();
+                        $("#frmConfirm").children().remove();
+                        $("#frmConfirm").html(data.confrv)
+                            .append($('<div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><span>Email Address </span><input type="text" id="confEmail" value="'+data.email+'"/></div>'));
+
+                        $("#confirmDialog").dialog('open');
+                    }
+                });
+            });
+
+        }
+
+        t.setUp = function(data) {
+
+            $rDiv = $('<div id="divResvDetail" style="padding:2px; float:left;" class="ui-widget-content ui-corner-bottom hhk-tdbox"/>');
+            $rDiv.append($(data.resv.rdiv.rChooser));
+
+            // Rate section
+            if (data.resv.rdiv.rate !== undefined) {
+                $rDiv.append($(data.resv.rdiv.rate));
+            }
+
+            // Stat and notes sections
+            $rDiv.append($(data.resv.rdiv.rstat)).append($(data.resv.rdiv.notes));
+
+            // Vehicle section
+            if (data.resv.rdiv.vehicle !== undefined) {
+                $veh = $(data.resv.rdiv.vehicle);
+                $rDiv.append($veh);
+                setupVehicle($veh);
+            }
+
+            // Header
+            $expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+                .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
+                .append($("<span id='r_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
+            $rHdr = $('<div id="divResvHdr" style="padding:2px; cursor:pointer;"/>')
+                    .append($(data.resv.hdr))
+                    .append($expanderButton).append('<div style="clear:both;"/>');
+
+            $rHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
+
+            $rHdr.click(function() {
+                if ($rDiv.css('display') === 'none') {
+                    $rDiv.show('blind');
+                    $rHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
+                } else {
+                    $rDiv.hide('blind');
+                    $rHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
                 }
             });
-        });
 
-    }
+            // Add to the page.
+            $wrapper.empty().append($rHdr).append($rDiv).show();
 
-    this.setUp = function($wrapper) {
+            t.$totalGuests = $('#spnNumGuests');
 
-        $rDiv = $('<div id="divResvDetail" style="padding:2px; float:left;" class="ui-widget-content ui-corner-bottom hhk-tdbox"/>');
-        $rDiv.append($(resv.rdiv.rChooser));
+            setupRoom(data.rid);
 
-        // Rate section
-        if (resv.rdiv.rate !== undefined) {
-            $rDiv.append($(resv.rdiv.rate));
-        }
-
-        // Stat and notes sections
-        $rDiv.append($(resv.rdiv.rstat)).append($(resv.rdiv.notes));
-
-        // Vehicle section
-        if (resv.rdiv.vehicle !== undefined) {
-            $veh = $(resv.rdiv.vehicle);
-            $rDiv.append($veh);
-            setupVehicle($veh);
-        }
-
-        // Header
-        $expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
-            .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
-            .append($("<span id='r_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
-        $rHdr = $('<div id="divResvHdr" style="padding:2px; cursor:pointer;"/>')
-                .append($(resv.hdr))
-                .append($expanderButton).append('<div style="clear:both;"/>');
-
-        $rHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
-
-        $rHdr.click(function() {
-            if ($rDiv.css('display') === 'none') {
-                $rDiv.show('blind');
-                $rHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
-            } else {
-                $rDiv.hide('blind');
-                $rHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
+            if (data.resv.rdiv.rate !== undefined) {
+                setupRate(data);
             }
-        });
 
-        // Add to the page.
-        $wrapper.empty().append($rHdr).append($rDiv).show();
+            setupComplete = true;
+        };
 
-        t.$totalGuests = $('#spnNumGuests');
+        t.verify = function() {
 
-        setupRoom(data.rid);
+            var numPat = 0;
+            var numGuests = 0;
 
-        if (resv.rdiv.rate !== undefined) {
-            setupRate(data);
-        }
-    };
-};
+            for (var i in people.list()) {
+                if (people.list()[i].role === 'p') {
+                    numPat++;
+                }
 
-function transferToGw(data) {
+                if (people.list()[i].stay === '1') {
+                    numGuests++;
+                }
+            }
 
-    var xferForm = $('#xform');
-    xferForm.children('input').remove();
-    xferForm.prop('action', data.xfer);
-    if (data.paymentId && data.paymentId != '') {
-        xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
-    } else if (data.cardId && data.cardId != '') {
-        xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
-    } else {
-        flagAlertMessage('PaymentId and CardId are missing!', true);
-        return;
-    }
-    xferForm.submit();
-}
+            // Only one patient allowed.
+            if (numPat < 1) {
+                flagAlertMessage('Choose a ' + resv.patLabel + '.', true);
+                return;
+            } else if (numPat > 1) {
+                flagAlertMessage('Only 1 ' + resv.patLabel + ' is allowed.', true);
+                return;
+            }
 
-function resvPicker(data, $resvDiag, $psgDiag) {
-    "use strict";
-    var buttons = {};
-
-    // reset then fill the reservation dialog
-    $resvDiag.empty()
-        .append($(data.resvChooser))
-        .children().find('input:button').button();
-
-    // Set up 'Check-in Now' button
-    $resvDiag.children().find('.hhk-checkinNow').click(function () {
-        window.open('CheckIn.php?rid=' + $(this).data('rid') + '&gid=' + data.id, '_self');
-    });
-
-    // Set up go to PSG chooser button
-    if (data.psgChooser && data.psgChooser !== '') {
-        buttons[data.patLabel + ' Chooser'] = function() {
-            $(this).dialog("close");
-            psgChooser(data, $psgDiag);
+            // Someone checking in?
+            if (findNumGuests() < 1) {
+                flagAlertMessage('There are no guests actually staying.  Pick someone to stay.', true);
+                return;
+            }
         };
     }
 
-    // Set up New Reservation button.
-    if (data.resvTitle) {
-        buttons['New ' + data.resvTitle] = function() {
-            data.rid = -1;
-            data.cmd = 'getresv';
-            $(this).dialog("close");
-            getReserve(data);
+    function Items () {
+
+        var _list = {};
+        var _index = '';
+        var t = this;
+        t.hasItem = hasItem;
+        t.findItem = findItem;
+
+        this.list = function () {
+            return _list;
         };
+
+        this.makeList = function(theList, indexProperty) {
+            _index = indexProperty;
+            _list = theList;
+        };
+
+        this.addItem = function(item) {
+
+            if (hasItem(item) === false) {
+                _list[item[_index]] = item;
+                return true;
+            }
+
+            return false;
+        };
+
+        function hasItem(item) {
+
+            if (_list[item[_index]] !== undefined) {
+                return true;
+            }
+
+            return false;
+        };
+
+        function findItem(property, value) {
+            for (var i in _list) {
+                if (i[property] == value) {
+                    return i;
+                }
+            }
+            return null;
+        }
+
     }
 
-    buttons['Exit'] = function() {
-        $(this).dialog("close");
-        $('div#guestSearch').show();
-        $('#gstSearch').val('').focus();
-    };
+    function transferToGw(data) {
 
-    $resvDiag.dialog('option', 'buttons', buttons);
-    $resvDiag.dialog('option', 'title', data.resvTitle + ' Chooser For: ' + data.fullName);
-    $resvDiag.dialog('open');
+        var xferForm = $('#xform');
+        xferForm.children('input').remove();
+        xferForm.prop('action', data.xfer);
+        if (data.paymentId && data.paymentId != '') {
+            xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
+        } else if (data.cardId && data.cardId != '') {
+            xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
+        } else {
+            flagAlertMessage('PaymentId and CardId are missing!', true);
+            return;
+        }
+        xferForm.submit();
+    }
 
-}
+    function resvPicker(data, $resvDiag, $psgDiag) {
+        "use strict";
+        var buttons = {};
 
-function psgChooser(data, $dialog) {
-    "use strict";
+        // reset then fill the reservation dialog
+        $resvDiag.empty()
+            .append($(data.resvChooser))
+            .children().find('input:button').button();
 
-    $dialog
-        .empty()
-        .append($(data.psgChooser))
-        .dialog('option', 'buttons', {
-            Open: function() {
-                $(this).dialog('close');
-                getReserve({idPsg: $dialog.find('input[name=cbselpsg]:checked').val(), id: data.id, cmd: 'getresv'});
-            },
-            Cancel: function () {
-                $(this).dialog('close');
-                $('div#guestSearch').show();
-                $('#gstSearch').val('').focus();
+        // Set up 'Check-in Now' button
+        $resvDiag.children().find('.hhk-checkinNow').click(function () {
+            window.open('CheckIn.php?rid=' + $(this).data('rid') + '&gid=' + data.id, '_self');
+        });
+
+        // Set up go to PSG chooser button
+        if (data.psgChooser && data.psgChooser !== '') {
+            buttons[data.patLabel + ' Chooser'] = function() {
+                $(this).dialog("close");
+                psgChooser(data, $psgDiag);
+            };
+        }
+
+        // Set up New Reservation button.
+        if (data.resvTitle) {
+            buttons['New ' + data.resvTitle] = function() {
+                data.rid = -1;
+                data.cmd = 'getresv';
+                $(this).dialog("close");
+                getReserve(data);
+            };
+        }
+
+        buttons['Exit'] = function() {
+            $(this).dialog("close");
+            $('div#guestSearch').show();
+            $('#gstSearch').val('').focus();
+        };
+
+        $resvDiag.dialog('option', 'buttons', buttons);
+        $resvDiag.dialog('option', 'title', data.resvTitle + ' Chooser For: ' + data.fullName);
+        $resvDiag.dialog('open');
+
+    }
+
+    function psgChooser(data, $dialog) {
+        "use strict";
+
+        $dialog
+            .empty()
+            .append($(data.psgChooser))
+            .dialog('option', 'buttons', {
+                Open: function() {
+                    $(this).dialog('close');
+                    getReserve({idPsg: $dialog.find('input[name=cbselpsg]:checked').val(), id: data.id, cmd: 'getresv'});
+                },
+                Cancel: function () {
+                    $(this).dialog('close');
+                    $('div#guestSearch').show();
+                    $('#gstSearch').val('').focus();
+                }
+            })
+            .dialog('option', 'title', data.patLabel + ' Chooser For: ' + data.fullName)
+            .dialog('open');
+    }
+
+    function getReserve(sdata) {
+
+        $.post('ws_resv.php', sdata, function(data) {
+
+            try {
+                data = $.parseJSON(data);
+            } catch (err) {
+                flagAlertMessage(err.message, true);
+                return;
             }
-        })
-        .dialog('option', 'title', data.patLabel + ' Chooser For: ' + data.fullName)
-        .dialog('open');
-}
 
-function getReserve(sdata) {
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
+            }
 
-    $.post('ws_resv.php', sdata, function(data) {
+            if (data.error) {
+                flagAlertMessage(data.error, true);
+            }
 
-        try {
-            data = $.parseJSON(data);
-        } catch (err) {
-            flagAlertMessage(err.message, true);
+            loadResv(data);
+        });
+
+        $('div#guestSearch').hide();
+
+    }
+
+    function loadResv(data) {
+
+        if (data.xfer) {
+            transferToGw(data);
+        }
+
+        if (data.resvChooser && data.resvChooser !== '') {
+            resvPicker(data, $('#resDialog'), $('#psgDialog'));
+            return;
+        } else if (data.psgChooser && data.psgChooser !== '') {
+            psgChooser(data, $('#psgDialog'));
             return;
         }
 
-        if (data.gotopage) {
-            window.open(data.gotopage, '_self');
+        if (data.famSection) {
+
+            familySection.setUp(data);
+
+            people.makeList(data.famSection.mem, 'pref');
+            addrs.makeList(data.famSection.addrs, 'pref');
+
+            $('#btnDone').show();
         }
 
-        if (data.error) {
-            flagAlertMessage(data.error, true);
+        // Expected Dates Control
+        if (data.expDates !== undefined && data.expDates !== '') {
+            expDatesSection.setUp(data.expDates);
         }
 
-        loadResv(data);
-    });
-
-    $('div#guestSearch').hide();
-
-}
-
-function loadResv(data) {
-
-    if (data.xfer) {
-        transferToGw(data);
-    }
-
-    if (data.resvChooser && data.resvChooser !== '') {
-        resvPicker(data, $('#resDialog'), $('#psgDialog'));
-        return;
-    } else if (data.psgChooser && data.psgChooser !== '') {
-        psgChooser(data, $('#psgDialog'));
-        return;
-    }
-
-    if (data.famSection) {
-
-        var familySection = new FamilySection(data);
-        familySection.setUp($('#famSection'));
-
-        people.makeList(data.famSection.mem, 'pref');
-        addrs.makeList(data.famSection.addrs, 'pref');
-
-        $('#btnDone').show();
-    }
-
-    // Expected Dates Control
-    if (data.expDates !== undefined && data.expDates !== '') {
-        expectedDateRange(data.expDates, $('#datesSection'));
-    }
-
-    // Hospital
-    if (data.hosp !== undefined) {
-        hospitalSection(data.hosp, $('div#hospitalSection'));
-    }
-
-    // Reservation
-    if (data.resv !== undefined) {
-
-        var reserv = new Reservation(data);
-        reserv.setUp($('#resvSection'));
-
-        // String together some events
-        $('#famSection').on('change', '.hhk-cbStay', function () {
-            var tot = findNumGuests();
-            reserv.$totalGuests.text(tot);
-
-            if (tot > 0) {
-                reserv.$totalGuests.parent().removeClass('ui-state-highlight');
-            } else {
-                reserv.$totalGuests.parent().addClass('ui-state-highlight');
-            }
-        });
-
-        $('#btnDone').val('Save').show();
-    }
-
-    if (data.addPerson !== undefined) {
-
-        // Clear the person search textbox.
-        $('#txtPersonSearch').val('');
-
-        if (people.addItem({role: '', stay: '1', id: data.addPerson.id})) {
-            addrs.addItem(data.addPerson.addrs[data.addPerson.pref]);
-            newGuestMarkup(data.addPerson);
-        }
-    }
-
-}
-
-function findNumGuests() {
-    var numGuests = 0;
-    $('.hhk-cbStay').each(function () {
-        if ($(this).prop('checked')) {
-            numGuests++;
-        }
-    });
-    return numGuests;
-}
-
-function Items () {
-
-    var _list = {};
-    var _index = '';
-    var t = this;
-    t.hasItem = hasItem;
-
-    this.list = function () {
-        return _list;
-    };
-
-    this.makeList = function(theList, indexProperty) {
-        _index = indexProperty;
-        _list = theList;
-    };
-
-    this.addItem = function(item) {
-
-        if (hasItem(item) === false) {
-            _list[item[_index]] = item;
-            return true;
+        // Hospital
+        if (data.hosp !== undefined) {
+            hospSection.setUp(data.hosp);
         }
 
-        return false;
-    };
+        // Reservation
+        if (data.resv !== undefined) {
 
-    function hasItem(item) {
+            resvSection.setUp(data);
 
-        if (_list[item[_index]] !== undefined) {
-            return true;
+            // String together some events
+            $('#famSection').on('change', '.hhk-cbStay', function () {
+                var tot = familySection.findStaysChecked();
+                resvSection.$totalGuests.text(tot);
+
+                if (tot > 0) {
+                    resvSection.$totalGuests.parent().removeClass('ui-state-highlight');
+                } else {
+                    resvSection.$totalGuests.parent().addClass('ui-state-highlight');
+                }
+            });
+
+            $('#btnDone').val('Save').show();
         }
 
-        return false;
-    };
+        if (data.addPerson !== undefined) {
 
-    function findItem(property, value) {
-        for (var i in _list) {
-            if (i[property] == value) {
-                return i;
+            // Clear the person search textbox.
+            $('#txtPersonSearch').val('');
+
+            if (people.addItem({role: '', stay: '1', id: data.addPerson.id, 'pref': data.addPerson.pref})) {
+                addrs.addItem(data.addPerson.addrs[data.addPerson.pref]);
+                familySection.newGuestMarkup(data.addPerson);
             }
         }
-        return null;
     }
 
-}
+    function verifyInput() {
 
-var people = new Items();
-var addrs = new Items();
+
+    }
+}
 
 $(document).ready(function() {
     "use strict";
     var $guestSearch = $('#gstSearch');
     var resv = $.parseJSON('<?php echo $resvObjEncoded; ?>');
+
+    var pageManager = new PageManager(resv);
 
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
@@ -977,30 +1112,10 @@ $(document).ready(function() {
 
         hideAlertMessage();
 
-        // Count patients
-        var numPat = 0;
-        for (var i in people.list()) {
-            if (people.list()[i].role === 'p') {
-                numPat++;
-            }
+        if (pageManager.verifyInput()) {
+
+            $(this).val('Saving >>>>');
         }
-
-        // Only one patient allowed.
-        if (numPat < 1) {
-            flagAlertMessage('Choose a ' + resv.patLabel + '.', true);
-            return;
-        } else if (numPat > 1) {
-            flagAlertMessage('Only 1 ' + resv.patLabel + ' is allowed.', true);
-            return;
-
-        // Someone checking in?
-        if (findNumGuests() < 1) {
-            flagAlertMessage('There are no guests actually staying.  Pick someone to stay.', true);
-            return;
-        }
-
-
-        $(this).val('Saving >>>>');
 
     });
 
@@ -1084,14 +1199,14 @@ $(document).ready(function() {
         resv.fullName = item.fullName;
         resv.cmd = 'getresv';
 
-        getReserve(resv);
+        pageManager.getReserve(resv);
 
     }
 
     if (parseInt(resv.id, 10) > 0 || parseInt(resv.rid, 10) > 0) {
 
         resv.cmd = 'getresv';
-        getReserve(resv);
+        pageManager.getReserve(resv);
 
     } else {
 
