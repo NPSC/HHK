@@ -123,18 +123,26 @@ function getIncomeDiag(idResv, idReg) {
             gotIncomeDiag(idResv, idReg, data);
         });
 }
+
 function setupRates(ckIn) {
     "use strict";
-    if ($('#selVisitFee').length > 0) {
-        
-        $('#selVisitFee').change(function() {
-            $('#selRateCategory').change();
+    var $selRateCat = $('#selRateCategory');
+    var $selResource = $('#selResource');
+    var $selVisitFee = $('#selVisitFee');
+
+    if ($selVisitFee.length > 0) {
+
+        $selVisitFee.change(function() {
+            
+            $selRateCat.change();
+            
             if ($('#visitFeeCb').length > 0) {
                 // update the visit fee
-                var amt = parseFloat(ckIn.visitFees[$('#selVisitFee').val()][2]);
+                var amt = parseFloat(ckIn.visitFees[$(this).val()][2]);
                 if (isNaN(amt) || amt < 0) {
                     amt = 0;
                 }
+                
                 if (amt === 0) {
                     $('#visitFeeAmt').val('');
                     $('#visitFeeCb').prop('checked', false);
@@ -144,104 +152,130 @@ function setupRates(ckIn) {
                     $('#spnvfeeAmt').text('($' + amt.toFixed(2).toString() + ')');
                     $('.hhk-vfrow').show('fade');
                 }
+                
                 $('#spnvfeeAmt').data('amt', amt);
                 $('#visitFeeCb').change();
             }
         });
-        
-        $('#selVisitFee').change();
+
+        $selVisitFee.change();
     }
-    
+
     $('#txtFixedRate').change(function() {
-        if ($('#selRateCategory').val() == 'x') {
+        
+        if ($selRateCat.val() === 'x') {
+            
             var amt = parseFloat($(this).val());
+            var ds = parseInt($('#spnNites').text(), 10);
+            var fa = 0;
+            var total;
+            
             if (isNaN(amt) || amt < 0) {
                 amt = parseFloat($(this).prop("defaultValue"));
                 if (isNaN(amt) || amt < 0)
                     amt = 0;
                 $(this).val(amt);
             }
-            if ($('#selResource').length > 0 && ckIn.resources[$('#selResource').val()]) {
-                ckIn.resources[$('#selResource').val()].rate = amt;
+            
+            if ($selResource.length > 0 && ckIn.resources[$selResource.val()]) {
+                ckIn.resources[$selResource.val()].rate = amt;
             }
-            var ds = parseInt($('#spnNites').text(), 10);
+            
             if (isNaN(ds)) {
                 ds = 0;
             }
-            var fa = 0;
-            if ($('#selVisitFee').length > 0) {
-                fa = parseFloat(ckIn.visitFees[$('#selVisitFee').val()][2]);
+            
+            if ($selVisitFee.length > 0) {
+                fa = parseFloat(ckIn.visitFees[$selVisitFee.val()][2]);
                 if (isNaN(fa) || fa < 0) {
                     fa = 0;
                 }
             }
             $('#spnLodging').text('$' + (amt * ds));
-            var total = (amt * ds) + fa;
+            total = (amt * ds) + fa;
             $('#spnAmount').text('$' + total);
         }
     });
+
     $('#txtadjAmount').change(function () {
-        var amt = 0,
-            category = $('#selRateCategory');
-        if (category.val() != 'x') {
+            
+        if ($selRateCat.val() !== 'x') {
+            
             var adj = parseFloat($(this).val());
+            var fa = 0;
+            
             if (isNaN(adj)) {
+                
                 adj = parseFloat($(this).prop("defaultValue"));
+                
                 if (isNaN(adj)) {
                     adj = 0;
                 }
                 $(this).val(adj);
             }
-            var fa = 0;
+            
             if ($('#selVisitFee').length > 0) {
-                fa = parseFloat(ckIn.visitFees[$('#selVisitFee').val()][2]);
+                
+                fa = parseFloat(ckIn.visitFees[$selVisitFee.val()][2]);
+                
                 if (isNaN(fa) || fa < 0) {
                     fa = 0;
                 }
             }
-            if (ckIn.rateList && ckIn.rateList[category.val()] !== false) {
-                amt = parseFloat(ckIn.rateList[category.val()]);
+            if (ckIn.rateList && ckIn.rateList[$selRateCat.val()] !== false) {
+                
+                var amt = parseFloat(ckIn.rateList[$selRateCat.val()]);
+                
                 if (isNaN(amt) || amt < 0) {
                     amt = 0;
                 }
-                var newAmt = (amt * (1 + adj/100));
-                $('#spnLodging').text('$' + newAmt);
-                newAmt += fa;
-                $('#spnAmount').text('$' + newAmt);
+                
+                amt = (amt * (1 + adj/100));
+                $('#spnLodging').text('$' + amt);
+                amt += fa;
+                $('#spnAmount').text('$' + amt);
             }
         }
     });
-    $('#selRateCategory').change(function () {
-        if ($(this).val() == 'x') {
-            $('.hhk-fxFixed').show();
-            var idresc = $('#selResource').val();
-            if (ckIn.resources[idresc]) {
-                $('#txtFixedRate').val(ckIn.resources[idresc].rate);
-            }
+
+    $selRateCat.change(function () {
+
+        if ($(this).val() === 'x') {
+
             $('.hhk-fxAdj').hide();
+            $('.hhk-fxFixed').show();
+            
+            if (ckIn.resources[$selResource.val()]) {
+                $('#txtFixedRate').val(ckIn.resources[$selResource.val()].rate);
+            }
         } else {
+            
             $('.hhk-fxFixed').hide();
             $('.hhk-fxAdj').show();
         }
+
         $('#txtFixedRate').change();
         $('#txtadjAmount').change();
     });
-    $('#selRateCategory').change();
+    
+    $selRateCat.change();
 }
+
 function updateRoomChooser(idReserv, numGuests, arrivalDate, departureDate) {
     
     var cbRS = {};
     var idResc;
+    var $selResource = $('#selResource');
 
-    if ($('#selResource').length === 0 || $('input.hhk-constraintsCB').length === 0) {
+    if ($selResource.length === 0 || $('input.hhk-constraintsCB').length === 0) {
         return;
     }
     
-    idResc = $('#selResource option:selected').val();
+    idResc = $selResource.find('option:selected').val();
 
     hideAlertMessage();
 
-    $('#selResource').prop('disabled', true);
+    $selResource.prop('disabled', true);
     $('#hhk-roomChsrtitle').addClass('hhk-loading');
     $('#hhkroomMsg').text('').hide();
     
@@ -264,7 +298,7 @@ function updateRoomChooser(idReserv, numGuests, arrivalDate, departureDate) {
       function(data) {
           var newSel;
           
-        $('#selResource').prop('disabled', false);
+        $selResource.prop('disabled', false);
         $('#hhk-roomChsrtitle').removeClass('hhk-loading');
         
         try {
@@ -286,10 +320,10 @@ function updateRoomChooser(idReserv, numGuests, arrivalDate, departureDate) {
         if (data.selectr) {
             
             newSel = $(data.selectr);
-            $('#selResource').children().remove();
+            $selResource.children().remove();
 
-            newSel.children().appendTo($('#selResource'));
-            $('#selResource').val(data.idResource).change();
+            newSel.children().appendTo($selResource);
+            $selResource.val(data.idResource).change();
 
             if (data.msg && data.msg !== '') {
                 $('#hhkroomMsg').text(data.msg).show();

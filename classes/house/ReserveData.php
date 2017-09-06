@@ -166,6 +166,10 @@ class ReserveData {
         return $this->forceNewResv;
     }
 
+    public function getAddrPurpose() {
+        return $this->addrPurpose;
+    }
+
     public function setIdResv($idResv) {
         if ($idResv < 0) {
             $this->idResv = 0;
@@ -208,7 +212,6 @@ class ReserveData {
         $this->familySection = $p;
         return $this;
     }
-
 
 
 }

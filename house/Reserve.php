@@ -159,8 +159,14 @@ $alertMsg->set_Text("uh-oh");
 
 $resultMessage = $alertMsg->createMarkup();
 
+$resvAr = $resvObj->toArray();
+$resvAr['patBD'] = $resvObj->getPatBirthDateFlag();
+$resvAr['patAddr'] = $uS->PatientAddr;
+$resvAr['gstAddr'] = $uS->GuestAddr;
+$resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
 
-$resvObjEncoded = json_encode($resvObj->toArray());
+
+$resvObjEncoded = json_encode($resvAr);
 
 ?>
 <!DOCTYPE html>
@@ -232,6 +238,9 @@ function PageManager(initData) {
 
     var patLabel = initData.patLabel;
     var resvTitle = initData.resvTitle;
+    var patBirthDate = initData.patBD;
+    var patAddrRequired = initData.patAddr;
+    var gstAddrRequired = initData.gstAddr;
 
     var people = new Items();
     var addrs = new Items();
@@ -263,6 +272,19 @@ function PageManager(initData) {
             return numGuests;
         }
 
+        function openSection(torf) {
+
+            var $fDiv = $('#divfamDetail');
+
+            if (torf === true) {
+                $fDiv.show('blind');
+                $fDiv.prev('div').removeClass('ui-corner-all').addClass('ui-corner-top');
+            } else {
+                $fDiv.hide('blind');
+                $fDiv.prev('div').addClass('ui-corner-all').removeClass('ui-corner-top');
+            }
+        }
+
         function addGuest(item, data) {
 
             hideAlertMessage();
@@ -287,6 +309,72 @@ function PageManager(initData) {
             };
 
             getReserve(resv);
+
+        }
+
+        function verifyAddress(prefix) {
+
+            var testreg = /^([\(]{1}[0-9]{3}[\)]{1}[\.| |\-]{0,1}|^[0-9]{3}[\.|\-| ]?)?[0-9]{3}(\.|\-| )?[0-9]{4}$/;
+            var msg = false;
+
+            // Incomplete checked?
+            if ($('#' + prefix + 'incomplete').prop('checked') === false) {
+
+                // Look at each entry
+                $('.' + prefix + 'hhk-addr-val').each(function() {
+
+                    if ($(this).val() === '' && !$(this).hasClass('bfh-states')) {
+
+                        // Missing
+                        $(this).addClass('ui-state-error');
+                        msg = true;
+
+                    } else {
+                        $(this).removeClass('ui-state-error');
+                    }
+                });
+
+                // Did we catch any?
+                if (msg) {
+                    // Yes,open address row.
+                    if ($('#' + prefix + 'toggleAddr').val() === 'Show') {
+                        $('#' + prefix + 'toggleAddr').click();
+                    }
+
+                    return 'Some or all of the indicated addresses are missing.  ';
+
+                }
+            }
+
+            // Validate Phone Number
+
+            $('.hhk-phoneInput[id^="' +prefix + 'txtPhone"]').each(function (){
+
+                if ($.trim($(this).val()) !== '' && testreg.test($(this).val()) === false) {
+
+                    // error
+                    $(this).addClass('ui-state-error');
+
+                    //Open address row
+                    if ($('#' + prefix + 'toggleAddr').val() === 'Show') {
+                        $('#' + prefix + 'toggleAddr').click();
+                    }
+
+                    // open phone tab
+                    $('#' + prefix + 'phEmlTabs').tabs("option", "active", 1);
+
+                    msg = true;
+
+                } else {
+                    $(this).removeClass('ui-state-error');
+                }
+            });
+
+            if (msg) {
+                return 'Indicated phone numbers are invalid.  ';
+            }
+
+            return '';
 
         }
 
@@ -376,9 +464,9 @@ function PageManager(initData) {
             // Relationship chooser
             $('#divfamDetail').on('change', '.patientRelch', function () {
                 if ($(this).val() === 'slf') {
-                    people.list[$(this).data('prefix')].role = 'p';
+                    people.list()[$(this).data('prefix')].role = 'p';
                 } else {
-                    people.list[$(this).data('prefix')].role = 'g';
+                    people.list()[$(this).data('prefix')].role = 'g';
                 }
             });
 
@@ -386,7 +474,7 @@ function PageManager(initData) {
                 addGuest(item, data);
             });
 
-            setupComplete = true;
+            t.setupComplete = true;
         };
 
         t.newGuestMarkup = function(data) {
@@ -444,15 +532,117 @@ function PageManager(initData) {
 
         t.verify = function() {
 
+            var nameErr = false;
+
+            // Last names
+            $wrapper.find('.hhk-lastname').each(function () {
+                if ($(this).val() == '') {
+                    $(this).addClass('ui-state-error');
+                    nameErr = true;
+                } else {
+                    $(this).removeClass('ui-state-error');
+                }
+            });
+
+            // First names
+            $wrapper.find('.hhk-firstname').each(function () {
+                if ($(this).val() == '') {
+                    $(this).addClass('ui-state-error');
+                    nameErr = true;
+                } else {
+                    $(this).removeClass('ui-state-error');
+                }
+            });
+
+            if (nameErr === true) {
+                openSection(true);
+                flagAlertMessage("Enter a first and last name for the people highlighted.", true);
+                return false;
+            }
+
+            // each person
+            for (var p in people.list()) {
+
+                if (people.list()[p].role === 'p') {
+
+                    // Check patient birthdate
+                    if (patBirthDate & $('#' + p + 'txtBirthDate').val() === '') {
+                        $('#' + p + 'txtBirthDate').addClass('ui-state-error');
+                        flagAlertMessage(patLabel + ' is missing the Birth Date.', true);
+                        openSection(true);
+                        return false;
+                    } else {
+                        $('#' + p + 'txtBirthDate').removeClass('ui-state-error');
+                    }
+
+                    // Check patient address
+                    if (patAddrRequired) {
+
+                        var pMessage = verifyAddress(p);
+
+                        if (pMessage !== '') {
+                            flagAlertMessage(pMessage, true);
+                            openSection(true);
+                            return false;
+                        } else if ($('#' + p + 'toggleAddr').val() === 'Hide') {
+                            // Close address row
+                            $('#' + p + 'toggleAddr').click();
+                        }
+
+                    } else if ($('#' + p + 'toggleAddr').val() === 'Hide') {
+                        // Close address row
+                        $('#' + p + 'toggleAddr').click();
+                    }
+
+                // Guests
+                } else {
+
+                    // Check Patient Relationship
+                    if ($('#' + p + 'selPatRel').val() === '') {
+
+                        $('#' + p + 'selPatRel').addClass('ui-state-error');
+                        flagAlertMessage('Person highlighted is missing their ' + patLabel + ' Relationship.', true);
+                        openSection(true);
+                        return false;
+
+                    } else {
+                        $('#' + p + 'selPatRel').removeClass('ui-state-error');
+                    }
+
+                    // Check Guest address
+                    if (gstAddrRequired) {
+
+                        var pMessage = verifyAddress(p);
+
+                         if (pMessage !== '') {
+
+                            flagAlertMessage(pMessage, true);
+                            openSection(true);
+                            return false;
+
+                        } else if ($('#' + p + 'toggleAddr').val() === 'Hide') {
+                            // Close address row
+                            $('#' + p + 'toggleAddr').click();
+                        }
+                   } else  if ($('#' + p + 'toggleAddr').val() === 'Hide') {
+                        // Close address row
+                        $('#' + p + 'toggleAddr').click();
+                    }
+                }
+            }
+
+            return true;
         };
     }
 
     function ExpDatesSection($dateSection) {
 
         var t = this;
-        t.setupComplete = false;
 
-        var resvTitle;
+        // Export
+        t.setupComplete = false;
+        t.ciDate = new Date();
+        t.coDate = new Date();
 
         t.setUp = function(expDates) {
 
@@ -489,8 +679,10 @@ function PageManager(initData) {
         t.verify = function() {
 
             var $arrDate = $('#gstDate'),
-                $deptDate = $('#gstCoDate'),
-                ciDate, coDate;
+                $deptDate = $('#gstCoDate');
+
+            $arrDate.removeClass('ui-state-error');
+            $deptDate.removeClass('ui-state-error');
 
             // Check in Date
             if ($arrDate.val() === '') {
@@ -511,7 +703,8 @@ function PageManager(initData) {
             }
 
             // Check-out date
-            if ($deptDate.val() == '') {
+            if ($deptDate.val() === '') {
+
                 $deptDate.addClass('ui-state-error');
                 flagAlertMessage("This " + resvTitle + " is missing the expected departure date.", true);
                 return false;
@@ -533,8 +726,8 @@ function PageManager(initData) {
                 }
             }
 
+            return true;
         };
-
     }
 
     function HospitalSection($hospSection) {
@@ -602,11 +795,33 @@ function PageManager(initData) {
                 hHdr.click();
             }
 
-            setupComplete = true;
+            t.setupComplete = true;
         };
 
         t.verify = function() {
 
+            $hospSection.find('.ui-state-error').each(function() {
+                $(this).removeClass('ui-state-error');
+            });
+
+            if ($('#selHospital').length > 0 && t.setupComplete === true) {
+
+                if ($('#selHospital').val() == "" ) {
+
+                    $('#selHospital').addClass('ui-state-error');
+
+                    flagAlertMessage("Select a hospital.", true, 0);
+
+                    $('#divhospDetail').show('blind');
+                    $('#divhospHdr').removeClass('ui-corner-all').addClass('ui-corner-top');
+                    return false;
+                }
+            }
+
+            $('#divhospDetail').hide('blind');
+            $('#divhospHdr').removeClass('ui-corner-top').addClass('ui-corner-all');
+
+            return true;
         };
 
     }
@@ -646,7 +861,9 @@ function PageManager(initData) {
         function setupRate(data) {
 
             var reserve = {};
-            if ($('#btnFapp').length > 0) {
+            var $finAppBtn = $wrapper.find('#btnFapp');
+
+            if ($finAppBtn.length > 0) {
 
                 $("#faDialog").dialog({
                     autoOpen: false,
@@ -684,7 +901,7 @@ function PageManager(initData) {
                     }
                 });
 
-                $('#btnFapp').button().click(function() {
+                $finAppBtn.button().click(function() {
                     getIncomeDiag(data.rid);
                 });
             }
@@ -693,7 +910,7 @@ function PageManager(initData) {
             reserve.resources = data.resv.rdiv.rooms;
             reserve.visitFees = data.resv.rdiv.vfee;
 
-            setupRates(reserve, $('#selResource').val());
+            setupRates(reserve);
 
             $('#selResource').change(function () {
                 $('#selRateCategory').change();
@@ -732,7 +949,8 @@ function PageManager(initData) {
 
             // Room selector update for constraints changes.
             $('input.hhk-constraintsCB').change( function () {
-                updateRoomChooser(idReserv, $('#spnNumGuests').text(), $('#gstDate').val(), $('#gstCoDate').val());
+                // Disable max room size.
+                updateRoomChooser(idReserv, '1', $('#gstDate').val(), $('#gstCoDate').val());
             });
 
             // Show confirmation form button.
@@ -818,7 +1036,7 @@ function PageManager(initData) {
                 setupRate(data);
             }
 
-            setupComplete = true;
+            t.setupComplete = true;
         };
 
         t.verify = function() {
@@ -839,17 +1057,19 @@ function PageManager(initData) {
             // Only one patient allowed.
             if (numPat < 1) {
                 flagAlertMessage('Choose a ' + resv.patLabel + '.', true);
-                return;
+                return false;
             } else if (numPat > 1) {
                 flagAlertMessage('Only 1 ' + resv.patLabel + ' is allowed.', true);
-                return;
+                return false;
             }
 
             // Someone checking in?
-            if (findNumGuests() < 1) {
+            if (familySection.findStaysChecked() < 1) {
                 flagAlertMessage('There are no guests actually staying.  Pick someone to stay.', true);
-                return;
+                return false;
             }
+
+            return true;
         };
     }
 
@@ -1028,7 +1248,7 @@ function PageManager(initData) {
             people.makeList(data.famSection.mem, 'pref');
             addrs.makeList(data.famSection.addrs, 'pref');
 
-            $('#btnDone').show();
+            $('#btnDone').val('Continue').show();
         }
 
         // Expected Dates Control
@@ -1059,6 +1279,7 @@ function PageManager(initData) {
             });
 
             $('#btnDone').val('Save').show();
+            $('#btnDelete').val('Delete ' + resvTitle).show()
         }
 
         if (data.addPerson !== undefined) {
@@ -1075,6 +1296,30 @@ function PageManager(initData) {
 
     function verifyInput() {
 
+        // dates
+        if (expDatesSection.verify() === false) {
+            return false;
+        }
+
+        // Family
+        if (familySection.verify() === false) {
+
+            return false;
+        }
+
+        // hospital
+        if (hospSection.verify() === false) {
+            return false;
+        }
+
+        if (resvSection.setupComplete === true) {
+
+            if (resvSection.verify() === false) {
+                return false;
+            }
+        }
+
+        return true;
 
     }
 }
@@ -1112,7 +1357,24 @@ $(document).ready(function() {
 
         hideAlertMessage();
 
-        if (pageManager.verifyInput()) {
+        if (pageManager.verifyInput() === true) {
+
+            var cmdStr = '&cmd=saveResv' + '&idPsg=' + resv.idPsg + '&rid=' + resv.idReserv + '&patStay=' + resv.patStaying + '&ciDate=' + resv.ciDate.toJSON() + '&coDate=' + resv.coDate.toJSON();
+            var parms = {
+                cmd: '',
+                idPsg: ''
+
+            };
+
+
+            $.post(
+                    'ws_ckin.php',
+                    $('#form1').serialize() + cmdStr,
+                    function(data) {
+                        loadResources(data, btnVal);
+                    }
+            );
+
 
             $(this).val('Saving >>>>');
         }
