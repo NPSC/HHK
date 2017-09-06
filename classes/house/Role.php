@@ -245,11 +245,11 @@ abstract class Role {
         // Staying button
         if ($this->getNoReturn() != '') {
             // Set for no return
-            $td = HTMLTable::makeTd('No Return', array('title'=>$this->getNoReturn()));
+            $td = HTMLTable::makeTd('No Return', array('title'=>$this->getNoReturn() . ';  Id: ' . $this->getIdName()));
 
         } else if ($staying == 'x') {
             // This person cannot stay
-            $td = HTMLTable::makeTd('');
+            $td = HTMLTable::makeTd('', array('title'=>'Id: ' . $this->getIdName()));
 
         } else {
 
@@ -269,7 +269,8 @@ abstract class Role {
 
             $td = HTMLTable::makeTd(
                 HTMLContainer::generateMarkup('label', 'Stay', $lblStay)
-                . HTMLInput::generateMarkup('', $cbStay));
+                . HTMLInput::generateMarkup('', $cbStay)
+                , array('title'=>'Id: ' . $this->getIdName()));
         }
 
         // Phone

@@ -173,7 +173,7 @@ class Guest extends Role {
 
         if ($uS->GuestAddr) {
             // Address
-            $mu .= HTMLTable::makeTd(HTMLInput::generateMarkup('Show', array('type'=>'button', 'id'=>$this->getRoleMember()->getIdPrefix() . 'toggleAddr', 'class'=>'hhk-togAddr')));
+            $mu .= HTMLTable::makeTd(HTMLContainer::generateMarkup('button', 'Hide', array('type'=>'button', 'data-pref'=>$this->getRoleMember()->getIdPrefix(), 'id'=>$this->getRoleMember()->getIdPrefix() . 'toggleAddr', 'class'=>'hhk-togAddr')));
         } else {
             $mu .= HTMLTable::makeTd('');
         }

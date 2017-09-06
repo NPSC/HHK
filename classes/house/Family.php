@@ -182,7 +182,9 @@ class Family {
 
             $role = $this->roleObjs[$this->rData->getId()];
 
-            $nameTr = HTMLContainer::generateMarkup('tr', $role->createThinMarkup($this->members[$role->getRoleMember()->getIdPrefix()]['stay'], ($this->rData->getIdPsg() == 0 ? FALSE : TRUE)));
+            $nameTr = HTMLContainer::generateMarkup('tr'
+                    , $role->createThinMarkup($this->members[$role->getRoleMember()->getIdPrefix()]['stay'], ($this->rData->getIdPsg() == 0 ? FALSE : TRUE))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup('Remove', array('type'=>'button', 'id'=>$role->getRoleMember()->getIdPrefix().'btnRemove'))));
 
             // Demographics
             if ($uS->ShowDemographics) {
@@ -234,7 +236,7 @@ class Family {
             }
 
             if ($uS->PatientAddr) {
-                $tbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow', 'style'=>'display:none;'));
+                $tbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow'));
             }
 
         }
@@ -265,7 +267,7 @@ class Family {
             }
 
             // Add addresses and demo's
-            $tbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow', 'style'=>'display:none;'));
+            $tbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow'));
         }
 
         // Guest search
@@ -278,11 +280,12 @@ class Family {
         // Waitlist notes?
         if ($uS->UseWLnotes) {
 
-            $mk1 .= HTMLContainer::generateMarkup('fieldset',
+            $mk1 .=
+                    HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', $this->rData->getWlNotesLabel(), array('style'=>'font-weight:bold;'))
-                . HTMLContainer::generateMarkup('textarea', $resvRs->Checkin_Notes->getStoredVal(), array('name'=>'taCkinNotes', 'rows'=>'2', 'cols'=>'75')),
-                array('class'=>'hhk-panel', 'style'=>'clear:both; float:left; margin-top:10px; font-size:.9em;'));
-            }
+                . HTMLContainer::generateMarkup('textarea', $resvRs->Checkin_Notes->getStoredVal(), array('name'=>'taCkinNotes', 'rows'=>'2', 'style'=>'width:100%')),
+                array('class'=>'hhk-panel', 'style'=>'margin-top:10px; font-size:.9em;'));
+        }
 
             // Header
         $hdr = HTMLContainer::generateMarkup('div',

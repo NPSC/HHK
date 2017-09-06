@@ -164,6 +164,7 @@ $resvAr['patBD'] = $resvObj->getPatBirthDateFlag();
 $resvAr['patAddr'] = $uS->PatientAddr;
 $resvAr['gstAddr'] = $uS->GuestAddr;
 $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
+$resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
 
 
 $resvObjEncoded = json_encode($resvAr);
@@ -241,6 +242,8 @@ function PageManager(initData) {
     var patBirthDate = initData.patBD;
     var patAddrRequired = initData.patAddr;
     var gstAddrRequired = initData.gstAddr;
+    var patAsGuest = initData.patAsGuest;
+    var addrPurpose = initData.addrPurpose;
 
     var people = new Items();
     var addrs = new Items();
@@ -252,6 +255,7 @@ function PageManager(initData) {
     // Exports
     t.getReserve = getReserve;
     t.verifyInput = verifyInput;
+    t.loadResv = loadResv;
 
 
 
@@ -261,6 +265,8 @@ function PageManager(initData) {
         // Exports
         t.findStaysChecked = findStaysChecked;
         t.setupComplete = false;
+
+        var divFamDetailId = 'divfamDetail';
 
         function findStaysChecked() {
             var numGuests = 0;
@@ -318,7 +324,7 @@ function PageManager(initData) {
             var msg = false;
 
             // Incomplete checked?
-            if ($('#' + prefix + 'incomplete').prop('checked') === false) {
+            if ($('#' + prefix + 'incomplete').length > 0 && $('#' + prefix + 'incomplete').prop('checked') === false) {
 
                 // Look at each entry
                 $('.' + prefix + 'hhk-addr-val').each(function() {
@@ -384,7 +390,7 @@ function PageManager(initData) {
                 return;
             }
 
-            var fDiv = $(data.famSection.div).addClass('ui-widget-content').prop('id', 'divfamDetail');
+            var fDiv = $(data.famSection.div).addClass('ui-widget-content').prop('id', divFamDetailId);
             var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
                 .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
                 .append($("<span id='f_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
@@ -429,17 +435,35 @@ function PageManager(initData) {
             });
 
             $('.hhk-togAddr').button();
+
             // toggle address row
-            $('#divfamDetail').on('click', '.hhk-togAddr', function () {
+            $('#' + divFamDetailId).on('click', '.hhk-togAddr', function () {
 
                 if ($(this).parents('tr').next('tr').css('display') === 'none') {
                     $(this).parents('tr').next('tr').show();
-                    $(this).val('Hide');
+                    $(this).button('option', 'label', 'Hide');
                 } else {
                     $(this).parents('tr').next('tr').hide();
-                    $(this).val('Show');
+                    $(this).button('option', 'label', 'Show');
                 }
+
+                // Address status icon
+                if ($('#' + $(this).data('pref') + 'incomplete').prop('checked') === true) {
+
+                    $(this).button('option', 'icon', 'ui-icon-circle-check');
+
+                } else {
+
+                    if ($('#' + $(this).data('pref') + 'adraddress1' + addrPurpose).val() === '' || $('#' + $(this).data('pref') + 'adrcity' + addrPurpose).val() === '') {
+                        $(this).button('option', 'icon', 'ui-icon-notice');
+                    } else {
+                        $(this).button('option', 'icon', 'ui-icon-check');
+                    }
+                }
+
             });
+
+            $('.hhk-togAddr').click();
 
             // set country and state selectors
             $('.hhk-addrPanel').find('select.bfh-countries').each(function() {
@@ -462,10 +486,19 @@ function PageManager(initData) {
             });
 
             // Relationship chooser
-            $('#divfamDetail').on('change', '.patientRelch', function () {
+            $('#' + divFamDetailId).on('change', '.patientRelch', function () {
+
                 if ($(this).val() === 'slf') {
+
                     people.list()[$(this).data('prefix')].role = 'p';
+
+                    if (patAsGuest === false) {
+                        // remove stay button
+                        $('#' + $(this).data('prefix') + 'lblStay').parent('td').empty();
+                    }
+
                 } else {
+
                     people.list()[$(this).data('prefix')].role = 'g';
                 }
             });
@@ -493,16 +526,16 @@ function PageManager(initData) {
 
             $famTbl.append($(data.ntr)).append($(data.atr));
 
+            // prepare stay button
             $('#' + data.pref + 'cbStay').checkboxradio({
                 classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
             });
 
-            $('#' + data.pref + 'lblStay').each(function () {
-                if ($(this).data('stay') == '1') {
-                    $(this).click();
-                }
-            });
+            if ($('#' + data.pref + 'lblStay').data('stay') === '1') {
+                $('#' + data.pref + 'lblStay').click();
+            }
 
+            // Prepare birth date picker
             $('.ckbdate').datepicker({
                 yearRange: '-99:+00',
                 changeMonth: true,
@@ -512,13 +545,21 @@ function PageManager(initData) {
                 dateFormat: 'M d, yy'
             });
 
+            // Address button
             $('#' + data.pref + 'toggleAddr').button();
 
+            // Remove button
+            $('#' + data.pref + 'btnRemove').button().click(function () {
+                $(this).parentsUntil('tbody', 'tr').next().remove();
+                $(this).parentsUntil('tbody', 'tr').remove();
+                people.removeIndex[data.pref];
+            });
+
             // set country and state selectors
-            $countries = $('#' + data.pref + 'adrcountry1');
+            $countries = $('#' + data.pref + 'adrcountry' + addrPurpose);
             $countries.bfhcountries($countries.data());
 
-            $states = $('#' + data.pref + 'adrstate1');
+            $states = $('#' + data.pref + 'adrstate' + addrPurpose);
             $states.bfhstates($states.data());
 
             $('#' + data.pref + 'phEmlTabs').tabs();
@@ -532,7 +573,62 @@ function PageManager(initData) {
 
         t.verify = function() {
 
+            var numPat = 0;
+            var numGuests = 0;
             var nameErr = false;
+
+
+            // Verify Relationships
+            $('.patientRelch').removeClass('ui-state-error');
+            $('.patientRelch').each(function () {
+
+                if ($(this).val() === '') {
+
+                    $(this).addClass('ui-state-error');
+                    flagAlertMessage('Set the highlighted Relationship.', true);
+                    return false;
+
+                }
+            });
+
+            // Check on number of guests and patients
+            for (var i in people.list()) {
+                if (people.list()[i].role === 'p') {
+                    numPat++;
+                }
+
+                if (people.list()[i].stay === '1') {
+                    numGuests++;
+                }
+            }
+
+            // Only one patient allowed.
+            if (numPat < 1) {
+
+                flagAlertMessage('Choose a ' + patLabel + '.', true);
+
+                $('.patientRelch').addClass('ui-state-error');
+                return false;
+
+            } else if (numPat > 1) {
+
+                flagAlertMessage('Only 1 ' + patLabel + ' is allowed.', true);
+
+                for (var i in people.list()) {
+                    if (people.list()[i].role === 'p') {
+                        $('#' + i + 'selPatRel').addClass('ui-state-error');
+                    }
+                }
+                return false;
+            }
+
+            // Someone checking in?
+            if (familySection.findStaysChecked() < 1) {
+                flagAlertMessage('There are no guests actually staying.  Pick someone to stay.', true);
+                return false;
+            }
+
+
 
             // Last names
             $wrapper.find('.hhk-lastname').each(function () {
@@ -656,6 +752,7 @@ function PageManager(initData) {
                 format: 'MMM D, YYYY',
                 separator : ' to ',
                 minDays: 1,
+                autoClose: true,
                 getValue: function()
                 {
                     if (gstDate.val() && gstCoDate.val() ) {
@@ -672,6 +769,11 @@ function PageManager(initData) {
             });
 
             $dateSection.show();
+
+            // Open the dialog if the dates are not defined yet.
+            if ($('#gstDate').val() == '') {
+                $('#spnRangePicker').data('dateRangePicker').open();
+            }
 
             setupComplete = true;
         };
@@ -693,9 +795,9 @@ function PageManager(initData) {
 
             } else {
 
-                ciDate = new Date($arrDate.val());
+                t.ciDate = new Date($arrDate.val());
 
-                if (isNaN(ciDate.getTime())) {
+                if (isNaN(t.ciDate.getTime())) {
                     $arrDate.addClass('ui-state-error');
                     flagAlertMessage("This " + resvTitle + " is missing the check-in date.", true);
                     return false;
@@ -711,15 +813,15 @@ function PageManager(initData) {
 
             } else {
 
-                coDate = new Date($deptDate.val());
+                t.coDate = new Date($deptDate.val());
 
-                if (isNaN(coDate.getTime())) {
+                if (isNaN(t.coDate.getTime())) {
                     $deptDate.addClass('ui-state-error');
                     flagAlertMessage("This " + resvTitle + " is missing the expected departure date", true);
                     return false;
                 }
 
-                if (ciDate > coDate) {
+                if (t.ciDate > t.coDate) {
                     $arrDate.addClass('ui-state-error');
                     flagAlertMessage("This " + resvTitle + "'s check-in date is after the expected departure date.", true);
                     return false;
@@ -1041,34 +1143,6 @@ function PageManager(initData) {
 
         t.verify = function() {
 
-            var numPat = 0;
-            var numGuests = 0;
-
-            for (var i in people.list()) {
-                if (people.list()[i].role === 'p') {
-                    numPat++;
-                }
-
-                if (people.list()[i].stay === '1') {
-                    numGuests++;
-                }
-            }
-
-            // Only one patient allowed.
-            if (numPat < 1) {
-                flagAlertMessage('Choose a ' + resv.patLabel + '.', true);
-                return false;
-            } else if (numPat > 1) {
-                flagAlertMessage('Only 1 ' + resv.patLabel + ' is allowed.', true);
-                return false;
-            }
-
-            // Someone checking in?
-            if (familySection.findStaysChecked() < 1) {
-                flagAlertMessage('There are no guests actually staying.  Pick someone to stay.', true);
-                return false;
-            }
-
             return true;
         };
     }
@@ -1099,6 +1173,10 @@ function PageManager(initData) {
 
             return false;
         };
+
+        this.removeIndex = function (index) {
+            delete _list[index];
+        }
 
         function hasItem(item) {
 
@@ -1203,6 +1281,7 @@ function PageManager(initData) {
 
     function getReserve(sdata) {
 
+
         $.post('ws_resv.php', sdata, function(data) {
 
             try {
@@ -1251,14 +1330,14 @@ function PageManager(initData) {
             $('#btnDone').val('Continue').show();
         }
 
-        // Expected Dates Control
-        if (data.expDates !== undefined && data.expDates !== '') {
-            expDatesSection.setUp(data.expDates);
-        }
-
         // Hospital
         if (data.hosp !== undefined) {
             hospSection.setUp(data.hosp);
+        }
+
+        // Expected Dates Control
+        if (data.expDates !== undefined && data.expDates !== '') {
+            expDatesSection.setUp(data.expDates);
         }
 
         // Reservation
@@ -1359,22 +1438,28 @@ $(document).ready(function() {
 
         if (pageManager.verifyInput() === true) {
 
-            var cmdStr = '&cmd=saveResv' + '&idPsg=' + resv.idPsg + '&rid=' + resv.idReserv + '&patStay=' + resv.patStaying + '&ciDate=' + resv.ciDate.toJSON() + '&coDate=' + resv.coDate.toJSON();
-            var parms = {
-                cmd: '',
-                idPsg: ''
-
-            };
-
-
             $.post(
-                    'ws_ckin.php',
-                    $('#form1').serialize() + cmdStr,
-                    function(data) {
-                        loadResources(data, btnVal);
+                'ws_ckin.php',
+                $('#form1').serialize() + '&cmd=sr&isPsg=' + resv.idPsg + '&rid=' + resv.rid,
+                function(data) {
+                    try {
+                        data = $.parseJSON(data);
+                    } catch (err) {
+                        flagAlertMessage(err.message, true);
+                        return;
                     }
-            );
 
+                    if (data.gotopage) {
+                        window.open(data.gotopage, '_self');
+                    }
+
+                    if (data.error) {
+                        flagAlertMessage(data.error, true);
+                    }
+
+                    pageManager.loadResv(data);
+                }
+            );
 
             $(this).val('Saving >>>>');
         }
