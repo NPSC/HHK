@@ -935,6 +935,12 @@ from
                 continue;
             }
 
+            $expDeparture = $r['Expected_Departure'];
+            $arrival = $r['Arrival'];
+            $lastCleaned = $r['Last_Cleaned'];
+            $notes = '';
+            $action = '';
+
             $fixedRows = array();
             $stat = '';
             $isDirty = FALSE;
@@ -955,45 +961,20 @@ from
                 $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);
             }
 
-            // Expected Departure
-            if ($r['Expected_Departure'] != '') {
-
-                $expDepDT = new \DateTime($r['Expected_Departure']);
-                $expDepDT->setTime(0, 0, 0);
-
-                $edAttr = array();
-
-                if ($expDepDT < $today) {
-                    $edAttr['style'] = 'color:red;';
-                }
-
-                $expDep = $r['Expected_Departure'];  //HTMLTable::makeTd($r['Expected_Departure'], $edAttr);
-
-            } else {
-                $expDep = '';  //HTMLTable::makeTd('');
-            }
-
-
-
             if ($printOnly) {
-                    // reverse output
-                $lines = explode("\n", $r['Notes']);
-                $reverse = "";
 
-                for ($i = (count($lines) - 1); $i >= 0; $i--) {
-                    $reverse .= $lines[$i] . "<br/>";
-                }
+                $stat = strip_tags($stat);
 
-                $notes = HTMLContainer::generateMarkup('div', $reverse, array('id'=>'hhk-existgNotes'));
+                // reverse notes output
+                $notes = implode('  ||', array_reverse(explode("\n", $r['Notes'])));
+
+                // format dates
+                $expDeparture = $r['Expected_Departure'] == '' ? '' : date('M d, Y', strtotime($expDeparture));
+                $arrival = $r['Arrival'] == '' ? '' : date('M d, Y', strtotime($arrival));
+                $lastCleaned = $r['Last_Cleaned'] == '' ? '' : date('M d, Y', strtotime($r['Last_Cleaned']));
 
             } else {
                 $notes = Notes::markupShell($r['Notes'], $filter.'taNotes[' . $r['idRoom'] . ']');
-            }
-
-
-            // action buttons
-            $action = '';
-            if ($printOnly === FALSE) {
 
                 if ($isDirty) {
                 $action = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbClean[' . $r['idRoom'] . ']', 'id'=>$filter.'cbClean' . $r['idRoom']))
@@ -1014,10 +995,10 @@ from
             $fixedRows['Status'] = $stat;
             $fixedRows['Action'] = $action;
             $fixedRows['Occupant'] = $r['Name'];
-            $fixedRows['Checked_In'] = $r['Arrival'] == '' ? '' : $r['Arrival'];
-            $fixedRows['Expected_Checkout'] = $expDep;
-            $fixedRows['Last_Cleaned'] = $r['Last_Cleaned'] == '' ? '' : $r['Last_Cleaned'];
-            $fixedRows['Notes'] = ($printOnly ? '' : $notes);
+            $fixedRows['Checked_In'] = $arrival;
+            $fixedRows['Expected_Checkout'] = $expDeparture;
+            $fixedRows['Last_Cleaned'] = $lastCleaned;
+            $fixedRows['Notes'] = $notes;
 
             $returnRows[] = $fixedRows;
         }

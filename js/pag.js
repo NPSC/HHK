@@ -67,12 +67,16 @@ function dateRender(data, type, format) {
     // If display or filter data is requested, format the date
     if ( type === 'display' || type === 'filter' ) {
 
-        data = data.trim();
-        
         if (data === null || data === '') {
             return '';
         }
-        
+
+        data = data.trim();
+
+        if (data === null || data === '') {
+            return '';
+        }
+
         if (!format || format === '') {
             format = 'MMM D, YYYY';
         }

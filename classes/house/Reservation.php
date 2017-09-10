@@ -99,6 +99,16 @@ abstract class Reservation {
 
     public abstract function createMarkup(\PDO $dbh);
 
+    public function save(\PDO $dbh, $post) {
+
+        return array();
+    }
+
+    public function addperson(\PDO $dbh) {
+
+        return array();
+    }
+
     protected function createExpDatesControl() {
 
         $cidAttr = array('name'=>'gstDate', 'readonly'=>'readonly', 'size'=>'14' );
@@ -216,10 +226,15 @@ class ActiveReservation extends BlankReservation {
 
         $data = parent::createMarkup($dbh);
 
+        // Add the reservation section.
         $data['resv'] = $this->resvSection($dbh, new Config_Lite(LABEL_FILE));
 
-
         return $data;
+
+    }
+
+    public function save(\PDO $dbh, $post) {
+
 
     }
 
@@ -231,6 +246,7 @@ class StaticReservation extends Reservation {
 
     }
 
+
 }
 
 class StayingReservation extends Reservation {
@@ -239,14 +255,16 @@ class StayingReservation extends Reservation {
 
     }
 
+
 }
 
 class BlankReservation extends Reservation {
 
     public function createMarkup(\PDO $dbh) {
 
-        $family = new Family($dbh, $this->reserveData);
+        $family = new Family($this->reserveData);
 
+        $family->loadMembers($dbh);
         $this->reserveData->setFamilySection($family->createFamilyMarkup($dbh, $this->reservRs));
 
         $data = $this->reserveData->toArray();
@@ -260,6 +278,22 @@ class BlankReservation extends Reservation {
         $data['hosp'] = Hospital::createReferralMarkup($dbh, $hospitalStay);
 
         return $data;
+    }
+
+    public function save(\PDO $dbh, $post) {
+
+        $family = new Family($this->reserveData);
+
+        $famSaved = $family->save($dbh, $post);
+
+    }
+
+    public function addperson(\PDO $dbh) {
+
+        $family = new Family($this->reserveData);
+        $family->loadMembers($dbh);
+
+        return array('addPerson' => $family->CreateAddPersonMu($dbh));
     }
 
 }
@@ -399,7 +433,6 @@ class ReserveSearcher extends BlankReservation {
 
         return $tbl->generateMarkup();
     }
-
 
 }
 

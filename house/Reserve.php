@@ -244,6 +244,9 @@ function PageManager(initData) {
     var gstAddrRequired = initData.gstAddr;
     var patAsGuest = initData.patAsGuest;
     var addrPurpose = initData.addrPurpose;
+    var idPsg = initData.idPsg;
+    var idResv = initData.rid;
+    var idName = initData.id;
 
     var people = new Items();
     var addrs = new Items();
@@ -256,6 +259,13 @@ function PageManager(initData) {
     t.getReserve = getReserve;
     t.verifyInput = verifyInput;
     t.loadResv = loadResv;
+    t.people = people;
+    t.addrs = addrs;
+
+
+    t.idPsg = idPsg;
+    t.idResv = idResv;
+    t.idName = idName;
 
 
 
@@ -384,7 +394,35 @@ function PageManager(initData) {
 
         }
 
+        function copyAddress(prefix, cpyAddr) {
+
+            for (var p in addrs.list()) {
+
+                // Use this one already?
+                if (p === cpyAddr[prefix]) {
+                    cpyAddr[prefix] = 0;
+                    continue;
+                }
+
+                if (addrs.list()[p].Address_1 !== '' && $('#' + p + 'adraddress1' +  addrPurpose) !== addrs.list()[p].Address_1) {
+
+                    cpyAddr[prefix] = p;
+
+                    $('#' + prefix + 'adraddress1' + addrPurpose).val(addrs.list()[p].Address_1);
+                    $('#' + prefix + 'adraddress2' + addrPurpose).val(addrs.list()[p].Address_2);
+                    $('#' + prefix + 'adrcity' + addrPurpose).val(addrs.list()[p].City);
+                    $('#' + prefix + 'adrcounty' + addrPurpose).val(addrs.list()[p].County);
+                    $('#' + prefix + 'adrstate' + addrPurpose).val(addrs.list()[p].State_Province);
+                    $('#' + prefix + 'adrcountry' + addrPurpose).val(addrs.list()[p].Country_Code);
+                    $('#' + prefix + 'adrzip' + addrPurpose).val(addrs.list()[p].Postal_Code);
+                    break;
+                }
+            }
+        }
+
         t.setUp = function(data) {
+
+            var  cpyAddr = [];
 
             if (data.famSection === undefined) {
                 return;
@@ -477,6 +515,26 @@ function PageManager(initData) {
             });
 
             $('.hhk-phemtabs').tabs();
+
+            $('#' + divFamDetailId).on('click', '.hhk-addrCopy', function() {
+
+                copyAddress($(this).attr('name'), cpyAddr);
+
+            });
+
+            $('#' + divFamDetailId).on('click', '.hhk-addrErase', function() {
+
+                var prefix = $(this).attr('name');
+
+                $('#' + prefix + 'adraddress1' + addrPurpose).val('');
+                $('#' + prefix + 'adraddress2' + addrPurpose).val('');
+                $('#' + prefix + 'adrcity' + addrPurpose).val('');
+                $('#' + prefix + 'adrcounty' + addrPurpose).val('');
+                $('#' + prefix + 'adrstate' + addrPurpose).val('');
+                $('#' + prefix + 'adrcountry' + addrPurpose).val('');
+                $('#' + prefix + 'adrzip' + addrPurpose).val('');
+
+            });
 
             verifyAddrs('#divfamDetail');
 
@@ -1240,7 +1298,7 @@ function PageManager(initData) {
         if (data.resvTitle) {
             buttons['New ' + data.resvTitle] = function() {
                 data.rid = -1;
-                data.cmd = 'getresv';
+                data.cmd = 'getResv';
                 $(this).dialog("close");
                 getReserve(data);
             };
@@ -1267,7 +1325,7 @@ function PageManager(initData) {
             .dialog('option', 'buttons', {
                 Open: function() {
                     $(this).dialog('close');
-                    getReserve({idPsg: $dialog.find('input[name=cbselpsg]:checked').val(), id: data.id, cmd: 'getresv'});
+                    getReserve({idPsg: $dialog.find('input[name=cbselpsg]:checked').val(), id: data.id, cmd: 'getResv'});
                 },
                 Cancel: function () {
                     $(this).dialog('close');
@@ -1320,6 +1378,18 @@ function PageManager(initData) {
             return;
         }
 
+        if (data.idPsg) {
+            t.idPsg = data.idPsg;
+        }
+
+        if (data.id) {
+            t.idName = data.id;
+        }
+
+        if (data.rid) {
+            t.idResv = data.rid;
+        }
+
         if (data.famSection) {
 
             familySection.setUp(data);
@@ -1358,7 +1428,60 @@ function PageManager(initData) {
             });
 
             $('#btnDone').val('Save').show();
-            $('#btnDelete').val('Delete ' + resvTitle).show()
+
+            if (data.rid > 0) {
+
+                $('#btnDelete').click(function () {
+                    if ($(this).val() === 'Deleting >>>>') {
+                        return;
+                    }
+
+                    if (confirm('Delete this ' + data.resvTitle + '?')) {
+
+                        var cmdStr = '&cmd=delResv' + '&rid=' + data.rid;
+
+                        $(this).val('Deleting >>>>');
+
+                        $.post(
+                                'ws_ckin.php',
+                                cmdStr,
+                                function(data) {
+                                    try {
+                                        data = $.parseJSON(data);
+                                    } catch (err) {
+                                        flagAlertMessage(err.message, true);
+                                        $('form#form1').remove();
+                                    }
+
+                                    if (data.error) {
+                                        if (data.gotopage) {
+                                            window.open(data.gotopage, '_self');
+                                        }
+                                        flagAlertMessage(data.error, true);
+                                        $('form#form1').remove();
+                                    }
+
+                                    if (data.warning) {
+                                        flagAlertMessage(data.warning, true);
+                                    }
+
+                                    if (data.result) {
+                                        $('form#form1').remove();
+                                        flagAlertMessage(data.result + ' <a href="Reserve.php">Continue</a>', true);
+                                    }
+                                }
+                        );
+                    }
+                });
+
+                $('#btnDelete').val('Delete ' + resvTitle).show();
+
+                $('#btnShowReg').click(function () {
+                    window.open('ShowRegForm.php?rid=' + data.rid, '_blank');
+                });
+
+                $('#btnShowReg').show();
+            }
         }
 
         if (data.addPerson !== undefined) {
@@ -1422,11 +1545,6 @@ $(document).ready(function() {
 
     $('#btnDone, #btnShowReg, #btnDelete').button();
 
-    $('#btnShowReg').click(function () {
-        if ($(this).data('rid') > 0) {
-            window.open('ShowRegForm.php?rid=' + $(this).data('rid'), '_blank');
-        }
-    });
 
     $('#btnDone').click(function () {
 
@@ -1439,8 +1557,8 @@ $(document).ready(function() {
         if (pageManager.verifyInput() === true) {
 
             $.post(
-                'ws_ckin.php',
-                $('#form1').serialize() + '&cmd=sr&isPsg=' + resv.idPsg + '&rid=' + resv.rid,
+                'ws_resv.php',
+                $('#form1').serialize() + '&cmd=saveResv&idPsg=' + pageManager.idPsg + '&rid=' + pageManager.idResv + '&' + $.param({mem: pageManager.people.list()}),
                 function(data) {
                     try {
                         data = $.parseJSON(data);
@@ -1544,7 +1662,7 @@ $(document).ready(function() {
         }
 
         resv.fullName = item.fullName;
-        resv.cmd = 'getresv';
+        resv.cmd = 'getResv';
 
         pageManager.getReserve(resv);
 
@@ -1552,7 +1670,7 @@ $(document).ready(function() {
 
     if (parseInt(resv.id, 10) > 0 || parseInt(resv.rid, 10) > 0) {
 
-        resv.cmd = 'getresv';
+        resv.cmd = 'getResv';
         pageManager.getReserve(resv);
 
     } else {

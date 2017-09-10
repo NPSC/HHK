@@ -115,6 +115,54 @@ function stripslashes_gpc(&$value) {
     $value = stripslashes($value);
 }
 
+function doExcelDownLoad($rows, $fileName) {
+
+    if (count($rows) === 0) {
+        return;
+    }
+
+    require_once CLASSES . 'OpenXML.php';
+
+    $reportRows = 1;
+    $sml = OpenXML::createExcel('', $fileName);
+
+    // build header
+    $hdr = array();
+    $n = 0;
+
+    $keys = array_keys($rows[0]);
+
+    foreach ($keys as $t) {
+        $hdr[$n++] = $t;
+    }
+
+    OpenXML::writeHeaderRow($sml, $hdr);
+    $reportRows++;
+
+    foreach ($rows as $r) {
+
+        $n = 0;
+        $flds = array();
+
+        foreach ($r as $col) {
+
+            $flds[$n++] = array('type' => "s", 'value' => $col);
+        }
+
+
+        $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+    }
+
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment;filename="' . $fileName . '.xlsx"');
+    header('Cache-Control: max-age=0');
+
+    OpenXML::finalizeExcel($sml);
+    exit();
+
+}
+
+
 function prepareEmail(Config_Lite $config) {
 
     $mail = new PHPMailer;

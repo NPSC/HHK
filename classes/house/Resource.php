@@ -406,7 +406,7 @@ class ResourceTypes {
 
     const Partition = 'part';
     const Room = 'room';
-    //const Block = 'block';
+    const Block = 'block';
     const RmtRoom = 'rmtroom';
 
 }

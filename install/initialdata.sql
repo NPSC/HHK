@@ -109,7 +109,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('FB_Status','w','Waiting','','',0),
 ('FB_Status','x','Prohibited','','',0),
 
-('Fund', '1', 'External Donation', '', 'u', '100')
+('Fund', '1', 'External Donation', '', 'u', '100'),
 
 ('Gender','f','Female','','d',0),
 ('Gender','m','Male','','d',0),
@@ -534,7 +534,7 @@ replace into `item_type` (`idItem_Type`,`Category_Type`,`Type_Description`,`Inte
 
 
 
-INSERT INTO `item_type_map` (`Item_Id`,`Type_Id`) values
+REPLACE INTO `item_type_map` (`Item_Id`,`Type_Id`) values
 (1,4),
 (2,1),
 (3,3),
@@ -549,7 +549,7 @@ INSERT INTO `item_type_map` (`Item_Id`,`Type_Id`) values
 
 
 
-INSERT INTO `payment_method` (`idPayment_method`, `Method_Name`) VALUES 
+REPLACE INTO `payment_method` (`idPayment_method`, `Method_Name`) VALUES 
 ('1', 'Cash'),
 ('2', 'Charge'),
 ('3', 'Check'),
@@ -614,7 +614,7 @@ VALUES
 ('v','Volunteer','Volunteer site.','','','','\0','','2013-08-07 16:19:17','admin','2013-07-28 16:34:25');
 -- ;
 
-INSERT INTO `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) VALUES 
+REPLACE INTO `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) VALUES 
 ('account/listIndividualTypes', 'individualTypes', 'individualType', 'Vol_Type'),
 ('donation/listFunds', 'funds', 'fund', 'Fund'),
 ('common/listTenders', 'tenders', 'tender', 'Pay_Type'),
@@ -674,7 +674,7 @@ REPLACE INTO `secondary_unit_desig` (`Common`,`Standard`,`Range_Required`,`Title
 -- Hospitals
 --
 REPLACE INTO `hospital` (`Title`,`Type`,`Status`) values
-('Hospital', 'h', 'a');
+('County Hospital', 'h', 'a');
 -- ;
 
 
@@ -712,7 +712,7 @@ REPLACE INTO `web_sites`
 -- Dumping data for table `page`
 --
 
-INSERT INTO `page` 
+REPLACE INTO `page` 
 (`idPage`,`File_Name`,`Login_Page_Id`,`Title`,`Product_Code`,`Web_Site`,`Menu_Parent`,`Menu_Position`,`Type`,`Hide`,`Validity_Code`,`Updated_By`,`Last_Updated`,`Timestamp`) 
 VALUES 
 (1,'index.php',0,'Welcome','','r','','','p',0,'','','2011-09-28 15:52:50','2011-09-29 01:52:50'),(2,'index.php',0,'','','a','','','p',0,'','admin','2011-09-28 15:52:50','2011-09-21 21:00:18'),(3,'NameEdit.php',2,'Edit Members','','a','','','p',0,'','admin','2014-07-25 12:27:19','2011-09-21 21:01:42'),(4,'EventShells.php',2,'Repeat Events','','a','35','f','p',0,'','','0000-00-00 00:00:00','2011-09-21 23:52:06'),(5,'KeyStats.php',2,'Key Stats','','a','67','g','p',0,'','admin','2012-06-11 14:28:56','2011-09-21 23:52:06'),(6,'Misc.php',2,'Miscellaneous','','a','34','a','p',0,'','admin','2012-04-09 12:04:46','2011-09-21 23:52:06'),(7,'PageEdit.php',2,'Edit Pages','','a','34','e','p',0,'','','0000-00-00 00:00:00','2011-09-21 23:52:06'),(8,'RegisterUser.php',2,'Register Web Users','','a','35','e','p',0,'','admin','2012-03-15 08:51:37','2011-09-21 23:52:06'),(9,'CategoryEdit.php',2,'Edit Categories','','a','34','d','p',0,'','admin','2012-01-18 11:55:50','2011-09-21 23:52:06'),
@@ -736,7 +736,7 @@ VALUES
 --
 -- Dumping data for table `page_securitygroup`
 --
-INSERT INTO `page_securitygroup` (`idPage`,`Group_Code`,`Timestamp`) VALUES 
+REPLACE INTO `page_securitygroup` (`idPage`,`Group_Code`,`Timestamp`) VALUES 
 (1,'pub','2011-09-29 19:03:46'),(2,'pub','2011-09-24 12:14:44'),(3,'mm','2011-09-22 00:21:42'),(4,'mm','2011-09-22 00:21:42'),(5,'mm','2011-09-22 00:21:42'),(6,'db','2011-09-22 00:21:42'),(7,'db','2011-09-22 00:21:42'),(8,'mm','2011-09-22 00:21:42'),(9,'db','2011-09-22 00:21:42'),
 (10,'mm','2011-09-22 00:21:42'),(11,'db','2011-09-22 00:21:42'),(12,'dm','2011-09-22 00:21:42'),(13,'mm','2011-09-22 00:21:42'),(14,'mm','2011-09-22 00:21:42'),(15,'dm','2011-09-22 00:21:42'),(16,'dm','2011-09-22 00:21:42'),(18,'mm','2011-09-22 00:21:42'),(19,'mm','2011-09-22 00:21:42'),
 (20,'dm','2011-09-22 00:21:42'),(21,'mm','2011-09-22 00:21:42'),(22,'v','2011-09-22 00:24:43'),(23,'pub','2011-09-29 19:01:12'),(24,'v','2011-09-22 00:24:43'),(26,'pub','2011-09-24 12:15:17'),(27,'pub','2011-09-29 19:02:08'),(28,'pub','2011-09-29 19:02:08'),(29,'v','2011-09-22 00:24:43'),
@@ -796,7 +796,7 @@ REPLACE INTO `language` (`idLanguage`,`Title`,`ISO_639_1`,`Display`) VALUES
 -- Dumping data for table `country_code`
 --
 
-INSERT INTO `country_code` (`Country_Name`,`ISO_3166-1-alpha-2`,`External_Id`) VALUES
+REPLACE INTO `country_code` (`Country_Name`,`ISO_3166-1-alpha-2`,`External_Id`) VALUES
  ('ANDORRA','AD',7),('UNITED ARAB EMIRATES','AE',223),('AFGHANISTAN','AF',3),('ANTIGUA AND BARBUDA','AG',10),('ANGUILLA','AI',242),('ALBANIA','AL',4),
 ('ARMENIA','AM',12),('ANGOLA','AO',8),('ANTARCTICA','AQ',9),('ARGENTINA','AR',11),('AMERICAN SAMOA','AS',6),('AUSTRIA','AT',15),('AUSTRALIA','AU',14),('ARUBA','AW',13),
 ('ALAND ISLANDS','AX',0),('AZERBAIJAN','AZ',16),('BOSNIA AND HERZEGOVINA','BA',28),('BARBADOS','BB',20),('BANGLADESH','BD',19),('BELGIUM','BE',22),('BURKINA FASO','BF',35),

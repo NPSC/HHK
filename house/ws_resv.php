@@ -123,7 +123,7 @@ try {
 
     switch ($c) {
 
-    case "getresv":
+    case "getResv":
 
         $rData = new ReserveData($_POST);
 
@@ -133,13 +133,25 @@ try {
 
         break;
 
+    case "saveResv":
+
+        $rData = new ReserveData($_POST);
+
+        $resv = Reservation::reservationFactoy($dbh, $rData);
+
+        $events = $resv->save($dbh, $_POST);
+
+        break;
+
     case "addThinGuest":
 
         $rData = new ReserveData($_POST);
 
-        $family = new Family($dbh, $rData);
+        $resv = Reservation::reservationFactoy($dbh, $rData);
 
-        $events = $family->addPerson($dbh);
+        //$family = new Family($rData);
+
+        $events = $resv->addPerson($dbh);
 
         break;
 

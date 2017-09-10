@@ -179,7 +179,7 @@ class Psg {
 
     public function setNewMember($idGuest, $relationshipCode) {
 
-        if ($idGuest > 0) {
+        if ($idGuest > 0 && $relationshipCode != '') {
 
             if (isset($this->psgMembers[$idGuest])) {
 
@@ -249,7 +249,7 @@ class Psg {
                 $ngs[] = $ngRS;
             }
         }
-        
+
         return $ngs;
     }
 

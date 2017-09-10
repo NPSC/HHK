@@ -11,6 +11,7 @@ require ("homeIncludes.php");
 
 require (CLASSES . 'Notes.php');
 
+require (CLASSES . 'CreateMarkupFromDB.php');
 require (HOUSE . 'Resource.php');
 require (HOUSE . 'Room.php');
 require (HOUSE . 'ResourceView.php');
@@ -26,32 +27,7 @@ $logoUrl = $uS->resourceURL . 'images/registrationLogo.png';
 $guestAdmin = ComponentAuthClass::is_Authorized("guestadmin");
 
 
-$stmt = $dbh->query("select DISTINCT
-    r.idRoom,
-ifnull(v.idVisit, 0) as idVisit,
-    r.Title,
-    r.`Status`,
-    r.`State`,
-    r.`Availability`,
-    ifnull(n.Name_Full, '') as `Name`,
-    ifnull(v.Arrival_Date, '') as `Arrival`,
-    ifnull(v.Expected_Departure, '') as `Expected_Departure`,
-    r.Last_Cleaned,
-    r.Notes
-from
-    room r
-        left join
-    resource_room rr ON r.idRoom = rr.idRoom
-        left join
-    visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
-        left join
-    name n ON v.idPrimaryGuest = n.idName
-        left join resource re on rr.idResource = re.idResource
-where re.`Type` != '". ResourceTypes::Partition ."' and re.`Type` != '" .ResourceTypes::Block. "' order by r.Title;");
-
-$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-$stmtMarkup = ResourceView::roomsClean($dbh, $rows, 'tblFac', $uS->guestLookups[GL_TableNames::RoomStatus], '', $guestAdmin, TRUE);
+$stmtMarkup = CreateMarkupFromDB::generateHTML_Table(ResourceView::roomsClean($dbh, '', $guestAdmin, TRUE), 'tbl');
 
 ?>
 <!DOCTYPE html>

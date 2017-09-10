@@ -57,6 +57,14 @@ ResourceView::dirtyOccupiedRooms($dbh);
 $resultMessage = "";
 $currentTab = 2;
 
+if (isset($_POST['btnExcelAll'])) {
+
+    // download to excel
+    $rows = ResourceView::roomsClean($dbh, '', $guestAdmin, true);
+    doExcelDownLoad($rows, 'Show All Rooms');
+
+}
+
 if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
 
     $rooms = array();
@@ -193,11 +201,16 @@ if ($checkingIn == '') {
         <?php echo JQ_UI_CSS; ?>
 
         <link href="css/house.css" rel="stylesheet" type="text/css" />
+        <style type="text/css" rel="stylesheet"  media="print">
+            #ckout {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
+            @page { margin: 1cm; }
+        </style>
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <?php echo JQ_DT_CSS ?>
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
@@ -368,7 +381,7 @@ $(document).ready(function() {
         "order": [[ 0, 'asc' ]]
     });
 
-    $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrint, #btnSubmitTable, #prtCkOut').button();
+    $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrint, #btnExcelAll, #btnSubmitTable, #prtCkOut').button();
 
     $('#mainTabs').tabs({
         beforeActivate: function (event, ui) {
@@ -384,7 +397,7 @@ $(document).ready(function() {
                         },
                         "columnDefs": dtColDefs,
                         "deferRender": true,
-                        "order": [[6, 'desc']],
+                        "order": [[6, 'desc']]
                     });
                 }
             }
@@ -451,6 +464,19 @@ $(document).ready(function() {
     $('#btnPrint').click(function () {
         window.open('ShowHsKpg.php', '_blank');
     });
+
+    var opt = {mode: 'popup',
+        popClose: true,
+        popHt      : $('#ckout').height(),
+        popWd      : 1200,
+        popX       : 20,
+        popY       : 20,
+        popTitle   : 'Guests Checking Out'};
+
+    $('#prtCkOut').click(function() {
+        $('div#ckout').printArea(opt);
+    });
+
     $('div#mainTabs').show();
 });
         </script>
@@ -479,10 +505,10 @@ $(document).ready(function() {
                         <input type="submit" name="btnSubmitClean" value="Save" id="btnSubmitClean" />
                     </div>
                 </div>
-                <div id="ckin"   class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
+                <div id="ckin" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                     <?php echo $checkingIn; ?>
                 </div>
-                <div id="ckout"   class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
+                <div id="ckout" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                     <p>
                         <span>Checkout Date: </span><input id="ckoutDate" class="ckdate"/>
                         <input type="button" value="Print" id="prtCkOut" style="margin:3px;"/>
@@ -493,6 +519,7 @@ $(document).ready(function() {
                     <table id='roomTable' class=' order-column display ' style='width:100%;'></table>
                     <div class="ui-corner-all submitButtons">
                         <input type="button" value="Print" name="btnPrint" id="btnPrint" />
+                        <input type="submit" value="Download to Excel" id="btnExcelAll" name="btnExcelAll" />
                         <input type="reset" name="btnReset2" value="Reset" id="btnReset2" />
                         <input type="submit" name="btnSubmitTable" value="Save" id="btnSubmitTable" />
                     </div>
