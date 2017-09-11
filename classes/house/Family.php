@@ -196,7 +196,7 @@ class Family {
             }
 
             // Add addresses and demo's
-            $addressTr = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>'hhk-addrRow', 'style'=>'display:none;'));
+            $addressTr = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>'hhk-addrRow'));
 
             $addPerson = array('id'=>$this->rData->getId(), 'ntr'=>$nameTr, 'atr'=>$addressTr, 'tblId'=>FAMILY::FAM_TABLE_ID, 'pref'=>$role->getRoleMember()->getIdPrefix(), 'addrs'=>$this->getAddresses(array($role)));
         }

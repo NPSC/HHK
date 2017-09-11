@@ -111,9 +111,9 @@ abstract class Reservation {
         return array();
     }
 
-    protected function createExpDatesControl() {
+    protected function createExpDatesControl($prefix = '') {
 
-        $cidAttr = array('name'=>'gstDate', 'readonly'=>'readonly', 'size'=>'14' );
+        $cidAttr = array('name'=>$prefix.'gstDate', 'readonly'=>'readonly', 'size'=>'14' );
 
         if ($this->reservRs->Expected_Arrival->getStoredVal() != '' && $this->reservRs->Expected_Departure->getStoredVal() != '') {
 
@@ -132,17 +132,17 @@ abstract class Reservation {
             }
         }
 
-        return HTMLContainer::generateMarkup('span',
-                HTMLContainer::generateMarkup('span', 'Expected Check In: '.
+        return HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('span', 'Arrival: '.
                     HTMLInput::generateMarkup(($this->reserveData->getArrivalDateStr()), $cidAttr))
                 .HTMLContainer::generateMarkup('span', 'Expected Departure: '.
-                    HTMLInput::generateMarkup(($this->reserveData->getDepartureDateStr()), array('name'=>'gstCoDate', 'readonly'=>'readonly', 'size'=>'14'))
+                    HTMLInput::generateMarkup(($this->reserveData->getDepartureDateStr()), array('name'=>$prefix.'gstCoDate', 'readonly'=>'readonly', 'size'=>'14'))
                     , array('style'=>'margin-left:.7em;'))
-                , array('style'=>'float:left; font-size:.9em;', 'id'=>'spnRangePicker'));
+                , array('style'=>'float:left; font-size:.9em;', 'id'=>$prefix.'spnRangePicker'));
 
     }
 
-    protected function resvSection(\PDO $dbh, $labels, $isAuthorized = TRUE) {
+    protected function createResvMarkup(\PDO $dbh, $labels, $prefix = '', $isAuthorized = TRUE) {
 
         $uS = Session::getInstance();
 
@@ -200,8 +200,9 @@ abstract class Reservation {
 
         // Collapsing header
         $hdr = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('span', 'Reservation ')
-                .HTMLContainer::generateMarkup('span', '', array('id'=>'spnResvStatus'))
+                HTMLContainer::generateMarkup('span', 'Reservation - ')
+                .HTMLContainer::generateMarkup('span', $resv->getStatusTitle(), array('id'=>$prefix.'spnResvStatus', 'style'=>'margin-right: 1em;'))
+//                .$this->createExpDatesControl()
                 , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
 
@@ -237,7 +238,7 @@ class ActiveReservation extends BlankReservation {
         $data = parent::createMarkup($dbh);
 
         // Add the reservation section.
-        $data['resv'] = $this->resvSection($dbh, new Config_Lite(LABEL_FILE));
+        $data['resv'] = $this->createResvMarkup($dbh, new Config_Lite(LABEL_FILE));
 
         return $data;
 
@@ -309,7 +310,7 @@ class BlankReservation extends Reservation {
     public function addperson(\PDO $dbh) {
 
         $family = new Family($this->reserveData);
-        $family->loadMembers($dbh);
+        $family->initMembers($dbh);
 
         return array('addPerson' => $family->CreateAddPersonMu($dbh));
     }

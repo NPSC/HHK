@@ -176,9 +176,6 @@ table {
     position: relative;
     top: 40px;
 }
-.hhk-visitdialog td {
-    background-color: #FFF;
-}
 .hhk-visitdialog th, .hhk-visitdialog .tdlabel {
     background-color: #E9F4FD;
 }
@@ -210,14 +207,17 @@ table {
     color: #d0e5f5;
 }
 .hhk-table tbody tr.odd {
-  background-color: #ebebeb;
+  background-color: #f8f8f8;
+}
+.hhk-table tbody tr.even {
+  background-color: #fff;
 }
 .hhk-table tbody tr.odd.selected {
   background-color: #acbad4;
 }
-.hhk-table tbody tr:hover {
-  background-color: #f6f6f6;
-}
+/*.hhk-table tbody tr:hover {
+  background-color: #ebebeb;
+}*/
 .hhk-table tbody tr:hover.selected {
   background-color: #aab7d1;
 }

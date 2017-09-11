@@ -353,7 +353,7 @@ function PageManager(initData) {
                 // Did we catch any?
                 if (msg) {
                     // Yes,open address row.
-                    if ($('#' + prefix + 'toggleAddr').val() === 'Show') {
+                    if ($('#' + prefix + 'toggleAddr').button('option', 'label') === 'Show') {
                         $('#' + prefix + 'toggleAddr').click();
                     }
 
@@ -372,7 +372,7 @@ function PageManager(initData) {
                     $(this).addClass('ui-state-error');
 
                     //Open address row
-                    if ($('#' + prefix + 'toggleAddr').val() === 'Show') {
+                    if ($('#' + prefix + 'toggleAddr').button('option', 'label') === 'Show') {
                         $('#' + prefix + 'toggleAddr').click();
                     }
 
@@ -570,7 +570,7 @@ function PageManager(initData) {
 
         t.newGuestMarkup = function(data) {
 
-            var $countries, $states, $famTbl;
+            var $countries, $states, $famTbl, stripeClass;
 
             if (data.tblId === undefined || data.tblId == '') {
                 return;
@@ -582,7 +582,13 @@ function PageManager(initData) {
                 return;
             }
 
-            $famTbl.append($(data.ntr)).append($(data.atr));
+            if ($famTbl.children('tbody').children('tr').last().hasClass('odd')) {
+                stripeClass = 'even';
+            } else {
+                stripeClass = 'odd';
+            }
+
+            $famTbl.append($(data.ntr).addClass(stripeClass)).append($(data.atr).addClass(stripeClass));
 
             // prepare stay button
             $('#' + data.pref + 'cbStay').checkboxradio({
@@ -608,6 +614,13 @@ function PageManager(initData) {
 
             // Remove button
             $('#' + data.pref + 'btnRemove').button().click(function () {
+
+                // Is the name entered?
+                if ($('#' + data.pref + 'txtFirstName').val() !== '' || $('#' + data.pref + 'txtLastName').val() !== '') {
+                    if (confirm('Remove this person: ' + $('#' + data.pref + 'txtFirstName').val() + ' ' + $('#' + data.pref + 'txtLastName').val() + '?') === false) {
+                        return;
+                    }
+                }
                 $(this).parentsUntil('tbody', 'tr').next().remove();
                 $(this).parentsUntil('tbody', 'tr').remove();
                 people.removeIndex[data.pref];
@@ -829,9 +842,9 @@ function PageManager(initData) {
             $dateSection.show();
 
             // Open the dialog if the dates are not defined yet.
-            if ($('#gstDate').val() == '') {
-                $('#spnRangePicker').data('dateRangePicker').open();
-            }
+//            if ($('#gstDate').val() == '') {
+//                $('#spnRangePicker').data('dateRangePicker').open();
+//            }
 
             setupComplete = true;
         };
