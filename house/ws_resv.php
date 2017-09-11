@@ -125,9 +125,7 @@ try {
 
     case "getResv":
 
-        $rData = new ReserveData($_POST);
-
-        $resv = Reservation::reservationFactoy($dbh, $rData);
+        $resv = Reservation::reservationFactoy($dbh, $_POST);
 
         $events = $resv->createMarkup($dbh);
 
@@ -135,9 +133,7 @@ try {
 
     case "saveResv":
 
-        $rData = new ReserveData($_POST);
-
-        $resv = Reservation::reservationFactoy($dbh, $rData);
+        $resv = Reservation::reservationFactoy($dbh, $_POST);
 
         $events = $resv->save($dbh, $_POST);
 
@@ -145,11 +141,7 @@ try {
 
     case "addThinGuest":
 
-        $rData = new ReserveData($_POST);
-
-        $resv = Reservation::reservationFactoy($dbh, $rData);
-
-        //$family = new Family($rData);
+        $resv = Reservation::reservationFactoy($dbh, $_POST);
 
         $events = $resv->addPerson($dbh);
 

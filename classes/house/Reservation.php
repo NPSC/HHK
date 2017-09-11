@@ -21,7 +21,9 @@ abstract class Reservation {
         $this->reservRs = $reservRs;
     }
 
-    public static function reservationFactoy(\PDO $dbh, ReserveData $rData) {
+    public static function reservationFactoy(\PDO $dbh, $post) {
+
+        $rData = new ReserveData($post);
 
         // idPsg < 0
         if ($rData->getForceNewPsg()) {
@@ -35,7 +37,7 @@ abstract class Reservation {
         } else if ($rData->getForceNewResv() && $rData->getIdPsg() > 0) {
 
             // New Resv
-            return new BlankReservation($rData, new ReservationRS());
+            return new ActiveReservation($rData, new ReservationRS());
 
         // undetermined resv and psg, look at guest id
         } else if ($rData->getIdResv() == 0 && $rData->getIdPsg() == 0) {
@@ -113,13 +115,17 @@ abstract class Reservation {
 
         $cidAttr = array('name'=>'gstDate', 'readonly'=>'readonly', 'size'=>'14' );
 
-        if ($this->reservRs->Expected_Arrival->getStoredVal() != '') {
+        if ($this->reservRs->Expected_Arrival->getStoredVal() != '' && $this->reservRs->Expected_Departure->getStoredVal() != '') {
 
             $nowDT = new \DateTime();
             $nowDT->setTime(0, 0, 0);
 
             $expArrDT = new \DateTime($this->reservRs->Expected_Arrival->getStoredVal());
             $expDepDT = new \DateTime($this->reservRs->Expected_Departure->getStoredVal());
+
+            $this->reserveData
+                    ->setArrivalDateStr($expArrDT->format('M j, Y'))
+                    ->setDepartureDateStr($expDepDT->format('M j, Y'));
 
             if (is_null($expArrDT) === FALSE && $expArrDT < $nowDT) {
                 $cidAttr['class'] = ' ui-state-highlight';
@@ -128,9 +134,9 @@ abstract class Reservation {
 
         return HTMLContainer::generateMarkup('span',
                 HTMLContainer::generateMarkup('span', 'Expected Check In: '.
-                    HTMLInput::generateMarkup(($this->reservRs->Expected_Arrival->getStoredVal() == '' ? '' : $expArrDT->format('M j, Y')), $cidAttr))
+                    HTMLInput::generateMarkup(($this->reserveData->getArrivalDateStr()), $cidAttr))
                 .HTMLContainer::generateMarkup('span', 'Expected Departure: '.
-                    HTMLInput::generateMarkup(($this->reservRs->Expected_Departure->getStoredVal() == '' ? '' : $expDepDT->format('M j, Y')), array('name'=>'gstCoDate', 'readonly'=>'readonly', 'size'=>'14'))
+                    HTMLInput::generateMarkup(($this->reserveData->getDepartureDateStr()), array('name'=>'gstCoDate', 'readonly'=>'readonly', 'size'=>'14'))
                     , array('style'=>'margin-left:.7em;'))
                 , array('style'=>'float:left; font-size:.9em;', 'id'=>'spnRangePicker'));
 
@@ -224,6 +230,10 @@ class ActiveReservation extends BlankReservation {
 
     public function createMarkup(\PDO $dbh) {
 
+        if ($this->reservRs->Status->getStoredVal() == '') {
+            $this->reservRs->Status->setStoredVal(ReservationStatus::Waitlist);
+        }
+
         $data = parent::createMarkup($dbh);
 
         // Add the reservation section.
@@ -235,6 +245,9 @@ class ActiveReservation extends BlankReservation {
 
     public function save(\PDO $dbh, $post) {
 
+        $family = new Family($this->reserveData);
+
+        $this->reserveData = $family->save($dbh, $post);
 
     }
 
@@ -264,7 +277,7 @@ class BlankReservation extends Reservation {
 
         $family = new Family($this->reserveData);
 
-        $family->loadMembers($dbh);
+        $family->initMembers($dbh);
         $this->reserveData->setFamilySection($family->createFamilyMarkup($dbh, $this->reservRs));
 
         $data = $this->reserveData->toArray();
@@ -282,9 +295,14 @@ class BlankReservation extends Reservation {
 
     public function save(\PDO $dbh, $post) {
 
+
         $family = new Family($this->reserveData);
 
-        $famSaved = $family->save($dbh, $post);
+        $this->reserveData = $family->save($dbh, $post);
+
+        $newResv = new ActiveReservation($this->reserveData, $this->reservRs);
+
+        return $newResv->createMarkup($dbh);
 
     }
 
@@ -298,7 +316,7 @@ class BlankReservation extends Reservation {
 
 }
 
-class ReserveSearcher extends BlankReservation {
+class ReserveSearcher extends ActiveReservation {
 
     public function createMarkup(\PDO $dbh) {
 

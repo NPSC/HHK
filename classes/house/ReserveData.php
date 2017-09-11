@@ -53,6 +53,9 @@ class ReserveData {
     protected $resvChooser;
     protected $psgChooser;
     protected $familySection;
+    protected $arrivalDateStr;
+    protected $departureDateStr;
+    protected $psgMembers;
 
     function __construct($post) {
 
@@ -73,6 +76,18 @@ class ReserveData {
 
         if (isset($post['fullName'])) {
             $this->fullName = filter_var($post['fullName'], FILTER_SANITIZE_STRING);
+        }
+
+        if (isset($post['gstDate'])) {
+            $this->setArrivalDateStr(filter_var($post['gstDate'], FILTER_SANITIZE_STRING));
+        }
+
+        if (isset($post['gstCoDate'])) {
+            $this->setDepartureDateStr(filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING));
+        }
+
+        if (isset($post['mem'])) {
+            $this->setPsgMembers(filter_var_array($post['mem'], FILTER_SANITIZE_STRING));
         }
 
         $this->resvTitle = $labels->getString('guestEdit', 'reservationTitle', 'Reservation');
@@ -170,6 +185,23 @@ class ReserveData {
         return $this->addrPurpose;
     }
 
+    public function getArrivalDateStr() {
+        return $this->arrivalDateStr;
+    }
+
+    public function getDepartureDateStr() {
+        return $this->departureDateStr;
+    }
+
+
+    public function setPsgMembers($m) {
+        if (is_array($m)) {
+            $this->psgMembers = $m;
+        } else {
+            $this->psgMembers = array();
+        }
+    }
+
     public function setIdResv($idResv) {
         if ($idResv < 0) {
             $this->idResv = 0;
@@ -210,6 +242,16 @@ class ReserveData {
 
     public function setFamilySection($p) {
         $this->familySection = $p;
+        return $this;
+    }
+
+    public function setArrivalDateStr($arrivalDateStr) {
+        $this->arrivalDateStr = $arrivalDateStr;
+        return $this;
+    }
+
+    public function setDepartureDateStr($departureDateStr) {
+        $this->departureDateStr = $departureDateStr;
         return $this;
     }
 

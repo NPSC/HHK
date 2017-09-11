@@ -9,7 +9,6 @@ class Family {
 
     const FAM_TABLE_ID = 'tblFamily';
 
-    protected $members;
     protected $roleObjs;
     protected $rData;
     protected $patientId;
@@ -28,10 +27,9 @@ class Family {
 
     }
 
-    public function loadMembers(\PDO $dbh) {
+    public function initMembers(\PDO $dbh) {
 
         $uS = Session::getInstance();
-        $this->members = array();
 
         // Load any existing PSG members.
         if ($this->rData->getIdPsg() > 0) {
@@ -85,7 +83,7 @@ class Family {
                 $this->roleObjs[$this->rData->getId()] = new Guest($dbh, $uS->addPerPrefix, $this->rData->getId());
 
                 $this->members[$uS->addPerPrefix]['role'] = 'g';
-                $this->members[$uS->addPerPrefix]['stay'] = '1';
+                $this->members[$uS->addPerPrefix]['stay'] = '0';
                 $this->members[$uS->addPerPrefix]['id'] = $this->rData->getId();
                 $this->members[$uS->addPerPrefix]['pref'] = $uS->addPerPrefix;
             }
@@ -99,7 +97,7 @@ class Family {
             $this->roleObjs[$this->rData->getId()] = new Guest($dbh, $uS->addPerPrefix, $this->rData->getId());
 
             $this->members[$uS->addPerPrefix]['role'] = '';
-            $this->members[$uS->addPerPrefix]['stay'] = '1';
+            $this->members[$uS->addPerPrefix]['stay'] = '0';
             $this->members[$uS->addPerPrefix]['id'] = $this->rData->getId();
             $this->members[$uS->addPerPrefix]['pref'] = $uS->addPerPrefix;
 
@@ -315,13 +313,9 @@ class Family {
 
         $uS = Session::getInstance();
 
-        // Filter Member input
-        if (($this->members = filter_var_array($post['mem'], FILTER_SANITIZE_STRING)) === FALSE) {
-            return FALSE;
-        }
-
         // Open Psg
         $psg = new Psg($dbh, $this->rData->getIdPsg());
+        $idPatient = 0;
 
         // Save Members
         foreach ($this->members as $m) {
@@ -335,18 +329,28 @@ class Family {
             $role = new Guest($dbh, $m['pref'], $id);
             $role->save($dbh, $post, $uS->username);
 
+            // Patient?
+            if ($m['role'] == 'p') {
+                $idPatient = $role->getIdName();
+            }
+
             $psg->setNewMember($role->getIdName(), $role->getPatientRelationshipCode());
         }
 
         // Save PSG
-        $psg->savePSG($dbh, $role->getIdName(), $uS->username);
+        $psg->savePSG($dbh, $idPatient, $uS->username);
 
+        if ($psg->getIdPsg() > 0 && $idPatient > 0) {
 
-        // Save Hospital
-        $hstay = new HospitalStay($dbh, $psg->getIdPatient());
-        Hospital::saveReferralMarkup($dbh, $psg, $hstay, $post);
+            // Save Hospital
+            $hstay = new HospitalStay($dbh, $psg->getIdPatient());
+            Hospital::saveReferralMarkup($dbh, $psg, $hstay, $post);
 
-        return TRUE;
+            $this->rData->setIdPsg($psg->getIdPsg());
+
+        }
+
+        return $this->rData;
     }
 
     public function getPatientId() {
