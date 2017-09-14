@@ -296,12 +296,13 @@ class Address extends ContactPoint{
         $badAddrClass = "";
 
         $badChkd = array (
-             'type'=>'checkbox',
-             'name'=>$idPrefix.'adr[' . $addrIndex . '][bad]',
-             'id'=>$idPrefix.'adrbad' . $addrIndex,
-             'title'=>'Check if the address is bad',
-            'style'=>'margin-top: 5px;'
-             );
+            'type'=>'checkbox',
+            'name'=>$idPrefix.'adr[' . $addrIndex . '][bad]',
+            'id'=>$idPrefix.'adrbad' . $addrIndex,
+            'title'=>'Check if the address is bad',
+            'style'=>'margin-top: 5px;',
+            'data-pref'=>$idPrefix,
+        );
 
          if ($adrRow->Bad_Address->getStoredVal() == "true") {
              $badChkd['checked'] = 'checked';
@@ -326,7 +327,8 @@ class Address extends ContactPoint{
             'title'=>'Street Address',
             'id'=>$idPrefix.'adraddress1' . $addrIndex,
             'name'=>$idPrefix.'adr[' . $addrIndex . '][address1]',
-            'class'=>$class
+            'class'=>$class,
+            'data-pref'=>$idPrefix
             );
 
         $table->addBodyTr(HTMLTable::makeTd('Street', array('class'=>'tdlabel', 'title'=>'Street Address'))
@@ -352,7 +354,8 @@ class Address extends ContactPoint{
             'class'=>'ckzip hhk-zipsearch ' . $class,
             'title'=>'Enter Postal Code',
             'data-hhkprefix'=>$idPrefix,
-            'data-hhkindex'=>$addrIndex
+            'data-hhkindex'=>$addrIndex,
+            'data-pref'=>$idPrefix
             );
 
         // Zip
@@ -392,6 +395,7 @@ class Address extends ContactPoint{
         $stAttr["class"] = $class . " bfh-states";
         $stAttr['data-country'] = $idPrefix.'adrcountry' . $addrIndex;
         $stAttr['data-state'] = $adrRow->State_Province->getStoredVal();
+        $stAttr['data-pref'] = $idPrefix;
 
         $table->addBodyTr(HTMLTable::makeTd('State', array('class'=>'tdlabel', 'title'=>'Select State or Province'))
             . HTMLTable::makeTd(HTMLSelector::generateMarkup('', $stAttr)));
@@ -403,6 +407,7 @@ class Address extends ContactPoint{
         $coAttr['title'] = 'Select Country';
         $coAttr['class'] = $class . ' input-medium bfh-countries';
         $coAttr['data-country'] = ($adrRow->Country_Code->getStoredVal() == '' ? 'US' : $adrRow->Country_Code->getStoredVal());
+        $coAttr['data-prefix'] = $idPrefix;
 
 
         $table->addBodyTr(HTMLTable::makeTd('Country', array('class'=>'tdlabel'))

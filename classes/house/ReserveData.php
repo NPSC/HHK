@@ -36,6 +36,11 @@ class ReserveData {
     const FAM_SECTION = 'famSection';
     const FULL_NAME = 'fullName';
 
+    const ROLE = 'role';
+    const PREF = 'pref';
+    const STAY = 'stay';
+    const ID = 'id';
+
     protected $idResv = 0;
     protected $id;
     protected $idPsg = 0;
@@ -193,6 +198,39 @@ class ReserveData {
         return $this->departureDateStr;
     }
 
+    public function getPsgMembers() {
+        return $this->psgMembers;
+    }
+
+    public function getPsgMember($prefix) {
+
+        if (isset($this->psgMembers[$prefix])) {
+            return $this->psgMembers[$prefix];
+        } else {
+            throw new Hk_Exception_Runtime('PSG Member prefix not found.  ');
+        }
+    }
+
+    public function findMemberPrefix($key, $val) {
+
+        foreach ($this->getPsgMembers() as $pref => $mem) {
+
+            if ($mem[$key] === $val) {
+                return $pref;
+            }
+        }
+
+        return NULL;
+    }
+
+    public function setMember($prefix, $key, $val) {
+
+        if ($prefix !== NULL && (String)$prefix != '' && $key != '') {
+            $this->psgMembers[$prefix][$key] = $val;
+        }
+
+        return $this;
+    }
 
     public function setPsgMembers($m) {
         if (is_array($m)) {

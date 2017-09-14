@@ -70,9 +70,17 @@ class Patient extends Role {
 
         if ($uS->PatientAddr) {
             // Address
-            $mu .= HTMLTable::makeTd(HTMLContainer::generateMarkup('button', 'Hide', array('type'=>'button', 'data-pref'=>$this->getRoleMember()->getIdPrefix(), 'id'=>$this->getRoleMember()->getIdPrefix() . 'toggleAddr', 'class'=>'hhk-togAddr')));
+            $mu .= HTMLTable::makeTd(
+                    HTMLContainer::generateMarkup('ul'
+                            , HTMLContainer::generateMarkup('li',
+                                    HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-check'))
+                                    , array('class'=>'ui-widget-header ui-corner-all hhk-AddrFlag ui-state-highlight', 'id'=>$this->getRoleMember()->getIdPrefix().'liaddrflag', 'style'=>'display:inline-block;margin-left:3px;'))
+                            . HTMLContainer::generateMarkup('li',
+                                    HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-circle-triangle-n'))
+                                    , array('class'=>'ui-widget-header ui-corner-all hhk-togAddr', 'style'=>'display:inline-block;margin-left:5px;cursor:pointer;', 'title'=>'Open - Close Address Section'))
+                            , array('data-pref'=>$this->getRoleMember()->getIdPrefix(), 'style'=>'float:right;margin-left:5px;padding-top:1px;list-style-type:none;', 'class'=>'ui-widget'))
+                    );
 
-            //$mu .= HTMLTable::makeTd(HTMLInput::generateMarkup('Show', array('type'=>'button', 'id'=>$this->getRoleMember()->getIdPrefix() . 'toggleAddr', 'class'=>'hhk-togAddr')));
         } else {
             $mu .= HTMLTable::makeTd('');
         }

@@ -412,24 +412,70 @@ function PageManager(initData) {
                     $('#' + prefix + 'adraddress2' + addrPurpose).val(addrs.list()[p].Address_2);
                     $('#' + prefix + 'adrcity' + addrPurpose).val(addrs.list()[p].City);
                     $('#' + prefix + 'adrcounty' + addrPurpose).val(addrs.list()[p].County);
-                    $('#' + prefix + 'adrstate' + addrPurpose).val(addrs.list()[p].State_Province);
+
                     $('#' + prefix + 'adrcountry' + addrPurpose).val(addrs.list()[p].Country_Code);
+                    $('#' + prefix + 'adrcountry' + addrPurpose).change();
+
+                    $('#' + prefix + 'adrstate' + addrPurpose).val(addrs.list()[p].State_Province);
                     $('#' + prefix + 'adrzip' + addrPurpose).val(addrs.list()[p].Postal_Code);
                     break;
                 }
             }
         }
 
+        function loadAddress($control) {
+
+            var prefix = $control.data('pref');
+
+            if ($control.attr('id') === prefix + 'adraddress1' + addrPurpose) {
+                addrs.list()[prefix].Address_1 = $control.val();
+            } else if ($control.attr('id') === prefix + 'adraddress2' + addrPurpose) {
+                addrs.list()[prefix].Address_2 = $control.val();
+            } else if ($control.attr('id') === prefix + 'adrcity' + addrPurpose) {
+                addrs.list()[prefix].City = $control.val();
+            } else if ($control.attr('id') === prefix + 'adrcounty' + addrPurpose) {
+                addrs.list()[prefix].County = $control.val();
+            } else if ($control.attr('id') === prefix + 'adrstate' + addrPurpose) {
+                addrs.list()[prefix].State_Province = $control.val();
+            } else if ($control.attr('id') === prefix + 'adrcountry' + addrPurpose) {
+                addrs.list()[prefix].Country_Code = $control.val();
+            } else if ($control.attr('id') === prefix + 'adrzip' + addrPurpose) {
+                addrs.list()[prefix].Postal_Code = $control.val();
+            }
+
+        }
+
+        function setAddrFlag($addrFlag) {
+
+            var pref = $addrFlag.parents('ul').data('pref');
+
+            // Address status icon
+            if ($('#' + pref + 'incomplete').prop('checked') === true) {
+
+                $addrFlag.show().find('span').removeClass('ui-icon-alert').addClass('ui-icon-check').attr('title', 'Incomplete Address is checked');
+                $addrFlag.removeClass('ui-state-error').addClass('ui-state-highlight');
+
+            } else {
+
+                if ($('#' + pref + 'adraddress1' + addrPurpose).val() === '' || $('#' + pref + 'adrcity' + addrPurpose).val() === '') {
+                    $addrFlag.show().find('span').removeClass('ui-icon-check').addClass('ui-icon-alert').attr('title', 'Address is Incomplete');
+                    $addrFlag.removeClass('ui-state-highlightui-state-error').addClass('ui-state-error');
+                } else {
+                    $addrFlag.hide();
+                }
+            }
+        }
+
         t.setUp = function(data) {
 
-            var  cpyAddr = [];
+            var cpyAddr = [], pref, $addrTog, $addrFlag;
 
             if (data.famSection === undefined) {
                 return;
             }
 
             var fDiv = $(data.famSection.div).addClass('ui-widget-content').prop('id', divFamDetailId);
-            var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+            var expanderButton = $("<ul style='list-style-type:none; float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
                 .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
                 .append($("<span id='f_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
             var fHdr = $('<div id="divfamHdr" style="padding:2px; cursor:pointer;"/>')
@@ -472,33 +518,28 @@ function PageManager(initData) {
                 dateFormat: 'M d, yy'
             });
 
-            $('.hhk-togAddr').button();
-
             // toggle address row
-            $('#' + divFamDetailId).on('click', '.hhk-togAddr', function () {
+            $('#' + divFamDetailId).on('click', '.hhk-togAddr, .hhk-AddrFlag', function () {
+
+                if ($(this).hasClass('hhk-togAddr')) {
+                    $addrTog = $(this);
+                    $addrFlag = $(this).siblings();
+                } else {
+                    $addrFlag = $(this);
+                    $addrTog = $(this).siblings();
+                }
 
                 if ($(this).parents('tr').next('tr').css('display') === 'none') {
                     $(this).parents('tr').next('tr').show();
-                    $(this).button('option', 'label', 'Hide');
+                    $addrTog.find('span').removeClass('ui-icon-circle-triangle-s').addClass('ui-icon-circle-triangle-n');
+                    $addrTog.attr('title', 'Hide Address Section');
                 } else {
                     $(this).parents('tr').next('tr').hide();
-                    $(this).button('option', 'label', 'Show');
+                    $addrTog.find('span').removeClass('ui-icon-circle-triangle-n').addClass('ui-icon-circle-triangle-s');
+                    $addrTog.attr('title', 'Show Address Section');
                 }
 
-                // Address status icon
-                if ($('#' + $(this).data('pref') + 'incomplete').prop('checked') === true) {
-
-                    $(this).button('option', 'icon', 'ui-icon-circle-check');
-
-                } else {
-
-                    if ($('#' + $(this).data('pref') + 'adraddress1' + addrPurpose).val() === '' || $('#' + $(this).data('pref') + 'adrcity' + addrPurpose).val() === '') {
-                        $(this).button('option', 'icon', 'ui-icon-notice');
-                    } else {
-                        $(this).button('option', 'icon', 'ui-icon-check');
-                    }
-                }
-
+                setAddrFlag($addrFlag);
             });
 
             $('.hhk-togAddr').click();
@@ -512,6 +553,10 @@ function PageManager(initData) {
             $('.hhk-addrPanel').find('select.bfh-states').each(function() {
                 var $states = $(this);
                 $states.bfhstates($states.data());
+            });
+
+            $('.hhk-addrPanel').on('change', 'input, select', function() {
+                loadAddress($(this));
             });
 
             $('.hhk-phemtabs').tabs();
@@ -610,7 +655,7 @@ function PageManager(initData) {
             });
 
             // Address button
-            $('#' + data.pref + 'toggleAddr').button();
+            setAddrFlag($('#' + data.pref + 'liaddrflag'));
 
             // Remove button
             $('#' + data.pref + 'btnRemove').button().click(function () {
@@ -621,6 +666,7 @@ function PageManager(initData) {
                         return;
                     }
                 }
+
                 $(this).parentsUntil('tbody', 'tr').next().remove();
                 $(this).parentsUntil('tbody', 'tr').remove();
                 people.removeIndex[data.pref];
