@@ -47,8 +47,6 @@ $alertMsg->set_Text("help");
 
 $resultMessage = $alertMsg->createMarkup();
 
-$isGuestAdmin = ComponentAuthClass::is_Authorized('guestadmin');
-
 function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, $locations, &$total, &$tbl, &$sml, &$reportRows, $subsidyId, $returnId) {
 
     $amt = $r['Amount'];

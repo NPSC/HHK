@@ -46,9 +46,6 @@ $alertMsg->set_Text("help");
 
 $resultMessage = $alertMsg->createMarkup();
 
-$isGuestAdmin = ComponentAuthClass::is_Authorized('guestadmin');
-
-
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
 $headerTable = '';

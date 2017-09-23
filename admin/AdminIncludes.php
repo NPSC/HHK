@@ -18,11 +18,11 @@ define('P_ROOT', dirname(__FILE__) . DS );
 // FInd the vendor directory
 $dirxx = '../vendor';
 if (file_exists($dirxx) === FALSE) {
-    $dirxx = '../../vendor';
+    $dirxx = '../' . $dirxx;
     if (file_exists($dirxx) === FALSE) {
-        $dirxx = '../../../vendor';
+        $dirxx = '../' . $dirxx;
         if (file_exists($dirxx) === FALSE) {
-            $dirxx = '../../../../vendor';
+            $dirxx = '../' . $dirxx;
             if (file_exists($dirxx) === FALSE) {
                 throw new Exception('Cannot find the vendor directory.');
             }
@@ -81,7 +81,6 @@ require (CLASSES . 'alertMessage.php');
 require (CLASSES . 'config'. DS . 'Lite.php');
 require (SEC . 'SecurityComponent.php');
 require (SEC . 'ScriptAuthClass.php');
-require (SEC . 'ComponentAuthClass.php');
 require (CLASSES . 'SysConst.php');
 require (SEC . 'webInit.php');
 

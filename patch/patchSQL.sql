@@ -20,3 +20,5 @@ UPDATE `gen_lookups` SET `Substitute`='AMEX' WHERE `Table_Name`='Charge_Cards' a
 Replace into `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Fund', '1', 'External Donation', '', 'u', 0);
 
 update gen_lookups set `Type` = 'h' where `Table_Name` = 'Patient_Rel_Type';
+
+update gen_lookups set Substitute = 'Guests' where `Table_Name` = 'Patient_Rel_Type' and Code != 'slf';

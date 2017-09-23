@@ -88,7 +88,7 @@ $alertMsg->set_Text("help");
 
 $resultMessage = $alertMsg->createMarkup();
 
-$isGuestAdmin = ComponentAuthClass::is_Authorized('guestadmin');
+$isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
 $paymentMarkup = '';
 $receiptMarkup = '';

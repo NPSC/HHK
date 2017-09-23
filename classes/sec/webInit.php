@@ -25,18 +25,14 @@ class webInit {
 
     public $dbh;
 
-    /**
-     *
-     * @param string $Page_Type
-     */
-    function __construct($Page_Type = WebPageCode::Page, $addCSP = TRUE) {
+    function __construct($page_Type = WebPageCode::Page, $addCSP = TRUE) {
 
         // find out what page we are on
         $parts = explode("/", filter_input(INPUT_SERVER, "SCRIPT_NAME", FILTER_SANITIZE_STRING));
         $pageAddress = $parts[count($parts) - 1];
 
         // check session for login - redirects to index.php otherwise
-        SecurityComponent::die_if_not_Logged_In($Page_Type, "index.php", $pageAddress);
+        SecurityComponent::die_if_not_Logged_In($page_Type, "index.php", $pageAddress);
 
         // get session instance
         $uS = Session::getInstance();
@@ -88,7 +84,7 @@ class webInit {
         } else {
             if ($uS->timeout_idle < time()) {
                 $uS->logged = FALSE;
-                SecurityComponent::die_if_not_Logged_In($Page_Type, "index.php", $pageAddress);
+                SecurityComponent::die_if_not_Logged_In($page_Type, "index.php", $pageAddress);
             } else {
                 $uS->timeout_idle = $t + ($uS->SessionTimeout * 60);
             }
@@ -98,19 +94,20 @@ class webInit {
             $cspURL = $uS->siteList[$this->page->get_Site_Code()]['HTTP_Host'];
             header("Content-Security-Policy: default-src $cspURL; script-src $cspURL 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
             header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // IE 10+
-
             header('X-Frame-Options: SAMEORIGIN');
-            $isHttps = !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off';
-            if ($isHttps) {
-              header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
+
+            if (SecurityComponent::isHTTPS()) {
+                header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
             }
         }
     }
 
 
     public function logout($page = 'index.php') {
+
         $uS = Session::getInstance();
-        $uS->destroy();
+        $uS->destroy(TRUE);
+
         header( "Location: $page");
     }
 

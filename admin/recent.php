@@ -21,7 +21,7 @@ $testVersion = $wInit->testVersion;
 
 $menuMarkup = $wInit->generatePageMenu();
 
-$donationsFlag = ComponentAuthClass::is_Authorized("NameEdit_Donations");
+$donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
 
 
 

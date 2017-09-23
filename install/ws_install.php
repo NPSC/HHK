@@ -166,16 +166,21 @@ function updateWebSites(\PDO $dbh, Config_Lite $config) {
         switch ($webRS->Site_Code->getStoredVal()) {
 
             case 'a':
-                $host = $config->getString('site', 'Admin_URL', '');
+                $host = $config->getString('site', 'Admin_Dir', '');
                 break;
 
 
             case 'h':
-                $host = $config->getString('site', 'House_URL', '');
+                $host = $config->getString('site', 'House_Dir', '');
+
+                if ($host == '') {
+                    // delete the volunteer row.
+                    EditRS::delete($dbh, $webRS, array($webRS->Site_Code));
+                }
                 break;
 
             case 'v':
-                $host = $config->getString('site', 'Volunteer_URL', '');
+                $host = $config->getString('site', 'Volunteer_Dir', '');
 
                 if ($host == '') {
                     // delete the volunteer row.
@@ -185,7 +190,7 @@ function updateWebSites(\PDO $dbh, Config_Lite $config) {
                 break;
 
             case 'r':
-                $host = $config->getString('site', 'Site_URL', '');
+                $host = 'r';
                 break;
         }
 
@@ -195,7 +200,7 @@ function updateWebSites(\PDO $dbh, Config_Lite $config) {
 
         $url = parse_url($host);
 
-        $webRS->HTTP_Host->setNewVal($url['host']);
+        //$webRS->HTTP_Host->setNewVal($url['host']);
 
         if (isset($url['path'])) {
             $webRS->Relative_Address->setNewVal($url['path']);

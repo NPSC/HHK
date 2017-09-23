@@ -7,8 +7,20 @@
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
-abstract class SecurityComponent {
+class SecurityComponent {
 
+    private $fileName = '';
+    private $path = '';
+    private $hostName = '';
+    private $siteURL = '';
+    private $rootURL = '';
+    private $hhkSiteDir = '';
+    private $rootPath = '';
+
+    public function __construct($isRoot = FALSE) {
+
+        $this->defineThisURL($isRoot);
+    }
 
     protected static function loadWebSite(\PDO $dbh, $host, $root) {
 
@@ -23,6 +35,7 @@ abstract class SecurityComponent {
                 from web_sites");
 
             $sl = array();
+
             if ($stmt->rowCount() > 0) {
 
                 while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -51,13 +64,14 @@ abstract class SecurityComponent {
                 }
 
                 $uS->siteList = $sl;
+
             } else {
                 throw new Hk_Exception_Runtime("web_sites records not found.");
             }
         }
 
         // Is our web site page list loaded?
-        if (isset($uS->webSite) && $uS->webSite["Relative_Address"] == $doc_root && $uS->webSite["HTTP_Host"] == $HTTP_Host) {
+        if (isset($uS->webSite) && $uS->webSite["Relative_Address"] == $doc_root) {  // && $uS->webSite["HTTP_Host"] == $HTTP_Host) {
 
             return $uS->webSite;
         }
@@ -67,7 +81,8 @@ abstract class SecurityComponent {
         unset($uS->webPages);
 
         foreach ($uS->siteList as $ws) {
-            if (trim($ws["Relative_Address"]) == trim($doc_root) && trim($ws["HTTP_Host"]) == trim($HTTP_Host)) {
+
+            if (trim($ws["Relative_Address"]) == trim($doc_root)) {  // && trim($ws["HTTP_Host"]) == trim($HTTP_Host)) {
                 $uS->webSite = $ws;
             }
         }
@@ -145,18 +160,39 @@ abstract class SecurityComponent {
 
     }
 
-    /*
-     *  die_if_not_Logged_In
-     *  redirects browser if not logged in.
-     */
+    public static function is_Authorized($name) {
+
+        if (self::is_Admin()) {
+            return TRUE;
+        }
+
+        $uS = Session::getInstance();
+
+        $pageCode = array();
+        // try reading the page table
+        if ($name != "" && isset($uS->webPages[$name])) {
+            $r = $uS->webPages[$name];
+
+            if (!is_null($r)) {
+                $pageCode = $r["Codes"];
+            }
+        }
+
+        // check authorization codes.
+        $tokn = self::does_User_Code_Match($pageCode);
+
+        return $tokn;
+    }
 
     public static function die_if_not_Logged_In($pageType, $loginPage, $pageAddress) {
         $ssn = Session::getInstance();
 
         if ($ssn->ssl === TRUE) {
 
+            $serverHTTPS = filter_input(INPUT_SERVER, "HTTPS", FILTER_SANITIZE_STRING);
+
             // Must access pages through SSL
-            if (empty($_SERVER['HTTPS']) || strtolower($_SERVER['HTTPS']) == 'off' ) {
+            if (empty($serverHTTPS) || strtolower($serverHTTPS) == 'off' ) {
                 // non-SSL access.
                header("Location: " . $ssn->resourceURL);
             }
@@ -209,6 +245,79 @@ abstract class SecurityComponent {
         return $tokn;
     }
 
+    public static function isHTTPS() {
+
+        $serverHTTPS = filter_input(INPUT_SERVER, "HTTPS", FILTER_SANITIZE_STRING);
+
+        if (empty($serverHTTPS) || strtolower($serverHTTPS) == 'off' ) {
+            return FALSE;
+        }
+
+        return TRUE;
+    }
+
+    public function defineThisURL($isRoot = FALSE) {
+
+        $scriptName = filter_input(INPUT_SERVER, "SCRIPT_NAME", FILTER_SANITIZE_STRING);
+        $serverName = filter_input(INPUT_SERVER, "SERVER_NAME", FILTER_SANITIZE_URL);
+
+        if (is_null($scriptName) || $scriptName === FALSE) {
+            throw new Hk_Exception_Runtime('Script name not set.');
+        }
+
+        if (is_null($serverName) || $serverName === FALSE) {
+            throw new Hk_Exception_Runtime('Server name not set.');
+        }
+
+        // scriptName = /rootDirs.../hhkSiteDir/filename
+        // where hhkSiteDir is one of admin, house, volunteer or nothun
+        //       roodDirs may be blank as well.
+        //
+        // find out what page we are on
+        $parts = explode("/", $scriptName);
+
+        // file name
+        $this->fileName = $parts[count($parts) - 1];
+        unset($parts[count($parts) - 1]);   // remove file name
+
+        $this->path = implode("/", $parts) . '/';
+
+        if ($isRoot === FALSE && count($parts) >= 1) {
+
+            $this->hhkSiteDir = $parts[count($parts) - 1] . '/';
+            unset($parts[count($parts) - 1]);
+
+            // THe root path is what's left.
+            $this->rootPath = implode("/", $parts) . '/';
+
+
+        } else {
+            $this->hhkSiteDir = '';
+            $this->rootPath = $this->getPath();
+        }
+
+
+        // remove leading www if present.
+        $hostParts = explode(".", $serverName);
+
+        if (strtolower($hostParts[0]) == "www") {
+            unset($hostParts[0]);
+            $this->hostName = implode(".", $hostParts);
+        } else {
+            $this->hostName = $serverName;
+        }
+
+        if (self::isHTTPS()) {
+            $this->siteURL = "https://" . $this->getHostName() . $this->getPath();
+            $this->rootURL = "https://" . $this->getHostName() . $this->getRootPath();
+        } else {
+            // non-SSL access.
+            $this->siteURL = "http://" . $this->getHostName() . $this->getPath();
+            $this->rootURL = "http://" . $this->getHostName() . $this->getRootPath();
+        }
+
+    }
+
     public static function is_Admin() {
         $tokn = false;
         $ssn = Session::getInstance();
@@ -246,6 +355,30 @@ abstract class SecurityComponent {
             }
         }
         return $tokn;
+    }
+
+
+    public function getFileName() {
+        return $this->fileName;
+    }
+
+    public function getPath() {
+        return $this->path;
+    }
+
+    public function getRootPath() {
+        return $this->rootPath;
+    }
+
+    public function getHostName() {
+        return $this->hostName;
+    }
+
+    public function getSiteURL() {
+        return $this->siteURL;
+    }
+    public function getRootURL() {
+        return $this->rootURL;
     }
 
 }

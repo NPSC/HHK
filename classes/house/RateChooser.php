@@ -46,7 +46,7 @@ class RateChooser {
         $this->payAtCheckin = $uS->PayAtCkin;
         $this->openCheckin = $uS->OpenCheckin;
         $this->payVisitFee = $uS->VisitFee;
-        $this->isAdmin = ComponentAuthClass::is_Authorized('guestadmin');
+        $this->isAdmin = SecurityComponent::is_Authorized('guestadmin');
         $this->rateGlideExtend = $uS->RateGlideExtend;
         $this->priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 

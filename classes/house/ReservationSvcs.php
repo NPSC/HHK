@@ -699,7 +699,7 @@ class ReservationSvcs {
         }
 
         $roomChooser = new RoomChooser($dbh, $resv, ($resv->getNumberGuests() + 1), new \DateTime($resv->getExpectedArrival()), new \DateTime($resv->getExpectedDeparture()));
-        $rescs = $roomChooser->findResources($dbh, ComponentAuthClass::is_Authorized("guestadmin"));
+        $rescs = $roomChooser->findResources($dbh, SecurityComponent::is_Authorized("guestadmin"));
 
         if ($resv->getIdResource() > 0 && isset($rescs[$resv->getIdResource()]) === FALSE) {
             // Too many occupants
@@ -1990,7 +1990,7 @@ class ReservationSvcs {
         $uS = Session::getInstance();
         $dataArray = array();
 
-        if (ComponentAuthClass::is_Authorized('guestadmin') === FALSE) {
+        if (SecurityComponent::is_Authorized('guestadmin') === FALSE) {
             return array("error" => "User not authorized to move reservations.");
         }
 

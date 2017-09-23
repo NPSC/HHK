@@ -48,8 +48,6 @@ $alertMsg->set_Text("help");
 
 $resultMessage = $alertMsg->createMarkup();
 
-$isGuestAdmin = ComponentAuthClass::is_Authorized('guestadmin');
-
 /**
  * Prettify a row.
  *

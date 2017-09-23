@@ -67,12 +67,12 @@ $wInit->sessionLoadGenLkUps();
 $volLkups = $wInit->sessionLoadVolLkUps();
 $wInit->sessionLoadGuestLkUps();
 
-$donationsFlag = ComponentAuthClass::is_Authorized("NameEdit_Donations");
+$donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
 
 // Maintainence component - and role = admin is also required.
 if (SecurityComponent::is_Admin($uS->rolecode, $uS->username)) {
-    $maintFlag = ComponentAuthClass::is_Authorized("NameEdit_Maint");
-    $privacyFlag = ComponentAuthClass::is_Authorized("PrivacyGroup");
+    $maintFlag = SecurityComponent::is_Authorized("NameEdit_Maint");
+    $privacyFlag = SecurityComponent::is_Authorized("PrivacyGroup");
 } else {
     $maintFlag = false;
     $privacyFlag = false;

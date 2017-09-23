@@ -131,7 +131,7 @@ class Login {
 
             } else {
 
-                if (ComponentAuthClass::is_Authorized($pge)) {
+                if (SecurityComponent::is_Authorized($pge)) {
                     $events['page'] = $pge;
                 } else {
 

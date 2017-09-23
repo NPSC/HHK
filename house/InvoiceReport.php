@@ -63,8 +63,6 @@ $alertMsg->set_txtSpanId("alrMessage");
 $alertMsg->set_Text("help");
 
 $resultMessage = $alertMsg->createMarkup();
-
-$isGuestAdmin = ComponentAuthClass::is_Authorized('guestadmin');
 $labels = new Config_Lite(LABEL_FILE);
 
 function doMarkupRow($r, $isLocal, $hospital, $statusTxt, &$tbl, &$sml, &$reportRows, $subsidyId) {

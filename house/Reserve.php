@@ -261,11 +261,11 @@ function PageManager(initData) {
     t.loadResv = loadResv;
     t.people = people;
     t.addrs = addrs;
-
-
     t.idPsg = idPsg;
     t.idResv = idResv;
     t.idName = idName;
+
+
 
 
 
@@ -317,6 +317,11 @@ function PageManager(initData) {
                 return;
             }
 
+            if (people.findItem('id', item.id) !== null) {
+                flagAlertMessage('This person is already listed here. ', true);
+                return;
+            }
+
             var resv = {
                 id: item.id,
                 rid: data.rid,
@@ -363,7 +368,6 @@ function PageManager(initData) {
             }
 
             // Validate Phone Number
-
             $('.hhk-phoneInput[id^="' +prefix + 'txtPhone"]').each(function (){
 
                 if ($.trim($(this).val()) !== '' && testreg.test($(this).val()) === false) {
@@ -466,19 +470,20 @@ function PageManager(initData) {
             }
         }
 
-        t.setUp = function(data) {
+        function initFamilyTable(data) {
 
-            var cpyAddr = [], pref, $addrTog, $addrFlag;
+            var fDiv, fHdr, expanderButton;
 
-            if (data.famSection === undefined) {
-                return;
-            }
+            fDiv = $('<div/>').addClass('ui-widget-content ui-corner-bottom hhk-tdbox').prop('id', divFamDetailId).css('padding', '5px');
 
-            var fDiv = $(data.famSection.div).addClass('ui-widget-content').prop('id', divFamDetailId);
-            var expanderButton = $("<ul style='list-style-type:none; float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+            fDiv.append($('<table/>').prop('id', data.famSection.tblId).addClass('hhk-table').append($('<thead/>').append($(data.famSection.tblHead))))
+                    .append($(data.famSection.adtnl));
+
+            expanderButton = $("<ul style='list-style-type:none; float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
                 .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
                 .append($("<span id='f_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
-            var fHdr = $('<div id="divfamHdr" style="padding:2px; cursor:pointer;"/>')
+
+            fHdr = $('<div id="divfamHdr" style="padding:2px; cursor:pointer;"/>')
                     .append($(data.famSection.hdr))
                     .append(expanderButton).append('<div style="clear:both;"/>');
 
@@ -498,6 +503,28 @@ function PageManager(initData) {
                     .append(fHdr)
                     .append(fDiv)
                     .show();
+
+        }
+
+        t.setUp = function(data) {
+
+            var cpyAddr = [], $addrTog, $addrFlag, $famTbl;
+
+            if (data.famSection === undefined || data.famSection.tblId === undefined || data.famSection.tblId == '') {
+                return;
+            }
+
+            $famTbl = $wrapper.find('#' + data.famSection.tblId);
+
+            if ($famTbl.length === 0) {
+                initFamilyTable(data);
+                $famTbl = $wrapper.find('#' + data.famSection.tblId);
+            }
+
+            for (var t=0; t < data.famSection.tblBody.length; t++) {
+                $famTbl.
+                        .append($(data.famSection.tblBody[t]));
+            }
 
             $('.hhk-cbStay').checkboxradio({
                 classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
@@ -708,7 +735,7 @@ function PageManager(initData) {
                 }
             });
 
-            // Check on number of guests and patients
+            // Compute number of guests and patients
             for (var i in people.list()) {
                 if (people.list()[i].role === 'p') {
                     numPat++;
@@ -1271,17 +1298,25 @@ function PageManager(initData) {
         var t = this;
         t.hasItem = hasItem;
         t.findItem = findItem;
+        t.addItem = addItem;
+        t.removeIndex = removeIndex;
+        t.list = list;
+        t.makeList = makeList;
 
-        this.list = function () {
+        function list() {
             return _list;
         };
 
-        this.makeList = function(theList, indexProperty) {
+        function makeList(theList, indexProperty) {
+
             _index = indexProperty;
-            _list = theList;
+
+            for (var i in theList) {
+                addItem(theList[i]);
+            }
         };
 
-        this.addItem = function(item) {
+        function addItem(item) {
 
             if (hasItem(item) === false) {
                 _list[item[_index]] = item;
@@ -1291,7 +1326,7 @@ function PageManager(initData) {
             return false;
         };
 
-        this.removeIndex = function (index) {
+        function removeIndex(index) {
             delete _list[index];
         }
 
@@ -1306,8 +1341,8 @@ function PageManager(initData) {
 
         function findItem(property, value) {
             for (var i in _list) {
-                if (i[property] == value) {
-                    return i;
+                if (_list[i][property] == value) {
+                    return _list[i];
                 }
             }
             return null;

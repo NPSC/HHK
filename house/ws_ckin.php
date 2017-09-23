@@ -103,7 +103,7 @@ $dbh = $wInit->dbh;
 $uS = Session::getInstance();
 
 
-$guestAdmin = ComponentAuthClass::is_Authorized("guestadmin");
+$guestAdmin = SecurityComponent::is_Authorized("guestadmin");
 
 $c = "";
 
@@ -983,16 +983,16 @@ try {
 
 
 if (is_array($events)) {
-    
+
     $json = json_encode($events);
-    
+
     if ($json !== FALSE) {
         echo ($json);
     } else {
         $events = array("error" => "PHP json encoding error: " . json_last_error_msg());
         echo json_encode($events);
     }
-    
+
 } else {
     echo $events;
 }

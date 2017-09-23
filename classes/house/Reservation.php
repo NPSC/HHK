@@ -28,7 +28,7 @@ abstract class Reservation {
         // idPsg < 0
         if ($rData->getForceNewPsg()) {
 
-            //new Resv
+            // Force new PSG, also implies new reservation
             $rData->setIdResv(0);
 
             return new BlankReservation($rData, new ReservationRS());
@@ -36,7 +36,7 @@ abstract class Reservation {
         // idResv < 0
         } else if ($rData->getForceNewResv() && $rData->getIdPsg() > 0) {
 
-            // New Resv
+            // Force New Resv for existing PSG
             return new ActiveReservation($rData, new ReservationRS());
 
         // undetermined resv and psg, look at guest id
@@ -250,6 +250,13 @@ class ActiveReservation extends BlankReservation {
 
         $this->reserveData = $family->save($dbh, $post);
 
+        // Room number chosen
+        $idRescPosted = 0;
+        if (isset($post['selResource'])) {
+            $idRescPosted = intval(filter_Var($post['selResource'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+
     }
 
 }
@@ -327,6 +334,7 @@ class ReserveSearcher extends ActiveReservation {
         if ($this->reserveData->getIdPsg() == 0) {
             // idPsg not set
 
+            // Does this guest have a PSG?
             $ngRss = Psg::getNameGuests($dbh, $this->reserveData->getId());
 
             $this->reserveData->setPsgChooser($this->psgChooserMkup($dbh, $ngRss));
@@ -352,6 +360,11 @@ class ReserveSearcher extends ActiveReservation {
         return $this->reserveData->toArray();
 
     }
+    
+    public function addperson(\PDO $dbh) {
+        return $this->createMarkup($dbh);
+    }
+
 
     protected function reservationChooser(\PDO $dbh) {
 

@@ -348,7 +348,7 @@ abstract class Role {
      * @param \PDO $dbh
      * @return boolean
      */
-    public static function checkCurrentStay(\PDO $dbh, $idName) {
+    protected static function checkCurrentStay(\PDO $dbh, $idName) {
 
         $id = intval($idName, 10);
         $idVisit = 0;
@@ -389,15 +389,15 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return FALSE;
     }
 
-    public function getCurrentVisitId(\PDO $dbh) {
-
-        if (is_null($this->idVisit)) {
-            $this->setCurrentIdVisit(self::checkCurrentStay($dbh, $this->getIdName()));
-        }
-
-        return $this->idVisit;
-    }
-
+//    public function getCurrentVisitId(\PDO $dbh) {
+//
+//        if (is_null($this->idVisit)) {
+//            $this->setCurrentIdVisit(self::checkCurrentStay($dbh, $this->getIdName()));
+//        }
+//
+//        return $this->idVisit;
+//    }
+//
     public function getNoReturn() {
         $uS = Session::getInstance();
 

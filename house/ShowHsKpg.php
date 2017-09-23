@@ -24,7 +24,7 @@ $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
 $logoUrl = $uS->resourceURL . 'images/registrationLogo.png';
-$guestAdmin = ComponentAuthClass::is_Authorized("guestadmin");
+$guestAdmin = SecurityComponent::is_Authorized("guestadmin");
 
 
 $stmtMarkup = CreateMarkupFromDB::generateHTML_Table(ResourceView::roomsClean($dbh, '', $guestAdmin, TRUE), 'tbl');

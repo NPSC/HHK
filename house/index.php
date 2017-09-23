@@ -71,12 +71,10 @@ if ($uS->mode != Mode::Live) {
 }
 
 
-$volSiteURL = $config->get("site", "Volunteer_URL", "");
-$tutorialSiteURL = $config->getString('site', 'Tutorial_URL'. '');
-$trainingSiteURL = $config->getString('site', 'Training_URL'. '');
+$volSiteURL = $config->get("site", "Volunteer_Dir", "");
+$tutorialSiteURL = $config->getString('site', 'Tutorial_URL', '');
+$trainingSiteURL = $config->getString('site', 'Training_URL', '');
 $build = 'Build:' . $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
-
-$pageTitle = $uS->siteName;
 
 $icons = array();
 
@@ -89,25 +87,26 @@ foreach ($uS->siteList as $r) {
 
 $siteName = HTMLContainer::generateMarkup('h3', 'Guest Tracking Site' . $icons[$page->get_Site_Code()]);
 
-$volLinkMkup = '';
-$houseLinkMkup = '';
-$tutorialMkup = '';
+$extLinkIcon = "<span class='ui-icon ui-icon-extlink' style='float: right; margin-right:.3em;margin-top:2px;'></span>";
+$siteLinkMkup = '';
+$linkMkup = '';
 
 
 if ($volSiteURL != '' && isset($icons['v'])) {
-    $volLinkMkup = HTMLContainer::generateMarkup('div',
-        HTMLContainer::generateMarkup('p',
-                'I want to go to the ' . $icons['v'] . HTMLContainer::generateMarkup('a', 'Volunteer web site', array('href'=>$volSiteURL))), array('style'=>'margin-top:40px;'));
+    $siteLinkMkup .= HTMLContainer::generateMarkup('div',
+                $icons['v'] . HTMLContainer::generateMarkup('a', 'Volunteer web site', array('href'=>$page->getRootURL() . $volSiteURL)));
 }
 
+$spacer = '25px';
 if ($tutorialSiteURL != '') {
-    $tutorialMkup .= HTMLContainer::generateMarkup('div',
-             HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'You Tube Video Tutorials', array('href'=>$tutorialSiteURL)), array('style'=>'margin-left:15px;')), array('style'=>'margin-top:25px;'));
+    $linkMkup .=
+            HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'You Tube Videos' . $extLinkIcon, array('href'=>$tutorialSiteURL, 'target'=>'_blank')), array('style'=>"margin-top:$spacer;float:left;"));
+    $spacer = '10px';
 }
 
-if ($trainingSiteURL != '') {
-    $tutorialMkup .= HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'HHK Playground', array('href'=>$trainingSiteURL)), array('style'=>'margin-left:15px;')), array('style'=>'margin-top:25px;'));
+if ($config->getString('site', 'Training_URL', '') != '') {
+    $linkMkup .=
+            HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'HHK Playground' . $extLinkIcon, array('href'=>$config->getString('site', 'Training_URL', ''), 'target'=>'_blank')), array('style'=>"margin-top:$spacer;clear:left;float:left"));
 }
 
 $copyYear = date('Y');
@@ -120,10 +119,8 @@ header('X-Frame-Options: SAMEORIGIN');
 header("Content-Security-Policy: default-src $cspURL; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
 header("X-Content-Security-Policy: default-src $cspURL; style-src $cspURL 'unsafe-inline';"); // IE 10+
 
-$isHttps = !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off';
-if ($isHttps)
-{
-  header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
+if (SecurityComponent::isHTTPS()) {
+    header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
 }
 
 ?>
@@ -147,19 +144,19 @@ if ($isHttps)
             </div>
             <div style="float:right;font-size: .6em;margin-right:5px;"><?php echo $build; ?></div>
             <div id="contentDiv">
-                    <a href="http://hospitalityhousekeeper.org/" target="blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="../images/hhkLogo.png"></a>
+                    <a href="https://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="../images/hhkLogo.png"></a>
                     <div style="clear:left; margin-bottom: 20px;"></div>
                 <div id="formlogin" style="float:left;" >
                     <div><?php echo $siteName; ?>
-                        <p style="margin-left:6px; width: 50%;"><?php echo $disclaimer ?></p>
+                        <p style="margin-left:6px; width: 65%;"><?php echo $disclaimer ?></p>
                     </div>
-                    <?php echo $loginMkup;  echo $volLinkMkup;  echo $tutorialMkup;?>
+                    <?php echo $loginMkup . $siteLinkMkup . $linkMkup; ?>
                 </div>
                 <div style="clear:left;"></div>
-                <div style="margin-top: 100px;width:500px;">
+                <div style="margin-top: 90px;width:500px;">
                     <hr>
-                    <div><a href ="http://nonprofitsoftwarecorp.org" ><div class="nplogo"></div></a></div>
-                    <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non Profit Software</div>
+                    <div><a href ="https://nonprofitsoftwarecorp.org" ><div class="nplogo"></div></a></div>
+                    <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non Profit Software Corporation</div>
                 </div>
             </div>
         </div>

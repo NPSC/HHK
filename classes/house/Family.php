@@ -98,7 +98,19 @@ class Family {
 
             $this->rData->setMember($uS->addPerPrefix, ReserveData::ROLE, '')
                 ->setMember($uS->addPerPrefix, ReserveData::STAY, '0')
-                ->setMember($uS->addPerPrefix, ReserveData::ID, $ngrs->idName->getStoredVal())
+                ->setMember($uS->addPerPrefix, ReserveData::ID, $this->rData->getId())
+                ->setMember($uS->addPerPrefix, ReserveData::PREF, $uS->addPerPrefix);
+
+        } else if ($this->rData->getIdPsg() == 0 && $this->rData->getId() > 0) {
+
+            // Add existing member to New PSG
+            $uS->addPerPrefix++;
+
+            $this->roleObjs[$this->rData->getId()] = new Guest($dbh, $uS->addPerPrefix, $this->rData->getId());
+
+            $this->rData->setMember($uS->addPerPrefix, ReserveData::ROLE, '')
+                ->setMember($uS->addPerPrefix, ReserveData::STAY, '0')
+                ->setMember($uS->addPerPrefix, ReserveData::ID, $this->rData->getId())
                 ->setMember($uS->addPerPrefix, ReserveData::PREF, $uS->addPerPrefix);
 
         }
@@ -206,12 +218,13 @@ class Family {
     public function createFamilyMarkup(\PDO $dbh, ReservationRS $resvRs) {
 
         $uS = Session::getInstance();
-        $tbl = new HTMLTable();
+        //$tbl = new HTMLTable();
         $rowClass = 'odd';
         $mk1 = '';
+        $trs = array();
 
 
-        $tbl->addHeaderTr(
+        $th = HTMLContainer::generateMarkup('tr',
                 HTMLTable::makeTh('Staying')
                 . RoleMember::createThinMarkupHdr($this->rData->getPatLabel(), FALSE, $this->rData->getPatBirthDateFlag())
                 . HTMLTable::makeTh('Phone')
@@ -224,8 +237,8 @@ class Family {
             $role = $this->roleObjs[$this->getPatientId()];
             $idPrefix = $role->getRoleMember()->getIdPrefix();
 
-            $tbl->addBodyTr(
-                    $role->createThinMarkup($this->rData->getPsgMember($idPrefix)[ReserveData::STAY], ($this->rData->getIdPsg() == 0 ? FALSE : TRUE))
+            $trs[] = HTMLContainer::generateMarkup('tr',
+                    $role->createThinMarkup($this->rData->getPsgMember($idPrefix)[ReserveData::STAY], TRUE)
                     , array('class'=>$rowClass));
 
             // Demographics
@@ -236,7 +249,7 @@ class Family {
             }
 
             if ($uS->PatientAddr) {
-                $tbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow'));
+                $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow'));
             }
 
         }
@@ -257,7 +270,7 @@ class Family {
                 $rowClass = 'odd';
             }
 
-            $tbl->addBodyTr($role->createThinMarkup($this->rData->getPsgMember($idPrefix)[ReserveData::STAY], ($this->rData->getIdPsg() == 0 ? FALSE : TRUE)), array('class'=>$rowClass));
+            $trs[] = HTMLContainer::generateMarkup('tr', $role->createThinMarkup($this->rData->getPsgMember($idPrefix)[ReserveData::STAY], ($this->rData->getIdPsg() == 0 ? FALSE : TRUE)), array('class'=>$rowClass));
 
             // Demographics
             if ($uS->ShowDemographics) {
@@ -267,7 +280,7 @@ class Family {
             }
 
             // Add addresses and demo's
-            $tbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow'));
+            $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow'));
         }
 
         // Guest search
@@ -292,9 +305,9 @@ class Family {
             HTMLContainer::generateMarkup('span', 'Family ')
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
-        $div = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('id'=>FAMILY::FAM_TABLE_ID, 'class'=>'hhk-table')) . $mk1, array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-tdbox'));
+        //$div = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('id'=>FAMILY::FAM_TABLE_ID, 'class'=>'hhk-table')) . $mk1, array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-tdbox'));
 
-        return array('hdr'=>$hdr, 'div'=>$div, 'mem'=>$this->rData->getPsgMembers(), 'addrs'=>$this->getAddresses($this->roleObjs));
+        return array('hdr'=>$hdr, 'tblHead'=>$th, 'tblBody'=>$trs, 'adtnl'=>$mk1, 'mem'=>$this->rData->getPsgMembers(), 'addrs'=>$this->getAddresses($this->roleObjs), 'tblId'=>FAMILY::FAM_TABLE_ID);
 
     }
 

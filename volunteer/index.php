@@ -47,7 +47,7 @@ try {
 
 
 // define db connection obj
-$dbh = initPDO();
+$dbh = initPDO(TRUE);
 
 // Load the page information
 try {
@@ -78,9 +78,6 @@ $siteName = HTMLContainer::generateMarkup('h3', 'Volunteer Site' . $icons[$page-
 // disclamer
 $disclaimer = $config->get("site", "Disclaimer", "");
 $logoLink = $config->getString("site", "Public_URL", "");
-
-$pageTitle = $uS->siteName;
-
 $copyYear = date('Y');
 
 $loginMkup = $login->loginForm($uname);
@@ -91,10 +88,8 @@ header('X-Frame-Options: SAMEORIGIN');
 header("Content-Security-Policy: default-src $cspURL; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
 header("X-Content-Security-Policy: default-src $cspURL; style-src $cspURL 'unsafe-inline';"); // IE 10+
 
-$isHttps = !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off';
-if ($isHttps)
-{
-  header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
+if (SecurityComponent::isHTTPS()) {
+    header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
 }
 
 ?>
@@ -102,7 +97,7 @@ if ($isHttps)
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title><?php echo $pageTitle; ?></title>
+        <title><?php echo $uS->siteName; ?></title>
         <?php echo PUBLIC_CSS; ?>
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
 
@@ -134,7 +129,7 @@ if ($isHttps)
                 <div style="margin-top: 50px;width:600px;">
                     <hr>
                     <div><a href ="http://nonprofitsoftwarecorp.org" ><div class="nplogo"></div></a></div>
-                    <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non Profit Software</div>
+                    <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non Profit Software Corporation</div>
                 </div>
             </div>
         </div>

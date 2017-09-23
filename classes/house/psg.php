@@ -215,24 +215,24 @@ class Psg {
         }
     }
 
-    public static function instantiateFromGuestId(\PDO $dbh, $idGuest) {
-
-        $ngRS = new Name_GuestRS();
-        $idPsg = 0;
-
-        if ($idGuest > 0) {
-            $ngRS->idName->setStoredVal($idGuest);
-            $rows = EditRS::select($dbh, $ngRS, array($ngRS->idName));
-
-            if (count($rows) > 0) {
-                EditRS::loadRow($rows[0], $ngRS);
-                $idPsg = $ngRS->idPsg->getStoredVal();
-            }
-        }
-
-        return new Psg($dbh, $idPsg);
-
-    }
+//    public static function instantiateFromGuestId(\PDO $dbh, $idGuest) {
+//
+//        $ngRS = new Name_GuestRS();
+//        $idPsg = 0;
+//
+//        if ($idGuest > 0) {
+//            $ngRS->idName->setStoredVal($idGuest);
+//            $rows = EditRS::select($dbh, $ngRS, array($ngRS->idName));
+//
+//            if (count($rows) > 0) {
+//                EditRS::loadRow($rows[0], $ngRS);
+//                $idPsg = $ngRS->idPsg->getStoredVal();
+//            }
+//        }
+//
+//        return new Psg($dbh, $idPsg);
+//
+//    }
 
     public static function getNameGuests(\PDO $dbh, $idGuest) {
 
@@ -486,9 +486,19 @@ class Psg {
 
     public function savePSG(\PDO $dbh, $idPatient, $uname, $notes = '') {
 
-        if ($idPatient == 0) {
+        if ($idPatient < 1) {
             return;
         }
+
+        // Only one PSG per patient.
+        $ngrss = Psg::getNameGuests($dbh, $idPatient);
+
+        foreach ($ngrss as $ngRS) {
+            if ($ngRS->Relationship_Code == RelLinkType::Self && $ngRS->idPsg->getStoredVal() != $this->psgRS->idPsg->getStoredVal()) {
+                throw new Hk_Exception_Runtime('Patient already has a PSG. Start over and enter this patient first.');
+            }
+        }
+
 
         $sanNotes = filter_var($notes, FILTER_SANITIZE_STRING);
 
@@ -504,6 +514,7 @@ class Psg {
 
         if ($this->psgRS->idPsg->getStoredVal() === 0) {
 
+            // New PSG
             $this->psgRS->idPatient->setNewVal($idPatient);
             $this->psgRS->Status->setNewVal('a');
             $idPsg = EditRS::insert($dbh, $this->psgRS);

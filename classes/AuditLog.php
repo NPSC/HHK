@@ -232,5 +232,3 @@ class NameLog implements iAuditLog {
     }
 
 }
-
-?>

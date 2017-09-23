@@ -129,7 +129,7 @@ class FinAssistance {
             $this->setApplied(TRUE);
         }
 
-        if (ComponentAuthClass::is_Authorized('guestadmin')) {
+        if (SecurityComponent::is_Authorized('guestadmin')) {
 
             $catTitle = '';
             $statTitle = '';

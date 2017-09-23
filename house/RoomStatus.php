@@ -49,7 +49,7 @@ $menuMarkup = $wInit->generatePageMenu();
 $wInit->sessionLoadGenLkUps();
 $wInit->sessionLoadGuestLkUps();
 $labels = new Config_Lite(LABEL_FILE);
-$guestAdmin = ComponentAuthClass::is_Authorized("guestadmin");
+$guestAdmin = SecurityComponent::is_Authorized("guestadmin");
 
 // update room cleaning status for existing guest rooms.
 ResourceView::dirtyOccupiedRooms($dbh);

@@ -106,8 +106,6 @@ $dbh = $wInit->dbh;
 $uS = Session::getInstance();
 
 
-$guestAdmin = ComponentAuthClass::is_Authorized("guestadmin");
-
 $c = "";
 
 // Get our command

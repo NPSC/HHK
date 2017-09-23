@@ -34,7 +34,7 @@ $wInit = new webInit(WebPageCode::Service);
 
 $dbh = $wInit->dbh;
 
-$guestAdmin = ComponentAuthClass::is_Authorized("guestadmin");
+$guestAdmin = SecurityComponent::is_Authorized("guestadmin");
 
 // get session instance
 $uS = Session::getInstance();

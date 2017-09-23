@@ -1385,7 +1385,7 @@ class HouseServices {
             return array("error" => "Visit not specified.");
         }
 
-        if (ComponentAuthClass::is_Authorized('guestadmin') === FALSE) {
+        if (SecurityComponent::is_Authorized('guestadmin') === FALSE) {
             return array("error" => "User not authorized to move visits.");
         }
 

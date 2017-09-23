@@ -64,7 +64,7 @@ $wInit = new webInit(WebPageCode::Service);
 
 /* @var $dbh PDO */
 $dbh = $wInit->dbh;
-$guestAdmin = ComponentAuthClass::is_Authorized("guestadmin");
+$guestAdmin = SecurityComponent::is_Authorized("guestadmin");
 addslashesextended($_REQUEST);
 $c = "";
 

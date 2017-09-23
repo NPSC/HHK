@@ -27,8 +27,6 @@ $wInit = new webInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
 
 
-$guestAdmin = ComponentAuthClass::is_Authorized("guestadmin");
-
 // get session instance
 $uS = Session::getInstance();
 $config = new Config_Lite(ciCFG_FILE);

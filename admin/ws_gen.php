@@ -31,8 +31,8 @@ $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
 
-$maintFlag = ComponentAuthClass::is_Authorized("ws_gen_Maint");
-$donationsFlag = ComponentAuthClass::is_Authorized("NameEdit_Donations");
+$maintFlag = SecurityComponent::is_Authorized("ws_gen_Maint");
+$donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
 
 
 if (isset($_REQUEST["cmd"])) {

@@ -65,7 +65,7 @@ class Patient extends Role {
 
         $uS = Session::getInstance();
 
-        $mu = parent::createThinMarkup($staying, $lockRelChooser);
+        $mu = parent::createThinMarkup($staying, TRUE);
 
 
         if ($uS->PatientAddr) {

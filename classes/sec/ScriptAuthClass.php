@@ -12,60 +12,25 @@ class ScriptAuthClass extends SecurityComponent {
     private $siteCode = "";
     private $indexPage = "";
     private $pageCodes = array();
-
-    private $fileName = "";
     private $pageTitle = "";
     private $loginPage = "";
     private $defaultPage = "";
     private $pageType = "";
-    private $path = "";
-    private $hostName = "";
-    private $siteURL = "";
+
 
     function __construct(\PDO $dbh) {
 
-        $scriptName = filter_var($_SERVER['SCRIPT_NAME'], FILTER_SANITIZE_STRING);
-        $serverName = filter_var($_SERVER['SERVER_NAME'], FILTER_SANITIZE_URL);
-
-        if (is_null($scriptName) || $scriptName === FALSE) {
-            session_destroy();
-            exit('Script name not set.');
-        }
-
-        if (is_null($serverName) || $serverName === FALSE) {
-            session_destroy();
-            exit('Server name not set.');
-        }
-
-        // find out what page we are on
-        $parts = explode("/", $scriptName);
-        $this->fileName = $parts[count($parts) - 1];
-
-        $parts[count($parts) - 1] = "";   // remove file name
-        $this->path = implode("/", $parts);
-
-
-        // remove leading www if present.
-        $hostParts = explode(".", $serverName);
-        if (strtolower($hostParts[0]) == "www") {
-            unset($hostParts[0]);
-            $this->hostName = implode(".", $hostParts);
-        } else {
-            $this->hostName = $serverName;
-        }
-
-        if (empty($_SERVER['HTTPS']) || strtolower($_SERVER['HTTPS']) == 'off' ) {
-            // non-SSL access.
-            $this->siteURL = "http://" . $this->hostName . $this->path;
-        } else {
-            $this->siteURL = "https://" . $this->hostName . $this->path;
-        }
+        parent::__construct();
+        $uS = Session::getInstance();
 
         // try reading the web site table
         try {
-            $site = self::loadWebSite($dbh, $this->hostName, $this->path);
+
+            $site = self::loadWebSite($dbh, $this->getHostName(), $this->getPath());
+
         } catch (Hk_Exception $hex) {
-            session_destroy();
+
+            $uS->destroy(TRUE);
             exit("error: ".$hex->getMessage());
         }
 
@@ -76,11 +41,11 @@ class ScriptAuthClass extends SecurityComponent {
         }
 
         // try reading the page table
-        if ($this->siteCode != "" && $this->fileName != "") {
-            $uS = Session::getInstance();
+        if ($this->siteCode != "" && $this->getFileName() != "") {
 
-            if (isset($uS->webPages[$this->fileName])) {
-                $page = $uS->webPages[$this->fileName];
+            if (isset($uS->webPages[$this->getFileName()])) {
+
+                $page = $uS->webPages[$this->getFileName()];
 
                 if (!is_null($page)) {
                     //$this->pageId = $r["idPage"];
@@ -95,7 +60,7 @@ class ScriptAuthClass extends SecurityComponent {
 
     public function Authorize_Or_Die() {
 
-        self::die_if_not_Logged_In($this->pageType, $this->loginPage, $this->fileName);
+        self::die_if_not_Logged_In($this->get_Page_Type(), $this->get_Login_Page(), $this->getFileName());
 
         $tokn = self::is_Admin();
 
@@ -104,9 +69,9 @@ class ScriptAuthClass extends SecurityComponent {
             $tokn = self::does_User_Code_Match($this->pageCodes);
 
             if ($tokn == FALSE) {
-                if ($this->pageType == "p") {
+                if ($this->get_Page_Type() == "p") {
                     include("../errorPages/forbid.html");
-                } else if ($this->pageType == "s") {
+                } else if ($this->get_Page_Type() == "s") {
                     $rtn = array("error" => "Unauthorized");
                     echo json_encode($rtn);
                 } else {
@@ -137,19 +102,16 @@ class ScriptAuthClass extends SecurityComponent {
         return $this->pageTitle;
     }
 
-    public function get_ScriptFilename() {
-        return $this->fileName;
-    }
-
     public function get_Page_Type() {
         return $this->pageType;
     }
 
     public function generateMenu($pageHeader) {
         // only generate menu for pages, not services or components
-        if ($this->pageType != WebPageCode::Page) {
+        if ($this->get_Page_Type() != WebPageCode::Page) {
             return '';
         }
+
         $menu = array();
         $uS = Session::getInstance();
         $pageAnchors = array();
@@ -163,6 +125,7 @@ class ScriptAuthClass extends SecurityComponent {
             if (self::is_Admin() || self::does_User_Code_Match($r['Codes'])) {
                 // remove leading underline char - special code for level 1 page names.
                 $fn = str_replace('_', '', $fn);
+
                 // Get my data
                 if (self::is_TheAdmin()) {
                     // Show auth codes for admin account for sanity check
@@ -172,6 +135,7 @@ class ScriptAuthClass extends SecurityComponent {
                     $pageAnchors[$r['idPage']]['Title'] = $r['Title'];
                     $pageAnchors[$r['idPage']]['File_Name'] = $fn;
                 }
+
                 $menu[$r['Parent']][$r['Position']] = $r['idPage'];
             }
         }
@@ -196,7 +160,7 @@ class ScriptAuthClass extends SecurityComponent {
 
                         $myClass = '';
 
-                        if ($pageAnchors[$chld]["File_Name"] == $this->get_ScriptFilename()) {
+                        if ($pageAnchors[$chld]["File_Name"] == $this->getFileName()) {
                             $myClass = " class='hhk-myPage' ";
                             $cls = ' hhk-myMenuTop';
                         }
@@ -213,7 +177,7 @@ class ScriptAuthClass extends SecurityComponent {
 
             } else {
                 $clss = '';
-                if ($pageAnchors[$item]["File_Name"] == $this->get_ScriptFilename()) {
+                if ($pageAnchors[$item]["File_Name"] == $this->getFileName()) {
                     $clss = " class='hhk-myMenuTop' ";
                 }
                 $markup .= "<li$clss><a href='".$pageAnchors[$item]["File_Name"]."'>" . $pageAnchors[$item]["Title"] . "</a>";
@@ -230,7 +194,6 @@ class ScriptAuthClass extends SecurityComponent {
 
         return $markup;
     }
-
 
     protected static function getSiteIcons($isSSL, $siteList, $tutorialURL, $hufURL) {
 

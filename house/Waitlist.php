@@ -29,7 +29,7 @@ $pageTitle = $wInit->pageTitle;
 $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
-$isGuestAdmin = ComponentAuthClass::is_Authorized('guestadmin');
+$isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
 // Load the session with member - based lookups
 $wInit->sessionLoadGenLkUps();

@@ -111,7 +111,7 @@ $memberData = array();
 $showSearchOnly = TRUE;
 
 
-$memberFlag = ComponentAuthClass::is_Authorized("guestadmin");
+$memberFlag = SecurityComponent::is_Authorized("guestadmin");
 
 // Instantiate the alert message control
 $alertMsg = new alertMessage("divAlert2");

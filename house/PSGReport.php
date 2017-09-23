@@ -49,8 +49,6 @@ $alertMsg->set_Text("help");
 
 $resultMessage = $alertMsg->createMarkup();
 
-$isGuestAdmin = ComponentAuthClass::is_Authorized('guestadmin');
-
 $labels = new Config_Lite(LABEL_FILE);
 
 

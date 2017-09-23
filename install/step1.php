@@ -13,13 +13,13 @@ require CLASSES . 'SiteConfig.php';
     function createMarkup(Config_Lite $config) {
 
         $hostName = '';
-        $serverName = filter_var($_SERVER["SERVER_NAME"], FILTER_SANITIZE_STRING);
+        $serverName = filter_input(INPUT_SERVER, "SERVER_NAME", FILTER_SANITIZE_URL);;
 
         if ($serverName === FALSE || is_string($serverName) === FALSE) {
             exit("Server Name is not a string?  " . $serverName);
         }
 
-        $requestURI = filter_var($_SERVER["REQUEST_URI"], FILTER_SANITIZE_URL);
+        $requestURI = filter_input(INPUT_SERVER, "REQUEST_URI", FILTER_SANITIZE_URL);;
 
         if ($requestURI === FALSE || is_string($requestURI) === FALSE) {
             exit("Reqauest URI is not a string?  " . $requestURI);
@@ -33,10 +33,10 @@ require CLASSES . 'SiteConfig.php';
             $hostName = $serverName;
         }
 
-        if (empty($_SERVER['HTTPS']) || strtolower($_SERVER['HTTPS']) == 'off' ) {
-            // non-SSL access.
-            $protocol = 'http://';
-        } else {
+        $serverHTTPS = filter_input(INPUT_SERVER, "HTTPS", FILTER_SANITIZE_STRING);
+        $protocol = 'HTTP://';
+
+        if (empty($serverHTTPS) || strtolower($serverHTTPS) == 'off' ) {
             $protocol = 'https://';
         }
 
@@ -48,8 +48,7 @@ require CLASSES . 'SiteConfig.php';
 
         $stbl = new HTMLTable();
         $stbl->addBodyTr(HTMLTable::makeTh("Site URL") . HTMLTable::makeTd(
-                HTMLContainer::generateMarkup('span', $protocol . $hostName . $path, array('id'=>'spnSiteURL'))
-                . HTMLInput::generateMarkup('Generate URLs', array('id'=>'btnGenURL', 'type'=>'button', 'data-host'=>$hostName, 'data-path'=>$path, 'style'=>'margin-left:5px;'))));
+                HTMLContainer::generateMarkup('span', $protocol . $hostName . $path, array('id'=>'spnSiteURL'))));
 
         $tbl = SiteConfig::createCliteMarkup($config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));  //new HTMLTable();
 
@@ -100,22 +99,6 @@ $configuration = createMarkup($config);
             };
 
             testDb(parms);
-        });
-        $('#btnGenURL').click(function () {
-
-            var link = $('#spnSiteURL').text();
-            $('#siteSite_URL').val(link);
-            $('#siteAdmin_URL').val(link + $('#siteAdmin_Dir').val());
-            $('#siteVolunteer_URL').val('');
-            $('#siteHouse_URL').val('');
-
-            if ($('#siteVolunteer_Dir').val() != '') {
-                $('#siteVolunteer_URL').val(link + $('#siteVolunteer_Dir').val());
-            }
-
-            if ($('#siteHouse_Dir').val() != '') {
-                $('#siteHouse_URL').val(link + $('#siteHouse_Dir').val());
-            }
         });
     });
         </script>

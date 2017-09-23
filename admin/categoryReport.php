@@ -23,8 +23,8 @@ $testVersion = $wInit->testVersion;
 
 $menuMarkup = $wInit->generatePageMenu();
 
-$donationsFlag = ComponentAuthClass::is_Authorized("NameEdit_Donations");
-$donorFlag = ComponentAuthClass::is_Authorized("Cat_Donor");
+$donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
+$donorFlag = SecurityComponent::is_Authorized("Cat_Donor");
 
 $showMemberTypes = false;
 if ($donationsFlag || $donorFlag) {
