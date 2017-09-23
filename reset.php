@@ -35,6 +35,7 @@ require ('classes' . DS. 'config'. DS . 'Lite.php');
 require ('classes' . DS. 'sec' .DS . 'sessionClass.php');
 require ('classes' . DS . 'SysConst.php');
 require ('classes' . DS . 'HTML_Controls.php');
+require ('classes' . DS. 'sec' . DS . 'SecurityComponent.php');
 
 function testdb($ssn) {
 
@@ -67,7 +68,7 @@ $config = new Config_Lite(ciCFG_FILE);
 
 // get session instance
 $ssn = Session::getInstance();
-
+$secureComp = new SecurityComponent(TRUE);
 
 try {
 
@@ -87,7 +88,7 @@ if (is_array($dbConfig)) {
     $ssn->databaseName = $dbConfig['Schema'];
     $ssn->dbms = $dbConfig['DBMS'];
 } else {
-    $ssn->destroy();
+    $ssn->destroy(TRUE);
     exit("Bad Database Configuration Section (db)");
 }
 
@@ -97,7 +98,7 @@ $result = testdb($ssn);
 
 if ($result == '') {
     // database ok.
-    header('location: ' . $config->getString('site','Site_URL', ''));
+    header('location: ' . $secureComp->getRootURL());
     exit();
 }
 
@@ -111,8 +112,8 @@ if (isset($_POST['btnSave'])) {
     try {
         SiteConfig::saveConfig(NULL, $config, $_POST, 'admin');
 
-        $ssn->destroy();
-        header('location: ' . $config->getString('site','Site_URL', ''));
+        $ssn->destroy(TRUE);
+        header('location: ' . $secureComp->getRootURL());
         exit();
 
     } catch (Exception $ex) {
@@ -128,7 +129,8 @@ $pageTitle = $config->getString("site", "Site_Name", "Hospitality House");
 $build = 'Build:' . $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
 $copyYear = date('Y');
 
-$tbl = SiteConfig::createCliteMarkup($config, new Config_Lite('conf' . DS . 'siteTitles.cfg'), 'db');
+
+$tbl = SiteConfig::createCliteMarkup($config, $secureComp->isHTTPS(), new Config_Lite('conf' . DS . 'siteTitles.cfg'), 'db');
 
 ?>
 <!DOCTYPE html>

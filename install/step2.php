@@ -34,7 +34,7 @@ $ssn = Session::getInstance();
 $pageTitle = $ssn->siteName;
 
 // define db connection obj
-$dbh = initPDO();
+$dbh = initPDO(TRUE);
 
 $errorMsg = '';
 $resultAccumulator = "";

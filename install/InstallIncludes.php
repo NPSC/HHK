@@ -43,7 +43,6 @@ require (CLASSES . 'alertMessage.php');
 require (CLASSES . 'config'. DS . 'Lite.php');
 require (SEC . 'SecurityComponent.php');
 require (SEC . 'ScriptAuthClass.php');
-require (SEC . 'ComponentAuthClass.php');
 require (CLASSES . 'SysConst.php');
 require (SEC . 'webInit.php');
 require (CLASSES . 'HTML_Controls.php');

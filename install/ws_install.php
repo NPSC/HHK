@@ -38,46 +38,36 @@ if ($c == "testdb") {
     $errorMsg = '';
 
     try {
-    // Load initialization data
-    $filedata = file_get_contents('initialdata.sql');
-    $parts = explode('-- ;', $filedata);
+        // Load initialization data
+        $filedata = file_get_contents('initialdata.sql');
+        $parts = explode('-- ;', $filedata);
 
-    foreach ($parts as $q) {
+        foreach ($parts as $q) {
 
-        $q = trim($q);
+            $q = trim($q);
 
-        if ($q != '') {
-            try {
-                $dbh->exec($q);
-            } catch (PDOException $pex) {
-                $errorMsg .= $pex->getMessage() . '.  ';
+            if ($q != '') {
+                try {
+                    $dbh->exec($q);
+                } catch (PDOException $pex) {
+                    $errorMsg .= $pex->getMessage() . '.  ';
+                }
             }
         }
-    }
 
-    // Update websites table
-    try {
-        $config = new Config_Lite(ciCFG_FILE);
-        updateWebSites($dbh, $config);
+        // Update admin password
+        if (isset($_POST['new'])) {
 
-    } catch (Exception $ex) {
-        $ssn->destroy();
-        $errorMsg .= $ex . " Configurtion file path = " . ciCFG_FILE . '.  ';
-    }
+            $newPw = filter_var($_POST['new'], FILTER_SANITIZE_STRING);
 
-
-    // Update admin password
-    if (isset($_POST['new'])) {
-
-        $newPw = filter_var($_POST['new'], FILTER_SANITIZE_STRING);
-
-        $uclass = new UserClass();
-        if ($uclass->setPassword($dbh, -1, $newPw)) {
-            $events['result'] = "Admin Password set.  ";
-        } else {
-            $errorMsg .= "Admin Password set.  ";
+            $uclass = new UserClass();
+            if ($uclass->setPassword($dbh, -1, $newPw)) {
+                $events['result'] = "Admin Password set.  ";
+            } else {
+                $errorMsg .= "Admin Password set.  ";
+            }
         }
-    }
+
     } catch (Exception $ex) {
         $errorMsg .= "Installer Error: " . $ex->getMessage();
     }
@@ -148,65 +138,5 @@ function testdb($post) {
     }
 
     return array('success'=>'Good! Server version ' . $serverInfo . '; ' . $driver);
-}
-
-function updateWebSites(\PDO $dbh, Config_Lite $config) {
-
-    // Update website table
-    $webRS = new Web_SitesRS();
-    $rows = EditRS::select($dbh, $webRS, array());
-
-    foreach ($rows as $w) {
-
-        $webRS = new Web_SitesRS();
-        EditRS::loadRow($w, $webRS);
-
-        $host = '';
-
-        switch ($webRS->Site_Code->getStoredVal()) {
-
-            case 'a':
-                $host = $config->getString('site', 'Admin_Dir', '');
-                break;
-
-
-            case 'h':
-                $host = $config->getString('site', 'House_Dir', '');
-
-                if ($host == '') {
-                    // delete the volunteer row.
-                    EditRS::delete($dbh, $webRS, array($webRS->Site_Code));
-                }
-                break;
-
-            case 'v':
-                $host = $config->getString('site', 'Volunteer_Dir', '');
-
-                if ($host == '') {
-                    // delete the volunteer row.
-                    EditRS::delete($dbh, $webRS, array($webRS->Site_Code));
-                }
-
-                break;
-
-            case 'r':
-                $host = 'r';
-                break;
-        }
-
-        if ($host == '') {
-            continue;
-        }
-
-        $url = parse_url($host);
-
-        //$webRS->HTTP_Host->setNewVal($url['host']);
-
-        if (isset($url['path'])) {
-            $webRS->Relative_Address->setNewVal($url['path']);
-        }
-
-        EditRS::update($dbh, $webRS, array($webRS->idweb_sites));
-    }
 }
 

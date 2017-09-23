@@ -31,7 +31,7 @@ try {
 }
 
 // define db connection obj
-$dbh = initPDO();
+$dbh = initPDO(TRUE);
 
 
 // get session instance

@@ -356,7 +356,7 @@ class SiteConfig {
         return $resultMsg;
     }
 
-    public static function createCliteMarkup(Config_Lite $config, Config_Lite $titles = NULL, $onlySection = '') {
+    public static function createCliteMarkup(Config_Lite $config, $isSSL, Config_Lite $titles = NULL, $onlySection = '') {
 
         $tbl = new HTMLTable();
         $inputSize = '40';
@@ -387,10 +387,18 @@ class SiteConfig {
                         }
 
                         if ($key == 'Disclaimer' || $key == 'PaymentDisclaimer') {
+
                             $attr["rows"] = "3";
                             $attr["cols"] = $inputSize;
                             $inpt = HTMLCONTAINER::generateMarkup('textarea', $val, $attr);
+
+                        } else if ($section == 'site' && $key == 'SSL') {
+
+                            $attr['size'] = $inputSize;
+                            $inpt = HTMLInput::generateMarkup(($isSSL ? 'true' : 'false'), $attr);
+
                         } else {
+
                             $attr['size'] = $inputSize;
                             $inpt = HTMLInput::generateMarkup($val, $attr);
                         }
@@ -416,9 +424,9 @@ class SiteConfig {
         return $tbl;
     }
 
-    public static function createMarkup(\PDO $dbh, Config_Lite $config, Config_Lite $titles = NULL) {
+    public static function createMarkup(\PDO $dbh, Config_Lite $config, $isSSL, Config_Lite $titles = NULL) {
 
-        $tbl = self::createCliteMarkup($config, $titles);
+        $tbl = self::createCliteMarkup($config, $isSSL, $titles);
 
         // add sys config table
         $stmt = $dbh->query("select * from sys_config order by `Category`, `Key`");
@@ -469,10 +477,8 @@ class SiteConfig {
                     if ($config->has($secName, $itemName)) {
 
                         // password cutout
-                        if (($itemName == 'Password' || $itemName == 'BackupPassword' || $itemName == 'ReadonlyPassword') && $config->getString($secName, $itemName, '') != $val) {
-                            if ($val != '') {
-                                $val = encryptMessage($val);
-                            }
+                        if ($val != '' && (strstr($itemName, 'Password') !== FALSE) && $config->getString($secName, $itemName, '') != $val) {
+                            $val = encryptMessage($val);
                         }
 
                         // log changes

@@ -413,14 +413,14 @@ if (is_dir('../install')) {
     $delInstallDir = HTMLContainer::generateMarkup('p', HTMLInput::generateMarkup('Delete Install Directory', array('name'=>'delInstallDir', 'type'=>'submit')));
 }
 
-$conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));
+$conf = SiteConfig::createMarkup($dbh, $config, $wInit->page->isHTTPS(), new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));
 
-$labels = SiteConfig::createCliteMarkup($labl)->generateMarkup();
+$labels = SiteConfig::createCliteMarkup($labl, TRUE)->generateMarkup();
 
 $externals = '';
 if (is_null($wsConfig) === FALSE) {
 
-    $externals = SiteConfig::createCliteMarkup($wsConfig, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'neonTitles.cfg'))->generateMarkup();
+    $externals = SiteConfig::createCliteMarkup($wsConfig, TRUE, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'neonTitles.cfg'))->generateMarkup();
 
     if ($wsConfig->getString('credentials', 'User') != '' && $wsConfig->getString('credentials', 'Password') != '') {
 

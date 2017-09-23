@@ -76,7 +76,7 @@ foreach ($uS->siteList as $r) {
 $siteName = HTMLContainer::generateMarkup('h3', 'Volunteer Site' . $icons[$page->get_Site_Code()]);
 
 // disclamer
-$disclaimer = $config->get("site", "Disclaimer", "");
+$disclaimer = $config->get("vol_email", "Disclaimer", "");
 $logoLink = $config->getString("site", "Public_URL", "");
 $copyYear = date('Y');
 

@@ -48,7 +48,7 @@ class ScriptAuthClass extends SecurityComponent {
                 $page = $uS->webPages[$this->getFileName()];
 
                 if (!is_null($page)) {
-                    //$this->pageId = $r["idPage"];
+
                     $this->pageCodes = $page["Codes"];
                     $this->pageTitle = $page["Title"];
                     $this->loginPage = $page["Login"];

@@ -1067,7 +1067,7 @@ $labels = new Config_Lite(LABEL_FILE);
 
 $receiptMarkup = '';
 $paymentMarkup = '';
-$payFailPage = $wInit->page->get_ScriptFilename();
+$payFailPage = $wInit->page->getFilename();
 
 if (isset($_POST['CardID']) || isset($_POST['PaymentID'])) {
 
@@ -1469,7 +1469,6 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
 <script type="text/javascript">
     $(document).ready(function() {
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-        var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';
         var makeTable = '<?php echo $mkTable; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
         var pmtMkup = "<?php echo $paymentMarkup; ?>";

@@ -10,56 +10,14 @@
 require ("InstallIncludes.php");
 require CLASSES . 'SiteConfig.php';
 
-    function createMarkup(Config_Lite $config) {
-
-        $hostName = '';
-        $serverName = filter_input(INPUT_SERVER, "SERVER_NAME", FILTER_SANITIZE_URL);;
-
-        if ($serverName === FALSE || is_string($serverName) === FALSE) {
-            exit("Server Name is not a string?  " . $serverName);
-        }
-
-        $requestURI = filter_input(INPUT_SERVER, "REQUEST_URI", FILTER_SANITIZE_URL);;
-
-        if ($requestURI === FALSE || is_string($requestURI) === FALSE) {
-            exit("Reqauest URI is not a string?  " . $requestURI);
-        }
-
-        $hostParts = explode(".", $serverName);
-        if (strtolower($hostParts[0]) == "www") {
-            unset($hostParts[0]);
-            $hostName = substr(implode(".", $hostParts), 1);
-        } else {
-            $hostName = $serverName;
-        }
-
-        $serverHTTPS = filter_input(INPUT_SERVER, "HTTPS", FILTER_SANITIZE_STRING);
-        $protocol = 'HTTP://';
-
-        if (empty($serverHTTPS) || strtolower($serverHTTPS) == 'off' ) {
-            $protocol = 'https://';
-        }
-
-        $path = "";
-        // find the path
-        $parts = explode("/", $requestURI);
-
-        $path = implode("/", array_slice($parts, 0, count($parts) - 2)) . '/';
-
-        $stbl = new HTMLTable();
-        $stbl->addBodyTr(HTMLTable::makeTh("Site URL") . HTMLTable::makeTd(
-                HTMLContainer::generateMarkup('span', $protocol . $hostName . $path, array('id'=>'spnSiteURL'))));
-
-        $tbl = SiteConfig::createCliteMarkup($config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));  //new HTMLTable();
-
-        return $stbl->generateMarkup() . $tbl->generateMarkup();
-    }
-
 
 // Get the site configuration object
 $config = new Config_Lite(ciCFG_FILE);
 $result = "";
+$secureComp = new SecurityComponent(FALSE);
 
+
+// Save button
 if (isset($_POST['btnSave'])) {
     addslashesextended($_POST);
     try {
@@ -70,13 +28,17 @@ if (isset($_POST['btnSave'])) {
     }
 }
 
-
+// Next button
 if (isset($_POST['btnNext'])) {
     header('location:step2.php');
 }
 
-$configuration = createMarkup($config);
+// Page Markup
+$siteURL = HTMLContainer::generateMarkup('p', "Site URL: " . $secureComp->getRootURL());
 
+$tbl = SiteConfig::createCliteMarkup($config, $secureComp->isHTTPS(), new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));
+
+$configuration = $siteURL . $tbl->generateMarkup();
 ?>
 <!DOCTYPE HTML>
 <html>
@@ -108,7 +70,7 @@ $configuration = createMarkup($config);
             <div class="topNavigation"></div>
             <div>
                 <h2 class="logo">Hospitality HouseKeeper Installation Process</h2>
-                <a href="showini.php">Show PHP Initialization</a>
+                <a href="showini.php" target="_blank">Show PHP Initialization</a>
                 <h3>Step One: Configure Site</h3>
             </div><div class='pageSpacer'></div>
             <div id="content" style="margin:10px; width:100%;">

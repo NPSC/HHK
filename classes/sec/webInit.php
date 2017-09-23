@@ -62,7 +62,7 @@ class webInit {
         }
 
         // define db connection obj
-        $this->dbh = initPDO();
+        $this->dbh = initPDO(FALSE);
 
         // Page authorization check
         $this->page = new ScriptAuthClass($this->dbh);

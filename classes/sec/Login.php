@@ -42,12 +42,14 @@ class Login {
 
         // Check SsL
         $ssl = $config->getBool('site', 'SSL', FALSE);
+        $secureComp = new SecurityComponent(FALSE);
+
         if ($ssl === TRUE) {
 
             // Must access pages through SSL
-            if (empty($_SERVER['HTTPS']) || strtolower($_SERVER['HTTPS']) == 'off' ) {
+            if ($secureComp->isHTTPS() === FALSE) {
                 // non-SSL access.
-               header("Location: " . $config->getString('site','Site_URL', ''));
+                header("Location: " . $config->getString('site','Site_URL', ''));
             }
         }
 
@@ -55,7 +57,7 @@ class Login {
         // Load session
         $ssn->testVersion = $config->getBool('site', 'Run_As_Test', true);
         $ssn->siteName = $config->getString('site','Site_Name', 'Hospitality HouseKeeper');
-        $ssn->resourceURL = $config->getString('site','Site_URL', '');
+        $ssn->resourceURL = $secureComp->getRootURL();
         $ssn->tz = $config->getString('calendar', 'TimeZone', 'America/Chicago');
         $ssn->ver = $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
         $ssn->ssl = $ssl;
@@ -63,9 +65,6 @@ class Login {
         $ssn->sconf = 'sys_config';
         $ssn->sId = $config->getString('site', 'Site_Id', '');
         $ssn->subsidyId = $config->getString('financial', 'RoomSubsidyId', '0');
-
-        $ssn->tutURL = $config->getString('site', 'Tutorial_URL', '');
-        $ssn->HufURL = $config->getString('site', 'HUF_URL', '');
         $ssn->adminEmailAddr = $config->getString('house', 'Admin_Address', '');
         $ssn->noreplyAddr = $config->getString('house', 'NoReply', '');
         $ssn->adminSiteURL = $config->get('site', 'Admin_URL', '');

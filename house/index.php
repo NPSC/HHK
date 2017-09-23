@@ -64,14 +64,14 @@ if (isset($_POST['txtUname'])) {
 }
 
 // disclamer
-$disclaimer = $config->get("site", "Disclaimer", "");
+$disclaimer = $config->get("vol_email", "Disclaimer", "");
 
 if ($uS->mode != Mode::Live) {
     $disclaimer = 'Welcome to this demonstration version of Hospitality HouseKeeper! Do NOT use real guest or patient names.  This demonstration web site is not HIPAA complient and not intended to be used for storing Protected Health Information.';
 }
 
 
-$volSiteURL = $config->get("site", "Volunteer_Dir", "");
+$volSiteURL = $config->get("site", "Volunteer_Dir", '');
 $tutorialSiteURL = $config->getString('site', 'Tutorial_URL', '');
 $trainingSiteURL = $config->getString('site', 'Training_URL', '');
 $build = 'Build:' . $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');

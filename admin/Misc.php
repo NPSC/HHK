@@ -429,7 +429,16 @@ if (isset($_POST["btnDoBackup"])) {
         $filename = REL_BASE_DIR . 'patch' . DS . 'backup.sql.gz';
 
         // ignore tables
-        $igtables = '';
+        $igtables = array(
+            1 => 'postal_codes',
+            2 => 'street_suffix',
+            3 => 'secondary_unit_desig',
+            4 => 'mail_listing',
+            5 => 'member_history',
+            6 => 'language',
+            7 => 'country_code',
+            );
+
         foreach ($ignoreTables as $t) {
             $igtables = " --ignore-table=$dbname.$t";
         }
@@ -454,7 +463,6 @@ if (isset($_POST["btnDoBackup"])) {
         $mail->msgHTML($message);
         $mail->addAttachment($filename, $attachmentname, 'base64', '', 'attachment');
         $mail->send();
-
 
         $bkupMsg = $bkupAlert->createMarkup('Result: ' . $return_var . ";  Email Error: " . $mail->ErrorInfo);
     }
@@ -544,21 +552,19 @@ $contents = "";
 if (isset($_POST["btnSvrErrors"])) {
 
     $accordIndex = 5;
-    $volSiteURL = $config->getString("site", 'Volunteer_URL', '');
-    $houseSiteUrl = $config->getString("site", 'House_URL', '');
 
     // Admin errors
     $contents = "<h3>Administration Site Error Log</h3>";
     $contents .= readErrorFile('error_log');
 
     // House errors
-    if ($houseSiteUrl != '') {
+    if ($config->getString("site", 'House_Dir', '') != '') {
         $contents .= "<h3>House Site Error Log</h3>";
         $contents .= readErrorFile('../house/error_log');
     }
 
     // Volunteer errors
-    if ($volSiteURL != '') {
+    if ($config->getString("site", 'Volunteer_Dir', '') != '') {
         $contents .= "<h3>Volunteer Site Error Log</h3>";
         $contents .= readErrorFile('../volunteer/error_log');
     }

@@ -14,8 +14,8 @@ define('P_ROOT', dirname(__FILE__) . DS);
 define('ciCFG_FILE', P_ROOT . 'conf' . DS . 'site.cfg');
 date_default_timezone_set('America/Chicago');
 
-require_once ('classes' . DS . 'config' . DS . 'Lite.php');
-require_once ('classes' . DS . 'sec' . DS . 'SecurityComponent.php');
+require ('classes' . DS . 'config' . DS . 'Lite.php');
+require ('classes' . DS . 'sec' . DS . 'SecurityComponent.php');
 
 
 // Get the site configuration object
