@@ -184,18 +184,15 @@ class SecurityComponent {
         return $tokn;
     }
 
-    public static function die_if_not_Logged_In($pageType, $loginPage, $pageAddress) {
+    public function die_if_not_Logged_In($pageType, $loginPage) {
         $ssn = Session::getInstance();
 
-        if ($ssn->ssl === TRUE) {
-
-            $serverHTTPS = filter_input(INPUT_SERVER, "HTTPS", FILTER_SANITIZE_STRING);
+        if ($ssn->ssl === TRUE && self::isHTTPS() === FALSE) {
 
             // Must access pages through SSL
-            if (empty($serverHTTPS) || strtolower($serverHTTPS) == 'off' ) {
                 // non-SSL access.
-               header("Location: " . $ssn->resourceURL);
-            }
+               header("Location: " . $this->getSiteURL());
+
         }
 
 
@@ -209,8 +206,8 @@ class SecurityComponent {
 
             } else {
 
-                if ($pageAddress != '') {
-                    header("Location: " . $loginPage . "?xf=" . $pageAddress);
+                if ($this->fileName != '') {
+                    header("Location: " . $loginPage . "?xf=" . $this->fileName);
                 } else {
                     header("Location: " . $loginPage);
                 }
@@ -247,7 +244,7 @@ class SecurityComponent {
 
     public static function isHTTPS() {
 
-        $serverHTTPS = filter_input(INPUT_SERVER, "HTTPS", FILTER_SANITIZE_STRING);
+        $serverHTTPS = filter_var($_SERVER["HTTPS"], FILTER_SANITIZE_STRING);
 
         if (empty($serverHTTPS) || strtolower($serverHTTPS) == 'off' ) {
             return FALSE;
@@ -258,8 +255,8 @@ class SecurityComponent {
 
     public function defineThisURL($isRoot = FALSE) {
 
-        $scriptName = filter_input(INPUT_SERVER, "SCRIPT_NAME", FILTER_SANITIZE_STRING);
-        $serverName = filter_input(INPUT_SERVER, "SERVER_NAME", FILTER_SANITIZE_URL);
+        $scriptName = filter_var($_SERVER["SCRIPT_NAME"], FILTER_SANITIZE_STRING);
+        $serverName = filter_var($_SERVER["SERVER_NAME"], FILTER_SANITIZE_URL);
 
         if (is_null($scriptName) || $scriptName === FALSE) {
             throw new Hk_Exception_Runtime('Script name not set.');

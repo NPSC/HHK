@@ -92,7 +92,7 @@ switch ($c) {
             $en = filter_var($_REQUEST["en"], FILTER_SANITIZE_STRING);
         }
 
-        $reply = $transfer->sendDonation($dbh, $uS->username, $st, $en);
+        $reply = $transfer->sendDonations($dbh, $uS->username, $st, $en);
         $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
 
         $newMembers = $transfer->getMemberReplies();

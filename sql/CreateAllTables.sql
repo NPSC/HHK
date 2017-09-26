@@ -1283,6 +1283,17 @@ CREATE TABLE if not exists `payment_auth` (
 
 
 -- -----------------------------------------------------
+-- Table ``paymentid_externalid`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `paymentid_externalid` (
+  `Payment_Id` INT NOT NULL,
+  `External_Id` VARCHAR(15) NOT NULL,
+  `TimeStamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Payment_Id`, `External_Id`));
+
+
+
+-- -----------------------------------------------------
 -- Table `payment_info_check`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `payment_info_check` (

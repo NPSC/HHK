@@ -125,7 +125,19 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
             //$transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
             $neonItems = $transfer->listNeonType($list['Method'], $list['List_Name'], $list['List_Item']);
 
-            $hhkLookup = removeOptionGroups(readGenLookupsPDO($dbh, $list['HHK_Lookup']));
+            if ($list['HHK_Lookup'] == 'Fund') {
+
+                // Use Items for the Fund
+                $stFund = $dbh->query("select idItem as Code, Description, '' as `Substitute` from item where Deleted = 0;");
+                $hhkLookup = array();
+
+                while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
+                    $hhkLookup[$row["Code"]] = $row;
+                }
+
+            } else {
+                $hhkLookup = removeOptionGroups(readGenLookupsPDO($dbh, $list['HHK_Lookup']));
+            }
 
             $stmtList = $dbh->query("Select * from neon_type_map where List_Name = '" . $list['List_Name'] . "'");
             $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
@@ -433,7 +445,19 @@ if (is_null($wsConfig) === FALSE) {
 
             $neonItems = $transfer->listNeonType($list['Method'], $list['List_Name'], $list['List_Item']);
 
-            $hhkLookup = removeOptionGroups(readGenLookupsPDO($dbh, $list['HHK_Lookup']));
+            if ($list['HHK_Lookup'] == 'Fund') {
+
+                // Use Items for the Fund
+                $stFund = $dbh->query("select idItem as Code, Description, '' as `Substitute` from item where Deleted = 0;");
+                $hhkLookup = array();
+
+                while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
+                    $hhkLookup[$row["Code"]] = $row;
+                }
+
+            } else {
+                $hhkLookup = removeOptionGroups(readGenLookupsPDO($dbh, $list['HHK_Lookup']));
+            }
 
             $stmtList = $dbh->query("Select * from neon_type_map where List_Name = '" . $list['List_Name'] . "'");
             $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);

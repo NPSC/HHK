@@ -60,7 +60,7 @@ class ScriptAuthClass extends SecurityComponent {
 
     public function Authorize_Or_Die() {
 
-        self::die_if_not_Logged_In($this->get_Page_Type(), $this->get_Login_Page(), $this->getFileName());
+        $this->die_if_not_Logged_In($this->get_Page_Type(), $this->get_Login_Page());
 
         $tokn = self::is_Admin();
 

@@ -16,6 +16,7 @@ date_default_timezone_set('America/Chicago');
 
 require ('classes' . DS . 'config' . DS . 'Lite.php');
 require ('classes' . DS . 'sec' . DS . 'SecurityComponent.php');
+require ('classes' . DS . 'Exception_hk' . DS . 'Hk_Exception.php');
 
 
 // Get the site configuration object

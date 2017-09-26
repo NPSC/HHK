@@ -27,12 +27,9 @@ class webInit {
 
     function __construct($page_Type = WebPageCode::Page, $addCSP = TRUE) {
 
-        // find out what page we are on
-        $parts = explode("/", filter_input(INPUT_SERVER, "SCRIPT_NAME", FILTER_SANITIZE_STRING));
-        $pageAddress = $parts[count($parts) - 1];
-
         // check session for login - redirects to index.php otherwise
-        SecurityComponent::die_if_not_Logged_In($page_Type, "index.php", $pageAddress);
+        $secureComp = new SecurityComponent();
+        $secureComp->die_if_not_Logged_In($page_Type, "index.php");
 
         // get session instance
         $uS = Session::getInstance();
@@ -84,7 +81,7 @@ class webInit {
         } else {
             if ($uS->timeout_idle < time()) {
                 $uS->logged = FALSE;
-                SecurityComponent::die_if_not_Logged_In($page_Type, "index.php", $pageAddress);
+                $secureComp->die_if_not_Logged_In($page_Type, "index.php");
             } else {
                 $uS->timeout_idle = $t + ($uS->SessionTimeout * 60);
             }
