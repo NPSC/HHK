@@ -244,7 +244,11 @@ class SecurityComponent {
 
     public static function isHTTPS() {
 
-        $serverHTTPS = filter_var($_SERVER["HTTPS"], FILTER_SANITIZE_STRING);
+        $serverHTTPS = '';
+
+        if (isset($_SERVER["HTTPS"])) {
+            $serverHTTPS = filter_var($_SERVER["HTTPS"], FILTER_SANITIZE_STRING);
+        }
 
         if (empty($serverHTTPS) || strtolower($serverHTTPS) == 'off' ) {
             return FALSE;

@@ -79,6 +79,10 @@ function getPaymentReport(\PDO $dbh, $start, $end) {
             $r['Payment Date'] = date('c', strtotime($r['Payment Date']));
         }
 
+        if (isset($r['Amount'])) {
+            $r['Amount'] = number_format($r['Amount'], 2);
+        }
+
         $rows[] = $r;
 
     }
@@ -685,8 +689,8 @@ $(document).ready(function() {
             }
             $('#TxButton').val('Working...');
             transferRemote(transferIds);
-
         });
+
     } else if (makeTable === '2') {
 
         $('div#printArea').show();
@@ -696,7 +700,7 @@ $(document).ready(function() {
 
         $('#tblrpt').dataTable({
             'columnDefs': [
-                {'targets': [5],
+                {'targets': [4],
                  'type': 'date',
                  'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
                 }
@@ -715,7 +719,6 @@ $(document).ready(function() {
 
             transferPayments($(this), start, end);
         });
-
     }
 
 

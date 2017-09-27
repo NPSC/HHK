@@ -881,14 +881,14 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
             $('#rbReplaceRoomnew').prop('checked', true);
         });
     }
-    
+
     if (p.adjustBtn.length > 0) {
         p.adjustBtn.button();
         p.adjustBtn.click(function () {
             getApplyDiscDiag(idVisit, $diagBox);
         });
     }
-    
+
     $('#divPmtMkup').on('click', '.invAction', function (event) {
         event.preventDefault();
         if ($(this).data('stat') == 'del') {
@@ -899,7 +899,7 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
 
         invoiceAction($(this).data('iid'), $(this).data('stat'), event.target.id, '#keysfees', true);
     });
-    
+
     // Billing agent chooser set up
     if ($('#txtInvSearch').length > 0) {
         
@@ -943,23 +943,28 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
         var days = parseInt($(this).val());
         var idVisit = parseInt($(this).data('vid'));
         var fixed = parseFloat($('#txtFixedRate').val());
-        
+        var noGuests = parseInt($('#spnNumGuests').text());
+
+        if (isNaN(noGuests)) {
+            noGuests = 1;
+        }
+
         if (isNaN(fixed)) {
             fixed = 0;
         }
-        
+
         var adjust = parseFloat($('#txtadjAmount').val());
         if (isNaN(adjust)) {
             adjust = 0;
         }
-        
+
         if (isNaN(days)) {
             $(this).val('');
             return;
         }
-        
+
         if (days > 0) {
-            var parms = {cmd:'rtcalc', vid: idVisit, nites: days, rcat: $rateSelector.val(), fxd: fixed, adj: adjust};
+            var parms = {cmd:'rtcalc', vid: idVisit, nites: days, rcat: $rateSelector.val(), fxd: fixed, adj: adjust, gsts: noGuests};
             // ask momma how much
             $.post('ws_ckin.php', parms,
                 function(data) {

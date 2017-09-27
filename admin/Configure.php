@@ -122,17 +122,26 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
 
         while ($list = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            //$transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
             $neonItems = $transfer->listNeonType($list['Method'], $list['List_Name'], $list['List_Item']);
 
             if ($list['HHK_Lookup'] == 'Fund') {
 
                 // Use Items for the Fund
-                $stFund = $dbh->query("select idItem as Code, Description, '' as `Substitute` from item where Deleted = 0;");
+                $stFund = $dbh->query("select `idItem` as `Code`, `Description`, '' as `Substitute` from item where Deleted = 0;");
                 $hhkLookup = array();
 
                 while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
-                    $hhkLookup[$row["Code"]] = $row;
+                    $hhkLookup[$row['Code']] = $row;
+                }
+
+            } else if ($list['HHK_Lookup'] == 'Pay_Type') {
+
+                // Use Items for the Fund
+                $stFund = $dbh->query("select `idPayment_method` as `Code`, `Method_Name` as `Description`, '' as `Substitute` from payment_method;");
+                $hhkLookup = array();
+
+                while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
+                    $hhkLookup[$row['Code']] = $row;
                 }
 
             } else {
@@ -453,6 +462,16 @@ if (is_null($wsConfig) === FALSE) {
 
                 while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
                     $hhkLookup[$row["Code"]] = $row;
+                }
+
+            } else if ($list['HHK_Lookup'] == 'Pay_Type') {
+
+                // Use Items for the Fund
+                $stFund = $dbh->query("select `idPayment_method` as `Code`, `Method_Name` as `Description`, '' as `Substitute` from payment_method;");
+                $hhkLookup = array();
+
+                while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
+                    $hhkLookup[$row['Code']] = $row;
                 }
 
             } else {

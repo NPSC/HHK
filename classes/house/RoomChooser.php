@@ -487,6 +487,8 @@ class RoomChooser {
         $catTitle = '';
         $catRate = 0;
         $nites = 1;
+        $guestNites = 1;
+        $numberGuests = 1;
         $credit = 0;
         $idRoomRate = 0;
         $fixedRate = 0;
@@ -509,6 +511,8 @@ class RoomChooser {
             if ($nites < 1) {
                 $nites = 1;
             }
+
+            $guestNites = $nites;
         }
 
         if (isset($post['credit'])) {
@@ -523,8 +527,13 @@ class RoomChooser {
         if (isset($post['fxd'])) {
             $fixedRate = floatval(filter_var($post['fxd'],FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
         }
+
         if (isset($post['adj'])) {
             $rateAdjust = floatval(filter_var($post['adj'],FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+        }
+
+        if (isset($post['gsts'])) {
+            $numberGuests = intval(filter_var($post['gsts'],FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
 
@@ -568,6 +577,10 @@ class RoomChooser {
 
                 $priceModel->setCreditDays($visitCharges->getNightsPaid());
 
+                $guestNites = count($visit->stays) * $nites;
+
+            } else {
+                $guestNites = $numberGuests * $nites;
             }
         }
 
@@ -576,6 +589,8 @@ class RoomChooser {
         } else if ($cat == '') {
             $cat = Default_Settings::Rate_Category;
         }
+
+        $amt = ($priceModel->amountCalculator($nites, $idRoomRate, $cat, $fixedRate, $guestNites) * (1 + $rateAdjust));
 
         foreach ($priceModel->getActiveModelRoomRates() as $rs) {
 
@@ -586,8 +601,6 @@ class RoomChooser {
             }
         }
 
-
-        $amt = ($priceModel->amountCalculator($nites, $idRoomRate, $cat, $fixedRate, $nites) * (1 + $rateAdjust));
 
         return array(
             'amt'=> number_format($amt, 2),

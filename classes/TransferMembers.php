@@ -298,65 +298,34 @@ class TransferMembers {
         $replys = array();
         $this->memberReplies = array();
         $idMap = array();
+        $mappedItems = array();
         $whereClause = '';
 
         if ($start != '') {
-            $whereClause = " and DATE(p.Payment_Date) >= DATE('$start') ";
+            $whereClause = " and DATE(`date`) >= DATE('$start') ";
         }
 
         if ($end != '') {
-            $whereClause .= " and DATE(p.Payment_Date) <= DATE('$end') ";
+            $whereClause .= " and DATE(`date`) <= DATE('$end') ";
         }
 
-        $stmt = $dbh->query("SELECT
-    p.*,
-    n.External_Id AS `accountId`,
-    IFNULL(DATE_FORMAT(p.Payment_Date, '%Y-%m-%d'), '') AS `date`,
-    'HHK' AS `source.name`,
-    CASE
-        WHEN p.Is_Refund = 1 THEN (0 - (p.il_Amount))
-        ELSE (p.il_Amount)
-    END AS `amount`,
-    IFNULL(np.Neon_Type_Code, '') AS `fund.id`,
-    IFNULL(nt.Neon_Type_Code, '') AS `tenderType.id`,
-    p.Payment_Note AS `note`,
-    IFNULL(p.Masked_Account, '') AS `cardNumber`,
-    IFNULL(nc.Neon_Type_Name, '') AS `cardType.name`,
-    IFNULL(gt.CardHolderName, '') AS `cardHolder`,
-    IFNULL(p.Check_Number, '') AS `CheckNumber`
-FROM
-    vlist_inv_pments p
-        LEFT JOIN
-    `name` n ON p.Payment_idPayor = n.idName
-        LEFT JOIN
-    guest_token gt ON p.Payment_idToken = gt.idGuest_token
-        LEFT JOIN
-    neon_type_map np ON np.List_Name = 'funds'
-        LEFT JOIN
-    gen_lookups gp ON gp.`Table_Name` = 'Pay_Type'
-        AND gp.Substitute = p.idPayment_Method
-        LEFT JOIN
-    neon_type_map nt ON nt.List_Name = 'tenders'
-        AND nt.HHK_Type_Code = gp.Code
-        LEFT JOIN
-    gen_lookups gc ON gc.`Table_Name` = 'Charge_Cards'
-        AND gc.Substitute = p.Card_Type
-        LEFT JOIN
-    neon_type_map nc ON nc.List_Name = 'creditCardTypes'
-        AND nc.HHK_Type_Code = gc.Code
-WHERE
-    p.Payment_Status = 's'
-        AND p.idPayment_Method IN (1 , 2, 3, 4)
-        AND Payment_External_Id = '' $whereClause");
+        $stmt = $dbh->query("Select * from vguest_neon_payment where 1=1 $whereClause");
 
         if ($stmt->rowCount() < 1) {
             return array(array('Donation Result'=>'No new HHK payments found to transfer.  '));
         }
 
+        // Load the time codes for output
+        $stmtList = $dbh->query("Select * from neon_type_map");
+        $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($items as $i) {
+            $mappedItems[$i['Neon_Name']][$i['Neon_Type_Code']] = $i['Neon_Type_Name'];
+        }
+
         // Log in with the web service
         $this->openTarget($this->userId, $this->password);
-        $idPayment = 0; // track repeated payment Id's
-        $result = array();
+
 
         while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
@@ -370,20 +339,32 @@ WHERE
 
             // Prefill output array
             foreach ($r as $k => $v) {
+
                 if ($k != '') {
-                    $f[$k] = $v;
+
+                    if ($k == 'amount') {
+                        $f[$k] = number_format($v, 2);
+                    } else if ($k == 'fund.id' && isset($mappedItems['fund'][$v])) {
+                        $f[$k] = $mappedItems['fund'][$v];
+                    } else if ($k == 'tenderType.id' && isset($mappedItems['tender'][$v])) {
+                        $f[$k] = $mappedItems['tender'][$v];
+                    } else if ($k == 'cardType.name' && isset($mappedItems['creditCardType'][$v])) {
+                        $f[$k] = $mappedItems['creditCardType'][$v];
+                    } else if ($k != 'source.name') {
+                        $f[$k] = $v;
+                    }
                 }
             }
 
             // Is the account defined?
-            if ($r['accountId'] == '' && isset($idMap[$r['Payment_idPayor']])) {
+            if ($r['accountId'] == '' && isset($idMap[$r['hhkId']])) {
                 // Already made a new Neon account.
-                $r['accountId'] = $idMap[$r['Payment_idPayor']];
+                $r['accountId'] = $idMap[$r['hhkId']];
 
             } else if ($r['accountId'] == '') {
 
                 // Search and create a new account if needed.
-                $acctReplys = $this->sendList($dbh, array($r['Payment_idPayor']), $username);
+                $acctReplys = $this->sendList($dbh, array($r['hhkId']), $username);
 
                 if (isset($acctReplys[0]['Account ID']) && $acctReplys[0]['Account ID'] != '') {
 
@@ -391,7 +372,7 @@ WHERE
                     $this->memberReplies[] = $acctReplys[0];
                     $r['accountId'] = $acctReplys[0]['Account ID'];
                     $f['accountId'] = $acctReplys[0]['Account ID'] . '*';
-                    $idMap[$r['Payment_idPayor']] = $acctReplys[0]['Account ID'];
+                    $idMap[$r['hhkId']] = $acctReplys[0]['Account ID'];
 
                 } else {
 
@@ -402,62 +383,18 @@ WHERE
                 }
             }
 
-            $don = array();
-
-            // Multiple payment records
-            if ($r['idPayment'] != $idPayment) {
-                // New Payment record
-
-                // Save old payment record.
-                if (isset($result['donationId'])) {
-
-                    try {
-
-                        $this->updateLocalPaymentRecord($dbh, $idPayment, $result['donationId'], $username);
-                        $f['Result'] = 'Success';
-                        $f['External_Id'] = $result['donationId'];
-
-
-                    } catch (Hk_Exception_Upload $uex) {
-
-                        $f['Result'] = $uex->getMessage();
-                    }
-
-                }
-
-                $idPayment = $r['idPayment'];
-            }
 
             // Make the donation with the HHK payment record.
-            $result = $this->createDonation($don, $f);
+            $this->createDonation($dbh, $r, $f);
 
 
             $replys[] = $f;
         }
 
-        // Save old payment record.
-        if (isset($result['donationId'])) {
-
-            try {
-
-                $this->updateLocalPaymentRecord($dbh, $idPayment, $result['donationId'], $username);
-                $f['Result'] = 'Success';
-                $f['External_Id'] = $result['donationId'];
-
-
-            } catch (Hk_Exception_Upload $uex) {
-
-                $f['Result'] = $uex->getMessage();
-            }
-
-        }
-
-
         return $replys;
-
     }
 
-    protected function createDonation($r, &$f) {
+    protected function createDonation(\PDO $dbh, $r, &$f) {
 
         $param = array();
 
@@ -478,10 +415,26 @@ WHERE
 
             $f['Result'] = $this->errorMessage;
 
-        } else if (isset($wsResult['donationId'])) {
+        } else if (isset($wsResult['donationId']) === FALSE) {
 
             $f['Result'] = 'Huh?  The donation Id was not set';
+
+        } else {
+
+            try {
+
+                $this->updateLocalPaymentRecord($dbh, $r['idPayment'], $wsResult['donationId']);
+                $f['Result'] = 'Success';
+
+            } catch (Hk_Exception_Upload $uex) {
+
+                $f['Result'] = $uex->getMessage();
+            }
+
+            $f['External Payment Id'] = $wsResult['donationId'];
         }
+
+        return $wsResult;
 
     }
 
@@ -634,25 +587,26 @@ WHERE
         }
     }
 
-    protected function updateLocalPaymentRecord(\PDO $dbh, $idPayment, $externalId, $username) {
+    protected function updateLocalPaymentRecord(\PDO $dbh, $idPayment, $externalId) {
+
+        $result = 0;
 
         if ($externalId != '' && $idPayment > 0) {
-            $payRs = new PaymentRS();
-            $payRs->idPayment->setStoredVal($idPayment);
-            $rows = EditRS::select($dbh, $payRs, array($payRs->idPayment));
 
-            EditRS::loadRow($rows[0], $payRs);
+            $extId = filter_var($externalId, FILTER_SANITIZE_STRING);
 
-            if ($payRs->External_Id->getStoredVal() != '' && $payRs->External_Id->getStoredVal() != $externalId) {
-                throw new Hk_Exception_Upload("HHK Payment Record (idPayment = $idPayment) already has a Neon Donation Id = " . $payRs->External_Id->getStoredVal());
+            $stmt = $dbh->query("Select count(*) from paymentid_externalid where Payment_Id = $idPayment and External_Id = '$extId'");
+            $extRows = $stmt->fetchAll(PDO::FETCH_NUM);
+
+            if (count($extRows[0]) == 1 && $extRows[0][0] > 0) {
+                throw new Hk_Exception_Upload("HHK Payment Record (idPayment = $idPayment) already has a Donation Id = " . $extId);
             }
 
-            $payRs->External_Id->setNewVal($externalId);
-            $payRs->Updated_By->setNewVal($username);
-            $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
-            EditRS::update($dbh, $payRs, array($payRs->idPayment));
+            $result = $dbh->exec("INSERT into `paymentid_externalid` (`Payment_Id`, `External_Id`) VALUES ($idPayment, '$extId');");
 
         }
+
+        return $result;
     }
 
     protected function fillDonation($r, &$param) {

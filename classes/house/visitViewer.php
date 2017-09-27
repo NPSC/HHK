@@ -683,11 +683,15 @@ class VisitView {
 
         // Number of guest-nights
         if ($showGuestNights) {
+
+            $additNights = $visitCharge->getGuestNightsStayed() - $visitCharge->getNightsStayed();
+
             $tbl2->addBodyTr(
-                    HTMLTable::makeTd('# of guest-nights stayed:', array('class'=>'tdlabel'))
-                    . HTMLTable::makeTd($visitCharge->getGuestNightsStayed())
+                    HTMLTable::makeTd('Additional guest-nights:', array('class'=>'tdlabel'))
+                    . HTMLTable::makeTd($additNights < 0 ? 0 : $additNights)
             );
         }
+        
         // Visit Glide
         if ($visitCharge->getGlideCredit() > 0) {
             $tbl2->addBodyTr(
