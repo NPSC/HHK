@@ -525,7 +525,7 @@ class SiteConfig {
             $indx = $r['idcc_gateway'];
             $tbl->addBodyTr(HTMLTable::makeTd($r['cc_name'], array('class'=>'tdlabel'))
             .HTMLTable::makeTd(HTMLInput::generateMarkup($r['Merchant_Id'], array('name'=>$indx . '_txtMid')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup(($r['Password'] != '' ? "********" : ''), array('name'=>$indx .'_txtpw')))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup($r['Password'], array('name'=>$indx .'_txtpw')))
             .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>$indx .'_txtpw2')))
              .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>$indx .'cbDel'))));
         }
@@ -587,13 +587,17 @@ class SiteConfig {
                     $pw = filter_var($post[$indx . '_txtpw'], FILTER_SANITIZE_STRING);
                     $pw2 = filter_var($post[$indx . '_txtpw2'], FILTER_SANITIZE_STRING);
 
-                    // Don't save the pw blank characters
-                    if ($pw != '********' && $pw == $pw2) {
+                    if ($pw != '' && $pw != $ccRs->Password->getStoredVal()) {
 
-                        $ccRs->Password->setNewVal(encryptMessage($pw));
-                    } else {
-                        // passwords don't match
-                        $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - Passwords do not match.  ");
+                        // Don't save the pw blank characters
+                        if ($pw == $pw2) {
+
+                            $ccRs->Password->setNewVal(encryptMessage($pw));
+
+                        } else {
+                            // passwords don't match
+                            $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - Passwords do not match.  ");
+                        }
                     }
                 }
 

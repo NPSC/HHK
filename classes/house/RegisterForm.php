@@ -278,7 +278,7 @@ class RegisterForm {
   <p class='label'>Relationship to Guest</p>
   </td>
   <td style='border-top:none;border-left: none;border-bottom:solid windowtext 1.5pt;border-right:solid windowtext 1.5pt;'>
-  <p class=MsoNormal style='margin-bottom:0;line-height: normal'>" . (isset($relationText[$emrg->getEcRelationship()]) ? $relationText[$emrg->getEcRelationship()][1] : '') . "</p>
+  <p class=MsoNormal style='margin-bottom:0;line-height: normal'>" .  "</p>
   </td>
  </tr>
  <tr>

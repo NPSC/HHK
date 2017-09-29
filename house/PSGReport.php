@@ -59,18 +59,9 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 
     $query = '';
     $agentTitle = $labels->getString('hospital', 'referralAgent', 'Referral Agent');
-    $diagTitle = '';
-    $locTitle = '';
+    $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
+    $locTitle = $labels->getString('hospital', 'location', 'Location');
 
-
-    if ($showDiagnosis) {
-        $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
-    }
-
-
-    if ($showLocation) {
-        $locTitle = $labels->getString('hospital', 'location', 'Location');
-    }
 
     if ($showAddr && $showFullName) {
 
@@ -81,8 +72,8 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
             . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
             . " ifnull(rr.Title, '') as `Rate Category`, 0 as `Total Cost`, "
             . "hs.idHospital, hs.idAssociation, "
-            . "  ifnull(g.Description, '') as `Diagnosis`, ifnull(gl.Description, '') as `Location`, "
-            . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `Referral Agent`, ifnull(g2.Description,'') as `Status`";
+            . "  ifnull(g.Description, '') as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
+            . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle`, ifnull(g2.Description,'') as `Status`";
 
     } else if ($showAddr && !$showFullName) {
 
@@ -92,8 +83,8 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
             . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
             . "hs.idHospital, hs.idAssociation, "
             . "np.Name_Last as `Patient Last`, np.Name_First as `Patient First`, "
-                ." ifnull(g.Description, '') as `Diagnosis`, ifnull(gl.Description, '') as `Location`, "
-            . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `Referral Agent` ";
+                ." ifnull(g.Description, '') as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
+            . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
 
     } else if (!$showAddr && $showFullName) {
 
@@ -101,18 +92,18 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
                 . "ifnull(g2.Description,'') as `Status`, "
                 . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
                 . "np.Name_Last as `Patient Last`, np.Name_First as `Patient First` , "
-                . " ifnull(g.Description, '') as `Diagnosis`, ifnull(gl.Description, '') as `Location`, "
+                . " ifnull(g.Description, '') as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
             . "hs.idHospital, hs.idAssociation,
-          ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `Referral Agent` ";
+          ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
 
     } else {
 
         $query = "select vg.Id, vg.idPsg, vg.Relationship_Code, vg.Last as `Guest Last`, vg.First as `Guest First`, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.ngStatus, "
             . "ifnull(g2.Description,'') as `Status`,  ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
                 . "np.Name_Last as `Patient Last`, np.Name_First as `Patient First`, "
-                . " ifnull(g.Description, '') as `Diagnosis`, ifnull(gl.Description, '') as `Location`, "
+                . " ifnull(g.Description, '') as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
             . "hs.idHospital, hs.idAssociation, "
-                . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `Referral Agent` ";
+                . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
     }
 
     if ($showNoReturn) {
@@ -177,11 +168,11 @@ where  ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DATE(s.Sp
 
         unset($r['Relationship_Code']);
 
-        if ($diagTitle == '') {
+        if ($showDiagnosis === FALSE) {
             unset($r['Diagnosis']);
         }
 
-        if ($locTitle == '') {
+        if ($showLocation === FALSE) {
             unset($r['Location']);
         }
 
@@ -190,7 +181,7 @@ where  ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DATE(s.Sp
         }
 
         if ($uS->ReferralAgent === FALSE) {
-            unset($r['Referral_Agent']);
+            unset($r[$agentTitle]);
         }
 
         if ($showAssoc === FALSE) {
@@ -229,18 +220,6 @@ where  ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DATE(s.Sp
                 $keys = array_keys($r);
                 foreach ($keys as $k) {
 
-                    if ($k == 'Diagnosis') {
-                        $k = $diagTitle;
-                    }
-
-                    if ($k == 'Location') {
-                        $k = $locTitle;
-                    }
-
-                    if ($k == 'Referral_Agent') {
-                        $k = $agentTitle;
-                    }
-
                     if ($k == 'ngStatus') {
                         $noReturn = 'No Return';
                         continue;
@@ -272,7 +251,6 @@ where  ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DATE(s.Sp
                 $r['Departure'] = date('Y/m/d', strtotime($r['Departure']));
             }
             unset($r['idPsg']);
-
 
             if (isset($r['ngStatus'])) {
 
@@ -341,6 +319,9 @@ where  ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DATE(s.Sp
 
 function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hospCodes, \Config_Lite $labels, $showAssoc, $showDiagnosis, $showLocation, $patBirthDate) {
 
+    $agentTitle = $labels->getString('hospital', 'referralAgent', 'Referral Agent');
+    $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
+    $locTitle = $labels->getString('hospital', 'location', 'Location');
     $psgLabel = $labels->getString('statement', 'psgAbrev', 'PSG') . ' Id';
 
     $query = "Select DISTINCT
@@ -354,8 +335,8 @@ function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hosp
     ifnull(n.BirthDate, '') as `Birth Date`,
     ifnull(hs.idHospital, '') as `Hospital`,
     ifnull(hs.idAssociation, '') as `Association`,
-    ifnull(g.Description, '') as `Diagnosis`,
-    ifnull(g1.Description, '') as `Location`
+    ifnull(g.Description, '') as `$diagTitle`,
+    ifnull(g1.Description, '') as `$locTitle`
 from
     name_guest ng
         join
@@ -393,16 +374,6 @@ order by ng.idPsg";
     $firstRow = TRUE;
     $separatorClassIndicator = '))+class';
 
-    $diagTitle = '';
-    $locTitle = '';
-
-    if ($showDiagnosis) {
-        $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
-    }
-
-    if ($showLocation) {
-        $locTitle = $labels->getString('hospital', 'location', 'Location');
-    }
 
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
@@ -428,20 +399,12 @@ order by ng.idPsg";
             $r['Hospital'] = '';
         }
 
-        if ($showDiagnosis) {
-            $tempDiag = $r['Diagnosis'];
-            unset($r['Diagnosis']);
-            $r[$diagTitle] = $tempDiag;
-        } else {
-            unset($r['Diagnosis']);
+        if ($showDiagnosis === FALSE) {
+            unset($r[$diagTitle]);
         }
 
-        if ($showLocation) {
-            $tempLoc = $r['Location'];
-            unset($r['Location']);
-            $r[$locTitle] = $tempLoc;
-        } else {
-            unset($r['Location']);
+        if ($showLocation === FALSE) {
+            unset($r[$locTitle]);
         }
 
         if (!$patBirthDate) {
@@ -497,10 +460,10 @@ order by ng.idPsg";
             } else {
                 // Not a patient
                 if ($showDiagnosis) {
-                    $r['Diagnosis'] = '';
+                    $r[$diagTitle] = '';
                 }
                 if ($showLocation) {
-                    $r['Location'] = '';
+                    $r[$locTitle] = '';
                 }
 
                 $r['Hospital'] = '';
@@ -613,7 +576,7 @@ foreach ($hospList as $h) {
 
 // Diagnozis
 $diags = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
-$locs = readGenLookupsPDO($dbh, 'Locations', 'Description');
+$locs = readGenLookupsPDO($dbh, 'Location', 'Description');
 
 if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 

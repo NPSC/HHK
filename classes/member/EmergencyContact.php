@@ -140,5 +140,3 @@ class EmergencyContact implements iEmergencyContact {
     }
 
 }
-
-?>

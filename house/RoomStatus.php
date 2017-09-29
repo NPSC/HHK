@@ -213,7 +213,7 @@ if ($checkingIn == '') {
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
-var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
+var dateFormat = '<?php echo "ddd MMM D, YYYY"; ?>';
 var cgCols = [
     {
         'data':'Room',

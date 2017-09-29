@@ -106,7 +106,7 @@ if ((count($aList) + count($hList)) > 1) {
 
 $locations = readGenLookupsPDO($dbh, 'Location');
 if (count($locations) > 0) {
-    $cFields[] = array($labels->getString('statement', 'location', 'Location'), 'Location', 'checked', '', 's', '', array());
+    $cFields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', 'checked', '', 's', '', array());
 }
 
 $diags = readGenLookupsPDO($dbh, 'Diagnosis');

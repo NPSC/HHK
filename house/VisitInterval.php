@@ -1067,9 +1067,11 @@ $labels = new Config_Lite(LABEL_FILE);
 
 $receiptMarkup = '';
 $paymentMarkup = '';
-$payFailPage = $wInit->page->getFilename();
+$payFailPage = '';
 
 if (isset($_POST['CardID']) || isset($_POST['PaymentID'])) {
+
+    $payFailPage = $wInit->page->getFilename();
 
     require (DB_TABLES . 'MercuryRS.php');
     require (DB_TABLES . 'PaymentsRS.php');
@@ -1206,7 +1208,7 @@ if ($uS->Doctor) {
 
 $locations = readGenLookupsPDO($dbh, 'Location');
 if (count($locations) > 0) {
-    $cFields[] = array($labels->getString('statement', 'location', 'Location'), 'Location', 'checked', '', 's', '', array());
+    $cFields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', 'checked', '', 's', '', array());
 }
 
 $diags = readGenLookupsPDO($dbh, 'Diagnosis');
