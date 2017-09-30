@@ -86,10 +86,36 @@ if (isset($_POST['btnSave'])) {
         foreach ($patch->results as $err) {
             $errorMsg .= 'Create Stored Procedures Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
         }
+
+        // Set web_sites table
+        $adminDir = str_ireplace('/', '', $conig->getString('site', 'Admin_Dir', 'admin')) . '/';
+        $houseDir = str_ireplace('/', '', $conig->getString('site', 'House_Dir', '')) . '/';
+        $volDir = str_ireplace('/', '', $conig->getString('site', 'Volunteer_Dir', '')) . '/';
+
+        // Admin
+        $dbh->exec("update web_sites set Relative_Address = '$adminDir' where Site_Code = 'a'");
+
+        // House
+        if ($houseDir != '') {
+            $dbh->exec("update web_sites set Relative_Address = '$houseDir' where Site_Code = 'h'");
+        } else {
+            $dbh->exec("update web_sites set Relative_Address = '' where Site_Code = 'h'");
+        }
+
+        // Volunteer
+        if ($volDir != '') {
+            $dbh->exec("update web_sites set Relative_Address = '$volDir' where Site_Code = 'v'");
+        } else {
+            $dbh->exec("update web_sites set Relative_Address = '' where Site_Code = 'v'");
+        }
+
+
     } catch (Exception $hex) {
         $errorMsg .= '***' . $hex->getMessage();
     }
-} else if (isset($_POST['btnNext'])) {
+}
+
+if (isset($_POST['btnNext'])) {
     header('location:step3.php');
 }
 ?>
@@ -106,13 +132,17 @@ if (isset($_POST['btnSave'])) {
                 "use strict";
 
                 $('#btnMeta').click(function () {
+
                     var pw1 = $('#txtpw1'),
-                            pw2 = $('#txtpw2');
-                    var pword;
+                        pw2 = $('#txtpw2'),
+                        pword;
+
+                    $('#spanpwerror').text('');
                     pword = pw1.val();
 
                     if (checkStrength(pword)) {
 
+                        // Strength ok, check second copy
                         if (pword !== pw2.val()) {
                             $('#spanpwerror').text('Passwords are not the same.');
                             return;

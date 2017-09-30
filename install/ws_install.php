@@ -34,7 +34,7 @@ if ($c == "testdb") {
 
 } else if ($c == 'loadmd') {
 
-    $dbh = initPDO();
+    $dbh = initPDO(TRUE);
     $errorMsg = '';
 
     try {
@@ -122,7 +122,7 @@ function testdb($post) {
             case 'ODBC':
                 $dbh = initODBC($dbURL, $dbName, $dbUser, $pw);
                 return array('success'=>'Good!');
-                break;
+
 
             default:
                 return array("error" => "Bad DBMS: " . $dbms . "<br/>");

@@ -82,7 +82,7 @@ $copyYear = date('Y');
 
 $loginMkup = $login->loginForm($uname);
 
-$cspURL = $uS->siteList[$page->get_Site_Code()]['HTTP_Host'];
+$cspURL = $page->getHostName();
 
 header('X-Frame-Options: SAMEORIGIN');
 header("Content-Security-Policy: default-src $cspURL; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+

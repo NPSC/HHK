@@ -88,7 +88,7 @@ class webInit {
         }
 
         if ($addCSP) {
-            $cspURL = $uS->siteList[$this->page->get_Site_Code()]['HTTP_Host'];
+            $cspURL = $this->page->getHostName();
             header("Content-Security-Policy: default-src $cspURL; script-src $cspURL 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
             header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // IE 10+
             header('X-Frame-Options: SAMEORIGIN');

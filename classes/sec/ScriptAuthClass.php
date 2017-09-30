@@ -26,7 +26,7 @@ class ScriptAuthClass extends SecurityComponent {
         // try reading the web site table
         try {
 
-            $site = self::loadWebSite($dbh, $this->getHostName(), $this->getPath());
+            $site = $this->loadWebSite($dbh);
 
         } catch (Hk_Exception $hex) {
 
@@ -57,6 +57,144 @@ class ScriptAuthClass extends SecurityComponent {
             }
         }
     }
+
+    protected function loadWebSite(\PDO $dbh) {
+
+        $uS = Session::getInstance();
+
+
+        // Load all the web sites.
+        if (isset($uS->siteList) === FALSE) {
+
+            $stmt = $dbh->query("Select Site_Code, Required_Group_Code, Relative_Address, Index_Page, Default_Page, Description, Path_To_CSS as `Class`
+                from web_sites where Relative_Address != '';");
+
+            $sl = array();
+
+            if ($stmt->rowCount() > 0) {
+
+                while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                    $site = array(
+                        "Site_Code" => $r["Site_Code"],
+                        "Relative_Address" => $r['Relative_Address'],
+                        "Index_Page" => $r["Index_Page"],
+                        "Default_Page" => $r["Default_Page"],
+                        "Description" => $r["Description"],
+                        "Class" => $r["Class"]
+                    );
+
+                    $codes = explode(',', $r["Required_Group_Code"]);
+
+                    foreach ($codes as $c) {
+
+                        $c = trim($c);
+
+                        if ($c != '') {
+                            $site['Groups'][] = $c;
+                        }
+                    }
+
+                    $sl[$r["Site_Code"]] = $site;
+                }
+
+                $uS->siteList = $sl;
+
+            } else {
+                throw new Hk_Exception_Runtime("web_sites records not found.");
+            }
+        }
+
+        // Is our web site page list loaded?
+        if (isset($uS->webSite) && $uS->webSite["Relative_Address"] == $this->getHhkSiteDir()) {
+
+            return $uS->webSite;
+        }
+
+        // Load Site
+        unset($uS->webSite);
+        unset($uS->webPages);
+
+        foreach ($uS->siteList as $ws) {
+
+            if ($ws["Relative_Address"] == $this->getHhkSiteDir()) {
+                $uS->webSite = $ws;
+                break;
+            }
+        }
+
+
+        if (isset($uS->webSite)) {
+
+            $wsCode = strtolower($uS->webSite["Site_Code"]);
+            $where = " where p.Web_Site = '$wsCode' and p.Hide = 0 ";
+            $orderBy = " order by p.Type, p.Menu_Parent, p.Menu_Position";
+
+            // Get list of pages
+            $query = "select
+                p.idPage as idPage,
+                p.File_Name,
+                p.Title as Title,
+                p.Type as Type,
+                p.Menu_Parent,
+                p.Menu_Position,
+                case
+                    when p.Login_Page_Id > 0 then p1.File_Name
+                    else ''
+                end as Login_Page,
+                ifnull(s.Group_Code, '') as Group_Code
+            from
+                page p
+                    left join
+                page p1 ON p.Login_Page_Id = p1.idPage
+                    left join
+                page_securitygroup s ON p.idPage = s.idPage";
+
+            try {
+                $stmt = $dbh->query($query . $where . $orderBy);
+            } catch (PDOException $pex) {
+                $where = " where p.Web_Site = '$wsCode' ";
+                $stmt = $dbh->query($query . $where . $orderBy);
+            }
+
+            if ($stmt->rowCount() > 0) {
+                $wp = array();
+                $lastId = 0;
+
+                while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+                    if ($lastId == $r['idPage']) {
+
+                        $wp[$r['File_Name']]['Codes'][] = $r['Group_Code'];
+
+                    } else {
+
+                        $wp[$r['File_Name']] = array(
+                            'idPage' => $r['idPage'],
+                            'Title' => $r['Title'],
+                            'Type' => $r['Type'],
+                            'Parent' => $r['Menu_Parent'],
+                            'Position' => $r['Menu_Position'],
+                            'Login' => $r['Login_Page'],
+                            'Codes' => array($r['Group_Code'])
+                        );
+                    }
+
+                    $lastId = $r['idPage'];
+                }
+
+                $uS->webPages = $wp;
+            } else {
+                throw new Hk_Exception_Runtime("Web pages list not found.");
+            }
+        } else {
+
+            throw new Hk_Exception_Runtime("web_sites not found.  Host: " . $this->getRootURL() . "  Doc Root: " . $this->getHhkSiteDir());
+        }
+
+        return $uS->webSite;
+
+    }
+
 
     public function Authorize_Or_Die() {
 
@@ -141,7 +279,7 @@ class ScriptAuthClass extends SecurityComponent {
         }
 
 
-        $markup = "<header id='global-nav'>" . self::getSiteIcons($uS->ssl, $uS->siteList, $uS->tutURL, $uS->HufURL);
+        $markup = "<header id='global-nav'>" . $this->getSiteIcons($uS->siteList, $uS->tutURL, $uS->HufURL);
         $markup .= "<div id='global-title'>$pageHeader</div><div id='navContainer'><div id='nav'>";
         // process
         foreach ($menu["0"] as $item) {
@@ -195,23 +333,19 @@ class ScriptAuthClass extends SecurityComponent {
         return $markup;
     }
 
-    protected static function getSiteIcons($isSSL, $siteList, $tutorialURL, $hufURL) {
+    protected function getSiteIcons($siteList, $tutorialURL, $hufURL) {
 
         $mu = "<ul id='ulIcons' style='float:left;padding-top:5px;' class='ui-widget ui-helper-clearfix'>";
         $siteCount = 0;
-        $proto = 'http://';
-        if ($isSSL) {
-            $proto = 'https://';
-        }
-
         $siteMu = '';
+
         foreach ($siteList as $r) {
 
             if ($r["Site_Code"] != "r" && (self::is_Admin() || self::does_User_Code_Match($r["Groups"]))) {
                 $siteCount++;
                 // put in the site list.
                 $siteMu .= "<li class='ui-widget-header ui-corner-all' title='" . $r["Description"] . "'>"
-                      . "<a  href='" . $proto . $r["HTTP_Host"] . $r["Relative_Address"] . $r["Default_Page"] . "'>"
+                      . "<a  href='" . $this->getRootURL() . $r["Relative_Address"] . $r["Default_Page"] . "'>"
                         . "<span class='" . $r["Class"] . "' ></span></a>"
                       . "</li>";
             }
