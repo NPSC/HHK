@@ -49,8 +49,8 @@ define('PMT', CLASSES . 'Payment' . DS);
 define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 define('MEMBER', CLASSES . 'member' . DS);
 
-define('JS_V', '?v=5');
-define('CSS_V', '?v=5');
+define('JS_V', '?v=4');
+define('CSS_V', '?v=4');
 
 // paths
 define('JQ_UI_CSS', 'css/sunny/jquery-ui.min.css' . CSS_V);

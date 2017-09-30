@@ -718,10 +718,10 @@ function injectSlot(data) {
         $('#btnCkinForm').hide();    
     }
     
-    if (resv.idReserv > 0) {
-        $('input#btnDelete').show();
+    if (resv.idReserv > 0 && (data.rvstCode === 'a' || data.rvstCode === 'w' || data.rvstCode === 'uc')) {
+        $('#btnDelete').show();
     } else {
-        $('input#btnDelete').hide();
+        $('#btnDelete').hide();
     }
 
     if (data.resun) {
@@ -898,15 +898,12 @@ function loadGuest(incmg, role, idPsg, patientStaying) {
             if (data.static && data.static === 'y') {
                 
                 $('input#btnDone').hide();
-                $('input#btnDelete').show();
+
                 
             } else {
                 
                 $('input#btnDone').show();
                 
-                if (resv.idReserv > 0) {
-                    $('input#btnDelete').show();
-                }
                 
                 if (data.patient && data.patient !== '') {
                     var idPstr = $('div#patientSection #h_idName').val();

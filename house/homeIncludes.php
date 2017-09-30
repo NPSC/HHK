@@ -88,8 +88,8 @@ define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 define('HOUSE', CLASSES . 'house' . DS);
 define('MEMBER', CLASSES . 'member' . DS);
 
-define('JS_V', '?v=4');
-define('CSS_V', '?v=3');
+define('JS_V', '?v=5');
+define('CSS_V', '?v=4');
 
 // paths
 define('JQ_UI_CSS', '<link href="css/redmond/jquery-ui.min.css' . CSS_V . '" rel="stylesheet" type="text/css" />');

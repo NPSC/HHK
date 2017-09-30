@@ -99,7 +99,7 @@ class EmergencyContact implements iEmergencyContact {
 
             $val = filter_var($pData[$idPrefix.'selEmrgRel'], FILTER_SANITIZE_STRING);
 
-            if ($val = RelLinkType::Self) {
+            if ($val == RelLinkType::Self) {
                 $val = '';
             }
 
