@@ -212,8 +212,13 @@ class RegisterForm {
     }
 
     protected static function guestBlock(\PDO $dbh, array $guests, array $relationText) {
+
         $mkup = "<table style='border-collapse:collapse;border:none'>
             <tr><td colspan='6' style='border:none;border-bottom:1.5pt solid #98C723;padding-left:0;'><h2>Guests</h2></td></tr>";
+
+        $uS = Session::getInstance();
+        $ecRels = $uS->nameLookups[GL_TableNames::RelTypes];
+
 
         // for each guest
         foreach ($guests as $guest) {
@@ -278,7 +283,7 @@ class RegisterForm {
   <p class='label'>Relationship to Guest</p>
   </td>
   <td style='border-top:none;border-left: none;border-bottom:solid windowtext 1.5pt;border-right:solid windowtext 1.5pt;'>
-  <p class=MsoNormal style='margin-bottom:0;line-height: normal'>" .  "</p>
+  <p class=MsoNormal style='margin-bottom:0;line-height: normal'>" . (isset($ecRels[$emrg->getEcRelationship()]) ? $ecRels[$emrg->getEcRelationship()][1] : '') . "</p>
   </td>
  </tr>
  <tr>

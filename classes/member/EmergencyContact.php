@@ -84,24 +84,35 @@ class EmergencyContact implements iEmergencyContact {
     protected function extractMarkup($pData, $idPrefix = "") {
 
         if (isset($pData[$idPrefix.'txtEmrgFirst'])) {
-            $this->ecRS->Name_First->setNewVal(ucfirst($pData[$idPrefix.'txtEmrgFirst']));
+            $this->ecRS->Name_First->setNewVal(ucfirst(filter_var($pData[$idPrefix.'txtEmrgFirst'], FILTER_SANITIZE_STRING)));
         }
         if (isset($pData[$idPrefix.'txtEmrgLast'])) {
-            $this->ecRS->Name_Last->setNewVal(ucfirst($pData[$idPrefix.'txtEmrgLast']));
+            $this->ecRS->Name_Last->setNewVal(ucfirst(filter_var($pData[$idPrefix.'txtEmrgLast'], FILTER_SANITIZE_STRING)));
         }
         if (isset($pData[$idPrefix.'txtEmrgPhn'])) {
-            $this->ecRS->Phone_Home->setNewVal($pData[$idPrefix.'txtEmrgPhn']);
+            $this->ecRS->Phone_Home->setNewVal(filter_var($pData[$idPrefix.'txtEmrgPhn'], FILTER_SANITIZE_STRING));
         }
         if (isset($pData[$idPrefix.'txtEmrgAlt'])) {
-            $this->ecRS->Phone_Alternate->setNewVal($pData[$idPrefix.'txtEmrgAlt']);
+            $this->ecRS->Phone_Alternate->setNewVal(filter_var($pData[$idPrefix.'txtEmrgAlt'], FILTER_SANITIZE_STRING));
         }
         if (isset($pData[$idPrefix.'selEmrgRel'])) {
-            $this->ecRS->Relationship->setNewVal($pData[$idPrefix.'selEmrgRel']);
+
+            $val = filter_var($pData[$idPrefix.'selEmrgRel'], FILTER_SANITIZE_STRING);
+
+            if ($val = RelLinkType::Self) {
+                $val = '';
+            }
+
+            $this->ecRS->Relationship->setNewVal($val);
         }
 
     }
 
     public static function createMarkup(iEmergencyContact $emContact, $relOptions, $idPrefix = "", $checkLater = FALSE) {
+
+        if (isset($relOptions[RelLinkType::Self])) {
+            unset($relOptions[RelLinkType::Self]);
+        }
 
         $markup = new HTMLTable();
         $markup->addBodyTr(HTMLTable::makeTd('First Name', array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLInput::generateMarkup($emContact->getEcNameFirst(), array('name'=>$idPrefix.'txtEmrgFirst', 'size'=>'14'))));
