@@ -265,7 +265,7 @@ class Patch {
         }
 
         // Finally the top directory
-        unlink($directory);
+        rmdir($directory);
 
     }
 

@@ -700,10 +700,10 @@ REPLACE INTO `fa_category` (`idFa_category`, `HouseHoldSize`, `Income_A`, `Incom
 REPLACE INTO `web_sites` 
 (`idweb_sites`,`Site_Code`,`Description`,`Relative_Address`,`Required_Group_Code`,`Path_To_CSS`,`Path_To_JS`,`Last_Updated`,`Updated_By`,`Default_Page`,`Index_Page`,`HTTP_Host`)
  VALUES
-(1,'a','Admin','/admin/','mm','ui-icon ui-icon-gear','',now(),'admin','NameSch.php','index.php','localhost'),
-(2,'h','House','/house/','g,ga','ui-icon ui-icon-person','',now(),'admin','register.php','index.php','localhost'),
-(3,'v','Volunteer','/volunteer/','v','ui-icon ui-icon-heart','',now(),'admin','VolAction.php','index.php','localhost'),
-(4,'r','Root','/','pub','','',now(),'admin','','','localhost');
+(1,'a','Admin','admin/','mm','ui-icon ui-icon-gear','',now(),'admin','NameSch.php','index.php',''),
+(2,'h','House','house/','g,ga','ui-icon ui-icon-person','',now(),'admin','register.php','index.php',''),
+(3,'v','Volunteer','volunteer/','v','ui-icon ui-icon-heart','',now(),'admin','VolAction.php','index.php',''),
+(4,'r','Root','/','pub','','',now(),'admin','','','');
 -- ;
 
 

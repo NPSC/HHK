@@ -334,6 +334,7 @@ if (isset($_POST['delInstallDir'])) {
     $tabIndex = 1;
     Patch::deleteDirectory('../install');
 }
+
 // Save SQL
 if (isset($_POST['btnSaveSQL'])) {
 

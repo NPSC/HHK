@@ -88,9 +88,9 @@ if (isset($_POST['btnSave'])) {
         }
 
         // Set web_sites table
-        $adminDir = str_ireplace('/', '', $conig->getString('site', 'Admin_Dir', 'admin')) . '/';
-        $houseDir = str_ireplace('/', '', $conig->getString('site', 'House_Dir', '')) . '/';
-        $volDir = str_ireplace('/', '', $conig->getString('site', 'Volunteer_Dir', '')) . '/';
+        $adminDir = str_ireplace('/', '', $config->getString('site', 'Admin_Dir', 'admin')) . '/';
+        $houseDir = str_ireplace('/', '', $config->getString('site', 'House_Dir', '')) . '/';
+        $volDir = str_ireplace('/', '', $config->getString('site', 'Volunteer_Dir', '')) . '/';
 
         // Admin
         $dbh->exec("update web_sites set Relative_Address = '$adminDir' where Site_Code = 'a'");

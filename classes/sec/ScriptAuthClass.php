@@ -279,8 +279,9 @@ class ScriptAuthClass extends SecurityComponent {
         }
 
 
-        $markup = "<header id='global-nav'>" . $this->getSiteIcons($uS->siteList, $uS->tutURL, $uS->HufURL);
+        $markup = "<header id='global-nav'>" . $this->getSiteIcons($uS->siteList);
         $markup .= "<div id='global-title'>$pageHeader</div><div id='navContainer'><div id='nav'>";
+
         // process
         foreach ($menu["0"] as $item) {
 
@@ -333,11 +334,15 @@ class ScriptAuthClass extends SecurityComponent {
         return $markup;
     }
 
-    protected function getSiteIcons($siteList, $tutorialURL, $hufURL) {
+    protected function getSiteIcons($siteList) {
 
         $mu = "<ul id='ulIcons' style='float:left;padding-top:5px;' class='ui-widget ui-helper-clearfix'>";
         $siteCount = 0;
         $siteMu = '';
+
+        $config = new Config_Lite(ciCFG_FILE);
+        $tutorialURL = $config->getString('site', 'Tutorial_URL', '');
+        $hufURL = $config->getString('site', 'HUF_URL', '');
 
         foreach ($siteList as $r) {
 
