@@ -378,16 +378,6 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
 $wsLogo = $wsConfig->getString('credentials', 'Logo_URI', '');
 $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
 
-$cspURL = $uS->siteList[$wInit->page->get_Site_Code()]['HTTP_Host'];
-header("Content-Security-Policy: default-src $cspURL; img-src $cspURL www.neoncrm.com; script-src $cspURL 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
-header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // IE 10+
-
-header('X-Frame-Options: SAMEORIGIN');
-$isHttps = !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off';
-if ($isHttps) {
-  header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
-}
-
 ?>
 <!DOCTYPE html>
 <html>
