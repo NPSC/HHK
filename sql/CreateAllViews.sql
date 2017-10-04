@@ -1118,7 +1118,7 @@ WHERE
 CREATE OR REPLACE VIEW `vneon_payment_display` AS
 SELECT 
     p.idPayment as `HHK Payment Id`,
-	p.idPayor as `HHK Id`,
+    p.idPayor as `HHK Id`,
     n.Name_Full as `Name`,
     n.External_Id AS `Account Id`,
     IFNULL(DATE_FORMAT(p.Payment_Date, '%Y-%m-%d'), '') AS `Payment Date`,
@@ -1128,16 +1128,16 @@ SELECT
     END AS `Amount`,
     IFNULL(np.Neon_Type_Name, '') AS `Neon Fund`,
     IFNULL(nt.Neon_Type_Name, '') AS `Payment Method`,
-        CASE
-            WHEN p.idPayment_Method = 1 THEN ''
-            WHEN p.idPayment_Method = 3 THEN IFNULL(pc.Check_Number, '')
-            ELSE CONCAT(IFNULL(pa.Acct_Number, ''),
-                    '; ',
-                    IFNULL(nc.Neon_Type_Name, ''),
-                    '; ',
-                    IFNULL(gt.CardHolderName, ''))
-        END AS `Detail`,
-        p.Notes AS `Notes`
+    CASE
+        WHEN p.idPayment_Method = 1 THEN ''
+        WHEN p.idPayment_Method = 3 THEN IFNULL(pc.Check_Number, '')
+        ELSE CONCAT(IFNULL(pa.Acct_Number, ''),
+                ', ',
+                IFNULL(nc.Neon_Type_Name, ''),
+                ', ',
+                IFNULL(gt.CardHolderName, ''))
+    END AS `Detail`,
+    p.Notes AS `Notes`
 FROM
     payment p
         LEFT JOIN
