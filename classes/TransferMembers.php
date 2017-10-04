@@ -374,12 +374,18 @@ class TransferMembers {
                     $f['accountId'] = $acctReplys[0]['Account ID'] . '*';
                     $idMap[$r['hhkId']] = $acctReplys[0]['Account ID'];
 
-                } else {
+                } else if (isset($acctReplys[0]['Result'])) {
 
                     // Some kind of problem like multiple accounts found.
-                    $f['Result'] = $acctReplys[0];
+                    $f['Result'] = $acctReplys[0]['Result'];
                     $replys[] = $f;
                     continue;
+
+                } else {
+                    $f['Result'] = "Undefined problem adding HHK person to Neon.";
+                    $replys[] = $f;
+                    continue;
+
                 }
             }
 
