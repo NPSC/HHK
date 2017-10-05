@@ -992,7 +992,7 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
         (CASE
             WHEN (`np`.`Phone_Code` = 'mc') THEN 'Mobile'
             WHEN (`np`.`Phone_Code` = 'dh') THEN 'Home'
-            WHEN (`np`.`Phone_Code` = 'gw') THEN 'Business'
+            WHEN (`np`.`Phone_Code` = 'gw') THEN 'Mobile'
             WHEN (IFNULL(`np`.`Phone_Code`, '') = '') THEN ''
             ELSE 'Home'
         END) AS `phone1Type`,
@@ -1107,7 +1107,7 @@ FROM
         LEFT JOIN
     paymentid_externalid pe on p.idPayment = pe.Payment_Id
 WHERE
-    p.Status_Code = 's' and pe.External_Id is null
+    p.Status_Code = 's' and pe.External_Id is null and n.Record_Member = 1
         AND p.idPayment_Method IN (1 , 2, 3, 4);
         
 
@@ -1126,7 +1126,7 @@ SELECT
         WHEN p.Is_Refund = 1 THEN (0 - (il.Amount))
         ELSE (il.Amount)
     END AS `Amount`,
-    IFNULL(np.Neon_Type_Name, '') AS `Neon Fund`,
+    IFNULL(np.Neon_Type_Name, concat('*', il.Description)) AS `Neon Fund`,
     IFNULL(nt.Neon_Type_Name, '') AS `Payment Method`,
     CASE
         WHEN p.idPayment_Method = 1 THEN ''
@@ -1167,7 +1167,7 @@ FROM
         LEFT JOIN
     paymentid_externalid pe on p.idPayment = pe.Payment_Id
 WHERE
-    p.Status_Code = 's' and pe.External_Id is null
+    p.Status_Code = 's' and pe.External_Id is null and n.Record_Member = 1
         AND p.idPayment_Method IN (1 , 2, 3, 4);
         
 

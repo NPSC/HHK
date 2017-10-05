@@ -319,7 +319,6 @@ $cFields[] = array("Notes", 'Notes', 'checked', '', 's', '', array());
 
 $colSelector = new ColumnSelectors($cFields, 'selFld');
 
-// Check POST
 if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     $headerTable = new HTMLTable();
