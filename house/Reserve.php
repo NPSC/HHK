@@ -317,7 +317,7 @@ function PageManager(initData) {
                 return;
             }
 
-            if (people.findItem('id', item.id) !== null) {
+            if (item.id > 0 && people.findItem('id', item.id) !== null) {
                 flagAlertMessage('This person is already listed here. ', true);
                 return;
             }
@@ -427,25 +427,38 @@ function PageManager(initData) {
             }
         }
 
-        function loadAddress($control) {
+        function loadAddress(prefix) {
 
-            var prefix = $control.data('pref');
-
-            if ($control.attr('id') === prefix + 'adraddress1' + addrPurpose) {
-                addrs.list()[prefix].Address_1 = $control.val();
-            } else if ($control.attr('id') === prefix + 'adraddress2' + addrPurpose) {
-                addrs.list()[prefix].Address_2 = $control.val();
-            } else if ($control.attr('id') === prefix + 'adrcity' + addrPurpose) {
-                addrs.list()[prefix].City = $control.val();
-            } else if ($control.attr('id') === prefix + 'adrcounty' + addrPurpose) {
-                addrs.list()[prefix].County = $control.val();
-            } else if ($control.attr('id') === prefix + 'adrstate' + addrPurpose) {
-                addrs.list()[prefix].State_Province = $control.val();
-            } else if ($control.attr('id') === prefix + 'adrcountry' + addrPurpose) {
-                addrs.list()[prefix].Country_Code = $control.val();
-            } else if ($control.attr('id') === prefix + 'adrzip' + addrPurpose) {
-                addrs.list()[prefix].Postal_Code = $control.val();
+            if (prefix === undefined) {
+                return;
             }
+
+            var ad = addrs.list();
+            var addr = t.addrs.list();
+
+            addrs.list()[prefix].Address_1 = $('#' + prefix + 'adraddress1').val();
+            addrs.list()[prefix].Address_2 = $('#' + prefix + 'adraddress2').val();
+            addrs.list()[prefix].City = $('#' + prefix + 'adrcity').val();
+            addrs.list()[prefix].County = $('#' + prefix + 'adrcounty').val();
+            addrs.list()[prefix].State_Province = $('#' + prefix + 'adrstate').val();
+            addrs.list()[prefix].Country_Code = $('#' + prefix + 'adrcountry').val();
+            addrs.list()[prefix].Postal_Code = $('#' + prefix + 'adrzip').val();
+
+//            if ($control.attr('id') === prefix + 'adraddress1' + addrPurpose) {
+//                addrs.list()[prefix].Address_1 = $control.val();
+//            } else if ($control.attr('id') === prefix + 'adraddress2' + addrPurpose) {
+//                addrs.list()[prefix].Address_2 = $control.val();
+//            } else if ($control.attr('id') === prefix + 'adrcity' + addrPurpose) {
+//                addrs.list()[prefix].City = $control.val();
+//            } else if ($control.attr('id') === prefix + 'adrcounty' + addrPurpose) {
+//                addrs.list()[prefix].County = $control.val();
+//            } else if ($control.attr('id') === prefix + 'adrstate' + addrPurpose) {
+//                addrs.list()[prefix].State_Province = $control.val();
+//            } else if ($control.attr('id') === prefix + 'adrcountry' + addrPurpose) {
+//                addrs.list()[prefix].Country_Code = $control.val();
+//            } else if ($control.attr('id') === prefix + 'adrzip' + addrPurpose) {
+//                addrs.list()[prefix].Postal_Code = $control.val();
+//            }
 
         }
 
@@ -476,7 +489,12 @@ function PageManager(initData) {
 
             fDiv = $('<div/>').addClass('ui-widget-content ui-corner-bottom hhk-tdbox').prop('id', divFamDetailId).css('padding', '5px');
 
-            fDiv.append($('<table/>').prop('id', data.famSection.tblId).addClass('hhk-table').append($('<thead/>').append($(data.famSection.tblHead))))
+            fDiv.append(
+                    $('<table/>')
+                        .prop('id', data.famSection.tblId)
+                        .addClass('hhk-table')
+                        .append($('<thead/>').append($(data.famSection.tblHead)))
+                        .append($('<tbody/>')))
                     .append($(data.famSection.adtnl));
 
             expanderButton = $("<ul style='list-style-type:none; float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
@@ -514,16 +532,14 @@ function PageManager(initData) {
                 return;
             }
 
+            $wrapper.empty();
+
+            initFamilyTable(data);
             $famTbl = $wrapper.find('#' + data.famSection.tblId);
 
-            if ($famTbl.length === 0) {
-                initFamilyTable(data);
-                $famTbl = $wrapper.find('#' + data.famSection.tblId);
-            }
 
             for (var t=0; t < data.famSection.tblBody.length; t++) {
-                $famTbl.
-                        .append($(data.famSection.tblBody[t]));
+                $famTbl.find('tbody:first').append($(data.famSection.tblBody[t]));
             }
 
             $('.hhk-cbStay').checkboxradio({
@@ -582,16 +598,14 @@ function PageManager(initData) {
                 $states.bfhstates($states.data());
             });
 
-            $('.hhk-addrPanel').on('change', 'input, select', function() {
-                loadAddress($(this));
+            $('.hhk-addrPanel').on('click', 'input, select', function() {
+                loadAddress($(this).data('pref'));
             });
 
             $('.hhk-phemtabs').tabs();
 
             $('#' + divFamDetailId).on('click', '.hhk-addrCopy', function() {
-
                 copyAddress($(this).attr('name'), cpyAddr);
-
             });
 
             $('#' + divFamDetailId).on('click', '.hhk-addrErase', function() {
@@ -660,7 +674,7 @@ function PageManager(initData) {
                 stripeClass = 'odd';
             }
 
-            $famTbl.append($(data.ntr).addClass(stripeClass)).append($(data.atr).addClass(stripeClass));
+            $famTbl.find('tbody:first').append($(data.ntr).addClass(stripeClass)).append($(data.atr).addClass(stripeClass));
 
             // prepare stay button
             $('#' + data.pref + 'cbStay').checkboxradio({
@@ -1433,8 +1447,7 @@ function PageManager(initData) {
 
     function getReserve(sdata) {
 
-
-        $.post('ws_resv.php', sdata, function(data) {
+        $.post('ws_resv.php', {id:sdata.id, rid:sdata.rid, idPsg:sdata.idPsg, cmd:sdata.cmd}, function(data) {
 
             try {
                 data = $.parseJSON(data);
@@ -1456,6 +1469,41 @@ function PageManager(initData) {
 
         $('div#guestSearch').hide();
 
+    }
+
+    function deleteReserve(rid, idForm) {
+
+        var cmdStr = '&cmd=delResv' + '&rid=' + rid;
+        $.post(
+                'ws_ckin.php',
+                cmdStr,
+                function(datas) {
+                    var data;
+                    try {
+                        data = $.parseJSON(datas);
+                    } catch (err) {
+                        flagAlertMessage(err.message, true);
+                        $(idForm).remove();
+                    }
+
+                    if (data.error) {
+                        if (data.gotopage) {
+                            window.open(data.gotopage, '_self');
+                        }
+                        flagAlertMessage(data.error, true);
+                        $(idForm).remove();
+                    }
+
+                    if (data.warning) {
+                        flagAlertMessage(data.warning, true);
+                    }
+
+                    if (data.result) {
+                        $(idForm).remove();
+                        flagAlertMessage(data.result + ' <a href="Reserve.php">Continue</a>', true);
+                    }
+                }
+        );
     }
 
     function loadResv(data) {
@@ -1486,10 +1534,10 @@ function PageManager(initData) {
 
         if (data.famSection) {
 
-            familySection.setUp(data);
-
             people.makeList(data.famSection.mem, 'pref');
             addrs.makeList(data.famSection.addrs, 'pref');
+
+            familySection.setUp(data);
 
             $('#btnDone').val('Continue').show();
         }
@@ -1526,45 +1574,16 @@ function PageManager(initData) {
             if (data.rid > 0) {
 
                 $('#btnDelete').click(function () {
+
                     if ($(this).val() === 'Deleting >>>>') {
                         return;
                     }
 
                     if (confirm('Delete this ' + data.resvTitle + '?')) {
 
-                        var cmdStr = '&cmd=delResv' + '&rid=' + data.rid;
-
                         $(this).val('Deleting >>>>');
 
-                        $.post(
-                                'ws_ckin.php',
-                                cmdStr,
-                                function(data) {
-                                    try {
-                                        data = $.parseJSON(data);
-                                    } catch (err) {
-                                        flagAlertMessage(err.message, true);
-                                        $('form#form1').remove();
-                                    }
-
-                                    if (data.error) {
-                                        if (data.gotopage) {
-                                            window.open(data.gotopage, '_self');
-                                        }
-                                        flagAlertMessage(data.error, true);
-                                        $('form#form1').remove();
-                                    }
-
-                                    if (data.warning) {
-                                        flagAlertMessage(data.warning, true);
-                                    }
-
-                                    if (data.result) {
-                                        $('form#form1').remove();
-                                        flagAlertMessage(data.result + ' <a href="Reserve.php">Continue</a>', true);
-                                    }
-                                }
-                        );
+                        deleteReserve(data.rid, 'form#form1');
                     }
                 });
 

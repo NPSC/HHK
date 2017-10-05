@@ -167,6 +167,13 @@ if ($roomCount > 20) {
     $divFontSize = 'font-size:.8em;';
 }
 
+// Daily Log
+$dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
+        . HTMLInput::generateMarkup('Print', array('type'=>'button', 'id'=>'btnPrtDaily', 'style'=>'margin-left:5em;font-size:.8em;'))
+        . HTMLInput::generateMarkup('Refresh', array('type'=>'button', 'id'=>'btnRefreshDaily', 'style'=>'margin-left:5em;font-size:.8em;'))
+        , array('style' => 'background-color:#D3D3D3; padding:10px;'))
+        . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divdaily'));
+
 
 // Currently Checked In guests
 $currentCheckedIn = HTMLContainer::generateMarkup('h3', 'Current Guests' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlCurGuests', 'style'=>'margin-left:5em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
@@ -353,8 +360,18 @@ try {
                 <?php if ($uS->UseWLnotes) { ?>
                 {data: 'WL Notes', title: '<?php echo $labels->getString('referral', 'waitlistNotesLabel', 'WL Notes'); ?>'},
                 <?php } ?>
-
             ];
+
+            var dailyCols = [
+                {data: 'Title', title: 'Room', className: 'hhk-justify-c'},
+                {data: 'Status', title: 'Status', searchable:false},
+                {data: 'Guests', title: 'Guests'},
+                {data: 'Patient_Name', title: patientLabel},
+                {data: 'Unpaid', title: 'Unpaid', className: 'hhk-justify-r'},
+                {data: 'Visit_Notes', title: 'Visit Notes', sortable: false},
+                {data: 'Notes', title: 'Room Notes', sortable: false},
+            ];
+
         </script>
         <script type="text/javascript" src="js/register-min.js<?php echo JS_V; ?>"></script>
 <style>
@@ -416,6 +433,7 @@ try {
                         <li><a href="#vfees"><?php echo $labels->getString('register', 'recentPayTab', 'Recent Payments'); ?></a></li>
                         <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
                     <?php } } ?>
+                    <li><a href="#vdaily">Daily Log</a></li>
                 </ul>
                 <div id="vcal" style="clear:left; padding: .6em 1em; display:none; <?php echo $divFontSize; ?>">
                     <?php echo $viewWeeks; echo $colorKey; ?>
@@ -431,6 +449,9 @@ try {
 <?php } ?>
                 <div id="vresvs" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
                     <?php echo $currentReservations; ?>
+                </div>
+                <div id="vdaily" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
+                    <?php echo $dailyLog; ?>
                 </div>
                 <div id="vwls" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
 <?php echo $waitlist; ?>

@@ -29,7 +29,7 @@ require (CLASSES . 'Notes.php');
 require (PMT . 'Invoice.php');
 require (PMT . 'InvoiceLine.php');
 require (PMT . 'Receipt.php');
-
+require (CLASSES . 'Purchase/Item.php');
 require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');
 require (MEMBER . 'OrgMember.php');
@@ -52,6 +52,8 @@ require (HOUSE . 'Constraint.php');
 require (HOUSE . 'ActivityReport.php');
 require (HOUSE . 'Reservation_1.php');
 require (HOUSE . 'ReservationSvcs.php');
+require (HOUSE . 'RoomReport.php');
+require (HOUSE . 'VisitCharges.php');
 
 require (CLASSES . 'HouseLog.php');
 require (CLASSES . 'Purchase/RoomRate.php');
@@ -386,6 +388,10 @@ $(document).mousedown(function (event) {
         switch ($tbl) {
             case 'curres':
                 $events['curres'] = History::getCheckedInGuestMarkup($dbh, "GuestEdit.php", TRUE);
+                break;
+
+            case 'daily':
+                $events['daily'] = RoomReport::dailyReport($dbh);
                 break;
 
             case 'reservs':

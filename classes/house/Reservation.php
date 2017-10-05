@@ -360,11 +360,6 @@ class ReserveSearcher extends ActiveReservation {
         return $this->reserveData->toArray();
 
     }
-    
-    public function addperson(\PDO $dbh) {
-        return $this->createMarkup($dbh);
-    }
-
 
     protected function reservationChooser(\PDO $dbh) {
 

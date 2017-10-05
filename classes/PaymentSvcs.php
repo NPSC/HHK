@@ -305,9 +305,11 @@ class PaymentSvcs {
 
         $uS = Session::getInstance();
 
+        $secure = new SecurityComponent();
         $config = new Config_Lite(ciCFG_FILE);
-        $houseUrl = $config->getString('site', 'House_URL', '');
-        $siteUrl = $config->getString('site', 'Site_URL', '');
+
+        $houseUrl = $secure->getSiteURL();
+        $siteUrl = $secure->getRootURL();
         $logo = $config->getString('financial', 'PmtPageLogoUrl', '');
 
         if ($houseUrl == '' || $siteUrl == '') {
@@ -346,8 +348,10 @@ class PaymentSvcs {
 
         // Do a hosted payment.
         $config = new Config_Lite(ciCFG_FILE);
-        $houseUrl = $config->getString('site', 'House_URL', '');
-        $siteUrl = $config->getString('site', 'Site_URL', '');
+        $secure = new SecurityComponent();
+
+        $houseUrl = $secure->getSiteURL();
+        $siteUrl = $secure->getRootURL();
         $logo = $config->getString('financial', 'PmtPageLogoUrl', '');
 
         if ($houseUrl == '' || $siteUrl == '') {

@@ -41,6 +41,11 @@ function refreshdTables(data) {
         tbl = $('#unreserv').DataTable();
         tbl.ajax.reload();
     }
+    
+    if ($('#divdaily').length > 0) {
+        tbl = $('#daily').DataTable();
+        tbl.ajax.reload();
+    }
 
 }
 
@@ -649,6 +654,15 @@ $(document).ready(function () {
        "columns": cgCols
     });
 
+    $('#daily').DataTable({
+       ajax: {
+           url: 'ws_resc.php?cmd=getHist&tbl=daily',
+           dataSrc: 'daily'
+       },
+       "order": [[ 0, 'asc' ]],
+       "columns": dailyCols
+    });
+
     $('#reservs').DataTable({
        ajax: {
            url: 'ws_resc.php?cmd=getHist&tbl=reservs',
@@ -1194,11 +1208,19 @@ $(document).ready(function () {
         window.open($(this).data('page') + '?d=' + $('#regwldate').val(), '_blank');
     });
 
+    $('#btnPrtDaily').button().click(function() {
+        $("#divdaily").printArea();
+    });
+
+    $('#btnRefreshDaily').button().click(function() {
+        var tbl = $('#daily').DataTable();
+        tbl.ajax.reload();
+    });
+
     if (rctMkup !== '') {
         showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt');
     }
     
-
     $('#version').click(function () {
         $('div#dchgPw').find('input').removeClass("ui-state-error").val('');
         $('#pwChangeErrMsg').text('');
