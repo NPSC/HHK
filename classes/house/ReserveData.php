@@ -44,6 +44,7 @@ class ReserveData {
     protected $idResv = 0;
     protected $id;
     protected $idPsg = 0;
+    protected $idHospitalStay = 0;
     protected $forceNewPsg = FALSE;
     protected $forceNewResv = FALSE;
     protected $fullName = '';
@@ -92,7 +93,7 @@ class ReserveData {
         }
 
         if (isset($post['mem'])) {
-            $this->setPsgMembers(filter_var_array($post['mem'], FILTER_SANITIZE_STRING));
+            $this->setMembersFromPost(filter_var_array($post['mem'], FILTER_SANITIZE_STRING));
         }
 
         $this->resvTitle = $labels->getString('guestEdit', 'reservationTitle', 'Reservation');
@@ -107,6 +108,49 @@ class ReserveData {
         $this->psgChooser = '';
         $this->familySection = '';
 
+    }
+
+    protected function setMembersFromPost($postMems) {
+
+        foreach ($postMems as $prefix => $memArray) {
+
+            if ($prefix == '') {
+                continue;
+            }
+
+            $id = 0;
+            $role = '';
+            $stay = '0';
+
+            if (isset($memArray[ReserveData::ID])) {
+                $id = intval($memArray[ReserveData::ID], 10);
+            }
+            if (isset($memArray[ReserveData::ROLE])) {
+                $role = $memArray[ReserveData::ROLE];
+            }
+            if (isset($memArray[ReserveData::ID])) {
+                $stay = $memArray[ReserveData::STAY];
+            }
+
+            $this->setMember(new PSGMember($id, $prefix, $role, $stay));
+        }
+    }
+
+    public function getMembersArray() {
+
+        $memArray = array();
+
+        foreach ($this->getPsgMembers() as $mem) {
+
+            $ma[ReserveData::ID] = $mem->getId();
+            $ma[ReserveData::ROLE] = $mem->getRole();
+            $ma[ReserveData::STAY] = $mem->getStay();
+            $ma[ReserveData::PREF] = $mem->getPrefix();
+
+            $memArray[$mem->getPrefix()] = $ma;
+        }
+
+        return $memArray;
     }
 
     public function toArray() {
@@ -148,6 +192,10 @@ class ReserveData {
 
     public function getIdPsg() {
         return $this->idPsg;
+    }
+
+    public function getIdHospital_Stay() {
+        return $this->idHospitalStay;
     }
 
     public function getResvTitle() {
@@ -211,33 +259,27 @@ class ReserveData {
         }
     }
 
-    public function findMemberPrefix($key, $val) {
+    public function findMemberById($val) {
 
-        foreach ($this->getPsgMembers() as $pref => $mem) {
+        foreach ($this->getPsgMembers() as $mem) {
 
-            if ($mem[$key] === $val) {
-                return $pref;
+            if ($mem->getId() === $val) {
+                return $mem;
             }
         }
 
         return NULL;
     }
 
-    public function setMember($prefix, $key, $val) {
+    public function setMember(PSGMember $mem) {
 
-        if ($prefix !== NULL && (String)$prefix != '' && $key != '') {
-            $this->psgMembers[$prefix][$key] = $val;
+        $prefix = $mem->getPrefix();
+
+        if ($prefix !== NULL && (String)$prefix != '') {
+            $this->psgMembers[$prefix] = $mem;
         }
 
         return $this;
-    }
-
-    public function setPsgMembers($m) {
-        if (is_array($m)) {
-            $this->psgMembers = $m;
-        } else {
-            $this->psgMembers = array();
-        }
     }
 
     public function setIdResv($idResv) {
@@ -268,6 +310,11 @@ class ReserveData {
         return $this;
     }
 
+    public function setIdHospital_Stay($id) {
+        $this->idHospitalStay = $id;
+        return $this;
+    }
+
     public function setResvChooser($resvChooser) {
         $this->resvChooser = $resvChooser;
         return $this;
@@ -292,6 +339,71 @@ class ReserveData {
         $this->departureDateStr = $departureDateStr;
         return $this;
     }
+
+
+}
+
+class PSGMember {
+
+    protected $id;
+    protected $prefix;
+    protected $role;
+    protected $stay;
+
+    public function __construct($id, $prefix, $role, $stay) {
+
+        $this->setId($id);
+        $this->setPrefix($prefix);
+        $this->setRole($role);
+        $this->setStay($stay);
+    }
+
+    public function getId() {
+        return $this->id;
+    }
+
+    public function getPrefix() {
+        return $this->prefix;
+    }
+
+    public function getRole() {
+        return $this->role;
+    }
+
+    public function getStay() {
+        return $this->stay;
+    }
+
+    public function isStaying() {
+        if ($this->getStay() == '1') {
+            return TRUE;
+        }
+        return FALSE;
+    }
+
+    public function setId($id) {
+        $this->id = $id;
+    }
+
+    public function setPrefix($prefix) {
+        $this->prefix = $prefix;
+    }
+
+    public function setRole($role) {
+        $this->role = $role;
+    }
+
+    public function isPatient() {
+        if ($this->getRole() == VolMemberType::Patient) {
+            return TRUE;
+        }
+        return FALSE;
+    }
+
+    public function setStay($stay) {
+        $this->stay = $stay;
+    }
+
 
 
 }

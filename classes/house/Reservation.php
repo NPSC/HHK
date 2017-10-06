@@ -224,6 +224,183 @@ abstract class Reservation {
         return Vehicle::createVehicleMarkup($dbh, $reg->getIdRegistration(), $noVeh);
 
     }
+
+    protected function setRoomRate(\PDO $dbh, Registration $reg, Reservation_1 &$resv, array $post) {
+
+        $uS = Session::getInstance();
+
+        // Room Rate
+        $rateChooser = new RateChooser($dbh);
+
+        // Default Room Rate category
+        if ($uS->RoomPriceModel == ItemPriceCode::Basic) {
+            $rateCategory = RoomRateCategorys::Fixed_Rate_Category;
+        } else if ($uS->RoomRateDefault != '') {
+            $rateCategory = $uS->RoomRateDefault;
+        } else {
+            $rateCategory = Default_Settings::Rate_Category;
+        }
+
+
+        // Get the rate category
+        if (isset($post['selRateCategory']) && (SecurityComponent::is_Authorized("guestadmin") || $uS->RateChangeAuth === FALSE)) {
+
+            $rateCat = filter_var($post['selRateCategory'], FILTER_SANITIZE_STRING);
+
+            if ($rateChooser->validateCategory($rateCat) === TRUE) {
+                $rateCategory = $rateCat;
+            }
+
+        } else {
+            // Look for an approved rate
+            if ($reg->getIdRegistration() > 0 && $uS->IncomeRated) {
+
+                $fin = new FinAssistance($dbh, $reg->getIdRegistration());
+
+                if ($fin->hasApplied() && $fin->getFaCategory() != '') {
+                    $rateCategory = $fin->getFaCategory();
+                }
+            }
+        }
+
+        // Only assign the rate id if the category changes
+        if ($resv->getRoomRateCategory() != $rateCategory) {
+            $rateRs = $rateChooser->getPriceModel()->getCategoryRateRs(0, $rateCategory);
+            $resv->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
+        }
+
+        $resv->setRoomRateCategory($rateCategory);
+
+        // Fixed Rate and Rate Adjust Amount
+        if ($rateCategory == RoomRateCategorys::Fixed_Rate_Category) {
+
+            // Check for rate setting amount.
+            if (isset($post['txtFixedRate']) && (SecurityComponent::is_Authorized("guestadmin") || $uS->RateChangeAuth === FALSE)) {
+
+                if ($post['txtFixedRate'] === '0' ||$post['txtFixedRate'] === '') {
+                    $fixedRate = 0;
+                } else {
+                    $fixedRate = floatval(filter_var($post['txtFixedRate'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+                }
+
+                if ($fixedRate < 0) {
+                    $fixedRate = 0;
+                }
+
+                $resv->setFixedRoomRate($fixedRate);
+                $resv->setRateAdjust(0);
+            }
+
+        } else if (isset($post['txtadjAmount']) && (SecurityComponent::is_Authorized("guestadmin") || $uS->RateChangeAuth === FALSE)) {
+
+            // Save rate adjustment
+            if ($post['txtadjAmount'] === '0' || $post['txtadjAmount'] === '') {
+                $rateAdjust = 0;
+            } else {
+                $rateAdjust = floatval(filter_var($post['txtadjAmount'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+            }
+
+            $resv->setRateAdjust($rateAdjust);
+
+        }
+
+        if (isset($post['selVisitFee']) && $uS->VisitFee) {
+
+            $visitFeeOption = filter_var($post['selVisitFee'], FILTER_SANITIZE_STRING);
+
+            $vFees = RateChooser::makeVisitFeeArray($dbh);
+
+            if (isset($vFees[$visitFeeOption])) {
+                $resv->setVisitFee($vFees[$visitFeeOption][2]);
+            } else {
+                $resv->setVisitFee($vFees[$uS->DefaultVisitFee][2]);
+            }
+
+        } else if ($resv->isNew() && $uS->VisitFee) {
+
+            $vFees = RateChooser::makeVisitFeeArray($dbh);
+            $resv->setVisitFee($vFees[$uS->DefaultVisitFee][2]);
+        }
+
+    }
+
+    protected function setRoomCoice(\PDO $dbh, Reservation_1 &$resv, $idRescPosted) {
+
+        $uS = Session::getInstance();
+
+        $roomChooser = new RoomChooser($dbh, $resv, $resv->getNumberGuests(), new \DateTime($resv->getExpectedArrival()), new \DateTime($resv->getExpectedDeparture()));
+
+        // Process reservation
+        if ($resv->getStatus() == ReservationStatus::Pending || $resv->isActive()) {
+
+            $roomChooser->findResources($dbh, SecurityComponent::is_Authorized("guestadmin"));
+
+            ReservationSvcs::processReservation($dbh, $resv, $idRescPosted, $resv->getFixedRoomRate(), $resv->getNumberGuests(), $resv->getExpectedArrival(), $resv->getExpectedDeparture(), SecurityComponent::is_Authorized("guestadmin"), $uS->username, $uS->InitResvStatus);
+
+        }
+    }
+
+    public function saveReservationGuests(\PDO $dbh) {
+
+        if ($this->reserveData->getIdResv() < 1) {
+            return FALSE;
+        }
+
+        // Save reservation-guest
+        $rgRs = new Reservation_GuestRS();
+        $rgRs->idReservation->setStoredVal($this->reserveData->getIdResv());
+
+        $rgs = EditRS::select($dbh, $rgRs, array($rgRs->idReservation));
+
+
+        if (count($rgs) == 0) {
+            // Load staying members.
+            foreach ($this->reserveData->getPsgMembers() as $g) {
+
+                if ($g->getStay() == '1') {
+
+                    $rgRs = new Reservation_GuestRS();
+                    $rgRs->idReservation->setNewVal($this->reserveData->getIdResv());
+                    $rgRs->idGuest->setNewVal($g->getId());
+
+                    EditRS::insert($dbh, $rgRs);
+                }
+            }
+
+        } else {
+
+            // Update who is staying or not.
+            foreach ($this->reserveData->getPsgMembers() as $g) {
+
+                $isListed = FALSE;
+
+                foreach ($rgs as $r) {
+
+                    if ($r['idGuest'] == $g->getId()) {
+                        $isListed = TRUE;
+
+                        if ($g->getStay() != '1') {
+                            // Delete record
+                            $dbh->exec("Delete from reservation_guest where idReservation = " . $this->reserveData->getIdResv() . " and idGuest = " . $g->getId());
+                        }
+                        break;
+                    }
+                }
+
+                if ($isListed === FALSE && $g->getStay() == '1') {
+
+                    $rgRs = new Reservation_GuestRS();
+                    $rgRs->idReservation->setNewVal($this->reserveData->getIdResv());
+                    $rgRs->idGuest->setNewVal($g->getId());
+
+                    EditRS::insert($dbh, $rgRs);
+                }
+            }
+        }
+
+        return TRUE;
+    }
+
 }
 
 
@@ -246,15 +423,93 @@ class ActiveReservation extends BlankReservation {
 
     public function save(\PDO $dbh, $post) {
 
+        $uS = Session::getInstance();
+
         $family = new Family($this->reserveData);
 
+        // Save members, psg, hospital
         $this->reserveData = $family->save($dbh, $post);
 
-        // Room number chosen
-        $idRescPosted = 0;
-        if (isset($post['selResource'])) {
-            $idRescPosted = intval(filter_Var($post['selResource'], FILTER_SANITIZE_NUMBER_INT), 10);
+
+        // Arrival and Departure dates
+        $departure = '';
+        $arrival = '';
+        if (isset($post['gstDate'])) {
+            $arrival = filter_var($post['gstDate'], FILTER_SANITIZE_STRING);
         }
+        if (isset($post['gstCoDate'])) {
+            $departure = filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING);
+        }
+
+        if ($arrival == '' || $departure == '') {
+            return array('error'=>'Reservation dates not set.  ');
+        }
+
+        try {
+            $arrivalDT = new\DateTime($arrival);
+            $departDT = new \DateTime($departure);
+        } catch (Exception $ex) {
+            return array('error'=>'Something is wrong with one of the dates: ' . $ex->getMessage());
+        }
+
+
+        // Registration
+        $reg = new Registration($dbh, $this->reserveData->getIdPsg());
+        if ($uS->TrackAuto) {
+            $reg->extractVehicleFlag($post);
+        }
+
+        $reg->saveRegistrationRs($dbh, $this->reserveData->getIdPsg(), $uS->username);
+
+        // Save any vehicles
+        if ($uS->TrackAuto && $reg->getNoVehicle() == 0) {
+            Vehicle::saveVehicle($dbh, $post, $reg->getIdRegistration());
+        }
+
+
+        $resv = new Reservation_1($this->reservRs);
+
+        $resv->setHospitalStay($family->getHospStay());
+
+        $resv->setExpectedArrival($arrivalDT->format('Y-m-d 16:00:00'));
+        $resv->setExpectedDeparture($departDT->format('Y-m-d 10:00:00'));
+
+        // Collect the room rates
+        $this->setRoomRate($dbh, $reg, $resv, $post);
+
+        // Notes
+        if (isset($post['txtRnotes'])) {
+            $resv->setNotes(filter_var($post['txtRnotes'], FILTER_SANITIZE_STRING), $uS->username);
+        }
+
+        // Payment Type
+        if (isset($post['selPayType'])) {
+            $resv->setExpectedPayType(filter_var($post['selPayType'], FILTER_SANITIZE_STRING));
+        }
+
+        // Verbal Confirmation Flag
+        if (isset($post['cbVerbalConf']) && $resv->getVerbalConfirm() != 'v') {
+            $resv->setVerbalConfirm('v');
+            $resv->setNotes('Verbal confirmation set', $uS->username);
+        } else {
+            $resv->setVerbalConfirm('');
+        }
+
+        // Check-in notes (to be put on the registration form.
+        if (isset($post['taCkinNotes'])) {
+            $resv->setCheckinNotes(filter_var($post['taCkinNotes'], FILTER_SANITIZE_STRING));
+        }
+
+        // Save reservation
+        $resv->saveReservation($dbh, $reg->getIdRegistration(), $uS->username);
+        $this->saveReservationGuests($dbh);
+        $resv->saveConstraints($dbh, $post);
+
+        // Room Chooser
+
+
+        // Payments
+
 
 
     }
