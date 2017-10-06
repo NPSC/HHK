@@ -219,7 +219,7 @@ switch ($c) {
 
             $result = $transfer->retrieveAccount($accountId);
 
-            $updateResult = $transfer->updateAccount($dbh, $result, $id);
+            $updateResult = $transfer->updateNeonAccount($dbh, $result, $id);
 
             $events = array('result'=>$updateResult);
 

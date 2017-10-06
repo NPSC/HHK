@@ -183,7 +183,7 @@ class History {
             }
 
             // Date reservation is filed.
-            if ($status == ReservationStatus::Waitlist) {
+            if ($status == ReservationStatus::Waitlist && $uS->ShowCreatedDate) {
 
                 $bDay = new \DateTime($r['Timestamp']);
                 $bDay->setTime(10, 0, 0);

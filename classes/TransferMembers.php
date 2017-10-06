@@ -130,7 +130,7 @@ class TransferMembers {
      * @return string
      * @throws Hk_Exception_Runtime
      */
-    public function updateAccount(\PDO $dbh, $accountData, $idName) {
+    public function updateNeonAccount(\PDO $dbh, $accountData, $idName) {
 
         if ($idName < 1) {
             throw new Hk_Exception_Runtime('HHK Member Id not specified: ' . $idName);
@@ -445,7 +445,6 @@ class TransferMembers {
     }
 
 
-
     /**
      *
      * @param \PDO $dbh
@@ -465,6 +464,15 @@ class TransferMembers {
         if (is_null($stmt)) {
             return array('error'=>'No local records were found.');
         }
+
+        // Load Individual types
+        $stmtList = $dbh->query("Select * from neon_type_map where List_Name = 'individualTypes'");
+        $invTypes = array();
+
+        while ($t = $stmtList->fetch(\PDO::FETCH_ASSOC)) {
+            $invTypes[] = $t;
+        }
+
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -501,8 +509,9 @@ class TransferMembers {
                     $replys[] = $f;
                     continue;
                 }
-
             }
+
+
 
             // Test results
             if ( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] == 1 ) {
@@ -510,11 +519,32 @@ class TransferMembers {
                 // We have a similar contact.
 
                 // Make sure the external Id is defined locally
-                if ($result['searchResults'][0]['Account ID'] != '') {
+                if (isset($result['searchResults'][0]['Account ID']) && $result['searchResults'][0]['Account ID'] != '') {
 
                     $this->updateLocalNameRecord($dbh, $r['HHK_ID'], $result['searchResults'][0]['Account ID'], $username);
                     $f['Account ID'] = $result['searchResults'][0]['Account ID'];
                     $f['Result'] = 'Previously Transferred.';
+
+                    // Check individual type
+                    $typeFound = FALSE;
+
+                    if (isset($result['searchResults'][0]['Individual Type'])) {
+
+                        foreach ($invTypes as $t) {
+
+                            if (stristr($result['searchResults'][0]['Individual Type'], $t['Neon_Type_Name']) !== FALSE) {
+                                $typeFound = TRUE;
+                                break;
+                            }
+                        }
+                    }
+
+                    if ($typeFound === FALSE) {
+                        // Update the individual type
+                        $retrieveResult = $this->retrieveAccount($result['searchResults'][0]['Account ID']);
+                        $f['Result'] .= $this->updateNeonAccount($dbh, $retrieveResult, $r['HHK_ID']);
+
+                    }
 
                 } else {
 
@@ -869,7 +899,7 @@ class TransferMembers {
         $search = array(
             'method' => 'account/listAccounts',
             'columns' => array(
-                'standardFields' => array('Account ID', 'Account Type'),
+                'standardFields' => array('Account ID', 'Account Type', 'Individual Type'),
             ),
             'page' => array(
                 'currentPage' => 1,

@@ -1709,13 +1709,12 @@ class ReservationSvcs {
 
         $form = $confirmForm->createForm($dbh, $reserv, $guest, $amount, $formNotes);
 
+        if ($emailAddr == '') {
+            $emAddr = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
+            $emailAddr = $emAddr["Email"];
+        }
 
         if ($sendEmail) {
-
-            if ($emailAddr == '') {
-                $emAddr = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
-                $emailAddr = $emAddr["Email"];
-            }
 
             if ($emailAddr != '') {
 
