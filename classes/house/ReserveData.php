@@ -141,13 +141,7 @@ class ReserveData {
         $memArray = array();
 
         foreach ($this->getPsgMembers() as $mem) {
-
-            $ma[ReserveData::ID] = $mem->getId();
-            $ma[ReserveData::ROLE] = $mem->getRole();
-            $ma[ReserveData::STAY] = $mem->getStay();
-            $ma[ReserveData::PREF] = $mem->getPrefix();
-
-            $memArray[$mem->getPrefix()] = $ma;
+            $memArray[$mem->getPrefix()] = $mem->toArray();
         }
 
         return $memArray;
@@ -260,6 +254,10 @@ class ReserveData {
     }
 
     public function findMemberById($val) {
+
+        if ($val == 0) {
+            throw new Hk_Exception_InvalidArguement('Member Id = 0 is indetermenent. ');
+        }
 
         foreach ($this->getPsgMembers() as $mem) {
 
@@ -404,6 +402,14 @@ class PSGMember {
         $this->stay = $stay;
     }
 
+    public function toArray() {
 
+        return array(
+            ReserveData::ID => $this->getId(),
+            ReserveData::ROLE => $this->getRole(),
+            ReserveData::STAY => $this->getStay(),
+            ReserveData::PREF => $this->getPrefix(),
+        );
+    }
 
 }

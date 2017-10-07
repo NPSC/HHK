@@ -148,7 +148,15 @@ abstract class Reservation {
 
         $resv = new Reservation_1($this->reservRs);
 
-        $roomChooser = new RoomChooser($dbh, $resv, $resv->getNumberGuests(), $resv->getExpectedArrival(), $resv->getExpectedDeparture());
+        // Count guests
+        $numGuests = 0;
+        foreach($this->reserveData->getPsgMembers() as $m) {
+            if ($m->getStay() == '1') {
+                $numGuests++;
+            }
+        }
+
+        $roomChooser = new RoomChooser($dbh, $resv, $numGuests, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
         //$roomChooser->setOldResvId($oldResvId);
         $dataArray['rChooser'] = $roomChooser->CreateResvMarkup($dbh, $isAuthorized);
 
@@ -200,8 +208,8 @@ abstract class Reservation {
 
         // Collapsing header
         $hdr = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('span', 'Reservation - ')
-                .HTMLContainer::generateMarkup('span', $resv->getStatusTitle(), array('id'=>$prefix.'spnResvStatus', 'style'=>'margin-right: 1em;'))
+                HTMLContainer::generateMarkup('span', ($resv->isNew() ? 'New ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation') : $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' - '))
+                .HTMLContainer::generateMarkup('span', ($resv->isNew() ? '' : $resv->getStatusTitle()), array('id'=>$prefix.'spnResvStatus', 'style'=>'margin-right: 1em;'))
 //                .$this->createExpDatesControl()
                 , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
@@ -223,6 +231,82 @@ abstract class Reservation {
 
         return Vehicle::createVehicleMarkup($dbh, $reg->getIdRegistration(), $noVeh);
 
+    }
+
+    protected function reservationChooser(\PDO $dbh, $idResv = 0) {
+
+        $uS = Session::getInstance();
+
+        $reservStatuses = $uS->guestLookups['ReservStatus'];
+
+        $mrkup = '';
+
+        $stmt = $dbh->query("select * from vresv_patient "
+            . "where Status in ('".ReservationStatus::Staying."','".ReservationStatus::Committed."','".ReservationStatus::Imediate."','".ReservationStatus::UnCommitted."','".ReservationStatus::Waitlist."') "
+            . "and idPsg= " . $this->reserveData->getIdPsg() . " order by `Expected_Arrival`");
+
+
+        $trs = array();
+        $today = new \DateTime();
+        $today->setTime(0, 0, 0);
+
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+            if ($idResv != 0 && $idResv == $r['idReservation']) {
+                continue;
+            }
+
+            $resvRs = new ReservationRS();
+            EditRS::loadRow($r, $resvRs);
+
+            $checkinNow = HTMLContainer::generateMarkup('a',
+                        HTMLInput::generateMarkup('Open ' . $this->reserveData->getResvTitle(), array('type'=>'button', 'style'=>'margin-bottom:.3em;'))
+                        , array('style'=>'text-decoration:none;margin-right:.3em;', 'href'=>'Reserve.php?idPsg='.$r['idPsg'] . '&rid='.$resvRs->idReservation->getStoredVal().'&id='.$this->reserveData->getId()));
+
+            $expArrDT = new \DateTime($resvRs->Expected_Arrival->getStoredVal());
+            $expArrDT->setTime(0, 0, 0);
+
+            if ($resvRs->Status->getStoredVal() == ReservationStatus::Staying) {
+                $checkinNow = HTMLInput::generateMarkup('Add Guest', array('type'=>'button', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
+            } else if ($expArrDT->diff($today, TRUE)->days == 0) {
+                $checkinNow .= HTMLInput::generateMarkup('Check-in Now', array('type'=>'button', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
+            } else if ($expArrDT->diff($today, TRUE)->days <= $this->reserveData->getResvEarlyArrDays()) {
+                $checkinNow .= HTMLInput::generateMarkup('Check-in Early', array('type'=>'button', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
+            }
+
+
+            $trs[] = HTMLTable::makeTd($checkinNow)
+                    .HTMLTable::makeTd($reservStatuses[$resvRs->Status->getStoredVal()][1])
+                    .HTMLTable::makeTd($r['Title'])
+                    .HTMLTable::makeTd($r['Patient_Name'])
+                    .HTMLTable::makeTd($expArrDT->format('M j, Y'))
+                    .HTMLTable::makeTd(date('M j, Y', strtotime($resvRs->Expected_Departure->getStoredVal())))
+                    .HTMLTable::makeTd($resvRs->Number_Guests->getStoredVal());
+        }
+
+
+        if (count($trs) > 0) {
+
+            // Caught some
+            $tbl = new HTMLTable();
+            foreach ($trs as $tr) {
+                $tbl->addBodyTr($tr);
+            }
+
+            $tbl->addHeaderTr(
+                    HTMLTable::makeTh('')
+                    .HTMLTable::makeTh('Status')
+                    .HTMLTable::makeTh('Room')
+                    .HTMLTable::makeTh($this->reserveData->getPatLabel())
+                    .HTMLTable::makeTh('Expected Arrival')
+                    .HTMLTable::makeTh('Expected Departure')
+                    .HTMLTable::makeTh('# Guests'));
+
+            $mrkup .= $tbl->generateMarkup();
+
+        }
+
+        return $mrkup;
     }
 
     protected function setRoomRate(\PDO $dbh, Registration $reg, Reservation_1 &$resv, array $post) {
@@ -324,7 +408,7 @@ abstract class Reservation {
 
     }
 
-    protected function setRoomCoice(\PDO $dbh, Reservation_1 &$resv, $idRescPosted) {
+    protected function setRoomChoice(\PDO $dbh, Reservation_1 &$resv, $idRescPosted) {
 
         $uS = Session::getInstance();
 
@@ -401,6 +485,31 @@ abstract class Reservation {
         return TRUE;
     }
 
+    public function saveDates($post, &$arrivalDT, &$departDT) {
+
+        // Arrival and Departure dates
+        $departure = '';
+        $arrival = '';
+
+        if (isset($post['gstDate'])) {
+            $arrival = filter_var($post['gstDate'], FILTER_SANITIZE_STRING);
+        }
+        if (isset($post['gstCoDate'])) {
+            $departure = filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING);
+        }
+
+        if ($arrival == '' || $departure == '') {
+            throw new Hk_Exception_Runtime('Reservation dates not set.  ');
+        }
+
+        try {
+            $arrivalDT = new\DateTime($arrival);
+            $departDT = new \DateTime($departure);
+        } catch (Exception $ex) {
+            throw new Hk_Exception_Runtime('Something is wrong with one of the dates: ' . $ex->getMessage());
+        }
+
+    }
 }
 
 
@@ -432,24 +541,22 @@ class ActiveReservation extends BlankReservation {
 
 
         // Arrival and Departure dates
-        $departure = '';
-        $arrival = '';
-        if (isset($post['gstDate'])) {
-            $arrival = filter_var($post['gstDate'], FILTER_SANITIZE_STRING);
-        }
-        if (isset($post['gstCoDate'])) {
-            $departure = filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING);
-        }
-
-        if ($arrival == '' || $departure == '') {
-            return array('error'=>'Reservation dates not set.  ');
-        }
-
         try {
-            $arrivalDT = new\DateTime($arrival);
-            $departDT = new \DateTime($departure);
-        } catch (Exception $ex) {
-            return array('error'=>'Something is wrong with one of the dates: ' . $ex->getMessage());
+            $arrivalDT = new\DateTime();
+            $departDT = new \DateTime();
+            $this->saveDates($post, $arrivalDT, $departDT);
+        } catch (Hk_Exception_Runtime $hex) {
+            return array('error'=>$hex->getMessage());
+        }
+
+
+        // Is anyone already in a visit?
+
+
+        // Check each guest for existing reservations
+        if (($mk = $this->reservationChooser($dbh, $this->reserveData->getIdResv())) !== '') {
+            $this->reserveData->setResvChooser($mk);
+            return $this->reserveData->toArray();
         }
 
 
@@ -467,10 +574,10 @@ class ActiveReservation extends BlankReservation {
         }
 
 
+        // Create the reservation instance
         $resv = new Reservation_1($this->reservRs);
 
         $resv->setHospitalStay($family->getHospStay());
-
         $resv->setExpectedArrival($arrivalDT->format('Y-m-d 16:00:00'));
         $resv->setExpectedDeparture($departDT->format('Y-m-d 10:00:00'));
 
@@ -495,9 +602,44 @@ class ActiveReservation extends BlankReservation {
             $resv->setVerbalConfirm('');
         }
 
-        // Check-in notes (to be put on the registration form.
+        // Check-in notes (to be put on the registration form. ALternatively, use as waitlist notes.
         if (isset($post['taCkinNotes'])) {
             $resv->setCheckinNotes(filter_var($post['taCkinNotes'], FILTER_SANITIZE_STRING));
+        }
+
+        // Room number chosen
+        $idRescPosted = 0;
+        if (isset($post['selResource'])) {
+            $idRescPosted = intval(filter_Var($post['selResource'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+
+        // DetermineReservation Status
+        $reservStatus = ReservationStatus::Waitlist;
+
+        if (isset($post['selResvStatus'])) {
+
+            $rStat = filter_var($post['selResvStatus'], FILTER_SANITIZE_STRING);
+
+            if ($rStat != '') {
+                $reservStatus = $rStat;
+            }
+
+        } else if ($resv->isNew() === FALSE && $resv->getStatus() != '') {
+            $reservStatus = $resv->getStatus();
+        }
+
+        // Set reservation status
+        $resv->setStatus($reservStatus);
+
+        // remove room if reservation is in waitlist
+        if ($reservStatus == ReservationStatus::Waitlist) {
+            $resv->setIdResource(0);
+        }
+
+        // Switch to waitlist status if room is 0
+        if ($resv->isActionStatus($reservStatus) && $idRescPosted == 0) {
+            $resv->setStatus(ReservationStatus::Waitlist);
         }
 
         // Save reservation
@@ -616,71 +758,6 @@ class ReserveSearcher extends ActiveReservation {
 
     }
 
-    protected function reservationChooser(\PDO $dbh) {
-
-        $uS = Session::getInstance();
-
-        $reservStatuses = $uS->guestLookups['ReservStatus'];
-
-        $mrkup = '';
-
-        $stmt = $dbh->query("select * from vresv_patient "
-            . "where Status in ('".ReservationStatus::Staying."','".ReservationStatus::Committed."','".ReservationStatus::Imediate."','".ReservationStatus::UnCommitted."','".ReservationStatus::Waitlist."') "
-            . "and idPsg= " . $this->reserveData->getIdPsg() . " order by `Expected_Arrival`");
-
-
-        $trs = array();
-        $today = new \DateTime();
-        $today->setTime(0, 0, 0);
-
-        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-
-            $resvRs = new ReservationRS();
-            EditRS::loadRow($r, $resvRs);
-
-            $checkinNow = HTMLContainer::generateMarkup('a',
-                        HTMLInput::generateMarkup('Open ' . $this->reserveData->getResvTitle(), array('type'=>'button', 'style'=>'margin-bottom:.3em;'))
-                        , array('style'=>'text-decoration:none;margin-right:.3em;', 'href'=>'Reserve.php?rid='.$resvRs->idReservation->getStoredVal().'&id='.$this->reserveData->getId()));
-
-            $expArrDT = new \DateTime($resvRs->Expected_Arrival->getStoredVal());
-            $expArrDT->setTime(0, 0, 0);
-
-            if ($resvRs->Status->getStoredVal() == ReservationStatus::Staying) {
-                $checkinNow = HTMLInput::generateMarkup('Add Guest', array('type'=>'button', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
-            } else if ($expArrDT->diff($today, TRUE)->days == 0) {
-                $checkinNow .= HTMLInput::generateMarkup('Check-in Now', array('type'=>'button', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
-            } else if ($expArrDT->diff($today, TRUE)->days <= $this->reserveData->getResvEarlyArrDays()) {
-                $checkinNow .= HTMLInput::generateMarkup('Check-in Early', array('type'=>'button', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
-            }
-
-
-            $trs[] = HTMLTable::makeTd($checkinNow)
-                    .HTMLTable::makeTd($reservStatuses[$resvRs->Status->getStoredVal()][1])
-                    .HTMLTable::makeTd($r['Title'])
-                    .HTMLTable::makeTd($r['Patient_Name'])
-                    .HTMLTable::makeTd($expArrDT->format('M j, Y'))
-                    .HTMLTable::makeTd(date('M j, Y', strtotime($resvRs->Expected_Departure->getStoredVal())))
-                    .HTMLTable::makeTd($resvRs->Number_Guests->getStoredVal());
-        }
-
-
-        if (count($trs) > 0) {
-
-            // Caught some
-            $tbl = new HTMLTable();
-            foreach ($trs as $tr) {
-                $tbl->addBodyTr($tr);
-            }
-
-            $tbl->addHeaderTr(HTMLTable::makeTh('').HTMLTable::makeTh('Status').HTMLTable::makeTh('Room').HTMLTable::makeTh($this->reserveData->getPatLabel()).HTMLTable::makeTh('Expected Arrival').HTMLTable::makeTh('Expected Departure')
-                    .HTMLTable::makeTh('# Guests'));
-
-            $mrkup .= $tbl->generateMarkup();
-
-        }
-
-        return $mrkup;
-    }
 
     protected function psgChooserMkup(\PDO $dbh, array $ngRss, $offerNew = TRUE) {
 

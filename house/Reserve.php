@@ -133,12 +133,17 @@ if (isset($_GET['rid'])) {
     $idReserv = intval(filter_var($_GET['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
+if (isset($_GET['idPsg'])) {
+    $idPsg = intval(filter_var($_GET['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
+}
+
 
 if ($idReserv > 0 || $idGuest > 0) {
 
     $mk1 = "<h2>Loading...</h2>";
     $resvObj->setIdResv($idReserv);
     $resvObj->setId($idGuest);
+    $resvObj->setIdPsg($idPsg);
 
 } else {
     // Guest Search markup
@@ -207,7 +212,7 @@ $resvObjEncoded = json_encode($resvAr);
                 <?php echo $mk1; ?>
             </div>
 
-            <form action="Referral.php" method="post"  id="form1">
+            <form action="Reserve.php" method="post"  id="form1">
                 <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
                 <div id="famSection" style="font-size: .9em; clear:left; float:left; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
 
@@ -271,20 +276,28 @@ function PageManager(initData) {
 
     function FamilySection($wrapper) {
         var t = this;
+        var divFamDetailId = 'divfamDetail';
 
         // Exports
         t.findStaysChecked = findStaysChecked;
         t.setupComplete = false;
+        t.setUp = setUp;
 
-        var divFamDetailId = 'divfamDetail';
 
         function findStaysChecked() {
             var numGuests = 0;
+
             $('.hhk-cbStay').each(function () {
+                var prefix = $(this).data('prefix');
+
                 if ($(this).prop('checked')) {
+                    people.list()[prefix].stay = '1';
                     numGuests++;
+                } else {
+                    people.list()[prefix].stay = '0';
                 }
             });
+
             return numGuests;
         }
 
@@ -524,7 +537,7 @@ function PageManager(initData) {
 
         }
 
-        t.setUp = function(data) {
+        function setUp(data) {
 
             var cpyAddr = [], $addrTog, $addrFlag, $famTbl;
 
@@ -781,7 +794,7 @@ function PageManager(initData) {
             }
 
             // Someone checking in?
-            if (familySection.findStaysChecked() < 1) {
+            if (findStaysChecked() < 1) {
                 flagAlertMessage('There are no guests actually staying.  Pick someone to stay.', true);
                 return false;
             }
@@ -1089,7 +1102,10 @@ function PageManager(initData) {
     function ResvSection($wrapper) {
         var t = this;
         var $rDiv, $veh, $rHdr, $expanderButton;
+
         t.setupComplete = false;
+        t.setUp = setUp;
+        t.verify = verify;
 
         function setupVehicle(veh) {
             var nextVehId = 1;
@@ -1245,7 +1261,7 @@ function PageManager(initData) {
 
         }
 
-        t.setUp = function(data) {
+        function setUp(data) {
 
             $rDiv = $('<div id="divResvDetail" style="padding:2px; float:left;" class="ui-widget-content ui-corner-bottom hhk-tdbox"/>');
             $rDiv.append($(data.resv.rdiv.rChooser));
@@ -1299,7 +1315,7 @@ function PageManager(initData) {
             t.setupComplete = true;
         };
 
-        t.verify = function() {
+        function verify() {
 
             return true;
         };
@@ -1419,7 +1435,7 @@ function PageManager(initData) {
         };
 
         $resvDiag.dialog('option', 'buttons', buttons);
-        $resvDiag.dialog('option', 'title', data.resvTitle + ' Chooser For: ' + data.fullName);
+        $resvDiag.dialog('option', 'title', data.resvTitle);
         $resvDiag.dialog('open');
 
     }
@@ -1559,6 +1575,7 @@ function PageManager(initData) {
 
             // String together some events
             $('#famSection').on('change', '.hhk-cbStay', function () {
+
                 var tot = familySection.findStaysChecked();
                 resvSection.$totalGuests.text(tot);
 
@@ -1568,6 +1585,8 @@ function PageManager(initData) {
                     resvSection.$totalGuests.parent().addClass('ui-state-highlight');
                 }
             });
+
+            $('#famSection.hhk-cbStay').change();
 
             $('#btnDone').val('Save').show();
 

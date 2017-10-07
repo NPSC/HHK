@@ -1,6 +1,6 @@
 <?php
 /**
- * Guest.php
+ * Role.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
@@ -257,6 +257,7 @@ abstract class Role {
                 'type'=>'checkbox',
                 'name'=>$this->getRoleMember()->getIdPrefix() .'cbStay',
                 'id'=>$this->getRoleMember()->getIdPrefix() .'cbStay',
+                'data-prefix'=>$this->getRoleMember()->getIdPrefix(),
                 'class' => 'hhk-cbStay',
             );
 
