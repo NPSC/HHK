@@ -97,7 +97,7 @@ abstract class Role {
         }
 
         // Incomplete address
-        $attr = array('type'=>'checkbox', 'name'=>$idPrefix.'incomplete');
+        $attr = array('type'=>'checkbox', 'name'=>$idPrefix.'incomplete', 'class'=>'hhk-incompleteAddr', 'data-prefix'=>$idPrefix);
         if ($this->getAddrObj()->getSet_Incomplete(Address_Purpose::Home)) {
             $attr['checked'] = 'checked';
         }
@@ -247,7 +247,8 @@ abstract class Role {
             // Set for no return
             $td = HTMLTable::makeTd('No Return', array('title'=>$this->getNoReturn() . ';  Id: ' . $this->getIdName()));
 
-        } else if ($staying == 'x') {
+        } else if ($staying == ReserveData::CANT_STAY) {
+
             // This person cannot stay
             $td = HTMLTable::makeTd('', array('title'=>'Id: ' . $this->getIdName()));
 
@@ -264,7 +265,7 @@ abstract class Role {
             $lblStay = array(
                 'for'=>$this->getRoleMember()->getIdPrefix() . 'cbStay',
                 'id' => $this->getRoleMember()->getIdPrefix() . 'lblStay',
-                'data-stay' => ($staying == '1' ? '1' : '0'),
+                'data-stay' => ($staying == ReserveData::STAYING ? ReserveData::STAYING : ReserveData::NOT_STAYING),
                 'class' => 'hhk-lblStay',
             );
 

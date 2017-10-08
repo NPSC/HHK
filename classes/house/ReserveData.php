@@ -41,6 +41,10 @@ class ReserveData {
     const STAY = 'stay';
     const ID = 'id';
 
+    const STAYING = '1';
+    const NOT_STAYING = '0';
+    const CANT_STAY = 'x';
+
     protected $idResv = 0;
     protected $id;
     protected $idPsg = 0;

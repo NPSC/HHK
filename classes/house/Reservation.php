@@ -309,6 +309,13 @@ abstract class Reservation {
         return $mrkup;
     }
 
+    protected function guestReservations(\PDO $dbh, $stayMembers) {
+//        $vstmt = $dbh->query("Select idName, Span_Start_Date, Expected_Co_Date from stays "
+//                . " where `Status` = '" . VisitStatus::CheckedIn . "' and DATE(Expected_Co_Date) > DATE('" . $arrivalDT->format('Y-m-d') . "') "
+//                . " and idName in (" . substr($wh, 1) . ")");
+        return '';
+    }
+
     protected function setRoomRate(\PDO $dbh, Registration $reg, Reservation_1 &$resv, array $post) {
 
         $uS = Session::getInstance();
@@ -539,6 +546,7 @@ class ActiveReservation extends BlankReservation {
         // Save members, psg, hospital
         $this->reserveData = $family->save($dbh, $post);
 
+        $members = $this->reserveData->getPsgMembers();
 
         // Arrival and Departure dates
         try {
@@ -550,14 +558,28 @@ class ActiveReservation extends BlankReservation {
         }
 
 
-        // Is anyone already in a visit?
+        // Find staying members
+        $stayMembers = array();
+        $wh = '';
+        foreach ($members as $m) {
+            if ($m->isStaying()) {
+                $stayMembers[$m->getId()] = $m;
+                $wh .= ',' . $m->getId();
+            }
+        }
 
-
-        // Check each guest for existing reservations
+        // Check PSG for existing reservations
         if (($mk = $this->reservationChooser($dbh, $this->reserveData->getIdResv())) !== '') {
             $this->reserveData->setResvChooser($mk);
             return $this->reserveData->toArray();
         }
+
+
+        // Is anyone already in a visit?
+        if (($mu = $this->guestReservations($dbh, $stayMembers))) {
+
+        }
+
 
 
         // Registration

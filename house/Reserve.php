@@ -214,9 +214,9 @@ $resvObjEncoded = json_encode($resvAr);
 
             <form action="Reserve.php" method="post"  id="form1">
                 <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
-                <div id="famSection" style="font-size: .9em; clear:left; float:left; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
+                <div id="famSection" style="clear:left; float:left; font-size: .9em; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
 
-                <div id="hospitalSection" style="font-size: .9em; padding-left:0;margin-top:0; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
+                <div id="hospitalSection" style="font-size: .9em; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
                 <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
 
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
@@ -277,6 +277,7 @@ function PageManager(initData) {
     function FamilySection($wrapper) {
         var t = this;
         var divFamDetailId = 'divfamDetail';
+        var cpyAddr = [];
 
         // Exports
         t.findStaysChecked = findStaysChecked;
@@ -411,17 +412,18 @@ function PageManager(initData) {
 
         }
 
-        function copyAddress(prefix, cpyAddr) {
+        function copyAddress(prefix) {
+
+            var adrs = addrs.list();
 
             for (var p in addrs.list()) {
-
                 // Use this one already?
                 if (p === cpyAddr[prefix]) {
                     cpyAddr[prefix] = 0;
                     continue;
                 }
 
-                if (addrs.list()[p].Address_1 !== '' && $('#' + p + 'adraddress1' +  addrPurpose) !== addrs.list()[p].Address_1) {
+                if (addrs.list()[p].Address_1 !== '') {
 
                     cpyAddr[prefix] = p;
 
@@ -435,9 +437,34 @@ function PageManager(initData) {
 
                     $('#' + prefix + 'adrstate' + addrPurpose).val(addrs.list()[p].State_Province);
                     $('#' + prefix + 'adrzip' + addrPurpose).val(addrs.list()[p].Postal_Code);
+
+                    // Clear the incomplete address checkbox if the address is valid.
+                    if ($('#' + prefix + 'adraddress1' + addrPurpose).val() !== '' && $('#' + prefix + 'adrcity' + addrPurpose).val() !== '' && $('#' + prefix + 'incomplete').prop('checked') === true) {
+                        $('#' + prefix + 'incomplete').prop('checked', false);
+                    }
+
+                    loadAddress(prefix);
+
+                    // Update the address flag
+                    setAddrFlag($('#' + prefix + 'liaddrflag'));
+
                     break;
                 }
             }
+        }
+
+        function eraseAddress(prefix) {
+
+            $('#' + prefix + 'adraddress1' + addrPurpose).val('');
+            $('#' + prefix + 'adraddress2' + addrPurpose).val('');
+            $('#' + prefix + 'adrcity' + addrPurpose).val('');
+            $('#' + prefix + 'adrcounty' + addrPurpose).val('');
+            $('#' + prefix + 'adrstate' + addrPurpose).val('');
+            $('#' + prefix + 'adrcountry' + addrPurpose).val('');
+            $('#' + prefix + 'adrzip' + addrPurpose).val('');
+
+            setAddrFlag($('#' + prefix + 'liaddrflag'));
+
         }
 
         function loadAddress(prefix) {
@@ -446,48 +473,29 @@ function PageManager(initData) {
                 return;
             }
 
-            var ad = addrs.list();
-            var addr = t.addrs.list();
-
-            addrs.list()[prefix].Address_1 = $('#' + prefix + 'adraddress1').val();
-            addrs.list()[prefix].Address_2 = $('#' + prefix + 'adraddress2').val();
-            addrs.list()[prefix].City = $('#' + prefix + 'adrcity').val();
-            addrs.list()[prefix].County = $('#' + prefix + 'adrcounty').val();
-            addrs.list()[prefix].State_Province = $('#' + prefix + 'adrstate').val();
-            addrs.list()[prefix].Country_Code = $('#' + prefix + 'adrcountry').val();
-            addrs.list()[prefix].Postal_Code = $('#' + prefix + 'adrzip').val();
-
-//            if ($control.attr('id') === prefix + 'adraddress1' + addrPurpose) {
-//                addrs.list()[prefix].Address_1 = $control.val();
-//            } else if ($control.attr('id') === prefix + 'adraddress2' + addrPurpose) {
-//                addrs.list()[prefix].Address_2 = $control.val();
-//            } else if ($control.attr('id') === prefix + 'adrcity' + addrPurpose) {
-//                addrs.list()[prefix].City = $control.val();
-//            } else if ($control.attr('id') === prefix + 'adrcounty' + addrPurpose) {
-//                addrs.list()[prefix].County = $control.val();
-//            } else if ($control.attr('id') === prefix + 'adrstate' + addrPurpose) {
-//                addrs.list()[prefix].State_Province = $control.val();
-//            } else if ($control.attr('id') === prefix + 'adrcountry' + addrPurpose) {
-//                addrs.list()[prefix].Country_Code = $control.val();
-//            } else if ($control.attr('id') === prefix + 'adrzip' + addrPurpose) {
-//                addrs.list()[prefix].Postal_Code = $control.val();
-//            }
+            addrs.list()[prefix].Address_1 = $('#' + prefix + 'adraddress1' + addrPurpose).val();
+            addrs.list()[prefix].Address_2 = $('#' + prefix + 'adraddress2' + addrPurpose).val();
+            addrs.list()[prefix].City = $('#' + prefix + 'adrcity' + addrPurpose).val();
+            addrs.list()[prefix].County = $('#' + prefix + 'adrcounty' + addrPurpose).val();
+            addrs.list()[prefix].State_Province = $('#' + prefix + 'adrstate' + addrPurpose).val();
+            addrs.list()[prefix].Country_Code = $('#' + prefix + 'adrcountry' + addrPurpose).val();
+            addrs.list()[prefix].Postal_Code = $('#' + prefix + 'adrzip' + addrPurpose).val();
 
         }
 
         function setAddrFlag($addrFlag) {
 
-            var pref = $addrFlag.parents('ul').data('pref');
+            var prefix = $addrFlag.parents('ul').data('pref');
 
             // Address status icon
-            if ($('#' + pref + 'incomplete').prop('checked') === true) {
+            if ($('#' + prefix + 'incomplete').prop('checked') === true) {
 
                 $addrFlag.show().find('span').removeClass('ui-icon-alert').addClass('ui-icon-check').attr('title', 'Incomplete Address is checked');
                 $addrFlag.removeClass('ui-state-error').addClass('ui-state-highlight');
 
             } else {
 
-                if ($('#' + pref + 'adraddress1' + addrPurpose).val() === '' || $('#' + pref + 'adrcity' + addrPurpose).val() === '') {
+                if ($('#' + prefix + 'adraddress1' + addrPurpose).val() === '' || $('#' + prefix + 'adrcity' + addrPurpose).val() === '') {
                     $addrFlag.show().find('span').removeClass('ui-icon-check').addClass('ui-icon-alert').attr('title', 'Address is Incomplete');
                     $addrFlag.removeClass('ui-state-highlightui-state-error').addClass('ui-state-error');
                 } else {
@@ -510,7 +518,7 @@ function PageManager(initData) {
                         .append($('<tbody/>')))
                     .append($(data.famSection.adtnl));
 
-            expanderButton = $("<ul style='list-style-type:none; float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+            expanderButton = $("<ul style='list-style-type:none; float:right;margin-left:5px;padding-top:2px;' class='ui-widget'/>")
                 .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
                 .append($("<span id='f_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
 
@@ -539,13 +547,11 @@ function PageManager(initData) {
 
         function setUp(data) {
 
-            var cpyAddr = [], $addrTog, $addrFlag, $famTbl;
+            var $addrTog, $addrFlag, $famTbl;
 
             if (data.famSection === undefined || data.famSection.tblId === undefined || data.famSection.tblId == '') {
                 return;
             }
-
-            $wrapper.empty();
 
             initFamilyTable(data);
             $famTbl = $wrapper.find('#' + data.famSection.tblId);
@@ -611,28 +617,25 @@ function PageManager(initData) {
                 $states.bfhstates($states.data());
             });
 
+            // Load the addresses into the addrs object if changed.
             $('.hhk-addrPanel').on('click', 'input, select', function() {
                 loadAddress($(this).data('pref'));
             });
 
             $('.hhk-phemtabs').tabs();
 
+            // Copy Address
             $('#' + divFamDetailId).on('click', '.hhk-addrCopy', function() {
-                copyAddress($(this).attr('name'), cpyAddr);
+                copyAddress($(this).attr('name'));
             });
 
+            // Delete address
             $('#' + divFamDetailId).on('click', '.hhk-addrErase', function() {
+                eraseAddress($(this).attr('name'));
+            });
 
-                var prefix = $(this).attr('name');
-
-                $('#' + prefix + 'adraddress1' + addrPurpose).val('');
-                $('#' + prefix + 'adraddress2' + addrPurpose).val('');
-                $('#' + prefix + 'adrcity' + addrPurpose).val('');
-                $('#' + prefix + 'adrcounty' + addrPurpose).val('');
-                $('#' + prefix + 'adrstate' + addrPurpose).val('');
-                $('#' + prefix + 'adrcountry' + addrPurpose).val('');
-                $('#' + prefix + 'adrzip' + addrPurpose).val('');
-
+            $('#' + divFamDetailId).on('click', '.hhk-incompleteAddr', function() {
+                setAddrFlag($('#' + $(this).data('prefix') + 'liaddrflag'));
             });
 
             verifyAddrs('#divfamDetail');
@@ -667,7 +670,7 @@ function PageManager(initData) {
             t.setupComplete = true;
         };
 
-        t.newGuestMarkup = function(data) {
+        t.newGuestMarkup = function(data, prefix) {
 
             var $countries, $states, $famTbl, stripeClass;
 
@@ -690,12 +693,12 @@ function PageManager(initData) {
             $famTbl.find('tbody:first').append($(data.ntr).addClass(stripeClass)).append($(data.atr).addClass(stripeClass));
 
             // prepare stay button
-            $('#' + data.pref + 'cbStay').checkboxradio({
+            $('#' + prefix + 'cbStay').checkboxradio({
                 classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
             });
 
-            if ($('#' + data.pref + 'lblStay').data('stay') === '1') {
-                $('#' + data.pref + 'lblStay').click();
+            if ($('#' + prefix + 'lblStay').data('stay') === '1') {
+                $('#' + prefix + 'lblStay').click();
             }
 
             // Prepare birth date picker
@@ -709,33 +712,33 @@ function PageManager(initData) {
             });
 
             // Address button
-            setAddrFlag($('#' + data.pref + 'liaddrflag'));
+            setAddrFlag($('#' + prefix + 'liaddrflag'));
 
             // Remove button
-            $('#' + data.pref + 'btnRemove').button().click(function () {
+            $('#' + prefix + 'btnRemove').button().click(function () {
 
                 // Is the name entered?
-                if ($('#' + data.pref + 'txtFirstName').val() !== '' || $('#' + data.pref + 'txtLastName').val() !== '') {
-                    if (confirm('Remove this person: ' + $('#' + data.pref + 'txtFirstName').val() + ' ' + $('#' + data.pref + 'txtLastName').val() + '?') === false) {
+                if ($('#' + prefix + 'txtFirstName').val() !== '' || $('#' + prefix + 'txtLastName').val() !== '') {
+                    if (confirm('Remove this person: ' + $('#' + prefix + 'txtFirstName').val() + ' ' + $('#' + prefix + 'txtLastName').val() + '?') === false) {
                         return;
                     }
                 }
 
                 $(this).parentsUntil('tbody', 'tr').next().remove();
                 $(this).parentsUntil('tbody', 'tr').remove();
-                people.removeIndex[data.pref];
+                people.removeIndex[prefix];
             });
 
             // set country and state selectors
-            $countries = $('#' + data.pref + 'adrcountry' + addrPurpose);
+            $countries = $('#' + prefix + 'adrcountry' + addrPurpose);
             $countries.bfhcountries($countries.data());
 
-            $states = $('#' + data.pref + 'adrstate' + addrPurpose);
+            $states = $('#' + prefix + 'adrstate' + addrPurpose);
             $states.bfhstates($states.data());
 
-            $('#' + data.pref + 'phEmlTabs').tabs();
+            $('#' + prefix + 'phEmlTabs').tabs();
 
-            $('input#' + data.pref + 'adrzip1').each(function() {
+            $('input#' + prefix + 'adrzip1').each(function() {
                 var lastXhr;
                 createZipAutoComplete($(this), 'ws_admin.php', lastXhr);
             });
@@ -1010,7 +1013,7 @@ function PageManager(initData) {
         t.setUp = function(hosp) {
 
             var hDiv = $(hosp.div).addClass('ui-widget-content').prop('id', 'divhospDetail').hide();
-            var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+            var expanderButton = $("<ul style='list-style-type:none; float:right;margin-left:5px;padding-top:2px;' class='ui-widget'/>")
                 .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
                 .append($("<span id='h_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
             var hHdr = $('<div id="divhospHdr" style="padding:2px; cursor:pointer;"/>')
@@ -1282,7 +1285,7 @@ function PageManager(initData) {
             }
 
             // Header
-            $expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+            $expanderButton = $("<ul style='list-style-type:none; float:right; margin-left:5px; padding-top:2px;' class='ui-widget'/>")
                 .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
                 .append($("<span id='r_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
             $rHdr = $('<div id="divResvHdr" style="padding:2px; cursor:pointer;"/>')
@@ -1324,7 +1327,7 @@ function PageManager(initData) {
     function Items () {
 
         var _list = {};
-        var _index = '';
+        var _index;
         var t = this;
         t.hasItem = hasItem;
         t.findItem = findItem;
@@ -1555,7 +1558,7 @@ function PageManager(initData) {
 
             familySection.setUp(data);
 
-            $('#btnDone').val('Continue').show();
+            $('#btnDone').val('Save Family').show();
         }
 
         // Hospital
@@ -1588,7 +1591,7 @@ function PageManager(initData) {
 
             $('#famSection.hhk-cbStay').change();
 
-            $('#btnDone').val('Save').show();
+            $('#btnDone').val('Save ' + resvTitle).show();
 
             if (data.rid > 0) {
 
@@ -1619,11 +1622,11 @@ function PageManager(initData) {
         if (data.addPerson !== undefined) {
 
             // Clear the person search textbox.
-            $('#txtPersonSearch').val('');
+            $('input#txtPersonSearch').val('');
 
-            if (people.addItem({role: '', stay: '1', id: data.addPerson.id, 'pref': data.addPerson.pref})) {
-                addrs.addItem(data.addPerson.addrs[data.addPerson.pref]);
-                familySection.newGuestMarkup(data.addPerson);
+            if (people.addItem(data.addPerson.mem)) {
+                addrs.addItem(data.addPerson.addrs);
+                familySection.newGuestMarkup(data.addPerson, data.addPerson.mem.pref);
             }
         }
     }
