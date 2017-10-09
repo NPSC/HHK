@@ -61,11 +61,11 @@ class Patient extends Role {
         return $mk1;
     }
 
-    public function createThinMarkup($staying, $lockRelChooser) {
+    public function createThinMarkup(PSGMemStay $stay, $lockRelChooser) {
 
         $uS = Session::getInstance();
 
-        $mu = parent::createThinMarkup($staying, TRUE);
+        $mu = parent::createThinMarkup($stay, TRUE);
 
 
         if ($uS->PatientAddr) {

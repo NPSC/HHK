@@ -309,11 +309,68 @@ abstract class Reservation {
         return $mrkup;
     }
 
-    protected function guestReservations(\PDO $dbh, $stayMembers) {
-//        $vstmt = $dbh->query("Select idName, Span_Start_Date, Expected_Co_Date from stays "
-//                . " where `Status` = '" . VisitStatus::CheckedIn . "' and DATE(Expected_Co_Date) > DATE('" . $arrivalDT->format('Y-m-d') . "') "
-//                . " and idName in (" . substr($wh, 1) . ")");
-        return '';
+    protected function guestReservations(\PDO $dbh, \DateTime $arrivalDT, \DateTime $departDT) {
+
+        $whStays = '';
+
+        foreach ($this->getStayingMembers() as $m) {
+            $whStays .= ',' . $m->getId();
+        }
+
+        if ($whStays != '') {
+
+            // Check ongoing visits
+            $vstmt = $dbh->query("Select idName, Span_Start_Date, Expected_Co_Date, idVisit from stays "
+                    . " where `Status` = '" . VisitStatus::CheckedIn . "' and DATE(Expected_Co_Date) > DATE('" . $arrivalDT->format('Y-m-d') . "') "
+                    . " and idName in (" . substr($whStays, 1) . ")");
+
+            while ($s = $vstmt->fetch(\PDO::FETCH_ASSOC)) {
+                // These guests are already staying
+                $mem = $this->reserveData->findMemberById($s['idName']);
+
+                $mem->setStayObj(new PSGMemVisit($s['idVisit']));
+
+            }
+        }
+
+        // Check other reservations
+        $whResv = '';
+        $stayingMembers = $this->getStayingMembers();
+
+        foreach ($stayingMembers as $m) {
+            $whResv .= ',' . $m->getId();
+        }
+
+        if ($whResv != '') {
+
+            $rstmt = $dbh->query("select g.idReservation, ng.idPsg, g.idGuest
+	from reservation_guest g left join name_Guest ng on ng.idName = g.idGuest
+    left join reservation r on r.idReservation = g.idReservation "
+                . "where r.`Status` in ('a', 'uc', 'w') and (ng.idPsg = " . $this->reserveData->getIdPsg() . " or g.idGuest in (" . substr($whResv, 1) . ")) and g.idReservation != " . $this->reserveData->getIdResv()
+                . " and Date(r.Expected_Arrival) < DATE('".$departDT->format('Y-m-d') . "') and Date(r.Expected_Departure) > DATE('".$arrivalDT->format('Y-m-d') . "')");
+
+            while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
+
+                if (isset($stayingMembers[$r['idGuest']])) {
+
+                    $mem = $this->reserveData->findMemberById($r['idGuest']);
+                    $mem->setStayObj(new PSGMemVisit($r['idReservation']));
+                }
+            }
+        }
+
+        return $this->getStayingMembers();
+    }
+
+    protected function getStayingMembers() {
+
+        $stayMembers = array();
+        foreach ($this->reserveData->getPsgMembers() as $m) {
+            if ($m->isStaying()) {
+                $stayMembers[$m->getId()] = $m;
+            }
+        }
+        return $stayMembers;
     }
 
     protected function setRoomRate(\PDO $dbh, Registration $reg, Reservation_1 &$resv, array $post) {
@@ -431,31 +488,72 @@ abstract class Reservation {
         }
     }
 
+    public function savePayments(\PDO $dbh, Reservation_1 &$resv, $post) {
+
+        return;
+
+
+//        $paymentManager = new PaymentManager(PaymentChooser::readPostedPayment($dbh, $post));
+//
+//        $payResult = HouseServices::processPayments($dbh, $paymentManager, 0, 'Referral.php');
+//
+//        if ($payResult !== NULL) {
+//
+//            if ($payResult->getStatus() == PaymentResult::FORWARDED) {
+//                $creditCheckOut = $payResult->getForwardHostedPayment();
+//            }
+//
+//            // Receipt
+//            if (is_null($payResult->getReceiptMarkup()) === FALSE && $payResult->getReceiptMarkup() != '') {
+//                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', $payResult->getReceiptMarkup());
+//                Registration::updatePrefTokenId($dbh, $resv->getIdRegistration(), $payResult->getIdToken());
+//            }
+//
+//            // New Invoice
+//            if (is_null($payResult->getInvoiceMarkup()) === FALSE && $payResult->getInvoiceMarkup() != '') {
+//                $dataArray['invoice'] = HTMLContainer::generateMarkup('div', $payResult->getInvoiceMarkup());
+//            }
+//        }
+//
+//        $results = HouseServices::cardOnFile($dbh, $resv->getIdGuest(), $resv->getIdRegistration(), $post, 'Referral.php?rid='.$resv->getIdReservation());
+//
+//        if (isset($results['error'])) {
+//            $dataArray['error'] = $results['error'];
+//            unset($results['error']);
+//        }
+//
+//        // GO to Card on file?
+//        if (count($creditCheckOut) > 0) {
+//            return $creditCheckOut;
+//        } else if (count($results) > 0) {
+//            return $results;
+//        }
+
+    }
+
     public function saveReservationGuests(\PDO $dbh) {
 
         if ($this->reserveData->getIdResv() < 1) {
             return FALSE;
         }
 
-        // Save reservation-guest
+        //
         $rgRs = new Reservation_GuestRS();
         $rgRs->idReservation->setStoredVal($this->reserveData->getIdResv());
-
         $rgs = EditRS::select($dbh, $rgRs, array($rgRs->idReservation));
 
-
+        // New Reservation
         if (count($rgs) == 0) {
+
             // Load staying members.
-            foreach ($this->reserveData->getPsgMembers() as $g) {
+            foreach ($this->getStayingMembers() as $g) {
 
-                if ($g->getStay() == '1') {
+                $rgRs = new Reservation_GuestRS();
+                $rgRs->idReservation->setNewVal($this->reserveData->getIdResv());
+                $rgRs->idGuest->setNewVal($g->getId());
 
-                    $rgRs = new Reservation_GuestRS();
-                    $rgRs->idReservation->setNewVal($this->reserveData->getIdResv());
-                    $rgRs->idGuest->setNewVal($g->getId());
+                EditRS::insert($dbh, $rgRs);
 
-                    EditRS::insert($dbh, $rgRs);
-                }
             }
 
         } else {
@@ -470,7 +568,7 @@ abstract class Reservation {
                     if ($r['idGuest'] == $g->getId()) {
                         $isListed = TRUE;
 
-                        if ($g->getStay() != '1') {
+                        if ($g->isStaying() === FALSE) {
                             // Delete record
                             $dbh->exec("Delete from reservation_guest where idReservation = " . $this->reserveData->getIdResv() . " and idGuest = " . $g->getId());
                         }
@@ -478,7 +576,7 @@ abstract class Reservation {
                     }
                 }
 
-                if ($isListed === FALSE && $g->getStay() == '1') {
+                if ($isListed === FALSE && $g->isStaying()) {
 
                     $rgRs = new Reservation_GuestRS();
                     $rgRs->idReservation->setNewVal($this->reserveData->getIdResv());
@@ -522,13 +620,13 @@ abstract class Reservation {
 
 class ActiveReservation extends BlankReservation {
 
-    public function createMarkup(\PDO $dbh) {
+    public function createMarkup(\PDO $dbh, Family $family = NULL) {
 
         if ($this->reservRs->Status->getStoredVal() == '') {
             $this->reservRs->Status->setStoredVal(ReservationStatus::Waitlist);
         }
 
-        $data = parent::createMarkup($dbh);
+        $data = parent::createMarkup($dbh, $family);
 
         // Add the reservation section.
         $data['resv'] = $this->createResvMarkup($dbh, new Config_Lite(LABEL_FILE));
@@ -541,12 +639,10 @@ class ActiveReservation extends BlankReservation {
 
         $uS = Session::getInstance();
 
-        $family = new Family($this->reserveData);
-
         // Save members, psg, hospital
+        $family = new Family($this->reserveData);
         $this->reserveData = $family->save($dbh, $post);
 
-        $members = $this->reserveData->getPsgMembers();
 
         // Arrival and Departure dates
         try {
@@ -558,28 +654,13 @@ class ActiveReservation extends BlankReservation {
         }
 
 
-        // Find staying members
-        $stayMembers = array();
-        $wh = '';
-        foreach ($members as $m) {
-            if ($m->isStaying()) {
-                $stayMembers[$m->getId()] = $m;
-                $wh .= ',' . $m->getId();
-            }
+        // Is anyone already in a visit or reservation?
+        $stayingMebers = $this->guestReservations($dbh, $arrivalDT, $departDT);
+
+        if (count($stayingMebers) < 1) {
+            // Nobody left in the reservation
+            return array('error'=>'Invalid Reservation - no one is set to stay.  ');
         }
-
-        // Check PSG for existing reservations
-        if (($mk = $this->reservationChooser($dbh, $this->reserveData->getIdResv())) !== '') {
-            $this->reserveData->setResvChooser($mk);
-            return $this->reserveData->toArray();
-        }
-
-
-        // Is anyone already in a visit?
-        if (($mu = $this->guestReservations($dbh, $stayMembers))) {
-
-        }
-
 
 
         // Registration
@@ -666,15 +747,21 @@ class ActiveReservation extends BlankReservation {
 
         // Save reservation
         $resv->saveReservation($dbh, $reg->getIdRegistration(), $uS->username);
+
+        $this->reserveData->setIdResv($resv->getIdReservation());
+
         $this->saveReservationGuests($dbh);
         $resv->saveConstraints($dbh, $post);
 
         // Room Chooser
-
+        $this->setRoomChoice($dbh, $resv, $idRescPosted);
 
         // Payments
+        $this->savePayments($dbh, $resv, $post);
 
 
+        // Reply
+        return $this->createMarkup($dbh, $family);
 
     }
 
@@ -700,11 +787,13 @@ class StayingReservation extends Reservation {
 
 class BlankReservation extends Reservation {
 
-    public function createMarkup(\PDO $dbh) {
+    public function createMarkup(\PDO $dbh, Family $family = NULL) {
 
-        $family = new Family($this->reserveData);
+        if (is_null($family)) {
+            $family = new Family($this->reserveData);
+            $family->initMembers($dbh);
+        }
 
-        $family->initMembers($dbh);
         $this->reserveData->setFamilySection($family->createFamilyMarkup($dbh, $this->reservRs));
 
         $data = $this->reserveData->toArray();
@@ -779,7 +868,6 @@ class ReserveSearcher extends ActiveReservation {
         return $this->reserveData->toArray();
 
     }
-
 
     protected function psgChooserMkup(\PDO $dbh, array $ngRss, $offerNew = TRUE) {
 

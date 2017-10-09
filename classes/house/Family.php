@@ -152,8 +152,8 @@ class Family {
 
                 $mem = $this->rData->findMemberById($g['idGuest']);
 
-                if ($mem !== NULL && $mem->getStay() !== 'x') {
-                    $mem->setStay('1');
+                if ($mem !== NULL) {
+                    $mem->getStayObj()->setStaying();
                 }
             }
 
@@ -164,8 +164,8 @@ class Family {
 
             foreach ($mems as $mem) {
 
-                if ($mem !== NULL && $mem->getStay() !== 'x') {
-                    $mem->setStay('1');
+                if ($mem !== NULL) {
+                    $mem->getStayObj()->setStaying();
                 }
             }
         }
@@ -206,7 +206,7 @@ class Family {
             }
 
             $nameTr = HTMLContainer::generateMarkup('tr'
-                    , $role->createThinMarkup($this->rData->getPsgMember($prefix)->getStay(), ($this->rData->getIdPsg() == 0 ? FALSE : TRUE))
+                    , $role->createThinMarkup($this->rData->getPsgMember($prefix)->getStayObj(), ($this->rData->getIdPsg() == 0 ? FALSE : TRUE))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup('Remove', array('type'=>'button', 'id'=>$prefix.'btnRemove'))));
 
             // Demographics
@@ -251,10 +251,8 @@ class Family {
             $role = $this->roleObjs[$this->patientPrefix];
             $idPrefix = $role->getRoleMember()->getIdPrefix();
 
-            $isStay = $this->rData->getPsgMember($idPrefix)->getStay();
-
             $trs[] = HTMLContainer::generateMarkup('tr',
-                    $role->createThinMarkup($this->rData->getPsgMember($idPrefix)->getStay(), TRUE)
+                    $role->createThinMarkup($this->rData->getPsgMember($idPrefix)->getStayObj(), TRUE)
                     , array('class'=>$rowClass));
 
             // Demographics
@@ -286,7 +284,7 @@ class Family {
                 $rowClass = 'odd';
             }
 
-            $trs[] = HTMLContainer::generateMarkup('tr', $role->createThinMarkup($this->rData->getPsgMember($idPrefix)->getStay(), ($this->rData->getIdPsg() == 0 ? FALSE : TRUE)), array('class'=>$rowClass));
+            $trs[] = HTMLContainer::generateMarkup('tr', $role->createThinMarkup($this->rData->getPsgMember($idPrefix)->getStayObj(), ($this->rData->getIdPsg() == 0 ? FALSE : TRUE)), array('class'=>$rowClass));
 
             // Demographics
             if ($uS->ShowDemographics) {

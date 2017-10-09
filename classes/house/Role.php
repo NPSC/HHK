@@ -238,40 +238,19 @@ abstract class Role {
 
     }
 
-    public function createThinMarkup($staying, $lockRelChooser) {
+    public function createThinMarkup(PSGMemStay $stay, $lockRelChooser) {
 
         $td = '';
 
         // Staying button
         if ($this->getNoReturn() != '') {
+
             // Set for no return
             $td = HTMLTable::makeTd('No Return', array('title'=>$this->getNoReturn() . ';  Id: ' . $this->getIdName()));
 
-        } else if ($staying == ReserveData::CANT_STAY) {
-
-            // This person cannot stay
-            $td = HTMLTable::makeTd('', array('title'=>'Id: ' . $this->getIdName()));
-
         } else {
 
-            $cbStay = array(
-                'type'=>'checkbox',
-                'name'=>$this->getRoleMember()->getIdPrefix() .'cbStay',
-                'id'=>$this->getRoleMember()->getIdPrefix() .'cbStay',
-                'data-prefix'=>$this->getRoleMember()->getIdPrefix(),
-                'class' => 'hhk-cbStay',
-            );
-
-            $lblStay = array(
-                'for'=>$this->getRoleMember()->getIdPrefix() . 'cbStay',
-                'id' => $this->getRoleMember()->getIdPrefix() . 'lblStay',
-                'data-stay' => ($staying == ReserveData::STAYING ? ReserveData::STAYING : ReserveData::NOT_STAYING),
-                'class' => 'hhk-lblStay',
-            );
-
-            $td = HTMLTable::makeTd(
-                HTMLContainer::generateMarkup('label', 'Stay', $lblStay)
-                . HTMLInput::generateMarkup('', $cbStay)
+            $td = HTMLTable::makeTd($stay->createMarkup($this->getRoleMember()->getIdPrefix())
                 , array('title'=>'Id: ' . $this->getIdName()));
         }
 

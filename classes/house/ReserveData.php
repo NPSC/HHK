@@ -1,31 +1,15 @@
 <?php
-
-/*
- * The MIT License
+/**
+ * ReserveData.php
  *
- * Copyright 2017 Eric.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
+ **/
 
 /**
- * Description of Reservation
+ * Description of ReserveData
  *
  * @author Eric
  */
@@ -132,7 +116,7 @@ class ReserveData {
             if (isset($memArray[ReserveData::ROLE])) {
                 $role = $memArray[ReserveData::ROLE];
             }
-            if (isset($memArray[ReserveData::ID])) {
+            if (isset($memArray[ReserveData::STAY])) {
                 $stay = $memArray[ReserveData::STAY];
             }
 
@@ -342,7 +326,6 @@ class ReserveData {
         return $this;
     }
 
-
 }
 
 class PSGMember {
@@ -350,6 +333,11 @@ class PSGMember {
     protected $id;
     protected $prefix;
     protected $role;
+
+    /**
+     *
+     * @var iPSGMemStay
+     */
     protected $stay;
 
     public function __construct($id, $prefix, $role, $stay) {
@@ -357,7 +345,7 @@ class PSGMember {
         $this->setId($id);
         $this->setPrefix($prefix);
         $this->setRole($role);
-        $this->setStay($stay);
+        $this->stay = new PSGMemStay($stay);
     }
 
     public function getId() {
@@ -373,14 +361,15 @@ class PSGMember {
     }
 
     public function getStay() {
+        return $this->stay->getStay();
+    }
+
+    public function getStayObj() {
         return $this->stay;
     }
 
     public function isStaying() {
-        if ($this->getStay() == '1') {
-            return TRUE;
-        }
-        return FALSE;
+        return $this->stay->isStaying();
     }
 
     public function setId($id) {
@@ -403,6 +392,10 @@ class PSGMember {
     }
 
     public function setStay($stay) {
+        $this->stay->setStay($stay);
+    }
+
+    public function setStayObj(PSGMemStay $stay) {
         $this->stay = $stay;
     }
 
@@ -411,9 +404,124 @@ class PSGMember {
         return array(
             ReserveData::ID => $this->getId(),
             ReserveData::ROLE => $this->getRole(),
-            ReserveData::STAY => $this->getStay(),
+            ReserveData::STAY => $this->stay->getStay(),
             ReserveData::PREF => $this->getPrefix(),
         );
     }
 
+}
+
+class PSGMemStay {
+
+    protected $stay;
+    protected $index;
+
+    public function __construct($stay) {
+
+        if ($stay == ReserveData::STAYING || $stay == ReserveData::NOT_STAYING || $stay == ReserveData::CANT_STAY) {
+
+            $this->stay = $stay;
+
+        } else {
+            $this->stay = ReserveData::NOT_STAYING;
+        }
+
+    }
+
+    public function createMarkup($prefix) {
+
+        if ($this->isBlocked()) {
+
+            // This person cannot stay
+            return '';
+
+        } else {
+
+            $cbStay = array(
+                'type'=>'checkbox',
+                'name'=>$prefix .'cbStay',
+                'id'=>$prefix .'cbStay',
+                'data-prefix'=>$prefix,
+                'class' => 'hhk-cbStay',
+            );
+
+            $lblStay = array(
+                'for'=>$prefix . 'cbStay',
+                'id' => $prefix . 'lblStay',
+                'data-stay' => $this->getStay(),
+                'class' => 'hhk-lblStay',
+            );
+
+            return HTMLContainer::generateMarkup('label', 'Stay', $lblStay)
+                    . HTMLInput::generateMarkup('', $cbStay);
+        }
+    }
+
+    public function isStaying() {
+        if ($this->getStay() == ReserveData::STAYING) {
+            return TRUE;
+        }
+        return FALSE;
+    }
+
+    public function isBlocked() {
+        if ($this->getStay() == ReserveData::CANT_STAY) {
+            return TRUE;
+        }
+        return FALSE;
+    }
+
+    public function getStay() {
+        return $this->stay;
+    }
+
+    public function setStay($s) {
+        $this->stay = $s;
+    }
+
+    public function setBlocked() {
+        $this->stay = ReserveData::CANT_STAY;
+    }
+
+    public function setNotStaying() {
+        $this->stay = ReserveData::NOT_STAYING;
+    }
+
+    public function setStaying() {
+        if ($this->isBlocked() === FALSE) {
+            $this->stay = ReserveData::STAYING;
+        }
+    }
+
+    public function getIndex() {
+        return $this->index;
+    }
+
+    public function setIndex($s) {
+        $this->index = $s;
+    }
+
+}
+
+class PSGMemVisit extends PSGMemStay {
+
+    public function __construct($index) {
+
+        $this->setIndex($index);
+        $this->setBlocked();
+    }
+
+    public function createMarkup($prefix) {
+
+        return HTMLContainer::generateMarkup('a', 'Visit', array('href'=>'whatever'));
+    }
+
+}
+
+class PSGMemResv extends PSGMemVisit {
+
+    public function createMarkup($prefix) {
+
+        return HTMLContainer::generateMarkup('a', 'Resv', array('href'=>'whatever'));
+    }
 }

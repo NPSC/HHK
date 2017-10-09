@@ -165,11 +165,11 @@ class Guest extends Role {
 
     }
 
-    public function createThinMarkup($staying, $lockRelChooser) {
+    public function createThinMarkup(PSGMemStay $stay, $lockRelChooser) {
 
         $uS = Session::getInstance();
 
-        $mu = parent::createThinMarkup($staying, $lockRelChooser);
+        $mu = parent::createThinMarkup($stay, $lockRelChooser);
 
         if ($uS->GuestAddr) {
             // Address
