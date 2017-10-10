@@ -10,14 +10,13 @@ class Family {
     const FAM_TABLE_ID = 'tblFamily';
 
     protected $roleObjs;
-    protected $rData;
     protected $patientId;
     protected $patientPrefix;
     protected $hospStay;
 
-    public function __construct(ReserveData $rData) {
+    public function __construct(\PDO $dbh, &$rData) {
 
-        $this->rData = $rData;
+        //$this->rData = $rData;
         $this->patientId = 0;
         $this->patientPrefix = 0;
 
@@ -28,18 +27,20 @@ class Family {
             $uS->addPerPrefix = 1;
         }
 
+        $this->initMembers($dbh, $rData);
+        $this->setGuestsStaying($dbh, $rData);
     }
 
-    public function initMembers(\PDO $dbh) {
+    protected function initMembers(\PDO $dbh, ReserveData &$rData) {
 
         $uS = Session::getInstance();
 
         // Load any existing PSG members.
-        if ($this->rData->getIdPsg() > 0) {
+        if ($rData->getIdPsg() > 0) {
 
             // PSG is defined
             $ngRs = new Name_GuestRS();
-            $ngRs->idPsg->setStoredVal($this->rData->getIdPsg());
+            $ngRs->idPsg->setStoredVal($rData->getIdPsg());
             $rows = EditRS::select($dbh, $ngRs, array($ngRs->idPsg));
             $target = FALSE;
 
@@ -50,13 +51,13 @@ class Family {
                 $uS->addPerPrefix++;
 
                 // Set target prefix if found.
-                if ($ngrs->idName->getStoredVal() == $this->rData->getId()) {
+                if ($ngrs->idName->getStoredVal() == $rData->getId()) {
                     $target = TRUE;
                 }
 
                 if ($ngrs->Relationship_Code->getStoredVal() == RelLinkType::Self) {
                     // patient
-                    $this->roleObjs[$uS->addPerPrefix] = new Patient($dbh, $uS->addPerPrefix, $ngrs->idName->getStoredVal(), $this->rData->getPatLabel());
+                    $this->roleObjs[$uS->addPerPrefix] = new Patient($dbh, $uS->addPerPrefix, $ngrs->idName->getStoredVal(), $rData->getPatLabel());
                     $this->roleObjs[$uS->addPerPrefix]->setPatientRelationshipCode($ngrs->Relationship_Code->getStoredVal());
 
                     if ($uS->PatientAsGuest && $this->roleObjs[$uS->addPerPrefix]->getNoReturn() == '') {
@@ -66,7 +67,7 @@ class Family {
                     }
 
                     $psgMember = new PSGMember($ngrs->idName->getStoredVal(), $uS->addPerPrefix, VolMemberType::Patient, $staying);
-                    $this->rData->setMember($psgMember);
+                    $rData->setMember($psgMember);
 
                     $this->patientId = $ngrs->idName->getStoredVal();
                     $this->patientPrefix = $uS->addPerPrefix;
@@ -83,74 +84,49 @@ class Family {
                     }
 
                     $psgMember = new PSGMember($ngrs->idName->getStoredVal(), $uS->addPerPrefix, VolMemberType::Guest, $staying);
-                    $this->rData->setMember($psgMember);
+                    $rData->setMember($psgMember);
                 }
             }
 
             // Load new existing member to existing PSG?
-            if ($this->rData->getId() > 0 && !$target) {
+            if ($rData->getId() > 0 && !$target) {
 
                 $uS->addPerPrefix++;
 
-                $this->roleObjs[$uS->addPerPrefix] = new Guest($dbh, $uS->addPerPrefix, $this->rData->getId());
+                $this->roleObjs[$uS->addPerPrefix] = new Guest($dbh, $uS->addPerPrefix, $rData->getId());
 
-                $psgMember = new PSGMember($this->rData->getId(), $uS->addPerPrefix, VolMemberType::Guest, ($this->roleObjs[$uS->addPerPrefix]->getNoReturn() == '' ? ReserveData::NOT_STAYING : ReserveData::CANT_STAY));
-                $this->rData->setMember($psgMember);
+                $psgMember = new PSGMember($rData->getId(), $uS->addPerPrefix, VolMemberType::Guest, ($this->roleObjs[$uS->addPerPrefix]->getNoReturn() == '' ? ReserveData::NOT_STAYING : ReserveData::CANT_STAY));
+                $rData->setMember($psgMember);
             }
-
-        // Flag for new PSG for existing guest
-        } else if ($this->rData->getForceNewPsg() && $this->rData->getId() > 0) {
-
-            // forced New PSG
-            $uS->addPerPrefix++;
-
-            $this->roleObjs[$uS->addPerPrefix] = new Guest($dbh, $uS->addPerPrefix, $this->rData->getId());
-
-            $psgMember = new PSGMember($this->rData->getId(), $uS->addPerPrefix, '', ($this->roleObjs[$uS->addPerPrefix]->getNoReturn() == '' ? ReserveData::NOT_STAYING : ReserveData::CANT_STAY));
-            $this->rData->setMember($psgMember);
-
-        // Add existing member to New PSG
-        } else if ($this->rData->getIdPsg() == 0 && $this->rData->getId() > 0) {
-
-            // Add existing member to New PSG
-            $uS->addPerPrefix++;
-
-            $this->roleObjs[$uS->addPerPrefix] = new Guest($dbh, $uS->addPerPrefix, $this->rData->getId());
-
-            $psgMember = new PSGMember($this->rData->getId(), $uS->addPerPrefix, '', ($this->roleObjs[$uS->addPerPrefix]->getNoReturn() == '' ? ReserveData::NOT_STAYING : ReserveData::CANT_STAY));
-            $this->rData->setMember($psgMember);
 
         }
 
-
         // Load empty member?
-        if ($this->rData->getId() === 0) {
+        if ($rData->getId() === 0) {
 
             $uS->addPerPrefix++;
 
             $this->roleObjs[$uS->addPerPrefix] = new Guest($dbh, $uS->addPerPrefix, 0);
 
             $psgMember = new PSGMember(0, $uS->addPerPrefix, '', '0');
-            $this->rData->setMember($psgMember);
+            $rData->setMember($psgMember);
         }
 
 
-        // Update who is staying
-        $this->setGuestsStaying($dbh);
     }
 
-    protected function setGuestsStaying(\PDO $dbh) {
+    protected function setGuestsStaying(\PDO $dbh, ReserveData &$rData) {
 
-        if ($this->rData->getIdResv() > 0) {
+        if ($rData->getIdResv() > 0) {
 
             // Existing reservation...
             $resvGuestRs = new Reservation_GuestRS();
-            $resvGuestRs->idReservation->setStoredVal($this->rData->getIdResv());
+            $resvGuestRs->idReservation->setStoredVal($rData->getIdResv());
             $rgs = EditRS::select($dbh, $resvGuestRs, array($resvGuestRs->idReservation));
 
             foreach ($rgs as $g) {
 
-                $mem = $this->rData->findMemberById($g['idGuest']);
+                $mem = $rData->findMemberById($g['idGuest']);
 
                 if ($mem !== NULL) {
                     $mem->getStayObj()->setStaying();
@@ -160,15 +136,20 @@ class Family {
         } else {
 
             // New reservation, so set the stay for the guests.
-            $mems = $this->rData->getPsgMembers();
+            $mems = $rData->getPsgMembers();
 
-            foreach ($mems as $mem) {
+            if (is_null($mems) === FALSE) {
 
-                if ($mem !== NULL) {
-                    $mem->getStayObj()->setStaying();
+                foreach ($mems as $mem) {
+
+                    if ($mem !== NULL) {
+                        $mem->getStayObj()->setStaying();
+                    }
                 }
             }
         }
+
+
     }
 
     protected function getAddresses($roles) {
@@ -193,7 +174,7 @@ class Family {
         return $addrs;
     }
 
-    public function CreateAddPersonMu(\PDO $dbh) {
+    public function CreateAddPersonMu(\PDO $dbh, ReserveData $rData) {
 
         $uS = Session::getInstance();
 
@@ -201,12 +182,12 @@ class Family {
 
         foreach ($this->roleObjs as $prefix => $role) {
 
-            if ($role->getIdName() != $this->rData->getId()) {
+            if ($role->getIdName() != $rData->getId()) {
                 continue;
             }
 
             $nameTr = HTMLContainer::generateMarkup('tr'
-                    , $role->createThinMarkup($this->rData->getPsgMember($prefix)->getStayObj(), ($this->rData->getIdPsg() == 0 ? FALSE : TRUE))
+                    , $role->createThinMarkup($rData->getPsgMember($prefix)->getStayObj(), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup('Remove', array('type'=>'button', 'id'=>$prefix.'btnRemove'))));
 
             // Demographics
@@ -219,17 +200,17 @@ class Family {
             // Add addresses and demo's
             $addressTr = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>'hhk-addrRow'));
 
-            $mem = $this->rData->getPsgMember($prefix)->toArray();
+            $mem = $rData->getPsgMember($prefix)->toArray();
             $adr = $this->getAddresses(array($role));
 
-            $addPerson = array('id'=>$this->rData->getId(), 'ntr'=>$nameTr, 'atr'=>$addressTr, 'tblId'=>FAMILY::FAM_TABLE_ID, 'mem'=>$mem, 'addrs'=>$adr[$prefix]);
+            $addPerson = array('id'=>$rData->getId(), 'ntr'=>$nameTr, 'atr'=>$addressTr, 'tblId'=>FAMILY::FAM_TABLE_ID, 'mem'=>$mem, 'addrs'=>$adr[$prefix]);
         }
 
         return $addPerson;
 
     }
 
-    public function createFamilyMarkup(\PDO $dbh, ReservationRS $resvRs) {
+    public function createFamilyMarkup(\PDO $dbh, ReservationRS $resvRs, ReserveData $rData) {
 
         $uS = Session::getInstance();
         //$tbl = new HTMLTable();
@@ -240,7 +221,7 @@ class Family {
 
         $th = HTMLContainer::generateMarkup('tr',
                 HTMLTable::makeTh('Staying')
-                . RoleMember::createThinMarkupHdr($this->rData->getPatLabel(), FALSE, $this->rData->getPatBirthDateFlag())
+                . RoleMember::createThinMarkupHdr($rData->getPatLabel(), FALSE, $rData->getPatBirthDateFlag())
                 . HTMLTable::makeTh('Phone')
                 . HTMLTable::makeTh('Addr'));
 
@@ -252,7 +233,7 @@ class Family {
             $idPrefix = $role->getRoleMember()->getIdPrefix();
 
             $trs[] = HTMLContainer::generateMarkup('tr',
-                    $role->createThinMarkup($this->rData->getPsgMember($idPrefix)->getStayObj(), TRUE)
+                    $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), TRUE)
                     , array('class'=>$rowClass));
 
             // Demographics
@@ -284,7 +265,7 @@ class Family {
                 $rowClass = 'odd';
             }
 
-            $trs[] = HTMLContainer::generateMarkup('tr', $role->createThinMarkup($this->rData->getPsgMember($idPrefix)->getStayObj(), ($this->rData->getIdPsg() == 0 ? FALSE : TRUE)), array('class'=>$rowClass));
+            $trs[] = HTMLContainer::generateMarkup('tr', $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), ($rData->getIdPsg() == 0 ? FALSE : TRUE)), array('class'=>$rowClass));
 
             // Demographics
             if ($uS->ShowDemographics) {
@@ -309,7 +290,7 @@ class Family {
 
             $mk1 .=
                     HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', $this->rData->getWlNotesLabel(), array('style'=>'font-weight:bold;'))
+                HTMLContainer::generateMarkup('legend', $rData->getWlNotesLabel(), array('style'=>'font-weight:bold;'))
                 . HTMLContainer::generateMarkup('textarea', $resvRs->Checkin_Notes->getStoredVal(), array('name'=>'taCkinNotes', 'rows'=>'2', 'style'=>'width:100%')),
                 array('class'=>'hhk-panel', 'style'=>'margin-top:10px; font-size:.9em;'));
         }
@@ -319,7 +300,7 @@ class Family {
             HTMLContainer::generateMarkup('span', 'Family ')
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
-        return array('hdr'=>$hdr, 'tblHead'=>$th, 'tblBody'=>$trs, 'adtnl'=>$mk1, 'mem'=>$this->rData->getMembersArray(), 'addrs'=>$this->getAddresses($this->roleObjs), 'tblId'=>FAMILY::FAM_TABLE_ID);
+        return array('hdr'=>$hdr, 'tblHead'=>$th, 'tblBody'=>$trs, 'adtnl'=>$mk1, 'mem'=>$rData->getMembersArray(), 'addrs'=>$this->getAddresses($this->roleObjs), 'tblId'=>FAMILY::FAM_TABLE_ID);
 
     }
 
@@ -332,16 +313,16 @@ class Family {
 
     }
 
-    public function save(\PDO $dbh, $post) {
+    public function save(\PDO $dbh, $post, ReserveData &$rData) {
 
         $uS = Session::getInstance();
 
         // Open Psg
-        $psg = new Psg($dbh, $this->rData->getIdPsg());
+        $psg = new Psg($dbh, $rData->getIdPsg());
         $idPatient = 0;
 
         // Save Members
-        foreach ($this->rData->getPsgMembers() as $m) {
+        foreach ($rData->getPsgMembers() as $m) {
 
             if ($m->getId() < 0) {
                 continue;
@@ -349,20 +330,23 @@ class Family {
 
             $role = new Guest($dbh, $m->getPrefix(), $m->getId());
             $role->save($dbh, $post, $uS->username);
+            $this->roleObjs[$m->getPrefix()] = $role;
 
             // Patient?
             if ($m->getRole() == 'p') {
                 $idPatient = $role->getIdName();
+                $this->patientId = $role->getIdName();
+                $this->patientPrefix = $m->getPrefix();
             }
 
             $psg->setNewMember($role->getIdName(), $role->getPatientRelationshipCode());
         }
 
         // Save PSG
-        $psg->savePSG($dbh, $idPatient, $uS->username);
-        $this->rData->setIdPsg($psg->getIdPsg());
+        $psg->savePSG($dbh, $this->patientId, $uS->username);
+        $rData->setIdPsg($psg->getIdPsg());
 
-        if ($psg->getIdPsg() > 0 && $idPatient > 0) {
+        if ($psg->getIdPsg() > 0 && $this->patientId > 0) {
 
             // Save Hospital
             $this->hospStay = new HospitalStay($dbh, $psg->getIdPatient());
@@ -370,7 +354,7 @@ class Family {
 
         }
 
-        return $this->rData;
+        return $rData;
     }
 
     public function getPatientId() {
@@ -381,5 +365,23 @@ class Family {
         return $this->hospStay;
     }
 
-
 }
+
+class JoinNewFamily extends Family {
+
+    public function initMembers(\PDO $dbh, ReserveData &$rData) {
+
+        $uS = Session::getInstance();
+
+        // forced New PSG
+        $uS->addPerPrefix++;
+
+        $this->roleObjs[$uS->addPerPrefix] = new Guest($dbh, $uS->addPerPrefix, $rData->getId());
+
+        $psgMember = new PSGMember($rData->getId(), $uS->addPerPrefix, '', ($this->roleObjs[$uS->addPerPrefix]->getNoReturn() == '' ? ReserveData::NOT_STAYING : ReserveData::CANT_STAY));
+        $rData->setMember($psgMember);
+
+    }
+}
+
+

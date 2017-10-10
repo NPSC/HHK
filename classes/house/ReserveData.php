@@ -268,6 +268,10 @@ class ReserveData {
         return $this;
     }
 
+    public function setMembersObj($obj) {
+        $this->psgMembers = $obj;
+    }
+
     public function setIdResv($idResv) {
         if ($idResv < 0) {
             $this->idResv = 0;

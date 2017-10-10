@@ -14,11 +14,13 @@ abstract class Reservation {
      */
     protected $reserveData;
     protected $reservRs;
+    protected $family;
 
-    function __construct(ReserveData $reserveData, ReservationRS $reservRs) {
+    function __construct(ReserveData $reserveData, ReservationRS $reservRs, Family $family) {
 
         $this->reserveData = $reserveData;
         $this->reservRs = $reservRs;
+        $this->family = $family;
     }
 
     public static function reservationFactoy(\PDO $dbh, $post) {
@@ -31,13 +33,13 @@ abstract class Reservation {
             // Force new PSG, also implies new reservation
             $rData->setIdResv(0);
 
-            return new BlankReservation($rData, new ReservationRS());
+            return new BlankReservation($rData, new ReservationRS(), new JoinNewFamily($dbh, $rData));
 
         // idResv < 0
         } else if ($rData->getForceNewResv() && $rData->getIdPsg() > 0) {
 
             // Force New Resv for existing PSG
-            return new ActiveReservation($rData, new ReservationRS());
+            return new ActiveReservation($rData, new ReservationRS(), new Family($dbh, $rData));
 
         // undetermined resv and psg, look at guest id
         } else if ($rData->getIdResv() == 0 && $rData->getIdPsg() == 0) {
@@ -45,17 +47,17 @@ abstract class Reservation {
             // Depends on GUest Id
             if ($rData->getId() > 0) {
                 // Search
-                return new ReserveSearcher($rData, new ReservationRS());
+                return new ReserveSearcher($rData, new ReservationRS(), new Family($dbh, $rData));
             }
 
             // New resv, new psg, new guest
-            return new BlankReservation($rData, new ReservationRS());
+            return new BlankReservation($rData, new ReservationRS(), new Family($dbh, $rData));
 
 
         // Guest, PSG, no reservation specified.
         } else if ($rData->getIdPsg() > 0 && $rData->getIdResv() == 0) {
 
-            return new ReserveSearcher($rData, new ReservationRS());
+            return new ReserveSearcher($rData, new ReservationRS(), new Family($dbh, $rData));
 
         // Got a defined resv.
         } else if ($rData->getIdResv() > 0) {
@@ -74,14 +76,15 @@ abstract class Reservation {
             $rData->setIdPsg($rows[0]['idPsg']);
 
             if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
-                return new ActiveReservation($rData, $rRs);
+
+                return new ActiveReservation($rData, $rRs, new Family($dbh, $rData));
             }
 
             if ($rRs->Status->getStoredVal() == ReservationStatus::Staying) {
-                return new StayingReservation($rData, $rRs);
+                return new StayingReservation($rData, $rRs, new Family($dbh, $rData));
             }
 
-            return new StaticReservation($rData, $rRs);
+            return new StaticReservation($rData, $rRs, new Family($dbh, $rData));
         }
 
         // invalid parameters
@@ -314,7 +317,9 @@ abstract class Reservation {
         $whStays = '';
 
         foreach ($this->getStayingMembers() as $m) {
-            $whStays .= ',' . $m->getId();
+            if ($m->getId() != 0) {
+                $whStays .= ',' . $m->getId();
+            }
         }
 
         if ($whStays != '') {
@@ -338,7 +343,9 @@ abstract class Reservation {
         $stayingMembers = $this->getStayingMembers();
 
         foreach ($stayingMembers as $m) {
-            $whResv .= ',' . $m->getId();
+            if ($m->getId() != 0) {
+                $whResv .= ',' . $m->getId();
+            }
         }
 
         if ($whResv != '') {
@@ -620,13 +627,26 @@ abstract class Reservation {
 
 class ActiveReservation extends BlankReservation {
 
-    public function createMarkup(\PDO $dbh, Family $family = NULL) {
+    public function createMarkup(\PDO $dbh) {
 
         if ($this->reservRs->Status->getStoredVal() == '') {
             $this->reservRs->Status->setStoredVal(ReservationStatus::Waitlist);
         }
 
-        $data = parent::createMarkup($dbh, $family);
+        // Arrival and Departure dates
+        if ($this->reserveData->getIdResv() > 0) {
+            try {
+                $arrivalDT = new\DateTime($this->reservRs->Expected_Arrival->getStoredVal());
+                $departDT = new \DateTime($this->reservRs->Expected_Departure->getStoredVal());
+
+                // Chack guests for other commitments.
+                $this->guestReservations($dbh, $arrivalDT, $departDT);
+            } catch (Hk_Exception_Runtime $hex) {
+                return array('error'=>$hex->getMessage());
+            }
+        }
+
+        $data = parent::createMarkup($dbh);
 
         // Add the reservation section.
         $data['resv'] = $this->createResvMarkup($dbh, new Config_Lite(LABEL_FILE));
@@ -640,8 +660,8 @@ class ActiveReservation extends BlankReservation {
         $uS = Session::getInstance();
 
         // Save members, psg, hospital
-        $family = new Family($this->reserveData);
-        $this->reserveData = $family->save($dbh, $post);
+ //       $family = new Family($this->reserveData);
+        $this->reserveData = $this->family->save($dbh, $post, $this->reserveData);
 
 
         // Arrival and Departure dates
@@ -680,7 +700,7 @@ class ActiveReservation extends BlankReservation {
         // Create the reservation instance
         $resv = new Reservation_1($this->reservRs);
 
-        $resv->setHospitalStay($family->getHospStay());
+        $resv->setHospitalStay($this->family->getHospStay());
         $resv->setExpectedArrival($arrivalDT->format('Y-m-d 16:00:00'));
         $resv->setExpectedDeparture($departDT->format('Y-m-d 10:00:00'));
 
@@ -710,12 +730,6 @@ class ActiveReservation extends BlankReservation {
             $resv->setCheckinNotes(filter_var($post['taCkinNotes'], FILTER_SANITIZE_STRING));
         }
 
-        // Room number chosen
-        $idRescPosted = 0;
-        if (isset($post['selResource'])) {
-            $idRescPosted = intval(filter_Var($post['selResource'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
 
         // DetermineReservation Status
         $reservStatus = ReservationStatus::Waitlist;
@@ -740,6 +754,12 @@ class ActiveReservation extends BlankReservation {
             $resv->setIdResource(0);
         }
 
+        // Room number chosen
+        $idRescPosted = 0;
+        if (isset($post['selResource'])) {
+            $idRescPosted = intval(filter_Var($post['selResource'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
         // Switch to waitlist status if room is 0
         if ($resv->isActionStatus($reservStatus) && $idRescPosted == 0) {
             $resv->setStatus(ReservationStatus::Waitlist);
@@ -753,6 +773,7 @@ class ActiveReservation extends BlankReservation {
         $this->saveReservationGuests($dbh);
         $resv->saveConstraints($dbh, $post);
 
+
         // Room Chooser
         $this->setRoomChoice($dbh, $resv, $idRescPosted);
 
@@ -761,7 +782,8 @@ class ActiveReservation extends BlankReservation {
 
 
         // Reply
-        return $this->createMarkup($dbh, $family);
+        $newResv = new ActiveReservation($this->reserveData, $this->reservRs, $this->family);
+        return $newResv->createMarkup($dbh);
 
     }
 
@@ -787,14 +809,9 @@ class StayingReservation extends Reservation {
 
 class BlankReservation extends Reservation {
 
-    public function createMarkup(\PDO $dbh, Family $family = NULL) {
+    public function createMarkup(\PDO $dbh) {
 
-        if (is_null($family)) {
-            $family = new Family($this->reserveData);
-            $family->initMembers($dbh);
-        }
-
-        $this->reserveData->setFamilySection($family->createFamilyMarkup($dbh, $this->reservRs));
+        $this->reserveData->setFamilySection($this->family->createFamilyMarkup($dbh, $this->reservRs, $this->reserveData));
 
         $data = $this->reserveData->toArray();
 
@@ -802,7 +819,7 @@ class BlankReservation extends Reservation {
         $data['expDates'] = $this->createExpDatesControl();
 
         // Hospital
-        $hospitalStay = new HospitalStay($dbh, $family->getPatientId());
+        $hospitalStay = new HospitalStay($dbh, $this->family->getPatientId());
 
         $data['hosp'] = Hospital::createReferralMarkup($dbh, $hospitalStay);
 
@@ -811,12 +828,9 @@ class BlankReservation extends Reservation {
 
     public function save(\PDO $dbh, $post) {
 
+        $this->family->save($dbh, $post, $this->reserveData);
 
-        $family = new Family($this->reserveData);
-
-        $this->reserveData = $family->save($dbh, $post);
-
-        $newResv = new ActiveReservation($this->reserveData, $this->reservRs);
+        $newResv = new ActiveReservation($this->reserveData, $this->reservRs, $this->family);
 
         return $newResv->createMarkup($dbh);
 
@@ -824,10 +838,7 @@ class BlankReservation extends Reservation {
 
     public function addperson(\PDO $dbh) {
 
-        $family = new Family($this->reserveData);
-        $family->initMembers($dbh);
-
-        return array('addPerson' => $family->CreateAddPersonMu($dbh));
+        return array('addPerson' => $this->family->CreateAddPersonMu($dbh, $this->reserveData));
     }
 
 }
