@@ -48,42 +48,52 @@ class Family {
 
                 $ngrs = new Name_GuestRS();
                 EditRS::loadRow($r, $ngrs);
-                $uS->addPerPrefix++;
 
                 // Set target prefix if found.
                 if ($ngrs->idName->getStoredVal() == $rData->getId()) {
                     $target = TRUE;
                 }
 
+                $psgMember = $rData->findMemberById($ngrs->idName->getStoredVal());
+
+                if ($psgMember != NULL) {
+                    $prefix = $psgMember->getPrefix();
+                } else {
+                    $prefix = $uS->addPerPrefix++;
+                    $psgMember = new PSGMember($ngrs->idName->getStoredVal(), $prefix, '', ReserveData::NOT_STAYING);
+                }
+
                 if ($ngrs->Relationship_Code->getStoredVal() == RelLinkType::Self) {
                     // patient
-                    $this->roleObjs[$uS->addPerPrefix] = new Patient($dbh, $uS->addPerPrefix, $ngrs->idName->getStoredVal(), $rData->getPatLabel());
-                    $this->roleObjs[$uS->addPerPrefix]->setPatientRelationshipCode($ngrs->Relationship_Code->getStoredVal());
+                    $this->roleObjs[$prefix] = new Patient($dbh, $prefix, $ngrs->idName->getStoredVal(), $rData->getPatLabel());
+                    $this->roleObjs[$prefix]->setPatientRelationshipCode($ngrs->Relationship_Code->getStoredVal());
 
-                    if ($uS->PatientAsGuest && $this->roleObjs[$uS->addPerPrefix]->getNoReturn() == '') {
+                    if ($uS->PatientAsGuest && $this->roleObjs[$prefix]->getNoReturn() == '') {
                         $staying = ReserveData::NOT_STAYING;
                     } else {
                         $staying = ReserveData::CANT_STAY;
                     }
 
-                    $psgMember = new PSGMember($ngrs->idName->getStoredVal(), $uS->addPerPrefix, VolMemberType::Patient, $staying);
+                    //$psgMember = new PSGMember($ngrs->idName->getStoredVal(), $prefix, VolMemberType::Patient, $staying);
+                    $psgMember->setRole(VolMemberType::Patient)->setStay($staying);
                     $rData->setMember($psgMember);
 
                     $this->patientId = $ngrs->idName->getStoredVal();
-                    $this->patientPrefix = $uS->addPerPrefix;
+                    $this->patientPrefix = $prefix;
 
                 } else {
                     // guest
-                    $this->roleObjs[$uS->addPerPrefix] = new Guest($dbh, $uS->addPerPrefix, $ngrs->idName->getStoredVal());
-                    $this->roleObjs[$uS->addPerPrefix]->setPatientRelationshipCode($ngrs->Relationship_Code->getStoredVal());
+                    $this->roleObjs[$prefix] = new Guest($dbh, $prefix, $ngrs->idName->getStoredVal());
+                    $this->roleObjs[$prefix]->setPatientRelationshipCode($ngrs->Relationship_Code->getStoredVal());
 
-                    if ($this->roleObjs[$uS->addPerPrefix]->getNoReturn() == '') {
+                    if ($this->roleObjs[$prefix]->getNoReturn() == '') {
                         $staying = ReserveData::NOT_STAYING;
                     } else {
                         $staying = ReserveData::CANT_STAY;
                     }
 
-                    $psgMember = new PSGMember($ngrs->idName->getStoredVal(), $uS->addPerPrefix, VolMemberType::Guest, $staying);
+                    //$psgMember = new PSGMember($ngrs->idName->getStoredVal(), $prefix, VolMemberType::Guest, $staying);
+                    $psgMember->setRole(VolMemberType::Guest)->setStay($staying);
                     $rData->setMember($psgMember);
                 }
             }
@@ -91,11 +101,19 @@ class Family {
             // Load new existing member to existing PSG?
             if ($rData->getId() > 0 && !$target) {
 
-                $uS->addPerPrefix++;
+                $psgMember = $rData->findMemberById($rData->getId());
 
-                $this->roleObjs[$uS->addPerPrefix] = new Guest($dbh, $uS->addPerPrefix, $rData->getId());
+                if ($psgMember != NULL) {
+                    $prefix = $psgMember->getPrefix();
+                } else {
+                    $prefix = $uS->addPerPrefix++;
+                    $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, ReserveData::NOT_STAYING);
+                }
 
-                $psgMember = new PSGMember($rData->getId(), $uS->addPerPrefix, VolMemberType::Guest, ($this->roleObjs[$uS->addPerPrefix]->getNoReturn() == '' ? ReserveData::NOT_STAYING : ReserveData::CANT_STAY));
+                $this->roleObjs[$prefix] = new Guest($dbh, $prefix, $rData->getId());
+
+                //$psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, ($this->roleObjs[$prefix]->getNoReturn() == '' ? ReserveData::NOT_STAYING : ReserveData::CANT_STAY));
+                $psgMember->setStay(($this->roleObjs[$prefix]->getNoReturn() == '' ? ReserveData::NOT_STAYING : ReserveData::CANT_STAY));
                 $rData->setMember($psgMember);
             }
 
@@ -104,11 +122,17 @@ class Family {
         // Load empty member?
         if ($rData->getId() === 0) {
 
-            $uS->addPerPrefix++;
+            $psgMember = $rData->findMemberById($ngrs->idName->getStoredVal());
 
-            $this->roleObjs[$uS->addPerPrefix] = new Guest($dbh, $uS->addPerPrefix, 0);
+            if ($psgMember != NULL) {
+                $prefix = $psgMember->getPrefix();
+            } else {
+                $prefix = $uS->addPerPrefix++;
+                $psgMember = new PSGMember(0, $prefix, '', ReserveData::NOT_STAYING);
+            }
 
-            $psgMember = new PSGMember(0, $uS->addPerPrefix, '', '0');
+            $this->roleObjs[$prefix] = new Guest($dbh, $prefix, 0);
+
             $rData->setMember($psgMember);
         }
 
@@ -374,12 +398,24 @@ class JoinNewFamily extends Family {
         $uS = Session::getInstance();
 
         // forced New PSG
-        $uS->addPerPrefix++;
+        $psgMember = $rData->findMemberById($rData->getId());
 
-        $this->roleObjs[$uS->addPerPrefix] = new Guest($dbh, $uS->addPerPrefix, $rData->getId());
+        if ($psgMember != NULL) {
+            $prefix = $psgMember->getPrefix();
+        } else {
+            $prefix = $uS->addPerPrefix++;
+            $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, ReserveData::NOT_STAYING);
+        }
 
-        $psgMember = new PSGMember($rData->getId(), $uS->addPerPrefix, '', ($this->roleObjs[$uS->addPerPrefix]->getNoReturn() == '' ? ReserveData::NOT_STAYING : ReserveData::CANT_STAY));
+        $this->roleObjs[$prefix] = new Guest($dbh, $prefix, $rData->getId());
+
+        $psgMember->setStay(($this->roleObjs[$prefix]->getNoReturn() == '' ? ReserveData::NOT_STAYING : ReserveData::CANT_STAY));
         $rData->setMember($psgMember);
+
+//        $this->roleObjs[$uS->addPerPrefix] = new Guest($dbh, $uS->addPerPrefix, $rData->getId());
+//
+//        $psgMember = new PSGMember($rData->getId(), $uS->addPerPrefix, '', ($this->roleObjs[$uS->addPerPrefix]->getNoReturn() == '' ? ReserveData::NOT_STAYING : ReserveData::CANT_STAY));
+//        $rData->setMember($psgMember);
 
     }
 }

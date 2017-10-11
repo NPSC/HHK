@@ -631,14 +631,14 @@ class TransferMembers {
 
             $extId = filter_var($externalId, FILTER_SANITIZE_STRING);
 
-            $stmt = $dbh->query("Select count(*) from paymentid_externalid where Payment_Id = $idPayment and External_Id = '$extId'");
+            $stmt = $dbh->query("Select count(*) from payment where idPayment = $idPayment and External_Id = '$extId'");
             $extRows = $stmt->fetchAll(PDO::FETCH_NUM);
 
             if (count($extRows[0]) == 1 && $extRows[0][0] > 0) {
                 throw new Hk_Exception_Upload("HHK Payment Record (idPayment = $idPayment) already has a Donation Id = " . $extId);
             }
 
-            $result = $dbh->exec("INSERT into `paymentid_externalid` (`Payment_Id`, `External_Id`) VALUES ($idPayment, '$extId');");
+            $result = $dbh->exec("Update `payment` set External_Id = '$extId' where idPayment = $idPayment;");
 
         }
 

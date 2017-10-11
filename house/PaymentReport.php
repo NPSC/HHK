@@ -12,6 +12,7 @@ require ("homeIncludes.php");
 require (PMT . 'Receipt.php');
 require (CLASSES . 'ColumnSelectors.php');
 require CLASSES . 'OpenXML.php';
+require HOUSE . 'PaymentReport.php';
 
 try {
     $wInit = new webInit();
@@ -44,195 +45,6 @@ $alertMsg->set_txtSpanId("alrMessage");
 $alertMsg->set_Text("help");
 
 $resultMessage = $alertMsg->createMarkup();
-
-function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$total, &$tbl, &$sml, &$reportRows, $subsidyId) {
-
-    $origAmt = $p['Payment_Amount'];
-    $amt = 0;
-    $payDetail = '';
-    $payStatus = $p['Payment_Status_Title'];
-
-
-    $payStatusAttr = array();
-    $payType = $p['Payment_Method_Title'];
-    $attr['style'] = 'text-align:right;';
-
-    if ($p['idPayment_Method'] == PaymentMethod::Charge || $p['idPayment_Method'] == PaymentMethod::ChgAsCash) {
-
-        if (isset($p['auths'])) {
-
-            foreach ($p['auths'] as $a) {
-
-                if ($a['Card_Type'] != '') {
-                    $payDetail = $a['Card_Type'] . ' - ' . $a['Masked_Account'];
-                }
-            }
-        }
-
-        $payType = 'Credit Card';
-
-
-    } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer) {
-
-        $payDetail = $p['Check_Number'];
-    }
-
-    switch ($p['Payment_Status']) {
-
-        case PaymentStatusCode::VoidSale:
-            $attr['style'] .= 'color:grey;';
-            $payStatusAttr = array('style'=>'text-align:right;');
-            $amt = 0;
-
-            break;
-
-        case PaymentStatusCode::VoidReturn:
-            $attr['style'] .= 'color:grey;';
-            $payStatusAttr = array('style'=>'text-align:right;');
-            $amt = 0;
-            $origAmt = 0 - $origAmt;
-
-            break;
-
-        case PaymentStatusCode::Reverse:
-            $attr['style'] .= 'color:grey;';
-            $payStatusAttr = array('style'=>'text-align:right;');
-            $amt = 0;
-
-            break;
-
-        case PaymentStatusCode::Retrn:  // Return payment
-            $attr['style'] .= 'color:red;';
-            $payStatusAttr = array('style'=>'text-align:right;');
-
-            break;
-
-        case PaymentStatusCode::Paid:
-
-            if ($p['Is_Refund'] == 1) {
-                $origAmt = 0 - $origAmt;
-                $payStatus = 'Refund';
-            }
-
-            $amt = $origAmt;
-
-
-            break;
-
-        case PaymentStatusCode::Declined:
-            $attr['style'] .= 'color:grey;';
-            $payStatusAttr = array('style'=>'text-align:right;');
-            $amt = 0;
-
-            break;
-
-    }
-
-
-    if ($r['i']['Sold_To_Id'] == $subsidyId) {
-
-        $payType = 'House Discount';
-        $payorLast = $r['i']['Company'];
-        $payorFirst = '';
-
-    } else if ($r['i']['Bill_Agent'] == 'a') {
-
-        $payorLast = $r['i']['Company'];
-        $payorFirst = $r['i']['Last'] . ', ' . $r['i']['First'];
-
-    } else {
-
-        $payorLast = HTMLContainer::generateMarkup('a', $r['i']['Last'], array('href'=>'GuestEdit.php?id=' . $r['i']['Sold_To_Id'], 'title'=>'Click to go to the Guest Edit page.'));
-        $payorFirst = $r['i']['First'];
-    }
-
-
-    $invNumber = $r['i']['Invoice_Number'];
-
-    if ($invNumber != '') {
-
-        $iAttr = array('href'=>'ShowInvoice.php?invnum=' . $r['i']['Invoice_Number'], 'style'=>'float:left;', 'target'=>'_blank');
-
-        if ($r['i']['Invoice_Deleted'] > 0) {
-            $iAttr['style'] .= 'color:red;';
-            $iAttr['title'] = 'Invoice is Deleted.';
-        } else if ($r['i']['Invoice_Balance'] != 0) {
-
-            $iAttr['title'] = 'Partial payment.';
-            $invNumber .= HTMLContainer::generateMarkup('sup', '-p');
-        }
-
-        $invNumber = HTMLContainer::generateMarkup('a', $invNumber, $iAttr)
-            .HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment invAction', 'id'=>'invicon'.$p['idPayment'], 'data-stat'=>'view', 'data-iid'=>$r['i']['idInvoice'], 'style'=>'cursor:pointer;', 'title'=>'View Items'));
-    }
-
-    $invoiceMkup = HTMLContainer::generateMarkup('span', $invNumber, array("style"=>'white-space:nowrap'));
-
-    $dateDT = new DateTime($p['Payment_Date']);
-
-    $g = array(
-        'idHospital' => $hospital,
-        'Title' => $r['i']['Room'],
-        'Patient_Last'=>$r['i']['Patient_Last'],
-        'Patient_First'=>$r['i']['Patient_First'],
-        'Pay_Type' => $payType,
-        'Detail' => $payDetail,
-        'Status' => $payStatus,
-        'Payment_External_Id'=>$p['Payment_External_Id'],
-        'By' => $p['Payment_Created_By'],
-        'Notes'=>$p['Payment_Note']
-    );
-
-    if ($isLocal) {
-
-        $g['Last'] = $payorLast;
-        $g['First'] = $payorFirst;
-        $g['Payment_Date'] = ($p['Payment_Date'] == '' ? '' :$dateDT->format('c'));
-        $g['Invoice_Number'] = $invoiceMkup;
-
-        $g['Orig_Amount'] = number_format($origAmt, 2);
-        $g['Amount'] = number_format($amt, 2);
-
-
-        $tr = '';
-        foreach ($fltrdFields as $f) {
-            $tr .= HTMLTable::makeTd($g[$f[1]], $f[6]);
-        }
-
-        $tbl->addBodyTr($tr);
-        $total += $amt;
-
-
-    } else {
-
-        $g['Last'] = $r['i']['Last'];
-        $g['First'] = $r['i']['First'];
-        $g['Payment_Date'] = PHPExcel_Shared_Date::PHPToExcel(strtotime($p['Payment_Date']));
-        $g['Invoice_Number'] = $r['i']['Invoice_Number'];
-
-        $g['Orig_Amount'] = $origAmt;
-        $g['Amount'] = $amt;
-
-        $n = 0;
-
-        $flds = array(
-            $n++ => array('type' => "n",
-                'value' => $r['i']['Sold_To_Id']
-            ),
-            $n++ => array('type' => "s",
-                'value' => ($r['i']['Bill_Agent'] == 'a' ? $r['i']['Company'] : '')
-            )
-        );
-
-        foreach ($fltrdFields as $f) {
-            $flds[$n++] = array('type' => $f[4], 'value' => $g[$f[1]], 'style'=>$f[5]);
-        }
-
-        $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
-
-    }
-
-}
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
 $hdrTbl = '';
@@ -651,7 +463,7 @@ where lp.idPayment > 0
             }
 
 
-            doMarkupRow($fltrdFields, $r, $p, $local, $hospital, $total, $tbl, $sml, $reportRows, $uS->subsidyId, $uS->returnId);
+            PaymentReport::doMarkupRow($fltrdFields, $r, $p, $local, $hospital, $total, $tbl, $sml, $reportRows, $uS->subsidyId, $uS->returnId);
 
         }
     }

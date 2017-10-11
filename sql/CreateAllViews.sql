@@ -1067,10 +1067,7 @@ SELECT
     n.External_Id AS `accountId`,
     IFNULL(DATE_FORMAT(p.Payment_Date, '%Y-%m-%d'), '') AS `date`,
     'HHK' AS `source.name`,
-    CASE
-        WHEN p.Is_Refund = 1 THEN (0 - (il.Amount))
-        ELSE (il.Amount)
-    END AS `amount`,
+    p.Amount AS `amount`,
     IFNULL(np.Neon_Type_Code, '') AS `fund.id`,
     IFNULL(nt.Neon_Type_Code, '') AS `tenderType.id`,
     p.Notes AS `note`,
@@ -1085,16 +1082,12 @@ FROM
         LEFT JOIN
     payment_info_check pc ON p.idPayment = pc.idPayment
         LEFT JOIN
-    payment_invoice pi ON p.idPayment = pi.Payment_Id
-        LEFT JOIN
-    invoice_line il ON pi.Invoice_Id = il.Invoice_Id
-        LEFT JOIN
     `name` n ON p.idPayor = n.idName
         LEFT JOIN
     guest_token gt ON p.idToken = gt.idGuest_token
         LEFT JOIN
     neon_type_map np ON np.List_Name = 'funds'
-	AND np.HHK_Type_Code = il.Item_Id
+		AND np.HHK_Type_Code = 'p'
         LEFT JOIN
     neon_type_map nt ON nt.List_Name = 'tenders'
         AND nt.HHK_Type_Code = p.idPayment_method
@@ -1104,10 +1097,9 @@ FROM
         LEFT JOIN
     neon_type_map nc ON nc.List_Name = 'creditCardTypes'
         AND nc.HHK_Type_Code = gc.Code
-        LEFT JOIN
-    paymentid_externalid pe on p.idPayment = pe.Payment_Id
+
 WHERE
-    p.Status_Code = 's' and pe.External_Id is null and n.Record_Member = 1
+    p.Status_Code = 's' and p.Is_Refund = 0 and p.External_Id = '' and n.Record_Member = 1 and n.idName > 0 and p.Amount > 0
         AND p.idPayment_Method IN (1 , 2, 3, 4);
         
 
@@ -1122,11 +1114,8 @@ SELECT
     n.Name_Full as `Name`,
     n.External_Id AS `Account Id`,
     IFNULL(DATE_FORMAT(p.Payment_Date, '%Y-%m-%d'), '') AS `Payment Date`,
-    CASE
-        WHEN p.Is_Refund = 1 THEN (0 - (il.Amount))
-        ELSE (il.Amount)
-    END AS `Amount`,
-    IFNULL(np.Neon_Type_Name, concat('*', il.Description)) AS `Neon Fund`,
+    p.Amount AS `Amount`,
+    IFNULL(np.Neon_Type_Name, '') AS `Neon Fund`,
     IFNULL(nt.Neon_Type_Name, '') AS `Payment Method`,
     CASE
         WHEN p.idPayment_Method = 1 THEN ''
@@ -1145,16 +1134,12 @@ FROM
         LEFT JOIN
     payment_info_check pc ON p.idPayment = pc.idPayment
         LEFT JOIN
-    payment_invoice pi ON p.idPayment = pi.Payment_Id
-        LEFT JOIN
-    invoice_line il ON pi.Invoice_Id = il.Invoice_Id
-        LEFT JOIN
     `name` n ON p.idPayor = n.idName
         LEFT JOIN
     guest_token gt ON p.idToken = gt.idGuest_token
         LEFT JOIN
     neon_type_map np ON np.List_Name = 'funds'
-	AND np.HHK_Type_Code = il.Item_Id
+	AND np.HHK_Type_Code = 'p'
         LEFT JOIN
     neon_type_map nt ON nt.List_Name = 'tenders'
         AND nt.HHK_Type_Code = p.idPayment_method
@@ -1163,11 +1148,9 @@ FROM
         AND gc.Substitute = pa.Card_Type
         LEFT JOIN
     neon_type_map nc ON nc.List_Name = 'creditCardTypes'
-        AND nc.HHK_Type_Code = gc.Code
-        LEFT JOIN
-    paymentid_externalid pe on p.idPayment = pe.Payment_Id
+        AND nc.HHK_Type_Code = gc.Code  
 WHERE
-    p.Status_Code = 's' and pe.External_Id is null and n.Record_Member = 1
+    p.Status_Code = 's' and p.Is_Refund = 0 and p.External_Id = '' and n.Record_Member = 1 and n.idName > 0 and p.Amount > 0
         AND p.idPayment_Method IN (1 , 2, 3, 4);
         
 

@@ -134,6 +134,8 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
                     $hhkLookup[$row['Code']] = $row;
                 }
 
+                $hhkLookup['p'] = array('Code'=>'p', 0=>'p', 'Description' => 'Payment', 1=>'Payment', 'Substitute'=>'', 2=>'');
+
             } else if ($list['HHK_Lookup'] == 'Pay_Type') {
 
                 // Use Items for the Fund
@@ -161,9 +163,21 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
             foreach ($neonItems as $n => $k) {
 
                 if (isset($_POST['sel' . $list['List_Name']][$n])) {
+
                     $hhkTypeCode = filter_var($_POST['sel' . $list['List_Name']][$n], FILTER_SANITIZE_STRING);
 
-                    if ($hhkTypeCode == '' || isset($hhkLookup[$hhkTypeCode]) === FALSE) {
+                    if ($hhkTypeCode == '') {
+                        // delete if previously set
+                        foreach ($mappedItems as $i) {
+                            if ($i['Neon_Type_Code'] == $n && $i['HHK_Type_Code'] != '') {
+                                $dbh->exec("delete from neon_type_map  where idNeon_type_map = " .$i['idNeon_type_map']);
+                                break;
+                            }
+                        }
+                        
+                        continue;
+
+                    } else if (isset($hhkLookup[$hhkTypeCode]) === FALSE) {
                         continue;
                     }
 
@@ -198,7 +212,6 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
     SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
 
     try {
-
 
         SiteConfig::checkZipFile('patch');
 
@@ -464,6 +477,8 @@ if (is_null($wsConfig) === FALSE) {
                 while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
                     $hhkLookup[$row["Code"]] = $row;
                 }
+
+                $hhkLookup['p'] = array('Code'=>'p', 0=>'p', 'Description' => 'Payment', 1=>'Payment', 'Substitute'=>'', 2=>'');
 
             } else if ($list['HHK_Lookup'] == 'Pay_Type') {
 

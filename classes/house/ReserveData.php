@@ -55,6 +55,7 @@ class ReserveData {
 
         $uS = Session::getInstance();
         $labels = new Config_Lite(LABEL_FILE);
+        $this->psgMembers = array();
 
         if (isset($post['rid'])) {
             $this->setIdResv(intval(filter_var($post['rid'], FILTER_SANITIZE_NUMBER_INT), 10));
@@ -120,7 +121,14 @@ class ReserveData {
                 $stay = $memArray[ReserveData::STAY];
             }
 
-            $this->setMember(new PSGMember($id, $prefix, $role, $stay));
+            $psgMember = $this->getPsgMember($prefix);
+
+            if (is_null($psgMember)) {
+                $this->setMember(new PSGMember($id, $prefix, $role, $stay));
+            } else {
+                $psgMember->setStay($stay)->setRole($role);
+            }
+
         }
     }
 
@@ -236,16 +244,12 @@ class ReserveData {
 
         if (isset($this->psgMembers[$prefix])) {
             return $this->psgMembers[$prefix];
-        } else {
-            throw new Hk_Exception_Runtime('PSG Member prefix not found.  ');
         }
+
+        return NULL;
     }
 
     public function findMemberById($val) {
-
-        if ($val == 0) {
-            throw new Hk_Exception_InvalidArguement('Member Id = 0 is indetermenent. ');
-        }
 
         foreach ($this->getPsgMembers() as $mem) {
 
@@ -259,10 +263,8 @@ class ReserveData {
 
     public function setMember(PSGMember $mem) {
 
-        $prefix = $mem->getPrefix();
-
-        if ($prefix !== NULL && (String)$prefix != '') {
-            $this->psgMembers[$prefix] = $mem;
+        if ($mem->getPrefix() !== NULL && (String)$mem->getPrefix() != '') {
+            $this->psgMembers[$mem->getPrefix()] = $mem;
         }
 
         return $this;
@@ -378,14 +380,17 @@ class PSGMember {
 
     public function setId($id) {
         $this->id = $id;
+        return $this;
     }
 
     public function setPrefix($prefix) {
         $this->prefix = $prefix;
+        return $this;
     }
 
     public function setRole($role) {
         $this->role = $role;
+        return $this;
     }
 
     public function isPatient() {
@@ -397,10 +402,12 @@ class PSGMember {
 
     public function setStay($stay) {
         $this->stay->setStay($stay);
+        return $this;
     }
 
     public function setStayObj(PSGMemStay $stay) {
         $this->stay = $stay;
+        return $this;
     }
 
     public function toArray() {
