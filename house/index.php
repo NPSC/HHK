@@ -135,7 +135,7 @@ if (SecurityComponent::isHTTPS()) {
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="../js/login.js"></script>
+        <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
     </head>
     <body <?php if ($uS->testVersion) { echo "class='testbody'"; } ?>>
         <div id="page">

@@ -64,6 +64,7 @@ define('JQ_DT_JS', '../js/datatables.min.js' . JS_V);
 define('PRINT_AREA_JS', "../js/jquery.PrintArea.js".JS_V);
 define('PAG_JS', "../js/pag.js".JS_V);
 define('MD5_JS', "../js/md5-min.js".JS_V);
+define('LOGIN_JS', "../js/login.js". JS_V);
 
 date_default_timezone_set('America/Chicago');
 

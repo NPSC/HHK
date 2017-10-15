@@ -15,13 +15,13 @@ require_once (DB_TABLES . 'WebSecRS.php');
 $wInit = new webInit();
 
 $dbh = $wInit->dbh;
-
+// get session instance
+$uS = Session::getInstance();
 
 $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;
-
-
 $menuMarkup = $wInit->generatePageMenu();
+
 
 if (isset($_POST['btnSave'])) {
 
@@ -59,6 +59,34 @@ if (isset($_POST['btnSave'])) {
     }
 }
 
+
+$cookieReply = '';
+
+if (isset($_COOKIE['housepc'])) {
+    $cookieReply = "Cookie-Restricted Access is set on this PC. ";
+}
+
+if (isset($_POST['setCookie'])) {
+    $accordIndex = 7;
+
+    $cookVal = encryptMessage(filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP) . 'eric');
+
+    if (SecurityComponent::is_Admin() && setcookie('housepc', $cookVal, time()+ 84600*365*5, $wInit->page->getRootPath() )) {
+        $cookieReply = "Cookie-Restricted Access is set on this PC.";
+    } else {
+        $cookieReply = "Must be logged in as web admin to set access.";
+    }
+
+} else if (isset($_POST['removeCookie']) && isset($_COOKIE['housepc'])) {
+    $accordIndex = 7;
+
+    if (SecurityComponent::is_Admin() && setcookie('housepc', "", time() - 3600, $wInit->page->getRootPath()) ) {
+        $cookieReply = "Cookie-Restricted Access deleted on this PC.";
+    } else {
+        $cookieReply .= " Must be logged in as web admin to delete access.";
+    }
+}
+
 $tbl = new HTMLTable();
 
 $wgroupRS = new W_groupsRS();
@@ -88,6 +116,8 @@ foreach ($rows as $r) {
 }
 
 $tbl->addHeaderTr(HTMLTable::makeTh('Group Code') . HTMLTable::makeTh('Title') . HTMLTable::makeTh('Cookie-Rrestricted') . HTMLTable::makeTh('Description'));
+
+
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
     "http://www.w3.org/TR/html4/loose.dtd"><html lang="en">
@@ -100,6 +130,13 @@ $tbl->addHeaderTr(HTMLTable::makeTh('Group Code') . HTMLTable::makeTh('Title') .
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript">
+            var table, accordIndex;
+            $(document).ready(function() {
+                $('input:submit').button();
+            });
+
+        </script>
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
         <?php echo $menuMarkup; ?>
@@ -108,10 +145,13 @@ $tbl->addHeaderTr(HTMLTable::makeTh('Group Code') . HTMLTable::makeTh('Title') .
             <div class="ui-widget ui-widget-content ui-corner-all" style="font-size:0.95em; float:left; padding: 0.7em 1.0em;">
                 <form method="POST" action="AuthGroupEdit.php" name="form1">
                     <?php echo $tbl->generateMarkup(); ?>
+                     <input name="setCookie" type="submit" value="Set PC Access" style="margin:10px;"/><input name="removeCookie" type="submit" value="Remove Access" style="margin:10px;"/>
                  <span style="float:right;margin:10px;">
+
                     <input type="submit" name="btnSave" value="Save"/>
                 </span>
                 </form>
+                <h3><?php echo $cookieReply; ?></h3>
             </div>
 
         </div>

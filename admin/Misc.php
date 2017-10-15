@@ -14,6 +14,7 @@ require (DB_TABLES . 'nameRS.php');
 require (CLASSES . 'AuditLog.php');
 require (THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php');
 require CLASSES . 'CreateMarkupFromDB.php';
+require CLASSES . 'SiteDbBackup.php';
 
 
 
@@ -27,7 +28,6 @@ $dbh = $wInit->dbh;
 //$dbcon = initDB();
 
 
-$pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;
 // get session instance
 $uS = Session::getInstance();
@@ -181,11 +181,6 @@ if (isset($_POST["cmd"])) {
     echo( json_encode($rtrn));
     exit();
 }
-// End of service calls
-//
-//
-//
-//$menuMarkup = $page->generateMenu($dbcon, $uS, $testHeader);
 
 $lookupErrMsg = "";
 
@@ -194,30 +189,27 @@ $accordIndex = 0;
 $cookieReply = '';
 
 if (isset($_COOKIE['housepc'])) {
-    $cookieReply = "Access is set on this PC " . $_COOKIE['housepc']['value'];
+    $cookieReply = "Cookie-Restricted Access is set on this PC. ";
 }
 
 if (isset($_POST['setCookie'])) {
     $accordIndex = 7;
-    $sites = $uS->siteList;
 
-    $cookVal = encryptMessage($_SERVER['REMOTE_ADDR'] . 'eric');
+    $cookVal = encryptMessage(filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP) . 'eric');
 
-    if (SecurityComponent::is_TheAdmin()) {
-        if ( setcookie('volpc', $cookVal,0, $sites[WebSiteCode::Volunteer]['Relative_Address'], $sites[WebSiteCode::Volunteer]['HTTP_Host']) ) {
-            $cookieReply = "Access Set.  PC should work now.";
-        }
-        setcookie('housepc', $cookVal, 0, $sites[WebSiteCode::House]['Relative_Address'], $sites[WebSiteCode::House]['HTTP_Host']);
+    if (SecurityComponent::is_Admin() && setcookie('housepc', $cookVal, time()+ 84600*365*5, $wInit->page->getRootPath() )) {
+        $cookieReply = "Cookie-Restricted Access is set on this PC.";
     } else {
-        $cookieReply = "Must be logged in as THE admin to set access.";
+        $cookieReply = "Must be logged in as web admin to set access.";
     }
 
-} else if (isset($_POST['removeCookie'])) {
+} else if (isset($_POST['removeCookie']) && isset($_COOKIE['housepc'])) {
     $accordIndex = 7;
-    $sites = $uS->siteList;
 
-    if ( setcookie('housepc', "", time() - 3600, $sites['v']['Relative_Address'], $sites['v']['HTTP_Host']) ) {
-        $cookieReply = "Access Deleted.";
+    if (SecurityComponent::is_Admin() && setcookie('housepc', "", time() - 3600, $wInit->page->getRootPath()) ) {
+        $cookieReply = "Cookie-Restricted Access Deleted on this PC.";
+    } else {
+        $cookieReply .= " Must be logged in as web admin to delete access.";
     }
 
 }
@@ -388,13 +380,6 @@ if (isset($_POST['btnClnNames'])) {
 
 // Database backup on demand
 $bkupMsg = "";
-$ignoreTables = array(
-    1 => 'postal_codes',
-    2 => 'street_suffix',
-    3 => 'secondary_unit_desig',
-    4 => 'mail_listing',
-    5 => 'member_history',
-);
 
 
 $to = $config->get('backup', 'BackupEmailAddr', '');
@@ -405,67 +390,29 @@ if (isset($_POST["btnDoBackup"])) {
     $bkupAlert = new alertMessage("bkupAlert");
     $bkupAlert->set_Context(alertMessage::Alert);
 
-    $siteName = $config->get('site', 'Site_Name', 'Hospitality HouseKeeper');
-    $from = $config->get('backup', 'FromEmailAddr', '');      // Email address message will show as coming from.
+    // ignore tables
+    $igtables = array(
+        1 => 'postal_codes',
+        2 => 'street_suffix',
+        3 => 'secondary_unit_desig',
+        4 => 'mail_listing',
+        5 => 'member_history',
+        6 => 'language',
+        7 => 'country_code',
+        8 => 'activity',
+        );
 
-    $dbuser = $config->get('backup', 'BackupUser', '');
-    $dbpwd = $config->get('backup', 'BackupPassword', '');
+    $dbBack = new SiteDbBackup(REL_BASE_DIR . 'patch' . DS . 'backup.sql', ciCFG_FILE);
 
-    $dbConfig = $config->getSection('db');
-
-    if (is_array($dbConfig)) {
-        $dbUrl = $dbConfig['URL'];
-        $dbname = $dbConfig['Schema'];
-    }
-
-    if ($dbuser == '' || $dbpwd == '') {
-        $bkupMsg = $bkupAlert->createMarkup('Backup username or password is missing.');
-    } else {
-
-        $dbpwd = decryptMessage($dbpwd);
-
-        $datestamp = date("Y_m_d");
-
-        $filename = REL_BASE_DIR . 'patch' . DS . 'backup.sql.gz';
-
-        // ignore tables
-        $igtables = array(
-            1 => 'postal_codes',
-            2 => 'street_suffix',
-            3 => 'secondary_unit_desig',
-            4 => 'mail_listing',
-            5 => 'member_history',
-            6 => 'language',
-            7 => 'country_code',
-            );
-
-        foreach ($ignoreTables as $t) {
-            $igtables = " --ignore-table=$dbname.$t";
+    if ($dbBack->backupSchema($igtables)) {
+        // success
+        if ($dbBack->encryptFile()) {
+            $dbBack->emailFile();
         }
-
-        $return_var = '';
-
-        // Backup database
-        $command = "mysqldump  --host=$dbUrl --skip-lock-tables --single-transaction $igtables --user=$dbuser --password='$dbpwd' $dbname | gzip > $filename";
-        passthru($command, $return_var);
-
-
-        //$attachmentname = array_pop(explode("/", $filename));   // If a path was included, strip it out for the attachment name
-        $attachmentname = 'backup_' . $datestamp . '.sql.gz';
-        $message = "Compressed database backup file $attachmentname attached.\r\n\r\n";
-
-        $mail = prepareEmail($config);
-
-        $mail->From = $from;
-        $mail->FromName = $config->getString('site', 'Site_Name', 'Hospitality HouseKeeper');
-        $mail->addAddress($to);     // Add a recipient
-        $mail->Subject = $siteName . " DB backup file - " . $datestamp;
-        $mail->msgHTML($message);
-        $mail->addAttachment($filename, $attachmentname, 'base64', '', 'attachment');
-        $mail->send();
-
-        $bkupMsg = $bkupAlert->createMarkup('Result: ' . $return_var . ";  Email Error: " . $mail->ErrorInfo);
     }
+
+    $bkupMsg = $bkupAlert->createMarkup('Result: ' . $dbBack->getErrors());
+
 }
 
 /*
@@ -674,7 +621,7 @@ $selLookups = getGenLookups($dbh);
 <html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title><?php echo $pageTitle; ?></title>
+        <title><?php echo $wInit->pageTitle; ?></title>
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
         <?php echo DEFAULT_CSS; ?>
         <link href="<?php echo JQ_DT_CSS; ?>" rel="stylesheet" type="text/css" />
@@ -959,7 +906,7 @@ $selLookups = getGenLookups($dbh);
 
                     <div id="setCook" class="ui-tabs-hide">
                         This sets or removes access on this PC that you are using now.<br/>
-                        <input name="setCookie" type="submit" value="Set House PC Access"/><input name="removeCookie" type="submit" value="Remove Access"/>
+                        <input name="setCookie" type="submit" value="Set PC Access" style="margin-right:1em;"/><input name="removeCookie" type="submit" value="Remove Access" style="margin-right:1em;"/>
                         <h3><?php echo $cookieReply; ?></h3>
                     </div>
                     <div id="lookups" class="ui-tabs-hide" >
@@ -1006,7 +953,7 @@ $selLookups = getGenLookups($dbh);
                             </tr>
                             <tr>
                                 <td>Email Address:
-                                    <input type="text" id ="eAddr" name="eAddr" VALUE='<?php echo $to; ?>' size="28" disabled="disabled" />
+                                    <input type="text" id ="eAddr" name="eAddr" VALUE='<?php echo $to; ?>' size="50" disabled="disabled" />
                                 </td>
                             <tr>
                                 <td style="text-align:right;"><input type="submit" name="btnDoBackup" value="Run Database Backup"/></td>

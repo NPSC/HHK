@@ -130,7 +130,7 @@ $build = 'Build:' . $config->getString('code', 'Version', '*') . '.' . $config->
 $copyYear = date('Y');
 
 
-$tbl = SiteConfig::createCliteMarkup($config, $secureComp->isHTTPS(), new Config_Lite('conf' . DS . 'siteTitles.cfg'), 'db');
+$tbl = SiteConfig::createCliteMarkup($config, new Config_Lite('conf' . DS . 'siteTitles.cfg'), 'db');
 
 ?>
 <!DOCTYPE html>

@@ -541,9 +541,13 @@ class TransferMembers {
 
                     if ($typeFound === FALSE) {
                         // Update the individual type
-                        $retrieveResult = $this->retrieveAccount($result['searchResults'][0]['Account ID']);
-                        $f['Result'] .= $this->updateNeonAccount($dbh, $retrieveResult, $r['HHK_ID']);
-
+                        try{
+                            $retrieveResult = $this->retrieveAccount($result['searchResults'][0]['Account ID']);
+                            $f['Result'] .= $this->updateNeonAccount($dbh, $retrieveResult, $r['HHK_ID']);
+                        } catch (Hk_Exception_Runtime $hex) {
+                            $f['Result'] .= 'Update Individual Type Error: ' . $hex->getMessage();
+                            continue;
+                        }
                     }
 
                 } else {

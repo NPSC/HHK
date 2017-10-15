@@ -104,7 +104,7 @@ if (SecurityComponent::isHTTPS()) {
         <script type="text/javascript" src="../js/md5-min.js"></script>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="../js/login.js"></script>
+        <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
         <link rel="icon" type="image/png" href="../images/hhkLogo.png" />
     </head>
     <body >

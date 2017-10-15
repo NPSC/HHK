@@ -109,6 +109,7 @@ define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JS_V);
 define('RESV_JS', "js/resv.js" . JS_V);
 define('MD5_JS', '../js/md5-min.js');
 define('PAG_JS', '../js/pag.js' . JS_V);
+define('LOGIN_JS', "../js/login.js". JS_V);
 
 
 date_default_timezone_set('America/Chicago');

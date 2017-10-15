@@ -12,9 +12,20 @@ require CLASSES . 'SiteConfig.php';
 
 
 // Get the site configuration object
-$config = new Config_Lite(ciCFG_FILE);
+$preConfig = new Config_Lite(ciCFG_FILE);
 $result = "";
 $secureComp = new SecurityComponent(FALSE);
+
+// Set the SSL config parameter
+if ($secureComp->isHTTPS()) {
+    $preConfig->set('site', 'SSL', 'true');
+} else {
+    $preConfig->set('site', 'SSL', 'false');
+}
+
+// Save SSL state and reopen the config file.
+$preConfig->save();
+$config = new Config_Lite(ciCFG_FILE);
 
 
 // Save button
@@ -36,7 +47,7 @@ if (isset($_POST['btnNext'])) {
 // Page Markup
 $siteURL = HTMLContainer::generateMarkup('p', "Site URL: " . $secureComp->getRootURL());
 
-$tbl = SiteConfig::createCliteMarkup($config, $secureComp->isHTTPS(), new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));
+$tbl = SiteConfig::createCliteMarkup($config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));
 
 $configuration = $siteURL . $tbl->generateMarkup();
 ?>

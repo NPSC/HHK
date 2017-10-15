@@ -88,30 +88,31 @@ if (isset($_POST['btnSave'])) {
         }
 
         // Set web_sites table
-        $adminDir = str_ireplace('/', '', $config->getString('site', 'Admin_Dir', 'admin')) . '/';
-        $houseDir = str_ireplace('/', '', $config->getString('site', 'House_Dir', '')) . '/';
-        $volDir = str_ireplace('/', '', $config->getString('site', 'Volunteer_Dir', '')) . '/';
+        $adminDir = str_ireplace('/', '', $config->getString('site', 'Admin_Dir', 'admin'));
+        $houseDir = str_ireplace('/', '', $config->getString('site', 'House_Dir', ''));
+        $volDir = str_ireplace('/', '', $config->getString('site', 'Volunteer_Dir', ''));
+
 
         // Admin
-        $dbh->exec("update web_sites set Relative_Address = '$adminDir' where Site_Code = 'a'");
+        $dbh->exec("update web_sites set Relative_Address = '$adminDir/' where Site_Code = '" . WebSiteCode::Admin . "'");
 
         // House
         if ($houseDir != '') {
-            $dbh->exec("update web_sites set Relative_Address = '$houseDir' where Site_Code = 'h'");
+            $dbh->exec("update web_sites set Relative_Address = '$houseDir/' where Site_Code = '" . WebSiteCode::House . "'");
         } else {
-            $dbh->exec("update web_sites set Relative_Address = '' where Site_Code = 'h'");
+            $dbh->exec("update web_sites set Relative_Address = '' where Site_Code = '" . WebSiteCode::House . "'");
         }
 
         // Volunteer
         if ($volDir != '') {
-            $dbh->exec("update web_sites set Relative_Address = '$volDir' where Site_Code = 'v'");
+            $dbh->exec("update web_sites set Relative_Address = '$volDir/' where Site_Code = '" . WebSiteCode::Volunteer . "'");
         } else {
-            $dbh->exec("update web_sites set Relative_Address = '' where Site_Code = 'v'");
+            $dbh->exec("update web_sites set Relative_Address = '' where Site_Code = '" . WebSiteCode::Volunteer . "'");
         }
 
 
     } catch (Exception $hex) {
-        $errorMsg .= '***' . $hex->getMessage();
+        $errorMsg .= '*** ' . $hex->getMessage();
     }
 }
 
