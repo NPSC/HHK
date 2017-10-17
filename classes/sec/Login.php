@@ -49,7 +49,7 @@ class Login {
             // Must access pages through SSL
             if ($secureComp->isHTTPS() === FALSE) {
                 // non-SSL access.
-                header("Location: " . $config->getString('site','Site_URL', ''));
+                header("Location: " . $secureComp->getRootURL());
             }
         }
 
@@ -67,7 +67,7 @@ class Login {
         $ssn->subsidyId = $config->getString('financial', 'RoomSubsidyId', '0');
         $ssn->adminEmailAddr = $config->getString('house', 'Admin_Address', '');
         $ssn->noreplyAddr = $config->getString('house', 'NoReply', '');
-        $ssn->adminSiteURL = $config->get('site', 'Admin_URL', '');
+        //$ssn->adminSiteURL = $config->get('site', 'Admin_URL', '');
         $ssn->ccgw = $config->getString('financial', 'CC_Gateway', '');
 
         // Initialize role code

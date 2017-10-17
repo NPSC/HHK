@@ -28,7 +28,7 @@ class Family {
         }
 
         $this->initMembers($dbh, $rData);
-        $this->setGuestsStaying($dbh, $rData);
+
     }
 
     protected function initMembers(\PDO $dbh, ReserveData &$rData) {
@@ -68,14 +68,11 @@ class Family {
                     $this->roleObjs[$prefix] = new Patient($dbh, $prefix, $ngrs->idName->getStoredVal(), $rData->getPatLabel());
                     $this->roleObjs[$prefix]->setPatientRelationshipCode($ngrs->Relationship_Code->getStoredVal());
 
-                    if ($uS->PatientAsGuest && $this->roleObjs[$prefix]->getNoReturn() == '') {
-                        $staying = ReserveData::NOT_STAYING;
-                    } else {
-                        $staying = ReserveData::CANT_STAY;
+                    if ($uS->PatientAsGuest && $this->roleObjs[$prefix]->getNoReturn() != '') {
+                        $psgMember->setStay(ReserveData::CANT_STAY);
                     }
 
-                    //$psgMember = new PSGMember($ngrs->idName->getStoredVal(), $prefix, VolMemberType::Patient, $staying);
-                    $psgMember->setRole(VolMemberType::Patient)->setStay($staying);
+                    $psgMember->setRole(VolMemberType::Patient);
                     $rData->setMember($psgMember);
 
                     $this->patientId = $ngrs->idName->getStoredVal();
@@ -86,14 +83,11 @@ class Family {
                     $this->roleObjs[$prefix] = new Guest($dbh, $prefix, $ngrs->idName->getStoredVal());
                     $this->roleObjs[$prefix]->setPatientRelationshipCode($ngrs->Relationship_Code->getStoredVal());
 
-                    if ($this->roleObjs[$prefix]->getNoReturn() == '') {
-                        $staying = ReserveData::NOT_STAYING;
-                    } else {
-                        $staying = ReserveData::CANT_STAY;
+                    if ($this->roleObjs[$prefix]->getNoReturn() != '') {
+                        $psgMember->setStay(ReserveData::CANT_STAY);
                     }
 
-                    //$psgMember = new PSGMember($ngrs->idName->getStoredVal(), $prefix, VolMemberType::Guest, $staying);
-                    $psgMember->setRole(VolMemberType::Guest)->setStay($staying);
+                    $psgMember->setRole(VolMemberType::Guest);
                     $rData->setMember($psgMember);
                 }
             }
@@ -112,8 +106,10 @@ class Family {
 
                 $this->roleObjs[$prefix] = new Guest($dbh, $prefix, $rData->getId());
 
-                //$psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, ($this->roleObjs[$prefix]->getNoReturn() == '' ? ReserveData::NOT_STAYING : ReserveData::CANT_STAY));
-                $psgMember->setStay(($this->roleObjs[$prefix]->getNoReturn() == '' ? ReserveData::NOT_STAYING : ReserveData::CANT_STAY));
+                if ($this->roleObjs[$prefix]->getNoReturn() != '') {
+                    $psgMember->setStay(ReserveData::CANT_STAY);
+                }
+
                 $rData->setMember($psgMember);
             }
 
@@ -122,7 +118,7 @@ class Family {
         // Load empty member?
         if ($rData->getId() === 0) {
 
-            $psgMember = $rData->findMemberById($ngrs->idName->getStoredVal());
+            $psgMember = $rData->findMemberById(0);
 
             if ($psgMember != NULL) {
                 $prefix = $psgMember->getPrefix();
@@ -136,10 +132,9 @@ class Family {
             $rData->setMember($psgMember);
         }
 
-
     }
 
-    protected function setGuestsStaying(\PDO $dbh, ReserveData &$rData) {
+    public function setGuestsStaying(\PDO $dbh, ReserveData &$rData) {
 
         if ($rData->getIdResv() > 0) {
 
@@ -337,7 +332,7 @@ class Family {
 
     }
 
-    public function save(\PDO $dbh, $post, ReserveData &$rData) {
+    public function save(\PDO $dbh, $post, ReserveData $rData) {
 
         $uS = Session::getInstance();
 
@@ -352,15 +347,29 @@ class Family {
                 continue;
             }
 
-            $role = new Guest($dbh, $m->getPrefix(), $m->getId());
-            $role->save($dbh, $post, $uS->username);
-            $this->roleObjs[$m->getPrefix()] = $role;
 
             // Patient?
             if ($m->getRole() == 'p') {
+
+                $role = new Patient($dbh, $m->getPrefix(), $m->getId());
+                $role->save($dbh, $post, $uS->username);
+                $this->roleObjs[$m->getPrefix()] = $role;
+
+                $m->setId($role->getIdName());
+
                 $idPatient = $role->getIdName();
                 $this->patientId = $role->getIdName();
                 $this->patientPrefix = $m->getPrefix();
+
+            } else {
+
+                $role = new Guest($dbh, $m->getPrefix(), $m->getId());
+                $role->save($dbh, $post, $uS->username);
+                $this->roleObjs[$m->getPrefix()] = $role;
+
+                $m->setId($role->getIdName());
+
+
             }
 
             $psg->setNewMember($role->getIdName(), $role->getPatientRelationshipCode());
@@ -375,6 +384,7 @@ class Family {
             // Save Hospital
             $this->hospStay = new HospitalStay($dbh, $psg->getIdPatient());
             Hospital::saveReferralMarkup($dbh, $psg, $this->hospStay, $post);
+            $rData->setIdHospital_Stay($this->hospStay->getIdHospital_Stay());
 
         }
 

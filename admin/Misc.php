@@ -380,15 +380,13 @@ if (isset($_POST['btnClnNames'])) {
 
 // Database backup on demand
 $bkupMsg = "";
-
-
 $to = $config->get('backup', 'BackupEmailAddr', '');
 
 if (isset($_POST["btnDoBackup"])) {
 
     $accordIndex = 2;
     $bkupAlert = new alertMessage("bkupAlert");
-    $bkupAlert->set_Context(alertMessage::Alert);
+    $bkupAlert->set_Context(alertMessage::Notice);
 
     // ignore tables
     $igtables = array(
@@ -402,12 +400,12 @@ if (isset($_POST["btnDoBackup"])) {
         8 => 'activity',
         );
 
-    $dbBack = new SiteDbBackup(REL_BASE_DIR . 'patch' . DS . 'backup.sql', ciCFG_FILE);
+    $dbBack = new SiteDbBackup(REL_BASE_DIR . 'patch' . DS, ciCFG_FILE);
 
     if ($dbBack->backupSchema($igtables)) {
         // success
         if ($dbBack->encryptFile()) {
-            $dbBack->emailFile();
+            $dbBack->emailFile('', TRUE);
         }
     }
 

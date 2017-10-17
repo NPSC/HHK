@@ -191,6 +191,7 @@ function setupRates(ckIn) {
                     fa = 0;
                 }
             }
+            
             $('#spnLodging').text('$' + (amt * ds));
             total = (amt * ds) + fa;
             $('#spnAmount').text('$' + total);

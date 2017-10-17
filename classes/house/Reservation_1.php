@@ -262,7 +262,9 @@ class Reservation_1 {
             $this->reservRs->idReservation->setNewVal($idResv);
 
             $logText = VisitLog::getInsertText($this->reservRs);
+
             EditRS::updateStoredVals($this->reservRs);
+
             ReservationLog::logReservation($dbh, $idResv,
                     $this->reservRs->idRegistration->getStoredVal(),
                     $this->reservRs->idHospital_Stay->getStoredVal(),
@@ -281,6 +283,7 @@ class Reservation_1 {
 
             if ($updt == 1) {
                 $logText = VisitLog::getUpdateText($this->reservRs);
+
                 EditRS::updateStoredVals($this->reservRs);
 
                 ReservationLog::logReservation($dbh, $this->reservRs->idReservation->getStoredVal(),

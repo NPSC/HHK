@@ -84,7 +84,7 @@ if (isset($_POST["btnSiteCnf"])) {
     SiteConfig::saveConfig($dbh, $config, $_POST, $uS->username);
     SiteConfig::saveSysConfig($dbh, $_POST);
 
-    $config = Login::initializeSession(ciCFG_FILE);
+    //$config = Login::initializeSession(ciCFG_FILE);
 }
 
 if (isset($_POST["btnLabelCnf"])) {

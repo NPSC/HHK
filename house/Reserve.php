@@ -191,7 +191,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="../js/jquery.daterangepicker.min.js"></script>
+        <script type="text/javascript" src="<?php echo DR_PICKER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VERIFY_ADDRS_JS; ?>"></script>
@@ -283,6 +283,8 @@ function PageManager(initData) {
         t.findStaysChecked = findStaysChecked;
         t.setupComplete = false;
         t.setUp = setUp;
+        t.newGuestMarkup = newGuestMarkup;
+        t.verify = verify;
 
 
         function findStaysChecked() {
@@ -414,7 +416,7 @@ function PageManager(initData) {
 
         function copyAddress(prefix) {
 
-            var adrs = addrs.list();
+            //var adrs = addrs.list();
 
             for (var p in addrs.list()) {
                 // Use this one already?
@@ -443,7 +445,7 @@ function PageManager(initData) {
                         $('#' + prefix + 'incomplete').prop('checked', false);
                     }
 
-                    loadAddress(prefix);
+                    //loadAddress(prefix);
 
                     // Update the address flag
                     setAddrFlag($('#' + prefix + 'liaddrflag'));
@@ -480,6 +482,8 @@ function PageManager(initData) {
             addrs.list()[prefix].State_Province = $('#' + prefix + 'adrstate' + addrPurpose).val();
             addrs.list()[prefix].Country_Code = $('#' + prefix + 'adrcountry' + addrPurpose).val();
             addrs.list()[prefix].Postal_Code = $('#' + prefix + 'adrzip' + addrPurpose).val();
+
+            setAddrFlag($('#' + prefix + 'liaddrflag'));
 
         }
 
@@ -670,7 +674,7 @@ function PageManager(initData) {
             t.setupComplete = true;
         };
 
-        t.newGuestMarkup = function(data, prefix) {
+        function newGuestMarkup(data, prefix) {
 
             var $countries, $states, $famTbl, stripeClass;
 
@@ -727,6 +731,7 @@ function PageManager(initData) {
                 $(this).parentsUntil('tbody', 'tr').next().remove();
                 $(this).parentsUntil('tbody', 'tr').remove();
                 people.removeIndex[prefix];
+                addrs.removeIndex[prefix];
             });
 
             // set country and state selectors
@@ -745,7 +750,7 @@ function PageManager(initData) {
 
         };
 
-        t.verify = function() {
+        function verify() {
 
             var numPat = 0;
             var numGuests = 0;
@@ -917,16 +922,26 @@ function PageManager(initData) {
         t.setUp = function(expDates) {
 
             $dateSection.empty();
-            $dateSection.append($(expDates));
+            $dateSection.append($(expDates.mu));
 
             var gstDate = $('#gstDate'),
-                gstCoDate = $('#gstCoDate');
+                gstCoDate = $('#gstCoDate'),
+                nextDays = parseInt(expDates.defdays, 10);
+
+            if (isNaN(nextDays) || nextDays < 1) {
+                nextDays = 21;
+            }
 
             $('#spnRangePicker').dateRangePicker({
                 format: 'MMM D, YYYY',
                 separator : ' to ',
                 minDays: 1,
                 autoClose: true,
+                showShortcuts: true,
+                shortcuts :
+                {
+                        'next-days': [nextDays]
+                },
                 getValue: function()
                 {
                     if (gstDate.val() && gstCoDate.val() ) {
@@ -940,7 +955,18 @@ function PageManager(initData) {
                     gstDate.val(s1);
                     gstCoDate.val(s2);
                 }
+            }).bind('datepicker-change', function(event, dates) {
+
+                // Update the number of days display text.
+                var numDays = Math.ceil((dates['date2'].getTime() - dates['date1'].getTime()) / 86400000);
+
+                $('#' + expDates.daysEle).val(numDays);
+
+                if ($('#spnNites').length > 0) {
+                    $('#spnNites').text(numDays);
+                }
             });
+
 
             $dateSection.show();
 
@@ -1184,6 +1210,9 @@ function PageManager(initData) {
                     getIncomeDiag(data.rid);
                 });
             }
+
+            // Days
+
 
             reserve.rateList = data.resv.rdiv.ratelist;
             reserve.resources = data.resv.rdiv.rooms;

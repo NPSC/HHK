@@ -116,7 +116,9 @@ abstract class Reservation {
 
     protected function createExpDatesControl($prefix = '') {
 
+        $uS = Session::getInstance();
         $cidAttr = array('name'=>$prefix.'gstDate', 'readonly'=>'readonly', 'size'=>'14' );
+        $days = '';
 
         if ($this->reservRs->Expected_Arrival->getStoredVal() != '' && $this->reservRs->Expected_Departure->getStoredVal() != '') {
 
@@ -133,15 +135,23 @@ abstract class Reservation {
             if (is_null($expArrDT) === FALSE && $expArrDT < $nowDT) {
                 $cidAttr['class'] = ' ui-state-highlight';
             }
+
+            $days = $expDepDT->diff($expArrDT, TRUE)->days + 1;
         }
 
-        return HTMLContainer::generateMarkup('div',
+        $mkup = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('span', 'Arrival: '.
                     HTMLInput::generateMarkup(($this->reserveData->getArrivalDateStr()), $cidAttr))
                 .HTMLContainer::generateMarkup('span', 'Expected Departure: '.
                     HTMLInput::generateMarkup(($this->reserveData->getDepartureDateStr()), array('name'=>$prefix.'gstCoDate', 'readonly'=>'readonly', 'size'=>'14'))
                     , array('style'=>'margin-left:.7em;'))
-                , array('style'=>'float:left; font-size:.9em;', 'id'=>$prefix.'spnRangePicker'));
+                .HTMLContainer::generateMarkup('span', 'Expected Days: '.
+                    HTMLInput::generateMarkup($days, array('name'=>$prefix.'gstDays', 'readonly'=>'readonly', 'size'=>'4'))
+                    , array('style'=>'margin-left:.7em;'))
+
+                , array('style'=>'float:left;font-size:.9em;', 'id'=>$prefix.'spnRangePicker'));
+
+        return array('mu'=>$mkup, 'defdays'=>$uS->DefaultDays, 'daysEle'=>$prefix.'gstDays');
 
     }
 
@@ -660,7 +670,6 @@ class ActiveReservation extends BlankReservation {
         $uS = Session::getInstance();
 
         // Save members, psg, hospital
- //       $family = new Family($this->reserveData);
         $this->reserveData = $this->family->save($dbh, $post, $this->reserveData);
 
 
@@ -782,7 +791,7 @@ class ActiveReservation extends BlankReservation {
 
 
         // Reply
-        $newResv = new ActiveReservation($this->reserveData, $this->reservRs, $this->family);
+        $newResv = new ActiveReservation($this->reserveData, $resv->getReservationRS(), $this->family);
         return $newResv->createMarkup($dbh);
 
     }
@@ -811,6 +820,7 @@ class BlankReservation extends Reservation {
 
     public function createMarkup(\PDO $dbh) {
 
+        $this->family->setGuestsStaying($dbh, $this->reserveData);
         $this->reserveData->setFamilySection($this->family->createFamilyMarkup($dbh, $this->reservRs, $this->reserveData));
 
         $data = $this->reserveData->toArray();

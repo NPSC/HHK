@@ -31,6 +31,8 @@ class SiteDbBackup {
 
         $this->filePath = $filePath;
         $this->emailError = '';
+        $this->return_var = 'Not backed up. ';
+        $this->encReturnVar = '';
 
         $timezone = $this->config->getString('calendar', 'TimeZone', 'America/Chicago');
         date_default_timezone_set($timezone);
@@ -47,10 +49,11 @@ class SiteDbBackup {
         $dbname = $this->config->getString('db', 'Schema', '');
 
         if ($dbuser == '' || $dbpwd == '' || $dbname == '' || $this->filePath == '') {
+            $this->return_var = 'Database Backup parameters are not set.  ';
             return FALSE;
         }
 
-        $this->fileName = $this->filePath . date("Y_m_d") . "_" . $dbname . ".sql.gz";
+        $this->fileName = $this->filePath . date("Y_m_d") . "_" . $dbname . ".sql";
 
         // ignore tables
         $igtables = '';
@@ -62,11 +65,17 @@ class SiteDbBackup {
 
         // Backup database
         $command = 'mysqldump ';
-        $params = " --host=$dbUrl --skip-lock-tables --single-transaction $igtables --user='$dbuser' --password='$dbpwd' $dbname $gzipTheFile > $this->fileName";
+        $params = " --host=$dbUrl --skip-lock-tables --single-transaction $igtables --user='$dbuser' --password='$dbpwd' $dbname > $this->fileName";
         passthru($command . $params, $this->return_var);
 
-
-        return file_exists($this->fileName);
+        // Analyze result
+        if (file_exists($this->fileName)) {
+            $this->return_var = 'Database Backup successful.  ';
+            return TRUE;
+        } else {
+            $this->return_var = 'Database Backup file not found.  ';
+            return FALSE;
+        }
 
     }
 
@@ -76,6 +85,7 @@ class SiteDbBackup {
 
         // Encrypt Database
         if ($encPass != '') {
+
             $encPass = $this->decrypt($encPass);
 
             if ($inFile == '') {
@@ -83,6 +93,7 @@ class SiteDbBackup {
             }
 
             if (file_exists($inFile) === FALSE) {
+                $this->encReturnVar = 'The Clear text file is Missing: ' . $inFile;
                 return FALSE;
             }
 
@@ -90,26 +101,31 @@ class SiteDbBackup {
             $this->encryptedFileName = $outfile;
             $this->encReturnVar = 0;
 
-            passthru("openssl enc -$cypher -e -pass pass:$encPass -in $inFile -out $outfile", $this->encReturnVar);
+            passthru("openssl enc -$cypher -e -base64 -z -pass pass:$encPass -in $inFile -out $outfile", $this->encReturnVar);
 
             // Delete the clear text file if the encryption completed successfully.
             if ($this->encReturnVar == 0 && file_exists($outfile)) {
                 unlink($this->fileName);
+                $this->encReturnVar = 'Encryption Successful. ';
                 return TRUE;
             }
+
+        } else {
+            $this->encReturnVar = 'Encryption PW is Missing. ';
         }
 
         return FALSE;
 
     }
 
-    public function emailFile($emFileName = '') {
+    public function emailFile($emFileName = '', $forceMail = FALSE) {
 
         if ($emFileName == '') {
             $emFileName = $this->encryptedFileName;
         }
 
         if ($emFileName == '' || file_exists($emFileName) === FALSE) {
+            $this->emailError = 'File name is not set or doesnt exist:  ' . $emFileName;
             return FALSE;
         }
 
@@ -118,7 +134,7 @@ class SiteDbBackup {
         $to = $this->config->getString("backup", "BackupEmailAddr", "");      // Email address to send dump file to
 
         // Is proper day for download?
-        if ($to != '' && (strtolower($emailBackupDay) == "all" || strtolower($now["weekday"]) == strtolower($emailBackupDay))) {
+        if ($to != '' && ($forceMail || strtolower($now["weekday"]) == strtolower($emailBackupDay))) {
 
             $attachmentname = 'DB_BackupFile';
             $message = "Encrypted compressed database backup file $attachmentname attached.\r\n\r\n";
@@ -133,10 +149,15 @@ class SiteDbBackup {
             $mail->msgHTML($message);
 
             $mail->addAttachment($emFileName, $attachmentname, 'binary', '', 'attachment');
-            $mail->send();
+
+            if ($mail->send()) {
+                $this->emailError = 'Email successfull.';
+            }
 
             $this->emailError = $mail->ErrorInfo;
 
+        } else {
+            $this->emailError = 'Wrong Day or To is missing.  To = ' . $to;
         }
 
         return TRUE;
@@ -166,16 +187,16 @@ class SiteDbBackup {
 
         $errorMessage = '';
 
-        if ($this->return_var != 0) {
+        if ($this->return_var != 0 || $this->return_var != '') {
             $errorMessage .= 'Schema Backup Error (' . $this->return_var . ') ';
         }
 
-        if ($this->encReturnVar != 0) {
+        if ($this->encReturnVar != 0 || $this->encReturnVar != '') {
             $errorMessage .= 'File Encryption Error (' . $this->encReturnVar . ') ';
         }
 
-        if ($this->encReturnVar != 0) {
-            $errorMessage .= 'Send Email Error (' . $this->emailError . ') ';
+        if ($this->emailError != '') {
+            $errorMessage .= 'Send Email: ' . $this->emailError;
         }
 
         return $errorMessage;

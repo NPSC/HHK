@@ -439,7 +439,7 @@ class PSGMemStay {
 
     }
 
-    public function createMarkup($prefix) {
+    public function createMarkup($prefix, $isPrimaryGuest = FALSE) {
 
         if ($this->isBlocked()) {
 
@@ -463,8 +463,22 @@ class PSGMemStay {
                 'class' => 'hhk-lblStay',
             );
 
+            $rbPri = array(
+                'type'=>'radio',
+                'name'=>'rbPriGuest',
+                'id'=>$prefix .'rbPri',
+                'data-prefix'=>$prefix,
+                'title'=>'Click to set this person as Primary Guest.',
+                'style'=>'margin-left:5px;'
+            );
+
+            if ($isPrimaryGuest) {
+                $rbPri['checked'] = 'checked';
+            }
+
             return HTMLContainer::generateMarkup('label', 'Stay', $lblStay)
-                    . HTMLInput::generateMarkup('', $cbStay);
+                    . HTMLInput::generateMarkup('', $cbStay)
+                    . HTMLInput::generateMarkup('', $rbPri);
         }
     }
 
@@ -522,7 +536,7 @@ class PSGMemVisit extends PSGMemStay {
         $this->setBlocked();
     }
 
-    public function createMarkup($prefix) {
+    public function createMarkup($prefix, $isPrimaryGuest = FALSE) {
 
         return HTMLContainer::generateMarkup('a', 'Visit', array('href'=>'whatever'));
     }
@@ -531,7 +545,7 @@ class PSGMemVisit extends PSGMemStay {
 
 class PSGMemResv extends PSGMemVisit {
 
-    public function createMarkup($prefix) {
+    public function createMarkup($prefix, $isPrimaryGuest = FALSE) {
 
         return HTMLContainer::generateMarkup('a', 'Resv', array('href'=>'whatever'));
     }

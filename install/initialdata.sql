@@ -433,6 +433,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('DefaultPayType','ca','s','f','Default payment type for paying today UI'),
 ('DefaultVisitFee', '1', 's', 'h', 'Default Visit Fee selected on new check-in and reservation pages.'),
 ('DefaultCkBalStmt', 'false', 'b', 'h', 'Check the Balance Statement checkbox by default'),
+('DefaultDays', '21', 'i', 'h', 'The Default number of following days for date range control'),
 ('DefaultRegisterTab', '0', 'i', 'h', 'Default active tab on register page, 0 = calendar, 1 = current Guests'),
 ('Doctor', 'true', 'b', 'h','Track doctors'),
 ('EmailBlockSize','200','i','r','Number of email addresses per block.'),
