@@ -60,7 +60,7 @@ class Family {
                     $prefix = $psgMember->getPrefix();
                 } else {
                     $prefix = $uS->addPerPrefix++;
-                    $psgMember = new PSGMember($ngrs->idName->getStoredVal(), $prefix, '', ReserveData::NOT_STAYING);
+                    $psgMember = new PSGMember($ngrs->idName->getStoredVal(), $prefix, '', new PSGMemStay(ReserveData::NOT_STAYING));
                 }
 
                 if ($ngrs->Relationship_Code->getStoredVal() == RelLinkType::Self) {
@@ -101,7 +101,7 @@ class Family {
                     $prefix = $psgMember->getPrefix();
                 } else {
                     $prefix = $uS->addPerPrefix++;
-                    $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, ReserveData::NOT_STAYING);
+                    $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, new PSGMemStay(ReserveData::NOT_STAYING));
                 }
 
                 $this->roleObjs[$prefix] = new Guest($dbh, $prefix, $rData->getId());
@@ -124,7 +124,7 @@ class Family {
                 $prefix = $psgMember->getPrefix();
             } else {
                 $prefix = $uS->addPerPrefix++;
-                $psgMember = new PSGMember(0, $prefix, '', ReserveData::NOT_STAYING);
+                $psgMember = new PSGMember(0, $prefix, '', new PSGMemStay(ReserveData::NOT_STAYING));
             }
 
             $this->roleObjs[$prefix] = new Guest($dbh, $prefix, 0);
@@ -149,6 +149,12 @@ class Family {
 
                 if ($mem !== NULL) {
                     $mem->getStayObj()->setStaying();
+
+                    if ($g['Primary_Guest'] == '1') {
+                        $mem->getStayObj()->setPrimaryGuest(TRUE);
+                    } else {
+                        $mem->getStayObj()->setPrimaryGuest(FALSE);
+                    }
                 }
             }
 

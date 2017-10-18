@@ -24,6 +24,7 @@ class ReserveData {
     const PREF = 'pref';
     const STAY = 'stay';
     const ID = 'id';
+    const PRI = 'pri';
 
     const STAYING = '1';
     const NOT_STAYING = '0';
@@ -109,22 +110,29 @@ class ReserveData {
 
             $id = 0;
             $role = '';
-            $stay = '0';
+            $stay = ReserveData::NOT_STAYING;
+            $priGuest = FALSE;
 
             if (isset($memArray[ReserveData::ID])) {
                 $id = intval($memArray[ReserveData::ID], 10);
             }
+
             if (isset($memArray[ReserveData::ROLE])) {
                 $role = $memArray[ReserveData::ROLE];
             }
+
             if (isset($memArray[ReserveData::STAY])) {
                 $stay = $memArray[ReserveData::STAY];
+            }
+
+            if (isset($memArray[ReserveData::PRI])) {
+                $priGuest = filter_var($memArray[ReserveData::PRI], FILTER_VALIDATE_BOOLEAN);
             }
 
             $psgMember = $this->getPsgMember($prefix);
 
             if (is_null($psgMember)) {
-                $this->setMember(new PSGMember($id, $prefix, $role, $stay));
+                $this->setMember(new PSGMember($id, $prefix, $role, new PSGMemStay($stay, $priGuest)));
             } else {
                 $psgMember->setStay($stay)->setRole($role);
             }
@@ -342,16 +350,16 @@ class PSGMember {
 
     /**
      *
-     * @var iPSGMemStay
+     * @var PSGMemStay
      */
-    protected $stay;
+    protected $memStay;
 
-    public function __construct($id, $prefix, $role, $stay) {
+    public function __construct($id, $prefix, $role, PSGMemStay $memStay) {
 
         $this->setId($id);
         $this->setPrefix($prefix);
         $this->setRole($role);
-        $this->stay = new PSGMemStay($stay);
+        $this->memStay = $memStay;
     }
 
     public function getId() {
@@ -367,15 +375,26 @@ class PSGMember {
     }
 
     public function getStay() {
-        return $this->stay->getStay();
+        return $this->memStay->getStay();
     }
 
     public function getStayObj() {
-        return $this->stay;
+        return $this->memStay;
     }
 
     public function isStaying() {
-        return $this->stay->isStaying();
+        return $this->memStay->isStaying();
+    }
+
+    public function isPrimaryGuest() {
+        return $this->memStay->isPrimaryGuest();
+    }
+
+    public function isPatient() {
+        if ($this->getRole() == VolMemberType::Patient) {
+            return TRUE;
+        }
+        return FALSE;
     }
 
     public function setId($id) {
@@ -393,20 +412,13 @@ class PSGMember {
         return $this;
     }
 
-    public function isPatient() {
-        if ($this->getRole() == VolMemberType::Patient) {
-            return TRUE;
-        }
-        return FALSE;
-    }
-
     public function setStay($stay) {
-        $this->stay->setStay($stay);
+        $this->memStay->setStay($stay);
         return $this;
     }
 
     public function setStayObj(PSGMemStay $stay) {
-        $this->stay = $stay;
+        $this->memStay = $stay;
         return $this;
     }
 
@@ -415,7 +427,8 @@ class PSGMember {
         return array(
             ReserveData::ID => $this->getId(),
             ReserveData::ROLE => $this->getRole(),
-            ReserveData::STAY => $this->stay->getStay(),
+            ReserveData::STAY => $this->memStay->getStay(),
+            ReserveData::PRI => ($this->memStay->isPrimaryGuest() ? '1' : '0'),
             ReserveData::PREF => $this->getPrefix(),
         );
     }
@@ -426,20 +439,20 @@ class PSGMemStay {
 
     protected $stay;
     protected $index;
+    protected $primaryGuest;
 
-    public function __construct($stay) {
+    public function __construct($stay, $primaryGuest = FALSE) {
 
         if ($stay == ReserveData::STAYING || $stay == ReserveData::NOT_STAYING || $stay == ReserveData::CANT_STAY) {
-
             $this->stay = $stay;
-
         } else {
             $this->stay = ReserveData::NOT_STAYING;
         }
 
+        $this->setPrimaryGuest($primaryGuest);
     }
 
-    public function createMarkup($prefix, $isPrimaryGuest = FALSE) {
+    public function createMarkup($prefix) {
 
         if ($this->isBlocked()) {
 
@@ -469,16 +482,19 @@ class PSGMemStay {
                 'id'=>$prefix .'rbPri',
                 'data-prefix'=>$prefix,
                 'title'=>'Click to set this person as Primary Guest.',
-                'style'=>'margin-left:5px;'
+                'style'=>'margin-left:5px;',
+                'class'=>'hhk-rbPri'
             );
 
-            if ($isPrimaryGuest) {
+            if ($this->isPrimaryGuest() && $this->isStaying()) {
                 $rbPri['checked'] = 'checked';
+            } else if ($this->isStaying() === FALSE) {
+                $rbPri['disabled'] = 'disabled';
             }
 
             return HTMLContainer::generateMarkup('label', 'Stay', $lblStay)
                     . HTMLInput::generateMarkup('', $cbStay)
-                    . HTMLInput::generateMarkup('', $rbPri);
+                    . HTMLInput::generateMarkup($prefix, $rbPri);
         }
     }
 
@@ -496,12 +512,24 @@ class PSGMemStay {
         return FALSE;
     }
 
+    public function isPrimaryGuest() {
+        return $this->primaryGuest;
+    }
+
     public function getStay() {
         return $this->stay;
     }
 
     public function setStay($s) {
         $this->stay = $s;
+    }
+
+    public function setPrimaryGuest($primaryGuest) {
+        if ($primaryGuest === TRUE) {
+            $this->primaryGuest = TRUE;
+        } else {
+            $this->primaryGuest = FALSE;
+        }
     }
 
     public function setBlocked() {
@@ -536,7 +564,7 @@ class PSGMemVisit extends PSGMemStay {
         $this->setBlocked();
     }
 
-    public function createMarkup($prefix, $isPrimaryGuest = FALSE) {
+    public function createMarkup($prefix) {
 
         return HTMLContainer::generateMarkup('a', 'Visit', array('href'=>'whatever'));
     }
@@ -545,7 +573,7 @@ class PSGMemVisit extends PSGMemStay {
 
 class PSGMemResv extends PSGMemVisit {
 
-    public function createMarkup($prefix, $isPrimaryGuest = FALSE) {
+    public function createMarkup($prefix) {
 
         return HTMLContainer::generateMarkup('a', 'Resv', array('href'=>'whatever'));
     }

@@ -78,7 +78,7 @@ class Patient extends Role {
                                     )
                             . HTMLContainer::generateMarkup('li',
                                     HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-circle-triangle-n'))
-                                    , array('class'=>'ui-widget-header ui-corner-all hhk-togAddr', 'style'=>'display:inline-block;margin-left:5px;cursor:pointer;', 'title'=>'Open - Close Address Section')
+                                    , array('class'=>'ui-widget-header ui-corner-all hhk-togAddr', 'id'=>$this->getRoleMember()->getIdPrefix().'toggleAddr', 'style'=>'display:inline-block;margin-left:5px;cursor:pointer;', 'title'=>'Open - Close Address Section')
                                     )
                             , array('data-pref'=>$this->getRoleMember()->getIdPrefix(), 'style'=>'padding-top:1px;list-style-type:none;', 'class'=>'ui-widget')
                             )

@@ -285,21 +285,49 @@ function PageManager(initData) {
         t.setUp = setUp;
         t.newGuestMarkup = newGuestMarkup;
         t.verify = verify;
+        t.divFamDetailId = divFamDetailId;
 
 
         function findStaysChecked() {
             var numGuests = 0;
+            var singlePrefix = '';
 
+            // Get Primary guest setting from form.
+            var pgPrefix = $( "input[type=radio][name=rbPriGuest]:checked" ).val();
+
+            // Each available stay control
             $('.hhk-cbStay').each(function () {
+
                 var prefix = $(this).data('prefix');
 
                 if ($(this).prop('checked')) {
+
                     people.list()[prefix].stay = '1';
                     numGuests++;
+                    $('#' + prefix + 'rbPri').prop('disabled', false);
+
+                    if (pgPrefix && pgPrefix !== '' && pgPrefix == prefix) {
+                        people.list()[prefix].pri = '1';
+                    } else {
+                         people.list()[prefix].pri = '0';
+                    }
+
+                    singlePrefix = prefix;
+
                 } else {
+
                     people.list()[prefix].stay = '0';
+                    people.list()[prefix].pri = '0';
+
+                    $('#' + prefix + 'rbPri').prop('checked', false).prop('disabled', true);
                 }
             });
+
+            // Only one guest staying, set as primary guest
+            if (numGuests === 1 && singlePrefix !== '') {
+                people.list()[singlePrefix].pri = '1';
+                $('#' + singlePrefix + 'rbPri').prop('checked', true);
+            }
 
             return numGuests;
         }
@@ -374,7 +402,7 @@ function PageManager(initData) {
                 // Did we catch any?
                 if (msg) {
                     // Yes,open address row.
-                    if ($('#' + prefix + 'toggleAddr').button('option', 'label') === 'Show') {
+                    if ($('#' + prefix + 'toggleAddr').find('span').hasClass('ui-icon-circle-triangle-s')) {
                         $('#' + prefix + 'toggleAddr').click();
                     }
 
@@ -392,7 +420,7 @@ function PageManager(initData) {
                     $(this).addClass('ui-state-error');
 
                     //Open address row
-                    if ($('#' + prefix + 'toggleAddr').button('option', 'label') === 'Show') {
+                    if ($('#' + prefix + 'toggleAddr').find('span').hasClass('ui-icon-circle-triangle-s')) {
                         $('#' + prefix + 'toggleAddr').click();
                     }
 
@@ -638,6 +666,7 @@ function PageManager(initData) {
                 eraseAddress($(this).attr('name'));
             });
 
+            // Incomplete address bind to address flag.
             $('#' + divFamDetailId).on('click', '.hhk-incompleteAddr', function() {
                 setAddrFlag($('#' + $(this).data('prefix') + 'liaddrflag'));
             });
@@ -754,10 +783,11 @@ function PageManager(initData) {
 
             var numPat = 0;
             var numGuests = 0;
+            var numPriGuests = 0;
             var nameErr = false;
 
 
-            // Verify Relationships
+            // Flag blank Relationships
             $('.patientRelch').removeClass('ui-state-error');
             $('.patientRelch').each(function () {
 
@@ -772,13 +802,24 @@ function PageManager(initData) {
 
             // Compute number of guests and patients
             for (var i in people.list()) {
+                // Patients
                 if (people.list()[i].role === 'p') {
                     numPat++;
                 }
-
+                // guests
                 if (people.list()[i].stay === '1') {
                     numGuests++;
                 }
+                // Primary Guests
+                if (people.list()[i].pri === '1') {
+                    numPriGuests++;
+                }
+                // Close address boxes.
+                if ($('#' + i + 'toggleAddr').find('span').hasClass('ui-icon-circle-triangle-n')) {
+                    // Close address row
+                    $('#' + i + 'toggleAddr').click();
+                }
+
             }
 
             // Only one patient allowed.
@@ -803,10 +844,15 @@ function PageManager(initData) {
 
             // Someone checking in?
             if (findStaysChecked() < 1) {
-                flagAlertMessage('There are no guests actually staying.  Pick someone to stay.', true);
+                flagAlertMessage('There is no one actually staying.  Pick someone to stay.', true);
                 return false;
             }
 
+            // Primary guests
+            if (numPriGuests > 1) {
+                flagAlertMessage('There are too many primary guests.', true);
+                return false;
+            }
 
 
             // Last names
@@ -856,17 +902,17 @@ function PageManager(initData) {
                         var pMessage = verifyAddress(p);
 
                         if (pMessage !== '') {
+
                             flagAlertMessage(pMessage, true);
                             openSection(true);
-                            return false;
-                        } else if ($('#' + p + 'toggleAddr').val() === 'Hide') {
-                            // Close address row
-                            $('#' + p + 'toggleAddr').click();
-                        }
 
-                    } else if ($('#' + p + 'toggleAddr').val() === 'Hide') {
-                        // Close address row
-                        $('#' + p + 'toggleAddr').click();
+                            // Open address row
+                            if ($('#' + p + 'toggleAddr').find('span').hasClass('ui-icon-circle-triangle-s')) {
+                                $('#' + p + 'toggleAddr').click();
+                            }
+
+                            return false;
+                        }
                     }
 
                 // Guests
@@ -893,16 +939,15 @@ function PageManager(initData) {
 
                             flagAlertMessage(pMessage, true);
                             openSection(true);
-                            return false;
 
-                        } else if ($('#' + p + 'toggleAddr').val() === 'Hide') {
-                            // Close address row
-                            $('#' + p + 'toggleAddr').click();
+                            // Open address row
+                            if ($('#' + p + 'toggleAddr').find('span').hasClass('ui-icon-circle-triangle-s')) {
+                                $('#' + p + 'toggleAddr').click();
+                            }
+
+                            return false;
                         }
-                   } else  if ($('#' + p + 'toggleAddr').val() === 'Hide') {
-                        // Close address row
-                        $('#' + p + 'toggleAddr').click();
-                    }
+                   }
                 }
             }
 
@@ -1364,6 +1409,7 @@ function PageManager(initData) {
         t.removeIndex = removeIndex;
         t.list = list;
         t.makeList = makeList;
+        t._list = _list;
 
         function list() {
             return _list;
@@ -1606,7 +1652,7 @@ function PageManager(initData) {
             resvSection.setUp(data);
 
             // String together some events
-            $('#famSection').on('change', '.hhk-cbStay', function () {
+            $('#' + familySection.divFamDetailId).on('change', '.hhk-cbStay, .hhk-rbPri', function () {
 
                 var tot = familySection.findStaysChecked();
                 resvSection.$totalGuests.text(tot);
@@ -1656,6 +1702,7 @@ function PageManager(initData) {
             if (people.addItem(data.addPerson.mem)) {
                 addrs.addItem(data.addPerson.addrs);
                 familySection.newGuestMarkup(data.addPerson, data.addPerson.mem.pref);
+                familySection.findStaysChecked();
             }
         }
     }

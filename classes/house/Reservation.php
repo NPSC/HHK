@@ -568,6 +568,7 @@ abstract class Reservation {
                 $rgRs = new Reservation_GuestRS();
                 $rgRs->idReservation->setNewVal($this->reserveData->getIdResv());
                 $rgRs->idGuest->setNewVal($g->getId());
+                $rgRs->Primary_Guest->setNewVal($g->getStayObj()->isPrimaryGuest() ? '1' : '');
 
                 EditRS::insert($dbh, $rgRs);
 
@@ -585,10 +586,19 @@ abstract class Reservation {
                     if ($r['idGuest'] == $g->getId()) {
                         $isListed = TRUE;
 
+                        // Still staying?
                         if ($g->isStaying() === FALSE) {
                             // Delete record
                             $dbh->exec("Delete from reservation_guest where idReservation = " . $this->reserveData->getIdResv() . " and idGuest = " . $g->getId());
                         }
+
+                        // Is this the primary guest?
+                        $priGuestFlag = '';
+                        if ($g->isPrimaryGuest()) {
+                            $priGuestFlag = '1';
+                        }
+                        $dbh->exec("update reservation_guest set Primary_Guest = '$priGuestFlag' where idReservation = " . $this->reserveData->getIdResv() . " and idGuest = " . $g->getId());
+
                         break;
                     }
                 }
@@ -598,6 +608,7 @@ abstract class Reservation {
                     $rgRs = new Reservation_GuestRS();
                     $rgRs->idReservation->setNewVal($this->reserveData->getIdResv());
                     $rgRs->idGuest->setNewVal($g->getId());
+                    $rgRs->Primary_Guest->setNewVal($g->getStayObj()->isPrimaryGuest() ? '1' : '');
 
                     EditRS::insert($dbh, $rgRs);
                 }
