@@ -434,7 +434,9 @@ p.label {
 
         if ($idVisit > 0) {
 
-            $query = "select idName, Span_Start_Date, Expected_Co_Date, Span_End_Date, Status  from stays where idVisit = :reg and Status in ('" . VisitStatus::CheckedIn . "', '" . VisitStatus::CheckedOut . "')";
+            $query = "select idName, Span_Start_Date, Expected_Co_Date, Span_End_Date, Status  from stays "
+                    . "where idVisit = :reg and Status in ('" . VisitStatus::CheckedIn . "', '" . VisitStatus::CheckedOut . "')"
+                    . " and DATEDIFF(ifnull(Span_End_Date, dateDefaultNow(Expected_Co_Date)), Span_Start_Date) > 0";
             $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
             $stmt->bindValue(':reg', $idVisit, PDO::PARAM_INT);
             $stmt->execute();
@@ -483,7 +485,7 @@ p.label {
 
         } else if ($idReservation > 0) {
 
-            $stmt = $dbh->query("Select rg.idGuest as GuestId, r.* from reservation_guest rg left join reservation r on rg.idReservation = r.idReservation where rg.idReservation = $idReservation");
+            $stmt = $dbh->query("Select rg.idGuest as GuestId, rg.Primary_Guest, r.* from reservation_guest rg left join reservation r on rg.idReservation = r.idReservation where rg.idReservation = $idReservation");
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             $arrival = $rows[0]['Actual_Arrival'];
@@ -508,6 +510,10 @@ p.label {
             $psg = new Psg($dbh, $reg->getIdPsg());
 
             foreach ($rows as $r) {
+
+                if ($r['Primary_Guest'] == '1') {
+                    $primaryGuestId = $r['idGuest'];
+                }
 
                 $gst = new Guest($dbh, '', $r['GuestId']);
                 $gst->setCheckinDate($arrival);

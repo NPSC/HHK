@@ -162,15 +162,15 @@ abstract class Reservation {
         $resv = new Reservation_1($this->reservRs);
 
         // Count guests
-        $numGuests = 0;
-        foreach($this->reserveData->getPsgMembers() as $m) {
-            if ($m->getStay() == '1') {
-                $numGuests++;
-            }
-        }
+//        $numGuests = 0;
+//        foreach($this->reserveData->getPsgMembers() as $m) {
+//            if ($m->getStay() == '1') {
+//                $numGuests++;
+//            }
+//        }
 
-        $roomChooser = new RoomChooser($dbh, $resv, $numGuests, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
-        //$roomChooser->setOldResvId($oldResvId);
+        $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
+
         $dataArray['rChooser'] = $roomChooser->CreateResvMarkup($dbh, $isAuthorized);
 
         $showPayWith = TRUE;
@@ -322,12 +322,12 @@ abstract class Reservation {
         return $mrkup;
     }
 
-    protected function guestReservations(\PDO $dbh, \DateTime $arrivalDT, \DateTime $departDT) {
+    protected function findConflictingStays(\PDO $dbh, array $psgMembers, \DateTime $arrivalDT) {
 
         $whStays = '';
 
-        foreach ($this->getStayingMembers() as $m) {
-            if ($m->getId() != 0) {
+        foreach ($psgMembers as $m) {
+            if ($m->getId() != 0 && $m->isBlocked() === FALSE) {
                 $whStays .= ',' . $m->getId();
             }
         }
@@ -335,48 +335,53 @@ abstract class Reservation {
         if ($whStays != '') {
 
             // Check ongoing visits
-            $vstmt = $dbh->query("Select idName, Span_Start_Date, Expected_Co_Date, idVisit from stays "
-                    . " where `Status` = '" . VisitStatus::CheckedIn . "' and DATE(Expected_Co_Date) > DATE('" . $arrivalDT->format('Y-m-d') . "') "
+            $vstmt = $dbh->query("Select idName, Span_Start_Date, Expected_Co_Date, idVisit, Visit_Span from stays "
+                    . " where `Status` = '" . VisitStatus::CheckedIn . "' and DATE(dateDefaultNow(Expected_Co_Date)) > DATE('" . $arrivalDT->format('Y-m-d') . "') "
                     . " and idName in (" . substr($whStays, 1) . ")");
 
             while ($s = $vstmt->fetch(\PDO::FETCH_ASSOC)) {
                 // These guests are already staying
-                $mem = $this->reserveData->findMemberById($s['idName']);
 
-                $mem->setStayObj(new PSGMemVisit($s['idVisit']));
-
+                if (is_null($mem = $this->reserveData->findMemberById($r['idGuest'])) === FALSE) {
+                    $mem->setStayObj(new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'])));
+                }
             }
         }
+    }
 
-        // Check other reservations
+    protected function findConflictingReservations(\PDO $dbh, array $psgMembers, \DateTime $arrivalDT, \DateTime $departDT) {
+
+        // Check reservations
         $whResv = '';
-        $stayingMembers = $this->getStayingMembers();
 
-        foreach ($stayingMembers as $m) {
-            if ($m->getId() != 0) {
+        foreach ($psgMembers as $m) {
+            if ($m->getId() != 0 && $m->isBlocked() === FALSE) {
                 $whResv .= ',' . $m->getId();
             }
         }
 
         if ($whResv != '') {
 
-            $rstmt = $dbh->query("select g.idReservation, ng.idPsg, g.idGuest
-	from reservation_guest g left join name_Guest ng on ng.idName = g.idGuest
-    left join reservation r on r.idReservation = g.idReservation "
-                . "where r.`Status` in ('a', 'uc', 'w') and (ng.idPsg = " . $this->reserveData->getIdPsg() . " or g.idGuest in (" . substr($whResv, 1) . ")) and g.idReservation != " . $this->reserveData->getIdResv()
-                . " and Date(r.Expected_Arrival) < DATE('".$departDT->format('Y-m-d') . "') and Date(r.Expected_Departure) > DATE('".$arrivalDT->format('Y-m-d') . "')");
+            $rstmt = $dbh->query("select rg.idReservation, ng.idPsg, rg.idGuest "
+                . "from reservation_guest rg left join name_Guest ng on ng.idName = rg.idGuest "
+                . "left join reservation r on r.idReservation = rg.idReservation "
+                . "where r.`Status` in ('a', 'uc', 'w') and rg.idGuest in (" . substr($whResv, 1) . ") and rg.idReservation != " . $this->reserveData->getIdResv()
+                . " and Date(r.Expected_Arrival) < DATE('".$departDT->format('Y-m-d') . "') and Date(dateDefaultNow(r.Expected_Departure)) > DATE('".$arrivalDT->format('Y-m-d') . "')");
 
             while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
 
-                if (isset($stayingMembers[$r['idGuest']])) {
-
-                    $mem = $this->reserveData->findMemberById($r['idGuest']);
-                    $mem->setStayObj(new PSGMemVisit($r['idReservation']));
+                if (is_null($mem = $this->reserveData->findMemberById($r['idGuest'])) === FALSE) {
+                    $mem->setStayObj(new PSGMemResv(array('idReservation'=>$r['idReservation'], 'idGuest'=>$r['idGuest'], 'idPsg'=>$r['idPsg'], 'label'=>$this->reserveData->getResvTitle())));
                 }
             }
         }
+    }
 
-        return $this->getStayingMembers();
+    protected function guestReservations(\PDO $dbh, $psgMembers, \DateTime $arrivalDT, \DateTime $departDT) {
+
+        $this->findConflictingStays($dbh, $psgMembers, $arrivalDT);
+
+        $this->findConflictingReservations($dbh, $psgMembers, $arrivalDT, $departDT);
     }
 
     protected function getStayingMembers() {
@@ -654,19 +659,7 @@ class ActiveReservation extends BlankReservation {
             $this->reservRs->Status->setStoredVal(ReservationStatus::Waitlist);
         }
 
-        // Arrival and Departure dates
-        if ($this->reserveData->getIdResv() > 0) {
-            try {
-                $arrivalDT = new\DateTime($this->reservRs->Expected_Arrival->getStoredVal());
-                $departDT = new \DateTime($this->reservRs->Expected_Departure->getStoredVal());
-
-                // Chack guests for other commitments.
-                $this->guestReservations($dbh, $arrivalDT, $departDT);
-            } catch (Hk_Exception_Runtime $hex) {
-                return array('error'=>$hex->getMessage());
-            }
-        }
-
+        // Add the family, hospital, etc sections.
         $data = parent::createMarkup($dbh);
 
         // Add the reservation section.
@@ -683,6 +676,11 @@ class ActiveReservation extends BlankReservation {
         // Save members, psg, hospital
         $this->reserveData = $this->family->save($dbh, $post, $this->reserveData);
 
+        if (count($this->getStayingMembers()) < 1) {
+            // Nobody set to stay
+            $data['error'] = 'Nobody is set to stay for this ' . $this->reserveData->getResvTitle() . '.  ';
+            return $data;
+        }
 
         // Arrival and Departure dates
         try {
@@ -694,12 +692,30 @@ class ActiveReservation extends BlankReservation {
         }
 
 
-        // Is anyone already in a visit or reservation?
-        $stayingMebers = $this->guestReservations($dbh, $arrivalDT, $departDT);
+        // Is anyone already in a visit?
+        $this->findConflictingStays($dbh, $this->reserveData->getPsgMembers(), $arrivalDT);
 
-        if (count($stayingMebers) < 1) {
+        if (count($this->getStayingMembers()) < 1) {
             // Nobody left in the reservation
-            return array('error'=>'Invalid Reservation - no one is set to stay.  ');
+            if ($this->reserveData->getId() == 0) {
+                $this->reserveData->setId($this->family->getPatientId());
+            }
+            $data = $this->createMarkup($dbh);
+            $data['error'] = 'Everybody is already staying at the house for all or part of the specified duration.  ';
+            return $data;
+        }
+
+        // Is anyone already in a reservation?
+        $this->findConflictingReservations($dbh, $this->reserveData->getPsgMembers(), $arrivalDT, $departDT);
+
+        if (count($this->getStayingMembers()) < 1) {
+            // Nobody left in the reservation
+            if ($this->reserveData->getId() == 0) {
+                $this->reserveData->setId($this->family->getPatientId());
+            }
+            $data = $this->createMarkup($dbh);
+            $data['error'] = 'Everybody is already in a reservation for all or part of the specified duration.  ';
+            return $data;
         }
 
 
@@ -723,6 +739,7 @@ class ActiveReservation extends BlankReservation {
         $resv->setHospitalStay($this->family->getHospStay());
         $resv->setExpectedArrival($arrivalDT->format('Y-m-d 16:00:00'));
         $resv->setExpectedDeparture($departDT->format('Y-m-d 10:00:00'));
+        $resv->setIdGuest($this->reserveData->getPrimaryGuestId());
 
         // Collect the room rates
         $this->setRoomRate($dbh, $reg, $resv, $post);
@@ -832,6 +849,21 @@ class BlankReservation extends Reservation {
     public function createMarkup(\PDO $dbh) {
 
         $this->family->setGuestsStaying($dbh, $this->reserveData);
+
+        // Arrival and Departure dates
+        if ($this->reserveData->getIdResv() > 0) {
+            try {
+                $arrivalDT = new\DateTime($this->reservRs->Expected_Arrival->getStoredVal());
+                $departDT = new \DateTime($this->reservRs->Expected_Departure->getStoredVal());
+
+                // Chack guests for other commitments.
+                $this->guestReservations($dbh, $this->reserveData->getPsgMembers(), $arrivalDT, $departDT);
+
+            } catch (Hk_Exception_Runtime $hex) {
+                return array('error'=>$hex->getMessage());
+            }
+        }
+
         $this->reserveData->setFamilySection($this->family->createFamilyMarkup($dbh, $this->reservRs, $this->reserveData));
 
         $data = $this->reserveData->toArray();

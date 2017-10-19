@@ -9,14 +9,11 @@
  */
 require ("homeIncludes.php");
 
-
 require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'registrationRS.php');
 require (DB_TABLES . 'ActivityRS.php');
 require (DB_TABLES . 'visitRS.php');
 require (DB_TABLES . 'ReservationRS.php');
-require (DB_TABLES . 'MercuryRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
 
 require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');
@@ -26,11 +23,6 @@ require (MEMBER . "EmergencyContact.php");
 
 require (CLASSES . 'CleanAddress.php');
 require (CLASSES . 'AuditLog.php');
-require (CLASSES . 'MercPay/Gateway.php');
-require (CLASSES . 'MercPay/MercuryHCClient.php');
-require (PMT . 'Payments.php');
-require (PMT . 'HostedPayments.php');
-require (PMT . 'CreditToken.php');
 require (CLASSES . 'PaymentSvcs.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
@@ -73,16 +65,39 @@ $wInit->sessionLoadGuestLkUps();
 $labels = new Config_Lite(LABEL_FILE);
 $paymentMarkup = '';
 $receiptMarkup = '';
-
+$payFailPage = $wInit->page->getFilename();
 $idGuest = 0;
 $idReserv = 0;
 $idPsg = 0;
 
 // Hosted payment return
-if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)) === FALSE) {
+if (isset($_POST['CardID']) || isset($_POST['PaymentID'])) {
 
-    $receiptMarkup = $payResult->getReceiptMarkup();
-    $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+    require (DB_TABLES . 'MercuryRS.php');
+    require (DB_TABLES . 'PaymentsRS.php');
+
+    require (CLASSES . 'MercPay/MercuryHCClient.php');
+    require (CLASSES . 'MercPay/Gateway.php');
+
+    require (CLASSES . 'Purchase/Item.php');
+
+    require (PMT . 'Payments.php');
+    require (PMT . 'HostedPayments.php');
+    require (PMT . 'Receipt.php');
+    require (PMT . 'Invoice.php');
+    require (PMT . 'InvoiceLine.php');
+    require (PMT . 'CreditToken.php');
+    require (PMT . 'CheckTX.php');
+    require (PMT . 'CashTX.php');
+    require (PMT . 'Transaction.php');
+
+    require (HOUSE . 'PaymentManager.php');
+    require (HOUSE . 'PaymentChooser.php');
+
+    if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)) === FALSE) {
+        $receiptMarkup = $payResult->getReceiptMarkup();
+        $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+    }
 }
 
 if (isset($_POST['hdnCfmRid'])) {
@@ -197,6 +212,8 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo VERIFY_ADDRS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
@@ -231,6 +248,8 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="psgDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;"></div>
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
+            <div id="keysfees" style="font-size: .85em;"></div>
+
 
         </div>
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
@@ -264,6 +283,8 @@ function PageManager(initData) {
     t.getReserve = getReserve;
     t.verifyInput = verifyInput;
     t.loadResv = loadResv;
+    t.deleteReserve = deleteReserve;
+    t.resvTitle = resvTitle;
     t.people = people;
     t.addrs = addrs;
     t.idPsg = idPsg;
@@ -678,6 +699,24 @@ function PageManager(initData) {
                 createZipAutoComplete($(this), 'ws_admin.php', lastXhr);
             });
 
+            // Remove button
+            $('.hhk-removeBtn').button();
+            $('#' + divFamDetailId).on('click', '.hhk-removeBtn', function () {
+
+                // Is the name entered?
+                if ($('#' + $(this).data('prefix') + 'txtFirstName').val() !== '' || $('#' + $(this).data('prefix') + 'txtLastName').val() !== '') {
+                    if (confirm('Remove this person: ' + $('#' + prefix + 'txtFirstName').val() + ' ' + $('#' + prefix + 'txtLastName').val() + '?') === false) {
+                        return;
+                    }
+                }
+
+                $(this).parentsUntil('tbody', 'tr').next().remove();
+                $(this).parentsUntil('tbody', 'tr').remove();
+                delete people._list[$(this).data('prefix')];
+                delete addrs._list[$(this).data('prefix')];
+            });
+
+
             // Relationship chooser
             $('#' + divFamDetailId).on('change', '.patientRelch', function () {
 
@@ -734,6 +773,8 @@ function PageManager(initData) {
                 $('#' + prefix + 'lblStay').click();
             }
 
+            $('.hhk-removeBtn').button();
+
             // Prepare birth date picker
             $('.ckbdate').datepicker({
                 yearRange: '-99:+00',
@@ -746,22 +787,6 @@ function PageManager(initData) {
 
             // Address button
             setAddrFlag($('#' + prefix + 'liaddrflag'));
-
-            // Remove button
-            $('#' + prefix + 'btnRemove').button().click(function () {
-
-                // Is the name entered?
-                if ($('#' + prefix + 'txtFirstName').val() !== '' || $('#' + prefix + 'txtLastName').val() !== '') {
-                    if (confirm('Remove this person: ' + $('#' + prefix + 'txtFirstName').val() + ' ' + $('#' + prefix + 'txtLastName').val() + '?') === false) {
-                        return;
-                    }
-                }
-
-                $(this).parentsUntil('tbody', 'tr').next().remove();
-                $(this).parentsUntil('tbody', 'tr').remove();
-                people.removeIndex[prefix];
-                addrs.removeIndex[prefix];
-            });
 
             // set country and state selectors
             $countries = $('#' + prefix + 'adrcountry' + addrPurpose);
@@ -1556,6 +1581,7 @@ function PageManager(initData) {
 
             if (data.error) {
                 flagAlertMessage(data.error, true);
+                $('#btnDone').val('Save').show();
             }
 
             loadResv(data);
@@ -1664,32 +1690,36 @@ function PageManager(initData) {
                 }
             });
 
+            $('.hhk-getVDialog').button();
+
+            $('#' + familySection.divFamDetailId).on('click', '.hhk-getVDialog', function () {
+                var buttons;
+                var vid = $(this).data('vid');
+                var span = $(this).data('span');
+                buttons = {
+                    "Show Statement": function() {
+                        window.open('ShowStatement.php?vid=' + vid, '_blank');
+                    },
+                    "Show Registration Form": function() {
+                        window.open('ShowRegForm.php?vid=' + vid, '_blank');
+                    },
+                    "Save": function() {
+                        saveFees(0, vid, span, false, payFailPage);
+                    },
+                    "Cancel": function() {
+                        $(this).dialog("close");
+                    }
+                };
+                viewVisit(0, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
+                $('#submitButtons').hide();
+            });
+
             $('#famSection.hhk-cbStay').change();
 
             $('#btnDone').val('Save ' + resvTitle).show();
 
             if (data.rid > 0) {
-
-                $('#btnDelete').click(function () {
-
-                    if ($(this).val() === 'Deleting >>>>') {
-                        return;
-                    }
-
-                    if (confirm('Delete this ' + data.resvTitle + '?')) {
-
-                        $(this).val('Deleting >>>>');
-
-                        deleteReserve(data.rid, 'form#form1');
-                    }
-                });
-
                 $('#btnDelete').val('Delete ' + resvTitle).show();
-
-                $('#btnShowReg').click(function () {
-                    window.open('ShowRegForm.php?rid=' + data.rid, '_blank');
-                });
-
                 $('#btnShowReg').show();
             }
         }
@@ -1703,6 +1733,8 @@ function PageManager(initData) {
                 addrs.addItem(data.addPerson.addrs);
                 familySection.newGuestMarkup(data.addPerson, data.addPerson.mem.pref);
                 familySection.findStaysChecked();
+
+                $('#' + data.addPerson.mem.pref + 'txtFirstName').focus();
             }
         }
     }
@@ -1737,10 +1769,13 @@ function PageManager(initData) {
     }
 }
 
+
+var payFailPage = '<?php echo $payFailPage; ?>';
 $(document).ready(function() {
     "use strict";
     var $guestSearch = $('#gstSearch');
     var resv = $.parseJSON('<?php echo $resvObjEncoded; ?>');
+
 
     var pageManager = new PageManager(resv);
 
@@ -1754,8 +1789,26 @@ $(document).ready(function() {
         }
     });
 
+// Buttons
     $('#btnDone, #btnShowReg, #btnDelete').button();
 
+    $('#btnDelete').click(function () {
+
+        if ($(this).val() === 'Deleting >>>>') {
+            return;
+        }
+
+        if (confirm('Delete this ' + pageManager.resvTitle + '?')) {
+
+            $(this).val('Deleting >>>>');
+
+            pageManager.deleteReserve(pageManager.idResv, 'form#form1');
+        }
+    });
+
+    $('#btnShowReg').click(function () {
+        window.open('ShowRegForm.php?rid=' + pageManager.idResv, '_blank');
+    });
 
     $('#btnDone').click(function () {
 
@@ -1784,6 +1837,7 @@ $(document).ready(function() {
 
                     if (data.error) {
                         flagAlertMessage(data.error, true);
+                        $('#btnDone').val('Save').show();
                     }
 
                     pageManager.loadResv(data);
@@ -1795,6 +1849,7 @@ $(document).ready(function() {
 
     });
 
+// Dialog Boxes
     $("#resDialog").dialog({
         autoOpen: false,
         resizable: true,
@@ -1855,6 +1910,22 @@ $(document).ready(function() {
         close: function (event, ui) {$('div#submitButtons').show();},
         open: function (event, ui) {$('div#submitButtons').hide();}
     });
+
+    $('#keysfees').dialog({
+        autoOpen: false,
+        resizable: true,
+        modal: true,
+        close: function() {$('#submitButtons').show();}
+    });
+
+    $('#pmtRcpt').dialog({
+        autoOpen: false,
+        resizable: true,
+        width: 530,
+        modal: true,
+        title: 'Payment Receipt'
+    });
+
 
     function getGuest(item) {
 

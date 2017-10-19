@@ -196,6 +196,19 @@ class ReserveData {
         return $this->idHospitalStay;
     }
 
+    public function getPrimaryGuestId() {
+
+        foreach ($this->getPsgMembers() as $m) {
+            if ($m->isStaying() && $m->isPrimaryGuest()) {
+                return $m->getId();
+            }
+        }
+
+        // No one defined
+
+        throw new Hk_Exception_Runtime('Primary Guest is not defined.  ');
+    }
+
     public function getResvTitle() {
         return $this->resvTitle;
     }
@@ -266,6 +279,18 @@ class ReserveData {
             }
         }
 
+        return NULL;
+    }
+
+    public function findPatientMember() {
+
+        foreach ($this->getPsgMembers() as $m) {
+            if ($m->getRole() == RelLinkType::Self) {
+                return $m;
+            }
+        }
+
+        // No Patient?
         return NULL;
     }
 
@@ -342,6 +367,7 @@ class ReserveData {
 
 }
 
+
 class PSGMember {
 
     protected $id;
@@ -384,6 +410,10 @@ class PSGMember {
 
     public function isStaying() {
         return $this->memStay->isStaying();
+    }
+
+    public function isBlocked() {
+        return $this->memStay->isBlocked();
     }
 
     public function isPrimaryGuest() {
@@ -435,10 +465,11 @@ class PSGMember {
 
 }
 
+
 class PSGMemStay {
 
     protected $stay;
-    protected $index;
+
     protected $primaryGuest;
 
     public function __construct($stay, $primaryGuest = FALSE) {
@@ -450,6 +481,7 @@ class PSGMemStay {
         }
 
         $this->setPrimaryGuest($primaryGuest);
+
     }
 
     public function createMarkup($prefix) {
@@ -546,27 +578,27 @@ class PSGMemStay {
         }
     }
 
-    public function getIndex() {
-        return $this->index;
-    }
-
-    public function setIndex($s) {
-        $this->index = $s;
-    }
-
 }
 
 class PSGMemVisit extends PSGMemStay {
 
-    public function __construct($index) {
+    protected $index = array();
 
-        $this->setIndex($index);
-        $this->setBlocked();
+    public function __construct($index, $primaryGuest = FALSE) {
+
+        parent::__construct(ReserveData::NOT_STAYING, $primaryGuest);
+
+        $this->index = $index;
+        $this->setNotStaying();
     }
 
     public function createMarkup($prefix) {
 
-        return HTMLContainer::generateMarkup('a', 'Visit', array('href'=>'whatever'));
+        if (isset($this->index['idVisit']) && isset($this->index['Visit_Span'])) {
+            return HTMLInput::generateMarkup('In Visit', array('type'=>'button', 'class'=>'hhk-getVDialog', 'data-vid'=>$this->index['idVisit'], 'data-span'=>$this->index['Visit_Span']));
+        } else {
+            return HTMLContainer::generateMarkup('span', 'In Visit', array());
+        }
     }
 
 }
@@ -575,6 +607,11 @@ class PSGMemResv extends PSGMemVisit {
 
     public function createMarkup($prefix) {
 
-        return HTMLContainer::generateMarkup('a', 'Resv', array('href'=>'whatever'));
+        if (isset($this->index['idReservation']) && isset($this->index['idPsg'])) {
+            return HTMLContainer::generateMarkup('a', (isset($this->index['label']) ? $this->index['label'] : 'Reservation')
+                , array('href'=>'Reserve.php?idPsg=' . $this->index['idPsg'] . '&rid=' . $this->index['idReservation'] . '&id=' . $this->index['idGuest'], 'target'=>'_blank'));
+        } else {
+            return HTMLContainer::generateMarkup('span', $this->index['label'], array());
+        }
     }
 }

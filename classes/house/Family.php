@@ -213,7 +213,7 @@ class Family {
 
             $nameTr = HTMLContainer::generateMarkup('tr'
                     , $role->createThinMarkup($rData->getPsgMember($prefix)->getStayObj(), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup('Remove', array('type'=>'button', 'id'=>$prefix.'btnRemove'))));
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup('Remove', array('type'=>'button', 'id'=>$prefix.'btnRemove', 'data-prefix'=>$prefix, 'class'=>'hhk-removeBtn'))));
 
             // Demographics
             if ($uS->ShowDemographics) {
@@ -290,7 +290,10 @@ class Family {
                 $rowClass = 'odd';
             }
 
-            $trs[] = HTMLContainer::generateMarkup('tr', $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), ($rData->getIdPsg() == 0 ? FALSE : TRUE)), array('class'=>$rowClass));
+            $trs[] = HTMLContainer::generateMarkup('tr',
+                    $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
+                    . ($role->getIdName() == 0 ? HTMLTable::makeTd(HTMLInput::generateMarkup('Remove', array('type'=>'button', 'id'=>$idPrefix.'btnRemove', 'data-prefix'=>$idPrefix, 'class'=>'hhk-removeBtn'))) : '')
+                    , array('class'=>$rowClass));
 
             // Demographics
             if ($uS->ShowDemographics) {
@@ -420,18 +423,13 @@ class JoinNewFamily extends Family {
             $prefix = $psgMember->getPrefix();
         } else {
             $prefix = $uS->addPerPrefix++;
-            $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, ReserveData::NOT_STAYING);
+            $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, new PSGMemStay(ReserveData::NOT_STAYING));
+            $rData->setMember($psgMember);
         }
 
         $this->roleObjs[$prefix] = new Guest($dbh, $prefix, $rData->getId());
 
         $psgMember->setStay(($this->roleObjs[$prefix]->getNoReturn() == '' ? ReserveData::NOT_STAYING : ReserveData::CANT_STAY));
-        $rData->setMember($psgMember);
-
-//        $this->roleObjs[$uS->addPerPrefix] = new Guest($dbh, $uS->addPerPrefix, $rData->getId());
-//
-//        $psgMember = new PSGMember($rData->getId(), $uS->addPerPrefix, '', ($this->roleObjs[$uS->addPerPrefix]->getNoReturn() == '' ? ReserveData::NOT_STAYING : ReserveData::CANT_STAY));
-//        $rData->setMember($psgMember);
 
     }
 }
