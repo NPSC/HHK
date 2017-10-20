@@ -134,7 +134,7 @@ class Family {
 
     }
 
-    public function setGuestsStaying(\PDO $dbh, ReserveData &$rData) {
+    public function setGuestsStaying(\PDO $dbh, ReserveData &$rData, $resvIdGuest) {
 
         if ($rData->getIdResv() > 0) {
 
@@ -142,6 +142,8 @@ class Family {
             $resvGuestRs = new Reservation_GuestRS();
             $resvGuestRs->idReservation->setStoredVal($rData->getIdResv());
             $rgs = EditRS::select($dbh, $resvGuestRs, array($resvGuestRs->idReservation));
+
+            $foundPriGuest = FALSE;
 
             foreach ($rgs as $g) {
 
@@ -151,10 +153,16 @@ class Family {
                     $mem->getStayObj()->setStaying();
 
                     if ($g['Primary_Guest'] == '1') {
+                        $foundPriGuest = TRUE;
                         $mem->getStayObj()->setPrimaryGuest(TRUE);
-                    } else {
-                        $mem->getStayObj()->setPrimaryGuest(FALSE);
                     }
+                }
+            }
+
+            if ($foundPriGuest === FALSE && $resvIdGuest > 0) {
+                $mem = $rData->findMemberById($resvIdGuest);
+                if ($mem !== NULL) {
+                    $mem->getStayObj()->setPrimaryGuest(TRUE);
                 }
             }
 

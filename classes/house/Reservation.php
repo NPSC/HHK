@@ -848,7 +848,7 @@ class BlankReservation extends Reservation {
 
     public function createMarkup(\PDO $dbh) {
 
-        $this->family->setGuestsStaying($dbh, $this->reserveData);
+        $this->family->setGuestsStaying($dbh, $this->reserveData, $this->reservRs->idGuest->getstoredVal());
 
         // Arrival and Departure dates
         if ($this->reserveData->getIdResv() > 0) {

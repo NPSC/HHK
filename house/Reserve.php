@@ -302,6 +302,7 @@ function PageManager(initData) {
 
         // Exports
         t.findStaysChecked = findStaysChecked;
+        t.findPrimaryGuest = findPrimaryGuest;
         t.setupComplete = false;
         t.setUp = setUp;
         t.newGuestMarkup = newGuestMarkup;
@@ -311,10 +312,6 @@ function PageManager(initData) {
 
         function findStaysChecked() {
             var numGuests = 0;
-            var singlePrefix = '';
-
-            // Get Primary guest setting from form.
-            var pgPrefix = $( "input[type=radio][name=rbPriGuest]:checked" ).val();
 
             // Each available stay control
             $('.hhk-cbStay').each(function () {
@@ -325,32 +322,32 @@ function PageManager(initData) {
 
                     people.list()[prefix].stay = '1';
                     numGuests++;
-                    $('#' + prefix + 'rbPri').prop('disabled', false);
-
-                    if (pgPrefix && pgPrefix !== '' && pgPrefix == prefix) {
-                        people.list()[prefix].pri = '1';
-                    } else {
-                         people.list()[prefix].pri = '0';
-                    }
-
-                    singlePrefix = prefix;
 
                 } else {
 
                     people.list()[prefix].stay = '0';
-                    people.list()[prefix].pri = '0';
-
-                    $('#' + prefix + 'rbPri').prop('checked', false).prop('disabled', true);
                 }
             });
 
-            // Only one guest staying, set as primary guest
-            if (numGuests === 1 && singlePrefix !== '') {
-                people.list()[singlePrefix].pri = '1';
-                $('#' + singlePrefix + 'rbPri').prop('checked', true);
+            return numGuests;
+        }
+
+        function findPrimaryGuest() {
+            var numPri = 0;
+            var pgPrefix = $( "input[type=radio][name=rbPriGuest]:checked" ).val();
+
+            // Clear out primary guest
+            for (var p in people.list()) {
+                people.list()[p].pri = 0;
             }
 
-            return numGuests;
+            // Set Primary guest
+            if (pgPrefix !== undefined) {
+                people.list()[pgPrefix].pri = 1;
+                numPri++;
+            }
+
+            return numPri;
         }
 
         function openSection(torf) {
@@ -705,7 +702,7 @@ function PageManager(initData) {
 
                 // Is the name entered?
                 if ($('#' + $(this).data('prefix') + 'txtFirstName').val() !== '' || $('#' + $(this).data('prefix') + 'txtLastName').val() !== '') {
-                    if (confirm('Remove this person: ' + $('#' + prefix + 'txtFirstName').val() + ' ' + $('#' + prefix + 'txtLastName').val() + '?') === false) {
+                    if (confirm('Remove this person: ' + $('#' + $(this).data('prefix') + 'txtFirstName').val() + ' ' + $('#' + $(this).data('prefix') + 'txtLastName').val() + '?') === false) {
                         return;
                     }
                 }
@@ -824,6 +821,11 @@ function PageManager(initData) {
 
                 }
             });
+
+            if (findPrimaryGuest() !== 1) {
+                flagAlertMessage('Select a primary guest.', true);
+                return false;
+            }
 
             // Compute number of guests and patients
             for (var i in people.list()) {
@@ -1678,7 +1680,7 @@ function PageManager(initData) {
             resvSection.setUp(data);
 
             // String together some events
-            $('#' + familySection.divFamDetailId).on('change', '.hhk-cbStay, .hhk-rbPri', function () {
+            $('#' + familySection.divFamDetailId).on('change', '.hhk-cbStay', function () {
 
                 var tot = familySection.findStaysChecked();
                 resvSection.$totalGuests.text(tot);
@@ -1690,6 +1692,7 @@ function PageManager(initData) {
                 }
             });
 
+            // Visit Dialog
             $('.hhk-getVDialog').button();
 
             $('#' + familySection.divFamDetailId).on('click', '.hhk-getVDialog', function () {

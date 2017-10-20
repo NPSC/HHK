@@ -249,11 +249,12 @@ class IndivMember extends Member {
         }
 
         // No Return
+        $nreasons = readGenLookupsPDO($dbh, 'NoReturnReason', 'order');
         $table->addBodyTr(
             HTMLTable::makeTd('No Return', array('class'=>'tdlabel', 'title'=>'Flag for No Return'))
             . HTMLTable::makeTd(
                     HTMLSelector::generateMarkup(
-                            HTMLSelector::doOptionsMkup($uS->nameLookups['NoReturnReason'], $this->getNoReturnDemog(), TRUE)
+                            HTMLSelector::doOptionsMkup($nreasons, $this->getNoReturnDemog(), TRUE)
                                 ,array('name'=>$idPrefix.'selnoReturn', 'title'=>'Set No Return reason'))
                     , array('style'=>'display:table-cell;', 'title'=>'Set No Return reason')
                     )

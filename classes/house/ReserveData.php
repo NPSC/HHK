@@ -126,7 +126,7 @@ class ReserveData {
             }
 
             if (isset($memArray[ReserveData::PRI])) {
-                $priGuest = filter_var($memArray[ReserveData::PRI], FILTER_VALIDATE_BOOLEAN);
+                $priGuest = intval($memArray[ReserveData::PRI], 10);
             }
 
             $psgMember = $this->getPsgMember($prefix);
@@ -134,7 +134,7 @@ class ReserveData {
             if (is_null($psgMember)) {
                 $this->setMember(new PSGMember($id, $prefix, $role, new PSGMemStay($stay, $priGuest)));
             } else {
-                $psgMember->setStay($stay)->setRole($role);
+                $psgMember->setStay($stay)->setRole($role)->setPrimaryGuest($priGuest);
             }
 
         }
@@ -199,7 +199,7 @@ class ReserveData {
     public function getPrimaryGuestId() {
 
         foreach ($this->getPsgMembers() as $m) {
-            if ($m->isStaying() && $m->isPrimaryGuest()) {
+            if ($m->isPrimaryGuest()) {
                 return $m->getId();
             }
         }
@@ -442,6 +442,11 @@ class PSGMember {
         return $this;
     }
 
+    public function setPrimaryGuest($primaryGuest) {
+        $this->memStay->setPrimaryGuest($primaryGuest);
+        return $this;
+    }
+
     public function setStay($stay) {
         $this->memStay->setStay($stay);
         return $this;
@@ -469,10 +474,9 @@ class PSGMember {
 class PSGMemStay {
 
     protected $stay;
-
     protected $primaryGuest;
 
-    public function __construct($stay, $primaryGuest = FALSE) {
+    public function __construct($stay, $primaryGuest = 0) {
 
         if ($stay == ReserveData::STAYING || $stay == ReserveData::NOT_STAYING || $stay == ReserveData::CANT_STAY) {
             $this->stay = $stay;
@@ -518,10 +522,8 @@ class PSGMemStay {
                 'class'=>'hhk-rbPri'
             );
 
-            if ($this->isPrimaryGuest() && $this->isStaying()) {
+            if ($this->isPrimaryGuest()) {
                 $rbPri['checked'] = 'checked';
-            } else if ($this->isStaying() === FALSE) {
-                $rbPri['disabled'] = 'disabled';
             }
 
             return HTMLContainer::generateMarkup('label', 'Stay', $lblStay)
@@ -545,7 +547,10 @@ class PSGMemStay {
     }
 
     public function isPrimaryGuest() {
-        return $this->primaryGuest;
+        if ($this->primaryGuest > 0) {
+            return TRUE;
+        }
+        return FALSE;
     }
 
     public function getStay() {
@@ -557,11 +562,7 @@ class PSGMemStay {
     }
 
     public function setPrimaryGuest($primaryGuest) {
-        if ($primaryGuest === TRUE) {
-            $this->primaryGuest = TRUE;
-        } else {
-            $this->primaryGuest = FALSE;
-        }
+        $this->primaryGuest = $primaryGuest;
     }
 
     public function setBlocked() {
