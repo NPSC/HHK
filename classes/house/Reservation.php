@@ -161,15 +161,11 @@ abstract class Reservation {
 
         $resv = new Reservation_1($this->reservRs);
 
-        // Count guests
-//        $numGuests = 0;
-//        foreach($this->reserveData->getPsgMembers() as $m) {
-//            if ($m->getStay() == '1') {
-//                $numGuests++;
-//            }
-//        }
+        // Allow reservations to have many guests.
+        $numGuests = 1;
 
-        $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
+        $roomChooser = new RoomChooser($dbh, $resv, $numGuests, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
+        $roomChooser->setOldResvId($this->copyOldReservation($dbh, $resv));
 
         $dataArray['rChooser'] = $roomChooser->CreateResvMarkup($dbh, $isAuthorized);
 
@@ -325,19 +321,23 @@ abstract class Reservation {
     protected function findConflictingStays(\PDO $dbh, array $psgMembers, \DateTime $arrivalDT) {
 
         $whStays = '';
+        $rooms = array();
 
+        // Collect member ids
         foreach ($psgMembers as $m) {
             if ($m->getId() != 0 && $m->isBlocked() === FALSE) {
                 $whStays .= ',' . $m->getId();
             }
         }
 
+        // Find any visits.
         if ($whStays != '') {
 
             // Check ongoing visits
-            $vstmt = $dbh->query("Select idName, Span_Start_Date, Expected_Co_Date, idVisit, Visit_Span from stays "
-                    . " where `Status` = '" . VisitStatus::CheckedIn . "' and DATE(dateDefaultNow(Expected_Co_Date)) > DATE('" . $arrivalDT->format('Y-m-d') . "') "
-                    . " and idName in (" . substr($whStays, 1) . ")");
+            $vstmt = $dbh->query("Select s.idName, s.idVisit, s.Visit_Span, s.idRoom, r.idPsg "
+                    . " from stays s join visit v on s.idVisit = v.idVisit join registration r on v.idRegistration = r.idRegistration "
+                    . " where s.`Status` = = '" . VisitStatus::CheckedIn . "' and DATE(dateDefaultNow(s.Expected_Co_Date)) > DATE('" . $arrivalDT->format('Y-m-d') . "') "
+                    . " and s.idName in (" . substr($whStays, 1) . ")");
 
             while ($s = $vstmt->fetch(\PDO::FETCH_ASSOC)) {
                 // These guests are already staying
@@ -345,8 +345,16 @@ abstract class Reservation {
                 if (is_null($mem = $this->reserveData->findMemberById($r['idGuest'])) === FALSE) {
                     $mem->setStayObj(new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'])));
                 }
+
+                // Count rooms
+                if ($s['idPsg'] == $this->reserveData->getIdPsg()) {
+                    $rooms[$s['idRoom']] = '1';
+                }
             }
         }
+
+        // Return number of rooms being used by this psg.
+        return count($rooms);
     }
 
     protected function findConflictingReservations(\PDO $dbh, array $psgMembers, \DateTime $arrivalDT, \DateTime $departDT) {
@@ -362,10 +370,13 @@ abstract class Reservation {
 
         if ($whResv != '') {
 
-            $rstmt = $dbh->query("select rg.idReservation, ng.idPsg, rg.idGuest "
-                . "from reservation_guest rg left join name_Guest ng on ng.idName = rg.idGuest "
-                . "left join reservation r on r.idReservation = rg.idReservation "
-                . "where r.`Status` in ('a', 'uc', 'w') and rg.idGuest in (" . substr($whResv, 1) . ") and rg.idReservation != " . $this->reserveData->getIdResv()
+            $rStatus = " in ('" . ReservationStatus::Committed. "','" . ReservationStatus::UnCommitted. "','". ReservationStatus::Waitlist. "','". ReservationStatus::Staying. "') ";
+
+            $rstmt = $dbh->query("select rg.idReservation, reg.idPsg, rg.idGuest, r.idResource "
+                . "from reservation_guest rg  "
+                . "join reservation r on r.idReservation = rg.idReservation "
+                . "join registration reg on r.idRegistration = reg.idRegistration "
+                . "where r.`Status` $rStatus and rg.idGuest in (" . substr($whResv, 1) . ") and rg.idReservation != " . $this->reserveData->getIdResv()
                 . " and Date(r.Expected_Arrival) < DATE('".$departDT->format('Y-m-d') . "') and Date(dateDefaultNow(r.Expected_Departure)) > DATE('".$arrivalDT->format('Y-m-d') . "')");
 
             while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -510,46 +521,32 @@ abstract class Reservation {
         }
     }
 
+    protected function copyOldReservation(\PDO $dbh, Reservation_1 $resv) {
+
+        // Pick up the old ReservationRS, if it exists.
+        // Use it to fill in the visit requirements.
+        $oldResvId = 0;
+
+        if ($resv->isNew() === FALSE || $this->reserveData->getIdPsg() < 1) {
+            return $oldResvId;
+        }
+
+        $stmt = $dbh->query("SELECT  r.idReservation, MAX(r.Expected_Arrival) "
+                . "FROM reservation r LEFT JOIN registration rg ON r.idRegistration = rg.idRegistration "
+                . "WHERE rg.idPsg = " . $this->reserveData->getIdPsg() . " ORDER BY rg.idPsg");
+
+        $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+
+        if (count($rows > 0)) {
+            $oldResvId = $rows[0][0];
+        }
+
+        return $oldResvId;
+    }
+
     public function savePayments(\PDO $dbh, Reservation_1 &$resv, $post) {
 
         return;
-
-
-//        $paymentManager = new PaymentManager(PaymentChooser::readPostedPayment($dbh, $post));
-//
-//        $payResult = HouseServices::processPayments($dbh, $paymentManager, 0, 'Referral.php');
-//
-//        if ($payResult !== NULL) {
-//
-//            if ($payResult->getStatus() == PaymentResult::FORWARDED) {
-//                $creditCheckOut = $payResult->getForwardHostedPayment();
-//            }
-//
-//            // Receipt
-//            if (is_null($payResult->getReceiptMarkup()) === FALSE && $payResult->getReceiptMarkup() != '') {
-//                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', $payResult->getReceiptMarkup());
-//                Registration::updatePrefTokenId($dbh, $resv->getIdRegistration(), $payResult->getIdToken());
-//            }
-//
-//            // New Invoice
-//            if (is_null($payResult->getInvoiceMarkup()) === FALSE && $payResult->getInvoiceMarkup() != '') {
-//                $dataArray['invoice'] = HTMLContainer::generateMarkup('div', $payResult->getInvoiceMarkup());
-//            }
-//        }
-//
-//        $results = HouseServices::cardOnFile($dbh, $resv->getIdGuest(), $resv->getIdRegistration(), $post, 'Referral.php?rid='.$resv->getIdReservation());
-//
-//        if (isset($results['error'])) {
-//            $dataArray['error'] = $results['error'];
-//            unset($results['error']);
-//        }
-//
-//        // GO to Card on file?
-//        if (count($creditCheckOut) > 0) {
-//            return $creditCheckOut;
-//        } else if (count($results) > 0) {
-//            return $results;
-//        }
 
     }
 
@@ -688,7 +685,7 @@ class ActiveReservation extends BlankReservation {
             $departDT = new \DateTime();
             $this->saveDates($post, $arrivalDT, $departDT);
         } catch (Hk_Exception_Runtime $hex) {
-            return array('error'=>$hex->getMessage());
+            return array('error'=> 'Problem with ' . $this->reserveData->getResvTitle() . ' arrival and/or departure dates:  ' . $hex->getMessage());
         }
 
 
@@ -736,6 +733,7 @@ class ActiveReservation extends BlankReservation {
         // Create the reservation instance
         $resv = new Reservation_1($this->reservRs);
 
+        $resv->setExpectedPayType($uS->DefaultPayType);
         $resv->setHospitalStay($this->family->getHospStay());
         $resv->setExpectedArrival($arrivalDT->format('Y-m-d 16:00:00'));
         $resv->setExpectedDeparture($departDT->format('Y-m-d 10:00:00'));
