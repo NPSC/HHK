@@ -190,17 +190,17 @@ class RoomChooser {
         }
     }
 
-    public function createResvMarkup(\PDO $dbh, $isAuthorized, $constraintsDisabled = FALSE, $classId = '') {
+    public function createResvMarkup(\PDO $dbh, $isAuthorized, $classId = '') {
 
         if (($this->resv->getStatus() === ReservationStatus::Committed || $this->resv->getStatus() === ReservationStatus::UnCommitted || $this->resv->getStatus() === ReservationStatus::Waitlist || $this->resv->isNew())) {
 
-            $rescs = $this->findResources($dbh, $isAuthorized);
+            $rescs = $this->findResources($dbh, $isAuthorized, TRUE, 1);
 
             if (isset($rescs[$this->resv->getIdResource()])) {
                 $this->selectedResource = $rescs[$this->resv->getIdResource()];
             }
 
-            return $this->createChooserMarkup($dbh, $constraintsDisabled, $classId);
+            return $this->createChooserMarkup($dbh, FALSE, $classId);
 
         } else {
 
@@ -275,12 +275,12 @@ class RoomChooser {
     }
 
 
-    public function findResources(\PDO $dbh, $isAuthorized, $omitSelf = TRUE) {
+    public function findResources(\PDO $dbh, $isAuthorized, $omitSelf = TRUE, $overrideMaxOcc = 0) {
 
         if ($isAuthorized) {
-            $resources = $this->resv->findGradedResources($dbh, $this->checkinDT->format('Y-m-d H:i:s'), $this->checkoutDT->format('Y-m-d H:i:s'), $this->getTotalGuests(), array('room','rmtroom','part'), $omitSelf);
+            $resources = $this->resv->findGradedResources($dbh, $this->checkinDT->format('Y-m-d H:i:s'), $this->checkoutDT->format('Y-m-d H:i:s'), ($overrideMaxOcc == 0 ? $this->getTotalGuests() : $overrideMaxOcc), array('room','rmtroom','part'), $omitSelf);
         } else {
-            $resources = $this->resv->findResources($dbh, $this->checkinDT->format('Y-m-d H:i:s'), $this->checkoutDT->format('Y-m-d H:i:s'), $this->getTotalGuests(), array('room','rmtroom','part'), $omitSelf);
+            $resources = $this->resv->findResources($dbh, $this->checkinDT->format('Y-m-d H:i:s'), $this->checkoutDT->format('Y-m-d H:i:s'), ($overrideMaxOcc == 0 ? $this->getTotalGuests() : $overrideMaxOcc), array('room','rmtroom','part'), $omitSelf);
         }
 
         return $resources;

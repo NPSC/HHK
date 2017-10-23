@@ -1285,7 +1285,7 @@ class ReservationSvcs {
 
 
         // Room Chooser
-        $dataArray['resc'] = $roomChooser->CreateResvMarkup($dbh, $isAuthorized, FALSE, 'hhk-rmchsr');
+        $dataArray['resc'] = $roomChooser->CreateResvMarkup($dbh, $isAuthorized, 'hhk-rmchsr');
 
 
 

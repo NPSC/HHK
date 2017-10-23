@@ -460,7 +460,7 @@ class RateChooser {
         return $catAmounts;
     }
 
-    public function makeRoomsArray(RoomChooser $roomChooser, $staticRoomRates, $keyDepCodes) {
+    public function makeRoomsArray(RoomChooser $roomChooser, $staticRoomRates, $keyDepCodes, $overRideMaxOccs = 0) {
 
         $resources = $roomChooser->resv->getAvailableResources();
         $resArray = array();
@@ -474,7 +474,7 @@ class RateChooser {
             }
 
             $resArray[$rc->getIdResource()] = array(
-                "maxOcc" => $rc->getMaxOccupants(),
+                "maxOcc" => ($overRideMaxOccs == 0 ? $rc->getMaxOccupants() : $overRideMaxOccs),
                 "rate" => $assignedRate,
                 "title" => $rc->getTitle(),
                 'key' => $rc->getKeyDeposit($keyDepCodes),

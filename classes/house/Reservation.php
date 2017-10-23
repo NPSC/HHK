@@ -162,7 +162,7 @@ abstract class Reservation {
         $resv = new Reservation_1($this->reservRs);
 
         // Allow reservations to have many guests.
-        $numGuests = 1;
+        $numGuests = count($this->getStayingMembers());
 
         $roomChooser = new RoomChooser($dbh, $resv, $numGuests, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
         $roomChooser->setOldResvId($this->copyOldReservation($dbh, $resv));
@@ -180,7 +180,7 @@ abstract class Reservation {
             // Array with amount calculated for each rate.
             $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
             // Array with key deposit info
-            $dataArray['rooms'] = $rateChooser->makeRoomsArray($roomChooser, $uS->guestLookups['Static_Room_Rate'], $uS->guestLookups[GL_TableNames::KeyDepositCode]);
+            $dataArray['rooms'] = $rateChooser->makeRoomsArray($roomChooser, $uS->guestLookups['Static_Room_Rate'], $uS->guestLookups[GL_TableNames::KeyDepositCode], 20);
 
             if ($uS->VisitFee) {
                 // Visit Fee Array
@@ -336,7 +336,7 @@ abstract class Reservation {
             // Check ongoing visits
             $vstmt = $dbh->query("Select s.idName, s.idVisit, s.Visit_Span, s.idRoom, r.idPsg "
                     . " from stays s join visit v on s.idVisit = v.idVisit join registration r on v.idRegistration = r.idRegistration "
-                    . " where s.`Status` = = '" . VisitStatus::CheckedIn . "' and DATE(dateDefaultNow(s.Expected_Co_Date)) > DATE('" . $arrivalDT->format('Y-m-d') . "') "
+                    . " where s.`Status` = '" . VisitStatus::CheckedIn . "' and DATE(dateDefaultNow(s.Expected_Co_Date)) > DATE('" . $arrivalDT->format('Y-m-d') . "') "
                     . " and s.idName in (" . substr($whStays, 1) . ")");
 
             while ($s = $vstmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -361,6 +361,7 @@ abstract class Reservation {
 
         // Check reservations
         $whResv = '';
+        $rescs = array();
 
         foreach ($psgMembers as $m) {
             if ($m->getId() != 0 && $m->isBlocked() === FALSE) {
@@ -375,7 +376,7 @@ abstract class Reservation {
             $rstmt = $dbh->query("select rg.idReservation, reg.idPsg, rg.idGuest, r.idResource "
                 . "from reservation_guest rg  "
                 . "join reservation r on r.idReservation = rg.idReservation "
-                . "join registration reg on r.idRegistration = reg.idRegistration "
+                . "join registration reg on reg.idRegistration = r.idRegistration "
                 . "where r.`Status` $rStatus and rg.idGuest in (" . substr($whResv, 1) . ") and rg.idReservation != " . $this->reserveData->getIdResv()
                 . " and Date(r.Expected_Arrival) < DATE('".$departDT->format('Y-m-d') . "') and Date(dateDefaultNow(r.Expected_Departure)) > DATE('".$arrivalDT->format('Y-m-d') . "')");
 
@@ -384,15 +385,22 @@ abstract class Reservation {
                 if (is_null($mem = $this->reserveData->findMemberById($r['idGuest'])) === FALSE) {
                     $mem->setStayObj(new PSGMemResv(array('idReservation'=>$r['idReservation'], 'idGuest'=>$r['idGuest'], 'idPsg'=>$r['idPsg'], 'label'=>$this->reserveData->getResvTitle())));
                 }
+
+                // Count rooms
+                if ($r['idPsg'] == $this->reserveData->getIdPsg()) {
+                    $rescs[$r['idResource']] = '1';
+                }
             }
         }
+
+        return count($rescs);
     }
 
     protected function guestReservations(\PDO $dbh, $psgMembers, \DateTime $arrivalDT, \DateTime $departDT) {
 
         $this->findConflictingStays($dbh, $psgMembers, $arrivalDT);
 
-        $this->findConflictingReservations($dbh, $psgMembers, $arrivalDT, $departDT);
+        return $this->findConflictingReservations($dbh, $psgMembers, $arrivalDT, $departDT);
     }
 
     protected function getStayingMembers() {
@@ -702,9 +710,10 @@ class ActiveReservation extends BlankReservation {
             return $data;
         }
 
-        // Is anyone already in a reservation?
-        $this->findConflictingReservations($dbh, $this->reserveData->getPsgMembers(), $arrivalDT, $departDT);
+        // Get reservations for the specified time
+        $numRooms = $this->findConflictingReservations($dbh, $this->reserveData->getPsgMembers(), $arrivalDT, $departDT);
 
+        // Anybody left?
         if (count($this->getStayingMembers()) < 1) {
             // Nobody left in the reservation
             if ($this->reserveData->getId() == 0) {
@@ -712,6 +721,13 @@ class ActiveReservation extends BlankReservation {
             }
             $data = $this->createMarkup($dbh);
             $data['error'] = 'Everybody is already in a reservation for all or part of the specified duration.  ';
+            return $data;
+        }
+
+        // verify number of simultaneous reservations/visits
+        if ($this->reserveData->getIdResv() == 0 && $numRooms > $uS->RoomsPerPatient) {
+            // Too many
+            $data['error'] = 'This reservation violates your House\'s maximum number of simutaneous rooms per patient (' .$uS->RoomsPerPatient . '.  ';
             return $data;
         }
 

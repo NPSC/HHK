@@ -382,24 +382,8 @@ class PatientMember extends RoleMember {
 
     public function createThinMarkupRow($patientRelationship = '', $hideRelChooser = TRUE, $lockRelChooser = FALSE) {
 
-        $uS = Session::getInstance();
-        $tr = parent::createThinMarkupRow();
+        return parent::createThinMarkupRow() . HTMLTable::makeTd('');
 
-
-        if ($hideRelChooser === FALSE) {
-
-            $parray = array(RelLinkType::Self => $uS->guestLookups[GL_TableNames::PatientRel][RelLinkType::Self]);
-
-            // Patient relationship
-            $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                     HTMLSelector::doOptionsMkup($parray, RelLinkType::Self, FALSE), array('name'=>$this->getIdPrefix() . 'selPatRel', 'data-prefix'=>$this->getIdPrefix(), 'class'=>'patientRelch')));
-
-        } else {
-
-            $tr .= HTMLTable::makeTd('');
-        }
-
-        return $tr;
     }
 
 }

@@ -1118,7 +1118,7 @@ function PageManager(initData) {
                     .append($(hosp.hdr))
                     .append(expanderButton).append('<div style="clear:both;"/>');
 
-            hHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
+            hHdr.addClass('ui-widget-header ui-state-default ui-corner-all');
 
             hHdr.click(function() {
                 if (hDiv.css('display') === 'none') {
