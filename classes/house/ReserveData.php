@@ -111,7 +111,7 @@ class ReserveData {
             $id = 0;
             $role = '';
             $stay = ReserveData::NOT_STAYING;
-            $priGuest = FALSE;
+            $priGuest = 0;
 
             if (isset($memArray[ReserveData::ID])) {
                 $id = intval($memArray[ReserveData::ID], 10);
@@ -196,19 +196,6 @@ class ReserveData {
         return $this->idHospitalStay;
     }
 
-    public function getPrimaryGuestId() {
-
-        foreach ($this->getPsgMembers() as $m) {
-            if ($m->isPrimaryGuest()) {
-                return $m->getId();
-            }
-        }
-
-        // No one defined
-
-        throw new Hk_Exception_Runtime('Primary Guest is not defined.  ');
-    }
-
     public function getResvTitle() {
         return $this->resvTitle;
     }
@@ -291,6 +278,18 @@ class ReserveData {
         }
 
         // No Patient?
+        return NULL;
+    }
+
+    public function findPrimaryGuestId() {
+
+        foreach ($this->getPsgMembers() as $m) {
+            if ($m->isPrimaryGuest()) {
+                return $m->getId();
+            }
+        }
+
+        // No one defined
         return NULL;
     }
 
@@ -610,7 +609,7 @@ class PSGMemResv extends PSGMemVisit {
 
         if (isset($this->index['idReservation']) && isset($this->index['idPsg'])) {
             return HTMLContainer::generateMarkup('a', (isset($this->index['label']) ? $this->index['label'] : 'Reservation')
-                , array('href'=>'Reserve.php?idPsg=' . $this->index['idPsg'] . '&rid=' . $this->index['idReservation'] . '&id=' . $this->index['idGuest'], 'target'=>'_blank'));
+                , array('href'=>'Reserve.php?idPsg=' . $this->index['idPsg'] . '&rid=' . $this->index['idReservation'] . '&id=' . $this->index['idGuest']));
         } else {
             return HTMLContainer::generateMarkup('span', $this->index['label'], array());
         }

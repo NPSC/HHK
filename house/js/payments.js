@@ -809,7 +809,7 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
         });
     }
     
-    if ($rescSelector && $rescSelector.length > 0) {
+    if (resources && $rescSelector && $rescSelector.length > 0) {
         
         $rescSelector.change(function() {
             $(this).removeClass('ui-state-error');

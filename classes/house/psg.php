@@ -457,6 +457,25 @@ class Psg {
             return;
         }
 
+        $foundPatient = FALSE;
+
+        // Check for just one patient
+        foreach ($this->psgMembers as $ngRS) {
+
+            if ($ngRS->Relationship_Code->getStoredVal() == RelLinkType::Self && $foundPatient) {
+                // Second patient defined.
+                throw new Hk_Exception_Runtime('PSG already has a patient.');
+            } else if ($ngRS->Relationship_Code->getStoredVal() == RelLinkType::Self && $this->getIdPatient() == $ngRS->idName->getStoredVal()) {
+                $foundPatient = TRUE;
+            }
+        }
+
+        // Check for at least one patient.
+        if ($foundPatient === FALSE) {
+            throw new Hk_Exception_Runtime('A Patient is undefined for this PSG.');
+        }
+
+        // Save each member
         foreach ($this->psgMembers as $ngRS) {
 
             $ngRS->idPsg->setNewVal($this->getIdPsg());
@@ -466,6 +485,7 @@ class Psg {
             if ($ngRS->idPsg->getStoredVal() !== 0) {
 
                 EditRS::update($dbh, $ngRS, array($ngRS->idName, $ngRS->idPsg));
+                
                 $logText = VisitLog::getUpdateText($ngRS);
                 VisitLog::logNameGuest($dbh, $this->getIdPsg(), $ngRS->idName->getStoredVal(), $logText, "update", $uname);
 
@@ -481,7 +501,6 @@ class Psg {
         }
 
         return;
-
     }
 
     public function savePSG(\PDO $dbh, $idPatient, $uname, $notes = '') {
@@ -494,7 +513,7 @@ class Psg {
         $ngrss = Psg::getNameGuests($dbh, $idPatient);
 
         foreach ($ngrss as $ngRS) {
-            if ($ngRS->Relationship_Code == RelLinkType::Self && $ngRS->idPsg->getStoredVal() != $this->psgRS->idPsg->getStoredVal()) {
+            if ($ngRS->Relationship_Code->getStoredVal() == RelLinkType::Self && $ngRS->idPsg->getStoredVal() != $this->psgRS->idPsg->getStoredVal()) {
                 throw new Hk_Exception_Runtime('Patient already has a PSG. Start over and enter this patient first.');
             }
         }

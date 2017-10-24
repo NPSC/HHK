@@ -155,7 +155,7 @@ abstract class Reservation {
 
     }
 
-    protected function createResvMarkup(\PDO $dbh, $labels, $prefix = '', $isAuthorized = TRUE) {
+    protected function createResvMarkup(\PDO $dbh, $oldResv, $labels, $prefix = '', $isAuthorized = TRUE) {
 
         $uS = Session::getInstance();
 
@@ -165,54 +165,61 @@ abstract class Reservation {
         $numGuests = count($this->getStayingMembers());
 
         $roomChooser = new RoomChooser($dbh, $resv, $numGuests, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
-        $roomChooser->setOldResvId($this->copyOldReservation($dbh, $resv));
+        $roomChooser->setOldResvId($oldResv);
 
-        $dataArray['rChooser'] = $roomChooser->CreateResvMarkup($dbh, $isAuthorized);
+        if ($this->reserveData->getIdResv() == 0) {
 
-        $showPayWith = TRUE;
-
-        // Rate Chooser
-        if ($uS->RoomPriceModel != ItemPriceCode::None) {
-
-            $rateChooser = new RateChooser($dbh);
-
-            $dataArray['rate'] = $rateChooser->createResvMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
-            // Array with amount calculated for each rate.
-            $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
-            // Array with key deposit info
-            $dataArray['rooms'] = $rateChooser->makeRoomsArray($roomChooser, $uS->guestLookups['Static_Room_Rate'], $uS->guestLookups[GL_TableNames::KeyDepositCode], 20);
-
-            if ($uS->VisitFee) {
-                // Visit Fee Array
-                $dataArray['vfee'] = $rateChooser::makeVisitFeeArray($dbh);
-            }
-
-//            $dataArray['pay'] =
-//                    PaymentChooser::createResvMarkup($dbh, $guest->getIdName(), $reg, removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]), $resv->getExpectedPayType(), $uS->ccgw);
+            $dataArray['rChooser'] = $roomChooser->createConstraintsChooser($dbh, 0, $numGuests);
 
         } else {
-            // Price Model - NONE
+
+            $dataArray['rChooser'] = $roomChooser->CreateResvMarkup($dbh, $isAuthorized);
+
             $showPayWith = FALSE;
-        }
+
+            // Rate Chooser
+            if ($uS->RoomPriceModel != ItemPriceCode::None) {
+
+                $showPayWith = TRUE;
+
+                $rateChooser = new RateChooser($dbh);
+
+                $dataArray['rate'] = $rateChooser->createResvMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
+                // Array with amount calculated for each rate.
+                $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
+                // Array with key deposit info
+                $dataArray['rooms'] = $rateChooser->makeRoomsArray($roomChooser, $uS->guestLookups['Static_Room_Rate'], $uS->guestLookups[GL_TableNames::KeyDepositCode], 20);
+
+                if ($uS->VisitFee) {
+                    // Visit Fee Array
+                    $dataArray['vfee'] = $rateChooser::makeVisitFeeArray($dbh);
+                }
+
+    //            $dataArray['pay'] =
+    //                    PaymentChooser::createResvMarkup($dbh, $guest->getIdName(), $reg, removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]), $resv->getExpectedPayType(), $uS->ccgw);
+
+            }
 
 
-        // Reservation Data
-        $dataArray['rstat'] = ReservationSvcs::createStatusChooser(
-                $resv,
-                $resv->getChooserStatuses($uS->guestLookups['ReservStatus']),
-                $uS->nameLookups[GL_TableNames::PayType],
-                $labels,
-                $showPayWith,
-                Registration::loadLodgingBalance($dbh, $resv->getIdRegistration()));
+            // Reservation Data
+            $dataArray['rstat'] = ReservationSvcs::createStatusChooser(
+                    $resv,
+                    $resv->getChooserStatuses($uS->guestLookups['ReservStatus']),
+                    $uS->nameLookups[GL_TableNames::PayType],
+                    $labels,
+                    $showPayWith,
+                    Registration::loadLodgingBalance($dbh, $resv->getIdRegistration()));
 
-        // Reservation notes
-        $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
-                        HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'notesLabel', 'Reservation Notes'), array('style'=>'font-weight:bold;'))
-                        . Notes::markupShell($resv->getNotes(), 'txtRnotes'), array('style'=>'float:left; width:50%;', 'class'=>'hhk-panel'));
+            // Reservation notes
+            $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
+                            HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'notesLabel', 'Reservation Notes'), array('style'=>'font-weight:bold;'))
+                            . Notes::markupShell($resv->getNotes(), 'txtRnotes'), array('style'=>'float:left; width:50%;', 'class'=>'hhk-panel'));
 
-        // Vehicles
-        if ($uS->TrackAuto) {
-            $dataArray['vehicle'] = $this->vehicleMarkup($dbh);
+            // Vehicles
+            if ($uS->TrackAuto) {
+                $dataArray['vehicle'] = $this->vehicleMarkup($dbh);
+            }
+
         }
 
         // Collapsing header
@@ -342,7 +349,7 @@ abstract class Reservation {
             while ($s = $vstmt->fetch(\PDO::FETCH_ASSOC)) {
                 // These guests are already staying
 
-                if (is_null($mem = $this->reserveData->findMemberById($r['idGuest'])) === FALSE) {
+                if (is_null($mem = $this->reserveData->findMemberById($s['idName'])) === FALSE) {
                     $mem->setStayObj(new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'])));
                 }
 
@@ -373,7 +380,7 @@ abstract class Reservation {
 
             $rStatus = " in ('" . ReservationStatus::Committed. "','" . ReservationStatus::UnCommitted. "','". ReservationStatus::Waitlist. "','". ReservationStatus::Staying. "') ";
 
-            $rstmt = $dbh->query("select rg.idReservation, reg.idPsg, rg.idGuest, r.idResource "
+            $rstmt = $dbh->query("select rg.idReservation, reg.idPsg, rg.idGuest, r.idResource, r.`Status` "
                 . "from reservation_guest rg  "
                 . "join reservation r on r.idReservation = rg.idReservation "
                 . "join registration reg on reg.idRegistration = r.idRegistration "
@@ -382,7 +389,7 @@ abstract class Reservation {
 
             while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
 
-                if (is_null($mem = $this->reserveData->findMemberById($r['idGuest'])) === FALSE) {
+                if ($r['Status'] != ReservationStatus::Staying && is_null($mem = $this->reserveData->findMemberById($r['idGuest'])) === FALSE) {
                     $mem->setStayObj(new PSGMemResv(array('idReservation'=>$r['idReservation'], 'idGuest'=>$r['idGuest'], 'idPsg'=>$r['idPsg'], 'label'=>$this->reserveData->getResvTitle())));
                 }
 
@@ -529,24 +536,34 @@ abstract class Reservation {
         }
     }
 
-    protected function copyOldReservation(\PDO $dbh, Reservation_1 $resv) {
+    protected function copyOldReservation(\PDO $dbh) {
 
         // Pick up the old ReservationRS, if it exists.
         // Use it to fill in the visit requirements.
         $oldResvId = 0;
 
-        if ($resv->isNew() === FALSE || $this->reserveData->getIdPsg() < 1) {
+        if ($this->reserveData->getIdResv() > 0 || $this->reserveData->getIdPsg() < 1) {
             return $oldResvId;
         }
 
-        $stmt = $dbh->query("SELECT  r.idReservation, MAX(r.Expected_Arrival) "
+        $stmt = $dbh->query("SELECT  r.idReservation, r.idGuest, MAX(r.Expected_Arrival) "
                 . "FROM reservation r LEFT JOIN registration rg ON r.idRegistration = rg.idRegistration "
                 . "WHERE rg.idPsg = " . $this->reserveData->getIdPsg() . " ORDER BY rg.idPsg");
 
         $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
         if (count($rows > 0)) {
+
             $oldResvId = $rows[0][0];
+
+            if ($this->reserveData->findPrimaryGuestId() === NULL) {
+
+                $mem = $this->reserveData->findMemberById($rows[0][1]);
+
+                if (is_null($mem) === FALSE) {
+                    $mem->setPrimaryGuest(1);
+                }
+            }
         }
 
         return $oldResvId;
@@ -664,11 +681,14 @@ class ActiveReservation extends BlankReservation {
             $this->reservRs->Status->setStoredVal(ReservationStatus::Waitlist);
         }
 
+        // Get any previous settings and set primary guest if blank.
+        $oldResvId = $this->copyOldReservation($dbh);
+
         // Add the family, hospital, etc sections.
         $data = parent::createMarkup($dbh);
 
         // Add the reservation section.
-        $data['resv'] = $this->createResvMarkup($dbh, new Config_Lite(LABEL_FILE));
+        $data['resv'] = $this->createResvMarkup($dbh, $oldResvId, new Config_Lite(LABEL_FILE));
 
         return $data;
 
@@ -753,7 +773,10 @@ class ActiveReservation extends BlankReservation {
         $resv->setHospitalStay($this->family->getHospStay());
         $resv->setExpectedArrival($arrivalDT->format('Y-m-d 16:00:00'));
         $resv->setExpectedDeparture($departDT->format('Y-m-d 10:00:00'));
-        $resv->setIdGuest($this->reserveData->getPrimaryGuestId());
+
+        if (($idPriGuest = $this->reserveData->findPrimaryGuestId()) !== NULL) {
+            $resv->setIdGuest($idPriGuest);
+        }
 
         // Collect the room rates
         $this->setRoomRate($dbh, $reg, $resv, $post);
