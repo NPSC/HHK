@@ -26,26 +26,26 @@ class ConfirmationForm {
     const AMOUNT = 'Amount';
     const NIGHTS = 'Nites';
     const DATE_TODAY = 'DateToday';
-    
+
     protected $mime;
     protected $template;
     protected $replacements;
 
 
     function __construct($fileName) {
-        
+
         $this->mime = array(
             'html'      => 'text/html',
             'htm'      => 'text/html',
             'mht'      => 'text/html',
             'mhtml'      => 'text/html',
         );
-        
+
         $this->getFormTemplate($fileName);
 
     }
 
-    protected function makeReplacements(\PDO $dbh, Reservation_1 $reserv, Guest $guest, $amount, $notes) {
+    protected function makeReplacements(Reservation_1 $reserv, Guest $guest, $amount, $notes) {
 
         $addr = $guest->getAddrObj()->get_Data();
 
@@ -59,19 +59,19 @@ class ConfirmationForm {
             ConfirmationForm::DEPARTURE => date('M j, Y', strtotime($reserv->getExpectedDeparture())),
             ConfirmationForm::DATE_TODAY => date('M j, Y'),
             ConfirmationForm::NIGHTS => $reserv->getExpectedDays($reserv->getExpectedArrival(), $reserv->getExpectedDeparture()),
-            ConfirmationForm::AMOUNT => number_format($amount, 2),
+            ConfirmationForm::AMOUNT => ($amount == '' ? 0 : number_format($amount, 2)),
             ConfirmationForm::NOTES => $notes,
         );
     }
 
     public function createForm(\PDO $dbh, $resv, $guest, $amount, $notes = '') {
-        
-        $this->makeReplacements($dbh, $resv, $guest, $amount, $notes);
+
+        $this->makeReplacements($resv, $guest, $amount, $notes);
 
         $vars = $this->getVariables();
-        
+
         foreach ($vars as $v) {
-            
+
             if (isset($this->replacements[$v])) {
                 $this->setValue($v, $this->replacements[$v]);
             }
@@ -85,28 +85,28 @@ class ConfirmationForm {
         $this->template = str_replace(self::ensureMacroCompleted($search), $replace, $this->template);
 
     }
-    
+
     protected static function ensureMacroCompleted($macro) {
-        
+
         if (substr($macro, 0, 2) !== '${' && substr($macro, -1) !== '}') {
             $macro = '${' . $macro . '}';
         }
 
         return $macro;
     }
-    
+
     public function getVariables() {
-        
+
         $matches = array();
-        
+
         preg_match_all('/\$\{(.*?)}/i', $this->template, $matches);
 
         return array_unique($matches[1]);
 
     }
-    
+
     public static function createNotes($text, $editable) {
-        
+
         $notesText = '';
 
         if ($editable) {
@@ -116,7 +116,7 @@ class ConfirmationForm {
             $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', "Special Note", array('style'=>'font-weight:bold;')) . "<br/>" . nl2br($text));
             $notesText .= '<br />';
         }
-        
+
         return $notesText;
     }
 
@@ -128,15 +128,15 @@ class ConfirmationForm {
         if (file_exists($path)) {
 
             $pathInfo = pathinfo($fileName);
-            
+
             if (isset($this->mime[strtolower($pathInfo['extension'])]) === FALSE) {
                 throw new Hk_Exception_Runtime("Confirmation file extension not supported, file = " . $fileName);
             }
-            
+
             if (($text = file_get_contents($path)) === FALSE) {
                 throw new Hk_Exception_Runtime("Confirmation file template not read, file = " . $fileName);
             }
-            
+
             $this->template = $text;
 
         } else {

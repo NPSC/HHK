@@ -96,7 +96,6 @@ class VisitCharges {
             $this->DepositCharged = floatval($s['Deposit_Amount']);
             $this->depositPayType = $s['DepositPayType'];
 
-
         }
 
         $this->glideCredit = $spans[0]['Rate_Glide_Credit'];
