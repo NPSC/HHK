@@ -20,7 +20,7 @@ require(THIRD_PARTY . 'autoload.php');
 
 
 // define db connection obj
-$dbh = initPDO();
+$dbh = initPDO(TRUE);
 $uS = Session::getInstance();
 
 // Get the site configuration object
@@ -74,6 +74,17 @@ try {
     $events = array("error" => "PHP Error: " . $ex->getMessage());
 }
 
+$cspURL = $ssn->siteList[$page->get_Site_Code()]['HTTP_Host'];
+
+header('X-Frame-Options: SAMEORIGIN');
+header("Content-Security-Policy: default-src $cspURL www.google.com; script-src $cspURL www.google.com www.gstatic.com 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+header("X-Content-Security-Policy: default-src $cspURL www.google.com; script-src $cspURL www.google.com www.gstatic.com 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // IE 10+
+
+$isHttps = !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off';
+if ($isHttps)
+{
+  header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
+}
 
 // return results.
 echo( json_encode($events));

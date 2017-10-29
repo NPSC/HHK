@@ -41,7 +41,7 @@ $logoLink = $config->getString("site", "Public_URL", "");
 $resourceURL = $ssn->resourceURL;
 
 // define db connection obj
-$dbh = initPDO();
+$dbh = initPDO(TRUE);
 
 $siteKey = $config->getString('recaptcha', 'Site_Key', '') == '' ? $config->getString('recaptcha', 'HHK_Site_Key', '') : $config->getString('recaptcha', 'Site_Key');
 
@@ -53,7 +53,7 @@ try {
 
 } catch (PDOException $ex) {
 
-    $ssn->destroy();
+    $ssn->destroy(TRUE);
     exit("Error - Database problem accessing page.");
 }
 
@@ -68,7 +68,7 @@ $donAlert->set_Text("working");
 
 $getDonReplyMessage = $donAlert->createMarkup();
 
-$cspURL = $ssn->siteList[$page->get_Site_Code()]['HTTP_Host'];
+$cspURL = $page->getHostName();
 
 header('X-Frame-Options: SAMEORIGIN');
 header("Content-Security-Policy: default-src $cspURL www.google.com; script-src $cspURL www.google.com www.gstatic.com 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+

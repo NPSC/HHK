@@ -151,10 +151,10 @@ class UserClass {
             $ip = filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP);
 
             $query = "UPDATE w_users SET Session = '$sessionId', Ip = '$ip', Last_Login=now() WHERE User_Name = '" . $ssn->username . "'";
-            $stmt = $dbh->query($query);
+            $dbh->exec($query);
 
             // Log access
-            $dbh->query("insert into w_user_log (Username, Access_Date, IP, Session_Id) values ('" . $ssn->username . "', now(), '$ip', '')");
+            $dbh->exec("insert into w_user_log (Username, Access_Date, IP, Session_Id) values ('" . $ssn->username . "', now(), '$ip', '')");
         }
     }
 

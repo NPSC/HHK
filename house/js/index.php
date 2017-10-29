@@ -1,5 +1,5 @@
 <?php
 
-header("Location: http://www.payitforwardhouse.org");
+header("Location: ../index.php");
 exit;
-?>
+

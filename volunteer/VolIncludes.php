@@ -49,23 +49,20 @@ define('PMT', CLASSES . 'Payment' . DS);
 define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 define('MEMBER', CLASSES . 'member' . DS);
 
-define('JS_V', '?v=4');
-define('CSS_V', '?v=4');
-
 // paths
-define('JQ_UI_CSS', 'css/sunny/jquery-ui.min.css' . CSS_V);
-define('JQ_DT_CSS', 'css/datatables.min.css' . CSS_V);
-define('JQ_UI_JS', '../js/jquery-ui.min.js' . JS_V);
-define('JQ_JS', '../js/jquery-3.1.1.min.js' . JS_V);
-define('JQ_DT_JS', '../js/datatables.min.js' . JS_V);
-define('LOGIN_JS', "../js/login.js". JS_V);
+define('JQ_UI_CSS', 'css/sunny/jquery-ui.min.css');
+define('JQ_DT_CSS', 'css/datatables.min.css');
+define('JQ_UI_JS', '../js/jquery-ui.min.js');
+define('JQ_JS', '../js/jquery-3.1.1.min.js');
+define('JQ_DT_JS', '../js/datatables.min.js');
+define('LOGIN_JS', "../js/login.js");
 
-define('FULLC_JS', '../js/fullcalendar.min.js' . JS_V);
-define('PAG_JS', '../js/pag.js' . JS_V);
-define('FULLC_CSS', 'css/fullcalendar.css' . CSS_V);
+define('FULLC_JS', '../js/fullcalendar.min.js');
+define('PAG_JS', '../js/pag.js');
+define('FULLC_CSS', 'css/fullcalendar.css');
 
-define('PRINT_AREA_JS', "../js/jquery.PrintArea.js" . JS_V);
-define('PUBLIC_CSS', "<link href='css/publicStyle.css" . CSS_V . "' rel='stylesheet' type='text/css' />");
+define('PRINT_AREA_JS', "../js/jquery.PrintArea.js");
+define('PUBLIC_CSS', "<link href='css/publicStyle.css' rel='stylesheet' type='text/css' />");
 
 date_default_timezone_set('America/Chicago');
 
