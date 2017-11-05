@@ -951,7 +951,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VERIFY_ADDRS_JS; ?>"></script>
-        <script type="text/javascript" src="../js/addrPrefs-min.js<?php echo JS_V; ?>"></script>
+        <script type="text/javascript" src="../js/addrPrefs-min.js"></script>
         <script type="text/javascript" src="../js/jquery.multiselect.min.js"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
@@ -964,6 +964,6 @@ $uS->guestId = $id;
             var rctMkup = '<?php echo $receiptMarkup; ?>';
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
         </script>
-        <script type="text/javascript" src="js/guestload-min.js<?php echo JS_V; ?>"></script>
+        <script type="text/javascript" src="js/guestload-min.js"></script>
     </body>
 </html>

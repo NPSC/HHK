@@ -451,6 +451,26 @@ class Psg {
 
     }
 
+    protected function verifyUniquePatient(\PDO $dbh, $idPatient) {
+
+        if ($idPatient < 1) {
+            return;
+        }
+
+        // Only one PSG per patient.
+        $psgRs = new PSG_RS();
+        $psgRs->idPatient->setStoredVal($idPatient);
+        $patRows = EditRS::select($dbh, $psgRs, array($psgRs->idPatient));
+
+        if (count($patRows) > 0) {
+            EditRS::loadRow($patRows[0], $psgRs);
+
+            if ($this->psgRS->idPsg->getStoredVal() != 0 && $psgRs->idPsg->getStoredVal() != $this->psgRS->idPsg->getStoredVal()) {
+                throw new Hk_Exception_Runtime('Patient already has a PSG. ');
+            }
+        }
+    }
+
     protected function saveMembers(\PDO $dbh, $uname) {
 
         if ($this->getIdPsg() == 0) {
@@ -462,10 +482,11 @@ class Psg {
         // Check for just one patient
         foreach ($this->psgMembers as $ngRS) {
 
-            if ($ngRS->Relationship_Code->getStoredVal() == RelLinkType::Self && $foundPatient) {
+            if (($ngRS->Relationship_Code->getStoredVal() == RelLinkType::Self || $ngRS->Relationship_Code->getNewVal() == RelLinkType::Self) && $foundPatient) {
                 // Second patient defined.
                 throw new Hk_Exception_Runtime('PSG already has a patient.');
-            } else if ($ngRS->Relationship_Code->getStoredVal() == RelLinkType::Self && $this->getIdPatient() == $ngRS->idName->getStoredVal()) {
+            } else if (($ngRS->Relationship_Code->getStoredVal() == RelLinkType::Self || $ngRS->Relationship_Code->getNewVal() == RelLinkType::Self)
+                    && ($this->getIdPatient() == $ngRS->idName->getStoredVal() || $this->getIdPatient() == $ngRS->idName->getNewVal())) {
                 $foundPatient = TRUE;
             }
         }
@@ -485,7 +506,7 @@ class Psg {
             if ($ngRS->idPsg->getStoredVal() !== 0) {
 
                 EditRS::update($dbh, $ngRS, array($ngRS->idName, $ngRS->idPsg));
-                
+
                 $logText = VisitLog::getUpdateText($ngRS);
                 VisitLog::logNameGuest($dbh, $this->getIdPsg(), $ngRS->idName->getStoredVal(), $logText, "update", $uname);
 
@@ -509,15 +530,7 @@ class Psg {
             return;
         }
 
-        // Only one PSG per patient.
-        $ngrss = Psg::getNameGuests($dbh, $idPatient);
-
-        foreach ($ngrss as $ngRS) {
-            if ($ngRS->Relationship_Code->getStoredVal() == RelLinkType::Self && $ngRS->idPsg->getStoredVal() != $this->psgRS->idPsg->getStoredVal()) {
-                throw new Hk_Exception_Runtime('Patient already has a PSG. Start over and enter this patient first.');
-            }
-        }
-
+        $this->verifyUniquePatient($dbh, $idPatient);
 
         $sanNotes = filter_var($notes, FILTER_SANITIZE_STRING);
 

@@ -364,7 +364,6 @@ class Family {
                 continue;
             }
 
-
             // Patient?
             if ($m->getRole() == 'p') {
 
@@ -385,7 +384,6 @@ class Family {
                 $this->roleObjs[$m->getPrefix()] = $role;
 
                 $m->setId($role->getIdName());
-
 
             }
 

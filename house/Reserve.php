@@ -267,9 +267,6 @@ $(document).ready(function() {
     var $guestSearch = $('#gstSearch');
     var resv = $.parseJSON('<?php echo $resvObjEncoded; ?>');
 
-
-    var pageManager = new PageManager(resv);
-
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
             var ul = this.menu.element;
@@ -279,6 +276,9 @@ $(document).ready(function() {
             ) * 1.1 );
         }
     });
+
+    var pageManager = new PageManager(resv);
+
 
 // Buttons
     $('#btnDone, #btnShowReg, #btnDelete').button();

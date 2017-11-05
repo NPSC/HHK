@@ -1369,7 +1369,7 @@ CREATE TABLE if not exists `psg` (
   `Last_Updated` DATETIME NULL DEFAULT NULL ,
   `Updated_By` VARCHAR(45) NOT NULL DEFAULT '' ,
   `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
-  PRIMARY KEY (`idPsg`, `idPatient`) )
+  PRIMARY KEY (`idPsg`) )
 ENGINE = InnoDB AUTO_INCREMENT = 10;
 
 
@@ -2100,6 +2100,9 @@ ALTER TABLE `payment_auth`
 
 ALTER TABLE `payment_info_check` 
     ADD INDEX `Index_idPayment` (`idPayment` ASC);
+
+ALTER TABLE `psg` 
+    ADD UNIQUE INDEX `idPatient_UNIQUE` (`idPatient` ASC);
 
 ALTER TABLE `registration` 
     ADD INDEX `Index_idPsg` (`idPsg` ASC);
