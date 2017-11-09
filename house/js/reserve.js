@@ -1215,6 +1215,7 @@ function PageManager(initData) {
         function makeList(theList, indexProperty) {
 
             _index = indexProperty;
+            _list = {};
 
             for (var i in theList) {
                 addItem(theList[i]);

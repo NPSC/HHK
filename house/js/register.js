@@ -660,7 +660,10 @@ $(document).ready(function () {
            dataSrc: 'daily'
        },
        "order": [[ 0, 'asc' ]],
-       "columns": dailyCols
+       "columns": dailyCols,
+       "infoCallback": function( settings, start, end, max, total, pre ) {
+            return "Printed on: " + dateRender(new Date().toLocaleString(), 'display', 'ddd, MMM D YYYY, h:mm a');
+      }
     });
 
     $('#reservs').DataTable({
