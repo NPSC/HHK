@@ -7,7 +7,7 @@ $instructions = '<p style="margin-bottom:10px;">The (House Name) is a not-for-pr
     <li><span style="font-weight: bold;">All guests must register at the Front Desk</span></li>
     <li><span style="font-weight: bold;">Smoking is strictly prohibited</span></li>
     <li><span style="font-weight: bold;">Staff must have access to room</span> to perform regular cleaning and maintenance. Rooms must be kept orderly to ensure that they are cleaned properly.</li>
-    <li><span style="font-weight: bold;">In case of an emergency,</span> call ###.</li>
+    <li><span style="font-weight: bold;">In case of an emergency,</span> dial Req-UEST.</li>
     <li><span style="font-weight: bold;">Pets are prohibited.</span> If a pet is found in a guest room, staff will ask that it be removed and may ask guest to leave the facility.</li>
     <li>Do not burn candles, incense or any other flammable objects in the rooms.</li>
     <li><span style="font-weight: bold;">Food must be stored properly</span> in sealed containers or in the refrigerator. Dispose of food properly at time of check out.</li>

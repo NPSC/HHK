@@ -21,29 +21,29 @@ function isNumber(n) {
 
 function refreshdTables(data) {
     "use strict";
-    var tbl;
+
     if (data.curres && $('#divcurres').length > 0) {
-        tbl = $('#curres').DataTable();
+        var tbl = $('#curres').DataTable();
         tbl.ajax.reload();
     }
     
     if (data.reservs && $('div#vresvs').length > 0) {
-        tbl = $('#reservs').DataTable();
+        var tbl = $('#reservs').DataTable();
         tbl.ajax.reload();
     }
     
     if (data.waitlist && $('div#vwls').length > 0) {
-        tbl = $('#waitlist').DataTable();
+        var tbl = $('#waitlist').DataTable();
         tbl.ajax.reload();
     }
     
     if (data.unreserv && $('div#vuncon').length > 0) {
-        tbl = $('#unreserv').DataTable();
+        var tbl = $('#unreserv').DataTable();
         tbl.ajax.reload();
     }
     
-    if ($('#divdaily').length > 0) {
-        tbl = $('#daily').DataTable();
+    if ($('#daily').length > 0) {
+        var tbl = $('#daily').DataTable();
         tbl.ajax.reload();
     }
 
@@ -662,7 +662,7 @@ $(document).ready(function () {
        "order": [[ 0, 'asc' ]],
        "columns": dailyCols,
        "infoCallback": function( settings, start, end, max, total, pre ) {
-            return "Printed on: " + dateRender(new Date().toLocaleString(), 'display', 'ddd, MMM D YYYY, h:mm a');
+            return "Prepared: " + dateRender(new Date().toISOString(), 'display', 'ddd, MMM D YYYY, h:mm a');
       }
     });
 

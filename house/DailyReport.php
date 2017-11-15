@@ -52,7 +52,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
     $(document).ready(function() {
-            var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
+        var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
         var dailyCols = [
             {data: 'Title', title: 'Room', sortable: true, searchable:true},
             {data: 'Status', title: 'Status'},
@@ -76,7 +76,10 @@ $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
                url: 'ws_resc.php?cmd=getHist&tbl=daily',
                dataSrc: 'daily'
            },
-           "columns": dailyCols
+           "columns": dailyCols,
+           "infoCallback": function( settings, start, end, max, total, pre ) {
+                return "Prepared: " + dateRender(new Date().toISOString(), 'display', 'ddd, MMM D YYYY, h:mm a');
+            }
         });
 
         $('#printButton').button().click(function() {
