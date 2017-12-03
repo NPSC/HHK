@@ -487,48 +487,48 @@ class PSGMemStay {
 
     }
 
-    public function createMarkup($prefix) {
+    public function createStayButton($prefix) {
 
-        if ($this->isBlocked()) {
 
-            // This person cannot stay
-            return '';
+        $cbStay = array(
+            'type'=>'checkbox',
+            'name'=>$prefix .'cbStay',
+            'id'=>$prefix .'cbStay',
+            'data-prefix'=>$prefix,
+            'class' => 'hhk-cbStay',
+        );
 
-        } else {
+        $lblStay = array(
+            'for'=>$prefix . 'cbStay',
+            'id' => $prefix . 'lblStay',
+            'data-stay' => $this->getStay(),
+            'class' => 'hhk-lblStay',
+        );
 
-            $cbStay = array(
-                'type'=>'checkbox',
-                'name'=>$prefix .'cbStay',
-                'id'=>$prefix .'cbStay',
-                'data-prefix'=>$prefix,
-                'class' => 'hhk-cbStay',
-            );
 
-            $lblStay = array(
-                'for'=>$prefix . 'cbStay',
-                'id' => $prefix . 'lblStay',
-                'data-stay' => $this->getStay(),
-                'class' => 'hhk-lblStay',
-            );
+        return HTMLContainer::generateMarkup('label', 'Stay', $lblStay)
+                . HTMLInput::generateMarkup('', $cbStay);
 
-            $rbPri = array(
-                'type'=>'radio',
-                'name'=>'rbPriGuest',
-                'id'=>$prefix .'rbPri',
-                'data-prefix'=>$prefix,
-                'title'=>'Click to set this person as Primary Guest.',
-                'style'=>'margin-left:5px;',
-                'class'=>'hhk-rbPri'
-            );
+    }
 
-            if ($this->isPrimaryGuest()) {
-                $rbPri['checked'] = 'checked';
-            }
+    public function createPrimaryGuestRadioBtn($prefix) {
 
-            return HTMLContainer::generateMarkup('label', 'Stay', $lblStay)
-                    . HTMLInput::generateMarkup('', $cbStay)
-                    . HTMLInput::generateMarkup($prefix, $rbPri);
+        $rbPri = array(
+            'type'=>'radio',
+            'name'=>'rbPriGuest',
+            'id'=>$prefix .'rbPri',
+            'data-prefix'=>$prefix,
+            'title'=>'Click to set this person as Primary Guest.',
+            'style'=>'margin-left:5px;',
+            'class'=>'hhk-rbPri'
+        );
+
+        if ($this->isPrimaryGuest()) {
+            $rbPri['checked'] = 'checked';
         }
+
+        return HTMLInput::generateMarkup($prefix, $rbPri);
+
     }
 
     public function isStaying() {

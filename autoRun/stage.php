@@ -7,40 +7,26 @@
  */
 
 require 'AutoIncludes.php';
+require 'EmailRegister.php';
+require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
-function runJob($url) {
+try {
 
-    return file_get_contents($url, null, stream_context_create(
-        array(
-        'http' => array(
-            'method' => 'GET',
-            'protocol_version' => 1.1,
-            'header' => array('Connection: close')
-        )
-    )));
+    $login = new Login();
+    $config = $login->initializeSession(ciCFG_FILE);
 
+} catch (PDOException $pex) {
+    exit ("<h3>Database Error.  </h3>");
+
+} catch (Exception $ex) {
+    exit ("<h3>" . $ex->getMessage());
 }
 
+// define db connection obj
+$dbh = initPDO(TRUE);
 
-$config = new Config_Lite('auto.cfg');
 
-// Run once for each entry
-foreach ($config as $secName => $secArray) {
-
-    if ($secName === 'jobs') {
-
-        foreach ($secArray as $val) {
-
-            if ($val == '') {
-                continue;
-            }
-
-            $success = runJob($val);
-            if ($success != '') {
-                echo("Error on job $val: " . $success);
-            }
-        }
-    }
-}
+$emailRegister = new EmailRegister();
+$emailRegister->runReport($dbh, $config);
 
 exit();
