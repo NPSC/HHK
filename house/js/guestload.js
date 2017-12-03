@@ -304,7 +304,7 @@ $(document).ready(function () {
     });
     $('#btnSubmit, #btnReset, #btnCred').button();
     $('#btnCred').click(function () {
-        cardOnFile($(this).data('id'), $(this).data('idreg'), 'GuestEdit.php?id=' + id + '&psg=' + memData.idPsg);
+        cardOnFile($(this).data('id'), $(this).data('idreg'), 'GuestEdit.php?id=' + $(this).data('id') + '&psg=' + memData.idPsg);
     });
     // phone - email tabs block
     $('#phEmlTabs').tabs();

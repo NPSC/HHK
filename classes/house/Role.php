@@ -246,12 +246,13 @@ abstract class Role {
         if ($this->getNoReturn() != '') {
 
             // Set for no return
-            $td = HTMLTable::makeTd('No Return', array('title'=>$this->getNoReturn() . ';  Id: ' . $this->getIdName()));
+            $td = HTMLTable::makeTd('No Return', array('title'=>$this->getNoReturn() . ';  Id: ' . $this->getIdName()), array('colspan'=>'2'));
 
         } else {
 
-            $td = HTMLTable::makeTd($stay->createMarkup($this->getRoleMember()->getIdPrefix())
-                , array('title'=>'Id: ' . $this->getIdName()));
+            $td = HTMLTable::makeTd($stay->createStayButton($this->getRoleMember()->getIdPrefix())
+                    , array('title'=>'Id: ' . $this->getIdName()))
+                . HTMLTable::makeTd($stay->createPrimaryGuestRadioBtn($this->getRoleMember()->getIdPrefix()));
         }
 
         // Phone
@@ -370,15 +371,6 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return FALSE;
     }
 
-//    public function getCurrentVisitId(\PDO $dbh) {
-//
-//        if (is_null($this->idVisit)) {
-//            $this->setCurrentIdVisit(self::checkCurrentStay($dbh, $this->getIdName()));
-//        }
-//
-//        return $this->idVisit;
-//    }
-//
     public function getNoReturn() {
         $uS = Session::getInstance();
 

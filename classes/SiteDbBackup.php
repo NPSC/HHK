@@ -16,12 +16,15 @@
 class SiteDbBackup {
 
     public $return_var;
+    protected $bkupMessage;
     public $encReturnVar;
+    protected $encMessage;
     public $encryptedFile;
     public $emailError;
     protected $fileName;
     protected $filePath;
-
+    protected $clrFileSize;
+    protected $dbBkUpFlag;
     protected $config;
 
 
@@ -31,8 +34,7 @@ class SiteDbBackup {
 
         $this->filePath = $filePath;
         $this->emailError = '';
-        $this->return_var = 'Not backed up. ';
-        $this->encReturnVar = '';
+        $this->clrFileSize = 0;
 
         $timezone = $this->config->getString('calendar', 'TimeZone', 'America/Chicago');
         date_default_timezone_set($timezone);
@@ -40,47 +42,69 @@ class SiteDbBackup {
 
     public function backupSchema($ignoreTables = array()) {
 
+        $this->dbBkUpFlag = FALSE;
+        $this->bkupMessage = '';
+
+        if (strtoupper($this->config->getString('db', 'DBMS', '')) != 'MYSQL') {
+            $this->bkupMessage = 'This backup only works for MySQL Databases.  ';
+            return FALSE;
+        }
+
         $dbuser = $this->config->getString("backup", "BackupUser", "");
         $dbpwd = $this->decrypt($this->config->getString("backup", "BackupPassword", ""));
-
-        $gzipTheFile = '| gzip';
 
         $dbUrl = $this->config->getString('db', 'URL', '');
         $dbname = $this->config->getString('db', 'Schema', '');
 
         if ($dbuser == '' || $dbpwd == '' || $dbname == '' || $this->filePath == '') {
-            $this->return_var = 'Database Backup parameters are not set.  ';
+            $this->bkupMessage = 'Database Backup parameters are not set.  ';
             return FALSE;
         }
 
-        $this->fileName = $this->filePath . date("Y_m_d") . "_" . $dbname . ".sql";
+        $this->fileName = $this->filePath . $dbname . ".sql";
+
+        if (file_exists($this->fileName)) {
+            unlink($this->fileName);
+        }
 
         // ignore tables
         $igtables = '';
         foreach ($ignoreTables as $t) {
-            $igtables .= " --ignore-table=$dbname.$t";
+            $igtables .= " --ignore-table=$t";
         }
 
         $this->return_var = 0;
 
         // Backup database
         $command = 'mysqldump ';
-        $params = " --host=$dbUrl --skip-lock-tables --single-transaction $igtables --user='$dbuser' --password='$dbpwd' $dbname > $this->fileName";
+        $params = " --host=$dbUrl --skip-lock-tables --single-transaction $igtables --user=$dbuser --password=$dbpwd $dbname > $this->fileName";
         passthru($command . $params, $this->return_var);
 
         // Analyze result
         if (file_exists($this->fileName)) {
-            $this->return_var = 'Database Backup successful.  ';
-            return TRUE;
+
+            $this->clrFileSize = filesize($this->fileName);
+
+            if ($this->clrFileSize > 1000000) {
+                $this->bkupMessage .= 'Database Backup successful.  File size = ' . $this->clrFileSize . ' bytes.  ';
+                $this->dbBkUpFlag = TRUE;
+
+            } else {
+                $this->bkupMessage .= 'Database Backup file too small: ' . $this->clrFileSize . ' bytes.  ';
+
+            }
+
         } else {
-            $this->return_var = 'Database Backup file not found.  ';
-            return FALSE;
+            $this->bkupMessage .= 'Database Backup file not found.  ';
+
         }
 
+        return $this->dbBkUpFlag;
     }
 
     public function encryptFile($inFile = '', $cypher = 'aes-256-cbc') {
 
+        $this->encMessage = '';
         $encPass = $this->config->getstring('backup', 'EncryptionPassword', '');
 
         // Encrypt Database
@@ -93,11 +117,15 @@ class SiteDbBackup {
             }
 
             if (file_exists($inFile) === FALSE) {
-                $this->encReturnVar = 'The Clear text file is Missing: ' . $inFile;
+                $this->encMessage = 'The Clear text file is Missing: ' . $inFile;
                 return FALSE;
             }
 
             $outfile = $inFile . '.enc';
+
+            if (file_exists($outfile)) {
+                unlink($outfile);
+            }
             $this->encryptedFileName = $outfile;
             $this->encReturnVar = 0;
 
@@ -106,12 +134,12 @@ class SiteDbBackup {
             // Delete the clear text file if the encryption completed successfully.
             if ($this->encReturnVar == 0 && file_exists($outfile)) {
                 unlink($this->fileName);
-                $this->encReturnVar = 'Encryption Successful. ';
+                $this->encMessage = 'Encryption Successful. ';
                 return TRUE;
             }
 
         } else {
-            $this->encReturnVar = 'Encryption PW is Missing. ';
+            $this->encMessage = 'Encryption PW is Missing. ';
         }
 
         return FALSE;
@@ -185,14 +213,10 @@ class SiteDbBackup {
 
     public function getErrors() {
 
-        $errorMessage = '';
+        $errorMessage = 'Schema Backup (' . $this->return_var . ').  ' . $this->bkupMessage;
 
-        if ($this->return_var != 0 || $this->return_var != '') {
-            $errorMessage .= 'Schema Backup Error (' . $this->return_var . ') ';
-        }
-
-        if ($this->encReturnVar != 0 || $this->encReturnVar != '') {
-            $errorMessage .= 'File Encryption Error (' . $this->encReturnVar . ') ';
+        if ($this->encMessage != '') {
+            $errorMessage .= 'File Encryption (' . $this->encReturnVar . '). ' . $this->encMessage;
         }
 
         if ($this->emailError != '') {
