@@ -80,7 +80,7 @@ try {
 
 
 $siteName = $config->get("site", "Site_Name", "Hospitality HouseKeeper");
-$from = $config->get("house", "Admin_Address", "");      // Email address message will show as coming from.
+$from = $config->get("house", "NoReply", "");      // Email address message will show as coming from.
 $to = $config->get("house", "Guest_Register_Email", "");      // Email address to send dump file to
 
 
@@ -119,5 +119,6 @@ $mail->Subject = $config->getString('site', 'Site_Name', '') . ' Guest Register'
 $mail->msgHTML($currentCheckedIn);
 
 $mail->send();
+//echo $mail->ErrorInfo;
 //echo $currentCheckedIn;
 exit();
