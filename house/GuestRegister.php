@@ -12,7 +12,7 @@ require 'homeIncludes.php';
 require (CLASSES . 'History.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require (CLASSES . 'CreateMarkupFromDB.php');
-require(SEC . 'Login.php');
+
 
 function getCheckedInMarkup(PDO $dbh) {
 
@@ -64,18 +64,10 @@ function getCheckedInMarkup(PDO $dbh) {
 
 }
 
-
-
 try {
-
-    $login = new Login();
-    $config = $login->initializeSession(ciCFG_FILE);
-
-} catch (PDOException $pex) {
-    exit ("<h3>Database Error.  </h3>");
-
+    $config = new Config_Lite(ciCFG_FILE);
 } catch (Exception $ex) {
-    exit ("<h3>" . $ex->getMessage());
+    exit("Configurtion file is missing, path=".ciCFG_FILE);
 }
 
 
@@ -89,13 +81,44 @@ if ($to == '') {
     exit();
 }
 
-// define db connection obj
-$dbh = initPDO();
+
+try {
+    $dbConfig = $config->getSection('db');
+} catch (Config_Lite_Exception $e) {
+    exit("Database configurtion data is missing.");
+}
+
+
+if (is_array($dbConfig)) {
+
+    if (strtoupper($dbConfig['DBMS']) != 'MYSQL') {
+        exit('Only works on MySQL.  You are using: ' . $dbConfig['DBMS']);
+    }
+
+    // Don't use local UNIX socket
+    $url = $dbConfig['URL'];
+    if (strtolower($url) == 'localhost') {
+        $url = '127.0.0.1';
+    }
+    
+    $dbh = initMY_SQL($url, $dbConfig['Schema'], $dbConfig['User'], decryptMessage($dbConfig['Password']));
+
+} else {
+
+    exit("Bad Database Configurtion");
+}
+
 
 $currentCheckedIn = '<style>table {border:none;} td, th {padding: 10px; border: solid 1px black;}</style>';
 $currentCheckedIn .= "<h2>Pay-it-Forward House Guest Register as of " . date('M j, Y  g:ia') . "</h2>";
-$currentCheckedIn .= CreateMarkupFromDB::generateHTML_Table(getCheckedInMarkup($dbh, ''), '');
 
+$ctable = getCheckedInMarkup($dbh, '');
+
+if (count($ctable) < 1) {
+    $currentCheckedIn .= '<p>There are no guests checked into the House at the time of this report.</p>';
+} else {
+    $currentCheckedIn .= CreateMarkupFromDB::generateHTML_Table($ctable, '');
+}
 $mail = prepareEmail($config);
 
 $mail->From = $from;

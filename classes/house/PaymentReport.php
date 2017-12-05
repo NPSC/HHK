@@ -486,6 +486,8 @@ class PaymentReport {
 
         } else {
 
+            $dateDT = new DateTime($p['Payment_Date'], new DateTimeZone('UTC'));
+
             $g['Last'] = $r['i']['Last'];
             $g['First'] = $r['i']['First'];
             $g['Payment_Date'] = PHPExcel_Shared_Date::PHPToExcel($dateDT->format('U'));

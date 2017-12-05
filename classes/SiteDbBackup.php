@@ -23,6 +23,7 @@ class SiteDbBackup {
     public $emailError;
     protected $fileName;
     protected $filePath;
+    protected $dumpErrorFile;
     protected $clrFileSize;
     protected $dbBkUpFlag;
     protected $config;
@@ -53,18 +54,23 @@ class SiteDbBackup {
         $dbuser = $this->config->getString("backup", "BackupUser", "");
         $dbpwd = $this->decrypt($this->config->getString("backup", "BackupPassword", ""));
 
-        $dbUrl = $this->config->getString('db', 'URL', '');
+        $dbUrl = $this->config->getString('backup', 'BackupURL', '');
         $dbname = $this->config->getString('db', 'Schema', '');
 
-        if ($dbuser == '' || $dbpwd == '' || $dbname == '' || $this->filePath == '') {
+        if ($dbuser == '' || $dbpwd == '' || $dbname == '' || $dbUrl == '' || $this->filePath == '') {
             $this->bkupMessage = 'Database Backup parameters are not set.  ';
             return FALSE;
         }
 
         $this->fileName = $this->filePath . $dbname . ".sql";
+        $this->dumpErrorFile = $this->filePath . $dbname . "_errors.txt";
 
         if (file_exists($this->fileName)) {
             unlink($this->fileName);
+        }
+
+        if (file_exists($this->dumpErrorFile)) {
+            unlink($this->dumpErrorFile);
         }
 
         // ignore tables
@@ -77,7 +83,7 @@ class SiteDbBackup {
 
         // Backup database
         $command = 'mysqldump ';
-        $params = " --host=$dbUrl --skip-lock-tables --single-transaction $igtables --user=$dbuser --password=$dbpwd $dbname > $this->fileName";
+        $params = " --single-transaction --skip-lock-tables --log-error=" . $this->dumpErrorFile . " --host='$dbUrl' --user=$dbuser --password=$dbpwd $dbname > " . $this->fileName;
         passthru($command . $params, $this->return_var);
 
         // Analyze result
@@ -139,7 +145,7 @@ class SiteDbBackup {
             }
 
         } else {
-            $this->encMessage = 'Encryption PW is Missing. ';
+            $this->encMessage = 'Encryption PW is not set. ';
         }
 
         return FALSE;
@@ -164,7 +170,7 @@ class SiteDbBackup {
         // Is proper day for download?
         if ($to != '' && ($forceMail || strtolower($now["weekday"]) == strtolower($emailBackupDay))) {
 
-            $attachmentname = 'DB_BackupFile';
+            $attachmentname = $emFileName;
             $message = "Encrypted compressed database backup file $attachmentname attached.\r\n\r\n";
             $message .= $this->messageFileList;
 
@@ -221,6 +227,10 @@ class SiteDbBackup {
 
         if ($this->emailError != '') {
             $errorMessage .= 'Send Email: ' . $this->emailError;
+        }
+
+        if (file_exists($this->dumpErrorFile)) {
+            $errorMessage .= 'mysqldump errors: ' . file_get_contents($this->dumpErrorFile);
         }
 
         return $errorMessage;

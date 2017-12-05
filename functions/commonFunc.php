@@ -35,7 +35,7 @@ function initPDO($override = FALSE) {
 
     try {
 
-        switch ($ssn->dbms) {
+        switch (strtoupper($ssn->dbms)) {
 
             case 'MS_SQL':
                 $dbh = initMS_SQL($ssn->databaseURL, $ssn->databaseName, $dbuName, $dbPw);
@@ -46,7 +46,7 @@ function initPDO($override = FALSE) {
                 break;
 
             case 'ODBC':
-                return initODBC($ssn->databaseURL, $ssn->databaseName, $dbuName, $dbPw);
+                return initODBC($ssn->databaseURL);
 
 
             default:
@@ -84,7 +84,7 @@ function initMS_SQL($dbURL, $dbName, $dbuName, $dbPw) {
 
 }
 
-function initODBC($dbURL, $dbName, $dbuName, $dbPw) {
+function initODBC($dbURL) {
 
     /* Connect using Windows Authentication. */
     return new \PDO("odbc:$dbURL");
@@ -102,9 +102,9 @@ function initMy_SQL($dbURL, $dbName, $dbuName, $dbPw) {
 function syncTimeZone(\PDO $dbh) {
 
     $now = new \DateTime();
-    $mins = $now->getOffset() / 60;
-    $sgn = ($mins < 0 ? -1 : 1);
-    $mins = abs($mins);
+    $tmins = $now->getOffset() / 60;
+    $sgn = ($tmins < 0 ? -1 : 1);
+    $mins = abs($tmins);
     $hrs = floor($mins / 60);
     $mins -= $hrs * 60;
     $offset = sprintf('%+d:%02d', $hrs * $sgn, $mins);

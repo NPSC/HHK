@@ -127,11 +127,11 @@ $query = "select distinct $fields
     n.Name_Full,
     np.Name_Full as `Patient_Name`
 from
-    name n
+    name_guest ng
         join
-    name_demog nd ON n.idName = nd.idName
+    name_demog nd ON ng.idName = nd.idName
         left join
-    name_guest ng on n.idName = ng.idName
+    name n on n.idName = ng.idName
         left join
     psg p on ng.idPsg = p.idPsg
         left join
