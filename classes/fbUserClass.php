@@ -352,8 +352,9 @@ class fbUserClass {
         $evt = array();
 
         // don't let the PIFH username be empty.
-        if ($this->get_pifhUsername() == "")
+        if ($this->get_pifhUsername() == "") {
             $this->set_pifhUsername($this->get_fun());
+        }
 
         $query = " update fbx set
             idName=" . $this->get_nid() .
@@ -405,4 +406,3 @@ class fbUserClass {
 
 }
 
-?>

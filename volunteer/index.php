@@ -120,7 +120,7 @@ if (SecurityComponent::isHTTPS()) {
                 <div style="padding-top: 25px;">
                     <table>
                         <tr>
-                            <td><a href ="register_web.php" ><span style="font-size: 1em;color: #4E4E4E;">Register for access to Volunteer Pages</span></a></td>
+                            <td><a href ="WebRegister.php" ><span style="font-size: 1em;color: #4E4E4E;">Register for access to Volunteer Pages</span></a></td>
                         </tr>
                     </table>
                 </div>
