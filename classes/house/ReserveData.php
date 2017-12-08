@@ -40,6 +40,7 @@ class ReserveData {
     protected $resvTitle;
     protected $patAsGuestFlag;
     protected $patBirthDateFlag;
+    protected $showBirthDate;
     protected $patLabel;
     protected $wlNotesLabel;
     protected $addrPurpose;
@@ -89,7 +90,8 @@ class ReserveData {
         $this->resvTitle = $labels->getString('guestEdit', 'reservationTitle', 'Reservation');
         $this->resvEarlyArrDays = $uS->ResvEarlyArrDays;
         $this->patAsGuestFlag = $uS->PatientAsGuest;
-        $this->patBirthDateFlag = $uS->PatientBirthDate;
+        $this->patBirthDateFlag = $uS->InsistPatBD;
+        $this->showBirthDate = $uS->ShowBirthDate;
         $this->patLabel = $labels->getString('MemberType', 'patient', 'Patient');
         $this->psgTitle = $labels->getString('statement', 'psgLabel', 'Patient Support Group');
         $this->wlNotesLabel = $labels->getString('referral', 'waitlistNotesLabel', 'Waitlist Notes');
@@ -206,6 +208,10 @@ class ReserveData {
 
     public function getPatBirthDateFlag() {
         return $this->patBirthDateFlag;
+    }
+
+    public function getShowBirthDate() {
+        return $this->showBirthDate;
     }
 
     public function getPatLabel() {

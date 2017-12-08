@@ -255,7 +255,7 @@ class Family {
         $th = HTMLContainer::generateMarkup('tr',
                 HTMLTable::makeTh('Staying')
                 . HTMLTable::makeTh('PG', array('title'=>'Primary Guest'))
-                . RoleMember::createThinMarkupHdr($rData->getPatLabel(), FALSE, $rData->getPatBirthDateFlag())
+                . RoleMember::createThinMarkupHdr($rData->getPatLabel(), FALSE, $rData->getShowBirthDate())
                 . HTMLTable::makeTh('Phone')
                 . HTMLTable::makeTh('Addr'));
 

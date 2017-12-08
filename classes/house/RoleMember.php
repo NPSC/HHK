@@ -32,7 +32,7 @@ abstract class RoleMember extends IndivMember {
             $this->getInsurance($dbh, $nid);
         }
 
-        $this->showBirthDate = $uS->PatientBirthDate;
+        $this->showBirthDate = $uS->ShowBirthDate;
 
     }
 

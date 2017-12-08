@@ -967,8 +967,9 @@ function verifyDone() {
             
         } else if ($('#' + pan.idPrefix + 'selPatRel').val() === 'slf') {
             
-            if (checkIn.patientBirthDate) {
+            if (checkIn.patientBirthDate && checkIn.ShowBirthDate) {
                 
+                // Patient Birth date required
                 $('#' + pan.idPrefix + 'txtBirthDate').removeClass('ui-state-error');
                 
                 if ($('#' + pan.idPrefix + 'txtBirthDate').val() === '') {
@@ -978,17 +979,22 @@ function verifyDone() {
                     $('#' + pan.idPrefix + 'txtBirthDate').addClass('ui-state-error');
                     return false;
                 }
-                
-                // check date value
-                var bDate = new Date($('#' + pan.idPrefix + 'txtBirthDate').val());
-                var today = new Date();
-                
-                if (bDate > today) {
-                    flagAlertMessage("The " + checkIn.patientLabel + " birth date cannot be in the future.", true);
-                    gstMsg.text("Birth date");
-                    $('#' + pan.idPrefix + 'txtBirthDate').addClass('ui-state-error');
-                    return false;
-                }
+            }
+        }
+        
+        // check birthdate value
+        if (checkIn.ShowBirthDate) {
+            
+            var bDate = new Date($('#' + pan.idPrefix + 'txtBirthDate').val());
+            var today = new Date();
+
+            $('#' + pan.idPrefix + 'txtBirthDate').removeClass('ui-state-error');
+            
+            if (bDate > today) {
+                flagAlertMessage("This birth date cannot be in the future.", true);
+                gstMsg.text("Birth date");
+                $('#' + pan.idPrefix + 'txtBirthDate').addClass('ui-state-error');
+                return false;
             }
         }
         

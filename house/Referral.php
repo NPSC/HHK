@@ -261,7 +261,8 @@ $resultMessage = $alertMsg->createMarkup();
     reserv.idReserv = '<?php echo $idReserv; ?>';
     reserv.gpnl = '<?php echo $guestid; ?>';
     reserv.patAsGuest = '<?php echo $uS->PatientAsGuest; ?>';
-    reserv.patientBirthDate = '<?php echo $uS->PatientBirthDate; ?>';
+    reserv.patientBirthDate = '<?php echo $uS->InsistPatBD; ?>';
+    reserv.showBirthDate = '<?php echo $uS->ShowBirthDate; ?>';
         </script>
     </body>
 </html>

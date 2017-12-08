@@ -550,11 +550,24 @@ class PriceGuestDay extends PriceModel {
 
         $spans = parent::loadVisitNights($dbh, $idVisit);
 
+        $config = new Config_Lite(ciCFG_FILE);
+
+        $ageYears = $config->getString('financial', 'StartGuestFeesYr', '0');
+        $parm = "NOW()";
         if ($endDate != '') {
-            $stmt = $dbh->query("SELECT s.Visit_Span, SUM(DATEDIFF(IFNULL(DATE(s.Span_End_Date), DATE('$endDate')), DATE(s.Span_Start_Date))) AS GDays FROM stays s WHERE s.idVisit = $idVisit GROUP BY s.Visit_Span");
-        } else {
-            $stmt = $dbh->query("SELECT s.Visit_Span, SUM(DATEDIFF(IFNULL(DATE(s.Span_End_Date), DATE(NOW())), DATE(s.Span_Start_Date))) AS GDays FROM stays s WHERE s.idVisit = $idVisit GROUP BY s.Visit_Span");
+            $parm = "'$endDate'";
         }
+
+        $stmt = $dbh->query("SELECT s.Visit_Span, SUM(DATEDIFF(IFNULL(DATE(s.Span_End_Date), DATE($parm)), DATE(s.Span_Start_Date))) AS `GDays`
+FROM stays s JOIN name n ON s.idName = n.idName
+WHERE IFNULL(DATE(n.BirthDate), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(NOW()), INTERVAL $ageYears YEAR)) AND s.idVisit = $idVisit
+GROUP BY s.Visit_Span");
+
+//        if ($endDate != '') {
+//            $stmt = $dbh->query("SELECT s.Visit_Span, SUM(DATEDIFF(IFNULL(DATE(s.Span_End_Date), DATE('$endDate')), DATE(s.Span_Start_Date))) AS GDays FROM stays s WHERE s.idVisit = $idVisit GROUP BY s.Visit_Span");
+//        } else {
+//            $stmt = $dbh->query("SELECT s.Visit_Span, SUM(DATEDIFF(IFNULL(DATE(s.Span_End_Date), DATE(NOW())), DATE(s.Span_Start_Date))) AS GDays FROM stays s WHERE s.idVisit = $idVisit GROUP BY s.Visit_Span");
+//        }
 
         $stays = array();
 

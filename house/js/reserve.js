@@ -746,6 +746,22 @@ function PageManager(initData) {
                         }
                    }
                 }
+                
+                // Check birth dates
+                if ($('#' + p + 'txtBirthDate').length > 0 && $('#' + p + 'txtBirthDate').val() !== '') {
+                    
+                    var bDate = new Date($('#' + p + 'txtBirthDate').val());
+                    var today = new Date();
+
+                    if (bDate > today) {
+                        $('#' + p + 'txtBirthDate').addClass('ui-state-error');
+                        flagAlertMessage('This birth date cannot be in the future.', true);
+                        openSection(true);
+                        return false;
+                    } else {
+                        $('#' + p + 'txtBirthDate').removeClass('ui-state-error');
+                    }
+                }
             }
 
             return true;
