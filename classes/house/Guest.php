@@ -85,10 +85,11 @@ class Guest extends Role {
         $idPrefix = $this->getRoleMember()->getIdPrefix();
         $labels = new Config_Lite(LABEL_FILE);
 
+        // Name
         $mk1 = $this->createNameMu($labels, $lockRelChooser);
-
         $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;min-height:10px;'));
 
+        // Address
         if($uS->GuestAddr) {
             $mk1 .= $this->createAddsBLock();
         }

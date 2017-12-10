@@ -409,16 +409,13 @@ class Address extends ContactPoint{
         $coAttr['data-country'] = ($adrRow->Country_Code->getStoredVal() == '' ? 'US' : $adrRow->Country_Code->getStoredVal());
         $coAttr['data-prefix'] = $idPrefix;
 
-
         $table->addBodyTr(HTMLTable::makeTd('Country', array('class'=>'tdlabel'))
             . HTMLTable::makeTd(HTMLSelector::generateMarkup('', $coAttr)
-            // Bad Address Checkbox
             . $badAddrMarkup
-            . HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'))
             ));
 
-        return $table->generateMarkup(array('class'=>$badAddrClass)) . $lastUpdated;
 
+        return $table->generateMarkup(array('class'=>$badAddrClass)) . $lastUpdated;
     }
 
 

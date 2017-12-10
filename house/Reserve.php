@@ -214,7 +214,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
-        <script type="text/javascript" src="js/reserve-min.js"></script>
+        <script type="text/javascript" src="js/reserve.js"></script>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>

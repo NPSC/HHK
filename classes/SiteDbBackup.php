@@ -54,12 +54,16 @@ class SiteDbBackup {
         $dbuser = $this->config->getString("backup", "BackupUser", "");
         $dbpwd = $this->decrypt($this->config->getString("backup", "BackupPassword", ""));
 
-        $dbUrl = $this->config->getString('backup', 'BackupURL', '');
+        $dbUrl = $this->config->getString('db', 'URL', '');
         $dbname = $this->config->getString('db', 'Schema', '');
 
         if ($dbuser == '' || $dbpwd == '' || $dbname == '' || $dbUrl == '' || $this->filePath == '') {
             $this->bkupMessage = 'Database Backup parameters are not set.  ';
             return FALSE;
+        }
+
+        if (strtolower($dbUrl) == 'localhost') {
+            $dbUrl = '127.0.0.1';
         }
 
         $this->fileName = $this->filePath . $dbname . ".sql";

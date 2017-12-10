@@ -57,8 +57,6 @@ function PageManager(initData) {
 
 
 
-
-
     function FamilySection($wrapper) {
         var t = this;
         var divFamDetailId = 'divfamDetail';
@@ -253,8 +251,6 @@ function PageManager(initData) {
                         $('#' + prefix + 'incomplete').prop('checked', false);
                     }
 
-                    //loadAddress(prefix);
-
                     // Update the address flag
                     setAddrFlag($('#' + prefix + 'liaddrflag'));
 
@@ -373,6 +369,18 @@ function PageManager(initData) {
                 $famTbl.find('tbody:first').append($(data.famSection.tblBody[t]));
             }
 
+            // Last Name Copy down
+            $('#lnCopy').click(function () {
+
+                var lastNameCopy = $('input.hhk-lastname').first().val();
+
+                $('input.hhk-lastname').each(function () {
+                    if ($(this).val() === '') {
+                        $(this).val(lastNameCopy);
+                    }
+                });
+            });
+                        
             $('.hhk-cbStay').checkboxradio({
                 classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
             });
@@ -430,7 +438,7 @@ function PageManager(initData) {
             });
 
             // Load the addresses into the addrs object if changed.
-            $('.hhk-addrPanel').on('click', 'input, select', function() {
+            $('.hhk-addrPanel').on('change', 'input, select', function() {
                 loadAddress($(this).data('pref'));
             });
 

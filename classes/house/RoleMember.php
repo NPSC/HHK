@@ -41,10 +41,17 @@ abstract class RoleMember extends IndivMember {
 
     public static function createThinMarkupHdr($labels = NULL, $hideRelChooser = TRUE, $showBirthDate = TRUE) {
 
+        $lnCopyDownIcon = HTMLContainer::generateMarkup('ul'
+                    ,  'Last Name  ' .HTMLContainer::generateMarkup('li',
+                        HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-arrowthick-1-s'))
+                        , array('class'=>'ui-widget-header ui-corner-all', 'id'=>'lnCopy', 'style'=>'display:inline-block;cursor:pointer;'))
+                    , array('style'=>'padding-top:1px;list-style-type:none;', 'class'=>'ui-widget'));
+
+
         $tr =
              HTMLTable::makeTh('First Name')
             . HTMLTable::makeTh('Middle')
-            . HTMLTable::makeTh('Last Name')
+            . HTMLTable::makeTh($lnCopyDownIcon)
             .HTMLTable::makeTh('Suffix')
             . HTMLTable::makeTh('Nickname')
             . ($showBirthDate ? HTMLTable::makeTh('Birth Date') : '');

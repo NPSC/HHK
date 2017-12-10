@@ -113,6 +113,26 @@ class Family {
                 $rData->setMember($psgMember);
             }
 
+        } else if ($rData->getId() > 0) {
+
+            // Load an existing member to a new psg
+            $psgMember = $rData->findMemberById($rData->getId());
+
+            if ($psgMember != NULL) {
+                $prefix = $psgMember->getPrefix();
+            } else {
+                $prefix = $uS->addPerPrefix++;
+                $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, new PSGMemStay(ReserveData::NOT_STAYING));
+            }
+
+            $this->roleObjs[$prefix] = new Guest($dbh, $prefix, $rData->getId());
+
+            if ($this->roleObjs[$prefix]->getNoReturn() != '') {
+                $psgMember->setStay(ReserveData::CANT_STAY);
+            }
+
+            $rData->setMember($psgMember);
+            
         }
 
         // Load empty member?
