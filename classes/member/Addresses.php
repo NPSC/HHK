@@ -245,7 +245,7 @@ class Address extends ContactPoint{
             $data['Address_2'] = $this->rSs[$code]->Address_2->getStoredVal();
             $data['City'] = $this->rSs[$code]->City->getStoredVal();
             $data['State_Province'] = $this->rSs[$code]->State_Province->getStoredVal();
-            $data['Country_Code'] = $this->rSs[$code]->Country_Code->getStoredVal();
+            $data['Country_Code'] = $this->rSs[$code]->Country_Code->getStoredVal() == '' ? 'US' : $this->rSs[$code]->Country_Code->getStoredVal();
             $data['Postal_Code'] = $this->rSs[$code]->Postal_Code->getStoredVal();
             $data['County'] = $this->rSs[$code]->County->getStoredVal();
             $data['Set_Incomplete'] = $this->rSs[$code]->Set_Incomplete->getStoredVal();
@@ -256,7 +256,7 @@ class Address extends ContactPoint{
             $data['Address_2'] = '';
             $data['City'] = '';
             $data['State_Province'] = '';
-            $data['Country_Code'] = '';
+            $data['Country_Code'] = 'US';
             $data['Postal_Code'] = '';
             $data['County'] = '';
             $data['Set_Incomplete'] = '';
@@ -339,7 +339,7 @@ class Address extends ContactPoint{
         $attr['id'] = $idPrefix.'adraddress2' . $addrIndex;
         $attr['name'] = $idPrefix.'adr[' . $addrIndex . '][address2]';
         $attr['title'] = 'Apt, Suite, Mail Stop';
-        $attr['class'] = "";
+        $attr['class'] = $class;
 
         $table->addBodyTr(HTMLTable::makeTd('', array('class'=>'tdlabel', 'title'=>'Apt, Suite, Mail Stop'))
             . HTMLTable::makeTd(
@@ -379,7 +379,7 @@ class Address extends ContactPoint{
             $attr['id'] = $idPrefix.'adrcounty' . $addrIndex;
             $attr['name'] = $idPrefix.'adr[' . $addrIndex . '][county]';
             $attr['title'] = 'County Name';
-            $attr['class']= '';
+            $attr['class']= $class;
 
             $table->addBodyTr(HTMLTable::makeTd('County', array('class'=>'tdlabel', 'title'=>'County Name'))
                     . HTMLTable::makeTd(

@@ -270,7 +270,7 @@ abstract class Role {
         $uS = Session::getInstance();
 
         // Street Address
-        $mkup .= $this->createMailAddrMU($this->getRoleMember()->getIdPrefix() . 'hhk-addr-val', TRUE, $uS->county);
+        $mkup .= $this->createMailAddrMU($this->getRoleMember()->getIdPrefix() . 'hhk-addr-val hhk-copy-target', TRUE, $uS->county);
 
         // Phone and email
         $mkup .= $this->createPhoneEmailMU($this->getRoleMember()->getIdPrefix());

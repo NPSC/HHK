@@ -1,4 +1,4 @@
-function createZipAutoComplete(txtCtrl, wsUrl, lastXhr) {
+function createZipAutoComplete(txtCtrl, wsUrl, lastXhr, selCallback) {
     "use strict";
     txtCtrl.autocomplete({
         source: function(request, response) {
@@ -28,16 +28,24 @@ function createZipAutoComplete(txtCtrl, wsUrl, lastXhr) {
             if (!ui.item) {
                 return;
             }
+            
             var idx = $(this).data('hhkindex');
             var prf = $(this).data('hhkprefix');
 
             $('#' + prf + 'adrcity' + idx).val(ui.item.City);
-            $('#' + prf + 'adrcountry' + idx).val('US');
-            $('#' + prf + 'adrcountry' + idx).change();
-            $('#' + prf + 'adrstate' + idx).val(ui.item.State);
+            $('#' + prf + 'adrzip' + idx).val(ui.item.value);
             
             if ( $('#' + prf + 'adrcounty' + idx).length > 0) {
                 $('#' + prf + 'adrcounty' + idx).val(ui.item.County);
+            }
+            
+            $('#' + prf + 'adrcountry' + idx).val('US');
+            $('#' + prf + 'adrcountry' + idx).change();
+            $('#' + prf + 'adrstate' + idx).val(ui.item.State);
+
+            
+            if ($.isFunction(selCallback)) {
+                selCallback(prf);
             }
         }
     });

@@ -60,7 +60,7 @@ function PageManager(initData) {
     function FamilySection($wrapper) {
         var t = this;
         var divFamDetailId = 'divfamDetail';
-        var cpyAddr = [];
+        var cpyAddr = '';
 
         // Exports
         t.findStaysChecked = findStaysChecked;
@@ -220,40 +220,47 @@ function PageManager(initData) {
 
         }
 
+        function isAddressComplete(prefix) {
+            
+            if ($('#' + prefix + 'adraddress1' + addrPurpose).val() !== '' 
+                    && $('#' + prefix + 'adrzip' + addrPurpose).val() !== ''
+                    && $('#' + prefix + 'adrstate' + addrPurpose).val() !== ''
+                    && $('#' + prefix + 'adrcity' + addrPurpose).val() !== '') {
+                
+                return true;
+            }
+            return false;
+        }
+        
         function copyAddress(prefix) {
 
-            //var adrs = addrs.list();
-
             for (var p in addrs.list()) {
-                // Use this one already?
-                if (p === cpyAddr[prefix]) {
-                    cpyAddr[prefix] = 0;
-                    continue;
-                }
-
-                if (addrs.list()[p].Address_1 !== '') {
-
-                    cpyAddr[prefix] = p;
-
+                
+                if (p !== cpyAddr) {
+                    
+                    cpyAddr = p;
+                    
                     $('#' + prefix + 'adraddress1' + addrPurpose).val(addrs.list()[p].Address_1);
                     $('#' + prefix + 'adraddress2' + addrPurpose).val(addrs.list()[p].Address_2);
                     $('#' + prefix + 'adrcity' + addrPurpose).val(addrs.list()[p].City);
                     $('#' + prefix + 'adrcounty' + addrPurpose).val(addrs.list()[p].County);
-
-                    $('#' + prefix + 'adrcountry' + addrPurpose).val(addrs.list()[p].Country_Code);
-                    $('#' + prefix + 'adrcountry' + addrPurpose).change();
-
-                    $('#' + prefix + 'adrstate' + addrPurpose).val(addrs.list()[p].State_Province);
                     $('#' + prefix + 'adrzip' + addrPurpose).val(addrs.list()[p].Postal_Code);
+                    
+                    if ($('#' + prefix + 'adrcountry' + addrPurpose).val() != addrs.list()[p].Country_Code) {
+                        $('#' + prefix + 'adrcountry' + addrPurpose).val(addrs.list()[p].Country_Code).change();
+                    }
+                    
+                    $('#' + prefix + 'adrstate' + addrPurpose).val(addrs.list()[p].State_Province);
+                    
 
                     // Clear the incomplete address checkbox if the address is valid.
-                    if ($('#' + prefix + 'adraddress1' + addrPurpose).val() !== '' && $('#' + prefix + 'adrcity' + addrPurpose).val() !== '' && $('#' + prefix + 'incomplete').prop('checked') === true) {
+                    if (isAddressComplete(prefix) && $('#' + prefix + 'incomplete').prop('checked') === true) {
                         $('#' + prefix + 'incomplete').prop('checked', false);
                     }
 
                     // Update the address flag
                     setAddrFlag($('#' + prefix + 'liaddrflag'));
-
+                    
                     break;
                 }
             }
@@ -303,7 +310,7 @@ function PageManager(initData) {
 
             } else {
 
-                if ($('#' + prefix + 'adraddress1' + addrPurpose).val() === '' || $('#' + prefix + 'adrcity' + addrPurpose).val() === '') {
+                if (!isAddressComplete(prefix)) {
                     $addrFlag.show().find('span').removeClass('ui-icon-check').addClass('ui-icon-alert').attr('title', 'Address is Incomplete');
                     $addrFlag.removeClass('ui-state-highlightui-state-error').addClass('ui-state-error');
                 } else {
@@ -438,7 +445,7 @@ function PageManager(initData) {
             });
 
             // Load the addresses into the addrs object if changed.
-            $('.hhk-addrPanel').on('change', 'input, select', function() {
+            $('#' + divFamDetailId).on('change', '.hhk-copy-target', function() {
                 loadAddress($(this).data('pref'));
             });
 
@@ -463,7 +470,7 @@ function PageManager(initData) {
 
             $('input.hhk-zipsearch').each(function() {
                 var lastXhr;
-                createZipAutoComplete($(this), 'ws_admin.php', lastXhr);
+                createZipAutoComplete($(this), 'ws_admin.php', lastXhr, loadAddress);
             });
 
             // Remove button
@@ -476,11 +483,12 @@ function PageManager(initData) {
                         return;
                     }
                 }
+                
+                people.removeIndex($(this).data('prefix'));
+                addrs.removeIndex($(this).data('prefix'));
 
                 $(this).parentsUntil('tbody', 'tr').next().remove();
                 $(this).parentsUntil('tbody', 'tr').remove();
-                delete people._list[$(this).data('prefix')];
-                delete addrs._list[$(this).data('prefix')];
             });
 
 
@@ -566,7 +574,7 @@ function PageManager(initData) {
 
             $('input#' + prefix + 'adrzip1').each(function() {
                 var lastXhr;
-                createZipAutoComplete($(this), 'ws_admin.php', lastXhr);
+                createZipAutoComplete($(this), 'ws_admin.php', lastXhr, loadAddress);
             });
 
         };
