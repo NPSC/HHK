@@ -339,7 +339,7 @@ class Address extends ContactPoint{
         $attr['id'] = $idPrefix.'adraddress2' . $addrIndex;
         $attr['name'] = $idPrefix.'adr[' . $addrIndex . '][address2]';
         $attr['title'] = 'Apt, Suite, Mail Stop';
-        $attr['class'] = $class;
+        $attr['class'] = $class . ' hhk-MissingOk';
 
         $table->addBodyTr(HTMLTable::makeTd('', array('class'=>'tdlabel', 'title'=>'Apt, Suite, Mail Stop'))
             . HTMLTable::makeTd(
@@ -379,7 +379,7 @@ class Address extends ContactPoint{
             $attr['id'] = $idPrefix.'adrcounty' . $addrIndex;
             $attr['name'] = $idPrefix.'adr[' . $addrIndex . '][county]';
             $attr['title'] = 'County Name';
-            $attr['class']= $class;
+            $attr['class']= $class . ' hhk-MissingOk';
 
             $table->addBodyTr(HTMLTable::makeTd('County', array('class'=>'tdlabel', 'title'=>'County Name'))
                     . HTMLTable::makeTd(

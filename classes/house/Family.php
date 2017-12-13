@@ -132,7 +132,7 @@ class Family {
             }
 
             $rData->setMember($psgMember);
-            
+
         }
 
         // Load empty member?
@@ -271,13 +271,19 @@ class Family {
         $mk1 = '';
         $trs = array();
 
+        $AdrCopyDownIcon = HTMLContainer::generateMarkup('ul'
+                    ,  'Addr  ' .HTMLContainer::generateMarkup('li',
+                        HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-arrowthick-1-s'))
+                        , array('class'=>'ui-widget-header ui-corner-all', 'id'=>'adrCopy', 'style'=>'display:inline-block;cursor:pointer;'))
+                    , array('style'=>'padding-top:1px;list-style-type:none;', 'class'=>'ui-widget'));
 
+        // Name Header
         $th = HTMLContainer::generateMarkup('tr',
                 HTMLTable::makeTh('Staying')
                 . HTMLTable::makeTh('PG', array('title'=>'Primary Guest'))
                 . RoleMember::createThinMarkupHdr($rData->getPatLabel(), FALSE, $rData->getShowBirthDate())
                 . HTMLTable::makeTh('Phone')
-                . HTMLTable::makeTh('Addr'));
+                . HTMLTable::makeTh($AdrCopyDownIcon));
 
 
         // Put the patient first.

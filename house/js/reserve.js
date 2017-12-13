@@ -164,7 +164,7 @@ function PageManager(initData) {
             if ($('#' + prefix + 'incomplete').length > 0 && $('#' + prefix + 'incomplete').prop('checked') === false) {
 
                 // Look at each entry
-                $('.' + prefix + 'hhk-addr-val').each(function() {
+                $('.' + prefix + 'hhk-addr-val').not('.hhk-MissingOk').each(function() {
 
                     if ($(this).val() === '' && !$(this).hasClass('bfh-states')) {
 
@@ -220,7 +220,44 @@ function PageManager(initData) {
 
         }
 
+        function addrCopyDown(sourcePrefix) {
+
+            for (var prefix in addrs.list()) {
+
+                if (sourcePrefix == prefix) {
+                    continue;
+                }
+
+                $('#' + prefix + 'adraddress1' + addrPurpose).val(addrs.list()[sourcePrefix].Address_1);
+                $('#' + prefix + 'adraddress2' + addrPurpose).val(addrs.list()[sourcePrefix].Address_2);
+                $('#' + prefix + 'adrcity' + addrPurpose).val(addrs.list()[sourcePrefix].City);
+                $('#' + prefix + 'adrcounty' + addrPurpose).val(addrs.list()[sourcePrefix].County);
+                $('#' + prefix + 'adrzip' + addrPurpose).val(addrs.list()[sourcePrefix].Postal_Code);
+
+                if ($('#' + prefix + 'adrcountry' + addrPurpose).val() != addrs.list()[sourcePrefix].Country_Code) {
+                    $('#' + prefix + 'adrcountry' + addrPurpose)
+                            .val(addrs.list()[sourcePrefix].Country_Code)
+                            .change();
+                }
+
+                $('#' + prefix + 'adrstate' + addrPurpose).val(addrs.list()[sourcePrefix].State_Province);
+
+                // Clear the incomplete address checkbox if the address is valid.
+                if (isAddressComplete(prefix) && $('#' + prefix + 'incomplete').prop('checked') === true) {
+                    $('#' + prefix + 'incomplete').prop('checked', false);
+                }
+
+                // Update the address flag
+                setAddrFlag($('#' + prefix + 'liaddrflag'));
+
+            }
+
+        }
         function isAddressComplete(prefix) {
+            
+            if (prefix === undefined || !prefix || prefix == '') {
+                return false;
+            }
             
             if ($('#' + prefix + 'adraddress1' + addrPurpose).val() !== '' 
                     && $('#' + prefix + 'adrzip' + addrPurpose).val() !== ''
@@ -386,6 +423,16 @@ function PageManager(initData) {
                         $(this).val(lastNameCopy);
                     }
                 });
+            });
+                        
+            // Address Copy down
+            $('#adrCopy').click(function () {
+
+                var p = $('input.hhk-lastname').first().data('prefix');
+                
+                if (isAddressComplete(p)) {
+                    addrCopyDown(p);
+                }
             });
                         
             $('.hhk-cbStay').checkboxradio({
