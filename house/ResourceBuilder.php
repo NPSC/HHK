@@ -758,7 +758,7 @@ if ($priceModel->hasRateCalculator()) {
 
 // Wrap rate table and rate calculator
 $feesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Room Rates', array('style' => 'font-weight:bold;'))
-                . $fTbl->generateMarkup(array('style' => 'margin:7px;'))
+                . HTMLContainer::generateMarkup('div', $fTbl->generateMarkup(array('style' => 'margin:7px;')), array('style'=>'max-height:300px; overflow:auto;'))
                 . $rcMarkup
                 . $sMarkup
                 , array('style' => 'clear:left;float:left;margin:7px;'));

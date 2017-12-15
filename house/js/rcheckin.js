@@ -1000,7 +1000,7 @@ function verifyDone() {
         
         // validate guest address
         if ($('#' + pan.idPrefix + 'incomplete').prop('checked') === false) {
-            $('.' + pan.idPrefix + 'hhk-addr-val').each(function() {
+            $('.' + pan.idPrefix + 'hhk-addr-val').not('.hhk-MissingOk').each(function() {
                 if ($(this).val() === "") {
                     if (!$(this).hasClass('bfh-states')) {
                         gstMsg.text("Incomplete Address");
