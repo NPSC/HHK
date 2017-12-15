@@ -163,7 +163,7 @@ function setupRates(ckIn) {
 
     $('#txtFixedRate').change(function() {
         
-        if ($selRateCat.val() === 'x') {
+        if ($selRateCat.val() === fixedRate) {
             
             var amt = parseFloat($(this).val());
             var ds = parseInt($('#spnNites').text(), 10);
@@ -200,7 +200,7 @@ function setupRates(ckIn) {
 
     $('#txtadjAmount').change(function () {
             
-        if ($selRateCat.val() !== 'x') {
+        if ($selRateCat.val() !== fixedRate) {
             
             var adj = parseFloat($(this).val());
             var fa = 0;
@@ -241,7 +241,7 @@ function setupRates(ckIn) {
 
     $selRateCat.change(function () {
 
-        if ($(this).val() === 'x') {
+        if ($(this).val() === fixedRate) {
 
             $('.hhk-fxAdj').hide();
             $('.hhk-fxFixed').show();

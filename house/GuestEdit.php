@@ -963,6 +963,7 @@ $uS->guestId = $id;
             var psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);
             var rctMkup = '<?php echo $receiptMarkup; ?>';
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
+            var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
         </script>
         <script type="text/javascript" src="js/guestload-min.js"></script>
     </body>

@@ -1726,7 +1726,7 @@ $(document).ready(function() {
             $('#selResource').removeClass('ui-state-error');
         }
         // Room rate
-        if ($('#selCategory').val() == 'x' && $('#txtFixedRate').length > 0 && $('#txtFixedRate').val() == '') {
+        if ($('#selCategory').val() == fixedRate && $('#txtFixedRate').length > 0 && $('#txtFixedRate').val() == '') {
             flagAlertMessage("Set the Room Rate to an amount, or 0.", true);
             $('#txtRoomRate').addClass('ui-state-error');
             return;

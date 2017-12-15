@@ -261,7 +261,7 @@ $resvObjEncoded = json_encode($resvAr);
 
 <script type="text/javascript">
 
-
+var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
 var payFailPage = '<?php echo $payFailPage; ?>';
 $(document).ready(function() {
     "use strict";

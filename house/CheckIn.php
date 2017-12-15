@@ -324,6 +324,8 @@ $confReserv = $labels->getString('register', 'reservationTab', 'Confirmed Reserv
     var postBkPg = '<?php echo $postBackPage; ?>';
     var isCheckedOut = false;
     var dateFormat = '<?php echo $labels->getString("momentFormats", "reportDay", "ddd, MMM D YYYY"); ?>';
+    var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
+
     chkIn = new CheckIn();
     chkIn.members = [];
     chkIn.currentGuests = 0;

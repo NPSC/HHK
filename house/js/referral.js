@@ -194,6 +194,16 @@ function additionalGuest(item) {
                 var lastXhr;
                 createZipAutoComplete($('#diagAddGuest input.hhk-zipsearch'), 'ws_admin.php', lastXhr);
                 
+                $('#diagAddGuest input.ckbdate').datepicker({
+                    yearRange: '-99:+00',
+                    changeMonth: true,
+                    changeYear: true,
+                    autoSize: true,
+                    maxDate: 0,
+                    dateFormat: 'M d, yy'
+                });
+
+                
                 $('#diagAddGuest').on('click', '.hhk-addrCopy', function() {
                     var prefix = $(this).attr('name');
                     

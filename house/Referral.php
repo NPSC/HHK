@@ -256,6 +256,7 @@ $resultMessage = $alertMsg->createMarkup();
     var rctMkup = '<?php echo $receiptMarkup; ?>';
     var isCheckedOut = false;
     var resvTitle = '<?php echo $labels->getString('guestEdit', 'reservationTitle', 'Reservation'); ?>';
+    var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
     var reserv = new Reserv();
     reserv.patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
     reserv.idReserv = '<?php echo $idReserv; ?>';

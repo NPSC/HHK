@@ -362,7 +362,7 @@ if (isset($_POST['btnkfSave'])) {
 
             EditRS::insert($dbh, $glRs);
 
-            $logText = HouseLog::getInsertText($glRs, 'Static_Room_Rate' . $newCode);
+            $logText = HouseLog::getInsertText($glRs);
             HouseLog::logGenLookups($dbh, 'Static_Room_Rate', $newCode, $logText, 'insert', $uS->username);
         }
 
@@ -758,7 +758,7 @@ if ($priceModel->hasRateCalculator()) {
 
 // Wrap rate table and rate calculator
 $feesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Room Rates', array('style' => 'font-weight:bold;'))
-                . HTMLContainer::generateMarkup('div', $fTbl->generateMarkup(array('style' => 'margin:7px;')), array('style'=>'max-height:300px; overflow:auto;'))
+                . HTMLContainer::generateMarkup('div', $fTbl->generateMarkup(array('style' => 'margin:7px;')), array('style'=>'max-height:310px; overflow-y:scroll;'))
                 . $rcMarkup
                 . $sMarkup
                 , array('style' => 'clear:left;float:left;margin:7px;'));
@@ -1084,8 +1084,10 @@ $resultMessage = $alertMsg->createMarkup();
         return !isNaN(parseFloat(n)) && isFinite(n);
     }
 
+    var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
+
     function getRoomFees(cat) {
-        if (cat != '' && cat != 'x') {
+        if (cat != '' && cat != fixedRate) {
             // go get the total
             var ds = parseInt($('#txtNites').val(), 10);
             if (isNaN(ds)) {
@@ -1123,7 +1125,7 @@ $resultMessage = $alertMsg->createMarkup();
     function setupRates() {
         "use strict";
         $('#txtFixedRate').change(function () {
-            if ($('#selRateCategory').val() == 'x') {
+            if ($('#selRateCategory').val() == fixedRate) {
                 var amt = parseFloat($(this).val());
                 if (isNaN(amt) || amt < 0) {
                     amt = parseFloat($(this).prop("defaultValue"));
@@ -1142,7 +1144,7 @@ $resultMessage = $alertMsg->createMarkup();
             getRoomFees($('#selRateCategory').val());
         });
         $('#selRateCategory').change(function () {
-            if ($(this).val() == 'x') {
+            if ($(this).val() == fixedRate) {
                 $('.hhk-fxFixed').show();
             } else {
                 $('.hhk-fxFixed').hide();
@@ -1517,7 +1519,7 @@ $resultMessage = $alertMsg->createMarkup();
                     </div>
                 </div>
                 <div id="rateTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
-                    <p style="padding:3px;background-color: #FFEDA8;float:left;">Make changes directly into the text boxes below and press 'Save'.</p>
+                    <p style="padding:3px;background-color: #fff7db;float:left;">Make changes directly into the text boxes below and press 'Save'.</p>
                     <form method="POST" action="ResourceBuilder.php" name="form1">
                         <div style="clear:left;float:left;"><?php echo $pricingModelTable; ?></div>
 <?php echo $visitFeesTable . $keysTable . $payTypesTable . $feesTable . $faMarkup; ?>

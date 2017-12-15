@@ -496,7 +496,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
             if ($('#selRateCategory').length > 0) {
                 $('#selRateCategory').change(function () {
-                    if ($(this).val() == 'x') {
+                    if ($(this).val() == fixedRate) {
                         $('.hhk-fxFixed').show('fade');
                         $('.hhk-fxAdj').hide('fade');
                     } else {

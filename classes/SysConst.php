@@ -226,6 +226,7 @@ class Phone_Purpose {
 class RateStatus {
     const Active = 'a';
     const NotActive = 'n';
+    const Retired = 'r';
 }
 
 class RelLinkType {
@@ -272,8 +273,9 @@ class ReturnIndex {
 
 class RoomRateCategorys {
     const FlatRateCategory = 'e';
-    const Fixed_Rate_Category = 'x';
+    const Fixed_Rate_Category = 'f';
     const FullRateCategory = 'y';
+    const NewRate = 'r';
 }
 
 class RoomState {

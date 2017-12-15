@@ -1469,6 +1469,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
 <script type="text/javascript">
+    var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
     $(document).ready(function() {
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
         var makeTable = '<?php echo $mkTable; ?>';

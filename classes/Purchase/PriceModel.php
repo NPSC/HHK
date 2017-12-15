@@ -35,7 +35,6 @@ abstract class PriceModel {
                 $this->activeRoomRates[$rs->idRoom_rate->getStoredVal()] = $rs;
             }
         }
-
     }
 
     public function loadVisitNights(\PDO $dbh, $idVisit, $end_Date = '') {
@@ -208,6 +207,7 @@ abstract class PriceModel {
                 $pm = new PriceBasic(PriceModel::getModelRoomRates($dbh, $modelCode));
                 $myRates = array();
 
+                // override the stored room rates.
                 foreach ($pm->getActiveModelRoomRates() as $r) {
                     if ($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category) {
                         $myRates[$r->idRoom_rate->getStoredVal()] = $r;
@@ -299,14 +299,20 @@ abstract class PriceModel {
             HTMLTable::makeTh('Title')
             .HTMLTable::makeTh('Default')
             .HTMLTable::makeTh('Rate')
+            .HTMLTable::makeTh('Retire')
             );
 
         // Room rates
-        $rows = $this->getActiveModelRoomRates();
+        foreach ($this->roomRates as $r) {
 
-        foreach ($rows as $r) {
+            // Don't deal with non-active rates.
+            if ($r->Status->getStoredVal() == RateStatus::NotActive) {
+                continue;
+            }
 
             $attrs = array('type'=>'radio', 'name'=>'rrdefault');
+            $titleAttrs = array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'17');
+            $rr1Attrs = array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
 
             if ($r->FA_Category->getStoredVal() == $defaultRoomRate) {
                 $attrs['checked'] = 'checked';
@@ -314,18 +320,45 @@ abstract class PriceModel {
                 unset($attrs['checked']);
             }
 
+            $cbRetire = '';
+            if ($r->FA_Category->getStoredVal() != RoomRateCategorys::Fixed_Rate_Category && $r->FA_Category->getStoredVal() != RoomRateCategorys::FlatRateCategory) {
+
+                $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']'));
+
+                if ($r->FA_Category->getStoredVal() != RoomRateCategorys::NewRate) {
+
+                    // Deal with Rate A, B, C, D
+
+                    if ($r->Status->getStoredVal() == RateStatus::Retired) {
+                        // show as inactive
+                        $attrs['disabled'] = 'disabled';
+                        $titleAttrs['readonly'] = 'readonly';
+                        $titleAttrs['style'] = 'background-color:#f0f0f0 ';
+                        $rr1Attrs['disabled'] = 'disabled';
+
+                        $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']', 'checked'=>'checked'));
+                    }
+
+                } else if ($r->Status->getStoredVal() != RateStatus::Active) {
+                    // Dont show retired new rates.
+                    continue;
+                }
+            }
+
             $fTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'13')))
+                HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), $titleAttrs))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup($r->FA_Category->getStoredVal(), $attrs))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_1->getStoredVal(), 2), array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'3')), array('style'=>'text-align:center;'))
+                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category ? HTMLTable::makeTd('') :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_1->getStoredVal(), 2), $rr1Attrs), array('style'=>'text-align:center;')))
+                .HTMLTable::makeTd($cbRetire, array('style'=>'text-align:center;'))
             );
         }
 
         // New rate
             $fTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'ratetitle[0]', 'size'=>'13')))
-                .HTMLTable::makeTd()
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr1[0]', 'size'=>'3')), array('style'=>'text-align:center;'))
+                HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'ratetitle[0]', 'size'=>'17')))
+                .HTMLTable::makeTd('(New)')
+                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr1[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd('')
             );
 
 
@@ -334,7 +367,7 @@ abstract class PriceModel {
 
     public function saveEditMarkup(\PDO $dbh, $post, $username) {
 
-        $defaultRate = 'x';
+        $defaultRate = RoomRateCategorys::Fixed_Rate_Category;
 
         if (isset($post['ratetitle'])) {
 
@@ -358,81 +391,119 @@ abstract class PriceModel {
                 $defaultRate = filter_var($post['rrdefault'], FILTER_SANITIZE_STRING);
             }
 
-            $rows = $this->getActiveModelRoomRates();
+            if (isset($post['cbRetire'])) {
+                $retire = filter_var_array($post['cbRetire'], FILTER_SANITIZE_STRING);
+            }
 
-            foreach ($rows as $oldRs) {
+            foreach ($this->roomRates as $oldRs) {
+
+                // Don't deal with non-active rates.
+                if ($oldRs->Status->getStoredVal() == RateStatus::NotActive) {
+                    continue;
+                }
 
                 $idRoomRate = $oldRs->idRoom_rate->getStoredVal();
-                $rpRs = new Room_RateRS();
 
-                $rpRs->PriceModel->setNewVal($this->getPriceModelCode());
-                $rpRs->FA_Category->setNewVal($oldRs->FA_Category->getStoredVal());
+                if (isset($post['ratetitle'][$idRoomRate])) {
 
-                $changed = FALSE;
+                    $rpRs = new Room_RateRS();
+
+                    $rpRs->FA_Category->setNewVal($oldRs->FA_Category->getStoredVal());
+
+                    // Retired?  Can't be the default rate.
+                    if (isset($retire[$idRoomRate]) && $defaultRate != $oldRs->FA_Category->getStoredVal()) {
+                        // update
+                        $oldRs->Status->setNewVal(RateStatus::Retired);
+                        $oldRs->Updated_By->setNewVal($username);
+                        $oldRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+                        EditRS::update($dbh, $oldRs, array($oldRs->idRoom_rate));
+
+                        // Log action.
+                        HouseLog::logRoomRate($dbh, 'update', $idRoomRate, HouseLog::getUpdateText($oldRs), $username);
+                        continue;
+
+                    } else if (isset($retire[$idRoomRate]) === FALSE && $oldRs->Status->getStoredVal() == RateStatus::Retired) {
+                        $oldRs->Status->setNewVal(RateStatus::Active);
+                    }
+
+                    // Clean and check values.
+                    $changed = FALSE;
+
+                    if (isset($rr1s[$idRoomRate])) {
+
+                        $rate1 = str_replace(',', '', str_replace('$', '', $rr1s[$idRoomRate]));
+                        $rpRs->Reduced_Rate_1->setNewVal($rate1);
+
+                        if ($rate1 != $oldRs->Reduced_Rate_1->getStoredVal()) {
+                            $changed = TRUE;
+                        }
+                    }
+
+                    if (isset($rr2s[$idRoomRate])) {
+
+                        $rate1 = str_replace(',', '', str_replace('$', '', $rr2s[$idRoomRate]));
+                        $rpRs->Reduced_Rate_2->setNewVal($rate1);
+
+                        if ($rate1 != $oldRs->Reduced_Rate_2->getStoredVal()) {
+                            $changed = TRUE;
+                        }
+                    }
+
+                    if (isset($rr3s[$idRoomRate])) {
+
+                        $rate1 = str_replace(',', '', str_replace('$', '', $rr3s[$idRoomRate]));
+                        $rpRs->Reduced_Rate_3->setNewVal($rate1);
+
+                        if ($rate1 != $oldRs->Reduced_Rate_3->getStoredVal()) {
+                            $changed = TRUE;
+                        }
+                    }
+
+                    if (isset($mins[$idRoomRate])) {
+
+                        $rate1 = str_replace(',', '', str_replace('$', '', $mins[$idRoomRate]));
+                        $rpRs->Min_Rate->setNewVal($rate1);
+
+                        if ($rate1 != $oldRs->Min_Rate->getStoredVal()) {
+                            $changed = TRUE;
+                        }
+                    }
+
+                    if ($changed) {
+                        // Insert New
+                        $rpRs->PriceModel->setNewVal($this->getPriceModelCode());
+                        $rpRs->Title->setNewVal($titles[$idRoomRate]);
+                        $rpRs->Updated_By->setNewVal($username);
+                        $rpRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+                        $rpRs->Status->setNewVal(RateStatus::Active);
+                        $idrr = EditRS::insert($dbh, $rpRs);
+
+                        // Log action.
+                        HouseLog::logRoomRate($dbh, 'insert', $idrr, HouseLog::getInsertText($rpRs), $username);
 
 
-                if (isset($rr1s[$idRoomRate])) {
+                        // update old
+                        $oldRs->Status->setNewVal(RateStatus::NotActive);
+                        $oldRs->Updated_By->setNewVal($username);
+                        $oldRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+                        EditRS::update($dbh, $oldRs, array($oldRs->idRoom_rate));
 
-                    $rate1 = str_replace(',', '', str_replace('$', '', $rr1s[$idRoomRate]));
-                    $rpRs->Reduced_Rate_1->setNewVal($rate1);
+                        // Log action.
+                        HouseLog::logRoomRate($dbh, 'update', $idRoomRate, HouseLog::getUpdateText($oldRs), $username);
 
-                    if ($rate1 != $oldRs->Reduced_Rate_1->getStoredVal()) {
-                        $changed = TRUE;
+                    } else {
+                        // update
+                        $oldRs->Title->setNewVal($titles[$idRoomRate]);
+                        $oldRs->Updated_By->setNewVal($username);
+                        $oldRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+                        $ctr = EditRS::update($dbh, $oldRs, array($oldRs->idRoom_rate));
+
+                        if ($ctr > 0) {
+                            // Log action.
+                            HouseLog::logRoomRate($dbh, 'update', $idRoomRate, HouseLog::getUpdateText($oldRs), $username);
+                        }
                     }
                 }
-
-                if (isset($rr2s[$idRoomRate])) {
-
-                    $rate1 = str_replace(',', '', str_replace('$', '', $rr2s[$idRoomRate]));
-                    $rpRs->Reduced_Rate_2->setNewVal($rate1);
-
-                    if ($rate1 != $oldRs->Reduced_Rate_2->getStoredVal()) {
-                        $changed = TRUE;
-                    }
-                }
-
-                if (isset($rr3s[$idRoomRate])) {
-
-                    $rate1 = str_replace(',', '', str_replace('$', '', $rr3s[$idRoomRate]));
-                    $rpRs->Reduced_Rate_3->setNewVal($rate1);
-
-                    if ($rate1 != $oldRs->Reduced_Rate_3->getStoredVal()) {
-                        $changed = TRUE;
-                    }
-                }
-
-                if (isset($mins[$idRoomRate])) {
-
-                    $rate1 = str_replace(',', '', str_replace('$', '', $mins[$idRoomRate]));
-                    $rpRs->Min_Rate->setNewVal($rate1);
-
-                    if ($rate1 != $oldRs->Min_Rate->getStoredVal()) {
-                        $changed = TRUE;
-                    }
-                }
-
-                if ($changed) {
-                    // Insert New
-                    $rpRs->Title->setNewVal($titles[$idRoomRate]);
-                    $rpRs->Updated_By->setNewVal($username);
-                    $rpRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
-                    $rpRs->Status->setNewVal(RateStatus::Active);
-                    EditRS::insert($dbh, $rpRs);
-
-                    // update old
-                    $oldRs->Status->setNewVal(RateStatus::NotActive);
-                    $oldRs->Updated_By->setNewVal($username);
-                    $oldRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
-                    EditRS::update($dbh, $oldRs, array($oldRs->idRoom_rate));
-
-                } else {
-                    // update
-                    $oldRs->Title->setNewVal($titles[$idRoomRate]);
-                    $oldRs->Updated_By->setNewVal($username);
-                    $oldRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
-                    EditRS::update($dbh, $oldRs, array($oldRs->idRoom_rate));
-                }
-
             }
 
             // New rate
@@ -460,7 +531,11 @@ abstract class PriceModel {
                 $rpRs->Updated_By->setNewVal($username);
                 $rpRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
                 $rpRs->Status->setNewVal(RateStatus::Active);
-                EditRS::insert($dbh, $rpRs);
+                $idRoomRate = EditRS::insert($dbh, $rpRs);
+
+                // Log action.
+                HouseLog::logRoomRate($dbh, 'insert', $idRoomRate, HouseLog::getInsertText($rpRs), $username);
+
             }
         }
 
@@ -568,8 +643,8 @@ class PriceNone extends PriceModel {
         $modelCode = ItemPriceCode::None;
 
         $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`Description`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
-                . "(5,'Flat Rate','','e','$modelCode',0.00,0.00,0.00,0,'a'), "
-                . "(6,'Assigned','','x','$modelCode',0,0,0,0,'a');");
+                . "(5,'Flat Rate','','" . RoomRateCategorys::Flat_Rate_Category . "','$modelCode',0.00,0.00,0.00,0,'a'), "
+                . "(6,'Assigned','','" . RoomRateCategorys::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 
 }
@@ -606,8 +681,8 @@ class PriceBasic extends PriceModel {
         $modelCode = ItemPriceCode::Basic;
 
         $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`Description`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
-                . "(5,'Flat Rate','','e','$modelCode',10.00,10.00,10.00,10,'a'), "
-                . "(6,'Assigned','','x','$modelCode',0,0,0,0,'a');");
+                . "(5,'Flat Rate','','" . RoomRateCategorys::Flat_Rate_Category . "','$modelCode',10.00,10.00,10.00,10,'a'), "
+                . "(6,'Assigned','','" . RoomRateCategorys::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 
 }
@@ -833,26 +908,57 @@ GROUP BY s.Visit_Span");
             .HTMLTable::makeTh('Default')
             .HTMLTable::makeTh('Rate/1st Guest')
             .HTMLTable::makeTh('Rate/2nd or more guests')
-            );
+            .HTMLTable::makeTh('Retire')
+        );
 
-        // Room rates
-        $rows = $this->getActiveModelRoomRates();
 
-        foreach ($rows as $r) {
+        foreach ($this->roomRates as $r) {
 
-            $attrs = array('type'=>'radio', 'name'=>'rrdefault');
+            // Don't deal with non-active rates.
+            if ($r->Status->getStoredVal() == RateStatus::NotActive) {
+                continue;
+            }
+
+            $defattrs = array('type'=>'radio', 'name'=>'rrdefault');
+            $titleAttrs = array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'17');
+            $rr1Attrs = array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
+            $rr2Attrs = array('name'=>'rr2['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
 
             if ($r->FA_Category->getStoredVal() == $defaultRoomRate) {
-                $attrs['checked'] = 'checked';
-            } else {
-                unset($attrs['checked']);
+                $defattrs['checked'] = 'checked';
+            }
+
+            $cbRetire = '';
+            // Cannot retire flat or fixed rates
+            if ($r->FA_Category->getStoredVal() != RoomRateCategorys::Fixed_Rate_Category && $r->FA_Category->getStoredVal() != RoomRateCategorys::FlatRateCategory) {
+
+                $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']'));
+
+                if ($r->FA_Category->getStoredVal() != RoomRateCategorys::NewRate) {
+
+                    if ($r->Status->getStoredVal() != RateStatus::Active) {
+                        // show as inactive
+                        $defattrs['disabled'] = 'disabled';
+                        $titleAttrs['readonly'] = 'readonly';
+                        $titleAttrs['style'] = 'background-color:#f0f0f0 ';
+                        $rr1Attrs['disabled'] = 'disabled';
+                        $rr2Attrs['disabled'] = 'disabled';
+
+                        $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']', 'checked'=>'checked'));
+                    }
+
+                } else if ($r->Status->getStoredVal() != RateStatus::Active) {
+                    // Dont show retired new rates.
+                    continue;
+                }
             }
 
             $fTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'17')))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($r->FA_Category->getStoredVal(), $attrs), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_1->getStoredVal(), 2), array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6')), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_2->getStoredVal(), 2), array('name'=>'rr2['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6')), array('style'=>'text-align:center;'))
+                HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), $titleAttrs))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($r->FA_Category->getStoredVal(), $defattrs), array('style'=>'text-align:center;'))
+                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category ? HTMLTable::makeTd('') :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_1->getStoredVal(), 2), $rr1Attrs), array('style'=>'text-align:center;')))
+                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category || $r->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory ? HTMLTable::makeTd('') :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_2->getStoredVal(), 2), $rr2Attrs), array('style'=>'text-align:center;')))
+                .HTMLTable::makeTd($cbRetire, array('style'=>'text-align:center;'))
             );
         }
 
@@ -862,7 +968,7 @@ GROUP BY s.Visit_Span");
             .HTMLTable::makeTd('(New)', array('style'=>'text-align:center;'))
             .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr1[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
             .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr2[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
-
+            .HTMLTable::makeTd('')
         );
 
         return $fTbl;
@@ -877,8 +983,8 @@ GROUP BY s.Visit_Span");
                 . "(2,'Rate B','','b','$modelCode',10.00,7.00,3.00,0,'a'),"
                 . "(3,'Rate C','','c','$modelCode',20.00,15.00,10.00,0,'a'),"
                 . "(4,'Rate D','','d','$modelCode',25.00,20.00,10.00,0,'a'),"
-                . "(5,'Flat Rate','','e','$modelCode',25.00,25.00,25.00,10,'a'), "
-                . "(6,'Assigned','','x','$modelCode',0,0,0,0,'a');");
+                . "(5,'Flat Rate','','" . RoomRateCategorys::Flat_Rate_Category . "','$modelCode',25.00,25.00,25.00,10,'a'), "
+                . "(6,'Assigned','','" . RoomRateCategorys::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 }
 
@@ -935,8 +1041,8 @@ class PriceDailey extends PriceModel {
                 . "(2,'Rate B','','b','$modelCode',10.00,7.00,3.00,0,'a'),"
                 . "(3,'Rate C','','c','$modelCode',20.00,15.00,10.00,0,'a'),"
                 . "(4,'Rate D','','d','$modelCode',25.00,20.00,10.00,0,'a'),"
-                . "(5,'Flat Rate','','e','$modelCode',25.00,25.00,25.00,10,'a'), "
-                . "(6,'Assigned','','x','$modelCode',0,0,0,0,'a');");
+                . "(5,'Flat Rate','','" . RoomRateCategorys::Flat_Rate_Category . "','$modelCode',25.00,25.00,25.00,10,'a'), "
+                . "(6,'Assigned','','" . RoomRateCategorys::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 }
 
@@ -1025,14 +1131,22 @@ class Price3Steps extends PriceModel {
             .HTMLTable::makeTh('Starting Rate')
             .HTMLTable::makeTh('After ' . HTMLInput::generateMarkup($rp['1'][2], array('name'=>'rp1', 'size'=>'3', 'disabled'=>'disabled')) . ' days')
             .HTMLTable::makeTh('After ' . HTMLInput::generateMarkup($rp['2'][2], array('name'=>'rp2', 'size'=>'3', 'disabled'=>'disabled')) . ' days')
+            .HTMLTable::makeTh('Retire')
             );
 
         // Room rates
-        $rows = $this->getActiveModelRoomRates();
+        foreach ($this->roomRates as $r) {
 
-        foreach ($rows as $r) {
+            // Don't deal with non-active rates.
+            if ($r->Status->getStoredVal() == RateStatus::NotActive) {
+                continue;
+            }
 
             $attrs = array('type'=>'radio', 'name'=>'rrdefault');
+            $titleAttrs = array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'17');
+            $rr1Attrs = array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
+            $rr2Attrs = array('name'=>'rr2['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
+            $rr3Attrs = array('name'=>'rr3['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
 
             if ($r->FA_Category->getStoredVal() == $defaultRoomRate) {
                 $attrs['checked'] = 'checked';
@@ -1040,25 +1154,52 @@ class Price3Steps extends PriceModel {
                 unset($attrs['checked']);
             }
 
+            $cbRetire = '';
+            // Cannot retire flat or fixed rates
+            if ($r->FA_Category->getStoredVal() != RoomRateCategorys::Fixed_Rate_Category && $r->FA_Category->getStoredVal() != RoomRateCategorys::FlatRateCategory) {
+
+                $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']'));
+
+                if ($r->FA_Category->getStoredVal() != RoomRateCategorys::NewRate) {
+
+                    if ($r->Status->getStoredVal() != RateStatus::Active) {
+                        // show as inactive
+                        $attrs['disabled'] = 'disabled';
+                        $titleAttrs['readonly'] = 'readonly';
+                        $titleAttrs['style'] = 'background-color:#f0f0f0 ';
+                        $rr1Attrs['disabled'] = 'disabled';
+                        $rr2Attrs['disabled'] = 'disabled';
+                        $rr3Attrs['disabled'] = 'disabled';
+
+                        $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']', 'checked'=>'checked'));
+                    }
+
+                } else if ($r->Status->getStoredVal() != RateStatus::Active) {
+                    // Dont show retired new rates.
+                    continue;
+                }
+            }
+
             $fTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'13')))
+                HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), $titleAttrs))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup($r->FA_Category->getStoredVal(), $attrs))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_1->getStoredVal()), array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'4')), array('style'=>'text-align:center;'))
-                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category || $r->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory ? '' :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_2->getStoredVal()), array('name'=>'rr2['.$r->idRoom_rate->getStoredVal().']', 'size'=>'4')), array('style'=>'text-align:center;')))
-                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category || $r->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory ? '' :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_3->getStoredVal()), array('name'=>'rr3['.$r->idRoom_rate->getStoredVal().']', 'size'=>'4')), array('style'=>'text-align:center;')))
+                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category ? HTMLTable::makeTd('') :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_1->getStoredVal(), 2), $rr1Attrs), array('style'=>'text-align:center;')))
+                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category || $r->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory ? HTMLTable::makeTd('') :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_2->getStoredVal()),$rr2Attrs), array('style'=>'text-align:center;')))
+                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category || $r->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory ? HTMLTable::makeTd('') :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_3->getStoredVal()), $rr3Attrs), array('style'=>'text-align:center;')))
+                .HTMLTable::makeTd($cbRetire, array('style'=>'text-align:center;'))
             );
 
         }
 
         // New rate
         $fTbl->addBodyTr(
-            HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'ratetitle[0]', 'size'=>'13')))
-            .HTMLTable::makeTd()
-            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr1[0]', 'size'=>'4')), array('style'=>'text-align:center;'))
-            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr2[0]', 'size'=>'4')), array('style'=>'text-align:center;'))
-            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr3[0]', 'size'=>'4')), array('style'=>'text-align:center;'))
+            HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'ratetitle[0]', 'size'=>'17')))
+            .HTMLTable::makeTd('')
+            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr1[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
+            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr2[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
+            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr3[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
+            .HTMLTable::makeTd('')
         );
-
 
         return $fTbl;
     }
@@ -1168,8 +1309,8 @@ class Price3Steps extends PriceModel {
                 . "(2,'Rate B','','b','$modelCode',10.00,7.00,3.00,0,'a'),"
                 . "(3,'Rate C','','c','$modelCode',20.00,15.00,10.00,0,'a'),"
                 . "(4,'Rate D','','d','$modelCode',25.00,20.00,10.00,0,'a'),"
-                . "(5,'Flat Rate','','e','$modelCode',25.00,25.00,25.00,10,'a'), "
-                . "(6,'Assigned','','x','$modelCode',0,0,0,0,'a');");
+                . "(5,'Flat Rate','','" . RoomRateCategorys::Flat_Rate_Category . "','$modelCode',25.00,25.00,25.00,10,'a'), "
+                . "(6,'Assigned','','" . RoomRateCategorys::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 
 }
@@ -1273,14 +1414,23 @@ class PricePerpetualSteps extends PriceModel {
             .HTMLTable::makeTh('Amount Drop')
             .HTMLTable::makeTh('Each Days')
             .HTMLTable::makeTh('Minimum Rate')
+            .HTMLTable::makeTh('Retire')
             );
 
         // Room rates
-        $rows = $this->getActiveModelRoomRates();
+        foreach ($this->roomRates as $r) {
 
-        foreach ($rows as $r) {
+            // Don't deal with non-active rates.
+            if ($r->Status->getStoredVal() == RateStatus::NotActive) {
+                continue;
+            }
 
             $attrs = array('type'=>'radio', 'name'=>'rrdefault');
+            $titleAttrs = array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'17');
+            $rr1Attrs = array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
+            $rr2Attrs = array('name'=>'rr2['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
+            $rr3Attrs = array('name'=>'rr3['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
+            $minAttrs = array('name'=>'minrt['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
 
             if ($r->FA_Category->getStoredVal() == $defaultRoomRate) {
                 $attrs['checked'] = 'checked';
@@ -1288,25 +1438,54 @@ class PricePerpetualSteps extends PriceModel {
                 unset($attrs['checked']);
             }
 
+            $cbRetire = '';
+            // Cannot retire flat or fixed rates
+            if ($r->FA_Category->getStoredVal() != RoomRateCategorys::Fixed_Rate_Category && $r->FA_Category->getStoredVal() != RoomRateCategorys::FlatRateCategory) {
+
+                $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']'));
+
+                if ($r->FA_Category->getStoredVal() != RoomRateCategorys::NewRate) {
+
+                    if ($r->Status->getStoredVal() != RateStatus::Active) {
+                        // show as inactive
+                        $attrs['disabled'] = 'disabled';
+                        $titleAttrs['readonly'] = 'readonly';
+                        $titleAttrs['style'] = 'background-color:#f0f0f0 ';
+                        $rr1Attrs['disabled'] = 'disabled';
+                        $rr2Attrs['disabled'] = 'disabled';
+                        $rr3Attrs['disabled'] = 'disabled';
+                        $minAttrs['disabled'] = 'disabled';
+
+                        $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']', 'checked'=>'checked'));
+                    }
+
+                } else if ($r->Status->getStoredVal() != RateStatus::Active) {
+                    // Dont show retired new rates.
+                    continue;
+                }
+            }
+
             $fTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'13')))
+                HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), $titleAttrs))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup($r->FA_Category->getStoredVal(), $attrs) . ' (' . $r->FA_Category->getStoredVal() . ')')
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_1->getStoredVal()), array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'3')), array('style'=>'text-align:center;'))
-                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category || $r->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory ? '' :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_2->getStoredVal()), array('name'=>'rr2['.$r->idRoom_rate->getStoredVal().']', 'size'=>'3')), array('style'=>'text-align:center;')))
-                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category || $r->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory ? '' :  HTMLTable::makeTd(HTMLInput::generateMarkup(number_format($r->Reduced_Rate_3->getStoredVal()), array('name'=>'rr3['.$r->idRoom_rate->getStoredVal().']', 'size'=>'3')), array('style'=>'text-align:center;')))
-                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category || $r->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory ? '' :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Min_Rate->getStoredVal()), array('name'=>'minrt['.$r->idRoom_rate->getStoredVal().']', 'size'=>'3')), array('style'=>'text-align:center;')))
+                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category ? HTMLTable::makeTd('') :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_1->getStoredVal(), 2), $rr1Attrs), array('style'=>'text-align:center;')))
+                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category || $r->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory ? '' :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_2->getStoredVal()), $rr2Attrs), array('style'=>'text-align:center;')))
+                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category || $r->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory ? '' :  HTMLTable::makeTd(HTMLInput::generateMarkup(number_format($r->Reduced_Rate_3->getStoredVal()), $rr3Attrs), array('style'=>'text-align:center;')))
+                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category || $r->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory ? '' :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Min_Rate->getStoredVal()), $minAttrs), array('style'=>'text-align:center;')))
+                .HTMLTable::makeTd($cbRetire, array('style'=>'text-align:center;'))
             );
 
         }
 
         // New rate
         $fTbl->addBodyTr(
-            HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'ratetitle[0]', 'size'=>'13')))
-            .HTMLTable::makeTd()
-            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr1[0]', 'size'=>'4')), array('style'=>'text-align:center;'))
-            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr2[0]', 'size'=>'4')), array('style'=>'text-align:center;'))
-            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr3[0]', 'size'=>'4')), array('style'=>'text-align:center;'))
-            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'minrt[0]', 'size'=>'4')), array('style'=>'text-align:center;'))
+            HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'ratetitle[0]', 'size'=>'17')))
+            .HTMLTable::makeTd('')
+            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr1[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
+            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr2[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
+            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr3[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
+            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'minrt[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
+            .HTMLTable::makeTd('')
         );
 
         return $fTbl;
@@ -1422,8 +1601,8 @@ class PricePerpetualSteps extends PriceModel {
                 . "(2,'Rate B','','b','$modelCode',10.00,7.00,3.00,2,'a'),"
                 . "(3,'Rate C','','c','$modelCode',20.00,15.00,10.00,10,'a'),"
                 . "(4,'Rate D','','d','$modelCode',25.00,20.00,10.00,10,'a'),"
-                . "(5,'Flat Rate','','e','$modelCode',25.00,25.00,25.00,10,'a'), "
-                . "(6,'Assigned','','x','$modelCode',0,0,0,0,'a');");
+                . "(5,'Flat Rate','','" . RoomRateCategorys::Flat_Rate_Category . "','$modelCode',25.00,25.00,25.00,10,'a'), "
+                . "(6,'Assigned','','" . RoomRateCategorys::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 }
 
@@ -1513,11 +1692,17 @@ class PriceNdayBlock extends PriceModel {
             );
 
         // Room rates
-        $rows = $this->getActiveModelRoomRates();
+        foreach ($this->roomRates as $r) {
 
-        foreach ($rows as $r) {
+            // Don't deal with non-active rates.
+            if ($r->Status->getStoredVal() == RateStatus::NotActive) {
+                continue;
+            }
 
             $attrs = array('type'=>'radio', 'name'=>'rrdefault');
+            $titleAttrs = array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'17');
+            $rr1Attrs = array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
+            $rr2Attrs = array('name'=>'rr2['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
 
             if ($r->FA_Category->getStoredVal() == $defaultRoomRate) {
                 $attrs['checked'] = 'checked';
@@ -1525,21 +1710,48 @@ class PriceNdayBlock extends PriceModel {
                 unset($attrs['checked']);
             }
 
+            $cbRetire = '';
+            // Cannot retire flat or fixed rates
+            if ($r->FA_Category->getStoredVal() != RoomRateCategorys::Fixed_Rate_Category && $r->FA_Category->getStoredVal() != RoomRateCategorys::FlatRateCategory) {
+
+                $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']'));
+
+                if ($r->FA_Category->getStoredVal() != RoomRateCategorys::NewRate) {
+
+                    if ($r->Status->getStoredVal() != RateStatus::Active) {
+                        // show as inactive
+                        $attrs['disabled'] = 'disabled';
+                        $titleAttrs['readonly'] = 'readonly';
+                        $titleAttrs['style'] = 'background-color:#f0f0f0 ';
+                        $rr1Attrs['disabled'] = 'disabled';
+                        $rr2Attrs['disabled'] = 'disabled';
+
+                        $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']', 'checked'=>'checked'));
+                    }
+
+                } else if ($r->Status->getStoredVal() != RateStatus::Active) {
+                    // Dont show retired new rates.
+                    continue;
+                }
+            }
+
             $fTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'13')))
+                HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), $titleAttrs))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup($r->FA_Category->getStoredVal(), $attrs) . ' (' . $r->FA_Category->getStoredVal() . ')')
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_1->getStoredVal()), array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'4')), array('style'=>'text-align:center;'))
-                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category || $r['FA_Category'] == RoomRateCategorys::FlatRateCategory ? '' :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_2->getStoredVal()), array('name'=>'rr2['.$r->idRoom_rate->getStoredVal().']', 'size'=>'4')), array('style'=>'text-align:center;')))
+                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category ? HTMLTable::makeTd('') :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_1->getStoredVal(), 2), $rr1Attrs), array('style'=>'text-align:center;')))
+                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category || $r['FA_Category'] == RoomRateCategorys::FlatRateCategory ? '' :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_2->getStoredVal()), $rr2Attrs), array('style'=>'text-align:center;')))
+                .HTMLTable::makeTd($cbRetire, array('style'=>'text-align:center;'))
             );
 
         }
 
         // New rate
         $fTbl->addBodyTr(
-            HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'ratetitle[0]', 'size'=>'13')))
-            .HTMLTable::makeTd()
-            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr1[0]', 'size'=>'4')), array('style'=>'text-align:center;'))
-            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr2[0]', 'size'=>'4')), array('style'=>'text-align:center;'))
+            HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'ratetitle[0]', 'size'=>'17')))
+            .HTMLTable::makeTd('')
+            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr1[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
+            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr2[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
+            .HTMLTable::makeTd('')
         );
 
         return $fTbl;
@@ -1630,8 +1842,8 @@ class PriceNdayBlock extends PriceModel {
                 . "(2,'Rate B','','b','$modelCode',10.00,7.00,0,0,'a'),"
                 . "(3,'Rate C','','c','$modelCode',20.00,15.00,0,0,'a'),"
                 . "(4,'Rate D','','d','$modelCode',25.00,20.00,0,0,'a'),"
-                . "(5,'Flat Rate','','e','$modelCode',25.00,0,0,0,'a'), "
-                . "(6,'Assigned','','x','$modelCode',0,0,0,0,'a');");
+                . "(5,'Flat Rate','','" . RoomRateCategorys::Flat_Rate_Category . "','$modelCode',25.00,0,0,0,'a'), "
+                . "(6,'Assigned','','" . RoomRateCategorys::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 
 }

@@ -60,4 +60,18 @@ class HouseLog extends TableLog {
 
     }
 
+
+    public static function logRoomRate(\PDO $dbh, $action, $idRoomRate,  $logText, $userName) {
+
+        $logRS = new House_LogRS();
+        $logRS->Log_Type->setNewVal('room_rate');
+        $logRS->Sub_Type->setNewVal($action);
+        $logRS->Id1->setNewVal($idRoomRate);
+        $logRS->Log_Text->setNewVal(self::encodeLogText($logText));
+        $logRS->User_Name->setNewVal($userName);
+
+        return self::insertLog($dbh, $logRS);
+
+    }
+
 }
