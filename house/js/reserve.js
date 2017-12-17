@@ -154,6 +154,21 @@ function PageManager(initData) {
             getReserve(resv);
 
         }
+        
+        function addGuestCopy(idName) {
+            
+            if (idName < 1 || people.findItem('id', idName) === null) {
+                flagAlertMessage('No one to copy. ', true);
+                return;
+            }
+
+            var resv = {
+                id: idName,
+                cmd: 'copyThinGuest'
+            };
+
+            getReserve(resv);
+        }
 
         function verifyAddress(prefix) {
 
@@ -227,6 +242,11 @@ function PageManager(initData) {
                 if (sourcePrefix == prefix) {
                     continue;
                 }
+                
+                // Don't over write an address.
+                if ($('#' + prefix + 'adraddress1' + addrPurpose).val() !== '' && $('#' + prefix + 'adrzip' + addrPurpose).val() !== '') {
+                    continue;
+                }
 
                 $('#' + prefix + 'adraddress1' + addrPurpose).val(addrs.list()[sourcePrefix].Address_1);
                 $('#' + prefix + 'adraddress2' + addrPurpose).val(addrs.list()[sourcePrefix].Address_2);
@@ -253,6 +273,7 @@ function PageManager(initData) {
             }
 
         }
+
         function isAddressComplete(prefix) {
             
             if (prefix === undefined || !prefix || prefix == '') {
@@ -337,7 +358,7 @@ function PageManager(initData) {
 
         function setAddrFlag($addrFlag) {
 
-            var prefix = $addrFlag.parents('ul').data('pref');
+            var prefix = $addrFlag.data('pref');
 
             // Address status icon
             if ($('#' + prefix + 'incomplete').prop('checked') === true) {
@@ -349,7 +370,7 @@ function PageManager(initData) {
 
                 if (!isAddressComplete(prefix)) {
                     $addrFlag.show().find('span').removeClass('ui-icon-check').addClass('ui-icon-alert').attr('title', 'Address is Incomplete');
-                    $addrFlag.removeClass('ui-state-highlightui-state-error').addClass('ui-state-error');
+                    $addrFlag.removeClass('ui-state-highlight').addClass('ui-state-error');
                 } else {
                     $addrFlag.hide();
                 }
@@ -500,12 +521,12 @@ function PageManager(initData) {
 
             // Copy Address
             $('#' + divFamDetailId).on('click', '.hhk-addrCopy', function() {
-                copyAddress($(this).attr('name'));
+                copyAddress($(this).data('prefix'));
             });
 
             // Delete address
             $('#' + divFamDetailId).on('click', '.hhk-addrErase', function() {
-                eraseAddress($(this).attr('name'));
+                eraseAddress($(this).data('prefix'));
             });
 
             // Incomplete address bind to address flag.
@@ -521,7 +542,6 @@ function PageManager(initData) {
             });
 
             // Remove button
-            $('.hhk-removeBtn').button();
             $('#' + divFamDetailId).on('click', '.hhk-removeBtn', function () {
 
                 // Is the name entered?
@@ -530,7 +550,7 @@ function PageManager(initData) {
                         return;
                     }
                 }
-                
+
                 people.removeIndex($(this).data('prefix'));
                 addrs.removeIndex($(this).data('prefix'));
 
@@ -538,6 +558,11 @@ function PageManager(initData) {
                 $(this).parentsUntil('tbody', 'tr').remove();
             });
 
+
+            // Add Guest button
+            $('#btnCopyGuest').button().click(function () {
+                addGuestCopy($('#selCopyGuest').val());
+            });
 
             // Relationship chooser
             $('#' + divFamDetailId).on('change', '.patientRelch', function () {
@@ -557,9 +582,20 @@ function PageManager(initData) {
                 }
             });
 
+            // Add People Textbox
             createAutoComplete($('#txtPersonSearch'), 3, {cmd: 'role', gp:'1'}, function (item) {
                 addGuest(item, data);
             });
+            
+            // Hover icons
+            $( "ul.hhk-ui-icons li" ).hover(
+                function() {
+                        $( this ).addClass( "ui-state-hover" );
+                },
+                function() {
+                        $( this ).removeClass( "ui-state-hover" );
+                }
+            );
 
             t.setupComplete = true;
         };
@@ -594,8 +630,6 @@ function PageManager(initData) {
             if ($('#' + prefix + 'lblStay').data('stay') === '1') {
                 $('#' + prefix + 'lblStay').click();
             }
-
-            $('.hhk-removeBtn').button();
 
             // Prepare birth date picker
             $('.ckbdate').datepicker({

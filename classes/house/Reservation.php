@@ -109,7 +109,12 @@ abstract class Reservation {
         return array();
     }
 
-    public function addperson(\PDO $dbh) {
+    public function addPerson(\PDO $dbh) {
+
+        return array();
+    }
+
+    public function copyPerson(\PDO $dbh) {
 
         return array();
     }
@@ -866,18 +871,16 @@ class ActiveReservation extends BlankReservation {
 class StaticReservation extends Reservation {
 
     public function createMarkup(\PDO $dbh) {
-
+        return array('error'=>'Not Implemented.');
     }
-
 
 }
 
 class StayingReservation extends Reservation {
 
     public function createMarkup(\PDO $dbh) {
-
+        return array('error'=>'Not Implemented.');
     }
-
 
 }
 
@@ -926,9 +929,13 @@ class BlankReservation extends Reservation {
 
     }
 
-    public function addperson(\PDO $dbh) {
+    public function addPerson(\PDO $dbh) {
 
-        return array('addPerson' => $this->family->CreateAddPersonMu($dbh, $this->reserveData));
+        return array('addPerson' => $this->family->createAddPersonMu($dbh, $this->reserveData));
+    }
+
+    public function copyPerson(\PDO $dbh) {
+        return array('error'=>'Not Implemented.');
     }
 
 }

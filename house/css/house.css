@@ -17,10 +17,10 @@
 #divAlertMsg {
     z-index:9;
 }
-    .hhk-view-visit {
-        padding:5px;
-        cursor:pointer;
-    }
+.hhk-view-visit {
+    padding:5px;
+    cursor:pointer;
+}
 .hhk-view-visit:hover {
     background-color: #d0e5f5;
     background-image: url("redmond/images/ui-bg_glass_75_d0e5f5_1x400.png");
@@ -353,11 +353,11 @@ div#global-title {
 li.hhk-myMenuTop {
     background-color: #3E6D8F;
 }
-#ulIcons {
+.hhk-ui-icons {
     margin: 0;
     padding: 0;
 }
-#ulIcons li {
+.hhk-ui-icons li {
     margin: 2px;
     position: relative;
     padding: 4px 0;
@@ -365,7 +365,7 @@ li.hhk-myMenuTop {
     float: left;
     list-style: none;
 }
-#ulIcons span.ui-icon {
+.hhk-ui-icons span.ui-icon {
     float: left;
     margin: 0 4px;
 }

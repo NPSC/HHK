@@ -89,12 +89,21 @@ abstract class Role {
 
         $idPrefix = $this->getRoleMember()->getIdPrefix();
 
-        $trash = HTMLContainer::generateMarkup('span', '', array('name'=>$idPrefix, 'id'=>$idPrefix.'t', 'class'=>'hhk-addrErase ui-icon ui-icon-trash', 'title'=>'Erase', 'style'=>'float: right; margin-left:.3em;'));
+        // Copy and Erase icons.
         $copy = '';
-
         if ($useCopyIcon) {
-            $copy = HTMLContainer::generateMarkup('span', '', array('name'=>$idPrefix, 'id'=>$idPrefix.'c', 'class'=>'hhk-addrCopy ui-icon ui-icon-copy', 'title'=>'Copy', 'style'=>'float: right; margin-left:.3em;'));
+            $copy = HTMLContainer::generateMarkup('li',
+                        HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-copy'))
+                        , array('class'=>'ui-state-default ui-corner-all hhk-addrCopy', 'style'=>'float:right;', 'data-prefix'=>$idPrefix, 'title'=>'Click to copy, click multiple times to cycle thru addresses.'));
         }
+
+        $legendTitle = HTMLContainer::generateMarkup('ul'
+                , HTMLContainer::generateMarkup('li',
+                        HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
+                    , array('class'=>'ui-state-default ui-corner-all hhk-addrErase', 'style'=>'float:right;', 'data-prefix'=>$idPrefix, 'title'=>'Erase'))
+                .$copy
+                .HTMLContainer::generateMarkup('span', 'Home Address', array('style'=>'float:right;margin-top:5px;margin-right:.4em;'))
+                , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'));
 
         // Incomplete address
         $attr = array('type'=>'checkbox', 'name'=>$idPrefix.'incomplete', 'class'=>'hhk-incompleteAddr', 'data-prefix'=>$idPrefix);
@@ -116,7 +125,8 @@ abstract class Role {
         return HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup(
                     'fieldset',
-                    HTMLContainer::generateMarkup('legend', 'Home Address'.$copy.$trash, array('style'=>'font-weight:bold;'))
+                    //HTMLContainer::generateMarkup('legend', 'Home Address'.$copy.$trash, array('style'=>'font-weight:bold;'))
+                    HTMLContainer::generateMarkup('legend', $legendTitle, array('style'=>'font-weight:bold;'))
                     . $this->addr->createPanelMarkup(Address_Purpose::Home, $this->getAddrObj()->get_recordSet(Address_Purpose::Home), FALSE, $idPrefix, $class, $includeCounty, $lastUpdated)
                     . $incomplete,
                     array('class'=>'hhk-panel')),
@@ -140,102 +150,6 @@ abstract class Role {
                 .HTMLContainer::generateMarkup('div', $this->getEmailsObj()->createMarkup("", $idPrefix), array('id'=>$idPrefix.'emailTab', 'class'=>'ui-tabs-hide'));
 
         return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('div', $ul . $divs, array('id'=>$idPrefix.'phEmlTabs', 'class'=>'hhk-phemtabs', 'style'=>'font-size:.9em;')), array('style'=>'float:left;margin-top:5px;margin-right:5px;', 'class'=>'hhk-tdbox'));
-    }
-
-    public function createThinAddrHdr($includeCounty = FALSE) {
-
-        return HTMLTable::makeTh('Address')
-                . HTMLTable::makeTh('')
-                . HTMLTable::makeTh('Zip')
-                . HTMLTable::makeTh('City')
-                . ($includeCounty ? HTMLTable::makeTh('County') : '')
-                . HTMLTable::makeTh('State')
-                . HTMLTable::makeTh('Country');
-
-    }
-
-    public function createThinAddrMU($includeCounty = FALSE) {
-
-        $idPrefix = $this->getRoleMember()->getIdPrefix();
-        $addrIndex = Address_Purpose::Home;
-        $adrRow = $this->getAddrObj()->get_recordSet($addrIndex);
-        $rowTr = '';
-
-        // address 1
-        $attr = array(
-            'type'=>'text',
-            'size'=>'27',
-            'title'=>'Street Address',
-            'id'=>$idPrefix.'adraddress1' . $addrIndex,
-            'name'=>$idPrefix.'adr[' . $addrIndex . '][address1]',
-            );
-
-
-        $rowTr .= HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->Address_1->getStoredVal(), $attr));
-
-        // Address 2
-        $attr['id'] = $idPrefix.'adraddress2' . $addrIndex;
-        $attr['name'] = $idPrefix.'adr[' . $addrIndex . '][address2]';
-        $attr['title'] = 'Apt, Suite, Mail Stop';
-        $attr['size'] = '17';
-
-        $rowTr .= HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->Address_2->getStoredVal(), $attr));
-
-        // & Zip
-        $zipAttr = array(
-            'id'=>$idPrefix.'adrzip'.$addrIndex,
-            'name'=>$idPrefix.'adr['.$addrIndex.'][zip]',
-            'type'=>'text',
-            'size'=>'10',
-            'class'=>'ckzip hhk-zipsearch ',
-            'title'=>'Enter Postal Code',
-            'data-hhkprefix'=>$idPrefix,
-            'data-hhkindex'=>$addrIndex
-            );
-
-        $rowTr .= HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->Postal_Code->getStoredVal(), $zipAttr));
-
-        // City
-        $attr['id'] = $idPrefix.'adrcity' . $addrIndex;
-        $attr['name'] = $idPrefix.'adr[' . $addrIndex . '][city]';
-        $attr['title'] = 'City Name';
-        $attr['class']= '';
-
-        $rowTr .= HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->City->getStoredVal(), $attr));
-
-        // County
-        if ($includeCounty) {
-            $attr['id'] = $idPrefix.'adrcounty' . $addrIndex;
-            $attr['name'] = $idPrefix.'adr[' . $addrIndex . '][county]';
-            $attr['title'] = 'County Name';
-            $attr['class']= '';
-
-            $rowTr .= HTMLTable::makeTd(HTMLInput::generateMarkup($adrRow->County->getStoredVal(), $attr));
-        }
-
-        // State
-        $stAttr['id'] = $idPrefix.'adrstate' . $addrIndex;
-        $stAttr['name'] = $idPrefix.'adr[' . $addrIndex . '][state]';
-        $stAttr['title'] = 'Select State or Province';
-        $stAttr['style'] = 'margin-right:8px;';
-        $stAttr["class"] = "bfh-states";
-        $stAttr['data-country'] = $idPrefix.'adrcountry' . $addrIndex;
-        $stAttr['data-state'] = $adrRow->State_Province->getStoredVal();
-
-        $rowTr .= HTMLTable::makeTd(HTMLSelector::generateMarkup('', $stAttr));
-
-        // Country
-        $coAttr['id'] = $idPrefix.'adrcountry' . $addrIndex;
-        $coAttr['name'] = $idPrefix.'adr[' . $addrIndex . '][country]';
-        $coAttr['title'] = 'Select Country';
-        $coAttr['class'] = 'input-medium bfh-countries';
-        $coAttr['data-country'] = ($adrRow->Country_Code->getStoredVal() == '' ? 'US' : $adrRow->Country_Code->getStoredVal());
-
-        $rowTr .= HTMLTable::makeTd(HTMLSelector::generateMarkup('', $coAttr));
-
-
-        return $rowTr;
-
     }
 
     public function createThinMarkup(PSGMemStay $stay, $lockRelChooser) {

@@ -205,7 +205,7 @@ function additionalGuest(item) {
 
                 
                 $('#diagAddGuest').on('click', '.hhk-addrCopy', function() {
-                    var prefix = $(this).attr('name');
+                    var prefix = $(this).data('prefix');
                     
                     if (resv.addr && resv.addr.adraddress1 != '' && $('#' + prefix + 'adraddress1' + resv.adrPurpose).val() != resv.addr.adraddress1) {
                         $('#' + prefix + 'adraddress1' + resv.adrPurpose).val(resv.addr.adraddress1);
@@ -238,7 +238,7 @@ function additionalGuest(item) {
                 });
                 
                 $('#diagAddGuest').on('click', '.hhk-addrErase', function() {
-                    var prefix = $(this).attr('name');
+                    var prefix = $(this).data('prefix');
                     $('#' + prefix + 'adraddress1' + resv.adrPurpose).val('');
                     $('#' + prefix + 'adraddress2' + resv.adrPurpose).val('');
                     $('#' + prefix + 'adrcity' + resv.adrPurpose).val('');
@@ -1571,7 +1571,7 @@ $(document).ready(function() {
     });
 
     $('div#guestAccordion, div#patientSection').on('click', '.hhk-addrCopy', function() {
-        var prefix = $(this).attr('name'),
+        var prefix = $(this).data('prefix'),
             otfix = 'h_';
             
         if (resv.addr && resv.addr.adraddress1 != '' && $('#' + prefix + 'adraddress1' + resv.adrPurpose).val() != resv.addr.adraddress1) {
@@ -1587,11 +1587,11 @@ $(document).ready(function() {
         if (prefix === 'h_') {
             otfix = 'pg';
         }
-        
+
         if ($('#' + otfix + 'adrcity1').val() == '') {
             return;
         }
-        
+
         $('#' + prefix + 'adraddress1' + resv.adrPurpose).val($('#' + otfix + 'adraddress11').val());
         $('#' + prefix + 'adraddress2' + resv.adrPurpose).val($('#' + otfix + 'adraddress21').val());
         $('#' + prefix + 'adrcity' + resv.adrPurpose).val($('#' + otfix + 'adrcity1').val());
@@ -1602,7 +1602,7 @@ $(document).ready(function() {
     });
 
     $('div#guestAccordion, div#patientSection').on('click', '.hhk-addrErase', function() {
-        var prefix = $(this).attr('name');
+        var prefix = $(this).data('prefix');
         $('#' + prefix + 'adraddress11').val('');
         $('#' + prefix + 'adraddress21').val('');
         $('#' + prefix + 'adrcity1').val('');
@@ -1612,17 +1612,17 @@ $(document).ready(function() {
         $('#' + prefix + 'adrzip1').val('');
         $('#' + prefix + 'adrbad1').prop('checked', false);
     });
-    
+
     verifyAddrs('div#guestAccordion, #hospitalSection, div#patientSection');
-    
+
     $('div#guestAccordion, div#patientSection').on('change', 'input.hhk-lastname', function() {
         $('span#' + $(this).data('prefix') + 'hdrLastName').text(' ' + $(this).val());
     });
-    
+
     $('div#guestAccordion, div#patientSection').on('change', 'input.hhk-firstname', function() {
         $('span#' + $(this).data('prefix') + 'hdrFirstName').text(' ' + $(this).val());
     });
-    
+
     $('div#hospitalSection').on('click', '.hhk-agentSearch, .hhk-docSearch', function() {
         $('#txtAgentSch').val('');
         $('#txtDocSch').val('');

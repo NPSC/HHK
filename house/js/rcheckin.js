@@ -1550,7 +1550,7 @@ $(document).ready(function() {
     
     $('div#guestAccordion, div#patientSection').on('click', '.hhk-addrCopy', function() {
 
-        var prefix = $(this).attr('name');
+        var prefix = $(this).data('prefix');
         
         if (checkIn.addr && checkIn.addr.adraddress1 != '' && $('#' + prefix + 'adraddress1' + checkIn.adrPurpose).val() != checkIn.addr.adraddress1) {
             $('#' + prefix + 'adraddress1' + checkIn.adrPurpose).val(checkIn.addr.adraddress1);
@@ -1582,7 +1582,7 @@ $(document).ready(function() {
     });
 
     $('div#guestAccordion, div#patientSection').on('click', '.hhk-addrErase', function() {
-        var prefix = $(this).attr('name');
+        var prefix = $(this).data('prefix');
         $('#' + prefix + 'adraddress1' + checkIn.adrPurpose).val('');
         $('#' + prefix + 'adraddress2' + checkIn.adrPurpose).val('');
         $('#' + prefix + 'adrcity' + checkIn.adrPurpose).val('');

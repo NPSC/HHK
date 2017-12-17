@@ -336,7 +336,7 @@ class ScriptAuthClass extends SecurityComponent {
 
     protected function getSiteIcons($siteList) {
 
-        $mu = "<ul id='ulIcons' style='float:left;padding-top:5px;' class='ui-widget ui-helper-clearfix'>";
+        $mu = "<ul id='ulIcons' style='float:left;padding-top:5px;' class='ui-widget ui-helper-clearfix hhk-ui-icons'>";
         $siteCount = 0;
         $siteMu = '';
 
@@ -349,10 +349,10 @@ class ScriptAuthClass extends SecurityComponent {
             if ($r["Site_Code"] != "r" && (self::is_Admin() || self::does_User_Code_Match($r["Groups"]))) {
                 $siteCount++;
                 // put in the site list.
-                $siteMu .= "<li class='ui-widget-header ui-corner-all' title='" . $r["Description"] . "'>"
-                      . "<a  href='" . $this->getRootURL() . $r["Relative_Address"] . $r["Default_Page"] . "'>"
-                        . "<span class='" . $r["Class"] . "' ></span></a>"
-                      . "</li>";
+                $siteMu .= "<a  href='" . $this->getRootURL() . $r["Relative_Address"] . $r["Default_Page"] . "'>"
+                      . "<li class='ui-widget-header ui-corner-all' title='" . $r["Description"] . "'>"
+                        . "<span class='" . $r["Class"] . "' ></span>"
+                      . "</li></a>";
             }
         }
 
@@ -362,18 +362,18 @@ class ScriptAuthClass extends SecurityComponent {
 
         // Tutorial site
         if ($tutorialURL != '') {
-            $mu .= "<li class='ui-widget-header ui-corner-all' title='Tutorial Site'>"
-                  . "<a href='" . $tutorialURL . "' target='blank'>"
-                  . "<span class='ui-icon ui-icon-video' ></span></a>"
-                  . "</li>";
+            $mu .= "<a href='" . $tutorialURL . "' target='blank'>"
+                  . "<li class='ui-widget-header ui-corner-all' title='Tutorial Site'>"
+                  . "<span class='ui-icon ui-icon-video' ></span>"
+                  . "</li></a>";
         }
 
         // HHK Users Forum
         if ($hufURL != '') {
-            $mu .= "<li class='ui-widget-header ui-corner-all' title='HHK Users Forum' >"
-                  . "<a href='" . $hufURL . "' target='blank'>"
-                  . "<span class='ui-icon ui-icon-flag' ></span></a>"
-                  . "</li>";
+            $mu .= "<a href='" . $hufURL . "' target='blank'>"
+                  . "<li class='ui-widget-header ui-corner-all' title='HHK Users Forum' >"
+                  . "<span class='ui-icon ui-icon-flag' ></span>"
+                  . "</li></a>";
         }
 
         $mu .= "</ul>";

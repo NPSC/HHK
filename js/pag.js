@@ -94,7 +94,7 @@ $(document).ready(function() {
     "use strict";
 
     //Hover states on the nav bar left icons.
-   $( "#divNavIcons #ulIcons li" ).hover(
+   $( "ul.hhk-ui-icons li" ).hover(
        function() {
                $( this ).addClass( "ui-state-hover" );
        },

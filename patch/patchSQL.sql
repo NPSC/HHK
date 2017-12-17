@@ -16,6 +16,5 @@ update visit_onleave set Rate_Category = 'f' where Rate_Category = 'x';
 -- Leave this til last as it may fail.
 ALTER TABLE `psg` 
     DROP PRIMARY KEY,
-    ADD PRIMARY KEY (`idPsg`),
-    ADD UNIQUE INDEX `idPatient_UNIQUE` (`idPatient` ASC);
+    ADD PRIMARY KEY (`idPsg`);
 

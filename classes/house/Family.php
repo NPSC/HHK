@@ -227,7 +227,7 @@ class Family {
         return $addrs;
     }
 
-    public function CreateAddPersonMu(\PDO $dbh, ReserveData $rData) {
+    public function createAddPersonMu(\PDO $dbh, ReserveData $rData) {
 
         $uS = Session::getInstance();
 
@@ -239,9 +239,15 @@ class Family {
                 continue;
             }
 
+            // Remove guests.
+            $removeIcons = HTMLContainer::generateMarkup('ul'
+                , HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
+                    , array('class'=>'ui-state-default ui-corner-all hhk-removeBtn', 'style'=>'float:right;', 'data-prefix'=>$prefix, 'title'=>'Remove guest'))
+                , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'));
+
             $nameTr = HTMLContainer::generateMarkup('tr'
                     , $role->createThinMarkup($rData->getPsgMember($prefix)->getStayObj(), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup('Remove', array('type'=>'button', 'id'=>$prefix.'btnRemove', 'data-prefix'=>$prefix, 'class'=>'hhk-removeBtn'))));
+                    . HTMLTable::makeTd($removeIcons));
 
             // Demographics
             if ($uS->ShowDemographics) {
@@ -263,6 +269,47 @@ class Family {
 
     }
 
+    public function createCopyPersonMu(\PDO $dbh, ReserveData $rData) {
+
+        $uS = Session::getInstance();
+
+        $addPerson = array();
+
+        foreach ($this->roleObjs as $prefix => $role) {
+
+            if ($role->getIdName() != $rData->getId()) {
+                continue;
+            }
+
+            // remove guests.
+            $removeIcons = HTMLContainer::generateMarkup('ul'
+                , HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
+                    , array('class'=>'ui-state-default ui-corner-all hhk-removeBtn', 'style'=>'float:right;', 'data-prefix'=>$prefix, 'title'=>'Remove guest'))
+                , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'));
+
+            $nameTr = HTMLContainer::generateMarkup('tr'
+                    , $role->createThinMarkup($rData->getPsgMember($prefix)->getStayObj(), TRUE)
+                    . HTMLTable::makeTd($removeIcons));
+
+            // Demographics
+            if ($uS->ShowDemographics) {
+                $demoMu = $this->getDemographicsMarkup($dbh, $role);
+            } else {
+                $demoMu = '';
+            }
+
+            // Add addresses and demo's
+            $addressTr = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>'hhk-addrRow'));
+
+            $mem = $rData->getPsgMember($prefix)->toArray();
+            $adr = $this->getAddresses(array($role));
+
+            $addPerson = array('id'=>$rData->getId(), 'ntr'=>$nameTr, 'atr'=>$addressTr, 'tblId'=>FAMILY::FAM_TABLE_ID, 'mem'=>$mem, 'addrs'=>$adr[$prefix]);
+        }
+
+        return $addPerson;
+
+    }
     public function createFamilyMarkup(\PDO $dbh, ReservationRS $resvRs, ReserveData $rData) {
 
         $uS = Session::getInstance();
@@ -270,12 +317,15 @@ class Family {
         $rowClass = 'odd';
         $mk1 = '';
         $trs = array();
+        $copyGuests = array();
 
         $AdrCopyDownIcon = HTMLContainer::generateMarkup('ul'
-                    ,  'Addr  ' .HTMLContainer::generateMarkup('li',
-                        HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-arrowthick-1-s'))
-                        , array('class'=>'ui-widget-header ui-corner-all', 'id'=>'adrCopy', 'style'=>'display:inline-block;cursor:pointer;'))
-                    , array('style'=>'padding-top:1px;list-style-type:none;', 'class'=>'ui-widget'));
+                    ,  HTMLContainer::generateMarkup('li',
+                       HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-arrowthick-1-s'))
+                        , array('class'=>'ui-state-default ui-corner-all', 'id'=>'adrCopy', 'style'=>'float:right;', 'title'=>'Copy top address down to any blank addresses.'))
+                        .HTMLContainer::generateMarkup('span', 'Addr', array('style'=>'float:right;margin-top:5px;margin-right:.4em;'))
+                    , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'));
+
 
         // Name Header
         $th = HTMLContainer::generateMarkup('tr',
@@ -295,6 +345,8 @@ class Family {
             $trs[] = HTMLContainer::generateMarkup('tr',
                     $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), TRUE)
                     , array('class'=>$rowClass));
+
+            $copyGuests[] = array(0=>$role->getIdName(), 1=>$role->getRoleMember()->getMemberFullName());
 
             // Demographics
             if ($uS->ShowDemographics) {
@@ -325,10 +377,21 @@ class Family {
                 $rowClass = 'odd';
             }
 
+            // Remove guests.
+            $removeIcons = HTMLContainer::generateMarkup('ul'
+                , HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
+                    , array('class'=>'ui-state-default ui-corner-all hhk-removeBtn', 'style'=>'float:right;', 'data-prefix'=>$idPrefix, 'title'=>'Remove guest'))
+                , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'));
+
+
             $trs[] = HTMLContainer::generateMarkup('tr',
                     $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
-                    . ($role->getIdName() == 0 ? HTMLTable::makeTd(HTMLInput::generateMarkup('Remove', array('type'=>'button', 'id'=>$idPrefix.'btnRemove', 'data-prefix'=>$idPrefix, 'class'=>'hhk-removeBtn'))) : '')
+                    . ($role->getIdName() == 0 ? HTMLTable::makeTd($removeIcons) : '')
                     , array('class'=>$rowClass));
+
+            if ($role->getRoleMember()->getMemberFullName() != '') {
+                $copyGuests[] = array(0=>$role->getIdName(), 1=>$role->getRoleMember()->getMemberFullName() );
+            }
 
             // Demographics
             if ($uS->ShowDemographics) {
@@ -343,8 +406,12 @@ class Family {
 
         // Guest search
         $mk1 .= HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('span', 'Add people - Name Search: ')
-                .HTMLInput::generateMarkup('', array('id'=>'txtPersonSearch', 'title'=>'Enter the first three characters of the person\'s last name'))
+                HTMLContainer::generateMarkup('span', 'Add people - Name search: ')
+                .HTMLInput::generateMarkup('', array('id'=>'txtPersonSearch', 'style'=>'margin-right:2em;', 'title'=>'Enter the first three characters of the person\'s last name'))
+
+                .HTMLContainer::generateMarkup('span', '- Add a copy of a guest: ')
+                .HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($copyGuests, '', TRUE), array('id'=>'selCopyGuest', 'style'=>'margin-right:.3em;'))
+                .HTMLInput::generateMarkup('Copy', array('id'=>'btnCopyGuest','type'=>'button'))
                 , array('id'=>'divPersonSearch', 'style'=>'margin-top:10px;'));
 
 

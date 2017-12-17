@@ -145,6 +145,14 @@ try {
 
         break;
 
+    case "copyThinGuest":
+
+        $resv = Reservation::reservationFactoy($dbh, $_POST);
+
+        $events = $resv->copyPerson($dbh);
+
+        break;
+
     default:
         $events = array("error" => "Bad Command: \"" . $c . "\"");
 }

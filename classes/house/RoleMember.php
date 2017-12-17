@@ -39,14 +39,18 @@ abstract class RoleMember extends IndivMember {
 
     protected abstract function getMyMemberType();
 
-    public static function createThinMarkupHdr($labels = NULL, $hideRelChooser = TRUE, $showBirthDate = TRUE) {
+    public static function createThinMarkupHdr($labels = NULL, $hideRelChooser = TRUE, $showBirthDate = TRUE, $showCopyDown = TRUE) {
 
-        $lnCopyDownIcon = HTMLContainer::generateMarkup('ul'
-                    ,  'Last Name  ' .HTMLContainer::generateMarkup('li',
-                        HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-arrowthick-1-s'))
-                        , array('class'=>'ui-widget-header ui-corner-all', 'id'=>'lnCopy', 'style'=>'display:inline-block;cursor:pointer;'))
-                    , array('style'=>'padding-top:1px;list-style-type:none;', 'class'=>'ui-widget'));
+        $lnCopyDownIcon = 'Last Name';
 
+        if ($showCopyDown) {
+            $lnCopyDownIcon = HTMLContainer::generateMarkup('ul'
+                ,HTMLContainer::generateMarkup('li',
+                   HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-arrowthick-1-s'))
+                   , array('class'=>'ui-state-default ui-corner-all', 'id'=>'lnCopy', 'style'=>'float:right;', 'title'=>'Copy top last name down to any blank last names.'))
+                .HTMLContainer::generateMarkup('span', 'Last Name', array('style'=>'float:right;margin-top:5px;margin-right:.4em;'))
+            , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'));
+        }
 
         $tr =
              HTMLTable::makeTh('First Name')
@@ -79,7 +83,7 @@ abstract class RoleMember extends IndivMember {
             HTMLTable::makeTh('Id')
             .HTMLTable::makeTh('Prefix');
 
-        return $tr . $this->createThinMarkupHdr($labels, $hideRelChooser, $this->showBirthDate);
+        return $tr . $this->createThinMarkupHdr($labels, $hideRelChooser, $this->showBirthDate, FALSE);
 
     }
 
@@ -352,6 +356,7 @@ class GuestMember extends RoleMember {
                     $parray = array($patientRelationship => $parray[$patientRelationship]);
                 } else {
                     unset($parray[RelLinkType::Self]);
+                    $parray = removeOptionGroups($parray);
                 }
 
                 if ($patientRelationship == '') {

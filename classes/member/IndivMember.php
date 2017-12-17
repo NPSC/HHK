@@ -57,6 +57,10 @@ class IndivMember extends Member {
         return $this->get_firstName() . " " . $this->get_lastName();
     }
 
+    public function getMemberFullName() {
+        return $this->get_fullName();
+    }
+
     /**
      *
      * @param PDO $dbh

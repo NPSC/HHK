@@ -72,18 +72,15 @@ class Patient extends Role {
             // Address
             $mu .= HTMLTable::makeTd(
                     HTMLContainer::generateMarkup('ul'
-                            , HTMLContainer::generateMarkup('li',
-                                    HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-check'))
-                                    , array('class'=>'ui-widget-header ui-corner-all hhk-AddrFlag ui-state-highlight', 'id'=>$this->getRoleMember()->getIdPrefix().'liaddrflag', 'style'=>'display:inline-block;cursor:pointer;')
-                                    )
-                            . HTMLContainer::generateMarkup('li',
-                                    HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-circle-triangle-n'))
-                                    , array('class'=>'ui-widget-header ui-corner-all hhk-togAddr', 'id'=>$this->getRoleMember()->getIdPrefix().'toggleAddr', 'style'=>'display:inline-block;margin-left:5px;cursor:pointer;', 'title'=>'Open - Close Address Section')
-                                    )
-                            , array('data-pref'=>$this->getRoleMember()->getIdPrefix(), 'style'=>'padding-top:1px;list-style-type:none;', 'class'=>'ui-widget')
-                            )
-                    , array('style'=>'text-align:center;min-width:50px;')
-                    );
+                        , HTMLContainer::generateMarkup('li',
+                                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-check'))
+                                , array('class'=>'ui-state-highlight ui-corner-all hhk-AddrFlag', 'data-pref'=>$this->getRoleMember()->getIdPrefix(), 'id'=>$this->getRoleMember()->getIdPrefix().'liaddrflag'))
+                        . HTMLContainer::generateMarkup('li',
+                                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-circle-triangle-n'))
+                                , array('class'=>'ui-state-default ui-corner-all hhk-togAddr', 'data-pref'=>$this->getRoleMember()->getIdPrefix(), 'id'=>$this->getRoleMember()->getIdPrefix().'toggleAddr', 'title'=>'Open - Close Address Section'))
+                        , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'))
+                    , array('style'=>'text-align:center;min-width:50px;', 'class'=>'hhk-ui-icons')
+            );
 
         } else {
             $mu .= HTMLTable::makeTd('');
