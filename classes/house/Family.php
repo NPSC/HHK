@@ -152,6 +152,11 @@ class Family {
             $rData->setMember($psgMember);
         }
 
+        // Reset the ignore idName param
+        if ($rData->getId() < 0) {
+            $rData->setId(0);
+        }
+
     }
 
     public function setGuestsStaying(\PDO $dbh, ReserveData &$rData, $resvIdGuest) {
@@ -346,7 +351,9 @@ class Family {
                     $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), TRUE)
                     , array('class'=>$rowClass));
 
-            $copyGuests[] = array(0=>$role->getIdName(), 1=>$role->getRoleMember()->getMemberFullName());
+            if ($role->getRoleMember()->getMemberFullName() != '') {
+                $copyGuests[] = array(0=>$role->getIdName(), 1=>$role->getRoleMember()->getMemberFullName() );
+            }
 
             // Demographics
             if ($uS->ShowDemographics) {

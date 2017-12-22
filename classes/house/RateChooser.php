@@ -151,6 +151,7 @@ class RateChooser {
 
         $visitRs = $visit->visitRS;
         $chRateDT = NULL;
+        $departDT = null;
         $rateCategory = '';
         $rateAdj = 0;
         $assignedRate = 0;
@@ -185,18 +186,11 @@ class RateChooser {
         }
 
         if (is_null($chRateDT)) {
-            return 'Change Rate Date not set.  ';
+            return 'The Change Rate date not set.  ';
         }
 
-        $chRateDT->setTime(0, 0, 0);
 
         // Find the departure date
-        $departDT = null;
-        if ($visitRs->Span_End->getStoredVal() != '') {
-            $departDT = new \DateTime($visitRs->Span_End->getStoredVal());
-        }
-
-        // Find end date
         if ($visit->getVisitStatus() == VisitStatus::CheckedIn) {
 
             // Expected Departure date
@@ -209,14 +203,25 @@ class RateChooser {
                 $departDT = new \DateTime($today->format('Y-m-d'));
                 $departDT->add(new \DateInterval('P1D'));
             }
+
+        } else if ($visitRs->Span_End->getStoredVal() != '') {
+
+            $departDT = new \DateTime($visitRs->Span_End->getStoredVal());
+
+        } else {
+            return 'The Departure date cannot be found.  ';
         }
 
-        $departDT->setTime(0, 0, 0);
 
         // Span Start date
         $SpanStartDT = new \DateTime($visitRs->Span_Start->getStoredVal());
+
+
+        $chRateDT->setTime(0, 0, 0);
+        $departDT->setTime(0, 0, 0);
         $SpanStartDT->setTime(0, 0, 0);
 
+        // Must be within visit timeframe
         if ($chRateDT < $SpanStartDT || $chRateDT >= $departDT) {
             return "The change rate date must be within the visit timeframe, between " . $SpanStartDT->format('M j, Y') . ' and ' . $departDT->format('M j, Y');
         }
@@ -270,6 +275,9 @@ class RateChooser {
 
         } else {
 
+            if ($chRateDT == $departDT) {
+                return 'We cannot change the room rate on the last day of the visi span as there are no nights left for which to charge the new rate.';
+            }
             // Split existing visit span into two
             $reply = $this->splitVisitSpan($dbh, $visit, $rateCategory, $assignedRate, $rateAdj, $uS->username, $chDT);
 

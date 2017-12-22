@@ -215,25 +215,6 @@ class Psg {
         }
     }
 
-//    public static function instantiateFromGuestId(\PDO $dbh, $idGuest) {
-//
-//        $ngRS = new Name_GuestRS();
-//        $idPsg = 0;
-//
-//        if ($idGuest > 0) {
-//            $ngRS->idName->setStoredVal($idGuest);
-//            $rows = EditRS::select($dbh, $ngRS, array($ngRS->idName));
-//
-//            if (count($rows) > 0) {
-//                EditRS::loadRow($rows[0], $ngRS);
-//                $idPsg = $ngRS->idPsg->getStoredVal();
-//            }
-//        }
-//
-//        return new Psg($dbh, $idPsg);
-//
-//    }
-
     public static function getNameGuests(\PDO $dbh, $idGuest) {
 
         $ngRS = new Name_GuestRS();

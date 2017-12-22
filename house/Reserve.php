@@ -444,6 +444,11 @@ $(document).ready(function() {
 
     if (parseInt(resv.id, 10) > 0 || parseInt(resv.rid, 10) > 0) {
 
+        // Avoid automatic new guest for existing reservations.
+        if (parseInt(resv.id, 10) === 0 && parseInt(resv.rid, 10) > 0) {
+            resv.id = -2;
+        }
+        
         resv.cmd = 'getResv';
         pageManager.getReserve(resv);
 
