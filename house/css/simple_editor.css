@@ -1,5 +1,5 @@
 
-@import url(http://fonts.googleapis.com/css?family=Varela+Round);
+
 @import url(http://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.1.0/css/font-awesome.css);
 
 html, body {
@@ -8,12 +8,6 @@ html, body {
 	width: 100%;
 }
 
-body {
-	font-family: "Varela Round", "ebrima";
-	background: #f5f5f5;
-	color: #373737;
-	padding-top: 10px;
-}
 
 .center {
 	margin: 0 auto;
@@ -30,9 +24,9 @@ body {
 
 
 .simpleEditorContainer .control-btn {
-	border: 0px solid transparent;
+	border: 1px solid white;
 	background: lightgrey;
-	outline: none;
+	outline: #0074c7;
 	cursor: pointer;
 }
 
