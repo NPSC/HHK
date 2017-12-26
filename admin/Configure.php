@@ -529,6 +529,15 @@ if (is_null($wsConfig) === FALSE) {
     }
 }
 
+if (isset($_POST['tx'])) {
+
+    $agreemt = filter_input(INPUT_POST, 'tx');
+
+    file_put_contents('../conf/agreement.html', $agreemt);
+}
+
+$formEditorText = file_get_contents('../conf/agreement.html');
+
 $webAlert = new alertMessage("webContainer");
 $webAlert->set_DisplayAttr("none");
 $webAlert->set_Context(alertMessage::Success);
@@ -550,6 +559,10 @@ $getWebReplyMessage = $webAlert->createMarkup();
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="../js/fontawesome-all.js"></script>
+
+        <script type="text/javascript" src="../js/wysiwyg.js"></script>
+        <script type="text/javascript" src="../js/simpleEdit.js"></script>
         <script type="text/javascript">
 $(document).ready(function () {
 
@@ -562,6 +575,8 @@ $(document).ready(function () {
             alert('Subsidy Id must be different than the Return Payor Id');
         }
     });
+
+    $("#taformtext").simpleEditor();
 
     var tabIndex = '<?php echo $tabIndex; ?>';
     var tbs = $('#tabs').tabs();
@@ -583,6 +598,7 @@ $(document).ready(function () {
                     <li><a href="#holidays">Set Holidays</a></li>
                     <li><a href="#loadZip">Load Zip Code Distance Data</a></li>
                     <li><a href="#labels">View Labels & Prompts</a></li>
+                    <li><a href="#formsEdit">Edit Forms</a></li>
                     <?php if ($serviceName != '') {echo '<li><a href="#external">' . $serviceName . '</a></li>';} ?>
                 </ul>
                 <div id="config" class="ui-tabs-hide" >
@@ -597,6 +613,11 @@ $(document).ready(function () {
                         <?php echo $labels; ?>
                         <div style="float:right;margin-right:40px;"><input type="reset" name="btnreset" value="Reset" style="margin-right:5px;"/><input type="submit" name="btnLabelCnf" value="Save Labels"/></div>
                     </form>
+                </div>
+                <div id="formsEdit" class="ui-tabs-hide" >
+                    <div class="simpleEditorContainer">
+                        <textarea id="taformtext" ><?php echo $formEditorText; ?></textarea>
+                    </div>
                 </div>
                     <?php if ($serviceName != '') { ?>
                         <div id="external" class="ui-tabs-hide" >

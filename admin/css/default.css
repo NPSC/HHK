@@ -55,6 +55,24 @@ body.testbody {
     padding: 5px;
 }
 
+.simpleEditorContainer {
+    width:800px;
+}
+.simpleEditorContainer .control-btn {
+	border: 1px solid #76B837;
+	background: transparent;
+	outline: #0074c7;
+	cursor: pointer;
+        padding: 2px 5px;
+        margin-right: 3px;
+}
+.control-btn:hover {
+    background: #fafaf4;
+}
+
+.control-btn.active {
+	background: grey;
+}
 .hhk-deceased {
     background-color: yellow;
 }

@@ -2,19 +2,21 @@
 
 /**
  * RegistrationForm.php
- * 
+ *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
+ *
+ * Used only by IMD GH
  */
 class RegistrationForm {
 
 
-    public function getDocument(\PDO $dbh, \Guest $priGuest, \Guest $billGuest, array $addtionalGuests, $patientName, $hospitalName, $roomTitle, $cardName, $cardType, $cardNumber, $logoUrl, $logoWidth, $expectedPayType = '', $note = '', $todaysDate = '') {
+    public function getDocument(\PDO $dbh, \Guest $priGuest, \Guest $billGuest, array $addtionalGuests, $patientName, $hospitalName, $roomTitle,
+            $cardName, $cardType, $cardNumber, $logoUrl, $logoWidth, $instructionFileName, $expectedPayType = '', $note = '', $todaysDate = '') {
 
-        // Adds several string variables to the function
-        include REL_BASE_DIR . 'conf' . DS . 'regSections.php';
+        $paymentInfoSection = '<div><span>The House asks that guests leave a card on file for security purposes. You will be charged for the nights stayed at the agreed upon rate after check-out or after x weeks. </div>';
 
         $uS = Session::getInstance();
 
@@ -81,7 +83,7 @@ class RegistrationForm {
 
         $doc .= $this->makeHeader($logoUrl, $logoWidth, $uS->siteName, $house->get_webSite(), $address, $phones);
 
-        $doc .= $this->makeInstructions($instructions);
+        $doc .= $this->makeInstructions($instructionFileName);
 
         $doc .= $this->makeSigLine($fullNames);
 
@@ -157,7 +159,13 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
 
     }
 
-    public function makeInstructions ($text) {
+    public function makeInstructions ($instructionFileName) {
+
+        if ($instructionFileName != '' && file_exists($instructionFileName)) {
+            $text = file_get_contents($instructionFileName);
+        } else {
+            $text = HTMLContainer::generateMarkup('p', 'Agreement text file is missing.', array('class'=>'ui-state-error'));
+        }
 
         return '<div style="margin-top:10px;">' . $text . '</div>';
 

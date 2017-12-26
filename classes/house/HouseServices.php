@@ -1865,30 +1865,12 @@ class HouseServices {
 
 
         // Generate Reg form
-        switch ($uS->RegForm) {
-            case '1':
-                // PIFH
-                try {
+        $reservArray = ReservationSvcs::generateCkinDoc($dbh, 0, $visit->getIdVisit(), $uS->resourceURL . 'images/receiptlogo.png');
 
-                    $dataArray['regform'] = RegisterForm::prepareReceipt($dbh, $visit->getIdVisit());
-                    $dataArray['style'] = RegisterForm::getStyling();
+        $dataArray['style'] = $reservArray['style'];
+        $dataArray['regform'] = $reservArray['doc'];
+        unset($reservArray);
 
-                } catch (\Hk_Exception_Runtime $hex) {
-                    $dataArray['regform'] = $hex->getMessage();
-                }
-
-                break;
-
-            case '2':
-                // IMDGHf
-                $reservArray = ReservationSvcs::generateCkinDoc($dbh, 0, $visit->getIdVisit(), $uS->resourceURL . 'images/receiptlogo.png');
-
-                $dataArray['style'] = $reservArray['style'];
-                $dataArray['regform'] = $reservArray['doc'];
-                unset($reservArray);
-
-                break;
-        }
 
 
         // email the form

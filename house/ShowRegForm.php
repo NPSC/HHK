@@ -77,9 +77,6 @@ $idVisit = 0;
 $idGuest = 0;
 $idResv = 0;
 
-$regForm = '';
-$sty = '';
-
 if (isset($_GET['vid'])) {
     $idVisit = intval(filter_var($_REQUEST['vid'], FILTER_SANITIZE_STRING), 10);
 }
@@ -102,43 +99,11 @@ if ($idVisit == 0 && $idResv > 0) {
 }
 
 // Generate Receipt
-switch ($uS->RegForm) {
+$reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, '../images/registrationLogo.png');
 
-    case '1':
-        // Template
-        if ($idVisit == 0 && $idGuest > 0) {
-            $idVisit = getVisitFromGuest($dbh, $idGuest);
-        }
-
-        if ($idVisit > 0 || $idResv > 0) {
-
-            try {
-
-                $regForm = RegisterForm::prepareReceipt($dbh, $idVisit, $idResv);
-                $sty = RegisterForm::getStyling();
-
-            } catch (\Hk_Exception_Runtime $hex) {
-                $regForm = $hex->getMessage();
-            }
-        } else {
-            $regForm = '<h2>Registration from available at checkin.</h2>';
-        }
-        break;
-
-
-    case '2':
-        //
-        $reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, '../images/registrationLogo.png', $uS->mode);
-
-        $sty = $reservArray['style'];
-        $regForm = $reservArray['doc'];
-        unset($reservArray);
-        break;
-
-    default:
-        $regForm = "Register form template not set in sys_config table.  ";
-
-}
+$sty = $reservArray['style'];
+$regForm = $reservArray['doc'];
+unset($reservArray);
 
 ?>
 <!DOCTYPE html>

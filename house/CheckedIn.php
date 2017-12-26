@@ -119,31 +119,11 @@ if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)
 
     if ($idVisit > 0) {
 
-        switch ($uS->RegForm) {
+        $reservArray = ReservationSvcs::generateCkinDoc($dbh, 0, $idVisit, '../images/receiptlogo.png');
 
-            case '1':
-                // PIFH
-                try {
-
-                    $regForm = RegisterForm::prepareReceipt($dbh, $idVisit);
-                    $sty = RegisterForm::getStyling();
-
-                } catch (Hk_Exception_Runtime $hex) {
-                    $regForm = $hex->getMessage();
-                }
-
-                break;
-
-            case '2':
-                // IMDGHf
-                $reservArray = ReservationSvcs::generateCkinDoc($dbh, 0, $idVisit, '../images/receiptlogo.png');
-
-                $sty = $reservArray['style'];
-                $regForm = $reservArray['doc'];
-                unset($reservArray);
-                break;
-
-        }
+        $sty = $reservArray['style'];
+        $regForm = $reservArray['doc'];
+        unset($reservArray);
 
     } else {
         $regForm = 'No Registration Information.';
