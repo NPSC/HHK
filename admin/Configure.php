@@ -39,7 +39,38 @@ if ($uS->rolecode > WebRole::WebUser) {
     exit();
 }
 
+
 $dbh = $wInit->dbh;
+
+// Get Form
+if (isset($_POST['cmd'])) {
+
+    $fn = filter_input(INPUT_POST, 'fn');
+
+
+    if (!$fn || $fn == '') {
+        exit(json_encode(array('warning'=>'The Form name is blank.')));
+    }
+
+    $files = readGenLookupsPDO($dbh, 'Editable_Forms');
+
+    if (isset($files[$fn])) {
+
+        if (file_exists($fn)) {
+
+            exit(json_encode(array('title'=>$files[$fn][1], 'tx'=>file_get_contents($fn))));
+
+        } else {
+            exit(json_encode(array('warning'=>'The Form is missing from the server library.')));
+        }
+
+    } else {
+
+        exit(json_encode(array('warning'=>'The Form name is not on the acceptable list.')));
+    }
+
+    exit(json_encode(array('warning'=>'Unspecified')));
+}
 
 
 $resultMsg = '';
@@ -50,11 +81,14 @@ $ccResultMessage = '';
 $holResultMessage = '';
 $externalErrMsg = '';
 $serviceName = '';
-
+$formEditorText = '';
+$rteFileSelection = '';
+$rteMsg = '';
 
 $config = new Config_Lite(ciCFG_FILE);
 $labl = new Config_Lite(LABEL_FILE);
 $wsConfig = NULL;
+
 
 if ($config->has('webServices', 'Service_Name') && $config->getString('webServices', 'Service_Name', '') != '' && $config->getString('webServices', 'ContactManager', '') != '') {
 
@@ -95,7 +129,7 @@ if (isset($_POST["btnLabelCnf"])) {
 
 if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
 
-    $tabIndex = 6;
+    $tabIndex = 7;
 
     SiteConfig::saveConfig($dbh, $wsConfig, $_POST, $uS->username);
 
@@ -411,7 +445,44 @@ if (isset($_POST['btnLogs'])) {
     $logs = CreateMarkupFromDB::generateHTML_Table($edRows, 'syslog');
 }
 
+// Form Editor
+if (isset($_POST['rteformText'])) {
+    $tabIndex = 6;
 
+    $formEditorText = filter_input(INPUT_POST, 'rteformText');
+    $rteFileSelection = filter_input(INPUT_POST, 'frmEdSelect');
+
+    $files = readGenLookupsPDO($dbh, 'Editable_Forms');
+
+    if ($rteFileSelection == '') {
+
+        $formEditorText = '';
+        $rteMsg = 'Nothing saved. Select a Form to edit.';
+
+    } else if (isset($files[$rteFileSelection]) === FALSE) {
+
+        $rteMsg = 'Nothing saved. Form name not accepted. ';
+
+    } else if (file_exists($rteFileSelection) === FALSE) {
+
+        $rteMsg = 'Nothing saved. Form does not exist. ';
+
+    } else if ($formEditorText == '') {
+
+        $rteMsg = 'Nothing saved. Form text is blank.  ';
+
+    } else {
+
+        $rtn = file_put_contents($rteFileSelection, $formEditorText);
+
+        if ($rtn > 0) {
+            $rteMsg = "$rtn bytes saved.";
+
+        } else {
+            $rteMsg = "Form Not Saved.";
+        }
+    }
+}
 
 try {
     $payments = SiteConfig::createPaymentCredentialsMarkup($dbh, $ccResultMessage);
@@ -529,6 +600,11 @@ if (is_null($wsConfig) === FALSE) {
     }
 }
 
+
+// Form editor
+$rteSelectForm = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(readGenLookupsPDO($dbh, 'Editable_Forms'), $rteFileSelection, TRUE), array('id'=>'frmEdSelect', 'name'=>'frmEdSelect'));
+
+// Alert Message
 $webAlert = new alertMessage("webContainer");
 $webAlert->set_DisplayAttr("none");
 $webAlert->set_Context(alertMessage::Success);
@@ -545,12 +621,23 @@ $getWebReplyMessage = $webAlert->createMarkup();
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $wInit->pageTitle; ?></title>
         <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
+        <link rel="stylesheet" type="text/css" href="css/rich-text-editor.css" />
         <?php echo DEFAULT_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript">
+        <script type="text/javascript" src="../js/rich-text-editor.js"></script>
+
+
+        <style type="text/css">
+            #newcomment {
+                width: 850px;
+                min-height: 500px;
+        }
+        </style>
+
+<script type="text/javascript">
 $(document).ready(function () {
 
     $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
@@ -561,6 +648,46 @@ $(document).ready(function () {
             $('#financialRoomSubsidyId, #financialReturnPayorId').addClass('ui-state-error');
             alert('Subsidy Id must be different than the Return Payor Id');
         }
+    });
+
+    $("#taAgreetext").richTextEditor();
+
+    $('#frmEdSelect').change(function () {
+        $('#rteMsg').text('');
+
+        if ($(this).val() === '') {
+            $('#spnRteLoading').hide();
+            $('#rte-editbox-0').html('');
+            $('#spnEditorTitle').text('');
+            return;
+        }
+
+        $('#spnRteLoading').show();
+
+        $.post('Configure.php', {cmd:'getform', fn: $(this).val()}, function (data){
+
+            $('#spnRteLoading').hide();
+            $('#rte-editbox-0').html('');
+            $('#spnEditorTitle').text('');
+
+            data = $.parseJSON(data);
+
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
+            }
+
+            if (data.warning && data.warning !== '') {
+                $('#rteMsg').text(data.warning);
+            }
+
+            if (data.tx) {
+                $('#rte-editbox-0').html(data.tx);
+            }
+
+            if (data.title) {
+                $('#spnEditorTitle').text('Editing ' + data.title);
+            }
+        });
     });
 
     var tabIndex = '<?php echo $tabIndex; ?>';
@@ -577,12 +704,13 @@ $(document).ready(function () {
             <?php echo $getWebReplyMessage; ?>
             <div id="tabs" class="hhk-member-detail" style="display:none;">
                 <ul>
-                    <li><a href="#config">View Site Configuration</a></li>
+                    <li><a href="#config">Site Configuration</a></li>
                     <li><a href="#patch">Patch</a></li>
                     <li><a href="#pay">Credit Card Processor</a></li>
                     <li><a href="#holidays">Set Holidays</a></li>
-                    <li><a href="#loadZip">Load Zip Code Distance Data</a></li>
-                    <li><a href="#labels">View Labels & Prompts</a></li>
+                    <li><a href="#loadZip">Load Zip Codes</a></li>
+                    <li><a href="#labels">Labels & Prompts</a></li>
+                    <li><a href="#agreeEdit">Form Editor</a></li>
                     <?php if ($serviceName != '') {echo '<li><a href="#external">' . $serviceName . '</a></li>';} ?>
                 </ul>
                 <div id="config" class="ui-tabs-hide" >
@@ -596,6 +724,16 @@ $(document).ready(function () {
                     <form method="post" name="form5" action="">
                         <?php echo $labels; ?>
                         <div style="float:right;margin-right:40px;"><input type="reset" name="btnreset" value="Reset" style="margin-right:5px;"/><input type="submit" name="btnLabelCnf" value="Save Labels"/></div>
+                    </form>
+                </div>
+                <div id="agreeEdit" class="ui-tabs-hide" >
+                    <form action="Configure.php" method="post">
+                        <p>Select the form to edit from the following list: <?php echo $rteSelectForm; ?><span id="spnRteLoading" style="text-decoration: italic; display:none;">Loading...</span></p>
+                        <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
+                        <fieldset style="clear:left; float:left; margin-top:10px;">
+                        <legend><span id="spnEditorTitle" style="font-size: 1em; font-weight: bold"></span></legend>
+                            <textarea name="rteformText" id="newcomment" class="rich-text-editor"><?php echo $formEditorText; ?></textarea>
+                        </fieldset>
                     </form>
                 </div>
                     <?php if ($serviceName != '') { ?>

@@ -1764,14 +1764,16 @@ class ReservationSvcs {
         return $dataArray;
     }
 
-    public static function generateCkinDoc(\PDO $dbh, $idReservation = 0, $idVisit = 0, $logoURL = '', $mode = 'live', $notes = '') {
+    public static function generateCkinDoc(\PDO $dbh, $idReservation = 0, $idVisit = 0, $logoURL = '', $notes = '') {
 
         $uS = Session::getInstance();
+
+        $instructFileName = REL_BASE_DIR . 'conf'. DS . 'agreement.html';
 
 
         if ($uS->RegForm == 1) {
 
-            $doc = RegisterForm::prepareReceipt($dbh, $idVisit, $idReservation);
+            $doc = RegisterForm::prepareRegForm($dbh, $idVisit, $idReservation, $instructFileName);
             $sty = RegisterForm::getStyling();
 
         } else if ($uS->RegForm == 2) {
@@ -1948,7 +1950,23 @@ class ReservationSvcs {
             $regdoc = new RegistrationForm();
             $logoWidth = 114;
 
-            $doc = $regdoc->getDocument($dbh, $priGuest, $billingGuest, $additionalGuests, $patientName, $hospitalName, $roomTitle, $cardName, $cardType, $cardNumber, $logoURL, $logoWidth, $expectedPayType, $notes, $todaysDate);
+            $doc = $regdoc->getDocument($dbh,
+                    $priGuest,
+                    $billingGuest,
+                    $additionalGuests,
+                    $patientName,
+                    $hospitalName,
+                    $roomTitle,
+                    $cardName,
+                    $cardType,
+                    $cardNumber,
+                    $logoURL,
+                    $logoWidth,
+                    $instructFileName,
+                    $expectedPayType,
+                    $notes,
+                    $todaysDate
+                );
             $sty = $regdoc->getStyle();
 
         } else {

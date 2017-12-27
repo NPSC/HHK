@@ -12,6 +12,8 @@
  * Description of RegisterForm
  * @package name
  * @author Eric
+ *
+ * This form is used by all Houses except IMD GH.
  */
 class RegisterForm {
 
@@ -156,13 +158,15 @@ class RegisterForm {
 
     }
 
-    protected static function AgreementBlock(array $guestNames, $agreemtLabel = '', $instructions = '') {
+    protected static function AgreementBlock(array $guestNames, $agreementLabel, $instructionFileName) {
 
-        // The following defines $agreemtLabel and $instructions.
-        require REL_BASE_DIR . 'conf' . DS . 'regSections.php';
+        $mkup = HTMLContainer::generateMarkup('h2', $agreementLabel, array('style'=>'border:none;border-bottom:1.5pt solid #98C723'));
 
-        $mkup = HTMLContainer::generateMarkup('h2', $agreemtLabel, array('style'=>'border:none;border-bottom:1.5pt solid #98C723'));
-        $mkup .= HTMLContainer::generateMarkup('div', $instructions);
+        if ($instructionFileName != '' && file_exists($instructionFileName)) {
+            $mkup .= HTMLContainer::generateMarkup('div', file_get_contents($instructionFileName));
+        } else {
+            $mkup .= HTMLContainer::generateMarkup('div', 'Agreement text file is missing.', array('class'=>'ui-state-error'));
+        }
 
         $usedNames = array();
 
@@ -339,7 +343,8 @@ class RegisterForm {
 
     }
 
-    protected static function generateDocument(\PDO $dbh, $title, \Role $patient, array $guests,  $houseAddr, $hospital, $hospRoom, $patientRelCodes, $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $creditRecord = '', $notes = '', $roomFeeTitle = 'Pledged Fee') {
+    protected static function generateDocument(\PDO $dbh, $title, \Role $patient, array $guests,  $houseAddr, $hospital, $hospRoom, $patientRelCodes,
+            $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $agreementLabel, $instructionFileName, $creditRecord = '', $notes = '', $roomFeeTitle = 'Pledged Fee') {
 
         $uS = Session::getInstance();
 
@@ -370,7 +375,7 @@ class RegisterForm {
         }
 
         // Agreement
-        $mkup .= self::AgreementBlock($guestNames);
+        $mkup .= self::AgreementBlock($guestNames, $agreementLabel, $instructionFileName);
 
         $mkup .= "</div>";
 
@@ -417,7 +422,7 @@ p.label {
 </style>';
     }
 
-    public static function prepareReceipt(PDO $dbh, $idVisit, $idReservation = 0) {
+    public static function prepareRegForm(PDO $dbh, $idVisit, $idReservation = 0, $instructionFileName = '') {
 
         $uS = Session::getInstance();
         $labels = new Config_Lite(LABEL_FILE);
@@ -675,7 +680,28 @@ p.label {
 
         }
 
-        return RegisterForm::generateDocument($dbh, $title, $patient, $guests, $houseAddr, $hospital, $hospRoom, $uS->guestLookups[GL_TableNames::PatientRel], $vehs, $agent, $rate, $roomTitle, $depDate, $creditReport, $notes, $labels->getString('register', 'rateTitle','Pledged Fee'));
+
+
+        return RegisterForm::generateDocument(
+                $dbh,
+                $title,
+                $patient,
+                $guests,
+                $houseAddr,
+                $hospital,
+                $hospRoom,
+                $uS->guestLookups[GL_TableNames::PatientRel],
+                $vehs,
+                $agent,
+                $rate,
+                $roomTitle,
+                $depDate,
+                $labels->getString('referral', 'agreementTitle','Agreement'),
+                $instructionFileName,
+                $creditReport,
+                $notes,
+                $labels->getString('register', 'rateTitle','Pledged Fee')
+            );
 
     }
 }

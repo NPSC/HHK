@@ -80,6 +80,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Dormant_Selector_Code','both','Dormant & Active','','',0),
 ('Dormant_Selector_Code','dor','Dormant Only','','',0),
 
+('Editable_Forms', '../conf/agreement.html', 'Registration Agreement','','',0),
+('Editable_Forms', '../conf/confirmation.html', 'Confirmation Form','','',0),
+('Editable_Forms', '../conf/survey.html', 'Survey Form','','',0),
+
 ('Education_Level','01','Highschool','','d',0),
 ('Education_Level','02','College','','d',0),
 ('Education_Level','z','Unknown','','d',1000),
