@@ -261,7 +261,7 @@ $type = '';
 $cbBlank = '';
 $dataTable = '';
 $settingstable = '';
-$rptSetting = 'd';
+
 $year = date('Y');
 $months = array(date('n'));     // logically overloaded.
 $txtStart = '';
@@ -283,7 +283,12 @@ if ($uS->fy_diff_Months == 0) {
     $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 20 => array(20, 'Fiscal Year'), 21 => array(21, 'Calendar Year'), 22 => array(22, 'Year to Date'));
 }
 
-
+// doctors
+if ($uS->Doctor) {
+    $rptSetting = 'd';
+} else {
+    $rptSetting = 'r';
+}
 
 // Hospital and association lists
 $hospList = array();
@@ -534,7 +539,6 @@ $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, $config
 $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
 
-
 ?>
 <!DOCTYPE html>
 <html>
@@ -637,7 +641,6 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                     <fieldset class="hhk-panel" style="margin-bottom: 15px;"><legend style='font-weight:bold;'>Report Type</legend>
                      <table style="width:100%">
                         <tr>
-<!--                            <th><label for='rbg'>Hospitals</label><input type="radio" id='rbg' name="rbReport" value="h" style='margin-left:.5em;' <?php if ($rptSetting == 'h') {echo 'checked="checked"';} ?>/></td>-->
                         <?php if ($uS->Doctor) { ?>
                             <th><label for='rbd'>Doctors</label><input type="radio" id='rbd' name="rbReport" value="d" style='margin-left:.5em;' <?php if ($rptSetting == 'd') {echo 'checked="checked"';} ?>/></td>
                         <?php } if ($uS->ReferralAgent) { ?>

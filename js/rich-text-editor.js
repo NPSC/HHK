@@ -1,227 +1,170 @@
-$(document).ready(function () {
+(function($) {
 
-    $.fn.richTextEditor = function () {
+    $.fn.richTextEditor = function (options) {
         
-	function formatDoc (oDoc, sCmd, sValue) {
-            
-            if (!validateMode(oDoc)) { return; }
-            
-            document.execCommand(sCmd, false, sValue);
-            oDoc.focus();
-	}
-
-	function validateMode (oDoc) {
-            
-		if (!document.getElementById("rte-mode-" + rId.exec(oDoc.id)[0]).checked) { return true; }
-                
-		alert("Uncheck \u00AB" + sModeLabel + "\u00BB.");
-                
-		oDoc.focus();
-		return false;
-	}
-
-	function extractText (oDoc) {
-		if (oDoc.innerText) { return oDoc.innerText; }
-		var oContent = document.createRange();
-		oContent.selectNodeContents(oDoc.firstChild);
-		return oContent.toString();
-	}
-
-	function setDocMode (oDoc, bToSource) {
-		if (bToSource) {
-                    var oContent = document.createTextNode(oDoc.innerHTML),
-                        oPre = document.createElement("pre");
-                    oDoc.innerHTML = "";
-                    oDoc.contentEditable = false;
-                    oPre.className = "rte-sourcetext";
-                    oPre.id = "rte-source-" + oDoc.id;
-                    oPre.onblur = oDoc.onblur;
-                    oPre.contentEditable = true;
-                    oPre.appendChild(oContent);
-                    oDoc.appendChild(oPre);
-		} else {
-                    oDoc.innerHTML = extractText(oDoc);
-                    oDoc.contentEditable = true;
-		}
-		oDoc.focus();
-	}
-
-	function menuSelect () {
-		if (this.selectedIndex < 1) { return; }
-                
-		var sMenuGroup = rId.exec(this.id)[0], 
-                    sCmd = this.id.slice(0, - sMenuGroup.length);
-		formatDoc(aEditors[sMenuGroup], sCmd, this[this.selectedIndex].value);
-		this.selectedIndex = 0;
-	}
-	
-	function buttonClick () {
-		var sBtnGroup = rId.exec(this.id)[0], 
-                    sCmd = this.id.slice(0, - sBtnGroup.length);
-            
-		customCommands.hasOwnProperty(sCmd) ? customCommands[sCmd](aEditors[sBtnGroup]) : formatDoc(aEditors[sBtnGroup], sCmd, this.alt || false);
-	}
-
-	function changeMode () {
-            setDocMode(aEditors[rId.exec(this.id)[0]], this.checked);
-	}
-
-	function updateField () {
-		var sFieldNum = rId.exec(this.id)[0];
-		document.getElementById("rte-field-" + sFieldNum).value = document.getElementById("rte-mode-" + sFieldNum).checked ? extractText(this) : this.innerHTML;
-	}
-        
-        function insertField (text) {
-            this.innerHTML = text;
-            this.upadteField();
-        }
-
-	function createMenuItem (sValue, sLabel) {
-		var oNewOpt = document.createElement("option");
-		oNewOpt.value = sValue;
-		oNewOpt.innerHTML = sLabel || sValue;
-		return oNewOpt;
-	}
-
-	function createEditor (oTxtArea) {
-            var nEditorId = aEditors.length, 
-                oParent = document.createElement("div"), 
-                oMenuBar = document.createElement("div"),
-                oToolsBar = document.createElement("div"), 
-                oEditBox = document.createElement("div"),
-                oModeBox = document.createElement("div"), 
-                oModeChB = document.createElement("input"),
-                oModeLbl = document.createElement("label"),
-                oSave = document.createElement("input");;
-
-            oParent.className = "rich-text-editor";
-            oParent.id = oTxtArea.id || "rich-text-" + nEditorId;
-            oMenuBar.className = "rte-menus";
-            oToolsBar.className = "rte-tools";
-            oEditBox.className = "rte-editbox";
-            oEditBox.id = "rte-editbox-" + nEditorId;
-            oEditBox.contentEditable = true;
-            oEditBox.innerHTML = oTxtArea.value;
-            aEditors.push(oEditBox);
-
-            if (oTxtArea.form) {
-                var oHiddField = document.createElement("input");
-                oHiddField.type = "hidden";
-                oHiddField.name = oTxtArea.name;
-                oHiddField.value = oEditBox.innerHTML;
-                oHiddField.id = "rte-field-" + nEditorId;
-                oTxtArea.form.appendChild(oHiddField);
-                oEditBox.onblur = updateField;
-            }
-
-            for (var oMenu, oMenuOpts, vOpt, nMenu = 0; nMenu < oTools.menus.length; nMenu++) {
-                oMenu = document.createElement("select");
-                oMenu.id = oTools.menus[nMenu].command + nEditorId;
-                oMenu.onchange = menuSelect;
-                oMenu.appendChild(createMenuItem(oTools.menus[nMenu].header));
-                oMenuOpts = oTools.menus[nMenu].values;
-                if (oMenuOpts.constructor === Array) {
-                    for (vOpt = 0; vOpt < oMenuOpts.length; oMenu.appendChild(createMenuItem(oMenuOpts[vOpt++])));
-                } else {
-                    for (vOpt in oMenuOpts) { oMenu.appendChild(createMenuItem(vOpt, oMenuOpts[vOpt])); }				
-                }
-                oMenu.selectedIndex = 0;
-                oMenuBar.appendChild(document.createTextNode(" "));
-                oMenuBar.appendChild(oMenu);
-            }
-            
-            // Buttons
-            for (var oBtnDef, oButton, nBtn = 0; nBtn < oTools.buttons.length; nBtn++) {
-                oBtnDef = oTools.buttons[nBtn];
-                oButton = document.createElement("img");
-                oButton.className = "rte-button";
-                oButton.id = oBtnDef.command + nEditorId;
-                oButton.src = oBtnDef.image;
-                if (oBtnDef.hasOwnProperty("value")) { oButton.alt = oBtnDef.value; }
-                oButton.title = oBtnDef.text;
-                oButton.onclick = buttonClick;
-                oToolsBar.appendChild(oButton);
-            }
-            
-            // Save button 
-            oSave.type = "submit";
-            oSave.value = 'Save';
-            oSave.className = 'rte-Submit';
-            oSave.title = 'Save File';
-            oToolsBar.appendChild(oSave);
-
-
-            // Mode Check Box
-            oModeBox.className = "rte-switchmode";
-            oModeChB.type = "checkbox";
-            oModeChB.id = "rte-mode-" + nEditorId;
-            oModeChB.onchange = changeMode;
-            oModeLbl.setAttribute("for", oModeChB.id);
-            oModeLbl.innerHTML = sModeLabel;
-            oModeBox.appendChild(oModeChB);
-            oModeBox.appendChild(document.createTextNode(" "));
-            oModeBox.appendChild(oModeLbl);
-            
-            oParent.appendChild(oMenuBar);
-            oParent.appendChild(oToolsBar);
-            oParent.appendChild(oEditBox);
-            oParent.appendChild(oModeBox);
-            oTxtArea.parentNode.replaceChild(oParent, oTxtArea);
-	}
-
-	function replaceFields (nFlag) {
-            nReady |= nFlag;
-            if (nReady !== 3) { return; }
-//		for (
-//                    var oField, nItem = 0, aTextareas = Array.prototype.slice.call(document.getElementById("newcomment"), 0);
-//			nItem < aTextareas.length;
-//			oField = aTextareas[nItem++], oField.className !== "rich-text-editor" || createEditor(oField)
-//		);
-
-            createEditor(document.getElementById("newcomment"));
-	}
-
-	function toolsReady () {
-            oTools = JSON.parse(this.responseText);
-            replaceFields(2);
-	}
-
-	function documentReady () {
-            replaceFields(1);
-        }
-
-	var t = this,
-            oTools, 
-            nReady = 0, 
-            sModeLabel = "Show HTML", 
-            aEditors = [], 
-            rId = /\d+$/, 
-            oToolsReq = new XMLHttpRequest(),
-            customCommands = {
-                "printDoc": function (oDoc) {
+        var defaults = {
+                wrapperAttrs: {
+                    class: 'rich-text-editor'
+                },
+                menuBarAttrs: {
+                    class: 'rte-menus'
+                },
+                toolBarAttrs: {
+                    class: 'rte-tools'
+                },
+                editBoxAttrs: {
+                    class: 'rte-editbox'
+                },
+                modeBoxAttrs: {
+                    class: 'rte-switchmode'
+                },
+                saveBtnAttrs: {
+                    class: 'rte-Submit',
+                    type: 'button',
+                    id: 'btnSave',
+                    title: 'Save Form',
+                    value: 'Save',
+                    style: "float:right;"
+                },
+                formName: '',
+                buttons: {},
+                menus: {},
+                onGet: function(){return 'Got it!';},
+                onSave: function(){},
+                customCommands: {
+                    "printDoc": function (oDoc) {
                         if (!validateMode(oDoc)) { return; }
                         var oPrntWin = window.open("","_blank","width=450,height=470,left=400,top=100,menubar=yes,toolbar=no,location=no,scrollbars=yes");
                         oPrntWin.document.open();
-                        oPrntWin.document.write("<!doctype html><html><head><title>Print<\/title><\/head><body onload=\"print();\">" + oDoc.innerHTML + "<\/body><\/html>");
+                        oPrntWin.document.write("<!doctype html><html><head><title>Print<\/title><\/head><body onload=\"print();\">" + oDoc.html() + "<\/body><\/html>");
                         oPrntWin.document.close();
-                },
-                "cleanDoc": function (oDoc) {
-                        if (validateMode(oDoc) && confirm("Are you sure?")) { oDoc.innerHTML = ""; };
-                },
-                "createLink": function (oDoc) {
+                    },
+                    "cleanDoc": function (oDoc) {
+                        if (validateMode(oDoc) && confirm("Are you sure?")) { oDoc.html(""); };
+                    },
+                    "createLink": function (oDoc) {
                         var sLnk = prompt("Write the URL here", "http:\/\/");
                         if (sLnk && sLnk !== "http://"){ formatDoc(oDoc, "createlink", sLnk); }
+                    }
                 }
             };
 
-        t.insertField = insertField;
+        var settings = $.extend( true, {}, defaults, options );
+        
+        var $wrapper = $(this);
+        
+        var $editBox = createEditor($wrapper, settings);
+        
+        var markup = settings.onGet.call();
 
-        // Get the tools and selectors markup
-	oToolsReq.onload = toolsReady;
-	oToolsReq.open("GET", "../js/rich-text-tools.json", true);
-	oToolsReq.send(null);
+        $wrapper.attr(settings.wrapperAttrs);
+        
+        $editBox.html(markup).prop('contentEditable', true);;
 
-        documentReady();
+        return this;
+    };
+    
+    function formatDoc ($editBox, sCmd, sValue) {
+        document.execCommand(sCmd, false, sValue);
+        $editBox.focus();
+    }
+
+    function menuSelect ($editBox, $menu) {
+        formatDoc($editBox, $menu.data('cmd'), $menu.val());
+    }
+
+    function buttonClick (customCommands, $editBox, $button) {
+        var sCmd = $button.data('cmd');
+        customCommands.hasOwnProperty(sCmd) ? customCommands[sCmd]($editBox) : formatDoc($editBox, sCmd, $button.attr('alt') || false);
+    }
+
+    function createMenuItem (sValue, sLabel) {
+        return new Option(sLabel, sValue); ;
+    }
+
+    createMenuBar = function (menus) {
+        
+        var mBar = $("<div />");
+        
+        for (var $menu, oMenuOpts, vOpt, nMenu = 0; nMenu < menus.length; nMenu++) {
+
+            $menu = $("<select />")
+                    .data('cmd', menus[nMenu].command)
+                    .append(createMenuItem('0', menus[nMenu].header))
+                    .prop('selectedIndex', '0');
+
+            oMenuOpts = menus[nMenu].values;
+
+            if (oMenuOpts.constructor === Array) {
+                for (vOpt = 0; vOpt < oMenuOpts.length; $menu.append(createMenuItem(oMenuOpts[vOpt], oMenuOpts[vOpt++])));
+            } else {
+                for (vOpt in oMenuOpts) { $menu.append(createMenuItem(vOpt, $('<div />').html(oMenuOpts[vOpt]).text())); }				
+            }
+            
+            mBar.append($menu);
+        }
+        return mBar;
 
     };
-});
+    
+    createToolBar = function(buttons) {
+
+        var tBar = $("<div />");
+        
+        for (var oBtnDef, $button, nBtn = 0; nBtn < buttons.length; nBtn++) {
+
+            oBtnDef = buttons[nBtn];
+            $button = $('<img class="rte-button" />');
+
+            $button.attr('src', oBtnDef.image);
+            if (oBtnDef.hasOwnProperty("value")) { $button.attr('alt', oBtnDef.value); }
+            $button.attr('title', oBtnDef.text);
+            $button.data('cmd', oBtnDef.command);
+
+            tBar.append($button);
+        }
+
+        return tBar;
+    };
+    
+    function createEditor ($wrapper, settings) {
+        var 
+            $menuBar = createMenuBar(settings.menus)
+                .attr(settings.menuBarAttrs)
+                .appendTo($wrapper),
+            $toolsBar = createToolBar(settings.buttons)
+                .attr(settings.toolBarAttrs)
+                .appendTo($wrapper), 
+            $editBox = $("<div />")
+                .attr(settings.editBoxAttrs)
+                .appendTo($wrapper),
+            $saveBtn = $('<input />').attr(settings.saveBtnAttrs);
+
+
+        $menuBar.on('change', 'select', function (){
+            if ($(this).val() !== '0') {
+                menuSelect($editBox, $(this));
+                $(this).children('option:first-child').prop('selected', true);
+            }
+        });
+
+        // Save button 
+        $saveBtn.click(function (){
+            var text = $editBox.html();
+            settings.onSave.call(text);
+        });
+        
+        $toolsBar.append($saveBtn);
+
+        $toolsBar.on('click', 'img', function (){
+            buttonClick(settings.customCommands, $editBox, $(this));
+        });
+
+        $wrapper.append($menuBar);
+        $wrapper.append($toolsBar);
+        $wrapper.append($editBox);
+
+        return $editBox;
+    }
+    
+}(jQuery));

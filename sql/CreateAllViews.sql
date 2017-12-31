@@ -2245,6 +2245,24 @@ where l.log_Type = 'stay'
 order by l.idVisit, l.Span, l.idStay, l.Timestamp;
 
 
+-- CREATE or replace VIEW `vvisit_checkedout` AS
+-- select
+--     v.idVisit,
+--     v.Span,
+--     ifnull(v.Actual_Departure, '') as `Actual_Departure`,
+--     
+-- from
+--     visit v
+--         join
+-- 	stays s on v.idVisit = s.idVisit
+--         join
+-- 	name_guest ng on s.idName = ng.idName
+-- 		join
+-- 	name n on s.idName = n.idName
+-- 		join
+-- 	name_email ne on n.idName = ne.idName
+--     
+
 
 
 -- -----------------------------------------------------

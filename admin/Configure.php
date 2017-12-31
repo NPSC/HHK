@@ -42,31 +42,75 @@ if ($uS->rolecode > WebRole::WebUser) {
 
 $dbh = $wInit->dbh;
 
-// Get Form
+// Get selected Editor Form text
 if (isset($_POST['cmd'])) {
 
-    $fn = filter_input(INPUT_POST, 'fn');
+    $cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_STRING);
 
+    switch ($cmd) {
 
-    if (!$fn || $fn == '') {
-        exit(json_encode(array('warning'=>'The Form name is blank.')));
-    }
+        case 'getform':
 
-    $files = readGenLookupsPDO($dbh, 'Editable_Forms');
+            $fn = filter_input(INPUT_POST, 'fn');
 
-    if (isset($files[$fn])) {
+            if (!$fn || $fn == '') {
+                exit(json_encode(array('warning'=>'The Form name is blank.')));
+            }
 
-        if (file_exists($fn)) {
+            $files = readGenLookupsPDO($dbh, 'Editable_Forms');
 
-            exit(json_encode(array('title'=>$files[$fn][1], 'tx'=>file_get_contents($fn))));
+            if (isset($files[$fn])) {
 
-        } else {
-            exit(json_encode(array('warning'=>'The Form is missing from the server library.')));
-        }
+                if (file_exists($fn)) {
+                    exit(json_encode(array('title'=>$files[$fn][1], 'tx'=>file_get_contents($fn), 'jsn'=>file_get_contents($files[$fn][2]))));
+                } else {
+                    exit(json_encode(array('warning'=>'This Form is missing from the server library.')));
+                }
 
-    } else {
+            } else {
+                exit(json_encode(array('warning'=>'The Form name is not on the acceptable list.')));
+            }
 
-        exit(json_encode(array('warning'=>'The Form name is not on the acceptable list.')));
+            break;
+
+        case 'saveform':
+
+            $formEditorText = filter_input(INPUT_POST, 'tx');
+            $rteFileSelection = filter_input(INPUT_POST, 'fn');
+
+            $files = readGenLookupsPDO($dbh, 'Editable_Forms');
+
+            if ($rteFileSelection == '') {
+
+                $rteMsg = 'Nothing saved. Select a Form to edit.';
+
+            } else if (isset($files[$rteFileSelection]) === FALSE) {
+
+                $rteMsg = 'Nothing saved. Form name not accepted. ';
+
+            } else if (file_exists($rteFileSelection) === FALSE) {
+
+                $rteMsg = 'Nothing saved. Form does not exist. ';
+
+            } else if ($formEditorText == '') {
+
+                $rteMsg = 'Nothing saved. Form text is blank.  ';
+
+            } else {
+
+                $rtn = file_put_contents($rteFileSelection, $formEditorText);
+
+                if ($rtn > 0) {
+                    $rteMsg = "Success - $rtn bytes saved.";
+
+                } else {
+                    $rteMsg = "Form Not Saved.";
+                }
+            }
+
+            exit(json_encode(array('response'=>$rteMsg)));
+
+            break;
     }
 
     exit(json_encode(array('warning'=>'Unspecified')));
@@ -445,44 +489,6 @@ if (isset($_POST['btnLogs'])) {
     $logs = CreateMarkupFromDB::generateHTML_Table($edRows, 'syslog');
 }
 
-// Form Editor
-if (isset($_POST['rteformText'])) {
-    $tabIndex = 6;
-
-    $formEditorText = filter_input(INPUT_POST, 'rteformText');
-    $rteFileSelection = filter_input(INPUT_POST, 'frmEdSelect');
-
-    $files = readGenLookupsPDO($dbh, 'Editable_Forms');
-
-    if ($rteFileSelection == '') {
-
-        $formEditorText = '';
-        $rteMsg = 'Nothing saved. Select a Form to edit.';
-
-    } else if (isset($files[$rteFileSelection]) === FALSE) {
-
-        $rteMsg = 'Nothing saved. Form name not accepted. ';
-
-    } else if (file_exists($rteFileSelection) === FALSE) {
-
-        $rteMsg = 'Nothing saved. Form does not exist. ';
-
-    } else if ($formEditorText == '') {
-
-        $rteMsg = 'Nothing saved. Form text is blank.  ';
-
-    } else {
-
-        $rtn = file_put_contents($rteFileSelection, $formEditorText);
-
-        if ($rtn > 0) {
-            $rteMsg = "$rtn bytes saved.";
-
-        } else {
-            $rteMsg = "Form Not Saved.";
-        }
-    }
-}
 
 try {
     $payments = SiteConfig::createPaymentCredentialsMarkup($dbh, $ccResultMessage);
@@ -602,7 +608,9 @@ if (is_null($wsConfig) === FALSE) {
 
 
 // Form editor
-$rteSelectForm = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(readGenLookupsPDO($dbh, 'Editable_Forms'), $rteFileSelection, TRUE), array('id'=>'frmEdSelect', 'name'=>'frmEdSelect'));
+$rteSelectForm = HTMLSelector::generateMarkup(
+        HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Editable_Forms')), $rteFileSelection, TRUE)
+        , array('id'=>'frmEdSelect', 'name'=>'frmEdSelect'));
 
 // Alert Message
 $webAlert = new alertMessage("webContainer");
@@ -631,7 +639,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
 
 
         <style type="text/css">
-            #newcomment {
+            #rteContainer {
                 width: 850px;
                 min-height: 500px;
         }
@@ -639,6 +647,9 @@ $getWebReplyMessage = $webAlert->createMarkup();
 
 <script type="text/javascript">
 $(document).ready(function () {
+    var tabIndex = '<?php echo $tabIndex; ?>';
+    var tbs = $('#tabs').tabs();
+    var frmSelVal = '<?php echo $rteFileSelection; ?>';
 
     $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
 
@@ -650,15 +661,14 @@ $(document).ready(function () {
         }
     });
 
-    $("#taAgreetext").richTextEditor();
-
+    // Form edit form select drives the whole process.
     $('#frmEdSelect').change(function () {
         $('#rteMsg').text('');
 
         if ($(this).val() === '') {
             $('#spnRteLoading').hide();
-            $('#rte-editbox-0').html('');
-            $('#spnEditorTitle').text('');
+            $('#spnEditorTitle').text('Select a form');
+            $('#rteContainer').empty()
             return;
         }
 
@@ -667,8 +677,6 @@ $(document).ready(function () {
         $.post('Configure.php', {cmd:'getform', fn: $(this).val()}, function (data){
 
             $('#spnRteLoading').hide();
-            $('#rte-editbox-0').html('');
-            $('#spnEditorTitle').text('');
 
             data = $.parseJSON(data);
 
@@ -680,8 +688,27 @@ $(document).ready(function () {
                 $('#rteMsg').text(data.warning);
             }
 
-            if (data.tx) {
-                $('#rte-editbox-0').html(data.tx);
+            var rte = $('#rteContainer');
+
+            if (data.jsn) {
+                var tools = $.parseJSON(data.jsn);
+                rte.empty().richTextEditor({
+                    menus: tools.menus,
+                    buttons: tools.buttons,
+                    formName: $('#frmEdSelect').val(),
+                    onGet: function () {
+                        return (data.tx ? data.tx : 'Nothing');
+                    },
+                    onSave: function (text) {
+
+                        var parms = {cmd:'saveform', tx: text, fn: $('#frmEdSelect').val()};
+
+                        $.post('Configure.php', parms, function (data){
+                            data = $.parseJSON(data);
+                            $('#rteMsg').text(data.response);
+                        });
+                    }
+                });
             }
 
             if (data.title) {
@@ -690,8 +717,7 @@ $(document).ready(function () {
         });
     });
 
-    var tabIndex = '<?php echo $tabIndex; ?>';
-    var tbs = $('#tabs').tabs();
+
     tbs.tabs("option", "active", tabIndex);
     $('#tabs').show();
 });
@@ -728,11 +754,11 @@ $(document).ready(function () {
                 </div>
                 <div id="agreeEdit" class="ui-tabs-hide" >
                     <form action="Configure.php" method="post">
-                        <p>Select the form to edit from the following list: <?php echo $rteSelectForm; ?><span id="spnRteLoading" style="text-decoration: italic; display:none;">Loading...</span></p>
+                        <p>Select the form to edit from the following list: <?php echo $rteSelectForm; ?><span id="spnRteLoading" style="font-style: italic; display:none;">Loading...</span></p>
                         <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
                         <fieldset style="clear:left; float:left; margin-top:10px;">
-                        <legend><span id="spnEditorTitle" style="font-size: 1em; font-weight: bold"></span></legend>
-                            <textarea name="rteformText" id="newcomment" class="rich-text-editor"><?php echo $formEditorText; ?></textarea>
+                            <legend><span id="spnEditorTitle" style="font-size: 1em; font-weight: bold">Select a form</span></legend>
+                            <div id="rteContainer"></div>
                         </fieldset>
                     </form>
                 </div>
