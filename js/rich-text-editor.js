@@ -21,15 +21,21 @@
                 saveBtnAttrs: {
                     class: 'rte-Submit',
                     type: 'button',
-                    id: 'btnSave',
                     title: 'Save Form',
                     value: 'Save',
                     style: "float:right;"
                 },
+                resetBtnAttrs: {
+                    type: 'button',
+                    title: 'Reset Form',
+                    value: 'Reset',
+                    style: "float:right;margin-right:.5em;"
+                },
                 formName: '',
+                content: '',
                 buttons: {},
                 menus: {},
-                onGet: function(){return 'Got it!';},
+                onGet: function(){return 'Nothing to load.';},
                 onSave: function(){},
                 customCommands: {
                     "printDoc": function (oDoc) {
@@ -55,11 +61,11 @@
         
         var $editBox = createEditor($wrapper, settings);
         
-        var markup = settings.onGet.call();
+        settings.content = settings.onGet.call();
 
         $wrapper.attr(settings.wrapperAttrs);
         
-        $editBox.html(markup).prop('contentEditable', true);;
+        $editBox.html(settings.content).prop('contentEditable', true);
 
         return this;
     };
@@ -138,7 +144,8 @@
             $editBox = $("<div />")
                 .attr(settings.editBoxAttrs)
                 .appendTo($wrapper),
-            $saveBtn = $('<input />').attr(settings.saveBtnAttrs);
+            $saveBtn = $('<input />').attr(settings.saveBtnAttrs),
+            $resetBtn = $('<input />').attr(settings.resetBtnAttrs);
 
 
         $menuBar.on('change', 'select', function (){
@@ -149,13 +156,16 @@
         });
 
         // Save button 
-        $saveBtn.click(function (){
-            var text = $editBox.html();
-            settings.onSave.call(text);
+        $saveBtn.click(function (event){
+            settings.onSave.call($editBox);
         });
         
-        $toolsBar.append($saveBtn);
-
+        // Reset button 
+        $resetBtn.click(function (event){
+            $editBox.html(settings.content).prop('contentEditable', true);
+        });
+        
+        $toolsBar.append($saveBtn).append($resetBtn);
         $toolsBar.on('click', 'img', function (){
             buttonClick(settings.customCommands, $editBox, $(this));
         });

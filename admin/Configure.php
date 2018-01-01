@@ -125,7 +125,6 @@ $ccResultMessage = '';
 $holResultMessage = '';
 $externalErrMsg = '';
 $serviceName = '';
-$formEditorText = '';
 $rteFileSelection = '';
 $rteMsg = '';
 
@@ -699,9 +698,9 @@ $(document).ready(function () {
                     onGet: function () {
                         return (data.tx ? data.tx : 'Nothing');
                     },
-                    onSave: function (text) {
+                    onSave: function () {
 
-                        var parms = {cmd:'saveform', tx: text, fn: $('#frmEdSelect').val()};
+                        var parms = {cmd:'saveform', tx: $(this).html(), fn: $('#frmEdSelect').val()};
 
                         $.post('Configure.php', parms, function (data){
                             data = $.parseJSON(data);
