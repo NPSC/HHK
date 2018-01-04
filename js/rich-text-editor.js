@@ -39,18 +39,17 @@
                 onSave: function(){},
                 customCommands: {
                     "printDoc": function (oDoc) {
-                        if (!validateMode(oDoc)) { return; }
-                        var oPrntWin = window.open("","_blank","width=450,height=470,left=400,top=100,menubar=yes,toolbar=no,location=no,scrollbars=yes");
+                        var oPrntWin = window.open("","_blank","width=750,height=470,left=100,top=100,menubar=yes,toolbar=no,location=no,scrollbars=yes");
                         oPrntWin.document.open();
                         oPrntWin.document.write("<!doctype html><html><head><title>Print<\/title><\/head><body onload=\"print();\">" + oDoc.html() + "<\/body><\/html>");
                         oPrntWin.document.close();
                     },
                     "cleanDoc": function (oDoc) {
-                        if (validateMode(oDoc) && confirm("Are you sure?")) { oDoc.html(""); };
+                        if (confirm("Are you sure?")) { oDoc.html(""); };
                     },
                     "createLink": function (oDoc) {
                         var sLnk = prompt("Write the URL here", "http:\/\/");
-                        if (sLnk && sLnk !== "http://"){ formatDoc(oDoc, "createlink", sLnk); }
+                        if (sLnk && sLnk !== "http://"){ formatDoc(oDoc, "createLink", sLnk); }
                     }
                 }
             };
@@ -66,12 +65,14 @@
         $wrapper.attr(settings.wrapperAttrs);
         
         $editBox.html(settings.content).prop('contentEditable', true);
-
+        
         return this;
     };
     
     function formatDoc ($editBox, sCmd, sValue) {
-        document.execCommand(sCmd, false, sValue);
+        if (document.execCommand(sCmd, false, sValue) === false) {
+            alert("Command did not work.");
+        }
         $editBox.focus();
     }
 
@@ -80,8 +81,14 @@
     }
 
     function buttonClick (customCommands, $editBox, $button) {
+        
         var sCmd = $button.data('cmd');
-        customCommands.hasOwnProperty(sCmd) ? customCommands[sCmd]($editBox) : formatDoc($editBox, sCmd, $button.attr('alt') || false);
+
+        if (customCommands.hasOwnProperty(sCmd)) {
+            customCommands[sCmd]($editBox);
+        } else { 
+            formatDoc($editBox,  sCmd, false);
+        }
     }
 
     function createMenuItem (sValue, sLabel) {
@@ -123,7 +130,6 @@
             $button = $('<img class="rte-button" />');
 
             $button.attr('src', oBtnDef.image);
-            if (oBtnDef.hasOwnProperty("value")) { $button.attr('alt', oBtnDef.value); }
             $button.attr('title', oBtnDef.text);
             $button.data('cmd', oBtnDef.command);
 
@@ -162,17 +168,14 @@
         
         // Reset button 
         $resetBtn.click(function (event){
-            $editBox.html(settings.content).prop('contentEditable', true);
+            $editBox.html(settings.content);
         });
         
         $toolsBar.append($saveBtn).append($resetBtn);
+        
         $toolsBar.on('click', 'img', function (){
             buttonClick(settings.customCommands, $editBox, $(this));
         });
-
-        $wrapper.append($menuBar);
-        $wrapper.append($toolsBar);
-        $wrapper.append($editBox);
 
         return $editBox;
     }

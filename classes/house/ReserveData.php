@@ -19,6 +19,7 @@ class ReserveData {
     const PSG_CHOOSER = 'psgChooser';
     const FAM_SECTION = 'famSection';
     const FULL_NAME = 'fullName';
+    const ADD_PERSON = 'addPerson';
 
     const ROLE = 'role';
     const PREF = 'pref';
@@ -49,6 +50,7 @@ class ReserveData {
     protected $resvChooser;
     protected $psgChooser;
     protected $familySection;
+    protected $addPerson;
     protected $arrivalDateStr;
     protected $departureDateStr;
     protected $psgMembers;
@@ -173,6 +175,10 @@ class ReserveData {
 
         if ($this->familySection != '') {
             $rtnData[ReserveData::FAM_SECTION] = $this->familySection;
+        }
+
+        if ($this->addPerson != '') {
+            $rtnData[ReserveData::ADD_PERSON] = $this->addPerson;
         }
 
         if ($this->fullName != '') {
@@ -352,6 +358,11 @@ class ReserveData {
 
     public function setPsgChooser($psgChooser) {
         $this->psgChooser = $psgChooser;
+        return $this;
+    }
+
+    public function setAddPerson($p) {
+        $this->addPerson = $p;
         return $this;
     }
 

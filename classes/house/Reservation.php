@@ -931,7 +931,8 @@ class BlankReservation extends Reservation {
 
     public function addPerson(\PDO $dbh) {
 
-        return array('addPerson' => $this->family->createAddPersonMu($dbh, $this->reserveData));
+        $this->reserveData->setAddPerson($this->family->createAddPersonMu($dbh, $this->reserveData));
+        return $this->reserveData->toArray();
     }
 
     public function copyPerson(\PDO $dbh) {
@@ -944,7 +945,28 @@ class ReserveSearcher extends ActiveReservation {
 
     public function createMarkup(\PDO $dbh) {
 
-        $ngRss = array();
+
+        return $this->reserveData->toArray();
+
+    }
+
+    public function addPerson(\PDO $dbh) {
+
+        if ($this->reserveData->getId() > 0) {
+
+            $stmt = $dbh->query("select count(*) from psg where idPatient = " . $this->reserveData->getId());
+            $rows = $stmt->fetchAll();
+            if ($rows[0][0] > 0) {
+                return $this->createMarkup($dbh);
+            }
+        }
+
+
+
+    }
+
+    protected function resvChooserMarkup() {
+                $ngRss = array();
 
         // Search for a PSG
         if ($this->reserveData->getIdPsg() == 0) {
@@ -972,8 +994,6 @@ class ReserveSearcher extends ActiveReservation {
 
             $this->reserveData->setResvChooser($mk);
         }
-
-        return $this->reserveData->toArray();
 
     }
 

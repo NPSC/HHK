@@ -1365,7 +1365,6 @@ class VisitView {
                 $newEndDt = setTimeZone(NULL, $stayRS->Span_End_Date->getStoredVal());
             }
 
-            //$newEndDt = new DateTime(($stayRS->Span_End_Date->getStoredVal() == '' ? $stayRS->Expected_Co_Date->getStoredVal() : $stayRS->Span_End_Date->getStoredVal()));
 
             if ($endDelta < 0 || $startDelta < 0) {
                 // Move back
@@ -1374,12 +1373,19 @@ class VisitView {
                 $expectedDeparture->sub($endInterval);
                 $firstArrival->sub($startInterval);
 
-            } else {
-
-                // Spring ahead
+            } else if (($endDelta > 0 || $startDelta == 0) && $stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
+                // Spring ahead if checked in
                 $newEndDt->add($endInterval);
                 $newStartDT->add($startInterval);
                 $expectedDeparture->add($endInterval);
+                $firstArrival->add($startInterval);
+
+            } else {
+
+                // Spring ahead
+
+                $newStartDT->add($startInterval);
+
                 $firstArrival->add($startInterval);
 
             }

@@ -1420,7 +1420,7 @@ function PageManager(initData) {
         buttons['Exit'] = function() {
             $(this).dialog("close");
             $('div#guestSearch').show();
-            $('#gstSearch').val('').focus();
+            $('input#txtPersonSearch').val('').focus();
         };
 
         $resvDiag.dialog('option', 'buttons', buttons);
@@ -1443,10 +1443,10 @@ function PageManager(initData) {
                 Cancel: function () {
                     $(this).dialog('close');
                     $('div#guestSearch').show();
-                    $('#gstSearch').val('').focus();
+                    $('input#txtPersonSearch').val('').focus();
                 }
             })
-            .dialog('option', 'title', data.patLabel + ' Chooser For: ' + data.fullName)
+            .dialog('option', 'title', data.patLabel + ' Chooser' + (data.fullName === undefined ? '' : ' For: ' + data.fullName))
             .dialog('open');
     }
 
@@ -1518,6 +1518,7 @@ function PageManager(initData) {
             transferToGw(data);
         }
 
+        // Patient management.
         if (data.resvChooser && data.resvChooser !== '') {
             resvPicker(data, $('#resDialog'), $('#psgDialog'));
             return;
@@ -1526,18 +1527,18 @@ function PageManager(initData) {
             return;
         }
 
+        // Assign variables.
         if (data.idPsg) {
             t.idPsg = data.idPsg;
         }
-
         if (data.id) {
             t.idName = data.id;
         }
-
         if (data.rid) {
             t.idResv = data.rid;
         }
 
+        // Build a new Family section.
         if (data.famSection) {
 
             people.makeList(data.famSection.mem, 'pref');

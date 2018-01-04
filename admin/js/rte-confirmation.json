@@ -112,11 +112,6 @@
             "command": "insertunorderedlist",
             "image": "css\/icons\/dottedlist.gif"
         }, {
-            "text": "Quote",
-            "command": "formatblock",
-            "value": "blockquote",
-            "image": "css\/icons\/quote.gif"
-        }, {
             "text": "Delete indentation",
             "command": "outdent",
             "image": "css\/icons\/outdent.gif"
@@ -128,18 +123,6 @@
             "text": "Hyperlink",
             "command": "createLink",
             "image": "css\/icons\/hyperlink.gif"
-        }, {
-            "text": "Cut",
-            "command": "cut",
-            "image": "css\/icons\/cut.gif"
-        }, {
-            "text": "Copy",
-            "command": "copy",
-            "image": "css\/icons\/copy.gif"
-        }, {
-            "text": "Paste",
-            "command": "paste",
-            "image": "css\/icons\/paste.gif"
         }
     ]
 }

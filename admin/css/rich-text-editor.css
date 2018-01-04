@@ -6,13 +6,15 @@ img.rte-button {
 div.rich-text-editor {
 	display: inline-block;
 	padding: 3px;
+        width: 850px;
+        min-height: 500px;
+
 }
 
 .rte-Submit {
     float:right;
     margin-right: 10px;
 }
-
 
 div.rte-editbox {
 	min-height: 100px;
@@ -23,21 +25,15 @@ div.rte-editbox {
         background-color:white;
 }
 
+div.rte-editbox ul {list-style-type:disc;margin-left: 20px;}
+div.rte-editbox ol {list-style-type:decimal;margin-left: 20px;}
+div.rte-editbox blockquote {
+    display: block;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
 div.rte-editbox p {
-	margin: 0;
+	margin-top: 10px;
 }
 
-div.rte-editbox > pre.rte-sourcetext {
-	padding: 0;
-	margin: 0;
-}
-
-div.rte-switchmode {
-	font-size: 12px;
-	text-align: right;
-	padding: 2px 0 0 2px;
-}
-
-div.rte-switchmode > label {
-	cursor: pointer;
-}

@@ -90,7 +90,7 @@
             "image": "css\/icons\/underline.gif"
         }, {
             "text": "Left align",
-            "command": "justifyleft",
+            "command": "justifyLeft",
             "image": "css\/icons\/justifyleft.gif"
         }, {
             "text": "Center align",
@@ -102,17 +102,12 @@
             "image": "css\/icons\/justifyright.gif"
         }, {
             "text": "Numbered list",
-            "command": "insertorderedlist",
+            "command": "insertOrderedList",
             "image": "css\/icons\/numberedlist.gif"
         }, {
             "text": "Dotted list",
-            "command": "insertunorderedlist",
+            "command": "insertUnorderedList",
             "image": "css\/icons\/dottedlist.gif"
-        }, {
-            "text": "Quote",
-            "command": "formatblock",
-            "value": "blockquote",
-            "image": "css\/icons\/quote.gif"
         }, {
             "text": "Delete indentation",
             "command": "outdent",
@@ -125,18 +120,6 @@
             "text": "Hyperlink",
             "command": "createLink",
             "image": "css\/icons\/hyperlink.gif"
-        }, {
-            "text": "Cut",
-            "command": "cut",
-            "image": "css\/icons\/cut.gif"
-        }, {
-            "text": "Copy",
-            "command": "copy",
-            "image": "css\/icons\/copy.gif"
-        }, {
-            "text": "Paste",
-            "command": "paste",
-            "image": "css\/icons\/paste.gif"
         }
     ]
 }
