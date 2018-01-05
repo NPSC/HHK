@@ -197,7 +197,7 @@ abstract class Reservation {
 
                 if ($uS->VisitFee) {
                     // Visit Fee Array
-                    $dataArray['vfee'] = $rateChooser::makeVisitFeeArray($dbh);
+                    $dataArray['vfee'] = $rateChooser::makeVisitFeeArray($dbh, $resv->getVisitFee());
                 }
 
     //            $dataArray['pay'] =
@@ -509,7 +509,7 @@ abstract class Reservation {
 
             $visitFeeOption = filter_var($post['selVisitFee'], FILTER_SANITIZE_STRING);
 
-            $vFees = RateChooser::makeVisitFeeArray($dbh);
+            $vFees = RateChooser::makeVisitFeeArray($dbh, $resv->getVisitFee());
 
             if (isset($vFees[$visitFeeOption])) {
                 $resv->setVisitFee($vFees[$visitFeeOption][2]);

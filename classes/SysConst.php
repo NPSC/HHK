@@ -102,6 +102,16 @@ class GL_TableNames {
     const KeyDepositCode = 'Key_Deposit_Code';
 }
 
+class GlTypeCodes {
+    const Archive = 'arc';
+    const Demographics = 'd';
+    const CA = 'ca';
+    const H = 'h';
+    const HA = 'ha';
+    const m = 'm';
+    const U = 'u';
+}
+
 class NameGuestStatus {
     const Active = 'a';
 }

@@ -21,8 +21,12 @@ class RoomReport {
             $whClause = " and DATE(s.Span_Start_Date) <= '$year-12-31' and Date(ifnull(s.Span_End_Date, now())) >= '$year-01-01'";
         }
 
-        $query = "select sum(DATEDIFF(ifnull(s.Span_End_Date, now()), s.Span_Start_Date)) as `Nights` "
-                . " from stays s where s.`On_Leave` = 0 and DATEDIFF(ifnull(s.Span_End_Date, now()), s.Span_Start_Date) > 0" . $whClause;
+        $query = "SELECT SUM(DATEDIFF(
+		IFNULL(s.Span_End_Date, NOW()),
+            case when DATE(s.Span_Start_Date) > DATE(NOW()) then s.Span_Start_Date else MAKEDATE(YEAR(NOW()), 1) end)) AS `Nights`
+    FROM stays s
+    WHERE s.`On_Leave` = 0 " . $whClause;
+
         $stmt = $dbh->query($query);
         $rows = $stmt->fetchAll();
         if (count($rows) == 1) {

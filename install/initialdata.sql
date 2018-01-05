@@ -147,8 +147,12 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('House_Discount', 'hd1', 'Service Issue','10', 'ca',0),
 ('House_Discount', 'hd2', 'Facilities Issue','15', 'ca',0),
 
-('Income_Bracket', 'ib1', 'Rich', '', 'd',0),
-('Income_Bracket', 'ib2', 'Poor', '', 'd',0),
+('Income_Bracket', 'ib1', '0 - 25,000', '', 'd',10),
+('Income_Bracket', 'ib2', '26 - 50,000', '', 'd',20),
+('Income_Bracket', 'ib3', '51 - 75,000', '', 'd',30),
+('Income_Bracket', 'ib4', '76 - 100,000', '', 'd',40),
+('Income_Bracket', 'ib5', '100 - 150,000', '', 'd',50),
+('Income_Bracket', 'ib6', '200,000 & up', '', 'd',60),
 ('Income_Bracket', 'z', 'Unknown', '', 'd',1000),
 
 ('Invoice_Status', 'p', 'Paid', '','',0),

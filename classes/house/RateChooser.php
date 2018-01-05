@@ -3,7 +3,7 @@
  * RateChooser.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -502,15 +502,26 @@ class RateChooser {
         return $resArray;
     }
 
-    public static function makeVisitFeeArray(\PDO $dbh) {
+    public static function makeVisitFeeArray(\PDO $dbh, $myVFeeAmt = 0) {
 
-        return readGenLookupsPDO($dbh, 'Visit_Fee_Code');
+        $codes = array();
+
+        foreach (readGenLookupsPDO($dbh, 'Visit_Fee_Code') as $r) {
+
+            if ($r['Type'] != GlTypeCodes::Archive || $myVFeeAmt >= 0) {
+                $codes[$r['Code']] = $r;
+            }
+        }
+
+        return $codes;
     }
 
     public static function makeVisitFeeSelector($vFeesArray, $myVFeeAmt, $class = '', $name = 'selVisitFee') {
 
+        $uS = Session::getInstance();
+
         $vFeeOpts = array();
-        $selectedVfeeOption = '1';
+        $selectedVfeeOption = $uS->DefaultVisitFee;
 
         foreach ($vFeesArray as $r) {
             $vFeeOpts[$r[0]] = array(0=>$r[0], 1=>$r[1] . ($r[2] == 0 ? '' :  ': $' . number_format($r[2], 0)));

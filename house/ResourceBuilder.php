@@ -37,6 +37,90 @@ try {
     die($exw->getMessage());
 }
 
+function saveArchive(\PDO $dbh, $desc, $subt, $tblName) {
+
+    $defaultCode = '';
+
+    if (isset($desc)) {
+
+        $uS = Session::getInstance();
+
+        foreach ($desc as $k => $r) {
+
+            $code = trim(filter_var($k, FILTER_SANITIZE_STRING));
+
+            if ($code == '' || $tblName == '') {
+                continue;
+            }
+
+            $glRs = new GenLookupsRS();
+            $glRs->Table_Name->setStoredVal($tblName);
+            $glRs->Code->setStoredVal($code);
+            $rows = EditRS::select($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+
+            if (count($rows) < 1) {
+                continue;
+            }
+
+            EditRS::loadRow($rows[0], $glRs);
+
+            $newDesc = '';
+
+            if ($r != '') {
+                $newDesc = filter_var($r, FILTER_SANITIZE_STRING);
+            } else {
+                continue;
+            }
+
+            if (isset($subt[$code])) {
+                $newSubt = filter_var($subt[$code], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+            } else {
+                continue;
+            }
+
+            // Check if value changed.
+            if ($glRs->Substitute->getStoredVal() != $newSubt) {
+
+                // Create new entry
+                $newRs = new GenLookupsRS();
+                $defaultCode = incCounter($dbh, 'codes');
+
+                $newRs->Table_Name->setNewVal($tblName);
+                $newRs->Code->setNewVal($defaultCode);
+                $newRs->Description->setNewVal($newDesc);
+                $newRs->Substitute->setNewVal($newSubt);
+
+                EditRS::insert($dbh, $newRs);
+                $logText = HouseLog::getInsertText($newRs, $tblName);
+                HouseLog::logGenLookups($dbh, $tblName, $defaultCode, $logText, 'insert', $uS->username);
+
+                // Update Old
+                $glRs->Type->setNewVal(GlTypeCodes::Archive);
+
+                $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+                $logTextu = HouseLog::getUpdateText($glRs, $tblName . $code);
+                HouseLog::logGenLookups($dbh, $tblName, $code, $logTextu, 'update', $uS->username);
+
+            } else {
+
+                // update
+                if ($newDesc != '') {
+                    $glRs->Description->setNewVal($newDesc);
+                }
+
+                $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+
+                if ($ctr > 0) {
+                    $logText = HouseLog::getUpdateText($glRs, $tblName . $code);
+                    HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'update', $uS->username);
+                }
+
+            }
+        }
+    }
+
+    return $defaultCode;
+}
 $dbh = $wInit->dbh;
 $pageTitle = $wInit->pageTitle;
 
@@ -397,11 +481,20 @@ if (isset($_POST['btnkfSave'])) {
     // Visit Fee
     if (isset($_POST['vfdesc'])) {
 
-        saveGenLk($dbh, 'Visit_Fee_Code', $_POST['vfdesc'], $_POST['vfrate'], NULL);
+        $vfDefault = '';
 
         if (isset($_POST['vfrbdefault'])) {
-
             $vfDefault = filter_var($_POST['vfrbdefault'], FILTER_SANITIZE_STRING);
+        }
+
+        // Amount Changed?
+        if (($defaultCode = saveArchive($dbh, $_POST['vfdesc'], $_POST['vfrate'], 'Visit_Fee_Code')) != '') {
+            $vfDefault = $defaultCode;
+        }
+
+        // Save the default visit fee selection.
+        if ($vfDefault != '') {
+
             $vFees = readGenLookupsPDO($dbh, 'Visit_Fee_Code');
 
             foreach ($vFees as $v) {
@@ -415,6 +508,7 @@ if (isset($_POST['btnkfSave'])) {
             }
         }
 
+        // Update the item description.
         foreach ($_POST['vfrate'] as $k => $p) {
 
             if ($p > 0) {
@@ -774,6 +868,10 @@ if ($uS->VisitFee) {
     $kTbl->addHeaderTr(HTMLTable::makeTh('Default') . HTMLTable::makeTh('Description') . HTMLTable::makeTh('Amount'));
 
     foreach ($kFees as $r) {
+
+        if ($r['Type'] == GlTypeCodes::Archive) {
+            continue;
+        }
 
         $ptAttrs = array('type' => 'radio', 'name' => 'vfrbdefault');
 

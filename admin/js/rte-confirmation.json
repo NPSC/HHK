@@ -54,7 +54,7 @@
                 "${ExpectedArrival}": "Expected Arrival",
                 "${ExpectedDeparture}": "Expected Departure",
                 "${Nites}" : "# Nights",
-                "${Notes} ": "Special Notes"
+                "${Notes}": "Special Notes"
             }
         }
     ],
