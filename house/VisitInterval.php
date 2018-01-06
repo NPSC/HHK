@@ -268,6 +268,12 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     // get session instance
     $uS = Session::getInstance();
 
+    $categories = readGenLookupsPDO($dbh, 'Room_Category', 'Description');
+    $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+
+    // Make titles for all the rates
+    $rateTitles = RoomRate::makeDescriptions($dbh);
+
     $query = "select
     v.idVisit,
     v.Span,
@@ -463,7 +469,6 @@ where
                         else Expected_Departure
                 end)) >= DATE('$start')) " . $whHosp . $whAssoc . " order by v.idVisit, v.Span";
 
-    $stmt = $dbh->query($query);
 
     $tbl = new HTMLTable();
     $sml = null;
@@ -532,7 +537,6 @@ where
     $totalNights = 0;
     $totalGuestNights = 0;
 
-    $categories = readGenLookupsPDO($dbh, 'Room_Category', 'Description');
     $totalCatNites[] = array();
 
     foreach ($categories as $c) {
@@ -548,12 +552,7 @@ where
     $now = new \DateTime();
     $now->setTime(0, 0, 0);
 
-    $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
-
-
-    // Make titles for all the rates
-    $rateTitles = RoomRate::makeDescriptions($dbh);
-
+    $stmt = $dbh->query($query);
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 

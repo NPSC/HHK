@@ -43,6 +43,9 @@ function initPDO($override = FALSE) {
 
             case 'MYSQL':
                 $dbh = initMY_SQL($ssn->databaseURL, $ssn->databaseName, $dbuName, $dbPw);
+
+                $dbh->exec("SET SESSION wait_timeout = 3600;");
+
                 break;
 
             case 'ODBC':
@@ -52,6 +55,7 @@ function initPDO($override = FALSE) {
             default:
                 // Use mysql
                 $dbh = initMY_SQL($ssn->databaseURL, $ssn->databaseName, $dbuName, $dbPw);
+                $dbh->exec("SET SESSION wait_timeout = 3600;");
 
         }
 
