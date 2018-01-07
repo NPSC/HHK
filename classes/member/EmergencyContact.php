@@ -122,7 +122,7 @@ class EmergencyContact implements iEmergencyContact {
         $markup->addBodyTr(HTMLTable::makeTd('Relationship to Guest', array('class'=>'tdlabel')) . HTMLTable::makeTd(
                 HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($relOptions), $emContact->getEcRelationship()), array('name'=>$idPrefix."selEmrgRel"))));
 
-        $attr = array('type'=>'checkbox', 'name'=>$idPrefix.'cbEmrgLater');
+        $attr = array('type'=>'checkbox', 'name'=>$idPrefix.'cbEmrgLater', 'class'=>'hhk-EmergCb');
         if ($checkLater) {
             $attr['checked'] = 'checked';
         }

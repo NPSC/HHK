@@ -79,6 +79,9 @@ order by r.Util_Priority;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
 
         $rooms = $this->getRooms();
 
+        // set the room priority
+        $dbh->query("update room set Util_Priority = '" . $this->getUtilPriority() . "' where idRoom = $id");
+
         if (count($rooms) == 0) {
             // add room
             $dbh->query("insert into resource_room (idResource, idRoom) values (" . $this->getIdResource() . "," . $id . ")");

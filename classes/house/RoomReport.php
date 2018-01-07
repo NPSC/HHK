@@ -136,6 +136,7 @@ FROM
 WHERE
     DATE(Start_Date) <= DATE(NOW())
         AND IFNULL(DATE(End_Date), DATE(NOW())) > DATE(NOW());";
+        
         $stmtrs = $dbh->query($query1);
 
         while ($r = $stmtrs->fetch(\PDO::FETCH_ASSOC)) {
@@ -149,6 +150,7 @@ WHERE
        }
 
         $query = "SELECT
+            r.Util_Priority,
             r.idRoom,
             r.`Title`,
             r.`Status`,
@@ -238,6 +240,7 @@ WHERE
             $guests = '';
         }
 
+        $fixed['titleSort'] = $r['Util_Priority'];
         $fixed['Title'] = $r['Title'];
         $fixed['Status'] = $stat;
         $fixed['Guests'] = $guests;

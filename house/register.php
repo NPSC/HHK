@@ -365,7 +365,8 @@ try {
             ];
 
             var dailyCols = [
-                {data: 'Title', title: 'Room', className: 'hhk-justify-c'},
+                {data: 'titleSort', 'visible': false },
+                {data: 'Title', title: 'Room', 'orderData': [0, 1], className: 'hhk-justify-c'},
                 {data: 'Status', title: 'Status', searchable:false},
                 {data: 'Guests', title: 'Guests'},
                 {data: 'Patient_Name', title: patientLabel},

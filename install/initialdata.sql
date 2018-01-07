@@ -434,7 +434,7 @@ REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`,`T
 REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES 
 ('CalViewWeeks','3','i','h','Number of weeks showing in the calendar view'),
 ('CardSwipe','false','b','f','Use POS terminal'),
-('ConfirmFile','hhk.html','s','h','Reservation Confirmation file template name'),
+('ConfirmFile','confirmation.html','s','h','Reservation Confirmation file template name'),
 ('ConcatVisitNotes', 'true', 'b', 'h', 'Show notes combined from all previous visits when true.'),
 ('county', 'false', 'b', 'h', 'Include the County in addresses.'),
 ('CoTod', 'false', 'b', 'h', 'Edit the time of day of a checkout.'),
@@ -490,7 +490,6 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('ShowTxPayType', 'false', 'b', 'h', 'Always Show the Transfer pay type'),
 ('SolicitBuffer','90','i','r','Timeout in days after visit checkout before solicit report will show new guests'),
 ('ShowUncfrmdStatusTab', 'true', 'b', 'h', 'Show the Unconfirmed reservations tab on the House Register page'),
-('ShrRm', 'false', 'b', 'h','Use the share rooms feature'),
 ('ShowZeroDayStays', 'false', 'b', 'h', 'Include 0-day stays and visits in Reports and Pages'),
 ('TrackAuto','true','b','h','Track vehicles'),
 ('UseWLnotes', 'false', 'b', 'h', 'Use wait list notes feature on reservations'),

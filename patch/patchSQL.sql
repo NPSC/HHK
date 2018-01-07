@@ -5,6 +5,8 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VAL
 UPDATE `sys_config` SET `Key`='ShowBirthDate', `Description`='Show birthdate for patients and guests' WHERE `Key`='PatientBirthDate';
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('InsistPatBD', 'true', 'b', 'h', 'Insist on user filling in the patients birthdate');
 
+DELETE FROM `sys_config` WHERE `Key`='ShrRm';
+
 -- update the room rate fixed category from x to r
 update room_rate set FA_Category = 'f' where FA_Category = 'x';
 update fin_application set FA_Category = 'f' where FA_Category = 'x';
@@ -15,6 +17,16 @@ update visit_onleave set Rate_Category = 'f' where Rate_Category = 'x';
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Editable_Forms', '../conf/agreement.html', 'Registration Agreement', 'js/rte-agreement.json');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Editable_Forms', '../conf/confirmation.html', 'Confirmation Form', 'js/rte-confirmation.json');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Editable_Forms', '../conf/survey.html', 'Survey Form', 'js/rte-survey.json');
+
+-- update room priority with that of resource
+UPDATE room r
+        JOIN
+    resource_room rr ON r.idRoom = rr.idRoom
+        JOIN
+    resource re ON rr.idResource = re.idResource 
+SET 
+    r.Util_Priority = re.Util_Priority;
+
 
 
 -- Leave this til last as it may fail.

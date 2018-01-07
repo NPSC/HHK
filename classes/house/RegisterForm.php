@@ -163,9 +163,9 @@ class RegisterForm {
         $mkup = HTMLContainer::generateMarkup('h2', $agreementLabel, array('style'=>'border:none;border-bottom:1.5pt solid #98C723'));
 
         if ($instructionFileName != '' && file_exists($instructionFileName)) {
-            $mkup .= HTMLContainer::generateMarkup('div', file_get_contents($instructionFileName));
+            $mkup .= HTMLContainer::generateMarkup('div', file_get_contents($instructionFileName), array('class'=>'hhk-agreement'));
         } else {
-            $mkup .= HTMLContainer::generateMarkup('div', 'Agreement text file is missing.', array('class'=>'ui-state-error'));
+            $mkup .= HTMLContainer::generateMarkup('div', "Agreement text file is missing.  '$instructionFileName'", array('class'=>'ui-state-error'));
         }
 
         $usedNames = array();
@@ -348,7 +348,7 @@ class RegisterForm {
 
         $uS = Session::getInstance();
 
-        $mkup = "<div style='width:800px;margin-bottom:30px; margin-left:10px; margin-right:10p'>";
+        $mkup = "<div style='width:700px;margin-bottom:30px; margin-left:5px; margin-right:5px'>";
         $mkup .= self::titleBlock($roomTitle, $expectedDeparture, $rate, $title, $agent, $uS->RoomPriceModel, $houseAddr, $roomFeeTitle);
 
         $mkup .= self::notesBlock($notes);

@@ -863,6 +863,13 @@ function verifyDone() {
     // Optional Emergency Contact.
     if (!checkIn.fillEmergCont) {
         emergContactCnt = 2;
+    } else {
+        // Count the skipped.
+        $('.hhk-EmergCb').each( function () {
+            if ($(this).prop('checked') === true) {
+                emergContactCnt++;
+            };
+         });
     }
     
     if (checkIn.members.length === 0) {
@@ -1018,6 +1025,7 @@ function verifyDone() {
         
         // Emergency Contact
         if ($('#' + pan.idPrefix + 'cbEmrgLater').length > 0 && $('#' + pan.idPrefix + 'cbEmrgLater').prop('checked') === false && emergContactCnt < 1) {
+            
             // check the emergency contact
             if ($('#' + pan.idPrefix + 'txtEmrgFirst').val() === '' && $('#' + pan.idPrefix + 'txtEmrgLast').val() === '') {
                 $('#' + pan.idPrefix + 'txtEmrgFirst').addClass('ui-state-error');
@@ -1038,9 +1046,8 @@ function verifyDone() {
                 $('.' + pan.idSlot + 'detail').show("blind");
                 return false;
             }
-            emergContactCnt++;
         }
-        
+
         // Check in Date
         if ($('#' + pan.idPrefix + 'gstDate').length > 0) {
             

@@ -54,7 +54,8 @@ $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
     $(document).ready(function() {
         var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
         var dailyCols = [
-            {data: 'Title', title: 'Room', sortable: true, searchable:true},
+            {data: 'titleSort', 'visible': false },
+            {data: 'Title', title: 'Room', 'orderData': [0, 1], sortable: true, searchable:true},
             {data: 'Status', title: 'Status'},
             {data: 'Guests', title: 'Guests'},
             {data: 'Patient_Name', title: patientLabel},
@@ -92,15 +93,15 @@ $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left;  padding:10px;">
                 <form id="fcat" action="DailyReport.php" method="post">
                     <input type="submit" name="btnHere" id="btnHere" value="Reload"/>
-                    <input id="printButton" value="Print" type="button" style="margin-left:1em;"/>
+
+                    <input id="printButton" value="Print" type="button" style="margin-left:3em;"/>
                 </form>
             </div>
             <div style="clear:both;"></div>
             <div class="ui-widget ui-widget-content hhk-tdbox" style="font-size: .9em; padding: 5px; padding-bottom:25px;">
-
                 <?php echo $dailyLog; ?>
             </div>
         </div>
