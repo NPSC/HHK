@@ -678,6 +678,63 @@ abstract class Reservation {
 }
 
 
+class BlankReservation extends Reservation {
+
+    public function createMarkup(\PDO $dbh) {
+
+        $this->family->setGuestsStaying($dbh, $this->reserveData, $this->reservRs->idGuest->getstoredVal());
+
+        // Arrival and Departure dates
+        if ($this->reserveData->getIdResv() > 0) {
+            try {
+                $arrivalDT = new\DateTime($this->reservRs->Expected_Arrival->getStoredVal());
+                $departDT = new \DateTime($this->reservRs->Expected_Departure->getStoredVal());
+
+                // Chack guests for other commitments.
+                $this->guestReservations($dbh, $this->reserveData->getPsgMembers(), $arrivalDT, $departDT);
+
+            } catch (Hk_Exception_Runtime $hex) {
+                return array('error'=>$hex->getMessage());
+            }
+        }
+
+        $this->reserveData->setFamilySection($this->family->createFamilyMarkup($dbh, $this->reservRs, $this->reserveData));
+
+        $data = $this->reserveData->toArray();
+
+        // Resv Expected dates
+        $data['expDates'] = $this->createExpDatesControl();
+
+        // Hospital
+        $hospitalStay = new HospitalStay($dbh, $this->family->getPatientId());
+
+        $data['hosp'] = Hospital::createReferralMarkup($dbh, $hospitalStay);
+
+        return $data;
+    }
+
+    public function save(\PDO $dbh, $post) {
+
+        $this->family->save($dbh, $post, $this->reserveData);
+
+        $newResv = new ActiveReservation($this->reserveData, $this->reservRs, $this->family);
+
+        return $newResv->createMarkup($dbh);
+
+    }
+
+    public function addPerson(\PDO $dbh) {
+
+        $this->reserveData->setAddPerson($this->family->createAddPersonMu($dbh, $this->reserveData));
+        return $this->reserveData->toArray();
+    }
+
+    public function copyPerson(\PDO $dbh) {
+        return array('error'=>'Not Implemented.');
+    }
+
+}
+
 class ActiveReservation extends BlankReservation {
 
     public function createMarkup(\PDO $dbh) {
@@ -868,83 +925,11 @@ class ActiveReservation extends BlankReservation {
 
 }
 
-class StaticReservation extends Reservation {
-
-    public function createMarkup(\PDO $dbh) {
-        return array('error'=>'Not Implemented.');
-    }
-
-}
-
-class StayingReservation extends Reservation {
-
-    public function createMarkup(\PDO $dbh) {
-        return array('error'=>'Not Implemented.');
-    }
-
-}
-
-class BlankReservation extends Reservation {
-
-    public function createMarkup(\PDO $dbh) {
-
-        $this->family->setGuestsStaying($dbh, $this->reserveData, $this->reservRs->idGuest->getstoredVal());
-
-        // Arrival and Departure dates
-        if ($this->reserveData->getIdResv() > 0) {
-            try {
-                $arrivalDT = new\DateTime($this->reservRs->Expected_Arrival->getStoredVal());
-                $departDT = new \DateTime($this->reservRs->Expected_Departure->getStoredVal());
-
-                // Chack guests for other commitments.
-                $this->guestReservations($dbh, $this->reserveData->getPsgMembers(), $arrivalDT, $departDT);
-
-            } catch (Hk_Exception_Runtime $hex) {
-                return array('error'=>$hex->getMessage());
-            }
-        }
-
-        $this->reserveData->setFamilySection($this->family->createFamilyMarkup($dbh, $this->reservRs, $this->reserveData));
-
-        $data = $this->reserveData->toArray();
-
-        // Resv Expected dates
-        $data['expDates'] = $this->createExpDatesControl();
-
-        // Hospital
-        $hospitalStay = new HospitalStay($dbh, $this->family->getPatientId());
-
-        $data['hosp'] = Hospital::createReferralMarkup($dbh, $hospitalStay);
-
-        return $data;
-    }
-
-    public function save(\PDO $dbh, $post) {
-
-        $this->family->save($dbh, $post, $this->reserveData);
-
-        $newResv = new ActiveReservation($this->reserveData, $this->reservRs, $this->family);
-
-        return $newResv->createMarkup($dbh);
-
-    }
-
-    public function addPerson(\PDO $dbh) {
-
-        $this->reserveData->setAddPerson($this->family->createAddPersonMu($dbh, $this->reserveData));
-        return $this->reserveData->toArray();
-    }
-
-    public function copyPerson(\PDO $dbh) {
-        return array('error'=>'Not Implemented.');
-    }
-
-}
-
 class ReserveSearcher extends ActiveReservation {
 
     public function createMarkup(\PDO $dbh) {
 
+        $this->resvChooserMarkup($dbh);
 
         return $this->reserveData->toArray();
 
@@ -965,8 +950,8 @@ class ReserveSearcher extends ActiveReservation {
 
     }
 
-    protected function resvChooserMarkup() {
-                $ngRss = array();
+    protected function resvChooserMarkup(\PDO $dbh) {
+        $ngRss = array();
 
         // Search for a PSG
         if ($this->reserveData->getIdPsg() == 0) {
@@ -1034,3 +1019,19 @@ class ReserveSearcher extends ActiveReservation {
 }
 
 
+
+class StaticReservation extends Reservation {
+
+    public function createMarkup(\PDO $dbh) {
+        return array('error'=>'Not Implemented.');
+    }
+
+}
+
+class StayingReservation extends Reservation {
+
+    public function createMarkup(\PDO $dbh) {
+        return array('error'=>'Not Implemented.');
+    }
+
+}
