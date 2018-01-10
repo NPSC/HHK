@@ -103,12 +103,13 @@ if (isset($_POST['hdnCfmRid'])) {
         $notes = filter_var($_POST['tbCfmNotes'], FILTER_SANITIZE_STRING);
     }
 
+    require(HOUSE . 'TemplateForm.php');
     require(HOUSE . 'ConfirmationForm.php');
 
     $confirmForm = new ConfirmationForm($uS->ConfirmFile);
 
     $formNotes = $confirmForm->createNotes($notes, FALSE);
-    $form = '<!DOCTYPE html>' . $confirmForm->createForm($dbh, $resv, $guest, 0, $formNotes);
+    $form = '<!DOCTYPE html>' . $confirmForm->createForm($confirmForm->makeReplacements($resv, $guest, 0, $formNotes));
 
     header('Content-Disposition: attachment; filename=confirm.doc');
     header("Content-Description: File Transfer");

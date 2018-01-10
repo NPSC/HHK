@@ -992,7 +992,6 @@ class ReservationSvcs {
 
 
 
-
         // Hospital
         $hstay = new HospitalStay($dbh, $psg->getIdPatient());
         Hospital::saveReferralMarkup($dbh, $psg, $hstay, $post);
@@ -1691,7 +1690,9 @@ class ReservationSvcs {
             return array('error'=>'Bad reservation Id: ' . $idReservation);
         }
 
+        require(HOUSE . 'TemplateForm.php');
         require(HOUSE . 'ConfirmationForm.php');
+
         $uS = Session::getInstance();
         $dataArray = array();
 
@@ -1707,7 +1708,7 @@ class ReservationSvcs {
 
         $formNotes = $confirmForm->createNotes($notes, !$sendEmail);
 
-        $form = $confirmForm->createForm($dbh, $reserv, $guest, $amount, $formNotes);
+        $form = $confirmForm->createForm($confirmForm->makeReplacements($reserv, $guest, $amount, $formNotes));
 
         if ($emailAddr == '') {
             $emAddr = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
