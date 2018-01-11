@@ -163,6 +163,7 @@ if ($copyEmail && $copyEmail != '') {
 
     $mail->clearAddresses();
     $mail->addAddress($copyEmail);
+    $mail->subject = "Auto Email Results: " . $numRecipients . " messages sent.";
 
     $mail->msgHTML($sForm->templateFile);
 
