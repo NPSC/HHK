@@ -424,6 +424,7 @@ if (isset($_POST['btnkfSave'])) {
         $uS->RoomRateDefault = $newDefault;
     }
 
+    //Static room settings.
     if (isset($_POST['srrDesc'][0]) && $_POST['srrDesc'][0] != '') {
 
         // new entry
@@ -453,6 +454,7 @@ if (isset($_POST['btnkfSave'])) {
         unset($_POST['srrDesc'][0]);
     }
 
+    //saveArchive($dbh, $_POST['srrDesc'], $_POST['srrAmt'], 'Static_Room_Rate');
     saveGenLk($dbh, 'Static_Room_Rate', $_POST['srrDesc'], $_POST['srrAmt'], NULL);
 
 

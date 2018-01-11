@@ -56,6 +56,12 @@ if (is_array($dbConfig)) {
 
 $uS = Session::getInstance();
 
+$sendEmail = TRUE;
+if (isset($_POST)) {
+    // Don't send email when run as a web page.
+    $sendEmail = FALSE;
+}
+
 $siteName = $config->get("site", "Site_Name", "Hospitality HouseKeeper");
 $from = $config->get("house", "NoReply", "");      // Email address message will show as coming from.
 $maxAutoEmail = $config->getString('email_server', 'MaxAutoEmail');
@@ -107,13 +113,14 @@ FROM
 WHERE
     n.Member_Status != 'd'
         AND v.`Status` = 'co'
-GROUP BY s.idName HAVING DateDiff(NOW(), `Last_Departure`) > :delayDays;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) > :delayDays;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
 
 $stmt->execute($paramList);
 $numRecipients = $stmt->rowCount();
 
 if ($numRecipients > $maxAutoEmail) {
     // to many recipients.
+    $stmt = NULL;
     exit("The number of email recipients, " . $stmt->rowCount() . " is higher than the maximum number allowed, $maxAutoEmail. See System Configuration, email_server -> MaxAutoEmail");
 }
 
@@ -127,6 +134,7 @@ $mail->isHTML(true);
 $mail->Subject = $subjectLine;
 
 $sForm = new SurveyForm('survey.html');
+$badAddresses = 0;
 
 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
 
@@ -135,42 +143,53 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
         $emailAddr = filter_var($r['Email'], FILTER_VALIDATE_EMAIL);
 
         if ($emailAddr === FALSE || $emailAddr == '') {
+            $badAddresses++;
             continue;
         }
     } else {
+        $badAddresses++;
         continue;
     }
 
     $form = $sForm->createForm($sForm->makeReplacements($r));
 
-    $mail->clearAddresses();
-    $mail->addAddress($emailAddr);
+    if ($sendEmail) {
 
-    $mail->msgHTML($form);
+        $mail->clearAddresses();
+        $mail->addAddress($emailAddr);
 
-    $mail->send();
+        $mail->msgHTML($form);
 
-    // Log in Visit Log
+        $mail->send();
 
-    echo $mail->ErrorInfo . '<br/>';
-    echo $form . '<br/>' . $r['Email'];
+        echo $mail->ErrorInfo . '<br/>';
+
+    } else {
+        echo $form . '<br/>' . $r['Email'];
+    }
+
+    // Log in Visit Log?
 
 }
 
 $copyEmail = filter_var($config->getString('house', 'Auto_Email_Address'), FILTER_VALIDATE_EMAIL);
 
-if ($copyEmail && $copyEmail != '') {
+if ($sendEmail && $copyEmail && $copyEmail != '') {
 
     $mail->clearAddresses();
     $mail->addAddress($copyEmail);
-    $mail->subject = "Auto Email Results: " . $numRecipients . " messages sent.";
+    $mail->Subject = "Auto Email Results: " . $numRecipients . " messages sent. Bad: ".$badAddresses;
 
     $mail->msgHTML($sForm->templateFile);
 
     $mail->send();
+
+} else if (!$sendEmail) {
+    echo "<br/><br/>Auto Email Results: " . $numRecipients . " messages sent. Bad: ".$badAddresses;
+    echo "<br/>Template:<br/>" . $sForm->templateFile;
 }
 
 // Log - Activity?
-echo $numRecipients;
+
 
 exit();
