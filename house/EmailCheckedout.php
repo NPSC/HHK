@@ -113,7 +113,7 @@ FROM
 WHERE
     n.Member_Status != 'd'
         AND v.`Status` = 'co'
-GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) > :delayDays;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) = :delayDays;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
 
 $stmt->execute($paramList);
 $numRecipients = $stmt->rowCount();
