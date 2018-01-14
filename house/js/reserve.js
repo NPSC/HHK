@@ -61,11 +61,11 @@ function PageManager(initData) {
         var t = this;
         var divFamDetailId = 'divfamDetail';
         var cpyAddr = '';
+        var setupComplete = false;
 
         // Exports
         t.findStaysChecked = findStaysChecked;
         t.findPrimaryGuest = findPrimaryGuest;
-        t.setupComplete = false;
         t.setUp = setUp;
         t.newGuestMarkup = newGuestMarkup;
         t.verify = verify;
@@ -426,7 +426,10 @@ function PageManager(initData) {
                 return;
             }
 
-            initFamilyTable(data);
+            if (setupComplete === false) {
+                initFamilyTable(data);
+            }
+            
             $famTbl = $wrapper.find('#' + data.famSection.tblId);
 
 
@@ -597,7 +600,7 @@ function PageManager(initData) {
                 }
             );
 
-            t.setupComplete = true;
+            setupComplete = true;
         };
 
         function newGuestMarkup(data, prefix) {
@@ -1328,7 +1331,7 @@ function PageManager(initData) {
         function makeList(theList, indexProperty) {
 
             _index = indexProperty;
-            _list = {};
+            //_list = {};
 
             for (var i in theList) {
                 addItem(theList[i]);
@@ -1419,12 +1422,13 @@ function PageManager(initData) {
 
         buttons['Exit'] = function() {
             $(this).dialog("close");
-            $('div#guestSearch').show();
-            $('input#txtPersonSearch').val('').focus();
+
+            $('input#txtPersonSearch').val('');
+            $('input#gstSearch').val('').focus();
         };
 
         $resvDiag.dialog('option', 'buttons', buttons);
-        $resvDiag.dialog('option', 'title', data.resvTitle);
+        $resvDiag.dialog('option', 'title', data.resvTitle + ' Chooser');
         $resvDiag.dialog('open');
 
     }
@@ -1442,8 +1446,9 @@ function PageManager(initData) {
                 },
                 Cancel: function () {
                     $(this).dialog('close');
-                    $('div#guestSearch').show();
-                    $('input#txtPersonSearch').val('').focus();
+
+                    $('input#txtPersonSearch').val('');
+                    $('input#gstSearch').val('').focus();
                 }
             })
             .dialog('option', 'title', data.patLabel + ' Chooser' + (data.fullName === undefined ? '' : ' For: ' + data.fullName))
@@ -1472,8 +1477,6 @@ function PageManager(initData) {
 
             loadResv(data);
         });
-
-        $('div#guestSearch').hide();
 
     }
 
@@ -1545,6 +1548,8 @@ function PageManager(initData) {
             addrs.makeList(data.famSection.addrs, 'pref');
 
             familySection.setUp(data);
+
+            $('div#guestSearch').hide();
 
             $('#btnDone').val('Save Family').show();
         }

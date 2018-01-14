@@ -34,33 +34,23 @@ abstract class Reservation {
             $rData->setIdResv(0);
 
             return new BlankReservation($rData, new ReservationRS(), new JoinNewFamily($dbh, $rData));
+        }
 
         // idResv < 0
-        } else if ($rData->getForceNewResv() && $rData->getIdPsg() > 0) {
+        if ($rData->getForceNewResv()) {
 
-            // Force New Resv for existing PSG
-            return new ActiveReservation($rData, new ReservationRS(), new Family($dbh, $rData));
+            if ($rData->getIdPsg() > 0) {
+                // Force New Resv for existing PSG
+                return new ActiveReservation($rData, new ReservationRS(), new Family($dbh, $rData));
 
-        // undetermined resv and psg, look at guest id
-        } else if ($rData->getIdResv() == 0 && $rData->getIdPsg() == 0) {
+            } else {
 
-            // Depends on GUest Id
-            if ($rData->getId() > 0) {
-                // Search
-                return new ReserveSearcher($rData, new ReservationRS(), new Family($dbh, $rData));
+                throw new Hk_Exception_Runtime("Reservation parameters are invalid.  ");
             }
+        }
 
-            // New resv, new psg, new guest
-            return new BlankReservation($rData, new ReservationRS(), new Family($dbh, $rData));
-
-
-        // Guest, PSG, no reservation specified.
-        } else if ($rData->getIdPsg() > 0 && $rData->getIdResv() == 0) {
-
-            return new ReserveSearcher($rData, new ReservationRS(), new Family($dbh, $rData));
-
-        // Got a defined resv.
-        } else if ($rData->getIdResv() > 0) {
+        // Resv > 0
+        if ($rData->getIdResv() > 0) {
 
             // Load reservation
             $stmt = $dbh->query("Select r.*, rg.idPsg from reservation r left join registration rg on r.idRegistration = rg.idRegistration where r.idReservation = " . $rData->getIdResv());
@@ -87,8 +77,28 @@ abstract class Reservation {
             return new StaticReservation($rData, $rRs, new Family($dbh, $rData));
         }
 
-        // invalid parameters
-        throw new Hk_Exception_Runtime("Reservation parameters are invalid.  ");
+
+
+        // idResv = 0 ------------------------------
+
+        // idPsg > 0
+        if ($rData->getIdPsg() > 0) {
+            return new ReserveSearcher($rData, new ReservationRS(), new Family($dbh, $rData));
+        }
+
+
+
+        // idPsg = 0; idResv = 0 -----------------------
+
+        // IdGuest > 0
+        if ($rData->getId() > 0) {
+            // Search
+            return new ReserveSearcher($rData, new ReservationRS(), new Family($dbh, $rData));
+        }
+
+
+        // idPsg = 0; idResv = 0; idGuest = 0
+        return new BlankReservation($rData, new ReservationRS(), new Family($dbh, $rData));
 
     }
 
@@ -939,6 +949,7 @@ class ReserveSearcher extends ActiveReservation {
 
         if ($this->reserveData->getId() > 0) {
 
+            // patient?
             $stmt = $dbh->query("select count(*) from psg where idPatient = " . $this->reserveData->getId());
             $rows = $stmt->fetchAll();
             if ($rows[0][0] > 0) {
@@ -946,7 +957,7 @@ class ReserveSearcher extends ActiveReservation {
             }
         }
 
-
+        return parent::addPerson($dbh);
 
     }
 
