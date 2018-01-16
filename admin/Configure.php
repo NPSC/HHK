@@ -683,7 +683,9 @@ $(document).ready(function () {
             var rte = $('#rteContainer');
 
             if (data.jsn) {
+
                 var tools = $.parseJSON(data.jsn);
+
                 rte.empty().richTextEditor({
                     menus: tools.menus,
                     buttons: tools.buttons,

@@ -60,6 +60,16 @@ $sendEmail = TRUE;
 if (isset($_POST)) {
     // Don't send email when run as a web page.
     $sendEmail = FALSE;
+
+    // Check for user logged in.
+    if (!$uS->logged) {
+        exit();
+    }
+
+    // Check user authorization
+    if ($uS->rolecode > WebRole::Admin) {
+        exit('Unauthorized.');
+    }
 }
 
 $siteName = $config->get("site", "Site_Name", "Hospitality HouseKeeper");
@@ -76,7 +86,17 @@ if ($from == '') {
     exit("From/Reply To address is missing.  Go to System Configuration, House, NoReply.");
 }
 
-$delayDays = $uS->SolicitBuffer;
+
+
+if (strtolower($uS->SolicitBuffer) === 'off') {
+    if ($sendEmail) {
+        exit();
+    } else {
+        exit('Auto Email is off.  Go to System Configuration, Solicit Buffer.');
+    }
+}
+
+$delayDays = intval($uS->SolicitBuffer, 10);
 
 if ($delayDays <1) {
     exit("Delay days not set properly.  Go to System Configuration, SolicitBuffer.");
@@ -165,7 +185,7 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
         echo $mail->ErrorInfo . '<br/>';
 
     } else {
-        echo $form . '<br/>' . $r['Email'];
+        echo $form . '<br/>Email Address: ' . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'];
     }
 
     // Log in Visit Log?
@@ -185,8 +205,8 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
     $mail->send();
 
 } else if (!$sendEmail) {
-    echo "<br/><br/>Auto Email Results: " . $numRecipients . " messages sent. Bad: ".$badAddresses;
-    echo "<br/>Template:<br/>" . $sForm->templateFile;
+    echo "<br/><br/><hr/>Auto Email Results: " . $numRecipients . " messages sent. Bad: ".$badAddresses;
+    echo "<br/>Template Used:<br/>" . $sForm->templateFile;
 }
 
 // Log - Activity?
