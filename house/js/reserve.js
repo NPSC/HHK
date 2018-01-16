@@ -143,7 +143,7 @@ function PageManager(initData) {
                 flagAlertMessage('This person is already listed here. ', true);
                 return;
             }
-
+            
             var resv = {
                 id: item.id,
                 rid: data.rid,
@@ -422,7 +422,7 @@ function PageManager(initData) {
 
             var $addrTog, $addrFlag, $famTbl;
 
-            if (data.famSection === undefined || data.famSection.tblId === undefined || data.famSection.tblId == '') {
+            if (data.famSection === undefined || data.famSection.tblId === undefined || data.famSection.tblId === '') {
                 return;
             }
 
@@ -431,6 +431,23 @@ function PageManager(initData) {
             }
             
             $famTbl = $wrapper.find('#' + data.famSection.tblId);
+
+            // Remove any previous entries.
+            for (var i in data.famSection.mem) {
+                
+                var item = people.findItem('id', data.famSection.mem[i].id);
+                
+                if (item) {
+                    $famTbl.find('input#' + item.pref + 'idName').parents('tr').next('tr').remove();
+                    $famTbl.find('input#' + item.pref + 'idName').parents('tr').remove();
+                    people.removeIndex(item.pref);
+                    addrs.removeIndex(item.pref);
+                }
+            }
+            
+            // Add new people to the lists.
+            people.makeList(data.famSection.mem, 'pref');
+            addrs.makeList(data.famSection.addrs, 'pref');
 
             // Add people to the UI
             for (var t=0; t < data.famSection.tblBody.length; t = t + 2) {
@@ -1473,8 +1490,25 @@ function PageManager(initData) {
     }
 
     function getReserve(sdata) {
+        
+//        var parms,
+//        
+//            guests = {};
+//
+//        for (var p in people.list()) {
+//
+//            if (people.list()[p].id > 0) {
+//                guests[people.list()[p].id] = p;
+//            }
+//        }
+        
+        var parms = {
+            id:sdata.id, 
+            rid:sdata.rid, 
+            idPsg:sdata.idPsg, 
+            cmd:sdata.cmd};
 
-        $.post('ws_resv.php', {id:sdata.id, rid:sdata.rid, idPsg:sdata.idPsg, cmd:sdata.cmd}, function(data) {
+        $.post('ws_resv.php', parms, function(data) {
 
             try {
                 data = $.parseJSON(data);
@@ -1560,9 +1594,6 @@ function PageManager(initData) {
 
         // Build a new Family section.
         if (data.famSection) {
-
-            people.makeList(data.famSection.mem, 'pref');
-            addrs.makeList(data.famSection.addrs, 'pref');
 
             familySection.setUp(data);
 

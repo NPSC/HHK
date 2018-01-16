@@ -315,6 +315,7 @@ class Family {
         return $addPerson;
 
     }
+
     public function createFamilyMarkup(\PDO $dbh, ReservationRS $resvRs, ReserveData $rData) {
 
         $uS = Session::getInstance();
@@ -346,9 +347,8 @@ class Family {
 
             $role = $this->roleObjs[$this->patientPrefix];
             $idPrefix = $role->getRoleMember()->getIdPrefix();
-            $tr = array();
 
-            $tr['g'] = HTMLContainer::generateMarkup('tr',
+            $trs[] = HTMLContainer::generateMarkup('tr',
                     $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), TRUE)
                     , array('class'=>$rowClass));
 
@@ -364,11 +364,8 @@ class Family {
             }
 
             if ($uS->PatientAddr) {
-                $tr['a'] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow'));
+                $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow'));
             }
-
-            $tr['id'] = $role->getIdName();
-            $trs[] = $tr;
         }
 
         // List each member
@@ -380,7 +377,6 @@ class Family {
             }
 
             $idPrefix = $role->getRoleMember()->getIdPrefix();
-            $tr = array();
 
             if ($rowClass == 'odd') {
                 $rowClass = 'even';
@@ -395,7 +391,7 @@ class Family {
                 , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'));
 
 
-            $tr['g'] = HTMLContainer::generateMarkup('tr',
+            $trs[] = HTMLContainer::generateMarkup('tr',
                     $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
                     . ($role->getIdName() == 0 ? HTMLTable::makeTd($removeIcons) : '')
                     , array('class'=>$rowClass));
@@ -412,10 +408,7 @@ class Family {
             }
 
             // Add addresses and demo's
-            $tr['a'] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow'));
-            $tr['id'] = $role->getIdName();
-
-            $trs[] = $tr;
+            $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow'));
 
         }
 
