@@ -64,7 +64,9 @@ class fbUserClass {
 
     //--------------------------
     function set_pifhUsername($v) {
-        $this->pifhUsername = strtolower($v);
+        if (strtolower($v) != 'admin') {
+            $this->pifhUsername = strtolower($v);
+        }
     }
 
     function get_pifhUsername() {

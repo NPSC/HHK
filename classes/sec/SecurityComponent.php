@@ -24,13 +24,10 @@ class SecurityComponent {
 
     public static function is_Authorized($name) {
 
-        if (self::is_Admin()) {
-            return TRUE;
-        }
-
         $uS = Session::getInstance();
 
         $pageCode = array();
+        
         // try reading the page table
         if ($name != "" && isset($uS->webPages[$name])) {
             $r = $uS->webPages[$name];
@@ -38,6 +35,12 @@ class SecurityComponent {
             if (!is_null($r)) {
                 $pageCode = $r["Codes"];
             }
+        } else {
+            exit('Web Page file name missing from DB. ');
+        }
+
+        if (self::is_Admin()) {
+            return TRUE;
         }
 
         // check authorization codes.
@@ -209,11 +212,12 @@ class SecurityComponent {
         $tokn = false;
         $ssn = Session::getInstance();
         $userName = $ssn->username;
+        $id = $ssn->uid;
 
         if (is_string($userName)) {
 
             // Authorization Bypass
-            if (strtolower($userName) == "admin") {
+            if (strtolower($userName) == "admin" && $id == -1) {
                 $tokn = TRUE;
             }
         }

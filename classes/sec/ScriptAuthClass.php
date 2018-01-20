@@ -43,18 +43,20 @@ class ScriptAuthClass extends SecurityComponent {
         // try reading the page table
         if ($this->siteCode != "" && $this->getFileName() != "") {
 
-            if (isset($uS->webPages[$this->getFileName()])) {
+            if (isset($uS->webPages[$this->getFileName()]) && !is_null($uS->webPages[$this->getFileName()])) {
 
                 $page = $uS->webPages[$this->getFileName()];
 
-                if (!is_null($page)) {
+                $this->pageCodes = $page["Codes"];
+                $this->pageTitle = $page["Title"];
+                $this->loginPage = $page["Login"];
+                $this->pageType = $page["Type"];
 
-                    $this->pageCodes = $page["Codes"];
-                    $this->pageTitle = $page["Title"];
-                    $this->loginPage = $page["Login"];
-                    $this->pageType = $page["Type"];
-                }
+            } else {
+                exit('Page file name not found in database. ');
             }
+        } else {
+            exit('Web Site Code or page file name not defined. ');
         }
     }
 

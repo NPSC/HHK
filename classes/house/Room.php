@@ -220,6 +220,9 @@ class Room {
             }
         } else {
             // insert
+            $this->roomRS->Status->setNewVal(RoomState::TurnOver);
+            $this->roomRS->State->setNewVal('a');
+            $this->roomRS->Availability->setNewVal('a');
             $idRoom = EditRS::insert($dbh, $this->roomRS);
 
             if ($idRoom > 0) {

@@ -194,6 +194,10 @@ class WebUser {
         $wUserName = "";
         if (isset($parms["wuname"])) {
             $wUserName = filter_var($parms["wuname"], FILTER_SANITIZE_STRING);
+
+            if (strtolower($wUserName) == 'admin') {
+                return array("error", "'Admin' cannot be used as a user name.");
+            }
         }
 
         $wUserPw = "";
