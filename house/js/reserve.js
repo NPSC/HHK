@@ -547,8 +547,6 @@ function PageManager(initData) {
                     
                 });
 
-                $('.hhk-togAddr').click();
-
                 // Load the addresses into the addrs object if changed.
                 $('#' + divFamDetailId).on('change', '.hhk-copy-target', function() {
                     loadAddress($(this).data('pref'));
@@ -633,12 +631,20 @@ function PageManager(initData) {
                 setAddrFlag($('#' + p + 'liaddrflag'));
             }
             
+            // Shut Address rows
+            $('.hhk-togAddr').each(function () {
+                
+                $(this).parents('tr').next('tr').hide();
+                $(this).find('span').removeClass('ui-icon-circle-triangle-n').addClass('ui-icon-circle-triangle-s');
+                $(this).attr('title', 'Show Address Section');
+            });
+            
             setupComplete = true;
         };
 
         function newGuestMarkup(data, prefix) {
 
-            var $countries, $states, $famTbl, stripeClass;
+            var $countries, $states, $famTbl, stripeClass, $addrFlag, $addrTog;
 
             if (data.tblId === undefined || data.tblId == '') {
                 return;
@@ -678,7 +684,20 @@ function PageManager(initData) {
             });
 
             // Address button
-            setAddrFlag($('#' + prefix + 'liaddrflag'));
+            $addrFlag = $('#' + prefix + 'liaddrflag');
+            $addrTog = $addrFlag.siblings();
+            
+            setAddrFlag($addrFlag);
+            
+            // Shut address line if filled in.
+            if ($addrFlag.css('display') === 'none') {
+                
+                $addrTog.parents('tr').next('tr').hide();
+                $addrTog.find('span').removeClass('ui-icon-circle-triangle-n').addClass('ui-icon-circle-triangle-s');
+                $addrTog.attr('title', 'Show Address Section');
+            } else {
+                $addrTog.attr('title', 'Hide Address Section');
+            }
 
             // set country and state selectors
             $countries = $('#' + prefix + 'adrcountry' + addrPurpose);
