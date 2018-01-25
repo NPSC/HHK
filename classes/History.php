@@ -396,11 +396,11 @@ class History {
 
                 if ($now > $stDay) {
                     // Past Due
-                    $fixedRows['Guest'] = HTMLContainer::generateMarkup('span', $fixedRows['Guest'], array('class'=>'ui-state-error','title'=>'On Leave - past due!'));
+                    $fixedRows['Guest Last'] = HTMLContainer::generateMarkup('span', $fixedRows['Guest Last'], array('class'=>'ui-state-error','title'=>'On Leave - past due!'));
 
                 } else {
                     // on leave
-                    $fixedRows['Guest'] = HTMLContainer::generateMarkup('span', $fixedRows['Guest'], array('class'=>'ui-state-highlight','title'=>'On Leave until ' . $stDay->format('M j')));
+                    $fixedRows['Guest Last'] = HTMLContainer::generateMarkup('span', $fixedRows['Guest Last'], array('class'=>'ui-state-highlight','title'=>'On Leave until ' . $stDay->format('M j')));
                 }
             }
 

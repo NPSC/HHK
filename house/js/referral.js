@@ -314,7 +314,7 @@ function injectSlot(data) {
 
         acDiv.addClass('Slot gstdetail');
 
-        var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget'/>")
+        var expanderButton = $("<ul style='float:right;margin-left:5px;padding-top:1px;' class='ui-widget ui-helper-clearfix hhk-ui-icons'/>")
             .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
             .append($("<span id='" + data.idPrefix + "drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
 

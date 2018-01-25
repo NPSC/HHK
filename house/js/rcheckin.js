@@ -7,7 +7,7 @@
  * @category  house
  * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -77,7 +77,7 @@ function injectSlot(data) {
         var acDiv = $('<div/>').append($(data.memMkup));
         acDiv.addClass(slot + 'Slot ' + slot + 'detail' + ' ui-widget-content ui-corner-bottom');
 
-        var expanderButton = $("<ul id='ulIcons' style='float:right;margin-left:5px;padding-top:3px;' class='ui-widget'/>")
+        var expanderButton = $("<ul style='float:right;margin-left:5px;padding-top:3px;' class='ui-widget ui-helper-clearfix hhk-ui-icons'/>")
             .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
             .append($("<span id='" + data.idPrefix + "drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
     
@@ -1429,7 +1429,7 @@ $(document).ready(function() {
         "order": [[ 4, 'asc' ]]
     });
 
-    $('#atblgetter, #stblgetter, #wtblgetter').DataTable({
+    $('#atblgetter, #stblgetter, #wtblgetter, #imtblgetter').DataTable({
         'columnDefs': [
             {'targets': [4,5],
              'type': 'date',
@@ -1498,7 +1498,7 @@ $(document).ready(function() {
     $("#faDialog").dialog({
         autoOpen: false,
         resizable: true,
-        width: 650,
+        width: 670,
         modal: true,
         title: 'Income Chooser',
         close: function (event, ui) {$('div#submitButtons').show();},

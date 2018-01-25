@@ -67,7 +67,7 @@ if (isset($_POST)) {
     }
 
     // Check user authorization
-    if ($uS->rolecode > WebRole::Admin) {
+    if ($uS->rolecode > WebRole::WebUser) {
         exit('Unauthorized.');
     }
 }
@@ -178,14 +178,15 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
         $mail->clearAddresses();
         $mail->addAddress($emailAddr);
 
+        $mail->Subject = $subjectLine;
         $mail->msgHTML($form);
 
-        $mail->send();
-
-        echo $mail->ErrorInfo . '<br/>';
+        if ($mail->send() === FALSE) {
+            echo $mail->ErrorInfo . '<br/>';
+        }
 
     } else {
-        echo $form . '<br/>Email Address: ' . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'];
+        echo "===========================<br/>(Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'] . ")<br/>" . $subjectLine . "<br/>" . $form;
     }
 
     // Log in Visit Log?
@@ -206,7 +207,8 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
 
 } else if (!$sendEmail) {
     echo "<br/><br/><hr/>Auto Email Results: " . $numRecipients . " messages sent. Bad: ".$badAddresses;
-    echo "<br/>Template Used:<br/>" . $sForm->templateFile;
+    echo "<br/> Subject Line: " . $subjectLine;
+    echo "<br/>Body Template:<br/>" . $sForm->templateFile;
 }
 
 // Log - Activity?

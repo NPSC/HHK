@@ -2621,6 +2621,7 @@ from
         }
 
         if ($addRoom) {
+            // Make a new reservation
             $idReserv = 0;
             $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
             $resv->setAddRoom(1);
@@ -2629,7 +2630,7 @@ from
         $rateChooser = new RateChooser($dbh);
 
         if ($idReserv == 0) {
-
+            // Preset new reservation
             $ids = array_keys($chkinGroup->newGuests);
             $idPrimaryGuest = $ids[0];
 
@@ -2768,7 +2769,7 @@ from
                 }
 
                 // Rate Chooser
-                $dataArray['rate'] = $rateChooser->createCheckinMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
+                $dataArray['rate'] = $rateChooser->createCheckinMarkup($dbh, $resv, $resv->getExpectedDaysDT($chkinDT, $chkoutDT), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
 
                 // Payment Chooser
                 if ($uS->PayAtCkin) {

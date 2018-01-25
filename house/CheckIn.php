@@ -306,8 +306,8 @@ $confReserv = $labels->getString('register', 'reservationTab', 'Confirmed Reserv
         <div id="patientPrompt" class="hhk-tdbox-noborder" style="display:none;">
             <p>Will this patient be staying at the House for at least one night?</p>
         </div>
-        <div id="psgDialog" class="hhk-tdbox hhk-visitdialog" style="display:none"></div>
-        <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none"></div>
+        <div id="psgDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;"></div>
+        <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
         <div id="resDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
         <form name="xform" id="xform" method="post"></form>
