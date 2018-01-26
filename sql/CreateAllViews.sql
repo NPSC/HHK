@@ -1857,19 +1857,32 @@ CREATE or Replace VIEW `vreservation_events` AS
 -- -----------------------------------------------------
 CREATE or replace VIEW `vresv_guest` AS
 select 
-    ng.idPsg,
+    hs.idPsg,
     rg.idGuest as `idGuest`,
     rg.idReservation,
-    r.Expected_Arrival,
-    r.Expected_Departure,
-    r.Actual_Arrival,
+    r.Expected_Arrival as `Arrival_Date`,
+    r.Expected_Departure as `Departure_Date`,
     r.`Status`
 from reservation_guest rg
 	left join
-    `name_guest` ng ON rg.idGuest = ng.idName
-        left join
     reservation r on rg.idReservation = r.idReservation
-where r.`Status` in ('a', 'uc', 's', 'w');
+	left join
+    hospital_stay hs on r.idHospital_Stay = hs.idHospital_stay
+where r.`Status` in ('a', 'uc', 'w')
+union
+select 
+    hs.idPsg,
+    s.idName as `idGuest`,
+    v.idReservation,
+    s.Span_Start_Date as `Arrival_Date`,
+    dateDefaultNow(s.Expected_Co_Date)  as `Departure_Date`,
+    's' as `Status`
+from stays s
+	left join
+    visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
+	left join
+    hospital_stay hs on v.idHospital_Stay = hs.idHospital_stay
+where s.`Status` in ('a');
 
 
 
@@ -1877,18 +1890,18 @@ where r.`Status` in ('a', 'uc', 's', 'w');
 -- View `vreservation_guests`
 -- -----------------------------------------------------
 create or replace view `vreservation_guests` as
-    select 
-        r.idReservation, r.idGuest, ng.idPsg, n.Name_Full, np.Phone_Num, r.`Primary_Guest`, g.Description as `Relationship_Code`
-    from
-        reservation_guest r
-            left join
-        `name` n ON r.idGuest = n.idName
-            left join
-        `name_phone` np ON r.idGuest = np.idName and n.Preferred_Phone = np.Phone_Code
-            left join
-        name_guest ng on r.idGuest = ng.idName
-            left join
-        gen_lookups g on g.Table_Name = 'Patient_Rel_Type' and g.Code = ng.Relationship_Code;
+select 
+    r.idReservation, r.idGuest, ng.idPsg, n.Name_Full, np.Phone_Num, r.`Primary_Guest`, g.Description as `Relationship_Code`
+from
+    reservation_guest r
+        left join
+    `name` n ON r.idGuest = n.idName
+        left join
+    `name_phone` np ON r.idGuest = np.idName and n.Preferred_Phone = np.Phone_Code
+        left join
+    name_guest ng on r.idGuest = ng.idName
+        left join
+    gen_lookups g on g.Table_Name = 'Patient_Rel_Type' and g.Code = ng.Relationship_Code;
 
 
 
@@ -2244,24 +2257,6 @@ from visit_log l left join name n on l.idName = n.idName
 where l.log_Type = 'stay'
 order by l.idVisit, l.Span, l.idStay, l.Timestamp;
 
-
--- CREATE or replace VIEW `vvisit_checkedout` AS
--- select
---     v.idVisit,
---     v.Span,
---     ifnull(v.Actual_Departure, '') as `Actual_Departure`,
---     
--- from
---     visit v
---         join
--- 	stays s on v.idVisit = s.idVisit
---         join
--- 	name_guest ng on s.idName = ng.idName
--- 		join
--- 	name n on s.idName = n.idName
--- 		join
--- 	name_email ne on n.idName = ne.idName
---     
 
 
 

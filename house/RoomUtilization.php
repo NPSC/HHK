@@ -63,12 +63,12 @@ if (isset($_POST['btnByGuest']) || isset($_POST['btnByRoom'])) {
         $year = intval(filter_var($_POST['selIntYear'], FILTER_SANITIZE_NUMBER_INT), 10);
     }
 
-    if (isset($_POST['rbType'])) {
-        $type = filter_var($_POST['rbType'], FILTER_SANITIZE_STRING);
-        if ($type != 'y') {
+//    if (isset($_POST['rbType'])) {
+//        $type = filter_var($_POST['rbType'], FILTER_SANITIZE_STRING);
+//        if ($type != 'y') {
             $type = 'm';
-        }
-    }
+//        }
+//    }
 
     $start = $year . '-' . $month . '-01';
 
@@ -148,9 +148,9 @@ $resultMessage = "";
                             <td><?php echo $monthSelector; ?></td>
                             <td><?php echo $yearSelector; ?></td>
                         </tr>
-                        <tr>
+<!--                        <tr>
                             <td colspan="2"><?php echo $rbByYear; ?><label for="rbTypey"> Year by Month</label></td>
-                        </tr>
+                        </tr>-->
                         <tr>
                             <td colspan="2"><?php echo $rbByMonth; ?><label for="rbTypem"> Month by Day</label></td>
                         </tr>

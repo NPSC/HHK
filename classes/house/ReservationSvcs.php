@@ -360,23 +360,23 @@ class ReservationSvcs {
 
         if ($idPsg > 0 && $id > 0) {
             // look for both
-            $stmt = $dbh->query("select g.idReservation, g.idPsg, r.idGuest from vresv_guest g join reservation_guest r on g.idReservation = r.idReservation "
-                    . "where (g.idPsg = $idPsg or r.idGuest = $id) and g.idReservation != $idResv and "
-                . "Date(g.Expected_Arrival) < DATE('".$endDT->format('Y-m-d') . "') and Date(g.Expected_Departure) > DATE('".$startDT->format('Y-m-d') . "')");
+            $stmt = $dbh->query("select idReservation, idPsg, idGuest from vresv_guest "
+                    . "where (idPsg = $idPsg or idGuest = $id) and idReservation != $idResv and "
+                . "Date(Arrival_Date) < DATE('".$endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('".$startDT->format('Y-m-d') . "')");
 
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         } else if ($idPsg > 0) {
 
             $stmt = $dbh->query("select * from vresv_guest where idPsg = $idPsg and idReservation != $idResv and "
-                . "Date(Expected_Arrival) < DATE('".$endDT->format('Y-m-d') . "') and Date(Expected_Departure) > DATE('".$startDT->format('Y-m-d') . "')");
+                . "Date(Arrival_Date) < DATE('".$endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('".$startDT->format('Y-m-d') . "')");
 
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         } else if ($id > 0) {
 
             $stmt = $dbh->query("select * from vresv_guest where idGuest= $id and idReservation != $idResv and "
-                . "Date(Expected_Arrival) < DATE('".$endDT->format('Y-m-d') . "') and Date(Expected_Departure) > DATE('".$startDT->format('Y-m-d') . "')");
+                . "Date(Arrival_Date) < DATE('".$endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('".$startDT->format('Y-m-d') . "')");
 
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
@@ -624,7 +624,7 @@ class ReservationSvcs {
         }
 
         // Check for existing reservations within the time period.
-        $resvs = self::getCurrentReservations($dbh, $resv->getIdReservation(), $guest->getIdName(), $psg->getIdPsg(), $arrivalDT, $departureDT);
+        $resvs = self::getCurrentReservations($dbh, $resv->getIdReservation(), $guest->getIdName(), 0, $arrivalDT, $departureDT);
 
         foreach ($resvs as $rv) {
 

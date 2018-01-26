@@ -136,7 +136,7 @@ FROM
 WHERE
     DATE(Start_Date) <= DATE(NOW())
         AND IFNULL(DATE(End_Date), DATE(NOW())) > DATE(NOW());";
-        
+
         $stmtrs = $dbh->query($query1);
 
         while ($r = $stmtrs->fetch(\PDO::FETCH_ASSOC)) {
@@ -442,9 +442,10 @@ and s.Span_Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(s.
             $td .= HTMLTable::makeTd($rooms[$idRm]['Title']);
             $td .= HTMLTable::makeTd($totals[$idRm]);
 
-            $f = ($daysOccupied / count($rdateArray) * 100);
-
-            $td .= HTMLTable::makeTd(number_format($f, 0) . "%");
+            if ($rooms[$idRm]['Title'] != 'Total') {
+                $f = ($daysOccupied / count($rdateArray) * 100);
+                $td .= HTMLTable::makeTd(number_format($f, 0) . "%");
+            }
 
             $tbl->addBodyTr($td);
         }

@@ -3,7 +3,7 @@
  * ReservReport.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -139,7 +139,7 @@ $cFields[] = array("Depart", 'Departure', 'checked', '', 'n', PHPExcel_Style_Num
 $cFields[] = array("Nights", 'Nights', 'checked', '', 'n', '');
 $cFields[] = array("Rate", 'FA_Category', 'checked', '', 's', '');
 $cFields[] = array("Status", 'Status_Title', 'checked', '', 's', '');
-$cFields[] = array("Status Date", 'Status_Date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
+$cFields[] = array("Created Date", 'Created_Date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
 
 $colSelector = new ColumnSelectors($cFields, 'selFld');
 
@@ -326,7 +326,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     hs.idAssociation,
     ifnull(gl.`Description`, '') as `Diagnosis`,
     ifnull(g2.`Description`, '') as `Location`,
-    r.Last_Updated as `Status_Date`
+    r.Timestamp as `Created_Date`
 from
     reservation r
         left join
@@ -354,7 +354,6 @@ from
         and g2.`Code` = hs.`Location`
 where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistration";
 
-    $stmt = $dbh->query($query);
 
     $fltrdTitles = $colSelector->getFilteredTitles();
     $fltrdFields = $colSelector->getFilteredFields();
@@ -404,6 +403,8 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistratio
         $rrates[$roomRateRS->FA_Category->getStoredVal()] = $roomRateRS;
     }
 
+    $stmt = $dbh->query($query);
+
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
         if ($curVisit != $r['idReservation']) {
@@ -442,7 +443,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistratio
 
         $arrivalDT = new DateTime($r['Arrival']);
         $departureDT = new DateTime($r['Departure']);
-        $statusDT = new DateTime($r['Status_Date']);
+        $statusDT = new DateTime($r['Created_Date']);
 
 
         if ($local) {
@@ -450,7 +451,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistratio
             $r['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>'Referral.php?rid=' . $r['idReservation']));
             $r['Arrival'] = $arrivalDT->format('c');
             $r['Departure'] = $departureDT->format('c');
-            $r['Status_Date'] = $statusDT->format('c');
+            $r['Created_Date'] = $statusDT->format('c');
             $r['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>'GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
             $r['FA_Category'] = $rate;
 
@@ -465,7 +466,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistratio
 
             $r['Arrival'] = PHPExcel_Shared_Date::PHPToExcel($arrivalDT);
             $r['Departure'] = PHPExcel_Shared_Date::PHPToExcel($departureDT);
-            $r['Status_Date'] = PHPExcel_Shared_Date::PHPToExcel($statusDT);
+            $r['Created_Date'] = PHPExcel_Shared_Date::PHPToExcel($statusDT);
             $r['FA_Category'] = $rate;
 
             $n = 0;
@@ -584,8 +585,10 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         });
 
         if (makeTable === '1') {
+
             $('div#printArea').css('display', 'block');
-            listTable = $('#tblrpt').dataTable({
+
+            $('#tblrpt').dataTable({
             'columnDefs': [
                 {'targets': columnDefs,
                  'type': 'date',

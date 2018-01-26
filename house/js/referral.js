@@ -126,7 +126,7 @@ function additionalGuest(item) {
                             // validate guest address
                             if ($('#bincomplete').prop('checked') === false) {
 
-                                $('.bhhk-addr-val').each(function() {
+                                $('.bhhk-addr-val').not('.hhk-MissingOk').each(function() {
                                     
                                     if ($(this).val() === "" && !$(this).hasClass('bfh-states')) {
                                         $(this).addClass('ui-state-error');

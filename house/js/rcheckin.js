@@ -755,27 +755,27 @@ function loadGuest(id, idPsg, role, patientStaying) {
             flagAlertMessage(incmg.error, true);
             return;
         }
-        
+
         if (incmg.warning) {
             // Don't stop.  Continue processing.
             flagAlertMessage(incmg.warning, true);
         }
-        
+
         var checkIn = chkIn;
 
         if (incmg.hvPat !== undefined && incmg.hvPat !== null) {
             checkIn.havePatient = incmg.hvPat;
         }
-        
+
         if (incmg.patStay !== undefined && incmg.patStay !== null) {
             checkIn.patientStaying = incmg.patStay;
         }
-        
+
         if (incmg.choosePsg) {
             psgChooser(incmg);
             return;
         }
-        
+
         if (incmg.resCh) {
             checkIn.idGuest = incmg.id;
             checkIn.idPsg = incmg.idPsg;
@@ -783,11 +783,11 @@ function loadGuest(id, idPsg, role, patientStaying) {
             resvPicker(incmg, $("#resDialog"));
             return;
         }
-        
+
         if (incmg.rid !== undefined && incmg.rid !== null) {
             checkIn.idReserv = parseInt(incmg.rid);
         }
-        
+
         if (incmg.addr) {
             checkIn.addr = incmg.addr;
         }
@@ -1877,7 +1877,7 @@ $(document).ready(function() {
     if (checkIn.ppnl !== '') {
         loadGuest(checkIn.ppnl, checkIn.idPsg, 'p', checkIn.patientStaying);
     }
-    if (checkIn.idReserv > 0) {
+    if (checkIn.idReserv > 0 && checkIn.addGuestId > 0) {
         loadGuest(checkIn.addGuestId, 0, 'r', checkIn.patientStaying);
     }
     $('#guestSearchWrapper').show();
