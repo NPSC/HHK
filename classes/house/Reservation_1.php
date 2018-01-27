@@ -822,7 +822,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
                     if ($checkinPage != '') {
                         $star = HTMLContainer::generateMarkup('a',
                         HTMLInput::generateMarkup($buttonText, array('type'=>'button'))
-                                , array('href'=>$checkinPage.'?rid='.$resv->getIdReservation().'&gid='.$resv->getIdGuest()));
+                                , array('href'=>$checkinPage.'?rid='.$resv->getIdReservation()));
                     }
 
                     if ($shoDirtyRooms) {

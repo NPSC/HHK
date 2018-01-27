@@ -1877,7 +1877,7 @@ $(document).ready(function() {
     if (checkIn.ppnl !== '') {
         loadGuest(checkIn.ppnl, checkIn.idPsg, 'p', checkIn.patientStaying);
     }
-    if (checkIn.idReserv > 0 && checkIn.addGuestId > 0) {
+    if (checkIn.idReserv > 0) {
         loadGuest(checkIn.addGuestId, 0, 'r', checkIn.patientStaying);
     }
     $('#guestSearchWrapper').show();
