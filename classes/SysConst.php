@@ -47,7 +47,7 @@ class Constraint_Type {
 
 class Default_Settings {
     const Rate_Category = 'e';
-    const Fixed_Rate_Category = 'x';
+    const Fixed_Rate_Category = 'f';
 }
 
 class Email_Purpose {
