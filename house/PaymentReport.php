@@ -215,23 +215,26 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         // Dates
         if ($txtStart != '') {
             $startDT = new DateTime($txtStart);
-            $start = $startDT->format('Y-m-d');
+        } else {
+            $startDT = new DateTime();
         }
 
         if ($txtEnd != '') {
             $endDT = new DateTime($txtEnd);
-            $endDT->add(new DateInterval('P1D'));
-            $end = $endDT->format('Y-m-d');
+        } else {
+            $endDT = new DateTime();
         }
+
+        $start = $startDT->format('Y-m-d');
+        $end = $endDT->format('Y-m-d');
 
     } else if ($calSelection == 22) {
         // Year to date
-        $start = $year . '-01-01';
+        $start = date('Y') . '-01-01';
 
-        $endDT = new DateTime($year . date('m') . date('d'));
-
-        $end = $endDT->add(new DateInterval('P1D'))->format('Y-m-d');
-
+        $endDT = new DateTime();
+        $endDT->add(new DateInterval('P1D'));
+        $end = $endDT->format('Y-m-d');
 
     } else {
         // Months

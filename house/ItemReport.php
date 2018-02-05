@@ -320,19 +320,24 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         // Dates
         if ($txtStart != '') {
             $startDT = new DateTime($txtStart);
-            $start = $startDT->format('Y-m-d 00:00:00');
+        } else {
+            $startDT = new DateTime();
         }
 
         if ($txtEnd != '') {
             $endDT = new DateTime($txtEnd);
-            $end = $endDT->format('Y-m-d 23:59:59');
+        } else {
+            $endDT = new DateTime();
         }
+
+        $start = $startDT->format('Y-m-d');
+        $end = $endDT->format('Y-m-d');
 
     } else if ($calSelection == 22) {
         // Year to date
-        $start = $year . '-01-01 00:00:00';
+        $start = date('Y') . '-01-01';
 
-        $endDT = new DateTime($year . date('m') . date('d'));
+        $endDT = new DateTime();
 
         $end = $endDT->add(new DateInterval('P1D'))->format('Y-m-d 00:00:00');
 
@@ -351,7 +356,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
 
 
-    $whDates = " and i.Invoice_Date < '$end' and i.Invoice_Date >= '$start' ";
+    $whDates = " and DATE(i.Invoice_Date) < DATE('$end') and DATE(i.Invoice_Date) >= DATE('$start') ";
 
     $endDT = new DateTime($end);
     $endDT->sub(new DateInterval('P1D'));

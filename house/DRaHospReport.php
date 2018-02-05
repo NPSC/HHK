@@ -9,8 +9,6 @@
  */
 
 require ("homeIncludes.php");
-require (DB_TABLES . 'visitRS.php');
-require (DB_TABLES . 'nameRS.php');
 
 
 require CLASSES . 'CreateMarkupFromDB.php';
@@ -67,7 +65,7 @@ function getRecords(\PDO $dbh, $local, $type, $colNameTitle, $whClause, $hospita
 from hospital_stay hs left join `name` n  ON hs.$Id = n.idName
 left join reservation rv on hs.idHospital_stay = rv.idHospital_Stay
 where rv.`Status` in ('" . ReservationStatus::Checkedout . "', '" . ReservationStatus::Staying . "') "
- . " and ifnull(rv.Actual_Departure, rv.Expected_Departure) > '$start' and ifnull(rv.Actual_Arrival, rv.Expected_Arrival) < '$end '  $whClause
+ . " and DATE(ifnull(rv.Actual_Departure, rv.Expected_Departure)) > DATE('$start') and DATE(ifnull(rv.Actual_Arrival, rv.Expected_Arrival)) < DATE('$end')  $whClause
 group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
         $stmt = $dbh->query($query);
@@ -109,10 +107,14 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
             $id = '';
             $doc = '';
+
             if ($rowCounter < $numRows) {
+
                 if ($r['Id'] > 0 && $lastId != $r['Id']) {
                     $id = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'../admin/NameEdit.php?id=' . $r['Id']));
                     $doc = $r['FirstLast'];
+                } else if ($rowCounter == 1) {
+                    $doc = 'unassigned';
                 }
 
                 $lastId = $r['Id'];
@@ -143,9 +145,12 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
             $doc = '';
 
             if ($rowCounter < $numRows) {
+
                 if ($r['Id'] > 0 && $lastId != $r['Id']) {
                     $id = $r['Id'];
                     $doc = $r['FirstLast'];
+                } else if ($rowCounter == 1) {
+                    $doc = 'unassigned';
                 }
 
                 $lastId = $r['Id'];
@@ -200,7 +205,7 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 }
 
 
-function blanksOnly(\PDO $dbh, $type, $colNameTitle, $whClause, $hospitals, $start, $end) {
+function blanksOnly(\PDO $dbh, $type, $whClause, $hospitals, $start, $end) {
 
     $class = '';
     $htmlId = '';
@@ -219,7 +224,9 @@ function blanksOnly(\PDO $dbh, $type, $colNameTitle, $whClause, $hospitals, $sta
 
     $query = "select hs.idPatient as `Patient Id`, n.Name_Full as `Patient Name`, hs.idHospital as `Hospital`, hs.idPsg
 from hospital_stay hs left join `name` n on hs.idPatient = n.idName
-where hs.$Id = 0  $whClause LIMIT 100";
+left join reservation rv on hs.idHospital_stay = rv.idHospital_Stay
+where hs.$Id = 0 and rv.`Status` in ('" . ReservationStatus::Checkedout . "', '" . ReservationStatus::Staying . "') "
+ . " and DATE(ifnull(rv.Actual_Departure, rv.Expected_Departure)) > DATE('$start') and DATE(ifnull(rv.Actual_Arrival, rv.Expected_Arrival)) < DATE('$end') $whClause";
 
     $stmt = $dbh->query($query);
 
@@ -232,15 +239,6 @@ where hs.$Id = 0  $whClause LIMIT 100";
         if (isset($hospitals[$r['Hospital']])) {
             $r['Hospital'] = $hospitals[$r['Hospital']][1];
         }
-
-//        $r['Search'] = HTMLContainer::generateMarkup('span', $colNameTitle, array('style'=>'float:left;'))
-//            . HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup('', array('id'=>$htmlId, 'data-pid'=>$r['Patient Id'], 'size'=>'13', 'title'=>'Type 3 characters to start the search.')), array('title'=>'Search', 'style'=>'float: left; margin-left:0.3em;'));
-
-//        $r['First Name'] = HTMLInput::generateMarkup('', array('name'=>$prefix.'_txtFirstName['.$r['Patient Id'].']', 'size'=>'15', 'class'=>$class))
-//                    .HTMLInput::generateMarkup('0', array('name'=>$prefix.'_idName['.$r['Patient Id'].']', 'type'=>'hidden'));
-//
-//        $r['Last Name'] = HTMLInput::generateMarkup('', array('name'=>$prefix.'_txtLastName['.$r['Patient Id'].']', 'size'=>'15', 'class'=>$class));
-//
 
         unset($r['idPsg']);
 
@@ -256,7 +254,7 @@ where hs.$Id = 0  $whClause LIMIT 100";
 $assocSelections = array();
 $hospitalSelections = '';
 $mkTable = '';
-$memType = '';
+
 $type = '';
 $cbBlank = '';
 $dataTable = '';
@@ -371,19 +369,24 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         // Dates
         if ($txtStart != '') {
             $startDT = new DateTime($txtStart);
-            $start = $startDT->format('Y-m-d');
+        } else {
+            $startDT = new DateTime();
         }
 
         if ($txtEnd != '') {
             $endDT = new DateTime($txtEnd);
-            $end = $endDT->format('Y-m-d');
+        } else {
+            $endDT = new DateTime();
         }
+
+        $start = $startDT->format('Y-m-d');
+        $end = $endDT->format('Y-m-d');
 
     } else if ($calSelection == 22) {
         // Year to date
-        $start = $year . '-01-01';
+        $start = date('Y') . '-01-01';
 
-        $endDT = new DateTime($year . date('m') . date('d'));
+        $endDT = new DateTime();
         $endDT->add(new DateInterval('P1D'));
         $end = $endDT->format('Y-m-d');
 
@@ -494,22 +497,22 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         }
 
         if ($blanksOnly) {
-            $dataTable = blanksOnly($dbh, $type, $colTitle, $whHosp, $hospList, $start, $end);
-            $memType = $type;
+
+            $dataTable = blanksOnly($dbh, $type, $whHosp, $hospList, $start, $end);
+            $sTbl->addBodyTr(HTMLTable::makeTh('Missing ' . $colTitle . ' Assignments', array('colspan'=>'4')));
+
         } else {
+
             $dataTable = getRecords($dbh, $local, $type, $colTitle, $whHosp, $hospList, $start, $end);
-            $memType = '';
+            $sTbl->addBodyTr(HTMLTable::makeTh($colTitle, array('colspan'=>'4')));
         }
 
         $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
         $sTbl->addBodyTr(HTMLTable::makeTd('Hospitals', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc);
         $settingstable = $sTbl->generateMarkup();
 
-
         $mkTable = 1;
     }
-
-
 }
 
 // Setups for the page.
@@ -547,24 +550,15 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
-
         <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
-
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo VERIFY_ADDRS_JS; ?>"></script>
-        <script type="text/javascript" src="js/resv.js"></script>
-
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
+
 <script type="text/javascript">
     $(document).ready(function() {
         var makeTable = '<?php echo $mkTable; ?>';
-        var doc = '<?php echo VolMemberType::Doctor; ?>';
-        var agent = '<?php echo VolMemberType::ReferralAgent; ?>';
-        var memType = '<?php echo $memType; ?>';
 
         $('#btnHere, #btnExcel').button();
 
@@ -572,40 +566,27 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
             $('div#printArea').show();
             $('#divPrintButton').show();
 
-            $('#tblrpt').dataTable({
-                "iDisplayLength": 50,
-                "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
-            });
             $('#printButton').button().click(function() {
                 $("div#printArea").printArea();
             });
 
-//            if (memType === agent) {
-//
-//                createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', add: 'phone', basis: 'ra'}, getAgent);
-//
-//                if ($('#a_txtLastName').val() === '') {
-//                    $('.hhk-agentInfo').hide();
-//                }
-//            } else if (memType === doc) {
-//
-//                createAutoComplete($('#txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc);
-//
-//                if ($('#d_txtLastName').val() === '') {
-//                    $('.hhk-docInfo').hide();
-//                }
-//            }
         }
 
         $('#cbBlanksOnly').click(function () {
             if ($(this).prop('checked') === true) {
                 $('#btnExcel').hide();
+
             } else {
                 $('#btnExcel').show();
+
             }
         });
 
+        if ($('#cbBlanksOnly').prop('checked') === true) {
+            $('#btnExcel').hide();
+        } else {
+            $('#btnExcel').show();
+        }
 
         $('.ckdate').datepicker({
             yearRange: '-05:+01',
@@ -615,16 +596,26 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
             numberOfMonths: 1,
             dateFormat: 'M d, yy'
         });
+
         $('#selCalendar').change(function () {
+
             if ($(this).val() && $(this).val() != '19') {
                 $('#selIntMonth').hide();
             } else {
                 $('#selIntMonth').show();
             }
+
+            if ($(this).val() && $(this).val() == '22') {
+                $('#selIntYear').hide();
+            } else {
+                $('#selIntYear').show();
+            }
+
             if ($(this).val() && $(this).val() != '18') {
                 $('.dates').hide();
             } else {
                 $('.dates').show();
+                $('#selIntYear').hide();
             }
         });
         $('#selCalendar').change();
@@ -649,7 +640,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                         </tr>
                     </table>
                     </fieldset>
-                   <table style="clear:left;float: left;">
+                   <table id="tblTimePeriod" style="clear:left;float: left;">
                         <tr>
                             <th colspan="3">Time Period</th>
                         </tr>

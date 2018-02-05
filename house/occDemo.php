@@ -133,19 +133,24 @@ if (isset($_POST['btnSmt'])) {
         // Dates
         if ($txtStart != '') {
             $startDT = new DateTime($txtStart);
-            $start = $startDT->format('Y-m-d');
+        } else {
+            $startDT = new DateTime();
         }
 
         if ($txtEnd != '') {
             $endDT = new DateTime($txtEnd);
-            $end = $endDT->format('Y-m-d');
+        } else {
+            $endDT = new DateTime();
         }
+
+        $start = $startDT->format('Y-m-d');
+        $end = $endDT->format('Y-m-d');
 
     } else if ($calSelection == 22) {
         // Year to date
-        $start = $year . '-01-01';
+        $start = date('Y') . '-01-01';
 
-        $endDT = new DateTime($year . date('m') . '01');
+        $endDT = new DateTime();
         $endDT->add(new DateInterval('P1M'));
         $end = $endDT->format('Y-m-d');
 
