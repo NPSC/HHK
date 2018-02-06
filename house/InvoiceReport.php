@@ -408,17 +408,17 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
         $adjustPeriod = new DateInterval('P' . $uS->fy_diff_Months . 'M');
         $startDT = new DateTime($year . '-01-01');
 
-        $start = $startDT->sub($adjustPeriod)->format('Y-m-d 00:00:00');
+        $start = $startDT->sub($adjustPeriod)->format('Y-m-d');
 
         $endDT = new DateTime(($year + 1) . '-01-01');
-        $end = $endDT->sub($adjustPeriod)->format('Y-m-d 00:00:00');
+        $end = $endDT->sub($adjustPeriod)->format('Y-m-d');
 
     } else if ($calSelection == 21) {
         // Calendar year
         $startDT = new DateTime($year . '-01-01');
-        $start = $startDT->format('Y-m-d 00:00:00');
+        $start = $startDT->format('Y-m-d');
 
-        $end = ($year + 1) . '-01-01 00:00:00';
+        $end = ($year + 1) . '-01-01';
 
     } else if ($calSelection == 18) {
         // Dates
@@ -443,19 +443,18 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
 
         $endDT = new DateTime();
 
-        $end = $endDT->add(new DateInterval('P1D'))->format('Y-m-d 00:00:00');
-
+        $end = $endDT->add(new DateInterval('P1D'))->format('Y-m-d ');
 
     } else {
         // Months
         $interval = 'P' . count($months) . 'M';
         $month = $months[0];
-        $start = $year . '-' . $month . '-01 00:00:00';
+        $start = $year . '-' . $month . '-01';
 
         $endDate = new DateTime($start);
         $endDate->add(new DateInterval($interval));
 
-        $end = $endDate->format('Y-m-d 00:00:00');
+        $end = $endDate->format('Y-m-d');
     }
 
     $whHosp = '';
@@ -474,9 +473,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
         $headerTable->addBodyTr(HTMLTable::makeTd('Reporting Period: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start)) . ' thru ' . date('M j, Y', strtotime($end))));
 
         if ($useVisitDates) {
-            $whDates = " and DATE(v.Arrival_Date) < '$end' and ifnull(DATE(v.Actual_Departure), DATE(v.Expected_Departure)) >= '$start' ";
+            $whDates = " and DATE(v.Arrival_Date) < DATE('$end') and ifnull(DATE(v.Actual_Departure), DATE(v.Expected_Departure)) >= DATE('$start') ";
         } else {
-            $whDates = " and DATE(`i`.`Invoice_Date`) < '$end' and DATE(`i`.`Invoice_Date`) >= '$start' ";
+            $whDates = " and DATE(`i`.`Invoice_Date`) < DATE('$end') and DATE(`i`.`Invoice_Date`) >= DATE('$start') ";
         }
 
 
@@ -560,9 +559,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
         }
 
         if ($showDeleted) {
-            $whDeleted = '1=1';
+            $whDeleted = '1=1 ';
         } else {
-            $whDeleted = 'i.Deleted = 0';
+            $whDeleted = 'i.Deleted = 0 ';
         }
     }
 
@@ -607,7 +606,6 @@ FROM `invoice` `i` left join `name` n on i.Sold_To_Id = n.idName
     left join invoice di on i.Delegated_Invoice_Id = di.idInvoice
 where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
-    $stmt = $dbh->query($query);
 
     $tbl = null;
     $sml = null;
@@ -659,6 +657,8 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
 
     // Now the data ...
+    $stmt = $dbh->query($query);
+
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
         // Hospital
