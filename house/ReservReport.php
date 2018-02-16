@@ -114,6 +114,10 @@ if (count($diags) > 0) {
     $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 's', '', array());
 }
 
+$cFields[] = array("Doctor", 'Name_Doctor', '', '', 's', '');
+$cFields[] = array("Agent", 'Name_Agent', '', '', 's', '');
+
+
 $cFields[] = array("First", 'Name_First', 'checked', '', 's', '');
 $cFields[] = array("Last", 'Name_Last', 'checked', '', 's', '');
 
@@ -329,6 +333,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     hs.idPsg,
     hs.idHospital,
     hs.idAssociation,
+    nd.Name_Full as `Name_Doctor`,
+    nr.Name_Full as `Name_Agent`,
     ifnull(gl.`Description`, '') as `Diagnosis`,
     ifnull(g2.`Description`, '') as `Location`,
     r.Timestamp as `Created_Date`
@@ -344,6 +350,10 @@ from
     name_phone np ON n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
         left join
     hospital_stay hs ON r.idHospital_Stay = hs.idHospital_stay
+        left join
+    name nd ON hs.idDoctor = nd.idName
+        left join
+    name nr ON hs.idReferralAgent = nr.idName
         left join
     room_rate rr ON r.idRoom_rate = rr.idRoom_rate
         left join resource_room rer on r.idResource = rer.idResource

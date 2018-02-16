@@ -182,21 +182,32 @@ class SiteConfig {
 //   0    1         2               3                   4                   5       6       7           8           9           10          11              12          13
 
 //"world_region","country","decommissioned","estimated_population","notes"
+
+        // New File as of 2/2018
+// zip	type	decommissioned	primary_city	acceptable_cities	unacceptable_cities	state	county	timezone	area_codes	world_region	country	approximate_latitude
+//  0     1            2             3                  4                       5                 6        7        8               9                10           11          12
+//
+// approximate_longitude	polygon_offset_latitude	polygon_offset_longitude	internal_point_latitude	internal_point_longitude	latitude_min	latitude_max	longitude_min	longitude_max	area_land	area_water	housing_count	population_count	irs_estimated_population_2015	white	black_or_african_american	american_indian_or_alaskan_native	asian	native_hawaiian_and_other_pacific_islander	other_race	two_or_more_races	total_male_population	total_female_population	pop_under_10	pop_10_to_19	pop_20_to_29	pop_30_to_39	pop_40_to_49	pop_50_to_59	pop_60_to_69	pop_70_to_79	pop_80_plus
+//        13                             14                      15                               16                        17                         18            19                20              21
         foreach ($lines as $line) {
 
             $fields = str_getcsv($line);
 
-            if (count($fields) > 11) {
+            if (count($fields) > 20) {
+
+                $county = filter_var(trim($fields[7]), FILTER_SANITIZE_STRING, FILTER_FLAG_ENCODE_HIGH);
+                $city = filter_var(trim($fields[3]), FILTER_SANITIZE_STRING, FILTER_FLAG_ENCODE_HIGH);
+                $altCitys = filter_var(trim($fields[4]), FILTER_SANITIZE_STRING, FILTER_FLAG_ENCODE_HIGH);
 
                 $query .= "('"
                         . filter_var(trim($fields[0]), FILTER_SANITIZE_NUMBER_INT) . "','"    // Zip_Code
-                        . filter_var(trim($fields[2]), FILTER_SANITIZE_STRING) . "','"        // City
-                        . filter_var(trim($fields[6]), FILTER_SANITIZE_STRING) . "','"        // County
-                        . filter_var(trim($fields[5]), FILTER_SANITIZE_STRING) . "','"        // State
-                        . filter_var(trim($fields[11]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION) . "','"
-                        . filter_var(trim($fields[12]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION) . "','"
+                        . $city . "','"        // City
+                        . $county . "','"        // County
+                        . filter_var(trim($fields[6]), FILTER_SANITIZE_STRING) . "','"        // State
+                        . filter_var(trim($fields[18]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION) . "','"
+                        . filter_var(trim($fields[20]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION) . "','"
                         . filter_var(trim(substr($fields[1], 0, 2)), FILTER_SANITIZE_STRING) . "','"
-                        . filter_var(trim($fields[3]), FILTER_SANITIZE_STRING)
+                        . $altCitys
                         . "'),";
                 $indx++;
                 $recordCounter++;
@@ -398,7 +409,7 @@ class SiteConfig {
                             $inpt = HTMLInput::generateMarkup($val, $attr);
                         }
 
-                        
+
                         if (is_null($titles)) {
                             $desc = '';
                         } else {

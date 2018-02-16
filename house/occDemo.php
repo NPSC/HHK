@@ -38,7 +38,9 @@ $labels = new Config_Lite(LABEL_FILE);
 $hospitalSelections = array('');
 $assocSelections = array('');
 $calSelection = '22';
-
+$newGuestsChecked = 'checked="checked"';
+$allGuestsChecked = '';
+$whichGuests = 'new';
 
 $year = date('Y');
 $txtStart = '';
@@ -104,6 +106,17 @@ if (isset($_POST['btnSmt'])) {
         $reqs = $_POST['selHospital'];
         if (is_array($reqs)) {
             $hospitalSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+        }
+    }
+
+    if (isset($_POST['rbAllGuests'])) {
+        $whichGuests = filter_var($_POST['rbAllGuests'], FILTER_SANITIZE_STRING);
+
+        if ($whichGuests == 'all') {
+            $newGuestsChecked = '';
+            $allGuestsChecked = 'checked="checked"';
+        } else {
+            $whichGuests = 'new';
         }
     }
 
@@ -191,7 +204,7 @@ if (isset($_POST['btnSmt'])) {
         $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
     }
 
-    $report = GuestReport::demogReport($dbh, $start, $end, $whHosp, $whAssoc, $zip);
+    $report = GuestReport::demogReport($dbh, $start, $end, $whHosp, $whAssoc, $whichGuests, $zip);
     $tabOpened = 0;
 }
 
@@ -328,6 +341,10 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                     <div style="clear:both;"></div>
                     <table style="padding-top:20px; ">
                         <tr>
+                            <td>
+                                <label for="rbnewG">New Guests </label><input type="radio" name="rbAllGuests" id="rbnewG" value="new" <?php echo $newGuestsChecked; ?> />
+                                <label for="rbAllG" style="margin-left:.3em;">All Guests </label><input type="radio" name="rbAllGuests" id="rbAllG" value="all" <?php echo $allGuestsChecked; ?> />
+                            </td>
                             <td>
                                 <input type="submit" id="btnSmt" name="btnSmt" value="Run Report" />
                             </td>

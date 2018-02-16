@@ -15,7 +15,7 @@
  */
 class GuestReport {
 
-    public static function demogReport(PDO $dbh, $startDate, $endDate, $whHosp, $whAssoc, $sourceZip) {
+    public static function demogReport(PDO $dbh, $startDate, $endDate, $whHosp, $whAssoc, $whichGuests, $sourceZip) {
 
         if ($startDate == '') {
             return;
@@ -113,16 +113,19 @@ class GuestReport {
 
         $th .= HTMLTable::makeTh("Total");
 
-        $query = "SELECT
-    s.idName,
-    MIN(DATE(s.Span_Start_Date)) AS `minDate`,
-    CONCAT(YEAR(s.Span_Start_Date),
-            '-',
-            MONTH(s.Span_Start_Date),
-            '-01') AS `In_Date`,
+        if ($whichGuests == 'new') {
+            $query = "SELECT s.idName, MIN(DATE(s.Span_Start_Date)) AS `minDate`,";
+        } else {
+            $query = "SELECT Distinct s.idName, ";
+        }
+
+    $query .= "CONCAT(YEAR(s.Span_Start_Date),
+        '-',
+        MONTH(s.Span_Start_Date),
+        '-01') AS `In_Date`,
     na.Postal_Code,
     $fields
-    ng.idPsg,
+    hs.idPsg,
     YEAR(s.Span_Start_Date) AS fy,
     hs.idHospital,
     hs.idAssociation
@@ -136,16 +139,20 @@ FROM
     name_address na ON s.idName = na.idName
         AND na.Purpose = n.Preferred_Mail_Address
         LEFT JOIN
-    name_guest ng ON n.idName = ng.idName
+    visit v ON s.idVisit = v.idVisit and s.Visit_Span = v.Span
         LEFT JOIN
-    hospital_stay hs on ng.idPsg = hs.idPsg
+    hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
 WHERE
     n.Member_Status IN ('a' , 'in', 'd') $whHosp $whAssoc
         AND DATEDIFF(IFNULL(s.Span_End_Date, NOW()),
             s.Span_Start_Date) > 0
-        AND DATE(s.Span_Start_Date) < DATE('" . $endDT->format('Y-m-01') . "')
-GROUP BY s.idName
-HAVING `minDate` >= DATE('" . $stDT->format('Y-m-01') . "')";
+        AND DATE(s.Span_Start_Date) < DATE('" . $endDT->format('Y-m-01') . "')";
+
+    if ($whichGuests == 'new') {
+        $query .= "GROUP BY s.idName HAVING `minDate` >= DATE('" . $stDT->format('Y-m-01') . "')";
+    } else {
+        $query .= " AND DATE(s.Span_Start_Date) >= DATE('" . $stDT->format('Y-m-01') . "')";
+    }
 
 
 

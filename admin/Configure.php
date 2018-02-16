@@ -402,7 +402,7 @@ if (isset($_FILES['zipfile'])) {
 
     try {
 
-        SiteLog::checkZipFile('zipfile');
+        SiteConfig::checkZipFile('zipfile');
 
         $resultMsg .= SiteConfig::loadZipCodeFile($dbh, $_FILES['zipfile']['tmp_name']);
 
@@ -541,6 +541,10 @@ if (is_null($wsConfig) === FALSE) {
         $stmt = $dbh->query("Select * from neon_lists;");
 
         while ($list = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+            if (isset($list['HHK_Lookup']) === FALSE) {
+                continue;
+            }
 
             $neonItems = $transfer->listNeonType($list['Method'], $list['List_Name'], $list['List_Item']);
 
