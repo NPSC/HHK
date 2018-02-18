@@ -314,9 +314,9 @@ WHERE
             $endDate = date('Y-12-31', strtotime($endDate));
         }
 
-        $stDT = new DateTime($startDate);
-        $endDT = new DateTime($endDate);
-        $endDT->add(new DateInterval('P1D'));
+        $stDT = new \DateTime($startDate);
+        $endDT = new \DateTime($endDate);
+        $endDT->add(new \DateInterval('P1D'));
 
         if ($stDT === FALSE || $endDT === FALSE) {
             return;
@@ -351,7 +351,7 @@ and s.Span_Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(s.
         $categories = array();
         $size = 0;
 //        $th = HTMLTable::makeTh('');
-        $now = new DateTime();
+        $now = new \DateTime();
         $now->setTime(23, 59, 59);
 
         if ($endDT > $now) {
@@ -398,7 +398,7 @@ and s.Span_Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(s.
 
         // Count
         foreach ($rows as $r) {
-            $rmStartDate = new DateTime($r['Span_Start_Date']);
+            $rmStartDate = new \DateTime($r['Span_Start_Date']);
             $numNights = $r['Nights'];
 
             for ($j = 0; $j < $numNights; $j++) {
@@ -507,9 +507,9 @@ and s.Span_Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(s.
             $captionDateFormat = 'Y';
         }
 
-        $stDT = new DateTime($startDate);
+        $stDT = new \DateTime($startDate);
         $stDT->setTime(0,0,0);
-        $endDT = new DateTime($endDate);
+        $endDT = new \DateTime($endDate);
         $endDT->add(new DateInterval('P1D'));
 
         if ($stDT === FALSE || $endDT === FALSE) {
@@ -517,7 +517,7 @@ and s.Span_Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(s.
         }
 
         // Counting start date
-        $countgDT = new DateTime($startDate);
+        $countgDT = new \DateTime($startDate);
         $countgDT->setTime(0, 0, 0);
 
 
@@ -528,7 +528,7 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
                 . " where ru.idResource_use is null and r.Type in ('" . ResourceTypes::Room . "', '" . ResourceTypes::RmtRoom . "')"
                 . " order by r.Title;");
 
-        $stRows = $stResc->fetchAll(PDO::FETCH_ASSOC);
+        $stRows = $stResc->fetchAll(\PDO::FETCH_ASSOC);
 
         $rescs = array();
         $totals = array();
@@ -602,8 +602,8 @@ and v.Span_Start < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(v.Span_
         $stmt = $dbh->query($query);
 
         // Count nights of use
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $rmStartDate = new DateTime($r['Span_Start']);
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $rmStartDate = new \DateTime($r['Span_Start']);
             $numNights = $r['Nights'];
 
             for ($j = 0; $j < $numNights; $j++) {
@@ -629,9 +629,9 @@ and v.Span_Start < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(v.Span_
         $rstmt = $dbh->query("Select idResource, `Status`, `Start_Date`, `End_Date`, DATEDIFF(ifnull(`End_Date`, now()), `Start_Date`) as `Nights`"
                 . " from resource_use where Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(End_Date, now()) >= '" . $stDT->format('Y-m-d 00:00:00') ."' order by idResource");
 
-        while ($r = $rstmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            $rmStartDate = new DateTime($r['Start_Date']);
+            $rmStartDate = new \DateTime($r['Start_Date']);
             $numNights = $r['Nights'];
 
             for ($j = 0; $j < $numNights; $j++) {

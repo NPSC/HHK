@@ -54,12 +54,14 @@ if (is_array($dbConfig)) {
     exit("Bad Database Configurtion");
 }
 
-$uS = Session::getInstance();
 
 $sendEmail = TRUE;
+
 if (isset($_POST)) {
     // Don't send email when run as a web page.
     $sendEmail = FALSE;
+
+    $uS = Session::getInstance();
 
     // Check for user logged in.
     if (!$uS->logged) {
@@ -86,9 +88,10 @@ if ($from == '') {
     exit("From/Reply To address is missing.  Go to System Configuration, House, NoReply.");
 }
 
+$buffer = SysConfig::getKeyValue($dbh, 'sys_config', 'SolicitBuffer');
 
 
-if (strtolower($uS->SolicitBuffer) === 'off') {
+if (strtolower($buffer) === 'off') {
     if ($sendEmail) {
         exit();
     } else {
@@ -96,7 +99,7 @@ if (strtolower($uS->SolicitBuffer) === 'off') {
     }
 }
 
-$delayDays = intval($uS->SolicitBuffer, 10);
+$delayDays = intval($buffer, 10);
 
 if ($delayDays <1) {
     exit("Delay days not set properly.  Go to System Configuration, SolicitBuffer.");

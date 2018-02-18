@@ -533,7 +533,7 @@ abstract class MercRequest {
 
         } catch (SoapFault $sf) {
 
-            throw new Hk_Exception_Payment('Problem with HHK web server contacting the Mercury Payment system:  ' . $sf->getMessage());
+            throw new Hk_Exception_Payment('Problem with HHK web server contacting the Mercury Payment system:  ' . $sf->getMessage() .     ' (' . $sf->getCode() . '); ' . ' Trace: ' . $sf->getTraceAsString());
         }
 
         try {

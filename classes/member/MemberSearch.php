@@ -75,13 +75,34 @@ class MemberSearch {
                 $stmt->execute(array(':vcat' => $prts[0], ':vcode' => $prts[1], ':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
 
                 $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
                 foreach ($rows as $row2) {
+
                     $namArray = array();
 
+                    $firstName = preg_replace_callback("/(&#[0-9]+;)/",
+                            function($m) {
+                                return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                            },
+                            $row2["Name_First"]
+                    );
+                    $lastName = preg_replace_callback("/(&#[0-9]+;)/",
+                            function($m) {
+                                return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                            },
+                            $row2["Name_Last"]
+                    );
+                    $nickName = preg_replace_callback("/(&#[0-9]+;)/",
+                            function($m) {
+                                return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                            },
+                            $row2["Name_Nickname"]
+                    );
+
                     $namArray['id'] = $row2["idName"];
-                    $namArray['value'] = $row2["Name_Last"] . ", " . $row2["Name_First"] . ($row2['Name_Nickname'] != '' ? ' (' . $row2['Name_Nickname'] . ')' : '' );
-                    $namArray['last'] = $row2["Name_Last"];
-                    $namArray['first'] = $row2['Name_Nickname'] != '' ? $row2['Name_Nickname'] : $row2["Name_First"];
+                    $namArray['value'] = $lastName . ", " . $firstName . ($nickName != '' ? ' (' . $nickName . ')' : '' );
+                    $namArray['last'] = $lastName;
+                    $namArray['first'] = $nickName != '' ? $nickName : $firstName;
 
                     $events[] = $namArray;
                 }
@@ -110,11 +131,30 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             foreach ($rows as $r) {
 
+                $firstName = preg_replace_callback("/(&#[0-9]+;)/",
+                        function($m) {
+                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                        },
+                        $r["Name_First"]
+                );
+                $lastName = preg_replace_callback("/(&#[0-9]+;)/",
+                        function($m) {
+                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                        },
+                        $r["Name_Last"]
+                );
+                $nickName = preg_replace_callback("/(&#[0-9]+;)/",
+                        function($m) {
+                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                        },
+                        $r["Name_Nickname"]
+                );
+
                 $events[] = array(
                     'id' => $r["idName"],
-                    'value' => $r["Name_Last"] . ", " . $r["Name_First"] . ($r['Name_Nickname'] != '' ? ' (' . $r['Name_Nickname'] . ')' : '' ),
-                    'first' => ($r['Name_Nickname'] != '' ? $r['Name_Nickname'] : $r["Name_First"] ),
-                    'last' => $r["Name_Last"],
+                    'value' => $lastName . ", " . $firstName . ($nickName != '' ? ' (' . $nickName . ')' : '' ),
+                    'first' => ($nickName != '' ? $nickName : $firstName ),
+                    'last' => $lastName,
                     'wphone' => $r["WorkPhone"],
                     'cphone' => $r["CellPhone"],
                     'email' => $r['Email']
@@ -156,9 +196,27 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             foreach ($rows as $r) {
 
+                $firstName = preg_replace_callback("/(&#[0-9]+;)/",
+                        function($m) {
+                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                        },
+                        $r["Name_First"]
+                );
+                $lastName = preg_replace_callback("/(&#[0-9]+;)/",
+                        function($m) {
+                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                        },
+                        $r["Name_Last"]
+                );
+                $company = preg_replace_callback("/(&#[0-9]+;)/",
+                        function($m) {
+                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                        },
+                        $r["Company"]
+                );
                 $events[] = array(
                     'id' => $r["idName"],
-                    'value' => ($r["Name_Last"] != '' ? $r["Name_Last"] . ", " . $r["Name_First"] . " - " . $r["Company"] : $r["Company"])
+                    'value' => ($lastName != '' ? $lastName . ", " . $firstName . " - " . $company : $company)
                 );
             }
 
@@ -189,11 +247,30 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             foreach ($rows as $r) {
 
+                $firstName = preg_replace_callback("/(&#[0-9]+;)/",
+                        function($m) {
+                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                        },
+                        $r["Name_First"]
+                );
+                $lastName = preg_replace_callback("/(&#[0-9]+;)/",
+                        function($m) {
+                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                        },
+                        $r["Name_Last"]
+                );
+                $nickName = preg_replace_callback("/(&#[0-9]+;)/",
+                        function($m) {
+                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                        },
+                        $r["Name_Nickname"]
+                );
+
                 $events[] = array(
                     'id' => $r["idName"],
-                    'value' => $r["Name_Last"] . ", " . $r["Name_First"] . ($r['Name_Nickname'] != '' ? ' (' . $r['Name_Nickname'] . ')' : '' ) . '  ' . $r['Phone'],
-                    'first' => ($r['Name_Nickname'] != '' ? $r['Name_Nickname'] : $r["Name_First"] ),
-                    'last' => $r["Name_Last"],
+                    'value' => $lastName . ", " . $firstName . ($nickName != '' ? ' (' . $nickName . ')' : '' ) . '  ' . $r['Phone'],
+                    'first' => ($nickName != '' ? $nickName : $firstName ),
+                    'last' => $lastName,
                     'phone' => $r["Phone"],
                 );
             }
@@ -217,14 +294,35 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             $stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-            foreach ($rows as $row2) {
+            foreach ($rows as $r) {
+
                 $namArray = array();
 
-                $namArray['id'] = $row2["idName"];
-                $namArray['value'] = $row2["Name_Last"] . ", " . $row2["Name_First"] . ($row2['Name_Nickname'] != '' ? ' (' . $row2['Name_Nickname'] . ')' : '' );
+                $firstName = preg_replace_callback("/(&#[0-9]+;)/",
+                        function($m) {
+                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                        },
+                        $r["Name_First"]
+                );
+                $lastName = preg_replace_callback("/(&#[0-9]+;)/",
+                        function($m) {
+                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                        },
+                        $r["Name_Last"]
+                );
+                $nickName = preg_replace_callback("/(&#[0-9]+;)/",
+                        function($m) {
+                            return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                        },
+                        $r["Name_Nickname"]
+                );
+
+                $namArray['id'] = $r["idName"];
+                $namArray['value'] = $lastName . ", " . $firstName . ($nickName != '' ? ' (' . $nickName . ')' : '' );
 
                 $events[] = $namArray;
             }
+            
             $events[] = array("id" => 0, "value" => "New Patient");
 
 
@@ -255,7 +353,6 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 (LOWER(n.Name_Last) like '" . $this->Name_Last . "' $operation
                 (LOWER(n.Name_NickName) like '" . $this->Name_First . "' OR LOWER(n.Name_First) like '" . $this->Name_First . "') OR LOWER(n.Company) like '" . $this->Company . "') order by n.Member_Status, n.Name_Last, n.Name_First;";
                 $stmt = $dbh->query($query2);
-                //$stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First, ':ltrco' => $this->Company));
                 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                 foreach ($rows as $row2) {
@@ -266,7 +363,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                     if ($row2[4] == '') {
                         $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
                             return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                        }, $row2[1] . ", " . $row2[2]);
+                            }, $row2[1] . ", " . $row2[2]);
                     } else {
                         $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
                             return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
@@ -421,9 +518,12 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                     $namArray = array();
 
                     $namArray['id'] = $row2[0];
-                    $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/", function($m) {
-                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
-                    }, $row2[1]);
+                    $namArray['value'] = preg_replace_callback("/(&#[0-9]+;)/",
+                            function($m) {
+                                return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                            },
+                            $row2[1]
+                    );
 
                     $events[] = $namArray;
                 }
@@ -551,15 +651,34 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $namArray = array();
 
+            $firstName = preg_replace_callback("/(&#[0-9]+;)/",
+                    function($m) {
+                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                    },
+                    $row2["Name_First"]
+            );
+            $lastName = preg_replace_callback("/(&#[0-9]+;)/",
+                    function($m) {
+                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                    },
+                    $row2["Name_Last"]
+            );
+            $nickName = preg_replace_callback("/(&#[0-9]+;)/",
+                    function($m) {
+                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                    },
+                    $row2["Name_Nickname"]
+            );
+
             $namArray['id'] = $row2["idName"];
-            $namArray['fullName'] = $row2["Name_First"] . ' ' . $row2["Name_Last"];
+            $namArray['fullName'] = $firstName . ' ' . $lastName;
             $namArray['No_Return'] = $row2['No_Return'];
             $namArray['value'] =
                 ($row2['No_Return'] != '' ? $row2['No_Return'] . '; ' : '')
                 . ($row2['Name_Prefix'] != '' ? $row2['Name_Prefix'] . ' ' : '' )
-                . $row2["Name_Last"] . ", " . $row2["Name_First"]
+                . $lastName . ", " . $firstName
                 . ($row2['Name_Suffix'] != '' ? ', ' . $row2['Name_Suffix'] : '' )
-                . ($row2['Name_Nickname'] != '' ? ' (' . $row2['Name_Nickname'] . ')' : '' )
+                . ($nickName != '' ? ' (' . $nickName . ')' : '' )
                 . ($row2['Member_Status'] == 'd' ? ' [' . $row2['Status'] . ']' : '')
                 . ($row2['Phone'] != '' ? ' ' . $row2['Phone'] : '')
                 . ($row2['City'] != '' ? '; ' . $row2['City'] : '')

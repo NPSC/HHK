@@ -342,8 +342,8 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                     <table style="padding-top:20px; ">
                         <tr>
                             <td>
-                                <label for="rbnewG">New Guests </label><input type="radio" name="rbAllGuests" id="rbnewG" value="new" <?php echo $newGuestsChecked; ?> />
-                                <label for="rbAllG" style="margin-left:.3em;">All Guests </label><input type="radio" name="rbAllGuests" id="rbAllG" value="all" <?php echo $allGuestsChecked; ?> />
+                                <label for="rbnewG">First Time Guests Only </label><input type="radio" name="rbAllGuests" id="rbnewG" value="new" <?php echo $newGuestsChecked; ?> />
+                                <label for="rbAllG" style="margin-left:.5em;">All Guests </label><input type="radio" name="rbAllGuests" id="rbAllG" value="all" <?php echo $allGuestsChecked; ?> />
                             </td>
                             <td>
                                 <input type="submit" id="btnSmt" name="btnSmt" value="Run Report" />

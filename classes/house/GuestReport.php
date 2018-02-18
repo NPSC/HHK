@@ -15,7 +15,7 @@
  */
 class GuestReport {
 
-    public static function demogReport(PDO $dbh, $startDate, $endDate, $whHosp, $whAssoc, $whichGuests, $sourceZip) {
+    public static function demogReport(\PDO $dbh, $startDate, $endDate, $whHosp, $whAssoc, $whichGuests, $sourceZip) {
 
         if ($startDate == '') {
             return;
@@ -25,17 +25,17 @@ class GuestReport {
             $endDate = date('Y-m-01');
         }
 
-        $stDT = new DateTime($startDate);
+        $stDT = new \DateTime($startDate);
         $stDT->setTime(0, 0, 0);
 
-        $endDT = new DateTime($endDate);
+        $endDT = new \DateTime($endDate);
         $endDT->setTime(0, 0, 0);
 
         if ($stDT === FALSE || $endDT === FALSE) {
             return;
         }
 
-        $indxDT = new DateTime($startDate);
+        $indxDT = new \DateTime($startDate);
         $indxDT->setTime(0, 0, 0);
 
         $periodFormat = 'Y-m';
@@ -48,7 +48,7 @@ class GuestReport {
         $firstPeriod = $thisPeriod = $stDT->format($periodFormat);
         $badZipCodes = array();
 
-        $now = new DateTime();
+        $now = new \DateTime();
         $now->setTime(0, 0, 0);
 
         // Set up user selected demographics categoryeis.
@@ -83,7 +83,11 @@ class GuestReport {
 //            $accum[$thisPeriod]['Guests']['p']['cnt'] = 0;
 //            $accum[$thisPeriod]['Guests']['p']['title'] = 'New PSGs';
             $accum[$thisPeriod]['Guests']['o']['cnt'] = 0;
-            $accum[$thisPeriod]['Guests']['o']['title'] = 'New Guests';
+            if ($whichGuests == 'new') {
+                $accum[$thisPeriod]['Guests']['o']['title'] = 'New Guests';
+            } else {
+                $accum[$thisPeriod]['Guests']['o']['title'] = 'All Guests starting in month';
+            }
 
             // Demographics
             foreach ($demoCategorys as $d) {
@@ -99,10 +103,8 @@ class GuestReport {
 
         $periods[] = 'Total';
 
-//        $accum['Total']['Guests']['p']['cnt'] = 0;
-//        $accum['Total']['Guests']['p']['title'] = 'New PSGs';
         $accum['Total']['Guests']['o']['cnt'] = 0;
-        $accum['Total']['Guests']['o']['title'] = 'New Guests';
+
         // Totals
         foreach ($demoCategorys as $d) {
             $accum['Total'][$d] = self::makeCounters(readGenLookupsPDO($dbh, $d));
@@ -114,55 +116,55 @@ class GuestReport {
         $th .= HTMLTable::makeTh("Total");
 
         if ($whichGuests == 'new') {
-            $query = "SELECT s.idName, MIN(DATE(s.Span_Start_Date)) AS `minDate`,";
+            $query = "SELECT s.idName, MIN(s.Span_Start_Date) AS `minDate`,";
         } else {
-            $query = "SELECT Distinct s.idName, ";
+            $query = "SELECT s.idName, DATE(s.Span_Start_Date) as `minDate`,";
         }
 
-    $query .= "CONCAT(YEAR(s.Span_Start_Date),
-        '-',
-        MONTH(s.Span_Start_Date),
-        '-01') AS `In_Date`,
-    na.Postal_Code,
-    $fields
-    hs.idPsg,
-    YEAR(s.Span_Start_Date) AS fy,
-    hs.idHospital,
-    hs.idAssociation
-FROM
-    stays s
-        LEFT JOIN
-    name n ON s.idName = n.idName
-        LEFT JOIN
-    name_demog nd ON s.idName = nd.idName
-        LEFT JOIN
-    name_address na ON s.idName = na.idName
-        AND na.Purpose = n.Preferred_Mail_Address
-        LEFT JOIN
-    visit v ON s.idVisit = v.idVisit and s.Visit_Span = v.Span
-        LEFT JOIN
-    hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
-WHERE
-    n.Member_Status IN ('a' , 'in', 'd') $whHosp $whAssoc
-        AND DATEDIFF(IFNULL(s.Span_End_Date, NOW()),
-            s.Span_Start_Date) > 0
-        AND DATE(s.Span_Start_Date) < DATE('" . $endDT->format('Y-m-01') . "')";
+        $query .= "na.Postal_Code,
+        $fields
+        hs.idPsg,
+        hs.idHospital,
+        hs.idAssociation
+    FROM
+        stays s
+            LEFT JOIN
+        name n ON s.idName = n.idName
+            LEFT JOIN
+        name_demog nd ON n.idName = nd.idName
+            LEFT JOIN
+        name_address na ON n.idName = na.idName
+            AND na.Purpose = n.Preferred_Mail_Address
+            LEFT JOIN
+        visit v ON s.idVisit = v.idVisit and s.Visit_Span = v.Span
+            LEFT JOIN
+        hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
+    WHERE
+        n.Member_Status IN ('a' , 'in', 'd') $whHosp $whAssoc
+        AND DATE(s.Span_Start_Date) < DATE('" . $endDT->format('Y-m-01') . "') ";
 
-    if ($whichGuests == 'new') {
-        $query .= "GROUP BY s.idName HAVING `minDate` >= DATE('" . $stDT->format('Y-m-01') . "')";
-    } else {
-        $query .= " AND DATE(s.Span_Start_Date) >= DATE('" . $stDT->format('Y-m-01') . "')";
-    }
+        if ($whichGuests == 'new') {
+            $query .= " GROUP BY s.idName HAVING DATE(`minDate`) >= DATE('" . $stDT->format('Y-m-01') . "')";
+        } else {
+            $query .= " AND DATE(s.Span_Start_Date) >= DATE('" . $stDT->format('Y-m-01') . "')";
+        }
 
-
-
+        $currId = 0;
+        $currPeriod = '';
         $stmt = $dbh->query($query);
 
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-            $spanStDT = new DateTime($r['In_Date']);
+            $spanStDT = new DateTime($r['minDate']);
             $startPeriod = $spanStDT->format($periodFormat);
+
+            if ($r['idName'] == $currId && $startPeriod == $currPeriod) {
+
+                continue;
+            }
+
+            $currId = $r['idName'];
+            $currPeriod = $startPeriod;
 
             foreach ($demoCategorys as $d) {
                 $accum[$startPeriod][$d][$r[$d]]['cnt']++;

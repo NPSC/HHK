@@ -1169,7 +1169,7 @@ class PaymentSvcs {
             case MpStatusValues::Declined:
 
                 $rtnResult->setStatus(PaymentResult::DENIED);
-                $rtnResult->feePaymentRejected($dbh, $uS, $payResp);
+                $rtnResult->feePaymentRejected($dbh, $uS, $rtnResp);
                 $rtnResult->setDisplayMessage('** The Return is Declined. **  Message: ' . $rtnResp->response->getDisplayMessage());
 
                 break;
@@ -1493,46 +1493,31 @@ class PaymentSvcs {
                 // Do nothing
             }
 
-//            if ($rtnCode != 0) {
-//
-//                $payResult = new PaymentResult($idInv, 0, 0);
-//                $payResult->setStatus(PaymentResult::ERROR);
-//                $payResult->setDisplayMessage('Payment Transaction Failed: ' . $rtnMessage);
-//
-//                if ($idInv != 0) {
-//                    // update fee record
-//                    //Fees::updateFeesPaymentStatus($dbh, 0, $idInv, 0, $uS->username, FeesPaymentStatus::Error);
-//
-//                }
-//
-//            } else {
+            try {
 
-                try {
+                $csResp = HostedCheckout::portalReply($dbh, $gw, $paymentId, $payNotes);
 
-                    $csResp = HostedCheckout::portalReply($dbh, $gw, $paymentId, $payNotes);
+                if ($csResp->getInvoice() != '') {
 
-                    if ($csResp->getInvoice() != '') {
+                    $invoice = new Invoice($dbh, $csResp->getInvoice());
 
-                        $invoice = new Invoice($dbh, $csResp->getInvoice());
+                    // Analyze the result
+                    $payResult = self::AnalyzeCredSaleResult($dbh, $csResp, $invoice);
 
-                        // Analyze the result
-                        $payResult = self::AnalyzeCredSaleResult($dbh, $csResp, $invoice);
-
-                    } else {
-
-                        $payResult = new PaymentResult($idInv, 0, 0);
-                        $payResult->setStatus(PaymentResult::ERROR);
-                        $payResult->setDisplayMessage('Invoice Not Found!  ');
-                    }
-
-                } catch (Hk_Exception_Payment $hex) {
+                } else {
 
                     $payResult = new PaymentResult($idInv, 0, 0);
                     $payResult->setStatus(PaymentResult::ERROR);
-                    $payResult->setDisplayMessage($hex->getMessage());
-
+                    $payResult->setDisplayMessage('Invoice Not Found!  ');
                 }
-//            }
+
+            } catch (Hk_Exception_Payment $hex) {
+
+                $payResult = new PaymentResult($idInv, 0, 0);
+                $payResult->setStatus(PaymentResult::ERROR);
+                $payResult->setDisplayMessage($hex->getMessage());
+
+            }
         }
 
         return $payResult;
