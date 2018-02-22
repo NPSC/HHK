@@ -1882,7 +1882,7 @@ from stays s
     visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
 	left join
     hospital_stay hs on v.idHospital_Stay = hs.idHospital_stay
-where s.`Status` in ('a');
+where s.`Status` = 'a';
 
 
 

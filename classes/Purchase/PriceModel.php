@@ -643,7 +643,7 @@ class PriceNone extends PriceModel {
         $modelCode = ItemPriceCode::None;
 
         $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`Description`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
-                . "(5,'Flat Rate','','" . RoomRateCategorys::Flat_Rate_Category . "','$modelCode',0.00,0.00,0.00,0,'a'), "
+                . "(5,'Flat Rate','','" . RoomRateCategorys::FlatRateCategory . "','$modelCode',0.00,0.00,0.00,0,'a'), "
                 . "(6,'Assigned','','" . RoomRateCategorys::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 
@@ -681,7 +681,7 @@ class PriceBasic extends PriceModel {
         $modelCode = ItemPriceCode::Basic;
 
         $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`Description`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
-                . "(5,'Flat Rate','','" . RoomRateCategorys::Flat_Rate_Category . "','$modelCode',10.00,10.00,10.00,10,'a'), "
+                . "(5,'Flat Rate','','" . RoomRateCategorys::FlatRateCategory . "','$modelCode',10.00,10.00,10.00,10,'a'), "
                 . "(6,'Assigned','','" . RoomRateCategorys::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 
@@ -983,7 +983,7 @@ GROUP BY s.Visit_Span");
                 . "(2,'Rate B','','b','$modelCode',10.00,7.00,3.00,0,'a'),"
                 . "(3,'Rate C','','c','$modelCode',20.00,15.00,10.00,0,'a'),"
                 . "(4,'Rate D','','d','$modelCode',25.00,20.00,10.00,0,'a'),"
-                . "(5,'Flat Rate','','" . RoomRateCategorys::Flat_Rate_Category . "','$modelCode',25.00,25.00,25.00,10,'a'), "
+                . "(5,'Flat Rate','','" . RoomRateCategorys::FlatRateCategory . "','$modelCode',25.00,25.00,25.00,10,'a'), "
                 . "(6,'Assigned','','" . RoomRateCategorys::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 }
@@ -1041,7 +1041,7 @@ class PriceDailey extends PriceModel {
                 . "(2,'Rate B','','b','$modelCode',10.00,7.00,3.00,0,'a'),"
                 . "(3,'Rate C','','c','$modelCode',20.00,15.00,10.00,0,'a'),"
                 . "(4,'Rate D','','d','$modelCode',25.00,20.00,10.00,0,'a'),"
-                . "(5,'Flat Rate','','" . RoomRateCategorys::Flat_Rate_Category . "','$modelCode',25.00,25.00,25.00,10,'a'), "
+                . "(5,'Flat Rate','','" . RoomRateCategorys::FlatRateCategory . "','$modelCode',25.00,25.00,25.00,10,'a'), "
                 . "(6,'Assigned','','" . RoomRateCategorys::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 }
@@ -1309,7 +1309,7 @@ class Price3Steps extends PriceModel {
                 . "(2,'Rate B','','b','$modelCode',10.00,7.00,3.00,0,'a'),"
                 . "(3,'Rate C','','c','$modelCode',20.00,15.00,10.00,0,'a'),"
                 . "(4,'Rate D','','d','$modelCode',25.00,20.00,10.00,0,'a'),"
-                . "(5,'Flat Rate','','" . RoomRateCategorys::Flat_Rate_Category . "','$modelCode',25.00,25.00,25.00,10,'a'), "
+                . "(5,'Flat Rate','','" . RoomRateCategorys::FlatRateCategory . "','$modelCode',25.00,25.00,25.00,10,'a'), "
                 . "(6,'Assigned','','" . RoomRateCategorys::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 
@@ -1601,7 +1601,7 @@ class PricePerpetualSteps extends PriceModel {
                 . "(2,'Rate B','','b','$modelCode',10.00,7.00,3.00,2,'a'),"
                 . "(3,'Rate C','','c','$modelCode',20.00,15.00,10.00,10,'a'),"
                 . "(4,'Rate D','','d','$modelCode',25.00,20.00,10.00,10,'a'),"
-                . "(5,'Flat Rate','','" . RoomRateCategorys::Flat_Rate_Category . "','$modelCode',25.00,25.00,25.00,10,'a'), "
+                . "(5,'Flat Rate','','" . RoomRateCategorys::FlatRateCategory . "','$modelCode',25.00,25.00,25.00,10,'a'), "
                 . "(6,'Assigned','','" . RoomRateCategorys::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 }
@@ -1842,7 +1842,7 @@ class PriceNdayBlock extends PriceModel {
                 . "(2,'Rate B','','b','$modelCode',10.00,7.00,0,0,'a'),"
                 . "(3,'Rate C','','c','$modelCode',20.00,15.00,0,0,'a'),"
                 . "(4,'Rate D','','d','$modelCode',25.00,20.00,0,0,'a'),"
-                . "(5,'Flat Rate','','" . RoomRateCategorys::Flat_Rate_Category . "','$modelCode',25.00,0,0,0,'a'), "
+                . "(5,'Flat Rate','','" . RoomRateCategorys::FlatRateCategory . "','$modelCode',25.00,0,0,0,'a'), "
                 . "(6,'Assigned','','" . RoomRateCategorys::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 
