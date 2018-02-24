@@ -14,6 +14,7 @@ update reservation set Room_Rate_Category = 'f' where Room_Rate_Category = 'x';
 update visit set Rate_Category = 'f' where Rate_Category = 'x';
 update visit_onleave set Rate_Category = 'f' where Rate_Category = 'x';
 update sys_config set `Value` = 'f' where `Key` = 'RoomRateDefault' and `Value` = 'x';
+update sys_config set Description = 'Default room rate category (a, b, c, d, e, f)' where `Key` = 'RoomRateDefault';
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Editable_Forms', '../conf/agreement.html', 'Registration Agreement', 'js/rte-agreement.json');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Editable_Forms', '../conf/confirmation.html', 'Confirmation Form', 'js/rte-confirmation.json');

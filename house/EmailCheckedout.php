@@ -57,7 +57,7 @@ if (is_array($dbConfig)) {
 
 $sendEmail = TRUE;
 
-if (isset($_POST)) {
+if (isset($_GET['sendemail']) && strtolower(filter_input(INPUT_GET, 'sendemail', FILTER_SANITIZE_STRING)) == 'no') {
     // Don't send email when run as a web page.
     $sendEmail = FALSE;
 

@@ -72,10 +72,10 @@ $donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
 // Maintainence component - and role = admin is also required.
 if (SecurityComponent::is_Admin($uS->rolecode, $uS->username)) {
     $maintFlag = SecurityComponent::is_Authorized("NameEdit_Maint");
-    $privacyFlag = SecurityComponent::is_Authorized("PrivacyGroup");
+
 } else {
     $maintFlag = false;
-    $privacyFlag = false;
+
 }
 
 

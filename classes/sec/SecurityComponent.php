@@ -24,10 +24,13 @@ class SecurityComponent {
 
     public static function is_Authorized($name) {
 
-        $uS = Session::getInstance();
+        if (self::is_Admin()) {
+            return TRUE;
+        }
 
+        $uS = Session::getInstance();
         $pageCode = array();
-        
+
         // try reading the page table
         if ($name != "" && isset($uS->webPages[$name])) {
             $r = $uS->webPages[$name];
@@ -37,10 +40,6 @@ class SecurityComponent {
             }
         } else {
             exit('Web Page file name missing from DB. ');
-        }
-
-        if (self::is_Admin()) {
-            return TRUE;
         }
 
         // check authorization codes.
