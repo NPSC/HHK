@@ -2415,43 +2415,6 @@ from (`name_demog` `nd` join `vmember_listing` `vd` on(((`nd`.`idName` = `vd`.`I
 
 
 
--- -----------------------------------------------------
--- View `vwaitlist`
--- -----------------------------------------------------
-create or replace view vwaitlist as
-select
-  `w`.`idWaitlist`,
-  ifnull(vp.Name_Last, `w`.`Patient_Last`) as `Patient_Last`,
-  ifnull((case when vp.Name_Nickname = '' then vp.Name_First else vp.Name_Nickname end), `w`.`Patient_First`) as `Patient_First`,
-  `w`.`idGuest`,
-  `w`.`idPatient`,
-  `w`.`Hospital`,
-  ifnull(v.Name_Last, `w`.`Guest_Last`) as `Guest_Last`,
-  ifnull((case when v.Name_Nickname = '' then v.Name_First else v.Name_Nickname end), `w`.`Guest_First`) as `Guest_First`,
-  `w`.`Phone`,
-  `w`.`Email`,
-  `w`.`Number_Adults`,
-  `w`.`Number_Children`,
-  `w`.`Arrival_Date`,
-  `w`.`Expected_Duration`,
-  `w`.`Notes`,
-  `w`.`Status`,
-  `w`.`Final_Status`,
-  `w`.`Final_Status_Date`,
-  `w`.`Timestamp`,
-  ifnull(g.`Description`, '') as `Status_Title`,
-  ifnull(g1.`Description`,'') as `Final_Status_Title`,
-  ifnull(g2.`Description`,'') as `Hospital_Title`
-from waitlist w
-    left join vmember_listing v on `w`.`idGuest` = v.Id
-    left join vmember_listing vp on `w`.`idPatient` = vp.Id
-    left join `gen_lookups` g on g.`Table_Name` = 'WL_Status' and g.`Code` = `w`.`Status`
-    left join `gen_lookups` g1 on g1.`Table_Name` = 'WL_Final_Status' and g1.`Code` = `w`.`Final_Status`
-    left join `gen_lookups` g2 on g2.`Table_Name` = 'Hospitals' and g2.`Code` = `w`.`Hospital`;
-
-
-
-
 
 -- -----------------------------------------------------
 -- View `vweb_users`

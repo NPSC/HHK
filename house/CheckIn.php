@@ -60,7 +60,7 @@ $wInit->sessionLoadGuestLkUps();
 $labels = new Config_Lite(LABEL_FILE);
 
 
-$idWaitlist = 0;
+
 $idGuest = 0;
 $idPatient = 0;
 $pmkup = '';
@@ -81,34 +81,6 @@ $reservListDisplay = 'display:none;';
 $textInfo = array();
 $postBackPage = 'CheckedIn.php';
 
-
-// Waitlist Id.
-if (isset($_GET['idWL'])) {
-
-    $idWaitlist = intval(filter_Var($_GET['idWL'], FILTER_SANITIZE_NUMBER_INT), 10);
-
-    if ($idWaitlist > 0) {
-
-        $wlRS = new WaitlistRS();
-        $wlRS->idWaitlist->setStoredVal($idWaitlist);
-        $rows = EditRS::select($dbh, $wlRS, array($wlRS->idWaitlist));
-
-        if (count($rows) == 1) {
-            // Got a waitlist
-            EditRS::loadRow($rows[0], $wlRS);
-            $idGuest = $wlRS->idGuest->getStoredVal();
-            $idPatient = $wlRS->idPatient->getStoredVal();
-
-            $textInfo['plast'] = $wlRS->Patient_Last->getStoredVal();
-            $textInfo['pfirst'] = $wlRS->Patient_First->getStoredVal();
-            $textInfo['glast'] = $wlRS->Guest_Last->getStoredVal();
-            $textInfo['gfirst'] = $wlRS->Guest_First->getStoredVal();
-            $textInfo['hospital'] = $wlRS->Hospital->getStoredVal();
-            $textInfo['gphone'] = $wlRS->Phone->getStoredVal();
-            $textInfo['gemail'] = $wlRS->Email->getStoredVal();
-        }
-    }
-}
 
 if (isset($_GET['idGuest'])) {
     $idGuest = intval(filter_var($_GET['idGuest'], FILTER_SANITIZE_NUMBER_INT), 10);
@@ -288,7 +260,6 @@ $confReserv = $labels->getString('register', 'reservationTab', 'Confirmed Reserv
                 <div id="pay" style="clear:left; float:left; font-size: .9em; display:none; " class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 </div>
                 <div style="clear:both; min-height: 400px;"></div>
-                <input type="hidden" id="txtWlId" value="<?php echo $idWaitlist; ?>" />
                 <div id="submitButtons" class="ui-corner-all">
                     <input id='btnDone' type='button' value='Done Adding Guests' style="display:none;"/>
                     <input type="button" value="Check In" id="btnChkin" style="display:none;" />

@@ -289,17 +289,13 @@ class RoomChooser {
 
     protected function createChooserMarkup(\PDO $dbh, $constraintsDisabled, $classId = '') {
 
-        $resources = array();
+        $resources[] = array(0, '-None-', '');
         $errorMessage = '';
 
         // Load available resources
         foreach ($this->resv->getAvailableResources() as $r) {
             $resources[$r->getIdResource()] = array($r->getIdResource(), $r->getTitle(), $r->optGroup);
         }
-
-        // add waitlist option to the top of the list
-        $resources[0] = array(0, '-None-', '');
-
 
         // Selected resource
         $idResourceChosen = $this->resv->getIdResource();
@@ -353,7 +349,7 @@ class RoomChooser {
         $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->getTotalGuests(), array('id'=>'spnNumGuests','style'=>'font-weight:bold;')), array('style'=>'text-align:center;'))
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('span',
-                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resources, $idResourceChosen), array('name'=>'selResource', 'class'=>$classId)), array('id'=>'spanSelResc'))
+                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resources, $idResourceChosen, FALSE), array('name'=>'selResource', 'class'=>$classId)), array('id'=>'spanSelResc'))
                         )
                 );
 

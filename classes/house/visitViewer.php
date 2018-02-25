@@ -179,16 +179,16 @@ class VisitView {
 
 
         // Return date
-        if ($action != 'cf' && !$noReturnDateFlag) {
-            $retDate = isset($r['Return_Date']) ? date('M j, Y', strtotime($r['Return_Date'])) : '';
-            if ($r['Status'] == VisitStatus::CheckedIn) {
-                $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($retDate, array('id' => 'visRtn', 'class' => 'ckdateFut hhk-feeskeys', 'readonly'=>'readonly')));
-            } else {
-                $tr .= HTMLTable::makeTd($retDate);
-            }
-            $th .= HTMLTable::makeTh('Return Date');
-        }
-
+//        if ($action != 'cf' && !$noReturnDateFlag) {
+//            $retDate = isset($r['Return_Date']) ? date('M j, Y', strtotime($r['Return_Date'])) : '';
+//            if ($r['Status'] == VisitStatus::CheckedIn) {
+//                $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($retDate, array('id' => 'visRtn', 'class' => 'ckdateFut hhk-feeskeys', 'readonly'=>'readonly')));
+//            } else {
+//                $tr .= HTMLTable::makeTd($retDate);
+//            }
+//            $th .= HTMLTable::makeTh('Return Date');
+//        }
+//
 
         // add completed rows to table
         $table->addBodyTr($tr);

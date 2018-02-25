@@ -89,8 +89,6 @@ require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Vehicle.php');
 require (HOUSE . 'Visit.php');
 require (HOUSE . "visitViewer.php");
-require (HOUSE . 'Waitlist.php');
-require (HOUSE . 'WaitlistSvcs.php');
 require (HOUSE . 'Register.php');
 require (HOUSE . 'VisitCharges.php');
 
@@ -388,21 +386,6 @@ try {
         }
 
 
-        break;
-
-    case "getWLname":
-
-        $id = 0;
-        if (isset($_REQUEST["id"])) {
-            $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_STRING), 10);
-        }
-
-        $role = "";
-        if (isset($_REQUEST["role"])) {
-            $role = filter_var($_REQUEST["role"], FILTER_SANITIZE_STRING);
-        }
-
-        $events = WaitlistSvcs::getWLName($dbh, $id, $role);
         break;
 
     case "reservMove":
@@ -856,15 +839,6 @@ try {
         $events = Register::getRegister($dbh, $startTime, $endTime);
         break;
 
-    case "wlist":
-
-        $ao = '0';
-        if (isset($_REQUEST['ao'])) {
-            $ao = filter_var($_REQUEST['ao'], FILTER_SANITIZE_STRING);
-        }
-        $events = WaitlistSvcs::getWaitList($dbh, $_POST, $ao);
-        break;
-
     case 'rvstat':
 
         $idReservation = 0;
@@ -878,16 +852,6 @@ try {
         }
 
         $events = ReservationSvcs::changeReservStatus($dbh, $idReservation, $status);
-        break;
-
-    case 'delWL':
-
-        $wlid = 0;
-        if (isset($_REQUEST["wlid"])) {
-            $wlid = intval(filter_var($_REQUEST["wlid"], FILTER_SANITIZE_STRING), 10);
-        }
-
-        $events = WaitlistSvcs::deleteWLEntry($dbh, $wlid);
         break;
 
     case 'cedd':
@@ -939,16 +903,6 @@ try {
             $events = HouseServices::changePaymentAmount($dbh, $pid, $newAmt);
         }
 
-        break;
-
-    case "addWL":
-
-        if (isset($_REQUEST["parm"])) {
-            $parm = filter_var_array($_REQUEST["parm"], FILTER_SANITIZE_STRING);
-            $events = WaitlistSvcs::saveWLEntry($dbh, $parm);
-        } else {
-            $events = array("error" => "Missing Parameters.");
-        }
         break;
 
     case 'rtcalc':

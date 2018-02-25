@@ -306,63 +306,63 @@ class CleaningLogRS extends TableRS {
     }
 }
 
-class WaitlistRS extends TableRS {
-
-    public $idWaitlist;   // int(11) NOT NULL AUTO_INCREMENT,
-    public $Patient_Last;   // varchar(45) NOT NULL DEFAULT '',
-    public $Patient_First;   // varchar(45) NOT NULL DEFAULT '',
-    public $Hospital;   // varchar(45) NOT NULL DEFAULT '',
-    public $Guest_Last;   // varchar(45) NOT NULL DEFAULT '',
-    public $Guest_First;   // varchar(45) NOT NULL DEFAULT '',
-    public $idGuest;   // int(11) NOT NULL DEFAULT '0',
-    public $idPatient;   // int(11) NOT NULL DEFAULT '0',
-    public $idPsg;   // int(11) NOT NULL DEFAULT '0',
-    public $idHospital;   // int(11) NOT NULL DEFAULT '0',
-    public $Contact_Name;   // varchar(100) NOT NULL DEFAULT '',
-    public $Phone;   // varchar(45) NOT NULL DEFAULT '',
-    public $Email;   // varchar(100) NOT NULL DEFAULT '',
-    public $Number_Adults;   // int(11) NOT NULL DEFAULT '0',
-    public $Number_Children;   // int(11) NOT NULL DEFAULT '0',
-    public $Arrival_Date;   // datetime DEFAULT NULL,
-    public $Expected_Duration;   // int(11) NOT NULL DEFAULT '0',
-    public $Status;   // varchar(45) NOT NULL DEFAULT '',
-    public $Notes;   // text not null default '',
-    public $Final_status;   // varchar(45) NOT NULL DEFAULT '',
-    public $Final_Status_Date;   // datetime DEFAULT NULL,
-    public $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
-    public $Last_Updated;   // datetime DEFAULT NULL,
-    public $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    function __construct($TableName = "waitlist") {
-        $this->idWaitlist = new DB_Field("idWaitlist", 0, new DbIntSanitizer());
-        $this->Patient_Last = new DB_Field("Patient_Last", "", new DbStrSanitizer(45), TRUE, TRUE);
-        $this->Patient_First = new DB_Field("Patient_First", "", new DbStrSanitizer(45), TRUE, TRUE);
-        $this->Hospital = new DB_Field("Hospital", "", new DbStrSanitizer(45), TRUE, TRUE);
-        $this->Guest_Last = new DB_Field("Guest_Last", "", new DbStrSanitizer(45), TRUE, TRUE);
-        $this->Guest_First = new DB_Field("Guest_First", "", new DbStrSanitizer(45), TRUE, TRUE);
-        $this->idGuest = new DB_Field("idGuest", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->idPatient = new DB_Field("idPatient", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->idPsg = new DB_Field("idPsg", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->idHospital = new DB_Field("idHospital", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->Contact_Name = new DB_Field("Contact_Name", "", new DbStrSanitizer(100), TRUE, TRUE);
-        $this->Phone = new DB_Field("Phone", "", new DbStrSanitizer(45), TRUE, TRUE);
-        $this->Email = new DB_Field("Email", "", new DbStrSanitizer(100), TRUE, TRUE);
-        $this->Number_Adults = new DB_Field("Number_Adults", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->Number_Children = new DB_Field("Number_Children", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->Arrival_Date = new DB_Field("Arrival_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
-        $this->Expected_Duration = new DB_Field("Expected_Duration", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->Status = new DB_Field("Status", "", new DbStrSanitizer(45), TRUE, TRUE);
-        $this->Notes = new DB_Field("Notes", "", new DbStrSanitizer(2048), TRUE, TRUE);
-        $this->Final_status = new DB_Field("Final_Status", "", new DbStrSanitizer(45), TRUE, TRUE);
-        $this->Final_Status_Date = new DB_Field("Final_Status_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
-
-        $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);
-        $this->Last_Updated = new DB_Field("Last_Updated", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
-        $this->Timestamp = new DB_Field("Timestamp", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
-        parent::__construct($TableName);
-    }
-}
-
+//class WaitlistRS extends TableRS {
+//
+//    public $idWaitlist;   // int(11) NOT NULL AUTO_INCREMENT,
+//    public $Patient_Last;   // varchar(45) NOT NULL DEFAULT '',
+//    public $Patient_First;   // varchar(45) NOT NULL DEFAULT '',
+//    public $Hospital;   // varchar(45) NOT NULL DEFAULT '',
+//    public $Guest_Last;   // varchar(45) NOT NULL DEFAULT '',
+//    public $Guest_First;   // varchar(45) NOT NULL DEFAULT '',
+//    public $idGuest;   // int(11) NOT NULL DEFAULT '0',
+//    public $idPatient;   // int(11) NOT NULL DEFAULT '0',
+//    public $idPsg;   // int(11) NOT NULL DEFAULT '0',
+//    public $idHospital;   // int(11) NOT NULL DEFAULT '0',
+//    public $Contact_Name;   // varchar(100) NOT NULL DEFAULT '',
+//    public $Phone;   // varchar(45) NOT NULL DEFAULT '',
+//    public $Email;   // varchar(100) NOT NULL DEFAULT '',
+//    public $Number_Adults;   // int(11) NOT NULL DEFAULT '0',
+//    public $Number_Children;   // int(11) NOT NULL DEFAULT '0',
+//    public $Arrival_Date;   // datetime DEFAULT NULL,
+//    public $Expected_Duration;   // int(11) NOT NULL DEFAULT '0',
+//    public $Status;   // varchar(45) NOT NULL DEFAULT '',
+//    public $Notes;   // text not null default '',
+//    public $Final_status;   // varchar(45) NOT NULL DEFAULT '',
+//    public $Final_Status_Date;   // datetime DEFAULT NULL,
+//    public $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
+//    public $Last_Updated;   // datetime DEFAULT NULL,
+//    public $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+//
+//    function __construct($TableName = "waitlist") {
+//        $this->idWaitlist = new DB_Field("idWaitlist", 0, new DbIntSanitizer());
+//        $this->Patient_Last = new DB_Field("Patient_Last", "", new DbStrSanitizer(45), TRUE, TRUE);
+//        $this->Patient_First = new DB_Field("Patient_First", "", new DbStrSanitizer(45), TRUE, TRUE);
+//        $this->Hospital = new DB_Field("Hospital", "", new DbStrSanitizer(45), TRUE, TRUE);
+//        $this->Guest_Last = new DB_Field("Guest_Last", "", new DbStrSanitizer(45), TRUE, TRUE);
+//        $this->Guest_First = new DB_Field("Guest_First", "", new DbStrSanitizer(45), TRUE, TRUE);
+//        $this->idGuest = new DB_Field("idGuest", 0, new DbIntSanitizer(), TRUE, TRUE);
+//        $this->idPatient = new DB_Field("idPatient", 0, new DbIntSanitizer(), TRUE, TRUE);
+//        $this->idPsg = new DB_Field("idPsg", 0, new DbIntSanitizer(), TRUE, TRUE);
+//        $this->idHospital = new DB_Field("idHospital", 0, new DbIntSanitizer(), TRUE, TRUE);
+//        $this->Contact_Name = new DB_Field("Contact_Name", "", new DbStrSanitizer(100), TRUE, TRUE);
+//        $this->Phone = new DB_Field("Phone", "", new DbStrSanitizer(45), TRUE, TRUE);
+//        $this->Email = new DB_Field("Email", "", new DbStrSanitizer(100), TRUE, TRUE);
+//        $this->Number_Adults = new DB_Field("Number_Adults", 0, new DbIntSanitizer(), TRUE, TRUE);
+//        $this->Number_Children = new DB_Field("Number_Children", 0, new DbIntSanitizer(), TRUE, TRUE);
+//        $this->Arrival_Date = new DB_Field("Arrival_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
+//        $this->Expected_Duration = new DB_Field("Expected_Duration", 0, new DbIntSanitizer(), TRUE, TRUE);
+//        $this->Status = new DB_Field("Status", "", new DbStrSanitizer(45), TRUE, TRUE);
+//        $this->Notes = new DB_Field("Notes", "", new DbStrSanitizer(2048), TRUE, TRUE);
+//        $this->Final_status = new DB_Field("Final_Status", "", new DbStrSanitizer(45), TRUE, TRUE);
+//        $this->Final_Status_Date = new DB_Field("Final_Status_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
+//
+//        $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);
+//        $this->Last_Updated = new DB_Field("Last_Updated", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
+//        $this->Timestamp = new DB_Field("Timestamp", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
+//        parent::__construct($TableName);
+//    }
+//}
+//
 class LocationRS extends TableRS {
 
     public $idLocation;   // int(11) NOT NULL AUTO_INCREMENT,

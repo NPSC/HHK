@@ -124,7 +124,6 @@ delete na from fbx na left join name n on na.idName = n.idName where (n.Member_S
 delete na from member_history na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 delete na from reservation_guest na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 delete na from reservation na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from waitlist na left join name n on (na.idGuest = n.idName or na.idPatient = n.idName) where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 delete na from hospital_stay na left join name n on na.idPatient = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 delete na from hospital_stay na left join name n on na.idDoctor = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 delete na from hospital_stay na left join name n on na.idPcDoctor = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
@@ -617,7 +616,6 @@ BEGIN
     delete from registration where idRegistration = badReg;
     delete from psg where idPsg = dupIdPsg;
     delete from hospital_stay where idPsg = dupIdPsg;
-    delete from waitlist where idPsg = dupIdPsg;
 
     call remove_dup_guest(goodIdP, badIdP);
 

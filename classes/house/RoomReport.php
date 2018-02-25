@@ -14,18 +14,23 @@
  */
 class RoomReport {
 
-    public static function getGlobalNightsCount(PDO $dbh, $year = '') {
+    protected static function getGlobalNightsCount(PDO $dbh, $year = '') {
 
-        $whClause = '';
         if ($year != '') {
-            $whClause = " and DATE(s.Span_Start_Date) <= '$year-12-31' and Date(ifnull(s.Span_End_Date, now())) >= '$year-01-01'";
-        }
+            // Filter out one year
+            $query = "SELECT SUM(DATEDIFF(
+IFNULL(s.Span_End_Date, NOW()),
+case when year(s.Span_Start_Date) < $year then DATE('$year-01-01') else Date(s.Span_Start_Date) end)) AS `Nights`
+FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE('$year-12-31') and Date(ifnull(s.Span_End_Date, now())) >= DATE('$year-01-01') ";
 
-        $query = "SELECT SUM(DATEDIFF(
-		IFNULL(s.Span_End_Date, NOW()),
-            case when DATE(s.Span_Start_Date) > DATE(NOW()) then s.Span_Start_Date else MAKEDATE(YEAR(NOW()), 1) end)) AS `Nights`
-    FROM stays s
-    WHERE s.`On_Leave` = 0 " . $whClause;
+        } else {
+            // Entire history
+            $query = "SELECT SUM(DATEDIFF(
+IFNULL(s.Span_End_Date, NOW()),
+DATE(s.Span_Start_Date))) AS `Nights`
+FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())";
+
+        }
 
         $stmt = $dbh->query($query);
         $rows = $stmt->fetchAll();
@@ -36,7 +41,7 @@ class RoomReport {
         }
     }
 
-    public static function getGlobalStaysCount(PDO $dbh, $year = '') {
+    protected static function getGlobalStaysCount(PDO $dbh, $year = '') {
 
         $whClause = '';
         if ($year != '') {
@@ -44,7 +49,7 @@ class RoomReport {
         }
 
         $query = "select count(*) as `Stays` "
-                . " from stays where `On_Leave` = 0 and DATEDIFF(ifnull(Span_End_Date, now()), Span_Start_Date) > 0" . $whClause;
+                . " from stays where `On_Leave` = 0 and `Status` = 'co' and DATEDIFF(ifnull(Span_End_Date, now()), Span_Start_Date) > 0" . $whClause;
         $stmt = $dbh->query($query);
         $rows = $stmt->fetchAll();
         if (count($rows) == 1) {
@@ -154,6 +159,7 @@ WHERE
             r.idRoom,
             r.`Title`,
             r.`Status`,
+            gc.Substitute as Cleaning_Days,
             IFNULL(g.Description, '') AS `Status_Text`,
             IFNULL(n.Name_Full, '') AS `Name`,
             r.`Notes`,
@@ -176,7 +182,11 @@ WHERE
             name np on hs.idPatient = np.idName
                 LEFT JOIN
             gen_lookups g ON g.Table_Name = 'Room_Status'
-                AND g.Code = r.`Status`";
+                AND g.Code = r.`Status`
+                LEFT JOIN
+            gen_lookups gc ON gc.Table_Name = 'Room_Cleaning_Days'
+                AND gc.Code = r.Cleaning_Cycle_Code
+        ORDER BY r.idRoom";
 
 
         $stmt = $dbh->query($query);
@@ -198,8 +208,12 @@ WHERE
                 $idRoom = $r['idRoom'];
             }
 
+            if ($guests == '') {
+                $guests .= $r['Name'];
+            } else {
+                $guests .= ', ' . $r['Name'];
+            }
 
-            $guests .= ', ' . $r['Name'];
             $last = $r;
         }
 
@@ -216,18 +230,25 @@ WHERE
         $idVisit = intval($r['idVisit'], 10);
 
         // Mangle room status
-        if ($r['Status'] == RoomState::TurnOver) {
-            $stat = HTMLContainer::generateMarkup('span', $r['Status_Text'], array('style'=>'background-color:yellow;'));
-        } else if ($r['idVisit'] > 0 && $r['Status'] == RoomState::Dirty) {
-            $stat = HTMLContainer::generateMarkup('span', 'Active-Dirty', array('style'=>'background-color:#E3FF14;'));
-        } else if ($r['idVisit'] > 0 && $r['Status'] == RoomState::Clean) {
-            $stat = HTMLContainer::generateMarkup('span', 'Active', array('style'=>'background-color:lightgreen;'));
-        } else if ($r['Status'] == RoomState::Dirty) {
-            $stat = HTMLContainer::generateMarkup('span', 'Dirty', array('style'=>'background-color:yellow;'));
+        if ($r['Cleaning_Days'] > 0) {
+            if ($r['Status'] == RoomState::TurnOver) {
+                $stat = HTMLContainer::generateMarkup('span', $r['Status_Text'], array('style'=>'background-color:yellow;'));
+            } else if ($r['idVisit'] > 0 && $r['Status'] == RoomState::Dirty) {
+                $stat = HTMLContainer::generateMarkup('span', 'Active-Dirty', array('style'=>'background-color:#E3FF14;'));
+            } else if ($r['idVisit'] > 0 && $r['Status'] == RoomState::Clean) {
+                $stat = HTMLContainer::generateMarkup('span', 'Active', array('style'=>'background-color:lightgreen;'));
+            } else if ($r['Status'] == RoomState::Dirty) {
+                $stat = HTMLContainer::generateMarkup('span', 'Dirty', array('style'=>'background-color:yellow;'));
+            } else {
+                $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);
+            }
         } else {
-            $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);
+            if ($r['idVisit'] > 0) {
+                $stat = HTMLContainer::generateMarkup('span', 'Active', array('style'=>'background-color:lightgreen;'));
+            } else {
+                $stat = HTMLContainer::generateMarkup('span', 'Empty');
+            }
         }
-
         // Check OOS
         if (isset($roomsOOS[$r['idRoom']])) {
             $stat = $roomsOOS[$r['idRoom']]['StatusTitle'] . ': ' . $roomsOOS[$r['idRoom']]['OOSCode'];
@@ -292,8 +313,8 @@ WHERE
             $fixed['Unpaid'] = '';
         }
 
-        $fixed['Visit_Notes'] = $r['Visit_Notes'];
-        $fixed['Notes'] = $r['Notes'];
+        $fixed['Visit_Notes'] = Notes::getNotesDiv($r['Visit_Notes']);
+        $fixed['Notes'] = Notes::getNotesDiv($r['Notes']);
 
         return $fixed;
     }
@@ -525,7 +546,7 @@ and s.Span_Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(s.
         $stResc = $dbh->query("select r.idResource, r.Title "
                 . " from resource r left join
 resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and ru.Start_Date <= '" . $stDT->format('Y-m-d 00:00:00') . "' and ru.End_Date >= '" . $endDT->format('Y-m-d 00:00:00') . "'"
-                . " where ru.idResource_use is null and r.Type in ('" . ResourceTypes::Room . "', '" . ResourceTypes::RmtRoom . "')"
+                . " where ru.idResource_use is null and r.Type in ('" . ResourceTypes::Room . "', '" . ResourceTypes::RmtRoom . "', '" . ResourceTypes::Partition . "')"
                 . " order by r.Title;");
 
         $stRows = $stResc->fetchAll(\PDO::FETCH_ASSOC);

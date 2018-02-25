@@ -2006,38 +2006,6 @@ CREATE TABLE if not exists `w_users` (
 
 
 -- -----------------------------------------------------
--- Table `waitlist`
--- -----------------------------------------------------
-CREATE TABLE if not exists `waitlist` (
-  `idWaitlist` int(11) NOT NULL AUTO_INCREMENT,
-  `Patient_Last` varchar(45) NOT NULL DEFAULT '',
-  `Patient_First` varchar(45) NOT NULL DEFAULT '',
-  `Hospital` varchar(45) NOT NULL DEFAULT '',
-  `Guest_Last` varchar(45) NOT NULL DEFAULT '',
-  `Guest_First` varchar(45) NOT NULL DEFAULT '',
-  `idGuest` int(11) NOT NULL DEFAULT '0',
-  `idPatient` int(11) NOT NULL DEFAULT '0',
-  `idPsg` int(11) NOT NULL DEFAULT '0',
-  `idHospital` int(11) NOT NULL DEFAULT '0',
-  `Contact_Name` varchar(100) NOT NULL DEFAULT '',
-  `Phone` varchar(45) NOT NULL DEFAULT '',
-  `Email` varchar(100) NOT NULL DEFAULT '',
-  `Number_Adults` int(11) NOT NULL DEFAULT '0',
-  `Number_Children` int(11) NOT NULL DEFAULT '0',
-  `Arrival_Date` datetime DEFAULT NULL,
-  `Expected_Duration` int(11) NOT NULL DEFAULT '0',
-  `Status` varchar(45) NOT NULL DEFAULT '',
-  `Notes` text,
-  `Final_Status` varchar(45) NOT NULL DEFAULT '',
-  `Final_Status_Date` datetime DEFAULT NULL,
-  `Updated_By` varchar(45) NOT NULL DEFAULT '',
-  `Last_Updated` datetime DEFAULT NULL,
-  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`idWaitlist`)
-) ENGINE=InnoDB AUTO_INCREMENT=5;
-
-
--- -----------------------------------------------------
 -- Table `web_sites`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `web_sites` (

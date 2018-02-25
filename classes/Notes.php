@@ -40,4 +40,18 @@ class Notes {
         return HTMLContainer::generateMarkup('div', $output . $inputTa, array('class'=>'hhk-noteBox'));
 
     }
+
+    public static function getNotesDiv($notesText, $class = 'hhk-currentNotes') {
+
+        // reverse output
+        $lines = explode("\n", $notesText);
+        $reverse = "";
+
+        for ($i = (count($lines) - 1); $i >= 0; $i--) {
+            $reverse .= $lines[$i] . "<br/>";
+        }
+
+
+        return HTMLContainer::generateMarkup('div', $reverse, array('class'=>$class));
+    }
 }

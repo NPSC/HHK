@@ -218,14 +218,14 @@ class HouseServices {
         }
 
         // Return Date
-        if (isset($post['visRtn']) && $visit->getVisitStatus() == VisitStatus::CheckedIn) {
-
-            $retDate = filter_var($post['visRtn'], FILTER_SANITIZE_STRING);
-
-            if ($retDate != '') {
-                $visit->setReturnDate(date('Y-m-d', strtotime($retDate)));
-            }
-        }
+//        if (isset($post['visRtn']) && $visit->getVisitStatus() == VisitStatus::CheckedIn) {
+//
+//            $retDate = filter_var($post['visRtn'], FILTER_SANITIZE_STRING);
+//
+//            if ($retDate != '') {
+//                $visit->setReturnDate(date('Y-m-d', strtotime($retDate)));
+//            }
+//        }
 
         // Change room rate
         if ($isGuestAdmin && isset($post['rateChgCB']) && isset($post['extendCb']) === FALSE) {
@@ -428,19 +428,6 @@ class HouseServices {
                         $id = intval(filter_var($idr, FILTER_SANITIZE_NUMBER_INT));
                         if ($id < 1) {
                             continue;
-                        }
-
-                        // Enter into waitlist if return date is valid
-                        if (isset($post['visRtn'])) {
-
-                            $retDate = filter_var($post['visRtn'], FILTER_SANITIZE_STRING);
-
-                            if ($retDate != '') {
-
-                                $retDT = setTimeZone($uS, $retDate);
-
-                                $reply .= Waitlist::makeGuestEntry($dbh, $id, $retDT->format('Y-m-d H:i:s'), $uS->username);
-                            }
                         }
 
                         // Check out Date
@@ -1851,17 +1838,6 @@ class HouseServices {
                 $dataArray['invoiceNumber'] = $payResult->getInvoiceNumber();
             }
         }
-
-
-
-        // waitlist maintenance
-        if (isset($post["txtWlId"])) {
-            $wlId = intval(filter_var($post["txtWlId"], FILTER_SANITIZE_NUMBER_INT), 10);
-            if ($wlId > 0) {
-                Waitlist::updateEntry($dbh, $wlId, WL_Status::Stayed, $uS->username);
-            }
-        }
-
 
 
         // Generate Reg form

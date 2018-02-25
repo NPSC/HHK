@@ -92,8 +92,8 @@ require (HOUSE . 'Vehicle.php');
 require (HOUSE . 'Visit.php');
 require (HOUSE . 'Family.php');
 require (HOUSE . "visitViewer.php");
-require (HOUSE . 'Waitlist.php');
-require (HOUSE . 'WaitlistSvcs.php');
+//require (HOUSE . 'Waitlist.php');
+//require (HOUSE . 'WaitlistSvcs.php');
 require (HOUSE . 'Register.php');
 require (HOUSE . 'VisitCharges.php');
 

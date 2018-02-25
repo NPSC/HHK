@@ -99,6 +99,10 @@
     overflow-y: auto;
     background-color:#ffffff;
 }
+.hhk-currentNotes {
+    max-height: 100px;
+    overflow-y: auto;
+}
 .hhk-noteBox textarea {
     float:left;
     width:100%;

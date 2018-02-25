@@ -158,6 +158,7 @@ $mail->Subject = $subjectLine;
 
 $sForm = new SurveyForm('survey.html');
 $badAddresses = 0;
+$resultsRegister = '';
 
 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
 
@@ -186,7 +187,10 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
 
         if ($mail->send() === FALSE) {
             echo $mail->ErrorInfo . '<br/>';
+            $resultsRegister .= "<br/>Email send error: " . $mail->ErrorInfo . '<br/>';
         }
+
+        $resultsRegister .= "<br/>(Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'] . ")<br/>" . $subjectLine . "<br/>" ;
 
     } else {
         echo "===========================<br/>(Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'] . ")<br/>" . $subjectLine . "<br/>" . $form;
@@ -204,7 +208,7 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
     $mail->addAddress($copyEmail);
     $mail->Subject = "Auto Email Results: " . $numRecipients . " messages sent. Bad: ".$badAddresses;
 
-    $mail->msgHTML($sForm->templateFile);
+    $mail->msgHTML("Template Text:<br/>" .  $sForm->templateFile) . "<br/><br/>Results:<br/>" . $resultsRegister;
 
     $mail->send();
 

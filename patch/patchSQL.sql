@@ -29,7 +29,8 @@ UPDATE room r
 SET 
     r.Util_Priority = re.Util_Priority;
 
-
+-- update the name of the web page in volunteer
+update `page` set `File_Name` = 'WebRegister.php' where `File_Name` = 'ws_reg_user.php' and `Web_Site` = 'v';
 
 -- Leave this til last as it may fail.
 ALTER TABLE `psg` 
