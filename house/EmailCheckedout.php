@@ -208,7 +208,7 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
     $mail->addAddress($copyEmail);
     $mail->Subject = "Auto Email Results: " . $numRecipients . " messages sent. Bad: ".$badAddresses;
 
-    $mail->msgHTML("Template Text:<br/>" .  $sForm->templateFile) . "<br/><br/>Results:<br/>" . $resultsRegister;
+    $mail->msgHTML("Template Text:<br/>" . $sForm->templateFile . "<br/><br/>Results:<br/>" . $resultsRegister);
 
     $mail->send();
 

@@ -293,25 +293,41 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                 $rescUsed[$r["idResource"]] = 'y';
             }
 
-            $title = $rescs[$r["idResource"]]['Title'] . '-' . $r['Guest Last']; //$r['title'];
-            if ($r['Guest Last'] == '') {
-                $title = $rescs[$r["idResource"]]['Title'];  //$r['title'];
-            }
+            $titleText = $rescs[$r["idResource"]]['Title'] . ': ' . $r['Guest Last'];
+            $spnArray = array('style'=>'white-space:nowrap;');
 
             if ($r['Visit_Status'] == VisitStatus::NewSpan) {
-                $title = HTMLContainer::generateMarkup('span', $title.' (rm)', array( 'title'=>'Room Changed', 'style'=>'white-space:nowrap;'));
+                $titleText .= ' (rm)';
+                $spnArray['title'] = 'Room Changed';
+                //$title = HTMLContainer::generateMarkup('span', $title.' (rm)', array( 'title'=>'Room Changed', 'style'=>'white-space:nowrap;'));
             } else if ($r['Visit_Status'] == VisitStatus::ChangeRate) {
-                $title = HTMLContainer::generateMarkup('span', $title.' ($)', array( 'title'=>'Rate Changed', 'style'=>'white-space:nowrap;'));
+                $titleText .= ' ($)';
+                $spnArray['title'] = 'Rate Changed';
+                //$title = HTMLContainer::generateMarkup('span', $title.' ($)', array( 'title'=>'Rate Changed', 'style'=>'white-space:nowrap;'));
             } else {
-                $title = HTMLContainer::generateMarkup('span', ($extended ? $title . htmlentities('>>') : $title), array('style'=>'white-space:nowrap;'));
+                $titleText .= htmlentities('>>');
+                $spnArray['title'] = 'Past Expected Departure Date';
+                //$title = HTMLContainer::generateMarkup('span', ($extended ? $title . htmlentities('>>') : $title), array('style'=>'white-space:nowrap;'));
             }
+
+            if (strtolower($uS->RegColors) == 'gender' && isset($r['Gender'])) {
+                if ($r['Gender'] == MemGender::Female){
+                    $spnArray['style'] .= 'background-color:pink; color:black;';
+                } else if ($r['Gender'] == MemGender::Male) {
+                    $spnArray['style'] .= 'background-color:blue;color:white;';
+                } else {
+                    $spnArray['style'] .= 'background-color:white;color:black;';
+                }
+            }
+
+            $title = HTMLContainer::generateMarkup('span', $titleText, $spnArray);
 
             // Set Start and end for fullCalendar control
             $s['id'] = $r['id'];
             $s['idVisit'] = $r['idVisit'];
             $s['Span'] = $r['Span'];
             $s['idHosp'] = $r['idHospital'];
-            $s['idAssoc'] = $r['idAssociation'];
+            $s['idAssoc'] = isset($hospitals[$r['idAssociation']]) ? $r['idAssociation'] : 0;
 
 
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
@@ -320,9 +336,9 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
             $s['allDay'] = 1;
 
 
-            if ($uS->RegColors == 'hospital') {
-                $s['backgroundColor'] = ($r['idAssociation'] > 0 ? $hospitals[$r['idAssociation']]['Background_Color'] : $hospitals[$r['idHospital']]['Background_Color']);
-                $s['textColor'] = ($r['idAssociation'] > 0 ? $hospitals[$r['idAssociation']]['Text_Color'] : $hospitals[$r['idHospital']]['Text_Color']);
+            if (strtolower($uS->RegColors) == 'hospital' || strtolower($uS->RegColors) == 'gender') {
+                $s['backgroundColor'] = (isset($hospitals[$r['idAssociation']]) ? $hospitals[$r['idAssociation']]['Background_Color'] : $hospitals[$r['idHospital']]['Background_Color']);
+                $s['textColor'] = (isset($hospitals[$r['idAssociation']]) ? $hospitals[$r['idAssociation']]['Text_Color'] : $hospitals[$r['idHospital']]['Text_Color']);
                 $s['borderColor'] = $s['backgroundColor'];
             } else {
                 $s['backgroundColor'] = $rescs[$r["idResource"]]['Background_Color'];
@@ -342,7 +358,7 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
         // Check reservations
         if ($uS->Reservation) {
 
-            $query = "select * from vreservation_events where Status in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Waitlist . "') "
+            $query = "select * from vregister_resv where Status in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Waitlist . "') "
                     . " and DATE(Expected_Arrival) < DATE('" . $endDate->format('Y-m-d') . "') and DATE(Expected_Departure) > DATE('" . $beginDate->format('Y-m-d') . "') order by Expected_Arrival";
 
             $stmt = $dbh->query($query);
@@ -584,8 +600,20 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                 $s['idReservation'] = $r['idReservation'];
 
 
-                $title = HTMLContainer::generateMarkup('span', $rescs[$r["idResource"]]['Title'], array('id'=>'hkr'.$r['idReservation'], 'style'=>'white-space:nowrap;', 'class'=>'hhk-schrm', 'title'=>'Click to Change Rooms'))
-                        . '-' . $r['Guest Last'];
+                $spnArray = array('style'=>'white-space:nowrap;padding-left:2px;padding-right:2px;');
+
+                if (strtolower($uS->RegColors) == 'gender' && isset($r['Gender'])) {
+                    if ($r['Gender'] == MemGender::Female){
+                        $spnArray['style'] .= 'background-color:pink; color:black;';
+                    } else if ($r['Gender'] == MemGender::Male) {
+                        $spnArray['style'] .= 'background-color:blue;color:white;';
+                    } else {
+                        $spnArray['style'] .= 'background-color:white;color:black;';
+                    }
+                }
+
+                $title = HTMLContainer::generateMarkup('span', $rescs[$r["idResource"]]['Title'] . ': ', array('id'=>'hkr'.$r['idReservation'], 'style'=>'white-space:nowrap;', 'class'=>'hhk-schrm', 'title'=>'Click to Change Rooms'))
+                        . HTMLContainer::generateMarkup('span', $r['Guest Last'], $spnArray);
 
                 // Dont allow reservations to precede "today"
 //                if ($startDT <= $now) {
@@ -600,7 +628,7 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                     }
 //                }
 
-                $title = HTMLContainer::generateMarkup('span', $title, array('style'=>'white-space:nowrap;width:100%;', 'title'=>'Click to go to Reservation Page'));
+                //$title = HTMLContainer::generateMarkup('span', $title, array('style'=>'white-space:nowrap;width:100%;', 'title'=>'Click to go to Reservation Page'));
 
                 $s['start'] = $startDT->format('Y-m-d\TH:i:00');
                 $s['end'] = $endDT->format('Y-m-d\TH:i:00');
@@ -609,9 +637,9 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                 $s['idAssoc'] = $r['idAssociation'];
                 $s['allDay'] = 1;
 
-                if ($uS->RegColors == 'hospital') {
-                    $s['backgroundColor'] = ($r['idAssociation'] > 0 ? $hospitals[$r['idAssociation']]['Background_Color'] : $hospitals[$r['idHospital']]['Background_Color']);
-                    $s['textColor'] = ($r['idAssociation'] > 0 ? $hospitals[$r['idAssociation']]['Text_Color'] : $hospitals[$r['idHospital']]['Text_Color']);
+                if (strtolower($uS->RegColors) == 'hospital' || strtolower($uS->RegColors) == 'gender') {
+                    $s['backgroundColor'] = (isset($hospitals[$r['idAssociation']]) ? $hospitals[$r['idAssociation']]['Background_Color'] : $hospitals[$r['idHospital']]['Background_Color']);
+                    $s['textColor'] = (isset($hospitals[$r['idAssociation']]) ? $hospitals[$r['idAssociation']]['Text_Color'] : $hospitals[$r['idHospital']]['Text_Color']);
                     $s['borderColor'] = 'black';
                 } else {
                     $s['backgroundColor'] = $rescs[$r["idResource"]]['Background_Color'];

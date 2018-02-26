@@ -1740,7 +1740,7 @@ CREATE or replace VIEW `vrecent_calevents` AS
 -- View `vregister`
 -- -----------------------------------------------------
 CREATE or replace VIEW `vregister` AS
-    select
+select
         concat(`v`.`idVisit`, v.Span) AS `id`,
         v.idVisit as idVisit,
         v.Span as `Span`,
@@ -1751,18 +1751,45 @@ CREATE or replace VIEW `vregister` AS
         `v`.`Expected_Departure`,
         `v`.`Span_End`,
         ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
-        case when ifnull(hs.idAssociation, 0) > 0 and h.Title = '(None)' then 0 else ifnull(hs.idAssociation, 0) end as `idAssociation`,
-        ifnull((case when n.Name_Suffix = '' then n.Name_Last else concat(n.Name_Last, ' ', gs.Description) end), '') as `Guest Last`
+        ifnull(hs.idAssociation, 0) as `idAssociation`,
+        ifnull((case when n.Name_Suffix = '' then n.Name_Last else concat(n.Name_Last, ' ', gs.Description) end), '') as `Guest Last`,
+        n.Gender
     from
         `visit` `v`
             left join
         hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
             left join
-        `hospital` `h` on hs.idAssociation = h.idHospital
-            left join
         `name` n on v.idPrimaryGuest = n.idName
             left join 
         gen_lookups gs on gs.Table_Name = 'Name_Suffix' and gs.Code = n.Name_Suffix;
+
+
+
+-- -----------------------------------------------------
+-- view vregister_resv
+-- -----------------------------------------------------
+CREATE or Replace VIEW `vregister_resv` AS
+    select 
+        `r`.`idReservation` AS `idReservation`,
+        `r`.`idResource` AS `idResource`,
+        `r`.`Status` AS `Status`,
+        `r`.`Expected_Arrival`, 
+        `r`.`Expected_Departure` AS `Expected_Departure`,
+        `r`.`idGuest` AS `idGuest`,
+        ifnull((case when n.Name_Suffix = '' then n.Name_Last else concat(n.Name_Last, ' ', gs.Description) end), '') AS `Guest Last`,
+        ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
+        ifnull(hs.idAssociation, 0) as `idAssociation`,
+        r.idRegistration,
+        n.Gender
+    from
+        `reservation` `r`
+            left join
+        `hospital_stay` `hs` ON `r`.`idHospital_Stay` = `hs`.`idHospital_stay`
+            left join
+        `name` `n` ON `r`.`idGuest` = `n`.`idName`
+            left join
+        gen_lookups gs on gs.`Table_Name` = 'Name_Suffix' and gs.`Code` = n.Name_Suffix;
+
 
 
 

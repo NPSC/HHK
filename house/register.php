@@ -226,7 +226,7 @@ if ($uS->Reservation) {
 $colorKey = '';
 $stmth = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)'");
 
-if ($stmth->rowCount() > 1 && strtolower($uS->RegColors) == 'hospital') {
+if ($stmth->rowCount() > 1 && (strtolower($uS->RegColors) == 'hospital' || strtolower($uS->RegColors) == 'gender')) {
 
     $colorKey = HTMLContainer::generateMarkup('span', $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . ': ');
     // All button
@@ -235,10 +235,7 @@ if ($stmth->rowCount() > 1 && strtolower($uS->RegColors) == 'hospital') {
     while ($r = $stmth->fetch(\PDO::FETCH_ASSOC)) {
 
         $attrs = array('class'=>'spnHosp', 'data-id'=>$r['idHospital']);
-
-        if ($uS->RegColors == 'hospital') {
-            $attrs['style'] = 'background-color:' . $r['Reservation_Style'] . ';color:' . $r['Stay_Style'] . ';';
-        }
+        $attrs['style'] = 'background-color:' . $r['Reservation_Style'] . ';color:' . $r['Stay_Style'] . ';';
 
         $colorKey .= HTMLContainer::generateMarkup('span', $r['Title'], $attrs);
     }
