@@ -434,6 +434,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('DefaultCkBalStmt', 'false', 'b', 'h', 'Check the Balance Statement checkbox by default'),
 ('DefaultDays', '21', 'i', 'h', 'The Default number of following days for date range control'),
 ('DefaultRegisterTab', '0', 'i', 'h', 'Default active tab on register page, 0 = calendar, 1 = current Guests'),
+('DisplayGuestGender', 'false', 'b', 'h', 'Display the guest gender on House Registration Page'),
 ('Doctor', 'true', 'b', 'h','Track doctors'),
 ('EmailBlockSize','200','i','r','Number of email addresses per block.'),
 ('EmergContactFill', 'true', 'b', 'h', 'Insist on Filling in the emergency contact (or check the \"skip\")'),

@@ -299,18 +299,15 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
             if ($r['Visit_Status'] == VisitStatus::NewSpan) {
                 $titleText .= ' (rm)';
                 $spnArray['title'] = 'Room Changed';
-                //$title = HTMLContainer::generateMarkup('span', $title.' (rm)', array( 'title'=>'Room Changed', 'style'=>'white-space:nowrap;'));
             } else if ($r['Visit_Status'] == VisitStatus::ChangeRate) {
                 $titleText .= ' ($)';
                 $spnArray['title'] = 'Rate Changed';
-                //$title = HTMLContainer::generateMarkup('span', $title.' ($)', array( 'title'=>'Rate Changed', 'style'=>'white-space:nowrap;'));
             } else {
                 $titleText .= htmlentities('>>');
                 $spnArray['title'] = 'Past Expected Departure Date';
-                //$title = HTMLContainer::generateMarkup('span', ($extended ? $title . htmlentities('>>') : $title), array('style'=>'white-space:nowrap;'));
             }
 
-            if (strtolower($uS->RegColors) == 'gender' && isset($r['Gender'])) {
+            if ($uS->DisplayGuestGender && isset($r['Gender'])) {
                 if ($r['Gender'] == MemGender::Female){
                     $spnArray['style'] .= 'background-color:pink; color:black;';
                 } else if ($r['Gender'] == MemGender::Male) {
@@ -336,7 +333,7 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
             $s['allDay'] = 1;
 
 
-            if (strtolower($uS->RegColors) == 'hospital' || strtolower($uS->RegColors) == 'gender') {
+            if (strtolower($uS->RegColors) == 'hospital') {
                 $s['backgroundColor'] = (isset($hospitals[$r['idAssociation']]) ? $hospitals[$r['idAssociation']]['Background_Color'] : $hospitals[$r['idHospital']]['Background_Color']);
                 $s['textColor'] = (isset($hospitals[$r['idAssociation']]) ? $hospitals[$r['idAssociation']]['Text_Color'] : $hospitals[$r['idHospital']]['Text_Color']);
                 $s['borderColor'] = $s['backgroundColor'];
@@ -602,7 +599,7 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
 
                 $spnArray = array('style'=>'white-space:nowrap;padding-left:2px;padding-right:2px;');
 
-                if (strtolower($uS->RegColors) == 'gender' && isset($r['Gender'])) {
+                if ($uS->DisplayGuestGender && isset($r['Gender'])) {
                     if ($r['Gender'] == MemGender::Female){
                         $spnArray['style'] .= 'background-color:pink; color:black;';
                     } else if ($r['Gender'] == MemGender::Male) {
@@ -637,7 +634,7 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                 $s['idAssoc'] = $r['idAssociation'];
                 $s['allDay'] = 1;
 
-                if (strtolower($uS->RegColors) == 'hospital' || strtolower($uS->RegColors) == 'gender') {
+                if (strtolower($uS->RegColors) == 'hospital') {
                     $s['backgroundColor'] = (isset($hospitals[$r['idAssociation']]) ? $hospitals[$r['idAssociation']]['Background_Color'] : $hospitals[$r['idHospital']]['Background_Color']);
                     $s['textColor'] = (isset($hospitals[$r['idAssociation']]) ? $hospitals[$r['idAssociation']]['Text_Color'] : $hospitals[$r['idHospital']]['Text_Color']);
                     $s['borderColor'] = 'black';

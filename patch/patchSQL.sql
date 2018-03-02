@@ -4,6 +4,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VAL
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('DefaultDays', '21', 'i', 'h', 'The Default number of following days for date range control');
 UPDATE `sys_config` SET `Key`='ShowBirthDate', `Description`='Show birthdate for patients and guests' WHERE `Key`='PatientBirthDate';
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('InsistPatBD', 'true', 'b', 'h', 'Insist on user filling in the patients birthdate');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('DisplayGuestGender', 'false', 'b', 'h', 'Display the guest gender on House Registration Page');
 
 DELETE FROM `sys_config` WHERE `Key`='ShrRm';
 DELETE FROM `lookups` WHERE `Category`='ReservStatus' and`Code`='h';
