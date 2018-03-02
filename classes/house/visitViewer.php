@@ -15,7 +15,7 @@
  */
 class VisitView {
 
-    public static function createActiveMarkup(\PDO $dbh, array $r, VisitCharges $visitCharge, $dispositions, $keyDepFlag, $visitFeeFlag, $noReturnDateFlag, $isAdmin,
+    public static function createActiveMarkup(\PDO $dbh, array $r, VisitCharges $visitCharge, $keyDepFlag, $visitFeeFlag, $noReturnDateFlag, $isAdmin,
             $extendVisitDays, $action, $coDate, $showAdjust) {
 
         $uS = Session::getInstance();
@@ -59,13 +59,7 @@ class VisitView {
 
             } else {
 
-                $disposText = '';
-                if (isset($dispositions[$r['Key_Dep_Disposition']])) {
-                    $disposText = $dispositions[$r['Key_Dep_Disposition']][1];
-                }
-
-                $kdRow = HTMLTable::makeTd(trim($disposText)
-                    . HTMLContainer::generateMarkup('span', $depAmtText, array('id' => 'kdPaid', 'data-amt'=>$keyDepAmount)), array('style' => 'text-align:center;'));
+                $kdRow = HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $depAmtText, array('id' => 'kdPaid', 'data-amt'=>$keyDepAmount)), array('style' => 'text-align:center;'));
 
                 $kdHeader = HTMLTable::makeTh($labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit'));
             }

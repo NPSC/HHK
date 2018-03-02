@@ -652,16 +652,6 @@ class IndivMember extends Member {
         }
 
 
-        //  Languages
-        if ($uS->LangChooser) {
-            $this->saveLanguages($dbh, $post, $idPrefix, $uS->username);
-        }
-
-        //  Insurance
-        if ($uS->InsuranceChooser) {
-            $this->saveInsurance($dbh, $post, $idPrefix, $uS->username);
-        }
-
         //  No Return
         if (isset($post[$idPrefix.'selnoReturn'])) {
 

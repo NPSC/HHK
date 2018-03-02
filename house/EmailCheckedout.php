@@ -211,7 +211,8 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
     $mail->addAddress($copyEmail);
     $mail->Subject = "Auto Email Results for guests leaving " . $deparatureDT->format('M j, Y');
 
-    $messg = "<p>" . $numRecipients . " messages sent. Bad Emails: " . $badAddresses . "</p>";
+    $messg = "<p>Today's date: " . date('M j, Y');
+    $messg .= "<p>For guests leaving " . $deparatureDT->format('M j, Y') . ', ' . $numRecipients . " messages were sent. Bad Emails: " . $badAddresses . "</p>";
     $messg .= "<p>Subject Line: </p>" . $subjectLine;
     $messg .= "<p>Template Text: </p>" . $sForm->templateFile . "<br/>";
     $messg .= "<p>Results:</p>" . $resultsRegister;

@@ -6,6 +6,11 @@ UPDATE `sys_config` SET `Key`='ShowBirthDate', `Description`='Show birthdate for
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('InsistPatBD', 'true', 'b', 'h', 'Insist on user filling in the patients birthdate');
 
 DELETE FROM `sys_config` WHERE `Key`='ShrRm';
+DELETE FROM `lookups` WHERE `Category`='ReservStatus' and`Code`='h';
+
+DELETE FROM `gen_lookups` WHERE `Table_Name`='Resource_Type' and`Code`='block';
+-- DELETE FROM `gen_lookups` WHERE `Table_Name`='Resource_Type' and`Code`='part';
+
 
 -- update the room rate fixed category from x to r
 update room_rate set FA_Category = 'f' where FA_Category = 'x';

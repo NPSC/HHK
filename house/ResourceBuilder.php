@@ -121,6 +121,7 @@ function saveArchive(\PDO $dbh, $desc, $subt, $tblName) {
 
     return $defaultCode;
 }
+
 $dbh = $wInit->dbh;
 $pageTitle = $wInit->pageTitle;
 
@@ -791,7 +792,7 @@ $kTbl->addBodyTr(HTMLTable::makeTd($rPrices[$uS->RoomPriceModel][1]));
 
 $pricingModelTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Room Pricing Model', array('style' => 'font-weight:bold;')) . $kTbl->generateMarkup(array('style' => 'margin:7px;')), array('style' => 'margin:7px;'));
 
-$rescTable = ResourceView::resourceTable($dbh, $uS->ShrRm);
+$rescTable = ResourceView::resourceTable($dbh);
 $roomTable = ResourceView::roomTable($dbh, $uS->KeyDeposit, $uS->VisitFee);
 
 
@@ -1360,37 +1361,6 @@ $resultMessage = $alertMsg->createMarkup();
                     }
                 });
     }
-    function deleteResource(idresc, type, trow, message) {
-        "use strict";
-        if (confirm('Delete?') === false) {
-            return;
-        }
-        $.post('ws_resc.php', {
-            cmd: 'rdel',
-            tp: type,
-            id: idresc
-        }, function (data) {
-            if (data) {
-                try {
-                    data = $.parseJSON(data);
-                } catch (err) {
-                    alert("Parser error - " + err.message);
-                    return;
-                }
-                if (data.error) {
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
-                    }
-                    flagAlertMessage(data.error, true);
-                    return;
-                }
-                if (data.success) {
-                    flagAlertMessage('Record Deleted.', false);
-                    trow.remove();
-                }
-            }
-        });
-    }
     function saveResource(idresc, type, clas) {
         "use strict";
         var parms = {};
@@ -1427,17 +1397,15 @@ $resultMessage = $alertMsg->createMarkup();
                     $('#roomTable').children().remove().end().append($(data.roomList));
                     $('#tblroom').dataTable({
                         "dom": '<"top"if>rt<"bottom"lp><"clear">',
-                        "iDisplayLength": 20,
-                        "aLengthMenu": [[20, 50, -1], [20, 50, "All"]],
-                        "language": {"emptyTable": "No data available in table"}
+                        "displayLength": 50,
+                        "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
                     });
                 } else if (data.rescList) {
                     $('#rescTable').children().remove().end().append($(data.rescList));
                     $('#tblresc').dataTable({
                         "dom": '<"top"if>rt<"bottom"lp><"clear">',
-                        "iDisplayLength": 20,
-                        "aLengthMenu": [[20, 50, -1], [20, 50, "All"]],
-                        "language": {"emptyTable": "No data available in table"}
+                        "displayLength": 50,
+                        "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
                     });
                 } else if (data.constList) {
                     $('#constr').children().remove().end().append($(data.constList));
@@ -1500,9 +1468,6 @@ $resultMessage = $alertMsg->createMarkup();
         });
         $('div#mainTabs').on('click', '.reEditBtn, .reNewBtn', function () {
             getResource($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
-        });
-        $('div#mainTabs').on('click', '.reDelBtn', function () {
-            deleteResource($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
         });
         $('div#mainTabs').on('click', '.reStatBtn', function () {
             getStatusEvent($(this).attr('name'), $(this).data('enty'), $(this).data('title'));

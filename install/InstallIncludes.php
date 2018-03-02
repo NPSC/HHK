@@ -29,7 +29,6 @@ define('JQ_UI_JS', 'js/jquery-ui.min.js');
 define('JQ_JS', 'js/jquery-3.1.1.min.js');
 define('MD5_JS', "js/md5-min.js");
 
-define('TOP_NAV_CSS', "<link href='css/topNav.css' rel='stylesheet' type='text/css' />");
 date_default_timezone_set('America/Chicago');
 
 /*

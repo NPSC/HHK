@@ -94,7 +94,6 @@ class HouseServices {
                         $dbh,
                         $r,
                         $visitCharge,
-                        $uS->guestLookups[GL_TableNames::KeyDispositions],
                         $uS->KeyDeposit,
                         $uS->VisitFee,
                         $uS->Reservation,
@@ -217,15 +216,6 @@ class HouseServices {
             }
         }
 
-        // Return Date
-//        if (isset($post['visRtn']) && $visit->getVisitStatus() == VisitStatus::CheckedIn) {
-//
-//            $retDate = filter_var($post['visRtn'], FILTER_SANITIZE_STRING);
-//
-//            if ($retDate != '') {
-//                $visit->setReturnDate(date('Y-m-d', strtotime($retDate)));
-//            }
-//        }
 
         // Change room rate
         if ($isGuestAdmin && isset($post['rateChgCB']) && isset($post['extendCb']) === FALSE) {
@@ -389,12 +379,7 @@ class HouseServices {
 
                         } else {
 
-                            $depDisposition = '';
-                            if (isset($post["selDepDisposition"])) {
-                                $depDisposition = filter_var($post["selDepDisposition"], FILTER_SANITIZE_STRING);
-                            }
-
-                            $reply .= $visit->changeRooms($dbh, $resc, $uS->username, $chRoomDT, $isGuestAdmin, $depDisposition);
+                            $reply .= $visit->changeRooms($dbh, $resc, $uS->username, $chRoomDT, $isGuestAdmin);
                             $returnCkdIn = TRUE;
                             $returnReserv = TRUE;
                         }
@@ -795,7 +780,7 @@ class HouseServices {
         $visit->visitRS->Span_End->setNewVal($nextVisitRs->Span_End->getStoredVal());
         $visit->visitRS->Expected_Departure->setNewVal($expDepDT->format('Y-m-d 10:00:00'));
         $visit->visitRS->Status->setNewVal($nextVisitRs->Status->getStoredVal());
-        $visit->visitRS->Key_Dep_Disposition->setNewVal($nextVisitRs->Key_Dep_Disposition->getStoredVal());
+
         $updateCounter = $visit->updateVisitRecord($dbh, $uname);
 
         if ($updateCounter != 1) {
@@ -955,7 +940,6 @@ class HouseServices {
         $visit->visitRS->Span_End->setNewVal('');
         $visit->visitRS->Expected_Departure->setNewVal($newExpectedDT->format('Y-m-d 10:00:00'));
         $visit->visitRS->Status->setNewVal(VisitStatus::CheckedIn);
-        $visit->visitRS->Key_Dep_Disposition->setNewVal('');
         $visit->visitRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
         $visit->visitRS->Updated_By->setNewVal($uname);
 

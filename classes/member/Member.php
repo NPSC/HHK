@@ -566,7 +566,7 @@ abstract class Member {
         // update the recordset
         EditRS::updateStoredVals($n);
         EditRS::updateStoredVals($this->demogRS);
-
+        
         return $message;
     }
 

@@ -98,7 +98,7 @@ function initODBC($dbURL) {
 function initMy_SQL($dbURL, $dbName, $dbuName, $dbPw) {
 
     return new \PDO(
-        "mysql:host=" . $dbURL . ";dbname=" . $dbName, $dbuName, $dbPw, array(\PDO::ATTR_PERSISTENT => true)
+        "mysql:host=" . $dbURL . ";dbname=" . $dbName, $dbuName, $dbPw
     );
 
 }

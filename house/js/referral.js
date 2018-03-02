@@ -1081,7 +1081,7 @@ function verifyDone(reserv) {
     hideAlertMessage();
 
     // Cancel, no show, turned down
-    if ($selStatus.val() === 'c' || $selStatus.val() === 'td' || $selStatus.val() === 'ns' || $selStatus.val() === 'h') {
+    if ($selStatus.val() === 'c' || $selStatus.val() === 'td' || $selStatus.val() === 'ns') {
         return true;
     }
 

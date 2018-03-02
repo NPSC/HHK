@@ -291,7 +291,7 @@ class Visit {
         }
     }
 
-    public function changeRooms(\PDO $dbh, Resource $resc, $uname, \DateTime $chgDT, $isAdmin, $depDisposition) {
+    public function changeRooms(\PDO $dbh, Resource $resc, $uname, \DateTime $chgDT, $isAdmin) {
 
         $rtnMessage = '';
 
@@ -414,10 +414,6 @@ class Visit {
                     $r->saveRoom($dbh, $uname, TRUE);
                 }
             }
-        }
-
-        if ($depDisposition != '') {
-            $rtnMessage .= $this->depositDisposition($dbh, $depDisposition);
         }
 
         $uS = Session::getInstance();

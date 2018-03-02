@@ -85,10 +85,10 @@ class GL_TableNames {
     const RescType = 'Resource_Type';
     const RescStatus = 'Resource_Status';
     const PayType = 'Pay_Type';
-    const WL_Status = 'WL_Status';
-    const WL_Final_Status = 'WL_Final_Status';
+//    const WL_Status = 'WL_Status';
+//    const WL_Final_Status = 'WL_Final_Status';
 //    const FeesPayType = 'FeesPayType';
-    const KeyDispositions = 'Key_Disposition';
+//    const KeyDispositions = 'Key_Disposition';
     const SalutationCodes = 'Salutation';
     //const AgeBracket = 'Age_Bracket';
     //const IncomeBracket = 'Income_Bracket';

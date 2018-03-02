@@ -61,9 +61,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Demographics', 'Media_Source', 'Media Source', '','m',30),
 
 ('Diagnosis','0','Other','','h',0),
-('Diagnosis','0','Breast Cancer','','h',0),
+('Diagnosis','0','Cardiac','','h',0),
 ('Diagnosis','0','Prostate Cancer','','h',0),
-('Diagnosis','0','Lung Cancer','','h',0),
+('Diagnosis','0','NICU','','h',0),
 ('Diagnosis','0','Glioma','','h',0),
 
 ('Dir_Type_Selector_Code','d','Directory','','',0),
@@ -103,8 +103,8 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('E_Shell_Status','a','Active','','',0),
 ('E_Shell_Status','d','Disabled','','',0),
 
-('ExcessPays', 'd', 'Room Fund','','u',0),
-('ExcessPays', 'e', 'Hold','','u',0),
+('ExcessPays', 'd', 'Donate','','u',0),
+('ExcessPays', 'e', 'Hold (MOA)','','u',0),
 ('ExcessPays', 'i', 'Ignore','','u',0),
 ('ExcessPays', 'r', 'Refund','','u',0),
 
@@ -161,11 +161,6 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('Key_Deposit_Code','k0','None','0','',0),
 ('Key_Deposit_Code','k1','House','20','',0),
-
-('Key_Disposition', '1', 'Retained', '', 'u',0),
-('Key_Disposition', '2', 'Refunded', '', 'u',0),
-('Key_Disposition', '3', 'Donated', '', 'u',0),
-('Key_Disposition', '4', 'Paid Room Fees', '', 'u',0),
 
 ('Language_Proficiency', '5', 'Native','', 'h',0),
 ('Language_Proficiency', '3', 'Professional','', 'h',0),
@@ -302,10 +297,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Resource_Status','a','Available','','',0),
 ('Resource_Status','oos','Out of Service','','',0),
 ('Resource_Status','un','Unavailable','','',0),
-('Resource_Status','dld','Delayed','','',0),
 
-('Resource_Type','block','Block','','',0),
-('Resource_Type','part','Partition','','',0),
 ('Resource_Type','rmtroom','Remote Room','','',0),
 ('Resource_Type','room','Room','','',0),
 
@@ -422,7 +414,6 @@ REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`,`T
 ('ReservStatus','p','New','y','y','','','2013-11-14 17:57:58'),
 ('ReservStatus','s','Checked In','y','y','','ui-icon-circle-check','2013-11-19 15:16:20'),
 ('ReservStatus','td','Turned Down','y','y','','ui-icon-arrowreturnthick-1-s','2013-11-14 17:57:58'),
-
 ('ReservStatus', 'im', 'Immediate', 'y', 'y', '', 'ui-icon-check', NULL),
 ('ReservStatus','w','Waitlist','y','y','','ui-icon-arrowstop-1-e','2013-11-14 17:57:58');
 -- ;

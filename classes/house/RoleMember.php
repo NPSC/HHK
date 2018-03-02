@@ -251,6 +251,17 @@ abstract class RoleMember extends IndivMember {
 
         $msg .= parent::saveChanges($dbh, $post);
 
+        //  Save Languages
+        if ($uS->LangChooser) {
+            $this->saveLanguages($dbh, $post, $this->getIdPrefix(), $uS->username);
+        }
+
+        //  Save Insurance
+        if ($uS->InsuranceChooser) {
+            $this->saveInsurance($dbh, $post, $this->getIdPrefix(), $uS->username);
+        }
+
+
         if ($uS->LangChooser && $this->get_idName() > 0) {
             $this->getLanguages($dbh, $this->get_idName());
         }

@@ -14,7 +14,7 @@
  */
 class ResourceView {
 
-    public static function resourceTable(\PDO $dbh, $showPartitions) {
+    public static function resourceTable(\PDO $dbh) {
 
         $rooms = array();
 
@@ -36,8 +36,7 @@ class ResourceView {
     ifnull(g2.Description,'') as 'Util Category',
     r.Background_Color as `Bkgrd Color`,
     r.Text_Color as `Text Color`,
-    r.Border_Color as `Border Color`,
-    r.Partition_Size as `Part. Size`
+    r.Border_Color as `Border Color`
 from
     resource r
         left join
@@ -57,10 +56,6 @@ order by r.Title;");
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            if ($showPartitions === FALSE) {
-                unset($r['Part. Size']);
-            }
-
             if ($idResc != $r['Id']) {
 
                 $ra = array();
@@ -74,8 +69,7 @@ order by r.Title;");
                     $r[$a['Title']] = (isset($ra[$a['idAttribute']]) ? HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-check')) . HTMLContainer::generateMarkup('span', 'x', array('class'=>'hhk-printmedia')) : '');
                 }
 
-                $r['Edit'] = HTMLInput::generateMarkup('', array('id'=>$r['Id'].'rebtn', 'name'=>$r['Id'], 'type'=>'button', 'data-enty'=>'resc', 'class'=>'reEditBtn ui-icon ui-icon-pencil', 'style'=>'width:20px;height:20px;margin-right:.5em;display:inline;', 'title'=>'Edit This Resource'))
-                    . HTMLInput::generateMarkup('', array('id'=>$r['Id'].'reDelete', 'name'=>$r['Id'], 'type'=>'button', 'data-enty'=>'resc', 'class'=>'reDelBtn ui-icon ui-icon-trash', 'style'=>'width:20px;height:20px;display:inline;', 'title'=>'Delete Resource'));
+                $r['Edit'] = HTMLInput::generateMarkup('', array('id'=>$r['Id'].'rebtn', 'name'=>$r['Id'], 'type'=>'button', 'data-enty'=>'resc', 'class'=>'reEditBtn ui-icon ui-icon-pencil', 'style'=>'width:20px;height:20px;margin-right:.5em;display:inline;', 'title'=>'Edit This Resource'));
 
                 $r['Status'] = HTMLInput::generateMarkup('', array('id'=>$r['Id'].'reStatbtn', 'name'=>$r['Id'], 'type'=>'button', 'data-enty'=>'resc', 'data-title'=>$r['Title'], 'class'=>'reStatBtn ui-icon ui-icon-wrench', 'style'=>'width:20px;height:20px;margin-left:.5em;display:inline;', 'title'=>'View Status Events'));
 
@@ -104,13 +98,9 @@ order by r.Title;");
             'Bkgrd Color' => '',
             'Text Color' => '',
             'Border Color' => '',
-            'Part. Size' => '',
             'status' => ''
             );
 
-        if ($showPartitions === FALSE) {
-            unset($newRow['Part. Size']);
-        }
 
         $rooms[] = $newRow;
 
@@ -163,8 +153,7 @@ order by r.Title;");
                 $r[$a['Title']] = (isset($ra[$a['idAttribute']]) ? HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-check')) . HTMLContainer::generateMarkup('span', 'x', array('class'=>'hhk-printmedia')) : '');
             }
 
-            $r['Edit'] = HTMLInput::generateMarkup('', array('id'=>$r['Id'].'rmbtn', 'name'=>$r['Id'], 'type'=>'button', 'data-enty'=>'room', 'class'=>'reEditBtn ui-icon ui-icon-pencil', 'style'=>'width:20px;height:20px;margin-right:.5em;display:inline;', 'title'=>'Edit This Room'))
-                . HTMLInput::generateMarkup('', array('id'=>$r['Id'].'rmDelete', 'name'=>$r['Id'], 'type'=>'button', 'data-enty'=>'room', 'class'=>'reDelBtn ui-icon ui-icon-trash', 'style'=>'width:20px;height:20px;display:inline;', 'title'=>'Delete Room'));
+            $r['Edit'] = HTMLInput::generateMarkup('', array('id'=>$r['Id'].'rmbtn', 'name'=>$r['Id'], 'type'=>'button', 'data-enty'=>'room', 'class'=>'reEditBtn ui-icon ui-icon-pencil', 'style'=>'width:20px;height:20px;margin-right:.5em;display:inline;', 'title'=>'Edit This Room'));
 
 
             $rooms[] = $r;
