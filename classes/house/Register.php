@@ -67,11 +67,16 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
             'Title' => 'Waitlist');
 
         // get list of hospital colors
+        $noAdminId = 0;
         $hospitals = array(0 => array('idHospital'=>0, 'Background_Color'=>'blue', 'Text_Color'=>'white'));
         if ($uS->RegColors) {
-            $hstmt = $dbh->query("Select idHospital, Reservation_Style as Background_Color, Stay_Style as Text_Color from hospital where Title != '(None)'");
+            $hstmt = $dbh->query("Select Title, idHospital, Reservation_Style as Background_Color, Stay_Style as Text_Color from hospital where `Status` = 'a';");
             foreach ($hstmt->fetchAll(\PDO::FETCH_ASSOC) as $h) {
                 $hospitals[$h['idHospital']] = $h;
+
+                if ($h['Title'] == '(None)') {
+                    $noAdminId = $h['idHospital'];
+                }
             }
         }
 
@@ -293,8 +298,8 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                 $rescUsed[$r["idResource"]] = 'y';
             }
 
-            $titleText = $rescs[$r["idResource"]]['Title'] . ': ' . $r['Guest Last'];
-            $spnArray = array('style'=>'white-space:nowrap;');
+            $titleText = $r['Guest Last'];
+            $spnArray = array('style'=>'white-space:nowrap;padding-left:2px;padding-right:2px;');
 
             if ($r['Visit_Status'] == VisitStatus::NewSpan) {
                 $titleText .= ' (rm)';
@@ -311,20 +316,21 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                 if ($r['Gender'] == MemGender::Female){
                     $spnArray['style'] .= 'background-color:pink; color:black;';
                 } else if ($r['Gender'] == MemGender::Male) {
-                    $spnArray['style'] .= 'background-color:blue;color:white;';
+                    $spnArray['style'] .= 'background-color:blue; color:white;';
                 } else {
-                    $spnArray['style'] .= 'background-color:white;color:black;';
+                    $spnArray['style'] .= 'background-color:white; color:black;';
                 }
             }
 
-            $title = HTMLContainer::generateMarkup('span', $titleText, $spnArray);
+            $title = HTMLContainer::generateMarkup('span', $rescs[$r["idResource"]]['Title'] . ': ', array('style'=>'white-space:nowrap;'))
+                    . HTMLContainer::generateMarkup('span', $titleText, $spnArray);
 
             // Set Start and end for fullCalendar control
             $s['id'] = $r['id'];
             $s['idVisit'] = $r['idVisit'];
             $s['Span'] = $r['Span'];
             $s['idHosp'] = $r['idHospital'];
-            $s['idAssoc'] = isset($hospitals[$r['idAssociation']]) ? $r['idAssociation'] : 0;
+            $s['idAssoc'] = $r['idAssociation'];
 
 
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
@@ -332,11 +338,20 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
             $s['title'] = $title;
             $s['allDay'] = 1;
 
-
+            // Use Hospital colors?
             if (strtolower($uS->RegColors) == 'hospital') {
-                $s['backgroundColor'] = (isset($hospitals[$r['idAssociation']]) ? $hospitals[$r['idAssociation']]['Background_Color'] : $hospitals[$r['idHospital']]['Background_Color']);
-                $s['textColor'] = (isset($hospitals[$r['idAssociation']]) ? $hospitals[$r['idAssociation']]['Text_Color'] : $hospitals[$r['idHospital']]['Text_Color']);
+
+                // Use Association colors?
+                if ($r['idAssociation'] != $noAdminId && $r['idAssociation'] > 0) {
+                    $s['backgroundColor'] = $hospitals[$r['idAssociation']]['Background_Color'];
+                    $s['textColor'] = $hospitals[$r['idAssociation']]['Text_Color'];
+                } else {
+                    $s['backgroundColor'] = $hospitals[$r['idHospital']]['Background_Color'];
+                    $s['textColor'] = $hospitals[$r['idHospital']]['Text_Color'];
+                }
+
                 $s['borderColor'] = $s['backgroundColor'];
+
             } else {
                 $s['backgroundColor'] = $rescs[$r["idResource"]]['Background_Color'];
                 $s['textColor'] = $rescs[$r["idResource"]]['Text_Color'];
@@ -618,14 +633,12 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
 //                    $startDT->add($p1d);
 //                    $startDT->setTime(16, 0, 0);
 //                    $title = htmlentities('<<') . $title;
-//                } else {
-                    // Determine if the resource is in use "TODAY"
-                    if (($startDT <= $now && $endDT >= $now) || $startDT->format('Y-m-d') == $now->format('Y-m-d')) {
-                        $rescUsed[$r["idResource"]] = 'y';
-                    }
 //                }
 
-                //$title = HTMLContainer::generateMarkup('span', $title, array('style'=>'white-space:nowrap;width:100%;', 'title'=>'Click to go to Reservation Page'));
+                // Determine if the resource is in use "TODAY"
+                if (($startDT <= $now && $endDT >= $now) || $startDT->format('Y-m-d') == $now->format('Y-m-d')) {
+                    $rescUsed[$r["idResource"]] = 'y';
+                }
 
                 $s['start'] = $startDT->format('Y-m-d\TH:i:00');
                 $s['end'] = $endDT->format('Y-m-d\TH:i:00');
@@ -635,13 +648,21 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                 $s['allDay'] = 1;
 
                 if (strtolower($uS->RegColors) == 'hospital') {
-                    $s['backgroundColor'] = (isset($hospitals[$r['idAssociation']]) ? $hospitals[$r['idAssociation']]['Background_Color'] : $hospitals[$r['idHospital']]['Background_Color']);
-                    $s['textColor'] = (isset($hospitals[$r['idAssociation']]) ? $hospitals[$r['idAssociation']]['Text_Color'] : $hospitals[$r['idHospital']]['Text_Color']);
+                    // Use Association colors?
+                    if ($r['idAssociation'] != $noAdminId && $r['idAssociation'] > 0) {
+                        $s['backgroundColor'] = $hospitals[$r['idAssociation']]['Background_Color'];
+                        $s['textColor'] = $hospitals[$r['idAssociation']]['Text_Color'];
+                    } else {
+                        $s['backgroundColor'] = $hospitals[$r['idHospital']]['Background_Color'];
+                        $s['textColor'] = $hospitals[$r['idHospital']]['Text_Color'];
+                    }
+
                     $s['borderColor'] = 'black';
+
                 } else {
                     $s['backgroundColor'] = $rescs[$r["idResource"]]['Background_Color'];
                     $s['textColor'] = $rescs[$r["idResource"]]['Text_Color'];
-                    $s['borderColor'] = 'black';  //$rescs[$r["idResource"]]['Border_Color'];
+                    $s['borderColor'] = 'black';
                 }
 
                 if ($r['Status'] == ReservationStatus::UnCommitted) {

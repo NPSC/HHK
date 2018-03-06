@@ -397,10 +397,3 @@ class WebSiteCode {
     const Root = 'r';
 }
 
-class WL_Status {
-    const Active = 'a';
-    const Inactive = 'in';
-    const Stayed = 'st';
-    const NoShow = 'ns';
-    const TurnedAway = 'ta';
-}
