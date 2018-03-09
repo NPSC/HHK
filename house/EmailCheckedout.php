@@ -159,7 +159,8 @@ $mail->Subject = $subjectLine;
 $sForm = new SurveyForm('survey.html');
 $badAddresses = 0;
 $resultsRegister = '';
-$deparatureDate = '';
+$deparatureDT = new \DateTime();
+$deparatureDT->sub(new \DateInterval('P' . $delayDays . 'D'));
 
 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
 

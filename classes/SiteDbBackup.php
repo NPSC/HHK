@@ -66,7 +66,7 @@ class SiteDbBackup {
             $dbUrl = '127.0.0.1';
         }
 
-        $this->fileName = $this->filePath . $dbname . ".sql";
+        $this->fileName = $this->filePath . $dbname . ".sql.zip";
         $this->dumpErrorFile = $this->filePath . $dbname . "_errors.txt";
 
         if (file_exists($this->fileName)) {
@@ -87,7 +87,7 @@ class SiteDbBackup {
 
         // Backup database
         $command = 'mysqldump ';
-        $params = " --single-transaction --skip-lock-tables --log-error=" . $this->dumpErrorFile . " --host='$dbUrl' --user=$dbuser --password=$dbpwd $dbname > " . $this->fileName;
+        $params = " --single-transaction --skip-lock-tables --log-error=" . $this->dumpErrorFile . " --host='$dbUrl' --user=$dbuser --password=$dbpwd $dbname | gzip > " . $this->fileName;
         passthru($command . $params, $this->return_var);
 
         // Analyze result
