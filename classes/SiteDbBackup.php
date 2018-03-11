@@ -66,7 +66,7 @@ class SiteDbBackup {
             $dbUrl = '127.0.0.1';
         }
 
-        $this->fileName = $this->filePath . $dbname . ".sql.zip";
+        $this->fileName = $this->filePath . $dbname . ".sql";
         $this->dumpErrorFile = $this->filePath . $dbname . "_errors.txt";
 
         if (file_exists($this->fileName)) {
@@ -87,7 +87,7 @@ class SiteDbBackup {
 
         // Backup database
         $command = 'mysqldump ';
-        $params = " --single-transaction --skip-lock-tables --log-error=" . $this->dumpErrorFile . " --host='$dbUrl' --user=$dbuser --password=$dbpwd $dbname | gzip > " . $this->fileName;
+        $params = " --single-transaction --skip-lock-tables --log-error=" . $this->dumpErrorFile . " --host='$dbUrl' --user=$dbuser --password='$dbpwd' $dbname > " . $this->fileName;
         passthru($command . $params, $this->return_var);
 
         // Analyze result
@@ -112,7 +112,7 @@ class SiteDbBackup {
         return $this->dbBkUpFlag;
     }
 
-    public function encryptFile($inFile = '', $cypher = 'aes-256-cbc') {
+    public function encryptFile($inFile = '', $cypher = 'aes-256-gcm') {
 
         $this->encMessage = '';
         $encPass = $this->config->getstring('backup', 'EncryptionPassword', '');
@@ -136,6 +136,7 @@ class SiteDbBackup {
             if (file_exists($outfile)) {
                 unlink($outfile);
             }
+
             $this->encryptedFileName = $outfile;
             $this->encReturnVar = 0;
 
@@ -146,14 +147,38 @@ class SiteDbBackup {
                 unlink($this->fileName);
                 $this->encMessage = 'Encryption Successful. ';
                 return TRUE;
+            } else {
+                $this->encMessage .= 'Encryption Failed, return code = ' . $this->encReturnVar;
             }
-
         } else {
             $this->encMessage = 'Encryption PW is not set. ';
         }
 
         return FALSE;
 
+    }
+
+    public function downloadFile($filename = '') {
+
+        if ($filename == '') {
+            $filename = $this->encryptedFileName;
+        }
+
+        if ($filename == '' || file_exists($filename) === FALSE) {
+            $this->emailError = 'File name is not set or doesnt exist:  ' . $filename;
+            return FALSE;
+        }
+
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="'.basename($filename).'"');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize($filename));
+        ob_flush();
+        readfile($filename);
+        exit();
     }
 
     public function emailFile($emFileName = '', $forceMail = FALSE) {
@@ -226,15 +251,15 @@ class SiteDbBackup {
         $errorMessage = 'Schema Backup (' . $this->return_var . ').  ' . $this->bkupMessage;
 
         if ($this->encMessage != '') {
-            $errorMessage .= 'File Encryption (' . $this->encReturnVar . '). ' . $this->encMessage;
+            $errorMessage .= '  File Encryption (' . $this->encReturnVar . '). ' . $this->encMessage;
         }
 
         if ($this->emailError != '') {
-            $errorMessage .= 'Send Email: ' . $this->emailError;
+            $errorMessage .= '  Send Email: ' . $this->emailError;
         }
 
         if (file_exists($this->dumpErrorFile)) {
-            $errorMessage .= 'mysqldump errors: ' . file_get_contents($this->dumpErrorFile);
+            $errorMessage .= '  mysqldump errors: ' . file_get_contents($this->dumpErrorFile);
         }
 
         return $errorMessage;

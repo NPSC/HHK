@@ -307,7 +307,7 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
             } else if ($r['Visit_Status'] == VisitStatus::ChangeRate) {
                 $titleText .= ' ($)';
                 $spnArray['title'] = 'Rate Changed';
-            } else {
+            } else if ($extended) {
                 $titleText .= htmlentities('>>');
                 $spnArray['title'] = 'Past Expected Departure Date';
             }

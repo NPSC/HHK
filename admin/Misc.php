@@ -186,33 +186,6 @@ $lookupErrMsg = "";
 
 // Maintain the accordian index accross posts
 $accordIndex = 0;
-$cookieReply = '';
-
-if (isset($_COOKIE['housepc'])) {
-    $cookieReply = "Cookie-Restricted Access is set on this PC. ";
-}
-
-if (isset($_POST['setCookie'])) {
-    $accordIndex = 7;
-
-    $cookVal = encryptMessage(filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP) . 'eric');
-
-    if (SecurityComponent::is_Admin() && setcookie('housepc', $cookVal, time()+ 84600*365*5, $wInit->page->getRootPath() )) {
-        $cookieReply = "Cookie-Restricted Access is set on this PC.";
-    } else {
-        $cookieReply = "Must be logged in as web admin to set access.";
-    }
-
-} else if (isset($_POST['removeCookie']) && isset($_COOKIE['housepc'])) {
-    $accordIndex = 7;
-
-    if (SecurityComponent::is_Admin() && setcookie('housepc', "", time() - 3600, $wInit->page->getRootPath()) ) {
-        $cookieReply = "Cookie-Restricted Access Deleted on this PC.";
-    } else {
-        $cookieReply .= " Must be logged in as web admin to delete access.";
-    }
-
-}
 
 // Check for Gen_Lookups post
 if (isset($_POST["btnGenLookups"])) {
@@ -405,7 +378,8 @@ if (isset($_POST["btnDoBackup"])) {
     if ($dbBack->backupSchema($igtables)) {
         // success
         if ($dbBack->encryptFile()) {
-            $dbBack->emailFile('', TRUE);
+            $dbBack->downloadFile();
+            exit();
         }
     }
 
@@ -880,7 +854,7 @@ $selLookups = getGenLookups($dbh);
                         <li><a href="#delid">Delete Member Records</a></li>
                         <li><a href="#errors">View Server Errors</a></li>
                         <li><a href="#access">View User Access Log</a></li>
-                        <li><a href="#setCook">Set House PC</a></li>
+
                     </ul>
                     <div id="access" class="ui-tabs-hide">
                         <table>
@@ -902,11 +876,6 @@ $selLookups = getGenLookups($dbh);
                         </div>
                     </div>
 
-                    <div id="setCook" class="ui-tabs-hide">
-                        This sets or removes access on this PC that you are using now.<br/>
-                        <input name="setCookie" type="submit" value="Set PC Access" style="margin-right:1em;"/><input name="removeCookie" type="submit" value="Remove Access" style="margin-right:1em;"/>
-                        <h3><?php echo $cookieReply; ?></h3>
-                    </div>
                     <div id="lookups" class="ui-tabs-hide" >
                         <table>
                             <tr>
@@ -949,10 +918,6 @@ $selLookups = getGenLookups($dbh);
                             <tr>
                                 <td><h3>Backup Database</h3></td>
                             </tr>
-                            <tr>
-                                <td>Email Address:
-                                    <input type="text" id ="eAddr" name="eAddr" VALUE='<?php echo $to; ?>' size="50" disabled="disabled" />
-                                </td>
                             <tr>
                                 <td style="text-align:right;"><input type="submit" name="btnDoBackup" value="Run Database Backup"/></td>
                             </tr>
@@ -1029,7 +994,6 @@ $selLookups = getGenLookups($dbh);
                                 <td style="text-align:right;">
                                     <input type="submit" name="btnClnPhone" value="Clean up Phone Numbers"/>
                                     <input type="submit" name="btnAddrs" value="Verify Addresses" style="margin-left:10px;"/>
-                                    <input type="submit" name="btnClnNames" value="Clean Names" style="margin-left:10px;"/>
                                 </td>
                             </tr>
                         </table>
