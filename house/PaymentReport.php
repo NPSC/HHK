@@ -250,7 +250,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
 
 
-    $whDates = " and DATE(lp.Payment_Date) < '$end' and DATE(lp.Payment_Date) >= '$start' ";
+    $whDates = " and DATE(lp.Payment_Date) < DATE('$end') and DATE(lp.Payment_Date) >= DATE('$start') ";
 
     $endDT = new DateTime($end);
     $endDT->sub(new DateInterval('P1D'));
@@ -379,7 +379,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     ifnull(np.Name_First, '') as `Patient_First`,
     DATE(hs.Arrival_Date) as Hosp_Arrival
 from
-    vlist_inv_pments lp
+    vlist_pments lp
         left join
     `name` n ON lp.Sold_To_Id = n.idName
         left join

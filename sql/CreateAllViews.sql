@@ -1405,7 +1405,7 @@ CREATE OR REPLACE VIEW `vitem_list` AS
 -- View `vlist_inv_pments`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vlist_inv_pments` AS
-    SELECT 
+   SELECT 
         `i`.`idInvoice` AS `idInvoice`,
         `i`.`Invoice_Number` AS `Invoice_Number`,
         `i`.`Amount` AS `Invoice_Amount`,
@@ -1467,7 +1467,70 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
     ORDER BY i.idInvoice, p.idPayment, pa.idPayment_auth;
 
 
-
+-- -----------------------------------------------------
+-- View `vlist_pments`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vlist_pments` AS
+   SELECT 
+        `i`.`idInvoice` AS `idInvoice`,
+        `i`.`Invoice_Number` AS `Invoice_Number`,
+        `i`.`Amount` AS `Invoice_Amount`,
+        `i`.`Sold_To_Id` AS `Sold_To_Id`,
+        IFNULL(`nv`.`Vol_Status`, '') AS `Bill_Agent`,
+        `i`.`idGroup` AS `idGroup`,
+        `i`.`Order_Number` AS `Order_Number`,
+        `i`.`Suborder_Number` AS `Suborder_Number`,
+        `i`.`Invoice_Date` AS `Invoice_Date`,
+        `i`.`Status` AS `Invoice_Status`,
+        `i`.`Carried_Amount` AS `Carried_Amount`,
+        `i`.`Balance` AS `Invoice_Balance`,
+        `i`.`Delegated_Invoice_Id` AS `Delegated_Invoice_Id`,
+        `i`.`Description` AS `Description`,
+        `i`.`Deleted` AS `Deleted`,
+        `i`.`Updated_By` AS `Invoice_Updated_By`,
+        ifnull(`il`.`idInvoice_Line`, '') as `il_Id`,
+        ifnull(`il`.`Description`, '') as `il_Description`,
+        ifnull(`il`.`Amount`, 0) as `il_Amount`,
+        IFNULL(`g1`.`Description`, '') AS `Invoice_Status_Title`,
+        IFNULL(`p`.`idPayment`, 0) AS `idPayment`,
+        IFNULL(`p`.`Amount`, 0) AS `Payment_Amount`,
+        IFNULL(`p`.`Balance`, 0) AS `Payment_Balance`,
+        IFNULL(`p`.`idPayment_Method`, 0) AS `idPayment_Method`,
+        IFNULL(`pm`.`Method_Name`, '') AS `Payment_Method_Title`,
+        IFNULL(`p`.`Status_Code`, 0) AS `Payment_Status`,
+        IFNULL(`g2`.`Description`, '') AS `Payment_Status_Title`,
+        IFNULL(`p`.`Payment_Date`, 0) AS `Payment_Date`,
+        IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
+        IFNULL(`p`.`idPayor`, 0) AS `Payment_idPayor`,
+        IFNULL(`p`.`Updated_By`, '') AS `Payment_Updated_By`,
+        IFNULL(`p`.`Created_By`, '') AS `Payment_Created_By`,
+        IFNULL(`p`.`Notes`, '') AS `Payment_Note`,
+        IFNULL(`p`.`External_Id`, '') AS `Payment_External_Id`,
+        IFNULL(`p`.`idToken`, 0) as `Payment_idToken`,
+        IFNULL(`pa`.`idPayment_auth`, 0) AS `idPayment_auth`,
+        IFNULL(`pa`.`Customer_Id`, 0) AS `Charge_Customer_Id`,
+        IFNULL(`pa`.`Acct_Number`, `p`.`Data2`) AS `Masked_Account`,
+        IFNULL(`pa`.`Card_Type`, '') AS `Card_Type`,
+        IFNULL(`pa`.`Approved_Amount`, '') AS `Approved_Amount`,
+        IFNULL(`pa`.`Approval_Code`, '') AS `Approval_Code`,
+        IFNULL(`pa`.`Status_Code`, '') AS `PA_Status_Code`,
+        IFNULL(`pc`.`Check_Number`, '') AS `Check_Number`
+    FROM
+        `payment` `p`
+        LEFT JOIN `payment_auth` `pa` ON `p`.`idPayment` = `pa`.`idPayment`
+        LEFT JOIN `payment_info_check` `pc` ON `p`.`idPayment` = `pc`.`idPayment`
+        LEFT JOIN `payment_method` `pm` ON `p`.`idPayment_Method` = `pm`.`idPayment_method`
+        LEFT JOIN `payment_invoice` `pi` ON `p`.`idPayment` = `pi`.`Payment_Id`
+        LEFT JOIN `invoice` `i` ON `pi`.`Invoice_Id` = `i`.`idInvoice`
+        LEFT JOIN `invoice_line` `il` on `i`.`idInvoice` = `il`.`Invoice_Id` and `il`.`Item_Id` = 11 and `il`.`Deleted` < 1
+        LEFT JOIN `name_volunteer2` `nv` ON `p`.`idPayor` = `nv`.`idName`
+            AND (`nv`.`Vol_Category` = 'Vol_Type')
+            AND (`nv`.`Vol_Code` = 'ba')
+        LEFT JOIN `gen_lookups` `g2` ON `p`.`Status_Code` = `g2`.`Code`
+            AND (`g2`.`Table_Name` = 'Payment_Status')
+        LEFT JOIN `gen_lookups` `g1` ON `i`.`Status` = `g1`.`Code`
+            AND (`g1`.`Table_Name` = 'Invoice_Status')
+    ORDER BY i.idInvoice, p.idPayment, pa.idPayment_auth;
 
 
 

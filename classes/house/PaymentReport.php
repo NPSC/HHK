@@ -82,7 +82,7 @@ class PaymentReport {
         }
 
 
-        $whDates = " and lp.Payment_Date < '$end' and lp.Payment_Date >= '$start' ";
+        $whDates = " and DATE(lp.Payment_Date) < DATE('$end') and DATE(lp.Payment_Date) >= DATE('$start') ";
 
 
         $whStatus = '';
@@ -132,7 +132,7 @@ class PaymentReport {
         ifnull(n.Company, '') as `Company`,
         ifnull(r.Title, '') as `Room`
     from
-        vlist_inv_pments lp
+        vlist_pments lp
             left join
         `name` n ON lp.Sold_To_Id = n.idName
             left join
