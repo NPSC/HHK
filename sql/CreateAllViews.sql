@@ -1816,13 +1816,23 @@ select
         ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
         ifnull(hs.idAssociation, 0) as `idAssociation`,
         ifnull((case when n.Name_Suffix = '' then n.Name_Last else concat(n.Name_Last, ' ', gs.Description) end), '') as `Guest Last`,
-        n.Gender
+        n.Gender,
+        nd.Newsletter,
+        nd.Photo_Permission,
+        nd.Media_Source,
+        nd.Ethnicity,
+        nd.Income_Bracket,
+        nd.Age_Bracket,
+        nd.Education_Level,
+        nd.Special_Needs
     from
         `visit` `v`
             left join
         hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
             left join
         `name` n on v.idPrimaryGuest = n.idName
+            left join
+	`name_demog` nd on v.idPrimaryGuest = nd.idName
             left join 
         gen_lookups gs on gs.Table_Name = 'Name_Suffix' and gs.Code = n.Name_Suffix;
 
@@ -1843,7 +1853,15 @@ CREATE or Replace VIEW `vregister_resv` AS
         ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
         ifnull(hs.idAssociation, 0) as `idAssociation`,
         r.idRegistration,
-        n.Gender
+        n.Gender,
+        nd.Newsletter,
+        nd.Photo_Permission,
+        nd.Media_Source,
+        nd.Ethnicity,
+        nd.Income_Bracket,
+        nd.Age_Bracket,
+        nd.Education_Level,
+        nd.Special_Needs
     from
         `reservation` `r`
             left join
@@ -1851,6 +1869,8 @@ CREATE or Replace VIEW `vregister_resv` AS
             left join
         `name` `n` ON `r`.`idGuest` = `n`.`idName`
             left join
+		`name_demog` nd on `r`.`idGuest` = nd.idName
+            left join 
         gen_lookups gs on gs.`Table_Name` = 'Name_Suffix' and gs.`Code` = n.Name_Suffix;
 
 

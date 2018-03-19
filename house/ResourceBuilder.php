@@ -168,6 +168,7 @@ if (isset($_POST['table'])) {
 
     if ($cmd == 'save' && isset($_POST['txtDiag'])) {
 
+        // Check for a new entry
         if (isset($_POST['txtDiag'][0]) && $_POST['txtDiag'][0] != '') {
 
             // new entry
@@ -212,6 +213,7 @@ if (isset($_POST['table'])) {
 
         $demos = readGenLookupsPDO($dbh, 'Demographics');
 
+        // Define the return functions.
         if (isset($demos[$tableName])) {
 
             if ($tableName == 'Gender') {
@@ -293,7 +295,11 @@ if (isset($_POST['table'])) {
         if (isset($_POST['txtDiagAmt'])) {
 
             foreach ($_POST['txtDiagAmt'] as $k => $a) {
-                $amounts[$k] = abs($a);
+                if (is_numeric($a)) {
+                    $a = abs($a);
+                }
+
+                $amounts[$k] = $a;
             }
         }
 
@@ -348,6 +354,8 @@ if (isset($_POST['table'])) {
         }
     }
 
+
+    // Generate selectors.
     $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
 
     $tbl = new HTMLTable();
@@ -355,7 +363,11 @@ if (isset($_POST['table'])) {
     if ($type == 'm') {
         $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries') . HTMLTable::makeTh('Order') . HTMLTable::makeTh('Use');
     } else {
-        $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries') . HTMLTable::makeTh('Order') . ($type == 'u' ? '' : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With')) . ($type == 'ca' ? HTMLTable::makeTh('Amount') : '') . ($type == 'ha' ? HTMLTable::makeTh('Days') : '');
+        $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries') . HTMLTable::makeTh('Order')
+                . ($type == 'ca' ? HTMLTable::makeTh('Amount') : '')
+                . ($type == 'ha' ? HTMLTable::makeTh('Days') : '')
+                . ($type == 'd' && $uS->GuestNameColor == $tableName ? HTMLTable::makeTh('Colors (font, bkgrnd)') : '')
+                . ($type == 'u' ? '' : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With'));
     }
 
     $tbl->addHeaderTr($hdrTr);
@@ -390,9 +402,9 @@ if (isset($_POST['table'])) {
         $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLInput::generateMarkup($d[1], array('name' => 'txtDiag[' . $d[0] . ']')))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($d[4], array('name' => 'txtDOrder[' . $d[0] . ']', 'size'=>'3')))
+                . ($type == 'ha' || $type == 'ca' || ($type == 'd' && $uS->GuestNameColor == $tableName) ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[2], array('size' => '10', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[' . $d[0] . ']'))) : '')
                 . $cbDelMU
                 . ($type != 'm' && $type != 'u' ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($tDiags, ''), array('name' => 'selDiagDel[' . $d[0] . ']'))) : '')
-                . ($type == 'ha' || $type == 'ca' ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[2], array('size' => '7', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[' . $d[0] . ']'))) : '')
         );
     }
 
@@ -1419,6 +1431,7 @@ $resultMessage = $alertMsg->createMarkup();
 
         var tabIndex = parseInt('<?php echo $tabIndex; ?>');
         $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn').button();
+
         $('#txtFaIncome, #txtFaSize').change(function () {
             var inc = $('#txtFaIncome').val().replace(',', ''),
                     size = $('#txtFaSize').val(),

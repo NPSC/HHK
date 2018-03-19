@@ -754,7 +754,15 @@ $recHistory = History::getGuestHistoryMarkup($dbh);
 // Currently Checked In guests
 $currentCheckedIn = CreateMarkupFromDB::generateHTML_Table(History::getCheckedInGuestMarkup($dbh, 'GuestEdit.php', FALSE, TRUE), 'curres');
 
+$showCharges = TRUE;
+$addnl = readGenLookupsPDO($dbh, 'Addnl_Charge');
+$discs = readGenLookupsPDO($dbh, 'House_Discount');
 
+// decide to show payments and invoices
+if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && count($discs) == 0) {
+    $showCharges = FALSE;
+
+}
 
 // Instantiate the alert message control
 $xhrMsg = new alertMessage("divAlert1");
@@ -868,9 +876,9 @@ $uS->guestId = $id;
                         <li><a href="#vregister"><?php echo ($uS->ccgw == '' ? 'Registration' : 'Registration/Credit') ?></a></li>
                         <?php if ($uS->Reservation) { ?>
                         <li><a href="#vreserv"><?php echo $labels->getString('guestEdit', 'reservationTab', 'Reservations'); ?></a></li>
-                        <?php } if ($uS->IncomeRated) {  ?>
+                        <?php } if ($uS->IncomeRated && $showCharges) {  ?>
                         <li id="fin"><a href="#vfin">Financial Assistance...</a></li>
-                        <?php } if ($memberFlag && $uS->RoomPriceModel != ItemPriceCode::None) {  ?>
+                        <?php } if ($memberFlag && $showCharges) {  ?>
                         <li><a href="ws_resc.php?cmd=payRpt&id=<?php echo $registration->getIdRegistration(); ?>" title="Payment History">Payments</a></li>
                         <?php } ?>
                         <li><a href="ShowStatement.php?cmd=show&reg=<?php echo $idReg; ?>" title="Comprehensive Statement">Statement</a></li>

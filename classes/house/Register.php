@@ -80,6 +80,31 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
             }
         }
 
+        $nameColors = array();
+
+        // Get guest name colorings
+        if ($uS->GuestNameColor != '') {
+
+            $demogs = readGenLookupsPDO($dbh, $uS->GuestNameColor);
+
+            foreach ($demogs as $d) {
+
+                if ($d[2] != '') {
+
+                    // Split colors out of CDL
+                    $splits = explode(',', $d[2]);
+
+                    $nameColors[$d[0]] = array(
+                        't' => trim(strtolower($splits[0])),
+                        'b' => isset($splits[1]) ? trim(strtolower($splits[1])) : 'transparent'
+                    );
+                }
+            }
+
+            // Not set case
+            $nameColors[''] = array('t'=>'black', 'b'=>'white');
+        }
+
         // Get cleaning holidays for the current year(s)
         $beginHolidays = new US_Holidays($dbh, $beginDate->format('Y'));
         $endHolidays = new US_Holidays($dbh, $endDate->format('Y'));
@@ -312,13 +337,9 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                 $spnArray['title'] = 'Past Expected Departure Date';
             }
 
-            if ($uS->DisplayGuestGender && isset($r['Gender'])) {
-                if ($r['Gender'] == MemGender::Female){
-                    $spnArray['style'] .= 'background-color:pink; color:black;';
-                } else if ($r['Gender'] == MemGender::Male) {
-                    $spnArray['style'] .= 'background-color:blue; color:white;';
-                } else {
-                    $spnArray['style'] .= 'background-color:white; color:black;';
+            if ($uS->GuestNameColor != '' && isset($r[$uS->GuestNameColor])) {
+                if (isset($nameColors[$r[$uS->GuestNameColor]])){
+                    $spnArray['style'] .= 'background-color:' . $nameColors[$r[$uS->GuestNameColor]]['b'] . '; color:' . $nameColors[$r[$uS->GuestNameColor]]['t'] . ';';
                 }
             }
 
@@ -614,13 +635,9 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
 
                 $spnArray = array('style'=>'white-space:nowrap;padding-left:2px;padding-right:2px;');
 
-                if ($uS->DisplayGuestGender && isset($r['Gender'])) {
-                    if ($r['Gender'] == MemGender::Female){
-                        $spnArray['style'] .= 'background-color:pink; color:black;';
-                    } else if ($r['Gender'] == MemGender::Male) {
-                        $spnArray['style'] .= 'background-color:blue;color:white;';
-                    } else {
-                        $spnArray['style'] .= 'background-color:white;color:black;';
+                if ($uS->GuestNameColor != '' && isset($r[$uS->GuestNameColor])) {
+                    if (isset($nameColors[$r[$uS->GuestNameColor]])){
+                        $spnArray['style'] .= 'background-color:' . $nameColors[$r[$uS->GuestNameColor]]['b'] . '; color:' . $nameColors[$r[$uS->GuestNameColor]]['t'] . ';';
                     }
                 }
 

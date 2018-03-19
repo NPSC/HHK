@@ -239,7 +239,7 @@ class IndivMember extends Member {
                     HTMLTable::makeTd($d[1], array('class'=>'tdlabel'))
                     . HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(
-                                HTMLSelector::doOptionsMkup($uS->nameLookups[$d[0]], $this->getDemographicsEntry($d[0])),
+                                HTMLSelector::doOptionsMkup(removeOptionGroups($uS->nameLookups[$d[0]]), $this->getDemographicsEntry($d[0])),
                                 array('name'=>$idPrefix.'sel_' . $d[0])
                                 )
                         , array('style'=>'display:table-cell;')

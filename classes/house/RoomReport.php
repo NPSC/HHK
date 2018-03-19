@@ -209,7 +209,7 @@ WHERE
             }
 
             if ($guests == '') {
-                $guests .= $r['Name'];
+                $guests = $r['Name'];
             } else {
                 $guests .= ', ' . $r['Name'];
             }
@@ -249,16 +249,10 @@ WHERE
                 $stat = HTMLContainer::generateMarkup('span', 'Empty');
             }
         }
+
         // Check OOS
         if (isset($roomsOOS[$r['idRoom']])) {
             $stat = $roomsOOS[$r['idRoom']]['StatusTitle'] . ': ' . $roomsOOS[$r['idRoom']]['OOSCode'];
-        }
-
-        // Check the guests
-        if (strlen($guests) > 3) {
-            substr($guests,2);
-        } else {
-            $guests = '';
         }
 
         $fixed['titleSort'] = $r['Util_Priority'];
@@ -266,7 +260,6 @@ WHERE
         $fixed['Status'] = $stat;
         $fixed['Guests'] = $guests;
         $fixed['Patient_Name'] = $r['Patient_Name'];
-
 
         if ($idVisit > 0) {
 

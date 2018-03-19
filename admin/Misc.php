@@ -377,10 +377,8 @@ if (isset($_POST["btnDoBackup"])) {
 
     if ($dbBack->backupSchema($igtables)) {
         // success
-        if ($dbBack->encryptFile()) {
-            $dbBack->downloadFile();
-            exit();
-        }
+        $dbBack->downloadFile();
+
     }
 
     $bkupMsg = $bkupAlert->createMarkup('Result: ' . $dbBack->getErrors());

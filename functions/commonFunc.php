@@ -585,7 +585,11 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
 
                     if (isset($subt[$code])) {
 
-                        $glRs->Substitute->setNewVal(filter_var($subt[$code], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+                        if (is_numeric($subt[$code])) {
+                            $glRs->Substitute->setNewVal(filter_var($subt[$code], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+                        } else {
+                            $glRs->Substitute->setNewVal(filter_var($subt[$code], FILTER_SANITIZE_STRING));
+                        }
                     }
 
                     if (isset($order[$code])) {

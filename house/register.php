@@ -92,8 +92,8 @@ $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
 $paymentMarkup = '';
 $receiptMarkup = '';
-
-
+$statusSelector = '';
+$payTypeSelector = '';
 
 // Hosted payment return
 if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)) === FALSE) {
@@ -134,21 +134,6 @@ if (isset($_POST['btnFeesDl'])) {
 
 
 
-// Prepare controls
-$statusList = readGenLookupsPDO($dbh, 'Payment_Status');
-$statusSelector = HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup($statusList, ''), array('name' => 'selPayStatus[]', 'id' => 'selPayStatus', 'size' => '6', 'multiple' => 'multiple'));
-
-$payTypes = array();
-
-foreach ($uS->nameLookups[GL_TableNames::PayType] as $p) {
-    if ($p[2] != '') {
-        $payTypes[$p[2]] = array($p[2], $p[1]);
-    }
-}
-
-$payTypeSelector = HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup($payTypes, ''), array('name' => 'selPayType[]', 'id' => 'selPayType', 'size' => '4', 'multiple' => 'multiple'));
 
 if (isset($uS->roomCount) === FALSE) {
     $stmt = $dbh->query("Select count(*) from resource");
@@ -257,6 +242,34 @@ try {
     $challengeVar = $chlgen->getChallengeVar("challenge");
 } catch (Exception $e) {
     //
+}
+
+$showCharges = TRUE;
+$addnl = readGenLookupsPDO($dbh, 'Addnl_Charge');
+$discs = readGenLookupsPDO($dbh, 'House_Discount');
+
+// decide to show payments and invoices
+if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && count($discs) == 0) {
+    $showCharges = FALSE;
+
+} else {
+
+    // Prepare controls
+    $statusList = readGenLookupsPDO($dbh, 'Payment_Status');
+    $statusSelector = HTMLSelector::generateMarkup(
+                    HTMLSelector::doOptionsMkup($statusList, ''), array('name' => 'selPayStatus[]', 'id' => 'selPayStatus', 'size' => '6', 'multiple' => 'multiple'));
+
+    $payTypes = array();
+
+    foreach ($uS->nameLookups[GL_TableNames::PayType] as $p) {
+        if ($p[2] != '') {
+            $payTypes[$p[2]] = array($p[2], $p[1]);
+        }
+    }
+
+    $payTypeSelector = HTMLSelector::generateMarkup(
+                    HTMLSelector::doOptionsMkup($payTypes, ''), array('name' => 'selPayType[]', 'id' => 'selPayType', 'size' => '4', 'multiple' => 'multiple'));
+
 }
 
 ?>
@@ -429,7 +442,7 @@ try {
                     <?php } ?>
                     <?php if ($isGuestAdmin) { ?>
                         <li><a href="#vactivity">Recent Activity</a></li>
-                        <?php if ($uS->RoomPriceModel != ItemPriceCode::None) { ?>
+                        <?php if ($showCharges) { ?>
                         <li><a href="#vfees"><?php echo $labels->getString('register', 'recentPayTab', 'Recent Payments'); ?></a></li>
                         <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
                     <?php } } ?>

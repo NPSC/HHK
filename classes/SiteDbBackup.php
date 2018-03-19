@@ -41,10 +41,11 @@ class SiteDbBackup {
         date_default_timezone_set($timezone);
     }
 
-    public function backupSchema($ignoreTables = array()) {
+    public function backupSchema($ignoreTables = array(), $zipIt = TRUE) {
 
         $this->dbBkUpFlag = FALSE;
         $this->bkupMessage = '';
+        $zipPipe = '';
 
         if (strtoupper($this->config->getString('db', 'DBMS', '')) != 'MYSQL') {
             $this->bkupMessage = 'This backup only works for MySQL Databases.  ';
@@ -66,7 +67,14 @@ class SiteDbBackup {
             $dbUrl = '127.0.0.1';
         }
 
-        $this->fileName = $this->filePath . $dbname . ".sql";
+        if ($zipIt) {
+            $this->fileName = $this->filePath . $dbname . ".sql.zip";
+            $zipPipe = '| gzip';
+        } else {
+            $this->fileName = $this->filePath . $dbname . ".sql";
+            $zipPipe = '';
+        }
+
         $this->dumpErrorFile = $this->filePath . $dbname . "_errors.txt";
 
         if (file_exists($this->fileName)) {
@@ -85,9 +93,11 @@ class SiteDbBackup {
 
         $this->return_var = 0;
 
+// mysqldump.exe --defaults-file="c:\users\eric\appdata\local\temp\tmpnh5gsa.cnf"  --set-gtid-purged=OFF --user=ab17426_eric --host=hospitalityhousekeeper.online --protocol=tcp --port=3306 --default-character-set=utf8 --single-transaction=TRUE --skip-triggers "ab17426_noras"
+
         // Backup database
         $command = 'mysqldump ';
-        $params = " --single-transaction --skip-lock-tables --log-error=" . $this->dumpErrorFile . " --host='$dbUrl' --user=$dbuser --password='$dbpwd' $dbname > " . $this->fileName;
+        $params = " --single-transaction --skip-lock-tables --log-error=" . $this->dumpErrorFile . " --host='$dbUrl' --user=$dbuser --password='$dbpwd' $dbname $zipPipe > " . $this->fileName;
         passthru($command . $params, $this->return_var);
 
         // Analyze result
@@ -95,18 +105,17 @@ class SiteDbBackup {
 
             $this->clrFileSize = filesize($this->fileName);
 
-            if ($this->clrFileSize > 1000000) {
+            if ($this->clrFileSize > 1000) {
+
                 $this->bkupMessage .= 'Database Backup successful.  File size = ' . $this->clrFileSize . ' bytes.  ';
                 $this->dbBkUpFlag = TRUE;
 
             } else {
                 $this->bkupMessage .= 'Database Backup file too small: ' . $this->clrFileSize . ' bytes.  ';
-
             }
 
         } else {
             $this->bkupMessage .= 'Database Backup file not found.  ';
-
         }
 
         return $this->dbBkUpFlag;
@@ -158,26 +167,25 @@ class SiteDbBackup {
 
     }
 
-    public function downloadFile($filename = '') {
+    public function downloadFile() {
 
-        if ($filename == '') {
-            $filename = $this->encryptedFileName;
-        }
-
-        if ($filename == '' || file_exists($filename) === FALSE) {
-            $this->emailError = 'File name is not set or doesnt exist:  ' . $filename;
+        if ($this->fileName == '' || file_exists($this->fileName) === FALSE) {
+            $this->emailError = 'File name is not set or doesnt exist:  ' . $this->fileName;
             return FALSE;
         }
 
         header('Content-Description: File Transfer');
         header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="'.basename($filename).'"');
+        header('Content-Disposition: attachment; filename="'.basename($this->fileName).'"');
         header('Expires: 0');
         header('Cache-Control: must-revalidate');
         header('Pragma: public');
-        header('Content-Length: ' . filesize($filename));
+        header('Content-Length: ' . filesize($this->fileName));
+
         ob_flush();
-        readfile($filename);
+
+        readfile($this->fileName);
+
         exit();
     }
 
