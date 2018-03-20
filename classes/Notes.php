@@ -41,6 +41,7 @@ class Notes {
 
     }
 
+    
     public static function getNotesDiv($notesText, $class = 'hhk-currentNotes') {
 
         // reverse output

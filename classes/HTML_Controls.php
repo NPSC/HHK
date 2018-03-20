@@ -115,11 +115,11 @@ class HTMLTable extends HTMLControl {
         $this->bodyTR = HTMLContainer::generateMarkup('tr', $contents) . $this->bodyTR;
     }
 
-    public static function makeTd($contents, array $attr = array()) {
+    public static function makeTd($contents = '', array $attr = array()) {
         return HTMLContainer::generateMarkup('td', $contents, $attr);
     }
 
-    public static function makeTh($contents, array $attr = array()) {
+    public static function makeTh($contents = '', array $attr = array()) {
         return HTMLContainer::generateMarkup('th', $contents, $attr);
     }
 

@@ -246,10 +246,10 @@ try {
 
 $showCharges = TRUE;
 $addnl = readGenLookupsPDO($dbh, 'Addnl_Charge');
-$discs = readGenLookupsPDO($dbh, 'House_Discount');
+
 
 // decide to show payments and invoices
-if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && count($discs) == 0) {
+if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
     $showCharges = FALSE;
 
 } else {
@@ -380,7 +380,9 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && count($d
                 {data: 'Status', title: 'Status', searchable:false},
                 {data: 'Guests', title: 'Guests'},
                 {data: 'Patient_Name', title: patientLabel},
+                <?php if ($showCharges) { ?>
                 {data: 'Unpaid', title: 'Unpaid', className: 'hhk-justify-r'},
+                <?php } ?>
                 {data: 'Visit_Notes', title: 'Visit Notes', sortable: false},
                 {data: 'Notes', title: 'Room Notes', sortable: false},
             ];
