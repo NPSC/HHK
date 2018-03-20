@@ -100,9 +100,6 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
                     );
                 }
             }
-
-            // Not set case
-            $nameColors[''] = array('t'=>'black', 'b'=>'white');
         }
 
         // Get cleaning holidays for the current year(s)

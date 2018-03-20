@@ -389,6 +389,10 @@ class IndivMember extends Member {
 
         foreach ($insTypes as $i) {
 
+            if (isset($ins[$i['idInsurance_type']]) === FALSE) {
+                continue;
+            }
+
             // Chosen Insurnaces...
             $choices = array();
             foreach ($this->insuranceRSs as $lRs) {
