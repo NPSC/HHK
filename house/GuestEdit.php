@@ -674,7 +674,7 @@ if ($psg->getIdPsg() > 0) {
                 $categoryTitles[$r['FA_Category']] = array(0 => $r['FA_Category'], 1 => $r['Title'] . ($r['Reduced_Rate_1'] == 0 ? '' :  ': $' . number_format($r['Reduced_Rate_1'], 0)));
             }
 
-            $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), array('href'=>'Referral.php?rid=' . $reserv->getIdReservation())))
+            $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), array('href'=>'Reserve.php?rid=' . $reserv->getIdReservation())))
                     . HTMLTable::makeTd($reserv->getStatusTitle($reserv->getStatus()))
                     . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getArrival())))
                     . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getDeparture())))

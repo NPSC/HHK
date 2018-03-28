@@ -411,7 +411,7 @@ class ReservationSvcs {
 
                 $checkinNow = HTMLContainer::generateMarkup('a',
                             HTMLInput::generateMarkup('Open ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('type'=>'button', 'style'=>'margin-bottom:.3em;'))
-                            , array('style'=>'text-decoration:none;margin-right:.3em;', 'href'=>'Referral.php?rid='.$resvRs->idReservation->getStoredVal()));
+                            , array('style'=>'text-decoration:none;margin-right:.3em;', 'href'=>'Reserve.php?rid='.$resvRs->idReservation->getStoredVal()));
 
                 $expArrDT = new \DateTime($resvRs->Expected_Arrival->getStoredVal());
                 $expArrDT->setTime(0, 0, 0);
@@ -631,13 +631,13 @@ class ReservationSvcs {
             // guest have a resv with another psg?
             if ($guest->getIdName() == $rv['idGuest'] && $rv['idPsg'] != $psg->getIdPsg()) {
 
-                $dataArray['error'] = 'This guest has a concurrent <a href="Referral.php?rid=' . $rv['idReservation'] . '">'. $labels->getString('guestEdit', 'reservationTitle', 'reservation') . '</a> with a different patient.  ';
+                $dataArray['error'] = 'This guest has a concurrent <a href="Reserve.php?rid=' . $rv['idReservation'] . '">'. $labels->getString('guestEdit', 'reservationTitle', 'reservation') . '</a> with a different patient.  ';
                 return $dataArray;
             }
 
             if ($rv['idPsg'] == $psg->getIdPsg() && $guest->getIdName() == $rv['idGuest']) {
 
-                $dataArray['error'] = 'This guest already has a <a href="Referral.php?rid=' . $rv['idReservation'] . '">'. $labels->getString('guestEdit', 'reservationTitle', 'reservation') . '</a>.  ';
+                $dataArray['error'] = 'This guest already has a <a href="Reserve.php?rid=' . $rv['idReservation'] . '">'. $labels->getString('guestEdit', 'reservationTitle', 'reservation') . '</a>.  ';
                 return $dataArray;
 
             }
@@ -976,14 +976,14 @@ class ReservationSvcs {
             // guest have a resv with another psg?
             if ($guest->getIdName() == $rv['idGuest'] && $rv['idPsg'] != $psg->getIdPsg()) {
 
-                $dataArray['warning'] = 'This guest has a concurrent <a href="Referral.php?rid=' . $rv['idReservation'] . '">'. $labels->getString('guestEdit', 'reservationTitle', 'reservation') . '</a> with a different patient.  ';
+                $dataArray['warning'] = 'This guest has a concurrent <a href="Reserve.php?rid=' . $rv['idReservation'] . '">'. $labels->getString('guestEdit', 'reservationTitle', 'reservation') . '</a> with a different patient.  ';
                 return $dataArray;
             }
 
             // another concurrent reservation already there
             if ($guest->getIdName() == $rv['idGuest'] && $rv['idPsg'] == $psg->getIdPsg()) {
 
-                $dataArray['warning'] = 'This guest already has a <a href="Referral.php?rid=' . $rv['idReservation'] . '">'. $labels->getString('guestEdit', 'reservationTitle', 'reservation') . '</a> with this patient.  ';
+                $dataArray['warning'] = 'This guest already has a <a href="Reserve.php?rid=' . $rv['idReservation'] . '">'. $labels->getString('guestEdit', 'reservationTitle', 'reservation') . '</a> with this patient.  ';
                 return $dataArray;
             }
         }
@@ -1187,7 +1187,7 @@ class ReservationSvcs {
         //
         $paymentManager = new PaymentManager(PaymentChooser::readPostedPayment($dbh, $post));
 
-        $payResult = self::processPayments($dbh, $paymentManager, $resv, 'Referral.php');
+        $payResult = self::processPayments($dbh, $paymentManager, $resv, 'Reserve.php');
 
         if ($payResult !== NULL) {
 
@@ -1207,7 +1207,7 @@ class ReservationSvcs {
             }
         }
 
-        $results = HouseServices::cardOnFile($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $post, 'Referral.php?rid='.$resv->getIdReservation());
+        $results = HouseServices::cardOnFile($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $post, 'Reserve.php?rid='.$resv->getIdReservation());
 
         if (isset($results['error'])) {
             $dataArray['error'] = $results['error'];

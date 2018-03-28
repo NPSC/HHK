@@ -196,7 +196,7 @@ abstract class RoleMember extends IndivMember {
         // First Name
         $attrs['name'] = $this->getIdPrefix().'txtFirstName';
         $attrs['class'] = 'hhk-firstname';
-        $attrs['autofocus'] = 'autofocus';
+        $attrs['size'] = '16';
         $tr = HTMLTable::makeTd(
                 HTMLInput::generateMarkup(($this->get_idName() == 0 ? '' : $this->get_idName())
                         , array('name'=>$this->getIdPrefix().'idName', 'type'=>'hidden', 'class'=>'ignrSave'))
@@ -206,18 +206,18 @@ abstract class RoleMember extends IndivMember {
         $attrs['name'] = $this->getIdPrefix().'txtMiddleName';
         $attrs['size'] = '5';
         unset($attrs['class']);
-        unset($attrs['autofocus']);
         $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($this->nameRS->Name_Middle->getstoredVal(), $attrs));
 
         // Last Name
         $attrs['name'] = $this->getIdPrefix().'txtLastName';
         $attrs['class'] = 'hhk-lastname';
-        unset($attrs['size']);
+        $attrs['size'] = '20';
         $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($this->nameRS->Name_Last->getstoredVal(), $attrs));
 
         // Suffix
         $attrs['name'] = $this->getIdPrefix().'selSuffix';
         unset($attrs['class']);
+        unset($attrs['size']);
         $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
                 HTMLSelector::doOptionsMkup($uS->nameLookups[GL_TableNames::NameSuffix],
                         $this->nameRS->Name_Suffix->getstoredVal(), TRUE),

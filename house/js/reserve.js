@@ -61,11 +61,11 @@ function PageManager(initData) {
         var t = this;
         var divFamDetailId = 'divfamDetail';
         var cpyAddr = '';
+        var setupComplete = false;
 
         // Exports
         t.findStaysChecked = findStaysChecked;
         t.findPrimaryGuest = findPrimaryGuest;
-        t.setupComplete = false;
         t.setUp = setUp;
         t.newGuestMarkup = newGuestMarkup;
         t.verify = verify;
@@ -143,7 +143,7 @@ function PageManager(initData) {
                 flagAlertMessage('This person is already listed here. ', true);
                 return;
             }
-
+            
             var resv = {
                 id: item.id,
                 rid: data.rid,
@@ -422,40 +422,45 @@ function PageManager(initData) {
 
             var $addrTog, $addrFlag, $famTbl;
 
-            if (data.famSection === undefined || data.famSection.tblId === undefined || data.famSection.tblId == '') {
+            if (data.famSection === undefined || data.famSection.tblId === undefined || data.famSection.tblId === '') {
                 return;
             }
 
-            initFamilyTable(data);
+            if (setupComplete === false) {
+                initFamilyTable(data);
+            }
+            
             $famTbl = $wrapper.find('#' + data.famSection.tblId);
 
+            // Remove any previous entries.
+            for (var i in data.famSection.mem) {
+                
+                var item = people.findItem('id', data.famSection.mem[i].id);
+                
+                if (item) {
+                    $famTbl.find('input#' + item.pref + 'idName').parents('tr').next('tr').remove();
+                    $famTbl.find('input#' + item.pref + 'idName').parents('tr').remove();
+                    people.removeIndex(item.pref);
+                    addrs.removeIndex(item.pref);
+                }
+            }
+            
+            // Add new people to the lists.
+            people.makeList(data.famSection.mem, 'pref');
+            addrs.makeList(data.famSection.addrs, 'pref');
 
-            for (var t=0; t < data.famSection.tblBody.length; t++) {
-                $famTbl.find('tbody:first').append($(data.famSection.tblBody[t]));
+            // Add people to the UI
+            for (var t=0; t < data.famSection.tblBody.length; t = t + 2) {
+                
+                // Patient is first
+                if (t === 0) {
+                    $famTbl.find('tbody:first').prepend($(data.famSection.tblBody[t+1])).prepend($(data.famSection.tblBody[t]));
+                } else {
+                    $famTbl.find('tbody:first').append($(data.famSection.tblBody[t]))
+                    .append($(data.famSection.tblBody[t+1]));
+                }
             }
 
-            // Last Name Copy down
-            $('#lnCopy').click(function () {
-
-                var lastNameCopy = $('input.hhk-lastname').first().val();
-
-                $('input.hhk-lastname').each(function () {
-                    if ($(this).val() === '') {
-                        $(this).val(lastNameCopy);
-                    }
-                });
-            });
-                        
-            // Address Copy down
-            $('#adrCopy').click(function () {
-
-                var p = $('input.hhk-lastname').first().data('prefix');
-                
-                if (isAddressComplete(p)) {
-                    addrCopyDown(p);
-                }
-            });
-                        
             $('.hhk-cbStay').checkboxradio({
                 classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
             });
@@ -475,32 +480,6 @@ function PageManager(initData) {
                 dateFormat: 'M d, yy'
             });
 
-            // toggle address row
-            $('#' + divFamDetailId).on('click', '.hhk-togAddr, .hhk-AddrFlag', function () {
-
-                if ($(this).hasClass('hhk-togAddr')) {
-                    $addrTog = $(this);
-                    $addrFlag = $(this).siblings();
-                } else {
-                    $addrFlag = $(this);
-                    $addrTog = $(this).siblings();
-                }
-
-                if ($(this).parents('tr').next('tr').css('display') === 'none') {
-                    $(this).parents('tr').next('tr').show();
-                    $addrTog.find('span').removeClass('ui-icon-circle-triangle-s').addClass('ui-icon-circle-triangle-n');
-                    $addrTog.attr('title', 'Hide Address Section');
-                } else {
-                    $(this).parents('tr').next('tr').hide();
-                    $addrTog.find('span').removeClass('ui-icon-circle-triangle-n').addClass('ui-icon-circle-triangle-s');
-                    $addrTog.attr('title', 'Show Address Section');
-                }
-
-                setAddrFlag($addrFlag);
-            });
-
-            $('.hhk-togAddr').click();
-
             // set country and state selectors
             $('.hhk-addrPanel').find('select.bfh-countries').each(function() {
                 var $countries = $(this);
@@ -512,27 +491,7 @@ function PageManager(initData) {
                 $states.bfhstates($states.data());
             });
 
-            // Load the addresses into the addrs object if changed.
-            $('#' + divFamDetailId).on('change', '.hhk-copy-target', function() {
-                loadAddress($(this).data('pref'));
-            });
-
             $('.hhk-phemtabs').tabs();
-
-            // Copy Address
-            $('#' + divFamDetailId).on('click', '.hhk-addrCopy', function() {
-                copyAddress($(this).data('prefix'));
-            });
-
-            // Delete address
-            $('#' + divFamDetailId).on('click', '.hhk-addrErase', function() {
-                eraseAddress($(this).data('prefix'));
-            });
-
-            // Incomplete address bind to address flag.
-            $('#' + divFamDetailId).on('click', '.hhk-incompleteAddr', function() {
-                setAddrFlag($('#' + $(this).data('prefix') + 'liaddrflag'));
-            });
 
             verifyAddrs('#divfamDetail');
 
@@ -541,68 +500,151 @@ function PageManager(initData) {
                 createZipAutoComplete($(this), 'ws_admin.php', lastXhr, loadAddress);
             });
 
-            // Remove button
-            $('#' + divFamDetailId).on('click', '.hhk-removeBtn', function () {
+            if (setupComplete === false) {
+                // Last Name Copy down
+                $('#lnCopy').click(function () {
 
-                // Is the name entered?
-                if ($('#' + $(this).data('prefix') + 'txtFirstName').val() !== '' || $('#' + $(this).data('prefix') + 'txtLastName').val() !== '') {
-                    if (confirm('Remove this person: ' + $('#' + $(this).data('prefix') + 'txtFirstName').val() + ' ' + $('#' + $(this).data('prefix') + 'txtLastName').val() + '?') === false) {
-                        return;
+                    var lastNameCopy = $('input.hhk-lastname').first().val();
+
+                    $('input.hhk-lastname').each(function () {
+                        if ($(this).val() === '') {
+                            $(this).val(lastNameCopy);
+                        }
+                    });
+                });
+
+                // Address Copy down
+                $('#adrCopy').click(function () {
+
+                    var p = $('input.hhk-lastname').first().data('prefix');
+
+                    if (isAddressComplete(p)) {
+                        addrCopyDown(p);
                     }
-                }
+                });
 
-                people.removeIndex($(this).data('prefix'));
-                addrs.removeIndex($(this).data('prefix'));
+                // toggle address row
+                $('#' + divFamDetailId).on('click', '.hhk-togAddr, .hhk-AddrFlag', function () {
 
-                $(this).parentsUntil('tbody', 'tr').next().remove();
-                $(this).parentsUntil('tbody', 'tr').remove();
-            });
-
-
-            // Add Guest button
-            $('#btnCopyGuest').button().click(function () {
-                addGuestCopy($('#selCopyGuest').val());
-            });
-
-            // Relationship chooser
-            $('#' + divFamDetailId).on('change', '.patientRelch', function () {
-
-                if ($(this).val() === 'slf') {
-
-                    people.list()[$(this).data('prefix')].role = 'p';
-
-                    if (patAsGuest === false) {
-                        // remove stay button
-                        $('#' + $(this).data('prefix') + 'lblStay').parent('td').empty();
+                    if ($(this).hasClass('hhk-togAddr')) {
+                        $addrTog = $(this);
+                        $addrFlag = $(this).siblings();
+                    } else {
+                        $addrFlag = $(this);
+                        $addrTog = $(this).siblings();
                     }
 
-                } else {
+                    if ($(this).parents('tr').next('tr').css('display') === 'none') {
+                        $(this).parents('tr').next('tr').show();
+                        $addrTog.find('span').removeClass('ui-icon-circle-triangle-s').addClass('ui-icon-circle-triangle-n');
+                        $addrTog.attr('title', 'Hide Address Section');
+                    } else {
+                        $(this).parents('tr').next('tr').hide();
+                        $addrTog.find('span').removeClass('ui-icon-circle-triangle-n').addClass('ui-icon-circle-triangle-s');
+                        $addrTog.attr('title', 'Show Address Section');
+                    }
 
-                    people.list()[$(this).data('prefix')].role = 'g';
-                }
-            });
+                    
+                });
 
-            // Add People Textbox
-            createAutoComplete($('#txtPersonSearch'), 3, {cmd: 'role', gp:'1'}, function (item) {
-                addGuest(item, data);
+                // Load the addresses into the addrs object if changed.
+                $('#' + divFamDetailId).on('change', '.hhk-copy-target', function() {
+                    loadAddress($(this).data('pref'));
+                });
+
+
+                // Copy Address
+                $('#' + divFamDetailId).on('click', '.hhk-addrCopy', function() {
+                    copyAddress($(this).data('prefix'));
+                });
+
+                // Delete address
+                $('#' + divFamDetailId).on('click', '.hhk-addrErase', function() {
+                    eraseAddress($(this).data('prefix'));
+                });
+
+                // Incomplete address bind to address flag.
+                $('#' + divFamDetailId).on('click', '.hhk-incompleteAddr', function() {
+                    setAddrFlag($('#' + $(this).data('prefix') + 'liaddrflag'));
+                });
+
+                // Remove button
+                $('#' + divFamDetailId).on('click', '.hhk-removeBtn', function () {
+
+                    // Is the name entered?
+                    if ($('#' + $(this).data('prefix') + 'txtFirstName').val() !== '' || $('#' + $(this).data('prefix') + 'txtLastName').val() !== '') {
+                        if (confirm('Remove this person: ' + $('#' + $(this).data('prefix') + 'txtFirstName').val() + ' ' + $('#' + $(this).data('prefix') + 'txtLastName').val() + '?') === false) {
+                            return;
+                        }
+                    }
+
+                    people.removeIndex($(this).data('prefix'));
+                    addrs.removeIndex($(this).data('prefix'));
+
+                    $(this).parentsUntil('tbody', 'tr').next().remove();
+                    $(this).parentsUntil('tbody', 'tr').remove();
+                });
+
+
+                // Copy Guest button
+                $('#btnCopyGuest').button().click(function () {
+                    addGuestCopy($('#selCopyGuest').val());
+                });
+
+                // Relationship chooser
+                $('#' + divFamDetailId).on('change', '.patientRelch', function () {
+
+                    if ($(this).val() === 'slf') {
+
+                        people.list()[$(this).data('prefix')].role = 'p';
+
+                        if (patAsGuest === false) {
+                            // remove stay button
+                            $('#' + $(this).data('prefix') + 'lblStay').parent('td').empty();
+                        }
+
+                    } else {
+
+                        people.list()[$(this).data('prefix')].role = 'g';
+                    }
+                });
+
+                // Add People Textbox
+                createAutoComplete($('#txtPersonSearch'), 3, {cmd: 'role', gp:'1'}, function (item) {
+                    addGuest(item, data);
+                });
+
+                // Hover icons
+                $( "ul.hhk-ui-icons li" ).hover(
+                    function() {
+                            $( this ).addClass( "ui-state-hover" );
+                    },
+                    function() {
+                            $( this ).removeClass( "ui-state-hover" );
+                    }
+                );
+        
+            }
+
+            // set the address flags
+            for (var p in people.list()) {
+                setAddrFlag($('#' + p + 'liaddrflag'));
+            }
+            
+            // Shut Address rows
+            $('.hhk-togAddr').each(function () {
+                
+                $(this).parents('tr').next('tr').hide();
+                $(this).find('span').removeClass('ui-icon-circle-triangle-n').addClass('ui-icon-circle-triangle-s');
+                $(this).attr('title', 'Show Address Section');
             });
             
-            // Hover icons
-            $( "ul.hhk-ui-icons li" ).hover(
-                function() {
-                        $( this ).addClass( "ui-state-hover" );
-                },
-                function() {
-                        $( this ).removeClass( "ui-state-hover" );
-                }
-            );
-
-            t.setupComplete = true;
+            setupComplete = true;
         };
 
         function newGuestMarkup(data, prefix) {
 
-            var $countries, $states, $famTbl, stripeClass;
+            var $countries, $states, $famTbl, stripeClass, $addrFlag, $addrTog;
 
             if (data.tblId === undefined || data.tblId == '') {
                 return;
@@ -642,7 +684,20 @@ function PageManager(initData) {
             });
 
             // Address button
-            setAddrFlag($('#' + prefix + 'liaddrflag'));
+            $addrFlag = $('#' + prefix + 'liaddrflag');
+            $addrTog = $addrFlag.siblings();
+            
+            setAddrFlag($addrFlag);
+            
+            // Shut address line if filled in.
+            if ($addrFlag.css('display') === 'none') {
+                
+                $addrTog.parents('tr').next('tr').hide();
+                $addrTog.find('span').removeClass('ui-icon-circle-triangle-n').addClass('ui-icon-circle-triangle-s');
+                $addrTog.attr('title', 'Show Address Section');
+            } else {
+                $addrTog.attr('title', 'Hide Address Section');
+            }
 
             // set country and state selectors
             $countries = $('#' + prefix + 'adrcountry' + addrPurpose);
@@ -861,6 +916,7 @@ function PageManager(initData) {
                 }
             }
 
+            setupComplete = false;
             return true;
         };
     }
@@ -1328,7 +1384,7 @@ function PageManager(initData) {
         function makeList(theList, indexProperty) {
 
             _index = indexProperty;
-            _list = {};
+            //_list = {};
 
             for (var i in theList) {
                 addItem(theList[i]);
@@ -1419,12 +1475,13 @@ function PageManager(initData) {
 
         buttons['Exit'] = function() {
             $(this).dialog("close");
-            $('div#guestSearch').show();
-            $('input#txtPersonSearch').val('').focus();
+
+            $('input#txtPersonSearch').val('');
+            $('input#gstSearch').val('').focus();
         };
 
         $resvDiag.dialog('option', 'buttons', buttons);
-        $resvDiag.dialog('option', 'title', data.resvTitle);
+        $resvDiag.dialog('option', 'title', data.resvTitle + ' Chooser');
         $resvDiag.dialog('open');
 
     }
@@ -1442,8 +1499,9 @@ function PageManager(initData) {
                 },
                 Cancel: function () {
                     $(this).dialog('close');
-                    $('div#guestSearch').show();
-                    $('input#txtPersonSearch').val('').focus();
+
+                    $('input#txtPersonSearch').val('');
+                    $('input#gstSearch').val('').focus();
                 }
             })
             .dialog('option', 'title', data.patLabel + ' Chooser' + (data.fullName === undefined ? '' : ' For: ' + data.fullName))
@@ -1451,8 +1509,25 @@ function PageManager(initData) {
     }
 
     function getReserve(sdata) {
+        
+//        var parms,
+//        
+//            guests = {};
+//
+//        for (var p in people.list()) {
+//
+//            if (people.list()[p].id > 0) {
+//                guests[people.list()[p].id] = p;
+//            }
+//        }
+        
+        var parms = {
+            id:sdata.id, 
+            rid:sdata.rid, 
+            idPsg:sdata.idPsg, 
+            cmd:sdata.cmd};
 
-        $.post('ws_resv.php', {id:sdata.id, rid:sdata.rid, idPsg:sdata.idPsg, cmd:sdata.cmd}, function(data) {
+        $.post('ws_resv.php', parms, function(data) {
 
             try {
                 data = $.parseJSON(data);
@@ -1472,8 +1547,6 @@ function PageManager(initData) {
 
             loadResv(data);
         });
-
-        $('div#guestSearch').hide();
 
     }
 
@@ -1541,10 +1614,9 @@ function PageManager(initData) {
         // Build a new Family section.
         if (data.famSection) {
 
-            people.makeList(data.famSection.mem, 'pref');
-            addrs.makeList(data.famSection.addrs, 'pref');
-
             familySection.setUp(data);
+
+            $('div#guestSearch').hide();
 
             $('#btnDone').val('Save Family').show();
         }

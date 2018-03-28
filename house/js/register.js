@@ -883,7 +883,7 @@ $(document).ready(function () {
                     getRoomList(calEvent.idReservation, jsEvent.target.id);
                     return;
                 } else {
-                    window.location.assign('Referral.php?rid=' + calEvent.idReservation);
+                    window.location.assign('Reserve.php?rid=' + calEvent.idReservation);
                 }
             }
             // dont lookup blank events - placeholders

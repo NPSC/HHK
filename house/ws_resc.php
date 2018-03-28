@@ -395,15 +395,15 @@ $(document).mousedown(function (event) {
                 break;
 
             case 'reservs':
-                $events['reservs'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Committed, "Referral.php", TRUE);
+                $events['reservs'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Committed, "Reserve.php", TRUE);
                 break;
 
             case 'unreserv':
-                $events['unreserv'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, "Referral.php", TRUE);
+                $events['unreserv'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, "Reserve.php", TRUE);
                 break;
 
             case 'waitlist':
-                $events['waitlist'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, "Referral.php", TRUE);
+                $events['waitlist'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, "Reserve.php", TRUE);
                 break;
 
         }

@@ -315,6 +315,7 @@ class Family {
         return $addPerson;
 
     }
+
     public function createFamilyMarkup(\PDO $dbh, ReservationRS $resvRs, ReserveData $rData) {
 
         $uS = Session::getInstance();
@@ -365,7 +366,6 @@ class Family {
             if ($uS->PatientAddr) {
                 $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow'));
             }
-
         }
 
         // List each member
@@ -409,6 +409,7 @@ class Family {
 
             // Add addresses and demo's
             $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow'));
+
         }
 
         // Guest search
