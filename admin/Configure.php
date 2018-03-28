@@ -75,7 +75,7 @@ if (isset($_POST['cmd'])) {
 
         case 'saveform':
 
-            $formEditorText = filter_input(INPUT_POST, 'tx');
+            $formEditorText = htmlspecialchars_decode(filter_input(INPUT_POST, 'tx'), ENT_NOQUOTES);
             $rteFileSelection = filter_input(INPUT_POST, 'fn');
 
             $files = readGenLookupsPDO($dbh, 'Editable_Forms');
@@ -647,6 +647,17 @@ $(document).ready(function () {
     var tbs = $('#tabs').tabs();
     var frmSelVal = '<?php echo $rteFileSelection; ?>';
 
+    var escape = document.createElement('textarea');
+    function escapeHTML(html) {
+        escape.textContent = html;
+        return escape.innerHTML;
+    }
+
+    function unescapeHTML(html) {
+        escape.innerHTML = html;
+        return escape.textContent;
+    }
+
     $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
 
         $('#financialRoomSubsidyId, #financialReturnPayorId').removeClass('ui-state-error');
@@ -699,7 +710,7 @@ $(document).ready(function () {
                     },
                     onSave: function () {
 
-                        var parms = {cmd:'saveform', tx: $(this).html(), fn: $('#frmEdSelect').val()};
+                        var parms = {cmd:'saveform', tx: escapeHTML($(this).html()), fn: $('#frmEdSelect').val()};
 
                         $.post('Configure.php', parms, function (data){
                             data = $.parseJSON(data);

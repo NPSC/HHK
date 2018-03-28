@@ -15,43 +15,36 @@ require_once ('VolIncludes.php');
 require_once (CLASSES . 'UserCategories.php');
 
 
-function getVolUSerMarkup(PDO $dbh, $id) {
+function getVolUSerMarkup(\PDO $dbh, $id) {
 
     $gvol = array();
-    $query = "select Vol_Category_Title, Vol_Code_Title, Vol_Status, Vol_Rank_Title, Vol_Begin, Vol_End, concat(Vol_Category, '|', Vol_Code) as Vol_Cat_Code, Vol_Rank
-    from vmember_categories where idName=:id and Vol_Category <> 'Vol_Type' order by Vol_Category, Vol_Code;";
-    $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-    $stmt->execute(array(":id" => $id));
+    $idName = intval($id);
 
-    //$res = queryDB($dbcon, $query);
-    if ($stmt->rowCount() > 0) {
+    $stmt = $dbh->query("select `Vol_Category_Title`, `Vol_Code_Title`, `Vol_Status`, `Vol_Rank_Title`, `Vol_Begin`, `Vol_End`, concat(Vol_Category, '|', Vol_Code) as `Vol_Cat_Code`, `Vol_Rank`
+    from `vmember_categories` where idName = $idName and `Vol_Category` <> 'Vol_Type' order by `Vol_Category`, `Vol_Code`;");
 
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($rows as $r) {
-            $gvol[$r["Vol_Cat_Code"]] = $r;
-        }
-
+    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+        $gvol[$r["Vol_Cat_Code"]] = $r;
     }
+
 
     if (count($gvol) > 0) {
 
         // Get counts
-            $query = "select  concat(v.Vol_Category, '|', v.Vol_Code) as Vol_Cat_Code, count(v.idname) as count
-        from vmember_categories v join vmember_categories vc
-            on concat(v.Vol_Category, '|', v.Vol_Code) = concat(vc.Vol_Category, '|', vc.Vol_Code) and vc.idName = :id
+        $query = "select  concat(v.Vol_Category, '|', v.Vol_Code) as `Vol_Cat_Code`, count(v.idname) as `count`
+        from `vmember_categories` v join `vmember_categories` vc
+            on concat(v.Vol_Category, '|', v.Vol_Code) = concat(vc.Vol_Category, '|', vc.Vol_Code) and vc.idName = $idName
         where  v.Vol_Category <> 'Vol_Type' and v.Vol_Status = 'a'
         group by v.Vol_Category, v.Vol_Code
         order by v.Vol_Category, v.Vol_Code;";
-        $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-        $stmt->execute(array(":id" => $id));
 
-        if ($stmt->rowCount() > 0) {
+        $stmtr = $dbh->query($query);
 
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($rows as $r) {
+        while ($r = $stmtr->fetchAll(\PDO::FETCH_ASSOC)) {
+
+            if (isset($gvol[$r["Vol_Cat_Code"]])) {
                 $gvol[$r["Vol_Cat_Code"]]["count"] = $r["count"];
             }
-
         }
 
 
@@ -64,16 +57,9 @@ function getVolUSerMarkup(PDO $dbh, $id) {
             </tr>";
 
         foreach ($gvol as $rw) {
+
             if ($rw["Vol_Status"] == 'a') {
-                // Figure out if we are dormant
-    //            if (!is_null($r["Begin_Active"]) && !is_null($r["End_Active"])) {
-    //                $stArray = date_parse($r["Begin_Active"]);
-    //                $endArray = date_parse($r["End_Active"]);
-    //                if ($stArray["month"] <= date('n') && $endArray["month"] >= date('n')) {
-    //
-    //                }
-    //            }
-            $status = "Active";
+                $status = "Active";
             } else if (!is_null($rw["Vol_End"])) {
                 $status = "Retired";
             } else {
@@ -97,10 +83,11 @@ function getVolUSerMarkup(PDO $dbh, $id) {
             <td style='vertical-align: middle; text-align:center;'>" . $status . "</td>
                 <td style='vertical-align: middle; text-align:center;'>" . $vrank . "</td>
                 <td style='vertical-align: middle; text-align:center;'>" . $count . "</td>";
-            if ($count > 0)
+            if ($count > 0) {
                 $mk .= "<td style='vertical-align: middle;'><input type='button' class='inptForList' id='" . $rw["Vol_Cat_Code"] . "' name='chairs' value='List Contacts' style='font-size: 0.8em;'/></td>";
-            else
+            } else {
                 $mk .= "<td>&nbsp;</td>";
+            }
 
             $mk .= "</tr>";
         }
@@ -191,9 +178,9 @@ order by c.Vol_Code_Title;";
 }
 
 $parms = array(":id" => $id);
-$stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+$stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
 $stmt->execute($parms);
-$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
 
 // get the name

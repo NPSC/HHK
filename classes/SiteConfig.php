@@ -249,7 +249,7 @@ class SiteConfig {
         zip_close($zip);
 
         if ($content === FALSE) {
-            throw new Hk_Exception_Runtime("Problem reading zip file: $na.  ");
+            throw new Hk_Exception_Runtime("Problem reading zip file entry: $na.  ");
         }
     } else {
         throw new Hk_Exception_Runtime("Problem opening zip file.  Error code = $zip.  ");

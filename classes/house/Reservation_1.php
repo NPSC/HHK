@@ -1107,6 +1107,14 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $this;
     }
 
+    public function setTitle($title) {
+        $this->reservRs->Title->setNewVal($title);
+        return $this;
+    }
+
+    public function getTitle() {
+        return $this->reservRs->Title->getStoredVal();
+    }
 
     /**
      * Returns Actual arrival date or Expected depending on reservation status

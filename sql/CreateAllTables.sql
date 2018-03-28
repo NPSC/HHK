@@ -94,8 +94,7 @@ CREATE TABLE if not exists `campaign` (
   `Last_Updated` datetime DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idcampaign`),
-  UNIQUE KEY `Campaign_Code_UNIQUE` (`Campaign_Code`),
-  KEY `idxType` (`Campaign_Code`)
+  UNIQUE KEY `Campaign_Code_UNIQUE` (`Campaign_Code`)
 ) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
@@ -666,8 +665,7 @@ CREATE TABLE if not exists `invoice_line`
     `Source_User_Id` INTEGER NOT NULL default 0,
     `Is_Percentage` SMALLINT NOT NULL default 0,
     `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY(`idInvoice_Line`),
-    INDEX `ix_invoice_line_invoice_id` (Invoice_Id)
+    PRIMARY KEY(`idInvoice_Line`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7;
 
 
@@ -749,7 +747,7 @@ CREATE TABLE if not exists `language` (
   `ISO_639_1` varchar(5) NOT NULL,
   `Display` INT(1) NOT NULL DEFAULT 0 ,
   PRIMARY KEY (`idLanguage`)
-) ENGINE=InnoDB AUTO_INCREMENT=553;
+) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
 
@@ -2056,12 +2054,20 @@ ALTER TABLE `invoice`
     ADD INDEX `Index_Order_SO_Number` (`Order_Number` ASC, `Suborder_Number` ASC);
 ALTER TABLE `invoice`
     ADD INDEX `Index_idGroup` (`idGroup` ASC);
+ALTER TABLE `invoice` 
+    ADD INDEX `Index_Date` (`Invoice_Date` ASC);
+
+ALTER TABLE `invoice_line` 
+    ADD INDEX `ix_invoice_line_invoice_id` (`Invoice_Id`, ASC);
 
 ALTER TABLE `name` 
     ADD INDEX `Index_Name` (`Name_Last` ASC, `Name_First` ASC),
 
 ALTER TABLE `name_guest` 
     ADD INDEX `INDEX_IdPsg` (`idPsg` ASC);
+
+ALTER TABLE `payment` 
+    ADD INDEX `Index_Date` (`Payment_Date` ASC);
 
 ALTER TABLE `payment_auth` 
     ADD INDEX `Index_idPayment` (`idPayment` ASC);
