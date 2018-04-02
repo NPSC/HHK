@@ -40,9 +40,9 @@ function getVolUSerMarkup(\PDO $dbh, $id) {
 
         $stmtr = $dbh->query($query);
 
-        while ($r = $stmtr->fetchAll(\PDO::FETCH_ASSOC)) {
+        while ($r = $stmtr->fetch(\PDO::FETCH_ASSOC)) {
 
-            if (isset($gvol[$r["Vol_Cat_Code"]])) {
+            if (isset($r["Vol_Cat_Code"]) && isset($gvol[$r["Vol_Cat_Code"]])) {
                 $gvol[$r["Vol_Cat_Code"]]["count"] = $r["count"];
             }
         }

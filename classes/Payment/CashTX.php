@@ -327,26 +327,25 @@ class ChargeAsCashTX {
         EditRS::updateStoredVals($payRs);
         $pr->paymentRs = $payRs;
 
-        if ($idPayment > 0) {
 
-            //Payment Detail
-            $pDetailRS = new Payment_AuthRS();
-            $pDetailRS->idPayment->setNewVal($idPayment);
-            $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
-            $pDetailRS->Acct_Number->setNewVal($pr->cardNum);
-            $pDetailRS->Card_Type->setNewVal($cType);
-            $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
-            $pDetailRS->Invoice_Number->setNewVal($pr->getInvoice());
+        //Payment Detail
+        $pDetailRS = new Payment_AuthRS();
+        $pDetailRS->idPayment->setNewVal($payRs->idPayment->getStoredVal());
+        $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
+        $pDetailRS->Acct_Number->setNewVal($pr->cardNum);
+        $pDetailRS->Card_Type->setNewVal($pr->cardType);
+        $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
+        $pDetailRS->Invoice_Number->setNewVal($pr->getInvoice());
 
-            $pDetailRS->Updated_By->setNewVal($username);
-            $pDetailRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
-            $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Retrn);
+        $pDetailRS->Updated_By->setNewVal($username);
+        $pDetailRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+        $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Retrn);
 
-            $idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
-            $pDetailRS->idPayment_auth->setNewVal($idPaymentAuth);
-            EditRS::updateStoredVals($pDetailRS);
+        $idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
+        $pDetailRS->idPayment_auth->setNewVal($idPaymentAuth);
+        EditRS::updateStoredVals($pDetailRS);
 
-        }
+
     }
 }
 

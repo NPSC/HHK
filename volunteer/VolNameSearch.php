@@ -10,9 +10,9 @@
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
 
-require_once ("VolIncludes.php");
+require ("VolIncludes.php");
 
-require_once(MEMBER . 'MemberSearch.php');
+require(MEMBER . 'MemberSearch.php');
 
 $wInit = new webInit(WebPageCode::Service);
 
@@ -24,9 +24,9 @@ addslashesextended($_GET);
 
 if (isset($_GET['cmd'])) {
     $c = filter_var($_GET['cmd'], FILTER_SANITIZE_STRING);
-}
-else
+} else {
     exit();
+}
 
 $events = array();
 

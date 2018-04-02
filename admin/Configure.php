@@ -396,6 +396,104 @@ if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
     }
 }
 
+
+if (isset($_POST['btnUpdate'])) {
+
+    $tabIndex = 1;
+    $errorCount = 0;
+
+    // Log attempt.
+    $logText = "Attempt Update.";
+    SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
+
+    try {
+        // Update system
+        $patch = new Patch();
+
+        // Update config file
+        $resultAccumulator .= $patch->loadConfigUpdates('../patch/patchSite.cfg', $config);
+        $resultAccumulator .= $patch->deleteConfigItems('../patch/deleteSiteItems.cfg', $config);
+
+        // Update labels file
+        $resultAccumulator .= $patch->loadConfigUpdates('../patch/patchLabel.cfg', $labl);
+        $resultAccumulator .= $patch->deleteConfigItems('../patch/deleteLabelItems.cfg', $labl);
+
+        // Update Tables
+        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
+
+        foreach ($patch->results as $err) {
+
+            if ($err['errno'] == 1091 || $err['errno'] == 1061) {  // key not exist, Duplicate Key name
+                continue;
+            }
+
+            $errorMsg .= 'Create Table Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+        }
+
+        // Run SQL patches
+        if (file_exists('../patch/patchSQL.sql')) {
+
+            $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../patch/patchSQL.sql', "Updates");
+
+
+            foreach ($patch->results as $err) {
+
+                if ($err['errno'] == 1062 || $err['errno'] == 1060) {
+                    continue;
+                }
+
+                $errorMsg .= 'Update Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+                $errorCount++;
+            }
+        }
+
+        // Update views
+        if ($errorCount < 1) {
+
+            $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllViews.sql', 'Views');
+
+            foreach ($patch->results as $err) {
+
+                $errorMsg .= 'Update Views Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+            }
+        } else {
+
+            $errorMsg .= '**Views not updated**  ';
+        }
+
+        // Update SPs
+        if ($errorCount < 1) {
+            $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
+
+            foreach ($patch->results as $err) {
+
+                $errorMsg .= 'Update Stored Procedures Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+            }
+
+        } else {
+            $errorMsg .= '** Stored Procedures not updated**  ';
+        }
+
+        // Update pay types
+        $cnt = SiteConfig::updatePayTypes($dbh);
+        if ($cnt > 0) {
+            $resultAccumulator .= "Pay Types updated.  ";
+        }
+
+        // Log update.
+        $logText = "Loaded Update; " . $errorMsg;
+        SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
+
+
+    } catch (Exception $hex) {
+        $errorMsg .= '***' . $hex->getMessage();
+        // Log failure.
+        $logText = "Fail Update.". $errorMsg;
+        SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
+    }
+}
+
+
 // Zip code file
 if (isset($_FILES['zipfile'])) {
     $tabIndex = 4;
@@ -816,8 +914,9 @@ $(document).ready(function () {
                             <p>User: <?php echo $uS->databaseUName; ?></p>
                             <?php echo $delInstallDir; ?>
                             <input type="submit" name="btnLogs" value="View Patch Log" style="margin-left:100px;margin-top:20px;"/>
-                            <input type="submit" name="btnSaveSQL" id="btnSave" value="Re-Create Tables, Views and SP's" style="margin-left:20px;margin-top:20px;"/>
-                            <input type="submit" name="btnDelBak" id="btnSave" value="Delete .bak Files" style="margin-left:20px;margin-top:20px;"/>
+                            <input type="submit" name="btnSaveSQL" value="Re-Create Tables, Views and SP's" style="margin-left:20px;margin-top:20px;"/>
+                            <input type="submit" name="btnUpdate" value="Update Config" style="margin-left:20px;margin-top:20px;"/>
+                            <input type="submit" name="btnDelBak" value="Delete .bak Files" style="margin-left:20px;margin-top:20px;"/>
                         </form>
                         <?php echo $resultAccumulator; ?>
                     </div>

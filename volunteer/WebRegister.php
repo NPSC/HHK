@@ -1,6 +1,6 @@
 <?php
 /**
- * register_web.php
+ * WebRegister.php
  *
  * @category  Volunteer
  * @package   Hospitality HouseKeeper
@@ -43,7 +43,6 @@ function processGuest(\PDO $dbh, \Config_Lite $config, $username, fbUserClass $f
             return array("warning" => "That User Name is already taken.  Choose another.", "pun" => $username);
         }
     }
-
 
 
     if ($fbc->get_fbid() != "") {
