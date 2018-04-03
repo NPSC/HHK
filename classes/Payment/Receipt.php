@@ -224,7 +224,7 @@ class Receipt {
         if ($logoUrl != '') {
 
             $rec .= HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('img', '', array('src'=>'../images' . DS . $logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$config->getString('financial', 'receiptLogoWidth', '150'))),
+                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$config->getString('financial', 'receiptLogoWidth', '150'))),
                 array('style'=>'margin-bottom:10px;margin-right:20px;float:left;'));
         }
 
@@ -1223,7 +1223,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         if ($logoUrl != '') {
 
             $rec .= HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('img', '', array('src'=>'../images' . DS . $logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$config->getString('financial', 'statementLogoWidth', '220'))),
+                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$config->getString('financial', 'statementLogoWidth', '220'))),
                 array('style'=>'margin-bottom:10px;margin-right:20px;float:left;'));
         }
 
@@ -1335,7 +1335,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
         if ($logoUrl != '') {
 
             $rec .= HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('img', '', array('src'=>'../images' . DS . $logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$config->getString('financial', 'statementLogoWidth', '220'))),
+                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$config->getString('financial', 'statementLogoWidth', '220'))),
                 array('style'=>'margin-bottom:10px;margin-right:20px;float:left;'));
         }
 

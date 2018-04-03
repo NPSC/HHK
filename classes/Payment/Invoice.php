@@ -233,7 +233,6 @@ where pi.Invoice_Id = " . $this->getIdInvoice());
         $uS = Session::getInstance();
         $config = new Config_Lite(ciCFG_FILE);
 
-        $logoUrl = $uS->resourceURL . $config->getString('financial', 'receiptLogoUrl', '');
         $invoiceTerm = $config->getString('financial', 'InvoiceTerm', '30');
         $hospital = '';
         $roomTitle = '';
@@ -300,7 +299,7 @@ where
         }
 
         // House Icon and address
-        $rec = Receipt::getHouseIconMarkup($logoUrl, $uS->siteName);
+        $rec = Receipt::getHouseIconMarkup();
         $rec .= HTMLContainer::generateMarkup('div', Receipt::getAddressTable($dbh, $uS->sId), array('style'=>'float:left;margin-bottom:10px;margin-left:20px;'));
 
         // Invoice dates
