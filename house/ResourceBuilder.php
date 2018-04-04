@@ -805,7 +805,7 @@ $kTbl->addBodyTr(HTMLTable::makeTd($rPrices[$uS->RoomPriceModel][1]));
 $pricingModelTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Room Pricing Model', array('style' => 'font-weight:bold;')) . $kTbl->generateMarkup(array('style' => 'margin:7px;')), array('style' => 'margin:7px;'));
 
 $rescTable = ResourceView::resourceTable($dbh);
-$roomTable = ResourceView::roomTable($dbh, $uS->KeyDeposit, $uS->VisitFee);
+$roomTable = ResourceView::roomTable($dbh, $uS->KeyDeposit);
 
 
 // Room Pricing

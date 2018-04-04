@@ -15,7 +15,7 @@
  */
 class VisitView {
 
-    public static function createActiveMarkup(\PDO $dbh, array $r, VisitCharges $visitCharge, $keyDepFlag, $visitFeeFlag, $noReturnDateFlag, $isAdmin,
+    public static function createActiveMarkup(\PDO $dbh, array $r, VisitCharges $visitCharge, $keyDepFlag, $visitFeeFlag, $isAdmin,
             $extendVisitDays, $action, $coDate, $showAdjust) {
 
         $uS = Session::getInstance();
@@ -171,18 +171,6 @@ class VisitView {
             $tr .= HTMLTable::makeTd($r['Patient_Name']);
         }
 
-
-        // Return date
-//        if ($action != 'cf' && !$noReturnDateFlag) {
-//            $retDate = isset($r['Return_Date']) ? date('M j, Y', strtotime($r['Return_Date'])) : '';
-//            if ($r['Status'] == VisitStatus::CheckedIn) {
-//                $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($retDate, array('id' => 'visRtn', 'class' => 'ckdateFut hhk-feeskeys', 'readonly'=>'readonly')));
-//            } else {
-//                $tr .= HTMLTable::makeTd($retDate);
-//            }
-//            $th .= HTMLTable::makeTh('Return Date');
-//        }
-//
 
         // add completed rows to table
         $table->addBodyTr($tr);

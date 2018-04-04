@@ -190,11 +190,11 @@ order by r.Title;");
 
     }
 
-    public static function saveResc_Room(\PDO $dbh, $id, $type, $post, $user, $showPartitions, $keyDeposit, $visitFee) {
+    public static function saveResc_Room(\PDO $dbh, $id, $type, $post, $user, $showPartitions, $keyDeposit) {
 
             if ($type == 'room') {
 
-                return self::saveRoom($dbh, $id, $post, $user, $keyDeposit, $visitFee);
+                return self::saveRoom($dbh, $id, $post, $user, $keyDeposit);
 
             } else if ($type == 'resc') {
 
@@ -434,7 +434,7 @@ order by r.Title;");
 
     }
 
-    public static function saveRoom(\PDO $dbh, $idRoom, $post, $user, $keyDeposit, $visitFee) {
+    public static function saveRoom(\PDO $dbh, $idRoom, $post, $user, $keyDeposit) {
 
         $room = new Room($dbh, $idRoom);
         $rTitle = '';
@@ -449,7 +449,7 @@ order by r.Title;");
 
 
         if ($rTitle == '') {
-            return array("roomList"=>self::roomTable($dbh));
+            return array("roomList"=>self::roomTable($dbh, $keyDeposit));
         }
 
         if (isset($post['txtPhone'])) {
@@ -543,7 +543,7 @@ order by r.Title;");
         $roomAttr = new RoomAttributes($dbh, $room->getIdRoom());
         $roomAttr->saveAttributes($dbh, $capturedAttributes);
 
-        return array("roomList"=>self::roomTable($dbh, $keyDeposit, $visitFee));
+        return array("roomList"=>self::roomTable($dbh, $keyDeposit));
     }
 
     public static function saveResc(\PDO $dbh, $idResc, $post, $username, $showPartitions) {

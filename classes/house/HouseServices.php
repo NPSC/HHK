@@ -96,7 +96,6 @@ class HouseServices {
                         $visitCharge,
                         $uS->KeyDeposit,
                         $uS->VisitFee,
-                        $uS->Reservation,
                         $isAdmin,
                         $uS->EmptyExtendLimit,
                         $action,

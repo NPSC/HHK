@@ -348,7 +348,7 @@ $(document).mousedown(function (event) {
 
         } else {
 
-            $events = ResourceView::saveResc_Room($dbh, $id, $type, $_POST['parm'], $uS->username, $uS->ShrRm, $uS->KeyDeposit, $uS->VisitFee);
+            $events = ResourceView::saveResc_Room($dbh, $id, $type, $_POST['parm'], $uS->username, $uS->ShrRm, $uS->KeyDeposit);
         }
 
         break;

@@ -614,8 +614,6 @@ abstract class PriceModel {
 
 class PriceNone extends PriceModel {
 
-
-
     public function amountCalculator($nites, $idRoomRate, $rateCatetgory = '', $pledgedRate = 0, $guestDays = 0) {
 
         return 0.00;
