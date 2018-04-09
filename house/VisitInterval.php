@@ -72,7 +72,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
 
         $r['rate'] = $r['Pledged_Rate'];
 
-    } else if (isset($rateTitles[$visit['rateId']])) {
+    } else if (isset($visit['rateId']) && isset($rateTitles[$visit['rateId']])) {
 
         $rateTxt = $rateTitles[$visit['rateId']];
 

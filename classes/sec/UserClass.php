@@ -40,8 +40,17 @@ class UserClass {
 
             // Get magic PC cookie
             $housePc = FALSE;
-            if (isset($_COOKIE["housepc"])) {
-                if (decryptMessage(filter_var($_COOKIE['housepc'], FILTER_SANITIZE_STRING)) == filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP) . 'eric') {
+            if (filter_has_var(INPUT_COOKIE, 'housepc')) {
+
+                $remoteIp = '';
+
+                if (filter_has_var(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR')) {
+                    $remoteIp = filter_input(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR', FILTER_VALIDATE_IP);
+                } else {
+                    $remoteIp = filter_input(INPUT_SERVER, 'REMOTE_ADDR', FILTER_VALIDATE_IP);
+                }
+
+                if (decryptMessage(filter_var($_COOKIE['housepc'], FILTER_SANITIZE_STRING)) == $remoteIp . 'eric') {
                     $housePc = TRUE;
                 }
             }

@@ -163,7 +163,6 @@ if ($ssn->logged && isset($ssn->uid)) {
 $pageTitle = $ssn->siteName;
 $houseTitle = $ssn->siteName;
 $logoLink = $config->getString("site", "Public_URL", "");
-$resourceURL = $ssn->resourceURL;
 
 // define db connection obj
 $dbh = initPDO(TRUE);

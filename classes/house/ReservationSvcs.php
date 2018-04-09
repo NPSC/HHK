@@ -1061,7 +1061,7 @@ class ReservationSvcs {
         }
 
         // Only assign the rate id if the category changes
-        if ($resv->getRoomRateCategory() != $rateCategory) {
+        if ($resv->getRoomRateCategory() != $rateCategory || $resv->getIdRoomRate() < 1) {
             $rateRs = $rateChooser->getPriceModel()->getCategoryRateRs(0, $rateCategory);
             $resv->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
         }

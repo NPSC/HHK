@@ -18,14 +18,8 @@ class ConfirmationForm extends TemplateForm {
 
     public function makeReplacements(Reservation_1 $reserv, Guest $guest, $amount, $notes) {
 
-        $addr = $guest->getAddrObj()->get_Data();
-
         return array(
             'GuestName' => $guest->getRoleMember()->get_fullName(),
-            'StreetAddress' => $addr['Address_1'] . ($addr['Address_2'] == '' ? '' : ' ' . $addr['Address_2']),
-            'City' => $addr['City'],
-            'State' => $addr['State_Province'],
-            'Zip' => $addr['Postal_Code'],
             'ExpectedArrival' => date('M j, Y', strtotime($reserv->getExpectedArrival())),
             'ExpectedDeparture' => date('M j, Y', strtotime($reserv->getExpectedDeparture())),
             'DateToday' => date('M j, Y'),

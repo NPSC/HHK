@@ -420,7 +420,7 @@ function showOpenShifts(divId, openShiftEvents) {
 
 function dropEvent(event, dayDelta, minuteDelta, allDay, revertFunc, dropUserId, wsAddress) {
     "use strict";
-    if (wsAddress == undefined || wsAddress == '') {
+    if (wsAddress === undefined || wsAddress == '') {
         wsAddress = 'gCalFeed.php';
     }
 
