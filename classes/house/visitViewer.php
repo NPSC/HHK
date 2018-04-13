@@ -585,14 +585,14 @@ class VisitView {
         }
 
         $uS = Session::getInstance();
-
+		
         $includeKeyDep = FALSE;
         if ($uS->KeyDeposit && $r['Status'] == VisitStatus::CheckedIn && ($action == '' || $action == 'pf') && $visitCharge->getDepositCharged() > 0 && ($visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid()) < $visitCharge->getDepositCharged()) {
             $includeKeyDep = TRUE;
         }
 
         $includeVisitFee = FALSE;
-        if ($uS->VisitFee && ($action == '' || $action == 'pf') && $visitCharge->getVisitFeeCharged() > 0) {
+        if ($uS->VisitFee && ($action == '' || $action == 'pf') && $visitCharge->getVisitFeeCharged() > 0 && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0)) {
             $includeVisitFee = TRUE;
         }
 
@@ -619,11 +619,11 @@ class VisitView {
 
 
         if ($includeKeyDep || $includeVisitFee || $includeAddnlCharge || $showRoomFees) {
-
+			
             // Current fees block
             $currFees = HTMLContainer::generateMarkup('fieldset',
                     HTMLContainer::generateMarkup('legend', ($r['Status'] == VisitStatus::CheckedIn ? 'To-Date Fees & Balance Due' : 'Final Fees & Balance Due'), array('style'=>'font-weight:bold;'))
-                    . HTMLContainer::generateMarkup('div', self::createCurrentFees($r['Status'], $visitCharge, $uS->VisitFee, $showRoomFees, $showGuestNights), array('style'=>'float:left;', 'id'=>'divCurrFees'))
+                    . HTMLContainer::generateMarkup('div', self::createCurrentFees($r['Status'], $visitCharge, $includeVisitFee, $showRoomFees, $showGuestNights), array('style'=>'float:left;', 'id'=>'divCurrFees'))
                         , array('class'=>'hhk-panel', 'style'=>'float:left;margin-right:10px;'));
 
             // Show Final payment?
@@ -745,10 +745,14 @@ class VisitView {
 
         $totalCharged =
                 $visitCharge->getRoomFeesCharged()
-                + $visitCharge->getVisitFeeCharged()
                 + $visitCharge->getItemInvCharges(ItemId::AddnlCharge)
                 + $totalMOA
                 + $totalDiscounts;
+                
+            //if show visit fee
+            if($showVisitFee){
+	            $totalCharged += $visitCharge->getVisitFeeCharged();
+            }
 
         // Subtotal line
         if ($showSubTotal) {

@@ -233,6 +233,10 @@ class PaymentChooser {
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
 
+		$useVisitFee = FALSE;
+		if($uS->VisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0)){
+			$useVisitFee = TRUE;
+		}
 
         $mkup = HTMLContainer::generateMarkup('div',
                 self::createPaymentMarkup(
@@ -240,7 +244,7 @@ class PaymentChooser {
                     $deposit,
                     $visitCharge->getDepositCharged(),
                     ($visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid()),
-                    $uS->VisitFee,
+                    $useVisitFee,
                     $visitCharge->getVisitFeeCharged(),
                     ($visitCharge->getVisitFeesPaid() + $visitCharge->getVisitFeesPending()),
                     Registration::loadLodgingBalance($dbh, $idRegistration),
