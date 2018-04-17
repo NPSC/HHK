@@ -278,7 +278,7 @@ div#global-title {
     opacity: 0;
     padding: 0;
     position: absolute;
-    top: 35px;
+    top: 32px;
     transition: opacity 0.2s ease 0s;
     visibility: hidden;
     width: 140px;
