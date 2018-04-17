@@ -2764,7 +2764,7 @@ from
 
         if ($uS->VisitFee) {
             // Visit Fee Array
-            $dataArray['vfee'] = $rateChooser::makeVisitFeeArray($dbh, $resv->getVisitFee());
+            $dataArray['vfee'] = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
         }
 
 
