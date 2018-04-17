@@ -23,8 +23,8 @@ class ConfirmationForm extends TemplateForm {
 		$visitFeeNotice = "";
 		
 		//populate visitFeeNotice
-		if($reserv->getExpectedDays($reserv->getExpectedArrival(), $reserv->getExpectedDeparture() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0){
-			$visitFeeNotice = $labels->getString('statement', 'VisitFeeConfirmLabel', '') . " $" . number_format($reserv->getVisitFee(), 2) . ".";
+		if($reserv->getExpectedDays($reserv->getExpectedArrival(), $reserv->getExpectedDeparture()) > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0){
+			$visitFeeNotice = $labels->getString('referral', 'VisitFeeConfirmLabel', '') . " $" . number_format($reserv->getVisitFee(), 2) . ".";
 		}
 
         return array(

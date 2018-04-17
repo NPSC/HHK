@@ -593,7 +593,7 @@ class VisitView {
 
         $includeVisitFee = FALSE;
         if ($uS->VisitFee && ($action == '' || $action == 'pf') && $visitCharge->getVisitFeeCharged() > 0 && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0)) {
-            $includeVisitFee = TRUE;
+            $includeVisitFee = $uS;
         }
 
         $includeAddnlCharge = FALSE;
