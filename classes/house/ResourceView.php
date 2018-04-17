@@ -789,46 +789,6 @@ order by r.Title;");
         return array('row'=>$tr);
     }
 
-    public static function roomListHtml(\PDO $dbh, $cleanStatuses, $roomTypes, $roomCategories, $staticRates, $useKeyDeposit = FALSE, $keyDepositCodes = array()) {
-        $tbl = new HTMLTable();
-
-        // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
-
-        $tbl->addHeaderTr(
-            HTMLTable::makeTh('Title')
-            . HTMLTable::makeTh('Type')
-            . HTMLTable::makeTh('Category')
-            . HTMLTable::makeTh('Status')
-            . HTMLTable::makeTh('Rate')
-            . ($useKeyDeposit ? HTMLTable::makeTh($labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit')) : '')
-            . HTMLTable::makeTh('Max Occ.')
-        );
-
-        $stmt = $dbh->prepare("Select * from room");
-        $stmt->execute();
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        foreach ($rows as $r) {
-
-            $tbl->addBodyTr(
-                HTMLTable::makeTd($r['Title'], array('class'=>'hhka'))
-               . HTMLTable::makeTd($roomTypes[$r['Type']][1], array('class'=>'hhka'))
-               . HTMLTable::makeTd(($r['Category'] != '' ? $roomCategories[$r['Category']][1] : ''), array('class'=>'hhka'))
-               . HTMLTable::makeTd($cleanStatuses[$r['Status']][1], array('class'=>'hhk' . $cleanStatuses[$r['Status']][0]))
-               . HTMLTable::makeTd($r['Rate_Code'] != '' ? '$'.$staticRates[$r['Rate_Code']][2] : '', array('style'=>'text-align:center;','class'=>'hhka'))
-               . ($useKeyDeposit ? HTMLTable::makeTd(($r['Key_Deposit_Code'] != '' ? '$'.$keyDepositCodes[$r['Key_Deposit_Code']][2] : ''), array('style'=>'text-align:center;','class'=>'hhka')) : '')
-               . HTMLTable::makeTd($r['Max_Occupants'], array('style'=>'text-align:center;','class'=>'hhka'))
-
-            );
-
-        }
-
-        $style = "<style>td {background-color:yellow;} td.hhka {background-color:transparent;}</style>";
-
-        return $style . $tbl->generateMarkup(array('id'=>'tblRescList', 'class'=>'display'));
-    }
-
     public static function dirtyOccupiedRooms(\PDO $dbh) {
 
         $uS = Session::getInstance();

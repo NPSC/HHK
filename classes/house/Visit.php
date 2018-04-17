@@ -157,20 +157,7 @@ class Visit {
 
     public function updateVisitRecord(\PDO $dbh, $uname = '') {
 
-        $this->visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-        $this->visitRS->Updated_By->setNewVal($uname);
-
-        $upCtr = EditRS::update($dbh, $this->visitRS, array($this->visitRS->idVisit, $this->visitRS->Span));
-
-        if ($upCtr > 0) {
-            $logText = VisitLog::getUpdateText($this->visitRS);
-
-            EditRS::updateStoredVals($this->visitRS);
-            VisitLog::logVisit($dbh, $this->getIdVisit(), $this->visitRS->Span->getStoredVal(), $this->visitRS->idResource->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
-
-        }
-
-        return $upCtr;
+        return self::updateVisitRecordStatic($dbh, $this->visitRS, $uname);
     }
 
     public static function updateVisitRecordStatic(\PDO $dbh, VisitRs $visitRS, $uname = '') {
@@ -270,7 +257,7 @@ class Visit {
         return TRUE;
     }
 
-    public function saveNewStays(\PDO $dbh, $username) {
+    protected function saveNewStays(\PDO $dbh, $username) {
 
         foreach ($this->stays as $stayRS) {
 
@@ -1693,13 +1680,13 @@ class Visit {
         $this->visitRS->Key_Deposit->setNewVal($v);
     }
 
-    public function setKeyDepDisposition($keyDepDisposition) {
-        $this->visitRS->Key_Dep_Disposition->setNewVal($keyDepDisposition);
-    }
-
-    public function getKeyDepDisposition() {
-        return $this->visitRS->Key_Dep_Disposition->getStoredVal();
-    }
+//    public function setKeyDepDisposition($keyDepDisposition) {
+//        $this->visitRS->Key_Dep_Disposition->setNewVal($keyDepDisposition);
+//    }
+//
+//    public function getKeyDepDisposition() {
+//        return $this->visitRS->Key_Dep_Disposition->getStoredVal();
+//    }
 
     public function getVisitStatus() {
         return $this->visitRS->Status->getStoredVal();

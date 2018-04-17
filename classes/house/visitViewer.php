@@ -143,7 +143,9 @@ class VisitView {
         // Visit fee
         if ($visitFeeFlag) {
 
-            $vFeeSelector = RateChooser::makeVisitFeeSelector(RateChooser::makeVisitFeeArray($dbh, $visitCharge->getVisitFeeCharged()), $visitCharge->getVisitFeeCharged(), 'hhk-feeskeys');
+            $rateChooser = new RateChooser($dbh);
+
+            $vFeeSelector = $rateChooser->makeVisitFeeSelector($rateChooser->makeVisitFeeArray($dbh, $visitCharge->getVisitFeeCharged()), $visitCharge->getVisitFeeCharged(), 'hhk-feeskeys');
 
             $th .= HTMLTable::makeTh($labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
             $tr .= HTMLTable::makeTd($vFeeSelector);

@@ -279,123 +279,123 @@ if (isset($_POST["btnUlPatch"])) {
     $tabIndex = 1;
 }
 
-if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
-    $tabIndex = 1;
-    $errorCount = 0;
-    $uploadFileName = $_FILES['patch']['name'];
-
-    // Log attempt.
-    $logText = "Attempt software patch.  File = " . $_FILES['patch']['name'];
-    SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
-
-    try {
-
-        SiteConfig::checkZipFile('patch');
-
-        $uploadfile = '..' . DS . 'patch' . DS . 'upload.zip';
-
-        if (move_uploaded_file($_FILES['patch']['tmp_name'], $uploadfile)) {
-
-            // patch system
-            $patch = new Patch();
-
-            // Verify file and build #.  Throws an error on problems.
-            $patch->verifyUpLoad($uploadfile, 'hhk/patch/patchSite.cfg', $uS->ver);
-
-            // Replace files
-            $resultAccumulator .= $patch->loadFiles('../', $uploadfile);
-
-            // Annotate any missed files.
-            foreach ($patch->results as $err) {
-                $errorMsg .= 'Patch File Copy Error: ' . $err['error'] . '<br/>';
-            }
-
-            // Update config file
-            $resultAccumulator .= $patch->loadConfigUpdates('../patch/patchSite.cfg', $config);
-            $resultAccumulator .= $patch->deleteConfigItems('../patch/deleteSiteItems.cfg', $config);
-
-            // Update labels file
-            $resultAccumulator .= $patch->loadConfigUpdates('../patch/patchLabel.cfg', $labl);
-            $resultAccumulator .= $patch->deleteConfigItems('../patch/deleteLabelItems.cfg', $labl);
-
-            // Update Tables
-            $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
-
-            foreach ($patch->results as $err) {
-
-                if ($err['errno'] == 1091 || $err['errno'] == 1061) {  // key not exist, Duplicate Key name
-                    continue;
-                }
-
-                $errorMsg .= 'Create Table Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-            }
-
-            // Run SQL patches
-            if (file_exists('../patch/patchSQL.sql')) {
-
-                $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../patch/patchSQL.sql', "Updates");
-
-
-                foreach ($patch->results as $err) {
-
-                    if ($err['errno'] == 1062 || $err['errno'] == 1060) {
-                        continue;
-                    }
-
-                    $errorMsg .= 'Patch Update Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-                    $errorCount++;
-                }
-            }
-
-            // Update views
-            if ($errorCount < 1) {
-
-                $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllViews.sql', 'Views');
-
-                foreach ($patch->results as $err) {
-
-                    $errorMsg .= 'Create Views Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-                }
-            } else {
-
-                $errorMsg .= '**Views not updated**  ';
-            }
-
-            // Update SPs
-            if ($errorCount < 1) {
-                $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
-
-                foreach ($patch->results as $err) {
-
-                    $errorMsg .= 'Create Stored Procedures Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-                }
-
-            } else {
-                $errorMsg .= '** Stored Procedures not updated**  ';
-            }
-
-            // Update pay types
-            $cnt = SiteConfig::updatePayTypes($dbh);
-            if ($cnt > 0) {
-                $resultAccumulator .= "Pay Types updated.  ";
-            }
-
-            // Log update.
-            $logText = "Loaded software patch - " . $uploadFileName . "; " . $errorMsg;
-            SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
-
-        } else {
-            throw new Hk_Exception_Runtime("Problem moving uploaded patch file.  ");
-        }
-
-    } catch (Exception $hex) {
-        $errorMsg .= '***' . $hex->getMessage();
-        // Log failure.
-        $logText = "Fail software patch - " . $uploadFileName . $errorMsg;
-        SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
-    }
-}
-
+//if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
+//    $tabIndex = 1;
+//    $errorCount = 0;
+//    $uploadFileName = $_FILES['patch']['name'];
+//
+//    // Log attempt.
+//    $logText = "Attempt software patch.  File = " . $_FILES['patch']['name'];
+//    SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
+//
+//    try {
+//
+//        SiteConfig::checkZipFile('patch');
+//
+//        $uploadfile = '..' . DS . 'patch' . DS . 'upload.zip';
+//
+//        if (move_uploaded_file($_FILES['patch']['tmp_name'], $uploadfile)) {
+//
+//            // patch system
+//            $patch = new Patch();
+//
+//            // Verify file and build #.  Throws an error on problems.
+//            $patch->verifyUpLoad($uploadfile, 'hhk/patch/patchSite.cfg', $uS->ver);
+//
+//            // Replace files
+//            $resultAccumulator .= $patch->loadFiles('../', $uploadfile);
+//
+//            // Annotate any missed files.
+//            foreach ($patch->results as $err) {
+//                $errorMsg .= 'Patch File Copy Error: ' . $err['error'] . '<br/>';
+//            }
+//
+//            // Update config file
+//            $resultAccumulator .= $patch->loadConfigUpdates('../patch/patchSite.cfg', $config);
+//            $resultAccumulator .= $patch->deleteConfigItems('../patch/deleteSiteItems.cfg', $config);
+//
+//            // Update labels file
+//            $resultAccumulator .= $patch->loadConfigUpdates('../patch/patchLabel.cfg', $labl);
+//            $resultAccumulator .= $patch->deleteConfigItems('../patch/deleteLabelItems.cfg', $labl);
+//
+//            // Update Tables
+//            $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
+//
+//            foreach ($patch->results as $err) {
+//
+//                if ($err['errno'] == 1091 || $err['errno'] == 1061) {  // key not exist, Duplicate Key name
+//                    continue;
+//                }
+//
+//                $errorMsg .= 'Create Table Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+//            }
+//
+//            // Run SQL patches
+//            if (file_exists('../patch/patchSQL.sql')) {
+//
+//                $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../patch/patchSQL.sql', "Updates");
+//
+//
+//                foreach ($patch->results as $err) {
+//
+//                    if ($err['errno'] == 1062 || $err['errno'] == 1060) {
+//                        continue;
+//                    }
+//
+//                    $errorMsg .= 'Patch Update Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+//                    $errorCount++;
+//                }
+//            }
+//
+//            // Update views
+//            if ($errorCount < 1) {
+//
+//                $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllViews.sql', 'Views');
+//
+//                foreach ($patch->results as $err) {
+//
+//                    $errorMsg .= 'Create Views Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+//                }
+//            } else {
+//
+//                $errorMsg .= '**Views not updated**  ';
+//            }
+//
+//            // Update SPs
+//            if ($errorCount < 1) {
+//                $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
+//
+//                foreach ($patch->results as $err) {
+//
+//                    $errorMsg .= 'Create Stored Procedures Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+//                }
+//
+//            } else {
+//                $errorMsg .= '** Stored Procedures not updated**  ';
+//            }
+//
+//            // Update pay types
+//            $cnt = SiteConfig::updatePayTypes($dbh);
+//            if ($cnt > 0) {
+//                $resultAccumulator .= "Pay Types updated.  ";
+//            }
+//
+//            // Log update.
+//            $logText = "Loaded software patch - " . $uploadFileName . "; " . $errorMsg;
+//            SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
+//
+//        } else {
+//            throw new Hk_Exception_Runtime("Problem moving uploaded patch file.  ");
+//        }
+//
+//    } catch (Exception $hex) {
+//        $errorMsg .= '***' . $hex->getMessage();
+//        // Log failure.
+//        $logText = "Fail software patch - " . $uploadFileName . $errorMsg;
+//        SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
+//    }
+//}
+//
 
 if (isset($_POST['btnUpdate'])) {
 
@@ -895,14 +895,14 @@ $(document).ready(function () {
                 <div id="patch" class="ui-tabs-hide">
                     <div class="hhk-member-detail">
                         <!-- The data encoding type, enctype, MUST be specified as below -->
-                        <form enctype="multipart/form-data" action="" method="POST" name ="formp">
-                            <!-- MAX_FILE_SIZE must precede the file input field -->
+<!--                        <form enctype="multipart/form-data" action="" method="POST" name ="formp">
+                             MAX_FILE_SIZE must precede the file input field
                             <input type="hidden" name="MAX_FILE_SIZE" value="10000000" />
-                            <!-- Name of input element determines name in $_FILES array -->
+                             Name of input element determines name in $_FILES array
                             <p>Select Patch File: <input name="patch" type="file" /></p><br/>
 
                             <div style="float:left;margin-left:200px;"><input type="submit" name='btnUlPatch' value="Upload & Execute Patch" /></div>
-                        </form>
+                        </form>-->
 
                     </div>
                     <div style='clear:both;'>

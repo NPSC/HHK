@@ -509,7 +509,7 @@ class RateChooser {
         return $resArray;
     }
 
-    public static function makeVisitFeeArray(\PDO $dbh, $myVFeeAmt = 0) {
+    public function makeVisitFeeArray(\PDO $dbh, $myVFeeAmt = 0) {
 
         $codes = array();
 
@@ -523,7 +523,7 @@ class RateChooser {
         return $codes;
     }
 
-    public static function makeVisitFeeSelector($vFeesArray, $myVFeeAmt, $class = '', $name = 'selVisitFee') {
+    public function makeVisitFeeSelector($vFeesArray, $myVFeeAmt, $class = '', $name = 'selVisitFee') {
 
         $uS = Session::getInstance();
 
@@ -539,7 +539,6 @@ class RateChooser {
 
         return HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($vFeeOpts, $selectedVfeeOption, FALSE), array('name'=>$name, 'class'=>$class));
     }
-
 
     public static function setRateGlideDays(\PDO $dbh, $idRegistration, $rateGlideExtend) {
 
@@ -573,8 +572,8 @@ where
         }
 
         return $dayCredit;
-    }
 
+    }
 
     protected function createBasicChooserMarkup(\PDO $dbh, \Reservation_1 $resv, $nites, $visitFeeTitle) {
 		$uS = Session::getInstance();
@@ -611,7 +610,7 @@ where
         $vFeeMkup = '';
 
         if ($this->payVisitFee) {
-            $vFeeMkup = $this->makeVisitFeeSelector(self::makeVisitFeeArray($dbh), $resv->getVisitFee());
+            $vFeeMkup = $this->makeVisitFeeSelector($this->makeVisitFeeArray($dbh), $resv->getVisitFee());
         }
 
         $rateCategories = RoomRate::makeSelectorOptions($this->priceModel, $resv->getIdRoomRate());
