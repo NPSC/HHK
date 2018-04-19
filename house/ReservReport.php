@@ -463,7 +463,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistratio
 
         if ($local) {
 
-            $r['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>'Reserve.php?rid=' . $r['idReservation']));
+            $r['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$config->getString('house', 'ReservationPage', 'Reserve.php') + '?rid=' . $r['idReservation']));
             $r['Arrival'] = $arrivalDT->format('c');
             $r['Departure'] = $departureDT->format('c');
             $r['Created_Date'] = $statusDT->format('c');

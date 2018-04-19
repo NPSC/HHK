@@ -344,7 +344,9 @@ class Guest extends Role {
     }
 
     public function setCheckinDate($stringDate, $time = 'H:i:s') {
+
         if ($stringDate != '') {
+
             $uS = Session::getInstance();
 
             $ciDT = new \DateTime($stringDate);
@@ -357,12 +359,14 @@ class Guest extends Role {
     }
 
     public function setExpectedCheckinDate($stringDate) {
+
         if ($stringDate != '') {
+
             $uS = Session::getInstance();
 
             $ciDT = new \DateTime($stringDate);
             $ciDT->setTimezone(new \DateTimeZone($uS->tz));
-            $dt = $ciDT->format('Y-m-d 16:00:00');
+            $dt = $ciDT->format('Y-m-d ' + $uS->CheckInTime . ':00');
 
             $this->checkinDate = new \DateTime($dt);
         }
@@ -381,14 +385,16 @@ class Guest extends Role {
     }
 
     public function setExpectedCheckOut($stringDate) {
+
         if ($stringDate != '') {
+
             $uS = Session::getInstance();
 
             $ciDT = new \DateTime($stringDate);
             $ciDT->setTimezone(new \DateTimeZone($uS->tz));
             $dt = $ciDT->format('Y-m-d');
 
-            $this->expectedCheckOut = new \DateTime($dt . ' 10:00:00');
+            $this->expectedCheckOut = new \DateTime($dt . ' ' . $uS->CheckOutTime . ':00');
         }
     }
 

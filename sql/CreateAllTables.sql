@@ -1905,6 +1905,7 @@ CREATE TABLE if not exists `volunteer_hours` (
   `idVolunteer_hours` int(11) NOT NULL AUTO_INCREMENT,
   `idmcalendar` int(11) NOT NULL DEFAULT '0',
   `idName` int(11) NOT NULL,
+  `idName2` int(11) NOT NULL DEFAULT '0',
   `idCompany` int(11) NOT NULL DEFAULT '0',
   `Org` varchar(45) NOT NULL DEFAULT '',
   `Hours` decimal(10,3) NOT NULL DEFAULT '0.000',

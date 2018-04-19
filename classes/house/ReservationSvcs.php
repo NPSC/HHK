@@ -603,7 +603,7 @@ class ReservationSvcs {
         if ($resv->isNew()) {
 
             if (isset($post['arr'])) {
-                $arrivalDT = new \DateTIme($post['arr']);
+                $arrivalDT = new \DateTime($post['arr']);
                 $departureDT = new \DateTime($post['dep']);
             } else {
                 return array('error'=>'The arrival and/or departure dates are  not set.  ');
@@ -611,12 +611,12 @@ class ReservationSvcs {
 
         } else {
 
-            $arrivalDT = new \DateTIme($resv->getExpectedArrival());
+            $arrivalDT = new \DateTime($resv->getExpectedArrival());
             $departureDT = new \DateTime($resv->getExpectedDeparture());
         }
 
         if ($resv->getActualArrival() != '') {
-            $arrivalDT = new \DateTIme($resv->getActualArrival());
+            $arrivalDT = new \DateTime($resv->getActualArrival());
         }
 
         if ($resv->getActualDeparture() != '') {
@@ -821,8 +821,6 @@ class ReservationSvcs {
         }
 
         $guest->save($dbh, $post, $uS->username);
-        $guest->setExpectedCheckinDate($post['ciDate']);
-        $guest->setExpectedCheckOut($post['coDate']);
 
         // primary guest markup
         $dataArray = $guest->createReservationMarkup($dbh, $patientStaying, $resv->getCheckinNotes());
@@ -1704,7 +1702,7 @@ class ReservationSvcs {
 
         $guest = new Guest($dbh, '', $idGuest);
 
-        $confirmForm = new ConfirmationForm($uS->ConfirmFile);
+        $confirmForm = new ConfirmationForm('confirmation.html');
 
         $formNotes = $confirmForm->createNotes($notes, !$sendEmail);
 

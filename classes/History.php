@@ -112,11 +112,15 @@ class History {
     }
 
 
-    public function getReservedGuestsMarkup(\PDO $dbh, $status = ReservationStatus::Committed, $page = "Reserve.php", $includeAction = TRUE, $start = '', $days = 1, $static = FALSE, $orderBy = '') {
+    public function getReservedGuestsMarkup(\PDO $dbh, $status = ReservationStatus::Committed, $includeAction = TRUE, $start = '', $days = 1, $static = FALSE, $orderBy = '') {
 
         if (is_null($this->roomRates)) {
             $this->roomRates = RoomRate::makeDescriptions($dbh);
         }
+
+        // Reservation page name
+        $config = new Config_Lite(ciCFG_FILE);
+        $page = $config->getString('house', 'ReservationPage', 'Reserve.php');
 
         $whDate = '';
 

@@ -36,7 +36,7 @@ if ($checkinDate == '') {
 
 $history = new History();
 
-$rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, '', FALSE, $checkinDate, 0, TRUE, 'Order BY `Patient Name`');
+$rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, FALSE, $checkinDate, 0, TRUE, 'Order BY `Patient Name`');
 
 $regForm = CreateMarkupFromDB::generateHTML_Table($rows, 'tbl');
 

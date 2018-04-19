@@ -112,17 +112,17 @@ if (isset($_POST['btnDlCurGuests'])) {
 }
 if (isset($_POST['btnDlConfRes'])) {
     // Confirmed Reservations
-    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Committed, '', FALSE, '', 1, TRUE);
+    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Committed, FALSE, '', 1, TRUE);
     doExcelDownLoad($rows, 'ConfirmedResv');
 }
 if (isset($_POST['btnDlUcRes'])) {
     // Unconfirmed Reservations
-    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, '', FALSE, '', 1, TRUE);
+    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, FALSE, '', 1, TRUE);
     doExcelDownLoad($rows, 'UnconfirmedResv');
 }
 if (isset($_POST['btnDlWlist'])) {
     // Waitlist
-    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, '', FALSE, '', 1, TRUE);
+    $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, FALSE, '', 1, TRUE);
     doExcelDownLoad($rows, 'Waitlist');
 }
 if (isset($_POST['btnFeesDl'])) {
@@ -308,6 +308,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             var viewDays = '<?php echo ($weeks * 7); ?>';
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
+            var resvPageName = '<?php echo $config->getString('house', 'ReservationPage', 'Reserve.php'); ?>';
             var cgCols = [
                 {data: 'Action', title: 'Action', sortable: false, searchable:false},
                 {data: 'Guest First', title: 'Guest First'},
