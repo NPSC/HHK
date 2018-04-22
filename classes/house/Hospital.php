@@ -352,12 +352,8 @@ $(document).ready(function () {
             if ($dateStr != '') {
                 $enDT = new \DateTime($dateStr);
                 $enDT->setTimezone(new \DateTimeZone($uS->tz));
-            } else {
-                $enDT = new \DateTime();
-                $enDT->setTimezone(new \DateTimeZone($uS->tz));
+                $hstay->setArrivalDate($enDT->format('Y-m-d H:i:s'));
             }
-
-            $hstay->setArrivalDate($enDT->format('Y-m-d H:i:s'));
         }
 
        if (isset($post['txtExitDate'])) {

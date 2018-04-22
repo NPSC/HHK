@@ -341,6 +341,7 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         $nowDT = new \DateTime();
         $nowDT->setTime(0, 0, 0);
         $cidAttr = array('name'=>'gstDate', 'readonly'=>'readonly', 'size'=>'14' );
+
         if (is_null($this->getCheckinDT()) === FALSE && $this->getCheckinDT() < $nowDT) {
             $cidAttr['class'] = ' ui-state-highlight';
         }

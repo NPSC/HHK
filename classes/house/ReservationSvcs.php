@@ -24,9 +24,9 @@ class ReservationSvcs {
 
         $numGuests = 1;
 
-        // Get labels
+        // Get conifigs
         $labels = new Config_Lite(LABEL_FILE);
-
+        $config = new Config_Lite(ciCFG_FILE);
 
         // Check for reserv id = 0, new resv or pick up old?
         if ($idReserv == 0 && $id > 0) {
@@ -47,7 +47,7 @@ class ReservationSvcs {
 
            if ($chosenIdPsg > 0) {
 
-                $dataArray = self::reservationChooser($dbh, $id, $chosenIdPsg, $uS->guestLookups['ReservStatus'], $labels, $uS->ResvEarlyArrDays);
+                $dataArray = self::reservationChooser($dbh, $id, $chosenIdPsg, $uS->guestLookups['ReservStatus'], $labels, $config->getString('house', 'ReservationPage', 'Referral.php'), $uS->ResvEarlyArrDays);
 
                 if (count($dataArray) > 0) {
 
@@ -384,7 +384,7 @@ class ReservationSvcs {
         return $rows;
     }
 
-    public static function reservationChooser(\PDO $dbh, $id, $idPsg, $reservStatuses, \Config_Lite $labels, $offerCheckinDays = 0) {
+    public static function reservationChooser(\PDO $dbh, $id, $idPsg, $reservStatuses, \Config_Lite $labels, $reservePage, $offerCheckinDays = 0) {
 
         //
         if ($idPsg > 0) {
@@ -411,7 +411,7 @@ class ReservationSvcs {
 
                 $checkinNow = HTMLContainer::generateMarkup('a',
                             HTMLInput::generateMarkup('Open ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('type'=>'button', 'style'=>'margin-bottom:.3em;'))
-                            , array('style'=>'text-decoration:none;margin-right:.3em;', 'href'=>'Reserve.php?rid='.$resvRs->idReservation->getStoredVal()));
+                            , array('style'=>'text-decoration:none;margin-right:.3em;', 'href'=>$reservePage.'?rid='.$resvRs->idReservation->getStoredVal()));
 
                 $expArrDT = new \DateTime($resvRs->Expected_Arrival->getStoredVal());
                 $expArrDT->setTime(0, 0, 0);
@@ -539,6 +539,7 @@ class ReservationSvcs {
 
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
+        $config = new Config_Lite(ciCFG_FILE);
 
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
 
@@ -631,13 +632,13 @@ class ReservationSvcs {
             // guest have a resv with another psg?
             if ($guest->getIdName() == $rv['idGuest'] && $rv['idPsg'] != $psg->getIdPsg()) {
 
-                $dataArray['error'] = 'This guest has a concurrent <a href="Reserve.php?rid=' . $rv['idReservation'] . '">'. $labels->getString('guestEdit', 'reservationTitle', 'reservation') . '</a> with a different patient.  ';
+                $dataArray['error'] = 'This guest has a concurrent <a href="' . $config->getString('house', 'ReservationPage', 'Referral.php') . '?rid=' . $rv['idReservation'] . '">'. $labels->getString('guestEdit', 'reservationTitle', 'reservation') . '</a> with a different patient.  ';
                 return $dataArray;
             }
 
             if ($rv['idPsg'] == $psg->getIdPsg() && $guest->getIdName() == $rv['idGuest']) {
 
-                $dataArray['error'] = 'This guest already has a <a href="Reserve.php?rid=' . $rv['idReservation'] . '">'. $labels->getString('guestEdit', 'reservationTitle', 'reservation') . '</a>.  ';
+                $dataArray['error'] = 'This guest already has a <a href="' . $config->getString('house', 'ReservationPage', 'Referral.php') . '?rid=' . $rv['idReservation'] . '">'. $labels->getString('guestEdit', 'reservationTitle', 'reservation') . '</a>.  ';
                 return $dataArray;
 
             }
@@ -746,6 +747,7 @@ class ReservationSvcs {
 
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
+        $config = new Config_Lite(ciCFG_FILE);
 
         // Patient staying flag
         if (isset($post['patStay'])) {
@@ -778,7 +780,7 @@ class ReservationSvcs {
         // Check for reserv id = 0, new resv or pick up old?
         if ($idReserv == 0 && $id > 0 && $idPsg > 0) {
 
-            $dataArray = self::reservationChooser($dbh, $id, $idPsg, $uS->guestLookups['ReservStatus'], $labels, $uS->ResvEarlyArrDays);
+            $dataArray = self::reservationChooser($dbh, $id, $idPsg, $uS->guestLookups['ReservStatus'], $labels, $config->getString('house', 'ReservationPage', 'Referral.php'), $uS->ResvEarlyArrDays);
 
             if (count($dataArray) > 0) {
                 return $dataArray;
@@ -821,6 +823,8 @@ class ReservationSvcs {
         }
 
         $guest->save($dbh, $post, $uS->username);
+        // Override the checkin date with an expected date.
+        $guest->setExpectedCheckinDate($guest->getCheckinDT()->format('Y-m-d'));
 
         // primary guest markup
         $dataArray = $guest->createReservationMarkup($dbh, $patientStaying, $resv->getCheckinNotes());
@@ -974,14 +978,14 @@ class ReservationSvcs {
             // guest have a resv with another psg?
             if ($guest->getIdName() == $rv['idGuest'] && $rv['idPsg'] != $psg->getIdPsg()) {
 
-                $dataArray['warning'] = 'This guest has a concurrent <a href="Reserve.php?rid=' . $rv['idReservation'] . '">'. $labels->getString('guestEdit', 'reservationTitle', 'reservation') . '</a> with a different patient.  ';
+                $dataArray['warning'] = 'This guest has a concurrent <a href="' . $config->getString('house', 'ReservationPage', 'Referral.php') . '?rid=' . $rv['idReservation'] . '">'. $labels->getString('guestEdit', 'reservationTitle', 'reservation') . '</a> with a different patient.  ';
                 return $dataArray;
             }
 
             // another concurrent reservation already there
             if ($guest->getIdName() == $rv['idGuest'] && $rv['idPsg'] == $psg->getIdPsg()) {
 
-                $dataArray['warning'] = 'This guest already has a <a href="Reserve.php?rid=' . $rv['idReservation'] . '">'. $labels->getString('guestEdit', 'reservationTitle', 'reservation') . '</a> with this patient.  ';
+                $dataArray['warning'] = 'This guest already has a <a href="' . $config->getString('house', 'ReservationPage', 'Referral.php') . '?rid=' . $rv['idReservation'] . '">'. $labels->getString('guestEdit', 'reservationTitle', 'reservation') . '</a> with this patient.  ';
                 return $dataArray;
             }
         }

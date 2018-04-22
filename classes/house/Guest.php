@@ -301,12 +301,12 @@ class Guest extends Role {
         }
 
         // Guest Checkin Date
-        if (isset($post[$idPrefix.'gstDate'])) {
-            $this->setCheckinDate(filter_var($post[$idPrefix.'gstDate'], FILTER_SANITIZE_STRING));
+        if (isset($post['gstDate'])) {
+            $this->setCheckinDate(filter_var($post['gstDate'], FILTER_SANITIZE_STRING));
         }
         // Guest Checkout Date
-        if (isset($post[$idPrefix.'gstCoDate'])) {
-            $this->setExpectedCheckOut(filter_var($post[$idPrefix.'gstCoDate'], FILTER_SANITIZE_STRING));
+        if (isset($post['gstCoDate'])) {
+            $this->setExpectedCheckOut(filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING));
         }
         // Guest Patient relationship
         if (isset($post[$idPrefix.'selPatRel'])) {
@@ -366,7 +366,7 @@ class Guest extends Role {
 
             $ciDT = new \DateTime($stringDate);
             $ciDT->setTimezone(new \DateTimeZone($uS->tz));
-            $dt = $ciDT->format('Y-m-d ' + $uS->CheckInTime . ':00');
+            $dt = $ciDT->format('Y-m-d ' . $uS->CheckInTime . ':00');
 
             $this->checkinDate = new \DateTime($dt);
         }
