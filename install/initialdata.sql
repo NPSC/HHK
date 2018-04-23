@@ -486,7 +486,8 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('UseWLnotes', 'false', 'b', 'h', 'Use wait list notes feature on reservations'),
 ('VisitFee', 'false', 'b', 'h','Use the visit fee (cleaning fee) feature'),
 ('VisitExcessPaid', 'd', 's', 'h','Default place for excess visit payments'),
-('VerifyHospDate', 'true', 'b', 'h','Insist on hospital treatment date entry');
+('VerifyHospDate', 'true', 'b', 'h','Insist on hospital treatment date entry'),
+('VisitFeeDelayDays', '0', 'i', 'h','Number of days before cleaning fee is charged');
 -- ;
 
 

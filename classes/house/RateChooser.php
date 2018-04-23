@@ -401,6 +401,13 @@ class RateChooser {
     }
 
     protected function createStaticMarkup(\PDO $dbh, \Reservation_1 $resv, $visitFeeTitle) {
+		$uS = Session::getInstance();
+
+		if($uS->VisitFee && ($resv->getExpectedDaysDt(new DateTime($resv->getArrival()), new DateTime($resv->getDeparture())) > $uS->VisitFeeDelayDays)){
+			$this->payVisitFee = TRUE;
+		}else{
+			$this->payVisitFee = FALSE;
+		}
 
         $tbl = new HTMLTable();
 
@@ -569,7 +576,13 @@ where
     }
 
     protected function createBasicChooserMarkup(\PDO $dbh, \Reservation_1 $resv, $nites, $visitFeeTitle) {
-
+		$uS = Session::getInstance();
+		
+		if($uS->VisitFee && ($resv->getExpectedDaysDt(new DateTime($resv->getArrival()), new DateTime($resv->getDeparture())) > $uS->VisitFeeDelayDays)){
+			$this->payVisitFee = TRUE;
+		}else{
+			$this->payVisitFee = FALSE;
+		}
         // Check for rate glide
         $dayCredit = self::setRateGlideDays($dbh, $resv->getIdRegistration(), $this->rateGlideExtend);
 

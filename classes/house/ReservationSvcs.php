@@ -326,7 +326,7 @@ class ReservationSvcs {
                 // Array with key deposit info
                 $dataArray['rooms'] = $rateChooser->makeRoomsArray($roomChooser, $uS->guestLookups['Static_Room_Rate'], $uS->guestLookups[GL_TableNames::KeyDepositCode]);
 
-                if ($uS->VisitFee) {
+                if ($uS->VisitFee && ($resv->getExpectedDays() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0)) {
                     // Visit Fee Array
                     $dataArray['vfee'] = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
                 }
@@ -1269,7 +1269,7 @@ class ReservationSvcs {
             // Rate Chooser
             $dataArray['rate'] = $rateChooser->createResvMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
 
-            if ($uS->VisitFee) {
+            if ($uS->VisitFee && ($resv->getExpectedDays() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0)) {
                 // Visit Fee Array
                 $dataArray['vfee'] = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
             }
