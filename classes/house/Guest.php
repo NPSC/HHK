@@ -303,15 +303,22 @@ class Guest extends Role {
         // Guest Checkin Date
         if (isset($post[$idPrefix.'gstDate'])) {
             $this->setCheckinDate(filter_var($post[$idPrefix.'gstDate'], FILTER_SANITIZE_STRING));
+        } else if (isset($post['gstDate'])) {
+            $this->setCheckinDate(filter_var($post['gstDate'], FILTER_SANITIZE_STRING));
         }
+
         // Guest Checkout Date
         if (isset($post[$idPrefix.'gstCoDate'])) {
             $this->setExpectedCheckOut(filter_var($post[$idPrefix.'gstCoDate'], FILTER_SANITIZE_STRING));
+        } else if (isset($post['gstCoDate'])) {
+            $this->setExpectedCheckOut(filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING));
         }
+
         // Guest Patient relationship
         if (isset($post[$idPrefix.'selPatRel'])) {
             $this->patientRelationshipCode = filter_var($post[$idPrefix.'selPatRel'], FILTER_SANITIZE_STRING);
         }
+
         // Guest incomplete emergency contact
         if (isset($post[$idPrefix.'cbEmrgLater'])) {
             $this->incompleteEmergContact = TRUE;
@@ -344,7 +351,9 @@ class Guest extends Role {
     }
 
     public function setCheckinDate($stringDate, $time = 'H:i:s') {
+
         if ($stringDate != '') {
+
             $uS = Session::getInstance();
 
             $ciDT = new \DateTime($stringDate);
@@ -357,12 +366,14 @@ class Guest extends Role {
     }
 
     public function setExpectedCheckinDate($stringDate) {
+
         if ($stringDate != '') {
+
             $uS = Session::getInstance();
 
             $ciDT = new \DateTime($stringDate);
             $ciDT->setTimezone(new \DateTimeZone($uS->tz));
-            $dt = $ciDT->format('Y-m-d 16:00:00');
+            $dt = $ciDT->format('Y-m-d ' . $uS->CheckInTime . ':00');
 
             $this->checkinDate = new \DateTime($dt);
         }
@@ -381,14 +392,16 @@ class Guest extends Role {
     }
 
     public function setExpectedCheckOut($stringDate) {
+
         if ($stringDate != '') {
+
             $uS = Session::getInstance();
 
             $ciDT = new \DateTime($stringDate);
             $ciDT->setTimezone(new \DateTimeZone($uS->tz));
             $dt = $ciDT->format('Y-m-d');
 
-            $this->expectedCheckOut = new \DateTime($dt . ' 10:00:00');
+            $this->expectedCheckOut = new \DateTime($dt . ' ' . $uS->CheckOutTime . ':00');
         }
     }
 

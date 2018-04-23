@@ -51,7 +51,7 @@ if (isset($_POST['cmd'])) {
 
         case 'getform':
 
-            $fn = filter_input(INPUT_POST, 'fn');
+            $fn = filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_STRING);
 
             if (!$fn || $fn == '') {
                 exit(json_encode(array('warning'=>'The Form name is blank.')));
@@ -75,8 +75,9 @@ if (isset($_POST['cmd'])) {
 
         case 'saveform':
 
-            $formEditorText = htmlspecialchars_decode(filter_input(INPUT_POST, 'tx'), ENT_NOQUOTES);
-            $rteFileSelection = filter_input(INPUT_POST, 'fn');
+            $formEditorText = urldecode(filter_input(INPUT_POST, 'mu', FILTER_SANITIZE_STRING));
+
+            $rteFileSelection = filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_STRING);
 
             $files = readGenLookupsPDO($dbh, 'Editable_Forms');
 
@@ -512,17 +513,6 @@ if (isset($_FILES['zipfile'])) {
     }
 }
 
-// Delete old files
-if (isset($_POST['btnDelBak'])) {
-    $tabIndex = 1;
-    Patch::deleteBakFiles('../', 'bak');
-}
-
-if (isset($_POST['delInstallDir'])) {
-    $tabIndex = 1;
-    Patch::deleteDirectory('../install');
-}
-
 // Save SQL
 if (isset($_POST['btnSaveSQL'])) {
 
@@ -615,11 +605,6 @@ if (count($rows) > 0 && $rows[0][0] != '') {
     $zipLoadDate = 'Zip Code File Loaded on ' . date('M j, Y', strtotime($rows[0][0]));
 } else {
     $zipLoadDate = '';
-}
-
-$delInstallDir = '';
-if (is_dir('../install')) {
-    $delInstallDir = HTMLContainer::generateMarkup('p', HTMLInput::generateMarkup('Delete Install Directory', array('name'=>'delInstallDir', 'type'=>'submit')));
 }
 
 $conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));
@@ -738,23 +723,10 @@ $getWebReplyMessage = $webAlert->createMarkup();
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="../js/rich-text-editor.js"></script>
 
-
 <script type="text/javascript">
 $(document).ready(function () {
     var tabIndex = '<?php echo $tabIndex; ?>';
     var tbs = $('#tabs').tabs();
-    var frmSelVal = '<?php echo $rteFileSelection; ?>';
-
-    var escape = document.createElement('textarea');
-    function escapeHTML(html) {
-        escape.textContent = html;
-        return escape.innerHTML;
-    }
-
-    function unescapeHTML(html) {
-        escape.innerHTML = html;
-        return escape.textContent;
-    }
 
     $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
 
@@ -779,11 +751,16 @@ $(document).ready(function () {
 
         $('#spnRteLoading').show();
 
-        $.post('Configure.php', {cmd:'getform', fn: $(this).val()}, function (data){
+        $.post('Configure.php', {cmd:'getform', fn: $(this).val()}, function (rawData){
 
             $('#spnRteLoading').hide();
 
-            data = $.parseJSON(data);
+            try {
+                var data = $.parseJSON(rawData);
+            } catch (error) {
+                alert('Server Error');
+                return;
+            }
 
             if (data.gotopage) {
                 window.open(data.gotopage, '_self');
@@ -808,7 +785,7 @@ $(document).ready(function () {
                     },
                     onSave: function () {
 
-                        var parms = {cmd:'saveform', tx: escapeHTML($(this).html()), fn: $('#frmEdSelect').val()};
+                        var parms = {cmd:'saveform', fn: $('#frmEdSelect').val(), mu: encodeURI($(this).html())};
 
                         $.post('Configure.php', parms, function (data){
                             data = $.parseJSON(data);
@@ -894,34 +871,22 @@ $(document).ready(function () {
                 </div>
                 <div id="patch" class="ui-tabs-hide">
                     <div class="hhk-member-detail">
-                        <!-- The data encoding type, enctype, MUST be specified as below -->
-<!--                        <form enctype="multipart/form-data" action="" method="POST" name ="formp">
-                             MAX_FILE_SIZE must precede the file input field
-                            <input type="hidden" name="MAX_FILE_SIZE" value="10000000" />
-                             Name of input element determines name in $_FILES array
-                            <p>Select Patch File: <input name="patch" type="file" /></p><br/>
-
-                            <div style="float:left;margin-left:200px;"><input type="submit" name='btnUlPatch' value="Upload & Execute Patch" /></div>
-                        </form>-->
-
-                    </div>
-                    <div style='clear:both;'>
                         <p style="color:red;"><?php echo $errorMsg; ?></p>
+                        <p>Database:</p>
+                        <p>URL: <?php echo $uS->databaseURL; ?></p>
+                        <p>Schema: <?php echo $uS->databaseName; ?></p>
+                        <p>User: <?php echo $uS->databaseUName; ?></p>
 
                         <form method="post" action="" name="form1">
-                            <p>URL: <?php echo $uS->databaseURL; ?></p>
-                            <p>Schema: <?php echo $uS->databaseName; ?></p>
-                            <p>User: <?php echo $uS->databaseUName; ?></p>
-                            <?php echo $delInstallDir; ?>
                             <input type="submit" name="btnLogs" value="View Patch Log" style="margin-left:100px;margin-top:20px;"/>
                             <input type="submit" name="btnSaveSQL" value="Re-Create Tables, Views and SP's" style="margin-left:20px;margin-top:20px;"/>
                             <input type="submit" name="btnUpdate" value="Update Config" style="margin-left:20px;margin-top:20px;"/>
-                            <input type="submit" name="btnDelBak" value="Delete .bak Files" style="margin-left:20px;margin-top:20px;"/>
+
                         </form>
                         <?php echo $resultAccumulator; ?>
-                    </div>
                     <div style="margin-top:20px;">
                         <?php echo $logs; ?>
+                    </div>
                     </div>
                 </div>
                 <div id="loadZip" class="ui-tabs-hide">

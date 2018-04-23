@@ -217,7 +217,7 @@ class Receipt {
 
         $uS = Session::getInstance();
         $config = new Config_Lite(ciCFG_FILE);
-        $logoUrl = $config->getString('financial', 'receiptLogoFile', '');
+        $logoUrl = '../conf/' . $config->getString('financial', 'receiptLogoFile', '');
         $rec = '';
 
         // Don't write img if logo URL not sepcified
@@ -1216,7 +1216,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
 
         // Build the statement
-        $logoUrl = $config->getString('financial', 'statementLogoFile', '');
+        $logoUrl = '../conf/' . $config->getString('financial', 'statementLogoFile', '');
         $rec = '';
 
         // Don't write img if logo URL not sepcified
@@ -1328,7 +1328,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
 
 
         // Build the statement
-        $logoUrl = $config->getString('financial', 'statementLogoFile', '');
+        $logoUrl = '../conf/' . $config->getString('financial', 'statementLogoFile', '');
         $rec = '';
 
         // Don't write img if logo URL not sepcified
