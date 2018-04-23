@@ -90,7 +90,7 @@ class SiteDbBackup {
 
         // Backup database
         $command = 'mysqldump ';
-        $params = " --single-transaction --skip-lock-tables --log-error=" . $this->dumpErrorFile . " --host='$dbUrl' --user=$dbuser --password='$dbpwd' $dbname $zipPipe > " . $this->fileName;
+        $params = " --single-transaction --skip-lock-tables --log-error=" . $this->dumpErrorFile . " --host='$dbUrl' --user=$dbuser --password='$dbpwd' $dbname | grep -v DEFINER $zipPipe > " . $this->fileName;
         passthru($command . $params, $this->return_var);
 
         // Analyze result
