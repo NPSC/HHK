@@ -373,7 +373,7 @@ if (isset($_POST["btnDoBackup"])) {
         8 => 'activity',
         );
 
-    $dbBack = new SiteDbBackup(REL_BASE_DIR . 'patch' . DS, ciCFG_FILE);
+    $dbBack = new SiteDbBackup('/tmp' . DS, ciCFG_FILE);
 
     if ($dbBack->backupSchema($igtables)) {
         // success
