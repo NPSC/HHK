@@ -301,17 +301,24 @@ class Guest extends Role {
         }
 
         // Guest Checkin Date
-        if (isset($post['gstDate'])) {
+        if (isset($post[$idPrefix.'gstDate'])) {
+            $this->setCheckinDate(filter_var($post[$idPrefix.'gstDate'], FILTER_SANITIZE_STRING));
+        } else if (isset($post['gstDate'])) {
             $this->setCheckinDate(filter_var($post['gstDate'], FILTER_SANITIZE_STRING));
         }
+
         // Guest Checkout Date
-        if (isset($post['gstCoDate'])) {
+        if (isset($post[$idPrefix.'gstCoDate'])) {
+            $this->setExpectedCheckOut(filter_var($post[$idPrefix.'gstCoDate'], FILTER_SANITIZE_STRING));
+        } else if (isset($post['gstCoDate'])) {
             $this->setExpectedCheckOut(filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING));
         }
+
         // Guest Patient relationship
         if (isset($post[$idPrefix.'selPatRel'])) {
             $this->patientRelationshipCode = filter_var($post[$idPrefix.'selPatRel'], FILTER_SANITIZE_STRING);
         }
+
         // Guest incomplete emergency contact
         if (isset($post[$idPrefix.'cbEmrgLater'])) {
             $this->incompleteEmergContact = TRUE;
