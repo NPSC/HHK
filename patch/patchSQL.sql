@@ -1,8 +1,5 @@
 
 
-INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`)
-VALUES
-	('VisitFeeDelayDays', '5', 'i', 'h', 'Number of days before cleaning fee is charged');
 
 ALTER TABLE `volunteer_hours` 
     ADD COLUMN `idName2` INT NOT NULL DEFAULT 0 AFTER `idName`;
@@ -17,6 +14,7 @@ Insert INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `T
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CheckOutTime', '10:00', 's', 'h', 'Normal House checkout time of day.  Format hh:mm');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CheckInTime', '16:00', 's', 'h', 'Normal Hose Check in time of day in 24-hour format, hh:mm');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('VisitFeeDelayDays', '5', 'i', 'h', 'Number of days before cleaning fee is charged');
 
 delete from `sys_config` where `Key` = 'ConfirmFile';
 

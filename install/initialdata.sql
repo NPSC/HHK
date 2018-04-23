@@ -425,6 +425,8 @@ REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`,`T
 REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES 
 ('CalViewWeeks','3','i','h','Number of weeks showing in the calendar view'),
 ('CardSwipe','false','b','f','Use POS terminal'),
+('CheckOutTime', '10:00', 's', 'h', 'Normal House checkout time of day.  Format hh:mm'),
+('CheckInTime', '16:00', 's', 'h', 'Normal Hose Check in time of day in 24-hour format, hh:mm'),
 ('ConcatVisitNotes', 'true', 'b', 'h', 'Show notes combined from all previous visits when true.'),
 ('county', 'false', 'b', 'h', 'Include the County in addresses.'),
 ('CoTod', 'false', 'b', 'h', 'Edit the time of day of a checkout.'),
