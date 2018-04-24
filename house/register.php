@@ -3,7 +3,7 @@
  * Register.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -161,7 +161,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
 
 
 // Currently Checked In guests
-$currentCheckedIn = HTMLContainer::generateMarkup('h3', 'Current Guests' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlCurGuests', 'style'=>'margin-left:5em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
+$currentCheckedIn = HTMLContainer::generateMarkup('h3', 'Current Guests' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlCurGuests', 'style'=>'margin-left:5em;font-size:.9em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
         . HTMLContainer::generateMarkup('div', "<table id='curres' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divcurres'));
 
 // Confirmed reservations and waitlist
@@ -179,17 +179,17 @@ if ($uS->Reservation) {
 
     // make registration form print button
     $regButton = HTMLContainer::generateMarkup('span', 'Check-in Date: ' . HTMLInput::generateMarkup('', array('id'=>'regckindate', 'class'=>'ckdate hhk-prtRegForm'))
-            . HTMLInput::generateMarkup('Print Registration Forms', array('id'=>'btnPrintRegForm', 'type'=>'button', 'data-page'=>'PrtRegForm.php', 'class'=>'hhk-prtRegForm', 'style'=>'margin-left:.3em;'))
+            . HTMLInput::generateMarkup('Print Registration Forms', array('id'=>'btnPrintRegForm', 'type'=>'button', 'data-page'=>'PrtRegForm.php', 'class'=>'hhk-prtRegForm', 'style'=>'margin-left:.3em; font-size:0.86em;'))
             , array('style'=>'margin-left:5em;padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5'));
 
     $currentReservations = HTMLContainer::generateMarkup('h3',
             $labels->getString('register', 'reservationTab', 'Confirmed Reservations') .
-            HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlConfRes', 'style'=>'margin-left:5em;')) . $regButton
+            HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlConfRes', 'style'=>'margin-left:5em;font-size:.9em;')) . $regButton
             , array('style' => 'background-color:#D3D3D3; padding:10px;'))
             . HTMLContainer::generateMarkup('div', "<table id='reservs' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divreservs'));
 
     if ($uS->ShowUncfrmdStatusTab) {
-        $uncommittedReservations = HTMLContainer::generateMarkup('h3', $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlUcRes', 'style'=>'margin-left:5em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
+        $uncommittedReservations = HTMLContainer::generateMarkup('h3', $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlUcRes', 'style'=>'margin-left:5em;font-size:.9em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
             . HTMLContainer::generateMarkup('div', "<table id='unreserv' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divunreserv'));
     }
 
@@ -201,7 +201,7 @@ if ($uS->Reservation) {
 
 
     $waitlist = HTMLContainer::generateMarkup('h3', 'Waitlist' .
-            HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlWlist', 'style'=>'margin-left:5em;'))
+            HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlWlist', 'style'=>'margin-left:5em;font-size:.9em;'))
             .$wlButton
             , array('style' => 'background-color:#D3D3D3; padding:10px;'))
             . HTMLContainer::generateMarkup('div', "<table id='waitlist' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divwaitlist'));
@@ -279,11 +279,10 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
+        <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
         <link href='css/fullcalendar.css'  rel='stylesheet' type='text/css' />
-        <?php echo HOUSE_CSS; ?>
-
-        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <?php echo FAVICON; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
@@ -291,7 +290,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <script type="text/javascript" src="../js/hhkcalendar-min.js"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo VERIFY_ADDRS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
@@ -390,36 +389,32 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
 
         </script>
         <script type="text/javascript" src="js/register-min.js"></script>
-<style>
-   #version {
-    height: 15px;
-    position: absolute;
-    right: 2px;
-    top: 47px;
-    font-size: .6em;
-    padding: 0 6px;
-    cursor:pointer;
-    }
-    #version:hover { background-color: yellow; }
-    .hhk-justify-r {
-        text-align: right;
-    }
-    .hhk-justify-c {
-        text-align: center;
-    }
-    .fc-content {
-        height: 680px;
-        overflow-y: auto;
-    }
-    .ui-menu-item-wrapper {min-width: 120px;}
-</style>
+        <style>
+           #version {
+            height: 15px;
+            position: absolute;
+            right: 2px;
+            top: 47px;
+            font-size: .6em;
+            padding: 0 6px;
+            cursor:pointer;
+            }
+            #version:hover { background-color: yellow; }
+            .hhk-justify-r {
+                text-align: right;
+            }
+            .hhk-justify-c {
+                text-align: center;
+            }
+            .fc-content {
+                height: 680px;
+                overflow-y: auto;
+            }
+            .ui-menu-item-wrapper {min-width: 120px;}
+        </style>
     </head>
-    <body <?php
-    if ($wInit->testVersion) {
-        echo "class='testbody'";
-    }
-    ?>>
-<?php echo $menuMarkup; ?>
+    <body <?php if ($wInit->testVersion) {echo "class='testbody'";}?>>
+        <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <div style="float:left; margin-top:10px;">
                 <h2><?php echo $wInit->pageHeading; ?><?php echo RoomReport::getGlobalNightsCounter($dbh, $totalRest); ?><?php echo RoomReport::getGlobalStaysCounter($dbh); ?>
@@ -432,7 +427,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             </div>
             <div style="clear:both;"></div>
             <form name="frmdownload" action="#" method="post">
-            <div id="mainTabs" style="display:none;font-size:.9em;">
+            <div id="mainTabs" style="display:none; font-size:.9em;">
                 <ul>
                     <li id="liCal"><a href="#vcal">Calendar</a></li>
                     <li><a href="#vstays">Current Guests</a></li>
@@ -458,11 +453,11 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 <div id="vstays" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
                     <?php echo $currentCheckedIn; ?>
                 </div>
-<?php if ($uS->ShowUncfrmdStatusTab) { ?>
+                <?php if ($uS->ShowUncfrmdStatusTab) { ?>
                 <div id="vuncon" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
                     <?php echo $uncommittedReservations; ?>
                 </div>
-<?php } ?>
+                <?php } ?>
                 <div id="vresvs" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
                     <?php echo $currentReservations; ?>
                 </div>
@@ -470,9 +465,9 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                     <?php echo $dailyLog; ?>
                 </div>
                 <div id="vwls" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
-<?php echo $waitlist; ?>
+                    <?php echo $waitlist; ?>
                 </div>
-<?php if ($isGuestAdmin) { ?>
+                <?php if ($isGuestAdmin) { ?>
                 <div id="vactivity" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
                     <table><tr>
                             <th>Reports</th><th>Dates</th>
@@ -516,7 +511,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                     <input type="button" id="btnInvGo" value="Refresh"/>
                       <div id="rptInvdiv" class="hhk-visitdialog"></div>
                 </div>
-<?php } ?>
+                <?php } ?>
             </div>
         </form>
         </div>  <!-- div id="contentDiv"-->

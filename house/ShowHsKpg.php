@@ -3,7 +3,7 @@
  * ShowHsKpg.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -35,9 +35,9 @@ $stmtMarkup = CreateMarkupFromDB::generateHTML_Table(ResourceView::roomsClean($d
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-<?php echo JQ_UI_CSS; ?>
+        <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <?php echo FAVICON; ?>
         <style type="text/css" media="print">
             body {margin:0; padding:0; line-height: 1.4em; word-spacing:1px; letter-spacing:0.2px; font: 13px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
         </style>

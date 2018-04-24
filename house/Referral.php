@@ -3,7 +3,7 @@
  * Referral.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -182,12 +182,19 @@ $resultMessage = $alertMsg->createMarkup();
         <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-        <link rel="stylesheet" href="css/daterangepicker.min.css">
-        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <?php echo DR_PICKER_CSS ?>
+        <?php echo FAVICON; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo DR_PICKER_JS; ?>"></script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
@@ -245,12 +252,6 @@ $resultMessage = $alertMsg->createMarkup();
             <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
         </div>  <!-- div id="contentDiv"-->
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
-        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo VERIFY_ADDRS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo DR_PICKER_JS; ?>"></script>
         <script type="text/javascript" src="js/referral-min.js"></script>
         <script type="text/javascript">
     var pmtMkup = "<?php echo $paymentMarkup; ?>";

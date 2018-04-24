@@ -463,7 +463,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistratio
 
         if ($local) {
 
-            $r['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$config->getString('house', 'ReservationPage', 'Reserve.php') + '?rid=' . $r['idReservation']));
+            $r['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$config->getString('house', 'ReservationPage', 'Reserve.php') . '?rid=' . $r['idReservation']));
             $r['Arrival'] = $arrivalDT->format('c');
             $r['Departure'] = $departureDT->format('c');
             $r['Created_Date'] = $statusDT->format('c');
@@ -547,7 +547,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
-        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <?php echo FAVICON; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>

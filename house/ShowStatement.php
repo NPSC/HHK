@@ -3,7 +3,7 @@
  * ShowStatement.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -303,9 +303,9 @@ if ($msg != '') {
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-<?php echo JQ_UI_CSS; ?>
+        <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <?php echo FAVICON; ?>
         <style type="text/css" media="print">
             .PrintArea {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
             @page { margin: 1cm; }

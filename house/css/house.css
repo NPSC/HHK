@@ -23,7 +23,7 @@
 }
 .hhk-view-visit:hover {
     background-color: #d0e5f5;
-    background-image: url("redmond/images/ui-bg_glass_75_d0e5f5_1x400.png");
+    background-image: url("jqui/images/ui-bg_glass_75_d0e5f5_1x400.png");
     background-repeat: repeat-x;
     background-attachment: scroll;
     background-position: 50% 50%;
@@ -272,7 +272,7 @@ div#global-title {
     top: 0;
     width: 100%;
     z-index: 20;
-    background: url("redmond/images/ui-bg_gloss-wave_55_5c9ccc_500x100.png") repeat-x scroll 0 bottom #5c9ccc;
+    background: url("jqui/images/ui-bg_gloss-wave_55_5c9ccc_500x100.png") repeat-x scroll 0 bottom #5c9ccc;
     height: 39px;
 }
 #global-nav #navContainer {

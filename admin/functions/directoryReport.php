@@ -5,7 +5,7 @@
  * @category  Reports
  * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
@@ -142,8 +142,7 @@ function dirReport(\PDO $dbh, chkBoxCtrlClass $cbBasisDir, chkBoxCtrlClass $cbRe
 
         $query = "select distinct vm2.* from vmember_directory vm2
  left join name_volunteer2 nv on vm2.Id = nv.idName and nv.Vol_Status = 'a' and nv.Vol_Category = 'Vol_Type'
- where ifnull(nv.Vol_Code, '') not in ('p', 'g') $wClause
- order by vm2.Name_Last, vm2.Name_First;";
+ where ifnull(nv.Vol_Code, '') not in ('p', 'g') $wClause order by `Name_Last`, `vm2`.`Name_First`;";
 
         $stmt = $dbh->query($query);
         $lineCtr = 1;

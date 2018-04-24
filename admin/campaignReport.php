@@ -3,7 +3,7 @@
  * campaignReport.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -44,8 +44,10 @@ $selYearOptions = getYearOptionsMarkup($yearSelected, $startYear, $fyMonths);
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
+        <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
-        <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
+        <?php echo FAVICON; ?>
+
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>

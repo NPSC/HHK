@@ -99,13 +99,13 @@
 }
 
 #widget-docs .ui-state-active {
-    background: url("ss/images/ui-bg_highlight-hard_100_fafaf4_1x100.png") repeat-x scroll 50% 50% #FAFAF4;
+    background: url("jqui/images/ui-bg_highlight-hard_100_fafaf4_1x100.png") repeat-x scroll 50% 50% #FAFAF4;
     border: 1px solid #D4CCB0;
     color: #459E00;
     font-weight: bold;
 }
 #widget-docs .ui-state-default {
-    background: url("ss/images/ui-bg_highlight-hard_15_459e00_1x100.png") repeat-x scroll 50% 50% #459E00;
+    background: url("jqui/images/ui-bg_highlight-hard_15_459e00_1x100.png") repeat-x scroll 50% 50% #459E00;
     border: 1px solid #327E04;
     color: #FFFFFF;
     font-weight: bold;

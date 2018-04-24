@@ -5,7 +5,7 @@
  * @category  Volunteer
  * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2015 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
@@ -224,7 +224,7 @@ function changePW(\PDO $dbh, $oldPw, $newPw, $uname, $id) {
 function listChairs(\PDO $dbh, $codes, $desc) {
 
     if ($codes != "") {
-        
+
         $title = $desc;
         $parts = explode("|", $codes);
 
@@ -238,7 +238,7 @@ function listChairs(\PDO $dbh, $codes, $desc) {
             $tbl->addHeaderTr(HTMLTable::makeTh('First').HTMLTable::makeTh('Last').HTMLTable::makeTh('Phone').HTMLTable::makeTh('Email').HTMLTable::makeTh('Role'));
 
             while ($r = $res->fetch(\PDO::FETCH_ASSOC)) {
-                
+
                 $tbl->addBodyTr(
                         $tbl->makeTd($r["Name_Last"])
                         . $tbl->makeTd($r["Name_First"])
@@ -246,22 +246,22 @@ function listChairs(\PDO $dbh, $codes, $desc) {
                         . $tbl->makeTd($r["PreferredEmail"])
                         . $tbl->makeTd($r["Vol_Rank"])
                 );
-                 
+
                 $title = $r["Category"] . "/" . $r["Description"];
             }
-            
+
             return array('table' => $tbl->generateMarkup(array('id'=>'tblListTable', 'style'=>'width:100%;')), 'title' => $title, 'removeId'=>'tblListTable');
          }
     }
-    
+
     return array("error" => "invalid vol codes - " . $codes);
 }
 
 
 function listMembers(\PDO $dbh, $codes) {
-    
+
     if ($codes != "") {
-        
+
         $title = '';
         $parts = explode("|", $codes);
 
@@ -275,7 +275,7 @@ function listMembers(\PDO $dbh, $codes) {
             $tbl->addHeaderTr(HTMLTable::makeTh('First').HTMLTable::makeTh('Last').HTMLTable::makeTh('Phone').HTMLTable::makeTh('Email').HTMLTable::makeTh('Role'));
 
             while ($r = $res->fetch(\PDO::FETCH_ASSOC)) {
-                
+
                 $tbl->addBodyTr(
                         HTMLTable::makeTd($r["Name_Last"])
                         . HTMLTable::makeTd($r["Name_First"])
@@ -283,14 +283,14 @@ function listMembers(\PDO $dbh, $codes) {
                         . HTMLTable::makeTd($r["PreferredEmail"])
                         . HTMLTable::makeTd($r["Vol_Rank"])
                 );
-                 
+
                 $title = $r["Category"] . "/" . $r["Description"];
             }
 
             return array('table' => $tbl->generateMarkup(array('id'=>'tblListTable', 'style'=>'width:100%;')), 'title' => $title, 'removeId'=>'tblListTable');
         }
     }
-    
+
     return array("error" => "invalid vol codes: " . $codes);
 }
 

@@ -3,7 +3,7 @@
  * ResourceBuilder.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -1177,7 +1177,7 @@ $resultMessage = $alertMsg->createMarkup();
         <?php echo JQ_UI_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <?php echo FAVICON; ?>
         <style>
             @media screen {
                 .hhk-printmedia {display:none;}
@@ -1186,10 +1186,11 @@ $resultMessage = $alertMsg->createMarkup();
                 .hhk-printmedia {display:inline;}
             }
         </style>
+
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo VERIFY_ADDRS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript">
     function isNumber(n) {

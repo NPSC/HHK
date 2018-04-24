@@ -3,7 +3,7 @@
     margin: 0;
 }
 body {
-    background: url('../../images/vol_bg.jpg') repeat #CEC9B5;
+    background: url('../../conf/vol_bg.jpg') repeat #CEC9B5;
     font-family: Arial, Helvetica, sans-serif;
 }
 p {
@@ -156,7 +156,7 @@ div#divSubmitButtons {
 	width: 885px;
 }
 #logoLT {
-	background-image: url(../../images/TopLogo.png);
+	background-image: url(../../conf/TopLogo.png);
 	height: 183px;
 	width: 275px;
 	background-repeat: no-repeat;
@@ -222,7 +222,7 @@ div#global-title {
     top: 0;
     width: 100%;
     z-index: 20;
-    background: url("sunny/images/ui-bg_gloss-wave_60_fece2f_500x100.png") repeat-x scroll 0 70px #fece2f;
+    background: url("jqui/images/ui-bg_gloss-wave_60_fece2f_500x100.png") repeat-x scroll 0 70px #fece2f;
     height: 39px;
 }
 #global-nav #navContainer {

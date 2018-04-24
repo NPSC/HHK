@@ -3,7 +3,7 @@
  * ShowInvoice.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -11,14 +11,10 @@ require ("homeIncludes.php");
 
 require(DB_TABLES . "visitRS.php");
 require(DB_TABLES . "registrationRS.php");
-
 require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
-
-
 require (CLASSES . 'Purchase/Item.php');
 require(CLASSES . 'Purchase/RoomRate.php');
-
 
 require (PMT . 'Invoice.php');
 require (PMT . 'InvoiceLine.php');
@@ -27,7 +23,6 @@ require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');
 require (MEMBER . 'OrgMember.php');
 require (MEMBER . "Addresses.php");
-
 
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
@@ -178,10 +173,10 @@ if ($msg != '') {
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-<?php echo JQ_UI_CSS; ?>
+        <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-<?php echo $sty; ?>
-        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <?php echo $sty; ?>
+        <?php echo FAVICON; ?>
         <style type="text/css" media="print">
             body {margin:0; padding:0; line-height: 1.4em; word-spacing:1px; letter-spacing:0.2px; font: 13px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
             .hhk-noprint {display:none;}

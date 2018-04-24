@@ -5,7 +5,7 @@
  * @category  Volunteer
  * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2016 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
@@ -205,15 +205,16 @@ try {
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-        <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
+        <?php echo JQ_UI_CSS; ?>
         <?php echo PUBLIC_CSS; ?>
-<link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <?php echo FAVICON; ?>
+        
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="../js/stateCountry.js"></script>
-        <script type="text/javascript" src="../js/md5-min.js"></script>
-        <script type="text/javascript"><?php include_once("js/vNameEdit.js") ?></script>
+        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        <script type="text/javascript"><?php require("js/vNameEdit.js") ?></script>
     </head>
     <body>
 <?php echo $menuMarkup; ?>

@@ -3,7 +3,7 @@
  * PrtRegForm.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -101,8 +101,8 @@ if ($checkinDate == '') {
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
-        <link href="css/house.css" rel="stylesheet" type="text/css" />
-        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <?php echo HOUSE_CSS; ?>
+        <?php echo FAVICON; ?>
         <?php echo $sty; ?>
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>

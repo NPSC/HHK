@@ -3,7 +3,7 @@
  * RoomView.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -12,6 +12,8 @@ require (HOUSE . 'RoomReport.php');
 require (HOUSE . 'Room.php');
 require (HOUSE . 'Resource.php');
 require (HOUSE . 'ResourceView.php');
+
+exit("This page is out of service.  ");
 
 try {
     $wInit = new webInit();
@@ -259,10 +261,9 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-<?php echo JQ_UI_CSS; ?>
-
-        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
-    <link href='css/house.css' rel='stylesheet' type='text/css' />
+        <?php echo JQ_UI_CSS; ?>
+        <?php echo FAVICON; ?>
+        <?php echo HOUSE_CSS; ?>
         <style>
             #roomMonth { width: 600px; height: 300px; float:left; }
         </style>

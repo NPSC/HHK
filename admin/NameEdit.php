@@ -14,8 +14,6 @@ require ("AdminIncludes.php");
 require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'ActivityRS.php');
 require (DB_TABLES . 'WebSecRS.php');
-require (DB_TABLES . 'visitRS.php');
-
 require (DB_TABLES . 'registrationRS.php');
 require (DB_TABLES . 'ReservationRS.php');
 
@@ -36,18 +34,6 @@ require (CLASSES . 'AuditLog.php');
 require (CLASSES . 'Relation.php');
 
 require (CLASSES . 'Notes.php');
-
-require (HOUSE . 'psg.php');
-require (HOUSE . 'Hospital.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'Guest.php');
-require (HOUSE . 'Patient.php');
-require (HOUSE . 'Agent.php');
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Doctor.php');
-
-require (HOUSE . 'VisitLog.php');
-
 
 $wInit = new webInit();
 
@@ -424,15 +410,25 @@ $alertMessage = $alertMsg->createMarkup();
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-        <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
-        <?php echo DEFAULT_CSS; ?>
-        <link href="<?php echo JQ_DT_CSS; ?>" rel="stylesheet" type="text/css" />
-        <?php echo MULTISELECT_CSS; ?>
 
+        <?php echo JQ_UI_CSS; ?>
+        <?php echo DEFAULT_CSS; ?>
+        <?php echo FAVICON; ?>
+        <?php echo JQ_DT_CSS; ?>
+        <?php echo MULTISELECT_CSS; ?>
         <link href="css/volCtrl.css" rel="stylesheet" type="text/css" />
+
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
+
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
             <?php echo $menuMarkup; ?>
@@ -563,16 +559,7 @@ $alertMessage = $alertMsg->createMarkup();
                 <?php echo $webUserDialogMarkup; ?>
             </div>
         </div>  <!-- div id="page"-->
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
-
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="../js/jquery.multiselect.min.js"></script>
-        <script type="text/javascript" src="../js/stateCountry.js"></script>
-        <script type="text/javascript" src="../js/verifyAddrs-min.js"></script>
-        <script type="text/javascript" src="../js/addrPrefs-min.js"></script>
         <script type="text/javascript" src="js/genfunc.js"></script>
-        <script type="text/javascript" src="../house/js/resv.js"></script>
         <script type="text/javascript"><?php include_once("js/nameEd.js") ?></script>
     </body>
 </html>

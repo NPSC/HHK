@@ -1,0 +1,64 @@
+<?php
+
+/*
+ * Find my place and determine paths.
+ */
+define( 'DS', DIRECTORY_SEPARATOR );
+define('P_ROOT', dirname(__FILE__) . DS );
+define('REL_BASE_DIR', '..' . DS);
+define('REL_BASE_SITE', '../');
+
+
+// Find the vendor directory
+$dirxx = '../vendor';
+if (file_exists($dirxx) === FALSE) {
+    $dirxx = '../' . $dirxx;
+    if (file_exists($dirxx) === FALSE) {
+        $dirxx = '../' . $dirxx;
+        if (file_exists($dirxx) === FALSE) {
+            $dirxx = '../' . $dirxx;
+            if (file_exists($dirxx) === FALSE) {
+                throw new Exception('Cannot find the vendor directory.');
+            }
+        }
+    }
+}
+
+define('THIRD_PARTY', $dirxx . DS);
+
+// Configuration filename and paths
+define('ciCFG_FILE', REL_BASE_DIR . 'conf' . DS . 'site.cfg' );
+define('LABEL_FILE', REL_BASE_DIR . 'conf' . DS . 'labels.cfg' );
+
+// Common Directory Names
+define('ADMIN_DIR', REL_BASE_DIR . 'admin' . DS);
+define('CLASSES', REL_BASE_DIR . 'classes' . DS);
+define('DB_TABLES', CLASSES . 'tables' . DS);
+define('MEMBER', CLASSES . 'member' . DS);
+define('HOUSE', CLASSES . 'house' . DS);
+define('SEC', CLASSES . 'sec' . DS);
+define('PMT', CLASSES . 'Payment' . DS);
+define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
+
+
+// Page header links and scripts
+define('JQ_UI_CSS', '<link href="css/jqui/jquery-ui.min.css" rel="stylesheet" type="text/css" />');
+define('JQ_DT_CSS', '<link href="css/datatables.min.css" rel="stylesheet" type="text/css" />');
+define('MULTISELECT_CSS', '<link href="css/jquery.multiselect.css" rel="stylesheet" type="text/css" />');
+define('FAVICON', '<link rel="icon" type="image/png" href="../images/hhkIcon.png" />');
+define('DR_PICKER_CSS', '<link rel="stylesheet" href="css/daterangepicker.min.css">');
+
+define('JQ_UI_JS', '../js/jquery-ui.min.js');
+define('JQ_JS', '../js/jquery-3.1.1.min.js');
+define('JQ_DT_JS', '../js/datatables.min.js');
+
+define('PRINT_AREA_JS', '../js/jquery.PrintArea.js');
+define('CREATE_AUTO_COMPLETE_JS', '../js/createAutoComplete.js');
+define('ADDR_PREFS_JS', '../js/addrPrefs-min.js');
+define('STATE_COUNTRY_JS', '../js/stateCountry.js');
+define('PAG_JS', '../js/pag.js');
+define('MD5_JS', '../js/md5-min.js');
+define('LOGIN_JS', '../js/login.js');
+define('MULTISELECT_JS', '../js/jquery.multiselect.min.js');
+define('DR_PICKER_JS', '../js/daterangepicker.hhk.min.js');
+define('HHK_CAL_JS', '../js/hhkcalendar-min.js');

@@ -3,7 +3,7 @@
  * PrtWaitList.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -47,8 +47,9 @@ $regForm = CreateMarkupFromDB::generateHTML_Table($rows, 'tbl');
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
-        <link href="css/house.css" rel="stylesheet" type="text/css" />
-        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <?php echo HOUSE_CSS; ?>
+        <?php echo FAVICON; ?>
+
         <style type="text/css" media="print">
             body {margin:0; padding:0; line-height: 1.4em; word-spacing:1px; letter-spacing:0.2px; font: 13px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
             .hhk-noprint {display:none;}

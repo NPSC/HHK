@@ -11,8 +11,6 @@ require ("AdminIncludes.php");
 require (CLASSES . 'CreateMarkupFromDB.php');
 require (CLASSES . 'Purchase/RoomRate.php');
 require (CLASSES . 'History.php');
-define('FULLC_JS', '../js/fullcalendar.min.js');
-define('FULLC_CSS', 'css/fullcalendar.css');
 
 $wInit = new webInit();
 
@@ -60,14 +58,17 @@ try {
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-        <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
+        <?php echo JQ_UI_CSS; ?>
+        <?php echo FULLC_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
+        <?php echo FAVICON; ?>
 
-        <link href="<?php echo FULLC_CSS; ?>" rel="stylesheet" type="text/css" />
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="../js/verifyAddrs-min.js"></script>
+        <script type="text/javascript" src="<?php echo FULLC_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
+
         <script type="text/javascript">
     function isNumber(n) {
         "use strict";
@@ -222,6 +223,5 @@ try {
                 </div>
             </div>
         </div>  <!-- div id="page"-->
-        <script type="text/javascript" src="<?php echo FULLC_JS; ?>"></script>
     </body>
 </html>

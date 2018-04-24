@@ -3,7 +3,7 @@
  * GuestEdit.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -784,14 +784,25 @@ $uS->guestId = $id;
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
 
+        <?php echo JQ_UI_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
         <?php echo JQ_DT_CSS; ?>
+        <?php echo FAVICON; ?>
+
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
@@ -955,16 +966,6 @@ $uS->guestId = $id;
             </div>
         </div>  <!-- div id="contentDiv"-->
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo VERIFY_ADDRS_JS; ?>"></script>
-        <script type="text/javascript" src="../js/addrPrefs-min.js"></script>
-        <script type="text/javascript" src="../js/jquery.multiselect.min.js"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
 
         <script type="text/javascript">
             var memberData = <?php echo json_encode($memberData); ?>;

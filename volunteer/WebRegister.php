@@ -5,7 +5,7 @@
  * @category  Volunteer
  * @package   Hospitality HouseKeeper
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
@@ -262,12 +262,15 @@ $getDonReplyMessage = $donAlert->createMarkup();
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-        <link href="<?php echo JQ_UI_CSS; ?>" rel="stylesheet" type="text/css" />
+        <?php echo JQ_UI_CSS; ?>
         <?php echo PUBLIC_CSS; ?>
+        <?php echo FAVICON; ?>
+
         <?php echo $reCAPTCHA->getScript(); ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="../js/md5-min.js"></script>
+        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        
         <style type="text/css">
             .lblFor {
                 text-align: right;

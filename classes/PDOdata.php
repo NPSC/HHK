@@ -8,14 +8,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-/**
- *
- */
-interface iDbFieldSanitizer {
-    public function sanitize($v);
-    public function getDbType();
-}
-
 interface iTableRS {
     public function getTableName();
 }
@@ -29,12 +21,6 @@ abstract class TableRS implements iTableRS {
 
     public function __construct($TableName = '') {
         $this->tableName = $TableName;
-
-        foreach($this as $prop) {
-            if (is_a($prop, 'DB_Field')) {
-                $prop->setContainer($this);
-            }
-        }
     }
 
 
@@ -42,6 +28,12 @@ abstract class TableRS implements iTableRS {
         return $this->tableName;
     }
 
+}
+
+
+interface iDbFieldSanitizer {
+    public function sanitize($v);
+    public function getDbType();
 }
 
 /**
@@ -261,8 +253,6 @@ class DB_Field {
     /** @var bool Log this field in a log table.  */
     protected $logField;
 
-    protected $container;
-
 
     /**
      *
@@ -280,11 +270,6 @@ class DB_Field {
         $this->updateOnChange = $updateOnChange;
         $this->logField = $logMe;
 
-    }
-
-    public function setContainer(TableRS $container) {
-        $this->container = $container;
-        return $this;
     }
 
     public function logMe() {
@@ -408,7 +393,7 @@ class EditRS {
      * @param string $combiner
      * @return array
      */
-    public static function select(\PDO $dbh, iTableRS $rs, array $whereDbFieldArray, $combiner = "and", array $orderByDbFieldArray = array(), $ascending = TRUE) {
+    public static function select(\PDO $dbh, TableRS $rs, array $whereDbFieldArray, $combiner = "and", array $orderByDbFieldArray = array(), $ascending = TRUE) {
         $paramList = array();
         $query = "";
         $whClause = "";
@@ -476,7 +461,7 @@ class EditRS {
      * @param array $row
      * @param iTableRS $rs
      */
-    public static function loadRow($row, iTableRS $rs) {
+    public static function loadRow($row, TableRS $rs) {
 
         if (is_array($row)) {
             foreach ($rs as $dbF) {
@@ -497,7 +482,7 @@ class EditRS {
      *
      * @param iTableRS $rs
      */
-    public static function updateStoredVals(iTableRS $rs) {
+    public static function updateStoredVals(TableRS $rs) {
 
         foreach ($rs as $dbF) {
 
@@ -523,7 +508,7 @@ class EditRS {
      * @param array $whereDbFieldArray
      * @return int
      */
-    public static function update(\PDO $dbh, iTableRS $rs, array $whereDbFieldArray) {
+    public static function update(\PDO $dbh, TableRS $rs, array $whereDbFieldArray) {
         $setList = array();
         $paramList = array();
         $query = "";
@@ -604,7 +589,7 @@ class EditRS {
      * @param iTableRS $rs
      * @return int
      */
-    public static function insert(\PDO $dbh, iTableRS $rs) {
+    public static function insert(\PDO $dbh, TableRS $rs) {
         $colList = "";
         $valueList = "";
         $paramList = array();
@@ -656,7 +641,7 @@ class EditRS {
     }
 
 
-    public static function delete(\PDO $dbh, iTableRS $rs, array $whereDbFieldArray, $combiner = "and") {
+    public static function delete(\PDO $dbh, TableRS $rs, array $whereDbFieldArray, $combiner = "and") {
         $paramList = array();
         $query = "";
         $whClause = "";
