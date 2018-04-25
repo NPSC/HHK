@@ -146,7 +146,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
             $r['visitFee'] = number_format($visit['vfa'],2);
             $visitFeePaid = HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-circle-check', 'style'=>'float:left;', 'title'=>'Fees paid'));
 
-        } else if ($visit['vfa'] > 0) {
+        } else if ($visit['vfa'] > 0 && $uS->VisitFeeDelayDays < $visit['nit']) {
 
             $r['visitFee'] = number_format($visit['vfa'],2);
 
@@ -171,7 +171,6 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
 
         $r['adjch'] = '';
     }
-
 
 
     $changeRoomIcon = HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-info', 'style'=>'float:left;', 'title'=>'Changed Rooms'));
@@ -564,7 +563,11 @@ where
 
                 $totalLodgingCharge += $visit['chg'];
                 $totalAddnlCharged += ($visit['addch']);
-                $totalVisitFee += $visit['vfa'];
+
+                if ($visit['nit'] > $uS->VisitFeeDelayDays) {
+                    $totalVisitFee += $visit['vfa'];
+                }
+
                 $totalCharged += $visit['chg'];
                 $totalFullCharge += $visit['fcg'];
                 $totalAmtPending += $visit['pndg'];

@@ -285,7 +285,7 @@ if (isset($_POST['btnClnPhone'])) {
 
 // CLean names
 if (isset($_POST['btnClnNames'])) {
-    // Clean up phone numbers
+    // Clean up
     $accordIndex = 1;
     $stmt = $dbh->query("select * from `name` where idName > 0 and Record_Member = 1 and Name_Last <> '';");
     $c = 0;
@@ -353,7 +353,15 @@ if (isset($_POST['btnClnNames'])) {
 
 // Database backup on demand
 $bkupMsg = "";
-$to = $config->get('backup', 'BackupEmailAddr', '');
+$igtables = array(
+    'Zip code data' => 'postal_codes',
+    'street name suffixes and common misspellings' => 'street_suffix',
+    'Apt, Unit, etc.' => 'secondary_unit_desig',
+    'Generated table' => 'mail_listing',
+    'Generated table' => 'member_history',
+    'List of world languages' => 'language',
+    'List of world country codes' => 'country_code',
+    );
 
 if (isset($_POST["btnDoBackup"])) {
 
@@ -362,16 +370,6 @@ if (isset($_POST["btnDoBackup"])) {
     $bkupAlert->set_Context(alertMessage::Notice);
 
     // ignore tables
-    $igtables = array(
-        1 => 'postal_codes',
-        2 => 'street_suffix',
-        3 => 'secondary_unit_desig',
-        4 => 'mail_listing',
-        5 => 'member_history',
-        6 => 'language',
-        7 => 'country_code',
-        8 => 'activity',
-        );
 
     $dbBack = new SiteDbBackup('/tmp' . DS, ciCFG_FILE);
 
@@ -382,7 +380,6 @@ if (isset($_POST["btnDoBackup"])) {
     }
 
     $bkupMsg = $bkupAlert->createMarkup('Result: ' . $dbBack->getErrors());
-
 }
 
 /*
@@ -451,65 +448,6 @@ if (isset($_POST["btnDelDups"])) {
     $delNamesMsg = $delDupsAlert->createMarkup();
 }
 
-function readErrorFile($fname) {
-
-    if (file_exists($fname)) {
-        $contents = nl2br(file_get_contents($fname));
-    } else {
-        $contents = '<span>Error Log is Empty.</span>';
-    }
-
-    return $contents;
-}
-
-/*
- *  List Errors
- */
-$contents = "";
-if (isset($_POST["btnSvrErrors"])) {
-
-    $accordIndex = 5;
-
-    // Admin errors
-    $contents = "<h3>Administration Site Error Log</h3>";
-    $contents .= readErrorFile('error_log');
-
-    // House errors
-    if ($config->getString("site", 'House_Dir', '') != '') {
-        $contents .= "<h3>House Site Error Log</h3>";
-        $contents .= readErrorFile('../house/error_log');
-    }
-
-    // Volunteer errors
-    if ($config->getString("site", 'Volunteer_Dir', '') != '') {
-        $contents .= "<h3>Volunteer Site Error Log</h3>";
-        $contents .= readErrorFile('../volunteer/error_log');
-    }
-
-}
-
-// Delete Server Error Logs
-if (isset($_POST["btnDelErrors"])) {
-
-    $accordIndex = 5;
-    $contents = '';
-
-    if (file_exists('error_log')) {
-        unlink('error_log');
-        $contents .= 'Admin Error File Deleted.';
-    }
-
-    if (file_exists('../house/error_log')) {
-        unlink('../house/error_log');
-        $contents .= 'House Error File Deleted.';
-    }
-
-    if (file_exists('../volunteer/error_log')) {
-        unlink('../volunteer/error_log');
-        $contents .= 'Volunteer Error File Deleted.';
-    }
-
-}
 
 // View user log
 $log = '';
@@ -850,7 +788,6 @@ $selLookups = getGenLookups($dbh);
                         <li><a href="#backup">Backup Database</a></li>
                         <li><a href="#changlog">View Change Log</a></li>
                         <li><a href="#delid">Delete Member Records</a></li>
-                        <li><a href="#errors">View Server Errors</a></li>
                         <li><a href="#access">View User Access Log</a></li>
 
                     </ul>
@@ -941,7 +878,7 @@ $selLookups = getGenLookups($dbh);
                             </tr>
                         </table>
                         <div id="divMkup" style="margin-top: 10px;">
-<?php echo $markup; ?>
+                            <?php echo $markup; ?>
                         </div>
                     </div>
                     <div id="delid" class="ui-tabs-hide" >
@@ -958,9 +895,7 @@ $selLookups = getGenLookups($dbh);
                                 </td>
                             </tr>
                             <tr>
-                                <td>
-<?php echo $delIdListing ?>
-                                </td>
+                                <td><?php echo $delIdListing ?></td>
                             </tr>
                             <tr>
                                 <td ><input type="submit" name="btnDelDups"  value="Delete Name Records"/></td>
@@ -972,18 +907,6 @@ $selLookups = getGenLookups($dbh);
                                 <td><input type="button" id="btnMoveDon" value="Move Donations"/></td>
                             </tr>
                         </table>
-                    </div>
-                    <div id="errors" class="ui-tabs-hide" >
-                        <table>
-                            <tr><td colspan="2" style="background-color: transparent;"><h3>View Server Error Files</h3></td></tr>
-                            <tr>
-                                <td style="text-align:right;">
-                                    <input type="submit" name="btnSvrErrors" value="View Error Logs"/>
-                                    <input type="submit" name="btnDelErrors" value="Delete Error Logs" style="margin-left:40px;"/>
-                                </td>
-                            </tr>
-                        </table>
-                            <?php echo $contents; ?>
                     </div>
                     <div id="clean" class="ui-tabs-hide" >
                         <table>

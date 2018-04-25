@@ -622,6 +622,7 @@ WHERE
 
     public static function makeOrdersRatesTable($rates, &$totalAmt, PriceModel $priceModel, Config_Lite $labels, array $invLines, &$numberNites) {
 
+        $uS = Session::getInstance();
         $tbl = new HTMLTable();
 
         $priceModel->rateHeaderMarkup($tbl, $labels);
@@ -630,6 +631,15 @@ WHERE
         $trs = array();
         $separator = '';
         $guestNites = 0;
+        $visitFeeInvoiced = FALSE;
+        $visitNights = 0;
+
+        // Visit fee invoiced?
+        foreach ($invLines as $l) {
+            if ($l['Item_Id'] == ItemId::VisitFee) {
+                $visitFeeInvoiced = TRUE;
+            }
+        }
 
         // orders and rates
         foreach ($rates as $r) {
@@ -642,6 +652,8 @@ WHERE
                 self::addSavedTrs($trs, $tbl);
                 $trs = array();
                 $separator = 'border-top: 2px solid #2E99DD;';
+
+                $visitNights = 0;
 
             }
 
@@ -664,6 +676,7 @@ WHERE
             $tiers = $priceModel->tiersCalculation($days, $r['idrate'], $r['cat'], $r['amt'], $r['adj'], floor($days * $gDayRatio));
 
             $numberNites += $days;
+            $visitNights += $days;
 
             // Mention rate aging ....
             if ($r['glide'] > 0 && $priceModel->getGlideApplied() && $r['span'] == 0) {
@@ -680,7 +693,7 @@ WHERE
 
 
             // Lay in the visit fee (Cleaning fee)
-            if ($r['vfa'] > 0 && $r['span'] == 0) {
+            if ($r['vfa'] > 0 && $r['span'] == 0 && ($uS->VisitFeeDelayDays < $visitNights || $visitFeeInvoiced)) {
 
                 $item = array(
                     'orderNum'=>$r['vid'] . '-' . $r['span'],
@@ -1257,7 +1270,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         if ($idVisit > 0) {
             $spans = $priceModel->loadVisitNights($dbh, $idVisit);
         } else {
-            return 'Missing Input pararmeters.  ';
+            return 'Missing Visit Id.  ';
         }
 
 
