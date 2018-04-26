@@ -9,10 +9,8 @@
  */
 
 define('DEFAULT_CSS', '<link href="css/default.css" rel="stylesheet" type="text/css" />');
-define('FULLC_CSS', '<link href="css/fullcalendar.css" rel="stylesheet" type="text/css" />');
 
-define('FULLC_JS', '../js/fullcalendar.min.js');
-define('RTE_JS', '../js/rich-text-editor.js');
+
 /*
  * includes
  */

@@ -47,6 +47,8 @@ define('JQ_DT_CSS', '<link href="css/datatables.min.css" rel="stylesheet" type="
 define('MULTISELECT_CSS', '<link href="css/jquery.multiselect.css" rel="stylesheet" type="text/css" />');
 define('FAVICON', '<link rel="icon" type="image/png" href="../images/hhkIcon.png" />');
 define('DR_PICKER_CSS', '<link rel="stylesheet" href="css/daterangepicker.min.css">');
+define('FULLC_CSS', '<link href="css/fullcalendar.css" rel="stylesheet" type="text/css" />');
+define('RTE_CSS', '<link href="css/rich-text-editor.css" rel="stylesheet" type="text/css" />');
 
 define('JQ_UI_JS', '../js/jquery-ui.min.js');
 define('JQ_JS', '../js/jquery-3.1.1.min.js');
@@ -62,3 +64,5 @@ define('LOGIN_JS', '../js/login.js');
 define('MULTISELECT_JS', '../js/jquery.multiselect.min.js');
 define('DR_PICKER_JS', '../js/daterangepicker.hhk.min.js');
 define('HHK_CAL_JS', '../js/hhkcalendar-min.js');
+define('FULLC_JS', '../js/fullcalendar.min.js');
+define('RTE_JS', '../js/rich-text-editor.js');

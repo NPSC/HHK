@@ -42,82 +42,6 @@ if ($uS->rolecode > WebRole::WebUser) {
 
 $dbh = $wInit->dbh;
 
-// Get selected Editor Form text
-if (isset($_POST['cmd'])) {
-
-    $cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_STRING);
-
-    switch ($cmd) {
-
-        case 'getform':
-
-            $fn = filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_STRING);
-
-            if (!$fn || $fn == '') {
-                exit(json_encode(array('warning'=>'The Form name is blank.')));
-            }
-
-            $files = readGenLookupsPDO($dbh, 'Editable_Forms');
-
-            if (isset($files[$fn])) {
-
-                if (file_exists($fn)) {
-                    exit(json_encode(array('title'=>$files[$fn][1], 'tx'=>file_get_contents($fn), 'jsn'=>file_get_contents($files[$fn][2]))));
-                } else {
-                    exit(json_encode(array('warning'=>'This Form is missing from the server library.')));
-                }
-
-            } else {
-                exit(json_encode(array('warning'=>'The Form name is not on the acceptable list.')));
-            }
-
-            break;
-
-        case 'saveform':
-
-            $formEditorText = urldecode(filter_input(INPUT_POST, 'mu', FILTER_SANITIZE_STRING));
-
-            $rteFileSelection = filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_STRING);
-
-            $files = readGenLookupsPDO($dbh, 'Editable_Forms');
-
-            if ($rteFileSelection == '') {
-
-                $rteMsg = 'Nothing saved. Select a Form to edit.';
-
-            } else if (isset($files[$rteFileSelection]) === FALSE) {
-
-                $rteMsg = 'Nothing saved. Form name not accepted. ';
-
-            } else if (file_exists($rteFileSelection) === FALSE) {
-
-                $rteMsg = 'Nothing saved. Form does not exist. ';
-
-            } else if ($formEditorText == '') {
-
-                $rteMsg = 'Nothing saved. Form text is blank.  ';
-
-            } else {
-
-                $rtn = file_put_contents($rteFileSelection, $formEditorText);
-
-                if ($rtn > 0) {
-                    $rteMsg = "Success - $rtn bytes saved.";
-
-                } else {
-                    $rteMsg = "Form Not Saved.";
-                }
-            }
-
-            exit(json_encode(array('response'=>$rteMsg)));
-
-            break;
-    }
-
-    exit(json_encode(array('warning'=>'Unspecified')));
-}
-
-
 $resultMsg = '';
 $errorMsg = '';
 $tabIndex = 0;
@@ -275,128 +199,6 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
         $externalErrMsg = "Transfer Error: " . $ex->getMessage();
     }
 }
-
-if (isset($_POST["btnUlPatch"])) {
-    $tabIndex = 1;
-}
-
-//if (isset($_FILES['patch']) && $_FILES['patch']['name'] != '') {
-//    $tabIndex = 1;
-//    $errorCount = 0;
-//    $uploadFileName = $_FILES['patch']['name'];
-//
-//    // Log attempt.
-//    $logText = "Attempt software patch.  File = " . $_FILES['patch']['name'];
-//    SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
-//
-//    try {
-//
-//        SiteConfig::checkZipFile('patch');
-//
-//        $uploadfile = '..' . DS . 'patch' . DS . 'upload.zip';
-//
-//        if (move_uploaded_file($_FILES['patch']['tmp_name'], $uploadfile)) {
-//
-//            // patch system
-//            $patch = new Patch();
-//
-//            // Verify file and build #.  Throws an error on problems.
-//            $patch->verifyUpLoad($uploadfile, 'hhk/patch/patchSite.cfg', $uS->ver);
-//
-//            // Replace files
-//            $resultAccumulator .= $patch->loadFiles('../', $uploadfile);
-//
-//            // Annotate any missed files.
-//            foreach ($patch->results as $err) {
-//                $errorMsg .= 'Patch File Copy Error: ' . $err['error'] . '<br/>';
-//            }
-//
-//            // Update config file
-//            $resultAccumulator .= $patch->loadConfigUpdates('../patch/patchSite.cfg', $config);
-//            $resultAccumulator .= $patch->deleteConfigItems('../patch/deleteSiteItems.cfg', $config);
-//
-//            // Update labels file
-//            $resultAccumulator .= $patch->loadConfigUpdates('../patch/patchLabel.cfg', $labl);
-//            $resultAccumulator .= $patch->deleteConfigItems('../patch/deleteLabelItems.cfg', $labl);
-//
-//            // Update Tables
-//            $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
-//
-//            foreach ($patch->results as $err) {
-//
-//                if ($err['errno'] == 1091 || $err['errno'] == 1061) {  // key not exist, Duplicate Key name
-//                    continue;
-//                }
-//
-//                $errorMsg .= 'Create Table Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-//            }
-//
-//            // Run SQL patches
-//            if (file_exists('../patch/patchSQL.sql')) {
-//
-//                $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../patch/patchSQL.sql', "Updates");
-//
-//
-//                foreach ($patch->results as $err) {
-//
-//                    if ($err['errno'] == 1062 || $err['errno'] == 1060) {
-//                        continue;
-//                    }
-//
-//                    $errorMsg .= 'Patch Update Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-//                    $errorCount++;
-//                }
-//            }
-//
-//            // Update views
-//            if ($errorCount < 1) {
-//
-//                $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllViews.sql', 'Views');
-//
-//                foreach ($patch->results as $err) {
-//
-//                    $errorMsg .= 'Create Views Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-//                }
-//            } else {
-//
-//                $errorMsg .= '**Views not updated**  ';
-//            }
-//
-//            // Update SPs
-//            if ($errorCount < 1) {
-//                $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
-//
-//                foreach ($patch->results as $err) {
-//
-//                    $errorMsg .= 'Create Stored Procedures Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-//                }
-//
-//            } else {
-//                $errorMsg .= '** Stored Procedures not updated**  ';
-//            }
-//
-//            // Update pay types
-//            $cnt = SiteConfig::updatePayTypes($dbh);
-//            if ($cnt > 0) {
-//                $resultAccumulator .= "Pay Types updated.  ";
-//            }
-//
-//            // Log update.
-//            $logText = "Loaded software patch - " . $uploadFileName . "; " . $errorMsg;
-//            SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
-//
-//        } else {
-//            throw new Hk_Exception_Runtime("Problem moving uploaded patch file.  ");
-//        }
-//
-//    } catch (Exception $hex) {
-//        $errorMsg .= '***' . $hex->getMessage();
-//        // Log failure.
-//        $logText = "Fail software patch - " . $uploadFileName . $errorMsg;
-//        SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
-//    }
-//}
-//
 
 if (isset($_POST['btnUpdate'])) {
 
@@ -692,12 +494,6 @@ if (is_null($wsConfig) === FALSE) {
     }
 }
 
-
-// Form editor
-$rteSelectForm = HTMLSelector::generateMarkup(
-        HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Editable_Forms')), $rteFileSelection, TRUE)
-        , array('id'=>'frmEdSelect', 'name'=>'frmEdSelect'));
-
 // Alert Message
 $webAlert = new alertMessage("webContainer");
 $webAlert->set_DisplayAttr("none");
@@ -721,7 +517,6 @@ $getWebReplyMessage = $webAlert->createMarkup();
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo RTE_JS; ?>"></script>
 
 <script type="text/javascript">
 $(document).ready(function () {
@@ -737,71 +532,6 @@ $(document).ready(function () {
             alert('Subsidy Id must be different than the Return Payor Id');
         }
     });
-
-    // Form edit form select drives the whole process.
-    $('#frmEdSelect').change(function () {
-        $('#rteMsg').text('');
-
-        if ($(this).val() === '') {
-            $('#spnRteLoading').hide();
-            $('#spnEditorTitle').text('Select a form');
-            $('#rteContainer').empty()
-            return;
-        }
-
-        $('#spnRteLoading').show();
-
-        $.post('Configure.php', {cmd:'getform', fn: $(this).val()}, function (rawData){
-
-            $('#spnRteLoading').hide();
-
-            try {
-                var data = $.parseJSON(rawData);
-            } catch (error) {
-                alert('Server Error');
-                return;
-            }
-
-            if (data.gotopage) {
-                window.open(data.gotopage, '_self');
-            }
-
-            if (data.warning && data.warning !== '') {
-                $('#rteMsg').text(data.warning);
-            }
-
-            var rte = $('#rteContainer');
-
-            if (data.jsn) {
-
-                var tools = $.parseJSON(data.jsn);
-
-                rte.empty().richTextEditor({
-                    menus: tools.menus,
-                    buttons: tools.buttons,
-                    formName: $('#frmEdSelect').val(),
-                    onGet: function () {
-                        return (data.tx ? data.tx : 'Nothing');
-                    },
-                    onSave: function () {
-
-                        var parms = {cmd:'saveform', fn: $('#frmEdSelect').val(), mu: encodeURI($(this).html())};
-
-                        $.post('Configure.php', parms, function (data){
-                            data = $.parseJSON(data);
-                            $('#rteMsg').text(data.response);
-                        });
-                    }
-                });
-            }
-
-            if (data.title) {
-                $('#spnEditorTitle').text('Editing ' + data.title);
-            }
-        });
-    });
-
-
     tbs.tabs("option", "active", tabIndex);
     $('#tabs').show();
 });
@@ -820,7 +550,6 @@ $(document).ready(function () {
                     <li><a href="#holidays">Set Holidays</a></li>
                     <li><a href="#loadZip">Load Zip Codes</a></li>
                     <li><a href="#labels">Labels & Prompts</a></li>
-                    <li><a href="#agreeEdit">Form Editor</a></li>
                     <?php if ($serviceName != '') {echo '<li><a href="#external">' . $serviceName . '</a></li>';} ?>
                 </ul>
                 <div id="config" class="ui-tabs-hide" >
@@ -835,14 +564,6 @@ $(document).ready(function () {
                         <?php echo $labels; ?>
                         <div style="float:right;margin-right:40px;"><input type="reset" name="btnreset" value="Reset" style="margin-right:5px;"/><input type="submit" name="btnLabelCnf" value="Save Labels"/></div>
                     </form>
-                </div>
-                <div id="agreeEdit" class="ui-tabs-hide" >
-                    <p>Select the form to edit from the following list: <?php echo $rteSelectForm; ?><span id="spnRteLoading" style="font-style: italic; display:none;">Loading...</span></p>
-                    <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
-                    <fieldset style="clear:left; float:left; margin-top:10px;">
-                        <legend><span id="spnEditorTitle" style="font-size: 1em; font-weight: bold">Select a form</span></legend>
-                        <div id="rteContainer"></div>
-                    </fieldset>
                 </div>
                     <?php if ($serviceName != '') { ?>
                         <div id="external" class="ui-tabs-hide" >

@@ -12,10 +12,6 @@
 
 define('MAX_IDLE_TIME', '1800');
 
-
-define('FULLC_JS', '../js/fullcalendar.min.js');
-define('FULLC_CSS', 'css/fullcalendar.css');
-
 define('PUBLIC_CSS', "<link href='css/publicStyle.css' rel='stylesheet' type='text/css' />");
 
 require ('../functions/commonDefines.php');
