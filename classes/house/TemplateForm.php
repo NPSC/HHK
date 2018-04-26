@@ -24,6 +24,7 @@ abstract class TemplateForm {
     function __construct($fileName, $path = 'conf/') {
 
         $this->mime = array(
+            'txt'      => 'text/html',
             'html'      => 'text/html',
             'htm'      => 'text/html',
             'mht'      => 'text/html',

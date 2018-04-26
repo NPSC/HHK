@@ -156,7 +156,7 @@ $mail->FromName = $siteName;
 $mail->isHTML(true);
 $mail->Subject = $subjectLine;
 
-$sForm = new SurveyForm('survey.html');
+$sForm = new SurveyForm('survey.txt');
 $badAddresses = 0;
 $resultsRegister = '';
 $deparatureDT = new \DateTime();

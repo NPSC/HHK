@@ -1706,7 +1706,7 @@ class ReservationSvcs {
 
         $guest = new Guest($dbh, '', $idGuest);
 
-        $confirmForm = new ConfirmationForm('confirmation.html');
+        $confirmForm = new ConfirmationForm('confirmation.txt');
 
         $formNotes = $confirmForm->createNotes($notes, !$sendEmail);
 
@@ -1771,7 +1771,7 @@ class ReservationSvcs {
 
         $uS = Session::getInstance();
 
-        $instructFileName = REL_BASE_DIR . 'conf'. DS . 'agreement.html';
+        $instructFileName = REL_BASE_DIR . 'conf'. DS . 'agreement.txt';
 
 
         if ($uS->RegForm == 1) {

@@ -106,7 +106,7 @@ if (isset($_POST['hdnCfmRid'])) {
     require(HOUSE . 'TemplateForm.php');
     require(HOUSE . 'ConfirmationForm.php');
 
-    $confirmForm = new ConfirmationForm($uS->ConfirmFile);
+    $confirmForm = new ConfirmationForm('confirmation.txt');
 
     $formNotes = $confirmForm->createNotes($notes, FALSE);
     $form = '<!DOCTYPE html>' . $confirmForm->createForm($confirmForm->makeReplacements($resv, $guest, 0, $formNotes));
