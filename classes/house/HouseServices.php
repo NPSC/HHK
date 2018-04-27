@@ -247,7 +247,7 @@ class HouseServices {
 
         // Change STAY Checkin date
         if (isset($post['stayCkInDate'])) {
-            $reply .= $visit->moveStay($dbh, $post['stayCkInDate']);
+            $reply .= $visit->checkStayStartDates($dbh, $post['stayCkInDate']);
         }
 
 

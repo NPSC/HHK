@@ -587,7 +587,7 @@ class VisitView {
         }
 
         $uS = Session::getInstance();
-		
+
         $includeKeyDep = FALSE;
         if ($uS->KeyDeposit && $r['Status'] == VisitStatus::CheckedIn && ($action == '' || $action == 'pf') && $visitCharge->getDepositCharged() > 0 && ($visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid()) < $visitCharge->getDepositCharged()) {
             $includeKeyDep = TRUE;
@@ -621,7 +621,7 @@ class VisitView {
 
 
         if ($includeKeyDep || $includeVisitFee || $includeAddnlCharge || $showRoomFees) {
-			
+
             // Current fees block
             $currFees = HTMLContainer::generateMarkup('fieldset',
                     HTMLContainer::generateMarkup('legend', ($r['Status'] == VisitStatus::CheckedIn ? 'To-Date Fees & Balance Due' : 'Final Fees & Balance Due'), array('style'=>'font-weight:bold;'))
@@ -750,7 +750,7 @@ class VisitView {
                 + $visitCharge->getItemInvCharges(ItemId::AddnlCharge)
                 + $totalMOA
                 + $totalDiscounts;
-                
+
             //if show visit fee
             if($showVisitFee){
 	            $totalCharged += $visitCharge->getVisitFeeCharged();

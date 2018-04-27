@@ -897,7 +897,6 @@ class Visit {
         $this->visitRS->Actual_Departure->setNewVal($dateDeparted->format("Y-m-d H:i:s"));
         $this->visitRS->Span_End->setNewVal($dateDeparted->format("Y-m-d H:i:s"));
         $this->visitRS->Status->setNewVal(VisitStatus::CheckedOut);
-        //$this->visitRS->Key_Dep_Disposition->setNewVal($newDepositDisposition);
 
         $this->updateVisitRecord($dbh, $username);
 
@@ -1063,100 +1062,195 @@ class Visit {
      * @param array $newStayStartDates posted array of stay start dates
      * @return string
      */
-    public function moveStay(\PDO $dbh, $newStayStartDates) {
+    public function checkStayStartDates(\PDO $dbh, $newStayStartDates) {
 
         $uS = Session::getInstance();
         $reply = '';
+        $staysToUpdate = array();
+        $visitActive = FALSE;
+
+        if ($this->getSpan() == 0) {
+            $visitActive = TRUE;
+        }
 
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
 
+        if ($this->getSpanStart() == '') {
+            return 'Visit Start Date Missing.  ';
+        }
+
         $visitStart = new \DateTime($this->getSpanStart());
         $visitStart->setTime(0, 0, 0);
 
-        if ($this->getVisitStatus() == VisitStatus::CheckedIn || $this->getSpanEnd() == '') {
+        if ($this->getVisitStatus() == VisitStatus::CheckedIn && $this->getExpectedDeparture() != '') {
 
-            $vend = new DateTime($this->getExpectedDeparture());
+            $vend = new \DateTime($this->getExpectedDeparture());
 
             if ($vend < $today) {
                 $vend = new \DateTime($today->format('Y-m-d'));
             }
-
-        } else {
-
+        } else if ($this->getSpanEnd() != '') {
             $vend = new \DateTime($this->getSpanEnd());
-
+        } else {
+            return 'A non-active visit has no span end date.  ';
         }
 
         $vend->setTime(0, 0, 0);
+
+        $firstStayStartDT = new \DateTime($vend->format('Y-m-d 00:00:00'));
 
         $stays = $this->loadStaysStatic($dbh, $this->getIdVisit(), $this->getSpan(), '');  // Loads all stays
 
         foreach ($stays as $stayRs) {
 
-            if (isset($newStayStartDates[$stayRs->idStays->getStoredVal()])) {
+            $stayStartDT = new \DateTime($stayRs->Span_Start_Date->getStoredVal());
+            $stayStartTime = new \DateTime($stayRs->Span_Start_Date->getStoredVal());
+            $stayStartDT->setTime(0, 0, 0);
 
-                $newStayStart = filter_var($newStayStartDates[$stayRs->idStays->getStoredVal()], FILTER_SANITIZE_STRING);
+            if (isset($newStayStartDates[$stayRs->idStays->getStoredVal()]) === FALSE) {
 
-                if ($newStayStart != '') {
-                    $ckinDT = new DateTime($newStayStart);
-                    $ckinDT->setTime(0, 0, 0);
-                } else {
-                    continue;
+                if ($visitActive && $stayStartDT < $firstStayStartDT) {
+                    $firstStayStartDT = new \DateTime($stayStartDT->format('Y-m-d 00:00:00'));
                 }
+                continue;
+            }
 
-                $stayStartDT = new \DateTime($stayRs->Span_Start_Date->getStoredVal());
-                $stayStartDT->setTime(0, 0, 0);
+            $newStayStart = filter_var($newStayStartDates[$stayRs->idStays->getStoredVal()], FILTER_SANITIZE_STRING);
+
+            if ($newStayStart == '') {
+
+                if ($visitActive && $stayStartDT < $firstStayStartDT) {
+                    $firstStayStartDT = new \DateTime($stayStartDT->format('Y-m-d 00:00:00'));
+                }
+                continue;
+            }
+
+            try {
+                $ckinDT = new \DateTime($newStayStart);
+                $ckinDT->setTime(0, 0, 0);
+            } catch(Exception $ex) {
+
+                $reply .= "Malformed new Stay Start date: " . $newStayStart . ".  ";
+
+                if ($visitActive && $stayStartDT < $firstStayStartDT) {
+                    $firstStayStartDT = new \DateTime($stayStartDT->format('Y-m-d 00:00:00'));
+                }
+                continue;
+            }
+
+            // test against visit dates.
+            if ($ckinDT == $stayStartDT) {
+                // No Change
+                if ($visitActive && $stayStartDT < $firstStayStartDT) {
+                    $firstStayStartDT = new \DateTime($stayStartDT->format('Y-m-d 00:00:00'));
+                }
+                continue;
+
+            } else if ($ckinDT < $visitStart) {
+                //
+                $reply .= "Guest's start date cannot be on or before the visit span starts: " . $visitStart->format('M j, Y') . '.  ';
+                if ($visitActive && $stayStartDT < $firstStayStartDT) {
+                    $firstStayStartDT = new \DateTime($stayStartDT->format('Y-m-d 00:00:00'));
+                }
+                continue;
+
+            } else if ($ckinDT >= $vend) {
+                //
+                $reply .= "Guest's start date cannot be on or after the visit span ends: " . $vend->format('M j, Y') . '.  ';
+                if ($visitActive && $stayStartDT < $firstStayStartDT) {
+                    $firstStayStartDT = new \DateTime($stayStartDT->format('Y-m-d 00:00:00'));
+                }
+                continue;
+
+            } else if ($ckinDT > $today) {
+                // Future
+                $reply .= 'Cannot change the start date to a future date.  ';
+                if ($visitActive && $stayStartDT < $firstStayStartDT) {
+                    $firstStayStartDT = new \DateTime($stayStartDT->format('Y-m-d 00:00:00'));
+                }
+                continue;
+            }
+
+            // Compute stay end date
+            if ($stayRs->Span_End_Date->getStoredVal() != '') {
 
                 $stayEndDT = new \DateTime($stayRs->Span_End_Date->getStoredVal());
                 $stayEndDT->setTime(0, 0, 0);
 
+            } else if ($stayRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
+
+                $stayEndDT = $vend;
+
+            } else {
+
+                $reply .= "Stay's span end date missing.  ";
+                if ($visitActive && $stayStartDT < $firstStayStartDT) {
+                    $firstStayStartDT = new \DateTime($stayStartDT->format('Y-m-d 00:00:00'));
+                }
+                continue;
+            }
+
+            if ($ckinDT >= $stayEndDT) {
                 //
-                if ($ckinDT == $stayStartDT) {
-                    // No Change
-                    continue;
-
-                } else if ($ckinDT < $visitStart && $this->getSpan() > 0) {
-                    //
-                    $reply .= 'Cannot check in before the visit span starts: ' . $visitStart->format('M j, Y') . '.  ';
-                    continue;
-
-                } else if ($ckinDT > $stayEndDT && $stayRs->Status->getStoredVal() != VisitStatus::CheckedIn) {
-                    //
-                    $reply .= "Cannot check the guest in after the guest's stay ends: " . $stayEndDT->format('M j, Y') . '.  ';
-                    continue;
-
-                } else if ($ckinDT > $vend) {
-                    //
-                    $reply .= 'Cannot check in after the visit span ends: ' . $vend->format('M j, Y') . '.  ';
-                    continue;
-
-                } else if ($ckinDT > $today) {
-                    // Future
-                    $reply .= 'Cannot change a checked-in date to a future date.  ';
-                    continue;
+                $reply .= "Guest's start date cannot be on or after the guest's stay ends: " . $stayEndDT->format('M j, Y') . '.  ';
+                if ($visitActive && $stayStartDT < $firstStayStartDT) {
+                    $firstStayStartDT = new \DateTime($stayStartDT->format('Y-m-d 00:00:00'));
                 }
+                continue;
+            }
 
-                // Stay can be moved
+            // Change the start date
+            $newStart = $ckinDT->format('Y-m-d') . ' ' . $stayStartTime->format('H:i:s');
+            $stayRs->Span_Start_Date->setNewVal($newStart);
 
+            // Check the stay expected end date.
+            $stayExpEnd = new \DateTime($stayRs->Expected_Co_Date->getStoredVal());
+            $stayExpEnd->setTime(0, 0, 0);
 
-                // Move entire visit?
-                if ($ckinDT < $visitStart && $this->getSpan() == 0) {
+            if ($stayExpEnd <= $stayEndDT) {
+                $stayRs->Expected_Co_Date->setNewVal($vend->format('Y-m-d') . ' ' . $uS->CheckOutTime);
+            }
 
-                    $startDelta = 0 - ($ckinDT->diff($visitStart, TRUE)->days);
+            if ($visitActive && $ckinDT < $firstStayStartDT) {
+                $firstStayStartDT = new \DateTime($ckinDT->format('Y-m-d 00:00:00'));
+            }
 
-                    $reply .= VisitView::moveVisit($dbh, $this->getIdVisit(), $this->getSpan(), $startDelta, $startDelta, $uS->username);
+            $staysToUpdate[] = $stayRs;
 
-                } else {
+            $reply .= 'Stay start date moved to: ' . $ckinDT->format('M j, Y') . '.  ';
 
-                    $ckinDT = new DateTime($newStayStart);
-                    $stayRs->Span_Start_Date->setNewVal($ckinDT->format('Y-m-d H:i:s'));
-                    VisitView::saveStaysDates($dbh, array($stayRs), $this->getIdRegistration(), $uS->username);
-                    $reply .= 'Stay start date moved. ';
-                }
+        }
+
+        if (count($staysToUpdate) > 0) {
+            VisitView::saveStaysDates($dbh, $staysToUpdate, $this->getIdRegistration(), $uS->username);
+            $this->loadStays($dbh);
+        }
+
+        // See if the visit start changed.
+        if ($visitActive && $visitStart < $firstStayStartDT) {
+
+            $visitStartTime = new \DateTime($this->getSpanStart());
+
+            // Update visit exepected departure
+            $this->visitRS->Arrival_Date->setNewVal($firstStayStartDT->format('Y-m-d') . ' ' . $visitStartTime->format('H:i:s'));
+            $this->visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+            $this->visitRS->Updated_By->setNewVal($uS->username);
+
+            $uctr = $this->updateVisitRecord($dbh, $uS->username);
+
+            if ($uctr > 0) {
+
+                $reply .= 'Visit Arrival date changed to: ' . $firstStayStartDT->format('M j, Y') . '.  ';
+
+                // Update reservation expected departure
+                $resv = Reservation_1::instantiateFromIdReserv($dbh, $this->getReservationId());
+                $resv->setActualArrival($firstStayStartDT->format('Y-m-d' . ' ' . $visitStartTime->format('H:i:s')));
+                $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
 
             }
         }
+
         return $reply;
     }
 
@@ -1176,15 +1270,18 @@ class Visit {
             return array('message' => '');
         }
 
+        $uS = Session::getInstance();
         $isChanged = FALSE;
         $rtnMsg = '';
-        $nowDT = new \DateTime();
-        $nowDT->setTime(0, 0, 0);
+        $staysToUpdate = array();
+
+        $todayDT = new \DateTime();
+        $todayDT->setTime(0, 0, 0);
 
 
         // Init the latest departure date for the visit
         $lastDepartureDT = new \DateTime($this->getArrivalDate());
-        $departureDateUpdated = FALSE;
+        $lastDepartureDT->setTime(0, 0, 0);
 
         foreach ($this->stays as $stayRS) {
 
@@ -1193,111 +1290,133 @@ class Visit {
             $ecoDT = new \DateTime($stayRS->Expected_Co_Date->getStoredVal());
             $ecoDT->setTime(0, 0, 0);
 
-            // Get the new date
-            if (isset($guestDates[$guestId])) {
-
-                $coDate = filter_var($guestDates[$guestId], FILTER_SANITIZE_STRING);
-
-                // no value set?
-                if ($coDate == '') {
-                    continue;
+            // Not trying to update it.
+            if (isset($guestDates[$guestId]) === FALSE) {
+                // Check last date
+                if ($ecoDT > $lastDepartureDT) {
+                    $lastDepartureDT = new \DateTime($ecoDT->format('Y-m-d 00:00:00'));
                 }
 
-                try {
-                    $coDT = setTimeZone(NULL, $coDate);
-                    $coDT->setTime(0, 0, 0);
-                } catch (Exception $ex) {
-                    $rtnMsg .= "Something wrong with the Expected Checkout Date: " . $coDate;
-                    continue;
-                }
-
-                if ($ecoDT == $coDT) {
-
-                    if ($ecoDT > $lastDepartureDT) {
-                        $lastDepartureDT = $ecoDT;
-                    }
-
-                    Continue;
-                }
-
-                $ecoDT = new \DateTime($coDT->format('Y-m-d 00:00:00'));
-
-            } else {
                 continue;
             }
 
+            // Get the new date
+            $coDate = filter_var($guestDates[$guestId], FILTER_SANITIZE_STRING);
+
+            // no value set?
+            if ($coDate == '') {
+                continue;
+            }
+
+            try {
+                $coDT = setTimeZone(NULL, $coDate);
+                $coDT->setTime(0, 0, 0);
+            } catch (Exception $ex) {
+                $rtnMsg .= "Something wrong with the Expected Checkout Date: " . $coDate;
+                continue;
+            }
+
+            if ($ecoDT == $coDT) {
+
+                // Check last date
+                if ($ecoDT > $lastDepartureDT) {
+                    $lastDepartureDT = new \DateTime($ecoDT->format('Y-m-d 00:00:00'));
+                }
+
+                Continue;
+            }
 
             // Only if trying to set a new expected checkout date
-            if ($ecoDT < $nowDT && isset($guestDates[$guestId])) {
-                $rtnMsg .= "Expected Checkout date is earlier than today.  ";
-                continue;
+            if ($coDT < $todayDT) {
+
+                $rtnMsg .= "Expected Checkout date cannot be earlier than today.  ";
+                 // Check last date
+                if ($ecoDT > $lastDepartureDT) {
+                    $lastDepartureDT = new \DateTime($ecoDT->format('Y-m-d 00:00:00'));
+                }
+
+               continue;
             }
 
-            // make span end date
-            $spnEndDT = new \DateTime($stayRS->Span_Start_Date->getStoredVal());
-            $spnEndDT->setTime(0, 0, 0);
+            // Span start date
+            $spnStartDT = new \DateTime($stayRS->Span_Start_Date->getStoredVal());
+            $spnStartDT->setTime(0, 0, 0);
 
             // Earlier than check in date?
-            if ($ecoDT < $spnEndDT) {
-                $rtnMsg .= "Expected Checkout date cannot be earlier than the Checkin date.  ";
+            if ($coDT <= $spnStartDT) {
+
+                $rtnMsg .= "The Expected Checkout date cannot be earlier or the same as the Check-in date.  ";
+                // Check last date
+                if ($ecoDT > $lastDepartureDT) {
+                    $lastDepartureDT = new \DateTime($ecoDT->format('Y-m-d 00:00:00'));
+                }
+
                 continue;
             }
 
-            if ($nowDT->diff($ecoDT)->days > $maxExpected) {
+            if ($todayDT->diff($coDT)->days > $maxExpected) {
+
                 $rtnMsg .= "Expected Checkout date cannot be beyond " . $maxExpected . " days from today.  The max days setting can be changed.";
+                // Check last date
+                if ($ecoDT > $lastDepartureDT) {
+                    $lastDepartureDT = new \DateTime($ecoDT->format('Y-m-d 00:00:00'));
+                }
+
                 continue;
             }
 
-            if ($ecoDT > $lastDepartureDT) {
-                $lastDepartureDT = $ecoDT;
-                $departureDateUpdated = TRUE;
+
+
+            // Okay to update
+            if ($coDT > $lastDepartureDT) {
+                $lastDepartureDT = new \DateTime($coDT->format('Y-m-d 00:00:00'));
             }
 
-
-            $stayRS->Expected_Co_Date->setNewVal($ecoDT->format('Y-m-d 10:00:00'));
+            $stayRS->Expected_Co_Date->setNewVal($coDT->format('Y-m-d') . ' ' . $uS->CheckOutTime);
             $stayRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
             $stayRS->Updated_By->setNewVal($uname);
 
-            $cnt = EditRS::update($dbh, $stayRS, array($stayRS->idStays));
+            $staysToUpdate[] = $stayRS;
 
-            if ($cnt > 0) {
-
-                $logText = VisitLog::getUpdateText($stayRS);
-                VisitLog::logStay($dbh, $this->getIdVisit(), $this->getSpan(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(), $stayRS->idName->getStoredVal(), $this->getIdRegistration(), $logText, "update", $uname);
-                EditRS::updateStoredVals($stayRS);
-                $isChanged = TRUE;
-            }
-
+            $rtnMsg .= 'Stay expected departure date changed to: ' . $coDT->format('M j, Y') . '.  ';
+            $isChanged = TRUE;
         }
 
+        // Update indicated stays.
+        if (count($staysToUpdate) > 0) {
+            VisitView::saveStaysDates($dbh, $staysToUpdate, $this->getIdRegistration(), $uS->username);
+            $this->loadStays($dbh);
+        }
 
-        if ($departureDateUpdated) {
+        // See if the visit expected departure changed.
+        $visitExpDepDT = new \DateTime($this->getExpectedDeparture());
+        $visitExpDepDT->setTime(0, 0, 0);
+
+        if ($visitExpDepDT != $lastDepartureDT) {
 
             // Update visit exepected departure
-            $this->visitRS->Expected_Departure->setNewVal($lastDepartureDT->format('Y-m-d 10:00:00'));
+            $this->visitRS->Expected_Departure->setNewVal($lastDepartureDT->format('Y-m-d') . ' ' . $uS->CheckOutTime);
             $this->visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
             $this->visitRS->Updated_By->setNewVal($uname);
 
             $uctr = $this->updateVisitRecord($dbh, $uname);
 
-
             if ($uctr > 0) {
 
-                $rtnMsg = 'Visit expected departure date(s) changed.  ';
+                $rtnMsg .= 'Visit expected departure date changed to: ' . $lastDepartureDT->format('M j, Y') . '.  ';
+                $isChanged = TRUE;
 
                 // Update reservation expected departure
                 $resv = Reservation_1::instantiateFromIdReserv($dbh, $this->getReservationId());
-                $resv->setExpectedDeparture($lastDepartureDT->format('Y-m-d 10:00:00'));
+                $resv->setExpectedDeparture($lastDepartureDT->format('Y-m-d' . ' ' . $uS->CheckOutTime));
                 $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
 
                 // Move other reservations to alternative rooms
                 $rtnMsg .= ReservationSvcs::moveResvAway($dbh, new \DateTime($this->getArrivalDate()), $lastDepartureDT, $this->getidResource(), $uname);
             }
-
-            return array('message'=>$rtnMsg, 'isChanged' => $isChanged);
         }
 
-        return array('message'=>$rtnMsg);
+        return array('message'=>$rtnMsg, 'isChanged' => $isChanged);
     }
 
     protected function onLeaveStays(\PDO $dbh, $visitStatus, $changeDate, $uname, $stayOnLeave = 0) {
@@ -1679,14 +1798,6 @@ class Visit {
     public function setKeyDeposit($v) {
         $this->visitRS->Key_Deposit->setNewVal($v);
     }
-
-//    public function setKeyDepDisposition($keyDepDisposition) {
-//        $this->visitRS->Key_Dep_Disposition->setNewVal($keyDepDisposition);
-//    }
-//
-//    public function getKeyDepDisposition() {
-//        return $this->visitRS->Key_Dep_Disposition->getStoredVal();
-//    }
 
     public function getVisitStatus() {
         return $this->visitRS->Status->getStoredVal();
