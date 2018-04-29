@@ -340,14 +340,6 @@ class VisitView {
                 $r['Cked'] = "y";
             }
 
-
-            try {
-                $ckinDT = new \DateTime($r['Checkin_Date']);
-                $ckinDT->setTime(0, 0, 0);
-            } catch (Exception $ex) {
-
-            }
-
             // Prepare checkbox attributes.
             $cbAttr = array(
                 'id' => 'stayActionCb_' . $r['idName'],

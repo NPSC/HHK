@@ -168,11 +168,9 @@ class HouseServices {
             $payFailPage = filter_var($post['payFailPage'], FILTER_SANITIZE_STRING);
         }
 
-
         if ($idVisit == 0) {
             return array("error" => "Neither Guest or Visit was selected.");
         }
-
 
         // Remove any indicated visit stays
         if (isset($post['removeCb'])) {
@@ -182,7 +180,6 @@ class HouseServices {
                 $reply .= VisitView::removeStays($dbh, $idVisit, $span, $idRemoved, $uS->username);
             }
         }
-
 
         // instantiate current visit
         $visit = new Visit($dbh, 0, $idVisit, NULL, NULL, NULL, $uS->username, $span);
@@ -270,6 +267,7 @@ class HouseServices {
             $reply .= self::undoCheckout($dbh, $visit, $newExpectedDT, $uS->username);
             $returnCkdIn = TRUE;
 
+        // Not undoing checkout...
         } else {
 
             // Instantiate a payment manager payment container.
@@ -467,7 +465,6 @@ class HouseServices {
             $returnCkdIn = TRUE;
 
         }
-
 
 
         // divert to credit payment site.

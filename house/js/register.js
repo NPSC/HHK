@@ -1332,15 +1332,11 @@ $(document).ready(function () {
             if (ui.newTab.prop('id') === 'liInvoice') {
                 $('#btnInvGo').click();
             }
-        },
-        activate: function (event, ui) {
-            if (ui.newTab.prop('id') === 'liCal') {
-                $('#calendar').hhkCalendar('render');
-            }
         }
-    });
+        });
     $('#mainTabs').show();
     $('#mainTabs').tabs("option", "active", defaultTab);
+
     $('#calendar').hhkCalendar('render');
 
 });
