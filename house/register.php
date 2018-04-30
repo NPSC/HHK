@@ -281,17 +281,20 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
-        <link href='css/fullcalendar.css'  rel='stylesheet' type='text/css' />
+        <link href='css/fullcalendar.min.css'  rel='stylesheet' type='text/css' />
+        <link href='css/scheduler.min.css'  rel='stylesheet' type='text/css' />
         <?php echo FAVICON; ?>
 
+        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
+        <script type="text/javascript" src="js/fullcalendar.js"></script>
+        <script type="text/javascript" src="js/scheduler.js"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="../js/hhkcalendar-min.js"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
@@ -388,7 +391,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             ];
 
         </script>
-        <script type="text/javascript" src="js/register-min.js"></script>
+        <script type="text/javascript" src="js/register.js"></script>
         <style>
            #version {
             height: 15px;
@@ -405,10 +408,6 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             }
             .hhk-justify-c {
                 text-align: center;
-            }
-            .fc-content {
-                height: 680px;
-                overflow-y: auto;
             }
             .ui-menu-item-wrapper {min-width: 120px;}
         </style>
@@ -448,6 +447,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 </ul>
                 <div id="vcal" style="clear:left; padding: .6em 1em; display:none; <?php echo $divFontSize; ?>">
                     <?php echo $viewWeeks; echo $colorKey; ?>
+                    <div id='script-warning' style="display:none;">uh-oh javascript error.</div>
                     <div id="calendar"></div>
                 </div>
                 <div id="vstays" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">

@@ -61,6 +61,7 @@ define('STATE_COUNTRY_JS', '../js/stateCountry.js');
 define('PAG_JS', '../js/pag.js');
 define('MD5_JS', '../js/md5-min.js');
 define('LOGIN_JS', '../js/login.js');
+define('MOMENT_JS', '../js/moment.min.js');
 define('MULTISELECT_JS', '../js/jquery.multiselect.min.js');
 define('DR_PICKER_JS', '../js/daterangepicker.hhk.min.js');
 define('HHK_CAL_JS', '../js/hhkcalendar-min.js');

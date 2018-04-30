@@ -811,106 +811,32 @@ $(document).ready(function () {
         },
         false
     );
-    
-    var vdays = parseInt(viewDays, 10);
-    
-    $('#calendar').hhkCalendar({
-        defaultView: 'twoweeks',
-        viewDays: vdays,
-        hospitalSelector: null,
-        theme: true,
-        contentHeight: parseInt(roomCnt) * 30,
+
+    $('#calendar').fullCalendar({
+
+        aspectRatio: 2.2,
+        themeSystem: 'jquery-ui',
+        allDay: true,
+        schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
         header: {
             left: 'title',
-            center: 'goto',
-            right: 'refresh,today prev,next'
+            right: 'timelineMonth'
         },
-        allDayDefault: true,
-        lazyFetching: true,
-        draggable: false,
-        editable: true,
-        selectHelper: true,
-        selectable: true,
-        unselectAuto: true,
-        year: d.getFullYear(),
-        month: d.getMonth(),
-        ignoreTimezone: true,
-        eventSources: [{
-                url: eventJSONString,
-                ignoreTimezone: true
-            }],
-        select: function (startDate, endDate, allDay, jsEvent, view) {
-
+        defaultView: 'timelineMonth',
+        resourceLabelText: 'Rooms',
+        resourceAreaWidth: '8%',
+        refetchResourcesOnNavigate: true,
+        resources: {
+            url: 'ws_calendar.php?cmd=resclist',
+            error: function() {
+                $('#script-warning').show();
+            }
         },
-        eventDrop: function (event, dayDelta, minuteDelta, allDay, revertFunc, jsEvent, ui, view) {
-            $("#divAlert1, #paymentMessage").hide();
-            if (event.idVisit > 0 && isGuestAdmin) {
-                if (confirm('Move Visit to a new start date?')) {
-                    moveVisit('visitMove', event.idVisit, event.Span, dayDelta, dayDelta);
-                }
+        events: {
+            url: 'ws_calendar.php?cmd=eventlist',
+            error: function() {
+                $('#script-warning').show();
             }
-            if (event.idReservation > 0 && isGuestAdmin) {
-                if (confirm('Move Reservation to a new start date?')) {
-                    moveVisit('reservMove', event.idReservation, event.Span, dayDelta, dayDelta);
-                }
-            }
-            revertFunc();
-        },
-        eventResize: function (event, dayDelta, minuteDelta, revertFunc, jsEvent, ui, view) {
-            $("#divAlert1, #paymentMessage").hide();
-            if (event.idVisit > 0 && isGuestAdmin) {
-                if (confirm('Move check out date?')) {
-                    moveVisit('visitMove', event.idVisit, event.Span, 0, dayDelta);
-                }
-            }
-            if (event.idReservation > 0 && isGuestAdmin) {
-                if (confirm('Move expected end date?')) {
-                    moveVisit('reservMove', event.idReservation, event.Span, 0, dayDelta);
-                }
-            }
-            revertFunc();
-        },
-        eventClick: function (calEvent, jsEvent, view) {
-            $("#divAlert1, #paymentMessage").hide();
-            // resources
-            if (calEvent.idResc && calEvent.idResc > 0) {
-                getStatusEvent(calEvent.idResc, 'resc', calEvent.title);
-                return;
-            }
-            // reservations
-            if (calEvent.idReservation && calEvent.idReservation > 0) {
-                if (jsEvent.target.classList.contains('hhk-schrm')) {
-                    getRoomList(calEvent.idReservation, jsEvent.target.id);
-                    return;
-                } else {
-                    window.location.assign(resvPageName + '?rid=' + calEvent.idReservation);
-                }
-            }
-            // dont lookup blank events - placeholders
-            if (isNaN(parseInt(calEvent.id, 10))) {
-                return;
-            }
-            var buttons = {
-                "Show Statement": function() {
-                    window.open('ShowStatement.php?vid=' + calEvent.idVisit, '_blank');
-                },
-                "Show Registration Form": function() {
-                    window.open('ShowRegForm.php?vid=' + calEvent.idVisit, '_blank');
-                },
-                "Save": function () {
-                    saveFees(0, calEvent.idVisit, calEvent.Span, true, 'register.php');
-                },
-                "Cancel": function () {
-                    $(this).dialog("close");
-                }
-            };
-            viewVisit(0, calEvent.idVisit, buttons, 'Edit Visit #' + calEvent.idVisit + '-' + calEvent.Span, '', calEvent.Span);
-        },
-        eventRender: function (event, element) {
-            if (hindx == undefined || hindx === 0 || event.idAssoc == hindx || event.idHosp == hindx || event.idHosp == 0) {
-                return true;
-            }
-            return false;
         }
     });
 
@@ -928,7 +854,7 @@ $(document).ready(function () {
             hindx = parseInt($(this).data('id'), 10);
             if (isNaN(hindx))
                 hindx = 0;
-            $('#calendar').hhkCalendar('rerenderEvents');
+            $('#calendar').fullCalendar('rerenderEvents');
             $(this).css('border', 'solid 3px black').css('font-size', '120%');
         });
     }
@@ -1337,6 +1263,6 @@ $(document).ready(function () {
     $('#mainTabs').show();
     $('#mainTabs').tabs("option", "active", defaultTab);
 
-    $('#calendar').hhkCalendar('render');
+    $('#calendar').fullCalendar('render');
 
 });
