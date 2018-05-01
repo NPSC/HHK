@@ -288,10 +288,10 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
 
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="js/fullcalendar.js"></script>
-        <script type="text/javascript" src="js/scheduler.js"></script>
-        <script type="text/javascript" src="../js/jquery.qtip.min.js"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
+        <script type="text/javascript" src="../js/jquery.qtip.min.js"></script>
+        <script type="text/javascript" src="js/fullcalendar.min.js"></script>
+        <script type="text/javascript" src="../js/hhk-scheduler.min.js"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
@@ -393,7 +393,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             ];
 
         </script>
-        <script type="text/javascript" src="js/register.js"></script>
+        <script type="text/javascript" src="js/register-min.js"></script>
         <style>
            #version {
             height: 15px;

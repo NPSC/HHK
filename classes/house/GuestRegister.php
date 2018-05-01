@@ -201,7 +201,6 @@ where ru.idResource_use is null
             $s['title'] = $titleText;
             $s['allDay'] = 1;
             $s['fullName'] = $r['Name_Full'];
-            $s['room'] = $r['Room'];
             $s['visitStatus'] = $r['Status_Text'];
             $s['borderColor'] = $backgroundBorderColor;
             $event = new Event($s, $timezone);
@@ -442,6 +441,7 @@ where ru.idResource_use is null
 
             $s['id'] = 'r' . $eventId++;
             $s['idReservation'] = $r['idReservation'];
+            $s['className'] = 'hhk-schrm';
 
             if ($uS->GuestNameColor != '' && isset($r[$uS->GuestNameColor])) {
                 if (isset($nameColors[$r[$uS->GuestNameColor]])){
@@ -452,13 +452,14 @@ where ru.idResource_use is null
 
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
             $s['end'] = $endDT->format('Y-m-d\TH:i:00');
-            $s['title'] = $r['Guest Last'];
+            $s['title'] = $r['Guest Last'] . '<span id="' . $r['idReservation'] . '" class="hhk-schrm ui-icon ui-icon-transferthick-e-w"></span>';
             $s['idHosp'] = $r['idHospital'];
             $s['idAssoc'] = $r['idAssociation'];
             $s['allDay'] = 1;
             $s['resourceId'] = $r["idResource"];
             $s['idResc'] = $r["idResource"];
             $s['resvStatus'] = $r['Status'];
+            $s['fullName'] = $r['Name_Full'];
 
             $event = new Event($s, $timezone);
             $events[] = $event->toArray();

@@ -850,18 +850,22 @@ $(document).ready(function () {
             }
         },
         resourceRender: function(resourceObj, labelTds, bodyTds) {
+            labelTds.qtip('destroy', true);
             labelTds.css('background', resourceObj.bgColor)
                 .css('color', resourceObj.textColor)
                 .qtip({
                     content: resourceObj.roomType + ': ' + resourceObj.title + ', Max. Occupants: ' + resourceObj.maxOcc + ', Status: ' + resourceObj.roomStatus,
                     position: {
                         target: 'mouse', // Position it where the click was...
-                        adjust: { mouse: true } // ...but don't follow the mouse
+                        adjust: { mouse: true } 
+                    },
+                    style: {
+                        tip: {corner: 'bottom left'}
                     }
                 });
         },
         eventOverlap: function (stillEvent, movingEvent) {
-            return stillEvent.id === movingEvent.id;
+            return (stillEvent.id === movingEvent.id);
         },
         events: {
             url: 'ws_calendar.php?cmd=eventlist',
@@ -870,7 +874,9 @@ $(document).ready(function () {
             }
         },
         eventDrop: function (event, delta, revertFunc) {
+            
             $("#divAlert1, #paymentMessage").hide();
+            
             if (event.idVisit > 0 && delta.asDays() > 0 && isGuestAdmin) {
                 if (confirm('Move Visit to a new start date?')) {
                     moveVisit('visitMove', event.idVisit, event.Span, delta.asDays(), delta.asDays());
@@ -931,41 +937,67 @@ $(document).ready(function () {
                 }
             }
             
-            var buttons = {
-                "Show Statement": function() {
-                    window.open('ShowStatement.php?vid=' + calEvent.idVisit, '_blank');
-                },
-                "Show Registration Form": function() {
-                    window.open('ShowRegForm.php?vid=' + calEvent.idVisit, '_blank');
-                },
-                "Save": function () {
-                    saveFees(0, calEvent.idVisit, calEvent.Span, true, 'register.php');
-                },
-                "Cancel": function () {
-                    $(this).dialog("close");
-                }
-            };
-            viewVisit(0, calEvent.idVisit, buttons, 'Edit Visit #' + calEvent.idVisit + '-' + calEvent.Span, '', calEvent.Span);
+            // visit
+            if (calEvent.idVisit && calEvent.idVisit > 0) {
+                var buttons = {
+                    "Show Statement": function() {
+                        window.open('ShowStatement.php?vid=' + calEvent.idVisit, '_blank');
+                    },
+                    "Show Registration Form": function() {
+                        window.open('ShowRegForm.php?vid=' + calEvent.idVisit, '_blank');
+                    },
+                    "Save": function () {
+                        saveFees(0, calEvent.idVisit, calEvent.Span, true, 'register.php');
+                    },
+                    "Cancel": function () {
+                        $(this).dialog("close");
+                    }
+                };
+                viewVisit(0, calEvent.idVisit, buttons, 'Edit Visit #' + calEvent.idVisit + '-' + calEvent.Span, '', calEvent.Span);
+            }
         },
+        
         eventRender: function (event, element) {
+            
             if (hindx === undefined || hindx === 0 || event.idAssoc == hindx || event.idHosp == hindx || event.idHosp == 0) {
+
+                var resource = $('#calendar').fullCalendar('getResourceById', event.resourceId);
                 
-                if (event.room !== undefined) {
+                if (event.idReservation !== undefined) {
+                    element.qtip('destroy', true);
                     element.qtip({
-                        content: event.fullName + ', ' + event.room + ', Visit Status: ' + event.visitStatus,
+                        content: event.fullName + ', ' + resource.title + ', Status: ' + event.visitStatus,
                         position: {
                             target: 'mouse', // Position it where the click was...
-                            adjust: { mouse: true } // ...but don't follow the mouse
+                            adjust: { mouse: true } 
+                        },
+                        style: {
+                            tip: {corner: 'bottom left'}
+                        }
+                    });
+                    element.find('.hhk-schrm').qtip({
+                        content: 'Change Rooms'
+                    });
+                } else if (event.idVisit !== undefined) {
+                    // visit
+                    element.qtip('destroy', true);
+                    element.qtip({
+                        content: event.fullName + ', ' + resource.title + ', Status: ' + event.visitStatus,
+                        position: {
+                            target: 'mouse', // Position it where the click was...
+                            adjust: { mouse: true } 
+                        },
+                        style: {
+                            tip: {corner: 'bottom left'}
                         }
                     });
                 }
-                
+
                 element.show();
             } else {
                 element.hide();
             }
         }
-
     });
 
     // disappear the pop-up room chooser.

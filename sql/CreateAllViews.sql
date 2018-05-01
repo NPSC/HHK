@@ -1814,7 +1814,6 @@ select
         `v`.`Expected_Departure`,
         `v`.`Span_End`,
         gv.Description as `Status_Text`,
-        ifnull(r.Title, '') as `Room`,
         ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
         ifnull(hs.idAssociation, 0) as `idAssociation`,
         ifnull((case when n.Name_Suffix = '' then n.Name_Last else concat(n.Name_Last, ' ', gs.Description) end), '') as `Guest Last`,
@@ -1832,8 +1831,6 @@ select
         `visit` `v`
             left join
         hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
-            left join
-        resource r on v.idResource = r.idResource
             left join
         `name` n on v.idPrimaryGuest = n.idName
             left join
@@ -1878,7 +1875,7 @@ CREATE or Replace VIEW `vregister_resv` AS
             left join
         `name` `n` ON `r`.`idGuest` = `n`.`idName`
             left join
-		`name_demog` nd on `r`.`idGuest` = nd.idName
+	`name_demog` nd on `r`.`idGuest` = nd.idName
             left join 
         gen_lookups gs on gs.`Table_Name` = 'Name_Suffix' and gs.`Code` = n.Name_Suffix
             left join 
