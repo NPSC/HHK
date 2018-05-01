@@ -14,6 +14,8 @@
 
 class GuestRegister {
 
+    protected $noAssocId;
+
     public static function getCalendarRescs(\PDO $dbh, $startTime = '', $endTime = '', $timezone = '') {
 
         $uS = Session::getInstance();
@@ -31,12 +33,16 @@ class GuestRegister {
         $endDate = new \DateTime($endTime);
 
         // Get list of resources
-        $qu = "select r.*, ru.idResource_use
+        $qu = "select r.idResource, r.Title, r.Background_Color, r.Text_Color, rm.Max_Occupants, g.Description as `Room_Type`, gs.Description as `Room_Status`, ru.idResource_use
 from resource r
 	left join
 resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and DATE(ru.Start_Date) <= DATE('" . $beginDate->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $endDate->format('Y-m-d') . "')
- where ru.idResource_use is null
- order by Util_Priority;";
+    left join resource_room rr on r.idResource = rr.idResource
+    left join room rm on rr.idRoom = rm.idRoom
+    left join gen_lookups g on g.Table_Name = 'Room_Type' and g.Code = rm.Type
+    left join gen_lookups gs on gs.Table_Name = 'Room_Status' and gs.Code = rm.Status
+where ru.idResource_use is null
+ order by r.Util_Priority;";
         $rstmt = $dbh->query($qu);
 
 
@@ -45,6 +51,11 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
             $rescs[] = array(
                 'id' => $re['idResource'],
                 'title' => $re['Title'],
+                'bgColor' => $re['Background_Color'],
+                'textColor' => $re['Text_Color'],
+                'maxOcc' => $re['Max_Occupants'],
+                'roomType' => $re['Room_Type'],
+                'roomStatus' => $re['Room_Status']
             );
         }
 
@@ -59,7 +70,7 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
      * @param string $endTime
      * @return array
      */
-    public static function getRegister(\PDO $dbh, $startTime, $endTime, $timezone) {
+    public function getRegister(\PDO $dbh, $startTime, $endTime, $timezone) {
 
         $uS = Session::getInstance();
         $events = array();
@@ -76,84 +87,19 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
         $endDate = self::parseDateTime($_GET['end']);
 
         // get list of hospital colors
-        $noAdminId = 0;
-        $hospitals = array(0 => array('idHospital'=>0, 'Background_Color'=>'blue', 'Text_Color'=>'white'));
-        if ($uS->RegColors) {
-            $hstmt = $dbh->query("Select Title, idHospital, Reservation_Style as Background_Color, Stay_Style as Text_Color from hospital where `Status` = 'a';");
-            foreach ($hstmt->fetchAll(\PDO::FETCH_ASSOC) as $h) {
-                $hospitals[$h['idHospital']] = $h;
+        $hospitals = $this->getHospitals($dbh, (trim(strtolower($uS->RegColors)) == 'hospital'));
 
-                if ($h['Title'] == '(None)') {
-                    $noAdminId = $h['idHospital'];
-                }
-            }
-        }
-
-        $nameColors = array();
-
-        // Get guest name colorings
-        if ($uS->GuestNameColor != '') {
-
-            $demogs = readGenLookupsPDO($dbh, $uS->GuestNameColor);
-
-            foreach ($demogs as $d) {
-
-                if ($d[2] != '') {
-
-                    // Split colors out of CDL
-                    $splits = explode(',', $d[2]);
-
-                    $nameColors[$d[0]] = array(
-                        't' => trim(strtolower($splits[0])),
-                        'b' => isset($splits[1]) ? trim(strtolower($splits[1])) : 'transparent'
-                    );
-                }
-            }
-        }
+        $nameColors = $this->getGuestColors($dbh, $uS->GuestNameColor);
 
         // Get cleaning holidays for the current year(s)
         $beginHolidays = new US_Holidays($dbh, $beginDate->format('Y'));
         $endHolidays = new US_Holidays($dbh, $endDate->format('Y'));
 
 
-        $rescUsed = array();
         $nonClean = Reservation_1::loadNonCleaningDays($dbh);
-        $eventCounter = 0;
-
-        // Room statuses
-        $query1 = "select ru.*, g.Description as `StatusTitle` from resource_use ru left join gen_lookups g on g.Table_Name = 'Resource_Status' and g.Code = ru.Status
-where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(End_Date), DATE(now())) > DATE('" . $beginDate->format('Y-m-d') . "');";
-        $stmtrs = $dbh->query($query1);
-
-        while ($r = $stmtrs->fetch(\PDO::FETCH_ASSOC)) {
-
-            if ($r["idResource"] == 0) {
-                continue;
-            }
-
-            // Set Start and end for fullCalendar control
-            $c = array(
-                'id' => 'RR' . $eventCounter++,
-                'idReservation' => 0,
-                'resourceId' => $r["idResource"],
-                'Span' => 0,
-                'idHosp' => 0,
-                'start' => $r['Start_Date'],
-                'end' => $r['End_Date'],
-                'title' => $r['StatusTitle'],
-                'allDay' => 1,
-                'backgroundColor' => 'gray',
-                'textColor' => 'white',
-                'borderColor' => 'black',
-
-            );
-
-            $event = new Event($c, $timezone);
-            $events[] = $event->toArray();
-
-        }
 
 
+        $this->getRoomOosEvents($dbh, $beginDate, $endDate, $timezone, $events);
 
         // Visits
         $query = "select * from vregister where Visit_Status <> '" . VisitStatus::Pending . "' and
@@ -172,7 +118,6 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
             $now->setTime(23, 59, 59);
             $s = array();
 
-
             if ($r['Span_End'] != "") {
 
                 if (date('Y-m-d', strtotime($r['Span_Start'])) == date('Y-m-d', strtotime($r['Span_End']))) {
@@ -184,9 +129,8 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                 $dtend = new \DateTime($r['Span_End']);
                 $dtendDate = new \DateTime($r['Span_End']);
                 $dtendDate->setTime(10, 0, 0);
-                $endDT->sub($p1d);
+                //$endDT->sub($p1d);
 
-                $s['borderColor'] = 'black';
             } else {
 
                 // Expected Departure
@@ -200,7 +144,7 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                     $extended = TRUE;
                 } else {
                     $endDT = new \DateTime($r['Expected_Departure']);
-                    $endDT->sub($p1d);
+                    //$endDT->sub($p1d);
                 }
             }
 
@@ -218,427 +162,307 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
 
             // Check end date for cleaning holidays
             if ($extended === FALSE && $validHolidays === TRUE && $r['Visit_Status'] != VisitStatus::ChangeRate) {
-
-                while ($myHolidays->is_holiday($dtendDate->format('U'))) {
-                    $c = array(
-                        'id' => 'H' . $eventCounter++,
-                        'idReservation' => 0,
-                        'resourceId' => $r["idResource"],
-                        'Span' => 0,
-                        'idHosp' => 0,
-                        'start' => $dtendDate->format('Y-m-d\TH:i:00'),
-                        'end' => $dtendDate->format('Y-m-d\TH:i:00'),
-                        'title' => 'out',
-                        'allDay' => 1,
-                        'backgroundColor' => 'black',
-                        'textColor' => 'white',
-                        'borderColor' => 'Yellow',
-
-                    );
-
-                    $event = new Event($c, $timezone);
-                    $events[] = $event->toArray();
-
-                    $dtendDate->add($p1d);
-                    $dtendDate->setTime(10, 0, 0);
-                }
-
-                // end date fall on non-cleaning weekday?
-                $dateInfo = getDate($dtendDate->format('U'));
-                $limit = 5;
-
-                while (array_search($dateInfo['wday'], $nonClean) !== FALSE && $limit-- > 0) {
-                    // Add a Cleaning Black-Out Event
-
-                    $c = array(
-                        'id' => $r['id'] . 'BO' . $dateInfo['wday'],
-                        'idReservation' => 0,
-                        'resourceId' => $r["idResource"],
-                        'Span' => 0,
-                        'idHosp' => 0,
-                        'start' => $dtendDate->format('Y-m-d\TH:i:00'),
-                        'end' => $dtendDate->format('Y-m-d\TH:i:00'),
-                        'title' => HTMLContainer::generateMarkup('span', $rescs[$r["idResource"]]['Title'], array('style'=>'white-space:nowrap;')),
-                        'allDay' => 1,
-                        'backgroundColor' => 'black',
-                        'textColor' => 'white',
-                        'borderColor' => 'white',
-
-                    );
-
-                    $event = new Event($c, $timezone);
-                    $events[] = $event->toArray();
-
-
-                    $dtendDate->add($p1d);
-                    $dtendDate->setTime(10, 0, 0);
-                    $dateInfo = getDate($dtendDate->format('U'));
-                }
-
-
-                // Check for holidays again?
-                while ($myHolidays->is_holiday($dtendDate->format('U'))) {
-                    $c = array(
-                        'id' => 'H' . $eventCounter++,
-                        'idReservation' => 0,
-                        'resourceId' => $r["idResource"],
-                        'Span' => 0,
-                        'idHosp' => 0,
-                        'start' => $dtendDate->format('Y-m-d\TH:i:00'),
-                        'end' => $dtendDate->format('Y-m-d\TH:i:00'),
-                        'title' => HTMLContainer::generateMarkup('span', $rescs[$r["idResource"]]['Title'], array('style'=>'white-space:nowrap;')),
-                        'allDay' => 1,
-                        'backgroundColor' => 'black',
-                        'textColor' => 'white',
-                        'borderColor' => 'Yellow',
-
-                    );
-                    $event = new Event($c, $timezone);
-                    $events[] = $event->toArray();
-
-                    $dtendDate->add($p1d);
-                    $dtendDate->setTime(10, 0, 0);
-                }
+                $this->addVisitBlackouts($myHolidays, $dtendDate, $timezone, $r["idResource"], $nonClean);
             }
 
+            $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $startDT, $endDT, $timezone, $uS->RegColors, $events);
 
+            // Render Event
             $titleText = $r['Guest Last'];
-            $spnArray = array('style'=>'white-space:nowrap;padding-left:2px;padding-right:2px;');
 
             if ($r['Visit_Status'] == VisitStatus::NewSpan) {
                 $titleText .= ' (rm)';
-                $spnArray['title'] = 'Room Changed';
+//                $spnArray['title'] = 'Room Changed';
             } else if ($r['Visit_Status'] == VisitStatus::ChangeRate) {
                 $titleText .= ' ($)';
-                $spnArray['title'] = 'Rate Changed';
+//                $spnArray['title'] = 'Rate Changed';
             } else if ($extended) {
-                $titleText .= htmlentities('>>');
-                $spnArray['title'] = 'Past Expected Departure Date';
+                $titleText .= '>>';
+//                $spnArray['title'] = 'Past Expected Departure Date';
             }
 
             if ($uS->GuestNameColor != '' && isset($r[$uS->GuestNameColor])) {
                 if (isset($nameColors[$r[$uS->GuestNameColor]])){
-                    $spnArray['style'] .= 'background-color:' . $nameColors[$r[$uS->GuestNameColor]]['b'] . '; color:' . $nameColors[$r[$uS->GuestNameColor]]['t'] . ';';
+                    $s['backgroundColor'] = $nameColors[$r[$uS->GuestNameColor]]['b'];
+                    $s['textColor'] = $nameColors[$r[$uS->GuestNameColor]]['t'];
                 }
             }
 
-            $title =  HTMLContainer::generateMarkup('span', $titleText, $spnArray);
-
             // Set Start and end for fullCalendar control
-            $s['id'] = $r['id'];
+            $s['id'] = 'v' . $r['id'];
             $s['idVisit'] = $r['idVisit'];
             $s['Span'] = $r['Span'];
             $s['idHosp'] = $r['idHospital'];
             $s['idAssoc'] = $r['idAssociation'];
             $s['resourceId'] = $r["idResource"];
-
+            $s['idResc'] = $r["idResource"];
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
             $s['end'] = $endDT->format('Y-m-d\TH:i:00');
-            $s['title'] = $title;
+            $s['title'] = $titleText;
             $s['allDay'] = 1;
-
-            // Use Hospital colors?
-            if (strtolower($uS->RegColors) == 'hospital') {
-
-                // Use Association colors?
-                if ($r['idAssociation'] != $noAdminId && $r['idAssociation'] > 0) {
-                    $s['backgroundColor'] = $hospitals[$r['idAssociation']]['Background_Color'];
-                    $s['textColor'] = $hospitals[$r['idAssociation']]['Text_Color'];
-                } else {
-                    $s['backgroundColor'] = $hospitals[$r['idHospital']]['Background_Color'];
-                    $s['textColor'] = $hospitals[$r['idHospital']]['Text_Color'];
-                }
-
-                $s['borderColor'] = $s['backgroundColor'];
-
-            } else {
-                $s['backgroundColor'] = $rescs[$r["idResource"]]['Background_Color'];
-                $s['textColor'] = $rescs[$r["idResource"]]['Text_Color'];
-                $s['borderColor'] = $rescs[$r["idResource"]]['Border_Color'];
-            }
-
-
+            $s['fullName'] = $r['Name_Full'];
+            $s['room'] = $r['Room'];
+            $s['visitStatus'] = $r['Status_Text'];
+            $s['borderColor'] = $backgroundBorderColor;
             $event = new Event($s, $timezone);
             $events[] = $event->toArray();
+
         }
 
 
 
 
-        // Check reservations
-        if ($uS->Reservation) {
+        // Reservations
+        $query = "select * from vregister_resv where Status in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Waitlist . "') "
+                . " and DATE(Expected_Arrival) < DATE('" . $endDate->format('Y-m-d') . "') and DATE(Expected_Departure) > DATE('" . $beginDate->format('Y-m-d') . "') order by Expected_Arrival";
 
-            $query = "select * from vregister_resv where Status in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Waitlist . "') "
-                    . " and DATE(Expected_Arrival) < DATE('" . $endDate->format('Y-m-d') . "') and DATE(Expected_Departure) > DATE('" . $beginDate->format('Y-m-d') . "') order by Expected_Arrival";
+        $stmt = $dbh->query($query);
 
-            $stmt = $dbh->query($query);
+        $eventId = 9000;
 
-            $eventId = 9000;
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            if ($r['Status'] == ReservationStatus::Waitlist) {
+                $r["idResource"] = 0;
 
+            }
 
-                if ($r['Status'] == ReservationStatus::Waitlist) {
-                    $r["idResource"] = 0;
+            $startDT = new \DateTime($r['Expected_Arrival']);
+            $stDT = new \DateTime($r['Expected_Arrival']);
+            $stDT->setTime(10, 0, 0);
 
-                }
+            $extended = FALSE;
+            $now = new \DateTime();
+            $s = array();
 
-                $startDT = new \DateTime($r['Expected_Arrival']);
-                $stDT = new \DateTime($r['Expected_Arrival']);
-                $stDT->setTime(10, 0, 0);
-
-                $extended = FALSE;
-                $now = new \DateTime();
-                $s = array();
-
-                $endDT = new \DateTime($r['Expected_Departure']);
-                $clDate = new \DateTime($r['Expected_Departure']);
-                $clDate->setTime(10, 0, 0);
+            $endDT = new \DateTime($r['Expected_Departure']);
+            $clDate = new \DateTime($r['Expected_Departure']);
+            $clDate->setTime(10, 0, 0);
 
 
-                $dateInfo = getDate(strtotime($r['Expected_Arrival']));
+            $dateInfo = getDate(strtotime($r['Expected_Arrival']));
 
-                // start date fall on a holiday?
-                $validHolidays = TRUE;
-                $stYear = $stDT->format('Y');
+            // start date fall on a holiday?
+            $validHolidays = TRUE;
+            $stYear = $stDT->format('Y');
 
-                if ($stYear == $beginHolidays->getYear()) {
-                    $myHolidays = $beginHolidays;
-                } else if ($stYear == $endHolidays->getYear()) {
-                    $myHolidays = $endHolidays;
-                } else {
-                    $validHolidays = FALSE;
-                }
+            if ($stYear == $beginHolidays->getYear()) {
+                $myHolidays = $beginHolidays;
+            } else if ($stYear == $endHolidays->getYear()) {
+                $myHolidays = $endHolidays;
+            } else {
+                $validHolidays = FALSE;
+            }
 
 
-                // Start date fall on a holiday or is a non work weekday?
-                if ($validHolidays === TRUE && ($myHolidays->is_holiday($stDT->format('U')) || array_search($dateInfo['wday'], $nonClean) !== FALSE)) {
+            // Start date fall on a holiday or is a non work weekday?
+            if ($validHolidays === TRUE && ($myHolidays->is_holiday($stDT->format('U')) || array_search($dateInfo['wday'], $nonClean) !== FALSE)) {
+
+                $stDT->sub($p1d);
+
+                // Days before fall on a holiday too?
+                while ($myHolidays->is_holiday($stDT->format('U'))) {
+                    $c = array(
+                        'id' => 'H' . $eventId++,
+                        'kind' => CalEvent_Kind::BO,
+                        'editable' => false,
+                        'idReservation' => 0,
+                        'resourceId' => $r["idResource"],
+                        'start' => $stDT->format('Y-m-d\TH:i:00'),
+                        'end' => $stDT->format('Y-m-d\TH:i:00'),
+                        'idHosp' => 0,
+                        'title' => 'H',
+                        'allDay' => 1,
+                        'backgroundColor' => 'black',
+                        'textColor' => 'white',
+                        'borderColor' => 'Yellow',
+
+                    );
+
+                    $event = new Event($c, $timezone);
+                    $events[] = $event->toArray();
 
                     $stDT->sub($p1d);
-
-                    // Days before fall on a holiday too?
-                    while ($myHolidays->is_holiday($stDT->format('U'))) {
-                        $c = array(
-                            'id' => 'H' . $eventId++,
-                            'idReservation' => 0,
-                            'resourceId' => $r["idResource"],
-                            'start' => $stDT->format('Y-m-d\TH:i:00'),
-                            'end' => $stDT->format('Y-m-d\TH:i:00'),
-                            'idHosp' => 0,
-                            'title' => HTMLContainer::generateMarkup('span', $rescs[$r["idResource"]]['Title'], array('style'=>'white-space:nowrap;')),
-                            'allDay' => 1,
-                            'backgroundColor' => 'black',
-                            'textColor' => 'white',
-                            'borderColor' => 'Yellow',
-
-                        );
-
-                        $event = new Event($c, $timezone);
-                        $events[] = $event->toArray();
-
-                        $stDT->sub($p1d);
-                        $stDT->setTime(10, 0, 0);
-                    }
-
-                    $dateInfo = getDate($stDT->getTimestamp());
-                    $limit = 5;
-
-                    while (array_search($dateInfo['wday'], $nonClean) !== FALSE && $limit-- > 0) {
-                        // Add a Cleaning Black-Out Event
-                        $c = array(
-                            'id' => 'c' . $eventId++,
-                            'idReservation' => 0,
-                            'resourceId' => $r["idResource"],
-                            'idHosp' => 0,
-                            'start' => $stDT->format('Y-m-d\TH:i:00'),
-                            'end' => $stDT->format('Y-m-d\TH:i:00'),
-                            'title' => HTMLContainer::generateMarkup('span', $rescs[$r["idResource"]]['Title'], array('style'=>'white-space:nowrap;')),
-                            'allDay' => 1,
-                            'backgroundColor' => 'black',
-                            'textColor' => 'white',
-                            'borderColor' => 'white',
-
-                        );
-                        $event = new Event($c, $timezone);
-                        $events[] = $event->toArray();
-
-                        $stDT->sub($p1d);
-                        $dateInfo = getDate($stDT->format('U'));
-                    }
-
-
-                    // Days before fall on a holiday too?
-                    while ($myHolidays->is_holiday($stDT->format('U'))) {
-                        $c = array(
-                            'id' => 'H' . $eventId++,
-                            'idReservation' => 0,
-                            'resourceId' => $r["idResource"],
-                            'start' => $stDT->format('Y-m-d\TH:i:00'),
-                            'end' => $stDT->format('Y-m-d\TH:i:00'),
-                            'idHosp' => 0,
-                            'title' => HTMLContainer::generateMarkup('span', $rescs[$r["idResource"]]['Title'], array('style'=>'white-space:nowrap;')),
-                            'allDay' => 1,
-                            'backgroundColor' => 'black',
-                            'textColor' => 'white',
-                            'borderColor' => 'Yellow',
-                            "level" => $rescs[$r["idResource"]]["_level_"]
-                        );
-                        $event = new Event($c, $timezone);
-                        $events[] = $event->toArray();
-
-                        $stDT->sub($p1d);
-                        $stDT->setTime(10, 0, 0);
-                    }
+                    $stDT->setTime(10, 0, 0);
                 }
 
-
-                $validHolidays = TRUE;
-                $edYear = $clDate->format('Y');
-
-                if ($edYear == $beginHolidays->getYear()) {
-                    $myHolidays = $beginHolidays;
-                } else if ($edYear == $endHolidays->getYear()) {
-                    $myHolidays = $endHolidays;
-                } else {
-                    $validHolidays = FALSE;
-                }
-
-                if ($validHolidays) {
-                    // End date fall on a holiday?
-                    while ($myHolidays->is_holiday($clDate->format('U'))) {
-
-                        $c = array(
-                            'id' => 'H' . $eventId++,
-                            'idReservation' => 0,
-                            'resourceId' => $r["idResource"],
-                            'start' => $clDate->format('Y-m-d\TH:i:00'),
-                            'end' => $clDate->format('Y-m-d\TH:i:00'),
-                            'idHosp' => 0,
-                            'title' => HTMLContainer::generateMarkup('span', $rescs[$r["idResource"]]['Title'], array('style'=>'white-space:nowrap;')),
-                            'allDay' => 1,
-                            'backgroundColor' => 'black',
-                            'textColor' => 'white',
-                            'borderColor' => 'Yellow',
-                            "level" => $rescs[$r["idResource"]]["_level_"]
-                        );
-
-                        $event = new Event($c, $timezone);
-                        $events[] = $event->toArray();
-
-                        $clDate->add($p1d);
-                        $clDate->setTime(10, 0, 0);
-                    }
-                }
-                // end date fall on non-cleaning day?
-                $dateInfo = getDate(strtotime($r['Expected_Departure']));
+                $dateInfo = getDate($stDT->getTimestamp());
                 $limit = 5;
 
                 while (array_search($dateInfo['wday'], $nonClean) !== FALSE && $limit-- > 0) {
                     // Add a Cleaning Black-Out Event
                     $c = array(
-                        'id' => 'c' . $eventId++,
+                        'id' => 'BO' . $eventId++,
+                        'kind' => CalEvent_Kind::BO,
+                        'editable' => false,
                         'idReservation' => 0,
                         'resourceId' => $r["idResource"],
                         'idHosp' => 0,
-                        'start' => $clDate->format('Y-m-d\TH:i:00'),
-                        'end' => $clDate->format('Y-m-d\TH:i:00'),
-                        'title' => HTMLContainer::generateMarkup('span', $rescs[$r["idResource"]]['Title'], array('style'=>'white-space:nowrap;')),
+                        'start' => $stDT->format('Y-m-d\TH:i:00'),
+                        'end' => $stDT->format('Y-m-d\TH:i:00'),
+                        'title' => 'BO',
                         'allDay' => 1,
                         'backgroundColor' => 'black',
                         'textColor' => 'white',
                         'borderColor' => 'white',
-                        "level" => $rescs[$r["idResource"]]["_level_"]
+
                     );
                     $event = new Event($c, $timezone);
                     $events[] = $event->toArray();
 
-                    $clDate->add($p1d);
-                    $dateInfo = getDate($clDate->format('U'));
+                    $stDT->sub($p1d);
+                    $dateInfo = getDate($stDT->format('U'));
                 }
 
-                // Now End date fall on a holiday?
-                while ($beginHolidays->is_holiday($clDate->format('U')) || $endHolidays->is_holiday($clDate->format('U'))) {
+
+                // Days before fall on a holiday too?
+                while ($myHolidays->is_holiday($stDT->format('U'))) {
                     $c = array(
                         'id' => 'H' . $eventId++,
                         'idReservation' => 0,
-                            'resourceId' => $r["idResource"],
-                        'start' => $clDate->format('Y-m-d\TH:i:00'),
-                        'end' => $clDate->format('Y-m-d\TH:i:00'),
+                        'kind' => CalEvent_Kind::BO,
+                        'editable' => false,
+                        'resourceId' => $r["idResource"],
+                        'start' => $stDT->format('Y-m-d\TH:i:00'),
+                        'end' => $stDT->format('Y-m-d\TH:i:00'),
                         'idHosp' => 0,
-                        'title' => HTMLContainer::generateMarkup('span', $rescs[$r["idResource"]]['Title'], array('style'=>'white-space:nowrap;')),
+                        'title' => 'H',
                         'allDay' => 1,
                         'backgroundColor' => 'black',
                         'textColor' => 'white',
                         'borderColor' => 'Yellow',
                         "level" => $rescs[$r["idResource"]]["_level_"]
                     );
+                    $event = new Event($c, $timezone);
+                    $events[] = $event->toArray();
+
+                    $stDT->sub($p1d);
+                    $stDT->setTime(10, 0, 0);
+                }
+            }
+
+
+            $validHolidays = TRUE;
+            $edYear = $clDate->format('Y');
+
+            if ($edYear == $beginHolidays->getYear()) {
+                $myHolidays = $beginHolidays;
+            } else if ($edYear == $endHolidays->getYear()) {
+                $myHolidays = $endHolidays;
+            } else {
+                $validHolidays = FALSE;
+            }
+
+            if ($validHolidays) {
+                // End date fall on a holiday?
+                while ($myHolidays->is_holiday($clDate->format('U'))) {
+
+                    $c = array(
+                        'id' => 'H' . $eventId++,
+                        'kind' => CalEvent_Kind::BO,
+                        'editable' => false,
+                        'idReservation' => 0,
+                        'resourceId' => $r["idResource"],
+                        'start' => $clDate->format('Y-m-d\TH:i:00'),
+                        'end' => $clDate->format('Y-m-d\TH:i:00'),
+                        'idHosp' => 0,
+                        'title' => 'H',
+                        'allDay' => 1,
+                        'backgroundColor' => 'black',
+                        'textColor' => 'white',
+                        'borderColor' => 'Yellow',
+                        "level" => $rescs[$r["idResource"]]["_level_"]
+                    );
+
                     $event = new Event($c, $timezone);
                     $events[] = $event->toArray();
 
                     $clDate->add($p1d);
                     $clDate->setTime(10, 0, 0);
                 }
+            }
+            // end date fall on non-cleaning day?
+            $dateInfo = getDate(strtotime($r['Expected_Departure']));
+            $limit = 5;
 
-                $endDT->sub(new \DateInterval("P1D"));
-
-
-                $s['id'] = 'v' . $eventId++;
-                $s['idReservation'] = $r['idReservation'];
-
-
-                $spnArray = array('style'=>'white-space:nowrap;padding-left:2px;padding-right:2px;');
-
-                if ($uS->GuestNameColor != '' && isset($r[$uS->GuestNameColor])) {
-                    if (isset($nameColors[$r[$uS->GuestNameColor]])){
-                        $spnArray['style'] .= 'background-color:' . $nameColors[$r[$uS->GuestNameColor]]['b'] . '; color:' . $nameColors[$r[$uS->GuestNameColor]]['t'] . ';';
-                    }
-                }
-
-                $title = $r['Guest Last'];
-
-                // Dont allow reservations to precede "today"
-//                if ($startDT <= $now) {
-//                    $startDT = new DateTime();
-//                    $startDT->add($p1d);
-//                    $startDT->setTime(16, 0, 0);
-//                    $title = htmlentities('<<') . $title;
-//                }
-
-
-                $s['start'] = $startDT->format('Y-m-d\TH:i:00');
-                $s['end'] = $endDT->format('Y-m-d\TH:i:00');
-                $s['title'] = $title;
-                $s['idHosp'] = $r['idHospital'];
-                $s['idAssoc'] = $r['idAssociation'];
-                $s['allDay'] = 1;
-                $s['resourceId'] = $r["idResource"];
-
-                if (strtolower($uS->RegColors) == 'hospital') {
-                    // Use Association colors?
-                    if ($r['idAssociation'] != $noAdminId && $r['idAssociation'] > 0) {
-                        $s['backgroundColor'] = $hospitals[$r['idAssociation']]['Background_Color'];
-                        $s['textColor'] = $hospitals[$r['idAssociation']]['Text_Color'];
-                    } else {
-                        $s['backgroundColor'] = $hospitals[$r['idHospital']]['Background_Color'];
-                        $s['textColor'] = $hospitals[$r['idHospital']]['Text_Color'];
-                    }
-
-                    $s['borderColor'] = 'black';
-
-                } else {
-                    $s['backgroundColor'] = $rescs[$r["idResource"]]['Background_Color'];
-                    $s['textColor'] = $rescs[$r["idResource"]]['Text_Color'];
-                    $s['borderColor'] = 'black';
-                }
-
-                if ($r['Status'] == ReservationStatus::UnCommitted) {
-                    $s['borderStyle'] = 'dashed';
-                }
-
-                $event = new Event($s, $timezone);
+            while (array_search($dateInfo['wday'], $nonClean) !== FALSE && $limit-- > 0) {
+                // Add a Cleaning Black-Out Event
+                $c = array(
+                    'id' => 'BO' . $eventId++,
+                    'kind' => CalEvent_Kind::BO,
+                    'editable' => false,
+                    'idReservation' => 0,
+                    'resourceId' => $r["idResource"],
+                    'idHosp' => 0,
+                    'start' => $clDate->format('Y-m-d\TH:i:00'),
+                    'end' => $clDate->format('Y-m-d\TH:i:00'),
+                    'title' => 'BO',
+                    'allDay' => 1,
+                    'backgroundColor' => 'black',
+                    'textColor' => 'white',
+                    'borderColor' => 'white',
+                    "level" => $rescs[$r["idResource"]]["_level_"]
+                );
+                $event = new Event($c, $timezone);
                 $events[] = $event->toArray();
 
+                $clDate->add($p1d);
+                $dateInfo = getDate($clDate->format('U'));
             }
+
+            // Now End date fall on a holiday?
+            while ($beginHolidays->is_holiday($clDate->format('U')) || $endHolidays->is_holiday($clDate->format('U'))) {
+                $c = array(
+                    'id' => 'H' . $eventId++,
+                    'kind' => CalEvent_Kind::BO,
+                    'editable' => FALSE,
+                    'idReservation' => 0,
+                    'resourceId' => $r["idResource"],
+                    'start' => $clDate->format('Y-m-d\TH:i:00'),
+                    'end' => $clDate->format('Y-m-d\TH:i:00'),
+                    'idHosp' => 0,
+                    'title' => 'H',
+                    'allDay' => 1,
+                    'backgroundColor' => 'black',
+                    'textColor' => 'white',
+                    'borderColor' => 'Yellow',
+                    "level" => $rescs[$r["idResource"]]["_level_"]
+                );
+                $event = new Event($c, $timezone);
+                $events[] = $event->toArray();
+
+                $clDate->add($p1d);
+                $clDate->setTime(10, 0, 0);
+            }
+
+            $endDT->sub(new \DateInterval("P1D"));
+
+            $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $startDT, $endDT, $timezone, $uS->RegColors, $events);
+
+
+            $s['id'] = 'r' . $eventId++;
+            $s['idReservation'] = $r['idReservation'];
+
+            if ($uS->GuestNameColor != '' && isset($r[$uS->GuestNameColor])) {
+                if (isset($nameColors[$r[$uS->GuestNameColor]])){
+                    $s['backgroundColor'] = $nameColors[$r[$uS->GuestNameColor]]['b'];
+                    $s['textColor'] = $nameColors[$r[$uS->GuestNameColor]]['t'];
+                }
+            }
+
+            $s['start'] = $startDT->format('Y-m-d\TH:i:00');
+            $s['end'] = $endDT->format('Y-m-d\TH:i:00');
+            $s['title'] = $r['Guest Last'];
+            $s['idHosp'] = $r['idHospital'];
+            $s['idAssoc'] = $r['idAssociation'];
+            $s['allDay'] = 1;
+            $s['resourceId'] = $r["idResource"];
+            $s['idResc'] = $r["idResource"];
+            $s['resvStatus'] = $r['Status'];
+
+            $event = new Event($s, $timezone);
+            $events[] = $event->toArray();
+
         }
 
         return $events;
@@ -670,6 +494,225 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
       return new DateTime($datetime->format('Y-m-d'));
     }
 
+
+    protected function addBackgroundEvent($r, $hospitals, $startDT, $endDT, $timezone, $regColors, &$events) {
+            $backgroundBorderColor = '';
+
+            $h = array();
+
+            // Background Event
+            $h['rendering'] = 'background';
+            $h['kind'] = CalEvent_Kind::BAK;
+            $h['editable'] = FALSE;
+            $h['id'] = 'b' . (isset($r['id']) ? $r['id'] : $r['idReservation']);
+            $h['idHosp'] = $r['idHospital'];
+            $h['idAssoc'] = $r['idAssociation'];
+            $h['resourceId'] = $r["idResource"];
+
+            $h['start'] = $startDT->format('Y-m-d\TH:i:00');
+            $h['end'] = $endDT->format('Y-m-d\TH:i:00');
+            $h['title'] = '';
+            $h['allDay'] = 1;
+
+                // Use Association colors?
+            if (strtolower($regColors) == 'hospital') {
+
+                if ($r['idAssociation'] != $this->noAssocId && $r['idAssociation'] > 0) {
+                    $h['backgroundColor'] = $hospitals[$r['idAssociation']]['Background_Color'];
+                } else {
+                    $h['backgroundColor'] = $hospitals[$r['idHospital']]['Background_Color'];
+                }
+
+                $h['borderColor'] = $h['backgroundColor'];
+                $backgroundBorderColor = $h['borderColor'];
+
+            }
+
+            $hEvent = new Event($h, $timezone);
+            $events[] = $hEvent->toArray();
+
+            return $backgroundBorderColor;
+    }
+
+    protected function addVisitBlackouts($myHolidays, $dtendDate, $timezone, $idResc, $nonClean) {
+
+        $p1d = new \DateInterval('P1D');
+
+        while ($myHolidays->is_holiday($dtendDate->format('U'))) {
+                    $c = array(
+                        'id' => 'H' . $idResc,
+                        'kind' => CalEvent_Kind::BO,
+                        'editable' => FALSE,
+                        'idReservation' => 0,
+                        'resourceId' => $idResc,
+                        'Span' => 0,
+                        'idHosp' => 0,
+                        'start' => $dtendDate->format('Y-m-d\TH:i:00'),
+                        'end' => $dtendDate->format('Y-m-d\TH:i:00'),
+                        'title' => 'H',
+                        'allDay' => 1,
+                        'backgroundColor' => 'black',
+                        'textColor' => 'white',
+                        'borderColor' => 'Yellow',
+
+                    );
+
+                    $event = new Event($c, $timezone);
+                    $events[] = $event->toArray();
+
+                    $dtendDate->add($p1d);
+                    $dtendDate->setTime(10, 0, 0);
+                }
+
+                // end date fall on non-cleaning weekday?
+                $dateInfo = getDate($dtendDate->format('U'));
+                $limit = 5;
+
+                while (array_search($dateInfo['wday'], $nonClean) !== FALSE && $limit-- > 0) {
+                    // Add a Cleaning Black-Out Event
+
+                    $c = array(
+                        'id' => 'BO' . $idResc,
+                        'kind' => CalEvent_Kind::BO,
+                        'editable' => FALSE,
+                        'idReservation' => 0,
+                        'resourceId' => $idResc,
+                        'Span' => 0,
+                        'idHosp' => 0,
+                        'start' => $dtendDate->format('Y-m-d\TH:i:00'),
+                        'end' => $dtendDate->format('Y-m-d\TH:i:00'),
+                        'title' => 'BO',
+                        'allDay' => 1,
+                        'backgroundColor' => 'black',
+                        'textColor' => 'white',
+                        'borderColor' => 'white',
+
+                    );
+
+                    $event = new Event($c, $timezone);
+                    $events[] = $event->toArray();
+
+
+                    $dtendDate->add($p1d);
+                    $dtendDate->setTime(10, 0, 0);
+                    $dateInfo = getDate($dtendDate->format('U'));
+                }
+
+
+                // Check for holidays again?
+                while ($myHolidays->is_holiday($dtendDate->format('U'))) {
+                    $c = array(
+                        'id' => 'H' . $idResc,
+                        'kind' => CalEvent_Kind::BO,
+                        'editable' => FALSE,
+                        'idReservation' => 0,
+                        'resourceId' => $idResc,
+                        'Span' => 0,
+                        'idHosp' => 0,
+                        'start' => $dtendDate->format('Y-m-d\TH:i:00'),
+                        'end' => $dtendDate->format('Y-m-d\TH:i:00'),
+                        'title' => 'H',
+                        'allDay' => 1,
+                        'backgroundColor' => 'black',
+                        'textColor' => 'white',
+                        'borderColor' => 'Yellow',
+
+                    );
+                    $event = new Event($c, $timezone);
+                    $events[] = $event->toArray();
+
+                    $dtendDate->add($p1d);
+                    $dtendDate->setTime(10, 0, 0);
+                }
+
+    }
+
+    protected function getRoomOosEvents(\PDO $dbh, \DateTime $beginDate, \DateTime $endDate, $timezone, &$events) {
+
+        $idCounter = 10;
+
+        $query1 = "select ru.*, g.Description as `StatusTitle` from resource_use ru left join gen_lookups g on g.Table_Name = 'Resource_Status' and g.Code = ru.Status
+where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(End_Date), DATE(now())) > DATE('" . $beginDate->format('Y-m-d') . "');";
+
+        $stmtrs = $dbh->query($query1);
+
+        while ($r = $stmtrs->fetch(\PDO::FETCH_ASSOC)) {
+
+            if ($r["idResource"] == 0) {
+                continue;
+            }
+
+            // Set Start and end for fullCalendar control
+            $c = array(
+                'id' => 'RR' . $idCounter++,
+                'kind' => CalEvent_Kind::OOS,
+                'idReservation' => 0,
+                'resourceId' => $r["idResource"],
+                'Span' => 0,
+                'idHosp' => 0,
+                'start' => $r['Start_Date'],
+                'end' => $r['End_Date'],
+                'title' => $r['StatusTitle'],
+                'allDay' => 1,
+                'backgroundColor' => 'gray',
+                'textColor' => 'white',
+                'borderColor' => 'black',
+
+            );
+
+            $event = new Event($c, $timezone);
+            $events[] = $event->toArray();
+
+        }
+    }
+
+    protected function getGuestColors(\PDO $dbh, $guestDemographic) {
+
+        $nameColors = array();
+
+        // Get guest name colorings
+        if ($guestDemographic != '') {
+
+            $demogs = readGenLookupsPDO($dbh, $guestDemographic);
+
+            foreach ($demogs as $d) {
+
+                if ($d[2] != '') {
+
+                    // Split colors out of CDL
+                    $splits = explode(',', $d[2]);
+
+                    $nameColors[$d[0]] = array(
+                        't' => trim(strtolower($splits[0])),
+                        'b' => isset($splits[1]) ? trim(strtolower($splits[1])) : 'transparent'
+                    );
+                }
+            }
+        }
+
+        return $nameColors;
+
+    }
+
+    protected function getHospitals(\PDO $dbh, $useHospitalColors) {
+
+        $hospitals = array(0 => array('idHospital'=>0, 'Background_Color'=>'blue', 'Text_Color'=>'white'));
+        $this->noAssocId = 0;
+
+        if ($useHospitalColors) {
+            $hstmt = $dbh->query("Select Title, idHospital, Reservation_Style as Background_Color, Stay_Style as Text_Color from hospital where `Status` = 'a';");
+            foreach ($hstmt->fetchAll(\PDO::FETCH_ASSOC) as $h) {
+                $hospitals[$h['idHospital']] = $h;
+
+                if ($h['Title'] == '(None)') {
+                    $this->noAssocId = $h['idHospital'];
+                }
+            }
+        }
+
+        return $hospitals;
+
+    }
 
 }
 

@@ -172,40 +172,40 @@ $rvCols = array();
 
 $wlCols = array();
 
-if ($uS->Reservation) {
-
-    $locations = readGenLookupsPDO($dbh, 'Location');
-    $diags = readGenLookupsPDO($dbh, 'Diagnosis');
-
-    // make registration form print button
-    $regButton = HTMLContainer::generateMarkup('span', 'Check-in Date: ' . HTMLInput::generateMarkup('', array('id'=>'regckindate', 'class'=>'ckdate hhk-prtRegForm'))
-            . HTMLInput::generateMarkup('Print Registration Forms', array('id'=>'btnPrintRegForm', 'type'=>'button', 'data-page'=>'PrtRegForm.php', 'class'=>'hhk-prtRegForm', 'style'=>'margin-left:.3em; font-size:0.86em;'))
-            , array('style'=>'margin-left:5em;padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5'));
-
-    $currentReservations = HTMLContainer::generateMarkup('h3',
-            $labels->getString('register', 'reservationTab', 'Confirmed Reservations') .
-            HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlConfRes', 'style'=>'margin-left:5em;font-size:.9em;')) . $regButton
-            , array('style' => 'background-color:#D3D3D3; padding:10px;'))
-            . HTMLContainer::generateMarkup('div', "<table id='reservs' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divreservs'));
-
-    if ($uS->ShowUncfrmdStatusTab) {
-        $uncommittedReservations = HTMLContainer::generateMarkup('h3', $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlUcRes', 'style'=>'margin-left:5em;font-size:.9em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
-            . HTMLContainer::generateMarkup('div', "<table id='unreserv' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divunreserv'));
-    }
 
 
-    // make registration form print button
-    $wlButton = HTMLContainer::generateMarkup('span', 'Date: ' . HTMLInput::generateMarkup(date('M j, Y'), array('id'=>'regwldate', 'class'=>'ckdate hhk-prtWL'))
-            . HTMLInput::generateMarkup('Print Wait List', array('id'=>'btnPrintWL', 'type'=>'button', 'data-page'=>'PrtWaitList.php', 'class'=>'hhk-prtWL', 'style'=>'margin-left:.3em;font-size:.85em;'))
-            , array('style'=>'margin-left:5em;padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5'));
+$locations = readGenLookupsPDO($dbh, 'Location');
+$diags = readGenLookupsPDO($dbh, 'Diagnosis');
 
+// make registration form print button
+$regButton = HTMLContainer::generateMarkup('span', 'Check-in Date: ' . HTMLInput::generateMarkup('', array('id'=>'regckindate', 'class'=>'ckdate hhk-prtRegForm'))
+        . HTMLInput::generateMarkup('Print Registration Forms', array('id'=>'btnPrintRegForm', 'type'=>'button', 'data-page'=>'PrtRegForm.php', 'class'=>'hhk-prtRegForm', 'style'=>'margin-left:.3em; font-size:0.86em;'))
+        , array('style'=>'margin-left:5em;padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5'));
 
-    $waitlist = HTMLContainer::generateMarkup('h3', 'Waitlist' .
-            HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlWlist', 'style'=>'margin-left:5em;font-size:.9em;'))
-            .$wlButton
-            , array('style' => 'background-color:#D3D3D3; padding:10px;'))
-            . HTMLContainer::generateMarkup('div', "<table id='waitlist' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divwaitlist'));
+$currentReservations = HTMLContainer::generateMarkup('h3',
+        $labels->getString('register', 'reservationTab', 'Confirmed Reservations') .
+        HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlConfRes', 'style'=>'margin-left:5em;font-size:.9em;')) . $regButton
+        , array('style' => 'background-color:#D3D3D3; padding:10px;'))
+        . HTMLContainer::generateMarkup('div', "<table id='reservs' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divreservs'));
+
+if ($uS->ShowUncfrmdStatusTab) {
+    $uncommittedReservations = HTMLContainer::generateMarkup('h3', $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlUcRes', 'style'=>'margin-left:5em;font-size:.9em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
+        . HTMLContainer::generateMarkup('div', "<table id='unreserv' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divunreserv'));
 }
+
+
+// make registration form print button
+$wlButton = HTMLContainer::generateMarkup('span', 'Date: ' . HTMLInput::generateMarkup(date('M j, Y'), array('id'=>'regwldate', 'class'=>'ckdate hhk-prtWL'))
+        . HTMLInput::generateMarkup('Print Wait List', array('id'=>'btnPrintWL', 'type'=>'button', 'data-page'=>'PrtWaitList.php', 'class'=>'hhk-prtWL', 'style'=>'margin-left:.3em;font-size:.85em;'))
+        , array('style'=>'margin-left:5em;padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5'));
+
+
+$waitlist = HTMLContainer::generateMarkup('h3', 'Waitlist' .
+        HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlWlist', 'style'=>'margin-left:5em;font-size:.9em;'))
+        .$wlButton
+        , array('style' => 'background-color:#D3D3D3; padding:10px;'))
+        . HTMLContainer::generateMarkup('div', "<table id='waitlist' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divwaitlist'));
+
 
 // Hospital Selector
 $colorKey = '';
@@ -283,12 +283,14 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <?php echo JQ_DT_CSS; ?>
         <link href='css/fullcalendar.min.css'  rel='stylesheet' type='text/css' />
         <link href='css/scheduler.min.css'  rel='stylesheet' type='text/css' />
+        <link href='css/jquery.qtip.min.css'  rel='stylesheet' type='text/css' />
         <?php echo FAVICON; ?>
 
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="js/fullcalendar.js"></script>
         <script type="text/javascript" src="js/scheduler.js"></script>
+        <script type="text/javascript" src="../js/jquery.qtip.min.js"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
@@ -410,6 +412,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 text-align: center;
             }
             .ui-menu-item-wrapper {min-width: 120px;}
+            .fc-bgevent {opacity: .9;}
         </style>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";}?>>
@@ -430,13 +433,12 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 <ul>
                     <li id="liCal"><a href="#vcal">Calendar</a></li>
                     <li><a href="#vstays">Current Guests</a></li>
-                    <?php if ($uS->Reservation) { ?>
-                        <li><a href="#vresvs"><?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?></a></li>
-                        <?php if ($uS->ShowUncfrmdStatusTab) { ?>
-                        <li><a href="#vuncon"><?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?></a></li>
-                        <?php } ?>
-                        <li><a href="#vwls">Wait List</a></li>
+                    <li><a href="#vresvs"><?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?></a></li>
+                    <?php if ($uS->ShowUncfrmdStatusTab) { ?>
+                    <li><a href="#vuncon"><?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?></a></li>
                     <?php } ?>
+                    <li><a href="#vwls">Wait List</a></li>
+
                     <?php if ($isGuestAdmin) { ?>
                         <li><a href="#vactivity">Recent Activity</a></li>
                         <?php if ($showCharges) { ?>
@@ -445,7 +447,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                     <?php } } ?>
                     <li><a href="#vdaily">Daily Log</a></li>
                 </ul>
-                <div id="vcal" style="clear:left; padding: .6em 1em; display:none; <?php echo $divFontSize; ?>">
+                <div id="vcal" style="clear:left; padding: .6em 1em; display:none;">
                     <?php echo $viewWeeks; echo $colorKey; ?>
                     <div id='script-warning' style="display:none;">uh-oh javascript error.</div>
                     <div id="calendar"></div>

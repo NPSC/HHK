@@ -258,7 +258,7 @@ class VisitView {
 
 
         // Make undo checkout button.
-        if ($r['Status'] == VisitStatus::CheckedOut && $isAdmin) {
+        if ($r['Status'] == VisitStatus::CheckedOut) {
 
             $spnMkup = HTMLContainer::generateMarkup('label', '- Undo Checkout', array('for'=>'undoCkout'))
                     . HTMLInput::generateMarkup('', array('id'=>'undoCkout', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.3em;margin-left:0.3em;'))

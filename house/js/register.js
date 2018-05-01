@@ -18,6 +18,29 @@ function isNumber(n) {
     "use strict";
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
+function setRoomTo(idResv, idResc) {
+
+    $.post('ws_ckin.php', {cmd: 'setRoom', rid: idResv, idResc: idResc}, function(data) {
+        try {
+            data = $.parseJSON(data);
+        } catch (err) {
+            alert("Parser error - " + err.message);
+            return;
+        }
+        if (data.error) {
+            if (data.gotopage) {
+                window.location.assign(data.gotopage);
+            }
+            flagAlertMessage(data.error, true);
+            return;
+        }
+        if (data.msg && data.msg !== '') {
+            flagAlertMessage(data.msg, false);
+        }
+        $('#calendar').fullCalendar('refetchEvents');
+        refreshdTables(data);
+    });
+}
 
 function refreshdTables(data) {
     "use strict";
@@ -74,7 +97,7 @@ function cgResvStatus(rid, status) {
             }
             if (data.success) {
                 flagAlertMessage(data.success, false);
-                $('#calendar').hhkCalendar('refetchEvents');
+                $('#calendar').fullCalendar('refetchEvents');
             }
             refreshdTables(data);
         }
@@ -431,7 +454,7 @@ function saveStatusEvent(idResc, type) {
                 alert("Server error - " + data.error);
             }
             if (data.reload && data.reload == 1) {
-                $('#calendar').hhkCalendar('refetchEvents');
+                $('#calendar').fullCalendar('refetchEvents');
             }
             if (data.msg && data.msg != '') {
                 flagAlertMessage(data.msg, false);
@@ -474,7 +497,7 @@ function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta) {
                 }
                 flagAlertMessage(data.error, true);
             } else if (data.success) {
-                $('#calendar').hhkCalendar('refetchEvents');
+                $('#calendar').fullCalendar('refetchEvents');
                 flagAlertMessage(data.success, false);
                 refreshdTables(data);
             }
@@ -507,31 +530,14 @@ function getRoomList(idResv, eid) {
                     of: "#" + data.eid
                 });
                 $('#selRoom').change(function () {
+                    
                     if ($('#selRoom').val() == '') {
                         contr.remove();
                         return;
                     }
+                    
                     if (confirm('Change room to ' + $('#selRoom option:selected').text() + '?')) {
-                        $.post('ws_ckin.php', {cmd: 'setRoom', rid: data.rid, idResc: $('#selRoom').val()}, function(data) {
-                            try {
-                                data = $.parseJSON(data);
-                            } catch (err) {
-                                alert("Parser error - " + err.message);
-                                return;
-                            }
-                            if (data.error) {
-                                if (data.gotopage) {
-                                    window.location.assign(data.gotopage);
-                                }
-                                flagAlertMessage(data.error, true);
-                                return;
-                            }
-                            if (data.msg && data.msg != '') {
-                                flagAlertMessage(data.msg, false);
-                            }
-                            $('#calendar').hhkCalendar('refetchEvents');
-                            refreshdTables(data);
-                        });
+                        setRoomTo(data.rid, $('#selRoom').val());
                     }
                     contr.remove();
                 });
@@ -553,13 +559,13 @@ function checkStrength(pwCtrl) {
     }
     return rtn;
 }
-
+    var hindx = 0;
 $(document).ready(function () {
     "use strict";
     var d = new Date();
     var wsAddress = 'ws_ckin.php';
     var eventJSONString = wsAddress + '?cmd=register';
-    var hindx = 0;
+
 
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
@@ -817,12 +823,23 @@ $(document).ready(function () {
         aspectRatio: 2.2,
         themeSystem: 'jquery-ui',
         allDay: true,
+        firstDay: 0,
+        dateIncrement: {weeks: 1 },
+        nextDayThreshold: '13:00',
         schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
         header: {
-            left: 'title',
-            right: 'timelineMonth'
+            center: 'title',
+            right: 'today prev, next'
         },
-        defaultView: 'timelineMonth',
+        views: {
+            timelineweeks: {
+                type: 'timelineMonth',
+                duration: {weeks: 3 }
+            }
+        },
+        defaultView: 'timelineweeks',
+        editable: true,
+
         resourceLabelText: 'Rooms',
         resourceAreaWidth: '8%',
         refetchResourcesOnNavigate: true,
@@ -832,12 +849,123 @@ $(document).ready(function () {
                 $('#script-warning').show();
             }
         },
+        resourceRender: function(resourceObj, labelTds, bodyTds) {
+            labelTds.css('background', resourceObj.bgColor)
+                .css('color', resourceObj.textColor)
+                .qtip({
+                    content: resourceObj.roomType + ': ' + resourceObj.title + ', Max. Occupants: ' + resourceObj.maxOcc + ', Status: ' + resourceObj.roomStatus,
+                    position: {
+                        target: 'mouse', // Position it where the click was...
+                        adjust: { mouse: true } // ...but don't follow the mouse
+                    }
+                });
+        },
+        eventOverlap: function (stillEvent, movingEvent) {
+            return stillEvent.id === movingEvent.id;
+        },
         events: {
             url: 'ws_calendar.php?cmd=eventlist',
             error: function() {
                 $('#script-warning').show();
             }
+        },
+        eventDrop: function (event, delta, revertFunc) {
+            $("#divAlert1, #paymentMessage").hide();
+            if (event.idVisit > 0 && delta.asDays() > 0 && isGuestAdmin) {
+                if (confirm('Move Visit to a new start date?')) {
+                    moveVisit('visitMove', event.idVisit, event.Span, delta.asDays(), delta.asDays());
+                }
+            }
+            if (event.idReservation > 0 && isGuestAdmin) {
+                // move by date?
+                if (delta.asDays() > 0) {
+                    if (confirm('Move Reservation to a new start date?')) {
+                        moveVisit('reservMove', event.idReservation, event.Span, delta.asDays(), delta.asDays());
+                        return;
+                    }
+                }
+                
+                // Change rooms?
+                if (event.resourceId !== event.idResc) {
+                    if (confirm('Move Reservation to a new room?')) {
+                        setRoomTo(event.idReservation, event.resourceId);
+                        return;
+                    }
+                }
+            }
+            revertFunc();
+        },
+        eventResize: function (event, delta, revertFunc) {
+            $("#divAlert1, #paymentMessage").hide();
+            if (event.idVisit > 0 && isGuestAdmin) {
+                if (confirm('Move check out date?')) {
+                    moveVisit('visitMove', event.idVisit, event.Span, 0, delta.asDays());
+                    return;
+                }
+            }
+            if (event.idReservation > 0 && isGuestAdmin) {
+                if (confirm('Move expected end date?')) {
+                    moveVisit('reservMove', event.idReservation, event.Span, 0, delta.asDays());
+                    return;
+                }
+            }
+            revertFunc();
+        },
+
+        eventClick: function (calEvent, jsEvent) {
+            $("#divAlert1, #paymentMessage").hide();
+            
+            // resources
+            if (calEvent.kind && calEvent.kind === 'oos') {
+                getStatusEvent(calEvent.resourceId, 'resc', calEvent.title);
+                return;
+            }
+            
+            // reservations
+            if (calEvent.idReservation && calEvent.idReservation > 0) {
+                if (jsEvent.target.classList.contains('hhk-schrm')) {
+                    getRoomList(calEvent.idReservation, jsEvent.target.id);
+                    return;
+                } else {
+                    window.location.assign(resvPageName + '?rid=' + calEvent.idReservation);
+                }
+            }
+            
+            var buttons = {
+                "Show Statement": function() {
+                    window.open('ShowStatement.php?vid=' + calEvent.idVisit, '_blank');
+                },
+                "Show Registration Form": function() {
+                    window.open('ShowRegForm.php?vid=' + calEvent.idVisit, '_blank');
+                },
+                "Save": function () {
+                    saveFees(0, calEvent.idVisit, calEvent.Span, true, 'register.php');
+                },
+                "Cancel": function () {
+                    $(this).dialog("close");
+                }
+            };
+            viewVisit(0, calEvent.idVisit, buttons, 'Edit Visit #' + calEvent.idVisit + '-' + calEvent.Span, '', calEvent.Span);
+        },
+        eventRender: function (event, element) {
+            if (hindx === undefined || hindx === 0 || event.idAssoc == hindx || event.idHosp == hindx || event.idHosp == 0) {
+                
+                if (event.room !== undefined) {
+                    element.qtip({
+                        content: event.fullName + ', ' + event.room + ', Visit Status: ' + event.visitStatus,
+                        position: {
+                            target: 'mouse', // Position it where the click was...
+                            adjust: { mouse: true } // ...but don't follow the mouse
+                        }
+                    });
+                }
+                
+                element.show();
+            } else {
+                element.hide();
+            }
         }
+
     });
 
     // disappear the pop-up room chooser.
@@ -1264,5 +1392,5 @@ $(document).ready(function () {
     $('#mainTabs').tabs("option", "active", defaultTab);
 
     $('#calendar').fullCalendar('render');
-
+    $('[title!=""]').qtip();
 });

@@ -77,7 +77,8 @@ try {
                 $timezone = filter_var(urldecode($_REQUEST["timezone"]), FILTER_SANITIZE_STRING);
             }
 
-            $events = GuestRegister::getRegister($dbh, $start, $end, $timezone);
+            $guestRegister = new GuestRegister();
+            $events = $guestRegister->getRegister($dbh, $start, $end, $timezone);
             break;
 
         default:
