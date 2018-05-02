@@ -9,9 +9,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-
-
-
 class GuestRegister {
 
     protected $noAssocId;
@@ -54,10 +51,21 @@ where ru.idResource_use is null
                 'bgColor' => $re['Background_Color'],
                 'textColor' => $re['Text_Color'],
                 'maxOcc' => $re['Max_Occupants'],
-                'roomType' => $re['Room_Type'],
+                'groupId' => $re['Room_Type'],
                 'roomStatus' => $re['Room_Status']
             );
         }
+
+        // Add waitlist
+        $rescs[] = array(
+                'id' => 0,
+                'title' => ' ',
+                'bgColor' => '#333',
+                'textColor' => '#fff',
+                'maxOcc' => 0,
+                'groupId' => 'Waitlist',
+                'roomStatus' => ''
+            );
 
         return $rescs;
 
@@ -194,6 +202,7 @@ where ru.idResource_use is null
             $s['Span'] = $r['Span'];
             $s['idHosp'] = $r['idHospital'];
             $s['idAssoc'] = $r['idAssociation'];
+            $s['hospName'] = $hospitals[$r['idHospital']]['Title'];
             $s['resourceId'] = $r["idResource"];
             $s['idResc'] = $r["idResource"];
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
@@ -436,7 +445,10 @@ where ru.idResource_use is null
 
             $endDT->sub(new \DateInterval("P1D"));
 
-            $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $startDT, $endDT, $timezone, $uS->RegColors, $events);
+            // Waitlist omit background event.
+            if ($r['idResource'] != 0 && $r['idHospital'] > 0) {
+                $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $startDT, $endDT, $timezone, $uS->RegColors, $events);
+            }
 
 
             $s['id'] = 'r' . $eventId++;
@@ -452,13 +464,14 @@ where ru.idResource_use is null
 
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
             $s['end'] = $endDT->format('Y-m-d\TH:i:00');
-            $s['title'] = $r['Guest Last'] . '<span id="' . $r['idReservation'] . '" class="hhk-schrm ui-icon ui-icon-transferthick-e-w"></span>';
+            $s['title'] = '<span id="' . $r['idReservation'] . '" class="hhk-schrm ui-icon ui-icon-transferthick-e-w" style="background-color:white; border:1px solid black;  margin-right:.3em;"></span>' . $r['Guest Last'];
+            $s['hospName'] = $hospitals[$r['idHospital']]['Title'];
             $s['idHosp'] = $r['idHospital'];
             $s['idAssoc'] = $r['idAssociation'];
             $s['allDay'] = 1;
             $s['resourceId'] = $r["idResource"];
             $s['idResc'] = $r["idResource"];
-            $s['resvStatus'] = $r['Status'];
+            $s['resvStatus'] = $r['Status_Text'];
             $s['fullName'] = $r['Name_Full'];
 
             $event = new Event($s, $timezone);

@@ -559,14 +559,10 @@ function checkStrength(pwCtrl) {
     }
     return rtn;
 }
-    var hindx = 0;
+    
 $(document).ready(function () {
     "use strict";
-    var d = new Date();
-    var wsAddress = 'ws_ckin.php';
-    var eventJSONString = wsAddress + '?cmd=register';
-
-
+    var hindx = 0;
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
             var ul = this.menu.element;
@@ -582,7 +578,7 @@ $(document).ready(function () {
     }
     
     $(':input[type="button"], :input[type="submit"]').button();
-    
+
     $.datepicker.setDefaults({
         yearRange: '-10:+02',
         changeMonth: true,
@@ -591,19 +587,25 @@ $(document).ready(function () {
         numberOfMonths: 2,
         dateFormat: 'M d, yy'
     });
-    
+    $.extend( $.fn.dataTable.defaults, {
+        "dom": '<"top"if>rt<"bottom"lp><"clear">',
+        "displayLength": 50,
+        "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
+        "order": [[ 3, 'asc' ]],
+        "processing": true,
+        "deferRender": true
+    });
+
     $('#vstays').on('click', '.stpayFees', function (event) {
         event.preventDefault();
         $("#divAlert1, #paymentMessage").hide();
         payFee($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
     });
-    
     $('#vstays').on('click', '.applyDisc', function (event) {
         event.preventDefault();
         $("#divAlert1, #paymentMessage").hide();
         getApplyDiscDiag($(this).data('vid'), $('#pmtRcpt'));
     });
-    
     $('#vstays, #vresvs, #vwls, #vuncon').on('click', '.stupCredit', function (event) {
         event.preventDefault();
         $("#divAlert1, #paymentMessage").hide();
@@ -640,15 +642,6 @@ $(document).ready(function () {
         cgResvStatus($(this).data('rid'), $(this).data('stat'));
     });
 
-    $.extend( $.fn.dataTable.defaults, {
-        "dom": '<"top"if>rt<"bottom"lp><"clear">',
-        "displayLength": 50,
-        "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
-        "order": [[ 3, 'asc' ]],
-        "processing": true,
-        "deferRender": true
-    });
-
     $('#curres').DataTable({
        ajax: {
            url: 'ws_resc.php?cmd=getHist&tbl=curres',
@@ -659,7 +652,6 @@ $(document).ready(function () {
        },
        "columns": cgCols
     });
-
     $('#daily').DataTable({
        ajax: {
            url: 'ws_resc.php?cmd=getHist&tbl=daily',
@@ -671,7 +663,6 @@ $(document).ready(function () {
             return "Prepared: " + dateRender(new Date().toISOString(), 'display', 'ddd, MMM D YYYY, h:mm a');
       }
     });
-
     $('#reservs').DataTable({
        ajax: {
            url: 'ws_resc.php?cmd=getHist&tbl=reservs',
@@ -682,7 +673,6 @@ $(document).ready(function () {
        },
        "columns": rvCols
     });
-
     if ($('#unreserv').length > 0) {
         $('#unreserv').DataTable({
            ajax: {
@@ -695,7 +685,6 @@ $(document).ready(function () {
            "columns": rvCols
         });
     }
-
     $('#waitlist').DataTable({
        ajax: {
            url: 'ws_resc.php?cmd=getHist&tbl=waitlist',
@@ -708,7 +697,6 @@ $(document).ready(function () {
        "columns": wlCols
     });
 
-
     $('.ckdate3').datepicker({
         onClose: function (dateText, inst) {
             var def = $(this).prop("defaultValue");
@@ -718,6 +706,8 @@ $(document).ready(function () {
             }
         }
     });
+    $('.ckdate').datepicker();
+
     
     $('#statEvents').dialog({
         autoOpen: false,
@@ -738,6 +728,7 @@ $(document).ready(function () {
             $('div#submitButtons').hide();
         }
     });
+    
     $('#keysfees').mousedown(function (event) {
         var target = $(event.target);
         if ( target[0].id !== 'pudiv' && target.parents("#" + 'pudiv').length === 0) {
@@ -777,8 +768,6 @@ $(document).ready(function () {
             $('div#submitButtons').hide();
         }
     });
-
-    $('.ckdate').datepicker();
 
     if ($('#txtactstart').val() === '') {
         var nowdt = new Date();
@@ -827,9 +816,30 @@ $(document).ready(function () {
         dateIncrement: {weeks: 1 },
         nextDayThreshold: '13:00',
         schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
+        customButtons: {
+            refresh: {
+              text: 'Refresh',
+              //themeIcon: 'ui-icon-refresh',
+              click: function() {
+                $('#calendar').fullCalendar( 'refetchResources' ).fullCalendar('refetchEvents');
+              }
+            },
+            prevprev: {
+              click: function() {
+                $('#calendar').fullCalendar('incrementDate', {weeks: -3});
+              },
+              themeIcon: 'ui-icon-seek-prev'
+            },
+            nextnext: {
+              click: function() {
+                $('#calendar').fullCalendar('incrementDate', {weeks: 3});
+              },
+              themeIcon: 'ui-icon-seek-next'
+            }
+        },
         header: {
-            center: 'title',
-            right: 'today prev, next'
+            center: '',
+            right: 'refresh,today prevprev,prev,next,nextnext'
         },
         views: {
             timelineweeks: {
@@ -839,7 +849,6 @@ $(document).ready(function () {
         },
         defaultView: 'timelineweeks',
         editable: true,
-
         resourceLabelText: 'Rooms',
         resourceAreaWidth: '8%',
         refetchResourcesOnNavigate: true,
@@ -849,12 +858,16 @@ $(document).ready(function () {
                 $('#script-warning').show();
             }
         },
+        resourceGroupField: 'groupId',
+        resourceGroupText: function (txt) {
+            return txt;
+        },
         resourceRender: function(resourceObj, labelTds, bodyTds) {
             labelTds.qtip('destroy', true);
             labelTds.css('background', resourceObj.bgColor)
                 .css('color', resourceObj.textColor)
                 .qtip({
-                    content: resourceObj.roomType + ': ' + resourceObj.title + ', Max. Occupants: ' + resourceObj.maxOcc + ', Status: ' + resourceObj.roomStatus,
+                    content: (resourceObj.roomType == '' ? '' : + ': ') + resourceObj.title + (resourceObj.maxOcc == 0 ? '' : ', Max. Occupants: ' + resourceObj.maxOcc) + (resourceObj.roomStatus == '' ? '' : ', Status: ' + resourceObj.roomStatus),
                     position: {
                         target: 'mouse', // Position it where the click was...
                         adjust: { mouse: true } 
@@ -865,7 +878,10 @@ $(document).ready(function () {
                 });
         },
         eventOverlap: function (stillEvent, movingEvent) {
-            return (stillEvent.id === movingEvent.id);
+            if (stillEvent.kind == 'bak' || stillEvent.id == movingEvent.id) {
+                return true;
+            }
+            return false;
         },
         events: {
             url: 'ws_calendar.php?cmd=eventlist',
@@ -877,12 +893,12 @@ $(document).ready(function () {
             
             $("#divAlert1, #paymentMessage").hide();
             
-            if (event.idVisit > 0 && delta.asDays() > 0 && isGuestAdmin) {
+            if (event.idVisit > 0 && delta.asDays() > 0) {
                 if (confirm('Move Visit to a new start date?')) {
                     moveVisit('visitMove', event.idVisit, event.Span, delta.asDays(), delta.asDays());
                 }
             }
-            if (event.idReservation > 0 && isGuestAdmin) {
+            if (event.idReservation > 0) {
                 // move by date?
                 if (delta.asDays() > 0) {
                     if (confirm('Move Reservation to a new start date?')) {
@@ -901,15 +917,16 @@ $(document).ready(function () {
             }
             revertFunc();
         },
+        
         eventResize: function (event, delta, revertFunc) {
             $("#divAlert1, #paymentMessage").hide();
-            if (event.idVisit > 0 && isGuestAdmin) {
+            if (event.idVisit > 0) {
                 if (confirm('Move check out date?')) {
                     moveVisit('visitMove', event.idVisit, event.Span, 0, delta.asDays());
                     return;
                 }
             }
-            if (event.idReservation > 0 && isGuestAdmin) {
+            if (event.idReservation > 0) {
                 if (confirm('Move expected end date?')) {
                     moveVisit('reservMove', event.idReservation, event.Span, 0, delta.asDays());
                     return;
@@ -963,10 +980,11 @@ $(document).ready(function () {
 
                 var resource = $('#calendar').fullCalendar('getResourceById', event.resourceId);
                 
+                // Reservations
                 if (event.idReservation !== undefined) {
                     element.qtip('destroy', true);
                     element.qtip({
-                        content: event.fullName + ', ' + resource.title + ', Status: ' + event.visitStatus,
+                        content: event.fullName + ', Room: ' + resource.title + (event.resourceId == 0 ? '' : ', Status: ' + event.resvStatus) + ', Hospital: ' + event.hospName,
                         position: {
                             target: 'mouse', // Position it where the click was...
                             adjust: { mouse: true } 
@@ -978,11 +996,13 @@ $(document).ready(function () {
                     element.find('.hhk-schrm').qtip({
                         content: 'Change Rooms'
                     });
+                    
+                // visits
                 } else if (event.idVisit !== undefined) {
-                    // visit
+                    
                     element.qtip('destroy', true);
                     element.qtip({
-                        content: event.fullName + ', ' + resource.title + ', Status: ' + event.visitStatus,
+                        content: event.fullName + ', Room: ' + resource.title + ', Status: ' + event.visitStatus + ', Hospital: ' + event.hospName,
                         position: {
                             target: 'mouse', // Position it where the click was...
                             adjust: { mouse: true } 
@@ -1419,10 +1439,20 @@ $(document).ready(function () {
                 $('#btnInvGo').click();
             }
         }
-        });
+    });
     $('#mainTabs').show();
     $('#mainTabs').tabs("option", "active", defaultTab);
 
     $('#calendar').fullCalendar('render');
     $('[title!=""]').qtip();
+    $('#divGoto').position({
+            my: 'center top',
+            at: 'center top',
+            of: '#calendar',
+            within: '#calendar'
+    });
+    $('#txtGotoDate').change(function () {
+        $('#calendar').fullCalendar('gotoDate', $(this).datepicker('getDate'));
+    });
+
 });

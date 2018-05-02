@@ -413,6 +413,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             }
             .ui-menu-item-wrapper {min-width: 120px;}
             .fc-bgevent {opacity: .9;}
+
         </style>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";}?>>
@@ -449,6 +450,10 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 </ul>
                 <div id="vcal" style="clear:left; padding: .6em 1em; display:none;">
                     <?php echo $viewWeeks; echo $colorKey; ?>
+                    <div id="divGoto" style="position:absolute;">
+                        <span>Goto Date: </span>
+                        <input id="txtGotoDate" type="text" class="ckdate" value="" />
+                    </div>
                     <div id='script-warning' style="display:none;">uh-oh javascript error.</div>
                     <div id="calendar"></div>
                 </div>
