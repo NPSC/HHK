@@ -322,6 +322,7 @@ $userDataEnc = json_encode($userData);
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo FULLC_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="js/volAction.js"></script>
     <script type="text/javascript">

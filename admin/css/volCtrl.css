@@ -47,17 +47,17 @@
     width: 100%;
 }
 #widget-docs .option-header h3 {
-    background: url("../images/spindown-closed.gif") no-repeat scroll left center transparent;
+/*    background: url("../images/spindown-closed.gif") no-repeat scroll left center transparent;*/
     cursor: pointer;
     float: left;
     line-height: 1.5;
     margin: 0 0 0 10px;
     padding: 0 0 0 15px;
-    width: 60%;
+    width: 79%;
 }
-#widget-docs .header-open h3 {
+/*#widget-docs .header-open h3 {
     background: url("../images/spindown-open.gif") no-repeat scroll left center transparent;
-}
+}*/
 #widget-docs .option-description, #widget-docs .event-description, #widget-docs .method-description, #widget-docs .option-examples, #widget-docs .event-examples {
     padding: 0 10px 0 25px;
 }
