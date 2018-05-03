@@ -30,7 +30,7 @@ class GuestRegister {
         $endDate = new \DateTime($endTime);
 
         // Get list of resources
-        $qu = "select r.idResource, r.Title, r.Background_Color, r.Text_Color, rm.Max_Occupants, g.Description as `Room_Type`, gs.Description as `Room_Status`, ru.idResource_use
+        $qu = "select r.idResource, r.Title, r.Background_Color, r.Text_Color, rm.Max_Occupants, gc.Description as `Category`, gr.Description as `Report_Category`, g.Description as `Room_Type`, gs.Description as `Room_Status`
 from resource r
 	left join
 resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and DATE(ru.Start_Date) <= DATE('" . $beginDate->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $endDate->format('Y-m-d') . "')
@@ -38,6 +38,8 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
     left join room rm on rr.idRoom = rm.idRoom
     left join gen_lookups g on g.Table_Name = 'Room_Type' and g.Code = rm.Type
     left join gen_lookups gs on gs.Table_Name = 'Room_Status' and gs.Code = rm.Status
+    left join gen_lookups gc on gc.Table_Name = 'Room_Category' and gc.Code = rm.Category
+    left join gen_lookups gr on gr.Table_Name = 'Room_Rpt_Cat' and gr.Code = rm.Report_Category
 where ru.idResource_use is null
  order by r.Util_Priority;";
         $rstmt = $dbh->query($qu);
@@ -51,8 +53,10 @@ where ru.idResource_use is null
                 'bgColor' => $re['Background_Color'],
                 'textColor' => $re['Text_Color'],
                 'maxOcc' => $re['Max_Occupants'],
-                'groupId' => $re['Room_Type'],
-                'roomStatus' => $re['Room_Status']
+                'roomType' => $re['Room_Type'],
+                'roomStatus' => $re['Room_Status'],
+                'roomCategory' => ($re['Category'] == '' ? '(Default)' : $re['Category']),
+                'reportCategory' => ($re['Report_Category'] == '' ? '(Default)' : $re['Report_Category']),
             );
         }
 
@@ -63,8 +67,10 @@ where ru.idResource_use is null
                 'bgColor' => '#333',
                 'textColor' => '#fff',
                 'maxOcc' => 0,
-                'groupId' => 'Waitlist',
-                'roomStatus' => ''
+                'roomType' => 'Waitlist',
+                'roomStatus' => '',
+                'roomCategory' => 'Waitlist',
+                'reportCategory' => 'Waitlist'
             );
 
         return $rescs;
@@ -111,7 +117,7 @@ where ru.idResource_use is null
 
         // Visits
         $query = "select * from vregister where Visit_Status <> '" . VisitStatus::Pending . "' and
-    DATE(Span_Start) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(Span_End), case when DATE(now()) > DATE(Expected_Departure) then DATE(now()) else DATE(Expected_Departure) end) >= DATE('" .$beginDate->format('Y-m-d') . "');";
+            DATE(Span_Start) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(Span_End), case when DATE(now()) > DATE(Expected_Departure) then DATE(now()) else DATE(Expected_Departure) end) >= DATE('" .$beginDate->format('Y-m-d') . "');";
         $stmtv = $dbh->query($query);
 
         while ($r = $stmtv->fetch(\PDO::FETCH_ASSOC)) {
@@ -220,7 +226,7 @@ where ru.idResource_use is null
 
 
 
-        // Reservations
+    // Reservations
         $query = "select * from vregister_resv where Status in ('" . ReservationStatus::Committed . "','" . ReservationStatus::UnCommitted . "','" . ReservationStatus::Waitlist . "') "
                 . " and DATE(Expected_Arrival) < DATE('" . $endDate->format('Y-m-d') . "') and DATE(Expected_Departure) > DATE('" . $beginDate->format('Y-m-d') . "') order by Expected_Arrival";
 
@@ -443,7 +449,7 @@ where ru.idResource_use is null
                 $clDate->setTime(10, 0, 0);
             }
 
-            $endDT->sub(new \DateInterval("P1D"));
+            //$endDT->sub(new \DateInterval("P1D"));
 
             // Waitlist omit background event.
             if ($r['idResource'] != 0 && $r['idHospital'] > 0) {
@@ -454,6 +460,7 @@ where ru.idResource_use is null
             $s['id'] = 'r' . $eventId++;
             $s['idReservation'] = $r['idReservation'];
             $s['className'] = 'hhk-schrm';
+            $s['borderColor'] = '#111';
 
             if ($uS->GuestNameColor != '' && isset($r[$uS->GuestNameColor])) {
                 if (isset($nameColors[$r[$uS->GuestNameColor]])){
@@ -646,7 +653,7 @@ where ru.idResource_use is null
         $idCounter = 10;
 
         $query1 = "select ru.*, g.Description as `StatusTitle` from resource_use ru left join gen_lookups g on g.Table_Name = 'Resource_Status' and g.Code = ru.Status
-where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(End_Date), DATE(now())) > DATE('" . $beginDate->format('Y-m-d') . "');";
+where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(ru.End_Date), DATE(now())) > DATE('" . $beginDate->format('Y-m-d') . "');";
 
         $stmtrs = $dbh->query($query1);
 
@@ -656,11 +663,23 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                 continue;
             }
 
+            // Filter Unavailable events.
+            if ($r['Status'] == ResourceStatus::Unavailable) {
+
+                $stDateDT = new \Datetime($r['Start_Date']);
+                $enDateDT = new \DateTime($r['End_Date']);
+
+                if (($stDateDT >= $beginDate && $stDateDT < $endDate) || ($enDateDT > $beginDate && $enDateDT <= $endDate)) {
+                    // take it.
+                } else {
+                    continue;
+                }
+            }
+
             // Set Start and end for fullCalendar control
             $c = array(
                 'id' => 'RR' . $idCounter++,
                 'kind' => CalEvent_Kind::OOS,
-                'idReservation' => 0,
                 'resourceId' => $r["idResource"],
                 'Span' => 0,
                 'idHosp' => 0,
@@ -671,7 +690,6 @@ where DATE(Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DA
                 'backgroundColor' => 'gray',
                 'textColor' => 'white',
                 'borderColor' => 'black',
-
             );
 
             $event = new Event($c, $timezone);

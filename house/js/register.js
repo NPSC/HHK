@@ -414,12 +414,16 @@ function getStatusEvent(idResc, type, title) {
                 alert("Parser error - " + err.message);
                 return;
             }
+            
             if (data.error) {
+                
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
                 alert("Server error - " + data.error);
+                
             } else if (data.tbl) {
+                
                 $('#statEvents').children().remove().end().append($(data.tbl));
                 $('.ckdate').datepicker({autoSize: true, dateFormat: 'M d, yy'});
                 var buttons = {
@@ -697,15 +701,6 @@ $(document).ready(function () {
        "columns": wlCols
     });
 
-    $('.ckdate3').datepicker({
-        onClose: function (dateText, inst) {
-            var def = $(this).prop("defaultValue");
-            if (dateText != '' && dateText != def) {
-                changeExptDeparture($(this).data('id'), $(this).data('vid'), dateText, $(this));
-                $(this).val($(this).prop("defaultValue"));
-            }
-        }
-    });
     $('.ckdate').datepicker();
 
     
@@ -837,28 +832,46 @@ $(document).ready(function () {
               themeIcon: 'ui-icon-seek-next'
             }
         },
+        views: {
+            timeline1weeks: {
+                type: 'timeline',
+                slotDuration: {days: 1},
+                duration: {weeks: 1 },
+                buttonText: '1'
+            },
+            timeline2weeks: {
+                type: 'timeline',
+                slotDuration: {days: 1},
+                duration: {weeks: 2 },
+                buttonText: '2'
+            },
+            timeline3weeks: {
+                type: 'timeline',
+                slotDuration: {days: 1},
+                duration: {weeks: 3 },
+                buttonText: '3'
+            },
+            timeline4weeks: {
+                type: 'timeline',
+                slotDuration: {days: 1},
+                duration: {weeks: 4 },
+                buttonText: '4'
+            }
+        },
         header: {
+            left: 'timeline1weeks,timeline2weeks,timeline3weeks,timeline4weeks title',
             center: '',
             right: 'refresh,today prevprev,prev,next,nextnext'
         },
-        views: {
-            timelineweeks: {
-                type: 'timelineMonth',
-                duration: {weeks: 3 }
-            }
-        },
-        defaultView: 'timelineweeks',
+        defaultView: defaultView,
         editable: true,
         resourceLabelText: 'Rooms',
         resourceAreaWidth: '8%',
         refetchResourcesOnNavigate: true,
+        resourceGroupField: resourceGroupBy,
         resources: {
-            url: 'ws_calendar.php?cmd=resclist',
-            error: function() {
-                $('#script-warning').show();
-            }
+            url: 'ws_calendar.php?cmd=resclist'
         },
-        resourceGroupField: 'groupId',
         resourceGroupText: function (txt) {
             return txt;
         },

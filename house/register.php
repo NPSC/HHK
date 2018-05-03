@@ -226,15 +226,17 @@ if ($stmth->rowCount() > 1 && (strtolower($uS->RegColors) == 'hospital')) {
     }
 }
 
-// View density
-$weeks = $uS->CalViewWeeks;
+
+$weeks = intval($uS->CalViewWeeks);
 if ($weeks < 1) {
     $weeks = 1;
-} else if ($weeks > 5) {
-    $weeks = 5;
+} else if ($weeks > 4) {
+    $weeks = 4;
 }
 
-$viewWeeks = '';  //HTMLContainer::generateMarkup('span', 'View ' . HTMLInput::generateMarkup($weeks, array('size'=>'1', 'id'=>'txtViewWeeks')) . ' weeks', array('style'=>'margin-right:5px;'));
+// View density
+$defaultView = 'timeline' . $weeks . 'weeks';
+
 
 // instantiate a ChallengeGenerator object
 try {
@@ -307,9 +309,10 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             var rctMkup = '<?php echo $receiptMarkup; ?>';
             var roomCnt = '<?php echo $roomCount; ?>';
             var defaultTab = '<?php echo $uS->DefaultRegisterTab; ?>';
+            var resourceGroupBy = '<?php echo $uS->CalResourceGroupBy; ?>';
             var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
             var challVar = '<?php echo $challengeVar; ?>';
-            var viewDays = '<?php echo ($weeks * 7); ?>';
+            var defaultView = '<?php echo $defaultView; ?>';
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
             var resvPageName = '<?php echo $config->getString('house', 'ReservationPage', 'Reserve.php'); ?>';
@@ -449,13 +452,12 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                     <li><a href="#vdaily">Daily Log</a></li>
                 </ul>
                 <div id="vcal" style="clear:left; padding: .6em 1em; display:none;">
-                    <?php echo $viewWeeks; echo $colorKey; ?>
+                    <?php echo $colorKey; ?>
                     <div id="divGoto" style="position:absolute;">
                         <span>Goto Date: </span>
                         <input id="txtGotoDate" type="text" class="ckdate" value="" />
                     </div>
-                    <div id='script-warning' style="display:none;">uh-oh javascript error.</div>
-                    <div id="calendar"></div>
+                    <div id="calendar" style="margin-top:5px;"></div>
                 </div>
                 <div id="vstays" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
                     <?php echo $currentCheckedIn; ?>

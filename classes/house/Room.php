@@ -77,6 +77,10 @@ class Room {
         return $this->roomRS->Category->getStoredVal();
     }
 
+    public function getReportCategory() {
+        return $this->roomRS->Report_Category->getStoredVal();
+    }
+
     public function getRate() {
         return $this->roomRS->Rate->getStoredVal();
     }
