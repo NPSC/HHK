@@ -128,7 +128,7 @@ order by r.Title;");
         }
 
 
-        $stmt = $dbh->query("Select '' as `Edit`, r.idRoom as `Id`, r.Title, g.Description as `Type`, g3.Description as `Category`, r.Max_Occupants as `Max`,
+        $stmt = $dbh->query("Select '' as `Edit`, r.idRoom as `Id`, r.Title, g.Description as `Type`, g3.Description as `Category`, g7.Description as `Cal. Group`, r.Max_Occupants as `Max`,
 r.Floor, r.Phone, g4.Description as `Static Rate`, g6.Description as `Clean Cycle` $depositCol
 from room r
 left join gen_lookups g on g.`Table_Name`='Room_Type' and g.`Code` = r.`Type`
@@ -136,6 +136,7 @@ left join gen_lookups g3 on g3.`Table_Name`='Room_Category' and g3.`Code`=r.Cate
 left join gen_lookups g4 on g4.`Table_Name`='Static_Room_Rate' and g4.`Code`=r.Rate_Code
 left join gen_lookups g5 on g5.`Table_Name`='Key_Deposit_Code' and g5.`Code`=r.Key_Deposit_Code
 left join gen_lookups g6 on g6.`Table_Name` = 'Room_Cleaning_Days' and g6.`Code` = r.Cleaning_Cycle_Code
+left join gen_lookups g7 on g7.`Table_Name` = 'Room_Rpt_Cat' and g7.`Code` = r.Report_Category
 order by r.Title;");
 
         $numResc = $stmt->rowCount();
@@ -167,6 +168,7 @@ order by r.Title;");
             'Title' => '',
             'Type' => '',
             'Category' => '',
+            'Report Category' => '',
             'Max' => '',
             'Floor' => '',
             'Phone' => '',
@@ -492,6 +494,9 @@ order by r.Title;");
             $roomRs->Category->setNewVal(filter_var($post['selReCategory'], FILTER_SANITIZE_STRING));
         }
 
+        if (isset($post['selRptCategory'])) {
+            $roomRs->Report_Category->setNewVal(filter_var($post['selRptCategory'], FILTER_SANITIZE_STRING));
+        }
         if (isset($post['selRateCode'])) {
             $code = filter_var($post['selRateCode'], FILTER_SANITIZE_STRING);
 
@@ -655,7 +660,7 @@ order by r.Title;");
 
     }
 
-    public static function roomDialog(\PDO $dbh, $idRoom, $roomTypes, $roomCategories, $rateCodes, $keyDepositCodes, $keyDeposit) {
+    public static function roomDialog(\PDO $dbh, $idRoom, $roomTypes, $roomCategories, $reportCategories, $rateCodes, $keyDepositCodes, $keyDeposit) {
 
         $roomRs = new RoomRs();
         $roomRs->idRoom->setStoredVal($idRoom);
@@ -684,6 +689,8 @@ order by r.Title;");
                     HTMLSelector::doOptionsMkup($roomTypes, $room->getType(), TRUE), array('id'=>'selReType', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
                     HTMLSelector::doOptionsMkup($roomCategories, $room->getRoomCategory(), TRUE), array('id'=>'selReCategory', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
+            . HTMLTable::makeTd(HTMLSelector::generateMarkup(
+                    HTMLSelector::doOptionsMkup($reportCategories, $room->getReportCategory(), TRUE), array('id'=>'selRptCategory', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
             // max occ
             . HTMLTable::makeTd(HTMLInput::generateMarkup($room->getMaxOccupants(), array('id'=>'txtMax', 'class'=>$cls, 'size'=>'3')), array('style'=>'padding-right:0;padding-left:0;'))
             . HTMLTable::makeTd(HTMLInput::generateMarkup($roomRs->Floor->getStoredVal(), array('id'=>'txtFloor', 'class'=>$cls, 'size'=>'4')), array('style'=>'padding-right:0;padding-left:0;'))

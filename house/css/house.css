@@ -60,9 +60,6 @@
 }
 .ui-autocomplete-loading { background: white url('../../images/ui-anim_basic_16x16.gif') right center no-repeat; }
 .hhk-loading { background: white url('../../images/ui-anim_basic_16x16.gif') left center no-repeat; }
-.hhk-schrm:hover {
-    font-size:150%;
-}
 .hhk-icon-redLight {
     width: 16px;
     height: 16px;

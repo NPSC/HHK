@@ -741,7 +741,7 @@ function paymentReply (data, updateCal) {
             flagAlertMessage(data.success, false);
         
             if ($('#calendar').length > 0 && updateCal) {
-                $('#calendar').hhkCalendar('refetchEvents');
+                $('#calendar').fullCalendar('refetchEvents');
             }
         }
         

@@ -314,6 +314,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Room_Cleaning_Days', 'b', '14 Days', '14', 'ha',20),
 ('Room_Cleaning_Days', 'nz', 'Disabled', '0', 'ha',1000),
 
+('Room_Rpt_Cat', '1', '1st Floor', '', 'h', 0),
+('Room_Rpt_Cat', '2', '2nd Floor', '', 'h', 0),
+
 ('Room_Status', 'a', 'Clean', '','',0),
 ('Room_Status', 'dty', 'Dirty', '','',0),
 ('Room_Status', 'to', 'Turn Over', '','',0),
@@ -424,6 +427,7 @@ REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`,`T
 --
 REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES 
 ('CalViewWeeks','3','i','h','Number of weeks showing in the calendar view'),
+('CalResourceGroupBy', 'roomType', 's', 'h', 'Calendar resource grouping parameter'),
 ('CardSwipe','false','b','f','Use POS terminal'),
 ('CheckOutTime', '10:00', 's', 'h', 'Normal House checkout time of day.  Format hh:mm'),
 ('CheckInTime', '16:00', 's', 'h', 'Normal Hose Check in time of day in 24-hour format, hh:mm'),

@@ -284,9 +284,11 @@ $(document).mousedown(function (event) {
                 $roomRates = $uS->guestLookups['Static_Room_Rate'];
             }
 
+            $reportCategories = readGenLookupsPDO($dbh, 'Room_Rpt_Cat');
+
 
             $events = ResourceView::roomDialog($dbh, $id, $uS->guestLookups[GL_TableNames::RoomType],
-                    $uS->guestLookups[GL_TableNames::RoomCategory], $roomRates, $uS->guestLookups[GL_TableNames::KeyDepositCode], $uS->KeyDeposit);
+                    $uS->guestLookups[GL_TableNames::RoomCategory], $reportCategories, $roomRates, $uS->guestLookups[GL_TableNames::KeyDepositCode], $uS->KeyDeposit);
 
         } else if ($type == 'rs') {
             // constraint

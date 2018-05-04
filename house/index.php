@@ -125,16 +125,16 @@ if (SecurityComponent::isHTTPS()) {
 
 ?>
 <!DOCTYPE HTML>
-<html>
+<html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $uS->siteName; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
-        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
+        <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
     </head>
     <body <?php if ($uS->testVersion) { echo "class='testbody'"; } ?>>

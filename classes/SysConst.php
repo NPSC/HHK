@@ -45,6 +45,12 @@ class Constraint_Type {
     const Visit = 'v';
 }
 
+class CalEvent_Kind {
+    const OOS = 'oos';
+    const BO = 'bo';
+    const BAK = 'bak';
+}
+
 class Default_Settings {
     const Rate_Category = 'e';
     const Fixed_Rate_Category = 'f';
