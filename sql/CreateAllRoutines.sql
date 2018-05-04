@@ -637,3 +637,72 @@ BEGIN
 END -- ;
 
 
+-- --------------------------------------------------------
+--
+-- Procedure `new_webpage`
+--
+DROP procedure IF EXISTS `set_pagesecurity`;
+
+CREATE PROCEDURE `set_pagesecurity` (pageId int, secCode varchar(5))
+BEGIN
+    if pageId > 0 and secCode != '' then
+	replace into page_securitygroup (idPage, Group_Code) VALUES (pageId, secCode);
+    end if;
+    
+END --;
+
+
+
+-- --------------------------------------------------------
+--
+-- Procedure `new_webpage`
+--
+DROP procedure IF EXISTS `new_webpage`;
+
+CREATE PROCEDURE `new_webpage`(
+    IN fileName varchar(65),
+    IN loginPageId int,
+    IN pageTitle varchar(45),
+    IN hideMe int,
+    IN website varchar(5),
+    IN menuParent varchar(45),
+    IN menuPosition varchar(45),
+    IN pageType varchar(5),
+    IN validityCode varchar(75),
+    IN updatedBy varchar(45),
+    IN lastUpdated datetime,
+    IN secCode varchar(5),
+    OUT id int
+)
+BEGIN
+
+    declare p int;
+    declare n int;
+    
+    select idPage into p from `page` where `File_Name` = fileName;
+    
+    -- Take care of page table
+    if p > 0 then
+        -- update
+        update `page` set `Login_Page_Id` = loginPageId, `Title` = pageTitle, `Hide` = hideMe, `Menu_Parent` = menuParent, `Menu_Position` = menuPosition, `Type` = pageType,
+                `Validity_Code` = validityCode, `Updated_By` = updatedBy, `Last_Updated` = lastUpdated
+                where idPage = p;
+            
+        Select p into id;
+        
+    else
+        -- insert
+        INSERT INTO `page`
+        (`File_Name`, `Login_Page_Id`, `Title`,	`Hide`,	`Web_Site`,	`Menu_Parent`, `Menu_Position`,	`Type`,	`Validity_Code`, `Updated_By`, `Last_Updated`)
+        VALUES
+        (fileName, loginPageId, pageTitle, hideMe, website, menuParent, menuPosition, pageType, validityCode, updatedBy, lastUpdated);
+
+        SELECT LAST_INSERT_ID() into id;
+    end if;
+
+    call set_pagesecurity(id, secCode);
+
+END --;
+
+
+
