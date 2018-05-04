@@ -186,13 +186,13 @@ where ru.idResource_use is null
 
             if ($r['Visit_Status'] == VisitStatus::NewSpan) {
                 $titleText .= ' (rm)';
-//                $spnArray['title'] = 'Room Changed';
+
             } else if ($r['Visit_Status'] == VisitStatus::ChangeRate) {
                 $titleText .= ' ($)';
-//                $spnArray['title'] = 'Rate Changed';
+
             } else if ($extended) {
                 $titleText .= '>>';
-//                $spnArray['title'] = 'Past Expected Departure Date';
+
             }
 
             if ($uS->GuestNameColor != '' && isset($r[$uS->GuestNameColor])) {
@@ -517,8 +517,11 @@ where ru.idResource_use is null
 
 
     protected function addBackgroundEvent($r, $hospitals, $startDT, $endDT, $timezone, $regColors, &$events) {
-            $backgroundBorderColor = '';
+        $backgroundBorderColor = '';
 
+            // Use Association colors?
+        if (strtolower($regColors) == 'hospital') {
+            
             $h = array();
 
             // Background Event
@@ -535,24 +538,21 @@ where ru.idResource_use is null
             $h['title'] = '';
             $h['allDay'] = 1;
 
-                // Use Association colors?
-            if (strtolower($regColors) == 'hospital') {
 
-                if ($r['idAssociation'] != $this->noAssocId && $r['idAssociation'] > 0) {
-                    $h['backgroundColor'] = $hospitals[$r['idAssociation']]['Background_Color'];
-                } else {
-                    $h['backgroundColor'] = $hospitals[$r['idHospital']]['Background_Color'];
-                }
-
-                $h['borderColor'] = $h['backgroundColor'];
-                $backgroundBorderColor = $h['borderColor'];
-
+            if ($r['idAssociation'] != $this->noAssocId && $r['idAssociation'] > 0) {
+                $h['backgroundColor'] = $hospitals[$r['idAssociation']]['Background_Color'];
+            } else {
+                $h['backgroundColor'] = $hospitals[$r['idHospital']]['Background_Color'];
             }
+
+            $h['borderColor'] = $h['backgroundColor'];
+            $backgroundBorderColor = $h['borderColor'];
 
             $hEvent = new Event($h, $timezone);
             $events[] = $hEvent->toArray();
+        }
 
-            return $backgroundBorderColor;
+        return $backgroundBorderColor;
     }
 
     protected function addVisitBlackouts($myHolidays, $dtendDate, $timezone, $idResc, $nonClean) {

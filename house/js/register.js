@@ -876,19 +876,27 @@ $(document).ready(function () {
             return txt;
         },
         resourceRender: function(resourceObj, labelTds, bodyTds) {
-            labelTds.qtip('destroy', true);
+            
             labelTds.css('background', resourceObj.bgColor)
-                .css('color', resourceObj.textColor)
-                .qtip({
-                    content: (resourceObj.roomType == '' ? '' : + ': ') + resourceObj.title + (resourceObj.maxOcc == 0 ? '' : ', Max. Occupants: ' + resourceObj.maxOcc) + (resourceObj.roomStatus == '' ? '' : ', Status: ' + resourceObj.roomStatus),
+                    .css('color', resourceObj.textColor);
+
+            if (resourceObj.id > 0) {
+                
+                labelTds.qtip('destroy', true);
+                
+                var cont = (resourceObj.roomType == '' ? '' : resourceObj.roomType + ': ')
+                        + resourceObj.title 
+                        + (resourceObj.maxOcc == 0 ? '' : ', Max. Occupants: ' + resourceObj.maxOcc)
+                        + (resourceObj.roomStatus == '' ? '' : ', Status: ' + resourceObj.roomStatus);
+                
+                labelTds.qtip({
+                    content: cont,
                     position: {
                         target: 'mouse', // Position it where the click was...
                         adjust: { mouse: true } 
-                    },
-                    style: {
-                        tip: {corner: 'bottom left'}
                     }
                 });
+            }
         },
         eventOverlap: function (stillEvent, movingEvent) {
             if (stillEvent.kind == 'bak' || stillEvent.id == movingEvent.id) {
@@ -951,7 +959,7 @@ $(document).ready(function () {
         eventClick: function (calEvent, jsEvent) {
             $("#divAlert1, #paymentMessage").hide();
             
-            // resources
+            // OOS events
             if (calEvent.kind && calEvent.kind === 'oos') {
                 getStatusEvent(calEvent.resourceId, 'resc', calEvent.title);
                 return;
@@ -989,39 +997,31 @@ $(document).ready(function () {
         
         eventRender: function (event, element) {
             
+            element.qtip('destroy', true);
+                
             if (hindx === undefined || hindx === 0 || event.idAssoc == hindx || event.idHosp == hindx || event.idHosp == 0) {
 
                 var resource = $('#calendar').fullCalendar('getResourceById', event.resourceId);
                 
                 // Reservations
                 if (event.idReservation !== undefined) {
-                    element.qtip('destroy', true);
+
                     element.qtip({
                         content: event.fullName + ', Room: ' + resource.title + (event.resourceId == 0 ? '' : ', Status: ' + event.resvStatus) + ', Hospital: ' + event.hospName,
                         position: {
                             target: 'mouse', // Position it where the click was...
                             adjust: { mouse: true } 
-                        },
-                        style: {
-                            tip: {corner: 'bottom left'}
                         }
-                    });
-                    element.find('.hhk-schrm').qtip({
-                        content: 'Change Rooms'
                     });
                     
                 // visits
                 } else if (event.idVisit !== undefined) {
                     
-                    element.qtip('destroy', true);
                     element.qtip({
                         content: event.fullName + ', Room: ' + resource.title + ', Status: ' + event.visitStatus + ', Hospital: ' + event.hospName,
                         position: {
                             target: 'mouse', // Position it where the click was...
                             adjust: { mouse: true } 
-                        },
-                        style: {
-                            tip: {corner: 'bottom left'}
                         }
                     });
                 }
@@ -1457,10 +1457,10 @@ $(document).ready(function () {
     $('#mainTabs').tabs("option", "active", defaultTab);
 
     $('#calendar').fullCalendar('render');
-    $('[title!=""]').qtip();
+
     $('#divGoto').position({
             my: 'center top',
-            at: 'center top',
+            at: 'center top+8',
             of: '#calendar',
             within: '#calendar'
     });
