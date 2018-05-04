@@ -646,61 +646,6 @@ $(document).ready(function () {
         cgResvStatus($(this).data('rid'), $(this).data('stat'));
     });
 
-    $('#curres').DataTable({
-       ajax: {
-           url: 'ws_resc.php?cmd=getHist&tbl=curres',
-           dataSrc: 'curres'
-       },
-       "drawCallback": function (settings) {
-            $('#curres .gmenu').menu();
-       },
-       "columns": cgCols
-    });
-    $('#daily').DataTable({
-       ajax: {
-           url: 'ws_resc.php?cmd=getHist&tbl=daily',
-           dataSrc: 'daily'
-       },
-       "order": [[ 0, 'asc' ]],
-       "columns": dailyCols,
-       "infoCallback": function( settings, start, end, max, total, pre ) {
-            return "Prepared: " + dateRender(new Date().toISOString(), 'display', 'ddd, MMM D YYYY, h:mm a');
-      }
-    });
-    $('#reservs').DataTable({
-       ajax: {
-           url: 'ws_resc.php?cmd=getHist&tbl=reservs',
-           dataSrc: 'reservs'
-       },
-       "drawCallback": function (settings) {
-            $('#reservs .gmenu').menu();
-       },
-       "columns": rvCols
-    });
-    if ($('#unreserv').length > 0) {
-        $('#unreserv').DataTable({
-           ajax: {
-               url: 'ws_resc.php?cmd=getHist&tbl=unreserv',
-               dataSrc: 'unreserv'
-           },
-           "drawCallback": function (settings) {
-                $('#unreserv .gmenu').menu();
-           },
-           "columns": rvCols
-        });
-    }
-    $('#waitlist').DataTable({
-       ajax: {
-           url: 'ws_resc.php?cmd=getHist&tbl=waitlist',
-           dataSrc: 'waitlist'
-       },
-       "order": [[ 4, 'asc' ]],
-       "drawCallback": function (settings) {
-            $('#waitlist .gmenu').menu();
-       },
-       "columns": wlCols
-    });
-
     $('.ckdate').datepicker();
 
     
@@ -1007,7 +952,7 @@ $(document).ready(function () {
                 if (event.idReservation !== undefined) {
 
                     element.qtip({
-                        content: event.fullName + ', Room: ' + resource.title + (event.resourceId == 0 ? '' : ', Status: ' + event.resvStatus) + ', Hospital: ' + event.hospName,
+                        content: event.fullName + ', Room: ' + resource.title +  ', Status: ' + event.resvStatus + ', Hospital: ' + event.hospName,
                         position: {
                             target: 'mouse', // Position it where the click was...
                             adjust: { mouse: true } 
@@ -1467,5 +1412,61 @@ $(document).ready(function () {
     $('#txtGotoDate').change(function () {
         $('#calendar').fullCalendar('gotoDate', $(this).datepicker('getDate'));
     });
+    
+    $('#curres').DataTable({
+       ajax: {
+           url: 'ws_resc.php?cmd=getHist&tbl=curres',
+           dataSrc: 'curres'
+       },
+       "drawCallback": function (settings) {
+            $('#curres .gmenu').menu();
+       },
+       "columns": cgCols
+    });
+    $('#daily').DataTable({
+       ajax: {
+           url: 'ws_resc.php?cmd=getHist&tbl=daily',
+           dataSrc: 'daily'
+       },
+       "order": [[ 0, 'asc' ]],
+       "columns": dailyCols,
+       "infoCallback": function( settings, start, end, max, total, pre ) {
+            return "Prepared: " + dateRender(new Date().toISOString(), 'display', 'ddd, MMM D YYYY, h:mm a');
+      }
+    });
+    $('#reservs').DataTable({
+       ajax: {
+           url: 'ws_resc.php?cmd=getHist&tbl=reservs',
+           dataSrc: 'reservs'
+       },
+       "drawCallback": function (settings) {
+            $('#reservs .gmenu').menu();
+       },
+       "columns": rvCols
+    });
+    if ($('#unreserv').length > 0) {
+        $('#unreserv').DataTable({
+           ajax: {
+               url: 'ws_resc.php?cmd=getHist&tbl=unreserv',
+               dataSrc: 'unreserv'
+           },
+           "drawCallback": function (settings) {
+                $('#unreserv .gmenu').menu();
+           },
+           "columns": rvCols
+        });
+    }
+    $('#waitlist').DataTable({
+       ajax: {
+           url: 'ws_resc.php?cmd=getHist&tbl=waitlist',
+           dataSrc: 'waitlist'
+       },
+       "order": [[ 4, 'asc' ]],
+       "drawCallback": function (settings) {
+            $('#waitlist .gmenu').menu();
+       },
+       "columns": wlCols
+    });
+
 
 });

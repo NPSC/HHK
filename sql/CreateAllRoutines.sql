@@ -639,9 +639,9 @@ END -- ;
 
 -- --------------------------------------------------------
 --
--- Procedure `new_webpage`
+-- Procedure `set_pagesecurity`
 --
-DROP procedure IF EXISTS `set_pagesecurity`;
+DROP procedure IF EXISTS `set_pagesecurity`; -- ;
 
 CREATE PROCEDURE `set_pagesecurity` (pageId int, secCode varchar(5))
 BEGIN
@@ -657,7 +657,7 @@ END --;
 --
 -- Procedure `new_webpage`
 --
-DROP procedure IF EXISTS `new_webpage`;
+DROP procedure IF EXISTS `new_webpage`; -- ;
 
 CREATE PROCEDURE `new_webpage`(
     IN fileName varchar(65),

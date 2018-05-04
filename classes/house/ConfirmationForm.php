@@ -21,10 +21,12 @@ class ConfirmationForm extends TemplateForm {
 		$uS = Session::getInstance();
 		$labels = new Config_Lite(LABEL_FILE);
 		$visitFeeNotice = "";
-		
+
 		//populate visitFeeNotice
 		if($reserv->getExpectedDays($reserv->getExpectedArrival(), $reserv->getExpectedDeparture()) > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0){
+                    if ($reserv->getVisitFee() > 0) {
 			$visitFeeNotice = $labels->getString('referral', 'VisitFeeConfirmLabel', '') . " $" . number_format($reserv->getVisitFee(), 2) . ".";
+                    }
 		}
 
         return array(

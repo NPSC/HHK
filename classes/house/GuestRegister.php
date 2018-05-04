@@ -280,11 +280,9 @@ where ru.idResource_use is null
                         'id' => 'H' . $eventId++,
                         'kind' => CalEvent_Kind::BO,
                         'editable' => false,
-                        'idReservation' => 0,
                         'resourceId' => $r["idResource"],
                         'start' => $stDT->format('Y-m-d\TH:i:00'),
                         'end' => $stDT->format('Y-m-d\TH:i:00'),
-                        'idHosp' => 0,
                         'title' => 'H',
                         'allDay' => 1,
                         'backgroundColor' => 'black',
@@ -309,9 +307,7 @@ where ru.idResource_use is null
                         'id' => 'BO' . $eventId++,
                         'kind' => CalEvent_Kind::BO,
                         'editable' => false,
-                        'idReservation' => 0,
                         'resourceId' => $r["idResource"],
-                        'idHosp' => 0,
                         'start' => $stDT->format('Y-m-d\TH:i:00'),
                         'end' => $stDT->format('Y-m-d\TH:i:00'),
                         'title' => 'BO',
@@ -333,19 +329,17 @@ where ru.idResource_use is null
                 while ($myHolidays->is_holiday($stDT->format('U'))) {
                     $c = array(
                         'id' => 'H' . $eventId++,
-                        'idReservation' => 0,
                         'kind' => CalEvent_Kind::BO,
                         'editable' => false,
                         'resourceId' => $r["idResource"],
                         'start' => $stDT->format('Y-m-d\TH:i:00'),
                         'end' => $stDT->format('Y-m-d\TH:i:00'),
-                        'idHosp' => 0,
                         'title' => 'H',
                         'allDay' => 1,
                         'backgroundColor' => 'black',
                         'textColor' => 'white',
                         'borderColor' => 'Yellow',
-                        "level" => $rescs[$r["idResource"]]["_level_"]
+
                     );
                     $event = new Event($c, $timezone);
                     $events[] = $event->toArray();
@@ -375,17 +369,15 @@ where ru.idResource_use is null
                         'id' => 'H' . $eventId++,
                         'kind' => CalEvent_Kind::BO,
                         'editable' => false,
-                        'idReservation' => 0,
                         'resourceId' => $r["idResource"],
                         'start' => $clDate->format('Y-m-d\TH:i:00'),
                         'end' => $clDate->format('Y-m-d\TH:i:00'),
-                        'idHosp' => 0,
                         'title' => 'H',
                         'allDay' => 1,
                         'backgroundColor' => 'black',
                         'textColor' => 'white',
                         'borderColor' => 'Yellow',
-                        "level" => $rescs[$r["idResource"]]["_level_"]
+
                     );
 
                     $event = new Event($c, $timezone);
@@ -405,9 +397,7 @@ where ru.idResource_use is null
                     'id' => 'BO' . $eventId++,
                     'kind' => CalEvent_Kind::BO,
                     'editable' => false,
-                    'idReservation' => 0,
                     'resourceId' => $r["idResource"],
-                    'idHosp' => 0,
                     'start' => $clDate->format('Y-m-d\TH:i:00'),
                     'end' => $clDate->format('Y-m-d\TH:i:00'),
                     'title' => 'BO',
@@ -415,7 +405,7 @@ where ru.idResource_use is null
                     'backgroundColor' => 'black',
                     'textColor' => 'white',
                     'borderColor' => 'white',
-                    "level" => $rescs[$r["idResource"]]["_level_"]
+
                 );
                 $event = new Event($c, $timezone);
                 $events[] = $event->toArray();
@@ -430,17 +420,15 @@ where ru.idResource_use is null
                     'id' => 'H' . $eventId++,
                     'kind' => CalEvent_Kind::BO,
                     'editable' => FALSE,
-                    'idReservation' => 0,
                     'resourceId' => $r["idResource"],
                     'start' => $clDate->format('Y-m-d\TH:i:00'),
                     'end' => $clDate->format('Y-m-d\TH:i:00'),
-                    'idHosp' => 0,
                     'title' => 'H',
                     'allDay' => 1,
                     'backgroundColor' => 'black',
                     'textColor' => 'white',
                     'borderColor' => 'Yellow',
-                    "level" => $rescs[$r["idResource"]]["_level_"]
+
                 );
                 $event = new Event($c, $timezone);
                 $events[] = $event->toArray();
@@ -489,9 +477,6 @@ where ru.idResource_use is null
         return $events;
     }
 
-        // Date Utilities
-    //----------------------------------------------------------------------------------------------
-
 
     // Parses a string into a DateTime object, optionally forced into the given timezone.
     public static function parseDateTime($string, $timezone=null) {
@@ -521,7 +506,7 @@ where ru.idResource_use is null
 
             // Use Association colors?
         if (strtolower($regColors) == 'hospital') {
-            
+
             $h = array();
 
             // Background Event
@@ -564,10 +549,7 @@ where ru.idResource_use is null
                         'id' => 'H' . $idResc,
                         'kind' => CalEvent_Kind::BO,
                         'editable' => FALSE,
-                        'idReservation' => 0,
                         'resourceId' => $idResc,
-                        'Span' => 0,
-                        'idHosp' => 0,
                         'start' => $dtendDate->format('Y-m-d\TH:i:00'),
                         'end' => $dtendDate->format('Y-m-d\TH:i:00'),
                         'title' => 'H',
@@ -596,10 +578,7 @@ where ru.idResource_use is null
                         'id' => 'BO' . $idResc,
                         'kind' => CalEvent_Kind::BO,
                         'editable' => FALSE,
-                        'idReservation' => 0,
                         'resourceId' => $idResc,
-                        'Span' => 0,
-                        'idHosp' => 0,
                         'start' => $dtendDate->format('Y-m-d\TH:i:00'),
                         'end' => $dtendDate->format('Y-m-d\TH:i:00'),
                         'title' => 'BO',
@@ -626,10 +605,7 @@ where ru.idResource_use is null
                         'id' => 'H' . $idResc,
                         'kind' => CalEvent_Kind::BO,
                         'editable' => FALSE,
-                        'idReservation' => 0,
                         'resourceId' => $idResc,
-                        'Span' => 0,
-                        'idHosp' => 0,
                         'start' => $dtendDate->format('Y-m-d\TH:i:00'),
                         'end' => $dtendDate->format('Y-m-d\TH:i:00'),
                         'title' => 'H',
