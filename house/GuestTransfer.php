@@ -408,7 +408,7 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
-
+        <script type="text/javascript" src="<?php echo ADDR_PREFS_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
 function updateLocal(id) {

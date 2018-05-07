@@ -94,6 +94,22 @@ $paymentMarkup = '';
 $receiptMarkup = '';
 $statusSelector = '';
 $payTypeSelector = '';
+$resourceGroupBy = 'roomType';
+$defaultRegisterTab = 0;
+$currentReservations = '';
+$uncommittedReservations = '';
+$waitlist = '';
+$rvCols = array();
+$wlCols = array();
+
+
+if ($uS->DefaultRegisterTab > 0 && $uS->DefaultRegisterTab < 5) {
+    $defaultRegisterTab = $uS->DefaultRegisterTab;
+}
+
+if ($uS->CalResourceGroupBy != '') {
+    $resourceGroupBy = $uS->CalResourceGroupBy;
+}
 
 // Hosted payment return
 if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)) === FALSE) {
@@ -102,7 +118,6 @@ if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)
     $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
 }
 
-$history = new History();
 
 // Page Return
 if (isset($_POST['btnDlCurGuests'])) {
@@ -112,45 +127,32 @@ if (isset($_POST['btnDlCurGuests'])) {
 }
 if (isset($_POST['btnDlConfRes'])) {
     // Confirmed Reservations
+    $history = new History();
     $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Committed, FALSE, '', 1, TRUE);
     doExcelDownLoad($rows, 'ConfirmedResv');
 }
 if (isset($_POST['btnDlUcRes'])) {
     // Unconfirmed Reservations
+    $history = new History();
     $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, FALSE, '', 1, TRUE);
     doExcelDownLoad($rows, 'UnconfirmedResv');
 }
 if (isset($_POST['btnDlWlist'])) {
     // Waitlist
+    $history = new History();
     $rows = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, FALSE, '', 1, TRUE);
     doExcelDownLoad($rows, 'Waitlist');
 }
 if (isset($_POST['btnFeesDl'])) {
-
     require (HOUSE . 'PaymentReport.php');
-
     PaymentReport::generateDayReport($dbh, $_POST);
 }
 
 
+$locations = readGenLookupsPDO($dbh, 'Location');
+$diags = readGenLookupsPDO($dbh, 'Diagnosis');
 
 
-if (isset($uS->roomCount) === FALSE) {
-    $stmt = $dbh->query("Select count(*) from resource");
-    $rows = $stmt->fetchAll(PDO::FETCH_NUM);
-    $uS->roomCount = $rows[0][0];
-}
-
-$roomCount = max(array($uS->roomCount, 10));
-
-if ($uS->Reservation) {
-    $roomCount += 9;
-}
-
-$divFontSize = 'font-size:.9em;';
-if ($roomCount > 20) {
-    $divFontSize = 'font-size:.8em;';
-}
 
 // Daily Log
 $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
@@ -159,23 +161,9 @@ $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
         , array('style' => 'background-color:#D3D3D3; padding:10px;'))
         . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divdaily'));
 
-
 // Currently Checked In guests
 $currentCheckedIn = HTMLContainer::generateMarkup('h3', 'Current Guests' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlCurGuests', 'style'=>'margin-left:5em;font-size:.9em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
         . HTMLContainer::generateMarkup('div', "<table id='curres' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divcurres'));
-
-// Confirmed reservations and waitlist
-$currentReservations = '';
-$uncommittedReservations = '';
-$waitlist = '';
-$rvCols = array();
-
-$wlCols = array();
-
-
-
-$locations = readGenLookupsPDO($dbh, 'Location');
-$diags = readGenLookupsPDO($dbh, 'Diagnosis');
 
 // make registration form print button
 $regButton = HTMLContainer::generateMarkup('span', 'Check-in Date: ' . HTMLInput::generateMarkup('', array('id'=>'regckindate', 'class'=>'ckdate hhk-prtRegForm'))
@@ -194,7 +182,7 @@ if ($uS->ShowUncfrmdStatusTab) {
 }
 
 
-// make registration form print button
+// make waitlist print button
 $wlButton = HTMLContainer::generateMarkup('span', 'Date: ' . HTMLInput::generateMarkup(date('M j, Y'), array('id'=>'regwldate', 'class'=>'ckdate hhk-prtWL'))
         . HTMLInput::generateMarkup('Print Wait List', array('id'=>'btnPrintWL', 'type'=>'button', 'data-page'=>'PrtWaitList.php', 'class'=>'hhk-prtWL', 'style'=>'margin-left:.3em;font-size:.85em;'))
         , array('style'=>'margin-left:5em;padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5'));
@@ -227,6 +215,7 @@ if ($stmth->rowCount() > 1 && (strtolower($uS->RegColors) == 'hospital')) {
 }
 
 
+// View density
 $weeks = intval($uS->CalViewWeeks);
 if ($weeks < 1) {
     $weeks = 1;
@@ -234,7 +223,6 @@ if ($weeks < 1) {
     $weeks = 4;
 }
 
-// View density
 $defaultView = 'timeline' . $weeks . 'weeks';
 
 
@@ -248,7 +236,6 @@ try {
 
 $showCharges = TRUE;
 $addnl = readGenLookupsPDO($dbh, 'Addnl_Charge');
-
 
 // decide to show payments and invoices
 if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
@@ -285,15 +272,13 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <?php echo JQ_DT_CSS; ?>
         <link href='css/fullcalendar.min.css'  rel='stylesheet' type='text/css' />
         <link href='css/scheduler.min.css'  rel='stylesheet' type='text/css' />
-        <link href='css/jquery.qtip.min.css'  rel='stylesheet' type='text/css' />
         <?php echo FAVICON; ?>
 
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="../js/jquery.qtip.min.js"></script>
         <script type="text/javascript" src="js/fullcalendar.min.js"></script>
-        <script type="text/javascript" src="../js/hhk-scheduler.min.js"></script>
+        <script type="text/javascript" src="../js/hhk-scheduler.js"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
@@ -307,9 +292,8 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';
             var pmtMkup = "<?php echo $paymentMarkup; ?>";
             var rctMkup = '<?php echo $receiptMarkup; ?>';
-            var roomCnt = '<?php echo $roomCount; ?>';
-            var defaultTab = '<?php echo $uS->DefaultRegisterTab; ?>';
-            var resourceGroupBy = '<?php echo $uS->CalResourceGroupBy; ?>';
+            var defaultTab = '<?php echo $defaultRegisterTab; ?>';
+            var resourceGroupBy = '<?php echo $resourceGroupBy; ?>';
             var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
             var challVar = '<?php echo $challengeVar; ?>';
             var defaultView = '<?php echo $defaultView; ?>';
@@ -442,7 +426,6 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                     <li><a href="#vuncon"><?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?></a></li>
                     <?php } ?>
                     <li><a href="#vwls">Wait List</a></li>
-
                     <?php if ($isGuestAdmin) { ?>
                         <li><a href="#vactivity">Recent Activity</a></li>
                         <?php if ($showCharges) { ?>
@@ -457,6 +440,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                         <span>Goto Date: </span>
                         <input id="txtGotoDate" type="text" class="ckdate" value="" />
                     </div>
+                    <p style="color:red; display:none;" id="pCalError"></p>
                     <div id="calendar" style="margin-top:5px;"></div>
                 </div>
                 <div id="vstays" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">

@@ -444,7 +444,6 @@ where ru.idResource_use is null
                 $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $startDT, $endDT, $timezone, $uS->RegColors, $events);
             }
 
-
             $s['id'] = 'r' . $eventId++;
             $s['idReservation'] = $r['idReservation'];
             $s['className'] = 'hhk-schrm';
@@ -459,7 +458,7 @@ where ru.idResource_use is null
 
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
             $s['end'] = $endDT->format('Y-m-d\TH:i:00');
-            $s['title'] = '<span id="' . $r['idReservation'] . '" class="hhk-schrm ui-icon ui-icon-transferthick-e-w" style="background-color:white; border:1px solid black;  margin-right:.3em;"></span>' . $r['Guest Last'];
+            $s['title'] = '<span id="' . $r['idReservation'] . '" class="hhk-schrm ui-icon ui-icon-arrowthick-2-n-s" style="background-color:white; border:1px solid black;  margin-right:.3em;"></span>' . $r['Guest Last'];
             $s['hospName'] = $hospitals[$r['idHospital']]['Title'];
             $s['idHosp'] = $r['idHospital'];
             $s['idAssoc'] = $r['idAssociation'];
@@ -467,6 +466,7 @@ where ru.idResource_use is null
             $s['resourceId'] = $r["idResource"];
             $s['idResc'] = $r["idResource"];
             $s['resvStatus'] = $r['Status_Text'];
+            $s['status'] = $r['Status'];
             $s['fullName'] = $r['Name_Full'];
 
             $event = new Event($s, $timezone);
@@ -628,7 +628,15 @@ where ru.idResource_use is null
 
         $idCounter = 10;
 
-        $query1 = "select ru.*, g.Description as `StatusTitle` from resource_use ru left join gen_lookups g on g.Table_Name = 'Resource_Status' and g.Code = ru.Status
+        $query1 = "SELECT
+    ru.*, g.Description AS `StatusTitle`, ifnull(gr.Description, 'Undefined') as `reasonTitle`
+FROM
+    resource_use ru
+        LEFT JOIN
+    gen_lookups g ON g.Table_Name = 'Resource_Status'
+        AND g.Code = ru.Status        LEFT JOIN
+    gen_lookups gr ON gr.Table_Name = 'OOS_Codes'
+        AND gr.Code = ru.OOS_Code
 where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(ru.End_Date), DATE(now())) > DATE('" . $beginDate->format('Y-m-d') . "');";
 
         $stmtrs = $dbh->query($query1);
@@ -657,8 +665,7 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
                 'id' => 'RR' . $idCounter++,
                 'kind' => CalEvent_Kind::OOS,
                 'resourceId' => $r["idResource"],
-                'Span' => 0,
-                'idHosp' => 0,
+                'reason' => $r['reasonTitle'],
                 'start' => $r['Start_Date'],
                 'end' => $r['End_Date'],
                 'title' => $r['StatusTitle'],
