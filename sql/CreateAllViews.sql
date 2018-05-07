@@ -2221,37 +2221,6 @@ order by r.Util_Priority,r.Title;
 
 
 
-
--- -----------------------------------------------------
--- View `vshells`
--- -----------------------------------------------------
-CREATE or replace VIEW `vshells` AS
-select
-    s.idShell,
-    s.Title,
-    s.Description,
-    gs.Description AS Status,
-    gcat.Description AS Category,
-    gcod.Description AS Type,
-    s.Shell_Color AS `Shell Color`,
-    ifnull(DATE_FORMAT(s.Time_Start, '%h:%i %p'), '') AS `Time Start`,
-    ifnull(DATE_FORMAT(s.Time_End, '%h:%i %p'), '') AS `Time End`,
-    ifnull(DATE_FORMAT(s.Date_Start, '%m/%d/%Y'), '') AS `Date Start`,
-    s.Sun AS Sun,
-    s.Mon AS Mon,
-    s.Tue AS Tue,
-    s.Wed AS Wed,
-    s.Thu AS Thu,
-    s.Fri AS Fri,
-    s.Sat AS Sat
-from
-    (((shell_events s
-    left join gen_lookups gcat ON (((s.Vol_Cat = gcat.Code) and (gcat.Table_Name = 'vol_Category'))))
-    left join gen_lookups gcod ON (((s.Vol_Code = gcod.Code) and (gcod.Table_Name = s.Vol_Cat))))
-    left join gen_lookups gs ON (((s.Status = gs.Code) and (gs.Table_Name = 'E_Shell_Status'))))
-order by gcat.Description, gcod.Description;
-
-
 -- -----------------------------------------------------
 -- View `vspan_listing`
 -- -----------------------------------------------------

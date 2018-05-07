@@ -160,7 +160,7 @@ $minuteOptions = array(
     45 => array(0=>45, 1=>'45'),
 );
 
-$query = "Select * from vshells";
+$query = "Select * from shell_events order by Vol_Cat";
 $stmt = $dbh->query($query);
 
 // peruse the rows
@@ -174,10 +174,10 @@ while ($rw = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($rw['Vol_Code'], array('name'=>'txtCode['. $rw['idShell'] . ']', 'size'=>'5')));
 
     $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($rw['Shell_Color'], array('name'=>'txtColor['. $rw['idShell'] . ']', 'size'=>'10')));
-    $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($rw['Date_Start'], array('name'=>'txtStartDate['. $rw['idShell'] . ']', 'class'=>'ckdate')));
+    $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup(date('M j, Y', strtotime($rw['Date_Start'])), array('name'=>'txtStartDate['. $rw['idShell'] . ']', 'class'=>'ckdate')));
 
     // Times
-    if (($startTimeDT = DateTime::createFromFormat('H:i:s', $rw['Time_Start'])) === FALSE) {
+    if (($startTimeDT = new DateTime($rw['Time_Start'])) === FALSE) {
         $startTimeDT = new DateTime();
         $startTimeDT->setTime(0, 0, 0);
     }
@@ -187,7 +187,7 @@ while ($rw = $stmt->fetch(PDO::FETCH_ASSOC)) {
             .':'.HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($minuteOptions, $startTimeDT->format('i'), FALSE), array('name'=>'selStartMinutes['. $rw['idShell'] . ']'))
     );
 
-    if (($endTimeDT = DateTime::createFromFormat('H:i:s', $rw['Time_End'])) === FALSE) {
+    if (($endTimeDT = new DateTime($rw['Time_End'])) === FALSE) {
         $endTimeDT = new DateTime();
         $endTimeDT->setTime(0, 0, 0);
     }
