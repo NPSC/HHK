@@ -287,6 +287,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Rate_Period', '2', 'Reduced Rate 2', '14','',0),
 ('Rate_Period', '3', 'Reduced Rate 3', '19999','',0),
 
+('registration', 'Sig_Card', 'Signature', 'y', 'm', 10),
+('registration', 'Pamphlet', 'Pamphlet', 'y', 'm', 20),
+('registration', 'Referral', 'Referral', 'y', 'm', 310),
+('registration', 'Guest_Ident', 'Guest Id', 'y', 'm', 40),
+
 ('rel_type','chd','Child','par','',0),
 ('rel_type','par','Parent','chd','',0),
 ('rel_type','rltv','Relative','','',0),

@@ -13,11 +13,13 @@ class Registration {
     public $isNew;
     protected $depositBalance;
     protected $lodgingMOA;
+    protected $rawRow;
 
     public function __construct(PDO $dbh, $idPsg, $idRegistration = 0) {
 
         $this->regRS = new RegistrationRs();
         $rows = array();
+        $this->rawRow = array();
         $this->isNew = TRUE;
         $this->depositBalance = NULL;
         $this->lodgingMOA = NULL;
@@ -34,7 +36,7 @@ class Registration {
         if (count($rows) > 0) {
 
             EditRS::loadRow($rows[0], $this->regRS);
-
+            $this->rawRow = $rows[0];
             $this->isNew = FALSE;
         }
     }
@@ -200,34 +202,43 @@ where
 
     public function extractRegistration(\PDO $dbh, $pData) {
 
-        $regRs = $this->regRS;
-        if (isset($pData["cbSig"])) {
-            $regRs->Sig_Card->setNewVal(1);
+        if (isset($pData['regGuest_Ident'])) {
+            $this->regRS->Guest_Ident->setNewVal('1');
+            $this->rawRow['Guest_Ident'] = '1';
         } else {
-            $regRs->Sig_Card->setNewVal(0);
+            $this->regRS->Guest_Ident->setNewVal('0');
+            $this->rawRow['Guest_Ident'] = '0';
         }
-        if (isset($pData["cbPam"])) {
-            $regRs->Pamphlet->setNewVal(1);
+
+        if (isset($pData['regPamphlet'])) {
+            $this->regRS->Pamphlet->setNewVal('1');
+            $this->rawRow['Pamphlet'] = '1';
         } else {
-            $regRs->Pamphlet->setNewVal(0);
+            $this->regRS->Pamphlet->setNewVal('0');
+            $this->rawRow['Pamphlet'] = '0';
         }
-        if (isset($pData["cbRef"])) {
-            $regRs->Referral->setNewVal(1);
+
+        if (isset($pData['regReferral'])) {
+            $this->regRS->Referral->setNewVal('1');
+            $this->rawRow['Referral'] = '1';
         } else {
-            $regRs->Referral->setNewVal(0);
+            $this->regRS->Referral->setNewVal('0');
+            $this->rawRow['Referral'] = '0';
         }
-        if (isset($pData["cbGid"])) {
-            $regRs->Guest_Ident->setNewVal('1');
+
+        if (isset($pData['regSig_Card'])) {
+            $this->regRS->Sig_Card->setNewVal('1');
+            $this->rawRow['Sig_Card'] = '1';
         } else {
-            $regRs->Guest_Ident->setNewVal('');
+            $this->regRS->Sig_Card->setNewVal('0');
+            $this->rawRow['Sig_Card'] = '0';
         }
 
         if (isset($pData["cbEml"])) {
-            $regRs->Email_Receipt->setNewVal('1');
+            $this->regRS->Email_Receipt->setNewVal('1');
         } else {
-            $regRs->Email_Receipt->setNewVal('');
+            $this->regRS->Email_Receipt->setNewVal('');
         }
-
     }
 
     public function saveRegistrationRs(PDO $dbh, $idPsg, $uname) {
@@ -279,57 +290,74 @@ where
 
     public function createRegMarkup(PDO $dbh, $adminKey) {
 
-        $sigChkd = "";
-        if ($this->regRS->Sig_Card->getStoredVal() == "1") {
-            $sigChkd = "checked='checked'";
-        }
-
-        $pamChkd = "";
-        if ($this->regRS->Pamphlet->getStoredVal() == "1") {
-            $pamChkd = "checked='checked'";
-        }
-
-        $refChkd = "";
-        if ($this->regRS->Referral->getStoredVal() == "1") {
-            $refChkd = "checked='checked'";
-        }
-
-        $gidChkd = "";
-        if ($this->regRS->Guest_Ident->getStoredVal() == "1") {
-            $gidChkd = "checked='checked'";
-        }
-
-        $emChkd = "";
-        if ($this->regRS->Email_Receipt->getStoredVal() == "1") {
-            $emChkd = "checked='checked'";
-        }
-
         // get session instance
         $uS = Session::getInstance();
         $labels = new Config_Lite(LABEL_FILE);
-        $keyMkup = '';
+        $tbl = new HTMLTable();
 
+        // Date Registered
+        $tbl->addBodyTr(HTMLTable::makeTh('Date')
+                . HTMLTable::makeTd(($this->regRS->Date_Registered->getStoredVal() == '' ? '' : date('M j, Y', strtotime($this->regRS->Date_Registered->getStoredVal())))));
+
+        $regs = readGenLookupsPDO($dbh, 'registration', 'Order');
+
+        // Selected Items.
+        foreach ($regs as $r) {
+
+            if (strtolower($r['Substitute']) == 'y' && isset($this->rawRow[$r['Code']])) {
+
+                $attrs = array(
+                    'type' => 'checkbox',
+                    'class' => 'hhk-regvalue',
+                    'name' => 'reg' . $r['Code'],
+                    'id' => 'reg' . $r['Code'],
+                );
+
+                // checked?
+                if ($this->rawRow[$r['Code']] == '1') {
+                    $attrs['checked'] = 'checked';
+                }
+
+                $tbl->addBodyTr(
+                        HTMLTable::makeTh(HTMLContainer::generateMarkup('label', $r['Description'], array('for'=>'reg' . $r['Code'])))
+                        . HTMLTable::makeTd(HTMLInput::generateMarkup('', $attrs)));
+            }
+        }
+
+        $emAttrs = array(
+            'type' => 'checkbox',
+            'class' => 'hhk-regvalue',
+            'name' => 'cbEml',
+            'id' => 'cbEml',
+        );
+
+        if ($this->regRS->Email_Receipt->getStoredVal() == "1") {
+            $emAttrs['checked'] = 'checked';
+        }
+
+        // Email receipt
+        $tbl->addBodyTr(
+            HTMLTable::makeTh(HTMLContainer::generateMarkup('label', 'Email Receipt', array('for'=>'cbEml')))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup('', $emAttrs))
+            );
+
+
+        // Key Deposit
         if ($uS->KeyDeposit) {
             $kdBal = $this->getDepositBalance($dbh);
 
-            $keyMkup = "</tr><tr><th class='tdlabel'>" . $labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit') . "</td><td>$" . number_format($kdBal, 2) . "</td>";
+            $tbl->addBodyTr(
+                HTMLTable::makeTh($labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit'))
+                .HTMLTable::makeTd('$' . number_format($kdBal, 2)));
+            //$keyMkup = "</tr><tr><th class='tdlabel'>" . $labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit') . "</td><td>$" . number_format($kdBal, 2) . "</td>";
         }
 
         // Lodging MOA
-        $lmoaMkup = "</tr><tr><th class='tdlabel'>" . $labels->getString('statement', 'lodgingMOA', 'MOA') . "</td><td>$" . number_format($this->getLodgingMOA($dbh), 2) . "</td>";
+        $tbl->addBodyTr(
+            HTMLTable::makeTh($labels->getString('statement', 'lodgingMOA', 'MOA'))
+            .HTMLTable::makeTd('$' . number_format($this->getLodgingMOA($dbh), 2)));
 
-
-
-        $rmkup = "<table><tr><th class='tdlabel'>Date</td><td>" . ($this->regRS->Date_Registered->getStoredVal() == '' ? '' : date('M j, Y', strtotime($this->regRS->Date_Registered->getStoredVal()))) . "</td>
-</tr><tr><th class='tdlabel'><label for='cbSig'>Signature Card</label></td><td><input type='checkbox' id='cbSig' name='cbSig' class='hhk-regvalue' $sigChkd /></td>
-</tr><tr><th class='tdlabel'><label for='cbPam'>Rules</label></td><td><input type='checkbox' id='cbPam' name='cbPam' class='hhk-regvalue' $pamChkd /></td>
-</tr><tr><th class='tdlabel'><label for='cbRef'>Referral</label></td><td><input type='checkbox' id='cbRef' name='cbRef' class='hhk-regvalue' $refChkd /></td>
-</tr><tr><th class='tdlabel'><label for='cbGid'>ID Card Photocopied</label></td><td><input type='checkbox' id='cbGid' name='cbGid' class='hhk-regvalue' $gidChkd /></td>
-</tr><tr><th class='tdlabel'><label for='cbEml'>Email Receipt</label></td><td><input type='checkbox' id='cbEml' name='cbEml' class='hhk-regvalue' $emChkd /></td>
-$lmoaMkup
-$keyMkup</tr></table>";
-
-        return $rmkup;
+        return $tbl->generateMarkup();
 
     }
 
