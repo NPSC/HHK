@@ -278,7 +278,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="js/fullcalendar.min.js"></script>
-        <script type="text/javascript" src="../js/hhk-scheduler.js"></script>
+        <script type="text/javascript" src="../js/hhk-scheduler.min.js"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
@@ -437,7 +437,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 <div id="vcal" style="clear:left; padding: .6em 1em; display:none;">
                     <?php echo $colorKey; ?>
                     <div id="divGoto" style="position:absolute;">
-                        <span>Goto Date: </span>
+                        <span>Go to Date: </span>
                         <input id="txtGotoDate" type="text" class="ckdate" value="" />
                     </div>
                     <p style="color:red; display:none;" id="pCalError"></p>
