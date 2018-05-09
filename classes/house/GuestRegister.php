@@ -30,7 +30,7 @@ class GuestRegister {
         $endDate = new \DateTime($endTime);
 
         // Get list of resources
-        $qu = "select r.idResource, r.Title, r.Background_Color, r.Text_Color, rm.Max_Occupants, gc.Description as `Category`, gr.Description as `Report_Category`, g.Description as `Room_Type`, gs.Description as `Room_Status`
+        $qu = "select r.idResource, r.Title, r.Background_Color, r.Text_Color, rm.Max_Occupants, gc.Description as `Category`, gr.Description as `Report_Category`, g.Description as `Room_Type`, gs.Description as `Room_Status`, rm.Floor
 from resource r
 	left join
 resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and DATE(ru.Start_Date) <= DATE('" . $beginDate->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $endDate->format('Y-m-d') . "')
@@ -54,6 +54,7 @@ where ru.idResource_use is null
                 'textColor' => $re['Text_Color'],
                 'maxOcc' => $re['Max_Occupants'],
                 'roomType' => $re['Room_Type'],
+                'floor' => $re['Floor'],
                 'roomStatus' => $re['Room_Status'],
                 'roomCategory' => ($re['Category'] == '' ? '(Default)' : $re['Category']),
                 'reportCategory' => ($re['Report_Category'] == '' ? '(Default)' : $re['Report_Category']),
@@ -68,6 +69,7 @@ where ru.idResource_use is null
                 'textColor' => '#fff',
                 'maxOcc' => 0,
                 'roomType' => 'Waitlist',
+                'floor' => 'Waitlist',
                 'roomStatus' => '',
                 'roomCategory' => 'Waitlist',
                 'reportCategory' => 'Waitlist'
@@ -101,7 +103,7 @@ where ru.idResource_use is null
         $endDate = self::parseDateTime($_GET['end']);
 
         // get list of hospital colors
-        $hospitals = $this->getHospitals($dbh, (trim(strtolower($uS->RegColors)) == 'hospital'));
+        $hospitals = $this->getHospitals($dbh);
 
         $nameColors = $this->getGuestColors($dbh, $uS->GuestNameColor);
 
@@ -709,24 +711,23 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
 
     }
 
-    protected function getHospitals(\PDO $dbh, $useHospitalColors) {
+    protected function getHospitals(\PDO $dbh) {
 
         $hospitals = array(0 => array('idHospital'=>0, 'Background_Color'=>'blue', 'Text_Color'=>'white'));
         $this->noAssocId = 0;
 
-        if ($useHospitalColors) {
-            $hstmt = $dbh->query("Select Title, idHospital, Reservation_Style as Background_Color, Stay_Style as Text_Color from hospital where `Status` = 'a';");
-            foreach ($hstmt->fetchAll(\PDO::FETCH_ASSOC) as $h) {
-                $hospitals[$h['idHospital']] = $h;
+        $hstmt = $dbh->query("Select Title, idHospital, Reservation_Style as Background_Color, Stay_Style as Text_Color from hospital where `Status` = 'a';");
+        foreach ($hstmt->fetchAll(\PDO::FETCH_ASSOC) as $h) {
 
-                if ($h['Title'] == '(None)') {
-                    $this->noAssocId = $h['idHospital'];
-                }
+            $h['Title'] = htmlspecialchars_decode($h['Title'], ENT_QUOTES);
+            $hospitals[$h['idHospital']] = $h;
+
+            if ($h['Title'] == '(None)') {
+                $this->noAssocId = $h['idHospital'];
             }
         }
 
         return $hospitals;
-
     }
 
 }
