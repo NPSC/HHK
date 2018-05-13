@@ -122,6 +122,78 @@ function saveArchive(\PDO $dbh, $desc, $subt, $tblName) {
     return $defaultCode;
 }
 
+function getSelections(\PDO $dbh, $tableName, $type) {
+
+    $uS = Session::getInstance();
+
+    // Generate selectors.
+    $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
+
+    $tbl = new HTMLTable();
+
+    if ($type == 'm') {
+        $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries') . HTMLTable::makeTh('Order') . HTMLTable::makeTh('Use');
+    } else {
+        $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries') . HTMLTable::makeTh('Order')
+                . ($type == 'ca' ? HTMLTable::makeTh('Amount') : '')
+                . ($type == 'ha' ? HTMLTable::makeTh('Days') : '')
+                . ($type == 'd' && $uS->GuestNameColor == $tableName ? HTMLTable::makeTh('Colors (font, bkgrnd)') : '')
+                . ($type == 'u' ? '' : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With'));
+    }
+
+    $tbl->addHeaderTr($hdrTr);
+
+    foreach ($diags as $d) {
+
+        // Remove this item from the replacement entries.
+        $tDiags = removeOptionGroups($diags);
+        unset($tDiags[$d[0]]);
+
+        $cbDelMU = '';
+
+        if ($type == 'm') {
+
+            $ary = array('name' => 'cbDiagDel[' . $d[0] . ']', 'type' => 'checkbox', 'class' => 'hhkdiagdelcb');
+
+            if (strtolower($d[2]) == 'y') {
+                $ary['checked'] = 'checked';
+            }
+
+            $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', $ary));
+
+        } else if ($type == 'd' && $d[0] == 'z') {
+
+            $cbDelMU = HTMLTable::makeTd('');
+
+        } else if ($type != 'u') {
+
+            $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'cbDiagDel[' . $d[0] . ']', 'type' => 'checkbox', 'class' => 'hhkdiagdelcb', 'data-did' => 'selDiagDel[' . $d[0] . ']')));
+        }
+
+        $tbl->addBodyTr(
+                HTMLTable::makeTd(HTMLInput::generateMarkup($d[1], array('name' => 'txtDiag[' . $d[0] . ']')))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($d[4], array('name' => 'txtDOrder[' . $d[0] . ']', 'size'=>'3')))
+                . ($type == 'ha' || $type == 'ca' || ($type == 'd' && $uS->GuestNameColor == $tableName) ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[2], array('size' => '10', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[' . $d[0] . ']'))) : '')
+                . $cbDelMU
+                . ($type != 'm' && $type != 'u' ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($tDiags, ''), array('name' => 'selDiagDel[' . $d[0] . ']'))) : '')
+        );
+    }
+
+    if ($type != 'u' && $type != 'm') {
+        // new entry row
+        $tbl->addBodyTr(
+                HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDiag[0]')))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDOrder[0]', 'size'=>'3')))
+                . HTMLTable::makeTd('New', array('colspan' => 2))
+                . ($type == 'ha' || $type == 'ca' ? HTMLTable::makeTd(HTMLInput::generateMarkup('', array('size' => '7', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[0]'))) : '')
+        );
+    }
+
+    return $tbl;
+
+}
+
+
 $dbh = $wInit->dbh;
 $pageTitle = $wInit->pageTitle;
 
@@ -146,7 +218,7 @@ $rteMsg = '';
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
 
-// Check post
+// Lookups
 if (isset($_POST['table'])) {
 
     $tableName = filter_var($_POST['table'], FILTER_SANITIZE_STRING);
@@ -168,6 +240,7 @@ if (isset($_POST['table'])) {
         $type = filter_var($_POST['tp'], FILTER_SANITIZE_STRING);
     }
 
+    // Save
     if ($cmd == 'save' && isset($_POST['txtDiag'])) {
 
         // Check for a new entry
@@ -358,70 +431,9 @@ if (isset($_POST['table'])) {
 
 
     // Generate selectors.
-    $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
+    $tbl = getSelections($dbh, $tableName, $type);
 
-    $tbl = new HTMLTable();
-
-    if ($type == 'm') {
-        $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries') . HTMLTable::makeTh('Order') . HTMLTable::makeTh('Use');
-    } else {
-        $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries') . HTMLTable::makeTh('Order')
-                . ($type == 'ca' ? HTMLTable::makeTh('Amount') : '')
-                . ($type == 'ha' ? HTMLTable::makeTh('Days') : '')
-                . ($type == 'd' && $uS->GuestNameColor == $tableName ? HTMLTable::makeTh('Colors (font, bkgrnd)') : '')
-                . ($type == 'u' ? '' : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With'));
-    }
-
-    $tbl->addHeaderTr($hdrTr);
-
-    foreach ($diags as $d) {
-
-        // Remove this item from the replacement entries.
-        $tDiags = removeOptionGroups($diags);
-        unset($tDiags[$d[0]]);
-
-        $cbDelMU = '';
-
-        if ($type == 'm') {
-
-            $ary = array('name' => 'cbDiagDel[' . $d[0] . ']', 'type' => 'checkbox', 'class' => 'hhkdiagdelcb');
-
-            if (strtolower($d[2]) == 'y') {
-                $ary['checked'] = 'checked';
-            }
-
-            $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', $ary));
-
-        } else if ($type == 'd' && $d[0] == 'z') {
-
-            $cbDelMU = HTMLTable::makeTd('');
-
-        } else if ($type != 'u') {
-
-            $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'cbDiagDel[' . $d[0] . ']', 'type' => 'checkbox', 'class' => 'hhkdiagdelcb', 'data-did' => 'selDiagDel[' . $d[0] . ']')));
-        }
-
-        $tbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup($d[1], array('name' => 'txtDiag[' . $d[0] . ']')))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($d[4], array('name' => 'txtDOrder[' . $d[0] . ']', 'size'=>'3')))
-                . ($type == 'ha' || $type == 'ca' || ($type == 'd' && $uS->GuestNameColor == $tableName) ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[2], array('size' => '10', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[' . $d[0] . ']'))) : '')
-                . $cbDelMU
-                . ($type != 'm' && $type != 'u' ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($tDiags, ''), array('name' => 'selDiagDel[' . $d[0] . ']'))) : '')
-        );
-    }
-
-    if ($type != 'u' && $type != 'm') {
-        // new entry row
-        $tbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDiag[0]')))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDOrder[0]', 'size'=>'3')))
-                . HTMLTable::makeTd('New', array('colspan' => 2))
-                . ($type == 'ha' || $type == 'ca' ? HTMLTable::makeTd(HTMLInput::generateMarkup('', array('size' => '7', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[0]'))) : '')
-        );
-    }
-
-    echo($tbl->generateMarkup(array('style' => 'margin:7px;')));
-
+    echo($tbl->generateMarkup());
     exit();
 }
 
@@ -792,9 +804,9 @@ if (isset($_POST['btnItemSave'])) {
 }
 
 // Get selected Editor Form text
-if (isset($_POST['cmd'])) {
+if (isset($_POST['formEdit'])) {
 
-    $cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_STRING);
+    $cmd = filter_input(INPUT_POST, 'formEdit', FILTER_SANITIZE_STRING);
 
     switch ($cmd) {
 
@@ -1180,7 +1192,11 @@ $rteSelectForm = HTMLSelector::generateMarkup(
 
 
 
-// Demographics
+// Demographics Selection table
+$tbl = getSelections($dbh, 'Demographics', 'm');
+$demoSelections = $tbl->generateMarkup();
+
+// Demographics category selectors
 $stmt = $dbh->query("SELECT DISTINCT
     `g`.`Table_Name`, g2.Description
 FROM
@@ -1198,6 +1214,7 @@ $selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''),
 $lookupErrMsg = '';
 
 
+
 // General Lookup categories
 $stmt2 = $dbh->query("select distinct `Type`, `Table_Name` from gen_lookups where `Type` in ('h','u', 'ha', 'm');");
 $rows2 = $stmt2->fetchAll(PDO::FETCH_NUM);
@@ -1209,7 +1226,9 @@ foreach ($rows2 as $r) {
         continue;
     }
 
-    $lkups[] = $r;
+    if ($r[1] != 'Demographics') {
+        $lkups[] = $r;
+    }
 }
 
 $selLookups = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($lkups, ''), array('name' => 'sellkLookup', 'class' => 'hhk-selLookup'));
@@ -1606,11 +1625,22 @@ $resultMessage = $alertMsg->createMarkup();
             }
 
             $.post('ResourceBuilder.php', $btn.serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
-                    function(data) {
-                        if (data) {
-                            $btn.children('div').children().remove().end().append(data);
-                        }
-                    });
+                function(data) {
+                    if (data) {
+                        $btn.children('div').children().remove().end().append(data);
+                    }
+                });
+        }).button();
+
+        $('.hhk-savedemoCat').click(function () {
+            var $frm = $(this).closest('form');
+
+            $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + 'Demographics' + '&tp=' + 'm',
+                function(data) {
+                    if (data) {
+                        $frm.children('div').children().remove().end().append(data);
+                    }
+                });
         }).button();
 
         // Form edit form select drives the whole process.
@@ -1626,7 +1656,7 @@ $resultMessage = $alertMsg->createMarkup();
 
             $('#spnRteLoading').show();
 
-            $.post('ResourceBuilder.php', {cmd:'getform', fn: $(this).val()}, function (rawData){
+            $.post('ResourceBuilder.php', {formEdit:'getform', fn: $(this).val()}, function (rawData){
 
                 $('#spnRteLoading').hide();
 
@@ -1660,7 +1690,7 @@ $resultMessage = $alertMsg->createMarkup();
                         },
                         onSave: function () {
 
-                            var parms = {cmd:'saveform', fn: $('#frmEdSelect').val(), mu: encodeURI($(this).html())};
+                            var parms = {formEdit:'saveform', fn: $('#frmEdSelect').val(), mu: encodeURI($(this).html())};
 
                             $.post('ResourceBuilder.php', parms, function (data){
                                 data = $.parseJSON(data);
@@ -1701,6 +1731,7 @@ $resultMessage = $alertMsg->createMarkup();
                     <li><a href="#roomTable">Rooms</a></li>
                     <li><a href="#rateTable"><?php echo $rateTableTabTitle; ?></a></li>
                     <li><a href="#hospTable"><?php echo $hospitalTabTitle; ?></a></li>
+                    <li><a href="#demoTable">Demographics</a></li>
                     <li><a href="#lkTable">Lookups</a></li>
                     <li><a href="#agreeEdit">Forms Editor</a></li>
                     <li><a href="#itemTable">Items</a></li>
@@ -1708,25 +1739,37 @@ $resultMessage = $alertMsg->createMarkup();
                     <li><a href="#constr">Constraints</a></li>
                 </ul>
                 <div id="rescTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
-<?php echo $rescTable; ?>
+                    <?php echo $rescTable; ?>
                 </div>
                 <div id="roomTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
-<?php echo $roomTable; ?>
+                    <?php echo $roomTable; ?>
                 </div>
-                <div id="lkTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
+                <div id="demoTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
                     <div style="float:left;">
-                        <h3>Demographics</h3>
+                        <h3>Demographic Categories</h3>
                         <form id="formdemo">
-                            <table>
+                            <div>
+                                <?php echo $demoSelections; ?>
+                            </div>
+                            <span style="margin:10px;float:right;"><input type="button" id='btndemoSave' class="hhk-savedemoCat" data-type="h" value="Save"/></span>
+                        </form>
+                    </div>
+
+                    <div style="float:left; margin-left:30px;">
+                        <h3>Demographics</h3>
+                        <form id="formdemoCat">
+                            <table><tr>
                                 <th>Demographic</th>
                                 <td><?php echo $selDemos; ?></td>
                                 </tr>
                             </table>
-                            <div id="divdemo"></div>
-                            <span style="margin:10px;float:right;"><input type="button" id='btndemoSave' class="hhk-saveLookup" data-type="d" value="Save"/></span>
+                            <div id="divdemoCat"></div>
+                            <span style="margin:10px;float:right;"><input type="button" id='btndemoSaveCat' class="hhk-saveLookup" data-type="d" value="Save"/></span>
                         </form>
                     </div>
-                    <div style="float:left; margin-left:30px;">
+                </div>
+                <div id="lkTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
+                    <div style="float:left;">
                         <h3>General Lookups</h3>
                         <form id="formlk">
                             <table><tr>

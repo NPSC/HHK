@@ -836,8 +836,14 @@ $(document).ready(function () {
                         + (resourceObj.maxOcc == 0 ? '' : ', Max. Occupants: ' + resourceObj.maxOcc);
                 
                 labelTds.prop('title', cont);
+                
+                labelTds.click(function () {
+                    // Bring up OOS dialog
+                    getStatusEvent(resourceObj.id, 'resc', resourceObj.title);
+                });
             }
         },
+        
         eventOverlap: function (stillEvent, movingEvent) {
             
             if (stillEvent.kind === 'bak' || stillEvent.idVisit === movingEvent.idVisit) {

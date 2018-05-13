@@ -131,7 +131,9 @@ class Hospital {
 
         if ($uS->ReferralAgent) {
 
-            $agent = new Agent($dbh, 'a_', $hstay->getAgentId());
+            try {
+                $agent = new Agent($dbh, 'a_', $hstay->getAgentId());
+
             $wPhone = $agent->getPhonesObj()->get_Data(Phone_Purpose::Work);
             $cPhone = $agent->getPhonesObj()->get_Data(Phone_Purpose::Cell);
             $email = $agent->getEmailsObj()->get_Data();
@@ -184,6 +186,11 @@ class Hospital {
             );
 
             $referralAgentMarkup = $ratbl->generateMarkup(array('style'=>'margin-top:.3em;'));
+
+            } catch (Hk_Exception_Runtime $hkex) {
+                $referralAgentMarkup = HTMLContainer::generateMarkup('div', 'Agent with id = ' . $hstay->getAgentId() . ' is not defined', array('style'=>'margin:.3em;color:red;'));
+            }
+
         }
 
         if ($uS->Doctor) {

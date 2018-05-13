@@ -199,7 +199,7 @@ $waitlist = HTMLContainer::generateMarkup('h3', 'Waitlist' .
 $colorKey = '';
 $stmth = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)'");
 
-if ($stmth->rowCount() > 1 && (strtolower($uS->RegColors) == 'hospital')) {
+if ($stmth->rowCount() > 1 && (strtolower($uS->RegColors) == 'hospital' || (strtolower($uS->GuestNameColor) == 'hospital'))) {
 
     $colorKey = HTMLContainer::generateMarkup('span', $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . ': ');
     // All button
@@ -440,7 +440,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                         <span>Go to Date: </span>
                         <input id="txtGotoDate" type="text" class="ckdate" value="" />
                     </div>
-                    <p style="color:red; display:none;" id="pCalError"></p>
+                    <p style="color:red; font-size: large; display:none;" id="pCalError"></p>
                     <div id="calendar" style="margin-top:5px;"></div>
                 </div>
                 <div id="vstays" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">

@@ -105,7 +105,7 @@ where ru.idResource_use is null
         // get list of hospital colors
         $hospitals = $this->getHospitals($dbh);
 
-        $nameColors = $this->getGuestColors($dbh, $uS->GuestNameColor);
+        $nameColors = $this->getGuestColors($dbh, $uS->GuestNameColor, $hospitals);
 
         // Get cleaning holidays for the current year(s)
         $beginHolidays = new US_Holidays($dbh, $beginDate->format('Y'));
@@ -197,10 +197,15 @@ where ru.idResource_use is null
 
             }
 
-            if ($uS->GuestNameColor != '' && isset($r[$uS->GuestNameColor])) {
-                if (isset($nameColors[$r[$uS->GuestNameColor]])){
+            if ($uS->GuestNameColor != '') {
+
+                if (isset($r[$uS->GuestNameColor]) && isset($nameColors[$r[$uS->GuestNameColor]])){
                     $s['backgroundColor'] = $nameColors[$r[$uS->GuestNameColor]]['b'];
                     $s['textColor'] = $nameColors[$r[$uS->GuestNameColor]]['t'];
+                } else if (isset($nameColors[$r['idHospital']])) {
+                    $index = $r['idHospital'];
+                    $s['backgroundColor'] = $nameColors[$r['idHospital']]['b'];
+                    $s['textColor'] = $nameColors[$r['idHospital']]['t'];
                 }
             }
 
@@ -683,12 +688,22 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
         }
     }
 
-    protected function getGuestColors(\PDO $dbh, $guestDemographic) {
+    protected function getGuestColors(\PDO $dbh, $guestDemographic, $hospitals) {
 
         $nameColors = array();
 
+        if ($guestDemographic == 'hospital') {
+
+            foreach($hospitals as $h) {
+
+                $nameColors[$h['idHospital']] = array(
+                    't' => trim(strtolower($h['Text_Color'])),
+                    'b' => trim(strtolower($h['Background_Color']))
+                );
+            }
+
         // Get guest name colorings
-        if ($guestDemographic != '') {
+        } else if ($guestDemographic != '') {
 
             $demogs = readGenLookupsPDO($dbh, $guestDemographic);
 

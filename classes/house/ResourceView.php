@@ -209,6 +209,12 @@ order by r.Title;");
 
     public static function getStatusEvents(\PDO $dbh, $id, $type, $title, $resourceStatuses, $oosCodes) {
 
+        $id = intval($id, 10);
+
+        if ($id < 1) {
+            return array('error'=>'Invalid resource id: '.$id);
+        }
+
         if ($type == 'resc') {
             $whid = 'idResource';
             $title = 'Room ' . $title;
@@ -225,8 +231,8 @@ order by r.Title;");
             }
         }
 
-        $stmt = $dbh->prepare("Select * from resource_use where $whid = :id order by Start_Date");
-        $stmt->execute(array(':id'=>$id));
+        $stmt = $dbh->query("Select * from resource_use where $whid = $id order by Start_Date");
+
 
         /* var \HTMLTable */
         $tbl = new HTMLTable();
