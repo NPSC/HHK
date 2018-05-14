@@ -221,6 +221,7 @@ if (isset($_POST['btnUpdate'])) {
         $resultAccumulator .= $patch->loadConfigUpdates('../patch/patchLabel.cfg', $labl);
         $resultAccumulator .= $patch->deleteConfigItems('../patch/deleteLabelItems.cfg', $labl);
 
+        
         // Update Tables
         $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
 
@@ -233,11 +234,19 @@ if (isset($_POST['btnUpdate'])) {
             $errorMsg .= 'Create Table Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
         }
 
+
+        // Update SPs
+        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
+
+        foreach ($patch->results as $err) {
+            $errorMsg .= 'Update Stored Procedures Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+        }
+
+
         // Run SQL patches
         if (file_exists('../patch/patchSQL.sql')) {
 
             $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../patch/patchSQL.sql', "Updates");
-
 
             foreach ($patch->results as $err) {
 
@@ -249,6 +258,7 @@ if (isset($_POST['btnUpdate'])) {
                 $errorCount++;
             }
         }
+
 
         // Update views
         if ($errorCount < 1) {
@@ -264,18 +274,6 @@ if (isset($_POST['btnUpdate'])) {
             $errorMsg .= '**Views not updated**  ';
         }
 
-        // Update SPs
-        if ($errorCount < 1) {
-            $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
-
-            foreach ($patch->results as $err) {
-
-                $errorMsg .= 'Update Stored Procedures Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-            }
-
-        } else {
-            $errorMsg .= '** Stored Procedures not updated**  ';
-        }
 
         // Update pay types
         $cnt = SiteConfig::updatePayTypes($dbh);
