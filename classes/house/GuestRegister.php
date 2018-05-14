@@ -203,7 +203,6 @@ where ru.idResource_use is null
                     $s['backgroundColor'] = $nameColors[$r[$uS->GuestNameColor]]['b'];
                     $s['textColor'] = $nameColors[$r[$uS->GuestNameColor]]['t'];
                 } else if (isset($nameColors[$r['idHospital']])) {
-                    $index = $r['idHospital'];
                     $s['backgroundColor'] = $nameColors[$r['idHospital']]['b'];
                     $s['textColor'] = $nameColors[$r['idHospital']]['t'];
                 }
@@ -456,10 +455,14 @@ where ru.idResource_use is null
             $s['className'] = 'hhk-schrm';
             $s['borderColor'] = '#111';
 
-            if ($uS->GuestNameColor != '' && isset($r[$uS->GuestNameColor])) {
-                if (isset($nameColors[$r[$uS->GuestNameColor]])){
+            if ($uS->GuestNameColor != '') {
+
+                if (isset($r[$uS->GuestNameColor]) && isset($nameColors[$r[$uS->GuestNameColor]])){
                     $s['backgroundColor'] = $nameColors[$r[$uS->GuestNameColor]]['b'];
                     $s['textColor'] = $nameColors[$r[$uS->GuestNameColor]]['t'];
+                } else if (isset($nameColors[$r['idHospital']])) {
+                    $s['backgroundColor'] = $nameColors[$r['idHospital']]['b'];
+                    $s['textColor'] = $nameColors[$r['idHospital']]['t'];
                 }
             }
 

@@ -819,7 +819,10 @@ $(document).ready(function () {
         refetchResourcesOnNavigate: true,
         resourceGroupField: resourceGroupBy,
         resources: {
-            url: 'ws_calendar.php?cmd=resclist'
+            url: 'ws_calendar.php?cmd=resclist',
+            error: function() {
+                $('#pCalError').text('Error getting resources').show();
+            }
         },
         resourceGroupText: function (txt) {
             return txt;
@@ -843,9 +846,9 @@ $(document).ready(function () {
                 });
             }
         },
-        
+
         eventOverlap: function (stillEvent, movingEvent) {
-            
+
             if (stillEvent.kind === 'bak' || stillEvent.idVisit === movingEvent.idVisit) {
                 return true;
             }
@@ -894,7 +897,7 @@ $(document).ready(function () {
             }
             revertFunc();
         },
-        
+
         eventResize: function (event, delta, revertFunc) {
             $("#divAlert1, #paymentMessage").hide();
             if (event.idVisit > 0) {
