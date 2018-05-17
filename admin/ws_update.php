@@ -1,0 +1,139 @@
+<?php
+
+/*
+ * The MIT License
+ *
+ * Copyright 2018 Eric.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+/**
+ * ws_update.php
+ *
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
+ */
+
+/**
+ * GET params:
+ *  cd = string, site identifier
+ *  un = string, user name
+ *  so = string, MD5 encoded password
+ *
+ * Returns:
+ *  error = string, access error message.  Update not attempted.
+ *
+ * or:
+ *  resultMsg = HTML string, the results of the update
+ *  errorMsg = HTML string, any errors encountered during the update
+ *
+ */
+require ("AdminIncludes.php");
+
+require CLASSES . 'SiteLog.php';
+require CLASSES . 'TableLog.php';
+require CLASSES . 'HouseLog.php';
+require CLASSES . 'CreateMarkupFromDB.php';
+require CLASSES . 'SiteConfig.php';
+require CLASSES . 'Patch.php';
+
+require SEC . 'Login.php';
+
+require DB_TABLES . 'GenLookupsRS.php';
+
+require (FUNCTIONS . 'mySqlFunc.php');
+
+
+$uS = Session::getInstance();
+
+$cd = '';
+$un = '';
+$so = '';
+$events = array();
+
+
+// Check input
+if (isset($_GET['cd'])) {
+    $cd = filter_input(INPUT_GET, 'cd');
+}
+if (isset($_GET['so'])) {
+    $so = filter_input(INPUT_GET, 'so');
+}
+if (isset($_GET['un'])) {
+    $un = filter_input(INPUT_GET, 'un');
+}
+
+if ($cd == '' || $so == '' || $un == '') {
+    $uS->destroy(true);
+    exit();
+}
+
+// Initialize
+try {
+
+    $login = new Login();
+    $config = $login->initializeSession(ciCFG_FILE);
+
+    // define db connection obj
+    $dbh = initPDO(TRUE);
+
+    // Load the page information
+    $page = new ScriptAuthClass($dbh);
+
+} catch (Exception $ex) {
+
+    $uS->destroy(true);
+    echo (json_encode(array('error'=>"Server Error: " . $ex->getMessage())));
+    exit();
+}
+
+
+
+// validate username and password
+$record = UserClass::getUserCredentials($dbh, $un);
+
+if (is_array($record) && isset($record['Enc_PW']) && $record['Enc_PW'] == $so) {
+
+    $uS->regenSessionId();
+
+    UserClass::_setSession($dbh, $uS, $record);
+
+    if ($page->is_TheAdmin()) {
+
+        $update = new UpdateSite();
+
+        $update->doUpdate($dbh);
+        $events['errorMsg'] = $update->getErrorMsg();
+        $events['resultMsg'] = $update->getResultAccumulator();
+    } else {
+        $events['error'] = 'This user does not enjoy site update priviledges.';
+    }
+
+} else {
+    $events['error'] = 'Bad username or password.';
+}
+
+
+
+// Leave
+echo( json_encode($events) );
+exit();
