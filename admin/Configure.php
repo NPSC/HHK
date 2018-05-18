@@ -14,6 +14,7 @@ require CLASSES . 'TableLog.php';
 require CLASSES . 'HouseLog.php';
 require CLASSES . 'CreateMarkupFromDB.php';
 require CLASSES . 'SiteConfig.php';
+require CLASSES . 'UpdateSite.php';
 require CLASSES . 'Patch.php';
 
 require SEC . 'Login.php';
@@ -203,94 +204,16 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
 if (isset($_POST['btnUpdate'])) {
 
     $tabIndex = 1;
-    $errorCount = 0;
 
-    // Log attempt.
-    $logText = "Attempt Update.";
-    SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
+    if (SecurityComponent::is_TheAdmin()) {
 
-    try {
-        // Update system
-        $patch = new Patch();
+        $update = new UpdateSite();
 
-        // Update config file
-        $resultAccumulator .= $patch->loadConfigUpdates('../patch/patchSite.cfg', $config);
-        $resultAccumulator .= $patch->deleteConfigItems('../patch/deleteSiteItems.cfg', $config);
-
-        // Update labels file
-        $resultAccumulator .= $patch->loadConfigUpdates('../patch/patchLabel.cfg', $labl);
-        $resultAccumulator .= $patch->deleteConfigItems('../patch/deleteLabelItems.cfg', $labl);
-
-        
-        // Update Tables
-        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
-
-        foreach ($patch->results as $err) {
-
-            if ($err['errno'] == 1091 || $err['errno'] == 1061) {  // key not exist, Duplicate Key name
-                continue;
-            }
-
-            $errorMsg .= 'Create Table Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-        }
-
-
-        // Update SPs
-        $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllRoutines.sql', 'Stored Procedures', '$$', '-- ;');
-
-        foreach ($patch->results as $err) {
-            $errorMsg .= 'Update Stored Procedures Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-        }
-
-
-        // Run SQL patches
-        if (file_exists('../patch/patchSQL.sql')) {
-
-            $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../patch/patchSQL.sql', "Updates");
-
-            foreach ($patch->results as $err) {
-
-                if ($err['errno'] == 1062 || $err['errno'] == 1060) {
-                    continue;
-                }
-
-                $errorMsg .= 'Update Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-                $errorCount++;
-            }
-        }
-
-
-        // Update views
-        if ($errorCount < 1) {
-
-            $resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllViews.sql', 'Views');
-
-            foreach ($patch->results as $err) {
-
-                $errorMsg .= 'Update Views Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
-            }
-        } else {
-
-            $errorMsg .= '**Views not updated**  ';
-        }
-
-
-        // Update pay types
-        $cnt = SiteConfig::updatePayTypes($dbh);
-        if ($cnt > 0) {
-            $resultAccumulator .= "Pay Types updated.  ";
-        }
-
-        // Log update.
-        $logText = "Loaded Update; " . $errorMsg;
-        SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
-
-
-    } catch (Exception $hex) {
-        $errorMsg .= '***' . $hex->getMessage();
-        // Log failure.
-        $logText = "Fail Update.". $errorMsg;
-        SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
+        $update->doUpdate($dbh);
+        $errorMsg = $update->getErrorMsg();
+        $resultAccumulator = $update->getResultAccumulator();
+    } else {
+        $errorMsg = 'This user does not enjoy site update priviledges.';
     }
 }
 

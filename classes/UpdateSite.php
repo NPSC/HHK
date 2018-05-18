@@ -128,7 +128,7 @@ class UpdateSite {
 
             $this->errorMsg .= '***' . $hex->getMessage();
             // Log failure.
-            $logText = "Fail Update.". $this->errorMsg;
+            $logText = "Failed Update.". $this->errorMsg;
             SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
 
         }

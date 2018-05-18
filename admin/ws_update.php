@@ -106,24 +106,35 @@ try {
     exit();
 }
 
+// Check site identifier
+if ($cd !== $config->getString('db', 'Schema', '')) {
+
+    $uS->destroy(true);
+    echo(json_encode(array('error'=>"Bad Site Identifier")));
+    exit();
+}
 
 
 // validate username and password
 $record = UserClass::getUserCredentials($dbh, $un);
 
-if (is_array($record) && isset($record['Enc_PW']) && $record['Enc_PW'] == $so) {
+if (is_array($record) && isset($record['Enc_PW']) && $record['Enc_PW'] === $so) {
 
     $uS->regenSessionId();
 
+    // Record the login.
     UserClass::_setSession($dbh, $uS, $record);
 
+    // Must be THE ADMIN
     if ($page->is_TheAdmin()) {
 
         $update = new UpdateSite();
 
         $update->doUpdate($dbh);
+
         $events['errorMsg'] = $update->getErrorMsg();
         $events['resultMsg'] = $update->getResultAccumulator();
+
     } else {
         $events['error'] = 'This user does not enjoy site update priviledges.';
     }
@@ -136,4 +147,5 @@ if (is_array($record) && isset($record['Enc_PW']) && $record['Enc_PW'] == $so) {
 
 // Leave
 echo( json_encode($events) );
+$uS->destroy(true);
 exit();
