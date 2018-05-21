@@ -45,9 +45,17 @@ function saveCampaign(PDO $dbh, $campCode, $type, $post) {
 
     // Start and end dates
     if (isset($post['sdate']) && isset($post['edate'])) {
+
+        $stDateStr = filter_var($post["sdate"], FILTER_SANITIZE_STRING);
+        $enDateStr = filter_var($post["edate"], FILTER_SANITIZE_STRING);
+
+        if ($stDateStr == '' || $enDateStr == '') {
+            return "Start and End dates must be specified.";
+        }
+        
         try {
-            $stDate = new DateTime(filter_var($post["sdate"], FILTER_SANITIZE_STRING));
-            $endDate = new DateTime(filter_var($post["edate"], FILTER_SANITIZE_STRING));
+            $stDate = new \DateTime($stDateStr);
+            $endDate = new \DateTime($enDateStr);
         } catch (Exception $ex) {
             return "Undecipherable Start and/or End Dates.";
         }
@@ -205,7 +213,7 @@ $selType->set_value(TRUE, $campaign->get_type());
         <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
         <?php echo FAVICON; ?>
-        
+
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
