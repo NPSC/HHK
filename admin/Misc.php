@@ -15,7 +15,7 @@ require (CLASSES . 'AuditLog.php');
 require (THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php');
 require CLASSES . 'CreateMarkupFromDB.php';
 require CLASSES . 'SiteDbBackup.php';
-
+require CLASSES . 'SiteLog.php';
 
 
 try {
@@ -369,14 +369,21 @@ if (isset($_POST["btnDoBackup"])) {
     $bkupAlert = new alertMessage("bkupAlert");
     $bkupAlert->set_Context(alertMessage::Notice);
 
-    // ignore tables
+
 
     $dbBack = new SiteDbBackup('/tmp' . DS, ciCFG_FILE);
 
     if ($dbBack->backupSchema($igtables)) {
         // success
-        $dbBack->downloadFile();
+        $logText = "Database Download.";
+        SiteLog::logDbDownload($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
 
+        $dbBack->downloadFile();  // exits here.
+
+    } else {
+
+        $logText = "Failed Database Download:  " . $dbBack->getErrors();
+        SiteLog::logDbDownload($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
     }
 
     $bkupMsg = $bkupAlert->createMarkup('Result: ' . $dbBack->getErrors());

@@ -123,7 +123,7 @@ class UpdateSite {
             }
 
             // Log update.
-            $logText = "Loaded Update; " . $this->errorMsg;
+            $logText = "Loaded Update.  " . $this->errorMsg;
             SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
 
 

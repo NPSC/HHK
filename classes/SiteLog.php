@@ -22,6 +22,13 @@ class SiteLog {
 
     }
 
+    public static function logDbDownload(\PDO $dbh, $logText, $GIT_Id = '') {
+
+
+        self::writeLog($dbh, "DB", $logText, $GIT_Id);
+
+    }
+
     public static function writeLog(\PDO $dbh, $logType, $logText, $gitId) {
 
         if ($logText == '' || $logType == '') {
@@ -33,7 +40,13 @@ class SiteLog {
         // get session instance
         $uS = Session::getInstance();
 
-        $remoteIp = filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP);
+        $remoteIp = '';
+
+        if (filter_has_var(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR')) {
+            $remoteIp = filter_input(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR', FILTER_VALIDATE_IP);
+        } else {
+            $remoteIp = filter_input(INPUT_SERVER, 'REMOTE_ADDR', FILTER_VALIDATE_IP);
+        }
 
         $dbh->exec("insert into syslog values ('$logType', '" . $uS->username . "', '$remoteIp', '$encodedText', '" . $uS->ver . "', '" . $gitId  . "', now());");
     }

@@ -520,7 +520,7 @@ $(document).ready(function () {
                         <p>User: <?php echo $uS->databaseUName; ?></p>
 
                         <form method="post" action="" name="form1">
-                            <input type="submit" name="btnLogs" value="View Patch Log" style="margin-left:100px;margin-top:20px;"/>
+                            <input type="submit" name="btnLogs" value="View Site Log" style="margin-left:100px;margin-top:20px;"/>
                             <input type="submit" name="btnSaveSQL" value="Re-Create Tables, Views and SP's" style="margin-left:20px;margin-top:20px;"/>
                             <input type="submit" name="btnUpdate" value="Update Config" style="margin-left:20px;margin-top:20px;"/>
 
