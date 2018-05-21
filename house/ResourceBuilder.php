@@ -218,6 +218,29 @@ $rteMsg = '';
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
 
+// Add diags and locations buttons
+if (isset($_POST['btnAddDiags'])) {
+    $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Diagnosis', 'q9', 'New Entry', 'h', 10 )");
+    $tabIndex = 5;
+}
+
+if (isset($_POST['btnAddLocs'])) {
+    $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Location', 'q9', 'New Entry', 'h', 10 )");
+    $tabIndex = 5;
+}
+
+// Add House Discounts and additional charges.
+if (isset($_POST['btnHouseDiscs'])) {
+    $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('House_Discount', 'q9', 'New Entry', 'ca', 10 )");
+    $tabIndex = 5;
+}
+
+if (isset($_POST['btnAddnlCharge'])) {
+    $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Type`, `Order`) values ('Addnl_Charge', 'q9', 'New Entry', 'ca', 10 )");
+    $tabIndex = 5;
+}
+
+
 // Lookups
 if (isset($_POST['table'])) {
 
@@ -1220,15 +1243,25 @@ $stmt2 = $dbh->query("select distinct `Type`, `Table_Name` from gen_lookups wher
 $rows2 = $stmt2->fetchAll(PDO::FETCH_NUM);
 
 $lkups = array();
+$hasDiags = FALSE;
+$hasLocs = FALSE;
+
 foreach ($rows2 as $r) {
 
-    if ($uS->RoomPriceModel == ItemPriceCode::None && ($r[1] == 'ExcessPays' || $r[1] == 'Key_Disposition')) {
+    if ($uS->RoomPriceModel == ItemPriceCode::None && ($r[1] == 'ExcessPays')) {
         continue;
     }
 
     if ($r[1] != 'Demographics') {
         $lkups[] = $r;
     }
+
+    if ($r[1] == 'Diagnosis') {
+        $hasDiags = TRUE;
+    } else if ($r[1] == 'Location') {
+        $hasLocs = TRUE;
+    }
+
 }
 
 $selLookups = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($lkups, ''), array('name' => 'sellkLookup', 'class' => 'hhk-selLookup'));
@@ -1238,6 +1271,16 @@ $selLookups = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($lkups, '
 // Lookup categories
 $stmt3 = $dbh->query("select distinct `Type`, `Table_Name` from gen_lookups where `Type` = 'ca';");
 $rows3 = $stmt3->fetchAll(PDO::FETCH_NUM);
+$hasAddnl = FALSE;
+$hasDiscounts = FALSE;
+
+foreach ($rows3 as $r) {
+    if ($r[1] == 'Addnl_Charge') {
+        $hasAddnl = TRUE;
+    } else if ($r[1] == 'House_Discount') {
+        $hasDiscounts = TRUE;
+    }
+}
 
 $seldiscs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows3, ''), array('name' => 'seldiscs', 'class' => 'hhk-selLookup'));
 
@@ -1706,6 +1749,20 @@ $resultMessage = $alertMsg->createMarkup();
             });
         });
 
+        // Add diagnosis and locations
+        if ($('#btnAddDiags').length > 0) {
+            $('#btnAddDiags').button();
+        }
+        if ($('#btnAddLocs').length > 0) {
+            $('#btnAddLocs').button();
+        }
+        if ($('#btnHouseDiscs').length > 0) {
+            $('#btnHouseDiscs').button();
+        }
+        if ($('#btnAddnlCharge').length > 0) {
+            $('#btnAddnlCharge').button();
+        }
+
 
         //verifyAddrs('#roomTable');
         $('input.number-only').change(function () {
@@ -1771,23 +1828,37 @@ $resultMessage = $alertMsg->createMarkup();
                 <div id="lkTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
                     <div style="float:left;">
                         <h3>General Lookups</h3>
-                        <form id="formlk">
+                        <form method="POST" action="ResourceBuilder.php" id="formlk">
                             <table><tr>
                                     <th>Category</th>
                                     <td><?php echo $selLookups; ?></td>
                                 </tr></table>
                             <div id="divlk"></div>
-                            <span style="margin:10px;float:right;"><input type="button" id='btnlkSave' class="hhk-saveLookup"data-type="h" value="Save"/></span>
+                            <span style="margin:10px;float:right;">
+                                <?php if (!$hasDiags) { ?>
+                                <input type="submit" name='btnAddDiags' id="btnAddDiags" value="Add Diagnosis"/>
+                                <?php } if (!$hasLocs) { ?>
+                                <input type="submit" id='btnAddLocs' name="btnAddLocs" value="Add Location"/>
+                                <?php } ?>
+                                <input type="button" id='btnlkSave' class="hhk-saveLookup"data-type="h" value="Save"/>
+                            </span>
                         </form></div>
                     <div style="float:left; margin-left:30px;">
                         <h3>Discounts & Additional Charges</h3>
-                        <form id="formdisc">
+                        <form method="POST" action="ResourceBuilder.php"  id="formdisc">
                             <table><tr>
                                     <th>Category</th>
                                     <td><?php echo $seldiscs; ?></td>
                                 </tr></table>
                             <div id="divdisc"></div>
-                            <span style="margin:10px;float:right;"><input type="button" id='btndiscSave' class="hhk-saveLookup" data-type="ha" value="Save"/></span>
+                            <span style="margin:10px;float:right;">
+                                <?php if (!$hasDiscounts) { ?>
+                                <input type="submit" name='btnHouseDiscs' id="btnHouseDiscs" value="Add Discounts"/>
+                                <?php } if (!$hasAddnl) { ?>
+                                <input type="submit" id='btnAddnlCharge' name="btnAddnlCharge" value="Add Additional Charges"/>
+                                <?php } ?>
+                                <input type="button" id='btndiscSave' class="hhk-saveLookup" data-type="ha" value="Save"/>
+                            </span>
                         </form>
                     </div>
                 </div>
