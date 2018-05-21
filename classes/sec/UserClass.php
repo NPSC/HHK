@@ -111,9 +111,12 @@ class UserClass {
 
         $uname = str_ireplace("'", "", $username);
 
-        $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id FROM w_users u join w_auth a on u.idName = a.idName  WHERE u.Status='a' and u.User_Name = '$uname'");
+        $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id
+FROM w_users u join w_auth a on u.idName = a.idName
+join `name` n on n.idName = u.idName
+WHERE n.idName is not null and u.Status='a' and u.User_Name = '$uname'");
 
-        if ($stmt->rowCount() > 0) {
+        if ($stmt->rowCount() === 1) {
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             return $rows[0];
         }

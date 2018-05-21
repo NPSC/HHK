@@ -2,8 +2,11 @@
 ALTER TABLE `volunteer_hours` 
     ADD COLUMN `idName2` INT NOT NULL DEFAULT 0 AFTER `idName`;
 
-DELETE From `gen_lookups` where `Table_Name` = 'Key_Disposition';
 
+update campaign set `Status` = 'd' where `Status` = 'c';
+DELETE FROM `gen_lookups` WHERE `Table_Name`='Campaign_Status' and`Code`='c';
+
+DELETE From `gen_lookups` where `Table_Name` = 'Key_Disposition';
 DELETE From `gen_lookups` where `Table_Name` = 'Editable_Forms';
 Insert INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES
 ('Editable_Forms', '../conf/agreement.txt', 'Registration Agreement','js/rte-agreement.json','',0),

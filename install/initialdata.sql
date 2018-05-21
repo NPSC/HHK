@@ -31,7 +31,6 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Cal_Show_Delete_Email','Vol_Activities1','y','','',0),
 
 ('Campaign_Status','a','Active','','',0),
-('Campaign_Status','c','Closed','','',0),
 ('Campaign_Status','d','Disabled','','',0),
 
 ('Campaign_Type','as','Normal','','',0),
