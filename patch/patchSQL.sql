@@ -30,4 +30,5 @@ delete from `sys_config` where `Key` = 'NightsCount';
 -- Add pages, one call for each security group.
 call new_webpage('ws_calendar.php', 31, '', 0, 'h', '', '', 's', '', 'admin', now(), 'g', @pageId);
 call new_webpage('ws_calendar.php', 31, '', 0, 'h', '', '', 's', '', 'admin', now(), 'ga', @pageId);
+call new_webpage('ws_update.php', 2, '', 0, 'a', '', '', 's', '', 'admin', now(), 'db', @pageId);
 
