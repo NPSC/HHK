@@ -139,7 +139,7 @@ class UserClass {
         return $grpArray;
     }
 
-    public static function _setSession(\PDO $dbh, Session $ssn, &$r, $init = true) {
+    public static function _setSession(\PDO $dbh, Session $ssn, $r, $init = true) {
 
         $ssn->uid = $r["idName"];
         $ssn->username = htmlspecialchars($r["User_Name"]);
@@ -156,45 +156,23 @@ class UserClass {
         unset($ssn->Challtries);
 
         if ($init) {
-            $sessionId = session_id();
-            $ip = filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP);
 
-            $query = "UPDATE w_users SET Session = '$sessionId', Ip = '$ip', Last_Login=now() WHERE User_Name = '" . $ssn->username . "'";
+            $sessionId = session_id();
+            $remoteIp = '';
+
+            if (filter_has_var(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR')) {
+                $remoteIp = filter_input(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR', FILTER_VALIDATE_IP);
+            } else {
+                $remoteIp = filter_input(INPUT_SERVER, 'REMOTE_ADDR', FILTER_VALIDATE_IP);
+            }
+
+            $query = "UPDATE w_users SET Session = '$sessionId', Ip = '$remoteIp', Last_Login=now() WHERE User_Name = '" . $ssn->username . "'";
             $dbh->exec($query);
 
             // Log access
-            $dbh->exec("insert into w_user_log (Username, Access_Date, IP, Session_Id) values ('" . $ssn->username . "', now(), '$ip', '')");
+            $dbh->exec("insert into w_user_log (Username, Access_Date, IP, Session_Id) values ('" . $ssn->username . "', now(), '$remoteIp', '')");
         }
     }
-
-//    protected static function _checkSession(\PDO $dbh, Session $ssn) {
-//
-//        if (isset($ssn->username)) {
-//            $parms = array(
-//                ":uname" => $ssn->username,
-//                ":cook" => $ssn->cookie,
-//                ":ssn" => session_id(),
-//                ":adr" => $_SERVER['REMOTE_ADDR']
-//                );
-//
-//            $query = "SELECT u.*, a.Role_Id as Role_Id FROM w_users u join w_auth a on u.idName = a.idName WHERE u.Status='a' and " .
-//            "(u.User_Name = :uname) AND (u.Cookie = :cook) AND " .
-//            "(u.Session = :ssn) AND (u.Ip = :adr)";
-//            $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
-//            $stmt->execute($parms);
-//
-//
-//            if ($stmt->rowCount() > 0) {
-//                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-//
-//                $this->_setSession($dbh, $ssn, $rows[0], false, false);
-//                return true;
-//
-//            }
-//        }
-//        $this->_logout();
-//        return false;
-//    }
 
     public static function _logout() {
         $uS = Session::getInstance();
