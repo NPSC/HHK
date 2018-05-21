@@ -15,101 +15,6 @@ $wInit = new webInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
 
 
-// get session instance
-//$uS = Session::getInstance();
-//$fyMonthsAdjust = $uS->fy_diff_Months;
-
-
-$c = "";
-if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
-}
-
-$events = array();
-
-switch ($c) {
-    case "fullcamp":
-
-        //get
-        $rb = filter_var(urldecode($_REQUEST["calyear"]), FILTER_SANITIZE_STRING);
-
-        $yr = filter_var(urldecode($_REQUEST["rptyear"]), FILTER_SANITIZE_STRING);
-
-        $fyMonths = filter_var(urldecode($_REQUEST["fymonths"]), FILTER_SANITIZE_STRING);
-
-        $events = array('success' => campaignReport($dbh, $rb, $yr, $fyMonths) . campaignInKindReport($dbh, $rb, $yr, $fyMonths));
-
-        break;
-
-
-    case "roomrev":
-
-        //get
-        $rb = filter_var(urldecode($_REQUEST["calyear"]), FILTER_SANITIZE_STRING);
-
-        $yr = filter_var(urldecode($_REQUEST["rptyear"]), FILTER_SANITIZE_STRING);
-
-        $fyMonths = filter_var(urldecode($_REQUEST["fymonths"]), FILTER_SANITIZE_STRING);
-
-        $events = array('success' => roomRevReport($dbh, $rb, $yr, $fyMonths));
-
-        break;
-
-
-    case "listcamp":
-
-        $yr = filter_var(urldecode($_REQUEST["rptyear"]), FILTER_SANITIZE_STRING);
-
-        $events = campaignList($dbh, $yr);
-
-        break;
-
-    case "demog":
-
-        $intType = 'Y';
-        $intVal = 1;
-        $startDate = '2005-01-01';
-        $endDate = '';
-        $sourceZip = '';
-
-        if (isset($_GET['intType'])) {
-            $intType = filter_var($_GET['intType'], FILTER_SANITIZE_STRING);
-        }
-
-        if (isset($_GET['intVal'])) {
-            $intVal = intVal(filter_var($_GET['intVal'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        try {
-            $interval = new DateInterval('P' . $intVal . $intType);
-        } catch (Exception $ex) {
-            return $ex->getMessage();
-        }
-
-        if (isset($_GET['stDate'])) {
-            $startDate = filter_var($_GET['stDate'], FILTER_SANITIZE_STRING);
-        }
-
-        if (isset($_GET['enDate'])) {
-            $endDate = filter_var($_GET['enDate'], FILTER_SANITIZE_STRING);
-        }
-
-        if (isset($_GET['szip'])) {
-            $sourceZip = filter_var($_GET['szip'], FILTER_SANITIZE_STRING);
-        }
-
-        // Don't JSON encode this.
-        return GuestReport::demogReport($dbh, $interval, $startDate, $endDate, $sourceZip);
-
-        break;
-
-    default:
-        $events = array("error" => "Bad Command:  $c");
-}
-
-
-echo( json_encode($events) );
-
 function campaignList(PDO $dbh, $yr) {
     // Year where-clause
     $headerYears = "";
@@ -354,4 +259,97 @@ function campaignInKindReport(PDO $dbh, $rbsel, $yr, $fyMonthsAdjust) {
     //return $events;
     return $txtreport . "</table>";
 }
+
+
+
+$c = "";
+if (isset($_REQUEST["cmd"])) {
+    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+}
+
+$events = array();
+
+switch ($c) {
+    case "fullcamp":
+
+        //get
+        $rb = filter_var(urldecode($_REQUEST["calyear"]), FILTER_SANITIZE_STRING);
+
+        $yr = filter_var(urldecode($_REQUEST["rptyear"]), FILTER_SANITIZE_STRING);
+
+        $fyMonths = filter_var(urldecode($_REQUEST["fymonths"]), FILTER_SANITIZE_STRING);
+
+        $events = array('success' => campaignReport($dbh, $rb, $yr, $fyMonths) . campaignInKindReport($dbh, $rb, $yr, $fyMonths));
+
+        break;
+
+
+    case "roomrev":
+
+        //get
+        $rb = filter_var(urldecode($_REQUEST["calyear"]), FILTER_SANITIZE_STRING);
+
+        $yr = filter_var(urldecode($_REQUEST["rptyear"]), FILTER_SANITIZE_STRING);
+
+        $fyMonths = filter_var(urldecode($_REQUEST["fymonths"]), FILTER_SANITIZE_STRING);
+
+        $events = array('success' => roomRevReport($dbh, $rb, $yr, $fyMonths));
+
+        break;
+
+
+    case "listcamp":
+
+        $yr = filter_var(urldecode($_REQUEST["rptyear"]), FILTER_SANITIZE_STRING);
+
+        $events = campaignList($dbh, $yr);
+
+        break;
+
+    case "demog":
+
+        $intType = 'Y';
+        $intVal = 1;
+        $startDate = '2005-01-01';
+        $endDate = '';
+        $sourceZip = '';
+
+        if (isset($_GET['intType'])) {
+            $intType = filter_var($_GET['intType'], FILTER_SANITIZE_STRING);
+        }
+
+        if (isset($_GET['intVal'])) {
+            $intVal = intVal(filter_var($_GET['intVal'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        try {
+            $interval = new DateInterval('P' . $intVal . $intType);
+        } catch (Exception $ex) {
+            return $ex->getMessage();
+        }
+
+        if (isset($_GET['stDate'])) {
+            $startDate = filter_var($_GET['stDate'], FILTER_SANITIZE_STRING);
+        }
+
+        if (isset($_GET['enDate'])) {
+            $endDate = filter_var($_GET['enDate'], FILTER_SANITIZE_STRING);
+        }
+
+        if (isset($_GET['szip'])) {
+            $sourceZip = filter_var($_GET['szip'], FILTER_SANITIZE_STRING);
+        }
+
+        // Don't JSON encode this.
+        return GuestReport::demogReport($dbh, $interval, $startDate, $endDate, $sourceZip);
+
+        break;
+
+    default:
+        $events = array("error" => "Bad Command:  $c");
+}
+
+
+echo( json_encode($events) );
+exit();
 
