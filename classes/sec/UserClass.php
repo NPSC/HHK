@@ -103,7 +103,7 @@ class UserClass {
         return FALSE;
     }
 
-    protected static function getUserCredentials(\PDO $dbh, $username) {
+    public static function getUserCredentials(\PDO $dbh, $username) {
 
         if (!is_string($username)) {
             return NULL;
@@ -139,7 +139,7 @@ class UserClass {
         return $grpArray;
     }
 
-    protected static function _setSession(\PDO $dbh, Session $ssn, &$r, $init = true) {
+    public static function _setSession(\PDO $dbh, Session $ssn, &$r, $init = true) {
 
         $ssn->uid = $r["idName"];
         $ssn->username = htmlspecialchars($r["User_Name"]);

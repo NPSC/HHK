@@ -27,10 +27,13 @@
 /**
  * Description of UpdateSite
  *
- * @author Eric
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
+
  */
 class UpdateSite {
-    //put your code here
 
     protected $errorMsg;
     protected $resultAccumulator;

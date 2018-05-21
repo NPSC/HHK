@@ -55,8 +55,10 @@ require CLASSES . 'HouseLog.php';
 require CLASSES . 'CreateMarkupFromDB.php';
 require CLASSES . 'SiteConfig.php';
 require CLASSES . 'Patch.php';
+require CLASSES . 'UpdateSite.php';
 
 require SEC . 'Login.php';
+require SEC . 'UserClass.php';
 
 require DB_TABLES . 'GenLookupsRS.php';
 
