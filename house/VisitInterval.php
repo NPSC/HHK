@@ -13,7 +13,7 @@ require ("homeIncludes.php");
 require (CLASSES . 'ColumnSelectors.php');
 require CLASSES . 'OpenXML.php';
 require(CLASSES . 'Purchase/RoomRate.php');
-
+require(HOUSE . 'Resource.php');
 
 
 try {
@@ -47,6 +47,159 @@ $alertMsg->set_txtSpanId("alrMessage");
 $alertMsg->set_Text("help");
 
 $resultMessage = $alertMsg->createMarkup();
+
+
+function statsPanel(\PDO $dbh, $visitNites, $totalCatNites, $start, $end, $categories, $avDailyFee) {
+
+    // Stats panel
+    if (count($visitNites) < 1) {
+        return '';
+    }
+
+    $totalVisitNites = 0;
+    $numCategoryRooms = array();
+
+    $oosNights = array();
+    $totalOOSNites = 0;
+
+    $stDT = new DateTime($start . ' 00:00:00');
+    $enDT = new DateTime($end . ' 00:00:00');
+    $numNights = $enDT->diff($stDT, TRUE)->days;
+
+    foreach ($visitNites as $v) {
+        $totalVisitNites += $v;
+    }
+
+    foreach ($categories as $cat) {
+        $numCategoryRooms[$cat[0]] = 0;
+        $oosNights[$cat[0]] = 0;
+    }
+
+
+    $qu = "select r.idResource, rm.Category, ifnull(ru.Start_Date,'') as `Start_Date`, ifnull(ru.End_Date, '') as `End_Date`, ifnull(ru.Status, 'a') as `RU_Status`
+        from resource r left join
+resource_use ru on r.idResource = ru.idResource and DATE(ru.Start_Date) < DATE('" . $enDT->format('Y-m-d') . "') and DATE(ru.End_Date) > DATE('" . $stDT->format('Y-m-d') . "')
+left join resource_room rr on r.idResource = rr.idResource
+left join room rm on rr.idRoom = rm.idRoom
+where r.`Type` in ('" . ResourceTypes::Room . "','" . ResourceTypes::RmtRoom . "')
+order by r.idResource;";
+
+    $rstmt = $dbh->query($qu);
+
+    $rooms = array();
+
+    // Get rooms and oos days
+    while ($r = $rstmt->fetch(PDO::FETCH_ASSOC)) {
+
+        $nites = 0;
+
+        if ($r['Start_Date'] != '' && $r['End_Date'] != '') {
+            $arriveDT = new DateTime($r['Start_Date']);
+            $departDT = new DateTime($r['End_Date']);
+            $nites = $departDT->diff($arriveDT, TRUE)->days;
+        }
+
+
+        if (isset($rooms[$r['idResource']][$r['Category']][$r['RU_Status']]) === FALSE) {
+            $rooms[$r['idResource']][$r['Category']][$r['RU_Status']] = $nites;
+        } else {
+            $rooms[$r['idResource']][$r['Category']][$r['RU_Status']] += $nites;
+        }
+
+    }
+
+    // Filter out unavailalbe rooms
+    $availableRooms = array();
+
+    foreach($rooms as $id => $r) {
+
+        $isAvailable = TRUE;
+
+        foreach ($r as $cId => $c) {
+
+            foreach ($c as $k => $v) {
+
+                if ($k == ResourceStatus::Unavailable && $v >= $numNights) {
+                    $isAvailable = FALSE;
+                } else {
+                    $oosNights[$cId] += $v;
+                    $totalOOSNites += $v;
+                }
+
+            }
+
+            if ($isAvailable) {
+                $availableRooms[$id] = $r;
+                $numCategoryRooms[$cId]++;
+            }
+        }
+
+    }
+
+//
+//            while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+//                $oosNights[$r['Category']] += intval($r['Actual_Month_Nights'], 10);
+//                $totalOOSNites += intval($r['Actual_Month_Nights'], 10);
+//            }
+
+
+    $numRoomNights = count($availableRooms) * $numNights;
+    $numUsefulNights = $numRoomNights - $totalOOSNites;
+    $avStay = $totalVisitNites / count($visitNites);
+
+    // Median
+    array_multisort($visitNites);
+    $entries = count($visitNites);
+    $emod = $entries % 2;
+
+    if ($emod > 0) {
+        // odd number of entries
+        $median = $visitNites[(ceil($entries / 2) - 1)];
+    } else {
+        $median = ($visitNites[($entries / 2) - 1] + $visitNites[($entries / 2)]) / 2;
+    }
+
+
+    $trs[4] = HTMLTable::makeTd('Useful Nights (Room-Nights &ndash; Room-Nights OOS):', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd($numRoomNights . ' &ndash; ' . $totalOOSNites . ' = '  . HTMLContainer::generateMarkup('span', $numUsefulNights, array('style'=>'font-weight:bold;')));
+
+    $trs[5] = HTMLTable::makeTd('Room Utilization (Nights &divide; Useful Nights):', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd($totalVisitNites . ' &divide; ' . $numUsefulNights . ' = ' . HTMLContainer::generateMarkup('span', ($numUsefulNights <= 0 ? '0' : number_format($totalVisitNites * 100 / $numUsefulNights, 1)) . '%', array('style'=>'font-weight:bold;')));
+
+    $hdTr = HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('All Rooms (' . count($availableRooms) . ')');
+
+    foreach ($categories as $c) {
+
+        if (!isset($numCategoryRooms[$c[0]]) || $numCategoryRooms[$c[0]] == 0){
+            continue;
+        }
+
+        $hdTr .= HTMLTable::makeTh($c[1] . ' (' . $numCategoryRooms[$c[0]] . ')');
+        $numRoomNights = $numCategoryRooms[$c[0]] * $numNights;
+        $numUsefulNights = $numRoomNights - $oosNights[$c[0]];
+
+        $trs[4] .= HTMLTable::makeTd($numRoomNights . ' &ndash; ' . $oosNights[$c[0]] . ' = '  . HTMLContainer::generateMarkup('span', $numUsefulNights, array('style'=>'font-weight:bold;')));
+        $trs[5] .= HTMLTable::makeTd($totalCatNites[$c[0]] . ' &divide; ' . $numUsefulNights . ' = ' . HTMLContainer::generateMarkup('span', ($numUsefulNights <= 0 ? '0' : number_format($totalCatNites[$c[0]] * 100 / $numUsefulNights, 1)) . '%', array('style'=>'font-weight:bold;')));
+    }
+
+    $sTbl = new HTMLTable();
+
+    $sTbl->addHeaderTr($hdTr);
+
+    $sTbl->addBodyTr(HTMLTable::makeTd('Mean visit length in days:', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($avStay, 2)));
+    $sTbl->addBodyTr(HTMLTable::makeTd('Median visit length in days:', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($median,2)));
+
+    $sTbl->addBodyTr(HTMLTable::makeTd('Mean Room Charge per visit day:', array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($avDailyFee,2)));
+
+    $sTbl->addBodyTr($trs[4]);
+
+    $sTbl->addBodyTr($trs[5]);
+
+    return HTMLContainer::generateMarkup('h3', 'Report Statistics')
+            . HTMLContainer::generateMarkup('p', 'These numbers are specific to this report\'s selected filtering parameters.')
+            . $sTbl->generateMarkup();
+
+}
 
 /**
  * Prettify a row.
@@ -262,7 +415,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
  * @param boolean $visitFee  Flag to show/hide visit fees
  * @return type
  */
-function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp, $whAssoc, $numberAssocs, $local, $visitFee) {
+function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp, $whAssoc, $numberAssocs, $local, $visitFee, $statsOnly) {
 
     // get session instance
     $uS = Session::getInstance();
@@ -660,7 +813,9 @@ where
                 $totalSubsidy += ($visit['fcg'] - $visit['chg']);
                 $nites[] = $visit['nit'];
 
-                doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $sml, $reportRows, $rateTitles, $uS, $visitFee);
+                if (!$statsOnly) {
+                    doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $sml, $reportRows, $rateTitles, $uS, $visitFee);
+                }
             }
 
             $curVisit = $r['idVisit'];
@@ -858,7 +1013,9 @@ where
         $totalSubsidy += ($visit['fcg'] - $visit['chg']);
         $nites[] = $visit['nit'];
 
-        doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $sml, $reportRows, $rateTitles, $uS, $visitFee);
+        if (!$statsOnly) {
+            doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $sml, $reportRows, $rateTitles, $uS, $visitFee);
+        }
     }
 
 
@@ -875,6 +1032,7 @@ where
         if ($totalGuestNights > 0 && $uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
             $avGuestFee = $totalCharged / $totalGuestNights;
         }
+
 
         // totals footer
         $tr = '';
@@ -944,110 +1102,24 @@ where
                     break;
             }
 
-            $tr .= HTMLTable::makeTd(HTMLContainer::generateMarkup('p', $entry, Array('style'=>'font-weight:bold;text-decoration: underline;')) . ' ' . $f[0], array('style'=>'vertical-align:top;'));
+            if ($entry != '') {
+                $entry = HTMLContainer::generateMarkup('p', $entry, Array('style'=>'font-weight:bold;text-decoration: underline;'));
+            }
+
+            $tr .= HTMLTable::makeTd($entry . ($statsOnly ? '' : ' ' . $f[0]), array('style'=>'vertical-align:top;'));
         }
 
-        $tbl->addFooterTr($tr);
+        if ($statsOnly) {
+            $tbl->addBodyTr($tr);
+        } else {
+            $tbl->addFooterTr($tr);
+        }
 
-
+        // Main data table
         $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display compact'));
-        $statsTable = '';
 
         // Stats panel
-        if (count($nites) > 0) {
-
-            $rstmt = $dbh->query("select Category, count(Category) as NumRooms from room group by Category;");
-
-            $numRooms = array();
-            $totalRooms = 0;
-            $oosNights = array();
-            $totalOOSNites = 0;
-
-            while ($r = $rstmt->fetch(PDO::FETCH_ASSOC)) {
-                $numRooms[$r['Category']] = $r['NumRooms'];
-                $oosNights[$r['Category']] = 0;
-                $totalRooms += $r['NumRooms'];
-            }
-
-            // Get out of service rooms
-            $query1 = "select ru.idResource, rm.Category, ru.Start_Date, ru.End_Date,
-case when ru.End_Date <= '$start' Then 0
-    when ru.Start_Date >= '$end' Then 0
-        else DATEDIFF(
-        case when ru.End_Date > '$end' then '$end' else ru.End_Date end,
-        case when ru.Start_Date < '$start' then '$start' else ru.Start_Date end)
-    end as `Actual_Month_Nights`
-from resource_use ru join resource_room rr on ru.idResource = rr.idResource
-    join room rm on rr.idRoom = rm.idRoom
-where ru.Start_Date <= '$end' and ifnull(ru.End_Date, now()) > '$start';";
-
-            $stmt = $dbh->query($query1);
-
-            while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $oosNights[$r['Category']] += intval($r['Actual_Month_Nights'], 10);
-                $totalOOSNites += intval($r['Actual_Month_Nights'], 10);
-            }
-
-            $stDT = new DateTime($start . ' 00:00:00');
-            $enDT = new DateTime($end . ' 00:00:00');
-            $numNights = $enDT->diff($stDT, TRUE)->days;
-
-            $numRoomNights = $totalRooms * $numNights;
-            $numUsefulNights = $numRoomNights - $totalOOSNites;
-            $avStay = $totalNights / count($nites);
-
-            // Median
-            array_multisort($nites);
-            $entries = count($nites);
-            $emod = $entries % 2;
-            if ($emod > 0) {
-                // odd number of entries
-                $median = $nites[(ceil($entries / 2) - 1)];
-            } else {
-                $median = ($nites[($entries / 2) - 1] + $nites[($entries / 2)]) / 2;
-            }
-
-
-            $trs[4] = HTMLTable::makeTd('Useful Nights (Room-Nights &ndash; Room-Nights OOS):', array('class'=>'tdlabel'))
-                    . HTMLTable::makeTd($numRoomNights . ' &ndash; ' . $totalOOSNites . ' = '  . HTMLContainer::generateMarkup('span', $numUsefulNights, array('style'=>'font-weight:bold;')));
-
-            $trs[5] = HTMLTable::makeTd('Room Utilization (Nights &divide; Useful Nights):', array('class'=>'tdlabel'))
-                    . HTMLTable::makeTd($totalNights . ' &divide; ' . $numUsefulNights . ' = ' . HTMLContainer::generateMarkup('span', ($numUsefulNights <= 0 ? '0' : number_format($totalNights * 100 / $numUsefulNights, 1)) . '%', array('style'=>'font-weight:bold;')));
-
-            $hdTr = HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('All Rooms (' . $totalRooms . ')');
-
-            foreach ($categories as $c) {
-
-                if (!isset($numRooms[$c[0]])){
-                    continue;
-                }
-
-                $hdTr .= HTMLTable::makeTh($c[1] . ' (' . $numRooms[$c[0]] . ')');
-                $numRoomNights = $numRooms[$c[0]] * $numNights;
-                $numUsefulNights = $numRoomNights - $oosNights[$c[0]];
-
-                $trs[4] .= HTMLTable::makeTd($numRoomNights . ' &ndash; ' . $oosNights[$c[0]] . ' = '  . HTMLContainer::generateMarkup('span', $numUsefulNights, array('style'=>'font-weight:bold;')));
-                $trs[5] .= HTMLTable::makeTd($totalCatNites[$c[0]] . ' &divide; ' . $numUsefulNights . ' = ' . HTMLContainer::generateMarkup('span', ($numUsefulNights <= 0 ? '0' : number_format($totalCatNites[$c[0]] * 100 / $numUsefulNights, 1)) . '%', array('style'=>'font-weight:bold;')));
-            }
-
-            $sTbl = new HTMLTable();
-
-            $sTbl->addHeaderTr($hdTr);
-
-            $sTbl->addBodyTr(HTMLTable::makeTd('Mean visit length in days:', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($avStay, 2)));
-            $sTbl->addBodyTr(HTMLTable::makeTd('Median visit length in days:', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($median,2)));
-
-            $sTbl->addBodyTr(HTMLTable::makeTd('Mean Room Charge per visit day:', array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($avDailyFee,2)));
-
-            $sTbl->addBodyTr($trs[4]);
-
-            $sTbl->addBodyTr($trs[5]);
-
-            $statsTable = HTMLContainer::generateMarkup('h3', 'Report Statistics')
-                    . HTMLContainer::generateMarkup('p', 'These numbers are specific to this report\'s selected filtering parameters.')
-                    . $sTbl->generateMarkup();
-
-        }
+        $statsTable = statsPanel($dbh, $nites, $totalCatNites, $start, $end, $categories, $avDailyFee);
 
         return array('data'=>$dataTable, 'stats'=>$statsTable);
 
@@ -1063,6 +1135,7 @@ where ru.Start_Date <= '$end' and ifnull(ru.End_Date, now()) > '$start';";
     }
 
 }
+
 
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
@@ -1263,14 +1336,20 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
     $cFields[] = array("Rate Subsidy", 'sub', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     $cFields[] = array("Contribution", 'donpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
 }
+
 $colSelector = new ColumnSelectors($cFields, 'selFld');
 
 
-if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
+if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || isset($_POST['btnStatsOnly'])) {
 
     $local = TRUE;
     if (isset($_POST['btnExcel'])) {
         $local = FALSE;
+    }
+
+    $statsOnly = FALSE;
+    if (isset($_POST['btnStatsOnly'])) {
+        $statsOnly = TRUE;
     }
 
     // set the column selectors
@@ -1402,7 +1481,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     if ($start != '' && $end != '') {
 
-        $tblArray = doReport($dbh, $colSelector, $start, $end, $whHosp, $whAssoc, count($aList), $local, $uS->VisitFee);
+        $tblArray = doReport($dbh, $colSelector, $start, $end, $whHosp, $whAssoc, count($aList), $local, $uS->VisitFee, $statsOnly);
 
         $dataTable = $tblArray['data'];
         $statsTable = $tblArray['stats'];
@@ -1510,7 +1589,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
             }
         });
         $('#selCalendar').change();
-        $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
+        $('#btnHere, #btnExcel, #btnStatsOnly, #cbColClearAll, #cbColSelAll').button();
         $('#btnHere, #btnExcel').click(function () {
             $('#paymentMessage').hide();
         });
@@ -1639,8 +1718,9 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                     <?php echo $columSelector; ?>
                     <table style="width:100%; clear:both;">
                         <tr>
-                            <!--<td><?php echo $colSelector->getRanges(); ?></td>-->
+
                             <td style="width:50%;"><span style="color:red;"><?php echo $errorMessage; ?></span></td>
+                            <td><input type="submit" name="btnStatsOnly" id="btnStatsOnly" value="Stats Only"/></td>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
                             <td><input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/></td>
                         </tr>

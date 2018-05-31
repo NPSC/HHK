@@ -215,7 +215,7 @@ abstract class PriceModel {
                 }
 
                 if (count($myRates) != 1) {
-                    throw new Hk_Exception_Runtime('Fixed Rate Category (x) is not set.  ');
+                    throw new Hk_Exception_Runtime('Fixed Rate Category (f) is not set.  ');
                 }
 
                 $pm->activeRoomRates = $myRates;

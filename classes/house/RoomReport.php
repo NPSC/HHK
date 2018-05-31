@@ -121,6 +121,9 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
     public static function dailyReport(\PDO $dbh) {
 
         $roomsOOS = array();
+        $uS = Session::getInstance();
+
+        $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
         // Get Rooms OOS
         $query1 = "SELECT
@@ -201,7 +204,7 @@ WHERE
             if ($idRoom != $r['idRoom']) {
 
                 if ($idRoom > 0) {
-                    $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS);
+                    $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS, $priceModel);
                 }
 
                 $guests = '';
@@ -217,14 +220,13 @@ WHERE
             $last = $r;
         }
 
-        $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS);
+        $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS, $priceModel);
 
         return $tableRows;
     }
 
-    protected static function doDailyMarkup(\PDO $dbh, $r, $guests, $roomsOOS) {
+    protected static function doDailyMarkup(\PDO $dbh, $r, $guests, $roomsOOS, PriceModel $priceModel) {
 
-        $uS = Session::getInstance();
         $fixed = array();
 
         $idVisit = intval($r['idVisit'], 10);
@@ -266,7 +268,7 @@ WHERE
             // get unpaid amount
             $visitCharge = new VisitCharges($idVisit);
             $visitCharge->sumPayments($dbh)
-                    ->sumCurrentRoomCharge($dbh, PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel));
+                    ->sumCurrentRoomCharge($dbh, $priceModel);
 
             $totalMOA = 0;
             if ($visitCharge->getItemInvCharges(ItemId::LodgingMOA) > 0) {
@@ -539,7 +541,7 @@ and s.Span_Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(s.
         $stResc = $dbh->query("select r.idResource, r.Title "
                 . " from resource r left join
 resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and ru.Start_Date <= '" . $stDT->format('Y-m-d 00:00:00') . "' and ru.End_Date >= '" . $endDT->format('Y-m-d 00:00:00') . "'"
-                . " where ru.idResource_use is null and r.Type in ('" . ResourceTypes::Room . "', '" . ResourceTypes::RmtRoom . "', '" . ResourceTypes::Partition . "')"
+                . " where ru.idResource_use is null and r.Type in ('" . ResourceTypes::Room . "', '" . ResourceTypes::RmtRoom . "')"
                 . " order by r.Title;");
 
         $stRows = $stResc->fetchAll(\PDO::FETCH_ASSOC);

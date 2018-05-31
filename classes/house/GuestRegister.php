@@ -197,18 +197,10 @@ where ru.idResource_use is null
 
             }
 
-            if ($uS->GuestNameColor != '') {
+            // Set ribbon color
+            $this->setRibbonColors($uS->GuestNameColor, $r, $s, $nameColors);
 
-                if (isset($r[$uS->GuestNameColor]) && isset($nameColors[$r[$uS->GuestNameColor]])){
-                    $s['backgroundColor'] = $nameColors[$r[$uS->GuestNameColor]]['b'];
-                    $s['textColor'] = $nameColors[$r[$uS->GuestNameColor]]['t'];
-                } else if (isset($nameColors[$r['idHospital']])) {
-                    $s['backgroundColor'] = $nameColors[$r['idHospital']]['b'];
-                    $s['textColor'] = $nameColors[$r['idHospital']]['t'];
-                }
-            }
-
-            // Set Start and end for fullCalendar control
+            //
             $s['id'] = 'v' . $r['id'];
             $s['idVisit'] = $r['idVisit'];
             $s['Span'] = $r['Span'];
@@ -455,16 +447,8 @@ where ru.idResource_use is null
             $s['className'] = 'hhk-schrm';
             $s['borderColor'] = '#111';
 
-            if ($uS->GuestNameColor != '') {
-
-                if (isset($r[$uS->GuestNameColor]) && isset($nameColors[$r[$uS->GuestNameColor]])){
-                    $s['backgroundColor'] = $nameColors[$r[$uS->GuestNameColor]]['b'];
-                    $s['textColor'] = $nameColors[$r[$uS->GuestNameColor]]['t'];
-                } else if (isset($nameColors[$r['idHospital']])) {
-                    $s['backgroundColor'] = $nameColors[$r['idHospital']]['b'];
-                    $s['textColor'] = $nameColors[$r['idHospital']]['t'];
-                }
-            }
+            // Set ribbon color
+            $this->setRibbonColors($uS->GuestNameColor, $r, $s, $nameColors);
 
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
             $s['end'] = $endDT->format('Y-m-d\TH:i:00');
@@ -695,7 +679,7 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
 
         $nameColors = array();
 
-        if ($guestDemographic == 'hospital') {
+        if (strtolower($guestDemographic) == 'hospital') {
 
             foreach($hospitals as $h) {
 
@@ -748,6 +732,31 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
         return $hospitals;
     }
 
+    protected function setRibbonColors($colorIndex, $r, &$s, $nameColors) {
+
+        // Set ribbon color
+        if ($colorIndex != '') {
+
+            if (isset($r[$colorIndex]) && isset($nameColors[$r[$colorIndex]])){
+
+                // Use Demographics colors
+                $s['backgroundColor'] = $nameColors[$r[$colorIndex]]['b'];
+                $s['textColor'] = $nameColors[$r[$colorIndex]]['t'];
+
+            } else if (isset($nameColors[$r['idHospital']])) {
+
+                // Use Hospital colors
+                if ($r['idAssociation'] != $this->noAssocId && $r['idAssociation'] > 0 && isset($nameColors[$r['idAssociation']])) {
+                    // Association color overrides the hospital color.
+                    $s['backgroundColor'] = $nameColors[$r['idAssociation']]['b'];
+                    $s['textColor'] = $nameColors[$r['idAssociation']]['t'];
+                } else {
+                    $s['backgroundColor'] = $nameColors[$r['idHospital']]['b'];
+                    $s['textColor'] = $nameColors[$r['idHospital']]['t'];
+                }
+            }
+        }
+    }
 }
 
 

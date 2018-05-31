@@ -1189,7 +1189,7 @@ class ReservationSvcs {
         //
         $paymentManager = new PaymentManager(PaymentChooser::readPostedPayment($dbh, $post));
 
-        $payResult = self::processPayments($dbh, $paymentManager, $resv, 'Reserve.php');
+        $payResult = self::processPayments($dbh, $paymentManager, $resv, $config->getString('house', 'ReservationPage', 'Referral.php'));
 
         if ($payResult !== NULL) {
 
@@ -1209,7 +1209,7 @@ class ReservationSvcs {
             }
         }
 
-        $results = HouseServices::cardOnFile($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $post, 'Reserve.php?rid='.$resv->getIdReservation());
+        $results = HouseServices::cardOnFile($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $post, $config->getString('house', 'ReservationPage', 'Referral.php') .'?rid='.$resv->getIdReservation());
 
         if (isset($results['error'])) {
             $dataArray['error'] = $results['error'];
