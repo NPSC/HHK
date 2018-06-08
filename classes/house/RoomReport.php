@@ -650,6 +650,11 @@ and v.Span_Start < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(v.Span_
             $rmStartDate = new \DateTime($r['Start_Date']);
             $numNights = $r['Nights'];
 
+            // Collect single day events
+            if ($numNights == 0) {
+                $numNights++;
+            }
+
             for ($j = 0; $j < $numNights; $j++) {
 
                 $rmDate = $rmStartDate->format($dateFormat);

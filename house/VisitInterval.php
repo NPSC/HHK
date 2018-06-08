@@ -95,8 +95,25 @@ order by r.idResource;";
 
         if ($r['Start_Date'] != '' && $r['End_Date'] != '') {
             $arriveDT = new DateTime($r['Start_Date']);
+            $arriveDT->setTime(0, 0, 0);
             $departDT = new DateTime($r['End_Date']);
-            $nites = $departDT->diff($arriveDT, TRUE)->days;
+            $departDT->setTime(0,0,0);
+
+            // Only collect days within the time period.
+            if ($arriveDT < $stDT) {
+                $arriveDT = new \DateTime($stDT->format('Y-m-d H:i:s'));
+            }
+
+            if ($departDT > $enDT) {
+                $departDT = new \DateTime($enDT->format('Y-m-d H:i:s'));
+            }
+
+            // Collect 0-day events as one day
+            if ($arriveDT == $departDT) {
+                $nites = 1;
+            } else {
+                $nites = $departDT->diff($arriveDT, TRUE)->days;
+            }
         }
 
 
@@ -108,42 +125,34 @@ order by r.idResource;";
 
     }
 
-    // Filter out unavailalbe rooms
-    $availableRooms = array();
+    // Filter out unavailalbe rooms and add up the nights
+    $availableRooms = 0;
+    $unavailableRooms = 0;
 
-    foreach($rooms as $id => $r) {
-
-        $isAvailable = TRUE;
+    foreach($rooms as $r) {
 
         foreach ($r as $cId => $c) {
 
+            if (isset($c[ResourceStatus::Unavailable]) && $c[ResourceStatus::Unavailable] >= $numNights) {
+                $unavailableRooms++;
+                continue;
+            }
+
+            $numCategoryRooms[$cId]++;
+            $availableRooms++;
+
             foreach ($c as $k => $v) {
 
-                if ($k == ResourceStatus::Unavailable && $v >= $numNights) {
-                    $isAvailable = FALSE;
-                } else {
+                if ($k != ResourceStatus::Available) {
                     $oosNights[$cId] += $v;
                     $totalOOSNites += $v;
                 }
-
-            }
-
-            if ($isAvailable) {
-                $availableRooms[$id] = $r;
-                $numCategoryRooms[$cId]++;
             }
         }
-
     }
 
-//
-//            while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-//                $oosNights[$r['Category']] += intval($r['Actual_Month_Nights'], 10);
-//                $totalOOSNites += intval($r['Actual_Month_Nights'], 10);
-//            }
 
-
-    $numRoomNights = count($availableRooms) * $numNights;
+    $numRoomNights = $availableRooms * $numNights;
     $numUsefulNights = $numRoomNights - $totalOOSNites;
     $avStay = $totalVisitNites / count($visitNites);
 
@@ -166,7 +175,7 @@ order by r.idResource;";
     $trs[5] = HTMLTable::makeTd('Room Utilization (Nights &divide; Useful Nights):', array('class'=>'tdlabel'))
             . HTMLTable::makeTd($totalVisitNites . ' &divide; ' . $numUsefulNights . ' = ' . HTMLContainer::generateMarkup('span', ($numUsefulNights <= 0 ? '0' : number_format($totalVisitNites * 100 / $numUsefulNights, 1)) . '%', array('style'=>'font-weight:bold;')));
 
-    $hdTr = HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('All Rooms (' . count($availableRooms) . ')');
+    $hdTr = HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('All Rooms (' . $availableRooms . ')');
 
     foreach ($categories as $c) {
 

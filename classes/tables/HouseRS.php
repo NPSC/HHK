@@ -233,7 +233,7 @@ class ResourceUseRS extends TableRS {
     /**
      * @var \DB_Field
      */
-    public $Room_Status;  // varchar(5) NOT NULL DEFAULT '',
+    public $Unavail_Code;  // varchar(5) NOT NULL DEFAULT '',
     /**
      * @var \DB_Field
      */
@@ -267,7 +267,7 @@ class ResourceUseRS extends TableRS {
         $this->End_Date = new DB_Field("End_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->OOS_Code = new DB_Field("OOS_Code", "", new DbStrSanitizer(5), TRUE, TRUE);
-        $this->Room_Status = new DB_Field("Room_Status", "", new DbStrSanitizer(5), TRUE, TRUE);
+        $this->Unavail_Code = new DB_Field("Unavail_Code", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Room_State = new DB_Field("Room_State", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Room_Availability = new DB_Field("Room_Availability", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Notes = new DB_Field("Notes", "", new DbStrSanitizer(245), TRUE, TRUE);

@@ -60,8 +60,10 @@ abstract class PriceModel {
         // Short circuit for fixed rate x
         if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category) {
             if ($pledgedRate > 0) {
-                $this->remainderAmt = $amount % $pledgedRate;
-                return floor($amount / $pledgedRate);
+                //$this->remainderAmt = $amount % $pledgedRate;
+                $days = floor($amount / $pledgedRate);
+                $this->remainderAmt = $amount - ($amount * $days);
+                return $days;
             }
             return 0;
         }
@@ -70,8 +72,10 @@ abstract class PriceModel {
         if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory) {
             if ($rrateRs->Reduced_Rate_1->getStoredVal() > 0) {
                 $rate = (1 + $rateAdjust / 100) * $rrateRs->Reduced_Rate_1->getStoredVal();
-                $this->remainderAmt = $amount % $rate;
-                return floor($amount / $rate);
+                //$this->remainderAmt = $amount % $rate;
+                $days = floor($amount / $rate);
+                $this->remainderAmt = $amount - ($amount * $days);
+                return $days;
             }
             return 0;
         }
@@ -759,11 +763,12 @@ GROUP BY s.Visit_Span");
 
         $rrateRs = $this->getCategoryRateRs($idRoomRate, $rateCategory);
 
-        // Short circuit for fixed rate x
+        // Short circuit for fixed rate
         if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category) {
             if ($pledgedRate > 0) {
-                $this->remainderAmt = $amount % $pledgedRate;
-                return floor($amount / $pledgedRate);
+                $days = floor($amount / $pledgedRate);
+                $this->remainderAmt = $amount - ($amount * $days);
+                return $days;
             }
             return 0;
         }
@@ -771,9 +776,11 @@ GROUP BY s.Visit_Span");
         // Flat rate
         if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory) {
             if ($rrateRs->Reduced_Rate_1->getStoredVal() > 0) {
+
                 $rate = (1 + $rateAdjust / 100) * $rrateRs->Reduced_Rate_1->getStoredVal();
-                $this->remainderAmt = $amount % $rate;
-                return floor($amount / $rate);
+                $days = floor($amount / $rate);
+                $this->remainderAmt = $amount - ($amount * $days);
+                return $days;
             }
             return 0;
         }
@@ -781,8 +788,8 @@ GROUP BY s.Visit_Span");
         // the rest
         if ($rrateRs->Reduced_Rate_1->getStoredVal() > 0) {
             $rate = (1 + $rateAdjust / 100) * $rrateRs->Reduced_Rate_1->getStoredVal();
-            $this->remainderAmt = $amount % $rate;
             $guestDays = floor($amount / $rate);
+            $this->remainderAmt = $amount - ($amount * $guestDays);
         }
 
         if ($guestDays < 1) {
