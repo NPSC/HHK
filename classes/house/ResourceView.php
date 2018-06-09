@@ -128,7 +128,7 @@ order by r.Title;");
         }
 
 
-        $stmt = $dbh->query("Select '' as `Edit`, r.idRoom as `Id`, r.Title, g.Description as `Type`, g3.Description as `Category`, g7.Description as `Cal. Group`, r.Max_Occupants as `Max`,
+        $stmt = $dbh->query("Select '' as `Edit`, r.idRoom as `Id`, r.Title, g.Description as `Type`, g3.Description as `Category`, g7.Description as `Report Category`, r.Max_Occupants as `Max`,
 r.Floor, r.Phone, g4.Description as `Static Rate`, g6.Description as `Clean Cycle` $depositCol
 from room r
 left join gen_lookups g on g.`Table_Name`='Room_Type' and g.`Code` = r.`Type`

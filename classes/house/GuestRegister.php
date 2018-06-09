@@ -23,14 +23,24 @@ class GuestRegister {
 
 
         if ($startTime == "" || $endTime == "") {
-            return $rescs;
+            return array();
         }
 
         $beginDate = new \DateTime($startTime);
         $endDate = new \DateTime($endTime);
 
         // Get list of resources
-        $qu = "select r.idResource, r.Title, r.Background_Color, r.Text_Color, rm.Max_Occupants, gc.Description as `Category`, gr.Description as `Report_Category`, g.Description as `Room_Type`, gs.Description as `Room_Status`, rm.Floor
+        $qu = "SELECT
+    r.idResource as `id`,
+    r.Title as `title`,
+    r.Background_Color as `bgColor`,
+    r.Text_Color as `textColor`,
+    rm.Max_Occupants as `maxOcc`,
+    ifnull(gc.Description, '(Default)') AS `roomCategory`,
+    ifnull(gr.Description, '(Default)') AS `reportCategory`,
+    ifnull(g.Description, '(Default)') AS `roomType`,
+    ifnull(gs.Description, '(Unknown)') AS `roomStatus`,
+    rm.Floor as `floor`
 from resource r
 	left join
 resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and DATE(ru.Start_Date) <= DATE('" . $beginDate->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $endDate->format('Y-m-d') . "')
@@ -44,22 +54,40 @@ where ru.idResource_use is null
  order by r.Util_Priority;";
         $rstmt = $dbh->query($qu);
 
+        $rawRescs = $rstmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        while ($re = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
+        // Resource grouping types
+        $roomGroups = array();
 
-            $rescs[] = array(
-                'id' => $re['idResource'],
-                'title' => $re['Title'],
-                'bgColor' => $re['Background_Color'],
-                'textColor' => $re['Text_Color'],
-                'maxOcc' => $re['Max_Occupants'],
-                'roomType' => $re['Room_Type'],
-                'floor' => $re['Floor'],
-                'roomStatus' => $re['Room_Status'],
-                'roomCategory' => ($re['Category'] == '' ? '(Default)' : $re['Category']),
-                'reportCategory' => ($re['Report_Category'] == '' ? '(Default)' : $re['Report_Category']),
-            );
+        $roomGrp = array('roomType', 'roomCategory', 'floor', 'reportCategory');
+
+        // Count the room grouping types
+        foreach ($rawRescs as $r) {
+
+            foreach ($roomGrp as $g) {
+
+                if (isset($roomGroups[$g][$r[$g]])) {
+                    $roomGroups[$g][$r[$g]]++;
+                } else {
+                    $roomGroups[$g][$r[$g]] = 1;
+                }
+            }
         }
+
+        // Set the grouping totals in the group titles
+        foreach ($rawRescs as $r) {
+
+            foreach ($roomGrp as $g) {
+
+                if (isset($r[$g])) {
+                    $r[$g] .= ' (' . $roomGroups[$g][$r[$g]] . ')';
+                }
+            }
+
+            $rescs[] = $r;
+        }
+
+
 
         // Add waitlist
         $rescs[] = array(

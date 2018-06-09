@@ -219,7 +219,7 @@ if ($stmth->rowCount() > 1 && (strtolower($uS->RegColors) == 'hospital' || (strt
 $weeks = intval($uS->CalViewWeeks);
 if ($weeks < 1) {
     $weeks = 1;
-} else if ($weeks > 4) {
+} else if ($weeks > 3) {
     $weeks = 4;
 }
 
@@ -300,6 +300,8 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
             var resvPageName = '<?php echo $config->getString('house', 'ReservationPage', 'Reserve.php'); ?>';
+            var showCreatedDate = '<?php echo $uS->ShowCreatedDate; ?>';
+            var expandResources = '<?php echo $uS->CalExpandResources; ?>';
             var cgCols = [
                 {data: 'Action', title: 'Action', sortable: false, searchable:false},
                 {data: 'Guest First', title: 'Guest First'},
@@ -420,12 +422,12 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             <div id="mainTabs" style="display:none; font-size:.9em;">
                 <ul>
                     <li id="liCal"><a href="#vcal">Calendar</a></li>
-                    <li><a href="#vstays">Current Guests</a></li>
-                    <li><a href="#vresvs"><?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?></a></li>
+                    <li><a href="#vstays">Current Guests (<span id="spnNumCurrent"></span>)</a></li>
+                    <li><a href="#vresvs"><?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?> (<span id="spnNumConfirmed"></span>)</a></li>
                     <?php if ($uS->ShowUncfrmdStatusTab) { ?>
-                    <li><a href="#vuncon"><?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?></a></li>
+                    <li><a href="#vuncon"><?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?> (<span id="spnNumUnconfirmed"></span>)</a></li>
                     <?php } ?>
-                    <li><a href="#vwls">Wait List</a></li>
+                    <li><a href="#vwls">Wait List (<span id="spnNumWaitlist"></span>)</a></li>
                     <?php if ($isGuestAdmin) { ?>
                         <li><a href="#vactivity">Recent Activity</a></li>
                         <?php if ($showCharges) { ?>
@@ -437,8 +439,21 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 <div id="vcal" style="clear:left; padding: .6em 1em; display:none;">
                     <?php echo $colorKey; ?>
                     <div id="divGoto" style="position:absolute;">
-                        <span>Go to Date: </span>
-                        <input id="txtGotoDate" type="text" class="ckdate" value="" />
+                        <span id="spnGotoDate" style="display:none;">Go to Date: <input id="txtGotoDate" type="text" class="ckdate" value="" /></span>
+                        <span id="pCalLoad" style="font-weight:bold;">Loading...</span>
+                    </div>
+                    <div id="divRoomGrouping" style="position:absolute; padding: 1.2em; display:none;" class="ui-widget ui-front ui-widget-content ui-corner-all ui-widget-shadow">
+                        <table>
+                            <tr>
+                                <td>Select Room Grouping scheme: </td>
+                                <td><select id="selRoomGroupScheme">
+                                        <option value="roomCategory">Room Category</option>
+                                        <option value="roomType">Room Type</option>
+                                        <option value="reportCategory">Report Category</option>
+                                        <option value="floor">Floor</option>
+                                    </select></td>
+                            </tr>
+                        </table>
                     </div>
                     <p style="color:red; font-size: large; display:none;" id="pCalError"></p>
                     <div id="calendar" style="margin-top:5px;"></div>

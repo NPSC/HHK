@@ -430,6 +430,7 @@ REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`,`T
 -- insert System configuration
 --
 REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES 
+('CalExpandResources', 'true', 'b', 'h', 'Initially expand room categories on the calendar'),
 ('CalViewWeeks','3','i','h','Number of weeks showing in the calendar view'),
 ('CalResourceGroupBy', 'roomType', 's', 'h', 'Calendar resource grouping parameter'),
 ('CardSwipe','false','b','f','Use POS terminal'),

@@ -563,7 +563,7 @@ function checkStrength(pwCtrl) {
     }
     return rtn;
 }
-    
+
 $(document).ready(function () {
     "use strict";
     var hindx = 0;
@@ -746,7 +746,7 @@ $(document).ready(function () {
         },
         false
     );
-
+    
     $('#calendar').fullCalendar({
 
         aspectRatio: 2.2,
@@ -756,26 +756,32 @@ $(document).ready(function () {
         dateIncrement: {weeks: 1 },
         nextDayThreshold: '13:00',
         schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
-        
+
         customButtons: {
             refresh: {
               text: 'Refresh',
               //themeIcon: 'ui-icon-refresh',
               click: function() {
-                $('#calendar').fullCalendar( 'refetchResources' ).fullCalendar('refetchEvents');
+                $('#calendar').fullCalendar( 'refetchEvents' );
               }
             },
-            prevprev: {
+            prevMonth: {
               click: function() {
-                $('#calendar').fullCalendar('incrementDate', {weeks: -3});
+                $('#calendar').fullCalendar('incrementDate', {months: -1});
               },
               themeIcon: 'ui-icon-seek-prev'
             },
-            nextnext: {
+            nextMonth: {
               click: function() {
-                $('#calendar').fullCalendar('incrementDate', {weeks: 3});
+                $('#calendar').fullCalendar('incrementDate', {months: 1});
               },
               themeIcon: 'ui-icon-seek-next'
+            },
+            setup: {
+              click: function() {
+                $('#divRoomGrouping').show('fade');
+              },
+              themeIcon: 'ui-icon-gear'
             }
         },
         
@@ -800,24 +806,36 @@ $(document).ready(function () {
             },
             timeline4weeks: {
                 type: 'timeline',
-                slotDuration: {days: 1},
-                duration: {weeks: 4 },
-                buttonText: '4'
+                slotDuration: {days: 7},
+                duration: {weeks: 26 },
+                buttonText: '26'
             }
         },
-        
+
         header: {
-            left: 'timeline1weeks,timeline2weeks,timeline3weeks,timeline4weeks title',
+            left: 'setup timeline1weeks,timeline2weeks,timeline3weeks,timeline4weeks title',
             center: '',
-            right: 'refresh,today prevprev,prev,next,nextnext'
+            right: 'refresh,today prevMonth,prev,next,nextMonth'
         },
-        
+
         defaultView: defaultView,
         editable: true,
+        resourcesInitiallyExpanded: expandResources,
         resourceLabelText: 'Rooms',
         resourceAreaWidth: '8%',
         refetchResourcesOnNavigate: true,
         resourceGroupField: resourceGroupBy,
+        loading: function (isLoading, View) {
+
+            if (isLoading) {
+                $('#pCalLoad').show();
+                $('#spnGotoDate').hide();
+            } else {
+                $('#pCalLoad').hide();
+                $('#spnGotoDate').show();
+            }
+        },
+
         resources: {
             url: 'ws_calendar.php?cmd=resclist',
             error: function() {
@@ -828,18 +846,18 @@ $(document).ready(function () {
             return txt;
         },
         resourceRender: function(resourceObj, labelTds, bodyTds) {
-            
+
             labelTds.css('background', resourceObj.bgColor)
                     .css('color', resourceObj.textColor);
 
             if (resourceObj.id > 0) {
-                
+
                 var cont = (resourceObj.roomType == '' ? '' : resourceObj.roomType + ': ')
                         + resourceObj.title 
                         + (resourceObj.maxOcc == 0 ? '' : ', Max. Occupants: ' + resourceObj.maxOcc);
-                
+
                 labelTds.prop('title', cont);
-                
+
                 labelTds.click(function () {
                     // Bring up OOS dialog
                     getStatusEvent(resourceObj.id, 'resc', resourceObj.title);
@@ -993,6 +1011,10 @@ $(document).ready(function () {
         var target = $(event.target);
         if ( target[0].id !== 'pudiv' && target.parents("#" + 'pudiv').length === 0) {
             $('div#pudiv').remove();
+        }
+        
+        if (target[0].id !== 'divRoomGrouping' && target[0].id !== 'selRoomGroupScheme') {
+            $('#divRoomGrouping').hide();
         }
     });
 
@@ -1413,14 +1435,32 @@ $(document).ready(function () {
 
     $('#calendar').fullCalendar('render');
 
+    // Calendar date goto button.
     $('#divGoto').position({
             my: 'center top',
             at: 'center top+8',
             of: '#calendar',
             within: '#calendar'
     });
+    
     $('#txtGotoDate').change(function () {
         $('#calendar').fullCalendar('gotoDate', $(this).datepicker('getDate'));
+    });
+    
+    $('#divRoomGrouping').position({
+        my: 'left top',
+        at: 'left top - 10',
+        of: '#vcal',
+        within: '#vcal'
+    });
+    
+    $('#selRoomGroupScheme').val(resourceGroupBy);
+
+    // Capture room Grouping schema change event.
+    $('#selRoomGroupScheme').change(function () {
+        $('#divRoomGrouping').hide();
+        $('#calendar').fullCalendar('option', 'resourceGroupField', $(this).val());
+        $('#calendar').fullCalendar( 'refetchResources' );
     });
     
     $('#curres').DataTable({
@@ -1429,10 +1469,12 @@ $(document).ready(function () {
            dataSrc: 'curres'
        },
        "drawCallback": function (settings) {
-            $('#curres .gmenu').menu();
+           $('#spnNumCurrent').text(this.api().rows().data().length);
+           $('#curres .gmenu').menu();
        },
        "columns": cgCols
     });
+    
     $('#daily').DataTable({
        ajax: {
            url: 'ws_resc.php?cmd=getHist&tbl=daily',
@@ -1444,16 +1486,19 @@ $(document).ready(function () {
             return "Prepared: " + dateRender(new Date().toISOString(), 'display', 'ddd, MMM D YYYY, h:mm a');
       }
     });
+    
     $('#reservs').DataTable({
        ajax: {
            url: 'ws_resc.php?cmd=getHist&tbl=reservs',
            dataSrc: 'reservs'
        },
        "drawCallback": function (settings) {
-            $('#reservs .gmenu').menu();
+           $('#spnNumConfirmed').text(this.api().rows().data().length);
+           $('#reservs .gmenu').menu();
        },
        "columns": rvCols
     });
+    
     if ($('#unreserv').length > 0) {
         $('#unreserv').DataTable({
            ajax: {
@@ -1461,18 +1506,21 @@ $(document).ready(function () {
                dataSrc: 'unreserv'
            },
            "drawCallback": function (settings) {
+                $('#spnNumUnconfirmed').text(this.api().rows().data().length);
                 $('#unreserv .gmenu').menu();
            },
            "columns": rvCols
         });
     }
+    
     $('#waitlist').DataTable({
        ajax: {
            url: 'ws_resc.php?cmd=getHist&tbl=waitlist',
            dataSrc: 'waitlist'
        },
-       "order": [[ 4, 'asc' ]],
+       "order": [[ (showCreatedDate ? 4 : 3), 'asc' ]],
        "drawCallback": function (settings) {
+            $('#spnNumWaitlist').text(this.api().rows().data().length);
             $('#waitlist .gmenu').menu();
        },
        "columns": wlCols
