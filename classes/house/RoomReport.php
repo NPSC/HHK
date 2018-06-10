@@ -315,7 +315,9 @@ WHERE
     }
 
 
-    public static function roomNOR(PDO $dbh, $startDate, $endDate, $period, $maxDays = 366) {
+    public static function roomNOR(PDO $dbh, $startDate, $endDate, $whHosp, $roomGroup) {
+
+        $oneDay = new \DateInterval('P1D');
 
         if ($startDate == '') {
             return;
@@ -325,14 +327,9 @@ WHERE
             $endDate = date('Y-m-d');
         }
 
-        if ($period == 'y') {
-            $startDate = date('Y-01-01', strtotime($startDate));
-            $endDate = date('Y-12-31', strtotime($endDate));
-        }
-
         $stDT = new \DateTime($startDate);
         $endDT = new \DateTime($endDate);
-        $endDT->add(new \DateInterval('P1D'));
+        $endDT->add($oneDay);
 
         if ($stDT === FALSE || $endDT === FALSE) {
             return;
@@ -341,19 +338,25 @@ WHERE
         $query = "SELECT
     r.idRoom,
     r.Title,
-    r.Category,
+    r.`$roomGroup[0]`,
     r.Max_Occupants,
     s.Span_Start_Date,
     IFNULL(s.Span_End_Date, NOW()) AS `CO_Date`,
-    DATEDIFF(IFNULL(s.Span_End_Date, NOW()), s.Span_Start_Date) AS `Nights`
+    DATEDIFF(IFNULL(s.Span_End_Date, NOW()), s.Span_Start_Date) AS `Nights`,
+    hs.idHospital,
+    hs.idAssociation
 FROM
     room r
         LEFT JOIN
     stays s ON s.idRoom = r.idRoom
+        LEFT JOIN
+    visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
+        LEFT JOIN
+    hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
 WHERE
-    DATEDIFF(IFNULL(s.Span_End_Date, NOW()), s.Span_Start_Date) > 0
+    DATEDIFF(IFNULL(s.Span_End_Date, NOW()), s.Span_Start_Date) > 0 $whHosp
         AND s.`On_Leave` = 0
-and s.Span_Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(s.Span_End_Date,  now() ) >= '" . $stDT->format('Y-m-d 00:00:00') ."'"
+and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(s.Span_End_Date),  DATE(now()) ) >= '" . $stDT->format('Y-m-d') ."'"
                 . " order by r.Title;";
         $stmt = $dbh->query($query);
         $rows = $stmt->fetchAll();
@@ -361,12 +364,9 @@ and s.Span_Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(s.
         $days = array();
         $catDays = array();
         $totals = array();
-        $oneDay = new DateInterval('P1D');
-        $rooms = array();
 
+        $rooms = array();
         $categories = array();
-        $size = 0;
-//        $th = HTMLTable::makeTh('');
         $now = new \DateTime();
         $now->setTime(23, 59, 59);
 
@@ -374,35 +374,48 @@ and s.Span_Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(s.
             $endDT = $now->sub($oneDay);
         }
 
-        // Set up the days array
         $th = '';
-        while ($stDT < $endDT && $size < $maxDays) {
+        $daysInMonths = array();
+        $roomsInCategory = array();
+
+        // Set up the days array
+        while ($stDT < $endDT) {
+
+            $thisMonth = $stDT->format('M, Y');
+
+            if (isset($daysInMonths[$thisMonth])) {
+                $daysInMonths[$thisMonth]++;
+            } else {
+                $daysInMonths[$thisMonth] = 1;
+            }
 
             $thisDay = $stDT->format('Y-m-d');
             $th .= HTMLTable::makeTh($stDT->format('j'));
 
             foreach ($rows as $r) {
                 $days[$r['idRoom']][$thisDay] = 0;
-                $catDays[$r['Category']][$thisDay] = 0;
+                $catDays[$r[$roomGroup[0]]][$thisDay] = 0;
             }
 
             $days['Total'][$thisDay] = 0;
 
             $stDT->add($oneDay);
-            $size++;
+
         }
 
         $th .= HTMLTable::makeTh('Room');
         $th .= HTMLTable::makeTh('Total');
 
-        $roomCataegoryTitles = readGenLookupsPDO($dbh, 'Room_Category');
+        $roomCataegoryTitles = readGenLookupsPDO($dbh, $roomGroup[2]);
+        $roomCataegoryTitles[''] = array(0=>'',1=>'Unknown');
 
         foreach ($rows as $r) {
             $totals[$r['idRoom']] = 0;
-            $totals[$r['Category']] = 0;
+            $totals[$r[$roomGroup[0]]] = 0;
             $rooms[$r['idRoom']]['Max'] = $r['Max_Occupants'];
             $rooms[$r['idRoom']]['Title'] = $r['Title'];
-            $categories[$r['Category']]['Title'] = $roomCataegoryTitles[$r['Category']][1];
+            $rgrp = $r[$roomGroup[0]];
+            $categories[$r[$roomGroup[0]]]['Title'] = $roomCataegoryTitles[$r[$roomGroup[0]]][1];
         }
 
         $rooms['Total']['Title'] = 'Total';
@@ -414,6 +427,9 @@ and s.Span_Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(s.
 
         // Count
         foreach ($rows as $r) {
+
+            $roomsInCategory[$r[$roomGroup[0]]][$r['idRoom']] = 1;
+
             $rmStartDate = new \DateTime($r['Span_Start_Date']);
             $numNights = $r['Nights'];
 
@@ -423,10 +439,10 @@ and s.Span_Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(s.
                 if (isset($days[$r['idRoom']][$rmDate])) {
 
                     $days[$r['idRoom']][$rmDate]++;
-                    $catDays[$r['Category']][$rmDate]++;
+                    $catDays[$r[$roomGroup[0]]][$rmDate]++;
                     $days['Total'][$rmDate]++;
                     $totals[$r['idRoom']]++;
-                    $totals[$r['Category']]++;
+                    $totals[$r[$roomGroup[0]]]++;
                     $totals['Total']++;
                 }
 
@@ -441,15 +457,17 @@ and s.Span_Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(s.
 
         // Rooms report
         $tbl = new HTMLTable();
-        $tbl->addHeaderTr(HTMLTable::makeTh('Room') . $th . HTMLTable::makeTh('Occupied'));
 
         foreach ($days as $idRm => $rdateArray) {
 
             $td = HTMLTable::makeTd($rooms[$idRm]['Title']);
 
             $daysOccupied = 0;
+
             foreach($rdateArray as $numGuests) {
+
                 $td .= HTMLTable::makeTd($numGuests);
+
                 if ($numGuests > 0 ) {
                     $daysOccupied++;
                 }
@@ -466,19 +484,27 @@ and s.Span_Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(s.
             $tbl->addBodyTr($td);
         }
 
-        // subtract the extra day off the end date
-        $endDT->sub($oneDay);
+        $thMonth = '';
 
-        $mkup = $tbl->generateMarkup(array(), $endDT->format('F, Y'));
+        // Month headers
+        foreach ($daysInMonths as $m => $c) {
+            $thMonth .= HTMLTable::makeTh($m, array('colspan'=>$c));
+        }
+
+        $tbl->addHeaderTr(HTMLTable::makeTh(' ') . $thMonth . HTMLTable::makeTh(' ', array('colspan'=>'3')));
+        $tbl->addHeaderTr(HTMLTable::makeTh('Room (' . (count($days)-1) . ')') . $th . HTMLTable::makeTh('Occupied'));
+
+        $mkup = $tbl->generateMarkup();
 
 
         // Category report
         $tbl2 = new HTMLTable();
+        $tbl2->addHeaderTr(HTMLTable::makeTh(' ') . $thMonth . HTMLTable::makeTh(' ', array('colspan'=>'2')));
         $tbl2->addHeaderTr(HTMLTable::makeTh('Category') . $th);
 
-        foreach ($catDays as $idRm => $rdateArray) {
+        foreach ($catDays as $idCat => $rdateArray) {
 
-            $td = HTMLTable::makeTd($categories[$idRm]['Title']);
+            $td = HTMLTable::makeTd($categories[$idCat]['Title']. ' (' . count($roomsInCategory[$idCat]) . ')');
 
             $daysOccupied = 0;
             foreach($rdateArray as $numGuests) {
@@ -488,17 +514,18 @@ and s.Span_Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(s.
                 }
             }
 
-            $td .= HTMLTable::makeTd($categories[$idRm]['Title']);
-            $td .= HTMLTable::makeTd($totals[$idRm]);
+            $td .= HTMLTable::makeTd($categories[$idCat]['Title']);
+            $td .= HTMLTable::makeTd($totals[$idCat]);
 
             $tbl2->addBodyTr($td);
         }
-        $mkup .= $tbl2->generateMarkup(array(), $endDT->format('F, Y'));
+
+        $mkup .= $tbl2->generateMarkup();
 
         return $mkup;
     }
 
-    public static function rescUtilization(PDO $dbh, $startDate, $endDate, $period, $maxDays = 366, $noTable = FALSE) {
+    public static function rescUtilization(PDO $dbh, $startDate, $endDate, $whStatus, $roomGroup) {
 
         if ($startDate == '') {
             return;
@@ -513,16 +540,6 @@ and s.Span_Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(s.
         $dateTitle = 'j';
         $captionDateFormat = 'F, Y';
 
-        if ($period == 'y') {
-            $startDate = date('Y-01-01', strtotime($startDate));
-            $endDate = date('Y-12-31', strtotime($endDate));
-            $onePeriod = new DateInterval('P1M');
-            $dateFormat = 'Y-m';
-            $dateTitle = 'n';
-            $maxDays = (int)$maxDays / 12;
-            $captionDateFormat = 'Y';
-        }
-
         $stDT = new \DateTime($startDate);
         $stDT->setTime(0,0,0);
         $endDT = new \DateTime($endDate);
@@ -532,19 +549,40 @@ and s.Span_Start_Date < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(s.
             return;
         }
 
-        // Counting start date
-        $countgDT = new \DateTime($startDate);
-        $countgDT->setTime(0, 0, 0);
 
+        // Get list of resources
+        $qu = "SELECT
+    r.idResource as `id`,
+    r.Title as `title`,
+    r.Background_Color as `bgColor`,
+    r.Text_Color as `textColor`,
+    rm.Max_Occupants as `maxOcc`,
+    ifnull(gc.Description, '(Default)') AS `roomCategory`,
+    ifnull(gr.Description, '(Default)') AS `reportCategory`,
+    ifnull(g.Description, '(Default)') AS `roomType`,
+    ifnull(gs.Description, '(Unknown)') AS `roomStatus`,
+    rm.Floor as `floor`
+from resource r
+	left join
+resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and DATE(ru.Start_Date) <= DATE('" . $stDT->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $endDT->format('Y-m-d') . "')
+    left join resource_room rr on r.idResource = rr.idResource
+    left join room rm on rr.idRoom = rm.idRoom
+    left join gen_lookups g on g.Table_Name = 'Room_Type' and g.Code = rm.Type
+    left join gen_lookups gs on gs.Table_Name = 'Room_Status' and gs.Code = rm.Status
+    left join gen_lookups gc on gc.Table_Name = 'Room_Category' and gc.Code = rm.Category
+    left join gen_lookups gr on gr.Table_Name = 'Room_Rpt_Cat' and gr.Code = rm.Report_Category
+where ru.idResource_use is null
+ order by r.Util_Priority;";
+        $rstmt = $dbh->query($qu);
 
         // Get all the rooms
-        $stResc = $dbh->query("select r.idResource, r.Title "
-                . " from resource r left join
-resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and ru.Start_Date <= '" . $stDT->format('Y-m-d 00:00:00') . "' and ru.End_Date >= '" . $endDT->format('Y-m-d 00:00:00') . "'"
-                . " where ru.idResource_use is null and r.Type in ('" . ResourceTypes::Room . "', '" . ResourceTypes::RmtRoom . "')"
-                . " order by r.Title;");
+//        $stResc = $dbh->query("select r.idResource, r.Title "
+//                . " from resource r left join
+//resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and ru.Start_Date <= '" . $stDT->format('Y-m-d 00:00:00') . "' and ru.End_Date >= '" . $endDT->format('Y-m-d 00:00:00') . "'"
+//                . " where ru.idResource_use is null and r.Type in ('" . ResourceTypes::Room . "', '" . ResourceTypes::RmtRoom . "')"
+//                . " order by r.Title;");
 
-        $stRows = $stResc->fetchAll(\PDO::FETCH_ASSOC);
+        $stRows = $rstmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $rescs = array();
         $totals = array();
@@ -561,14 +599,18 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
 
         $summary = array('nits'=>'Nights', 'oos'=>'OOS', 'to'=>'Delayed', 'un'=>'Unavailable');
 
-        $size = 0;
+
         $days = array();
         $oneDay = new DateInterval('P1D');
         $th = '';
+        // Counting start date
+        $countgDT = new \DateTime($startDate);
+        $countgDT->setTime(0, 0, 0);
+
 
 
         // Set up the days array
-        while ($countgDT < $endDT && $size < $maxDays) {
+        while ($countgDT < $endDT) {
 
             $thisDay = $countgDT->format($dateFormat);
             $th .= HTMLTable::makeTh($countgDT->format($dateTitle));
@@ -591,7 +633,7 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
 
 
             $countgDT->add($onePeriod);
-            $size++;
+
         }
 
         $th .= HTMLTable::makeTh('Room');
@@ -599,8 +641,6 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
         $th .= HTMLTable::makeTh('OOS');
         $th .= HTMLTable::makeTh('Delayed');
         $th .= HTMLTable::makeTh('Unavailable');
-
-
 
 
 

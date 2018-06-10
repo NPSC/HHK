@@ -18,8 +18,9 @@ require (HOUSE . 'Resource.php');
 require (HOUSE . 'ResourceView.php');
 require (HOUSE . 'RoomReport.php');
 
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
+require (CLASSES . 'ColumnSelectors.php');
+require CLASSES . 'OpenXML.php';
+
 
 
 try {
@@ -39,69 +40,233 @@ $menuMarkup = $wInit->generatePageMenu();
 // Load the session with member - based lookups
 $wInit->sessionLoadGenLkUps();
 $wInit->sessionLoadGuestLkUps();
+$config = new Config_Lite(ciCFG_FILE);
+$labels = new Config_Lite(LABEL_FILE);
 
+// Instantiate the alert message control
+$alertMsg = new alertMessage("divAlert1");
+$alertMsg->set_DisplayAttr("none");
+$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_iconId("alrIcon");
+$alertMsg->set_styleId("alrResponse");
+$alertMsg->set_txtSpanId("alrMessage");
+$alertMsg->set_Text("help");
 
-$output = "";
+$resultMessage = $alertMsg->createMarkup();
+
+$hospitalSelections = array();
+$assocSelections = array();
+$statusSelections = array();
+$groupingSelection = 'Category';
+$calSelection = '19';
+$mkTable = '';
+
 $year = date('Y');
-$month = date('n');
-$type = 'm';
+$months = array(date('n'));     // logically overloaded.
+$status = '';
+$txtStart = '';
+$txtEnd = '';
 
-$gArray = array(
-    1 => array(1, 'January'),
-    2 => array(2, 'February'),
+
+$monthArray = array(
+    1 => array(1, 'January'), 2 => array(2, 'February'),
     3 => array(3, 'March'), 4 => array(4, 'April'), 5 => array(5, 'May'), 6 => array(6, 'June'),
     7 => array(7, 'July'), 8 => array(8, 'August'), 9 => array(9, 'September'), 10 => array(10, 'October'), 11 => array(11, 'November'), 12 => array(12, 'December'));
 
+if ($uS->fy_diff_Months == 0) {
+    $calOpts = array(19 => array(19, 'Month'), 21 => array(21, 'Cal. Year'), 22 => array(22, 'Year to Date'));
+} else {
+    $calOpts = array(19 => array(19, 'Month'), 20 => array(20, 'Fiscal Year'), 21 => array(21, 'Calendar Year'), 22 => array(22, 'Year to Date'));
+}
+
+
+// Hospital and association lists
+$hospList = array();
+if (isset($uS->guestLookups[GL_TableNames::Hospital])) {
+    $hospList = $uS->guestLookups[GL_TableNames::Hospital];
+}
+
+$hList = array();
+$aList = array();
+foreach ($hospList as $h) {
+    if ($h[2] == 'h') {
+        $hList[] = array(0=>$h[0], 1=>$h[1]);
+    } else if ($h[2] == 'a' && $h[1] != '(None)') {
+        $aList[] = array(0=>$h[0], 1=>$h[1]);
+    }
+}
+
+// Room Groupings
+$roomGroups = readGenLookupsPDO($dbh, 'Room_Group');
+
+
+// Callback
 if (isset($_POST['btnByGuest']) || isset($_POST['btnByRoom'])) {
-    addslashesextended($_POST);
+
+    // Room Status
+    if (isset($_POST['selResvStatus'])) {
+        $statusSelections = filter_var_array($_POST['selResvStatus'], FILTER_SANITIZE_STRING);
+    }
+
+    // Room Grouping
+    if (isset($_POST['selGroup'])) {
+        $groupingSelection = filter_var($_POST['selGroup'], FILTER_SANITIZE_STRING);
+    }
+
+    if (isset($_POST['selCalendar'])) {
+        $calSelection = intval(filter_var($_POST['selCalendar'], FILTER_SANITIZE_NUMBER_INT), 10);
+    }
 
     if (isset($_POST['selIntMonth'])) {
-        $month = intval(filter_var($_POST['selIntMonth'], FILTER_SANITIZE_NUMBER_INT), 10);
+        $months = filter_var_array($_POST['selIntMonth'], FILTER_SANITIZE_NUMBER_INT);
     }
 
     if (isset($_POST['selIntYear'])) {
         $year = intval(filter_var($_POST['selIntYear'], FILTER_SANITIZE_NUMBER_INT), 10);
     }
 
-//    if (isset($_POST['rbType'])) {
-//        $type = filter_var($_POST['rbType'], FILTER_SANITIZE_STRING);
-//        if ($type != 'y') {
-            $type = 'm';
-//        }
-//    }
+    if (isset($_POST['stDate'])) {
+        $txtStart = filter_var($_POST['stDate'], FILTER_SANITIZE_STRING);
+    }
 
-    $start = $year . '-' . $month . '-01';
+    if (isset($_POST['enDate'])) {
+        $txtEnd = filter_var($_POST['enDate'], FILTER_SANITIZE_STRING);
+    }
 
-    $endDate = new DateTime($start);
-    $endDate->add(new DateInterval('P1M'));
-    $endDate->sub(new DateInterval("P1D"));
+    if (isset($_POST['selAssoc'])) {
+        $reqs = $_POST['selAssoc'];
+        if (is_array($reqs)) {
+            $assocSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+        }
+    }
+
+    if (isset($_POST['selHospital'])) {
+        $reqs = $_POST['selHospital'];
+        if (is_array($reqs)) {
+            $hospitalSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+        }
+    }
+
+    if ($calSelection == 20) {
+        // fiscal year
+        $adjustPeriod = new DateInterval('P' . $uS->fy_diff_Months . 'M');
+        $startDT = new DateTime($year . '-01-01');
+        $startDT->sub($adjustPeriod);
+        $start = $startDT->format('Y-m-d');
+
+        $endDT = new DateTime(($year + 1) . '-01-01');
+        $end = $endDT->sub($adjustPeriod)->format('Y-m-d');
+
+    } else if ($calSelection == 21) {
+        // Calendar year
+        $startDT = new DateTime($year . '-01-01');
+        $start = $startDT->format('Y-m-d');
+
+        $end = ($year + 1) . '-01-01';
+
+    } else if ($calSelection == 22) {
+        // Year to date
+        $start = date('Y') . '-01-01';
+
+        $endDT = new DateTime();
+        $endDT->add(new DateInterval('P1D'));
+        $end = $endDT->format('Y-m-d');
+
+    } else {
+        // Months
+        $interval = 'P' . count($months) . 'M';
+        $month = $months[0];
+        $start = $year . '-' . $month . '-01';
+
+        $endDate = new DateTime($start);
+        $endDate->add(new DateInterval($interval));
+        $endDate->sub(new DateInterval('P1D'));
+
+        $end = $endDate->format('Y-m-d');
+    }
+
+
+    // Hospitals
+    $whHosp = '';
+    foreach ($hospitalSelections as $a) {
+        if ($a != '') {
+            if ($whHosp == '') {
+                $whHosp .= $a;
+            } else {
+                $whHosp .= ",". $a;
+            }
+        }
+    }
+
+    $whAssoc = '';
+    foreach ($assocSelections as $a) {
+        if ($a != '') {
+            if ($whAssoc == '') {
+                $whAssoc .= $a;
+            } else {
+                $whAssoc .= ",". $a;
+            }
+        }
+    }
+
+    if ($whHosp != '') {
+        $whHosp = " and hs.idHospital in (".$whHosp.") ";
+    }
+
+    if ($whAssoc != '') {
+        $whHosp .= " and hs.idAssociation in (".$whAssoc.") ";
+    }
+
+    // Visit diagnosis selections
+    $whStatus = '';
+    foreach ($statusSelections as $s) {
+        if ($s != '') {
+            if ($whStatus == '') {
+                $whStatus = "'" . $s . "'";
+            } else {
+                $whStatus .= ",'".$s . "'";
+            }
+        }
+    }
+
+    if ($whStatus != '') {
+        $whStatus = "and r.Status in (" . $whStatus . ") ";
+    }
+
+    $mkTable = 1;
 
     if (isset($_POST['btnByGuest'])) {
-        $output = RoomReport::roomNOR($dbh, $start, $endDate->format('Y-m-d'), $type);
+        $output = RoomReport::roomNOR($dbh, $start, $end, $whHosp, $roomGroups[$groupingSelection]);
     } else {
-        $output = RoomReport::rescUtilization($dbh, $start, $endDate->format('Y-m-d'), $type);
+        $output = RoomReport::rescUtilization($dbh, $start, $end, $whStatus, $roomGroups[$groupingSelection]);
     }
 }
 
-$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($gArray, $month, FALSE), array('name' => 'selIntMonth'));
-$yearSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(getYearArray(), $year), array('name' => 'selIntYear'));
 
-$attrs = array('type'=>'radio', 'name'=>'rbType', 'id'=>'rbTypey');
-if ($type == 'y') {
-    $attrs['checked'] = 'checked';
-}
-$rbByYear = HTMLInput::generateMarkup('y', $attrs);
-
-$attrs['id'] = 'rbTypem';
-if ($type == 'm') {
-    $attrs['checked'] = 'checked';
-} else {
-    unset($attrs['checked']);
+// Setups for the page.
+$assocs = '';
+if (count($aList) > 0) {
+    $assocs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($aList, $assocSelections),
+                array('name'=>'selAssoc[]', 'size'=>'3', 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
 }
 
-$rbByMonth = HTMLInput::generateMarkup('m', $attrs);
+$numHosp = count($hList) + 1;
 
-$resultMessage = "";
+$hospitals = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($hList, $hospitalSelections),
+                array('name'=>'selHospital[]', 'size'=>$numHosp, 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
+
+
+$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
+$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, $config->getString('site', 'Start_Year', '2010'), $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
+
+$statusSelector = HTMLSelector::generateMarkup(
+        HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Resource_Status')), $statusSelections), array('name' => 'selStatus[]', 'size'=>'5', 'multiple'=>'multiple'));
+
+$roomGrouping = HTMLSelector::generateMarkup(
+        HTMLSelector::doOptionsMkup(removeOptionGroups($roomGroups), $groupingSelection, FALSE), array('name' => 'selGroup', 'size'=>'4'));
+
+$calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>'4'));
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -115,56 +280,149 @@ $resultMessage = "";
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        
-        <script type="text/javascript">
-        $(document).ready(function() {
-            "use strict";
+        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
 
-            $('#btnByGuest, #btnByRoom').button();
+        <script type="text/javascript">
+$(document).ready(function() {
+    "use strict";
+    var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
+    var makeTable = '<?php echo $mkTable; ?>';
+    $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
+
+    $('.ckdate').datepicker({
+        yearRange: '-05:+01',
+        changeMonth: true,
+        changeYear: true,
+        autoSize: true,
+        numberOfMonths: 1,
+        dateFormat: 'M d, yy'
+    });
+
+    $('#selCalendar').change(function () {
+        $('#selIntYear').show();
+        if ($(this).val() && $(this).val() != '19') {
+            $('#selIntMonth').hide();
+        } else {
+            $('#selIntMonth').show();
+        }
+        if ($(this).val() && $(this).val() != '18') {
+            $('.dates').hide();
+        } else {
+            $('.dates').show();
+            $('#selIntYear').hide();
+        }
+    });
+    $('#selCalendar').change();
+
+    $('#btnByGuest, #btnByRoom').button();
+
+    if (makeTable === '1') {
+
+        $('div#printArea').css('display', 'block');
+
+//        $('#tblrpt').dataTable({
+//        'columnDefs': [
+//            {'targets': columnDefs,
+//             'type': 'date',
+//             'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
+//            }
+//         ],
+//            "displayLength": 50,
+//            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+//            "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
+//        });
+        $('#printButton').button().click(function() {
+            $("div#printArea").printArea();
         });
+    }
+
+});
         </script>
     </head>
-    <body <?php if ($wInit->testVersion) {
-            echo "class='testbody'";
-        } ?>>
+    <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
-<?php echo $resultMessage ?>
-            <div style="clear:both;"></div>
-
-            <form action="RoomUtilization.php" method="post"  id="form1" name="form1" >
-                <div class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-member-detail hhk-visitdialog">
-                    <table>
+            <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-member-detail hhk-visitdialog">
+                <form action="RoomUtilization.php" method="post"  id="form1" name="form1" >
+                    <table style="float: left;">
                         <tr>
-                            <th colspan="2">Time Period</th>
+                            <th colspan="3">Time Period</th>
                         </tr>
                         <tr>
-                            <th>Month</th>
+                            <th>Interval</th>
+                            <th style="min-width:100px; ">Month</th>
                             <th>Year</th>
                         </tr>
-
                         <tr>
-                            <td><?php echo $monthSelector; ?></td>
-                            <td><?php echo $yearSelector; ?></td>
+                            <td style="vertical-align: top;"><?php echo $calSelector; ?></td>
+                            <td style="vertical-align: top;"><?php echo $monthSelector; ?></td>
+                            <td style="vertical-align: top;"><?php echo $yearSelector; ?></td>
                         </tr>
-<!--                        <tr>
-                            <td colspan="2"><?php echo $rbByYear; ?><label for="rbTypey"> Year by Month</label></td>
-                        </tr>-->
                         <tr>
-                            <td colspan="2"><?php echo $rbByMonth; ?><label for="rbTypem"> Month by Day</label></td>
+                            <td colspan="3">
+                                <span class="dates" style="margin-right:.3em;">Start:</span>
+                                <input type="text" value="<?php echo $txtStart; ?>" name="stDate" id="stDate" class="ckdate dates" style="margin-right:.3em;"/>
+                                <span class="dates" style="margin-right:.3em;">End:</span>
+                                <input type="text" value="<?php echo $txtEnd; ?>" name="enDate" id="enDate" class="ckdate dates"/></td>
                         </tr>
                     </table>
-                    <input type="submit" name="btnByGuest" value="By Guest" id="btnByGuest" />
-                    <input type="submit" name="btnByRoom" value="By Room" id="btnByRoom" />
-                </div>
-            </form>
-            <div style="clear:both;"></div>
-            <div id="rmMgmt" style="float: left; margin-top: 30px; margin-bottom: 10px; font-size: .9em;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
-<?php echo $output; ?>
-            </div>
+                    <table style="float: left;">
+                        <tr>
+                            <th>Room Grouping</th>
+                        </tr>
+                        <tr>
+                            <td><?php echo $roomGrouping; ?></td>
+                        </tr>
+                    </table>
+                    <table style="width:100%; clear:both; margin-top:10px;">
+                        <tr>
+                            <td>
 
+                                <table>
+                                    <?php if ((count($aList) + count($hList)) > 1) { ?>
+                                    <tr>
+                                        <?php if (count($aList) > 0) echo '<th>Associations</th>';  ?>
+                                        <th>Hospitals</th>
+                                    </tr>
+                                    <tr>
+                                        <?php if (count($aList) > 0) echo '<td style="vertical-align: top;">'. $assocs .'</td>'; ?>
+                                        <td style="vertical-align: top;"><?php echo $hospitals; ?></td>
+                                    </tr>
+                                    <?php } ?>
+                                    <tr><td colspan="2" style="text-align:center;">
+                                        <input type="submit" name="btnByGuest" value="By Guest" id="btnByGuest" />
+                                        </td></tr>
+                                </table>
+                            </td>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <th>Room Status</th>
+                                    </tr>
+                                    <tr>
+                                        <td><?php echo $statusSelector; ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="text-align:center;">
+                                            <input type="submit" name="btnByRoom" value="By Room" id="btnByRoom" />
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+            <div style="clear:both;"></div>
+            <div id="printArea" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-member-detail hhk-visitdialog" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px;">
+                <div><input id="printButton" value="Print" type="button"/></div>
+                <?php echo $output; ?>
+            </div>
         </div>  <!-- div id="contentDiv"-->
     </body>
 </html>

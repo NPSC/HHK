@@ -21,6 +21,11 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `T
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('registration', 'Referral', 'Referral', 'y', 'm', 30);
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('registration', 'Guest_Ident', 'Guest Id', 'y', 'm', 40);
 
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Room_Group', 'Type', 'Room Type', 'Room_Type');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Room_Group', 'Category', 'Room Category', 'Room_Category');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Room_Group', 'Report_Category', 'Report Category', 'Room_Rpt_Cat');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Room_Group', 'Floor', 'Floor');
+
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CheckOutTime', '10:00', 's', 'h', 'Normal House checkout time of day.  Format hh:mm');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CheckInTime', '16:00', 's', 'h', 'Normal Hose Check in time of day in 24-hour format, hh:mm');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('VisitFeeDelayDays', '5', 'i', 'h', 'Number of days before cleaning fee is charged');
