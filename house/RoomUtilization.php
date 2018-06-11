@@ -56,7 +56,6 @@ $resultMessage = $alertMsg->createMarkup();
 
 $hospitalSelections = array();
 $assocSelections = array();
-$statusSelections = array();
 $groupingSelection = 'Category';
 $calSelection = '19';
 $mkTable = '';
@@ -69,9 +68,9 @@ $txtEnd = '';
 
 
 $monthArray = array(
-    1 => array(1, 'January'), 2 => array(2, 'February'),
+    0 => array(0, 'December'), 1 => array(1, 'January'), 2 => array(2, 'February'),
     3 => array(3, 'March'), 4 => array(4, 'April'), 5 => array(5, 'May'), 6 => array(6, 'June'),
-    7 => array(7, 'July'), 8 => array(8, 'August'), 9 => array(9, 'September'), 10 => array(10, 'October'), 11 => array(11, 'November'), 12 => array(12, 'December'));
+    7 => array(7, 'July'), 8 => array(8, 'August'), 9 => array(9, 'September'), 10 => array(10, 'October'), 11 => array(11, 'November'), 12 => array(12, 'December'), 13 => array(13, 'January'));
 
 if ($uS->fy_diff_Months == 0) {
     $calOpts = array(19 => array(19, 'Month'), 21 => array(21, 'Cal. Year'), 22 => array(22, 'Year to Date'));
@@ -102,11 +101,6 @@ $roomGroups = readGenLookupsPDO($dbh, 'Room_Group');
 
 // Callback
 if (isset($_POST['btnByGuest']) || isset($_POST['btnByRoom'])) {
-
-    // Room Status
-    if (isset($_POST['selResvStatus'])) {
-        $statusSelections = filter_var_array($_POST['selResvStatus'], FILTER_SANITIZE_STRING);
-    }
 
     // Room Grouping
     if (isset($_POST['selGroup'])) {
@@ -176,7 +170,16 @@ if (isset($_POST['btnByGuest']) || isset($_POST['btnByRoom'])) {
         // Months
         $interval = 'P' . count($months) . 'M';
         $month = $months[0];
-        $start = $year . '-' . $month . '-01';
+
+        if ($month < 1) {
+            $y = $year - 1;
+            $start = $y . '-12-01';
+        } else if ($month > 12) {
+            $y = $year + 1;
+            $start = $y . '-01-01';
+        } else {
+            $start = $year . '-' . $month . '-01';
+        }
 
         $endDate = new DateTime($start);
         $endDate->add(new DateInterval($interval));
@@ -217,28 +220,12 @@ if (isset($_POST['btnByGuest']) || isset($_POST['btnByRoom'])) {
         $whHosp .= " and hs.idAssociation in (".$whAssoc.") ";
     }
 
-    // Visit diagnosis selections
-    $whStatus = '';
-    foreach ($statusSelections as $s) {
-        if ($s != '') {
-            if ($whStatus == '') {
-                $whStatus = "'" . $s . "'";
-            } else {
-                $whStatus .= ",'".$s . "'";
-            }
-        }
-    }
-
-    if ($whStatus != '') {
-        $whStatus = "and r.Status in (" . $whStatus . ") ";
-    }
-
     $mkTable = 1;
 
     if (isset($_POST['btnByGuest'])) {
         $output = RoomReport::roomNOR($dbh, $start, $end, $whHosp, $roomGroups[$groupingSelection]);
     } else {
-        $output = RoomReport::rescUtilization($dbh, $start, $end, $whStatus, $roomGroups[$groupingSelection]);
+        $output = RoomReport::rescUtilization($dbh, $start, $end, $roomGroups[$groupingSelection]);
     }
 }
 
@@ -256,11 +243,8 @@ $hospitals = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($hList, $
                 array('name'=>'selHospital[]', 'size'=>$numHosp, 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
 
 
-$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
+$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'14', 'multiple'=>'multiple'));
 $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, $config->getString('site', 'Start_Year', '2010'), $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
-
-$statusSelector = HTMLSelector::generateMarkup(
-        HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Resource_Status')), $statusSelections), array('name' => 'selStatus[]', 'size'=>'5', 'multiple'=>'multiple'));
 
 $roomGrouping = HTMLSelector::generateMarkup(
         HTMLSelector::doOptionsMkup(removeOptionGroups($roomGroups), $groupingSelection, FALSE), array('name' => 'selGroup', 'size'=>'4'));
@@ -363,15 +347,27 @@ $(document).ready(function() {
                             <td style="vertical-align: top;"><?php echo $monthSelector; ?></td>
                             <td style="vertical-align: top;"><?php echo $yearSelector; ?></td>
                         </tr>
-                        <tr>
+<!--                        <tr>
                             <td colspan="3">
                                 <span class="dates" style="margin-right:.3em;">Start:</span>
                                 <input type="text" value="<?php echo $txtStart; ?>" name="stDate" id="stDate" class="ckdate dates" style="margin-right:.3em;"/>
                                 <span class="dates" style="margin-right:.3em;">End:</span>
                                 <input type="text" value="<?php echo $txtEnd; ?>" name="enDate" id="enDate" class="ckdate dates"/></td>
+                        </tr>-->
+                    </table>
+                    <?php if ((count($aList) + count($hList)) > 1) { ?>
+                    <table style="float: left;margin-left:5px;">
+                        <tr>
+                            <?php if (count($aList) > 0) echo '<th>Associations</th>';  ?>
+                            <th>Hospitals</th>
+                        </tr>
+                        <tr>
+                            <?php if (count($aList) > 0) {echo '<td style="vertical-align: top;">'. $assocs .'</td>';} ?>
+                            <td style="vertical-align: top;"><?php echo $hospitals; ?></td>
                         </tr>
                     </table>
-                    <table style="float: left;">
+                    <?php } ?>
+                    <table style="float: left;margin-left:5px;">
                         <tr>
                             <th>Room Grouping</th>
                         </tr>
@@ -381,38 +377,11 @@ $(document).ready(function() {
                     </table>
                     <table style="width:100%; clear:both; margin-top:10px;">
                         <tr>
-                            <td>
-
-                                <table>
-                                    <?php if ((count($aList) + count($hList)) > 1) { ?>
-                                    <tr>
-                                        <?php if (count($aList) > 0) echo '<th>Associations</th>';  ?>
-                                        <th>Hospitals</th>
-                                    </tr>
-                                    <tr>
-                                        <?php if (count($aList) > 0) echo '<td style="vertical-align: top;">'. $assocs .'</td>'; ?>
-                                        <td style="vertical-align: top;"><?php echo $hospitals; ?></td>
-                                    </tr>
-                                    <?php } ?>
-                                    <tr><td colspan="2" style="text-align:center;">
-                                        <input type="submit" name="btnByGuest" value="By Guest" id="btnByGuest" />
-                                        </td></tr>
-                                </table>
+                            <td style="text-align:right;">
+                                <input type="submit" name="btnByRoom" value="By Room" id="btnByRoom" />
                             </td>
-                            <td>
-                                <table>
-                                    <tr>
-                                        <th>Room Status</th>
-                                    </tr>
-                                    <tr>
-                                        <td><?php echo $statusSelector; ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td style="text-align:center;">
-                                            <input type="submit" name="btnByRoom" value="By Room" id="btnByRoom" />
-                                        </td>
-                                    </tr>
-                                </table>
+                            <td colspan="2" style="text-align:right;">
+                                <input type="submit" name="btnByGuest" value="By Guest" id="btnByGuest" />
                             </td>
                         </tr>
                     </table>
