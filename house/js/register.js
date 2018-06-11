@@ -838,13 +838,15 @@ $(document).ready(function () {
 
         resources: {
             url: 'ws_calendar.php?cmd=resclist',
-            error: function() {
-                $('#pCalError').text('Error getting resources').show();
+            error: function(jqXHR, textStatus, errorThrown) {
+                $('#pCalError').text('Error getting resources: ' + errorThrown).show();
             }
         },
+        
         resourceGroupText: function (txt) {
             return txt;
         },
+
         resourceRender: function(resourceObj, labelTds, bodyTds) {
 
             labelTds.css('background', resourceObj.bgColor)
@@ -852,9 +854,8 @@ $(document).ready(function () {
 
             if (resourceObj.id > 0) {
 
-                var cont = (resourceObj.roomType == '' ? '' : resourceObj.roomType + ': ')
-                        + resourceObj.title 
-                        + (resourceObj.maxOcc == 0 ? '' : ', Max. Occupants: ' + resourceObj.maxOcc);
+                var cont = resourceObj.title 
+                        + (resourceObj.maxOcc == 0 ? '' : ' (' + resourceObj.maxOcc + ')');
 
                 labelTds.prop('title', cont);
 
@@ -872,12 +873,14 @@ $(document).ready(function () {
             }
             return false;
         },
+
         events: {
             url: 'ws_calendar.php?cmd=eventlist',
-            error: function() {
-                $('#pCalError').text('Error getting events').show();
+            error: function(jqXHR, textStatus, errorThrown) {
+                $('#pCalError').text('Error getting resources: ' + errorThrown).show();
             }
         },
+        
         eventDrop: function (event, delta, revertFunc) {
             
             $("#divAlert1, #paymentMessage").hide();
@@ -973,27 +976,27 @@ $(document).ready(function () {
         },
 
         eventRender: function (event, element) {
-                            
+
             if (hindx === undefined || hindx === 0 || event.idHosp === undefined || event.idAssoc == hindx || event.idHosp == hindx) {
 
                 var resource = $('#calendar').fullCalendar('getResourceById', event.resourceId);
-                
+
                 // Reservations
                 if (event.idReservation !== undefined) {
-                    
-                    element.prop('title', event.fullName + (event.resourceId > 0 ? ', Room: ' + resource.title : '') +  ', Status: ' + event.resvStatus + ', Hospital: ' + event.hospName);
-                    
+
+                    element.prop('title', event.fullName + (event.resourceId > 0 ? ', Room: ' + resource.title : '') +  ', Status: ' + event.resvStatus + (shoHospitalName ? ', Hospital: ' + event.hospName : ''));
+
                     // update border for uncommitted reservations.
                     if (event.status === 'uc') {
                         element.css('border', '2px dashed black').css('padding', '1px 0');
                     } else {
                         element.css('border', '2px solid black').css('padding', '1px 0');
                     }
-                    
+
                 // visits
                 } else if (event.idVisit !== undefined) {
-                    element.prop('title', event.fullName + ', Room: ' + resource.title + ', Status: ' + event.visitStatus + ', Hospital: ' + event.hospName);
-                    
+                    element.prop('title', event.fullName + ', Room: ' + resource.title + ', Status: ' + event.visitStatus + (shoHospitalName ? ', Hospital: ' + event.hospName : ''));
+
                 // Out of service
                 } else if (event.kind === 'oos') {
                     element.prop('title', event.reason);
@@ -1446,7 +1449,7 @@ $(document).ready(function () {
     $('#txtGotoDate').change(function () {
         $('#calendar').fullCalendar('gotoDate', $(this).datepicker('getDate'));
     });
-    
+
     $('#divRoomGrouping').position({
         my: 'left top',
         at: 'left top - 10',

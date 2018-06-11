@@ -13,8 +13,6 @@ Insert INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `T
 ('Editable_Forms', '../conf/confirmation.txt', 'Confirmation Form','js/rte-confirmation.json','',0),
 ('Editable_Forms', '../conf/survey.txt', 'Survey Form','js/rte-survey.json','',0);
 
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('Room_Rpt_Cat', '1', '1st Floor', 'h');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('Room_Rpt_Cat', '2', '2nd Floor', 'h');
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('registration', 'Sig_Card', 'Signature', 'y', 'm', 10);
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('registration', 'Pamphlet', 'Pamphlet', 'y', 'm', 20);

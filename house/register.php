@@ -196,10 +196,13 @@ $waitlist = HTMLContainer::generateMarkup('h3', 'Waitlist' .
 
 
 // Hospital Selector
+$shoHosptialName = FALSE;
 $colorKey = '';
 $stmth = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)'");
 
 if ($stmth->rowCount() > 1 && (strtolower($uS->RegColors) == 'hospital' || (strtolower($uS->GuestNameColor) == 'hospital'))) {
+
+    $shoHosptialName = TRUE;
 
     $colorKey = HTMLContainer::generateMarkup('span', $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . ': ');
     // All button
@@ -302,6 +305,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             var resvPageName = '<?php echo $config->getString('house', 'ReservationPage', 'Reserve.php'); ?>';
             var showCreatedDate = '<?php echo $uS->ShowCreatedDate; ?>';
             var expandResources = '<?php echo $uS->CalExpandResources; ?>';
+            var shoHospitalName = '<?php echo $shoHosptialName; ?>';
             var cgCols = [
                 {data: 'Action', title: 'Action', sortable: false, searchable:false},
                 {data: 'Guest First', title: 'Guest First'},
