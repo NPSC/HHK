@@ -94,7 +94,7 @@ $paymentMarkup = '';
 $receiptMarkup = '';
 $statusSelector = '';
 $payTypeSelector = '';
-$resourceGroupBy = 'roomType';
+$resourceGroupBy = 'Type';
 $defaultRegisterTab = 0;
 $currentReservations = '';
 $uncommittedReservations = '';
@@ -105,10 +105,6 @@ $wlCols = array();
 
 if ($uS->DefaultRegisterTab > 0 && $uS->DefaultRegisterTab < 5) {
     $defaultRegisterTab = $uS->DefaultRegisterTab;
-}
-
-if ($uS->CalResourceGroupBy != '') {
-    $resourceGroupBy = $uS->CalResourceGroupBy;
 }
 
 // Hosted payment return
@@ -227,6 +223,18 @@ if ($weeks < 1) {
 }
 
 $defaultView = 'timeline' . $weeks . 'weeks';
+$calDateIncrement = ''; //$uS->CalDateIncrement;
+
+//Resource grouping controls
+$rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+
+if (isset($rescGroups[$uS->CalResourceGroupBy])) {
+    $resourceGroupBy = $uS->CalResourceGroupBy;
+} else {
+    $resourceGroupBy = reset($rescGroups)[0];
+}
+
+$rescGroupSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rescGroups), $resourceGroupBy, FALSE), array('id'=>'selRoomGroupScheme'));
 
 
 // instantiate a ChallengeGenerator object
@@ -300,6 +308,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
             var challVar = '<?php echo $challengeVar; ?>';
             var defaultView = '<?php echo $defaultView; ?>';
+            var calDateIncrement = '<?php echo $calDateIncrement; ?>';
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
             var resvPageName = '<?php echo $config->getString('house', 'ReservationPage', 'Reserve.php'); ?>';
@@ -450,12 +459,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                         <table>
                             <tr>
                                 <td>Select Room Grouping scheme: </td>
-                                <td><select id="selRoomGroupScheme">
-                                        <option value="roomCategory">Room Category</option>
-                                        <option value="roomType">Room Type</option>
-                                        <option value="reportCategory">Report Category</option>
-                                        <option value="floor">Floor</option>
-                                    </select></td>
+                                <td><?php echo $rescGroupSel; ?></td>
                             </tr>
                         </table>
                     </div>

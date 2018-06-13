@@ -30,6 +30,8 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VAL
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CalResourceGroupBy', 'roomType', 's', 'h', 'Calendar resource grouping parameter');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CalExpandResources', 'true', 'b', 'h', 'Initially expand room categories on the calendar');
 
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CalDateIncrement', '1', 's', 'h', 'Number of weeks to increment Calendar view, auto = calViewWeeks');
+
 delete from `sys_config` where `Key` = 'ConfirmFile';
 delete from `sys_config` where `Key` = 'MaxLifetimeFee';
 delete from `sys_config` where `Key` = 'EmptyExtend';

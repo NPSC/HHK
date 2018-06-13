@@ -567,6 +567,8 @@ function checkStrength(pwCtrl) {
 $(document).ready(function () {
     "use strict";
     var hindx = 0;
+    var calStartDate = new moment();
+    
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
             var ul = this.menu.element;
@@ -747,21 +749,27 @@ $(document).ready(function () {
         false
     );
     
+    var dateIncrementObj = null;
+    
+    if (calDateIncrement != '') {
+        dateIncrementObj = {weeks: calDateIncrement};
+    }
+    
     $('#calendar').fullCalendar({
 
         aspectRatio: 2.2,
         themeSystem: 'jquery-ui',
         allDay: true,
         firstDay: 0,
-        dateIncrement: {weeks: 1 },
+        dateIncrement: dateIncrementObj,
         nextDayThreshold: '13:00',
         schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
 
         customButtons: {
             refresh: {
               text: 'Refresh',
-              //themeIcon: 'ui-icon-refresh',
               click: function() {
+                $('#calendar').fullCalendar( 'refetchResources' );
                 $('#calendar').fullCalendar( 'refetchEvents' );
               }
             },
@@ -784,7 +792,7 @@ $(document).ready(function () {
               themeIcon: 'ui-icon-gear'
             }
         },
-        
+
         views: {
             timeline1weeks: {
                 type: 'timeline',
@@ -823,7 +831,7 @@ $(document).ready(function () {
         resourcesInitiallyExpanded: expandResources,
         resourceLabelText: 'Rooms',
         resourceAreaWidth: '8%',
-        refetchResourcesOnNavigate: true,
+        refetchResourcesOnNavigate: false,
         resourceGroupField: resourceGroupBy,
         loading: function (isLoading, View) {
 
@@ -836,13 +844,23 @@ $(document).ready(function () {
             }
         },
 
-        resources: {
-            url: 'ws_calendar.php?cmd=resclist',
-            error: function(jqXHR, textStatus, errorThrown) {
-                $('#pCalError').text('Error getting resources: ' + errorThrown).show();
-            }
+        resources: function (callback) {
+            
+            $.ajax({
+                url: 'ws_calendar.php',
+                data: {
+                    start: calStartDate.format(),
+                    cmd: 'resclist'
+                },
+                success: function (rdata) {
+                    callback($.parseJSON(rdata));
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    $('#pCalError').text('Error getting resources: ' + textStatus + errorThrown).show();
+                }
+            });
         },
-        
+
         resourceGroupText: function (txt) {
             return txt;
         },
@@ -1447,7 +1465,9 @@ $(document).ready(function () {
     });
     
     $('#txtGotoDate').change(function () {
-        $('#calendar').fullCalendar('gotoDate', $(this).datepicker('getDate'));
+        calStartDate = new moment($(this).datepicker('getDate'));
+        $('#calendar').fullCalendar( 'refetchResources' );
+        $('#calendar').fullCalendar('gotoDate', calStartDate);
     });
 
     $('#divRoomGrouping').position({

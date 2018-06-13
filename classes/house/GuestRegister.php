@@ -13,21 +13,23 @@ class GuestRegister {
 
     protected $noAssocId;
 
-    public static function getCalendarRescs(\PDO $dbh, $startTime = '', $endTime = '', $timezone = '') {
+    public static function getCalendarRescs(\PDO $dbh, $startDate = '') {
 
-        $uS = Session::getInstance();
         $rescs = array();
-        $p1d = new \DateInterval('P1D');
-        $today = new \DateTime();
-        $today->setTime(0, 0, 0);
 
-
-        if ($startTime == "" || $endTime == "") {
+        if ($startDate == "") {
             return array();
         }
 
-        $beginDate = new \DateTime($startTime);
-        $endDate = new \DateTime($endTime);
+        $beginDate = new \DateTime($startDate);
+        // Reset to first day of the month.
+        $beginDate->setDate($beginDate->format('Y'), $beginDate->format('m'), 1);
+
+        $endDate = new \DateTime($startDate);
+        $endDate->add(new DateInterval('P2M'));
+
+        // Move start date back one month
+        $beginDate->sub(new DateInterval('P2M'));
 
         // Get list of resources
         $qu = "SELECT
@@ -36,14 +38,14 @@ class GuestRegister {
     r.Background_Color as `bgColor`,
     r.Text_Color as `textColor`,
     rm.Max_Occupants as `maxOcc`,
-    ifnull(gc.Description, '(Default)') AS `roomCategory`,
-    ifnull(gr.Description, '(Default)') AS `reportCategory`,
-    ifnull(g.Description, '(Default)') AS `roomType`,
+    ifnull(gc.Description, '(Default)') AS `Category`,
+    ifnull(gr.Description, '(Default)') AS `Report_Category`,
+    ifnull(g.Description, '(Default)') AS `Type`,
     ifnull(gs.Description, '(Unknown)') AS `roomStatus`,
-    rm.Floor as `floor`
+    rm.Floor as `Floor`
 from resource r
 	left join
-resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceStatus::Unavailable . "' and DATE(ru.Start_Date) <= DATE('" . $beginDate->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $endDate->format('Y-m-d') . "')
+resource_use ru on r.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $beginDate->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $endDate->format('Y-m-d') . "')
     left join resource_room rr on r.idResource = rr.idResource
     left join room rm on rr.idRoom = rm.idRoom
     left join gen_lookups g on g.Table_Name = 'Room_Type' and g.Code = rm.Type
@@ -59,17 +61,18 @@ where ru.idResource_use is null
         // Resource grouping types
         $roomGroups = array();
 
-        $roomGrp = array('roomType', 'roomCategory', 'floor', 'reportCategory');
+        //Resource grouping controls
+        $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
 
         // Count the room grouping types
         foreach ($rawRescs as $r) {
 
-            foreach ($roomGrp as $g) {
+            foreach ($rescGroups as $g) {
 
-                if (isset($roomGroups[$g][$r[$g]])) {
-                    $roomGroups[$g][$r[$g]]++;
+                if (isset($roomGroups[$g[0]][$r[$g[0]]])) {
+                    $roomGroups[$g[0]][$r[$g[0]]]++;
                 } else {
-                    $roomGroups[$g][$r[$g]] = 1;
+                    $roomGroups[$g[0]][$r[$g[0]]] = 1;
                 }
             }
         }
@@ -77,10 +80,10 @@ where ru.idResource_use is null
         // Set the grouping totals in the group titles
         foreach ($rawRescs as $r) {
 
-            foreach ($roomGrp as $g) {
+            foreach ($rescGroups as $g) {
 
-                if (isset($r[$g])) {
-                    $r[$g] .= ' (' . $roomGroups[$g][$r[$g]] . ')';
+                if (isset($r[$g[0]])) {
+                    $r[$g[0]] .= ' (' . $roomGroups[$g[0]][$r[$g[0]]] . ')';
                 }
             }
 
