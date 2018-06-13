@@ -223,7 +223,9 @@ if ($weeks < 1) {
 }
 
 $defaultView = 'timeline' . $weeks . 'weeks';
-$calDateIncrement = ''; //$uS->CalDateIncrement;
+
+// Calendar date increment for date navigation controls.
+$calDateIncrement = intval($uS->CalDateIncrement);
 
 //Resource grouping controls
 $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
@@ -395,7 +397,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             ];
 
         </script>
-        <script type="text/javascript" src="js/register-min.js"></script>
+        <script type="text/javascript" src="js/register.js"></script>
         <style>
            #version {
             height: 15px;

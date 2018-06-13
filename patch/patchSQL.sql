@@ -27,10 +27,9 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Room_Gr
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CheckOutTime', '10:00', 's', 'h', 'Normal House checkout time of day.  Format hh:mm');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CheckInTime', '16:00', 's', 'h', 'Normal Hose Check in time of day in 24-hour format, hh:mm');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('VisitFeeDelayDays', '5', 'i', 'h', 'Number of days before cleaning fee is charged');
-INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CalResourceGroupBy', 'roomType', 's', 'h', 'Calendar resource grouping parameter');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CalResourceGroupBy', 'Type', 's', 'h', 'Calendar resource grouping parameter, Type, Category, Report_Category or Floor');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CalExpandResources', 'true', 'b', 'h', 'Initially expand room categories on the calendar');
-
-INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CalDateIncrement', '1', 's', 'h', 'Number of weeks to increment Calendar view, auto = calViewWeeks');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CalDateIncrement', '1', 's', 'h', 'Number of weeks to increment Calendar view, "auto" = calViewWeeks');
 
 delete from `sys_config` where `Key` = 'ConfirmFile';
 delete from `sys_config` where `Key` = 'MaxLifetimeFee';

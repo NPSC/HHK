@@ -751,7 +751,7 @@ $(document).ready(function () {
     
     var dateIncrementObj = null;
     
-    if (calDateIncrement != '') {
+    if (calDateIncrement > 0 && calDateIncrement < 5) {
         dateIncrementObj = {weeks: calDateIncrement};
     }
     
