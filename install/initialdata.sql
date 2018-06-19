@@ -321,7 +321,6 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Room_Group', 'Type', 'Room Type', 'Room_Type','',0),
 ('Room_Group', 'Category', 'Room Category', 'Room_Category','',0),
 ('Room_Group', 'Report_Category', 'Report Category', 'Room_Rpt_Cat','',0),
-('Room_Group', 'Floor', 'Floor','','',0),
 
 ('Room_Rpt_Cat', '1', '1st Floor', '', 'h', 0),
 ('Room_Rpt_Cat', '2', '2nd Floor', '', 'h', 0),
