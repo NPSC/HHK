@@ -62,12 +62,12 @@ class GuestReport {
 
 
                 if ($d[0] == 'Gender') {
-                    $fields .= "ifnull(n.`Gender`,'') as `Gender`,";
+                    $fields .= "ifnull(n.`Gender`,'') as `" . $d[1] . "`,";
                 } else {
-                    $fields .= "ifnull(nd.`" . $d[0] . "`, '') as `" . $d[0] . "`,";
+                    $fields .= "ifnull(nd.`" . $d[0] . "`, '') as `" . $d[1] . "`,";
                 }
 
-                $demoCategorys[$d[0]] = $d[0];
+                $demoCategorys[$d[0]] = $d[1];
             }
         }
 
@@ -90,8 +90,8 @@ class GuestReport {
             }
 
             // Demographics
-            foreach ($demoCategorys as $d) {
-                $accum[$thisPeriod][$d] = self::makeCounters(readGenLookupsPDO($dbh, $d));
+            foreach ($demoCategorys as $k => $d) {
+                $accum[$thisPeriod][$d] = self::makeCounters(readGenLookupsPDO($dbh, $k));
             }
 
             $accum[$thisPeriod]['Distance'] = self::makeCounters(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute'));
@@ -106,8 +106,8 @@ class GuestReport {
         $accum['Total']['Guests']['o']['cnt'] = 0;
 
         // Totals
-        foreach ($demoCategorys as $d) {
-            $accum['Total'][$d] = self::makeCounters(readGenLookupsPDO($dbh, $d));
+        foreach ($demoCategorys as $k => $d) {
+            $accum['Total'][$d] = self::makeCounters(readGenLookupsPDO($dbh, $k));
         }
 
         $accum['Total']['Distance'] = self::makeCounters(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute'));
@@ -198,7 +198,7 @@ class GuestReport {
             $totalPSGs[$r['idPsg']] = 'y';
         }
 
-        $trs = array();     // tRow array
+        $trs = array();
         $rowCount = 0;
 
         // Title Column
@@ -218,10 +218,13 @@ class GuestReport {
 
             foreach ($accum[$col] as $demog) {
 
-                $trs[$rowCount++] .= HTMLTable::makeTd('', array('class' => 'hhk-tdTitle'));
+                if (isset($trs[$rowCount])) {
 
-                foreach ($demog as $indx) {
-                    $trs[$rowCount++] .= HTMLTable::makeTd($indx['cnt'] > 0 ? $indx['cnt'] : '');
+                    $trs[$rowCount++] .= HTMLTable::makeTd('', array('class' => 'hhk-tdTitle'));
+
+                    foreach ($demog as $indx) {
+                        $trs[$rowCount++] .= HTMLTable::makeTd($indx['cnt'] > 0 ? $indx['cnt'] : '');
+                    }
                 }
             }
         }

@@ -99,11 +99,11 @@ where ru.idResource_use is null
                 'bgColor' => '#333',
                 'textColor' => '#fff',
                 'maxOcc' => 0,
-                'roomType' => 'Waitlist',
-                'floor' => 'Waitlist',
+                'Type' => 'Waitlist',
+                'Floor' => 'Waitlist',
                 'roomStatus' => '',
-                'roomCategory' => 'Waitlist',
-                'reportCategory' => 'Waitlist'
+                'Category' => 'Waitlist',
+                'Report_Category' => 'Waitlist'
             );
 
         return $rescs;
