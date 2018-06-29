@@ -12,6 +12,7 @@ require ("homeIncludes.php");
 
 require (CLASSES . 'ColumnSelectors.php');
 require CLASSES . 'OpenXML.php';
+require(HOUSE . 'ReportFilter.php');
 
 
 try {
@@ -48,58 +49,25 @@ $resultMessage = $alertMsg->createMarkup();
 
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
-$headerTable = '';
+$headerTable = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 $dataTable = '';
-
-$hospitalSelections = array();
-$assocSelections = array();
-$statusSelections = array();
-$calSelection = '19';
-
-$year = date('Y');
-$months = array(date('n'));     // logically overloaded.
 $status = '';
-$txtStart = '';
-$txtEnd = '';
+$statusSelections = array();
 
-$monthArray = array(
-    1 => array(1, 'January'), 2 => array(2, 'February'),
-    3 => array(3, 'March'), 4 => array(4, 'April'), 5 => array(5, 'May'), 6 => array(6, 'June'),
-    7 => array(7, 'July'), 8 => array(8, 'August'), 9 => array(9, 'September'), 10 => array(10, 'October'), 11 => array(11, 'November'), 12 => array(12, 'December'));
-
-if ($uS->fy_diff_Months == 0) {
-    $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 21 => array(21, 'Cal. Year'), 22 => array(22, 'Year to Date'));
-} else {
-    $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 20 => array(20, 'Fiscal Year'), 21 => array(21, 'Calendar Year'), 22 => array(22, 'Year to Date'));
-}
-
-
-// Hospital and association lists
-$hospList = array();
-if (isset($uS->guestLookups[GL_TableNames::Hospital])) {
-    $hospList = $uS->guestLookups[GL_TableNames::Hospital];
-}
-
-$hList = array();
-$aList = array();
-foreach ($hospList as $h) {
-    if ($h[2] == 'h') {
-        $hList[] = array(0=>$h[0], 1=>$h[1]);
-    } else if ($h[2] == 'a' && $h[1] != '(None)') {
-        $aList[] = array(0=>$h[0], 1=>$h[1]);
-    }
-}
+$filter = new ReportFilter();
+$filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
+$filter->createHospitals();
 
 // Report column selector
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style
 $cFields[] = array('Resv Id', 'idReservation', 'checked', 'f', 'n', '');
 $cFields[] = array("Room", 'Room', 'checked', '', 's', '');
 
-if ((count($aList) + count($hList)) > 1) {
+if ((count($filter->getAList()) + count($filter->getHList())) > 1) {
 
     $cFields[] = array($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'), 'Hospital', 'checked', '', 's', '');
 
-    if (count($aList) > 0) {
+    if (count($filter->getAList()) > 0) {
         $cFields[] = array("Association", 'Assoc', 'checked', '', 's', '');
     }
 }
@@ -113,6 +81,10 @@ $diags = readGenLookupsPDO($dbh, 'Diagnosis');
 if (count($diags) > 0) {
     $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 's', '', array());
 }
+
+// Reservation statuses
+$statusList = removeOptionGroups($uS->guestLookups['ReservStatus']);
+
 
 $cFields[] = array("Doctor", 'Name_Doctor', '', '', 's', '');
 $cFields[] = array("Agent", 'Name_Agent', '', '', 's', '');
@@ -161,107 +133,19 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     // set the column selectors
     $colSelector->setColumnSelectors($_POST);
+    $filter->loadSelectedTimePeriod();
+    $filter->loadSelectedHospitals();
 
 
-    // gather input
+    $whDates = " r.Expected_Arrival <= '" . $filter->getReportEnd() . "' and ifnull(r.Actual_Departure, r.Expected_Departure) >= '" . $filter->getReportStart() . "' ";
+
     if (isset($_POST['selResvStatus'])) {
         $statusSelections = filter_var_array($_POST['selResvStatus'], FILTER_SANITIZE_STRING);
     }
 
-    if (isset($_POST['selCalendar'])) {
-        $calSelection = intval(filter_var($_POST['selCalendar'], FILTER_SANITIZE_NUMBER_INT), 10);
-    }
-
-    if (isset($_POST['selIntMonth'])) {
-        $months = filter_var_array($_POST['selIntMonth'], FILTER_SANITIZE_NUMBER_INT);
-    }
-
-    if (isset($_POST['selIntYear'])) {
-        $year = intval(filter_var($_POST['selIntYear'], FILTER_SANITIZE_NUMBER_INT), 10);
-    }
-
-    if (isset($_POST['stDate'])) {
-        $txtStart = filter_var($_POST['stDate'], FILTER_SANITIZE_STRING);
-    }
-
-    if (isset($_POST['enDate'])) {
-        $txtEnd = filter_var($_POST['enDate'], FILTER_SANITIZE_STRING);
-    }
-
-    if (isset($_POST['selAssoc'])) {
-        $reqs = $_POST['selAssoc'];
-        if (is_array($reqs)) {
-            $assocSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
-        }
-    }
-
-    if (isset($_POST['selHospital'])) {
-        $reqs = $_POST['selHospital'];
-        if (is_array($reqs)) {
-            $hospitalSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
-        }
-    }
-
-    if ($calSelection == 20) {
-        // fiscal year
-        $adjustPeriod = new DateInterval('P' . $uS->fy_diff_Months . 'M');
-        $startDT = new DateTime($year . '-01-01');
-        $startDT->sub($adjustPeriod);
-        $start = $startDT->format('Y-m-d');
-
-        $endDT = new DateTime(($year + 1) . '-01-01');
-        $end = $endDT->sub($adjustPeriod)->format('Y-m-d');
-
-    } else if ($calSelection == 21) {
-        // Calendar year
-        $startDT = new DateTime($year . '-01-01');
-        $start = $startDT->format('Y-m-d');
-
-        $end = ($year + 1) . '-01-01';
-
-    } else if ($calSelection == 18) {
-        // Dates
-        if ($txtStart != '') {
-            $startDT = new DateTime($txtStart);
-        } else {
-            $startDT = new DateTime();
-        }
-
-        if ($txtEnd != '') {
-            $endDT = new DateTime($txtEnd);
-        } else {
-            $endDT = new DateTime();
-        }
-
-        $start = $startDT->format('Y-m-d');
-        $end = $endDT->format('Y-m-d');
-
-    } else if ($calSelection == 22) {
-        // Year to date
-        $start = date('Y') . '-01-01';
-
-        $endDT = new DateTime();
-        $endDT->add(new DateInterval('P1D'));
-        $end = $endDT->format('Y-m-d');
-
-    } else {
-        // Months
-        $interval = 'P' . count($months) . 'M';
-        $month = $months[0];
-        $start = $year . '-' . $month . '-01';
-
-        $endDate = new DateTime($start);
-        $endDate->add(new DateInterval($interval));
-
-        $end = $endDate->format('Y-m-d');
-    }
-
-    $whDates = " r.Expected_Arrival <= '$end' and ifnull(r.Actual_Departure, r.Expected_Departure) >= '$start' ";
-
-
     // Hospitals
     $whHosp = '';
-    foreach ($hospitalSelections as $a) {
+    foreach ($filter->getSelectedHosptials() as $a) {
         if ($a != '') {
             if ($whHosp == '') {
                 $whHosp .= $a;
@@ -272,7 +156,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     }
 
     $whAssoc = '';
-    foreach ($assocSelections as $a) {
+    foreach ($filter->getSelectedAssocs() as $a) {
         if ($a != '') {
             if ($whAssoc == '') {
                 $whAssoc .= $a;
@@ -501,6 +385,45 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistratio
 
         $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display'));
         $mkTable = 1;
+        $headerTable .= HTMLContainer::generateMarkup('p', 'Report Period: ' . date('M j, Y', strtotime($filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($filter->getReportEnd())));
+
+        $hospitalTitles = '';
+        $hospList = $filter->getHospitals();
+
+        foreach ($filter->getSelectedAssocs() as $h) {
+            if (isset($hospList[$h])) {
+                $hospitalTitles .= $hospList[$h][1] . ', ';
+            }
+        }
+        foreach ($filter->getSelectedHosptials() as $h) {
+            if (isset($hospList[$h])) {
+                $hospitalTitles .= $hospList[$h][1] . ', ';
+            }
+        }
+
+        if ($hospitalTitles != '') {
+            $h = trim($hospitalTitles);
+            $hospitalTitles = substr($h, 0, strlen($h) - 1);
+            $headerTable .= HTMLContainer::generateMarkup('p', 'Hospitals: ' . $hospitalTitles);
+        } else {
+            $headerTable .= HTMLContainer::generateMarkup('p', 'All Hospitals');
+        }
+
+        $statusTitles = '';
+        foreach ($statusSelections as $s) {
+            if (isset($statusList[$s])) {
+                $statusTitles .= $statusList[$s][1] . ', ';
+            }
+        }
+
+        if ($statusTitles != '') {
+            $s = trim($statusTitles);
+            $statusTitles = substr($s, 0, strlen($s) - 1);
+            $headerTable .= HTMLContainer::generateMarkup('p', 'Statuses: ' . $statusTitles);
+        } else {
+            $headerTable .= HTMLContainer::generateMarkup('p', 'All Statuses');
+        }
+
 
     } else {
 
@@ -516,27 +439,14 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistratio
 }
 
 // Setups for the page.
-$assocs = '';
-if (count($aList) > 0) {
-    $assocs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($aList, $assocSelections),
-                array('name'=>'selAssoc[]', 'size'=>'3', 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
-}
 
-$numHosp = count($hList) + 1;
-
-$hospitals = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($hList, $hospitalSelections),
-                array('name'=>'selHospital[]', 'size'=>$numHosp, 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
-
-
-$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
-$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, $config->getString('site', 'Start_Year', '2010'), $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
-
-$statusList = removeOptionGroups($uS->guestLookups['ReservStatus']);
 $statusSelector = HTMLSelector::generateMarkup(
         HTMLSelector::doOptionsMkup($statusList, $statusSelections), array('name' => 'selResvStatus[]', 'size'=>'6', 'multiple'=>'multiple'));
-$calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
 $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;'));
+
+$timePeriodMarkup = $filter->timePeriodMarkup($config)->generateMarkup(array('style'=>'float: left;'));
+$hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
 
 ?>
 <!DOCTYPE html>
@@ -571,23 +481,6 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
             numberOfMonths: 1,
             dateFormat: 'M d, yy'
         });
-
-        $('#selCalendar').change(function () {
-            $('#selIntYear').show();
-            if ($(this).val() && $(this).val() != '19') {
-                $('#selIntMonth').hide();
-            } else {
-                $('#selIntMonth').show();
-            }
-            if ($(this).val() && $(this).val() != '18') {
-                $('.dates').hide();
-            } else {
-                $('.dates').show();
-                $('#selIntYear').hide();
-            }
-        });
-        $('#selCalendar').change();
-
         $('#cbColClearAll').click(function () {
             $('#selFld option').each(function () {
                 $(this).prop('selected', false);
@@ -629,28 +522,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
             <h2><?php echo $wInit->pageHeading; ?></h2>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="ReservReport.php" method="post">
-                    <table style="float: left;">
-                        <tr>
-                            <th colspan="3">Time Period</th>
-                        </tr>
-                        <tr>
-                            <th>Interval</th>
-                            <th style="min-width:100px; ">Month</th>
-                            <th>Year</th>
-                        </tr>
-                        <tr>
-                            <td style="vertical-align: top;"><?php echo $calSelector; ?></td>
-                            <td style="vertical-align: top;"><?php echo $monthSelector; ?></td>
-                            <td style="vertical-align: top;"><?php echo $yearSelector; ?></td>
-                        </tr>
-                        <tr>
-                            <td colspan="3">
-                                <span class="dates" style="margin-right:.3em;">Start:</span>
-                                <input type="text" value="<?php echo $txtStart; ?>" name="stDate" id="stDate" class="ckdate dates" style="margin-right:.3em;"/>
-                                <span class="dates" style="margin-right:.3em;">End:</span>
-                                <input type="text" value="<?php echo $txtEnd; ?>" name="enDate" id="enDate" class="ckdate dates"/></td>
-                        </tr>
-                    </table>
+                    <?php echo $timePeriodMarkup; ?>
                     <table style="float: left;">
                         <tr>
                             <th>Status</th>
@@ -659,18 +531,10 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                             <td><?php echo $statusSelector; ?></td>
                         </tr>
                     </table>
-                    <?php if ((count($aList) + count($hList)) > 1) { ?>
-                    <table style="float: left;">
-                        <tr>
-                            <?php if (count($aList) > 0) echo '<th>Associations</th>';  ?>
-                            <th>Hospitals</th>
-                        </tr>
-                        <tr>
-                            <?php if (count($aList) > 0) echo '<td style="vertical-align: top;">'. $assocs .'</td>'; ?>
-                            <td style="vertical-align: top;"><?php echo $hospitals; ?></td>
-                        </tr>
-                    </table>
-                    <?php } echo $columSelector; ?>
+                    <?php if (count($filter->getHospitals()) > 1) {
+                            echo $hospitalMarkup;
+                        }
+                        echo $columSelector; ?>
                     <table style="width:100%; clear:both;">
                         <tr>
                             <td style="width:50%;"></td>

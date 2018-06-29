@@ -1738,7 +1738,7 @@ class ReservationSvcs {
 
                 $mail->isHTML(true);
 
-                $mail->Subject = $uS->siteName . ' Reservation Confirmation';
+                $mail->Subject = htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Reservation Confirmation';
                 $mail->msgHTML($form);
 
 
