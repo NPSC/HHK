@@ -79,17 +79,21 @@ class VisitCharges {
 
     protected function getVisitData($spans, PriceModel $priceModel, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
 
+        $uS = Session::getInstance();
+
         if ($newPayment > 0) {
             $calcDaysPaid = TRUE;
         }
 
         $this->visitFeeCharged = 0;
+        $visitFeeCharge = 0;
+
         foreach ($spans as $s) {
 
             // Search for visit fee
             $amt = floatval($s['Visit_Fee_Amount']);
-            if ($amt > $this->visitFeeCharged) {
-                $this->visitFeeCharged = $amt;
+            if ($amt > $visitFeeCharge) {
+                $visitFeeCharge = $amt;
             }
 
             // Get the last deposit amount.
@@ -196,6 +200,13 @@ class VisitCharges {
             $this->nightsToPay = $daysBeingPaid;
             $this->excessPaid = $newPayment;
 
+        }
+
+
+        // Should we charge a visit fee now?
+        if (($this->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0) &&
+                $visitFeeCharge > 0 && $visitFeeCharge > ($this->getVisitFeesPaid() + $this->getVisitFeesPending())) {
+            $this->visitFeeCharged = $visitFeeCharge - ($this->getVisitFeesPaid() + $this->getVisitFeesPending());
         }
 
         return $this;

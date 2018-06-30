@@ -547,9 +547,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
             <div style="clear:both;"></div>
             <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px;">
                 <div><input id="printButton" value="Print" type="button"/></div>
-                <table style="margin-top:20px; margin-bottom:10px; min-width: 350px;">
-                    <?php echo $headerTable; ?>
-                </table>
+                <?php echo $headerTable; ?>
                 <?php echo $dataTable; ?>
             </div>
         </div>

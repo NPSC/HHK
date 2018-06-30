@@ -233,10 +233,10 @@ class PaymentChooser {
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
 
-		$useVisitFee = FALSE;
-		if($uS->VisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0)){
-			$useVisitFee = TRUE;
-		}
+        $useVisitFee = FALSE;
+        if($uS->VisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0)){
+                $useVisitFee = TRUE;
+        }
 
         $mkup = HTMLContainer::generateMarkup('div',
                 self::createPaymentMarkup(
@@ -663,6 +663,7 @@ ORDER BY v.idVisit , v.Span;");
                     .HTMLInput::generateMarkup('', $vfAttr) . HTMLContainer::generateMarkup('span', ($visitFeeAmt > 0 ? '($' . $visitFeeAmt . ')' : ''), array('id'=>'spnvfeeAmt', 'data-amt'=>$visitFeeAmt)))
                     .HTMLTable::makeTd( '$'. HTMLInput::generateMarkup($visitFeeAmt, array('name'=>'visitFeeAmt', 'size'=>'8', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;', 'class'=>'hhk-feeskeys', 'title'=>$vFeeTitle.' amount')), array('style'=>'text-align:right;'));
             }
+
 
             if ($visitFee != '') {
 
