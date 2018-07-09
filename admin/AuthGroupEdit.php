@@ -7,9 +7,11 @@
 -- @license   MIT
 -- @link      https://github.com/NPSC/HHK
  */
-require_once ("AdminIncludes.php");
 
-require_once (DB_TABLES . 'WebSecRS.php');
+require ("AdminIncludes.php");
+
+require (DB_TABLES . 'WebSecRS.php');
+require (SEC . 'UserClass.php');
 
 
 $wInit = new webInit();
@@ -60,30 +62,28 @@ if (isset($_POST['btnSave'])) {
 }
 
 
-$cookieReply = '';
+$cookieReply = "No access cookie found on this device. ";
 
 if (isset($_COOKIE['housepc'])) {
-    $cookieReply = "Cookie-Restricted Access is set on this PC. ";
+    $cookieReply = "Cookie-Restricted Access is set for this device. ";
 }
 
-if (isset($_POST['setCookie'])) {
+if (isset($_POST['setCookie']) && SecurityComponent::is_Admin()) {
     $accordIndex = 7;
 
-    $cookVal = encryptMessage(filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP) . 'eric');
-
-    if (SecurityComponent::is_Admin() && setcookie('housepc', $cookVal, time()+ 84600*365*5, $wInit->page->getRootPath() )) {
-        $cookieReply = "Cookie-Restricted Access is set on this PC.";
+    if (UserClass::setCookieAccess($wInit->page->getRootPath(), TRUE)) {
+        $cookieReply = "Cookie-Restricted Access is set for this device.";
     } else {
-        $cookieReply = "Must be logged in as web admin to set access.";
+        $cookieReply = "Failed to set the access cookie!";
     }
 
 } else if (isset($_POST['removeCookie']) && isset($_COOKIE['housepc'])) {
     $accordIndex = 7;
 
-    if (SecurityComponent::is_Admin() && setcookie('housepc', "", time() - 3600, $wInit->page->getRootPath()) ) {
-        $cookieReply = "Cookie-Restricted Access deleted on this PC.";
+    if (UserClass::setCookieAccess($wInit->page->getRootPath(), FALSE) ) {
+        $cookieReply = "Cookie-Restricted Access is removed from this device.";
     } else {
-        $cookieReply .= " Must be logged in as web admin to delete access.";
+        $cookieReply .= " Failed to remove the access cookie!";
     }
 }
 

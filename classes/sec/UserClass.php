@@ -68,6 +68,23 @@ class UserClass {
         return FALSE;
     }
 
+    public static function setCookieAccess($rootPath, $toggle = TRUE) {
+
+        if ($toggle) {
+
+            if (filter_has_var(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR')) {
+                $remoteIp = filter_input(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR', FILTER_VALIDATE_IP);
+            } else {
+                $remoteIp = filter_input(INPUT_SERVER, 'REMOTE_ADDR', FILTER_VALIDATE_IP);
+            }
+
+            return setcookie('housepc', encryptMessage($remoteIp . 'eric'), (time() + 84600*365*5), $rootPath);
+
+        } else {
+            return setcookie('housepc', "", time() - 3600, $rootPath);
+        }
+    }
+
     public function updateDbPassword(\PDO $dbh, $id, $oldPw, $newPw) {
 
         $ssn = Session::getInstance();
