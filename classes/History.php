@@ -154,6 +154,7 @@ class History {
         $uS = Session::getInstance();
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
+        $config = new Config_Lite(ciCFG_FILE);
         $returnRows = array();
 
         foreach ($this->resvEvents as $r) {
@@ -165,7 +166,7 @@ class History {
                 $fixedRows['Action'] =  HTMLContainer::generateMarkup(
                     'ul', HTMLContainer::generateMarkup('li', 'Action' .
                         HTMLContainer::generateMarkup('ul',
-                           HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'View ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('href'=>'Reserve.php?rid='.$r['idReservation'], 'style'=>'text-decoration:none;')))
+                           HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'View ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('href'=>$config->getString('house', 'ReservationPage', 'Referral.php') . '?rid='.$r['idReservation'], 'style'=>'text-decoration:none;')))
                            . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Canceled][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Canceled, 'data-rid'=>$r['idReservation'])))
                            . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::NoShow][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::NoShow, 'data-rid'=>$r['idReservation'])))
                            . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::TurnDown][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::TurnDown, 'data-rid'=>$r['idReservation'])))

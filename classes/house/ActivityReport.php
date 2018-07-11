@@ -182,7 +182,7 @@ class ActivityReport {
 
             if (isset($logData['Status']) && $r['Sub_Type'] == 'update') {
 
-                $trow .= HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $r['Name_First'] . " " . $r['Name_Last'], array('href' => 'Referral.php?id=' . $r['idName'])));
+                $trow .= HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $r['Name_First'] . " " . $r['Name_Last'], array('href' =>$config->getString('house', 'ReservationPage', 'Referral.php') . '?id=' . $r['idName'])));
 
                 if (isset($uS->guestLookups['ReservStatus'][$logData['Status']['new']])) {
                     $statTitle = $uS->guestLookups['ReservStatus'][$logData['Status']['new']][1];

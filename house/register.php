@@ -415,7 +415,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             .hhk-justify-c {
                 text-align: center;
             }
-            .ui-menu-item-wrapper {min-width: 120px;}
+            .ui-menu-item-wrapper {min-width: 130px;}
             .fc-bgevent {opacity: .9;}
 
         </style>
