@@ -65,6 +65,7 @@ $months = array(date('n'));     // logically overloaded.
 $status = '';
 $txtStart = '';
 $txtEnd = '';
+$output = '';
 
 
 $monthArray = array(
