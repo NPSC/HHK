@@ -276,6 +276,8 @@ class Psg {
         // Members section
         $relListLessSlf = $relList;
         unset($relListLessSlf[RelLinkType::Self]);
+        $relListLessSlf = removeOptionGroups($relListLessSlf);
+
         // Members that are not patients anywhere
         $notPatients = array();
         $changePatientMU = '';
