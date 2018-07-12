@@ -293,10 +293,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('rel_type','chd','Child','par','',0),
 ('rel_type','par','Parent','chd','',0),
-('rel_type','rltv','Relative','','',0),
+('rel_type','rltv','Relative','rltv','',0),
 ('rel_type','sib','Sibling','sib','',0),
 ('rel_type','sp','Partner','sp','',0),
-('rel_type','frd','Friend','sp','',0),
+('rel_type','frd','Friend','frd','',0),
 
 ('Resource_Status','a','Available','','',0),
 ('Resource_Status','oos','Out of Service','','',0),

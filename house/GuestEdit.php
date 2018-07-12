@@ -531,7 +531,7 @@ if ($name->get_lastUpdated() != '') {
 
 // Add Emergency contact
 $emergencyTabMarkup = HTMLContainer::generateMarkup('div',
-        $emergContact->createMarkup($emergContact, $uS->nameLookups[GL_TableNames::RelTypes]));
+        $emergContact->createMarkup($emergContact, $uS->guestLookups[GL_TableNames::PatientRel]));
 
 
 

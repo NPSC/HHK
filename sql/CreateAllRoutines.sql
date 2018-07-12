@@ -645,8 +645,16 @@ DROP procedure IF EXISTS `set_pagesecurity`; -- ;
 
 CREATE PROCEDURE `set_pagesecurity` (pageId int, secCode varchar(5))
 BEGIN
+    declare p int;
+
     if pageId > 0 and secCode != '' then
-	replace into page_securitygroup (idPage, Group_Code) VALUES (pageId, secCode);
+
+        select `idPage` into p from `page_securitygroup` where `idPage` = pageId and `Group_Code` = secCode;
+
+        if p = 0 then
+            insert into page_securitygroup (idPage, Group_Code) VALUES (pageId, secCode);
+        end if;
+
     end if;
     
 END --;

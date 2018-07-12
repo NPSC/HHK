@@ -87,6 +87,9 @@ where ru.idResource_use is null
                 }
             }
 
+            // Fix room title
+            $r['title'] = htmlspecialchars_decode($r['title'], ENT_QUOTES);
+
             $rescs[] = $r;
         }
 

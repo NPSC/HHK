@@ -66,7 +66,7 @@ class Room {
     }
 
     public function getTitle() {
-        return $this->roomRS->Title->getStoredVal();
+        return htmlspecialchars_decode($this->roomRS->Title->getStoredVal(), ENT_QUOTES);
     }
 
     public function getType() {

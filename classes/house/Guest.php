@@ -100,7 +100,7 @@ class Guest extends Role {
 
         $mk1 .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Emergency Contact for Guest' . $ecSearch, array('style'=>'font-weight:bold;'))
-                . $ec->createMarkup($ec, $uS->nameLookups[GL_TableNames::RelTypes], $idPrefix, $this->incompleteEmergContact), array('class'=>'hhk-panel')),
+                . $ec->createMarkup($ec, $uS->guestLookups[GL_TableNames::PatientRel], $idPrefix, $this->incompleteEmergContact), array('class'=>'hhk-panel')),
                 array('style'=>'float:left; margin-right:3px;'));
 
 
