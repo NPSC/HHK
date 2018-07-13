@@ -1,4 +1,5 @@
 
+
 ALTER TABLE `volunteer_hours` 
     ADD COLUMN `idName2` INT NOT NULL DEFAULT 0 AFTER `idName`;
 
@@ -45,3 +46,4 @@ delete from `sys_config` where `Key` = 'NightsCount';
 -- Add pages, one call for each security group.
 call new_webpage('ws_calendar.php', 31, '', 0, 'h', '', '', 's', '', 'admin', now(), 'g', @pageId);
 call new_webpage('ws_calendar.php', 31, '', 0, 'h', '', '', 's', '', 'admin', now(), 'ga', @pageId);
+

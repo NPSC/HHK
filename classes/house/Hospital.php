@@ -625,4 +625,3 @@ class HospitalStay {
         $this->hstayRs->Room->setNewVal($v);
     }
 }
-
