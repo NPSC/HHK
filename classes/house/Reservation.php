@@ -129,6 +129,67 @@ abstract class Reservation {
         return array();
     }
 
+    public static function updateAgenda(\PDO $dbh, $post) {
+
+
+        // decifer posts
+        if (isset($post['dt1']) && isset($post['dt2']) && isset($post['mems'])) {
+
+            $labels = new Config_Lite(LABEL_FILE);
+            $psgMembers = array();
+
+            $idPsg = intval(filter_var($post['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
+            $idResv = intval(filter_var($post['idResv'], FILTER_SANITIZE_NUMBER_INT), 10);
+            $arrivalDT = new DateTime(filter_var($post['dt1'], FILTER_SANITIZE_STRING));
+            $departDT = new DateTime(filter_var($post['dt2'], FILTER_SANITIZE_STRING));
+            $postMems = filter_var_array($post['mems'], FILTER_SANITIZE_STRING);
+
+            foreach ($postMems as $prefix => $memArray) {
+
+                if ($prefix == '') {
+                    continue;
+                }
+
+                $id = 0;
+                $role = '';
+                $stay = ReserveData::NOT_STAYING;
+                $priGuest = 0;
+
+                if (isset($memArray[ReserveData::ID])) {
+                    $id = intval($memArray[ReserveData::ID], 10);
+                }
+
+                if (isset($memArray[ReserveData::ROLE])) {
+                    $role = $memArray[ReserveData::ROLE];
+                }
+
+                if (isset($memArray[ReserveData::STAY])) {
+                    $stay = $memArray[ReserveData::STAY];
+                }
+
+                if (isset($memArray[ReserveData::PRI])) {
+                    $priGuest = intval($memArray[ReserveData::PRI], 10);
+                }
+
+                $psgMembers[$prefix] = new PSGMember($id, $prefix, $role, new PSGMemStay($stay, $priGuest));
+            }
+
+            // Create new stay controls for each member
+            self::findConflictingStays($dbh, $psgMembers, $arrivalDT, $idPsg);
+            self::findConflictingReservations($dbh, $idPsg, $idResv, $psgMembers, $arrivalDT, $departDT, $labels->getString('guestEdit', 'reservationTitle', 'Reservation'));
+
+            $events = [];
+
+            foreach ($psgMembers as $m) {
+
+                $events[$m->getPrefix()] = $m->getStayObj()->createStayButton($m->getPrefix());
+            }
+
+            return array('stayCtrl'=>$events);
+
+        }
+    }
+
     protected function createExpDatesControl($prefix = '') {
 
         $uS = Session::getInstance();
@@ -306,13 +367,37 @@ abstract class Reservation {
             }
 
 
+            // Get guest names
+            $gstmt = $dbh->query("select n.Name_Full, rg.Primary_Guest
+from reservation_guest rg join name n on rg.idGuest = n.idName
+where rg.idReservation =" . $r['idReservation']);
+
+            $names = '';
+            $fst = TRUE;
+
+            while ($g = $gstmt->fetch(PDO::FETCH_ASSOC)) {
+
+                if ($fst) {
+                    $name = $g['Name_Full'];
+                    $fst = FALSE;
+                } else {
+                    $name = ', ' . $g['Name_Full'];
+                }
+                if ($g['Primary_Guest'] == 1) {
+                    $names .= HTMLContainer::generateMarkup('span', $name, array('style'=>'font-weight:bold;', 'title'=>'Primary Guest'));
+                } else {
+                    $names .= HTMLContainer::generateMarkup('span', $name);
+                }
+            }
+
             $trs[] = HTMLTable::makeTd($checkinNow)
                     .HTMLTable::makeTd($reservStatuses[$resvRs->Status->getStoredVal()][1])
                     .HTMLTable::makeTd($r['Title'])
                     .HTMLTable::makeTd($r['Patient_Name'])
                     .HTMLTable::makeTd($expArrDT->format('M j, Y'))
                     .HTMLTable::makeTd(date('M j, Y', strtotime($resvRs->Expected_Departure->getStoredVal())))
-                    .HTMLTable::makeTd($resvRs->Number_Guests->getStoredVal());
+                    .HTMLTable::makeTd($resvRs->Number_Guests->getStoredVal()
+                    .HTMLTable::makeTd($names));
         }
 
 
@@ -331,7 +416,8 @@ abstract class Reservation {
                     .HTMLTable::makeTh($this->reserveData->getPatLabel())
                     .HTMLTable::makeTh('Expected Arrival')
                     .HTMLTable::makeTh('Expected Departure')
-                    .HTMLTable::makeTh('# Guests'));
+                    .HTMLTable::makeTh('#')
+                    .HTMLTable::makeTh('Guests'));
 
             $mrkup .= $tbl->generateMarkup();
 
@@ -340,7 +426,7 @@ abstract class Reservation {
         return $mrkup;
     }
 
-    protected function findConflictingStays(\PDO $dbh, array $psgMembers, \DateTime $arrivalDT) {
+    protected static function findConflictingStays(\PDO $dbh, array &$psgMembers, \DateTime $arrivalDT, $idPsg) {
 
         $whStays = '';
         $rooms = array();
@@ -364,12 +450,14 @@ abstract class Reservation {
             while ($s = $vstmt->fetch(\PDO::FETCH_ASSOC)) {
                 // These guests are already staying
 
-                if (is_null($mem = $this->reserveData->findMemberById($s['idName'])) === FALSE) {
-                    $mem->setStayObj(new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'])));
+                foreach ($psgMembers as $m) {
+                    if ($m->getId() == $s['idName']) {
+                        $psgMembers[$m->getPrefix()]->setStayObj(new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'])));
+                    }
                 }
 
                 // Count rooms
-                if ($s['idPsg'] == $this->reserveData->getIdPsg()) {
+                if ($s['idPsg'] == $idPsg) {
                     $rooms[$s['idRoom']] = '1';
                 }
             }
@@ -379,7 +467,7 @@ abstract class Reservation {
         return count($rooms);
     }
 
-    protected function findConflictingReservations(\PDO $dbh, array $psgMembers, \DateTime $arrivalDT, \DateTime $departDT) {
+    protected static function findConflictingReservations(\PDO $dbh, $idPsg, $idResv, array &$psgMembers, \DateTime $arrivalDT, \DateTime $departDT, $resvTitle = 'Reservation') {
 
         // Check reservations
         $whResv = '';
@@ -399,17 +487,23 @@ abstract class Reservation {
                 . "from reservation_guest rg  "
                 . "join reservation r on r.idReservation = rg.idReservation "
                 . "join registration reg on reg.idRegistration = r.idRegistration "
-                . "where r.`Status` $rStatus and rg.idGuest in (" . substr($whResv, 1) . ") and rg.idReservation != " . $this->reserveData->getIdResv()
+                . "where r.`Status` $rStatus and rg.idGuest in (" . substr($whResv, 1) . ") and rg.idReservation != " . $idResv
                 . " and Date(r.Expected_Arrival) < DATE('".$departDT->format('Y-m-d') . "') and Date(dateDefaultNow(r.Expected_Departure)) > DATE('".$arrivalDT->format('Y-m-d') . "')");
 
             while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
 
-                if ($r['Status'] != ReservationStatus::Staying && is_null($mem = $this->reserveData->findMemberById($r['idGuest'])) === FALSE) {
-                    $mem->setStayObj(new PSGMemResv(array('idReservation'=>$r['idReservation'], 'idGuest'=>$r['idGuest'], 'idPsg'=>$r['idPsg'], 'label'=>$this->reserveData->getResvTitle())));
+                foreach ($psgMembers as $m) {
+                    if ($m->getId() == $r['idGuest'] && $r['Status'] != ReservationStatus::Staying) {
+                        $psgMembers[$m->getPrefix()]->setStayObj(new PSGMemResv(array('idReservation'=>$r['idReservation'], 'idGuest'=>$r['idGuest'], 'idPsg'=>$r['idPsg'], 'label'=>$resvTitle)));
+                    }
                 }
 
+//                if ($r['Status'] != ReservationStatus::Staying && is_null($mem = $this->reserveData->findMemberById($r['idGuest'])) === FALSE) {
+//                    $mem->setStayObj(new PSGMemResv(array('idReservation'=>$r['idReservation'], 'idGuest'=>$r['idGuest'], 'idPsg'=>$r['idPsg'], 'label'=>$resvTitle)));
+//                }
+
                 // Count rooms
-                if ($r['idPsg'] == $this->reserveData->getIdPsg()) {
+                if ($r['idPsg'] == $idPsg) {
                     $rescs[$r['idResource']] = '1';
                 }
             }
@@ -418,11 +512,11 @@ abstract class Reservation {
         return count($rescs);
     }
 
-    protected function guestReservations(\PDO $dbh, $psgMembers, \DateTime $arrivalDT, \DateTime $departDT) {
+    protected static function guestReservations(\PDO $dbh, $idResv, $psgMembers, \DateTime $arrivalDT, \DateTime $departDT, $idPsg, $resvTitle) {
 
-        $this->findConflictingStays($dbh, $psgMembers, $arrivalDT);
+        self::findConflictingStays($dbh, $psgMembers, $arrivalDT, $idPsg);
 
-        return $this->findConflictingReservations($dbh, $psgMembers, $arrivalDT, $departDT);
+        return self::findConflictingReservations($dbh, $idPsg, $idResv, $psgMembers, $arrivalDT, $departDT, $resvTitle);
     }
 
     protected function getStayingMembers() {
@@ -701,7 +795,7 @@ class BlankReservation extends Reservation {
                 $departDT = new \DateTime($this->reservRs->Expected_Departure->getStoredVal());
 
                 // Chack guests for other commitments.
-                $this->guestReservations($dbh, $this->reserveData->getPsgMembers(), $arrivalDT, $departDT);
+                $this->guestReservations($dbh, $this->reserveData->getIdResv(), $this->reserveData->getPsgMembers(), $arrivalDT, $departDT, $this->reserveData->getIdPsg(), $this->reserveData->getResvTitle());
 
             } catch (Hk_Exception_Runtime $hex) {
                 return array('error'=>$hex->getMessage());
@@ -790,27 +884,35 @@ class ActiveReservation extends BlankReservation {
 
 
         // Is anyone already in a visit?
-        $this->findConflictingStays($dbh, $this->reserveData->getPsgMembers(), $arrivalDT);
+        $psgMems = $this->reserveData->getPsgMembers();
+        $this->findConflictingStays($dbh, $psgMems, $arrivalDT, $this->reserveData->getIdPsg());
+        $this->reserveData->setPsgMembers($psgMems);
 
         if (count($this->getStayingMembers()) < 1) {
+
             // Nobody left in the reservation
             if ($this->reserveData->getId() == 0) {
                 $this->reserveData->setId($this->family->getPatientId());
             }
+
             $data = $this->createMarkup($dbh);
             $data['error'] = 'Everybody is already staying at the house for all or part of the specified duration.  ';
             return $data;
         }
 
         // Get reservations for the specified time
-        $numRooms = $this->findConflictingReservations($dbh, $this->reserveData->getPsgMembers(), $arrivalDT, $departDT);
+        $psgMems = $this->reserveData->getPsgMembers();
+        $numRooms = $this->findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMems, $arrivalDT, $departDT, $this->reserveData->getResvTitle());
+        $this->reserveData->setPsgMembers($psgMems);
 
         // Anybody left?
         if (count($this->getStayingMembers()) < 1) {
+
             // Nobody left in the reservation
             if ($this->reserveData->getId() == 0) {
                 $this->reserveData->setId($this->family->getPatientId());
             }
+
             $data = $this->createMarkup($dbh);
             $data['error'] = 'Everybody is already in a reservation for all or part of the specified duration.  ';
             return $data;

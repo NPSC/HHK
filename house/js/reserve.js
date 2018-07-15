@@ -62,7 +62,8 @@ function PageManager(initData) {
         var divFamDetailId = 'divfamDetail';
         var cpyAddr = '';
         var setupComplete = false;
-
+        var $famTbl;
+        
         // Exports
         t.findStaysChecked = findStaysChecked;
         t.findPrimaryGuest = findPrimaryGuest;
@@ -70,8 +71,9 @@ function PageManager(initData) {
         t.newGuestMarkup = newGuestMarkup;
         t.verify = verify;
         t.divFamDetailId = divFamDetailId;
+        t.$famTbl = $famTbl;
 
-
+        
         function findStaysChecked() {
             var numGuests = 0;
 
@@ -383,13 +385,13 @@ function PageManager(initData) {
 
             fDiv = $('<div/>').addClass('ui-widget-content ui-corner-bottom hhk-tdbox').prop('id', divFamDetailId).css('padding', '5px');
 
-            fDiv.append(
-                    $('<table/>')
+            $famTbl = $('<table/>')
                         .prop('id', data.famSection.tblId)
                         .addClass('hhk-table')
                         .append($('<thead/>').append($(data.famSection.tblHead)))
-                        .append($('<tbody/>')))
-                    .append($(data.famSection.adtnl));
+                        .append($('<tbody/>'));
+                
+            fDiv.append($famTbl).append($(data.famSection.adtnl));
 
             expanderButton = $("<ul style='list-style-type:none; float:right;margin-left:5px;padding-top:2px;' class='ui-widget'/>")
                 .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
@@ -420,7 +422,7 @@ function PageManager(initData) {
 
         function setUp(data) {
 
-            var $addrTog, $addrFlag, $famTbl;
+            var $addrTog, $addrFlag;
 
             if (data.famSection === undefined || data.famSection.tblId === undefined || data.famSection.tblId === '') {
                 return;
@@ -429,8 +431,6 @@ function PageManager(initData) {
             if (setupComplete === false) {
                 initFamilyTable(data);
             }
-            
-            $famTbl = $wrapper.find('#' + data.famSection.tblId);
 
             // Remove any previous entries.
             for (var i in data.famSection.mem) {
@@ -587,9 +587,9 @@ function PageManager(initData) {
 
 
                 // Copy Guest button
-                $('#btnCopyGuest').button().click(function () {
-                    addGuestCopy($('#selCopyGuest').val());
-                });
+//                $('#btnCopyGuest').button().click(function () {
+//                    addGuestCopy($('#selCopyGuest').val());
+//                });
 
                 // Relationship chooser
                 $('#' + divFamDetailId).on('change', '.patientRelch', function () {
@@ -644,13 +644,13 @@ function PageManager(initData) {
 
         function newGuestMarkup(data, prefix) {
 
-            var $countries, $states, $famTbl, stripeClass, $addrFlag, $addrTog;
+            var $countries, $states, stripeClass, $addrFlag, $addrTog;
 
             if (data.tblId === undefined || data.tblId == '') {
                 return;
             }
 
-            $famTbl = $wrapper.find('#' + data.tblId);
+            //$famTbl = $wrapper.find('#' + data.tblId);
 
             if ($famTbl.length === 0) {
                 return;
@@ -930,15 +930,17 @@ function PageManager(initData) {
         t.ciDate = new Date();
         t.coDate = new Date();
 
-        t.setUp = function(expDates) {
+
+        t.setUp = function(data, doOnDatesChange) {
 
             $dateSection.empty();
-            $dateSection.append($(expDates.mu));
+            $dateSection.append($(data.expDates.mu));
 
             var gstDate = $('#gstDate'),
                 gstCoDate = $('#gstCoDate'),
-                nextDays = parseInt(expDates.defdays, 10);
+                nextDays = parseInt(data.expDates.defdays, 10);
 
+            // default number of days for a new stay.
             if (isNaN(nextDays) || nextDays < 1) {
                 nextDays = 21;
             }
@@ -971,10 +973,14 @@ function PageManager(initData) {
                 // Update the number of days display text.
                 var numDays = Math.ceil((dates['date2'].getTime() - dates['date1'].getTime()) / 86400000);
 
-                $('#' + expDates.daysEle).val(numDays);
+                $('#' + data.expDates.daysEle).val(numDays);
 
                 if ($('#spnNites').length > 0) {
                     $('#spnNites').text(numDays);
+                }
+                
+                if ($.isFunction(doOnDatesChange)) {
+                    doOnDatesChange(dates);
                 }
             });
 
@@ -1041,6 +1047,66 @@ function PageManager(initData) {
 
             return true;
         };
+    }
+
+    function doOnDatesChange(dates) {
+
+        var hasIds = false;
+        for (var p in people.list()) {
+            if (people.list()[p].id > 0) {
+                hasIds = true
+            }
+        }
+
+        if (hasIds) {
+            var parms = {
+                cmd:'updateAgenda', 
+                idPsg: idPsg,
+                idResv: idResv,
+                dt1:dates["date1"].toUTCString(), 
+                dt2:dates["date2"].toUTCString(), 
+                mems:people.list()};
+
+            $.post('ws_resv.php', parms, function(data) {
+
+                try {
+                    data = $.parseJSON(data);
+                } catch (err) {
+                    flagAlertMessage(err.message, true);
+                    return;
+                }
+
+                if (data.gotopage) {
+                    window.open(data.gotopage, '_self');
+                }
+
+                if (data.error) {
+                    flagAlertMessage(data.error, true);
+                }
+
+                if (data.stayCtrl) {
+
+                    for (var i in data.stayCtrl) {
+                        var $lbl;
+
+                        $('#sb' + i).empty().html(data.stayCtrl[i]);
+
+                        $('#' + i + 'cbStay').checkboxradio({
+                            classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
+                        });
+
+                        $lbl = $('#' + i + 'lblStay');
+
+                        if ($lbl.data('stay') == '1') {
+                            $lbl.click();
+                        }
+                        
+                        // visit buttons
+                        $('.hhk-getVDialog').button();
+                    }
+                }
+            });
+        }
     }
 
     function HospitalSection($hospSection) {
@@ -1479,10 +1545,14 @@ function PageManager(initData) {
             $('input#txtPersonSearch').val('');
             $('input#gstSearch').val('').focus();
         };
-
+        
+        $resvDiag.dialog('option', 'width', '95%');
         $resvDiag.dialog('option', 'buttons', buttons);
         $resvDiag.dialog('option', 'title', data.resvTitle + ' Chooser');
         $resvDiag.dialog('open');
+        
+        var table = $resvDiag.find('table').width();
+        $resvDiag.dialog('option', 'width', table + 20);
 
     }
 
@@ -1628,7 +1698,7 @@ function PageManager(initData) {
 
         // Expected Dates Control
         if (data.expDates !== undefined && data.expDates !== '') {
-            expDatesSection.setUp(data.expDates);
+            expDatesSection.setUp(data, doOnDatesChange);
         }
 
         // Reservation

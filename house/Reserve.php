@@ -195,24 +195,26 @@ $resvObjEncoded = json_encode($resvAr);
     <head>
         <meta charset="UTF-8">
         <title><?php echo $wInit->pageTitle; ?></title>
-        <link rel="icon" type="image/png" href="../images/hhkIcon.png" />
-        <link rel="stylesheet" href="css/daterangepicker.min.css">
 
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
+        <?php echo DR_PICKER_CSS ?>
+        <?php echo FAVICON; ?>
 <!--        Fix the ugly checkboxes-->
         <style>.ui-icon-background, .ui-state-active .ui-icon-background {background-color:#fff;}</style>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo DR_PICKER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo VERIFY_ADDRS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo DR_PICKER_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="js/reserve.js"></script>
 
@@ -246,7 +248,7 @@ $resvObjEncoded = json_encode($resvAr);
             </form>
 
             <div id="pmtRcpt" style="font-size: .9em; display:none;"><?php echo $receiptMarkup; ?></div>
-            <div id="resDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
+            <div id="resDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
             <div id="psgDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;"></div>
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
@@ -345,7 +347,7 @@ $(document).ready(function() {
     $("#resDialog").dialog({
         autoOpen: false,
         resizable: true,
-        width: 900,
+        width: '95%',
         modal: true
     });
 
@@ -448,7 +450,7 @@ $(document).ready(function() {
         if (parseInt(resv.id, 10) === 0 && parseInt(resv.rid, 10) > 0) {
             resv.id = -2;
         }
-        
+
         resv.cmd = 'getResv';
         pageManager.getReserve(resv);
 

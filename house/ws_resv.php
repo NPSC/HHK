@@ -153,6 +153,11 @@ try {
 
         break;
 
+    case 'updateAgenda':
+
+        $events = Reservation::updateAgenda($dbh, $_POST);
+        break;
+
     default:
         $events = array("error" => "Bad Command: \"" . $c . "\"");
 }
