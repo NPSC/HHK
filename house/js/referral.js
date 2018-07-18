@@ -17,6 +17,68 @@
  * @param {object} item
  * @returns {undefined}
  */
+ 
+function getNotes(rid, container)
+{
+	rid = parseInt(rid, 10);
+	if(Number.isInteger(rid) ){
+	
+		$(container).empty();
+		$(container).html('<div id="resvNotesHeader" class="ui-widget-header ui-state-default ui-corner-all"><div class="hhk-checkinHdr"></div></div><div id="resvNotesDetail"></div>');
+		$("#resvNotesHeader div").html("Reservation Notes");
+		$(container + " #resvNotesDetail").html('<table style="width: 100%"></table>');
+		
+		var dtCols = [
+			{
+	        "targets": [ 0 ],
+	        'data': 'id',
+	        'visible': false
+	    },
+	    {
+	        "targets": [ 1 ],
+	        "title": "Date",
+	        'data': 'Date',
+	        render: function ( data, type ) {
+	            return dateRender(data, type);
+	        }
+	    },
+	    {
+	        "targets": [ 2 ],
+	        "title": "Username",
+	        "searchable": false,
+	        "sortable": false,
+	        "data": "Type"
+	    },
+	    {
+	        "targets": [ 3 ],
+	        "title": "Note",
+	        "searchable": false,
+	        "sortable": false,
+	        "data": "Sub-Type"
+	    }
+	];
+	
+			
+		listNoteTable = $('#resvNotesDetail table').dataTable({
+	        "columnDefs": dtCols,
+	        "serverSide": true,
+	        "processing": true,
+	        "deferRender": true,
+	        "language": {"sSearch": "Search Notes:"},
+	        "sorting": [[0,'desc']],
+	        "displayLength": 25,
+	        "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+	        "Dom": '<"top"ilf>rt<"bottom"ip>',
+	        ajax: {
+	            url: 'ws_resv.php?cmd=getNoteList&rid=' + rid
+	        }
+	        });
+	}else{
+		$("divAlertMsg").html("Cannot get Reservation Notes for specified Reservation ID").show();
+	}
+};
+
+
 function additionalGuest(item) {
     "use strict";
     var resv = reserv;
@@ -417,7 +479,7 @@ function injectSlot(data) {
     }
 
     if (data.notes !== undefined) {
-        $('#notesGuest').children().remove().end().append($(data.notes)).show();
+        getNotes(resv.idReserv, "#resvNotes");
     }
 
     if (data.patStay !== undefined) {
@@ -1720,5 +1782,7 @@ $(document).ready(function() {
     }
     
     $('#gstSearch').focus();
+    
+    
 
 });
