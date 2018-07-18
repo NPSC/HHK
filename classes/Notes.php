@@ -15,6 +15,8 @@
  */
 class Notes {
 
+
+
     public static function markupShell($notesText, $taId, $txtboxRows = '1', $taClass = 'hhk-feeskeys') {
 
         if (is_null($notesText)) {
@@ -41,7 +43,7 @@ class Notes {
 
     }
 
-    
+
     public static function getNotesDiv($notesText, $class = 'hhk-currentNotes') {
 
         // reverse output

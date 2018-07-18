@@ -87,6 +87,9 @@ where ru.idResource_use is null
                 }
             }
 
+            // Fix room title
+            $r['title'] = htmlspecialchars_decode($r['title'], ENT_QUOTES);
+
             $rescs[] = $r;
         }
 
@@ -216,6 +219,7 @@ where ru.idResource_use is null
 
             // Render Event
             $titleText = $r['Guest Last'];
+            $visitExtended = FALSE;
 
             if ($r['Visit_Status'] == VisitStatus::NewSpan) {
                 $titleText .= ' (rm)';
@@ -224,8 +228,7 @@ where ru.idResource_use is null
                 $titleText .= ' ($)';
 
             } else if ($extended) {
-                $titleText .= '>>';
-
+                $visitExtended = TRUE;
             }
 
             // Set ribbon color
@@ -243,6 +246,7 @@ where ru.idResource_use is null
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
             $s['end'] = $endDT->format('Y-m-d\TH:i:00');
             $s['title'] = $titleText;
+            $s['extended'] = $visitExtended;
             $s['allDay'] = 1;
             $s['fullName'] = $r['Name_Full'];
             $s['visitStatus'] = $r['Status_Text'];

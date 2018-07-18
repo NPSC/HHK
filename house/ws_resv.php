@@ -145,12 +145,36 @@ try {
 
         break;
 
+    case 'getNoteList':
+
+        if (($rid = filter_input(INPUT_POST, 'rid', FILTER_SANITIZE_NUMBER_INT))) {
+
+            require(CLASSES . 'DataTableServer.php');
+
+            $columns = array(
+
+                array( 'db' => 'Timestamp',  'dt' => 'Date' ),
+                array( 'db' => 'User_Name',   'dt' => 'User' ),
+                array( 'db' => 'Note_Text', 'dt' => 'Note'),
+                array( 'db' => 'Note_Id', 'dt' => 'NoteId')
+            );
+
+            return SSP::complex ( $_GET, $dbh, "vresv_notes", 'Note_Id', $columns, null, "Reservation_Id=$rid" );
+        }
+
+        break;
+
     case "copyThinGuest":
 
         $resv = Reservation::reservationFactoy($dbh, $_POST);
 
         $events = $resv->copyPerson($dbh);
 
+        break;
+
+    case 'updateAgenda':
+
+        $events = Reservation::updateAgenda($dbh, $_POST);
         break;
 
     default:

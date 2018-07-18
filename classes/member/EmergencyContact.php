@@ -60,12 +60,16 @@ class EmergencyContact implements iEmergencyContact {
 
 
             if ($this->ecRS->idEmergency_contact->getStoredVal() == 0) {
-                // Insert
-                $this->ecRS->idName->setNewVal($id);
 
-                $n = EditRS::insert($dbh, $this->ecRS);
-                if ($n > 0) {
-                    $rtnMsg .= "Emergency Contact Inserted.  ";
+                if ($this->ecRS->Name_Last->getNewVal() != '' && $this->ecRS->Name_First->getNewVal() != '') {
+
+                    // Insert
+                    $this->ecRS->idName->setNewVal($id);
+
+                    $n = EditRS::insert($dbh, $this->ecRS);
+                    if ($n > 0) {
+                        $rtnMsg .= "Emergency Contact Inserted.  ";
+                    }
                 }
 
             } else {
@@ -126,6 +130,7 @@ class EmergencyContact implements iEmergencyContact {
         if ($checkLater) {
             $attr['checked'] = 'checked';
         }
+        
         $later = HTMLContainer::generateMarkup('div', HTMLInput::generateMarkup('', $attr) . HTMLContainer::generateMarkup('label', ' Skip for now', array('for'=>$idPrefix.'cbEmrgLater')), array('style'=>'margin-top:10px; margin-left:40px;'));
         return $markup->generateMarkup() . $later;
     }

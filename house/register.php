@@ -415,9 +415,20 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             .hhk-justify-c {
                 text-align: center;
             }
-            .ui-menu-item-wrapper {min-width: 120px;}
+            .ui-menu-item-wrapper {min-width: 130px;}
             .fc-bgevent {opacity: .9;}
 
+            .hhk-fc-title::after {
+                /* generic arrow */
+                content: "";
+                position: absolute;
+                top: 50%;
+                margin-top: -5px;
+                border: 5px solid #000;
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+                opacity: .9;
+            }
         </style>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";}?>>

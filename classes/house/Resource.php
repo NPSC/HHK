@@ -168,7 +168,7 @@ order by r.Util_Priority;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
             $resArray[$r['idRes']] = array(
                 "maxOcc"=>$r['Max_Occupants'],
                 "rate"=>$r['Rate'],
-                "title"=>$r['Title'],
+                "title"=> htmlspecialchars($r['Title'], ENT_QUOTES),
                 'key' => $r['Key_Deposit'],
                 'status' => $r["Status"]
                 );
@@ -281,7 +281,7 @@ order by r.Util_Priority;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
     }
 
     public function getTitle() {
-        return $this->resourceRS->Title->getStoredVal();
+        return htmlspecialchars_decode($this->resourceRS->Title->getStoredVal(), ENT_QUOTES);
     }
 
     public function getUtilizationCategory() {

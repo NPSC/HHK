@@ -127,8 +127,6 @@ WHERE r.Email_Receipt = 1 and
             $toAddr = $rows[0]['Email'];
             $guestName = ' to ' . $rows[0]['Name_Full'];
             $guestHasEmail = TRUE;
-        } else {
-            $toAddr = $fromAddr;
         }
 
         $toAddrSan = filter_var($toAddr, FILTER_SANITIZE_EMAIL);

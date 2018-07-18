@@ -324,6 +324,7 @@ class Family {
         $mk1 = '';
         $trs = array();
         $copyGuests = array();
+        $familyName = '';
 
         $AdrCopyDownIcon = HTMLContainer::generateMarkup('ul'
                     ,  HTMLContainer::generateMarkup('li',
@@ -371,12 +372,17 @@ class Family {
         // List each member
         foreach ($this->roleObjs as $role) {
 
+            $idPrefix = $role->getRoleMember()->getIdPrefix();
+
+            if ($rData->getPsgMember($idPrefix)->isPrimaryGuest()) {
+                $familyName = $role->getRoleMember()->get_lastName();
+            }
+
             // Skip the patient who was taken care of above
             if ($role->getIdName() > 0 && $role->getIdName() == $this->getPatientId()) {
                 continue;
             }
 
-            $idPrefix = $role->getRoleMember()->getIdPrefix();
 
             if ($rowClass == 'odd') {
                 $rowClass = 'even';
@@ -396,9 +402,9 @@ class Family {
                     . ($role->getIdName() == 0 ? HTMLTable::makeTd($removeIcons) : '')
                     , array('class'=>$rowClass));
 
-            if ($role->getRoleMember()->getMemberFullName() != '') {
-                $copyGuests[] = array(0=>$role->getIdName(), 1=>$role->getRoleMember()->getMemberFullName() );
-            }
+//            if ($role->getRoleMember()->getMemberFullName() != '') {
+//                $copyGuests[] = array(0=>$role->getIdName(), 1=>$role->getRoleMember()->getMemberFullName() );
+//            }
 
             // Demographics
             if ($uS->ShowDemographics) {
@@ -417,9 +423,9 @@ class Family {
                 HTMLContainer::generateMarkup('span', 'Add people - Name search: ')
                 .HTMLInput::generateMarkup('', array('id'=>'txtPersonSearch', 'style'=>'margin-right:2em;', 'title'=>'Enter the first three characters of the person\'s last name'))
 
-                .HTMLContainer::generateMarkup('span', '- Add a copy of a guest: ')
-                .HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($copyGuests, '', TRUE), array('id'=>'selCopyGuest', 'style'=>'margin-right:.3em;'))
-                .HTMLInput::generateMarkup('Copy', array('id'=>'btnCopyGuest','type'=>'button'))
+//                .HTMLContainer::generateMarkup('span', '- Add a copy of a guest: ')
+//                .HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($copyGuests, '', TRUE), array('id'=>'selCopyGuest', 'style'=>'margin-right:.3em;'))
+//                .HTMLInput::generateMarkup('Copy', array('id'=>'btnCopyGuest','type'=>'button'))
                 , array('id'=>'divPersonSearch', 'style'=>'margin-top:10px;'));
 
 
@@ -430,12 +436,12 @@ class Family {
                     HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', $rData->getWlNotesLabel(), array('style'=>'font-weight:bold;'))
                 . HTMLContainer::generateMarkup('textarea', $resvRs->Checkin_Notes->getStoredVal(), array('name'=>'taCkinNotes', 'rows'=>'2', 'style'=>'width:100%')),
-                array('class'=>'hhk-panel', 'style'=>'margin-top:10px; font-size:.9em;'));
+                array('class'=>'hhk-panel', 'style'=>'margin-top:10px; margin-bottom:10px; font-size:.9em;'));
         }
 
         // Header
         $hdr = HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup('span', 'Family ')
+            HTMLContainer::generateMarkup('span', $familyName . ' Family')
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
         return array('hdr'=>$hdr, 'tblHead'=>$th, 'tblBody'=>$trs, 'adtnl'=>$mk1, 'mem'=>$rData->getMembersArray(), 'addrs'=>$this->getAddresses($this->roleObjs), 'tblId'=>FAMILY::FAM_TABLE_ID);

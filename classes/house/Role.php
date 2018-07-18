@@ -165,7 +165,7 @@ abstract class Role {
         } else {
 
             $td = HTMLTable::makeTd($stay->createStayButton($this->getRoleMember()->getIdPrefix())
-                    , array('title'=>'Id: ' . $this->getIdName()))
+                    , array('title'=>'Id: ' . $this->getIdName(), 'id'=>'sb' . $this->getRoleMember()->getIdPrefix()))
                 . HTMLTable::makeTd($stay->createPrimaryGuestRadioBtn($this->getRoleMember()->getIdPrefix()));
         }
 

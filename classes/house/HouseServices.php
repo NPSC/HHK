@@ -1895,6 +1895,7 @@ class HouseServices {
         $psg = null;
         $oldResvId = 0;
         $labels = new Config_Lite(LABEL_FILE);
+        $config = new Config_Lite(ciCFG_FILE);
 
         // Not Claiming a reservation?
         if ($idReserv == 0 && $addRoom === FALSE) {
@@ -1921,7 +1922,7 @@ class HouseServices {
             // Look for a reservation
             if ($idPsg > 0) {
 
-                $dataArray = ReservationSvcs::reservationChooser($dbh, $id, $idPsg, $uS->guestLookups['ReservStatus'], $labels, $uS->ResvEarlyArrDays);
+                $dataArray = ReservationSvcs::reservationChooser($dbh, $id, $idPsg, $uS->guestLookups['ReservStatus'], $labels, $config->getString("house", "ReservationPage", "Referral.php"), $uS->ResvEarlyArrDays);
                 if (count($dataArray) > 0) {
                     $dataArray['role'] = $role;
                     return $dataArray;
@@ -2685,7 +2686,8 @@ from
 
             // If there are other reservations, then we may be adding a room
             if (count($visits) >= $uS->RoomsPerPatient) {
-                throw new Hk_Exception_Runtime('Maximum Rooms per ' . $labels->getString('MemberType', 'patient', 'Patient') . ' is exceeded.  ');
+                $dataArray['warning'] = 'Maximum Rooms per ' . $labels->getString('MemberType', 'patient', 'Patient') . ' is exceeded.  ';
+                return $dataArray;
             }
 
             // We need a primary guest.

@@ -324,9 +324,9 @@ class ReserveData {
         return $this;
     }
 
-//    public function setMembersObj($obj) {
-//        $this->psgMembers = $obj;
-//    }
+    public function setPsgMembers($obj) {
+        $this->psgMembers = $obj;
+    }
 
     public function setIdResv($idResv) {
         if ($idResv < 0) {
@@ -619,7 +619,7 @@ class PSGMemVisit extends PSGMemStay {
         $this->setNotStaying();
     }
 
-    public function createMarkup($prefix) {
+    public function createStayButton($prefix) {
 
         if (isset($this->index['idVisit']) && isset($this->index['Visit_Span'])) {
             return HTMLInput::generateMarkup('In Visit', array('type'=>'button', 'class'=>'hhk-getVDialog', 'data-vid'=>$this->index['idVisit'], 'data-span'=>$this->index['Visit_Span']));
@@ -632,7 +632,7 @@ class PSGMemVisit extends PSGMemStay {
 
 class PSGMemResv extends PSGMemVisit {
 
-    public function createMarkup($prefix) {
+    public function createStayButton($prefix) {
 
         if (isset($this->index['idReservation']) && isset($this->index['idPsg'])) {
             return HTMLContainer::generateMarkup('a', (isset($this->index['label']) ? $this->index['label'] : 'Reservation')

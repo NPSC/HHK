@@ -204,9 +204,8 @@ class VisitCharges {
 
 
         // Should we charge a visit fee now?
-        if (($this->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0) &&
-                $visitFeeCharge > 0 && $visitFeeCharge > ($this->getVisitFeesPaid() + $this->getVisitFeesPending())) {
-            $this->visitFeeCharged = $visitFeeCharge - ($this->getVisitFeesPaid() + $this->getVisitFeesPending());
+        if ($visitFeeCharge > 0 && ($this->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == '' || $this->getVisitFeesPaid() + $this->getVisitFeesPending() > 0)) {
+            $this->visitFeeCharged = $visitFeeCharge;
         }
 
         return $this;

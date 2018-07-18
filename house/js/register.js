@@ -1014,6 +1014,11 @@ $(document).ready(function () {
                 // visits
                 } else if (event.idVisit !== undefined) {
                     element.prop('title', event.fullName + ', Room: ' + resource.title + ', Status: ' + event.visitStatus + (shoHospitalName ? ', Hospital: ' + event.hospName : ''));
+                    
+                    if (event.extended !== undefined && event.extended) {
+                        element.find('div.fc-content')
+                            .append($('<span style="float:right;margin-right:5px;" class="hhk-fc-title"/>'));
+                    }
 
                 // Out of service
                 } else if (event.kind === 'oos') {

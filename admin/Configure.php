@@ -514,7 +514,7 @@ $(document).ready(function () {
                 <div id="patch" class="ui-tabs-hide">
                     <div class="hhk-member-detail">
                         <p style="color:red;"><?php echo $errorMsg; ?></p>
-                        <p>Database:</p>
+                        <p>Database: <?php echo $uS->dbms; ?></p>
                         <p>URL: <?php echo $uS->databaseURL; ?></p>
                         <p>Schema: <?php echo $uS->databaseName; ?></p>
                         <p>User: <?php echo $uS->databaseUName; ?></p>
@@ -523,12 +523,11 @@ $(document).ready(function () {
                             <input type="submit" name="btnLogs" value="View Site Log" style="margin-left:100px;margin-top:20px;"/>
                             <input type="submit" name="btnSaveSQL" value="Re-Create Tables, Views and SP's" style="margin-left:20px;margin-top:20px;"/>
                             <input type="submit" name="btnUpdate" value="Update Config" style="margin-left:20px;margin-top:20px;"/>
-
                         </form>
                         <?php echo $resultAccumulator; ?>
-                    <div style="margin-top:20px;">
-                        <?php echo $logs; ?>
-                    </div>
+                        <div style="margin-top:20px;">
+                            <?php echo $logs; ?>
+                        </div>
                     </div>
                 </div>
                 <div id="loadZip" class="ui-tabs-hide">

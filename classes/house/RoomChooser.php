@@ -398,7 +398,7 @@ class RoomChooser {
         $constraintMkup = self::createResvConstMkup($dbh, $this->resv->getIdReservation(), TRUE, '', $this->oldResvId);
 
         $ttbl = new HTMLTable();
-        $ttg = $this->getTotalGuests();
+
         $ttbl->addBodyTr( HTMLTable::makeTh("Total Guests:")
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->getTotalGuests(), array('id'=>'spnNumGuests','style'=>'font-weight:bold;')), array('style'=>'text-align:center;'))
                 .(is_null($this->selectedResource) ? '' : HTMLTable::makeTh('Room:'). HTMLTable::makeTd($this->selectedResource->getTitle(), array('style'=>'font-weight:bold;')))

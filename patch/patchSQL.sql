@@ -1,4 +1,5 @@
 
+
 ALTER TABLE `volunteer_hours` 
     ADD COLUMN `idName2` INT NOT NULL DEFAULT 0 AFTER `idName`;
 
@@ -13,6 +14,8 @@ Insert INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `T
 ('Editable_Forms', '../conf/confirmation.txt', 'Confirmation Form','js/rte-confirmation.json','',0),
 ('Editable_Forms', '../conf/survey.txt', 'Survey Form','js/rte-survey.json','',0);
 
+UPDATE `gen_lookups` set `Substitute` = 'frd' where `Table_Name` = 'rel_type' and `Code` = 'frd';
+UPDATE `gen_lookups` set `Substitute` = 'rltv' where `Table_Name` = 'rel_type' and `Code` = 'rltv';
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('registration', 'Sig_Card', 'Signature', 'y', 'm', 10);
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('registration', 'Pamphlet', 'Pamphlet', 'y', 'm', 20);
@@ -22,7 +25,10 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `T
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Room_Group', 'Type', 'Room Type', 'Room_Type');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Room_Group', 'Category', 'Room Category', 'Room_Category');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Room_Group', 'Report_Category', 'Report Category', 'Room_Rpt_Cat');
+
 delete from `gen_lookups` where `Table_Name` = 'Room_Group' and Code=, 'Floor';
+
+DELETE FROM `emergency_contact` WHERE Name_Last = '' and Name_First = '';
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CheckOutTime', '10:00', 's', 'h', 'Normal House checkout time of day.  Format hh:mm');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CheckInTime', '16:00', 's', 'h', 'Normal Hose Check in time of day in 24-hour format, hh:mm');
@@ -40,5 +46,4 @@ delete from `sys_config` where `Key` = 'NightsCount';
 -- Add pages, one call for each security group.
 call new_webpage('ws_calendar.php', 31, '', 0, 'h', '', '', 's', '', 'admin', now(), 'g', @pageId);
 call new_webpage('ws_calendar.php', 31, '', 0, 'h', '', '', 's', '', 'admin', now(), 'ga', @pageId);
-call new_webpage('ws_update.php', 2, '', 0, 'a', '', '', 's', '', 'admin', now(), 'db', @pageId);
 
