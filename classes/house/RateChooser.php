@@ -509,13 +509,13 @@ class RateChooser {
         return $resArray;
     }
 
-    public function makeVisitFeeArray(\PDO $dbh, $myVFeeAmt = 0) {
+    public function makeVisitFeeArray(\PDO $dbh, $visitFeeCharged = 0) {
 
         $codes = array();
 
         foreach (readGenLookupsPDO($dbh, 'Visit_Fee_Code') as $r) {
 
-            if ($r['Type'] != GlTypeCodes::Archive || $myVFeeAmt >= 0) {
+            if ($r['Type'] != GlTypeCodes::Archive || $visitFeeCharged == $r['Substitute']) {
                 $codes[$r['Code']] = $r;
             }
         }
@@ -523,7 +523,7 @@ class RateChooser {
         return $codes;
     }
 
-    public function makeVisitFeeSelector($vFeesArray, $myVFeeAmt, $class = '', $name = 'selVisitFee') {
+    public function makeVisitFeeSelector($vFeesArray, $visitFeeCharged, $class = '', $name = 'selVisitFee') {
 
         $uS = Session::getInstance();
 
@@ -532,7 +532,7 @@ class RateChooser {
 
         foreach ($vFeesArray as $r) {
             $vFeeOpts[$r[0]] = array(0=>$r[0], 1=>$r[1] . ($r[2] == 0 ? '' :  ': $' . number_format($r[2], 0)));
-            if ($myVFeeAmt == $r[2]) {
+            if ($visitFeeCharged == $r[2]) {
                 $selectedVfeeOption = $r[0];
             }
         }
@@ -577,7 +577,7 @@ where
 
     protected function createBasicChooserMarkup(\PDO $dbh, \Reservation_1 $resv, $nites, $visitFeeTitle) {
 		$uS = Session::getInstance();
-		
+
 		if($uS->VisitFee && ($resv->getExpectedDaysDt(new DateTime($resv->getArrival()), new DateTime($resv->getDeparture())) > $uS->VisitFeeDelayDays)){
 			$this->payVisitFee = TRUE;
 		}else{

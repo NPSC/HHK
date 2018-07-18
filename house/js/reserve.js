@@ -156,21 +156,6 @@ function PageManager(initData) {
             getReserve(resv);
 
         }
-        
-        function addGuestCopy(idName) {
-            
-            if (idName < 1 || people.findItem('id', idName) === null) {
-                flagAlertMessage('No one to copy. ', true);
-                return;
-            }
-
-            var resv = {
-                id: idName,
-                cmd: 'copyThinGuest'
-            };
-
-            getReserve(resv);
-        }
 
         function verifyAddress(prefix) {
 
@@ -586,10 +571,6 @@ function PageManager(initData) {
                 });
 
 
-                // Copy Guest button
-//                $('#btnCopyGuest').button().click(function () {
-//                    addGuestCopy($('#selCopyGuest').val());
-//                });
 
                 // Relationship chooser
                 $('#' + divFamDetailId).on('change', '.patientRelch', function () {

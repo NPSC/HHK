@@ -220,7 +220,7 @@ $resvObjEncoded = json_encode($resvAr);
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
-        <?php echo $menuMarkup; ?>
+        <?php echo $wInit->generatePageMenu() ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?> <span id="spnStatus" sytle="margin-left:50px; display:inline;"></span></h1>
             <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
@@ -253,7 +253,6 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="keysfees" style="font-size: .85em;"></div>
-
 
         </div>
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>

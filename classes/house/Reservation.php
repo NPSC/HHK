@@ -124,11 +124,6 @@ abstract class Reservation {
         return array();
     }
 
-    public function copyPerson(\PDO $dbh) {
-
-        return array();
-    }
-
     public static function updateAgenda(\PDO $dbh, $post) {
 
 
@@ -833,10 +828,6 @@ class BlankReservation extends Reservation {
         return $this->reserveData->toArray();
     }
 
-    public function copyPerson(\PDO $dbh) {
-        return array('error'=>'Not Implemented.');
-    }
-
 }
 
 class ActiveReservation extends BlankReservation {
@@ -1041,7 +1032,11 @@ class ReserveSearcher extends ActiveReservation {
 
     public function createMarkup(\PDO $dbh) {
 
-        $this->resvChooserMarkup($dbh);
+        $data = $this->resvChooserMarkup($dbh);
+
+        if (is_array($data)) {
+            return $data;
+        }
 
         return $this->reserveData->toArray();
 

@@ -1183,6 +1183,87 @@ CREATE TABLE if not exists `neon_type_map` (
 
 
 -- -----------------------------------------------------
+-- Table `note`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `note` (
+  `idNote` INT NOT NULL AUTO_INCREMENT,
+  `User_Name` VARCHAR(45) NOT NULL,
+  `Note_Category` VARCHAR(15) NULL,
+  `Note_Type` VARCHAR(15) NULL,
+  `Title` VARCHAR(145) NULL,
+  `Note_Text` TEXT NULL,
+  `Updated_By` VARCHAR(45) NULL,
+  `Last_Updated` DATETIME NULL,
+  `Status` VARCHAR(5) NOT NULL DEFAULT 'a',
+  `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idNote`),
+  INDEX `INDEX_USERNAME` (`User_Name` ASC)
+ ) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `note_comment`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `note_comment` (
+  `idNote_omment` INT NOT NULL AUTO_INCREMENT,
+  `Note_Id` INT NULL,
+  `Comment` TEXT NULL,
+  `User_Name` VARCHAR(45) NOT NULL,
+  `Updated_By` VARCHAR(45) NULL,
+  `Last_Updated` DATETIME NULL,
+  `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idNote_omment`),
+  INDEX `INDEX_NOTE_ID` (`Note_Id` ASC),
+  INDEX `INDEX_USERNAME` (`User_Name` ASC)
+) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `note_group`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `note_group` (
+  `Note_Id` INT NOT NULL,
+  `Group_Id` VARCHAR(5) NOT NULL,
+  PRIMARY KEY (`Note_Id`, `Group_Id`)
+) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `registration_note`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `registration_note` (
+  `idRegistration_note` INT NOT NULL,
+  `Registration_Id` INT NOT NULL,
+  `Reservation_Id` INT NOT NULL,
+  `Note_Id` INT NOT NULL,
+  PRIMARY KEY (`idRegistration_note`),
+  INDEX `INDEX_REGISTRATION` (`Registration_Id` ASC),
+  INDEX `INDEX_RESERVATION` (`Reservation_Id` ASC)
+) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `psg_note`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `psg_note` (
+  `Psg_Id` INT NOT NULL,
+  `Note_Id` INT NOT NULL,
+  PRIMARY KEY (`Psg_Id`, `Note_Id`)
+) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `member_note`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `member_note` (
+  `idName` INT NOT NULL,
+  `Note_Id` INT NOT NULL,
+  PRIMARY KEY (`idName`, `Note_Id`)
+) ENGINE = InnoDB;
+
+
+
+-- -----------------------------------------------------
 -- Table `page`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `page` (

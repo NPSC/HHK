@@ -2686,7 +2686,8 @@ from
 
             // If there are other reservations, then we may be adding a room
             if (count($visits) >= $uS->RoomsPerPatient) {
-                throw new Hk_Exception_Runtime('Maximum Rooms per ' . $labels->getString('MemberType', 'patient', 'Patient') . ' is exceeded.  ');
+                $dataArray['warning'] = 'Maximum Rooms per ' . $labels->getString('MemberType', 'patient', 'Patient') . ' is exceeded.  ';
+                return $dataArray;
             }
 
             // We need a primary guest.

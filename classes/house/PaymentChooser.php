@@ -234,7 +234,7 @@ class PaymentChooser {
         $labels = new Config_Lite(LABEL_FILE);
 
         $useVisitFee = FALSE;
-        if($uS->VisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0)){
+        if($uS->VisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == '')){
                 $useVisitFee = TRUE;
         }
 

@@ -145,7 +145,8 @@ class VisitView {
 
             $rateChooser = new RateChooser($dbh);
 
-            $vFeeSelector = $rateChooser->makeVisitFeeSelector($rateChooser->makeVisitFeeArray($dbh, $visitCharge->getVisitFeeCharged()), $visitCharge->getVisitFeeCharged(), 'hhk-feeskeys');
+            $vFeeSelector = $rateChooser->makeVisitFeeSelector(
+                    $rateChooser->makeVisitFeeArray($dbh, $visitCharge->getVisitFeeCharged()), $visitCharge->getVisitFeeCharged(), 'hhk-feeskeys');
 
             $th .= HTMLTable::makeTh($labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
             $tr .= HTMLTable::makeTd($vFeeSelector);
@@ -586,8 +587,8 @@ class VisitView {
         }
 
         $includeVisitFee = FALSE;
-        if ($uS->VisitFee && ($action == '' || $action == 'pf') && $visitCharge->getVisitFeeCharged() > 0 && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0)) {
-            $includeVisitFee = $uS;
+        if ($uS->VisitFee && ($action == '' || $action == 'pf') && $visitCharge->getVisitFeeCharged() > 0) {
+            $includeVisitFee = TRUE;
         }
 
         $includeAddnlCharge = FALSE;
@@ -743,10 +744,10 @@ class VisitView {
                 + $totalMOA
                 + $totalDiscounts;
 
-            //if show visit fee
-            if($showVisitFee){
-	            $totalCharged += $visitCharge->getVisitFeeCharged();
-            }
+        //if show visit fee
+        if($showVisitFee){
+                $totalCharged += $visitCharge->getVisitFeeCharged();
+        }
 
         // Subtotal line
         if ($showSubTotal) {
