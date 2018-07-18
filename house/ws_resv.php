@@ -159,7 +159,7 @@ try {
                 array( 'db' => 'Note_Id', 'dt' => 'NoteId')
             );
 
-            return SSP::complex ( $_GET, $dbh, "vresv_notes", 'Note_Id', $columns, null, "Reservation_Id=$rid" );
+            $events = SSP::complex ( $_GET, $dbh, "vresv_notes", 'Note_Id', $columns, null, "Reservation_Id=$rid" );
         }
 
         break;

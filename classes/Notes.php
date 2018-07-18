@@ -13,8 +13,55 @@
  *
  * @author Eric
  */
-class Notes {
 
+class Note {
+
+    private $idNote;
+    private $noteRS;
+
+    public function __construct($idNote) {
+        $this->idNote = $idNote;
+        $this->noteRS = new NoteRs();
+    }
+
+    protected function loadNote(\PDO $dbh) {
+
+        if ($this->idNote > 0) {
+            $noteRS = new NoteRs();
+            $noteRS->idNote->setStoredVal($this->idNote);
+            $rows = EditRS::select($dbh, $this->noteRS, array($this->noteRS->idNote));
+
+            if (count($rows) == 1) {
+                EditRS::loadRow($rows[0], $this->noteRS);
+                return TRUE;
+            }
+        }
+
+        return FALSE;
+    }
+
+
+    public function createNote(\PDO $dbh, $username, $noteText, $category, $noteType ) {
+
+        $this->noteRS = new NoteRs();
+        $this->noteRS->User_Name->setNewVal($username);
+        $this->noteRS->Note_Text->setNewVal($noteText);
+        $this->noteRS->Note_Category->setNewVal($category);
+        $this->noteRS->Note_Type->setNewVal($noteType);
+
+        $this->idNote = EditRS::insert($dbh, $this->noteRS);
+
+    }
+
+    public function updateNote(\PDO $dbh, $username, $noteText, $category) {
+
+        if ($this->loadNote($dbh)) {
+
+            $this->noteRS->Updated_By->setNewVal($username);
+        }
+    }
+}
+class Notes {
 
 
     public static function markupShell($notesText, $taId, $txtboxRows = '1', $taClass = 'hhk-feeskeys') {
