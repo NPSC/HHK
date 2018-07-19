@@ -1,12 +1,2 @@
 
-Move client images to conf/
-receiptlogo.png
-registrationLogo.png
-hostpaylogo
-toplogo
-vol_background
-
-Change the path of the image files in the system configuration file, financial section.
-
-Change the names of the forms templates to .txt
 

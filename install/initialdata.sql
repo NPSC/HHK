@@ -214,6 +214,14 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('NoReturnReason', 'n1', 'Irresponsible', '', 'h',0),
 
+('Note_Category', 'ncr', 'Reservation', '', 'h', 0),
+('Note_Category', 'ncf', 'PSG', '', 'h', 0),
+('Note_Category', 'ncv', 'Visit', '', 'h', 0),
+('Note_Category', 'ncg', 'Guest', '', 'h', 0),
+('Note_Category', 'ncp', 'Patient', '', 'h', 0),
+
+('Note_Type', 'ntxt', 'Text', '', '', 0),
+
 ('OOS_Codes', 'sb', 'Sewer Backup','','h',0),
 ('OOS_Codes', 'ar', 'Appliance Repair','','h',0),
 ('OOS_Codes', 'sr', 'Structural Repair','','h',0),
