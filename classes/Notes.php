@@ -19,7 +19,7 @@ class Note {
     private $idNote;
     private $noteRS;
 
-    public function __construct($idNote) {
+    public function __construct($idNote = 0) {
         $this->idNote = $idNote;
         $this->noteRS = new NoteRs();
     }

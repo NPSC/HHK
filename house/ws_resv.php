@@ -156,7 +156,8 @@ try {
                 array( 'db' => 'Timestamp',  'dt' => 'Date' ),
                 array( 'db' => 'User_Name',   'dt' => 'User' ),
                 array( 'db' => 'Note_Text', 'dt' => 'Note'),
-                array( 'db' => 'Note_Id', 'dt' => 'NoteId')
+                array( 'db' => 'Note_Id', 'dt' => 'NoteId'),
+                array( 'db' => 'Action', 'dt' => 'Action')
             );
 
             $events = SSP::complex ( $_GET, $dbh, "vresv_notes", 'Note_Id', $columns, null, "Reservation_Id=$rid" );
