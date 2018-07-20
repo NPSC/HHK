@@ -9,117 +9,19 @@
  */
 require ("homeIncludes.php");
 
-require (CLASSES . 'History.php');
-require (CLASSES . 'CreateMarkupFromDB.php');
 
 require (DB_TABLES . 'GenLookupsRS.php');
-require (DB_TABLES . 'registrationRS.php');
-require (DB_TABLES . 'AttributeRS.php');
-require (DB_TABLES . 'ReservationRS.php');
-require (DB_TABLES . 'ItemRS.php');
-
-
-require (HOUSE . 'VisitLog.php');
-require (HOUSE . 'RoomLog.php');
-require (HOUSE . 'Room.php');
+require CLASSES . 'TableLog.php';
 require (CLASSES . 'HouseLog.php');
-require (CLASSES . 'Purchase/RoomRate.php');
-require (CLASSES . 'FinAssistance.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'ResourceView.php');
-require (HOUSE . 'Attributes.php');
-require (HOUSE . 'Constraint.php');
 
 
 try {
     $wInit = new webInit();
+    $wInit->sessionLoadGenLkUps();
+    $wInit->sessionLoadGuestLkUps();
+
 } catch (Exception $exw) {
     die($exw->getMessage());
-}
-
-function saveArchive(\PDO $dbh, $desc, $subt, $tblName) {
-
-    $defaultCode = '';
-
-    if (isset($desc)) {
-
-        $uS = Session::getInstance();
-
-        foreach ($desc as $k => $r) {
-
-            $code = trim(filter_var($k, FILTER_SANITIZE_STRING));
-
-            if ($code == '' || $tblName == '') {
-                continue;
-            }
-
-            $glRs = new GenLookupsRS();
-            $glRs->Table_Name->setStoredVal($tblName);
-            $glRs->Code->setStoredVal($code);
-            $rows = EditRS::select($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
-
-            if (count($rows) < 1) {
-                continue;
-            }
-
-            EditRS::loadRow($rows[0], $glRs);
-
-            $newDesc = '';
-
-            if ($r != '') {
-                $newDesc = filter_var($r, FILTER_SANITIZE_STRING);
-            } else {
-                continue;
-            }
-
-            if (isset($subt[$code])) {
-                $newSubt = filter_var($subt[$code], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-            } else {
-                continue;
-            }
-
-            // Check if value changed.
-            if ($glRs->Substitute->getStoredVal() != $newSubt) {
-
-                // Create new entry
-                $newRs = new GenLookupsRS();
-                $defaultCode = incCounter($dbh, 'codes');
-
-                $newRs->Table_Name->setNewVal($tblName);
-                $newRs->Code->setNewVal($defaultCode);
-                $newRs->Description->setNewVal($newDesc);
-                $newRs->Substitute->setNewVal($newSubt);
-
-                EditRS::insert($dbh, $newRs);
-                $logText = HouseLog::getInsertText($newRs, $tblName);
-                HouseLog::logGenLookups($dbh, $tblName, $defaultCode, $logText, 'insert', $uS->username);
-
-                // Update Old
-                $glRs->Type->setNewVal(GlTypeCodes::Archive);
-
-                $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
-                $logTextu = HouseLog::getUpdateText($glRs, $tblName . $code);
-                HouseLog::logGenLookups($dbh, $tblName, $code, $logTextu, 'update', $uS->username);
-
-            } else {
-
-                // update
-                if ($newDesc != '') {
-                    $glRs->Description->setNewVal($newDesc);
-                }
-
-                $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
-
-                if ($ctr > 0) {
-                    $logText = HouseLog::getUpdateText($glRs, $tblName . $code);
-                    HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'update', $uS->username);
-                }
-
-            }
-        }
-    }
-
-    return $defaultCode;
 }
 
 function getSelections(\PDO $dbh, $tableName, $type) {
@@ -195,13 +97,9 @@ function getSelections(\PDO $dbh, $tableName, $type) {
 
 
 $dbh = $wInit->dbh;
-$pageTitle = $wInit->pageTitle;
-
 $menuMarkup = $wInit->generatePageMenu();
 
 // Load the session with member - based lookups
-$wInit->sessionLoadGenLkUps();
-$wInit->sessionLoadGuestLkUps();
 $uS = Session::getInstance();
 
 // Kick out 'Guest' Users
@@ -298,161 +196,25 @@ if (isset($_POST['table'])) {
 
         $rep = NULL;
 
-        $demos = readGenLookupsPDO($dbh, 'Demographics');
-
-        // Define the return functions.
-        if (isset($demos[$tableName])) {
-
-            if ($tableName == 'Gender') {
-                $rep = function($dbh, $newId, $oldId, $tableName) {
-                    return $dbh->exec("update name set `$tableName` = '$newId' where `$tableName` = '$oldId';");
-                };
-            } else {
-                $rep = function($dbh, $newId, $oldId, $tableName) {
-                    return $dbh->exec("update name_demog set `$tableName` = '$newId' where `$tableName` = '$oldId';");
-                };
-            }
-
-        } else {
-            switch ($tableName) {
-
-                case 'Patient_Rel_Type':
-
-                    $rep = function($dbh, $newId, $oldId) {
-                        return $dbh->exec("update name_guest set Relationship_Code = '$newId' where Relationship_Code = '$oldId';");
-                    };
-
-                    $verify = "Select n.Relationship_Code from name_guest n left join gen_lookups g on n.Relationship_Code = g.Code Where g.Table_Name = 'Patient_Rel_Type' and g.Code is null;";
-                    break;
-
-                case 'Diagnosis':
-
-                    $rep = function($dbh, $newId, $oldId) {
-                        return $dbh->exec("update hospital_stay set Diagnosis = '$newId' where Diagnosis = '$oldId';");
-                    };
-
-                    $verify = "select hs.Diagnosis from hospital_stay hs left join gen_lookups g on hs.Diagnosis = g.Code where g.Table_Name = 'Diagnosis' and g.Code is null;";
-                    break;
-
-                case 'Location':
-
-                    $rep = function($dbh, $newId, $oldId) {
-                        return $dbh->exec("update hospital_stay set Location = '$newId' where Location = '$oldId';");
-                    };
-                    break;
-
-                case 'OSS_Codes':
-
-                    $rep = function($dbh, $newId, $oldId) {
-                        return $dbh->exec("update resource_use set OSS_Code = '$newId' where OSS_Code = '$oldId';");
-                    };
-                    break;
-
-                case 'Utilization_Category':
-
-                    $rep = function($dbh, $newId, $oldId) {
-                        return $dbh->exec("update resource set Utilization_Category = '$newId' where Utilization_Category = '$oldId';");
-                    };
-                    break;
-
-                case 'Ins_Type':
-
-                    $rep = function($dbh, $newId, $oldId) {
-                        return $dbh->exec("update insurance set `Type` = '$newId' where `Type` = '$oldId';");
-                    };
-                    break;
-
-                case 'Room_Cleaning_Days':
-
-                    $rep = function($dbh, $newId, $oldId) {
-                        return $dbh->exec("update room set `Cleaning_Cycle_Code` = '$newId' where `Cleaning_Cycle_Code` = '$oldId';");
-                    };
-                    break;
-
-                case 'NoReturnReason':
-
-                    $rep = function($dbh, $newId, $oldId) {
-                        return $dbh->exec("update name_demog set `No_Return` = '$newId' where `No_Return` = '$oldId';");
-                    };
-                    break;
-            }
-        }
 
         $amounts = array();
-        if (isset($_POST['txtDiagAmt'])) {
-
-            foreach ($_POST['txtDiagAmt'] as $k => $a) {
-                if (is_numeric($a)) {
-                    $a = abs($a);
-                }
-
-                $amounts[$k] = $a;
-            }
-        }
 
         $codeArray = filter_var_array($_POST['txtDiag'], FILTER_SANITIZE_STRING);
         $orderNums = filter_var_array($_POST['txtDOrder'], FILTER_SANITIZE_NUMBER_INT);
 
-        if ($type === 'm') {
+        replaceGenLk($dbh, $tableName, $codeArray, $amounts, $orderNums, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : NULL), $rep, (isset($_POST['cbDiagDel']) ? $_POST['selDiagDel'] : array()));
 
-            foreach ($codeArray as $c => $v) {
-
-                $gluRs = new GenLookupsRS();
-                $gluRs->Table_Name->setStoredVal($tableName);
-                $gluRs->Code->setStoredVal($c);
-
-                $rw = EditRS::select($dbh, $gluRs, array($gluRs->Table_Name, $gluRs->Code));
-
-                if (count($rw) == 1) {
-
-                    $gluRs = new GenLookupsRS();
-                    EditRS::loadRow($rw[0], $gluRs);
-
-                    $use = '';
-                    if (isset($_POST['cbDiagDel'][$c])) {
-                        $use = 'y';
-                    }
-
-                    $orderNumber = 0;
-                    if (isset($_POST['txtDOrder'][$c])) {
-                        $orderNumber = intval(filter_var($_POST['txtDOrder'][$c], FILTER_SANITIZE_NUMBER_INT), 10);
-                    }
-
-                    $desc = '';
-                    if (isset($_POST['txtDiag'][$c])) {
-                        $desc = filter_var($_POST['txtDiag'][$c], FILTER_SANITIZE_STRING);
-                    }
-
-                    $gluRs->Description->setNewVal($desc);
-                    $gluRs->Substitute->setNewVal($use);
-                    $gluRs->Order->setNewVal($orderNumber);
-
-                    $upCtr = EditRS::update($dbh, $gluRs, array($gluRs->Table_Name, $gluRs->Code));
-
-                    if ($upCtr > 0) {
-
-                        $logText = HouseLog::getUpdateText($gluRs);
-                        HouseLog::logGenLookups($dbh, $tableName, $c, $logText, "update", $uS->username);
-                    }
-                }
-            }
-        } else {
-            replaceGenLk($dbh, $tableName, $codeArray, $amounts, $orderNums, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : NULL), $rep, (isset($_POST['cbDiagDel']) ? $_POST['selDiagDel'] : array()));
-        }
     }
 
 
     // Generate selectors.
-    $tbl = getSelections($dbh, $tableName, $type);
+    $tbl = getSelections($dbh, $tableName, 'u');
 
     echo($tbl->generateMarkup());
     exit();
 }
 
 
-//
-// Generate tab content
-//
 // General Lookup categories
 $stmt2 = $dbh->query("select distinct `Type`, `Table_Name` from gen_lookups where `Table_Name` in ('Diagnosis', 'Location');");
 $rows2 = $stmt2->fetchAll(PDO::FETCH_NUM);
@@ -473,81 +235,64 @@ foreach ($rows2 as $r) {
 
 }
 
-$selLookups = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($lkups, ''), array('name' => 'sellkLookup', 'class' => 'hhk-selLookup'));
-
-
-
-// Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("uh-oh");
-
-$resultMessage = $alertMsg->createMarkup();
+$selLookups = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($lkups, ''), array('name' => 'selLookup', 'class' => 'hhk-selLookup'));
 ?>
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title><?php echo $pageTitle; ?></title>
+        <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
-        <?php echo JQ_DT_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-        <?php echo RTE_CSS; ?>
         <?php echo FAVICON; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo RTE_JS; ?>"></script>
         <script type="text/javascript">
     $(document).ready(function () {
         "use strict";
 
-        $('.hhk-selLookup').change(function () {
-            var $sel = $(this),
-                table = $(this).find("option:selected").text(),
+        $('#selLookup').change(function () {
+            var table = $(this).find("option:selected").text(),
                 type = $(this).val();
 
-            if ($sel.data('type') === 'd') {
-                table = $sel.val();
-                type = 'd';
-            }
-
-            $.post('ResourceBuilder.php', {table: table, cmd: "load", tp: type},
-                    function (data) {
-                        $sel.closest('form').children('div').children().remove();
-                        if (data) {
-                            $sel.closest('form').children('div').append(data);
-                        }
-                    });
+            $('#saveMsg').hide();
+            $('#divlk').empty().text('Loading...');
+            $.post('DiagnosisBuilder.php', {table: table, cmd: "load", tp: type},
+                function (data) {
+                    $('#divlk').empty();
+                    if (data) {
+                        $('#divlk').append(data);
+                    }
+                });
         });
 
-        $('.hhk-saveLookup').click(function () {
-            var $btn = $(this).closest('form');
-            var sel = $btn.find('select.hhk-selLookup');
-            var table = sel.find('option:selected').text(),
-                type = $btn.find('select').val();
+        $('#btnlkSave').click(function () {
 
-            if (sel.data('type') === 'd') {
-                table = sel.val();
-                type = 'd';
+            var sel = $('#selLookup');
+            var table = sel.find('option:selected').text(),
+                type = $('#selLookup').val(),
+                $btn = $(this);
+
+            $('#saveMsg').hide();
+
+            if ($btn.val() === 'Saving...') {
+                return;
             }
 
-            $.post('ResourceBuilder.php', $btn.serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
+            $btn.val('Saving...');
+
+            $.post('DiagnosisBuilder.php', $('#formlk').serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
                 function(data) {
+                    $btn.val('Save');
+                    $('#divlk').empty();
                     if (data) {
-                        $btn.children('div').children().remove().end().append(data);
+                        $('#divlk').append(data);
+                        $('#saveMsg').text(table + ' saved').show();
                     }
                 });
         }).button();
-
-
 
         // Add diagnosis and locations
         if ($('#btnAddDiags').length > 0) {
@@ -556,7 +301,6 @@ $resultMessage = $alertMsg->createMarkup();
         if ($('#btnAddLocs').length > 0) {
             $('#btnAddLocs').button();
         }
-
 
     });
         </script>
@@ -567,25 +311,23 @@ $resultMessage = $alertMsg->createMarkup();
             <div style="float:left; margin-right: 100px; margin-top:10px;">
                 <h1><?php echo $wInit->pageHeading; ?></h1>
             </div>
-<?php echo $resultMessage ?>
-
             <div id="lkTable" class="hhk-tdbox hhk-visitdialog" style="clear:left;font-size: .9em;margin-top:20px;">
-
-                    <form method="POST" action="ResourceBuilder.php" id="formlk">
-                        <table><tr>
-                                <th>Category</th>
-                                <td><?php echo $selLookups; ?></td>
-                            </tr></table>
-                        <div id="divlk" style="margin:10px;"></div>
-                        <span style="margin:10px;">
-                            <?php if (!$hasDiags) { ?>
-                            <input type="submit" name='btnAddDiags' id="btnAddDiags" value="Add Diagnosis"/>
-                            <?php } if (!$hasLocs) { ?>
-                            <input type="submit" id='btnAddLocs' name="btnAddLocs" value="Add Location"/>
-                            <?php } ?>
-                            <input type="button" id='btnlkSave' class="hhk-saveLookup"data-type="h" value="Save"/>
-                        </span>
-                    </form>
+                <form method="POST" action="DiagnosisBuilder.php" id="formlk">
+                    <table><tr>
+                            <th>Category</th>
+                            <td><?php echo $selLookups; ?></td>
+                        </tr></table>
+                    <p id="saveMsg" style="display:none; max-width: 50%;" class="ui-state-highlight"></p>
+                    <div id="divlk" style="margin:10px;"></div>
+                    <span style="margin:10px;">
+                        <?php if (!$hasDiags) { ?>
+                        <input type="submit" name='btnAddDiags' id="btnAddDiags" value="Add Diagnosis"/>
+                        <?php } if (!$hasLocs) { ?>
+                        <input type="submit" id='btnAddLocs' name="btnAddLocs" value="Add Location"/>
+                        <?php } ?>
+                        <input type="button" id='btnlkSave' class="hhk-saveLookup "data-type="h" value="Save"/>
+                    </span>
+                </form>
             </div>
 
         </div>  <!-- div id="contentDiv"-->

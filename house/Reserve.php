@@ -25,6 +25,7 @@ require (CLASSES . 'CleanAddress.php');
 require (CLASSES . 'AuditLog.php');
 require (CLASSES . 'PaymentSvcs.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+require CLASSES . 'TableLog.php';
 
 require (HOUSE . 'psg.php');
 require (HOUSE . 'RoleMember.php');

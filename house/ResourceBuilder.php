@@ -18,7 +18,7 @@ require (DB_TABLES . 'AttributeRS.php');
 require (DB_TABLES . 'ReservationRS.php');
 require (DB_TABLES . 'ItemRS.php');
 
-
+//require (CLASSES . 'TableLog.php');
 require (HOUSE . 'VisitLog.php');
 require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Room.php');
@@ -1648,29 +1648,40 @@ $resultMessage = $alertMsg->createMarkup();
                 type = 'd';
             }
 
+            $sel.closest('form').children('div').empty().text('Loading...');
+            $sel.prop('disabled', true);
+
             $.post('ResourceBuilder.php', {table: table, cmd: "load", tp: type},
                     function (data) {
-                        $sel.closest('form').children('div').children().remove();
+                        $sel.prop('disabled', false);
                         if (data) {
-                            $sel.closest('form').children('div').append(data);
+                            $sel.closest('form').children('div').empty().append(data);
                         }
                     });
         });
         $('.hhk-saveLookup').click(function () {
-            var $btn = $(this).closest('form');
-            var sel = $btn.find('select.hhk-selLookup');
+            var $frm = $(this).closest('form');
+            var sel = $frm.find('select.hhk-selLookup');
             var table = sel.find('option:selected').text(),
-                type = $btn.find('select').val();
+                type = $frm.find('select').val(),
+                $btn = $(this);
 
             if (sel.data('type') === 'd') {
                 table = sel.val();
                 type = 'd';
             }
 
-            $.post('ResourceBuilder.php', $btn.serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
+            if ($btn.val() === 'Saving...') {
+                return;
+            }
+
+            $btn.val('Saving...');
+
+            $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
                 function(data) {
+                    $btn.val('Save');
                     if (data) {
-                        $btn.children('div').children().remove().end().append(data);
+                        $frm.children('div').empty().append(data);
                     }
                 });
         }).button();
@@ -1833,7 +1844,7 @@ $resultMessage = $alertMsg->createMarkup();
                                     <th>Category</th>
                                     <td><?php echo $selLookups; ?></td>
                                 </tr></table>
-                            <div id="divlk"></div>
+                            <div id="divlk" class="hhk-divLk"></div>
                             <span style="margin:10px;float:right;">
                                 <?php if (!$hasDiags) { ?>
                                 <input type="submit" name='btnAddDiags' id="btnAddDiags" value="Add Diagnosis"/>
@@ -1850,7 +1861,7 @@ $resultMessage = $alertMsg->createMarkup();
                                     <th>Category</th>
                                     <td><?php echo $seldiscs; ?></td>
                                 </tr></table>
-                            <div id="divdisc"></div>
+                            <div id="divdisc" class="hhk-divLk"></div>
                             <span style="margin:10px;float:right;">
                                 <?php if (!$hasDiscounts) { ?>
                                 <input type="submit" name='btnHouseDiscs' id="btnHouseDiscs" value="Add Discounts"/>

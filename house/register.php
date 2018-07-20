@@ -37,6 +37,7 @@ require (PMT . 'Transaction.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'Purchase/RoomRate.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+require CLASSES . 'TableLog.php';
 
 require (HOUSE . 'Room.php');
 require (HOUSE . 'Resource.php');

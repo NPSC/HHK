@@ -32,7 +32,7 @@ require (CLASSES . 'Notes.php');
 require (CLASSES . 'US_Holidays.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'FinAssistance.php');
-
+require CLASSES . 'TableLog.php';
 
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
@@ -92,8 +92,7 @@ require (HOUSE . 'Vehicle.php');
 require (HOUSE . 'Visit.php');
 require (HOUSE . 'Family.php');
 require (HOUSE . "visitViewer.php");
-//require (HOUSE . 'Waitlist.php');
-//require (HOUSE . 'WaitlistSvcs.php');
+
 require (HOUSE . 'Register.php');
 require (HOUSE . 'VisitCharges.php');
 
