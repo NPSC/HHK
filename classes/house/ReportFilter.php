@@ -55,6 +55,14 @@ class ReportFilter {
     protected $reportStart;
     protected $reportEnd;
 
+    public function __construct() {
+        $this->selectedAssocs = array();
+        $this->selectedHosptials = array();
+        $this->selectedResourceGroups = array();
+        $this->selectedMonths = array();
+        $this->hospitals = array();
+    }
+
     public function createTimePeriod($defaultYear, $defaultCalendarOption, $fiscalYearDiffMonths = 0) {
         $this->months = array(
             0 => array(0, 'December'), 1 => array(1, 'January'), 2 => array(2, 'February'),

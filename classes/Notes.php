@@ -3,13 +3,13 @@
  * Notes.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 /**
- * Description of Notes
+ * Description of Note
  *
  * @author Eric
  */
@@ -19,11 +19,21 @@ class Note {
     private $idNote;
     private $noteRS;
 
-    public function __construct($idNote = 0) {
+    /**
+     *
+     * @param int $idNote
+     */
+    public function __construct($idNote) {
         $this->idNote = $idNote;
         $this->noteRS = new NoteRs();
+
     }
 
+    /**
+     *
+     * @param \PDO $dbh
+     * @return boolean
+     */
     protected function loadNote(\PDO $dbh) {
 
         if ($this->idNote > 0) {
@@ -40,27 +50,126 @@ class Note {
         return FALSE;
     }
 
+    /**
+     *
+     * @param \PDO $dbh
+     * @param string $username
+     * @param string $noteText
+     * @param string $category
+     * @param string $noteType
+     */
+    public function createNote(\PDO $dbh, $username, $noteText, $category = NoteCategory::Reservation, $noteType = NoteType::Text ) {
 
-    public function createNote(\PDO $dbh, $username, $noteText, $category, $noteType ) {
+        if ($noteText != '' && $username != '') {
+            $this->noteRS = new NoteRs();
+            $this->noteRS->User_Name->setNewVal($username);
+            $this->noteRS->Note_Text->setNewVal($noteText);
+            $this->noteRS->Note_Category->setNewVal($category);
+            $this->noteRS->Note_Type->setNewVal($noteType);
+            $this->noteRS->Status->setNewVal(NoteStatus::Active);
 
-        $this->noteRS = new NoteRs();
-        $this->noteRS->User_Name->setNewVal($username);
-        $this->noteRS->Note_Text->setNewVal($noteText);
-        $this->noteRS->Note_Category->setNewVal($category);
-        $this->noteRS->Note_Type->setNewVal($noteType);
-
-        $this->idNote = EditRS::insert($dbh, $this->noteRS);
+            $this->idNote = EditRS::insert($dbh, $this->noteRS);
+            $this->noteRS->idNote->setNewVal($this->idNote);
+            EditRS::updateStoredVals($this->noteRS);
+        }
 
     }
 
-    public function updateNote(\PDO $dbh, $username, $noteText, $category) {
+    /**
+     *
+     * @param \PDO $dbh
+     * @param string $updatedBy
+     * @param string $noteText
+     * @param string $category
+     * @return int the number of records updated.
+     */
+    public function updateNote(\PDO $dbh, $updatedBy, $noteText, $category = '') {
+
+        $counter = 0;
 
         if ($this->loadNote($dbh)) {
 
-            $this->noteRS->Updated_By->setNewVal($username);
+            if ($category != '') {
+                $this->noteRS->Note_Category->setNewVal($category);
+            }
+            $this->noteRS->Note_Text->setNewVal($noteText);
+            $this->noteRS->Status->setNewVal(NoteStatus::Active);
+            $this->noteRS->Updated_By->setNewVal($updatedBy);
+            $this->noteRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+
+            $counter = EditRS::update($dbh, $this->noteRS, array($this->noteRS->idNote));
+            EditRS::updateStoredVals($this->noteRS);
         }
+
+        return $counter;
+    }
+
+    /**
+     *
+     * @param \PDO $dbh
+     * @param string $username
+     * @return int the number of rows affected
+     */
+    public function deleteNote(\PDO $dbh, $username) {
+
+        $counter = 0;
+
+        if ($this->loadNote($dbh)) {
+
+            $this->noteRS->Status->setNewVal(NoteStatus::Deleted);
+            $this->noteRS->Updated_By->setNewVal($username);
+            $this->noteRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+
+            $counter = EditRS::update($dbh, $this->noteRS, array($this->noteRS->idNote));
+            EditRS::updateStoredVals($this->noteRS);
+
+        }
+
+        return $counter;
+    }
+
+    public function getIdNote() {
+        return $this->idNote;
+    }
+
+    public function getNoteRS() {
+        return $this->noteRS;
+    }
+
+    public function getNoteText() {
+        return $this->noteRS->Note_Text->getStoredVal();
+    }
+
+    public function getNoteCategory() {
+        return $this->noteRS->Note_Category->getStoredVal();
+    }
+
+    public function getNoteType() {
+        return $this->noteRS->Note_Type->getStoredVal();
+    }
+
+    public function getUserName() {
+        return $this->noteRS->User_Name->getStoredVal();
+    }
+
+    public function getLastUpdated() {
+        return $this->noteRS->Last_Updated->getStoredVal();
+    }
+
+    public function getUpdatedBy() {
+        return $this->noteRS->Updated_By->getStoredVal();
+    }
+
+    public function getNoteStatus() {
+        return $this->noteRS->Status->getStoredVal();
+    }
+
+    public function getNoteTimestamp() {
+        return $this->noteRS->Timestamp->getStoredVal();
     }
 }
+
+
 class Notes {
 
 

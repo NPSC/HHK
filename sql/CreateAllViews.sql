@@ -1752,7 +1752,7 @@ order by n.Name_Last_First;
 CREATE  OR REPLACE VIEW `vresv_notes` AS
 select n.idNote as `Note_Id`, n.idNote as `Action`, n.User_Name, n.Note_Text, rn.Reservation_Id, n.`Timestamp`
     from note n join registration_note rn on n.idNote = rn.Note_Id
-Where rn.Reservation_Id > 0;
+Where rn.Reservation_Id > 0 && n.Status = 'a';
 
 
 
