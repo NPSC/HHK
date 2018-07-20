@@ -33,10 +33,10 @@ function getNotes(rid, container)
 	    {
 		  	"targets": 0,
 		  	"title": "Actions",
-		  	'data': "NoteId",
-		  	'width': "10%",
+		  	'data': "Action",
+		  	'width': "15%",
 		  	render: function (data, type, row) {
-			  	 return '<input type="button" value="Edit" class="editNote ui-button ui-corner-all ui-widget" data-noteid="' + data + '">';
+			  	 return '<button class="editNote ui-button ui-corner-all ui-widget" data-noteid="' + data + '">Edit</button><button class="done ui-button ui-corner-all ui-widget" style="display: none; margin-bottom:5px;">Save</button><button class="deleteNote ui-button ui-corner-all ui-widget" data-noteid="' + data + '" style="display: none;">Delete</button>';
 			}
 	    },
 	    {
@@ -61,6 +61,7 @@ function getNotes(rid, container)
 	        "title": "Note",
 	        "searchable": false,
 	        "sortable": false,
+	        "className":'noteText',
 	        "data": "Note"
 	    }
 	];
@@ -81,9 +82,37 @@ function getNotes(rid, container)
 	        }
 	        });
 	        
-	        $(container + " table").append('<tfoot><td>New Note</td><td colspan="3"><textarea id="noteText" style="width: 100%;"></textarea></td></tfoot>');
-	        $(".editNote").button();
+	        $(container + " table").append('<tfoot><td>New Note</td><td colspan="3"><textarea id="noteText" style="width: 100%; padding:5px;"></textarea></td></tfoot>');
 	        $(container).show();
+	        
+	        $(container + " table").on('click', '.editNote', function(e){
+		        e.preventDefault();
+		        var noteText = $(this).closest('tr').find('.noteText').html();
+		        $(this).closest('tr').find('.noteText').html('<textarea style="width: 100%; padding:5px;" id="editNoteText">' + noteText + '</textarea>');
+		        $(this).closest('td').find('.deleteNote').show();
+		        $(this).closest('td').find('.done').show();
+		        $(this).hide();
+	        });
+	        
+	        $(container + " table").on('click', '.done', function(e){
+		        e.preventDefault();
+		        var noteText = $(this).closest('tr').find('#editNoteText').val();
+		        $(this).closest('tr').find('.noteText').text(noteText);
+		        $(this).closest('td').find('.deleteNote').hide();
+		        $(this).closest('td').find('.editNote').show();
+		        $(this).hide();
+	        });
+	        
+	        $(container + " table").on('click', '.deleteNote', function(e){
+		        e.preventDefault();
+		        if($(container + " table tbody").length > 1){
+		        	$(this).closest('tr').remove();
+		        }else{
+			        $(this).closest('tr').empty().append('<td colspan="4" style="text-align: center;">No Notes found</td>');
+		        }
+		        
+	        });
+	        
 	}else{
 		$("divAlertMsg").html("Cannot get Reservation Notes for specified Reservation ID").show();
 	}
