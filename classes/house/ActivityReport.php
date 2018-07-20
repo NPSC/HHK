@@ -130,6 +130,7 @@ class ActivityReport {
     public static function reservLog(\PDO $dbh, $startDate, $endDate, $resvId = 0) {
 
         $uS = Session::getInstance();
+        $config = new Config_Lite(ciCFG_FILE);
 
         if ($resvId > 0) {
             $idResv = intval($resvId, 10);

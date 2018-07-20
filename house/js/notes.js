@@ -1,21 +1,22 @@
-function getNotes(rid)
+function getNotes(rid, container)
 {
 	rid = parseInt(rid, 10);
 	if(Number.isInteger(rid) ){
 	
-		$("#resvNotes").empty();
-		$("#resvNotes").html('<div id="resvNotesHeader" class="ui-widget-header ui-state-default ui-corner-all"><div class="hhk-checkinHdr"></div></div><div id="resvNotesDetail"></div>');
-		$("#resvNotesHeader div").html("Reservation Notes");
-		$("#resvNotes #resvNotesDetail").html('<table style="width: 100%"></table>');
+		$(container).empty();
+		$(container).html('<div id="resvNotesHeader" class="ui-widget-header ui-state-default ui-corner-all"><div class="hhk-checkinHdr"></div></div><div id="resvNotesDetail"></div>');
+		$("#resvNotesHeader div").html(resvTitle + " Notes");
+		$("#resvNotesHeader div").append($('<input type="button" id="hhk-newNote" style="margin-left: 30px; margin-bottom: 5px; font-size: 0.8em;" value="New Note">').button());
+		$(container + " #resvNotesDetail").html('<table style="width: 100%"></table>');
 		
 		var dtCols = [
 			{
-	        "targets": [ 0 ],
-	        'data': 'id',
+	        "targets": [ 3 ],
+	        'data': 'NoteId',
 	        'visible': false
 	    },
 	    {
-	        "targets": [ 1 ],
+	        "targets": [ 0 ],
 	        "title": "Date",
 	        'data': 'Date',
 	        render: function ( data, type ) {
@@ -23,14 +24,14 @@ function getNotes(rid)
 	        }
 	    },
 	    {
-	        "targets": [ 2 ],
+	        "targets": [ 1 ],
 	        "title": "Username",
 	        "searchable": false,
 	        "sortable": false,
 	        "data": "Type"
 	    },
 	    {
-	        "targets": [ 3 ],
+	        "targets": [ 2 ],
 	        "title": "Note",
 	        "searchable": false,
 	        "sortable": false,
@@ -50,9 +51,11 @@ function getNotes(rid)
 	        "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
 	        "Dom": '<"top"ilf>rt<"bottom"ip>',
 	        ajax: {
-	            url: 'ws_resv.php?cmd=getNotesList&rid=' + rid
+	            url: 'ws_resv.php?cmd=getNoteList&rid=' + rid
 	        }
 	        });
+	        
+	        $(container).show();
 	}else{
 		$("divAlertMsg").html("Cannot get Reservation Notes for specified Reservation ID").show();
 	}

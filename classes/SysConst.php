@@ -193,6 +193,23 @@ class Mode {
     const Training = "train";
 }
 
+class NoteCategory {
+    const Reservation = 'ncr';
+    const PSG = 'ncf';
+    const Guest = 'ncg';
+    const Visit = 'ncv';
+    const Patient = 'ncp';
+}
+
+
+class NoteType {
+    const Text = 'ntxt';
+}
+
+class NoteStatus {
+    const Active = 'a';
+    const Deleted = 'd';
+}
 
 class PayType {
     const Cash = 'ca';
