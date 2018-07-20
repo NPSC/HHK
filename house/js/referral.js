@@ -17,67 +17,77 @@
  * @param {object} item
  * @returns {undefined}
  */
- 
+
 function getNotes(rid, container)
 {
 	rid = parseInt(rid, 10);
 	if(Number.isInteger(rid) ){
 	
 		$(container).empty();
-		$(container).html('<div id="resvNotesHeader" class="ui-widget-header ui-state-default ui-corner-all"><div class="hhk-checkinHdr"></div></div><div id="resvNotesDetail"></div>');
-		$("#resvNotesHeader div").html("Reservation Notes");
-		$(container + " #resvNotesDetail").html('<table style="width: 100%"></table>');
+		$(container).html('<fieldset class="hhk-panel"><legend style="font-weight:bold;"></legend><div id="resvNotesDetail"></div></fieldset>');
+		$(container +" legend").html(resvTitle + " Notes");
+		$("#resvNotesHeader div").append($('<input type="button" id="hhk-newNote" style="margin-left: 30px; margin-bottom: 5px; font-size: 0.8em;" value="New Note">').button());
+		$(container + " #resvNotesDetail").html('<table class="display" style="width: 100%"></table>');
 		
 		var dtCols = [
-			{
-	        "targets": [ 0 ],
-	        'data': 'id',
-	        'visible': false
+	    {
+		  	"targets": 0,
+		  	"title": "Actions",
+		  	'data': "NoteId",
+		  	'width': "10%",
+		  	render: function (data, type, row) {
+			  	 return '<input type="button" value="Edit" class="editNote ui-button ui-corner-all ui-widget" data-noteid="' + data + '">';
+			}
 	    },
 	    {
 	        "targets": [ 1 ],
 	        "title": "Date",
 	        'data': 'Date',
+	        'width': '25%',
 	        render: function ( data, type ) {
-	            return dateRender(data, type);
+	            return dateRender(data, type, dateFormat);
 	        }
 	    },
 	    {
 	        "targets": [ 2 ],
-	        "title": "Username",
+	        "title": "User",
 	        "searchable": false,
 	        "sortable": false,
-	        "data": "Type"
+	        "width": "20%",
+	        "data": "User"
 	    },
 	    {
 	        "targets": [ 3 ],
 	        "title": "Note",
 	        "searchable": false,
 	        "sortable": false,
-	        "data": "Sub-Type"
+	        "data": "Note"
 	    }
 	];
 	
 			
-		listNoteTable = $('#resvNotesDetail table').dataTable({
+		var listNoteTable = $('#resvNotesDetail table').DataTable({
 	        "columnDefs": dtCols,
 	        "serverSide": true,
 	        "processing": true,
 	        "deferRender": true,
 	        "language": {"sSearch": "Search Notes:"},
 	        "sorting": [[0,'desc']],
-	        "displayLength": 25,
-	        "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-	        "Dom": '<"top"ilf>rt<"bottom"ip>',
+	        "displayLength": 5,
+	        "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
+ 	        "Dom": '<"top"ilf>rt<"bottom"ip>',
 	        ajax: {
 	            url: 'ws_resv.php?cmd=getNoteList&rid=' + rid
 	        }
 	        });
+	        
+	        $(container + " table").append('<tfoot><td>New Note</td><td colspan="3"><textarea id="noteText" style="width: 100%;"></textarea></td></tfoot>');
+	        $(".editNote").button();
+	        $(container).show();
 	}else{
 		$("divAlertMsg").html("Cannot get Reservation Notes for specified Reservation ID").show();
 	}
 };
-
 
 function additionalGuest(item) {
     "use strict";

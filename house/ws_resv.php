@@ -147,7 +147,7 @@ try {
 
     case 'getNoteList':
 
-        if (($rid = filter_input(INPUT_POST, 'rid', FILTER_SANITIZE_NUMBER_INT))) {
+        $rid = filter_var($_REQUEST['rid'], FILTER_SANITIZE_NUMBER_INT);
 
             require(CLASSES . 'DataTableServer.php');
 
@@ -159,8 +159,7 @@ try {
                 array( 'db' => 'Note_Id', 'dt' => 'NoteId')
             );
 
-            return SSP::complex ( $_GET, $dbh, "vresv_notes", 'Note_Id', $columns, null, "Reservation_Id=$rid" );
-        }
+            $events = SSP::complex ( $_GET, $dbh, "vresv_notes", 'Note_Id', $columns, null, "Reservation_Id=$rid" );
 
         break;
 
