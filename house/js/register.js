@@ -1454,32 +1454,36 @@ $(document).ready(function () {
             if (ui.newTab.prop('id') === 'liInvoice') {
                 $('#btnInvGo').click();
             }
+        },
+        activate: function(event, ui) {
+            if (ui.newTab.prop('id') === 'liCal') {
+                
+                $('#calendar').fullCalendar('render');
+                
+                // Calendar date goto button.
+                $('#divGoto').position({
+                        my: 'center top',
+                        at: 'center top+8',
+                        of: '#calendar',
+                        within: '#calendar'
+                });
+                $('#divRoomGrouping').position({
+                    my: 'left top',
+                    at: 'left top - 10',
+                    of: '#vcal',
+                    within: '#vcal'
+                });
+    
+            }
         }
     });
     $('#mainTabs').show();
     $('#mainTabs').tabs("option", "active", defaultTab);
 
-    $('#calendar').fullCalendar('render');
-
-    // Calendar date goto button.
-    $('#divGoto').position({
-            my: 'center top',
-            at: 'center top+8',
-            of: '#calendar',
-            within: '#calendar'
-    });
-    
     $('#txtGotoDate').change(function () {
         calStartDate = new moment($(this).datepicker('getDate'));
         $('#calendar').fullCalendar( 'refetchResources' );
         $('#calendar').fullCalendar('gotoDate', calStartDate);
-    });
-
-    $('#divRoomGrouping').position({
-        my: 'left top',
-        at: 'left top - 10',
-        of: '#vcal',
-        within: '#vcal'
     });
     
     $('#selRoomGroupScheme').val(resourceGroupBy);

@@ -427,12 +427,12 @@ REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`,`T
 ('RegistrationAttribute','Referral','Hospital Referral Document','','','','','2013-11-13 00:59:31'),
 ('ReservStatus','a','Confirmed','y','y','','ui-icon-check','2013-11-11 15:09:04'),
 ('ReservStatus','uc','Unconfirmed','y','y','','ui-icon-help','2013-11-11 15:09:04'),
-('ReservStatus','c','Canceled','y','y','','ui-icon-cancel','2013-11-11 15:09:04'),
+('ReservStatus','c','Guest Canceled','y','y','','ui-icon-cancel','2013-11-11 15:09:04'),
 ('ReservStatus','ns','No Show','y','y','','ui-icon-alert','2013-11-14 17:57:58'),
 ('ReservStatus','co','Checked Out','y','y','','ui-icon-extlink','2013-11-14 17:57:58'),
 ('ReservStatus','p','New','y','y','','','2013-11-14 17:57:58'),
 ('ReservStatus','s','Checked In','y','y','','ui-icon-circle-check','2013-11-19 15:16:20'),
-('ReservStatus','td','Turned Down','y','y','','ui-icon-arrowreturnthick-1-s','2013-11-14 17:57:58'),
+('ReservStatus','td','Turned Away','y','y','','ui-icon-arrowreturnthick-1-s','2013-11-14 17:57:58'),
 ('ReservStatus', 'im', 'Immediate', 'y', 'y', '', 'ui-icon-check', NULL),
 ('ReservStatus','w','Waitlist','y','y','','ui-icon-arrowstop-1-e','2013-11-14 17:57:58');
 -- ;
