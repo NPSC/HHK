@@ -1351,6 +1351,10 @@ function PageManager(initData) {
 
         }
 
+        function setupNotes(idReserv) {
+            
+        }
+        
         function setUp(data) {
 
             $rDiv = $('<div id="divResvDetail" style="padding:2px; float:left;min-width: 810px;" class="ui-widget-content ui-corner-bottom hhk-tdbox"/>');

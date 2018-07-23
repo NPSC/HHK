@@ -922,7 +922,8 @@ where
                 $fullCharge = $fullCharge * $adjRatio;
             }
 
-            $visit['fcg'] += $fullCharge;
+            // Only Positive values.
+            $visit['fcg'] += ($fullCharge > 0 ? $fullCharge : 0);
         }
 
         $savedr = $r;
