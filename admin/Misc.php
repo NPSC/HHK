@@ -424,7 +424,7 @@ $res = $dbh->query($query);
     }
 
 // Check for existing stays
-$staysStmt = $dbh->query("select n.idName, n.Name_Last_First from stays s left join name n on n.idName = s.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD') group by s.idName");
+$staysStmt = $dbh->query("select n.idName, n.Name_Last_First from stays s left join name n on n.idName = s.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD') and DATEDIFF(ifnull(s.Span_End_Date, now()), s.Span_Start_Date) > 0 group by s.idName");
    while ($r = $staysStmt->fetch(\PDO::FETCH_ASSOC)) {
        $stayIds .= $r['idName'] . ', ';
        $numStays++;

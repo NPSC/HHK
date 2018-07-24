@@ -81,15 +81,14 @@ function getSelections(\PDO $dbh, $tableName, $type) {
         );
     }
 
-    if ($type != 'u' && $type != 'm') {
-        // new entry row
-        $tbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDiag[0]')))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDOrder[0]', 'size'=>'3')))
-                . HTMLTable::makeTd('New', array('colspan' => 2))
-                . ($type == 'ha' || $type == 'ca' ? HTMLTable::makeTd(HTMLInput::generateMarkup('', array('size' => '7', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[0]'))) : '')
-        );
-    }
+    // new entry row
+    $tbl->addBodyTr(
+            HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDiag[0]')))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDOrder[0]', 'size'=>'3')))
+            . HTMLTable::makeTd('New', array('colspan' => 2))
+            . ($type == 'ha' || $type == 'ca' ? HTMLTable::makeTd(HTMLInput::generateMarkup('', array('size' => '7', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[0]'))) : '')
+    );
+
 
     return $tbl;
 
