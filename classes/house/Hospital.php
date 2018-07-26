@@ -131,8 +131,21 @@ class Hospital {
 
         if ($uS->ReferralAgent) {
 
+            $raErrorMsg = '';
+
             try {
                 $agent = new Agent($dbh, 'a_', $hstay->getAgentId());
+
+                if ($agent->getIdName() > 0 && $agent->getRoleMember()->get_status() !== MemStatus::Active) {
+                    $raErrorMsg = HTMLContainer::generateMarkup('div', 'Agent with Id ' . $hstay->getAgentId() . ' status is "' . $uS->nameLookups['mem_status'][$agent->getRoleMember()->get_status()][1] . '".', array('style'=>'margin:.3em;color:red;'));
+                }
+
+            } catch (Hk_Exception_Runtime $hkex) {
+
+                $raErrorMsg = HTMLContainer::generateMarkup('div', 'Agent with Id ' . $hstay->getAgentId() . ' is not defined', array('style'=>'margin:.3em;color:red;'));
+                $agent = new Agent($dbh, 'a_', 0);
+            }
+
 
             $wPhone = $agent->getPhonesObj()->get_Data(Phone_Purpose::Work);
             $cPhone = $agent->getPhonesObj()->get_Data(Phone_Purpose::Cell);
@@ -185,15 +198,15 @@ class Hospital {
                         )
             );
 
-            $referralAgentMarkup = $ratbl->generateMarkup(array('style'=>'margin-top:.3em;'));
+            $referralAgentMarkup = $raErrorMsg . $ratbl->generateMarkup(array('style'=>'margin-top:.3em;'));
 
-            } catch (Hk_Exception_Runtime $hkex) {
-                $referralAgentMarkup = HTMLContainer::generateMarkup('div', 'Agent with id = ' . $hstay->getAgentId() . ' is not defined', array('style'=>'margin:.3em;color:red;'));
-            }
 
         }
 
         if ($uS->Doctor) {
+
+            $docErrorMsg = '';
+
 
             $dtbl = new HTMLTable();
             $dtbl->addBodyTr(
@@ -204,12 +217,22 @@ class Hospital {
                         , array('colspan'=>'2'))
             );
 
-            $dtbl->addBodyTr(
-                HTMLTable::makeTh('First')
-                .HTMLTable::makeTh('Last')
-                    );
+            $dtbl->addBodyTr(HTMLTable::makeTh('First').HTMLTable::makeTh('Last'));
 
-            $doc = new Doctor($dbh, 'd_', $hstay->getDoctorId());
+            try {
+
+                $doc = new Doctor($dbh, 'd_', $hstay->getDoctorId());
+
+                if ($doc->getIdName() > 0 && $doc->getRoleMember()->get_status() !== MemStatus::Active) {
+                    $docErrorMsg = HTMLContainer::generateMarkup('div', 'Doctor with Id ' . $doc->getIdName() . ' status is "' . $uS->nameLookups['mem_status'][$doc->getRoleMember()->get_status()][1] . '".', array('style'=>'margin:.3em;color:red;'));
+                }
+
+            } catch (Hk_Exception_Runtime $hkex) {
+
+                $docErrorMsg = HTMLContainer::generateMarkup('div', 'Doctor with Id ' . $hstay->getDoctorId() . ' is not defined', array('style'=>'margin:.3em;color:red;'));
+                $doc = new Doctor($dbh, 'd_', 0);
+            }
+
 
             $dtbl->addBodyTr(
                 HTMLTable::makeTd(($doc->getRoleMember()->get_lastName() == '' ? '' : 'Dr. ') .
@@ -225,7 +248,7 @@ class Hospital {
                         )
              );
 
-            $doctorMarkup = $dtbl->generateMarkup(array('style'=>'margin-top:.3em;float:left;'));
+            $doctorMarkup = $docErrorMsg . $dtbl->generateMarkup(array('style'=>'margin-top:.3em;float:left;'));
         }
 
         // Diagnosis

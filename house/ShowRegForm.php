@@ -98,7 +98,7 @@ if ($idVisit == 0 && $idResv > 0) {
     }
 }
 
-// Generate Receipt
+// Generate Registration
 $reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, '../images/registrationLogo.png');
 
 $sty = $reservArray['style'];
@@ -132,19 +132,36 @@ $(document).ready(function() {
         popX       : 20,
         popY       : 20,
         popTitle   : 'Guest Registration Form'};
+
     $('#btnPrint').button();
+
     $('#btnPrint').click(function() {
         $('div#PrintArea').printArea(opt);
     });
+    
+    $('#mainTabs').tabs().show();
+
 });
 </script>
     </head>
     <body>
-        <div style="margin:10px;">
-            <input type="button" id="btnPrint" value="Print"/>
-        </div>
-        <div id="PrintArea">
-            <?php echo $regForm; ?>
+        <h2><?php echo $wInit->pageHeading; ?></h2>
+        <div id="mainTabs" style="display:none; font-size:.9em;">
+            <ul>
+                <li id="liReg"><a href="#vreg">Registration Form</a></li>
+                <li><a href="#vperm">Permissions</a></li>
+            </ul>
+            <div id="vreg" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
+                <div style="margin:10px;">
+                    <input type="button" id="btnPrint" value="Print"/>
+                </div>
+                <div id="PrintArea">
+                    <?php echo $regForm; ?>
+                </div>
+            </div>
+            <div id="vperm" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
+
+            </div>
         </div>
     </body>
 </html>

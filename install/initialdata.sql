@@ -82,6 +82,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Editable_Forms', '../conf/agreement.txt', 'Registration Agreement','js/rte-agreement.json','',0),
 ('Editable_Forms', '../conf/confirmation.txt', 'Confirmation Form','js/rte-confirmation.json','',0),
 ('Editable_Forms', '../conf/survey.txt', 'Survey Form','js/rte-survey.json','',0),
+('Editable_Forms', '../conf/permission.txt', 'Permission Form','js/rte-permission.json','',0),
 
 ('Education_Level','01','Highschool','','d',0),
 ('Education_Level','02','College','','d',0),
@@ -349,6 +350,8 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Special_Needs','f','Dev. Challenged','','d',0),
 ('Special_Needs','z','Unknown','','d',1000),
 
+('Signature_Capture', 'Photo_Permission', 'Photo Permission','','',0),
+
 ('Static_Room_Rate','rb','Regular Rate','10','',0),
 
 ('Utilization_Category', 'uc1', 'Standard', '', 'h',0),
@@ -407,14 +410,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Web_User_Status','a','active','','',0),
 ('Web_User_Status','d','Disabled','','',0),
 ('Web_User_Status','w','Waiting','','',0),
-('Web_User_Status','x','Prohibited','','',0),
-
-('WL_Final_Status','hf','House Full','','',0),
-('WL_Final_Status','lc','Lost Contact','','',0),
-('WL_Final_Status','se','Elsewhere','','',0),
-('WL_Status','a','Active','','',0),
-('WL_Status','in','Inactive','','',0),
-('WL_Status','st','Stayed','','',0);
+('Web_User_Status','x','Prohibited','','',0);
 -- ;
 
 

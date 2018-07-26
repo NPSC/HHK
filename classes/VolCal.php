@@ -499,7 +499,7 @@ class VolCal {
         $EndDate = date('Y-m-d', $endTime + 86400);
 
         $pts = $cats->splitVcc($vcc);
-        
+
         if (count($pts) >= 2) {
 
             $query = "select * from vcategory_events
@@ -593,7 +593,7 @@ class VolCal {
                         $st = $todayDate . "T" . $shell->get_Time_Start();
                         $ed = $todayDate . "T" . $shell->get_Time_End();
 
-                        if ($days[$wd] == 1) {
+                        if ($days[$wd]) {
                             // set event for today if not already taken
                             // if day and vcc are identical, and regular event was a shell, then don't put this shell up.
                             $isThere = false;

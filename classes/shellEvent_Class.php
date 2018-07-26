@@ -190,14 +190,8 @@ class shellEvent_Class {
     }
 
    function readDbBit($dbBit) {
-        $w = ord($dbBit);
-        if ($dbBit == '1' || $w == 1) {
-            $v = 1;
-        } else {
-            $v = 0;
-        }
-        return $v;
 
+        return ord( $dbBit ) === 1 ?: (ord( $dbBit ) === 0 ? false : (bool) $dbBit);
     }
 
     public function loadFromDbRow($v) {
@@ -317,4 +311,4 @@ class shellEvent_Class {
 
 
 }
-?>
+

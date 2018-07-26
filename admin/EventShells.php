@@ -22,8 +22,9 @@ $menuMarkup = $wInit->generatePageMenu();
 
 function getDayControl($name, $data) {
 
-    $attrs = array('name'=>$name, 'type'=>'checkbox');
-    if ($data == '1') {
+    $attrs = array('name'=>$name, 'type'=>'checkbox', 'data-ckd' => $data);
+
+    if ($data != 0) {
         $attrs['checked'] = 'checked';
     }
 
@@ -198,13 +199,13 @@ while ($rw = $stmt->fetch(PDO::FETCH_ASSOC)) {
     );
 
     // Days
-    $tr .= HTMLTable::makeTd(getDayControl('rbSun['. $rw['idShell'] . ']', $rw['Sun']), $dayAttrs);
-    $tr .= HTMLTable::makeTd(getDayControl('rbMon['. $rw['idShell'] . ']', $rw['Mon']), $dayAttrs);
-    $tr .= HTMLTable::makeTd(getDayControl('rbTue['. $rw['idShell'] . ']', $rw['Tue']), $dayAttrs);
-    $tr .= HTMLTable::makeTd(getDayControl('rbWed['. $rw['idShell'] . ']', $rw['Wed']), $dayAttrs);
-    $tr .= HTMLTable::makeTd(getDayControl('rbThu['. $rw['idShell'] . ']', $rw['Thu']), $dayAttrs);
-    $tr .= HTMLTable::makeTd(getDayControl('rbFri['. $rw['idShell'] . ']', $rw['Fri']), $dayAttrs);
-    $tr .= HTMLTable::makeTd(getDayControl('rbSat['. $rw['idShell'] . ']', $rw['Sat']), $dayAttrs);
+    $tr .= HTMLTable::makeTd(getDayControl('rbSun['. $rw['idShell'] . ']', (ord( $rw['Sun'] ) === 1 ?: (ord( $rw['Sun'] ) === 0 ? false : (bool) $rw['Sun']))), $dayAttrs);
+    $tr .= HTMLTable::makeTd(getDayControl('rbMon['. $rw['idShell'] . ']', (ord( $rw['Mon'] ) === 1 ?: (ord( $rw['Mon'] ) === 0 ? false : (bool) $rw['Mon']))), $dayAttrs);
+    $tr .= HTMLTable::makeTd(getDayControl('rbTue['. $rw['idShell'] . ']', (ord( $rw['Tue'] ) === 1 ?: (ord( $rw['Tue'] ) === 0 ? false : (bool) $rw['Tue']))), $dayAttrs);
+    $tr .= HTMLTable::makeTd(getDayControl('rbWed['. $rw['idShell'] . ']', (ord( $rw['Wed'] ) === 1 ?: (ord( $rw['Wed'] ) === 0 ? false : (bool) $rw['Wed']))), $dayAttrs);
+    $tr .= HTMLTable::makeTd(getDayControl('rbThu['. $rw['idShell'] . ']', (ord( $rw['Thu'] ) === 1 ?: (ord( $rw['Thu'] ) === 0 ? false : (bool) $rw['Thu']))), $dayAttrs);
+    $tr .= HTMLTable::makeTd(getDayControl('rbFri['. $rw['idShell'] . ']', (ord( $rw['Fri'] ) === 1 ?: (ord( $rw['Fri'] ) === 0 ? false : (bool) $rw['Fri']))), $dayAttrs);
+    $tr .= HTMLTable::makeTd(getDayControl('rbSat['. $rw['idShell'] . ']', (ord( $rw['Sat'] ) === 1 ?: (ord( $rw['Sat'] ) === 0 ? false : (bool) $rw['Sat']))), $dayAttrs);
 
     $tbl->addBodyTr($tr);
 
