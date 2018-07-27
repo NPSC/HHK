@@ -138,18 +138,18 @@ $(document).ready(function() {
     $('#btnPrint').click(function() {
         $('div#PrintArea').printArea(opt);
     });
-    
+
     $('#mainTabs').tabs().show();
 
 });
 </script>
     </head>
     <body>
-        <h2><?php echo $wInit->pageHeading; ?></h2>
-        <div id="mainTabs" style="display:none; font-size:.9em;">
+<!--        <h2><?php echo $wInit->pageHeading; ?></h2>-->
+        <div id="mainTabs" style="max-width:900px; display:none; font-size:.9em;">
             <ul>
                 <li id="liReg"><a href="#vreg">Registration Form</a></li>
-                <li><a href="#vperm">Permissions</a></li>
+<!--                <li><a href="#vperm">Permissions</a></li>-->
             </ul>
             <div id="vreg" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
                 <div style="margin:10px;">
@@ -160,7 +160,7 @@ $(document).ready(function() {
                 </div>
             </div>
             <div id="vperm" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
-
+                <h2>No permission forms were found.</h2>
             </div>
         </div>
     </body>

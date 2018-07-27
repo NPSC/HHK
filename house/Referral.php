@@ -254,7 +254,7 @@ $resultMessage = $alertMsg->createMarkup();
             <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
         </div>  <!-- div id="contentDiv"-->
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
-        <script type="text/javascript" src="js/referral-min.js"></script>
+        <script type="text/javascript" src="js/referral-min.js?v8zz=n"></script>
         <script type="text/javascript">
     var pmtMkup = "<?php echo $paymentMarkup; ?>";
     var rctMkup = '<?php echo $receiptMarkup; ?>';

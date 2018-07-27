@@ -174,7 +174,7 @@ class RegisterForm {
 
             if (!isset($usedNames[$g->getIdName()])) {
 
-                $sigCapture = HTMLContainer::generateMarkup('span', '___________________________________', array('name'=>'divSigCap_' . $g->getIdName(), 'class'=>'hhk-sigCapure'));
+                $sigCapture = HTMLContainer::generateMarkup('span', '___________________________________', array('name'=>'divSigCap_' . $g->getIdName(), 'data-gid'=>$g->getIdName(), 'class'=>'hhk-sigCapure'));
 
                 $mkup .= "<p class=MsoNormal style='margin-top:14pt;margin-right:0;margin-bottom:0;margin-left:.5in;line-height:normal'>"
                     . "<span>" . $g->getRoleMember()->get_fullName() . $sigCapture . "</span></p>";

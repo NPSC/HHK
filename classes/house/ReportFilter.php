@@ -185,6 +185,17 @@ class ReportFilter {
             $endDT->add(new DateInterval('P1D'));
             $this->reportEnd = $endDT->format('Y-m-d');
 
+        } else if ($this->selectedCalendar == 18) {
+            // selected dates.
+            $startDT = new DateTime($this->selectedStart);
+            $endDateDT = new DateTime($this->selectedEnd);
+
+            if ($startDT <= $endDateDT) {
+                $this->reportEnd = $endDateDT->format('Y-m-d');
+                $this->reportStart = $startDT->format('Y-m-d');
+            }
+
+
         } else {
             // Months
             $interval = 'P' . count($this->selectedMonths) . 'M';
