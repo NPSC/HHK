@@ -465,8 +465,8 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 </ul>
                 <div id="vcal" style="clear:left; padding: .6em 1em; display:none;">
                     <?php echo $colorKey; ?>
-                    <div id="divGoto" style="position:absolute;">
-                        <span id="spnGotoDate" style="display:none;">Go to Date: <input id="txtGotoDate" type="text" class="ckdate" value="" /></span>
+                    <div id="divGoto" style="display:none;position:absolute;">
+                        <span id="spnGotoDate" >Go to Date: <input id="txtGotoDate" type="text" class="ckdate" value="" /></span>
                         <span id="pCalLoad" style="font-weight:bold;">Loading...</span>
                     </div>
                     <div id="divRoomGrouping" style="position:absolute; padding: 1.2em; display:none;" class="ui-widget ui-front ui-widget-content ui-corner-all ui-widget-shadow">

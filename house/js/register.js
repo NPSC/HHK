@@ -755,6 +755,8 @@ $(document).ready(function () {
         dateIncrementObj = {weeks: calDateIncrement};
     }
     
+    $('#selRoomGroupScheme').val(resourceGroupBy);
+    
     $('#calendar').fullCalendar({
 
         aspectRatio: 2.2,
@@ -836,6 +838,13 @@ $(document).ready(function () {
         loading: function (isLoading, View) {
 
             if (isLoading) {
+                $('#divGoto').show();
+            $('#divGoto').position({
+                    my: 'center top',
+                    at: 'center top+8',
+                    of: '#calendar',
+                    within: '#calendar'
+            });
                 $('#pCalLoad').show();
                 $('#spnGotoDate').hide();
             } else {
@@ -1029,6 +1038,10 @@ $(document).ready(function () {
             } else {
                 element.hide();
             }
+        },
+        viewRender: function (view) {
+            
+            // Calendar date goto button.
         }
     });
 
@@ -1450,35 +1463,23 @@ $(document).ready(function () {
     });
 
     $('#mainTabs').tabs({
+
         beforeActivate: function (event, ui) {
             if (ui.newTab.prop('id') === 'liInvoice') {
                 $('#btnInvGo').click();
             }
         },
+
         activate: function(event, ui) {
             if (ui.newTab.prop('id') === 'liCal') {
-                
                 $('#calendar').fullCalendar('render');
-                
-                // Calendar date goto button.
-                $('#divGoto').position({
-                        my: 'center top',
-                        at: 'center top+8',
-                        of: '#calendar',
-                        within: '#calendar'
-                });
-                $('#divRoomGrouping').position({
-                    my: 'left top',
-                    at: 'left top - 10',
-                    of: '#vcal',
-                    within: '#vcal'
-                });
-    
             }
-        }
+        },
+        active: defaultTab
     });
+    
     $('#mainTabs').show();
-    $('#mainTabs').tabs("option", "active", defaultTab);
+    //$('#mainTabs').tabs("option", "active", defaultTab);
 
     $('#txtGotoDate').change(function () {
         calStartDate = new moment($(this).datepicker('getDate'));
@@ -1486,8 +1487,6 @@ $(document).ready(function () {
         $('#calendar').fullCalendar('gotoDate', calStartDate);
     });
     
-    $('#selRoomGroupScheme').val(resourceGroupBy);
-
     // Capture room Grouping schema change event.
     $('#selRoomGroupScheme').change(function () {
         $('#divRoomGrouping').hide();
