@@ -838,13 +838,6 @@ $(document).ready(function () {
         loading: function (isLoading, View) {
 
             if (isLoading) {
-                $('#divGoto').show();
-            $('#divGoto').position({
-                    my: 'center top',
-                    at: 'center top+8',
-                    of: '#calendar',
-                    within: '#calendar'
-            });
                 $('#pCalLoad').show();
                 $('#spnGotoDate').hide();
             } else {
@@ -1039,10 +1032,6 @@ $(document).ready(function () {
                 element.hide();
             }
         },
-        viewRender: function (view) {
-            
-            // Calendar date goto button.
-        }
     });
 
     // disappear the pop-up room chooser.
@@ -1355,6 +1344,19 @@ $(document).ready(function () {
         tbl.ajax.reload();
     });
 
+    $('#txtGotoDate').change(function () {
+        calStartDate = new moment($(this).datepicker('getDate'));
+        $('#calendar').fullCalendar( 'refetchResources' );
+        $('#calendar').fullCalendar('gotoDate', calStartDate);
+    });
+    
+    // Capture room Grouping schema change event.
+    $('#selRoomGroupScheme').change(function () {
+        $('#divRoomGrouping').hide();
+        $('#calendar').fullCalendar('option', 'resourceGroupField', $(this).val());
+        $('#calendar').fullCalendar( 'refetchResources' );
+    });
+    
     if (rctMkup !== '') {
         showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt');
     }
@@ -1473,27 +1475,30 @@ $(document).ready(function () {
         activate: function(event, ui) {
             if (ui.newTab.prop('id') === 'liCal') {
                 $('#calendar').fullCalendar('render');
+                // Calendar date goto button.
+                $('#divGoto').position({
+                        my: 'center top',
+                        at: 'center top+8',
+                        of: '#calendar',
+                        within: '#calendar'
+                });
             }
         },
         active: defaultTab
     });
     
     $('#mainTabs').show();
-    //$('#mainTabs').tabs("option", "active", defaultTab);
 
-    $('#txtGotoDate').change(function () {
-        calStartDate = new moment($(this).datepicker('getDate'));
-        $('#calendar').fullCalendar( 'refetchResources' );
-        $('#calendar').fullCalendar('gotoDate', calStartDate);
+    // Calendar date goto button.
+    $('#divGoto').position({
+            my: 'center top',
+            at: 'center top+8',
+            of: '#calendar',
+            within: '#calendar'
     });
-    
-    // Capture room Grouping schema change event.
-    $('#selRoomGroupScheme').change(function () {
-        $('#divRoomGrouping').hide();
-        $('#calendar').fullCalendar('option', 'resourceGroupField', $(this).val());
-        $('#calendar').fullCalendar( 'refetchResources' );
-    });
-    
+
+
+
     $('#curres').DataTable({
        ajax: {
            url: 'ws_resc.php?cmd=getHist&tbl=curres',

@@ -223,9 +223,8 @@ CREATE OR REPLACE VIEW `vaudit_log` AS
         `name_log`.`idName` AS `idName`,
         `name_log`.`Log_Text` AS `LogText`
     FROM
-        `name_log`
-    WHERE
-        (1 = 1)) UNION (SELECT 
+        `name_log`)
+    UNION (SELECT 
         `a`.`Effective_Date` AS `LogDate`,
         'Volunteer' AS `LogType`,
         `a`.`Action_Codes` AS `Subtype`,
@@ -778,6 +777,34 @@ CREATE or replace VIEW `vemail_directory` AS
         ((`n`.`Member_Status` = 'a')
             and (`n`.`Exclude_Email` = 0)
             and (`ne`.`Email` <> ''));
+
+
+
+-- -----------------------------------------------------
+-- View `vguest_audit_log`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vguest_audit_log` AS
+    SELECT 
+        `Timestamp` AS `LogDate`,
+        `Log_Type` AS `LogType`,
+        `Sub_Type` AS `Subtype`,
+        `WP_User_Id` AS `User`,
+        `idName`,
+        `Log_Text` AS `LogText`
+    FROM
+        `name_log` 
+    UNION SELECT 
+        `Timestamp` AS `LogDate`,
+        `Log_Type` AS `LogType`,
+        `Sub_Type` AS `Subtype`,
+        `User_Name` AS `User`,
+        `idName`,
+        `Log_Text` AS `LogText`
+    FROM
+        `visit_log`
+    WHERE
+        `Log_Type` = 'nameguest' and idName > 0;
+
 
 
 

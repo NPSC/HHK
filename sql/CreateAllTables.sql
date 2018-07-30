@@ -2222,3 +2222,10 @@ ALTER TABLE `visit`
 
 ALTER TABLE `volunteer_hours` 
     ADD INDEX `Index_idName` (`idName` ASC);
+
+ALTER TABLE `name_log` 
+    ADD INDEX `INDEX_IDNAME` (`idName` ASC);
+
+ALTER TABLE `visit_log` 
+    ADD INDEX `INDX_IDNAME` (`idName` ASC),
+    ADD INDEX `INDX_IDVISIT` (`idVisit` ASC, `Span` ASC);
