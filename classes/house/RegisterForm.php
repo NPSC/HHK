@@ -353,7 +353,10 @@ class RegisterForm {
         $mkup = "<div style='width:700px;margin-bottom:30px; margin-left:5px; margin-right:5px'>";
         $mkup .= self::titleBlock($roomTitle, $expectedDeparture, $rate, $title, $agent, $uS->RoomPriceModel, $houseAddr, $roomFeeTitle);
 
-        $mkup .= self::notesBlock($notes);
+        // don't use notes if they are for the waitlist.
+        if (!$uS->UseWLnotes) {
+            $mkup .= self::notesBlock($notes);
+        }
 
         $mkup .= self::guestBlock($dbh, $guests, $patientRelCodes);
 

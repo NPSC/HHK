@@ -261,7 +261,7 @@ class History {
             // Patient Name
             $fixedRows['Patient'] = $r['Patient Name'];
 
-            if ($r['Patient_Staying'] > 0) {
+            if ($r['Patient_Staying'] > 0 && !$static) {
                 $fixedRows['Patient'] .= HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>"$patientTitle Planning to stay"));
             }
 

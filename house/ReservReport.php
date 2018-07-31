@@ -473,14 +473,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
         var makeTable = '<?php echo $mkTable; ?>';
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
 
-        $('.ckdate').datepicker({
-            yearRange: '-05:+01',
-            changeMonth: true,
-            changeYear: true,
-            autoSize: true,
-            numberOfMonths: 1,
-            dateFormat: 'M d, yy'
-        });
+        <?php echo $filter->getTimePeriodScript(); ?>;
         $('#cbColClearAll').click(function () {
             $('#selFld option').each(function () {
                 $(this).prop('selected', false);

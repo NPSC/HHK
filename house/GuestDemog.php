@@ -1,6 +1,6 @@
 <?php
 /**
- * occDemo.php
+ * GiestDemog.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
@@ -50,7 +50,7 @@ foreach (readGenLookupsPDO($dbh, 'Demographics') as $d) {
 
         $demos[$d[0]] = array(
             'title' => $d[1],
-            'list' => readGenLookupsPDO($dbh, $d[0], 'Order'),
+            'list' => removeOptionGroups(readGenLookupsPDO($dbh, $d[0], 'Order')),
         );
     }
 }

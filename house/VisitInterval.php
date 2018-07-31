@@ -1454,14 +1454,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         var pmtMkup = "<?php echo $paymentMarkup; ?>";
         var rctMkup = '<?php echo $receiptMarkup; ?>';
         var payFailPage = '<?php echo $payFailPage; ?>';
-        $('.ckdate').datepicker({
-            yearRange: '-05:+02',
-            changeMonth: true,
-            changeYear: true,
-            autoSize: true,
-            numberOfMonths: 1,
-            dateFormat: 'M d, yy'
-        });
+        <?php echo $filter->getTimePeriodScript(); ?>;
         $('#btnHere, #btnExcel, #btnStatsOnly, #cbColClearAll, #cbColSelAll').button();
         $('#btnHere, #btnExcel').click(function () {
             $('#paymentMessage').hide();
