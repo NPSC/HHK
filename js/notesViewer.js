@@ -17,7 +17,7 @@
                 width: '100%',
                 rows: 1
             },
-           
+
             dtCols: [
                 {
                 "targets": 0,
@@ -71,12 +71,20 @@
                 .append('<td>New Note</td>')
                 .append( $('<td/>').append($('<textarea').attr(settings.textAreaAttrs)).attr('colspan', (settings.dtCols.length - 1) ));
     }
+    
+    function createButtons($settings) {
+        
+        var buttons = '';
+        return buttons;
+    }
 
     function createViewer($wrapper, settings) {
         
-        var $table = $('<table />').attr(settings.tableAttrs).append(createFooter(settings));
+        $wrapper.append(createButtons(settings));
         
-        var listNoteTable = $table.DataTable({
+        var $table = $('<table />').attr(settings.tableAttrs).append(createFooter(settings)).appendTo($wrapper);
+        
+        $table.DataTable({
 	        "columnDefs": settings.dtCols,
 	        "serverSide": true,
 	        "processing": true,
@@ -89,11 +97,8 @@
 	        ajax: {
 	            url: settings.serviceURL + settings.idReservation
 	        }
-	        });
+	});
 
-
-
-        
     }
 
 }(jQuery));
