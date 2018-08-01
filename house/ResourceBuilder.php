@@ -135,8 +135,8 @@ function getSelections(\PDO $dbh, $tableName, $type) {
             . ($type == GlTypeCodes::CA ? HTMLTable::makeTh('Amount') : '')
             . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '')
             . ($type == GlTypeCodes::Demographics && $uS->GuestNameColor == $tableName ? HTMLTable::makeTh('Colors (font, bkgrnd)') : '')
-            . ($type == GlTypeCodes::U ? '' : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With'))
-            . ($type == GlTypeCodes::m ? HTMLTable::makeTh('Use') : '');
+            . ($type == GlTypeCodes::U ? '' : $type == GlTypeCodes::m ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With'));
+
 
 
     $tbl->addHeaderTr($hdrTr);
@@ -1685,7 +1685,7 @@ $resultMessage = $alertMsg->createMarkup();
                 });
         }).button();
 
-        $('.hhk-savedemoCat').click(function () {
+        $('#btndemoSave').click(function () {
             var $frm = $(this).closest('form');
 
             $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + 'Demographics' + '&tp=' + 'm',

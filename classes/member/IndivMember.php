@@ -412,10 +412,6 @@ ORDER BY `List_Order`");
                 }
             }
 
-//            if (count($choices) === 0) {
-//                $choices[''] = '';
-//            }
-//
             $attr = array(
                 'name'=>$idPrefix.'sel' . $i['Title'],
             );
