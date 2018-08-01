@@ -251,25 +251,6 @@ abstract class RoleMember extends IndivMember {
 
         $msg .= parent::saveChanges($dbh, $post);
 
-        //  Save Languages
-        if ($uS->LangChooser) {
-            $this->saveLanguages($dbh, $post, $this->getIdPrefix(), $uS->username);
-        }
-
-        //  Save Insurance
-        if ($uS->InsuranceChooser) {
-            $this->saveInsurance($dbh, $post, $this->getIdPrefix(), $uS->username);
-        }
-
-
-        if ($uS->LangChooser && $this->get_idName() > 0) {
-            $this->getLanguages($dbh, $this->get_idName());
-        }
-
-        if ($uS->InsuranceChooser && $this->get_idName() > 0) {
-            $this->getInsurance($dbh, $this->get_idName());
-        }
-
         $this->saveMemberType($dbh, $uS->username);
 
         return $msg;
@@ -394,6 +375,36 @@ class GuestMember extends RoleMember {
     protected function getMyMemberType() {
         return VolMemberType::Guest;
     }
+
+    public function saveChanges(\PDO $dbh, array $post) {
+
+        $msg = '';
+        $uS = Session::getInstance();
+
+        $msg .= parent::saveChanges($dbh, $post);
+
+        //  Save Languages
+        if ($uS->LangChooser) {
+            $this->saveLanguages($dbh, $post, $this->getIdPrefix(), $uS->username);
+        }
+
+        //  Save Insurance
+        if ($uS->InsuranceChooser) {
+            $this->saveInsurance($dbh, $post, $this->getIdPrefix(), $uS->username);
+        }
+
+
+        if ($uS->LangChooser && $this->get_idName() > 0) {
+            $this->getLanguages($dbh, $this->get_idName());
+        }
+
+        if ($uS->InsuranceChooser && $this->get_idName() > 0) {
+            $this->getInsurance($dbh, $this->get_idName());
+        }
+
+        return $msg;
+    }
+
 }
 
 
@@ -408,6 +419,36 @@ class PatientMember extends RoleMember {
         return parent::createThinMarkupRow() . HTMLTable::makeTd('');
 
     }
+
+    public function saveChanges(\PDO $dbh, array $post) {
+
+        $msg = '';
+        $uS = Session::getInstance();
+
+        $msg .= parent::saveChanges($dbh, $post);
+
+        //  Save Languages
+        if ($uS->LangChooser) {
+            $this->saveLanguages($dbh, $post, $this->getIdPrefix(), $uS->username);
+        }
+
+        //  Save Insurance
+        if ($uS->InsuranceChooser) {
+            $this->saveInsurance($dbh, $post, $this->getIdPrefix(), $uS->username);
+        }
+
+
+        if ($uS->LangChooser && $this->get_idName() > 0) {
+            $this->getLanguages($dbh, $this->get_idName());
+        }
+
+        if ($uS->InsuranceChooser && $this->get_idName() > 0) {
+            $this->getInsurance($dbh, $this->get_idName());
+        }
+
+        return $msg;
+    }
+
 
 }
 

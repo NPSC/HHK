@@ -452,7 +452,7 @@ class Name_InsuranceRS extends TableRS {
     function __construct($TableName = "name_insurance") {
 
         $this->Insurance_Id = new DB_Field("Insurance_Id", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->idName = new DB_Field("idName", 0, new DbIntSanitizer(), TRUE, TRUE);
+        $this->idName = new DB_Field("idName", 0, new DbIntSanitizer(), TRUE, FALSE);
         $this->Primary = new DB_Field("Primary", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(4), TRUE, TRUE);
 

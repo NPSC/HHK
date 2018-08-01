@@ -377,7 +377,18 @@ class IndivMember extends Member {
         }
 
         // Insurance Types
-        $stmt2 = $dbh->query("Select * from `insurance_type` order by `List_Order`");
+        $stmt2 = $dbh->query("SELECT
+    idInsurance_type,
+    Title,
+    CASE
+        WHEN Is_Primary = 1 THEN '1'
+        ELSE '0'
+    END AS `Is_Primary`,
+    Multiselect,
+    List_Order
+FROM
+    `insurance_type`
+ORDER BY `List_Order`");
         $insTypes = array();
 
         while ($r = $stmt2->fetch(\PDO::FETCH_ASSOC)) {
@@ -401,10 +412,10 @@ class IndivMember extends Member {
                 }
             }
 
-            if (count($choices) === 0) {
-                $choices[''] = '';
-            }
-
+//            if (count($choices) === 0) {
+//                $choices[''] = '';
+//            }
+//
             $attr = array(
                 'name'=>$idPrefix.'sel' . $i['Title'],
             );
@@ -416,15 +427,16 @@ class IndivMember extends Member {
                 $attr['id'] = $idPrefix.'sel' . $i['Title'];
             }
 
+            $showBlankChoice = TRUE;
+            if ($i['Is_Primary'] == '1') {
+                $showBlankChoice = FALSE;
+            }
+
             $tbl->addBodyTr(
                     HTMLTable::makeTd($i['Title'])
-                    .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($ins[$i['idInsurance_type']], $choices, TRUE),$attr)));
+                    .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($ins[$i['idInsurance_type']], $choices, $showBlankChoice),$attr)));
 
         }
-
-        // help message
-        //$tbl->addBodyTr(HTMLTable::makeTd('Insurance Types can be defined on the Resource Builder page under the Lookups tab.', array('colspan'=>'3', 'class'=>'hhk-htip')));
-
 
         return $tbl->generateMarkup();
 
@@ -718,8 +730,11 @@ class IndivMember extends Member {
 
                 if (!isset($langs2[$langRs->Language_Id->getStoredVal()])) {
                     // remove recordset
-                    EditRS::delete($dbh, $langRs, array($langRs->Language_Id, $langRs->idName));
+                    $numRecords = EditRS::delete($dbh, $langRs, array($langRs->Language_Id, $langRs->idName));
 
+                    if ($numRecords > 0) {
+                        NameLog::writeDelete($dbh, $langRs, $langRs->idName, $username, $langRs->Language_Id->getStoredVal());
+                    }
                 } else {
                     $myLangs[] = $langRs;
                 }
@@ -747,18 +762,16 @@ class IndivMember extends Member {
                     $langRs->Language_Id->setNewVal($idLang);
                     $langRs->idName->setNewVal($this->get_idName());
                     $langRs->Updated_By->setNewVal($username);
-                    $recId = EditRS::insert($dbh, $langRs);
+                    EditRS::insert($dbh, $langRs);
 
-                    if ($recId > 0) {
-                        $langRs->setStoredVal($recId);
-                        $myLangs[] = $langRs;
-                    }
+                    $langRs->Language_Id->setStoredVal($idLang);
+                    $myLangs[] = $langRs;
+                    NameLog::writeInsert($dbh, $langRs, $this->get_idName(), $username, $idLang);
                 }
             }
 
             $this->languageRSs = $myLangs;
         }
-
     }
 
     protected function saveInsurance(\PDO $dbh, $post, $idPrefix, $username) {
@@ -768,14 +781,32 @@ class IndivMember extends Member {
         // Insurance Types
         $stmt2 = $dbh->query("Select * from `insurance_type` order by `List_Order`");
         $insTypes = array();
+        $primaryInsType = '';
 
         while ($r = $stmt2->fetch(\PDO::FETCH_ASSOC)) {
             $insTypes[$r['idInsurance_type']] = $r;
+
+            if ($r['Is_Primary']) {
+                $primaryInsType = $r['Title'];
+            }
+        }
+
+        // Insurances
+        $stmt3 = $dbh->query("select idInsurance, Type, Title from insurance");
+        $insCos = array();
+
+        while ($c = $stmt3->fetch(\PDO::FETCH_ASSOC)) {
+            $insCos[$c['idInsurance']] = $c;
+        }
+
+        // Make a primary selector if not present so I can delete them.
+        if (isset($post[$idPrefix.'sel'.$primaryInsType]) === FALSE) {
+            $post[$idPrefix.'sel'.$primaryInsType] = array();
         }
 
         foreach ($insTypes as $i) {
 
-            if (isset($post[$idPrefix.'sel'.$i['Title']]) && $post[$idPrefix.'sel'.$i['Title']] != '' && $this->get_idName() > 0) {
+            if (isset($post[$idPrefix.'sel'.$i['Title']]) && $this->get_idName() > 0) {
 
                 if ($i['Multiselect'] > 1) {
                     $inss = filter_var_array($post[$idPrefix.'sel'.$i['Title']], FILTER_SANITIZE_NUMBER_INT);
@@ -786,19 +817,26 @@ class IndivMember extends Member {
                     $inss2[$ins] = $ins;
                 }
 
-                // Remove any unset languages.
+                // Remove any unset .
                 foreach ($this->insuranceRSs as $insRs) {
 
                     if (!isset($inss2[$insRs->Insurance_Id->getStoredVal()])) {
-                        // remove recordset
-                        EditRS::delete($dbh, $insRs, array($insRs->Insurance_Id, $insRs->idName));
+
+                        if ($insCos[$insRs->Insurance_Id->getStoredVal()]['Type'] == $i['idInsurance_type']) {
+                            // remove recordset
+                            $numRecords = EditRS::delete($dbh, $insRs, array($insRs->Insurance_Id, $insRs->idName));
+
+                            if ($numRecords > 0) {
+                                NameLog::writeDelete($dbh, $insRs, $insRs->idName, $username, $i['Title'] . '-' . $insCos[$insRs->Insurance_Id->getStoredVal()]['Title']);
+                            }
+                        }
 
                     } else {
                         $myInss[] = $insRs;
                     }
                 }
 
-                // set any new languages
+                // set any new insurance
                 foreach ($inss as $v) {
 
                     $idins = intval($v, 10);
@@ -821,12 +859,12 @@ class IndivMember extends Member {
                         $insRs->idName->setNewVal($this->get_idName());
                         $insRs->Updated_By->setNewVal($username);
 
-                        $recId = EditRS::insert($dbh, $insRs);
+                        EditRS::insert($dbh, $insRs);
 
-                        if ($recId > 0) {
-                            $insRs->setStoredVal($recId);
-                            $myInss[] = $insRs;
-                        }
+                        $insRs->Insurance_Id->setStoredVal($idins);
+                        $myInss[] = $insRs;
+                        NameLog::writeInsert($dbh, $insRs, $this->get_idName(), $username, $i['Title'] . '-' . $insCos[$idins]['Title']);
+
                     }
                 }
             }
