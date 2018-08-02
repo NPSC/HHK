@@ -112,7 +112,6 @@ class GuestReport {
 
         $accum['Total']['Distance'] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));
 
-
         $th .= HTMLTable::makeTh("Total");
 
         if ($whichGuests == 'new') {
@@ -141,7 +140,7 @@ class GuestReport {
         hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
     WHERE
         n.Member_Status IN ('a' , 'in', 'd') $whHosp $whAssoc
-        AND DATE(s.Span_Start_Date) <= DATE('" . $endDT->format('Y-m-d') . "') ";
+        AND DATE(s.Span_Start_Date) < DATE('" . $endDT->format('Y-m-d') . "') ";
 
         if ($whichGuests == 'new') {
             $query .= " GROUP BY s.idName HAVING DATE(`minDate`) >= DATE('" . $stDT->format('Y-m-01') . "')";

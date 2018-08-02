@@ -219,16 +219,16 @@ $ckdate";
         } else if ($this->selectedCalendar == self::DATES) {
             // selected dates.
             $startDT = new DateTime($this->selectedStart);
-            $endDateDT = new DateTime($this->selectedEnd);
+            $endDT = new DateTime($this->selectedEnd);
+            $endDT->add(new DateInterval('P1D'));
 
-            if ($startDT <= $endDateDT) {
-                $this->reportEnd = $endDateDT->format('Y-m-d');
+            if ($startDT <= $endDT) {
+                $this->reportEnd = $endDT->format('Y-m-d');
                 $this->reportStart = $startDT->format('Y-m-d');
             } else {
-                $this->reportStart = $endDateDT->format('Y-m-d');
+                $this->reportStart = $endDT->format('Y-m-d');
                 $this->reportEmd = $startDT->format('Y-m-d');
             }
-
 
         } else {
             // Months
@@ -245,11 +245,10 @@ $ckdate";
                 $this->reportStart = $this->selectedYear . '-' . $month . '-01';
             }
 
-            $endDate = new DateTime($this->reportStart);
-            $endDate->add(new DateInterval($interval));
-            $endDate->sub(new DateInterval('P1D'));
+            $endDT = new DateTime($this->reportStart);
+            $endDT->add(new DateInterval($interval));
 
-            $this->reportEnd = $endDate->format('Y-m-d');
+            $this->reportEnd = $endDT->format('Y-m-d');
         }
 
     }

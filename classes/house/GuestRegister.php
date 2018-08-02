@@ -13,23 +13,22 @@ class GuestRegister {
 
     protected $noAssocId;
 
-    public static function getCalendarRescs(\PDO $dbh, $startDate = '') {
+    public static function getCalendarRescs(\PDO $dbh, $startDate, $endDate, $timezone) {
 
+        $uS = Session::getInstance();
         $rescs = array();
 
-        if ($startDate == "") {
+        if ($startDate == '' || $endDate == '') {
             return array();
         }
 
-        $beginDate = new \DateTime($startDate);
-        // Reset to first day of the month.
-        $beginDate->setDate($beginDate->format('Y'), $beginDate->format('m'), 1);
+        if ($timezone == '') {
+            $timezone = $uS->tz;
+        }
 
-        $endDate = new \DateTime($startDate);
-        $endDate->add(new DateInterval('P2M'));
+        $beginDT = self::parseDateTime($startDate, new DateTimeZone($timezone));
+        $endDT = self::parseDateTime($endDate, new DateTimeZone($timezone));
 
-        // Move start date back one month
-        $beginDate->sub(new DateInterval('P2M'));
 
         // Get list of resources
         $qu = "SELECT
@@ -45,7 +44,7 @@ class GuestRegister {
     rm.Floor as `Floor`
 from resource r
 	left join
-resource_use ru on r.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $beginDate->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $endDate->format('Y-m-d') . "')
+resource_use ru on r.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $beginDT->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $endDT->format('Y-m-d') . "')
     left join resource_room rr on r.idResource = rr.idResource
     left join room rm on rr.idRoom = rm.idRoom
     left join gen_lookups g on g.Table_Name = 'Room_Type' and g.Code = rm.Type
@@ -133,8 +132,12 @@ where ru.idResource_use is null
             return $events;
         }
 
-        $beginDate = self::parseDateTime($_GET['start']);
-        $endDate = self::parseDateTime($_GET['end']);
+        if ($timezone == '') {
+            $timezone = $uS->tz;
+        }
+
+        $beginDate = self::parseDateTime($startTime, new DateTimeZone($timezone));
+        $endDate = self::parseDateTime($endTime, new DateTimeZone($timezone));
 
         // get list of hospital colors
         $hospitals = $this->getHospitals($dbh);

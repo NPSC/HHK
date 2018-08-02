@@ -833,7 +833,7 @@ $(document).ready(function () {
         resourcesInitiallyExpanded: expandResources,
         resourceLabelText: 'Rooms',
         resourceAreaWidth: '8%',
-        refetchResourcesOnNavigate: false,
+        refetchResourcesOnNavigate: true,
         resourceGroupField: resourceGroupBy,
         loading: function (isLoading, View) {
 
@@ -846,21 +846,11 @@ $(document).ready(function () {
             }
         },
 
-        resources: function (callback) {
-            
-            $.ajax({
-                url: 'ws_calendar.php',
-                data: {
-                    start: calStartDate.format(),
-                    cmd: 'resclist'
-                },
-                success: function (rdata) {
-                    callback($.parseJSON(rdata));
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    $('#pCalError').text('Error getting resources: ' + textStatus + errorThrown).show();
-                }
-            });
+        resources: {
+            url: 'ws_calendar.php?cmd=resclist',
+            error: function(jqXHR, textStatus, errorThrown) {
+                $('#pCalError').text('Error getting resources: ' + errorThrown).show();
+            }
         },
 
         resourceGroupText: function (txt) {
@@ -897,7 +887,7 @@ $(document).ready(function () {
         events: {
             url: 'ws_calendar.php?cmd=eventlist',
             error: function(jqXHR, textStatus, errorThrown) {
-                $('#pCalError').text('Error getting resources: ' + errorThrown).show();
+                $('#pCalError').text('Error getting events: ' + errorThrown).show();
             }
         },
         

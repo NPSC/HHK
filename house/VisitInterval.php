@@ -462,7 +462,8 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
             DATE(IFNULL(v.Span_End, DATEDEFAULTNOW(v.Expected_Departure))) <= DATE('$start')
         THEN 0
         WHEN DATE(v.Span_Start) >= DATE('$end') THEN 0
-        ELSE DATEDIFF(CASE
+        ELSE DATEDIFF(
+                CASE
                     WHEN
                         DATE(IFNULL(v.Span_End, DATEDEFAULTNOW(v.Expected_Departure))) > DATE('$end')
                     THEN
