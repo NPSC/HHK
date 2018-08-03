@@ -294,9 +294,9 @@ class History {
                 unset($fixedRows['Patient']);
                 $fixedRows = array('Patient' => $r['Patient Name']) + $fixedRows;
 
-                if ($r['Patient_Staying'] > 0) {
-                    $fixedRows['Patient'] .= HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>"$patientTitle Planning to stay"));
-                }
+//                if ($r['Patient_Staying'] > 0) {
+//                    $fixedRows['Patient'] .= HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>"$patientTitle Planning to stay"));
+//                }
             }
 
 
