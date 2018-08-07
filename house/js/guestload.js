@@ -86,7 +86,7 @@ $(document).ready(function () {
     var memData = memberData;
     var savePressed = false;
     var nextVeh = 1;
-    var listJSON = '../admin/ws_gen.php?cmd=chglog&uid=' + memData.id;
+    var listJSON = '../admin/ws_gen.php?cmd=chglog&vw=vguest_audit_log&uid=' + memData.id;
     var listEvtTable;
     
     $.widget( "ui.autocomplete", $.ui.autocomplete, {

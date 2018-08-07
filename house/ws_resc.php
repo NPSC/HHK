@@ -25,6 +25,7 @@ require CLASSES . 'AuditLog.php';
 require CLASSES . 'History.php';
 require (CLASSES . 'CreateMarkupFromDB.php');
 require (CLASSES . 'Notes.php');
+require CLASSES . 'TableLog.php';
 
 require (PMT . 'Invoice.php');
 require (PMT . 'InvoiceLine.php');

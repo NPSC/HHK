@@ -158,7 +158,7 @@ class RegisterForm {
 
     }
 
-    protected static function AgreementBlock(array $guestNames, $agreementLabel, $instructionFileName) {
+    protected static function AgreementBlock(array $guests, $agreementLabel, $instructionFileName) {
 
         $mkup = HTMLContainer::generateMarkup('h2', $agreementLabel, array('style'=>'border:none;border-bottom:1.5pt solid #98C723'));
 
@@ -170,18 +170,20 @@ class RegisterForm {
 
         $usedNames = array();
 
-        foreach ($guestNames as $gname) {
+        foreach ($guests as $g) {
 
-            if (!isset($usedNames[$gname])) {
+            if (!isset($usedNames[$g->getIdName()])) {
 
-                $mkup .= "<p class=MsoNormal style='margin-top:12pt;margin-right:0;margin-bottom:0;margin-left:.5in;line-height:normal'>"
-                    . "<span style='font-size:10pt'>" . $gname . "&ensp; ___________________________________</span></p>";
-                $usedNames[$gname] = 'y';
+                $sigCapture = HTMLContainer::generateMarkup('span', '___________________________________', array('name'=>'divSigCap_' . $g->getIdName(), 'data-gid'=>$g->getIdName(), 'class'=>'hhk-sigCapure'));
+
+                $mkup .= "<p class=MsoNormal style='margin-top:14pt;margin-right:0;margin-bottom:0;margin-left:.5in;line-height:normal'>"
+                    . "<span>" . $g->getRoleMember()->get_fullName() . $sigCapture . "</span></p>";
+                $usedNames[$g->getIdName()] = 'y';
             }
         }
 
         // one more blank line
-        $mkup .= "<p class=MsoNormal style='margin-top:12pt;margin-right:0;margin-bottom:0;margin-left:.5in;line-height:normal'>
+        $mkup .= "<p class=MsoNormal style='margin-top:14pt;margin-right:0;margin-bottom:0;margin-left:.5in;line-height:normal'>
             <span style='font-size:10pt'>________________________________&emsp; ___________________________________</span></p>";
 
 
@@ -351,15 +353,12 @@ class RegisterForm {
         $mkup = "<div style='width:700px;margin-bottom:30px; margin-left:5px; margin-right:5px'>";
         $mkup .= self::titleBlock($roomTitle, $expectedDeparture, $rate, $title, $agent, $uS->RoomPriceModel, $houseAddr, $roomFeeTitle);
 
-        $mkup .= self::notesBlock($notes);
+        // don't use notes if they are for the waitlist.
+        if (!$uS->UseWLnotes) {
+            $mkup .= self::notesBlock($notes);
+        }
 
         $mkup .= self::guestBlock($dbh, $guests, $patientRelCodes);
-
-        $guestNames = array();
-        // for each guest
-        foreach ($guests as $guest) {
-            $guestNames[] = $guest->getRoleMember()->get_fullName();
-        }
 
         // Patient
         $mkup .= self::patientBlock($patient, $hospital, $hospRoom);
@@ -375,7 +374,7 @@ class RegisterForm {
         }
 
         // Agreement
-        $mkup .= self::AgreementBlock($guestNames, $agreementLabel, $instructionFileName);
+        $mkup .= self::AgreementBlock($guests, $agreementLabel, $instructionFileName);
 
         $mkup .= "</div>";
 

@@ -8,7 +8,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-require CLASSES . 'TableLog.php';
 
 class VisitLog extends TableLog {
 

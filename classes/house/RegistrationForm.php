@@ -32,7 +32,10 @@ class RegistrationForm {
 
         $doc .= $this->makePatient($patientName, $hospitalName);
 
-        $doc .= $this->makeNotes($note);
+        // don't use notes if they are for the waitlist.
+        if (!$uS->UseWLnotes) {
+            $doc .= $this->makeNotes($note);
+        }
 
         $doc .= $this->makeGuestRegSection();
 

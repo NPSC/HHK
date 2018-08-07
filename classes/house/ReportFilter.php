@@ -34,6 +34,12 @@
  */
 class ReportFilter {
 
+    const DATES = 18;
+    const MONTHS = 19;
+    const FISCAL_YEAR = 20;
+    const CAL_YEAR = 21;
+    const YEAR_2_DATE = 22;
+
     protected $months;
     protected $calendarOptions;
     protected $selectedCalendar;
@@ -63,16 +69,28 @@ class ReportFilter {
         $this->hospitals = array();
     }
 
-    public function createTimePeriod($defaultYear, $defaultCalendarOption, $fiscalYearDiffMonths = 0) {
+    public function createTimePeriod($defaultYear, $defaultCalendarOption, $fiscalYearDiffMonths = 0, $omits = array()) {
         $this->months = array(
             0 => array(0, 'December'), 1 => array(1, 'January'), 2 => array(2, 'February'),
             3 => array(3, 'March'), 4 => array(4, 'April'), 5 => array(5, 'May'), 6 => array(6, 'June'),
             7 => array(7, 'July'), 8 => array(8, 'August'), 9 => array(9, 'September'), 10 => array(10, 'October'), 11 => array(11, 'November'), 12 => array(12, 'December'), 13 => array(13, 'January'));
 
+
+        $this->calendarOptions = array(
+            self::DATES => array(self::DATES, 'Dates'),
+            self::MONTHS => array(self::MONTHS, 'Month'),
+            self::FISCAL_YEAR => array(self::FISCAL_YEAR, 'Fiscal Year'),
+            self::CAL_YEAR => array(self::CAL_YEAR, 'Calendar Year'),
+            self::YEAR_2_DATE => array(self::YEAR_2_DATE, 'Year to Date')
+        );
+
+
+        foreach ($omits as $o) {
+            unset($this->calendarOptions[$o]);
+        }
+
         if ($fiscalYearDiffMonths == 0) {
-            $this->calendarOptions = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 21 => array(21, 'Cal. Year'), 22 => array(22, 'Year to Date'));
-        } else {
-            $this->calendarOptions = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 20 => array(20, 'Fiscal Year'), 21 => array(21, 'Calendar Year'), 22 => array(22, 'Year to Date'));
+            unset($this->calendarOptions[self::FISCAL_YEAR]);
         }
 
         $this->selectedYear = $defaultYear;
@@ -102,37 +120,50 @@ class ReportFilter {
                 . HTMLTable::makeTd($yearSelector, array('style'=>'vertical-align: top;'))
         );
 
-        $tbl->addBodyTr(HTMLTable::makeTd(
+        if (isset($this->calendarOptions[self::DATES])) {
+            $tbl->addBodyTr(HTMLTable::makeTd(
                 HTMLContainer::generateMarkup('span', 'Start:', array('class'=>'dates', 'style'=>'margin-right:.3em;display:none;'))
                 . HTMLInput::generateMarkup($this->selectedStart, array('name'=>"stDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
                 . HTMLContainer::generateMarkup('span', 'End:', array('class'=>'dates', 'style'=>'margin-right:.3em;display:none;'))
                 . HTMLInput::generateMarkup($this->selectedEnd, array('name'=>"enDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
-                . $this->timePeriodScript()
                 , array('colspan'=>'3')
                 ));
+        }
 
         return $tbl;
     }
 
-    protected function timePeriodScript() {
+    public function getTimePeriodScript() {
 
-        return "<script type='text/javascript'>
-                $('#selCalendar').change(function () {
-            $('#selIntYear').show();
-            if ($(this).val() && $(this).val() != '19') {
-                $('#selIntMonth').hide();
-            } else {
-                $('#selIntMonth').show();
-            }
-            if ($(this).val() && $(this).val() != '18') {
-                $('.dates').hide();
-            } else {
-                $('.dates').show();
-                $('#selIntYear').hide();
-            }
-        });
-        $('#selCalendar').change();
-        </script>";
+        $ckdate = '';
+
+        if (isset($this->calendarOptions[self::DATES])) {
+            $ckdate = "$('.ckdate').datepicker({
+yearRange: '-05:+02',
+changeMonth: true,
+changeYear: true,
+autoSize: true,
+numberOfMonths: 1,
+dateFormat: 'M d, yy'
+});";
+        }
+
+        return "$('#selCalendar').change(function () {
+    $('#selIntYear').show();
+    if ($(this).val() && $(this).val() != '19') {
+        $('#selIntMonth').hide();
+    } else {
+        $('#selIntMonth').show();
+    }
+    if ($(this).val() && $(this).val() != '18') {
+        $('.dates').hide();
+    } else {
+        $('.dates').show();
+        $('#selIntYear').hide();
+    }
+});
+$('#selCalendar').change();
+$ckdate";
 
     }
 
@@ -160,7 +191,7 @@ class ReportFilter {
         }
 
 
-        if ($this->selectedCalendar == 20) {
+        if ($this->selectedCalendar == self::FISCAL_YEAR) {
             // fiscal year
             $adjustPeriod = new DateInterval('P' . $this->fyDiffMonths . 'M');
             $startDT = new DateTime($this->selectedYear . '-01-01');
@@ -170,20 +201,34 @@ class ReportFilter {
             $endDT = new DateTime(($this->selectedYear + 1) . '-01-01');
             $this->reportEnd = $endDT->sub($adjustPeriod)->format('Y-m-d');
 
-        } else if ($this->selectedCalendar == 21) {
+        } else if ($this->selectedCalendar == self::CAL_YEAR) {
             // Calendar year
             $startDT = new DateTime($this->selectedYear . '-01-01');
             $this->reportStart = $startDT->format('Y-m-d');
 
             $this->reportEnd = ($this->selectedYear + 1) . '-01-01';
 
-        } else if ($this->selectedCalendar == 22) {
+        } else if ($this->selectedCalendar == self::YEAR_2_DATE) {
             // Year to date
             $this->reportStart = date('Y') . '-01-01';
 
             $endDT = new DateTime();
             $endDT->add(new DateInterval('P1D'));
             $this->reportEnd = $endDT->format('Y-m-d');
+
+        } else if ($this->selectedCalendar == self::DATES) {
+            // selected dates.
+            $startDT = new DateTime($this->selectedStart);
+            $endDT = new DateTime($this->selectedEnd);
+            $endDT->add(new DateInterval('P1D'));
+
+            if ($startDT <= $endDT) {
+                $this->reportEnd = $endDT->format('Y-m-d');
+                $this->reportStart = $startDT->format('Y-m-d');
+            } else {
+                $this->reportStart = $endDT->format('Y-m-d');
+                $this->reportEmd = $startDT->format('Y-m-d');
+            }
 
         } else {
             // Months
@@ -200,11 +245,10 @@ class ReportFilter {
                 $this->reportStart = $this->selectedYear . '-' . $month . '-01';
             }
 
-            $endDate = new DateTime($this->reportStart);
-            $endDate->add(new DateInterval($interval));
-            $endDate->sub(new DateInterval('P1D'));
+            $endDT = new DateTime($this->reportStart);
+            $endDT->add(new DateInterval($interval));
 
-            $this->reportEnd = $endDate->format('Y-m-d');
+            $this->reportEnd = $endDT->format('Y-m-d');
         }
 
     }

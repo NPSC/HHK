@@ -53,6 +53,7 @@ require (PMT . 'CheckTX.php');
 require (CLASSES . 'Purchase/Item.php');
 
 require(CLASSES . 'Purchase/RoomRate.php');
+require CLASSES . 'TableLog.php';
 
 require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');

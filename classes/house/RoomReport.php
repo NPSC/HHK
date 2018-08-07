@@ -129,6 +129,7 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         $query1 = "SELECT
     rr.idRoom,
     ru.Notes,
+    ru.`Status`,
     IFNULL(g.Description, '') AS `StatusTitle`,
     IFNULL(g2.Description, '') AS `OOSCode`
 FROM
@@ -142,8 +143,8 @@ FROM
     gen_lookups g2 ON g2.Table_Name = 'OOS_Codes'
         AND g2.Code = ru.OOS_Code
 WHERE
-    DATE(Start_Date) <= DATE(NOW())
-        AND IFNULL(DATE(End_Date), DATE(NOW())) > DATE(NOW());";
+    DATE(ru.Start_Date) <= DATE(NOW())
+        AND IFNULL(DATE(ru.End_Date), DATE(NOW())) > DATE(NOW());";
 
         $stmtrs = $dbh->query($query1);
 
@@ -203,7 +204,7 @@ WHERE
 
             if ($idRoom != $r['idRoom']) {
 
-                if ($idRoom > 0) {
+                if ($idRoom > 0 && (!isset($roomsOOS[$idRoom]) || $roomsOOS[$idRoom]['Status'] !== ResourceStatus::Unavailable)) {
                     $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS, $priceModel);
                 }
 
@@ -220,7 +221,10 @@ WHERE
             $last = $r;
         }
 
-        $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS, $priceModel);
+        // Print the last room
+        if ($last['idRoom'] > 0 && (!isset($roomsOOS[$last['idRoom']]) || $roomsOOS[$last['idRoom']]['Status'] !== ResourceStatus::Unavailable)) {
+            $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS, $priceModel);
+        }
 
         return $tableRows;
     }
@@ -228,8 +232,8 @@ WHERE
     protected static function doDailyMarkup(\PDO $dbh, $r, $guests, $roomsOOS, PriceModel $priceModel) {
 
         $fixed = array();
-
         $idVisit = intval($r['idVisit'], 10);
+        $stat = '';
 
         // Mangle room status
         if ($r['Cleaning_Days'] > 0) {

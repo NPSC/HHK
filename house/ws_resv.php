@@ -1,3 +1,4 @@
+
 <?php
 /**
  * ws_resv.php
@@ -32,7 +33,7 @@ require (CLASSES . 'Notes.php');
 require (CLASSES . 'US_Holidays.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'FinAssistance.php');
-
+require CLASSES . 'TableLog.php';
 
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
@@ -92,8 +93,7 @@ require (HOUSE . 'Vehicle.php');
 require (HOUSE . 'Visit.php');
 require (HOUSE . 'Family.php');
 require (HOUSE . "visitViewer.php");
-//require (HOUSE . 'Waitlist.php');
-//require (HOUSE . 'WaitlistSvcs.php');
+
 require (HOUSE . 'Register.php');
 require (HOUSE . 'VisitCharges.php');
 
@@ -147,7 +147,7 @@ try {
 
     case 'getNoteList':
 
-        $rid = filter_var($_REQUEST['rid'], FILTER_SANITIZE_NUMBER_INT);
+        if (($rid = filter_input(INPUT_POST, 'rid', FILTER_SANITIZE_NUMBER_INT))) {
 
             require(CLASSES . 'DataTableServer.php');
 
@@ -161,6 +161,31 @@ try {
             );
 
             $events = SSP::complex ( $_GET, $dbh, "vresv_notes", 'Note_Id', $columns, null, "Reservation_Id=$rid" );
+        }
+
+        break;
+
+    case 'saveNote':
+
+        $note = '';
+        $linkType = '';
+        $rid = 0;
+
+        if (isset($_POST['data'])) {
+            $note = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
+        }
+
+        if (isset($_POST['linkType'])) {
+            $linkType = intval(filter_input(INPUT_POST, 'linkType', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if (isset($_POST['linkId'])) {
+            $rid = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if ($linkType == NoteLink::Reservation) {
+            $events[] = array('idNote', ResvNote::save($dbh, $idNote, $noteText, $rid));
+        }
 
         break;
 
@@ -207,4 +232,3 @@ if (is_array($events)) {
 }
 
 exit();
-

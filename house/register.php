@@ -37,6 +37,7 @@ require (PMT . 'Transaction.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'Purchase/RoomRate.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+require CLASSES . 'TableLog.php';
 
 require (HOUSE . 'Room.php');
 require (HOUSE . 'Resource.php');
@@ -397,7 +398,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             ];
 
         </script>
-        <script type="text/javascript" src="js/register-min.js"></script>
+        <script type="text/javascript" src="js/register-min.js?v2x=n"></script>
         <style>
            #version {
             height: 15px;
@@ -465,7 +466,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 <div id="vcal" style="clear:left; padding: .6em 1em; display:none;">
                     <?php echo $colorKey; ?>
                     <div id="divGoto" style="position:absolute;">
-                        <span id="spnGotoDate" style="display:none;">Go to Date: <input id="txtGotoDate" type="text" class="ckdate" value="" /></span>
+                        <span id="spnGotoDate" >Go to Date: <input id="txtGotoDate" type="text" class="ckdate" value="" /></span>
                         <span id="pCalLoad" style="font-weight:bold;">Loading...</span>
                     </div>
                     <div id="divRoomGrouping" style="position:absolute; padding: 1.2em; display:none;" class="ui-widget ui-front ui-widget-content ui-corner-all ui-widget-shadow">

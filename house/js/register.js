@@ -755,6 +755,8 @@ $(document).ready(function () {
         dateIncrementObj = {weeks: calDateIncrement};
     }
     
+    $('#selRoomGroupScheme').val(resourceGroupBy);
+    
     $('#calendar').fullCalendar({
 
         aspectRatio: 2.2,
@@ -831,7 +833,7 @@ $(document).ready(function () {
         resourcesInitiallyExpanded: expandResources,
         resourceLabelText: 'Rooms',
         resourceAreaWidth: '8%',
-        refetchResourcesOnNavigate: false,
+        refetchResourcesOnNavigate: true,
         resourceGroupField: resourceGroupBy,
         loading: function (isLoading, View) {
 
@@ -844,21 +846,11 @@ $(document).ready(function () {
             }
         },
 
-        resources: function (callback) {
-            
-            $.ajax({
-                url: 'ws_calendar.php',
-                data: {
-                    start: calStartDate.format(),
-                    cmd: 'resclist'
-                },
-                success: function (rdata) {
-                    callback($.parseJSON(rdata));
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    $('#pCalError').text('Error getting resources: ' + textStatus + errorThrown).show();
-                }
-            });
+        resources: {
+            url: 'ws_calendar.php?cmd=resclist',
+            error: function(jqXHR, textStatus, errorThrown) {
+                $('#pCalError').text('Error getting resources: ' + errorThrown).show();
+            }
         },
 
         resourceGroupText: function (txt) {
@@ -895,7 +887,7 @@ $(document).ready(function () {
         events: {
             url: 'ws_calendar.php?cmd=eventlist',
             error: function(jqXHR, textStatus, errorThrown) {
-                $('#pCalError').text('Error getting resources: ' + errorThrown).show();
+                $('#pCalError').text('Error getting events: ' + errorThrown).show();
             }
         },
         
@@ -1029,7 +1021,7 @@ $(document).ready(function () {
             } else {
                 element.hide();
             }
-        }
+        },
     });
 
     // disappear the pop-up room chooser.
@@ -1342,6 +1334,19 @@ $(document).ready(function () {
         tbl.ajax.reload();
     });
 
+    $('#txtGotoDate').change(function () {
+        calStartDate = new moment($(this).datepicker('getDate'));
+        $('#calendar').fullCalendar( 'refetchResources' );
+        $('#calendar').fullCalendar('gotoDate', calStartDate);
+    });
+    
+    // Capture room Grouping schema change event.
+    $('#selRoomGroupScheme').change(function () {
+        $('#divRoomGrouping').hide();
+        $('#calendar').fullCalendar('option', 'resourceGroupField', $(this).val());
+        $('#calendar').fullCalendar( 'refetchResources' );
+    });
+    
     if (rctMkup !== '') {
         showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt');
     }
@@ -1450,16 +1455,29 @@ $(document).ready(function () {
     });
 
     $('#mainTabs').tabs({
+
         beforeActivate: function (event, ui) {
             if (ui.newTab.prop('id') === 'liInvoice') {
                 $('#btnInvGo').click();
             }
-        }
-    });
-    $('#mainTabs').show();
-    $('#mainTabs').tabs("option", "active", defaultTab);
+        },
 
-    $('#calendar').fullCalendar('render');
+        activate: function(event, ui) {
+            if (ui.newTab.prop('id') === 'liCal') {
+                $('#calendar').fullCalendar('render');
+                // Calendar date goto button.
+                $('#divGoto').position({
+                        my: 'center top',
+                        at: 'center top+8',
+                        of: '#calendar',
+                        within: '#calendar'
+                });
+            }
+        },
+        active: defaultTab
+    });
+    
+    $('#mainTabs').show();
 
     // Calendar date goto button.
     $('#divGoto').position({
@@ -1468,29 +1486,9 @@ $(document).ready(function () {
             of: '#calendar',
             within: '#calendar'
     });
-    
-    $('#txtGotoDate').change(function () {
-        calStartDate = new moment($(this).datepicker('getDate'));
-        $('#calendar').fullCalendar( 'refetchResources' );
-        $('#calendar').fullCalendar('gotoDate', calStartDate);
-    });
 
-    $('#divRoomGrouping').position({
-        my: 'left top',
-        at: 'left top - 10',
-        of: '#vcal',
-        within: '#vcal'
-    });
-    
-    $('#selRoomGroupScheme').val(resourceGroupBy);
 
-    // Capture room Grouping schema change event.
-    $('#selRoomGroupScheme').change(function () {
-        $('#divRoomGrouping').hide();
-        $('#calendar').fullCalendar('option', 'resourceGroupField', $(this).val());
-        $('#calendar').fullCalendar( 'refetchResources' );
-    });
-    
+
     $('#curres').DataTable({
        ajax: {
            url: 'ws_resc.php?cmd=getHist&tbl=curres',

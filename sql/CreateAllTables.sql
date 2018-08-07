@@ -1229,16 +1229,12 @@ CREATE TABLE IF NOT EXISTS `note_group` (
 
 
 -- -----------------------------------------------------
--- Table `registration_note`
+-- Table `reservation_note`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `registration_note` (
-  `idRegistration_note` INT NOT NULL,
-  `Registration_Id` INT NOT NULL,
   `Reservation_Id` INT NOT NULL,
   `Note_Id` INT NOT NULL,
-  PRIMARY KEY (`idRegistration_note`),
-  INDEX `INDEX_REGISTRATION` (`Registration_Id` ASC),
-  INDEX `INDEX_RESERVATION` (`Reservation_Id` ASC)
+  PRIMARY KEY (`Reservation_Id`, `Note_Id`),
 ) ENGINE = InnoDB;
 
 
@@ -1767,6 +1763,17 @@ CREATE TABLE if not exists `shell_events` (
 ) ENGINE=InnoDB AUTO_INCREMENT=3;
 
 
+CREATE TABLE `static_doc` (
+  `idStatic_doc` INT NOT NULL AUTO_INCREMENT,
+  `Doc_Type` VARCHAR(5) NOT NULL DEFAULT '',
+  `Doc_Category` VARCHAR(5) NOT NULL DEFAULT '',
+  `Doc_Blob` BLOB NULL,
+  `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
+  `Last_Updated` DATETIME NULL,
+  `Timestamp` TIMESTAMP NOT NULL DEFAULT now(),
+  PRIMARY KEY (`idStatic_doc`)
+)ENGINE=InnoDB AUTO_INCREMENT=10;
+
 
 
 -- -----------------------------------------------------
@@ -2211,3 +2218,10 @@ ALTER TABLE `visit`
 
 ALTER TABLE `volunteer_hours` 
     ADD INDEX `Index_idName` (`idName` ASC);
+
+ALTER TABLE `name_log` 
+    ADD INDEX `INDEX_IDNAME` (`idName` ASC);
+
+ALTER TABLE `visit_log` 
+    ADD INDEX `INDX_IDNAME` (`idName` ASC),
+    ADD INDEX `INDX_IDVISIT` (`idVisit` ASC, `Span` ASC);

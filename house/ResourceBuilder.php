@@ -18,7 +18,7 @@ require (DB_TABLES . 'AttributeRS.php');
 require (DB_TABLES . 'ReservationRS.php');
 require (DB_TABLES . 'ItemRS.php');
 
-
+require (CLASSES . 'TableLog.php');
 require (HOUSE . 'VisitLog.php');
 require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Room.php');
@@ -131,15 +131,13 @@ function getSelections(\PDO $dbh, $tableName, $type) {
 
     $tbl = new HTMLTable();
 
-    if ($type == 'm') {
-        $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries') . HTMLTable::makeTh('Order') . HTMLTable::makeTh('Use');
-    } else {
-        $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries') . HTMLTable::makeTh('Order')
-                . ($type == 'ca' ? HTMLTable::makeTh('Amount') : '')
-                . ($type == 'ha' ? HTMLTable::makeTh('Days') : '')
-                . ($type == 'd' && $uS->GuestNameColor == $tableName ? HTMLTable::makeTh('Colors (font, bkgrnd)') : '')
-                . ($type == 'u' ? '' : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With'));
-    }
+    $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries') . HTMLTable::makeTh('Order')
+            . ($type == GlTypeCodes::CA ? HTMLTable::makeTh('Amount') : '')
+            . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '')
+            . ($type == GlTypeCodes::Demographics && $uS->GuestNameColor == $tableName ? HTMLTable::makeTh('Colors (font, bkgrnd)') : '')
+            . ($type == GlTypeCodes::U ? '' : $type == GlTypeCodes::m ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With'));
+
+
 
     $tbl->addHeaderTr($hdrTr);
 
@@ -151,7 +149,7 @@ function getSelections(\PDO $dbh, $tableName, $type) {
 
         $cbDelMU = '';
 
-        if ($type == 'm') {
+        if ($type == GlTypeCodes::m) {
 
             $ary = array('name' => 'cbDiagDel[' . $d[0] . ']', 'type' => 'checkbox', 'class' => 'hhkdiagdelcb');
 
@@ -161,11 +159,11 @@ function getSelections(\PDO $dbh, $tableName, $type) {
 
             $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', $ary));
 
-        } else if ($type == 'd' && $d[0] == 'z') {
+        } else if ($type == GlTypeCodes::Demographics && $d[0] == 'z') {
 
             $cbDelMU = HTMLTable::makeTd('');
 
-        } else if ($type != 'u') {
+        } else if ($type != GlTypeCodes::U) {
 
             $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'cbDiagDel[' . $d[0] . ']', 'type' => 'checkbox', 'class' => 'hhkdiagdelcb', 'data-did' => 'selDiagDel[' . $d[0] . ']')));
         }
@@ -173,19 +171,20 @@ function getSelections(\PDO $dbh, $tableName, $type) {
         $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLInput::generateMarkup($d[1], array('name' => 'txtDiag[' . $d[0] . ']')))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($d[4], array('name' => 'txtDOrder[' . $d[0] . ']', 'size'=>'3')))
-                . ($type == 'ha' || $type == 'ca' || ($type == 'd' && $uS->GuestNameColor == $tableName) ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[2], array('size' => '10', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[' . $d[0] . ']'))) : '')
+                . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA || ($type == GlTypeCodes::Demographics && $uS->GuestNameColor == $tableName) ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[2], array('size' => '10', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[' . $d[0] . ']'))) : '')
                 . $cbDelMU
-                . ($type != 'm' && $type != 'u' ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($tDiags, ''), array('name' => 'selDiagDel[' . $d[0] . ']'))) : '')
+                . ($type != GlTypeCodes::m && $type != GlTypeCodes::U ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($tDiags, ''), array('name' => 'selDiagDel[' . $d[0] . ']'))) : '')
         );
     }
 
-    if ($type != 'u' && $type != 'm') {
+    // New Entry Markup?
+    if ($type != GlTypeCodes::U && $type != GlTypeCodes::m) {
         // new entry row
         $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDiag[0]')))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDOrder[0]', 'size'=>'3')))
                 . HTMLTable::makeTd('New', array('colspan' => 2))
-                . ($type == 'ha' || $type == 'ca' ? HTMLTable::makeTd(HTMLInput::generateMarkup('', array('size' => '7', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[0]'))) : '')
+                . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA ? HTMLTable::makeTd(HTMLInput::generateMarkup('', array('size' => '7', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[0]'))) : '')
         );
     }
 
@@ -404,7 +403,7 @@ if (isset($_POST['table'])) {
         $codeArray = filter_var_array($_POST['txtDiag'], FILTER_SANITIZE_STRING);
         $orderNums = filter_var_array($_POST['txtDOrder'], FILTER_SANITIZE_NUMBER_INT);
 
-        if ($type === 'm') {
+        if ($type === GlTypeCodes::m) {
 
             foreach ($codeArray as $c => $v) {
 
@@ -1648,34 +1647,45 @@ $resultMessage = $alertMsg->createMarkup();
                 type = 'd';
             }
 
+            $sel.closest('form').children('div').empty().text('Loading...');
+            $sel.prop('disabled', true);
+
             $.post('ResourceBuilder.php', {table: table, cmd: "load", tp: type},
                     function (data) {
-                        $sel.closest('form').children('div').children().remove();
+                        $sel.prop('disabled', false);
                         if (data) {
-                            $sel.closest('form').children('div').append(data);
+                            $sel.closest('form').children('div').empty().append(data);
                         }
                     });
         });
         $('.hhk-saveLookup').click(function () {
-            var $btn = $(this).closest('form');
-            var sel = $btn.find('select.hhk-selLookup');
+            var $frm = $(this).closest('form');
+            var sel = $frm.find('select.hhk-selLookup');
             var table = sel.find('option:selected').text(),
-                type = $btn.find('select').val();
+                type = $frm.find('select').val(),
+                $btn = $(this);
 
             if (sel.data('type') === 'd') {
                 table = sel.val();
                 type = 'd';
             }
 
-            $.post('ResourceBuilder.php', $btn.serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
+            if ($btn.val() === 'Saving...') {
+                return;
+            }
+
+            $btn.val('Saving...');
+
+            $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
                 function(data) {
+                    $btn.val('Save');
                     if (data) {
-                        $btn.children('div').children().remove().end().append(data);
+                        $frm.children('div').empty().append(data);
                     }
                 });
         }).button();
 
-        $('.hhk-savedemoCat').click(function () {
+        $('#btndemoSave').click(function () {
             var $frm = $(this).closest('form');
 
             $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + 'Demographics' + '&tp=' + 'm',
@@ -1833,7 +1843,7 @@ $resultMessage = $alertMsg->createMarkup();
                                     <th>Category</th>
                                     <td><?php echo $selLookups; ?></td>
                                 </tr></table>
-                            <div id="divlk"></div>
+                            <div id="divlk" class="hhk-divLk"></div>
                             <span style="margin:10px;float:right;">
                                 <?php if (!$hasDiags) { ?>
                                 <input type="submit" name='btnAddDiags' id="btnAddDiags" value="Add Diagnosis"/>
@@ -1850,7 +1860,7 @@ $resultMessage = $alertMsg->createMarkup();
                                     <th>Category</th>
                                     <td><?php echo $seldiscs; ?></td>
                                 </tr></table>
-                            <div id="divdisc"></div>
+                            <div id="divdisc" class="hhk-divLk"></div>
                             <span style="margin:10px;float:right;">
                                 <?php if (!$hasDiscounts) { ?>
                                 <input type="submit" name='btnHouseDiscs' id="btnHouseDiscs" value="Add Discounts"/>

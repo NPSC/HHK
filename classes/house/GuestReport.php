@@ -91,10 +91,10 @@ class GuestReport {
 
             // Demographics
             foreach ($demoCategorys as $k => $d) {
-                $accum[$thisPeriod][$d] = self::makeCounters(readGenLookupsPDO($dbh, $k));
+                $accum[$thisPeriod][$d] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, $k)));
             }
 
-            $accum[$thisPeriod]['Distance'] = self::makeCounters(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute'));
+            $accum[$thisPeriod]['Distance'] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));
 
             $periods[] = $thisPeriod;
 
@@ -107,11 +107,10 @@ class GuestReport {
 
         // Totals
         foreach ($demoCategorys as $k => $d) {
-            $accum['Total'][$d] = self::makeCounters(readGenLookupsPDO($dbh, $k));
+            $accum['Total'][$d] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, $k)));
         }
 
-        $accum['Total']['Distance'] = self::makeCounters(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute'));
-
+        $accum['Total']['Distance'] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));
 
         $th .= HTMLTable::makeTh("Total");
 
@@ -141,7 +140,7 @@ class GuestReport {
         hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
     WHERE
         n.Member_Status IN ('a' , 'in', 'd') $whHosp $whAssoc
-        AND DATE(s.Span_Start_Date) < DATE('" . $endDT->format('Y-m-01') . "') ";
+        AND DATE(s.Span_Start_Date) < DATE('" . $endDT->format('Y-m-d') . "') ";
 
         if ($whichGuests == 'new') {
             $query .= " GROUP BY s.idName HAVING DATE(`minDate`) >= DATE('" . $stDT->format('Y-m-01') . "')";

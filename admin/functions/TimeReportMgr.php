@@ -163,6 +163,8 @@ function processTime(PDO $dbh, &$selCtrls, selCtrl &$selRptType, $fyMonthsAdjust
         // title for category report
         $reportTitle = "Volunteer Time Report.  Date " . date("m/d/Y");
 
+        $rws = array();
+
         // pre-process for roll-up totals
         foreach ($rows as $r) {
             $n = 0;
@@ -184,9 +186,11 @@ function processTime(PDO $dbh, &$selCtrls, selCtrl &$selRptType, $fyMonthsAdjust
                 }
                 $n++;
             }
+
+            $rws[] = $r;
         }
 
-        if ($dlFlag && count($rows) > 0) {
+        if ($dlFlag && count($rws) > 0) {
             $file = "VolunteerTimeReport";
             $sml = OpenXML::createExcel($uname, 'Donor Roll-up Report');
 
@@ -243,7 +247,7 @@ function processTime(PDO $dbh, &$selCtrls, selCtrl &$selRptType, $fyMonthsAdjust
         } else {
 
             $txtReport = CreateMarkupFromDB::generateHTMLSummary($sumaryRows, $reportTitle);
-            $txtReport .= CreateMarkupFromDB::generateHTML_Table($rows, "tblCategory");
+            $txtReport .= CreateMarkupFromDB::generateHTML_Table($rws, "tblCategory");
         }
     }
 
@@ -297,7 +301,7 @@ from
     vmember_listing vm
     left join mcalendar c on vm.Id = c.idName or vm.Id = c.idName2
     left join gen_lookups g ON g.Table_Name = c.E_Vol_Category and g.Code = c.E_Vol_Code
-where
+where c.E_Status != 'd' and
         vm.MemberStatus = 'a' $whereClause $groupBy;";
 }
 
@@ -351,4 +355,4 @@ where
         vm.MemberStatus = 'a' $whereClause $groupBy;";
 }
 
-?>
+

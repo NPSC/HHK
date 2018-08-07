@@ -10,6 +10,7 @@
 require ("homeIncludes.php");
 
 require (CLASSES . 'History.php');
+require CLASSES . 'TableLog.php';
 
 require (HOUSE . 'VisitLog.php');
 require (HOUSE . 'RoomLog.php');

@@ -498,7 +498,7 @@ class Psg {
                 EditRS::insert($dbh, $ngRS);
 
                 $logText = VisitLog::getInsertText($ngRS);
-                VisitLog::logNameGuest($dbh, $this->getIdPsg(), $ngRS->idName->getStoredVal(), $logText, "insert", $uname);
+                VisitLog::logNameGuest($dbh, $this->getIdPsg(), $ngRS->idName->getNewVal(), $logText, "insert", $uname);
             }
 
             EditRS::updateStoredVals($ngRS);

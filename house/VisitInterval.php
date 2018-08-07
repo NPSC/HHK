@@ -462,7 +462,8 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
             DATE(IFNULL(v.Span_End, DATEDEFAULTNOW(v.Expected_Departure))) <= DATE('$start')
         THEN 0
         WHEN DATE(v.Span_Start) >= DATE('$end') THEN 0
-        ELSE DATEDIFF(CASE
+        ELSE DATEDIFF(
+                CASE
                     WHEN
                         DATE(IFNULL(v.Span_End, DATEDEFAULTNOW(v.Expected_Departure))) > DATE('$end')
                     THEN
@@ -922,7 +923,8 @@ where
                 $fullCharge = $fullCharge * $adjRatio;
             }
 
-            $visit['fcg'] += $fullCharge;
+            // Only Positive values.
+            $visit['fcg'] += ($fullCharge > 0 ? $fullCharge : 0);
         }
 
         $savedr = $r;
@@ -1453,14 +1455,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         var pmtMkup = "<?php echo $paymentMarkup; ?>";
         var rctMkup = '<?php echo $receiptMarkup; ?>';
         var payFailPage = '<?php echo $payFailPage; ?>';
-        $('.ckdate').datepicker({
-            yearRange: '-05:+02',
-            changeMonth: true,
-            changeYear: true,
-            autoSize: true,
-            numberOfMonths: 1,
-            dateFormat: 'M d, yy'
-        });
+        <?php echo $filter->getTimePeriodScript(); ?>;
         $('#btnHere, #btnExcel, #btnStatsOnly, #cbColClearAll, #cbColSelAll').button();
         $('#btnHere, #btnExcel').click(function () {
             $('#paymentMessage').hide();

@@ -25,6 +25,7 @@ require (CLASSES . 'CleanAddress.php');
 require (CLASSES . 'AuditLog.php');
 require (CLASSES . 'PaymentSvcs.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+require CLASSES . 'TableLog.php';
 
 require (HOUSE . 'psg.php');
 require (HOUSE . 'RoleMember.php');
@@ -214,8 +215,8 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo DR_PICKER_JS; ?>"></script>
-
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
+        <script type="text/javascript" src="../js/notesViewer.js"></script>
         <script type="text/javascript" src="js/reserve.js"></script>
 
     </head>
@@ -235,14 +236,14 @@ $resvObjEncoded = json_encode($resvAr);
             <form action="Reserve.php" method="post"  id="form1">
                 <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
                 <div id="famSection" style="clear:left; float:left; font-size: .9em; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
-
+                <div id="notesSection" style="font-size: .9em; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
                 <div id="hospitalSection" style="font-size: .9em; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
                 <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
                 <div style="clear:both;min-height: 70px;">.</div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <input type="button" id="btnDelete" value="Delete" style="display:none;"/>
                     <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
-                    <input id='btnDone' type='button' value='Continue' style="display:none;"/>
+                    <input type='button' id='btnDone' value='Continue' style="display:none;"/>
                 </div>
 
             </form>
@@ -252,7 +253,7 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="psgDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;"></div>
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
-            <div id="keysfees" style="font-size: .85em;"></div>
+            <div id="keysfees" style="display:none;font-size: .85em;"></div>
 
         </div>
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
@@ -280,6 +281,7 @@ $(document).ready(function() {
     });
 
     var pageManager = new PageManager(resv);
+
 
 
 // Buttons

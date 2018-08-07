@@ -82,6 +82,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Editable_Forms', '../conf/agreement.txt', 'Registration Agreement','js/rte-agreement.json','',0),
 ('Editable_Forms', '../conf/confirmation.txt', 'Confirmation Form','js/rte-confirmation.json','',0),
 ('Editable_Forms', '../conf/survey.txt', 'Survey Form','js/rte-survey.json','',0),
+('Editable_Forms', '../conf/permission.txt', 'Permission Form','js/rte-permission.json','',0),
 
 ('Education_Level','01','Highschool','','d',0),
 ('Education_Level','02','College','','d',0),
@@ -349,6 +350,8 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Special_Needs','f','Dev. Challenged','','d',0),
 ('Special_Needs','z','Unknown','','d',1000),
 
+('Signature_Capture', 'Photo_Permission', 'Photo Permission','','',0),
+
 ('Static_Room_Rate','rb','Regular Rate','10','',0),
 
 ('Utilization_Category', 'uc1', 'Standard', '', 'h',0),
@@ -407,14 +410,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Web_User_Status','a','active','','',0),
 ('Web_User_Status','d','Disabled','','',0),
 ('Web_User_Status','w','Waiting','','',0),
-('Web_User_Status','x','Prohibited','','',0),
-
-('WL_Final_Status','hf','House Full','','',0),
-('WL_Final_Status','lc','Lost Contact','','',0),
-('WL_Final_Status','se','Elsewhere','','',0),
-('WL_Status','a','Active','','',0),
-('WL_Status','in','Inactive','','',0),
-('WL_Status','st','Stayed','','',0);
+('Web_User_Status','x','Prohibited','','',0);
 -- ;
 
 
@@ -427,12 +423,12 @@ REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`,`T
 ('RegistrationAttribute','Referral','Hospital Referral Document','','','','','2013-11-13 00:59:31'),
 ('ReservStatus','a','Confirmed','y','y','','ui-icon-check','2013-11-11 15:09:04'),
 ('ReservStatus','uc','Unconfirmed','y','y','','ui-icon-help','2013-11-11 15:09:04'),
-('ReservStatus','c','Canceled','y','y','','ui-icon-cancel','2013-11-11 15:09:04'),
+('ReservStatus','c','Guest Canceled','y','y','','ui-icon-cancel','2013-11-11 15:09:04'),
 ('ReservStatus','ns','No Show','y','y','','ui-icon-alert','2013-11-14 17:57:58'),
 ('ReservStatus','co','Checked Out','y','y','','ui-icon-extlink','2013-11-14 17:57:58'),
 ('ReservStatus','p','New','y','y','','','2013-11-14 17:57:58'),
 ('ReservStatus','s','Checked In','y','y','','ui-icon-circle-check','2013-11-19 15:16:20'),
-('ReservStatus','td','Turned Down','y','y','','ui-icon-arrowreturnthick-1-s','2013-11-14 17:57:58'),
+('ReservStatus','td','Turned Away','y','y','','ui-icon-arrowreturnthick-1-s','2013-11-14 17:57:58'),
 ('ReservStatus', 'im', 'Immediate', 'y', 'y', '', 'ui-icon-check', NULL),
 ('ReservStatus','w','Waitlist','y','y','','ui-icon-arrowstop-1-e','2013-11-14 17:57:58');
 -- ;
@@ -597,8 +593,17 @@ replace INTO invoice_line_type (id, Description, Order_Position) VALUES
 
 
 REPLACE INTO `insurance_type` (`idInsurance_type`, `Title`, `Is_Primary`, `Multiselect`, `List_Order`) VALUES 
-('h', 'Primary', '1', '10', '10'),
+('1h', 'Primary', '1', '10', '10'),
 ('p', 'Private', '0', '1', '20');
+-- ;
+
+REPLACE INTO `insurance` (`idInsurance`, `Type`, `Title`, `Opens_Type`) VALUES 
+(1, '1h', 'Aetna', ''),
+(2, '1h', 'Blue Cross', ''),
+(3, '1h', 'Private Insurance', 'p'),
+(4, 'p', 'Cigna', ''),
+(5, 'p', 'Kaser', ''),
+(6, '1h', 'No Ins.', '');
 -- ;
 
 
@@ -660,10 +665,10 @@ REPLACE INTO `counter` (`seqn`,`Table_Name`,`Next`,`Last_Updated`) VALUES
 --
 -- Mercury Hosted Gateway
 --
-REPLACE INTO `cc_hosted_gateway` (`cc_name`, `Merchant_Id`, `Password`, `Credit_Url`, `Trans_Url`, `CardInfo_Url`, `Checkout_Url`, `Mobile_CardInfo_Url`, `Mobile_Checkout_Url`) 
+REPLACE INTO `cc_hosted_gateway` (`idcc_gateway`, `cc_name`, `Merchant_Id`, `Password`, `Credit_Url`, `Trans_Url`, `CardInfo_Url`, `Checkout_Url`, `Mobile_CardInfo_Url`, `Mobile_Checkout_Url`) 
 VALUES 
-('Test', '', '', 'https://hc.mercurydev.net/hcws/hcservice.asmx?WSDL', 'https://hc.mercurydev.net/tws/TransactionService.asmx?WSDL', 'https://hc.mercurydev.net/CardInfo.aspx', 'https://hc.mercurydev.net/Checkout.aspx', 'https://hc.mercurydev.net/mobile/mCardInfo.aspx', 'https://hc.mercurydev.net/mobile/mCheckout.aspx'),
-('Production', '', '', 'https://hc.mercurypay.com/hcws/hcservice.asmx?WSDL', 'https://hc.mercurypay.com/tws/transactionservice.asmx?WSDL', 'https://hc.mercurypay.com/CardInfo.aspx', 'https://hc.mercurypay.com/Checkout.aspx', 'https://hc.mercurypay.com/mobile/mCardInfo.aspx', 'https://hc.mercurypay.com/mobile/mCheckout.aspx');
+(1, 'Test', '', '', 'https://hc.mercurydev.net/hcws/hcservice.asmx?WSDL', 'https://hc.mercurydev.net/tws/TransactionService.asmx?WSDL', 'https://hc.mercurydev.net/CardInfo.aspx', 'https://hc.mercurydev.net/Checkout.aspx', 'https://hc.mercurydev.net/mobile/mCardInfo.aspx', 'https://hc.mercurydev.net/mobile/mCheckout.aspx'),
+(2, 'Production', '', '', 'https://hc.mercurypay.com/hcws/hcservice.asmx?WSDL', 'https://hc.mercurypay.com/tws/transactionservice.asmx?WSDL', 'https://hc.mercurypay.com/CardInfo.aspx', 'https://hc.mercurypay.com/Checkout.aspx', 'https://hc.mercurypay.com/mobile/mCardInfo.aspx', 'https://hc.mercurypay.com/mobile/mCheckout.aspx');
 -- ;
 
 

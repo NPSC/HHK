@@ -32,6 +32,7 @@ require (CLASSES . 'History.php');
 require (CLASSES . 'AuditLog.php');
 require (CLASSES . 'CleanAddress.php');
 require (CLASSES . 'CreateMarkupFromDB.php');
+require CLASSES . 'TableLog.php';
 
 require (HOUSE . 'psg.php');
 require (HOUSE . 'Role.php');

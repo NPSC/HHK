@@ -331,19 +331,25 @@ function newRelationLink(PDO $dbh, $id, $rId, $relCode) {
 
 function changeLog(PDO $dbh, $id, $get) {
 
-        require(CLASSES . 'DataTableServer.php');
+    require(CLASSES . 'DataTableServer.php');
 
-        $columns = array(
+    $view = 'vaudit_log';
 
-            array( 'db' => 'LogDate',  'dt' => 'Date' ),
-            array( 'db' => 'LogType',   'dt' => 'Type' ),
-            array( 'db' => 'Subtype',     'dt' => 'Sub-Type' ),
-            array( 'db'  => 'User', 'dt' => 'User' ),
-            array( 'db'  => 'idName', 'dt' => 'Id' ),
-            array( 'db' => 'LogText', 'dt' => 'Log Text')
-        );
+    if (isset($get['vw'])) {
+        $view = filter_var($get['vw'], FILTER_SANITIZE_STRING);
+    }
 
-        return SSP::complex ( $get, $dbh, "vaudit_log", 'idName', $columns, null, "idName=$id" );
+    $columns = array(
+
+        array( 'db' => 'LogDate',  'dt' => 'Date' ),
+        array( 'db' => 'LogType',   'dt' => 'Type' ),
+        array( 'db' => 'Subtype',     'dt' => 'Sub-Type' ),
+        array( 'db'  => 'User', 'dt' => 'User' ),
+        array( 'db'  => 'idName', 'dt' => 'Id' ),
+        array( 'db' => 'LogText', 'dt' => 'Log Text')
+    );
+
+    return SSP::complex ( $get, $dbh, $view, 'idName', $columns, null, "idName=$id" );
 
 }
 
