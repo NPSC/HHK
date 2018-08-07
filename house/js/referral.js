@@ -17,6 +17,107 @@
  * @param {object} item
  * @returns {undefined}
  */
+
+function getNotes(rid, container)
+{
+	rid = parseInt(rid, 10);
+	if(Number.isInteger(rid) ){
+	
+		$(container).empty();
+		$(container).html('<fieldset class="hhk-panel"><legend style="font-weight:bold;"></legend><div id="resvNotesDetail"></div></fieldset>');
+		$(container +" legend").html(resvTitle + " Notes");
+		$("#resvNotesHeader div").append($('<input type="button" id="hhk-newNote" style="margin-left: 30px; margin-bottom: 5px; font-size: 0.8em;" value="New Note">').button());
+		$(container + " #resvNotesDetail").html('<table class="display" style="width: 100%"></table>');
+		
+		var dtCols = [
+	    {
+		  	"targets": 0,
+		  	"title": "Actions",
+		  	'data': "Action",
+		  	'width': "15%",
+		  	render: function (data, type, row) {
+			  	 return '<button class="editNote ui-button ui-corner-all ui-widget" data-noteid="' + data + '">Edit</button><button class="done ui-button ui-corner-all ui-widget" style="display: none; margin-bottom:5px;">Save</button><button class="deleteNote ui-button ui-corner-all ui-widget" data-noteid="' + data + '" style="display: none;">Delete</button>';
+			}
+	    },
+	    {
+	        "targets": [ 1 ],
+	        "title": "Date",
+	        'data': 'Date',
+	        'width': '25%',
+	        render: function ( data, type ) {
+	            return dateRender(data, type, dateFormat);
+	        }
+	    },
+	    {
+	        "targets": [ 2 ],
+	        "title": "User",
+	        "searchable": false,
+	        "sortable": false,
+	        "width": "20%",
+	        "data": "User"
+	    },
+	    {
+	        "targets": [ 3 ],
+	        "title": "Note",
+	        "searchable": false,
+	        "sortable": false,
+	        "className":'noteText',
+	        "data": "Note"
+	    }
+	];
+	
+			
+		var listNoteTable = $('#resvNotesDetail table').DataTable({
+	        "columnDefs": dtCols,
+	        "serverSide": true,
+	        "processing": true,
+	        "deferRender": true,
+	        "language": {"sSearch": "Search Notes:"},
+	        "sorting": [[0,'desc']],
+	        "displayLength": 5,
+	        "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
+ 	        "Dom": '<"top"ilf>rt<"bottom"ip>',
+	        ajax: {
+	            url: 'ws_resv.php?cmd=getNoteList&rid=' + rid
+	        }
+	        });
+	        
+	        $(container + " table").append('<tfoot><td>New Note</td><td colspan="3"><textarea id="noteText" style="width: 100%; padding:5px;"></textarea></td></tfoot>');
+	        $(container).show();
+	        
+	        $(container + " table").on('click', '.editNote', function(e){
+		        e.preventDefault();
+		        var noteText = $(this).closest('tr').find('.noteText').html();
+		        $(this).closest('tr').find('.noteText').html('<textarea style="width: 100%; padding:5px;" id="editNoteText">' + noteText + '</textarea>');
+		        $(this).closest('td').find('.deleteNote').show();
+		        $(this).closest('td').find('.done').show();
+		        $(this).hide();
+	        });
+	        
+	        $(container + " table").on('click', '.done', function(e){
+		        e.preventDefault();
+		        var noteText = $(this).closest('tr').find('#editNoteText').val();
+		        $(this).closest('tr').find('.noteText').text(noteText);
+		        $(this).closest('td').find('.deleteNote').hide();
+		        $(this).closest('td').find('.editNote').show();
+		        $(this).hide();
+	        });
+	        
+	        $(container + " table").on('click', '.deleteNote', function(e){
+		        e.preventDefault();
+		        if($(container + " table tbody").length > 1){
+		        	$(this).closest('tr').remove();
+		        }else{
+			        $(this).closest('tr').empty().append('<td colspan="4" style="text-align: center;">No Notes found</td>');
+		        }
+		        
+	        });
+	        
+	}else{
+		$("divAlertMsg").html("Cannot get Reservation Notes for specified Reservation ID").show();
+	}
+};
+
 function additionalGuest(item) {
     "use strict";
     var resv = reserv;
@@ -417,7 +518,7 @@ function injectSlot(data) {
     }
 
     if (data.notes !== undefined) {
-        $('#notesGuest').children().remove().end().append($(data.notes)).show();
+        getNotes(resv.idReserv, "#resvNotes");
     }
 
     if (data.patStay !== undefined) {
@@ -1720,5 +1821,7 @@ $(document).ready(function() {
     }
     
     $('#gstSearch').focus();
+    
+    
 
 });

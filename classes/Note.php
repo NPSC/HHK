@@ -8,7 +8,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-
 /**
  * Description of Note
  *
@@ -269,4 +268,3 @@ class Note {
 
 
 }
-

@@ -1,3 +1,4 @@
+
 <?php
 /**
  * ws_resv.php
@@ -231,4 +232,3 @@ if (is_array($events)) {
 }
 
 exit();
-
