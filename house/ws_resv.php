@@ -147,7 +147,7 @@ try {
 
     case 'getNoteList':
 
-        if (($rid = filter_input(INPUT_POST, 'rid', FILTER_SANITIZE_NUMBER_INT))) {
+        if (($rid = filter_input(INPUT_GET, 'rid', FILTER_SANITIZE_NUMBER_INT))) {
 
             require(CLASSES . 'DataTableServer.php');
 

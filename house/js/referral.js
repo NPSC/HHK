@@ -82,7 +82,37 @@ function getNotes(rid, container)
 	        }
 	        });
 	        
-	        $(container + " table").append('<tfoot><td>New Note</td><td colspan="3"><textarea id="noteText" style="width: 100%; padding:5px;"></textarea></td></tfoot>');
+	        $(container + " table").append('<tfoot><td colspan="3"><textarea id="noteText" style="width: 100%; padding:5px;"></textarea></td><td><button id="hhk-newNote" style="margin-left: 30px; margin-bottom: 5px; font-size: 0.8em;">New Note</button></td></tfoot>');
+	        $(container + " #hhk-newNote").button();
+	        
+	        $(container).on('click', '#hhk-newNote', function(e){
+		        e.preventDefault();
+		        $('#hhk-newNote').attr("disabled", "disabled").text("Saving...");
+		        var noteData = $('#noteText').val();
+		        
+		        if(noteData != ""){
+			        $.ajax({
+				    	url: 'ws_resv.php',
+				    	dataType: 'JSON',
+				    	type: 'post',
+				    	data: {
+					    	'cmd': 'saveNote',
+					    	'linkType': 'reservation',
+					    	'linkId': rid,
+					    	'data': noteData
+				    	},
+				    	success: function( data ){
+					    	if(data.idNote > 0){
+					    		listNoteTable.ajax.reload();
+					    		$("#hhk-newNote").empty();
+					    	}else{
+						    	
+					    	}
+				    	}
+				    });
+		        }
+	        });
+	        
 	        $(container).show();
 	        
 	        $(container + " table").on('click', '.editNote', function(e){
