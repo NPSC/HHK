@@ -167,22 +167,24 @@ try {
     case 'saveNote':
 
         $note = '';
-        $idNote = 0;
+        $linkType = '';
         $rid = 0;
 
-        if (isset($_POST['noteTxt'])) {
-            $note = filter_input(INPUT_POST, 'noteTxt', FILTER_SANITIZE_STRING);
+        if (isset($_POST['data'])) {
+            $note = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
         }
 
-        if (isset($_POST['idNote'])) {
-            $idNote = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);
+        if (isset($_POST['linkType'])) {
+            $linkType = intval(filter_input(INPUT_POST, 'linkType', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        if (isset($_POST['rid'])) {
-            $rid = intval(filter_input(INPUT_POST, 'rid', FILTER_SANITIZE_NUMBER_INT), 10);
+        if (isset($_POST['linkId'])) {
+            $rid = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $events() = array('idNote', ResvNote::save($dbh, $idNote, $noteText, $rid));
+        if ($linkType == NoteLink::Reservation) {
+            $events[] = array('idNote', ResvNote::save($dbh, $idNote, $noteText, $rid));
+        }
 
         break;
 

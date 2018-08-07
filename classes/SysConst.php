@@ -201,9 +201,13 @@ class NoteCategory {
     const Patient = 'ncp';
 }
 
+class NoteLink {
+    const Reservation = 'reservation';
+}
+
 
 class NoteType {
-    const Text = 'ntxt';
+    const Text = 'text';
 }
 
 class NoteStatus {
