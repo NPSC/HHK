@@ -7,22 +7,12 @@
  */
 class ResvNote {
 
-    public static function save(\PDO $dbh, $idNote, $noteText, $rid, $userName) {
+    public static function save(\PDO $dbh, $noteText, $rid, $userName) {
 
+        // Create a new note.
+        $note = Note::createNote($userName, $noteText);
+        $note->save($dbh);
 
-        if ($idNote > 0) {
-
-            // Update Existing note
-            $note = new Note($idNote);
-            $note->updateNote($dbh, $userName, $noteText);
-
-        } else {
-
-            // Create a new note.
-            $note = Note::createNote($userName, $noteText);
-            $note->save($dbh);
-
-        }
 
         if ($rid > 0 && $note->getIdNote() > 0) {
 

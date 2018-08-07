@@ -30,6 +30,7 @@ require CLASSES . 'History.php';
 require (CLASSES . 'CreateMarkupFromDB.php');
 
 require (CLASSES . 'Notes.php');
+require (CLASSES . 'Note.php');
 require (CLASSES . 'US_Holidays.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'FinAssistance.php');
@@ -92,6 +93,7 @@ require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Vehicle.php');
 require (HOUSE . 'Visit.php');
 require (HOUSE . 'Family.php');
+require (HOUSE . 'ResvNote.php');
 require (HOUSE . "visitViewer.php");
 
 require (HOUSE . 'Register.php');
@@ -176,7 +178,7 @@ try {
         }
 
         if (isset($_POST['linkType'])) {
-            $linkType = intval(filter_input(INPUT_POST, 'linkType', FILTER_SANITIZE_NUMBER_INT), 10);
+            $linkType = filter_input(INPUT_POST, 'linkType', FILTER_SANITIZE_STRING);
         }
 
         if (isset($_POST['linkId'])) {
@@ -184,7 +186,8 @@ try {
         }
 
         if ($linkType == NoteLink::Reservation) {
-            $events[] = array('idNote', ResvNote::save($dbh, $idNote, $noteText, $rid));
+            $answer = ResvNote::save($dbh, $note, $rid, $uS->username);
+            $events = array('idNote'=>$answer);
         }
 
         break;

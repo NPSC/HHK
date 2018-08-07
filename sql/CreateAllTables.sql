@@ -1231,7 +1231,7 @@ CREATE TABLE IF NOT EXISTS `note_group` (
 -- -----------------------------------------------------
 -- Table `reservation_note`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `registration_note` (
+CREATE TABLE IF NOT EXISTS `reservation_note` (
   `Reservation_Id` INT NOT NULL,
   `Note_Id` INT NOT NULL,
   PRIMARY KEY (`Reservation_Id`, `Note_Id`),
