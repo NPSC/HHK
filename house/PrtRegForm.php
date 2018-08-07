@@ -87,7 +87,7 @@ if ($checkinDate == '') {
 
     foreach ($rows as $r) {
 
-        $reservArray = ReservationSvcs::generateCkinDoc($dbh, $r['idReservation'], 0, $wInit->resourceURL . 'images/registrationLogo.png');
+        $reservArray = ReservationSvcs::generateCkinDoc($dbh, $r['idReservation'], 0, $wInit->resourceURL . '../conf/registrationLogo.png');
         $sty = $reservArray['style'];
 
         $regForm .= $reservArray['doc'] . HTMLContainer::generateMarkup('div', '', array('style'=>'page-break-before: right;'));

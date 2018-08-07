@@ -1229,16 +1229,12 @@ CREATE TABLE IF NOT EXISTS `note_group` (
 
 
 -- -----------------------------------------------------
--- Table `registration_note`
+-- Table `reservation_note`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `registration_note` (
-  `idRegistration_note` INT NOT NULL,
-  `Registration_Id` INT NOT NULL,
   `Reservation_Id` INT NOT NULL,
   `Note_Id` INT NOT NULL,
-  PRIMARY KEY (`idRegistration_note`),
-  INDEX `INDEX_REGISTRATION` (`Registration_Id` ASC),
-  INDEX `INDEX_RESERVATION` (`Reservation_Id` ASC)
+  PRIMARY KEY (`Reservation_Id`, `Note_Id`),
 ) ENGINE = InnoDB;
 
 

@@ -221,7 +221,7 @@ class IndivMember extends Member {
      *
       * @return string HTML table structure
      */
-    public function createDemographicsPanel(\PDO $dbh, $limit = FALSE, $includeBirthDate = TRUE) {
+    public function createDemographicsPanel(\PDO $dbh, $limited = FALSE, $includeBirthDate = TRUE) {
 
         $uS = Session::getInstance();
         $idPrefix = $this->idPrefix;
@@ -248,7 +248,7 @@ class IndivMember extends Member {
             }
         }
 
-        if ($limit) {
+        if ($limited) {
             return $table->generateMarkup(array('style'=>'float:left;'));
         }
 
@@ -344,6 +344,7 @@ class IndivMember extends Member {
                         , array('style'=>'display:table-cell;', 'colspan'=>'3')));
         }
 
+        //Previous Name
         $tbl2->addBodyTr(
         HTMLTable::makeTd('Previous Name:', array('class'=>'tdlabel'))
         . HTMLTable::makeTd(
@@ -413,14 +414,18 @@ ORDER BY `List_Order`");
             }
 
             $attr = array(
-                'name'=>$idPrefix.'sel' . $i['Title'],
+                'name'=>$idPrefix.'selIns' . $i['Title'],
             );
+
+            $controlId = '';
 
             if ($i['Multiselect'] > 1) {
                 $attr['multiple'] = 'multiple';
                 $attr['class'] = 'hhk-multisel';
-                $attr['name'] = $idPrefix.'sel' . $i['Title'] . '[]';
-                $attr['id'] = $idPrefix.'sel' . $i['Title'];
+                $attr['name'] = $idPrefix.'selIns' . $i['Title'] . '[]';
+                $attr['id'] = $idPrefix.'selIns' . $i['Title'];
+
+                $controlId = HTMLInput::generateMarkup('y', array('type'=>'hidden', 'name'=>$idPrefix.'insCtrl'));
             }
 
             $showBlankChoice = TRUE;
@@ -430,7 +435,7 @@ ORDER BY `List_Order`");
 
             $tbl->addBodyTr(
                     HTMLTable::makeTd($i['Title'])
-                    .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($ins[$i['idInsurance_type']], $choices, $showBlankChoice),$attr)));
+                    .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($ins[$i['idInsurance_type']], $choices, $showBlankChoice),$attr) . $controlId));
 
         }
 
@@ -772,6 +777,11 @@ ORDER BY `List_Order`");
 
     protected function saveInsurance(\PDO $dbh, $post, $idPrefix, $username) {
 
+        // Check for insurance controls are on the page.
+        if (isset($post[$idPrefix.'insCtrl']) === FALSE) {
+            return;
+        }
+
         $myInss = array();
 
         // Insurance Types
@@ -796,19 +806,19 @@ ORDER BY `List_Order`");
         }
 
         // Make a primary selector if not present so I can delete them.
-        if (isset($post[$idPrefix.'sel'.$primaryInsType]) === FALSE) {
-            $post[$idPrefix.'sel'.$primaryInsType] = array();
+        if (isset($post[$idPrefix.'selIns'.$primaryInsType]) === FALSE) {
+            $post[$idPrefix.'selIns'.$primaryInsType] = array();
         }
 
         foreach ($insTypes as $i) {
 
-            if (isset($post[$idPrefix.'sel'.$i['Title']]) && $this->get_idName() > 0) {
+            if (isset($post[$idPrefix.'selIns'.$i['Title']]) && $this->get_idName() > 0) {
 
                 if ($i['Multiselect'] > 1) {
-                    $inss = filter_var_array($post[$idPrefix.'sel'.$i['Title']], FILTER_SANITIZE_NUMBER_INT);
+                    $inss = filter_var_array($post[$idPrefix.'selIns'.$i['Title']], FILTER_SANITIZE_NUMBER_INT);
                     $inss2 = array_flip($inss);
                 } else {
-                    $ins = filter_var($post[$idPrefix.'sel'.$i['Title']], FILTER_SANITIZE_NUMBER_INT);
+                    $ins = filter_var($post[$idPrefix.'selIns'.$i['Title']], FILTER_SANITIZE_NUMBER_INT);
                     $inss = array($ins=>$ins);
                     $inss2[$ins] = $ins;
                 }

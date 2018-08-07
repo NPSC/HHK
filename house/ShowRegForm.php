@@ -99,7 +99,7 @@ if ($idVisit == 0 && $idResv > 0) {
 }
 
 // Generate Registration
-$reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, '../images/registrationLogo.png');
+$reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, '../conf/registrationLogo.png');
 
 $sty = $reservArray['style'];
 $regForm = $reservArray['doc'];
