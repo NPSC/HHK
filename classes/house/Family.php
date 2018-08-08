@@ -429,15 +429,6 @@ class Family {
                 , array('id'=>'divPersonSearch', 'style'=>'margin-top:10px;'));
 
 
-        // Waitlist notes?
-        if ($uS->UseWLnotes) {
-
-            $mk1 .=
-                    HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', $rData->getWlNotesLabel(), array('style'=>'font-weight:bold;'))
-                . HTMLContainer::generateMarkup('textarea', $resvRs->Checkin_Notes->getStoredVal(), array('name'=>'taCkinNotes', 'rows'=>'2', 'style'=>'width:100%')),
-                array('class'=>'hhk-panel', 'style'=>'margin-top:10px; margin-bottom:10px; font-size:.9em;'));
-        }
 
         // Header
         $hdr = HTMLContainer::generateMarkup('div',

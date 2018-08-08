@@ -1605,7 +1605,7 @@ function PageManager(initData) {
 
     }
 
-    function deleteReserve(rid, idForm) {
+    function deleteReserve(rid, idForm, $delButton) {
 
         var cmdStr = '&cmd=delResv' + '&rid=' + rid;
         $.post(
@@ -1630,6 +1630,7 @@ function PageManager(initData) {
 
                     if (data.warning) {
                         flagAlertMessage(data.warning, true);
+                        $delButton.hide();
                     }
 
                     if (data.result) {

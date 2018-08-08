@@ -231,22 +231,18 @@ abstract class Reservation {
         $uS = Session::getInstance();
 
         $resv = new Reservation_1($this->reservRs);
+        $showPayWith = FALSE;
 
-        // Allow reservations to have many guests.
-        $numGuests = count($this->getStayingMembers());
+        if ($resv->isActive()) {
 
-        $roomChooser = new RoomChooser($dbh, $resv, $numGuests, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
-        $roomChooser->setOldResvId($oldResv);
+            // Allow reservations to have many guests.
+            $numGuests = count($this->getStayingMembers());
 
-        if ($this->reserveData->getIdResv() == 0) {
-
-            $dataArray['rChooser'] = $roomChooser->createConstraintsChooser($dbh, 0, $numGuests);
-
-        } else {
+            $roomChooser = new RoomChooser($dbh, $resv, $numGuests, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
+            $roomChooser->setOldResvId($oldResv);
 
             $dataArray['rChooser'] = $roomChooser->CreateResvMarkup($dbh, $isAuthorized);
 
-            $showPayWith = FALSE;
 
             // Rate Chooser
             if ($uS->RoomPriceModel != ItemPriceCode::None) {
@@ -266,11 +262,23 @@ abstract class Reservation {
                     $dataArray['vfee'] = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
                 }
 
-    //            $dataArray['pay'] =
-    //                    PaymentChooser::createResvMarkup($dbh, $guest->getIdName(), $reg, removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]), $resv->getExpectedPayType(), $uS->ccgw);
+        //            $dataArray['pay'] =
+        //                    PaymentChooser::createResvMarkup($dbh, $guest->getIdName(), $reg, removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]), $resv->getExpectedPayType(), $uS->ccgw);
 
             }
 
+            // Vehicles
+            if ($uS->TrackAuto) {
+                $dataArray['vehicle'] = $this->vehicleMarkup($dbh);
+            }
+
+        }
+
+        if ($resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
+
+            $dataArray['rstat'] = '';
+
+        } else {
 
             // Reservation Data
             $dataArray['rstat'] = ReservationSvcs::createStatusChooser(
@@ -280,24 +288,29 @@ abstract class Reservation {
                     $labels,
                     $showPayWith,
                     Registration::loadLodgingBalance($dbh, $resv->getIdRegistration()));
-
-            // Reservation notes
-            $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
-                            HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'notesLabel', 'Reservation Notes'), array('style'=>'font-weight:bold;'))
-                            . Notes::markupShell($resv->getNotes(), 'txtRnotes'), array('style'=>'float:left; width:50%;', 'class'=>'hhk-panel'));
-
-            // Vehicles
-            if ($uS->TrackAuto) {
-                $dataArray['vehicle'] = $this->vehicleMarkup($dbh);
-            }
-
         }
+
+
+        // Reservation notes
+        $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'notesLabel', 'Reservation Notes'), array('style'=>'font-weight:bold;'))
+                . Notes::markupShell($resv->getNotes(), 'txtRnotes'), array('style'=>'clear:left; float:left; width:50%;', 'class'=>'hhk-panel'));
+
+
+        // Waitlist notes?
+        if ($uS->UseWLnotes && $resv->getStatus() == ReservationStatus::Waitlist) {
+
+            $dataArray['notes'] .= HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', $this->reserveData->getWlNotesLabel(), array('style'=>'font-weight:bold;'))
+                . HTMLContainer::generateMarkup('textarea', $resv->getCheckinNotes(), array('name'=>'taCkinNotes', 'rows'=>'2', 'style'=>'width:100%')),
+                array('class'=>'hhk-panel', 'style'=>'float:left; width:50%;'));
+        }
+
 
         // Collapsing header
         $hdr = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('span', ($resv->isNew() ? 'New ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation') : $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' - '))
                 .HTMLContainer::generateMarkup('span', ($resv->isNew() ? '' : $resv->getStatusTitle()), array('id'=>$prefix.'spnResvStatus', 'style'=>'margin-right: 1em;'))
-//                .$this->createExpDatesControl()
                 , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
 
@@ -970,7 +983,7 @@ class ActiveReservation extends BlankReservation {
         }
 
 
-        // DetermineReservation Status
+        // Determine Reservation Status
         $reservStatus = ReservationStatus::Waitlist;
 
         if (isset($post['selResvStatus'])) {
@@ -1021,7 +1034,8 @@ class ActiveReservation extends BlankReservation {
 
 
         // Reply
-        $newResv = new ActiveReservation($this->reserveData, $resv->getReservationRS(), $this->family);
+        $newResv = Reservation::reservationFactoy($dbh, $_POST);
+        //$newResv = new ActiveReservation($this->reserveData, $resv->getReservationRS(), $this->family);
         return $newResv->createMarkup($dbh);
 
     }
@@ -1128,18 +1142,14 @@ class ReserveSearcher extends ActiveReservation {
 
 
 
-class StaticReservation extends Reservation {
-
-    public function createMarkup(\PDO $dbh) {
-        return array('error'=>'Not Implemented.');
-    }
+class StaticReservation extends ActiveReservation {
 
 }
 
-class StayingReservation extends Reservation {
+class StayingReservation extends ActiveReservation {
 
-    public function createMarkup(\PDO $dbh) {
-        return array('error'=>'Not Implemented.');
+    public function save(\PDO $dbh, $post) {
+        return array('error'=>'Saving is not allowed.');
     }
 
 }

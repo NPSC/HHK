@@ -297,7 +297,7 @@ $(document).ready(function() {
 
             $(this).val('Deleting >>>>');
 
-            pageManager.deleteReserve(pageManager.idResv, 'form#form1');
+            pageManager.deleteReserve(pageManager.idResv, 'form#form1', $(this));
         }
     });
 

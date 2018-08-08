@@ -372,13 +372,10 @@ class RateChooser {
 
         if ($resv->isActive()) {
 
+            $markup = $this->createBasicChooserMarkup($dbh, $resv, $numNights, $visitFeeTitle);
+
             if ($this->incomeRated) {
-
-                $markup = $this->createIncomeChooserMarkup($dbh, $resv, $numNights, $visitFeeTitle);
-
-            } else {
-
-                $markup = $this->createBasicChooserMarkup($dbh, $resv, $numNights, $visitFeeTitle);
+                $markup .= HTMLInput::generateMarkup('Income Chooser ...', array('type'=>'button', 'id' => 'btnFapp', 'data-id'=>$resv->getIdGuest(), 'style'=>'margin:1em;'));
             }
 
             return HTMLContainer::generateMarkup('fieldset',
@@ -388,15 +385,6 @@ class RateChooser {
         } else {
             return $this->createStaticMarkup($dbh, $resv, $visitFeeTitle);
         }
-
-    }
-
-    protected function createIncomeChooserMarkup($dbh, \Reservation_1 $resv, $numNights, $visitFeeTitle) {
-
-        $markup = $this->createBasicChooserMarkup($dbh, $resv, $numNights, $visitFeeTitle);
-        $markup .= HTMLInput::generateMarkup('Income Chooser ...', array('type'=>'button', 'id' => 'btnFapp', 'data-id'=>$resv->getIdGuest(), 'style'=>'margin:1em;'));
-
-        return $markup;
 
     }
 
@@ -576,15 +564,23 @@ where
     }
 
     protected function createBasicChooserMarkup(\PDO $dbh, \Reservation_1 $resv, $nites, $visitFeeTitle) {
-		$uS = Session::getInstance();
 
-		if($uS->VisitFee && ($resv->getExpectedDaysDt(new DateTime($resv->getArrival()), new DateTime($resv->getDeparture())) > $uS->VisitFeeDelayDays)){
-			$this->payVisitFee = TRUE;
-		}else{
-			$this->payVisitFee = FALSE;
-		}
+        $uS = Session::getInstance();
+
+        if($uS->VisitFee && ($resv->getExpectedDaysDt(new DateTime($resv->getArrival()), new DateTime($resv->getDeparture())) > $uS->VisitFeeDelayDays)){
+                $this->payVisitFee = TRUE;
+        }else{
+                $this->payVisitFee = FALSE;
+        }
+
+        $roomRateCategory = $resv->getRoomRateCategory();
+
+        if ($resv->getRoomRateCategory() == '') {
+            $roomRateCategory = $uS->RoomRateDefault;
+        }
+
         // Check for rate glide
-        $dayCredit = self::setRateGlideDays($dbh, $resv->getIdRegistration(), $this->rateGlideExtend);
+        //$dayCredit = self::setRateGlideDays($dbh, $resv->getIdRegistration(), $this->rateGlideExtend);
 
         //
         // Javascript calculates the amount based on number of days and number of guests.
@@ -596,7 +592,7 @@ where
         $fixedRate = '';
 
         // Fixed rate?
-        if ($resv->getRoomRateCategory() == Default_Settings::Fixed_Rate_Category) {
+        if ($roomRateCategory == Default_Settings::Fixed_Rate_Category) {
 
             $attrAdj['style'] .= 'display:none;';
             $fixedRate = $resv->getFixedRoomRate() == 0 ? '' : (number_format($resv->getFixedRoomRate(), 2));
@@ -631,7 +627,7 @@ where
 
         $tbl->addBodyTr(
                 ($this->payVisitFee ? HTMLTable::makeTd($vFeeMkup, array('style'=>'text-align:center;')) : '')
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $resv->getRoomRateCategory(), FALSE), $rateSelectorAttrs)
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $roomRateCategory, FALSE), $rateSelectorAttrs)
                     .HTMLContainer::generateMarkup('span', '$' . HTMLInput::generateMarkup($fixedRate, array('name'=>'txtFixedRate', 'size'=>'4')), $attrFixed))
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup(($resv->getRateAdjust() == 0 ? '' : number_format($resv->getRateAdjust(), 0)), array('name'=>'txtadjAmount', 'size'=>'2')) . '%'), $attrAdj)
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $nites, array('name'=>'spnNites')), array('style'=>'text-align:center;'))
@@ -640,9 +636,9 @@ where
                 );
 
         // Add mention of rate glide credit days
-        if ($dayCredit > 0) {
-            $tbl->addBodyTr(HTMLTable::makeTd('(Estimated Total based on ' . $dayCredit . ' days of room rate glide.)', array('colspan'=>'4')));
-        }
+//        if ($dayCredit > 0) {
+//            $tbl->addBodyTr(HTMLTable::makeTd('(Estimated Total based on ' . $dayCredit . ' days of room rate glide.)', array('colspan'=>'4')));
+//        }
 
         return $tbl->generateMarkup();
 

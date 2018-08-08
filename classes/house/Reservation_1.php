@@ -301,6 +301,10 @@ class Reservation_1 {
 
     public function deleteMe(\PDO $dbh, $uname) {
 
+        if ($this->getStatus() == ReservationStatus::Staying || $this->getStatus() == ReservationStatus::Checkedout) {
+            throw new Hk_Exception_Runtime('Reservation cannot be deleted.  Delete the Visit instead.');
+        }
+
         // Delete
         $cnt = $dbh->exec("Delete from reservation where idReservation = " . $this->getIdReservation());
 
