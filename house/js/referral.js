@@ -36,7 +36,7 @@ function getNotes(rid, container)
 		  	'data': "Action",
 		  	'width': "15%",
 		  	render: function (data, type, row) {
-			  	 return '<button class="editNote ui-button ui-corner-all ui-widget" data-noteid="' + data + '">Edit</button><button class="done ui-button ui-corner-all ui-widget" style="display: none; margin-bottom:5px;">Save</button><button class="deleteNote ui-button ui-corner-all ui-widget" data-noteid="' + data + '" style="display: none;">Delete</button>';
+			  	 return '<button class="editNote ui-button ui-corner-all ui-widget" data-noteid="' + data + '">Edit</button><button class="done ui-button ui-corner-all ui-widget" data-noteid="' + data + '" style="display: none; margin-bottom:5px;">Save</button><button class="deleteNote ui-button ui-corner-all ui-widget" data-noteid="' + data + '" style="display: none;">Delete</button>';
 			}
 	    },
 	    {
@@ -82,7 +82,7 @@ function getNotes(rid, container)
 	        }
 	        });
 	        
-	        $(container + " table").append('<tfoot><td colspan="3"><textarea id="noteText" style="width: 100%; padding:5px;"></textarea></td><td><button id="hhk-newNote" style="margin-left: 30px; margin-bottom: 5px; font-size: 0.8em;">New Note</button></td></tfoot>');
+	        $(container + " table").append('<tfoot><td><button id="hhk-newNote" style="margin-bottom: 5px; font-size: 0.8em;">New Note</button></td><td colspan="3"><textarea id="noteText" style="width: 100%; padding:5px;"></textarea></td></tfoot>');
 	        $(container + " #hhk-newNote").button();
 	        
 	        $(container).on('click', '#hhk-newNote', function(e){
@@ -104,12 +104,16 @@ function getNotes(rid, container)
 				    	success: function( data ){
 					    	if(data.idNote > 0){
 					    		listNoteTable.ajax.reload();
-					    		$("#hhk-newNote").empty();
+					    		$("#noteText").val("");
+					    		$('#hhk-newNote').removeAttr("disabled").text("New Note");
 					    	}else{
-						    	
+						    	$("#divAlertMsg #alrMessage").html("<strong>Error:</strong> " + data.error);
+						    	$("#divAlertMsg #divAlert1").show();
 					    	}
 				    	}
 				    });
+		        }else{
+			        $('#hhk-newNote').removeAttr("disabled").text("New Note");
 		        }
 	        });
 	        
@@ -127,6 +131,31 @@ function getNotes(rid, container)
 	        $(container + " table").on('click', '.done', function(e){
 		        e.preventDefault();
 		        var noteText = $(this).closest('tr').find('#editNoteText').val();
+		        var noteId = $(this).data('noteid');
+		        
+		        if(noteText != ""){
+			        $.ajax({
+				    	url: 'ws_resv.php',
+				    	dataType: 'JSON',
+				    	type: 'post',
+				    	data: {
+					    	'cmd': 'updateNoteContent',
+					    	'idNote': noteId,
+					    	'data': noteText
+				    	},
+				    	success: function( data ){
+					    	if(data.idNote > 0){
+					    		listNoteTable.ajax.reload();
+					    	}else{
+						    	$("#divAlertMsg #alrMessage").html("<strong>Error:</strong> " + data.error);
+						    	$("#divAlertMsg #divAlert1").show();
+					    	}
+				    	}
+				    });
+		        }else{
+			        
+		        }
+		        
 		        $(this).closest('tr').find('.noteText').text(noteText);
 		        $(this).closest('td').find('.deleteNote').hide();
 		        $(this).closest('td').find('.editNote').show();
@@ -134,12 +163,28 @@ function getNotes(rid, container)
 	        });
 	        
 	        $(container + " table").on('click', '.deleteNote', function(e){
+		        var idnote = $(this).data("noteid");
 		        e.preventDefault();
-		        if($(container + " table tbody").length > 1){
-		        	$(this).closest('tr').remove();
-		        }else{
-			        $(this).closest('tr').empty().append('<td colspan="4" style="text-align: center;">No Notes found</td>');
-		        }
+		        $.ajax({
+			    	url: 'ws_resv.php',
+			    	dataType: 'JSON',
+			    	type: 'post',
+			    	data: {
+				    	'cmd': 'deleteNote',
+				    	'idNote': idnote
+			    	},
+			    	success: function( data ){
+				    	if(data.idNote > 0){
+				    		listNoteTable.ajax.reload();
+				    		$("#noteText").val("");
+				    		$('#hhk-newNote').removeAttr("disabled").text("New Note");
+				    	}else{
+					    	$("#divAlertMsg #alrMessage").html("<strong>Error:</strong> " + data.error);
+						    $("#divAlertMsg #divAlert1").show();
+				    	}
+			    	}
+			    });
+		        listNoteTable.ajax.reload();
 		        
 	        });
 	        
