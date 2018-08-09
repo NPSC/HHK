@@ -730,7 +730,7 @@ if (isset($_POST['btnhSave'])) {
 
 if (isset($_POST['btnAttrSave'])) {
 
-    $tabIndex = 6;
+    $tabIndex = 8;
     $postedAttr = array();
     if (isset($_POST['atTitle'])) {
         $postedAttr = filter_var_array($_POST['atTitle'], FILTER_SANITIZE_STRING);
@@ -802,7 +802,7 @@ if (isset($_POST['btnAttrSave'])) {
 
 if (isset($_POST['btnItemSave'])) {
 
-    $tabIndex = 5;
+    $tabIndex = 7;
 
     $sitems = $dbh->query("Select idItem, Description from item;");
     $items = $sitems->fetchAll(PDO::FETCH_ASSOC);
@@ -827,6 +827,8 @@ if (isset($_POST['btnItemSave'])) {
 
 // Get selected Editor Form text
 if (isset($_POST['formEdit'])) {
+
+    $tabIndex = 6;
 
     $cmd = filter_input(INPUT_POST, 'formEdit', FILTER_SANITIZE_STRING);
 

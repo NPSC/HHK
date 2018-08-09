@@ -355,7 +355,7 @@ class RateChooser {
 
             } else {
 
-                $markup = $this->createBasicChooserMarkup($dbh, $resv, $numNights, $visitFeeTitle);
+                $markup = $this->createBasicChooserMarkup($dbh, $resv, $numNights, $visitFeeTitle, $resv->getIdRegistration());
             }
 
             return HTMLContainer::generateMarkup('fieldset',
@@ -368,11 +368,11 @@ class RateChooser {
 
     }
 
-    public function createResvMarkup(\PDO $dbh, \Reservation_1 $resv, $numNights, $visitFeeTitle) {
+    public function createResvMarkup(\PDO $dbh, \Reservation_1 $resv, $numNights, $visitFeeTitle, $idRegistration) {
 
         if ($resv->isActive()) {
 
-            $markup = $this->createBasicChooserMarkup($dbh, $resv, $numNights, $visitFeeTitle);
+            $markup = $this->createBasicChooserMarkup($dbh, $resv, $numNights, $visitFeeTitle, $idRegistration);
 
             if ($this->incomeRated) {
                 $markup .= HTMLInput::generateMarkup('Income Chooser ...', array('type'=>'button', 'id' => 'btnFapp', 'data-id'=>$resv->getIdGuest(), 'style'=>'margin:1em;'));
@@ -389,13 +389,14 @@ class RateChooser {
     }
 
     protected function createStaticMarkup(\PDO $dbh, \Reservation_1 $resv, $visitFeeTitle) {
-		$uS = Session::getInstance();
 
-		if($uS->VisitFee && ($resv->getExpectedDaysDt(new DateTime($resv->getArrival()), new DateTime($resv->getDeparture())) > $uS->VisitFeeDelayDays)){
-			$this->payVisitFee = TRUE;
-		}else{
-			$this->payVisitFee = FALSE;
-		}
+        $uS = Session::getInstance();
+
+        if($uS->VisitFee && ($resv->getExpectedDaysDt(new DateTime($resv->getArrival()), new DateTime($resv->getDeparture())) > $uS->VisitFeeDelayDays)){
+            $this->payVisitFee = TRUE;
+        }else{
+            $this->payVisitFee = FALSE;
+        }
 
         $tbl = new HTMLTable();
 
@@ -563,7 +564,7 @@ where
 
     }
 
-    protected function createBasicChooserMarkup(\PDO $dbh, \Reservation_1 $resv, $nites, $visitFeeTitle) {
+    protected function createBasicChooserMarkup(\PDO $dbh, \Reservation_1 $resv, $nites, $visitFeeTitle, $idRegistration) {
 
         $uS = Session::getInstance();
 
@@ -576,11 +577,22 @@ where
         $roomRateCategory = $resv->getRoomRateCategory();
 
         if ($resv->getRoomRateCategory() == '') {
+
             $roomRateCategory = $uS->RoomRateDefault;
+
+            // Look for an approved rate
+            if ($idRegistration > 0 && $uS->IncomeRated) {
+
+                $fin = new FinAssistance($dbh, $idRegistration);
+
+                if ($fin->hasApplied() && $fin->getFaCategory() != '') {
+                    $roomRateCategory = $fin->getFaCategory();
+                }
+            }
         }
 
         // Check for rate glide
-        //$dayCredit = self::setRateGlideDays($dbh, $resv->getIdRegistration(), $this->rateGlideExtend);
+        $dayCredit = self::setRateGlideDays($dbh, $resv->getIdRegistration(), $this->rateGlideExtend);
 
         //
         // Javascript calculates the amount based on number of days and number of guests.
@@ -636,9 +648,9 @@ where
                 );
 
         // Add mention of rate glide credit days
-//        if ($dayCredit > 0) {
-//            $tbl->addBodyTr(HTMLTable::makeTd('(Estimated Total based on ' . $dayCredit . ' days of room rate glide.)', array('colspan'=>'4')));
-//        }
+        if ($dayCredit > 0) {
+            $tbl->addBodyTr(HTMLTable::makeTd('(Estimated Total based on ' . $dayCredit . ' days of room rate glide.)', array('colspan'=>'4')));
+        }
 
         return $tbl->generateMarkup();
 

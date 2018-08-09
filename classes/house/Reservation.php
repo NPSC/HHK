@@ -233,6 +233,10 @@ abstract class Reservation {
         $resv = new Reservation_1($this->reservRs);
         $showPayWith = FALSE;
 
+        // Registration
+        $reg = new Registration($dbh, $this->reserveData->getIdPsg());
+
+
         if ($resv->isActive()) {
 
             // Allow reservations to have many guests.
@@ -251,7 +255,7 @@ abstract class Reservation {
 
                 $rateChooser = new RateChooser($dbh);
 
-                $dataArray['rate'] = $rateChooser->createResvMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
+                $dataArray['rate'] = $rateChooser->createResvMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'), $reg->getIdRegistration());
                 // Array with amount calculated for each rate.
                 $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
                 // Array with key deposit info
@@ -1034,8 +1038,8 @@ class ActiveReservation extends BlankReservation {
 
 
         // Reply
-        $newResv = Reservation::reservationFactoy($dbh, $_POST);
-        //$newResv = new ActiveReservation($this->reserveData, $resv->getReservationRS(), $this->family);
+        //$newResv = Reservation::reservationFactoy($dbh, $_POST);
+        $newResv = new ActiveReservation($this->reserveData, $resv->getReservationRS(), $this->family);
         return $newResv->createMarkup($dbh);
 
     }

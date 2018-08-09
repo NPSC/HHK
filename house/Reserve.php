@@ -217,7 +217,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo DR_PICKER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="../js/notesViewer.js"></script>
-        <script type="text/javascript" src="js/reserve.js"></script>
+        <script type="text/javascript" src="js/resvManager.js"></script>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
@@ -280,7 +280,7 @@ $(document).ready(function() {
         }
     });
 
-    var pageManager = new PageManager(resv);
+    var pageManager = new resvManager(resv);
 
 
 
