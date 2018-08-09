@@ -806,8 +806,14 @@ class BlankReservation extends Reservation {
                 $arrivalDT = new\DateTime($this->reservRs->Expected_Arrival->getStoredVal());
                 $departDT = new \DateTime($this->reservRs->Expected_Departure->getStoredVal());
 
+                $psgMembers = $this->reserveData->getPsgMembers();
                 // Chack guests for other commitments.
-                $this->guestReservations($dbh, $this->reserveData->getIdResv(), $this->reserveData->getPsgMembers(), $arrivalDT, $departDT, $this->reserveData->getIdPsg(), $this->reserveData->getResvTitle());
+                //$this->guestReservations($dbh, $this->reserveData->getIdResv(), $this->reserveData->getPsgMembers(), $arrivalDT, $departDT, $this->reserveData->getIdPsg(), $this->reserveData->getResvTitle());
+
+                self::findConflictingStays($dbh, $psgMembers, $arrivalDT, $this->reserveData->getIdPsg());
+                self::findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $arrivalDT, $departDT, $this->reserveData->getResvTitle());
+
+                $this->reserveData->setPsgMembers($psgMembers);
 
             } catch (Hk_Exception_Runtime $hex) {
                 return array('error'=>$hex->getMessage());

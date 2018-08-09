@@ -349,13 +349,10 @@ class RateChooser {
         // Select payment block
         if ($this->payAtCheckin) {
 
+            $markup = $this->createBasicChooserMarkup($dbh, $resv, $numNights, $visitFeeTitle, $resv->getIdRegistration());
+
             if ($this->incomeRated) {
-
-                $markup = $this->createIncomeChooserMarkup($dbh, $resv, $numNights, $visitFeeTitle);
-
-            } else {
-
-                $markup = $this->createBasicChooserMarkup($dbh, $resv, $numNights, $visitFeeTitle, $resv->getIdRegistration());
+                $markup .= HTMLInput::generateMarkup('Income Chooser ...', array('type'=>'button', 'id' => 'btnFapp', 'data-id'=>$resv->getIdGuest(), 'style'=>'margin:1em;'));
             }
 
             return HTMLContainer::generateMarkup('fieldset',
