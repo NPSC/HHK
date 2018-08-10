@@ -593,7 +593,10 @@ function injectSlot(data) {
     }
 
     if (data.notes !== undefined) {
-        getNotes(resv.idReserv, "#resvNotes");
+	    $("#resvNotes").notesViewer({
+		    linkId: resv.idReserv,
+		    linkType: "reservation"
+	    })
     }
 
     if (data.patStay !== undefined) {
