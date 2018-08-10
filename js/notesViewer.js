@@ -143,7 +143,7 @@
 				    	'data': noteText
 			    	},
 			    	success: function( data ){
-				    	if(data.update > 0){
+				    	if(data.idNote > 0){
 				    		$table.ajax.reload();
 				    	}else{
 					    	if(data.error){
