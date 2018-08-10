@@ -153,7 +153,6 @@
 			    });
 	        }
 	        
-	        $(this).closest('tr').find('.noteText').text(noteText);
 	        $(this).closest('td').find('.note-delete').hide();
 	        $(this).closest('td').find('.note-edit').show();
 	        $(this).hide();
@@ -183,7 +182,6 @@
 			    	}
 		    	}
 		    });
-	        listNoteTable.ajax.reload();
 	        
         });
         //End Delete Note
