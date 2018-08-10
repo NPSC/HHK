@@ -199,7 +199,8 @@ try {
         $updateCount = 0;
 
         if (isset($_POST['data'])) {
-            $data = addcslashes(filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING));
+	        $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
+            //$data = addcslashes(filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING));
         }
         if (isset($_POST['idNote'])) {
             $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);

@@ -143,11 +143,15 @@
 				    	'data': noteText
 			    	},
 			    	success: function( data ){
-				    	if(data.idNote > 0){
+				    	if(data.update > 0){
 				    		$table.ajax.reload();
 				    	}else{
-					    	$("#divAlertMsg #alrMessage").html("<strong>Error:</strong> " + data.error);
-					    	$("#divAlertMsg #divAlert1").show();
+					    	if(data.error){
+					    		$("#divAlertMsg #alrMessage").html("<strong>Error:</strong> " + data.error);
+					    	}else{
+						    	$("#divAlertMsg #alrMessage").html("<strong>Error:</strong> An unknown error occurred.");
+					    	}
+							$("#divAlertMsg #divAlert1").show();
 				    	}
 			    	}
 			    });
