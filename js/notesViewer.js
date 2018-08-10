@@ -130,7 +130,7 @@
         $wrapper.on('click', '.note-done', function(e){
 	        e.preventDefault();
 	        var noteText = $(this).closest('tr').find('#editNoteText').val();
-	        var noteId = $(this).data('noteid');
+	        var noteId = $(this).closest('td').find('.note-edit').data('noteid');
 	        
 	        if(noteText != ""){
 		        $.ajax({
