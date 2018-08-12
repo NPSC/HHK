@@ -226,8 +226,10 @@ function resvManager(initData) {
 
                 $('#' + prefix + 'adrstate' + addrPurpose).val(addrs.list()[sourcePrefix].State_Province);
 
-                // Clear the incomplete address checkbox if the address is valid.
-                if (isAddressComplete(prefix) && $('#' + prefix + 'incomplete').prop('checked') === true) {
+                // Match the source incomplete checkbox
+                if ($('#' + sourcePrefix + 'incomplete').prop('checked') === true) {
+                    $('#' + prefix + 'incomplete').prop('checked', true);
+                } else if (isAddressComplete(prefix) && $('#' + prefix + 'incomplete').prop('checked') === true) {
                     $('#' + prefix + 'incomplete').prop('checked', false);
                 }
 
@@ -397,7 +399,7 @@ function resvManager(initData) {
             // Remove any previous entries.
             for (var i in data.famSection.mem) {
                 
-                var item = people.findItem('id', data.famSection.mem[i].id);
+                var item = people.findItem('pref', data.famSection.mem[i].pref);
                 
                 if (item) {
                     $famTbl.find('input#' + item.pref + 'idName').parents('tr').next('tr').remove();
@@ -406,7 +408,7 @@ function resvManager(initData) {
                     addrs.removeIndex(item.pref);
                 }
             }
-            
+
             // Add new people to the lists.
             people.makeList(data.famSection.mem, 'pref');
             addrs.makeList(data.famSection.addrs, 'pref');
@@ -479,10 +481,8 @@ function resvManager(initData) {
                 $('#adrCopy').click(function () {
 
                     var p = $('input.hhk-lastname').first().data('prefix');
+                    addrCopyDown(p);
 
-                    if (isAddressComplete(p)) {
-                        addrCopyDown(p);
-                    }
                 });
 
                 // toggle address row
@@ -648,14 +648,14 @@ function resvManager(initData) {
             setAddrFlag($addrFlag);
             
             // Shut address line if filled in.
-            if ($addrFlag.css('display') === 'none') {
+//            if ($addrFlag.css('display') === 'none') {
                 
                 $addrTog.parents('tr').next('tr').hide();
                 $addrTog.find('span').removeClass('ui-icon-circle-triangle-n').addClass('ui-icon-circle-triangle-s');
                 $addrTog.attr('title', 'Show Address Section');
-            } else {
-                $addrTog.attr('title', 'Hide Address Section');
-            }
+//            } else {
+//                $addrTog.attr('title', 'Hide Address Section');
+//            }
 
             // set country and state selectors
             $countries = $('#' + prefix + 'adrcountry' + addrPurpose);
@@ -1328,8 +1328,14 @@ function resvManager(initData) {
 
         }
 
-        function setupNotes(idReserv) {
+        function setupNotes(rid, $container) {
             
+            $container.notesViewer({
+                linkId: rid,
+                linkType: 'reservation'
+            });
+            
+            return $container;
         }
         
         function setUp(data) {
@@ -1343,7 +1349,8 @@ function resvManager(initData) {
             }
 
             // Stat and notes sections
-            $rDiv.append($(data.resv.rdiv.rstat)).append($(data.resv.rdiv.notes));
+            $rDiv.append($(data.resv.rdiv.rstat))
+                    .append(setupNotes(data.rid, $(data.resv.rdiv.notes)));
 
             // Vehicle section
             if (data.resv.rdiv.vehicle !== undefined) {
@@ -1714,6 +1721,7 @@ function resvManager(initData) {
             if (data.rid > 0) {
                 $('#btnDelete').val('Delete ' + resvTitle).show();
                 $('#btnShowReg').show();
+                $('#spnStatus').text(' - ' + data.resv.rdiv.rStatTitle);
             }
         }
 

@@ -5,7 +5,7 @@
  *
  * @author Eric
  */
-abstract class Reservation {
+class Reservation {
 
 
     /**
@@ -33,7 +33,7 @@ abstract class Reservation {
             // Force new PSG, also implies new reservation
             $rData->setIdResv(0);
 
-            return new BlankReservation($rData, new ReservationRS(), new JoinNewFamily($dbh, $rData));
+            return new Reservation($rData, new ReservationRS(), new JoinNewFamily($dbh, $rData));
         }
 
         // idResv < 0
@@ -70,8 +70,10 @@ abstract class Reservation {
                 return new ActiveReservation($rData, $rRs, new Family($dbh, $rData));
             }
 
-            if ($rRs->Status->getStoredVal() == ReservationStatus::Staying) {
+            if ($rRs->Status->getStoredVal() == ReservationStatus::Staying || $rRs->Status->getStoredVal() == ReservationStatus::Checkedout) {
+
                 return new StayingReservation($rData, $rRs, new Family($dbh, $rData));
+
             }
 
             return new StaticReservation($rData, $rRs, new Family($dbh, $rData));
@@ -81,47 +83,69 @@ abstract class Reservation {
 
         // idResv = 0 ------------------------------
 
-        // idPsg > 0
-        if ($rData->getIdPsg() > 0) {
-            return new ReserveSearcher($rData, new ReservationRS(), new Family($dbh, $rData));
-        }
 
+        if ($rData->getIdPsg() > 0 || $rData->getId() > 0) {
 
-
-        // idPsg = 0; idResv = 0 -----------------------
-
-        // IdGuest > 0
-        if ($rData->getId() > 0) {
-            // Search
             return new ReserveSearcher($rData, new ReservationRS(), new Family($dbh, $rData));
         }
 
 
         // idPsg = 0; idResv = 0; idGuest = 0
-        return new BlankReservation($rData, new ReservationRS(), new Family($dbh, $rData));
+        return new Reservation($rData, new ReservationRS(), new Family($dbh, $rData));
 
     }
 
-    protected function notesMarkup($notes) {
+    public function createMarkup(\PDO $dbh) {
 
-        return HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup('fieldset',
-                    HTMLContainer::generateMarkup('legend', $this->reserveData->getNotesLabel())
-                    . Notes::markupShell($notes, 'txtRnotes'),
-                    array('class'=>'hhk-panel')));
+        $this->family->setGuestsStaying($dbh, $this->reserveData, $this->reservRs->idGuest->getstoredVal());
 
+        // Arrival and Departure dates
+        if ($this->reserveData->getIdResv() > 0) {
+            try {
+                $arrivalDT = new\DateTime($this->reservRs->Expected_Arrival->getStoredVal());
+                $departDT = new \DateTime($this->reservRs->Expected_Departure->getStoredVal());
+
+                $psgMembers = $this->reserveData->getPsgMembers();
+
+                self::findConflictingStays($dbh, $psgMembers, $arrivalDT, $this->reserveData->getIdPsg());
+                self::findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $arrivalDT, $departDT, $this->reserveData->getResvTitle());
+
+                $this->reserveData->setPsgMembers($psgMembers);
+
+            } catch (Hk_Exception_Runtime $hex) {
+                return array('error'=>$hex->getMessage());
+            }
+        }
+
+        $this->reserveData->setFamilySection($this->family->createFamilyMarkup($dbh, $this->reserveData));
+
+        $data = $this->reserveData->toArray();
+
+        // Resv Expected dates
+        $data['expDates'] = $this->createExpDatesControl();
+
+        // Hospital
+        $hospitalStay = new HospitalStay($dbh, $this->family->getPatientId());
+
+        $data['hosp'] = Hospital::createReferralMarkup($dbh, $hospitalStay);
+
+        return $data;
     }
-
-    public abstract function createMarkup(\PDO $dbh);
 
     public function save(\PDO $dbh, $post) {
 
-        return array();
+        $this->family->save($dbh, $post, $this->reserveData);
+
+        $newResv = new ActiveReservation($this->reserveData, $this->reservRs, $this->family);
+
+        return $newResv->createMarkup($dbh);
+
     }
 
     public function addPerson(\PDO $dbh) {
 
-        return array();
+        $this->reserveData->setAddPerson($this->family->createAddPersonMu($dbh, $this->reserveData));
+        return $this->reserveData->toArray();
     }
 
     public static function updateAgenda(\PDO $dbh, $post) {
@@ -294,11 +318,13 @@ abstract class Reservation {
                     Registration::loadLodgingBalance($dbh, $resv->getIdRegistration()));
         }
 
+        // Reservation status title
+        $dataArray['rStatTitle'] = $resv->getStatusTitle();
 
         // Reservation notes
         $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'notesLabel', 'Reservation Notes'), array('style'=>'font-weight:bold;'))
-                . Notes::markupShell($resv->getNotes(), 'txtRnotes'), array('style'=>'clear:left; float:left; width:50%;', 'class'=>'hhk-panel'));
+                , array('id'=>'hhk-noteViewer', 'style'=>'clear:left; float:left; width:100%;', 'class'=>'hhk-panel'));
 
 
         // Waitlist notes?
@@ -522,13 +548,6 @@ where rg.idReservation =" . $r['idReservation']);
         }
 
         return count($rescs);
-    }
-
-    protected static function guestReservations(\PDO $dbh, $idResv, $psgMembers, \DateTime $arrivalDT, \DateTime $departDT, $idPsg, $resvTitle) {
-
-        self::findConflictingStays($dbh, $psgMembers, $arrivalDT, $idPsg);
-
-        return self::findConflictingReservations($dbh, $idPsg, $idResv, $psgMembers, $arrivalDT, $departDT, $resvTitle);
     }
 
     protected function getStayingMembers() {
@@ -794,66 +813,8 @@ where rg.idReservation =" . $r['idReservation']);
 }
 
 
-class BlankReservation extends Reservation {
 
-    public function createMarkup(\PDO $dbh) {
-
-        $this->family->setGuestsStaying($dbh, $this->reserveData, $this->reservRs->idGuest->getstoredVal());
-
-        // Arrival and Departure dates
-        if ($this->reserveData->getIdResv() > 0) {
-            try {
-                $arrivalDT = new\DateTime($this->reservRs->Expected_Arrival->getStoredVal());
-                $departDT = new \DateTime($this->reservRs->Expected_Departure->getStoredVal());
-
-                $psgMembers = $this->reserveData->getPsgMembers();
-                // Chack guests for other commitments.
-                //$this->guestReservations($dbh, $this->reserveData->getIdResv(), $this->reserveData->getPsgMembers(), $arrivalDT, $departDT, $this->reserveData->getIdPsg(), $this->reserveData->getResvTitle());
-
-                self::findConflictingStays($dbh, $psgMembers, $arrivalDT, $this->reserveData->getIdPsg());
-                self::findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $arrivalDT, $departDT, $this->reserveData->getResvTitle());
-
-                $this->reserveData->setPsgMembers($psgMembers);
-
-            } catch (Hk_Exception_Runtime $hex) {
-                return array('error'=>$hex->getMessage());
-            }
-        }
-
-        $this->reserveData->setFamilySection($this->family->createFamilyMarkup($dbh, $this->reservRs, $this->reserveData));
-
-        $data = $this->reserveData->toArray();
-
-        // Resv Expected dates
-        $data['expDates'] = $this->createExpDatesControl();
-
-        // Hospital
-        $hospitalStay = new HospitalStay($dbh, $this->family->getPatientId());
-
-        $data['hosp'] = Hospital::createReferralMarkup($dbh, $hospitalStay);
-
-        return $data;
-    }
-
-    public function save(\PDO $dbh, $post) {
-
-        $this->family->save($dbh, $post, $this->reserveData);
-
-        $newResv = new ActiveReservation($this->reserveData, $this->reservRs, $this->family);
-
-        return $newResv->createMarkup($dbh);
-
-    }
-
-    public function addPerson(\PDO $dbh) {
-
-        $this->reserveData->setAddPerson($this->family->createAddPersonMu($dbh, $this->reserveData));
-        return $this->reserveData->toArray();
-    }
-
-}
-
-class ActiveReservation extends BlankReservation {
+class ActiveReservation extends Reservation {
 
     public function createMarkup(\PDO $dbh) {
 
@@ -879,7 +840,7 @@ class ActiveReservation extends BlankReservation {
         $uS = Session::getInstance();
 
         // Save members, psg, hospital
-        $this->reserveData = $this->family->save($dbh, $post, $this->reserveData);
+        $this->family->save($dbh, $post, $this->reserveData);
 
         if (count($this->getStayingMembers()) < 1) {
             // Nobody set to stay
@@ -915,9 +876,9 @@ class ActiveReservation extends BlankReservation {
         }
 
         // Get reservations for the specified time
-        $psgMems = $this->reserveData->getPsgMembers();
-        $numRooms = $this->findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMems, $arrivalDT, $departDT, $this->reserveData->getResvTitle());
-        $this->reserveData->setPsgMembers($psgMems);
+        $psgMems2 = $this->reserveData->getPsgMembers();
+        $numRooms = $this->findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMems2, $arrivalDT, $departDT, $this->reserveData->getResvTitle());
+        $this->reserveData->setPsgMembers($psgMems2);
 
         // Anybody left?
         if (count($this->getStayingMembers()) < 1) {
@@ -1042,15 +1003,13 @@ class ActiveReservation extends BlankReservation {
         // Payments
         $this->savePayments($dbh, $resv, $post);
 
-
         // Reply
-        //$newResv = Reservation::reservationFactoy($dbh, $_POST);
         $newResv = new ActiveReservation($this->reserveData, $resv->getReservationRS(), $this->family);
         return $newResv->createMarkup($dbh);
 
     }
-
 }
+
 
 class ReserveSearcher extends ActiveReservation {
 
@@ -1154,12 +1113,20 @@ class ReserveSearcher extends ActiveReservation {
 
 class StaticReservation extends ActiveReservation {
 
+    public function addPerson(\PDO $dbh) {
+        return array();
+    }
 }
+
 
 class StayingReservation extends ActiveReservation {
 
     public function save(\PDO $dbh, $post) {
         return array('error'=>'Saving is not allowed.');
+    }
+
+    public function addPerson(\PDO $dbh) {
+        return array('error'=>'Adding a person is not allowed.');
     }
 
 }

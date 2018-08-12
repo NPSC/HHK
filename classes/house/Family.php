@@ -316,7 +316,7 @@ class Family {
 
     }
 
-    public function createFamilyMarkup(\PDO $dbh, ReservationRS $resvRs, ReserveData $rData) {
+    public function createFamilyMarkup(\PDO $dbh, ReserveData $rData) {
 
         $uS = Session::getInstance();
         //$tbl = new HTMLTable();
@@ -448,7 +448,7 @@ class Family {
 
     }
 
-    public function save(\PDO $dbh, $post, ReserveData $rData) {
+    public function save(\PDO $dbh, $post, ReserveData &$rData) {
 
         $uS = Session::getInstance();
 
@@ -487,6 +487,7 @@ class Family {
             }
 
             $psg->setNewMember($role->getIdName(), $role->getPatientRelationshipCode());
+
         }
 
         // Save PSG
@@ -502,7 +503,6 @@ class Family {
 
         }
 
-        return $rData;
     }
 
     public function getPatientId() {

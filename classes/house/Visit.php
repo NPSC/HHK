@@ -92,6 +92,7 @@ class Visit {
      */
     protected function loadVisits(\PDO $dbh, $idReg, $idVisit, $span = -1, $forceNew = FALSE) {
 
+        $uS = Session::getInstance();
         $visitRS = new VisitRs();
         $visits = array();
 
@@ -125,9 +126,10 @@ class Visit {
             $visitRS->Status->setStoredVal(VisitStatus::CheckedIn);
             $rows = EditRS::select($dbh, $visitRS, Array($visitRS->idRegistration, $visitRS->Status));
 
-            if (count($rows) > 1) {
+            if (count($rows) > $uS->RoomsPerPatient) {
 
-                throw new Hk_Exception_Runtime('More than one checked-in visit for this registration.');
+                throw new Hk_Exception_Runtime('More than ' . $uS->RoomsPerPatient . ' checked-in visits for this registration.');
+
             } else if (count($rows) == 0 || $forceNew) {
                 // new visit
                 $visitRS = new VisitRs();

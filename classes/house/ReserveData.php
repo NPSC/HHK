@@ -54,14 +54,12 @@ class ReserveData {
     protected $arrivalDateStr;
     protected $departureDateStr;
     protected $psgMembers;
-    protected $resvMembers;
 
     function __construct($post) {
 
         $uS = Session::getInstance();
         $labels = new Config_Lite(LABEL_FILE);
         $this->psgMembers = array();
-        $this->resvMembers = array();
 
         if (isset($post['rid'])) {
             $this->setIdResv(intval(filter_var($post['rid'], FILTER_SANITIZE_NUMBER_INT), 10));
@@ -90,10 +88,6 @@ class ReserveData {
         if (isset($post['mem'])) {
             $this->setMembersFromPost(filter_var_array($post['mem'], FILTER_SANITIZE_STRING));
         }
-
-//        if (isset($post['gsts'])) {
-//            $this->resvMembers = filter_var_array($post['gsts'], FILTER_SANITIZE_STRING);
-//        }
 
         $this->resvTitle = $labels->getString('guestEdit', 'reservationTitle', 'Reservation');
         $this->resvEarlyArrDays = $uS->ResvEarlyArrDays;
@@ -159,10 +153,6 @@ class ReserveData {
         }
 
         return $memArray;
-    }
-
-    public function getResvMembers() {
-        return $this->resvMembers;
     }
 
     public function toArray() {

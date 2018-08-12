@@ -187,7 +187,6 @@ $resvAr['gstAddr'] = $uS->GuestAddr;
 $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
 $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
 
-
 $resvObjEncoded = json_encode($resvAr);
 
 ?>
@@ -200,6 +199,7 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo DR_PICKER_CSS ?>
+        <?php echo JQ_DT_CSS; ?>
         <?php echo FAVICON; ?>
 <!--        Fix the ugly checkboxes-->
         <style>.ui-icon-background, .ui-state-active .ui-icon-background {background-color:#fff;}</style>
@@ -216,6 +216,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo DR_PICKER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="../js/notesViewer.js"></script>
         <script type="text/javascript" src="js/resvManager.js"></script>
 
@@ -262,9 +263,9 @@ $resvObjEncoded = json_encode($resvAr);
         </div>
 
 <script type="text/javascript">
-
 var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
 var payFailPage = '<?php echo $payFailPage; ?>';
+
 $(document).ready(function() {
     "use strict";
     var $guestSearch = $('#gstSearch');
@@ -282,7 +283,10 @@ $(document).ready(function() {
 
     var pageManager = new resvManager(resv);
 
-
+    // hide the alert on mousedown
+    $(document).mousedown(function (event) {
+        hideAlertMessage();
+    });
 
 // Buttons
     $('#btnDone, #btnShowReg, #btnDelete').button();
@@ -336,6 +340,7 @@ $(document).ready(function() {
                     }
 
                     pageManager.loadResv(data);
+                    flagAlertMessage(resv.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle);
                 }
             );
 
