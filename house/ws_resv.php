@@ -1,3 +1,4 @@
+
 <?php
 /**
  * ws_resv.php
@@ -29,6 +30,7 @@ require CLASSES . 'History.php';
 require (CLASSES . 'CreateMarkupFromDB.php');
 
 require (CLASSES . 'Notes.php');
+require (CLASSES . 'Note.php');
 require (CLASSES . 'US_Holidays.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'FinAssistance.php');
@@ -91,6 +93,7 @@ require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Vehicle.php');
 require (HOUSE . 'Visit.php');
 require (HOUSE . 'Family.php');
+require (HOUSE . 'ResvNote.php');
 require (HOUSE . "visitViewer.php");
 
 require (HOUSE . 'Register.php');
@@ -146,7 +149,7 @@ try {
 
     case 'getNoteList':
 
-        if (($rid = filter_input(INPUT_POST, 'rid', FILTER_SANITIZE_NUMBER_INT))) {
+        if (($rid = filter_input(INPUT_GET, 'rid', FILTER_SANITIZE_NUMBER_INT))) {
 
             require(CLASSES . 'DataTableServer.php');
 
@@ -166,24 +169,87 @@ try {
 
     case 'saveNote':
 
-        $note = '';
+        $data = '';
         $linkType = '';
-        $rid = 0;
+        $idLink = 0;
 
         if (isset($_POST['data'])) {
-            $note = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
+            $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
         }
 
         if (isset($_POST['linkType'])) {
-            $linkType = intval(filter_input(INPUT_POST, 'linkType', FILTER_SANITIZE_NUMBER_INT), 10);
+            $linkType = filter_input(INPUT_POST, 'linkType', FILTER_SANITIZE_STRING);
         }
 
         if (isset($_POST['linkId'])) {
-            $rid = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
+            $idLink = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
         if ($linkType == NoteLink::Reservation) {
-            $events[] = array('idNote', ResvNote::save($dbh, $idNote, $noteText, $rid));
+            $answer = ResvNote::save($dbh, $data, $idLink, $uS->username);
+            $events = array('idNote'=>$answer);
+        }
+
+        break;
+
+    case 'updateNoteContent':
+
+        $data = '';
+        $noteId = 0;
+        $updateCount = 0;
+
+        if (isset($_POST['data'])) {
+	        $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
+            //$data = addcslashes(filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING));
+        }
+        if (isset($_POST['idNote'])) {
+            $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if ($noteId > 0 && $data != '') {
+
+            $note = new Note($noteId);
+            $updateCount = $note->updateNote($dbh, $uS->username, $data);
+        }
+
+        $events = array('update'=>$updateCount, 'idNote'=>$noteId);
+
+        break;
+
+    case 'deleteNote':
+
+        $noteId = 0;
+        $deleteCount = 0;
+
+        if (isset($_POST['idNote'])) {
+            $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if ($noteId > 0) {
+            $note = new Note($noteId);
+            $deleteCount = $note->deleteNote($dbh, $uS->userName);
+        }
+
+        $events = array('delete'=>$deleteCount, 'idNote'=>$noteId);
+
+        break;
+
+    case 'linkNote':
+
+        $noteId = 0;
+        $linkType = '';
+        $idLink = 0;
+
+        if (isset($_POST['idNote'])) {
+            $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if (isset($_POST['linkType'])) {
+            $linkType = filter_input(INPUT_POST, 'linkType', FILTER_SANITIZE_STRING);
+        }
+
+        if (isset($_POST['linkId'])) {
+            $idLink = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
         break;
@@ -231,4 +297,3 @@ if (is_array($events)) {
 }
 
 exit();
-

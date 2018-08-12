@@ -17,6 +17,182 @@
  * @param {object} item
  * @returns {undefined}
  */
+
+function getNotes(rid, container)
+{
+	rid = parseInt(rid, 10);
+	if(Number.isInteger(rid) ){
+	
+		$(container).empty();
+		$(container).html('<fieldset class="hhk-panel"><legend style="font-weight:bold;"></legend><div id="resvNotesDetail"></div></fieldset>');
+		$(container +" legend").html(resvTitle + " Notes");
+		$("#resvNotesHeader div").append($('<input type="button" id="hhk-newNote" style="margin-left: 30px; margin-bottom: 5px; font-size: 0.8em;" value="New Note">').button());
+		$(container + " #resvNotesDetail").html('<table class="display" style="width: 100%"></table>');
+		
+		var dtCols = [
+	    {
+		  	"targets": 0,
+		  	"title": "Actions",
+		  	'data': "Action",
+		  	'width': "15%",
+		  	render: function (data, type, row) {
+			  	 return '<button class="editNote ui-button ui-corner-all ui-widget" data-noteid="' + data + '">Edit</button><button class="done ui-button ui-corner-all ui-widget" data-noteid="' + data + '" style="display: none; margin-bottom:5px;">Save</button><button class="deleteNote ui-button ui-corner-all ui-widget" data-noteid="' + data + '" style="display: none;">Delete</button>';
+			}
+	    },
+	    {
+	        "targets": [ 1 ],
+	        "title": "Date",
+	        'data': 'Date',
+	        'width': '25%',
+	        render: function ( data, type ) {
+	            return dateRender(data, type, dateFormat);
+	        }
+	    },
+	    {
+	        "targets": [ 2 ],
+	        "title": "User",
+	        "searchable": false,
+	        "sortable": false,
+	        "width": "20%",
+	        "data": "User"
+	    },
+	    {
+	        "targets": [ 3 ],
+	        "title": "Note",
+	        "searchable": false,
+	        "sortable": false,
+	        "className":'noteText',
+	        "data": "Note"
+	    }
+	];
+	
+			
+		var listNoteTable = $('#resvNotesDetail table').DataTable({
+	        "columnDefs": dtCols,
+	        "serverSide": true,
+	        "processing": true,
+	        "deferRender": true,
+	        "language": {"sSearch": "Search Notes:"},
+	        "sorting": [[0,'desc']],
+	        "displayLength": 5,
+	        "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
+ 	        "Dom": '<"top"ilf>rt<"bottom"ip>',
+	        ajax: {
+	            url: 'ws_resv.php?cmd=getNoteList&rid=' + rid
+	        }
+	        });
+	        
+	        $(container + " table").append('<tfoot><td><button id="hhk-newNote" style="margin-bottom: 5px; font-size: 0.8em;">New Note</button></td><td colspan="3"><textarea id="noteText" style="width: 100%; padding:5px;"></textarea></td></tfoot>');
+	        $(container + " #hhk-newNote").button();
+	        
+	        $(container).on('click', '#hhk-newNote', function(e){
+		        e.preventDefault();
+		        $('#hhk-newNote').attr("disabled", "disabled").text("Saving...");
+		        var noteData = $('#noteText').val();
+		        
+		        if(noteData != ""){
+			        $.ajax({
+				    	url: 'ws_resv.php',
+				    	dataType: 'JSON',
+				    	type: 'post',
+				    	data: {
+					    	'cmd': 'saveNote',
+					    	'linkType': 'reservation',
+					    	'linkId': rid,
+					    	'data': noteData
+				    	},
+				    	success: function( data ){
+					    	if(data.idNote > 0){
+					    		listNoteTable.ajax.reload();
+					    		$("#noteText").val("");
+					    		$('#hhk-newNote').removeAttr("disabled").text("New Note");
+					    	}else{
+						    	$("#divAlertMsg #alrMessage").html("<strong>Error:</strong> " + data.error);
+						    	$("#divAlertMsg #divAlert1").show();
+					    	}
+				    	}
+				    });
+		        }else{
+			        $('#hhk-newNote').removeAttr("disabled").text("New Note");
+		        }
+	        });
+	        
+	        $(container).show();
+	        
+	        $(container + " table").on('click', '.editNote', function(e){
+		        e.preventDefault();
+		        var noteText = $(this).closest('tr').find('.noteText').html();
+		        $(this).closest('tr').find('.noteText').html('<textarea style="width: 100%; padding:5px;" id="editNoteText">' + noteText + '</textarea>');
+		        $(this).closest('td').find('.deleteNote').show();
+		        $(this).closest('td').find('.done').show();
+		        $(this).hide();
+	        });
+	        
+	        $(container + " table").on('click', '.done', function(e){
+		        e.preventDefault();
+		        var noteText = $(this).closest('tr').find('#editNoteText').val();
+		        var noteId = $(this).data('noteid');
+		        
+		        if(noteText != ""){
+			        $.ajax({
+				    	url: 'ws_resv.php',
+				    	dataType: 'JSON',
+				    	type: 'post',
+				    	data: {
+					    	'cmd': 'updateNoteContent',
+					    	'idNote': noteId,
+					    	'data': noteText
+				    	},
+				    	success: function( data ){
+					    	if(data.idNote > 0){
+					    		listNoteTable.ajax.reload();
+					    	}else{
+						    	$("#divAlertMsg #alrMessage").html("<strong>Error:</strong> " + data.error);
+						    	$("#divAlertMsg #divAlert1").show();
+					    	}
+				    	}
+				    });
+		        }else{
+			        
+		        }
+		        
+		        $(this).closest('tr').find('.noteText').text(noteText);
+		        $(this).closest('td').find('.deleteNote').hide();
+		        $(this).closest('td').find('.editNote').show();
+		        $(this).hide();
+	        });
+	        
+	        $(container + " table").on('click', '.deleteNote', function(e){
+		        var idnote = $(this).data("noteid");
+		        e.preventDefault();
+		        $.ajax({
+			    	url: 'ws_resv.php',
+			    	dataType: 'JSON',
+			    	type: 'post',
+			    	data: {
+				    	'cmd': 'deleteNote',
+				    	'idNote': idnote
+			    	},
+			    	success: function( data ){
+				    	if(data.idNote > 0){
+				    		listNoteTable.ajax.reload();
+				    		$("#noteText").val("");
+				    		$('#hhk-newNote').removeAttr("disabled").text("New Note");
+				    	}else{
+					    	$("#divAlertMsg #alrMessage").html("<strong>Error:</strong> " + data.error);
+						    $("#divAlertMsg #divAlert1").show();
+				    	}
+			    	}
+			    });
+		        listNoteTable.ajax.reload();
+		        
+	        });
+	        
+	}else{
+		$("divAlertMsg").html("Cannot get Reservation Notes for specified Reservation ID").show();
+	}
+};
+
 function additionalGuest(item) {
     "use strict";
     var resv = reserv;
@@ -417,7 +593,10 @@ function injectSlot(data) {
     }
 
     if (data.notes !== undefined) {
-        $('#notesGuest').children().remove().end().append($(data.notes)).show();
+	    $("#resvNotes").notesViewer({
+		    linkId: resv.idReserv,
+		    linkType: "reservation"
+	    })
     }
 
     if (data.patStay !== undefined) {
@@ -1720,5 +1899,7 @@ $(document).ready(function() {
     }
     
     $('#gstSearch').focus();
+    
+    
 
 });
