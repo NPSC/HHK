@@ -29,7 +29,7 @@ require CLASSES . 'AuditLog.php';
 require CLASSES . 'History.php';
 require (CLASSES . 'CreateMarkupFromDB.php');
 
-require (CLASSES . 'Notes.php');
+//require (CLASSES . 'Notes.php');
 require (CLASSES . 'Note.php');
 require (CLASSES . 'US_Holidays.php');
 require (CLASSES . 'PaymentSvcs.php');
@@ -149,21 +149,20 @@ try {
 
     case 'getNoteList':
 
-        if (($rid = filter_input(INPUT_GET, 'rid', FILTER_SANITIZE_NUMBER_INT))) {
+        $rid = filter_input(INPUT_GET, 'rid', FILTER_SANITIZE_NUMBER_INT);
 
-            require(CLASSES . 'DataTableServer.php');
+        require(CLASSES . 'DataTableServer.php');
 
-            $columns = array(
+        $columns = array(
 
-                array( 'db' => 'Timestamp',  'dt' => 'Date' ),
-                array( 'db' => 'User_Name',   'dt' => 'User' ),
-                array( 'db' => 'Note_Text', 'dt' => 'Note'),
-                array( 'db' => 'Note_Id', 'dt' => 'NoteId'),
-                array( 'db' => 'Action', 'dt' => 'Action')
-            );
+            array( 'db' => 'Timestamp',  'dt' => 'Date' ),
+            array( 'db' => 'User_Name',   'dt' => 'User' ),
+            array( 'db' => 'Note_Text', 'dt' => 'Note'),
+            array( 'db' => 'Note_Id', 'dt' => 'NoteId'),
+            array( 'db' => 'Action', 'dt' => 'Action')
+        );
 
-            $events = SSP::complex ( $_GET, $dbh, "vresv_notes", 'Note_Id', $columns, null, "Reservation_Id=$rid" );
-        }
+        $events = SSP::complex ( $_GET, $dbh, "vresv_notes", 'Note_Id', $columns, null, "Reservation_Id=$rid" );
 
         break;
 
@@ -199,7 +198,7 @@ try {
         $updateCount = 0;
 
         if (isset($_POST['data'])) {
-	        $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
+	    $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
             //$data = addcslashes(filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING));
         }
         if (isset($_POST['idNote'])) {

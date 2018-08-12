@@ -324,13 +324,15 @@ class Reservation {
         // Reservation notes
         $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'notesLabel', 'Reservation Notes'), array('style'=>'font-weight:bold;'))
-                , array('id'=>'hhk-noteViewer', 'style'=>'clear:left; float:left; width:100%;', 'class'=>'hhk-panel'));
+                , array('id'=>'hhk-noteViewer', 'style'=>'clear:left; float:left; width:90%;font-size:0.9em;', 'class'=>'hhk-panel'));
 
+
+        $dataArray['wlnotes'] = '';
 
         // Waitlist notes?
         if ($uS->UseWLnotes && $resv->getStatus() == ReservationStatus::Waitlist) {
 
-            $dataArray['notes'] .= HTMLContainer::generateMarkup('fieldset',
+            $dataArray['wlnotes'] = HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', $this->reserveData->getWlNotesLabel(), array('style'=>'font-weight:bold;'))
                 . HTMLContainer::generateMarkup('textarea', $resv->getCheckinNotes(), array('name'=>'taCkinNotes', 'rows'=>'2', 'style'=>'width:100%')),
                 array('class'=>'hhk-panel', 'style'=>'float:left; width:50%;'));
@@ -931,8 +933,8 @@ class ActiveReservation extends Reservation {
         $this->setRoomRate($dbh, $reg, $resv, $post);
 
         // Notes
-        if (isset($post['txtRnotes'])) {
-            $resv->setNotes(filter_var($post['txtRnotes'], FILTER_SANITIZE_STRING), $uS->username);
+        if (isset($post['taNewNote']) && $post['taNewNote'] != '') {
+            $resv->saveNote($dbh, filter_var($post['taNewNote'], FILTER_SANITIZE_STRING), $uS->username);
         }
 
         // Payment Type
@@ -943,7 +945,7 @@ class ActiveReservation extends Reservation {
         // Verbal Confirmation Flag
         if (isset($post['cbVerbalConf']) && $resv->getVerbalConfirm() != 'v') {
             $resv->setVerbalConfirm('v');
-            $resv->setNotes('Verbal confirmation set', $uS->username);
+            $resv->saveNote($dbh, 'Verbal confirmation set', $uS->username);
         } else {
             $resv->setVerbalConfirm('');
         }

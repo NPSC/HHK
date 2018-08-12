@@ -1224,6 +1224,13 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         }
     }
 
+    public function saveNote(\PDO $dbh, $notes, $uname) {
+
+        if ($notes != '') {
+            return ResvNote::save($dbh, $notes, $this->getIdReservation(), $uname);
+        }
+    }
+
     public function getIdVisit(\PDO $dbh) {
 
         if ($this->idVisit < 0 && $this->getIdReservation() > 0) {

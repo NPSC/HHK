@@ -1332,7 +1332,8 @@ function resvManager(initData) {
             
             $container.notesViewer({
                 linkId: rid,
-                linkType: 'reservation'
+                linkType: 'reservation',
+                newNoteAttrs: {id:'taNewNote', name:'taNewNote'}
             });
             
             return $container;
@@ -1349,15 +1350,23 @@ function resvManager(initData) {
             }
 
             // Stat and notes sections
-            $rDiv.append($(data.resv.rdiv.rstat))
-                    .append(setupNotes(data.rid, $(data.resv.rdiv.notes)));
-
+            $rDiv.append($(data.resv.rdiv.rstat));
+            
             // Vehicle section
             if (data.resv.rdiv.vehicle !== undefined) {
                 $veh = $(data.resv.rdiv.vehicle);
                 $rDiv.append($veh);
                 setupVehicle($veh);
             }
+
+            // Reservation notes.
+            $rDiv.append(setupNotes(data.rid, $(data.resv.rdiv.notes)));
+
+            // waitlist notes
+            if (data.resv.rdiv.wlnotes !== undefined) {
+                $rDiv.append($(data.resv.rdiv.wlnotes));
+            }
+            
 
             // Header
             $expanderButton = $("<ul style='list-style-type:none; float:right; margin-left:5px; padding-top:2px;' class='ui-widget'/>")

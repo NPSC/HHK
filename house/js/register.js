@@ -594,7 +594,7 @@ $(document).ready(function () {
         dateFormat: 'M d, yy'
     });
     $.extend( $.fn.dataTable.defaults, {
-        "dom": '<"top"if>rt<"bottom"lp><"clear">',
+        "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
         "displayLength": 50,
         "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
         "order": [[ 3, 'asc' ]],

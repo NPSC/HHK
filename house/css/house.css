@@ -222,6 +222,10 @@ table {
 .hhk-table tbody tr:hover.selected {
   background-color: #aab7d1;
 }
+.dtTop, .dtBottom {
+    margin:4px;
+    vertical-align: middle;
+}
 
 .hhk-panel .hhk-panel {
     margin: 0;

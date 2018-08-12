@@ -202,7 +202,9 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo JQ_DT_CSS; ?>
         <?php echo FAVICON; ?>
 <!--        Fix the ugly checkboxes-->
-        <style>.ui-icon-background, .ui-state-active .ui-icon-background {background-color:#fff;}</style>
+        <style>
+            .ui-icon-background, .ui-state-active .ui-icon-background {background-color:#fff;}
+        </style>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
@@ -265,6 +267,7 @@ $resvObjEncoded = json_encode($resvAr);
 <script type="text/javascript">
 var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
 var payFailPage = '<?php echo $payFailPage; ?>';
+var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
 
 $(document).ready(function() {
     "use strict";
