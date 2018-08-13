@@ -67,7 +67,8 @@ class Reservation {
 
             if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
 
-                return new ActiveReservation($rData, $rRs, new Family($dbh, $rData));
+                $family = new Family($dbh, $rData);
+                return new ActiveReservation($rData, $rRs, $family);
             }
 
             if ($rRs->Status->getStoredVal() == ReservationStatus::Staying || $rRs->Status->getStoredVal() == ReservationStatus::Checkedout) {
@@ -997,6 +998,11 @@ class ActiveReservation extends Reservation {
 
         $this->saveReservationGuests($dbh);
         $resv->saveConstraints($dbh, $post);
+
+        // Save Notes
+        if (isset($post['taNewNote']) && $post['taNewNote'] != '') {
+            $resv->saveNote($dbh, filter_var($post['taNewNote'], FILTER_SANITIZE_STRING), $uS->username);
+        }
 
 
         // Room Chooser

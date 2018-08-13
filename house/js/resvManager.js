@@ -1333,7 +1333,10 @@ function resvManager(initData) {
             $container.notesViewer({
                 linkId: rid,
                 linkType: 'reservation',
-                newNoteAttrs: {id:'taNewNote', name:'taNewNote'}
+                newNoteAttrs: {id:'taNewNote', name:'taNewNote'},
+                alertMessage: function(text, isError) {
+                    flagAlertMessage(text, isError);
+                }
             });
             
             return $container;
@@ -1349,7 +1352,7 @@ function resvManager(initData) {
                 $rDiv.append($(data.resv.rdiv.rate));
             }
 
-            // Stat and notes sections
+            // Stat
             $rDiv.append($(data.resv.rdiv.rstat));
             
             // Vehicle section

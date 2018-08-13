@@ -643,16 +643,19 @@ END -- ;
 --
 DROP procedure IF EXISTS `set_pagesecurity`; -- ;
 
-CREATE PROCEDURE `set_pagesecurity` (pageId int, secCode varchar(5))
+CREATE PROCEDURE `set_pagesecurity` (
+    IN pageId int, 
+    IN secCode varchar(5)
+)
 BEGIN
     declare p int;
 
     if pageId > 0 and secCode != '' then
 
-        select `idPage` into p from `page_securitygroup` where `idPage` = pageId and `Group_Code` = secCode;
+        select count(`idPage`) into p from `page_securitygroup` where `idPage` = pageId and `Group_Code` = secCode;
 
         if p = 0 then
-            insert into page_securitygroup (idPage, Group_Code) VALUES (pageId, secCode);
+            insert into page_securitygroup (`idPage`, `Group_Code`) VALUES (pageId, secCode);
         end if;
 
     end if;
@@ -679,13 +682,13 @@ CREATE PROCEDURE `new_webpage`(
     IN validityCode varchar(75),
     IN updatedBy varchar(45),
     IN lastUpdated datetime,
-    IN secCode varchar(5),
-    OUT id int
+    IN secCode varchar(5)
 )
 BEGIN
 
     declare p int;
     declare n int;
+    declare id int;
     
     select idPage into p from `page` where `File_Name` = fileName;
     

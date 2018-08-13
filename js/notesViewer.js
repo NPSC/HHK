@@ -16,22 +16,25 @@
                 style: 'width: 80%;',
                 rows: 2
             },
+            alertMessage: function (text, isError) {},
 
+            newTaLabel: '  New note text here',
             dtCols: [
                 {
                 "targets": [ 0 ],
                         "title": "Actions",
                         'data': "Action",
-                        'width': "15%",
                         render: function (data, type, row) {
-                            return '<button class="note-edit ui-button ui-corner-all ui-widget" data-noteid="' + data + '">Edit</button><button class="note-done ui-button ui-corner-all ui-widget" style="display: none; margin-bottom:5px;">Save</button><button class="note-delete ui-button ui-corner-all ui-widget" data-noteid="' + data + '" style="display: none;">Delete</button>';
+                            return '<button class="note-edit ui-button ui-corner-all ui-widget" data-noteid="' + data + '">Edit</button>\n\
+                                <button class="note-cancel note-action ui-button " title="Cancel Edit" style="display: none; margin-bottom:2px;">Cancel</button>\n\
+                                <button class="note-done note-action ui-button ui-corner-all ui-widget" style="display: none; margin-bottom:2px;">Save</button>\n\
+                                <button class="note-delete note-action ui-button ui-corner-all ui-widget" data-noteid="' + data + '" style="display: none;">Delete</button>';
                         }
                 },
                 {
                 "targets": [ 1 ],
                         "title": "Date",
                         'data': 'Date',
-                        'width': '25%',
                         render: function (data, type) {
                             return dateRender(data, type, dateFormat);
                         }
@@ -41,7 +44,6 @@
                         "title": "User",
                         "searchable": true,
                         "sortable": true,
-                        "width": "20%",
                         "data": "User"
                 },
                 {
@@ -49,6 +51,7 @@
                         "title": "Note",
                         "searchable": true,
                         "sortable": false,
+                        'width':"60%",
                         "className":'noteText',
                         "data": "Note"
                 }
@@ -64,50 +67,62 @@
         return this;
     };
 
-    function createFooter(settings) {
+    function createNewNote(settings, dtTable) {
+        var $div, $ta, $button;
         
-        return $('<tfoot />').append($('<td colspan="7" style="vertical-align:top;"/>')
-                .append( $('<textarea/>').attr(settings.newNoteAttrs))
-                .append('<button class=" ui-button ui-corner-all ui-widget" id="note-newNote" style="vertical-align: top; margin:6px;">Save New Note</button>')
-                );
-    }
-    
-    function actions($wrapper, settings, $table) {
-		
-        //Create new note
-        $wrapper.on('click', '#note-newNote', function(e){
-            e.preventDefault();
-            $('#note-newNote').attr("disabled", "disabled").text("Saving...");
-            var noteTextarea = $('#' + settings.newNoteAttrs.id);
-            var noteData = noteTextarea.val();
+        // Create textarea contorl with greyed out label
+        $ta = $('<textarea placeholder="' + settings.newTaLabel + '" />').attr(settings.newNoteAttrs);
+                
+        $div = $('<div style="margin-top:5px;" class="hhk-panel" />').append($ta);
+        
+        if (settings.linkId > 0) {
+            
+            $button = $('<button class=" ui-button ui-corner-all ui-widget" id=' + settings.linkId + '"note-newNote" style="vertical-align: top; margin:7px;">Save New Note</button>')
+                .click(function (e) {
+                    e.preventDefault();
+                    var noteTextarea = $('#' + settings.newNoteAttrs.id);
+                    var noteData = noteTextarea.val();
 
-            if(noteData != ""){
-                $.ajax({
-                        url: 'ws_resv.php',
-                        dataType: 'JSON',
-                        type: 'post',
-                        data: {
+                    if (settings.linkId == 0) {
+                        settings.alertMessage.call('Link Id is not set.  ', false);
+                        return;
+                    }
+
+                    if(noteData != ""){
+
+                        $('#note-newNote').attr("disabled", "disabled").text("Saving...");
+
+                        $.ajax({
+                            url: 'ws_resv.php',
+                            dataType: 'JSON',
+                            type: 'post',
+                            data: {
                                 'cmd': 'saveNote',
                                 'linkType': settings.linkType,
                                 'linkId': settings.linkId,
                                 'data': noteData
-                        },
-                        success: function( data ){
+                            },
+                            success: function( data ){
                                 if(data.idNote > 0){
-                                        $table.ajax.reload();
-                                        noteTextarea.val("");
-                                        $('#note-newNote').removeAttr("disabled").text(settings.newLabel);
+                                    dtTable.ajax.reload();
+                                    noteTextarea.val("");
+                                    $('#note-newNote').removeAttr("disabled").text(settings.newLabel);
                                 }else{
-                                        $("#divAlertMsg #alrMessage").html("<strong>Error:</strong> " + data.error);
-                                        $("#divAlertMsg #divAlert1").show();
+                                    settings.alertMessage.call(data.error, true);
                                 }
-                        }
+                            }
+                        });
+                    }
                 });
-            }else{
-                $('#note-newNote').removeAttr("disabled").text(settings.newLabel);
-            }
-        });
-        //End Create new note
+
+            
+            $div.append($button);
+        }
+        
+        return $div;
+    }
+    
+    function actions($wrapper, settings, $table) {
         
         //Show Edit mode
         $wrapper.on('click', '.note-edit', function(e){
@@ -115,8 +130,7 @@
             var noteText = $(this).closest('tr').find('.noteText').html();
             var noteHeight = $(this).closest('tr').find('.noteText').height();
             $(this).closest('tr').find('.noteText').html('<textarea style="width: 100%; height: ' + noteHeight +'px;" id="editNoteText">' + noteText + '</textarea>');
-            $(this).closest('td').find('.note-delete').show();
-            $(this).closest('td').find('.note-done').show();
+            $(this).closest('td').find('.note-action').show();
             $(this).hide();
         });
         //End Show Edit mode
@@ -128,71 +142,80 @@
             var noteId = $(this).closest('td').find('.note-edit').data('noteid');
 
             if(noteText != ""){
-                    $.ajax({
-                            url: 'ws_resv.php',
-                            dataType: 'JSON',
-                            type: 'post',
-                            data: {
-                                    'cmd': 'updateNoteContent',
-                                    'idNote': noteId,
-                                    'data': noteText
-                            },
-                            success: function( data ){
-                                    if(data.idNote > 0){
-                                            $table.ajax.reload();
-                                    }else{
-                                            if(data.error){
-                                                    $("#divAlertMsg #alrMessage").html("<strong>Error:</strong> " + data.error);
-                                            }else{
-                                                    $("#divAlertMsg #alrMessage").html("<strong>Error:</strong> An unknown error occurred.");
-                                            }
-                                                    $("#divAlertMsg #divAlert1").show();
-                                    }
+                $.ajax({
+                    url: 'ws_resv.php',
+                    dataType: 'JSON',
+                    type: 'post',
+                    data: {
+                            'cmd': 'updateNoteContent',
+                            'idNote': noteId,
+                            'data': noteText
+                    },
+                    success: function( data ){
+                            if(data.idNote > 0){
+                                $table.ajax.reload();
+                            }else{
+                                if(data.error){
+                                    settings.alertMessage.call(data.error, true);
+                                }else{
+                                    settings.alertMessage.call('An unknown error occurred.', true);
+                                }
                             }
-                        });
+                    }
+                });
             }
 
-            $(this).closest('td').find('.note-delete').hide();
+            $(this).closest('td').find('.note-action').hide();
             $(this).closest('td').find('.note-edit').show();
-            $(this).hide();
+        });
+        //End Edit Note
+        
+        //Cancel Note
+        $wrapper.on('click', '.note-cancel', function(e){
+            e.preventDefault();
+
+            $(this).closest('td').find('.note-action').hide();
+            $(this).closest('td').find('.note-edit').show();
+
         });
         //End Edit Note
         
         //Delete Note
         $wrapper.on('click', '.note-delete', function(e){
-	        var idnote = $(this).data("noteid");
-	        e.preventDefault();
-	        $.ajax({
-		    	url: 'ws_resv.php',
-		    	dataType: 'JSON',
-		    	type: 'post',
-		    	data: {
-			    	'cmd': 'deleteNote',
-			    	'idNote': idnote
-		    	},
-		    	success: function( data ){
-			    	if(data.idNote > 0){
-			    		$table.ajax.reload();
-			    		$("#noteText").val("");
-			    		$('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
-			    	}else{
-				    	$("#divAlertMsg #alrMessage").html("<strong>Error:</strong> " + data.error);
-					    $("#divAlertMsg #divAlert1").show();
-			    	}
-		    	}
-		    });
-	        
+            var idnote = $(this).data("noteid");
+            e.preventDefault();
+            $.ajax({
+                    url: 'ws_resv.php',
+                    dataType: 'JSON',
+                    type: 'post',
+                    data: {
+                        'cmd': 'deleteNote',
+                        'idNote': idnote
+                    },
+                    success: function( data ){
+                        if(data.idNote > 0){
+                            $table.ajax.reload();
+                            $("#noteText").val("");
+                            $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
+                        }else{
+                            settings.alertMessage.call(data.error, true);
+                        }
+                    }
+                });
+
         });
         //End Delete Note
-	}
+    }
 
     function createViewer($wrapper, settings) {
         
         console.log(settings.serviceURL + settings.idReservation);
         console.log(settings.dtCols);
-        var $table = $('<table />').attr(settings.tableAttrs).appendTo($wrapper);
+        
+        if (settings.linkId > 0) {
+            var $table = $('<table />').attr(settings.tableAttrs).appendTo($wrapper);
 
-        var dtTable = $table.DataTable({
+            var dtTable = $table.DataTable({
 	        "columnDefs": settings.dtCols,
 	        "serverSide": true,
 	        "processing": true,
@@ -205,13 +228,14 @@
 	        ajax: {
 	            url: settings.serviceURL + settings.linkId
 	        }
-		});
-		
-		$table.append(createFooter(settings));
-		
-		actions($wrapper, settings, dtTable);
-		
-		$wrapper.show();
+            });
+
+            actions($wrapper, settings, dtTable);
+        }
+        
+        $wrapper.append(createNewNote(settings, dtTable));
+
+        $wrapper.show();
 
     }
 

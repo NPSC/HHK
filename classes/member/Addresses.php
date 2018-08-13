@@ -523,6 +523,7 @@ class Address extends ContactPoint{
         $a = $this->rSs[$purpose[0]];
         $id = $this->name->get_idName();
 
+        // Incomplete checkbox
         if ($incomplete) {
             $a->Set_Incomplete->setNewVal(1);
         }
@@ -546,9 +547,9 @@ class Address extends ContactPoint{
             } else {
 
                 // Update the address
-                $this->loadPostData($a, $p);
+                $adrComplete = $this->loadPostData($a, $p);
 
-                if ($p['city'] != '' && $p['state'] != '' && $p['zip'] != '' && $p['address1'] != '') {
+                if ($adrComplete === TRUE) {
                     $a->Set_Incomplete->setNewVal(0);
                 }
 
@@ -562,11 +563,11 @@ class Address extends ContactPoint{
         } else {
             // Address does not exist inthe DB.
             // Did the user fill in this address panel?
-            if ($p['city'] != '' || $p['state'] != '' || $p['zip'] != '' || $p['address1'] != '' || $incomplete) {
+            $adrComplete = $this->loadPostData($a, $p);
+
+            if ($incomplete || $adrComplete) {
 
                 // Insert a new address
-                $this->loadPostData($a, $p);
-
                 $a->idName->setNewVal($id);
                 $a->Purpose->setNewVal($purpose[0]);
                 $naId = EditRS::insert($dbh, $a);
@@ -593,12 +594,15 @@ class Address extends ContactPoint{
      */
     protected function loadPostData(iTableRS $a, array $p) {
 
+        $addrComplete = TRUE;
+
         if (is_a($this->cleanAddress, 'CleanAddress') === FALSE) {
             throw new Hk_Exception_Runtime("CleanAddress object is missing.  ");
         }
 
         // Clean the street address
         if (isset($p["address1"])) {
+
             $addrs = $this->cleanAddress->cleanAddr(trim(filter_var($p["address1"], FILTER_SANITIZE_STRING)));
 
             $street2 = '';
@@ -614,6 +618,10 @@ class Address extends ContactPoint{
 
             $a->Address_1->setNewVal($addrs[0]);
             $a->Address_2->setNewVal($street2);
+
+            if ($addrs[0] == '') {
+                $addrComplete = FALSE;
+            }
         }
 
         // Country
@@ -621,23 +629,38 @@ class Address extends ContactPoint{
         if (isset($p['country'])) {
             $country = trim(filter_var($p['country'], FILTER_SANITIZE_STRING));
         }
+
         if ($country == '' || strtoupper($country) == 'USA') {
             $country = "US";
         }
+
         $a->Country_Code->setNewVal($country);
+
+        if (isset($p['county'])) {
+            $a->County->setNewVal(trim(filter_var($p['county'], FILTER_SANITIZE_STRING)));
+        }
 
         // zip code, city and state
         if (isset($p['city'])) {
             $a->City->setNewVal(trim(filter_var($p['city'], FILTER_SANITIZE_STRING)));
-        }
-        if (isset($p['county'])) {
-            $a->County->setNewVal(trim(filter_var($p['county'], FILTER_SANITIZE_STRING)));
+
+            if ($p['city'] == '') {
+                $addrComplete = FALSE;
+            }
         }
         if (isset($p['state'])) {
             $a->State_Province->setNewVal(trim(filter_var($p['state'], FILTER_SANITIZE_STRING)));
+
+            if ($p['state'] == '') {
+                $addrComplete = FALSE;
+            }
         }
         if (isset($p['zip'])) {
             $a->Postal_Code->setNewVal(strtoupper(trim(filter_var($p['zip'], FILTER_SANITIZE_STRING))));
+
+            if ($p['zip'] == '') {
+                $addrComplete = FALSE;
+            }
         }
 
         $a->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
@@ -647,6 +670,8 @@ class Address extends ContactPoint{
         } else {
             $a->Bad_Address->setNewVal('');
         }
+
+        return $addrComplete;
 
     }
 

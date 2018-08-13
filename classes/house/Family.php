@@ -170,22 +170,28 @@ class Family {
 
             $foundPriGuest = FALSE;
 
+            // If a record exists, they are staying.
             foreach ($rgs as $g) {
 
                 $mem = $rData->findMemberById($g['idGuest']);
 
                 if ($mem !== NULL) {
+
                     $mem->getStayObj()->setStaying();
 
                     if ($g['Primary_Guest'] == '1') {
                         $foundPriGuest = TRUE;
                         $mem->getStayObj()->setPrimaryGuest(TRUE);
                     }
+
+                    $rData->setMember($mem);
                 }
             }
 
             if ($foundPriGuest === FALSE && $resvIdGuest > 0) {
+
                 $mem = $rData->findMemberById($resvIdGuest);
+
                 if ($mem !== NULL) {
                     $mem->getStayObj()->setPrimaryGuest(TRUE);
                 }

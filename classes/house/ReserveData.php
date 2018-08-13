@@ -273,7 +273,7 @@ class ReserveData {
 
         foreach ($this->getPsgMembers() as $mem) {
 
-            if ($mem->getId() === $val) {
+            if ($mem->getId() == $val) {
                 return $mem;
             }
         }
