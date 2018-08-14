@@ -5,7 +5,7 @@
         var defaults = {
             linkId: 0,
             linkType: 0,
-            serviceURL: 'ws_resv.php?cmd=getNoteList&rid=',
+            serviceURL: 'ws_resv.php',
             newLabel: 'New Note',
             tableAttrs: {
                 class: 'display compact',
@@ -143,7 +143,7 @@
 
             if(noteText != ""){
                 $.ajax({
-                    url: 'ws_resv.php',
+                    url: settings.serviceURL,
                     dataType: 'JSON',
                     type: 'post',
                     data: {
@@ -173,7 +173,8 @@
         //Cancel Note
         $wrapper.on('click', '.note-cancel', function(e){
             e.preventDefault();
-
+            var noteText = $(this).closest('tr').find('#editNoteText').val();
+            $(this).closest('tr').find('.noteText').html(noteText);
             $(this).closest('td').find('.note-action').hide();
             $(this).closest('td').find('.note-edit').show();
 
@@ -185,7 +186,7 @@
             var idnote = $(this).data("noteid");
             e.preventDefault();
             $.ajax({
-                    url: 'ws_resv.php',
+                    url: settings.serviceURL,
                     dataType: 'JSON',
                     type: 'post',
                     data: {
@@ -226,7 +227,12 @@
 	        "lengthMenu": [[5, 10, 25, -1], [5, 10, 25, "All"]],
                 "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
 	        ajax: {
-	            url: settings.serviceURL + settings.linkId
+	            url: settings.serviceURL,
+                    data: {
+                        'cmd': 'getNoteList',
+                        'linkType': settings.linkType,
+                        'rid': settings.linkId
+                    },
 	        }
             });
 
