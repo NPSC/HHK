@@ -179,7 +179,7 @@
             $(this).closest('td').find('.note-edit').show();
 
         });
-        //End Edit Note
+        //End Cancel Note
         
         //Delete Note
         $wrapper.on('click', '.note-delete', function(e){

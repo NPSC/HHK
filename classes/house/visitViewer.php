@@ -21,7 +21,7 @@ class VisitView {
         $uS = Session::getInstance();
 
         // Take Payment doesn't need this section.
-        if ($action == 'pf' || $action == 'cr') {
+        if ($action == 'cr') {
             return '';
         }
 
@@ -582,12 +582,12 @@ class VisitView {
         $uS = Session::getInstance();
 
         $includeKeyDep = FALSE;
-        if ($uS->KeyDeposit && $r['Status'] == VisitStatus::CheckedIn && ($action == '' || $action == 'pf') && $visitCharge->getDepositCharged() > 0 && ($visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid()) < $visitCharge->getDepositCharged()) {
+        if ($uS->KeyDeposit && $r['Status'] == VisitStatus::CheckedIn && ($action == '' || $action == 'pf' || $action == 'ref') && $visitCharge->getDepositCharged() > 0 && ($visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid()) < $visitCharge->getDepositCharged()) {
             $includeKeyDep = TRUE;
         }
 
         $includeVisitFee = FALSE;
-        if ($uS->VisitFee && ($action == '' || $action == 'pf') && $visitCharge->getVisitFeeCharged() > 0) {
+        if ($uS->VisitFee && ($action == '' || $action == 'pf' || $action == 'ref') && $visitCharge->getVisitFeeCharged() > 0) {
             $includeVisitFee = TRUE;
         }
 

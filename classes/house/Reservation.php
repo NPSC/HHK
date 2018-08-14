@@ -262,7 +262,7 @@ class Reservation {
         $reg = new Registration($dbh, $this->reserveData->getIdPsg());
 
 
-        if ($resv->isActive()) {
+        if ($resv->isNew() === FALSE && $resv->isActive()) {
 
             // Allow reservations to have many guests.
             $numGuests = count($this->getStayingMembers());
@@ -303,7 +303,7 @@ class Reservation {
 
         }
 
-        if ($resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
+        if ($resv->isNew() || $resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
 
             $dataArray['rstat'] = '';
 
