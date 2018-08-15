@@ -458,8 +458,10 @@ function saveStatusEvent(idResc, type) {
                 alert("Server error - " + data.error);
             }
             if (data.reload && data.reload == 1) {
+                $('#calendar').fullCalendar('refetchResources');
                 $('#calendar').fullCalendar('refetchEvents');
             }
+            
             if (data.msg && data.msg != '') {
                 flagAlertMessage(data.msg, false);
             }
@@ -756,10 +758,12 @@ $(document).ready(function () {
     }
     
     $('#selRoomGroupScheme').val(resourceGroupBy);
+
+    var winHieght = window.innerHeight;
     
     $('#calendar').fullCalendar({
-
-        aspectRatio: 2.2,
+        height: winHieght - 170,
+        //aspectRatio: 2.2,
         themeSystem: 'jquery-ui',
         allDay: true,
         firstDay: 0,
@@ -771,6 +775,8 @@ $(document).ready(function () {
             refresh: {
               text: 'Refresh',
               click: function() {
+                calStartDate = $('calendar').fullCalendar('getDate');
+                defaultView =  $('calendar').fullCalendar('getView').name;
                 $('#calendar').fullCalendar( 'refetchResources' );
                 $('#calendar').fullCalendar( 'refetchEvents' );
               }
@@ -833,7 +839,7 @@ $(document).ready(function () {
         resourcesInitiallyExpanded: expandResources,
         resourceLabelText: 'Rooms',
         resourceAreaWidth: '8%',
-        refetchResourcesOnNavigate: true,
+        refetchResourcesOnNavigate: false,
         resourceGroupField: resourceGroupBy,
         loading: function (isLoading, View) {
 
@@ -846,11 +852,23 @@ $(document).ready(function () {
             }
         },
 
-        resources: {
-            url: 'ws_calendar.php?cmd=resclist',
-            error: function(jqXHR, textStatus, errorThrown) {
-                $('#pCalError').text('Error getting resources: ' + errorThrown).show();
-            }
+        resources: function (callback) {
+            
+            $.ajax({
+                url: 'ws_calendar.php',
+                dataType: 'JSON',
+                data: {
+                    cmd: 'resclist',
+                    start: calStartDate.format('YYYY-MM-DD'),
+                    view: defaultView
+                },
+                success: function (data) {
+                    callback(data);
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    $('#pCalError').text('Error getting resources: ' + errorThrown).show();
+                }
+            });
         },
 
         resourceGroupText: function (txt) {
@@ -1021,7 +1039,7 @@ $(document).ready(function () {
             } else {
                 element.hide();
             }
-        },
+        }
     });
 
     // disappear the pop-up room chooser.

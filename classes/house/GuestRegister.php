@@ -13,12 +13,12 @@ class GuestRegister {
 
     protected $noAssocId;
 
-    public static function getCalendarRescs(\PDO $dbh, $startDate, $endDate, $timezone) {
+    public static function getCalendarRescs(\PDO $dbh, $startDate, $endDate, $timezone, $view) {
 
         $uS = Session::getInstance();
         $rescs = array();
 
-        if ($startDate == '' || $endDate == '') {
+        if ($startDate == '') {
             return array();
         }
 
@@ -27,7 +27,32 @@ class GuestRegister {
         }
 
         $beginDT = self::parseDateTime($startDate, new DateTimeZone($timezone));
-        $endDT = self::parseDateTime($endDate, new DateTimeZone($timezone));
+
+        if ($endDate != '') {
+            $endDT = self::parseDateTime($endDate, new DateTimeZone($timezone));
+        } else if ($view != '') {
+
+            $endDT = self::parseDateTime($startDate, new DateTimeZone($timezone));
+
+            switch ($view) {
+                case 'timeline1weeks':
+                    $endDT->add(new DateInterval('P1W'));
+                    break;
+
+                case 'timeline2weeks':
+                    $endDT->add(new DateInterval('P2W'));
+                    break;
+
+                case 'timeline3weeks':
+                    $endDT->add(new DateInterval('P3W'));
+                    break;
+
+                case 'timeline4weeks':
+                    $endDT->add(new DateInterval('P26W'));
+                    break;
+
+            }
+        }
 
 
         // Get list of resources
