@@ -1188,7 +1188,6 @@ CREATE TABLE if not exists `neon_type_map` (
 CREATE TABLE IF NOT EXISTS `note` (
   `idNote` INT NOT NULL AUTO_INCREMENT,
   `User_Name` VARCHAR(45) NOT NULL,
-  `Note_Category` VARCHAR(15) NULL,
   `Note_Type` VARCHAR(15) NULL,
   `Title` VARCHAR(145) NULL,
   `Note_Text` TEXT NULL,
@@ -1204,18 +1203,18 @@ CREATE TABLE IF NOT EXISTS `note` (
 -- -----------------------------------------------------
 -- Table `note_comment`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `note_comment` (
-  `idNote_omment` INT NOT NULL AUTO_INCREMENT,
-  `Note_Id` INT NULL,
-  `Comment` TEXT NULL,
-  `User_Name` VARCHAR(45) NOT NULL,
-  `Updated_By` VARCHAR(45) NULL,
-  `Last_Updated` DATETIME NULL,
-  `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`idNote_omment`),
-  INDEX `INDEX_NOTE_ID` (`Note_Id` ASC),
-  INDEX `INDEX_USERNAME` (`User_Name` ASC)
-) ENGINE = InnoDB;
+-- CREATE TABLE IF NOT EXISTS `note_comment` (
+--   `idNote_omment` INT NOT NULL AUTO_INCREMENT,
+--   `Note_Id` INT NULL,
+--   `Comment` TEXT NULL,
+--   `User_Name` VARCHAR(45) NOT NULL,
+--   `Updated_By` VARCHAR(45) NULL,
+--   `Last_Updated` DATETIME NULL,
+--   `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--   PRIMARY KEY (`idNote_omment`),
+--   INDEX `INDEX_NOTE_ID` (`Note_Id` ASC),
+--   INDEX `INDEX_USERNAME` (`User_Name` ASC)
+-- ) ENGINE = InnoDB
 
 
 -- -----------------------------------------------------
@@ -1225,6 +1224,16 @@ CREATE TABLE IF NOT EXISTS `note_group` (
   `Note_Id` INT NOT NULL,
   `Group_Id` VARCHAR(5) NOT NULL,
   PRIMARY KEY (`Note_Id`, `Group_Id`)
+) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `note_category`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `note_category` (
+  `Note_Id` INT NOT NULL,
+  `Category_Code` VARCHAR(5) NOT NULL,
+  PRIMARY KEY (`Note_Id`, `Category_Code`)
 ) ENGINE = InnoDB;
 
 

@@ -66,3 +66,4 @@ define('MULTISELECT_JS', '../js/jquery.multiselect.min.js');
 define('DR_PICKER_JS', '../js/daterangepicker.hhk.min.js');
 define('FULLC_JS', '../js/fullcalendarold.min.js');
 define('RTE_JS', '../js/rich-text-editor.js');
+define('NOTES_VIEWER_JS', '../js/notesViewer.js');

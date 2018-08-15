@@ -201,20 +201,6 @@ class NoteCategory {
     const Patient = 'ncp';
 }
 
-class NoteLink {
-    const Reservation = 'reservation';
-}
-
-
-class NoteType {
-    const Text = 'text';
-}
-
-class NoteStatus {
-    const Active = 'a';
-    const Deleted = 'd';
-}
-
 class PayType {
     const Cash = 'ca';
     const Charge = 'cc';

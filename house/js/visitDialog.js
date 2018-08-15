@@ -128,6 +128,20 @@ function getMember(item, idVisit, visitSpan) {
     }
 }
 
+function setupVisitNotes(vid, $container) {
+
+    $container.notesViewer({
+        linkId: vid,
+        linkType: 'visit',
+        newNoteAttrs: {id:'taNewVNote', name:'taNewVNote'},
+        alertMessage: function(text, isError) {
+            flagAlertMessage(text, isError);
+        }
+    });
+
+    return $container;
+}
+
 var isCheckedOut = false;
 /**
  * 
@@ -481,6 +495,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 });
             }
 
+            // Add guest Button
             $('#guestAdd').click(function () {
                 $('.hhk-addGuest').toggle();
             });
@@ -507,6 +522,9 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 $('#selRateCategory').change();
             }
 
+            // Notes
+            setupVisitNotes(idVisit, $diagbox.find('#visitNoteViewer'));
+            
             $diagbox.dialog('option', 'buttons', buttons);
             $diagbox.dialog('option', 'title', title);
             $diagbox.dialog('option', 'width', ($( window ).width() * .8));

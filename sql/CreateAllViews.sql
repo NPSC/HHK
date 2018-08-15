@@ -1777,9 +1777,59 @@ order by n.Name_Last_First;
 -- View `vresv_notes`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vresv_notes` AS
-select n.idNote as `Note_Id`, n.idNote as `Action`, n.User_Name, n.Note_Text, rn.Reservation_Id, n.`Timestamp`
-    from note n join reservation_note rn on n.idNote = rn.Note_Id
-Where rn.Reservation_Id > 0 && n.Status = 'a';
+    SELECT 
+        n.idNote AS `Note_Id`,
+        n.idNote AS `Action`,
+        n.User_Name,
+        n.Note_Text,
+        rn.Reservation_Id,
+        n.`Timestamp`
+    FROM
+        note n
+            JOIN
+        reservation_note rn ON n.idNote = rn.Note_Id
+    WHERE
+        rn.Reservation_Id > 0 && n.Status = 'a';
+
+
+-- -----------------------------------------------------
+-- View `vvisit_notes`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vvisit_notes` AS
+    SELECT 
+        n.idNote AS `Note_Id`,
+        n.idNote AS `Action`,
+        n.User_Name,
+        n.Note_Text,
+        v.idVisit,
+        n.`Timestamp`
+    FROM
+        note n
+            JOIN
+        reservation_note rn ON n.idNote = rn.Note_Id
+            join
+        visit v on v.idReservation = rn.Reservation_Id
+    WHERE
+        rn.Reservation_Id > 0 && n.`Status` = 'a';
+
+
+-- -----------------------------------------------------
+-- View `vpsg_notes`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vpsg_notes` AS
+    SELECT 
+        n.idNote AS `Note_Id`,
+        n.idNote AS `Action`,
+        n.User_Name,
+        n.Note_Text,
+        pn.Psg_Id,
+        n.`Timestamp`
+    FROM
+        note n
+            JOIN
+        psg_note pn ON n.idNote = pn.Note_Id
+    WHERE
+        pn.Psg_Id > 0 && n.`Status` = 'a';
 
 
 

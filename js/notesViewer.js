@@ -231,7 +231,7 @@
                     data: {
                         'cmd': 'getNoteList',
                         'linkType': settings.linkType,
-                        'rid': settings.linkId
+                        'linkId': settings.linkId
                     },
 	        }
             });

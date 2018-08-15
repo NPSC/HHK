@@ -30,14 +30,19 @@ class VisitView {
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
 
-        // Notes
-        $trNotes = HTMLTable::makeTd('Notes: ', array('class' => 'tdlabel'));
 
-        if ($uS->ConcatVisitNotes) {
-            $trNotes .= HTMLTable::makeTd(Notes::markupShell($r['Notes'], 'tavisitnotes'), array('colspan' => '8', 'style'=>'min-width:500px;'));
-        } else {
-            $trNotes .= HTMLTable::makeTd(Notes::markupShell($r['Visit_Notes'], 'tavisitnotes'), array('colspan' => '8', 'style'=>'min-width:500px;'));
-        }
+        // Notes
+        $notesContainer = HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', 'Notes', array('style'=>'font-weight:bold;'))
+                , array('id'=>'visitNoteViewer', 'style'=>'clear:left; float:left; width:90%;', 'class'=>'hhk-panel'));
+
+//        $trNotes = HTMLTable::makeTd('Notes: ', array('class' => 'tdlabel'));
+
+//        if ($uS->ConcatVisitNotes) {
+//            $trNotes .= HTMLTable::makeTd(Notes::markupShell($r['Notes'], 'tavisitnotes'), array('colspan' => '8', 'style'=>'min-width:500px;'));
+//        } else {
+//            $trNotes .= HTMLTable::makeTd(Notes::markupShell($r['Visit_Notes'], 'tavisitnotes'), array('colspan' => '8', 'style'=>'min-width:500px;'));
+//        }
 
 
         // Key Deposit
@@ -191,10 +196,6 @@ class VisitView {
             $tblMarkup .= $rateTbl->generateMarkup(array('style'=>'clear:left;margin-bottom:.3em; margin-top:.3em;'));
         }
 
-        // Notes
-        $notesTbl = new HTMLTable();
-        $notesTbl->addBodyTr($trNotes);
-        $tblMarkup .= $notesTbl->generateMarkup(array('id' => 'tblActiveNotes', 'style'=>'clear:left;float:left;'));
 
         // Weekender button
         if ($r['Status'] == VisitStatus::CheckedIn && $extendVisitDays > 0 && $action != 'ref') {
@@ -249,10 +250,16 @@ class VisitView {
                     , array('style'=>'float:left;margin-left:.3em;'));
         }
 
-
-
-
+        //Add Guest Button
         $tblMarkup .= $addGuestButton . HTMLContainer::generateMarkup('div','', array('style'=>'clear:both;'));
+
+        // Notes
+//        $notesTbl = new HTMLTable();
+//        $notesTbl->addBodyTr($trNotes);
+        $tblMarkup .= $notesContainer; //$notesTbl->generateMarkup(array('id' => 'tblActiveNotes', 'style'=>'clear:left;float:left;'));
+
+
+
 
 
         $undoCkoutButton = '';

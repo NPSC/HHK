@@ -31,6 +31,7 @@ require (CLASSES . 'CreateMarkupFromDB.php');
 
 //require (CLASSES . 'Notes.php');
 require (CLASSES . 'Note.php');
+require (CLASSES . 'ListNotes.php');
 require (CLASSES . 'US_Holidays.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'FinAssistance.php');
@@ -93,7 +94,6 @@ require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Vehicle.php');
 require (HOUSE . 'Visit.php');
 require (HOUSE . 'Family.php');
-require (HOUSE . 'ResvNote.php');
 require (HOUSE . "visitViewer.php");
 
 require (HOUSE . 'Register.php');
@@ -149,20 +149,20 @@ try {
 
     case 'getNoteList':
 
-        $rid = filter_input(INPUT_GET, 'rid', FILTER_SANITIZE_NUMBER_INT);
+        $linkType = '';
+        $idLink = 0;
+
+        if (isset($_GET['linkType'])) {
+            $linkType = filter_input(INPUT_GET, 'linkType', FILTER_SANITIZE_STRING);
+        }
+
+        if (isset($_GET['linkId'])) {
+            $idLink = intval(filter_input(INPUT_GET, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
 
         require(CLASSES . 'DataTableServer.php');
 
-        $columns = array(
-
-            array( 'db' => 'Timestamp',  'dt' => 'Date' ),
-            array( 'db' => 'User_Name',   'dt' => 'User' ),
-            array( 'db' => 'Note_Text', 'dt' => 'Note'),
-            array( 'db' => 'Note_Id', 'dt' => 'NoteId'),
-            array( 'db' => 'Action', 'dt' => 'Action')
-        );
-
-        $events = SSP::complex ( $_GET, $dbh, "vresv_notes", 'Note_Id', $columns, null, "Reservation_Id=$rid" );
+        $events = ListNotes::loadList($dbh, $idLink, $linkType, $_GET);
 
         break;
 
@@ -208,7 +208,7 @@ try {
         if ($noteId > 0 && $data != '') {
 
             $note = new Note($noteId);
-            $updateCount = $note->updateNote($dbh, $uS->username, $data);
+            $updateCount = $note->updateContents($dbh, $data, $uS->username);
         }
 
         $events = array('update'=>$updateCount, 'idNote'=>$noteId);

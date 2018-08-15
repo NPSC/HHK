@@ -16,16 +16,25 @@
 
 class Note {
 
-    const Reservation = 'reservation';
-    const Visit = 'visit';
-    const House = 'house';
-    const PSG = 'psg';
-    const Room = 'room';
-    const Member = 'member';
+    // Link Type
+    const ResvLink = 'reservation';
+    const VisitLink = 'visit';
+    const HouseLink = 'house';
+    const PsgLink = 'psg';
+    const RoomLink = 'room';
+    const MemberLink = 'member';
 
+    // Note Type
+    const TextType = 'text';
+
+    // Note Ststus
+    const ActiveStatus = 'a';
+    const DeletedStatus = 'd';
+
+
+    // Note record field vars
     protected $idNote = 0;
     protected $text = '';
-    protected $category = '';
     protected $title = '';
     protected $type = '';
     protected $userName = '';
@@ -54,7 +63,10 @@ class Note {
      */
     protected function loadNote(\PDO $dbh) {
 
+        $response = TRUE;
+
         if ($this->idNote > 0) {
+
             $noteRS = new NoteRs();
             $noteRS->idNote->setStoredVal($this->idNote);
             $rows = EditRS::select($dbh, $noteRS, array($noteRS->idNote));
@@ -62,7 +74,6 @@ class Note {
             if (count($rows) == 1) {
                 EditRS::loadRow($rows[0], $noteRS);
 
-                $this->setCategory($noteRS->Note_Category->getStoredVal());
                 $this->createdOn = $noteRS->Timestamp->getStoredVal();
                 $this->setStatus($noteRS->Status->getStoredVal());
                 $this->setText($noteRS->Note_Text->getStoredVal());
@@ -74,34 +85,33 @@ class Note {
 
                 $this->noteRS = $noteRS;
 
-                return TRUE;
+            } else {
+                $response =  FALSE;
             }
         }
 
-        return FALSE;
+        return $response;
     }
 
     /**
      *
      * @param string $userName
      * @param string $noteText
-     * @param string $category
      * @param string $noteType
      * @param string $noteTitle
      */
-    public static function createNote($userName, $noteText, $category = '', $noteType = NoteType::Text, $noteTitle = '' ) {
+    public static function createNew($noteText, $userName, $noteType = NoteType::Text, $noteTitle = '', $noteStatus = Note::ActiveStatus ) {
 
         if ($noteText != '' && $userName != '') {
 
             $note = new Note();
 
             $note->setText($noteText);
-            $note->setCategory($category);
             $note->setType($noteType);
             $note->setTitle($noteTitle);
             $note->setUserName($userName);
-
-            $note->setStatus(NoteStatus::Active);
+            $note->setStatus($noteStatus);
+            $note->idNote = 0;
 
         } else {
             throw new Hk_Exception_Runtime('Trying to create an invalid note.  ');
@@ -110,29 +120,28 @@ class Note {
         return $note;
     }
 
-    public function save(\PDO $dbh) {
+    public function saveNew(\PDO $dbh) {
 
-        if ($this->isValid()) {
-
-            $noteRS = new NoteRs();
-            $noteRS->User_Name->setNewVal($this->getUserName());
-            $noteRS->Note_Text->setNewVal($this->getNoteText());
-            $noteRS->Note_Category->setNewVal($this->getNoteCategory());
-            $noteRS->Note_Type->setNewVal($this->getNoteType());
-            $noteRS->Title->setNewVal($this->getNoteTitle());
-            $noteRS->Status->setNewVal($this->getStatus());
-            $noteRS->Last_Updated->setNewVal($this->getLastUpdated());
-            $noteRS->Updated_By->setNewVal($this->getUpdatedBy());
-
-            $this->idNote = EditRS::insert($dbh, $noteRS);
-            $noteRS->idNote->setNewVal($this->idNote);
-            EditRS::updateStoredVals($noteRS);
-
-            $this->noteRS = $noteRS;
-
-        } else {
-            throw new Hk_Exception_Runtime('Trying to save an invalid note.  ');
+        if ($this->isValid() === FALSE) {
+            return FALSE;
         }
+
+        // Insert
+        $noteRS = new NoteRs();
+        $noteRS->User_Name->setNewVal($this->getUserName());
+        $noteRS->Note_Text->setNewVal($this->getNoteText());
+        $noteRS->Note_Type->setNewVal($this->getNoteType());
+        $noteRS->Title->setNewVal($this->getNoteTitle());
+        $noteRS->Status->setNewVal($this->getStatus());
+        $noteRS->Last_Updated->setNewVal($this->getLastUpdated());
+        $noteRS->Updated_By->setNewVal($this->getUpdatedBy());
+
+        $this->idNote = EditRS::insert($dbh, $noteRS);
+        $noteRS->idNote->setNewVal($this->idNote);
+        EditRS::updateStoredVals($noteRS);
+
+        $this->noteRS = $noteRS;
+
     }
 
     /**
@@ -140,18 +149,13 @@ class Note {
      * @param \PDO $dbh
      * @param string $updatedBy
      * @param string $noteText
-     * @param string $category
      * @return int the number of records updated.
      */
-    public function updateNote(\PDO $dbh, $updatedBy, $noteText, $category = '') {
+    public function updateContents(\PDO $dbh, $noteText, $updatedBy) {
 
         $counter = 0;
 
-        if ($this->loadNote($dbh)) {
-
-            if ($category != '') {
-                $this->noteRS->Note_Category->setNewVal($category);
-            }
+        if ($this->getIdNote() > 0 && $this->loadNote($dbh)) {
 
             $this->noteRS->Note_Text->setNewVal($noteText);
             $this->noteRS->Status->setNewVal(NoteStatus::Active);
@@ -175,7 +179,7 @@ class Note {
 
         $counter = 0;
 
-        if ($this->loadNote($dbh)) {
+        if ($this->getIdNote() > 0 && $this->loadNote($dbh)) {
 
             $this->noteRS->Status->setNewVal(NoteStatus::Deleted);
             $this->noteRS->Updated_By->setNewVal($username);
@@ -189,25 +193,6 @@ class Note {
         return $counter;
     }
 
-    public function linkNote(\PDO $dbh, $idNote, $linkType, $linkId, $userName) {
-
-        return 0;
-
-        if ($linkId > 0 && $note->getIdNote() > 0) {
-
-            $stmt = $dbh->query("Select count(*) from reservation_note where Note_Id = " . $note->getIdNote() . " and Reservation_Id = " . $rid);
-            $rows = $stmt->fetchAll();
-
-            if (count($rows) > 0 && $rows[0][0] == 0) {
-
-                // add record
-                $dbh->exec("insert into reservation_note (Reservation_Id, Note_Id) values ('$rid', '" . $note->getIdNote() . "');");
-
-            }
-        }
-
-    }
-
     protected function isValid() {
 
         return TRUE;
@@ -219,10 +204,6 @@ class Note {
 
     public function getNoteText() {
         return $this->text;
-    }
-
-    public function getNoteCategory() {
-        return $this->category;
     }
 
     public function getNoteType() {
@@ -255,11 +236,6 @@ class Note {
 
     public function setText($text) {
         $this->text = $text;
-    }
-
-    public function setCategory($category) {
-        $this->category = $category;
-        return $this;
     }
 
     public function setTitle($title) {
