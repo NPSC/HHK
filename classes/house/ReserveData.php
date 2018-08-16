@@ -519,7 +519,7 @@ class PSGMemStay {
             'for'=>$prefix . 'cbStay',
             'id' => $prefix . 'lblStay',
             'data-stay' => $this->getStay(),
-            'class' => 'hhk-lblStay',
+            'class' => 'hhk-lblStay hhk-stayIndicate',
         );
 
 
@@ -612,9 +612,9 @@ class PSGMemVisit extends PSGMemStay {
     public function createStayButton($prefix) {
 
         if (isset($this->index['idVisit']) && isset($this->index['Visit_Span'])) {
-            return HTMLInput::generateMarkup('In Visit', array('type'=>'button', 'class'=>'hhk-getVDialog', 'data-vid'=>$this->index['idVisit'], 'data-span'=>$this->index['Visit_Span']));
+            return HTMLInput::generateMarkup('In Visit', array('type'=>'button', 'class'=>'hhk-getVDialog hhk-stayIndicate', 'data-vid'=>$this->index['idVisit'], 'data-span'=>$this->index['Visit_Span']));
         } else {
-            return HTMLContainer::generateMarkup('span', 'In Visit', array());
+            return HTMLContainer::generateMarkup('span', 'In Visit', array('class'=>'hhk-stayIndicate'));
         }
     }
 
@@ -626,9 +626,9 @@ class PSGMemResv extends PSGMemVisit {
 
         if (isset($this->index['idReservation']) && isset($this->index['idPsg'])) {
             return HTMLContainer::generateMarkup('a', (isset($this->index['label']) ? $this->index['label'] : 'Reservation')
-                , array('href'=>'Reserve.php?idPsg=' . $this->index['idPsg'] . '&rid=' . $this->index['idReservation'] . '&id=' . $this->index['idGuest']));
+                , array('href'=>'Reserve.php?idPsg=' . $this->index['idPsg'] . '&rid=' . $this->index['idReservation'] . '&id=' . $this->index['idGuest'], 'class'=>'hhk-stayIndicate'));
         } else {
-            return HTMLContainer::generateMarkup('span', $this->index['label'], array());
+            return HTMLContainer::generateMarkup('span', $this->index['label'], array('class'=>'hhk-stayIndicate'));
         }
     }
 }

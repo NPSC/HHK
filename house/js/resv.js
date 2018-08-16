@@ -279,10 +279,7 @@ function updateRoomChooser(idReserv, numGuests, arrivalDate, departureDate) {
     $selResource.prop('disabled', true);
     $('#hhk-roomChsrtitle').addClass('hhk-loading');
     $('#hhkroomMsg').text('').hide();
-    
-    // loading symbol
-    //var loadg = $('<div id="divLoadg">').append()
-    
+        
     $('input.hhk-constraintsCB:checked').each(function () {
         var nod = $(this).data('cnid');
         cbRS[nod] = 'ON';

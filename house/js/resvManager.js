@@ -256,38 +256,93 @@ function resvManager(initData) {
             return false;
         }
         
-        function copyAddress(prefix) {
-
+        function copyAddrSelector($button, prefix) {
+            
+            var $sel = $('<select id="selAddrch" multiple="multiple"/>');
+            var options = 0;
+            var optTexts = [];
+            
             for (var p in addrs.list()) {
                 
-                if (p !== cpyAddr) {
+                if (addrs.list()[p].Address_1 != '' || addrs.list()[p].Postal_Code != '') {
                     
-                    cpyAddr = p;
-                    
-                    $('#' + prefix + 'adraddress1' + addrPurpose).val(addrs.list()[p].Address_1);
-                    $('#' + prefix + 'adraddress2' + addrPurpose).val(addrs.list()[p].Address_2);
-                    $('#' + prefix + 'adrcity' + addrPurpose).val(addrs.list()[p].City);
-                    $('#' + prefix + 'adrcounty' + addrPurpose).val(addrs.list()[p].County);
-                    $('#' + prefix + 'adrzip' + addrPurpose).val(addrs.list()[p].Postal_Code);
-                    
-                    if ($('#' + prefix + 'adrcountry' + addrPurpose).val() != addrs.list()[p].Country_Code) {
-                        $('#' + prefix + 'adrcountry' + addrPurpose).val(addrs.list()[p].Country_Code).change();
+                    var notFound = true,
+                        optText = addrs.list()[p].Address_1 + ', ' 
+                            + (addrs.list()[p].Address_2 == '' ? '' : addrs.list()[p].Address_2 + ', ')
+                            + addrs.list()[p].City  + ', '
+                            + addrs.list()[p].State_Province  + '  '
+                            + addrs.list()[p].Postal_Code;
+
+                    for (var i=0; i <= optTexts.length; i++) {
+                        if (optTexts[i] == optText) {
+                            notFound = false;
+                            continue;
+                        }
                     }
                     
-                    $('#' + prefix + 'adrstate' + addrPurpose).val(addrs.list()[p].State_Province);
-                    
+                    if (notFound) {
+                        // Add as option
+                        optTexts[options] = optText;
+                        options++;
 
-                    // Clear the incomplete address checkbox if the address is valid.
-                    if (isAddressComplete(prefix) && $('#' + prefix + 'incomplete').prop('checked') === true) {
-                        $('#' + prefix + 'incomplete').prop('checked', false);
+                        $('<option value="' + p + '">' + optText + '</option>')
+                            .appendTo($sel);
                     }
-
-                    // Update the address flag
-                    setAddrFlag($('#' + prefix + 'liaddrflag'));
-                    
-                    break;
                 }
             }
+
+            if (options > 0) {
+                
+                $sel.prop('size', options + 1).prepend($('<option value="0" >(Cancel)</option>'));
+                
+                $sel.change(function () {
+                    setAddress(prefix, $(this).val());
+                });
+            
+                var $selDiv = $('<div id="divSelAddr" style="position:absolute; vertical-align:top;" class="hhk-addrPicker"/>')
+                        .append($('<p>Choose an Address: </p>'))
+                    .append($sel)
+                    .appendTo($('body'));
+            
+                $selDiv.position({
+                    my: 'left top',
+                    at: 'right center',
+                    of: $button
+                });
+            }
+
+        }
+
+        function setAddress(prefix, p) {
+            
+            
+            if (p == 0) {
+                $('#divSelAddr').remove();
+                return;
+            }
+
+            $('#' + prefix + 'adraddress1' + addrPurpose).val(addrs.list()[p].Address_1);
+            $('#' + prefix + 'adraddress2' + addrPurpose).val(addrs.list()[p].Address_2);
+            $('#' + prefix + 'adrcity' + addrPurpose).val(addrs.list()[p].City);
+            $('#' + prefix + 'adrcounty' + addrPurpose).val(addrs.list()[p].County);
+            $('#' + prefix + 'adrzip' + addrPurpose).val(addrs.list()[p].Postal_Code);
+
+            if ($('#' + prefix + 'adrcountry' + addrPurpose).val() != addrs.list()[p].Country_Code) {
+                $('#' + prefix + 'adrcountry' + addrPurpose).val(addrs.list()[p].Country_Code).change();
+            }
+
+            $('#' + prefix + 'adrstate' + addrPurpose).val(addrs.list()[p].State_Province);
+
+
+            // Clear the incomplete address checkbox if the address is valid.
+            if (isAddressComplete(prefix) && $('#' + prefix + 'incomplete').prop('checked') === true) {
+                $('#' + prefix + 'incomplete').prop('checked', false);
+            }
+
+            // Update the address flag
+            setAddrFlag($('#' + prefix + 'liaddrflag'));
+            $('#divSelAddr').remove();
+
         }
 
         function eraseAddress(prefix) {
@@ -517,7 +572,7 @@ function resvManager(initData) {
 
                 // Copy Address
                 $('#' + divFamDetailId).on('click', '.hhk-addrCopy', function() {
-                    copyAddress($(this).data('prefix'));
+                    copyAddrSelector($(this), $(this).data('prefix'));
                 });
 
                 // Delete address
@@ -1016,7 +1071,11 @@ function resvManager(initData) {
             }
         }
 
+        // Update the Staying controls
         if (hasIds) {
+            // Hide controls
+            $('.hhk-stayIndicate').hide().parent('td').addClass('hhk-loading');
+            
             var parms = {
                 cmd:'updateAgenda', 
                 idPsg: idPsg,
@@ -1027,6 +1086,8 @@ function resvManager(initData) {
 
             $.post('ws_resv.php', parms, function(data) {
 
+                $('.hhk-stayIndicate').show().parent('td').removeClass('hhk-loading');
+                
                 try {
                     data = $.parseJSON(data);
                 } catch (err) {
@@ -1064,6 +1125,11 @@ function resvManager(initData) {
                     }
                 }
             });
+        }
+        
+        // Update the room chooser.
+        if ($('#gstDate').val() != '' && $('#gstCoDate').val() != '') {
+            updateRoomChooser(idResv, '1', $('#gstDate').val(), $('#gstCoDate').val());
         }
     }
 

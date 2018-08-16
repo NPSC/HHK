@@ -116,6 +116,12 @@ table.hhk-badAddress {
 .hhk-hideMe {
     display:none;
 }
+.hhk-addrPicker {
+    border: solid 1px #333;
+    padding: 7px;
+    background-color: lightgoldenrodyellow;
+    opacity: 80%;
+}
 .spnHosp {
     padding: 0 .4em;
     border:solid 1px black;
