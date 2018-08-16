@@ -186,29 +186,33 @@ class HouseServices {
 
 
         // Notes
-        if (isset($post["tavisitnotes"])) {
+        if (isset($post["taNewVNote"])) {
 
-            $notes = filter_var($post["tavisitnotes"], FILTER_SANITIZE_STRING);
+            $notes = filter_var($post["taNewVNote"], FILTER_SANITIZE_STRING);
 
-            if ($notes != '' && $visit->getIdRegistration() > 0) {
+            if ($notes != '' && $visit->getIdReservation() > 0) {
 
                 $roomTitle = $visit->getRoomTitle($dbh);
-                $visit->setNotes($notes, $uS->username, $roomTitle);
-                $visit->updateVisitRecord($dbh, $uS->username);
 
-                //Add notes to psg Notes
-                $stmt = $dbh->query("Select p.* from registration rg join psg p on rg.idPsg = p.idPsg where rg.idRegistration = " . $visit->getIdRegistration());
-                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                $notes = 'Visit ' . $this->getIdVisit() . '-' . $this->getSpan() . ', Room ' . $roomTitle . ' - ' . $notes;
+                LinkNote::save($dbh, $notes, $visit->getIdReservation(), Note::ResvLink, $uS->username);
 
-                if (count($rows) > 0) {
-
-                    $psgRs = new PSG_RS();
-                    EditRS::loadRow($rows[0], $psgRs);
-
-                    $oldNotes = is_null($psgRs->Notes->getStoredVal()) ? '' : $psgRs->Notes->getStoredVal();
-                    $psgRs->Notes->setNewVal($oldNotes . "\r\n" . date('m-d-Y') . ', visit ' . $idVisit . '-' . $visit->getSpan() . ', room ' . $roomTitle . ', ' . $uS->username . ' - ' . $notes);
-                    EditRS::update($dbh, $psgRs, array($psgRs->idPsg));
-                }
+//                $visit->setNotes($notes, $uS->username, $roomTitle);
+//                $visit->updateVisitRecord($dbh, $uS->username);
+//
+//                //Add notes to psg Notes
+//                $stmt = $dbh->query("Select p.* from registration rg join psg p on rg.idPsg = p.idPsg where rg.idRegistration = " . $visit->getIdRegistration());
+//                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+//
+//                if (count($rows) > 0) {
+//
+//                    $psgRs = new PSG_RS();
+//                    EditRS::loadRow($rows[0], $psgRs);
+//
+//                    $oldNotes = is_null($psgRs->Notes->getStoredVal()) ? '' : $psgRs->Notes->getStoredVal();
+//                    $psgRs->Notes->setNewVal($oldNotes . "\r\n" . date('m-d-Y') . ', visit ' . $idVisit . '-' . $visit->getSpan() . ', room ' . $roomTitle . ', ' . $uS->username . ' - ' . $notes);
+//                    EditRS::update($dbh, $psgRs, array($psgRs->idPsg));
+//                }
             }
         }
 
@@ -400,9 +404,9 @@ class HouseServices {
 
                     // Get any last note for the checkout email
                     $notes = '';
-                    if (isset($post["tavisitnotes"])) {
-                        $notes = filter_var($post["tavisitnotes"], FILTER_SANITIZE_STRING);
-                    }
+//                    if (isset($post["tavisitnotes"])) {
+//                        $notes = filter_var($post["tavisitnotes"], FILTER_SANITIZE_STRING);
+//                    }
 
                     // See whose checking out
                     foreach ($post['stayActionCb'] as $idr => $v) {
@@ -427,7 +431,7 @@ class HouseServices {
                         $returnCkdIn = TRUE;
 
                         // Only need Notes once.
-                        $notes = '';
+//                        $notes = '';
                     }
                 }
             }

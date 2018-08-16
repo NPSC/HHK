@@ -100,7 +100,7 @@ class Note {
      * @param string $noteType
      * @param string $noteTitle
      */
-    public static function createNew($noteText, $userName, $noteType = NoteType::Text, $noteTitle = '', $noteStatus = Note::ActiveStatus ) {
+    public static function createNew($noteText, $userName, $noteType = self::TextType, $noteTitle = '', $noteStatus = Note::ActiveStatus ) {
 
         if ($noteText != '' && $userName != '') {
 
@@ -147,8 +147,8 @@ class Note {
     /**
      *
      * @param \PDO $dbh
-     * @param string $updatedBy
      * @param string $noteText
+     * @param string $updatedBy
      * @return int the number of records updated.
      */
     public function updateContents(\PDO $dbh, $noteText, $updatedBy) {
@@ -158,7 +158,7 @@ class Note {
         if ($this->getIdNote() > 0 && $this->loadNote($dbh)) {
 
             $this->noteRS->Note_Text->setNewVal($noteText);
-            $this->noteRS->Status->setNewVal(NoteStatus::Active);
+            $this->noteRS->Status->setNewVal(self::ActiveStatus);
             $this->noteRS->Updated_By->setNewVal($updatedBy);
             $this->noteRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
@@ -181,7 +181,7 @@ class Note {
 
         if ($this->getIdNote() > 0 && $this->loadNote($dbh)) {
 
-            $this->noteRS->Status->setNewVal(NoteStatus::Deleted);
+            $this->noteRS->Status->setNewVal(self::DeletedStatus);
             $this->noteRS->Updated_By->setNewVal($username);
             $this->noteRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 

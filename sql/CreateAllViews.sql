@@ -1808,7 +1808,7 @@ CREATE OR REPLACE VIEW `vvisit_notes` AS
             JOIN
         reservation_note rn ON n.idNote = rn.Note_Id
             join
-        visit v on v.idReservation = rn.Reservation_Id
+        visit v on v.idReservation = rn.Reservation_Id and v.Span = 0
     WHERE
         rn.Reservation_Id > 0 && n.`Status` = 'a';
 

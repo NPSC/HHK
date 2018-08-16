@@ -13,64 +13,66 @@
  *
  * @author Eric
  */
-class LinkNote extends Note {
-
-    protected $idLink;
-    protected $linkType;
+class LinkNote {
 
     public static function save(\PDO $dbh, $noteText, $linkId, $linkType, $userName) {
 
-        // Create a new note.
-        $note = Note::createNote($userName, $noteText);
-        $note->save($dbh);
-
-
-        if ($linkType == '') {
+        if ($linkType == '' || $linkId < 1) {
             return array('error'=>'The Link Type is missing.');
         }
 
-        switch ($linkType) {
+        // Create a new note.
+        $note = Note::createNew($noteText, $userName);
+        $note->saveNew($dbh);
 
-            case Note::ResvLink:
+        if ($note->getIdNote() > 0) {
 
-                $dbView = 'vresv_notes';
-                $whereField = 'Reservation_Id';
-                break;
+            $table = '';
+            $field = '';
 
-            case Note::VisitLink:
+            switch ($linkType) {
 
-                $dbView = 'vvisit_notes';
-                $whereField = 'idVisit';
-                break;
+                case Note::ResvLink:
 
-            case Note::PsgLink:
+                    $table = 'reservation_note';
+                    $field = 'Reservation_Id';
+                    break;
 
-                $dbView = 'vpsg_notes';
-                $whereField = 'Psg_Id';
-                break;
+                case Note::VisitLink:
 
-            case Note::MemberLink:
+                    // We actually need the reservation ID
+                    $stmt = $dbh->query("select `idReservation` from `visit` where `Span` = 0 and `idVisit` = " . $linkId);
+                    $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
-                //break;
+                    if (count($rows) > 0) {
+                        $linkId = $rows[0][0];
+                        $table = 'reservation_note';
+                        $field = 'Reservation_Id';
+                    }
 
-            case Note::RoomLink:
+                    break;
 
-                //break;
+                case Note::PsgLink:
 
-            default:
-                return array('error'=>'The Link Type is not found: ' . $linkType);
-        }
+                    $table = 'psg_note';
+                    $field = 'Psg_Id';
+                    break;
 
-        if ($rid > 0 && $note->getIdNote() > 0) {
+                case Note::MemberLink:
 
-            $stmt = $dbh->query("Select count(*) from reservation_note where Note_Id = " . $note->getIdNote() . " and Reservation_Id = " . $rid);
-            $rows = $stmt->fetchAll();
+                    //break;
 
-            if (count($rows) > 0 && $rows[0][0] == 0) {
+                case Note::RoomLink:
 
-                // add record
-                $dbh->exec("insert into reservation_note (Reservation_Id, Note_Id) values ('$rid', '" . $note->getIdNote() . "');");
+                    //break;
 
+                default:
+                    return array('error'=>'The Link Type is not found: ' . $linkType);
+            }
+
+            if ($table != '' && $field != '') {
+
+                $dbh->exec("insert into `$table` (`$field`, Note_Id) values ('$linkId', '" . $note->getIdNote() . "');");
             }
         }
 

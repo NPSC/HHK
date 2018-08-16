@@ -24,6 +24,8 @@
                 "targets": [ 0 ],
                         "title": "Actions",
                         'data': "Action",
+                        "sortable": false,
+                        "searchable": false,
                         render: function (data, type, row) {
                             return '<button class="note-edit ui-button ui-corner-all ui-widget" data-noteid="' + data + '">Edit</button>\n\
                                 <button class="note-cancel note-action ui-button " title="Cancel Edit" style="display: none; margin-bottom:2px;">Cancel</button>\n\
@@ -222,7 +224,7 @@
 	        "processing": true,
 	        "deferRender": true,
 	        "language": {"sSearch": "Search Notes:"},
-	        "sorting": [[0,'desc']],
+	        "sorting": [[1,'desc']],
 	        "displayLength": 5,
 	        "lengthMenu": [[5, 10, 25, -1], [5, 10, 25, "All"]],
                 "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',

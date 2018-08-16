@@ -76,6 +76,21 @@ function relationReturn(data) {
     }
 }
 
+function setupPsgNotes(rid, $container) {
+
+    $container.notesViewer({
+        linkId: rid,
+        linkType: 'psg',
+        newNoteAttrs: {id:'psgNewNote', name:'psgNewNote'},
+        alertMessage: function(text, isError) {
+            flagAlertMessage(text, isError);
+        }
+    });
+
+    return $container;
+}
+
+
 function manageRelation(id, rId, relCode, cmd) {
     $.post('ws_admin.php', {'id':id, 'rId':rId, 'rc':relCode, 'cmd':cmd}, relationReturn);
 }
@@ -472,6 +487,9 @@ $(document).ready(function () {
     createAutoComplete($('#txtRelSch'), 3, {cmd: 'srrel', basis: $('#hdnRelCode').val(), id: memData.id}, function (item) {
         $.post('ws_admin.php', {'rId':item.id, 'id':memData.id, 'rc':$('#hdnRelCode').val(), 'cmd':'newRel'}, relationReturn);
     });
+    
+    
+    setupPsgNotes(memData.idPsg, $('#psgNoteViewer'));
 
     
     // Excludes tab "Check-all" button

@@ -219,7 +219,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo DR_PICKER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="../js/notesViewer.js"></script>
+        <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="js/resvManager.js"></script>
 
     </head>

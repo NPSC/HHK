@@ -32,6 +32,7 @@ require (CLASSES . 'CreateMarkupFromDB.php');
 //require (CLASSES . 'Notes.php');
 require (CLASSES . 'Note.php');
 require (CLASSES . 'ListNotes.php');
+require (CLASSES . 'LinkNote.php');
 require (CLASSES . 'US_Holidays.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'FinAssistance.php');
@@ -184,10 +185,7 @@ try {
             $idLink = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        if ($linkType == NoteLink::Reservation) {
-            $answer = ResvNote::save($dbh, $data, $idLink, $uS->username);
-            $events = array('idNote'=>$answer);
-        }
+        $events = array('idNote'=>LinkNote::save($dbh, $data, $idLink, $linkType, $uS->username));
 
         break;
 

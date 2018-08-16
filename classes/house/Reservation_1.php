@@ -1217,17 +1217,17 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $this;
     }
 
-    public function setNotes($notes, $uname) {
-        if ($notes != '') {
-            $oldNotes = (is_null($this->reservRs->Notes->getStoredVal()) ? '' : $this->reservRs->Notes->getStoredVal());
-            $this->reservRs->Notes->setNewVal($oldNotes . "\r\n" . date('m-d-Y') . ', ' . $uname . ' - ' . $notes);
-        }
-    }
+//    public function setNotes($notes, $uname) {
+//        if ($notes != '') {
+//            $oldNotes = (is_null($this->reservRs->Notes->getStoredVal()) ? '' : $this->reservRs->Notes->getStoredVal());
+//            $this->reservRs->Notes->setNewVal($oldNotes . "\r\n" . date('m-d-Y') . ', ' . $uname . ' - ' . $notes);
+//        }
+//    }
 
-    public function saveNote(\PDO $dbh, $notes, $uname) {
+    public function saveNote(\PDO $dbh, $noteText, $uname) {
 
-        if ($notes != '') {
-            return ResvNote::save($dbh, $notes, $this->getIdReservation(), $uname);
+        if ($noteText != '') {
+            return LinkNote::save($dbh, $noteText, $this->getIdReservation(), Note::ResvLink, $uname);
         }
     }
 

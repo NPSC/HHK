@@ -775,8 +775,6 @@ $(document).ready(function () {
             refresh: {
               text: 'Refresh',
               click: function() {
-                calStartDate = $('calendar').fullCalendar('getDate');
-                defaultView =  $('calendar').fullCalendar('getView').name;
                 $('#calendar').fullCalendar( 'refetchResources' );
                 $('#calendar').fullCalendar( 'refetchEvents' );
               }
@@ -827,6 +825,11 @@ $(document).ready(function () {
                 buttonText: '26'
             }
         },
+        
+        viewRender: function (view, element) {
+            defaultView = view.name;
+            calStartDate = $('#calendar').fullCalendar('getDate');
+        },
 
         header: {
             left: 'setup timeline1weeks,timeline2weeks,timeline3weeks,timeline4weeks title',
@@ -853,7 +856,6 @@ $(document).ready(function () {
         },
 
         resources: function (callback) {
-            
             $.ajax({
                 url: 'ws_calendar.php',
                 dataType: 'JSON',
