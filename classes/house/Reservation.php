@@ -108,8 +108,8 @@ class Reservation {
 
                 $psgMembers = $this->reserveData->getPsgMembers();
 
-                self::findConflictingStays($dbh, $psgMembers, $arrivalDT, $this->reserveData->getIdPsg());
                 self::findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $arrivalDT, $departDT, $this->reserveData->getResvTitle());
+                self::findConflictingStays($dbh, $psgMembers, $arrivalDT, $this->reserveData->getIdPsg());
 
                 $this->reserveData->setPsgMembers($psgMembers);
 
@@ -195,8 +195,8 @@ class Reservation {
             }
 
             // Create new stay controls for each member
-            self::findConflictingStays($dbh, $psgMembers, $arrivalDT, $idPsg);
             self::findConflictingReservations($dbh, $idPsg, $idResv, $psgMembers, $arrivalDT, $departDT, $labels->getString('guestEdit', 'reservationTitle', 'Reservation'));
+            self::findConflictingStays($dbh, $psgMembers, $arrivalDT, $idPsg);
 
             $events = [];
 
@@ -522,14 +522,14 @@ where rg.idReservation =" . $r['idReservation']);
 
         if ($whResv != '') {
 
-            $rStatus = " in ('" . ReservationStatus::Committed. "','" . ReservationStatus::UnCommitted. "','". ReservationStatus::Waitlist. "','". ReservationStatus::Staying. "') ";
+            $rStatus = " in ('" . ReservationStatus::Committed. "','" . ReservationStatus::UnCommitted. "','". ReservationStatus::Waitlist. "') ";
 
             $rstmt = $dbh->query("select rg.idReservation, reg.idPsg, rg.idGuest, r.idResource, r.`Status` "
                 . "from reservation_guest rg  "
                 . "join reservation r on r.idReservation = rg.idReservation "
                 . "join registration reg on reg.idRegistration = r.idRegistration "
                 . "where r.`Status` $rStatus and rg.idGuest in (" . substr($whResv, 1) . ") and rg.idReservation != " . $idResv
-                . " and Date(r.Expected_Arrival) < DATE('".$departDT->format('Y-m-d') . "') and Date(dateDefaultNow(r.Expected_Departure)) > DATE('".$arrivalDT->format('Y-m-d') . "')");
+                . " and Date(r.Expected_Arrival) < DATE('".$departDT->format('Y-m-d') . "') and Date(r.Expected_Departure) > DATE('".$arrivalDT->format('Y-m-d') . "')");
 
             while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -538,10 +538,6 @@ where rg.idReservation =" . $r['idReservation']);
                         $psgMembers[$m->getPrefix()]->setStayObj(new PSGMemResv(array('idReservation'=>$r['idReservation'], 'idGuest'=>$r['idGuest'], 'idPsg'=>$r['idPsg'], 'label'=>$resvTitle)));
                     }
                 }
-
-//                if ($r['Status'] != ReservationStatus::Staying && is_null($mem = $this->reserveData->findMemberById($r['idGuest'])) === FALSE) {
-//                    $mem->setStayObj(new PSGMemResv(array('idReservation'=>$r['idReservation'], 'idGuest'=>$r['idGuest'], 'idPsg'=>$r['idPsg'], 'label'=>$resvTitle)));
-//                }
 
                 // Count rooms
                 if ($r['idPsg'] == $idPsg) {

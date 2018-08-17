@@ -288,7 +288,6 @@ $(document).ready(function() {
     // hide the alert on mousedown
     $(document).mousedown(function (event) {
         var target = $(event.target);
-        hideAlertMessage();
 
         if (target[0].id !== 'divSelAddr' && target[0].id !== 'selAddrch') {
             $('#divSelAddr').remove();

@@ -678,6 +678,11 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         }
     }
 
+    // Save Note
+    if ($('#taNewVNote').length > 0 && $('#taNewVNote').val() !== '') {
+        parms['taNewVNote'] = $('#taNewVNote').val();
+    }
+    
     // Fees and Keys
     $('.hhk-feeskeys').each(function() {
         if ($(this).attr('type') === 'checkbox') {
@@ -722,6 +727,11 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
             
             if (typeof refreshdTables !== 'undefined') {
                 refreshdTables(data);
+            }
+            
+            if (typeof pageManager !== 'undefined') {
+                var dates = {'date1': new Date($('#gstDate').val()), 'date2': new Date($('#gstCoDate').val())};
+                pageManager,doOnDatesChange(dates);
             }
 
             paymentReply(data, true);

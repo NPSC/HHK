@@ -45,6 +45,11 @@ class LinkNote {
                     $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                     if (count($rows) > 0) {
+
+                        // Update the visit text
+                        $newText = 'Visit ' . $linkId . '; ' . $note->getNoteText();
+                        $note->updateContents($dbh, $newText, $userName);
+
                         $linkId = $rows[0][0];
                         $table = 'reservation_note';
                         $field = 'Reservation_Id';

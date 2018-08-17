@@ -29,6 +29,8 @@ require CLASSES . 'History.php';
 require (CLASSES . 'CreateMarkupFromDB.php');
 
 require (CLASSES . 'Notes.php');
+require (CLASSES . 'Note.php');
+require (CLASSES . 'LinkNote.php');
 require (CLASSES . 'US_Holidays.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'FinAssistance.php');
