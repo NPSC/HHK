@@ -535,7 +535,7 @@ function resvManager(initData) {
                 // Address Copy down
                 $('#adrCopy').click(function () {
 
-                    var p = $('input.hhk-lastname').first().data('prefix');
+                    var p = $('li.hhk-AddrFlag').first().data('pref');
                     addrCopyDown(p);
 
                 });

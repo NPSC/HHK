@@ -325,11 +325,9 @@ class Family {
     public function createFamilyMarkup(\PDO $dbh, ReserveData $rData) {
 
         $uS = Session::getInstance();
-        //$tbl = new HTMLTable();
         $rowClass = 'odd';
         $mk1 = '';
         $trs = array();
-        $copyGuests = array();
         $familyName = '';
 
         $AdrCopyDownIcon = HTMLContainer::generateMarkup('ul'
@@ -358,10 +356,6 @@ class Family {
             $trs[] = HTMLContainer::generateMarkup('tr',
                     $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), TRUE)
                     , array('class'=>$rowClass));
-
-            if ($role->getRoleMember()->getMemberFullName() != '') {
-                $copyGuests[] = array(0=>$role->getIdName(), 1=>$role->getRoleMember()->getMemberFullName() );
-            }
 
             // Demographics
             if ($uS->ShowDemographics) {
@@ -408,9 +402,6 @@ class Family {
                     . ($role->getIdName() == 0 ? HTMLTable::makeTd($removeIcons) : '')
                     , array('class'=>$rowClass));
 
-//            if ($role->getRoleMember()->getMemberFullName() != '') {
-//                $copyGuests[] = array(0=>$role->getIdName(), 1=>$role->getRoleMember()->getMemberFullName() );
-//            }
 
             // Demographics
             if ($uS->ShowDemographics) {
@@ -429,9 +420,6 @@ class Family {
                 HTMLContainer::generateMarkup('span', 'Add people - Name search: ')
                 .HTMLInput::generateMarkup('', array('id'=>'txtPersonSearch', 'style'=>'margin-right:2em;', 'title'=>'Enter the first three characters of the person\'s last name'))
 
-//                .HTMLContainer::generateMarkup('span', '- Add a copy of a guest: ')
-//                .HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($copyGuests, '', TRUE), array('id'=>'selCopyGuest', 'style'=>'margin-right:.3em;'))
-//                .HTMLInput::generateMarkup('Copy', array('id'=>'btnCopyGuest','type'=>'button'))
                 , array('id'=>'divPersonSearch', 'style'=>'margin-top:10px;'));
 
 

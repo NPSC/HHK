@@ -71,7 +71,7 @@ abstract class RoleMember extends IndivMember {
                 $patTitle = $labels->getString('MemberType', 'patient', 'Patient');
             }
 
-            $tr .= HTMLTable::makeTh('Relationship to ' . $patTitle);
+            $tr .= HTMLTable::makeTh('Relationship to ' . $patTitle, array('style'=>'font-size:.9em;'));
         }
 
         return $tr;
@@ -416,7 +416,7 @@ class PatientMember extends RoleMember {
 
     public function createThinMarkupRow($patientRelationship = '', $hideRelChooser = TRUE, $lockRelChooser = FALSE) {
 
-        return parent::createThinMarkupRow() . HTMLTable::makeTd('');
+        return parent::createThinMarkupRow() . HTMLTable::makeTd('Patient', array('style'=>'text-align:center;'));
 
     }
 
