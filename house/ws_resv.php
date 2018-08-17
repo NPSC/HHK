@@ -230,6 +230,24 @@ try {
         $events = array('delete'=>$deleteCount, 'idNote'=>$noteId);
 
         break;
+        
+    case 'undoDeleteNote':
+
+        $noteId = 0;
+        $deleteCount = 0;
+
+        if (isset($_POST['idNote'])) {
+            $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if ($noteId > 0) {
+            $note = new Note($noteId);
+            $deleteCount = $note->undoDeleteNote($dbh, $uS->userName);
+        }
+
+        $events = array('delete'=>$deleteCount, 'idNote'=>$noteId);
+
+        break;
 
     case 'linkNote':
 

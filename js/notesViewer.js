@@ -30,7 +30,8 @@
                             return '<button class="note-edit ui-button ui-corner-all ui-widget" data-noteid="' + data + '">Edit</button>\n\
                                 <button class="note-cancel note-action ui-button " title="Cancel Edit" style="display: none; margin-bottom:2px;">Cancel</button>\n\
                                 <button class="note-done note-action ui-button ui-corner-all ui-widget" style="display: none; margin-bottom:2px;">Save</button>\n\
-                                <button class="note-delete note-action ui-button ui-corner-all ui-widget" data-noteid="' + data + '" style="display: none;">Delete</button>';
+                                <button class="note-delete note-action ui-button ui-corner-all ui-widget" data-noteid="' + data + '" style="display: none;">Delete</button>\n\
+                                <button class="note-undodelete ui-button ui-corner-all ui-widget" data-noteid="' + data + '" style="display: none;">Undo Delete</button>';
                         }
                 },
                 {
@@ -186,6 +187,7 @@
         //Delete Note
         $wrapper.on('click', '.note-delete', function(e){
             var idnote = $(this).data("noteid");
+            var row = $(this).closest('tr');
             e.preventDefault();
             $.ajax({
                     url: settings.serviceURL,
@@ -193,6 +195,36 @@
                     type: 'post',
                     data: {
                         'cmd': 'deleteNote',
+                        'idNote': idnote
+                    },
+                    success: function( data ){
+                        if(data.idNote > 0){
+                            row.find("td:not(:first)").css("opacity", "0.3");
+                            var noteText = row.find('#editNoteText').val();
+							row.find('.noteText').html(noteText);
+							row.find('.note-action').hide();
+							row.find('.note-undodelete').show();
+                            $("#noteText").val("");
+                            $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
+                        }else{
+                            settings.alertMessage.call(data.error, true);
+                        }
+                    }
+                });
+
+        });
+        //End Delete Note
+        
+        //Undo Delete Note
+        $wrapper.on('click', '.note-undodelete', function(e){
+            var idnote = $(this).data("noteid");
+            e.preventDefault();
+            $.ajax({
+                    url: settings.serviceURL,
+                    dataType: 'JSON',
+                    type: 'post',
+                    data: {
+                        'cmd': 'undoDeleteNote',
                         'idNote': idnote
                     },
                     success: function( data ){
@@ -207,7 +239,7 @@
                 });
 
         });
-        //End Delete Note
+        //End Undo Delete Note
     }
 
     function createViewer($wrapper, settings) {
