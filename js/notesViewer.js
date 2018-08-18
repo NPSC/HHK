@@ -201,9 +201,9 @@
                         if(data.idNote > 0){
                             row.find("td:not(:first)").css("opacity", "0.3");
                             var noteText = row.find('#editNoteText').val();
-							row.find('.noteText').html(noteText);
-							row.find('.note-action').hide();
-							row.find('.note-undodelete').show();
+                                    row.find('.noteText').html(noteText);
+                                    row.find('.note-action').hide();
+                                    row.find('.note-undodelete').show();
                             $("#noteText").val("");
                             $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
                         }else{
@@ -244,8 +244,8 @@
 
     function createViewer($wrapper, settings) {
         
-        console.log(settings.serviceURL + settings.idReservation);
-        console.log(settings.dtCols);
+//        console.log(settings.serviceURL + settings.idReservation);
+//        console.log(settings.dtCols);
         
         if (settings.linkId > 0) {
             var $table = $('<table />').attr(settings.tableAttrs).appendTo($wrapper);

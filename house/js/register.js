@@ -762,7 +762,7 @@ $(document).ready(function () {
     var winHieght = window.innerHeight;
     
     $('#calendar').fullCalendar({
-        height: winHieght - 170,
+        height: winHieght - 175,
         //aspectRatio: 2.2,
         themeSystem: 'jquery-ui',
         allDay: true,

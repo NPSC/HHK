@@ -108,8 +108,8 @@ class Reservation {
 
                 $psgMembers = $this->reserveData->getPsgMembers();
 
-                self::findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $arrivalDT, $departDT, $this->reserveData->getResvTitle());
-                self::findConflictingStays($dbh, $psgMembers, $arrivalDT, $this->reserveData->getIdPsg());
+                $this->findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $arrivalDT, $departDT, $this->reserveData->getResvTitle());
+                $this->findConflictingStays($dbh, $psgMembers, $arrivalDT, $this->reserveData->getIdPsg());
 
                 $this->reserveData->setPsgMembers($psgMembers);
 
@@ -135,11 +135,8 @@ class Reservation {
 
     public function save(\PDO $dbh, $post) {
 
-        $this->family->save($dbh, $post, $this->reserveData);
-
         $newResv = new ActiveReservation($this->reserveData, $this->reservRs, $this->family);
-
-        return $newResv->createMarkup($dbh);
+        return $newResv->save($dbh, $post);
 
     }
 
@@ -150,7 +147,6 @@ class Reservation {
     }
 
     public static function updateAgenda(\PDO $dbh, $post) {
-
 
         // decifer posts
         if (isset($post['dt1']) && isset($post['dt2']) && isset($post['mems'])) {
@@ -261,17 +257,13 @@ class Reservation {
         // Registration
         $reg = new Registration($dbh, $this->reserveData->getIdPsg());
 
-
         if ($resv->isNew() === FALSE && $resv->isActive()) {
 
             // Allow reservations to have many guests.
-            $numGuests = count($this->getStayingMembers());
-
-            $roomChooser = new RoomChooser($dbh, $resv, $numGuests, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
+            $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
             $roomChooser->setOldResvId($oldResv);
 
             $dataArray['rChooser'] = $roomChooser->CreateResvMarkup($dbh, $isAuthorized);
-
 
             // Rate Chooser
             if ($uS->RoomPriceModel != ItemPriceCode::None) {
@@ -300,7 +292,6 @@ class Reservation {
             if ($uS->TrackAuto) {
                 $dataArray['vehicle'] = $this->vehicleMarkup($dbh);
             }
-
         }
 
         if ($resv->isNew() || $resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
@@ -663,14 +654,14 @@ where rg.idReservation =" . $r['idReservation']);
 
         $uS = Session::getInstance();
 
-        $roomChooser = new RoomChooser($dbh, $resv, $resv->getNumberGuests(), new \DateTime($resv->getExpectedArrival()), new \DateTime($resv->getExpectedDeparture()));
+        $roomChooser = new RoomChooser($dbh, $resv, 1, new \DateTime($resv->getExpectedArrival()), new \DateTime($resv->getExpectedDeparture()));
 
         // Process reservation
         if ($resv->getStatus() == ReservationStatus::Pending || $resv->isActive()) {
 
             $roomChooser->findResources($dbh, SecurityComponent::is_Authorized("guestadmin"));
 
-            ReservationSvcs::processReservation($dbh, $resv, $idRescPosted, $resv->getFixedRoomRate(), $resv->getNumberGuests(), $resv->getExpectedArrival(), $resv->getExpectedDeparture(), SecurityComponent::is_Authorized("guestadmin"), $uS->username, $uS->InitResvStatus);
+            ReservationSvcs::processReservation($dbh, $resv, $idRescPosted, $resv->getFixedRoomRate(), 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), SecurityComponent::is_Authorized("guestadmin"), $uS->username, $uS->InitResvStatus);
 
         }
     }
@@ -859,7 +850,7 @@ class ActiveReservation extends Reservation {
 
         // Is anyone already in a visit?
         $psgMems = $this->reserveData->getPsgMembers();
-        $this->findConflictingStays($dbh, $psgMems, $arrivalDT, $this->reserveData->getIdPsg());
+        self::findConflictingStays($dbh, $psgMems, $arrivalDT, $this->reserveData->getIdPsg());
         $this->reserveData->setPsgMembers($psgMems);
 
         if (count($this->getStayingMembers()) < 1) {
@@ -876,7 +867,7 @@ class ActiveReservation extends Reservation {
 
         // Get reservations for the specified time
         $psgMems2 = $this->reserveData->getPsgMembers();
-        $numRooms = $this->findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMems2, $arrivalDT, $departDT, $this->reserveData->getResvTitle());
+        $numRooms = self::findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMems2, $arrivalDT, $departDT, $this->reserveData->getResvTitle());
         $this->reserveData->setPsgMembers($psgMems2);
 
         // Anybody left?
@@ -921,6 +912,7 @@ class ActiveReservation extends Reservation {
         $resv->setHospitalStay($this->family->getHospStay());
         $resv->setExpectedArrival($arrivalDT->format('Y-m-d 16:00:00'));
         $resv->setExpectedDeparture($departDT->format('Y-m-d 10:00:00'));
+        $resv->setNumberGuests(count($this->getStayingMembers()));
 
         if (($idPriGuest = $this->reserveData->findPrimaryGuestId()) !== NULL) {
             $resv->setIdGuest($idPriGuest);

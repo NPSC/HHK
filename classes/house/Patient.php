@@ -65,10 +65,15 @@ class Patient extends Role {
 
         $uS = Session::getInstance();
 
-        $mu = parent::createThinMarkup($stay, TRUE);
+        $td = $this->createStayMarkup($stay);
+
+        // Phone
+        $ph = HTMLTable::makeTd($this->getPhonesObj()->get_Data()['Phone_Num']);
+
+        $mu =  $td . $this->roleMember->createThinMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser) . $ph;
 
 
-        if ($uS->PatientAddr) {
+        if ($uS->PatientAddr || $uS->PatientAsGuest) {
             // Address
             $mu .= HTMLTable::makeTd(
                     HTMLContainer::generateMarkup('ul'
@@ -88,6 +93,33 @@ class Patient extends Role {
 
         return $mu;
     }
+
+    public function createStayMarkup(PSGMemStay $stay) {
+
+        $uS = Session::getInstance();
+        $td = '';
+
+        // Staying button
+        if ($this->getNoReturn() != '') {
+
+            // Set for no return
+            $td = HTMLTable::makeTd('No Return', array('title'=>$this->getNoReturn() . ';  Id: ' . $this->getIdName()), array('colspan'=>'2'));
+
+        } else {
+
+            $stBtn = '';
+            if ($uS->PatientAsGuest) {
+                $stBtn = $stay->createStayButton($this->getRoleMember()->getIdPrefix());
+            }
+
+            $td = HTMLTable::makeTd($stBtn
+                    , array('title'=>'Id: ' . $this->getIdName(), 'id'=>'sb' . $this->getRoleMember()->getIdPrefix()))
+                . HTMLTable::makeTd($stay->createPrimaryGuestRadioBtn($this->getRoleMember()->getIdPrefix()));
+        }
+
+        return $td;
+    }
+
 
     public function createReservationMarkup($lockRelChooser = FALSE) {
 

@@ -140,6 +140,14 @@ try {
 
         break;
 
+    case "getCkin":
+
+        $resv = Reservation::reservationFactoy($dbh, $_POST);
+
+        $events = $resv->createMarkup($dbh);
+
+        break;
+
     case "addThinGuest":
 
         $resv = Reservation::reservationFactoy($dbh, $_POST);
@@ -230,7 +238,7 @@ try {
         $events = array('delete'=>$deleteCount, 'idNote'=>$noteId);
 
         break;
-        
+
     case 'undoDeleteNote':
 
         $noteId = 0;

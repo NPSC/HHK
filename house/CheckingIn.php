@@ -1,6 +1,6 @@
 <?php
 /**
- * Reserve.php
+ * CheckingIn.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
@@ -101,36 +101,6 @@ if (isset($_POST['CardID']) || isset($_POST['PaymentID'])) {
     }
 }
 
-if (isset($_POST['hdnCfmRid'])) {
-
-    $idReserv = intval(filter_var($_POST['hdnCfmRid'], FILTER_SANITIZE_NUMBER_INT), 10);
-    $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
-
-    $idGuest = $resv->getIdGuest();
-
-    $guest = new Guest($dbh, '', $idGuest);
-
-    $notes = '';
-    if (isset($_POST['tbCfmNotes'])) {
-        $notes = filter_var($_POST['tbCfmNotes'], FILTER_SANITIZE_STRING);
-    }
-
-    require(HOUSE . 'ConfirmationForm.php');
-
-    $confirmForm = new ConfirmationForm($uS->ConfirmFile);
-
-    $formNotes = $confirmForm->createNotes($notes, FALSE);
-    $form = '<!DOCTYPE html>' . $confirmForm->createForm($dbh, $resv, $guest, 0, $formNotes);
-
-    header('Content-Disposition: attachment; filename=confirm.doc');
-    header("Content-Description: File Transfer");
-    header('Content-Type: text/html');
-    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-    header('Expires: 0');
-
-    echo($form);
-    exit();
-}
 
 if (isset($uS->cofrid)) {
     $idReserv = $uS->cofrid;
@@ -236,14 +206,13 @@ $resvObjEncoded = json_encode($resvAr);
                 <?php echo $mk1; ?>
             </div>
 
-            <form action="Reserve.php" method="post"  id="form1">
+            <form action="CheckingIn.php" method="post"  id="form1">
                 <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
                 <div id="famSection" style="clear:left; float:left; font-size: .9em; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
                 <div id="hospitalSection" style="font-size: .9em; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
                 <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
                 <div style="clear:both;min-height: 70px;">.</div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
-                    <input type="button" id="btnDelete" value="Delete" style="display:none;"/>
                     <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
                     <input type='button' id='btnDone' value='Continue' style="display:none;"/>
                 </div>
@@ -251,17 +220,12 @@ $resvObjEncoded = json_encode($resvAr);
             </form>
 
             <div id="pmtRcpt" style="font-size: .9em; display:none;"><?php echo $receiptMarkup; ?></div>
-            <div id="resDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
-            <div id="psgDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;"></div>
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="keysfees" style="display:none;font-size: .85em;"></div>
 
         </div>
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
-        <div id="confirmDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;">
-            <form id="frmConfirm" action="Reserve.php" method="post"></form>
-        </div>
 
 <script type="text/javascript">
 var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
@@ -299,19 +263,6 @@ $(document).ready(function() {
 // Buttons
     $('#btnDone, #btnShowReg, #btnDelete').button();
 
-    $('#btnDelete').click(function () {
-
-        if ($(this).val() === 'Deleting >>>>') {
-            return;
-        }
-
-        if (confirm('Delete this ' + pageManager.resvTitle + '?')) {
-
-            $(this).val('Deleting >>>>');
-
-            pageManager.deleteReserve(pageManager.idResv, 'form#form1', $(this));
-        }
-    });
 
     $('#btnShowReg').click(function () {
         window.open('ShowRegForm.php?rid=' + pageManager.idResv, '_blank');
@@ -358,41 +309,6 @@ $(document).ready(function() {
     });
 
 // Dialog Boxes
-    $("#resDialog").dialog({
-        autoOpen: false,
-        resizable: true,
-        width: '95%',
-        modal: true
-    });
-
-    $('#confirmDialog').dialog({
-        autoOpen: false,
-        resizable: true,
-        width: 850,
-        modal: true,
-        title: 'Confirmation Form',
-        close: function () {$('div#submitButtons').show(); $("#frmConfirm").children().remove();},
-        buttons: {
-            'Download MS Word': function () {
-                var $confForm = $("form#frmConfirm");
-                $confForm.append($('<input name="hdnCfmRid" type="hidden" value="' + $('#btnShowCnfrm').data('rid') + '"/>'))
-                $confForm.submit();
-            },
-            'Send Email': function() {
-                $.post('ws_ckin.php', {cmd:'confrv', rid: $('#btnShowCnfrm').data('rid'), eml: '1', eaddr: $('#confEmail').val(), amt: $('#spnAmount').text(), notes: $('#tbCfmNotes').val()}, function(data) {
-                    data = $.parseJSON(data);
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
-                    }
-                    flagAlertMessage(data.mesg, true);
-                });
-                $(this).dialog("close");
-            },
-            "Cancel": function() {
-                $(this).dialog("close");
-            }
-        }
-    });
 
     $("#activityDialog").dialog({
         autoOpen: false,
@@ -409,15 +325,6 @@ $(document).ready(function() {
         }
     });
 
-    $("#psgDialog").dialog({
-        autoOpen: false,
-        resizable: true,
-        width: 500,
-        modal: true,
-        title: resv.patLabel + ' Chooser',
-        close: function (event, ui) {$('div#submitButtons').show();},
-        open: function (event, ui) {$('div#submitButtons').hide();}
-    });
 
     $('#keysfees').dialog({
         autoOpen: false,
@@ -465,7 +372,7 @@ $(document).ready(function() {
             resv.id = -2;
         }
 
-        resv.cmd = 'getResv';
+        resv.cmd = 'getCkin';
         pageManager.getReserve(resv);
 
     } else {

@@ -94,7 +94,7 @@ abstract class Role {
         if ($useCopyIcon) {
             $copy = HTMLContainer::generateMarkup('li',
                         HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-copy'))
-                        , array('class'=>'ui-state-default ui-corner-all hhk-addrCopy', 'style'=>'float:right;', 'data-prefix'=>$idPrefix, 'title'=>'Click to copy, click multiple times to cycle thru addresses.'));
+                        , array('class'=>'ui-state-default ui-corner-all hhk-addrCopy', 'style'=>'float:right;', 'data-prefix'=>$idPrefix, 'title'=>'Click to copy.'));
         }
 
         $legendTitle = HTMLContainer::generateMarkup('ul'
@@ -154,6 +154,18 @@ abstract class Role {
 
     public function createThinMarkup(PSGMemStay $stay, $lockRelChooser) {
 
+        // Staying button
+        $td = $this->createStayMarkup($stay);
+
+        // Phone
+        $ph = HTMLTable::makeTd($this->getPhonesObj()->get_Data()['Phone_Num']);
+
+        return $td . $this->roleMember->createThinMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser) . $ph;
+
+    }
+
+    public function createStayMarkup(PSGMemStay $stay) {
+
         $td = '';
 
         // Staying button
@@ -169,11 +181,7 @@ abstract class Role {
                 . HTMLTable::makeTd($stay->createPrimaryGuestRadioBtn($this->getRoleMember()->getIdPrefix()));
         }
 
-        // Phone
-        $ph = HTMLTable::makeTd($this->getPhonesObj()->get_Data()['Phone_Num']);
-
-        return $td . $this->roleMember->createThinMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser) . $ph;
-
+        return $td;
     }
 
 

@@ -148,23 +148,22 @@ if ($idGuest > 0) {
         }
     }
 
-    if ($uS->Reservation) {
-        // Load reservations
-        $inside = Reservation_1::showListByStatus($dbh, $config->getString('house', 'ReservationPage', 'Reserve.php'), 'CheckIn.php', ReservationStatus::Committed, TRUE, NULL, 2, TRUE);
-        if ($inside == '') {
-            $inside = "<p style='margin-left:60px;'>-None are imminent-</p>";
-        }
-
-        $committedMarkup = HTMLContainer::generateMarkup('h3', $labels->getString('register', 'reservationTab', 'Confirmed Reservations')
-                . HTMLContainer::generateMarkup('span', '', array('style'=>'float:right;', 'class'=>'ui-icon ui-icon-triangle-1-e')),
-                array('id'=>'hhk-confResvHdr', 'style'=>'margin-bottom:15px;padding:5px;background-color: #D3D3D3;', 'title'=>'Click to show or hide the '
-                    . $labels->getString('register', 'reservationTab', 'Confirmed Reservations')))
-            . HTMLContainer::generateMarkup('div', $inside, array('id'=>'hhk-confResv', 'style'=>'margin-bottom:5px;'));
+    // Load reservations
+    $inside = Reservation_1::showListByStatus($dbh, $config->getString('house', 'ReservationPage', 'Reserve.php'), 'CheckingIn.php', ReservationStatus::Committed, TRUE, NULL, 2, TRUE);
+    if ($inside == '') {
+        $inside = "<p style='margin-left:60px;'>-None are imminent-</p>";
     }
 
-    if ($uS->Reservation && $uS->OpenCheckin) {
+    $committedMarkup = HTMLContainer::generateMarkup('h3', $labels->getString('register', 'reservationTab', 'Confirmed Reservations')
+            . HTMLContainer::generateMarkup('span', '', array('style'=>'float:right;', 'class'=>'ui-icon ui-icon-triangle-1-e')),
+            array('id'=>'hhk-confResvHdr', 'style'=>'margin-bottom:15px;padding:5px;background-color: #D3D3D3;', 'title'=>'Click to show or hide the '
+                . $labels->getString('register', 'reservationTab', 'Confirmed Reservations')))
+        . HTMLContainer::generateMarkup('div', $inside, array('id'=>'hhk-confResv', 'style'=>'margin-bottom:5px;'));
 
-        $inside = Reservation_1::showListByStatus($dbh, $config->getString('house', 'ReservationPage', 'Reserve.php'), 'CheckIn.php', ReservationStatus::Waitlist, TRUE, NULL, 2, TRUE);
+
+    if ($uS->OpenCheckin) {
+
+        $inside = Reservation_1::showListByStatus($dbh, $config->getString('house', 'ReservationPage', 'Reserve.php'), 'CheckingIn.php', ReservationStatus::Waitlist, TRUE, NULL, 2, TRUE);
 
         if ($inside != '') {
             $wListMarkup = HTMLContainer::generateMarkup('h3', 'Wait List' . HTMLContainer::generateMarkup('span', '', array('style'=>'float:right;', 'class'=>'ui-icon ui-icon-triangle-1-e')), array('id'=>'hhk-wListResvHdr'

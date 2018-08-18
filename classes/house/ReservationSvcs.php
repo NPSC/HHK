@@ -2343,10 +2343,6 @@ class ReservationSvcs {
             return array('error'=>'Reservation Id is not set.');
         }
 
-        if (count($cbs) < 1) {
-            return array(''=>'');
-        }
-
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
         $resv->setNumberGuests($numGuests);
         $resv->setIdResource($idResc);

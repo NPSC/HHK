@@ -72,6 +72,10 @@ class Family {
                         $psgMember->setStay(ReserveData::CANT_STAY);
                     }
 
+                    if ($uS->PatientAsGuest === FALSE) {
+                        $psgMember->setStay(ReserveData::NOT_STAYING);
+                    }
+
                     $psgMember->setRole(VolMemberType::Patient);
                     $rData->setMember($psgMember);
 
@@ -258,48 +262,6 @@ class Family {
 
             $nameTr = HTMLContainer::generateMarkup('tr'
                     , $role->createThinMarkup($rData->getPsgMember($prefix)->getStayObj(), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
-                    . HTMLTable::makeTd($removeIcons));
-
-            // Demographics
-            if ($uS->ShowDemographics) {
-                $demoMu = $this->getDemographicsMarkup($dbh, $role);
-            } else {
-                $demoMu = '';
-            }
-
-            // Add addresses and demo's
-            $addressTr = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>'hhk-addrRow'));
-
-            $mem = $rData->getPsgMember($prefix)->toArray();
-            $adr = $this->getAddresses(array($role));
-
-            $addPerson = array('id'=>$rData->getId(), 'ntr'=>$nameTr, 'atr'=>$addressTr, 'tblId'=>FAMILY::FAM_TABLE_ID, 'mem'=>$mem, 'addrs'=>$adr[$prefix]);
-        }
-
-        return $addPerson;
-
-    }
-
-    public function createCopyPersonMu(\PDO $dbh, ReserveData $rData) {
-
-        $uS = Session::getInstance();
-
-        $addPerson = array();
-
-        foreach ($this->roleObjs as $prefix => $role) {
-
-            if ($role->getIdName() != $rData->getId()) {
-                continue;
-            }
-
-            // remove guests.
-            $removeIcons = HTMLContainer::generateMarkup('ul'
-                , HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
-                    , array('class'=>'ui-state-default ui-corner-all hhk-removeBtn', 'style'=>'float:right;', 'data-prefix'=>$prefix, 'title'=>'Remove guest'))
-                , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'));
-
-            $nameTr = HTMLContainer::generateMarkup('tr'
-                    , $role->createThinMarkup($rData->getPsgMember($prefix)->getStayObj(), TRUE)
                     . HTMLTable::makeTd($removeIcons));
 
             // Demographics

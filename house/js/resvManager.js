@@ -25,6 +25,7 @@ function resvManager(initData) {
     t.verifyInput = verifyInput;
     t.loadResv = loadResv;
     t.deleteReserve = deleteReserve;
+    t.doOnDatesChange = doOnDatesChange;
     t.resvTitle = resvTitle;
     t.people = people;
     t.addrs = addrs;
@@ -541,15 +542,10 @@ function resvManager(initData) {
                 });
 
                 // toggle address row
-                $('#' + divFamDetailId).on('click', '.hhk-togAddr, .hhk-AddrFlag', function () {
+                $('#' + divFamDetailId).on('click', '.hhk-togAddr', function () {
 
-                    if ($(this).hasClass('hhk-togAddr')) {
-                        $addrTog = $(this);
-                        $addrFlag = $(this).siblings();
-                    } else {
-                        $addrFlag = $(this);
-                        $addrTog = $(this).siblings();
-                    }
+                    $addrTog = $(this);
+                    $addrFlag = $(this).siblings();
 
                     if ($(this).parents('tr').next('tr').css('display') === 'none') {
                         $(this).parents('tr').next('tr').show();
@@ -562,6 +558,12 @@ function resvManager(initData) {
                     }
 
                     
+                });
+
+                // Incomplete Address Flag
+                $('#' + divFamDetailId).on('click', '.hhk-AddrFlag', function () {
+                    // Click the incomplete address checkbox.
+                    $('#' + $(this).data('pref') + 'incomplete').click();
                 });
 
                 // Load the addresses into the addrs object if changed.
@@ -1720,13 +1722,13 @@ function resvManager(initData) {
 
         // Assign variables.
         if (data.idPsg) {
-            t.idPsg = data.idPsg;
+            idPsg = data.idPsg;
         }
         if (data.id) {
-            t.idName = data.id;
+            idName = data.id;
         }
         if (data.rid) {
-            t.idResv = data.rid;
+            idResv = data.rid;
         }
 
         // Build a new Family section.
@@ -1792,7 +1794,7 @@ function resvManager(initData) {
                 $('#submitButtons').hide();
             });
 
-            $('#famSection.hhk-cbStay').change();
+            $('.hhk-cbStay').change();
 
             $('#btnDone').val('Save ' + resvTitle).show();
 

@@ -499,7 +499,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
             $('#guestAdd').click(function () {
                 $('.hhk-addGuest').toggle();
             });
-            
+
             if ($('#btnAddGuest').length > 0) {
                 $('#btnAddGuest').button();
                 $('#btnAddGuest').click(function () {
@@ -524,13 +524,13 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
             // Notes
             setupVisitNotes(idVisit, $diagbox.find('#visitNoteViewer'));
-            
+
             $diagbox.dialog('option', 'buttons', buttons);
             $diagbox.dialog('option', 'title', title);
             $diagbox.dialog('option', 'width', ($( window ).width() * .8));
             $diagbox.dialog('option', 'height', $( window ).height());
             $diagbox.dialog('open');
-            
+
         }
     });
 }
@@ -558,36 +558,36 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         rtntbl: (rtnTbl === true ? '1' : '0'),
         pbp: postbackPage
     };
-    
+
     $('input.hhk-expckout').each(function() {
         var parts = $(this).attr('id').split('_');
         if (parts.length > 0) {
             parms[parts[0] + '[' + parts[1] + ']'] = $(this).val();
         }
     });
-    
+
     $('input.hhk-stayckin').each(function() {
         var parts = $(this).attr('id').split('_');
         if (parts.length > 0) {
             parms[parts[0] + '[' + parts[1] + ']'] = $(this).val();
         }
     });
-    
+
     // Undo checkout
     if ($('#undoCkout').length > 0 && $('#undoCkout').prop('checked')) {
         undoCheckout = true;
     }
-    
+
     // Overpayment disposition
     if (isCheckedOut && verifyBalDisp() === false && undoCheckout === false) {
         return;
     }
-    
+
     // Cash amount tendered
     if (verifyAmtTendrd() === false) {
         return;
     }
-    
+
 
     $('input.hhk-ckoutCB').each(function() {
         if (this.checked) {
@@ -607,7 +607,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
             }
         }
     });
-    
+
     $('input.hhk-removeCB').each(function () {
         if (this.checked) {
             var parts = $(this).attr('id').split('_');
@@ -617,7 +617,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
             }
         }
     });
-    
+
     // Confirm checking out
     if (ckoutlist.length > 0) {
         var cnfMsg = 'Check Out:\n' + ckoutlist.join('\n');
@@ -629,7 +629,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
             return;
         }
     }
-    
+
     // Confirm remove guests
     if (removeList.length > 0) {
         if (confirm('Remove:\n' + removeList.join('\n') + '?') === false) {
@@ -637,14 +637,14 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
             return;
         }
     }
-    
+
     $('#keyDepAmt').removeClass('ui-state-highlight');
-    
+
     // Room Change?
     if ($('#resvResource').length > 0) {
-        
+
         resvResc = $('#resvResource').val();
-    
+
         if (resvResc != '0') {
             $('#resvChangeDate').removeClass('ui-state-highlight');
             $('#chgmsg').text('');
@@ -682,7 +682,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     if ($('#taNewVNote').length > 0 && $('#taNewVNote').val() !== '') {
         parms['taNewVNote'] = $('#taNewVNote').val();
     }
-    
+
     // Fees and Keys
     $('.hhk-feeskeys').each(function() {
         if ($(this).attr('type') === 'checkbox') {
@@ -704,34 +704,34 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
             parms[$(this).attr('id')] = this.value;
         }
     });
-    
+
     $('#keysfees').css('background-color', 'white');
     $('#keysfees').dialog("close");
 
     $.post('ws_ckin.php', parms,
         function(data) {
-            
+
             try {
                 data = $.parseJSON(data);
             } catch (err) {
                 alert("Parser error - " + err.message);
                 return;
             }
-            
+
             if (data.error) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
                 flagAlertMessage(data.error, true);
             }            
-            
+
             if (typeof refreshdTables !== 'undefined') {
                 refreshdTables(data);
             }
-            
+
             if (typeof pageManager !== 'undefined') {
                 var dates = {'date1': new Date($('#gstDate').val()), 'date2': new Date($('#gstCoDate').val())};
-                pageManager,doOnDatesChange(dates);
+                pageManager.doOnDatesChange(dates);
             }
 
             paymentReply(data, true);
