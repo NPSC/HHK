@@ -19,6 +19,12 @@ function resvManager(initData) {
     var resvSection = new ResvSection($('#resvSection'));
     var hospSection = new HospitalSection($('#hospitalSection'));
     var expDatesSection = new ExpDatesSection($('#datesSection'));
+    
+    //imports
+    //var setupPayments = t.setupPayments;
+    //var verifyAddrs = t.verifyAddrs;
+    //var flagAlertMessage = t.flagAlertMessage;
+    //var createAutoComplete = t.createAutoComplete();
 
     // Exports
     t.getReserve = getReserve;
@@ -38,7 +44,6 @@ function resvManager(initData) {
     function FamilySection($wrapper) {
         var t = this;
         var divFamDetailId = 'divfamDetail';
-        var cpyAddr = '';
         var setupComplete = false;
         var $famTbl;
         
@@ -1332,6 +1337,16 @@ function resvManager(initData) {
 
         }
 
+        function setupPay(data){
+            
+            $('#paymentDate').datepicker({
+                yearRange: '-1:+01',
+                numberOfMonths: 1
+            });
+                
+            setupPayments(data.resv.rdiv.rooms, $('#selResource'), $('#selRateCategory'));
+        }
+
         function setupRoom(idReserv) {
 
             // Reservation history button
@@ -1412,7 +1427,7 @@ function resvManager(initData) {
         
         function setUp(data) {
 
-            $rDiv = $('<div id="divResvDetail" style="padding:2px; float:left;min-width: 810px;" class="ui-widget-content ui-corner-bottom hhk-tdbox"/>');
+            $rDiv = $('<div id="divResvDetail" style="padding:2px; float:left; width: 100%;" class="ui-widget-content ui-corner-bottom hhk-tdbox"/>');
             $rDiv.append($(data.resv.rdiv.rChooser));
 
             // Rate section
@@ -1428,6 +1443,10 @@ function resvManager(initData) {
                 $veh = $(data.resv.rdiv.vehicle);
                 $rDiv.append($veh);
                 setupVehicle($veh);
+            }
+            
+            if (data.resv.rdiv.pay !== undefined) {
+                $rDiv.append($(data.resv.rdiv.pay));
             }
 
             // Reservation notes.
@@ -1468,6 +1487,10 @@ function resvManager(initData) {
 
             if (data.resv.rdiv.rate !== undefined) {
                 setupRate(data);
+            }
+
+            if (data.resv.rdiv.pay !== undefined) {
+                setupPay(data);
             }
 
             t.setupComplete = true;
@@ -1801,7 +1824,7 @@ function resvManager(initData) {
             if (data.rid > 0) {
                 $('#btnDelete').val('Delete ' + resvTitle).show();
                 $('#btnShowReg').show();
-                $('#spnStatus').text(' - ' + data.resv.rdiv.rStatTitle);
+                $('#spnStatus').text(data.resv.rdiv.rStatTitle === '' ? '' : ' - ' + data.resv.rdiv.rStatTitle);
             }
         }
 

@@ -108,7 +108,7 @@ if (isset($uS->cofrid)) {
 }
 
 
-$resvObj = new ReserveData(array());
+$resvObj = new ReserveData(array(), 'Check-in');
 
 
 if (isset($_GET['id'])) {
@@ -132,9 +132,7 @@ if ($idReserv > 0 || $idGuest > 0) {
     $resvObj->setIdPsg($idPsg);
 
 } else {
-    // Guest Search markup
-    $gMk = Role::createSearchHeaderMkup("gst", "Guest or " . $labels->getString('MemberType', 'patient', 'Patient') . " Name Search: ");
-    $mk1 = $gMk['hdr'];
+
 
 }
 
@@ -202,15 +200,11 @@ $resvObjEncoded = json_encode($resvAr);
                 <?php echo $paymentMarkup; ?>
             </div>
 
-            <div id="guestSearch" style="padding-left:0;padding-top:0; margin-bottom:1.5em; clear:left; float:left;">
-                <?php echo $mk1; ?>
-            </div>
-
             <form action="CheckingIn.php" method="post"  id="form1">
                 <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
-                <div id="famSection" style="clear:left; float:left; font-size: .9em; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
-                <div id="hospitalSection" style="font-size: .9em; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
-                <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
+                <div id="famSection" style="clear:left; float:left; font-size: .9em; display:none; width: 100%; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
+                <div id="hospitalSection" style="font-size: .9em; margin-bottom:.5em; clear:left; float:left; display:none; width: 100%;"  class="ui-widget hhk-visitdialog"></div>
+                <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; width: 100%;" class="ui-widget hhk-visitdialog"></div>
                 <div style="clear:both;min-height: 70px;">.</div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
@@ -232,6 +226,92 @@ var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
 var payFailPage = '<?php echo $payFailPage; ?>';
 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
 var pageManager;
+
+function ckedIn(data) {
+    "use strict";
+    $("#divAlert1").hide();
+
+    if (data.warning) {
+        flagAlertMessage(data.warning, true);
+    }
+
+    if (data.xfer) {
+        var xferForm = $('#xform');
+        xferForm.children('input').remove();
+        xferForm.prop('action', data.xfer);
+        if (data.paymentId && data.paymentId != '') {
+            xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
+        } else if (data.cardId && data.cardId != '') {
+            xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
+        } else {
+            flagAlertMessage('PaymentId and CardId are missing!', true);
+            return;
+        }
+        xferForm.submit();
+    }
+
+    if (data.success) {
+        //flagAlertMessage(data.success, false);
+        var cDiv = $('#contentDiv');
+        var opt = {mode: 'popup',
+            popClose: true,
+            popHt      : $('div#RegArea').height(),
+            popWd      : 950,
+            popX       : 20,
+            popY       : 20,
+            popTitle   : 'Guest Registration Form'};
+
+        cDiv.children().remove();
+
+        if (data.regform && data.style) {
+            cDiv.append($('<div id="print_button" style="float:left;">Print</div>'))
+                    .append($('<div id="btnReg" style="float:left; margin-left:10px;">Check In Followup</div>'))
+                    .append($('<div id="btnStmt" style="float:left; margin-left:10px;">Show Statement</div>'))
+                    .append($('<div id="mesgReg" style="color: darkgreen; clear:left; font-size:1.5em;"></div>'))
+                    .append($('<div style="clear: left;" class="RegArea"/>')
+                            .append($(data.style)).append($(data.regform)));
+
+            $("div#print_button, div#btnReg, div#btnStmt").button();
+            $("div#print_button").click(function() {
+                $("div.RegArea").printArea(opt);
+            });
+            $('div#btnReg').click(function() {
+                getRegistrationDialog(data.reg, cDiv);
+            });
+            $('div#btnStmt').click(function() {
+                window.open('ShowStatement.php?vid=' + data.vid, '_blank');
+            });
+        }
+
+        if (data.ckmeout) {
+            var buttons = {
+                "Show Statement": function() {
+                    window.open('ShowStatement.php?vid=' + data.vid, '_blank');
+                },
+                "Check Out": function() {
+                    saveFees(data.gid, data.vid, 0, true, 'register.php');
+                },
+                "Cancel": function() {
+                    $(this).dialog("close");
+                }
+            };
+            viewVisit(data.gid, data.vid, buttons, 'Check Out', 'co', 0, data.ckmeout);
+        }
+
+        if (data.regDialog) {
+            showRegDialog(data.regDialog, data.reg, cDiv);
+        }
+
+        if (data.receipt) {
+            showReceipt('#pmtRcpt', data.receipt);
+        }
+
+        if (data.invoiceNumber && data.invoiceNumber !== '') {
+            window.open('ShowInvoice.php?invnum=' + data.invoiceNumber);
+        }
+
+    }
+}
 
 $(document).ready(function() {
     "use strict";
@@ -261,7 +341,7 @@ $(document).ready(function() {
     });
 
 // Buttons
-    $('#btnDone, #btnShowReg, #btnDelete').button();
+    $('#btnDone, #btnShowReg').button();
 
 
     $('#btnShowReg').click(function () {
@@ -280,8 +360,9 @@ $(document).ready(function() {
 
             $.post(
                 'ws_resv.php',
-                $('#form1').serialize() + '&cmd=saveResv&idPsg=' + pageManager.idPsg + '&rid=' + pageManager.idResv + '&' + $.param({mem: pageManager.people.list()}),
+                $('#form1').serialize() + '&cmd=saveCheckin&idPsg=' + pageManager.idPsg + '&rid=' + pageManager.idResv + '&' + $.param({mem: pageManager.people.list()}),
                 function(data) {
+
                     try {
                         data = $.parseJSON(data);
                     } catch (err) {
@@ -298,8 +379,9 @@ $(document).ready(function() {
                         $('#btnDone').val('Save').show();
                     }
 
-                    pageManager.loadResv(data);
-                    flagAlertMessage(data.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle);
+                    $('#btnDone').val('Save').show();
+                    ckedIn(data);
+
                 }
             );
 

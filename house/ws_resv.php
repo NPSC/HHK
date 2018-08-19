@@ -132,21 +132,37 @@ try {
 
         break;
 
+
     case "saveResv":
 
         $resv = Reservation::reservationFactoy($dbh, $_POST);
 
-        $events = $resv->save($dbh, $_POST);
+        $newResv = $resv->save($dbh, $_POST);
+
+        $events = $newResv->createMarkup($dbh);
 
         break;
 
+
     case "getCkin":
 
-        $resv = Reservation::reservationFactoy($dbh, $_POST);
+        $resv = CheckingIn::reservationFactoy($dbh, $_POST);
 
         $events = $resv->createMarkup($dbh);
 
         break;
+
+
+    case 'saveCheckin':
+
+        $resv = CheckingIn::reservationFactoy($dbh, $_POST);
+
+        $resv->save($dbh, $_POST);
+
+        $events = $resv->checkedinMarkup($dbh);
+
+        break;
+
 
     case "addThinGuest":
 
@@ -155,6 +171,7 @@ try {
         $events = $resv->addPerson($dbh);
 
         break;
+
 
     case 'getNoteList':
 
@@ -174,6 +191,7 @@ try {
         $events = ListNotes::loadList($dbh, $idLink, $linkType, $_GET);
 
         break;
+
 
     case 'saveNote':
 
@@ -196,6 +214,7 @@ try {
         $events = array('idNote'=>LinkNote::save($dbh, $data, $idLink, $linkType, $uS->username));
 
         break;
+
 
     case 'updateNoteContent':
 
@@ -221,6 +240,7 @@ try {
 
         break;
 
+
     case 'deleteNote':
 
         $noteId = 0;
@@ -239,6 +259,7 @@ try {
 
         break;
 
+
     case 'undoDeleteNote':
 
         $noteId = 0;
@@ -256,6 +277,7 @@ try {
         $events = array('delete'=>$deleteCount, 'idNote'=>$noteId);
 
         break;
+
 
     case 'linkNote':
 
@@ -277,6 +299,7 @@ try {
 
         break;
 
+
     case "copyThinGuest":
 
         $resv = Reservation::reservationFactoy($dbh, $_POST);
@@ -285,10 +308,12 @@ try {
 
         break;
 
+
     case 'updateAgenda':
 
         $events = Reservation::updateAgenda($dbh, $_POST);
         break;
+
 
     default:
         $events = array("error" => "Bad Command: \"" . $c . "\"");

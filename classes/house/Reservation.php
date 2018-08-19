@@ -51,33 +51,7 @@ class Reservation {
 
         // Resv > 0
         if ($rData->getIdResv() > 0) {
-
-            // Load reservation
-            $stmt = $dbh->query("Select r.*, rg.idPsg from reservation r left join registration rg on r.idRegistration = rg.idRegistration where r.idReservation = " . $rData->getIdResv());
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            if (count($rows) != 1) {
-                throw new Hk_Exception_Runtime("Reservation Id not found.  ");
-            }
-
-            $rRs = new ReservationRS();
-            EditRS::loadRow($rows[0], $rRs);
-
-            $rData->setIdPsg($rows[0]['idPsg']);
-
-            if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
-
-                $family = new Family($dbh, $rData);
-                return new ActiveReservation($rData, $rRs, $family);
-            }
-
-            if ($rRs->Status->getStoredVal() == ReservationStatus::Staying || $rRs->Status->getStoredVal() == ReservationStatus::Checkedout) {
-
-                return new StayingReservation($rData, $rRs, new Family($dbh, $rData));
-
-            }
-
-            return new StaticReservation($rData, $rRs, new Family($dbh, $rData));
+            return self::loadReservation($dbh, $rData, $post);
         }
 
 
@@ -96,7 +70,66 @@ class Reservation {
 
     }
 
-    public function createMarkup(\PDO $dbh) {
+    public static function loadReservation(\PDO $dbh, ReserveData $rData) {
+
+        // Load reservation
+        $stmt = $dbh->query("Select r.*, rg.idPsg from reservation r left join registration rg on r.idRegistration = rg.idRegistration where r.idReservation = " . $rData->getIdResv());
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($rows) != 1) {
+            throw new Hk_Exception_Runtime("Reservation Id not found.  ");
+        }
+
+        $rRs = new ReservationRS();
+        EditRS::loadRow($rows[0], $rRs);
+
+        $rData->setIdPsg($rows[0]['idPsg']);
+
+        if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
+
+            $family = new Family($dbh, $rData);
+            return new ActiveReservation($rData, $rRs, $family);
+        }
+
+        if ($rRs->Status->getStoredVal() == ReservationStatus::Staying || $rRs->Status->getStoredVal() == ReservationStatus::Checkedout) {
+
+            return new StayingReservation($rData, $rRs, new Family($dbh, $rData));
+
+        }
+
+        return new StaticReservation($rData, $rRs, new Family($dbh, $rData));
+
+    }
+
+    /**
+     * Verify visit input dates
+     *
+     * @param \Reservation_1 $resv
+     * @param \DateTime $chkinDT
+     * @param \DateTime $chkoutDT
+     * @param bool $autoResv
+     * @throws Hk_Exception_Runtime
+     */
+    public static function verifyVisitDates(\Reservation_1 $resv, \DateTime $chkinDT, \DateTime $chkoutDT, $autoResv = FALSE) {
+
+        $uS = Session::getInstance();
+
+        $rCkinDT = new \DateTime(($resv->getActualArrival() == '' ? $resv->getExpectedArrival() : $resv->getActualArrival()));
+        $rCkinDT->setTime(0, 0, 0);
+        $rCkoutDT = new \DateTime($resv->getExpectedDeparture());
+        $rCkoutDT->setTime(23, 59, 59);
+
+        if ($resv->getStatus() == ReservationStatus::Committed && $rCkinDT->diff($chkinDT)->days > $uS->ResvEarlyArrDays) {
+            throw new Hk_Exception_Runtime('Cannot check-in earlier than ' . $uS->ResvEarlyArrDays . ' days of the reservation expected arrival date of ' . $rCkinDT->format('M d, Y'));
+        } else if ($resv->getStatus() == ReservationStatus::Committed && $chkoutDT > $rCkoutDT && $autoResv === FALSE) {
+            throw new Hk_Exception_Runtime('Cannot check-out later than the reservation expected departure date of ' . $rCkoutDT->format('M d, Y'));
+        }
+
+        if ($chkinDT >= $chkoutDT) {
+            throw new Hk_Exception_Runtime('A check-in date cannot be AFTER the check-out date.  (Silly Human)  ');
+        }
+    }
+    public function createMarkup(\PDO $dbh, $includeResv = TRUE) {
 
         $this->family->setGuestsStaying($dbh, $this->reserveData, $this->reservRs->idGuest->getstoredVal());
 
@@ -136,7 +169,8 @@ class Reservation {
     public function save(\PDO $dbh, $post) {
 
         $newResv = new ActiveReservation($this->reserveData, $this->reservRs, $this->family);
-        return $newResv->save($dbh, $post);
+        $newResv->save($dbh, $post);
+        return $newResv;
 
     }
 
@@ -316,7 +350,7 @@ class Reservation {
         // Reservation notes
         $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'notesLabel', 'Reservation Notes'), array('style'=>'font-weight:bold;'))
-                , array('id'=>'hhk-noteViewer', 'style'=>'clear:left; float:left; width:90%;font-size:0.9em;', 'class'=>'hhk-panel'));
+                , array('id'=>'hhk-noteViewer', 'style'=>'clear:left; float:left; width:90%; font-size:0.9em;', 'class'=>'hhk-panel'));
 
 
         $dataArray['wlnotes'] = '';
@@ -664,6 +698,8 @@ where rg.idReservation =" . $r['idReservation']);
             ReservationSvcs::processReservation($dbh, $resv, $idRescPosted, $resv->getFixedRoomRate(), 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), SecurityComponent::is_Authorized("guestadmin"), $uS->username, $uS->InitResvStatus);
 
         }
+
+        return $roomChooser;
     }
 
     protected function copyOldReservation(\PDO $dbh) {
@@ -806,20 +842,22 @@ where rg.idReservation =" . $r['idReservation']);
 
 class ActiveReservation extends Reservation {
 
-    public function createMarkup(\PDO $dbh) {
+    public function createMarkup(\PDO $dbh, $includeResv = TRUE) {
 
         if ($this->reservRs->Status->getStoredVal() == '') {
             $this->reservRs->Status->setStoredVal(ReservationStatus::Waitlist);
         }
 
-        // Get any previous settings and set primary guest if blank.
-        $oldResvId = $this->copyOldReservation($dbh);
-
         // Add the family, hospital, etc sections.
         $data = parent::createMarkup($dbh);
 
-        // Add the reservation section.
-        $data['resv'] = $this->createResvMarkup($dbh, $oldResvId, new Config_Lite(LABEL_FILE));
+        if ($includeResv) {
+            // Get any previous settings and set primary guest if blank.
+            $oldResvId = $this->copyOldReservation($dbh);
+
+            // Add the reservation section.
+            $data['resv'] = $this->createResvMarkup($dbh, $oldResvId, new Config_Lite(LABEL_FILE));
+        }
 
         return $data;
 
@@ -999,17 +1037,417 @@ class ActiveReservation extends Reservation {
         // Payments
         $this->savePayments($dbh, $resv, $post);
 
-        // Reply
-        $newResv = new ActiveReservation($this->reserveData, $resv->getReservationRS(), $this->family);
-        return $newResv->createMarkup($dbh);
+        return $this;
 
     }
 }
 
 
+
+class CheckingIn extends ActiveReservation {
+
+    protected $payResult;
+    protected $visit;
+    protected $resc;
+    protected $errors;
+
+    public static function reservationFactoy(\PDO $dbh, $post) {
+
+        $rData = new ReserveData($post, 'Check-in');
+
+        if ($rData->getIdResv() > 0) {
+            return CheckingIn::loadReservation($dbh, $rData);
+        }
+
+        return array('error', 'Reservation Id not defined.');
+
+    }
+
+    public static function loadReservation(\PDO $dbh, ReserveData $rData) {
+
+        // Load reservation
+        $stmt = $dbh->query("Select r.*, rg.idPsg from reservation r left join registration rg on r.idRegistration = rg.idRegistration where r.idReservation = " . $rData->getIdResv());
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($rows) != 1) {
+            throw new Hk_Exception_Runtime("Reservation Id not found.  ");
+        }
+
+        $rRs = new ReservationRS();
+        EditRS::loadRow($rows[0], $rRs);
+
+        $rData->setIdPsg($rows[0]['idPsg']);
+
+        if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
+
+            $family = new Family($dbh, $rData);
+            return new CheckingIn($rData, $rRs, $family);
+        }
+
+        if ($rRs->Status->getStoredVal() == ReservationStatus::Staying) {
+
+            return new StayingReservation($rData, $rRs, new Family($dbh, $rData));
+
+        }
+
+        return new StaticReservation($rData, $rRs, new Family($dbh, $rData));
+
+    }
+
+    public function createMarkup(\PDO $dbh, $includeResv = FALSE) {
+
+        $data = parent::createMarkup($dbh, $includeResv);
+
+        $data['resv'] = $this->createCheckinMarkup($dbh, new Config_Lite(LABEL_FILE));
+
+        return $data;
+
+    }
+
+    protected function createCheckinMarkup(\PDO $dbh, $labels, $isAuthorized = TRUE) {
+
+        $uS = Session::getInstance();
+
+        $resv = new Reservation_1($this->reservRs);
+
+        // Registration
+        $reg = new Registration($dbh, $this->reserveData->getIdPsg());
+
+
+        // Room Chooser
+        $roomChooser = new RoomChooser($dbh, $resv, $resv->getNumberGuests(), $resv->getExpectedArrival(), $resv->getExpectedDeparture());
+
+        $dataArray['rChooser'] = $roomChooser->CreateCheckinMarkup($dbh, $isAuthorized, FALSE, TRUE);
+
+        $rateChooser = new RateChooser($dbh);
+
+        // Rate Chooser
+        if ($uS->RoomPriceModel != ItemPriceCode::None) {
+
+            $resc = $roomChooser->getSelectedResource();
+
+            if (is_null($resc)) {
+                $roomKeyDeps = '';
+            } else {
+                $roomKeyDeps = $resc->getKeyDeposit($uS->guestLookups[GL_TableNames::KeyDepositCode]);
+
+            }
+
+            // Rate Chooser
+            $dataArray['rate'] = $rateChooser->createResvMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'), $reg->getIdRegistration());
+
+            //$dataArray['rate'] = $rateChooser->createCheckinMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
+
+        }
+
+        // Payment Chooser
+        if ($uS->PayAtCkin) {
+
+            $checkinCharges = new CheckinCharges(0, $resv->getVisitFee(), $roomKeyDeps);
+            $checkinCharges->sumPayments($dbh);
+
+            $dataArray['pay'] = HTMLContainer::generateMarkup('div',
+                    PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $checkinCharges, $resv->getExpectedPayType(), $uS->KeyDeposit, FALSE, $uS->DefaultVisitFee, $reg->getPreferredTokenId())
+                    , array('style'=>'clear:left; float:left;'));
+        }
+
+
+        // Array with amount calculated for each rate.
+        $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
+
+        // Array with key deposit info
+        $dataArray['rooms'] = $rateChooser->makeRoomsArray($roomChooser, $uS->guestLookups['Static_Room_Rate'], $uS->guestLookups[GL_TableNames::KeyDepositCode], 20);
+
+        if ($uS->VisitFee) {
+            // Visit Fee Array
+            $dataArray['vfee'] = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
+        }
+
+        // send resource information
+        if (is_null($roomChooser->getSelectedResource()) === FALSE) {
+            $dataArray['rmax'] = $roomChooser->getSelectedResource()->getMaxOccupants();
+            $dataArray['rcur'] = $roomChooser->getCurrentGuests();
+        }
+
+        // Vehicles
+        if ($uS->TrackAuto) {
+            $dataArray['vehicle'] = $this->vehicleMarkup($dbh);
+        }
+
+        // Reservation status title
+        $dataArray['rStatTitle'] = '';
+
+        // Reservation notes
+        $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', 'Visit Notes', array('style'=>'font-weight:bold;'))
+                , array('id'=>'hhk-noteViewer', 'style'=>'clear:left; float:left; width:90%; font-size: 0.9em;', 'class'=>'hhk-panel'));
+
+
+        // Collapsing header
+        $hdr = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('span', 'Checking In')
+                , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
+
+
+        return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
+    }
+
+    public function save(\PDO $dbh, $post) {
+
+        // Save family, rate, hospital, room.
+        parent::save($dbh, $post);
+
+        $this->checkIn($dbh, $post);
+
+    }
+
+    protected function checkIn(\PDO $dbh, $post) {
+
+        $uS = Session::getInstance();
+        $this->errors = '';
+        $today = new \DateTime();
+        $today->setTime(0, 0, 0);
+
+
+        $resv = new Reservation_1($this->reservRs);
+
+        $stmt = $dbh->query("Select idVisit from visit where idReservation = " . $resv->getIdReservation() . " limit 1;");
+
+        if ($stmt->rowCount() > 0) {
+            throw new Hk_Exception_Runtime('Visit already exists for reservation Id ' . $resv->getIdReservation());
+        }
+
+        // Arrival and Departure dates
+        try {
+            $arrivalDT = new\DateTime();
+            $departDT = new \DateTime();
+            $this->saveDates($post, $arrivalDT, $departDT);
+
+            // Edit checkin date for later hour of checkin if posting the check in late.
+            $tCkinDT = new \DateTime($arrivalDT->format('Y-m-d 00:00:00'));
+
+                if ($arrivalDT->format('H') < $uS->CheckInTime && $today > $tCkinDT) {
+                    $arrivalDT->setTime($uS->CheckInTime,0,0);
+                }
+
+                self::verifyVisitDates($resv, $arrivalDT, $departDT, $uS->OpenCheckin);
+
+
+        } catch (Hk_Exception_Runtime $hex) {
+            $this->errors = 'Problem with ' . $this->reserveData->getResvTitle() . ' arrival and/or departure dates:  ' . $hex->getMessage();
+            return;
+        }
+
+
+        // Is resource specified?
+        if ($resv->getIdResource() == 0) {
+            $this->errors =  'A room was not specified.';
+            return;
+        }
+
+        $resources = $resv->findGradedResources($dbh, $arrivalDT->format('Y-m-d'), $departDT->format('Y-m-d'), 1, array('room', 'rmtroom', 'part'), TRUE);
+
+
+        // Does the resource still fit the requirements?
+        if (isset($resources[$resv->getIdResource()]) === FALSE) {
+            $this->errors = 'The room is already in use.';
+            return;
+        }
+
+        // Get our room.
+        $resc = $resources[$resv->getIdResource()];
+        unset($resources);
+
+        // Only admins can pick an unsuitable room.
+//        if ($isAuthorized === FALSE && $resc->optGroup != '') {
+//            return array("error" => 'Room ' . $resc->getTitle() . " is " . $resc->optGroup);
+//        }
+
+        if (count($this->getStayingMembers()) > $resc->getMaxOccupants()) {
+            $this->errors = "The maximum occupancy (" . $resc->getMaxOccupants() . ") for room " . $resc->getTitle() . " is exceded.  ";
+            return;
+        }
+
+        // create visit
+        $visit = new Visit($dbh, $resv->getIdRegistration(), 0, $arrivalDT, $departDT, $resc, $uS->username);
+
+        // Add guests
+        foreach ($this->getStayingMembers() as $m) {
+
+            $visit->addGuestStay($m->getId(), $arrivalDT->format('Y-m-d H:i:s'), $arrivalDT->format('Y-m-d H:i:s'), $departDT->format('Y-m-d H:i:s'));
+
+        }
+
+        $visit->setRateCategory($resv->getRoomRateCategory());
+        $visit->setIdRoomRate($resv->getIdRoomRate());
+        $visit->setRateAdjust($resv->getRateAdjust());
+        $visit->setPledgedRate($resv->getFixedRoomRate());
+
+        // Rate Glide
+        $visit->setRateGlideCredit(RateChooser::setRateGlideDays($dbh, $resv->getIdRegistration(), $uS->RateGlideExtend));
+
+        // Primary guest
+        $visit->setPrimaryGuestId($resv->getIdGuest());
+
+        // Reservation Id
+        $visit->setReservationId($resv->getIdReservation());
+
+        // hospital stay id
+        $visit->setIdHospital_stay($resv->getIdHospitalStay());
+
+        //
+        // Checkin  Saves visit
+        //
+        $visit->checkin($dbh, $uS->username);
+
+
+        // Save new reservation status
+        $resv->setStatus(ReservationStatus::Staying);
+        $resv->setActualArrival($visit->getArrivalDate());
+        $resv->setExpectedDeparture($visit->getExpectedDeparture());
+        $resv->setNumberGuests(count($this->getStayingMembers()));
+        $resv->setIdResource($resc->getIdResource());
+        $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
+
+        //
+        // Payment
+        //
+        $pmp = PaymentChooser::readPostedPayment($dbh, $post);
+
+        // Check for key deposit
+        if ($uS->KeyDeposit && is_null($pmp) === FALSE) {
+
+            $reg = new Registration($dbh, 0, $resv->getIdRegistration());
+
+            $depCharge = $resc->getKeyDeposit($uS->guestLookups[GL_TableNames::KeyDepositCode]);
+            $depBalance = $reg->getDepositBalance($dbh);
+
+            if ($depCharge > 0 && $pmp->getKeyDepositPayment() == 0 && $depBalance > 0) {
+
+                // Pay deposit with registration balance
+                if ($depCharge <= $depBalance) {
+                    $pmp->setKeyDepositPayment($depCharge);
+                } else {
+                    $pmp->setKeyDepositPayment($depBalance);
+                }
+
+
+
+            } else if ($pmp->getKeyDepositPayment() > 0) {
+
+                $visit->visitRS->DepositPayType->setNewVal($pmp->getPayType());
+            }
+
+            // Update Pay type.
+            $visit->updateVisitRecord($dbh, $uS->username);
+        }
+
+        $paymentManager = new PaymentManager($pmp);
+
+        $this->payResult = HouseServices::processPayments($dbh, $paymentManager, $visit, 'CheckedIn.php', $visit->getPrimaryGuestId());
+        $this->resc = $resc;
+        $this->visit = $visit;
+
+        return;
+    }
+
+    public function checkedinMarkup(\PDO $dbh) {
+
+        if ($this->errors != '') {
+            return array('error' => $this->errors);
+        }
+
+        $uS = Session::getInstance();
+        $reply = '';
+
+        if ($this->payResult !== NULL) {
+
+            $reply .= $this->payResult->getReplyMessage();
+
+            if ($this->payResult->getStatus() == PaymentResult::FORWARDED) {
+                $creditCheckOut = $this->payResult->getForwardHostedPayment();
+            }
+
+            // Receipt
+            if (is_null($this->payResult->getReceiptMarkup()) === FALSE && $this->payResult->getReceiptMarkup() != '') {
+                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', $this->payResult->getReceiptMarkup());
+                Registration::updatePrefTokenId($dbh, $this->visit->getIdRegistration(), $this->payResult->getIdToken());
+            }
+
+            // New Invoice
+            if (is_null($this->payResult->getInvoiceNumber()) === FALSE && $this->payResult->getInvoiceNumber() != '') {
+                $dataArray['invoiceNumber'] = $this->payResult->getInvoiceNumber();
+            }
+        }
+
+
+        // Generate Reg form
+        $reservArray = ReservationSvcs::generateCkinDoc($dbh, 0, $this->visit->getIdVisit(), $uS->resourceURL . 'images/receiptlogo.png');
+
+        $dataArray['style'] = $reservArray['style'];
+        $dataArray['regform'] = $reservArray['doc'];
+        unset($reservArray);
+
+
+
+        // email the form
+        if ($uS->adminEmailAddr != '' && $uS->noreplyAddr != '') {
+
+            try {
+
+                $config = new Config_Lite(ciCFG_FILE);
+                $mail = prepareEmail($config);
+
+                $mail->From = $uS->noreplyAddr;
+                $mail->FromName = $uS->siteName;
+
+                $tos = explode(',', $uS->adminEmailAddr);
+                foreach ($tos as $t) {
+                    $to = filter_var($t, FILTER_SANITIZE_EMAIL);
+                    if ($to !== FALSE && $to != '') {
+                        $mail->addAddress($to);
+                    }
+                }
+
+                $mail->addReplyTo($uS->noreplyAddr, $uS->siteName);
+                $mail->isHTML(true);
+
+                $mail->Subject = "New Check-In to " . $this->resc->getTitle() . " by " . $uS->username;
+
+                $notes = '';  //HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('h4', 'Notes') . nl2br($psg->psgRS->Notes->getStoredVal()));
+
+                $mail->msgHTML($dataArray['style'] . $dataArray['regform'] . $notes);
+                $mail->send();
+
+            } catch (Exception $ex) {
+                $reply .= $ex->getMessage();
+            }
+        }
+
+
+        // Credit payment?
+        if (count($creditCheckOut) > 0) {
+            return $creditCheckOut;
+        }
+
+        // reload registration to reflect any new deposit payments.
+        $reg = new Registration($dbh, 0, $this->visit->getIdRegistration());
+
+
+        $dataArray['vid'] = $this->visit->getIdVisit();
+        $dataArray['regDialog'] = HTMLContainer::generateMarkup('div', $reg->createRegMarkup($dbh, FALSE), array('class' => "ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"));
+        $dataArray['success'] = "Checked-In.  " . $reply;
+        $dataArray['reg'] = $reg->getIdRegistration();
+
+        return $dataArray;
+
+    }
+
+}
+
 class ReserveSearcher extends ActiveReservation {
 
-    public function createMarkup(\PDO $dbh) {
+    public function createMarkup(\PDO $dbh, $includeResv = TRUE) {
 
         $data = $this->resvChooserMarkup($dbh);
 

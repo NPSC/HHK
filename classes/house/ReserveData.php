@@ -55,7 +55,7 @@ class ReserveData {
     protected $departureDateStr;
     protected $psgMembers;
 
-    function __construct($post) {
+    function __construct($post, $reservationTitle = '') {
 
         $uS = Session::getInstance();
         $labels = new Config_Lite(LABEL_FILE);
@@ -89,7 +89,7 @@ class ReserveData {
             $this->setMembersFromPost(filter_var_array($post['mem'], FILTER_SANITIZE_STRING));
         }
 
-        $this->resvTitle = $labels->getString('guestEdit', 'reservationTitle', 'Reservation');
+        $this->resvTitle = ($reservationTitle == '' ? $labels->getString('guestEdit', 'reservationTitle', 'Reservation') : $reservationTitle);
         $this->resvEarlyArrDays = $uS->ResvEarlyArrDays;
         $this->patAsGuestFlag = $uS->PatientAsGuest;
         $this->patBirthDateFlag = $uS->InsistPatBD;

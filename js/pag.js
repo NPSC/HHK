@@ -32,7 +32,7 @@ function hideAlertMessage(containerId) {
     if (!containerId) {
         containerId = 'divAlert1';
     }
-    $("#" + containerId + ":visible").removeAttr("style").hide('fade');
+    $("#" + containerId).hide('fade');
 }
 /**
  * 

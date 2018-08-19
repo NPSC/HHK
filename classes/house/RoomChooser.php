@@ -172,11 +172,11 @@ class RoomChooser {
     }
 
 
-    public function createCheckinMarkup(\PDO $dbh, $isAuthorized, $constraintsDisabled = FALSE, $omitSelf = TRUE) {
+    public function createCheckinMarkup(\PDO $dbh, $isAuthorized, $constraintsDisabled = FALSE, $omitSelf = TRUE, $overrideMaxOcc = 0) {
 
         if ($this->resv->getStatus() === ReservationStatus::Committed || $this->resv->getStatus() === ReservationStatus::Imediate || $this->resv->getStatus() === ReservationStatus::Waitlist) {
 
-            $rescs = $this->findResources($dbh, $isAuthorized, $omitSelf);
+            $rescs = $this->findResources($dbh, $isAuthorized, $omitSelf, $overrideMaxOcc);
 
             if (isset($rescs[$this->resv->getIdResource()])) {
                 $this->selectedResource = $rescs[$this->resv->getIdResource()];
