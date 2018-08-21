@@ -194,7 +194,7 @@ class HouseServices {
 
                 //$notes = 'Visit ' . $this->getIdVisit() . '-' . $this->getSpan() . ', Room ' . $roomTitle . ' - ' . $notes;
                 LinkNote::save($dbh, $notes, $idVisit, Note::VisitLink, $uS->username);
-                
+
             }
         }
 
@@ -2740,7 +2740,7 @@ from
         $dataArray['resc'] = $roomChooser->CreateCheckinMarkup($dbh, $isAuthorized, TRUE, $omitSelf);
 
         // Array with key deposit info
-        $dataArray['rooms'] = $rateChooser->makeRoomsArray($roomChooser, $uS->guestLookups['Static_Room_Rate'], $uS->guestLookups[GL_TableNames::KeyDepositCode]);
+        $dataArray['rooms'] = $roomChooser->makeRoomsArray();
         // Array with amount calculated for each rate.
         $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $reg->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
 

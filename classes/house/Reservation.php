@@ -91,9 +91,15 @@ class Reservation {
             return new ActiveReservation($rData, $rRs, $family);
         }
 
-        if ($rRs->Status->getStoredVal() == ReservationStatus::Staying || $rRs->Status->getStoredVal() == ReservationStatus::Checkedout) {
+        if ($rRs->Status->getStoredVal() == ReservationStatus::Staying) {
 
             return new StayingReservation($rData, $rRs, new Family($dbh, $rData));
+
+        }
+
+        if ($rRs->Status->getStoredVal() == ReservationStatus::Checkedout) {
+
+            return new CheckedoutReservation($rData, $rRs, new Family($dbh, $rData));
 
         }
 
@@ -166,10 +172,10 @@ class Reservation {
         return $data;
     }
 
-    public function save(\PDO $dbh, $post) {
+    public function save(\PDO $dbh, $post, $isAuthorized) {
 
         $newResv = new ActiveReservation($this->reserveData, $this->reservRs, $this->family);
-        $newResv->save($dbh, $post);
+        $newResv->save($dbh, $post, $isAuthorized);
         return $newResv;
 
     }
@@ -310,7 +316,7 @@ class Reservation {
                 // Array with amount calculated for each rate.
                 $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
                 // Array with key deposit info
-                $dataArray['rooms'] = $rateChooser->makeRoomsArray($roomChooser, $uS->guestLookups['Static_Room_Rate'], $uS->guestLookups[GL_TableNames::KeyDepositCode], 20);
+                $dataArray['rooms'] = $roomChooser->makeRoomsArray();
 
                 if ($uS->VisitFee) {
                     // Visit Fee Array
@@ -373,6 +379,42 @@ class Reservation {
 
 
         return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
+    }
+
+    protected function makeRoomsArray(Reservation_1 $resv) {
+
+        $uS = Session::getInstance();
+
+        $resArray = array();
+
+        foreach ($resv->getAvailableResources() as $rc) {
+
+            if ($rc->getIdResource() == $resv->getIdResource()) {
+                $assignedRate = $resv->getFixedRoomRate();
+            } else {
+                $assignedRate = $rc->getRate($uS->guestLookups['Static_Room_Rate']);
+            }
+
+            $resArray[$rc->getIdResource()] = array(
+                "maxOcc" => $rc->getMaxOccupants(),
+                "rate" => $assignedRate,
+                "title" => $rc->getTitle(),
+                'key' => $rc->getKeyDeposit($uS->guestLookups[GL_TableNames::KeyDepositCode]),
+                'status' => 'a'
+            );
+        }
+
+        // Blank
+        $resArray['0'] = array(
+            "maxOcc" => 0,
+            "rate" => 0,
+            "title" => '',
+            'key' => 0,
+            'status' => ''
+        );
+
+        return $resArray;
+
     }
 
     protected function vehicleMarkup(\PDO $dbh) {
@@ -863,7 +905,7 @@ class ActiveReservation extends Reservation {
 
     }
 
-    public function save(\PDO $dbh, $post) {
+    public function save(\PDO $dbh, $post, $isAuthorized) {
 
         $uS = Session::getInstance();
 
@@ -1059,7 +1101,7 @@ class CheckingIn extends ActiveReservation {
             return CheckingIn::loadReservation($dbh, $rData);
         }
 
-        return array('error', 'Reservation Id not defined.');
+        throw new Hk_Exception_Runtime('Reservation Id not defined.');
 
     }
 
@@ -1115,13 +1157,12 @@ class CheckingIn extends ActiveReservation {
 
 
         // Room Chooser
-        $roomChooser = new RoomChooser($dbh, $resv, $resv->getNumberGuests(), $resv->getExpectedArrival(), $resv->getExpectedDeparture());
-
-        $dataArray['rChooser'] = $roomChooser->CreateCheckinMarkup($dbh, $isAuthorized, FALSE, TRUE);
-
-        $rateChooser = new RateChooser($dbh);
+        $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
 
         // Rate Chooser
+        $rateChooser = new RateChooser($dbh);
+
+        // Create rate chooser markup?
         if ($uS->RoomPriceModel != ItemPriceCode::None) {
 
             $resc = $roomChooser->getSelectedResource();
@@ -1130,13 +1171,10 @@ class CheckingIn extends ActiveReservation {
                 $roomKeyDeps = '';
             } else {
                 $roomKeyDeps = $resc->getKeyDeposit($uS->guestLookups[GL_TableNames::KeyDepositCode]);
-
             }
 
             // Rate Chooser
-            $dataArray['rate'] = $rateChooser->createResvMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'), $reg->getIdRegistration());
-
-            //$dataArray['rate'] = $rateChooser->createCheckinMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
+            $dataArray['rate'] = $rateChooser->createCheckinMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
 
         }
 
@@ -1151,22 +1189,19 @@ class CheckingIn extends ActiveReservation {
                     , array('style'=>'clear:left; float:left;'));
         }
 
+        // Room Chooser
+        $dataArray['rChooser'] = $roomChooser->CreateCheckinMarkup($dbh, $isAuthorized, FALSE, TRUE, 1);
 
-        // Array with amount calculated for each rate.
+
+        // Rates array with amount calculated for each rate.
         $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
 
-        // Array with key deposit info
-        $dataArray['rooms'] = $rateChooser->makeRoomsArray($roomChooser, $uS->guestLookups['Static_Room_Rate'], $uS->guestLookups[GL_TableNames::KeyDepositCode], 20);
+        // Rooms array with key deposit info
+        $dataArray['rooms'] = $roomChooser->makeRoomsArray();
 
         if ($uS->VisitFee) {
             // Visit Fee Array
             $dataArray['vfee'] = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
-        }
-
-        // send resource information
-        if (is_null($roomChooser->getSelectedResource()) === FALSE) {
-            $dataArray['rmax'] = $roomChooser->getSelectedResource()->getMaxOccupants();
-            $dataArray['rcur'] = $roomChooser->getCurrentGuests();
         }
 
         // Vehicles
@@ -1192,16 +1227,16 @@ class CheckingIn extends ActiveReservation {
         return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
     }
 
-    public function save(\PDO $dbh, $post) {
+    public function save(\PDO $dbh, $post, $isAuthorized) {
 
         // Save family, rate, hospital, room.
-        parent::save($dbh, $post);
+        parent::save($dbh, $post, $isAuthorized);
 
-        $this->checkIn($dbh, $post);
+        $this->checkIn($dbh, $post, $isAuthorized);
 
     }
 
-    protected function checkIn(\PDO $dbh, $post) {
+    protected function checkIn(\PDO $dbh, $post, $isAuthorized) {
 
         $uS = Session::getInstance();
         $this->errors = '';
@@ -1259,9 +1294,10 @@ class CheckingIn extends ActiveReservation {
         unset($resources);
 
         // Only admins can pick an unsuitable room.
-//        if ($isAuthorized === FALSE && $resc->optGroup != '') {
-//            return array("error" => 'Room ' . $resc->getTitle() . " is " . $resc->optGroup);
-//        }
+        if ($isAuthorized === FALSE && $resc->optGroup != '') {
+            $this->errors = 'Room ' . $resc->getTitle() . " is " . $resc->optGroup;
+            return;
+        }
 
         if (count($this->getStayingMembers()) > $resc->getMaxOccupants()) {
             $this->errors = "The maximum occupancy (" . $resc->getMaxOccupants() . ") for room " . $resc->getTitle() . " is exceded.  ";
@@ -1273,6 +1309,11 @@ class CheckingIn extends ActiveReservation {
 
         // Add guests
         foreach ($this->getStayingMembers() as $m) {
+
+            if ($uS->PatientAsGuest === FALSE && $m->isPatient()) {
+                $this->errors = 'Patients cannot stay.';
+                return;
+            }
 
             $visit->addGuestStay($m->getId(), $arrivalDT->format('Y-m-d H:i:s'), $arrivalDT->format('Y-m-d H:i:s'), $departDT->format('Y-m-d H:i:s'));
 
@@ -1343,8 +1384,8 @@ class CheckingIn extends ActiveReservation {
         }
 
         $paymentManager = new PaymentManager($pmp);
-
         $this->payResult = HouseServices::processPayments($dbh, $paymentManager, $visit, 'CheckedIn.php', $visit->getPrimaryGuestId());
+
         $this->resc = $resc;
         $this->visit = $visit;
 
@@ -1352,6 +1393,8 @@ class CheckingIn extends ActiveReservation {
     }
 
     public function checkedinMarkup(\PDO $dbh) {
+
+        $creditCheckOut = array();
 
         if ($this->errors != '') {
             return array('error' => $this->errors);
@@ -1387,7 +1430,6 @@ class CheckingIn extends ActiveReservation {
         $dataArray['style'] = $reservArray['style'];
         $dataArray['regform'] = $reservArray['doc'];
         unset($reservArray);
-
 
 
         // email the form
@@ -1555,7 +1597,19 @@ class StaticReservation extends ActiveReservation {
 
 class StayingReservation extends ActiveReservation {
 
-    public function save(\PDO $dbh, $post) {
+    public function save(\PDO $dbh, $post, $isAuthorized) {
+        return array('error'=>'Saving is not allowed.');
+    }
+
+    public function addPerson(\PDO $dbh) {
+        return array('error'=>'Adding a person is not allowed.');
+    }
+
+}
+
+class CheckedoutReservation extends ActiveReservation {
+
+    public function save(\PDO $dbh, $post, $isAuthorized) {
         return array('error'=>'Saving is not allowed.');
     }
 

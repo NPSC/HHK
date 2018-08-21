@@ -48,7 +48,7 @@ function flagAlertMessage(mess, wasError) {
         $('#alrResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
         $('#alrIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
         spn.innerHTML = "<strong>Success: </strong>" + mess;
-        $("#divAlert1").show("slide");
+        $("#divAlert1").show();
         window.scrollTo(0, 5);
     } else {
         // define the error message markup

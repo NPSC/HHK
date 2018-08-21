@@ -281,8 +281,7 @@ function updateRoomChooser(idReserv, numGuests, arrivalDate, departureDate) {
     $('#hhkroomMsg').text('').hide();
         
     $('input.hhk-constraintsCB:checked').each(function () {
-        var nod = $(this).data('cnid');
-        cbRS[nod] = 'ON';
+        cbRS[$(this).data('cnid')] = 'ON';
     });
 
     $.post('ws_ckin.php', 

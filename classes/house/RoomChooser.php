@@ -24,6 +24,7 @@ class RoomChooser {
     protected $currentGuests;
     protected $maxOccupants;
     protected $oldResvId;
+
     /**
      *
      * @var \Reservation_1
@@ -286,27 +287,66 @@ class RoomChooser {
         return $resources;
     }
 
+    public function makeRoomsArray() {
 
-    protected function createChooserMarkup(\PDO $dbh, $constraintsDisabled, $classId = '') {
+        $uS = Session::getInstance();
 
-        $resources[] = array(0, '-None-', '');
-        $errorMessage = '';
+        $resources = $this->resv->getAvailableResources();
+        $resArray = array();
+
+        foreach ($resources as $rc) {
+
+            if ($this->getSelectedResource() != NULL && $rc->getIdResource() == $this->getSelectedResource()->getIdResource()) {
+                $assignedRate = $this->resv->getFixedRoomRate();
+            } else {
+                $assignedRate = $rc->getRate($uS->guestLookups['Static_Room_Rate']);
+            }
+
+            $resArray[$rc->getIdResource()] = array(
+                "maxOcc" => $rc->getMaxOccupants(),
+                "rate" => $assignedRate,
+                "title" => $rc->getTitle(),
+                'key' => $rc->getKeyDeposit($uS->guestLookups[GL_TableNames::KeyDepositCode]),
+                'status' => 'a'
+            );
+        }
+
+        // Blank
+        $resArray['0'] = array(
+            "maxOcc" => 0,
+            "rate" => 0,
+            "title" => '',
+            'key' => 0,
+            'status' => ''
+        );
+
+        return $resArray;
+    }
+
+    public function makeRoomSelector($resOptions, $idResourceChosen) {
+
+        return HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resOptions, $idResourceChosen, FALSE), array('name'=>'selResource'));
+    }
+
+    public function makeRoomSelectorOptions() {
+
+        $resOptions[] = array(0, '-None-', '');
 
         // Load available resources
         foreach ($this->resv->getAvailableResources() as $r) {
-            $resources[$r->getIdResource()] = array($r->getIdResource(), $r->getTitle(), $r->optGroup);
+            $resOptions[$r->getIdResource()] = array($r->getIdResource(), $r->getTitle(), $r->optGroup);
         }
 
-        // Selected resource
-        $idResourceChosen = $this->resv->getIdResource();
+        return $resOptions;
+    }
 
-        if ($this->resv->getStatus() == ReservationStatus::Waitlist) {
+    public function getRoomSelectionError(\PDO $dbh, $resOptions) {
 
-            $idResourceChosen = 0;
+        $errorMessage = '';
 
-        } else if (($this->resv->getStatus() == ReservationStatus::Committed || $this->resv->getStatus() == ReservationStatus::UnCommitted) && isset($resources[$this->resv->getIdResource()])) {
+        if (($this->resv->getStatus() == ReservationStatus::Committed || $this->resv->getStatus() == ReservationStatus::UnCommitted) && isset($resOptions[$this->resv->getIdResource()])) {
 
-            $myResc = $resources[$this->resv->getIdResource()];
+            $myResc = $resOptions[$this->resv->getIdResource()];
 
             if (isset($myResc[2]) && $myResc[2] != '') {
                 $errorMessage = $myResc[2];
@@ -330,6 +370,15 @@ class RoomChooser {
             }
         }
 
+        return $errorMessage;
+    }
+
+    protected function createChooserMarkup(\PDO $dbh, $constraintsDisabled, $classId = '') {
+
+        $resOptions = $this->makeRoomSelectorOptions();
+
+        $errorMessage = $this->getRoomSelectionError($dbh, $resOptions);
+
         $resvConstraints = $this->resv->getConstraints($dbh);
         $constraintMkup = '';
 
@@ -348,9 +397,7 @@ class RoomChooser {
 
         $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->getTotalGuests(), array('id'=>'spnNumGuests','style'=>'font-weight:bold;')), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span',
-                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resources, $idResourceChosen, FALSE), array('name'=>'selResource', 'class'=>$classId)), array('id'=>'spanSelResc'))
-                        )
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->makeRoomSelector($resOptions, $this->resv->getIdResource()), array('id'=>'spanSelResc')))
                 );
 
         // set up room suitability message area

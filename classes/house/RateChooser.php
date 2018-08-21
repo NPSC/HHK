@@ -342,8 +342,6 @@ class RateChooser {
         return $reply;
     }
 
-
-
     public function createCheckinMarkup(\PDO $dbh, \Reservation_1 $resv, $numNights, $visitFeeTitle) {
 
         // Select payment block
@@ -357,7 +355,7 @@ class RateChooser {
 
             return HTMLContainer::generateMarkup('fieldset',
                     HTMLContainer::generateMarkup('legend', 'Rate Chooser', array('style'=>'font-weight:bold;'))
-                    . $markup);
+                    . $markup, array('style'=>'float:left;', 'class'=>'hhk-panel'));
 
         } else {
             return $this->createStaticMarkup($dbh, $resv, $visitFeeTitle);
@@ -443,7 +441,6 @@ class RateChooser {
 
     }
 
-
     public function makeRateArray(\PDO $dbh, $numNights, $idRegistration, $pledgedRate = 0, $guestNites = 0) {
         // category, rate
 
@@ -459,40 +456,6 @@ class RateChooser {
         }
 
         return $catAmounts;
-    }
-
-    public function makeRoomsArray(RoomChooser $roomChooser, $staticRoomRates, $keyDepCodes, $overRideMaxOccs = 0) {
-
-        $resources = $roomChooser->resv->getAvailableResources();
-        $resArray = array();
-
-        foreach ($resources as $rc) {
-
-            if ($roomChooser->getSelectedResource() != NULL && $rc->getIdResource() == $roomChooser->getSelectedResource()->getIdResource()) {
-                $assignedRate = $roomChooser->resv->getFixedRoomRate();
-            } else {
-                $assignedRate = $rc->getRate($staticRoomRates);
-            }
-
-            $resArray[$rc->getIdResource()] = array(
-                "maxOcc" => ($overRideMaxOccs == 0 ? $rc->getMaxOccupants() : $overRideMaxOccs),
-                "rate" => $assignedRate,
-                "title" => $rc->getTitle(),
-                'key' => $rc->getKeyDeposit($keyDepCodes),
-                'status' => 'a'
-            );
-        }
-
-        // Blank
-        $resArray['0'] = array(
-            "maxOcc" => 0,
-            "rate" => 0,
-            "title" => '',
-            'key' => 0,
-            'status' => ''
-        );
-
-        return $resArray;
     }
 
     public function makeVisitFeeArray(\PDO $dbh, $visitFeeCharged = 0) {

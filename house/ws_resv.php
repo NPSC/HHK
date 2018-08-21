@@ -108,6 +108,7 @@ $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
 
+$guestAdmin = SecurityComponent::is_Authorized("guestadmin");
 
 $c = "";
 
@@ -137,7 +138,7 @@ try {
 
         $resv = Reservation::reservationFactoy($dbh, $_POST);
 
-        $newResv = $resv->save($dbh, $_POST);
+        $newResv = $resv->save($dbh, $_POST, $guestAdmin);
 
         $events = $newResv->createMarkup($dbh);
 
@@ -157,14 +158,14 @@ try {
 
         $resv = CheckingIn::reservationFactoy($dbh, $_POST);
 
-        $resv->save($dbh, $_POST);
+        $resv->save($dbh, $_POST, $guestAdmin);
 
         $events = $resv->checkedinMarkup($dbh);
 
         break;
 
 
-    case "addThinGuest":
+    case "addResvGuest":
 
         $resv = Reservation::reservationFactoy($dbh, $_POST);
 

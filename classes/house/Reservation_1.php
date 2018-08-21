@@ -435,6 +435,13 @@ class Reservation_1 {
 
         $this->availableResources = $this->testResources($dbh, $this->untestedResources);
 
+        foreach ($this->availableResources as $resc) {
+
+            if ($resc->getMaxOccupants() < $this->getNumberGuests()) {
+                $resc->optGroup = 'Too Small';
+            }
+        }
+
         // Return an array of Resource objs.
         return $this->availableResources;
     }
@@ -456,14 +463,19 @@ class Reservation_1 {
         $this->availableResources = array();
 
         // Returns an array of Resource objs.
-        $filteredRows = $this->testResources($dbh, $this->untestedResources);
+        $testedRows = $this->testResources($dbh, $this->untestedResources);
 
         foreach ($this->untestedResources as $r) {
 
-            if (isset($filteredRows[$r['idResource']])) {
+            if (isset($testedRows[$r['idResource']])) {
 
-                $resc = $filteredRows[$r['idResource']];
+                $resc = $testedRows[$r['idResource']];
                 $resc->optGroup = '';
+
+                if ($resc->getMaxOccupants() < $this->getNumberGuests()) {
+                    $resc->optGroup = 'Too Small';
+                }
+
                 $this->availableResources[$r['idResource']] = $resc;
 
             } else {
@@ -472,8 +484,14 @@ class Reservation_1 {
                 EditRS::loadRow($r, $resourceRS);
                 $resc = Resource::getThisFromRS($dbh, $resourceRS);
                 $resc->optGroup = 'Not Suitable';
+
+                if ($resc->getMaxOccupants() < $this->getNumberGuests()) {
+                    $resc->optGroup = 'Too Small';
+                }
+
                 $this->availableResources[$r['idResource']] = $resc;
             }
+
         }
 
         return $this->availableResources;

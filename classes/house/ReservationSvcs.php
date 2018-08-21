@@ -324,7 +324,7 @@ class ReservationSvcs {
                 // Array with amount calculated for each rate.
                 $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
                 // Array with key deposit info
-                $dataArray['rooms'] = $rateChooser->makeRoomsArray($roomChooser, $uS->guestLookups['Static_Room_Rate'], $uS->guestLookups[GL_TableNames::KeyDepositCode]);
+                $dataArray['rooms'] = $roomChooser->makeRoomsArray();
 
                 if ($uS->VisitFee && ($resv->getExpectedDays() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0)) {
                     // Visit Fee Array
@@ -1282,7 +1282,7 @@ class ReservationSvcs {
         $dataArray['resv'] = self::createStatusChooser($resv, $resv->getChooserStatuses($uS->guestLookups['ReservStatus']), $uS->nameLookups[GL_TableNames::PayType], $labels, $showPayWith, Registration::loadLodgingBalance($dbh, $resv->getIdRegistration()));
 
         // Array with key deposit info
-        $dataArray['rooms'] = $rateChooser->makeRoomsArray($roomChooser, $uS->guestLookups['Static_Room_Rate'], $uS->guestLookups[GL_TableNames::KeyDepositCode]);
+        $dataArray['rooms'] = $roomChooser->makeRoomsArray();
 
 
         // Room Chooser
@@ -2272,12 +2272,16 @@ class ReservationSvcs {
         return $dataArray;
     }
 
-    public static function getRoomList(\PDO $dbh, Reservation_1 $resv, $eid, $isAuthorized) {
+    public static function getRoomList(\PDO $dbh, Reservation_1 $resv, $eid, $isAuthorized, $numGuests = 0) {
+
+        if ($numGuests <= 0) {
+            $numGuests = $resv->getNumberGuests();
+        }
 
         if ($isAuthorized) {
-            $resv->findGradedResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $resv->getNumberGuests(), array('room','rmtroom','part'), TRUE);
+            $resv->findGradedResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $numGuests, array('room','rmtroom','part'), TRUE);
         } else {
-            $resv->findResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $resv->getNumberGuests(), array('room','rmtroom','part'), TRUE);
+            $resv->findResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $numGuests, array('room','rmtroom','part'), TRUE);
         }
 
         $resources = array();
@@ -2289,7 +2293,7 @@ class ReservationSvcs {
         }
 
         // add waitlist option to the top of the list
-        $resources[0] = array(0, 'Waitlist', '');
+        $resources[0] = array(0, '-None-', '');
 
 
         // Selected resource
@@ -2344,17 +2348,21 @@ class ReservationSvcs {
         }
 
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
-        $resv->setNumberGuests($numGuests);
+        //$resv->setNumberGuests($numGuests);
         $resv->setIdResource($idResc);
         $resv->setExpectedArrival($expArr);
         $resv->setExpectedDeparture($expDep);
 
         $resv->saveConstraints($dbh, $cbs);
 
-        $results = ReservationSvcs::getRoomList($dbh, $resv, '', $isAuthorized);
+        $roomChooser = new RoomChooser($dbh, $resv, 0, new DateTime($expArr), new DateTime($expDep));
+        $roomChooser->findResources($dbh, $isAuthorized, TRUE, $numGuests);
 
-        return array('selectr'=>$results['ctrl'], 'idResource' => $idResc, 'msg'=>$results['msg']);
+        $resOptions = $roomChooser->makeRoomSelectorOptions();
+        $errorMessage = $roomChooser->getRoomSelectionError($dbh, $resOptions);
 
+        //$results = ReservationSvcs::getRoomList($dbh, $resv, '', $isAuthorized, $numGuests);
+        return array('rooms'=>$roomChooser->makeRoomsArray(), 'selectr'=>$roomChooser->makeRoomSelector($resOptions, $idResc), 'idResource' => $idResc, 'msg'=>$errorMessage);
 
     }
 

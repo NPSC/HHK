@@ -379,7 +379,7 @@ $(document).ready(function() {
                         $('#btnDone').val('Save').show();
                     }
 
-                    $('#btnDone').val('Save').show();
+                    $('#btnDone').val('Save ' + resv.resvTitle).show();
                     ckedIn(data);
 
                 }
