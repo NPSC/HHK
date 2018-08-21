@@ -135,6 +135,7 @@ class Reservation {
             throw new Hk_Exception_Runtime('A check-in date cannot be AFTER the check-out date.  (Silly Human)  ');
         }
     }
+
     public function createMarkup(\PDO $dbh, $includeResv = TRUE) {
 
         $this->family->setGuestsStaying($dbh, $this->reserveData, $this->reservRs->idGuest->getstoredVal());
@@ -1079,7 +1080,8 @@ class ActiveReservation extends Reservation {
         // Payments
         $this->savePayments($dbh, $resv, $post);
 
-        return $this;
+        $newResv = new ActiveReservation($this->reserveData, $this->reservRs, $this->family);
+        return $newResv;
 
     }
 }
@@ -1273,6 +1275,14 @@ class CheckingIn extends ActiveReservation {
             return;
         }
 
+        $tonight = new DateTime();
+        $tonight->setTime(23, 59, 50);
+
+        // Cannot check in early
+        if ($arrivalDT > $tonight) {
+            $this->errors =  'Cannot check into the future.';
+            return;
+        }
 
         // Is resource specified?
         if ($resv->getIdResource() == 0) {

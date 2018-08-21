@@ -227,6 +227,92 @@ var payFailPage = '<?php echo $payFailPage; ?>';
 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
 var pageManager;
 
+function getRegistrationDialog(idReg, cDiv) {
+    "use strict";
+    $.post(
+            'ws_ckin.php',
+            {cmd: 'getReg',
+                reg: idReg},
+    function(data) {
+        if (!data) {
+            alert('Bad Reply from Server');
+            return;
+        }
+        try {
+            data = $.parseJSON(data);
+        } catch (err) {
+            alert('Bad JSON Encoding');
+            return;
+        }
+        if (data.error) {
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
+            }
+            flagAlertMessage(data.error, true);
+            return;
+        } else if (data.success) {
+            showRegDialog(data.success, idReg, cDiv);
+        }
+    }
+    );
+}
+
+function showRegDialog(markup, idReg, container) {
+    "use strict";
+    var regDialog = $('<div id="regDialog" />').append($(markup));
+    container.append(regDialog);
+    $('#regDialog').dialog({
+        autoOpen: true,
+        width: 360,
+        resizable: true,
+        modal: true,
+        title: 'Registration Info',
+        buttons: {
+            "Cancel": function() {
+                $(this).dialog("close");
+            },
+            "Save": function() {
+                var parms = {};
+                $('.hhk-regvalue').each(function() {
+                    if ($(this).attr('type') === 'checkbox') {
+                        if (this.checked !== false) {
+                            parms[$(this).attr('name')] = 'on';
+                        }
+                    } else {
+                        parms[$(this).attr('name')] = this.value;
+                    }
+                });
+                $(this).dialog("close");
+                $.post('ws_ckin.php',
+                        {cmd: 'saveReg',
+                            reg: idReg,
+                            parm: parms},
+                function(data) {
+                    if (!data) {
+                        alert('Bad Reply from Server');
+                        return;
+                    }
+                    try {
+                        data = $.parseJSON(data);
+                    } catch (err) {
+                        alert('Bad JSON Encoding');
+                        return;
+                    }
+                    if (data.error) {
+                        if (data.gotopage) {
+                            window.open(data.gotopage, '_self');
+                        }
+                        alert(data.error);
+                        return;
+                    } else if (data.success) {
+                        $('#mesgReg').text(data.success);
+                    }
+                });
+            }
+        }
+    });
+}
+
 function ckedIn(data) {
     "use strict";
     $("#divAlert1").hide();
@@ -315,8 +401,10 @@ function ckedIn(data) {
 
 $(document).ready(function() {
     "use strict";
+    var t = this;
     var $guestSearch = $('#gstSearch');
     var resv = $.parseJSON('<?php echo $resvObjEncoded; ?>');
+    var pageManager = t.pageManager;
 
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
@@ -345,7 +433,7 @@ $(document).ready(function() {
 
 
     $('#btnShowReg').click(function () {
-        window.open('ShowRegForm.php?rid=' + pageManager.idResv, '_blank');
+        window.open('ShowRegForm.php?rid=' + pageManager.getIdResv(), '_blank');
     });
 
     $('#btnDone').click(function () {
@@ -360,7 +448,7 @@ $(document).ready(function() {
 
             $.post(
                 'ws_resv.php',
-                $('#form1').serialize() + '&cmd=saveCheckin&idPsg=' + pageManager.idPsg + '&rid=' + pageManager.idResv + '&' + $.param({mem: pageManager.people.list()}),
+                $('#form1').serialize() + '&cmd=saveCheckin&idPsg=' + pageManager.getIdPsg() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
                 function(data) {
 
                     try {

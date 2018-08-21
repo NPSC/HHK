@@ -271,8 +271,10 @@ var pageManager;
 
 $(document).ready(function() {
     "use strict";
+    var t = this;
     var $guestSearch = $('#gstSearch');
     var resv = $.parseJSON('<?php echo $resvObjEncoded; ?>');
+    var pageManager = t.pageManager;
 
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
@@ -309,12 +311,12 @@ $(document).ready(function() {
 
             $(this).val('Deleting >>>>');
 
-            pageManager.deleteReserve(pageManager.idResv, 'form#form1', $(this));
+            pageManager.deleteReserve(pageManager.getIdResv(), 'form#form1', $(this));
         }
     });
 
     $('#btnShowReg').click(function () {
-        window.open('ShowRegForm.php?rid=' + pageManager.idResv, '_blank');
+        window.open('ShowRegForm.php?rid=' + pageManager.getIdResv(), '_blank');
     });
 
     $('#btnDone').click(function () {
@@ -329,7 +331,7 @@ $(document).ready(function() {
 
             $.post(
                 'ws_resv.php',
-                $('#form1').serialize() + '&cmd=saveResv&idPsg=' + pageManager.idPsg + '&rid=' + pageManager.idResv + '&' + $.param({mem: pageManager.people.list()}),
+                $('#form1').serialize() + '&cmd=saveResv&idPsg=' + pageManager.getIdPsg() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
                 function(data) {
                     try {
                         data = $.parseJSON(data);

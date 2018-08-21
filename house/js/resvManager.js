@@ -36,12 +36,22 @@ function resvManager(initData) {
     t.resvTitle = resvTitle;
     t.people = people;
     t.addrs = addrs;
-    t.idPsg = idPsg;
-    t.idResv = idResv;
-    t.idName = idName;
-    t.rooms = rooms;
+    t.getIdPsg = getIdPsg;
+    t.getIdResv = getIdResv;
+    t.getIdName = getIdName;
 
 
+    function getIdResv() {
+        return idResv;
+    }
+    
+    function getIdPsg() {
+        return idPsg;
+    }
+    
+    function getIdName() {
+        return idName;
+    }
 
     function FamilySection($wrapper) {
         var t = this;
@@ -1076,7 +1086,7 @@ function resvManager(initData) {
         var hasIds = false;
         for (var p in people.list()) {
             if (people.list()[p].id > 0) {
-                hasIds = true
+                hasIds = true;
             }
         }
 
@@ -1580,8 +1590,51 @@ function resvManager(initData) {
             t.setupComplete = true;
         };
 
+        function validateCar(cnum) {
+            "use strict";
+            var err = '';
+            if ($('#car' + cnum + 'txtVehLic').val() === '' && $('#car' + cnum + 'txtVehMake').val() === '') {
+                return "Enter vehicle info or check the 'No Vehicle' checkbox. ";
+            }
+            if ($('#car' + cnum + 'txtVehLic').val() === '') {
+                if ($('#car' + cnum + 'txtVehModel').val() === '') {
+                    $('#car' + cnum + 'txtVehModel').addClass('ui-state-highlight');
+                    err = 'Enter Model';
+                }
+                if ($('#car' + cnum + 'txtVehColor').val() === '') {
+                    $('#car' + cnum + 'txtVehColor').addClass('ui-state-highlight');
+                    err = 'Enter Color';
+                }
+                if ($('#car' + cnum + 'selVehLicense').val() === '') {
+                    $('#car' + cnum + 'selVehLicense').addClass('ui-state-highlight');
+                    err = 'Enter state license plate registration';
+                }
+            } else if ($('#car' + cnum + 'txtVehMake').val() === '') {
+                if ($('#car' + cnum + 'txtVehLic').val() === '') {
+                    $('#car' + cnum + 'txtVehLic').addClass('ui-state-highlight');
+                    err = 'Enter a license plate number.';
+                }
+            }
+            return err;
+        }
+        
         function verify() {
 
+        // vehicle
+        if ($('#cbNoVehicle').length > 0) {
+            if ($('#cbNoVehicle').prop("checked") === false) {
+                var carVal = validateCar(1);
+                if (carVal != '') {
+                    var carVal2 = validateCar(2);
+                    if (carVal2 != '') {
+                        $('#vehValidate').text(carVal2);
+                        flagAlertMessage(carVal, true);
+                        return false;
+                    }
+                }
+            }
+            $('#vehValidate').text('');
+        }
             return true;
         };
     }
