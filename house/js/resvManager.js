@@ -4,6 +4,7 @@ function resvManager(initData) {
 
     var patLabel = initData.patLabel;
     var resvTitle = initData.resvTitle;
+    var saveButtonLabel = initData.saveButtonLabel;
     var patBirthDate = initData.patBD;
     var patAddrRequired = initData.patAddr;
     var gstAddrRequired = initData.gstAddr;
@@ -21,12 +22,6 @@ function resvManager(initData) {
     var hospSection = new HospitalSection($('#hospitalSection'));
     var expDatesSection = new ExpDatesSection($('#datesSection'));
     
-    //imports
-    //var setupPayments = t.setupPayments;
-    //var verifyAddrs = t.verifyAddrs;
-    //var flagAlertMessage = t.flagAlertMessage;
-    //var createAutoComplete = t.createAutoComplete();
-
     // Exports
     t.getReserve = getReserve;
     t.verifyInput = verifyInput;
@@ -538,6 +533,7 @@ function resvManager(initData) {
             });
 
             if (setupComplete === false) {
+                
                 // Last Name Copy down
                 $('#lnCopy').click(function () {
 
@@ -633,6 +629,8 @@ function resvManager(initData) {
                         if (patAsGuest === false) {
                             // remove stay button
                             $('#' + $(this).data('prefix') + 'lblStay').parent('td').empty();
+                            //set not staying
+                            people.list()[$(this).data('prefix')].stay = '0';
                         }
 
                     } else {
@@ -878,7 +876,7 @@ function resvManager(initData) {
                     }
 
                     // Check patient address
-                    if (patAddrRequired) {
+                    if (patAddrRequired || patAsGuest) {
 
                         var pMessage = verifyAddress(p);
 
@@ -930,10 +928,10 @@ function resvManager(initData) {
                         }
                    }
                 }
-                
+
                 // Check birth dates
                 if ($('#' + p + 'txtBirthDate').length > 0 && $('#' + p + 'txtBirthDate').val() !== '') {
-                    
+
                     var bDate = new Date($('#' + p + 'txtBirthDate').val());
                     var today = new Date();
 
@@ -1151,6 +1149,22 @@ function resvManager(initData) {
         if ($('#gstDate').val() != '' && $('#gstCoDate').val() != '') {
             updateRescChooser($('#gstDate').val(), $('#gstCoDate').val());
         }
+        
+        // Checking in now button
+        manageCheckInNowButton(dates["date1"].t, idResv);
+    }
+    
+    function manageCheckInNowButton(arrDate, rid) {
+        
+        // Assumes the date is set to the format indicated
+        var start = moment(arrDate, 'MMM D, YYYY');
+        var now = moment().endOf('date');
+        
+        if (rid > 0 && start <= now) {
+            $('#btnCheckinNow').show();
+        } else {
+            $('#btnCheckinNow').hide();
+        }
     }
     
     function updateRescChooser(arrivalDate, departureDate) {
@@ -1278,6 +1292,8 @@ function resvManager(initData) {
                 }
             }
 
+            verifyAddrs('#divhospDetail');
+            
             $hospSection.on('change', '#selHospital, #selAssoc', function() {
                 var hosp = $('#selAssoc').find('option:selected').text();
                 if (hosp != '') {
@@ -1891,6 +1907,11 @@ function resvManager(initData) {
             idResv = data.rid;
         }
 
+        // Hospital
+        if (data.hosp !== undefined) {
+            hospSection.setUp(data.hosp);
+        }
+
         // Build a new Family section.
         if (data.famSection) {
 
@@ -1899,11 +1920,6 @@ function resvManager(initData) {
             $('div#guestSearch').hide();
 
             $('#btnDone').val('Save Family').show();
-        }
-
-        // Hospital
-        if (data.hosp !== undefined) {
-            hospSection.setUp(data.hosp);
         }
 
         // Expected Dates Control
@@ -1960,13 +1976,17 @@ function resvManager(initData) {
 
             $('.hhk-cbStay').change();
 
-            $('#btnDone').val('Save ' + resvTitle).show();
+            $('#btnDone').val(saveButtonLabel).show();
 
             if (data.rid > 0) {
                 $('#btnDelete').val('Delete ' + resvTitle).show();
                 $('#btnShowReg').show();
                 $('#spnStatus').text(data.resv.rdiv.rStatTitle === '' ? '' : ' - ' + data.resv.rdiv.rStatTitle);
             }
+            
+            // Checking in now button
+            manageCheckInNowButton($('#gstDate').val(), data.rid);
+        
         }
 
         if (data.addPerson !== undefined) {

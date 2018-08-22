@@ -109,6 +109,7 @@ if (isset($uS->cofrid)) {
 
 
 $resvObj = new ReserveData(array(), 'Check-in');
+$resvObj->setSaveButtonLabel('Check-in');
 
 
 if (isset($_GET['id'])) {
@@ -464,10 +465,9 @@ $(document).ready(function() {
 
                     if (data.error) {
                         flagAlertMessage(data.error, true);
-                        $('#btnDone').val('Save').show();
+                        $('#btnDone').val(resv.saveButtonLabel).show();
                     }
 
-                    $('#btnDone').val('Save ' + resv.resvTitle).show();
                     ckedIn(data);
 
                 }

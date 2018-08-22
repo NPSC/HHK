@@ -244,6 +244,7 @@ $resvObjEncoded = json_encode($resvAr);
                 <div style="clear:both;min-height: 70px;">.</div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <input type="button" id="btnDelete" value="Delete" style="display:none;"/>
+                    <input type="button" id="btnCheckinNow" value='Check-in Now' style="display:none;"/>
                     <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
                     <input type='button' id='btnDone' value='Continue' style="display:none;"/>
                 </div>
@@ -299,7 +300,7 @@ $(document).ready(function() {
     });
 
 // Buttons
-    $('#btnDone, #btnShowReg, #btnDelete').button();
+    $('#btnDone, #btnShowReg, #btnDelete, #btnCheckinNow').button();
 
     $('#btnDelete').click(function () {
 
@@ -317,6 +318,10 @@ $(document).ready(function() {
 
     $('#btnShowReg').click(function () {
         window.open('ShowRegForm.php?rid=' + pageManager.getIdResv(), '_blank');
+    });
+
+    $('#btnCheckinNow').click(function () {
+        window.open('CheckingIn.php?rid=' + pageManager.getIdResv(), '_self');
     });
 
     $('#btnDone').click(function () {

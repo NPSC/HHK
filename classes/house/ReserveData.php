@@ -39,6 +39,7 @@ class ReserveData {
     protected $forceNewResv = FALSE;
     protected $fullName = '';
     protected $resvTitle;
+    protected $saveButtonLabel;
     protected $patAsGuestFlag;
     protected $patBirthDateFlag;
     protected $showBirthDate;
@@ -90,6 +91,7 @@ class ReserveData {
         }
 
         $this->resvTitle = ($reservationTitle == '' ? $labels->getString('guestEdit', 'reservationTitle', 'Reservation') : $reservationTitle);
+        $this->saveButtonLabel = 'Save ' . $this->resvTitle;
         $this->resvEarlyArrDays = $uS->ResvEarlyArrDays;
         $this->patAsGuestFlag = $uS->PatientAsGuest;
         $this->patBirthDateFlag = $uS->InsistPatBD;
@@ -163,6 +165,7 @@ class ReserveData {
             'idPsg' => $this->getIdPsg(),
             'patLabel' => $this->getPatLabel(),
             'resvTitle' => $this->getResvTitle(),
+            'saveButtonLabel' => $this->saveButtonLabel,
         );
 
         if ($this->resvChooser != '') {
@@ -346,6 +349,10 @@ class ReserveData {
         return $this;
     }
 
+    public function setSaveButtonLabel($label) {
+        $this->saveButtonLabel = $label;
+        return $this;
+    }
     public function setIdHospital_Stay($id) {
         $this->idHospitalStay = $id;
         return $this;

@@ -73,7 +73,7 @@ class Patient extends Role {
         $mu =  $td . $this->roleMember->createThinMarkupRow($this->patientRelationshipCode, FALSE, $lockRelChooser) . $ph;
 
 
-        if ($uS->PatientAddr) {
+        if ($uS->PatientAddr || $uS->PatientAsGuest) {
             // Address
             $mu .= HTMLTable::makeTd(
                     HTMLContainer::generateMarkup('ul'

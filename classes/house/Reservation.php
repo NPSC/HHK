@@ -1080,9 +1080,7 @@ class ActiveReservation extends Reservation {
         // Payments
         $this->savePayments($dbh, $resv, $post);
 
-        $newResv = new ActiveReservation($this->reserveData, $this->reservRs, $this->family);
-        return $newResv;
-
+        return $this;
     }
 }
 
@@ -1098,6 +1096,7 @@ class CheckingIn extends ActiveReservation {
     public static function reservationFactoy(\PDO $dbh, $post) {
 
         $rData = new ReserveData($post, 'Check-in');
+        $rData->setSaveButtonLabel('Check-in');
 
         if ($rData->getIdResv() > 0) {
             return CheckingIn::loadReservation($dbh, $rData);
@@ -1497,6 +1496,8 @@ class CheckingIn extends ActiveReservation {
 
 }
 
+
+
 class ReserveSearcher extends ActiveReservation {
 
     public function createMarkup(\PDO $dbh, $includeResv = TRUE) {
@@ -1526,6 +1527,15 @@ class ReserveSearcher extends ActiveReservation {
         return parent::addPerson($dbh);
 
     }
+
+    public function save(\PDO $dbh, $post, $isAuthorized) {
+
+        $newResv = new ActiveReservation($this->reserveData, $this->reservRs, $this->family);
+        $newResv->save($dbh, $post, $isAuthorized);
+        return $newResv;
+
+    }
+
 
     protected function resvChooserMarkup(\PDO $dbh) {
         $ngRss = array();

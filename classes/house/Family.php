@@ -326,7 +326,7 @@ class Family {
                 $demoMu = '';
             }
 
-            if ($uS->PatientAddr) {
+            if ($uS->PatientAddr || $uS->PatientAsGuest) {
                 $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow'));
             }
         }
