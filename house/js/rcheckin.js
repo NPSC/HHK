@@ -1814,22 +1814,24 @@ $(document).ready(function() {
     
     createAutoComplete($('#' + checkIn.guestSearchPrefix + 'Search'), 3, {cmd: 'role', gp:'1'}, function (item) {
         
-        if (item.No_Return !== undefined && item.No_Return !== '') {
-            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
-            return;
-        }
+//        if (item.No_Return !== undefined && item.No_Return !== '') {
+//            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
+//            return;
+//        }
 
-        loadGuest(item.id, checkIn.idPsg, 'g', checkIn.patientStaying);
+        window.open('Reserve.php?id=' + item.id, '_self');
+        //loadGuest(item.id, checkIn.idPsg, 'g', checkIn.patientStaying);
     });
     
     createAutoComplete($('#' + checkIn.guestSearchPrefix + 'phSearch'), 5, {cmd: 'role', gp:'1'}, function (item) {
         
-        if (item.No_Return !== undefined && item.No_Return !== '') {
-            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
-            return;
-        }
+//        if (item.No_Return !== undefined && item.No_Return !== '') {
+//            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
+//            return;
+//        }
 
-        loadGuest(item.id, checkIn.idPsg, 'g', checkIn.patientStaying);
+        window.open('Reserve.php?id=' + item.id, '_self');
+        //loadGuest(item.id, checkIn.idPsg, 'g', checkIn.patientStaying);
     });
         
     function getPatient(item) {

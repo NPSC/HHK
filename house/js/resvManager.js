@@ -147,6 +147,24 @@ function resvManager(initData) {
 
         }
 
+        function getECRel(item) {
+            "use strict";
+            // item returned from createAutocomoletre.
+            $('#ecSearch').dialog('close');
+            var cid = parseInt(item.id, 10);
+            if (isNaN(cid) === false && cid > 0) {
+                var prefix = $('#hdnEcSchPrefix').val();
+                if (prefix == '') {
+                    return;
+                }
+                $('#' + prefix + 'txtEmrgFirst').val(item.first);
+                $('#' + prefix + 'txtEmrgLast').val(item.last);
+                $('#' + prefix + 'txtEmrgPhn').val(item.phone);
+                $('#' + prefix + 'txtEmrgAlt').val('');
+                $('#' + prefix + 'selEmrgRel').val('');
+            }
+        }
+
         function verifyAddress(prefix) {
 
             var testreg = /^([\(]{1}[0-9]{3}[\)]{1}[\.| |\-]{0,1}|^[0-9]{3}[\.|\-| ]?)?[0-9]{3}(\.|\-| )?[0-9]{4}$/;
@@ -643,6 +661,9 @@ function resvManager(initData) {
                 createAutoComplete($('#txtPersonSearch'), 3, {cmd: 'role', gp:'1'}, function (item) {
                     addGuest(item, data);
                 });
+
+                // Emergency Contact
+                createAutoComplete($('#txtRelSch'), 3, {cmd: 'filter', add: 'phone', basis: 'g'}, getECRel);
 
                 // Hover icons
                 $( "ul.hhk-ui-icons li" ).hover(
@@ -1233,7 +1254,7 @@ function resvManager(initData) {
                         $('#hhkroomMsg').text(data.msg).show();
                     }
                 }
-                
+
                 if (data.rooms) {
                     rooms = data.rooms;
                 }
@@ -1804,17 +1825,6 @@ function resvManager(initData) {
     }
 
     function getReserve(sdata) {
-        
-//        var parms,
-//        
-//            guests = {};
-//
-//        for (var p in people.list()) {
-//
-//            if (people.list()[p].id > 0) {
-//                guests[people.list()[p].id] = p;
-//            }
-//        }
         
         var parms = {
             id:sdata.id, 

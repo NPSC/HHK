@@ -257,9 +257,17 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="keysfees" style="display:none;font-size: .85em;"></div>
+            <div id="ecSearch"  style="display:none;">
+                <table>
+                    <tr>
+                        <td>Search: </td><td><input type="text" id="txtRelSch" size="15" value="" title="Type at least 3 letters to invoke the search."/></td>
+                    </tr>
+                    <tr><td><input type="hidden" value="" id="hdnEcSchPrefix"/></td></tr>
+                </table>
+            </div>
 
         </div>
-        <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
+        <form name="xform" id="xform" method="post"></form>
         <div id="confirmDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;">
             <form id="frmConfirm" action="Reserve.php" method="post"></form>
         </div>
@@ -294,7 +302,7 @@ $(document).ready(function() {
         hideAlertMessage();
         var target = $(event.target);
 
-        if (target[0].id !== 'divSelAddr' && target[0].id !== 'selAddrch') {
+        if (target[0].id !== 'divSelAddr' && target[0].closest('div').id !== 'divSelAddr') {
             $('#divSelAddr').remove();
         }
     });

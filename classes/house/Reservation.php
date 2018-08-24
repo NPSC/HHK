@@ -1494,9 +1494,21 @@ class CheckingIn extends ActiveReservation {
 
     }
 
+    protected function getEmergencyConntact(\PDO $dbh) {
+
+        // Add Emergency contact
+        $ecSearch = HTMLContainer::generateMarkup('span', '', array('id'=>'ecSearch', 'class'=>'hhk-guestSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'float: right; margin-left:.3em;cursor:pointer;'));
+        $ec = $this->getEmergContactObj($dbh);
+
+        return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', 'Emergency Contact for Guest' . $ecSearch, array('style'=>'font-weight:bold;'))
+                . $ec->createMarkup($ec, $uS->guestLookups[GL_TableNames::PatientRel], $idPrefix, $this->incompleteEmergContact), array('class'=>'hhk-panel')),
+                array('style'=>'float:left; margin-right:3px;'));
+
+    }
+
+
 }
-
-
 
 class ReserveSearcher extends ActiveReservation {
 
