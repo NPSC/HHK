@@ -343,6 +343,10 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         return $this->emergContact;
     }
 
+    public function getIncompleteEmContact() {
+        return $this->incompleteEmergContact;
+    }
+
     public function getExpectedDatesControl() {
 
 

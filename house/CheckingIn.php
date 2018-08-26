@@ -155,6 +155,7 @@ $resvAr['patAddr'] = $uS->PatientAddr;
 $resvAr['gstAddr'] = $uS->GuestAddr;
 $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
 $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
+$resvAr['emergencyContact'] = isset($uS->EmergContactFill) ? $uS->EmergContactFill : 'false';
 
 $resvObjEncoded = json_encode($resvAr);
 
@@ -218,6 +219,14 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="keysfees" style="display:none;font-size: .85em;"></div>
+            <div id="ecSearch"  style="display:none;">
+                <table>
+                    <tr>
+                        <td>Search: </td><td><input type="text" id="txtRelSch" size="15" value="" title="Type at least 3 letters to invoke the search."/></td>
+                    </tr>
+                    <tr><td><input type="hidden" value="" id="hdnEcSchPrefix"/></td></tr>
+                </table>
+            </div>
 
         </div>
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
@@ -227,92 +236,6 @@ var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
 var payFailPage = '<?php echo $payFailPage; ?>';
 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
 var pageManager;
-
-function getRegistrationDialog(idReg, cDiv) {
-    "use strict";
-    $.post(
-            'ws_ckin.php',
-            {cmd: 'getReg',
-                reg: idReg},
-    function(data) {
-        if (!data) {
-            alert('Bad Reply from Server');
-            return;
-        }
-        try {
-            data = $.parseJSON(data);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-        if (data.error) {
-            if (data.gotopage) {
-                window.open(data.gotopage, '_self');
-            }
-            flagAlertMessage(data.error, true);
-            return;
-        } else if (data.success) {
-            showRegDialog(data.success, idReg, cDiv);
-        }
-    }
-    );
-}
-
-function showRegDialog(markup, idReg, container) {
-    "use strict";
-    var regDialog = $('<div id="regDialog" />').append($(markup));
-    container.append(regDialog);
-    $('#regDialog').dialog({
-        autoOpen: true,
-        width: 360,
-        resizable: true,
-        modal: true,
-        title: 'Registration Info',
-        buttons: {
-            "Cancel": function() {
-                $(this).dialog("close");
-            },
-            "Save": function() {
-                var parms = {};
-                $('.hhk-regvalue').each(function() {
-                    if ($(this).attr('type') === 'checkbox') {
-                        if (this.checked !== false) {
-                            parms[$(this).attr('name')] = 'on';
-                        }
-                    } else {
-                        parms[$(this).attr('name')] = this.value;
-                    }
-                });
-                $(this).dialog("close");
-                $.post('ws_ckin.php',
-                        {cmd: 'saveReg',
-                            reg: idReg,
-                            parm: parms},
-                function(data) {
-                    if (!data) {
-                        alert('Bad Reply from Server');
-                        return;
-                    }
-                    try {
-                        data = $.parseJSON(data);
-                    } catch (err) {
-                        alert('Bad JSON Encoding');
-                        return;
-                    }
-                    if (data.error) {
-                        if (data.gotopage) {
-                            window.open(data.gotopage, '_self');
-                        }
-                        alert(data.error);
-                        return;
-                    } else if (data.success) {
-                        $('#mesgReg').text(data.success);
-                    }
-                });
-            }
-        }
-    });
-}
 
 function ckedIn(data) {
     "use strict";
@@ -417,6 +340,52 @@ $(document).ready(function() {
         }
     });
 
+// Dialog Boxes
+
+    $("#activityDialog").dialog({
+        autoOpen: false,
+        resizable: true,
+        width: 900,
+        modal: true,
+        title: 'Reservation Activity Log',
+        close: function () {$('div#submitButtons').show();},
+        open: function () {$('div#submitButtons').hide();},
+        buttons: {
+            "Exit": function() {
+                $(this).dialog("close");
+            }
+        }
+    });
+
+    $('#keysfees').dialog({
+        autoOpen: false,
+        resizable: true,
+        modal: true,
+        close: function() {$('#submitButtons').show();}
+    });
+
+    $('#pmtRcpt').dialog({
+        autoOpen: false,
+        resizable: true,
+        width: 530,
+        modal: true,
+        title: 'Payment Receipt'
+    });
+
+    $("#ecSearch").dialog({
+        autoOpen: false,
+        resizable: false,
+        width: 300,
+        title: 'Emergency Contact',
+        modal: true,
+        buttons: {
+            "Exit": function() {
+                $(this).dialog("close");
+            }
+        }
+    });
+
+
     pageManager = new resvManager(resv);
 
     // hide the alert on mousedown
@@ -424,7 +393,7 @@ $(document).ready(function() {
         hideAlertMessage();
         var target = $(event.target);
 
-        if (target[0].id !== 'divSelAddr' && target[0].id !== 'selAddrch') {
+        if (target[0].id !== 'divSelAddr' && target[0].closest('div') && target[0].closest('div').id !== 'divSelAddr') {
             $('#divSelAddr').remove();
         }
     });
@@ -476,39 +445,6 @@ $(document).ready(function() {
             $(this).val('Saving >>>>');
         }
 
-    });
-
-// Dialog Boxes
-
-    $("#activityDialog").dialog({
-        autoOpen: false,
-        resizable: true,
-        width: 900,
-        modal: true,
-        title: 'Reservation Activity Log',
-        close: function () {$('div#submitButtons').show();},
-        open: function () {$('div#submitButtons').hide();},
-        buttons: {
-            "Exit": function() {
-                $(this).dialog("close");
-            }
-        }
-    });
-
-
-    $('#keysfees').dialog({
-        autoOpen: false,
-        resizable: true,
-        modal: true,
-        close: function() {$('#submitButtons').show();}
-    });
-
-    $('#pmtRcpt').dialog({
-        autoOpen: false,
-        resizable: true,
-        width: 530,
-        modal: true,
-        title: 'Payment Receipt'
     });
 
 

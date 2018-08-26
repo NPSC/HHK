@@ -239,7 +239,7 @@ class Reservation {
 
             foreach ($psgMembers as $m) {
 
-                $events[$m->getPrefix()] = $m->getStayObj()->createStayButton($m->getPrefix());
+                $events[$m->getPrefix()] = array('ctrl'=>$m->getStayObj()->createStayButton($m->getPrefix()), 'stay'=>$m->getStay());
             }
 
             return array('stayCtrl'=>$events);
@@ -911,7 +911,7 @@ class ActiveReservation extends Reservation {
         $uS = Session::getInstance();
 
         // Save members, psg, hospital
-        $this->family->save($dbh, $post, $this->reserveData);
+        $this->family->save($dbh, $post, $this->reserveData, $uS->username);
 
         if (count($this->getStayingMembers()) < 1) {
             // Nobody set to stay
@@ -1123,13 +1123,13 @@ class CheckingIn extends ActiveReservation {
 
         if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
 
-            $family = new Family($dbh, $rData);
+            $family = new Family($dbh, $rData, TRUE);
             return new CheckingIn($rData, $rRs, $family);
         }
 
         if ($rRs->Status->getStoredVal() == ReservationStatus::Staying) {
 
-            return new StayingReservation($rData, $rRs, new Family($dbh, $rData));
+            return new StayingReservation($rData, $rRs, new Family($dbh, $rData, TRUE));
 
         }
 
@@ -1491,19 +1491,6 @@ class CheckingIn extends ActiveReservation {
         $dataArray['reg'] = $reg->getIdRegistration();
 
         return $dataArray;
-
-    }
-
-    protected function getEmergencyConntact(\PDO $dbh) {
-
-        // Add Emergency contact
-        $ecSearch = HTMLContainer::generateMarkup('span', '', array('id'=>'ecSearch', 'class'=>'hhk-guestSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'float: right; margin-left:.3em;cursor:pointer;'));
-        $ec = $this->getEmergContactObj($dbh);
-
-        return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', 'Emergency Contact for Guest' . $ecSearch, array('style'=>'font-weight:bold;'))
-                . $ec->createMarkup($ec, $uS->guestLookups[GL_TableNames::PatientRel], $idPrefix, $this->incompleteEmergContact), array('class'=>'hhk-panel')),
-                array('style'=>'float:left; margin-right:3px;'));
 
     }
 

@@ -9,6 +9,7 @@ function resvManager(initData) {
     var patAddrRequired = initData.patAddr;
     var gstAddrRequired = initData.gstAddr;
     var patAsGuest = initData.patAsGuest;
+    var fillEmergencyContact = initData.emergencyContact;
     var addrPurpose = initData.addrPurpose;
     var idPsg = initData.idPsg;
     var idResv = initData.rid;
@@ -230,6 +231,47 @@ function resvManager(initData) {
 
         }
 
+        function verifyEmergencyContacts(prefix) {
+
+            // Emergency Contact
+            if ($('#' + prefix + 'cbEmrgLater').length > 0 && $('#' + prefix + 'cbEmrgLater').prop('checked') === false) {
+
+                var isMissing = false,
+                    $eFirst = $('#' + prefix + 'txtEmrgFirst'),
+                    $eLast = $('#' + prefix + 'txtEmrgLast'),
+                    $ephone = $('#' + prefix + 'txtEmrgPhn'),
+                    $eRel = $('#' + prefix + 'selEmrgRel');
+
+                $eFirst.removeClass('ui-state-error');
+                $eLast.removeClass('ui-state-error');
+                $ephone.removeClass('ui-state-error');
+                $eRel.removeClass('ui-state-error');
+
+                // check the emergency contact
+                if ($eFirst.val() === '' && $eLast.val() === '') {
+                    $eFirst.addClass('ui-state-error');
+                    $eLast.addClass('ui-state-error');
+                    isMissing = true;
+                }
+
+                if ($ephone.val() === '') {
+                    $ephone.addClass('ui-state-error');
+                    isMissing = true;
+                }
+
+                if ($eRel.val() === '') {
+                    $eRel.addClass('ui-state-error');
+                    isMissing = true;
+                }
+
+                if (isMissing) {
+                    return 'Some or all of the indicated Emergency Contact Information is missing.  ';
+                }
+            }
+
+            return '';
+        }
+        
         function addrCopyDown(sourcePrefix) {
 
             for (var prefix in addrs.list()) {
@@ -345,8 +387,7 @@ function resvManager(initData) {
         }
 
         function setAddress(prefix, p) {
-            
-            
+ 
             if (p == 0) {
                 $('#divSelAddr').remove();
                 return;
@@ -511,6 +552,7 @@ function resvManager(initData) {
                 }
             }
 
+            // Staying controls
             $('.hhk-cbStay').checkboxradio({
                 classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
             });
@@ -521,6 +563,7 @@ function resvManager(initData) {
                 }
             });
 
+            // Birthday Date picker
             $('.ckbdate').datepicker({
                 yearRange: '-99:+00',
                 changeMonth: true,
@@ -535,7 +578,6 @@ function resvManager(initData) {
                 var $countries = $(this);
                 $countries.bfhcountries($countries.data());
             });
-
             $('.hhk-addrPanel').find('select.bfh-states').each(function() {
                 var $states = $(this);
                 $states.bfhstates($states.data());
@@ -550,6 +592,7 @@ function resvManager(initData) {
                 createZipAutoComplete($(this), 'ws_admin.php', lastXhr, loadAddress);
             });
 
+                
             if (setupComplete === false) {
                 
                 // Last Name Copy down
@@ -636,7 +679,6 @@ function resvManager(initData) {
                 });
 
 
-
                 // Relationship chooser
                 $('#' + divFamDetailId).on('change', '.patientRelch', function () {
 
@@ -663,8 +705,13 @@ function resvManager(initData) {
                 });
 
                 // Emergency Contact
-                createAutoComplete($('#txtRelSch'), 3, {cmd: 'filter', add: 'phone', basis: 'g'}, getECRel);
+                $('#' + divFamDetailId).on('click', '.hhk-guestSearch', function() {
+                    $('#hdnEcSchPrefix').val($(this).attr('name'));
+                    $("#ecSearch").dialog('open');
+                });
 
+                createAutoComplete($('#txtRelSch'), 3, {cmd: 'filter', add: 'phone', basis: 'g'}, getECRel);
+                
                 // Hover icons
                 $( "ul.hhk-ui-icons li" ).hover(
                     function() {
@@ -768,11 +815,12 @@ function resvManager(initData) {
 
         function verify() {
 
-            var numFamily = 0;
-            var numPat = 0;
-            var numGuests = 0;
-            var numPriGuests = 0;
-            var nameErr = false;
+            var numFamily = 0,
+                numPat = 0,
+                numGuests = 0,
+                numPriGuests = 0,
+                nameErr = false,
+                emergContactCnt;
 
 
             // Flag blank Relationships
@@ -880,6 +928,17 @@ function resvManager(initData) {
                 flagAlertMessage("Enter a first and last name for the people highlighted.", true);
                 return false;
             }
+            
+            // Optional Emergency Contact.
+            if (fillEmergencyContact) {
+                // Count the skipped.
+                $wrapper.find('.hhk-EmergCb').each( function () {
+                    if ($(this).prop('checked') === true) {
+                        emergContactCnt++;
+                    };
+                 });
+            }
+
 
             // each person
             for (var p in people.list()) {
@@ -947,7 +1006,26 @@ function resvManager(initData) {
 
                             return false;
                         }
-                   }
+                    }
+                   
+                    // Check Emergen
+                    if (fillEmergencyContact && emergContactCnt < 1) {
+                        
+                        var pMessage = verifyEmergencyContacts(p);
+                        
+                        if (pMessage !== '') {
+
+                            flagAlertMessage(pMessage, true);
+                            openSection(true);
+
+                            // Open address row
+                            if ($('#' + p + 'toggleAddr').find('span').hasClass('ui-icon-circle-triangle-s')) {
+                                $('#' + p + 'toggleAddr').click();
+                            }
+
+                            return false;
+                        }
+                    }
                 }
 
                 // Check birth dates
@@ -1146,18 +1224,19 @@ function resvManager(initData) {
                     for (var i in data.stayCtrl) {
                         var $lbl;
 
-                        $('#sb' + i).empty().html(data.stayCtrl[i]);
+                        $('#sb' + i).empty().html(data.stayCtrl[i]['ctrl']);
 
                         $('#' + i + 'cbStay').checkboxradio({
                             classes: {"ui-checkboxradio-label": "hhk-unselected-text" }
                         });
 
-                        $lbl = $('#' + i + 'lblStay');
+                        people.list()[i].stay = '0';
+                        
+                        $lbl = $('#' + i + 'lblStay')
 
-                        if ($lbl.data('stay') == '1') {
+                        if ($lbl.length > 0 && $lbl.data('stay') == '1') {
                             $lbl.click();
                         }
-                        
                     }
                     
                     // visit buttons
@@ -1657,23 +1736,24 @@ function resvManager(initData) {
         
         function verify() {
 
-        // vehicle
-        if ($('#cbNoVehicle').length > 0) {
-            if ($('#cbNoVehicle').prop("checked") === false) {
-                var carVal = validateCar(1);
-                if (carVal != '') {
-                    var carVal2 = validateCar(2);
-                    if (carVal2 != '') {
-                        $('#vehValidate').text(carVal2);
-                        flagAlertMessage(carVal, true);
-                        return false;
+            // vehicle
+            if ($('#cbNoVehicle').length > 0) {
+                if ($('#cbNoVehicle').prop("checked") === false) {
+                    var carVal = validateCar(1);
+                    if (carVal != '') {
+                        var carVal2 = validateCar(2);
+                        if (carVal2 != '') {
+                            $('#vehValidate').text(carVal2);
+                            flagAlertMessage(carVal, true);
+                            return false;
+                        }
                     }
                 }
+                $('#vehValidate').text('');
             }
-            $('#vehValidate').text('');
-        }
+            
             return true;
-        };
+        }
     }
 
     function Items () {
@@ -1798,7 +1878,7 @@ function resvManager(initData) {
         $resvDiag.dialog('open');
         
         var table = $resvDiag.find('table').width();
-        $resvDiag.dialog('option', 'width', table + 20);
+        $resvDiag.dialog('option', 'width', table + 80);
 
     }
 
@@ -1960,30 +2040,33 @@ function resvManager(initData) {
             });
 
             // Visit Dialog
-            $('.hhk-getVDialog').button();
+            if ($('.hhk-getVDialog').length > 0) {
+                
+                $('.hhk-getVDialog').button();
 
-            $('#' + familySection.divFamDetailId).on('click', '.hhk-getVDialog', function () {
-                var buttons;
-                var vid = $(this).data('vid');
-                var span = $(this).data('span');
-                buttons = {
-                    "Show Statement": function() {
-                        window.open('ShowStatement.php?vid=' + vid, '_blank');
-                    },
-                    "Show Registration Form": function() {
-                        window.open('ShowRegForm.php?vid=' + vid, '_blank');
-                    },
-                    "Save": function() {
-                        saveFees(0, vid, span, false, payFailPage);
-                    },
-                    "Cancel": function() {
-                        $(this).dialog("close");
-                    }
-                };
-                viewVisit(0, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
-                $('#submitButtons').hide();
-            });
-
+                $('#' + familySection.divFamDetailId).on('click', '.hhk-getVDialog', function () {
+                    var buttons;
+                    var vid = $(this).data('vid');
+                    var span = $(this).data('span');
+                    buttons = {
+                        "Show Statement": function() {
+                            window.open('ShowStatement.php?vid=' + vid, '_blank');
+                        },
+                        "Show Registration Form": function() {
+                            window.open('ShowRegForm.php?vid=' + vid, '_blank');
+                        },
+                        "Save": function() {
+                            saveFees(0, vid, span, false, payFailPage);
+                        },
+                        "Cancel": function() {
+                            $(this).dialog("close");
+                        }
+                    };
+                    viewVisit(0, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
+                    $('#submitButtons').hide();
+                });
+            }
+            
             $('.hhk-cbStay').change();
 
             $('#btnDone').val(saveButtonLabel).show();

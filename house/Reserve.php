@@ -67,7 +67,7 @@ $labels = new Config_Lite(LABEL_FILE);
 $paymentMarkup = '';
 $receiptMarkup = '';
 $payFailPage = $wInit->page->getFilename();
-$idGuest = 0;
+$idGuest = -1;
 $idReserv = 0;
 $idPsg = 0;
 
@@ -154,7 +154,7 @@ if (isset($_GET['idPsg'])) {
 }
 
 
-if ($idReserv > 0 || $idGuest > 0) {
+if ($idReserv > 0 || $idGuest >= 0) {
 
     $mk1 = "<h2>Loading...</h2>";
     $resvObj->setIdResv($idReserv);
@@ -257,14 +257,6 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="keysfees" style="display:none;font-size: .85em;"></div>
-            <div id="ecSearch"  style="display:none;">
-                <table>
-                    <tr>
-                        <td>Search: </td><td><input type="text" id="txtRelSch" size="15" value="" title="Type at least 3 letters to invoke the search."/></td>
-                    </tr>
-                    <tr><td><input type="hidden" value="" id="hdnEcSchPrefix"/></td></tr>
-                </table>
-            </div>
 
         </div>
         <form name="xform" id="xform" method="post"></form>
@@ -293,83 +285,6 @@ $(document).ready(function() {
                     this.element.outerWidth()
             ) * 1.1 );
         }
-    });
-
-    pageManager = new resvManager(resv);
-
-    // hide the alert on mousedown
-    $(document).mousedown(function (event) {
-        hideAlertMessage();
-        var target = $(event.target);
-
-        if (target[0].id !== 'divSelAddr' && target[0].closest('div').id !== 'divSelAddr') {
-            $('#divSelAddr').remove();
-        }
-    });
-
-// Buttons
-    $('#btnDone, #btnShowReg, #btnDelete, #btnCheckinNow').button();
-
-    $('#btnDelete').click(function () {
-
-        if ($(this).val() === 'Deleting >>>>') {
-            return;
-        }
-
-        if (confirm('Delete this ' + pageManager.resvTitle + '?')) {
-
-            $(this).val('Deleting >>>>');
-
-            pageManager.deleteReserve(pageManager.getIdResv(), 'form#form1', $(this));
-        }
-    });
-
-    $('#btnShowReg').click(function () {
-        window.open('ShowRegForm.php?rid=' + pageManager.getIdResv(), '_blank');
-    });
-
-    $('#btnCheckinNow').click(function () {
-        window.open('CheckingIn.php?rid=' + pageManager.getIdResv(), '_self');
-    });
-
-    $('#btnDone').click(function () {
-
-        if ($(this).val() === 'Saving >>>>') {
-            return;
-        }
-
-        hideAlertMessage();
-
-        if (pageManager.verifyInput() === true) {
-
-            $.post(
-                'ws_resv.php',
-                $('#form1').serialize() + '&cmd=saveResv&idPsg=' + pageManager.getIdPsg() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
-                function(data) {
-                    try {
-                        data = $.parseJSON(data);
-                    } catch (err) {
-                        flagAlertMessage(err.message, true);
-                        return;
-                    }
-
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
-                    }
-
-                    if (data.error) {
-                        flagAlertMessage(data.error, true);
-                        $('#btnDone').val('Save').show();
-                    }
-
-                    pageManager.loadResv(data);
-                    flagAlertMessage(data.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle);
-                }
-            );
-
-            $(this).val('Saving >>>>');
-        }
-
     });
 
 // Dialog Boxes
@@ -449,6 +364,84 @@ $(document).ready(function() {
         title: 'Payment Receipt'
     });
 
+    pageManager = new resvManager(resv);
+
+    // hide the alert on mousedown
+    $(document).mousedown(function (event) {
+        hideAlertMessage();
+        var target = $(event.target);
+
+        if (target[0].id !== 'divSelAddr' && target[0].closest('div') && target[0].closest('div').id !== 'divSelAddr') {
+            $('#divSelAddr').remove();
+        }
+    });
+
+// Buttons
+    $('#btnDone, #btnShowReg, #btnDelete, #btnCheckinNow').button();
+
+    $('#btnDelete').click(function () {
+
+        if ($(this).val() === 'Deleting >>>>') {
+            return;
+        }
+
+        if (confirm('Delete this ' + pageManager.resvTitle + '?')) {
+
+            $(this).val('Deleting >>>>');
+
+            pageManager.deleteReserve(pageManager.getIdResv(), 'form#form1', $(this));
+        }
+    });
+
+    $('#btnShowReg').click(function () {
+        window.open('ShowRegForm.php?rid=' + pageManager.getIdResv(), '_blank');
+    });
+
+    $('#btnCheckinNow').click(function () {
+        window.open('CheckingIn.php?rid=' + pageManager.getIdResv(), '_self');
+    });
+
+    $('#btnDone').click(function () {
+
+        if ($(this).val() === 'Saving >>>>') {
+            return;
+        }
+
+        hideAlertMessage();
+
+        if (pageManager.verifyInput() === true) {
+
+            $.post(
+                'ws_resv.php',
+                $('#form1').serialize() + '&cmd=saveResv&idPsg=' + pageManager.getIdPsg() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
+                function(data) {
+                    try {
+                        data = $.parseJSON(data);
+                    } catch (err) {
+                        flagAlertMessage(err.message, true);
+                        return;
+                    }
+
+                    if (data.gotopage) {
+                        window.open(data.gotopage, '_self');
+                    }
+
+                    if (data.error) {
+                        flagAlertMessage(data.error, true);
+                        $('#btnDone').val('Save').show();
+                    }
+
+                    pageManager.loadResv(data);
+                    flagAlertMessage(data.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle);
+                }
+            );
+
+            $(this).val('Saving >>>>');
+        }
+
+    });
+
+
 
     function getGuest(item) {
 
@@ -473,7 +466,7 @@ $(document).ready(function() {
 
     }
 
-    if (parseInt(resv.id, 10) > 0 || parseInt(resv.rid, 10) > 0) {
+    if (parseInt(resv.id, 10) >= 0 || parseInt(resv.rid, 10) > 0) {
 
         // Avoid automatic new guest for existing reservations.
         if (parseInt(resv.id, 10) === 0 && parseInt(resv.rid, 10) > 0) {
