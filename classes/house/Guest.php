@@ -100,7 +100,7 @@ class Guest extends Role {
 
         $mk1 .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Emergency Contact for Guest' . $ecSearch, array('style'=>'font-weight:bold;'))
-                . $ec->createMarkup($ec, $uS->guestLookups[GL_TableNames::PatientRel], $idPrefix, $this->incompleteEmergContact), array('class'=>'hhk-panel')),
+                . $ec->createMarkup($uS->guestLookups[GL_TableNames::PatientRel], $idPrefix, $this->incompleteEmergContact), array('class'=>'hhk-panel')),
                 array('style'=>'float:left; margin-right:3px;'));
 
 
@@ -295,11 +295,6 @@ class Guest extends Role {
             $this->useHousePhone = TRUE;
         }
 
-        $ec = $this->getEmergContactObj($dbh);
-        if (is_null($ec) === FALSE) {
-            $ec->save($dbh, $this->getIdName(), $post, $uname, $idPrefix);
-        }
-
         // Guest Checkin Date
         if (isset($post[$idPrefix.'gstDate'])) {
             $this->setCheckinDate(filter_var($post[$idPrefix.'gstDate'], FILTER_SANITIZE_STRING));
@@ -312,21 +307,6 @@ class Guest extends Role {
             $this->setExpectedCheckOut(filter_var($post[$idPrefix.'gstCoDate'], FILTER_SANITIZE_STRING));
         } else if (isset($post['gstCoDate'])) {
             $this->setExpectedCheckOut(filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING));
-        }
-
-        // Guest Patient relationship
-        if (isset($post[$idPrefix.'selPatRel'])) {
-            $this->patientRelationshipCode = filter_var($post[$idPrefix.'selPatRel'], FILTER_SANITIZE_STRING);
-        }
-
-        // Guest incomplete emergency contact
-        if (isset($post[$idPrefix.'cbEmrgLater'])) {
-            $this->incompleteEmergContact = TRUE;
-        }
-
-        // Also set patient member type if guest is the patient.
-        if ($this->patientRelationshipCode == RelLinkType::Self) {
-            $message .= $this->getRoleMember()->saveMemberType($dbh, $uname, VolMemberType::Patient);
         }
 
         return $message;

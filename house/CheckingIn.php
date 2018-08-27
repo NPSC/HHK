@@ -155,7 +155,8 @@ $resvAr['patAddr'] = $uS->PatientAddr;
 $resvAr['gstAddr'] = $uS->GuestAddr;
 $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
 $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
-$resvAr['emergencyContact'] = isset($uS->EmergContactFill) ? $uS->EmergContactFill : 'false';
+$resvAr['emergencyContact'] = isset($uS->EmergContactFill) ? $uS->EmergContactFill : FALSE;
+$resvAr['isCheckin'] = TRUE;
 
 $resvObjEncoded = json_encode($resvAr);
 
@@ -210,7 +211,7 @@ $resvObjEncoded = json_encode($resvAr);
                 <div style="clear:both;min-height: 70px;">.</div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
-                    <input type='button' id='btnDone' value='Continue' style="display:none;"/>
+                    <input type='button' id='btnDone' value='Continue' style="display:none;font-size:1em;"/>
                 </div>
 
             </form>
@@ -222,7 +223,7 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="ecSearch"  style="display:none;">
                 <table>
                     <tr>
-                        <td>Search: </td><td><input type="text" id="txtRelSch" size="15" value="" title="Type at least 3 letters to invoke the search."/></td>
+                        <td>Search: </td><td><input type="text" id="txtemSch" size="15" value="" title="Type at least 3 letters to invoke the search."/></td>
                     </tr>
                     <tr><td><input type="hidden" value="" id="hdnEcSchPrefix"/></td></tr>
                 </table>
@@ -400,7 +401,6 @@ $(document).ready(function() {
 
 // Buttons
     $('#btnDone, #btnShowReg').button();
-
 
     $('#btnShowReg').click(function () {
         window.open('ShowRegForm.php?rid=' + pageManager.getIdResv(), '_blank');

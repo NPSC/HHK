@@ -114,7 +114,7 @@ class Family {
                     $prefix = $psgMember->getPrefix();
                 } else {
                     $prefix = $uS->addPerPrefix++;
-                    $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, new PSGMemStay(ReserveData::NOT_STAYING));
+                    $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, new PSGMemStay(ReserveData::STAYING));
                 }
 
                 $this->roleObjs[$prefix] = new Guest($dbh, $prefix, $rData->getId());
@@ -135,7 +135,7 @@ class Family {
                 $prefix = $psgMember->getPrefix();
             } else {
                 $prefix = $uS->addPerPrefix++;
-                $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, new PSGMemStay(ReserveData::NOT_STAYING));
+                $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, new PSGMemStay(ReserveData::STAYING));
             }
 
             $this->roleObjs[$prefix] = new Guest($dbh, $prefix, $rData->getId());
@@ -157,7 +157,7 @@ class Family {
                 $prefix = $psgMember->getPrefix();
             } else {
                 $prefix = $uS->addPerPrefix++;
-                $psgMember = new PSGMember(0, $prefix, '', new PSGMemStay(ReserveData::NOT_STAYING));
+                $psgMember = new PSGMember(0, $prefix, '', new PSGMemStay(ReserveData::STAYING));
             }
 
             $this->roleObjs[$prefix] = new Guest($dbh, $prefix, 0);
@@ -263,7 +263,7 @@ class Family {
                 continue;
             }
 
-            // Remove guests.
+            // Remove icon.
             $removeIcons = HTMLContainer::generateMarkup('ul'
                 , HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
                     , array('class'=>'ui-state-default ui-corner-all hhk-removeBtn', 'style'=>'float:right;', 'data-prefix'=>$prefix, 'title'=>'Remove guest'))
@@ -425,13 +425,14 @@ class Family {
 
         $uS = Session::getInstance();
 
-        // Add Emergency contact
-        $ecSearch = HTMLContainer::generateMarkup('span', '', array('id'=>'ecSearch', 'class'=>'hhk-guestSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'float: right; margin-left:.3em;cursor:pointer;'));
+        // Add search icon
+        $ecSearch = HTMLContainer::generateMarkup('span', '', array('data-prefix'=>$role->getRoleMember()->getIdPrefix(), 'class'=>'hhk-emSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'float: right; margin-left:.3em;cursor:pointer;'));
+
         $ec = $role->getEmergContactObj($dbh);
 
         return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Emergency Contact for Guest' . $ecSearch, array('style'=>'font-weight:bold;'))
-                . $ec->createMarkup($ec, $uS->guestLookups[GL_TableNames::PatientRel], $role->getRoleMember()->getIdPrefix(), $role->getIncompleteEmContact()), array('class'=>'hhk-panel')),
+                . $ec->createMarkup($uS->guestLookups[GL_TableNames::PatientRel], $role->getRoleMember()->getIdPrefix(), $role->getIncompleteEmContact()), array('class'=>'hhk-panel')),
                 array('style'=>'float:left; margin-right:3px;'));
 
     }

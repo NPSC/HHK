@@ -223,6 +223,17 @@ abstract class Role {
             $incomplete = TRUE;
         }
 
+        // Save emergency Contact.
+        $ec = $this->getEmergContactObj($dbh);
+        if (is_null($ec) === FALSE) {
+            $ec->save($dbh, $this->getIdName(), $post, $uname, $idPrefix);
+        }
+
+        // Ignore emergency contact
+        if (isset($post[$idPrefix.'cbEmrgLater'])) {
+            $this->incompleteEmergContact = TRUE;
+        }
+
         // street Address
         $this->getAddrObj()->cleanAddress = new CleanAddress($dbh);
         $cdArray = $this->getAddrObj()->get_CodeArray();
@@ -236,6 +247,16 @@ abstract class Role {
             $this->incompleteAddress = TRUE;
         } else {
             $this->incompleteAddress = FALSE;
+        }
+
+        // Update local Patient relationship
+        if (isset($post[$idPrefix.'selPatRel'])) {
+            $this->patientRelationshipCode = filter_var($post[$idPrefix.'selPatRel'], FILTER_SANITIZE_STRING);
+        }
+
+        // Also set patient member type if guest is the patient.
+        if ($this->patientRelationshipCode == RelLinkType::Self) {
+            $message .= $this->getRoleMember()->saveMemberType($dbh, $uname, VolMemberType::Patient);
         }
 
         // Phone
