@@ -7,6 +7,10 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `T
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Note_Category', 'ncp', 'Patient', '', 'h', 0);
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Note_Category', 'ncrm', 'Room', '', 'h', 0);
 
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES 
+('Room_Group', 'Type', 'Room Type', 'Room_Type','',0), 
+('Room_Group', 'Category', 'Room Category', 'Room_Category','',0), 
+('Room_Group', 'Report_Category', 'Report Category', 'Room_Rpt_Cat','',0);
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES('Editable_Forms', '../conf/permission.txt', 'Permission Form','js/rte-permission.json','',0);
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Signature_Capture', 'Photo_Permission', 'Photo Permission');

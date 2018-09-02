@@ -328,7 +328,7 @@ class Family {
 
             $trs[] = HTMLContainer::generateMarkup('tr',
                     $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), TRUE)
-                    , array('class'=>$rowClass));
+                    , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
 
             if ($this->patientAddr || $this->patientAsGuest) {
 
@@ -340,7 +340,7 @@ class Family {
                     $demoMu = $this->getDemographicsMarkup($dbh, $role);
                 }
 
-                $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow'));
+                $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
             }
         }
 
@@ -377,7 +377,7 @@ class Family {
             $trs[] = HTMLContainer::generateMarkup('tr',
                     $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
                     . ($role->getIdName() == 0 ? HTMLTable::makeTd($removeIcons) : '')
-                    , array('class'=>$rowClass));
+                    , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
 
 
             if ($this->IncldEmContact) {
@@ -390,7 +390,7 @@ class Family {
 
 
             // Add addresses and demo's
-            $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow'));
+            $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
 
         }
 

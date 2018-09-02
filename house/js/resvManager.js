@@ -535,9 +535,11 @@ function resvManager(initData) {
             // Remove any previous entries.
             for (var i in data.famSection.mem) {
                 
-                var item = people.findItem('pref', data.famSection.mem[i].pref);
+                var item = people.findItem('id', data.famSection.mem[i].id);
                 
-                if (item) {
+                if (item && item.id > 0) {
+                    $famTbl.find('tr#' + item.id + 'n').remove();
+                    $famTbl.find('tr#' + item.id + 'a').remove();
                     $famTbl.find('input#' + item.pref + 'idName').parents('tr').next('tr').remove();
                     $famTbl.find('input#' + item.pref + 'idName').parents('tr').remove();
                     people.removeIndex(item.pref);
@@ -654,7 +656,6 @@ function resvManager(initData) {
                     loadAddress($(this).data('pref'));
                 });
 
-
                 // Copy Address
                 $('#' + divFamDetailId).on('click', '.hhk-addrCopy', function() {
                     copyAddrSelector($(this), $(this).data('prefix'));
@@ -687,34 +688,17 @@ function resvManager(initData) {
                     $(this).parentsUntil('tbody', 'tr').remove();
                 });
 
-
                 // Relationship chooser
                 $('#' + divFamDetailId).on('change', '.patientRelch', function () {
 
                     if ($(this).val() === 'slf') {
-
                         people.list()[$(this).data('prefix')].role = 'p';
-
-//                        if (patAsGuest === false) {
-//                            // remove stay button
-//                            $('#' + $(this).data('prefix') + 'lblStay').parent('td').empty();
-//                            //set not staying
-//                            people.list()[$(this).data('prefix')].stay = '0';
-//                        }
-//                        
-//                        if (patAddrRequired === false) {
-//                            // Close the address tr and remove the addr controls.
-//                            $addrFlag = $('#' + prefix + 'liaddrflag');
-//                            $addrFlag.parents('tr').next('tr').hide();
-//                            $addrFlag.parents('td').empty();
-//                        }
-
                     } else {
                         people.list()[$(this).data('prefix')].role = 'g';
                     }
                 });
 
-                // Add People Textbox
+                // Add people search
                 createAutoComplete($('#txtPersonSearch'), 3, {cmd: 'role', gp:'1'}, function (item) {
                     addGuest(item, data);
                 });
@@ -1856,6 +1840,9 @@ function resvManager(initData) {
         "use strict";
         var buttons = {};
 
+        // Clear add person textbox
+        $('input#txtPersonSearch').val('');
+        
         // reset then fill the reservation dialog
         $resvDiag.empty()
             .append($(data.resvChooser))
@@ -1887,7 +1874,6 @@ function resvManager(initData) {
         buttons['Exit'] = function() {
             $(this).dialog("close");
 
-            $('input#txtPersonSearch').val('');
             $('input#gstSearch').val('').focus();
         };
         
@@ -1904,6 +1890,9 @@ function resvManager(initData) {
     function psgChooser(data, $dialog) {
         "use strict";
 
+        // Clear add person textbox
+        $('input#txtPersonSearch').val('');
+        
         $dialog
             .empty()
             .append($(data.psgChooser))
@@ -1915,7 +1904,6 @@ function resvManager(initData) {
                 Cancel: function () {
                     $(this).dialog('close');
 
-                    $('input#txtPersonSearch').val('');
                     $('input#gstSearch').val('').focus();
                 }
             })
