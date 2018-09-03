@@ -42,7 +42,6 @@ class Patient extends Role {
         return $this->patientPsg;
     }
 
-
     protected function createNameMU() {
 
         // Build name.
@@ -119,7 +118,6 @@ class Patient extends Role {
 
         return $td;
     }
-
 
     public function createReservationMarkup($lockRelChooser = FALSE) {
 

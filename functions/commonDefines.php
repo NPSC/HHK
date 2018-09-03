@@ -53,6 +53,8 @@ define('RTE_CSS', '<link href="css/rich-text-editor.css" rel="stylesheet" type="
 define('JQ_UI_JS', '../js/jquery-ui.min.js');
 define('JQ_JS', '../js/jquery-3.1.1.min.js');
 define('JQ_DT_JS', '../js/datatables.min.js');
+define('NOTY_JS', "../js/noty-min.js");
+define('NOTY_SETTINGS_JS', '../js/notySettings.js');
 
 define('PRINT_AREA_JS', '../js/jquery.PrintArea.js');
 define('CREATE_AUTO_COMPLETE_JS', '../js/createAutoComplete.js');

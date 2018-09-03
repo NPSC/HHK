@@ -1126,103 +1126,6 @@ function verifyDone() {
     }
     return true;
 }
-/**
- * 
- * @param {int} idReg
- * @param {jquery} cDiv
- * @returns {undefined}
- */
-function getRegistrationDialog(idReg, cDiv) {
-    "use strict";
-    $.post(
-            'ws_ckin.php',
-            {cmd: 'getReg',
-                reg: idReg},
-    function(data) {
-        if (!data) {
-            alert('Bad Reply from Server');
-            return;
-        }
-        try {
-            data = $.parseJSON(data);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-        if (data.error) {
-            if (data.gotopage) {
-                window.open(data.gotopage, '_self');
-            }
-            flagAlertMessage(data.error, true);
-            return;
-        } else if (data.success) {
-            showRegDialog(data.success, idReg, cDiv);
-        }
-    }
-    );
-}
-/**
- * 
- * @param {string} markup
- * @param {int} idReg
- * @param {jquery} container
- * @returns {undefined}
- */
-function showRegDialog(markup, idReg, container) {
-    "use strict";
-    var regDialog = $('<div id="regDialog" />').append($(markup));
-    container.append(regDialog);
-    $('#regDialog').dialog({
-        autoOpen: true,
-        width: 360,
-        resizable: true,
-        modal: true,
-        title: 'Registration Info',
-        buttons: {
-            "Cancel": function() {
-                $(this).dialog("close");
-            },
-            "Save": function() {
-                var parms = {};
-                $('.hhk-regvalue').each(function() {
-                    if ($(this).attr('type') === 'checkbox') {
-                        if (this.checked !== false) {
-                            parms[$(this).attr('name')] = 'on';
-                        }
-                    } else {
-                        parms[$(this).attr('name')] = this.value;
-                    }
-                });
-                $(this).dialog("close");
-                $.post('ws_ckin.php',
-                        {cmd: 'saveReg',
-                            reg: idReg,
-                            parm: parms},
-                function(data) { 
-                    if (!data) {
-                        alert('Bad Reply from Server');
-                        return;
-                    }
-                    try {
-                        data = $.parseJSON(data);
-                    } catch (err) {
-                        alert('Bad JSON Encoding');
-                        return;
-                    }
-                    if (data.error) {
-                        if (data.gotopage) {
-                            window.open(data.gotopage, '_self');
-                        }
-                        alert(data.error);
-                        return;
-                    } else if (data.success) {
-                        $('#mesgReg').text(data.success);
-                    }
-                });
-            }
-        }
-    });
-}
 
 /**
  * 
@@ -1814,22 +1717,24 @@ $(document).ready(function() {
     
     createAutoComplete($('#' + checkIn.guestSearchPrefix + 'Search'), 3, {cmd: 'role', gp:'1'}, function (item) {
         
-        if (item.No_Return !== undefined && item.No_Return !== '') {
-            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
-            return;
-        }
+//        if (item.No_Return !== undefined && item.No_Return !== '') {
+//            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
+//            return;
+//        }
 
-        loadGuest(item.id, checkIn.idPsg, 'g', checkIn.patientStaying);
+        window.open('Reserve.php?id=' + item.id, '_self');
+        //loadGuest(item.id, checkIn.idPsg, 'g', checkIn.patientStaying);
     });
     
     createAutoComplete($('#' + checkIn.guestSearchPrefix + 'phSearch'), 5, {cmd: 'role', gp:'1'}, function (item) {
         
-        if (item.No_Return !== undefined && item.No_Return !== '') {
-            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
-            return;
-        }
+//        if (item.No_Return !== undefined && item.No_Return !== '') {
+//            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
+//            return;
+//        }
 
-        loadGuest(item.id, checkIn.idPsg, 'g', checkIn.patientStaying);
+        window.open('Reserve.php?id=' + item.id, '_self');
+        //loadGuest(item.id, checkIn.idPsg, 'g', checkIn.patientStaying);
     });
         
     function getPatient(item) {

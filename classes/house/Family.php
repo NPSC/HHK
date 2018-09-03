@@ -13,14 +13,23 @@ class Family {
     protected $patientId;
     protected $patientPrefix;
     protected $hospStay;
+    protected $IncldEmContact;
+    protected $patientAsGuest;
+    protected $patientAddr;
+    protected $showDemographics;
 
-    public function __construct(\PDO $dbh, &$rData) {
 
-        //$this->rData = $rData;
+    public function __construct(\PDO $dbh, &$rData, $incldEmContact = FALSE) {
+
+        $uS = Session::getInstance();
+
+        $this->IncldEmContact = $incldEmContact;
         $this->patientId = 0;
         $this->patientPrefix = 0;
 
-        $uS = Session::getInstance();
+        $this->patientAsGuest = $uS->PatientAsGuest;
+        $this->patientAddr = $uS->PatientAddr;
+        $this->showDemographics = $uS->ShowDemographics;
 
         // Prefix
         if (isset($uS->addPerPrefix) === FALSE) {
@@ -68,11 +77,11 @@ class Family {
                     $this->roleObjs[$prefix] = new Patient($dbh, $prefix, $ngrs->idName->getStoredVal(), $rData->getPatLabel());
                     $this->roleObjs[$prefix]->setPatientRelationshipCode($ngrs->Relationship_Code->getStoredVal());
 
-                    if ($uS->PatientAsGuest && $this->roleObjs[$prefix]->getNoReturn() != '') {
+                    if ($this->patientAsGuest && $this->roleObjs[$prefix]->getNoReturn() != '') {
                         $psgMember->setStay(ReserveData::CANT_STAY);
                     }
 
-                    if ($uS->PatientAsGuest === FALSE) {
+                    if ($this->patientAsGuest === FALSE) {
                         $psgMember->setStay(ReserveData::NOT_STAYING);
                     }
 
@@ -105,7 +114,7 @@ class Family {
                     $prefix = $psgMember->getPrefix();
                 } else {
                     $prefix = $uS->addPerPrefix++;
-                    $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, new PSGMemStay(ReserveData::NOT_STAYING));
+                    $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, new PSGMemStay(ReserveData::STAYING));
                 }
 
                 $this->roleObjs[$prefix] = new Guest($dbh, $prefix, $rData->getId());
@@ -126,7 +135,7 @@ class Family {
                 $prefix = $psgMember->getPrefix();
             } else {
                 $prefix = $uS->addPerPrefix++;
-                $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, new PSGMemStay(ReserveData::NOT_STAYING));
+                $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, new PSGMemStay(ReserveData::STAYING));
             }
 
             $this->roleObjs[$prefix] = new Guest($dbh, $prefix, $rData->getId());
@@ -148,7 +157,7 @@ class Family {
                 $prefix = $psgMember->getPrefix();
             } else {
                 $prefix = $uS->addPerPrefix++;
-                $psgMember = new PSGMember(0, $prefix, '', new PSGMemStay(ReserveData::NOT_STAYING));
+                $psgMember = new PSGMember(0, $prefix, '', new PSGMemStay(ReserveData::STAYING));
             }
 
             $this->roleObjs[$prefix] = new Guest($dbh, $prefix, 0);
@@ -244,17 +253,17 @@ class Family {
 
     public function createAddPersonMu(\PDO $dbh, ReserveData $rData) {
 
-        $uS = Session::getInstance();
-
         $addPerson = array();
 
         foreach ($this->roleObjs as $prefix => $role) {
+
+            $demoMu = '';
 
             if ($role->getIdName() != $rData->getId()) {
                 continue;
             }
 
-            // Remove guests.
+            // Remove icon.
             $removeIcons = HTMLContainer::generateMarkup('ul'
                 , HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
                     , array('class'=>'ui-state-default ui-corner-all hhk-removeBtn', 'style'=>'float:right;', 'data-prefix'=>$prefix, 'title'=>'Remove guest'))
@@ -264,11 +273,13 @@ class Family {
                     , $role->createThinMarkup($rData->getPsgMember($prefix)->getStayObj(), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
                     . HTMLTable::makeTd($removeIcons));
 
-            // Demographics
-            if ($uS->ShowDemographics) {
+
+            if ($this->IncldEmContact) {
+                // Emergency Contact
+                $demoMu = $this->getEmergencyConntactMu($dbh, $role);
+            } else if ($this->showDemographics) {
+                // Demographics
                 $demoMu = $this->getDemographicsMarkup($dbh, $role);
-            } else {
-                $demoMu = '';
             }
 
             // Add addresses and demo's
@@ -286,7 +297,6 @@ class Family {
 
     public function createFamilyMarkup(\PDO $dbh, ReserveData $rData) {
 
-        $uS = Session::getInstance();
         $rowClass = 'odd';
         $mk1 = '';
         $trs = array();
@@ -312,22 +322,25 @@ class Family {
         // Put the patient first.
         if ($this->patientPrefix > 0) {
 
+            $demoMu = '';
             $role = $this->roleObjs[$this->patientPrefix];
             $idPrefix = $role->getRoleMember()->getIdPrefix();
 
             $trs[] = HTMLContainer::generateMarkup('tr',
                     $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), TRUE)
-                    , array('class'=>$rowClass));
+                    , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
 
-            // Demographics
-            if ($uS->ShowDemographics) {
-                $demoMu = $this->getDemographicsMarkup($dbh, $role);
-            } else {
-                $demoMu = '';
-            }
+            if ($this->patientAddr || $this->patientAsGuest) {
 
-            if ($uS->PatientAddr || $uS->PatientAsGuest) {
-                $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow'));
+                if ($this->IncldEmContact) {
+                    // Emergency Contact
+                    $demoMu = $this->getEmergencyConntactMu($dbh, $role);
+                } else if ($this->showDemographics) {
+                    // Demographics
+                    $demoMu = $this->getDemographicsMarkup($dbh, $role);
+                }
+
+                $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
             }
         }
 
@@ -335,6 +348,8 @@ class Family {
         foreach ($this->roleObjs as $role) {
 
             $idPrefix = $role->getRoleMember()->getIdPrefix();
+            $demoMu = '';
+
 
             if ($rData->getPsgMember($idPrefix)->isPrimaryGuest()) {
                 $familyName = $role->getRoleMember()->get_lastName();
@@ -352,7 +367,7 @@ class Family {
                 $rowClass = 'odd';
             }
 
-            // Remove guests.
+            // Remove guest button.
             $removeIcons = HTMLContainer::generateMarkup('ul'
                 , HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
                     , array('class'=>'ui-state-default ui-corner-all hhk-removeBtn', 'style'=>'float:right;', 'data-prefix'=>$idPrefix, 'title'=>'Remove guest'))
@@ -362,18 +377,20 @@ class Family {
             $trs[] = HTMLContainer::generateMarkup('tr',
                     $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
                     . ($role->getIdName() == 0 ? HTMLTable::makeTd($removeIcons) : '')
-                    , array('class'=>$rowClass));
+                    , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
 
 
-            // Demographics
-            if ($uS->ShowDemographics) {
+            if ($this->IncldEmContact) {
+                // Emergency Contact
+                $demoMu = $this->getEmergencyConntactMu($dbh, $role);
+            } else if ($this->showDemographics) {
+                // Demographics
                 $demoMu = $this->getDemographicsMarkup($dbh, $role);
-            } else {
-                $demoMu = '';
             }
 
+
             // Add addresses and demo's
-            $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>$rowClass . ' hhk-addrRow'));
+            $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
 
         }
 
@@ -404,9 +421,24 @@ class Family {
 
     }
 
-    public function save(\PDO $dbh, $post, ReserveData &$rData) {
+    protected function getEmergencyConntactMu(\PDO $dbh, $role) {
 
         $uS = Session::getInstance();
+
+        // Add search icon
+        $ecSearch = HTMLContainer::generateMarkup('span', '', array('data-prefix'=>$role->getRoleMember()->getIdPrefix(), 'class'=>'hhk-emSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'float: right; margin-left:.3em;cursor:pointer;'));
+
+        $ec = $role->getEmergContactObj($dbh);
+
+        return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', 'Emergency Contact for Guest' . $ecSearch, array('style'=>'font-weight:bold;'))
+                . $ec->createMarkup($uS->guestLookups[GL_TableNames::PatientRel], $role->getRoleMember()->getIdPrefix(), $role->getIncompleteEmContact()), array('class'=>'hhk-panel')),
+                array('style'=>'float:left; margin-right:3px;'));
+
+    }
+
+
+    public function save(\PDO $dbh, $post, ReserveData &$rData, $userName) {
 
         // Open Psg
         $psg = new Psg($dbh, $rData->getIdPsg());
@@ -423,7 +455,7 @@ class Family {
             if ($m->getRole() == 'p') {
 
                 $role = new Patient($dbh, $m->getPrefix(), $m->getId());
-                $role->save($dbh, $post, $uS->username);
+                $role->save($dbh, $post, $userName);
                 $this->roleObjs[$m->getPrefix()] = $role;
 
                 $m->setId($role->getIdName());
@@ -435,7 +467,7 @@ class Family {
             } else {
 
                 $role = new Guest($dbh, $m->getPrefix(), $m->getId());
-                $role->save($dbh, $post, $uS->username);
+                $role->save($dbh, $post, $userName);
                 $this->roleObjs[$m->getPrefix()] = $role;
 
                 $m->setId($role->getIdName());
@@ -447,7 +479,7 @@ class Family {
         }
 
         // Save PSG
-        $psg->savePSG($dbh, $this->patientId, $uS->username);
+        $psg->savePSG($dbh, $this->patientId, $userName);
         $rData->setIdPsg($psg->getIdPsg());
 
         if ($psg->getIdPsg() > 0 && $this->patientId > 0) {

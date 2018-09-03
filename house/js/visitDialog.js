@@ -13,7 +13,7 @@
  * @param {int} idVisit
  * @param {int} visitSpan
  * @returns {undefined}
- */
+
 function getMember(item, idVisit, visitSpan) {
     "use strict";
     $.post('ws_ckin.php',
@@ -127,6 +127,7 @@ function getMember(item, idVisit, visitSpan) {
         });
     }
 }
+ */
 
 function setupVisitNotes(vid, $container) {
 
@@ -278,11 +279,11 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
                 $('#rateChgCB').change(function () {
                     if (this.checked) {
-                        $('.changeRateTd').show('fade');
+                        $('.changeRateTd').show();
                         $('#showRateTd').hide('fade');
                     }else {
                         $('.changeRateTd').hide('fade');
-                        $('#showRateTd').show('fade');
+                        $('#showRateTd').show();
                     }
                 });
 
@@ -527,7 +528,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
             $diagbox.dialog('option', 'buttons', buttons);
             $diagbox.dialog('option', 'title', title);
-            $diagbox.dialog('option', 'width', ($( window ).width() * .8));
+            $diagbox.dialog('option', 'width', ($( window ).width() * .86));
             $diagbox.dialog('option', 'height', $( window ).height());
             $diagbox.dialog('open');
 

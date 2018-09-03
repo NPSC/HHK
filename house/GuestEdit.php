@@ -532,7 +532,7 @@ if ($name->get_lastUpdated() != '') {
 
 // Add Emergency contact
 $emergencyTabMarkup = HTMLContainer::generateMarkup('div',
-        $emergContact->createMarkup($emergContact, $uS->guestLookups[GL_TableNames::PatientRel]));
+        $emergContact->createMarkup($uS->guestLookups[GL_TableNames::PatientRel]));
 
 
 
@@ -601,7 +601,9 @@ if ($psg->getIdPsg() > 0) {
         for ($j = count($visitRows) - 1; $j >= 0 ; $j--) {
 
             if (isset($visitRows[$j - 1])) {
-                $visitRows[$j]['nxtRoom'] = $visitRows[$j - 1]['Title'];
+                $visitRows[$j]['nxtRoom'] = ' to ' . $visitRows[$j - 1]['Title'];
+            } else {
+                $visitRows[$j]['nxtRoom'] = '';
             }
         }
 
@@ -625,7 +627,7 @@ if ($psg->getIdPsg() > 0) {
             if ($r['Status'] == VisitStatus::NewSpan) {
 
                 // Get the next room if room was changed
-                $room = $r['Status_Title'] . ' from ' . $r['Title'] . ' to ' . $r['nxtRoom'];
+                $room = $r['Status_Title'] . ' from ' . $r['Title'] . $r['nxtRoom'];
                 $stIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-newwin', 'style'=>'float: left; margin-left:.3em;', 'title'=>$r['Status_Title']));
 
             } else if ($r['Status'] == VisitStatus::ChangeRate) {
@@ -791,6 +793,7 @@ $uS->guestId = $id;
         <?php echo MULTISELECT_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
+        <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
@@ -806,6 +809,8 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>

@@ -167,7 +167,17 @@ try {
 
     case "addResvGuest":
 
-        $resv = Reservation::reservationFactoy($dbh, $_POST);
+        $isCheckin = FALSE;
+
+        if (isset($_POST['isCheckin'])) {
+            $isCheckin = filter_var($_POST['isCheckin'], FILTER_VALIDATE_BOOLEAN);
+        }
+
+        if ($isCheckin) {
+            $resv = CheckingIn::reservationFactoy($dbh, $_POST);
+        } else {
+            $resv = Reservation::reservationFactoy($dbh, $_POST);
+        }
 
         $events = $resv->addPerson($dbh);
 

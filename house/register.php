@@ -286,6 +286,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <?php echo JQ_DT_CSS; ?>
         <link href='css/fullcalendar.min.css'  rel='stylesheet' type='text/css' />
         <link href='css/scheduler.min.css'  rel='stylesheet' type='text/css' />
+        <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
 
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
@@ -302,6 +303,8 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
         <script type="text/javascript">
             var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';

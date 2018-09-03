@@ -67,7 +67,7 @@ $labels = new Config_Lite(LABEL_FILE);
 $paymentMarkup = '';
 $receiptMarkup = '';
 $payFailPage = $wInit->page->getFilename();
-$idGuest = 0;
+$idGuest = -1;
 $idReserv = 0;
 $idPsg = 0;
 
@@ -154,7 +154,7 @@ if (isset($_GET['idPsg'])) {
 }
 
 
-if ($idReserv > 0 || $idGuest > 0) {
+if ($idReserv > 0 || $idGuest >= 0) {
 
     $mk1 = "<h2>Loading...</h2>";
     $resvObj->setIdResv($idReserv);
@@ -200,6 +200,7 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo HOUSE_CSS; ?>
         <?php echo DR_PICKER_CSS ?>
         <?php echo JQ_DT_CSS; ?>
+        <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
 <!--        Fix the ugly checkboxes-->
         <style>
@@ -219,6 +220,8 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo DR_PICKER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="js/resvManager.js"></script>
 
@@ -259,7 +262,7 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="keysfees" style="display:none;font-size: .85em;"></div>
 
         </div>
-        <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
+        <form name="xform" id="xform" method="post"></form>
         <div id="confirmDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;">
             <form id="frmConfirm" action="Reserve.php" method="post"></form>
         </div>
@@ -285,83 +288,6 @@ $(document).ready(function() {
                     this.element.outerWidth()
             ) * 1.1 );
         }
-    });
-
-    pageManager = new resvManager(resv);
-
-    // hide the alert on mousedown
-    $(document).mousedown(function (event) {
-        hideAlertMessage();
-        var target = $(event.target);
-
-        if (target[0].id !== 'divSelAddr' && target[0].id !== 'selAddrch') {
-            $('#divSelAddr').remove();
-        }
-    });
-
-// Buttons
-    $('#btnDone, #btnShowReg, #btnDelete, #btnCheckinNow').button();
-
-    $('#btnDelete').click(function () {
-
-        if ($(this).val() === 'Deleting >>>>') {
-            return;
-        }
-
-        if (confirm('Delete this ' + pageManager.resvTitle + '?')) {
-
-            $(this).val('Deleting >>>>');
-
-            pageManager.deleteReserve(pageManager.getIdResv(), 'form#form1', $(this));
-        }
-    });
-
-    $('#btnShowReg').click(function () {
-        window.open('ShowRegForm.php?rid=' + pageManager.getIdResv(), '_blank');
-    });
-
-    $('#btnCheckinNow').click(function () {
-        window.open('CheckingIn.php?rid=' + pageManager.getIdResv(), '_self');
-    });
-
-    $('#btnDone').click(function () {
-
-        if ($(this).val() === 'Saving >>>>') {
-            return;
-        }
-
-        hideAlertMessage();
-
-        if (pageManager.verifyInput() === true) {
-
-            $.post(
-                'ws_resv.php',
-                $('#form1').serialize() + '&cmd=saveResv&idPsg=' + pageManager.getIdPsg() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
-                function(data) {
-                    try {
-                        data = $.parseJSON(data);
-                    } catch (err) {
-                        flagAlertMessage(err.message, true);
-                        return;
-                    }
-
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
-                    }
-
-                    if (data.error) {
-                        flagAlertMessage(data.error, true);
-                        $('#btnDone').val('Save').show();
-                    }
-
-                    pageManager.loadResv(data);
-                    flagAlertMessage(data.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle);
-                }
-            );
-
-            $(this).val('Saving >>>>');
-        }
-
     });
 
 // Dialog Boxes
@@ -441,6 +367,84 @@ $(document).ready(function() {
         title: 'Payment Receipt'
     });
 
+    pageManager = new resvManager(resv);
+
+    // hide the alert on mousedown
+    $(document).mousedown(function (event) {
+        hideAlertMessage();
+        var target = $(event.target);
+
+        if (target[0].id !== 'divSelAddr' && target[0].closest('div') && target[0].closest('div').id !== 'divSelAddr') {
+            $('#divSelAddr').remove();
+        }
+    });
+
+// Buttons
+    $('#btnDone, #btnShowReg, #btnDelete, #btnCheckinNow').button();
+
+    $('#btnDelete').click(function () {
+
+        if ($(this).val() === 'Deleting >>>>') {
+            return;
+        }
+
+        if (confirm('Delete this ' + pageManager.resvTitle + '?')) {
+
+            $(this).val('Deleting >>>>');
+
+            pageManager.deleteReserve(pageManager.getIdResv(), 'form#form1', $(this));
+        }
+    });
+
+    $('#btnShowReg').click(function () {
+        window.open('ShowRegForm.php?rid=' + pageManager.getIdResv(), '_blank');
+    });
+
+    $('#btnCheckinNow').click(function () {
+        window.open('CheckingIn.php?rid=' + pageManager.getIdResv(), '_self');
+    });
+
+    $('#btnDone').click(function () {
+
+        if ($(this).val() === 'Saving >>>>') {
+            return;
+        }
+
+        hideAlertMessage();
+
+        if (pageManager.verifyInput() === true) {
+
+            $.post(
+                'ws_resv.php',
+                $('#form1').serialize() + '&cmd=saveResv&idPsg=' + pageManager.getIdPsg() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
+                function(data) {
+                    try {
+                        data = $.parseJSON(data);
+                    } catch (err) {
+                        flagAlertMessage(err.message, true);
+                        return;
+                    }
+
+                    if (data.gotopage) {
+                        window.open(data.gotopage, '_self');
+                    }
+
+                    if (data.error) {
+                        flagAlertMessage(data.error, true);
+                        $('#btnDone').val('Save').show();
+                    }
+
+                    pageManager.loadResv(data);
+                    flagAlertMessage(data.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle);
+                }
+            );
+
+            $(this).val('Saving >>>>');
+        }
+
+    });
+
+
 
     function getGuest(item) {
 
@@ -465,7 +469,7 @@ $(document).ready(function() {
 
     }
 
-    if (parseInt(resv.id, 10) > 0 || parseInt(resv.rid, 10) > 0) {
+    if (parseInt(resv.id, 10) >= 0 || parseInt(resv.rid, 10) > 0) {
 
         // Avoid automatic new guest for existing reservations.
         if (parseInt(resv.id, 10) === 0 && parseInt(resv.rid, 10) > 0) {

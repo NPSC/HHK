@@ -36,14 +36,6 @@ class VisitView {
                 HTMLContainer::generateMarkup('legend', 'Notes', array('style'=>'font-weight:bold;'))
                 , array('id'=>'visitNoteViewer', 'style'=>'clear:left; float:left; width:90%;', 'class'=>'hhk-panel'));
 
-//        $trNotes = HTMLTable::makeTd('Notes: ', array('class' => 'tdlabel'));
-
-//        if ($uS->ConcatVisitNotes) {
-//            $trNotes .= HTMLTable::makeTd(Notes::markupShell($r['Notes'], 'tavisitnotes'), array('colspan' => '8', 'style'=>'min-width:500px;'));
-//        } else {
-//            $trNotes .= HTMLTable::makeTd(Notes::markupShell($r['Visit_Notes'], 'tavisitnotes'), array('colspan' => '8', 'style'=>'min-width:500px;'));
-//        }
-
 
         // Key Deposit
         $kdRow = '';
@@ -102,7 +94,7 @@ class VisitView {
 
                 $addGuestButton = HTMLContainer::generateMarkup('div',
                     HTMLInput::generateMarkup('Add Guest', array('id'=>'btnAddGuest', 'type'=>'button', 'data-rid'=>$r['idReservation'], 'title'=>'Add another guest to this visit.'))
-                    , array('style'=>'float:left;margin-left:.3em;'));
+                    , array('style'=>'float:right;margin-left:.3em;margin-bottom:.3em; margin-top:.3em;'));
 
                 break;
 
@@ -193,7 +185,7 @@ class VisitView {
             EditRS::loadRow($r, $vRs);
             $rateTbl = $rateChooser->createChangeRateMarkup($dbh, $vRs, $isAdmin);
 
-            $tblMarkup .= $rateTbl->generateMarkup(array('style'=>'clear:left;margin-bottom:.3em; margin-top:.3em;'));
+            $tblMarkup .= $rateTbl->generateMarkup(array('style'=>'clear:left;float:left;margin-bottom:.3em; margin-top:.3em;'));
         }
 
 
@@ -239,7 +231,7 @@ class VisitView {
                 }
             }
 
-            $tblMarkup .= $etbl->generateMarkup(array('style'=>'float:left;margin-left:.3em;'));
+            $tblMarkup .= $etbl->generateMarkup(array('style'=>'float:left;margin-left:.3em;margin-bottom:.3em; margin-top:.3em;'));
         }
 
         // Adjust button
@@ -247,19 +239,13 @@ class VisitView {
 
             $tblMarkup .= HTMLContainer::generateMarkup('div',
                     HTMLInput::generateMarkup('Adjust Fees', array('name'=>'paymentAdjust', 'type'=>'button', 'class'=>'hhk-feeskeys', 'title'=>'Create one-time additional charges or discounts.'))
-                    , array('style'=>'float:left;margin-left:.3em;'));
+                    , array('style'=>'float:right;margin-left:.3em;margin-bottom:.3em; margin-top:.3em;'));
         }
 
         //Add Guest Button
-        $tblMarkup .= $addGuestButton . HTMLContainer::generateMarkup('div','', array('style'=>'clear:both;'));
+        $tblMarkup .= $addGuestButton;  // . HTMLContainer::generateMarkup('div','', array('style'=>'float:left;margin-left:.3em;margin-bottom:.3em; margin-top:.3em;'));
 
-        // Notes
-//        $notesTbl = new HTMLTable();
-//        $notesTbl->addBodyTr($trNotes);
-        $tblMarkup .= $notesContainer; //$notesTbl->generateMarkup(array('id' => 'tblActiveNotes', 'style'=>'clear:left;float:left;'));
-
-
-
+        $tblMarkup .= $notesContainer;
 
 
         $undoCkoutButton = '';
@@ -280,7 +266,7 @@ class VisitView {
             $spnMkup = HTMLContainer::generateMarkup('label', '- Undo Room Change', array('for'=>'undoRmChg'))
                     . HTMLInput::generateMarkup('', array('id'=>'undoRmChg', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.3em;margin-left:0.3em;'));
 
-            $undoCkoutButton = HTMLContainer::generateMarkup('span', $spnMkup, array('style'=>'margin:0 1em;', 'title'=>'Undo Room Change'));
+            $undoCkoutButton = HTMLContainer::generateMarkup('span', $spnMkup, array('style'=>'margin:0.1em;', 'title'=>'Undo Room Change'));
         }
 
 

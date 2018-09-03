@@ -239,7 +239,7 @@ class Reservation {
 
             foreach ($psgMembers as $m) {
 
-                $events[$m->getPrefix()] = $m->getStayObj()->createStayButton($m->getPrefix());
+                $events[$m->getPrefix()] = array('ctrl'=>$m->getStayObj()->createStayButton($m->getPrefix()), 'stay'=>$m->getStay());
             }
 
             return array('stayCtrl'=>$events);
@@ -911,7 +911,7 @@ class ActiveReservation extends Reservation {
         $uS = Session::getInstance();
 
         // Save members, psg, hospital
-        $this->family->save($dbh, $post, $this->reserveData);
+        $this->family->save($dbh, $post, $this->reserveData, $uS->username);
 
         if (count($this->getStayingMembers()) < 1) {
             // Nobody set to stay
@@ -1123,13 +1123,13 @@ class CheckingIn extends ActiveReservation {
 
         if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
 
-            $family = new Family($dbh, $rData);
+            $family = new Family($dbh, $rData, TRUE);
             return new CheckingIn($rData, $rRs, $family);
         }
 
         if ($rRs->Status->getStoredVal() == ReservationStatus::Staying) {
 
-            return new StayingReservation($rData, $rRs, new Family($dbh, $rData));
+            return new StayingReservation($rData, $rRs, new Family($dbh, $rData, TRUE));
 
         }
 
@@ -1494,9 +1494,8 @@ class CheckingIn extends ActiveReservation {
 
     }
 
+
 }
-
-
 
 class ReserveSearcher extends ActiveReservation {
 

@@ -112,25 +112,25 @@ class EmergencyContact implements iEmergencyContact {
 
     }
 
-    public static function createMarkup(iEmergencyContact $emContact, $relOptions, $idPrefix = "", $checkLater = FALSE) {
+    public function createMarkup($relOptions, $idPrefix = "", $checkLater = FALSE) {
 
         if (isset($relOptions[RelLinkType::Self])) {
             unset($relOptions[RelLinkType::Self]);
         }
 
         $markup = new HTMLTable();
-        $markup->addBodyTr(HTMLTable::makeTd('First Name', array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLInput::generateMarkup($emContact->getEcNameFirst(), array('name'=>$idPrefix.'txtEmrgFirst', 'size'=>'14'))));
-        $markup->addBodyTr(HTMLTable::makeTd('Last Name', array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLInput::generateMarkup($emContact->getEcNameLast(), array('name'=>$idPrefix.'txtEmrgLast', 'size'=>'14'))));
-        $markup->addBodyTr(HTMLTable::makeTd('Phone', array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLInput::generateMarkup($emContact->getEcPhone(), array('name'=>$idPrefix.'txtEmrgPhn', 'class'=>'hhk-phoneInput', 'size'=>'14'))));
-        $markup->addBodyTr(HTMLTable::makeTd('Alternate', array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLInput::generateMarkup($emContact->getEcAltPhone(), array('name'=>$idPrefix.'txtEmrgAlt', 'class'=>'hhk-phoneInput', 'size'=>'14'))));
+        $markup->addBodyTr(HTMLTable::makeTd('First Name', array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getEcNameFirst(), array('name'=>$idPrefix.'txtEmrgFirst', 'size'=>'14'))));
+        $markup->addBodyTr(HTMLTable::makeTd('Last Name', array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getEcNameLast(), array('name'=>$idPrefix.'txtEmrgLast', 'size'=>'14'))));
+        $markup->addBodyTr(HTMLTable::makeTd('Phone', array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getEcPhone(), array('name'=>$idPrefix.'txtEmrgPhn', 'class'=>'hhk-phoneInput', 'size'=>'14'))));
+        $markup->addBodyTr(HTMLTable::makeTd('Alternate', array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getEcAltPhone(), array('name'=>$idPrefix.'txtEmrgAlt', 'class'=>'hhk-phoneInput', 'size'=>'14'))));
         $markup->addBodyTr(HTMLTable::makeTd('Relationship to Guest', array('class'=>'tdlabel')) . HTMLTable::makeTd(
-                HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($relOptions), $emContact->getEcRelationship()), array('name'=>$idPrefix."selEmrgRel"))));
+                HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($relOptions), $this->getEcRelationship()), array('name'=>$idPrefix."selEmrgRel"))));
 
-        $attr = array('type'=>'checkbox', 'name'=>$idPrefix.'cbEmrgLater', 'class'=>'hhk-EmergCb');
+        $attr = array('type'=>'checkbox', 'name'=>$idPrefix.'cbEmrgLater', 'data-prefix'=>$idPrefix, 'class'=>'hhk-EmergCb');
         if ($checkLater) {
             $attr['checked'] = 'checked';
         }
-        
+
         $later = HTMLContainer::generateMarkup('div', HTMLInput::generateMarkup('', $attr) . HTMLContainer::generateMarkup('label', ' Skip for now', array('for'=>$idPrefix.'cbEmrgLater')), array('style'=>'margin-top:10px; margin-left:40px;'));
         return $markup->generateMarkup() . $later;
     }

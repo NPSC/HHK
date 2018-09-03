@@ -40,6 +40,7 @@ class ReserveData {
     protected $fullName = '';
     protected $resvTitle;
     protected $saveButtonLabel;
+    protected $fillEmergencyContact;
     protected $patAsGuestFlag;
     protected $patBirthDateFlag;
     protected $showBirthDate;
@@ -96,6 +97,7 @@ class ReserveData {
         $this->patAsGuestFlag = $uS->PatientAsGuest;
         $this->patBirthDateFlag = $uS->InsistPatBD;
         $this->showBirthDate = $uS->ShowBirthDate;
+        $this->fillEmergencyContact = isset($uS->EmergContactFill) ? $uS->EmergContactFill : 'false';
         $this->patLabel = $labels->getString('MemberType', 'patient', 'Patient');
         $this->psgTitle = $labels->getString('statement', 'psgLabel', 'Patient Support Group');
         $this->wlNotesLabel = $labels->getString('referral', 'waitlistNotesLabel', 'Waitlist Notes');
