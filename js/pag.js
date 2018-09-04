@@ -49,7 +49,7 @@ function flagAlertMessage(mess, wasError) {
     new Noty(
             {
                 type: type,
-                text: "<strong>Error:</strong> " + mess,
+                text: mess
             }
             ).show();
     

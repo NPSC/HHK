@@ -793,7 +793,6 @@ CREATE TABLE if not exists `lookups` (
 -- -----------------------------------------------------
 -- Table `mail_listing`
 -- -----------------------------------------------------
-drop table if exists `mail_listing`;
 CREATE TABLE if not exists `mail_listing` (
   `id` int(11) NOT NULL,
   `mr` varchar(5) NOT NULL DEFAULT '',
@@ -1284,7 +1283,7 @@ CREATE TABLE if not exists `page` (
   `Type` varchar(5) NOT NULL DEFAULT '',
   `Validity_Code` varchar(75) NOT NULL DEFAULT '',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
-  `Last_Updated` datetime NOT NULL,
+  `Last_Updated` datetime DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idPage`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5;
@@ -2156,10 +2155,10 @@ ALTER TABLE `invoice`
     ADD INDEX `Index_Date` (`Invoice_Date` ASC);
 
 ALTER TABLE `invoice_line` 
-    ADD INDEX `ix_invoice_line_invoice_id` (`Invoice_Id`, ASC);
+    ADD INDEX `ix_invoice_line_invoice_id` (`Invoice_Id` ASC);
 
 ALTER TABLE `name` 
-    ADD INDEX `Index_Name` (`Name_Last` ASC, `Name_First` ASC),
+    ADD INDEX `Index_Name` (`Name_Last` ASC, `Name_First` ASC);
 
 ALTER TABLE `name_guest` 
     ADD INDEX `INDEX_IdPsg` (`idPsg` ASC);

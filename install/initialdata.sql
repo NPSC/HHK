@@ -414,23 +414,23 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 -- ;
 
 
-REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`,`Timestamp`) VALUES 
-('FinAppStatus','a','Granted','y','y','','','2013-11-19 17:27:35'),
-('FinAppStatus','n','Not Granted','y','y','','','2013-11-19 17:27:35'),
-('RegistrationAtribute','Sig_Card','Guest Signature','y','y','','','2013-11-13 00:59:31'),
-('RegistrationAttribute','Guest_Ident','Guest Identification','y','y','','','2013-11-13 00:59:31'),
-('RegistrationAttribute','Pamphlet','Rules Pamphlet','y','y','','','2013-11-13 00:59:31'),
-('RegistrationAttribute','Referral','Hospital Referral Document','','','','','2013-11-13 00:59:31'),
-('ReservStatus','a','Confirmed','y','y','','ui-icon-check','2013-11-11 15:09:04'),
-('ReservStatus','uc','Unconfirmed','y','y','','ui-icon-help','2013-11-11 15:09:04'),
-('ReservStatus','c','Guest Canceled','y','y','','ui-icon-cancel','2013-11-11 15:09:04'),
-('ReservStatus','ns','No Show','y','y','','ui-icon-alert','2013-11-14 17:57:58'),
-('ReservStatus','co','Checked Out','y','y','','ui-icon-extlink','2013-11-14 17:57:58'),
-('ReservStatus','p','New','y','y','','','2013-11-14 17:57:58'),
-('ReservStatus','s','Checked In','y','y','','ui-icon-circle-check','2013-11-19 15:16:20'),
-('ReservStatus','td','Turned Away','y','y','','ui-icon-arrowreturnthick-1-s','2013-11-14 17:57:58'),
-('ReservStatus', 'im', 'Immediate', 'y', 'y', '', 'ui-icon-check', NULL),
-('ReservStatus','w','Waitlist','y','y','','ui-icon-arrowstop-1-e','2013-11-14 17:57:58');
+REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`) VALUES 
+('FinAppStatus','a','Granted','y','y','',''),
+('FinAppStatus','n','Not Granted','y','y','',''),
+('RegistrationAtribute','Sig_Card','Guest Signature','y','y','',''),
+('RegistrationAttribute','Guest_Ident','Guest Identification','y','y','',''),
+('RegistrationAttribute','Pamphlet','Rules Pamphlet','y','y','',''),
+('RegistrationAttribute','Referral','Hospital Referral Document','','','',''),
+('ReservStatus','a','Confirmed','y','y','','ui-icon-check'),
+('ReservStatus','uc','Unconfirmed','y','y','','ui-icon-help'),
+('ReservStatus','c','Guest Canceled','y','y','','ui-icon-cancel'),
+('ReservStatus','ns','No Show','y','y','','ui-icon-alert'),
+('ReservStatus','co','Checked Out','y','y','','ui-icon-extlink'),
+('ReservStatus','p','New','y','y','',''),
+('ReservStatus','s','Checked In','y','y','','ui-icon-circle-check'),
+('ReservStatus','td','Turned Away','y','y','','ui-icon-arrowreturnthick-1-s'),
+('ReservStatus', 'im', 'Immediate', 'y', 'y', '', 'ui-icon-check'),
+('ReservStatus','w','Waitlist','y','y','','ui-icon-arrowstop-1-e');
 -- ;
 
 
@@ -632,16 +632,16 @@ VALUES
 -- Table `w_groups`
 --
 REPLACE INTO `w_groups` 
-(`Group_Code`,`Title`,`Description`,`Default_Access_Level`,`Max_Level`,`Min_Access_Level`,`Cookie_Restricted`,`Password_Policy`,`Last_Updated`,`Updated_By`,`Timestamp`) 
+(`Group_Code`,`Title`,`Description`,`Default_Access_Level`,`Max_Level`,`Min_Access_Level`,`Cookie_Restricted`,`Password_Policy`) 
 VALUES
-('db','Maintenance','Configure metadata.','','','','\0','','2013-08-07 16:19:17','admin','2013-07-28 16:34:25'),
-('dm','Donation Management','Donation Management','','','','\0','','2013-08-07 16:11:22','admin','2013-07-28 16:34:25'),
-('dna','Donors (No Amounts)','View lists of donors but without donation amounts','','','','\0','','2013-08-07 16:16:10','admin','2013-07-28 16:34:25'),
-('g','Guest Operations','Guest Operations, basic access to guest tracking site','','','','','','2013-08-07 16:19:17','admin','2013-07-28 16:34:25'),
-('ga','Guest Admin','Guest Administration level access to guest tracking site','','','','\0','','2013-08-07 16:19:17','admin','2013-07-28 16:34:25'),
-('mm','Member Management','Member Management, basic access to admin site.','','','','\0','','2013-08-07 16:19:40','admin','2013-07-28 16:34:25'),
-('pub','Public','Public','','','','\0','','2013-08-07 16:11:22','admin','2013-07-28 16:34:25'),
-('v','Volunteer','Volunteer site.','','','','\0','','2013-08-07 16:19:17','admin','2013-07-28 16:34:25');
+('db','Maintenance','Configure metadata.','','','','\0',''),
+('dm','Donation Management','Donation Management','','','','\0',''),
+('dna','Donors (No Amounts)','View lists of donors but without donation amounts','','','','\0',''),
+('g','Guest Operations','Guest Operations, basic access to guest tracking site','','','','',''),
+('ga','Guest Admin','Guest Administration level access to guest tracking site','','','','\0',''),
+('mm','Member Management','Member Management, basic access to admin site.','','','','\0',''),
+('pub','Public','Public','','','','\0',''),
+('v','Volunteer','Volunteer site.','','','','\0','');
 -- ;
 
 REPLACE INTO `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) VALUES 
@@ -659,16 +659,6 @@ REPLACE INTO `counter` (`seqn`,`Table_Name`,`Next`,`Last_Updated`) VALUES
 (4,'repeater',10,NULL),
 (5,'codes',100,NULL),
 (6, 'invoice', 1000, NULL);
--- ;
-
-
---
--- Mercury Hosted Gateway
---
-REPLACE INTO `cc_hosted_gateway` (`idcc_gateway`, `cc_name`, `Merchant_Id`, `Password`, `Credit_Url`, `Trans_Url`, `CardInfo_Url`, `Checkout_Url`, `Mobile_CardInfo_Url`, `Mobile_Checkout_Url`) 
-VALUES 
-(1, 'Test', '', '', 'https://hc.mercurydev.net/hcws/hcservice.asmx?WSDL', 'https://hc.mercurydev.net/tws/TransactionService.asmx?WSDL', 'https://hc.mercurydev.net/CardInfo.aspx', 'https://hc.mercurydev.net/Checkout.aspx', 'https://hc.mercurydev.net/mobile/mCardInfo.aspx', 'https://hc.mercurydev.net/mobile/mCheckout.aspx'),
-(2, 'Production', '', '', 'https://hc.mercurypay.com/hcws/hcservice.asmx?WSDL', 'https://hc.mercurypay.com/tws/transactionservice.asmx?WSDL', 'https://hc.mercurypay.com/CardInfo.aspx', 'https://hc.mercurypay.com/Checkout.aspx', 'https://hc.mercurypay.com/mobile/mCardInfo.aspx', 'https://hc.mercurypay.com/mobile/mCheckout.aspx');
 -- ;
 
 
@@ -741,40 +731,38 @@ REPLACE INTO `web_sites`
 --
 -- Dumping data for table `page`
 --
-REPLACE INTO `page` (`idPage`,`File_Name`,`Login_Page_Id`,`Title`,`Product_Code`,`Hide`,`Web_Site`,`Menu_Parent`,`Menu_Position`,`Type`,`Validity_Code`,`Updated_By`,`Last_Updated`,`Timestamp`)
-VALUES (1,'index.php',0,'Welcome','',0,'r','','','p','','','2011-09-28 15:52:50','2011-09-29 06:52:50'),(2,'index.php',0,'','',0,'a','','','p','','admin','2011-09-28 15:52:50','2011-09-22 02:00:18'),(3,'NameEdit.php',2,'Edit Members','',0,'a','','','p','','admin','2014-07-25 12:27:19','2011-09-22 02:01:42'),(4,'EventShells.php',2,'Repeat Events','',0,'a','35','f','p','','','0000-00-00 00:00:00','2011-09-22 04:52:06'),(5,'KeyStats.php',2,'Key Stats','',0,'a','67','g','p','','admin','2012-06-11 14:28:56','2011-09-22 04:52:06'),(6,'Misc.php',2,'Miscellaneous','',0,'a','34','a','p','','admin','2012-04-09 12:04:46','2011-09-22 04:52:06'),(7,'PageEdit.php',2,'Edit Pages','',0,'a','34','e','p','','','0000-00-00 00:00:00','2011-09-22 04:52:06'),(8,'RegisterUser.php',2,'Register Web Users','',0,'a','35','e','p','','admin','2012-03-15 08:51:37','2011-09-22 04:52:06'),(9,'CategoryEdit.php',2,'Edit Categories','',0,'a','34','d','p','','admin','2012-01-18 11:55:50','2011-09-22 04:52:06'),
-(10,'VolListing.php',2,'Web Users','',0,'a','35','c','p','','admin','2011-10-31 14:41:12','2011-09-22 04:52:06'),(11,'campaignEdit.php',2,'Edit Campaigns','',0,'a','34','c','p','','','0000-00-00 00:00:00','2011-09-22 04:56:43'),(12,'campaignReport.php',2,'Campaigns','',0,'a','32','d','p','','','0000-00-00 00:00:00','2011-09-22 04:56:43'),(13,'checkDateReport.php',2,'Check Date','',0,'a','32','j','p','','','0000-00-00 00:00:00','2011-09-22 04:56:43'),(14,'directory.php',2,'Directory','',0,'a','32','a','p','','','0000-00-00 00:00:00','2011-09-22 04:56:43'),(15,'donate.php',0,'','',0,'a','','','s','','','0000-00-00 00:00:00','2011-09-22 04:56:43'),(16,'donationReport.php',2,'Donations','',0,'a','32','b','p','','admin','2011-12-12 11:32:31','2011-09-22 04:56:43'),(18,'liveGetCamp.php',0,'','',0,'a','','','s','','','0000-00-00 00:00:00','2011-09-22 04:56:43'),(19,'liveNameSearch.php',0,'','',0,'a','','','s','','','0000-00-00 00:00:00','2011-09-22 04:56:43'),
-(20,'ws_Report.php',0,'','',0,'a','','','s','','','0000-00-00 00:00:00','2011-09-22 04:56:43'),(21,'ws_gen.php',0,'','',0,'a','','','s','','','0000-00-00 00:00:00','2011-09-22 04:56:43'),(22,'VolNameEdit.php',26,'My Volunteer Info','',0,'v','0','d','p','','admin','2011-09-28 15:40:54','2011-09-22 05:01:58'),(23,'forgotpw.php',26,'Forgot My Password','',0,'v','','','p','','admin','2011-09-28 15:54:43','2011-09-22 05:01:58'),(24,'gCalFeed.php',0,'','',0,'v','','','s','','','0000-00-00 00:00:00','2011-09-22 05:01:58'),(26,'index.php',0,'','',0,'v','','','p','','admin','2011-09-28 15:50:30','2011-09-22 05:01:58'),(27,'register_web.php',26,'Register','',0,'v','','','p','','admin','2011-09-28 15:53:57','2011-09-22 05:01:58'),(28,'ws_reg_user.php',0,'','',0,'v','','','s','','','0000-00-00 00:00:00','2011-09-22 05:01:58'),(29,'ws_vol.php',0,'','',0,'v','','','s','','','0000-00-00 00:00:00','2011-09-22 05:01:58'),
-(31,'index.php',0,'','',0,'h','','','p','','admin','2011-09-28 15:52:16','2011-09-22 05:03:58'),(32,'_directory.php',2,'Reports','',0,'a','0','e','p','','','0000-00-00 00:00:00','2011-09-22 22:20:36'),(33,'categoryReport.php',2,'Categories','',0,'a','32','f','p','','admin','2013-12-10 13:09:01','2011-09-22 22:25:04'),(34,'_Misc.php',2,'DB Maintenance','',0,'a','0','k','p','','admin','2011-10-13 10:42:35','2011-09-22 22:26:38'),(35,'_VolListing.php',2,'Web Users','',0,'a','0','j','p','','admin','2011-10-31 14:40:58','2011-09-22 22:27:25'),(36,'NameEdit_Donations',0,'','',0,'a','','','c','','','0000-00-00 00:00:00','2011-09-23 18:07:22'),(37,'NameEdit_Maint',0,'','',0,'a','','','c','','admin','2011-09-26 15:15:27','2011-09-27 21:24:53'),(39,'ws_gen_Maint',0,'','',0,'a','','','c','','admin','2011-09-26 15:41:54','2011-09-27 23:41:54'),
-(45,'VolNameSearch.php',0,'','',0,'v','','','s','','admin','2011-10-09 19:24:53','2011-10-11 03:24:53'),(46,'guestadmin',0,'','',0,'h','','','c','','admin','2013-07-23 14:26:44','2011-10-15 17:01:45'),(47,'guestaccess',0,'','',0,'v','','','c','','admin','2011-10-17 15:23:29','2011-10-18 23:23:29'),(48,'PrivacyGroup',0,'','',0,'a','','','c','','admin','2011-10-31 20:38:16','2011-11-02 04:38:16'),(49,'recent.php',2,'Recent Changes','',0,'a','67','r','p','','admin','2012-06-11 14:29:48','2011-11-03 21:20:26'),
-(50,'nonReportables.php',2,'Non-Reportables','',0,'a','67','v','p','','admin','2012-06-11 14:29:29','2011-12-04 05:06:32'),(51,'donorReport.php',2,'Donors','',0,'a','32','c','p','','admin','2011-12-24 17:42:31','2011-12-13 23:59:14'),(55,'MemEdit.php',0,'','',0,'v','','none','p','','admin','2012-02-07 16:36:02','2012-02-09 04:36:02'),(56,'Cat_Donor',0,'','',0,'a','','','c','','admin','2012-02-29 11:19:02','2012-03-01 23:19:02'),(57,'anomalies.php',2,'Anomaly report','',0,'a','67','k','p','','admin','2012-06-11 14:29:18','2012-03-09 09:28:42'),(59,'ws_admin.php',0,'','',0,'h','','','s','','admin','2013-02-25 17:01:00','2012-03-12 02:33:23'),
-(60,'guestaccess',0,'','',0,'a','','','c','','admin','2012-03-26 14:04:37','2012-03-27 22:04:37'),(62,'roleSearch.php',0,'','',0,'h','','','s','','admin','2013-11-12 19:35:00','2012-03-31 18:46:51'),(65,'timeReport.php',2,'Time Reports','',0,'a','32','u','p','','admin','2012-06-04 13:47:31','2012-06-05 21:47:31'),(66,'NameSch.php',2,'Members','',0,'a','0','d','p','','admin','2015-01-27 11:46:08','2012-06-12 22:22:04'),(67,'_KeyStats.php',2,'Key Stats','',0,'a','0','g','p','','admin','2012-06-11 14:28:41','2012-06-12 22:28:41'),(68,'VolAction.php',26,'Activities','',0,'v','0','b','p','','admin','2012-09-03 16:37:32','2012-06-12 23:21:41'),(69,'_index.php?log=lo',0,'Log Out','',0,'a','0','z','p','','admin','2012-06-17 13:07:24','2012-06-18 21:05:10'),
-(70,'_index.php?log=lo',0,'Log Out','',0,'v','0','z','p','','admin','2012-06-17 13:08:23','2012-06-18 21:05:10'),(71,'_index.php?log=lo',0,'Log Out','',0,'h','0','z','p','','admin','2012-06-17 13:08:36','2012-06-18 21:05:10'),(72,'CheckIn.php',31,'Check In','',0,'h','0','f','p','','admin','2014-09-08 09:13:58','2012-10-21 00:12:53'),(74,'register.php',31,'House Register','',0,'h','79','b','p','','admin','2017-02-12 15:37:50','2012-12-09 01:25:34'),(75,'ws_resv.php',0,'','',0,'h','','','s','','admin','2017-10-10 16:09:36','2017-10-12 04:09:36'),(76,'ws_ckin.php',0,'','',0,'h','','','s','','admin','2012-12-20 16:42:05','2012-12-22 04:42:05'),(77,'RoomView.php',31,'Room Viewer','',1,'h','79','d','p','','admin','2017-02-12 15:37:50','2013-01-03 12:54:45'),(79,'_register.php',31,'House','',0,'h','0','d','p','','admin','2013-01-02 01:48:49','2013-01-03 13:48:49'),
-(80,'HouseCal.php',26,'','',0,'v','','','p','','admin','2013-03-03 17:31:24','2013-03-05 05:30:30'),(81,'ResourceBuilder.php',31,'Resource Builder','',0,'h','79','l','p','','admin','2017-02-12 15:37:50','2013-03-26 21:19:56'),(82,'ws_resc.php',0,'','',0,'h','','','s','','admin','2013-03-25 15:01:03','2013-03-26 23:01:03'),(83,'RoomUtilization.php',31,'Room Report','',0,'h','102','e','p','','admin','2017-02-12 15:37:50','2013-04-02 21:43:00'),(84,'memberManagement',0,'','',0,'h','','','c','','admin','2013-06-06 11:17:02','2013-06-07 19:17:02'),(87,'ws_reg.php',0,'','',0,'r','','','s','','admin','2013-08-04 13:40:29','2013-08-05 21:40:29'),(88,'AuthGroupEdit.php',2,'Edit Authorization','',0,'a','34','j','p','','admin','2013-08-07 15:13:41','2013-08-08 23:13:05'),(89,'Configure.php',2,'Site Configuration','',0,'a','34','g','p','','admin','2013-08-17 10:11:05','2013-08-18 18:10:27'),
-(92,'GuestDemog.php',31,'Missing Demographics','',0,'h','102','f','p','','admin','2017-02-12 15:37:50','2013-09-04 18:23:02'),(93,'GuestEdit.php',31,'Guest Edit','',0,'h','0','j','p','','admin','2014-03-05 15:49:04','2013-09-04 18:25:10'),(94,'ShowRegForm.php',31,'Registration Form','',0,'h','','','p','','admin','2017-02-12 15:37:50','2013-10-22 11:58:41'),(95,'_Referral.php',31,'Reservation','',0,'h','0','e','p','','admin','2014-03-15 12:39:32','2013-11-07 19:32:21'),(96,'CheckedIn.php',31,'','',0,'h','','','p','','admin','2017-02-12 15:37:50','2013-12-03 00:54:22'),(99,'PaymentResult.php',31,'Payment Result','',0,'h','','','p','','admin','2017-02-12 16:23:39','2013-12-17 13:14:11'),
-(100,'ShowStatement.php',31,'Guest Statement','',0,'h','','','p','','admin','2017-02-12 15:37:50','2014-01-30 19:39:16'),(101,'RoomStatus.php',31,'Housekeeping','',0,'h','79','p','p','','admin','2017-02-12 15:37:50','2014-02-26 08:46:18'),(102,'_GuestReport.php',31,'Reports','',0,'h','0','h','p','','admin','2014-03-15 12:35:58','2014-03-06 13:46:56'),(104,'ReservReport.php',31,'Reservations Report','',0,'h','102','b','p','','admin','2017-02-12 15:37:51','2014-03-16 08:37:09'),(105,'PaymentTx.php',2,'Credit Transactions Report','',0,'a','32','v','p','','admin','2015-01-27 12:19:09','2014-08-14 08:25:03'),(106,'Duplicates.php',2,'Duplicates','',0,'a','32','o','p','','admin','2014-08-27 13:43:20','2014-08-28 09:43:21'),(107,'PSGReport.php',31,'People Reports','',0,'h','102','k','p','','admin','2017-02-12 15:37:51','2014-11-14 14:25:35'),(109,'PaymentReport.php',31,'Payment Report','',0,'h','102','m','p','','admin','2017-02-12 15:37:51','2015-02-10 06:59:12'),
-(110,'VisitInterval.php',31,'Visit Interval Report','',0,'h','102','c','p','','admin','2017-02-12 15:37:51','2015-02-18 03:47:21'),(111,'GuestView.php',31,'Guests & Vehicles','',0,'h','79','v','p','','admin','2017-02-12 15:37:51','2015-02-20 03:53:11'),(113,'DRaHospReport.php',31,'Doctors, Hospitals','',0,'h','102','l','p','','admin','2017-02-12 15:37:51','2015-05-16 03:22:26'),(114,'ShowInvoice.php',31,'Show Invoice','',0,'h','','','p','','admin','2017-02-12 15:37:51','2015-06-23 04:05:44'),(115,'InvoiceReport.php',31,'Invoice Report','',0,'h','102','n','p','','admin','2017-02-12 15:37:51','2015-07-29 08:32:12'),(116,'ShowHsKpg.php',31,'Housekeeping','',0,'h','','','p','','admin','2017-02-12 15:37:51','2015-08-11 06:00:39'),(117,'PrtRegForm.php',31,'Print Registration Forms','',0,'h','','','p','','admin','2017-02-12 15:37:51','2015-09-06 02:47:07'),(118,'occDemo.php',31,'Guest Demographics','',0,'h','102','g','p','','admin','2017-02-12 15:37:51','2015-10-30 23:31:30'),(119,'ItemReport.php',31,'Item Report','',0,'h','102','s','p','','admin','2017-02-12 15:37:51','2015-12-04 02:28:20'),
-(120,'AccessLog.php',2,'User Access Log','',0,'a','35','d','p','','admin','2016-08-21 11:37:15','2016-08-21 21:37:15'),(121,'GuestTransfer.php',31,'Guest Transfer','',1,'h','79','x','p','','admin','2017-08-11 16:10:22','2016-11-28 23:13:39'),(122,'NewGuest.php',31,'New Guests','',0,'h','102','i','p','','admin','2017-02-12 15:37:51','2017-01-03 00:28:06'),(123,'PrtWaitList.php',31,'Wait Listing','',0,'h','','','p','','admin','2017-02-12 15:37:51','2017-01-03 00:28:06'),(124,'Reserve.php',31,'Family Reservation','',1,'h','95','g','p','','admin','2017-07-26 09:23:58','2017-07-26 14:23:58'),(125,'Referral.php',31,'Reservation','',0,'h','95','j','p','','admin','2017-07-26 09:31:04','2017-07-26 14:31:04'),(126,'DailyReport.php',31,'Daily Report','',0,'h','102','p','p','','admin','2017-10-05 10:56:22','2017-10-05 15:56:22'),(127,'ws_calendar.php',31,'','',0,'h','','','s','','admin','2017-10-05 10:56:22','2017-10-05 15:56:22'),(128,'ws_update.php',2,'','',0,'a','','','s','','admin','2017-10-05 10:56:22','2017-10-05 15:56:22');
+LOCK TABLES `page` WRITE;
+INSERT INTO `page` (`idPage`,`File_Name`,`Login_Page_Id`,`Title`,`Product_Code`,`Hide`,`Web_Site`,`Menu_Parent`,`Menu_Position`,`Type`) VALUES 
+(1,'index.php',0,'Welcome','',0,'r','','','p'),(2,'index.php',0,'','',0,'a','','','p'),(3,'NameEdit.php',2,'Edit Members','',0,'a','','','p'),(4,'EventShells.php',2,'Repeat Events','',0,'a','35','f','p'),(5,'KeyStats.php',2,'Key Stats','',0,'a','67','g','p'),(6,'Misc.php',2,'Miscellaneous','',0,'a','34','a','p'),(7,'PageEdit.php',2,'Edit Pages','',0,'a','34','e','p'),(8,'RegisterUser.php',2,'Register Web Users','',0,'a','35','e','p'),(9,'CategoryEdit.php',2,'Edit Categories','',0,'a','34','d','p'),(10,'VolListing.php',2,'Web Users','',0,'a','35','c','p'),
+(11,'campaignEdit.php',2,'Edit Campaigns','',0,'a','34','c','p'),(12,'campaignReport.php',2,'Campaigns','',0,'a','32','d','p'),(13,'checkDateReport.php',2,'Check Date','',0,'a','32','j','p'),(14,'directory.php',2,'Directory','',0,'a','32','a','p'),(15,'donate.php',0,'','',0,'a','','','s'),(16,'donationReport.php',2,'Donations','',0,'a','32','b','p'),(18,'liveGetCamp.php',0,'','',0,'a','','','s'),(19,'liveNameSearch.php',0,'','',0,'a','','','s'),
+(20,'ws_Report.php',0,'','',0,'a','','','s'),(21,'ws_gen.php',0,'','',0,'a','','','s'),(22,'VolNameEdit.php',26,'My Volunteer Info','',0,'v','0','d','p'),(23,'forgotpw.php',26,'Forgot My Password','',0,'v','','','p'),(24,'gCalFeed.php',0,'','',0,'v','','','s'),(26,'index.php',0,'','',0,'v','','','p'),(27,'register_web.php',26,'Register','',0,'v','','','p'),(28,'WebRegister.php',0,'','',0,'v','','','s'),(29,'ws_vol.php',0,'','',0,'v','','','s'),
+(31,'index.php',0,'','',0,'h','','','p'),(32,'_directory.php',2,'Reports','',0,'a','0','e','p'),(33,'categoryReport.php',2,'Categories','',0,'a','32','f','p'),(34,'_Misc.php',2,'DB Maintenance','',0,'a','0','k','p'),(35,'_VolListing.php',2,'Web Users','',0,'a','0','j','p'),(36,'NameEdit_Donations',0,'','',0,'a','','','c'),(37,'NameEdit_Maint',0,'','',0,'a','','','c'),(39,'ws_gen_Maint',0,'','',0,'a','','','c'),
+(45,'VolNameSearch.php',0,'','',0,'v','','','s'),(46,'guestadmin',0,'','',0,'h','','','c'),(47,'guestaccess',0,'','',0,'v','','','c'),(49,'recent.php',2,'Recent Changes','',0,'a','67','r','p'),
+(50,'nonReportables.php',2,'Non-Reportables','',0,'a','67','v','p'),(51,'donorReport.php',2,'Donors','',0,'a','32','c','p'),(55,'MemEdit.php',0,'','',0,'v','','none','p'),(56,'Cat_Donor',0,'','',0,'a','','','c'),(57,'anomalies.php',2,'Anomaly report','',0,'a','67','k','p'),(59,'ws_admin.php',0,'','',0,'h','','','s'),
+(60,'guestaccess',0,'','',0,'a','','','c'),(62,'roleSearch.php',0,'','',0,'h','','','s'),(65,'timeReport.php',2,'Time Reports','',0,'a','32','u','p'),(66,'NameSch.php',2,'Members','',0,'a','0','d','p'),(67,'_KeyStats.php',2,'Key Stats','',0,'a','0','g','p'),(68,'VolAction.php',26,'Activities','',0,'v','0','b','p'),(69,'_index.php?log=lo',0,'Log Out','',0,'a','0','z','p'),
+(70,'_index.php?log=lo',0,'Log Out','',0,'v','0','z','p'),(71,'_index.php?log=lo',0,'Log Out','',0,'h','0','z','p'),(72,'CheckIn.php',31,'Check In','',0,'h','0','f','p'),(74,'register.php',31,'House Register','',0,'h','79','b','p'),(75,'ws_resv.php',0,'','',0,'h','','','s'),(76,'ws_ckin.php',0,'','',0,'h','','','s'),(79,'_register.php',31,'House','',0,'h','0','d','p'),
+(81,'ResourceBuilder.php',31,'Resource Builder','',0,'h','79','l','p'),(82,'ws_resc.php',0,'','',0,'h','','','s'),(83,'RoomUtilization.php',31,'Room Report','',0,'h','102','e','p'),(84,'memberManagement',0,'','',0,'h','','','c'),(88,'AuthGroupEdit.php',2,'Edit Authorization','',0,'a','34','j','p'),(89,'Configure.php',2,'Site Configuration','',0,'a','34','g','p'),
+(92,'GuestDemog.php',31,'Missing Demographics','',0,'h','102','f','p'),(93,'GuestEdit.php',31,'Guest Edit','',0,'h','0','j','p'),(94,'ShowRegForm.php',31,'Registration Form','',0,'h','','','p'),(95,'_Referral.php',31,'Reservation','',0,'h','0','e','p'),(96,'CheckedIn.php',31,'','',0,'h','','','p'),(99,'PaymentResult.php',31,'Payment Result','',0,'h','','','p'),
+(100,'ShowStatement.php',31,'Guest Statement','',0,'h','','','p'),(101,'RoomStatus.php',31,'Housekeeping','',0,'h','79','p','p'),(102,'GuestReport.php',31,'Reports','',0,'h','0','h','p'),(104,'ReservReport.php',31,'Reservations Report','',0,'h','102','b','p'),(105,'PaymentTx.php',2,'Credit Transactions Report','',0,'a','32','v','p'),(106,'Duplicates.php',2,'Duplicates','',0,'a','32','o','p'),(107,'PSGReport.php',31,'People Reports','',0,'h','102','k','p'),(109,'PaymentReport.php',31,'Payment Report','',0,'h','102','m','p'),
+(110,'VisitInterval.php',31,'Visit Interval Report','',0,'h','102','c','p'),(111,'GuestView.php',31,'Guests & Vehicles','',0,'h','79','v','p'),(113,'DRaHospReport.php',31,'Doctors, Hospitals','',0,'h','102','l','p'),(114,'ShowInvoice.php',31,'Show Invoice','',0,'h','','','p'),(115,'InvoiceReport.php',31,'Invoice Report','',0,'h','102','n','p'),(116,'ShowHsKpg.php',31,'Housekeeping','',0,'h','','','p'),(117,'PrtRegForm.php',31,'Print Registration Forms','',0,'h','','','p'),(118,'occDemo.php',31,'Guest Demographics','',0,'h','102','g','p'),(119,'ItemReport.php',31,'Item Report','',0,'h','102','s','p'),
+(120,'AccessLog.php',2,'User Access Log','',0,'a','35','d','p'),(121,'GuestTransfer.php',31,'Guest Transfer','',0,'h','79','x','p'),(122,'NewGuest.php',31,'New Guests','',0,'h','102','i','p'),(123,'PrtWaitList.php',31,'Wait Listing','',0,'h','','','p'),(124,'Reserve.php',31,'Family Reservation','',0,'h','95','g','p'),(125,'Referral.php',31,'Reservation','',0,'h','95','j','p'),(126,'DailyReport.php',31,'Daily Report','',0,'h','102','p','p'),(127,'Help.php',31,'Help','',1,'h','71','f','p'),(128,'ws_calendar.php',31,'','',0,'h','','','s'),(129,'ws_update.php',2,'','',0,'a','','','s'),(130,'DiagnosisBuilder.php',31,'Diagnosis Builder','',1,'h','79','n','p'),(131,'CheckingIn.php',31,'Checking In','',0,'h','','','p');
+UNLOCK TABLES;
 -- ;
-
 
 --
 -- Dumping data for table `page_securitygroup`
 --
-Replace INTO `page_securitygroup` (`idPage`,`Group_Code`,`Timestamp`) 
-VALUES (1,'pub','2011-09-30 00:03:46'),(2,'pub','2011-09-24 17:14:44'),(3,'mm','2011-09-22 05:21:42'),(4,'mm','2011-09-22 05:21:42'),(5,'mm','2011-09-22 05:21:42'),(6,'db','2011-09-22 05:21:42'),(7,'db','2011-09-22 05:21:42'),(8,'mm','2011-09-22 05:21:42'),(9,'db','2011-09-22 05:21:42'),
-(10,'mm','2011-09-22 05:21:42'),(11,'db','2011-09-22 05:21:42'),(12,'dm','2011-09-22 05:21:42'),(13,'mm','2011-09-22 05:21:42'),(14,'mm','2011-09-22 05:21:42'),(15,'dm','2011-09-22 05:21:42'),(16,'dm','2011-09-22 05:21:42'),(18,'mm','2011-09-22 05:21:42'),(19,'mm','2011-09-22 05:21:42'),
-(20,'dm','2011-09-22 05:21:42'),(21,'g','2017-10-13 14:21:23'),(21,'ga','2017-10-13 14:21:23'),(21,'mm','2011-09-22 05:21:42'),(22,'v','2011-09-22 05:24:43'),(23,'pub','2011-09-30 00:01:12'),(24,'v','2011-09-22 05:24:43'),(26,'pub','2011-09-24 17:15:17'),(27,'pub','2011-09-30 00:02:08'),(28,'pub','2011-09-30 00:02:08'),(29,'v','2011-09-22 05:24:43'),
-(31,'pub','2011-09-24 17:15:48'),(32,'mm','2011-09-23 00:36:57'),(33,'mm','2011-09-23 00:48:59'),(34,'db','2011-09-23 00:36:57'),(35,'mm','2011-09-23 00:36:57'),(36,'dm','2011-09-24 19:22:47'),(37,'db','2011-09-27 21:24:53'),(39,'db','2011-09-27 23:41:54'),
-(45,'v','2011-10-11 03:24:53'),(46,'ga','2017-02-13 02:54:06'),(47,'g','2011-10-18 23:23:29'),(48,'p','2011-11-02 04:38:16'),(49,'mm','2011-11-03 21:20:26'),
-(50,'mm','2011-12-04 05:06:32'),(51,'dna','2011-12-13 23:59:14'),(52,'dm','2012-01-13 05:48:53'),(55,'v','2012-02-09 04:36:02'),(56,'dna','2012-03-01 23:19:02'),(57,'mm','2012-03-09 09:28:42'),(59,'g','2017-02-13 02:54:21'),(59,'ga','2017-02-13 02:41:22'),
-(60,'g','2012-03-27 22:04:37'),(62,'g','2017-02-13 02:54:37'),(62,'ga','2017-02-13 02:54:37'),(65,'mm','2012-06-05 21:47:31'),(66,'mm','2012-06-12 22:22:04'),(67,'mm','2012-06-12 22:28:41'),(68,'v','2012-06-12 23:21:41'),(69,'pub','2012-06-18 21:10:47'),
-(70,'pub','2012-06-18 21:10:47'),(71,'pub','2017-02-13 02:55:11'),(72,'g','2017-02-13 02:41:25'),(72,'ga','2017-02-13 02:41:25'),(74,'g','2017-02-13 02:55:11'),(74,'ga','2017-02-13 02:55:11'),(75,'g','2012-12-12 04:09:36'),(75,'ga','2013-07-30 21:07:47'),(76,'g','2012-12-22 04:42:05'),(76,'ga','2013-07-30 21:07:55'),(77,'ga','2013-07-30 21:06:47'),(79,'g','2017-02-13 01:50:26'),(79,'ga','2013-07-30 21:06:12'),
-(80,'v','2013-03-05 05:30:30'),(81,'ga','2016-03-21 19:48:52'),(82,'g','2016-03-21 19:48:31'),(82,'ga','2016-03-21 19:48:31'),(83,'ga','2013-08-04 17:43:13'),(84,'g','2017-02-13 02:37:50'),(84,'ga','2017-02-13 02:37:50'),(87,'pub','2013-08-05 21:40:29'),(88,'db','2013-08-08 23:13:05'),(89,'db','2013-08-18 18:10:27'),
-(92,'ga','2017-02-13 02:38:20'),(93,'g','2017-02-13 02:41:31'),(93,'ga','2017-02-13 02:41:31'),(94,'g','2017-07-26 14:27:14'),(94,'ga','2017-07-26 14:27:14'),(95,'g','2017-07-26 14:27:14'),(95,'ga','2017-07-26 14:27:14'),(96,'g','2017-07-26 14:27:14'),(96,'ga','2017-07-26 14:27:14'),(99,'g','2017-07-26 14:27:14'),(99,'ga','2017-07-26 14:27:14'),
-(100,'g','2017-07-26 14:27:14'),(100,'ga','2017-07-26 14:27:14'),(101,'g','2017-02-13 01:49:21'),(101,'ga','2014-02-26 08:46:18'),(102,'ga','2014-03-06 13:46:56'),(104,'ga','2017-02-13 01:28:45'),(105,'db','2014-08-14 08:25:03'),(106,'mm','2014-08-28 09:43:21'),(107,'ga','2014-11-14 14:25:35'),(109,'ga','2015-02-10 06:59:12'),
-(110,'ga','2015-02-18 03:47:21'),(111,'g','2017-02-13 02:41:42'),(111,'ga','2015-02-20 03:53:11'),(113,'ga','2015-05-16 03:22:26'),(114,'g','2017-10-13 14:20:00'),(114,'ga','2017-02-13 01:49:21'),(115,'ga','2015-07-29 08:32:12'),(116,'g','2017-02-13 02:41:42'),(116,'ga','2017-02-13 01:49:21'),(117,'g','2017-10-13 14:20:00'),(117,'ga','2015-09-06 02:47:07'),(118,'ga','2015-10-30 23:31:30'),(119,'ga','2015-12-04 02:28:20'),
-(120,'mm','2016-08-21 21:37:15'),(121,'ga','2016-11-28 23:13:39'),(122,'ga','2017-01-03 00:28:06'),(123,'g','2017-02-13 01:30:54'),(123,'ga','2017-01-03 00:28:06'),(124,'g','2017-07-26 14:23:58'),(124,'ga','2017-07-26 14:23:58'),(125,'g','2017-07-26 14:31:04'),(125,'ga','2017-07-26 14:31:04'),(126,'ga','2017-10-05 15:56:22'), (127,'ga','2017-10-05 15:56:22'),(127,'g','2017-10-05 15:56:22'),(128,'db','2017-10-05 15:56:22');
+LOCK TABLES `page_securitygroup` WRITE;
+INSERT INTO `page_securitygroup` (`idPage`,`Group_Code`) VALUES 
+(1,'pub'),(2,'pub'),(3,'mm'),(4,'mm'),(5,'mm'),(6,'db'),(7,'db'),(8,'mm'),(9,'db'),(10,'mm'),(11,'db'),(12,'dm'),(13,'mm'),(14,'mm'),(15,'dm'),(16,'dm'),
+(18,'mm'),(19,'mm'),(20,'dm'),(21,'g'),(21,'ga'),(21,'mm'),(22,'v'),(23,'pub'),(24,'v'),(26,'pub'),(27,'pub'),(28,'pub'),(29,'v'),(31,'pub'),(32,'mm'),(33,'mm'),
+(34,'db'),(35,'mm'),(36,'dm'),(37,'db'),(39,'db'),(45,'v'),(46,'ga'),(47,'g'),(49,'mm'),(50,'mm'),(51,'dna'),(52,'dm'),(55,'v'),(56,'dna'),(57,'mm'),(59,'g'),(59,'ga'),
+(60,'g'),(62,'g'),(62,'ga'),(65,'mm'),(66,'mm'),(67,'mm'),(68,'v'),(69,'pub'),(70,'pub'),(71,'pub'),(72,'g'),(72,'ga'),(74,'g'),(74,'ga'),(75,'g'),(75,'ga'),
+(76,'g'),(76,'ga'),(79,'g'),(79,'ga'),(81,'ga'),(82,'g'),(82,'ga'),(83,'ga'),(84,'g'),(84,'ga'),(88,'db'),(89,'db'),(92,'ga'),(93,'g'),(93,'ga'),(94,'g'),(94,'ga'),
+(95,'g'),(95,'ga'),(96,'g'),(96,'ga'),(99,'g'),(99,'ga'),(100,'g'),(100,'ga'),(101,'g'),(101,'ga'),(102,'ga'),(104,'ga'),(105,'db'),(106,'mm'),(107,'ga'),(109,'ga'),
+(110,'ga'),(111,'g'),(111,'ga'),(113,'ga'),(114,'g'),(114,'ga'),(115,'ga'),(116,'g'),(116,'ga'),(117,'g'),(117,'ga'),(118,'ga'),(119,'ga'),(120,'mm'),(121,'ga'),
+(122,'ga'),(123,'g'),(123,'ga'),(124,'g'),(124,'ga'),(125,'g'),(125,'ga'),(126,'ga'),(127,'g'),(127,'ga'),(128,'g'),(128,'ga'),(129,'db'),(130,'ga'),(131,'g'),(131,'ga');
+UNLOCK TABLES;
 -- ;
 
 

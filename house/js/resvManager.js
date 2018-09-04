@@ -1427,7 +1427,7 @@ function resvManager(initData) {
 
                     $('#selHospital').addClass('ui-state-error');
 
-                    flagAlertMessage("Select a hospital.", true, 0);
+                    flagAlertMessage("Select a hospital.", false);
 
                     $('#divhospDetail').show('blind');
                     $('#divhospHdr').removeClass('ui-corner-all').addClass('ui-corner-top');
@@ -1747,7 +1747,7 @@ function resvManager(initData) {
                         var carVal2 = validateCar(2);
                         if (carVal2 != '') {
                             $('#vehValidate').text(carVal2);
-                            flagAlertMessage(carVal, true);
+                            flagAlertMessage(carVal, false);
                             return false;
                         }
                     }
@@ -1967,13 +1967,13 @@ function resvManager(initData) {
                     }
 
                     if (data.warning) {
-                        flagAlertMessage(data.warning, true);
+                        flagAlertMessage(data.warning, false);
                         $delButton.hide();
                     }
 
                     if (data.result) {
                         $(idForm).remove();
-                        flagAlertMessage(data.result + ' <a href="Reserve.php">Continue</a>', true);
+                        flagAlertMessage(data.result + ' <a href="Reserve.php">Continue</a>', false);
                     }
                 }
         );
