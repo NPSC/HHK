@@ -19,7 +19,7 @@ require(DB_TABLES . "ReservationRS.php");
 require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'ItemRS.php');
 require (DB_TABLES . 'ActivityRS.php');
-require (DB_TABLES . 'MercuryRS.php');
+require (DB_TABLES . 'PaymentGwRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
 require (DB_TABLES . 'AttributeRS.php');
 

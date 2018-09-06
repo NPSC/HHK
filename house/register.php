@@ -12,7 +12,7 @@ require ("homeIncludes.php");
 require (CLASSES . 'History.php');
 require (DB_TABLES . 'PaymentsRS.php');
 require (DB_TABLES . 'visitRS.php');
-require (DB_TABLES . 'MercuryRS.php');
+require (DB_TABLES . 'PaymentGwRS.php');
 require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'ActivityRS.php');
 

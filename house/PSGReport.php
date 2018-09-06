@@ -372,6 +372,7 @@ order by ng.idPsg";
     $rows = array();
     $firstRow = TRUE;
     $separatorClassIndicator = '))+class';
+    $numberPSGs = 0;
 
 
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -434,6 +435,7 @@ order by ng.idPsg";
         if ($psgId != $r[$psgLabel]) {
             $firstTd = $r[$psgLabel];
             $psgId = $r[$psgLabel];
+            $numberPSGs++;
         } else {
             $firstTd = '';
         }
@@ -500,7 +502,7 @@ order by ng.idPsg";
 
         $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblroom', $separatorClassIndicator);
 
-        return array('table'=>$dataTable, 'rows'=>$rowCount);
+        return array('table'=>$dataTable, 'rows'=>$rowCount, 'psgs'=>$numberPSGs);
 
 
     } else {
@@ -908,6 +910,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 }
 
                 $sTbl->addBodyTr(HTMLTable::makeTd('Rows Returned', array('class'=>'tdlabel')) . HTMLTable::makeTd($rptArry['rows'], array('colspan'=>'3')));
+                $sTbl->addBodyTr(HTMLTable::makeTd("Number of PSG's", array('class'=>'tdlabel')) . HTMLTable::makeTd($rptArry['psgs'], array('colspan'=>'3')));
 
                 $settingstable = $sTbl->generateMarkup();
                 break;
