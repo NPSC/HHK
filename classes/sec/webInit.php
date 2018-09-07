@@ -68,6 +68,7 @@ class webInit {
         $this->pageHeading = $this->page->get_Page_Title();
 
         $this->sessionLoadGenLkUps();
+        $this->sessionLoadGuestLkUps();
 
         // Check session timeout
         $t = time();

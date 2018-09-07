@@ -95,9 +95,7 @@ $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
 
-// Load the session with member - based lookups
 
-$wInit->sessionLoadGuestLkUps();
 $labels = new Config_Lite(LABEL_FILE);
 $config = new Config_Lite(ciCFG_FILE);
 

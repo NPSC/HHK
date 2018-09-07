@@ -31,10 +31,6 @@ $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
 
-// Load the session with member - based lookups
-$wInit->sessionLoadGenLkUps();
-$wInit->sessionLoadGuestLkUps();
-
 $config = new Config_Lite(ciCFG_FILE);
 
 // Instantiate the alert message control
@@ -910,7 +906,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 }
 
                 $sTbl->addBodyTr(HTMLTable::makeTd('Rows Returned', array('class'=>'tdlabel')) . HTMLTable::makeTd($rptArry['rows'], array('colspan'=>'3')));
-                $sTbl->addBodyTr(HTMLTable::makeTd("Number of PSG's", array('class'=>'tdlabel')) . HTMLTable::makeTd($rptArry['psgs'], array('colspan'=>'3')));
+                $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('statement', 'psgAbrev', 'PSG')." count", array('class'=>'tdlabel')) . HTMLTable::makeTd($rptArry['psgs'], array('colspan'=>'3')));
 
                 $settingstable = $sTbl->generateMarkup();
                 break;

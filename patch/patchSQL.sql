@@ -18,6 +18,8 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Signatu
 DELETE FROM `gen_lookups` WHERE `Table_Name`='WL_Final_Status';
 DELETE FROM `gen_lookups` WHERE `Table_Name`='WL_Status';
 
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('PaymentGateway', 'instamed', 's', 'h', 'Payment Gateway, either vantiv, instamed or nothing.');
+
 -- Add pages, one call for each security group.
 call new_webpage('ws_resv.php', 31, '', 0, 'h', '', '', 's', '', 'admin', now(), 'g', @pageId);
 call new_webpage('ws_resv.php', 31, '', 0, 'h', '', '', 's', '', 'admin', now(), 'ga', @pageId);

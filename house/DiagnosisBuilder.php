@@ -17,9 +17,6 @@ require (CLASSES . 'HouseLog.php');
 
 try {
     $wInit = new webInit();
-    $wInit->sessionLoadGenLkUps();
-    $wInit->sessionLoadGuestLkUps();
-
 } catch (Exception $exw) {
     die($exw->getMessage());
 }

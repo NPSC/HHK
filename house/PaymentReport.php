@@ -29,10 +29,6 @@ $uS = Session::getInstance();
 $labels = new Config_Lite(LABEL_FILE);
 $menuMarkup = $wInit->generatePageMenu();
 
-// Load the session with member - based lookups
-$wInit->sessionLoadGenLkUps();
-$wInit->sessionLoadGuestLkUps();
-
 $config = new Config_Lite(ciCFG_FILE);
 
 // Instantiate the alert message control

@@ -53,8 +53,8 @@ $uS = Session::getInstance();
 $menuMarkup = $wInit->generatePageMenu();
 
 // Load the session with member - based lookups
-$wInit->sessionLoadGenLkUps();
-$wInit->sessionLoadGuestLkUps();
+//$wInit->sessionLoadGenLkUps();
+//$wInit->sessionLoadGuestLkUps();
 
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);

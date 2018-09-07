@@ -63,10 +63,6 @@ $pageTitle = $wInit->pageTitle;
 
 $menuMarkup = $wInit->generatePageMenu();
 
-// Load the session with member - based lookups
-$wInit->sessionLoadGenLkUps();
-$wInit->sessionLoadGuestLkUps();
-
 // get session instance
 $uS = Session::getInstance();
 

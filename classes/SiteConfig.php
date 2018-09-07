@@ -522,32 +522,9 @@ class SiteConfig {
 
         $uS = Session::getInstance();
 
-        $stmt = $dbh->query("Select * from cc_hosted_gateway");
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        $tbl = new HTMLTable();
-
-        foreach ($rows as $r) {
-
-            $indx = $r['idcc_gateway'];
-            $tbl->addBodyTr(HTMLTable::makeTd($r['cc_name'], array('class'=>'tdlabel'))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup($r['Merchant_Id'], array('name'=>$indx . '_txtMid')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup($r['Password'], array('name'=>$indx .'_txtpw')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>$indx .'_txtpw2')))
-             .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>$indx .'cbDel'))));
-        }
-
-        if ($resultMessage != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan'=>'4', 'style'=>'font-weight:bold;')));
-        }
-
-        $tbl->addHeader(HTMLTable::makeTh('Name') . HTMLTable::makeTh('Merchant Id')
-                . HTMLTable::makeTh('Password') . HTMLTable::makeTh('Password Again') . HTMLTable::makeTh('Delete'));
-
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
         $ptbl = new HTMLTable();
-//        $ccAttr = array('type'=>'radio', 'name'=>'useGw', 'id'=>'cbuseGw', 'disabled'=>'disabled', 'value'=>  PayType::Charge);
-//        $cxAttr = array('type'=>'radio', 'name'=>'useGw', 'id'=>'cbuseEx', 'disabled'=>'disabled', 'value'=>  PayType::ChargeAsCash);
 
         if ($uS->ccgw == '')  {
             $using = 'External';
@@ -558,106 +535,21 @@ class SiteConfig {
         $ptbl->addBodyTr(HTMLTable::makeTh('Using:')
                 . HTMLTable::makeTd($using));
 
-
-        return $tbl->generateMarkup() . $ptbl->generateMarkup(array('class'=>'hhk-tdbox'));
+        return $gateway->createEditMarkup($dbh, $resultMessage) . $ptbl->generateMarkup(array('class'=>'hhk-tdbox', 'style'=>'margin-top:10px;'));
     }
 
     public static function savePaymentCredentials(\PDO $dbh, $post) {
 
-        $msg = '';
-        $ccRs = new Cc_Hosted_GatewayRS();
-        $rows = EditRS::select($dbh, $ccRs, array());
+        $uS = Session::getInstance();
 
-        foreach ($rows as $r) {
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-            EditRS::loadRow($r, $ccRs);
+        $msg = $gateway->SaveEditMarkup($dbh, $post);
 
-            $indx = $ccRs->idcc_gateway->getStoredVal();
-
-            // Clear the entries??
-            if (isset($post[$indx . 'cbDel'])) {
-
-                $ccRs->Merchant_Id->setNewVal('');
-                $ccRs->Password->setNewVal('');
-                $num = EditRS::update($dbh, $ccRs, array($ccRs->idcc_gateway));
-                 $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - Payment Credentials Deleted.  ");
-
-            } else {
-
-                if (isset($post[$indx . '_txtMid'])) {
-                    $mid = filter_var($post[$indx . '_txtMid'], FILTER_SANITIZE_STRING);
-                        $ccRs->Merchant_Id->setNewVal($mid);
-                }
-
-                if (isset($post[$indx . '_txtpw']) && isset($post[$indx . '_txtpw2']) && $post[$indx . '_txtpw2'] != '') {
-
-                    $pw = filter_var($post[$indx . '_txtpw'], FILTER_SANITIZE_STRING);
-                    $pw2 = filter_var($post[$indx . '_txtpw2'], FILTER_SANITIZE_STRING);
-
-                    if ($pw != '' && $pw != $ccRs->Password->getStoredVal()) {
-
-                        // Don't save the pw blank characters
-                        if ($pw == $pw2) {
-
-                            $ccRs->Password->setNewVal(encryptMessage($pw));
-
-                        } else {
-                            // passwords don't match
-                            $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - Passwords do not match.  ");
-                        }
-                    }
-                }
-
-                // Save record.
-                $num = EditRS::update($dbh, $ccRs, array($ccRs->idcc_gateway));
-
-                if ($num > 0) {
-                    $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - Payment Credentials Updated.  ");
-                } else {
-                    $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - No changes detected.  ");
-                }
-
-            }
-        }
-
-        $cnt = self::updatePayTypes($dbh);
+        $cnt = $gateway->updatePayTypes($dbh, $uS->username);
 
         if ($cnt > 0) {
             $msg .= "Pay Types updated.  ";
-        }
-
-        return $msg;
-    }
-
-    public static function updatePayTypes(\PDO $dbh) {
-
-        $uS = Session::getInstance();
-        $msg = '';
-
-        $glRs = new GenLookupsRS();
-        $glRs->Table_Name->setStoredVal('Pay_Type');
-        $glRs->Code->setStoredVal(PayType::Charge);
-        $rows = EditRS::select($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
-
-        if (count($rows) > 0) {
-            $glRs = new GenLookupsRS();
-            EditRS::loadRow($rows[0], $glRs);
-
-
-            if ($uS->ccgw != '') {
-                $glRs->Substitute->setNewVal(PaymentMethod::Charge);
-            } else {
-                $glRs->Substitute->setNewVal(PaymentMethod::ChgAsCash);
-            }
-
-
-            $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
-
-            if ($ctr > 0) {
-                $logText = HouseLog::getUpdateText($glRs);
-                HouseLog::logGenLookups($dbh, 'Pay_Type', PayType::Charge, $logText, "update", $uS->username);
-                $msg = "Pay_Type Charge is updated.  ";
-            }
         }
 
         return $msg;

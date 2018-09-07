@@ -18,10 +18,6 @@ require (CLASSES . 'Purchase/Item.php');
 
 try {
     $wInit = new webInit();
-
-    $wInit->sessionLoadGenLkUps();
-    $wInit->sessionLoadGuestLkUps();
-
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }

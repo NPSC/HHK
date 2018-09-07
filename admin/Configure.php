@@ -9,6 +9,9 @@
  */
 require ("AdminIncludes.php");
 
+require DB_TABLES . 'PaymentGwRS.php';
+require DB_TABLES . 'GenLookupsRS.php';
+
 require CLASSES . 'SiteLog.php';
 require CLASSES . 'TableLog.php';
 require CLASSES . 'HouseLog.php';
@@ -16,12 +19,12 @@ require CLASSES . 'CreateMarkupFromDB.php';
 require CLASSES . 'SiteConfig.php';
 require CLASSES . 'UpdateSite.php';
 require CLASSES . 'Patch.php';
+require CLASSES . 'US_Holidays.php';
+
+require PMT . 'PaymentGateway.php';
 
 require SEC . 'Login.php';
 require SEC . 'ChallengeGenerator.php';
-require CLASSES . 'US_Holidays.php';
-require DB_TABLES . 'MercuryRS.php';
-require DB_TABLES . 'GenLookupsRS.php';
 
 require (FUNCTIONS . 'mySqlFunc.php');
 
@@ -299,11 +302,11 @@ if (isset($_POST['btnLogs'])) {
     $logs = CreateMarkupFromDB::generateHTML_Table($edRows, 'syslog');
 }
 
-
+$pgw = $uS->PaymentGateway;
 try {
     $payments = SiteConfig::createPaymentCredentialsMarkup($dbh, $ccResultMessage);
-} catch (PDOException $pex) {
-
+} catch (Exception $pex) {
+    $payments = 'Error: ' . $pex->getMessage();
 }
 
 if (isset($_POST['btnHoliday'])) {

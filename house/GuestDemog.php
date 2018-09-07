@@ -12,8 +12,6 @@ require(CLASSES . 'AuditLog.php');
 require(DB_TABLES . "nameRS.php");
 
 $wInit = new webInit();
-$wInit->sessionLoadGenLkUps();
-
 
 $dbh = $wInit->dbh;
 

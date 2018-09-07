@@ -12,7 +12,6 @@ require(HOUSE . 'ReportFilter.php');
 require(HOUSE . "GuestReport.php");
 
 $wInit = new webInit();
-$wInit->sessionLoadGenLkUps();
 
 $uS = Session::getInstance();
 

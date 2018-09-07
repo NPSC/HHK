@@ -40,9 +40,6 @@ $alertMsg->set_styleId("alrResponse");
 $alertMsg->set_txtSpanId("alrMessage");
 $alertMsg->set_Text("help");
 
-// Load the session with member - based lookups
-$wInit->sessionLoadGenLkUps();
-$wInit->sessionLoadGuestLkUps();
 
 $config = new Config_Lite(ciCFG_FILE);
 

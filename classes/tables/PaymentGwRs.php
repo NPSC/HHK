@@ -151,7 +151,7 @@ class InstamedGatewayRS extends TableRS {
     public $sso_Alias;  // varchar(145) NOT NULL DEFAULT '',
     public $user_Id;  // varchar(145) NOT NULL DEFAULT '',
     public $user_Name;  // varchar(145) NOT NULL DEFAULT '',
-    public $providersSsoUrl;  // varchar(145) NOT NULL DEFAULT '',
+    public $providersSso_Url;  // varchar(145) NOT NULL DEFAULT '',
 //    public $Mobile_CardInfo_Url;  // varchar(145) NOT NULL DEFAULT '',
 //    public $Mobile_Checkout_Url;  // varchar(145) NOT NULL DEFAULT '',
 //    public $CheckoutPOS_Url;  // varchar(145) NOT NULL DEFAULT '',

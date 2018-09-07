@@ -25,9 +25,6 @@ $dbh = $wInit->dbh;
 // get session instance
 $uS = Session::getInstance();
 
-// Load the session with member - based lookups
-$wInit->sessionLoadGenLkUps();
-$wInit->sessionLoadGuestLkUps();
 
 $config = new Config_Lite(ciCFG_FILE);
 
