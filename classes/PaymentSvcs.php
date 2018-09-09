@@ -340,61 +340,8 @@ class PaymentSvcs {
         return CardInfo::sendToPortal($dbh, $gw, $idGuest, $idGroup, $initCi);
     }
 
-    protected static function initHostedPayment(\PDO $dbh, $gw, $pageTitle, \Invoice $invoice, $cardHolderName, $address, $zipCode, $postPage, $tranType = MpTranType::Sale) {
 
-        $uS = Session::getInstance();
-
-        // Do a hosted payment.
-        $config = new Config_Lite(ciCFG_FILE);
-        $secure = new SecurityComponent();
-
-        $houseUrl = $secure->getSiteURL();
-        $siteUrl = $secure->getRootURL();
-        $logo = $config->getString('financial', 'PmtPageLogoUrl', '');
-
-        if ($houseUrl == '' || $siteUrl == '') {
-            throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
-        }
-
-        if ($invoice->getSoldToId() < 1 || $invoice->getIdGroup() < 1) {
-            throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
-        }
-
-        $pay = new InitCkOutRequest($pageTitle, 'Custom');
-
-        // Card reader?
-        if ($uS->CardSwipe) {
-            $pay->setDefaultSwipe('Swipe')
-                ->setCardEntryMethod('Both')
-                ->setPaymentPageCode('Checkout_Url');
-        } else {
-            $pay->setPaymentPageCode('Checkout_Url');
-        }
-
-        $pay->setPartialAuth(TRUE);
-
-        $pay    ->setAVSZip($zipCode)
-                ->setAVSAddress($address)
-                ->setCardHolderName($cardHolderName)
-                ->setFrequency(MpFrequencyValues::OneTime)
-                ->setInvoice($invoice->getInvoiceNumber())
-                ->setMemo(MpVersion::PosVersion)
-                ->setTaxAmount(0)
-                ->setTotalAmount($invoice->getBalance())
-                ->setCompleteURL($houseUrl . $postPage)
-                ->setReturnURL($houseUrl . $postPage)
-                ->setTranType($tranType)
-                ->setLogoUrl($siteUrl . $logo)
-                ->setCVV('on')
-                ->setAVSFields('both');
-
-        $CreditCheckOut = HostedCheckout::sendToPortal($dbh, $gw, $invoice->getSoldToId(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $pay);
-
-        return $CreditCheckOut;
-
-    }
-
-    public static function payAmount(\PDO $dbh, Invoice $invoice, PaymentManagerPayment $pmp, $postPage, $paymentDate = '') {
+    public static function payAmount(\PDO $dbh, Invoice $invoice, PaymentManagerPayment $pmp, $postbackUrl, $paymentDate = '') {
 
         $uS = Session::getInstance();
 
@@ -456,6 +403,9 @@ class PaymentSvcs {
 
           case PayType::Charge:
 
+            // Payment Gateway
+            $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+
             $guest = new Guest($dbh, '', $invoice->getSoldToId());
             $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
 
@@ -489,7 +439,7 @@ class PaymentSvcs {
             } else {
 
                 // Initialiaze hosted payment
-                $fwrder = self::initHostedPayment($dbh, $uS->ccgw, $uS->siteName, $invoice, '', $addr['Address_1'], $addr["Postal_Code"], $postPage);
+                $fwrder = $gateway->initHostedPayment($dbh, $invoice, $guest, $addr, $postbackUrl);
 
                 $payIds = array();
                 if (isset($uS->paymentIds)) {

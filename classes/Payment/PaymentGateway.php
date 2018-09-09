@@ -14,6 +14,7 @@ abstract class PaymentGateway {
 
     protected $gwName;
     protected $credentials;
+    protected $responseErrors;
 
     public function __construct(\PDO $dbh, $gwName) {
 
@@ -34,9 +35,10 @@ abstract class PaymentGateway {
     public abstract function createEditMarkup(\PDO $dbh);
     public abstract function SaveEditMarkup(\PDO $dbh, $post);
 
-    public static function saveGwTx(PDO $dbh, $status, $request, $response, $transType) {
+    public static function logGwTx(PDO $dbh, $status, $request, $response, $transType) {
 
         $gwRs = new Gateway_TransactionRS();
+
         $gwRs->Vendor_Response->setNewVal($response);
         $gwRs->Vendor_Request->setNewVal($request);
         $gwRs->GwResultCode->setNewVal($status);
@@ -105,6 +107,9 @@ abstract class PaymentGateway {
     public function getGwName() {
         return $this->gwName;
     }
+    public function getResponseErrors() {
+        return $this->responseErrors;
+    }
 
     public function getCredentials() {
         return $this->credentials;
@@ -120,6 +125,9 @@ abstract class PaymentGateway {
 
 class LocalGateway extends PaymentGateway {
 
+    public function initHostedPayment(\PDO $dbh, Invoice $invoice, Guest $guest, $addr, $postbackUrl) {
+
+    }
     protected function loadGateway(\PDO $dbh) {
         return '';
     }
@@ -140,6 +148,60 @@ class LocalGateway extends PaymentGateway {
 
 
 class VantivGateway extends PaymentGateway {
+
+    public function initHostedPayment(\PDO $dbh, Invoice $invoice, Guest $guest, $addr, $postbackUrl) {
+
+        $uS = Session::getInstance();
+
+        // Do a hosted payment.
+        $config = new Config_Lite(ciCFG_FILE);
+        $secure = new SecurityComponent();
+
+        $houseUrl = $secure->getSiteURL();
+        $siteUrl = $secure->getRootURL();
+        $logo = $config->getString('financial', 'PmtPageLogoUrl', '');
+
+        if ($houseUrl == '' || $siteUrl == '') {
+            throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
+        }
+
+        if ($invoice->getSoldToId() < 1 || $invoice->getIdGroup() < 1) {
+            throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
+        }
+
+        $pay = new InitCkOutRequest($uS->siteName, 'Custom');
+
+
+        // Card reader?
+        if ($uS->CardSwipe) {
+            $pay->setDefaultSwipe('Swipe')
+                ->setCardEntryMethod('Both')
+                ->setPaymentPageCode('Checkout_Url');
+        } else {
+            $pay->setPaymentPageCode('Checkout_Url');
+        }
+
+        $pay->setPartialAuth(TRUE);
+
+        $pay    ->setAVSZip($addr["Postal_Code"])
+                ->setAVSAddress($addr['Address_1'])
+                ->setCardHolderName($guest->getRoleMember()->get_fullName())
+                ->setFrequency(MpFrequencyValues::OneTime)
+                ->setInvoice($invoice->getInvoiceNumber())
+                ->setMemo(MpVersion::PosVersion)
+                ->setTaxAmount(0)
+                ->setTotalAmount($invoice->getBalance())
+                ->setCompleteURL($houseUrl . $postbackUrl)
+                ->setReturnURL($houseUrl . $postbackUrl)
+                ->setTranType(MpTranType::Sale)
+                ->setLogoUrl($siteUrl . $logo)
+                ->setCVV('on')
+                ->setAVSFields('both');
+
+        $CreditCheckOut = HostedCheckout::sendToPortal($dbh, $this->gwName, $invoice->getSoldToId(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $pay);
+
+        return $CreditCheckOut;
+    }
 
     protected function loadGateway(\PDO $dbh) {
 
@@ -265,7 +327,76 @@ class VantivGateway extends PaymentGateway {
  */
 class InstamedGateway extends PaymentGateway {
 
+    const RELAY_STATE = 'relayState';
+    const INVOICE_NUMBER = 'additionalInfo1';
+    const GROUP_ID = 'additionalInfo2';
+
     protected $ssoUrl;
+
+    public function initHostedPayment(\PDO $dbh, Invoice $invoice, Guest $guest, $addr, $postbackUrl) {
+
+        $uS = Session::getInstance();
+
+        // Do a hosted payment.
+        $secure = new SecurityComponent();
+
+        $houseUrl = $secure->getSiteURL();
+
+        if ($houseUrl == '') {
+            throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
+        }
+
+        if ($invoice->getSoldToId() < 1 || $invoice->getIdGroup() < 1) {
+            throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
+        }
+
+        $data = array (
+            "patientID" => $invoice->getSoldToId(),
+            "patientFirstName" => $guest->getRoleMember()->get_firstName(),
+            "patientLastName" => $guest->getRoleMember()->get_lastName(),
+            "amount" => $invoice->getBalance(),
+
+            InstamedGateway::GROUP_ID => $invoice->getIdGroup(),
+            InstamedGateway::INVOICE_NUMBER => $invoice->getInvoiceNumber(),
+
+            InstaMedCredentials::U_ID => $uS->uid,
+            InstaMedCredentials::U_NAME => $uS->username,
+
+            "lightWeight" => 'true',
+            'preventCheck' => 'true',
+            'preventCash'  => 'true',
+            "hideGuarantorID" => 'true',
+            "responseActionType" => 'header',
+            'returnURL' => $houseUrl . $postbackUrl,
+            "requestToken" => 'true',
+            "RelayState" => "https://online.instamed.com/providers/Form/PatientPayments/NewPaymentSimpleSSO",
+        );
+
+        $headers = $this->doHeaderRequest(http_build_query(array_merge($data, $this->getCredentials()->toNVP())));
+
+        if (isset($headers[])) {
+
+
+            // Save payment ID
+            $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode)"
+                . " values (" . $invoice->getSoldToId() . " , " . $invoice->getIdGroup() . ", 'hco', '" . $invoice->getInvoiceNumber() . "', '" . $split[1] . "', now(), 'OneTime', '" . http_response_code() . "')";
+
+            $dbh->exec($ciq);
+
+
+            $dataArray = array('inctx' => $headers[InstamedGateway::RELAY_STATE], 'paymentId' => (isset($split[1]) ? $split[1] : '') );
+
+        } else {
+
+            // The initialization failed.
+            throw new Hk_Exception_Payment("Credit Payment Gateway Error: " . http_response_code());
+
+        }
+
+        return $dataArray;
+
+    }
+
 
     protected function loadGateway(\PDO $dbh) {
 
@@ -307,7 +438,34 @@ class InstamedGateway extends PaymentGateway {
             )
         ));
 
-        return get_headers($this->ssoUrl, 1, $context);
+        $headers = get_headers($this->ssoUrl, 1, $context);
+
+        return $this->parseHeader($headers);
+
+    }
+
+    protected function parseHeader($headers) {
+        //"https://online.instamed.com/providers/Form/SSO/SSOError?respCode=401&respMessage=Invalid AccountID or Password.&lightWeight=true"
+
+        if (isset($headers[InstamedGateway::RELAY_STATE])) {
+
+            $split = explode('?', $headers[InstamedGateway::RELAY_STATE]);
+
+            if (count($split) < 2) {
+                $this->responseErrors = 'relayState has no parameters: ' . $headers[InstamedGateway::RELAY_STATE];
+                return false;
+            }
+
+            $parSplit = explode('&', $split[1]);
+
+            
+
+
+        } else {
+            $this->responseErrors = 'relayState is missing. ';
+            return false;
+        }
+
     }
 
     public function createEditMarkup(\PDO $dbh, $resultMessage = '') {
@@ -436,8 +594,8 @@ class InstaMedCredentials {
     protected $securityKey;
     protected $accountID;
     protected $ssoAlias;
-    protected $userName;
-    protected $userID;
+//    protected $userName;
+//    protected $userID;
 
 
     public function __construct(InstamedGatewayRS $gwRs) {
@@ -445,8 +603,8 @@ class InstaMedCredentials {
         $this->accountID = $gwRs->account_Id->getStoredVal();
         $this->securityKey = $gwRs->security_Key->getStoredVal();
         $this->ssoAlias = $gwRs->sso_Alias->getStoredVal();
-        $this->userID = $gwRs->user_Id->getStoredVal();
-        $this->userName = $gwRs->user_Name->getStoredVal();
+//        $this->userID = $gwRs->user_Id->getStoredVal();
+//        $this->userName = $gwRs->user_Name->getStoredVal();
 
     }
 
@@ -456,8 +614,8 @@ class InstaMedCredentials {
             InstaMedCredentials::ACCT_ID => $this->accountID,
             InstaMedCredentials::SEC_KEY => decryptMessage($this->securityKey),
             InstaMedCredentials::SSO_ALIAS => $this->ssoAlias,
-            InstaMedCredentials::U_ID => $this->userID,
-            InstaMedCredentials::U_NAME => $this->userName,
+//            InstaMedCredentials::U_ID => $this->userID,
+//            InstaMedCredentials::U_NAME => $this->userName,
         );
     }
 

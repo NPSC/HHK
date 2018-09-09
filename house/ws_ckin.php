@@ -44,6 +44,7 @@ require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require (PMT . 'Payments.php');
 require (PMT . 'TokenTX.php');
 require (PMT . 'HostedPayments.php');
+require (PMT . 'PaymentGateway.php');
 require (PMT . 'Invoice.php');
 require (PMT . 'InvoiceLine.php');
 require (PMT . 'Receipt.php');

@@ -16,7 +16,7 @@ define('NOTY_CSS', "<link href='css/noty/noty.css' rel='stylesheet' type='text/c
 
 define('PAYMENT_JS', "js/payments-min.js" . JSV);
 define('RESV_JS', "js/resv.js" . JSV);
-define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JSV);
+define('VISIT_DIALOG_JS', "js/visitDialog.js" . JSV);
 
 
 /**

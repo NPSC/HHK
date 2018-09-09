@@ -955,7 +955,7 @@ $uS->guestId = $id;
             <div id="zipSearch" class="hhk-tdbox-noborder" style="display:none;">
                 <table width="100%">
                     <tr>
-                        <td class="tdlabel">Postal Code: </td><td><input type="text" id="txtZipSch" class="input-medium" value="" title="Type in the postal code."/></td>
+                        <td class="tdlabel">Postal Code: </td><td><input type="text" id="txtZipSch" class="input-medium ignrSave" value="" title="Type in the postal code."/></td>
                     </tr>
                     <tr><td colspan="3" id="placeList"></td></tr>
                 </table>
@@ -981,6 +981,6 @@ $uS->guestId = $id;
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
         </script>
-        <script type="text/javascript" src="js/guestload-min.js"></script>
+        <script type="text/javascript" src="js/guestload.js"></script>
     </body>
 </html>
