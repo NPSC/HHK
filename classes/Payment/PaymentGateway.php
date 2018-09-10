@@ -339,7 +339,6 @@ class InstamedGateway extends PaymentGateway {
 
         // Do a hosted payment.
         $secure = new SecurityComponent();
-
         $houseUrl = $secure->getSiteURL();
 
         if ($houseUrl == '') {
@@ -372,24 +371,24 @@ class InstamedGateway extends PaymentGateway {
             "RelayState" => "https://online.instamed.com/providers/Form/PatientPayments/NewPaymentSimpleSSO",
         );
 
-        $headers = $this->doHeaderRequest(http_build_query(array_merge($data, $this->getCredentials()->toNVP())));
+        $headerResponse = $this->doHeaderRequest(http_build_query(array_merge($data, $this->getCredentials()->toNVP())));
 
-        if (isset($headers[])) {
+        if ($headerResponse->getToken() != '') {
 
 
             // Save payment ID
             $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode)"
-                . " values (" . $invoice->getSoldToId() . " , " . $invoice->getIdGroup() . ", 'hco', '" . $invoice->getInvoiceNumber() . "', '" . $split[1] . "', now(), 'OneTime', '" . http_response_code() . "')";
+                . " values (" . $invoice->getSoldToId() . " , " . $invoice->getIdGroup() . ", 'hco', '" . $invoice->getInvoiceNumber() . "', '" . $headerResponse->getToken() . "', now(), 'OneTime', " . $headerResponse->getResponseCode() . ")";
 
             $dbh->exec($ciq);
 
 
-            $dataArray = array('inctx' => $headers[InstamedGateway::RELAY_STATE], 'paymentId' => (isset($split[1]) ? $split[1] : '') );
+            $dataArray = array('inctx' => $headerResponse->getRelayState(), 'paymentId' => $headerResponse->getToken() );
 
         } else {
 
             // The initialization failed.
-            throw new Hk_Exception_Payment("Credit Payment Gateway Error: " . http_response_code());
+            throw new Hk_Exception_Payment("Credit Payment Gateway Error: " . $headerResponse->getResponseMessage());
 
         }
 
@@ -440,31 +439,7 @@ class InstamedGateway extends PaymentGateway {
 
         $headers = get_headers($this->ssoUrl, 1, $context);
 
-        return $this->parseHeader($headers);
-
-    }
-
-    protected function parseHeader($headers) {
-        //"https://online.instamed.com/providers/Form/SSO/SSOError?respCode=401&respMessage=Invalid AccountID or Password.&lightWeight=true"
-
-        if (isset($headers[InstamedGateway::RELAY_STATE])) {
-
-            $split = explode('?', $headers[InstamedGateway::RELAY_STATE]);
-
-            if (count($split) < 2) {
-                $this->responseErrors = 'relayState has no parameters: ' . $headers[InstamedGateway::RELAY_STATE];
-                return false;
-            }
-
-            $parSplit = explode('&', $split[1]);
-
-            
-
-
-        } else {
-            $this->responseErrors = 'relayState is missing. ';
-            return false;
-        }
+        return new HeaderResponse($headers);
 
     }
 
@@ -619,4 +594,56 @@ class InstaMedCredentials {
         );
     }
 
+}
+
+class HeaderResponse extends GatewayResponse {
+
+    protected function parseResponse($headers) {
+
+        //"https://online.instamed.com/providers/Form/SSO/SSOError?respCode=401&respMessage=Invalid AccountID or Password.&lightWeight=true"
+
+        if (isset($headers[InstamedGateway::RELAY_STATE])) {
+
+            $qs = parse_url($headers[InstamedGateway::RELAY_STATE], PHP_URL_QUERY);
+            parse_str($qs, $this->result);
+
+            $this->result[InstamedGateway::RELAY_STATE] = $headers[InstamedGateway::RELAY_STATE];
+
+        } else {
+            $this->errors = 'response is missing. ';
+        }
+
+    }
+
+    public function getRelayState() {
+        return $this->result[InstamedGateway::RELAY_STATE];
+    }
+
+    public function getToken() {
+
+        if (isset($this->result['token'])) {
+            return $this->result['token'];
+        }
+
+        return '';
+    }
+
+    public function getResponseCode() {
+
+        if (isset($this->result['respCode'])) {
+
+            return intval($this->result['respCode'], 10);
+        }
+
+        return 0;
+    }
+
+    public function getResponseMessage() {
+
+        if (isset($this->result['respMessage'])) {
+            return $this->result['respMessage'];
+        }
+
+        return '';
+    }
 }

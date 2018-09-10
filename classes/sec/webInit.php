@@ -90,8 +90,8 @@ class webInit {
 
         if ($addCSP) {
             $cspURL = $this->page->getHostName();
-            header("Content-Security-Policy: default-src $cspURL; script-src $cspURL 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
-            header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // IE 10+
+            header("Content-Security-Policy: default-src $cspURL https://online.instamed.com; script-src $cspURL 'unsafe-inline' https://online.instamed.com; style-src $cspURL https://online.instamed.com 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+            header("X-Content-Security-Policy: default-src $cspURL https://online.instamed.com; script-src $cspURL https://online.instamed.com 'unsafe-inline'; style-src $cspURL https://online.instamed.com 'unsafe-inline';"); // IE 10+
             header('X-Frame-Options: SAMEORIGIN');
 
             if (SecurityComponent::isHTTPS()) {

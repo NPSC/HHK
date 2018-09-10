@@ -24,6 +24,7 @@ require (MEMBER . "EmergencyContact.php");
 
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
+require (PMT . 'GatewayConnect.php');
 require (PMT . 'Payments.php');
 require (PMT . 'HostedPayments.php');
 require (PMT . 'Receipt.php');

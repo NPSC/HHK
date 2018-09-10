@@ -105,7 +105,7 @@ CREATE TABLE if not exists `campaign` (
 CREATE TABLE if not exists `card_id` (
   `idName` int(11) NOT NULL,
   `idGroup` int(11) NOT NULL,
-  `CardID` varchar(36) NOT NULL DEFAULT '',
+  `CardID` varchar(236) NOT NULL DEFAULT '',
   `Init_Date` datetime DEFAULT NULL,
   `ReturnCode` int(11) NOT NULL DEFAULT '0',
   `Frequency` varchar(9) NOT NULL DEFAULT '',

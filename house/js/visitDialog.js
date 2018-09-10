@@ -642,10 +642,11 @@ function paymentReply (data, updateCal) {
             }
             
             xferForm.submit();
+            
         } else if (data.inctx) {
-            $.get(data.inctx, {}, function (data) {
-                $('body').append(data);
-            });
+            
+            window.location.assign(data.inctx);
+
         }
         
         

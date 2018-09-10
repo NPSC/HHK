@@ -42,6 +42,7 @@ require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
+require (PMT . 'GatewayConnect.php');
 
 require (PMT . 'Payments.php');
 require (PMT . 'TokenTX.php');
@@ -53,6 +54,7 @@ require (PMT . 'CreditToken.php');
 require (PMT . 'Transaction.php');
 require (PMT . 'CashTX.php');
 require (PMT . 'CheckTX.php');
+require (PMT . 'PaymentGateway.php');
 
 require (CLASSES . 'Purchase/Item.php');
 

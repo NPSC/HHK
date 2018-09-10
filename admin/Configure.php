@@ -21,6 +21,7 @@ require CLASSES . 'UpdateSite.php';
 require CLASSES . 'Patch.php';
 require CLASSES . 'US_Holidays.php';
 
+require (PMT . 'GatewayConnect.php');
 require PMT . 'PaymentGateway.php';
 
 require SEC . 'Login.php';

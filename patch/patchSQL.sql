@@ -1,4 +1,9 @@
 
+ALTER TABLE `card_id` 
+    CHANGE COLUMN `CardID` `CardID` VARCHAR(236) NOT NULL DEFAULT '' ;
+
+
+
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Note_Category', 'ncr', 'Reservation', '', 'h', 0);
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Note_Category', 'nch', 'House', '', 'h', 0);
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Note_Category', 'ncf', 'PSG', '', 'h', 0);

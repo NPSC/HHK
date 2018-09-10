@@ -29,6 +29,59 @@
  *
  * @author Eric
  */
-class GatewayConnect {
-    //put your code here
+abstract class GatewayResponse {
+
+    /**
+     *
+     * @var array
+     */
+    protected $response;
+    protected $errors;
+
+    /**
+     *
+     * @var array
+     */
+    protected $result;
+
+    protected $tranType;
+
+    /**
+     * The child is expected to define $result.
+     *
+     * @param array $response
+     * @throws Hk_Exception_Payment
+     */
+    function __construct($response) {
+        if (is_array($response) || is_object($response)) {
+            $this->response = $response;
+        } else {
+            throw new Hk_Exception_Payment('Empty response object. ');
+        }
+
+        $this->parseResponse($response);
+    }
+
+    // Returns Result
+    protected abstract function parseResponse($response);
+
+    public abstract function getResponseCode();
+
+
+    public function getResultArray() {
+        if (isset($this->result)) {
+            return $this->result;
+        }
+        return array();
+    }
+
+    public function getTranType() {
+        return $this->tranType;
+    }
+
+
+    public function getAuthorizeAmount() {
+        return 0;
+    }
+
 }
