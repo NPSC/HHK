@@ -90,7 +90,6 @@ function setupPsgNotes(rid, $container) {
     return $container;
 }
 
-
 function manageRelation(id, rId, relCode, cmd) {
     $.post('ws_admin.php', {'id':id, 'rId':rId, 'rc':relCode, 'cmd':cmd}, relationReturn);
 }
@@ -99,11 +98,10 @@ function manageRelation(id, rId, relCode, cmd) {
 $(document).ready(function () {
     "use strict";
     var memData = memberData;
-    var savePressed = false;
     var nextVeh = 1;
     var listJSON = '../admin/ws_gen.php?cmd=chglog&vw=vguest_audit_log&uid=' + memData.id;
     var listEvtTable;
-    
+
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
             var ul = this.menu.element;
@@ -113,71 +111,11 @@ $(document).ready(function () {
             ) * 1.1 );
         }
     });
-    
-    // Unsaved changes on form are caught here.
-    $(window).bind('beforeunload', function () {
-        // skip if the save button was pressed
-        if (savePressed !== true) {
-            var isDirty = false;
-            $('#form1').find("input[type='text'],textarea").not(".ignrSave").each(function () {
-                
-                if (this.value != this.defaultValue && $(this).parents('div.ignrSave').length === 0) {
-                    var nm = this.value;
-                    isDirty = true;
-                    return false;
-                }
-            });
-            
-            $('#form1').find("input[type='radio'],input[type='checkbox']").not(".ignrSave").each(function () {
-                if ($(this).prop("checked") !== $(this).prop("defaultChecked") && $(this).parents('div.ignrSave').length === 0) {
-                    var nm = $(this).prop("checked");
-                    isDirty = true;
-                    return false;
-                }
-            });
-            
-            $('#form1').find("select").not(".ignrSave").each(function () {
-                
-                if ($(this).parents('div.ignrSave').length === 0) {
-                
-                    if ($(this).data('bfhstates')) {
 
-                        if ($(this).data('state') !== $(this).val()) {
-                            isDirty = true;
-                            return false;
-                        }
-                    } else if ($(this).data('bfhcountries')) {
-
-                        if ($(this).data('country') !== $(this).val()) {
-                            isDirty = true;
-                            return false;
-                        }
-                    } else {
-
-                        // gotta look at each option
-                        $(this).children('option').each(function () {
-
-                            if (this.defaultSelected !== undefined && this.selected !== undefined) {
-                                if (this.defaultSelected !== this.selected) {
-                                    var nm = this.selected;
-                                    isDirty = true;
-                                }
-                            }
-                        });
-                    }
-                }
-            });
-            
-            if (isDirty === true) {
-                return false;
-            }
-        }
-    });
-    
     $("#divFuncTabs").tabs({
         collapsible: true
     });
-    
+
     // relationship dialog
     $("#submit").dialog({
         autoOpen: false,
@@ -190,7 +128,7 @@ $(document).ready(function () {
             }
         }
     });
-    
+
     $('#keysfees').dialog({
         autoOpen: false,
         resizable: true,
@@ -198,14 +136,14 @@ $(document).ready(function () {
         close: function (event, ui) {$('div#submitButtons').show();},
         open: function (event, ui) {$('div#submitButtons').hide();}
     });
-    
+
     $('#pmtRcpt').dialog({
         autoOpen: false,
         resizable: true,
         modal: true,
         title: 'Payment Receipt'
     });
-    
+
     $("#faDialog").dialog({
         autoOpen: false,
         resizable: true,
@@ -213,11 +151,11 @@ $(document).ready(function () {
         modal: true,
         title: 'Income Chooser'
     });
-    
+
     if (rctMkup !== '') {
         showReceipt('#pmtRcpt', rctMkup);
     }
-    
+
     $('.hhk-view-visit').click(function () {
         var vid = $(this).data('vid');
         var gid = $(this).data('gid');
@@ -240,14 +178,14 @@ $(document).ready(function () {
          viewVisit(gid, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
          $('#divAlert1').hide();
     });
-    
+
     $('#resvAccordion').accordion({
         heightStyle: "content",
         collapsible: true,
         active: false,
         icons: false
     });
-    
+
     // relationship events
     $('div.hhk-relations').each(function () {
         var schLinkCode = $(this).attr('name');
@@ -267,7 +205,7 @@ $(document).ready(function () {
             }
         });
     });
-    
+
     $('#cbNoVehicle').change(function () {
         if (this.checked) {
             $('#tblVehicle').hide();
@@ -276,9 +214,9 @@ $(document).ready(function () {
         }
     });
     $('#cbNoVehicle').change();
-    
+
     $('#btnNextVeh, #exAll, #exNone').button();
-    
+
     $('#btnNextVeh').click(function () {
         $('#trVeh' + nextVeh).show('fade');
         nextVeh++;
@@ -286,7 +224,7 @@ $(document).ready(function () {
             $('#btnNextVeh').hide('fade');
         }
     });
-    
+
     $('#divNametabs').tabs({
         
         beforeActivate: function (event, ui) {
@@ -370,7 +308,7 @@ $(document).ready(function () {
         }
     });
     $('#cbnoReturn').change();
-    
+
     if (memData.id === 0) {
         // enable tabs for a "new" member
         $("#divFuncTabs").tabs("option", "disabled", [2,3,4]);
@@ -382,6 +320,7 @@ $(document).ready(function () {
         if (isNaN(tbIndex)) {tbIndex = 0;}
         $('#addrsTabs').tabs("option", "active", tbIndex);
     }
+
     $.datepicker.setDefaults({
         yearRange: '-0:+02',
         changeMonth: true,
@@ -390,9 +329,11 @@ $(document).ready(function () {
         numberOfMonths: 1,
         dateFormat: 'M d, yy'
     });
+
     $('.ckdate').datepicker({
         yearRange: '-02:+03'
     });
+
     $('.ckbdate').datepicker({
         yearRange: '-99:+00',
         changeMonth: true,
@@ -401,6 +342,7 @@ $(document).ready(function () {
         maxDate:0,
         dateFormat: 'M d, yy'
     });
+
     $('#cbLastConfirmed').change(function () {
         if ($(this).prop('checked')) {
             $('#txtLastConfirmed').datepicker('setDate', '+0');
@@ -409,6 +351,7 @@ $(document).ready(function () {
             $('#txtLastConfirmed').val($('#txtLastConfirmed').prop('defaultValue'));
         }
     });
+
     $('#txtLastConfirmed').change(function () {
         if ($('#txtLastConfirmed').val() == $('#txtLastConfirmed').prop('defaultValue')) {
             $('#cbLastConfirmed').prop('checked', false);
@@ -416,19 +359,23 @@ $(document).ready(function () {
             $('#cbLastConfirmed').prop('checked', true);
         }
     });
+
     verifyAddrs('div#nameTab, div#hospitalSection');
+
     addrPrefs(memData);
+
     var zipXhr;
+
     createZipAutoComplete($('input.hhk-zipsearch'), 'ws_admin.php', zipXhr);
+
     // Main form submit button.  Disable page during POST
     $('#btnSubmit').click(function () {
         if ($(this).val() === 'Saving>>>>') {
             return false;
         }
-        savePressed = true;
         $(this).val('Saving>>>>');
     });
-    
+
     // Member search letter input box
     $('#txtsearch').keypress(function (event) {
         var mm = $(this).val();
@@ -444,7 +391,7 @@ $(document).ready(function () {
             }
         }
     });
-    
+
     // Date of death
     $('#cbdeceased').change(function () {
         if ($(this).prop('checked')) {
@@ -461,22 +408,23 @@ $(document).ready(function () {
     });
 
     createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', add: 'phone', basis: 'ra'}, getAgent);
+
     if ($('#a_txtLastName').val() === '') {
         $('.hhk-agentInfo').hide();
     }
-    
+
     createAutoComplete($('#txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc);
     if ($('#d_txtLastName').val() === '') {
         $('.hhk-docInfo').hide();
     }
-    
+
     createAutoComplete($('#txtsearch'), 3, {cmd: 'role', mode: 'mo', gp:'1'}, 
         function (item) {
             if (item.id > 0) {
                 window.location.assign("GuestEdit.php?id=" + item.id);
             }
         });
-        
+
     createAutoComplete($('#txtPhsearch'), 5, {cmd: 'role', mode: 'mo', gp:'1'}, 
         function (item) {
             if (item.id > 0) {
@@ -487,11 +435,9 @@ $(document).ready(function () {
     createAutoComplete($('#txtRelSch'), 3, {cmd: 'srrel', basis: $('#hdnRelCode').val(), id: memData.id}, function (item) {
         $.post('ws_admin.php', {'rId':item.id, 'id':memData.id, 'rc':$('#hdnRelCode').val(), 'cmd':'newRel'}, relationReturn);
     });
-    
-    
+
     setupPsgNotes(memData.idPsg, $('#psgNoteViewer'));
 
-    
     // Excludes tab "Check-all" button
     $('input.hhk-check-button').click(function () {
         if ($(this).prop('id') === 'exAll') {
@@ -500,9 +446,26 @@ $(document).ready(function () {
             $('input.hhk-ex').prop('checked', false);
         }
     });
+
     // Hide the member status and basis controls
     $(".hhk-hideStatus, .hhk-hideBasis").hide();
+
     $('#divFuncTabs').show();
+
     $('.hhk-showonload').show();
+
     $('#txtsearch').focus();
+
+    // Unsaved changes on form are caught here.
+    // Set Dirrty initial value manually for bfh
+    $(document).find("bfh-states").each(function(){
+	$(this).data("dirrty-initial-value", $(this).data('state'));
+    });
+
+    $(document).find("bfh-country").each(function(){
+	$(this).data("dirrty-initial-value", $(this).data('country'));
+    });
+
+    // init dirrty
+    $("#form1").dirrty();
 });

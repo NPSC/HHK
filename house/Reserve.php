@@ -70,7 +70,7 @@ $idPsg = 0;
 // Hosted payment return
 if (isset($_POST['CardID']) || isset($_POST['PaymentID'])) {
 
-    require (DB_TABLES . 'MercuryRS.php');
+    require (DB_TABLES . 'PaymentGwRS.php');
     require (DB_TABLES . 'PaymentsRS.php');
 
     require (CLASSES . 'MercPay/MercuryHCClient.php');
@@ -439,7 +439,6 @@ $(document).ready(function() {
         }
 
     });
-
 
 
     function getGuest(item) {

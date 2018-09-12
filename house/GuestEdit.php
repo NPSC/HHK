@@ -669,19 +669,14 @@ if ($psg->getIdPsg() > 0) {
             $rtbl->addHeaderTr(HTMLTable::makeTh('Id').HTMLTable::makeTh('Status').HTMLTable::makeTh('Arrival').HTMLTable::makeTh('Depart').HTMLTable::makeTh('Room').HTMLTable::makeTh('Rate'));
 
             // Get the room rate category names
-            $stmt = $dbh->query("Select FA_Category, Title, Reduced_Rate_1 from room_rate");
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            $categoryTitles = array();
-            foreach ($rows as $r) {
-                $categoryTitles[$r['FA_Category']] = array(0 => $r['FA_Category'], 1 => $r['Title'] . ($r['Reduced_Rate_1'] == 0 ? '' :  ': $' . number_format($r['Reduced_Rate_1'], 0)));
-            }
+            $categoryTitles = RoomRate::makeDescriptions($dbh);
 
             $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), array('href'=>$config->getString('house', 'ReservationPage', 'Referral.php').'?rid=' . $reserv->getIdReservation())))
                     . HTMLTable::makeTd($reserv->getStatusTitle($reserv->getStatus()))
                     . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getArrival())))
                     . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getDeparture())))
                     . HTMLTable::makeTd($reserv->getRoomTitle($dbh))
-                    . ($uS->RoomPriceModel != ItemPriceCode::None ? HTMLTable::makeTd($categoryTitles[$reserv->getRoomRateCategory()][1]) : HTMLTable::makeTd(''))
+                    . ($uS->RoomPriceModel != ItemPriceCode::None ? HTMLTable::makeTd($categoryTitles[$reserv->getIdRoomRate()]) : HTMLTable::makeTd(''))
                     );
 
             $constraintMkup = RoomChooser::createResvConstMkup($dbh, $reserv->getIdReservation(), TRUE);
@@ -689,7 +684,6 @@ if ($psg->getIdPsg() > 0) {
                 $constraintMkup = "<p style='padding:4px;'>(No Room Attributes Selected.)<p>";
             }
 
-            $rtbl->addBodyTr(HTMLTable::makeTd(Notes::markupShell($reserv->getNotes(), 'tbrn'.$reserv->getIdReservation()), array('colspan'=>'7')));
             $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('div', $constraintMkup, array('style'=>'float:left;margin-left:10px;')), array('colspan'=>'7')));
 
             $hdr = HTMLContainer::generateMarkup('h3', HTMLContainer::generateMarkup('span',
@@ -702,7 +696,6 @@ if ($psg->getIdPsg() > 0) {
             $reservMarkup .= $hdr . HTMLContainer::generateMarkup('div', $rtbl->generateMarkup());
 
         }
-
     }
 
     // Financial Assistance
@@ -810,6 +803,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
@@ -933,7 +927,6 @@ $uS->guestId = $id;
                 <div style="clear:both;"></div>
                 <!-- End of Tabs Control -->
                 <div id="submitButtons" class="ui-corner-all" style="font-size:0.9em;">
-                    <input type="reset" name="btnReset" value="Reset" id="btnReset" />
                     <input type="submit" name="btnSubmit" value="Save" id="btnSubmit" />
                 </div>
                 <input type="hidden" name="hdnid" id="hdnid" value="<?php echo $id; ?>" />
@@ -972,7 +965,7 @@ $uS->guestId = $id;
                 </table>
             </div>
         </div>  <!-- div id="contentDiv"-->
-        <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
+        <form name="xform" id="xform" method="post"></form>
 
         <script type="text/javascript">
             var memberData = <?php echo json_encode($memberData); ?>;

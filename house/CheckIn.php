@@ -173,7 +173,7 @@ if ($idGuest > 0) {
         }
     }
 
-    $stayingMarkup = HTMLContainer::generateMarkup('div', Reservation_1::showListByStatus($dbh, 'GuestEdit.php', 'CheckIn.php', ReservationStatus::Staying), array('id'=>'hhk-chkedIn'));
+    $stayingMarkup = HTMLContainer::generateMarkup('div', Reservation_1::showListByStatus($dbh, 'GuestEdit.php', 'CheckingIn.php', ReservationStatus::Staying), array('id'=>'hhk-chkedIn'));
     if ($stayingMarkup == '') {
         $stayingMarkup = "<p style='margin-left:60px;'>-None-</p>";
     }

@@ -428,6 +428,7 @@ $alertMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
 
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
@@ -508,7 +509,7 @@ $alertMessage = $alertMsg->createMarkup();
                </div>
                 <!-- End of Tabs Control -->
                 <div id="divSubmitButtons" class="ui-corner-all">
-                    <input type="reset" name="btnReset" value="Reset" id="btnReset" />
+                    
                     <input type="submit" name="btnSubmit" value="Save" id="btnSubmit" />
                 </div>
                 <input type="hidden" name="hdnid" id="hdnid" value="<?php echo $id; ?>" />
