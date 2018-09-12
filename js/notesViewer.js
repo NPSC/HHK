@@ -18,7 +18,7 @@
             },
             alertMessage: function (text, isError) {},
 
-            newTaLabel: '  New note text here',
+            newTaLabel: 'New note text here',
             dtCols: [
                 {
                 "targets": [ 0 ],

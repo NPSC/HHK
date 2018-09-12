@@ -441,7 +441,6 @@ $(document).ready(function() {
     });
 
 
-
     function getGuest(item) {
 
         hideAlertMessage();

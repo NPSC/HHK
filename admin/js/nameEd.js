@@ -19,50 +19,6 @@ $(document).ready(function () {
         }
     });
     
-    // Unsaved changes on form are caught here.
-    $(window).bind('beforeunload', function () {
-        // Did user press the save button?
-        if (savePressed !== true) {
-
-            var isDirty = false;
-
-            $('#form1').find("input[type='text'],textarea").not(".ignrSave, #vchangelog").each(function () {
-                if ($(this).val() != $(this).prop("defaultValue")) {
-                    var nm = $(this).val();
-                    isDirty = true;
-                    return 'You have unsaved changes.';
-                }
-            });
-            $('#form1').find("input[type='radio'],input[type='checkbox']").not(".ignrSave, #vchangelog").each(function () {
-                if ($(this).prop("checked") != $(this).prop("defaultChecked")) {
-                    var nm = $(this).val();
-                    isDirty = true;
-                    return 'You have unsaved changes.';
-                }
-            });
-            $('#form1').find("select").not(".ignrSave, #vchangelog").each(function () {
-                if ($(this).data('bfhstates')) {
-                    if ($(this).data('state') != $(this).val()) isDirty = true;
-                } else if ($(this).data('bfhcountries')) {
-                    if ($(this).data('country') != $(this).val()) isDirty = true;
-                } else {
-                    // gotta look at each option
-                    $(this).children('option').each(function () {
-                        // find the default option
-                        if (this.defaultSelected != this.selected) {
-                            var nm = $(this).val();
-                            isDirty = true;
-                            return 'You have unsaved changes.';
-                        }
-                    });
-                }
-            });
-
-            if (isDirty === true) {
-                return 'You have unsaved changes.';
-            }
-        }
-    });
     // phone - email tabs block
     $('#phEmlTabs').tabs();
     $('#demographicTabs').tabs();
@@ -617,16 +573,28 @@ $(document).ready(function () {
         theUl.parent().height(sumpx + 40);
     });
 
-// Hover states on the static widgets
-$( ".hhk-relations td, .hhk-gotoweb" ).hover(
-	function() {
-		$( this ).addClass( "ui-state-hover" );
-	},
-	function() {
-		$( this ).removeClass( "ui-state-hover" );
-	}
-);
+    // Hover states on the static widgets
+    $( ".hhk-relations td, .hhk-gotoweb" ).hover(
+            function() {
+                    $( this ).addClass( "ui-state-hover" );
+            },
+            function() {
+                    $( this ).removeClass( "ui-state-hover" );
+            }
+    );
+
+    // Unsaved changes on form are caught here.
+    // Set Dirrty initial value manually for bfh
+    $(document).find("bfh-states").each(function(){
+	$(this).data("dirrty-initial-value", $(this).data('state'));
+    });
+    
+    $(document).find("bfh-country").each(function(){
+	$(this).data("dirrty-initial-value", $(this).data('country'));
+    });
+    
+    // init dirrty
+    $("#form1").dirrty();
 
 });
-
 
