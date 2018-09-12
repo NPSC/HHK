@@ -981,6 +981,7 @@ $uS->guestId = $id;
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
         </script>
+        <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <script type="text/javascript" src="js/guestload-min.js"></script>
     </body>
 </html>

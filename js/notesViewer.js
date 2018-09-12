@@ -271,6 +271,11 @@
             });
 
             actions($wrapper, settings, dtTable);
+            
+            //add ignrSave class to Dt controls
+            $(".dataTables_filter").addClass('ignrSave');
+            $(".dtBottom").addClass('ignrSave');
+            
         }
         
         $wrapper.append(createNewNote(settings, dtTable));

@@ -114,66 +114,6 @@ $(document).ready(function () {
         }
     });
     
-    // Unsaved changes on form are caught here.
-    $(window).bind('beforeunload', function () {
-        // skip if the save button was pressed
-        if (savePressed !== true) {
-            var isDirty = false;
-            $('#form1').find("input[type='text'],textarea").not(".ignrSave").each(function () {
-                
-                if (this.value != this.defaultValue && $(this).parents('div.ignrSave').length === 0) {
-                    var nm = this.value;
-                    isDirty = true;
-                    return false;
-                }
-            });
-            
-            $('#form1').find("input[type='radio'],input[type='checkbox']").not(".ignrSave").each(function () {
-                if ($(this).prop("checked") !== $(this).prop("defaultChecked") && $(this).parents('div.ignrSave').length === 0) {
-                    var nm = $(this).prop("checked");
-                    isDirty = true;
-                    return false;
-                }
-            });
-            
-            $('#form1').find("select").not(".ignrSave").each(function () {
-                
-                if ($(this).parents('div.ignrSave').length === 0) {
-                
-                    if ($(this).data('bfhstates')) {
-
-                        if ($(this).data('state') !== $(this).val()) {
-                            isDirty = true;
-                            return false;
-                        }
-                    } else if ($(this).data('bfhcountries')) {
-
-                        if ($(this).data('country') !== $(this).val()) {
-                            isDirty = true;
-                            return false;
-                        }
-                    } else {
-
-                        // gotta look at each option
-                        $(this).children('option').each(function () {
-
-                            if (this.defaultSelected !== undefined && this.selected !== undefined) {
-                                if (this.defaultSelected !== this.selected) {
-                                    var nm = this.selected;
-                                    isDirty = true;
-                                }
-                            }
-                        });
-                    }
-                }
-            });
-            
-            if (isDirty === true) {
-                return false;
-            }
-        }
-    });
-    
     $("#divFuncTabs").tabs({
         collapsible: true
     });
@@ -505,4 +445,20 @@ $(document).ready(function () {
     $('#divFuncTabs').show();
     $('.hhk-showonload').show();
     $('#txtsearch').focus();
+    
+    // Unsaved changes on form are caught here.
+    // Set Dirrty initial value manually for bfh
+    $(document).find("bfh-states").each(function(){
+	    $(this).data("dirrty-initial-value", $(this).data('state'));
+    });
+    $(document).find("bfh-country").each(function(){
+	    $(this).data("dirrty-initial-value", $(this).data('country'));
+    });
+    // init dirrty
+    $("#form1").dirrty()
+    .on("dirty", function() {
+		console.log("I'm dirty!");
+	}).on("clean", function() {
+		console.log("I'm clean!");
+	});
 });
