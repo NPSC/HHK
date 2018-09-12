@@ -18,7 +18,7 @@
             },
             alertMessage: function (text, isError) {},
 
-            newTaLabel: '  New note text here',
+            newTaLabel: 'New note text here',
             dtCols: [
                 {
                 "targets": [ 0 ],
@@ -271,6 +271,11 @@
             });
 
             actions($wrapper, settings, dtTable);
+            
+            //add ignrSave class to Dt controls
+            $(".dataTables_filter").addClass('ignrSave');
+            $(".dtBottom").addClass('ignrSave');
+            
         }
         
         $wrapper.append(createNewNote(settings, dtTable));
