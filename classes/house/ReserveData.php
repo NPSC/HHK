@@ -18,6 +18,10 @@ class ReserveData {
     const RESV_CHOOSER = 'resvChooser';
     const PSG_CHOOSER = 'psgChooser';
     const FAM_SECTION = 'famSection';
+    const EXPECTED_DATES = 'expDates';
+    const HOSPITAL_SECTION = 'hosp';
+    const RESV_SECTION = 'resv';
+    const CHECKIN_SECTION = 'resv';
     const FULL_NAME = 'fullName';
     const ADD_PERSON = 'addPerson';
 
@@ -52,6 +56,11 @@ class ReserveData {
     protected $resvChooser;
     protected $psgChooser;
     protected $familySection;
+    protected $expectedDatesSection;
+    protected $hospitalSection;
+    protected $reservationSection;
+    protected $checkinSection;
+    protected $paymentSection;
     protected $addPerson;
     protected $arrivalDateStr;
     protected $departureDateStr;
@@ -105,6 +114,11 @@ class ReserveData {
         $this->resvChooser = '';
         $this->psgChooser = '';
         $this->familySection = '';
+        $this->expectedDatesSection = '';
+        $this->hospitalSection = '';
+        $this->reservationSection = '';
+        $this->checkingInSection = '';
+        $this->paymentSection = '';
 
     }
 
@@ -180,6 +194,22 @@ class ReserveData {
 
         if ($this->familySection != '') {
             $rtnData[ReserveData::FAM_SECTION] = $this->familySection;
+        }
+
+        if ($this->hospitalSection != '') {
+            $rtnData[ReserveData::HOSPITAL_SECTION] = $this->hospitalSection;
+        }
+
+        if ($this->expectedDatesSection != '') {
+            $rtnData[ReserveData::EXPECTED_DATES] = $this->expectedDatesSection;
+        }
+
+        if ($this->reservationSection != '') {
+            $rtnData[ReserveData::RESV_SECTION] = $this->reservationSection;
+        }
+
+        if ($this->checkinSection != '') {
+            $rtnData[ReserveData::CHECKIN_SECTION] = $this->checkinSection;
         }
 
         if ($this->addPerson != '') {
@@ -377,6 +407,26 @@ class ReserveData {
 
     public function setFamilySection($p) {
         $this->familySection = $p;
+        return $this;
+    }
+
+    public function setHospitalSection($p) {
+        $this->hospitalSection = $p;
+        return $this;
+    }
+
+    public function setExpectedDatesSection($p) {
+        $this->expectedDatesSection = $p;
+        return $this;
+    }
+
+    public function setResvSection($p) {
+        $this->reservationSection = $p;
+        return $this;
+    }
+
+    public function setCheckinSection($p) {
+        $this->checkinSection = $p;
         return $this;
     }
 
