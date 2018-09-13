@@ -645,8 +645,13 @@ function paymentReply (data, updateCal) {
             
         } else if (data.inctx) {
             
-            window.location.assign(data.inctx);
-
+            var $diagbox = $('#keysfees');
+            var $iframe = $('<iframe name="instamedIf" src="' + data.inctx + '" style="height:800px;width:700px;" />');
+            $diagbox.empty();
+            $diagbox.append($('<div/>').append($iframe));
+            $diagbox.dialog('open');
+            return;
+                        
         }
         
         

@@ -350,10 +350,11 @@ class InstamedGateway extends PaymentGateway {
         }
 
         $data = array (
-            "patientID" => $invoice->getSoldToId(),
-            "patientFirstName" => $guest->getRoleMember()->get_firstName(),
-            "patientLastName" => $guest->getRoleMember()->get_lastName(),
-            "amount" => $invoice->getBalance(),
+            'patientID' => $invoice->getSoldToId(),
+            'patientFirstName' => $guest->getRoleMember()->get_firstName(),
+            'patientLastName' => $guest->getRoleMember()->get_lastName(),
+            'amount' => $invoice->getBalance(),
+
 
             InstamedGateway::GROUP_ID => $invoice->getIdGroup(),
             InstamedGateway::INVOICE_NUMBER => $invoice->getInvoiceNumber(),
@@ -361,20 +362,22 @@ class InstamedGateway extends PaymentGateway {
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
 
-            "lightWeight" => 'true',
+            'creditCardKeyed ' => 'true',
+            'incontext' => 'true',
+            'lightWeight' => 'true',
             'preventCheck' => 'true',
             'preventCash'  => 'true',
-            "hideGuarantorID" => 'true',
-            "responseActionType" => 'header',
+            'suppressReceipt' => 'true',
+            'hideGuarantorID' => 'true',
+            'responseActionType' => 'header',
             'returnURL' => $houseUrl . $postbackUrl,
-            "requestToken" => 'true',
-            "RelayState" => "https://online.instamed.com/providers/Form/PatientPayments/NewPaymentSimpleSSO",
+            'requestToken' => 'true',
+            'RelayState' => "https://online.instamed.com/providers/Form/PatientPayments/NewPaymentPlanSimpleSSO?",
         );
 
         $headerResponse = $this->doHeaderRequest(http_build_query(array_merge($data, $this->getCredentials()->toNVP())));
 
         if ($headerResponse->getToken() != '') {
-
 
             // Save payment ID
             $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode)"
