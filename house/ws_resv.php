@@ -108,8 +108,6 @@ $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
 
-$guestAdmin = SecurityComponent::is_Authorized("guestadmin");
-
 $c = "";
 
 // Get our command
@@ -138,7 +136,7 @@ try {
 
         $resv = Reservation::reservationFactoy($dbh, $_POST);
 
-        $newResv = $resv->save($dbh, $_POST, $guestAdmin);
+        $newResv = $resv->save($dbh, $_POST);
 
         $events = $newResv->createMarkup($dbh);
 
@@ -158,7 +156,7 @@ try {
 
         $resv = CheckingIn::reservationFactoy($dbh, $_POST);
 
-        $resv->save($dbh, $_POST, $guestAdmin);
+        $resv->save($dbh, $_POST);
 
         $events = $resv->checkedinMarkup($dbh);
 

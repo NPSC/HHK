@@ -24,12 +24,15 @@ class ReserveData {
     const CHECKIN_SECTION = 'resv';
     const FULL_NAME = 'fullName';
     const ADD_PERSON = 'addPerson';
+    const WARNING = 'warning';
 
     const ROLE = 'role';
     const PREF = 'pref';
     const STAY = 'stay';
     const ID = 'id';
     const PRI = 'pri';
+
+    const GUEST_ADMIN = 'guestadmin';
 
     const STAYING = '1';
     const NOT_STAYING = '0';
@@ -65,6 +68,7 @@ class ReserveData {
     protected $arrivalDateStr;
     protected $departureDateStr;
     protected $psgMembers;
+    protected $errors;
 
     function __construct($post, $reservationTitle = '') {
 
@@ -119,6 +123,7 @@ class ReserveData {
         $this->reservationSection = '';
         $this->checkingInSection = '';
         $this->paymentSection = '';
+        $this->errors = '';
 
     }
 
@@ -218,6 +223,10 @@ class ReserveData {
 
         if ($this->fullName != '') {
             $rtnData[ReserveData::FULL_NAME] = $this->fullName;
+        }
+
+        if ($this->errors != '') {
+            $rtnData[ReserveData::WARNING] = $this->errors;
         }
 
         return $rtnData;
@@ -438,6 +447,19 @@ class ReserveData {
     public function setDepartureDateStr($departureDateStr) {
         $this->departureDateStr = $departureDateStr;
         return $this;
+    }
+
+    public function addError($e) {
+        $this->errors .= $e;
+    }
+
+    public function hasError() {
+
+        if ($this->errors != '') {
+            return TRUE;
+        }
+
+        return FALSE;
     }
 
 }

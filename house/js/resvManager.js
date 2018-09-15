@@ -2024,6 +2024,10 @@ function resvManager(initData) {
         if (data.expDates !== undefined && data.expDates !== '') {
             expDatesSection.setUp(data, doOnDatesChange);
         }
+        
+        if (data.warning !== undefined && data.warning !== '') {
+            flagAlertMessage(data.warning, true);
+        }
 
         // Reservation
         if (data.resv !== undefined) {
