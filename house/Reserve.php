@@ -367,7 +367,6 @@ $(document).ready(function() {
 
     // hide the alert on mousedown
     $(document).mousedown(function (event) {
-        hideAlertMessage();
         var target = $(event.target);
 
         if (target[0].id !== 'divSelAddr' && target[0].closest('div') && target[0].closest('div').id !== 'divSelAddr') {
@@ -406,8 +405,6 @@ $(document).ready(function() {
             return;
         }
 
-        hideAlertMessage();
-
         if (pageManager.verifyInput() === true) {
 
             $.post(
@@ -417,7 +414,7 @@ $(document).ready(function() {
                     try {
                         data = $.parseJSON(data);
                     } catch (err) {
-                        flagAlertMessage(err.message, true);
+                        flagAlertMessage(err.message, 'error');
                         return;
                     }
 
@@ -426,12 +423,12 @@ $(document).ready(function() {
                     }
 
                     if (data.error) {
-                        flagAlertMessage(data.error, true);
+                        flagAlertMessage(data.error, 'error');
                         $('#btnDone').val('Save').show();
                     }
 
                     pageManager.loadResv(data);
-                    flagAlertMessage(data.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle);
+                    flagAlertMessage(data.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle, 'success');
                 }
             );
 
@@ -443,9 +440,8 @@ $(document).ready(function() {
 
     function getGuest(item) {
 
-        hideAlertMessage();
         if (item.No_Return !== undefined && item.No_Return !== '') {
-            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
+            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', 'alert');
             return;
         }
 
@@ -482,7 +478,6 @@ $(document).ready(function() {
         createAutoComplete($('#gstphSearch'), 4, {cmd: 'role', gp:'1'}, getGuest);
 
         $guestSearch.keypress(function(event) {
-            hideAlertMessage();
             $(this).removeClass('ui-state-highlight');
         });
 

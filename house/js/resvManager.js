@@ -119,13 +119,11 @@ function resvManager(initData) {
 
         function addGuest(item, data) {
 
-            hideAlertMessage();
-
             // Check for guest already added.
             //
 
             if (item.No_Return !== undefined && item.No_Return !== '') {
-                flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
+                flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', 'alert');
                 return;
             }
 
@@ -134,7 +132,7 @@ function resvManager(initData) {
             }
 
             if (item.id > 0 && people.findItem('id', item.id) !== null) {
-                flagAlertMessage('This person is already listed here. ', true);
+                flagAlertMessage('This person is already listed here. ', 'alert');
                 return;
             }
             
@@ -828,7 +826,7 @@ function resvManager(initData) {
                 if ($(this).val() === '') {
 
                     $(this).addClass('ui-state-error');
-                    flagAlertMessage('Set the highlighted Relationship.', true);
+                    flagAlertMessage('Set the highlighted Relationship.', 'alert');
                     return false;
 
                 }
@@ -865,14 +863,14 @@ function resvManager(initData) {
             // Only one patient allowed.
             if (numPat < 1) {
 
-                flagAlertMessage('Choose a ' + patLabel + '.', true);
+                flagAlertMessage('Choose a ' + patLabel + '.', 'alert');
 
                 $('.patientRelch').addClass('ui-state-error');
                 return false;
 
             } else if (numPat > 1) {
 
-                flagAlertMessage('Only 1 ' + patLabel + ' is allowed.', true);
+                flagAlertMessage('Only 1 ' + patLabel + ' is allowed.', 'alert');
 
                 for (var i in people.list()) {
                     if (people.list()[i].role === 'p') {
@@ -884,7 +882,7 @@ function resvManager(initData) {
 
             // Someone checking in?
             if (numGuests < 1) {
-                flagAlertMessage('There is no one actually staying.  Pick someone to stay.', true);
+                flagAlertMessage('There is no one actually staying.  Pick someone to stay.', 'alert');
                 return false;
             }
 
@@ -896,7 +894,7 @@ function resvManager(initData) {
                }
 
             } else if (numPriGuests === 0) {
-                flagAlertMessage('Set one guest as primary guest.', true);
+                flagAlertMessage('Set one guest as primary guest.', 'alert');
                 return false;
             }
 
@@ -923,7 +921,7 @@ function resvManager(initData) {
 
             if (nameErr === true) {
                 openSection(true);
-                flagAlertMessage("Enter a first and last name for the people highlighted.", true);
+                flagAlertMessage("Enter a first and last name for the people highlighted.", 'alert');
                 return false;
             }
             
@@ -949,7 +947,7 @@ function resvManager(initData) {
                     // Check patient birthdate
                     if (patBirthDate & $('#' + p + 'txtBirthDate').val() === '') {
                         $('#' + p + 'txtBirthDate').addClass('ui-state-error');
-                        flagAlertMessage(patLabel + ' is missing the Birth Date.', true);
+                        flagAlertMessage(patLabel + ' is missing the Birth Date.', 'alert');
                         openSection(true);
                         return false;
                     } else {
@@ -963,7 +961,7 @@ function resvManager(initData) {
 
                         if (pMessage !== '') {
 
-                            flagAlertMessage(pMessage, true);
+                            flagAlertMessage(pMessage, 'alert');
                             openSection(true);
 
                             // Open address row
@@ -982,7 +980,7 @@ function resvManager(initData) {
                     if ($('#' + p + 'selPatRel').val() === '') {
 
                         $('#' + p + 'selPatRel').addClass('ui-state-error');
-                        flagAlertMessage('Person highlighted is missing their ' + patLabel + ' Relationship.', true);
+                        flagAlertMessage('Person highlighted is missing their ' + patLabel + ' Relationship.', 'alert');
                         openSection(true);
                         return false;
 
@@ -997,7 +995,7 @@ function resvManager(initData) {
 
                          if (pMessage !== '') {
 
-                            flagAlertMessage(pMessage, true);
+                            flagAlertMessage(pMessage, 'alert');
                             openSection(true);
 
                             // Open address row
@@ -1019,7 +1017,7 @@ function resvManager(initData) {
 
                     if (bDate > today) {
                         $('#' + p + 'txtBirthDate').addClass('ui-state-error');
-                        flagAlertMessage('This birth date cannot be in the future.', true);
+                        flagAlertMessage('This birth date cannot be in the future.', 'alert');
                         openSection(true);
                         return false;
                     } else {
@@ -1034,7 +1032,7 @@ function resvManager(initData) {
 
                     if (pMessage !== '') {
 
-                        flagAlertMessage(pMessage, true);
+                        flagAlertMessage(pMessage, 'alert');
                         openSection(true);
 
                         // Open address row
@@ -1139,7 +1137,7 @@ function resvManager(initData) {
             if ($arrDate.val() === '') {
 
                 $arrDate.addClass('ui-state-error');
-                flagAlertMessage("This " + resvTitle + " is missing the check-in date.", true);
+                flagAlertMessage("This " + resvTitle + " is missing the check-in date.", 'alert');
                 return false;
 
             } else {
@@ -1148,7 +1146,7 @@ function resvManager(initData) {
 
                 if (isNaN(t.ciDate.getTime())) {
                     $arrDate.addClass('ui-state-error');
-                    flagAlertMessage("This " + resvTitle + " is missing the check-in date.", true);
+                    flagAlertMessage("This " + resvTitle + " is missing the check-in date.", 'alert');
                     return false;
                 }
             }
@@ -1157,7 +1155,7 @@ function resvManager(initData) {
             if ($deptDate.val() === '') {
 
                 $deptDate.addClass('ui-state-error');
-                flagAlertMessage("This " + resvTitle + " is missing the expected departure date.", true);
+                flagAlertMessage("This " + resvTitle + " is missing the expected departure date.", 'alert');
                 return false;
 
             } else {
@@ -1166,13 +1164,13 @@ function resvManager(initData) {
 
                 if (isNaN(t.coDate.getTime())) {
                     $deptDate.addClass('ui-state-error');
-                    flagAlertMessage("This " + resvTitle + " is missing the expected departure date", true);
+                    flagAlertMessage("This " + resvTitle + " is missing the expected departure date", 'alert');
                     return false;
                 }
 
                 if (t.ciDate > t.coDate) {
                     $arrDate.addClass('ui-state-error');
-                    flagAlertMessage("This " + resvTitle + "'s check-in date is after the expected departure date.", true);
+                    flagAlertMessage("This " + resvTitle + "'s check-in date is after the expected departure date.", 'alert');
                     return false;
                 }
             }
@@ -1210,7 +1208,7 @@ function resvManager(initData) {
                 try {
                     data = $.parseJSON(data);
                 } catch (err) {
-                    flagAlertMessage(err.message, true);
+                    flagAlertMessage(err.message, 'error');
                     return;
                 }
 
@@ -1219,7 +1217,7 @@ function resvManager(initData) {
                 }
 
                 if (data.error) {
-                    flagAlertMessage(data.error, true);
+                    flagAlertMessage(data.error, 'error');
                 }
 
                 if (data.stayCtrl) {
@@ -1319,7 +1317,7 @@ function resvManager(initData) {
                     if (data.gotopage) {
                         window.location.assign(data.gotopage);
                     }
-                    flagAlertMessage(data.error, true);
+                    flagAlertMessage(data.error, 'error');
                     return;
                 }
 
@@ -1427,7 +1425,7 @@ function resvManager(initData) {
 
                     $('#selHospital').addClass('ui-state-error');
 
-                    flagAlertMessage("Select a hospital.", false);
+                    flagAlertMessage("Select a hospital.", 'alert');
 
                     $('#divhospDetail').show('blind');
                     $('#divhospHdr').removeClass('ui-corner-all').addClass('ui-corner-top');
@@ -1573,8 +1571,8 @@ function resvManager(initData) {
                 linkId: rid,
                 linkType: 'reservation',
                 newNoteAttrs: {id:'taNewNote', name:'taNewNote'},
-                alertMessage: function(text, isError) {
-                    flagAlertMessage(text, isError);
+                alertMessage: function(text, type) {
+                    flagAlertMessage(text, type);
                 }
             });
             
@@ -1651,7 +1649,7 @@ function resvManager(initData) {
                         if (data.gotopage) {
                             window.open(data.gotopage, '_self');
                         }
-                        flagAlertMessage(data.error, true);
+                        flagAlertMessage(data.error, 'error');
                         return;
                     }
                      if (data.activity) {
@@ -1680,7 +1678,7 @@ function resvManager(initData) {
                         if (data.gotopage) {
                             window.open(data.gotopage, '_self');
                         }
-                        flagAlertMessage(data.error, true);
+                        flagAlertMessage(data.error, 'error');
                         return;
                     }
 
@@ -1747,7 +1745,7 @@ function resvManager(initData) {
                         var carVal2 = validateCar(2);
                         if (carVal2 != '') {
                             $('#vehValidate').text(carVal2);
-                            flagAlertMessage(carVal, false);
+                            flagAlertMessage(carVal, 'alert');
                             return false;
                         }
                     }
@@ -1830,7 +1828,7 @@ function resvManager(initData) {
         } else if (data.cardId && data.cardId != '') {
             xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
         } else {
-            flagAlertMessage('PaymentId and CardId are missing!', true);
+            flagAlertMessage('PaymentId and CardId are missing!', 'error');
             return;
         }
         xferForm.submit();
@@ -1925,7 +1923,7 @@ function resvManager(initData) {
             try {
                 data = $.parseJSON(data);
             } catch (err) {
-                flagAlertMessage(err.message, true);
+                flagAlertMessage(err.message, 'error');
                 return;
             }
 
@@ -1934,7 +1932,7 @@ function resvManager(initData) {
             }
 
             if (data.error) {
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
                 $('#btnDone').val('Save ' + resvTitle).show();
             }
 
@@ -1954,7 +1952,7 @@ function resvManager(initData) {
                     try {
                         data = $.parseJSON(datas);
                     } catch (err) {
-                        flagAlertMessage(err.message, true);
+                        flagAlertMessage(err.message, 'error');
                         $(idForm).remove();
                     }
 
@@ -1962,18 +1960,18 @@ function resvManager(initData) {
                         if (data.gotopage) {
                             window.open(data.gotopage, '_self');
                         }
-                        flagAlertMessage(data.error, true);
+                        flagAlertMessage(data.error, 'error');
                         $(idForm).remove();
                     }
 
                     if (data.warning) {
-                        flagAlertMessage(data.warning, false);
+                        flagAlertMessage(data.warning, 'warning');
                         $delButton.hide();
                     }
 
                     if (data.result) {
                         $(idForm).remove();
-                        flagAlertMessage(data.result + ' <a href="Reserve.php">Continue</a>', false);
+                        flagAlertMessage(data.result + ' <a href="Reserve.php">Continue</a>', 'success');
                     }
                 }
         );
@@ -2026,7 +2024,7 @@ function resvManager(initData) {
         }
         
         if (data.warning !== undefined && data.warning !== '') {
-            flagAlertMessage(data.warning, true);
+            flagAlertMessage(data.warning, 'warning');
         }
 
         // Reservation

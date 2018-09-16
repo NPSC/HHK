@@ -64,7 +64,7 @@ function relationReturn(data) {
         if (data.gotopage) {
             window.open(data.gotopage, '_self');
         }
-        flagAlertMessage(data.error, true);
+        flagAlertMessage(data.error, 'error');
     } else if (data.success) {
         if (data.rc && data.markup) {
             var div = $('#acm' + data.rc);
@@ -72,7 +72,7 @@ function relationReturn(data) {
             var newDiv = $(data.markup);
             div.append(newDiv.children());
         }
-        flagAlertMessage(data.success, false);
+        flagAlertMessage(data.success, 'success');
     }
 }
 
@@ -82,8 +82,8 @@ function setupPsgNotes(rid, $container) {
         linkId: rid,
         linkType: 'psg',
         newNoteAttrs: {id:'psgNewNote', name:'psgNewNote'},
-        alertMessage: function(text, isError) {
-            flagAlertMessage(text, isError);
+        alertMessage: function(text, type) {
+            flagAlertMessage(text, type);
         }
     });
 
@@ -245,7 +245,7 @@ $(document).ready(function () {
                             if (data.gotopage) {
                                 window.open(data.gotopage, '_self');
                             }
-                            flagAlertMessage(data.error, true);
+                            flagAlertMessage(data.error, 'error');
                         } else if (data.vlog) {
                             $('#vvisitLog').append($(data.vlog));
                         }

@@ -16,7 +16,7 @@
                 style: 'width: 80%;',
                 rows: 2
             },
-            alertMessage: function (text, isError) {},
+            alertMessage: function (text, type) {},
 
             newTaLabel: 'New note text here',
             dtCols: [
@@ -87,7 +87,7 @@
                     var noteData = noteTextarea.val();
 
                     if (settings.linkId == 0) {
-                        settings.alertMessage.call('Link Id is not set.  ', false);
+                        settings.alertMessage.call('Link Id is not set.  ', 'alert');
                         return;
                     }
 
@@ -111,7 +111,7 @@
                                     noteTextarea.val("");
                                     $('#note-newNote').removeAttr("disabled").text(settings.newLabel);
                                 }else{
-                                    settings.alertMessage.call(data.error, true);
+                                    settings.alertMessage.call(data.error, 'alert');
                                 }
                             }
                         });
@@ -159,9 +159,9 @@
                                 $table.ajax.reload();
                             }else{
                                 if(data.error){
-                                    settings.alertMessage.call(data.error, true);
+                                    settings.alertMessage.call(data.error, 'alert');
                                 }else{
-                                    settings.alertMessage.call('An unknown error occurred.', true);
+                                    settings.alertMessage.call('An unknown error occurred.', 'alert');
                                 }
                             }
                     }
@@ -207,7 +207,7 @@
                             $("#noteText").val("");
                             $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
                         }else{
-                            settings.alertMessage.call(data.error, true);
+                            settings.alertMessage.call(data.error, 'error');
                         }
                     }
                 });
@@ -233,7 +233,7 @@
                             $("#noteText").val("");
                             $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
                         }else{
-                            settings.alertMessage.call(data.error, true);
+                            settings.alertMessage.call(data.error, 'error');
                         }
                     }
                 });

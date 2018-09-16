@@ -38,7 +38,7 @@ function gotIncomeDiag(idResv, idReg, data) {
         if (data.gotopage) {
             window.location.assign(data.gotopage);
         }
-        flagAlertMessage(data.error, true);
+        flagAlertMessage(data.error, 'error');
         return;
     }
     if (data.incomeDiag) {
@@ -55,7 +55,7 @@ function gotIncomeDiag(idResv, idReg, data) {
                         window.location.assign(data.gotopage);
                     }
                     if (data.error) {
-                        flagAlertMessage(data.error, true);
+                        flagAlertMessage(data.error, 'error');
                     }
                     if (data.rstat && data.rstat == true) {
                         var selCat = $('#selRateCategory');
@@ -309,7 +309,7 @@ function updateRoomChooser(idReserv, numGuests, arrivalDate, departureDate) {
             if (data.gotopage) {
                 window.location.assign(data.gotopage);
             }
-            flagAlertMessage(data.error, true);
+            flagAlertMessage(data.error, 'error');
             return;
         }
 
@@ -341,10 +341,10 @@ function changePsgPatient(idPsg, idGuest, patientName) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
                 return;
             } else if (data.warning) {
-                flagAlertMessage(data.warning, false);
+                flagAlertMessage(data.warning, 'warning');
 
             } else if (data.result) {
                 $('#divPSGContainer').children().remove();
@@ -373,7 +373,7 @@ function getRegistrationDialog(idReg, cDiv) {
             if (data.gotopage) {
                 window.open(data.gotopage, '_self');
             }
-            flagAlertMessage(data.error, true);
+            flagAlertMessage(data.error, 'error');
             return;
         } else if (data.success) {
             showRegDialog(data.success, idReg, cDiv);
