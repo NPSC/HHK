@@ -38,10 +38,13 @@ class ReserveData {
     const NOT_STAYING = '0';
     const CANT_STAY = 'x';
 
+    const DATE_FORMAT = 'M j, Y';
+
     protected $idResv = 0;
     protected $id;
     protected $idPsg = 0;
     protected $idHospitalStay = 0;
+    protected $idVisit;
     protected $forceNewPsg = FALSE;
     protected $forceNewResv = FALSE;
     protected $fullName = '';
@@ -65,8 +68,8 @@ class ReserveData {
     protected $checkinSection;
     protected $paymentSection;
     protected $addPerson;
-    protected $arrivalDateStr;
-    protected $departureDateStr;
+    protected $arrivalDT;
+    protected $departureDT;
     protected $psgMembers;
     protected $errors;
 
@@ -248,6 +251,10 @@ class ReserveData {
         return $this->idHospitalStay;
     }
 
+    public function getIdVisit() {
+        return $this->idVisit;
+    }
+
     public function getResvTitle() {
         return $this->resvTitle;
     }
@@ -292,12 +299,30 @@ class ReserveData {
         return $this->addrPurpose;
     }
 
+    public function getArrivalDT() {
+        return $this->arrivalDT;
+    }
+
     public function getArrivalDateStr() {
-        return $this->arrivalDateStr;
+
+        if ($this->arrivalDT !== NULL) {
+            return $this->arrivalDT->format(ReserveData::DATE_FORMAT);
+        }
+
+        return '';
+    }
+
+    public function getDepartureDT() {
+        return $this->departureDT;
     }
 
     public function getDepartureDateStr() {
-        return $this->departureDateStr;
+
+        if ($this->departureDT !== NULL) {
+            return $this->departureDT->format(ReserveData::DATE_FORMAT);
+        }
+
+        return '';
     }
 
     public function getPsgMembers() {
@@ -390,6 +415,11 @@ class ReserveData {
         return $this;
     }
 
+    public function setIdVisit($id) {
+        $this->idVisit = $id;
+        return $this;
+    }
+
     public function setSaveButtonLabel($label) {
         $this->saveButtonLabel = $label;
         return $this;
@@ -439,13 +469,13 @@ class ReserveData {
         return $this;
     }
 
-    public function setArrivalDateStr($arrivalDateStr) {
-        $this->arrivalDateStr = $arrivalDateStr;
+    public function setArrivalDT($arrivalDT) {
+        $this->arrivalDT = $arrivalDT;
         return $this;
     }
 
-    public function setDepartureDateStr($departureDateStr) {
-        $this->departureDateStr = $departureDateStr;
+    public function setDepartureDT($departureDate) {
+        $this->departureDT = $departureDate;
         return $this;
     }
 
@@ -573,10 +603,10 @@ class PSGMemStay {
     protected $stay;
     protected $primaryGuest;
 
-    public function __construct($stay, $primaryGuest = 0) {
+    public function __construct($stayIndex, $primaryGuest = 0) {
 
-        if ($stay == ReserveData::STAYING || $stay == ReserveData::NOT_STAYING || $stay == ReserveData::CANT_STAY) {
-            $this->stay = $stay;
+        if ($stayIndex == ReserveData::STAYING || $stayIndex == ReserveData::NOT_STAYING || $stayIndex == ReserveData::CANT_STAY) {
+            $this->stay = $stayIndex;
         } else {
             $this->stay = ReserveData::NOT_STAYING;
         }

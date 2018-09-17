@@ -41,7 +41,7 @@ function resvManager(initData) {
     function getIdResv() {
         return idResv;
     }
-    
+
     function getIdPsg() {
         return idPsg;
     }
@@ -1064,11 +1064,11 @@ function resvManager(initData) {
         t.setUp = function(data, doOnDatesChange) {
 
             $dateSection.empty();
-            $dateSection.append($(data.expDates.mu));
+            $dateSection.append($(data.mu));
 
             var gstDate = $('#gstDate'),
                 gstCoDate = $('#gstCoDate'),
-                nextDays = parseInt(data.expDates.defdays, 10);
+                nextDays = parseInt(data.defdays, 10);
 
             // default number of days for a new stay.
             if (isNaN(nextDays) || nextDays < 1) {
@@ -1103,7 +1103,7 @@ function resvManager(initData) {
                 // Update the number of days display text.
                 var numDays = Math.ceil((dates['date2'].getTime() - dates['date1'].getTime()) / 86400000);
 
-                $('#' + data.expDates.daysEle).val(numDays);
+                $('#' + data.daysEle).val(numDays);
 
                 if ($('#spnNites').length > 0) {
                     $('#spnNites').text(numDays);
@@ -1254,20 +1254,20 @@ function resvManager(initData) {
         // Checking in now button
         manageCheckInNowButton(dates["date1"].t, idResv);
     }
-    
+
     function manageCheckInNowButton(arrDate, rid) {
-        
+
         // Assumes the date is set to the format indicated
         var start = moment(arrDate, 'MMM D, YYYY');
         var now = moment().endOf('date');
-        
+
         if (rid > 0 && start <= now) {
             $('#btnCheckinNow').show();
         } else {
             $('#btnCheckinNow').hide();
         }
     }
-    
+
     function updateRescChooser(arrivalDate, departureDate) {
     
         var cbRS = {};
@@ -1279,8 +1279,6 @@ function resvManager(initData) {
         }
 
         idResc = $selResource.find('option:selected').val();
-
-        hideAlertMessage();
 
         $selResource.prop('disabled', true);
         $('#hhk-roomChsrtitle').addClass('hhk-loading');
@@ -1590,7 +1588,9 @@ function resvManager(initData) {
             }
 
             // Stat
-            $rDiv.append($(data.resv.rdiv.rstat));
+            if (data.resv.rdiv.rstat !== undefined) {
+                $rDiv.append($(data.resv.rdiv.rstat));
+            }
             
             // Vehicle section
             if (data.resv.rdiv.vehicle !== undefined) {
@@ -1604,7 +1604,9 @@ function resvManager(initData) {
             }
 
             // Reservation notes.
-            $rDiv.append(setupNotes(data.rid, $(data.resv.rdiv.notes)));
+            if (data.resv.rdiv.notes !== undefined) {
+                $rDiv.append(setupNotes(data.rid, $(data.resv.rdiv.notes)));
+            }
 
             // waitlist notes
             if (data.resv.rdiv.wlnotes !== undefined) {
@@ -1622,7 +1624,13 @@ function resvManager(initData) {
 
             $rHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
 
-            $rHdr.click(function() {
+            $rHdr.click(function(event) {
+                var target = $(event.target);
+
+                if (target[0].id !== 'divResvHdr' && target[0].id !== 'r_drpDown') {
+                   return;
+                }
+
                 if ($rDiv.css('display') === 'none') {
                     $rDiv.show('blind');
                     $rHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
@@ -1636,6 +1644,7 @@ function resvManager(initData) {
             $wrapper.empty().append($rHdr).append($rDiv).show();
 
             t.$totalGuests = $('#spnNumGuests');
+            t.origRoomId = $('#selResource').val();
 
             // Reservation history button
             if ($('.hhk-viewResvActivity').length > 0) {
@@ -1702,6 +1711,22 @@ function resvManager(initData) {
 
             if (data.resv.rdiv.pay !== undefined) {
                 setupPay(data);
+            }
+
+            if ($('#addGuestHeader').length > 0) {
+                expDatesSection = new ExpDatesSection($('#addGuestHeader'));
+                expDatesSection.setUp(data.resv.rdiv, doOnDatesChange);
+                
+                $('#selResource').change(function () {
+                    
+                    if ($(this).val() !== t.origRoomId) {
+                        $('#divRateChooser').show();
+                        $('#divPayChooser').show();
+                    } else {
+                        $('#divRateChooser').hide();
+                        $('#divPayChooser').hide();
+                    }
+                });
             }
 
             t.setupComplete = true;
@@ -2020,16 +2045,16 @@ function resvManager(initData) {
 
         // Expected Dates Control
         if (data.expDates !== undefined && data.expDates !== '') {
-            expDatesSection.setUp(data, doOnDatesChange);
+            expDatesSection.setUp(data.expDates, doOnDatesChange);
         }
-        
+
         if (data.warning !== undefined && data.warning !== '') {
             flagAlertMessage(data.warning, 'warning');
         }
 
         // Reservation
         if (data.resv !== undefined) {
-            
+
             if (data.resv.rdiv.rooms) {
                 rooms = data.resv.rdiv.rooms;
             }
@@ -2086,7 +2111,7 @@ function resvManager(initData) {
                 $('#btnShowReg').show();
                 $('#spnStatus').text(data.resv.rdiv.rStatTitle === '' ? '' : ' - ' + data.resv.rdiv.rStatTitle);
             }
-            
+
             // Checking in now button
             manageCheckInNowButton($('#gstDate').val(), data.rid);
         

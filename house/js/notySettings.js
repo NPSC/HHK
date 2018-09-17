@@ -1,11 +1,11 @@
 Noty.overrideDefaults({
-    layout   : 'bottomRight',
+    layout   : 'top',
     theme    : 'semanticui',
     timeout  : '4000',
     progressBar : true,
     closeWith: ['button'],
     animation: {
-        open : 'animated bounceInUp',
+        open : 'animated bounceInDown',
         close: 'animated bounceOutUp'
     }
 });

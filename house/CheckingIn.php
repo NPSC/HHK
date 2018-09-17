@@ -199,7 +199,7 @@ $resvObjEncoded = json_encode($resvAr);
                 <div style="clear:both;min-height: 70px;">.</div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
-                    <input type='button' id='btnDone' value='Continue' style="display:none;font-size:1em;"/>
+                    <input type='button' id='btnDone' value='Continue' style="display:none;"/>
                 </div>
 
             </form>
