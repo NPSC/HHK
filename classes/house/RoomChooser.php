@@ -213,11 +213,11 @@ class RoomChooser {
 
         if ($this->resv->getStatus() === ReservationStatus::Staying) {
 
-            $rescs = $this->findResources($dbh, $isAuthorized, TRUE, 0);
-
-            if (isset($rescs[$this->resv->getIdResource()])) {
-                $this->selectedResource = $rescs[$this->resv->getIdResource()];
-            }
+            $this->findResources($dbh, $isAuthorized, TRUE, 0);
+//
+//            if (isset($rescs[$this->resv->getIdResource()])) {
+//                $this->selectedResource = $rescs[$this->resv->getIdResource()];
+//            }
 
             return $this->createAddedMarkup($dbh, FALSE);
         }
@@ -420,7 +420,7 @@ class RoomChooser {
         }
 
         $errorMarkup = HTMLContainer::generateMarkup('p',
-                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-info', 'style'=>'float: left; margin-right: .3em;'))
+                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-info', 'style'=>'float: left; margin-right: .3em;margin-top:1px;'))
                 . $errorMessage, $errArray);
 
 
@@ -495,13 +495,24 @@ class RoomChooser {
             }
         }
 
+        // Current room
+        $curRoomMarkup = $this->selectedResource->getTitle();
+
+        if ($this->currentGuests >= $this->selectedResource->getMaxOccupants()) {
+            $curRoomMarkup .= ' (Full)';
+        }
+
         $tbl = new HTMLTable();
 
-        $tbl->addHeaderTr(HTMLTable::makeTh("Existing Guests") . HTMLTable::makeTh("New Guests") . HTMLTable::makeTh('Room', array('id'=>'hhk-roomChsrtitle')));
+        $tbl->addHeaderTr(HTMLTable::makeTh("Existing Guests")
+                . HTMLTable::makeTh("New Guests")
+                . HTMLTable::makeTh("Current Room")
+                . HTMLTable::makeTh('New Room', array('id'=>'hhk-roomChsrtitle')));
 
         $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->getCurrentGuests()), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnNumGuests','style'=>'font-weight:bold;')), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnNumGuests')), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $curRoomMarkup), array('style'=>'text-align:center;'))
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->makeRoomSelector($resOptions, $this->resv->getIdResource()), array('id'=>'spanSelResc')))
                 );
 

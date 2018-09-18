@@ -164,18 +164,6 @@ if ($idReserv > 0 || $idGuest >= 0) {
 
 }
 
-
-// Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("uh-oh");
-
-$resultMessage = $alertMsg->createMarkup();
-
 $resvAr = $resvObj->toArray();
 $resvAr['patBD'] = $resvObj->getPatBirthDateFlag();
 $resvAr['patAddr'] = $uS->PatientAddr;
@@ -226,11 +214,9 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo $wInit->generatePageMenu() ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?> <span id="spnStatus" sytle="margin-left:50px; display:inline;"></span></h1>
-            <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
             <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
                 <?php echo $paymentMarkup; ?>
             </div>
-
             <div id="guestSearch" style="padding-left:0;padding-top:0; margin-bottom:1.5em; clear:left; float:left;">
                 <?php echo $mk1; ?>
             </div>
@@ -428,7 +414,12 @@ $(document).ready(function() {
                     }
 
                     pageManager.loadResv(data);
-                    flagAlertMessage(data.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle, 'success');
+
+                    if (data.resv !== undefined) {
+                        flagAlertMessage(data.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle, 'success');
+                    } else {
+                        flagAlertMessage(data.resvTitle + ' Saved.', 'success');
+                    }
                 }
             );
 

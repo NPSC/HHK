@@ -1546,7 +1546,7 @@ function resvManager(initData) {
         function setupPay(data){
             
             $('#paymentDate').datepicker({
-                yearRange: '-1:+01',
+                yearRange: '-1:+00',
                 numberOfMonths: 1
             });
                 
@@ -1645,6 +1645,7 @@ function resvManager(initData) {
 
             t.$totalGuests = $('#spnNumGuests');
             t.origRoomId = $('#selResource').val();
+            t.checkPayments = true;
 
             // Reservation history button
             if ($('.hhk-viewResvActivity').length > 0) {
@@ -1714,17 +1715,28 @@ function resvManager(initData) {
             }
 
             if ($('#addGuestHeader').length > 0) {
+                
                 expDatesSection = new ExpDatesSection($('#addGuestHeader'));
                 expDatesSection.setUp(data.resv.rdiv, doOnDatesChange);
+                t.checkPayments = false;
                 
                 $('#selResource').change(function () {
-                    
-                    if ($(this).val() !== t.origRoomId) {
-                        $('#divRateChooser').show();
-                        $('#divPayChooser').show();
+
+                    if ($('#gstDate').val() !== '' && $('#gstCoDate').val() !== '') {
+
+                        if ($(this).val() !== t.origRoomId) {
+                            $('#divRateChooser').show();
+                            $('#divPayChooser').show();
+                            t.checkPayments = true;
+                        } else {
+                            $('#divRateChooser').hide();
+                            $('#divPayChooser').hide();
+                            t.checkPayments = false;
+                        }
+
                     } else {
-                        $('#divRateChooser').hide();
-                        $('#divPayChooser').hide();
+                        $(this).val(t.origRoomId);
+                        flagAlertMessage('Set the arrival and departure dates before selecting a new room. ', 'alert');
                     }
                 });
             }
@@ -1778,7 +1790,41 @@ function resvManager(initData) {
                 $('#vehValidate').text('');
             }
             
+            if (isCheckin) {
+                
+                if (t.checkPayments === true && $('#txtRoomRate').length > 0) {
+                    // Room rate
+                    if ($('#selCategory').val() == fixedRate && $('#txtFixedRate').length > 0 && $('#txtFixedRate').val() == '') {
+                        
+                        flagAlertMessage("Set the Room Rate to an amount, or to 0.", 'alert');
+                        $('#txtRoomRate').addClass('ui-state-error');
+                        return false;
+                        
+                    } else {
+                        $('#txtRoomRate').removeClass('ui-state-error');
+                    }
+                
+
+                    // Room fees paid
+                    if ($('input#feesPayment').length > 0 && $('input#feesPayment').val() == '') {
+                        
+                        $('#payChooserMsg').text("Set the Room Fees to an amount, or 0.").show('fade');
+                        $('input#feesPayment').addClass('ui-state-error');
+                        return false;
+                        
+                    } else {
+                        $('input#feesPayment').removeClass('ui-state-error');
+                    }
+
+                    // Verify cash amount tendered
+                    if (verifyAmtTendrd !== undefined && verifyAmtTendrd() === false) {
+                        return false;
+                    }
+                }
+            }
+            
             return true;
+            
         }
     }
 
@@ -2038,6 +2084,7 @@ function resvManager(initData) {
 
             familySection.setUp(data);
 
+            // Hide loading message/guest search.
             $('div#guestSearch').hide();
 
             $('#btnDone').val('Save Family').show();
@@ -2152,6 +2199,7 @@ function resvManager(initData) {
             return false;
         }
 
+        // Reservation
         if (resvSection.setupComplete === true) {
 
             if (resvSection.verify() === false) {

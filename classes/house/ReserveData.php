@@ -474,8 +474,24 @@ class ReserveData {
         return $this;
     }
 
+    protected function setArrivalDateStr($strDate) {
+
+        if ($strDate != '') {
+            $this->setArrivalDT(new \DateTime($strDate));
+        }
+        return $this;
+    }
+
     public function setDepartureDT($departureDate) {
         $this->departureDT = $departureDate;
+        return $this;
+    }
+
+    protected function setDepartureDateStr($strDate) {
+
+        if ($strDate != '') {
+            $this->setDepartureDT(new \DateTime($strDate));
+        }
         return $this;
     }
 

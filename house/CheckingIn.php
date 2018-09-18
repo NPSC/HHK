@@ -131,6 +131,7 @@ if ($idReserv > 0 || $idGuest > 0) {
 
 } else {
 
+    $mk1 = HTMLContainer::generateMarkup('h2', 'Reservation Id is missing.');
 
 }
 
@@ -187,8 +188,12 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo $wInit->generatePageMenu() ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?> <span id="spnStatus" sytle="margin-left:50px; display:inline;"></span></h1>
+
             <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
                 <?php echo $paymentMarkup; ?>
+            </div>
+            <div id="guestSearch" style="padding-left:0;padding-top:0; margin-bottom:1.5em; clear:left; float:left;">
+                <?php echo $mk1; ?>
             </div>
 
             <form action="CheckingIn.php" method="post"  id="form1">
@@ -420,9 +425,9 @@ $(document).ready(function() {
 
                     if (data.error) {
                         flagAlertMessage(data.error, 'error');
-                        $('#btnDone').val(resv.saveButtonLabel).show();
                     }
 
+                    $('#btnDone').val(resv.saveButtonLabel).show();
                     ckedIn(data);
 
                 }
@@ -433,28 +438,6 @@ $(document).ready(function() {
 
     });
 
-
-    function getGuest(item) {
-
-        if (item.No_Return !== undefined && item.No_Return !== '') {
-            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', 'alert');
-            return;
-        }
-
-        if (typeof item.id !== 'undefined') {
-            resv.id = item.id;
-        } else if (typeof item.rid !== 'undefined') {
-            resv.rid = item.rid;
-        } else {
-            return;
-        }
-
-        resv.fullName = item.fullName;
-        resv.cmd = 'getResv';
-
-        pageManager.getReserve(resv);
-
-    }
 
     if (parseInt(resv.id, 10) > 0 || parseInt(resv.rid, 10) > 0) {
 
@@ -468,17 +451,6 @@ $(document).ready(function() {
 
     } else {
 
-        createAutoComplete($guestSearch, 3, {cmd: 'role', gp:'1'}, getGuest);
-
-        // Phone number search
-        createAutoComplete($('#gstphSearch'), 4, {cmd: 'role', gp:'1'}, getGuest);
-
-        $guestSearch.keypress(function(event) {
-            hideAlertMessage();
-            $(this).removeClass('ui-state-highlight');
-        });
-
-        $guestSearch.focus();
     }
 });
         </script>
