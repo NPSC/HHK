@@ -320,7 +320,6 @@ function ckedIn(data) {
 $(document).ready(function() {
     "use strict";
     var t = this;
-    var $guestSearch = $('#gstSearch');
     var resv = $.parseJSON('<?php echo $resvObjEncoded; ?>');
     var pageManager = t.pageManager;
 

@@ -23,6 +23,7 @@ class RoomChooser {
     protected $newGuests;
     protected $currentGuests;
     protected $maxOccupants;
+    protected $maxRoomsPerPatient;
     protected $oldResvId;
 
     /**
@@ -52,6 +53,7 @@ class RoomChooser {
         $uS = Session::getInstance();
 
         $this->openCheckin = $uS->OpenCheckin;
+        $this->maxRoomsPerPatient = $uS->RoomsPerPatient;
         $this->newGuests = intval($numNewGuests, 10);
         $this->currentGuests = 0;
         $this->resv = $resv;
@@ -209,17 +211,17 @@ class RoomChooser {
         }
     }
 
-    public function createAddGuestMarkup(\PDO $dbh, $isAuthorized) {
+    public function createAddGuestMarkup(\PDO $dbh, $isAuthorized, $replaceRoomSel) {
 
         if ($this->resv->getStatus() === ReservationStatus::Staying) {
 
-            $this->findResources($dbh, $isAuthorized, TRUE, 0);
+            $this->findResources($dbh, $isAuthorized, FALSE, 0);
 //
 //            if (isset($rescs[$this->resv->getIdResource()])) {
 //                $this->selectedResource = $rescs[$this->resv->getIdResource()];
 //            }
 
-            return $this->createAddedMarkup($dbh, FALSE);
+            return $this->createAddedMarkup($dbh, TRUE, $replaceRoomSel);
         }
     }
 
@@ -477,11 +479,21 @@ class RoomChooser {
 
     }
 
-    protected function createAddedMarkup(\PDO $dbh, $constraintsDisabled) {
+    protected function createAddedMarkup(\PDO $dbh, $constraintsDisabled, $replaceRoomSel) {
 
-        $resOptions = $this->makeRoomSelectorOptions();
+        $errorMessage = '';
+        $rmSelectorMarkup = '';
 
-        $errorMessage = $this->getRoomSelectionError($dbh, $resOptions);
+        if ($replaceRoomSel == '') {
+
+            $resOptions = $this->makeRoomSelectorOptions();
+            $errorMessage = $this->getRoomSelectionError($dbh, $resOptions);
+
+            $rmSelectorMarkup = $this->makeRoomSelector($resOptions, 0);
+
+        } else {
+            $rmSelectorMarkup = $replaceRoomSel;
+        }
 
         $resvConstraints = $this->resv->getConstraints($dbh);
         $constraintMkup = '';
@@ -513,7 +525,7 @@ class RoomChooser {
                 HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->getCurrentGuests()), array('style'=>'text-align:center;'))
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnNumGuests')), array('style'=>'text-align:center;'))
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $curRoomMarkup), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->makeRoomSelector($resOptions, $this->resv->getIdResource()), array('id'=>'spanSelResc')))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $rmSelectorMarkup, array('id'=>'spanSelResc')))
                 );
 
         // set up room suitability message area

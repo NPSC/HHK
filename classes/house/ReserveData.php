@@ -70,6 +70,7 @@ class ReserveData {
     protected $addPerson;
     protected $arrivalDT;
     protected $departureDT;
+    protected $concurrentRooms = 0;
     protected $psgMembers;
     protected $errors;
 
@@ -255,6 +256,10 @@ class ReserveData {
         return $this->idVisit;
     }
 
+    public function getConcurrentRooms() {
+        return $this->concurrentRooms;
+    }
+
     public function getResvTitle() {
         return $this->resvTitle;
     }
@@ -417,6 +422,11 @@ class ReserveData {
 
     public function setIdVisit($id) {
         $this->idVisit = $id;
+        return $this;
+    }
+
+    public function setConcurrentRooms($numberRooms) {
+        $this->concurrentRooms = intval($numberRooms);
         return $this;
     }
 

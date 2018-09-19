@@ -156,9 +156,9 @@ try {
 
         $resv = CheckingIn::reservationFactoy($dbh, $_POST);
 
-        $resv->save($dbh, $_POST);
+        $newResv = $resv->save($dbh, $_POST);
 
-        $events = $resv->checkedinMarkup($dbh);
+        $events = $newResv->checkedinMarkup($dbh);
 
         break;
 

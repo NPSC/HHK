@@ -2340,7 +2340,7 @@ class ReservationSvcs {
         return $dataArray;
     }
 
-    public static function reviseConstraints(\PDO $dbh, $idResv, $idResc, $numGuests, $expArr, $expDep, $cbs, $isAuthorized = FALSE) {
+    public static function reviseConstraints(\PDO $dbh, $idResv, $idResc, $numGuests, $expArr, $expDep, $cbs, $isAuthorized = FALSE, $omitSelf = TRUE) {
 
         // update reservation's constraints
         if ($idResv < 1) {
@@ -2356,7 +2356,7 @@ class ReservationSvcs {
         $resv->saveConstraints($dbh, $cbs);
 
         $roomChooser = new RoomChooser($dbh, $resv, 0, new DateTime($expArr), new DateTime($expDep));
-        $roomChooser->findResources($dbh, $isAuthorized, TRUE, $numGuests);
+        $roomChooser->findResources($dbh, $isAuthorized, $omitSelf, $numGuests);
 
         $resOptions = $roomChooser->makeRoomSelectorOptions();
         $errorMessage = $roomChooser->getRoomSelectionError($dbh, $resOptions);

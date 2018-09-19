@@ -167,7 +167,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 $psgMembers = $this->reserveData->getPsgMembers();
 
                 $this->findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $arrivalDT, $departDT, $this->reserveData->getResvTitle());
-                $this->findConflictingStays($dbh, $psgMembers, $arrivalDT, $this->reserveData->getIdPsg());
+                $this->reserveData->setConcurrentRooms($this->findConflictingStays($dbh, $psgMembers, $arrivalDT, $this->reserveData->getIdPsg()));
 
                 $this->reserveData->setPsgMembers($psgMembers);
 
@@ -232,7 +232,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         // Is anyone already in a visit?
         $psgMems = $this->reserveData->getPsgMembers();
-        self::findConflictingStays($dbh, $psgMems, $this->reserveData->getArrivalDT(), $this->reserveData->getIdPsg());
+        $this->reserveData->setConcurrentRooms(self::findConflictingStays($dbh, $psgMems, $this->reserveData->getArrivalDT(), $this->reserveData->getIdPsg()));
         $this->reserveData->setPsgMembers($psgMems);
 
         if (count($this->getStayingMembers()) < 1) {
@@ -248,7 +248,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         // Get reservations for the specified time
         $psgMems2 = $this->reserveData->getPsgMembers();
-        $numRooms = self::findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMems2, $this->reserveData->getArrivalDT(), $this->reserveData->getDepartureDT(), $this->reserveData->getResvTitle());
+        self::findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMems2, $this->reserveData->getArrivalDT(), $this->reserveData->getDepartureDT(), $this->reserveData->getResvTitle());
         $this->reserveData->setPsgMembers($psgMems2);
 
         // Anybody left?
@@ -264,7 +264,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
 
         // verify number of simultaneous reservations/visits
-        if ($this->reserveData->getIdResv() == 0 && $numRooms > $uS->RoomsPerPatient) {
+        if ($this->reserveData->getIdResv() == 0 && $this->reserveData->getConcurrentRooms() > $uS->RoomsPerPatient) {
             // Too many
             $this->reserveData->addError('This reservation violates your House\'s maximum number of simutaneous rooms per patient (' .$uS->RoomsPerPatient . '.  ');
             return;
@@ -1300,6 +1300,8 @@ WHERE r.idReservation = " . $rData->getIdResv());
             $this->checkIn($dbh, $post);
         }
 
+        return $this;
+
     }
 
     protected function checkIn(\PDO $dbh, $post) {
@@ -1674,7 +1676,7 @@ class ReserveSearcher extends ActiveReservation {
 
 
 
-class StayingReservation extends Reservation {
+class StayingReservation extends CheckingIn {
 
     public function createMarkup(\PDO $dbh) {
 
@@ -1688,13 +1690,28 @@ class StayingReservation extends Reservation {
 
     public function save(\PDO $dbh, $post) {
 
-        // Save family, rate, hospital, room.
-        $this->initialSave($dbh, $post);
+        $resv = new Reservation_1($this->reservRs);
 
-        if ($this->reserveData->hasError() === FALSE) {
-            $this->checkIn($dbh, $post);
+        $idRescPosted = 0;
+        if (isset($post['selResource'])) {
+            $idRescPosted = intval(filter_Var($post['selResource'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
+        // Check for new room
+        if ($idRescPosted > 0 && $resv->getIdResource() != $idRescPosted) {
+            // New Room
+            $this->reserveData->setIdResv(0);
+
+            $checkingIn = new CheckingIn($this->reserveData, new ReservationRS(), $this->family);
+            $checkingIn->save($dbh, $post);
+            return $checkingIn;
+
+        } else {
+            // Same room, just add the guests.
+            $this->addGuestStay($dbh, $post);
+        }
+
+        return $this;
     }
 
 
@@ -1715,12 +1732,18 @@ class StayingReservation extends Reservation {
         // Registration
         $reg = new Registration($dbh, $this->reserveData->getIdPsg());
 
+        // Check for max rooms per patient
+        if ($this->reserveData->getConcurrentRooms() >= $uS->RoomsPerPatient) {
+            $rmSelMessage = 'Already at maximum rooms per patient of ' .$uS->RoomsPerPatient . '.';
+        } else {
+            $rmSelMessage = '';
+        }
+
         // Room Chooser
         $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
-        $dataArray['rChooser'] = $roomChooser->createAddGuestMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
+        $dataArray['rChooser'] = $roomChooser->createAddGuestMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN), $rmSelMessage);
 
         // Rate Chooser
-        
         $rateChooser = new RateChooser($dbh);
 
         // Create rate chooser markup?
@@ -1786,9 +1809,15 @@ class StayingReservation extends Reservation {
         return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
     }
 
-    protected function checkIn(\PDO $dbh, $post) {
+    protected function addGuestStay(\PDO $dbh, $post) {
 
         $uS = Session::getInstance();
+
+        $this->initialSave($dbh, $post);
+
+        if ($this->reserveData->hasError()) {
+            return $this;
+        }
 
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
