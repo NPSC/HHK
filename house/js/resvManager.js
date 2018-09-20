@@ -30,7 +30,7 @@ function resvManager(initData) {
     t.verifyInput = verifyInput;
     t.loadResv = loadResv;
     t.deleteReserve = deleteReserve;
-//    t.doOnDatesChange = doOnDatesChange;
+
     t.resvTitle = resvTitle;
     t.people = people;
     t.addrs = addrs;
@@ -1285,14 +1285,15 @@ function resvManager(initData) {
     
         var t = this;
         var cbRS = {};
-        var idResc;
         
         t.omitSelf = true;
+        t.numberGuests = 0;
+        t.idReservation = idResv;
         t.go = go;
         
         function go(arrivalDate, departureDate) {
 
-            var $selResource = $('#selResource');
+            var idResc, $selResource = $('#selResource');
             
             if ($selResource.length === 0) {
                 return;
@@ -1311,8 +1312,8 @@ function resvManager(initData) {
             $.post('ws_ckin.php', 
                 {  //parameters
                     cmd: 'newConstraint', 
-                    rid: idResv, 
-                    numguests: 1, 
+                    rid: t.idReservation, 
+                    numguests: t.numberGuests, 
                     expArr: arrivalDate, 
                     expDep: departureDate, 
                     idr: idResc, 
@@ -1465,6 +1466,7 @@ function resvManager(initData) {
         var $rDiv, $veh, $rHdr, $expanderButton;
 
         t.setupComplete = false;
+        t.checkPayments = true;
         t.setUp = setUp;
         t.verify = verify;
 
@@ -1668,6 +1670,8 @@ function resvManager(initData) {
             t.origRoomId = $('#selResource').val();
             t.checkPayments = true;
 
+            $('#selResource').select2();
+            
             // Reservation history button
             if ($('.hhk-viewResvActivity').length > 0) {
                 $('.hhk-viewResvActivity').click(function () {
@@ -1701,9 +1705,9 @@ function resvManager(initData) {
                 if (amount === '') {
                     amount = 0;
                 }
-                $.post('ws_ckin.php', {cmd:'confrv', rid: $(this).data('rid'), amt: amount, eml: '0'}, function(data) {
+                $.post('ws_ckin.php', {cmd:'confrv', rid: $(this).data('rid'), amt: amount, eml: '0'}, function(d) {
 
-                    data = $.parseJSON(data);
+                    data = $.parseJSON(d);
 
                     if (data.error) {
                         if (data.gotopage) {
@@ -1742,6 +1746,7 @@ function resvManager(initData) {
                 expDatesSection.setUp(data.resv.rdiv, doOnDatesChange);
                 
                 updateRescChooser.omitSelf = false;
+                updateRescChooser.idReservation = 0;
                 t.checkPayments = false;
                 
                 $('#selResource').change(function () {
@@ -1762,6 +1767,10 @@ function resvManager(initData) {
                         $(this).val(t.origRoomId);
                         flagAlertMessage('Set the arrival and departure dates before selecting a new room. ', 'alert');
                     }
+                });
+                
+                $('#' + familySection.divFamDetailId).on('change', '.hhk-cbStay', function () {
+                    updateRescChooser.numberGuests = familySection.findStaysChecked();
                 });
             }
 
@@ -1800,10 +1809,15 @@ function resvManager(initData) {
 
             // vehicle
             if ($('#cbNoVehicle').length > 0) {
+                
                 if ($('#cbNoVehicle').prop("checked") === false) {
+                    
                     var carVal = validateCar(1);
+                    
                     if (carVal != '') {
+                        
                         var carVal2 = validateCar(2);
+                        
                         if (carVal2 != '') {
                             $('#vehValidate').text(carVal2);
                             flagAlertMessage(carVal, 'alert');
@@ -1811,6 +1825,7 @@ function resvManager(initData) {
                         }
                     }
                 }
+                
                 $('#vehValidate').text('');
             }
             

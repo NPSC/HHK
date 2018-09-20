@@ -69,7 +69,7 @@ class Family {
                     $prefix = $psgMember->getPrefix();
                 } else {
                     $prefix = $uS->addPerPrefix++;
-                    $psgMember = new PSGMember($ngrs->idName->getStoredVal(), $prefix, '', new PSGMemStay(ReserveData::NOT_STAYING));
+                    $psgMember = new PSGMember($ngrs->idName->getStoredVal(), $prefix, '', FALSE, new PSGMemStay(ReserveData::NOT_STAYING));
                 }
 
                 if ($ngrs->Relationship_Code->getStoredVal() == RelLinkType::Self) {
@@ -114,7 +114,7 @@ class Family {
                     $prefix = $psgMember->getPrefix();
                 } else {
                     $prefix = $uS->addPerPrefix++;
-                    $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, new PSGMemStay(ReserveData::STAYING));
+                    $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, FALSE, new PSGMemStay(ReserveData::STAYING));
                 }
 
                 $this->roleObjs[$prefix] = new Guest($dbh, $prefix, $rData->getId());
@@ -135,7 +135,7 @@ class Family {
                 $prefix = $psgMember->getPrefix();
             } else {
                 $prefix = $uS->addPerPrefix++;
-                $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, new PSGMemStay(ReserveData::STAYING));
+                $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, FALSE, new PSGMemStay(ReserveData::STAYING));
             }
 
             $this->roleObjs[$prefix] = new Guest($dbh, $prefix, $rData->getId());
@@ -157,7 +157,7 @@ class Family {
                 $prefix = $psgMember->getPrefix();
             } else {
                 $prefix = $uS->addPerPrefix++;
-                $psgMember = new PSGMember(0, $prefix, '', new PSGMemStay(ReserveData::STAYING));
+                $psgMember = new PSGMember(0, $prefix, '', FALSE, new PSGMemStay(ReserveData::STAYING));
             }
 
             $this->roleObjs[$prefix] = new Guest($dbh, $prefix, 0);
@@ -194,7 +194,9 @@ class Family {
 
                     if ($g['Primary_Guest'] == '1') {
                         $foundPriGuest = TRUE;
-                        $mem->getStayObj()->setPrimaryGuest(TRUE);
+                        $mem->setPrimaryGuest(TRUE);
+                    } else {
+                        $mem->setPrimaryGuest(FALSE);
                     }
 
                     $rData->setMember($mem);
@@ -206,7 +208,7 @@ class Family {
                 $mem = $rData->findMemberById($resvIdGuest);
 
                 if ($mem !== NULL) {
-                    $mem->getStayObj()->setPrimaryGuest(TRUE);
+                    $mem->setPrimaryGuest(TRUE);
                 }
             }
 
@@ -221,6 +223,7 @@ class Family {
 
                     if ($mem !== NULL) {
                         $mem->getStayObj()->setStaying();
+                        $mem->setPrimaryGuest(FALSE);
                     }
                 }
             }
@@ -270,7 +273,7 @@ class Family {
                 , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'));
 
             $nameTr = HTMLContainer::generateMarkup('tr'
-                    , $role->createThinMarkup($rData->getPsgMember($prefix)->getStayObj(), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
+                    , $role->createThinMarkup($rData->getPsgMember($prefix), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
                     . HTMLTable::makeTd($removeIcons));
 
 
@@ -327,7 +330,7 @@ class Family {
             $idPrefix = $role->getRoleMember()->getIdPrefix();
 
             $trs[] = HTMLContainer::generateMarkup('tr',
-                    $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), TRUE)
+                    $role->createThinMarkup($rData->getPsgMember($idPrefix), TRUE)
                     , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
 
             if ($this->patientAddr || $this->patientAsGuest) {
@@ -375,7 +378,7 @@ class Family {
 
 
             $trs[] = HTMLContainer::generateMarkup('tr',
-                    $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
+                    $role->createThinMarkup($rData->getPsgMember($idPrefix), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
                     . ($role->getIdName() == 0 ? HTMLTable::makeTd($removeIcons) : '')
                     , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
 
@@ -538,7 +541,7 @@ class FamilyAddGuest extends Family {
             $idPrefix = $role->getRoleMember()->getIdPrefix();
 
             $trs[] = HTMLContainer::generateMarkup('tr',
-                    $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), TRUE)
+                    $role->createThinMarkup($rData->getPsgMember($idPrefix), TRUE)
                     , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
 
             if ($this->patientAddr || $this->patientAsGuest) {
@@ -586,7 +589,7 @@ class FamilyAddGuest extends Family {
 
 
             $trs[] = HTMLContainer::generateMarkup('tr',
-                    $role->createThinMarkup($rData->getPsgMember($idPrefix)->getStayObj(), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
+                    $role->createThinMarkup($rData->getPsgMember($idPrefix), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
                     . ($role->getIdName() == 0 ? HTMLTable::makeTd($removeIcons) : '')
                     , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
 
@@ -637,7 +640,7 @@ class JoinNewFamily extends Family {
             $prefix = $psgMember->getPrefix();
         } else {
             $prefix = $uS->addPerPrefix++;
-            $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, new PSGMemStay(ReserveData::NOT_STAYING));
+            $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, FALSE, new PSGMemStay(ReserveData::NOT_STAYING));
             $rData->setMember($psgMember);
         }
 

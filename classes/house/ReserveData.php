@@ -157,15 +157,17 @@ class ReserveData {
             }
 
             if (isset($memArray[ReserveData::PRI])) {
-                $priGuest = intval($memArray[ReserveData::PRI], 10);
+                $priGuest = $memArray[ReserveData::PRI];
             }
 
             $psgMember = $this->getPsgMember($prefix);
 
             if (is_null($psgMember)) {
-                $this->setMember(new PSGMember($id, $prefix, $role, new PSGMemStay($stay, $priGuest)));
+                $this->setMember(new PSGMember($id, $prefix, $role, $priGuest, new PSGMemStay($stay)));
             } else {
-                $psgMember->setStay($stay)->setRole($role)->setPrimaryGuest($priGuest);
+                $psgMember->setStay($stay)
+                        ->setRole($role)
+                        ->setPrimaryGuest($priGuest);
             }
 
         }
@@ -526,6 +528,7 @@ class PSGMember {
     protected $id;
     protected $prefix;
     protected $role;
+    protected $primaryGuest;
 
     /**
      *
@@ -533,13 +536,36 @@ class PSGMember {
      */
     protected $memStay;
 
-    public function __construct($id, $prefix, $role, PSGMemStay $memStay) {
+    public function __construct($id, $prefix, $role, $isPrimaryGuest, PSGMemStay $memStay) {
 
         $this->setId($id);
         $this->setPrefix($prefix);
         $this->setRole($role);
+        $this->setPrimaryGuest($isPrimaryGuest);
+
         $this->memStay = $memStay;
     }
+
+    public function createPrimaryGuestRadioBtn($prefix) {
+
+        $rbPri = array(
+            'type'=>'radio',
+            'name'=>'rbPriGuest',
+            'id'=>$prefix .'rbPri',
+            'data-prefix'=>$prefix,
+            'title'=>'Click to set this person as Primary Guest.',
+            'style'=>'margin-left:5px;',
+            'class'=>'hhk-rbPri'
+        );
+
+        if ($this->isPrimaryGuest()) {
+            $rbPri['checked'] = 'checked';
+        }
+
+        return HTMLInput::generateMarkup($prefix, $rbPri);
+
+    }
+
 
     public function getId() {
         return $this->id;
@@ -570,7 +596,7 @@ class PSGMember {
     }
 
     public function isPrimaryGuest() {
-        return $this->memStay->isPrimaryGuest();
+        return $this->primaryGuest;
     }
 
     public function isPatient() {
@@ -596,7 +622,13 @@ class PSGMember {
     }
 
     public function setPrimaryGuest($primaryGuest) {
-        $this->memStay->setPrimaryGuest($primaryGuest);
+
+        if ($primaryGuest == TRUE) {
+            $this->primaryGuest = TRUE;
+        } else {
+            $this->primaryGuest = FALSE;
+        }
+
         return $this;
     }
 
@@ -616,7 +648,7 @@ class PSGMember {
             ReserveData::ID => $this->getId(),
             ReserveData::ROLE => $this->getRole(),
             ReserveData::STAY => $this->memStay->getStay(),
-            ReserveData::PRI => ($this->memStay->isPrimaryGuest() ? '1' : '0'),
+            ReserveData::PRI => ($this->isPrimaryGuest() ? '1' : '0'),
             ReserveData::PREF => $this->getPrefix(),
         );
     }
@@ -627,18 +659,14 @@ class PSGMember {
 class PSGMemStay {
 
     protected $stay;
-    protected $primaryGuest;
 
-    public function __construct($stayIndex, $primaryGuest = 0) {
+    public function __construct($stayIndex) {
 
         if ($stayIndex == ReserveData::STAYING || $stayIndex == ReserveData::NOT_STAYING || $stayIndex == ReserveData::CANT_STAY) {
             $this->stay = $stayIndex;
         } else {
             $this->stay = ReserveData::NOT_STAYING;
         }
-
-        $this->setPrimaryGuest($primaryGuest);
-
     }
 
     public function createStayButton($prefix) {
@@ -665,26 +693,6 @@ class PSGMemStay {
 
     }
 
-    public function createPrimaryGuestRadioBtn($prefix) {
-
-        $rbPri = array(
-            'type'=>'radio',
-            'name'=>'rbPriGuest',
-            'id'=>$prefix .'rbPri',
-            'data-prefix'=>$prefix,
-            'title'=>'Click to set this person as Primary Guest.',
-            'style'=>'margin-left:5px;',
-            'class'=>'hhk-rbPri'
-        );
-
-        if ($this->isPrimaryGuest()) {
-            $rbPri['checked'] = 'checked';
-        }
-
-        return HTMLInput::generateMarkup($prefix, $rbPri);
-
-    }
-
     public function isStaying() {
         if ($this->getStay() == ReserveData::STAYING) {
             return TRUE;
@@ -699,23 +707,12 @@ class PSGMemStay {
         return FALSE;
     }
 
-    public function isPrimaryGuest() {
-        if ($this->primaryGuest > 0) {
-            return TRUE;
-        }
-        return FALSE;
-    }
-
     public function getStay() {
         return $this->stay;
     }
 
     public function setStay($s) {
         $this->stay = $s;
-    }
-
-    public function setPrimaryGuest($primaryGuest) {
-        $this->primaryGuest = $primaryGuest;
     }
 
     public function setBlocked() {
@@ -738,9 +735,9 @@ class PSGMemVisit extends PSGMemStay {
 
     protected $index = array();
 
-    public function __construct($index, $primaryGuest = FALSE) {
+    public function __construct($index) {
 
-        parent::__construct(ReserveData::NOT_STAYING, $primaryGuest);
+        parent::__construct(ReserveData::NOT_STAYING);
 
         $this->index = $index;
         $this->setNotStaying();

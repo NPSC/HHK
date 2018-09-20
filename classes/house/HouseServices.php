@@ -375,8 +375,14 @@ class HouseServices {
                     $newPg = intval(filter_var($post['rbPriGuest'], FILTER_SANITIZE_NUMBER_INT), 10);
 
                     if ($newPg > 0 && $newPg != $visit->getPrimaryGuestId()) {
+
                         $visit->setPrimaryGuestId($newPg);
                         $visit->updateVisitRecord($dbh, $uS->username);
+
+                        $resv = Reservation_1::instantiateFromIdReserv($dbh, $visit->getReservationId());
+                        $resv->setIdGuest($newPg);
+                        $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
+
                         $reply .= 'Primary Guest Id updated.  ';
                     }
                 }
@@ -868,7 +874,7 @@ class HouseServices {
 //        }
 
 
-        $resv = Reservation_1::instantiateFromIdReserv($dbh, $visit->getReservationId(), $visit->getIdVisit());
+        $resv = Reservation_1::instantiateFromIdReserv($dbh, $visit->getReservationId());
 
 
         $startDT = new \DateTime($visit->getSpanStart());

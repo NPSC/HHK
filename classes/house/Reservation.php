@@ -108,32 +108,37 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
     }
 
-    /**
-     * Verify visit input dates
-     *
-     * @param \Reservation_1 $resv
-     * @param \DateTime $chkinDT
-     * @param \DateTime $chkoutDT
-     * @param bool $autoResv
-     * @throws Hk_Exception_Runtime
-     */
-    public static function verifyVisitDates(\Reservation_1 $resv, \DateTime $chkinDT, \DateTime $chkoutDT, $autoResv = FALSE) {
+    protected function checkVisitDates($checkinHour) {
 
-        $uS = Session::getInstance();
+        $today = new \DateTime();
+        $hourNow = intval($today->format('H'));
+        $minuteNow = intval($today->format('i'));
 
-        $rCkinDT = new \DateTime(($resv->getActualArrival() == '' ? $resv->getExpectedArrival() : $resv->getActualArrival()));
-        $rCkinDT->setTime(0, 0, 0);
-        $rCkoutDT = new \DateTime($resv->getExpectedDeparture());
-        $rCkoutDT->setTime(23, 59, 59);
+        $today->setTime(0, 0, 0);
 
-        if ($resv->getStatus() == ReservationStatus::Committed && $rCkinDT->diff($chkinDT)->days > $uS->ResvEarlyArrDays) {
-            throw new Hk_Exception_Runtime('Cannot check-in earlier than ' . $uS->ResvEarlyArrDays . ' days of the reservation expected arrival date of ' . $rCkinDT->format('M d, Y'));
-        } else if ($resv->getStatus() == ReservationStatus::Committed && $chkoutDT > $rCkoutDT && $autoResv === FALSE) {
-            throw new Hk_Exception_Runtime('Cannot check-out later than the reservation expected departure date of ' . $rCkoutDT->format('M d, Y'));
+        $tonight = new DateTime();
+        $tonight->setTime(23, 59, 50);
+
+
+        // Edit checkin date for later hour of checkin if posting the check in late.
+        $tCkinDT = new \DateTime($this->reserveData->getArrivalDT()->format('Y-m-d 00:00:00'));
+
+        if ($today > $tCkinDT) {
+            $this->reserveData->getArrivalDT()->setTime(intval($checkinHour),0,0);
+        } else {
+            $this->reserveData->getArrivalDT()->setTime($hourNow, $minuteNow, 0);
         }
 
-        if ($chkinDT >= $chkoutDT) {
-            throw new Hk_Exception_Runtime('A check-in date cannot be AFTER the check-out date.  (Silly Human)  ');
+        // Date Order
+        if ($this->reserveData->getArrivalDT() > $this->reserveData->getDepartureDT()) {
+            $this->reserveData->addError('A check-in date cannot be AFTER the checkout date.  ');
+            return;
+        }
+
+        // Cannot check in early
+        if ($this->reserveData->getArrivalDT() > $tonight) {
+            $this->reserveData->addError('Cannot check into the future.  ');
+            return;
         }
     }
 
@@ -220,6 +225,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             $this->reserveData->addError('Nobody is set to stay for this ' . $this->reserveData->getResvTitle() . '.  ');
             return;
         }
+
 
         // Arrival and Departure dates
         try {
@@ -326,7 +332,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     $priGuest = intval($memArray[ReserveData::PRI], 10);
                 }
 
-                $psgMembers[$prefix] = new PSGMember($id, $prefix, $role, new PSGMemStay($stay, $priGuest));
+                $psgMembers[$prefix] = new PSGMember($id, $prefix, $role, $priGuest, new PSGMemStay($stay));
             }
 
             // Create new stay controls for each member
@@ -917,7 +923,7 @@ where rg.idReservation =" . $r['idReservation']);
                 $rgRs = new Reservation_GuestRS();
                 $rgRs->idReservation->setNewVal($this->reserveData->getIdResv());
                 $rgRs->idGuest->setNewVal($g->getId());
-                $rgRs->Primary_Guest->setNewVal($g->getStayObj()->isPrimaryGuest() ? '1' : '');
+                $rgRs->Primary_Guest->setNewVal($g->isPrimaryGuest() ? '1' : '');
 
                 EditRS::insert($dbh, $rgRs);
 
@@ -957,7 +963,7 @@ where rg.idReservation =" . $r['idReservation']);
                     $rgRs = new Reservation_GuestRS();
                     $rgRs->idReservation->setNewVal($this->reserveData->getIdResv());
                     $rgRs->idGuest->setNewVal($g->getId());
-                    $rgRs->Primary_Guest->setNewVal($g->getStayObj()->isPrimaryGuest() ? '1' : '');
+                    $rgRs->Primary_Guest->setNewVal($g->isPrimaryGuest() ? '1' : '');
 
                     EditRS::insert($dbh, $rgRs);
                 }
@@ -1308,17 +1314,6 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         $uS = Session::getInstance();
 
-        $today = new \DateTime();
-        $hourNow = intval($today->format('H'));
-        $minuteNow = intval($today->format('i'));
-
-        $today->setTime(0, 0, 0);
-
-        $tonight = new DateTime();
-        $tonight->setTime(23, 59, 50);
-
-
-
         $resv = new Reservation_1($this->reservRs);
 
         $stmt = $dbh->query("Select idVisit from visit where idReservation = " . $resv->getIdReservation() . " limit 1;");
@@ -1327,30 +1322,9 @@ WHERE r.idReservation = " . $rData->getIdResv());
             throw new Hk_Exception_Runtime('Visit already exists for reservation Id ' . $resv->getIdReservation());
         }
 
-        // Arrival and Departure dates
-        try {
+        $this->checkVisitDates($uS->CheckInTime);
 
-            // Edit checkin date for later hour of checkin if posting the check in late.
-            $tCkinDT = new \DateTime($this->reserveData->getArrivalDT()->format('Y-m-d 00:00:00'));
-
-                if ($today > $tCkinDT) {
-                    $this->reserveData->getArrivalDT()->setTime(intval($uS->CheckInTime),0,0);
-                } else {
-                    $this->reserveData->getArrivalDT()->setTime($hourNow, $minuteNow, 0);
-                }
-
-                self::verifyVisitDates($resv, $this->reserveData->getArrivalDT(), $this->reserveData->getDepartureDT(), $uS->OpenCheckin);
-
-
-        } catch (Hk_Exception_Runtime $hex) {
-            $this->reserveData->addError('Problem with ' . $this->reserveData->getResvTitle() . ' arrival and/or departure dates:  ' . $hex->getMessage() . '.  ');
-            return;
-        }
-
-
-        // Cannot check in early
-        if ($this->reserveData->getArrivalDT() > $tonight) {
-            $this->reserveData->addError('Cannot check into the future.  ');
+        if ($this->reserveData->hasError()) {
             return;
         }
 
@@ -1361,7 +1335,6 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
 
         $resources = $resv->findGradedResources($dbh, $this->reserveData->getArrivalDT()->format('Y-m-d'), $this->reserveData->getDepartureDT()->format('Y-m-d'), 1, array('room', 'rmtroom', 'part'), TRUE);
-
 
         // Does the resource still fit the requirements?
         if (isset($resources[$resv->getIdResource()]) === FALSE) {
@@ -1692,6 +1665,7 @@ class StayingReservation extends CheckingIn {
 
         $resv = new Reservation_1($this->reservRs);
 
+        // Retrieve room from selector control
         $idRescPosted = 0;
         if (isset($post['selResource'])) {
             $idRescPosted = intval(filter_Var($post['selResource'], FILTER_SANITIZE_NUMBER_INT), 10);
@@ -1701,8 +1675,9 @@ class StayingReservation extends CheckingIn {
         if ($idRescPosted > 0 && $resv->getIdResource() != $idRescPosted) {
             // New Room
             $this->reserveData->setIdResv(0);
+            $this->reserveData->setIdVisit(0);
 
-            $checkingIn = new CheckingIn($this->reserveData, new ReservationRS(), $this->family);
+            $checkingIn = new CheckingIn($this->reserveData, new ReservationRS(), new Family($dbh, $this->reserveData, TRUE));
             $checkingIn->save($dbh, $post);
             return $checkingIn;
 
@@ -1812,6 +1787,8 @@ class StayingReservation extends CheckingIn {
     protected function addGuestStay(\PDO $dbh, $post) {
 
         $uS = Session::getInstance();
+        $visitRs = new VisitRs();
+        $today = new \DateTime();
 
         $this->initialSave($dbh, $post);
 
@@ -1819,59 +1796,33 @@ class StayingReservation extends CheckingIn {
             return $this;
         }
 
-        $today = new \DateTime();
-        $today->setTime(0, 0, 0);
-        $tonight = new DateTime();
-        $tonight->setTime(23, 59, 50);
-
-        $resv = new Reservation_1($this->reservRs);
-
-        $stmt = $dbh->query("Select idVisit, max(Span) from visit where idReservation = " . $resv->getIdReservation() . ";");
+        // Does visit exist
+        $stmt = $dbh->query("Select * from visit where Status = '" . VisitStatus::CheckedIn . "' and idReservation = " . $this->reserveData->getIdResv() . ";");
 
         if ($stmt->rowCount() == 0) {
-            throw new Hk_Exception_Runtime('Visit not found for reservation Id ' . $resv->getIdReservation());
+            throw new Hk_Exception_Runtime('Visit not found for reservation Id ' . $this->reserveData->getIdResv());
         }
 
         $vrows = $stmt->fetchAll(PDO::FETCH_NUM);
-        $idVisit = $vrows[0][0];
-        $span = $vrows[0][1];
+        EditRS::loadRow($vrows[0], $visitRs);
 
-        // Arrival and Departure dates
-        try {
-            $arrivalDT = new\DateTime();
-            $departDT = new \DateTime();
-            $this->setDates($post, $arrivalDT, $departDT);
+        // Checking the new guest stay dates.
+        $this->checkVisitDates($uS->CheckInTime);
 
-            // Edit checkin date for later hour of checkin if posting the check in late.
-            $tCkinDT = new \DateTime($arrivalDT->format('Y-m-d 00:00:00'));
-
-            if ($arrivalDT->format('H') < intval($uS->CheckInTime) && $today > $tCkinDT) {
-                $arrivalDT->setTime(intval($uS->CheckInTime),0,0);
-            }
-
-            if ($arrivalDT > $departDT) {
-                $this->reserveData->addError('A check-in date cannot be AFTER the check-out date.  ');
-            }
-
-        } catch (Hk_Exception_Runtime $hex) {
-            $this->reserveData->addError($hex->getMessage());
+        if ($this->reserveData->hasError()) {
             return;
         }
 
-        // Cannot check in early
-        if ($arrivalDT > $tonight) {
-            $this->reserveData->addError('Cannot check into the future.  ');
+        // Get the resource
+        $resc = null;
+        if ($visitRs->idResource->getStoredVal() > 0) {
+            $resc = Resource::getResourceObj($dbh, $visitRs->idResource->getStoredVal());
+        } else {
+            $this->reserveData->addError('Room not found.  ');
             return;
         }
 
-        // Is resource specified?
-        if ($resv->getIdResource() == 0) {
-            $this->reserveData->addError('A room was not specified.  ');
-            return;
-        }
-
-        // Get our room.
-        $resc = Resource::getResourceObj($dbh, $resv->getIdResource(), ResourceTypes::Room, FALSE);
+        // Maximym occupants...
         $numOccupants = $resc->getCurrantOccupants($dbh) + count($this->getStayingMembers());
 
         if ($numOccupants > $resc->getMaxOccupants()) {
@@ -1879,19 +1830,18 @@ class StayingReservation extends CheckingIn {
             return;
         }
 
-        // create visit
-        $visit = new Visit($dbh, $resv->getIdRegistration(), $idVisit, $arrivalDT, $departDT, $resc, $uS->username, $span);
+        // open visit
+        $visit = new Visit($dbh, 0, $visitRs->idVisit->getStoredVal(), NULL, NULL, $resc, $uS->username, $visitRs->Span->getStoredVal());
 
         // Add guests
         foreach ($this->getStayingMembers() as $m) {
 
             if ($uS->PatientAsGuest === FALSE && $m->isPatient()) {
                 $this->reserveData->addError('Patients cannot stay.  ');
-                return;
+                continue;
             }
 
-            $visit->addGuestStay($m->getId(), $arrivalDT->format('Y-m-d H:i:s'), $arrivalDT->format('Y-m-d H:i:s'), $departDT->format('Y-m-d H:i:s'));
-
+            $visit->addGuestStay($m->getId(), $this->reserveData->getArrivalDT()->format('Y-m-d H:i:s'), $this->reserveData->getArrivalDT()->format('Y-m-d H:i:s'), $this->reserveData->getDepartureDT()->format('Y-m-d H:i:s'));
         }
 
 
@@ -1903,7 +1853,7 @@ class StayingReservation extends CheckingIn {
         $this->payResult = NULL;
 
         $this->resc = $resc;
-        $this->visit = $visit;
+        $this->visit = new Visit($dbh, 0, $visitRs->idVisit->getStoredVal(), NULL, NULL, $resc, $uS->username, $visitRs->Span->getStoredVal());
 
         return;
     }
