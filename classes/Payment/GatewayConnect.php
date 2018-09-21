@@ -1,29 +1,4 @@
 <?php
-
-/*
- * The MIT License
- *
- * Copyright 2018 Eric.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
 /**
  * Description of GatewayConnect
  *
@@ -59,11 +34,11 @@ abstract class GatewayResponse {
             throw new Hk_Exception_Payment('Empty response object. ');
         }
 
-        $this->parseResponse($response);
+        $this->parseResponse();
     }
 
     // Returns Result
-    protected abstract function parseResponse($response);
+    protected abstract function parseResponse();
 
     public abstract function getResponseCode();
 
@@ -83,5 +58,40 @@ abstract class GatewayResponse {
     public function getAuthorizeAmount() {
         return 0;
     }
+
+}
+
+
+abstract class SoapRequest {
+
+    protected $gateWay;
+
+    public function submit(array $req, $url, $trace = FALSE) {
+
+        try {
+            // Create the Soap, prepre the data
+            $txClient = new SoapClient($url, array('trace'=>$trace));
+
+            $xaction = $this->execute($txClient, $req);
+
+        } catch (SoapFault $sf) {
+
+            throw new Hk_Exception_Payment('Problem with HHK web server contacting the Mercury Payment system:  ' . $sf->getMessage() .     ' (' . $sf->getCode() . '); ' . ' Trace: ' . $sf->getTraceAsString());
+        }
+
+        try {
+            if ($trace) {
+                file_put_contents(REL_BASE_DIR . 'patch' . DS . 'soapLog.xml', $txClient->__getLastRequest() . $txClient->__getLastResponse(), FILE_APPEND);
+            }
+
+        } catch(Exception $ex) {
+
+            throw new Hk_Exception_Payment('Trace file error:  ' . $ex->getMessage());
+        }
+
+        return $xaction;
+    }
+
+    protected abstract function execute(SoapClient $sc, $data);
 
 }

@@ -149,10 +149,10 @@ class InstamedGatewayRS extends TableRS {
     public $account_Id;  // varchar(45) NOT NULL DEFAULT '',
     public $security_Key;  // varchar(245) NOT NULL DEFAULT '',
     public $sso_Alias;  // varchar(145) NOT NULL DEFAULT '',
-    public $user_Id;  // varchar(145) NOT NULL DEFAULT '',
-    public $user_Name;  // varchar(145) NOT NULL DEFAULT '',
+    public $merchant_Id;  // varchar(145) NOT NULL DEFAULT '',
+    public $store_Id;  // varchar(145) NOT NULL DEFAULT '',
     public $providersSso_Url;  // varchar(145) NOT NULL DEFAULT '',
-//    public $Mobile_CardInfo_Url;  // varchar(145) NOT NULL DEFAULT '',
+    public $soap_Url;  // varchar(145) NOT NULL DEFAULT '',
 //    public $Mobile_Checkout_Url;  // varchar(145) NOT NULL DEFAULT '',
 //    public $CheckoutPOS_Url;  // varchar(145) NOT NULL DEFAULT '',
 //    public $CheckoutPOSiFrame_Url;  // varchar(145) NOT NULL DEFAULT '',
@@ -169,10 +169,10 @@ class InstamedGatewayRS extends TableRS {
         $this->account_Id = new DB_Field("Merchant_Id", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->security_Key = new DB_Field("Password", "", new DbStrSanitizer(245), TRUE, TRUE);
         $this->sso_Alias = new DB_Field("Credit_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
-        $this->user_Id = new DB_Field("Trans_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
-        $this->user_Name = new DB_Field("CardInfo_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
+        $this->merchant_Id = new DB_Field("Trans_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
+        $this->store_Id = new DB_Field("CardInfo_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->providersSso_Url = new DB_Field("Checkout_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
-//        $this->Mobile_CardInfo_Url = new DB_Field("Mobile_CardInfo_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
+        $this->soap_Url = new DB_Field("Mobile_CardInfo_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
 //        $this->Mobile_Checkout_Url = new DB_Field("Mobile_Checkout_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
 //        $this->CheckoutPOS_Url = new DB_Field("CheckoutPOS_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
 //        $this->CheckoutPOSiFrame_Url = new DB_Field("CheckoutPOSiFrame_Url", "", new DbStrSanitizer(145), TRUE, TRUE);

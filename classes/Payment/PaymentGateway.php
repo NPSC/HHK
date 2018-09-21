@@ -332,6 +332,7 @@ class InstamedGateway extends PaymentGateway {
     const GROUP_ID = 'additionalInfo2';
 
     protected $ssoUrl;
+    protected $soapUrl;
 
     public function initHostedPayment(\PDO $dbh, Invoice $invoice, Guest $guest, $addr, $postbackUrl) {
 
@@ -370,7 +371,9 @@ class InstamedGateway extends PaymentGateway {
             'suppressReceipt' => 'true',
             'hideGuarantorID' => 'true',
             'responseActionType' => 'header',
-            'returnURL' => $houseUrl . $postbackUrl,
+//            'returnURL' => $houseUrl . $postbackUrl,
+            'cancelURL' => $houseUrl . $postbackUrl,
+            'confirmURL' => $houseUrl . $postbackUrl,
             'requestToken' => 'true',
             'RelayState' => "https://online.instamed.com/providers/Form/PatientPayments/NewPaymentPlanSimpleSSO?",
         );
@@ -385,6 +388,7 @@ class InstamedGateway extends PaymentGateway {
 
             $dbh->exec($ciq);
 
+            $uS->imtoken = $headerResponse->getToken();
 
             $dataArray = array('inctx' => $headerResponse->getRelayState(), 'paymentId' => $headerResponse->getToken() );
 
@@ -399,6 +403,17 @@ class InstamedGateway extends PaymentGateway {
 
     }
 
+    public function pollPaymentStatus($token) {
+
+        $data = $this->getCredentials()->toSOAP();
+
+        $data['tokenID'] = $token;
+
+        $soapReq = new PollingRequest();
+
+        return new PollingResponse($soapReq->submit($data, $this->soapUrl));
+
+    }
 
     protected function loadGateway(\PDO $dbh) {
 
@@ -424,6 +439,8 @@ class InstamedGateway extends PaymentGateway {
 
         $this->credentials = new InstaMedCredentials($gwRs);
         $this->ssoUrl = $gwRs->providersSso_Url->getStoredVal();
+        $this->soapUrl = $gwRs->soap_Url->getStoredVal();
+
     }
 
     public function doHeaderRequest($data) {
@@ -478,12 +495,12 @@ class InstamedGateway extends PaymentGateway {
                     .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->sso_Alias->getStoredVal(), array('name'=>$indx .'_txtsalias', 'size'=>'50')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('User Id', array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->user_Id->getStoredVal(), array('name'=>$indx .'_txtuid', 'size'=>'50')))
+                    HTMLTable::makeTh('Merchant Id', array('class'=>'tdlabel'))
+                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->merchant_Id->getStoredVal(), array('name'=>$indx .'_txtuid', 'size'=>'50')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('User Name', array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->user_Name->getStoredVal(), array('name'=>$indx .'_txtuname', 'size'=>'50')))
+                    HTMLTable::makeTh('Store Id', array('class'=>'tdlabel'))
+                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->store_Id->getStoredVal(), array('name'=>$indx .'_txtuname', 'size'=>'50')))
             );
             $tbl->addBodyTr(
                     HTMLTable::makeTh('URL', array('class'=>'tdlabel'))
@@ -521,11 +538,11 @@ class InstamedGateway extends PaymentGateway {
             }
 
             if (isset($post[$indx . '_txtuid'])) {
-                $ccRs->user_Id->setNewVal(filter_var($post[$indx . '_txtuid'], FILTER_SANITIZE_STRING));
+                $ccRs->merchant_Id->setNewVal(filter_var($post[$indx . '_txtuid'], FILTER_SANITIZE_STRING));
             }
 
             if (isset($post[$indx . '_txtuname'])) {
-                $ccRs->user_Name->setNewVal(filter_var($post[$indx . '_txtuname'], FILTER_SANITIZE_STRING));
+                $ccRs->store_Id->setNewVal(filter_var($post[$indx . '_txtuname'], FILTER_SANITIZE_STRING));
             }
 
             if (isset($post[$indx . '_txtpurl'])) {
@@ -536,7 +553,7 @@ class InstamedGateway extends PaymentGateway {
 
                 $pw = filter_var($post[$indx . '_txtsk'], FILTER_SANITIZE_STRING);
 
-                if ($pw != '') {
+                if ($pw != '' && $ccRs->security_Key->getStoredVal() != $pw) {
                     $ccRs->security_Key->setNewVal(encryptMessage($pw));
                 } else {
                     $ccRs->security_Key->setNewVal('');
@@ -565,15 +582,16 @@ class InstaMedCredentials {
     const SEC_KEY = 'securityKey';
     const ACCT_ID = 'accountID';
     const SSO_ALIAS = 'ssoAlias';
+    const MERCHANT_ID = 'merchantId';
+    const STORE_ID = 'storeId';
     const U_NAME = 'userName';
     const U_ID = 'userID';
-
 
     protected $securityKey;
     protected $accountID;
     protected $ssoAlias;
-//    protected $userName;
-//    protected $userID;
+    public $merchantId;
+    public $storeId;
 
 
     public function __construct(InstamedGatewayRS $gwRs) {
@@ -581,8 +599,8 @@ class InstaMedCredentials {
         $this->accountID = $gwRs->account_Id->getStoredVal();
         $this->securityKey = $gwRs->security_Key->getStoredVal();
         $this->ssoAlias = $gwRs->sso_Alias->getStoredVal();
-//        $this->userID = $gwRs->user_Id->getStoredVal();
-//        $this->userName = $gwRs->user_Name->getStoredVal();
+        $this->merchantId = $gwRs->merchant_Id->getStoredVal();
+        $this->storeId = $gwRs->store_Id->getStoredVal();
 
     }
 
@@ -592,8 +610,15 @@ class InstaMedCredentials {
             InstaMedCredentials::ACCT_ID => $this->accountID,
             InstaMedCredentials::SEC_KEY => decryptMessage($this->securityKey),
             InstaMedCredentials::SSO_ALIAS => $this->ssoAlias,
-//            InstaMedCredentials::U_ID => $this->userID,
-//            InstaMedCredentials::U_NAME => $this->userName,
+        );
+    }
+
+    public function toSOAP() {
+
+        return array(
+            InstaMedCredentials::ACCT_ID => $this->accountID,
+            'password' => decryptMessage($this->securityKey),
+            'alias' => $this->ssoAlias,
         );
     }
 
@@ -601,16 +626,16 @@ class InstaMedCredentials {
 
 class HeaderResponse extends GatewayResponse {
 
-    protected function parseResponse($headers) {
+    protected function parseResponse() {
 
         //"https://online.instamed.com/providers/Form/SSO/SSOError?respCode=401&respMessage=Invalid AccountID or Password.&lightWeight=true"
 
-        if (isset($headers[InstamedGateway::RELAY_STATE])) {
+        if (isset($this->response[InstamedGateway::RELAY_STATE])) {
 
-            $qs = parse_url($headers[InstamedGateway::RELAY_STATE], PHP_URL_QUERY);
+            $qs = parse_url($this->response[InstamedGateway::RELAY_STATE], PHP_URL_QUERY);
             parse_str($qs, $this->result);
 
-            $this->result[InstamedGateway::RELAY_STATE] = $headers[InstamedGateway::RELAY_STATE];
+            $this->result[InstamedGateway::RELAY_STATE] = $this->response[InstamedGateway::RELAY_STATE];
 
         } else {
             $this->errors = 'response is missing. ';
@@ -649,4 +674,61 @@ class HeaderResponse extends GatewayResponse {
 
         return '';
     }
+}
+
+
+class PollingRequest extends SoapRequest {
+
+    protected function execute(\SoapClient $soapClient, $data) {
+        return new PollingResponse($soapClient->GetSSOTokenStatus($data));;
+    }
+}
+
+
+class PollingResponse extends GatewayResponse {
+
+    const WAIT = 'NEW';
+    const EXPIRED = 'EXPIRED';
+    const COMPLETE = 'complete';
+
+
+    protected function parseResponse() {
+
+        if (isset($this->response->GetSSOTokenStatusResponse)) {
+            $this->result = $this->response->GetSSOTokenStatusResponse;
+        } else {
+            throw new Hk_Exception_Payment("GetSSOTokenStatusResponse is missing from the payment gateway response.  ");
+        }
+    }
+
+    public function getResponseCode() {
+
+        if (isset($this->result['GetSSOTokenStatusResult'])) {
+            return $this->result['GetSSOTokenStatusResult'];
+        } else {
+            throw new Hk_Exception_Payment("GetSSOTokenStatusResult is missing from the payment gateway response.  ");
+        }
+    }
+
+    public function isWaiting() {
+        if ($this->getResponseCode() == PollingResponse::WAIT) {
+            return TRUE;
+        }
+        return FALSE;
+    }
+
+    public function isExpired() {
+        if ($this->getResponseCode() == PollingResponse::EXPIRED) {
+            return TRUE;
+        }
+        return FALSE;
+    }
+
+    public function isComplete() {
+        if ($this->getResponseCode() == PollingResponse::COMPLETE) {
+            return TRUE;
+        }
+        return FALSE;
+    }
+
 }

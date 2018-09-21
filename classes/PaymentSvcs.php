@@ -1391,6 +1391,48 @@ class PaymentSvcs {
             $rtnMessage = filter_var($post['ReturnMessage'], FILTER_SANITIZE_STRING) . "  ";
         }
 
+        if (isset($post['result'])) {
+
+            $result = filter_var($post['result'], FILTER_SANITIZE_STRING);
+
+            if ($result == 'cancel') {
+
+                $payResult = new PaymentResult(0, 0, 0);
+                $payResult->setDisplayMessage('User Canceled.');
+
+            } else if ($result == 'confirm') {
+
+                if (isset($uS->imtoken) && $uS->imtoken != '' ) {
+
+
+                    // Payment Gateway
+                    $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+
+                    // Poll for results.
+                    do  {
+
+                        $result = $gateway->pollPaymentStatus($uS->imtoken);
+
+                        if ($result->isExpired()) {
+                            $payResult = new PaymentResult(0, 0, 0);
+                            $payResult->setDisplayMessage('Session Expired.');
+                        }
+
+                        if ($result->isComplete()) {
+
+                            // Get payment results
+
+                        }
+
+                        sleep(10);
+
+                    } while ($result->isWaiting());
+
+                }
+
+            }
+        }
+
         if (isset($post['CardID'])) {
 
             $cardId = filter_var($post['CardID'], FILTER_SANITIZE_STRING);
