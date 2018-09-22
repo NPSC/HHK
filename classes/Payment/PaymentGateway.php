@@ -331,6 +331,10 @@ class InstamedGateway extends PaymentGateway {
     const INVOICE_NUMBER = 'additionalInfo1';
     const GROUP_ID = 'additionalInfo2';
 
+    const HCO_POSTBACK_VAR = 'imco';
+    const POSTBACK_CANCEL = 'x';
+    const POSTBACK_COMPLETE = 'c';
+
     protected $ssoUrl;
     protected $soapUrl;
 
@@ -345,6 +349,8 @@ class InstamedGateway extends PaymentGateway {
         if ($houseUrl == '') {
             throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
         }
+
+        $houseUrl .= $postbackUrl . '?' . InstamedGateway::HCO_POSTBACK_VAR . '=';
 
         if ($invoice->getSoldToId() < 1 || $invoice->getIdGroup() < 1) {
             throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
@@ -371,8 +377,8 @@ class InstamedGateway extends PaymentGateway {
             'hideGuarantorID' => 'true',
             'responseActionType' => 'header',
 //            'returnURL' => $houseUrl . $postbackUrl,
-            'cancelURL' => $houseUrl . $postbackUrl . '?im=x',
-            'confirmURL' => $houseUrl . $postbackUrl . '?im=c',
+            'cancelURL' => $houseUrl . InstamedGateway::POSTBACK_CANCEL,
+            'confirmURL' => $houseUrl . InstamedGateway::POSTBACK_COMPLETE,
             'requestToken' => 'true',
             'RelayState' => "https://online.instamed.com/providers/Form/PatientPayments/NewPatientPaymentSSO?",
         );
@@ -402,7 +408,31 @@ class InstamedGateway extends PaymentGateway {
 
     }
 
-    public function pollPaymentStatus($token) {
+    public function HostedPaymentComplete(\PDO $dbh, $idToken, $paymentNotes) {
+
+
+        // Poll for results.
+        do  {
+
+            $result = $this->pollPaymentStatus($idToken, TRUE);
+
+            sleep(10);
+
+        } while ($result->isWaiting());
+
+
+
+        if ($result->isExpired()) {
+
+        }
+
+        if ($result->isComplete()) {
+
+        }
+
+    }
+
+    protected function pollPaymentStatus($token, $trace = FALSE) {
 
         $data = $this->getCredentials()->toSOAP();
 
@@ -410,7 +440,7 @@ class InstamedGateway extends PaymentGateway {
 
         $soapReq = new PollingRequest();
 
-        return new PollingResponse($soapReq->submit($data, $this->soapUrl));
+        return new PollingResponse($soapReq->submit($data, $this->soapUrl, $trace));
 
     }
 
@@ -505,6 +535,10 @@ class InstamedGateway extends PaymentGateway {
                     HTMLTable::makeTh('URL', array('class'=>'tdlabel'))
                     .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->providersSso_Url->getStoredVal(), array('name'=>$indx .'_txtpurl', 'size'=>'70')))
             );
+            $tbl->addBodyTr(
+                    HTMLTable::makeTh('SOAP URL', array('class'=>'tdlabel'))
+                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->soap_Url->getStoredVal(), array('name'=>$indx .'_txtsurl', 'size'=>'70')))
+            );
 
         }
 
@@ -548,13 +582,17 @@ class InstamedGateway extends PaymentGateway {
                 $ccRs->providersSso_Url->setNewVal(filter_var($post[$indx . '_txtpurl'], FILTER_SANITIZE_STRING));
             }
 
+            if (isset($post[$indx . '_txtsurl'])) {
+                $ccRs->soap_Url->setNewVal(filter_var($post[$indx . '_txtsurl'], FILTER_SANITIZE_STRING));
+            }
+
             if (isset($post[$indx . '_txtsk'])) {
 
                 $pw = filter_var($post[$indx . '_txtsk'], FILTER_SANITIZE_STRING);
 
                 if ($pw != '' && $ccRs->security_Key->getStoredVal() != $pw) {
                     $ccRs->security_Key->setNewVal(encryptMessage($pw));
-                } else {
+                } else if ($pw == '') {
                     $ccRs->security_Key->setNewVal('');
                 }
             }

@@ -1381,6 +1381,7 @@ class PaymentSvcs {
 
         $rtnCode = '';
         $rtnMessage = '';
+        $payNotes = '';
         $payResult = null;
 
         if (isset($post['ReturnCode'])) {
@@ -1391,16 +1392,28 @@ class PaymentSvcs {
             $rtnMessage = filter_var($post['ReturnMessage'], FILTER_SANITIZE_STRING) . "  ";
         }
 
-        if (isset($post['result'])) {
+        if (isset($uS->paymentNotes)) {
+            $payNotes = $uS->paymentNotes;
+        }
 
-            $result = filter_var($post['result'], FILTER_SANITIZE_STRING);
 
-            if ($result == 'cancel') {
+        if (isset($post[InstamedGateway::HCO_POSTBACK_VAR])) {
+
+            $result = filter_var($post[InstamedGateway::HCO_POSTBACK_VAR], FILTER_SANITIZE_STRING);
+
+            try {
+                Gateway::saveGwTx($dbh, $result, '', json_encode($post), 'HostedCoPostBack');
+            } catch (Exception $ex) {
+                // Do nothing
+            }
+
+            if ($result == InstamedGateway::POSTBACK_CANCEL) {
 
                 $payResult = new PaymentResult(0, 0, 0);
                 $payResult->setDisplayMessage('User Canceled.');
+                unset($uS->imtoken);
 
-            } else if ($result == 'confirm') {
+            } else if ($result == InstamedGateway::POSTBACK_COMPLETE) {
 
                 if (isset($uS->imtoken) && $uS->imtoken != '' ) {
 
@@ -1408,32 +1421,14 @@ class PaymentSvcs {
                     // Payment Gateway
                     $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-                    // Poll for results.
-                    do  {
+                    $payResponse = $gateway->HostedPaymentComplete($dbh, $uS->imtoken, $payNotes);
 
-                        $result = $gateway->pollPaymentStatus($uS->imtoken);
-
-                        if ($result->isExpired()) {
-                            $payResult = new PaymentResult(0, 0, 0);
-                            $payResult->setDisplayMessage('Session Expired.');
-                        }
-
-                        if ($result->isComplete()) {
-
-                            // Get payment results
-
-                        }
-
-                        sleep(10);
-
-                    } while ($result->isWaiting());
-
+                    //$payResult =
                 }
 
             }
-        }
 
-        if (isset($post['CardID'])) {
+        } else if (isset($post['CardID'])) {
 
             $cardId = filter_var($post['CardID'], FILTER_SANITIZE_STRING);
 
@@ -1469,11 +1464,6 @@ class PaymentSvcs {
             $idInv = 0;
             if (isset($uS->paymentIds[$paymentId])) {
                 $idInv = $uS->paymentIds[$paymentId];
-            }
-
-            $payNotes = '';
-            if (isset($uS->paymentNotes)) {
-                $payNotes = $uS->paymentNotes;
             }
 
 

@@ -646,9 +646,16 @@ function paymentReply (data, updateCal) {
 
         } else if (data.inctx) {
 
-            var $paybox = $('#frmIm');
-            $paybox.prop('action', data.inctx);
-            $paybox.submit();
+            if (document.getElementsByName('instamed').length != 0) {
+                document.getElementById('instamed').setAttribute('src', data.inctx);
+            } else {
+                flagAlertMessage('InstaMed iFrame is missing.', true);
+                return;
+            }
+            
+//            var $paybox = $('#frmIm');
+//            $paybox.prop('action', data.inctx);
+            //$paybox.submit();
 
         }
 

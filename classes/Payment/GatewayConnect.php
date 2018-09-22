@@ -76,7 +76,7 @@ abstract class SoapRequest {
 
         } catch (SoapFault $sf) {
 
-            throw new Hk_Exception_Payment('Problem with HHK web server contacting the Mercury Payment system:  ' . $sf->getMessage() .     ' (' . $sf->getCode() . '); ' . ' Trace: ' . $sf->getTraceAsString());
+            throw new Hk_Exception_Payment('Problem with HHK web server contacting the payment gateway:  ' . $sf->getMessage() .     ' (' . $sf->getCode() . '); ' . ' Trace: ' . $sf->getTraceAsString());
         }
 
         try {

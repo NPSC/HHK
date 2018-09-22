@@ -25,6 +25,7 @@ require (MEMBER . "EmergencyContact.php");
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
 require (PMT . 'GatewayConnect.php');
+require (PMT . 'PaymentGateway.php');
 require (PMT . 'Payments.php');
 require (PMT . 'HostedPayments.php');
 require (PMT . 'Receipt.php');
@@ -106,7 +107,7 @@ if ($uS->DefaultRegisterTab > 0 && $uS->DefaultRegisterTab < 5) {
 }
 
 // Hosted payment return
-if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)) === FALSE) {
+if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_REQUEST)) === FALSE) {
 
     $receiptMarkup = $payResult->getReceiptMarkup();
     $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
@@ -303,7 +304,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
-        <script type="text/javascript">
+<script type="text/javascript">
             var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';
             var pmtMkup = "<?php echo $paymentMarkup; ?>";
             var rctMkup = '<?php echo $receiptMarkup; ?>';
@@ -563,8 +564,8 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 </tr>
             </table>
         </div>
-        <form id="frmIm" target="instamed" method="POST">
-            <script src="../js/embed.js" data-displaymode="incontext" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="incontext"></script>
+        <form id="frmIm"  method="POST">
+            <script src="js/embed.js" data-displaymode="incontext" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="incontext"></script>
         </form>
 
         <div class="gmenu"></div>
