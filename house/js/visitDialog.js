@@ -626,12 +626,13 @@ function paymentReply (data, updateCal) {
         if (data.hostedError) {
             
             flagAlertMessage(data.hostedError, true);
-            
+
         } else if (data.xfer && $('#xform').length > 0) {
-            
+
             var xferForm = $('#xform');
             xferForm.children('input').remove();
             xferForm.prop('action', data.xfer);
+            
             if (data.paymentId && data.paymentId != '') {
                 xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
             } else if (data.cardId && data.cardId != '') {
@@ -640,21 +641,18 @@ function paymentReply (data, updateCal) {
                 flagAlertMessage('PaymentId and CardId are missing!', true);
                 return;
             }
-            
+
             xferForm.submit();
-            
+
         } else if (data.inctx) {
-            
-            var $diagbox = $('#keysfees');
-            var $iframe = $('<iframe name="instamedIf" src="' + data.inctx + '" style="height:800px;width:700px;" />');
-            $diagbox.empty();
-            $diagbox.append($('<div/>').append($iframe));
-            $diagbox.dialog('open');
-            return;
-                        
+
+            var $paybox = $('#frmIm');
+            $paybox.prop('action', data.inctx);
+            $paybox.submit();
+
         }
-        
-        
+
+
         if (data.success && data.success !== '') {
             flagAlertMessage(data.success, false);
         

@@ -356,7 +356,6 @@ class InstamedGateway extends PaymentGateway {
             'patientLastName' => $guest->getRoleMember()->get_lastName(),
             'amount' => $invoice->getBalance(),
 
-
             InstamedGateway::GROUP_ID => $invoice->getIdGroup(),
             InstamedGateway::INVOICE_NUMBER => $invoice->getInvoiceNumber(),
 
@@ -372,10 +371,10 @@ class InstamedGateway extends PaymentGateway {
             'hideGuarantorID' => 'true',
             'responseActionType' => 'header',
 //            'returnURL' => $houseUrl . $postbackUrl,
-            'cancelURL' => $houseUrl . $postbackUrl,
-            'confirmURL' => $houseUrl . $postbackUrl,
+            'cancelURL' => $houseUrl . $postbackUrl . '?im=x',
+            'confirmURL' => $houseUrl . $postbackUrl . '?im=c',
             'requestToken' => 'true',
-            'RelayState' => "https://online.instamed.com/providers/Form/PatientPayments/NewPaymentPlanSimpleSSO?",
+            'RelayState' => "https://online.instamed.com/providers/Form/PatientPayments/NewPatientPaymentSSO?",
         );
 
         $headerResponse = $this->doHeaderRequest(http_build_query(array_merge($data, $this->getCredentials()->toNVP())));
