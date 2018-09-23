@@ -486,9 +486,7 @@ class RoomChooser {
 
         if ($replaceRoomSel == '') {
 
-            $resOptions = $this->makeRoomSelectorOptions();
-            $errorMessage = $this->getRoomSelectionError($dbh, $resOptions);
-
+            $resOptions[] = array(0, '-None-', '');
             $rmSelectorMarkup = $this->makeRoomSelector($resOptions, 0);
 
         } else {

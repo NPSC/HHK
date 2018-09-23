@@ -1066,62 +1066,67 @@ function resvManager(initData) {
         t.setUp = function(data, doOnDatesChange) {
 
             $dateSection.empty();
-            $dateSection.append($(data.mu));
-
-            var gstDate = $('#gstDate'),
-                gstCoDate = $('#gstCoDate'),
-                nextDays = parseInt(data.defdays, 10);
-
-            // default number of days for a new stay.
-            if (isNaN(nextDays) || nextDays < 1) {
-                nextDays = 21;
-            }
-
-            $('#spnRangePicker').dateRangePicker({
-                format: 'MMM D, YYYY',
-                separator : ' to ',
-                minDays: 1,
-                autoClose: true,
-                showShortcuts: true,
-                shortcuts :
-                {
-                        'next-days': [nextDays]
-                },
-                getValue: function()
-                {
-                    if (gstDate.val() && gstCoDate.val() ) {
-                        return gstDate.val() + ' to ' + gstCoDate.val();
-                    } else {
-                        return '';
-                    }
-                },
-                setValue: function(s,s1,s2)
-                {
-                    gstDate.val(s1);
-                    gstCoDate.val(s2);
-                }
-            }).bind('datepicker-change', function(event, dates) {
-
-                // Update the number of days display text.
-                var numDays = Math.ceil((dates['date2'].getTime() - dates['date1'].getTime()) / 86400000);
-
-                $('#' + data.daysEle).val(numDays);
-
-                if ($('#spnNites').length > 0) {
-                    $('#spnNites').text(numDays);
-                }
+            
+            if (data.mu && data.mu !== '') {
                 
-                if ($.isFunction(doOnDatesChange)) {
-                    doOnDatesChange(dates);
+                $dateSection.append($(data.mu));
+
+                var gstDate = $('#gstDate'),
+                    gstCoDate = $('#gstCoDate'),
+                    nextDays = parseInt(data.defdays, 10);
+
+                // default number of days for a new stay.
+                if (isNaN(nextDays) || nextDays < 1) {
+                    nextDays = 21;
                 }
-            });
+
+                $('#spnRangePicker').dateRangePicker({
+                    format: 'MMM D, YYYY',
+                    separator : ' to ',
+                    minDays: 1,
+                    autoClose: true,
+                    showShortcuts: true,
+                    shortcuts :
+                    {
+                            'next-days': [nextDays]
+                    },
+                    getValue: function()
+                    {
+                        if (gstDate.val() && gstCoDate.val() ) {
+                            return gstDate.val() + ' to ' + gstCoDate.val();
+                        } else {
+                            return '';
+                        }
+                    },
+                    setValue: function(s,s1,s2)
+                    {
+                        gstDate.val(s1);
+                        gstCoDate.val(s2);
+                    }
+                }).bind('datepicker-change', function(event, dates) {
+
+                    // Update the number of days display text.
+                    var numDays = Math.ceil((dates['date2'].getTime() - dates['date1'].getTime()) / 86400000);
+
+                    $('#' + data.daysEle).val(numDays);
+
+                    if ($('#spnNites').length > 0) {
+                        $('#spnNites').text(numDays);
+                    }
+
+                    if ($.isFunction(doOnDatesChange)) {
+                        doOnDatesChange(dates);
+                    }
+                });
 
 
-            $dateSection.show();
+                $dateSection.show();
 
-            // Open the dialog if the dates are not defined yet.
-            if (t.openControl) {
-                $('#spnRangePicker').data('dateRangePicker').open();
+                // Open the dialog if the dates are not defined yet.
+                if (t.openControl) {
+                    $('#spnRangePicker').data('dateRangePicker').open();
+                }
+            
             }
 
             setupComplete = true;
@@ -1740,7 +1745,7 @@ function resvManager(initData) {
             }
 
             if ($('#addGuestHeader').length > 0) {
-                
+
                 expDatesSection = new ExpDatesSection($('#addGuestHeader'));
                 expDatesSection.openControl = true;
                 expDatesSection.setUp(data.resv.rdiv, doOnDatesChange);
@@ -1831,16 +1836,17 @@ function resvManager(initData) {
             
             if (isCheckin) {
                 
-                if (t.checkPayments === true && $('#txtRoomRate').length > 0) {
+                if (t.checkPayments === true) {
+                    
                     // Room rate
                     if ($('#selCategory').val() == fixedRate && $('#txtFixedRate').length > 0 && $('#txtFixedRate').val() == '') {
                         
                         flagAlertMessage("Set the Room Rate to an amount, or to 0.", 'alert');
-                        $('#txtRoomRate').addClass('ui-state-error');
+                        $('#txtFixedRate').addClass('ui-state-error');
                         return false;
                         
                     } else {
-                        $('#txtRoomRate').removeClass('ui-state-error');
+                        $('#txtFixedRate').removeClass('ui-state-error');
                     }
                 
 

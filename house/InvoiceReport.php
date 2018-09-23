@@ -10,7 +10,7 @@
 
 require ("homeIncludes.php");
 
-require (DB_TABLES . 'MercuryRS.php');
+require (DB_TABLES . 'PaymentGwRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
 
 require (CLASSES . 'MercPay/MercuryHCClient.php');

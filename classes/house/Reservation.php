@@ -1050,6 +1050,7 @@ class ActiveReservation extends Reservation {
             Vehicle::saveVehicle($dbh, $post, $reg->getIdRegistration());
         }
 
+        $stayingMembers = $this->getStayingMembers();
 
         // Create the reservation instance
         $resv = new Reservation_1($this->reservRs);
@@ -1058,16 +1059,31 @@ class ActiveReservation extends Reservation {
         $resv->setHospitalStay($this->family->getHospStay());
         $resv->setExpectedArrival($this->reserveData->getArrivalDT()->format('Y-m-d ' . intval($uS->CheckInTime) . ':00:00'));
         $resv->setExpectedDeparture($this->reserveData->getDepartureDT()->format('Y-m-d ' . intval($uS->CheckOutTime) . ':00:00'));
-        $resv->setNumberGuests(count($this->getStayingMembers()));
+        $resv->setNumberGuests(count($stayingMembers));
 
-        if (($idPriGuest = $this->reserveData->findPrimaryGuestId()) !== NULL) {
+        // Primary guest must be staying or now checking in.
+        $idPriGuest = $this->reserveData->findPrimaryGuestId();
+
+        if (isset($stayingMembers[$idPriGuest])) {
             $resv->setIdGuest($idPriGuest);
+        } else {
+            // Find first staying member.
+            foreach ($this->reserveData->getPsgMembers() as $m) {
+
+                if ($m->isStaying()) {
+
+                    $m->setPrimaryGuest(TRUE);
+                    $this->reserveData->setMember($m);
+                    $resv->setIdGuest($m->getId());
+                    break;
+                }
+            }
         }
 
         // Collect the room rates
         $this->setRoomRate($dbh, $reg, $resv, $post);
 
-        // Payment Type
+        // Reservation anticipated Payment Type
         if (isset($post['selPayType'])) {
             $resv->setExpectedPayType(filter_var($post['selPayType'], FILTER_SANITIZE_STRING));
         }
@@ -1357,8 +1373,8 @@ WHERE r.idReservation = " . $rData->getIdResv());
             return;
         }
 
-        // create visit
-        $visit = new Visit($dbh, $resv->getIdRegistration(), 0, $this->reserveData->getArrivalDT(), $this->reserveData->getDepartureDT(), $resc, $uS->username);
+        // create visit ( -1 forces a new visit)
+        $visit = new Visit($dbh, $resv->getIdRegistration(), -1, $this->reserveData->getArrivalDT(), $this->reserveData->getDepartureDT(), $resc, $uS->username);
 
         // Add guests
         foreach ($this->getStayingMembers() as $m) {
@@ -1702,7 +1718,6 @@ class StayingReservation extends CheckingIn {
 
         // Dates
         $this->reserveData->setArrivalDT($nowDT);
-        $dataArray = $this->createExpDatesControl();
 
         // Registration
         $reg = new Registration($dbh, $this->reserveData->getIdPsg());
@@ -1712,6 +1727,7 @@ class StayingReservation extends CheckingIn {
             $rmSelMessage = 'Already at maximum rooms per patient of ' .$uS->RoomsPerPatient . '.';
         } else {
             $rmSelMessage = '';
+            $dataArray = $this->createExpDatesControl();
         }
 
         // Room Chooser
@@ -1788,7 +1804,7 @@ class StayingReservation extends CheckingIn {
 
         $uS = Session::getInstance();
         $visitRs = new VisitRs();
-        $today = new \DateTime();
+
 
         $this->initialSave($dbh, $post);
 
@@ -1803,7 +1819,7 @@ class StayingReservation extends CheckingIn {
             throw new Hk_Exception_Runtime('Visit not found for reservation Id ' . $this->reserveData->getIdResv());
         }
 
-        $vrows = $stmt->fetchAll(PDO::FETCH_NUM);
+        $vrows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         EditRS::loadRow($vrows[0], $visitRs);
 
         // Checking the new guest stay dates.
