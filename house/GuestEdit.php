@@ -76,6 +76,8 @@ require (PMT . 'InvoiceLine.php');
 require (PMT . 'CreditToken.php');
 require (PMT . 'Transaction.php');
 require (PMT . 'Receipt.php');
+require (PMT . 'GatewayConnect.php');
+require (PMT . 'PaymentGateway.php');
 require (PMT . 'CashTX.php');
 require (PMT . 'CheckTX.php');
 

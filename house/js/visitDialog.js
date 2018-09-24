@@ -652,10 +652,6 @@ function paymentReply (data, updateCal) {
                 flagAlertMessage('InstaMed iFrame is missing.', true);
                 return;
             }
-            
-//            var $paybox = $('#frmIm');
-//            $paybox.prop('action', data.inctx);
-            //$paybox.submit();
 
         }
 

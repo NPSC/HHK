@@ -299,47 +299,6 @@ class ReturnResult extends PaymentResult {
  */
 class PaymentSvcs {
 
-    public static function initCardOnFile(\PDO $dbh, $gw, $pageTitle, $idGuest, $idGroup, $cardHolderName, $postBackPage) {
-
-        $uS = Session::getInstance();
-
-        $secure = new SecurityComponent();
-        $config = new Config_Lite(ciCFG_FILE);
-
-        $houseUrl = $secure->getSiteURL();
-        $siteUrl = $secure->getRootURL();
-        $logo = $config->getString('financial', 'PmtPageLogoUrl', '');
-
-        if ($houseUrl == '' || $siteUrl == '') {
-            throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
-        }
-
-        if ($idGuest < 1 || $idGroup < 1) {
-            throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
-        }
-
-
-        $initCi = new InitCiRequest($pageTitle, 'Custom');
-
-        // Card reader?
-        if ($uS->CardSwipe) {
-            $initCi->setDefaultSwipe('Swipe')
-                ->setCardEntryMethod('Both')
-                ->setPaymentPageCode('CardInfo_Url');
-        } else {
-            $initCi->setPaymentPageCode('CardInfo_Url');
-        }
-
-        $initCi->setCardHolderName($cardHolderName)
-                ->setFrequency(MpFrequencyValues::OneTime)
-                ->setCompleteURL($houseUrl . $postBackPage)
-                ->setReturnURL($houseUrl . $postBackPage)
-                ->setLogoUrl($siteUrl . $logo);
-
-
-        return CardInfo::sendToPortal($dbh, $gw, $idGuest, $idGroup, $initCi);
-    }
-
 
     public static function payAmount(\PDO $dbh, Invoice $invoice, PaymentManagerPayment $pmp, $postbackUrl, $paymentDate = '') {
 
