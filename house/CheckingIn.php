@@ -159,7 +159,7 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo DR_PICKER_CSS ?>
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
-        <?php echo SELECT2_CSS; ?>
+
         <?php echo FAVICON; ?>
 <!--        Fix the ugly checkboxes-->
         <style>
@@ -182,7 +182,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo SELECT2_JS ?>"></script>
+
         <script type="text/javascript" src="js/resvManager.js"></script>
 
     </head>

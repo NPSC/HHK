@@ -1,6 +1,6 @@
 Noty.overrideDefaults({
-    layout   : 'topRight',
-    theme    : 'metroui',
+    layout   : 'top',
+    theme    : 'semanticui',
     timeout  : '4000',
     progressBar : true,
     closeWith: ['click', 'button'],

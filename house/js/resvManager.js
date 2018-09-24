@@ -1675,7 +1675,7 @@ function resvManager(initData) {
             t.origRoomId = $('#selResource').val();
             t.checkPayments = true;
 
-            $('#selResource').select2();
+            //$('#selResource').select2();
             
             // Reservation history button
             if ($('.hhk-viewResvActivity').length > 0) {

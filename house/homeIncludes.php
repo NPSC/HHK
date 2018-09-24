@@ -11,7 +11,6 @@
 define('JSV', '?i9er=45');
 
 define('HOUSE_CSS', "<link href='css/house.css' rel='stylesheet' type='text/css' />");
-define('NOTY_CSS', "<link href='css/noty/noty.css' rel='stylesheet' type='text/css' /><link href='css/noty/themes/semanticui.css' rel='stylesheet' type='text/css' /><link href='css/noty/animate.css' rel='stylesheet' type='text/css' />");
 
 
 define('PAYMENT_JS', "js/payments-min.js" . JSV);

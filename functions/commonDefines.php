@@ -50,6 +50,7 @@ define('DR_PICKER_CSS', '<link rel="stylesheet" href="css/daterangepicker.min.cs
 define('FULLC_CSS', '<link href="css/fullcalendar.css" rel="stylesheet" type="text/css" />');
 define('RTE_CSS', '<link href="css/rich-text-editor.css" rel="stylesheet" type="text/css" />');
 define('SELECT2_CSS', '<link href="css/select2.min.css" rel="stylesheet" type="text/css" />');
+define('NOTY_CSS', "<link href='css/noty/noty.css' rel='stylesheet' type='text/css' /><link href='css/noty/themes/semanticui.css' rel='stylesheet' type='text/css' /><link href='css/noty/animate.css' rel='stylesheet' type='text/css' />");
 
 define('JQ_UI_JS', '../js/jquery-ui.min.js');
 define('JQ_JS', '../js/jquery-3.1.1.min.js');

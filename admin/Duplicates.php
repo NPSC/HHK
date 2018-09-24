@@ -141,7 +141,7 @@ $resultMessage = $alertMsg->createMarkup();
         <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
-                <?php echo NOTY_CSS; ?>
+        <?php echo NOTY_CSS; ?>
 
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
@@ -256,11 +256,11 @@ $(document).ready(function () {
                                                 return;
                                             }
                                             if (data.error) {
-                                                flagAlertMessage(data.error, true);
+                                                flagAlertMessage(data.error, 'error');
                                                 return;
                                             }
                                             if (data.msg && data.msg != '') {
-                                                flagAlertMessage(data.msg, false);
+                                                flagAlertMessage(data.msg, 'info');
                                             }
                                 });
                             });
@@ -295,11 +295,11 @@ $(document).ready(function () {
                                                 return;
                                             }
                                             if (data.error) {
-                                                flagAlertMessage(data.error, true);
+                                                flagAlertMessage(data.error, 'alert');
                                                 return;
                                             }
                                             if (data.msg && data.msg != '') {
-                                                flagAlertMessage(data.msg, false);
+                                                flagAlertMessage(data.msg, 'success');
                                             }
                                 });
                             });
