@@ -717,7 +717,7 @@ class HeaderResponse extends GatewayResponse {
 class PollingRequest extends SoapRequest {
 
     protected function execute(\SoapClient $soapClient, $data) {
-        return new PollingResponse($soapClient->GetSSOTokenStatus($data));;
+        return new PollingResponse($soapClient->GetSSOTokenStatus($data));
     }
 }
 

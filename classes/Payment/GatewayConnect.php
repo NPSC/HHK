@@ -70,7 +70,7 @@ abstract class SoapRequest {
 
         try {
             // Create the Soap, prepre the data
-            $txClient = new SoapClient($url, array('trace'=>$trace));
+            $txClient = new SoapClient('../service.xml', array('trace'=>$trace));
 
             $xaction = $this->execute($txClient, $req);
 
@@ -95,3 +95,4 @@ abstract class SoapRequest {
     protected abstract function execute(SoapClient $sc, $data);
 
 }
+
