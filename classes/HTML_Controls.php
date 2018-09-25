@@ -136,7 +136,6 @@ class HTMLSelector extends HTMLControl {
      *
      * @param string $contents
      * @param array $attributes
-     * @return type
      */
     public static function generateMarkup($contents, array $attributes = array()) {
 
