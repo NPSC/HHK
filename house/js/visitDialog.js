@@ -624,14 +624,8 @@ function paymentReply (data, updateCal) {
     if (data) {
         
         if (data.hostedError) {
-            
-<<<<<<< HEAD
-            flagAlertMessage(data.hostedError, true);
-
-=======
             flagAlertMessage(data.hostedError, 'error');
             
->>>>>>> master
         } else if (data.xfer && $('#xform').length > 0) {
 
             var xferForm = $('#xform');

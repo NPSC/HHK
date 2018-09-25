@@ -69,7 +69,7 @@ $idReserv = 0;
 $idPsg = 0;
 
 // Hosted payment return
-if (isset($_POST['CardID']) || isset($_POST['PaymentID'])) {
+if (isset($_POST['CardID']) || isset($_POST['PaymentID']) || isset($_POST[InstamedGateway::HCO_POSTBACK_VAR])) {
 
     require (DB_TABLES . 'PaymentGwRS.php');
     require (DB_TABLES . 'PaymentsRS.php');
@@ -79,6 +79,8 @@ if (isset($_POST['CardID']) || isset($_POST['PaymentID'])) {
 
     require (CLASSES . 'Purchase/Item.php');
 
+    require (PMT . 'GatewayConnect.php');
+    require (PMT . 'PaymentGateway.php');
     require (PMT . 'Payments.php');
     require (PMT . 'HostedPayments.php');
     require (PMT . 'Receipt.php');

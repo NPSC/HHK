@@ -153,8 +153,8 @@ class InstamedGatewayRS extends TableRS {
     public $store_Id;  // varchar(145) NOT NULL DEFAULT '',
     public $providersSso_Url;  // varchar(145) NOT NULL DEFAULT '',
     public $soap_Url;  // varchar(145) NOT NULL DEFAULT '',
-    public $sale_Url;  // varchar(145) NOT NULL DEFAULT '',
-    public $COF_Url;  // varchar(145) NOT NULL DEFAULT '',
+//    public $sale_Url;  // varchar(145) NOT NULL DEFAULT '',
+//    public $COF_Url;  // varchar(145) NOT NULL DEFAULT '',
 //    public $CheckoutPOSiFrame_Url;  // varchar(145) NOT NULL DEFAULT '',
     public $Use_AVS_Flag;  // bit(1) NOT NULL DEFAULT b'0',
     public $Use_Ccv_Flag;  // bit(1) NOT NULL DEFAULT b'0',
@@ -173,8 +173,8 @@ class InstamedGatewayRS extends TableRS {
         $this->store_Id = new DB_Field("CardInfo_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->providersSso_Url = new DB_Field("Checkout_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->soap_Url = new DB_Field("Mobile_CardInfo_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
-        $this->sale_Url = new DB_Field("Mobile_Checkout_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
-        $this->COF_Url = new DB_Field("CheckoutPOS_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
+//        $this->sale_Url = new DB_Field("Mobile_Checkout_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
+//        $this->COF_Url = new DB_Field("CheckoutPOS_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
 //        $this->CheckoutPOSiFrame_Url = new DB_Field("CheckoutPOSiFrame_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->Use_AVS_Flag = new DB_Field("Use_AVS_Flag", 0, new DbBitSanitizer(), TRUE, TRUE);
         $this->Use_Ccv_Flag = new DB_Field("Use_Ccv_Flag", 0, new DbBitSanitizer(), TRUE, TRUE);
