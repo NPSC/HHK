@@ -175,7 +175,7 @@ function ckedIn(data) {
     $("#divAlert1").hide();
     
     if (data.warning) {
-        flagAlertMessage(data.warning, true);
+        flagAlertMessage(data.warning, 'warning');
     }
     
     if (data.xfer) {
@@ -187,7 +187,7 @@ function ckedIn(data) {
         } else if (data.cardId && data.cardId != '') {
             xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
         } else {
-            flagAlertMessage('PaymentId and CardId are missing!', true);
+            flagAlertMessage('PaymentId and CardId are missing!', 'error');
             return;
         }
         xferForm.submit();
@@ -275,7 +275,7 @@ function loadReserv(incmg) {
     
     if (incmg.warning && incmg.warning != '') {
         okay = false;
-        flagAlertMessage(incmg.warning, true);
+        flagAlertMessage(incmg.warning, 'warning');
     }
     
     if (okay) {
@@ -375,7 +375,7 @@ function processGuests(incmg) {
     
     if (incmg.idPsg) {
         if (checkIn.idPsg && checkIn.idPsg > 0 && incmg.idPsg > 0 && checkIn.idPsg != incmg.idPsg) {
-            flagAlertMessage('Something is wrong.  Please try again. ', true);
+            flagAlertMessage('Something is wrong.  Please try again. ', 'warning');
             checkIn.idPsg = 0;
             return false;
         }
@@ -489,7 +489,7 @@ function processGuests(incmg) {
         
         if (cnt > 0) {
             
-            flagAlertMessage("One of the guests is already set as the " + checkIn.patientLabel + ".  ", true);
+            flagAlertMessage("One of the guests is already set as the " + checkIn.patientLabel + ".  ", 'alert');
             checkIn.patient = null;
 
         } else {
@@ -709,7 +709,7 @@ function loadGuest(id, idPsg, role, patientStaying) {
         for (var i = 0; i < checkIn.members.length; i++) {
             
             if (checkIn.members[i].idName == id) {
-                flagAlertMessage('This person is already added.', true);;
+                flagAlertMessage('This person is already added.', true);
                 return;
             }
         }

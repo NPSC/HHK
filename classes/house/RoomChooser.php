@@ -23,6 +23,7 @@ class RoomChooser {
     protected $newGuests;
     protected $currentGuests;
     protected $maxOccupants;
+    protected $maxRoomsPerPatient;
     protected $oldResvId;
 
     /**
@@ -52,6 +53,7 @@ class RoomChooser {
         $uS = Session::getInstance();
 
         $this->openCheckin = $uS->OpenCheckin;
+        $this->maxRoomsPerPatient = $uS->RoomsPerPatient;
         $this->newGuests = intval($numNewGuests, 10);
         $this->currentGuests = 0;
         $this->resv = $resv;
@@ -209,6 +211,19 @@ class RoomChooser {
         }
     }
 
+    public function createAddGuestMarkup(\PDO $dbh, $isAuthorized, $replaceRoomSel) {
+
+        if ($this->resv->getStatus() === ReservationStatus::Staying) {
+
+            $this->findResources($dbh, $isAuthorized, FALSE, 0);
+//
+//            if (isset($rescs[$this->resv->getIdResource()])) {
+//                $this->selectedResource = $rescs[$this->resv->getIdResource()];
+//            }
+
+            return $this->createAddedMarkup($dbh, TRUE, $replaceRoomSel);
+        }
+    }
 
     public function createChangeRoomsMarkup(\PDO $dbh, VisitCharges $visitCharge, $idGuest, $isAuthorized) {
 
@@ -344,7 +359,7 @@ class RoomChooser {
 
         $errorMessage = '';
 
-        if (($this->resv->getStatus() == ReservationStatus::Committed || $this->resv->getStatus() == ReservationStatus::UnCommitted) && isset($resOptions[$this->resv->getIdResource()])) {
+        if (($this->resv->getStatus() == ReservationStatus::Committed || $this->resv->getStatus() == ReservationStatus::UnCommitted || $this->resv->getStatus() == ReservationStatus::Staying) && isset($resOptions[$this->resv->getIdResource()])) {
 
             $myResc = $resOptions[$this->resv->getIdResource()];
 
@@ -407,7 +422,7 @@ class RoomChooser {
         }
 
         $errorMarkup = HTMLContainer::generateMarkup('p',
-                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-info', 'style'=>'float: left; margin-right: .3em;'))
+                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-info', 'style'=>'float: left; margin-right: .3em;margin-top:1px;'))
                 . $errorMessage, $errArray);
 
 
@@ -464,6 +479,79 @@ class RoomChooser {
 
     }
 
+    protected function createAddedMarkup(\PDO $dbh, $constraintsDisabled, $replaceRoomSel) {
+
+        $errorMessage = '';
+        $rmSelectorMarkup = '';
+
+        if ($replaceRoomSel == '') {
+
+            $resOptions[] = array(0, '-None-', '');
+            $rmSelectorMarkup = $this->makeRoomSelector($resOptions, 0);
+
+        } else {
+            $rmSelectorMarkup = $replaceRoomSel;
+        }
+
+        $resvConstraints = $this->resv->getConstraints($dbh);
+        $constraintMkup = '';
+
+        if (count($resvConstraints->getConstraints()) > 0) {
+
+            $constraintMkup = self::createResvConstMkup($dbh, $this->resv->getIdReservation(), $constraintsDisabled, '', $this->oldResvId);
+
+            if ($constraintMkup == '') {
+                $constraintMkup = "<p style='padding:4px;'>(No Room Attributes Selected.)<p>";
+            }
+        }
+
+        // Current room
+        $curRoomMarkup = $this->selectedResource->getTitle();
+
+        if ($this->currentGuests >= $this->selectedResource->getMaxOccupants()) {
+            $curRoomMarkup .= ' (Full)';
+        }
+
+        $tbl = new HTMLTable();
+
+        $tbl->addHeaderTr(HTMLTable::makeTh("Existing Guests")
+                . HTMLTable::makeTh("New Guests")
+                . HTMLTable::makeTh("Current Room")
+                . HTMLTable::makeTh('New Room', array('id'=>'hhk-roomChsrtitle')));
+
+        $tbl->addBodyTr(
+                HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->getCurrentGuests()), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnNumGuests')), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $curRoomMarkup), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $rmSelectorMarkup, array('id'=>'spanSelResc')))
+                );
+
+        // set up room suitability message area
+        $errArray = array('class'=>'ui-state-highlight', 'id'=>'hhkroomMsg');
+        if ($errorMessage == '') {
+            $errArray['style'] = 'display:none;';
+        }
+
+        $errorMarkup = HTMLContainer::generateMarkup('p',
+                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-info', 'style'=>'float: left; margin-right: .3em;'))
+                . $errorMessage, $errArray);
+
+
+        // fieldset wrapper
+        $mk1 = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('fieldset',
+                        HTMLContainer::generateMarkup('legend', 'Room Chooser', array('style'=>'font-weight:bold;'))
+                        . $tbl->generateMarkup(array('id'=>'tblRescList'))
+                        . $errorMarkup
+                        . HTMLContainer::generateMarkup('div', $constraintMkup, array('style'=>'clear:left; float:left;')),
+                        array('class'=>'hhk-panel'))
+                        , array('style'=>'float:left;')
+                );
+
+
+        return $mk1;
+
+    }
     public static function createResvConstMkup(\PDO $dbh, $resvId, $disableCtrl = FALSE, $classId = '', $oldResvId = 0) {
 
         $tbl = new HTMLTable();

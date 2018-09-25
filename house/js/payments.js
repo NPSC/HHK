@@ -21,7 +21,7 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
     "use strict";
     
     if (!orderNumber || orderNumber == '') {
-        flagAlertMessage('Order Number is missing', true);
+        flagAlertMessage('Order Number is missing', 'error');
         return;
     }
     
@@ -45,7 +45,7 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                     window.location.assign(data.gotopage);
                 }
                 
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
                 
             } else if (data.markup) {
                 $diagBox.children().remove();
@@ -162,11 +162,11 @@ function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjD
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
             }
             
             if (data.reply && data.reply != '') {
-                flagAlertMessage(data.reply, false);
+                flagAlertMessage(data.reply, 'success');
                 $('#keysfees').dialog("close");
             }
             
@@ -218,14 +218,14 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
                 return;
             }
             
             if (data.delete) {
 
                 if (data.eid == '0') {
-                    flagAlertMessage(data.delete, false);
+                    flagAlertMessage(data.delete, 'success');
                     $('#btnInvGo').click();
                 } else {
                     $('#' + data.eid).parents('tr').first().hide('fade');
@@ -291,18 +291,18 @@ function sendVoidReturn(btnid, vorr, idPayment, amt) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
                 return;
             }
             if (data.reversal && data.reversal !== '') {
                 revMessage = data.reversal;
             }
             if (data.warning) {
-                flagAlertMessage(revMessage + data.warning, true);
+                flagAlertMessage(revMessage + data.warning, 'warning');
                 return;
             }
             if (data.success) {
-                 flagAlertMessage(revMessage + data.success, false);
+                 flagAlertMessage(revMessage + data.success, 'success');
             }
             if (data.receipt) {
                 showReceipt('#pmtRcpt', data.receipt, 'Receipt');
@@ -982,7 +982,7 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
                         if (data.gotopage) {
                             window.open(data.gotopage);
                         }
-                        flagAlertMessage(data.error, true);
+                        flagAlertMessage(data.error, 'error');
                         return;
                     }
                     if (data.amt) {
@@ -1127,7 +1127,7 @@ function reprintReceipt(pid, idDialg) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
                 
             }
             
@@ -1161,11 +1161,11 @@ function cardOnFile(id, idGroup, postBackPage) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
                 return;
             }
             if (data.hostedError) {
-                flagAlertMessage(data.hostedError, true);
+                flagAlertMessage(data.hostedError, 'error');
             }
             if (data.xfer) {
                 var xferForm = $('#xform');
@@ -1176,13 +1176,13 @@ function cardOnFile(id, idGroup, postBackPage) {
                 } else if (data.cardId && data.cardId != '') {
                     xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
                 } else {
-                    flagAlertMessage('PaymentId and CardId are missing!', true);
+                    flagAlertMessage('PaymentId and CardId are missing!', 'error');
                     return;
                 }
                 xferForm.submit();
             }
             if (data.success && data.success != '') {
-                flagAlertMessage(data.success, false);
+                flagAlertMessage(data.success, 'success');
             }
         }
     });
@@ -1221,7 +1221,7 @@ function updateCredit(id, idReg, name, strCOFdiag) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
             } else if (data.success) {
                 var cof = $('#' + strCOFdiag);
                 cof.children().remove();

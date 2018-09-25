@@ -31,11 +31,11 @@ function setRoomTo(idResv, idResc) {
             if (data.gotopage) {
                 window.location.assign(data.gotopage);
             }
-            flagAlertMessage(data.error, true);
+            flagAlertMessage(data.error, 'error');
             return;
         }
         if (data.msg && data.msg !== '') {
-            flagAlertMessage(data.msg, false);
+            flagAlertMessage(data.msg, 'info');
         }
         $('#calendar').fullCalendar('refetchEvents');
         refreshdTables(data);
@@ -92,11 +92,11 @@ function cgResvStatus(rid, status) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
                 return;
             }
             if (data.success) {
-                flagAlertMessage(data.success, false);
+                flagAlertMessage(data.success, 'info');
                 $('#calendar').fullCalendar('refetchEvents');
             }
             refreshdTables(data);
@@ -146,7 +146,7 @@ function invPay(id, pbp, dialg) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
                 
             }
             
@@ -187,7 +187,7 @@ function invLoadPc(nme, id, iid) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
                 
             } else if (data.mkup) {
                 
@@ -243,7 +243,7 @@ function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement)
                             window.location.assign(data.gotopage);
                         }
                         
-                        flagAlertMessage(data.error, true);
+                        flagAlertMessage(data.error, 'error');
                         
                     } else if (data.success) {
 
@@ -257,7 +257,7 @@ function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement)
                             
                         }
                         
-                        flagAlertMessage(data.success, false);
+                        flagAlertMessage(data.success, 'info');
                     }
                 }
             });
@@ -298,14 +298,14 @@ function chgRoomCleanStatus(idRoom, statusCode) {
                     if (data.gotopage) {
                         window.location.assign(data.gotopage);
                     }
-                    flagAlertMessage("Server error - " + data.error, true);
+                    flagAlertMessage("Server error - " + data.error, 'error');
                     return;
                 }
                 
                 refreshdTables(data);
                 
                 if (data.msg && data.msg != '') {
-                    flagAlertMessage(data.msg, false);
+                    flagAlertMessage(data.msg, 'info');
                 }
             }
 
@@ -352,7 +352,7 @@ function editPSG(psg) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
             } else if (data.markup) {
                 var diag = $('div#keysfees');
                 diag.children().remove();
@@ -463,7 +463,7 @@ function saveStatusEvent(idResc, type) {
             }
             
             if (data.msg && data.msg != '') {
-                flagAlertMessage(data.msg, false);
+                flagAlertMessage(data.msg, 'info');
             }
         }
         $('#statEvents').dialog('close');
@@ -497,14 +497,16 @@ function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta) {
                 alert("Parser error - " + err.message);
                 return;
             }
+            
             if (data.error) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
+                
             } else if (data.success) {
                 $('#calendar').fullCalendar('refetchEvents');
-                flagAlertMessage(data.success, false);
+                flagAlertMessage(data.success, 'success');
                 refreshdTables(data);
             }
         }
@@ -524,7 +526,7 @@ function getRoomList(idResv, eid) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
                 return;
             }
             if (data.container) {
@@ -1072,7 +1074,7 @@ $(document).ready(function () {
         var stDate = $('#txtactstart').datepicker("getDate");
         if (stDate === null) {
             $('#txtactstart').addClass('ui-state-highlight');
-            flagAlertMessage('Enter start date', true);
+            flagAlertMessage('Enter start date', 'alert');
             return;
         } else {
             $('#txtactstart').removeClass('ui-state-highlight');
@@ -1108,7 +1110,7 @@ $(document).ready(function () {
                         if (data.gotopage) {
                             window.open(data.gotopage, '_self');
                         }
-                        flagAlertMessage(data.error, true);
+                        flagAlertMessage(data.error, 'error');
 
                     } else if (data.success) {
                         $('#rptdiv').remove();
@@ -1142,7 +1144,7 @@ $(document).ready(function () {
         var stDate = $('#txtfeestart').datepicker("getDate");
         if (stDate === null) {
             $('#txtfeestart').addClass('ui-state-highlight');
-            flagAlertMessage('Enter start date', true);
+            flagAlertMessage('Enter start date', 'alert');
             return;
         } else {
             $('#txtfeestart').removeClass('ui-state-highlight');
@@ -1180,7 +1182,7 @@ $(document).ready(function () {
                     if (data.gotopage) {
                         window.open(data.gotopage, '_self');
                     }
-                    flagAlertMessage(data.error, true);
+                    flagAlertMessage(data.error, 'error');
 
                 } else if (data.success) {
                     
@@ -1280,7 +1282,7 @@ $(document).ready(function () {
                         if (data.gotopage) {
                             window.open(data.gotopage, '_self');
                         }
-                        flagAlertMessage(data.error, true);
+                        flagAlertMessage(data.error, 'error');
 
                     } else if (data.success) {
                         
@@ -1454,12 +1456,12 @@ $(document).ready(function () {
                                 if (data.gotopage) {
                                     window.open(data.gotopage, '_self');
                                 }
-                                flagAlertMessage(data.error, true);
+                                flagAlertMessage(data.error, 'error');
                                                                 
                             } else if (data.success) {
                                 
                                 $('#dchgPw').dialog("close");
-                                flagAlertMessage(data.success, false);
+                                flagAlertMessage(data.success, 'success');
                                 
                             } else if (data.warning) {
                                 $('#pwChangeErrMsg').text(data.warning);

@@ -23,13 +23,14 @@ function resvManager(initData) {
     var resvSection = new ResvSection($('#resvSection'));
     var hospSection = new HospitalSection($('#hospitalSection'));
     var expDatesSection = new ExpDatesSection($('#datesSection'));
+    var updateRescChooser = new updateRescChooser();
     
     // Exports
     t.getReserve = getReserve;
     t.verifyInput = verifyInput;
     t.loadResv = loadResv;
     t.deleteReserve = deleteReserve;
-    t.doOnDatesChange = doOnDatesChange;
+
     t.resvTitle = resvTitle;
     t.people = people;
     t.addrs = addrs;
@@ -41,7 +42,7 @@ function resvManager(initData) {
     function getIdResv() {
         return idResv;
     }
-    
+
     function getIdPsg() {
         return idPsg;
     }
@@ -119,13 +120,11 @@ function resvManager(initData) {
 
         function addGuest(item, data) {
 
-            hideAlertMessage();
-
             // Check for guest already added.
             //
 
             if (item.No_Return !== undefined && item.No_Return !== '') {
-                flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
+                flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', 'alert');
                 return;
             }
 
@@ -134,7 +133,7 @@ function resvManager(initData) {
             }
 
             if (item.id > 0 && people.findItem('id', item.id) !== null) {
-                flagAlertMessage('This person is already listed here. ', true);
+                flagAlertMessage('This person is already listed here. ', 'alert');
                 return;
             }
             
@@ -828,7 +827,7 @@ function resvManager(initData) {
                 if ($(this).val() === '') {
 
                     $(this).addClass('ui-state-error');
-                    flagAlertMessage('Set the highlighted Relationship.', true);
+                    flagAlertMessage('Set the highlighted Relationship.', 'alert');
                     return false;
 
                 }
@@ -865,14 +864,14 @@ function resvManager(initData) {
             // Only one patient allowed.
             if (numPat < 1) {
 
-                flagAlertMessage('Choose a ' + patLabel + '.', true);
+                flagAlertMessage('Choose a ' + patLabel + '.', 'alert');
 
                 $('.patientRelch').addClass('ui-state-error');
                 return false;
 
             } else if (numPat > 1) {
 
-                flagAlertMessage('Only 1 ' + patLabel + ' is allowed.', true);
+                flagAlertMessage('Only 1 ' + patLabel + ' is allowed.', 'alert');
 
                 for (var i in people.list()) {
                     if (people.list()[i].role === 'p') {
@@ -884,7 +883,7 @@ function resvManager(initData) {
 
             // Someone checking in?
             if (numGuests < 1) {
-                flagAlertMessage('There is no one actually staying.  Pick someone to stay.', true);
+                flagAlertMessage('There is no one actually staying.  Pick someone to stay.', 'alert');
                 return false;
             }
 
@@ -896,7 +895,7 @@ function resvManager(initData) {
                }
 
             } else if (numPriGuests === 0) {
-                flagAlertMessage('Set one guest as primary guest.', true);
+                flagAlertMessage('Set one guest as primary guest.', 'alert');
                 return false;
             }
 
@@ -923,7 +922,7 @@ function resvManager(initData) {
 
             if (nameErr === true) {
                 openSection(true);
-                flagAlertMessage("Enter a first and last name for the people highlighted.", true);
+                flagAlertMessage("Enter a first and last name for the people highlighted.", 'alert');
                 return false;
             }
             
@@ -949,7 +948,7 @@ function resvManager(initData) {
                     // Check patient birthdate
                     if (patBirthDate & $('#' + p + 'txtBirthDate').val() === '') {
                         $('#' + p + 'txtBirthDate').addClass('ui-state-error');
-                        flagAlertMessage(patLabel + ' is missing the Birth Date.', true);
+                        flagAlertMessage(patLabel + ' is missing the Birth Date.', 'alert');
                         openSection(true);
                         return false;
                     } else {
@@ -963,7 +962,7 @@ function resvManager(initData) {
 
                         if (pMessage !== '') {
 
-                            flagAlertMessage(pMessage, true);
+                            flagAlertMessage(pMessage, 'alert');
                             openSection(true);
 
                             // Open address row
@@ -982,7 +981,7 @@ function resvManager(initData) {
                     if ($('#' + p + 'selPatRel').val() === '') {
 
                         $('#' + p + 'selPatRel').addClass('ui-state-error');
-                        flagAlertMessage('Person highlighted is missing their ' + patLabel + ' Relationship.', true);
+                        flagAlertMessage('Person highlighted is missing their ' + patLabel + ' Relationship.', 'alert');
                         openSection(true);
                         return false;
 
@@ -997,7 +996,7 @@ function resvManager(initData) {
 
                          if (pMessage !== '') {
 
-                            flagAlertMessage(pMessage, true);
+                            flagAlertMessage(pMessage, 'alert');
                             openSection(true);
 
                             // Open address row
@@ -1019,7 +1018,7 @@ function resvManager(initData) {
 
                     if (bDate > today) {
                         $('#' + p + 'txtBirthDate').addClass('ui-state-error');
-                        flagAlertMessage('This birth date cannot be in the future.', true);
+                        flagAlertMessage('This birth date cannot be in the future.', 'alert');
                         openSection(true);
                         return false;
                     } else {
@@ -1034,7 +1033,7 @@ function resvManager(initData) {
 
                     if (pMessage !== '') {
 
-                        flagAlertMessage(pMessage, true);
+                        flagAlertMessage(pMessage, 'alert');
                         openSection(true);
 
                         // Open address row
@@ -1061,68 +1060,74 @@ function resvManager(initData) {
         t.setupComplete = false;
         t.ciDate = new Date();
         t.coDate = new Date();
+        t.openControl = false;
 
 
         t.setUp = function(data, doOnDatesChange) {
 
             $dateSection.empty();
-            $dateSection.append($(data.expDates.mu));
-
-            var gstDate = $('#gstDate'),
-                gstCoDate = $('#gstCoDate'),
-                nextDays = parseInt(data.expDates.defdays, 10);
-
-            // default number of days for a new stay.
-            if (isNaN(nextDays) || nextDays < 1) {
-                nextDays = 21;
-            }
-
-            $('#spnRangePicker').dateRangePicker({
-                format: 'MMM D, YYYY',
-                separator : ' to ',
-                minDays: 1,
-                autoClose: true,
-                showShortcuts: true,
-                shortcuts :
-                {
-                        'next-days': [nextDays]
-                },
-                getValue: function()
-                {
-                    if (gstDate.val() && gstCoDate.val() ) {
-                        return gstDate.val() + ' to ' + gstCoDate.val();
-                    } else {
-                        return '';
-                    }
-                },
-                setValue: function(s,s1,s2)
-                {
-                    gstDate.val(s1);
-                    gstCoDate.val(s2);
-                }
-            }).bind('datepicker-change', function(event, dates) {
-
-                // Update the number of days display text.
-                var numDays = Math.ceil((dates['date2'].getTime() - dates['date1'].getTime()) / 86400000);
-
-                $('#' + data.expDates.daysEle).val(numDays);
-
-                if ($('#spnNites').length > 0) {
-                    $('#spnNites').text(numDays);
-                }
+            
+            if (data.mu && data.mu !== '') {
                 
-                if ($.isFunction(doOnDatesChange)) {
-                    doOnDatesChange(dates);
+                $dateSection.append($(data.mu));
+
+                var gstDate = $('#gstDate'),
+                    gstCoDate = $('#gstCoDate'),
+                    nextDays = parseInt(data.defdays, 10);
+
+                // default number of days for a new stay.
+                if (isNaN(nextDays) || nextDays < 1) {
+                    nextDays = 21;
                 }
-            });
+
+                $('#spnRangePicker').dateRangePicker({
+                    format: 'MMM D, YYYY',
+                    separator : ' to ',
+                    minDays: 1,
+                    autoClose: true,
+                    showShortcuts: true,
+                    shortcuts :
+                    {
+                            'next-days': [nextDays]
+                    },
+                    getValue: function()
+                    {
+                        if (gstDate.val() && gstCoDate.val() ) {
+                            return gstDate.val() + ' to ' + gstCoDate.val();
+                        } else {
+                            return '';
+                        }
+                    },
+                    setValue: function(s,s1,s2)
+                    {
+                        gstDate.val(s1);
+                        gstCoDate.val(s2);
+                    }
+                }).bind('datepicker-change', function(event, dates) {
+
+                    // Update the number of days display text.
+                    var numDays = Math.ceil((dates['date2'].getTime() - dates['date1'].getTime()) / 86400000);
+
+                    $('#' + data.daysEle).val(numDays);
+
+                    if ($('#spnNites').length > 0) {
+                        $('#spnNites').text(numDays);
+                    }
+
+                    if ($.isFunction(doOnDatesChange)) {
+                        doOnDatesChange(dates);
+                    }
+                });
 
 
-            $dateSection.show();
+                $dateSection.show();
 
-            // Open the dialog if the dates are not defined yet.
-//            if ($('#gstDate').val() == '') {
-//                $('#spnRangePicker').data('dateRangePicker').open();
-//            }
+                // Open the dialog if the dates are not defined yet.
+                if (t.openControl) {
+                    $('#spnRangePicker').data('dateRangePicker').open();
+                }
+            
+            }
 
             setupComplete = true;
         };
@@ -1139,7 +1144,7 @@ function resvManager(initData) {
             if ($arrDate.val() === '') {
 
                 $arrDate.addClass('ui-state-error');
-                flagAlertMessage("This " + resvTitle + " is missing the check-in date.", true);
+                flagAlertMessage("This " + resvTitle + " is missing the check-in date.", 'alert');
                 return false;
 
             } else {
@@ -1148,8 +1153,19 @@ function resvManager(initData) {
 
                 if (isNaN(t.ciDate.getTime())) {
                     $arrDate.addClass('ui-state-error');
-                    flagAlertMessage("This " + resvTitle + " is missing the check-in date.", true);
+                    flagAlertMessage("This " + resvTitle + " is missing the check-in date.", 'alert');
                     return false;
+                }
+                
+                if (isCheckin !== undefined && isCheckin === true) {
+                    var start = moment($('#gstDate').val(), 'MMM D, YYYY');
+                    var now = moment().endOf('date');
+                    
+                    if (start > now) {
+                        $arrDate.addClass('ui-state-error');
+                        flagAlertMessage("Set the Check in date to today or earlier.", 'alert');
+                        return false;
+                    }
                 }
             }
 
@@ -1157,7 +1173,7 @@ function resvManager(initData) {
             if ($deptDate.val() === '') {
 
                 $deptDate.addClass('ui-state-error');
-                flagAlertMessage("This " + resvTitle + " is missing the expected departure date.", true);
+                flagAlertMessage("This " + resvTitle + " is missing the expected departure date.", 'alert');
                 return false;
 
             } else {
@@ -1166,13 +1182,13 @@ function resvManager(initData) {
 
                 if (isNaN(t.coDate.getTime())) {
                     $deptDate.addClass('ui-state-error');
-                    flagAlertMessage("This " + resvTitle + " is missing the expected departure date", true);
+                    flagAlertMessage("This " + resvTitle + " is missing the expected departure date", 'alert');
                     return false;
                 }
 
                 if (t.ciDate > t.coDate) {
                     $arrDate.addClass('ui-state-error');
-                    flagAlertMessage("This " + resvTitle + "'s check-in date is after the expected departure date.", true);
+                    flagAlertMessage("This " + resvTitle + "'s check-in date is after the expected departure date.", 'alert');
                     return false;
                 }
             }
@@ -1210,7 +1226,7 @@ function resvManager(initData) {
                 try {
                     data = $.parseJSON(data);
                 } catch (err) {
-                    flagAlertMessage(err.message, true);
+                    flagAlertMessage(err.message, 'error');
                     return;
                 }
 
@@ -1219,7 +1235,7 @@ function resvManager(initData) {
                 }
 
                 if (data.error) {
-                    flagAlertMessage(data.error, true);
+                    flagAlertMessage(data.error, 'error');
                 }
 
                 if (data.stayCtrl) {
@@ -1250,99 +1266,106 @@ function resvManager(initData) {
         
         // Update the room chooser.
         if ($('#gstDate').val() != '' && $('#gstCoDate').val() != '') {
-            updateRescChooser($('#gstDate').val(), $('#gstCoDate').val());
+            updateRescChooser.go($('#gstDate').val(), $('#gstCoDate').val());
         }
         
         // Checking in now button
         manageCheckInNowButton(dates["date1"].t, idResv);
     }
-    
+
     function manageCheckInNowButton(arrDate, rid) {
-        
+
         // Assumes the date is set to the format indicated
         var start = moment(arrDate, 'MMM D, YYYY');
         var now = moment().endOf('date');
-        
+
         if (rid > 0 && start <= now) {
             $('#btnCheckinNow').show();
         } else {
             $('#btnCheckinNow').hide();
         }
     }
+
+    function updateRescChooser() {
     
-    function updateRescChooser(arrivalDate, departureDate) {
-    
+        var t = this;
         var cbRS = {};
-        var idResc;
-        var $selResource = $('#selResource');
+        
+        t.omitSelf = true;
+        t.numberGuests = 0;
+        t.idReservation = idResv;
+        t.go = go;
+        
+        function go(arrivalDate, departureDate) {
 
-        if ($selResource.length === 0) {
-            return;
+            var idResc, $selResource = $('#selResource');
+            
+            if ($selResource.length === 0) {
+                return;
+            }
+
+            idResc = $selResource.find('option:selected').val();
+
+            $selResource.prop('disabled', true);
+            $('#hhk-roomChsrtitle').addClass('hhk-loading');
+            $('#hhkroomMsg').text('').hide();
+
+            $('input.hhk-constraintsCB:checked').each(function () {
+                cbRS[$(this).data('cnid')] = 'ON';
+            });
+
+            $.post('ws_ckin.php', 
+                {  //parameters
+                    cmd: 'newConstraint', 
+                    rid: t.idReservation, 
+                    numguests: t.numberGuests, 
+                    expArr: arrivalDate, 
+                    expDep: departureDate, 
+                    idr: idResc, 
+                    cbRS:cbRS,
+                    omsf: t.omitSelf
+                },
+                function(data) {
+                    var newSel;
+
+                    $selResource.prop('disabled', false);
+                    $('#hhk-roomChsrtitle').removeClass('hhk-loading');
+
+                    try {
+                        data = $.parseJSON(data);
+                    } catch (err) {
+                        alert("Parser error - " + err.message);
+                        return;
+                    }
+
+                    if (data.error) {
+                        if (data.gotopage) {
+                            window.location.assign(data.gotopage);
+                        }
+                        flagAlertMessage(data.error, 'error');
+                        return;
+                    }
+
+
+                    if (data.selectr) {
+
+                        newSel = $(data.selectr);
+                        $selResource.children().remove();
+
+                        newSel.children().appendTo($selResource);
+                        $selResource.val(data.idResource).change();
+
+                        if (data.msg && data.msg !== '') {
+                            $('#hhkroomMsg').text(data.msg).show();
+                        }
+                    }
+
+                    if (data.rooms) {
+                        rooms = data.rooms;
+                    }
+
+            });
         }
-
-        idResc = $selResource.find('option:selected').val();
-
-        hideAlertMessage();
-
-        $selResource.prop('disabled', true);
-        $('#hhk-roomChsrtitle').addClass('hhk-loading');
-        $('#hhkroomMsg').text('').hide();
-
-        $('input.hhk-constraintsCB:checked').each(function () {
-            cbRS[$(this).data('cnid')] = 'ON';
-        });
-
-        $.post('ws_ckin.php', 
-            {  //parameters
-                cmd: 'newConstraint', 
-                rid: idResv, 
-                numguests: 1, 
-                expArr: arrivalDate, 
-                expDep: departureDate, 
-                idr: idResc, 
-                cbRS:cbRS
-            },
-            function(data) {
-                var newSel;
-
-                $selResource.prop('disabled', false);
-                $('#hhk-roomChsrtitle').removeClass('hhk-loading');
-
-                try {
-                    data = $.parseJSON(data);
-                } catch (err) {
-                    alert("Parser error - " + err.message);
-                    return;
-                }
-
-                if (data.error) {
-                    if (data.gotopage) {
-                        window.location.assign(data.gotopage);
-                    }
-                    flagAlertMessage(data.error, true);
-                    return;
-                }
-
-
-                if (data.selectr) {
-
-                    newSel = $(data.selectr);
-                    $selResource.children().remove();
-
-                    newSel.children().appendTo($selResource);
-                    $selResource.val(data.idResource).change();
-
-                    if (data.msg && data.msg !== '') {
-                        $('#hhkroomMsg').text(data.msg).show();
-                    }
-                }
-
-                if (data.rooms) {
-                    rooms = data.rooms;
-                }
-
-        });
-
     }
 
     function HospitalSection($hospSection) {
@@ -1427,7 +1450,7 @@ function resvManager(initData) {
 
                     $('#selHospital').addClass('ui-state-error');
 
-                    flagAlertMessage("Select a hospital.", false);
+                    flagAlertMessage("Select a hospital.", 'alert');
 
                     $('#divhospDetail').show('blind');
                     $('#divhospHdr').removeClass('ui-corner-all').addClass('ui-corner-top');
@@ -1448,6 +1471,7 @@ function resvManager(initData) {
         var $rDiv, $veh, $rHdr, $expanderButton;
 
         t.setupComplete = false;
+        t.checkPayments = true;
         t.setUp = setUp;
         t.verify = verify;
 
@@ -1550,7 +1574,7 @@ function resvManager(initData) {
         function setupPay(data){
             
             $('#paymentDate').datepicker({
-                yearRange: '-1:+01',
+                yearRange: '-1:+00',
                 numberOfMonths: 1
             });
                 
@@ -1562,7 +1586,7 @@ function resvManager(initData) {
             // Room selector update for constraints changes.
             $('input.hhk-constraintsCB').change( function () {
                 // Disable max room size.
-                updateRescChooser($('#gstDate').val(), $('#gstCoDate').val());
+                updateRescChooser.go($('#gstDate').val(), $('#gstCoDate').val());
             });
 
         }
@@ -1573,8 +1597,8 @@ function resvManager(initData) {
                 linkId: rid,
                 linkType: 'reservation',
                 newNoteAttrs: {id:'taNewNote', name:'taNewNote'},
-                alertMessage: function(text, isError) {
-                    flagAlertMessage(text, isError);
+                alertMessage: function(text, type) {
+                    flagAlertMessage(text, type);
                 }
             });
             
@@ -1592,7 +1616,9 @@ function resvManager(initData) {
             }
 
             // Stat
-            $rDiv.append($(data.resv.rdiv.rstat));
+            if (data.resv.rdiv.rstat !== undefined) {
+                $rDiv.append($(data.resv.rdiv.rstat));
+            }
             
             // Vehicle section
             if (data.resv.rdiv.vehicle !== undefined) {
@@ -1606,7 +1632,9 @@ function resvManager(initData) {
             }
 
             // Reservation notes.
-            $rDiv.append(setupNotes(data.rid, $(data.resv.rdiv.notes)));
+            if (data.resv.rdiv.notes !== undefined) {
+                $rDiv.append(setupNotes(data.rid, $(data.resv.rdiv.notes)));
+            }
 
             // waitlist notes
             if (data.resv.rdiv.wlnotes !== undefined) {
@@ -1624,7 +1652,13 @@ function resvManager(initData) {
 
             $rHdr.addClass('ui-widget-header ui-state-default ui-corner-top');
 
-            $rHdr.click(function() {
+            $rHdr.click(function(event) {
+                var target = $(event.target);
+
+                if (target[0].id !== 'divResvHdr' && target[0].id !== 'r_drpDown') {
+                   return;
+                }
+
                 if ($rDiv.css('display') === 'none') {
                     $rDiv.show('blind');
                     $rHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
@@ -1638,7 +1672,11 @@ function resvManager(initData) {
             $wrapper.empty().append($rHdr).append($rDiv).show();
 
             t.$totalGuests = $('#spnNumGuests');
+            t.origRoomId = $('#selResource').val();
+            t.checkPayments = true;
 
+            //$('#selResource').select2();
+            
             // Reservation history button
             if ($('.hhk-viewResvActivity').length > 0) {
                 $('.hhk-viewResvActivity').click(function () {
@@ -1651,7 +1689,7 @@ function resvManager(initData) {
                         if (data.gotopage) {
                             window.open(data.gotopage, '_self');
                         }
-                        flagAlertMessage(data.error, true);
+                        flagAlertMessage(data.error, 'error');
                         return;
                     }
                      if (data.activity) {
@@ -1672,15 +1710,15 @@ function resvManager(initData) {
                 if (amount === '') {
                     amount = 0;
                 }
-                $.post('ws_ckin.php', {cmd:'confrv', rid: $(this).data('rid'), amt: amount, eml: '0'}, function(data) {
+                $.post('ws_ckin.php', {cmd:'confrv', rid: $(this).data('rid'), amt: amount, eml: '0'}, function(d) {
 
-                    data = $.parseJSON(data);
+                    data = $.parseJSON(d);
 
                     if (data.error) {
                         if (data.gotopage) {
                             window.open(data.gotopage, '_self');
                         }
-                        flagAlertMessage(data.error, true);
+                        flagAlertMessage(data.error, 'error');
                         return;
                     }
 
@@ -1704,6 +1742,41 @@ function resvManager(initData) {
 
             if (data.resv.rdiv.pay !== undefined) {
                 setupPay(data);
+            }
+
+            if ($('#addGuestHeader').length > 0) {
+
+                expDatesSection = new ExpDatesSection($('#addGuestHeader'));
+                expDatesSection.openControl = true;
+                expDatesSection.setUp(data.resv.rdiv, doOnDatesChange);
+                
+                updateRescChooser.omitSelf = false;
+                updateRescChooser.idReservation = 0;
+                t.checkPayments = false;
+                
+                $('#selResource').change(function () {
+
+                    if ($('#gstDate').val() !== '' && $('#gstCoDate').val() !== '') {
+
+                        if ($(this).val() !== t.origRoomId) {
+                            $('#divRateChooser').show();
+                            $('#divPayChooser').show();
+                            t.checkPayments = true;
+                        } else {
+                            $('#divRateChooser').hide();
+                            $('#divPayChooser').hide();
+                            t.checkPayments = false;
+                        }
+
+                    } else {
+                        $(this).val(t.origRoomId);
+                        flagAlertMessage('Set the arrival and departure dates before selecting a new room. ', 'alert');
+                    }
+                });
+                
+                $('#' + familySection.divFamDetailId).on('change', '.hhk-cbStay', function () {
+                    updateRescChooser.numberGuests = familySection.findStaysChecked();
+                });
             }
 
             t.setupComplete = true;
@@ -1741,21 +1814,62 @@ function resvManager(initData) {
 
             // vehicle
             if ($('#cbNoVehicle').length > 0) {
+                
                 if ($('#cbNoVehicle').prop("checked") === false) {
+                    
                     var carVal = validateCar(1);
+                    
                     if (carVal != '') {
+                        
                         var carVal2 = validateCar(2);
+                        
                         if (carVal2 != '') {
                             $('#vehValidate').text(carVal2);
-                            flagAlertMessage(carVal, false);
+                            flagAlertMessage(carVal, 'alert');
                             return false;
                         }
                     }
                 }
+                
                 $('#vehValidate').text('');
             }
             
+            if (isCheckin) {
+                
+                if (t.checkPayments === true) {
+                    
+                    // Room rate
+                    if ($('#selCategory').val() == fixedRate && $('#txtFixedRate').length > 0 && $('#txtFixedRate').val() == '') {
+                        
+                        flagAlertMessage("Set the Room Rate to an amount, or to 0.", 'alert');
+                        $('#txtFixedRate').addClass('ui-state-error');
+                        return false;
+                        
+                    } else {
+                        $('#txtFixedRate').removeClass('ui-state-error');
+                    }
+                
+
+                    // Room fees paid
+                    if ($('input#feesPayment').length > 0 && $('input#feesPayment').val() == '') {
+                        
+                        $('#payChooserMsg').text("Set the Room Fees to an amount, or 0.").show('fade');
+                        $('input#feesPayment').addClass('ui-state-error');
+                        return false;
+                        
+                    } else {
+                        $('input#feesPayment').removeClass('ui-state-error');
+                    }
+
+                    // Verify cash amount tendered
+                    if (verifyAmtTendrd !== undefined && verifyAmtTendrd() === false) {
+                        return false;
+                    }
+                }
+            }
+            
             return true;
+            
         }
     }
 
@@ -1830,7 +1944,7 @@ function resvManager(initData) {
         } else if (data.cardId && data.cardId != '') {
             xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
         } else {
-            flagAlertMessage('PaymentId and CardId are missing!', true);
+            flagAlertMessage('PaymentId and CardId are missing!', 'error');
             return;
         }
         xferForm.submit();
@@ -1925,7 +2039,7 @@ function resvManager(initData) {
             try {
                 data = $.parseJSON(data);
             } catch (err) {
-                flagAlertMessage(err.message, true);
+                flagAlertMessage(err.message, 'error');
                 return;
             }
 
@@ -1934,7 +2048,7 @@ function resvManager(initData) {
             }
 
             if (data.error) {
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
                 $('#btnDone').val('Save ' + resvTitle).show();
             }
 
@@ -1954,7 +2068,7 @@ function resvManager(initData) {
                     try {
                         data = $.parseJSON(datas);
                     } catch (err) {
-                        flagAlertMessage(err.message, true);
+                        flagAlertMessage(err.message, 'error');
                         $(idForm).remove();
                     }
 
@@ -1962,18 +2076,18 @@ function resvManager(initData) {
                         if (data.gotopage) {
                             window.open(data.gotopage, '_self');
                         }
-                        flagAlertMessage(data.error, true);
+                        flagAlertMessage(data.error, 'error');
                         $(idForm).remove();
                     }
 
                     if (data.warning) {
-                        flagAlertMessage(data.warning, false);
+                        flagAlertMessage(data.warning, 'warning');
                         $delButton.hide();
                     }
 
                     if (data.result) {
                         $(idForm).remove();
-                        flagAlertMessage(data.result + ' <a href="Reserve.php">Continue</a>', false);
+                        flagAlertMessage(data.result + ' <a href="Reserve.php">Continue</a>', 'success');
                     }
                 }
         );
@@ -2015,6 +2129,7 @@ function resvManager(initData) {
 
             familySection.setUp(data);
 
+            // Hide loading message/guest search.
             $('div#guestSearch').hide();
 
             $('#btnDone').val('Save Family').show();
@@ -2022,12 +2137,16 @@ function resvManager(initData) {
 
         // Expected Dates Control
         if (data.expDates !== undefined && data.expDates !== '') {
-            expDatesSection.setUp(data, doOnDatesChange);
+            expDatesSection.setUp(data.expDates, doOnDatesChange);
+        }
+
+        if (data.warning !== undefined && data.warning !== '') {
+            flagAlertMessage(data.warning, 'warning');
         }
 
         // Reservation
         if (data.resv !== undefined) {
-            
+
             if (data.resv.rdiv.rooms) {
                 rooms = data.resv.rdiv.rooms;
             }
@@ -2084,7 +2203,7 @@ function resvManager(initData) {
                 $('#btnShowReg').show();
                 $('#spnStatus').text(data.resv.rdiv.rStatTitle === '' ? '' : ' - ' + data.resv.rdiv.rStatTitle);
             }
-            
+
             // Checking in now button
             manageCheckInNowButton($('#gstDate').val(), data.rid);
         
@@ -2125,6 +2244,7 @@ function resvManager(initData) {
             return false;
         }
 
+        // Reservation
         if (resvSection.setupComplete === true) {
 
             if (resvSection.verify() === false) {

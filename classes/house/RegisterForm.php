@@ -435,21 +435,22 @@ p.label {
         $pledgedRate = 0.0;
         $rateAdj = 0.0;
         $notes = '';
+        $stays = array();
 
         if ($idVisit > 0) {
 
-            $query = "select idName, Span_Start_Date, Expected_Co_Date, Span_End_Date, Status  from stays "
-                    . "where idVisit = :reg and Status in ('" . VisitStatus::CheckedIn . "', '" . VisitStatus::CheckedOut . "')"
-                    . " and DATEDIFF(ifnull(Span_End_Date, dateDefaultNow(Expected_Co_Date)), Span_Start_Date) > 0";
+            $query = "select idName, Span_Start_Date, Expected_Co_Date, Span_End_Date, `Status`  from stays "
+                    . "where idVisit = :reg and `Status` in ('" . VisitStatus::CheckedIn . "', '" . VisitStatus::CheckedOut . "')"
+                    . " and DATEDIFF(ifnull(Span_End_Date, dateDefaultNow(Expected_Co_Date)), Span_Start_Date) > 0"
+                    . " order by `Status` desc";
             $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
             $stmt->bindValue(':reg', $idVisit, PDO::PARAM_INT);
             $stmt->execute();
-            $stays = $stmt->fetchAll(PDO::FETCH_NAMED);
+            $rows = $stmt->fetchAll(PDO::FETCH_NAMED);
 
-            // If still 0, then ?
-//            if (count($stays) == 0) {
-//                throw new Hk_Exception_Runtime("No guests were found for this visit.  ");
-//            }
+            foreach ($rows as $s) {
+                $stays[$s['idName']] = $s;
+            }
 
             // visit
             $visit = new Visit($dbh, 0, $idVisit);

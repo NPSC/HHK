@@ -14,8 +14,8 @@ function setupVisitNotes(vid, $container) {
         linkId: vid,
         linkType: 'visit',
         newNoteAttrs: {id:'taNewVNote', name:'taNewVNote'},
-        alertMessage: function(text, isError) {
-            flagAlertMessage(text, isError);
+        alertMessage: function(text, type) {
+            flagAlertMessage(text, type);
         }
     });
 
@@ -59,7 +59,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                     window.location.assign(data.gotopage);
                     return;
                 }
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
                 return;
                 
             }
@@ -602,7 +602,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
             }            
 
             if (typeof refreshdTables !== 'undefined') {
@@ -625,8 +625,13 @@ function paymentReply (data, updateCal) {
         
         if (data.hostedError) {
             
+<<<<<<< HEAD
             flagAlertMessage(data.hostedError, true);
 
+=======
+            flagAlertMessage(data.hostedError, 'error');
+            
+>>>>>>> master
         } else if (data.xfer && $('#xform').length > 0) {
 
             var xferForm = $('#xform');
@@ -638,7 +643,7 @@ function paymentReply (data, updateCal) {
             } else if (data.cardId && data.cardId != '') {
                 xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
             } else {
-                flagAlertMessage('PaymentId and CardId are missing!', true);
+                flagAlertMessage('PaymentId and CardId are missing!', 'error');
                 return;
             }
 
@@ -657,7 +662,7 @@ function paymentReply (data, updateCal) {
 
 
         if (data.success && data.success !== '') {
-            flagAlertMessage(data.success, false);
+            flagAlertMessage(data.success, 'success');
         
             if ($('#calendar').length > 0 && updateCal) {
                 $('#calendar').fullCalendar('refetchEvents');

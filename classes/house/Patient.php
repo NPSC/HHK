@@ -60,11 +60,11 @@ class Patient extends Role {
         return $mk1;
     }
 
-    public function createThinMarkup(PSGMemStay $stay, $lockRelChooser) {
+    public function createThinMarkup(PSGMember $mem, $lockRelChooser) {
 
         $uS = Session::getInstance();
 
-        $td = $this->createStayMarkup($stay);
+        $td = $this->createStayMarkup($mem);
 
         // Phone
         $ph = HTMLTable::makeTd($this->getPhonesObj()->get_Data()['Phone_Num']);
@@ -93,7 +93,7 @@ class Patient extends Role {
         return $mu;
     }
 
-    public function createStayMarkup(PSGMemStay $stay) {
+    public function createStayMarkup(PSGMember $stay) {
 
         $uS = Session::getInstance();
         $td = '';
@@ -108,7 +108,7 @@ class Patient extends Role {
 
             $stBtn = '';
             if ($uS->PatientAsGuest) {
-                $stBtn = $stay->createStayButton($this->getRoleMember()->getIdPrefix());
+                $stBtn = $stay->getStayObj()->createStayButton($this->getRoleMember()->getIdPrefix());
             }
 
             $td = HTMLTable::makeTd($stBtn

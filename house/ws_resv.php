@@ -110,8 +110,6 @@ $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
 
-$guestAdmin = SecurityComponent::is_Authorized("guestadmin");
-
 $c = "";
 
 // Get our command
@@ -140,7 +138,7 @@ try {
 
         $resv = Reservation::reservationFactoy($dbh, $_POST);
 
-        $newResv = $resv->save($dbh, $_POST, $guestAdmin);
+        $newResv = $resv->save($dbh, $_POST);
 
         $events = $newResv->createMarkup($dbh);
 
@@ -160,9 +158,9 @@ try {
 
         $resv = CheckingIn::reservationFactoy($dbh, $_POST);
 
-        $resv->save($dbh, $_POST, $guestAdmin);
+        $newResv = $resv->save($dbh, $_POST);
 
-        $events = $resv->checkedinMarkup($dbh);
+        $events = $newResv->checkedinMarkup($dbh);
 
         break;
 
@@ -337,7 +335,7 @@ try {
 } catch (Hk_Exception $ex) {
     $events = array("error" => "HouseKeeper Server Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
 } catch (Exception $ex) {
-    $events = array("error" => "Web Server Error: " . $ex->getMessage());
+    $events = array("error" => "Web Server Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
 }
 
 

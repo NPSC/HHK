@@ -358,7 +358,9 @@ class RateChooser {
                     . $markup, array('style'=>'float:left;', 'class'=>'hhk-panel'));
 
         } else {
-            return $this->createStaticMarkup($dbh, $resv, $visitFeeTitle);
+            return HTMLContainer::generateMarkup('fieldset',
+                    HTMLContainer::generateMarkup('legend', 'Room Rate', array('style'=>'font-weight:bold;'))
+                    . $this->createStaticMarkup($dbh, $resv, $visitFeeTitle), array('style'=>'float:left;', 'class'=>'hhk-panel'));
         }
 
     }
@@ -435,9 +437,7 @@ class RateChooser {
         }
 
 
-        return HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', 'Rate Info', array('style'=>'font-weight:bold;'))
-                . $tbl->generateMarkup());
+        return $tbl->generateMarkup();
 
     }
 

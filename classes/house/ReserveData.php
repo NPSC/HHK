@@ -18,8 +18,13 @@ class ReserveData {
     const RESV_CHOOSER = 'resvChooser';
     const PSG_CHOOSER = 'psgChooser';
     const FAM_SECTION = 'famSection';
+    const EXPECTED_DATES = 'expDates';
+    const HOSPITAL_SECTION = 'hosp';
+    const RESV_SECTION = 'resv';
+    const CHECKIN_SECTION = 'resv';
     const FULL_NAME = 'fullName';
     const ADD_PERSON = 'addPerson';
+    const WARNING = 'warning';
 
     const ROLE = 'role';
     const PREF = 'pref';
@@ -27,14 +32,19 @@ class ReserveData {
     const ID = 'id';
     const PRI = 'pri';
 
+    const GUEST_ADMIN = 'guestadmin';
+
     const STAYING = '1';
     const NOT_STAYING = '0';
     const CANT_STAY = 'x';
+
+    const DATE_FORMAT = 'M j, Y';
 
     protected $idResv = 0;
     protected $id;
     protected $idPsg = 0;
     protected $idHospitalStay = 0;
+    protected $idVisit;
     protected $forceNewPsg = FALSE;
     protected $forceNewResv = FALSE;
     protected $fullName = '';
@@ -52,10 +62,17 @@ class ReserveData {
     protected $resvChooser;
     protected $psgChooser;
     protected $familySection;
+    protected $expectedDatesSection;
+    protected $hospitalSection;
+    protected $reservationSection;
+    protected $checkinSection;
+    protected $paymentSection;
     protected $addPerson;
-    protected $arrivalDateStr;
-    protected $departureDateStr;
+    protected $arrivalDT;
+    protected $departureDT;
+    protected $concurrentRooms = 0;
     protected $psgMembers;
+    protected $errors;
 
     function __construct($post, $reservationTitle = '') {
 
@@ -105,6 +122,12 @@ class ReserveData {
         $this->resvChooser = '';
         $this->psgChooser = '';
         $this->familySection = '';
+        $this->expectedDatesSection = '';
+        $this->hospitalSection = '';
+        $this->reservationSection = '';
+        $this->checkingInSection = '';
+        $this->paymentSection = '';
+        $this->errors = '';
 
     }
 
@@ -134,15 +157,17 @@ class ReserveData {
             }
 
             if (isset($memArray[ReserveData::PRI])) {
-                $priGuest = intval($memArray[ReserveData::PRI], 10);
+                $priGuest = $memArray[ReserveData::PRI];
             }
 
             $psgMember = $this->getPsgMember($prefix);
 
             if (is_null($psgMember)) {
-                $this->setMember(new PSGMember($id, $prefix, $role, new PSGMemStay($stay, $priGuest)));
+                $this->setMember(new PSGMember($id, $prefix, $role, $priGuest, new PSGMemStay($stay)));
             } else {
-                $psgMember->setStay($stay)->setRole($role)->setPrimaryGuest($priGuest);
+                $psgMember->setStay($stay)
+                        ->setRole($role)
+                        ->setPrimaryGuest($priGuest);
             }
 
         }
@@ -182,12 +207,32 @@ class ReserveData {
             $rtnData[ReserveData::FAM_SECTION] = $this->familySection;
         }
 
+        if ($this->hospitalSection != '') {
+            $rtnData[ReserveData::HOSPITAL_SECTION] = $this->hospitalSection;
+        }
+
+        if ($this->expectedDatesSection != '') {
+            $rtnData[ReserveData::EXPECTED_DATES] = $this->expectedDatesSection;
+        }
+
+        if ($this->reservationSection != '') {
+            $rtnData[ReserveData::RESV_SECTION] = $this->reservationSection;
+        }
+
+        if ($this->checkinSection != '') {
+            $rtnData[ReserveData::CHECKIN_SECTION] = $this->checkinSection;
+        }
+
         if ($this->addPerson != '') {
             $rtnData[ReserveData::ADD_PERSON] = $this->addPerson;
         }
 
         if ($this->fullName != '') {
             $rtnData[ReserveData::FULL_NAME] = $this->fullName;
+        }
+
+        if ($this->errors != '') {
+            $rtnData[ReserveData::WARNING] = $this->errors;
         }
 
         return $rtnData;
@@ -207,6 +252,14 @@ class ReserveData {
 
     public function getIdHospital_Stay() {
         return $this->idHospitalStay;
+    }
+
+    public function getIdVisit() {
+        return $this->idVisit;
+    }
+
+    public function getConcurrentRooms() {
+        return $this->concurrentRooms;
     }
 
     public function getResvTitle() {
@@ -253,12 +306,30 @@ class ReserveData {
         return $this->addrPurpose;
     }
 
+    public function getArrivalDT() {
+        return $this->arrivalDT;
+    }
+
     public function getArrivalDateStr() {
-        return $this->arrivalDateStr;
+
+        if ($this->arrivalDT !== NULL) {
+            return $this->arrivalDT->format(ReserveData::DATE_FORMAT);
+        }
+
+        return '';
+    }
+
+    public function getDepartureDT() {
+        return $this->departureDT;
     }
 
     public function getDepartureDateStr() {
-        return $this->departureDateStr;
+
+        if ($this->departureDT !== NULL) {
+            return $this->departureDT->format(ReserveData::DATE_FORMAT);
+        }
+
+        return '';
     }
 
     public function getPsgMembers() {
@@ -351,6 +422,16 @@ class ReserveData {
         return $this;
     }
 
+    public function setIdVisit($id) {
+        $this->idVisit = $id;
+        return $this;
+    }
+
+    public function setConcurrentRooms($numberRooms) {
+        $this->concurrentRooms = intval($numberRooms);
+        return $this;
+    }
+
     public function setSaveButtonLabel($label) {
         $this->saveButtonLabel = $label;
         return $this;
@@ -380,14 +461,63 @@ class ReserveData {
         return $this;
     }
 
-    public function setArrivalDateStr($arrivalDateStr) {
-        $this->arrivalDateStr = $arrivalDateStr;
+    public function setHospitalSection($p) {
+        $this->hospitalSection = $p;
         return $this;
     }
 
-    public function setDepartureDateStr($departureDateStr) {
-        $this->departureDateStr = $departureDateStr;
+    public function setExpectedDatesSection($p) {
+        $this->expectedDatesSection = $p;
         return $this;
+    }
+
+    public function setResvSection($p) {
+        $this->reservationSection = $p;
+        return $this;
+    }
+
+    public function setCheckinSection($p) {
+        $this->checkinSection = $p;
+        return $this;
+    }
+
+    public function setArrivalDT($arrivalDT) {
+        $this->arrivalDT = $arrivalDT;
+        return $this;
+    }
+
+    protected function setArrivalDateStr($strDate) {
+
+        if ($strDate != '') {
+            $this->setArrivalDT(new \DateTime($strDate));
+        }
+        return $this;
+    }
+
+    public function setDepartureDT($departureDate) {
+        $this->departureDT = $departureDate;
+        return $this;
+    }
+
+    protected function setDepartureDateStr($strDate) {
+
+        if ($strDate != '') {
+            $this->setDepartureDT(new \DateTime($strDate));
+        }
+        return $this;
+    }
+
+    public function addError($e) {
+        $this->errors .= $e;
+    }
+
+    public function hasError() {
+
+        if ($this->errors != '') {
+            return TRUE;
+        }
+
+        return FALSE;
     }
 
 }
@@ -398,6 +528,7 @@ class PSGMember {
     protected $id;
     protected $prefix;
     protected $role;
+    protected $primaryGuest;
 
     /**
      *
@@ -405,13 +536,36 @@ class PSGMember {
      */
     protected $memStay;
 
-    public function __construct($id, $prefix, $role, PSGMemStay $memStay) {
+    public function __construct($id, $prefix, $role, $isPrimaryGuest, PSGMemStay $memStay) {
 
         $this->setId($id);
         $this->setPrefix($prefix);
         $this->setRole($role);
+        $this->setPrimaryGuest($isPrimaryGuest);
+
         $this->memStay = $memStay;
     }
+
+    public function createPrimaryGuestRadioBtn($prefix) {
+
+        $rbPri = array(
+            'type'=>'radio',
+            'name'=>'rbPriGuest',
+            'id'=>$prefix .'rbPri',
+            'data-prefix'=>$prefix,
+            'title'=>'Click to set this person as Primary Guest.',
+            'style'=>'margin-left:5px;',
+            'class'=>'hhk-rbPri'
+        );
+
+        if ($this->isPrimaryGuest()) {
+            $rbPri['checked'] = 'checked';
+        }
+
+        return HTMLInput::generateMarkup($prefix, $rbPri);
+
+    }
+
 
     public function getId() {
         return $this->id;
@@ -442,7 +596,7 @@ class PSGMember {
     }
 
     public function isPrimaryGuest() {
-        return $this->memStay->isPrimaryGuest();
+        return $this->primaryGuest;
     }
 
     public function isPatient() {
@@ -468,7 +622,13 @@ class PSGMember {
     }
 
     public function setPrimaryGuest($primaryGuest) {
-        $this->memStay->setPrimaryGuest($primaryGuest);
+
+        if ($primaryGuest == TRUE) {
+            $this->primaryGuest = TRUE;
+        } else {
+            $this->primaryGuest = FALSE;
+        }
+
         return $this;
     }
 
@@ -488,7 +648,7 @@ class PSGMember {
             ReserveData::ID => $this->getId(),
             ReserveData::ROLE => $this->getRole(),
             ReserveData::STAY => $this->memStay->getStay(),
-            ReserveData::PRI => ($this->memStay->isPrimaryGuest() ? '1' : '0'),
+            ReserveData::PRI => ($this->isPrimaryGuest() ? '1' : '0'),
             ReserveData::PREF => $this->getPrefix(),
         );
     }
@@ -499,18 +659,14 @@ class PSGMember {
 class PSGMemStay {
 
     protected $stay;
-    protected $primaryGuest;
 
-    public function __construct($stay, $primaryGuest = 0) {
+    public function __construct($stayIndex) {
 
-        if ($stay == ReserveData::STAYING || $stay == ReserveData::NOT_STAYING || $stay == ReserveData::CANT_STAY) {
-            $this->stay = $stay;
+        if ($stayIndex == ReserveData::STAYING || $stayIndex == ReserveData::NOT_STAYING || $stayIndex == ReserveData::CANT_STAY) {
+            $this->stay = $stayIndex;
         } else {
             $this->stay = ReserveData::NOT_STAYING;
         }
-
-        $this->setPrimaryGuest($primaryGuest);
-
     }
 
     public function createStayButton($prefix) {
@@ -537,26 +693,6 @@ class PSGMemStay {
 
     }
 
-    public function createPrimaryGuestRadioBtn($prefix) {
-
-        $rbPri = array(
-            'type'=>'radio',
-            'name'=>'rbPriGuest',
-            'id'=>$prefix .'rbPri',
-            'data-prefix'=>$prefix,
-            'title'=>'Click to set this person as Primary Guest.',
-            'style'=>'margin-left:5px;',
-            'class'=>'hhk-rbPri'
-        );
-
-        if ($this->isPrimaryGuest()) {
-            $rbPri['checked'] = 'checked';
-        }
-
-        return HTMLInput::generateMarkup($prefix, $rbPri);
-
-    }
-
     public function isStaying() {
         if ($this->getStay() == ReserveData::STAYING) {
             return TRUE;
@@ -571,23 +707,12 @@ class PSGMemStay {
         return FALSE;
     }
 
-    public function isPrimaryGuest() {
-        if ($this->primaryGuest > 0) {
-            return TRUE;
-        }
-        return FALSE;
-    }
-
     public function getStay() {
         return $this->stay;
     }
 
     public function setStay($s) {
         $this->stay = $s;
-    }
-
-    public function setPrimaryGuest($primaryGuest) {
-        $this->primaryGuest = $primaryGuest;
     }
 
     public function setBlocked() {
@@ -610,9 +735,9 @@ class PSGMemVisit extends PSGMemStay {
 
     protected $index = array();
 
-    public function __construct($index, $primaryGuest = FALSE) {
+    public function __construct($index) {
 
-        parent::__construct(ReserveData::NOT_STAYING, $primaryGuest);
+        parent::__construct(ReserveData::NOT_STAYING);
 
         $this->index = $index;
         $this->setNotStaying();
