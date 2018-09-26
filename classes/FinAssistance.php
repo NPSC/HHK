@@ -169,11 +169,15 @@ class FinAssistance {
                 if ($catTitle != '') {
                     $statTitle = '; ' . $statTitle;
                 }
+
+                if ($notes != '') {
+                    $statTitle .= '; ';
+                }
             }
 
             // Notes
             if ($notes != '' || $catTitle != '' || $statTitle != '') {
-                $this->finAppRs->Notes->setNewVal($this->getFaNotes() . "\r\n" . date('m-d-Y') . ', ' . $uname . ' - ' . $catTitle . $statTitle);
+                $this->finAppRs->Notes->setNewVal($this->getFaNotes() . "\r\n" . date('m-d-Y') . ', ' . $uname . ' - ' . $catTitle . $statTitle . $notes);
             }
         }
 

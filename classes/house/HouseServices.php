@@ -1460,1322 +1460,1322 @@ class HouseServices {
      * @return array of new markup and variables for post check-in processing
      * @throws Hk_Exception_Runtime
      */
-    public static function saveCheckinPage(\PDO $dbh, $post, $isAuthorized = FALSE) {
-
-        $uS = Session::getInstance();
-        $dataArray = array();
-        $dataArray['warning'] = '';
-        $reply = '';
-        $creditCheckOut = array();
-
-
-        //
-        // Reservation
-        //
-        $idReserv = 0;
-        if (isset($post['rid'])) {
-            $idReserv = intval(filter_var($post['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if ($idReserv == 0) {
-            throw new Hk_Exception_Runtime('Check-in missing reservation id.  ');
-        }
-
-        $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
-
-        if (($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::Waitlist || $resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Imediate) === FALSE) {
-            throw new Hk_Exception_Runtime('Reservation Status is wrong - ' . $resv->getStatusTitle());
-        }
-
-
-        //
-        // Save members
-        //
-        $chkinGroup = new CheckInGroup();
-        $chkinGroup->saveMembers($dbh, $resv->getIdHospitalStay(), $post);
-
-        if (is_null($chkinGroup->patient)) {
-            // Get labels
-            $labels = new Config_Lite(LABEL_FILE);
-
-            throw new Hk_Exception_Runtime($labels->getString('MemberType', 'patient', 'Patient') . ' not specified.  ');
-        }
-
-        // any new guests?
-        if (count($chkinGroup->newGuests) == 0) {
-            throw new Hk_Exception_Runtime('All guests are already checked in.  ');
-        }
-
-
-        //
-        // verify/save psg
-        //
-        $psg = $chkinGroup->savePsg($dbh, '', $uS->username);
-
-
-
-        //
-        // dates
-        //
-        $today = new \DateTime();
-        $today->setTime(0, 0, 0);
-
-        // Visit dates
-        if (isset($post['ckindt']) && isset($post['ckoutdt'])) {
-
-            try {
-                $chkinDT = setTimeZone($uS, filter_var($post['ckindt'], FILTER_SANITIZE_STRING));
-                $chkoutDT = setTimeZone($uS, filter_var($post['ckoutdt'], FILTER_SANITIZE_STRING));
-
-                // Edit checkin date for later hour of checkin if posting the check in late.
-                $tCkinDT = new \DateTime($chkinDT->format('Y-m-d 00:00:00'));
-
-                if ($chkinDT->format('H') < 16 && $today > $tCkinDT) {
-                    $chkinDT->setTime(16,0,0);
-                }
-
-                self::verifyVisitDates($resv, $chkinDT, $chkoutDT, $uS->OpenCheckin);
-
-                // Stay dates
-                self::verifyStayDates($chkinGroup->newGuests, $chkinDT, $chkoutDT);
-
-            } catch (Exception $ex) {
-                throw new Hk_Exception_Runtime('Bad dates:  ' . $ex->getMessage());
-            }
-
-        } else {
-            throw new Hk_Exception_Runtime('Check-in and/or check-out dates are missing!  ');
-        }
-
-        //
-        // Hospital
-        //
-        $hospitalStay = new HospitalStay($dbh, $psg->getIdPatient());
-        Hospital::saveHospitalMarkup($dbh, $psg, $hospitalStay, $post);
-
-
-        //
-        // Room
-        //
-
-        // Find selected resource
-        $newRescId = $resv->getIdResource();
-
-        if (isset($post['selResource'])) {
-            $newRescId = intval(filter_var($post['selResource'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        // Is resource specified?
-        if ($newRescId == 0) {
-            return array("error" => 'A room was not specified.');
-        }
-
-        $resources = $resv->findGradedResources($dbh, $chkinDT->format('Y-m-d'), $chkoutDT->format('Y-m-d'), 1, array('room', 'rmtroom', 'part'), TRUE);
-
-
-        // Does the resource still fit the requirements?
-        if (isset($resources[$newRescId]) === FALSE) {
-            return array("error" => 'The room is busy.');
-        }
-
-        // Get our room.
-        $resc = $resources[$newRescId];
-        unset($resources);
-
-        // Only admins can pick an unsuitable room.
-        if ($isAuthorized === FALSE && $resc->optGroup != '') {
-            return array("error" => 'Room ' . $resc->getTitle() . " is " . $resc->optGroup);
-        }
-
-
-        //
-        if ($resv->getStatus() == ReservationStatus::Staying) {
-            $numOccupants = $resc->getCurrantOccupants($dbh) + count($chkinGroup->newGuests);
-        } else {
-            $numOccupants = count($chkinGroup->newGuests);
-        }
-
-        if ($numOccupants > $resc->getMaxOccupants()) {
-            return array("error" => "The maximum occupancy (" . $resc->getMaxOccupants() . ") for room " . $resc->getTitle() . " is exceded.  ");
-        }
-
-        //
-        // Registration
-        //
-        $reg = new Registration($dbh, $psg->getIdPsg());
-
-        if ($uS->TrackAuto) {
-            $reg->extractVehicleFlag($post);
-        }
-
-        // Save registration
-        $reg->saveRegistrationRs($dbh, $psg->getIdPsg(), $uS->username);
-
-        // Save any vehicles
-        if ($uS->TrackAuto && $reg->getNoVehicle() == 0) {
-            Vehicle::saveVehicle($dbh, $post, $reg->getIdRegistration());
-        }
-
-
-        $idVisit = -1;
-        $stmt = $dbh->query("Select idVisit from visit where idReservation = " . $resv->getIdReservation() . " limit 1;");
-
-        if ($stmt->rowCount() > 0) {
-            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
-            $idVisit = $rows[0][0];
-        }
-
-        // create visit
-        $visit = new Visit($dbh, $reg->getIdRegistration(), $idVisit, $chkinDT, $chkoutDT, $resc, $uS->username);
-
-
-        // Add guests
-        foreach ($chkinGroup->newGuests as $g) {
-
-            $visit->addGuestStay($g->getIdName(), $g->getCheckinDate(), $g->getCheckinDate(), $g->getExpectedCheckOut());
-
-            // Use room/house phone?
-            if ($g->getHousePhone()) {
-                $visit->setExtPhoneInstalled();
-            }
-        }
-
-
-        // Room rate
-
-        $visit->setRateCategory($resv->getRoomRateCategory());
-        $visit->setIdRoomRate($resv->getIdRoomRate());
-        $visit->setRateAdjust($resv->getRateAdjust());
-        $visit->setPledgedRate($resv->getFixedRoomRate());
-
-        // Category
-        if (isset($post['selRateCategory']) && ($isAuthorized || $uS->RateChangeAuth === FALSE)) {
-
-            $rateCategory = filter_var($post['selRateCategory'], FILTER_SANITIZE_STRING);
-
-            // Verify new rate...
-            if ($rateCategory != $resv->getRoomRateCategory()) {
-
-                $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
-                $rateRs = $priceModel->getCategoryRateRs(0, $rateCategory);
-
-                $resv->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
-                $visit->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
-
-                $visit->setRateCategory($rateCategory);
-                $resv->setRoomRateCategory($rateCategory);
-
-            }
-        }
-
-        // Adjustment amount
-        if (isset($post['txtadjAmount']) && ($isAuthorized || $uS->RateChangeAuth === FALSE)) {
-
-            if ($post['txtadjAmount'] === '0' || $post['txtadjAmount'] === '') {
-                $rateAdjust = 0;
-            } else {
-                $rateAdjust = floatval(filter_var($post['txtadjAmount'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
-            }
-
-            $visit->setRateAdjust($rateAdjust);
-            $resv->setRateAdjust($rateAdjust);
-
-        } else {
-            $visit->setRateAdjust($resv->getRateAdjust());
-        }
-
-        // Pledged room rate
-        if (isset($post["txtFixedRate"]) && ($isAuthorized || $uS->RateChangeAuth === FALSE)) {
-
-            if ($post['txtFixedRate'] === '0' || $post['txtFixedRate'] === '') {
-                $fixedRate = 0;
-            } else {
-                $fixedRate = floatval(filter_var($post['txtFixedRate'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
-            }
-
-            if ($fixedRate < 0) {
-                $fixedRate = 0;
-            }
-
-            $visit->setPledgedRate($fixedRate);
-            $resv->setFixedRoomRate($fixedRate);
-
-        } else {
-            $visit->setPledgedRate($resv->getFixedRoomRate());
-        }
-
-        // Visit (Cleaning) Fee
-        if (isset($post['selVisitFee'])) {
-            $visitFeeOption = filter_var($post['selVisitFee'], FILTER_SANITIZE_STRING);
-
-            $vFees = readGenLookupsPDO($dbh, 'Visit_Fee_Code');
-
-            if (isset($vFees[$visitFeeOption])) {
-                $resv->setVisitFee($vFees[$visitFeeOption][2]);
-            } else {
-                throw new Hk_Exception_Runtime('Bad Cleaning Fee Code.  ');
-            }
-        }
-
-
-
-        // Rate Glide
-        $visit->setRateGlideCredit(RateChooser::setRateGlideDays($dbh, $reg->getIdRegistration(), $uS->RateGlideExtend));
-
-        // Primary guest
-        $visit->setPrimaryGuestId($resv->getIdGuest());
-
-        // Reservation Id
-        $visit->setReservationId($resv->getIdReservation());
-
-        // hospital stay id
-        $visit->setIdHospital_stay($hospitalStay->getIdHospital_Stay());
-
-        // Add reservation notes
-        if ($visit->visitRS->Notes->getStoredVal() == '' && $resv->getNotes() != '') {
-            $visit->visitRS->Notes->setNewVal($resv->getNotes());
-            VisitView::updatePsgNotes($dbh, $psg, $resv->getNotes());
-        }
-
-
-        //
-        // Checkin  Saves visit
-        //
-        $visit->checkin($dbh, $uS->username);
-
-
-        // Save new reservation status
-        $resv->setStatus(ReservationStatus::Staying);
-        $resv->setActualArrival($visit->getArrivalDate());
-        $resv->setExpectedDeparture($visit->getExpectedDeparture());
-        $resv->setNumberGuests($numOccupants);
-        $resv->setIdResource($resc->getIdResource());
-        $resv->saveReservation($dbh, $reg->getIdRegistration(), $uS->username);
-
-
-        //
-        // Payment
-        //
-        $pmp = PaymentChooser::readPostedPayment($dbh, $post);
-
-        // Check for key deposit
-        if ($uS->KeyDeposit && is_null($pmp) === FALSE) {
-
-            $depCharge = $resc->getKeyDeposit($uS->guestLookups[GL_TableNames::KeyDepositCode]);
-            $depBalance = $reg->getDepositBalance($dbh);
-
-            if ($depCharge > 0 && $pmp->getKeyDepositPayment() == 0 && $depBalance > 0) {
-
-                // Pay deposit with registration balance
-                if ($depCharge <= $depBalance) {
-                    $pmp->setKeyDepositPayment($depCharge);
-                } else {
-                    $pmp->setKeyDepositPayment($depBalance);
-                }
-
-
-
-            } else if ($pmp->getKeyDepositPayment() > 0) {
-
-                $visit->visitRS->DepositPayType->setNewVal($pmp->getPayType());
-            }
-
-            // Update Pay type.
-            $visit->updateVisitRecord($dbh, $uS->username);
-        }
-
-        $paymentManager = new PaymentManager($pmp);
-
-        $payResult = self::processPayments($dbh, $paymentManager, $visit, 'CheckedIn.php', $visit->getPrimaryGuestId());
-
-        if ($payResult !== NULL) {
-
-            $reply .= $payResult->getReplyMessage();
-
-            if ($payResult->getStatus() == PaymentResult::FORWARDED) {
-                $creditCheckOut = $payResult->getForwardHostedPayment();
-            }
-
-            // Receipt
-            if (is_null($payResult->getReceiptMarkup()) === FALSE && $payResult->getReceiptMarkup() != '') {
-                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', $payResult->getReceiptMarkup());
-                Registration::updatePrefTokenId($dbh, $visit->getIdRegistration(), $payResult->getIdToken());
-            }
-
-            // New Invoice
-            if (is_null($payResult->getInvoiceNumber()) === FALSE && $payResult->getInvoiceNumber() != '') {
-                $dataArray['invoiceNumber'] = $payResult->getInvoiceNumber();
-            }
-        }
-
-
-        // Generate Reg form
-        $reservArray = ReservationSvcs::generateCkinDoc($dbh, 0, $visit->getIdVisit(), $uS->resourceURL . 'images/receiptlogo.png');
-
-        $dataArray['style'] = $reservArray['style'];
-        $dataArray['regform'] = $reservArray['doc'];
-        unset($reservArray);
-
-
-
-        // email the form
-        if ($uS->adminEmailAddr != '' && $uS->noreplyAddr != '') {
-
-            try {
-
-                $config = new Config_Lite(ciCFG_FILE);
-                $mail = prepareEmail($config);
-
-                $mail->From = $uS->noreplyAddr;
-                $mail->FromName = $uS->siteName;
-
-                $tos = explode(',', $uS->adminEmailAddr);
-                foreach ($tos as $t) {
-                    $to = filter_var($t, FILTER_SANITIZE_EMAIL);
-                    if ($to !== FALSE && $to != '') {
-                        $mail->addAddress($to);
-                    }
-                }
-
-                $mail->addReplyTo($uS->noreplyAddr, $uS->siteName);
-                $mail->isHTML(true);
-
-                $mail->Subject = "New Check-In to " . $resc->getTitle() . " by " . $uS->username;
-
-                $notes = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('h4', 'Notes') . nl2br($psg->psgRS->Notes->getStoredVal()));
-
-                $mail->msgHTML($dataArray['style'] . $dataArray['regform'] . $notes);
-                $mail->send();
-
-            } catch (Exception $ex) {
-                $reply .= $ex->getMessage();
-            }
-        }
-
-
-
-        // Credit payment?
-        if (count($creditCheckOut) > 0) {
-            return $creditCheckOut;
-        }
-
-        // reload registration to reflect any new deposit payments.
-        $reg2 = new Registration($dbh, $psg->getIdPsg());
-
-        // Checked out already?
-        if ($chkoutDT < $today) {
-            $dataArray['ckmeout'] = $chkoutDT->format('Y-m-d');
-            $dataArray['gid'] = $visit->getPrimaryGuestId();
-        }
-
-        $dataArray['vid'] = $visit->getIdVisit();
-        $dataArray['regDialog'] = HTMLContainer::generateMarkup('div', $reg2->createRegMarkup($dbh, FALSE), array('class' => "ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"));
-        $dataArray['success'] = "Checked-In.  " . $reply;
-        $dataArray['reg'] = $reg2->getIdRegistration();
-        // Okay
-        return $dataArray;
-    }
-
-    public static function getMember(\PDO $dbh, $idReserv, $id, $role, $idPrefix, $idPsg, $patientStaying, $havePatient, $addRoom) {
-
-        $uS = Session::getInstance();
-        $guest = null;
-        $patient = null;
-        $psg = null;
-        $oldResvId = 0;
-        $labels = new Config_Lite(LABEL_FILE);
-        $config = new Config_Lite(ciCFG_FILE);
-
-        // Not Claiming a reservation?
-        if ($idReserv == 0 && $addRoom === FALSE) {
-            // No reservation indicated
-
-            if ($uS->OpenCheckin === FALSE) {
-                return array('error' => 'Our guest must have a reservation in order to check-in.  ');
-            }
-
-            // Find idPsg if guest is the patient
-            if ($role == 'p' && $id > 0 && $idPsg < 1) {
-
-                $ngRs = new Name_GuestRS();
-                $ngRs->idName->setStoredVal($id);
-                $ngRs->Relationship_Code->setStoredVal(RelLinkType::Self);
-                $rows = EditRS::select($dbh, $ngRs, array($ngRs->idName, $ngRs->Relationship_Code));
-
-                if (count($rows) == 1) {
-                    EditRS::loadRow($rows[0], $ngRs);
-                    $idPsg = $ngRs->idPsg->getStoredVal();
-                }
-            }
-
-            // Look for a reservation
-            if ($idPsg > 0) {
-
-                $dataArray = ReservationSvcs::reservationChooser($dbh, $id, $idPsg, $uS->guestLookups['ReservStatus'], $labels, $config->getString("house", "ReservationPage", "Referral.php"), $uS->ResvEarlyArrDays);
-                if (count($dataArray) > 0) {
-                    $dataArray['role'] = $role;
-                    return $dataArray;
-                }
-            }
-        }
-
-
-
-        // Flag to force a new reservation.
-        if ($idReserv == -1) {
-            $idReserv = 0;
-        }
-
-        // adding a room?
-        if ($addRoom && $idReserv > 0) {
-
-            // get the psgId
-            $idPsg = Reservation_1::getIdPsgStatic($dbh, $idReserv);
-            $idReserv = 0;
-        }
-
-
-        // reservation
-        $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
-        $dataArray['rid'] = $resv->getIdReservation();
-
-
-        if ($role == 'r') {
-            // existing reservation
-
-            $havePatient = TRUE;
-
-            if ($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::Imediate || $resv->getStatus() == ReservationStatus::Waitlist) {
-                // Check in a reservation
-                $guest = new Guest($dbh, $idPrefix, $resv->getIdGuest());
-
-            } else if ($id > 0) {
-                // add a guest.
-                $guest = new Guest($dbh, $idPrefix, $id);
-
-            } else if ($resv->getStatus() == ReservationStatus::Staying) {
-                // prepare to add a guest.
-
-                $psg = new Psg($dbh, $resv->getIdPsg($dbh));
-                $dataArray['idPsg'] = $psg->getIdPsg();
-
-                $stays = self::loadStays($dbh, $resv->getIdRegistration());
-                $patientStaying = FALSE;
-
-                foreach ($stays as $s) {
-
-                    if ($psg->getIdPatient() == $s['idName']) {
-                        $patientStaying = TRUE;
-                        break;
-                    }
-                }
-
-                if ($patientStaying === FALSE) {
-
-                    $patient = new Patient($dbh, 'h_', $psg->getIdPatient());
-                    $dataArray['patient'] = $patient->createMarkup(FALSE);
-
-                }
-
-                if (count($stays) > 0) {
-                    $dataArray['stays'] = HouseServices::getStaysMarkup($stays, $resv->getIdReservation());
-                }
-
-                // Hospital markup
-                $hospitalStay = new HospitalStay($dbh, $psg->getIdPatient());
-                $dataArray['hosp'] = Hospital::createReferralMarkup($dbh, $hospitalStay);
-
-                $dataArray['addr'] = self::createAddrObj($dbh, $resv->getIdGuest());
-                $dataArray['hvPat'] = $havePatient;
-                $dataArray['patStay'] = $patientStaying;
-
-                if ($uS->RoomsPerPatient > 1) {
-
-                    $stmt = $dbh->query("select count(*) from reservation where idRegistration = " . $resv->getIdRegistration() . " and `Status` = '" . ReservationStatus::Staying . "'");
-                    $rcount = $stmt->fetchAll(PDO::FETCH_NUM);
-
-                    if ($rcount[0][0] < $uS->RoomsPerPatient) {
-                        // Include Additional Room Query
-                        $dataArray['adnlrm'] = RoomChooser::moreRoomsMarkup($rcount[0][0], $addRoom);
-                    } else {
-                        $dataArray['adnlrm'] = HTMLContainer::generateMarkup('p', 'Already using the maximum of ' . $uS->RoomsPerPatient . ' rooms per ' . $labels->getString('MemberType', 'patient', 'Patient'), array('style'=>'margin:.3em;'));
-                    }
-                }
-
-                return $dataArray;
-
-            } else {
-                throw new Hk_Exception_InvalidArguement("A Valid Reservation was not found.  Resv. Id = " . $resv->getIdReservation());
-            }
-
-        } else if ($role == 'g') {
-            // add a guest
-            if ($resv->isNew() && $havePatient === FALSE && $idPsg == 0) {
-
-                $ngRss = Psg::getNameGuests($dbh, $id);
-
-                if (count($ngRss) > 0) {
-                    // Select psg
-                    $mkup = ReservationSvcs::psgChooserMkup($dbh, $ngRss, $uS->PatientAsGuest);
-                    return array('choosePsg' => $mkup, 'idGuest' => $id, 'role' => $role);
-                }
-            }
-
-            $guest = new Guest($dbh, $idPrefix, $id);
-
-        //
-        } else if ($role == 'p' && $havePatient === FALSE) {
-            // patient
-
-            if ($id == 0) {
-
-                if ($patientStaying && $uS->PatientAsGuest) {
-
-                    $guest = new Guest($dbh, $idPrefix, 0);
-                    $guest->setPatientRelationshipCode(RelLinkType::Self);
-                    $dataArray['hosp'] = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, $id));
-                    $havePatient = TRUE;
-
-                } else {
-                    // Blank patient markup
-                    $patient = new Patient($dbh, 'h_', $id);
-                    $dataArray['hosp'] = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, $id));
-                    $dataArray['patient'] = $patient->createMarkup();
-                    $dataArray['hvPat'] = TRUE;
-                    $dataArray['rmvbtnp'] = TRUE;
-                    return $dataArray;
-                }
-
-            } else {
-
-                // id > 0
-                if ($patientStaying === FALSE || $uS->PatientAsGuest === FALSE) {
-
-                    $patient = new Patient($dbh, 'h_', $id);
-                    $psg = $patient->getPatientPsg($dbh);
-                    $idPsg = $psg->getIdPsg();
-
-                    $dataArray['patient'] = $patient->createMarkup();
-                    $dataArray['idPsg'] = $psg->getIdPsg();
-
-
-                    // Hospital markup
-                    $hospitalStay = new HospitalStay($dbh, $patient->getIdName());
-                    $dataArray['hosp'] = Hospital::createReferralMarkup($dbh, $hospitalStay);
-
-                    $stays = self::loadStays($dbh, $resv->getIdRegistration());
-
-                    if (count($stays) > 0) {
-                        $dataArray['stays'] = HouseServices::getStaysMarkup($stays, $resv->getIdReservation());
-                    }
-
-                    $dataArray['addr'] = self::createAddrObj($dbh, $resv->getIdGuest());
-                    $dataArray['hvPat'] = TRUE;
-
-                    return $dataArray;
-                }
-
-
-               // otherwise, the patient is also the guest so let it fall through
-                $guest = new Guest($dbh, 'g_', $id);
-                $guest->setPatientRelationshipCode(RelLinkType::Self);
-                $dataArray['hosp'] = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, $id));
-                $havePatient = TRUE;
-
-            }
-
-        } else {
-
-            throw new Hk_Exception_InvalidArguement("Member role = '" . $role . "', is unknown. Or bad action code.");
-        }
-
-
-        // Hopefully we defined a guest.
-        if (is_null($guest)) {
-            return array('error' => "Guest is set to NULL.");
-        }
-
-        // Exit no return guests.
-        if ($guest->getNoReturn() != '') {
-            return array('error'=>'Guest "' .$guest->getRoleMember()->get_FullName() . '" is flagged for No Return.  Reason: ' . $guest->getNoReturn());
-        }
-
-        // guest already staying?
-        if ($guest->isCurrentlyStaying($dbh)) {
-
-            $nameObj = $guest->getRoleMember();
-            return array('error' => $nameObj->get_fullName() . ' is already checked in.  ');
-        }
-
-        // Provide addnl room check box
-        if ($uS->RoomsPerPatient > 1 && $resv->getStatus() == ReservationStatus::Staying) {
-
-            $stmt = $dbh->query("select count(*) from reservation where idRegistration = " . $resv->getIdRegistration() . " and `Status` = '" . ReservationStatus::Staying . "'");
-            $rcount = $stmt->fetchAll(PDO::FETCH_NUM);
-
-            if ($rcount[0][0] < $uS->RoomsPerPatient) {
-                // Include Additional Room Query
-                $dataArray['adnlrm'] = RoomChooser::moreRoomsMarkup($rcount[0][0], $addRoom);
-            } else {
-                $dataArray['adnlrm'] = HTMLContainer::generateMarkup('p', 'Already using the maximum of ' . $uS->RoomsPerPatient . ' rooms per ' . $labels->getString('MemberType', 'patient', 'Patient'), array('style'=>'margin:.3em;'));
-            }
-        }
-
-        $idPatient = 0;
-
-
-        // Get PSG
-        if ($resv->isNew()) {
-
-            // Flag to force a new psg
-            if ($idPsg == -1) {
-                $idPsg = 0;
-            }
-
-            $psg = new Psg($dbh, $idPsg);
-            $idPatient = $psg->getIdPatient();
-            $hospitalStay = new HospitalStay($dbh, $idPatient);
-            $reg = new Registration($dbh, 0, $resv->getIdRegistration());
-
-            // Define the reservation if exists.
-            if ($hospitalStay->getIdHospital_Stay() > 0 && $addRoom === FALSE) {
-
-                // check for existing reservation
-                $stmt = $dbh->query("Select idReservation from reservation where idHospital_Stay = " . $hospitalStay->getIdHospital_Stay() . " and Status = '" . ReservationStatus::Staying . "';");
-                $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
-
-                if (count($rows) > 0) {
-
-                    $resv = Reservation_1::instantiateFromIdReserv($dbh, $rows[0][0]);
-                    $reg = new Registration($dbh, 0, $resv->getIdRegistration());
-                    $dataArray['rid'] = $resv->getIdReservation();
-                    $havePatient = TRUE;
-                }
-
-            } else if ($idPsg > 0 && $addRoom === FALSE) {
-
-                // More general check for reservations.
-                $resArray = ReservationSvcs::reservationChooser($dbh, 0, $psg->getIdPsg(), $uS->guestLookups['ReservStatus'], $labels, $uS->ResvEarlyArrDays);
-                if (count($resArray) > 0) {
-                    return $resArray;
-                }
-
-            } else if ($guest->getIdName() > 0 && $havePatient === FALSE) {
-
-                // Look for a previous reservation to copy from ...
-                $stmt = $dbh->query("select r.idReservation, max(r.Expected_Arrival) from reservation r  where r.idGuest = " . $guest->getIdName() . " order by r.idGuest");
-                $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
-
-                if (count($rows > 0)) {
-                    $oldResvId = $rows[0][0];
-                }
-
-            }
-
-        } else {
-
-            // From valid reservation
-            $reg = new Registration($dbh, 0, $resv->getIdRegistration());
-            $psg = new Psg($dbh, $reg->getIdPsg());
-            $idPatient = $psg->getIdPatient();
-            $hospitalStay = new HospitalStay($dbh, $idPatient);
-
-            if ($idPatient > 0) {
-                $havePatient = TRUE;
-            }
-
-        }
-
-        //Set Rel Code
-        if (isset($psg->psgMembers[$guest->getIdName()]) && $guest->getPatientRelationshipCode() == '') {
-            $guest->setPatientRelationshipCode($psg->psgMembers[$guest->getIdName()]->Relationship_Code->getStoredVal());
-        }
-
-
-        // Arrival Date
-        $arrDate = new \DateTime($resv->getActualArrival() == '' ? $resv->getExpectedArrival() : $resv->getActualArrival());
-        $depDate = new \DateTime($resv->getExpectedDeparture());
-
-        if ($resv->getStatus() == ReservationStatus::Staying) {
-            $arrDate = new \DateTime();
-        }
-
-        $arrDate->setTime(0, 0, 0);
-        $depDate->setTime(0, 0, 0);
-
-        $nowDT = new \DateTime();
-        $nowDT->setTime(0,0,0);
-
-        if ($depDate <= $arrDate || $depDate <= $nowDT) {
-            $depDateStr = '';
-        } else {
-            $depDateStr = $depDate->format('M j, Y');
-        }
-
-        if ($arrDate < $nowDT) {
-            $arrDateStr = $arrDate->format('M j, Y');
-        } else {
-            $arrDateStr = $nowDT->format('M j, Y');
-        }
-
-        $guest->setCheckinDate($arrDateStr);
-        $guest->setExpectedCheckOut($depDateStr);
-
-
-
-        // Patient
-        if ($resv->getStatus() == ReservationStatus::Staying) {
-
-            $stays = HouseServices::loadStays($dbh, $reg->getIdRegistration());
-            $foundPatient = FALSE;
-
-            foreach ($stays as $s) {
-                if ($s['idName'] == $psg->getIdPatient()) {
-                    $foundPatient = TRUE;
-                }
-            }
-
-            if ($foundPatient === FALSE && $guest->getIdName() != $psg->getIdPatient()) {
-                // Include a patient section
-
-                $patient = new Patient($dbh, 'h_', $psg->getIdPatient());
-                $dataArray['patient'] = $patient->createMarkup($dbh);
-                $dataArray['idPsg'] = $psg->getIdPsg();
-                $dataArray['rmvbtnp'] = FALSE;
-            }
-
-        } else {
-
-            $dataArray['hosp'] = Hospital::createReferralMarkup($dbh, $hospitalStay);
-
-            // Patient markup
-            if ($patientStaying !== TRUE && $idPatient > 0 && ($idPatient != $guest->getIdName() || $uS->PatientAsGuest === FALSE)) {
-                // Patient is not a guest
-                $patient = new Patient($dbh, 'h_', $idPatient);
-                $dataArray['patient'] = $patient->createMarkup($dbh);
-                $dataArray['rmvbtnp'] = TRUE;
-
-                if ($idPatient == $guest->getIdName() && $uS->PatientAsGuest === FALSE) {
-                    // Return the patient now
-                    $dataArray['idPsg'] = $psg->getIdPsg();
-                    $stays = self::loadStays($dbh, $reg->getIdRegistration());
-
-                    if (count($stays) > 0) {
-                        $dataArray['stays'] = HouseServices::getStaysMarkup($stays, $resv->getIdReservation());
-                    }
-
-                    $dataArray['addr'] = self::createAddrObj($dbh, $resv->getIdGuest());
-                    $dataArray['patStay'] = FALSE;
-                    return $dataArray;
-                }
-
-            } else if ($resv->isNew() && $idPatient > 0 && $idPatient != $guest->getIdName() && $patientStaying && $havePatient === FALSE) {
-
-                $patient = new Guest($dbh, $idPrefix.'p', $idPatient);
-                $patient->setPatientRelationshipCode(RelLinkType::Self);
-                $patient->setCheckinDate($arrDateStr);
-                $patient->setExpectedCheckOut($depDateStr);
-
-                $dataArray['guests'][] = $patient->createMarkup($dbh);
-                $havePatient = TRUE;
-            }
-
-        }
-
-
-
-
-        // Restrict patient relationship chooser
-        if ($resv->isNew() && $havePatient === FALSE) {
-            $restrictRel = FALSE;
-        } else {
-            $restrictRel = TRUE;
-        }
-
-        $dataArray['guests'][] = $guest->createMarkup($dbh, TRUE, $restrictRel);
-
-        $dataArray['hvPat'] = $havePatient;
-
-        if ($patientStaying != NULL) {
-            $dataArray['patStay'] = $patientStaying;
-        }
-
-
-        $numNewGuests = 1;
-
-        $roomChooser = new RoomChooser($dbh, $resv, $numNewGuests, new \DateTime($arrDateStr), new \DateTime($depDateStr));
-
-        if ($resv->getStatus() != ReservationStatus::Staying) {
-            // load additional guests
-            $guests = ReservationSvcs::getReservGuests($dbh, $resv->getIdReservation());
-
-            if (count($guests) > 1 && $roomChooser->getCurrentGuests() == 0) {
-
-                foreach ($guests as $k => $v) {
-
-                    // Omit selected guest
-                    if ($guest->getIdName() == $k) {
-                        continue;
-                    }
-
-                    // Guest must be in the psg
-                    if (isset($psg->psgMembers[$k]) === FALSE) {
-                        throw new Hk_Exception_Runtime('Guest is not a member of the PSG! Golly, this is not supposted to happen.');
-                    }
-
-                    // omit primary guest
-//                    if ($v != '1') {
-
-                        $g = new Guest($dbh, $k, $k);
-
-                        if ($g->isCurrentlyStaying($dbh)) {
-                            Continue;
-                        }
-
-                        $g->setCheckinDate($arrDateStr);
-                        $g->setExpectedCheckOut($depDateStr);
-                        $g->setPatientRelationshipCode($psg->getGuestRelationship($k));
-
-                        $dataArray['guests'][] = $g->createMarkup($dbh, TRUE);
-                        $numNewGuests ++;
-
-                        if ($psg->getGuestRelationship($k) == RelLinkType::Self) {
-                            // remove patient markup.
-                            unset($dataArray['patient']);
-                            // Put patient on top.
-                            array_reverse($dataArray['guests']);
-                        }
-
+//    public static function saveCheckinPage(\PDO $dbh, $post, $isAuthorized = FALSE) {
+//
+//        $uS = Session::getInstance();
+//        $dataArray = array();
+//        $dataArray['warning'] = '';
+//        $reply = '';
+//        $creditCheckOut = array();
+//
+//
+//        //
+//        // Reservation
+//        //
+//        $idReserv = 0;
+//        if (isset($post['rid'])) {
+//            $idReserv = intval(filter_var($post['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
+//        }
+//
+//        if ($idReserv == 0) {
+//            throw new Hk_Exception_Runtime('Check-in missing reservation id.  ');
+//        }
+//
+//        $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
+//
+//        if (($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::Waitlist || $resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Imediate) === FALSE) {
+//            throw new Hk_Exception_Runtime('Reservation Status is wrong - ' . $resv->getStatusTitle());
+//        }
+//
+//
+//        //
+//        // Save members
+//        //
+//        $chkinGroup = new CheckInGroup();
+//        $chkinGroup->saveMembers($dbh, $resv->getIdHospitalStay(), $post);
+//
+//        if (is_null($chkinGroup->patient)) {
+//            // Get labels
+//            $labels = new Config_Lite(LABEL_FILE);
+//
+//            throw new Hk_Exception_Runtime($labels->getString('MemberType', 'patient', 'Patient') . ' not specified.  ');
+//        }
+//
+//        // any new guests?
+//        if (count($chkinGroup->newGuests) == 0) {
+//            throw new Hk_Exception_Runtime('All guests are already checked in.  ');
+//        }
+//
+//
+//        //
+//        // verify/save psg
+//        //
+//        $psg = $chkinGroup->savePsg($dbh, '', $uS->username);
+//
+//
+//
+//        //
+//        // dates
+//        //
+//        $today = new \DateTime();
+//        $today->setTime(0, 0, 0);
+//
+//        // Visit dates
+//        if (isset($post['ckindt']) && isset($post['ckoutdt'])) {
+//
+//            try {
+//                $chkinDT = setTimeZone($uS, filter_var($post['ckindt'], FILTER_SANITIZE_STRING));
+//                $chkoutDT = setTimeZone($uS, filter_var($post['ckoutdt'], FILTER_SANITIZE_STRING));
+//
+//                // Edit checkin date for later hour of checkin if posting the check in late.
+//                $tCkinDT = new \DateTime($chkinDT->format('Y-m-d 00:00:00'));
+//
+//                if ($chkinDT->format('H') < 16 && $today > $tCkinDT) {
+//                    $chkinDT->setTime(16,0,0);
+//                }
+//
+//                self::verifyVisitDates($resv, $chkinDT, $chkoutDT, $uS->OpenCheckin);
+//
+//                // Stay dates
+//                self::verifyStayDates($chkinGroup->newGuests, $chkinDT, $chkoutDT);
+//
+//            } catch (Exception $ex) {
+//                throw new Hk_Exception_Runtime('Bad dates:  ' . $ex->getMessage());
+//            }
+//
+//        } else {
+//            throw new Hk_Exception_Runtime('Check-in and/or check-out dates are missing!  ');
+//        }
+//
+//        //
+//        // Hospital
+//        //
+//        $hospitalStay = new HospitalStay($dbh, $psg->getIdPatient());
+//        Hospital::saveHospitalMarkup($dbh, $psg, $hospitalStay, $post);
+//
+//
+//        //
+//        // Room
+//        //
+//
+//        // Find selected resource
+//        $newRescId = $resv->getIdResource();
+//
+//        if (isset($post['selResource'])) {
+//            $newRescId = intval(filter_var($post['selResource'], FILTER_SANITIZE_NUMBER_INT), 10);
+//        }
+//
+//        // Is resource specified?
+//        if ($newRescId == 0) {
+//            return array("error" => 'A room was not specified.');
+//        }
+//
+//        $resources = $resv->findGradedResources($dbh, $chkinDT->format('Y-m-d'), $chkoutDT->format('Y-m-d'), 1, array('room', 'rmtroom', 'part'), TRUE);
+//
+//
+//        // Does the resource still fit the requirements?
+//        if (isset($resources[$newRescId]) === FALSE) {
+//            return array("error" => 'The room is busy.');
+//        }
+//
+//        // Get our room.
+//        $resc = $resources[$newRescId];
+//        unset($resources);
+//
+//        // Only admins can pick an unsuitable room.
+//        if ($isAuthorized === FALSE && $resc->optGroup != '') {
+//            return array("error" => 'Room ' . $resc->getTitle() . " is " . $resc->optGroup);
+//        }
+//
+//
+//        //
+//        if ($resv->getStatus() == ReservationStatus::Staying) {
+//            $numOccupants = $resc->getCurrantOccupants($dbh) + count($chkinGroup->newGuests);
+//        } else {
+//            $numOccupants = count($chkinGroup->newGuests);
+//        }
+//
+//        if ($numOccupants > $resc->getMaxOccupants()) {
+//            return array("error" => "The maximum occupancy (" . $resc->getMaxOccupants() . ") for room " . $resc->getTitle() . " is exceded.  ");
+//        }
+//
+//        //
+//        // Registration
+//        //
+//        $reg = new Registration($dbh, $psg->getIdPsg());
+//
+//        if ($uS->TrackAuto) {
+//            $reg->extractVehicleFlag($post);
+//        }
+//
+//        // Save registration
+//        $reg->saveRegistrationRs($dbh, $psg->getIdPsg(), $uS->username);
+//
+//        // Save any vehicles
+//        if ($uS->TrackAuto && $reg->getNoVehicle() == 0) {
+//            Vehicle::saveVehicle($dbh, $post, $reg->getIdRegistration());
+//        }
+//
+//
+//        $idVisit = -1;
+//        $stmt = $dbh->query("Select idVisit from visit where idReservation = " . $resv->getIdReservation() . " limit 1;");
+//
+//        if ($stmt->rowCount() > 0) {
+//            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+//            $idVisit = $rows[0][0];
+//        }
+//
+//        // create visit
+//        $visit = new Visit($dbh, $reg->getIdRegistration(), $idVisit, $chkinDT, $chkoutDT, $resc, $uS->username);
+//
+//
+//        // Add guests
+//        foreach ($chkinGroup->newGuests as $g) {
+//
+//            $visit->addGuestStay($g->getIdName(), $g->getCheckinDate(), $g->getCheckinDate(), $g->getExpectedCheckOut());
+//
+//            // Use room/house phone?
+//            if ($g->getHousePhone()) {
+//                $visit->setExtPhoneInstalled();
+//            }
+//        }
+//
+//
+//        // Room rate
+//
+//        $visit->setRateCategory($resv->getRoomRateCategory());
+//        $visit->setIdRoomRate($resv->getIdRoomRate());
+//        $visit->setRateAdjust($resv->getRateAdjust());
+//        $visit->setPledgedRate($resv->getFixedRoomRate());
+//
+//        // Category
+//        if (isset($post['selRateCategory']) && ($isAuthorized || $uS->RateChangeAuth === FALSE)) {
+//
+//            $rateCategory = filter_var($post['selRateCategory'], FILTER_SANITIZE_STRING);
+//
+//            // Verify new rate...
+//            if ($rateCategory != $resv->getRoomRateCategory()) {
+//
+//                $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+//                $rateRs = $priceModel->getCategoryRateRs(0, $rateCategory);
+//
+//                $resv->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
+//                $visit->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
+//
+//                $visit->setRateCategory($rateCategory);
+//                $resv->setRoomRateCategory($rateCategory);
+//
+//            }
+//        }
+//
+//        // Adjustment amount
+//        if (isset($post['txtadjAmount']) && ($isAuthorized || $uS->RateChangeAuth === FALSE)) {
+//
+//            if ($post['txtadjAmount'] === '0' || $post['txtadjAmount'] === '') {
+//                $rateAdjust = 0;
+//            } else {
+//                $rateAdjust = floatval(filter_var($post['txtadjAmount'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+//            }
+//
+//            $visit->setRateAdjust($rateAdjust);
+//            $resv->setRateAdjust($rateAdjust);
+//
+//        } else {
+//            $visit->setRateAdjust($resv->getRateAdjust());
+//        }
+//
+//        // Pledged room rate
+//        if (isset($post["txtFixedRate"]) && ($isAuthorized || $uS->RateChangeAuth === FALSE)) {
+//
+//            if ($post['txtFixedRate'] === '0' || $post['txtFixedRate'] === '') {
+//                $fixedRate = 0;
+//            } else {
+//                $fixedRate = floatval(filter_var($post['txtFixedRate'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+//            }
+//
+//            if ($fixedRate < 0) {
+//                $fixedRate = 0;
+//            }
+//
+//            $visit->setPledgedRate($fixedRate);
+//            $resv->setFixedRoomRate($fixedRate);
+//
+//        } else {
+//            $visit->setPledgedRate($resv->getFixedRoomRate());
+//        }
+//
+//        // Visit (Cleaning) Fee
+//        if (isset($post['selVisitFee'])) {
+//            $visitFeeOption = filter_var($post['selVisitFee'], FILTER_SANITIZE_STRING);
+//
+//            $vFees = readGenLookupsPDO($dbh, 'Visit_Fee_Code');
+//
+//            if (isset($vFees[$visitFeeOption])) {
+//                $resv->setVisitFee($vFees[$visitFeeOption][2]);
+//            } else {
+//                throw new Hk_Exception_Runtime('Bad Cleaning Fee Code.  ');
+//            }
+//        }
+//
+//
+//
+//        // Rate Glide
+//        $visit->setRateGlideCredit(RateChooser::setRateGlideDays($dbh, $reg->getIdRegistration(), $uS->RateGlideExtend));
+//
+//        // Primary guest
+//        $visit->setPrimaryGuestId($resv->getIdGuest());
+//
+//        // Reservation Id
+//        $visit->setReservationId($resv->getIdReservation());
+//
+//        // hospital stay id
+//        $visit->setIdHospital_stay($hospitalStay->getIdHospital_Stay());
+//
+//        // Add reservation notes
+//        if ($visit->visitRS->Notes->getStoredVal() == '' && $resv->getNotes() != '') {
+//            $visit->visitRS->Notes->setNewVal($resv->getNotes());
+//            VisitView::updatePsgNotes($dbh, $psg, $resv->getNotes());
+//        }
+//
+//
+//        //
+//        // Checkin  Saves visit
+//        //
+//        $visit->checkin($dbh, $uS->username);
+//
+//
+//        // Save new reservation status
+//        $resv->setStatus(ReservationStatus::Staying);
+//        $resv->setActualArrival($visit->getArrivalDate());
+//        $resv->setExpectedDeparture($visit->getExpectedDeparture());
+//        $resv->setNumberGuests($numOccupants);
+//        $resv->setIdResource($resc->getIdResource());
+//        $resv->saveReservation($dbh, $reg->getIdRegistration(), $uS->username);
+//
+//
+//        //
+//        // Payment
+//        //
+//        $pmp = PaymentChooser::readPostedPayment($dbh, $post);
+//
+//        // Check for key deposit
+//        if ($uS->KeyDeposit && is_null($pmp) === FALSE) {
+//
+//            $depCharge = $resc->getKeyDeposit($uS->guestLookups[GL_TableNames::KeyDepositCode]);
+//            $depBalance = $reg->getDepositBalance($dbh);
+//
+//            if ($depCharge > 0 && $pmp->getKeyDepositPayment() == 0 && $depBalance > 0) {
+//
+//                // Pay deposit with registration balance
+//                if ($depCharge <= $depBalance) {
+//                    $pmp->setKeyDepositPayment($depCharge);
+//                } else {
+//                    $pmp->setKeyDepositPayment($depBalance);
+//                }
+//
+//
+//
+//            } else if ($pmp->getKeyDepositPayment() > 0) {
+//
+//                $visit->visitRS->DepositPayType->setNewVal($pmp->getPayType());
+//            }
+//
+//            // Update Pay type.
+//            $visit->updateVisitRecord($dbh, $uS->username);
+//        }
+//
+//        $paymentManager = new PaymentManager($pmp);
+//
+//        $payResult = self::processPayments($dbh, $paymentManager, $visit, 'CheckedIn.php', $visit->getPrimaryGuestId());
+//
+//        if ($payResult !== NULL) {
+//
+//            $reply .= $payResult->getReplyMessage();
+//
+//            if ($payResult->getStatus() == PaymentResult::FORWARDED) {
+//                $creditCheckOut = $payResult->getForwardHostedPayment();
+//            }
+//
+//            // Receipt
+//            if (is_null($payResult->getReceiptMarkup()) === FALSE && $payResult->getReceiptMarkup() != '') {
+//                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', $payResult->getReceiptMarkup());
+//                Registration::updatePrefTokenId($dbh, $visit->getIdRegistration(), $payResult->getIdToken());
+//            }
+//
+//            // New Invoice
+//            if (is_null($payResult->getInvoiceNumber()) === FALSE && $payResult->getInvoiceNumber() != '') {
+//                $dataArray['invoiceNumber'] = $payResult->getInvoiceNumber();
+//            }
+//        }
+//
+//
+//        // Generate Reg form
+//        $reservArray = ReservationSvcs::generateCkinDoc($dbh, 0, $visit->getIdVisit(), $uS->resourceURL . 'images/receiptlogo.png');
+//
+//        $dataArray['style'] = $reservArray['style'];
+//        $dataArray['regform'] = $reservArray['doc'];
+//        unset($reservArray);
+//
+//
+//
+//        // email the form
+//        if ($uS->adminEmailAddr != '' && $uS->noreplyAddr != '') {
+//
+//            try {
+//
+//                $config = new Config_Lite(ciCFG_FILE);
+//                $mail = prepareEmail($config);
+//
+//                $mail->From = $uS->noreplyAddr;
+//                $mail->FromName = $uS->siteName;
+//
+//                $tos = explode(',', $uS->adminEmailAddr);
+//                foreach ($tos as $t) {
+//                    $to = filter_var($t, FILTER_SANITIZE_EMAIL);
+//                    if ($to !== FALSE && $to != '') {
+//                        $mail->addAddress($to);
 //                    }
-                }
-
-                $roomChooser->setNumNewGuests($numNewGuests);
-            }
-        }
-
-
-        // Constraints panel.
-        $disableConstraints = FALSE;
-        if ($resv->getStatus() == ReservationStatus::Staying || $uS->OpenCheckin === FALSE) {
-            $disableConstraints = TRUE;
-        }
-
-
-        if ($resv->isNew()) {
-
-            // Look for a previous reservation to copy from ...
-            if ($guest->getIdName() > 0) {
-                $stmt = $dbh->query("select r.idReservation, max(r.Expected_Arrival) from reservation r  where r.idGuest = " . $guest->getIdName() . " order by r.idGuest");
-                $rows = $stmt->fetchAll(PDO::FETCH_NUM);
-
-                if (count($rows > 0)) {
-                    $roomChooser->setOldResvId($rows[0][0]);
-                }
-            }
-        }
-
-        // only show an open chooser a new checkin.
-        $dataArray['resc'] = $roomChooser->createConstraintsChooser($dbh, $resv->getIdReservation(), $roomChooser->getTotalGuests(), $disableConstraints, $resv->getRoomTitle($dbh));
-
-        // send resource information
-        if (is_null($roomChooser->getSelectedResource()) === FALSE) {
-
-            $dataArray['rmax'] = $roomChooser->getSelectedResource()->getMaxOccupants();
-            $dataArray['rcur'] = $roomChooser->getCurrentGuests();
-        }
-
-
-        $stays = self::loadStays($dbh, $reg->getIdRegistration());
-
-        if (count($stays) > 0) {
-            $dataArray['stays'] = HouseServices::getStaysMarkup($stays, $resv->getIdReservation());
-        }
-
-        $dataArray['addr'] = self::createAddrObj($dbh, $resv->getIdGuest());
-
-        return $dataArray;
-    }
-
-    public static function loadStays(\PDO $dbh, $idReg) {
-
-        if ($idReg == 0) {
-            return array();
-        }
-
-        $query = "select
-    s.idName,
-    ifnull(r.Title,'') as `Room`,
-    (case when m.Name_Nickname = '' then m.Name_First else m.Name_Nickname end) as Name_First,
-    (case when m.Name_Suffix = '' then m.Name_Last else concat(m.Name_Last, ' ', m.Name_Suffix) end) as `Name_Last`,
-    s.Checkin_Date,
-    ng.Relationship_Code,
-    ng.idPsg,
-    v.idReservation,
-    v.idVisit
-from
-    stays s left join vmember_listing m ON s.idName = m.Id
-            left join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
-            left join room r on s.idRoom = r.idRoom
-            left join registration rg on v.idRegistration = rg.idRegistration
-            left join name_guest ng on s.idName = ng.idName and rg.idPsg = ng.idPsg
-    where s.`Status` = '" . VisitStatus::CheckedIn . "' and v.idRegistration = $idReg;";
-        $stmt = $dbh->query($query);
-        $stays = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        return $stays;
-    }
-
-    public static function getStaysMarkup($stays, $idResv) {
-
-        if (count($stays) <= 0) {
-            return '';
-        }
-
-        // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
-
-        $uS = Session::getInstance();
-        $tbl = new HTMLTable();
-        $hasRows = FALSE;
-        $markup = '';
-
-        foreach ($stays as $r) {
-
-            if ($idResv != $r['idReservation']) {
-                continue;
-            }
-
-            $hasRows = TRUE;
-
-            $rel = '';
-            if (isset($uS->guestLookups[GL_TableNames::PatientRel][$r['Relationship_Code']])) {
-                $rel = $uS->guestLookups[GL_TableNames::PatientRel][$r['Relationship_Code']][1];
-            }
-
-            $idMarkup = HTMLContainer::generateMarkup('a', $r['Name_First'] . ' ' . $r['Name_Last'], array('href' => 'GuestEdit.php?id=' . $r['idName'] . '&psg='.$r['idPsg']));
-
-            $tbl->addBodyTr(
-                    HTMLTable::makeTd($idMarkup)
-                    .HTMLTable::makeTd($rel)
-                    .HTMLTable::makeTd($r['Room'])
-                    .HTMLTable::makeTd($r['Checkin_Date'] == '' ? '' : date('M j, Y h:i', strtotime($r['Checkin_Date'])))
-                    );
-
-        }
-
-        if ($hasRows) {
-            $tbl->addHeaderTr(HTMLTable::makeTh('Name').HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient') . ' Relation').HTMLTable::makeTh('Room').HTMLTable::makeTh('Checked In'));
-
-            $markup = HTMLContainer::generateMarkup('div',
-                    HTMLContainer::generateMarkup('fieldset',
-                            HTMLContainer::generateMarkup('legend', 'Guests in Residence', array('style' => 'font-weight:bold;'))
-                    . $tbl->generateMarkup(), array('class' => 'hhk-panel')), array('style' => 'float:left'));
-        }
-
-        return $markup;
-    }
-
-    public static function saveMembers(\PDO $dbh, $post, $isAuthorized) {
-
-        $uS = Session::getInstance();
-        $dataArray = array();
-        $dataArray['warning'] = '';
-        $labels = new Config_Lite(LABEL_FILE);
-
-
-        // reservation
-        $idReserv = 0;
-        if (isset($post['rid'])) {
-            $idReserv = intval(filter_var($post['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
-
-        $chkinGroup = new CheckInGroup();
-        $chkinGroup->saveMembers($dbh, $resv->getIdHospitalStay(), $post);
-
-        // Do we have any guests?
-        if (count($chkinGroup->newGuests) == 0) {
-            $dataArray['patient'] = $chkinGroup->patient->createMarkup();
-            $dataArray['warning'] = 'No guests specified, or the guests are already checked in.  ';
-            return $dataArray;
-        }
-
-        // Load Guests
-        foreach ($chkinGroup->newGuests as $guest) {
-            $dataArray['guests'][] = $guest->createMarkup($dbh, FALSE, TRUE);
-        }
-
-        // do we have a patient?
-        if (is_null($chkinGroup->patient)) {
-
-            // no patient.
-            $dataArray['warning'] = 'A ' . $labels->getString('MemberType', 'patient', 'Patient') . ' must be specified.  ';
-            $dataArray['hvPat'] = FALSE;
-            return $dataArray;
-        }
-
-        // Patient
-        if ($chkinGroup->isPatientCkgIn() === FALSE) {
-            $dataArray['patient'] = $chkinGroup->patient->createMarkup(FALSE);
-        }
-
-        // verify/save psg
-        $psg = $chkinGroup->savePsg($dbh, '', $uS->username);
-
-        // Registration
-        $reg = new Registration($dbh, $psg->getIdPsg());
-        $reg->saveRegistrationRs($dbh, $psg->getIdPsg(), $uS->username);
-
-        // Hospital
-        $hospitalStay = new HospitalStay($dbh, $psg->getIdPatient());
-        Hospital::saveHospitalMarkup($dbh, $psg, $hospitalStay, $post);
-
-        $today = new \DateTime();
-        $today->setTime(0, 0, 0);
-
-        // clean Dates
-        if (isset($post['ckindt']) && isset($post['ckoutdt'])) {
-
-            $ckinStr = filter_var($post['ckindt'], FILTER_SANITIZE_STRING);
-            $ckoutStr = filter_var($post['ckoutdt'], FILTER_SANITIZE_STRING);
-
-            try {
-                $chkinDT = setTimeZone($uS, $ckinStr);
-
-                if ($chkinDT < $today) {
-                    $chkinDT->setTime(16, 0, 0);
-                }
-
-                $chkoutDT = setTimeZone($uS, $ckoutStr);
-                $chkoutDT->setTime(10,0,0);
-
-            } catch (Exception $ex) {
-                $dataArray['warning'] = 'Problem with visit dates:  ' . $ex->getMessage();
-                return $dataArray;
-            }
-
-        } else {
-            $dataArray['warning'] .= 'Check-in and/or check-out dates are missing!  ';
-            return $dataArray;
-        }
-
-        // Add new room to the registration?
-        $addRoom = FALSE;
-        if (isset($post['addRoom'])) {
-            $addRoom = filter_Var($post['addRoom'], FILTER_VALIDATE_BOOLEAN);
-        }
-
-        if ($addRoom) {
-            // Make a new reservation
-            $idReserv = 0;
-            $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
-            $resv->setAddRoom(1);
-        }
-
-        $rateChooser = new RateChooser($dbh);
-
-        if ($idReserv == 0) {
-            // Preset new reservation
-            $ids = array_keys($chkinGroup->newGuests);
-            $idPrimaryGuest = $ids[0];
-
-            // Make a new reservation.
-            $resv->setHospitalStay($hospitalStay);
-            $resv->setNumberGuests(count($chkinGroup->newGuests));
-            $resv->setIdGuest($idPrimaryGuest);
-
-            if ($uS->RoomPriceModel == ItemPriceCode::Basic) {
-                $rateCategory = RoomRateCategorys::Fixed_Rate_Category;
-            } else if ($uS->RoomRateDefault != '') {
-                $rateCategory = $uS->RoomRateDefault;
-            } else {
-                $rateCategory = Default_Settings::Rate_Category;
-            }
-
-
-            // Look for an approved rate
-            if ($psg->getIdPsg() > 0 && $uS->IncomeRated) {
-
-                if ($reg->getIdRegistration() > 0) {
-
-                    $fin = new FinAssistance($dbh, $reg->getIdRegistration());
-
-                    if ($fin->hasApplied() && $fin->getFaCategory() != '') {
-                        $rateCategory = $fin->getFaCategory();
-                    }
-                }
-            }
-
-            // Get the idRoomRate
-            $rateRs = $rateChooser->getPriceModel()->getCategoryRateRs(0, $rateCategory);
-            $resv->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
-            $resv->setRoomRateCategory($rateCategory);
-
-            $resv->setStatus(ReservationStatus::Imediate);
-            $resv->setExpectedArrival($chkinDT->format('Y-m-d H:i:s'));
-            $resv->setExpectedDeparture($chkoutDT->format('Y-m-d H:i:s'));
-
-            if ($uS->VisitFee) {
-                $kFees = readGenLookupsPDO($dbh, 'Visit_Fee_Code');
-                $resv->setVisitFee($kFees[$uS->DefaultVisitFee][2]);
-            }
-
-            $resv->saveReservation($dbh, $reg->getIdRegistration(), $uS->username);
-
-            foreach ($ids as $id) {
-                ReservationSvcs::saveReservationGuest($dbh, $resv->getIdReservation(), $id, ($id == $idPrimaryGuest ? TRUE : FALSE));
-            }
-
-        }
-
-
-
-        // Check for proper reservation status
-        if (($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::Waitlist || $resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Imediate) === FALSE) {
-
-            throw new Hk_Exception_Runtime('The Reservation Status is wrong - ' . $resv->getStatusTitle());
-        }
-
-
-        // Save any constraints
-        $resv->saveConstraints($dbh, $post);
-
-
-
-
-        // Reservation dates
-        try {
-            self::verifyVisitDates($resv, $chkinDT, $chkoutDT, $uS->OpenCheckin);
-
-            // Stay dates
-            self::verifyStayDates($chkinGroup->newGuests, $chkinDT, $chkoutDT);
-
-        } catch (Exception $ex) {
-
-            $dataArray['warning'] = 'Problem with dates:  ' . $ex->getMessage();
-            return $dataArray;
-        }
-
-
-        // Set up room chooser object
-        $roomChooser = new RoomChooser($dbh, $resv, count($chkinGroup->newGuests), $chkinDT, $chkoutDT);
-
-        // Load any stays
-        $stays = self::loadStays($dbh, $reg->getIdRegistration());
-
-        // Room empty?
-        if ($roomChooser->getCurrentGuests() == 0) {
-
-            // count visits
-            $visits = array();
-            foreach ($stays as $s) {
-                $visits[$s['idVisit']] = 'y';
-            }
-
-            // If there are other reservations, then we may be adding a room
-            if (count($visits) >= $uS->RoomsPerPatient) {
-                $dataArray['warning'] = 'Maximum Rooms per ' . $labels->getString('MemberType', 'patient', 'Patient') . ' is exceeded.  ';
-                return $dataArray;
-            }
-
-            // We need a primary guest.
-            if (isset($chkinGroup->newGuests[$resv->getIdGuest()]) === FALSE) {
-
-                $ids = array_keys($chkinGroup->newGuests);
-                $idPrimaryGuest = $ids[0];
-                $oldPriGuest = $resv->getIdGuest();
-
-                // Update reservation.
-                $resv->setNumberGuests(count($chkinGroup->newGuests));
-                $resv->setIdGuest($idPrimaryGuest);
-                $resv->saveReservation($dbh, $reg->getIdRegistration(), $uS->username);
-
-                // Remove old primary guest.
-                $resGuestRs = new Reservation_GuestRS();
-                $resGuestRs->idReservation->setStoredVal($resv->getIdReservation());
-                $resGuestRs->idGuest->setStoredVal($oldPriGuest);
-
-                EditRS::delete($dbh, $resGuestRs, array($resGuestRs->idReservation, $resGuestRs->idGuest));
-
-
-                foreach ($ids as $id) {
-                    ReservationSvcs::saveReservationGuest($dbh, $resv->getIdReservation(), $id, ($id == $idPrimaryGuest ? TRUE : FALSE));
-                }
-            }
-
-            // Show payment, only to the first guest.
-            if ($uS->RoomPriceModel != ItemPriceCode::None) {
-
-                $resc = $roomChooser->getSelectedResource();
-                if (is_null($resc)) {
-                    $roomKeyDeps = '';
-                } else {
-                    $roomKeyDeps = $resc->getKeyDeposit($uS->guestLookups[GL_TableNames::KeyDepositCode]);
-
-                }
-
-                // Rate Chooser
-                $dataArray['rate'] = $rateChooser->createCheckinMarkup($dbh, $resv, $resv->getExpectedDaysDT($chkinDT, $chkoutDT), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
-
-                // Payment Chooser
-                if ($uS->PayAtCkin) {
-                    $checkinCharges = new CheckinCharges(0, $resv->getVisitFee(), $roomKeyDeps);
-                    $checkinCharges->sumPayments($dbh);
-                    $dataArray['pay'] = PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $checkinCharges, $resv->getExpectedPayType(), $uS->KeyDeposit, FALSE, $uS->DefaultVisitFee, $reg->getPreferredTokenId());
-                }
-
-            }
-
-        } else {
-
-            // Currunt guests markup
-            if (count($stays) > 0) {
-                $dataArray['stays'] = HouseServices::getStaysMarkup($stays, $resv->getIdReservation());
-            }
-
-        }
-
-        // Omit self only if not adding a room
-        $omitSelf = TRUE;
-        if ($addRoom) {
-            $omitSelf = FALSE;
-        }
-
-        // Room Chooser
-        $dataArray['resc'] = $roomChooser->CreateCheckinMarkup($dbh, $isAuthorized, TRUE, $omitSelf);
-
-        // Array with key deposit info
-        $dataArray['rooms'] = $roomChooser->makeRoomsArray();
-        // Array with amount calculated for each rate.
-        $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $reg->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
-
-        if ($uS->VisitFee) {
-            // Visit Fee Array
-            $dataArray['vfee'] = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
-        }
-
-
-        // send resource information
-        if (is_null($roomChooser->getSelectedResource()) === FALSE) {
-
-            $dataArray['rmax'] = $roomChooser->getSelectedResource()->getMaxOccupants();
-            $dataArray['rcur'] = $roomChooser->getCurrentGuests();
-        }
-
-
-
-        // Vehicles
-        if ($uS->TrackAuto) {
-            $dataArray['vehicle'] = Vehicle::createVehicleMarkup($dbh, $reg->getIdRegistration(), $reg->getNoVehicle());
-        }
-
-
-        // Reservation ID
-        $dataArray['rid'] = $resv->getIdReservation();
-
-        return $dataArray;
-    }
+//                }
+//
+//                $mail->addReplyTo($uS->noreplyAddr, $uS->siteName);
+//                $mail->isHTML(true);
+//
+//                $mail->Subject = "New Check-In to " . $resc->getTitle() . " by " . $uS->username;
+//
+//                $notes = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('h4', 'Notes') . nl2br($psg->psgRS->Notes->getStoredVal()));
+//
+//                $mail->msgHTML($dataArray['style'] . $dataArray['regform'] . $notes);
+//                $mail->send();
+//
+//            } catch (Exception $ex) {
+//                $reply .= $ex->getMessage();
+//            }
+//        }
+//
+//
+//
+//        // Credit payment?
+//        if (count($creditCheckOut) > 0) {
+//            return $creditCheckOut;
+//        }
+//
+//        // reload registration to reflect any new deposit payments.
+//        $reg2 = new Registration($dbh, $psg->getIdPsg());
+//
+//        // Checked out already?
+//        if ($chkoutDT < $today) {
+//            $dataArray['ckmeout'] = $chkoutDT->format('Y-m-d');
+//            $dataArray['gid'] = $visit->getPrimaryGuestId();
+//        }
+//
+//        $dataArray['vid'] = $visit->getIdVisit();
+//        $dataArray['regDialog'] = HTMLContainer::generateMarkup('div', $reg2->createRegMarkup($dbh, FALSE), array('class' => "ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"));
+//        $dataArray['success'] = "Checked-In.  " . $reply;
+//        $dataArray['reg'] = $reg2->getIdRegistration();
+//        // Okay
+//        return $dataArray;
+//    }
+//
+//    public static function getMember(\PDO $dbh, $idReserv, $id, $role, $idPrefix, $idPsg, $patientStaying, $havePatient, $addRoom) {
+//
+//        $uS = Session::getInstance();
+//        $guest = null;
+//        $patient = null;
+//        $psg = null;
+//        $oldResvId = 0;
+//        $labels = new Config_Lite(LABEL_FILE);
+//        $config = new Config_Lite(ciCFG_FILE);
+//
+//        // Not Claiming a reservation?
+//        if ($idReserv == 0 && $addRoom === FALSE) {
+//            // No reservation indicated
+//
+//            if ($uS->OpenCheckin === FALSE) {
+//                return array('error' => 'Our guest must have a reservation in order to check-in.  ');
+//            }
+//
+//            // Find idPsg if guest is the patient
+//            if ($role == 'p' && $id > 0 && $idPsg < 1) {
+//
+//                $ngRs = new Name_GuestRS();
+//                $ngRs->idName->setStoredVal($id);
+//                $ngRs->Relationship_Code->setStoredVal(RelLinkType::Self);
+//                $rows = EditRS::select($dbh, $ngRs, array($ngRs->idName, $ngRs->Relationship_Code));
+//
+//                if (count($rows) == 1) {
+//                    EditRS::loadRow($rows[0], $ngRs);
+//                    $idPsg = $ngRs->idPsg->getStoredVal();
+//                }
+//            }
+//
+//            // Look for a reservation
+//            if ($idPsg > 0) {
+//
+//                $dataArray = ReservationSvcs::reservationChooser($dbh, $id, $idPsg, $uS->guestLookups['ReservStatus'], $labels, $config->getString("house", "ReservationPage", "Referral.php"), $uS->ResvEarlyArrDays);
+//                if (count($dataArray) > 0) {
+//                    $dataArray['role'] = $role;
+//                    return $dataArray;
+//                }
+//            }
+//        }
+//
+//
+//
+//        // Flag to force a new reservation.
+//        if ($idReserv == -1) {
+//            $idReserv = 0;
+//        }
+//
+//        // adding a room?
+//        if ($addRoom && $idReserv > 0) {
+//
+//            // get the psgId
+//            $idPsg = Reservation_1::getIdPsgStatic($dbh, $idReserv);
+//            $idReserv = 0;
+//        }
+//
+//
+//        // reservation
+//        $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
+//        $dataArray['rid'] = $resv->getIdReservation();
+//
+//
+//        if ($role == 'r') {
+//            // existing reservation
+//
+//            $havePatient = TRUE;
+//
+//            if ($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::Imediate || $resv->getStatus() == ReservationStatus::Waitlist) {
+//                // Check in a reservation
+//                $guest = new Guest($dbh, $idPrefix, $resv->getIdGuest());
+//
+//            } else if ($id > 0) {
+//                // add a guest.
+//                $guest = new Guest($dbh, $idPrefix, $id);
+//
+//            } else if ($resv->getStatus() == ReservationStatus::Staying) {
+//                // prepare to add a guest.
+//
+//                $psg = new Psg($dbh, $resv->getIdPsg($dbh));
+//                $dataArray['idPsg'] = $psg->getIdPsg();
+//
+//                $stays = self::loadStays($dbh, $resv->getIdRegistration());
+//                $patientStaying = FALSE;
+//
+//                foreach ($stays as $s) {
+//
+//                    if ($psg->getIdPatient() == $s['idName']) {
+//                        $patientStaying = TRUE;
+//                        break;
+//                    }
+//                }
+//
+//                if ($patientStaying === FALSE) {
+//
+//                    $patient = new Patient($dbh, 'h_', $psg->getIdPatient());
+//                    $dataArray['patient'] = $patient->createMarkup(FALSE);
+//
+//                }
+//
+//                if (count($stays) > 0) {
+//                    $dataArray['stays'] = HouseServices::getStaysMarkup($stays, $resv->getIdReservation());
+//                }
+//
+//                // Hospital markup
+//                $hospitalStay = new HospitalStay($dbh, $psg->getIdPatient());
+//                $dataArray['hosp'] = Hospital::createReferralMarkup($dbh, $hospitalStay);
+//
+//                $dataArray['addr'] = self::createAddrObj($dbh, $resv->getIdGuest());
+//                $dataArray['hvPat'] = $havePatient;
+//                $dataArray['patStay'] = $patientStaying;
+//
+//                if ($uS->RoomsPerPatient > 1) {
+//
+//                    $stmt = $dbh->query("select count(*) from reservation where idRegistration = " . $resv->getIdRegistration() . " and `Status` = '" . ReservationStatus::Staying . "'");
+//                    $rcount = $stmt->fetchAll(PDO::FETCH_NUM);
+//
+//                    if ($rcount[0][0] < $uS->RoomsPerPatient) {
+//                        // Include Additional Room Query
+//                        $dataArray['adnlrm'] = RoomChooser::moreRoomsMarkup($rcount[0][0], $addRoom);
+//                    } else {
+//                        $dataArray['adnlrm'] = HTMLContainer::generateMarkup('p', 'Already using the maximum of ' . $uS->RoomsPerPatient . ' rooms per ' . $labels->getString('MemberType', 'patient', 'Patient'), array('style'=>'margin:.3em;'));
+//                    }
+//                }
+//
+//                return $dataArray;
+//
+//            } else {
+//                throw new Hk_Exception_InvalidArguement("A Valid Reservation was not found.  Resv. Id = " . $resv->getIdReservation());
+//            }
+//
+//        } else if ($role == 'g') {
+//            // add a guest
+//            if ($resv->isNew() && $havePatient === FALSE && $idPsg == 0) {
+//
+//                $ngRss = Psg::getNameGuests($dbh, $id);
+//
+//                if (count($ngRss) > 0) {
+//                    // Select psg
+//                    $mkup = ReservationSvcs::psgChooserMkup($dbh, $ngRss, $uS->PatientAsGuest);
+//                    return array('choosePsg' => $mkup, 'idGuest' => $id, 'role' => $role);
+//                }
+//            }
+//
+//            $guest = new Guest($dbh, $idPrefix, $id);
+//
+//        //
+//        } else if ($role == 'p' && $havePatient === FALSE) {
+//            // patient
+//
+//            if ($id == 0) {
+//
+//                if ($patientStaying && $uS->PatientAsGuest) {
+//
+//                    $guest = new Guest($dbh, $idPrefix, 0);
+//                    $guest->setPatientRelationshipCode(RelLinkType::Self);
+//                    $dataArray['hosp'] = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, $id));
+//                    $havePatient = TRUE;
+//
+//                } else {
+//                    // Blank patient markup
+//                    $patient = new Patient($dbh, 'h_', $id);
+//                    $dataArray['hosp'] = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, $id));
+//                    $dataArray['patient'] = $patient->createMarkup();
+//                    $dataArray['hvPat'] = TRUE;
+//                    $dataArray['rmvbtnp'] = TRUE;
+//                    return $dataArray;
+//                }
+//
+//            } else {
+//
+//                // id > 0
+//                if ($patientStaying === FALSE || $uS->PatientAsGuest === FALSE) {
+//
+//                    $patient = new Patient($dbh, 'h_', $id);
+//                    $psg = $patient->getPatientPsg($dbh);
+//                    $idPsg = $psg->getIdPsg();
+//
+//                    $dataArray['patient'] = $patient->createMarkup();
+//                    $dataArray['idPsg'] = $psg->getIdPsg();
+//
+//
+//                    // Hospital markup
+//                    $hospitalStay = new HospitalStay($dbh, $patient->getIdName());
+//                    $dataArray['hosp'] = Hospital::createReferralMarkup($dbh, $hospitalStay);
+//
+//                    $stays = self::loadStays($dbh, $resv->getIdRegistration());
+//
+//                    if (count($stays) > 0) {
+//                        $dataArray['stays'] = HouseServices::getStaysMarkup($stays, $resv->getIdReservation());
+//                    }
+//
+//                    $dataArray['addr'] = self::createAddrObj($dbh, $resv->getIdGuest());
+//                    $dataArray['hvPat'] = TRUE;
+//
+//                    return $dataArray;
+//                }
+//
+//
+//               // otherwise, the patient is also the guest so let it fall through
+//                $guest = new Guest($dbh, 'g_', $id);
+//                $guest->setPatientRelationshipCode(RelLinkType::Self);
+//                $dataArray['hosp'] = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, $id));
+//                $havePatient = TRUE;
+//
+//            }
+//
+//        } else {
+//
+//            throw new Hk_Exception_InvalidArguement("Member role = '" . $role . "', is unknown. Or bad action code.");
+//        }
+//
+//
+//        // Hopefully we defined a guest.
+//        if (is_null($guest)) {
+//            return array('error' => "Guest is set to NULL.");
+//        }
+//
+//        // Exit no return guests.
+//        if ($guest->getNoReturn() != '') {
+//            return array('error'=>'Guest "' .$guest->getRoleMember()->get_FullName() . '" is flagged for No Return.  Reason: ' . $guest->getNoReturn());
+//        }
+//
+//        // guest already staying?
+//        if ($guest->isCurrentlyStaying($dbh)) {
+//
+//            $nameObj = $guest->getRoleMember();
+//            return array('error' => $nameObj->get_fullName() . ' is already checked in.  ');
+//        }
+//
+//        // Provide addnl room check box
+//        if ($uS->RoomsPerPatient > 1 && $resv->getStatus() == ReservationStatus::Staying) {
+//
+//            $stmt = $dbh->query("select count(*) from reservation where idRegistration = " . $resv->getIdRegistration() . " and `Status` = '" . ReservationStatus::Staying . "'");
+//            $rcount = $stmt->fetchAll(PDO::FETCH_NUM);
+//
+//            if ($rcount[0][0] < $uS->RoomsPerPatient) {
+//                // Include Additional Room Query
+//                $dataArray['adnlrm'] = RoomChooser::moreRoomsMarkup($rcount[0][0], $addRoom);
+//            } else {
+//                $dataArray['adnlrm'] = HTMLContainer::generateMarkup('p', 'Already using the maximum of ' . $uS->RoomsPerPatient . ' rooms per ' . $labels->getString('MemberType', 'patient', 'Patient'), array('style'=>'margin:.3em;'));
+//            }
+//        }
+//
+//        $idPatient = 0;
+//
+//
+//        // Get PSG
+//        if ($resv->isNew()) {
+//
+//            // Flag to force a new psg
+//            if ($idPsg == -1) {
+//                $idPsg = 0;
+//            }
+//
+//            $psg = new Psg($dbh, $idPsg);
+//            $idPatient = $psg->getIdPatient();
+//            $hospitalStay = new HospitalStay($dbh, $idPatient);
+//            $reg = new Registration($dbh, 0, $resv->getIdRegistration());
+//
+//            // Define the reservation if exists.
+//            if ($hospitalStay->getIdHospital_Stay() > 0 && $addRoom === FALSE) {
+//
+//                // check for existing reservation
+//                $stmt = $dbh->query("Select idReservation from reservation where idHospital_Stay = " . $hospitalStay->getIdHospital_Stay() . " and Status = '" . ReservationStatus::Staying . "';");
+//                $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+//
+//                if (count($rows) > 0) {
+//
+//                    $resv = Reservation_1::instantiateFromIdReserv($dbh, $rows[0][0]);
+//                    $reg = new Registration($dbh, 0, $resv->getIdRegistration());
+//                    $dataArray['rid'] = $resv->getIdReservation();
+//                    $havePatient = TRUE;
+//                }
+//
+//            } else if ($idPsg > 0 && $addRoom === FALSE) {
+//
+//                // More general check for reservations.
+//                $resArray = ReservationSvcs::reservationChooser($dbh, 0, $psg->getIdPsg(), $uS->guestLookups['ReservStatus'], $labels, $uS->ResvEarlyArrDays);
+//                if (count($resArray) > 0) {
+//                    return $resArray;
+//                }
+//
+//            } else if ($guest->getIdName() > 0 && $havePatient === FALSE) {
+//
+//                // Look for a previous reservation to copy from ...
+//                $stmt = $dbh->query("select r.idReservation, max(r.Expected_Arrival) from reservation r  where r.idGuest = " . $guest->getIdName() . " order by r.idGuest");
+//                $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+//
+//                if (count($rows > 0)) {
+//                    $oldResvId = $rows[0][0];
+//                }
+//
+//            }
+//
+//        } else {
+//
+//            // From valid reservation
+//            $reg = new Registration($dbh, 0, $resv->getIdRegistration());
+//            $psg = new Psg($dbh, $reg->getIdPsg());
+//            $idPatient = $psg->getIdPatient();
+//            $hospitalStay = new HospitalStay($dbh, $idPatient);
+//
+//            if ($idPatient > 0) {
+//                $havePatient = TRUE;
+//            }
+//
+//        }
+//
+//        //Set Rel Code
+//        if (isset($psg->psgMembers[$guest->getIdName()]) && $guest->getPatientRelationshipCode() == '') {
+//            $guest->setPatientRelationshipCode($psg->psgMembers[$guest->getIdName()]->Relationship_Code->getStoredVal());
+//        }
+//
+//
+//        // Arrival Date
+//        $arrDate = new \DateTime($resv->getActualArrival() == '' ? $resv->getExpectedArrival() : $resv->getActualArrival());
+//        $depDate = new \DateTime($resv->getExpectedDeparture());
+//
+//        if ($resv->getStatus() == ReservationStatus::Staying) {
+//            $arrDate = new \DateTime();
+//        }
+//
+//        $arrDate->setTime(0, 0, 0);
+//        $depDate->setTime(0, 0, 0);
+//
+//        $nowDT = new \DateTime();
+//        $nowDT->setTime(0,0,0);
+//
+//        if ($depDate <= $arrDate || $depDate <= $nowDT) {
+//            $depDateStr = '';
+//        } else {
+//            $depDateStr = $depDate->format('M j, Y');
+//        }
+//
+//        if ($arrDate < $nowDT) {
+//            $arrDateStr = $arrDate->format('M j, Y');
+//        } else {
+//            $arrDateStr = $nowDT->format('M j, Y');
+//        }
+//
+//        $guest->setCheckinDate($arrDateStr);
+//        $guest->setExpectedCheckOut($depDateStr);
+//
+//
+//
+//        // Patient
+//        if ($resv->getStatus() == ReservationStatus::Staying) {
+//
+//            $stays = HouseServices::loadStays($dbh, $reg->getIdRegistration());
+//            $foundPatient = FALSE;
+//
+//            foreach ($stays as $s) {
+//                if ($s['idName'] == $psg->getIdPatient()) {
+//                    $foundPatient = TRUE;
+//                }
+//            }
+//
+//            if ($foundPatient === FALSE && $guest->getIdName() != $psg->getIdPatient()) {
+//                // Include a patient section
+//
+//                $patient = new Patient($dbh, 'h_', $psg->getIdPatient());
+//                $dataArray['patient'] = $patient->createMarkup($dbh);
+//                $dataArray['idPsg'] = $psg->getIdPsg();
+//                $dataArray['rmvbtnp'] = FALSE;
+//            }
+//
+//        } else {
+//
+//            $dataArray['hosp'] = Hospital::createReferralMarkup($dbh, $hospitalStay);
+//
+//            // Patient markup
+//            if ($patientStaying !== TRUE && $idPatient > 0 && ($idPatient != $guest->getIdName() || $uS->PatientAsGuest === FALSE)) {
+//                // Patient is not a guest
+//                $patient = new Patient($dbh, 'h_', $idPatient);
+//                $dataArray['patient'] = $patient->createMarkup($dbh);
+//                $dataArray['rmvbtnp'] = TRUE;
+//
+//                if ($idPatient == $guest->getIdName() && $uS->PatientAsGuest === FALSE) {
+//                    // Return the patient now
+//                    $dataArray['idPsg'] = $psg->getIdPsg();
+//                    $stays = self::loadStays($dbh, $reg->getIdRegistration());
+//
+//                    if (count($stays) > 0) {
+//                        $dataArray['stays'] = HouseServices::getStaysMarkup($stays, $resv->getIdReservation());
+//                    }
+//
+//                    $dataArray['addr'] = self::createAddrObj($dbh, $resv->getIdGuest());
+//                    $dataArray['patStay'] = FALSE;
+//                    return $dataArray;
+//                }
+//
+//            } else if ($resv->isNew() && $idPatient > 0 && $idPatient != $guest->getIdName() && $patientStaying && $havePatient === FALSE) {
+//
+//                $patient = new Guest($dbh, $idPrefix.'p', $idPatient);
+//                $patient->setPatientRelationshipCode(RelLinkType::Self);
+//                $patient->setCheckinDate($arrDateStr);
+//                $patient->setExpectedCheckOut($depDateStr);
+//
+//                $dataArray['guests'][] = $patient->createMarkup($dbh);
+//                $havePatient = TRUE;
+//            }
+//
+//        }
+//
+//
+//
+//
+//        // Restrict patient relationship chooser
+//        if ($resv->isNew() && $havePatient === FALSE) {
+//            $restrictRel = FALSE;
+//        } else {
+//            $restrictRel = TRUE;
+//        }
+//
+//        $dataArray['guests'][] = $guest->createMarkup($dbh, TRUE, $restrictRel);
+//
+//        $dataArray['hvPat'] = $havePatient;
+//
+//        if ($patientStaying != NULL) {
+//            $dataArray['patStay'] = $patientStaying;
+//        }
+//
+//
+//        $numNewGuests = 1;
+//
+//        $roomChooser = new RoomChooser($dbh, $resv, $numNewGuests, new \DateTime($arrDateStr), new \DateTime($depDateStr));
+//
+//        if ($resv->getStatus() != ReservationStatus::Staying) {
+//            // load additional guests
+//            $guests = ReservationSvcs::getReservGuests($dbh, $resv->getIdReservation());
+//
+//            if (count($guests) > 1 && $roomChooser->getCurrentGuests() == 0) {
+//
+//                foreach ($guests as $k => $v) {
+//
+//                    // Omit selected guest
+//                    if ($guest->getIdName() == $k) {
+//                        continue;
+//                    }
+//
+//                    // Guest must be in the psg
+//                    if (isset($psg->psgMembers[$k]) === FALSE) {
+//                        throw new Hk_Exception_Runtime('Guest is not a member of the PSG! Golly, this is not supposted to happen.');
+//                    }
+//
+//                    // omit primary guest
+////                    if ($v != '1') {
+//
+//                        $g = new Guest($dbh, $k, $k);
+//
+//                        if ($g->isCurrentlyStaying($dbh)) {
+//                            Continue;
+//                        }
+//
+//                        $g->setCheckinDate($arrDateStr);
+//                        $g->setExpectedCheckOut($depDateStr);
+//                        $g->setPatientRelationshipCode($psg->getGuestRelationship($k));
+//
+//                        $dataArray['guests'][] = $g->createMarkup($dbh, TRUE);
+//                        $numNewGuests ++;
+//
+//                        if ($psg->getGuestRelationship($k) == RelLinkType::Self) {
+//                            // remove patient markup.
+//                            unset($dataArray['patient']);
+//                            // Put patient on top.
+//                            array_reverse($dataArray['guests']);
+//                        }
+//
+////                    }
+//                }
+//
+//                $roomChooser->setNumNewGuests($numNewGuests);
+//            }
+//        }
+//
+//
+//        // Constraints panel.
+//        $disableConstraints = FALSE;
+//        if ($resv->getStatus() == ReservationStatus::Staying || $uS->OpenCheckin === FALSE) {
+//            $disableConstraints = TRUE;
+//        }
+//
+//
+//        if ($resv->isNew()) {
+//
+//            // Look for a previous reservation to copy from ...
+//            if ($guest->getIdName() > 0) {
+//                $stmt = $dbh->query("select r.idReservation, max(r.Expected_Arrival) from reservation r  where r.idGuest = " . $guest->getIdName() . " order by r.idGuest");
+//                $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+//
+//                if (count($rows > 0)) {
+//                    $roomChooser->setOldResvId($rows[0][0]);
+//                }
+//            }
+//        }
+//
+//        // only show an open chooser a new checkin.
+//        $dataArray['resc'] = $roomChooser->createConstraintsChooser($dbh, $resv->getIdReservation(), $roomChooser->getTotalGuests(), $disableConstraints, $resv->getRoomTitle($dbh));
+//
+//        // send resource information
+//        if (is_null($roomChooser->getSelectedResource()) === FALSE) {
+//
+//            $dataArray['rmax'] = $roomChooser->getSelectedResource()->getMaxOccupants();
+//            $dataArray['rcur'] = $roomChooser->getCurrentGuests();
+//        }
+//
+//
+//        $stays = self::loadStays($dbh, $reg->getIdRegistration());
+//
+//        if (count($stays) > 0) {
+//            $dataArray['stays'] = HouseServices::getStaysMarkup($stays, $resv->getIdReservation());
+//        }
+//
+//        $dataArray['addr'] = self::createAddrObj($dbh, $resv->getIdGuest());
+//
+//        return $dataArray;
+//    }
+//
+//    public static function loadStays(\PDO $dbh, $idReg) {
+//
+//        if ($idReg == 0) {
+//            return array();
+//        }
+//
+//        $query = "select
+//    s.idName,
+//    ifnull(r.Title,'') as `Room`,
+//    (case when m.Name_Nickname = '' then m.Name_First else m.Name_Nickname end) as Name_First,
+//    (case when m.Name_Suffix = '' then m.Name_Last else concat(m.Name_Last, ' ', m.Name_Suffix) end) as `Name_Last`,
+//    s.Checkin_Date,
+//    ng.Relationship_Code,
+//    ng.idPsg,
+//    v.idReservation,
+//    v.idVisit
+//from
+//    stays s left join vmember_listing m ON s.idName = m.Id
+//            left join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
+//            left join room r on s.idRoom = r.idRoom
+//            left join registration rg on v.idRegistration = rg.idRegistration
+//            left join name_guest ng on s.idName = ng.idName and rg.idPsg = ng.idPsg
+//    where s.`Status` = '" . VisitStatus::CheckedIn . "' and v.idRegistration = $idReg;";
+//        $stmt = $dbh->query($query);
+//        $stays = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+//
+//        return $stays;
+//    }
+//
+//    public static function getStaysMarkup($stays, $idResv) {
+//
+//        if (count($stays) <= 0) {
+//            return '';
+//        }
+//
+//        // Get labels
+//        $labels = new Config_Lite(LABEL_FILE);
+//
+//        $uS = Session::getInstance();
+//        $tbl = new HTMLTable();
+//        $hasRows = FALSE;
+//        $markup = '';
+//
+//        foreach ($stays as $r) {
+//
+//            if ($idResv != $r['idReservation']) {
+//                continue;
+//            }
+//
+//            $hasRows = TRUE;
+//
+//            $rel = '';
+//            if (isset($uS->guestLookups[GL_TableNames::PatientRel][$r['Relationship_Code']])) {
+//                $rel = $uS->guestLookups[GL_TableNames::PatientRel][$r['Relationship_Code']][1];
+//            }
+//
+//            $idMarkup = HTMLContainer::generateMarkup('a', $r['Name_First'] . ' ' . $r['Name_Last'], array('href' => 'GuestEdit.php?id=' . $r['idName'] . '&psg='.$r['idPsg']));
+//
+//            $tbl->addBodyTr(
+//                    HTMLTable::makeTd($idMarkup)
+//                    .HTMLTable::makeTd($rel)
+//                    .HTMLTable::makeTd($r['Room'])
+//                    .HTMLTable::makeTd($r['Checkin_Date'] == '' ? '' : date('M j, Y h:i', strtotime($r['Checkin_Date'])))
+//                    );
+//
+//        }
+//
+//        if ($hasRows) {
+//            $tbl->addHeaderTr(HTMLTable::makeTh('Name').HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient') . ' Relation').HTMLTable::makeTh('Room').HTMLTable::makeTh('Checked In'));
+//
+//            $markup = HTMLContainer::generateMarkup('div',
+//                    HTMLContainer::generateMarkup('fieldset',
+//                            HTMLContainer::generateMarkup('legend', 'Guests in Residence', array('style' => 'font-weight:bold;'))
+//                    . $tbl->generateMarkup(), array('class' => 'hhk-panel')), array('style' => 'float:left'));
+//        }
+//
+//        return $markup;
+//    }
+//
+//    public static function saveMembers(\PDO $dbh, $post, $isAuthorized) {
+//
+//        $uS = Session::getInstance();
+//        $dataArray = array();
+//        $dataArray['warning'] = '';
+//        $labels = new Config_Lite(LABEL_FILE);
+//
+//
+//        // reservation
+//        $idReserv = 0;
+//        if (isset($post['rid'])) {
+//            $idReserv = intval(filter_var($post['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
+//        }
+//
+//        $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
+//
+//        $chkinGroup = new CheckInGroup();
+//        $chkinGroup->saveMembers($dbh, $resv->getIdHospitalStay(), $post);
+//
+//        // Do we have any guests?
+//        if (count($chkinGroup->newGuests) == 0) {
+//            $dataArray['patient'] = $chkinGroup->patient->createMarkup();
+//            $dataArray['warning'] = 'No guests specified, or the guests are already checked in.  ';
+//            return $dataArray;
+//        }
+//
+//        // Load Guests
+//        foreach ($chkinGroup->newGuests as $guest) {
+//            $dataArray['guests'][] = $guest->createMarkup($dbh, FALSE, TRUE);
+//        }
+//
+//        // do we have a patient?
+//        if (is_null($chkinGroup->patient)) {
+//
+//            // no patient.
+//            $dataArray['warning'] = 'A ' . $labels->getString('MemberType', 'patient', 'Patient') . ' must be specified.  ';
+//            $dataArray['hvPat'] = FALSE;
+//            return $dataArray;
+//        }
+//
+//        // Patient
+//        if ($chkinGroup->isPatientCkgIn() === FALSE) {
+//            $dataArray['patient'] = $chkinGroup->patient->createMarkup(FALSE);
+//        }
+//
+//        // verify/save psg
+//        $psg = $chkinGroup->savePsg($dbh, '', $uS->username);
+//
+//        // Registration
+//        $reg = new Registration($dbh, $psg->getIdPsg());
+//        $reg->saveRegistrationRs($dbh, $psg->getIdPsg(), $uS->username);
+//
+//        // Hospital
+//        $hospitalStay = new HospitalStay($dbh, $psg->getIdPatient());
+//        Hospital::saveHospitalMarkup($dbh, $psg, $hospitalStay, $post);
+//
+//        $today = new \DateTime();
+//        $today->setTime(0, 0, 0);
+//
+//        // clean Dates
+//        if (isset($post['ckindt']) && isset($post['ckoutdt'])) {
+//
+//            $ckinStr = filter_var($post['ckindt'], FILTER_SANITIZE_STRING);
+//            $ckoutStr = filter_var($post['ckoutdt'], FILTER_SANITIZE_STRING);
+//
+//            try {
+//                $chkinDT = setTimeZone($uS, $ckinStr);
+//
+//                if ($chkinDT < $today) {
+//                    $chkinDT->setTime(16, 0, 0);
+//                }
+//
+//                $chkoutDT = setTimeZone($uS, $ckoutStr);
+//                $chkoutDT->setTime(10,0,0);
+//
+//            } catch (Exception $ex) {
+//                $dataArray['warning'] = 'Problem with visit dates:  ' . $ex->getMessage();
+//                return $dataArray;
+//            }
+//
+//        } else {
+//            $dataArray['warning'] .= 'Check-in and/or check-out dates are missing!  ';
+//            return $dataArray;
+//        }
+//
+//        // Add new room to the registration?
+//        $addRoom = FALSE;
+//        if (isset($post['addRoom'])) {
+//            $addRoom = filter_Var($post['addRoom'], FILTER_VALIDATE_BOOLEAN);
+//        }
+//
+//        if ($addRoom) {
+//            // Make a new reservation
+//            $idReserv = 0;
+//            $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
+//            $resv->setAddRoom(1);
+//        }
+//
+//        $rateChooser = new RateChooser($dbh);
+//
+//        if ($idReserv == 0) {
+//            // Preset new reservation
+//            $ids = array_keys($chkinGroup->newGuests);
+//            $idPrimaryGuest = $ids[0];
+//
+//            // Make a new reservation.
+//            $resv->setHospitalStay($hospitalStay);
+//            $resv->setNumberGuests(count($chkinGroup->newGuests));
+//            $resv->setIdGuest($idPrimaryGuest);
+//
+//            if ($uS->RoomPriceModel == ItemPriceCode::Basic) {
+//                $rateCategory = RoomRateCategorys::Fixed_Rate_Category;
+//            } else if ($uS->RoomRateDefault != '') {
+//                $rateCategory = $uS->RoomRateDefault;
+//            } else {
+//                $rateCategory = Default_Settings::Rate_Category;
+//            }
+//
+//
+//            // Look for an approved rate
+//            if ($psg->getIdPsg() > 0 && $uS->IncomeRated) {
+//
+//                if ($reg->getIdRegistration() > 0) {
+//
+//                    $fin = new FinAssistance($dbh, $reg->getIdRegistration());
+//
+//                    if ($fin->hasApplied() && $fin->getFaCategory() != '') {
+//                        $rateCategory = $fin->getFaCategory();
+//                    }
+//                }
+//            }
+//
+//            // Get the idRoomRate
+//            $rateRs = $rateChooser->getPriceModel()->getCategoryRateRs(0, $rateCategory);
+//            $resv->setIdRoomRate($rateRs->idRoom_rate->getStoredVal());
+//            $resv->setRoomRateCategory($rateCategory);
+//
+//            $resv->setStatus(ReservationStatus::Imediate);
+//            $resv->setExpectedArrival($chkinDT->format('Y-m-d H:i:s'));
+//            $resv->setExpectedDeparture($chkoutDT->format('Y-m-d H:i:s'));
+//
+//            if ($uS->VisitFee) {
+//                $kFees = readGenLookupsPDO($dbh, 'Visit_Fee_Code');
+//                $resv->setVisitFee($kFees[$uS->DefaultVisitFee][2]);
+//            }
+//
+//            $resv->saveReservation($dbh, $reg->getIdRegistration(), $uS->username);
+//
+//            foreach ($ids as $id) {
+//                ReservationSvcs::saveReservationGuest($dbh, $resv->getIdReservation(), $id, ($id == $idPrimaryGuest ? TRUE : FALSE));
+//            }
+//
+//        }
+//
+//
+//
+//        // Check for proper reservation status
+//        if (($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::Waitlist || $resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Imediate) === FALSE) {
+//
+//            throw new Hk_Exception_Runtime('The Reservation Status is wrong - ' . $resv->getStatusTitle());
+//        }
+//
+//
+//        // Save any constraints
+//        $resv->saveConstraints($dbh, $post);
+//
+//
+//
+//
+//        // Reservation dates
+//        try {
+//            self::verifyVisitDates($resv, $chkinDT, $chkoutDT, $uS->OpenCheckin);
+//
+//            // Stay dates
+//            self::verifyStayDates($chkinGroup->newGuests, $chkinDT, $chkoutDT);
+//
+//        } catch (Exception $ex) {
+//
+//            $dataArray['warning'] = 'Problem with dates:  ' . $ex->getMessage();
+//            return $dataArray;
+//        }
+//
+//
+//        // Set up room chooser object
+//        $roomChooser = new RoomChooser($dbh, $resv, count($chkinGroup->newGuests), $chkinDT, $chkoutDT);
+//
+//        // Load any stays
+//        $stays = self::loadStays($dbh, $reg->getIdRegistration());
+//
+//        // Room empty?
+//        if ($roomChooser->getCurrentGuests() == 0) {
+//
+//            // count visits
+//            $visits = array();
+//            foreach ($stays as $s) {
+//                $visits[$s['idVisit']] = 'y';
+//            }
+//
+//            // If there are other reservations, then we may be adding a room
+//            if (count($visits) >= $uS->RoomsPerPatient) {
+//                $dataArray['warning'] = 'Maximum Rooms per ' . $labels->getString('MemberType', 'patient', 'Patient') . ' is exceeded.  ';
+//                return $dataArray;
+//            }
+//
+//            // We need a primary guest.
+//            if (isset($chkinGroup->newGuests[$resv->getIdGuest()]) === FALSE) {
+//
+//                $ids = array_keys($chkinGroup->newGuests);
+//                $idPrimaryGuest = $ids[0];
+//                $oldPriGuest = $resv->getIdGuest();
+//
+//                // Update reservation.
+//                $resv->setNumberGuests(count($chkinGroup->newGuests));
+//                $resv->setIdGuest($idPrimaryGuest);
+//                $resv->saveReservation($dbh, $reg->getIdRegistration(), $uS->username);
+//
+//                // Remove old primary guest.
+//                $resGuestRs = new Reservation_GuestRS();
+//                $resGuestRs->idReservation->setStoredVal($resv->getIdReservation());
+//                $resGuestRs->idGuest->setStoredVal($oldPriGuest);
+//
+//                EditRS::delete($dbh, $resGuestRs, array($resGuestRs->idReservation, $resGuestRs->idGuest));
+//
+//
+//                foreach ($ids as $id) {
+//                    ReservationSvcs::saveReservationGuest($dbh, $resv->getIdReservation(), $id, ($id == $idPrimaryGuest ? TRUE : FALSE));
+//                }
+//            }
+//
+//            // Show payment, only to the first guest.
+//            if ($uS->RoomPriceModel != ItemPriceCode::None) {
+//
+//                $resc = $roomChooser->getSelectedResource();
+//                if (is_null($resc)) {
+//                    $roomKeyDeps = '';
+//                } else {
+//                    $roomKeyDeps = $resc->getKeyDeposit($uS->guestLookups[GL_TableNames::KeyDepositCode]);
+//
+//                }
+//
+//                // Rate Chooser
+//                $dataArray['rate'] = $rateChooser->createCheckinMarkup($dbh, $resv, $resv->getExpectedDaysDT($chkinDT, $chkoutDT), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
+//
+//                // Payment Chooser
+//                if ($uS->PayAtCkin) {
+//                    $checkinCharges = new CheckinCharges(0, $resv->getVisitFee(), $roomKeyDeps);
+//                    $checkinCharges->sumPayments($dbh);
+//                    $dataArray['pay'] = PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $checkinCharges, $resv->getExpectedPayType(), $uS->KeyDeposit, FALSE, $uS->DefaultVisitFee, $reg->getPreferredTokenId());
+//                }
+//
+//            }
+//
+//        } else {
+//
+//            // Currunt guests markup
+//            if (count($stays) > 0) {
+//                $dataArray['stays'] = HouseServices::getStaysMarkup($stays, $resv->getIdReservation());
+//            }
+//
+//        }
+//
+//        // Omit self only if not adding a room
+//        $omitSelf = TRUE;
+//        if ($addRoom) {
+//            $omitSelf = FALSE;
+//        }
+//
+//        // Room Chooser
+//        $dataArray['resc'] = $roomChooser->CreateCheckinMarkup($dbh, $isAuthorized, TRUE, $omitSelf);
+//
+//        // Array with key deposit info
+//        $dataArray['rooms'] = $roomChooser->makeRoomsArray();
+//        // Array with amount calculated for each rate.
+//        $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $reg->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
+//
+//        if ($uS->VisitFee) {
+//            // Visit Fee Array
+//            $dataArray['vfee'] = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
+//        }
+//
+//
+//        // send resource information
+//        if (is_null($roomChooser->getSelectedResource()) === FALSE) {
+//
+//            $dataArray['rmax'] = $roomChooser->getSelectedResource()->getMaxOccupants();
+//            $dataArray['rcur'] = $roomChooser->getCurrentGuests();
+//        }
+//
+//
+//
+//        // Vehicles
+//        if ($uS->TrackAuto) {
+//            $dataArray['vehicle'] = Vehicle::createVehicleMarkup($dbh, $reg->getIdRegistration(), $reg->getNoVehicle());
+//        }
+//
+//
+//        // Reservation ID
+//        $dataArray['rid'] = $resv->getIdReservation();
+//
+//        return $dataArray;
+//    }
 
     public static function deleteUnfinisedCheckins(\PDO $dbh) {
 

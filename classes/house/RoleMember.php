@@ -53,7 +53,8 @@ abstract class RoleMember extends IndivMember {
         }
 
         $tr =
-             HTMLTable::makeTh('First Name')
+             HTMLTable::makeTh('Prefix')
+            . HTMLTable::makeTh('First Name')
             . HTMLTable::makeTh('Middle')
             . HTMLTable::makeTh($lnCopyDownIcon)
             .HTMLTable::makeTh('Suffix')
@@ -79,11 +80,7 @@ abstract class RoleMember extends IndivMember {
 
     public function createMarkupHdr($labels = NULL, $hideRelChooser = TRUE) {
 
-        $tr =
-            HTMLTable::makeTh('Id')
-            .HTMLTable::makeTh('Prefix');
-
-        return $tr . $this->createThinMarkupHdr($labels, $hideRelChooser, $this->showBirthDate, FALSE);
+        return HTMLTable::makeTh('Id') . $this->createThinMarkupHdr($labels, $hideRelChooser, $this->showBirthDate, FALSE);
 
     }
 
@@ -191,13 +188,19 @@ abstract class RoleMember extends IndivMember {
 
         $uS = Session::getInstance();
 
+                // Name Prefix
+        $tr = HTMLTable::makeTd(HTMLSelector::generateMarkup(
+                HTMLSelector::doOptionsMkup($uS->nameLookups[GL_TableNames::NamePrefix],
+                        $this->nameRS->Name_Prefix->getstoredVal(), TRUE),
+                array('data-prefix'=>$this->getIdPrefix(), 'name' => $this->getIdPrefix().'selPrefix')));
+
         $attrs = array('data-prefix'=>$this->getIdPrefix());
 
         // First Name
         $attrs['name'] = $this->getIdPrefix().'txtFirstName';
         $attrs['class'] = 'hhk-firstname';
         $attrs['size'] = '16';
-        $tr = HTMLTable::makeTd(
+        $tr .= HTMLTable::makeTd(
                 HTMLInput::generateMarkup(($this->get_idName() == 0 ? '' : $this->get_idName())
                         , array('name'=>$this->getIdPrefix().'idName', 'type'=>'hidden', 'class'=>'ignrSave'))
                 .HTMLInput::generateMarkup($this->nameRS->Name_First->getstoredVal(), $attrs));

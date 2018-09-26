@@ -344,24 +344,15 @@ class RateChooser {
 
     public function createCheckinMarkup(\PDO $dbh, \Reservation_1 $resv, $numNights, $visitFeeTitle) {
 
-        // Select payment block
-        if ($this->payAtCheckin) {
+        $markup = $this->createBasicChooserMarkup($dbh, $resv, $numNights, $visitFeeTitle, $resv->getIdRegistration());
 
-            $markup = $this->createBasicChooserMarkup($dbh, $resv, $numNights, $visitFeeTitle, $resv->getIdRegistration());
-
-            if ($this->incomeRated) {
-                $markup .= HTMLInput::generateMarkup('Income Chooser ...', array('type'=>'button', 'id' => 'btnFapp', 'data-id'=>$resv->getIdGuest(), 'style'=>'margin:1em;'));
-            }
-
-            return HTMLContainer::generateMarkup('fieldset',
-                    HTMLContainer::generateMarkup('legend', 'Rate Chooser', array('style'=>'font-weight:bold;'))
-                    . $markup, array('style'=>'float:left;', 'class'=>'hhk-panel'));
-
-        } else {
-            return HTMLContainer::generateMarkup('fieldset',
-                    HTMLContainer::generateMarkup('legend', 'Room Rate', array('style'=>'font-weight:bold;'))
-                    . $this->createStaticMarkup($dbh, $resv, $visitFeeTitle), array('style'=>'float:left;', 'class'=>'hhk-panel'));
+        if ($this->incomeRated) {
+            $markup .= HTMLInput::generateMarkup('Income Chooser ...', array('type'=>'button', 'id' => 'btnFapp', 'data-id'=>$resv->getIdGuest(), 'style'=>'margin:1em;'));
         }
+
+        return HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', 'Rate Chooser', array('style'=>'font-weight:bold;'))
+                . $markup, array('style'=>'float:left;', 'class'=>'hhk-panel'));
 
     }
 
@@ -410,7 +401,7 @@ class RateChooser {
              . HTMLTable::makeTd($rate, array('style'=>'text-align:center;')));
 
         $tbl->addBodyTr(HTMLTable::makeTd('Estimated Nights', array('class'=>'tdlabel'))
-             . HTMLTable::makeTd($resv->getExpectedDays(), array('style'=>'text-align:center;')));
+             . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $resv->getExpectedDays(), array('name'=>'spnNites')), array('style'=>'text-align:center;')));
 
         if ($resv->getRateAdjust() != 0) {
             $amount = (1 + $resv->getRateAdjust() / 100) * $amount;
@@ -420,22 +411,24 @@ class RateChooser {
 
         if ($this->payVisitFee) {
 
+            $vFeeMkup = $this->makeVisitFeeSelector($this->makeVisitFeeArray($dbh), $resv->getVisitFee());
+
             $tbl->addBodyTr(HTMLTable::makeTd('Estimated Room Amount', array('class'=>'tdlabel'))
-                 . HTMLTable::makeTd('$'. number_format($amount,2), array('style'=>'text-align:right;border-top: solid 3px #2E99DD;')));
+                 . HTMLTable::makeTd('$'. HTMLContainer::generateMarkup('span', number_format($amount,2), array('name'=>'spnLodging'))
+                         , array('style'=>'text-align:right;border-top: solid 3px #2E99DD;')));
 
             $tbl->addBodyTr(HTMLTable::makeTd($visitFeeTitle, array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$'.number_format($resv->getVisitFee(),2), array('style'=>'text-align:right;')));
+                . HTMLTable::makeTd('$'.number_format($resv->getVisitFee(),2), array('style'=>'text-align:right;'))
+                    . HTMLContainer::generateMarkup('span', $vFeeMkup, array('style'=>'display:none;')));
         }
 
-
         $tbl->addBodyTr(HTMLTable::makeTd('Estimated Total Amount', array('class'=>'tdlabel'))
-             . HTMLTable::makeTd('$'. number_format($amount + $resv->getVisitFee(), 2), array('style'=>'text-align:right;font-weight:bold;border-top: solid 3px #2E99DD;')));
+             . HTMLTable::makeTd('$'. HTMLContainer::generateMarkup('span', number_format($amount + $resv->getVisitFee(), 2), array('name'=>'spnAmount')), array('style'=>'text-align:right;font-weight:bold;border-top: solid 3px #2E99DD;')));
 
         // Add mention of rate glide credit days
         if ($dayCredit > 0) {
             $tbl->addBodyTr(HTMLTable::makeTd('(Estimated Total based on ' . $dayCredit . ' days of room rate glide.)', array('colspan'=>'4')));
         }
-
 
         return $tbl->generateMarkup();
 

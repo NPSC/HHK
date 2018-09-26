@@ -65,6 +65,8 @@ $sty = '';
 $emtableMarkup = '';
 $emAddr = '';
 
+$includeLogo = TRUE;
+
 
 function createScript() {
     return "
@@ -125,10 +127,12 @@ if (isset($_REQUEST['reg'])) {
 
 if (isset($_POST['hdnIdReg'])) {
     $idRegistration = intval(filter_var($_REQUEST['hdnIdReg'], FILTER_SANITIZE_NUMBER_INT), 10);
+    $includeLogo = FALSE;
 }
 
 if (isset($_POST['hdnIdVisit'])) {
     $idVisit = intval(filter_var($_REQUEST["hdnIdVisit"], FILTER_SANITIZE_NUMBER_INT), 10);
+    $includeLogo = FALSE;
 }
 
 
@@ -162,7 +166,7 @@ if ($idRegistration > 0) {
         $name = $guest->getRoleMember();
 
         $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
-        $stmtMarkup = Receipt::createComprehensiveStatements($dbh, $spans, $idRegistration, $name->get_fullName(), $priceModel);
+        $stmtMarkup = Receipt::createComprehensiveStatements($dbh, $spans, $idRegistration, $name->get_fullName(), $priceModel, $includeLogo);
 
     } else {
         $stmtMarkup = 'No Information.';
@@ -177,7 +181,7 @@ if ($idRegistration > 0) {
     $guest = new Guest($dbh, '', $visit->getPrimaryGuestId());
     $name = $guest->getRoleMember();
 
-    $stmtMarkup = Receipt::createStatementMarkup($dbh, $idVisit, $name->get_fullName());
+    $stmtMarkup = Receipt::createStatementMarkup($dbh, $idVisit, $name->get_fullName(), $includeLogo);
 
 } else {
     $stmtMarkup = 'No Information.';

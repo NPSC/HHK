@@ -182,6 +182,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
 
         <script type="text/javascript" src="js/resvManager.js"></script>
 

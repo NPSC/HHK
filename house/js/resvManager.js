@@ -591,10 +591,12 @@ function resvManager(initData) {
             $('.hhk-addrPanel').find('select.bfh-countries').each(function() {
                 var $countries = $(this);
                 $countries.bfhcountries($countries.data());
+                $(this).data("dirrty-initial-value", $(this).data('country'));
             });
             $('.hhk-addrPanel').find('select.bfh-states').each(function() {
                 var $states = $(this);
                 $states.bfhstates($states.data());
+                $(this).data("dirrty-initial-value", $(this).data('state'));
             });
 
             $('.hhk-phemtabs').tabs();
@@ -1315,6 +1317,8 @@ function resvManager(initData) {
             $('#hhk-roomChsrtitle').addClass('hhk-loading');
             $('#hhkroomMsg').text('').hide();
 
+            cbRS = {};
+            
             $('input.hhk-constraintsCB:checked').each(function () {
                 cbRS[$(this).data('cnid')] = 'ON';
             });
@@ -2229,6 +2233,10 @@ function resvManager(initData) {
                 $('#' + data.addPerson.mem.pref + 'txtFirstName').focus();
             }
         }
+        
+        // init dirrty
+        $("#form1").dirrty();
+
     }
 
     function verifyInput() {

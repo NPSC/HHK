@@ -162,81 +162,80 @@ function setupRates(ckIn) {
     }
 
     $('#txtFixedRate').change(function() {
-        
+
         if ($selRateCat.val() === fixedRate) {
-            
-            var amt = parseFloat($(this).val());
-            var ds = parseInt($('#spnNites').text(), 10);
-            var fa = 0;
-            var total;
-            
+
+            var amt = parseFloat($(this).val()),
+                fa = 0,
+                total,
+                days = parseInt($('#spnNites').text(), 10);
+
+            if (isNaN(days)) {
+                days = 0;
+            }
+
             if (isNaN(amt) || amt < 0) {
                 amt = parseFloat($(this).prop("defaultValue"));
                 if (isNaN(amt) || amt < 0)
                     amt = 0;
                 $(this).val(amt);
             }
-            
+
             if ($selResource.length > 0 && ckIn.resources[$selResource.val()]) {
                 ckIn.resources[$selResource.val()].rate = amt;
             }
-            
-            if (isNaN(ds)) {
-                ds = 0;
-            }
-            
+
             if ($selVisitFee.length > 0) {
                 fa = parseFloat(ckIn.visitFees[$selVisitFee.val()][2]);
                 if (isNaN(fa) || fa < 0) {
                     fa = 0;
                 }
             }
-            
-            $('#spnLodging').text('$' + (amt * ds));
-            total = (amt * ds) + fa;
+
+            $('#spnLodging').text('$' + (amt * days));
+            total = (amt * days) + fa;
             $('#spnAmount').text('$' + total);
         }
     });
 
     $('#txtadjAmount').change(function () {
-            
+
         if ($selRateCat.val() !== fixedRate) {
-            
-            var adj = parseFloat($(this).val());
-            var fa = 0;
-            
+
+            var adj = parseFloat($(this).val()),
+                fa = 0,
+                days = parseInt($('#spnNites').text(), 10);
+
+            if (isNaN(days)) {
+                days = 0;
+            }
+
             if (isNaN(adj)) {
-                
+
                 adj = parseFloat($(this).prop("defaultValue"));
-                
+
                 if (isNaN(adj)) {
                     adj = 0;
                 }
                 $(this).val(adj);
             }
-            
-            if ($('#selVisitFee').length > 0) {
-                
+
+            if ($selVisitFee.length > 0) {
+
                 fa = parseFloat(ckIn.visitFees[$selVisitFee.val()][2]);
-                
+
                 if (isNaN(fa) || fa < 0) {
                     fa = 0;
                 }
             }
-            
-            if (ckIn.rateList && ckIn.rateList[$selRateCat.val()] !== false) {
-                
-                var amt = parseFloat(ckIn.rateList[$selRateCat.val()]);
-                
-                if (isNaN(amt) || amt < 0) {
-                    amt = 0;
-                }
-                
-                amt = (amt * (1 + adj/100));
-                $('#spnLodging').text('$' + amt);
+
+            daysCalculator(days, $selRateCat.val(), 0, 0, adj, parseInt($('#spnNumGuests').text()), function(amt) {
+
+                $('#spnLodging').text('$' + amt.toFixed(2).toString());
                 amt += fa;
-                $('#spnAmount').text('$' + amt);
-            }
+                $('#spnAmount').text('$' + amt.toFixed(2).toString());
+            });
+
         }
     });
 
@@ -259,7 +258,7 @@ function setupRates(ckIn) {
         $('#txtFixedRate').change();
         $('#txtadjAmount').change();
     });
-    
+
     $selRateCat.change();
 }
 

@@ -942,10 +942,11 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
 
     // Days - Payment calculator
     $('#daystoPay').change(function () {
-        var days = parseInt($(this).val());
-        var idVisit = parseInt($(this).data('vid'));
-        var fixed = parseFloat($('#txtFixedRate').val());
-        var noGuests = parseInt($('#spnNumGuests').text());
+        var days = parseInt($(this).val()),
+            idVisit = parseInt($(this).data('vid')),
+            fixed = parseFloat($('#txtFixedRate').val()),
+            noGuests = parseInt($('#spnNumGuests').text()),
+            feePayAmt = p.feePayAmt;
 
         if (isNaN(noGuests)) {
             noGuests = 1;
@@ -966,36 +967,53 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
         }
 
         if (days > 0) {
-            var parms = {cmd:'rtcalc', vid: idVisit, nites: days, rcat: $rateSelector.val(), fxd: fixed, adj: adjust, gsts: noGuests};
-            // ask momma how much
-            $.post('ws_ckin.php', parms,
-                function(data) {
-                    if (!data) {
-                        alert('Bad Reply from Server');
-                        return;
-                    }
-                    try {
-                        data = $.parseJSON(data);
-                    } catch (err) {
-                        alert("Parser error - " + err.message);
-                        return;
-                    }
-                    if (data.error) {
-                        if (data.gotopage) {
-                            window.open(data.gotopage);
-                        }
-                        flagAlertMessage(data.error, 'error');
-                        return;
-                    }
-                    if (data.amt) {
-                        p.feePayAmt.val(data.amt);
-                        p.feePayAmt.change();
-                    }
+            
+            daysCalculator(days, $rateSelector.val(), idVisit, fixed, adjust, noGuests, function(amt) {
+                feePayAmt.val(amt.toFixed(2).toString());
+                feePayAmt.change();
             });
         }
     });
 
     amtPaid();
+}
+
+function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, rtnFunction) {
+    
+    if (days > 0) {
+        var parms = {cmd:'rtcalc', vid: idVisit, nites: days, rcat: idRate, fxd: fixedAmt, adj: adjAmt, gsts: numGuests};
+        // ask momma how much
+        $.post('ws_ckin.php', parms,
+            function(data) {
+                if (!data) {
+                    alert('Bad Reply from Server');
+                    return;
+                }
+                try {
+                    data = $.parseJSON(data);
+                } catch (err) {
+                    alert("Parser error - " + err.message);
+                    return;
+                }
+                if (data.error) {
+                    if (data.gotopage) {
+                        window.open(data.gotopage);
+                    }
+                    flagAlertMessage(data.error, 'error');
+                    return;
+                }
+                if (data.amt) {
+                    
+                    var amt = parseFloat(data.amt);
+                    
+                    if (isNaN(amt) || amt < 0) {
+                        amt = 0;
+                    }
+                    rtnFunction(amt);
+                }
+        });
+    }
+
 }
 
 function verifyBalDisp() {
