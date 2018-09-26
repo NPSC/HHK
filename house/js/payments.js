@@ -672,6 +672,7 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
     "use strict";
     var ptsel = $('#PayTypeSel');
     var chg = $('.tblCredit');
+    var p = new payCtrls();
     
     if (chg.length === 0) {
         chg = $('.hhk-mcred');
@@ -732,9 +733,6 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
         rtnsel.change();
     }
 
-    
-    var p = new payCtrls();
-    
 
     if (p.selBalTo.length > 0) {
         p.selBalTo.change(function () {
@@ -837,6 +835,7 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
                 amtPaid();
             }
             
+            // Change Rooms Markup only
             if (indx > 0 && resources[indx] && $('#myRescId').length > 0) {
                 
                 $('#rmChgMsg').text('').hide();
@@ -882,6 +881,7 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
         });
     }
 
+    // Extra payments or credits applied.
     if (p.adjustBtn.length > 0) {
         p.adjustBtn.button();
         p.adjustBtn.click(function () {
@@ -889,6 +889,7 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
         });
     }
 
+    // Delete invoice
     $('#divPmtMkup').on('click', '.invAction', function (event) {
         event.preventDefault();
         if ($(this).data('stat') == 'del') {
@@ -939,6 +940,7 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
         createAutoComplete($('#txtInvSearch'), 3, {cmd: "filter", 'basis':'ba'}, function (item) { getInvoicee(item, idVisit); }, false);
     }
 
+    // Days - Payment calculator
     $('#daystoPay').change(function () {
         var days = parseInt($(this).val());
         var idVisit = parseInt($(this).data('vid'));

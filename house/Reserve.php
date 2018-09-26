@@ -111,21 +111,27 @@ if (isset($_POST['hdnCfmRid'])) {
         $notes = filter_var($_POST['tbCfmNotes'], FILTER_SANITIZE_STRING);
     }
 
+    require(HOUSE . 'TemplateForm.php');
     require(HOUSE . 'ConfirmationForm.php');
 
-    $confirmForm = new ConfirmationForm($uS->ConfirmFile);
+    try {
+        $confirmForm = new ConfirmationForm('confirmation.txt');
 
-    $formNotes = $confirmForm->createNotes($notes, FALSE);
-    $form = '<!DOCTYPE html>' . $confirmForm->createForm($dbh, $resv, $guest, 0, $formNotes);
+        $formNotes = $confirmForm->createNotes($notes, FALSE);
+        $form = '<!DOCTYPE html>' . $confirmForm->createForm($confirmForm->makeReplacements($resv, $guest, 0, $formNotes));
 
-    header('Content-Disposition: attachment; filename=confirm.doc');
-    header("Content-Description: File Transfer");
-    header('Content-Type: text/html');
-    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-    header('Expires: 0');
+        header('Content-Disposition: attachment; filename=confirm.doc');
+        header("Content-Description: File Transfer");
+        header('Content-Type: text/html');
+        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+        header('Expires: 0');
 
-    echo($form);
-    exit();
+        echo($form);
+        exit();
+
+    } catch (Exception $ex) {
+        $paymentMarkup .= "Confirmation Form Error: " . $ex->getMessage();
+    }
 }
 
 if (isset($uS->cofrid)) {
@@ -255,6 +261,7 @@ $resvObjEncoded = json_encode($resvAr);
 var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
 var payFailPage = '<?php echo $payFailPage; ?>';
 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
+var paymentMarkup = '<?php echo $paymentMarkup; ?>';
 var pageManager;
 
 $(document).ready(function() {
@@ -273,6 +280,7 @@ $(document).ready(function() {
             ) * 1.1 );
         }
     });
+
 
 // Dialog Boxes
     $("#resDialog").dialog({
@@ -350,6 +358,11 @@ $(document).ready(function() {
         modal: true,
         title: 'Payment Receipt'
     });
+
+    if (paymentMarkup !== '') {
+        $('#paymentMessage').show();
+    }
+
 
     pageManager = new resvManager(resv);
 

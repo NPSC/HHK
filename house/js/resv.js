@@ -223,6 +223,7 @@ function setupRates(ckIn) {
                     fa = 0;
                 }
             }
+            
             if (ckIn.rateList && ckIn.rateList[$selRateCat.val()] !== false) {
                 
                 var amt = parseFloat(ckIn.rateList[$selRateCat.val()]);
@@ -292,6 +293,7 @@ function updateRoomChooser(idReserv, numGuests, arrivalDate, departureDate) {
           expDep:departureDate, 
           idr:idResc, 
           cbRS:cbRS},
+      
       function(data) {
           var newSel;
           
@@ -352,6 +354,7 @@ function changePsgPatient(idPsg, idGuest, patientName) {
             }
         });
 }
+
 function getRegistrationDialog(idReg, cDiv) {
     "use strict";
     $.post(

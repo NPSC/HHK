@@ -1260,14 +1260,15 @@ function resvManager(initData) {
                     
                     // visit buttons
                     $('.hhk-getVDialog').button();
+                    
+                    // Update the room chooser.
+                    if ($('#gstDate').val() != '' && $('#gstCoDate').val() != '') {
+                        updateRescChooser.go($('#gstDate').val(), $('#gstCoDate').val());
+                    }
                 }
             });
         }
         
-        // Update the room chooser.
-        if ($('#gstDate').val() != '' && $('#gstCoDate').val() != '') {
-            updateRescChooser.go($('#gstDate').val(), $('#gstCoDate').val());
-        }
         
         // Checking in now button
         manageCheckInNowButton(dates["date1"].t, idResv);

@@ -85,7 +85,7 @@ abstract class TemplateForm {
 
             $pathInfo = pathinfo($this->templateFileName);
 
-            if (isset($this->mime[strtolower($pathInfo['extension'])]) === FALSE) {
+            if (isset($pathInfo['extension']) === FALSE || isset($this->mime[strtolower($pathInfo['extension'])]) === FALSE) {
                 throw new Hk_Exception_Runtime("File extension not supported, file = " . $this->templateFileName);
             }
 
