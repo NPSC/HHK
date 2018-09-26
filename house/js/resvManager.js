@@ -37,7 +37,11 @@ function resvManager(initData) {
     t.getIdPsg = getIdPsg;
     t.getIdResv = getIdResv;
     t.getIdName = getIdName;
+    t.setRooms = setRooms;
 
+    function setRooms($r) {
+        rooms = $r;
+    }
 
     function getIdResv() {
         return idResv;
@@ -1362,7 +1366,7 @@ function resvManager(initData) {
                     }
 
                     if (data.rooms) {
-                        rooms = data.rooms;
+                        setRooms(data.rooms);
                     }
 
             });
