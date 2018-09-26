@@ -15,7 +15,7 @@
  */
 class ListNotes {
 
-    public static function loadList (\PDO $dbh, $linkId, $linkType, $parms) {
+    public static function loadList (\PDO $dbh, $linkId, $linkType, $parms, $concatNotes = FALSE) {
 
         $columns = array(
             array( 'db' => 'Timestamp',  'dt' => 'Date' ),
@@ -28,6 +28,15 @@ class ListNotes {
         $dbView = '';
         $whereField = '';
         $priKey = 'Note_Id';
+        
+        if ($concatNotes) {
+            $idPsg = LinkNote::findIdPsg($dbh, $linkType, $linkId);
+            
+            if ($idPsg > 0) {
+                $linkType = Note::PsgLink;
+                $linkId = $idPsg;
+            }
+        }
 
         if ($linkType == '') {
             return array('error'=>'The Link Type is missing.');

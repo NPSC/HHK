@@ -197,7 +197,7 @@ try {
 
         require(CLASSES . 'DataTableServer.php');
 
-        $events = ListNotes::loadList($dbh, $idLink, $linkType, $_GET);
+        $events = ListNotes::loadList($dbh, $idLink, $linkType, $_GET, $uS->ConcatVisitNotes);
 
         break;
 
@@ -220,7 +220,7 @@ try {
             $idLink = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $events = array('idNote'=>LinkNote::save($dbh, $data, $idLink, $linkType, $uS->username));
+        $events = array('idNote'=>LinkNote::save($dbh, $data, $idLink, $linkType, $uS->username, $uS->ConcatVisitNotes));
 
         break;
 

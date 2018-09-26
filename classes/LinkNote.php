@@ -15,7 +15,7 @@
  */
 class LinkNote {
 
-    public static function save(\PDO $dbh, $noteText, $linkId, $linkType, $userName) {
+    public static function save(\PDO $dbh, $noteText, $linkId, $linkType, $userName, $concatNotes = FALSE) {
 
         if ($linkType == '' || $linkId < 1) {
             return array('error'=>'The Link Type is missing.');
@@ -25,6 +25,54 @@ class LinkNote {
         $note = Note::createNew($noteText, $userName);
         $note->saveNew($dbh);
 
+        if ($note->getIdNote() > 0) {
+            
+            $result = $this->saveLink($dbh, $linkId, $linkType, $userName);
+            
+            if ($concatNotes) {
+                
+                $idPsg = $this->findIdPsg($dbh, $linkType, $linkId);
+                
+                if ($idPsg > 0) {
+                    $psgResult = $this->saveLink($dbh, $idPsg, Note::PsgLink, $userName);
+                }
+            }
+        }
+
+        return $note->getIdNote();
+
+    }
+
+    public static function findIdPsg(\PDO $dbh, $linkType, $linkId) {
+        
+        $query = '';
+        $idPsg = 0;
+
+        if ($linkType == Note::ResvLink) {
+            $query = "select reg.idPsg from registration reg join reservation r on reg.idRegistration = r.idRegistration "
+                    . "where r.idReservation = $linkId";
+        } else if ($linkType == Note::VisitLink) {
+            $query = "select reg.idPsg from registration reg join visit r on reg.idRegistration = r.idRegistration "
+                    . "where r.idVisit = $linkId";
+        } else if ($linkType == Note::PsgLink) {
+            return $linkId;
+        }
+
+        if ($query != '') {
+
+            $stmt = $dbh->query($query);
+            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+
+            if (is_array($rows) && isset($rows[0][0])) {
+                $idPsg = intval($rows[0][0], 10);
+            }
+        }
+
+        return $idPsg;
+    }
+    
+    protected function saveLink(\PDO $dbh, $linkId, $linkType, $userName) {
+        
         if ($note->getIdNote() > 0) {
 
             $table = '';
@@ -72,16 +120,18 @@ class LinkNote {
                     //break;
 
                 default:
-                    return array('error'=>'The Link Type is not found: ' . $linkType);
+                    return 'The Link Type is not found: ' . $linkType;
             }
 
             if ($table != '' && $field != '') {
 
                 $dbh->exec("insert into `$table` (`$field`, Note_Id) values ('$linkId', '" . $note->getIdNote() . "');");
+            } else {
+                return 'The link table or link field are missing ';
             }
         }
-
-        return $note->getIdNote();
+        
+        return '';
 
     }
 
