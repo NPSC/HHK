@@ -112,6 +112,5 @@ $(document).ready(function() {
    );
    
    $('#contentDiv').css('margin-top', $('#global-nav').css('height'));
-
    
 });

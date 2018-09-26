@@ -586,7 +586,9 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     });
 
     $('#keysfees').css('background-color', 'white');
-    $('#keysfees').dialog("close");
+    
+	//working
+	$('#keysfees').empty().append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading Payment Gateway</p></div>');
 
     $.post('ws_ckin.php', parms,
         function(data) {
@@ -613,10 +615,11 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 var dates = {'date1': new Date($('#gstDate').val()), 'date2': new Date($('#gstCoDate').val())};
                 pageManager.doOnDatesChange(dates);
             }
-
+			
             paymentReply(data, true);
-
+			
     });
+    //$("#hhk-loading-spinner").show();
 }
 
 function paymentReply (data, updateCal) {
@@ -626,9 +629,9 @@ function paymentReply (data, updateCal) {
         if (data.hostedError) {
             
             flagAlertMessage(data.hostedError, true);
-
+			$('#keysfees').dialog("close");
         } else if (data.xfer && $('#xform').length > 0) {
-
+			
             var xferForm = $('#xform');
             xferForm.children('input').remove();
             xferForm.prop('action', data.xfer);
@@ -648,13 +651,19 @@ function paymentReply (data, updateCal) {
 
             if (document.getElementsByName('instamed').length != 0) {
                 document.getElementById('instamed').setAttribute('src', data.inctx);
+                $("#instamed").on("load", function(){
+	                $('#keysfees').dialog("close");
+                });
+                return;
+                
             } else {
                 flagAlertMessage('InstaMed iFrame is missing.', true);
+                $('#keysfees').dialog("close");
                 return;
             }
 
         }
-
+		$('#keysfees').dialog("close");
 
         if (data.success && data.success !== '') {
             flagAlertMessage(data.success, false);
@@ -672,7 +681,7 @@ function paymentReply (data, updateCal) {
             window.open('ShowInvoice.php?invnum=' + data.invoiceNumber);
         }
     }
-
+	
 }
 /**
  * 

@@ -523,6 +523,7 @@ class InstamedGateway extends PaymentGateway {
 
 
         // Poll for results.
+/*
         do  {
 
             $result = $this->pollPaymentStatus($idToken, TRUE);
@@ -546,8 +547,67 @@ class InstamedGateway extends PaymentGateway {
         }
 
         if ($result->isComplete()) {
+*/
+	        //get transaction details
+	        $url = "https://online.instamed.com/payment/NVP.aspx?";
+	        $params = "merchantID=" . $this->getCredentials()->merchantId
+	        		. "&storeID=" . $this->getCredentials()->storeId
+	        		. "&terminalID=001"
+	        		. "&transactionAction=ViewReceipt"
+	        		. "&requestToken=false"
+	        		. "&allowPartialPayment=false"
+	        		. "&singleSignOnToken=" . $idToken;
+	        
+	        //var_dump($url . $params);
+	        		
+			$ch = curl_init();
+	
+	        curl_setopt($ch, CURLOPT_URL, $url . $params);
+	        curl_setopt($ch, CURLOPT_USERPWD, "NP.SOFTWARE.TEST:vno9cFqM");
+			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			
+	        $responseString = curl_exec($ch);
+	        parse_str($responseString, $transaction);
+	        //var_dump($transaction);
+	        //IsEMVVerifiedByPIN=false&isEMVTransaction=false&EMVCardEntryMode=Keyed&isSignatureRequired=false&cardBrand=VISA&cardExpirationMonth=12&cardExpirationYear=2021&cardBINNumber=411111&cardHolderName= &paymentCardType=Credit&lastFourDigits=1111&authorizationNumber=A2CDB9&responseCode=000&responseMessage=APPROVAL&transactionStatus=C&primaryTransactionID=c5a1a5a099f748c8bf16b890c8b371ec&authorizationText=I AGREE TO PAY THE ABOVE AMOUNT ACCORDING TO MY CARD HOLDER AGREEMENT.&transactionID=c5a1a5a099f748c8bf16b890c8b371ec&paymentPlanID=ccc366b1641444fe9e59620340d5e06c&transactionDate=2018-09-26T19:05:40.1666074Z
+	        
+	        curl_close($ch);
+	        
+	        $response = new VerifyCurlResponse($transaction);
+	        // Check paymentId
+			$cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $idToken);
+			
+	        $vr = new CheckOutResponse($response, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $payNotes);
 
-        }
+
+	        // Save raw transaction in the db.
+	        try {
+	            Gateway::saveGwTx($dbh, $vr->response->getStatus(), json_encode($verify->getFieldsArray()), json_encode($vr->response->getResultArray()), 'HostedCoVerify');
+	        } catch(Exception $ex) {
+	            // Do Nothing
+	        }
+	
+	        // Record transaction
+	        try {
+	
+	            if ($verifyResponse->getTranType() == MpTranType::ReturnAmt) {
+	                $trType = TransType::Retrn;
+	            } else if ($verifyResponse->getTranType() == MpTranType::Sale) {
+	                $trType = TransType::Sale;
+	            }
+	
+	            $transRs = Transaction::recordTransaction($dbh, $vr, $gw, $trType, TransMethod::HostedPayment);
+	            $vr->setIdTrans($transRs->idTrans->getStoredVal());
+	
+	        } catch(Exception $ex) {
+	
+	        }
+	
+	        // record payment
+	        return SaleReply::processReply($dbh, $vr, $uS->username);
+
+//        }
 
     }
 
@@ -921,5 +981,278 @@ class PollingResponse extends GatewayResponse {
         }
         return FALSE;
     }
+
+}
+
+class VerifyCurlResponse extends GatewayResponse {
+
+    function __construct($response) {
+        parent::__construct($response);
+		
+		if(is_array($response)){
+			$this->result = $response;
+		}else{
+			throw new Hk_Exception_Payment("Curl transaction response is invalid.  ");
+		}
+        
+
+    }
+	
+	public function parseResponse(){
+		return '';
+	}
+	
+	public function getResponseCode() {
+        if (isset($this->result['responseCode'])) {
+            return $this->result['responseCode'];
+        }
+        return '';
+    }
+	
+    public function getStatus() {
+        if (isset($this->result['responseCode'])) {
+            return $this->result['responseCode'];
+        }
+        return '';
+    }
+
+    public function getStatusMessage() {
+        if (isset($this->result['responseMessage'])) {
+            return $this->result['responseMessage'];
+        }
+        return '';
+    }
+
+    public function getMessage() {
+        if (isset($this->result['responseMessage'])) {
+            return $this->result['responseMessage'];
+        }
+        return '';
+    }
+
+    public function getDisplayMessage() {
+        if (isset($this->result->DisplayMessage)) {
+            return $this->result->DisplayMessage;
+        }
+        return '';
+    }
+
+    public function getToken() {
+        /*
+if (isset($this->result->Token)) {
+            return $this->result->Token;
+        }
+*/
+        return '';
+    }
+
+    public function getCardType() {
+        if (isset($this->result['cardBrand'])) {
+            return $this->result['cardBrand'];
+        }
+        return '';
+    }
+
+    public function getCardUsage() {
+        /*
+if (isset($this->result->CardUsage)) {
+            return $this->result->CardUsage;
+        }
+*/
+        return '';
+    }
+
+    public function getMaskedAccount() {
+        if (isset($this->result['lastFourDigits'])) {
+            return $this->result['lastFourDigits'];
+        }
+        return '';
+    }
+
+    public function getTranType() {
+        /*
+if (isset($this->result->TranType)) {
+            return $this->result->TranType;
+        }
+*/
+        return '';
+    }
+
+    public function getPaymentIDExpired() {
+        /*
+if (isset($this->result->PaymentIDExpired)) {
+            return $this->result->PaymentIDExpired;
+        }
+*/
+        return '';
+    }
+
+    public function getCardHolderName() {
+        if (isset($this->result['cardHolderName'])) {
+            return $this->result['cardHolderName'];
+        }
+        return '';
+    }
+
+    public function getExpDate() {	 
+	       
+        if (isset($this->result['cardExpirationMonth']) && isset($this->result['cardExpirationYear'])) {
+	        if($this->result['cardExpirationMonth'] < 10){
+            	$month = '0' . $this->result['cardExpirationMonth'];
+            }else{
+	            $month = $this->result['cardExpirationMonth'];
+            }
+            
+            $year = $this->result['cardExpirationYear'];
+            
+            return $month . '/' . $year;
+        }
+        
+        return '';
+    }
+
+    public function getAcqRefData() {
+        /*
+if (isset($this->result->AcqRefData)) {
+            return $this->result->AcqRefData;
+        }
+*/
+        return '';
+    }
+
+    public function getAuthorizeAmount() {
+        /*
+if (isset($this->result->AuthAmount)) {
+            return $this->result->AuthAmount;
+        }
+*/
+        return '';
+    }
+
+    public function getAuthCode() {
+
+        if (isset($this->result['authorizationNumber'])) {
+            return $this->result['authorizationNumber'];
+        }
+        return '';
+    }
+
+    public function getAVSAddress() {
+        // Address used for AVS verification. Note it is truncated to 8 characters.
+/*
+        if (isset($this->result->AVSAddress)) {
+            return $this->result->AVSAddress;
+        }
+*/
+        return '';
+    }
+
+    public function getAVSResult() {
+/*
+        if (isset($this->result->AvsResult)) {
+            return $this->result->AvsResult;
+        }
+*/
+        return '';
+    }
+
+    public function getAVSZip() {
+        // Postal code used for AVS verification
+/*
+        if (isset($this->result->AVSZip)) {
+            return $this->result->AVSZip;
+        }
+*/
+        return '';
+    }
+
+    public function getCvvResult() {
+/*
+        if (isset($this->result->CvvResult)) {
+            return $this->result->CvvResult;
+        }
+*/
+        return '';
+    }
+
+    public function getInvoice() {
+/*
+        if (isset($this->result->Invoice)) {
+            return $this->result->Invoice;
+        }
+*/
+        return '';
+    }
+
+    public function getMemo() {
+/*
+        if (isset($this->result->Memo)) {
+            return $this->result->Memo;
+        }
+*/
+        return '';
+    }
+
+    public function getProcessData() {
+/*
+        if (isset($this->result->ProcessData)) {
+            return $this->result->ProcessData;
+        }
+*/
+        return '';
+    }
+
+    public function getRefNo() {
+/*
+        if (isset($this->result->RefNo)) {
+            return $this->result->RefNo;
+        }
+*/
+        return '';
+    }
+
+    public function getTaxAmount() {
+/*
+        if (isset($this->result->TaxAmount)) {
+            return $this->result->TaxAmount;
+        }
+*/
+        return '';
+    }
+
+    public function getAmount() {
+/*
+        if (isset($this->result->Amount)) {
+            return $this->result->Amount;
+        }
+*/
+        return '';
+    }
+
+    public function getTransPostTime() {
+        if (isset($this->result['transactionDate'])) {
+            return $this->result['transactionDate'];
+        }
+        return '';
+    }
+
+    public function getCustomerCode() {
+/*
+        if (isset($this->result->CustomerCode)) {
+            return $this->result->CustomerCode;
+        }
+*/
+        return '';
+    }
+
+    public function getOperatorID() {
+/*
+        if (isset($this->result->OperatorID)) {
+            return $this->result->OperatorID;
+        }
+*/
+        return '';
+    }
+
 
 }
