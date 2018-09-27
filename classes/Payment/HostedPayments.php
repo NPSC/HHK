@@ -236,7 +236,7 @@ class CheckOutResponse extends PaymentResponse {
     public $response;
     public $idToken = '';
 
-    function __construct(\VerifyCkOutResponse $verifyCkOutResponse, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+    function __construct($verifyCkOutResponse, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
         $this->response = $verifyCkOutResponse;
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;

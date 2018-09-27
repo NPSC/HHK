@@ -409,7 +409,7 @@ class InstamedGateway extends PaymentGateway {
             throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
         }
 
-        $patInfo = $this->getPatientInfo($dbh, $idGroup);
+        $patInfo = $this->getPatientInfo($dbh, $invoice->getIdGroup());
 
         $data = array (
             'patientID' => $patInfo['idName'],
@@ -733,7 +733,7 @@ class InstamedGateway extends PaymentGateway {
 
 	        // Save raw transaction in the db.
 	        try {
-	            Gateway::saveGwTx($dbh, $vr->response->getStatus(), json_encode($verify->getFieldsArray()), json_encode($vr->response->getResultArray()), 'HostedCoVerify');
+	            Gateway::saveGwTx($dbh, $vr->response->getStatus(), json_encode($params), json_encode($vr->response->getResultArray()), 'HostedCoVerify');
 	        } catch(Exception $ex) {
 	            // Do Nothing
 	        }
