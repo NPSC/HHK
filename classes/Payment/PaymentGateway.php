@@ -373,7 +373,14 @@ class InstamedGateway extends PaymentGateway {
     const INVOICE_NUMBER = 'additionalInfo1';
     const GROUP_ID = 'additionalInfo2';
 
-    const HCO_POSTBACK_VAR = 'imco';
+    const INSTAMED_TRANS_VAR = 'imt';
+    const INSTAMED_RESULT_VAR = 'imres';
+
+    const HCO_TRANS = 'imsale';
+    const COF_TRANS = 'imcof';
+    const VOID_TRANS = 'imvoid';
+    const RETURN_TRANS = 'imret';
+
     const POSTBACK_CANCEL = 'x';
     const POSTBACK_COMPLETE = 'c';
 
@@ -381,6 +388,8 @@ class InstamedGateway extends PaymentGateway {
     protected $soapUrl;
     protected $saleUrl;
     protected $cofUrl;
+    protected $returnUrl;
+    protected $voidUrl;
 
     public function initHostedPayment(\PDO $dbh, Invoice $invoice, Guest $guest, $addr, $postbackUrl) {
 
@@ -394,7 +403,7 @@ class InstamedGateway extends PaymentGateway {
             throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
         }
 
-        $houseUrl .= $postbackUrl . '?' . InstamedGateway::HCO_POSTBACK_VAR . '=';
+        $houseUrl .= $this->buildPostbackUrl($postbackUrl, InstamedGateway::HCO_TRANS);
 
         if ($invoice->getSoldToId() < 1 || $invoice->getIdGroup() < 1) {
             throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
@@ -435,17 +444,18 @@ class InstamedGateway extends PaymentGateway {
 
             // Save payment ID
             $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode)"
-                . " values (" . $invoice->getSoldToId() . " , " . $invoice->getIdGroup() . ", 'hco', '" . $invoice->getInvoiceNumber() . "', '" . $headerResponse->getToken() . "', now(), 'OneTime', " . $headerResponse->getResponseCode() . ")";
+                . " values (" . $invoice->getSoldToId() . " , " . $invoice->getIdGroup() . ", '" . InstamedGateway::HCO_TRANS . "', '" . $invoice->getInvoiceNumber() . "', '" . $headerResponse->getToken() . "', now(), 'OneTime', " . $headerResponse->getResponseCode() . ")";
 
             $dbh->exec($ciq);
 
             $uS->imtoken = $headerResponse->getToken();
 
-            $dataArray = array('inctx' => $headerResponse->getRelayState(), 'paymentId' => $headerResponse->getToken() );
+            $dataArray = array('inctx' => $headerResponse->getRelayState(), 'PaymentId' => $headerResponse->getToken() );
 
         } else {
 
             // The initialization failed.
+            unset($uS->imtoken);
             throw new Hk_Exception_Payment("Credit Payment Gateway Error: " . $headerResponse->getResponseMessage());
 
         }
@@ -466,7 +476,7 @@ class InstamedGateway extends PaymentGateway {
             throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
         }
 
-        $houseUrl .= $postbackUrl . '?' . InstamedGateway::HCO_POSTBACK_VAR . '=';
+        $houseUrl .= $this->buildPostbackUrl($postbackUrl, InstamedGateway::COF_TRANS);
 
         $patInfo = $this->getPatientInfo($dbh, $idGroup);
 
@@ -492,26 +502,29 @@ class InstamedGateway extends PaymentGateway {
             'cancelURL' => $houseUrl . InstamedGateway::POSTBACK_CANCEL,
             'confirmURL' => $houseUrl . InstamedGateway::POSTBACK_COMPLETE,
             'requestToken' => 'true',
-            'RelayState' => $this->saleUrl,
+            'RelayState' => $this->cofUrl,
         );
 
+
         $headerResponse = $this->doHeaderRequest(http_build_query(array_merge($data, $this->getCredentials()->toNVP())));
+
 
         if ($headerResponse->getToken() != '') {
 
             // Save payment ID
             $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode)"
-                . " values (" . $invoice->getSoldToId() . " , " . $invoice->getIdGroup() . ", 'hco', '" . $invoice->getInvoiceNumber() . "', '" . $headerResponse->getToken() . "', now(), 'OneTime', " . $headerResponse->getResponseCode() . ")";
+                . " values (" . $idGuest . " , " . $idGroup . ", '" . InstamedGateway::COF_TRANS . "', '', '" . $headerResponse->getToken() . "', now(), 'OneTime', " . $headerResponse->getResponseCode() . ")";
 
             $dbh->exec($ciq);
 
             $uS->imtoken = $headerResponse->getToken();
 
-            $dataArray = array('inctx' => $headerResponse->getRelayState(), 'paymentId' => $headerResponse->getToken() );
+            $dataArray = array('inctx' => $headerResponse->getRelayState(), 'CardId' => $headerResponse->getToken() );
 
         } else {
 
             // The initialization failed.
+            unset($uS->imtoken);
             throw new Hk_Exception_Payment("Credit Payment Gateway Error: " . $headerResponse->getResponseMessage());
 
         }
@@ -519,7 +532,144 @@ class InstamedGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    public function HostedPaymentComplete(\PDO $dbh, $idToken, $paymentNotes) {
+    public function initVoid(\PDO $dbh, $idGuest, $idGroup, $transactionId, $postbackUrl) {
+
+        $uS = Session::getInstance();
+
+        // Do a hosted payment.
+        $secure = new SecurityComponent();
+        $houseUrl = $secure->getSiteURL();
+
+        if ($houseUrl == '') {
+            throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
+        }
+
+        $houseUrl .= $this->buildPostbackUrl($postbackUrl, InstamedGateway::VOID_TRANS);
+
+        $patInfo = $this->getPatientInfo($dbh, $idGroup);
+
+        $data = array (
+            'patientID' => $patInfo['idName'],
+            'patientFirstName' => $patInfo['Name_First'],
+            'patientLastName' => $patInfo['Name_Last'],
+
+            InstamedGateway::GROUP_ID => $idGroup,
+
+            InstaMedCredentials::U_ID => $uS->uid,
+            InstaMedCredentials::U_NAME => $uS->username,
+
+            //'creditCardKeyed ' => 'true',
+            'incontext' => 'true',
+            'lightWeight' => 'true',
+            'preventCheck' => 'true',
+            'preventCash'  => 'true',
+            'suppressReceipt' => 'true',
+            'hideGuarantorID' => 'true',
+            'responseActionType' => 'header',
+
+            'cancelURL' => $houseUrl . InstamedGateway::POSTBACK_CANCEL,
+            'confirmURL' => $houseUrl . InstamedGateway::POSTBACK_COMPLETE,
+            'requestToken' => 'true',
+            'RelayState' => $this->voidUrl,
+        );
+
+
+        $headerResponse = $this->doHeaderRequest(http_build_query(array_merge($data, $this->getCredentials()->toNVP())));
+
+
+        if ($headerResponse->getToken() != '') {
+
+            // Save payment ID
+            $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode)"
+                . " values (" . $idGuest . " , " . $idGroup . ", '" . InstamedGateway::VOID_TRANS . "', '', '" . $headerResponse->getToken() . "', now(), 'OneTime', " . $headerResponse->getResponseCode() . ")";
+
+            $dbh->exec($ciq);
+
+            $uS->imtoken = $headerResponse->getToken();
+
+            $dataArray = array('inctx' => $headerResponse->getRelayState(), 'CardId' => $headerResponse->getToken() );
+
+        } else {
+
+            // The initialization failed.
+            unset($uS->imtoken);
+            throw new Hk_Exception_Payment("Credit Payment Gateway Error: " . $headerResponse->getResponseMessage());
+
+        }
+
+        return $dataArray;
+    }
+
+    public function initReturn(\PDO $dbh, $idGuest, $idGroup, $TransactionId, $postbackUrl) {
+
+        $uS = Session::getInstance();
+
+        // Do a hosted payment.
+        $secure = new SecurityComponent();
+        $houseUrl = $secure->getSiteURL();
+
+        if ($houseUrl == '') {
+            throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
+        }
+
+        $houseUrl .= $this->buildPostbackUrl($postbackUrl, InstamedGateway::RETURN_TRANS);
+
+        $patInfo = $this->getPatientInfo($dbh, $idGroup);
+
+        $data = array (
+            'patientID' => $patInfo['idName'],
+            'patientFirstName' => $patInfo['Name_First'],
+            'patientLastName' => $patInfo['Name_Last'],
+
+            InstamedGateway::GROUP_ID => $idGroup,
+
+            InstaMedCredentials::U_ID => $uS->uid,
+            InstaMedCredentials::U_NAME => $uS->username,
+
+            //'creditCardKeyed ' => 'true',
+            'incontext' => 'true',
+            'lightWeight' => 'true',
+            'preventCheck' => 'true',
+            'preventCash'  => 'true',
+            'suppressReceipt' => 'true',
+            'hideGuarantorID' => 'true',
+            'responseActionType' => 'header',
+
+            'cancelURL' => $houseUrl . InstamedGateway::POSTBACK_CANCEL,
+            'confirmURL' => $houseUrl . InstamedGateway::POSTBACK_COMPLETE,
+            'requestToken' => 'true',
+            'RelayState' => $this->returnUrl,
+        );
+
+
+        $headerResponse = $this->doHeaderRequest(http_build_query(array_merge($data, $this->getCredentials()->toNVP())));
+
+
+        if ($headerResponse->getToken() != '') {
+
+            // Save payment ID
+            $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode)"
+                . " values (" . $idGuest . " , " . $idGroup . ", '" . InstamedGateway::RETURN_TRANS . "', '', '" . $headerResponse->getToken() . "', now(), 'OneTime', " . $headerResponse->getResponseCode() . ")";
+
+            $dbh->exec($ciq);
+
+            $uS->imtoken = $headerResponse->getToken();
+
+            $dataArray = array('inctx' => $headerResponse->getRelayState(), 'CardId' => $headerResponse->getToken() );
+
+        } else {
+
+            // The initialization failed.
+            unset($uS->imtoken);
+            throw new Hk_Exception_Payment("Credit Payment Gateway Error: " . $headerResponse->getResponseMessage());
+
+        }
+
+        return $dataArray;
+    }
+
+
+    public function hostedPaymentComplete(\PDO $dbh, $idToken, $paymentNotes) {
 
 
         // Poll for results.
@@ -611,6 +761,15 @@ class InstamedGateway extends PaymentGateway {
 
     }
 
+    public function cardComplete(\PDO $dbh, $idToken, $paymentNotes) {
+
+        // poll for completion
+
+        // get details
+
+
+    }
+
     protected function pollPaymentStatus($token, $trace = FALSE) {
 
         $data = $this->getCredentials()->toSOAP();
@@ -648,11 +807,14 @@ class InstamedGateway extends PaymentGateway {
         $this->credentials = new InstaMedCredentials($gwRs);
         $this->ssoUrl = $gwRs->providersSso_Url->getStoredVal();
         $this->soapUrl = $gwRs->soap_Url->getStoredVal();
-        $this->saleUrl = $gwRs->sale_Url->getStoredVal();
-        $this->cofUrl = $gwRs->COF_Url->getStoredVal();
+        $this->saleUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPatientPaymentSSO?';
+        $this->cofUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPaymentPlanSimpleSSO?';
+
+        $this->voidUrl = 'https://online.instamed.com/providers/Form/PatientPayments/VoidPaymentSSO?';
+        $this->returnUrl = 'https://online.instamed.com/providers/Form/PatientPayments/RefundPaymentSSO?';
     }
 
-    public function doHeaderRequest($data) {
+    protected function doHeaderRequest($data) {
 
         //Create HTTP stream context
         $context = stream_context_create(array(
@@ -670,6 +832,11 @@ class InstamedGateway extends PaymentGateway {
 
         return new HeaderResponse($headers);
 
+    }
+
+    protected function buildPostbackUrl($postbackPageUrl, $transVar) {
+
+        return $postbackPageUrl . '?' . InstamedGateway::INSTAMED_TRANS_VAR . '=' . $transVar . '&' . InstamedGateway::INSTAMED_RESULT_VAR . '=';
     }
 
     protected function getPatientInfo(\PDO $dbh, $idRegistration) {
@@ -737,14 +904,14 @@ where r.idRegistration =" . $idReg);
                     HTMLTable::makeTh('SOAP URL', array('class'=>'tdlabel'))
                     .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->soap_Url->getStoredVal(), array('name'=>$indx .'_txtsurl', 'size'=>'90')))
             );
-            $tbl->addBodyTr(
-                    HTMLTable::makeTh('Sale URL', array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->sale_Url->getStoredVal(), array('name'=>$indx .'_txtsaurl', 'size'=>'90')))
-            );
-            $tbl->addBodyTr(
-                    HTMLTable::makeTh('Card on File URL', array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->COF_Url->getStoredVal(), array('name'=>$indx .'_txtcofurl', 'size'=>'90')))
-            );
+//            $tbl->addBodyTr(
+//                    HTMLTable::makeTh('Sale URL', array('class'=>'tdlabel'))
+//                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->sale_Url->getStoredVal(), array('name'=>$indx .'_txtsaurl', 'size'=>'90')))
+//            );
+//            $tbl->addBodyTr(
+//                    HTMLTable::makeTh('Card on File URL', array('class'=>'tdlabel'))
+//                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->COF_Url->getStoredVal(), array('name'=>$indx .'_txtcofurl', 'size'=>'90')))
+//            );
 
         }
 
@@ -792,13 +959,13 @@ where r.idRegistration =" . $idReg);
                 $ccRs->soap_Url->setNewVal(filter_var($post[$indx . '_txtsurl'], FILTER_SANITIZE_STRING));
             }
 
-            if (isset($post[$indx . '_txtsaurl'])) {
-                $ccRs->sale_Url->setNewVal(filter_var($post[$indx . '_txtsaurl'], FILTER_SANITIZE_STRING));
-            }
-
-            if (isset($post[$indx . '_txtcofurl'])) {
-                $ccRs->COF_Url->setNewVal(filter_var($post[$indx . '_txtcofurl'], FILTER_SANITIZE_STRING));
-            }
+//            if (isset($post[$indx . '_txtsaurl'])) {
+//                $ccRs->sale_Url->setNewVal(filter_var($post[$indx . '_txtsaurl'], FILTER_SANITIZE_STRING));
+//            }
+//
+//            if (isset($post[$indx . '_txtcofurl'])) {
+//                $ccRs->COF_Url->setNewVal(filter_var($post[$indx . '_txtcofurl'], FILTER_SANITIZE_STRING));
+//            }
 
             if (isset($post[$indx . '_txtsk'])) {
 

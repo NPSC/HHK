@@ -1253,7 +1253,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
         if ($this->idVisit < 0 && $this->getIdReservation() > 0) {
 
-            $stmt = $dbh->query("Select idVisit from visit where idReservation = " . $this->getIdReservation());
+            $stmt = $dbh->query("Select idVisit from visit where Span = 0 and idReservation = " . $this->getIdReservation());
             $lines = $stmt->fetchAll(\PDO::FETCH_NUM);
 
             if (count($lines) > 0) {

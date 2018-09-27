@@ -69,7 +69,7 @@ $idReserv = 0;
 $idPsg = 0;
 
 // Hosted payment return
-if (isset($_POST['CardID']) || isset($_POST['PaymentID'])) {
+if (isset($_POST['CardID']) || isset($_POST['PaymentID']) || isset($_POST[InstamedGateway::HCO_POSTBACK_VAR])) {
 
     require (DB_TABLES . 'PaymentGwRS.php');
     require (DB_TABLES . 'PaymentsRS.php');
@@ -79,6 +79,8 @@ if (isset($_POST['CardID']) || isset($_POST['PaymentID'])) {
 
     require (CLASSES . 'Purchase/Item.php');
 
+    require (PMT . 'GatewayConnect.php');
+    require (PMT . 'PaymentGateway.php');
     require (PMT . 'Payments.php');
     require (PMT . 'HostedPayments.php');
     require (PMT . 'Receipt.php');
@@ -131,6 +133,7 @@ if ($idReserv > 0 || $idGuest > 0) {
 
 } else {
 
+    $mk1 = HTMLContainer::generateMarkup('h2', 'Reservation Id is missing.');
 
 }
 
@@ -158,6 +161,7 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo DR_PICKER_CSS ?>
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
+
         <?php echo FAVICON; ?>
 <!--        Fix the ugly checkboxes-->
         <style>
@@ -180,6 +184,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
+
         <script type="text/javascript" src="js/resvManager.js"></script>
 
     </head>
@@ -187,8 +192,12 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo $wInit->generatePageMenu() ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?> <span id="spnStatus" sytle="margin-left:50px; display:inline;"></span></h1>
+
             <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
                 <?php echo $paymentMarkup; ?>
+            </div>
+            <div id="guestSearch" style="padding-left:0;padding-top:0; margin-bottom:1.5em; clear:left; float:left;">
+                <?php echo $mk1; ?>
             </div>
 
             <form action="CheckingIn.php" method="post"  id="form1">
@@ -199,7 +208,7 @@ $resvObjEncoded = json_encode($resvAr);
                 <div style="clear:both;min-height: 70px;">.</div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
-                    <input type='button' id='btnDone' value='Continue' style="display:none;font-size:1em;"/>
+                    <input type='button' id='btnDone' value='Continue' style="display:none;"/>
                 </div>
 
             </form>
@@ -231,7 +240,7 @@ function ckedIn(data) {
     $("#divAlert1").hide();
 
     if (data.warning) {
-        flagAlertMessage(data.warning, true);
+        flagAlertMessage(data.warning, 'warning');
     }
 
     if (data.xfer) {
@@ -243,7 +252,7 @@ function ckedIn(data) {
         } else if (data.cardId && data.cardId != '') {
             xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
         } else {
-            flagAlertMessage('PaymentId and CardId are missing!', true);
+            flagAlertMessage('PaymentId and CardId are missing!', 'error');
             return;
         }
         xferForm.submit();
@@ -315,7 +324,6 @@ function ckedIn(data) {
 $(document).ready(function() {
     "use strict";
     var t = this;
-    var $guestSearch = $('#gstSearch');
     var resv = $.parseJSON('<?php echo $resvObjEncoded; ?>');
     var pageManager = t.pageManager;
 
@@ -379,7 +387,7 @@ $(document).ready(function() {
 
     // hide the alert on mousedown
     $(document).mousedown(function (event) {
-        hideAlertMessage();
+
         var target = $(event.target);
 
         if (target[0].id !== 'divSelAddr' && target[0].closest('div') && target[0].closest('div').id !== 'divSelAddr') {
@@ -400,8 +408,6 @@ $(document).ready(function() {
             return;
         }
 
-        hideAlertMessage();
-
         if (pageManager.verifyInput() === true) {
 
             $.post(
@@ -412,7 +418,7 @@ $(document).ready(function() {
                     try {
                         data = $.parseJSON(data);
                     } catch (err) {
-                        flagAlertMessage(err.message, true);
+                        flagAlertMessage(err.message, 'error');
                         return;
                     }
 
@@ -421,10 +427,10 @@ $(document).ready(function() {
                     }
 
                     if (data.error) {
-                        flagAlertMessage(data.error, true);
-                        $('#btnDone').val(resv.saveButtonLabel).show();
+                        flagAlertMessage(data.error, 'error');
                     }
 
+                    $('#btnDone').val(resv.saveButtonLabel).show();
                     ckedIn(data);
 
                 }
@@ -435,29 +441,6 @@ $(document).ready(function() {
 
     });
 
-
-    function getGuest(item) {
-
-        hideAlertMessage();
-        if (item.No_Return !== undefined && item.No_Return !== '') {
-            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
-            return;
-        }
-
-        if (typeof item.id !== 'undefined') {
-            resv.id = item.id;
-        } else if (typeof item.rid !== 'undefined') {
-            resv.rid = item.rid;
-        } else {
-            return;
-        }
-
-        resv.fullName = item.fullName;
-        resv.cmd = 'getResv';
-
-        pageManager.getReserve(resv);
-
-    }
 
     if (parseInt(resv.id, 10) > 0 || parseInt(resv.rid, 10) > 0) {
 
@@ -471,17 +454,6 @@ $(document).ready(function() {
 
     } else {
 
-        createAutoComplete($guestSearch, 3, {cmd: 'role', gp:'1'}, getGuest);
-
-        // Phone number search
-        createAutoComplete($('#gstphSearch'), 4, {cmd: 'role', gp:'1'}, getGuest);
-
-        $guestSearch.keypress(function(event) {
-            hideAlertMessage();
-            $(this).removeClass('ui-state-highlight');
-        });
-
-        $guestSearch.focus();
     }
 });
         </script>

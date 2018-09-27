@@ -204,7 +204,7 @@ class Visit {
         // Check room size
         $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants);
         if (is_null($rm)) {
-            throw new Hk_Exception_Runtime('Room is full.  ');
+            throw new Hk_Exception_Runtime('The Room is full.  ');
         }
 
 
@@ -213,7 +213,7 @@ class Visit {
         }
 
         if ($expectedCO == '') {
-            throw new Hk_Exception_UnexpectedValue("The Expected Departure date is not set.");
+            throw new Hk_Exception_UnexpectedValue("Set the Expected Departure date.");
         }
 
         $stayCoDt = new \DateTime($expectedCO);

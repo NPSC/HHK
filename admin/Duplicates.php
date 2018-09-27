@@ -141,10 +141,14 @@ $resultMessage = $alertMsg->createMarkup();
         <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
+        <?php echo NOTY_CSS; ?>
+
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript">
 // Init j-query
 $(document).ready(function () {
@@ -252,11 +256,11 @@ $(document).ready(function () {
                                                 return;
                                             }
                                             if (data.error) {
-                                                flagAlertMessage(data.error, true);
+                                                flagAlertMessage(data.error, 'error');
                                                 return;
                                             }
                                             if (data.msg && data.msg != '') {
-                                                flagAlertMessage(data.msg, false);
+                                                flagAlertMessage(data.msg, 'info');
                                             }
                                 });
                             });
@@ -291,11 +295,11 @@ $(document).ready(function () {
                                                 return;
                                             }
                                             if (data.error) {
-                                                flagAlertMessage(data.error, true);
+                                                flagAlertMessage(data.error, 'alert');
                                                 return;
                                             }
                                             if (data.msg && data.msg != '') {
-                                                flagAlertMessage(data.msg, false);
+                                                flagAlertMessage(data.msg, 'success');
                                             }
                                 });
                             });

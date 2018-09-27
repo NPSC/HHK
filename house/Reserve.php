@@ -164,18 +164,6 @@ if ($idReserv > 0 || $idGuest >= 0) {
 
 }
 
-
-// Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("uh-oh");
-
-$resultMessage = $alertMsg->createMarkup();
-
 $resvAr = $resvObj->toArray();
 $resvAr['patBD'] = $resvObj->getPatBirthDateFlag();
 $resvAr['patAddr'] = $uS->PatientAddr;
@@ -197,6 +185,7 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo DR_PICKER_CSS ?>
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
+
         <?php echo FAVICON; ?>
 <!--        Fix the ugly checkboxes-->
         <style>
@@ -219,6 +208,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
+
         <script type="text/javascript" src="js/resvManager.js"></script>
 
     </head>
@@ -226,11 +216,9 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo $wInit->generatePageMenu() ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?> <span id="spnStatus" sytle="margin-left:50px; display:inline;"></span></h1>
-            <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
             <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
                 <?php echo $paymentMarkup; ?>
             </div>
-
             <div id="guestSearch" style="padding-left:0;padding-top:0; margin-bottom:1.5em; clear:left; float:left;">
                 <?php echo $mk1; ?>
             </div>
@@ -367,7 +355,6 @@ $(document).ready(function() {
 
     // hide the alert on mousedown
     $(document).mousedown(function (event) {
-        hideAlertMessage();
         var target = $(event.target);
 
         if (target[0].id !== 'divSelAddr' && target[0].closest('div') && target[0].closest('div').id !== 'divSelAddr') {
@@ -406,8 +393,6 @@ $(document).ready(function() {
             return;
         }
 
-        hideAlertMessage();
-
         if (pageManager.verifyInput() === true) {
 
             $.post(
@@ -417,7 +402,7 @@ $(document).ready(function() {
                     try {
                         data = $.parseJSON(data);
                     } catch (err) {
-                        flagAlertMessage(err.message, true);
+                        flagAlertMessage(err.message, 'error');
                         return;
                     }
 
@@ -426,12 +411,17 @@ $(document).ready(function() {
                     }
 
                     if (data.error) {
-                        flagAlertMessage(data.error, true);
+                        flagAlertMessage(data.error, 'error');
                         $('#btnDone').val('Save').show();
                     }
 
                     pageManager.loadResv(data);
-                    flagAlertMessage(data.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle);
+
+                    if (data.resv !== undefined) {
+                        flagAlertMessage(data.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle, 'success');
+                    } else {
+                        flagAlertMessage(data.resvTitle + ' Saved.', 'success');
+                    }
                 }
             );
 
@@ -443,9 +433,8 @@ $(document).ready(function() {
 
     function getGuest(item) {
 
-        hideAlertMessage();
         if (item.No_Return !== undefined && item.No_Return !== '') {
-            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', true);
+            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', 'alert');
             return;
         }
 
@@ -482,7 +471,6 @@ $(document).ready(function() {
         createAutoComplete($('#gstphSearch'), 4, {cmd: 'role', gp:'1'}, getGuest);
 
         $guestSearch.keypress(function(event) {
-            hideAlertMessage();
             $(this).removeClass('ui-state-highlight');
         });
 

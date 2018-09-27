@@ -152,10 +152,10 @@ abstract class Role {
         return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('div', $ul . $divs, array('id'=>$idPrefix.'phEmlTabs', 'class'=>'hhk-phemtabs', 'style'=>'font-size:.9em;')), array('style'=>'float:left;margin-top:5px;margin-right:5px;', 'class'=>'hhk-tdbox'));
     }
 
-    public function createThinMarkup(PSGMemStay $stay, $lockRelChooser) {
+    public function createThinMarkup(PSGMember $mem, $lockRelChooser) {
 
         // Staying button
-        $td = $this->createStayMarkup($stay);
+        $td = $this->createStayMarkup($mem);
 
         // Phone
         $ph = HTMLTable::makeTd($this->getPhonesObj()->get_Data()['Phone_Num']);
@@ -164,7 +164,7 @@ abstract class Role {
 
     }
 
-    public function createStayMarkup(PSGMemStay $stay) {
+    public function createStayMarkup(PSGMember $stay) {
 
         $td = '';
 
@@ -176,7 +176,7 @@ abstract class Role {
 
         } else {
 
-            $td = HTMLTable::makeTd($stay->createStayButton($this->getRoleMember()->getIdPrefix())
+            $td = HTMLTable::makeTd($stay->getStayObj()->createStayButton($this->getRoleMember()->getIdPrefix())
                     , array('title'=>'Id: ' . $this->getIdName(), 'id'=>'sb' . $this->getRoleMember()->getIdPrefix()))
                 . HTMLTable::makeTd($stay->createPrimaryGuestRadioBtn($this->getRoleMember()->getIdPrefix()));
         }

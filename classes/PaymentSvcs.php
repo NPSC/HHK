@@ -1356,12 +1356,13 @@ class PaymentSvcs {
         }
 
 
-        if (isset($post[InstamedGateway::HCO_POSTBACK_VAR])) {
+        if (isset($post[InstamedGateway::INSTAMED_TRANS_VAR])) {
 
-            $result = filter_var($post[InstamedGateway::HCO_POSTBACK_VAR], FILTER_SANITIZE_STRING);
+            $trans = filter_var($post[InstamedGateway::INSTAMED_TRANS_VAR], FILTER_SANITIZE_STRING);
+            $result = filter_var($post[InstamedGateway::INSTAMED_RESULT_VAR], FILTER_SANITIZE_STRING);
 
             try {
-                Gateway::saveGwTx($dbh, $result, '', json_encode($post), 'HostedCoPostBack');
+                Gateway::saveGwTx($dbh, $result, '', json_encode($post), $trans.'_PostBack');
             } catch (Exception $ex) {
                 // Do nothing
             }
@@ -1380,7 +1381,7 @@ class PaymentSvcs {
                     // Payment Gateway
                     $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-                    $payResponse = $gateway->HostedPaymentComplete($dbh, $uS->imtoken, $payNotes);
+                    $payResponse = $gateway->hostedPaymentComplete($dbh, $uS->imtoken, $payNotes);
 
                     //$payResult =
                 }

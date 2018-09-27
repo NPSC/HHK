@@ -203,8 +203,13 @@ try {
                 $cbs = $_POST;
             }
 
+            $omitSelf = TRUE;
+            if (isset($_POST['omsf'])) {
+                $omitSelf = filter_var($_POST['omsf'], FILTER_VALIDATE_BOOLEAN);
+            }
 
-            $events = ReservationSvcs::reviseConstraints($dbh, $idResv, $idResc, $numGuests, $expArr, $expDep, $cbs, $guestAdmin);
+
+            $events = ReservationSvcs::reviseConstraints($dbh, $idResv, $idResc, $numGuests, $expArr, $expDep, $cbs, $guestAdmin, $omitSelf);
 
             break;
 
