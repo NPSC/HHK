@@ -480,7 +480,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('PayAtCkin','true','b','h','Allow/Disallow payments at check-in time'),
 ('PayVFeeFirst', 'false', 'b', 'h','Default check the visit fees payment checkbox'),
 ('PaymentLogoUrl','images/hostpaylogo.jpg','s','f','Path to payment page logo image file'),
-('PaymentGateway', 'instamed', 's', 'h', 'Payment Gateway, either vantiv, instamed or nothing.'),
+('PaymentGateway', '', 's', 'h', 'Payment Gateway, either vantiv, instamed or nothing.'),
 ('PreviousNights','0','i','h','Previous nights to add to nights counter'),
 ('RateChangeAuth', 'false', 'b', 'h', 'true = Only authorized users can change the defailt room rate'),
 ('RateGlideExtend', '0', 'i', 'h','# of days for the Room Rate Glide to time out after visit check-out'),
