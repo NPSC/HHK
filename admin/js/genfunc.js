@@ -98,24 +98,24 @@ function checkStrength(pwCtrl) {
     return rtn;
 }
 
-function flagAlertMessage(mess, wasError) {
-    "use strict";
-    var spn = document.getElementById('alrMessage');
-
-    if (!wasError) {
-        // define the error message markup
-        $('#alrResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
-        $('#alrIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
-        spn.innerHTML = "<strong>Success: </strong>" + mess;
-        $("#divAlert1").show("slide");
-    } else {
-        // define the success message markup
-        $('alrResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
-        $('#alrIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
-        spn.innerHTML = "<strong>Alert: </strong>" + mess;
-        $("#divAlert1").show("pulsate");
-    }
-}
+//function flagAlertMessage(mess, wasError) {
+//    "use strict";
+//    var spn = document.getElementById('alrMessage');
+//
+//    if (!wasError) {
+//        // define the error message markup
+//        $('#alrResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
+//        $('#alrIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
+//        spn.innerHTML = "<strong>Success: </strong>" + mess;
+//        $("#divAlert1").show("slide");
+//    } else {
+//        // define the success message markup
+//        $('alrResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
+//        $('#alrIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
+//        spn.innerHTML = "<strong>Alert: </strong>" + mess;
+//        $("#divAlert1").show("pulsate");
+//    }
+//}
 function getDonationMarkup(id) {
     "use strict";
     $.post(
@@ -255,29 +255,29 @@ function relationReturn(data) {
 function manageRelation(id, rId, relCode, cmd) {
     $.post('ws_gen.php', {'id':id, 'rId':rId, 'rc':relCode, 'cmd':cmd}, relationReturn);
 }
-function dateRender(data, type) {
-    // If display or filter data is requested, format the date
-    if ( type === 'display' || type === 'filter' ) {
-        var d;
-        if (data === null) {
-            return '';
-        }
-
-        if (!isNaN(data)) {
-            d = new Date( data * 1000 );
-        } else {
-            d = new Date(Date.parse(data));
-        }
-
-        return (d.getMonth()+1) +'/'+ (d.getDate() < 10 ? '0'+ d.getDate() : d.getDate()) +'/'+ d.getFullYear();
-    }
-
-    // Otherwise the data type requested (`type`) is type detection or
-    // sorting data, for which we want to use the integer, so just return
-    // that, unaltered
-    return data;
-
-}
+//function dateRender(data, type) {
+//    // If display or filter data is requested, format the date
+//    if ( type === 'display' || type === 'filter' ) {
+//        var d;
+//        if (data === null) {
+//            return '';
+//        }
+//
+//        if (!isNaN(data)) {
+//            d = new Date( data * 1000 );
+//        } else {
+//            d = new Date(Date.parse(data));
+//        }
+//
+//        return (d.getMonth()+1) +'/'+ (d.getDate() < 10 ? '0'+ d.getDate() : d.getDate()) +'/'+ d.getFullYear();
+//    }
+//
+//    // Otherwise the data type requested (`type`) is type detection or
+//    // sorting data, for which we want to use the integer, so just return
+//    // that, unaltered
+//    return data;
+//
+//}
 
 
 var dtCols = [

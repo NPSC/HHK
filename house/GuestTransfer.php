@@ -395,6 +395,7 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
+        <?php echo NOTY_CSS; ?>
         <style>
             .hhk-rowseparater { border-top: 2px #0074c7 solid !important; }
             #aLoginLink:hover {background-color: #337a8e; }
@@ -406,6 +407,8 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 <script type="text/javascript">
 function updateLocal(id) {

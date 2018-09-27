@@ -316,6 +316,7 @@ $userDataEnc = json_encode($userData);
         <?php echo JQ_UI_CSS; ?>
         <?php echo FULLC_CSS; ?>
         <?php echo PUBLIC_CSS; ?>
+        <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
@@ -323,6 +324,8 @@ $userDataEnc = json_encode($userData);
         <script type="text/javascript" src="<?php echo FULLC_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="js/volAction.js"></script>
     <script type="text/javascript">
@@ -663,7 +666,7 @@ $userDataEnc = json_encode($userData);
 
                     } else if (get_vcc(catData[$('#selcustomCat').val()]) == 'all55') {
                         // Cannot create a new event until you pick a category.
-                        flagCalAlertMessage('Select a category from above.', true);
+                        flagAlertMessage('Select a category from above.', true);
                         $('#divSelCategory').effect('pulsate', 200);
                         $('#divSelCategory').addClass("ui-state-highlight");
 
@@ -864,7 +867,7 @@ $('input.inptForList').click(function () {
             if (data.gotopage) {
                 window.open(data.gotopage, '_self');
             }
-            flagCalAlertMessage(data.error, true);
+            flagAlertMessage(data.error, true);
             return;
 
         } else if (data.table) {

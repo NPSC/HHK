@@ -101,25 +101,25 @@ function handleError(xhrObject, stat, thrwnError) {
     $('div.ui-dialog-buttonset').css("display", "block");
     alert("Server error: " + stat + ", " + thrwnError);
 }
-function flagCalAlertMessage(mess, wasError) {
-    "use strict";
-
-    var spn = document.getElementById('calMessage');
-
-    if (!wasError) {
-        // define the error message markup
-        $('#calResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
-        $('#calIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
-        spn.innerHTML = "<strong>Success: </strong>" + mess;
-        $("#calContainer").show("slide", {}, 500, alertCallback('calContainer'));
-    } else {
-        // define the success message markup
-        $('calResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
-        $('#calIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
-        spn.innerHTML = "<strong>Alert: </strong>" + mess;
-        $("#calContainer").show("pulsate", {}, 200, alertCallback('calContainer'));
-    }
-}
+//function flagCalAlertMessage(mess, wasError) {
+//    "use strict";
+//
+//    var spn = document.getElementById('calMessage');
+//
+//    if (!wasError) {
+//        // define the error message markup
+//        $('#calResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
+//        $('#calIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
+//        spn.innerHTML = "<strong>Success: </strong>" + mess;
+//        $("#calContainer").show("slide", {}, 500, alertCallback('calContainer'));
+//    } else {
+//        // define the success message markup
+//        $('calResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
+//        $('#calIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
+//        spn.innerHTML = "<strong>Alert: </strong>" + mess;
+//        $("#calContainer").show("pulsate", {}, 200, alertCallback('calContainer'));
+//    }
+//}
 
 
 // Init j-query.

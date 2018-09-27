@@ -440,7 +440,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         } else {
 
             // Reservation Data
-            $dataArray['rstat'] = ReservationSvcs::createStatusChooser(
+            $dataArray['rstat'] = $this->createStatusChooser(
                     $resv,
                     $resv->getChooserStatuses($uS->guestLookups['ReservStatus']),
                     $uS->nameLookups[GL_TableNames::PayType],
@@ -631,6 +631,61 @@ where rg.idReservation =" . $r['idReservation']);
         }
 
         return $mrkup;
+    }
+
+    public function createStatusChooser(Reservation_1 $resv, array $limResvStatuses, array $payTypes, \Config_Lite $labels, $showPayWith, $moaBal) {
+
+        $uS = Session::getInstance();
+        $tbl2 = new HTMLTable();
+        // Pay option, verbal confirmation
+
+        $attr = array('name'=>'cbVerbalConf', 'type'=>'checkbox');
+
+        if ($resv->getVerbalConfirm() == 'v') {
+            $attr['checked'] = 'checked';
+        }
+
+        $moaHeader = '';
+        $moaData = '';
+        if ($moaBal > 0) {
+            $moaHeader = HTMLTable::makeTh('MOA Balance', array('title'=>'MOA = Money on Account'));
+            $moaData = HTMLTable::makeTd('$' . number_format($moaBal, 2), array('style'=>'text-align:center'));
+        }
+
+        $tbl2->addBodyTr(
+                ($showPayWith ? HTMLTable::makeTh('Pay With') . $moaHeader : '')
+                .HTMLTable::makeTh('Verbal Affirmation')
+                .($resv->getStatus() == ReservationStatus::UnCommitted ? HTMLTable::makeTh('Status', array('class'=>'ui-state-highlight')) : HTMLTable::makeTh('Status'))
+                );
+
+        $tbl2->addBodyTr(
+                ($showPayWith ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $resv->getExpectedPayType()), array('name'=>'selPayType')))
+                . $moaData : '')
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', $attr), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd(
+                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($limResvStatuses, $resv->getStatus(), FALSE), array('name'=>'selResvStatus', 'style'=>'float:left;margin-right:.4em;'))
+                        .HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-comment hhk-viewResvActivity', 'data-rid'=>$resv->getIdReservation(), 'title'=>'View Activity Log', 'style'=>'cursor:pointer;float:right;')))
+                );
+
+
+        if ($uS->UseWLnotes === FALSE) {
+            $tbl2->addBodyTr(HTMLTable::makeTd('Check-in Note:',array('class'=>'tdlabel')).HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea',$resv->getCheckinNotes(), array('name'=>'taCkinNotes', 'rows'=>'1', 'cols'=>'40')),array('colspan'=>'3')));
+        }
+
+        // Confirmation button
+        $mk2 = '';
+        if ($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::Waitlist) {
+            $mk2 .= HTMLInput::generateMarkup('Create Confirmation...', array('type'=>'button', 'id'=>'btnShowCnfrm', 'style'=>'margin:.3em;float:right;', 'data-rid'=>$resv->getIdReservation()));
+        }
+
+        // fieldset wrapper
+        return HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('fieldset',
+                    HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'statusLabel', 'Reservation Status'), array('style'=>'font-weight:bold;'))
+                    . $tbl2->generateMarkup() . $mk2,
+                    array('class'=>'hhk-panel'))
+            , array('style'=>'clear:left; float:left;'));
+
     }
 
     protected static function findConflictingStays(\PDO $dbh, array &$psgMembers, \DateTime $arrivalDT, $idPsg) {
