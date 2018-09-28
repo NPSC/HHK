@@ -117,10 +117,10 @@ class UpdateSite {
 
 
             // Update pay types
-            $cnt = SiteConfig::updatePayTypes($dbh);
-            if ($cnt > 0) {
-                $this->resultAccumulator .= "Pay Types updated.  ";
-            }
+//            $cnt = SiteConfig::updatePayTypes($dbh);
+//            if ($cnt > 0) {
+//                $this->resultAccumulator .= "Pay Types updated.  ";
+//            }
 
             // Log update.
             $logText = "Loaded Update.  " . $this->errorMsg;

@@ -803,10 +803,12 @@ function resvManager(initData) {
             // set country and state selectors
             $countries = $('#' + prefix + 'adrcountry' + addrPurpose);
             $countries.bfhcountries($countries.data());
+            $(this).data("dirrty-initial-value", $(this).data('country'));
 
             $states = $('#' + prefix + 'adrstate' + addrPurpose);
             $states.bfhstates($states.data());
-
+            $(this).data("dirrty-initial-value", $(this).data('state'));
+            
             $('#' + prefix + 'phEmlTabs').tabs();
 
             $('input#' + prefix + 'adrzip1').each(function() {
@@ -2235,7 +2237,9 @@ function resvManager(initData) {
         }
         
         // init dirrty
-        $("#form1").dirrty();
+        if (isCheckin === false) {
+            $("#form1").dirrty();
+        }
 
     }
 
