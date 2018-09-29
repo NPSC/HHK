@@ -75,6 +75,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Distance_Range','200','151 to 200 miles','5','',40),
 ('Distance_Range','30000','More Than 200 miles','7','',50),
 
+('Document_Category', 'form', 'Form','','',0),
+
+('Document_Type', 'md', 'Markdown','','',0),
+('Document Type', 'text', 'Text','','',0),
+
 ('Dormant_Selector_Code','act','Active Only','','',0),
 ('Dormant_Selector_Code','both','Dormant & Active','','',0),
 ('Dormant_Selector_Code','dor','Dormant Only','','',0),

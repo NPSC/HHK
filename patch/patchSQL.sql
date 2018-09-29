@@ -7,6 +7,10 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `T
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Note_Category', 'ncp', 'Patient', '', 'h', 0);
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Note_Category', 'ncrm', 'Room', '', 'h', 0);
 
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Document_Type', 'md', 'Markdown');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Document Type', 'text', 'Text');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Document_Category', 'form', 'Form');
+
 REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES 
 ('Room_Group', 'Type', 'Room Type', 'Room_Type','',0), 
 ('Room_Group', 'Category', 'Room Category', 'Room_Category','',0), 
@@ -17,6 +21,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 DELETE FROM `gen_lookups` WHERE `Table_Name`='WL_Final_Status';
 DELETE FROM `gen_lookups` WHERE `Table_Name`='WL_Status';
+
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('PaymentGateway', '', 's', 'h', 'Payment Gateway, either vantiv, instamed or nothing.');
 

@@ -208,7 +208,7 @@ if ($uS->rolecode > WebRole::WebUser) {
 
 
 $tabIndex = 0;
-$rteFileSelection = '';
+$feFileSelection = '';
 $rteMsg = '';
 
 // Get labels
@@ -859,7 +859,7 @@ if (isset($_POST['btnItemSave'])) {
 //
 //            $formEditorText = urldecode(filter_input(INPUT_POST, 'mu', FILTER_SANITIZE_STRING));
 //
-//            $rteFileSelection = filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_STRING);
+//            $feFileSelection = filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_STRING);
 //
 //            $files = readGenLookupsPDO($dbh, 'Editable_Forms');
 //
@@ -1207,8 +1207,8 @@ $constraintTable = $constraints->createConstraintTable($dbh);
 
 
 // Form editor
-//$rteSelectForm = HTMLSelector::generateMarkup(
-//        HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Editable_Forms')), $rteFileSelection, TRUE)
+//$feSelectForm = HTMLSelector::generateMarkup(
+//        HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Editable_Forms')), $feeFileSelection, TRUE)
 //        , array('id'=>'frmEdSelect', 'name'=>'frmEdSelect'));
 
 
