@@ -168,6 +168,7 @@ function setupRates(ckIn) {
             var amt = parseFloat($(this).val()),
                 fa = 0,
                 total,
+                lodging,
                 days = parseInt($('#spnNites').text(), 10);
 
             if (isNaN(days)) {
@@ -192,9 +193,10 @@ function setupRates(ckIn) {
                 }
             }
 
-            $('#spnLodging').text('$' + (amt * days));
+            lodging = amt * days;
+            $('#spnLodging').text('$' + lodging.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
             total = (amt * days) + fa;
-            $('#spnAmount').text('$' + total);
+            $('#spnAmount').text('$' + total.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
         }
     });
 
@@ -229,11 +231,11 @@ function setupRates(ckIn) {
                 }
             }
 
-            daysCalculator(days, $selRateCat.val(), 0, 0, adj, parseInt($('#spnNumGuests').text()), function(amt) {
+            daysCalculator(days, $selRateCat.val(), 0, 0, adj, parseInt($('#spnNumGuests').text()), (ckIn.idResv === undefined ? 0 : ckIn.idResv), function(amt) {
 
-                $('#spnLodging').text('$' + amt.toFixed(2).toString());
+                $('#spnLodging').text('$' + amt.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
                 amt += fa;
-                $('#spnAmount').text('$' + amt.toFixed(2).toString());
+                $('#spnAmount').text('$' + amt.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
             });
 
         }

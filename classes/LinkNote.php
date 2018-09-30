@@ -26,15 +26,15 @@ class LinkNote {
         $note->saveNew($dbh);
 
         if ($note->getIdNote() > 0) {
-            
-            $result = $this->saveLink($dbh, $linkId, $linkType, $userName);
-            
+
+            $result = LinkNote::saveLink($dbh, $note, $linkId, $linkType, $userName);
+
             if ($concatNotes) {
-                
-                $idPsg = $this->findIdPsg($dbh, $linkType, $linkId);
-                
+
+                $idPsg = LinkNote::findIdPsg($dbh, $linkType, $linkId);
+
                 if ($idPsg > 0) {
-                    $psgResult = $this->saveLink($dbh, $idPsg, Note::PsgLink, $userName);
+                    $psgResult = LinkNote::saveLink($dbh, $note, $idPsg, Note::PsgLink, $userName);
                 }
             }
         }
@@ -44,7 +44,7 @@ class LinkNote {
     }
 
     public static function findIdPsg(\PDO $dbh, $linkType, $linkId) {
-        
+
         $query = '';
         $idPsg = 0;
 
@@ -70,9 +70,9 @@ class LinkNote {
 
         return $idPsg;
     }
-    
-    protected function saveLink(\PDO $dbh, $linkId, $linkType, $userName) {
-        
+
+    protected static function saveLink(\PDO $dbh, $note, $linkId, $linkType, $userName) {
+
         if ($note->getIdNote() > 0) {
 
             $table = '';
@@ -130,7 +130,7 @@ class LinkNote {
                 return 'The link table or link field are missing ';
             }
         }
-        
+
         return '';
 
     }

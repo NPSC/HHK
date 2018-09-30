@@ -2337,8 +2337,8 @@ CREATE or replace VIEW `vspan_listing` AS
         `v`.`Return_Date`,
         `v`.`Ext_Phone_Installed`,
         `v`.`OverRideMaxOcc`,
-        v.Notes as `Visit_Notes`,
-        ifnull(`p`.`Notes`, '') AS `Notes`,
+        '' as `Visit_Notes`,
+        '' AS `Notes`,
         `v`.`Status`,
         ifnull(`g2`.`Description`, '') AS `Status_Title`,
         `v`.`Updated_By`,
@@ -2347,7 +2347,7 @@ CREATE or replace VIEW `vspan_listing` AS
         v.Expected_Rate,
         `v`.`Pledged_Rate`,
         `v`.`Rate_Category`,
-        v.idRoom_rate,
+        v.idRoom_Rate,
         v.Rate_Glide_Credit,
         ifnull(n.Name_Full, '') as `Patient_Name`,
 	ifnull(hs.idHospital, 0) as `idHospital`,
@@ -2357,7 +2357,6 @@ CREATE or replace VIEW `vspan_listing` AS
         left join `resource` `re` ON `v`.`idResource` = `re`.`idResource`
         left join `registration` `r` ON `v`.`idRegistration` = `r`.`idRegistration`
         left join `hospital_stay` `hs` ON `v`.`idHospital_stay` = `hs`.`idHospital_stay`
-	left join psg p on hs.idPsg = p.idPsg
         left join `name` n on hs.idPatient = n.idName
         left join `gen_lookups` `g2` ON `g2`.`Table_Name` = 'Visit_Status'
             and `g2`.`Code` = `v`.`Status`;
@@ -2484,7 +2483,7 @@ select
     v.DepositPayType,
     v.Pledged_Rate,
     v.Rate_Category,
-    v.idRoom_rate,
+    v.idRoom_Rate,
     v.Expected_Rate,
     rv.Visit_Fee as `Visit_Fee_Amount`,
     DATEDIFF(ifnull(v.Span_End, now()), v.Span_Start) as `Actual_Span_Nights`,

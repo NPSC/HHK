@@ -652,7 +652,6 @@ class RoomChooser {
 
         if (isset($post['rcat'])) {
             $cat = filter_var($post['rcat'],FILTER_SANITIZE_STRING);
-
         }
 
         if (isset($post['fxd'])) {
@@ -667,7 +666,24 @@ class RoomChooser {
             $numberGuests = intval(filter_var($post['gsts'],FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
+        if (isset($post['rid'])) {
 
+            $idResv = intval(filter_var($post['rid'],FILTER_SANITIZE_NUMBER_INT), 10);
+
+            if ($idResv > 0) {
+
+                $stmt = $dbh->query("Select idRoom_rate, Room_Rate_Category from reservation where idReservation = $idResv");
+                $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+
+                if (is_array($rows)) {
+
+                    if (isset($rows[0]) && $cat == $rows[0][1]) {
+                        $idRoomRate = $rows[0][0];
+                    }
+                }
+            }
+        }
+        
         $priceModel->setCreditDays($credit);
         $priceModel->setVisitStatus(VisitStatus::CheckedIn);
 
@@ -734,7 +750,7 @@ class RoomChooser {
 
 
         return array(
-            'amt'=> number_format($amt, 2),
+            'amt'=> number_format($amt, 2, '.', ''),
             'cat'=>  $cat,
             'catTitle' => $catTitle . ':  $' . ($fixedRate > 0 ? $fixedRate : $catRate));
     }

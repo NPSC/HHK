@@ -1302,7 +1302,6 @@ function resvManager(initData) {
         
         t.omitSelf = true;
         t.numberGuests = 0;
-        t.idReservation = idResv;
         t.go = go;
         
         function go(arrivalDate, departureDate) {
@@ -1328,7 +1327,7 @@ function resvManager(initData) {
             $.post('ws_ckin.php', 
                 {  //parameters
                     cmd: 'newConstraint', 
-                    rid: t.idReservation, 
+                    rid: getIdResv(), 
                     numguests: t.numberGuests, 
                     expArr: arrivalDate, 
                     expDep: departureDate, 
@@ -1564,6 +1563,7 @@ function resvManager(initData) {
             reserve.rateList = data.resv.rdiv.ratelist;
             reserve.resources = data.resv.rdiv.rooms;
             reserve.visitFees = data.resv.rdiv.vfee;
+            reserve.idResv = idResv;
 
             setupRates(reserve);
 

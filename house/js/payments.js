@@ -20,7 +20,7 @@ var gblAdjustData = [];
 function getApplyDiscDiag(orderNumber, $diagBox) {
     "use strict";
     
-    if (!orderNumber || orderNumber == '') {
+    if (!orderNumber || orderNumber == '' || orderNumber == 0) {
         flagAlertMessage('Order Number is missing', 'error');
         return;
     }
@@ -968,7 +968,7 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
 
         if (days > 0) {
             
-            daysCalculator(days, $rateSelector.val(), idVisit, fixed, adjust, noGuests, function(amt) {
+            daysCalculator(days, $rateSelector.val(), idVisit, fixed, adjust, noGuests, 0, function(amt) {
                 feePayAmt.val(amt.toFixed(2).toString());
                 feePayAmt.change();
             });
@@ -978,10 +978,10 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
     amtPaid();
 }
 
-function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, rtnFunction) {
+function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, idResv, rtnFunction) {
     
     if (days > 0) {
-        var parms = {cmd:'rtcalc', vid: idVisit, nites: days, rcat: idRate, fxd: fixedAmt, adj: adjAmt, gsts: numGuests};
+        var parms = {cmd:'rtcalc', vid: idVisit, rid: idResv, nites: days, rcat: idRate, fxd: fixedAmt, adj: adjAmt, gsts: numGuests};
         // ask momma how much
         $.post('ws_ckin.php', parms,
             function(data) {
@@ -1009,6 +1009,7 @@ function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, rtnF
                     if (isNaN(amt) || amt < 0) {
                         amt = 0;
                     }
+                    
                     rtnFunction(amt);
                 }
         });

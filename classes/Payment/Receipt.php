@@ -422,7 +422,7 @@ WHERE
                 'amt'=>$v['Pledged_Rate'],
                 'adj'=>$v['Expected_Rate'],
                 'glide'=>$v['Rate_Glide_Credit'],
-                'idrate'=>$v['idRoom_rate'],
+                'idrate'=>$v['idRoom_Rate'],
                 'start'=>$v['Span_Start'],
                 'end'=>$v['Span_End'],
                 'arr'=>$v['Arrival_Date'],

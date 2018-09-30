@@ -45,7 +45,7 @@ class RoomRate {
 
             $rateCategories[$rateRs->FA_Category->getStoredVal()] = array(0=>$rateRs->FA_Category->getStoredVal(),
                 1=>'*'.$rateRs->Title->getStoredVal() . ($rateRs->Reduced_Rate_1->getStoredVal() == 0 ? '' :  ': $' . number_format($rateRs->Reduced_Rate_1->getStoredVal(), $decimals)),
-                2=>number_format($rc->Reduced_Rate_1->getStoredVal(), $decimals));
+                2=>number_format($rateRs->Reduced_Rate_1->getStoredVal(), $decimals));
 
         }
 

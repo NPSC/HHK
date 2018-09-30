@@ -26,6 +26,35 @@ class ReservationSvcs {
         return array('activity'=>  ActivityReport::reservLog($dbh, '', '', $idResv));
     }
 
+    public static function getCurrentReservations(\PDO $dbh, $idResv, $id, $idPsg, \DateTime $startDT, \DateTime $endDT) {
+
+        $rows = array();
+
+        if ($idPsg > 0 && $id > 0) {
+            // look for both
+            $stmt = $dbh->query("select idReservation, idPsg, idGuest from vresv_guest "
+                    . "where (idPsg = $idPsg or idGuest = $id) and idReservation != $idResv and "
+                . "Date(Arrival_Date) < DATE('".$endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('".$startDT->format('Y-m-d') . "')");
+
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        } else if ($idPsg > 0) {
+
+            $stmt = $dbh->query("select * from vresv_guest where idPsg = $idPsg and idReservation != $idResv and "
+                . "Date(Arrival_Date) < DATE('".$endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('".$startDT->format('Y-m-d') . "')");
+
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        } else if ($id > 0) {
+
+            $stmt = $dbh->query("select * from vresv_guest where idGuest= $id and idReservation != $idResv and "
+                . "Date(Arrival_Date) < DATE('".$endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('".$startDT->format('Y-m-d') . "')");
+
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return $rows;
+    }
 
     public static function getConfirmForm(\PDO $dbh, $idReservation, $idGuest, $amount, $sendEmail = FALSE, $notes = '', $emailAddr = '') {
 
