@@ -89,13 +89,13 @@ class LinkNote {
                 case Note::VisitLink:
 
                     // We actually need the reservation ID
-                    $stmt = $dbh->query("select `idReservation` from `visit` where `Span` = 0 and `idVisit` = " . $linkId);
+                    $stmt = $dbh->query("SELECT v.`idReservation`, ifnull(r.Title, '(?)') FROM `visit` v LEFT JOIN resource r ON v.idResource = r.idResource WHERE `Span` = 0 AND `idVisit` =" . $linkId);
                     $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                     if (count($rows) > 0) {
 
                         // Update the visit text
-                        $newText = 'Visit ' . $linkId . '; ' . $note->getNoteText();
+                        $newText = 'Visit ' . $linkId . ', Room ' . $rows[0][1] . ' - ' . $note->getNoteText();
                         $note->updateContents($dbh, $newText, $userName);
 
                         $linkId = $rows[0][0];

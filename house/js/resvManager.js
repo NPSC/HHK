@@ -30,7 +30,6 @@ function resvManager(initData) {
     t.verifyInput = verifyInput;
     t.loadResv = loadResv;
     t.deleteReserve = deleteReserve;
-
     t.resvTitle = resvTitle;
     t.people = people;
     t.addrs = addrs;
@@ -538,9 +537,9 @@ function resvManager(initData) {
             // Remove any previous entries.
             for (var i in data.famSection.mem) {
                 
-                var item = people.findItem('id', data.famSection.mem[i].id);
+                var item = people.findItem('pref', data.famSection.mem[i].pref);
                 
-                if (item && item.id > 0) {
+                if (item) {
                     $famTbl.find('tr#' + item.id + 'n').remove();
                     $famTbl.find('tr#' + item.id + 'a').remove();
                     $famTbl.find('input#' + item.pref + 'idName').parents('tr').next('tr').remove();
@@ -1302,6 +1301,7 @@ function resvManager(initData) {
         
         t.omitSelf = true;
         t.numberGuests = 0;
+        t.idReservation = 0;
         t.go = go;
         
         function go(arrivalDate, departureDate) {
@@ -1327,7 +1327,7 @@ function resvManager(initData) {
             $.post('ws_ckin.php', 
                 {  //parameters
                     cmd: 'newConstraint', 
-                    rid: getIdResv(), 
+                    rid: t.idReservation, 
                     numguests: t.numberGuests, 
                     expArr: arrivalDate, 
                     expDep: departureDate, 
@@ -1592,14 +1592,15 @@ function resvManager(initData) {
             setupPayments(data.resv.rdiv.rooms, $('#selResource'), $('#selRateCategory'));
         }
 
-        function setupRoom() {
+        function setupRoom(rid) {
 
+            updateRescChooser.idReservation = rid;
+            
             // Room selector update for constraints changes.
             $('input.hhk-constraintsCB').change( function () {
                 // Disable max room size.
                 updateRescChooser.go($('#gstDate').val(), $('#gstCoDate').val());
             });
-
         }
 
         function setupNotes(rid, $container) {
@@ -1685,8 +1686,6 @@ function resvManager(initData) {
             t.$totalGuests = $('#spnNumGuests');
             t.origRoomId = $('#selResource').val();
             t.checkPayments = true;
-
-            //$('#selResource').select2();
             
             // Reservation history button
             if ($('.hhk-viewResvActivity').length > 0) {
@@ -2238,7 +2237,7 @@ function resvManager(initData) {
         
         // init dirrty
         if (isCheckin === false) {
-            $("#form1").dirrty();
+            //$("#form1").dirrty();
         }
 
     }

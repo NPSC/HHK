@@ -259,6 +259,7 @@ class Reservation_1 {
             $this->reservRs->idRegistration->setNewVal($idReg);
 
             $idResv = EditRS::insert($dbh, $this->reservRs);
+
             $this->reservRs->idReservation->setNewVal($idResv);
 
             $logText = VisitLog::getInsertText($this->reservRs);
@@ -269,12 +270,12 @@ class Reservation_1 {
                     $this->reservRs->idRegistration->getStoredVal(),
                     $this->reservRs->idHospital_Stay->getStoredVal(),
                     $this->reservRs->idResource->getStoredVal(),
-                    0, //Room Rate Id: $this->reservRs->idRoom_rate->getStoredVal(),
+                    $this->reservRs->idRoom_rate->getStoredVal(),
                     $this->reservRs->idGuest->getStoredVal(),
                     $logText, "insert", $uname);
 
             // Load constraints with new Id.
-            $this->getConstraints($dbh, TRUE);  //reservConstraints = $this->loadReservationConstraints($dbh, $this->getIdReservation());
+            $this->getConstraints($dbh, TRUE);
 
         } else {
 
@@ -290,13 +291,11 @@ class Reservation_1 {
                     $this->reservRs->idRegistration->getStoredVal(),
                     $this->reservRs->idHospital_Stay->getStoredVal(),
                     $this->reservRs->idResource->getStoredVal(),
-                    0, //$this->reservRs->idRoom_rate->getStoredVal(),
+                    $this->reservRs->idRoom_rate->getStoredVal(),
                     $this->reservRs->idGuest->getStoredVal(),
                     $logText, "update", $uname);
             }
-
         }
-
     }
 
     public function deleteMe(\PDO $dbh, $uname) {
@@ -350,7 +349,6 @@ class Reservation_1 {
         if (is_null($this->boDays)) {
             $this->boDays = $this->loadNonCleaningDays($dbh);
         }
-
     }
 
     protected function adjustArrivalDate($stringDate) {
@@ -1242,10 +1240,10 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 //        }
 //    }
 
-    public function saveNote(\PDO $dbh, $noteText, $uname) {
+    public function saveNote(\PDO $dbh, $noteText, $uname, $concatNotes) {
 
         if ($noteText != '') {
-            return LinkNote::save($dbh, $noteText, $this->getIdReservation(), Note::ResvLink, $uname);
+            return LinkNote::save($dbh, $noteText, $this->getIdReservation(), Note::ResvLink, $uname, $concatNotes);
         }
     }
 

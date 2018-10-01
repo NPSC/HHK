@@ -3,7 +3,7 @@ Noty.overrideDefaults({
     theme    : 'semanticui',
     timeout  : '4000',
     progressBar : true,
-    closeWith: ['button'],
+    closeWith: ['click', 'button'],
     animation: {
         open : 'animated bounceInDown',
         close: 'animated bounceOutUp'

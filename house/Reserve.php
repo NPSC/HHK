@@ -216,7 +216,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
 
-        <script type="text/javascript" src="js/resvManager.js"></script>
+        <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
@@ -238,7 +238,7 @@ $resvObjEncoded = json_encode($resvAr);
                 <div style="clear:both;min-height: 70px;">.</div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <input type="button" id="btnDelete" value="Delete" style="display:none;"/>
-                    <input type="button" id="btnCheckinNow" value='Check-in Now' style="display:none;"/>
+                    <input type="button" id="btnCheckinNow" value='Check-in Now' style="display:none;"/><input type="hidden" id="resvCkinNow" name="resvCkinNow" value="no" />
                     <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
                     <input type='button' id='btnDone' value='Continue' style="display:none;"/>
                 </div>
@@ -398,7 +398,8 @@ $(document).ready(function() {
     });
 
     $('#btnCheckinNow').click(function () {
-        window.open('CheckingIn.php?rid=' + pageManager.getIdResv(), '_self');
+        $('#resvCkinNow').val('yes');
+        $('#btnDone').click();
     });
 
     $('#btnDone').click(function () {

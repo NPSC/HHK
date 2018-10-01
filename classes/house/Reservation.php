@@ -1059,7 +1059,13 @@ where rg.idReservation =" . $r['idReservation']);
 
 class ActiveReservation extends Reservation {
 
+    protected $gotoCheckingIn = '';
+
     public function createMarkup(\PDO $dbh) {
+
+        if ($this->gotoCheckingIn === 'yes' && $this->reserveData->getIdResv() > 0) {
+            return array('gotopage'=>'CheckingIn.php?rid=' . $this->reserveData->getIdResv());
+        }
 
         if ($this->reservRs->Status->getStoredVal() == '') {
             $this->reservRs->Status->setStoredVal(ReservationStatus::Waitlist);
@@ -1091,6 +1097,10 @@ class ActiveReservation extends Reservation {
             return $this;
         }
 
+        // Return a goto checkingin page?
+        if (isset($post['resvCkinNow'])) {
+            $this->gotoCheckingIn = filter_var($post['resvCkinNow'], FILTER_SANITIZE_STRING);
+        }
 
         // Registration
         $reg = new Registration($dbh, $this->reserveData->getIdPsg());
@@ -1198,8 +1208,13 @@ class ActiveReservation extends Reservation {
         $resv->saveConstraints($dbh, $post);
 
         // Notes
-        if (isset($post['taNewNote']) && $post['taNewNote'] != '') {
-            $resv->saveNote($dbh, filter_var($post['taNewNote'], FILTER_SANITIZE_STRING), $uS->username);
+        if (isset($post['taNewNote'])) {
+
+            $noteText = filter_var($post['taNewNote'], FILTER_SANITIZE_STRING);
+
+            if ($noteText != '') {
+                LinkNote::save($dbh, $noteText, $resv->getIdReservation(), Note::ResvLink, $uS->username, $uS->ConcatVisitNotes);
+            }
         }
 
         // Room Chooser

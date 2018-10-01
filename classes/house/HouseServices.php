@@ -191,10 +191,7 @@ class HouseServices {
             $notes = filter_var($post["taNewVNote"], FILTER_SANITIZE_STRING);
 
             if ($notes != '' && $idVisit > 0) {
-
-                //$notes = 'Visit ' . $this->getIdVisit() . '-' . $this->getSpan() . ', Room ' . $roomTitle . ' - ' . $notes;
-                LinkNote::save($dbh, $notes, $idVisit, Note::VisitLink, $uS->username);
-
+                LinkNote::save($dbh, $notes, $idVisit, Note::VisitLink, $uS->username, $uS->ConcatVisitNotes);
             }
         }
 
@@ -390,9 +387,6 @@ class HouseServices {
                 // Check-out any guests.
                 if (isset($post['stayActionCb'])) {
 
-                    // Get any last note for the checkout email
-                    $notes = '';
-
                     // See whose checking out
                     foreach ($post['stayActionCb'] as $idr => $v) {
 
@@ -412,11 +406,9 @@ class HouseServices {
                         $now = date('H:i:s');
                         $coDT = new \DateTime($dt . ' ' . $now);
 
-                        $reply .= $visit->checkOutGuest($dbh, $id, $coDT->format('Y-m-d H:i:s'), $notes, TRUE);
+                        $reply .= $visit->checkOutGuest($dbh, $id, $coDT->format('Y-m-d H:i:s'), '', TRUE);
                         $returnCkdIn = TRUE;
 
-                        // Only need Notes once.
-//                        $notes = '';
                     }
                 }
             }

@@ -29,7 +29,7 @@ require CLASSES . 'AuditLog.php';
 require CLASSES . 'History.php';
 require (CLASSES . 'CreateMarkupFromDB.php');
 
-//require (CLASSES . 'Notes.php');
+
 require (CLASSES . 'Note.php');
 require (CLASSES . 'ListNotes.php');
 require (CLASSES . 'LinkNote.php');
@@ -306,14 +306,7 @@ try {
             $idLink = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        break;
-
-
-    case "copyThinGuest":
-
-        $resv = Reservation::reservationFactoy($dbh, $_POST);
-
-        $events = $resv->copyPerson($dbh);
+        $events = array('warning'=>'Link Note is not implemented.  ');
 
         break;
 

@@ -953,6 +953,11 @@ $(document).ready(function () {
 
         eventResize: function (event, delta, revertFunc) {
             $("#divAlert1, #paymentMessage").hide();
+            
+            if (delta === undefined) {
+                revertFunc();
+                return;
+            }
             if (event.idVisit > 0) {
                 if (confirm('Move check out date?')) {
                     moveVisit('visitMove', event.idVisit, event.Span, 0, delta.asDays());
