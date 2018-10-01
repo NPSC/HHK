@@ -95,8 +95,8 @@ class LinkNote {
                     if (count($rows) > 0) {
 
                         // Update the visit text
-                        $newText = 'Visit ' . $linkId . ', Room ' . $rows[0][1] . ' - ' . $note->getNoteText();
-                        $note->updateContents($dbh, $newText, $userName);
+                        $title = 'Visit ' . $linkId . ', Room ' . $rows[0][1];
+                        $note->saveTitle($dbh, $title);
 
                         $linkId = $rows[0][0];
                         $table = 'reservation_note';

@@ -158,40 +158,55 @@ WHERE
 
        }
 
-        $query = "SELECT
-            r.Util_Priority,
-            r.idRoom,
-            r.`Title`,
-            r.`Status`,
-            gc.Substitute as Cleaning_Days,
-            IFNULL(g.Description, '') AS `Status_Text`,
-            IFNULL(n.Name_Full, '') AS `Name`,
-            r.`Notes`,
-            IFNULL(v.`Notes`, '') AS `Visit_Notes`,
-            IFNULL(v.idVisit, 0) AS idVisit,
-            IFNULL(v.Span, 0) AS `Span`,
-            IFNULL(np.Name_Full, '') as `Patient_Name`
-        FROM
-            room r
-                LEFT JOIN
-            stays s ON r.idRoom = s.idRoom AND s.`Status` = 'a'
-                LEFT JOIN
-            `name` n ON s.idName = n.idName
-                LEFT JOIN
-            visit v ON s.idVisit = v.idVisit
-                AND s.Visit_Span = v.Span
-                LEFT JOIN
-            hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
-                LEFT JOIN
-            name np on hs.idPatient = np.idName
-                LEFT JOIN
-            gen_lookups g ON g.Table_Name = 'Room_Status'
-                AND g.Code = r.`Status`
-                LEFT JOIN
-            gen_lookups gc ON gc.Table_Name = 'Room_Cleaning_Days'
-                AND gc.Code = r.Cleaning_Cycle_Code
-        ORDER BY r.idRoom";
+       // Get notes
+       $stmtn = $dbh->query("SELECT
+    rn.Reservation_Id,
+    n.User_Name,
+    CASE
+        WHEN n.Title = '' THEN n.Note_Text
+        ELSE CONCAT(n.Title, ' - ', n.Note_Text)
+    END AS Note_Text
+FROM
+visit v join reservation_note rn on v.idReservation = rn.Reservation_Id
+        JOIN
+    note n ON rn.Note_Id = n.idNote
+where v.Status = 'a'
+ORDER BY rn.Reservation_Id, n.User_Name;");
 
+
+//        $query = "SELECT
+//            r.Util_Priority,
+//            r.idRoom,
+//            r.`Title`,
+//            r.`Status`,
+//            gc.Substitute as Cleaning_Days,
+//            IFNULL(g.Description, '') AS `Status_Text`,
+//            IFNULL(n.Name_Full, '') AS `Name`,
+//            r.`Notes`,
+//            IFNULL(v.idVisit, 0) AS idVisit,
+//            IFNULL(v.Span, 0) AS `Span`,
+//            IFNULL(np.Name_Full, '') as `Patient_Name`
+//        FROM
+//            room r
+//                LEFT JOIN
+//            stays s ON r.idRoom = s.idRoom AND s.`Status` = 'a'
+//                LEFT JOIN
+//            `name` n ON s.idName = n.idName
+//                LEFT JOIN
+//            visit v ON s.idVisit = v.idVisit
+//                AND s.Visit_Span = v.Span
+//                LEFT JOIN
+//            hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
+//                LEFT JOIN
+//            name np on hs.idPatient = np.idName
+//                LEFT JOIN
+//            gen_lookups g ON g.Table_Name = 'Room_Status'
+//                AND g.Code = r.`Status`
+//                LEFT JOIN
+//            gen_lookups gc ON gc.Table_Name = 'Room_Cleaning_Days'
+//                AND gc.Code = r.Cleaning_Cycle_Code
+//        ORDER BY r.idRoom";
+//
 
         $stmt = $dbh->query($query);
 
@@ -312,7 +327,7 @@ WHERE
             $fixed['Unpaid'] = '';
         }
 
-        $fixed['Visit_Notes'] = Notes::getNotesDiv($r['Visit_Notes']);
+        //$fixed['Visit_Notes'] = Notes::getNotesDiv($r['Visit_Notes']);
         $fixed['Notes'] = Notes::getNotesDiv($r['Notes']);
 
         return $fixed;

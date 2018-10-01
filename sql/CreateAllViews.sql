@@ -1781,7 +1781,8 @@ CREATE OR REPLACE VIEW `vresv_notes` AS
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
         n.User_Name,
-        n.Note_Text,
+        case when n.Title = '' then n.Note_Text else 
+        CONCAT(n.Title, ' - ', n.Note_Text) end as Note_Text,
         rn.Reservation_Id,
         n.`Timestamp`
     FROM
@@ -1800,7 +1801,8 @@ CREATE OR REPLACE VIEW `vvisit_notes` AS
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
         n.User_Name,
-        n.Note_Text,
+        case when n.Title = '' then n.Note_Text else 
+        CONCAT(n.Title, ' - ', n.Note_Text) end as Note_Text,
         v.idVisit,
         n.`Timestamp`
     FROM
@@ -1821,7 +1823,8 @@ CREATE OR REPLACE VIEW `vpsg_notes` AS
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
         n.User_Name,
-        n.Note_Text,
+        case when n.Title = '' then n.Note_Text else 
+        CONCAT(n.Title, ' - ', n.Note_Text) end as Note_Text,
         pn.Psg_Id,
         n.`Timestamp`
     FROM
