@@ -20,7 +20,7 @@ function isNumber(n) {
 }
 function setRoomTo(idResv, idResc) {
 
-    $.post('ws_ckin.php', {cmd: 'setRoom', rid: idResv, idResc: idResc}, function(data) {
+    $.post('ws_resv.php', {cmd: 'moveResvRoom', rid: idResv, idResc: idResc}, function(data) {
         try {
             data = $.parseJSON(data);
         } catch (err) {
@@ -32,6 +32,10 @@ function setRoomTo(idResv, idResc) {
                 window.location.assign(data.gotopage);
             }
             flagAlertMessage(data.error, 'error');
+            return;
+        }
+        if (data.warning && data.warning !== '') {
+            flagAlertMessage(data.warning, 'alert');
             return;
         }
         if (data.msg && data.msg !== '') {

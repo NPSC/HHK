@@ -736,38 +736,38 @@ class ReservationSvcs {
 
     }
 
-    public static function setNewRoom(\PDO $dbh, $idResv, $idResc, $isAuthorized) {
-
-        $uS = Session::getInstance();
-
-        if ($idResv < 1) {
-            return array('error'=>'Reservation Id is not set.');
-        }
-
-        $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
-
-        if ($isAuthorized) {
-            $resv->findGradedResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $resv->getNumberGuests(), array('room','rmtroom','part'), TRUE);
-        } else {
-            $resv->findResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $resv->getNumberGuests(), array('room','rmtroom','part'), TRUE);
-        }
-
-        $dataArray['msg'] = self::processReservation($dbh, $resv, $idResc, $resv->getFixedRoomRate(), $resv->getNumberGuests(), $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $isAuthorized, $uS->username, $uS->InitResvStatus);
-
-        // New resservation lists
-        if ($uS->Reservation) {
-            $dataArray['reservs'] = 'y';
-            $dataArray['waitlist'] = 'y';
-
-            if ($uS->ShowUncfrmdStatusTab) {
-                $dataArray['unreserv'] = 'y';
-            }
-
-        }
-
-        return $dataArray;
-
-    }
+//    public static function setNewRoom(\PDO $dbh, $idResv, $idResc, $isAuthorized) {
+//
+//        $uS = Session::getInstance();
+//
+//        if ($idResv < 1) {
+//            return array('error'=>'Reservation Id is not set.');
+//        }
+//
+//        $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
+//
+//        if ($isAuthorized) {
+//            $resv->findGradedResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $resv->getNumberGuests(), array('room','rmtroom','part'), TRUE);
+//        } else {
+//            $resv->findResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $resv->getNumberGuests(), array('room','rmtroom','part'), TRUE);
+//        }
+//
+//        $dataArray['msg'] = self::processReservation($dbh, $resv, $idResc, $resv->getFixedRoomRate(), $resv->getNumberGuests(), $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $isAuthorized, $uS->username, $uS->InitResvStatus);
+//
+//        // New resservation lists
+//        if ($uS->Reservation) {
+//            $dataArray['reservs'] = 'y';
+//            $dataArray['waitlist'] = 'y';
+//
+//            if ($uS->ShowUncfrmdStatusTab) {
+//                $dataArray['unreserv'] = 'y';
+//            }
+//
+//        }
+//
+//        return $dataArray;
+//
+//    }
 
     public static function deleteReservation(\PDO $dbh, $rid) {
 

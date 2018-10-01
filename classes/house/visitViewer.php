@@ -1059,7 +1059,7 @@ class VisitView {
         $tonight->setTime(23, 59, 59);
 
         $today = new \DateTime();
-        $today->setTime(10, 0, 0);
+        $today->setTime(intval($uS->CheckOutTime), 0, 0);
 
         reset($spans);
 
@@ -1071,7 +1071,7 @@ class VisitView {
             if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
                 $newEndDt = setTimeZone(NULL, $vRs->Expected_Departure->getStoredVal());
-                $newEndDt->setTime(10,0,0);
+                $newEndDt->setTime(intval($uS->CheckOutTime),0,0);
 
                 if ($newEndDt < $today) {
                     $newEndDt = $today;
@@ -1080,6 +1080,8 @@ class VisitView {
             } else {
                 $newEndDt = setTimeZone(NULL, $vRs->Span_End->getStoredVal());
             }
+
+            $newEndDt->setTime(intval($uS->CheckOutTime),0,0);
 
             $modEndDt = new \DateTime($newEndDt->format('Y-m-d H:i:s'));
 
@@ -1298,11 +1300,17 @@ class VisitView {
             $lastDepart = setTimeZone(NULL, $estDepart);
         }
 
+        $lastDepart->setTime(intval($uS->CheckOutTime), 0, 0);
+        $firstArrival->setTime(intval($uS->CheckInTime), 0, 0);
+
         $reply = ReservationSvcs::moveResvAway($dbh, $firstArrival, $lastDepart, $lastVisitRs->idResource->getStoredVal(), $uname);
 
-
-
-        return 'Visit Moved. ' . $reply;
+        if ($startDelta == 0) {
+            $reply = 'Visit checkout date changed. ' . $reply;
+        } else {
+            $reply = 'Visit dates changed. ' . $reply;
+        }
+        return $reply;
     }
 
     /**
@@ -1315,10 +1323,12 @@ class VisitView {
      */
     protected static function moveStaysDates($stays, $startDelta, $endDelta) {
 
+        $uS = Session::getInstance();
+
         $startInterval = new \DateInterval('P' . abs($startDelta) . 'D');
         $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
         $today = new \DateTime();
-        $today->setTime(10, 0, 0);
+        $today->setTime(intval($uS->CheckOutTime), 0, 0);
 
         foreach ($stays as $stayRS) {
 
@@ -1329,7 +1339,7 @@ class VisitView {
             if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
                 $newEndDt = setTimeZone(NULL, $stayRS->Expected_Co_Date->getStoredVal());
-                $newEndDt->setTime(10,0,0);
+                $newEndDt->setTime(intval($uS->CheckOutTime),0,0);
 
                 if ($newEndDt < $today) {
                     $newEndDt = $today;

@@ -181,6 +181,24 @@ try {
 
         break;
 
+    case 'moveResvRoom':
+
+        $idResv = 0;
+        if (isset($_POST['rid'])) {
+            $idResv = intval(filter_var($_POST['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $idResc = '';
+        if (isset($_POST['idResc'])) {
+            $idResc = filter_var($_POST['idResc'], FILTER_SANITIZE_STRING);
+        }
+
+        $resv = new ActiveReservation(new ReserveData($_POST), null, null);
+
+        $events = $resv->changeRoom($dbh, $idResv, $idResc);
+
+        break;
+
 
     case 'getNoteList':
 

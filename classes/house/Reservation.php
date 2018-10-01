@@ -15,7 +15,7 @@ class Reservation {
     protected $reservRs;
     protected $family;
 
-    function __construct(ReserveData $reserveData, ReservationRS $reservRs, Family $family) {
+    function __construct(ReserveData $reserveData, $reservRs, $family) {
 
         $this->reserveData = $reserveData;
         $this->reservRs = $reservRs;
@@ -894,7 +894,6 @@ where rg.idReservation =" . $r['idReservation']);
         }
 
         $roomChooser = new RoomChooser($dbh, $resv, 1, new \DateTime($resv->getExpectedArrival()), new \DateTime($resv->getExpectedDeparture()));
-
         $resources = $roomChooser->findResources($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
 
         // Does the resource fit the requirements?
@@ -917,6 +916,10 @@ where rg.idReservation =" . $r['idReservation']);
 
         $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
 
+    }
+
+    public function changeRoom(\PDO $dbh, $idResv, $idResc) {
+        return array('error'=>"Changing this reservation's room is not allowed.");
     }
 
     protected function copyOldReservation(\PDO $dbh) {
@@ -1217,7 +1220,7 @@ class ActiveReservation extends Reservation {
             }
         }
 
-        // Room Chooser
+        // Room Choice
         $this->setRoomChoice($dbh, $resv, $idRescPosted);
 
         // Payments
@@ -1225,6 +1228,41 @@ class ActiveReservation extends Reservation {
 
         return $this;
     }
+
+    public function changeRoom(\PDO $dbh, $idResv, $idResc) {
+
+        $uS = Session::getInstance();
+        $dataArray = array();
+
+        if ($idResv < 1) {
+            return array('error'=>'Reservation Id is not set.');
+        }
+
+        $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
+
+        if ($resv->isActive()) {
+
+            $this->setRoomChoice($dbh, $resv, $idResc);
+
+            if ($this->reserveData->getErrors() != '') {
+                $dataArray[ReserveData::WARNING] = $this->reserveData->getErrors();
+            } else {
+                $dataArray['msg'] = 'Reservation Changed Rooms.';
+            }
+
+            // New resservation lists
+            $dataArray['reservs'] = 'y';
+            $dataArray['waitlist'] = 'y';
+
+            if ($uS->ShowUncfrmdStatusTab) {
+                $dataArray['unreserv'] = 'y';
+            }
+
+        }
+
+        return $dataArray;
+    }
+
 }
 
 
