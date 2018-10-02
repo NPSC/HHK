@@ -23,12 +23,12 @@ DELETE FROM `gen_lookups` WHERE `Table_Name`='WL_Status';
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('PaymentGateway', '', 's', 'h', 'Payment Gateway, either vantiv, instamed or nothing.');
 
-update sys_config set Value = '16', Type = 'i' where Key = 'CheckInTime';
-update sys_config set Value = '10', Type = 'i' where Key = 'CheckOutTime';
+update sys_config set `Value` = '16', `Type` = 'i' where `Key` = 'CheckInTime';
+update sys_config set `Value` = '10', `Type` = 'i' where `Key` = 'CheckOutTime';
 
 
 -- Add pages, one call for each security group.
 call new_webpage('ws_resv.php', 31, '', 0, 'h', '', '', 's', '', 'admin', now(), 'g', @pageId);
 call new_webpage('ws_resv.php', 31, '', 0, 'h', '', '', 's', '', 'admin', now(), 'ga', @pageId);
 
-update page set File_Name = 'Reserve.php' where File_Name = 'Referral.php';
+update page set `File_Name` = 'Reserve.php' where `File_Name` = 'Referral.php';

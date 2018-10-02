@@ -165,48 +165,56 @@ WHERE
     CASE
         WHEN n.Title = '' THEN n.Note_Text
         ELSE CONCAT(n.Title, ' - ', n.Note_Text)
-    END AS Note_Text
+    END AS Note_Text,
+    MAX(n.Timestamp) as Timestamp
 FROM
 visit v join reservation_note rn on v.idReservation = rn.Reservation_Id
         JOIN
     note n ON rn.Note_Id = n.idNote
 where v.Status = 'a'
-ORDER BY rn.Reservation_Id, n.User_Name;");
+GROUP BY rn.Reservation_Id having max(n.Timestamp);");
+
+        $notes = array();
+        while ($n = $stmtn->fetch(PDO::FETCH_ASSOC)) {
+            $dt = new DateTime($n['Timestamp']);
+            $notes[$n['Reservation_Id']] =  $dt->format('M j, Y H:i ') . $n['User_Name'] . '; ' . $n['Note_Text'];
+        }
 
 
-//        $query = "SELECT
-//            r.Util_Priority,
-//            r.idRoom,
-//            r.`Title`,
-//            r.`Status`,
-//            gc.Substitute as Cleaning_Days,
-//            IFNULL(g.Description, '') AS `Status_Text`,
-//            IFNULL(n.Name_Full, '') AS `Name`,
-//            r.`Notes`,
-//            IFNULL(v.idVisit, 0) AS idVisit,
-//            IFNULL(v.Span, 0) AS `Span`,
-//            IFNULL(np.Name_Full, '') as `Patient_Name`
-//        FROM
-//            room r
-//                LEFT JOIN
-//            stays s ON r.idRoom = s.idRoom AND s.`Status` = 'a'
-//                LEFT JOIN
-//            `name` n ON s.idName = n.idName
-//                LEFT JOIN
-//            visit v ON s.idVisit = v.idVisit
-//                AND s.Visit_Span = v.Span
-//                LEFT JOIN
-//            hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
-//                LEFT JOIN
-//            name np on hs.idPatient = np.idName
-//                LEFT JOIN
-//            gen_lookups g ON g.Table_Name = 'Room_Status'
-//                AND g.Code = r.`Status`
-//                LEFT JOIN
-//            gen_lookups gc ON gc.Table_Name = 'Room_Cleaning_Days'
-//                AND gc.Code = r.Cleaning_Cycle_Code
-//        ORDER BY r.idRoom";
-//
+        $query = "SELECT
+            r.Util_Priority,
+            r.idRoom,
+            r.`Title`,
+            r.`Status`,
+            gc.Substitute as Cleaning_Days,
+            IFNULL(g.Description, '') AS `Status_Text`,
+            IFNULL(n.Name_Full, '') AS `Name`,
+            r.`Notes`,
+            IFNULL(v.idVisit, 0) AS idVisit,
+            IFNULL(v.Span, 0) AS `Span`,
+            IFNULL(v.idReservation, 0) AS `idResv`,
+            IFNULL(np.Name_Full, '') as `Patient_Name`
+        FROM
+            room r
+                LEFT JOIN
+            stays s ON r.idRoom = s.idRoom AND s.`Status` = 'a'
+                LEFT JOIN
+            `name` n ON s.idName = n.idName
+                LEFT JOIN
+            visit v ON s.idVisit = v.idVisit
+                AND s.Visit_Span = v.Span
+                LEFT JOIN
+            hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
+                LEFT JOIN
+            name np on hs.idPatient = np.idName
+                LEFT JOIN
+            gen_lookups g ON g.Table_Name = 'Room_Status'
+                AND g.Code = r.`Status`
+                LEFT JOIN
+            gen_lookups gc ON gc.Table_Name = 'Room_Cleaning_Days'
+                AND gc.Code = r.Cleaning_Cycle_Code
+        ORDER BY r.idRoom";
+
 
         $stmt = $dbh->query($query);
 
@@ -220,7 +228,7 @@ ORDER BY rn.Reservation_Id, n.User_Name;");
             if ($idRoom != $r['idRoom']) {
 
                 if ($idRoom > 0 && (!isset($roomsOOS[$idRoom]) || $roomsOOS[$idRoom]['Status'] !== ResourceStatus::Unavailable)) {
-                    $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS, $priceModel);
+                    $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS, $notes, $priceModel);
                 }
 
                 $guests = '';
@@ -238,13 +246,13 @@ ORDER BY rn.Reservation_Id, n.User_Name;");
 
         // Print the last room
         if ($last['idRoom'] > 0 && (!isset($roomsOOS[$last['idRoom']]) || $roomsOOS[$last['idRoom']]['Status'] !== ResourceStatus::Unavailable)) {
-            $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS, $priceModel);
+            $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS, $notes, $priceModel);
         }
 
         return $tableRows;
     }
 
-    protected static function doDailyMarkup(\PDO $dbh, $r, $guests, $roomsOOS, PriceModel $priceModel) {
+    protected static function doDailyMarkup(\PDO $dbh, $r, $guests, $roomsOOS, $notes, PriceModel $priceModel) {
 
         $fixed = array();
         $idVisit = intval($r['idVisit'], 10);
@@ -327,7 +335,12 @@ ORDER BY rn.Reservation_Id, n.User_Name;");
             $fixed['Unpaid'] = '';
         }
 
-        //$fixed['Visit_Notes'] = Notes::getNotesDiv($r['Visit_Notes']);
+        $fixed['Visit_Notes'] = '';
+
+        if (isset($notes[$r['idResv']])) {
+            $fixed['Visit_Notes'] = $notes[$r['idResv']];
+        }
+
         $fixed['Notes'] = Notes::getNotesDiv($r['Notes']);
 
         return $fixed;

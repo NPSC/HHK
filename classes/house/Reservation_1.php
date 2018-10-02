@@ -954,15 +954,24 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
     public function getChooserStatuses($reserveStatuses) {
 
+        $uS = Session::getInstance();
+
         $limResvStatuses = array();
         foreach (removeOptionGroups($reserveStatuses) as $s) {
             if ($s['0'] != ReservationStatus::Checkedout && $s[0] != ReservationStatus::Staying && $s[0] != ReservationStatus::Pending && $s[0] != ReservationStatus::Imediate) {
+
+                if ($s[0] == ReservationStatus::UnCommitted && $uS->ShowUncfrmdStatusTab === FALSE) {
+                    continue;
+                }
+
                 if ($this->isRemovedStatus($s[0])) {
                     $s[2] = 'Cancel Codes';
                 }
+
                 $limResvStatuses[$s[0]] = $s;
             }
         }
+        
         return $limResvStatuses;
     }
 

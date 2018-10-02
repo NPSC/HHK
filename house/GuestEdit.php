@@ -884,7 +884,7 @@ $uS->guestId = $id;
                 <div id="psgList" class="hhk-showonload hhk-tdbox hhk-member-detail hhk-visitdialog" style="display:none;">
                     <ul>
                         <li><a href="#vVisits">Visits</a></li>
-                        <li><a href="#vpsg"><?php echo $labels->getString('guestEdit', 'psgTab', 'Patient Support Group'); ?></a></li>
+                        <li id="lipsg"><a href="#vpsg"><?php echo $labels->getString('guestEdit', 'psgTab', 'Patient Support Group'); ?></a></li>
                         <li><a href="#vregister"><?php echo ($uS->ccgw == '' ? 'Registration' : 'Registration/Credit') ?></a></li>
                         <?php if ($uS->Reservation) { ?>
                         <li><a href="#vreserv"><?php echo $labels->getString('guestEdit', 'reservationTab', 'Reservations'); ?></a></li>

@@ -273,10 +273,6 @@ class Psg {
             HTMLContainer::generateMarkup('legend', $labels->getString('guestEdit', 'psgTab', 'Patient Support Group').' Notes', array('style'=>'font-weight:bold;'))
             , array('id'=>'psgNoteViewer', 'style'=>'clear:left; float:left; width:90%;', 'class'=>'hhk-panel'));
 
-//        $nTable = new HTMLTable();
-//        $nTable->addBodyTr(HTMLTable::makeTh('Patient Support Group Notes'));
-//        $nTable->addBodyTr(HTMLTable::makeTd(Notes::markupShell($this->psgRS->Notes->getStoredVal(), 'txtPSGNotes')));
-
         // Members section
         $relListLessSlf = $relList;
         unset($relListLessSlf[RelLinkType::Self]);

@@ -410,11 +410,11 @@ class DocumentRS extends TableRS {
     function __construct($TableName = "document") {
 
         $this->idDocument = new DB_Field("idDocument", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->Title = new DB_Field("Title", "", new DbStrSanitizer(128), FALSE);
-        $this->Category = new DB_Field("Category", "", new DbStrSanitizer(5), FALSE);
-        $this->Type = new DB_Field("Type", "", new DbStrSanitizer(5), FALSE);
-        $this->Abstract = new DB_Field("Abstract", "", new DbStrSanitizer(1000), FALSE);
-        $this->Doc = new DB_Field("Doc", "", new DbStrSanitizer(10000), FALSE);
+        $this->Title = new DB_Field("Title", "", new DbStrSanitizer(128), TRUE, TRUE);
+        $this->Category = new DB_Field("Category", "", new DbStrSanitizer(5), TRUE, TRUE);
+        $this->Type = new DB_Field("Type", "", new DbStrSanitizer(5), TRUE, TRUE);
+        $this->Abstract = new DB_Field("Abstract", "", new DbStrSanitizer(1000), TRUE, TRUE);
+        $this->Doc = new DB_Field("Doc", "", new DbStrSanitizer(10000), TRUE, TRUE);
 
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);

@@ -57,7 +57,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
             {data: 'Guests', title: 'Guests'},
             {data: 'Patient_Name', title: patientLabel},
             {data: 'Unpaid', title: 'Unpaid', className: 'hhk-justify-r'},
-            {data: 'Visit_Notes', title: 'Visit Notes'},
+            {data: 'Visit_Notes', title: 'Last Visit Note'},
             {data: 'Notes', title: 'Room Notes'}
         ];
 

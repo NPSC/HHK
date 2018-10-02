@@ -27,14 +27,14 @@ class LinkNote {
 
         if ($note->getIdNote() > 0) {
 
-            $result = LinkNote::saveLink($dbh, $note, $linkId, $linkType, $userName);
+            $result = LinkNote::saveLink($dbh, $note, $linkId, $linkType);
 
-            if ($concatNotes) {
+            if ($concatNotes && $linkType != Note::PsgLink) {
 
                 $idPsg = LinkNote::findIdPsg($dbh, $linkType, $linkId);
 
                 if ($idPsg > 0) {
-                    $psgResult = LinkNote::saveLink($dbh, $note, $idPsg, Note::PsgLink, $userName);
+                    $psgResult = LinkNote::saveLink($dbh, $note, $idPsg, Note::PsgLink);
                 }
             }
         }
@@ -71,7 +71,7 @@ class LinkNote {
         return $idPsg;
     }
 
-    protected static function saveLink(\PDO $dbh, $note, $linkId, $linkType, $userName) {
+    protected static function saveLink(\PDO $dbh, $note, $linkId, $linkType) {
 
         if ($note->getIdNote() > 0) {
 

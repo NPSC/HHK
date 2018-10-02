@@ -949,14 +949,14 @@ class VisitView {
 
     public static function updatePsgNotes(\PDO $dbh, \Psg $psg, $notes) {
 
-        if ($notes != '') {
-
-            $oldNotes = is_null($psg->psgRS->Notes->getStoredVal()) ? '' : $psg->psgRS->Notes->getStoredVal();
-            $psg->psgRS->Notes->setNewVal($oldNotes . $notes);
-            EditRS::update($dbh, $psg->psgRS, array($psg->psgRS->idPsg));
-            EditRS::updateStoredVals($psg->psgRS);
-        }
-
+//        if ($notes != '') {
+//
+//            $oldNotes = is_null($psg->psgRS->Notes->getStoredVal()) ? '' : $psg->psgRS->Notes->getStoredVal();
+//            $psg->psgRS->Notes->setNewVal($oldNotes . $notes);
+//            EditRS::update($dbh, $psg->psgRS, array($psg->psgRS->idPsg));
+//            EditRS::updateStoredVals($psg->psgRS);
+//        }
+//
     }
 
     public static function visitMessageArea($header, $message) {

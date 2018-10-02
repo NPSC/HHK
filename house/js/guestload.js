@@ -101,6 +101,7 @@ $(document).ready(function () {
     var nextVeh = 1;
     var listJSON = '../admin/ws_gen.php?cmd=chglog&vw=vguest_audit_log&uid=' + memData.id;
     var listEvtTable;
+    var setupNotes;
 
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
@@ -273,7 +274,11 @@ $(document).ready(function () {
                     event.preventDefault();
                 }
                 
-                 if (ui.newTab.prop('id') === 'chglog' && !listEvtTable) {
+                if (ui.newTab.prop('id') === 'lipsg' && !setupNotes) {
+                    setupNotes = setupPsgNotes(memData.idPsg, $('#psgNoteViewer'));
+                }
+                
+                if (ui.newTab.prop('id') === 'chglog' && !listEvtTable) {
                     listEvtTable = $('#dataTbl').dataTable({
                     "columnDefs": dtCols,
                     "serverSide": true,
@@ -436,7 +441,6 @@ $(document).ready(function () {
         $.post('ws_admin.php', {'rId':item.id, 'id':memData.id, 'rc':$('#hdnRelCode').val(), 'cmd':'newRel'}, relationReturn);
     });
 
-    setupPsgNotes(memData.idPsg, $('#psgNoteViewer'));
 
     // Excludes tab "Check-all" button
     $('input.hhk-check-button').click(function () {
