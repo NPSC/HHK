@@ -628,7 +628,6 @@ function paymentReply (data, updateCal) {
         
         if (data.hostedError) {
             flagAlertMessage(data.hostedError, 'error');
-			$('#keysfees').dialog("close");
 
         } else if (data.xfer && $('#xform').length > 0) {
 			
@@ -650,20 +649,19 @@ function paymentReply (data, updateCal) {
         } else if (data.inctx) {
 
             if (document.getElementsByName('instamed').length != 0) {
+                
                 document.getElementById('instamed').setAttribute('src', data.inctx);
                 $("#instamed").on("load", function(){
 	                $('#keysfees').dialog("close");
                 });
                 return;
-                
-            } else {
-                flagAlertMessage('InstaMed iFrame is missing.', true);
-                $('#keysfees').dialog("close");
-                return;
-            }
 
+            }
+            
+            flagAlertMessage('InstaMed iFrame is missing.', true);
         }
-		$('#keysfees').dialog("close");
+        
+        $('#keysfees').dialog("close");
 
         if (data.success && data.success !== '') {
             flagAlertMessage(data.success, 'success');

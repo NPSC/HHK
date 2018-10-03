@@ -111,7 +111,7 @@ CREATE TABLE if not exists `card_id` (
   `Frequency` varchar(9) NOT NULL DEFAULT '',
   `OperatorID` varchar(10) NOT NULL DEFAULT '',
   `ResponseCode` int(11) NOT NULL DEFAULT '0',
-  `Transaction` varchar(4) NOT NULL DEFAULT '',
+  `Transaction` varchar(14) NOT NULL DEFAULT '',
   `InvoiceNumber` varchar(36) NOT NULL DEFAULT '',
   PRIMARY KEY (`idName`,`idGroup`)
 ) ENGINE=InnoDB;

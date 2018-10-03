@@ -197,7 +197,7 @@ class Card_IdRS extends TableRS {
     public $Frequency;   // varchar(9) NOT NULL DEFAULT '',
     public $OperatorID;   // varchar(10) NOT NULL DEFAULT '',
     public $ResponseCode;   // int(11) NOT NULL DEFAULT '0',
-    public $Transaction;   // varchar(4) NOT NULL DEFAULT '',
+    public $Transaction;   // varchar(14) NOT NULL DEFAULT '',
     public $InvoiceNumber;   // varchar(36) NOT NULL DEFAULT '',
 
     function __construct($TableName = "card_id") {
@@ -209,7 +209,7 @@ class Card_IdRS extends TableRS {
         $this->Frequency = new DB_Field("Frequency", "", new DbStrSanitizer(9), TRUE, TRUE);
         $this->OperatorID = new DB_Field("OperatorID", "", new DbStrSanitizer(10), TRUE, TRUE);
         $this->ResponseCode = new DB_Field("ResponseCode", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->Transaction = new DB_Field("Transaction", "", new DbStrSanitizer(4), TRUE, TRUE);
+        $this->Transaction = new DB_Field("Transaction", "", new DbStrSanitizer(14), TRUE, TRUE);
         $this->InvoiceNumber = new DB_Field("InvoiceNumber", "", new DbStrSanitizer(36), TRUE, TRUE);
 
         parent::__construct($TableName);

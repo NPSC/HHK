@@ -391,7 +391,7 @@ class InstamedGateway extends PaymentGateway {
     protected $returnUrl;
     protected $voidUrl;
 
-    public function initHostedPayment(\PDO $dbh, Invoice $invoice, Guest $guest, $addr, $postbackUrl) {
+    public function initHostedPayment(\PDO $dbh, Invoice $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
 
@@ -671,93 +671,58 @@ class InstamedGateway extends PaymentGateway {
 
     public function hostedPaymentComplete(\PDO $dbh, $idToken, $paymentNotes) {
 
+        //get transaction details
+        $url = "https://online.instamed.com/payment/NVP.aspx?";
+        $params = "merchantID=" . $this->getCredentials()->merchantId
+                . "&storeID=" . $this->getCredentials()->storeId
+                . "&terminalID=001"
+                . "&transactionAction=ViewReceipt"
+                . "&requestToken=false"
+                . "&allowPartialPayment=false"
+                . "&singleSignOnToken=" . $idToken;
 
-        // Poll for results.
-/*
-        do  {
+        $ch = curl_init();
 
-            $result = $this->pollPaymentStatus($idToken, TRUE);
+        curl_setopt($ch, CURLOPT_URL, $url . $params);
+        curl_setopt($ch, CURLOPT_USERPWD, "NP.SOFTWARE.TEST:vno9cFqM");
+                curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-            if ($result->isExpired()) {
+        $responseString = curl_exec($ch);
+        curl_close($ch);
 
-            }
+        $transaction = array();
 
-            if ($result->isComplete()) {
+        parse_str($responseString, $transaction);
 
-            }
-
-            sleep(10);
-
-        } while ($result->isWaiting());
+        //IsEMVVerifiedByPIN=false&isEMVTransaction=false&EMVCardEntryMode=Keyed&isSignatureRequired=false&cardBrand=VISA&cardExpirationMonth=12&cardExpirationYear=2021&cardBINNumber=411111&cardHolderName= &paymentCardType=Credit&lastFourDigits=1111&authorizationNumber=A2CDB9&responseCode=000&responseMessage=APPROVAL&transactionStatus=C&primaryTransactionID=c5a1a5a099f748c8bf16b890c8b371ec&authorizationText=I AGREE TO PAY THE ABOVE AMOUNT ACCORDING TO MY CARD HOLDER AGREEMENT.&transactionID=c5a1a5a099f748c8bf16b890c8b371ec&paymentPlanID=ccc366b1641444fe9e59620340d5e06c&transactionDate=2018-09-26T19:05:40.1666074Z
 
 
+        $response = new VerifyCurlResponse($transaction);
+        // Check paymentId
+        $cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $idToken);
 
-        if ($result->isExpired()) {
+        $vr = new CheckOutResponse($response, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $paymentNotes);
 
+        // Save raw transaction in the db.
+        try {
+            Gateway::saveGwTx($dbh, $vr->response->getStatus(), json_encode($params), json_encode($vr->response->getResultArray()), 'HostedCoVerify');
+        } catch(Exception $ex) {
+            // Do Nothing
         }
 
-        if ($result->isComplete()) {
-*/
-	        //get transaction details
-	        $url = "https://online.instamed.com/payment/NVP.aspx?";
-	        $params = "merchantID=" . $this->getCredentials()->merchantId
-	        		. "&storeID=" . $this->getCredentials()->storeId
-	        		. "&terminalID=001"
-	        		. "&transactionAction=ViewReceipt"
-	        		. "&requestToken=false"
-	        		. "&allowPartialPayment=false"
-	        		. "&singleSignOnToken=" . $idToken;
-	        
-	        //var_dump($url . $params);
-	        		
-			$ch = curl_init();
-	
-	        curl_setopt($ch, CURLOPT_URL, $url . $params);
-	        curl_setopt($ch, CURLOPT_USERPWD, "NP.SOFTWARE.TEST:vno9cFqM");
-			curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			
-	        $responseString = curl_exec($ch);
-	        parse_str($responseString, $transaction);
-	        //var_dump($transaction);
-	        //IsEMVVerifiedByPIN=false&isEMVTransaction=false&EMVCardEntryMode=Keyed&isSignatureRequired=false&cardBrand=VISA&cardExpirationMonth=12&cardExpirationYear=2021&cardBINNumber=411111&cardHolderName= &paymentCardType=Credit&lastFourDigits=1111&authorizationNumber=A2CDB9&responseCode=000&responseMessage=APPROVAL&transactionStatus=C&primaryTransactionID=c5a1a5a099f748c8bf16b890c8b371ec&authorizationText=I AGREE TO PAY THE ABOVE AMOUNT ACCORDING TO MY CARD HOLDER AGREEMENT.&transactionID=c5a1a5a099f748c8bf16b890c8b371ec&paymentPlanID=ccc366b1641444fe9e59620340d5e06c&transactionDate=2018-09-26T19:05:40.1666074Z
-	        
-	        curl_close($ch);
-	        
-	        $response = new VerifyCurlResponse($transaction);
-	        // Check paymentId
-			$cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $idToken);
-			
-	        $vr = new CheckOutResponse($response, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $payNotes);
+        // Record transaction
+        try {
 
+            $transRs = Transaction::recordTransaction($dbh, $vr, $this->gwName, TransType::Sale, TransMethod::HostedPayment);
+            $vr->setIdTrans($transRs->idTrans->getStoredVal());
 
-	        // Save raw transaction in the db.
-	        try {
-	            Gateway::saveGwTx($dbh, $vr->response->getStatus(), json_encode($params), json_encode($vr->response->getResultArray()), 'HostedCoVerify');
-	        } catch(Exception $ex) {
-	            // Do Nothing
-	        }
-	
-	        // Record transaction
-	        try {
-	
-	            if ($verifyResponse->getTranType() == MpTranType::ReturnAmt) {
-	                $trType = TransType::Retrn;
-	            } else if ($verifyResponse->getTranType() == MpTranType::Sale) {
-	                $trType = TransType::Sale;
-	            }
-	
-	            $transRs = Transaction::recordTransaction($dbh, $vr, $gw, $trType, TransMethod::HostedPayment);
-	            $vr->setIdTrans($transRs->idTrans->getStoredVal());
-	
-	        } catch(Exception $ex) {
-	
-	        }
-	
-	        // record payment
-	        return SaleReply::processReply($dbh, $vr, $uS->username);
+        } catch(Exception $ex) {
+            // do nothing
+        }
 
-//        }
+        // record payment
+        return SaleReply::processReply($dbh, $vr, $uS->username);
 
     }
 
@@ -1154,28 +1119,28 @@ class PollingResponse extends GatewayResponse {
 class VerifyCurlResponse extends GatewayResponse {
 
     function __construct($response) {
+
         parent::__construct($response);
-		
-		if(is_array($response)){
-			$this->result = $response;
-		}else{
-			throw new Hk_Exception_Payment("Curl transaction response is invalid.  ");
-		}
-        
+
+        if(is_array($response)){
+                $this->result = $response;
+        }else{
+            throw new Hk_Exception_Payment("Curl transaction response is invalid.  ");
+        }
 
     }
-	
-	public function parseResponse(){
-		return '';
-	}
-	
-	public function getResponseCode() {
+
+    public function parseResponse(){
+            return '';
+    }
+
+    public function getResponseCode() {
         if (isset($this->result['responseCode'])) {
             return $this->result['responseCode'];
         }
         return '';
     }
-	
+
     public function getStatus() {
         if (isset($this->result['responseCode'])) {
             return $this->result['responseCode'];
@@ -1261,20 +1226,20 @@ if (isset($this->result->PaymentIDExpired)) {
         return '';
     }
 
-    public function getExpDate() {	 
-	       
+    public function getExpDate() {
+
         if (isset($this->result['cardExpirationMonth']) && isset($this->result['cardExpirationYear'])) {
 	        if($this->result['cardExpirationMonth'] < 10){
             	$month = '0' . $this->result['cardExpirationMonth'];
             }else{
 	            $month = $this->result['cardExpirationMonth'];
             }
-            
+
             $year = $this->result['cardExpirationYear'];
-            
+
             return $month . '/' . $year;
         }
-        
+
         return '';
     }
 

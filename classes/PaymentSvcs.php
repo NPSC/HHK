@@ -398,13 +398,13 @@ class PaymentSvcs {
             } else {
 
                 // Initialiaze hosted payment
-                $fwrder = $gateway->initHostedPayment($dbh, $invoice, $guest, $addr, $postbackUrl);
+                $fwrder = $gateway->initHostedPayment($dbh, $invoice, $postbackUrl);
 
                 $payIds = array();
                 if (isset($uS->paymentIds)) {
                     $payIds = $uS->paymentIds;
                 }
-                $payIds[$fwrder['paymentId']] = $invoice->getIdInvoice();
+                $payIds[$fwrder['PaymentId']] = $invoice->getIdInvoice();
                 $uS->paymentIds = $payIds;
                 $uS->paymentNotes = $pmp->getPayNotes();
 
