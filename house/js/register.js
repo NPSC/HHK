@@ -847,7 +847,7 @@ $(document).ready(function () {
         editable: true,
         resourcesInitiallyExpanded: expandResources,
         resourceLabelText: 'Rooms',
-        resourceAreaWidth: '8%',
+        resourceAreaWidth: resourceColumnWidth,
         refetchResourcesOnNavigate: false,
         resourceGroupField: resourceGroupBy,
         loading: function (isLoading, View) {

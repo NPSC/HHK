@@ -369,7 +369,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Verify_User_Address','y','Waiting for verification','','',0),
 
 ('Visit_Fee_Code', '1', 'Cleaning Fee','15','',0),
-('Visit_Fee_Code', '2', '','0','',0),
+('Visit_Fee_Code', '2', 'No Fee','0','',0),
 
 ('Visit_Status','a','Checked In','','',0),
 ('Visit_Status','co','Checked Out','','',0),
@@ -446,6 +446,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('CalDateIncrement', '1', 's', 'h', 'Number of weeks to increment Calendar view, "auto"=calViewWeeks'),
 ('CalExpandResources', 'true', 'b', 'h', 'Initially expand room categories on the calendar'),
 ('CalViewWeeks','3','i','h','Number of weeks showing in the calendar view'),
+('CalRescColWidth', '8%', 's', 'h', 'The width of the rooms column on the calendar page as percent of the overall width.'),
 ('CalResourceGroupBy', 'Type', 's', 'h', 'Calendar resource grouping parameter: Type, Category, Report_Category or Floor'),
 ('CardSwipe','false','b','f','Use POS terminal'),
 ('CheckOutTime', '10', 'i', 'h', 'Normal House checkout time of day in 24-hour format, hh'),

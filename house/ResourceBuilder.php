@@ -210,6 +210,7 @@ if ($uS->rolecode > WebRole::WebUser) {
 $tabIndex = 0;
 $feFileSelection = '';
 $rteMsg = '';
+$rateTableErrorMessage = '';
 
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
@@ -529,6 +530,42 @@ if (isset($_POST['btnkfSave'])) {
     // Visit Fee
     if (isset($_POST['vfdesc'])) {
 
+        // new visit fee defined?
+        if (isset($_POST['vfdesc'][0])) {
+
+            $newDesc = filter_var($_POST['vfdesc'][0], FILTER_SANITIZE_STRING);
+            $newRate = filter_var($_POST['vfrate'][0], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+
+            if ($newDesc != '') {
+                // Add a cleaning fee?
+
+                // Look for existing fee
+                $glRs = new GenLookupsRS();
+                $glRs->Table_Name->setStoredVal('Visit_Fee_Code');
+                $glRs->Description->setStoredVal($newDesc);
+                $rows = EditRS::select($dbh, $glRs, array($glRs->Table_Name, $glRs->Description));
+
+                if (count($rows) > 0) {
+                    $rateTableErrorMessage = HTMLContainer::generateMarkup('p', 'Visit fee code "' . $newDesc . '" is already defined. ', array('style'=>'color:red;'));
+                } else {
+
+                    // Insert new cleaning fee
+                    $glRs = new GenLookupsRS();
+                    $newCode = incCounter($dbh, 'codes');
+
+                    $glRs->Table_Name->setNewVal('Visit_Fee_Code');
+                    $glRs->Description->setNewVal($newDesc);
+                    $glRs->Substitute->setNewVal($newRate);
+                    $glRs->Code->setNewVal($newCode);
+
+                    EditRS::insert($dbh, $glRs);
+                    $logText = HouseLog::getInsertText($glRs, 'Visit_Fee_Code');
+                    HouseLog::logGenLookups($dbh, 'Visit_Fee_Code', $newCode, $logText, 'insert', $uS->username);
+
+                }
+            }
+        }
+
         $vfDefault = '';
 
         if (isset($_POST['vfrbdefault'])) {
@@ -552,22 +589,6 @@ if (isset($_POST['btnkfSave'])) {
                     SysConfig::saveKeyValue($dbh, $uS->sconf, 'DefaultVisitFee', $v[0]);
                     $uS->DefaultVisitFee = $v[0];
                     break;
-                }
-            }
-        }
-
-        // Update the item description.
-        foreach ($_POST['vfrate'] as $k => $p) {
-
-            if ($p > 0) {
-                // update item
-                $itemRs = new ItemRS();
-                $itemRs->idItem->setStoredVal(ItemId::VisitFee);
-                $rows = EditRS::select($dbh, $itemRs, array($itemRs->idItem));
-
-                if (count($rows) == 1) {
-                    $itemRs->Description->setNewVal(filter_var($_POST['vfdesc'][$k], FILTER_SANITIZE_STRING));
-                    EditRS::update($dbh, $itemRs, array($itemRs->idItem));
                 }
             }
         }
@@ -1013,6 +1034,13 @@ if ($uS->VisitFee) {
                 . HTMLTable::makeTd('$' . HTMLInput::generateMarkup($r[2], array('name' => 'vfrate[' . $r[0] . ']', 'size' => '6', 'class' => 'number-only')))
         );
     }
+
+    // add empty fee row
+        $kTbl->addBodyTr(
+                HTMLTable::makeTd('', array('style' => 'text-align:center;'))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'vfdesc[0]', 'size' => '16')))
+                . HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name' => 'vfrate[0]', 'size' => '6', 'class' => 'number-only'))));
+
 
     $visitFeesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee') . ' Amount', array('style' => 'font-weight:bold;')) . $kTbl->generateMarkup(array('style' => 'margin:7px;')), array('style' => 'float:left;margin:7px;'));
 }
@@ -1813,7 +1841,8 @@ $resultMessage = $alertMsg->createMarkup();
                     </div>
                 </div>
                 <div id="rateTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
-                    <p style="padding:3px;background-color: #fff7db;float:left;">Make changes directly into the text boxes below and press 'Save'.</p>
+                    <p style="padding:3px;background-color: #fff7db;">Make changes directly into the text boxes below and press 'Save'.</p>
+                    <?php echo $rateTableErrorMessage; ?>
                     <form method="POST" action="ResourceBuilder.php" name="form1">
                         <div style="clear:left;float:left;"><?php echo $pricingModelTable; ?></div>
 <?php echo $visitFeesTable . $keysTable . $payTypesTable . $feesTable . $faMarkup; ?>

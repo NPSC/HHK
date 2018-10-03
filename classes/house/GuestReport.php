@@ -56,7 +56,7 @@ class GuestReport {
 
         $fields = '';
 
-        foreach (readGenLookupsPDO($dbh, 'Demographics') as $d) {
+        foreach (readGenLookupsPDO($dbh, 'Demographics', 'Order') as $d) {
 
             if (strtolower($d[2]) == 'y') {
 
@@ -91,7 +91,7 @@ class GuestReport {
 
             // Demographics
             foreach ($demoCategorys as $k => $d) {
-                $accum[$thisPeriod][$d] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, $k)));
+                $accum[$thisPeriod][$d] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, $k, 'Order')));
             }
 
             $accum[$thisPeriod]['Distance'] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));

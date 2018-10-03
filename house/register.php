@@ -308,6 +308,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             var rctMkup = '<?php echo $receiptMarkup; ?>';
             var defaultTab = '<?php echo $defaultRegisterTab; ?>';
             var resourceGroupBy = '<?php echo $resourceGroupBy; ?>';
+            var resourceColumnWidth = '<?php echo $uS->CalRescColWidth; ?>';
             var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
             var challVar = '<?php echo $challengeVar; ?>';
             var defaultView = '<?php echo $defaultView; ?>';

@@ -32,3 +32,8 @@ call new_webpage('ws_resv.php', 31, '', 0, 'h', '', '', 's', '', 'admin', now(),
 call new_webpage('ws_resv.php', 31, '', 0, 'h', '', '', 's', '', 'admin', now(), 'ga', @pageId);
 
 update page set `File_Name` = 'Reserve.php' where `File_Name` = 'Referral.php';
+
+
+-- new values
+
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CalRescColWidth', '8%', 's', 'h', 'The width of the rooms column on the calendar page as percent of the overall width.');

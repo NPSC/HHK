@@ -107,7 +107,7 @@ where ru.idResource_use is null
             foreach ($rescGroups as $g) {
 
                 if (isset($r[$g[0]])) {
-                    $r[$g[0]] .= ' (' . $roomGroups[$g[0]][$r[$g[0]]] . ')';
+                    $r[$g[0]] = htmlspecialchars_decode($r[$g[0]], ENT_QUOTES) . ' (' . $roomGroups[$g[0]][$r[$g[0]]] . ')';
                 }
             }
 
