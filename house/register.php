@@ -310,6 +310,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             var rctMkup = '<?php echo $receiptMarkup; ?>';
             var defaultTab = '<?php echo $defaultRegisterTab; ?>';
             var resourceGroupBy = '<?php echo $resourceGroupBy; ?>';
+            var resourceColumnWidth = '<?php echo $uS->CalRescColWidth; ?>';
             var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
             var challVar = '<?php echo $challengeVar; ?>';
             var defaultView = '<?php echo $defaultView; ?>';
@@ -395,7 +396,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 <?php if ($showCharges) { ?>
                 {data: 'Unpaid', title: 'Unpaid', className: 'hhk-justify-r'},
                 <?php } ?>
-                {data: 'Visit_Notes', title: 'Visit Notes', sortable: false},
+                {data: 'Visit_Notes', title: 'Last Visit Note', sortable: false},
                 {data: 'Notes', title: 'Room Notes', sortable: false},
             ];
 
@@ -463,7 +464,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                         <li><a href="#vfees"><?php echo $labels->getString('register', 'recentPayTab', 'Recent Payments'); ?></a></li>
                         <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
                     <?php } } ?>
-                    <li><a href="#vdaily">Daily Log</a></li>
+                    <li id="liDaylog"><a href="#vdaily">Daily Log</a></li>
                 </ul>
                 <div id="vcal" style="clear:left; padding: .6em 1em; display:none;">
                     <?php echo $colorKey; ?>

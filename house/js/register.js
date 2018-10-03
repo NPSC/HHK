@@ -20,7 +20,7 @@ function isNumber(n) {
 }
 function setRoomTo(idResv, idResc) {
 
-    $.post('ws_ckin.php', {cmd: 'setRoom', rid: idResv, idResc: idResc}, function(data) {
+    $.post('ws_resv.php', {cmd: 'moveResvRoom', rid: idResv, idResc: idResc}, function(data) {
         try {
             data = $.parseJSON(data);
         } catch (err) {
@@ -34,6 +34,10 @@ function setRoomTo(idResv, idResc) {
             flagAlertMessage(data.error, 'error');
             return;
         }
+        if (data.warning && data.warning !== '') {
+            flagAlertMessage(data.warning, 'alert');
+            return;
+        }
         if (data.msg && data.msg !== '') {
             flagAlertMessage(data.msg, 'info');
         }
@@ -42,6 +46,7 @@ function setRoomTo(idResv, idResc) {
     });
 }
 
+var $dailyTbl;
 function refreshdTables(data) {
     "use strict";
 
@@ -65,9 +70,8 @@ function refreshdTables(data) {
         tbl.ajax.reload();
     }
     
-    if ($('#daily').length > 0) {
-        var tbl = $('#daily').DataTable();
-        tbl.ajax.reload();
+    if ($('#daily').length > 0 && $dailyTbl) {
+        $dailyTbl.ajax.reload();
     }
 
 }
@@ -843,7 +847,7 @@ $(document).ready(function () {
         editable: true,
         resourcesInitiallyExpanded: expandResources,
         resourceLabelText: 'Rooms',
-        resourceAreaWidth: '8%',
+        resourceAreaWidth: resourceColumnWidth,
         refetchResourcesOnNavigate: false,
         resourceGroupField: resourceGroupBy,
         loading: function (isLoading, View) {
@@ -953,6 +957,11 @@ $(document).ready(function () {
 
         eventResize: function (event, delta, revertFunc) {
             $("#divAlert1, #paymentMessage").hide();
+            
+            if (delta === undefined) {
+                revertFunc();
+                return;
+            }
             if (event.idVisit > 0) {
                 if (confirm('Move check out date?')) {
                     moveVisit('visitMove', event.idVisit, event.Span, 0, delta.asDays());
@@ -1482,8 +1491,21 @@ $(document).ready(function () {
             if (ui.newTab.prop('id') === 'liInvoice') {
                 $('#btnInvGo').click();
             }
+            if (ui.newTab.prop('id') === 'liDaylog' && !$dailyTbl) {
+                $dailyTbl = $('#daily').DataTable({
+                   ajax: {
+                       url: 'ws_resc.php?cmd=getHist&tbl=daily',
+                       dataSrc: 'daily'
+                   },
+                   order: [[ 0, 'asc' ]],
+                   columns: dailyCols,
+                   infoCallback: function( settings, start, end, max, total, pre ) {
+                        return "Prepared: " + dateRender(new Date().toISOString(), 'display', 'ddd, MMM D YYYY, h:mm a');
+                  }
+                });
+            }
         },
-
+        
         activate: function(event, ui) {
             if (ui.newTab.prop('id') === 'liCal') {
                 $('#calendar').fullCalendar('render');
@@ -1516,35 +1538,24 @@ $(document).ready(function () {
            url: 'ws_resc.php?cmd=getHist&tbl=curres',
            dataSrc: 'curres'
        },
-       "drawCallback": function (settings) {
+       drawCallback: function (settings) {
            $('#spnNumCurrent').text(this.api().rows().data().length);
            $('#curres .gmenu').menu();
        },
-       "columns": cgCols
+       columns: cgCols
     });
     
-    $('#daily').DataTable({
-       ajax: {
-           url: 'ws_resc.php?cmd=getHist&tbl=daily',
-           dataSrc: 'daily'
-       },
-       "order": [[ 0, 'asc' ]],
-       "columns": dailyCols,
-       "infoCallback": function( settings, start, end, max, total, pre ) {
-            return "Prepared: " + dateRender(new Date().toISOString(), 'display', 'ddd, MMM D YYYY, h:mm a');
-      }
-    });
     
     $('#reservs').DataTable({
        ajax: {
            url: 'ws_resc.php?cmd=getHist&tbl=reservs',
            dataSrc: 'reservs'
        },
-       "drawCallback": function (settings) {
+       drawCallback: function (settings) {
            $('#spnNumConfirmed').text(this.api().rows().data().length);
            $('#reservs .gmenu').menu();
        },
-       "columns": rvCols
+       columns: rvCols
     });
     
     if ($('#unreserv').length > 0) {
@@ -1553,11 +1564,11 @@ $(document).ready(function () {
                url: 'ws_resc.php?cmd=getHist&tbl=unreserv',
                dataSrc: 'unreserv'
            },
-           "drawCallback": function (settings) {
+           drawCallback: function (settings) {
                 $('#spnNumUnconfirmed').text(this.api().rows().data().length);
                 $('#unreserv .gmenu').menu();
            },
-           "columns": rvCols
+           columns: rvCols
         });
     }
     
@@ -1566,12 +1577,12 @@ $(document).ready(function () {
            url: 'ws_resc.php?cmd=getHist&tbl=waitlist',
            dataSrc: 'waitlist'
        },
-       "order": [[ (showCreatedDate ? 4 : 3), 'asc' ]],
-       "drawCallback": function (settings) {
+       order: [[ (showCreatedDate ? 4 : 3), 'asc' ]],
+       drawCallback: function (settings) {
             $('#spnNumWaitlist').text(this.api().rows().data().length);
             $('#waitlist .gmenu').menu();
        },
-       "columns": wlCols
+       columns: wlCols
     });
 
 });

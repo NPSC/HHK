@@ -156,21 +156,6 @@ try {
 
             break;
 
-        case 'setRoom':
-
-            $idresv = 0;
-            if (isset($_POST['rid'])) {
-                $idresv = intval(filter_var($_POST['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-
-            $idResc = '';
-            if (isset($_POST['idResc'])) {
-                $idResc = filter_var($_POST['idResc'], FILTER_SANITIZE_STRING);
-            }
-
-            $events = ReservationSvcs::setNewRoom($dbh, $idresv, $idResc, $guestAdmin);
-            break;
-
         case 'newConstraint':
 
             $idResv = 0;
@@ -452,51 +437,6 @@ try {
 
         break;
 
-    case "getMember":
-
-        $id = 0;
-        if (isset($_POST["id"])) {
-            $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_STRING), 10);
-        }
-
-        $idReserv = 0;
-        if (isset($_POST["rid"])) {
-            $idReserv = intval(filter_var($_POST["rid"], FILTER_SANITIZE_STRING), 10);
-        }
-
-        $idp = "";
-        if (isset($_POST["idPrefix"])) {
-            $idp = filter_var($_POST["idPrefix"], FILTER_SANITIZE_STRING);
-        }
-
-        $role = "";
-        if (isset($_POST["role"])) {
-            $role = filter_var($_POST["role"], FILTER_SANITIZE_STRING);
-        }
-
-        $idPsg = 0;
-        if (isset($_POST["psg"])) {
-            $idPsg = intval(filter_var($_POST["psg"], FILTER_SANITIZE_STRING), 10);
-        }
-
-        $patStay = NULL;
-        if (isset($_POST["patStay"]) && $_POST["patStay"] != '') {
-            $patStay = filter_var($_POST["patStay"], FILTER_VALIDATE_BOOLEAN);
-        }
-
-        $havePatient = FALSE;
-        if (isset($_POST["hvPat"])) {
-            $havePatient = filter_var($_POST["hvPat"], FILTER_VALIDATE_BOOLEAN);
-        }
-
-        $addRoom = FALSE;
-        if (isset($_POST["addRoom"])) {
-            $addRoom = filter_var($_POST["addRoom"], FILTER_VALIDATE_BOOLEAN);
-        }
-
-        $events = HouseServices::getMember($dbh, $idReserv, $id, $role, $idp, $idPsg, $patStay, $havePatient, $addRoom);
-
-        break;
 
     case "addStay":
 
@@ -518,103 +458,6 @@ try {
         $events = HouseServices::addVisitStay($dbh, $idVisit, $visitSpan, $id, $_POST);
         break;
 
-    case "getResv":
-
-        $id = 0;
-        if (isset($_GET["id"])) {
-            $id = intval(filter_var($_GET["id"], FILTER_SANITIZE_STRING), 10);
-        }
-
-        $idReserv = 0;
-        if (isset($_GET["rid"])) {
-            $idReserv = intval(filter_var($_GET["rid"], FILTER_SANITIZE_STRING), 10);
-        }
-
-        $idPsg = 0;
-        if (isset($_GET["idPsg"])) {
-            $idPsg = intval(filter_var($_GET["idPsg"], FILTER_SANITIZE_STRING), 10);
-        }
-
-        $idp = "";
-        if (isset($_GET["idPrefix"])) {
-            $idp = filter_var($_GET["idPrefix"], FILTER_SANITIZE_STRING);
-        }
-
-        $role = "";
-        if (isset($_GET["role"])) {
-            $role = filter_var($_GET["role"], FILTER_SANITIZE_STRING);
-        }
-
-        $patStay = FALSE;
-        if (isset($_GET["patStay"])) {
-            $patStay = filter_var($_GET["patStay"], FILTER_VALIDATE_BOOLEAN);
-        }
-
-        $events = ReservationSvcs::getResv($dbh, $idReserv, $id, $role, $idPsg, $idp, $guestAdmin, $patStay);
-
-        break;
-
-    case 'delResvGst':
-
-        $id = 0;
-        if (isset($_POST["id"])) {
-            $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_STRING), 10);
-        }
-
-        $idReserv = 0;
-        if (isset($_POST["rid"])) {
-            $idReserv = intval(filter_var($_POST["rid"], FILTER_SANITIZE_STRING), 10);
-        }
-
-        // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
-
-        $events = ReservationSvcs::removeResvGuest($dbh, $id, $idReserv, $labels, $uS->username);
-
-        break;
-
-    case "addResv":
-
-        $id = 0;
-        if (isset($_POST["id"])) {
-            $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_STRING), 10);
-        }
-
-        $idReserv = 0;
-        if (isset($_POST["rid"])) {
-            $idReserv = intval(filter_var($_POST["rid"], FILTER_SANITIZE_STRING), 10);
-        }
-
-        $idPsg = 0;
-        if (isset($_POST["psg"])) {
-            $idPsg = intval(filter_var($_POST["psg"], FILTER_SANITIZE_STRING), 10);
-        }
-
-        $addRoom = FALSE;
-        if (isset($_POST['addRoom'])) {
-            $addRoom = filter_Var($_POST['addRoom'], FILTER_VALIDATE_BOOLEAN);
-        }
-
-        $post = filter_var_array($_POST, FILTER_SANITIZE_STRING);
-
-        $events = ReservationSvcs::addResv($dbh, $idPsg, $idReserv, $id, $addRoom, $post);
-        break;
-
-    case "makeResv":
-
-        $memData = filter_var_array($_POST, FILTER_SANITIZE_STRING);
-
-        $events = ReservationSvcs::findARoom($dbh, $memData, $guestAdmin);
-
-        break;
-
-    case "saveMem":
-
-        $memData = filter_var_array($_POST, FILTER_SANITIZE_STRING);
-
-        $events = HouseServices::saveMembers($dbh, $memData, $guestAdmin);
-
-        break;
 
     case 'changePatient':
 
@@ -632,12 +475,6 @@ try {
 
         break;
 
-    case "savePage":
-
-        $memData = filter_var_array($_POST, FILTER_SANITIZE_STRING);
-
-        $events = HouseServices::saveCheckinPage($dbh, $memData, $guestAdmin);
-        break;
 
     case "getincmdiag":
 

@@ -158,6 +158,29 @@ WHERE
 
        }
 
+       // Get notes
+       $stmtn = $dbh->query("SELECT
+    rn.Reservation_Id,
+    n.User_Name,
+    CASE
+        WHEN n.Title = '' THEN n.Note_Text
+        ELSE CONCAT(n.Title, ' - ', n.Note_Text)
+    END AS Note_Text,
+    MAX(n.Timestamp) as Timestamp
+FROM
+visit v join reservation_note rn on v.idReservation = rn.Reservation_Id
+        JOIN
+    note n ON rn.Note_Id = n.idNote
+where v.Status = 'a'
+GROUP BY rn.Reservation_Id having max(n.Timestamp);");
+
+        $notes = array();
+        while ($n = $stmtn->fetch(PDO::FETCH_ASSOC)) {
+            $dt = new DateTime($n['Timestamp']);
+            $notes[$n['Reservation_Id']] =  $dt->format('M j, Y H:i ') . $n['User_Name'] . '; ' . $n['Note_Text'];
+        }
+
+
         $query = "SELECT
             r.Util_Priority,
             r.idRoom,
@@ -167,9 +190,9 @@ WHERE
             IFNULL(g.Description, '') AS `Status_Text`,
             IFNULL(n.Name_Full, '') AS `Name`,
             r.`Notes`,
-            IFNULL(v.`Notes`, '') AS `Visit_Notes`,
             IFNULL(v.idVisit, 0) AS idVisit,
             IFNULL(v.Span, 0) AS `Span`,
+            IFNULL(v.idReservation, 0) AS `idResv`,
             IFNULL(np.Name_Full, '') as `Patient_Name`
         FROM
             room r
@@ -205,7 +228,7 @@ WHERE
             if ($idRoom != $r['idRoom']) {
 
                 if ($idRoom > 0 && (!isset($roomsOOS[$idRoom]) || $roomsOOS[$idRoom]['Status'] !== ResourceStatus::Unavailable)) {
-                    $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS, $priceModel);
+                    $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS, $notes, $priceModel);
                 }
 
                 $guests = '';
@@ -223,13 +246,13 @@ WHERE
 
         // Print the last room
         if ($last['idRoom'] > 0 && (!isset($roomsOOS[$last['idRoom']]) || $roomsOOS[$last['idRoom']]['Status'] !== ResourceStatus::Unavailable)) {
-            $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS, $priceModel);
+            $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS, $notes, $priceModel);
         }
 
         return $tableRows;
     }
 
-    protected static function doDailyMarkup(\PDO $dbh, $r, $guests, $roomsOOS, PriceModel $priceModel) {
+    protected static function doDailyMarkup(\PDO $dbh, $r, $guests, $roomsOOS, $notes, PriceModel $priceModel) {
 
         $fixed = array();
         $idVisit = intval($r['idVisit'], 10);
@@ -312,7 +335,12 @@ WHERE
             $fixed['Unpaid'] = '';
         }
 
-        $fixed['Visit_Notes'] = Notes::getNotesDiv($r['Visit_Notes']);
+        $fixed['Visit_Notes'] = '';
+
+        if (isset($notes[$r['idResv']])) {
+            $fixed['Visit_Notes'] = $notes[$r['idResv']];
+        }
+
         $fixed['Notes'] = Notes::getNotesDiv($r['Notes']);
 
         return $fixed;

@@ -29,7 +29,7 @@ require CLASSES . 'AuditLog.php';
 require CLASSES . 'History.php';
 require (CLASSES . 'CreateMarkupFromDB.php');
 
-//require (CLASSES . 'Notes.php');
+
 require (CLASSES . 'Note.php');
 require (CLASSES . 'ListNotes.php');
 require (CLASSES . 'LinkNote.php');
@@ -183,6 +183,24 @@ try {
 
         break;
 
+    case 'moveResvRoom':
+
+        $idResv = 0;
+        if (isset($_POST['rid'])) {
+            $idResv = intval(filter_var($_POST['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $idResc = '';
+        if (isset($_POST['idResc'])) {
+            $idResc = filter_var($_POST['idResc'], FILTER_SANITIZE_STRING);
+        }
+
+        $resv = new ActiveReservation(new ReserveData($_POST), null, null);
+
+        $events = $resv->changeRoom($dbh, $idResv, $idResc);
+
+        break;
+
 
     case 'getNoteList':
 
@@ -199,7 +217,7 @@ try {
 
         require(CLASSES . 'DataTableServer.php');
 
-        $events = ListNotes::loadList($dbh, $idLink, $linkType, $_GET);
+        $events = ListNotes::loadList($dbh, $idLink, $linkType, $_GET, $uS->ConcatVisitNotes);
 
         break;
 
@@ -222,7 +240,7 @@ try {
             $idLink = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $events = array('idNote'=>LinkNote::save($dbh, $data, $idLink, $linkType, $uS->username));
+        $events = array('idNote'=>LinkNote::save($dbh, $data, $idLink, $linkType, $uS->username, $uS->ConcatVisitNotes));
 
         break;
 
@@ -308,14 +326,7 @@ try {
             $idLink = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        break;
-
-
-    case "copyThinGuest":
-
-        $resv = Reservation::reservationFactoy($dbh, $_POST);
-
-        $events = $resv->copyPerson($dbh);
+        $events = array('warning'=>'Link Note is not implemented.  ');
 
         break;
 

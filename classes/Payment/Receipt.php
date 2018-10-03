@@ -422,7 +422,7 @@ WHERE
                 'amt'=>$v['Pledged_Rate'],
                 'adj'=>$v['Expected_Rate'],
                 'glide'=>$v['Rate_Glide_Credit'],
-                'idrate'=>$v['idRoom_rate'],
+                'idrate'=>$v['idRoom_Rate'],
                 'start'=>$v['Span_Start'],
                 'end'=>$v['Span_End'],
                 'arr'=>$v['Arrival_Date'],
@@ -1155,7 +1155,7 @@ WHERE
         }
     }
 
-    public static function createComprehensiveStatements(\PDO $dbh, $spans, $idRegistration, $guestName, $priceModel) {
+    public static function createComprehensiveStatements(\PDO $dbh, $spans, $idRegistration, $guestName, $priceModel, $includeLogo = TRUE) {
 
         $uS = Session::getInstance();
 
@@ -1233,7 +1233,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         $rec = '';
 
         // Don't write img if logo URL not sepcified
-        if ($logoUrl != '') {
+        if ($includeLogo && $logoUrl != '') {
 
             $rec .= HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$config->getString('financial', 'statementLogoWidth', '220'))),
@@ -1261,7 +1261,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
     }
 
-    public static function createStatementMarkup(\PDO $dbh, $idVisit, $guestName) {
+    public static function createStatementMarkup(\PDO $dbh, $idVisit, $guestName, $includeLogo = TRUE) {
 
         $uS = Session::getInstance();
         $spans = array();
@@ -1345,7 +1345,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
         $rec = '';
 
         // Don't write img if logo URL not sepcified
-        if ($logoUrl != '') {
+        if ($includeLogo && $logoUrl != '') {
 
             $rec .= HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$config->getString('financial', 'statementLogoWidth', '220'))),

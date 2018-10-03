@@ -111,21 +111,27 @@ if (isset($_POST['hdnCfmRid'])) {
         $notes = filter_var($_POST['tbCfmNotes'], FILTER_SANITIZE_STRING);
     }
 
+    require(HOUSE . 'TemplateForm.php');
     require(HOUSE . 'ConfirmationForm.php');
 
-    $confirmForm = new ConfirmationForm($uS->ConfirmFile);
+    try {
+        $confirmForm = new ConfirmationForm('confirmation.txt');
 
-    $formNotes = $confirmForm->createNotes($notes, FALSE);
-    $form = '<!DOCTYPE html>' . $confirmForm->createForm($dbh, $resv, $guest, 0, $formNotes);
+        $formNotes = $confirmForm->createNotes($notes, FALSE);
+        $form = '<!DOCTYPE html>' . $confirmForm->createForm($confirmForm->makeReplacements($resv, $guest, 0, $formNotes));
 
-    header('Content-Disposition: attachment; filename=confirm.doc');
-    header("Content-Description: File Transfer");
-    header('Content-Type: text/html');
-    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-    header('Expires: 0');
+        header('Content-Disposition: attachment; filename=confirm.doc');
+        header("Content-Description: File Transfer");
+        header('Content-Type: text/html');
+        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+        header('Expires: 0');
 
-    echo($form);
-    exit();
+        echo($form);
+        exit();
+
+    } catch (Exception $ex) {
+        $paymentMarkup .= "Confirmation Form Error: " . $ex->getMessage();
+    }
 }
 
 if (isset($uS->cofrid)) {
@@ -208,8 +214,9 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
 
-        <script type="text/javascript" src="js/resvManager.js"></script>
+        <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
@@ -231,7 +238,7 @@ $resvObjEncoded = json_encode($resvAr);
                 <div style="clear:both;min-height: 70px;">.</div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <input type="button" id="btnDelete" value="Delete" style="display:none;"/>
-                    <input type="button" id="btnCheckinNow" value='Check-in Now' style="display:none;"/>
+                    <input type="button" id="btnCheckinNow" value='Check-in Now' style="display:none;"/><input type="hidden" id="resvCkinNow" name="resvCkinNow" value="no" />
                     <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
                     <input type='button' id='btnDone' value='Continue' style="display:none;"/>
                 </div>
@@ -255,6 +262,7 @@ $resvObjEncoded = json_encode($resvAr);
 var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
 var payFailPage = '<?php echo $payFailPage; ?>';
 var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
+var paymentMarkup = '<?php echo $paymentMarkup; ?>';
 var pageManager;
 
 $(document).ready(function() {
@@ -273,6 +281,7 @@ $(document).ready(function() {
             ) * 1.1 );
         }
     });
+
 
 // Dialog Boxes
     $("#resDialog").dialog({
@@ -351,6 +360,11 @@ $(document).ready(function() {
         title: 'Payment Receipt'
     });
 
+    if (paymentMarkup !== '') {
+        $('#paymentMessage').show();
+    }
+
+
     pageManager = new resvManager(resv);
 
     // hide the alert on mousedown
@@ -384,7 +398,8 @@ $(document).ready(function() {
     });
 
     $('#btnCheckinNow').click(function () {
-        window.open('CheckingIn.php?rid=' + pageManager.getIdResv(), '_self');
+        $('#resvCkinNow').val('yes');
+        $('#btnDone').click();
     });
 
     $('#btnDone').click(function () {

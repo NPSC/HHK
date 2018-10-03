@@ -520,6 +520,10 @@ class ReserveData {
         return FALSE;
     }
 
+    public function getErrors() {
+        return $this->errors;
+    }
+
 }
 
 

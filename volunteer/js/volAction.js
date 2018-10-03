@@ -11,36 +11,36 @@
  */
 
 //function $() {}
-function alertCallback() {
-    "use strict";
-
-    setTimeout(function () {
-        $("#calContainer").hide();
-    }, 3000
-    );
-}
-
-function flagCalAlertMessage($mess, wasError) {
-    "use strict";
-
-    var spn = document.getElementById('calMessage');
-
-    if (!wasError) {
-        // define the error message markup
-        $('#calResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
-        $('#calIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
-        spn.innerHTML = "<strong>Success: </strong>" + $mess;
-        $("#calContainer").show();
-        alertCallback();
-    } else {
-        // define the success message markup
-        $('calResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
-        $('#calIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
-        spn.innerHTML = "<strong>Alert: </strong>" + $mess;
-        $("#calContainer").show();
-        alertCallback();
-    }
-}
+//function alertCallback() {
+//    "use strict";
+//
+//    setTimeout(function () {
+//        $("#calContainer").hide();
+//    }, 3000
+//    );
+//}
+//
+//function flagCalAlertMessage($mess, wasError) {
+//    "use strict";
+//
+//    var spn = document.getElementById('calMessage');
+//
+//    if (!wasError) {
+//        // define the error message markup
+//        $('#calResponse').removeClass("ui-state-error").addClass("ui-state-highlight");
+//        $('#calIcon').removeClass("ui-icon-alert").addClass("ui-icon-info");
+//        spn.innerHTML = "<strong>Success: </strong>" + $mess;
+//        $("#calContainer").show();
+//        alertCallback();
+//    } else {
+//        // define the success message markup
+//        $('calResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
+//        $('#calIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
+//        spn.innerHTML = "<strong>Alert: </strong>" + $mess;
+//        $("#calContainer").show();
+//        alertCallback();
+//    }
+//}
 
 function updateTips(t, tips, o) {
     "use strict";
@@ -461,7 +461,7 @@ function dropEvent(event, dayDelta, minuteDelta, allDay, revertFunc, dropUserId,
                         revertFunc();
 
                     } else {
-                        flagCalAlertMessage('Appointment Moved', false);
+                        flagAlertMessage('Appointment Moved', false);
                     }
                 } else {
                     alert('Nothing was returned from the Calendar Server');
@@ -511,7 +511,7 @@ function resizeEvent(event, dayDelta, minuteDelta, revertFunc, myId, wsAddress) 
                         alert("Calendar Server warning: " + data.warning);
                         revertFunc();
                     } else {
-                        flagCalAlertMessage('Appointment Re-sized', false);
+                        flagAlertMessage('Appointment Re-sized', false);
                     }
                 } else {
                     alert('Nothing was returned from the Calendar Server');
@@ -1049,16 +1049,16 @@ function doCalDelete(eid, delall, justme, sendemail, myId, wsAddress) {
 //                            }
 //                            return false;
 //                        });
-                        flagCalAlertMessage(data.num + ' Appointments Deleted', false);
+                        flagAlertMessage(data.num + ' Appointments Deleted', false);
                     } else if(data.num === 1) {
                         //$('#calendar').fullCalendar('removeEvents', eid);
-                        flagCalAlertMessage(data.num + ' Appointment Deleted', false);
+                        flagAlertMessage(data.num + ' Appointment Deleted', false);
                     } else if (data.num === 0) {
-                        flagCalAlertMessage('Nothing Deleted', false);
+                        flagAlertMessage('Nothing Deleted', false);
                     }
                 } else if (data.justme && data.justme == 1) {
 
-                    flagCalAlertMessage('Partner removed from ' + data.num + ' appointment(s).', false);
+                    flagAlertMessage('Partner removed from ' + data.num + ' appointment(s).', false);
                 }
             } else {
                 alert('Nothing was returned from the Calendar Server');
@@ -1307,7 +1307,7 @@ function doDialogSave(userData, catData, edMkup, wsAddress) {
                         if (data.event) {
                             // single event saved.
                             $('#calendar').fullCalendar('renderEvent', data.event);
-                            flagCalAlertMessage('Appointment Saved', false);
+                            flagAlertMessage('Appointment Saved', false);
                         }
 
                         if (data.repeatmsg) {
@@ -1325,7 +1325,7 @@ function doDialogSave(userData, catData, edMkup, wsAddress) {
                             }
 
                             $('#calendar').fullCalendar('refetchEvents');
-                            flagCalAlertMessage(rmsg.enew + ' Appointments Saved', false);
+                            flagAlertMessage(rmsg.enew + ' Appointments Saved', false);
 
                         }
 
@@ -1520,7 +1520,7 @@ function doDialogSave(userData, catData, edMkup, wsAddress) {
                             saveEvent.shl = 0;
 
                             $('#calendar').fullCalendar('updateEvent', saveEvent);
-                            flagCalAlertMessage(data.success, false);
+                            flagAlertMessage(data.success, false);
                             $('#calendar').fullCalendar('refetchEvents');
 
                         }
@@ -1540,7 +1540,7 @@ function doDialogSave(userData, catData, edMkup, wsAddress) {
                             }
 
                             $('#calendar').fullCalendar('refetchEvents');
-                            flagCalAlertMessage(rmsg.enew + ' Appointments Saved', false);
+                            flagAlertMessage(rmsg.enew + ' Appointments Saved', false);
 
                         }
 

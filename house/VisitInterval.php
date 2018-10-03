@@ -451,7 +451,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     v.Pledged_Rate,
     v.Expected_Rate,
     v.Rate_Category,
-    v.idRoom_rate,
+    v.idRoom_Rate,
     v.Status,
     v.Rate_Glide_Credit,
     CASE
@@ -867,15 +867,15 @@ where
         }
 
         // Count rate changes
-        if ($curRateId != $r['idRoom_rate']
+        if ($curRateId != $r['idRoom_Rate']
                 || ($curRate == RoomRateCategorys::Fixed_Rate_Category && $curAmt != $r['Pledged_Rate'])
                 || ($curRate != RoomRateCategorys::Fixed_Rate_Category && $curAdj != $r['Expected_Rate'])) {
 
             $curRate = $r['Rate_Category'];
-            $curRateId = $r['idRoom_rate'];
+            $curRateId = $r['idRoom_Rate'];
             $curAdj = $r['Expected_Rate'];
             $curAmt = $r['Pledged_Rate'];
-            $visit['rateId'] = $r['idRoom_rate'];
+            $visit['rateId'] = $r['idRoom_Rate'];
             $visit['rtc']++;
         }
 
@@ -893,7 +893,7 @@ where
 
             // collect all pre-charges
             $priceModel->setCreditDays($r['Rate_Glide_Credit']);
-            $visit['preCh'] += ($priceModel->amountCalculator($r['Pre_Interval_Nights'], $r['idRoom_rate'], $r['Rate_Category'], $r['Pledged_Rate'], $r['PI_Guest_Nights']) * $adjRatio);
+            $visit['preCh'] += ($priceModel->amountCalculator($r['Pre_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $r['PI_Guest_Nights']) * $adjRatio);
 
         }
 
@@ -910,7 +910,7 @@ where
         if ($days > 0) {
 
             $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $r['Pre_Interval_Nights']);
-            $visit['chg'] += ($priceModel->amountCalculator($days, $r['idRoom_rate'], $r['Rate_Category'], $r['Pledged_Rate'], $gdays) * $adjRatio);
+            $visit['chg'] += ($priceModel->amountCalculator($days, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $gdays) * $adjRatio);
 
             $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $r['Pre_Interval_Nights']);
             $fullCharge = ($priceModel->amountCalculator($days, 0, RoomRateCategorys::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $gdays));
@@ -1427,6 +1427,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
+        <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
@@ -1440,6 +1441,8 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>-->
 
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 

@@ -19,44 +19,55 @@
             alertMessage: function (text, type) {},
 
             newTaLabel: 'New note text here',
+            
             dtCols: [
                 {
                 "targets": [ 0 ],
-                        "title": "Actions",
-                        'data': "Action",
-                        "sortable": false,
-                        "searchable": false,
+                        title: "Actions",
+                        data: "Action",
+                        sortable: false,
+                        searchable: false,
                         render: function (data, type, row) {
-                            return '<button class="note-edit ui-button ui-corner-all ui-widget" data-noteid="' + data + '">Edit</button>\n\
-                                <button class="note-cancel note-action ui-button " title="Cancel Edit" style="display: none; margin-bottom:2px;">Cancel</button>\n\
-                                <button class="note-done note-action ui-button ui-corner-all ui-widget" style="display: none; margin-bottom:2px;">Save</button>\n\
-                                <button class="note-delete note-action ui-button ui-corner-all ui-widget" data-noteid="' + data + '" style="display: none;">Delete</button>\n\
-                                <button class="note-undodelete ui-button ui-corner-all ui-widget" data-noteid="' + data + '" style="display: none;">Undo Delete</button>';
+                            return createActions(data, row);  
                         }
                 },
                 {
                 "targets": [ 1 ],
-                        "title": "Date",
-                        'data': 'Date',
+                        title: "Date",
+                        data: 'Date',
                         render: function (data, type) {
                             return dateRender(data, type, dateFormat);
                         }
                 },
                 {
                 "targets": [ 2 ],
-                        "title": "User",
-                        "searchable": true,
-                        "sortable": true,
-                        "data": "User"
+                        title: "User",
+                        searchable: true,
+                        sortable: true,
+                        data: "User"
                 },
                 {
                 "targets": [ 3 ],
-                        "title": "Note",
-                        "searchable": true,
-                        "sortable": false,
-                        'width':"60%",
-                        "className":'noteText',
-                        "data": "Note"
+                        title: "Note",
+                        searchable: true,
+                        sortable: false,
+                        width:"70%",
+                        className:'noteText',
+                        data: "Note",
+                        render: function (data, type, row) {
+                            
+                            if (row.Title !== '') {
+                                return row.Title + ' - ' + data;
+                            }
+                            return data;
+                        }
+                },
+                {
+                "targets": [ 4 ],
+                        sortable: false,
+                        searchable: false,
+                        visible: false,
+                        data: "Title"
                 }
             ]
         };
@@ -100,10 +111,10 @@
                             dataType: 'JSON',
                             type: 'post',
                             data: {
-                                'cmd': 'saveNote',
-                                'linkType': settings.linkType,
-                                'linkId': settings.linkId,
-                                'data': noteData
+                                cmd: 'saveNote',
+                                linkType: settings.linkType,
+                                linkId: settings.linkId,
+                                data: noteData
                             },
                             success: function( data ){
                                 if(data.idNote > 0){
@@ -124,16 +135,56 @@
         
         return $div;
     }
+
+    function createActions(noteId, row) {
+        
+        var $ul, $li;
+        
+        $ul = $('<ul />').addClass('ui-widget ui-helper-clearfix hhk-ui-icons');
+        
+        // Edit icon
+        $li = $('<li title="Edit Note" data-noteid="' + noteId + '" data-notetext="' + row.Note + '" />').addClass('hhk-note-button note-edit ui-corner-all ui-state-default');
+        $li.append($('<span class="ui-icon ui-icon-pencil" />'));
+        
+        $ul.append($li);
+        
+        // Save(Done) Edit Icon
+        $li = $('<li title="Save Note" />').addClass('hhk-note-button note-done note-action ui-corner-all ui-state-default').hide();
+        $li.append($('<span class="ui-icon ui-icon-check" />'));
+        
+        $ul.append($li);
+        
+        // Cancel Edit Icon
+        $li = $('<li title="Cancel" data-titletext="' + row.Title + '" />').addClass('hhk-note-button note-cancel note-action ui-corner-all ui-state-default').hide();
+        $li.append($('<span class="ui-icon ui-icon-cancel" />'));
+        
+        $ul.append($li);
+        
+        // Delete Edit Icon
+        $li = $('<li title="Delete Note" data-noteid="' + noteId + '" />').addClass('hhk-note-button note-delete ui-corner-all ui-state-default');
+        $li.append($('<span class="ui-icon ui-icon-trash" />'));
+        
+        $ul.append($li);
+        
+        // Undo Delete Edit Icon
+        $li = $('<li title="Undo Delete" data-noteid="' + noteId + '" />').addClass('hhk-note-button note-undodelete ui-corner-all ui-state-default').hide();
+        $li.append($('<span class="ui-icon ui-icon-notice" />'));
+        
+        $ul.append($li);
+        
+        return $('<div />').append($ul).html();
+
+        //return $ul.html();
+    }
     
     function actions($wrapper, settings, $table) {
         
         //Show Edit mode
         $wrapper.on('click', '.note-edit', function(e){
             e.preventDefault();
-            var noteText = $(this).closest('tr').find('.noteText').html();
-            var noteHeight = $(this).closest('tr').find('.noteText').height();
-            $(this).closest('tr').find('.noteText').html('<textarea style="width: 100%; height: ' + noteHeight +'px;" id="editNoteText">' + noteText + '</textarea>');
+            $(this).closest('tr').find('.noteText').html('<textarea style="width: 100%; height: ' + $(this).closest('tr').find('.noteText').height() +'px;" id="editNoteText">' + $(this).data('notetext') + '</textarea>');
             $(this).closest('td').find('.note-action').show();
+            $(this).closest('td').find('.note-delete').hide();
             $(this).hide();
         });
         //End Show Edit mode
@@ -150,9 +201,9 @@
                     dataType: 'JSON',
                     type: 'post',
                     data: {
-                            'cmd': 'updateNoteContent',
-                            'idNote': noteId,
-                            'data': noteText
+                            cmd: 'updateNoteContent',
+                            idNote: noteId,
+                            data: noteText
                     },
                     success: function( data ){
                             if(data.idNote > 0){
@@ -170,16 +221,18 @@
 
             $(this).closest('td').find('.note-action').hide();
             $(this).closest('td').find('.note-edit').show();
+            $(this).closest('td').find('.note-delete').show();
         });
         //End Edit Note
         
         //Cancel Note
         $wrapper.on('click', '.note-cancel', function(e){
             e.preventDefault();
-            var noteText = $(this).closest('tr').find('#editNoteText').val();
+            var noteText = $(this).data('titletext') + ' - ' + $(this).closest('tr').find('#editNoteText').val();
             $(this).closest('tr').find('.noteText').html(noteText);
             $(this).closest('td').find('.note-action').hide();
             $(this).closest('td').find('.note-edit').show();
+            $(this).closest('td').find('.note-delete').show();
 
         });
         //End Cancel Note
@@ -194,8 +247,8 @@
                     dataType: 'JSON',
                     type: 'post',
                     data: {
-                        'cmd': 'deleteNote',
-                        'idNote': idnote
+                        cmd: 'deleteNote',
+                        idNote: idnote
                     },
                     success: function( data ){
                         if(data.idNote > 0){
@@ -203,6 +256,8 @@
                             var noteText = row.find('#editNoteText').val();
                                     row.find('.noteText').html(noteText);
                                     row.find('.note-action').hide();
+                                    row.find('.note-delete').hide();
+                                    row.find('.note-edit').hide();
                                     row.find('.note-undodelete').show();
                             $("#noteText").val("");
                             $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
@@ -218,14 +273,15 @@
         //Undo Delete Note
         $wrapper.on('click', '.note-undodelete', function(e){
             var idnote = $(this).data("noteid");
+
             e.preventDefault();
             $.ajax({
                     url: settings.serviceURL,
                     dataType: 'JSON',
                     type: 'post',
                     data: {
-                        'cmd': 'undoDeleteNote',
-                        'idNote': idnote
+                        cmd: 'undoDeleteNote',
+                        idNote: idnote
                     },
                     success: function( data ){
                         if(data.idNote > 0){

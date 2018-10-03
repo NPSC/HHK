@@ -394,12 +394,15 @@ function getVolGroupList($rows, $volGroup, $page = "MemEdit.php") {
         <?php echo JQ_UI_CSS; ?>
         <?php echo PUBLIC_CSS; ?>
         <?php echo FAVICON; ?>
+        <?php echo NOTY_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?> >
             <?php echo $menuMarkup; ?>

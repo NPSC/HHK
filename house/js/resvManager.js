@@ -30,14 +30,17 @@ function resvManager(initData) {
     t.verifyInput = verifyInput;
     t.loadResv = loadResv;
     t.deleteReserve = deleteReserve;
-
     t.resvTitle = resvTitle;
     t.people = people;
     t.addrs = addrs;
     t.getIdPsg = getIdPsg;
     t.getIdResv = getIdResv;
     t.getIdName = getIdName;
+    t.setRooms = setRooms;
 
+    function setRooms($r) {
+        rooms = $r;
+    }
 
     function getIdResv() {
         return idResv;
@@ -534,9 +537,9 @@ function resvManager(initData) {
             // Remove any previous entries.
             for (var i in data.famSection.mem) {
                 
-                var item = people.findItem('id', data.famSection.mem[i].id);
+                var item = people.findItem('pref', data.famSection.mem[i].pref);
                 
-                if (item && item.id > 0) {
+                if (item) {
                     $famTbl.find('tr#' + item.id + 'n').remove();
                     $famTbl.find('tr#' + item.id + 'a').remove();
                     $famTbl.find('input#' + item.pref + 'idName').parents('tr').next('tr').remove();
@@ -587,10 +590,12 @@ function resvManager(initData) {
             $('.hhk-addrPanel').find('select.bfh-countries').each(function() {
                 var $countries = $(this);
                 $countries.bfhcountries($countries.data());
+                $(this).data("dirrty-initial-value", $(this).data('country'));
             });
             $('.hhk-addrPanel').find('select.bfh-states').each(function() {
                 var $states = $(this);
                 $states.bfhstates($states.data());
+                $(this).data("dirrty-initial-value", $(this).data('state'));
             });
 
             $('.hhk-phemtabs').tabs();
@@ -797,10 +802,12 @@ function resvManager(initData) {
             // set country and state selectors
             $countries = $('#' + prefix + 'adrcountry' + addrPurpose);
             $countries.bfhcountries($countries.data());
+            $(this).data("dirrty-initial-value", $(this).data('country'));
 
             $states = $('#' + prefix + 'adrstate' + addrPurpose);
             $states.bfhstates($states.data());
-
+            $(this).data("dirrty-initial-value", $(this).data('state'));
+            
             $('#' + prefix + 'phEmlTabs').tabs();
 
             $('input#' + prefix + 'adrzip1').each(function() {
@@ -1260,14 +1267,15 @@ function resvManager(initData) {
                     
                     // visit buttons
                     $('.hhk-getVDialog').button();
+                    
+                    // Update the room chooser.
+                    if ($('#gstDate').val() != '' && $('#gstCoDate').val() != '') {
+                        updateRescChooser.go($('#gstDate').val(), $('#gstCoDate').val());
+                    }
                 }
             });
         }
         
-        // Update the room chooser.
-        if ($('#gstDate').val() != '' && $('#gstCoDate').val() != '') {
-            updateRescChooser.go($('#gstDate').val(), $('#gstCoDate').val());
-        }
         
         // Checking in now button
         manageCheckInNowButton(dates["date1"].t, idResv);
@@ -1293,7 +1301,7 @@ function resvManager(initData) {
         
         t.omitSelf = true;
         t.numberGuests = 0;
-        t.idReservation = idResv;
+        t.idReservation = 0;
         t.go = go;
         
         function go(arrivalDate, departureDate) {
@@ -1310,6 +1318,8 @@ function resvManager(initData) {
             $('#hhk-roomChsrtitle').addClass('hhk-loading');
             $('#hhkroomMsg').text('').hide();
 
+            cbRS = {};
+            
             $('input.hhk-constraintsCB:checked').each(function () {
                 cbRS[$(this).data('cnid')] = 'ON';
             });
@@ -1361,7 +1371,7 @@ function resvManager(initData) {
                     }
 
                     if (data.rooms) {
-                        rooms = data.rooms;
+                        setRooms(data.rooms);
                     }
 
             });
@@ -1553,6 +1563,7 @@ function resvManager(initData) {
             reserve.rateList = data.resv.rdiv.ratelist;
             reserve.resources = data.resv.rdiv.rooms;
             reserve.visitFees = data.resv.rdiv.vfee;
+            reserve.idResv = idResv;
 
             setupRates(reserve);
 
@@ -1581,14 +1592,15 @@ function resvManager(initData) {
             setupPayments(data.resv.rdiv.rooms, $('#selResource'), $('#selRateCategory'));
         }
 
-        function setupRoom() {
+        function setupRoom(rid) {
 
+            updateRescChooser.idReservation = rid;
+            
             // Room selector update for constraints changes.
             $('input.hhk-constraintsCB').change( function () {
                 // Disable max room size.
                 updateRescChooser.go($('#gstDate').val(), $('#gstCoDate').val());
             });
-
         }
 
         function setupNotes(rid, $container) {
@@ -1674,8 +1686,6 @@ function resvManager(initData) {
             t.$totalGuests = $('#spnNumGuests');
             t.origRoomId = $('#selResource').val();
             t.checkPayments = true;
-
-            //$('#selResource').select2();
             
             // Reservation history button
             if ($('.hhk-viewResvActivity').length > 0) {
@@ -2224,6 +2234,12 @@ function resvManager(initData) {
                 $('#' + data.addPerson.mem.pref + 'txtFirstName').focus();
             }
         }
+        
+        // init dirrty
+        if (isCheckin === false) {
+            //$("#form1").dirrty();
+        }
+
     }
 
     function verifyInput() {

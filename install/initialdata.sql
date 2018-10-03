@@ -75,6 +75,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Distance_Range','200','151 to 200 miles','5','',40),
 ('Distance_Range','30000','More Than 200 miles','7','',50),
 
+('Document_Category', 'form', 'Form','','',0),
+
+('Document_Type', 'md', 'Markdown','','',0),
+('Document Type', 'text', 'Text','','',0),
+
 ('Dormant_Selector_Code','act','Active Only','','',0),
 ('Dormant_Selector_Code','both','Dormant & Active','','',0),
 ('Dormant_Selector_Code','dor','Dormant Only','','',0),
@@ -364,7 +369,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Verify_User_Address','y','Waiting for verification','','',0),
 
 ('Visit_Fee_Code', '1', 'Cleaning Fee','15','',0),
-('Visit_Fee_Code', '2', '','0','',0),
+('Visit_Fee_Code', '2', 'No Fee','0','',0),
 
 ('Visit_Status','a','Checked In','','',0),
 ('Visit_Status','co','Checked Out','','',0),
@@ -441,10 +446,11 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('CalDateIncrement', '1', 's', 'h', 'Number of weeks to increment Calendar view, "auto"=calViewWeeks'),
 ('CalExpandResources', 'true', 'b', 'h', 'Initially expand room categories on the calendar'),
 ('CalViewWeeks','3','i','h','Number of weeks showing in the calendar view'),
+('CalRescColWidth', '8%', 's', 'h', 'The width of the rooms column on the calendar page as percent of the overall width.'),
 ('CalResourceGroupBy', 'Type', 's', 'h', 'Calendar resource grouping parameter: Type, Category, Report_Category or Floor'),
 ('CardSwipe','false','b','f','Use POS terminal'),
-('CheckOutTime', '10', 's', 'h', 'Normal House checkout time of day in 24-hour format, hh'),
-('CheckInTime', '16', 's', 'h', 'Normal House check in time of day in 24-hour format, hh'),
+('CheckOutTime', '10', 'i', 'h', 'Normal House checkout time of day in 24-hour format, hh'),
+('CheckInTime', '16', 'i', 'h', 'Normal House check in time of day in 24-hour format, hh'),
 ('ConcatVisitNotes', 'true', 'b', 'h', 'Show notes combined from all previous visits when true.'),
 ('county', 'false', 'b', 'h', 'Include the County in addresses.'),
 ('CoTod', 'false', 'b', 'h', 'Edit the time of day of a checkout.'),
@@ -480,7 +486,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('PayAtCkin','true','b','h','Allow/Disallow payments at check-in time'),
 ('PayVFeeFirst', 'false', 'b', 'h','Default check the visit fees payment checkbox'),
 ('PaymentLogoUrl','images/hostpaylogo.jpg','s','f','Path to payment page logo image file'),
-('PaymentGateway', 'instamed', 's', 'h', 'Payment Gateway, either vantiv, instamed or nothing.'),
+('PaymentGateway', '', 's', 'h', 'Payment Gateway, either vantiv, instamed or nothing.'),
 ('PreviousNights','0','i','h','Previous nights to add to nights counter'),
 ('RateChangeAuth', 'false', 'b', 'h', 'true = Only authorized users can change the defailt room rate'),
 ('RateGlideExtend', '0', 'i', 'h','# of days for the Room Rate Glide to time out after visit check-out'),
@@ -743,10 +749,10 @@ INSERT INTO `page` (`idPage`,`File_Name`,`Login_Page_Id`,`Title`,`Product_Code`,
 (60,'guestaccess',0,'','',0,'a','','','c'),(62,'roleSearch.php',0,'','',0,'h','','','s'),(65,'timeReport.php',2,'Time Reports','',0,'a','32','u','p'),(66,'NameSch.php',2,'Members','',0,'a','0','d','p'),(67,'_KeyStats.php',2,'Key Stats','',0,'a','0','g','p'),(68,'VolAction.php',26,'Activities','',0,'v','0','b','p'),(69,'_index.php?log=lo',0,'Log Out','',0,'a','0','z','p'),
 (70,'_index.php?log=lo',0,'Log Out','',0,'v','0','z','p'),(71,'_index.php?log=lo',0,'Log Out','',0,'h','0','z','p'),(72,'CheckIn.php',31,'Check In','',0,'h','0','f','p'),(74,'register.php',31,'House Register','',0,'h','79','b','p'),(75,'ws_resv.php',0,'','',0,'h','','','s'),(76,'ws_ckin.php',0,'','',0,'h','','','s'),(79,'_register.php',31,'House','',0,'h','0','d','p'),
 (81,'ResourceBuilder.php',31,'Resource Builder','',0,'h','79','l','p'),(82,'ws_resc.php',0,'','',0,'h','','','s'),(83,'RoomUtilization.php',31,'Room Report','',0,'h','102','e','p'),(84,'memberManagement',0,'','',0,'h','','','c'),(88,'AuthGroupEdit.php',2,'Edit Authorization','',0,'a','34','j','p'),(89,'Configure.php',2,'Site Configuration','',0,'a','34','g','p'),
-(92,'GuestDemog.php',31,'Missing Demographics','',0,'h','102','f','p'),(93,'GuestEdit.php',31,'Guest Edit','',0,'h','0','j','p'),(94,'ShowRegForm.php',31,'Registration Form','',0,'h','','','p'),(95,'_Referral.php',31,'Reservation','',0,'h','0','e','p'),(96,'CheckedIn.php',31,'','',0,'h','','','p'),(99,'PaymentResult.php',31,'Payment Result','',0,'h','','','p'),
+(92,'GuestDemog.php',31,'Missing Demographics','',0,'h','102','f','p'),(93,'GuestEdit.php',31,'Guest Edit','',0,'h','0','j','p'),(94,'ShowRegForm.php',31,'Registration Form','',0,'h','','','p'),(95,'Reserve.php',31,'Reservation','',0,'h','0','e','p'),(96,'CheckedIn.php',31,'','',0,'h','','','p'),(99,'PaymentResult.php',31,'Payment Result','',0,'h','','','p'),
 (100,'ShowStatement.php',31,'Guest Statement','',0,'h','','','p'),(101,'RoomStatus.php',31,'Housekeeping','',0,'h','79','p','p'),(102,'GuestReport.php',31,'Reports','',0,'h','0','h','p'),(104,'ReservReport.php',31,'Reservations Report','',0,'h','102','b','p'),(105,'PaymentTx.php',2,'Credit Transactions Report','',0,'a','32','v','p'),(106,'Duplicates.php',2,'Duplicates','',0,'a','32','o','p'),(107,'PSGReport.php',31,'People Reports','',0,'h','102','k','p'),(109,'PaymentReport.php',31,'Payment Report','',0,'h','102','m','p'),
 (110,'VisitInterval.php',31,'Visit Interval Report','',0,'h','102','c','p'),(111,'GuestView.php',31,'Guests & Vehicles','',0,'h','79','v','p'),(113,'DRaHospReport.php',31,'Doctors, Hospitals','',0,'h','102','l','p'),(114,'ShowInvoice.php',31,'Show Invoice','',0,'h','','','p'),(115,'InvoiceReport.php',31,'Invoice Report','',0,'h','102','n','p'),(116,'ShowHsKpg.php',31,'Housekeeping','',0,'h','','','p'),(117,'PrtRegForm.php',31,'Print Registration Forms','',0,'h','','','p'),(118,'occDemo.php',31,'Guest Demographics','',0,'h','102','g','p'),(119,'ItemReport.php',31,'Item Report','',0,'h','102','s','p'),
-(120,'AccessLog.php',2,'User Access Log','',0,'a','35','d','p'),(121,'GuestTransfer.php',31,'Guest Transfer','',0,'h','79','x','p'),(122,'NewGuest.php',31,'New Guests','',0,'h','102','i','p'),(123,'PrtWaitList.php',31,'Wait Listing','',0,'h','','','p'),(124,'Reserve.php',31,'Family Reservation','',0,'h','95','g','p'),(125,'Referral.php',31,'Reservation','',0,'h','95','j','p'),(126,'DailyReport.php',31,'Daily Report','',0,'h','102','p','p'),(127,'Help.php',31,'Help','',1,'h','71','f','p'),(128,'ws_calendar.php',31,'','',0,'h','','','s'),(129,'ws_update.php',2,'','',0,'a','','','s'),(130,'DiagnosisBuilder.php',31,'Diagnosis Builder','',1,'h','79','n','p'),(131,'CheckingIn.php',31,'Checking In','',0,'h','','','p');
+(120,'AccessLog.php',2,'User Access Log','',0,'a','35','d','p'),(121,'GuestTransfer.php',31,'Guest Transfer','',0,'h','79','x','p'),(122,'NewGuest.php',31,'New Guests','',0,'h','102','i','p'),(123,'PrtWaitList.php',31,'Wait Listing','',0,'h','','','p'),(126,'DailyReport.php',31,'Daily Report','',0,'h','102','p','p'),(127,'Help.php',31,'Help','',1,'h','71','f','p'),(128,'ws_calendar.php',31,'','',0,'h','','','s'),(129,'ws_update.php',2,'','',0,'a','','','s'),(130,'DiagnosisBuilder.php',31,'Diagnosis Builder','',1,'h','79','n','p'),(131,'CheckingIn.php',31,'Checking In','',0,'h','','','p');
 UNLOCK TABLES;
 -- ;
 
@@ -762,7 +768,7 @@ INSERT INTO `page_securitygroup` (`idPage`,`Group_Code`) VALUES
 (76,'g'),(76,'ga'),(79,'g'),(79,'ga'),(81,'ga'),(82,'g'),(82,'ga'),(83,'ga'),(84,'g'),(84,'ga'),(88,'db'),(89,'db'),(92,'ga'),(93,'g'),(93,'ga'),(94,'g'),(94,'ga'),
 (95,'g'),(95,'ga'),(96,'g'),(96,'ga'),(99,'g'),(99,'ga'),(100,'g'),(100,'ga'),(101,'g'),(101,'ga'),(102,'ga'),(104,'ga'),(105,'db'),(106,'mm'),(107,'ga'),(109,'ga'),
 (110,'ga'),(111,'g'),(111,'ga'),(113,'ga'),(114,'g'),(114,'ga'),(115,'ga'),(116,'g'),(116,'ga'),(117,'g'),(117,'ga'),(118,'ga'),(119,'ga'),(120,'mm'),(121,'ga'),
-(122,'ga'),(123,'g'),(123,'ga'),(124,'g'),(124,'ga'),(125,'g'),(125,'ga'),(126,'ga'),(127,'g'),(127,'ga'),(128,'g'),(128,'ga'),(129,'db'),(130,'ga'),(131,'g'),(131,'ga');
+(122,'ga'),(123,'g'),(123,'ga'),(126,'ga'),(127,'g'),(127,'ga'),(128,'g'),(128,'ga'),(129,'db'),(130,'ga'),(131,'g'),(131,'ga');
 UNLOCK TABLES;
 -- ;
 

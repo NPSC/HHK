@@ -15,7 +15,7 @@ class Reservation {
     protected $reservRs;
     protected $family;
 
-    function __construct(ReserveData $reserveData, ReservationRS $reservRs, Family $family) {
+    function __construct(ReserveData $reserveData, $reservRs, $family) {
 
         $this->reserveData = $reserveData;
         $this->reservRs = $reservRs;
@@ -440,7 +440,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         } else {
 
             // Reservation Data
-            $dataArray['rstat'] = ReservationSvcs::createStatusChooser(
+            $dataArray['rstat'] = $this->createStatusChooser(
                     $resv,
                     $resv->getChooserStatuses($uS->guestLookups['ReservStatus']),
                     $uS->nameLookups[GL_TableNames::PayType],
@@ -631,6 +631,61 @@ where rg.idReservation =" . $r['idReservation']);
         }
 
         return $mrkup;
+    }
+
+    public function createStatusChooser(Reservation_1 $resv, array $limResvStatuses, array $payTypes, \Config_Lite $labels, $showPayWith, $moaBal) {
+
+        $uS = Session::getInstance();
+        $tbl2 = new HTMLTable();
+        // Pay option, verbal confirmation
+
+        $attr = array('name'=>'cbVerbalConf', 'type'=>'checkbox');
+
+        if ($resv->getVerbalConfirm() == 'v') {
+            $attr['checked'] = 'checked';
+        }
+
+        $moaHeader = '';
+        $moaData = '';
+        if ($moaBal > 0) {
+            $moaHeader = HTMLTable::makeTh('MOA Balance', array('title'=>'MOA = Money on Account'));
+            $moaData = HTMLTable::makeTd('$' . number_format($moaBal, 2), array('style'=>'text-align:center'));
+        }
+
+        $tbl2->addBodyTr(
+                ($showPayWith ? HTMLTable::makeTh('Pay With') . $moaHeader : '')
+                .HTMLTable::makeTh('Verbal Affirmation')
+                .($resv->getStatus() == ReservationStatus::UnCommitted ? HTMLTable::makeTh('Status', array('class'=>'ui-state-highlight')) : HTMLTable::makeTh('Status'))
+                );
+
+        $tbl2->addBodyTr(
+                ($showPayWith ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $resv->getExpectedPayType()), array('name'=>'selPayType')))
+                . $moaData : '')
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', $attr), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd(
+                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($limResvStatuses, $resv->getStatus(), FALSE), array('name'=>'selResvStatus', 'style'=>'float:left;margin-right:.4em;'))
+                        .HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-comment hhk-viewResvActivity', 'data-rid'=>$resv->getIdReservation(), 'title'=>'View Activity Log', 'style'=>'cursor:pointer;float:right;')))
+                );
+
+
+        if ($uS->UseWLnotes === FALSE) {
+            $tbl2->addBodyTr(HTMLTable::makeTd('Check-in Note:',array('class'=>'tdlabel')).HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea',$resv->getCheckinNotes(), array('name'=>'taCkinNotes', 'rows'=>'1', 'cols'=>'40')),array('colspan'=>'3')));
+        }
+
+        // Confirmation button
+        $mk2 = '';
+        if ($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::Waitlist) {
+            $mk2 .= HTMLInput::generateMarkup('Create Confirmation...', array('type'=>'button', 'id'=>'btnShowCnfrm', 'style'=>'margin:.3em;float:right;', 'data-rid'=>$resv->getIdReservation()));
+        }
+
+        // fieldset wrapper
+        return HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('fieldset',
+                    HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'statusLabel', 'Reservation Status'), array('style'=>'font-weight:bold;'))
+                    . $tbl2->generateMarkup() . $mk2,
+                    array('class'=>'hhk-panel'))
+            , array('style'=>'clear:left; float:left;'));
+
     }
 
     protected static function findConflictingStays(\PDO $dbh, array &$psgMembers, \DateTime $arrivalDT, $idPsg) {
@@ -839,7 +894,6 @@ where rg.idReservation =" . $r['idReservation']);
         }
 
         $roomChooser = new RoomChooser($dbh, $resv, 1, new \DateTime($resv->getExpectedArrival()), new \DateTime($resv->getExpectedDeparture()));
-
         $resources = $roomChooser->findResources($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
 
         // Does the resource fit the requirements?
@@ -862,6 +916,10 @@ where rg.idReservation =" . $r['idReservation']);
 
         $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
 
+    }
+
+    public function changeRoom(\PDO $dbh, $idResv, $idResc) {
+        return array('error'=>"Changing this reservation's room is not allowed.");
     }
 
     protected function copyOldReservation(\PDO $dbh) {
@@ -1004,7 +1062,13 @@ where rg.idReservation =" . $r['idReservation']);
 
 class ActiveReservation extends Reservation {
 
+    protected $gotoCheckingIn = '';
+
     public function createMarkup(\PDO $dbh) {
+
+        if ($this->gotoCheckingIn === 'yes' && $this->reserveData->getIdResv() > 0) {
+            return array('gotopage'=>'CheckingIn.php?rid=' . $this->reserveData->getIdResv());
+        }
 
         if ($this->reservRs->Status->getStoredVal() == '') {
             $this->reservRs->Status->setStoredVal(ReservationStatus::Waitlist);
@@ -1036,6 +1100,10 @@ class ActiveReservation extends Reservation {
             return $this;
         }
 
+        // Return a goto checkingin page?
+        if (isset($post['resvCkinNow'])) {
+            $this->gotoCheckingIn = filter_var($post['resvCkinNow'], FILTER_SANITIZE_STRING);
+        }
 
         // Registration
         $reg = new Registration($dbh, $this->reserveData->getIdPsg());
@@ -1143,11 +1211,16 @@ class ActiveReservation extends Reservation {
         $resv->saveConstraints($dbh, $post);
 
         // Notes
-        if (isset($post['taNewNote']) && $post['taNewNote'] != '') {
-            $resv->saveNote($dbh, filter_var($post['taNewNote'], FILTER_SANITIZE_STRING), $uS->username);
+        if (isset($post['taNewNote'])) {
+
+            $noteText = filter_var($post['taNewNote'], FILTER_SANITIZE_STRING);
+
+            if ($noteText != '') {
+                LinkNote::save($dbh, $noteText, $resv->getIdReservation(), Note::ResvLink, $uS->username, $uS->ConcatVisitNotes);
+            }
         }
 
-        // Room Chooser
+        // Room Choice
         $this->setRoomChoice($dbh, $resv, $idRescPosted);
 
         // Payments
@@ -1155,6 +1228,41 @@ class ActiveReservation extends Reservation {
 
         return $this;
     }
+
+    public function changeRoom(\PDO $dbh, $idResv, $idResc) {
+
+        $uS = Session::getInstance();
+        $dataArray = array();
+
+        if ($idResv < 1) {
+            return array('error'=>'Reservation Id is not set.');
+        }
+
+        $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
+
+        if ($resv->isActive()) {
+
+            $this->setRoomChoice($dbh, $resv, $idResc);
+
+            if ($this->reserveData->getErrors() != '') {
+                $dataArray[ReserveData::WARNING] = $this->reserveData->getErrors();
+            } else {
+                $dataArray['msg'] = 'Reservation Changed Rooms.';
+            }
+
+            // New resservation lists
+            $dataArray['reservs'] = 'y';
+            $dataArray['waitlist'] = 'y';
+
+            if ($uS->ShowUncfrmdStatusTab) {
+                $dataArray['unreserv'] = 'y';
+            }
+
+        }
+
+        return $dataArray;
+    }
+
 }
 
 
@@ -1896,4 +2004,3 @@ class StaticReservation extends ActiveReservation {
         return array();
     }
 }
-

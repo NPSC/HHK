@@ -35,17 +35,17 @@ function alertCallback(alertId) {
     }, 3000);
 }
 
-function flagAlertMessage(alertPkg, msg, context) {
-    "use strict";
-
-    $('#' + alertPkg.Id_Style).removeClass().addClass(alertPkg.States[context]);
-    $('#' + alertPkg.Id_Icon).removeClass().addClass(alertPkg.Icons[context]);
-    $('#' + alertPkg.Id_Message).val(msg);
-    $('#' + alertPkg.Id_Control).show('slide', {}, 500,
-        setTimeout(function () {
-            $("#" + alertPkg.Id_Control).removeAttr("style").fadeOut(500);
-        }, 3000)
-    );
+//function flagAlertMessage(alertPkg, msg, context) {
+//    "use strict";
+//
+//    $('#' + alertPkg.Id_Style).removeClass().addClass(alertPkg.States[context]);
+//    $('#' + alertPkg.Id_Icon).removeClass().addClass(alertPkg.Icons[context]);
+//    $('#' + alertPkg.Id_Message).val(msg);
+//    $('#' + alertPkg.Id_Control).show('slide', {}, 500,
+//        setTimeout(function () {
+//            $("#" + alertPkg.Id_Control).removeAttr("style").fadeOut(500);
+//        }, 3000)
+//    );
 
 //    if (!wasError) {
 //        // define the error message markup
@@ -60,7 +60,7 @@ function flagAlertMessage(alertPkg, msg, context) {
 //        spn.innerHTML = "<strong>Alert: </strong>" + $mess;
 //        $("#calContainer").show("pulsate", {}, 200, alertCallback);
 //    }
-}
+//}
 
 function handleResponse(data, statusTxt, xhrObject) {
     "use strict";
