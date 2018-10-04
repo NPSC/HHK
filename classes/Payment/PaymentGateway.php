@@ -671,11 +671,13 @@ class InstamedGateway extends PaymentGateway {
 
     public function hostedPaymentComplete(\PDO $dbh, $idToken, $paymentNotes) {
 
+        $uS = Session::getInstance();
+
         //get transaction details
         $url = "https://online.instamed.com/payment/NVP.aspx?";
         $params = "merchantID=" . $this->getCredentials()->merchantId
                 . "&storeID=" . $this->getCredentials()->storeId
-                . "&terminalID=001"
+                . "&terminalID=0001"
                 . "&transactionAction=ViewReceipt"
                 . "&requestToken=false"
                 . "&allowPartialPayment=false"
@@ -685,10 +687,12 @@ class InstamedGateway extends PaymentGateway {
 
         curl_setopt($ch, CURLOPT_URL, $url . $params);
         curl_setopt($ch, CURLOPT_USERPWD, "NP.SOFTWARE.TEST:vno9cFqM");
-                curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-        $responseString = curl_exec($ch);
+        if ( ! $responseString = curl_exec($ch) ) {
+            $err = curl_error($ch);
+        }
         curl_close($ch);
 
         $transaction = array();
