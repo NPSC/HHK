@@ -919,7 +919,83 @@ if (isset($_POST['btnItemSave'])) {
 //
 //    exit(json_encode(array('warning'=>'Unspecified')));
 //}
-//
+
+if (isset($_POST['formEdit'])) {
+
+   $tabIndex = 6;
+
+   $cmd = filter_input(INPUT_POST, 'formEdit', FILTER_SANITIZE_STRING);
+
+   switch ($cmd) {
+
+       case 'getform':
+
+           $fn = filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_STRING);
+
+           if (!$fn || $fn == '') {
+               exit(json_encode(array('warning'=>'The Form name is blank.')));
+           }
+
+           $files = readGenLookupsPDO($dbh, 'Editable_Forms');
+
+           if (isset($files[$fn])) {
+
+               if (file_exists($fn)) {
+                   exit(json_encode(array('title'=>$files[$fn][1], 'tx'=>file_get_contents($fn), 'jsn'=>file_get_contents($files[$fn][2]))));
+               } else {
+                   exit(json_encode(array('warning'=>'This Form is missing from the server library.')));
+               }
+
+           } else {
+               exit(json_encode(array('warning'=>'The Form name is not on the acceptable list.')));
+           }
+
+           break;
+
+       case 'saveform':
+
+           $formEditorText = urldecode(filter_input(INPUT_POST, 'mu', FILTER_SANITIZE_STRING));
+
+           $feFileSelection = filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_STRING);
+
+           $files = readGenLookupsPDO($dbh, 'Editable_Forms');
+
+           if ($rteFileSelection == '') {
+
+               $rteMsg = 'Nothing saved. Select a Form to edit.';
+
+           } else if (isset($files[$rteFileSelection]) === FALSE) {
+
+               $rteMsg = 'Nothing saved. Form name not accepted. ';
+
+           } else if (file_exists($rteFileSelection) === FALSE) {
+
+               $rteMsg = 'Nothing saved. Form does not exist. ';
+
+           } else if ($formEditorText == '') {
+
+               $rteMsg = 'Nothing saved. Form text is blank.  ';
+
+           } else {
+
+               $rtn = file_put_contents($rteFileSelection, $formEditorText);
+
+               if ($rtn > 0) {
+                   $rteMsg = "Success - $rtn bytes saved.";
+
+               } else {
+                   $rteMsg = "Form Not Saved.";
+               }
+           }
+
+           exit(json_encode(array('response'=>$rteMsg)));
+
+           break;
+   }
+
+   exit(json_encode(array('warning'=>'Unspecified')));
+}
+
 
 //
 // Generate tab content
@@ -1235,9 +1311,9 @@ $constraintTable = $constraints->createConstraintTable($dbh);
 
 
 // Form editor
-//$feSelectForm = HTMLSelector::generateMarkup(
-//        HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Editable_Forms')), $feeFileSelection, TRUE)
-//        , array('id'=>'frmEdSelect', 'name'=>'frmEdSelect'));
+$feSelectForm = HTMLSelector::generateMarkup(
+       HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Editable_Forms')), "", TRUE)
+       , array('id'=>'frmEdSelect', 'name'=>'frmEdSelect'));
 
 
 
@@ -1348,7 +1424,8 @@ $resultMessage = $alertMsg->createMarkup();
         <?php echo JQ_UI_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-        <?php echo RTE_CSS; ?>
+        <?php echo FONTAWESOME_CSS; ?>s
+        <?php echo MDEDITOR_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
         <style>
@@ -1367,7 +1444,7 @@ $resultMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-<!--        <script type="text/javascript" src="<?php echo RTE_JS; ?>"></script>-->
+        <script type="text/javascript" src="<?php echo MDEDITOR_JS; ?>"></script>
         <script type="text/javascript">
     function isNumber(n) {
         "use strict";
@@ -1750,6 +1827,58 @@ $resultMessage = $alertMsg->createMarkup();
             $(this).val(parseInt(this.value));
         });
         $('#mainTabs').show();
+        
+        // Form edit form select drives the whole process.
+        $('#frmEdSelect').change(function () {
+            $('#rteMsg').text('');
+			$(".editorContainer").find("*").not("textarea").remove();
+			$('#spnEditorTitle').text("");
+			
+            if ($(this).val() === '') {
+                $('#spnRteLoading').hide();
+                
+                $('#simpleMDEContainer').val("");
+                return;
+            }
+
+            $('#spnRteLoading').show();
+
+            $.post('ResourceBuilder.php', {formEdit:'getform', fn: $(this).val()}, function (rawData){
+
+                $('#spnRteLoading').hide();
+
+                try {
+                    var data = $.parseJSON(rawData);
+                } catch (error) {
+                    alert('Server Error');
+                    return;
+                }
+
+                if (data.gotopage) {
+                    window.open(data.gotopage, '_self');
+				}
+                if (data.warning && data.warning !== '') {
+                    $('#rteMsg').text(data.warning);
+                }else{
+	                var mdeContainer = $('#simpleMDEContainer');
+					var simplemde = null;
+					simplemde = new SimpleMDE({ 
+							element: mdeContainer[0],
+							initialValue: data.tx,
+							autoDownloadFontAwesome: false,
+							spellChecker: false,
+							hideIcons: [
+								"fullscreen", "side-by-side"
+							]
+						});
+	
+	                if (data.title) {
+	                    $('#spnEditorTitle').text('Editing ' + data.title);
+	                }
+                }
+            });
+        });
+
     });
         </script>
     </head>
@@ -1768,7 +1897,7 @@ $resultMessage = $alertMsg->createMarkup();
                     <li><a href="#hospTable"><?php echo $hospitalTabTitle; ?></a></li>
                     <li><a href="#demoTable">Demographics</a></li>
                     <li><a href="#lkTable">Lookups</a></li>
-<!--                    <li><a href="#agreeEdit">Forms Editor</a></li>-->
+                    <li><a href="#agreeEdit">Forms Editor</a></li>
                     <li><a href="#itemTable">Items</a></li>
                     <li><a href="#attrTable">Attributes</a></li>
                     <li><a href="#constr">Constraints</a></li>
@@ -1857,14 +1986,14 @@ $resultMessage = $alertMsg->createMarkup();
                         <span style="margin:10px;float:right;"><input type="submit" id='btnhSave' name="btnhSave" value="Save"/></span>
                     </form>
                 </div>
-<!--                <div id="agreeEdit" class="ui-tabs-hide" >
-                    <p>Select the form to edit from the following list: <?php echo $rteSelectForm; ?><span id="spnRteLoading" style="font-style: italic; display:none;">Loading...</span></p>
+                <div id="agreeEdit" class="ui-tabs-hide" >
+                    <p>Select the form to edit from the following list: <?php echo $feSelectForm; ?></p><p id="spnRteLoading" style="font-style: italic; display:none;">Loading...</p>
                     <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
-                    <fieldset style="clear:left; float:left; margin-top:10px;">
-                        <legend><span id="spnEditorTitle" style="font-size: 1em; font-weight: bold;">Select a form</span></legend>
-                        <div id="rteContainer"></div>
-                    </fieldset>
-                </div>-->
+                    <h3 id="spnEditorTitle"></h3>
+                    <div class="editorContainer">
+                    	<textarea id="simpleMDEContainer" style="display:none;"></textarea>
+                    </div>
+                </div>
                 <div id="itemTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <form method="POST" action="ResourceBuilder.php" name="formitem">
 <?php echo $itemTable; ?>
