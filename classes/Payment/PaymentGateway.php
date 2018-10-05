@@ -32,6 +32,8 @@ abstract class PaymentGateway {
      */
     protected abstract function setCredentials($credentials);
 
+    public abstract function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl);
+
     public abstract function createEditMarkup(\PDO $dbh);
     public abstract function SaveEditMarkup(\PDO $dbh, $post);
 
@@ -82,7 +84,6 @@ abstract class PaymentGateway {
         return $msg;
     }
 
-
     public static function factory(\PDO $dbh, $gwType, $gwName) {
 
 
@@ -107,6 +108,7 @@ abstract class PaymentGateway {
     public function getGwName() {
         return $this->gwName;
     }
+
     public function getResponseErrors() {
         return $this->responseErrors;
     }
@@ -122,32 +124,65 @@ abstract class PaymentGateway {
 
 }
 
-
-class LocalGateway extends PaymentGateway {
-
-    public function initHostedPayment(\PDO $dbh, Invoice $invoice, Guest $guest, $addr, $postbackUrl) {
-
-    }
-    protected function loadGateway(\PDO $dbh) {
-        return '';
-    }
-
-    protected function setCredentials($gwRs) {
-        return '';
-    }
-
-    public function createEditMarkup(\PDO $dbh, $resultMessage = '') {
-        return '';
-    }
-
-    public function SaveEditMarkup(\PDO $dbh, $post) {
-
-    }
-
-}
-
-
 class VantivGateway extends PaymentGateway {
+
+    public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
+
+        $uS = Session::getInstance();
+        $payResult = NULL;
+
+        $guest = new Guest($dbh, '', $invoice->getSoldToId());
+        $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
+
+        $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getIdToken());
+
+        // Do we have a token?
+        if (CreditToken::hasToken($tokenRS)) {
+
+            $cpay = new CreditSaleTokenRequest();
+
+            $cpay->setPurchaseAmount($invoice->getAmountToPay())
+                ->setTaxAmount(0)
+                ->setCustomerCode($invoice->getSoldToId())
+                ->setAddress($addr["Address_1"])
+                ->setZip($addr["Postal_Code"])
+                ->setToken($tokenRS->Token->getStoredVal())
+                ->setPartialAuth(FALSE)
+                ->setCardHolderName($tokenRS->CardHolderName->getStoredVal())
+                ->setFrequency(MpFrequencyValues::OneTime)
+                ->setInvoice($invoice->getInvoiceNumber())
+                ->setTokenId($tokenRS->idGuest_token->getStoredVal())
+                ->setMemo(MpVersion::PosVersion);
+
+            // Run the token transaction
+            $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $uS->ccgw, $cpay, $pmp->getPayNotes());
+
+            // Analyze the result
+            $payResult = self::AnalyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken());
+
+
+        } else {
+
+            // Initialiaze hosted payment
+            $fwrder = $this->initHostedPayment($dbh, $invoice, $guest, $addr, $postbackUrl);
+
+            $payIds = array();
+            if (isset($uS->paymentIds)) {
+                $payIds = $uS->paymentIds;
+            }
+            $payIds[$fwrder['PaymentId']] = $invoice->getIdInvoice();
+            $uS->paymentIds = $payIds;
+            $uS->paymentNotes = $pmp->getPayNotes();
+
+            $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+            $payResult->setForwardHostedPayment($fwrder);
+            $payResult->setDisplayMessage('Forward to Payment Page. ');
+
+        }
+
+        return $payResult;
+
+    }
 
     public function initHostedPayment(\PDO $dbh, Invoice $invoice, Guest $guest, $addr, $postbackUrl) {
 
@@ -190,7 +225,7 @@ class VantivGateway extends PaymentGateway {
                 ->setInvoice($invoice->getInvoiceNumber())
                 ->setMemo(MpVersion::PosVersion)
                 ->setTaxAmount(0)
-                ->setTotalAmount($invoice->getBalance())
+                ->setTotalAmount($invoice->getAmountToPay())
                 ->setCompleteURL($houseUrl . $postbackUrl)
                 ->setReturnURL($houseUrl . $postbackUrl)
                 ->setTranType(MpTranType::Sale)
@@ -384,6 +419,9 @@ class InstamedGateway extends PaymentGateway {
     const POSTBACK_CANCEL = 'x';
     const POSTBACK_COMPLETE = 'c';
 
+    const APPROVED = '000';
+
+
     protected $ssoUrl;
     protected $soapUrl;
     protected $saleUrl;
@@ -391,9 +429,32 @@ class InstamedGateway extends PaymentGateway {
     protected $returnUrl;
     protected $voidUrl;
 
-    public function initHostedPayment(\PDO $dbh, Invoice $invoice, $postbackUrl) {
+    public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
+
+        // Initialiaze hosted payment
+        $fwrder = $this->initHostedPayment($dbh, $invoice, $postbackUrl);
+
+        $payIds = array();
+        if (isset($uS->paymentIds)) {
+            $payIds = $uS->paymentIds;
+        }
+        $payIds[$fwrder['PaymentId']] = $invoice->getIdInvoice();
+        $uS->paymentIds = $payIds;
+
+        $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+        $payResult->setForwardHostedPayment($fwrder);
+        $payResult->setDisplayMessage('Forward to Payment Page. ');
+
+        return $payResult;
+    }
+
+
+    protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $postbackUrl) {
+
+        $uS = Session::getInstance();
+        $dataArray = array();
 
         // Do a hosted payment.
         $secure = new SecurityComponent();
@@ -415,7 +476,7 @@ class InstamedGateway extends PaymentGateway {
             'patientID' => $patInfo['idName'],
             'patientFirstName' => $patInfo['Name_First'],
             'patientLastName' => $patInfo['Name_Last'],
-            'amount' => $invoice->getBalance(),
+            'amount' => $invoice->getAmountToPay(),
 
             InstamedGateway::GROUP_ID => $invoice->getIdGroup(),
             InstamedGateway::INVOICE_NUMBER => $invoice->getInvoiceNumber(),
@@ -443,8 +504,8 @@ class InstamedGateway extends PaymentGateway {
         if ($headerResponse->getToken() != '') {
 
             // Save payment ID
-            $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode)"
-                . " values (" . $invoice->getSoldToId() . " , " . $invoice->getIdGroup() . ", '" . InstamedGateway::HCO_TRANS . "', '" . $invoice->getInvoiceNumber() . "', '" . $headerResponse->getToken() . "', now(), 'OneTime', " . $headerResponse->getResponseCode() . ")";
+            $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode, Amount)"
+                . " values (" . $invoice->getSoldToId() . " , " . $invoice->getIdGroup() . ", '" . InstamedGateway::HCO_TRANS . "', '" . $invoice->getInvoiceNumber() . "', '" . $headerResponse->getToken() . "', now(), 'OneTime', '" . $headerResponse->getResponseCode() . "', " . $invoice->getAmountToPay() . ")";
 
             $dbh->exec($ciq);
 
@@ -669,9 +730,42 @@ class InstamedGateway extends PaymentGateway {
     }
 
 
-    public function hostedPaymentComplete(\PDO $dbh, $idToken, $paymentNotes) {
+    public function completeHostedPayment(\PDO $dbh, $post, $ssoToken, $paymentNotes) {
 
         $uS = Session::getInstance();
+
+        $trans = filter_var($post[InstamedGateway::INSTAMED_TRANS_VAR], FILTER_SANITIZE_STRING);
+        $result = filter_var($post[InstamedGateway::INSTAMED_RESULT_VAR], FILTER_SANITIZE_STRING);
+
+        try {
+            Gateway::saveGwTx($dbh, $result, '', json_encode($post), $trans.'_PostBack');
+        } catch (Exception $ex) {
+            // Do nothing
+        }
+
+        if ($result == InstamedGateway::POSTBACK_CANCEL) {
+
+            $payResult = new PaymentResult(0, 0, 0);
+            $payResult->setDisplayMessage('User Canceled.');
+
+            return $payResult;
+
+        } else if ($result != InstamedGateway::POSTBACK_COMPLETE) {
+
+            $payResult = new PaymentResult(0, 0, 0);
+            $payResult->setDisplayMessage('Undefined Result: ' . $result);
+
+            return $payResult;
+
+        }
+
+        if ($ssoToken === NULL || $ssoToken == '') {
+
+            $payResult = new PaymentResult(0, 0, 0);
+            $payResult->setDisplayMessage('Missing Token. ');
+
+            return $payResult;
+        }
 
         //get transaction details
         $url = "https://online.instamed.com/payment/NVP.aspx?";
@@ -681,7 +775,7 @@ class InstamedGateway extends PaymentGateway {
                 . "&transactionAction=ViewReceipt"
                 . "&requestToken=false"
                 . "&allowPartialPayment=false"
-                . "&singleSignOnToken=" . $idToken;
+                . "&singleSignOnToken=" . $ssoToken;
 
         $ch = curl_init();
 
@@ -690,53 +784,64 @@ class InstamedGateway extends PaymentGateway {
         curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-        if ( ! $responseString = curl_exec($ch) ) {
-            $err = curl_error($ch);
-        }
+        $responseString = curl_exec($ch);
+        $msg = curl_error($ch);
         curl_close($ch);
 
-        $transaction = array();
+        if ( ! $responseString ) {
+            throw new Hk_Exception_Payment('Network (cURL) Error: ' . $msg);
+        }
 
+        $transaction = array();
         parse_str($responseString, $transaction);
 
-        //IsEMVVerifiedByPIN=false&isEMVTransaction=false&EMVCardEntryMode=Keyed&isSignatureRequired=false&cardBrand=VISA&cardExpirationMonth=12&cardExpirationYear=2021&cardBINNumber=411111&cardHolderName= &paymentCardType=Credit&lastFourDigits=1111&authorizationNumber=A2CDB9&responseCode=000&responseMessage=APPROVAL&transactionStatus=C&primaryTransactionID=c5a1a5a099f748c8bf16b890c8b371ec&authorizationText=I AGREE TO PAY THE ABOVE AMOUNT ACCORDING TO MY CARD HOLDER AGREEMENT.&transactionID=c5a1a5a099f748c8bf16b890c8b371ec&paymentPlanID=ccc366b1641444fe9e59620340d5e06c&transactionDate=2018-09-26T19:05:40.1666074Z
+        $cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $ssoToken);
 
-
-        $response = new VerifyCurlResponse($transaction);
-        // Check paymentId
-        $cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $idToken);
-
-        $vr = new CheckOutResponse($response, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $paymentNotes);
+        $response = new VerifyCurlResponse($transaction, $cidInfo['InvoiceNumber'], $cidInfo['Amount']);
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $vr->response->getStatus(), json_encode($params), json_encode($vr->response->getResultArray()), 'HostedCoVerify');
+            Gateway::saveGwTx($dbh, $response->getStatus(), json_encode($params), json_encode($response->getResultArray()), 'HostedCoVerify');
         } catch(Exception $ex) {
             // Do Nothing
         }
 
+        // Make a sale response...
+        $sr = new ImSaleResponse($response, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $paymentNotes);
+
         // Record transaction
         try {
 
-            $transRs = Transaction::recordTransaction($dbh, $vr, $this->gwName, TransType::Sale, TransMethod::HostedPayment);
-            $vr->setIdTrans($transRs->idTrans->getStoredVal());
+            $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Sale, TransMethod::HostedPayment);
+            $sr->setIdTrans($transRs->idTrans->getStoredVal());
 
         } catch(Exception $ex) {
             // do nothing
         }
 
         // record payment
-        return SaleReply::processReply($dbh, $vr, $uS->username);
+        $ssr = SaleReply::processReply($dbh, $sr, $uS->username);
 
-    }
+        $idInv = 0;
+        if (isset($uS->paymentIds[$ssoToken])) {
+            $idInv = $uS->paymentIds[$ssoToken];
+        }
 
-    public function cardComplete(\PDO $dbh, $idToken, $paymentNotes) {
+        if ($ssr->getInvoice() != '') {
 
-        // poll for completion
+            $invoice = new Invoice($dbh, $ssr->getInvoice());
 
-        // get details
+            // Analyze the result
+            $payResult = PaymentSvcs::AnalyzeCredSaleResult($dbh, $ssr, $invoice);
 
+        } else {
 
+            $payResult = new PaymentResult($idInv, 0, 0);
+            $payResult->setStatus(PaymentResult::ERROR);
+            $payResult->setDisplayMessage('Invoice Not Found!  ');
+        }
+
+        return $payResult;
     }
 
     protected function pollPaymentStatus($token, $trace = FALSE) {
@@ -1122,21 +1227,42 @@ class PollingResponse extends GatewayResponse {
 
 class VerifyCurlResponse extends GatewayResponse {
 
-    function __construct($response) {
+    function __construct($response, $invoiceNumber, $amount) {
 
         parent::__construct($response);
 
         if(is_array($response)){
-                $this->result = $response;
+            $this->result = $response;
+            $this->result['InvoiceNumber'] = $invoiceNumber;
+            $this->result['Amount'] = $amount;
         }else{
             throw new Hk_Exception_Payment("Curl transaction response is invalid.  ");
         }
-
     }
 
     public function parseResponse(){
             return '';
     }
+        //IsEMVVerifiedByPIN=false
+        //isEMVTransaction=false
+        //EMVCardEntryMode=Keyed
+        //isSignatureRequired=false
+        //cardBrand=VISA
+        //cardExpirationMonth=12
+        //cardExpirationYear=2021
+        //cardBINNumber=411111
+        //cardHolderName=
+        //paymentCardType=Credit
+        //lastFourDigits=1111
+        //authorizationNumber=A2CDB9
+        //responseCode=000
+        //responseMessage=APPROVAL
+        //transactionStatus=C
+        //primaryTransactionID=c5a1a5a099f748c8bf16b890c8b371ec
+        //authorizationText=I AGREE TO PAY THE ABOVE AMOUNT ACCORDING TO MY CARD HOLDER AGREEMENT.
+        //transactionID=c5a1a5a099f748c8bf16b890c8b371ec
+        //paymentPlanID=ccc366b1641444fe9e59620340d5e06c
+        //transactionDate=2018-09-26T19:05:40.1666074Z
 
     public function getResponseCode() {
         if (isset($this->result['responseCode'])) {
@@ -1174,12 +1300,7 @@ class VerifyCurlResponse extends GatewayResponse {
     }
 
     public function getToken() {
-        /*
-if (isset($this->result->Token)) {
-            return $this->result->Token;
-        }
-*/
-        return '';
+        return $this->getPaymentPlanID();
     }
 
     public function getCardType() {
@@ -1190,11 +1311,6 @@ if (isset($this->result->Token)) {
     }
 
     public function getCardUsage() {
-        /*
-if (isset($this->result->CardUsage)) {
-            return $this->result->CardUsage;
-        }
-*/
         return '';
     }
 
@@ -1206,20 +1322,10 @@ if (isset($this->result->CardUsage)) {
     }
 
     public function getTranType() {
-        /*
-if (isset($this->result->TranType)) {
-            return $this->result->TranType;
-        }
-*/
-        return '';
+        return MpTranType::Sale;
     }
 
     public function getPaymentIDExpired() {
-        /*
-if (isset($this->result->PaymentIDExpired)) {
-            return $this->result->PaymentIDExpired;
-        }
-*/
         return '';
     }
 
@@ -1248,20 +1354,13 @@ if (isset($this->result->PaymentIDExpired)) {
     }
 
     public function getAcqRefData() {
-        /*
-if (isset($this->result->AcqRefData)) {
-            return $this->result->AcqRefData;
-        }
-*/
         return '';
     }
 
     public function getAuthorizeAmount() {
-        /*
-if (isset($this->result->AuthAmount)) {
-            return $this->result->AuthAmount;
+        if (isset($this->result['Amount'])) {
+            return $this->result['Amount'];
         }
-*/
         return '';
     }
 
@@ -1274,94 +1373,78 @@ if (isset($this->result->AuthAmount)) {
     }
 
     public function getAVSAddress() {
-        // Address used for AVS verification. Note it is truncated to 8 characters.
-/*
-        if (isset($this->result->AVSAddress)) {
-            return $this->result->AVSAddress;
-        }
-*/
         return '';
     }
 
     public function getAVSResult() {
-/*
-        if (isset($this->result->AvsResult)) {
-            return $this->result->AvsResult;
-        }
-*/
+        //AddressVerificationResponseCode
         return '';
     }
 
     public function getAVSZip() {
-        // Postal code used for AVS verification
-/*
-        if (isset($this->result->AVSZip)) {
-            return $this->result->AVSZip;
-        }
-*/
         return '';
     }
 
     public function getCvvResult() {
-/*
-        if (isset($this->result->CvvResult)) {
-            return $this->result->CvvResult;
-        }
-*/
+        //CardVerificationResponseCode
         return '';
     }
 
     public function getInvoice() {
-/*
-        if (isset($this->result->Invoice)) {
-            return $this->result->Invoice;
+        if (isset($this->result['InvoiceNumber'])) {
+            return $this->result['InvoiceNumber'];
         }
-*/
+
         return '';
     }
 
     public function getMemo() {
-/*
-        if (isset($this->result->Memo)) {
-            return $this->result->Memo;
+        return '';
+    }
+
+    public function getPaymentPlanID() {
+        if (isset($this->result['paymentPlanID'])) {
+            return $this->result['paymentPlanID'];
         }
-*/
+        return '';
+    }
+
+    public function getPrimaryTransactionID() {
+        if (isset($this->result['primaryTransactionID'])) {
+            return $this->result['primaryTransactionID'];
+        }
         return '';
     }
 
     public function getProcessData() {
-/*
-        if (isset($this->result->ProcessData)) {
-            return $this->result->ProcessData;
-        }
-*/
-        return '';
+        return $this->getPrimaryTransactionID();
     }
 
     public function getRefNo() {
-/*
-        if (isset($this->result->RefNo)) {
-            return $this->result->RefNo;
+        return $this->getTransactionId();
+    }
+
+    public function getTransactionId() {
+        if (isset($this->result['transactionID'])) {
+            return $this->result['transactionID'];
         }
-*/
+        return '';
+    }
+    public function getTransactionStatus() {
+        if (isset($this->result['transactionStatus'])) {
+            return $this->result['transactionStatus'];
+        }
         return '';
     }
 
     public function getTaxAmount() {
-/*
-        if (isset($this->result->TaxAmount)) {
-            return $this->result->TaxAmount;
-        }
-*/
         return '';
     }
 
     public function getAmount() {
-/*
-        if (isset($this->result->Amount)) {
-            return $this->result->Amount;
+        if (isset($this->result['Amount'])) {
+            return $this->result['Amount'];
         }
-*/
         return '';
     }
 
@@ -1373,20 +1456,10 @@ if (isset($this->result->AuthAmount)) {
     }
 
     public function getCustomerCode() {
-/*
-        if (isset($this->result->CustomerCode)) {
-            return $this->result->CustomerCode;
-        }
-*/
         return '';
     }
 
     public function getOperatorID() {
-/*
-        if (isset($this->result->OperatorID)) {
-            return $this->result->OperatorID;
-        }
-*/
         return '';
     }
 

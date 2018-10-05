@@ -199,6 +199,7 @@ class Card_IdRS extends TableRS {
     public $ResponseCode;   // int(11) NOT NULL DEFAULT '0',
     public $Transaction;   // varchar(14) NOT NULL DEFAULT '',
     public $InvoiceNumber;   // varchar(36) NOT NULL DEFAULT '',
+    public $Amount;  // DECIMAL(11,2) NOT NULL DEFAULT 0.00,
 
     function __construct($TableName = "card_id") {
         $this->idName = new DB_Field("idName", 0, new DbIntSanitizer(), TRUE, TRUE);
@@ -211,6 +212,7 @@ class Card_IdRS extends TableRS {
         $this->ResponseCode = new DB_Field("ResponseCode", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Transaction = new DB_Field("Transaction", "", new DbStrSanitizer(14), TRUE, TRUE);
         $this->InvoiceNumber = new DB_Field("InvoiceNumber", "", new DbStrSanitizer(36), TRUE, TRUE);
+        $this->Amount = new DB_Field("Amount", 0, new DbDecimalSanitizer(), TRUE, TRUE);
 
         parent::__construct($TableName);
     }

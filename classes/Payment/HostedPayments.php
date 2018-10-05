@@ -113,6 +113,25 @@ class CardInfoResponse extends PaymentResponse {
         $this->cardNum = str_ireplace('x', '', $verifyCiResponse->getMaskedAccount());
     }
 
+    public function getStatus() {
+
+        switch ($this->response->getStatus()) {
+
+            case MpStatusValues::Approved:
+                $pr = CreditPayments::STATUS_APPROVED;
+                break;
+
+            case MpStatusValues::Declined:
+                $pr = CreditPayments::STATUS_DECLINED;
+                break;
+
+            default:
+                $pr = CreditPayments::STATUS_DECLINED;
+        }
+
+        return $pr;
+    }
+
     public function receiptMarkup(\PDO $dbh, &$tbl) {
         return array('error'=>'Receipts not available.');
     }
@@ -248,6 +267,25 @@ class CheckOutResponse extends PaymentResponse {
         $this->cardName = $verifyCkOutResponse->getCardHolderName();
         $this->amount = $verifyCkOutResponse->getAuthorizeAmount();
         $this->payNotes = $payNotes;
+    }
+
+    public function getStatus() {
+
+        switch ($this->response->getStatus()) {
+
+            case MpStatusValues::Approved:
+                $pr = CreditPayments::STATUS_APPROVED;
+                break;
+
+            case MpStatusValues::Declined:
+                $pr = CreditPayments::STATUS_DECLINED;
+                break;
+
+            default:
+                $pr = CreditPayments::STATUS_DECLINED;
+        }
+
+        return $pr;
     }
 
     public function receiptMarkup(\PDO $dbh, &$tbl) {

@@ -365,54 +365,8 @@ class PaymentSvcs {
             // Payment Gateway
             $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-            $guest = new Guest($dbh, '', $invoice->getSoldToId());
-            $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
+            $payResult = $gateway->CreditSale($dbh, $pmp, $invoice, $postbackUrl);
 
-            $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getIdToken());
-
-            // Do we have a token?
-            if (CreditToken::hasToken($tokenRS)) {
-
-                $cpay = new CreditSaleTokenRequest();
-
-                $cpay->setPurchaseAmount($amount)
-                    ->setTaxAmount(0)
-                    ->setCustomerCode($invoice->getSoldToId())
-                    ->setAddress($addr["Address_1"])
-                    ->setZip($addr["Postal_Code"])
-                    ->setToken($tokenRS->Token->getStoredVal())
-                    ->setPartialAuth(FALSE)
-                    ->setCardHolderName($tokenRS->CardHolderName->getStoredVal())
-                    ->setFrequency(MpFrequencyValues::OneTime)
-                    ->setInvoice($invoice->getInvoiceNumber())
-                    ->setTokenId($tokenRS->idGuest_token->getStoredVal())
-                    ->setMemo(MpVersion::PosVersion);
-
-                // Run the token transaction
-                $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $uS->ccgw, $cpay, $pmp->getPayNotes());
-
-                // Analyze the result
-                $payResult = self::AnalyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken());
-
-
-            } else {
-
-                // Initialiaze hosted payment
-                $fwrder = $gateway->initHostedPayment($dbh, $invoice, $postbackUrl);
-
-                $payIds = array();
-                if (isset($uS->paymentIds)) {
-                    $payIds = $uS->paymentIds;
-                }
-                $payIds[$fwrder['PaymentId']] = $invoice->getIdInvoice();
-                $uS->paymentIds = $payIds;
-                $uS->paymentNotes = $pmp->getPayNotes();
-
-                $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
-                $payResult->setForwardHostedPayment($fwrder);
-                $payResult->setDisplayMessage('Forward to Payment Page. ');
-
-            }
 
             break;
 
@@ -1194,16 +1148,16 @@ class PaymentSvcs {
         return $dataArray;
     }
 
-    protected static function AnalyzeCredSaleResult(\PDO $dbh, PaymentResponse $payResp, \Invoice $invoice, $idToken = 0) {
+    public static function AnalyzeCredSaleResult(\PDO $dbh, PaymentResponse $payResp, \Invoice $invoice, $idToken = 0) {
 
         $uS = Session::getInstance();
 
         $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $idToken);
 
 
-        switch ($payResp->response->getStatus()) {
+        switch ($payResp->getStatus()) {
 
-            case MpStatusValues::Approved:
+            case CreditPayments::STATUS_APPROVED:
 
                 // Update invoice
                 $invoice->updateInvoiceBalance($dbh, $payResp->getAmount(), $uS->username);
@@ -1224,7 +1178,7 @@ class PaymentSvcs {
 
                 break;
 
-            case MpStatusValues::Declined:
+            case CreditPayments::STATUS_DECLINED:
 
                 $payResult->setStatus(PaymentResult::DENIED);
                 $payResult->feePaymentRejected($dbh, $uS, $payResp);
@@ -1311,17 +1265,18 @@ class PaymentSvcs {
 
         $infoArray = array();
 
-        $query = "select idName, idGroup, InvoiceNumber from card_id where CardID = :cid";
+        $query = "select `idName`, `idGroup`, `InvoiceNumber`, `Amount` from `card_id` where `CardID` = :cid";
         $stmt = $dbh->prepare($query);
         $stmt->execute(array(':cid'=>$cardId));
 
-        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) > 0) {
 
-            $infoArray['idName'] = $rows[0][0];
-            $infoArray['idGroup'] = $rows[0][1];
-            $infoArray['InvoiceNumber'] = $rows[0][2];
+            $infoArray = $rows[0];
+//            $infoArray['idGroup'] = $rows[0][1];
+//            $infoArray['InvoiceNumber'] = $rows[0][2];
+//            $infoArray['Amount'] = $rows[0][3];
 
             // Delete to discourge replays.
             $stmt = $dbh->prepare("delete from card_id where CardID = :cid");
@@ -1337,6 +1292,9 @@ class PaymentSvcs {
     public static function processSiteReturn(\PDO $dbh, $gw, $post) {
 
         $uS = Session::getInstance();
+
+        // Payment Gateway
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
         $rtnCode = '';
         $rtnMessage = '';
@@ -1358,34 +1316,15 @@ class PaymentSvcs {
 
         if (isset($post[InstamedGateway::INSTAMED_TRANS_VAR])) {
 
-            $trans = filter_var($post[InstamedGateway::INSTAMED_TRANS_VAR], FILTER_SANITIZE_STRING);
-            $result = filter_var($post[InstamedGateway::INSTAMED_RESULT_VAR], FILTER_SANITIZE_STRING);
-
             try {
-                Gateway::saveGwTx($dbh, $result, '', json_encode($post), $trans.'_PostBack');
-            } catch (Exception $ex) {
-                // Do nothing
-            }
 
-            if ($result == InstamedGateway::POSTBACK_CANCEL) {
+                $payResult = $gateway->completeHostedPayment($dbh, $post, $uS->imtoken, $payNotes);
 
-                $payResult = new PaymentResult(0, 0, 0);
-                $payResult->setDisplayMessage('User Canceled.');
-                unset($uS->imtoken);
+            } catch (Hk_Exception_Payment $hex) {
 
-            } else if ($result == InstamedGateway::POSTBACK_COMPLETE) {
-
-                if (isset($uS->imtoken) && $uS->imtoken != '' ) {
-
-
-                    // Payment Gateway
-                    $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
-
-                    $payResponse = $gateway->hostedPaymentComplete($dbh, $uS->imtoken, $payNotes);
-
-                    //$payResult =
-                }
-
+                $payResult = new PaymentResult($idInv, 0, 0);
+                $payResult->setStatus(PaymentResult::ERROR);
+                $payResult->setDisplayMessage($hex->getMessage());
             }
 
         } else if (isset($post['CardID'])) {

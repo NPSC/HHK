@@ -32,7 +32,6 @@ abstract class PaymentResponse {
 
     public $payNotes = '';
 
-
     /**
      *
      * @var PaymentRS
@@ -60,6 +59,8 @@ abstract class PaymentResponse {
         return 0;
     }
 
+    public abstract function getStatus();
+
     public function getPaymentDate() {
 
         if (is_null($this->paymentRs) === FALSE) {
@@ -83,6 +84,54 @@ abstract class PaymentResponse {
 }
 
 
+class ImSaleResponse extends PaymentResponse {
+
+    public $response;
+    public $idToken = '';
+
+    function __construct($verifyCurlResponse, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+        $this->response = $verifyCurlResponse;
+        $this->paymentType = PayType::Charge;
+        $this->idPayor = $idPayor;
+        $this->idRegistration = $idGroup;
+        $this->invoiceNumber = $invoiceNumber;
+        $this->expDate = $verifyCurlResponse->getExpDate();
+        $this->cardNum = str_ireplace('x', '', $verifyCurlResponse->getMaskedAccount());
+        $this->cardType = $verifyCurlResponse->getCardType();
+        $this->cardName = $verifyCurlResponse->getCardHolderName();
+        $this->amount = $verifyCurlResponse->getAuthorizeAmount();
+        $this->payNotes = $payNotes;
+    }
+
+    public function getStatus() {
+
+        switch ($this->response->getStatus()) {
+
+            case InstamedGateway::APPROVED:
+                $pr = CreditPayments::STATUS_APPROVED;
+                break;
+
+            default:
+                $pr = CreditPayments::STATUS_DECLINED;
+        }
+
+        return $pr;
+    }
+
+    public function receiptMarkup(\PDO $dbh, &$tbl) {
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxxxx...". $this->cardNum));
+
+        if ($this->cardName != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardName));
+        }
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
+
+    }
+
+}
 
 
 /**
@@ -92,43 +141,21 @@ abstract class PaymentResponse {
  */
 abstract class CreditPayments {
 
+    const STATUS_APPROVED = 'ap';
+    const STATUS_DECLINED = 'dec';
+
     public static function processReply(\PDO $dbh, PaymentResponse $pr, $userName, PaymentRs $payRs = NULL, $attempts = 1) {
 
         // Transaction status
-        switch ($pr->response->getStatus()) {
+        switch ($pr->getStatus()) {
 
-            case MpStatusValues::Approved:
+            case CreditPayments::STATUS_APPROVED:
                 $pr = static::caseApproved($dbh, $pr, $userName, $payRs, $attempts);
                 break;
 
-            case MpStatusValues::Declined:
+            case CreditPayments::STATUS_DECLINED:
                 $pr = static::caseDeclined($dbh, $pr, $userName, $payRs, $attempts);
                 break;
-
-//            case MpStatusValues::Invalid:
-//                // Indicates that the user entered invalid card data too many times and was therefore redirected back to the Merchants eCommerce site.
-//                //throw new Hk_Exception_Payment("Repeated invalid account number entries.  " . $vr->getDisplayMessage());
-//                break;
-//
-//            case MpStatusValues::Error:
-//                // A transaction processing error occurred.
-//                //throw new Hk_Exception_Payment("Transaction processing error.  Try again later.  " . $vr->getDisplayMessage());
-//                break;
-//
-//            case MpStatusValues::AuthFail:
-//                // Authentication failed for MerchantID/password.
-//                //throw new Hk_Exception_Payment("Bad Merchant Id or password. ");
-//                break;
-//
-//            case MpStatusValues::MercInternalFail:
-//                // An error occurred internal to Mercury.
-//                //throw new Hk_Exception_Payment("Mercury Internal Error.  Try again later. ");
-//                break;
-//
-//            case MpStatusValues::ValidateFail:
-//                // Validation of the request failed. See Message for validation errors.
-//                //throw new Hk_Exception_Payment('Validation Fail: ' . $vr->getDisplayMessage());
-//                break;
 
             default:
                 static::caseOther($dbh, $pr, $userName, $payRs);
@@ -653,4 +680,28 @@ class VoidReturnReply extends CreditPayments {
         return $pr;
     }
 
+}
+
+
+abstract class ImCreditPayments extends CreditPayments {
+
+    public static function processReply(\PDO $dbh, PaymentResponse $pr, $userName, PaymentRs $payRs = NULL, $attempts = 1) {
+
+        // Transaction status
+        switch ($pr->response->getStatus()) {
+
+            case MpStatusValues::Approved:
+                $pr = static::caseApproved($dbh, $pr, $userName, $payRs, $attempts);
+                break;
+
+            case MpStatusValues::Declined:
+                $pr = static::caseDeclined($dbh, $pr, $userName, $payRs, $attempts);
+                break;
+            default:
+                static::caseOther($dbh, $pr, $userName, $payRs);
+
+        }
+
+        return $pr;
+    }
 }

@@ -651,9 +651,11 @@ function paymentReply (data, updateCal) {
             if (document.getElementsByName('instamed').length != 0) {
                 
                 document.getElementById('instamed').setAttribute('src', data.inctx);
+                
                 $("#instamed").on("load", function(){
-	                $('#keysfees').dialog("close");
+	            $('#keysfees').dialog("close");
                 });
+                
                 return;
 
             }

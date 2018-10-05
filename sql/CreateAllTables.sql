@@ -113,6 +113,7 @@ CREATE TABLE if not exists `card_id` (
   `ResponseCode` int(11) NOT NULL DEFAULT '0',
   `Transaction` varchar(14) NOT NULL DEFAULT '',
   `InvoiceNumber` varchar(36) NOT NULL DEFAULT '',
+  `Amount` DECIMAL(11,2) NOT NULL DEFAULT 0.00,
   PRIMARY KEY (`idName`,`idGroup`)
 ) ENGINE=InnoDB;
 

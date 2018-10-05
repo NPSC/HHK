@@ -20,6 +20,10 @@ class CashResponse extends PaymentResponse {
         $this->payNotes = $payNote;
     }
 
+    public function getStatus() {
+        return CreditPayments::STATUS_APPROVED;
+    }
+
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         if ($this->getAmount() != 0) {
@@ -160,6 +164,10 @@ class ManualChargeResponse extends PaymentResponse {
 
     public function getChargeType() {
         return $this->cardType;
+    }
+
+    public function getStatus() {
+        return CreditPayments::STATUS_APPROVED;
     }
 
     public function receiptMarkup(\PDO $dbh, &$tbl) {
