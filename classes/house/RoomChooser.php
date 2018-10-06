@@ -683,7 +683,7 @@ class RoomChooser {
                 }
             }
         }
-        
+
         $priceModel->setCreditDays($credit);
         $priceModel->setVisitStatus(VisitStatus::CheckedIn);
 
