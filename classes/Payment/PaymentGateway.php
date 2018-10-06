@@ -434,18 +434,27 @@ class InstamedGateway extends PaymentGateway {
         $uS = Session::getInstance();
 
         // Initialiaze hosted payment
-        $fwrder = $this->initHostedPayment($dbh, $invoice, $postbackUrl);
+        try {
 
-        $payIds = array();
-        if (isset($uS->paymentIds)) {
-            $payIds = $uS->paymentIds;
+            $fwrder = $this->initHostedPayment($dbh, $invoice, $postbackUrl);
+
+            $payIds = array();
+            if (isset($uS->paymentIds)) {
+                $payIds = $uS->paymentIds;
+            }
+            $payIds[$fwrder['PaymentId']] = $invoice->getIdInvoice();
+            $uS->paymentIds = $payIds;
+
+            $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+            $payResult->setForwardHostedPayment($fwrder);
+            $payResult->setDisplayMessage('Forward to Payment Page. ');
+
+        } catch (Hk_Exception_Payment $hpx) {
+
+            $payResult = new PaymentResult($invoice->getIdInvoice(), 0, 0);
+            $payResult->setStatus(PaymentResult::ERROR);
+            $payResult->setDisplayMessage($hpx->getMessage());
         }
-        $payIds[$fwrder['PaymentId']] = $invoice->getIdInvoice();
-        $uS->paymentIds = $payIds;
-
-        $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
-        $payResult->setForwardHostedPayment($fwrder);
-        $payResult->setDisplayMessage('Forward to Payment Page. ');
 
         return $payResult;
     }
@@ -487,6 +496,7 @@ class InstamedGateway extends PaymentGateway {
             'creditCardKeyed ' => 'true',
             'incontext' => 'true',
             'lightWeight' => 'true',
+            'isReadOnly' => 'true',
             'preventCheck' => 'true',
             'preventCash'  => 'true',
             'suppressReceipt' => 'true',
@@ -822,6 +832,7 @@ class InstamedGateway extends PaymentGateway {
         // record payment
         $ssr = SaleReply::processReply($dbh, $sr, $uS->username);
 
+        // Update the invoice
         $idInv = 0;
         if (isset($uS->paymentIds[$ssoToken])) {
             $idInv = $uS->paymentIds[$ssoToken];
@@ -1116,58 +1127,6 @@ class InstaMedCredentials {
 
 }
 
-class HeaderResponse extends GatewayResponse {
-
-    protected function parseResponse() {
-
-        //"https://online.instamed.com/providers/Form/SSO/SSOError?respCode=401&respMessage=Invalid AccountID or Password.&lightWeight=true"
-
-        if (isset($this->response[InstamedGateway::RELAY_STATE])) {
-
-            $qs = parse_url($this->response[InstamedGateway::RELAY_STATE], PHP_URL_QUERY);
-            parse_str($qs, $this->result);
-
-            $this->result[InstamedGateway::RELAY_STATE] = $this->response[InstamedGateway::RELAY_STATE];
-
-        } else {
-            $this->errors = 'response is missing. ';
-        }
-
-    }
-
-    public function getRelayState() {
-        return $this->result[InstamedGateway::RELAY_STATE];
-    }
-
-    public function getToken() {
-
-        if (isset($this->result['token'])) {
-            return $this->result['token'];
-        }
-
-        return '';
-    }
-
-    public function getResponseCode() {
-
-        if (isset($this->result['respCode'])) {
-
-            return intval($this->result['respCode'], 10);
-        }
-
-        return 0;
-    }
-
-    public function getResponseMessage() {
-
-        if (isset($this->result['respMessage'])) {
-            return $this->result['respMessage'];
-        }
-
-        return '';
-    }
-}
-
 
 class PollingRequest extends SoapRequest {
 
@@ -1177,291 +1136,3 @@ class PollingRequest extends SoapRequest {
 }
 
 
-class PollingResponse extends GatewayResponse {
-
-    const WAIT = 'NEW';
-    const EXPIRED = 'EXPIRED';
-    const COMPLETE = 'complete';
-
-
-    protected function parseResponse() {
-
-        if (isset($this->response->GetSSOTokenStatusResponse)) {
-            $this->result = $this->response->GetSSOTokenStatusResponse;
-        } else {
-            throw new Hk_Exception_Payment("GetSSOTokenStatusResponse is missing from the payment gateway response.  ");
-        }
-    }
-
-    public function getResponseCode() {
-
-        if (isset($this->result['GetSSOTokenStatusResult'])) {
-            return $this->result['GetSSOTokenStatusResult'];
-        } else {
-            throw new Hk_Exception_Payment("GetSSOTokenStatusResult is missing from the payment gateway response.  ");
-        }
-    }
-
-    public function isWaiting() {
-        if ($this->getResponseCode() == PollingResponse::WAIT) {
-            return TRUE;
-        }
-        return FALSE;
-    }
-
-    public function isExpired() {
-        if ($this->getResponseCode() == PollingResponse::EXPIRED) {
-            return TRUE;
-        }
-        return FALSE;
-    }
-
-    public function isComplete() {
-        if ($this->getResponseCode() == PollingResponse::COMPLETE) {
-            return TRUE;
-        }
-        return FALSE;
-    }
-
-}
-
-class VerifyCurlResponse extends GatewayResponse {
-
-    function __construct($response, $invoiceNumber, $amount) {
-
-        parent::__construct($response);
-
-        if(is_array($response)){
-            $this->result = $response;
-            $this->result['InvoiceNumber'] = $invoiceNumber;
-            $this->result['Amount'] = $amount;
-        }else{
-            throw new Hk_Exception_Payment("Curl transaction response is invalid.  ");
-        }
-    }
-
-    public function parseResponse(){
-            return '';
-    }
-        //IsEMVVerifiedByPIN=false
-        //isEMVTransaction=false
-        //EMVCardEntryMode=Keyed
-        //isSignatureRequired=false
-        //cardBrand=VISA
-        //cardExpirationMonth=12
-        //cardExpirationYear=2021
-        //cardBINNumber=411111
-        //cardHolderName=
-        //paymentCardType=Credit
-        //lastFourDigits=1111
-        //authorizationNumber=A2CDB9
-        //responseCode=000
-        //responseMessage=APPROVAL
-        //transactionStatus=C
-        //primaryTransactionID=c5a1a5a099f748c8bf16b890c8b371ec
-        //authorizationText=I AGREE TO PAY THE ABOVE AMOUNT ACCORDING TO MY CARD HOLDER AGREEMENT.
-        //transactionID=c5a1a5a099f748c8bf16b890c8b371ec
-        //paymentPlanID=ccc366b1641444fe9e59620340d5e06c
-        //transactionDate=2018-09-26T19:05:40.1666074Z
-
-    public function getResponseCode() {
-        if (isset($this->result['responseCode'])) {
-            return $this->result['responseCode'];
-        }
-        return '';
-    }
-
-    public function getStatus() {
-        if (isset($this->result['responseCode'])) {
-            return $this->result['responseCode'];
-        }
-        return '';
-    }
-
-    public function getStatusMessage() {
-        if (isset($this->result['responseMessage'])) {
-            return $this->result['responseMessage'];
-        }
-        return '';
-    }
-
-    public function getMessage() {
-        if (isset($this->result['responseMessage'])) {
-            return $this->result['responseMessage'];
-        }
-        return '';
-    }
-
-    public function getDisplayMessage() {
-        if (isset($this->result->DisplayMessage)) {
-            return $this->result->DisplayMessage;
-        }
-        return '';
-    }
-
-    public function getToken() {
-        return $this->getPaymentPlanID();
-    }
-
-    public function getCardType() {
-        if (isset($this->result['cardBrand'])) {
-            return $this->result['cardBrand'];
-        }
-        return '';
-    }
-
-    public function getCardUsage() {
-        return '';
-    }
-
-    public function getMaskedAccount() {
-        if (isset($this->result['lastFourDigits'])) {
-            return $this->result['lastFourDigits'];
-        }
-        return '';
-    }
-
-    public function getTranType() {
-        return MpTranType::Sale;
-    }
-
-    public function getPaymentIDExpired() {
-        return '';
-    }
-
-    public function getCardHolderName() {
-        if (isset($this->result['cardHolderName'])) {
-            return $this->result['cardHolderName'];
-        }
-        return '';
-    }
-
-    public function getExpDate() {
-
-        if (isset($this->result['cardExpirationMonth']) && isset($this->result['cardExpirationYear'])) {
-	        if($this->result['cardExpirationMonth'] < 10){
-            	$month = '0' . $this->result['cardExpirationMonth'];
-            }else{
-	            $month = $this->result['cardExpirationMonth'];
-            }
-
-            $year = $this->result['cardExpirationYear'];
-
-            return $month . '/' . $year;
-        }
-
-        return '';
-    }
-
-    public function getAcqRefData() {
-        return '';
-    }
-
-    public function getAuthorizeAmount() {
-        if (isset($this->result['Amount'])) {
-            return $this->result['Amount'];
-        }
-        return '';
-    }
-
-    public function getAuthCode() {
-
-        if (isset($this->result['authorizationNumber'])) {
-            return $this->result['authorizationNumber'];
-        }
-        return '';
-    }
-
-    public function getAVSAddress() {
-        return '';
-    }
-
-    public function getAVSResult() {
-        //AddressVerificationResponseCode
-        return '';
-    }
-
-    public function getAVSZip() {
-        return '';
-    }
-
-    public function getCvvResult() {
-        //CardVerificationResponseCode
-        return '';
-    }
-
-    public function getInvoice() {
-        if (isset($this->result['InvoiceNumber'])) {
-            return $this->result['InvoiceNumber'];
-        }
-
-        return '';
-    }
-
-    public function getMemo() {
-        return '';
-    }
-
-    public function getPaymentPlanID() {
-        if (isset($this->result['paymentPlanID'])) {
-            return $this->result['paymentPlanID'];
-        }
-        return '';
-    }
-
-    public function getPrimaryTransactionID() {
-        if (isset($this->result['primaryTransactionID'])) {
-            return $this->result['primaryTransactionID'];
-        }
-        return '';
-    }
-
-    public function getProcessData() {
-        return $this->getPrimaryTransactionID();
-    }
-
-    public function getRefNo() {
-        return $this->getTransactionId();
-    }
-
-    public function getTransactionId() {
-        if (isset($this->result['transactionID'])) {
-            return $this->result['transactionID'];
-        }
-        return '';
-    }
-    public function getTransactionStatus() {
-        if (isset($this->result['transactionStatus'])) {
-            return $this->result['transactionStatus'];
-        }
-        return '';
-    }
-
-    public function getTaxAmount() {
-        return '';
-    }
-
-    public function getAmount() {
-        if (isset($this->result['Amount'])) {
-            return $this->result['Amount'];
-        }
-        return '';
-    }
-
-    public function getTransPostTime() {
-        if (isset($this->result['transactionDate'])) {
-            return $this->result['transactionDate'];
-        }
-        return '';
-    }
-
-    public function getCustomerCode() {
-        return '';
-    }
-
-    public function getOperatorID() {
-        return '';
-    }
-
-
-}

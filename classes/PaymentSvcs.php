@@ -1182,7 +1182,12 @@ class PaymentSvcs {
 
                 $payResult->setStatus(PaymentResult::DENIED);
                 $payResult->feePaymentRejected($dbh, $uS, $payResp);
-                $payResult->setDisplayMessage('** The Payment is Declined. **  Message: ' . $payResp->response->getDisplayMessage());
+
+                $msg = '** The Payment is Declined. **';
+                if ($payResp->response->getDisplayMessage() != '') {
+                    $msg .= 'Message: ' . $payResp->response->getDisplayMessage();
+                }
+                $payResult->setDisplayMessage($msg);
 
                 break;
 
@@ -1315,6 +1320,11 @@ class PaymentSvcs {
 
 
         if (isset($post[InstamedGateway::INSTAMED_TRANS_VAR])) {
+
+            $idInv = 0;
+            if (isset($uS->paymentIds[$uS->imtoken])) {
+                $idInv = $uS->paymentIds[$uS->imtoken];
+            }
 
             try {
 

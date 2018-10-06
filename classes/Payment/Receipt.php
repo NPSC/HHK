@@ -1291,14 +1291,9 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         }
 
         // Payments
-        $query = "select lp.*, ifnull(n.Name_First, '') as `First`,
-    ifnull(n.Name_Last, '') as `Last`,
-    ifnull(n.Company, '') as `Company`
-from vlist_inv_pments lp
-    left join
-    `name` n ON lp.Sold_To_Id = n.idName
- where lp.Order_Number = $idVisit and lp.Deleted = 0 ";
-        $stmt = $dbh->query($query);
+        $stmt = $dbh->query("select lp.*, ifnull(n.Name_First, '') as `First`, ifnull(n.Name_Last, '') as `Last`, ifnull(n.Company, '') as `Company`
+from vlist_inv_pments `lp` left join `name` n ON lp.Sold_To_Id = n.idName
+ where lp.Order_Number = $idVisit and lp.Deleted = 0 ");
 
         $pments = self::processPayments($stmt, array('Last', 'First', 'Company'));
 

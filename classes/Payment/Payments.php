@@ -107,15 +107,27 @@ class ImSaleResponse extends PaymentResponse {
 
         switch ($this->response->getStatus()) {
 
-            case InstamedGateway::APPROVED:
-                $pr = CreditPayments::STATUS_APPROVED;
+            case '000':
+                $status = CreditPayments::STATUS_APPROVED;
+                break;
+
+            case '005':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '051':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '063':
+                $status = CreditPayments::STATUS_DECLINED;
                 break;
 
             default:
-                $pr = CreditPayments::STATUS_DECLINED;
+                $status = CreditPayments::STATUS_DECLINED;
         }
 
-        return $pr;
+        return $status;
     }
 
     public function receiptMarkup(\PDO $dbh, &$tbl) {
@@ -141,8 +153,8 @@ class ImSaleResponse extends PaymentResponse {
  */
 abstract class CreditPayments {
 
-    const STATUS_APPROVED = 'ap';
-    const STATUS_DECLINED = 'dec';
+    const STATUS_APPROVED = 'AP';
+    const STATUS_DECLINED = 'DECLINED';
 
     public static function processReply(\PDO $dbh, PaymentResponse $pr, $userName, PaymentRs $payRs = NULL, $attempts = 1) {
 
@@ -308,6 +320,7 @@ class SaleReply extends CreditPayments {
             $pDetailRS->idPayment->setNewVal($idPmt);
             $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizeAmount());
             $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
+            $pDetailRS->Status_Message->setNewVal($vr->getStatusMessage());
             $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
             $pDetailRS->Acct_Number->setNewVal($pr->cardNum);
             $pDetailRS->Card_Type->setNewVal($vr->getCardType());
@@ -682,26 +695,3 @@ class VoidReturnReply extends CreditPayments {
 
 }
 
-
-abstract class ImCreditPayments extends CreditPayments {
-
-    public static function processReply(\PDO $dbh, PaymentResponse $pr, $userName, PaymentRs $payRs = NULL, $attempts = 1) {
-
-        // Transaction status
-        switch ($pr->response->getStatus()) {
-
-            case MpStatusValues::Approved:
-                $pr = static::caseApproved($dbh, $pr, $userName, $payRs, $attempts);
-                break;
-
-            case MpStatusValues::Declined:
-                $pr = static::caseDeclined($dbh, $pr, $userName, $payRs, $attempts);
-                break;
-            default:
-                static::caseOther($dbh, $pr, $userName, $payRs);
-
-        }
-
-        return $pr;
-    }
-}

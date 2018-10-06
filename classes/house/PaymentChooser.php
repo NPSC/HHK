@@ -274,7 +274,7 @@ class PaymentChooser {
                 $payTypes,
                 $chargeCards,
                 $labels,
-                $uS->ccgw,
+                $uS->PaymentGateway,
                 $idGuest, $idRegistration, $prefTokenId);
 
 
@@ -293,7 +293,7 @@ class PaymentChooser {
                 $defaultPayType,
                 $payTypes,
                 $chargeCards,
-                $uS->ccgw,
+                $uS->PaymentGateway,
                 $idGuest, $idRegistration, $prefTokenId, 'r'),
                 array('id'=>'divReturnPay', 'style'=>'float:left;display:none;'));
 
@@ -385,7 +385,7 @@ class PaymentChooser {
         );
 
         // payment types panel
-        $panelMkup = self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')), $labels, $uS->ccgw,
+        $panelMkup = self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')), $labels, $uS->PaymentGateway,
                 $idGuest, $idRegistration, $prefTokenId);
 
         $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
@@ -591,7 +591,7 @@ ORDER BY v.idVisit , v.Span;");
 //
 //                } else {
                     // payment types panel
-                    $panelMkup = self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')), $labels, $uS->ccgw,
+                    $panelMkup = self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')), $labels, $uS->PaymentGateway,
                         $id, 0, $prefTokenId, '');
 //                }
 
@@ -827,11 +827,11 @@ ORDER BY v.idVisit , v.Span;");
         // credit info
         if (isset($payTypes[PayType::Charge]) || isset($payTypes[PayType::ChargeAsCash])) {
 
-            if ($ccgw != '') {
+            if ($ccgw == PaymentGateway::VANTIV) {
 
                 self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $prefTokenId);
 
-            } else {
+            } else if ($ccgw == '') {
 
                 $payTbl->addBodyTr(
                     HTMLTable::makeTd('Card: ', array('class'=>'tdlabel'))
@@ -879,11 +879,11 @@ ORDER BY v.idVisit , v.Span;");
         // credit info
         if (isset($payTypes[PayType::Charge]) || isset($payTypes[PayType::ChargeAsCash])) {
 
-            if ($ccgw != '') {
+            if ($ccgw == PaymentGateway::VANTIV) {
 
                 self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $prefTokenId, ReturnIndex::ReturnIndex);
 
-            } else {
+            } else if ($ccgw == '') {
 
                 $payTbl->addBodyTr(
                     HTMLTable::makeTd('Card: ', array('class'=>'tdlabel'))

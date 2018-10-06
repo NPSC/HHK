@@ -587,8 +587,8 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
 
     $('#keysfees').css('background-color', 'white');
     
-	//working
-	$('#keysfees').empty().append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading Payment Gateway</p></div>');
+    //working
+    $('#keysfees').empty();  //.append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading Payment Gateway</p></div>');
 
     $.post('ws_ckin.php', parms,
         function(data) {
@@ -616,10 +616,9 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 pageManager.doOnDatesChange(dates);
             }
 			
-            paymentReply(data, true);
-			
+            paymentReply(data, true);		
     });
-    //$("#hhk-loading-spinner").show();
+
 }
 
 function paymentReply (data, updateCal) {
@@ -654,6 +653,7 @@ function paymentReply (data, updateCal) {
                 
                 $("#instamed").on("load", function(){
 	            $('#keysfees').dialog("close");
+                    $("#instamed").find('#FormPatientPayment-GuarantorInfoContainer').css('display', 'none');
                 });
                 
                 return;
