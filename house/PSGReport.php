@@ -67,7 +67,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
             . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
             . " ifnull(rr.Title, '') as `Rate Category`, 0 as `Total Cost`, "
             . "hs.idHospital, hs.idAssociation, "
-            . "  ifnull(g.Description, '') as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
+            . "  ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
             . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle`, ifnull(g2.Description,'') as `Status`";
 
     } else if ($showAddr && !$showFullName) {
@@ -78,7 +78,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
             . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
             . "hs.idHospital, hs.idAssociation, "
             . "np.Name_Last as `Patient Last`, np.Name_First as `Patient First`, "
-                ." ifnull(g.Description, '') as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
+                ." ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
             . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
 
     } else if (!$showAddr && $showFullName) {
@@ -87,7 +87,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
                 . "ifnull(g2.Description,'') as `Status`, "
                 . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
                 . "np.Name_Last as `Patient Last`, np.Name_First as `Patient First` , "
-                . " ifnull(g.Description, '') as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
+                . " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
             . "hs.idHospital, hs.idAssociation,
           ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
 
@@ -96,7 +96,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
         $query = "select vg.Id, vg.idPsg, vg.Relationship_Code, vg.Last as `Guest Last`, vg.First as `Guest First`, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.ngStatus, "
             . "ifnull(g2.Description,'') as `Status`,  ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
                 . "np.Name_Last as `Patient Last`, np.Name_First as `Patient First`, "
-                . " ifnull(g.Description, '') as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
+                . " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
             . "hs.idHospital, hs.idAssociation, "
                 . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
     }
@@ -330,7 +330,7 @@ function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hosp
     ifnull(n.BirthDate, '') as `Birth Date`,
     ifnull(hs.idHospital, '') as `Hospital`,
     ifnull(hs.idAssociation, '') as `Association`,
-    ifnull(g.Description, '') as `$diagTitle`,
+    ifnull(g.Description, hs.Diagnosis) as `$diagTitle`,
     ifnull(g1.Description, '') as `$locTitle`
 from
     name_guest ng

@@ -506,7 +506,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                             <td><input id='cbVisits' type='checkbox' checked="checked"/> Visits</td>
                             <td>Starting: <input type="text" id="txtactstart" class="ckdate" value="" /></td>
                         </tr><tr>
-                            <td><?php if ($uS->Reservation) { ?><input id='cbReserv' type='checkbox'/> Reservations</td><?php } ?>
+                            <td><input id='cbReserv' type='checkbox'/> Reservations</td>
                             <td>Ending: <input type="text" id="txtactend" class="ckdate" value="" /></td>
                         </tr><tr>
                             <td><input id='cbHospStay' type='checkbox'/> Hospital Stays</td>

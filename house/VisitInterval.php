@@ -561,7 +561,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     ifnull(hs.idHospital, 0) as idHospital,
     ifnull(hs.idAssociation, 0) as idAssociation,
     ifnull(nra.Name_Full, '') as Referral_Agent,
-    ifnull(g.Description, '') as Diagnosis,
+    ifnull(g.Description, hs.Diagnosis) as Diagnosis,
     ifnull(gl.Description, '') as Location,
     ifnull(rm.Rate_Code, '') as Rate_Code,
     ifnull(rm.Category, '') as Category,

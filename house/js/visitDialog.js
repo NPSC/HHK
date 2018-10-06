@@ -471,17 +471,27 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
 
     $('input.hhk-ckoutCB').each(function() {
         if (this.checked) {
+            
             var parts = $(this).attr('id').split('_');
+            
             if (parts.length > 0) {
+                
                 parms['stayActionCb[' + parts[1] + ']'] = 'on';
                 var tdate = $('#stayCkOutDate_' + parts[1]).datepicker('getDate');
+                
                 if (tdate) {
+                    
                     var nowDate = new Date();
                     tdate.setHours(nowDate.getHours());
                     tdate.setMinutes(nowDate.getMinutes());
                 } else {
                     tdate = new Date();
                 }
+                
+                if ($('#stayCkOutHour_' + parts[1]).length > 0) {
+                    parms['stayCkOutHour[' + parts[1] + ']'] = $('#stayCkOutHour_' + parts[1]).val();
+                }
+
                 parms['stayCkOutDate[' + parts[1] + ']'] = tdate.toJSON();
                 ckoutlist.push($(this).data('nm') + ', ' + tdate.toDateString());
             }

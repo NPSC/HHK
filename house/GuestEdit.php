@@ -655,48 +655,47 @@ if ($psg->getIdPsg() > 0) {
     }
 
     // Reservation
-    if ($uS->Reservation) {
-        $stmt = $dbh->query("select * from reservation where idRegistration = ". $registration->getIdRegistration() . " order by idReservation desc");
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    $stmt = $dbh->query("select * from reservation where idRegistration = ". $registration->getIdRegistration() . " order by idReservation desc");
+    $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
 
-        foreach ($rows as $r) {
-            $reservRs = new ReservationRS();
-            EditRS::loadRow($r, $reservRs);
+    foreach ($rows as $r) {
+        $reservRs = new ReservationRS();
+        EditRS::loadRow($r, $reservRs);
 
-            $reserv = new Reservation_1($reservRs);
-            $rtbl = new HTMLTable();
-            $rtbl->addHeaderTr(HTMLTable::makeTh('Id').HTMLTable::makeTh('Status').HTMLTable::makeTh('Arrival').HTMLTable::makeTh('Depart').HTMLTable::makeTh('Room').HTMLTable::makeTh('Rate'));
+        $reserv = new Reservation_1($reservRs);
+        $rtbl = new HTMLTable();
+        $rtbl->addHeaderTr(HTMLTable::makeTh('Id').HTMLTable::makeTh('Status').HTMLTable::makeTh('Arrival').HTMLTable::makeTh('Depart').HTMLTable::makeTh('Room').HTMLTable::makeTh('Rate'));
 
-            // Get the room rate category names
-            $categoryTitles = RoomRate::makeDescriptions($dbh);
+        // Get the room rate category names
+        $categoryTitles = RoomRate::makeDescriptions($dbh);
 
-            $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), array('href'=>$config->getString('house', 'ReservationPage', 'Referral.php').'?rid=' . $reserv->getIdReservation())))
-                    . HTMLTable::makeTd($reserv->getStatusTitle($reserv->getStatus()))
-                    . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getArrival())))
-                    . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getDeparture())))
-                    . HTMLTable::makeTd($reserv->getRoomTitle($dbh))
-                    . ($uS->RoomPriceModel != ItemPriceCode::None ? HTMLTable::makeTd($categoryTitles[$reserv->getIdRoomRate()]) : HTMLTable::makeTd(''))
-                    );
+        $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), array('href'=>$config->getString('house', 'ReservationPage', 'Referral.php').'?rid=' . $reserv->getIdReservation())))
+                . HTMLTable::makeTd($reserv->getStatusTitle($reserv->getStatus()))
+                . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getArrival())))
+                . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getDeparture())))
+                . HTMLTable::makeTd($reserv->getRoomTitle($dbh))
+                . ($uS->RoomPriceModel != ItemPriceCode::None ? HTMLTable::makeTd($categoryTitles[$reserv->getIdRoomRate()]) : HTMLTable::makeTd(''))
+                );
 
-            $constraintMkup = RoomChooser::createResvConstMkup($dbh, $reserv->getIdReservation(), TRUE);
-            if ($constraintMkup == '') {
-                $constraintMkup = "<p style='padding:4px;'>(No Room Attributes Selected.)<p>";
-            }
-
-            $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('div', $constraintMkup, array('style'=>'float:left;margin-left:10px;')), array('colspan'=>'7')));
-
-            $hdr = HTMLContainer::generateMarkup('h3', HTMLContainer::generateMarkup('span',
-                    $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ': '
-                    . (date('Y') == date('Y', strtotime($reserv->getArrival())) ? date('M j', strtotime($reserv->getArrival())) : date('M j, Y', strtotime($reserv->getArrival())))
-                    . " to " .(date('Y') == date('Y', strtotime($reserv->getDeparture())) ? date('M j', strtotime($reserv->getDeparture())) : date('M j, Y', strtotime($reserv->getDeparture())))
-                    . '.  ' . $reserv->getStatusIcon()
-                    , array('style'=>'margin-left:10px;')), array('style'=>'min-height:25px; padding-top:5px;'));
-
-            $reservMarkup .= $hdr . HTMLContainer::generateMarkup('div', $rtbl->generateMarkup());
-
+        $constraintMkup = RoomChooser::createResvConstMkup($dbh, $reserv->getIdReservation(), TRUE);
+        if ($constraintMkup == '') {
+            $constraintMkup = "<p style='padding:4px;'>(No Room Attributes Selected.)<p>";
         }
+
+        $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('div', $constraintMkup, array('style'=>'float:left;margin-left:10px;')), array('colspan'=>'7')));
+
+        $hdr = HTMLContainer::generateMarkup('h3', HTMLContainer::generateMarkup('span',
+                $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ': '
+                . (date('Y') == date('Y', strtotime($reserv->getArrival())) ? date('M j', strtotime($reserv->getArrival())) : date('M j, Y', strtotime($reserv->getArrival())))
+                . " to " .(date('Y') == date('Y', strtotime($reserv->getDeparture())) ? date('M j', strtotime($reserv->getDeparture())) : date('M j, Y', strtotime($reserv->getDeparture())))
+                . '.  ' . $reserv->getStatusIcon()
+                , array('style'=>'margin-left:10px;')), array('style'=>'min-height:25px; padding-top:5px;'));
+
+        $reservMarkup .= $hdr . HTMLContainer::generateMarkup('div', $rtbl->generateMarkup());
+
     }
+
 
     // Financial Assistance
     if ($uS->IncomeRated) {
@@ -886,9 +885,8 @@ $uS->guestId = $id;
                         <li><a href="#vVisits">Visits</a></li>
                         <li id="lipsg"><a href="#vpsg"><?php echo $labels->getString('guestEdit', 'psgTab', 'Patient Support Group'); ?></a></li>
                         <li><a href="#vregister"><?php echo ($uS->ccgw == '' ? 'Registration' : 'Registration/Credit') ?></a></li>
-                        <?php if ($uS->Reservation) { ?>
                         <li><a href="#vreserv"><?php echo $labels->getString('guestEdit', 'reservationTab', 'Reservations'); ?></a></li>
-                        <?php } if ($uS->IncomeRated && $showCharges) {  ?>
+                        <?php if ($uS->IncomeRated && $showCharges) {  ?>
                         <li id="fin"><a href="#vfin">Financial Assistance...</a></li>
                         <?php } if ($memberFlag && $showCharges) {  ?>
                         <li><a href="ws_resc.php?cmd=payRpt&id=<?php echo $registration->getIdRegistration(); ?>" title="Payment History">Payments</a></li>

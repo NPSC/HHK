@@ -404,14 +404,12 @@ class ReservationSvcs {
         if ($worked) {
 
             // Return checked in guests markup?
-            if ($uS->Reservation) {
-                if ($reserv->getStatus() == ReservationStatus::Committed) {
-                    $dataArray['reservs'] = 'y';
-                } else if ($reserv->getStatus() == ReservationStatus::UnCommitted && $uS->ShowUncfrmdStatusTab) {
-                    $dataArray['unreserv'] = 'y';
-                } else if ($reserv->getStatus() == ReservationStatus::Waitlist) {
-                    $dataArray['waitlist'] = 'y';
-                }
+            if ($reserv->getStatus() == ReservationStatus::Committed) {
+                $dataArray['reservs'] = 'y';
+            } else if ($reserv->getStatus() == ReservationStatus::UnCommitted && $uS->ShowUncfrmdStatusTab) {
+                $dataArray['unreserv'] = 'y';
+            } else if ($reserv->getStatus() == ReservationStatus::Waitlist) {
+                $dataArray['waitlist'] = 'y';
             }
         }
 
@@ -623,20 +621,16 @@ class ReservationSvcs {
         $dataArray['success'] = 'Reservation status changed to ' . $uS->guestLookups['ReservStatus'][$status][1];
 
 
-        if ($uS->Reservation) {
+        if ($oldStatus == ReservationStatus::Committed || $status == ReservationStatus::Committed) {
+            $dataArray['reservs'] = 'y';
+        }
 
-            if ($oldStatus == ReservationStatus::Committed || $status == ReservationStatus::Committed) {
-                $dataArray['reservs'] = 'y';
-            }
+        if ($oldStatus == ReservationStatus::UnCommitted || $status == ReservationStatus::UnCommitted) {
+            $dataArray['unreserv'] = 'y';
+        }
 
-            if ($oldStatus == ReservationStatus::UnCommitted || $status == ReservationStatus::UnCommitted) {
-                $dataArray['unreserv'] = 'y';
-            }
-
-            if ($oldStatus == ReservationStatus::Waitlist || $status == ReservationStatus::Waitlist) {
-                $dataArray['waitlist'] = 'y';
-            }
-
+        if ($oldStatus == ReservationStatus::Waitlist || $status == ReservationStatus::Waitlist) {
+            $dataArray['waitlist'] = 'y';
         }
 
         return $dataArray;
@@ -736,38 +730,6 @@ class ReservationSvcs {
 
     }
 
-//    public static function setNewRoom(\PDO $dbh, $idResv, $idResc, $isAuthorized) {
-//
-//        $uS = Session::getInstance();
-//
-//        if ($idResv < 1) {
-//            return array('error'=>'Reservation Id is not set.');
-//        }
-//
-//        $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
-//
-//        if ($isAuthorized) {
-//            $resv->findGradedResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $resv->getNumberGuests(), array('room','rmtroom','part'), TRUE);
-//        } else {
-//            $resv->findResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $resv->getNumberGuests(), array('room','rmtroom','part'), TRUE);
-//        }
-//
-//        $dataArray['msg'] = self::processReservation($dbh, $resv, $idResc, $resv->getFixedRoomRate(), $resv->getNumberGuests(), $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $isAuthorized, $uS->username, $uS->InitResvStatus);
-//
-//        // New resservation lists
-//        if ($uS->Reservation) {
-//            $dataArray['reservs'] = 'y';
-//            $dataArray['waitlist'] = 'y';
-//
-//            if ($uS->ShowUncfrmdStatusTab) {
-//                $dataArray['unreserv'] = 'y';
-//            }
-//
-//        }
-//
-//        return $dataArray;
-//
-//    }
 
     public static function deleteReservation(\PDO $dbh, $rid) {
 

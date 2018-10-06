@@ -216,7 +216,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     hs.idAssociation,
     nd.Name_Full as `Name_Doctor`,
     nr.Name_Full as `Name_Agent`,
-    ifnull(gl.`Description`, '') as `Diagnosis`,
+    ifnull(gl.`Description`, hs.Diagnosis) as `Diagnosis`,
     ifnull(g2.`Description`, '') as `Location`,
     r.Timestamp as `Created_Date`
 from

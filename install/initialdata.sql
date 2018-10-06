@@ -495,7 +495,6 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('RegForm','1','i','h','1 = Registration form style 1, 2 = style 2'),
 ('RegFormNoRm', 'false', 'b', 'h','Do not show the room number on the registration form before check-in'),
 ('ResvEarlyArrDays', '2', 'i', 'h','# Days before reservation to show check-in button on reservation chooser'),
-('Reservation','true','b','h','Use reservations'),
 ('RoomPriceModel', 'd', 's', 'h','Room rate price model - Do not change!'),
 ('RoomsPerPatient', '2', 'i', 'h','# simultaneous rooms per patient allowed'),
 ('RoomRateDefault', 'e', 's', 'h', 'Default room rate category (a, b, c, d, e, f)'),

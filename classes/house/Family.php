@@ -16,6 +16,7 @@ class Family {
     protected $IncldEmContact;
     protected $patientAsGuest;
     protected $patientAddr;
+    protected $showGuestAddr;
     protected $showDemographics;
 
 
@@ -29,6 +30,7 @@ class Family {
 
         $this->patientAsGuest = $uS->PatientAsGuest;
         $this->patientAddr = $uS->PatientAddr;
+        $this->showGuestAddr = $uS->GuestAddr;
         $this->showDemographics = $uS->ShowDemographics;
 
         // Prefix
@@ -277,16 +279,28 @@ class Family {
                     . HTMLTable::makeTd($removeIcons));
 
 
-            if ($this->IncldEmContact) {
-                // Emergency Contact
-                $demoMu = $this->getEmergencyConntactMu($dbh, $role);
-            } else if ($this->showDemographics) {
-                // Demographics
-                $demoMu = $this->getDemographicsMarkup($dbh, $role);
+            // Decide if we show the address lin.
+            if ($role->getIdName() > 0 && $role->getIdName() == $this->getPatientId()) {
+                $shoAddr = $this->patientAddr;
+            } else {
+                $shoAddr = $this->showGuestAddr;
             }
 
-            // Add addresses and demo's
-            $addressTr = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>'hhk-addrRow'));
+            if ($shoAddr) {
+
+                if ($this->IncldEmContact) {
+                    // Emergency Contact
+                    $demoMu = $this->getEmergencyConntactMu($dbh, $role);
+                }
+
+                if ($this->showDemographics) {
+                    // Demographics
+                    $demoMu = $this->getDemographicsMarkup($dbh, $role);
+                }
+
+                // Add addresses and demo's
+                $addressTr = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('class'=>'hhk-addrRow'));
+            }
 
             $mem = $rData->getPsgMember($prefix)->toArray();
             $adr = $this->getAddresses(array($role));
@@ -351,8 +365,6 @@ class Family {
         foreach ($this->roleObjs as $role) {
 
             $idPrefix = $role->getRoleMember()->getIdPrefix();
-            $demoMu = '';
-
 
             if ($rData->getPsgMember($idPrefix)->isPrimaryGuest()) {
                 $familyName = $role->getRoleMember()->get_lastName();
@@ -376,25 +388,33 @@ class Family {
                     , array('class'=>'ui-state-default ui-corner-all hhk-removeBtn', 'style'=>'float:right;', 'data-prefix'=>$idPrefix, 'title'=>'Remove guest'))
                 , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'));
 
-
+            // Guest Name row.
             $trs[] = HTMLContainer::generateMarkup('tr',
                     $role->createThinMarkup($rData->getPsgMember($idPrefix), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
                     . ($role->getIdName() == 0 ? HTMLTable::makeTd($removeIcons) : '')
                     , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
 
 
-            if ($this->IncldEmContact) {
-                // Emergency Contact
-                $demoMu = $this->getEmergencyConntactMu($dbh, $role);
-            } else if ($this->showDemographics) {
-                // Demographics
-                $demoMu = $this->getDemographicsMarkup($dbh, $role);
-            }
-
-
             // Add addresses and demo's
-            $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
+            if ($this->showGuestAddr) {
 
+                $demoMu = '';
+
+                if ($this->IncldEmContact) {
+                    // Emergency Contact
+                    $demoMu .= $this->getEmergencyConntactMu($dbh, $role);
+                }
+
+                if ($this->showDemographics) {
+                    // Demographics
+                    $demoMu .= $this->getDemographicsMarkup($dbh, $role);
+                }
+
+                $trs[] = HTMLContainer::generateMarkup('tr',
+                    HTMLTable::makeTd('')
+                    . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11'))
+                    , array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
+            }
         }
 
         // Guest search
@@ -594,17 +614,26 @@ class FamilyAddGuest extends Family {
                     , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
 
 
-            if ($this->IncldEmContact) {
-                // Emergency Contact
-                $demoMu = $this->getEmergencyConntactMu($dbh, $role);
-            } else if ($this->showDemographics) {
-                // Demographics
-                $demoMu = $this->getDemographicsMarkup($dbh, $role);
-            }
-
-
             // Add addresses and demo's
-            $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
+            if ($this->showGuestAddr) {
+
+                $demoMu = '';
+
+                if ($this->IncldEmContact) {
+                    // Emergency Contact
+                    $demoMu .= $this->getEmergencyConntactMu($dbh, $role);
+                }
+
+                if ($this->showDemographics) {
+                    // Demographics
+                    $demoMu .= $this->getDemographicsMarkup($dbh, $role);
+                }
+
+                $trs[] = HTMLContainer::generateMarkup('tr',
+                    HTMLTable::makeTd('')
+                    . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11'))
+                    , array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
+            }
 
         }
 

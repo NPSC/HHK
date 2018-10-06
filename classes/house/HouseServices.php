@@ -401,10 +401,22 @@ class HouseServices {
                             $coDate = filter_var($post['stayCkOutDate'][$id], FILTER_SANITIZE_STRING);
                         }
 
-                        $cDT = setTimeZone($uS, $coDate);
-                        $dt = $cDT->format('Y-m-d');
-                        $now = date('H:i:s');
-                        $coDT = new \DateTime($dt . ' ' . $now);
+                        $coHour = intval(date('H'), 10);
+                        $coMin = intval(date('i'), 10);
+
+                        if (isset($post['stayCkOutHour'][$id]) && $post['stayCkOutHour'][$id] != '') {
+                            $coHour = intval(filter_var($post['stayCkOutHour'][$id], FILTER_SANITIZE_NUMBER_INT), 10);
+
+                            if ($coHour < 0) {
+                                $coHour = 0;
+                            } else if ($coHour > 23) {
+                                $coHour = 23;
+                            }
+                        }
+
+                        $coDT = setTimeZone($uS, $coDate);
+
+                        $coDT->setTime($coHour, $coMin, 0);
 
                         $reply .= $visit->checkOutGuest($dbh, $id, $coDT->format('Y-m-d H:i:s'), '', TRUE);
                         $returnCkdIn = TRUE;
@@ -458,7 +470,7 @@ class HouseServices {
             $dataArray['curres'] = 'y';
         }
 
-        if ($returnReserv && $uS->Reservation) {
+        if ($returnReserv) {
             $dataArray['reservs'] = 'y';
             $dataArray['waitlist'] = 'y';
 
