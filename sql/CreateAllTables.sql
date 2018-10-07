@@ -255,6 +255,7 @@ CREATE TABLE `document` (
   `Abstract` TEXT NULL,
   `Doc` BLOB NULL,
   `Status` VARCHAR(5) NOT NULL,
+  `Created_By` VARCHAR(45) NOT NULL DEFAULT '',
   `Last_Updated` DATETIME NULL,
   `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
   `Timestamp` TIMESTAMP NOT NULL DEFAULT now(),

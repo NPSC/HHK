@@ -25,6 +25,7 @@ require (HOUSE . 'Room.php');
 require (CLASSES . 'HouseLog.php');
 require (CLASSES . 'Purchase/RoomRate.php');
 require (CLASSES . 'FinAssistance.php');
+require (CLASSES . 'Document.php');
 require (HOUSE . 'Resource.php');
 require (HOUSE . 'ResourceView.php');
 require (HOUSE . 'Attributes.php');
@@ -843,82 +844,6 @@ if (isset($_POST['btnItemSave'])) {
     }
 }
 
-// Get selected Editor Form text
-//if (isset($_POST['formEdit'])) {
-//
-//    $tabIndex = 6;
-//
-//    $cmd = filter_input(INPUT_POST, 'formEdit', FILTER_SANITIZE_STRING);
-//
-//    switch ($cmd) {
-//
-//        case 'getform':
-//
-//            $fn = filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_STRING);
-//
-//            if (!$fn || $fn == '') {
-//                exit(json_encode(array('warning'=>'The Form name is blank.')));
-//            }
-//
-//            $files = readGenLookupsPDO($dbh, 'Editable_Forms');
-//
-//            if (isset($files[$fn])) {
-//
-//                if (file_exists($fn)) {
-//                    exit(json_encode(array('title'=>$files[$fn][1], 'tx'=>file_get_contents($fn), 'jsn'=>file_get_contents($files[$fn][2]))));
-//                } else {
-//                    exit(json_encode(array('warning'=>'This Form is missing from the server library.')));
-//                }
-//
-//            } else {
-//                exit(json_encode(array('warning'=>'The Form name is not on the acceptable list.')));
-//            }
-//
-//            break;
-//
-//        case 'saveform':
-//
-//            $formEditorText = urldecode(filter_input(INPUT_POST, 'mu', FILTER_SANITIZE_STRING));
-//
-//            $feFileSelection = filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_STRING);
-//
-//            $files = readGenLookupsPDO($dbh, 'Editable_Forms');
-//
-//            if ($rteFileSelection == '') {
-//
-//                $rteMsg = 'Nothing saved. Select a Form to edit.';
-//
-//            } else if (isset($files[$rteFileSelection]) === FALSE) {
-//
-//                $rteMsg = 'Nothing saved. Form name not accepted. ';
-//
-//            } else if (file_exists($rteFileSelection) === FALSE) {
-//
-//                $rteMsg = 'Nothing saved. Form does not exist. ';
-//
-//            } else if ($formEditorText == '') {
-//
-//                $rteMsg = 'Nothing saved. Form text is blank.  ';
-//
-//            } else {
-//
-//                $rtn = file_put_contents($rteFileSelection, $formEditorText);
-//
-//                if ($rtn > 0) {
-//                    $rteMsg = "Success - $rtn bytes saved.";
-//
-//                } else {
-//                    $rteMsg = "Form Not Saved.";
-//                }
-//            }
-//
-//            exit(json_encode(array('response'=>$rteMsg)));
-//
-//            break;
-//    }
-//
-//    exit(json_encode(array('warning'=>'Unspecified')));
-//}
 
 if (isset($_POST['formEdit'])) {
 
@@ -930,25 +855,22 @@ if (isset($_POST['formEdit'])) {
 
        case 'getform':
 
-           $fn = filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_STRING);
+           $fn = intval(filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_NUMBER_INT), 10);
 
-           if (!$fn || $fn == '') {
-               exit(json_encode(array('warning'=>'The Form name is blank.')));
+           if (!$fn || $fn == '0') {
+               exit(json_encode(array('warning'=>'The Form id is blank.')));
            }
 
-           $files = readGenLookupsPDO($dbh, 'Editable_Forms');
+           $doc = new Document($dbh, $fn);
+           $rtn = array();
 
-           if (isset($files[$fn])) {
-
-               if (file_exists($fn)) {
-                   exit(json_encode(array('title'=>$files[$fn][1], 'tx'=>file_get_contents($fn), 'jsn'=>file_get_contents($files[$fn][2]))));
-               } else {
-                   exit(json_encode(array('warning'=>'This Form is missing from the server library.')));
-               }
-
+           if ($doc->isValid()) {
+               $rtn = array('title'=>$doc->getTitle(), 'tx'=>$doc->getDoc());
            } else {
-               exit(json_encode(array('warning'=>'The Form name is not on the acceptable list.')));
+               $rtn = array('warning'=>'The Form is not found.');
            }
+
+           exit(json_encode($rtn));
 
            break;
 
@@ -956,37 +878,23 @@ if (isset($_POST['formEdit'])) {
 
            $formEditorText = urldecode(filter_input(INPUT_POST, 'mu', FILTER_SANITIZE_STRING));
 
-           $feFileSelection = filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_STRING);
+           $fn = intval(filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_NUMBER_INT), 10);
 
-           $files = readGenLookupsPDO($dbh, 'Editable_Forms');
-
-           if ($rteFileSelection == '') {
-
-               $rteMsg = 'Nothing saved. Select a Form to edit.';
-
-           } else if (isset($files[$rteFileSelection]) === FALSE) {
-
-               $rteMsg = 'Nothing saved. Form name not accepted. ';
-
-           } else if (file_exists($rteFileSelection) === FALSE) {
-
-               $rteMsg = 'Nothing saved. Form does not exist. ';
-
-           } else if ($formEditorText == '') {
-
-               $rteMsg = 'Nothing saved. Form text is blank.  ';
-
-           } else {
-
-               $rtn = file_put_contents($rteFileSelection, $formEditorText);
-
-               if ($rtn > 0) {
-                   $rteMsg = "Success - $rtn bytes saved.";
-
-               } else {
-                   $rteMsg = "Form Not Saved.";
-               }
+           if (!$fn || $fn == '0') {
+               exit(json_encode(array('warning'=>'The Form id is blank.')));
            }
+
+            $doc = new Document($dbh, $fn);
+
+            $doc->setDoc($formEditorText);
+            $doc->save($dbh, $uS->username);
+
+            if ($doc->getIdDocument() > 0) {
+                $rteMsg = "Success - form saved.";
+
+            } else {
+                $rteMsg = "Form Not Saved.";
+            }
 
            exit(json_encode(array('response'=>$rteMsg)));
 
@@ -1312,7 +1220,7 @@ $constraintTable = $constraints->createConstraintTable($dbh);
 
 // Form editor
 $feSelectForm = HTMLSelector::generateMarkup(
-       HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Editable_Forms')), "", TRUE)
+       HTMLSelector::doOptionsMkup(ListDocuments::asLookups(ListDocuments::listHouseForms($dbh)), "", TRUE)
        , array('id'=>'frmEdSelect', 'name'=>'frmEdSelect'));
 
 
@@ -1452,6 +1360,8 @@ $resultMessage = $alertMsg->createMarkup();
     }
 
     var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
+    var documentId = 0;
+    var simplemde;
 
     function getRoomFees(cat) {
         if (cat != '' && cat != fixedRate) {
@@ -1684,7 +1594,7 @@ $resultMessage = $alertMsg->createMarkup();
         "use strict";
 
         var tabIndex = parseInt('<?php echo $tabIndex; ?>');
-        $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn').button();
+        $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn, #btnFormSave').button();
 
         $('#txtFaIncome, #txtFaSize').change(function () {
             var inc = $('#txtFaIncome').val().replace(',', ''),
@@ -1827,20 +1737,22 @@ $resultMessage = $alertMsg->createMarkup();
             $(this).val(parseInt(this.value));
         });
         $('#mainTabs').show();
-        
+
         // Form edit form select drives the whole process.
         $('#frmEdSelect').change(function () {
+
             $('#rteMsg').text('');
-			$(".editorContainer").find("*").not("textarea").remove();
-			$('#spnEditorTitle').text("");
-			
+            $(".editorContainer").find("*").not("textarea").remove();
+            $('#spnEditorTitle').text("");
+
             if ($(this).val() === '') {
                 $('#spnRteLoading').hide();
-                
+                documentId = 0;
                 $('#simpleMDEContainer').val("");
                 return;
             }
 
+            documentId = $(this).val();
             $('#spnRteLoading').show();
 
             $.post('ResourceBuilder.php', {formEdit:'getform', fn: $(this).val()}, function (rawData){
@@ -1856,29 +1768,56 @@ $resultMessage = $alertMsg->createMarkup();
 
                 if (data.gotopage) {
                     window.open(data.gotopage, '_self');
-				}
+		}
+
                 if (data.warning && data.warning !== '') {
+
                     $('#rteMsg').text(data.warning);
+
                 }else{
-	                var mdeContainer = $('#simpleMDEContainer');
-					var simplemde = null;
-					simplemde = new SimpleMDE({ 
-							element: mdeContainer[0],
-							initialValue: data.tx,
-							autoDownloadFontAwesome: false,
-							spellChecker: false,
-							hideIcons: [
-								"fullscreen", "side-by-side"
-							]
-						});
-	
-	                if (data.title) {
-	                    $('#spnEditorTitle').text('Editing ' + data.title);
-	                }
+
+	            var mdeContainer = $('#simpleMDEContainer');
+
+                    simplemde = new SimpleMDE({
+                                element: mdeContainer[0],
+                                initialValue: data.tx,
+                                autoDownloadFontAwesome: false,
+                                spellChecker: false,
+                                hideIcons: [
+                                        "fullscreen", "side-by-side"
+                                ]
+                         });
+
+                    if (data.title) {
+                        $('#spnEditorTitle').text('Editing ' + data.title);
+                    }
+
+                    // Form save button
+                    $('#btnFormSave').show().click(function () {
+                        // Save code here
+
+                        $.post('ResourceBuilder.php', {formEdit:'saveform', fn: documentId, mu: "text of form"}, function (rawData){
+                            try {
+                                var data = $.parseJSON(rawData);
+                            } catch (error) {
+                                alert('Server Error');
+                                return;
+                            }
+
+                            if (data.gotopage) {
+                                window.open(data.gotopage, '_self');
+                            }
+
+                            if (data.warning && data.warning !== '') {
+                                $('#rteMsg').text(data.warning);
+                            }else{
+                                // I'm Saved!!
+                            }
+                        });
+                    });
                 }
             });
         });
-
     });
         </script>
     </head>
@@ -1969,6 +1908,7 @@ $resultMessage = $alertMsg->createMarkup();
                         </form>
                     </div>
                 </div>
+
                 <div id="rateTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <p style="padding:3px;background-color: #fff7db;">Make changes directly into the text boxes below and press 'Save'.</p>
                     <?php echo $rateTableErrorMessage; ?>
@@ -1979,6 +1919,7 @@ $resultMessage = $alertMsg->createMarkup();
                         <span style="margin:10px;float:right;"><input type="submit" id='btnkfSave' name="btnkfSave" value="Save"/></span>
                     </form>
                 </div>
+
                 <div id="hospTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <form method="POST" action="ResourceBuilder.php" name="formh">
 <?php echo $hospTable; ?>
@@ -1986,14 +1927,17 @@ $resultMessage = $alertMsg->createMarkup();
                         <span style="margin:10px;float:right;"><input type="submit" id='btnhSave' name="btnhSave" value="Save"/></span>
                     </form>
                 </div>
+
                 <div id="agreeEdit" class="ui-tabs-hide" >
                     <p>Select the form to edit from the following list: <?php echo $feSelectForm; ?></p><p id="spnRteLoading" style="font-style: italic; display:none;">Loading...</p>
                     <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
                     <h3 id="spnEditorTitle"></h3>
                     <div class="editorContainer">
                     	<textarea id="simpleMDEContainer" style="display:none;"></textarea>
-                    </div>
+                    </div><div style="clear:both"></div>
+                    <span style="margin:10px;float:right;"><input type="button" id='btnFormSave' style="display:none;" value="Save Form"/></span>
                 </div>
+
                 <div id="itemTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <form method="POST" action="ResourceBuilder.php" name="formitem">
 <?php echo $itemTable; ?>
@@ -2001,6 +1945,7 @@ $resultMessage = $alertMsg->createMarkup();
                         <span style="margin:10px;float:right;"><input type="submit" id='btnItemSave' name="btnItemSave" value="Save"/></span>
                     </form>
                 </div>
+
                 <div id="attrTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <form method="POST" action="ResourceBuilder.php" name="format">
 <?php echo $attrTable; ?>
@@ -2008,6 +1953,7 @@ $resultMessage = $alertMsg->createMarkup();
                         <span style="margin:10px;float:right;"><input type="submit" id='btnAttrSave' name="btnAttrSave" value="Save"/></span>
                     </form>
                 </div>
+
                 <div id="constr" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                         <?php echo $constraintTable; ?>
                 </div>
