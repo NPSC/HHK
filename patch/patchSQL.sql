@@ -26,14 +26,15 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VAL
 update sys_config set `Value` = '16', `Type` = 'i' where `Key` = 'CheckInTime';
 update sys_config set `Value` = '10', `Type` = 'i' where `Key` = 'CheckOutTime';
 
+update page set `File_Name` = 'Reserve.php' where `File_Name` = 'Referral.php';
+
+
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CalRescColWidth', '8%', 's', 'h', 'The width of the rooms column on the calendar page as percent of the overall width.');
+
 
 -- Add pages, one call for each security group.
 call new_webpage('ws_resv.php', 31, '', 0, 'h', '', '', 's', '', 'admin', now(), 'g', @pageId);
 call new_webpage('ws_resv.php', 31, '', 0, 'h', '', '', 's', '', 'admin', now(), 'ga', @pageId);
 
-update page set `File_Name` = 'Reserve.php' where `File_Name` = 'Referral.php';
-
-
--- new values
-
-INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CalRescColWidth', '8%', 's', 'h', 'The width of the rooms column on the calendar page as percent of the overall width.');
+call new_webpage('CheckingIn.php', 31, 'Checking In', 0, 'h', '', '', 'p', '', 'admin', now(), 'g', @pageId);
+call new_webpage('CheckingIn.php', 31, 'Checking In', 0, 'h', '', '', 'p', '', 'admin', now(), 'ga', @pageId);
