@@ -232,9 +232,9 @@ function resvManager(initData) {
                 }
             });
 
-            if (msg) {
-                return 'Indicated phone numbers are invalid.  ';
-            }
+//            if (msg) {
+//                return 'Indicated phone numbers are invalid.  ';
+//            }
 
             return '';
 
