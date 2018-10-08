@@ -695,7 +695,7 @@ REPLACE INTO `secondary_unit_desig` (`Common`,`Standard`,`Range_Required`,`Title
 -- ;
 
 
-REPLACE INTO Document (`idDocument`, `Title`, `Abstract`, `Category`, `Type`, `Doc`, `Status`, `Last_Updated`, `Created_By`) VALUES
+REPLACE INTO document (`idDocument`, `Title`, `Abstract`, `Category`, `Type`, `Doc`, `Status`, `Last_Updated`, `Created_By`) VALUES
 (1, 'Registration Document', '', 'form', 'md', 'The (House Name) is a not-for-profit healthcare hospitality house. The Guest House is strictly a lodging facility for referred patients that are actively receiving care at our partner institutions and their families/friends.', 'a', NOW(), 'admin'),
 (2, 'Confirmation Document', '', 'form', 'md', 'Dear ${GuestName}:Thank you for your reservation. This is a confirmation for the following dates: ${ExpectedArrival} until ${ExpectedDeparture} for ${Nites} nights for an estimated $${Amount}.  ${VisitFeeNotice}', 'a', NOW(), 'admin'),
 (3, 'Survey Document', '', 'form', 'md', 'Dear ${FirstName},', 'a', NOW(), 'admin');

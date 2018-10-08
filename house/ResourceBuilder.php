@@ -896,7 +896,7 @@ if (isset($_POST['formEdit'])) {
                 $rteMsg = "Form Not Saved.";
             }
 
-           exit(json_encode(array('response'=>$rteMsg)));
+           exit(json_encode(array('response'=>$rteMsg, 'idDocument'=>$doc->getIdDocument())));
 
            break;
    }
@@ -1785,7 +1785,8 @@ $resultMessage = $alertMsg->createMarkup();
                                 spellChecker: false,
                                 hideIcons: [
                                         "fullscreen", "side-by-side"
-                                ]
+                                ],
+                                status: false
                          });
 
                     if (data.title) {
@@ -1796,11 +1797,11 @@ $resultMessage = $alertMsg->createMarkup();
                     $('#btnFormSave').show().click(function () {
                         // Save code here
 
-                        $.post('ResourceBuilder.php', {formEdit:'saveform', fn: documentId, mu: "text of form"}, function (rawData){
+                        $.post('ResourceBuilder.php', {formEdit:'saveform', fn: documentId, mu: simplemde.value() }, function (rawData){
                             try {
                                 var data = $.parseJSON(rawData);
                             } catch (error) {
-                                alert('Server Error');
+                                flagAlertMessage("Server error, true);
                                 return;
                             }
 
@@ -1809,9 +1810,11 @@ $resultMessage = $alertMsg->createMarkup();
                             }
 
                             if (data.warning && data.warning !== '') {
-                                $('#rteMsg').text(data.warning);
+                                flagAlertMessage(data.warning, true);
                             }else{
-                                // I'm Saved!!
+                                flagAlertMessage(data.response, 'success');
+                                $('#frmEdSelect option[value="' + documentId + '"]').val(data.idDocument);
+                                console.log(data);
                             }
                         });
                     });

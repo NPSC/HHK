@@ -291,8 +291,8 @@ class ListDocuments {
 
         $docs = array();
 
-        $stmt = $dbh->query("SELECT `idDocument`, `Title`, max(Last_Updated) from `document` where `Category` = 'form' and `Type` = 'md'"
-                . " group by idDocument having max(Last_Updated);");
+        $stmt = $dbh->query("SELECT `idDocument`, `Title`, Last_Updated from `document` where `Category` = 'form' and `Type` = 'md' and `Status` = 'a';");
+
 
         If ($stmt->rowCount() > 0) {
             $docs = $stmt->fetchAll(PDO::FETCH_ASSOC);

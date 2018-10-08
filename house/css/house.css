@@ -383,3 +383,8 @@ li.hhk-myMenuTop {
     float: left;
     margin: 0 4px;
 }
+
+.editor-preview *{
+	margin: inherit;
+	padding: inherit;
+}
