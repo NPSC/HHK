@@ -1418,6 +1418,12 @@ $roomGroupMarkup = $filter->resourceGroupsMarkup()->generateMarkup(array('style'
 
 $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;'));
 
+$dateFormat = $labels->getString("momentFormats", "report", "MMM D, YYYY");
+
+if ($uS->CoTod) {
+    $dateFormat .= ' H:mm';
+}
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -1449,13 +1455,16 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
 <script type="text/javascript">
     var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
     $(document).ready(function() {
-        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
+        var dateFormat = '<?php echo $dateFormat; ?>';
         var makeTable = '<?php echo $mkTable; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
         var pmtMkup = "<?php echo $paymentMarkup; ?>";
         var rctMkup = '<?php echo $receiptMarkup; ?>';
         var payFailPage = '<?php echo $payFailPage; ?>';
+
         <?php echo $filter->getTimePeriodScript(); ?>;
+
+
         $('#btnHere, #btnExcel, #btnStatsOnly, #cbColClearAll, #cbColSelAll').button();
         $('#btnHere, #btnExcel').click(function () {
             $('#paymentMessage').hide();

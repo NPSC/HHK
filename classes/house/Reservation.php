@@ -938,7 +938,7 @@ where rg.idReservation =" . $r['idReservation']);
 
         $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
-        if (count($rows > 0)) {
+        if (count($rows) > 0) {
 
             $oldResvId = $rows[0][0];
 

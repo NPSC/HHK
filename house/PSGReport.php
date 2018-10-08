@@ -237,13 +237,13 @@ where  ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DATE(s.Sp
             $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
 
             if (isset($r['Birth Date']) && $r['Birth Date'] != '') {
-                $r['Birth Date'] = date('Y/m/d', strtotime($r['Birth Date']));
+                $r['Birth Date'] = date('n/d/Y', strtotime($r['Birth Date']));
             }
             if ($r['Arrival'] != '') {
-                $r['Arrival'] = date('Y/m/d', strtotime($r['Arrival']));
+                $r['Arrival'] = date('n/d/Y', strtotime($r['Arrival']));
             }
             if ($r['Departure'] != '') {
-                $r['Departure'] = date('Y/m/d', strtotime($r['Departure']));
+                $r['Departure'] = date('n/d/Y', strtotime($r['Departure']));
             }
             unset($r['idPsg']);
 
@@ -1012,6 +1012,12 @@ $coAttr['class'] = 'input-medium bfh-countries psgsel';
 $coAttr['data-country'] = $countrySelection;
 
 $selCountry = HTMLSelector::generateMarkup('', $coAttr);
+
+$dateFormat = $labels->getString("momentFormats", "report", "MMM D, YYYY");
+
+if ($uS->CoTod) {
+    $dateFormat .= ' H:mm';
+}
 
 
 ?>
