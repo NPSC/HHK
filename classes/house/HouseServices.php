@@ -1406,7 +1406,7 @@ class HouseServices {
      */
     public static function verifyStayDates(array $guests, \DateTime $chkinDT, \DateTime $chkoutDT) {
 
-        if (count($guests == 0)) {
+        if (count($guests) == 0) {
             return;
         }
 

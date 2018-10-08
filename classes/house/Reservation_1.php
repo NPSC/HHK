@@ -1339,7 +1339,7 @@ where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdRe
             $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
             $this->numGuests = 0;
 
-            if (count($rows > 0)) {
+            if (count($rows) > 0) {
                 $this->numGuests = $rows[0][0];
             }
         }

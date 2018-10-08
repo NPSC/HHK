@@ -365,7 +365,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 {data: 'Guest First', title: 'Guest First'},
                 {data: 'Guest Last', title: 'Guest Last'},
                 <?php if ($uS->ShowCreatedDate) { ?>
-                {data: 'Timestamp', title: 'Created On', render: function (data, type) {return dateRender(data, type, dateFormat);}},
+                {data: 'Timestamp', title: 'Created On', render: function (data, type) {return dateRender(data, type, "MMM D, YYYY H:mm");}},
                 <?php } ?>
                 {data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type, dateFormat);}},
                 {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},

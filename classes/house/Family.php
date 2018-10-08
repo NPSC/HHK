@@ -263,6 +263,7 @@ class Family {
         foreach ($this->roleObjs as $prefix => $role) {
 
             $demoMu = '';
+            $addressTr = '';
 
             if ($role->getIdName() != $rData->getId()) {
                 continue;
@@ -281,7 +282,7 @@ class Family {
 
             // Decide if we show the address lin.
             if ($role->getIdName() > 0 && $role->getIdName() == $this->getPatientId()) {
-                $shoAddr = $this->patientAddr;
+                $shoAddr = $this->patientAddr || ($this->patientAsGuest && $this->showGuestAddr);
             } else {
                 $shoAddr = $this->showGuestAddr;
             }
@@ -334,8 +335,8 @@ class Family {
                 . RoleMember::createThinMarkupHdr($rData->getPatLabel(), FALSE, $rData->getShowBirthDate())
                 . HTMLTable::makeTh('Phone')
                 . HTMLTable::makeTh($AdrCopyDownIcon));
-
-
+        
+            
         // Put the patient first.
         if ($this->patientPrefix > 0) {
 
@@ -347,7 +348,7 @@ class Family {
                     $role->createThinMarkup($rData->getPsgMember($idPrefix), TRUE)
                     , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
 
-            if ($this->patientAddr || $this->patientAsGuest) {
+            if ($this->patientAddr || ($this->patientAsGuest && $this->showGuestAddr)) {
 
                 if ($this->IncldEmContact) {
                     // Emergency Contact
@@ -564,12 +565,14 @@ class FamilyAddGuest extends Family {
                     $role->createThinMarkup($rData->getPsgMember($idPrefix), TRUE)
                     , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
 
-            if ($this->patientAddr || $this->patientAsGuest) {
+            if ($this->patientAddr || ($this->patientAsGuest && $this->showGuestAddr)) {
 
                 if ($this->IncldEmContact) {
                     // Emergency Contact
                     $demoMu = $this->getEmergencyConntactMu($dbh, $role);
-                } else if ($this->showDemographics) {
+                }
+                
+                if ($this->showDemographics) {
                     // Demographics
                     $demoMu = $this->getDemographicsMarkup($dbh, $role);
                 }

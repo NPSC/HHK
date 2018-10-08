@@ -536,7 +536,7 @@ p.label {
         // Get constraints
         $constraints = new ConstraintsVisit($dbh, $idReservation, 0);
 
-        if(count($constraints) > 0) {
+        if(count($constraints->getConstraints()) > 0) {
             $constrs = array();
 
             foreach ($constraints->getConstraints() as $c) {

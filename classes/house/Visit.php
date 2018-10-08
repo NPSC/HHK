@@ -662,12 +662,18 @@ class Visit {
 
             if ($stayStartDT == $visitSpanStartDT) {
                 // Special case - just update the span id and status
-                $stayRS->Visit_Span->setNewVal($this->visitRS->Span->getStoredVal());
+                
+                $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants);
+                if (is_null($rm)) {
+                    throw new Hk_Exception_Runtime('Room is full.  ');
+                }
 
                 if ($stayRS->Status->getStoredVal() != VisitStatus::CheckedOut) {
                     $stayRS->Status->setNewVal($this->visitRS->Status->getStoredVal());
                 }
 
+                $stayRS->Visit_Span->setNewVal($this->visitRS->Span->getStoredVal());
+                $stayRS->idRoom->setNewVal($rm->getIdRoom());
                 $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
                 $stayRS->Updated_By->setNewVal($uname);
 

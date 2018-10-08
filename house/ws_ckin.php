@@ -92,7 +92,7 @@ require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Vehicle.php');
 require (HOUSE . 'Visit.php');
 require (HOUSE . "visitViewer.php");
-require (HOUSE . 'Register.php');
+
 require (HOUSE . 'VisitCharges.php');
 
 

@@ -245,25 +245,6 @@ CREATE TABLE if not exists `desig_holidays` (
 
 
 -- -----------------------------------------------------
--- Table `document`
--- -----------------------------------------------------
-CREATE TABLE `document` (
-  `idDocument` INT NOT NULL AUTO_INCREMENT,
-  `Title` VARCHAR(128) NOT NULL,
-  `Category` VARCHAR(5) NOT NULL DEFAULT '',
-  `Type` VARCHAR(5) NOT NULL DEFAULT '',
-  `Abstract` TEXT NULL,
-  `Doc` BLOB NULL,
-  `Status` VARCHAR(5) NOT NULL,
-  `Last_Updated` DATETIME NULL,
-  `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
-  `Timestamp` TIMESTAMP NOT NULL DEFAULT now(),
-  PRIMARY KEY (`idDocument`))
-ENGINE = MyISAM;
-
-
-
--- -----------------------------------------------------
 -- Table `donations`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `donations` (
