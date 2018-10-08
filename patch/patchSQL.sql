@@ -16,6 +16,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Room_Group', 'Category', 'Room Category', 'Room_Category','',0), 
 ('Room_Group', 'Report_Category', 'Report Category', 'Room_Rpt_Cat','',0);
 
+UPDATE `gen_lookups` set `Code` = 'reg' where `Code` = '../conf/agreement.txt';
+UPDATE `gen_lookups` set `Code` = 'conf' where `Code` = '../conf/confirmation.txt';
+UPDATE `gen_lookups` set `Code` = 'survey' where `Code` = '../conf/survey.txt';
+
 
 DELETE FROM `gen_lookups` WHERE `Table_Name`='WL_Final_Status';
 DELETE FROM `gen_lookups` WHERE `Table_Name`='WL_Status';

@@ -56,6 +56,12 @@ class Default_Settings {
     const Fixed_Rate_Category = 'f';
 }
 
+class Editable_Forms {
+	const Registration = "reg";
+	const Confirmation = "conf";
+	const Survey = "survey";
+}
+
 class Email_Purpose {
     const Home = '1';
     const Work = '2';

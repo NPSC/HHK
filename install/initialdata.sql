@@ -84,9 +84,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Dormant_Selector_Code','both','Dormant & Active','','',0),
 ('Dormant_Selector_Code','dor','Dormant Only','','',0),
 
-('Editable_Forms', '../conf/agreement.txt', 'Registration Agreement','js/rte-agreement.json','',0),
-('Editable_Forms', '../conf/confirmation.txt', 'Confirmation Form','js/rte-confirmation.json','',0),
-('Editable_Forms', '../conf/survey.txt', 'Survey Form','js/rte-survey.json','',0),
+('Editable_Forms', 'reg', 'Registration Agreement','js/rte-agreement.json','',0),
+('Editable_Forms', 'conf', 'Confirmation Form','js/rte-confirmation.json','',0),
+('Editable_Forms', 'survey', 'Survey Form','js/rte-survey.json','',0),
 ('Editable_Forms', '../conf/permission.txt', 'Permission Form','js/rte-permission.json','',0),
 
 ('Education_Level','01','Highschool','','d',0),

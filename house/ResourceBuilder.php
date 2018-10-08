@@ -1801,7 +1801,7 @@ $resultMessage = $alertMsg->createMarkup();
                             try {
                                 var data = $.parseJSON(rawData);
                             } catch (error) {
-                                flagAlertMessage("Server error, true);
+                                flagAlertMessage("Server error", true);
                                 return;
                             }
 

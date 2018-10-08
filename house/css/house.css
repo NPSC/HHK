@@ -384,7 +384,8 @@ li.hhk-myMenuTop {
     margin: 0 4px;
 }
 
-.editor-preview *{
-	margin: inherit;
-	padding: inherit;
+.editor-preview ul, .hhk-agreement ul {
+	padding-left: 2em;
+	padding-top: 0.5em;
+	padding-bottom: 0.5em;
 }

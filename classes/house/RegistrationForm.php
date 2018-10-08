@@ -163,12 +163,27 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
     }
 
     public function makeInstructions ($instructionFileName) {
-
+/*
+		
         if ($instructionFileName != '' && file_exists($instructionFileName)) {
             $text = file_get_contents($instructionFileName);
         } else {
             $text = HTMLContainer::generateMarkup('p', 'Agreement text file is missing.', array('class'=>'ui-state-error'));
         }
+*/
+
+		$stmt = $dbh->query("SELECT `Doc` from `document` where `Title` = 'Registration Document' AND `Category` = 'form' AND `type` = 'md' AND `Status` = 'a' limit 1");
+		if ($stmt->rowCount() == 1) {
+            $doc = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $agreementTxt = $doc[0]['Doc'];
+        }
+        
+		if($agreementMd){
+			$Parsedown = new Parsedown();
+			$text = $Parsedown->text($agreementMd);
+		}else{
+			$text = HTMLContainer::generateMarkup('p', 'Agreement text file is missing.', array('class'=>'ui-state-error'));
+		}
 
         return '<div style="margin-top:10px;">' . $text . '</div>';
 

@@ -50,6 +50,8 @@ require (HOUSE . 'Attributes.php');
 require (HOUSE . 'Constraint.php');
 require (HOUSE . 'Vehicle.php');
 
+require (CLASSES . 'Parsedown.php');
+
 function getVisitFromGuest(\PDO $dbh, $guestId) {
 
     $stmt = $dbh->prepare("Select idVisit from stays where `Status` = :stat and idName = :id");
