@@ -604,8 +604,10 @@ class PaymentSvcs {
         return $rtnResult;
     }
 
-    public static function voidFees(\PDO $dbh, $idPayment, $bid, $paymentNotes = '') {
+    public static function voidFees(\PDO $dbh, $idPayment, $bid, $postbackUrl, $paymentNotes = '') {
 
+        $uS = Session::getInstance();
+        
         if ($idPayment < 1) {
             return array('warning' => 'Payment record Id not defined.  ', 'bid' => $bid);
         }
@@ -632,34 +634,10 @@ class PaymentSvcs {
             return array('warning' => 'Use Return instead.  ', 'bid' => $bid);
         }
 
-
-        // find the token record
-        if ($payRs->idToken->getStoredVal() > 0) {
-            $tknRs = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
-        } else {
-            return array('warning' => 'Payment Token Id not found.  Unable to Void this purchase.  ', 'bid' => $bid);
-        }
-
-        if (CreditToken::hasToken($tknRs) === FALSE) {
-            return array('warning' => 'Payment Token not found.  Unable to Void this purchase.  ', 'bid' => $bid);
-        }
-
-        // Find hte detail record.
-        $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
-        $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($arows) < 1) {
-            return array('warning' => 'Payment Detail record not found.  Unable to Void this purchase. ', 'bid' => $bid);
-        }
-
-        $pAuthRs = new Payment_AuthRS();
-        EditRS::loadRow(array_pop($arows), $pAuthRs);
-
-        if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid || $pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::VoidReturn) {
-            return self::sendVoid($dbh, $payRs, $pAuthRs, $tknRs, $invoice, $paymentNotes);
-        }
-
-        return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
+        // Load gateway
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+        
+        return $gateway->voidSale($dbh, $invoice, $payRs, $paymentNotes, $bid);
 
     }
 
@@ -1199,71 +1177,6 @@ class PaymentSvcs {
         }
 
         return $payResult;
-    }
-
-    protected static function sendVoid(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Guest_TokenRS $tknRs, Invoice $invoice, $paymentNotes = '') {
-
-        $uS = Session::getInstance();
-        $dataArray = array();
-
-        // Set up request
-        $voidRequest = new CreditVoidSaleTokenRequest();
-        $voidRequest->setAuthCode($pAuthRs->Approval_Code->getStoredVal());
-        $voidRequest->setCardHolderName($tknRs->CardHolderName->getStoredVal());
-        $voidRequest->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion);
-        $voidRequest->setInvoice($invoice->getInvoiceNumber());
-        $voidRequest->setPurchaseAmount($pAuthRs->Approved_Amount->getStoredVal());
-        $voidRequest->setRefNo($pAuthRs->Reference_Num->getStoredVal());
-        $voidRequest->setToken($tknRs->Token->getStoredVal());
-        $voidRequest->setTokenId($tknRs->idGuest_token->getStoredVal());
-
-        try {
-
-            $csResp = TokenTX::creditVoidSaleToken($dbh, $payRs->idPayor->getstoredVal(), $uS->ccgw, $voidRequest, $payRs, $paymentNotes);
-
-            switch ($csResp->response->getStatus()) {
-
-                case MpStatusValues::Approved:
-
-                    // Update invoice
-                    $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizeAmount(), $uS->username);
-
-                    $csResp->idVisit = $invoice->getOrderNumber();
-                    $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
-                    $dataArray['success'] = 'Payment is void.  ';
-
-                    break;
-
-                case MpStatusValues::Declined:
-
-                    if (strtoupper($csResp->response->getMessage()) == 'ITEM VOIDED') {
-
-                        // Update invoice
-                        $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizeAmount(), $uS->username);
-
-                        $csResp->idVisit = $invoice->getOrderNumber();
-                        $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
-                        $dataArray['success'] = 'Payment is void.  ';
-
-                    } else {
-
-                        $dataArray['warning'] = $csResp->response->getMessage();
-                    }
-
-                    break;
-
-                default:
-
-                    $dataArray['warning'] = '** Void Invalid or Error. **  ' . 'Message: ' . $csResp->response->getMessage();
-
-            }
-
-        } catch (Hk_Exception_Payment $exPay) {
-
-            $dataArray['warning'] =  "Void Error = " . $exPay->getMessage();
-        }
-
-        return $dataArray;
     }
 
     public static function getInfoFromCardId(\PDO $dbh, $cardId) {
