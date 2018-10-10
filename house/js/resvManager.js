@@ -15,6 +15,8 @@ function resvManager(initData) {
     var idPsg = initData.idPsg;
     var idResv = initData.rid;
     var idName = initData.id;
+    var idVisit = initData.vid;
+    var span = initData.span;
     var rooms = [];
 
     var people = new Items();
@@ -36,6 +38,8 @@ function resvManager(initData) {
     t.getIdPsg = getIdPsg;
     t.getIdResv = getIdResv;
     t.getIdName = getIdName;
+    t.getIdVisit = getIdVisit;
+    t.getSpan = getSpan;
     t.setRooms = setRooms;
 
     function setRooms($r) {
@@ -44,6 +48,14 @@ function resvManager(initData) {
 
     function getIdResv() {
         return idResv;
+    }
+
+    function getIdVisit() {
+        return idVisit;
+    }
+
+    function getSpan() {
+        return span;
     }
 
     function getIdPsg() {
@@ -1226,6 +1238,7 @@ function resvManager(initData) {
                 cmd:'updateAgenda', 
                 idPsg: idPsg,
                 idResv: idResv,
+                idVisit: idVisit,
                 dt1:dates["date1"].toUTCString(), 
                 dt2:dates["date2"].toUTCString(), 
                 mems:people.list()};
@@ -1782,9 +1795,6 @@ function resvManager(initData) {
                             t.checkPayments = false;
                         }
 
-                    } else {
-                        $(this).val(t.origRoomId);
-                        flagAlertMessage('Set the arrival and departure dates before selecting a new room. ', 'alert');
                     }
                 });
                 
@@ -2045,6 +2055,8 @@ function resvManager(initData) {
             id:sdata.id, 
             rid:sdata.rid, 
             idPsg:sdata.idPsg,
+            vid:sdata.vid,
+            span:sdata.span,
             isCheckin: isCheckin,
             cmd:sdata.cmd};
 
@@ -2132,6 +2144,12 @@ function resvManager(initData) {
         if (data.rid) {
             idResv = data.rid;
         }
+        if (data.vid) {
+            idVisit = data.vid;
+        }
+        if (data.span) {
+            span = data.span;
+        }
 
         // Hospital
         if (data.hosp !== undefined) {
@@ -2210,7 +2228,11 @@ function resvManager(initData) {
             
             $('.hhk-cbStay').change();
 
-            $('#btnDone').val(saveButtonLabel).show();
+            if (data.resv.rdiv.hideCkinBtn !== undefined && data.resv.rdiv.hideCkinBtn) {
+                $('#btnDone').hide();
+            } else {
+                $('#btnDone').val(saveButtonLabel).show();
+            }
 
             if (data.rid > 0) {
                 $('#btnDelete').val('Delete ' + resvTitle).show();

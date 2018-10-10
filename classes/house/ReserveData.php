@@ -45,6 +45,7 @@ class ReserveData {
     protected $idPsg = 0;
     protected $idHospitalStay = 0;
     protected $idVisit;
+    protected $span;
     protected $forceNewPsg = FALSE;
     protected $forceNewResv = FALSE;
     protected $fullName = '';
@@ -82,6 +83,14 @@ class ReserveData {
 
         if (isset($post['rid'])) {
             $this->setIdResv(intval(filter_var($post['rid'], FILTER_SANITIZE_NUMBER_INT), 10));
+        }
+
+        if (isset($post['vid'])) {
+            $this->setIdVisit(intval(filter_var($post['vid'], FILTER_SANITIZE_NUMBER_INT), 10));
+        }
+
+        if (isset($post['span'])) {
+            $this->setSpan(intval(filter_var($post['span'], FILTER_SANITIZE_NUMBER_INT), 10));
         }
 
         if (isset($post['id'])) {
@@ -190,6 +199,8 @@ class ReserveData {
             'id' => $this->getId(),
             'rid' => $this->getIdResv(),
             'idPsg' => $this->getIdPsg(),
+            'vid' => $this->getIdVisit(),
+            'span'=> $this->getSpan(),
             'patLabel' => $this->getPatLabel(),
             'resvTitle' => $this->getResvTitle(),
             'saveButtonLabel' => $this->saveButtonLabel,
@@ -256,6 +267,10 @@ class ReserveData {
 
     public function getIdVisit() {
         return $this->idVisit;
+    }
+
+    public function getSpan() {
+        return $this->span;
     }
 
     public function getConcurrentRooms() {
@@ -424,6 +439,11 @@ class ReserveData {
 
     public function setIdVisit($id) {
         $this->idVisit = $id;
+        return $this;
+    }
+
+    public function setSpan($id) {
+        $this->span = $id;
         return $this;
     }
 

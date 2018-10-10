@@ -783,9 +783,9 @@ class Visit {
 
         // Check out
         $stayRS->Status->setNewVal(VisitStatus::CheckedOut);
-        $stayRS->Checkout_Date->setNewVal($dateDepartedDT->format("Y-m-d H:i:s"));
-        $stayRS->Span_End_Date->setNewVal($dateDepartedDT->format("Y-m-d H:i:s"));
-        $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+        $stayRS->Checkout_Date->setNewVal($dateDepartedDT->format('Y-m-d H:i:s'));
+        $stayRS->Span_End_Date->setNewVal($dateDepartedDT->format('Y-m-d H:i:s'));
+        $stayRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
         $stayRS->Updated_By->setNewVal($uS->username);
 
         EditRS::update($dbh, $stayRS, array($stayRS->idStays));
@@ -794,6 +794,16 @@ class Visit {
         VisitLog::logStay($dbh, $stayRS->idVisit->getStoredVal(), $stayRS->Visit_Span->getStoredVal(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(), $idGuest, $this->visitRS->idRegistration->getStoredVal(), $logText, "update", $uS->username);
 
         EditRS::updateStoredVals($stayRS);
+
+
+//        // Update the visit expected departure
+//        $visitExpectedDepartDT = new \DateTime($this->getExpectedDeparture());
+//
+//        if ($dateDepartedDT > $visitExpectedDepartDT) {
+//
+//            $this->visitRS->Expected_Departure->setNewVal($dateDepartedDT->format('Y-m-d H:i:s'));
+//            $this->updateVisitRecord($dbh, $username);
+//        }
 
 
         $msg = $this->checkStaysEndVisit($dbh, $uS->username, $dateDepartedDT, $sendEmail);

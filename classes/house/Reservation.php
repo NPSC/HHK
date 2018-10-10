@@ -153,7 +153,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
     }
 
-    protected function createFamilyMarkup(\PDO $dbh, $arrivalDT = NULL, $departDT = NULL) {
+    protected function createFamilyMarkup(\PDO $dbh) {
 
         $this->family->setGuestsStaying($dbh, $this->reserveData, $this->reservRs->idGuest->getstoredVal());
 
@@ -161,13 +161,8 @@ WHERE r.idReservation = " . $rData->getIdResv());
         if ($this->reserveData->getIdResv() > 0) {
 
             try {
-                if ($arrivalDT == NULL) {
-                    $arrivalDT = new\DateTime($this->reservRs->Expected_Arrival->getStoredVal());
-                }
-
-                if ($departDT == NULL) {
-                    $departDT = new \DateTime($this->reservRs->Expected_Departure->getStoredVal());
-                }
+                $arrivalDT = new\DateTime($this->reservRs->Expected_Arrival->getStoredVal());
+                $departDT = new \DateTime($this->reservRs->Expected_Departure->getStoredVal());
 
                 $psgMembers = $this->reserveData->getPsgMembers();
 
@@ -298,6 +293,11 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             $labels = new Config_Lite(LABEL_FILE);
             $psgMembers = array();
+            $idVisit = 0;
+
+            if (isset($post['idVisit'])) {
+                $idVisit = intval(filter_var($post['idVisit'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
 
             $idPsg = intval(filter_var($post['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
             $idResv = intval(filter_var($post['idResv'], FILTER_SANITIZE_NUMBER_INT), 10);
@@ -337,7 +337,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             // Create new stay controls for each member
             self::findConflictingReservations($dbh, $idPsg, $idResv, $psgMembers, $arrivalDT, $departDT, $labels->getString('guestEdit', 'reservationTitle', 'Reservation'));
-            self::findConflictingStays($dbh, $psgMembers, $arrivalDT, $idPsg);
+            self::findConflictingStays($dbh, $psgMembers, $arrivalDT, $idPsg, $idVisit);
 
             $events = [];
 
@@ -688,7 +688,7 @@ where rg.idReservation =" . $r['idReservation']);
 
     }
 
-    protected static function findConflictingStays(\PDO $dbh, array &$psgMembers, \DateTime $arrivalDT, $idPsg) {
+    protected static function findConflictingStays(\PDO $dbh, array &$psgMembers, \DateTime $arrivalDT, $idPsg, $idVisit = 0) {
 
         $whStays = '';
         $rooms = array();
@@ -705,8 +705,13 @@ where rg.idReservation =" . $r['idReservation']);
 
             // Check ongoing visits
             $vstmt = $dbh->query("Select s.idName, s.idVisit, s.Visit_Span, s.idRoom, r.idPsg "
-                    . " from stays s join visit v on s.idVisit = v.idVisit join registration r on v.idRegistration = r.idRegistration "
-                    . " where s.`Status` = '" . VisitStatus::CheckedIn . "' and DATE(dateDefaultNow(s.Expected_Co_Date)) >= DATE('" . $arrivalDT->format('Y-m-d') . "') "
+                    . " from stays s join visit v on s.idVisit = v.idVisit AND s.Visit_Span = v.Span "
+                    . " join registration r on v.idRegistration = r.idRegistration "
+                    . " where v.`Status` = '" . VisitStatus::CheckedIn . "' "
+                    . " AND ("
+                            . " ( s.`Status` = '" . VisitStatus::CheckedIn . "' AND DATE(DATEDEFAULTNOW(s.Expected_Co_Date)) >= DATE('" . $arrivalDT->format('Y-m-d') . "') ) "
+                        . " OR "
+                            . " ( s.`Status` = '" . VisitStatus::CheckedOut . "' AND DATE(s.Checkout_Date) > DATE('" . $arrivalDT->format('Y-m-d') . "') )) "
                     . " and s.idName in (" . substr($whStays, 1) . ")");
 
             while ($s = $vstmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -714,7 +719,12 @@ where rg.idReservation =" . $r['idReservation']);
 
                 foreach ($psgMembers as $m) {
                     if ($m->getId() == $s['idName']) {
-                        $psgMembers[$m->getPrefix()]->setStayObj(new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'])));
+
+                        if ($idVisit == 0 || $idVisit != $s['idVisit']) {
+                            $psgMembers[$m->getPrefix()]->setStayObj(new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'])));
+                        } else {
+                            $psgMembers[$m->getPrefix()]->setStayObj(new PSGMemVisit(array()));
+                        }
                     }
                 }
 
@@ -1311,14 +1321,18 @@ WHERE r.idReservation = " . $rData->getIdResv());
         $rData->setIdVisit($rows[0]['idVisit']);
 
         // Reservation status determines which class to use.
+
+        // Uncommitted cannot check in.
         if ($rRs->Status->getStoredVal() == ReservationStatus::UnCommitted) {
             return new ActiveReservation($rData, $rRs, new Family($dbh, $rData, TRUE));
         }
 
+        // Staying resv - add guests
         if ($rRs->Status->getStoredVal() == ReservationStatus::Staying) {
             return new StayingReservation($rData, $rRs, new FamilyAddGuest($dbh, $rData, TRUE));
         }
 
+        // Otherwise we can check in.
         if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
             return new CheckingIn($rData, $rRs, new Family($dbh, $rData, TRUE));
         }
@@ -1814,11 +1828,37 @@ class StayingReservation extends CheckingIn {
         return $this;
     }
 
+    protected function createFamilyMarkup(\PDO $dbh) {
+
+
+        if ($this->reserveData->getIdVisit() > 0 && $this->reserveData->getSpan() >= 0) {
+
+            // set guests staying
+            $stayRss = $dbh->query("Select idName from stays where idVisit = " . $this->reserveData->getIdVisit() . " and Visit_Span = " . $this->reserveData->getSpan() . " and `Status` = '" . VisitStatus::CheckedIn . "' ");
+
+            foreach ($stayRss as $g) {
+
+                $mem = $this->reserveData->findMemberById($g['idName']);
+
+                if ($mem !== NULL) {
+
+                    $mem->setStayObj(new PSGMemVisit(array()));
+                    $this->reserveData->setMember($mem);
+                }
+            }
+        } else {
+            throw new Hk_Exception_Runtime('The visit is not defined.');
+        }
+
+        $this->reserveData->setFamilySection($this->family->createFamilyMarkup($dbh, $this->reserveData));
+
+    }
 
     protected function createAddGuestMarkup(\PDO $dbh) {
 
         $uS = Session::getInstance();
         $labels = new Config_Lite(LABEL_FILE);
+        $resvSectionHeaderPrompt = 'Add Guests:';
 
         $nowDT = new \DateTime();
         $nowDT->setTime(intval($uS->CheckInTime), 0, 0);
@@ -1836,58 +1876,68 @@ class StayingReservation extends CheckingIn {
             $rmSelMessage = 'Already at maximum rooms per patient of ' .$uS->RoomsPerPatient . '.';
         } else {
             $rmSelMessage = '';
-            $dataArray = $this->createExpDatesControl();
         }
+
 
         // Room Chooser
         $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
         $dataArray['rChooser'] = $roomChooser->createAddGuestMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN), $rmSelMessage);
 
-        // Rate Chooser
-        $rateChooser = new RateChooser($dbh);
+        if ( ($roomChooser->getCurrentGuests() < $roomChooser->getSelectedResource()->getMaxOccupants())
+                || $this->reserveData->getConcurrentRooms() < $uS->RoomsPerPatient) {
 
-        // Create rate chooser markup?
-        if ($uS->RoomPriceModel != ItemPriceCode::None) {
-
-            $resc = $roomChooser->getSelectedResource();
-
-            if (is_null($resc)) {
-                $roomKeyDeps = '';
-            } else {
-                $roomKeyDeps = $resc->getKeyDeposit($uS->guestLookups[GL_TableNames::KeyDepositCode]);
-            }
+            $dataArray = array_merge($dataArray, $this->createExpDatesControl());
 
             // Rate Chooser
-            $dataArray['rate'] = HTMLContainer::generateMarkup('div',
-                    $rateChooser->createCheckinMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'), FALSE)
-                    , array('style'=>'clear:left; float:left; display:none;', 'id'=>'divRateChooser'));
-        }
+            $rateChooser = new RateChooser($dbh);
 
-        // Payment Chooser
-        if ($uS->PayAtCkin) {
+            // Create rate chooser markup?
+            if ($uS->RoomPriceModel != ItemPriceCode::None) {
 
-            $checkinCharges = new CheckinCharges(0, $resv->getVisitFee(), $roomKeyDeps);
-            $checkinCharges->sumPayments($dbh);
+                $resc = $roomChooser->getSelectedResource();
 
-            $dataArray['pay'] = HTMLContainer::generateMarkup('div',
-                    PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $checkinCharges, $resv->getExpectedPayType(), $uS->KeyDeposit, FALSE, $uS->DefaultVisitFee, $reg->getPreferredTokenId(), FALSE)
-                    , array('style'=>'clear:left; float:left; display:none;', 'id'=>'divPayChooser'));
-        }
+                if (is_null($resc)) {
+                    $roomKeyDeps = '';
+                } else {
+                    $roomKeyDeps = $resc->getKeyDeposit($uS->guestLookups[GL_TableNames::KeyDepositCode]);
+                }
 
-        // Rates array with amount calculated for each rate.
-        $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
+                // Rate Chooser
+                $dataArray['rate'] = HTMLContainer::generateMarkup('div',
+                        $rateChooser->createCheckinMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'), FALSE)
+                        , array('style'=>'clear:left; float:left; display:none;', 'id'=>'divRateChooser'));
+            }
 
-        // Rooms array with key deposit info
-        $dataArray['rooms'] = $roomChooser->makeRoomsArray();
+            // Payment Chooser
+            if ($uS->PayAtCkin) {
 
-        if ($uS->VisitFee) {
-            // Visit Fee Array
-            $dataArray['vfee'] = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
-        }
+                $checkinCharges = new CheckinCharges(0, $resv->getVisitFee(), $roomKeyDeps);
+                $checkinCharges->sumPayments($dbh);
 
-        // Vehicles
-        if ($uS->TrackAuto) {
-            $dataArray['vehicle'] = $this->vehicleMarkup($dbh);
+                $dataArray['pay'] = HTMLContainer::generateMarkup('div',
+                        PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $checkinCharges, $resv->getExpectedPayType(), $uS->KeyDeposit, FALSE, $uS->DefaultVisitFee, $reg->getPreferredTokenId(), FALSE)
+                        , array('style'=>'clear:left; float:left; display:none;', 'id'=>'divPayChooser'));
+            }
+
+            // Rates array with amount calculated for each rate.
+            $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
+
+            // Rooms array with key deposit info
+            $dataArray['rooms'] = $roomChooser->makeRoomsArray();
+
+            if ($uS->VisitFee) {
+                // Visit Fee Array
+                $dataArray['vfee'] = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
+            }
+
+            // Vehicles
+            if ($uS->TrackAuto) {
+                $dataArray['vehicle'] = $this->vehicleMarkup($dbh);
+            }
+
+        } else {
+            $resvSectionHeaderPrompt = 'The ' . $labels->getString('guestEdit', 'psgTab', 'PSG') . ' is already at maximum occupancy for our House';
+            $dataArray['hideCkinBtn'] = TRUE;
         }
 
         // Reservation status title
@@ -1901,7 +1951,7 @@ class StayingReservation extends CheckingIn {
 
         // Collapsing header
         $hdr = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('span', 'Add Guests:', array('style'=>'float:left;font-size:.9em; margin-right: 1em;'))
+                HTMLContainer::generateMarkup('span', $resvSectionHeaderPrompt, array('style'=>'float:left;font-size:.9em; margin-right: 1em;'))
                  . HTMLContainer::generateMarkup('span', '', array('id'=>'addGuestHeader', 'style'=>'float:left;'))
                 , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 

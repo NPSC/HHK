@@ -375,15 +375,16 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 });
             }
 
-            // Add guest Button
+            // Add search to add guest icon
             $('#guestAdd').click(function () {
                 $('.hhk-addGuest').toggle();
             });
 
+            // Add Guest button
             if ($('#btnAddGuest').length > 0) {
                 $('#btnAddGuest').button();
                 $('#btnAddGuest').click(function () {
-                    window.location.assign('CheckingIn.php?rid=' + $(this).data('rid'));
+                    window.location.assign('CheckingIn.php?vid=' + $(this).data('vid') + '&span=' + $(this).data('span') + '&rid=' + $(this).data('rid'));
                 });
             }
 

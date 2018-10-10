@@ -93,7 +93,7 @@ class VisitView {
                 }
 
                 $addGuestButton = HTMLContainer::generateMarkup('div',
-                    HTMLInput::generateMarkup('Add Guest', array('id'=>'btnAddGuest', 'type'=>'button', 'data-rid'=>$r['idReservation'], 'title'=>'Add another guest to this visit.'))
+                    HTMLInput::generateMarkup('Add Guest', array('id'=>'btnAddGuest', 'type'=>'button', 'data-rid'=>$r['idReservation'], 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span'], 'title'=>'Add another guest to this visit.'))
                     , array('style'=>'float:right;margin-left:.3em;margin-bottom:.3em; margin-top:.3em;'));
 
                 break;
