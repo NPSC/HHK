@@ -662,7 +662,7 @@ class Visit {
 
             if ($stayStartDT == $visitSpanStartDT) {
                 // Special case - just update the span id and status
-                
+
                 $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants);
                 if (is_null($rm)) {
                     throw new Hk_Exception_Runtime('Room is full.  ');
@@ -1277,7 +1277,7 @@ class Visit {
 
             // If the stay expected end is too early, make it the same as the visit.
             if ($stayExpEnd <= $stayEndDT) {
-                $stayRs->Expected_Co_Date->setNewVal($visitEndDT->format('Y-m-d') . ' ' . $uS->CheckOutTime);
+                $stayRs->Expected_Co_Date->setNewVal($visitEndDT->format('Y-m-d '. $uS->CheckOutTime . ':00:00'));
             }
 
             // Check the Stay Check-in date.  Can only change the first span.
@@ -1450,7 +1450,7 @@ class Visit {
                 $lastDepartureDT = new \DateTime($coDT->format('Y-m-d 00:00:00'));
             }
 
-            $stayRS->Expected_Co_Date->setNewVal($coDT->format('Y-m-d') . ' ' . $uS->CheckOutTime);
+            $stayRS->Expected_Co_Date->setNewVal($coDT->format('Y-m-d '. $uS->CheckOutTime . ':00:00'));
             $stayRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
             $stayRS->Updated_By->setNewVal($uname);
 
@@ -1473,7 +1473,7 @@ class Visit {
         if ($visitExpDepDT != $lastDepartureDT) {
 
             // Update visit exepected departure
-            $this->visitRS->Expected_Departure->setNewVal($lastDepartureDT->format('Y-m-d') . ' ' . $uS->CheckOutTime);
+            $this->visitRS->Expected_Departure->setNewVal($lastDepartureDT->format('Y-m-d '. $uS->CheckOutTime . ':00:00'));
             $this->visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
             $this->visitRS->Updated_By->setNewVal($uname);
 
@@ -1486,7 +1486,7 @@ class Visit {
 
                 // Update reservation expected departure
                 $resv = Reservation_1::instantiateFromIdReserv($dbh, $this->getReservationId());
-                $resv->setExpectedDeparture($lastDepartureDT->format('Y-m-d' . ' ' . $uS->CheckOutTime));
+                $resv->setExpectedDeparture($lastDepartureDT->format('Y-m-d ' . $uS->CheckOutTime . ':00:00'));
                 $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
 
                 // Move other reservations to alternative rooms

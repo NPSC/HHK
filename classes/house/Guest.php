@@ -381,7 +381,7 @@ class Guest extends Role {
             $ciDT->setTimezone(new \DateTimeZone($uS->tz));
             $dt = $ciDT->format('Y-m-d');
 
-            $this->expectedCheckOut = new \DateTime($dt . ' ' . $uS->CheckOutTime . ':00');
+            $this->expectedCheckOut = new \DateTime($dt . ' ' . $uS->CheckOutTime . ':00:00');
         }
     }
 

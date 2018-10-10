@@ -543,58 +543,6 @@ class ReservationSvcs {
         return $dataArray;
     }
 
-
-    public static function psgChooserMkup(\PDO $dbh, array $ngRss, $patientAsGuest, $offerNew = TRUE) {
-
-        // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
-
-        $tbl = new HTMLTable();
-        $tbl->addHeaderTr(HTMLTable::makeTh('Who is the ' . $labels->getString('MemberType', 'patient', 'Patient') . '?', array('colspan'=>'2')));
-
-        $firstOne = TRUE;
-
-        foreach ($ngRss as $n) {
-
-            $psg = new Psg($dbh, $n->idPsg->getStoredVal());
-
-            $attrs = array('type'=>'radio', 'value'=>$psg->getIdPsg(), 'name'=>'cbselpsg', 'data-pid'=>$psg->getIdPatient(), 'data-ngid'=>$n->idName->getStoredVal());
-            if ($firstOne) {
-                $attrs['checked'] = 'checked';
-                $firstOne = FALSE;
-            }
-
-            $tbl->addBodyTr(
-                    HTMLTable::makeTd($psg->getPatientName($dbh), array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', $attrs)));
-
-        }
-
-        // Add new PSG choice
-        if ($offerNew) {
-            $tbl->addBodyTr(
-                HTMLTable::makeTd('New ' . $labels->getString('MemberType', 'patient', 'Patient'), array('class'=>'tdlabel'))
-               .HTMLTable::makeTd(HTMLInput::generateMarkup('-1', array('type'=>'radio', 'name'=>'cbselpsg', 'data-pid'=>'0', 'data-ngid'=>'0'))));
-        }
-
-        if ($patientAsGuest) {
-
-            $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
-            $tbl->addBodyTr(HTMLTable::makeTh('Is the ' . $labels->getString('MemberType', 'patient', 'Patient') . ' staying the First night (or longer)?', array('colspan'=>'2')));
-
-            $tbl->addBodyTr(
-                    HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Yes, at least the First night', array('for'=>'cbpstayy')), array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'radio', 'value'=>'yes', 'name'=>'cbpstay', 'id'=>'cbpstayy')), array('class'=>'pstaytd')));
-            $tbl->addBodyTr(
-                    HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'No, not the first night', array('for'=>'cbpstayn')), array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'radio', 'value'=>'no', 'name'=>'cbpstay', 'id'=>'cbpstayn')), array('class'=>'pstaytd')));
-            $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnstaymsg', 'style'=> 'color:red')), array('colspan'=>'2')));
-        }
-
-
-        return $tbl->generateMarkup();
-    }
-
     public static function changeReservStatus(\PDO $dbh, $idReservation, $status) {
 
         if ($idReservation == 0 || $status == '') {

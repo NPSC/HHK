@@ -1455,14 +1455,6 @@ class HouseServices {
         }
     }
 
-
-    public static function deleteUnfinisedCheckins(\PDO $dbh) {
-
-        $dbh->exec("delete from reservation_guest where idReservation in (select idreservation from reservation where idResource = 0 and Status = '" . ReservationStatus::Imediate . "')");
-        $numDel = $dbh->exec("delete from reservation where idResource = 0 and Status = '" . ReservationStatus::Imediate . "'");
-        return array('success' => $numDel . ' Records Deleted.  ');
-    }
-
     public static function visitChangeLogMarkup(\PDO $dbh, $idReg) {
 
         $lTable = new HTMLTable();

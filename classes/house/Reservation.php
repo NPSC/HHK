@@ -1125,8 +1125,8 @@ class ActiveReservation extends Reservation {
 
         $resv->setExpectedPayType($uS->DefaultPayType);
         $resv->setHospitalStay($this->family->getHospStay());
-        $resv->setExpectedArrival($this->reserveData->getArrivalDT()->format('Y-m-d ' . intval($uS->CheckInTime) . ':00:00'));
-        $resv->setExpectedDeparture($this->reserveData->getDepartureDT()->format('Y-m-d ' . intval($uS->CheckOutTime) . ':00:00'));
+        $resv->setExpectedArrival($this->reserveData->getArrivalDT()->format('Y-m-d ' . $uS->CheckInTime . ':00:00'));
+        $resv->setExpectedDeparture($this->reserveData->getDepartureDT()->format('Y-m-d ' . $uS->CheckOutTime . ':00:00'));
         $resv->setNumberGuests(count($stayingMembers));
 
         // Primary guest must be staying or now checking in.
@@ -1685,6 +1685,7 @@ class ReserveSearcher extends ActiveReservation {
             // patient?
             $stmt = $dbh->query("select count(*) from psg where idPatient = " . $this->reserveData->getId());
             $rows = $stmt->fetchAll();
+
             if ($rows[0][0] > 0) {
                 return $this->createMarkup($dbh);
             }
@@ -1761,7 +1762,7 @@ class ReserveSearcher extends ActiveReservation {
         // Add new PSG choice
         if ($offerNew) {
             $tbl->addBodyTr(
-                HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'New ' . $this->reserveData->getPatLabel(), array('for'=>'1_cbselpsg')), array('class'=>'tdlabel'))
+                HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Different ' . $this->reserveData->getPatLabel(), array('for'=>'1_cbselpsg')), array('class'=>'tdlabel'))
                .HTMLTable::makeTd(HTMLInput::generateMarkup('-1', array('type'=>'radio', 'name'=>'cbselpsg', 'id'=>'1_cbselpsg', 'data-pid'=>'0', 'data-ngid'=>'0'))));
         }
 

@@ -196,11 +196,6 @@ try {
 
             break;
 
-        case 'dunf':
-
-            $events = HouseServices::deleteUnfinisedCheckins($dbh);
-            break;
-
         case 'confrv':
 
             $idresv = 0;
@@ -667,21 +662,6 @@ try {
 
         $events = array('success'=>HouseServices::viewCreditTable($dbh, $idReg, 0));
 
-        break;
-
-    case "register":
-        $startTime = 0;
-        $endTime = 0;
-
-        if (isset($_REQUEST["start"])) {
-            $startTime = filter_var(urldecode($_REQUEST["start"]), FILTER_SANITIZE_NUMBER_INT);
-        }
-        if (isset($_REQUEST["end"])) {
-            $endTime = filter_var(urldecode($_REQUEST["end"]), FILTER_SANITIZE_NUMBER_INT);
-        }
-
-
-        $events = Register::getRegister($dbh, $startTime, $endTime);
         break;
 
     case 'rvstat':

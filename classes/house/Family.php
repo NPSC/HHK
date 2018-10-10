@@ -335,8 +335,8 @@ class Family {
                 . RoleMember::createThinMarkupHdr($rData->getPatLabel(), FALSE, $rData->getShowBirthDate())
                 . HTMLTable::makeTh('Phone')
                 . HTMLTable::makeTh($AdrCopyDownIcon));
-        
-            
+
+
         // Put the patient first.
         if ($this->patientPrefix > 0) {
 
@@ -344,7 +344,7 @@ class Family {
             $role = $this->roleObjs[$this->patientPrefix];
             $idPrefix = $role->getRoleMember()->getIdPrefix();
 
-            $trs[] = HTMLContainer::generateMarkup('tr',
+            $trs[0] = HTMLContainer::generateMarkup('tr',
                     $role->createThinMarkup($rData->getPsgMember($idPrefix), TRUE)
                     , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
 
@@ -358,9 +358,11 @@ class Family {
                     $demoMu = $this->getDemographicsMarkup($dbh, $role);
                 }
 
-                $trs[] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
+                $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
             }
         }
+
+        $trsCounter = 2;
 
         // List each member
         foreach ($this->roleObjs as $role) {
@@ -390,7 +392,7 @@ class Family {
                 , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'));
 
             // Guest Name row.
-            $trs[] = HTMLContainer::generateMarkup('tr',
+            $trs[$trsCounter++] = HTMLContainer::generateMarkup('tr',
                     $role->createThinMarkup($rData->getPsgMember($idPrefix), ($rData->getIdPsg() == 0 ? FALSE : TRUE))
                     . ($role->getIdName() == 0 ? HTMLTable::makeTd($removeIcons) : '')
                     , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
@@ -411,7 +413,7 @@ class Family {
                     $demoMu .= $this->getDemographicsMarkup($dbh, $role);
                 }
 
-                $trs[] = HTMLContainer::generateMarkup('tr',
+                $trs[$trsCounter++] = HTMLContainer::generateMarkup('tr',
                     HTMLTable::makeTd('')
                     . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11'))
                     , array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
@@ -571,7 +573,7 @@ class FamilyAddGuest extends Family {
                     // Emergency Contact
                     $demoMu = $this->getEmergencyConntactMu($dbh, $role);
                 }
-                
+
                 if ($this->showDemographics) {
                     // Demographics
                     $demoMu = $this->getDemographicsMarkup($dbh, $role);

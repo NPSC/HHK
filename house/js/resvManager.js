@@ -123,9 +123,6 @@ function resvManager(initData) {
 
         function addGuest(item, data) {
 
-            // Check for guest already added.
-            //
-
             if (item.No_Return !== undefined && item.No_Return !== '') {
                 flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', 'alert');
                 return;
@@ -553,15 +550,22 @@ function resvManager(initData) {
             people.makeList(data.famSection.mem, 'pref');
             addrs.makeList(data.famSection.addrs, 'pref');
 
+            // add patient to the UI
+            if (data.famSection.tblBody['1'] !== undefined) {
+                $famTbl.find('tbody:first').prepend($(data.famSection.tblBody['1']));
+            }
+            if (data.famSection.tblBody['0'] !== undefined) {
+                $famTbl.find('tbody:first').prepend($(data.famSection.tblBody['0']));
+            }
+            
             // Add people to the UI
-            for (var t=0; t < data.famSection.tblBody.length; t = t + 2) {
+            for (var t in data.famSection.tblBody) {
                 
                 // Patient is first
-                if (t === 0) {
-                    $famTbl.find('tbody:first').prepend($(data.famSection.tblBody[t+1])).prepend($(data.famSection.tblBody[t]));
+                if (t === '0' || t === '1') {
+                    continue;
                 } else {
-                    $famTbl.find('tbody:first').append($(data.famSection.tblBody[t]))
-                    .append($(data.famSection.tblBody[t+1]));
+                    $famTbl.find('tbody:first').append($(data.famSection.tblBody[t]));
                 }
             }
 
