@@ -862,6 +862,7 @@ class HouseServices {
     public static function undoCheckout(\PDO $dbh, Visit $visit, \DateTime $newExpectedDT, $uname) {
 
         $reply = '';
+        $uS = Session::getInstance();
 
         if ($visit->getVisitStatus() != VisitStatus::CheckedOut) {
             return 'Cannot undo checkout, visit continues in another room or at another rate.  ';
@@ -870,16 +871,7 @@ class HouseServices {
         // only allow 15 days to undo the checkout
         $actDeptDT = new \DateTime($visit->getActualDeparture());
 
-//        $fulcrumDT = new \DateTime();
-//        $fulcrumDT->sub(new \DateInterval('P15D'));
-//
-//        if ($actDeptDT < $fulcrumDT) {
-//            $reply .= 'Cannot undo a checkout after 15 days.  ';
-//        }
-
-
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $visit->getReservationId());
-
 
         $startDT = new \DateTime($visit->getSpanStart());
         $startDT->setTime(23, 59, 59);
@@ -898,23 +890,20 @@ class HouseServices {
         // Check for pending reservations
         $resvs = ReservationSvcs::getCurrentReservations($dbh, $resv->getIdReservation(), 0, $idPsg, $startDT, $newExpectedDT);
 
+        //if (count($resvs) >= $uS->RoomsPerPatient)
+        $roomsUsed = array($visit->getidResource() => 'y');  // this room
+
         foreach ($resvs as $rv) {
 
             // another concurrent reservation already there
             if ($rv['idPsg'] == $idPsg) {
-
-                $type = 'Reservaion';
-
-                if ($rv['Status'] == ReservationStatus::Staying) {
-                    $type = 'Visit';
-                }
-
-                $reply .=  "Cannot undo checkout, this family has a conflicting $type.  ";
-                return $reply;
+                $roomsUsed[$rv['idResource']] = 'y';
             }
         }
 
-
+        if (count($roomsUsed) > $uS->RoomsPerPatient) {
+            return ('Cannot undo the checkout, the maximum rooms per patient would be exceeded.');
+        }
 
         // Undo reservation termination
         $resv->setActualDeparture('');

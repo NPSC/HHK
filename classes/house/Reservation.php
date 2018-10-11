@@ -704,7 +704,7 @@ where rg.idReservation =" . $r['idReservation']);
         if ($whStays != '') {
 
             // Check ongoing visits
-            $vstmt = $dbh->query("Select s.idName, s.idVisit, s.Visit_Span, s.idRoom, r.idPsg "
+            $vstmt = $dbh->query("Select s.idName, s.idVisit, s.Visit_Span, s.idRoom, r.idPsg, v.idPrimaryGuest "
                     . " from stays s join visit v on s.idVisit = v.idVisit AND s.Visit_Span = v.Span "
                     . " join registration r on v.idRegistration = r.idRegistration "
                     . " where v.`Status` = '" . VisitStatus::CheckedIn . "' "
@@ -1834,7 +1834,9 @@ class StayingReservation extends CheckingIn {
         if ($this->reserveData->getIdVisit() > 0 && $this->reserveData->getSpan() >= 0) {
 
             // set guests staying
-            $stayRss = $dbh->query("Select idName from stays where idVisit = " . $this->reserveData->getIdVisit() . " and Visit_Span = " . $this->reserveData->getSpan() . " and `Status` = '" . VisitStatus::CheckedIn . "' ");
+            $stayRss = $dbh->query("Select s.idName, v.idPrimaryGuest from stays s "
+                    . " join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span "
+                    . " where s.idVisit = " . $this->reserveData->getIdVisit() . " and s.Visit_Span = " . $this->reserveData->getSpan() . " and s.`Status` = '" . VisitStatus::CheckedIn . "' ");
 
             foreach ($stayRss as $g) {
 
@@ -1843,6 +1845,13 @@ class StayingReservation extends CheckingIn {
                 if ($mem !== NULL) {
 
                     $mem->setStayObj(new PSGMemVisit(array()));
+
+                    if ($g['idPrimaryGuest'] == $g['idName']) {
+                        $mem->setPrimaryGuest(TRUE);
+                    } else {
+                        $mem->setPrimaryGuest(FALSE);
+                    }
+
                     $this->reserveData->setMember($mem);
                 }
             }

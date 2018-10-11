@@ -32,7 +32,7 @@ class ReservationSvcs {
 
         if ($idPsg > 0 && $id > 0) {
             // look for both
-            $stmt = $dbh->query("select idReservation, idPsg, idGuest from vresv_guest "
+            $stmt = $dbh->query("select * from vresv_guest "
                     . "where (idPsg = $idPsg or idGuest = $id) and idReservation != $idResv and "
                 . "Date(Arrival_Date) < DATE('".$endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('".$startDT->format('Y-m-d') . "')");
 
