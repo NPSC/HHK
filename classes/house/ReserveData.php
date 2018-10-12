@@ -375,7 +375,7 @@ class ReserveData {
     public function findPatientMember() {
 
         foreach ($this->getPsgMembers() as $m) {
-            if ($m->getRole() == RelLinkType::Self) {
+            if ($m->getRole() == VolMemberType::Patient) {
                 return $m;
             }
         }

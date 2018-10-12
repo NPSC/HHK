@@ -505,7 +505,11 @@ class VisitView {
                 $useRemoveHdr = TRUE;
             }
 
-            $sTable->addBodyTr($tr);
+            if ($r['Status'] != VisitStatus::CheckedIn) {
+                $sTable->addBodyTr($tr, array('style'=>'background-color:#f2f2f2;'));
+            } else {
+                $sTable->addBodyTr($tr);
+            }
         }
 
         // Adjust headers in this condition

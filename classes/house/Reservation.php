@@ -213,7 +213,9 @@ WHERE r.idReservation = " . $rData->getIdResv());
         $uS = Session::getInstance();
 
         // Save members, psg, hospital
-        $this->family->save($dbh, $post, $this->reserveData, $uS->username);
+        if ($this->family->save($dbh, $post, $this->reserveData, $uS->username) === FALSE) {
+            return;
+        }
 
         if (count($this->getStayingMembers()) < 1) {
             // Nobody set to stay

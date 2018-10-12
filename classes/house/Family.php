@@ -466,9 +466,35 @@ class Family {
 
     public function save(\PDO $dbh, $post, ReserveData &$rData, $userName) {
 
-        // Open Psg
-        $psg = new Psg($dbh, $rData->getIdPsg());
-        $idPatient = 0;
+        // Verify selected patient
+        if (is_null($patMem = $rData->findPatientMember())) {
+            $rData->addError("who's the patient?");
+            return FALSE;
+        }
+
+        $psg = NULL;
+
+        // Verify patient - psg link
+        if ($rData->getIdPsg() < 1) {
+
+            $psg = new Psg($dbh, 0, $patMem->getId());
+            $rData->setIdPsg($psg->getIdPsg());
+
+            if ($psg->getIdPsg() > 0) {
+                $this->initMembers($dbh, $rData);
+            }
+
+        } else {
+
+            // idPsg > 0.  Make sure the selected patient is this psg
+            $psg = new Psg($dbh, $rData->getIdPsg());
+
+            if ($patMem->getId() != $psg->getIdPatient()) {
+                $rData->addError("The person selected as a new patient is already a patient.");
+                return FALSE;
+            }
+        }
+
 
         // Save Members
         foreach ($rData->getPsgMembers() as $m) {
@@ -478,21 +504,22 @@ class Family {
             }
 
             // Patient?
-            if ($m->getRole() == 'p') {
+            if ($m->getRole() == VolMemberType::Patient) {
 
-                $role = new Patient($dbh, $m->getPrefix(), $m->getId());
+                //$role = new Patient($dbh, $m->getPrefix(), $m->getId());
+                $role = (isset($this->roleObjs[$m->getPrefix()]) ? $this->roleObjs[$m->getPrefix()] : new Patient($dbh, $m->getPrefix(), $m->getId()));
                 $role->save($dbh, $post, $userName);
                 $this->roleObjs[$m->getPrefix()] = $role;
 
                 $m->setId($role->getIdName());
 
-                $idPatient = $role->getIdName();
                 $this->patientId = $role->getIdName();
                 $this->patientPrefix = $m->getPrefix();
 
             } else {
 
-                $role = new Guest($dbh, $m->getPrefix(), $m->getId());
+                //$role = new Guest($dbh, $m->getPrefix(), $m->getId());
+                $role = (isset($this->roleObjs[$m->getPrefix()]) ? $this->roleObjs[$m->getPrefix()] : new Guest($dbh, $m->getPrefix(), $m->getId()));
                 $role->save($dbh, $post, $userName);
                 $this->roleObjs[$m->getPrefix()] = $role;
 
@@ -505,17 +532,28 @@ class Family {
         }
 
         // Save PSG
-        $psg->savePSG($dbh, $this->patientId, $userName);
-        $rData->setIdPsg($psg->getIdPsg());
+        try {
+            $psg->savePSG($dbh, $this->patientId, $userName);
+            $rData->setIdPsg($psg->getIdPsg());
 
-        if ($psg->getIdPsg() > 0 && $this->patientId > 0) {
+            if ($psg->getIdPsg() > 0 && $this->patientId > 0) {
 
-            // Save Hospital
-            $this->hospStay = new HospitalStay($dbh, $psg->getIdPatient());
-            Hospital::saveReferralMarkup($dbh, $psg, $this->hospStay, $post);
-            $rData->setIdHospital_Stay($this->hospStay->getIdHospital_Stay());
+                // Save Hospital
+                $this->hospStay = new HospitalStay($dbh, $psg->getIdPatient());
+                Hospital::saveReferralMarkup($dbh, $psg, $this->hospStay, $post);
+                $rData->setIdHospital_Stay($this->hospStay->getIdHospital_Stay());
 
+            }
+        } catch(PDOException $pex) {
+
+            if ($pex->getCode() == 23000) {
+                // Integrity constraint.  The new patient is alresdy a patient elsewhere
+                $rData->addError("The person selected as a new patient is already a patient.");
+                return FALSE;
+            }
         }
+
+        return TRUE;
 
     }
 
