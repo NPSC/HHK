@@ -770,9 +770,9 @@ class PSGMemVisit extends PSGMemStay {
     public function createStayButton($prefix) {
 
         if (isset($this->index['idVisit']) && isset($this->index['Visit_Span'])) {
-            return HTMLInput::generateMarkup('In Visit', array('type'=>'button', 'class'=>'hhk-getVDialog hhk-stayIndicate', 'data-vid'=>$this->index['idVisit'], 'data-span'=>$this->index['Visit_Span']));
+            return HTMLInput::generateMarkup($this->index['room'], array('type'=>'button', 'class'=>'hhk-getVDialog hhk-stayIndicate', 'data-vid'=>$this->index['idVisit'], 'data-span'=>$this->index['Visit_Span']));
         } else {
-            return HTMLContainer::generateMarkup('span', 'In Visit', array('class'=>'hhk-stayIndicate'));
+            return HTMLContainer::generateMarkup('span', 'In Room', array('class'=>'hhk-stayIndicate'));
         }
     }
 

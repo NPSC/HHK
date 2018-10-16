@@ -994,7 +994,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
     public static function isRemovedStatus($reservStatus) {
 
-        if ($reservStatus == ReservationStatus::Canceled || $reservStatus == ReservationStatus::NoShow || $reservStatus == ReservationStatus::TurnDown || $reservStatus == ReservationStatus::ToHotel) {
+        if ($reservStatus == ReservationStatus::Canceled || $reservStatus == ReservationStatus::NoShow || $reservStatus == ReservationStatus::TurnDown) {
             return TRUE;
         }
 
@@ -1233,7 +1233,10 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
     }
 
     public function setStatus($v) {
-        $this->reservRs->Status->setNewVal($v);
+        $uS = Session::getInstance();
+        if (isset($uS->guestLookups['ReservStatus'][$v])) {
+            $this->reservRs->Status->setNewVal($v);
+        }
         return $this;
     }
 

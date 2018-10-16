@@ -706,8 +706,9 @@ where rg.idReservation =" . $r['idReservation']);
         if ($whStays != '') {
 
             // Check ongoing visits
-            $vstmt = $dbh->query("Select s.idName, s.idVisit, s.Visit_Span, s.idRoom, r.idPsg, v.idPrimaryGuest "
+            $vstmt = $dbh->query("Select s.idName, s.idVisit, s.Visit_Span, s.idRoom, r.idPsg, v.idPrimaryGuest, rm.Title "
                     . " from stays s join visit v on s.idVisit = v.idVisit AND s.Visit_Span = v.Span "
+                    . " join room rm on s.idRoom = rm.idRoom"
                     . " join registration r on v.idRegistration = r.idRegistration "
                     . " where v.`Status` = '" . VisitStatus::CheckedIn . "' "
                     . " AND ("
@@ -723,7 +724,7 @@ where rg.idReservation =" . $r['idReservation']);
                     if ($m->getId() == $s['idName']) {
 
                         if ($idVisit == 0 || $idVisit != $s['idVisit']) {
-                            $psgMembers[$m->getPrefix()]->setStayObj(new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'])));
+                            $psgMembers[$m->getPrefix()]->setStayObj(new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'], 'room'=>$s['Title'])));
                         } else {
                             $psgMembers[$m->getPrefix()]->setStayObj(new PSGMemVisit(array()));
                         }
@@ -895,6 +896,10 @@ where rg.idReservation =" . $r['idReservation']);
     protected function setRoomChoice(\PDO $dbh, Reservation_1 &$resv, $idRescPosted) {
 
         $uS = Session::getInstance();
+        
+        if ($resv->isActive() === FALSE) {
+            reurn;
+        }
 
         if ($idRescPosted == 0) {
 
@@ -1187,7 +1192,7 @@ class ActiveReservation extends Reservation {
 
             $rStat = filter_var($post['selResvStatus'], FILTER_SANITIZE_STRING);
 
-            if ($rStat != '') {
+            if ($rStat != ''  && isset($uS->guestLookups['ReservStatus'][$rStat])) {
                 $reservStatus = $rStat;
             }
 
