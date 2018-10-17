@@ -350,6 +350,22 @@ class VerifyCurlResponse extends GatewayResponse {
 
 }
 
+class VerifyVoidResponse extends VerifyCurlResponse {
+    
+
+    // responseCode=000
+    // &responseMessage=APPROVED
+    // &transactionStatus=C
+    // &primaryTransactionID=EE52401813A74328AAA7D93319FF4383
+    // &primaryTransactionStatus=V
+}
+
+class VerifyReturnResponse extends VerifyCurlResponse {
+    
+
+}
+
+
 class HeaderResponse extends GatewayResponse {
 
     protected function parseResponse() {
@@ -400,6 +416,56 @@ class HeaderResponse extends GatewayResponse {
 
         return '';
     }
+}
+
+class CurlRequest {
+    
+    protected $gateWay;
+
+    public function submit($parmStr, $url = '', $trace = FALSE) {
+
+        if ($url == '') {
+            $url = "https://online.instamed.com/payment/NVP.aspx?";
+        }
+
+        $xaction = $this->execute($url, $parmStr);
+
+        try {
+            if ($trace) {
+                file_put_contents(REL_BASE_DIR . 'patch' . DS . 'soapLog.xml', $parmStr . implode($xaction), FILE_APPEND);
+            }
+
+        } catch(Exception $ex) {
+
+            throw new Hk_Exception_Payment('Trace file error:  ' . $ex->getMessage());
+        }
+
+        return $xaction;
+    }
+
+    protected function execute($url, $params) {
+        
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, $url . $params);
+        curl_setopt($ch, CURLOPT_USERPWD, "NP.SOFTWARE.TEST:vno9cFqM");
+        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        $responseString = curl_exec($ch);
+        $msg = curl_error($ch);
+        curl_close($ch);
+
+        if ( ! $responseString ) {
+            throw new Hk_Exception_Payment('Network (cURL) Error: ' . $msg);
+        }
+
+        $transaction = array();
+        parse_str($responseString, $transaction);
+
+        return $transaction;
+    }
+    
 }
 
 
