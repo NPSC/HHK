@@ -145,6 +145,139 @@ class ImSaleResponse extends PaymentResponse {
 
 }
 
+class ImVoidResponse extends PaymentResponse {
+
+    public $response;
+    public $idToken = '';
+
+    function __construct(VerifyVoidResponse $verifyVoidResp, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+        $this->response = $verifyVoidResp;
+        $this->paymentType = PayType::Charge;
+        $this->idPayor = $idPayor;
+        $this->idRegistration = $idGroup;
+        $this->invoiceNumber = $invoiceNumber;
+        $this->amount = $verifyVoidResp->getAuthorizeAmount();
+        $this->payNotes = $payNotes;
+    }
+
+    public function getStatus() {
+
+        switch ($this->response->getStatus()) {
+
+            case '000':
+                $status = CreditPayments::STATUS_APPROVED;
+                break;
+
+            case '005':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '051':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '063':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            default:
+                $status = CreditPayments::STATUS_DECLINED;
+        }
+
+        return $status;
+    }
+
+    public function receiptMarkup(\PDO $dbh, &$tbl) {
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxxxx...". $this->cardNum));
+
+        if ($this->cardName != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardName));
+        }
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
+
+    }
+    
+}
+
+class ImReturnResponse extends PaymentResponse {
+
+    public $response;
+    public $idToken = '';
+//IsEMVVerifiedByPIN=false
+//isEMVTransaction=FALSE
+//EMVCardEntryMode=KEYED
+//cardBrand=DISCOVER
+//cardExpirationMonth=12
+//cardExpirationYear=2019
+//cardBINNumber=601100
+//cardHolderName=JOE MONTANA
+//paymentCardType=CREDIT
+//lastFourDigits=9424
+//authorizationNumber=9A5DDA
+//responseCode=000
+//responseMessage=APPROVAL
+//transactionStatus=C
+//primaryTransactionID=D5E2BF0800AB41CEAC2D8CBF406E800E
+//authorizationText=THE ABOVE AMOUNT HAS BEEN REFUNDED.
+//transactionID=96A66FDA25964C8F9C0AEB0EF8123AAF
+//transactionDate=2016-04-27T19:17:05.2770143Z
+//saveOnFileTransactionID=2FA23B1C2C8C4E0D951C24EB300DCCFB
+        
+    function __construct(VerifyReturnResponse $verifyReturnResp, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+        $this->response = $verifyReturnResp;
+        $this->paymentType = PayType::Charge;
+        $this->idPayor = $idPayor;
+        $this->idRegistration = $idGroup;
+        $this->invoiceNumber = $invoiceNumber;
+        $this->amount = $verifyReturnResp->getAuthorizeAmount();
+        $this->payNotes = $payNotes;
+    }
+
+    public function getStatus() {
+
+        switch ($this->response->getStatus()) {
+
+            case '000':
+                $status = CreditPayments::STATUS_APPROVED;
+                break;
+
+            case '005':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '051':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '063':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            default:
+                $status = CreditPayments::STATUS_DECLINED;
+        }
+
+        return $status;
+    }
+
+    public function receiptMarkup(\PDO $dbh, &$tbl) {
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxxxx...". $this->cardNum));
+
+        if ($this->cardName != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardName));
+        }
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
+
+    }
+    
+}
+
 
 /**
  * Description of Payments
