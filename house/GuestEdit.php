@@ -839,9 +839,13 @@ $uS->guestId = $id;
                         <?php if ($memberFlag) {  ?>
                         <li id="visitLog"><a href="#vvisitLog">Activity Log</a></li>
                         <?php } ?>
+                        <li id="chglog"><a href="#vchangelog">Change Log</a></li>
                     </ul>
                     <div id="demoTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
                         <?php echo $demogTab; ?>
+                    </div>
+                    <div id="vchangelog" class="ignrSave">
+                      <table style="width:100%;" id="dataTbl" cellpadding="0" cellspacing="0" border="0"></table>
                     </div>
                     <div id="exclTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
                         <?php echo $ExcludeTab; ?>
@@ -899,7 +903,6 @@ $uS->guestId = $id;
                         <?php if ($uS->TrackAuto) { ?>
                         <li><a href="#vvehicle">Vehicles</a></li>
                         <?php } ?>
-                        <li id="chglog"><a href="#vchangelog">Change Log</a></li>
                     </ul>
                     <div id="vpsg" class="ui-tabs-hide"  style="display:none;">
                         <div id="divPSGContainer"><?php echo $psgTabMarkup; ?></div>

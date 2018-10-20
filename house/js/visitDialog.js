@@ -624,44 +624,33 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
 function paymentReply (data, updateCal) {
     "use strict";
     if (data) {
+        var $xferForm = $('#xform');
         
         if (data.hostedError) {
             flagAlertMessage(data.hostedError, 'error');
 
-        } else if (data.xfer && $('#xform').length > 0) {
-			
-            var xferForm = $('#xform');
-            xferForm.children('input').remove();
-            xferForm.prop('action', data.xfer);
-            
+        } else if (data.xfer && $xferForm.length > 0) {
+
+            $xferForm.children('input').remove();
+            $xferForm.prop('action', data.xfer);
+
             if (data.paymentId && data.paymentId != '') {
-                xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
+                $xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
             } else if (data.cardId && data.cardId != '') {
-                xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
+                $xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
             } else {
                 flagAlertMessage('PaymentId and CardId are missing!', 'error');
                 return;
             }
 
-            xferForm.submit();
+            $xferForm.submit();
 
-        } else if (data.inctx) {
+        } else if (data.inctx && $xferForm.length > 0) {
 
-            if (document.getElementsByName('instamed').length != 0) {
-                
-                document.getElementById('instamed').setAttribute('src', data.inctx);
-                
-                $("#instamed").on("load", function(){
-	            $('#keysfees').dialog("close");
-                    $("#instamed").find('#FormPatientPayment-GuarantorInfoContainer').css('display', 'none');
-                });
-                
-                return;
-
-            }
-            
-            flagAlertMessage('InstaMed iFrame is missing.', true);
+            $xferForm.prop('action', data.inctx);
+            $xferForm.submit();
         }
+        
         
         $('#keysfees').dialog("close");
 

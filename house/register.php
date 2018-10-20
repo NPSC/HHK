@@ -304,6 +304,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        <script type="text/javascript" src="js/embed.js" data-displaymode="popup" data-hostname="https://online.instamed.com/providers"></script>
 <script type="text/javascript">
             var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';
             var pmtMkup = "<?php echo $paymentMarkup; ?>";
@@ -565,8 +566,8 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 </tr>
             </table>
         </div>
-        <form id="frmIm"  method="POST">
-            <script src="js/embed.js" data-displaymode="incontext" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="incontext"></script>
+        <form name="frmIm" id="frmIm"  method="post">
+
         </form>
 
         <div class="gmenu"></div>

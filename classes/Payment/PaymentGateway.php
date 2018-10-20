@@ -184,7 +184,7 @@ class VantivGateway extends PaymentGateway {
     }
 
     public function voidSale(\PDO $dbh, $invoice, PaymentRS $payRs, $paymentNotes, $bid) {
-        
+
         // find the token record
         if ($payRs->idToken->getStoredVal() > 0) {
             $tknRs = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
@@ -210,15 +210,15 @@ class VantivGateway extends PaymentGateway {
         if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid || $pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::VoidReturn) {
             return $this->sendVoid($dbh, $payRs, $pAuthRs, $tknRs, $invoice, $paymentNotes);
         }
-        
+
         return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
 
     }
-    
+
     public function reverseSale(\PDO $dbh, PaymentRS $payRs, $invoice, $bid, $paymentNotes) {
-        
+
         $uS = Session::getInstance();
-        
+
         // find the token record
         if ($payRs->idToken->getStoredVal() > 0) {
             $tknRs = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
@@ -303,7 +303,7 @@ class VantivGateway extends PaymentGateway {
     }
 
     public function returnSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $returnAmt, $bid) {
-        
+
         // find the token
         if ($payRs->idToken->getStoredVal() > 0) {
             $tknRs = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
@@ -380,7 +380,7 @@ class VantivGateway extends PaymentGateway {
 
         return $dataArray;
     }
-    
+
     public function initHostedPayment(\PDO $dbh, Invoice $invoice, Guest $guest, $addr, $postbackUrl) {
 
         $uS = Session::getInstance();
@@ -722,9 +722,9 @@ class InstamedGateway extends PaymentGateway {
     public function voidSale(\PDO $dbh, $invoice, PaymentRS $payRs, $paymentNotes, $bid) {
         return $this->reveseSale($dbh, $payRs, $invoice, $bid, $paymentNotes);
     }
-    
+
     public function reverseSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid, $paymentNotes) {
-        
+
         // Find hte detail record.
         $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
         $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -739,9 +739,9 @@ class InstamedGateway extends PaymentGateway {
         if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid) {
             return $this->sendVoid($dbh, $payRs, $pAuthRs, $invoice, $paymentNotes);
         }
-        
+
         return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
-        
+
     }
 
     public function returnSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $returnAmt, $bid) {
@@ -774,7 +774,7 @@ class InstamedGateway extends PaymentGateway {
         return array('warning' => 'This Payment is ineligable for Return. ', 'bid' => $bid);
 
     }
-    
+
     protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
@@ -809,7 +809,7 @@ class InstamedGateway extends PaymentGateway {
             InstaMedCredentials::U_NAME => $uS->username,
 
             'creditCardKeyed ' => 'true',
-            'incontext' => 'true',
+            //'incontext' => 'true',
             'lightWeight' => 'true',
             'isReadOnly' => 'true',
             'preventCheck' => 'true',
@@ -877,7 +877,7 @@ class InstamedGateway extends PaymentGateway {
             InstaMedCredentials::U_NAME => $uS->username,
 
             //'creditCardKeyed ' => 'true',
-            'incontext' => 'true',
+//            'incontext' => 'true',
             'lightWeight' => 'true',
             'preventCheck' => 'true',
             'preventCash'  => 'true',
@@ -931,7 +931,7 @@ class InstamedGateway extends PaymentGateway {
                 . "&primaryTransactionID=" . $pAuthRs->Reference_Num->getStoredVal();
 
         $curlRequest = new CurlRequest();
-        
+
         $resp = $curlRequest->submit($params, '', TRUE);
         $response = new VerifyVoidResponse($resp, $invoice->getInvoiceNumber(), $invoice->getAmount());
 
@@ -957,7 +957,7 @@ class InstamedGateway extends PaymentGateway {
         // Record payment
         $csResp = VoidReply::processReply($dbh, $sr, $uS->username, $payRs);
 
-        
+
         switch ($csResp->getStatus()) {
 
             case CreditPayments::STATUS_APPROVED:
@@ -994,7 +994,7 @@ class InstamedGateway extends PaymentGateway {
                 $dataArray['warning'] = '** Void Invalid or Error. **  ' . 'Message: ' . $csResp->response->getMessage();
 
         }
-        
+
         return $dataArray;
     }
 
@@ -1021,7 +1021,7 @@ class InstamedGateway extends PaymentGateway {
                 . "&amount=" . number_format($returnAmt, 2);
 
         $curlRequest = new CurlRequest();
-        
+
         $resp = $curlRequest->submit($params, '', TRUE);
         $response = new VerifyReturnResponse($resp, $invoice->getInvoiceNumber(), $invoice->getAmount());
 
@@ -1072,7 +1072,7 @@ class InstamedGateway extends PaymentGateway {
                 $dataArray['warning'] = "Payment Error = " . $exPay->getMessage();
 
         }
-        
+
         return $dataArray;
     }
 
@@ -1459,17 +1459,17 @@ class PollingRequest extends SoapRequest {
 
 
 class LocalGateway extends PaymentGateway {
-    
+
     protected function loadGateway(\PDO $dbh) {
-        
+
     }
 
     protected function setCredentials($credentials) {
-        
+
     }
 
     public function SaveEditMarkup(\PDO $dbh, $post) {
-        
+
     }
 
     public function createEditMarkup(\PDO $dbh) {
@@ -1477,7 +1477,7 @@ class LocalGateway extends PaymentGateway {
     }
 
     public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
-        
+
     }
 
 }

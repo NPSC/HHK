@@ -1171,6 +1171,7 @@ function cardOnFile(id, idGroup, postBackPage) {
     // Go to the server for payment data, then come back and submit to new URL to enter credit info.
     $.post('ws_ckin.php', parms,
     function(data) {
+        var xferForm;
         if (data) {
             try {
                 data = $.parseJSON(data);
@@ -1188,8 +1189,11 @@ function cardOnFile(id, idGroup, postBackPage) {
             if (data.hostedError) {
                 flagAlertMessage(data.hostedError, 'error');
             }
-            if (data.xfer) {
-                var xferForm = $('#xform');
+
+            xferForm = $('#xform');
+
+            if (data.xfer && xferForm.length > 0) {
+
                 xferForm.children('input').remove();
                 xferForm.prop('action', data.xfer);
                 if (data.paymentId && data.paymentId != '') {
@@ -1201,7 +1205,13 @@ function cardOnFile(id, idGroup, postBackPage) {
                     return;
                 }
                 xferForm.submit();
+
+            } else if (data.inctx && xferForm.length > 0) {
+
+                xferForm.prop('action', data.inctx);
+                xferForm.submit();
             }
+            
             if (data.success && data.success != '') {
                 flagAlertMessage(data.success, 'success');
             }
@@ -1220,10 +1230,13 @@ function updateCredit(id, idReg, name, strCOFdiag) {
             $(this).dialog("close");
         }
     };
+    
     var gnme = '';
+    
     if (name && name != '') {
         gnme = ' - ' + name;
     }
+    
     $.post('ws_ckin.php',
             {
                 cmd: 'viewCredit',
