@@ -737,7 +737,7 @@ class RoomChooser {
             $cat = Default_Settings::Rate_Category;
         }
 
-        $amt = ($priceModel->amountCalculator($nites, $idRoomRate, $cat, $fixedRate, $guestNites) * (1 + $rateAdjust));
+        $amt = ($priceModel->amountCalculator($nites, $idRoomRate, $cat, $fixedRate, $guestNites) * (1 + ($rateAdjust / 100)));
 
         foreach ($priceModel->getActiveModelRoomRates() as $rs) {
 

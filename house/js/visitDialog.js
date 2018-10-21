@@ -21,6 +21,126 @@ function setupVisitNotes(vid, $container) {
 
     return $container;
 }
+/**
+ * 
+ * @param {object} item
+ * @param {int} idVisit
+ * @param {int} visitSpan
+ * @returns {undefined}
+ */
+function getMember(item, idVisit, visitSpan) {
+    "use strict";
+    $.post('ws_ckin.php',
+            {
+                cmd: 'addStay',
+                vid: idVisit,
+                id: item.id,
+                span: visitSpan
+            },
+        function(data) {
+            myReply(data, item.id, idVisit, visitSpan);
+        });
+    function myReply(data, idGuest, idVisit, visitSpan) {
+        "use strict";
+        if (!data) {
+            alert('Bad Reply from Server');
+            return;
+        }
+        try {
+            data = $.parseJSON(data);
+        } catch (err) {
+            alert("Parser error - " + err.message);
+            return;
+        }
+        if (data.error) {
+            if (data.gotopage) {
+                window.open(data.gotopage);
+            }
+            flagAlertMessage(data.error, true);
+            return;
+        }
+        $('#txtAddGuest').val('');
+        if (data.addtguest) {
+            $('#keysfees').dialog('close');
+            $('#diagAddGuest').remove();
+            // create a dialog and show the form.
+            var acBody = $('<div style="font-size:.9em;"/>').append($(data.addtguest.memMkup));
+            var acHdr = $('<div style="min-height:30px; padding:3px;font-size:.9em;"/>')
+                .append($(data.addtguest.txtHdr))
+                .append($('<span id="' + data.addtguest.idPrefix + 'memMsg" style="color: red; margin-right:20px;margin-left:20px;margin-top:7px;"></span>'))
+                .addClass('ui-widget-header ui-state-default ui-corner-top');
+            var acDiv = $('<div id="diagAddGuest"/>').append($('<form id="fAddGuest"  style="font-size:.9em;"/>').append(acHdr).append(acBody));
+            acDiv.dialog({
+                autoOpen: false,
+                resizable: true,
+                width: 950,
+                modal: true,
+                title: 'Additional Guest',
+                buttons: {
+                    Save: function () {
+                        myReq(idGuest, idVisit, visitSpan);
+                        $(this).dialog("close");
+                    },
+                    "Cancel": function() {
+                        $(this).dialog("close");
+                    }
+                }
+            });
+            // Guest date
+            $('div#diagAddGuest .ckdate').datepicker();
+            acDiv.find('select.bfh-countries').each(function() {
+                var $countries = $(this);
+                $countries.bfhcountries($countries.data());
+            });
+            acDiv.find('select.bfh-states').each(function() {
+                var $states = $(this);
+                $states.bfhstates($states.data());
+            });
+            $('#diagAddGuest #qphEmlTabs').tabs();
+            verifyAddrs('#diagAddGuest');
+            if (data.addr) {
+                $('#diagAddGuest').on('click', '.hhk-addrCopy', function() {
+                    $('#qadraddress11').val(data.addr.adraddress1);
+                    $('#qadraddress21').val(data.addr.adraddress2);
+                    $('#qadrcity1').val(data.addr.adrcity);
+                    $('#qadrstate1').val(data.addr.adrstate);
+                    $('#qadrzip1').val(data.addr.adrzip);
+                });
+            }
+            $('#diagAddGuest').on('click', '.hhk-addrErase', function() {
+                $('#qadraddress11').val('');
+                $('#qadraddress21').val('');
+                $('#qadrcity1').val('');
+                $('#qadrstate1').val('');
+                $('#qadrzip1').val('');
+                $('#qadrbad1').prop('checked', false);
+            });
+            acDiv.dialog('open');
+            return;
+        }
+    }
+    function myReq(idGuest, idVisit, visitSpan) {
+        $.post('ws_ckin.php', $('#fAddGuest').serialize() + '&cmd=addStay' + '&id=' + idGuest + '&vid=' + idVisit + '&span=' + visitSpan, function(data) {
+            try {
+                data = $.parseJSON(data);
+            } catch (err) {
+                alert("Parser error - " + err.message);
+                return;
+            }
+            if (data.error) {
+                if (data.gotopage) {
+                    window.open(data.gotopage);
+                }
+                flagAlertMessage(data.error, true);
+            }
+            if (data.stays && data.stays !== '') {
+                $('#keysfees').dialog('open');
+                $('#divksStays').children().remove();
+                $('#divksStays').append($(data.stays));
+            }
+        });
+    }
+}
 
 var isCheckedOut = false;
 /**
@@ -375,15 +495,16 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 });
             }
 
-            // Add guest Button
+            // Add search to add guest icon
             $('#guestAdd').click(function () {
                 $('.hhk-addGuest').toggle();
             });
 
+            // Add Guest button
             if ($('#btnAddGuest').length > 0) {
                 $('#btnAddGuest').button();
                 $('#btnAddGuest').click(function () {
-                    window.location.assign('CheckingIn.php?rid=' + $(this).data('rid'));
+                    window.location.assign('CheckingIn.php?vid=' + $(this).data('vid') + '&span=' + $(this).data('span') + '&rid=' + $(this).data('rid'));
                 });
             }
 
@@ -471,17 +592,27 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
 
     $('input.hhk-ckoutCB').each(function() {
         if (this.checked) {
+            
             var parts = $(this).attr('id').split('_');
+            
             if (parts.length > 0) {
+                
                 parms['stayActionCb[' + parts[1] + ']'] = 'on';
                 var tdate = $('#stayCkOutDate_' + parts[1]).datepicker('getDate');
+                
                 if (tdate) {
+                    
                     var nowDate = new Date();
                     tdate.setHours(nowDate.getHours());
                     tdate.setMinutes(nowDate.getMinutes());
                 } else {
                     tdate = new Date();
                 }
+                
+                if ($('#stayCkOutHour_' + parts[1]).length > 0) {
+                    parms['stayCkOutHour[' + parts[1] + ']'] = $('#stayCkOutHour_' + parts[1]).val();
+                }
+
                 parms['stayCkOutDate[' + parts[1] + ']'] = tdate.toJSON();
                 ckoutlist.push($(this).data('nm') + ', ' + tdate.toDateString());
             }

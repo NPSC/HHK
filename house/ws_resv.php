@@ -99,7 +99,6 @@ require (HOUSE . 'Visit.php');
 require (HOUSE . 'Family.php');
 require (HOUSE . "visitViewer.php");
 
-require (HOUSE . 'Register.php');
 require (HOUSE . 'VisitCharges.php');
 
 

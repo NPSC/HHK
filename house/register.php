@@ -299,6 +299,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
@@ -368,7 +369,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 {data: 'Guest First', title: 'Guest First'},
                 {data: 'Guest Last', title: 'Guest Last'},
                 <?php if ($uS->ShowCreatedDate) { ?>
-                {data: 'Timestamp', title: 'Created On', render: function (data, type) {return dateRender(data, type, dateFormat);}},
+                {data: 'Timestamp', title: 'Created On', render: function (data, type) {return dateRender(data, type, "MMM D, YYYY H:mm");}},
                 <?php } ?>
                 {data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type, dateFormat);}},
                 {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},
@@ -509,7 +510,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                             <td><input id='cbVisits' type='checkbox' checked="checked"/> Visits</td>
                             <td>Starting: <input type="text" id="txtactstart" class="ckdate" value="" /></td>
                         </tr><tr>
-                            <td><?php if ($uS->Reservation) { ?><input id='cbReserv' type='checkbox'/> Reservations</td><?php } ?>
+                            <td><input id='cbReserv' type='checkbox'/> Reservations</td>
                             <td>Ending: <input type="text" id="txtactend" class="ckdate" value="" /></td>
                         </tr><tr>
                             <td><input id='cbHospStay' type='checkbox'/> Hospital Stays</td>

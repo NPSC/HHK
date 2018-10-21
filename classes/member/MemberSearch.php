@@ -322,7 +322,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
                 $events[] = $namArray;
             }
-            
+
             $events[] = array("id" => 0, "value" => "New Patient");
 
 
@@ -670,6 +670,8 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                     $row2["Name_Nickname"]
             );
 
+            $phone = htmlspecialchars_decode($row2['Phone']);
+
             $namArray['id'] = $row2["idName"];
             $namArray['fullName'] = $firstName . ' ' . $lastName;
             $namArray['No_Return'] = $row2['No_Return'];
@@ -680,7 +682,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 . ($row2['Name_Suffix'] != '' ? ', ' . $row2['Name_Suffix'] : '' )
                 . ($nickName != '' ? ' (' . $nickName . ')' : '' )
                 . ($row2['Member_Status'] == 'd' ? ' [' . $row2['Status'] . ']' : '')
-                . ($row2['Phone'] != '' ? ' ' . $row2['Phone'] : '')
+                . ($row2['Phone'] != '' ? ' ' . $phone : '')
                 . ($row2['City'] != '' ? '; ' . $row2['City'] : '')
                 . ($row2['State'] != '' ? ', ' . $row2['State'] : '');
 

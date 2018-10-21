@@ -87,7 +87,6 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Editable_Forms', '../conf/agreement.txt', 'Registration Agreement','js/rte-agreement.json','',0),
 ('Editable_Forms', '../conf/confirmation.txt', 'Confirmation Form','js/rte-confirmation.json','',0),
 ('Editable_Forms', '../conf/survey.txt', 'Survey Form','js/rte-survey.json','',0),
-('Editable_Forms', '../conf/permission.txt', 'Permission Form','js/rte-permission.json','',0),
 
 ('Education_Level','01','Highschool','','d',0),
 ('Education_Level','02','College','','d',0),
@@ -355,8 +354,6 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Special_Needs','f','Dev. Challenged','','d',0),
 ('Special_Needs','z','Unknown','','d',1000),
 
-('Signature_Capture', 'Photo_Permission', 'Photo Permission','','',0),
-
 ('Static_Room_Rate','rb','Regular Rate','10','',0),
 
 ('Utilization_Category', 'uc1', 'Standard', '', 'h',0),
@@ -422,10 +419,6 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`) VALUES 
 ('FinAppStatus','a','Granted','y','y','',''),
 ('FinAppStatus','n','Not Granted','y','y','',''),
-('RegistrationAtribute','Sig_Card','Guest Signature','y','y','',''),
-('RegistrationAttribute','Guest_Ident','Guest Identification','y','y','',''),
-('RegistrationAttribute','Pamphlet','Rules Pamphlet','y','y','',''),
-('RegistrationAttribute','Referral','Hospital Referral Document','','','',''),
 ('ReservStatus','a','Confirmed','y','y','','ui-icon-check'),
 ('ReservStatus','uc','Unconfirmed','y','y','','ui-icon-help'),
 ('ReservStatus','c','Guest Canceled','y','y','','ui-icon-cancel'),
@@ -451,7 +444,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('CardSwipe','false','b','f','Use POS terminal'),
 ('CheckOutTime', '10', 'i', 'h', 'Normal House checkout time of day in 24-hour format, hh'),
 ('CheckInTime', '16', 'i', 'h', 'Normal House check in time of day in 24-hour format, hh'),
-('ConcatVisitNotes', 'true', 'b', 'h', 'Show notes combined from all previous visits when true.'),
+('ConcatVisitNotes', 'false', 'b', 'h', 'Show notes combined from all previous visits when true.'),
 ('county', 'false', 'b', 'h', 'Include the County in addresses.'),
 ('CoTod', 'false', 'b', 'h', 'Edit the time of day of a checkout.'),
 ('DefaultPayType','ca','s','f','Default payment type for paying today UI'),
@@ -476,11 +469,11 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('LangChooser', 'false', 'b', 'h', 'Show member language chooser'),
 ('MajorDonation','500','i','d','Major donator trigger amount'),
 ('MaxDonate','100000','i','d','Maximum amount amount for a single payment'),
-('MaxExpected','60','i','h','Maximum Expected days out for a visit'),
+('MaxExpected','90','i','h','Maximum Expected days out for a visit'),
 ('MaxRepeatEvent','53','i','v','Maximum number of times to repeat a calendar event.'),
 ('NightsCounter', 'calYear', 's', 'h','Count nights by year (calYear) or by grand total.'),
 ('OpenCheckin','true','b','h','Allow walk-ups to check in'),
-('PatientAddr', 'false', 'b', 'h','Collect the patient address.'),
+('PatientAddr', 'true', 'b', 'h','Collect the patient address.'),
 ('PatientAsGuest','true','b','h','House allows patients to stay as guests'),
 ('PatientBirthDate', 'true', 'b', 'h','Insist on providing the patients birthdate'),
 ('PayAtCkin','true','b','h','Allow/Disallow payments at check-in time'),
@@ -495,7 +488,6 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('RegForm','1','i','h','1 = Registration form style 1, 2 = style 2'),
 ('RegFormNoRm', 'false', 'b', 'h','Do not show the room number on the registration form before check-in'),
 ('ResvEarlyArrDays', '2', 'i', 'h','# Days before reservation to show check-in button on reservation chooser'),
-('Reservation','true','b','h','Use reservations'),
 ('RoomPriceModel', 'd', 's', 'h','Room rate price model - Do not change!'),
 ('RoomsPerPatient', '2', 'i', 'h','# simultaneous rooms per patient allowed'),
 ('RoomRateDefault', 'e', 's', 'h', 'Default room rate category (a, b, c, d, e, f)'),
@@ -507,7 +499,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('ShowLodgDates', 'true', 'b', 'h','Show dates on lodging invoice lines'),
 ('ShowTxPayType', 'false', 'b', 'h', 'Always Show the Transfer pay type'),
 ('SolicitBuffer','90','i','r','Timeout in days after visit checkout before solicit report will show new guests'),
-('ShowUncfrmdStatusTab', 'true', 'b', 'h', 'Show the Unconfirmed reservations tab on the House Register page'),
+('ShowUncfrmdStatusTab', 'false', 'b', 'h', 'Show the Unconfirmed reservations tab on the House Register page'),
 ('ShowZeroDayStays', 'false', 'b', 'h', 'Include 0-day stays and visits in Reports and Pages'),
 ('TrackAuto','true','b','h','Track vehicles'),
 ('UseWLnotes', 'false', 'b', 'h', 'Use wait list notes feature on reservations'),
@@ -617,13 +609,15 @@ REPLACE INTO `insurance` (`idInsurance`, `Type`, `Title`, `Opens_Type`) VALUES
 --
 -- insert users
 --
-REPLACE into name (idName, Name_Last, Name_First, Member_Type, Member_Status, Record_Member) values 
-(-1, 'admin', '', 'ai', 'a', 1),
-(10, 'Crane', 'Eric', 'ai', 'a', 1);
+REPLACE into name (idName, Name_Last, Name_First, Member_Type, Member_Status, Record_Member, Record_Company, Company) values 
+(-1, 'admin', '', 'ai', 'a', 1, 0, ''),
+(10, 'User', 'NPSC', 'ai', 'a', 1, 0, ''),
+(11, '', '', 'ai', 'a', 0, 1, 'Hospitality House');
 -- ;
 
-REPLACE INTO `w_auth` (`idName`,`Role_Id`,`Organization_Id`,`Policy_id`,`Updated_By`,`Last_Updated`,`User_Name`,`Status`) 
-    VALUES (-1,'10','p',0,'admin',now(),'admin','a');
+REPLACE INTO `w_auth` (`idName`,`Role_Id`,`Organization_Id`,`Policy_id`,`Updated_By`,`Last_Updated`,`User_Name`,`Status`) VALUES 
+(-1,'10','p',0,'admin',now(),'admin','a'),
+(10,'10','p',0,'admin',now(),'npscuser','a');
 -- ;
 
 
@@ -631,7 +625,8 @@ REPLACE INTO `w_auth` (`idName`,`Role_Id`,`Organization_Id`,`Policy_id`,`Updated
 REPLACE INTO `w_users` 
 (`idName`,`User_Name`,`Enc_PW`,`Status`,`Certificate`,`Cookie`,`Session`,`Ip`,`Verify_Address`,`Last_Login`,`Hash_PW`,`Updated_By`,`Last_Updated`,`Timestamp`)
 VALUES 
-(-1,'admin','539e17171312c324d3c23908f85f3149','a','','','','','done',NULL,'','',NULL,now());
+(-1,'admin','539e17171312c324d3c23908f85f3149','a','','','','','done',NULL,'','',NULL,now()),
+(10,'npscuser','VEFhRldOWVFqVmZ5bjhENVZvd29ldz09','a','','','','','done',NULL,'','',NULL,now());
 -- ;
 
 
@@ -701,7 +696,8 @@ REPLACE INTO `secondary_unit_desig` (`Common`,`Standard`,`Range_Required`,`Title
 -- Hospitals
 --
 REPLACE INTO `hospital` (`Title`,`Type`,`Status`) values
-('County Hospital', 'h', 'a');
+('County Hospital', 'h', 'a'),
+('City Hospital', 'h', 'a');
 -- ;
 
 

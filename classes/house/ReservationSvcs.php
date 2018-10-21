@@ -32,7 +32,7 @@ class ReservationSvcs {
 
         if ($idPsg > 0 && $id > 0) {
             // look for both
-            $stmt = $dbh->query("select idReservation, idPsg, idGuest from vresv_guest "
+            $stmt = $dbh->query("select * from vresv_guest "
                     . "where (idPsg = $idPsg or idGuest = $id) and idReservation != $idResv and "
                 . "Date(Arrival_Date) < DATE('".$endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('".$startDT->format('Y-m-d') . "')");
 
@@ -404,14 +404,12 @@ class ReservationSvcs {
         if ($worked) {
 
             // Return checked in guests markup?
-            if ($uS->Reservation) {
-                if ($reserv->getStatus() == ReservationStatus::Committed) {
-                    $dataArray['reservs'] = 'y';
-                } else if ($reserv->getStatus() == ReservationStatus::UnCommitted && $uS->ShowUncfrmdStatusTab) {
-                    $dataArray['unreserv'] = 'y';
-                } else if ($reserv->getStatus() == ReservationStatus::Waitlist) {
-                    $dataArray['waitlist'] = 'y';
-                }
+            if ($reserv->getStatus() == ReservationStatus::Committed) {
+                $dataArray['reservs'] = 'y';
+            } else if ($reserv->getStatus() == ReservationStatus::UnCommitted && $uS->ShowUncfrmdStatusTab) {
+                $dataArray['unreserv'] = 'y';
+            } else if ($reserv->getStatus() == ReservationStatus::Waitlist) {
+                $dataArray['waitlist'] = 'y';
             }
         }
 
@@ -545,58 +543,6 @@ class ReservationSvcs {
         return $dataArray;
     }
 
-
-    public static function psgChooserMkup(\PDO $dbh, array $ngRss, $patientAsGuest, $offerNew = TRUE) {
-
-        // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
-
-        $tbl = new HTMLTable();
-        $tbl->addHeaderTr(HTMLTable::makeTh('Who is the ' . $labels->getString('MemberType', 'patient', 'Patient') . '?', array('colspan'=>'2')));
-
-        $firstOne = TRUE;
-
-        foreach ($ngRss as $n) {
-
-            $psg = new Psg($dbh, $n->idPsg->getStoredVal());
-
-            $attrs = array('type'=>'radio', 'value'=>$psg->getIdPsg(), 'name'=>'cbselpsg', 'data-pid'=>$psg->getIdPatient(), 'data-ngid'=>$n->idName->getStoredVal());
-            if ($firstOne) {
-                $attrs['checked'] = 'checked';
-                $firstOne = FALSE;
-            }
-
-            $tbl->addBodyTr(
-                    HTMLTable::makeTd($psg->getPatientName($dbh), array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', $attrs)));
-
-        }
-
-        // Add new PSG choice
-        if ($offerNew) {
-            $tbl->addBodyTr(
-                HTMLTable::makeTd('New ' . $labels->getString('MemberType', 'patient', 'Patient'), array('class'=>'tdlabel'))
-               .HTMLTable::makeTd(HTMLInput::generateMarkup('-1', array('type'=>'radio', 'name'=>'cbselpsg', 'data-pid'=>'0', 'data-ngid'=>'0'))));
-        }
-
-        if ($patientAsGuest) {
-
-            $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
-            $tbl->addBodyTr(HTMLTable::makeTh('Is the ' . $labels->getString('MemberType', 'patient', 'Patient') . ' staying the First night (or longer)?', array('colspan'=>'2')));
-
-            $tbl->addBodyTr(
-                    HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Yes, at least the First night', array('for'=>'cbpstayy')), array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'radio', 'value'=>'yes', 'name'=>'cbpstay', 'id'=>'cbpstayy')), array('class'=>'pstaytd')));
-            $tbl->addBodyTr(
-                    HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'No, not the first night', array('for'=>'cbpstayn')), array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'radio', 'value'=>'no', 'name'=>'cbpstay', 'id'=>'cbpstayn')), array('class'=>'pstaytd')));
-            $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnstaymsg', 'style'=> 'color:red')), array('colspan'=>'2')));
-        }
-
-
-        return $tbl->generateMarkup();
-    }
-
     public static function changeReservStatus(\PDO $dbh, $idReservation, $status) {
 
         if ($idReservation == 0 || $status == '') {
@@ -623,20 +569,16 @@ class ReservationSvcs {
         $dataArray['success'] = 'Reservation status changed to ' . $uS->guestLookups['ReservStatus'][$status][1];
 
 
-        if ($uS->Reservation) {
+        if ($oldStatus == ReservationStatus::Committed || $status == ReservationStatus::Committed) {
+            $dataArray['reservs'] = 'y';
+        }
 
-            if ($oldStatus == ReservationStatus::Committed || $status == ReservationStatus::Committed) {
-                $dataArray['reservs'] = 'y';
-            }
+        if ($oldStatus == ReservationStatus::UnCommitted || $status == ReservationStatus::UnCommitted) {
+            $dataArray['unreserv'] = 'y';
+        }
 
-            if ($oldStatus == ReservationStatus::UnCommitted || $status == ReservationStatus::UnCommitted) {
-                $dataArray['unreserv'] = 'y';
-            }
-
-            if ($oldStatus == ReservationStatus::Waitlist || $status == ReservationStatus::Waitlist) {
-                $dataArray['waitlist'] = 'y';
-            }
-
+        if ($oldStatus == ReservationStatus::Waitlist || $status == ReservationStatus::Waitlist) {
+            $dataArray['waitlist'] = 'y';
         }
 
         return $dataArray;
@@ -736,38 +678,6 @@ class ReservationSvcs {
 
     }
 
-//    public static function setNewRoom(\PDO $dbh, $idResv, $idResc, $isAuthorized) {
-//
-//        $uS = Session::getInstance();
-//
-//        if ($idResv < 1) {
-//            return array('error'=>'Reservation Id is not set.');
-//        }
-//
-//        $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
-//
-//        if ($isAuthorized) {
-//            $resv->findGradedResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $resv->getNumberGuests(), array('room','rmtroom','part'), TRUE);
-//        } else {
-//            $resv->findResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $resv->getNumberGuests(), array('room','rmtroom','part'), TRUE);
-//        }
-//
-//        $dataArray['msg'] = self::processReservation($dbh, $resv, $idResc, $resv->getFixedRoomRate(), $resv->getNumberGuests(), $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $isAuthorized, $uS->username, $uS->InitResvStatus);
-//
-//        // New resservation lists
-//        if ($uS->Reservation) {
-//            $dataArray['reservs'] = 'y';
-//            $dataArray['waitlist'] = 'y';
-//
-//            if ($uS->ShowUncfrmdStatusTab) {
-//                $dataArray['unreserv'] = 'y';
-//            }
-//
-//        }
-//
-//        return $dataArray;
-//
-//    }
 
     public static function deleteReservation(\PDO $dbh, $rid) {
 

@@ -401,10 +401,22 @@ class HouseServices {
                             $coDate = filter_var($post['stayCkOutDate'][$id], FILTER_SANITIZE_STRING);
                         }
 
-                        $cDT = setTimeZone($uS, $coDate);
-                        $dt = $cDT->format('Y-m-d');
-                        $now = date('H:i:s');
-                        $coDT = new \DateTime($dt . ' ' . $now);
+                        $coHour = intval(date('H'), 10);
+                        $coMin = intval(date('i'), 10);
+
+                        if (isset($post['stayCkOutHour'][$id]) && $post['stayCkOutHour'][$id] != '') {
+                            $coHour = intval(filter_var($post['stayCkOutHour'][$id], FILTER_SANITIZE_NUMBER_INT), 10);
+
+                            if ($coHour < 0) {
+                                $coHour = 0;
+                            } else if ($coHour > 23) {
+                                $coHour = 23;
+                            }
+                        }
+
+                        $coDT = setTimeZone($uS, $coDate);
+
+                        $coDT->setTime($coHour, $coMin, 0);
 
                         $reply .= $visit->checkOutGuest($dbh, $id, $coDT->format('Y-m-d H:i:s'), '', TRUE);
                         $returnCkdIn = TRUE;
@@ -458,7 +470,7 @@ class HouseServices {
             $dataArray['curres'] = 'y';
         }
 
-        if ($returnReserv && $uS->Reservation) {
+        if ($returnReserv) {
             $dataArray['reservs'] = 'y';
             $dataArray['waitlist'] = 'y';
 
@@ -850,6 +862,7 @@ class HouseServices {
     public static function undoCheckout(\PDO $dbh, Visit $visit, \DateTime $newExpectedDT, $uname) {
 
         $reply = '';
+        $uS = Session::getInstance();
 
         if ($visit->getVisitStatus() != VisitStatus::CheckedOut) {
             return 'Cannot undo checkout, visit continues in another room or at another rate.  ';
@@ -858,16 +871,7 @@ class HouseServices {
         // only allow 15 days to undo the checkout
         $actDeptDT = new \DateTime($visit->getActualDeparture());
 
-//        $fulcrumDT = new \DateTime();
-//        $fulcrumDT->sub(new \DateInterval('P15D'));
-//
-//        if ($actDeptDT < $fulcrumDT) {
-//            $reply .= 'Cannot undo a checkout after 15 days.  ';
-//        }
-
-
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $visit->getReservationId());
-
 
         $startDT = new \DateTime($visit->getSpanStart());
         $startDT->setTime(23, 59, 59);
@@ -886,23 +890,20 @@ class HouseServices {
         // Check for pending reservations
         $resvs = ReservationSvcs::getCurrentReservations($dbh, $resv->getIdReservation(), 0, $idPsg, $startDT, $newExpectedDT);
 
+        //if (count($resvs) >= $uS->RoomsPerPatient)
+        $roomsUsed = array($visit->getidResource() => 'y');  // this room
+
         foreach ($resvs as $rv) {
 
             // another concurrent reservation already there
             if ($rv['idPsg'] == $idPsg) {
-
-                $type = 'Reservaion';
-
-                if ($rv['Status'] == ReservationStatus::Staying) {
-                    $type = 'Visit';
-                }
-
-                $reply .=  "Cannot undo checkout, this family has a conflicting $type.  ";
-                return $reply;
+                $roomsUsed[$rv['idResource']] = 'y';
             }
         }
 
-
+        if (count($roomsUsed) > $uS->RoomsPerPatient) {
+            return ('Cannot undo the checkout, the maximum rooms per patient would be exceeded.');
+        }
 
         // Undo reservation termination
         $resv->setActualDeparture('');
@@ -1396,7 +1397,7 @@ class HouseServices {
      */
     public static function verifyStayDates(array $guests, \DateTime $chkinDT, \DateTime $chkoutDT) {
 
-        if (count($guests == 0)) {
+        if (count($guests) == 0) {
             return;
         }
 
@@ -1443,14 +1444,6 @@ class HouseServices {
 
             $trackerDT->add($p1d);
         }
-    }
-
-
-    public static function deleteUnfinisedCheckins(\PDO $dbh) {
-
-        $dbh->exec("delete from reservation_guest where idReservation in (select idreservation from reservation where idResource = 0 and Status = '" . ReservationStatus::Imediate . "')");
-        $numDel = $dbh->exec("delete from reservation where idResource = 0 and Status = '" . ReservationStatus::Imediate . "'");
-        return array('success' => $numDel . ' Records Deleted.  ');
     }
 
     public static function visitChangeLogMarkup(\PDO $dbh, $idReg) {

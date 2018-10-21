@@ -190,7 +190,6 @@ class History {
             if ($status == ReservationStatus::Waitlist && $uS->ShowCreatedDate) {
 
                 $bDay = new \DateTime($r['Timestamp']);
-                $bDay->setTime(10, 0, 0);
 
                 if ($static) {
                     $fixedRows['Timestamp'] = $bDay->format('n/d/Y');
@@ -411,7 +410,7 @@ class History {
 
             // Date?
             if ($static) {
-                $fixedRows['Checked In'] = date('M j, Y', strtotime($r['Checked-In']));
+                $fixedRows['Checked In'] = date('M j, Y H:i', strtotime($r['Checked-In']));
             } else {
                 $fixedRows['Checked In'] = date('c', strtotime($r['Checked-In']));
             }

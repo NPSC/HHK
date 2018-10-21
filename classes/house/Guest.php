@@ -63,16 +63,16 @@ class Guest extends Role {
     }
 
 
-    public function createNotesMU($notes, $idTextBox, \Config_Lite $labels) {
-
-        $mk1 = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('fieldset',
-                        HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'notesLabel', 'Reservation Notes'), array('style'=>'font-weight:bold;'))
-                        . Notes::markupShell($notes, $idTextBox),
-                        array('class'=>'hhk-panel')));
-
-        return $mk1;
-    }
+//    public function createNotesMU($notes, $idTextBox, \Config_Lite $labels) {
+//
+//        $mk1 = HTMLContainer::generateMarkup('div',
+//                HTMLContainer::generateMarkup('fieldset',
+//                        HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'notesLabel', 'Reservation Notes'), array('style'=>'font-weight:bold;'))
+//                        . Notes::markupShell($notes, $idTextBox),
+//                        array('class'=>'hhk-panel')));
+//
+//        return $mk1;
+//    }
 
     /**
      *
@@ -381,7 +381,7 @@ class Guest extends Role {
             $ciDT->setTimezone(new \DateTimeZone($uS->tz));
             $dt = $ciDT->format('Y-m-d');
 
-            $this->expectedCheckOut = new \DateTime($dt . ' ' . $uS->CheckOutTime . ':00');
+            $this->expectedCheckOut = new \DateTime($dt . ' ' . $uS->CheckOutTime . ':00:00');
         }
     }
 
