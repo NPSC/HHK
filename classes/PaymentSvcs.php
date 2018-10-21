@@ -607,7 +607,7 @@ class PaymentSvcs {
     public static function voidFees(\PDO $dbh, $idPayment, $bid, $postbackUrl, $paymentNotes = '') {
 
         $uS = Session::getInstance();
-        
+
         if ($idPayment < 1) {
             return array('warning' => 'Payment record Id not defined.  ', 'bid' => $bid);
         }
@@ -636,7 +636,7 @@ class PaymentSvcs {
 
         // Load gateway
         $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
-        
+
         return $gateway->voidSale($dbh, $invoice, $payRs, $paymentNotes, $bid, $postbackUrl);
 
     }
@@ -669,7 +669,7 @@ class PaymentSvcs {
 
         // Load gateway
         $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
-        
+
         return $gateway->reverseSale($dbh, $payRs, $invoice, $bid, $paymentNotes);
 
     }
@@ -694,7 +694,7 @@ class PaymentSvcs {
         if ($payRs->Status_Code->getStoredVal() != PaymentStatusCode::Paid) {
             return array('warning' => 'This Payment is ineligable for return.  ', 'bid' => $bid);
         }
-        
+
 
         // Get the invoice record
         $invoice = new Invoice($dbh);
@@ -710,7 +710,7 @@ class PaymentSvcs {
                 $dataArray = $gateway->returnSale($dbh, $payRs, $invoice, $returnAmt, $bid);
 
                 break;
-            
+
             case PaymentMethod::Cash:
 
                 // Determine amount to return
@@ -1067,115 +1067,19 @@ class PaymentSvcs {
         // Payment Gateway
         $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-        $rtnCode = '';
-        $rtnMessage = '';
         $payNotes = '';
-        $payResult = null;
-
-        if (isset($post['ReturnCode'])) {
-            $rtnCode = intval(filter_var($post['ReturnCode'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if (isset($post['ReturnMessage'])) {
-            $rtnMessage = filter_var($post['ReturnMessage'], FILTER_SANITIZE_STRING) . "  ";
-        }
 
         if (isset($uS->paymentNotes)) {
             $payNotes = $uS->paymentNotes;
         }
 
-
-        if (isset($post[InstamedGateway::INSTAMED_TRANS_VAR])) {
-
-            $idInv = 0;
-            if (isset($uS->paymentIds[$uS->imtoken])) {
-                $idInv = $uS->paymentIds[$uS->imtoken];
-            }
-
-            try {
-
-                $payResult = $gateway->completeHostedPayment($dbh, $post, $uS->imtoken, $payNotes);
-
-            } catch (Hk_Exception_Payment $hex) {
-
-                $payResult = new PaymentResult($idInv, 0, 0);
-                $payResult->setStatus(PaymentResult::ERROR);
-                $payResult->setDisplayMessage($hex->getMessage());
-            }
-
-        } else if (isset($post['CardID'])) {
-
-            $cardId = filter_var($post['CardID'], FILTER_SANITIZE_STRING);
-
-            // Save postback in the db.
-            try {
-                Gateway::saveGwTx($dbh, $rtnCode, '', json_encode($post), 'CardInfoPostBack');
-            } catch (Exception $ex) {
-                // Do nothing
-            }
-
-//            if ($rtnCode != 0) {
-//
-//                 $payResult = new cofResult('Payment Transaction Failed: ' . $rtnMessage, PaymentResult::ERROR, 0, 0);
-//
-//            } else {
-
-                try {
-
-                    $vr = CardInfo::portalReply($dbh, $gw, $cardId, $post);
-
-                    $payResult = new CofResult($vr->response->getDisplayMessage(), $vr->response->getStatus(), $vr->idPayor, $vr->idRegistration);
-
-                } catch (Hk_Exception_Payment $hex) {
-                    $payResult = new cofResult($hex->getMessage(), PaymentResult::ERROR, 0, 0);
-                }
-
-//            }
-
-        } else if (isset($post['PaymentID'])) {
-
-            $paymentId = filter_var($post['PaymentID'], FILTER_SANITIZE_STRING);
-
-            $idInv = 0;
-            if (isset($uS->paymentIds[$paymentId])) {
-                $idInv = $uS->paymentIds[$paymentId];
-            }
-
-
-            try {
-                Gateway::saveGwTx($dbh, $rtnCode, '', json_encode($post), 'HostedCoPostBack');
-            } catch (Exception $ex) {
-                // Do nothing
-            }
-
-            try {
-
-                $csResp = HostedCheckout::portalReply($dbh, $gw, $paymentId, $payNotes);
-
-                if ($csResp->getInvoice() != '') {
-
-                    $invoice = new Invoice($dbh, $csResp->getInvoice());
-
-                    // Analyze the result
-                    $payResult = self::AnalyzeCredSaleResult($dbh, $csResp, $invoice);
-
-                } else {
-
-                    $payResult = new PaymentResult($idInv, 0, 0);
-                    $payResult->setStatus(PaymentResult::ERROR);
-                    $payResult->setDisplayMessage('Invoice Not Found!  ');
-                }
-
-            } catch (Hk_Exception_Payment $hex) {
-
-                $payResult = new PaymentResult($idInv, 0, 0);
-                $payResult->setStatus(PaymentResult::ERROR);
-                $payResult->setDisplayMessage($hex->getMessage());
-
-            }
+        $idInv = 0;
+        if (isset($uS->paymentIds[$uS->imtoken])) {
+            $idInv = $uS->paymentIds[$uS->imtoken];
         }
 
-        return $payResult;
+        return $gateway->processHostedReturn($dbh, $post, $uS->imtoken, $idInv, $payNotes);
+
     }
 
     public static function generateReceipt(\PDO $dbh, $idPayment) {
