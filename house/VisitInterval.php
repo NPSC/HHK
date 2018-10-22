@@ -25,27 +25,10 @@ try {
 
 $dbh = $wInit->dbh;
 
-$pageTitle = $wInit->pageTitle;
-
 // get session instance
 $uS = Session::getInstance();
 
-$menuMarkup = $wInit->generatePageMenu();
-
-
 $config = new Config_Lite(ciCFG_FILE);
-
-// Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("help");
-
-$resultMessage = $alertMsg->createMarkup();
-
 
 function statsPanel(\PDO $dbh, $visitNites, $totalCatNites, $start, $end, $categories, $avDailyFee, $rescGroup) {
 
@@ -1155,57 +1138,6 @@ where
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
 
-$receiptMarkup = '';
-$paymentMarkup = '';
-$payFailPage = '';
-
-if (isset($_POST['CardID']) || isset($_POST['PaymentID'])) {
-
-    $payFailPage = $wInit->page->getFilename();
-
-    require (DB_TABLES . 'MercuryRS.php');
-    require (DB_TABLES . 'PaymentsRS.php');
-    require (DB_TABLES . 'nameRS.php');
-    require (DB_TABLES . 'ActivityRS.php');
-    require (DB_TABLES . 'visitRS.php');
-
-    require (CLASSES . 'MercPay/MercuryHCClient.php');
-    require (CLASSES . 'MercPay/Gateway.php');
-
-    require (CLASSES . 'Purchase/Item.php');
-
-    require (PMT . 'Payments.php');
-    require (PMT . 'HostedPayments.php');
-    require (PMT . 'Receipt.php');
-    require (PMT . 'Invoice.php');
-    require (PMT . 'InvoiceLine.php');
-    require (PMT . 'CreditToken.php');
-    require (PMT . 'CheckTX.php');
-    require (PMT . 'CashTX.php');
-    require (PMT . 'Transaction.php');
-
-    require (MEMBER . 'Member.php');
-    require (MEMBER . 'IndivMember.php');
-    require (MEMBER . 'OrgMember.php');
-    require (MEMBER . "Addresses.php");
-    require (MEMBER . "EmergencyContact.php");
-
-    require (CLASSES . 'PaymentSvcs.php');
-    require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-
-    require (HOUSE . 'PaymentManager.php');
-    require (HOUSE . 'PaymentChooser.php');
-
-    $payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST);
-
-    if (is_null($payResult) === FALSE) {
-
-        $receiptMarkup = $payResult->getReceiptMarkup();
-
-        $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
-    }
-}
-
 $mkTable = '';  // var handed to javascript to make the report table or not.
 $headerTable = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 $dataTable = '';
@@ -1429,7 +1361,7 @@ if ($uS->CoTod) {
 <html>
     <head>
         <meta charset="UTF-8">
-        <title><?php echo $pageTitle; ?></title>
+        <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
@@ -1440,12 +1372,6 @@ if ($uS->CoTod) {
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
-
-<!--        <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>-->
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
@@ -1458,20 +1384,13 @@ if ($uS->CoTod) {
         var dateFormat = '<?php echo $dateFormat; ?>';
         var makeTable = '<?php echo $mkTable; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
-        var pmtMkup = "<?php echo $paymentMarkup; ?>";
-        var rctMkup = '<?php echo $receiptMarkup; ?>';
-        var payFailPage = '<?php echo $payFailPage; ?>';
 
         <?php echo $filter->getTimePeriodScript(); ?>;
-
 
         $('#btnHere, #btnExcel, #btnStatsOnly, #cbColClearAll, #cbColSelAll').button();
         $('#btnHere, #btnExcel').click(function () {
             $('#paymentMessage').hide();
         });
-        if (pmtMkup !== '') {
-            $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
-        }
         $('#cbColClearAll').click(function () {
             $('#selFld option').each(function () {
                 $(this).prop('selected', false);
@@ -1496,43 +1415,10 @@ if ($uS->CoTod) {
                 "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                 "dom": '<"top"ilf>rt<"bottom"ilp><"clear">',
             });
-            $('div#printArea').on('click', '.hhk-getVDialog',
-                function () {
-                var buttons;
-                var vid = $(this).data('vid');
-                var span = $(this).data('span');
-                buttons = {
-                    "Show Statement": function() {
-                        window.open('ShowStatement.php?vid=' + vid, '_blank');
-                    },
-                    "Show Registration Form": function() {
-                        window.open('ShowRegForm.php?vid=' + vid, '_blank');
-                    },
-                    "Save": function() {
-                        saveFees(0, vid, span, false, payFailPage);
-                    },
-                    "Cancel": function() {
-                        $(this).dialog("close");
-                    }
-                };
-                viewVisit(0, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
-            });
             $('#printButton').button().click(function() {
                 $("div#printArea").printArea();
             });
         }
-        $('#keysfees').dialog({
-            autoOpen: false,
-            resizable: true,
-            modal: true
-        });
-        $('#pmtRcpt').dialog({
-            autoOpen: false,
-            resizable: true,
-            width: 530,
-            modal: true,
-            title: 'Payment Receipt'
-        });
         $("#faDialog").dialog({
             autoOpen: false,
             resizable: true,
@@ -1540,18 +1426,13 @@ if ($uS->CoTod) {
             modal: true,
             title: 'Income Chooser'
         });
-        if (rctMkup !== '') {
-            showReceipt('#pmtRcpt', rctMkup);
-        }
     });
  </script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
-        <?php echo $menuMarkup; ?>
+        <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
-            <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
-            <div id="paymentMessage" style="float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
-            </div>
+
             <h2><?php echo $wInit->pageHeading; ?></h2>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="VisitInterval.php" method="post">
@@ -1586,9 +1467,5 @@ if ($uS->CoTod) {
                 <?php echo $dataTable; ?>
             </div>
         </div>
-        <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
-        <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
-        <div id="keysfees" style="font-size: .85em;"></div>
-        <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
     </body>
 </html>

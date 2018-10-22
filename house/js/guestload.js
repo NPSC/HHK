@@ -442,6 +442,11 @@ $(document).ready(function () {
     createAutoComplete($('#txtRelSch'), 3, {cmd: 'srrel', basis: $('#hdnRelCode').val(), id: memData.id}, function (item) {
         $.post('ws_admin.php', {'rId':item.id, 'id':memData.id, 'rc':$('#hdnRelCode').val(), 'cmd':'newRel'}, relationReturn);
     });
+    
+    // Any results
+    if (resultMessage !== '') {
+        flagAlertMessage(resultMessage, 'alert');
+    }
 
 
     // Excludes tab "Check-all" button

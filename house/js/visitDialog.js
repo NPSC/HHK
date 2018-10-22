@@ -719,7 +719,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     $('#keysfees').css('background-color', 'white');
     
     //working
-    $('#keysfees').empty();  //.append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading Payment Gateway</p></div>');
+    $('#keysfees').empty().append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Working...</p></div>');
 
     $.post('ws_ckin.php', parms,
         function(data) {
@@ -746,16 +746,33 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 var dates = {'date1': new Date($('#gstDate').val()), 'date2': new Date($('#gstCoDate').val())};
                 pageManager.doOnDatesChange(dates);
             }
-			
-            paymentReply(data, true);		
+            
+            $('#keysfees').dialog("close");
+
+            if (data.success && data.success !== '') {
+                flagAlertMessage(data.success, 'success');
+
+                if ($('#calendar').length > 0 && updateCal) {
+                    $('#calendar').fullCalendar('refetchEvents');
+                }
+            }
+
+            if (data.receipt && data.receipt !== '') {
+                showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
+            }
+
+            if (data.invoiceNumber && data.invoiceNumber !== '') {
+                window.open('ShowInvoice.php?invnum=' + data.invoiceNumber);
+            }
+
+            paymentRedirect(data, $('#xform'));		
     });
 
 }
 
-function paymentReply (data, updateCal) {
+function paymentRedirect (data, $xferForm) {
     "use strict";
     if (data) {
-        var $xferForm = $('#xform');
         
         if (data.hostedError) {
             flagAlertMessage(data.hostedError, 'error');
@@ -781,28 +798,9 @@ function paymentReply (data, updateCal) {
             $xferForm.prop('action', data.inctx);
             $xferForm.submit();
         }
-        
-        
-        $('#keysfees').dialog("close");
-
-        if (data.success && data.success !== '') {
-            flagAlertMessage(data.success, 'success');
-        
-            if ($('#calendar').length > 0 && updateCal) {
-                $('#calendar').fullCalendar('refetchEvents');
-            }
-        }
-        
-        if (data.receipt && data.receipt !== '') {
-            showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
-        }
-        
-        if (data.invoiceNumber && data.invoiceNumber !== '') {
-            window.open('ShowInvoice.php?invnum=' + data.invoiceNumber);
-        }
     }
-	
 }
+
 /**
  * 
  * @param {string} header

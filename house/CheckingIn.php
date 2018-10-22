@@ -14,6 +14,14 @@ require (DB_TABLES . 'registrationRS.php');
 require (DB_TABLES . 'ActivityRS.php');
 require (DB_TABLES . 'visitRS.php');
 require (DB_TABLES . 'ReservationRS.php');
+require (DB_TABLES . 'PaymentGwRS.php');
+require (DB_TABLES . 'PaymentsRS.php');
+
+require (CLASSES . 'MercPay/MercuryHCClient.php');
+require (CLASSES . 'MercPay/Gateway.php');
+
+require (PMT . 'GatewayConnect.php');
+require (PMT . 'PaymentGateway.php');
 
 require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');
@@ -24,6 +32,7 @@ require (MEMBER . "EmergencyContact.php");
 require (CLASSES . 'CleanAddress.php');
 require (CLASSES . 'AuditLog.php');
 require (CLASSES . 'PaymentSvcs.php');
+require (CLASSES . 'Purchase/Item.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require CLASSES . 'TableLog.php';
 
@@ -71,18 +80,8 @@ $idVisit = 0;
 $span = -1;
 
 // Hosted payment return
-if (isset($_POST['CardID']) || isset($_POST['PaymentID']) || isset($_POST[InstamedGateway::HCO_POSTBACK_VAR])) {
+if (isset($_POST['CardID']) || isset($_POST['PaymentID']) || isset($_POST[InstamedGateway::INSTAMED_TRANS_VAR])) {
 
-    require (DB_TABLES . 'PaymentGwRS.php');
-    require (DB_TABLES . 'PaymentsRS.php');
-
-    require (CLASSES . 'MercPay/MercuryHCClient.php');
-    require (CLASSES . 'MercPay/Gateway.php');
-
-    require (CLASSES . 'Purchase/Item.php');
-
-    require (PMT . 'GatewayConnect.php');
-    require (PMT . 'PaymentGateway.php');
     require (PMT . 'Payments.php');
     require (PMT . 'HostedPayments.php');
     require (PMT . 'Receipt.php');
@@ -198,6 +197,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
+        <script type="text/javascript" src="js/embed.js" data-displaymode="popup" data-hostname="https://online.instamed.com/providers"></script>
 
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
 
@@ -257,20 +257,7 @@ function ckedIn(data) {
         flagAlertMessage(data.warning, 'warning');
     }
 
-    if (data.xfer) {
-        var xferForm = $('#xform');
-        xferForm.children('input').remove();
-        xferForm.prop('action', data.xfer);
-        if (data.paymentId && data.paymentId != '') {
-            xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
-        } else if (data.cardId && data.cardId != '') {
-            xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
-        } else {
-            flagAlertMessage('PaymentId and CardId are missing!', 'error');
-            return;
-        }
-        xferForm.submit();
-    }
+    paymentRedirect(data, $('#xform'));
 
     if (data.success) {
         //flagAlertMessage(data.success, false);

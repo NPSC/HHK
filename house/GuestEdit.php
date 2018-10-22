@@ -115,19 +115,9 @@ $showSearchOnly = TRUE;
 
 $memberFlag = SecurityComponent::is_Authorized("guestadmin");
 
-// Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert2");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("uh-oh");
-
-
-
-
 $receiptMarkup = '';
+$paymentMarkup = '';
+
 
 // Hosted payment return
 if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)) === FALSE) {
@@ -136,10 +126,7 @@ if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)
 
     if ($payResult->getDisplayMessage() != '') {
 
-        $alertMsg->set_Context(alertMessage::Alert);
-        $alertMsg->set_Text($payResult->getDisplayMessage());
-        $alertMsg->set_DisplayAttr("block");
-        $resultMessage = $alertMsg->createMarkup();
+        $paymentMarkup = $payResult->getDisplayMessage();
     }
 }
 
@@ -461,19 +448,11 @@ if (isset($_POST["btnSubmit"])) {
         }
 
         // success
-        $alertMsg->set_Context(alertMessage::Notice);
-        $alertMsg->set_Text($msg);
-        $alertMsg->set_DisplayAttr("block");
-        $resultMessage = $alertMsg->createMarkup();
+        $resultMessage = $msg;
 
 
     } catch (Exception $ex) {
-
-        $alertMsg->set_Context(alertMessage::Alert);
-        $alertMsg->set_Text($ex->getMessage());
-        $alertMsg->set_DisplayAttr("block");
-        $resultMessage = $alertMsg->createMarkup();
-
+        $resultMessage = $ex->getMessage();
     }
 }
 
@@ -760,16 +739,6 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && count($d
 
 }
 
-// Instantiate the alert message control
-$xhrMsg = new alertMessage("divAlert1");
-$xhrMsg->set_DisplayAttr("none");
-$xhrMsg->set_Context(alertMessage::Success);
-$xhrMsg->set_iconId("alrIcon");
-$xhrMsg->set_styleId("alrResponse");
-$xhrMsg->set_txtSpanId("alrMessage");
-$xhrMsg->set_Text("uh-oh");
-
-$alertMessage = $xhrMsg->createMarkup();
 
 // Save guest Id.
 $uS->guestId = $id;
@@ -805,9 +774,10 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
+        <script type="text/javascript" src="js/embed.js" data-displaymode="popup" data-hostname="https://online.instamed.com/providers"></script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
-        <?php echo $menuMarkup; ?>
+        <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <div style="float:left; margin-right: 90px; margin-top:5px;">
                 <?php echo $guestName; ?>
@@ -819,7 +789,7 @@ $uS->guestId = $id;
                 <input type="text" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" />
             </div>
             <div style="clear:both;"></div>
-            <?php echo $resultMessage;  echo $alertMessage; ?>
+
             <?php if ($showSearchOnly === FALSE) { ?>
             <form action="GuestEdit.php" method="post" id="form1" name="form1" >
 
@@ -974,8 +944,10 @@ $uS->guestId = $id;
             var memberData = <?php echo json_encode($memberData); ?>;
             var psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);
             var rctMkup = '<?php echo $receiptMarkup; ?>';
+            var pmtMkup = "<?php echo $paymentMarkup; ?>";
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
+            var resultMessage = '<?php echo $resultMessage; ?>';
         </script>
         <script type="text/javascript" src="js/guestload.js"></script>
     </body>

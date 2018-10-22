@@ -26,6 +26,8 @@ require (MEMBER . "EmergencyContact.php");
 require (CLASSES . 'MercPay/Gateway.php');
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'Purchase/Item.php');
+require (PMT . 'GatewayConnect.php');
+require (PMT . 'PaymentGateway.php');
 require (PMT . 'Payments.php');
 require (PMT . 'HostedPayments.php');
 require (PMT . 'Receipt.php');
@@ -145,6 +147,7 @@ if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+        <script type="text/javascript" src="js/embed.js" data-displaymode="popup" data-hostname="https://online.instamed.com/providers"></script>
 
         <?php echo $sty; ?>
     </head>
