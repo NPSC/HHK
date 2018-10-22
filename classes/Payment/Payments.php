@@ -199,7 +199,7 @@ class ImVoidResponse extends PaymentResponse {
         $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
 
     }
-    
+
 }
 
 class ImReturnResponse extends PaymentResponse {
@@ -225,7 +225,7 @@ class ImReturnResponse extends PaymentResponse {
 //transactionID=96A66FDA25964C8F9C0AEB0EF8123AAF
 //transactionDate=2016-04-27T19:17:05.2770143Z
 //saveOnFileTransactionID=2FA23B1C2C8C4E0D951C24EB300DCCFB
-        
+
     function __construct(VerifyReturnResponse $verifyReturnResp, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
         $this->response = $verifyReturnResp;
         $this->paymentType = PayType::Charge;
@@ -275,9 +275,55 @@ class ImReturnResponse extends PaymentResponse {
         $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
 
     }
-    
+
 }
 
+class ImCofResponse extends PaymentResponse {
+
+
+    function __construct($verifyCurlResponse, $idPayor, $idGroup) {
+        $this->response = $verifyCurlResponse;
+        $this->idPayor = $idPayor;
+        $this->idRegistration = $idGroup;
+        $this->expDate = $verifyCurlResponse->getExpDate();
+        $this->cardNum = str_ireplace('x', '', $verifyCurlResponse->getMaskedAccount());
+        $this->cardType = $verifyCurlResponse->getCardType();
+        $this->cardName = $verifyCurlResponse->getCardHolderName();
+    }
+
+    public function getStatus() {
+
+        switch ($this->response->getStatus()) {
+
+            case '000':
+                $status = CreditPayments::STATUS_APPROVED;
+                break;
+
+            case '005':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '051':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '063':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            default:
+                $status = CreditPayments::STATUS_DECLINED;
+
+        }
+
+        return $status;
+    }
+
+    public function receiptMarkup(\PDO $dbh, &$tbl) {
+        return array('error'=>'Receipts not available.');
+    }
+
+}
 
 /**
  * Description of Payments

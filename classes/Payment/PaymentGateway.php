@@ -15,6 +15,9 @@ abstract class PaymentGateway {
     protected $gwName;
     protected $credentials;
     protected $responseErrors;
+    protected $useAVS;
+    protected $useCVV;
+
 
     public function __construct(\PDO $dbh, $gwName) {
 
@@ -120,6 +123,13 @@ abstract class PaymentGateway {
     protected function setGwName($gwName) {
         $this->gwName = $gwName;
         return $this;
+    }
+
+    public function useAVS() {
+        if ($this->credentials->Use_AVS_Flag->getStoredVal() > 0) {
+            return TRUE;
+        }
+        return FALSE;
     }
 
 }
@@ -480,7 +490,7 @@ class VantivGateway extends PaymentGateway {
         return CardInfo::sendToPortal($dbh, $this->gwName, $idGuest, $idGroup, $initCi);
     }
 
-    public function processHostedReturn(\PDO $dbh, $post, $token, $idInv, $payNotes) {
+    public function processHostedReturn(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName = '') {
 
         $payResult = NULL;
         $rtnCode = '';
@@ -632,7 +642,13 @@ class VantivGateway extends PaymentGateway {
             $rows[0]['Password'] = decryptMessage($rows[0]['Password']);
         }
 
-        return $rows[0];
+        $gwRs = new Cc_Hosted_GatewayRS();
+        EditRS::loadRow($rows[0], $gwRs);
+
+        $this->useAVS = filter_var($gwRs->Use_AVS_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
+        $this->useCVV = filter_var($gwRs->Use_Ccv_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
+
+        return $gwRs;
 
     }
 
@@ -656,15 +672,17 @@ class VantivGateway extends PaymentGateway {
             .HTMLTable::makeTd(HTMLInput::generateMarkup($r['Merchant_Id'], array('name'=>$indx . '_txtMid')))
             .HTMLTable::makeTd(HTMLInput::generateMarkup($r['Password'], array('name'=>$indx .'_txtpw')))
             .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>$indx .'_txtpw2')))
+             .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>$indx .'cbCVV')))
+             .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>$indx .'cbAVS')))
              .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>$indx .'cbDel'))));
         }
 
         if ($resultMessage != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan'=>'4', 'style'=>'font-weight:bold;')));
+            $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan'=>'6', 'style'=>'font-weight:bold;')));
         }
 
         $tbl->addHeader(HTMLTable::makeTh('Name') . HTMLTable::makeTh('Merchant Id')
-                . HTMLTable::makeTh('Password') . HTMLTable::makeTh('Password Again') . HTMLTable::makeTh('Delete'));
+                . HTMLTable::makeTh('Password') . HTMLTable::makeTh('Password Again') . HTMLTable::makeTh('use CVV') . HTMLTable::makeTh('use AVS') . HTMLTable::makeTh('Delete'));
 
         return $tbl->generateMarkup();
     }
@@ -713,6 +731,18 @@ class VantivGateway extends PaymentGateway {
                             $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - Passwords do not match.  ");
                         }
                     }
+                }
+
+                if  (isset($post[$indx . 'cbCVV'])) {
+                    $ccRs->Use_Ccv_Flag->setNewVal(1);
+                } else {
+                    $ccRs->Use_Ccv_Flag->setNewVal(0);
+                }
+
+                if  (isset($post[$indx . 'cbAVS'])) {
+                    $ccRs->Use_AVS_Flag->setNewVal(1);
+                } else {
+                    $ccRs->Use_AVS_Flag->setNewVal(0);
                 }
 
                 // Save record.
@@ -822,8 +852,6 @@ class InstamedGateway extends PaymentGateway {
 
     public function returnSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $returnAmt, $bid) {
 
-        $uS = Session::getInstance();
-
         // Find hte detail record.
         $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
         $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -900,7 +928,15 @@ class InstamedGateway extends PaymentGateway {
             'RelayState' => $this->saleUrl,
         );
 
-        $headerResponse = $this->doHeaderRequest(http_build_query(array_merge($data, $this->getCredentials()->toSSO())));
+        $req = http_build_query(array_merge($data, $this->getCredentials()->toSSO()));
+        $headerResponse = $this->doHeaderRequest($req);
+
+        // Save raw transaction in the db.
+        try {
+            Gateway::saveGwTx($dbh, $headerResponse->getResponseCode(), json_encode($data), json_encode($headerResponse->getResultArray()), 'HostedCoInit');
+        } catch(Exception $ex) {
+            // Do Nothing
+        }
 
         if ($headerResponse->getToken() != '') {
 
@@ -952,7 +988,7 @@ class InstamedGateway extends PaymentGateway {
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
 
-            //'creditCardKeyed ' => 'true',
+            'creditCardKeyed ' => 'true',
 //            'incontext' => 'true',
             'lightWeight' => 'true',
             'preventCheck' => 'true',
@@ -970,6 +1006,12 @@ class InstamedGateway extends PaymentGateway {
 
         $headerResponse = $this->doHeaderRequest(http_build_query(array_merge($data, $this->getCredentials()->toSSO())));
 
+        // Save raw transaction in the db.
+        try {
+            Gateway::saveGwTx($dbh, $headerResponse->getResponseCode(), json_encode($data), json_encode($headerResponse->getResultArray()), 'HostedCoInit');
+        } catch(Exception $ex) {
+            // Do Nothing
+        }
 
         if ($headerResponse->getToken() != '') {
 
@@ -1152,9 +1194,8 @@ class InstamedGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    public function processHostedReturn(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes) {
+    public function processHostedReturn(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $userName = '') {
 
-        $uS = Session::getInstance();
         $transType = '';
         $transResult = '';
         $payResult = NULL;
@@ -1196,11 +1237,23 @@ class InstamedGateway extends PaymentGateway {
             return $payResult;
         }
 
+        // Check DB for record
+        $cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $ssoToken);
 
+        if (count($cidInfo) < 1) {
+
+            $payResult = new PaymentResult(0, 0, 0);
+            $payResult->setDisplayMessage('');
+
+            return $payResult;
+        }
+
+
+        // Finally, process the transaction
         if ($transType == InstamedGateway::HCO_TRANS) {
 
             try {
-                $payResult = $this->completeHostedPayment($dbh, $idInv, $uS->imtoken, $payNotes, $uS->username);
+                $payResult = $this->completeHostedPayment($dbh, $idInv, $ssoToken, $payNotes, $userName, $cidInfo);
 
             } catch (Hk_Exception_Payment $hex) {
 
@@ -1211,13 +1264,13 @@ class InstamedGateway extends PaymentGateway {
 
         } else if ($transType == InstamedGateway::COF_TRANS) {
 
-            $payResult = $this->completeCof($dbh, $post, $ssoToken);
+            $payResult = $this->completeCof($dbh, $ssoToken, $cidInfo);
         }
 
         return $payResult;
     }
 
-    public function completeCof(\PDO $dbh, $ssoToken) {
+    public function completeCof(\PDO $dbh, $ssoToken, $cidInfo) {
 
         //get transaction details
         $params = $this->getCredentials()->toCurl()
@@ -1229,9 +1282,7 @@ class InstamedGateway extends PaymentGateway {
         $curl = new CurlRequest();
         $transaction = $curl->submit($params, $this->NvpUrl, TRUE);
 
-        $cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $ssoToken);
-
-        $response = new VerifyCurlResponse($transaction, $cidInfo['InvoiceNumber'], $cidInfo['Amount']);
+        $response = new VerifyCurlResponse($transaction, '0', 0);
 
         // Save raw transaction in the db.
         try {
@@ -1240,13 +1291,13 @@ class InstamedGateway extends PaymentGateway {
             // Do Nothing
         }
 
-        $vr = new CardInfoResponse($response, $cidInfo['idName'], $cidInfo['idGroup']);
+        $vr = new ImCofResponse($response, $cidInfo['idName'], $cidInfo['idGroup']);
 
-        return new CofResult($vr->response->getDisplayMessage(), $vr->response->getStatus(), $vr->idPayor, $vr->idRegistration);
+        return new CofResult($vr->response->getDisplayMessage(), $vr->getStatus(), $vr->idPayor, $vr->idRegistration);
 
     }
 
-    protected function completeHostedPayment(\PDO $dbh, $idInv, $ssoToken, $paymentNotes, $userName) {
+    protected function completeHostedPayment(\PDO $dbh, $idInv, $ssoToken, $paymentNotes, $userName, $cidInfo) {
 
         //get transaction details
         $params = $this->getCredentials()->toCurl()
@@ -1257,8 +1308,6 @@ class InstamedGateway extends PaymentGateway {
 
         $curl = new CurlRequest();
         $transaction = $curl->submit($params, $this->NvpUrl, TRUE);
-
-        $cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $ssoToken);
 
         $response = new VerifyCurlResponse($transaction, $cidInfo['InvoiceNumber'], $cidInfo['Amount']);
 
@@ -1302,17 +1351,17 @@ class InstamedGateway extends PaymentGateway {
         return $payResult;
     }
 
-    protected function pollPaymentStatus($token, $trace = FALSE) {
-
-        $data = $this->getCredentials()->toSOAP();
-
-        $data['tokenID'] = $token;
-
-        $soapReq = new PollingRequest();
-
-        return new PollingResponse($soapReq->submit($data, $this->soapUrl, $trace));
-
-    }
+//    protected function pollPaymentStatus($token, $trace = FALSE) {
+//
+//        $data = $this->getCredentials()->toSOAP();
+//
+//        $data['tokenID'] = $token;
+//
+//        $soapReq = new PollingRequest();
+//
+//        return new PollingResponse($soapReq->submit($data, $this->soapUrl, $trace));
+//
+//    }
 
     protected function loadGateway(\PDO $dbh) {
 
@@ -1327,6 +1376,13 @@ class InstamedGateway extends PaymentGateway {
             $gwRs = new InstamedGatewayRS();
             EditRS::loadRow($rows[0], $gwRs);
 
+            $this->ssoUrl = $gwRs->providersSso_Url->getStoredVal();
+            $this->soapUrl = $gwRs->soap_Url->getStoredVal();
+            $this->NvpUrl = $gwRs->nvp_Url->getStoredVal();
+
+            $this->useAVS = filter_var($gwRs->Use_AVS_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
+            $this->useCVV = filter_var($gwRs->Use_Ccv_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
+
         } else {
             throw new Hk_Exception_Runtime('The credit card payment gateway is not defined.');
         }
@@ -1337,9 +1393,6 @@ class InstamedGateway extends PaymentGateway {
     protected function setCredentials($gwRs) {
 
         $this->credentials = new InstaMedCredentials($gwRs);
-        $this->ssoUrl = $gwRs->providersSso_Url->getStoredVal();
-        $this->soapUrl = $gwRs->soap_Url->getStoredVal();
-        $this->NvpUrl = $gwRs->nvp_Url->getStoredVal();
 
         $this->saleUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPatientPaymentSSO?';
         $this->cofUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPaymentPlanSimpleSSO?';
@@ -1515,6 +1568,9 @@ where r.idRegistration =" . $idReg);
                 }
             }
 
+            $ccRs->Use_Ccv_Flag->setNewVal(0);
+            $ccRs->Use_AVS_Flag->setNewVal(0);
+
             // Save record.
             $num = EditRS::update($dbh, $ccRs, array($ccRs->idcc_gateway));
 
@@ -1574,9 +1630,9 @@ class InstaMedCredentials {
     public function toCurl() {
 
         return
-            InstaMedCredentials::MERCHANT_ID . $this->accountID
-            . '&' . InstaMedCredentials::STORE_ID . $this->storeId
-            . '&' . InstaMedCredentials::TERMINAL_ID . $this->terminalId;
+            InstaMedCredentials::MERCHANT_ID . '=' . $this->accountID
+            . '&' . InstaMedCredentials::STORE_ID . '=' . $this->storeId
+            . '&' . InstaMedCredentials::TERMINAL_ID . '=' . $this->terminalId;
 
     }
 
@@ -1592,12 +1648,12 @@ class InstaMedCredentials {
 }
 
 
-class PollingRequest extends SoapRequest {
-
-    protected function execute(\SoapClient $soapClient, $data) {
-        return new PollingResponse($soapClient->GetSSOTokenStatus($data));
-    }
-}
+//class PollingRequest extends SoapRequest {
+//
+//    protected function execute(\SoapClient $soapClient, $data) {
+//        return new PollingResponse($soapClient->GetSSOTokenStatus($data));
+//    }
+//}
 
 
 class LocalGateway extends PaymentGateway {

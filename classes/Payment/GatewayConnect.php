@@ -177,10 +177,7 @@ class VerifyCurlResponse extends GatewayResponse {
     }
 
     public function getDisplayMessage() {
-//        if (isset($this->result->DisplayMessage)) {
-//            return $this->result->DisplayMessage;
-//        }
-        return '';
+        return $this->getMessage();
     }
 
     public function getToken() {
@@ -223,10 +220,11 @@ class VerifyCurlResponse extends GatewayResponse {
     public function getExpDate() {
 
         if (isset($this->result['cardExpirationMonth']) && isset($this->result['cardExpirationYear'])) {
-	        if($this->result['cardExpirationMonth'] < 10){
+
+	    if($this->result['cardExpirationMonth'] < 10){
             	$month = '0' . $this->result['cardExpirationMonth'];
             }else{
-	            $month = $this->result['cardExpirationMonth'];
+	        $month = $this->result['cardExpirationMonth'];
             }
 
             $year = $this->result['cardExpirationYear'];
@@ -351,7 +349,7 @@ class VerifyCurlResponse extends GatewayResponse {
 }
 
 class VerifyVoidResponse extends VerifyCurlResponse {
-    
+
 
     // responseCode=000
     // &responseMessage=APPROVED
@@ -361,7 +359,7 @@ class VerifyVoidResponse extends VerifyCurlResponse {
 }
 
 class VerifyReturnResponse extends VerifyCurlResponse {
-    
+
 
 }
 
@@ -419,7 +417,7 @@ class HeaderResponse extends GatewayResponse {
 }
 
 class CurlRequest {
-    
+
     protected $gateWay;
 
     public function submit($parmStr, $url = '', $trace = FALSE) {
@@ -432,7 +430,7 @@ class CurlRequest {
 
         try {
             if ($trace) {
-                file_put_contents(REL_BASE_DIR . 'patch' . DS . 'soapLog.xml', $parmStr . implode($xaction), FILE_APPEND);
+                file_put_contents(REL_BASE_DIR . 'patch' . DS . 'soapLog.xml', '; |new__' . $parmStr . '|||' . json_encode($xaction), FILE_APPEND);
             }
 
         } catch(Exception $ex) {
@@ -444,7 +442,7 @@ class CurlRequest {
     }
 
     protected function execute($url, $params) {
-        
+
         $ch = curl_init();
 
         curl_setopt($ch, CURLOPT_URL, $url . $params);
@@ -465,7 +463,7 @@ class CurlRequest {
 
         return $transaction;
     }
-    
+
 }
 
 

@@ -770,37 +770,6 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
 
 }
 
-function paymentRedirect (data, $xferForm) {
-    "use strict";
-    if (data) {
-        
-        if (data.hostedError) {
-            flagAlertMessage(data.hostedError, 'error');
-
-        } else if (data.xfer && $xferForm.length > 0) {
-
-            $xferForm.children('input').remove();
-            $xferForm.prop('action', data.xfer);
-
-            if (data.paymentId && data.paymentId != '') {
-                $xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
-            } else if (data.cardId && data.cardId != '') {
-                $xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
-            } else {
-                flagAlertMessage('PaymentId and CardId are missing!', 'error');
-                return;
-            }
-
-            $xferForm.submit();
-
-        } else if (data.inctx && $xferForm.length > 0) {
-
-            $xferForm.prop('action', data.inctx);
-            $xferForm.submit();
-        }
-    }
-}
-
 /**
  * 
  * @param {string} header

@@ -96,8 +96,12 @@ if (isset($_POST['CardID']) || isset($_POST['PaymentID']) || isset($_POST[Instam
     require (HOUSE . 'PaymentChooser.php');
 
     if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)) === FALSE) {
+
         $receiptMarkup = $payResult->getReceiptMarkup();
-        $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+
+        if ($payResult->getDisplayMessage() != '') {
+            $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        }
     }
 }
 

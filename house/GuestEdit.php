@@ -124,10 +124,8 @@ if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)
 
     $receiptMarkup = $payResult->getReceiptMarkup();
 
-    if ($payResult->getDisplayMessage() != '') {
+    $paymentMarkup = $payResult->getDisplayMessage();
 
-        $paymentMarkup = $payResult->getDisplayMessage();
-    }
 }
 
 
@@ -949,6 +947,6 @@ $uS->guestId = $id;
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
             var resultMessage = '<?php echo $resultMessage; ?>';
         </script>
-        <script type="text/javascript" src="js/guestload.js"></script>
+        <script type="text/javascript" src="js/guestload-min.js"></script>
     </body>
 </html>

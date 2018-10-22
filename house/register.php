@@ -95,7 +95,10 @@ if ($uS->DefaultRegisterTab > 0 && $uS->DefaultRegisterTab < 5) {
 if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_REQUEST)) === FALSE) {
 
     $receiptMarkup = $payResult->getReceiptMarkup();
-    $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+    
+    if ($payResult->getDisplayMessage() != '') {
+        $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+    }
 }
 
 
@@ -388,7 +391,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
     ];
 </script>
 
-<script type="text/javascript" src="js/register-min.js?v2x=n"></script>
+<script type="text/javascript" src="js/register.js?v2x=n"></script>
 
 <style>
    #version {

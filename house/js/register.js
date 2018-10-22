@@ -623,7 +623,7 @@ $(document).ready(function () {
     $('#vstays, #vresvs, #vwls, #vuncon').on('click', '.stupCredit', function (event) {
         event.preventDefault();
         $("#divAlert1, #paymentMessage").hide();
-        updateCredit($(this).data('id'), $(this).data('reg'), $(this).data('name'), 'cardonfile');
+        updateCredit($(this).data('id'), $(this).data('reg'), $(this).data('name'), 'cardonfile', 'register.php');
     });
     $('#vstays').on('click', '.stckout', function (event) {
         event.preventDefault();

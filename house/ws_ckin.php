@@ -662,7 +662,12 @@ try {
             $idReg = intval(filter_var($_POST['reg'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $events = array('success'=>HouseServices::viewCreditTable($dbh, $idReg, 0));
+        $pbp = '';
+        if (isset($_POST['pbp'])) {
+            $pbp = filter_var($_POST['pbp'], FILTER_SANITIZE_STRING);
+        }
+
+        $events = array('success'=>HouseServices::viewCreditTable($dbh, $idReg, 0), 'pbp'=>$pbp);
 
         break;
 

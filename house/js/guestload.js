@@ -275,10 +275,13 @@ $(document).ready(function () {
         },
         collapsible: true
     });
+    
     $('#btnSubmit, #btnReset, #btnCred').button();
+    
     $('#btnCred').click(function () {
         cardOnFile($(this).data('id'), $(this).data('idreg'), 'GuestEdit.php?id=' + $(this).data('id') + '&psg=' + memData.idPsg);
     });
+    
     // phone - email tabs block
     $('#phEmlTabs').tabs();
     $('#emergTabs').tabs();

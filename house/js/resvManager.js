@@ -1959,19 +1959,7 @@ function resvManager(initData) {
     }
 
     function transferToGw(data) {
-
-        var xferForm = $('#xform');
-        xferForm.children('input').remove();
-        xferForm.prop('action', data.xfer);
-        if (data.paymentId && data.paymentId != '') {
-            xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
-        } else if (data.cardId && data.cardId != '') {
-            xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
-        } else {
-            flagAlertMessage('PaymentId and CardId are missing!', 'error');
-            return;
-        }
-        xferForm.submit();
+        paymentRedirect (data, $('#xform'));
     }
 
     function resvPicker(data, $resvDiag, $psgDiag) {

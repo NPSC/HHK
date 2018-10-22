@@ -979,7 +979,7 @@ class PaymentSvcs {
         return $dataArray;
     }
 
-    public static function AnalyzeCredSaleResult(\PDO $dbh, PaymentResponse $payResp, \Invoice $invoice, $idToken = 0) {
+    public static function AnalyzeCredSaleResult(\PDO $dbh, PaymentResponse $payResp, \Invoice $invoice, $idToken = 0, $useAVS = TRUE, $useCVV = TRUE) {
 
         $uS = Session::getInstance();
 
@@ -996,15 +996,19 @@ class PaymentSvcs {
                 $payResult->feePaymentAccepted($dbh, $uS, $payResp, $invoice);
                 $payResult->setDisplayMessage('Paid by Credit Card.  ');
 
-                $avsResult = new AVSResult($payResp->response->getAVSResult());
-                $cvvResult = new CVVResult($payResp->response->getCvvResult());
+                if ($useAVS) {
+                    $avsResult = new AVSResult($payResp->response->getAVSResult());
 
-                if ($avsResult->isZipMatch() === FALSE) {
-                    $payResult->setDisplayMessage($avsResult->getResultMessage() . '  ');
+                    if ($avsResult->isZipMatch() === FALSE) {
+                        $payResult->setDisplayMessage($avsResult->getResultMessage() . '  ');
+                    }
                 }
 
-                if ($cvvResult->isCvvMatch() === FALSE && $uS->CardSwipe === FALSE) {
-                    $payResult->setDisplayMessage($cvvResult->getResultMessage() . '  ');
+                if ($useCVV) {
+                    $cvvResult = new CVVResult($payResp->response->getCvvResult());
+                    if ($cvvResult->isCvvMatch() === FALSE && $uS->CardSwipe === FALSE) {
+                        $payResult->setDisplayMessage($cvvResult->getResultMessage() . '  ');
+                    }
                 }
 
                 break;
@@ -1045,16 +1049,11 @@ class PaymentSvcs {
         if (count($rows) > 0) {
 
             $infoArray = $rows[0];
-//            $infoArray['idGroup'] = $rows[0][1];
-//            $infoArray['InvoiceNumber'] = $rows[0][2];
-//            $infoArray['Amount'] = $rows[0][3];
 
             // Delete to discourge replays.
             $stmt = $dbh->prepare("delete from card_id where CardID = :cid");
             $stmt->execute(array(':cid'=>$cardId));
 
-        } else {
-            throw new Hk_Exception_Payment('CardID/PaymentID not found.  ');
         }
 
         return $infoArray;
@@ -1068,17 +1067,21 @@ class PaymentSvcs {
         $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
         $payNotes = '';
+        $idInv = 0;
+        $tokenId = '';
 
         if (isset($uS->paymentNotes)) {
             $payNotes = $uS->paymentNotes;
         }
 
-        $idInv = 0;
-        if (isset($uS->paymentIds[$uS->imtoken])) {
-            $idInv = $uS->paymentIds[$uS->imtoken];
+        if (isset($uS->imtoken)) {
+            $tokenId = $uS->imtoken;
+        }
+        if (isset($uS->paymentIds[$tokenId])) {
+            $idInv = $uS->paymentIds[$tokenId];
         }
 
-        return $gateway->processHostedReturn($dbh, $post, $uS->imtoken, $idInv, $payNotes);
+        return $gateway->processHostedReturn($dbh, $post, $tokenId, $idInv, $payNotes, $uS->username);
 
     }
 
