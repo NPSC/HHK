@@ -66,7 +66,6 @@ $menuMarkup = $wInit->generatePageMenu();
 // get session instance
 $uS = Session::getInstance();
 
-
 $config = new Config_Lite(ciCFG_FILE);
 $totalRest = $uS->PreviousNights;
 
@@ -444,8 +443,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 </h2>
             </div>
             <div id="divAlertMsg" style="clear:left;"><?php echo $resultMessage; ?></div>
-            <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
-            </div>
+            <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
             <div style="clear:both;"></div>
             <form name="frmdownload" action="#" method="post">
             <div id="mainTabs" style="display:none; font-size:.9em;">
