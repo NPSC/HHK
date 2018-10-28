@@ -863,7 +863,7 @@ class InstamedGateway extends PaymentGateway {
         $pAuthRs = new Payment_AuthRS();
         EditRS::loadRow(array_pop($arows), $pAuthRs);
 
-        if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid && $pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::VoidReturn) {
+        if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid && $pAuthRs->Status_Code->getStoredVal() != PaymentStatusCode::VoidReturn) {
 
             // Determine amount to return
             if ($returnAmt == 0) {
