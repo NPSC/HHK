@@ -21,7 +21,7 @@ abstract class TemplateForm {
     public $templateFile;
 
 
-    function __construct($fileName, $path = 'conf/') {
+    function __construct($dbh, $fileName, $path = 'conf/') {
 
         $this->mime = array(
             'txt'      => 'text/html',
@@ -31,9 +31,22 @@ abstract class TemplateForm {
             'mhtml'      => 'text/html',
         );
 
-        $this->templateFileName = REL_BASE_DIR . $path . $fileName;
-        $this->getFormTemplate();
-
+		if($dbh == null){
+			$this->templateFileName = REL_BASE_DIR . $path . $fileName;
+			$this->getFormTemplate();
+		}else{
+			
+			$idDocument = Document::findDocument($dbh, $fileName, 'form', 'md');
+			
+			if($idDocument > 0){
+				$document = new Document($dbh, $idDocument);
+				$this->document = $document->getDoc();
+				
+			}
+		}
+        
+		
+		
     }
 
     public function createForm($replacements) {
