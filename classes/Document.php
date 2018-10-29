@@ -61,6 +61,21 @@ class Document {
         $this->docCategories = readGenLookupsPDO($dbh, 'Document_Category');
 
     }
+    
+    public static function findDocument(\PDO $dbh, $title, $category, $type) {
+        
+        $idDoc = 0;
+                
+        $stmt = $dbh->query("select idDocument from document where `Title` = '$title' and `Category` = '$category' and `Type` = '$type'");
+        $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+        
+        if ($stmt->rowCount() > 0) {
+            $idDoc = $rows[0][0];
+        }
+
+        return $idDoc;
+
+    }
 
     protected function loadDoc(\PDO $dbh) {
 
