@@ -737,15 +737,6 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $this->reservConstraints;
     }
 
-    public static function isActionStatus($reservStatus) {
-
-        if ($reservStatus == ReservationStatus::Checkedout || $reservStatus == ReservationStatus::Staying || $reservStatus == ReservationStatus::Committed || $reservStatus == ReservationStatus::UnCommitted) {
-            return TRUE;
-        }
-
-        return FALSE;
-    }
-
     public static function showListByStatus(\PDO $dbh, $editPage, $checkinPage, $reservStatus = ReservationStatus::Committed, $shoDirtyRooms = FALSE, $idResc = NULL, $daysAhead = 2, $showConstraints = FALSE) {
 
         $dateAhead = new \DateTime();
@@ -971,7 +962,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
                 $limResvStatuses[$s[0]] = $s;
             }
         }
-        
+
         return $limResvStatuses;
     }
 
@@ -994,7 +985,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
     public static function isRemovedStatus($reservStatus) {
 
-        if ($reservStatus == ReservationStatus::Canceled || $reservStatus == ReservationStatus::NoShow || $reservStatus == ReservationStatus::TurnDown || $reservStatus == ReservationStatus::ToHotel) {
+        if ($reservStatus == ReservationStatus::Canceled || $reservStatus == ReservationStatus::NoShow || $reservStatus == ReservationStatus::TurnDown) {
             return TRUE;
         }
 
@@ -1233,7 +1224,10 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
     }
 
     public function setStatus($v) {
-        $this->reservRs->Status->setNewVal($v);
+        $uS = Session::getInstance();
+        if (isset($uS->guestLookups['ReservStatus'][$v])) {
+            $this->reservRs->Status->setNewVal($v);
+        }
         return $this;
     }
 
@@ -1339,7 +1333,7 @@ where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdRe
             $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
             $this->numGuests = 0;
 
-            if (count($rows > 0)) {
+            if (count($rows) > 0) {
                 $this->numGuests = $rows[0][0];
             }
         }

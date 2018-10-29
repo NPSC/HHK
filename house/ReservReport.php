@@ -201,7 +201,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     ifnull(r.Actual_Departure, r.Expected_Departure) as `Departure`,
     r.Fixed_Room_Rate,
     r.`Status` as `ResvStatus`,
-    DATEDIFF(r.Expected_Departure, r.Expected_Arrival) as `Nights`,
+    DATEDIFF(ifnull(r.Actual_Departure, r.Expected_Departure), ifnull(r.Actual_Arrival, r.Expected_Arrival)) as `Nights`,
     ifnull(n.Name_Last, '') as Name_Last,
     ifnull(n.Name_First, '') as Name_First,
     re.Title as `Room`,
@@ -216,7 +216,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     hs.idAssociation,
     nd.Name_Full as `Name_Doctor`,
     nr.Name_Full as `Name_Agent`,
-    ifnull(gl.`Description`, '') as `Diagnosis`,
+    ifnull(gl.`Description`, hs.Diagnosis) as `Diagnosis`,
     ifnull(g2.`Description`, '') as `Location`,
     r.Timestamp as `Created_Date`
 from

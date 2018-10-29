@@ -67,6 +67,8 @@ $payFailPage = $wInit->page->getFilename();
 $idGuest = 0;
 $idReserv = 0;
 $idPsg = 0;
+$idVisit = 0;
+$span = 0;
 
 // Hosted payment return
 if (isset($_POST['CardID']) || isset($_POST['PaymentID'])) {
@@ -121,13 +123,24 @@ if (isset($_GET['idPsg'])) {
     $idPsg = intval(filter_var($_GET['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
+if (isset($_GET['vid'])) {
+    $idVisit = intval(filter_var($_GET['vid'], FILTER_SANITIZE_NUMBER_INT), 10);
+}
 
-if ($idReserv > 0 || $idGuest > 0) {
+if (isset($_GET['span'])) {
+    $span = intval(filter_var($_GET['span'], FILTER_SANITIZE_NUMBER_INT), 10);
+}
+
+
+if ($idReserv > 0 || $idGuest > 0 || $idVisit > 0) {
 
     $mk1 = "<h2>Loading...</h2>";
     $resvObj->setIdResv($idReserv);
     $resvObj->setId($idGuest);
     $resvObj->setIdPsg($idPsg);
+    $resvObj->setIdVisit($idVisit);
+    $resvObj->setSpan($span);
+
 
 } else {
 
@@ -411,7 +424,7 @@ $(document).ready(function() {
 
             $.post(
                 'ws_resv.php',
-                $('#form1').serialize() + '&cmd=saveCheckin&idPsg=' + pageManager.getIdPsg() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
+                $('#form1').serialize() + '&cmd=saveCheckin&idPsg=' + pageManager.getIdPsg() + '&rid=' + pageManager.getIdResv() + '&vid=' + pageManager.getIdVisit() + '&span=' + pageManager.getSpan() + '&' + $.param({mem: pageManager.people.list()}),
                 function(data) {
 
                     try {
@@ -441,7 +454,7 @@ $(document).ready(function() {
     });
 
 
-    if (parseInt(resv.id, 10) > 0 || parseInt(resv.rid, 10) > 0) {
+    if (parseInt(resv.id, 10) > 0 || parseInt(resv.rid, 10) > 0 || parseInt(resv.vid, 10) > 0) {
 
         // Avoid automatic new guest for existing reservations.
         if (parseInt(resv.id, 10) === 0 && parseInt(resv.rid, 10) > 0) {
@@ -450,8 +463,6 @@ $(document).ready(function() {
 
         resv.cmd = 'getCkin';
         pageManager.getReserve(resv);
-
-    } else {
 
     }
 });

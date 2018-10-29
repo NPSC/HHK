@@ -662,12 +662,18 @@ class Visit {
 
             if ($stayStartDT == $visitSpanStartDT) {
                 // Special case - just update the span id and status
-                $stayRS->Visit_Span->setNewVal($this->visitRS->Span->getStoredVal());
+
+                $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants);
+                if (is_null($rm)) {
+                    throw new Hk_Exception_Runtime('Room is full.  ');
+                }
 
                 if ($stayRS->Status->getStoredVal() != VisitStatus::CheckedOut) {
                     $stayRS->Status->setNewVal($this->visitRS->Status->getStoredVal());
                 }
 
+                $stayRS->Visit_Span->setNewVal($this->visitRS->Span->getStoredVal());
+                $stayRS->idRoom->setNewVal($rm->getIdRoom());
                 $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
                 $stayRS->Updated_By->setNewVal($uname);
 
@@ -777,9 +783,9 @@ class Visit {
 
         // Check out
         $stayRS->Status->setNewVal(VisitStatus::CheckedOut);
-        $stayRS->Checkout_Date->setNewVal($dateDepartedDT->format("Y-m-d H:i:s"));
-        $stayRS->Span_End_Date->setNewVal($dateDepartedDT->format("Y-m-d H:i:s"));
-        $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+        $stayRS->Checkout_Date->setNewVal($dateDepartedDT->format('Y-m-d H:i:s'));
+        $stayRS->Span_End_Date->setNewVal($dateDepartedDT->format('Y-m-d H:i:s'));
+        $stayRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
         $stayRS->Updated_By->setNewVal($uS->username);
 
         EditRS::update($dbh, $stayRS, array($stayRS->idStays));
@@ -788,6 +794,16 @@ class Visit {
         VisitLog::logStay($dbh, $stayRS->idVisit->getStoredVal(), $stayRS->Visit_Span->getStoredVal(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(), $idGuest, $this->visitRS->idRegistration->getStoredVal(), $logText, "update", $uS->username);
 
         EditRS::updateStoredVals($stayRS);
+
+
+//        // Update the visit expected departure
+//        $visitExpectedDepartDT = new \DateTime($this->getExpectedDeparture());
+//
+//        if ($dateDepartedDT > $visitExpectedDepartDT) {
+//
+//            $this->visitRS->Expected_Departure->setNewVal($dateDepartedDT->format('Y-m-d H:i:s'));
+//            $this->updateVisitRecord($dbh, $username);
+//        }
 
 
         $msg = $this->checkStaysEndVisit($dbh, $uS->username, $dateDepartedDT, $sendEmail);
@@ -908,6 +924,7 @@ class Visit {
         $rooms = $resc->getRooms();
 
         $rmCleans = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
+        $finalCleanState = '';
 
         foreach ($rooms as $r) {
 
@@ -915,6 +932,7 @@ class Visit {
             if (isset($rmCleans[$r->getCleaningCycleCode()]) && $rmCleans[$r->getCleaningCycleCode()][2] > 0) {
                 $r->putTurnOver();
                 $r->saveRoom($dbh, $username, TRUE);
+                $finalCleanState = RoomState::TurnOver;
             }
         }
 
@@ -932,30 +950,21 @@ class Visit {
 
 
         // prepare email message
+        $noreply = $uS->noreplyAddr;
+        $adminemail = $uS->adminEmailAddr;
+        $hskpg = $uS->HouseKeepingEmail;
+
         try {
-            if ($sendEmail && $uS->adminEmailAddr != '' && $uS->noreplyAddr != '') {
+            if ($sendEmail && $uS->noreplyAddr != '' && ($uS->adminEmailAddr != '' || $uS->HouseKeepingEmail != '')) {
                 // Get room name
                 $roomTitle = 'Unknown';
                 if (is_null($this->getResource($dbh)) === FALSE) {
                     $roomTitle = $this->resource->getTitle();
                 }
 
-                // Get room list
-                $rooms = array();
-                $stmt2 = $dbh->query("select idResource, Title from resource;");
-
-                while ($rw = $stmt2->fetch(\PDO::FETCH_ASSOC)) {
-                    $rooms[$rw['idResource']] = $rw['Title'];
-                }
-
-                // fees transaction table
-                //$feesMarkup = HTMLContainer::generateMarkup('div', Fees::createVisitFeesMarkup($dbh, $this->getIdVisit(), $rooms));
-
                 // Get guest names
-                $query = "Select n.idName, n.Name_First, n.Name_Last, s.Checkin_Date, s.Checkout_Date, p.Notes
+                $query = "Select n.idName, n.Name_First, n.Name_Last, s.Checkin_Date, s.Checkout_Date
                 from stays s join `name` n on s.idName = n.idName
-                left join name_guest ng on s.idName = ng.idName
-                left join psg p on ng.idPsg = p.idPsg
                 where s.idVisit = :vst and s.Status = :stat;";
                 $stmt = $dbh->prepare($query);
                 $stmt->execute(array(':vst' => $this->getIdVisit(), ':stat' => VisitStatus::CheckedOut));
@@ -973,8 +982,6 @@ class Visit {
                                 . HTMLTable::makeTd(date('g:ia D M jS, Y', strtotime($g['Checkout_Date']))));
                     }
 
-                    $tbl->addBodyTr(HTMLTable::makeTd('Return Date') . HTMLTable::makeTd($this->getReturnDate() == '' ? '' : date('D M jS, Y', strtotime($this->getReturnDate())), array('colspan' => '3')));
-                    $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('h4', 'Notes') . nl2br($gsts[0]['Notes'])), array('colspan' => '4')));
                     $gMarkup .= $tbl->generateMarkup();
                 }
 
@@ -983,8 +990,6 @@ class Visit {
                 $gMarkup .= '</body></html>';
 
                 $subj = "Visit audit report for room: " . $roomTitle . ".  Room is now empty.";
-
-
 
                 // Get the site configuration object
                 $config = new Config_Lite(ciCFG_FILE);
@@ -996,7 +1001,8 @@ class Visit {
                 $mail->FromName = $uS->siteName;
                 $mail->addReplyTo($uS->noreplyAddr, $uS->siteName);
 
-                $tos = explode(',', $uS->adminEmailAddr);
+                $tos = array_merge(explode(',', $uS->adminEmailAddr), explode(',', $uS->HouseKeepingEmail));
+
                 foreach ($tos as $t) {
                     $to = filter_var($t, FILTER_SANITIZE_EMAIL);
                     if ($to !== FALSE && $to != '') {
@@ -1271,7 +1277,7 @@ class Visit {
 
             // If the stay expected end is too early, make it the same as the visit.
             if ($stayExpEnd <= $stayEndDT) {
-                $stayRs->Expected_Co_Date->setNewVal($visitEndDT->format('Y-m-d') . ' ' . $uS->CheckOutTime);
+                $stayRs->Expected_Co_Date->setNewVal($visitEndDT->format('Y-m-d '. $uS->CheckOutTime . ':00:00'));
             }
 
             // Check the Stay Check-in date.  Can only change the first span.
@@ -1444,7 +1450,7 @@ class Visit {
                 $lastDepartureDT = new \DateTime($coDT->format('Y-m-d 00:00:00'));
             }
 
-            $stayRS->Expected_Co_Date->setNewVal($coDT->format('Y-m-d') . ' ' . $uS->CheckOutTime);
+            $stayRS->Expected_Co_Date->setNewVal($coDT->format('Y-m-d '. $uS->CheckOutTime . ':00:00'));
             $stayRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
             $stayRS->Updated_By->setNewVal($uname);
 
@@ -1467,7 +1473,7 @@ class Visit {
         if ($visitExpDepDT != $lastDepartureDT) {
 
             // Update visit exepected departure
-            $this->visitRS->Expected_Departure->setNewVal($lastDepartureDT->format('Y-m-d') . ' ' . $uS->CheckOutTime);
+            $this->visitRS->Expected_Departure->setNewVal($lastDepartureDT->format('Y-m-d '. $uS->CheckOutTime . ':00:00'));
             $this->visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
             $this->visitRS->Updated_By->setNewVal($uname);
 
@@ -1480,7 +1486,7 @@ class Visit {
 
                 // Update reservation expected departure
                 $resv = Reservation_1::instantiateFromIdReserv($dbh, $this->getReservationId());
-                $resv->setExpectedDeparture($lastDepartureDT->format('Y-m-d' . ' ' . $uS->CheckOutTime));
+                $resv->setExpectedDeparture($lastDepartureDT->format('Y-m-d ' . $uS->CheckOutTime . ':00:00'));
                 $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
 
                 // Move other reservations to alternative rooms

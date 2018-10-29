@@ -93,7 +93,7 @@ class VisitView {
                 }
 
                 $addGuestButton = HTMLContainer::generateMarkup('div',
-                    HTMLInput::generateMarkup('Add Guest', array('id'=>'btnAddGuest', 'type'=>'button', 'data-rid'=>$r['idReservation'], 'title'=>'Add another guest to this visit.'))
+                    HTMLInput::generateMarkup('Add Guest', array('id'=>'btnAddGuest', 'type'=>'button', 'data-rid'=>$r['idReservation'], 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span'], 'title'=>'Add another guest to this visit.'))
                     , array('style'=>'float:right;margin-left:.3em;margin-bottom:.3em; margin-top:.3em;'));
 
                 break;
@@ -386,6 +386,11 @@ class VisitView {
                     $days = $edDay->diff($stDayDT, TRUE)->days;
 
                     $getCkOutDate = HTMLInput::generateMarkup($edDay->format('M j, Y'), array('id' => 'stayCkOutDate_' . $r['idName'], 'name' =>'[stayCkOutDate][' . $r['idName'] . ']', 'class' => 'ckdate hhk-ckoutDate', 'readonly'=>'readonly'));
+
+                    if ($uS->CoTod) {
+                        $getCkOutDate .= HTMLInput::generateMarkup(date('H'), array('id' => 'stayCkOutHour_' . $r['idName'], 'name' =>'[stayCkOutHour][' . $r['idName'] . ']', 'size'=>'3'));
+                    }
+
                     $ckOutDate = HTMLInput::generateMarkup(date('M j, Y', strtotime($r['Expected_Co_Date'])), array('id' => 'stayExpCkOut_' . $r['idName'], 'name' => '[stayExpCkOut][' . $r['idName'] . ']', 'class' => 'ckdateFut hhk-expckout', 'readonly'=>'readonly'));
                     $ckOutTitle = "Exp'd Check Out";
                     $actionButton = HTMLInput::generateMarkup('', $cbAttr) . $getCkOutDate;
@@ -500,7 +505,11 @@ class VisitView {
                 $useRemoveHdr = TRUE;
             }
 
-            $sTable->addBodyTr($tr);
+            if ($r['Status'] != VisitStatus::CheckedIn) {
+                $sTable->addBodyTr($tr, array('style'=>'background-color:#f2f2f2;'));
+            } else {
+                $sTable->addBodyTr($tr);
+            }
         }
 
         // Adjust headers in this condition

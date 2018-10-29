@@ -279,7 +279,7 @@ class SysConfig {
         $stmt = $dbh->query("select `Value`,`Type` from `" . $tableName . "` where `Key` = '$key' ");
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if (count($rows == 1)) {
+        if (count($rows) == 1) {
             return $rows[0]['Value'];
         } else {
             throw new Hk_Exception_Runtime('System Configuration key not found.  ');

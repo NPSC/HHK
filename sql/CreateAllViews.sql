@@ -2071,7 +2071,9 @@ select
     rg.idReservation,
     r.Expected_Arrival as `Arrival_Date`,
     r.Expected_Departure as `Departure_Date`,
-    r.`Status`
+    r.`Status`,
+    r.idResource,
+    'r' as `Source`
 from reservation_guest rg
 	left join
     reservation r on rg.idReservation = r.idReservation
@@ -2085,7 +2087,9 @@ select
     v.idReservation,
     s.Span_Start_Date as `Arrival_Date`,
     dateDefaultNow(s.Expected_Co_Date)  as `Departure_Date`,
-    's' as `Status`
+    's' as `Status`,
+    v.idResource,
+    'v' as `Source`
 from stays s
 	left join
     visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span

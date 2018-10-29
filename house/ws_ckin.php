@@ -92,7 +92,7 @@ require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Vehicle.php');
 require (HOUSE . 'Visit.php');
 require (HOUSE . "visitViewer.php");
-require (HOUSE . 'Register.php');
+
 require (HOUSE . 'VisitCharges.php');
 
 
@@ -194,11 +194,6 @@ try {
 
             $events = ReservationSvcs::reviseConstraints($dbh, $idResv, $idResc, $numGuests, $expArr, $expDep, $cbs, $guestAdmin, $omitSelf);
 
-            break;
-
-        case 'dunf':
-
-            $events = HouseServices::deleteUnfinisedCheckins($dbh);
             break;
 
         case 'confrv':
@@ -667,21 +662,6 @@ try {
 
         $events = array('success'=>HouseServices::viewCreditTable($dbh, $idReg, 0));
 
-        break;
-
-    case "register":
-        $startTime = 0;
-        $endTime = 0;
-
-        if (isset($_REQUEST["start"])) {
-            $startTime = filter_var(urldecode($_REQUEST["start"]), FILTER_SANITIZE_NUMBER_INT);
-        }
-        if (isset($_REQUEST["end"])) {
-            $endTime = filter_var(urldecode($_REQUEST["end"]), FILTER_SANITIZE_NUMBER_INT);
-        }
-
-
-        $events = Register::getRegister($dbh, $startTime, $endTime);
         break;
 
     case 'rvstat':

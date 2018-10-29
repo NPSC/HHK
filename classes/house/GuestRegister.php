@@ -204,7 +204,7 @@ where ru.idResource_use is null
                 }
 
                 $endDT = new \DateTime($r['Span_End']);
-                $dtend = new \DateTime($r['Span_End']);
+
                 $dtendDate = new \DateTime($r['Span_End']);
                 $dtendDate->setTime(10, 0, 0);
                 //$endDT->sub($p1d);
@@ -212,13 +212,13 @@ where ru.idResource_use is null
             } else {
 
                 // Expected Departure
-                $dtend = new \DateTime($r['Expected_Departure']);
+
                 $dtendDate = new \DateTime($r['Expected_Departure']);
                 $dtendDate->setTime(10, 0, 0);
 
                 if ($now > $dtendDate) {
                     $endDT = $now;
-                    $dtend = $now;
+
                     $extended = TRUE;
                 } else {
                     $endDT = new \DateTime($r['Expected_Departure']);

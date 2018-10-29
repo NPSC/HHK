@@ -15,6 +15,8 @@ function resvManager(initData) {
     var idPsg = initData.idPsg;
     var idResv = initData.rid;
     var idName = initData.id;
+    var idVisit = initData.vid;
+    var span = initData.span;
     var rooms = [];
 
     var people = new Items();
@@ -36,6 +38,8 @@ function resvManager(initData) {
     t.getIdPsg = getIdPsg;
     t.getIdResv = getIdResv;
     t.getIdName = getIdName;
+    t.getIdVisit = getIdVisit;
+    t.getSpan = getSpan;
     t.setRooms = setRooms;
 
     function setRooms($r) {
@@ -44,6 +48,14 @@ function resvManager(initData) {
 
     function getIdResv() {
         return idResv;
+    }
+
+    function getIdVisit() {
+        return idVisit;
+    }
+
+    function getSpan() {
+        return span;
     }
 
     function getIdPsg() {
@@ -122,9 +134,6 @@ function resvManager(initData) {
         }
 
         function addGuest(item, data) {
-
-            // Check for guest already added.
-            //
 
             if (item.No_Return !== undefined && item.No_Return !== '') {
                 flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', 'alert');
@@ -232,9 +241,9 @@ function resvManager(initData) {
                 }
             });
 
-            if (msg) {
-                return 'Indicated phone numbers are invalid.  ';
-            }
+//            if (msg) {
+//                return 'Indicated phone numbers are invalid.  ';
+//            }
 
             return '';
 
@@ -553,15 +562,22 @@ function resvManager(initData) {
             people.makeList(data.famSection.mem, 'pref');
             addrs.makeList(data.famSection.addrs, 'pref');
 
+            // add patient to the UI
+            if (data.famSection.tblBody['1'] !== undefined) {
+                $famTbl.find('tbody:first').prepend($(data.famSection.tblBody['1']));
+            }
+            if (data.famSection.tblBody['0'] !== undefined) {
+                $famTbl.find('tbody:first').prepend($(data.famSection.tblBody['0']));
+            }
+            
             // Add people to the UI
-            for (var t=0; t < data.famSection.tblBody.length; t = t + 2) {
+            for (var t in data.famSection.tblBody) {
                 
                 // Patient is first
-                if (t === 0) {
-                    $famTbl.find('tbody:first').prepend($(data.famSection.tblBody[t+1])).prepend($(data.famSection.tblBody[t]));
+                if (t === '0' || t === '1') {
+                    continue;
                 } else {
-                    $famTbl.find('tbody:first').append($(data.famSection.tblBody[t]))
-                    .append($(data.famSection.tblBody[t+1]));
+                    $famTbl.find('tbody:first').append($(data.famSection.tblBody[t]));
                 }
             }
 
@@ -1222,6 +1238,7 @@ function resvManager(initData) {
                 cmd:'updateAgenda', 
                 idPsg: idPsg,
                 idResv: idResv,
+                idVisit: idVisit,
                 dt1:dates["date1"].toUTCString(), 
                 dt2:dates["date2"].toUTCString(), 
                 mems:people.list()};
@@ -1281,13 +1298,13 @@ function resvManager(initData) {
         manageCheckInNowButton(dates["date1"].t, idResv);
     }
 
-    function manageCheckInNowButton(arrDate, rid) {
+    function manageCheckInNowButton(arrDate, rid, hide) {
 
         // Assumes the date is set to the format indicated
         var start = moment(arrDate, 'MMM D, YYYY');
         var now = moment().endOf('date');
 
-        if (rid > 0 && start <= now) {
+        if (rid > 0 && start <= now && ! hide) {
             $('#btnCheckinNow').show();
         } else {
             $('#btnCheckinNow').hide();
@@ -1778,9 +1795,6 @@ function resvManager(initData) {
                             t.checkPayments = false;
                         }
 
-                    } else {
-                        $(this).val(t.origRoomId);
-                        flagAlertMessage('Set the arrival and departure dates before selecting a new room. ', 'alert');
                     }
                 });
                 
@@ -2041,6 +2055,8 @@ function resvManager(initData) {
             id:sdata.id, 
             rid:sdata.rid, 
             idPsg:sdata.idPsg,
+            vid:sdata.vid,
+            span:sdata.span,
             isCheckin: isCheckin,
             cmd:sdata.cmd};
 
@@ -2128,6 +2144,12 @@ function resvManager(initData) {
         if (data.rid) {
             idResv = data.rid;
         }
+        if (data.vid) {
+            idVisit = data.vid;
+        }
+        if (data.span) {
+            span = data.span;
+        }
 
         // Hospital
         if (data.hosp !== undefined) {
@@ -2206,7 +2228,11 @@ function resvManager(initData) {
             
             $('.hhk-cbStay').change();
 
-            $('#btnDone').val(saveButtonLabel).show();
+            if (data.resv.rdiv.hideCkinBtn !== undefined && data.resv.rdiv.hideCkinBtn) {
+                $('#btnDone').hide();
+            } else {
+                $('#btnDone').val(saveButtonLabel).show();
+            }
 
             if (data.rid > 0) {
                 $('#btnDelete').val('Delete ' + resvTitle).show();
@@ -2215,8 +2241,8 @@ function resvManager(initData) {
             }
 
             // Checking in now button
-            manageCheckInNowButton($('#gstDate').val(), data.rid);
-        
+            manageCheckInNowButton($('#gstDate').val(), data.rid, data.resv.rdiv.hideCiNowBtn);
+
         }
 
         if (data.addPerson !== undefined) {

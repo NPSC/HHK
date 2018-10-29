@@ -45,6 +45,7 @@ class ReserveData {
     protected $idPsg = 0;
     protected $idHospitalStay = 0;
     protected $idVisit;
+    protected $span;
     protected $forceNewPsg = FALSE;
     protected $forceNewResv = FALSE;
     protected $fullName = '';
@@ -82,6 +83,14 @@ class ReserveData {
 
         if (isset($post['rid'])) {
             $this->setIdResv(intval(filter_var($post['rid'], FILTER_SANITIZE_NUMBER_INT), 10));
+        }
+
+        if (isset($post['vid'])) {
+            $this->setIdVisit(intval(filter_var($post['vid'], FILTER_SANITIZE_NUMBER_INT), 10));
+        }
+
+        if (isset($post['span'])) {
+            $this->setSpan(intval(filter_var($post['span'], FILTER_SANITIZE_NUMBER_INT), 10));
         }
 
         if (isset($post['id'])) {
@@ -190,6 +199,8 @@ class ReserveData {
             'id' => $this->getId(),
             'rid' => $this->getIdResv(),
             'idPsg' => $this->getIdPsg(),
+            'vid' => $this->getIdVisit(),
+            'span'=> $this->getSpan(),
             'patLabel' => $this->getPatLabel(),
             'resvTitle' => $this->getResvTitle(),
             'saveButtonLabel' => $this->saveButtonLabel,
@@ -256,6 +267,10 @@ class ReserveData {
 
     public function getIdVisit() {
         return $this->idVisit;
+    }
+
+    public function getSpan() {
+        return $this->span;
     }
 
     public function getConcurrentRooms() {
@@ -360,7 +375,7 @@ class ReserveData {
     public function findPatientMember() {
 
         foreach ($this->getPsgMembers() as $m) {
-            if ($m->getRole() == RelLinkType::Self) {
+            if ($m->getRole() == VolMemberType::Patient) {
                 return $m;
             }
         }
@@ -424,6 +439,11 @@ class ReserveData {
 
     public function setIdVisit($id) {
         $this->idVisit = $id;
+        return $this;
+    }
+
+    public function setSpan($id) {
+        $this->span = $id;
         return $this;
     }
 
@@ -750,9 +770,9 @@ class PSGMemVisit extends PSGMemStay {
     public function createStayButton($prefix) {
 
         if (isset($this->index['idVisit']) && isset($this->index['Visit_Span'])) {
-            return HTMLInput::generateMarkup('In Visit', array('type'=>'button', 'class'=>'hhk-getVDialog hhk-stayIndicate', 'data-vid'=>$this->index['idVisit'], 'data-span'=>$this->index['Visit_Span']));
+            return HTMLInput::generateMarkup($this->index['room'], array('type'=>'button', 'class'=>'hhk-getVDialog hhk-stayIndicate', 'data-vid'=>$this->index['idVisit'], 'data-span'=>$this->index['Visit_Span']));
         } else {
-            return HTMLContainer::generateMarkup('span', 'In Visit', array('class'=>'hhk-stayIndicate'));
+            return HTMLContainer::generateMarkup('span', 'In Room', array('class'=>'hhk-stayIndicate'));
         }
     }
 
