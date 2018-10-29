@@ -27,6 +27,9 @@ require (CLASSES . 'PaymentSvcs.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require CLASSES . 'TableLog.php';
 
+require (CLASSES . 'Document.php');
+require (CLASSES . 'Parsedown.php');
+
 require (HOUSE . 'psg.php');
 require (HOUSE . 'RoleMember.php');
 require (HOUSE . 'Role.php');

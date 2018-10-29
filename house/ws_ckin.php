@@ -35,6 +35,8 @@ require (CLASSES . 'US_Holidays.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'FinAssistance.php');
 
+require (CLASSES . 'Document.php');
+require (CLASSES . 'Parsedown.php');
 
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');

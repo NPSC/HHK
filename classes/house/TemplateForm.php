@@ -37,10 +37,11 @@ abstract class TemplateForm {
 		}else{
 			
 			$idDocument = Document::findDocument($dbh, $fileName, 'form', 'md');
-			
+						
 			if($idDocument > 0){
 				$document = new Document($dbh, $idDocument);
-				$this->document = $document->getDoc();
+				$parsedown = new Parsedown();
+				$this->document = $parsedown->setBreaksEnabled(true)->text($document->getDoc());
 				
 			}
 		}
@@ -50,8 +51,12 @@ abstract class TemplateForm {
     }
 
     public function createForm($replacements) {
-
-        $this->template = $this->templateFile;
+		
+		if($this->document){
+			$this->template = $this->document;
+		}else{
+			$this->template = $this->templateFile;
+		}
 
         $vars = $this->getVariables();
 

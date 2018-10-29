@@ -9,6 +9,9 @@
   */
 
 require 'homeIncludes.php';
+
+require (CLASSES . 'Document.php');
+require (CLASSES . 'Parsedown.php');
 require(HOUSE . 'TemplateForm.php');
 require(HOUSE . 'SurveyForm.php');
 
@@ -156,7 +159,7 @@ $mail->FromName = $siteName;
 $mail->isHTML(true);
 $mail->Subject = $subjectLine;
 
-$sForm = new SurveyForm('survey.txt');
+$sForm = new SurveyForm($dbh, "Survey Document");
 $badAddresses = 0;
 $resultsRegister = '';
 $deparatureDT = new \DateTime();

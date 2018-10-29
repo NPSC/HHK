@@ -66,7 +66,7 @@ class Document {
         
         $idDoc = 0;
                 
-        $stmt = $dbh->query("select idDocument from document where `Title` = '$title' and `Category` = '$category' and `Type` = '$type'");
+        $stmt = $dbh->query("select idDocument from document where `Title` = '$title' and `Category` = '$category' and `Type` = '$type' and `Status` = 'a'");
         $rows = $stmt->fetchAll(PDO::FETCH_NUM);
         
         if ($stmt->rowCount() > 0) {
