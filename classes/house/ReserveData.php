@@ -447,8 +447,8 @@ class ReserveData {
         return $this;
     }
 
-    public function setConcurrentRooms($numberRooms) {
-        $this->concurrentRooms = intval($numberRooms);
+    public function addConcurrentRooms($numberRooms) {
+        $this->concurrentRooms += intval($numberRooms);
         return $this;
     }
 
