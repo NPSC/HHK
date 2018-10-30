@@ -77,7 +77,7 @@ $idGuest = 0;
 $idReserv = 0;
 $idPsg = 0;
 $idVisit = 0;
-$span = -1;
+$span = 0;
 
 // Hosted payment return
 if (isset($_POST['CardID']) || isset($_POST['PaymentID']) || isset($_POST[InstamedGateway::INSTAMED_TRANS_VAR])) {
@@ -456,8 +456,6 @@ $(document).ready(function() {
 
         resv.cmd = 'getCkin';
         pageManager.getReserve(resv);
-
-    } else {
 
     }
 });

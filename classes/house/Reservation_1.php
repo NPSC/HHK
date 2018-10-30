@@ -737,15 +737,6 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $this->reservConstraints;
     }
 
-    public static function isActionStatus($reservStatus) {
-
-        if ($reservStatus == ReservationStatus::Checkedout || $reservStatus == ReservationStatus::Staying || $reservStatus == ReservationStatus::Committed || $reservStatus == ReservationStatus::UnCommitted) {
-            return TRUE;
-        }
-
-        return FALSE;
-    }
-
     public static function showListByStatus(\PDO $dbh, $editPage, $checkinPage, $reservStatus = ReservationStatus::Committed, $shoDirtyRooms = FALSE, $idResc = NULL, $daysAhead = 2, $showConstraints = FALSE) {
 
         $dateAhead = new \DateTime();
@@ -971,7 +962,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
                 $limResvStatuses[$s[0]] = $s;
             }
         }
-        
+
         return $limResvStatuses;
     }
 

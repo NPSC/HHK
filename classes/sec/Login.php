@@ -68,6 +68,7 @@ class Login {
         $ssn->adminEmailAddr = $config->getString('house', 'Admin_Address', '');
         $ssn->noreplyAddr = $config->getString('house', 'NoReply', '');
         $ssn->ccgw = $config->getString('financial', 'CC_Gateway', '');
+        $ssn->HouseKeepingEmail = $config->getString('house', 'HouseKeepingEmail', '');
 
         // Initialize role code
         $ssn->rolecode = WebRole::Guest;

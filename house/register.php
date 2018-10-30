@@ -65,7 +65,6 @@ $dbh = $wInit->dbh;
 // get session instance
 $uS = Session::getInstance();
 
-
 $config = new Config_Lite(ciCFG_FILE);
 $totalRest = $uS->PreviousNights;
 
@@ -95,7 +94,7 @@ if ($uS->DefaultRegisterTab > 0 && $uS->DefaultRegisterTab < 5) {
 if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_REQUEST)) === FALSE) {
 
     $receiptMarkup = $payResult->getReceiptMarkup();
-    
+
     if ($payResult->getDisplayMessage() != '') {
         $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
     }

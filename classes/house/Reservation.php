@@ -394,6 +394,8 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         $resv = new Reservation_1($this->reservRs);
         $showPayWith = FALSE;
+        $statusText = $resv->getStatusTitle();
+        $hideCheckinButton = TRUE;
 
         // Registration
         $reg = new Registration($dbh, $this->reserveData->getIdPsg());
@@ -433,6 +435,13 @@ WHERE r.idReservation = " . $rData->getIdResv());
             if ($uS->TrackAuto) {
                 $dataArray['vehicle'] = $this->vehicleMarkup($dbh);
             }
+
+            // Add room title to status title
+            if ($resv->getStatus() == ReservationStatus::Committed) {
+                $statusText .= ' for Room ' . $resv->getRoomTitle($dbh);
+            }
+
+            $hideCheckinButton = FALSE;
         }
 
         if ($resv->isNew() || $resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
@@ -452,7 +461,8 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
 
         // Reservation status title
-        $dataArray['rStatTitle'] = $resv->getStatusTitle();
+        $dataArray['rStatTitle'] = $statusText;
+        $dataArray['hideCiNowBtn'] = $hideCheckinButton;
 
         // Reservation notes
         $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
@@ -475,7 +485,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         // Collapsing header
         $hdr = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('span', ($resv->isNew() ? 'New ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation') : $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' - '))
-                .HTMLContainer::generateMarkup('span', ($resv->isNew() ? '' : $resv->getStatusTitle()), array('id'=>$prefix.'spnResvStatus', 'style'=>'margin-right: 1em;'))
+                .HTMLContainer::generateMarkup('span', ($resv->isNew() ? '' : $statusText), array('id'=>$prefix.'spnResvStatus', 'style'=>'margin-right: 1em;'))
                 , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
 
@@ -663,14 +673,14 @@ where rg.idReservation =" . $r['idReservation']);
         $tbl2->addBodyTr(
                 ($showPayWith ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $resv->getExpectedPayType()), array('name'=>'selPayType')))
                 . $moaData : '')
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', $attr), array('style'=>'text-align:center;'))
+                .($resv->isActive() ? HTMLTable::makeTd(HTMLInput::generateMarkup('', $attr), array('style'=>'text-align:center;')) : HTMLTable::makeTd(''))
                 .HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($limResvStatuses, $resv->getStatus(), FALSE), array('name'=>'selResvStatus', 'style'=>'float:left;margin-right:.4em;'))
                         .HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-comment hhk-viewResvActivity', 'data-rid'=>$resv->getIdReservation(), 'title'=>'View Activity Log', 'style'=>'cursor:pointer;float:right;')))
                 );
 
 
-        if ($uS->UseWLnotes === FALSE) {
+        if ($uS->UseWLnotes === FALSE && $resv->isActive()) {
             $tbl2->addBodyTr(HTMLTable::makeTd('Check-in Note:',array('class'=>'tdlabel')).HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea',$resv->getCheckinNotes(), array('name'=>'taCkinNotes', 'rows'=>'1', 'cols'=>'40')),array('colspan'=>'3')));
         }
 
@@ -898,7 +908,7 @@ where rg.idReservation =" . $r['idReservation']);
         $uS = Session::getInstance();
 
         if ($resv->isActive() === FALSE) {
-            reurn;
+            return;
         }
 
         if ($idRescPosted == 0) {
@@ -1122,6 +1132,40 @@ class ActiveReservation extends Reservation {
             $this->gotoCheckingIn = filter_var($post['resvCkinNow'], FILTER_SANITIZE_STRING);
         }
 
+        // Open Reservation
+        $resv = new Reservation_1($this->reservRs);
+
+        $resv->setExpectedPayType($uS->DefaultPayType);
+        $resv->setHospitalStay($this->family->getHospStay());
+        $resv->setExpectedArrival($this->reserveData->getArrivalDT()->format('Y-m-d ' . $uS->CheckInTime . ':00:00'));
+        $resv->setExpectedDeparture($this->reserveData->getDepartureDT()->format('Y-m-d ' . $uS->CheckOutTime . ':00:00'));
+
+        // Determine Reservation Status
+        $reservStatus = ReservationStatus::Waitlist;
+
+        if (isset($post['selResvStatus'])) {
+
+            $rStat = filter_var($post['selResvStatus'], FILTER_SANITIZE_STRING);
+
+            if ($rStat != ''  && isset($uS->guestLookups['ReservStatus'][$rStat])) {
+                $reservStatus = $rStat;
+            }
+
+        } else if ($resv->isNew() === FALSE && $resv->getStatus() != '') {
+            $reservStatus = $resv->getStatus();
+        }
+
+        // Set reservation status
+        $resv->setStatus($reservStatus);
+
+        // Cancel reservation?
+        if (Reservation_1::isRemovedStatus($reservStatus)) {
+
+            $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
+            return new StaticReservation($this->reserveData, $this->reservRs, $this->family);
+
+        }
+
         // Registration
         $reg = new Registration($dbh, $this->reserveData->getIdPsg());
         if ($uS->TrackAuto) {
@@ -1135,15 +1179,8 @@ class ActiveReservation extends Reservation {
             Vehicle::saveVehicle($dbh, $post, $reg->getIdRegistration());
         }
 
+        // Find any staying people.
         $stayingMembers = $this->getStayingMembers();
-
-        // Create the reservation instance
-        $resv = new Reservation_1($this->reservRs);
-
-        $resv->setExpectedPayType($uS->DefaultPayType);
-        $resv->setHospitalStay($this->family->getHospStay());
-        $resv->setExpectedArrival($this->reserveData->getArrivalDT()->format('Y-m-d ' . $uS->CheckInTime . ':00:00'));
-        $resv->setExpectedDeparture($this->reserveData->getDepartureDT()->format('Y-m-d ' . $uS->CheckOutTime . ':00:00'));
         $resv->setNumberGuests(count($stayingMembers));
 
         // Primary guest must be staying or now checking in.
@@ -1176,6 +1213,7 @@ class ActiveReservation extends Reservation {
         // Verbal Confirmation Flag
         if (isset($post['cbVerbalConf']) && $resv->getVerbalConfirm() != 'v') {
             $resv->setVerbalConfirm('v');
+            LinkNote::save($dbh, 'Verbal Confirmation is Set.', $resv->getIdReservation(), Note::ResvLink, $uS->username, $uS->ConcatVisitNotes);
         } else {
             $resv->setVerbalConfirm('');
         }
@@ -1184,24 +1222,6 @@ class ActiveReservation extends Reservation {
         if (isset($post['taCkinNotes'])) {
             $resv->setCheckinNotes(filter_var($post['taCkinNotes'], FILTER_SANITIZE_STRING));
         }
-
-        // Determine Reservation Status
-        $reservStatus = ReservationStatus::Waitlist;
-
-        if (isset($post['selResvStatus'])) {
-
-            $rStat = filter_var($post['selResvStatus'], FILTER_SANITIZE_STRING);
-
-            if ($rStat != ''  && isset($uS->guestLookups['ReservStatus'][$rStat])) {
-                $reservStatus = $rStat;
-            }
-
-        } else if ($resv->isNew() === FALSE && $resv->getStatus() != '') {
-            $reservStatus = $resv->getStatus();
-        }
-
-        // Set reservation status
-        $resv->setStatus($reservStatus);
 
         // remove room if reservation is in waitlist
         if ($reservStatus == ReservationStatus::Waitlist) {
@@ -1215,7 +1235,7 @@ class ActiveReservation extends Reservation {
         }
 
         // Switch to waitlist status if room is 0
-        if ($resv->isActionStatus($reservStatus) && $idRescPosted == 0) {
+        if ($resv->isActiveStatus($reservStatus) && $idRescPosted == 0) {
             $resv->setStatus(ReservationStatus::Waitlist);
         }
 

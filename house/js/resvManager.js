@@ -1298,13 +1298,13 @@ function resvManager(initData) {
         manageCheckInNowButton(dates["date1"].t, idResv);
     }
 
-    function manageCheckInNowButton(arrDate, rid) {
+    function manageCheckInNowButton(arrDate, rid, hide) {
 
         // Assumes the date is set to the format indicated
         var start = moment(arrDate, 'MMM D, YYYY');
         var now = moment().endOf('date');
 
-        if (rid > 0 && start <= now) {
+        if (rid > 0 && start <= now && ! hide) {
             $('#btnCheckinNow').show();
         } else {
             $('#btnCheckinNow').hide();
@@ -2229,8 +2229,8 @@ function resvManager(initData) {
             }
 
             // Checking in now button
-            manageCheckInNowButton($('#gstDate').val(), data.rid);
-        
+            manageCheckInNowButton($('#gstDate').val(), data.rid, data.resv.rdiv.hideCiNowBtn);
+
         }
 
         if (data.addPerson !== undefined) {

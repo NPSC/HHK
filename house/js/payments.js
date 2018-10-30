@@ -1097,26 +1097,26 @@ function showReceipt(dialogId, markup, title, width) {
         popX       : 200,
         popY       : 200,
         popTitle   : title};
-    
+
     if (width === undefined || !width) {
         width = 550;
     }
 
     pRecpt.children().remove();
     pRecpt.append($(markup).addClass('ReceiptArea').css('max-width', (width + 'px') ));
-    
+
     btn.button();
     btn.click(function() {
         $(".ReceiptArea").printArea(opt);
         pRecpt.dialog('close');
     });
-    
+
     pRecpt.prepend(btn);
     pRecpt.dialog("option", "title", title);
     pRecpt.dialog('option', 'buttons', {});
     pRecpt.dialog('option', 'width', width);
     pRecpt.dialog('open');
-    
+
     opt.popHt = $('#pmtRcpt').height();
     opt.popWd = $('#pmtRcpt').width();
 
