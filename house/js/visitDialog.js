@@ -143,6 +143,7 @@ function getMember(item, idVisit, visitSpan) {
 }
 
 var isCheckedOut = false;
+    
 /**
  * 
  * @param {int} idGuest
@@ -736,6 +737,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                     window.location.assign(data.gotopage);
                 }
                 flagAlertMessage(data.error, 'error');
+                return;
             }            
 
             if (typeof refreshdTables !== 'undefined') {
@@ -747,12 +749,10 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 pageManager.doOnDatesChange(dates);
             }
             
-            $('#keysfees').dialog("close");
-
             if (data.success && data.success !== '') {
                 flagAlertMessage(data.success, 'success');
 
-                if ($('#calendar').length > 0 && updateCal) {
+                if ($('#calendar').length > 0) {
                     $('#calendar').fullCalendar('refetchEvents');
                 }
             }
@@ -765,7 +765,10 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 window.open('ShowInvoice.php?invnum=' + data.invoiceNumber);
             }
 
-            paymentRedirect(data, $('#xform'));		
+            paymentRedirect(data, $('#xform'));
+            
+            $('#keysfees').dialog("close");
+
     });
 
 }

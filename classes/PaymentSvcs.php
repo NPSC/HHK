@@ -1076,7 +1076,9 @@ class PaymentSvcs {
 
         if (isset($uS->imtoken)) {
             $tokenId = $uS->imtoken;
+            unset($uS->imtoken);
         }
+
         if (isset($uS->paymentIds[$tokenId])) {
             $idInv = $uS->paymentIds[$tokenId];
         }

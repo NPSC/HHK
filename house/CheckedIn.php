@@ -86,9 +86,12 @@ $paymentMarkup = '';
 $receiptMarkup = '';
 
 // Hosted payment return
-if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)) === FALSE) {
+if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_REQUEST)) === FALSE) {
 
-    $paymentMarkup = HTMLContainer::generateMarkup('span', $payResult->getDisplayMessage(), array('style'=>'margin-right:1em;'));
+    if ($payResult->getDisplayMessage() != '') {
+        $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+    }
+
     $receiptMarkup = $payResult->getReceiptMarkup();
 
     $idRegistration = $payResult->getIdRegistration();

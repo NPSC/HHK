@@ -22,6 +22,15 @@ require (CLASSES . 'MercPay/Gateway.php');
 
 require (PMT . 'GatewayConnect.php');
 require (PMT . 'PaymentGateway.php');
+require (PMT . 'Payments.php');
+require (PMT . 'HostedPayments.php');
+require (PMT . 'Receipt.php');
+require (PMT . 'Invoice.php');
+require (PMT . 'InvoiceLine.php');
+require (PMT . 'CreditToken.php');
+require (PMT . 'CheckTX.php');
+require (PMT . 'CashTX.php');
+require (PMT . 'Transaction.php');
 
 require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');
@@ -36,6 +45,8 @@ require (CLASSES . 'Purchase/Item.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require CLASSES . 'TableLog.php';
 
+require (HOUSE . 'PaymentManager.php');
+require (HOUSE . 'PaymentChooser.php');
 require (HOUSE . 'psg.php');
 require (HOUSE . 'RoleMember.php');
 require (HOUSE . 'Role.php');
@@ -80,28 +91,12 @@ $idVisit = 0;
 $span = 0;
 
 // Hosted payment return
-if (isset($_POST['CardID']) || isset($_POST['PaymentID']) || isset($_POST[InstamedGateway::INSTAMED_TRANS_VAR])) {
+if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_REQUEST)) === FALSE) {
 
-    require (PMT . 'Payments.php');
-    require (PMT . 'HostedPayments.php');
-    require (PMT . 'Receipt.php');
-    require (PMT . 'Invoice.php');
-    require (PMT . 'InvoiceLine.php');
-    require (PMT . 'CreditToken.php');
-    require (PMT . 'CheckTX.php');
-    require (PMT . 'CashTX.php');
-    require (PMT . 'Transaction.php');
+    $receiptMarkup = $payResult->getReceiptMarkup();
 
-    require (HOUSE . 'PaymentManager.php');
-    require (HOUSE . 'PaymentChooser.php');
-
-    if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)) === FALSE) {
-
-        $receiptMarkup = $payResult->getReceiptMarkup();
-
-        if ($payResult->getDisplayMessage() != '') {
-            $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
-        }
+    if ($payResult->getDisplayMessage() != '') {
+        $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
     }
 }
 
@@ -245,7 +240,7 @@ $resvObjEncoded = json_encode($resvAr);
             </div>
 
         </div>
-        <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
+        <form name="xform" id="xform" method="post"></form>
 
 <script type="text/javascript">
 var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';

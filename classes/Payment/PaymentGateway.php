@@ -843,7 +843,7 @@ class InstamedGateway extends PaymentGateway {
         EditRS::loadRow(array_pop($arows), $pAuthRs);
 
         if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid) {
-            return $this->sendVoid($dbh, $payRs, $pAuthRs, $invoice, $paymentNotes);
+            return $this->sendVoid($dbh, $payRs, $pAuthRs, $invoice, $paymentNotes, $bid);
         }
 
         return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
@@ -872,7 +872,7 @@ class InstamedGateway extends PaymentGateway {
                 return array('warning' => 'Return Failed.  Return amount is larger than the original purchase amount.  ', 'bid' => $bid);
             }
 
-            return $this->sendReturn($dbh, $payRs, $pAuthRs, $invoice, $returnAmt);
+            return $this->sendReturn($dbh, $payRs, $pAuthRs, $invoice, $returnAmt, $bid);
         }
 
         return array('warning' => 'This Payment is ineligable for Return. ', 'bid' => $bid);
@@ -884,15 +884,7 @@ class InstamedGateway extends PaymentGateway {
         $uS = Session::getInstance();
         $dataArray = array();
 
-        // Do a hosted payment.
-        $secure = new SecurityComponent();
-        $houseUrl = $secure->getSiteURL();
-
-        if ($houseUrl == '') {
-            throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
-        }
-
-        $houseUrl .= $this->buildPostbackUrl($postbackUrl, InstamedGateway::HCO_TRANS);
+        $houseUrl = $this->buildPostbackUrl($postbackUrl, InstamedGateway::HCO_TRANS);
 
         if ($invoice->getSoldToId() < 1 || $invoice->getIdGroup() < 1) {
             throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
@@ -965,16 +957,10 @@ class InstamedGateway extends PaymentGateway {
     public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $cardHolderName, $postbackUrl) {
 
         $uS = Session::getInstance();
+        $dataArray = array();
 
-        // Do a hosted payment.
-        $secure = new SecurityComponent();
-        $houseUrl = $secure->getSiteURL();
-
-        if ($houseUrl == '') {
-            throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
-        }
-
-        $houseUrl .= $this->buildPostbackUrl($postbackUrl, InstamedGateway::COF_TRANS);
+        // Get my postback url
+        $houseUrl = $this->buildPostbackUrl($postbackUrl, InstamedGateway::COF_TRANS);
 
         $patInfo = $this->getPatientInfo($dbh, $idGroup);
 
@@ -984,12 +970,10 @@ class InstamedGateway extends PaymentGateway {
             'patientLastName' => $patInfo['Name_Last'],
 
             InstamedGateway::GROUP_ID => $idGroup,
-
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
 
             'creditCardKeyed ' => 'true',
-//            'incontext' => 'true',
             'lightWeight' => 'true',
             'preventCheck' => 'true',
             'preventCash'  => 'true',
@@ -1002,7 +986,6 @@ class InstamedGateway extends PaymentGateway {
             'requestToken' => 'true',
             'RelayState' => $this->cofUrl,
         );
-
 
         $headerResponse = $this->doHeaderRequest(http_build_query(array_merge($data, $this->getCredentials()->toSSO())));
 
@@ -1036,9 +1019,10 @@ class InstamedGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    protected function sendVoid(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $paymentNotes) {
+    protected function sendVoid(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $paymentNotes, $bid) {
 
         $uS = Session::getInstance();
+        $dataArray['bid'] = $bid;
 
         $params = "transactionType=CreditCard"
                 . "&transactionAction=Void"
@@ -1116,7 +1100,7 @@ class InstamedGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    protected function sendReturn(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $returnAmt) {
+    protected function sendReturn(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $returnAmt, $bid) {
 
         $uS = Session::getInstance();
         $reply = '';
@@ -1422,7 +1406,26 @@ class InstamedGateway extends PaymentGateway {
 
     protected function buildPostbackUrl($postbackPageUrl, $transVar) {
 
-        return $postbackPageUrl . '?' . InstamedGateway::INSTAMED_TRANS_VAR . '=' . $transVar . '&' . InstamedGateway::INSTAMED_RESULT_VAR . '=';
+        $secure = new SecurityComponent();
+        $houseUrl = $secure->getSiteURL();
+
+        if ($houseUrl == '') {
+            throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
+        }
+
+        $parts = parse_url($postbackPageUrl);
+        $queryStr = '';
+        $path = '';
+
+        if (isset($parts['query']) && $parts['query'] !== '') {
+            $queryStr = $parts['query'] . '&';
+        }
+
+        if (isset($parts['path']) && $parts['path'] !== '') {
+            $path = $parts['path'];
+        }
+
+        return $houseUrl . $path . '?' . $queryStr . InstamedGateway::INSTAMED_TRANS_VAR . '=' . $transVar . '&' . InstamedGateway::INSTAMED_RESULT_VAR . '=';
     }
 
     protected function getPatientInfo(\PDO $dbh, $idRegistration) {

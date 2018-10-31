@@ -1194,15 +1194,18 @@ function paymentRedirect (data, $xferForm) {
 
 
 function cardOnFile(id, idGroup, postBackPage) {
+    
     var parms = {cmd: 'cof', idGuest: id, idGrp: idGroup, pbp: postBackPage};
+    
     $('#tblupCredit').find('input').each(function() {
         if (this.checked) {
             parms[$(this).attr('id')] = $(this).val();
         }
     });
+    
     // Go to the server for payment data, then come back and submit to new URL to enter credit info.
     $.post('ws_ckin.php', parms,
-    function(data) {
+      function(data) {
 
         if (data) {
             try {
