@@ -166,8 +166,8 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
                 $psgMembers = $this->reserveData->getPsgMembers();
 
-                $this->findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $arrivalDT, $departDT, $this->reserveData->getResvTitle());
-                $this->reserveData->setConcurrentRooms($this->findConflictingStays($dbh, $psgMembers, $arrivalDT, $this->reserveData->getIdPsg()));
+                $this->reserveData->addConcurrentRooms($this->findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $arrivalDT, $departDT, $this->reserveData->getResvTitle()));
+                $this->reserveData->addConcurrentRooms($this->findConflictingStays($dbh, $psgMembers, $arrivalDT, $this->reserveData->getIdPsg()));
 
                 $this->reserveData->setPsgMembers($psgMembers);
 
@@ -235,7 +235,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         // Is anyone already in a visit?
         $psgMems = $this->reserveData->getPsgMembers();
-        $this->reserveData->setConcurrentRooms(self::findConflictingStays($dbh, $psgMems, $this->reserveData->getArrivalDT(), $this->reserveData->getIdPsg()));
+        $this->reserveData->addConcurrentRooms(self::findConflictingStays($dbh, $psgMems, $this->reserveData->getArrivalDT(), $this->reserveData->getIdPsg()));
         $this->reserveData->setPsgMembers($psgMems);
 
         if (count($this->getStayingMembers()) < 1) {
@@ -251,7 +251,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         // Get reservations for the specified time
         $psgMems2 = $this->reserveData->getPsgMembers();
-        self::findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMems2, $this->reserveData->getArrivalDT(), $this->reserveData->getDepartureDT(), $this->reserveData->getResvTitle());
+        $this->reserveData->addConcurrentRooms(self::findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMems2, $this->reserveData->getArrivalDT(), $this->reserveData->getDepartureDT(), $this->reserveData->getResvTitle()));
         $this->reserveData->setPsgMembers($psgMems2);
 
         // Anybody left?
@@ -267,9 +267,9 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
 
         // verify number of simultaneous reservations/visits
-        if ($this->reserveData->getIdResv() == 0 && $this->reserveData->getConcurrentRooms() > $uS->RoomsPerPatient) {
+        if ($this->reserveData->getIdResv() == 0 && $this->reserveData->getConcurrentRooms() >= $uS->RoomsPerPatient) {
             // Too many
-            $this->reserveData->addError('This reservation violates your House\'s maximum number of simutaneous rooms per patient (' .$uS->RoomsPerPatient . '.  ');
+            $this->reserveData->addError('This reservation violates your House\'s maximum number of simutaneous rooms per patient (' .$uS->RoomsPerPatient . ').  ');
             return;
         }
     }
@@ -741,7 +741,7 @@ where rg.idReservation =" . $r['idReservation']);
                     }
                 }
 
-                // Count rooms
+                // Count different rooms
                 if ($s['idPsg'] == $idPsg) {
                     $rooms[$s['idRoom']] = '1';
                 }
@@ -783,7 +783,7 @@ where rg.idReservation =" . $r['idReservation']);
                     }
                 }
 
-                // Count rooms
+                // Count different rooms
                 if ($r['idPsg'] == $idPsg) {
                     $rescs[$r['idResource']] = '1';
                 }
@@ -927,6 +927,7 @@ where rg.idReservation =" . $r['idReservation']);
         if (($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::UnCommitted)
                 && isset($resources[$idRescPosted]) === FALSE) {
 
+            //  No.
             $this->reserveData->addError('Chosen Room is unavailable.  ');
             $resv->setIdResource(0);
             $resv->setStatus(ReservationStatus::Waitlist);
@@ -935,8 +936,8 @@ where rg.idReservation =" . $r['idReservation']);
 
             $resv->setIdResource($idRescPosted);
 
-            // Don't change comitted to uncommitted.
-            if ($resv->getStatus() != ReservationStatus::Committed) {
+            // Update Status.
+            if ($resv->getStatus() != ReservationStatus::Committed && $resv->getStatus() != ReservationStatus::UnCommitted) {
                 $resv->setStatus($uS->InitResvStatus);
             }
         }

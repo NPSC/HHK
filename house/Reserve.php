@@ -433,7 +433,9 @@ $(document).ready(function() {
                     pageManager.loadResv(data);
 
                     if (data.resv !== undefined) {
-                        flagAlertMessage(data.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle, 'success');
+                        if (data.warning === undefined) {
+                            flagAlertMessage(data.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle, 'success');
+                        }
                     } else {
                         flagAlertMessage(data.resvTitle + ' Saved.', 'success');
                     }

@@ -1,4 +1,4 @@
 /nbproject/private/
 
-conf/site.cfg
-
+/conf/site.cfg
+/patch/soapLog.xml
