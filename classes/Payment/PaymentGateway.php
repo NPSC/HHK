@@ -1039,7 +1039,7 @@ class InstamedGateway extends PaymentGateway {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $response->getStatus(), json_encode($params), json_encode($response->getResultArray()), 'HostedCoVerify');
+            Gateway::saveGwTx($dbh, $response->getStatus(), $params, json_encode($response->getResultArray()), 'HostedCoVerify');
         } catch(Exception $ex) {
             // Do Nothing
         }
@@ -1129,7 +1129,7 @@ class InstamedGateway extends PaymentGateway {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $response->getStatus(), json_encode($params), json_encode($response->getResultArray()), 'ImReturnTx');
+            Gateway::saveGwTx($dbh, $response->getStatus(), $params, json_encode($response->getResultArray()), 'ImReturnTx');
         } catch(Exception $ex) {
             // Do Nothing
         }
@@ -1270,7 +1270,7 @@ class InstamedGateway extends PaymentGateway {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $response->getStatus(), json_encode($params), json_encode($response->getResultArray()), 'COFVerify');
+            Gateway::saveGwTx($dbh, $response->getStatus(), $params, json_encode($response->getResultArray()), 'COFVerify');
         } catch(Exception $ex) {
             // Do Nothing
         }
@@ -1297,7 +1297,7 @@ class InstamedGateway extends PaymentGateway {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $response->getStatus(), json_encode($params), json_encode($response->getResultArray()), 'HostedCoVerify');
+            Gateway::saveGwTx($dbh, $response->getStatus(), $params, json_encode($response->getResultArray()), 'HostedCoVerify');
         } catch(Exception $ex) {
             // Do Nothing
         }
