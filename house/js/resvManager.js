@@ -1136,6 +1136,9 @@ function resvManager(initData) {
                     if ($('#spnNites').length > 0) {
                         $('#spnNites').text(numDays);
                     }
+                    
+                    $('#gstDate').removeClass('ui-state-error');
+                    $('#gstCoDate').removeClass('ui-state-error');
 
                     if ($.isFunction(doOnDatesChange)) {
                         doOnDatesChange(dates);
@@ -2199,32 +2202,27 @@ function resvManager(initData) {
             });
 
             // Visit Dialog
-            if ($('.hhk-getVDialog').length > 0) {
-                
-                $('.hhk-getVDialog').button();
-
-                $('#' + familySection.divFamDetailId).on('click', '.hhk-getVDialog', function () {
-                    var buttons;
-                    var vid = $(this).data('vid');
-                    var span = $(this).data('span');
-                    buttons = {
-                        "Show Statement": function() {
-                            window.open('ShowStatement.php?vid=' + vid, '_blank');
-                        },
-                        "Show Registration Form": function() {
-                            window.open('ShowRegForm.php?vid=' + vid, '_blank');
-                        },
-                        "Save": function() {
-                            saveFees(0, vid, span, false, payFailPage);
-                        },
-                        "Cancel": function() {
-                            $(this).dialog("close");
-                        }
-                    };
-                    viewVisit(0, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
-                    $('#submitButtons').hide();
-                });
-            }
+            $('#' + familySection.divFamDetailId).on('click', '.hhk-getVDialog', function () {
+                var buttons;
+                var vid = $(this).data('vid');
+                var span = $(this).data('span');
+                buttons = {
+                    "Show Statement": function() {
+                        window.open('ShowStatement.php?vid=' + vid, '_blank');
+                    },
+                    "Show Registration Form": function() {
+                        window.open('ShowRegForm.php?vid=' + vid, '_blank');
+                    },
+                    "Save": function() {
+                        saveFees(0, vid, span, false, payFailPage);
+                    },
+                    "Cancel": function() {
+                        $(this).dialog("close");
+                    }
+                };
+                viewVisit(0, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
+                $('#submitButtons').hide();
+            });
             
             $('.hhk-cbStay').change();
 

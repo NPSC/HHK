@@ -5,7 +5,7 @@
  *
  * @author Eric
  */
-class Reservation {
+abstract class Reservation {
 
     /**
      *
@@ -439,9 +439,9 @@ WHERE r.idReservation = " . $rData->getIdResv());
             // Add room title to status title
             if ($resv->getStatus() == ReservationStatus::Committed) {
                 $statusText .= ' for Room ' . $resv->getRoomTitle($dbh);
+                $hideCheckinButton = FALSE;
             }
 
-            $hideCheckinButton = FALSE;
         }
 
         if ($resv->isNew() || $resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
@@ -1706,6 +1706,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
 }
 
+
 class ReserveSearcher extends ActiveReservation {
 
     public function createMarkup(\PDO $dbh) {
@@ -1722,7 +1723,7 @@ class ReserveSearcher extends ActiveReservation {
 
     public function addPerson(\PDO $dbh) {
 
-        if ($this->reserveData->getId() > 0) {
+        if ($this->reserveData->getIdPsg() < 1 && $this->reserveData->getId() > 0) {
 
             // patient?
             $stmt = $dbh->query("select count(*) from psg where idPatient = " . $this->reserveData->getId());
@@ -1731,6 +1732,7 @@ class ReserveSearcher extends ActiveReservation {
             if ($rows[0][0] > 0) {
                 return $this->createMarkup($dbh);
             }
+
         }
 
         return parent::addPerson($dbh);
