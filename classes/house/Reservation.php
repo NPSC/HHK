@@ -5,7 +5,7 @@
  *
  * @author Eric
  */
-abstract class Reservation {
+class Reservation {
 
     /**
      *
