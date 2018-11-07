@@ -1,27 +1,11 @@
 
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Note_Category', 'ncr', 'Reservation', '', 'h', 0);
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Note_Category', 'nch', 'House', '', 'h', 0);
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Note_Category', 'ncf', 'PSG', '', 'h', 0);
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Note_Category', 'ncv', 'Visit', '', 'h', 0);
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Note_Category', 'ncg', 'Guest', '', 'h', 0);
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Note_Category', 'ncp', 'Patient', '', 'h', 0);
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Note_Category', 'ncrm', 'Room', '', 'h', 0);
-
-DELETE FROM `gen_lookups` WHERE `Table_Name`='WL_Final_Status';
-DELETE FROM `gen_lookups` WHERE `Table_Name`='WL_Status';
-
-INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('PaymentGateway', '', 's', 'h', 'Payment Gateway, either vantiv, instamed or nothing.');
-INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('CalRescColWidth', '8%', 's', 'h', 'The width of the rooms column on the calendar page as percent of the overall width.');
-
-update sys_config set `Value` = '16', `Type` = 'i' where `Key` = 'CheckInTime';
-update sys_config set `Value` = '10', `Type` = 'i' where `Key` = 'CheckOutTime';
-
-update page set `File_Name` = 'Reserve.php' where `File_Name` = 'Referral.php';
-
--- Add pages, one call for each security group.
-call new_webpage('ws_resv.php', 31, '', 0, 'h', '', '', 's', '', 'admin', now(), 'g', @pageId);
-call new_webpage('ws_resv.php', 31, '', 0, 'h', '', '', 's', '', 'admin', now(), 'ga', @pageId);
-call new_webpage('CheckingIn.php', 31, 'Checking In', 0, 'h', '', '', 'p', '', 'admin', now(), 'g', @pageId);
-call new_webpage('CheckingIn.php', 31, 'Checking In', 0, 'h', '', '', 'p', '', 'admin', now(), 'ga', @pageId);
-
-
+-- values moved from site.cfg file
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('testVersion', 'false', 'b', 'a', 'True = use the test version styling and colors.');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('siteName', 'Hospitality Housekeeper', 's', 'a', 'Name of this web site.  Typically the name of the House.');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('mode', 'demo', 's', 'a', 'Site operation mode.');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('adminEmailAddr', '', 's', 'a', 'Houses admin email address.');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('noreplyAddr', '', 's', 'a', 'Houses no-reply email address.');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('HouseKeepingEmail', '', 's', 'h', 'Gets notice of visit endings.');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('sId', '11', 'i', 'h', 'Site Id - House member record Id.');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('subsidyId', '11', 'i', 'h', 'Financial subsidy Id, typically same as sId');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ccgw', '', 's', 'h', 'Credit Gateway mode, test or production.');

@@ -55,20 +55,22 @@ class Login {
 
 
         // Load session
-        $ssn->testVersion = $config->getBool('site', 'Run_As_Test', true);
-        $ssn->siteName = $config->getString('site','Site_Name', 'Hospitality HouseKeeper');
         $ssn->resourceURL = $secureComp->getRootURL();
-        $ssn->tz = $config->getString('calendar', 'TimeZone', 'America/Chicago');
+        $ssn->sconf = 'sys_config';
         $ssn->ver = $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
         $ssn->ssl = $ssl;
-        $ssn->mode = strtolower($config->getString('site', 'Mode', 'live'));
-        $ssn->sconf = 'sys_config';
-        $ssn->sId = $config->getString('site', 'Site_Id', '');
-        $ssn->subsidyId = $config->getString('financial', 'RoomSubsidyId', '0');
-        $ssn->adminEmailAddr = $config->getString('house', 'Admin_Address', '');
-        $ssn->noreplyAddr = $config->getString('house', 'NoReply', '');
-        $ssn->ccgw = $config->getString('financial', 'CC_Gateway', '');
-        $ssn->HouseKeepingEmail = $config->getString('house', 'HouseKeepingEmail', '');
+
+        // The following copied to table sys_config:
+//        $ssn->testVersion = $config->getBool('site', 'Run_As_Test', true);
+//        $ssn->siteName = $config->getString('site','Site_Name', 'Hospitality HouseKeeper');
+//        $ssn->mode = strtolower($config->getString('site', 'Mode', 'live'));
+//        $ssn->tz = $config->getString('calendar', 'TimeZone', 'America/Chicago');
+//        $ssn->sId = $config->getString('site', 'Site_Id', '');
+//        $ssn->subsidyId = $config->getString('financial', 'RoomSubsidyId', '0');
+//        $ssn->adminEmailAddr = $config->getString('house', 'Admin_Address', '');
+//        $ssn->noreplyAddr = $config->getString('house', 'NoReply', '');
+//        $ssn->ccgw = $config->getString('financial', 'CC_Gateway', '');
+//        $ssn->HouseKeepingEmail = $config->getString('house', 'HouseKeepingEmail', '');
 
         // Initialize role code
         $ssn->rolecode = WebRole::Guest;
