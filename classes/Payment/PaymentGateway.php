@@ -905,7 +905,7 @@ class InstamedGateway extends PaymentGateway {
             InstaMedCredentials::U_NAME => $uS->username,
 
             'creditCardKeyed ' => 'true',
-            //'incontext' => 'true',
+            'incontext' => 'true',
             'lightWeight' => 'true',
             'isReadOnly' => 'true',
             'preventCheck' => 'true',
@@ -913,7 +913,7 @@ class InstamedGateway extends PaymentGateway {
             'suppressReceipt' => 'true',
             'hideGuarantorID' => 'true',
             'responseActionType' => 'header',
-
+            'returnUrlUpdateParent' => 'parent',
             'cancelURL' => $houseUrl . InstamedGateway::POSTBACK_CANCEL,
             'confirmURL' => $houseUrl . InstamedGateway::POSTBACK_COMPLETE,
             'requestToken' => 'true',

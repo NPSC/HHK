@@ -748,7 +748,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 var dates = {'date1': new Date($('#gstDate').val()), 'date2': new Date($('#gstCoDate').val())};
                 pageManager.doOnDatesChange(dates);
             }
-            
+
             if (data.success && data.success !== '') {
                 flagAlertMessage(data.success, 'success');
 

@@ -292,7 +292,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
-        <script type="text/javascript" src="js/embed.js" data-displaymode="popup" data-hostname="https://online.instamed.com/providers"></script>
+        
 <script type="text/javascript">
     var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';
     var pmtMkup = "<?php echo $paymentMarkup; ?>";
@@ -558,7 +558,9 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
 
         <div class="gmenu"></div>
         <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
-        <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
+        <form name="xform" id="xform" method="post">
+            <script type="text/javascript" src="js/embed.js" data-displaymode="incontext" data-hostname="https://online.instamed.com/providers"></script>
+        </form>
         <div id="cardonfile" style="font-size: .9em; display:none;"></div>
         <div id="statEvents" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;"></div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>

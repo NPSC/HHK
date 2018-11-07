@@ -591,6 +591,18 @@ $(document).ready(function () {
         $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
     }
     
+//    var w = opener;
+//    
+//    if (!w) {
+//        w = parent.window;
+//    }
+//    else {
+//        w = opener.window;
+//    }
+//    
+//    w.location.hash = window.location.hash;
+//    setTimeout(function() { self.close();}, 5 * 100);
+
     $(':input[type="button"], :input[type="submit"]').button();
 
     $.datepicker.setDefaults({
