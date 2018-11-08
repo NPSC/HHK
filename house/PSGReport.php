@@ -196,6 +196,10 @@ where  ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DATE(s.Sp
             $r['Hospital'] = $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
         }
 
+        if (count($uS->guestLookups[GL_TableNames::Hospital]) < 2) {
+            unset($r['Hospital']);
+        }
+
         unset($r['idHospital']);
         unset($r['idAssociation']);
 
@@ -312,7 +316,7 @@ where  ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DATE(s.Sp
     }
 }
 
-function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hospCodes, \Config_Lite $labels, $showAssoc, $showDiagnosis, $showLocation, $patBirthDate) {
+function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hospCodes, \Config_Lite $labels, $showAssoc, $showDiagnosis, $showLocation, $patBirthDate, $patAsGuest = true) {
 
     $agentTitle = $labels->getString('hospital', 'referralAgent', 'Referral Agent');
     $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
@@ -352,9 +356,6 @@ where n.Member_Status != 'TBD'
  $whHosp
 order by ng.idPsg";
 
-    $stmt = $dbh->query($query);
-
-    $rowCount = $stmt->rowCount();
 
     if (!$local) {
 
@@ -370,6 +371,8 @@ order by ng.idPsg";
     $separatorClassIndicator = '))+class';
     $numberPSGs = 0;
 
+    $stmt = $dbh->query($query);
+    $rowCount = $stmt->rowCount();
 
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
@@ -393,6 +396,10 @@ order by ng.idPsg";
             $r['Hospital'] = $hospCodes[$r['Hospital']][1];
         } else {
             $r['Hospital'] = '';
+        }
+
+        if (count($hospCodes) < 2) {
+            unset($r['Hospital']);
         }
 
         if ($showDiagnosis === FALSE) {
@@ -454,16 +461,18 @@ order by ng.idPsg";
 
                 $r['Patient Relationship'] = HTMLContainer::generateMarkup('span', $r['Patient Relationship'], array('style'=>'font-weight:bold;'));
 
-            } else {
+            } else if ($patAsGuest) {
                 // Not a patient
-                if ($showDiagnosis) {
+                if (isset($r[$diagTitle])) {
                     $r[$diagTitle] = '';
                 }
-                if ($showLocation) {
+                if (isset($r[$locTitle])) {
                     $r[$locTitle] = '';
                 }
 
-                $r['Hospital'] = '';
+                if (isset($r['Hospital'])) {
+                    $r['Hospital'] = '';
+                }
 
                 if (isset($r['Association'])) {
                     $r['Association'] = '';
@@ -796,7 +805,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     }
 
     if ($whLocs != '') {
-        $whDiags .= " and hs.Diagnosis in (".$whLocs.") ";
+        $whDiags .= " and hs.Location in (".$whLocs.") ";
     } else {
         $tdLocs = 'All';
     }
@@ -893,7 +902,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         switch ($rptSetting) {
 
             case 'psg':
-                $rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $end, readGenLookupsPDO($dbh, 'Patient_Rel_Type'), $uS->guestLookups[GL_TableNames::Hospital], $labels, $showAssoc, $showDiag, $showLocation, $uS->ShowBirthDate);
+                $rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $end, readGenLookupsPDO($dbh, 'Patient_Rel_Type'), $uS->guestLookups[GL_TableNames::Hospital], $labels, $showAssoc, $showDiag, $showLocation, $uS->ShowBirthDate, $uS->PatientAsGuest);
                 $dataTable = $rptArry['table'];
                 $sTbl->addBodyTr(HTMLTable::makeTh($labels->getString('statement', 'psgLabel', 'PSG') . ' Report', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
@@ -1127,6 +1136,7 @@ if ($uS->CoTod) {
                                 <input type="text" value="<?php echo $txtEnd; ?>" name="enDate" id="enDate" class="ckdate dates"/></td>
                         </tr>
                     </table>
+                    <?php if (count($hList) > 1) { ?>
                     <table style="float: left;">
                         <tr>
                             <th colspan="2">Hospitals</th>
@@ -1140,6 +1150,7 @@ if ($uS->CoTod) {
                             <td><?php echo $hospitals; ?></td>
                         </tr>
                     </table>
+                    <?php } ?>
                     <?php if ($selDiag != '') { ?>
                     <table style="float: left;">
                         <tr>
