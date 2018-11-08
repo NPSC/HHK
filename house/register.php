@@ -555,11 +555,11 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 </tr>
             </table>
         </div>
+        <iframe name="instamed" id="instamed" data-incontext="true" frameborder="0" allowtransparency="true" style="z-index: 9999; display: none; background-color: transparent; border: 0px none transparent; overflow-x: hidden; overflow-y: auto; margin: 0px; padding: 0px; -webkit-tap-highlight-color: transparent; position: fixed; left: 0px; top: 0px; width: 100%; height: 100%;"></iframe>
 
         <div class="gmenu"></div>
         <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
         <form name="xform" id="xform" method="post">
-            <script type="text/javascript" src="js/embed.js" data-displaymode="incontext" data-hostname="https://online.instamed.com/providers"></script>
         </form>
         <div id="cardonfile" style="font-size: .9em; display:none;"></div>
         <div id="statEvents" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;"></div>

@@ -1185,10 +1185,11 @@ function paymentRedirect (data, $xferForm) {
 
         } else if (data.inctx && $xferForm.length > 0) {
 
-            //document.getElementById('instamed').setAttribute('src', data.inctx);
-            $xferForm.prop('target', 'instamed');
-            $xferForm.prop('action', data.inctx);
-            $xferForm.submit();
+            $('iframe#instamed').show();
+            document.getElementById('instamed').setAttribute('src', data.inctx + '&incontext=true');
+            //$xferForm.prop('target', 'instamed');
+            //$xferForm.prop('action', data.inctx + '&incontext=true');
+            //$xferForm.submit();
         }
     }
 }
