@@ -904,8 +904,8 @@ class InstamedGateway extends PaymentGateway {
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
 
-            'creditCardKeyed ' => 'true',
-            'incontext' => 'true',
+//            'creditCardKeyed ' => 'true',
+//            'incontext' => 'true',
             'lightWeight' => 'true',
             'isReadOnly' => 'true',
             'preventCheck' => 'true',
@@ -913,6 +913,7 @@ class InstamedGateway extends PaymentGateway {
             'suppressReceipt' => 'true',
             'hideGuarantorID' => 'true',
             'responseActionType' => 'header',
+//            'returnURL' => $houseUrl . InstamedGateway::POSTBACK_COMPLETE,
             'returnUrlUpdateParent' => 'parent',
             'cancelURL' => $houseUrl . InstamedGateway::POSTBACK_CANCEL,
             'confirmURL' => $houseUrl . InstamedGateway::POSTBACK_COMPLETE,
@@ -1368,7 +1369,7 @@ class InstamedGateway extends PaymentGateway {
             $this->useCVV = filter_var($gwRs->Use_Ccv_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
 
         } else {
-            throw new Hk_Exception_Runtime('The credit card payment gateway is not defined.');
+            throw new Hk_Exception_Runtime('The credit card payment gateway is not found: ' . $this->getGwName() .'.  ');
         }
 
         return $gwRs;

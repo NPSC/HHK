@@ -1059,7 +1059,7 @@ class PaymentSvcs {
         return $infoArray;
     }
 
-    public static function processSiteReturn(\PDO $dbh, $gw, $post) {
+    public static function processSiteReturn(\PDO $dbh, $post) {
 
         $uS = Session::getInstance();
 

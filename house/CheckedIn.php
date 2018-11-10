@@ -86,7 +86,7 @@ $paymentMarkup = '';
 $receiptMarkup = '';
 
 // Hosted payment return
-if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_REQUEST)) === FALSE) {
+if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
     if ($payResult->getDisplayMessage() != '') {
         $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());

@@ -82,6 +82,7 @@ $defaultRegisterTab = 0;
 $currentReservations = '';
 $uncommittedReservations = '';
 $waitlist = '';
+
 $rvCols = array();
 $wlCols = array();
 
@@ -91,13 +92,19 @@ if ($uS->DefaultRegisterTab > 0 && $uS->DefaultRegisterTab < 5) {
 }
 
 // Hosted payment return
-if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_REQUEST)) === FALSE) {
+try {
 
-    $receiptMarkup = $payResult->getReceiptMarkup();
+    if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
-    if ($payResult->getDisplayMessage() != '') {
-        $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        $receiptMarkup = $payResult->getReceiptMarkup();
+
+        if ($payResult->getDisplayMessage() != '') {
+            $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        }
     }
+
+} catch (Hk_Exception_Runtime $ex) {
+    $paymentMarkup = $ex->getMessage();
 }
 
 
@@ -292,7 +299,8 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
-        
+        <scriptt type="text/javascript" src="<?php echo INS_EMBED_JS; ?>" ></script>
+
 <script type="text/javascript">
     var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';
     var pmtMkup = "<?php echo $paymentMarkup; ?>";
@@ -555,7 +563,6 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 </tr>
             </table>
         </div>
-        <iframe name="instamed" id="instamed" data-incontext="true" frameborder="0" allowtransparency="true" style="z-index: 9999; display: none; background-color: transparent; border: 0px none transparent; overflow-x: hidden; overflow-y: auto; margin: 0px; padding: 0px; -webkit-tap-highlight-color: transparent; position: fixed; left: 0px; top: 0px; width: 100%; height: 100%;"></iframe>
 
         <div class="gmenu"></div>
         <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
@@ -564,6 +571,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <div id="cardonfile" style="font-size: .9em; display:none;"></div>
         <div id="statEvents" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;"></div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
+        <div id="ifContainer" style="display:none;"></div>
         <div id="dchgPw" style="display:none;">
             <table><tr>
                     <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="txtUserName"><?php echo $uS->username; ?></span></td>

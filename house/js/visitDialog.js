@@ -744,6 +744,8 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 refreshdTables(data);
             }
 
+            $('#keysfees').dialog("close");
+            
             if (typeof pageManager !== 'undefined') {
                 var dates = {'date1': new Date($('#gstDate').val()), 'date2': new Date($('#gstCoDate').val())};
                 pageManager.doOnDatesChange(dates);
@@ -766,8 +768,6 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
             }
 
             paymentRedirect(data, $('#xform'));
-            
-            $('#keysfees').dialog("close");
 
     });
 

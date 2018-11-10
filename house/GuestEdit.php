@@ -120,7 +120,7 @@ $paymentMarkup = '';
 
 
 // Hosted payment return
-if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_REQUEST)) === FALSE) {
+if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
     $receiptMarkup = $payResult->getReceiptMarkup();
 

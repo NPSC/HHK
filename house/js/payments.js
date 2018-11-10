@@ -1163,7 +1163,7 @@ function reprintReceipt(pid, idDialg) {
 function paymentRedirect (data, $xferForm) {
     "use strict";
     if (data) {
-        
+
         if (data.hostedError) {
             flagAlertMessage(data.hostedError, 'error');
 
@@ -1183,10 +1183,11 @@ function paymentRedirect (data, $xferForm) {
 
             $xferForm.submit();
 
-        } else if (data.inctx && $xferForm.length > 0) {
+        } else if (data.inctx && $('#ifContainer').length > 0) {
 
-            $('iframe#instamed').show();
-            document.getElementById('instamed').setAttribute('src', data.inctx + '&incontext=true');
+            var $cont = $('#ifContainer').append($('<iframe width="860" height="650" src="' + data.inctx + '"/>')).show();
+            
+
             //$xferForm.prop('target', 'instamed');
             //$xferForm.prop('action', data.inctx + '&incontext=true');
             //$xferForm.submit();
