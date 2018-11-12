@@ -591,6 +591,10 @@ $(document).ready(function () {
         $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
     }
 
+//    if ($('iframe#instamed').length > 0) {
+//        $('iframe#instamed').remove();
+//    }
+    
     $(':input[type="button"], :input[type="submit"]').button();
 
     $.datepicker.setDefaults({

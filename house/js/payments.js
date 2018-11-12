@@ -1157,7 +1157,7 @@ function reprintReceipt(pid, idDialg) {
             showReceipt(idDialg, data.receipt, 'Receipt Copy');
           }
     });
-        
+
 }
 
 function paymentRedirect (data, $xferForm) {
@@ -1183,14 +1183,14 @@ function paymentRedirect (data, $xferForm) {
 
             $xferForm.submit();
 
-        } else if (data.inctx && $('#ifContainer').length > 0) {
+        } else if (data.inctx) {
 
-            var $cont = $('#ifContainer').append($('<iframe width="860" height="650" src="' + data.inctx + '"/>')).show();
-            
+            //$('#ifContainer').append($('<iframe width="710" height="600" src="' + data.inctx + '" style="z-index: 9999; background-color: transparent; border: 0px none transparent; overflow-x: hidden; overflow-y: auto; margin: 0px; padding: 0px; -webkit-tap-highlight-color: transparent; position: fixed; left: 0px; top: 0px; width: 100%; height: 100%;" />')).show();
+            InstaMed.launch(data.inctx);
 
-            //$xferForm.prop('target', 'instamed');
-            //$xferForm.prop('action', data.inctx + '&incontext=true');
-            //$xferForm.submit();
+//            $xferForm.prop('target', 'instamed');
+//            $xferForm.prop('action', data.inctx);
+//            $xferForm.submit();
         }
     }
 }

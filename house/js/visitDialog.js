@@ -740,12 +740,14 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 return;
             }            
 
+            $('#keysfees').dialog("close");
+            
+            paymentRedirect(data, $('#xform'));
+
             if (typeof refreshdTables !== 'undefined') {
                 refreshdTables(data);
             }
 
-            $('#keysfees').dialog("close");
-            
             if (typeof pageManager !== 'undefined') {
                 var dates = {'date1': new Date($('#gstDate').val()), 'date2': new Date($('#gstCoDate').val())};
                 pageManager.doOnDatesChange(dates);
@@ -766,8 +768,6 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
             if (data.invoiceNumber && data.invoiceNumber !== '') {
                 window.open('ShowInvoice.php?invnum=' + data.invoiceNumber);
             }
-
-            paymentRedirect(data, $('#xform'));
 
     });
 

@@ -903,9 +903,10 @@ class InstamedGateway extends PaymentGateway {
 
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
+            'id' => 'NP.SOFTWARE.TEST',
 
 //            'creditCardKeyed ' => 'true',
-//            'incontext' => 'true',
+            'incontext' => 'true',
             'lightWeight' => 'true',
             'isReadOnly' => 'true',
             'preventCheck' => 'true',
@@ -913,20 +914,21 @@ class InstamedGateway extends PaymentGateway {
             'suppressReceipt' => 'true',
             'hideGuarantorID' => 'true',
             'responseActionType' => 'header',
-//            'returnURL' => $houseUrl . InstamedGateway::POSTBACK_COMPLETE,
             'returnUrlUpdateParent' => 'parent',
-            'cancelURL' => $houseUrl . InstamedGateway::POSTBACK_CANCEL,
+//            'cancelURL' => $houseUrl . InstamedGateway::POSTBACK_CANCEL,
             'confirmURL' => $houseUrl . InstamedGateway::POSTBACK_COMPLETE,
             'requestToken' => 'true',
             'RelayState' => $this->saleUrl,
         );
 
-        $req = http_build_query(array_merge($data, $this->getCredentials()->toSSO()));
-        $headerResponse = $this->doHeaderRequest($req);
+        $req = array_merge($data, $this->getCredentials()->toSSO());
+        $headerResponse = $this->doHeaderRequest(http_build_query($req));
+
+        unset($req[InstaMedCredentials::SEC_KEY]);
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $headerResponse->getResponseCode(), json_encode($data), json_encode($headerResponse->getResultArray()), 'HostedCoInit');
+            Gateway::saveGwTx($dbh, $headerResponse->getResponseCode(), json_encode($req), json_encode($headerResponse->getResultArray()), 'HostedCoInit');
         } catch(Exception $ex) {
             // Do Nothing
         }
@@ -973,30 +975,38 @@ class InstamedGateway extends PaymentGateway {
             InstamedGateway::GROUP_ID => $idGroup,
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
-
-            'creditCardKeyed ' => 'true',
+            'id' => 'NP.SOFTWARE.TEST',
+//            'creditCardKeyed ' => 'true',
             'lightWeight' => 'true',
-            'preventCheck' => 'true',
-            'preventCash'  => 'true',
-            'suppressReceipt' => 'true',
-            'hideGuarantorID' => 'true',
+            'incontext' => 'true',
+//            'preventCheck' => 'true',
+//            'preventCash'  => 'true',
+//            'suppressReceipt' => 'true',
+//            'hideGuarantorID' => 'true',
             'responseActionType' => 'header',
-            'returnUrlUpdateParent' => 'parent',
+//            'returnUrlUpdateParent' => 'parent',
             'cancelURL' => $houseUrl . InstamedGateway::POSTBACK_CANCEL,
             'confirmURL' => $houseUrl . InstamedGateway::POSTBACK_COMPLETE,
             'requestToken' => 'true',
             'RelayState' => $this->cofUrl,
         );
 
-        $headerResponse = $this->doHeaderRequest(http_build_query(array_merge($data, $this->getCredentials()->toSSO())));
+        $allData = array_merge($data, $this->getCredentials()->toSSO());
+
+        $headerResponse = $this->doHeaderRequest(http_build_query($allData));
+
+
+        // remove password.
+        unset($allData[InstaMedCredentials::SEC_KEY]);
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $headerResponse->getResponseCode(), json_encode($data), json_encode($headerResponse->getResultArray()), 'HostedCoInit');
+            Gateway::saveGwTx($dbh, $headerResponse->getResponseCode(), json_encode($allData), json_encode($headerResponse->getResultArray()), 'HostedCoInit');
         } catch(Exception $ex) {
             // Do Nothing
         }
 
+        // Verify response
         if ($headerResponse->getToken() != '') {
 
             // Save payment ID
@@ -1379,8 +1389,8 @@ class InstamedGateway extends PaymentGateway {
 
         $this->credentials = new InstaMedCredentials($gwRs);
 
-        $this->saleUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPatientPaymentSSO?';
-        $this->cofUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPaymentPlanSimpleSSO?';
+        $this->saleUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPatientPaymentSSO';
+        $this->cofUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPaymentPlanSimpleSSO';
         $this->voidUrl = 'https://online.instamed.com/providers/Form/PatientPayments/VoidPaymentSSO?';
         $this->returnUrl = 'https://online.instamed.com/providers/Form/PatientPayments/RefundPaymentSSO?';
     }
