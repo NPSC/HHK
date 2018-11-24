@@ -1386,6 +1386,7 @@ class Visit {
                 continue;
             }
 
+            // Creaate new Checkout date
             try {
                 $coDT = setTimeZone(NULL, $coDate);
                 $coDT->setTime(0, 0, 0);
@@ -1394,6 +1395,7 @@ class Visit {
                 continue;
             }
 
+            // Not changed.
             if ($ecoDT == $coDT) {
 
                 // Check last date
@@ -1432,6 +1434,7 @@ class Visit {
                 continue;
             }
 
+            // Too rar out?
             if ($todayDT->diff($coDT)->days > $maxExpected) {
 
                 $rtnMsg .= "Expected Checkout date cannot be beyond " . $maxExpected . " days from today.  The max days setting can be changed.";

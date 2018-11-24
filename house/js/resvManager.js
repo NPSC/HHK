@@ -351,6 +351,9 @@ function resvManager(initData) {
         
         function copyAddrSelector($button, prefix) {
             
+            // remove any previous incarnations
+            $('.hhk-addrPicker').remove();
+            
             var $sel = $('<select id="selAddrch" multiple="multiple"/>');
             var options = 0;
             var optTexts = [];
@@ -393,7 +396,7 @@ function resvManager(initData) {
                 });
             
                 var $selDiv = $('<div id="divSelAddr" style="position:absolute; vertical-align:top;" class="hhk-addrPicker"/>')
-                        .append($('<p>Choose an Address: </p>'))
+                    .append($('<p>Choose an Address: </p>'))
                     .append($sel)
                     .appendTo($('body'));
             

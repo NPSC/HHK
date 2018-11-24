@@ -59,11 +59,11 @@ class Login {
         $ssn->sconf = 'sys_config';
         $ssn->ver = $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
         $ssn->ssl = $ssl;
+        $ssn->siteName = $config->getString('site','Site_Name', 'Hospitality HouseKeeper');
+        $ssn->testVersion = $config->getBool('site', 'Run_As_Test', true);
+        $ssn->mode = strtolower($config->getString('site', 'Mode', 'live'));
 
         // The following copied to table sys_config:
-//        $ssn->testVersion = $config->getBool('site', 'Run_As_Test', true);
-//        $ssn->siteName = $config->getString('site','Site_Name', 'Hospitality HouseKeeper');
-//        $ssn->mode = strtolower($config->getString('site', 'Mode', 'live'));
 //        $ssn->tz = $config->getString('calendar', 'TimeZone', 'America/Chicago');
 //        $ssn->sId = $config->getString('site', 'Site_Id', '');
 //        $ssn->subsidyId = $config->getString('financial', 'RoomSubsidyId', '0');
@@ -76,7 +76,7 @@ class Login {
         $ssn->rolecode = WebRole::Guest;
 
         // Set Timezone
-        date_default_timezone_set($ssn->tz);
+//        date_default_timezone_set($ssn->tz);
 
         try {
             $dbConfig = $config->getSection('db');

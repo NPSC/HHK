@@ -34,9 +34,6 @@ class webInit {
         // get session instance
         $uS = Session::getInstance();
 
-        // set timezone
-        date_default_timezone_set($uS->tz);
-
         // Run as test?
         $this->testVersion = $uS->testVersion;
         $this->siteName = $uS->siteName;
@@ -69,6 +66,9 @@ class webInit {
 
         $this->sessionLoadGenLkUps();
         $this->sessionLoadGuestLkUps();
+
+        // set timezone
+        date_default_timezone_set($uS->tz);
 
         // Check session timeout
         $t = time();
@@ -159,6 +159,7 @@ class webInit {
         SysConfig::getCategory($this->dbh, $uS, "'f'", $uS->sconf);
         SysConfig::getCategory($this->dbh, $uS, "'r'", $uS->sconf);
         SysConfig::getCategory($this->dbh, $uS, "'d'", $uS->sconf);
+        SysConfig::getCategory($this->dbh, $uS, "'a'", $uS->sconf);
 
         return $uS->nameLookups;
 

@@ -528,7 +528,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
             $diagbox.dialog('option', 'buttons', buttons);
             $diagbox.dialog('option', 'title', title);
-            $diagbox.dialog('option', 'width', ($( window ).width() * .86));
+            $diagbox.dialog('option', 'width', ($( window ).width() * .92));
             $diagbox.dialog('option', 'height', $( window ).height());
             $diagbox.dialog('open');
 
@@ -793,18 +793,6 @@ function paymentReply (data, updateCal) {
         }
     }
 
-}
-/**
- * 
- * @param {string} header
- * @param {string} body
- * @returns {undefined}
- */
-function updateVisitMessage(header, body) {
-    //$('#visitMsg').toggle("clip");
-    $('#h3VisitMsgHdr').text(header);
-    $('#spnVisitMsg').text(body);
-    $('#visitMsg').effect("pulsate");
 }
 
 
