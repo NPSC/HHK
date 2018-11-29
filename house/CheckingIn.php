@@ -166,7 +166,7 @@ $resvObjEncoded = json_encode($resvAr);
     <head>
         <meta charset="UTF-8">
         <title><?php echo $wInit->pageTitle; ?></title>
-
+        <meta http-equiv="x-ua-compatible" content="IE=edge">
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo DR_PICKER_CSS ?>
