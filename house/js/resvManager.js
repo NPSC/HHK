@@ -354,7 +354,7 @@ function resvManager(initData) {
             // remove any previous incarnations
             $('.hhk-addrPicker').remove();
             
-            var $sel = $('<select id="selAddrch" multiple="multiple"/>');
+            var $sel = $('<select id="selAddrch" multiple="multiple" />');
             var options = 0;
             var optTexts = [];
             
@@ -381,7 +381,7 @@ function resvManager(initData) {
                         optTexts[options] = optText;
                         options++;
 
-                        $('<option value="' + p + '">' + optText + '</option>')
+                        $('<option class="hhk-addrPickerPanel" value="' + p + '">' + optText + '</option>')
                             .appendTo($sel);
                     }
                 }
@@ -395,8 +395,8 @@ function resvManager(initData) {
                     setAddress(prefix, $(this).val());
                 });
             
-                var $selDiv = $('<div id="divSelAddr" style="position:absolute; vertical-align:top;" class="hhk-addrPicker"/>')
-                    .append($('<p>Choose an Address: </p>'))
+                var $selDiv = $('<div id="divSelAddr" style="position:absolute; vertical-align:top;" class="hhk-addrPicker hhk-addrPickerPanel"/>')
+                    .append($('<p class="hhk-addrPickerPanel">Choose an Address: </p>'))
                     .append($sel)
                     .appendTo($('body'));
             
@@ -1232,6 +1232,7 @@ function resvManager(initData) {
         for (var p in people.list()) {
             if (people.list()[p].id > 0) {
                 hasIds = true;
+                break;
             }
         }
 
@@ -1245,8 +1246,8 @@ function resvManager(initData) {
                 idPsg: idPsg,
                 idResv: idResv,
                 idVisit: idVisit,
-                dt1:dates["date1"].toUTCString(), 
-                dt2:dates["date2"].toUTCString(), 
+                dt1: dates["date1"].getFullYear() + '-' + (dates["date1"].getMonth() + 1) + '-' + dates["date1"].getDate(),
+                dt2: dates["date2"].getFullYear() + '-' + (dates["date2"].getMonth() + 1) + '-'  + dates["date2"].getDate(), 
                 mems:people.list()};
 
             $.post('ws_resv.php', parms, function(data) {

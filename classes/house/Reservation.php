@@ -303,9 +303,15 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             $idPsg = intval(filter_var($post['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
             $idResv = intval(filter_var($post['idResv'], FILTER_SANITIZE_NUMBER_INT), 10);
-            $arrivalDT = new DateTime(filter_var($post['dt1'], FILTER_SANITIZE_STRING));
-            $departDT = new DateTime(filter_var($post['dt2'], FILTER_SANITIZE_STRING));
             $postMems = filter_var_array($post['mems'], FILTER_SANITIZE_STRING);
+            
+            try {
+                $arrivalDT = new DateTime(filter_var($post['dt1'], FILTER_SANITIZE_STRING));
+                $departDT = new DateTime(filter_var($post['dt2'], FILTER_SANITIZE_STRING));
+            } catch(Exception $ex) {
+                return array('error'=>'Bad dates: ' . $ex->getMessage());
+            }
+            
 
             foreach ($postMems as $prefix => $memArray) {
 

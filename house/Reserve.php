@@ -369,13 +369,23 @@ $(document).ready(function() {
 
     // hide the alert on mousedown
     $(document).mousedown(function (event) {
-        var target = $(event.target[0]);
+    
+//        if (isIE()) {
+            if (event.target.className === undefined || event.target.className !== 'hhk-addrPickerPanel') {
+                $('#divSelAddr').remove();
+            }
 
-        if (target.id === undefined) {
-            $('#divSelAddr').remove();
-        } else if (target.id !== 'divSelAddr' && target.closest('div') && target.closest('div').id !== 'divSelAddr') {
-            $('#divSelAddr').remove();
-        }
+       
+            
+//        } else {
+//            var target = event.target;
+//
+//            if (target.id === undefined) {
+//                $('#divSelAddr').remove();
+//            } else if (target.id !== 'divSelAddr' && target.closest('div') && target.closest('div').id !== 'divSelAddr') {
+//                $('#divSelAddr').remove();
+//            }
+//        }
     });
 
 // Buttons

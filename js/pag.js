@@ -71,6 +71,11 @@ function dateRender(data, type, format) {
     return data;
 }
 
+function isIE() {
+    var ua = window.navigator.userAgent;
+    return /MSIE|Trident/.test(ua);
+}
+
 $(document).ready(function () {
     "use strict";
 
