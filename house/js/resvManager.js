@@ -116,7 +116,6 @@ function resvManager(initData) {
             // Set Primary guest
             if (pgPrefix !== undefined) {
                 people.list()[pgPrefix].pri = '1';
-
             }
         }
 
@@ -663,9 +662,13 @@ function resvManager(initData) {
                         $(this).parents('tr').next('tr').hide();
                         $addrTog.find('span').removeClass('ui-icon-circle-triangle-n').addClass('ui-icon-circle-triangle-s');
                         $addrTog.attr('title', 'Show Address Section');
+                        
+                        // CLose the address picker window for poor IE.
+                        if (isIE()) {
+                            $('#divSelAddr').remove();
+                        }
                     }
 
-                    
                 });
 
                 // Incomplete Address Flag
@@ -914,6 +917,8 @@ function resvManager(initData) {
             }
 
             // Primary guests
+             $("input.hhk-rbPri").parent().removeClass('ui-state-error');
+            
             if (numPriGuests === 0 && numFamily === 1) {
                 // Set the only guest as primary guest
                for (var i in people.list()) {
@@ -922,6 +927,7 @@ function resvManager(initData) {
 
             } else if (numPriGuests === 0) {
                 flagAlertMessage('Set one guest as primary guest.', 'alert');
+                $("input.hhk-rbPri").parent().addClass('ui-state-error');
                 return false;
             }
 

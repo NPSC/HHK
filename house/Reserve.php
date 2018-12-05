@@ -369,23 +369,20 @@ $(document).ready(function() {
 
     // hide the alert on mousedown
     $(document).mousedown(function (event) {
-    
-//        if (isIE()) {
-            if (event.target.className === undefined || event.target.className !== 'hhk-addrPickerPanel') {
+
+        if (isIE()) {
+            var target = $(event.target[0]);
+
+            if (target.id && target.id !== undefined && target.id !== 'divSelAddr' && target.closest('div') && target.closest('div').id !== 'divSelAddr') {
                 $('#divSelAddr').remove();
             }
 
-       
-            
-//        } else {
-//            var target = event.target;
-//
-//            if (target.id === undefined) {
-//                $('#divSelAddr').remove();
-//            } else if (target.id !== 'divSelAddr' && target.closest('div') && target.closest('div').id !== 'divSelAddr') {
-//                $('#divSelAddr').remove();
-//            }
-//        }
+        } else {
+
+            if (event.target.className === undefined || event.target.className !== 'hhk-addrPickerPanel') {
+                $('#divSelAddr').remove();
+            }
+        }
     });
 
 // Buttons
