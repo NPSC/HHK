@@ -949,10 +949,6 @@ class Visit {
         }
 
 
-        // prepare email message
-        $noreply = $uS->noreplyAddr;
-        $adminemail = $uS->adminEmailAddr;
-        $hskpg = $uS->HouseKeepingEmail;
 
         try {
             if ($sendEmail && $uS->noreplyAddr != '' && ($uS->adminEmailAddr != '' || $uS->HouseKeepingEmail != '')) {

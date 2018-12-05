@@ -400,7 +400,11 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             ];
 
         </script>
+
+        
         <script type="text/javascript" src="js/register-min.js?v2x=n"></script>
+
+
         <style>
            #version {
             height: 15px;
