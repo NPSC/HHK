@@ -74,7 +74,7 @@ class Login {
         $ssn->rolecode = WebRole::Guest;
 
         // Set Timezone
-        date_default_timezone_set($ssn->tz);
+//        date_default_timezone_set($ssn->tz);
 
         try {
             $dbConfig = $config->getSection('db');
@@ -213,4 +213,3 @@ class Login {
 
 
 }
-
