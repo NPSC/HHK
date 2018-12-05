@@ -400,9 +400,9 @@ $(document).ready(function() {
     // hide the alert on mousedown
     $(document).mousedown(function (event) {
 
-        var target = $(event.target);
+        var target = $(event.target[0]);
 
-        if (target[0].id !== 'divSelAddr' && target[0].closest('div') && target[0].closest('div').id !== 'divSelAddr') {
+        if (target.id && target.id !== undefined && target.id !== 'divSelAddr' && target.closest('div') && target.closest('div').id !== 'divSelAddr') {
             $('#divSelAddr').remove();
         }
     });

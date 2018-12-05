@@ -70,7 +70,7 @@ if ($uS->mode != Mode::Live) {
 $volSiteURL = $config->getString("site", 'Volunteer_Dir', '');
 $houseSiteUrl = $config->getString("site", 'House_Dir', '');
 $tutorialSiteURL = $config->getString('site', 'Tutorial_URL', '');
-$build = 'Build:' . $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
+$build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 
 $icons = array();
 
