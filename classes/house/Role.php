@@ -93,8 +93,8 @@ abstract class Role {
         $copy = '';
         if ($useCopyIcon) {
             $copy = HTMLContainer::generateMarkup('li',
-                        HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-copy'))
-                        , array('class'=>'ui-state-default ui-corner-all hhk-addrCopy', 'style'=>'float:right;', 'data-prefix'=>$idPrefix, 'title'=>'Click to copy.'));
+                        HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-copy hhk-addrPickerPanel'))
+                        , array('class'=>'ui-state-default ui-corner-all hhk-addrCopy hhk-addrPickerPanel', 'style'=>'float:right;', 'data-prefix'=>$idPrefix, 'title'=>'Click to copy.'));
         }
 
         $legendTitle = HTMLContainer::generateMarkup('ul'

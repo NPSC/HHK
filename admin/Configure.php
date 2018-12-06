@@ -85,13 +85,14 @@ if (isset($_POST["btnSiteCnf"])) {
 
     addslashesextended($_POST);
 
-    // Check subsidyId and returnId - cannot be the same
-    $subsidyId = intval(filter_var($_POST['financial']['RoomSubsidyId'], FILTER_SANITIZE_NUMBER_INT), 10);
-
-    SiteConfig::saveConfig($dbh, $config, $_POST, $uS->username);
     SiteConfig::saveSysConfig($dbh, $_POST);
 
-    //$config = Login::initializeSession(ciCFG_FILE);
+    try{
+        SiteConfig::saveConfig($dbh, $config, $_POST, $uS->username);
+    } catch (Exception $ex) {
+        $confError = $ex->getMessage();
+    }
+
 }
 
 if (isset($_POST["btnLabelCnf"])) {

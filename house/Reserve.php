@@ -185,7 +185,7 @@ $resvObjEncoded = json_encode($resvAr);
     <head>
         <meta charset="UTF-8">
         <title><?php echo $wInit->pageTitle; ?></title>
-
+        <meta http-equiv="x-ua-compatible" content="IE=edge">
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo DR_PICKER_CSS ?>
@@ -369,10 +369,19 @@ $(document).ready(function() {
 
     // hide the alert on mousedown
     $(document).mousedown(function (event) {
-        var target = $(event.target);
 
-        if (target[0].id !== 'divSelAddr' && target[0].closest('div') && target[0].closest('div').id !== 'divSelAddr') {
-            $('#divSelAddr').remove();
+        if (isIE()) {
+            var target = $(event.target[0]);
+
+            if (target.id && target.id !== undefined && target.id !== 'divSelAddr' && target.closest('div') && target.closest('div').id !== 'divSelAddr') {
+                $('#divSelAddr').remove();
+            }
+
+        } else {
+
+            if (event.target.className === undefined || event.target.className !== 'hhk-addrPickerPanel') {
+                $('#divSelAddr').remove();
+            }
         }
     });
 

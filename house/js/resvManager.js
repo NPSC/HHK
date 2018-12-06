@@ -116,7 +116,6 @@ function resvManager(initData) {
             // Set Primary guest
             if (pgPrefix !== undefined) {
                 people.list()[pgPrefix].pri = '1';
-
             }
         }
 
@@ -351,7 +350,10 @@ function resvManager(initData) {
         
         function copyAddrSelector($button, prefix) {
             
-            var $sel = $('<select id="selAddrch" multiple="multiple"/>');
+            // remove any previous incarnations
+            $('.hhk-addrPicker').remove();
+            
+            var $sel = $('<select id="selAddrch" multiple="multiple" />');
             var options = 0;
             var optTexts = [];
             
@@ -378,7 +380,7 @@ function resvManager(initData) {
                         optTexts[options] = optText;
                         options++;
 
-                        $('<option value="' + p + '">' + optText + '</option>')
+                        $('<option class="hhk-addrPickerPanel" value="' + p + '">' + optText + '</option>')
                             .appendTo($sel);
                     }
                 }
@@ -392,8 +394,8 @@ function resvManager(initData) {
                     setAddress(prefix, $(this).val());
                 });
             
-                var $selDiv = $('<div id="divSelAddr" style="position:absolute; vertical-align:top;" class="hhk-addrPicker"/>')
-                        .append($('<p>Choose an Address: </p>'))
+                var $selDiv = $('<div id="divSelAddr" style="position:absolute; vertical-align:top;" class="hhk-addrPicker hhk-addrPickerPanel"/>')
+                    .append($('<p class="hhk-addrPickerPanel">Choose an Address: </p>'))
                     .append($sel)
                     .appendTo($('body'));
             
@@ -660,9 +662,13 @@ function resvManager(initData) {
                         $(this).parents('tr').next('tr').hide();
                         $addrTog.find('span').removeClass('ui-icon-circle-triangle-n').addClass('ui-icon-circle-triangle-s');
                         $addrTog.attr('title', 'Show Address Section');
+                        
+                        // CLose the address picker window for poor IE.
+                        if (isIE()) {
+                            $('#divSelAddr').remove();
+                        }
                     }
 
-                    
                 });
 
                 // Incomplete Address Flag
@@ -911,6 +917,8 @@ function resvManager(initData) {
             }
 
             // Primary guests
+             $("input.hhk-rbPri").parent().removeClass('ui-state-error');
+            
             if (numPriGuests === 0 && numFamily === 1) {
                 // Set the only guest as primary guest
                for (var i in people.list()) {
@@ -919,6 +927,7 @@ function resvManager(initData) {
 
             } else if (numPriGuests === 0) {
                 flagAlertMessage('Set one guest as primary guest.', 'alert');
+                $("input.hhk-rbPri").parent().addClass('ui-state-error');
                 return false;
             }
 
@@ -1136,6 +1145,9 @@ function resvManager(initData) {
                     if ($('#spnNites').length > 0) {
                         $('#spnNites').text(numDays);
                     }
+                    
+                    $('#gstDate').removeClass('ui-state-error');
+                    $('#gstCoDate').removeClass('ui-state-error');
 
                     if ($.isFunction(doOnDatesChange)) {
                         doOnDatesChange(dates);
@@ -1226,6 +1238,7 @@ function resvManager(initData) {
         for (var p in people.list()) {
             if (people.list()[p].id > 0) {
                 hasIds = true;
+                break;
             }
         }
 
@@ -1239,8 +1252,8 @@ function resvManager(initData) {
                 idPsg: idPsg,
                 idResv: idResv,
                 idVisit: idVisit,
-                dt1:dates["date1"].toUTCString(), 
-                dt2:dates["date2"].toUTCString(), 
+                dt1: dates["date1"].getFullYear() + '-' + (dates["date1"].getMonth() + 1) + '-' + dates["date1"].getDate(),
+                dt2: dates["date2"].getFullYear() + '-' + (dates["date2"].getMonth() + 1) + '-'  + dates["date2"].getDate(), 
                 mems:people.list()};
 
             $.post('ws_resv.php', parms, function(data) {
@@ -2187,32 +2200,27 @@ function resvManager(initData) {
             });
 
             // Visit Dialog
-            if ($('.hhk-getVDialog').length > 0) {
-                
-                $('.hhk-getVDialog').button();
-
-                $('#' + familySection.divFamDetailId).on('click', '.hhk-getVDialog', function () {
-                    var buttons;
-                    var vid = $(this).data('vid');
-                    var span = $(this).data('span');
-                    buttons = {
-                        "Show Statement": function() {
-                            window.open('ShowStatement.php?vid=' + vid, '_blank');
-                        },
-                        "Show Registration Form": function() {
-                            window.open('ShowRegForm.php?vid=' + vid, '_blank');
-                        },
-                        "Save": function() {
-                            saveFees(0, vid, span, false, payFailPage);
-                        },
-                        "Cancel": function() {
-                            $(this).dialog("close");
-                        }
-                    };
-                    viewVisit(0, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
-                    $('#submitButtons').hide();
-                });
-            }
+            $('#' + familySection.divFamDetailId).on('click', '.hhk-getVDialog', function () {
+                var buttons;
+                var vid = $(this).data('vid');
+                var span = $(this).data('span');
+                buttons = {
+                    "Show Statement": function() {
+                        window.open('ShowStatement.php?vid=' + vid, '_blank');
+                    },
+                    "Show Registration Form": function() {
+                        window.open('ShowRegForm.php?vid=' + vid, '_blank');
+                    },
+                    "Save": function() {
+                        saveFees(0, vid, span, false, payFailPage);
+                    },
+                    "Cancel": function() {
+                        $(this).dialog("close");
+                    }
+                };
+                viewVisit(0, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
+                $('#submitButtons').hide();
+            });
             
             $('.hhk-cbStay').change();
 

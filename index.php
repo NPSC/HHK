@@ -17,6 +17,7 @@ date_default_timezone_set('America/Chicago');
 require ('classes' . DS . 'config' . DS . 'Lite.php');
 require ('classes' . DS . 'sec' . DS . 'SecurityComponent.php');
 require ('classes' . DS . 'Exception_hk' . DS . 'Hk_Exception.php');
+require ('classes' . DS . 'SysConst.php');
 
 
 // Get the site configuration object
@@ -33,7 +34,7 @@ $adminDir = $config->getString("site", "Admin_Dir", "");
 $volunteerDir = $config->getString("site", "Volunteer_Dir", "");
 $houseDir = $config->getString("site", "House_Dir", "");
 $trainingURL = $config->getString("site", "Training_URL", "");
-$build = 'Build:' . $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
+$build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 
 $tz = $config->getString('calendar', 'TimeZone', 'America/Chicago');
 date_default_timezone_set($tz);

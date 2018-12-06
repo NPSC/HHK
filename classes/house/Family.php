@@ -296,7 +296,7 @@ class Family {
 
                 if ($this->showDemographics) {
                     // Demographics
-                    $demoMu = $this->getDemographicsMarkup($dbh, $role);
+                    $demoMu .= $this->getDemographicsMarkup($dbh, $role);
                 }
 
                 // Add addresses and demo's

@@ -303,9 +303,15 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             $idPsg = intval(filter_var($post['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
             $idResv = intval(filter_var($post['idResv'], FILTER_SANITIZE_NUMBER_INT), 10);
-            $arrivalDT = new DateTime(filter_var($post['dt1'], FILTER_SANITIZE_STRING));
-            $departDT = new DateTime(filter_var($post['dt2'], FILTER_SANITIZE_STRING));
             $postMems = filter_var_array($post['mems'], FILTER_SANITIZE_STRING);
+
+            try {
+                $arrivalDT = new DateTime(filter_var($post['dt1'], FILTER_SANITIZE_STRING));
+                $departDT = new DateTime(filter_var($post['dt2'], FILTER_SANITIZE_STRING));
+            } catch(Exception $ex) {
+                return array('error'=>'Bad dates: ' . $ex->getMessage());
+            }
+
 
             foreach ($postMems as $prefix => $memArray) {
 
@@ -439,9 +445,9 @@ WHERE r.idReservation = " . $rData->getIdResv());
             // Add room title to status title
             if ($resv->getStatus() == ReservationStatus::Committed) {
                 $statusText .= ' for Room ' . $resv->getRoomTitle($dbh);
+                $hideCheckinButton = FALSE;
             }
 
-            $hideCheckinButton = FALSE;
         }
 
         if ($resv->isNew() || $resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
@@ -722,7 +728,7 @@ where rg.idReservation =" . $r['idReservation']);
                     . " join registration r on v.idRegistration = r.idRegistration "
                     . " where v.`Status` = '" . VisitStatus::CheckedIn . "' "
                     . " AND ("
-                            . " ( s.`Status` = '" . VisitStatus::CheckedIn . "' AND DATE(DATEDEFAULTNOW(s.Expected_Co_Date)) >= DATE('" . $arrivalDT->format('Y-m-d') . "') ) "
+                            . " ( s.`Status` = '" . VisitStatus::CheckedIn . "' AND DATE(DATEDEFAULTNOW(s.Expected_Co_Date)) > DATE('" . $arrivalDT->format('Y-m-d') . "') ) "
                         . " OR "
                             . " ( s.`Status` = '" . VisitStatus::CheckedOut . "' AND DATE(s.Checkout_Date) > DATE('" . $arrivalDT->format('Y-m-d') . "') )) "
                     . " and s.idName in (" . substr($whStays, 1) . ")");
@@ -1706,6 +1712,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
 }
 
+
 class ReserveSearcher extends ActiveReservation {
 
     public function createMarkup(\PDO $dbh) {
@@ -1722,7 +1729,7 @@ class ReserveSearcher extends ActiveReservation {
 
     public function addPerson(\PDO $dbh) {
 
-        if ($this->reserveData->getId() > 0) {
+        if ($this->reserveData->getIdPsg() < 1 && $this->reserveData->getId() > 0) {
 
             // patient?
             $stmt = $dbh->query("select count(*) from psg where idPatient = " . $this->reserveData->getId());
@@ -1731,6 +1738,7 @@ class ReserveSearcher extends ActiveReservation {
             if ($rows[0][0] > 0) {
                 return $this->createMarkup($dbh);
             }
+
         }
 
         return parent::addPerson($dbh);

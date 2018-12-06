@@ -22,7 +22,7 @@ function setupVisitNotes(vid, $container) {
     return $container;
 }
 /**
- * 
+ *
  * @param {object} item
  * @param {int} idVisit
  * @param {int} visitSpan
@@ -143,9 +143,9 @@ function getMember(item, idVisit, visitSpan) {
 }
 
 var isCheckedOut = false;
-    
+
 /**
- * 
+ *
  * @param {int} idGuest
  * @param {int} idVisit
  * @param {object} buttons
@@ -182,14 +182,14 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 }
                 flagAlertMessage(data.error, 'error');
                 return;
-                
+
             }
-                
+
             var $diagbox = $('#keysfees');
 
             $diagbox.children().remove();
             $diagbox.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.success)));
-            
+
             $diagbox.find('.ckdate').datepicker({
                 yearRange: '-07:+01',
                 changeMonth: true,
@@ -295,11 +295,11 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
             var roomChgBal = 0.00;
             var vFeeChgBal = 0.00;
-            
+
             if ($('#spnCfBalDue').length > 0) {
                 roomChgBal = parseFloat($('#spnCfBalDue').data('bal'));
                 vFeeChgBal = parseFloat($('#spnCfBalDue').data('vfee'));
-                
+
                 roomChgBal -= vFeeChgBal;
             }
 
@@ -385,9 +385,9 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                             $('.hhk-refundDeposit').hide('fade');
                         }
 
-                        
+
                         if (roomChgBal < 0) {
-                            
+
                             $('#guestCredit').val(roomChgBal.toFixed(2).toString());
                             $('#feesCharges').val('');
                             $('.hhk-RoomCharge').hide();
@@ -398,7 +398,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                             }
 
                         } else {
-                            
+
                             $('#feesCharges').val(roomChgBal.toFixed(2).toString());
                             $('#guestCredit').val('');
                             $('.hhk-GuestCredit').hide();
@@ -443,13 +443,13 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 });
 
                 $('#cbCoAll').button().click(function () {
-                    
+
                     $('input.hhk-ckoutCB').each(function () {
                         $(this).prop('checked', true);
                     });
                     $('input.hhk-ckoutCB').change();
                 });
-                
+
                 $('input.hhk-ckoutCB').change();
 
             } else if ($('#cbFinalPayment').length > 0) {
@@ -457,7 +457,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 isCheckedOut = true;
 
                 $('.hhk-finalPayment').show();
-                
+
                 // Key Deposit
                 var kdamt = parseFloat($('#kdPaid').data('amt'));
 
@@ -529,7 +529,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
             $diagbox.dialog('option', 'buttons', buttons);
             $diagbox.dialog('option', 'title', title);
-            $diagbox.dialog('option', 'width', ($( window ).width() * .86));
+            $diagbox.dialog('option', 'width', ($( window ).width() * .92));
             $diagbox.dialog('option', 'height', $( window ).height());
             $diagbox.dialog('open');
 
@@ -538,7 +538,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 }
 
 /**
- * 
+ *
  * @param {int} idGuest
  * @param {int} idVisit
  * @param {int} visitSpan
@@ -593,23 +593,23 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
 
     $('input.hhk-ckoutCB').each(function() {
         if (this.checked) {
-            
+
             var parts = $(this).attr('id').split('_');
-            
+
             if (parts.length > 0) {
-                
+
                 parms['stayActionCb[' + parts[1] + ']'] = 'on';
                 var tdate = $('#stayCkOutDate_' + parts[1]).datepicker('getDate');
-                
+
                 if (tdate) {
-                    
+
                     var nowDate = new Date();
                     tdate.setHours(nowDate.getHours());
                     tdate.setMinutes(nowDate.getMinutes());
                 } else {
                     tdate = new Date();
                 }
-                
+
                 if ($('#stayCkOutHour_' + parts[1]).length > 0) {
                     parms['stayCkOutHour[' + parts[1] + ']'] = $('#stayCkOutHour_' + parts[1]).val();
                 }
@@ -718,7 +718,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     });
 
     $('#keysfees').css('background-color', 'white');
-    
+
     //working
     $('#keysfees').empty().append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Working...</p></div>');
 
@@ -738,10 +738,10 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 }
                 flagAlertMessage(data.error, 'error');
                 return;
-            }            
+            }
 
             $('#keysfees').dialog("close");
-            
+
             paymentRedirect(data, $('#xform'));
 
             if (typeof refreshdTables !== 'undefined') {
@@ -774,7 +774,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
 }
 
 /**
- * 
+ *
  * @param {string} header
  * @param {string} body
  * @returns {undefined}
@@ -785,5 +785,3 @@ function updateVisitMessage(header, body) {
     $('#spnVisitMsg').text(body);
     $('#visitMsg').effect("pulsate");
 }
-
-

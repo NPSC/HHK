@@ -135,7 +135,6 @@ class HouseServices {
                     VisitView::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
         }
 
-        $mkup .= HTMLContainer::generateMarkup('div', VisitView::visitMessageArea('', ''), array('id' => 'visitMsg', 'class' => 'hhk-VisitMessage'));
         $dataArray['success'] = $mkup;
 
 
