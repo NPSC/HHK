@@ -1475,14 +1475,14 @@ WHERE r.idReservation = " . $rData->getIdResv());
         parent::save($dbh, $post);
 
         if ($this->reserveData->hasError() === FALSE) {
-            $this->checkIn($dbh, $post);
+            $this->saveCheckIn($dbh, $post);
         }
 
         return $this;
 
     }
 
-    protected function checkIn(\PDO $dbh, $post) {
+    protected function saveCheckIn(\PDO $dbh, $post) {
 
         $uS = Session::getInstance();
 
@@ -1596,8 +1596,6 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 } else {
                     $pmp->setKeyDepositPayment($depBalance);
                 }
-
-
 
             } else if ($pmp->getKeyDepositPayment() > 0) {
 

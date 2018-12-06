@@ -747,6 +747,7 @@ $uS->guestId = $id;
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
+        <meta http-equiv="x-ua-compatible" content="IE=edge">
 
         <?php echo JQ_UI_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
