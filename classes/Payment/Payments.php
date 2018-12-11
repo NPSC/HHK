@@ -63,7 +63,12 @@ abstract class PaymentResponse {
     public function getPaymentDate() {
 
         if (is_null($this->paymentRs) === FALSE) {
-            return $this->paymentRs->Payment_Date->getStoredVal();
+
+            if ($this->paymentRs->Last_Updated->getStoredVal() != '') {
+                return $this->paymentRs->Last_Updated->getStoredVal();
+            } else {
+                return $this->paymentRs->Payment_Date->getStoredVal();
+            }
         }
 
         return '';

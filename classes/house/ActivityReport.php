@@ -424,11 +424,11 @@ class ActivityReport {
 
         // Dates
         if ($startDT != NULL && $startDT != '') {
-            $whDates .= " and DATE(`lp`.`Payment_Date`) >= DATE('" . $startDT->format('Y-m-d 00:00:00') . "') ";
+            $whDates .= " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) >= DATE('" . $startDT->format('Y-m-d 00:00:00') . "') ";
         }
 
         if ($endDT != NULL && $endDT != '') {
-            $whDates .= " and DATE(`lp`.`Payment_Date`) <= DATE('" . $endDT->format('Y-m-d 23:59:59') . "') ";
+            $whDates .= " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) <= DATE('" . $endDT->format('Y-m-d 23:59:59') . "') ";
         }
 
         // Set up status totals array
@@ -564,7 +564,6 @@ where `lp`.`idPayment` > 0
 
         $header = HTMLContainer::generateMarkup('h2', $title, array('class' => 'ui-widget-header')) . $hdrTbl->generateMarkup(array('style' => 'margin-bottom:10px;float:left; '));
 
-
         // Main fees listing table
         $tbl = new HTMLTable();
         $tbl->addHeaderTr(
@@ -616,6 +615,7 @@ where `lp`.`idPayment` > 0
 
                 $voidContent = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-script pmtRecpt', 'id' => 'pmticon' . $p['idPayment'], 'data-pid' => $p['idPayment'], 'style' => 'cursor:pointer;float:right;', 'title' => 'View Payment Receipt'));
                 $amt = $p['Payment_Amount'];
+                $dateDT = new DateTime($p['Payment_Date']);
 
                 switch ($p['Payment_Status']) {
 
@@ -739,6 +739,10 @@ where `lp`.`idPayment` > 0
                             if ($a['Card_Type'] != '') {
                                 $payDetail = $a['Card_Type'] . ' - ' . $a['Masked_Account'];
                             }
+
+                            IF ($a['Auth_Last_Updated'] !== '') {
+                                $dateDT = new DateTime($a['Auth_Last_Updated']);
+                            }
                         }
                     }
                 } else if ($p['idPayment_Method'] == PaymentMethod::Check || $p['idPayment_Method'] == PaymentMethod::Transfer) {
@@ -782,12 +786,11 @@ where `lp`.`idPayment` > 0
                     .HTMLTable::makeTd('')
                     .HTMLTable::makeTd(number_format(abs($h['Amount']), 2), array('style'=>'text-align:right;color:gray;'))
                     .HTMLTable::makeTd($voidContent)
-                    .HTMLTable::makeTd(date('c', strtotime($r['Invoice_Date'])))
+                    .HTMLTable::makeTd($dateDT->format('c'))
                     .HTMLTable::makeTd($r['Invoice_Updated_By'])
                     .($showExternlId ? HTMLTable::makeTd($p['Payment_External_Id']) : HTMLTable::makeTd(''))
                     .HTMLTable::makeTd('')
                 );
-
             }
         }
 
@@ -999,7 +1002,7 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
         if ($stmt->rowCount() == 0) {
             $tbl->addBodyTr(HTMLTable::makeTd('-No Data-', array('colspan' => '11', 'style' => 'text-align:center;')));
         }
-        
+
         return $tbl->generateMarkup(array('id' => 'InvTable', 'width' => '100%'), '<h3>Invoices</h3>');
     }
 

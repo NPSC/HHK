@@ -138,7 +138,7 @@ class Receipt {
 
 
         $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(date('D M jS, Y g:ia')));
+                . HTMLTable::makeTd(date('D M jS, Y g:ia', strtotime($payResp->getPaymentDate()))));
 
         $tbl->addBodyTr(HTMLTable::makeTd("Total Voided:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
 
@@ -198,7 +198,7 @@ class Receipt {
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(date('D M jS, Y g:ia')));
+                . HTMLTable::makeTd(date('D M jS, Y g:ia', strtotime($payResp->getPaymentDate()))));
 
         $tbl->addBodyTr(HTMLTable::makeTd("Total Returned:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
 
@@ -574,12 +574,13 @@ WHERE
                     $idPA = $p['idPayment_auth'];
 
                     $paymtAuths[$idPA] = array(
-                        'idPayment_auth'=>$p['idPayment_auth'],
-                        'Charge_Customer_Id'=>$p['Charge_Customer_Id'],
-                        'Masked_Account'=>$p['Masked_Account'],
-                        'Card_Type'=>$p['Card_Type'],
-                        'Approved_Amount'=>$p['Approved_Amount'],
-                        'Approval_Code'=>$p['Approval_Code']
+                        'idPayment_auth' => $p['idPayment_auth'],
+                        'Charge_Customer_Id' => $p['Charge_Customer_Id'],
+                        'Masked_Account' => $p['Masked_Account'],
+                        'Card_Type' => $p['Card_Type'],
+                        'Approved_Amount' => $p['Approved_Amount'],
+                        'Approval_Code' => $p['Approval_Code'],
+                        'Auth_Last_Updated' => $p['Auth_Last_Updated']
                     );
                 }
             }
