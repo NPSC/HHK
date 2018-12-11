@@ -17,8 +17,9 @@ function resvManager(initData) {
     var idName = initData.id;
     var idVisit = initData.vid;
     var span = initData.span;
+    
+    
     var rooms = [];
-
     var people = new Items();
     var addrs = new Items();
     var familySection = new FamilySection($('#famSection'));

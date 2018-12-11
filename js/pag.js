@@ -8,6 +8,10 @@ function flagAlertMessage(mess, wasError) {
     "use strict";
     //Types:  alert, success, warning, error, info/information
     var type = 'info';
+    
+    if (!mess || mess == '') {
+        return;
+    }
 
     if (typeof wasError === 'boolean') {
         type = (wasError ? 'error' : 'success');
@@ -15,12 +19,16 @@ function flagAlertMessage(mess, wasError) {
         type = wasError;
     }
 
-    new Noty(
-        {
-            type: type,
-            text: mess
-        }
-    ).show();
+    try {
+        new Noty(
+            {
+                type: type,
+                text: mess
+            }
+        ).show();
+    } catch(err) {
+        // do nothing for now.
+    }
 }
 
 //function altFlagAlertMessage(mess, wasError) {
