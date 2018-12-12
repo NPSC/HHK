@@ -1185,12 +1185,8 @@ function paymentRedirect (data, $xferForm) {
 
         } else if (data.inctx) {
 
-            //$('#ifContainer').append($('<iframe width="710" height="600" src="' + data.inctx + '" style="z-index: 9999; background-color: transparent; border: 0px none transparent; overflow-x: hidden; overflow-y: auto; margin: 0px; padding: 0px; -webkit-tap-highlight-color: transparent; position: fixed; left: 0px; top: 0px; width: 100%; height: 100%;" />')).show();
             InstaMed.launch(data.inctx);
 
-//            $xferForm.prop('target', 'instamed');
-//            $xferForm.prop('action', data.inctx);
-//            $xferForm.submit();
         }
     }
 }

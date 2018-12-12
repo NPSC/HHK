@@ -16,7 +16,7 @@ define('RESV_MANAGER_JS', 'js/resvManager.js' . JSV);
 define('PAYMENT_JS', "js/payments.js" . JSV);
 define('RESV_JS', "js/resv.js" . JSV);
 define('VISIT_DIALOG_JS', "js/visitDialog.js" . JSV);
-define('INS_EMBED_JS', 'js/embed.js');
+define('INS_EMBED_JS', '<script src="js/embed.js" data-displaymode="incontext" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="incontext"></script>');
 
 /**
  * Includes

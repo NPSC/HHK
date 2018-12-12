@@ -89,14 +89,14 @@ class ImSaleResponse extends PaymentResponse {
     public $response;
     public $idToken = '';
 
-    function __construct($verifyCurlResponse, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+    function __construct(VerifyCurlResponse $verifyCurlResponse, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
         $this->response = $verifyCurlResponse;
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
         $this->invoiceNumber = $invoiceNumber;
         $this->expDate = $verifyCurlResponse->getExpDate();
-        $this->cardNum = str_ireplace('x', '', $verifyCurlResponse->getMaskedAccount());
+        $this->cardNum = $verifyCurlResponse->getMaskedAccount();
         $this->cardType = $verifyCurlResponse->getCardType();
         $this->cardName = $verifyCurlResponse->getCardHolderName();
         $this->amount = $verifyCurlResponse->getAuthorizeAmount();

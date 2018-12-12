@@ -272,7 +272,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title><?php echo $pageTitle; ?></title>
+        <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
@@ -282,9 +282,9 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
 
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="js/fullcalendar.min.js"></script>
         <script type="text/javascript" src="../js/hhk-scheduler.min.js"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
@@ -398,9 +398,8 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
 
         </script>
 
-
         <script type="text/javascript" src="js/register-min.js?v2x=n"></script>
-
+        <?php echo INS_EMBED_JS; ?>
 
         <style>
            #version {
@@ -569,9 +568,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <div class="gmenu"></div>
 
         <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
-        <form name="xform" id="xform" method="post">
-            <script src="js/embed.js" data-displaymode="incontext" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="incontext"></script>
-        </form>
+        <form name="xform" id="xform" method="post"></form>
 
         <div id="cardonfile" style="font-size: .9em; display:none;"></div>
         <div id="statEvents" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;"></div>

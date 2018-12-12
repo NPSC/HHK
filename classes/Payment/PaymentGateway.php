@@ -783,6 +783,7 @@ class InstamedGateway extends PaymentGateway {
 
     const POSTBACK_CANCEL = 'x';
     const POSTBACK_COMPLETE = 'c';
+    const POSTBACK_UNKNOWN = 'u';
 
     const APPROVED = '000';
 
@@ -914,12 +915,17 @@ class InstamedGateway extends PaymentGateway {
             'suppressReceipt' => 'true',
             'hideGuarantorID' => 'true',
             'responseActionType' => 'header',
-            'returnUrlUpdateParent' => 'parent',
-//            'cancelURL' => $houseUrl . InstamedGateway::POSTBACK_CANCEL,
-            'confirmURL' => $houseUrl . InstamedGateway::POSTBACK_COMPLETE,
+//            'returnURL' => $houseUrl . InstamedGateway::POSTBACK_UNKNOWN,
+//            'returnUrlUpdateParent' => 'parent',
+            'cancelURL' => $houseUrl . InstamedGateway::POSTBACK_CANCEL,
+            'confirmURL' => "http://localhost/hhk/house/Confirm.php", //$houseUrl . InstamedGateway::POSTBACK_COMPLETE,
             'requestToken' => 'true',
             'RelayState' => $this->saleUrl,
         );
+
+        // create a simple page like the one that I provided
+        // confirm.html
+        // cancel.html
 
         $req = array_merge($data, $this->getCredentials()->toSSO());
         $headerResponse = $this->doHeaderRequest(http_build_query($req));
@@ -1208,21 +1214,21 @@ class InstamedGateway extends PaymentGateway {
             $transResult = filter_var($post[InstamedGateway::INSTAMED_RESULT_VAR], FILTER_SANITIZE_STRING);
         }
 
-       if ($transResult == InstamedGateway::POSTBACK_CANCEL) {
-
-            $payResult = new PaymentResult(0, 0, 0);
-            $payResult->setDisplayMessage('User Canceled.');
-
-            return $payResult;
-
-        } else if ($transResult != InstamedGateway::POSTBACK_COMPLETE) {
-
-            $payResult = new PaymentResult(0, 0, 0);
-            $payResult->setDisplayMessage('Undefined Result: ' . $transResult);
-
-            return $payResult;
-
-        }
+//       if ($transResult == InstamedGateway::POSTBACK_CANCEL) {
+//
+//            $payResult = new PaymentResult(0, 0, 0);
+//            $payResult->setDisplayMessage('User Canceled.');
+//
+//            return $payResult;
+//
+//        } else if ($transResult != InstamedGateway::POSTBACK_COMPLETE && $transResult != InstamedGateway::POSTBACK_UNKNOWN) {
+//
+//            $payResult = new PaymentResult(0, 0, 0);
+//            $payResult->setDisplayMessage('Undefined Result: ' . $transResult);
+//
+//            return $payResult;
+//
+//        }
 
         if ($ssoToken === NULL || $ssoToken == '') {
 
@@ -1298,7 +1304,7 @@ class InstamedGateway extends PaymentGateway {
         $params = $this->getCredentials()->toCurl()
                 . "&transactionAction=ViewReceipt"
                 . "&requestToken=false"
-                . "&allowPartialPayment=false"
+                //. "&allowPartialPayment=false"
                 . "&singleSignOnToken=" . $ssoToken;
 
         $curl = new CurlRequest();
@@ -1308,6 +1314,7 @@ class InstamedGateway extends PaymentGateway {
 
         // Save raw transaction in the db.
         try {
+
             Gateway::saveGwTx($dbh, $response->getStatus(), $params, json_encode($response->getResultArray()), 'HostedCoVerify');
         } catch(Exception $ex) {
             // Do Nothing
