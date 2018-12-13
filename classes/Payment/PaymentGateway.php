@@ -773,9 +773,11 @@ class InstamedGateway extends PaymentGateway {
     const INVOICE_NUMBER = 'additionalInfo1';
     const GROUP_ID = 'additionalInfo2';
 
+    // query string parameter names
     const INSTAMED_TRANS_VAR = 'imt';
     const INSTAMED_RESULT_VAR = 'imres';
 
+    // query string parameter values
     const HCO_TRANS = 'imsale';
     const COF_TRANS = 'imcof';
     const VOID_TRANS = 'imvoid';
@@ -783,9 +785,15 @@ class InstamedGateway extends PaymentGateway {
 
     const POSTBACK_CANCEL = 'x';
     const POSTBACK_COMPLETE = 'c';
-    const POSTBACK_UNKNOWN = 'u';
 
     const APPROVED = '000';
+    const PARTIAL_APPROVAL = '010';
+
+    // IM's backward way to get back to my original page.
+    const TRANSFER_URL = 'ConfirmGWPayment.php';
+    const TRANSFER_VAR = 'intfr';  // query sgring parameter name for the TRANSFER_URL
+    const TRANSFER_DEFAULT_PAGE = 'register.php';
+    const TRANSFER_POSTBACK_PAGE_VAR = 'pg';
 
 
     protected $ssoUrl;
@@ -885,8 +893,6 @@ class InstamedGateway extends PaymentGateway {
         $uS = Session::getInstance();
         $dataArray = array();
 
-        $houseUrl = $this->buildPostbackUrl($postbackUrl, InstamedGateway::HCO_TRANS);
-
         if ($invoice->getSoldToId() < 1 || $invoice->getIdGroup() < 1) {
             throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
         }
@@ -904,9 +910,8 @@ class InstamedGateway extends PaymentGateway {
 
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
-            'id' => 'NP.SOFTWARE.TEST',
+            //'id' => 'NP.SOFTWARE.TEST',
 
-//            'creditCardKeyed ' => 'true',
             'incontext' => 'true',
             'lightWeight' => 'true',
             'isReadOnly' => 'true',
@@ -915,17 +920,11 @@ class InstamedGateway extends PaymentGateway {
             'suppressReceipt' => 'true',
             'hideGuarantorID' => 'true',
             'responseActionType' => 'header',
-//            'returnURL' => $houseUrl . InstamedGateway::POSTBACK_UNKNOWN,
-//            'returnUrlUpdateParent' => 'parent',
-            'cancelURL' => $houseUrl . InstamedGateway::POSTBACK_CANCEL,
-            'confirmURL' => "http://localhost/hhk/house/Confirm.php", //$houseUrl . InstamedGateway::POSTBACK_COMPLETE,
+            'cancelURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::HCO_TRANS, InstamedGateway::POSTBACK_CANCEL),
+            'confirmURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::HCO_TRANS, InstamedGateway::POSTBACK_COMPLETE),
             'requestToken' => 'true',
             'RelayState' => $this->saleUrl,
         );
-
-        // create a simple page like the one that I provided
-        // confirm.html
-        // cancel.html
 
         $req = array_merge($data, $this->getCredentials()->toSSO());
         $headerResponse = $this->doHeaderRequest(http_build_query($req));
@@ -968,9 +967,6 @@ class InstamedGateway extends PaymentGateway {
         $uS = Session::getInstance();
         $dataArray = array();
 
-        // Get my postback url
-        $houseUrl = $this->buildPostbackUrl($postbackUrl, InstamedGateway::COF_TRANS);
-
         $patInfo = $this->getPatientInfo($dbh, $idGroup);
 
         $data = array (
@@ -981,19 +977,13 @@ class InstamedGateway extends PaymentGateway {
             InstamedGateway::GROUP_ID => $idGroup,
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
-            'id' => 'NP.SOFTWARE.TEST',
-//            'creditCardKeyed ' => 'true',
+            //'id' => 'NP.SOFTWARE.TEST',
             'lightWeight' => 'true',
             'incontext' => 'true',
-//            'preventCheck' => 'true',
-//            'preventCash'  => 'true',
-//            'suppressReceipt' => 'true',
-//            'hideGuarantorID' => 'true',
             'responseActionType' => 'header',
-//            'returnUrlUpdateParent' => 'parent',
-            'cancelURL' => $houseUrl . InstamedGateway::POSTBACK_CANCEL,
-            'confirmURL' => $houseUrl . InstamedGateway::POSTBACK_COMPLETE,
-            'requestToken' => 'true',
+            'cancelURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::COF_TRANS, InstamedGateway::POSTBACK_CANCEL),
+            'confirmURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::COF_TRANS, InstamedGateway::POSTBACK_COMPLETE),
+           'requestToken' => 'true',
             'RelayState' => $this->cofUrl,
         );
 
@@ -1353,18 +1343,6 @@ class InstamedGateway extends PaymentGateway {
         return $payResult;
     }
 
-//    protected function pollPaymentStatus($token, $trace = FALSE) {
-//
-//        $data = $this->getCredentials()->toSOAP();
-//
-//        $data['tokenID'] = $token;
-//
-//        $soapReq = new PollingRequest();
-//
-//        return new PollingResponse($soapReq->submit($data, $this->soapUrl, $trace));
-//
-//    }
-
     protected function loadGateway(\PDO $dbh) {
 
         $gwRs = new InstamedGatewayRS();
@@ -1422,7 +1400,10 @@ class InstamedGateway extends PaymentGateway {
 
     }
 
-    protected function buildPostbackUrl($postbackPageUrl, $transVar) {
+    protected function buildPostbackUrl($postbackPageUrl, $transVar, $resultVar) {
+
+        $parms = array();
+        $parts = parse_url($postbackPageUrl);
 
         $secure = new SecurityComponent();
         $houseUrl = $secure->getSiteURL();
@@ -1431,19 +1412,20 @@ class InstamedGateway extends PaymentGateway {
             throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
         }
 
-        $parts = parse_url($postbackPageUrl);
-        $queryStr = '';
-        $path = '';
-
         if (isset($parts['query']) && $parts['query'] !== '') {
-            $queryStr = $parts['query'] . '&';
+            parse_str($parts['query'], $parms);
         }
 
         if (isset($parts['path']) && $parts['path'] !== '') {
-            $path = $parts['path'];
+            $parms[InstamedGateway::TRANSFER_POSTBACK_PAGE_VAR] = $parts['path'];
         }
 
-        return $houseUrl . $path . '?' . $queryStr . InstamedGateway::INSTAMED_TRANS_VAR . '=' . $transVar . '&' . InstamedGateway::INSTAMED_RESULT_VAR . '=';
+        $parms[InstamedGateway::INSTAMED_TRANS_VAR] = $transVar;
+        $parms[InstamedGateway::INSTAMED_RESULT_VAR] = $resultVar;
+
+        $queryStr = encryptMessage(http_build_query($parms));
+
+        return $houseUrl . InstamedGateway::TRANSFER_URL . '?' . InstamedGateway::TRANSFER_VAR . '=' . $queryStr;
     }
 
     protected function getPatientInfo(\PDO $dbh, $idRegistration) {
@@ -1463,6 +1445,20 @@ where r.idRegistration =" . $idReg);
 
         return array();
     }
+
+    //    protected function pollPaymentStatus($token, $trace = FALSE) {
+//
+//        $data = $this->getCredentials()->toSOAP();
+//
+//        $data['tokenID'] = $token;
+//
+//        $soapReq = new PollingRequest();
+//
+//        return new PollingResponse($soapReq->submit($data, $this->soapUrl, $trace));
+//
+//    }
+
+
 
     public function createEditMarkup(\PDO $dbh, $resultMessage = '') {
 
@@ -1613,6 +1609,7 @@ class InstaMedCredentials {
     // NVP names
     const SEC_KEY = 'securityKey';
     const ACCT_ID = 'accountID';
+    const ID = 'id';
     const SSO_ALIAS = 'ssoAlias';
     const MERCHANT_ID = 'merchantId';
     const STORE_ID = 'storeId';
@@ -1620,12 +1617,14 @@ class InstaMedCredentials {
     const U_NAME = 'userName';
     const U_ID = 'userID';
 
+    public $merchantId;
+    public $storeId;
+
     protected $securityKey;
     protected $accountID;
     protected $terminalId;
     protected $ssoAlias;
-    public $merchantId;
-    public $storeId;
+    protected $id;
 
 
     public function __construct(InstamedGatewayRS $gwRs) {
@@ -1637,6 +1636,10 @@ class InstaMedCredentials {
         $this->storeId = $gwRs->store_Id->getStoredVal();
         $this->terminalId = $gwRs->terminal_Id->getStoredVal();
 
+        $parts = explode('@', $this->accountID);
+
+        $this->id = $parts[0];
+
     }
 
     public function toSSO() {
@@ -1645,6 +1648,7 @@ class InstaMedCredentials {
             InstaMedCredentials::ACCT_ID => $this->accountID,
             InstaMedCredentials::SEC_KEY => decryptMessage($this->securityKey),
             InstaMedCredentials::SSO_ALIAS => $this->ssoAlias,
+            InstaMedCredentials::ID => $this->id,
         );
     }
 
