@@ -240,8 +240,20 @@ class VerifyCurlResponse extends GatewayResponse {
     }
 
     public function getAuthorizeAmount() {
-        if (isset($this->result['Amount'])) {
+
+        if (isset($this->result['partialApprovalAmount'])) {
+            return $this->result['partialApprovalAmount'];
+
+        } else if (isset($this->result['Amount'])) {
             return $this->result['Amount'];
+        }
+
+        return '';
+    }
+
+    public function getPartialPaymentAmount() {
+        if (isset($this->result['partialApprovalAmount'])) {
+            return $this->result['partialApprovalAmount'];
         }
         return '';
     }
@@ -315,17 +327,6 @@ class VerifyCurlResponse extends GatewayResponse {
     public function getTransactionStatus() {
         if (isset($this->result['transactionStatus'])) {
             return $this->result['transactionStatus'];
-        }
-        return '';
-    }
-
-    public function getTaxAmount() {
-        return '';
-    }
-
-    public function getAmount() {
-        if (isset($this->result['Amount'])) {
-            return $this->result['Amount'];
         }
         return '';
     }

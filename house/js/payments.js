@@ -1185,8 +1185,8 @@ function paymentRedirect (data, $xferForm) {
 
         } else if (data.inctx) {
 
+            $('#contentDiv').empty().append($('<p>Processing Credit Payment...</p>'));
             InstaMed.launch(data.inctx);
-
         }
     }
 }

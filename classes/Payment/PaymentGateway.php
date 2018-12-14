@@ -1041,8 +1041,8 @@ class InstamedGateway extends PaymentGateway {
 
         $curlRequest = new CurlRequest();
 
-        $resp = $curlRequest->submit($params, '', TRUE);
-        $response = new VerifyVoidResponse($resp, $invoice->getInvoiceNumber(), $invoice->getAmount());
+        $resp = $curlRequest->submit($params, '');
+        $response = new VerifyVoidResponse($resp, $invoice->getInvoiceNumber(), $payRs->Amount->getStoredVal());
 
         // Save raw transaction in the db.
         try {
@@ -1204,21 +1204,20 @@ class InstamedGateway extends PaymentGateway {
             $transResult = filter_var($post[InstamedGateway::INSTAMED_RESULT_VAR], FILTER_SANITIZE_STRING);
         }
 
-//       if ($transResult == InstamedGateway::POSTBACK_CANCEL) {
-//
-//            $payResult = new PaymentResult(0, 0, 0);
-//            $payResult->setDisplayMessage('User Canceled.');
-//
-//            return $payResult;
-//
-//        } else if ($transResult != InstamedGateway::POSTBACK_COMPLETE && $transResult != InstamedGateway::POSTBACK_UNKNOWN) {
-//
-//            $payResult = new PaymentResult(0, 0, 0);
-//            $payResult->setDisplayMessage('Undefined Result: ' . $transResult);
-//
-//            return $payResult;
-//
-//        }
+       if ($transResult == InstamedGateway::POSTBACK_CANCEL) {
+
+            $payResult = new PaymentResult(0, 0, 0);
+            $payResult->setDisplayMessage('User Canceled.');
+
+            return $payResult;
+
+        } else if ($transResult != InstamedGateway::POSTBACK_COMPLETE) {
+
+            $payResult = new PaymentResult(0, 0, 0);
+            $payResult->setDisplayMessage('Undefined Result: ' . $transResult);
+
+            return $payResult;
+        }
 
         if ($ssoToken === NULL || $ssoToken == '') {
 
@@ -1267,11 +1266,10 @@ class InstamedGateway extends PaymentGateway {
         $params = $this->getCredentials()->toCurl()
                 . "&transactionAction=ViewReceipt"
                 . "&requestToken=false"
-                . "&allowPartialPayment=false"
                 . "&singleSignOnToken=" . $ssoToken;
 
         $curl = new CurlRequest();
-        $transaction = $curl->submit($params, $this->NvpUrl, TRUE);
+        $transaction = $curl->submit($params, $this->NvpUrl);
 
         $response = new VerifyCurlResponse($transaction, '0', 0);
 
@@ -1284,6 +1282,10 @@ class InstamedGateway extends PaymentGateway {
 
         $vr = new ImCofResponse($response, $cidInfo['idName'], $cidInfo['idGroup']);
 
+        // save token
+        CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr);
+
+
         return new CofResult($vr->response->getDisplayMessage(), $vr->getStatus(), $vr->idPayor, $vr->idRegistration);
 
     }
@@ -1294,11 +1296,10 @@ class InstamedGateway extends PaymentGateway {
         $params = $this->getCredentials()->toCurl()
                 . "&transactionAction=ViewReceipt"
                 . "&requestToken=false"
-                //. "&allowPartialPayment=false"
                 . "&singleSignOnToken=" . $ssoToken;
 
         $curl = new CurlRequest();
-        $transaction = $curl->submit($params, $this->NvpUrl, TRUE);
+        $transaction = $curl->submit($params, $this->NvpUrl);
 
         $response = new VerifyCurlResponse($transaction, $cidInfo['InvoiceNumber'], $cidInfo['Amount']);
 
@@ -1331,7 +1332,7 @@ class InstamedGateway extends PaymentGateway {
             $invoice = new Invoice($dbh, $ssr->getInvoice());
 
             // Analyze the result
-            $payResult = PaymentSvcs::AnalyzeCredSaleResult($dbh, $ssr, $invoice);
+            $payResult = PaymentSvcs::AnalyzeCredSaleResult($dbh, $ssr, $invoice, 0, FALSE, FALSE);
 
         } else {
 

@@ -12,8 +12,10 @@
 abstract class PaymentResponse {
 
     protected $paymentType;
-    protected $amount;
-
+    protected $amount = 0.0;
+    protected $amountDue = 0.0;
+    protected $partialPayment = false;
+    protected $responseMessage = '';
     public $idPayor = 0;
     protected $invoiceNumber = '';
 
@@ -46,8 +48,28 @@ abstract class PaymentResponse {
         return $this->amount;
     }
 
+    public function getAmountDue() {
+        return $this->amountDue;
+    }
+
+    public function getResponseMessage() {
+        return $this->responseMessage;
+    }
+
     public function getInvoice() {
         return $this->invoiceNumber;
+    }
+
+    public function isPartialPayment() {
+        return $this->partialPayment;
+    }
+
+    public function setPartialPayment($v) {
+        if ($v) {
+            $this->partialPayment = TRUE;
+        } else {
+            $this->partialPayment = FALSE;
+        }
     }
 
     public function getIdPayment() {
@@ -87,10 +109,11 @@ abstract class PaymentResponse {
 class ImSaleResponse extends PaymentResponse {
 
     public $response;
-    public $idToken = '';
+    public $idToken;
 
     function __construct(VerifyCurlResponse $verifyCurlResponse, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
         $this->response = $verifyCurlResponse;
+        $this->responseMessage = $verifyCurlResponse->getStatusMessage();
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
@@ -101,9 +124,18 @@ class ImSaleResponse extends PaymentResponse {
         $this->cardName = $verifyCurlResponse->getCardHolderName();
         $this->amount = $verifyCurlResponse->getAuthorizeAmount();
         $this->payNotes = $payNotes;
+        $this->idToken = $verifyCurlResponse->getToken();
+
+        if ($verifyCurlResponse->getPartialPaymentAmount() > 0) {
+            $this->partialPayment = TRUE;
+        } else {
+            $this->partialPayment = FALSE;
+        }
     }
 
     public function getStatus() {
+
+        $status = '';
 
         switch ($this->response->getStatus()) {
 
@@ -111,8 +143,13 @@ class ImSaleResponse extends PaymentResponse {
                 $status = CreditPayments::STATUS_APPROVED;
                 break;
 
+            case '010':
+                // Partial Payment
+                $status = CreditPayments::STATUS_APPROVED;
+                break;
+
             case '005':
-                $status = CreditPayments::STATUS_DECLINED;
+
                 break;
 
             case '051':
@@ -124,7 +161,7 @@ class ImSaleResponse extends PaymentResponse {
                 break;
 
             default:
-                $status = CreditPayments::STATUS_DECLINED;
+                $status = CreditPayments::STATUS_ERROR;
         }
 
         return $status;
@@ -280,6 +317,7 @@ class ImReturnResponse extends PaymentResponse {
 
 class ImCofResponse extends PaymentResponse {
 
+    public $idToken;
 
     function __construct($verifyCurlResponse, $idPayor, $idGroup) {
         $this->response = $verifyCurlResponse;
@@ -289,6 +327,7 @@ class ImCofResponse extends PaymentResponse {
         $this->cardNum = str_ireplace('x', '', $verifyCurlResponse->getMaskedAccount());
         $this->cardType = $verifyCurlResponse->getCardType();
         $this->cardName = $verifyCurlResponse->getCardHolderName();
+        $this->idToken = $verifyCurlResponse->getToken();
     }
 
     public function getStatus() {
@@ -334,6 +373,7 @@ abstract class CreditPayments {
 
     const STATUS_APPROVED = 'AP';
     const STATUS_DECLINED = 'DECLINED';
+    const STATUS_ERROR = 'Error';
 
     public static function processReply(\PDO $dbh, PaymentResponse $pr, $userName, PaymentRs $payRs = NULL, $attempts = 1) {
 
@@ -417,7 +457,7 @@ class SaleReply extends CreditPayments {
             $payRs->Is_Refund->setStoredVal(1);
         }
 
-        $payRs->Amount->setNewVal($vr->getAuthorizeAmount());
+        $payRs->Amount->setNewVal($pr->getAmount());
         $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
         $payRs->idPayor->setNewVal($pr->idPayor);
         $payRs->idTrans->setNewVal($pr->getIdTrans());
@@ -439,7 +479,7 @@ class SaleReply extends CreditPayments {
             //Payment Detail
             $pDetailRS = new Payment_AuthRS();
             $pDetailRS->idPayment->setNewVal($idPayment);
-            $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizeAmount());
+            $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
             $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
             $pDetailRS->Status_Message->setNewVal($vr->getStatusMessage());
             $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
@@ -462,7 +502,10 @@ class SaleReply extends CreditPayments {
 
         }
 
-        return $pr;
+         // save token
+        CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr);
+
+       return $pr;
     }
 
     protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $username, PaymentRs $pRs = NULL, $attempts = 1) {
@@ -484,7 +527,7 @@ class SaleReply extends CreditPayments {
         $payRs->Result->setNewVal(MpStatusValues::Declined);
         $payRs->Created_By->setNewVal($username);
         $payRs->Attempt->setNewVal($attempts);
-        $payRs->Amount->setNewVal($vr->getAuthorizeAmount());
+        $payRs->Amount->setNewVal($pr->getAmount());
         $payRs->Notes->setNewVal($pr->payNotes);
 
         $idPmt = EditRS::insert($dbh, $payRs);
@@ -497,7 +540,7 @@ class SaleReply extends CreditPayments {
             //Payment Detail
             $pDetailRS = new Payment_AuthRS();
             $pDetailRS->idPayment->setNewVal($idPmt);
-            $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizeAmount());
+            $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
             $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
             $pDetailRS->Status_Message->setNewVal($vr->getStatusMessage());
             $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
@@ -558,7 +601,7 @@ class VoidReply extends CreditPayments {
         // Payment Detail
         $pDetailRS = new Payment_AuthRS();
         $pDetailRS->idPayment->setNewVal($payRs->idPayment->getStoredVal());
-        $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizeAmount());
+        $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
         $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
         $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
         $pDetailRS->AVS->setNewVal($vr->getAVSResult());
@@ -575,6 +618,7 @@ class VoidReply extends CreditPayments {
         $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::VoidSale);
 
         $idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
+
         $pDetailRS->idPayment_auth->setNewVal($idPaymentAuth);
         EditRS::updateStoredVals($pDetailRS);
 
@@ -625,7 +669,7 @@ class ReverseReply extends CreditPayments {
         // Payment Detail
         $pDetailRS = new Payment_AuthRS();
         $pDetailRS->idPayment->setNewVal($payRs->idPayment->getStoredVal());
-        $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizeAmount());
+        $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
         $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
         $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
         $pDetailRS->AVS->setNewVal($vr->getAVSResult());
@@ -758,8 +802,8 @@ class ReturnReply extends CreditPayments {
             $payRs->Created_By->setNewVal($username);
             $payRs->Attempt->setNewVal($attempts);
             $payRs->Is_Refund->setNewVal(1);
-            $payRs->Amount->setNewVal($vr->getAuthorizeAmount());
-            $payRs->Balance->setNewVal($vr->getAuthorizeAmount());
+            $payRs->Amount->setNewVal($pr->getAmount());
+            $payRs->Balance->setNewVal($pr->getAmount());
             $payRs->Notes->setNewVal($pr->payNotes);
 
             $idPmt = EditRS::insert($dbh, $payRs);
@@ -772,7 +816,7 @@ class ReturnReply extends CreditPayments {
                 //Payment Detail
                 $pDetailRS = new Payment_AuthRS();
                 $pDetailRS->idPayment->setNewVal($idPmt);
-                $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizeAmount());
+                $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
                 $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
                 $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
                 $pDetailRS->Acct_Number->setNewVal($pr->cardNum);

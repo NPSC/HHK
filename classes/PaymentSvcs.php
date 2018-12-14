@@ -996,6 +996,10 @@ class PaymentSvcs {
                 $payResult->feePaymentAccepted($dbh, $uS, $payResp, $invoice);
                 $payResult->setDisplayMessage('Paid by Credit Card.  ');
 
+                if ($payResp->isPartialPayment()) {
+                    $payResult->setDisplayMessage('** Partially Approved Amount: ' . number_format($payResp->getAmount(), 2) . ' (Remaining Balance Due: ' . number_format($invoice->getBalance(), 2) . ').  ');
+                }
+
                 if ($useAVS) {
                     $avsResult = new AVSResult($payResp->response->getAVSResult());
 
