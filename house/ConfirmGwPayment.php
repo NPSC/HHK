@@ -28,10 +28,11 @@ if ($resultStr == '') {
     parse_str($resultVar, $resultParms);
 
     if (isset($resultParms[InstamedGateway::TRANSFER_POSTBACK_PAGE_VAR])) {
+
         $transferPageStr = $resultParms[InstamedGateway::TRANSFER_POSTBACK_PAGE_VAR];
+
         unset($resultParms[InstamedGateway::TRANSFER_POSTBACK_PAGE_VAR]);
     }
-
 
 }
 

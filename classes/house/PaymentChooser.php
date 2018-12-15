@@ -787,7 +787,7 @@ ORDER BY v.idVisit , v.Span;");
         return $mess . $feesTbl->generateMarkup(array('id'=>'payTodayTbl', 'style'=>'margin-right:7px;float:left;'));
     }
 
-    protected static function showPaySelection(\PDO $dbh, $defaultPayType, $payTypes, $chargeCards, $labels, $ccgw, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
+    protected static function showPaySelection(\PDO $dbh, $defaultPayType, $payTypes, $chargeCards, $labels, $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
 
         $payTbl = new HTMLTable();
 
@@ -825,21 +825,20 @@ ORDER BY v.idVisit , v.Span;");
                 , array('style'=>'display:none;', 'class'=>'hhk-transfer'));
 
         // credit info
-        if (isset($payTypes[PayType::Charge]) || isset($payTypes[PayType::ChargeAsCash])) {
+        if (isset($payTypes[PayType::Charge])) {
 
-            if ($ccgw == PaymentGateway::VANTIV) {
+            // Charge card gateway
+            self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $paymentGateway, $prefTokenId);
 
-                self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $prefTokenId);
+        } else if (isset($payTypes[PayType::ChargeAsCash])) {
 
-            } else if ($ccgw == '') {
+            // Charge as Cash markup
+            $payTbl->addBodyTr(
+                HTMLTable::makeTd('Card: ', array('class'=>'tdlabel'))
+                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($chargeCards, '', TRUE), array('name'=>'selChargeType', 'style'=>'margin-right:.4em;', 'class'=>'hhk-feeskeys')))
+                .HTMLTable::makeTd(' Acct. #: '.HTMLInput::generateMarkup('', array('name'=>'txtChargeAcct', 'size'=>'4', 'title'=>'Only the last 4 digits.', 'class'=>'hhk-feeskeys')))
+                , array('style'=>'display:none;', 'class'=>'hhk-mcred'));
 
-                $payTbl->addBodyTr(
-                    HTMLTable::makeTd('Card: ', array('class'=>'tdlabel'))
-                    . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($chargeCards, '', TRUE), array('name'=>'selChargeType', 'style'=>'margin-right:.4em;', 'class'=>'hhk-feeskeys')))
-                    .HTMLTable::makeTd(' Acct. #: '.HTMLInput::generateMarkup('', array('name'=>'txtChargeAcct', 'size'=>'4', 'title'=>'Only the last 4 digits.', 'class'=>'hhk-feeskeys')))
-                    , array('style'=>'display:none;', 'class'=>'hhk-mcred'));
-
-            }
         }
 
         // Payment notes
@@ -852,7 +851,7 @@ ORDER BY v.idVisit , v.Span;");
         return $payTbl->generateMarkup(array('id' => 'tblPaySelect'));
     }
 
-    protected static function showReturnSelection(\PDO $dbh, $defaultPayType, $payTypes, $chargeCards, $ccgw, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
+    protected static function showReturnSelection(\PDO $dbh, $defaultPayType, $payTypes, $chargeCards, $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
 
         $payTbl = new HTMLTable();
 
@@ -877,21 +876,20 @@ ORDER BY v.idVisit , v.Span;");
 
 
         // credit info
-        if (isset($payTypes[PayType::Charge]) || isset($payTypes[PayType::ChargeAsCash])) {
+        if (isset($payTypes[PayType::Charge])) {
 
-            if ($ccgw == PaymentGateway::VANTIV) {
+            // Credit gateway
+            self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $paymentGateway, $prefTokenId, ReturnIndex::ReturnIndex);
 
-                self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $prefTokenId, ReturnIndex::ReturnIndex);
+        } else if (isset($payTypes[PayType::ChargeAsCash])) {
 
-            } else if ($ccgw == '') {
+            // Charge as Cash markup
+            $payTbl->addBodyTr(
+                HTMLTable::makeTd('Card: ', array('class'=>'tdlabel'))
+                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($chargeCards, '', TRUE), array('name'=>'selRtnChargeType', 'style'=>'margin-right:.4em;', 'class'=>'hhk-feeskeys')))
+                .HTMLTable::makeTd(' Acct. #: '.HTMLInput::generateMarkup('', array('name'=>'txtRtnChargeAcct', 'size'=>'4', 'title'=>'Only the last 4 digits.', 'class'=>'hhk-feeskeys')))
+                , array('style'=>'display:none;', 'class'=>'hhk-mcredr'));
 
-                $payTbl->addBodyTr(
-                    HTMLTable::makeTd('Card: ', array('class'=>'tdlabel'))
-                    . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($chargeCards, '', TRUE), array('name'=>'selRtnChargeType', 'style'=>'margin-right:.4em;', 'class'=>'hhk-feeskeys')))
-                    .HTMLTable::makeTd(' Acct. #: '.HTMLInput::generateMarkup('', array('name'=>'txtRtnChargeAcct', 'size'=>'4', 'title'=>'Only the last 4 digits.', 'class'=>'hhk-feeskeys')))
-                    , array('style'=>'display:none;', 'class'=>'hhk-mcredr'));
-
-            }
         }
 
         // Payment notes
@@ -903,7 +901,7 @@ ORDER BY v.idVisit , v.Span;");
         return $payTbl->generateMarkup(array('id' => 'tblRtnSelect'));
     }
 
-    protected static function CreditBlock(\PDO $dbh, &$tbl, $idPrimaryGuest, $idReg, $prefTokenId = 0, $index = '') {
+    protected static function CreditBlock(\PDO $dbh, &$tbl, $idPrimaryGuest, $idReg, $paymentGateway, $prefTokenId = 0, $index = '') {
 
         $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idReg, $idPrimaryGuest);
 
@@ -913,7 +911,7 @@ ORDER BY v.idVisit , v.Span;");
             return;
         }
 
-        $tbl->addBodyTr(HTMLTable::makeTh("Card on File").HTMLTable::makeTh("Name").HTMLTable::makeTh("Use")
+        $tbl->addBodyTr(HTMLTable::makeTh("Card on File") . HTMLTable::makeTh("Name") . ($paymentGateway == PaymentGateway::VANTIV ? HTMLTable::makeTh("Use") : '')
                 , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
 
         // preset useCardRb
@@ -937,7 +935,7 @@ ORDER BY v.idVisit , v.Span;");
 
                 $tbl->addBodyTr(HTMLTable::makeTd($tkRs->CardType->getStoredVal() . ' - ' . $tkRs->MaskedAccount->getStoredVal())
                         . HTMLTable::makeTd($tkRs->CardHolderName->getStoredVal())
-                        . HTMLTable::makeTd(HTMLInput::generateMarkup($tkRs->idGuest_token->getStoredVal(), $attr))
+                        . ($paymentGateway == PaymentGateway::VANTIV ? HTMLTable::makeTd(HTMLInput::generateMarkup($tkRs->idGuest_token->getStoredVal(), $attr)) : '')
                     , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
 
             }
@@ -946,15 +944,35 @@ ORDER BY v.idVisit , v.Span;");
         // New card.  Not for credit return.
         if ($index !== ReturnIndex::ReturnIndex) {
 
-            if ($prefTokenId == 0) {
-                $attr['checked'] = 'checked';
-            } else {
-                unset($attr['checked']);
-            }
+            switch ($paymentGateway) {
 
-            $tbl->addBodyTr(HTMLTable::makeTd('New', array('style'=>'text-align:right;', 'colspan'=>'2'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr))
-                    , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
+                case PaymentGateway::VANTIV:
+
+                    if ($prefTokenId == 0) {
+                        $attr['checked'] = 'checked';
+                    } else {
+                        unset($attr['checked']);
+                    }
+
+                    $tbl->addBodyTr(HTMLTable::makeTd('New', array('style'=>'text-align:right;', 'colspan'=> '2'))
+                        . ($paymentGateway == PaymentGateway::VANTIV ? HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr)) : '')
+                            , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
+
+                    break;
+
+                case PaymentGateway::INSTAMED:
+
+                    if (count($tkRsArray) < 1) {
+                        $tbl->addBodyTr(HTMLTable::makeTd('None', array('style'=>'text-align:center;', 'colspan'=> '2'))
+                            , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
+                    }
+                    break;
+
+                default:
+
+
+
+            }
         }
 
     }

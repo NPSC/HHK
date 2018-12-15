@@ -91,13 +91,19 @@ $idVisit = 0;
 $span = 0;
 
 // Hosted payment return
-if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
+try {
 
-    $receiptMarkup = $payResult->getReceiptMarkup();
+    if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
-    if ($payResult->getDisplayMessage() != '') {
-        $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        $receiptMarkup = $payResult->getReceiptMarkup();
+
+        if ($payResult->getDisplayMessage() != '') {
+            $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        }
     }
+
+} catch (Hk_Exception_Runtime $ex) {
+    $paymentMarkup = $ex->getMessage();
 }
 
 
@@ -195,7 +201,6 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
-<!--        <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>-->
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <?php echo INS_EMBED_JS; ?>
 

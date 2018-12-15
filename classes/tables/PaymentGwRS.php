@@ -30,7 +30,7 @@ class Guest_TokenRS extends TableRS {
     public $CardHolderName;   // varchar(32) NOT NULL DEFAULT '',
     public $CardType;   // varchar(45) NOT NULL DEFAULT '',
     public $CardUsage;   // varchar(20) NOT NULL DEFAULT '',
-    public $ExpDate;   // varchar(4) NOT NULL DEFAULT '',
+    public $ExpDate;   // varchar(14) NOT NULL DEFAULT '',
     public $OperatorID;   // varchar(10) NOT NULL DEFAULT '',
     public $Tran_Type;   // varchar(10) NOT NULL DEFAULT '',
     public $StatusMessage;   // varchar(45) NOT NULL DEFAULT '',
@@ -52,7 +52,7 @@ class Guest_TokenRS extends TableRS {
         $this->CardHolderName = new DB_Field("CardHolderName", "", new DbStrSanitizer(32), TRUE, TRUE);
         $this->CardType = new DB_Field("CardType", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->CardUsage = new DB_Field("CardUsage", "", new DbStrSanitizer(20), TRUE, TRUE);
-        $this->ExpDate = new DB_Field("ExpDate", "", new DbStrSanitizer(4), TRUE, TRUE);
+        $this->ExpDate = new DB_Field("ExpDate", "", new DbStrSanitizer(14), TRUE, TRUE);
         $this->OperatorID = new DB_Field("OperatorID", "", new DbStrSanitizer(10), TRUE, TRUE);
         $this->Tran_Type = new DB_Field("Tran_Type", "", new DbStrSanitizer(10), TRUE, TRUE);
         $this->StatusMessage = new DB_Field("StatusMessage", "", new DbStrSanitizer(45), TRUE, TRUE);
@@ -71,8 +71,8 @@ class Gateway_TransactionRS extends TableRS {
     public $GwTransCode;   // varchar(64) NOT NULL DEFAULT '',
     public $GwResultCode;   // varchar(44) NOT NULL DEFAULT '',
     public $Amount;   // decimal(10,2) NOT NULL DEFAULT '0.00',
-    public $Vendor_Request;   // varchar(900) NOT NULL DEFAULT '',
-    public $Vendor_Response;   // varchar(1000) NOT NULL DEFAULT '',
+    public $Vendor_Request;   // varchar(2000) NOT NULL DEFAULT '',
+    public $Vendor_Response;   // varchar(2000) NOT NULL DEFAULT '',
     public $AuthCode;   // varchar(45) NOT NULL DEFAULT '',
     public $idPayment_Detail;   // int(11) NOT NULL DEFAULT '0',
     public $Created_By;   // varchar(45) NOT NULL DEFAULT '',
@@ -83,8 +83,8 @@ class Gateway_TransactionRS extends TableRS {
         $this->GwTransCode = new DB_Field("GwTransCode", "", new DbStrSanitizer(64), TRUE, TRUE);
         $this->GwResultCode = new DB_Field("GwResultCode", "", new DbStrSanitizer(44), TRUE, TRUE);
         $this->Amount = new DB_Field('Amount', 0, new DbDecimalSanitizer(), TRUE, TRUE);
-        $this->Vendor_Request = new DB_Field("Vendor_Request", "", new DbStrSanitizer(900), TRUE, TRUE);
-        $this->Vendor_Response = new DB_Field("Vendor_Response", "", new DbStrSanitizer(1000), TRUE, TRUE);
+        $this->Vendor_Request = new DB_Field("Vendor_Request", "", new DbStrSanitizer(2000), TRUE, TRUE);
+        $this->Vendor_Response = new DB_Field("Vendor_Response", "", new DbStrSanitizer(2000), TRUE, TRUE);
         $this->AuthCode = new DB_Field("AuthCode", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->idPayment_Detail = new DB_Field("idPayment_Detail", 0, new DbIntSanitizer(), TRUE, TRUE);
 

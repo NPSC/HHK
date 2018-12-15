@@ -181,6 +181,11 @@ class VerifyCurlResponse extends GatewayResponse {
     }
 
     public function getToken() {
+
+        if ($this->getPaymentPlanID() == '') {
+            return $this->getPrimaryTransactionID();
+        }
+
         return $this->getPaymentPlanID();
     }
 
@@ -229,7 +234,9 @@ class VerifyCurlResponse extends GatewayResponse {
 
             $year = $this->result['cardExpirationYear'];
 
-            return $month . '/' . $year;
+
+
+            return $month . substr($year, 2);
         }
 
         return '';

@@ -248,6 +248,7 @@ WHERE r.Email_Receipt = 1 and
 
 }
 
+
 class cofResult extends PaymentResult {
 
     function __construct($displayMessage, $status, $idName, $idRegistration) {
@@ -260,6 +261,7 @@ class cofResult extends PaymentResult {
     }
 
 }
+
 
 class ReturnResult extends PaymentResult {
 

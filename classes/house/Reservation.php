@@ -431,10 +431,6 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     // Visit Fee Array
                     $dataArray['vfee'] = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
                 }
-
-        //            $dataArray['pay'] =
-        //                    PaymentChooser::createResvMarkup($dbh, $guest->getIdName(), $reg, removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]), $resv->getExpectedPayType(), $uS->ccgw);
-
             }
 
             // Vehicles
@@ -447,7 +443,6 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 $statusText .= ' for Room ' . $resv->getRoomTitle($dbh);
                 $hideCheckinButton = FALSE;
             }
-
         }
 
         if ($resv->isNew() || $resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
@@ -455,6 +450,15 @@ WHERE r.idReservation = " . $rData->getIdResv());
             $dataArray['rstat'] = '';
 
         } else {
+
+            // Card on file
+            if ($uS->ccgw != '') {
+
+                $dataArray['cof'] = HTMLcontainer::generateMarkup('div' ,HTMLContainer::generateMarkup('fieldset',
+                        HouseServices::viewCreditTable($dbh, $resv->getIdRegistration(), $resv->getIdGuest())
+                        . HTMLInput::generateMarkup('Update Credit', array('type'=>'button','id'=>'btnCred', 'data-id'=>$resv->getIdGuest(), 'data-idreg'=>$resv->getIdRegistration(), 'style'=>'margin:5px;float:right;'))
+                    ,array('style'=>'float:left;padding:5px;')));
+            }
 
             // Reservation Data
             $dataArray['rstat'] = $this->createStatusChooser(
@@ -989,12 +993,6 @@ where rg.idReservation =" . $r['idReservation']);
         return $oldResvId;
     }
 
-    public function savePayments(\PDO $dbh, Reservation_1 &$resv, $post) {
-
-        return;
-
-    }
-
     public function saveReservationGuests(\PDO $dbh) {
 
         if ($this->reserveData->getIdResv() < 1) {
@@ -1266,9 +1264,6 @@ class ActiveReservation extends Reservation {
 
         // Room Choice
         $this->setRoomChoice($dbh, $resv, $idRescPosted);
-
-        // Payments
-        $this->savePayments($dbh, $resv, $post);
 
         return $this;
     }

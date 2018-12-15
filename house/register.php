@@ -51,7 +51,7 @@ require (HOUSE . 'RoomReport.php');
 
 require (CLASSES . 'CreateMarkupFromDB.php');
 require (CLASSES . 'Notes.php');
-require_once(SEC . 'ChallengeGenerator.php');
+require(SEC . 'ChallengeGenerator.php');
 
 
 try {

@@ -17,7 +17,7 @@
  */
 class CreditToken {
 
-    public static function storeToken(\PDO $dbh, $idRegistration, $idPayor, MercResponse $vr) {
+    public static function storeToken(\PDO $dbh, $idRegistration, $idPayor, $vr) {
 
         $cardNum = str_ireplace('x', '', $vr->getMaskedAccount());
 

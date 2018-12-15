@@ -1283,8 +1283,7 @@ class InstamedGateway extends PaymentGateway {
         $vr = new ImCofResponse($response, $cidInfo['idName'], $cidInfo['idGroup']);
 
         // save token
-        CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr);
-
+        CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response);
 
         return new CofResult($vr->response->getDisplayMessage(), $vr->getStatus(), $vr->idPayor, $vr->idRegistration);
 

@@ -1656,6 +1656,11 @@ function resvManager(initData) {
             if (data.resv.rdiv.rate !== undefined) {
                 $rDiv.append($(data.resv.rdiv.rate));
             }
+            
+            // Card-on-file
+            if (data.resv.rdiv.cof !== undefined) {
+                $rDiv.append(data.resv.rdiv.cof);
+            }
 
             // Stat
             if (data.resv.rdiv.rstat !== undefined) {
@@ -1782,6 +1787,14 @@ function resvManager(initData) {
 
             if (data.resv.rdiv.pay !== undefined) {
                 setupPay(data);
+            }
+            
+            // Wire card on file button.
+            if (data.resv.rdiv.cof !== undefined) {
+                $('#btnCred').button();
+                $('#btnCred').click(function () {
+                    cardOnFile($(this).data('id'), $(this).data('idreg'), location.href.split("/").slice(-1) + '?rid=' + data.rid);
+                });
             }
 
             if ($('#addGuestHeader').length > 0) {

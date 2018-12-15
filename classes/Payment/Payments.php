@@ -148,8 +148,16 @@ class ImSaleResponse extends PaymentResponse {
                 $status = CreditPayments::STATUS_APPROVED;
                 break;
 
-            case '005':
+            case '001':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
 
+            case '003':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '005':
+                $status = CreditPayments::STATUS_DECLINED;
                 break;
 
             case '051':
@@ -205,6 +213,14 @@ class ImVoidResponse extends PaymentResponse {
                 $status = CreditPayments::STATUS_APPROVED;
                 break;
 
+            case '001':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '003':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
             case '005':
                 $status = CreditPayments::STATUS_DECLINED;
                 break;
@@ -218,7 +234,7 @@ class ImVoidResponse extends PaymentResponse {
                 break;
 
             default:
-                $status = CreditPayments::STATUS_DECLINED;
+                $status = CreditPayments::STATUS_ERROR;
         }
 
         return $status;
@@ -281,6 +297,14 @@ class ImReturnResponse extends PaymentResponse {
                 $status = CreditPayments::STATUS_APPROVED;
                 break;
 
+            case '001':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '003':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
             case '005':
                 $status = CreditPayments::STATUS_DECLINED;
                 break;
@@ -294,7 +318,7 @@ class ImReturnResponse extends PaymentResponse {
                 break;
 
             default:
-                $status = CreditPayments::STATUS_DECLINED;
+                $status = CreditPayments::STATUS_ERROR;
         }
 
         return $status;
@@ -338,6 +362,14 @@ class ImCofResponse extends PaymentResponse {
                 $status = CreditPayments::STATUS_APPROVED;
                 break;
 
+            case '001':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '003':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
             case '005':
                 $status = CreditPayments::STATUS_DECLINED;
                 break;
@@ -351,7 +383,7 @@ class ImCofResponse extends PaymentResponse {
                 break;
 
             default:
-                $status = CreditPayments::STATUS_DECLINED;
+                $status = CreditPayments::STATUS_ERROR;
 
         }
 
