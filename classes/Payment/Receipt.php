@@ -140,14 +140,12 @@ class Receipt {
         $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel'))
                 . HTMLTable::makeTd(date('D M jS, Y g:ia')));
 
+        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoice()));
+
         $tbl->addBodyTr(HTMLTable::makeTd("Total Voided:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
 
-        if ($payResp->getPaymentType() == PayType::Charge) {
-
-            $tbl->addBodyTr(HTMLTable::makeTd($payResp->response->getCardType() . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxxx..". $payResp->cardNum));
-        }
-
-        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoice()));
+        // Create pay type determined markup
+        $payResp->receiptMarkup($dbh, $tbl);
 
         $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;float:left;'));
 
@@ -200,13 +198,12 @@ class Receipt {
         $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel'))
                 . HTMLTable::makeTd(date('D M jS, Y g:ia')));
 
+        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoice()));
+
         $tbl->addBodyTr(HTMLTable::makeTd("Total Returned:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
 
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);
-
-
-        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoice()));
 
         $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;float:left;'));
 

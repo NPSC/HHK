@@ -1156,7 +1156,7 @@ class PaymentSvcs {
 
             case PaymentMethod::Charge:
 
-                $stmt = $dbh->query("SELECT * FROM payment_auth where idPayment = $idPayment order by idPayment_auth");
+                $stmt = $dbh->query("SELECT * FROM payment_auth where idPayment = $idPayment order by `Timestamp`");
                 $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                 if (count($rows) < 1) {
@@ -1188,12 +1188,12 @@ class PaymentSvcs {
         }
 
         $dataArray = array();
-        $config = new Config_Lite(ciCFG_FILE);
-            $statusCode = $payRs->Status_Code->getStoredVal();
 
-            if ($statusCode == PaymentStatusCode::Paid && $payRs->Is_Refund->getStoredVal() > 0) {
-                $statusCode = PaymentStatusCode::Retrn;
-            }
+        $statusCode = $payRs->Status_Code->getStoredVal();
+
+        if ($statusCode == PaymentStatusCode::Paid && $payRs->Is_Refund->getStoredVal() > 0) {
+            $statusCode = PaymentStatusCode::Retrn;
+        }
 
         switch ($statusCode) {
 

@@ -124,7 +124,6 @@ class ImSaleResponse extends PaymentResponse {
         $this->cardName = $verifyCurlResponse->getCardHolderName();
         $this->amount = $verifyCurlResponse->getAuthorizeAmount();
         $this->payNotes = $payNotes;
-        $this->idToken = $verifyCurlResponse->getToken();
 
         if ($verifyCurlResponse->getPartialPaymentAmount() > 0) {
             $this->partialPayment = TRUE;
@@ -178,7 +177,7 @@ class ImSaleResponse extends PaymentResponse {
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxxxx...". $this->cardNum));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardNum));
 
         if ($this->cardName != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardName));
@@ -195,14 +194,18 @@ class ImVoidResponse extends PaymentResponse {
     public $response;
     public $idToken = '';
 
-    function __construct(VerifyVoidResponse $verifyVoidResp, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+    function __construct(VerifyCurlResponse $verifyVoidResp, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
         $this->response = $verifyVoidResp;
+        $this->responseMessage = $verifyCurlResponse->getStatusMessage();
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
         $this->invoiceNumber = $invoiceNumber;
         $this->amount = $verifyVoidResp->getAuthorizeAmount();
         $this->payNotes = $payNotes;
+        $this->cardNum = $verifyVoidResp->getMaskedAccount();
+        $this->cardType = $verifyVoidResp->getCardType();
+        $this->cardName = $verifyVoidResp->getCardHolderName();
     }
 
     public function getStatus() {
@@ -243,7 +246,7 @@ class ImVoidResponse extends PaymentResponse {
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxxxx...". $this->cardNum));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardNum));
 
         if ($this->cardName != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardName));
@@ -259,27 +262,9 @@ class ImReturnResponse extends PaymentResponse {
 
     public $response;
     public $idToken = '';
-//IsEMVVerifiedByPIN=false
-//isEMVTransaction=FALSE
-//EMVCardEntryMode=KEYED
-//cardBrand=DISCOVER
-//cardExpirationMonth=12
-//cardExpirationYear=2019
-//cardBINNumber=601100
-//cardHolderName=JOE MONTANA
-//paymentCardType=CREDIT
-//lastFourDigits=9424
-//authorizationNumber=9A5DDA
-//responseCode=000
-//responseMessage=APPROVAL
-//transactionStatus=C
-//primaryTransactionID=D5E2BF0800AB41CEAC2D8CBF406E800E
-//authorizationText=THE ABOVE AMOUNT HAS BEEN REFUNDED.
-//transactionID=96A66FDA25964C8F9C0AEB0EF8123AAF
-//transactionDate=2016-04-27T19:17:05.2770143Z
-//saveOnFileTransactionID=2FA23B1C2C8C4E0D951C24EB300DCCFB
 
-    function __construct(VerifyReturnResponse $verifyReturnResp, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+    function __construct(VerifyCurlResponse $verifyReturnResp, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+        $this->responseMessage = $verifyCurlResponse->getStatusMessage();
         $this->response = $verifyReturnResp;
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
@@ -287,6 +272,9 @@ class ImReturnResponse extends PaymentResponse {
         $this->invoiceNumber = $invoiceNumber;
         $this->amount = $verifyReturnResp->getAuthorizeAmount();
         $this->payNotes = $payNotes;
+        $this->cardNum = $verifyReturnResp->getMaskedAccount();
+        $this->cardType = $verifyReturnResp->getCardType();
+        $this->cardName = $verifyReturnResp->getCardHolderName();
     }
 
     public function getStatus() {
@@ -327,7 +315,7 @@ class ImReturnResponse extends PaymentResponse {
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxxxx...". $this->cardNum));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardNum));
 
         if ($this->cardName != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardName));
@@ -343,7 +331,7 @@ class ImCofResponse extends PaymentResponse {
 
     public $idToken;
 
-    function __construct($verifyCurlResponse, $idPayor, $idGroup) {
+    function __construct(VerifyCurlResponse $verifyCurlResponse, $idPayor, $idGroup) {
         $this->response = $verifyCurlResponse;
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
@@ -449,6 +437,10 @@ class SaleReply extends CreditPayments {
 
         $vr = $pr->response;
 
+        // Store any tokens
+        $idToken = CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr);
+
+
         // Check for replay - AP*
         if ($vr->getStatusMessage() == MpStatusMessage::Replay) {
 
@@ -493,7 +485,7 @@ class SaleReply extends CreditPayments {
         $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
         $payRs->idPayor->setNewVal($pr->idPayor);
         $payRs->idTrans->setNewVal($pr->getIdTrans());
-        $payRs->idToken->setNewVal($pr->idToken);
+        $payRs->idToken->setNewVal($idToken);
         $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
         $payRs->Result->setNewVal(MpStatusValues::Approved);
         $payRs->Attempt->setNewVal($attempts);
@@ -534,8 +526,6 @@ class SaleReply extends CreditPayments {
 
         }
 
-         // save token
-        CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr);
 
        return $pr;
     }

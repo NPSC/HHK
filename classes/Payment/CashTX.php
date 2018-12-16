@@ -166,6 +166,10 @@ class ManualChargeResponse extends PaymentResponse {
         return $this->cardType;
     }
 
+    public function getCardNum() {
+        return $this->cardNum;
+    }
+
     public function getStatus() {
         return CreditPayments::STATUS_APPROVED;
     }

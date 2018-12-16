@@ -27,12 +27,14 @@ abstract class GatewayResponse {
      * @param array $response
      * @throws Hk_Exception_Payment
      */
-    function __construct($response) {
+    function __construct($response, $tranType = '') {
         if (is_array($response) || is_object($response)) {
             $this->response = $response;
         } else {
             throw new Hk_Exception_Payment('Empty response object. ');
         }
+
+        $this->tranType = $tranType;
 
         $this->parseResponse();
     }
@@ -111,42 +113,15 @@ class PollingResponse extends GatewayResponse {
 
 class VerifyCurlResponse extends GatewayResponse {
 
-    function __construct($response, $invoiceNumber, $amount) {
+    public function parseResponse(){
 
-        parent::__construct($response);
-
-        if(is_array($response)){
-            $this->result = $response;
-            $this->result['InvoiceNumber'] = $invoiceNumber;
-            $this->result['Amount'] = $amount;
+        if(is_array($this->response)){
+            $this->result = $this->response;
         }else{
             throw new Hk_Exception_Payment("Curl transaction response is invalid.  ");
         }
-    }
-
-    public function parseResponse(){
             return '';
     }
-        //IsEMVVerifiedByPIN=false
-        //isEMVTransaction=false
-        //EMVCardEntryMode=Keyed
-        //isSignatureRequired=false
-        //cardBrand=VISA
-        //cardExpirationMonth=12
-        //cardExpirationYear=2021
-        //cardBINNumber=411111
-        //cardHolderName=
-        //paymentCardType=Credit
-        //lastFourDigits=1111
-        //authorizationNumber=A2CDB9
-        //responseCode=000
-        //responseMessage=APPROVAL
-        //transactionStatus=C
-        //primaryTransactionID=c5a1a5a099f748c8bf16b890c8b371ec
-        //authorizationText=I AGREE TO PAY THE ABOVE AMOUNT ACCORDING TO MY CARD HOLDER AGREEMENT.
-        //transactionID=c5a1a5a099f748c8bf16b890c8b371ec
-        //paymentPlanID=ccc366b1641444fe9e59620340d5e06c
-        //transactionDate=2018-09-26T19:05:40.1666074Z
 
     public function getResponseCode() {
         if (isset($this->result['responseCode'])) {
@@ -205,10 +180,6 @@ class VerifyCurlResponse extends GatewayResponse {
             return $this->result['lastFourDigits'];
         }
         return '';
-    }
-
-    public function getTranType() {
-        return MpTranType::Sale;
     }
 
     public function getPaymentIDExpired() {
@@ -318,7 +289,7 @@ class VerifyCurlResponse extends GatewayResponse {
     }
 
     public function getProcessData() {
-        return $this->getPrimaryTransactionID();
+        return $this->getTransactionStatus();
     }
 
     public function getRefNo() {
@@ -331,6 +302,7 @@ class VerifyCurlResponse extends GatewayResponse {
         }
         return '';
     }
+
     public function getTransactionStatus() {
         if (isset($this->result['transactionStatus'])) {
             return $this->result['transactionStatus'];
@@ -355,22 +327,6 @@ class VerifyCurlResponse extends GatewayResponse {
 
 
 }
-
-class VerifyVoidResponse extends VerifyCurlResponse {
-
-
-    // responseCode=000
-    // &responseMessage=APPROVED
-    // &transactionStatus=C
-    // &primaryTransactionID=EE52401813A74328AAA7D93319FF4383
-    // &primaryTransactionStatus=V
-}
-
-class VerifyReturnResponse extends VerifyCurlResponse {
-
-
-}
-
 
 class HeaderResponse extends GatewayResponse {
 
@@ -428,10 +384,10 @@ class CurlRequest {
 
     protected $gateWay;
 
-    public function submit($parmStr, $url = '', $trace = FALSE) {
+    public function submit($parmStr, $url, $trace = FALSE) {
 
         if ($url == '') {
-            $url = "https://online.instamed.com/payment/NVP.aspx?";
+            throw new Hk_Exception_Payment('Curl Request is missing the URL.  ');
         }
 
         $xaction = $this->execute($url, $parmStr);

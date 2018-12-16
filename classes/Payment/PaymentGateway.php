@@ -835,10 +835,6 @@ class InstamedGateway extends PaymentGateway {
     }
 
     public function voidSale(\PDO $dbh, $invoice, PaymentRS $payRs, $paymentNotes, $bid) {
-        return $this->reveseSale($dbh, $payRs, $invoice, $bid, $paymentNotes);
-    }
-
-    public function reverseSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid, $paymentNotes) {
 
         // Find hte detail record.
         $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
@@ -856,7 +852,11 @@ class InstamedGateway extends PaymentGateway {
         }
 
         return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
+    }
 
+    public function reverseSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid, $paymentNotes) {
+
+        return $this->voidSale($dbh, $invoice, $payRs, $paymentNotes, $bid);
     }
 
     public function returnSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $returnAmt, $bid) {
@@ -1031,28 +1031,32 @@ class InstamedGateway extends PaymentGateway {
         $uS = Session::getInstance();
         $dataArray['bid'] = $bid;
 
-        $params = "transactionType=CreditCard"
+        $params = $this->getCredentials()->toCurl()
+                . "&transactionType=CreditCard"
                 . "&transactionAction=Void"
-                . "&merchantID=" . $this->getCredentials()->merchantId
-                . "&storeID=" . $this->getCredentials()->storeId
-                . "&terminalID=0001"
                 . "&primaryCardPresentStatus=PresentManualKey"
                 . "&primaryTransactionID=" . $pAuthRs->Reference_Num->getStoredVal();
 
         $curlRequest = new CurlRequest();
 
-        $resp = $curlRequest->submit($params, '');
-        $response = new VerifyVoidResponse($resp, $invoice->getInvoiceNumber(), $payRs->Amount->getStoredVal());
+        $resp = $curlRequest->submit($params, $this->NvpUrl);
+
+        $resp['InvoiceNumber'] = $invoice->getInvoiceNumber();
+        $resp['Amount'] = $payRs->Amount->getStoredVal();
+        $resp['cardBrand'] = $pAuthRs->Card_Type->getStoredVal();
+        $resp['lastFourDigits'] = $pAuthRs->Acct_Number->getStoredVal();
+
+        $curlResponse = new VerifyCurlResponse($resp, MpTranType::Void);
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $response->getStatus(), $params, json_encode($response->getResultArray()), 'HostedCoVerify');
+            Gateway::saveGwTx($dbh, $curlResponse->getStatus(), $params, json_encode($curlResponse->getResultArray()), 'ImTokenVoid');
         } catch(Exception $ex) {
             // Do Nothing
         }
 
         // Make a void response...
-        $sr = new ImVoidResponse($response, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $paymentNotes);
+        $sr = new ImVoidResponse($curlResponse, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $paymentNotes);
 
         // Record transaction
         try {
@@ -1111,38 +1115,32 @@ class InstamedGateway extends PaymentGateway {
 
         $uS = Session::getInstance();
         $reply = '';
-        //  transactionType=CreditCard
-        //  &transactionAction=SimpleRefund
-        //  &MerchantID=123123123
-        //  &StoreID=123
-        //  &TerminalID=123
-        //  &primaryTransactionID=2FA23B1C2C8C4E0D951C24EB300DCCFB
-        //  &primaryCardPresentStatus=PresentManualKey
-        //  &amount=10.00&
 
-        $params = "transactionType=CreditCard"
+        $params = $this->getCredentials()->toCurl()
+                . "&transactionType=CreditCard"
                 . "&transactionAction=SimpleRefund"
-                . "&merchantID=" . $this->getCredentials()->merchantId
-                . "&storeID=" . $this->getCredentials()->storeId
-                . "&terminalID=0001"
                 . "&primaryCardPresentStatus=PresentManualKey"
                 . "&primaryTransactionID=" . $pAuthRs->Reference_Num->getStoredVal()
                 . "&amount=" . number_format($returnAmt, 2);
 
         $curlRequest = new CurlRequest();
 
-        $resp = $curlRequest->submit($params, '', TRUE);
-        $response = new VerifyReturnResponse($resp, $invoice->getInvoiceNumber(), $invoice->getAmount());
+        $resp = $curlRequest->submit($params, $this->NvpUrl);
+
+        $resp['InvoiceNumber'] = $invoice->getInvoiceNumber();
+        $resp['Amount'] = $payRs->Amount->getStoredVal();
+
+        $curlResponse = new VerifyCurlResponse($resp);
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $response->getStatus(), $params, json_encode($response->getResultArray()), 'ImReturnTx');
+            Gateway::saveGwTx($dbh, $curlResponse->getStatus(), $params, json_encode($curlResponse->getResultArray()), 'ImTokenReturn');
         } catch(Exception $ex) {
             // Do Nothing
         }
 
         // Make a return response...
-        $sr = new ImReturnResponse($response, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), '');
+        $sr = new ImReturnResponse($curlResponse, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), '');
 
         // Record transaction
         try {
@@ -1155,6 +1153,8 @@ class InstamedGateway extends PaymentGateway {
 
         // Record return
         $csResp = ReturnReply::processReply($dbh, $sr, $uS->username, $payRs);
+
+
         $dataArray = array('bid' => $bid);
 
         switch ($csResp->getStatus()) {
@@ -1269,9 +1269,12 @@ class InstamedGateway extends PaymentGateway {
                 . "&singleSignOnToken=" . $ssoToken;
 
         $curl = new CurlRequest();
-        $transaction = $curl->submit($params, $this->NvpUrl);
+        $resp = $curl->submit($params, $this->NvpUrl);
 
-        $response = new VerifyCurlResponse($transaction, '0', 0);
+        $resp['InvoiceNumber'] = 0;
+        $resp['Amount'] = 0;
+
+        $response = new VerifyCurlResponse($resp);
 
         // Save raw transaction in the db.
         try {
@@ -1298,20 +1301,22 @@ class InstamedGateway extends PaymentGateway {
                 . "&singleSignOnToken=" . $ssoToken;
 
         $curl = new CurlRequest();
-        $transaction = $curl->submit($params, $this->NvpUrl);
+        $resp = $curl->submit($params, $this->NvpUrl);
 
-        $response = new VerifyCurlResponse($transaction, $cidInfo['InvoiceNumber'], $cidInfo['Amount']);
+        $resp['InvoiceNumber'] = $cidInfo['InvoiceNumber'];
+        $resp['Amount'] = $cidInfo['Amount'];
+
+        $curlResponse = new VerifyCurlResponse($resp, MpTranType::Sale);
 
         // Save raw transaction in the db.
         try {
-
-            Gateway::saveGwTx($dbh, $response->getStatus(), $params, json_encode($response->getResultArray()), 'HostedCoVerify');
+            Gateway::saveGwTx($dbh, $curlResponse->getStatus(), $params, json_encode($curlResponse->getResultArray()), 'HostedCoVerify');
         } catch(Exception $ex) {
             // Do Nothing
         }
 
         // Make a sale response...
-        $sr = new ImSaleResponse($response, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $paymentNotes);
+        $sr = new ImSaleResponse($curlResponse, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $paymentNotes);
 
         // Record transaction
         try {
@@ -1655,7 +1660,7 @@ class InstaMedCredentials {
     public function toCurl() {
 
         return
-            InstaMedCredentials::MERCHANT_ID . '=' . $this->accountID
+            InstaMedCredentials::MERCHANT_ID . '=' . $this->merchantId
             . '&' . InstaMedCredentials::STORE_ID . '=' . $this->storeId
             . '&' . InstaMedCredentials::TERMINAL_ID . '=' . $this->terminalId;
 
