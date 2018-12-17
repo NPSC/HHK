@@ -186,7 +186,6 @@ class ImSaleResponse extends PaymentResponse {
         $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
 
     }
-
 }
 
 class ImVoidResponse extends PaymentResponse {
@@ -194,18 +193,18 @@ class ImVoidResponse extends PaymentResponse {
     public $response;
     public $idToken = '';
 
-    function __construct(VerifyCurlResponse $verifyVoidResp, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
-        $this->response = $verifyVoidResp;
-        $this->responseMessage = $verifyCurlResponse->getStatusMessage();
+    function __construct(VerifyCurlResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+        $this->response = $vcr;
+        $this->responseMessage = $vcr->getStatusMessage();
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
         $this->invoiceNumber = $invoiceNumber;
-        $this->amount = $verifyVoidResp->getAuthorizeAmount();
+        $this->amount = $vcr->getAuthorizeAmount();
         $this->payNotes = $payNotes;
-        $this->cardNum = $verifyVoidResp->getMaskedAccount();
-        $this->cardType = $verifyVoidResp->getCardType();
-        $this->cardName = $verifyVoidResp->getCardHolderName();
+        $this->cardNum = $vcr->getMaskedAccount();
+        $this->cardType = $vcr->getCardType();
+        $this->cardName = $vcr->getCardHolderName();
     }
 
     public function getStatus() {
@@ -263,18 +262,18 @@ class ImReturnResponse extends PaymentResponse {
     public $response;
     public $idToken = '';
 
-    function __construct(VerifyCurlResponse $verifyReturnResp, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
-        $this->responseMessage = $verifyCurlResponse->getStatusMessage();
-        $this->response = $verifyReturnResp;
+    function __construct(VerifyCurlResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+        $this->responseMessage = $vcr->getStatusMessage();
+        $this->response = $vcr;
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
         $this->invoiceNumber = $invoiceNumber;
-        $this->amount = $verifyReturnResp->getAuthorizeAmount();
+        $this->amount = $vcr->getAuthorizeAmount();
         $this->payNotes = $payNotes;
-        $this->cardNum = $verifyReturnResp->getMaskedAccount();
-        $this->cardType = $verifyReturnResp->getCardType();
-        $this->cardName = $verifyReturnResp->getCardHolderName();
+        $this->cardNum = $vcr->getMaskedAccount();
+        $this->cardType = $vcr->getCardType();
+        $this->cardName = $vcr->getCardHolderName();
     }
 
     public function getStatus() {

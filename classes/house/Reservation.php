@@ -14,6 +14,7 @@ class Reservation {
     protected $reserveData;
     protected $reservRs;
     protected $family;
+    protected $payResult;
 
     function __construct(ReserveData $reserveData, $reservRs, $family) {
 
@@ -431,6 +432,15 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     // Visit Fee Array
                     $dataArray['vfee'] = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
                 }
+
+                // Card on file
+                if ($uS->ccgw != '') {
+
+                    $dataArray['cof'] = HTMLcontainer::generateMarkup('div' ,HTMLContainer::generateMarkup('fieldset',
+                            HTMLContainer::generateMarkup('legend', 'Credit', array('style'=>'font-weight:bold;'))
+                            . HouseServices::viewCreditTable($dbh, $resv->getIdRegistration(), $resv->getIdGuest())
+                        ,array('style'=>'float:left;padding:5px;')));
+                }
             }
 
             // Vehicles
@@ -450,15 +460,6 @@ WHERE r.idReservation = " . $rData->getIdResv());
             $dataArray['rstat'] = '';
 
         } else {
-
-            // Card on file
-            if ($uS->ccgw != '') {
-
-                $dataArray['cof'] = HTMLcontainer::generateMarkup('div' ,HTMLContainer::generateMarkup('fieldset',
-                        HouseServices::viewCreditTable($dbh, $resv->getIdRegistration(), $resv->getIdGuest())
-                        . HTMLInput::generateMarkup('Update Credit', array('type'=>'button','id'=>'btnCred', 'data-id'=>$resv->getIdGuest(), 'data-idreg'=>$resv->getIdRegistration(), 'style'=>'margin:5px;float:right;'))
-                    ,array('style'=>'float:left;padding:5px;')));
-            }
 
             // Reservation Data
             $dataArray['rstat'] = $this->createStatusChooser(
@@ -1098,10 +1099,20 @@ class ActiveReservation extends Reservation {
 
     public function createMarkup(\PDO $dbh) {
 
+        // Credit payment?
+        if ($this->payResult !== NULL) {
+
+            if (count($this->payResult) > 0) {
+                return $this->payResult;
+            }
+        }
+
+        // Checking In?
         if ($this->gotoCheckingIn === 'yes' && $this->reserveData->getIdResv() > 0) {
             return array('gotopage'=>'CheckingIn.php?rid=' . $this->reserveData->getIdResv());
         }
 
+        // Verify reserve status.
         if ($this->reservRs->Status->getStoredVal() == '') {
             $this->reservRs->Status->setStoredVal(ReservationStatus::Waitlist);
         }
@@ -1265,6 +1276,21 @@ class ActiveReservation extends Reservation {
         // Room Choice
         $this->setRoomChoice($dbh, $resv, $idRescPosted);
 
+        // Add a new card
+        if (isset($post['cbNewCard'])) {
+
+            try {
+                // Payment Gateway
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+
+                $this->payResult = $gateway->initCardOnFile($dbh, $uS->siteName, $resv->getIdGuest(), $reg->getIdRegistration(), '', 'Reserve.php?rid=' . $resv->getIdReservation());
+
+            } catch (Hk_Exception_Payment $ex) {
+
+                $this->reserveData->addError($ex->getMessage());
+            }
+        }
+
         return $this;
     }
 
@@ -1308,7 +1334,6 @@ class ActiveReservation extends Reservation {
 
 class CheckingIn extends ActiveReservation {
 
-    protected $payResult;
     protected $visit;
     protected $resc;
     protected $errors;

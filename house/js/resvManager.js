@@ -1789,14 +1789,6 @@ function resvManager(initData) {
                 setupPay(data);
             }
             
-            // Wire card on file button.
-            if (data.resv.rdiv.cof !== undefined) {
-                $('#btnCred').button();
-                $('#btnCred').click(function () {
-                    cardOnFile($(this).data('id'), $(this).data('idreg'), location.href.split("/").slice(-1) + '?rid=' + data.rid);
-                });
-            }
-
             if ($('#addGuestHeader').length > 0) {
 
                 expDatesSection = new ExpDatesSection($('#addGuestHeader'));
@@ -2135,8 +2127,9 @@ function resvManager(initData) {
 
     function loadResv(data) {
 
-        if (data.xfer) {
+        if (data.xfer || data.inctx) {
             transferToGw(data);
+            return;
         }
 
         // Patient management.
