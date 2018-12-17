@@ -27,6 +27,7 @@ function resvManager(initData) {
     var hospSection = new HospitalSection($('#hospitalSection'));
     var expDatesSection = new ExpDatesSection($('#datesSection'));
     var updateRescChooser = new updateRescChooser();
+    var $pWarning = $('#pWarnings');
     
     // Exports
     t.getReserve = getReserve;
@@ -848,8 +849,7 @@ function resvManager(initData) {
                 numPriGuests = 0,
                 nameErr = false,
                 ecIgnoreCount = 0;
-
-
+            
             // Flag blank Relationships
             $('.patientRelch').removeClass('ui-state-error');
             $('.patientRelch').each(function () {
@@ -857,7 +857,7 @@ function resvManager(initData) {
                 if ($(this).val() === '') {
 
                     $(this).addClass('ui-state-error');
-                    flagAlertMessage('Set the highlighted Relationship.', 'alert');
+                    flagAlertMessage('Set the highlighted Relationship.', 'alert', $pWarning);
                     return false;
 
                 }
@@ -894,14 +894,14 @@ function resvManager(initData) {
             // Only one patient allowed.
             if (numPat < 1) {
 
-                flagAlertMessage('Choose a ' + patLabel + '.', 'alert');
+                flagAlertMessage('Choose a ' + patLabel + '.', 'alert', $pWarning);
 
                 $('.patientRelch').addClass('ui-state-error');
                 return false;
 
             } else if (numPat > 1) {
 
-                flagAlertMessage('Only 1 ' + patLabel + ' is allowed.', 'alert');
+                flagAlertMessage('Only 1 ' + patLabel + ' is allowed.', 'alert', $pWarning);
 
                 for (var i in people.list()) {
                     if (people.list()[i].role === 'p') {
@@ -913,7 +913,7 @@ function resvManager(initData) {
 
             // Someone checking in?
             if (numGuests < 1) {
-                flagAlertMessage('There is no one actually staying.  Pick someone to stay.', 'alert');
+                flagAlertMessage('There is no one actually staying.  Pick someone to stay.', 'alert', $pWarning);
                 return false;
             }
 
@@ -927,7 +927,8 @@ function resvManager(initData) {
                }
 
             } else if (numPriGuests === 0) {
-                flagAlertMessage('Set one guest as primary guest.', 'alert');
+                $pWarning.text('Set one guest as primary guest.').show();
+                flagAlertMessage('Set one guest as primary guest.', 'alert', $pWarning);
                 $("input.hhk-rbPri").parent().addClass('ui-state-error');
                 return false;
             }
@@ -955,7 +956,7 @@ function resvManager(initData) {
 
             if (nameErr === true) {
                 openSection(true);
-                flagAlertMessage("Enter a first and last name for the people highlighted.", 'alert');
+                flagAlertMessage("Enter a first and last name for the people highlighted.", 'alert', $pWarning);
                 return false;
             }
             
@@ -981,7 +982,7 @@ function resvManager(initData) {
                     // Check patient birthdate
                     if (patBirthDate & $('#' + p + 'txtBirthDate').val() === '') {
                         $('#' + p + 'txtBirthDate').addClass('ui-state-error');
-                        flagAlertMessage(patLabel + ' is missing the Birth Date.', 'alert');
+                        flagAlertMessage(patLabel + ' is missing the Birth Date.', 'alert', $pWarning);
                         openSection(true);
                         return false;
                     } else {
@@ -995,7 +996,7 @@ function resvManager(initData) {
 
                         if (pMessage !== '') {
 
-                            flagAlertMessage(pMessage, 'alert');
+                            flagAlertMessage(pMessage, 'alert', $pWarning);
                             openSection(true);
 
                             // Open address row
@@ -1014,7 +1015,7 @@ function resvManager(initData) {
                     if ($('#' + p + 'selPatRel').val() === '') {
 
                         $('#' + p + 'selPatRel').addClass('ui-state-error');
-                        flagAlertMessage('Person highlighted is missing their ' + patLabel + ' Relationship.', 'alert');
+                        flagAlertMessage('Person highlighted is missing their ' + patLabel + ' Relationship.', 'alert', $pWarning);
                         openSection(true);
                         return false;
 
@@ -1029,7 +1030,7 @@ function resvManager(initData) {
 
                          if (pMessage !== '') {
 
-                            flagAlertMessage(pMessage, 'alert');
+                            flagAlertMessage(pMessage, 'alert', $pWarning);
                             openSection(true);
 
                             // Open address row
@@ -1051,7 +1052,7 @@ function resvManager(initData) {
 
                     if (bDate > today) {
                         $('#' + p + 'txtBirthDate').addClass('ui-state-error');
-                        flagAlertMessage('This birth date cannot be in the future.', 'alert');
+                        flagAlertMessage('This birth date cannot be in the future.', 'alert', $pWarning);
                         openSection(true);
                         return false;
                     } else {
@@ -1066,7 +1067,7 @@ function resvManager(initData) {
 
                     if (pMessage !== '') {
 
-                        flagAlertMessage(pMessage, 'alert');
+                        flagAlertMessage(pMessage, 'alert', $pWarning);
                         openSection(true);
 
                         // Open address row
@@ -1180,7 +1181,7 @@ function resvManager(initData) {
             if ($arrDate.val() === '') {
 
                 $arrDate.addClass('ui-state-error');
-                flagAlertMessage("This " + resvTitle + " is missing the check-in date.", 'alert');
+                flagAlertMessage("This " + resvTitle + " is missing the check-in date.", 'alert', $pWarning);
                 return false;
 
             } else {
@@ -1189,7 +1190,7 @@ function resvManager(initData) {
 
                 if (isNaN(t.ciDate.getTime())) {
                     $arrDate.addClass('ui-state-error');
-                    flagAlertMessage("This " + resvTitle + " is missing the check-in date.", 'alert');
+                    flagAlertMessage("This " + resvTitle + " is missing the check-in date.", 'alert', $pWarning);
                     return false;
                 }
                 
@@ -1199,7 +1200,7 @@ function resvManager(initData) {
                     
                     if (start > now) {
                         $arrDate.addClass('ui-state-error');
-                        flagAlertMessage("Set the Check in date to today or earlier.", 'alert');
+                        flagAlertMessage("Set the Check in date to today or earlier.", 'alert', $pWarning);
                         return false;
                     }
                 }
@@ -1209,7 +1210,7 @@ function resvManager(initData) {
             if ($deptDate.val() === '') {
 
                 $deptDate.addClass('ui-state-error');
-                flagAlertMessage("This " + resvTitle + " is missing the expected departure date.", 'alert');
+                flagAlertMessage("This " + resvTitle + " is missing the expected departure date.", 'alert', $pWarning);
                 return false;
 
             } else {
@@ -1218,13 +1219,13 @@ function resvManager(initData) {
 
                 if (isNaN(t.coDate.getTime())) {
                     $deptDate.addClass('ui-state-error');
-                    flagAlertMessage("This " + resvTitle + " is missing the expected departure date", 'alert');
+                    flagAlertMessage("This " + resvTitle + " is missing the expected departure date", 'alert', $pWarning);
                     return false;
                 }
 
                 if (t.ciDate > t.coDate) {
                     $arrDate.addClass('ui-state-error');
-                    flagAlertMessage("This " + resvTitle + "'s check-in date is after the expected departure date.", 'alert');
+                    flagAlertMessage("This " + resvTitle + "'s check-in date is after the expected departure date.", 'alert', $pWarning);
                     return false;
                 }
             }
@@ -1234,6 +1235,8 @@ function resvManager(initData) {
     }
 
     function doOnDatesChange(dates) {
+
+        $pWarning.text('').hide();
 
         var hasIds = false;
         for (var p in people.list()) {
@@ -1491,7 +1494,7 @@ function resvManager(initData) {
 
                     $('#selHospital').addClass('ui-state-error');
 
-                    flagAlertMessage("Select a hospital.", 'alert');
+                    flagAlertMessage("Select a hospital.", 'alert', $pWarning);
 
                     $('#divhospDetail').show('blind');
                     $('#divhospHdr').removeClass('ui-corner-all').addClass('ui-corner-top');
@@ -1879,7 +1882,7 @@ function resvManager(initData) {
                     // Room rate
                     if ($('#selCategory').val() == fixedRate && $('#txtFixedRate').length > 0 && $('#txtFixedRate').val() == '') {
                         
-                        flagAlertMessage("Set the Room Rate to an amount, or to 0.", 'alert');
+                        flagAlertMessage("Set the Room Rate to an amount, or to 0.", 'alert', $pWarning);
                         $('#txtFixedRate').addClass('ui-state-error');
                         return false;
                         
@@ -1970,22 +1973,6 @@ function resvManager(initData) {
             return null;
         }
 
-    }
-
-    function transferToGw(data) {
-
-        var xferForm = $('#xform');
-        xferForm.children('input').remove();
-        xferForm.prop('action', data.xfer);
-        if (data.paymentId && data.paymentId != '') {
-            xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
-        } else if (data.cardId && data.cardId != '') {
-            xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
-        } else {
-            flagAlertMessage('PaymentId and CardId are missing!', 'error');
-            return;
-        }
-        xferForm.submit();
     }
 
     function resvPicker(data, $resvDiag, $psgDiag) {
@@ -2135,10 +2122,6 @@ function resvManager(initData) {
 
     function loadResv(data) {
 
-        if (data.xfer) {
-            transferToGw(data);
-        }
-
         // Patient management.
         if (data.resvChooser && data.resvChooser !== '') {
             resvPicker(data, $('#resDialog'), $('#psgDialog'));
@@ -2187,7 +2170,7 @@ function resvManager(initData) {
         }
 
         if (data.warning !== undefined && data.warning !== '') {
-            flagAlertMessage(data.warning, 'warning');
+            flagAlertMessage(data.warning, 'warning', $pWarning);
         }
 
         // Reservation
@@ -2269,15 +2252,12 @@ function resvManager(initData) {
                 $('#' + data.addPerson.mem.pref + 'txtFirstName').focus();
             }
         }
-        
-        // init dirrty
-        if (isCheckin === false) {
-            //$("#form1").dirrty();
-        }
 
     }
 
     function verifyInput() {
+        
+        $pWarning.text('').hide();
 
         // dates
         if (expDatesSection.verify() === false) {

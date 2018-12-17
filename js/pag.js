@@ -4,7 +4,7 @@
  * @param {boolean} wasError
  * @returns {undefined}
  */
-function flagAlertMessage(mess, wasError) {
+function flagAlertMessage(mess, wasError, $txtCtrl) {
     "use strict";
     //Types:  alert, success, warning, error, info/information
     var type = 'info';
@@ -29,6 +29,9 @@ function flagAlertMessage(mess, wasError) {
     } catch(err) {
         // do nothing for now.
     }
+    
+    // Show message in a given container.
+    $txtCtrl.text(mess).show();
 }
 
 //function altFlagAlertMessage(mess, wasError) {
