@@ -790,7 +790,7 @@ class InstamedGateway extends PaymentGateway {
     const PARTIAL_APPROVAL = '010';
 
     // IM's backward way to get back to my original page.
-    const TRANSFER_URL = 'ConfirmGWPayment.php';
+    const TRANSFER_URL = 'ConfirmGwPayment.php';
     const TRANSFER_VAR = 'intfr';  // query sgring parameter name for the TRANSFER_URL
     const TRANSFER_DEFAULT_PAGE = 'register.php';
     const TRANSFER_POSTBACK_PAGE_VAR = 'pg';
