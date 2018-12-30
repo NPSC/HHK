@@ -78,10 +78,10 @@ class UserClass {
                 $remoteIp = filter_input(INPUT_SERVER, 'REMOTE_ADDR', FILTER_VALIDATE_IP);
             }
 
-            return setcookie('housepc', encryptMessage($remoteIp . 'eric'), (time() + 84600*365*5), $rootPath);
+            return setcookie('housepc', encryptMessage($remoteIp . 'eric'), (time() + 84600*365*5), $rootPath, null,null, TRUE);
 
         } else {
-            return setcookie('housepc', "", time() - 3600, $rootPath);
+            return setcookie('housepc', "", time() - 3600, $rootPath, null,null, TRUE);
         }
     }
 

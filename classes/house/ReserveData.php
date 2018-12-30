@@ -55,6 +55,7 @@ class ReserveData {
     protected $patAsGuestFlag;
     protected $patBirthDateFlag;
     protected $showBirthDate;
+    protected $useCheckin;
     protected $patLabel;
     protected $wlNotesLabel;
     protected $addrPurpose;
@@ -117,12 +118,12 @@ class ReserveData {
             $this->setMembersFromPost(filter_var_array($post['mem'], FILTER_SANITIZE_STRING));
         }
 
-        $this->resvTitle = ($reservationTitle == '' ? $labels->getString('guestEdit', 'reservationTitle', 'Reservation') : $reservationTitle);
         $this->saveButtonLabel = 'Save ' . $this->resvTitle;
         $this->resvEarlyArrDays = $uS->ResvEarlyArrDays;
         $this->patAsGuestFlag = $uS->PatientAsGuest;
         $this->patBirthDateFlag = $uS->InsistPatBD;
         $this->showBirthDate = $uS->ShowBirthDate;
+        $this->useCheckin = ! $uS->Reservation;
         $this->fillEmergencyContact = isset($uS->EmergContactFill) ? $uS->EmergContactFill : 'false';
         $this->patLabel = $labels->getString('MemberType', 'patient', 'Patient');
         $this->psgTitle = $labels->getString('statement', 'psgLabel', 'Patient Support Group');
@@ -138,6 +139,11 @@ class ReserveData {
         $this->paymentSection = '';
         $this->errors = '';
 
+        if ($this->useCheckin) {
+            $this->resvTitle = 'Check-in';
+        } else {
+            $this->resvTitle = ($reservationTitle == '' ? $labels->getString('guestEdit', 'reservationTitle', 'Reservation') : $reservationTitle);
+        }
     }
 
     protected function setMembersFromPost($postMems) {

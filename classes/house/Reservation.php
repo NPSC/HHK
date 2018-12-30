@@ -304,14 +304,14 @@ WHERE r.idReservation = " . $rData->getIdResv());
             $idPsg = intval(filter_var($post['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
             $idResv = intval(filter_var($post['idResv'], FILTER_SANITIZE_NUMBER_INT), 10);
             $postMems = filter_var_array($post['mems'], FILTER_SANITIZE_STRING);
-            
+
             try {
                 $arrivalDT = new DateTime(filter_var($post['dt1'], FILTER_SANITIZE_STRING));
                 $departDT = new DateTime(filter_var($post['dt2'], FILTER_SANITIZE_STRING));
             } catch(Exception $ex) {
                 return array('error'=>'Bad dates: ' . $ex->getMessage());
             }
-            
+
 
             foreach ($postMems as $prefix => $memArray) {
 
@@ -989,12 +989,6 @@ where rg.idReservation =" . $r['idReservation']);
         return $oldResvId;
     }
 
-    public function savePayments(\PDO $dbh, Reservation_1 &$resv, $post) {
-
-        return;
-
-    }
-
     public function saveReservationGuests(\PDO $dbh) {
 
         if ($this->reserveData->getIdResv() < 1) {
@@ -1267,9 +1261,6 @@ class ActiveReservation extends Reservation {
         // Room Choice
         $this->setRoomChoice($dbh, $resv, $idRescPosted);
 
-        // Payments
-        $this->savePayments($dbh, $resv, $post);
-
         return $this;
     }
 
@@ -1321,9 +1312,9 @@ class CheckingIn extends ActiveReservation {
     public static function reservationFactoy(\PDO $dbh, $post) {
 
         $rData = new ReserveData($post, 'Check-in');
-        $rData->setSaveButtonLabel('Check-in');
 
         if ($rData->getIdResv() > 0) {
+            $rData->setSaveButtonLabel('Check-in');
             return CheckingIn::loadReservation($dbh, $rData);
         }
 
