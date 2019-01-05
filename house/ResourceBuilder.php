@@ -1858,8 +1858,8 @@ $resultMessage = $alertMsg->createMarkup();
                     </form>
                 </div>
 <!--                <div id="agreeEdit" class="ui-tabs-hide" >
-                    <p>Select the form to edit from the following list: <?php echo $rteSelectForm; ?><span id="spnRteLoading" style="font-style: italic; display:none;">Loading...</span></p>
-                    <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
+                    <p>Select the form to edit from the following list: <?php //echo $rteSelectForm; ?><span id="spnRteLoading" style="font-style: italic; display:none;">Loading...</span></p>
+                    <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php //echo $rteMsg; ?></p>
                     <fieldset style="clear:left; float:left; margin-top:10px;">
                         <legend><span id="spnEditorTitle" style="font-size: 1em; font-weight: bold;">Select a form</span></legend>
                         <div id="rteContainer"></div>
