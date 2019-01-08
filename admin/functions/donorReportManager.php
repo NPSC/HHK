@@ -222,7 +222,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
 
     // Set up ordering clauses based on users selections
     if ($dlFlag) {
-        $oClause = " order by vd.Donor_Last ";
+        $oClause = " order by Donor_Last ";
     }
 
     $endD = $eDate;
@@ -316,16 +316,19 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
             $hdr[$n++] = "City";
             $hdr[$n++] = "State";
             $hdr[$n++] = "Zip";
+            $hdr[$n++] = "#";
 
             if ($showAmounts) {
-                $hdr[$n++] = "#";
                 $hdr[$n++] = "Total";
+                $hdr[$n++] = "Vendor Amount";
                 $hdr[$n++] = "Free & Clear";
             }
 
             OpenXML::writeHeaderRow($sml, $hdr);
             $reportRows++;
+
         } else {
+
             $txtIntro .= "<tr><th colspan='2'>" . $reportTitle . "</th></tr>";
             foreach ($sumaryRows as $key => $val) {
                 if ($key != "" && $val != "") {
@@ -334,12 +337,13 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                 }
             }
             $txtIntro .= "<tr><td class='tdlabel'>Records Fetched: </td><td>" . count($rows) . "</td></tr>";
-            $txtheadr = "<thead><tr><th style='width:40px;'>Id</th><th> * </th><th>Last Name</th><th>First</th>";
+            $txtheadr = "<thead><tr><th style='width:40px;'>Id</th><th> * </th><th>Last Name</th><th>First</th><th>#</th>";
             if ($showAmounts) {
-                $txtheadr .= "<th>#</th><th>Total</th><th>House Total</th>";
+                $txtheadr .= "<th>Total</th><th>Vendor Amount</th><th>Free & Clear</th>";
             }
             $txtheadr .= "</tr></thead>";
         }
+
     } else {
         // Individual donation report
         $sumaryRows['Report Type'] = "Individual Donation Report";
@@ -369,15 +373,10 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
 
             if ($showAmounts) {
                 $hdr[$n++] = "Total";
-                $hdr[$n++] = "% to Vendor";
+                $hdr[$n++] = "Vendor Amount";
                 $hdr[$n++] = "Free & Clear";
             }
             $hdr[$n++] = "Campaign";
-            if ($hasStudents) {
-                $hdr[$n++] = "Student";
-            } else {
-                $hdr[$n++] = "Fund Code";
-            }
             $hdr[$n++] = "Date";
             $hdr[$n++] = "Merge Code";
             $hdr[$n++] = "Notes";
@@ -398,10 +397,10 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
             $txtheadr = "<thead><tr><th style='width:40px;'>Id</th><th> * </th><th>Last Name</th><th>Envelope Salutation</th>";
 
             if ($showAmounts) {
-                $txtheadr .= "<th>Total</th><th>% to Vendor</th><th>Free & Clear</th>";
+                $txtheadr .= "<th>Total</th><th>Vendor Amount</th><th>Free & Clear</th>";
             }
 
-            $txtheadr .= "<th>Campaign</th>" . ($hasStudents ? "<th>Student</th>" : "<th>Fund Code</th>") . "<th>Date</th><th>Note</th></tr></thead>";
+            $txtheadr .= "<th>Campaign</th><th>Date</th><th>Note</th></tr></thead>";
         }
     }
 
@@ -458,10 +457,14 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
         // format amounts
         $amountMkup = number_format($r["Total"], 2, '.', '');
         $taxFreeMkup = '';
-        $percentCut = '0.0';
+        $vendorAmt = '';
         if ($r['Campaign_Type'] != CampaignType::InKind) {
             $taxFreeMkup = number_format($r["Tot_TaxFree"], 2, '.', '');
-            $percentCut = number_format($r["Percent_Cut"], 1, '.', '');
+
+            $vendorDiff = ($r["Total"] - $r["Tot_TaxFree"]);
+            if ($vendorDiff > 0) {
+                $vendorAmt = number_format($vendorDiff, 1, '.', '');
+            }
         }
 
         $amtFloat = floatval($r["Total"]);
@@ -589,18 +592,24 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                     9 => array('type' => "s",
                         'value' => $r["Zipcode"],
                         'style' => '00000'
-                    )
+                    ),
+                    10 => array('type' => "n",
+                        'value' => $r["numDon"]
+                    ),
+
                 );
 
                 if ($showAmounts) {
-                    $flds[10] = array('type' => "n",
-                        'value' => $r["numDon"]);
 
                     $flds[11] = array('type' => "n",
                         'value' => $amountMkup,
                         'style' => PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1);
 
                     $flds[12] = array('type' => "n",
+                        'value' => $vendorAmt,
+                        'style' => PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1);
+
+                    $flds[13] = array('type' => "n",
                         'value' => $taxFreeMkup,
                         'style' => PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1);
                 }
@@ -650,8 +659,8 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                         'style' => PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
                     );
                     $flds[$n++] = array('type' => "n",
-                        'value' => $percentCut/100,
-                        'style' => PHPExcel_Style_NumberFormat::FORMAT_PERCENTAGE_00
+                        'value' => $vendorAmt,
+                        'style' => PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
                     );
                     $flds[$n++] = array('type' => "n",
                         'value' => $taxFreeMkup,
@@ -659,9 +668,6 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                     );
                     $flds[$n++] = array('type' => "s",
                         'value' => $r["Campaign_Title"]
-                    );
-                    $flds[$n++] = array('type' => "n",
-                        'value' => $r["Fund_Code"]
                     );
                     $flds[$n++] = array('type' => "s",
                         'value' => date("m/d/Y", strtotime($r["Effective_Date"])),
@@ -676,9 +682,6 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                 } else {
                     $flds[$n++] = array('type' => "s",
                         'value' => $r["Campaign_Title"]
-                    );
-                    $flds[$n++] = array('type' => "n",
-                        'value' => $r["Fund_Code"]
                     );
                     $flds[$n++] = array('type' => "s",
                         'value' => date("m/d/Y", strtotime($r["Effective_Date"])),
@@ -702,7 +705,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                 $txtreport .= "<tr><td style='width:40px;'><a href='NameEdit.php?id=" . $r["id"] . "'>" . $r["id"] . "</a></td><td>$majorDonorMark</td><td>" .
                         $r["Donor_Last"] . "</td><td>" . $r["Donor_First"] . "</td>";
                 if ($showAmounts) {
-                    $txtreport .= "<td style='text-align:center;'>" . $r["numDon"] . "</td><td style='text-align:right;'>" . $amountMkup . "</td><td style='text-align:right;'>" . $taxFreeMkup . "</td>";
+                    $txtreport .= "<td style='text-align:center;'>" . $r["numDon"] . "</td><td style='text-align:right;'>" . $amountMkup . "</td><td style='text-align:right;'>" . $vendorAmt . "</td><td style='text-align:right;'>" . $taxFreeMkup . "</td>";
                 }
                 $txtreport .= "</tr>";
             } else {
@@ -710,9 +713,9 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                 $txtreport .= "<tr><td style='width:40px;'><a href='NameEdit.php?id=" . $r["id"] . "'>" . $r["id"] . "</a></td>
                     <td>$majorDonorMark</td><td>" . $r["Donor_Last"] . "</td><td>" . $envName . "</td>";
                 if ($showAmounts) {
-                    $txtreport .= "<td style='text-align:right;'>" . $amountMkup . "</td><td style='text-align:center;'>" . $percentCut . "</td><td style='text-align:right;'>" . $taxFreeMkup . "</td>";
+                    $txtreport .= "<td style='text-align:right;'>" . $amountMkup . "</td><td style='text-align:right;'>" . $vendorAmt . "</td><td style='text-align:right;'>" . $taxFreeMkup . "</td>";
                 }
-                $txtreport .= "<td>" . $r["Campaign_Title"] . "</td><td>" . $r["Fund_Code"] . "</td><td>" . date("Y/m/d", strtotime($r["Effective_Date"])) . "</td><td>" . $r["Note"] . "</td></tr>";
+                $txtreport .= "<td>" . $r["Campaign_Title"] . "</td><td>" . date("Y/m/d", strtotime($r["Effective_Date"])) . "</td><td>" . $r["Note"] . "</td></tr>";
             }
         }
     }

@@ -57,6 +57,7 @@ class Session
     {
         if ( $this->sessionState == self::SESSION_NOT_STARTED )
         {
+            ini_set( 'session.cookie_httponly', 1 );
             $this->sessionState = session_start();
         }
 

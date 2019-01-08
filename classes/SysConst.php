@@ -8,6 +8,14 @@
  * @link      https://github.com/NPSC/HHK
  */
 
+class CodeVersion {
+    const BUILD = 136;
+    const VERSION = 3.12;
+    const PATCH = 1;
+    const GIT_Id = "";
+}
+
+
 class ActivityTypes {
     const Donation = 'don';
     const Volunteer = 'vol';

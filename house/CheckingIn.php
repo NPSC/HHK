@@ -166,7 +166,7 @@ $resvObjEncoded = json_encode($resvAr);
     <head>
         <meta charset="UTF-8">
         <title><?php echo $wInit->pageTitle; ?></title>
-
+        <meta http-equiv="x-ua-compatible" content="IE=edge">
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo DR_PICKER_CSS ?>
@@ -195,8 +195,6 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
-
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
 
     </head>
@@ -211,7 +209,6 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="guestSearch" style="padding-left:0;padding-top:0; margin-bottom:1.5em; clear:left; float:left;">
                 <?php echo $mk1; ?>
             </div>
-
             <form action="CheckingIn.php" method="post"  id="form1">
                 <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
                 <div id="famSection" style="clear:left; float:left; font-size: .9em; display:none; width: 100%; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
@@ -219,12 +216,17 @@ $resvObjEncoded = json_encode($resvAr);
                 <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; width: 100%;" class="ui-widget hhk-visitdialog"></div>
                 <div style="clear:both;min-height: 70px;">.</div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
-                    <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
-                    <input type='button' id='btnDone' value='Continue' style="display:none;"/>
+                    <table >
+                        <tr><td>
+                            <span id="pWarnings" style="display:none; font-size: 1.4em; border: 1px solid #ddce99;margin-bottom:3px; padding: 0 2px; color:red; background-color: yellow; float:right;"></span>
+                        </td></tr>
+                        <tr><td>
+                            <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
+                            <input type='button' id='btnDone' value='Continue' style="display:none;"/>
+                        </td></tr>
+                    </table>
                 </div>
-
             </form>
-
             <div id="pmtRcpt" style="font-size: .9em; display:none;"><?php echo $receiptMarkup; ?></div>
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
@@ -237,10 +239,8 @@ $resvObjEncoded = json_encode($resvAr);
                     <tr><td><input type="hidden" value="" id="hdnEcSchPrefix"/></td></tr>
                 </table>
             </div>
-
         </div>
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
-
 <script type="text/javascript">
 var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
 var payFailPage = '<?php echo $payFailPage; ?>';
@@ -400,10 +400,19 @@ $(document).ready(function() {
     // hide the alert on mousedown
     $(document).mousedown(function (event) {
 
-        var target = $(event.target);
+        if (isIE()) {
 
-        if (target[0].id !== 'divSelAddr' && target[0].closest('div') && target[0].closest('div').id !== 'divSelAddr') {
-            $('#divSelAddr').remove();
+            var target = $(event.target[0]);
+
+            if (target.id && target.id !== undefined && target.id !== 'divSelAddr' && target.closest('div') && target.closest('div').id !== 'divSelAddr') {
+                $('#divSelAddr').remove();
+            }
+
+        } else {
+
+            if (event.target.className === undefined || event.target.className !== 'hhk-addrPickerPanel') {
+                $('#divSelAddr').remove();
+            }
         }
     });
 

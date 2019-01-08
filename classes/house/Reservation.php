@@ -166,8 +166,8 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
                 $psgMembers = $this->reserveData->getPsgMembers();
 
-                $this->findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $arrivalDT, $departDT, $this->reserveData->getResvTitle());
-                $this->reserveData->setConcurrentRooms($this->findConflictingStays($dbh, $psgMembers, $arrivalDT, $this->reserveData->getIdPsg()));
+                $this->reserveData->addConcurrentRooms($this->findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $arrivalDT, $departDT, $this->reserveData->getResvTitle()));
+                $this->reserveData->addConcurrentRooms($this->findConflictingStays($dbh, $psgMembers, $arrivalDT, $this->reserveData->getIdPsg()));
 
                 $this->reserveData->setPsgMembers($psgMembers);
 
@@ -235,7 +235,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         // Is anyone already in a visit?
         $psgMems = $this->reserveData->getPsgMembers();
-        $this->reserveData->setConcurrentRooms(self::findConflictingStays($dbh, $psgMems, $this->reserveData->getArrivalDT(), $this->reserveData->getIdPsg()));
+        $this->reserveData->addConcurrentRooms(self::findConflictingStays($dbh, $psgMems, $this->reserveData->getArrivalDT(), $this->reserveData->getIdPsg()));
         $this->reserveData->setPsgMembers($psgMems);
 
         if (count($this->getStayingMembers()) < 1) {
@@ -251,7 +251,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         // Get reservations for the specified time
         $psgMems2 = $this->reserveData->getPsgMembers();
-        self::findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMems2, $this->reserveData->getArrivalDT(), $this->reserveData->getDepartureDT(), $this->reserveData->getResvTitle());
+        $this->reserveData->addConcurrentRooms(self::findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMems2, $this->reserveData->getArrivalDT(), $this->reserveData->getDepartureDT(), $this->reserveData->getResvTitle()));
         $this->reserveData->setPsgMembers($psgMems2);
 
         // Anybody left?
@@ -267,9 +267,9 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
 
         // verify number of simultaneous reservations/visits
-        if ($this->reserveData->getIdResv() == 0 && $this->reserveData->getConcurrentRooms() > $uS->RoomsPerPatient) {
+        if ($this->reserveData->getIdResv() == 0 && $this->reserveData->getConcurrentRooms() >= $uS->RoomsPerPatient) {
             // Too many
-            $this->reserveData->addError('This reservation violates your House\'s maximum number of simutaneous rooms per patient (' .$uS->RoomsPerPatient . '.  ');
+            $this->reserveData->addError('This reservation violates your House\'s maximum number of simutaneous rooms per patient (' .$uS->RoomsPerPatient . ').  ');
             return;
         }
     }
@@ -303,9 +303,15 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             $idPsg = intval(filter_var($post['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
             $idResv = intval(filter_var($post['idResv'], FILTER_SANITIZE_NUMBER_INT), 10);
-            $arrivalDT = new DateTime(filter_var($post['dt1'], FILTER_SANITIZE_STRING));
-            $departDT = new DateTime(filter_var($post['dt2'], FILTER_SANITIZE_STRING));
             $postMems = filter_var_array($post['mems'], FILTER_SANITIZE_STRING);
+
+            try {
+                $arrivalDT = new DateTime(filter_var($post['dt1'], FILTER_SANITIZE_STRING));
+                $departDT = new DateTime(filter_var($post['dt2'], FILTER_SANITIZE_STRING));
+            } catch(Exception $ex) {
+                return array('error'=>'Bad dates: ' . $ex->getMessage());
+            }
+
 
             foreach ($postMems as $prefix => $memArray) {
 
@@ -439,9 +445,9 @@ WHERE r.idReservation = " . $rData->getIdResv());
             // Add room title to status title
             if ($resv->getStatus() == ReservationStatus::Committed) {
                 $statusText .= ' for Room ' . $resv->getRoomTitle($dbh);
+                $hideCheckinButton = FALSE;
             }
 
-            $hideCheckinButton = FALSE;
         }
 
         if ($resv->isNew() || $resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
@@ -722,7 +728,7 @@ where rg.idReservation =" . $r['idReservation']);
                     . " join registration r on v.idRegistration = r.idRegistration "
                     . " where v.`Status` = '" . VisitStatus::CheckedIn . "' "
                     . " AND ("
-                            . " ( s.`Status` = '" . VisitStatus::CheckedIn . "' AND DATE(DATEDEFAULTNOW(s.Expected_Co_Date)) >= DATE('" . $arrivalDT->format('Y-m-d') . "') ) "
+                            . " ( s.`Status` = '" . VisitStatus::CheckedIn . "' AND DATE(DATEDEFAULTNOW(s.Expected_Co_Date)) > DATE('" . $arrivalDT->format('Y-m-d') . "') ) "
                         . " OR "
                             . " ( s.`Status` = '" . VisitStatus::CheckedOut . "' AND DATE(s.Checkout_Date) > DATE('" . $arrivalDT->format('Y-m-d') . "') )) "
                     . " and s.idName in (" . substr($whStays, 1) . ")");
@@ -741,7 +747,7 @@ where rg.idReservation =" . $r['idReservation']);
                     }
                 }
 
-                // Count rooms
+                // Count different rooms
                 if ($s['idPsg'] == $idPsg) {
                     $rooms[$s['idRoom']] = '1';
                 }
@@ -783,7 +789,7 @@ where rg.idReservation =" . $r['idReservation']);
                     }
                 }
 
-                // Count rooms
+                // Count different rooms
                 if ($r['idPsg'] == $idPsg) {
                     $rescs[$r['idResource']] = '1';
                 }
@@ -927,6 +933,7 @@ where rg.idReservation =" . $r['idReservation']);
         if (($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::UnCommitted)
                 && isset($resources[$idRescPosted]) === FALSE) {
 
+            //  No.
             $this->reserveData->addError('Chosen Room is unavailable.  ');
             $resv->setIdResource(0);
             $resv->setStatus(ReservationStatus::Waitlist);
@@ -935,8 +942,8 @@ where rg.idReservation =" . $r['idReservation']);
 
             $resv->setIdResource($idRescPosted);
 
-            // Don't change comitted to uncommitted.
-            if ($resv->getStatus() != ReservationStatus::Committed) {
+            // Update Status.
+            if ($resv->getStatus() != ReservationStatus::Committed && $resv->getStatus() != ReservationStatus::UnCommitted) {
                 $resv->setStatus($uS->InitResvStatus);
             }
         }
@@ -980,12 +987,6 @@ where rg.idReservation =" . $r['idReservation']);
         }
 
         return $oldResvId;
-    }
-
-    public function savePayments(\PDO $dbh, Reservation_1 &$resv, $post) {
-
-        return;
-
     }
 
     public function saveReservationGuests(\PDO $dbh) {
@@ -1260,9 +1261,6 @@ class ActiveReservation extends Reservation {
         // Room Choice
         $this->setRoomChoice($dbh, $resv, $idRescPosted);
 
-        // Payments
-        $this->savePayments($dbh, $resv, $post);
-
         return $this;
     }
 
@@ -1314,9 +1312,9 @@ class CheckingIn extends ActiveReservation {
     public static function reservationFactoy(\PDO $dbh, $post) {
 
         $rData = new ReserveData($post, 'Check-in');
-        $rData->setSaveButtonLabel('Check-in');
 
         if ($rData->getIdResv() > 0) {
+            $rData->setSaveButtonLabel('Check-in');
             return CheckingIn::loadReservation($dbh, $rData);
         }
 
@@ -1705,6 +1703,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
 }
 
+
 class ReserveSearcher extends ActiveReservation {
 
     public function createMarkup(\PDO $dbh) {
@@ -1721,7 +1720,7 @@ class ReserveSearcher extends ActiveReservation {
 
     public function addPerson(\PDO $dbh) {
 
-        if ($this->reserveData->getId() > 0) {
+        if ($this->reserveData->getIdPsg() < 1 && $this->reserveData->getId() > 0) {
 
             // patient?
             $stmt = $dbh->query("select count(*) from psg where idPatient = " . $this->reserveData->getId());
@@ -1730,6 +1729,7 @@ class ReserveSearcher extends ActiveReservation {
             if ($rows[0][0] > 0) {
                 return $this->createMarkup($dbh);
             }
+
         }
 
         return parent::addPerson($dbh);

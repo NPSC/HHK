@@ -210,7 +210,8 @@ class ScriptAuthClass extends SecurityComponent {
 
             if ($tokn == FALSE) {
                 if ($this->get_Page_Type() == "p") {
-                    include("../errorPages/forbid.html");
+                    echo("Unauthorized");
+                    //include("../errorPages/forbid.html");
                 } else if ($this->get_Page_Type() == "s") {
                     $rtn = array("error" => "Unauthorized");
                     echo json_encode($rtn);

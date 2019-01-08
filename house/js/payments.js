@@ -1020,8 +1020,9 @@ function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, idRe
 function verifyBalDisp() {
     
     if ($('#selexcpay').val() == '' && $('#txtOverPayAmt').val() != '') {
-        $('#payChooserMsg').text('Set "Apply To" to the desired overpayment disposition. ').show('fade');
+        $('#payChooserMsg').text('Set "Apply To" to the desired overpayment disposition. ').show();
         $('#selexcpay').addClass('ui-state-highlight');
+        $('#pWarnings').text('Set "Apply To" to the desired overpayment disposition.').show();
         return false;
     } else {
         $('#payChooserMsg').text('').hide();
@@ -1058,12 +1059,14 @@ function verifyAmtTendrd() {
         }
     
         if (total > 0 && tendered <= 0) {
-            $('#tdCashMsg').text('Enter the amount paid into "Amount Tendered" ').show('fade');
+            $('#tdCashMsg').text('Enter the amount paid into "Amount Tendered" ').show();
+            $('#pWarnings').text('Enter the amount paid into "Amount Tendered"').show();
             return false;
         }
         
         if (total > 0 && tendered < total) {
             $('#tdCashMsg').text('Amount tendered is not enough ').show('fade');
+            $('#pWarnings').text('Amount tendered is not enough').show();
             return false;
         }
     } else if ($('#PayTypeSel').val() === 'in') {

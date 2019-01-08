@@ -188,7 +188,7 @@ $resvObjEncoded = json_encode($resvAr);
     <head>
         <meta charset="UTF-8">
         <title><?php echo $wInit->pageTitle; ?></title>
-
+        <meta http-equiv="x-ua-compatible" content="IE=edge">
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo DR_PICKER_CSS ?>
@@ -217,7 +217,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
+<!--        <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>-->
 
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
 
@@ -240,10 +240,15 @@ $resvObjEncoded = json_encode($resvAr);
                 <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
                 <div style="clear:both;min-height: 70px;">.</div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
-                    <input type="button" id="btnDelete" value="Delete" style="display:none;"/>
-                    <input type="button" id="btnCheckinNow" value='Check-in Now' style="display:none;"/><input type="hidden" id="resvCkinNow" name="resvCkinNow" value="no" />
-                    <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
-                    <input type='button' id='btnDone' value='Continue' style="display:none;"/>
+                    <table >
+                        <tr><td ><span id="pWarnings" style="display:none; font-size: 1.4em; border: 1px solid #ddce99;margin-bottom:3px; padding: 0 2px; color:red; background-color: yellow; float:right;"></span></td></tr>
+                        <tr><td>
+                        <input type="button" id="btnDelete" value="Delete" style="display:none;"/>
+                        <input type="button" id="btnCheckinNow" value='Check-in Now' style="display:none;"/><input type="hidden" id="resvCkinNow" name="resvCkinNow" value="no" />
+                        <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
+                        <input type='button' id='btnDone' value='Continue' style="display:none;"/>
+                            </td></tr>
+                    </table>
                 </div>
 
             </form>
@@ -372,10 +377,19 @@ $(document).ready(function() {
 
     // hide the alert on mousedown
     $(document).mousedown(function (event) {
-        var target = $(event.target);
 
-        if (target[0].id !== 'divSelAddr' && target[0].closest('div') && target[0].closest('div').id !== 'divSelAddr') {
-            $('#divSelAddr').remove();
+        if (isIE()) {
+            var target = $(event.target[0]);
+
+            if (target.id && target.id !== undefined && target.id !== 'divSelAddr' && target.closest('div') && target.closest('div').id !== 'divSelAddr') {
+                $('#divSelAddr').remove();
+            }
+
+        } else {
+
+            if (event.target.className === undefined || event.target.className !== 'hhk-addrPickerPanel') {
+                $('#divSelAddr').remove();
+            }
         }
     });
 
@@ -436,7 +450,9 @@ $(document).ready(function() {
                     pageManager.loadResv(data);
 
                     if (data.resv !== undefined) {
-                        flagAlertMessage(data.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle, 'success');
+                        if (data.warning === undefined) {
+                            flagAlertMessage(data.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle, 'success');
+                        }
                     } else {
                         flagAlertMessage(data.resvTitle + ' Saved.', 'success');
                     }

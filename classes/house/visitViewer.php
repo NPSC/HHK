@@ -956,25 +956,6 @@ class VisitView {
         return $reply;
     }
 
-    public static function updatePsgNotes(\PDO $dbh, \Psg $psg, $notes) {
-
-//        if ($notes != '') {
-//
-//            $oldNotes = is_null($psg->psgRS->Notes->getStoredVal()) ? '' : $psg->psgRS->Notes->getStoredVal();
-//            $psg->psgRS->Notes->setNewVal($oldNotes . $notes);
-//            EditRS::update($dbh, $psg->psgRS, array($psg->psgRS->idPsg));
-//            EditRS::updateStoredVals($psg->psgRS);
-//        }
-//
-    }
-
-    public static function visitMessageArea($header, $message) {
-        $mkup = HTMLContainer::generateMarkup('h4', $header, array('id'=>'h3VisitMsgHdr'))
-                . HTMLContainer::generateMarkup('span', $message, array('id'=>'spnVisitMsg'));
-
-        return $mkup;
-    }
-
 
     /**
      * Move a visit temporally by delta days
@@ -1082,9 +1063,9 @@ class VisitView {
                 $newEndDt = setTimeZone(NULL, $vRs->Expected_Departure->getStoredVal());
                 $newEndDt->setTime(intval($uS->CheckOutTime),0,0);
 
-                if ($newEndDt < $today) {
-                    $newEndDt = $today;
-                }
+//                if ($newEndDt < $today) {
+//                    $newEndDt = $today;
+//                }
 
             } else {
                 $newEndDt = setTimeZone(NULL, $vRs->Span_End->getStoredVal());

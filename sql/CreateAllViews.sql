@@ -1461,6 +1461,7 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
         IFNULL(`p`.`Status_Code`, 0) AS `Payment_Status`,
         IFNULL(`g2`.`Description`, '') AS `Payment_Status_Title`,
         IFNULL(`p`.`Payment_Date`, 0) AS `Payment_Date`,
+        IFNULL(`p`.`Last_Updated`, '') AS `Payment_Last_Updated`,
         IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
         IFNULL(`p`.`idPayor`, 0) AS `Payment_idPayor`,
         IFNULL(`p`.`Updated_By`, '') AS `Payment_Updated_By`,
@@ -1475,6 +1476,7 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
         IFNULL(`pa`.`Approved_Amount`, '') AS `Approved_Amount`,
         IFNULL(`pa`.`Approval_Code`, '') AS `Approval_Code`,
         IFNULL(`pa`.`Status_Code`, '') AS `PA_Status_Code`,
+        IFNULL(`pa`.`Last_Updated`, '') as `Auth_Last_Updated`,
         IFNULL(`pc`.`Check_Number`, '') AS `Check_Number`
     FROM
         `invoice` `i`
@@ -1526,7 +1528,8 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
         IFNULL(`pm`.`Method_Name`, '') AS `Payment_Method_Title`,
         IFNULL(`p`.`Status_Code`, 0) AS `Payment_Status`,
         IFNULL(`g2`.`Description`, '') AS `Payment_Status_Title`,
-        IFNULL(`p`.`Payment_Date`, 0) AS `Payment_Date`,
+        IFNULL(`p`.`Payment_Date`, '') AS `Payment_Date`,
+        IFNULL(`p`.`Last_Updated`, '') AS `Payment_Last_Updated`,
         IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
         IFNULL(`p`.`idPayor`, 0) AS `Payment_idPayor`,
         IFNULL(`p`.`Updated_By`, '') AS `Payment_Updated_By`,
@@ -1541,6 +1544,7 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
         IFNULL(`pa`.`Approved_Amount`, '') AS `Approved_Amount`,
         IFNULL(`pa`.`Approval_Code`, '') AS `Approval_Code`,
         IFNULL(`pa`.`Status_Code`, '') AS `PA_Status_Code`,
+        IFNULL(`pa`.`Last_Updated`, '') as `Auth_Last_Updated`,
         IFNULL(`pc`.`Check_Number`, '') AS `Check_Number`
     FROM
         `payment` `p`
