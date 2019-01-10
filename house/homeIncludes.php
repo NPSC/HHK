@@ -8,7 +8,7 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-define('JSV', '?ir=3');
+define('JSV', '?qr=4');
 
 define('HOUSE_CSS', "<link href='css/house.css' rel='stylesheet' type='text/css' />");
 
