@@ -28,14 +28,15 @@
  * Description of UpdateSite
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
  * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
 
  */
- 
+
 require CLASSES . 'Markdownify.php';
- 
+
 class UpdateSite {
 
     protected $errorMsg;
@@ -102,36 +103,36 @@ class UpdateSite {
                     $errorCount++;
                 }
             }
-            
+
             // Run forms editor update
             $converter = new Markdownify\Converter;
-            
+
             if (file_exists('../conf/agreement.txt')){
 		        $stmt = $dbh->query("select idDocument from document where `Title` = 'Registration Document' and `Category` = 'form' and `Type` = 'md' and `Status` = 'a'");
 				$rows = $stmt->fetchAll(PDO::FETCH_NUM);
-	        
+
 				if ($stmt->rowCount() == 0) { //if agreement document cannot be found
 	            	$htmlcontent = file_get_contents("../conf/agreement.txt");
 	            	$mdcontent = $converter->parseString($htmlcontent);
 	            	$dbh->exec("INSERT INTO document (`Title`, `Abstract`, `Category`, `Type`, `Doc`, `Status`, `Last_Updated`, `Created_By`) VALUES ('Registration Document', '', 'form', 'md', " . $mdcontent . ", 'a', NOW(), 'admin'),");
 	        	}
             }
-            
+
             if (file_exists('../conf/confirmation.txt')){
 	            $stmt = $dbh->query("select idDocument from document where `Title` = 'Confirmation Document' and `Category` = 'form' and `Type` = 'md' and `Status` = 'a'");
 				$rows = $stmt->fetchAll(PDO::FETCH_NUM);
-	        
+
 				if ($stmt->rowCount() == 0) {//if confirmation document cannot be found
 	            	$htmlcontent = file_get_contents("../conf/confirmation.txt");
 	            	$mdcontent = $converter->parseString($htmlcontent);
 	            	$dbh->exec("INSERT INTO document (`Title`, `Abstract`, `Category`, `Type`, `Doc`, `Status`, `Last_Updated`, `Created_By`) VALUES ('Registration Document', '', 'form', 'md', " . $mdcontent . ", 'a', NOW(), 'admin'),");
 	        	}
             }
-            
+
             if (file_exists('../conf/survey.txt')){
 	            $stmt = $dbh->query("select idDocument from document where `Title` = 'Survey Document' and `Category` = 'form' and `Type` = 'md' and `Status` = 'a'");
 				$rows = $stmt->fetchAll(PDO::FETCH_NUM);
-	        
+
 				if ($stmt->rowCount() == 0) {//if survey document cannot be found
 	            	$htmlcontent = file_get_contents("../conf/survey.txt");
 	            	$mdcontent = $converter->parseString($htmlcontent);
