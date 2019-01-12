@@ -1861,11 +1861,15 @@ class StayingReservation extends CheckingIn {
         if ($this->reserveData->getIdVisit() > 0 && $this->reserveData->getSpan() >= 0) {
 
             // set guests staying
-            $stayRss = $dbh->query("Select s.idName, v.idPrimaryGuest from stays s "
+            $stayRss = $dbh->query("Select s.idName, v.idPrimaryGuest, s.Visit_Span from stays s "
                     . " join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span "
-                    . " where s.idVisit = " . $this->reserveData->getIdVisit() . " and s.Visit_Span = " . $this->reserveData->getSpan() . " and s.`Status` = '" . VisitStatus::CheckedIn . "' ");
+                    . " where s.idVisit = " . $this->reserveData->getIdVisit() . " and s.`Status` = '" . VisitStatus::CheckedIn . "' ");
 
-            foreach ($stayRss as $g) {
+
+            while ($g = $stayRss->fetch(PDO::FETCH_ASSOC)) {
+
+                // update the span id
+                $this->reserveData->setSpan($g['Visit_Span']);
 
                 $mem = $this->reserveData->findMemberById($g['idName']);
 

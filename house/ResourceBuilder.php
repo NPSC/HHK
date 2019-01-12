@@ -1792,7 +1792,7 @@ $resultMessage = $alertMsg->createMarkup();
                     if (data.title) {
                         $('#spnEditorTitle').text('Editing ' + data.title);
                         if(data.title == "Confirmation Document"){
-	                        $("#replacementTokens").html('<ul>' + 
+	                        $("#replacementTokens").html('<ul>' +
 	                        '<li>${GuestName}</li>' +
 							'<li>${ExpectedArrival}</li>' +
 							'<li>${ExpectedDeparture}</li>' +
@@ -1961,7 +1961,7 @@ $resultMessage = $alertMsg->createMarkup();
                     <div class="editorContainer">
                     	<textarea id="simpleMDEContainer" style="display:none;"></textarea>
                     </div>
-                    
+
                     <div style="clear:both"></div>
                     <span style="margin:10px;float:right;"><input type="button" id='btnFormSave' style="display:none;" value="Save Form"/></span>
                     <div class="availableTokenContainer" style="display: none; margin-top: 1em;">
