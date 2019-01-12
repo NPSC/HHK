@@ -247,7 +247,7 @@ CREATE TABLE if not exists `desig_holidays` (
 -- -----------------------------------------------------
 -- Table `document`
 -- -----------------------------------------------------
-CREATE TABLE `document` (
+CREATE TABLE if not exists `document` (
   `idDocument` INT NOT NULL AUTO_INCREMENT,
   `Title` VARCHAR(128) NOT NULL,
   `Category` VARCHAR(5) NOT NULL DEFAULT '',
@@ -1791,7 +1791,7 @@ CREATE TABLE if not exists `shell_events` (
 ) ENGINE=InnoDB AUTO_INCREMENT=3;
 
 
-CREATE TABLE `static_doc` (
+CREATE TABLE if not exists `static_doc` (
   `idStatic_doc` INT NOT NULL AUTO_INCREMENT,
   `Doc_Type` VARCHAR(5) NOT NULL DEFAULT '',
   `Doc_Category` VARCHAR(5) NOT NULL DEFAULT '',

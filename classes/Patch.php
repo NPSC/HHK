@@ -123,15 +123,15 @@ class Patch {
     public function updateWithSqlStmts(\PDO $dbh, $tfile, $type = '', $delimiter = ';', $splitAt = ';') {
 
         $this->results = array();
+        $tresult = array();
 
         if ($tfile == '') {
             return $type . ' Filename is missing.  ';
         }
 
-        $tquery = file_get_contents($tfile);
+        $tresult = self::multiQueryPDO($dbh, file_get_contents($tfile), $delimiter, $splitAt);
 
-        $tresult = self::multiQueryPDO($dbh, $tquery, $delimiter, $splitAt);
-
+        // Check for errors
         if (count($tresult) > 0) {
 
             foreach ($tresult as $err) {
