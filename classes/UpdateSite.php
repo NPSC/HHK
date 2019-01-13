@@ -33,8 +33,9 @@
  * @link      https://github.com/NPSC/HHK
 
  */
- 
-require CLASSES . 'Markdownify.php';
+
+require CLASSES . 'Markdownify/Parser.php'; 
+require CLASSES . 'Markdownify/Converter.php';
  
 class UpdateSite {
 
