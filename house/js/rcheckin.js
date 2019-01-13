@@ -47,10 +47,10 @@ $(document).ready(function() {
         $('#hhk-wListResv').toggle('blind');
     });
     createAutoComplete($('#Search'), 3, {cmd: 'role', gp:'1'}, function (item) {
-        window.open('Reserve.php?id=' + item.id, '_self');
+        window.open('Reserve.php?id=' + item.id + '&title=ckin', '_self');
     });
     createAutoComplete($('#phSearch'), 5, {cmd: 'role', gp:'1'}, function (item) {
-        window.open('Reserve.php?id=' + item.id, '_self');
+        window.open('Reserve.php?id=' + item.id + '&title=ckin', '_self');
     });
     $('#Search').keypress(function(event) {
         $(this).removeClass('ui-state-highlight');

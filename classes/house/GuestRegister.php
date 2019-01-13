@@ -778,10 +778,11 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
 
     protected function getHospitals(\PDO $dbh) {
 
-        $hospitals = array(0 => array('idHospital'=>0, 'Background_Color'=>'blue', 'Text_Color'=>'white'));
+        $hospitals = array(0 => array('Title'=>'', 'idHospital'=>0, 'Background_Color'=>'blue', 'Text_Color'=>'white'));
         $this->noAssocId = 0;
 
         $hstmt = $dbh->query("Select Title, idHospital, Reservation_Style as Background_Color, Stay_Style as Text_Color from hospital where `Status` = 'a';");
+
         foreach ($hstmt->fetchAll(\PDO::FETCH_ASSOC) as $h) {
 
             $h['Title'] = htmlspecialchars_decode($h['Title'], ENT_QUOTES);

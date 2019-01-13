@@ -19,6 +19,8 @@ require (DB_TABLES . 'ReservationRS.php');
 require (DB_TABLES . 'ItemRS.php');
 
 require (CLASSES . 'TableLog.php');
+require CLASSES . 'ConvertTxtFiles.php';
+
 require (HOUSE . 'VisitLog.php');
 require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Room.php');
@@ -212,6 +214,7 @@ $tabIndex = 0;
 $feFileSelection = '';
 $rteMsg = '';
 $rateTableErrorMessage = '';
+$convertMsg = '';
 
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
@@ -904,7 +907,12 @@ if (isset($_POST['formEdit'])) {
    exit(json_encode(array('warning'=>'Unspecified')));
 }
 
+if (isset($_POST['btnConvertFiles'])) {
 
+    $tabIndex = 6;
+
+    $convertMsg = ConvertTxtFiles::doMarkdownify($dbh);
+}
 //
 // Generate tab content
 //
@@ -1741,6 +1749,7 @@ $resultMessage = $alertMsg->createMarkup();
         // Form edit form select drives the whole process.
         $('#frmEdSelect').change(function () {
 
+            $('#convertMsg').text('');
             $('#rteMsg').text('');
             $(".editorContainer").find("*").not("textarea").remove();
             $('#spnEditorTitle').text("");
@@ -1792,7 +1801,7 @@ $resultMessage = $alertMsg->createMarkup();
                     if (data.title) {
                         $('#spnEditorTitle').text('Editing ' + data.title);
                         if(data.title == "Confirmation Document"){
-	                        $("#replacementTokens").html('<ul>' + 
+	                        $("#replacementTokens").html('<ul>' +
 	                        '<li>${GuestName}</li>' +
 							'<li>${ExpectedArrival}</li>' +
 							'<li>${ExpectedDeparture}</li>' +
@@ -1955,13 +1964,17 @@ $resultMessage = $alertMsg->createMarkup();
                 </div>
 
                 <div id="agreeEdit" class="ui-tabs-hide" >
+                    <form method="POST" action="ResourceBuilder.php" name="formConvrt">
+                    <input type="submit" name='btnConvertFiles'  value="Convert Files"/>
+                    <p id="convertMsg"><?php echo $convertMsg; ?></p>
+                    </form>
                     <p>Select the form to edit from the following list: <?php echo $feSelectForm; ?></p><p id="spnRteLoading" style="font-style: italic; display:none;">Loading...</p>
                     <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
                     <h3 id="spnEditorTitle"></h3>
                     <div class="editorContainer">
                     	<textarea id="simpleMDEContainer" style="display:none;"></textarea>
                     </div>
-                    
+
                     <div style="clear:both"></div>
                     <span style="margin:10px;float:right;"><input type="button" id='btnFormSave' style="display:none;" value="Save Form"/></span>
                     <div class="availableTokenContainer" style="display: none; margin-top: 1em;">

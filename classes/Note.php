@@ -3,6 +3,7 @@
  * Note.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
  * @copyright 2018 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
