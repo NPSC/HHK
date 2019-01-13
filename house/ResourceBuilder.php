@@ -908,6 +908,9 @@ if (isset($_POST['formEdit'])) {
 }
 
 if (isset($_POST['btnConvertFiles'])) {
+
+    $tabIndex = 6;
+
     $convertMsg = ConvertTxtFiles::doMarkdownify($dbh);
 }
 //
@@ -1746,6 +1749,7 @@ $resultMessage = $alertMsg->createMarkup();
         // Form edit form select drives the whole process.
         $('#frmEdSelect').change(function () {
 
+            $('#convertMsg').text('');
             $('#rteMsg').text('');
             $(".editorContainer").find("*").not("textarea").remove();
             $('#spnEditorTitle').text("");
@@ -1962,7 +1966,7 @@ $resultMessage = $alertMsg->createMarkup();
                 <div id="agreeEdit" class="ui-tabs-hide" >
                     <form method="POST" action="ResourceBuilder.php" name="formConvrt">
                     <input type="submit" name='btnConvertFiles'  value="Convert Files"/>
-                    <p><?php echo $convertMsg; ?></p>
+                    <p id="convertMsg"><?php echo $convertMsg; ?></p>
                     </form>
                     <p>Select the form to edit from the following list: <?php echo $feSelectForm; ?></p><p id="spnRteLoading" style="font-style: italic; display:none;">Loading...</p>
                     <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>

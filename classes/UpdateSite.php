@@ -105,7 +105,7 @@ class UpdateSite {
             }
 
             // Convert any old agreement or confirmation files.
-            $this->resultAccumulator .= ConvertTxtFiles::doMarkdownify($dbh);
+            //$this->resultAccumulator .= ConvertTxtFiles::doMarkdownify($dbh);
 
 
             // Update views

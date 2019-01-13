@@ -24,8 +24,8 @@
  * THE SOFTWARE.
  */
 
-require CLASSES . 'Markdownify.php';
-require CLASSES . 'Parsedown.php';
+require CLASSES . 'markdownify/Markdownify.php';
+
 
 /**
  * Description of ConvertTxtFiles
@@ -37,7 +37,7 @@ class ConvertTxtFiles {
     public static function doMarkdownify(\PDO $dbh) {
 
         // Run forms editor update
-        $converter = new Markdownify\Converter;
+        $converter = new Markdownify;
         $result = '';
 
         if (file_exists('../conf/agreement.txt')) {
@@ -50,7 +50,7 @@ class ConvertTxtFiles {
             if ($stmt->rowCount() == 0) { //if agreement document cannot be found
                 $htmlcontent = file_get_contents("../conf/agreement.txt");
                 $mdcontent = $converter->parseString($htmlcontent);
-                $agreeCt = $dbh->exec("INSERT INTO document (`Title`, `Abstract`, `Category`, `Type`, `Doc`, `Status`, `Last_Updated`, `Created_By`) VALUES ('Registration Document', '', 'form', 'md', " . $mdcontent . ", 'a', NOW(), 'admin'),");
+                $agreeCt = $dbh->exec("INSERT INTO document (`Title`, `Abstract`, `Category`, `Type`, `Doc`, `Status`, `Last_Updated`, `Created_By`) VALUES ('Registration Document', '', 'form', 'md', '" . $mdcontent . "', 'a', NOW(), 'admin')");
 
                 if ($agreeCt > 0) {
                     $result .= 'agreement.txt converted.  ';
@@ -74,7 +74,7 @@ class ConvertTxtFiles {
             if ($stmt->rowCount() == 0) {//if confirmation document cannot be found
                 $htmlcontent = file_get_contents("../conf/confirmation.txt");
                 $mdcontent = $converter->parseString($htmlcontent);
-                $agreeCt = $dbh->exec("INSERT INTO document (`Title`, `Abstract`, `Category`, `Type`, `Doc`, `Status`, `Last_Updated`, `Created_By`) VALUES ('Registration Document', '', 'form', 'md', " . $mdcontent . ", 'a', NOW(), 'admin'),");
+                $agreeCt = $dbh->exec("INSERT INTO document (`Title`, `Abstract`, `Category`, `Type`, `Doc`, `Status`, `Last_Updated`, `Created_By`) VALUES ('Registration Document', '', 'form', 'md', '" . $mdcontent . "', 'a', NOW(), 'admin'),");
 
                 if ($agreeCt > 0) {
                     $result .= 'confirmation.txt converted.  ';
@@ -97,7 +97,7 @@ class ConvertTxtFiles {
             if ($stmt->rowCount() == 0) {//if survey document cannot be found
                 $htmlcontent = file_get_contents("../conf/survey.txt");
                 $mdcontent = $converter->parseString($htmlcontent);
-                $agreeCt = $dbh->exec("INSERT INTO document (`Title`, `Abstract`, `Category`, `Type`, `Doc`, `Status`, `Last_Updated`, `Created_By`) VALUES ('Registration Document', '', 'form', 'md', " . $mdcontent . ", 'a', NOW(), 'admin'),");
+                $agreeCt = $dbh->exec("INSERT INTO document (`Title`, `Abstract`, `Category`, `Type`, `Doc`, `Status`, `Last_Updated`, `Created_By`) VALUES ('Registration Document', '', 'form', 'md', '" . $mdcontent . "', 'a', NOW(), 'admin'),");
 
                 if ($agreeCt > 0) {
                     $result .= 'survey.txt converted.  ';
