@@ -31,6 +31,10 @@ function flagAlertMessage(mess, wasError, $txtCtrl) {
     }
     
     // Show message in a given container.
+    if ($txtCtrl === undefined || $txtCtrl === null) {
+        return;
+    }
+    
     $txtCtrl.text(mess).show();
 }
 
