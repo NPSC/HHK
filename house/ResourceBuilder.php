@@ -103,7 +103,6 @@ function saveArchive(\PDO $dbh, $desc, $subt, $tblName) {
                 $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
                 $logTextu = HouseLog::getUpdateText($glRs, $tblName . $code);
                 HouseLog::logGenLookups($dbh, $tblName, $code, $logTextu, 'update', $uS->username);
-
             } else {
 
                 // update
@@ -117,7 +116,6 @@ function saveArchive(\PDO $dbh, $desc, $subt, $tblName) {
                     $logText = HouseLog::getUpdateText($glRs, $tblName . $code);
                     HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'update', $uS->username);
                 }
-
             }
         }
     }
@@ -161,11 +159,9 @@ function getSelections(\PDO $dbh, $tableName, $type) {
             }
 
             $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', $ary));
-
         } else if ($type == GlTypeCodes::Demographics && $d[0] == 'z') {
 
             $cbDelMU = HTMLTable::makeTd('');
-
         } else if ($type != GlTypeCodes::U) {
 
             $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'cbDiagDel[' . $d[0] . ']', 'type' => 'checkbox', 'class' => 'hhkdiagdelcb', 'data-did' => 'selDiagDel[' . $d[0] . ']')));
@@ -173,7 +169,7 @@ function getSelections(\PDO $dbh, $tableName, $type) {
 
         $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLInput::generateMarkup($d[1], array('name' => 'txtDiag[' . $d[0] . ']')))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($d[4], array('name' => 'txtDOrder[' . $d[0] . ']', 'size'=>'3')))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($d[4], array('name' => 'txtDOrder[' . $d[0] . ']', 'size' => '3')))
                 . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA || ($type == GlTypeCodes::Demographics && $uS->GuestNameColor == $tableName) ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[2], array('size' => '10', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[' . $d[0] . ']'))) : '')
                 . $cbDelMU
                 . ($type != GlTypeCodes::m && $type != GlTypeCodes::U ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($tDiags, ''), array('name' => 'selDiagDel[' . $d[0] . ']'))) : '')
@@ -185,16 +181,14 @@ function getSelections(\PDO $dbh, $tableName, $type) {
         // new entry row
         $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDiag[0]')))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDOrder[0]', 'size'=>'3')))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDOrder[0]', 'size' => '3')))
                 . HTMLTable::makeTd('New', array('colspan' => 2))
                 . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA ? HTMLTable::makeTd(HTMLInput::generateMarkup('', array('size' => '7', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[0]'))) : '')
         );
     }
 
     return $tbl;
-
 }
-
 
 $dbh = $wInit->dbh;
 $pageTitle = $wInit->pageTitle;
@@ -206,7 +200,7 @@ $uS = Session::getInstance();
 // Kick out 'Guest' Users
 if ($uS->rolecode > WebRole::WebUser) {
 
-    exit("Unauthorized - " . HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'index.php')));
+    exit("Unauthorized - " . HTMLContainer::generateMarkup('a', 'Continue', array('href' => 'index.php')));
 }
 
 
@@ -324,7 +318,6 @@ if (isset($_POST['table'])) {
                     return $dbh->exec("update name_demog set `$tableName` = '$newId' where `$tableName` = '$oldId';");
                 };
             }
-
         } else {
             switch ($tableName) {
 
@@ -542,7 +535,6 @@ if (isset($_POST['btnkfSave'])) {
 
             if ($newDesc != '') {
                 // Add a cleaning fee?
-
                 // Look for existing fee
                 $glRs = new GenLookupsRS();
                 $glRs->Table_Name->setStoredVal('Visit_Fee_Code');
@@ -550,7 +542,7 @@ if (isset($_POST['btnkfSave'])) {
                 $rows = EditRS::select($dbh, $glRs, array($glRs->Table_Name, $glRs->Description));
 
                 if (count($rows) > 0) {
-                    $rateTableErrorMessage = HTMLContainer::generateMarkup('p', 'Visit fee code "' . $newDesc . '" is already defined. ', array('style'=>'color:red;'));
+                    $rateTableErrorMessage = HTMLContainer::generateMarkup('p', 'Visit fee code "' . $newDesc . '" is already defined. ', array('style' => 'color:red;'));
                 } else {
 
                     // Insert new cleaning fee
@@ -565,7 +557,6 @@ if (isset($_POST['btnkfSave'])) {
                     EditRS::insert($dbh, $glRs);
                     $logText = HouseLog::getInsertText($glRs, 'Visit_Fee_Code');
                     HouseLog::logGenLookups($dbh, 'Visit_Fee_Code', $newCode, $logText, 'insert', $uS->username);
-
                 }
             }
         }
@@ -850,42 +841,42 @@ if (isset($_POST['btnItemSave'])) {
 
 if (isset($_POST['formEdit'])) {
 
-   $tabIndex = 6;
+    $tabIndex = 6;
 
-   $cmd = filter_input(INPUT_POST, 'formEdit', FILTER_SANITIZE_STRING);
+    $cmd = filter_input(INPUT_POST, 'formEdit', FILTER_SANITIZE_STRING);
 
-   switch ($cmd) {
+    switch ($cmd) {
 
-       case 'getform':
+        case 'getform':
 
-           $fn = intval(filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_NUMBER_INT), 10);
+            $fn = intval(filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_NUMBER_INT), 10);
 
-           if (!$fn || $fn == '0') {
-               exit(json_encode(array('warning'=>'The Form id is blank.')));
-           }
+            if (!$fn || $fn == '0') {
+                exit(json_encode(array('warning' => 'The Form id is blank.')));
+            }
 
-           $doc = new Document($dbh, $fn);
-           $rtn = array();
+            $doc = new Document($dbh, $fn);
+            $rtn = array();
 
-           if ($doc->isValid()) {
-               $rtn = array('title'=>$doc->getTitle(), 'tx'=>$doc->getDoc());
-           } else {
-               $rtn = array('warning'=>'The Form is not found.');
-           }
+            if ($doc->isValid()) {
+                $rtn = array('title' => $doc->getTitle(), 'tx' => $doc->getDoc());
+            } else {
+                $rtn = array('warning' => 'The Form is not found.');
+            }
 
-           exit(json_encode($rtn));
+            exit(json_encode($rtn));
 
-           break;
+            break;
 
-       case 'saveform':
+        case 'saveform':
 
-           $formEditorText = urldecode(filter_input(INPUT_POST, 'mu', FILTER_SANITIZE_STRING));
+            $formEditorText = urldecode(filter_input(INPUT_POST, 'mu', FILTER_SANITIZE_STRING));
 
-           $fn = intval(filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_NUMBER_INT), 10);
+            $fn = intval(filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_NUMBER_INT), 10);
 
-           if (!$fn || $fn == '0') {
-               exit(json_encode(array('warning'=>'The Form id is blank.')));
-           }
+            if (!$fn || $fn == '0') {
+                exit(json_encode(array('warning' => 'The Form id is blank.')));
+            }
 
             $doc = new Document($dbh, $fn);
 
@@ -894,17 +885,16 @@ if (isset($_POST['formEdit'])) {
 
             if ($doc->getIdDocument() > 0) {
                 $rteMsg = "Success - form saved.";
-
             } else {
                 $rteMsg = "Form Not Saved.";
             }
 
-           exit(json_encode(array('response'=>$rteMsg, 'idDocument'=>$doc->getIdDocument())));
+            exit(json_encode(array('response' => $rteMsg, 'idDocument' => $doc->getIdDocument())));
 
-           break;
-   }
+            break;
+    }
 
-   exit(json_encode(array('warning'=>'Unspecified')));
+    exit(json_encode(array('warning' => 'Unspecified')));
 }
 
 if (isset($_POST['btnConvertFiles'])) {
@@ -991,7 +981,7 @@ if ($priceModel->hasRateCalculator()) {
 
 // Wrap rate table and rate calculator
 $feesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Room Rates', array('style' => 'font-weight:bold;'))
-                . HTMLContainer::generateMarkup('div', $fTbl->generateMarkup(array('style' => 'margin:7px;')), array('style'=>'max-height:310px; overflow-y:scroll;'))
+                . HTMLContainer::generateMarkup('div', $fTbl->generateMarkup(array('style' => 'margin:7px;')), array('style' => 'max-height:310px; overflow-y:scroll;'))
                 . $rcMarkup
                 . $sMarkup
                 , array('style' => 'clear:left;float:left;margin:7px;'));
@@ -1028,10 +1018,10 @@ if ($uS->VisitFee) {
     }
 
     // add empty fee row
-        $kTbl->addBodyTr(
-                HTMLTable::makeTd('', array('style' => 'text-align:center;'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'vfdesc[0]', 'size' => '16')))
-                . HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name' => 'vfrate[0]', 'size' => '6', 'class' => 'number-only'))));
+    $kTbl->addBodyTr(
+            HTMLTable::makeTd('', array('style' => 'text-align:center;'))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'vfdesc[0]', 'size' => '16')))
+            . HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name' => 'vfrate[0]', 'size' => '6', 'class' => 'number-only'))));
 
 
     $visitFeesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee') . ' Amount', array('style' => 'font-weight:bold;')) . $kTbl->generateMarkup(array('style' => 'margin:7px;')), array('style' => 'float:left;margin:7px;'));
@@ -1228,8 +1218,8 @@ $constraintTable = $constraints->createConstraintTable($dbh);
 
 // Form editor
 $feSelectForm = HTMLSelector::generateMarkup(
-       HTMLSelector::doOptionsMkup(ListDocuments::asLookups(ListDocuments::listHouseForms($dbh)), "", TRUE)
-       , array('id'=>'frmEdSelect', 'name'=>'frmEdSelect'));
+                HTMLSelector::doOptionsMkup(ListDocuments::asLookups(ListDocuments::listHouseForms($dbh)), "", TRUE)
+                , array('id' => 'frmEdSelect', 'name' => 'frmEdSelect'));
 
 
 
@@ -1251,7 +1241,7 @@ WHERE
 
 $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
-$selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''), array('name' => 'selDemoLookup', 'data-type'=>'d', 'class' => 'hhk-selLookup'));
+$selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''), array('name' => 'selDemoLookup', 'data-type' => 'd', 'class' => 'hhk-selLookup'));
 $lookupErrMsg = '';
 
 
@@ -1279,7 +1269,6 @@ foreach ($rows2 as $r) {
     } else if ($r[1] == 'Location') {
         $hasLocs = TRUE;
     }
-
 }
 
 $selLookups = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($lkups, ''), array('name' => 'sellkLookup', 'class' => 'hhk-selLookup'));
@@ -1337,13 +1326,11 @@ $resultMessage = $alertMsg->createMarkup();
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo JQ_UI_CSS; ?>
-        <?php echo JQ_DT_CSS; ?>
-        <?php echo HOUSE_CSS; ?>
-        <?php echo FONTAWESOME_CSS; ?>s
-        <?php echo MDEDITOR_CSS; ?>
-        <?php echo NOTY_CSS; ?>
-        <?php echo FAVICON; ?>
+<?php echo JQ_UI_CSS; ?>
+<?php echo JQ_DT_CSS; ?>
+<?php echo HOUSE_CSS; ?>
+<?php echo NOTY_CSS; ?>
+<?php echo FAVICON; ?>
         <style>
             @media screen {
                 .hhk-printmedia {display:none;}
@@ -1353,6 +1340,14 @@ $resultMessage = $alertMsg->createMarkup();
             }
         </style>
 
+
+        <script src="../js/tuiEditorSupport.js"></script>
+        <script src="../js/tui-editor-Editor.min.js"></script>
+
+        <link rel="stylesheet" href="css/tui-editor/tui-editor.min.css">
+        <link rel="stylesheet" href="css/tui-editor/tui-editor-contents-min.css">
+        <link rel="stylesheet" href="css/tui-editor/codemirror.css">
+
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
@@ -1360,169 +1355,96 @@ $resultMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MDEDITOR_JS; ?>"></script>
+
         <script type="text/javascript">
-    function isNumber(n) {
-        "use strict";
-        return !isNaN(parseFloat(n)) && isFinite(n);
-    }
+            function isNumber(n) {
+                "use strict";
+                return !isNaN(parseFloat(n)) && isFinite(n);
+            }
 
-    var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
-    var documentId = 0;
-    var simplemde;
+            var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
+            var documentId = 0;
+            var simplemde;
 
-    function getRoomFees(cat) {
-        if (cat != '' && cat != fixedRate) {
-            // go get the total
-            var ds = parseInt($('#txtNites').val(), 10);
-            if (isNaN(ds)) {
-                ds = 0;
-            }
-            var ct = parseInt($('#txtCredit').val(), 10);
-            if (isNaN(ct)) {
-                ct = 0;
-            }
-            $('#spnAmount').text('').addClass('ui-autocomplete-loading');
-            $.post('ws_ckin.php', {
-                cmd: 'rtcalc',
-                rcat: cat,
-                nites: ds,
-                credit: ct
-            }, function (data) {
-                $('#spnAmount').text('').removeClass('ui-autocomplete-loading');
-                data = $.parseJSON(data);
-                if (data.error) {
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
+            function getRoomFees(cat) {
+                if (cat != '' && cat != fixedRate) {
+                    // go get the total
+                    var ds = parseInt($('#txtNites').val(), 10);
+                    if (isNaN(ds)) {
+                        ds = 0;
                     }
-                    flagAlertMessage(data.error, true);
-                    return;
-                }
-                if (data.amt) {
-                    $('#spnAmount').text(data.amt);
-                }
-                if (data.cat) {
-                    $('#selRateCategory').val(cat);
-                }
-            });
-        }
-    }
-    function setupRates() {
-        "use strict";
-        $('#txtFixedRate').change(function () {
-            if ($('#selRateCategory').val() == fixedRate) {
-                var amt = parseFloat($(this).val());
-                if (isNaN(amt) || amt < 0) {
-                    amt = parseFloat($(this).prop("defaultValue"));
-                    if (isNaN(amt) || amt < 0)
-                        amt = 0;
-                    $(this).val(amt);
-                }
-                var ds = parseInt($('#txtNites').val(), 10);
-                if (isNaN(ds)) {
-                    ds = 0;
-                }
-                $('#spnAmount').text(amt * ds);
-            }
-        });
-        $('#txtNites, #txtCredit').change(function () {
-            getRoomFees($('#selRateCategory').val());
-        });
-        $('#selRateCategory').change(function () {
-            if ($(this).val() == fixedRate) {
-                $('.hhk-fxFixed').show();
-            } else {
-                $('.hhk-fxFixed').hide();
-                getRoomFees($(this).val());
-            }
-            $('#txtFixedRate').change();
-        });
-        $('#selRateCategory').change();
-    }
-    var savedRow;
-    function getResource(idResc, type, trow) {
-        "use strict";
-        if ($('#cancelbtn').length > 0) {
-            $('#cancelbtn').click();
-        }
-        $.post('ws_resc.php', {
-            cmd: 'getResc',
-            tp: type,
-            id: idResc
-        }, function (data) {
-            if (data) {
-                try {
-                    data = $.parseJSON(data);
-                } catch (err) {
-                    alert("Parser error - " + err.message);
-                    return;
-                }
-                if (data.error) {
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
+                    var ct = parseInt($('#txtCredit').val(), 10);
+                    if (isNaN(ct)) {
+                        ct = 0;
                     }
-                    flagAlertMessage(data.error, true);
-                    return;
-                }
-                if (data.row) {
-                    savedRow = trow.children();
-                    trow.children().remove().end().append($(data.row));
-                    $('#savebtn').button().click(function () {
-                        var btn = $(this);
-                        saveResource(btn.data('id'), btn.data('type'), btn.data('cls'));
-                    });
-                    $('#cancelbtn').button().click(function () {
-                        trow.children().remove().end().append(savedRow);
-                        $('.reNewBtn').button();
-                    });
-                }
-            }
-        });
-    }
-    function getStatusEvent(idResc, type, title) {
-        "use strict";
-        $.post('ws_resc.php', {
-            cmd: 'getStatEvent',
-            tp: type,
-            title: title,
-            id: idResc
-        }, function (data) {
-            if (data) {
-                try {
-                    data = $.parseJSON(data);
-                } catch (err) {
-                    alert("Parser error - " + err.message);
-                    return;
-                }
-                if (data.error) {
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
-                    }
-                    flagAlertMessage(data.error, true);
-                    return;
-                }
-                if (data.tbl) {
-                    $('#statEvents').children().remove().end().append($(data.tbl));
-                    $('.ckdate').datepicker({autoSize: true, dateFormat: 'M d, yy'});
-                    var buttons = {
-                        "Save": function () {
-                            saveStatusEvent(idResc, type);
-                        },
-                        'Cancel': function () {
-                            $(this).dialog('close');
+                    $('#spnAmount').text('').addClass('ui-autocomplete-loading');
+                    $.post('ws_ckin.php', {
+                        cmd: 'rtcalc',
+                        rcat: cat,
+                        nites: ds,
+                        credit: ct
+                    }, function (data) {
+                        $('#spnAmount').text('').removeClass('ui-autocomplete-loading');
+                        data = $.parseJSON(data);
+                        if (data.error) {
+                            if (data.gotopage) {
+                                window.open(data.gotopage, '_self');
+                            }
+                            flagAlertMessage(data.error, true);
+                            return;
                         }
-                    };
-                    $('#statEvents').dialog('option', 'buttons', buttons);
-                    $('#statEvents').dialog('open');
+                        if (data.amt) {
+                            $('#spnAmount').text(data.amt);
+                        }
+                        if (data.cat) {
+                            $('#selRateCategory').val(cat);
+                        }
+                    });
                 }
             }
-        });
-    }
-    function saveStatusEvent(idResc, type) {
-        "use strict";
-        $.post('ws_resc.php', $('#statForm').serialize() + '&cmd=saveStatEvent' + '&id=' + idResc + '&tp=' + type,
-                function (data) {
-                    $('#statEvents').dialog('close');
+            function setupRates() {
+                "use strict";
+                $('#txtFixedRate').change(function () {
+                    if ($('#selRateCategory').val() == fixedRate) {
+                        var amt = parseFloat($(this).val());
+                        if (isNaN(amt) || amt < 0) {
+                            amt = parseFloat($(this).prop("defaultValue"));
+                            if (isNaN(amt) || amt < 0)
+                                amt = 0;
+                            $(this).val(amt);
+                        }
+                        var ds = parseInt($('#txtNites').val(), 10);
+                        if (isNaN(ds)) {
+                            ds = 0;
+                        }
+                        $('#spnAmount').text(amt * ds);
+                    }
+                });
+                $('#txtNites, #txtCredit').change(function () {
+                    getRoomFees($('#selRateCategory').val());
+                });
+                $('#selRateCategory').change(function () {
+                    if ($(this).val() == fixedRate) {
+                        $('.hhk-fxFixed').show();
+                    } else {
+                        $('.hhk-fxFixed').hide();
+                        getRoomFees($(this).val());
+                    }
+                    $('#txtFixedRate').change();
+                });
+                $('#selRateCategory').change();
+            }
+            var savedRow;
+            function getResource(idResc, type, trow) {
+                "use strict";
+                if ($('#cancelbtn').length > 0) {
+                    $('#cancelbtn').click();
+                }
+                $.post('ws_resc.php', {
+                    cmd: 'getResc',
+                    tp: type,
+                    id: idResc
+                }, function (data) {
                     if (data) {
                         try {
                             data = $.parseJSON(data);
@@ -1537,326 +1459,404 @@ $resultMessage = $alertMsg->createMarkup();
                             flagAlertMessage(data.error, true);
                             return;
                         }
-
-                        if (data.msg && data.msg != '') {
-                            flagAlertMessage(data.msg, false);
+                        if (data.row) {
+                            savedRow = trow.children();
+                            trow.children().remove().end().append($(data.row));
+                            $('#savebtn').button().click(function () {
+                                var btn = $(this);
+                                saveResource(btn.data('id'), btn.data('type'), btn.data('cls'));
+                            });
+                            $('#cancelbtn').button().click(function () {
+                                trow.children().remove().end().append(savedRow);
+                                $('.reNewBtn').button();
+                            });
                         }
-
                     }
                 });
-    }
-    function saveResource(idresc, type, clas) {
-        "use strict";
-        var parms = {};
-        $('.' + clas).each(function () {
-
-            if ($(this).attr('type') === 'radio' || $(this).attr('type') === 'checkbox') {
-                if (this.checked !== false) {
-                    parms[$(this).attr('id')] = 'on';
-                }
-            } else {
-                parms[$(this).attr('id')] = $(this).val();
             }
-        });
-        $.post('ws_resc.php', {
-            cmd: 'redit',
-            tp: type,
-            id: idresc,
-            parm: parms
-        }, function (data) {
-            if (data) {
-                try {
-                    data = $.parseJSON(data);
-                } catch (err) {
-                    alert("Parser error - " + err.message);
-                    return;
-                }
-                if (data.error) {
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
-                    }
-                    flagAlertMessage(data.error, true);
-                    return;
-                } else if (data.roomList) {
-                    $('#roomTable').children().remove().end().append($(data.roomList));
-                    $('#tblroom').dataTable({
-                        "dom": '<"top"if>rt<"bottom"lp><"clear">',
-                        "displayLength": 50,
-                        "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
-                    });
-                } else if (data.rescList) {
-                    $('#rescTable').children().remove().end().append($(data.rescList));
-                    $('#tblresc').dataTable({
-                        "dom": '<"top"if>rt<"bottom"lp><"clear">',
-                        "displayLength": 50,
-                        "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
-                    });
-                } else if (data.constList) {
-                    $('#constr').children().remove().end().append($(data.constList));
-                }
-                $('.reNewBtn').button();
-            }
-        });
-    }
-    $(document).ready(function () {
-        "use strict";
-
-        var tabIndex = parseInt('<?php echo $tabIndex; ?>');
-        $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn, #btnFormSave').button();
-
-        $('#txtFaIncome, #txtFaSize').change(function () {
-            var inc = $('#txtFaIncome').val().replace(',', ''),
-                    size = $('#txtFaSize').val(),
-                    errmsg = $('#spnErrorMsg');
-            errmsg.text('');
-            $('#txtFaIncome, #txtFaSize, #spnErrorMsg').removeClass('ui-state-highlight');
-            if (inc == '' || size == '') {
-                $('#spnFaCatTitle').text('');
-                $('#hdnRateCat').val('');
-                return false;
-            }
-            if (inc == '' || inc == '0' || isNaN(inc)) {
-                $('#txtFaIncome').addClass('ui-state-highlight');
-                errmsg.text('Fill in the Household Income').addClass('ui-state-highlight');
-                return false;
-            }
-            if (size == '' || size == '0' || isNaN(size)) {
-                $('#txtFaSize').addClass('ui-state-highlight');
-                errmsg.text('Fill in the Household Size').addClass('ui-state-highlight');
-                return false;
-            }
-            $.post('ws_ckin.php', {
-                cmd: 'rtcalc',
-                income: inc,
-                hhsize: size,
-                nites: 0
-            }, function (data) {
-                data = $.parseJSON(data);
-                if (data.catTitle) {
-                    $('#spnFaCatTitle').text(data.catTitle);
-                }
-                if (data.cat) {
-                    $('#hdnRateCat').val(data.cat);
-                }
-            });
-            return false;
-        });
-        setupRates();
-        $('#mainTabs').tabs();
-        $('#mainTabs').tabs("option", "active", tabIndex);
-        $('#statEvents').dialog({
-            autoOpen: false,
-            resizable: true,
-            width: 800,
-            modal: true,
-            title: 'Manage Status Events'
-        });
-        $('div#mainTabs').on('click', '.reEditBtn, .reNewBtn', function () {
-            getResource($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
-        });
-        $('div#mainTabs').on('click', '.reStatBtn', function () {
-            getStatusEvent($(this).attr('name'), $(this).data('enty'), $(this).data('title'));
-        });
-        $('#tblroom, #tblresc').dataTable({
-            "dom": '<"top"if>rt<"bottom"lp><"clear">',
-            "displayLength": 50,
-            "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
-        });
-        $('.hhk-selLookup').change(function () {
-            var $sel = $(this),
-                table = $(this).find("option:selected").text(),
-                type = $(this).val();
-
-            if ($sel.data('type') === 'd') {
-                table = $sel.val();
-                type = 'd';
-            }
-
-            $sel.closest('form').children('div').empty().text('Loading...');
-            $sel.prop('disabled', true);
-
-            $.post('ResourceBuilder.php', {table: table, cmd: "load", tp: type},
-                    function (data) {
-                        $sel.prop('disabled', false);
-                        if (data) {
-                            $sel.closest('form').children('div').empty().append(data);
-                        }
-                    });
-        });
-        $('.hhk-saveLookup').click(function () {
-            var $frm = $(this).closest('form');
-            var sel = $frm.find('select.hhk-selLookup');
-            var table = sel.find('option:selected').text(),
-                type = $frm.find('select').val(),
-                $btn = $(this);
-
-            if (sel.data('type') === 'd') {
-                table = sel.val();
-                type = 'd';
-            }
-
-            if ($btn.val() === 'Saving...') {
-                return;
-            }
-
-            $btn.val('Saving...');
-
-            $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
-                function(data) {
-                    $btn.val('Save');
+            function getStatusEvent(idResc, type, title) {
+                "use strict";
+                $.post('ws_resc.php', {
+                    cmd: 'getStatEvent',
+                    tp: type,
+                    title: title,
+                    id: idResc
+                }, function (data) {
                     if (data) {
-                        $frm.children('div').empty().append(data);
-                    }
-                });
-        }).button();
-
-        $('#btndemoSave').click(function () {
-            var $frm = $(this).closest('form');
-
-            $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + 'Demographics' + '&tp=' + 'm',
-                function(data) {
-                    if (data) {
-                        $frm.children('div').children().remove().end().append(data);
-                    }
-                });
-        }).button();
-
-
-        // Add diagnosis and locations
-        if ($('#btnAddDiags').length > 0) {
-            $('#btnAddDiags').button();
-        }
-        if ($('#btnAddLocs').length > 0) {
-            $('#btnAddLocs').button();
-        }
-        if ($('#btnHouseDiscs').length > 0) {
-            $('#btnHouseDiscs').button();
-        }
-        if ($('#btnAddnlCharge').length > 0) {
-            $('#btnAddnlCharge').button();
-        }
-
-
-        //verifyAddrs('#roomTable');
-        $('input.number-only').change(function () {
-            if (isNumber(this.value) === false) {
-                $(this).val('0');
-            }
-            $(this).val(parseInt(this.value));
-        });
-        $('#mainTabs').show();
-
-        // Form edit form select drives the whole process.
-        $('#frmEdSelect').change(function () {
-
-            $('#convertMsg').text('');
-            $('#rteMsg').text('');
-            $(".editorContainer").find("*").not("textarea").remove();
-            $('#spnEditorTitle').text("");
-
-            if ($(this).val() === '') {
-                $('#spnRteLoading').hide();
-                documentId = 0;
-                $('#simpleMDEContainer').val("");
-                return;
-            }
-
-            documentId = $(this).val();
-            $('#spnRteLoading').show();
-
-            $.post('ResourceBuilder.php', {formEdit:'getform', fn: $(this).val()}, function (rawData){
-
-                $('#spnRteLoading').hide();
-
-                try {
-                    var data = $.parseJSON(rawData);
-                } catch (error) {
-                    alert('Server Error');
-                    return;
-                }
-
-                if (data.gotopage) {
-                    window.open(data.gotopage, '_self');
-		}
-
-                if (data.warning && data.warning !== '') {
-
-                    $('#rteMsg').text(data.warning);
-
-                }else{
-
-	            var mdeContainer = $('#simpleMDEContainer');
-
-                    simplemde = new SimpleMDE({
-                                element: mdeContainer[0],
-                                initialValue: data.tx,
-                                autoDownloadFontAwesome: false,
-                                spellChecker: false,
-                                hideIcons: [
-                                        "fullscreen", "side-by-side"
-                                ],
-                                status: false
-                         });
-
-                    if (data.title) {
-                        $('#spnEditorTitle').text('Editing ' + data.title);
-                        if(data.title == "Confirmation Document"){
-	                        $("#replacementTokens").html('<ul>' +
-	                        '<li>${GuestName}</li>' +
-							'<li>${ExpectedArrival}</li>' +
-							'<li>${ExpectedDeparture}</li>' +
-							'<li>${DateToday}</li>' +
-							'<li>${Nites}</li>' +
-							'<li>${Amount}</li>' +
-							'<li>${Notes}</li>' +
-							'<li>${VisitFeeNotice}</li>' +
-							'</ul>');
-	                        $(".availableTokenContainer").show();
-                        }else if(data.title == "Survey Document"){
-	                        $("#replacementTokens").html('<ul>' +
-	                        '<li>${FirstName}</li>' +
-							'<li>${LastName}</li>' +
-							'<li>${NameSuffix}</li>' +
-							'<li>${NamePrefix}</li>' +
-	                        '</ul>');
-	                        $(".availableTokenContainer").show();
-                        }else{
-	                        $(".availableTokenContainer").hide();
+                        try {
+                            data = $.parseJSON(data);
+                        } catch (err) {
+                            alert("Parser error - " + err.message);
+                            return;
                         }
-                    }
-
-                    // Form save button
-                    $('#btnFormSave').show().click(function () {
-                        // Save code here
-
-                        $.post('ResourceBuilder.php', {formEdit:'saveform', fn: documentId, mu: simplemde.value() }, function (rawData){
-                            try {
-                                var data = $.parseJSON(rawData);
-                            } catch (error) {
-                                flagAlertMessage("Server error", true);
-                                return;
-                            }
-
+                        if (data.error) {
                             if (data.gotopage) {
                                 window.open(data.gotopage, '_self');
                             }
+                            flagAlertMessage(data.error, true);
+                            return;
+                        }
+                        if (data.tbl) {
+                            $('#statEvents').children().remove().end().append($(data.tbl));
+                            $('.ckdate').datepicker({autoSize: true, dateFormat: 'M d, yy'});
+                            var buttons = {
+                                "Save": function () {
+                                    saveStatusEvent(idResc, type);
+                                },
+                                'Cancel': function () {
+                                    $(this).dialog('close');
+                                }
+                            };
+                            $('#statEvents').dialog('option', 'buttons', buttons);
+                            $('#statEvents').dialog('open');
+                        }
+                    }
+                });
+            }
+            function saveStatusEvent(idResc, type) {
+                "use strict";
+                $.post('ws_resc.php', $('#statForm').serialize() + '&cmd=saveStatEvent' + '&id=' + idResc + '&tp=' + type,
+                        function (data) {
+                            $('#statEvents').dialog('close');
+                            if (data) {
+                                try {
+                                    data = $.parseJSON(data);
+                                } catch (err) {
+                                    alert("Parser error - " + err.message);
+                                    return;
+                                }
+                                if (data.error) {
+                                    if (data.gotopage) {
+                                        window.open(data.gotopage, '_self');
+                                    }
+                                    flagAlertMessage(data.error, true);
+                                    return;
+                                }
 
-                            if (data.warning && data.warning !== '') {
-                                flagAlertMessage(data.warning, true);
-                            }else{
-                                flagAlertMessage(data.response, 'success');
-                                $('#frmEdSelect option[value="' + documentId + '"]').val(data.idDocument);
-                                console.log(data);
+                                if (data.msg && data.msg != '') {
+                                    flagAlertMessage(data.msg, false);
+                                }
+
                             }
                         });
+            }
+            function saveResource(idresc, type, clas) {
+                "use strict";
+                var parms = {};
+                $('.' + clas).each(function () {
+
+                    if ($(this).attr('type') === 'radio' || $(this).attr('type') === 'checkbox') {
+                        if (this.checked !== false) {
+                            parms[$(this).attr('id')] = 'on';
+                        }
+                    } else {
+                        parms[$(this).attr('id')] = $(this).val();
+                    }
+                });
+                $.post('ws_resc.php', {
+                    cmd: 'redit',
+                    tp: type,
+                    id: idresc,
+                    parm: parms
+                }, function (data) {
+                    if (data) {
+                        try {
+                            data = $.parseJSON(data);
+                        } catch (err) {
+                            alert("Parser error - " + err.message);
+                            return;
+                        }
+                        if (data.error) {
+                            if (data.gotopage) {
+                                window.open(data.gotopage, '_self');
+                            }
+                            flagAlertMessage(data.error, true);
+                            return;
+                        } else if (data.roomList) {
+                            $('#roomTable').children().remove().end().append($(data.roomList));
+                            $('#tblroom').dataTable({
+                                "dom": '<"top"if>rt<"bottom"lp><"clear">',
+                                "displayLength": 50,
+                                "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
+                            });
+                        } else if (data.rescList) {
+                            $('#rescTable').children().remove().end().append($(data.rescList));
+                            $('#tblresc').dataTable({
+                                "dom": '<"top"if>rt<"bottom"lp><"clear">',
+                                "displayLength": 50,
+                                "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
+                            });
+                        } else if (data.constList) {
+                            $('#constr').children().remove().end().append($(data.constList));
+                        }
+                        $('.reNewBtn').button();
+                    }
+                });
+            }
+            $(document).ready(function () {
+                "use strict";
+
+                var tabIndex = parseInt('<?php echo $tabIndex; ?>');
+                $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn, #btnFormSave').button();
+
+                $('#txtFaIncome, #txtFaSize').change(function () {
+                    var inc = $('#txtFaIncome').val().replace(',', ''),
+                            size = $('#txtFaSize').val(),
+                            errmsg = $('#spnErrorMsg');
+                    errmsg.text('');
+                    $('#txtFaIncome, #txtFaSize, #spnErrorMsg').removeClass('ui-state-highlight');
+                    if (inc == '' || size == '') {
+                        $('#spnFaCatTitle').text('');
+                        $('#hdnRateCat').val('');
+                        return false;
+                    }
+                    if (inc == '' || inc == '0' || isNaN(inc)) {
+                        $('#txtFaIncome').addClass('ui-state-highlight');
+                        errmsg.text('Fill in the Household Income').addClass('ui-state-highlight');
+                        return false;
+                    }
+                    if (size == '' || size == '0' || isNaN(size)) {
+                        $('#txtFaSize').addClass('ui-state-highlight');
+                        errmsg.text('Fill in the Household Size').addClass('ui-state-highlight');
+                        return false;
+                    }
+                    $.post('ws_ckin.php', {
+                        cmd: 'rtcalc',
+                        income: inc,
+                        hhsize: size,
+                        nites: 0
+                    }, function (data) {
+                        data = $.parseJSON(data);
+                        if (data.catTitle) {
+                            $('#spnFaCatTitle').text(data.catTitle);
+                        }
+                        if (data.cat) {
+                            $('#hdnRateCat').val(data.cat);
+                        }
                     });
+                    return false;
+                });
+                setupRates();
+                $('#mainTabs').tabs();
+                $('#mainTabs').tabs("option", "active", tabIndex);
+                $('#statEvents').dialog({
+                    autoOpen: false,
+                    resizable: true,
+                    width: 800,
+                    modal: true,
+                    title: 'Manage Status Events'
+                });
+                $('div#mainTabs').on('click', '.reEditBtn, .reNewBtn', function () {
+                    getResource($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
+                });
+                $('div#mainTabs').on('click', '.reStatBtn', function () {
+                    getStatusEvent($(this).attr('name'), $(this).data('enty'), $(this).data('title'));
+                });
+                $('#tblroom, #tblresc').dataTable({
+                    "dom": '<"top"if>rt<"bottom"lp><"clear">',
+                    "displayLength": 50,
+                    "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
+                });
+                $('.hhk-selLookup').change(function () {
+                    var $sel = $(this),
+                            table = $(this).find("option:selected").text(),
+                            type = $(this).val();
+
+                    if ($sel.data('type') === 'd') {
+                        table = $sel.val();
+                        type = 'd';
+                    }
+
+                    $sel.closest('form').children('div').empty().text('Loading...');
+                    $sel.prop('disabled', true);
+
+                    $.post('ResourceBuilder.php', {table: table, cmd: "load", tp: type},
+                            function (data) {
+                                $sel.prop('disabled', false);
+                                if (data) {
+                                    $sel.closest('form').children('div').empty().append(data);
+                                }
+                            });
+                });
+                $('.hhk-saveLookup').click(function () {
+                    var $frm = $(this).closest('form');
+                    var sel = $frm.find('select.hhk-selLookup');
+                    var table = sel.find('option:selected').text(),
+                            type = $frm.find('select').val(),
+                            $btn = $(this);
+
+                    if (sel.data('type') === 'd') {
+                        table = sel.val();
+                        type = 'd';
+                    }
+
+                    if ($btn.val() === 'Saving...') {
+                        return;
+                    }
+
+                    $btn.val('Saving...');
+
+                    $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
+                            function (data) {
+                                $btn.val('Save');
+                                if (data) {
+                                    $frm.children('div').empty().append(data);
+                                }
+                            });
+                }).button();
+
+                $('#btndemoSave').click(function () {
+                    var $frm = $(this).closest('form');
+
+                    $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + 'Demographics' + '&tp=' + 'm',
+                            function (data) {
+                                if (data) {
+                                    $frm.children('div').children().remove().end().append(data);
+                                }
+                            });
+                }).button();
+
+
+                // Add diagnosis and locations
+                if ($('#btnAddDiags').length > 0) {
+                    $('#btnAddDiags').button();
                 }
+                if ($('#btnAddLocs').length > 0) {
+                    $('#btnAddLocs').button();
+                }
+                if ($('#btnHouseDiscs').length > 0) {
+                    $('#btnHouseDiscs').button();
+                }
+                if ($('#btnAddnlCharge').length > 0) {
+                    $('#btnAddnlCharge').button();
+                }
+
+
+                //verifyAddrs('#roomTable');
+                $('input.number-only').change(function () {
+                    if (isNumber(this.value) === false) {
+                        $(this).val('0');
+                    }
+                    $(this).val(parseInt(this.value));
+                });
+                $('#mainTabs').show();
+
+                // Form edit form select drives the whole process.
+                $('#frmEdSelect').change(function () {
+                    var documentId;
+
+                    $('#convertMsg').text('');
+                    $('#rteMsg').text('');
+                    $('#spnEditorTitle').text("");
+
+                    if ($(this).val() === '') {
+                        $('#spnRteLoading').hide();
+                        documentId = 0;
+                        return;
+                    }
+
+                    documentId = $(this).val();
+                    $('#spnRteLoading').show();
+
+                    $.post('ResourceBuilder.php', {formEdit: 'getform', fn: $(this).val()}, function (rawData) {
+
+                        $('#spnRteLoading').hide();
+
+                        try {
+                            var data = $.parseJSON(rawData);
+                        } catch (error) {
+                            alert('Server Error');
+                            return;
+                        }
+
+                        if (data.gotopage) {
+                            window.open(data.gotopage, '_self');
+                        }
+
+                        if (data.warning && data.warning !== '') {
+
+                            $('#rteMsg').text(data.warning);
+                            return;
+
+                        }
+
+                        var editor = new tui.Editor({
+                            el: document.querySelector('#editSection'),
+                            initialEditType: 'wysiwyg',
+                            previewStyle: 'vertical',
+                            initialValue: data.tx,
+                            usageStatistics: false,
+                            height: '600px',
+                            toolbarItems: [
+                                'heading',
+                                'bold',
+                                'italic',
+                                'divider',
+                                'hr',
+                                'quote',
+                                'divider',
+                                'ul',
+                                'ol',
+                                'task',
+                                'indent',
+                                'outdent',
+                            ]
+                        });
+
+                        if (data.repls) {
+
+                            // make replacements selector
+                            var $rSel = $('select id="relSelect" />');
+
+                            for (var i=1; i<data.repls.length; i++) {
+                                $rSel.append($('<option value="' +  data.repls[i].val + '">' + data.repls[i].txt + '</option'));
+                            }
+
+                            $("#replacementTokens").append($rSel);
+
+                            $rSel.change(function () {
+                                editor.insertText($(this).val());
+                            });
+                        }
+
+                        if (data.title) {
+                            $('#spnEditorTitle').text('Editing ' + data.title);
+                        }
+
+                        // Form save button
+                        $('#btnFormSave').show().click(function () {
+                            // Save code here
+
+                            $.post('ResourceBuilder.php', {formEdit: 'saveform', fn: documentId, mu: simplemde.value()}, function (rawData) {
+                                try {
+                                    var data = $.parseJSON(rawData);
+                                } catch (error) {
+                                    flagAlertMessage("Server error", true);
+                                    return;
+                                }
+
+                                if (data.gotopage) {
+                                    window.open(data.gotopage, '_self');
+                                }
+
+                                if (data.warning && data.warning !== '') {
+                                    flagAlertMessage(data.warning, true);
+                                } else {
+                                    flagAlertMessage(data.response, 'success');
+                                    $('#frmEdSelect option[value="' + documentId + '"]').val(data.idDocument);
+                                    console.log(data);
+                                }
+                            });
+                        });
+
+                    });
+                });
             });
-        });
-    });
         </script>
     </head>
-    <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
+    <body <?php if ($wInit->testVersion) {
+    echo "class='testbody'";
+} ?>>
 <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <div style="float:left; margin-right: 100px; margin-top:10px;">
@@ -1877,17 +1877,17 @@ $resultMessage = $alertMsg->createMarkup();
                     <li><a href="#constr">Constraints</a></li>
                 </ul>
                 <div id="rescTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
-                    <?php echo $rescTable; ?>
+<?php echo $rescTable; ?>
                 </div>
                 <div id="roomTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
-                    <?php echo $roomTable; ?>
+<?php echo $roomTable; ?>
                 </div>
                 <div id="demoTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
                     <div style="float:left;">
                         <h3>Demographic Categories</h3>
                         <form id="formdemo">
                             <div>
-                                <?php echo $demoSelections; ?>
+<?php echo $demoSelections; ?>
                             </div>
                             <span style="margin:10px;float:right;"><input type="button" id='btndemoSave' class="hhk-savedemoCat" data-type="h" value="Save"/></span>
                         </form>
@@ -1897,8 +1897,8 @@ $resultMessage = $alertMsg->createMarkup();
                         <h3>Demographics</h3>
                         <form id="formdemoCat">
                             <table><tr>
-                                <th>Demographic</th>
-                                <td><?php echo $selDemos; ?></td>
+                                    <th>Demographic</th>
+                                    <td><?php echo $selDemos; ?></td>
                                 </tr>
                             </table>
                             <div id="divdemoCat"></div>
@@ -1916,11 +1916,11 @@ $resultMessage = $alertMsg->createMarkup();
                                 </tr></table>
                             <div id="divlk" class="hhk-divLk"></div>
                             <span style="margin:10px;float:right;">
-                                <?php if (!$hasDiags) { ?>
-                                <input type="submit" name='btnAddDiags' id="btnAddDiags" value="Add Diagnosis"/>
-                                <?php } if (!$hasLocs) { ?>
-                                <input type="submit" id='btnAddLocs' name="btnAddLocs" value="Add Location"/>
-                                <?php } ?>
+<?php if (!$hasDiags) { ?>
+                                    <input type="submit" name='btnAddDiags' id="btnAddDiags" value="Add Diagnosis"/>
+<?php } if (!$hasLocs) { ?>
+                                    <input type="submit" id='btnAddLocs' name="btnAddLocs" value="Add Location"/>
+<?php } ?>
                                 <input type="button" id='btnlkSave' class="hhk-saveLookup"data-type="h" value="Save"/>
                             </span>
                         </form></div>
@@ -1933,11 +1933,11 @@ $resultMessage = $alertMsg->createMarkup();
                                 </tr></table>
                             <div id="divdisc" class="hhk-divLk"></div>
                             <span style="margin:10px;float:right;">
-                                <?php if (!$hasDiscounts) { ?>
-                                <input type="submit" name='btnHouseDiscs' id="btnHouseDiscs" value="Add Discounts"/>
-                                <?php } if (!$hasAddnl) { ?>
-                                <input type="submit" id='btnAddnlCharge' name="btnAddnlCharge" value="Add Additional Charges"/>
-                                <?php } ?>
+<?php if (!$hasDiscounts) { ?>
+                                    <input type="submit" name='btnHouseDiscs' id="btnHouseDiscs" value="Add Discounts"/>
+<?php } if (!$hasAddnl) { ?>
+                                    <input type="submit" id='btnAddnlCharge' name="btnAddnlCharge" value="Add Additional Charges"/>
+<?php } ?>
                                 <input type="button" id='btndiscSave' class="hhk-saveLookup" data-type="ha" value="Save"/>
                             </span>
                         </form>
@@ -1946,7 +1946,7 @@ $resultMessage = $alertMsg->createMarkup();
 
                 <div id="rateTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <p style="padding:3px;background-color: #fff7db;">Make changes directly into the text boxes below and press 'Save'.</p>
-                    <?php echo $rateTableErrorMessage; ?>
+                                <?php echo $rateTableErrorMessage; ?>
                     <form method="POST" action="ResourceBuilder.php" name="form1">
                         <div style="clear:left;float:left;"><?php echo $pricingModelTable; ?></div>
 <?php echo $visitFeesTable . $keysTable . $payTypesTable . $feesTable . $faMarkup; ?>
@@ -1957,7 +1957,7 @@ $resultMessage = $alertMsg->createMarkup();
 
                 <div id="hospTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <form method="POST" action="ResourceBuilder.php" name="formh">
-<?php echo $hospTable; ?>
+                        <?php echo $hospTable; ?>
                         <div style="clear:both"></div>
                         <span style="margin:10px;float:right;"><input type="submit" id='btnhSave' name="btnhSave" value="Save"/></span>
                     </form>
@@ -1965,22 +1965,17 @@ $resultMessage = $alertMsg->createMarkup();
 
                 <div id="agreeEdit" class="ui-tabs-hide" >
                     <form method="POST" action="ResourceBuilder.php" name="formConvrt">
-                    <input type="submit" name='btnConvertFiles'  value="Convert Files"/>
-                    <p id="convertMsg"><?php echo $convertMsg; ?></p>
+                        <input type="submit" name='btnConvertFiles'  value="Convert Files"/>
+                        <p id="convertMsg"><?php echo $convertMsg; ?></p>
                     </form>
                     <p>Select the form to edit from the following list: <?php echo $feSelectForm; ?></p><p id="spnRteLoading" style="font-style: italic; display:none;">Loading...</p>
                     <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
                     <h3 id="spnEditorTitle"></h3>
-                    <div class="editorContainer">
-                    	<textarea id="simpleMDEContainer" style="display:none;"></textarea>
-                    </div>
+                    <div id='replacementTokens'></div>
+                    <div class="editSection"></div>
 
                     <div style="clear:both"></div>
                     <span style="margin:10px;float:right;"><input type="button" id='btnFormSave' style="display:none;" value="Save Form"/></span>
-                    <div class="availableTokenContainer" style="display: none; margin-top: 1em;">
-                    	<h4>Available replacement tokens</h4>
-						<div id="replacementTokens"></div>
-                    </div>
                 </div>
 
                 <div id="itemTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
@@ -1993,14 +1988,14 @@ $resultMessage = $alertMsg->createMarkup();
 
                 <div id="attrTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <form method="POST" action="ResourceBuilder.php" name="format">
-<?php echo $attrTable; ?>
+                        <?php echo $attrTable; ?>
                         <div style="clear:both"></div>
                         <span style="margin:10px;float:right;"><input type="submit" id='btnAttrSave' name="btnAttrSave" value="Save"/></span>
                     </form>
                 </div>
 
                 <div id="constr" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
-                        <?php echo $constraintTable; ?>
+<?php echo $constraintTable; ?>
                 </div>
             </div>
             <div id="statEvents" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em;"></div>

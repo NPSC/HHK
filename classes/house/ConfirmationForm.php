@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ConfirmationForm.php
  *
@@ -18,16 +19,16 @@ class ConfirmationForm extends TemplateForm {
 
     public function makeReplacements(Reservation_1 $reserv, Guest $guest, $amount, $notes) {
 
-		$uS = Session::getInstance();
-		$labels = new Config_Lite(LABEL_FILE);
-		$visitFeeNotice = "";
+        $uS = Session::getInstance();
+        $labels = new Config_Lite(LABEL_FILE);
+        $visitFeeNotice = "";
 
-		//populate visitFeeNotice
-		if($reserv->getExpectedDays($reserv->getExpectedArrival(), $reserv->getExpectedDeparture()) > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0){
-                    if ($reserv->getVisitFee() > 0) {
-			$visitFeeNotice = $labels->getString('referral', 'VisitFeeConfirmLabel', '') . " $" . number_format($reserv->getVisitFee(), 2) . ".";
-                    }
-		}
+        //populate visitFeeNotice
+        if ($reserv->getExpectedDays($reserv->getExpectedArrival(), $reserv->getExpectedDeparture()) > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == 0) {
+            if ($reserv->getVisitFee() > 0) {
+                $visitFeeNotice = $labels->getString('referral', 'VisitFeeConfirmLabel', '') . " $" . number_format($reserv->getVisitFee(), 2) . ".";
+            }
+        }
 
         return array(
             'GuestName' => $guest->getRoleMember()->get_fullName(),
@@ -39,7 +40,6 @@ class ConfirmationForm extends TemplateForm {
             'Notes' => $notes,
             'VisitFeeNotice' => $visitFeeNotice,
         );
-
     }
 
     public static function createNotes($text, $editable) {
@@ -47,10 +47,10 @@ class ConfirmationForm extends TemplateForm {
         $notesText = '';
 
         if ($editable) {
-            $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', "Special Note", array('style'=>'font-weight:bold;')));
-            $notesText .= HTMLContainer::generateMarkup('textarea', '', array('id'=>'tbCfmNotes', 'name'=>'tbCfmNotes', 'rows'=>'3', 'cols'=>'80'));
+            $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', "Special Note", array('style' => 'font-weight:bold;')));
+            $notesText .= HTMLContainer::generateMarkup('textarea', '', array('id' => 'tbCfmNotes', 'name' => 'tbCfmNotes', 'rows' => '3', 'cols' => '80'));
         } else if (strlen($text) > 5) {
-            $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', "Special Note", array('style'=>'font-weight:bold;')) . "<br/>" . nl2br($text));
+            $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', "Special Note", array('style' => 'font-weight:bold;')) . "<br/>" . nl2br($text));
             $notesText .= '<br />';
         }
 

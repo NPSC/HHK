@@ -1,4 +1,5 @@
 <?php
+
 /**
  * TemplateForm.php
  *
@@ -20,43 +21,38 @@ abstract class TemplateForm {
     protected $templateFileName;
     public $templateFile;
 
-
     function __construct($dbh, $fileName, $path = 'conf/') {
 
         $this->mime = array(
-            'txt'      => 'text/html',
-            'html'      => 'text/html',
-            'htm'      => 'text/html',
-            'mht'      => 'text/html',
-            'mhtml'      => 'text/html',
+            'txt' => 'text/html',
+            'html' => 'text/html',
+            'htm' => 'text/html',
+            'mht' => 'text/html',
+            'mhtml' => 'text/html',
         );
 
-		if($dbh == null){
-			$this->templateFileName = REL_BASE_DIR . $path . $fileName;
-			$this->getFormTemplate();
-		}else{
-			
-			$idDocument = Document::findDocument($dbh, $fileName, 'form', 'md');
-						
-			if($idDocument > 0){
-				$document = new Document($dbh, $idDocument);
-				$parsedown = new Parsedown();
-				$this->document = $parsedown->setBreaksEnabled(true)->text($document->getDoc());
-				
-			}
-		}
-        
-		
-		
+        if ($dbh == null) {
+            $this->templateFileName = REL_BASE_DIR . $path . $fileName;
+            $this->getFormTemplate();
+        } else {
+
+            $idDocument = Document::findDocument($dbh, $fileName, 'form', 'md');
+
+            if ($idDocument > 0) {
+                $document = new Document($dbh, $idDocument);
+                $parsedown = new Parsedown();
+                $this->document = $parsedown->setBreaksEnabled(true)->text($document->getDoc());
+            }
+        }
     }
 
     public function createForm($replacements) {
-		
-		if($this->document){
-			$this->template = $this->document;
-		}else{
-			$this->template = $this->templateFile;
-		}
+
+        if ($this->document) {
+            $this->template = $this->document;
+        } else {
+            $this->template = $this->templateFile;
+        }
 
         $vars = $this->getVariables();
 
@@ -73,7 +69,6 @@ abstract class TemplateForm {
     protected function setValue($search, $replace) {
 
         $this->template = str_replace(self::ensureMacroCompleted($search), $replace, $this->template);
-
     }
 
     protected static function ensureMacroCompleted($macro) {
@@ -92,7 +87,6 @@ abstract class TemplateForm {
         preg_match_all('/\$\{(.*?)}/i', $this->template, $matches);
 
         return array_unique($matches[1]);
-
     }
 
     protected function getFormTemplate() {
@@ -112,10 +106,9 @@ abstract class TemplateForm {
             }
 
             $this->templateFile = $text;
-
         } else {
             throw new Hk_Exception_Runtime("File template does not exist, file = " . $this->templateFileName);
         }
-
     }
+
 }
