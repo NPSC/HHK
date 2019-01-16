@@ -1772,18 +1772,6 @@ CREATE TABLE if not exists `shell_events` (
 ) ENGINE=InnoDB AUTO_INCREMENT=3;
 
 
-CREATE TABLE `static_doc` (
-  `idStatic_doc` INT NOT NULL AUTO_INCREMENT,
-  `Doc_Type` VARCHAR(5) NOT NULL DEFAULT '',
-  `Doc_Category` VARCHAR(5) NOT NULL DEFAULT '',
-  `Doc_Blob` BLOB NULL,
-  `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
-  `Last_Updated` DATETIME NULL,
-  `Timestamp` TIMESTAMP NOT NULL DEFAULT now(),
-  PRIMARY KEY (`idStatic_doc`)
-)ENGINE=InnoDB AUTO_INCREMENT=10;
-
-
 
 -- -----------------------------------------------------
 -- Table `stays`
