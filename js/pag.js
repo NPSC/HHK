@@ -4,10 +4,14 @@
  * @param {boolean} wasError
  * @returns {undefined}
  */
-function flagAlertMessage(mess, wasError) {
+function flagAlertMessage(mess, wasError, $txtCtrl) {
     "use strict";
     //Types:  alert, success, warning, error, info/information
     var type = 'info';
+    
+    if (!mess || mess == '') {
+        return;
+    }
 
     if (typeof wasError === 'boolean') {
         type = (wasError ? 'error' : 'success');
@@ -15,12 +19,23 @@ function flagAlertMessage(mess, wasError) {
         type = wasError;
     }
 
-    new Noty(
-        {
-            type: type,
-            text: mess
-        }
-    ).show();
+    try {
+        new Noty(
+            {
+                type: type,
+                text: mess
+            }
+        ).show();
+    } catch(err) {
+        // do nothing for now.
+    }
+    
+    // Show message in a given container.
+    if ($txtCtrl === undefined || $txtCtrl === null) {
+        return;
+    }
+    
+    $txtCtrl.text(mess).show();
 }
 
 //function altFlagAlertMessage(mess, wasError) {

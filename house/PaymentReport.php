@@ -246,7 +246,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
 
 
-    $whDates = " and DATE(lp.Payment_Date) < DATE('$end') and DATE(lp.Payment_Date) >= DATE('$start') ";
+    $whDates = " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) < DATE('$end') and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) >= DATE('$start') ";
 
     $endDT = new DateTime($end);
     $endDT->sub(new DateInterval('P1D'));
@@ -462,7 +462,7 @@ where lp.idPayment > 0
             }
 
 
-            PaymentReport::doMarkupRow($fltrdFields, $r, $p, $local, $hospital, $total, $tbl, $sml, $reportRows, $uS->subsidyId, $uS->returnId);
+            PaymentReport::doMarkupRow($fltrdFields, $r, $p, $local, $hospital, $total, $tbl, $sml, $reportRows, $uS->subsidyId);
 
         }
     }

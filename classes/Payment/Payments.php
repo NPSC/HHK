@@ -34,6 +34,7 @@ abstract class PaymentResponse {
 
     public $payNotes = '';
 
+
     /**
      *
      * @var PaymentRS
@@ -938,4 +939,3 @@ class VoidReturnReply extends CreditPayments {
     }
 
 }
-

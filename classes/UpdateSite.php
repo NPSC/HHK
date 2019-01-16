@@ -95,7 +95,7 @@ class UpdateSite {
                         continue;
                     }
 
-                    $this->errorMsg .= 'Update Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+                    $this->errorMsg .= 'Update Patch SQL Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
                     $errorCount++;
                 }
             }

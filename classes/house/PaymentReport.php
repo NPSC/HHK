@@ -332,7 +332,7 @@ class PaymentReport {
         $amt = 0;
         $payDetail = '';
         $payStatus = $p['Payment_Status_Title'];
-
+        $dateDT = new DateTime($p['Payment_Date']);
 
         $payStatusAttr = array();
         $payType = $p['Payment_Method_Title'];
@@ -346,6 +346,10 @@ class PaymentReport {
 
                     if ($a['Card_Type'] != '') {
                         $payDetail = $a['Card_Type'] . ' - ' . $a['Masked_Account'];
+                    }
+
+                    if ($a['Auth_Last_Updated'] !== '') {
+                        $dateDT = new DateTime($a['Auth_Last_Updated']);
                     }
                 }
             }
@@ -449,8 +453,6 @@ class PaymentReport {
 
         $invoiceMkup = HTMLContainer::generateMarkup('span', $invNumber, array("style"=>'white-space:nowrap'));
 
-        $dateDT = new DateTime($p['Payment_Date']);
-
         $g = array(
             'idHospital' => $hospital,
             'Title' => $r['i']['Room'],
@@ -468,7 +470,7 @@ class PaymentReport {
 
             $g['Last'] = $payorLast;
             $g['First'] = $payorFirst;
-            $g['Payment_Date'] = ($p['Payment_Date'] == '' ? '' : $dateDT->format('c'));
+            $g['Payment_Date'] = $dateDT->format('c');
             $g['Invoice_Number'] = $invoiceMkup;
 
             $g['Orig_Amount'] = number_format($origAmt, 2);
@@ -486,7 +488,7 @@ class PaymentReport {
 
         } else {
 
-            $dateDT = new DateTime($p['Payment_Date'], new DateTimeZone('UTC'));
+            $dateDT->setTimezone('UTC');  // = new DateTime($p['Payment_Date'], new DateTimeZone('UTC'));
 
             $g['Last'] = $r['i']['Last'];
             $g['First'] = $r['i']['First'];

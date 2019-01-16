@@ -163,6 +163,13 @@ if (isset($_GET['idPsg'])) {
     $idPsg = intval(filter_var($_GET['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
+// Page title
+$title = $wInit->pageHeading;
+
+if (isset($_GET['title'])) {
+    $title = 'Check In';
+}
+
 
 if ($idReserv > 0 || $idGuest >= 0) {
 
@@ -228,7 +235,7 @@ $resvObjEncoded = json_encode($resvAr);
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu() ?>
         <div id="contentDiv">
-            <h1><?php echo $wInit->pageHeading; ?> <span id="spnStatus" sytle="margin-left:50px; display:inline;"></span></h1>
+            <h1><?php echo $title; ?> <span id="spnStatus" sytle="margin-left:50px; display:inline;"></span></h1>
             <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
                 <?php echo $paymentMarkup; ?>
             </div>
@@ -243,10 +250,15 @@ $resvObjEncoded = json_encode($resvAr);
                 <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
                 <div style="clear:both;min-height: 70px;">.</div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
-                    <input type="button" id="btnDelete" value="Delete" style="display:none;"/>
-                    <input type="button" id="btnCheckinNow" value='Check-in Now' style="display:none;"/><input type="hidden" id="resvCkinNow" name="resvCkinNow" value="no" />
-                    <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
-                    <input type='button' id='btnDone' value='Continue' style="display:none;"/>
+                    <table >
+                        <tr><td ><span id="pWarnings" style="display:none; font-size: 1.4em; border: 1px solid #ddce99;margin-bottom:3px; padding: 0 2px; color:red; background-color: yellow; float:right;"></span></td></tr>
+                        <tr><td>
+                        <input type="button" id="btnDelete" value="Delete" style="display:none;"/>
+                        <input type="button" id="btnCheckinNow" value='Check-in Now' style="display:none;"/><input type="hidden" id="resvCkinNow" name="resvCkinNow" value="no" />
+                        <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
+                        <input type='button' id='btnDone' value='Continue' style="display:none;"/>
+                            </td></tr>
+                    </table>
                 </div>
 
             </form>

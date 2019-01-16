@@ -566,7 +566,7 @@ abstract class Member {
         // update the recordset
         EditRS::updateStoredVals($n);
         EditRS::updateStoredVals($this->demogRS);
-        
+
         return $message;
     }
 
@@ -1190,5 +1190,9 @@ abstract class Member {
         }
     }
 
+    public function set_ExternalId($v) {
+        $id = intval($v, 10);
+        $this->nameRS->External_Id->setNewVal($id);
+    }
 }
 

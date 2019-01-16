@@ -216,7 +216,6 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="guestSearch" style="padding-left:0;padding-top:0; margin-bottom:1.5em; clear:left; float:left;">
                 <?php echo $mk1; ?>
             </div>
-
             <form action="CheckingIn.php" method="post"  id="form1">
                 <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
                 <div id="famSection" style="clear:left; float:left; font-size: .9em; display:none; width: 100%; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
@@ -224,12 +223,17 @@ $resvObjEncoded = json_encode($resvAr);
                 <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; width: 100%;" class="ui-widget hhk-visitdialog"></div>
                 <div style="clear:both;min-height: 70px;">.</div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
-                    <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
-                    <input type='button' id='btnDone' value='Continue' style="display:none;"/>
+                    <table >
+                        <tr><td>
+                            <span id="pWarnings" style="display:none; font-size: 1.4em; border: 1px solid #ddce99;margin-bottom:3px; padding: 0 2px; color:red; background-color: yellow; float:right;"></span>
+                        </td></tr>
+                        <tr><td>
+                            <input type="button" id="btnShowReg" value='Show Registration Form' style="display:none;"/>
+                            <input type='button' id='btnDone' value='Continue' style="display:none;"/>
+                        </td></tr>
+                    </table>
                 </div>
-
             </form>
-
             <div id="pmtRcpt" style="font-size: .9em; display:none;"><?php echo $receiptMarkup; ?></div>
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
@@ -242,7 +246,6 @@ $resvObjEncoded = json_encode($resvAr);
                     <tr><td><input type="hidden" value="" id="hdnEcSchPrefix"/></td></tr>
                 </table>
             </div>
-
         </div>
         <form name="xform" id="xform" method="post"></form>
 
