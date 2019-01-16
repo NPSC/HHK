@@ -864,6 +864,21 @@ if (isset($_POST['formEdit'])) {
                 $rtn = array('warning' => 'The Form is not found.');
             }
 
+            if ($fn == 'Confirmation Document') {
+                $repls = array(
+                    array('txt'=>'Guest Name', 'val' => '${GuestName}'),
+                    array('txt'=>'Expected Arrival', 'val' => '${ExpectedArrival}'),
+                    array('txt'=>'Expected Departure', 'val' => '${ExpectedDeparture}'),
+                    array('txt'=>'Date Today', 'val' => '${DateToday}'),
+                    array('txt'=>'Nites', 'val' => '${Nites}'),
+                    array('txt'=>'Amount', 'val' => '${Amount}'),
+                    array('txt'=>'Notes', 'val' => '${Notes}'),
+                    array('txt'=>'Visit Fee Notice', 'val' => '${VisitFeeNotice}'),
+                );
+
+                $rtn['repls'] = $repls;
+            }
+
             exit(json_encode($rtn));
 
             break;
@@ -1341,9 +1356,6 @@ $resultMessage = $alertMsg->createMarkup();
         </style>
 
 
-        <script src="../js/tuiEditorSupport.js"></script>
-        <script src="../js/tui-editor-Editor.min.js"></script>
-
         <link rel="stylesheet" href="css/tui-editor/tui-editor.min.css">
         <link rel="stylesheet" href="css/tui-editor/tui-editor-contents-min.css">
         <link rel="stylesheet" href="css/tui-editor/codemirror.css">
@@ -1355,6 +1367,9 @@ $resultMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script src="../js/tuiEditorSupport.js"></script>
+        <script src="../js/tui-editor-Editor.min.js"></script>
+
 
         <script type="text/javascript">
             function isNumber(n) {
@@ -1972,7 +1987,7 @@ $resultMessage = $alertMsg->createMarkup();
                     <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
                     <h3 id="spnEditorTitle"></h3>
                     <div id='replacementTokens'></div>
-                    <div class="editSection"></div>
+                    <div id="editSection"></div>
 
                     <div style="clear:both"></div>
                     <span style="margin:10px;float:right;"><input type="button" id='btnFormSave' style="display:none;" value="Save Form"/></span>

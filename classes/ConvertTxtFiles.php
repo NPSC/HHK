@@ -24,7 +24,8 @@
  * THE SOFTWARE.
  */
 
-require CLASSES . 'markdownify/Markdownify.php';
+require CLASSES . 'Markdownify/Converter.php';
+require CLASSES . 'Markdownify/Parser.php';
 
 
 /**
@@ -37,7 +38,7 @@ class ConvertTxtFiles {
     public static function doMarkdownify(\PDO $dbh) {
 
         // Run forms editor update
-        $converter = new Markdownify;
+        $converter = new \Markdownify\Converter();
         $result = '';
 
         if (file_exists('../conf/agreement.txt')) {
@@ -74,7 +75,7 @@ class ConvertTxtFiles {
             if ($stmt->rowCount() == 0) {//if confirmation document cannot be found
                 $htmlcontent = file_get_contents("../conf/confirmation.txt");
                 $mdcontent = $converter->parseString($htmlcontent);
-                $agreeCt = $dbh->exec("INSERT INTO document (`Title`, `Abstract`, `Category`, `Type`, `Doc`, `Status`, `Last_Updated`, `Created_By`) VALUES ('Registration Document', '', 'form', 'md', '" . $mdcontent . "', 'a', NOW(), 'admin'),");
+                $agreeCt = $dbh->exec("INSERT INTO document (`Title`, `Category`, `Type`, `Doc`, `Status`, `Last_Updated`, `Created_By`) VALUES ('Registration Document', 'form', 'md', '" . $mdcontent . "', 'a', NOW(), 'admin'),");
 
                 if ($agreeCt > 0) {
                     $result .= 'confirmation.txt converted.  ';
