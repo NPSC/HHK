@@ -164,7 +164,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
 
     public function makeInstructions ($instructionFileName) {
 /*
-		
+
         if ($instructionFileName != '' && file_exists($instructionFileName)) {
             $text = file_get_contents($instructionFileName);
         } else {
@@ -172,18 +172,29 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
         }
 */
 
-		$stmt = $dbh->query("SELECT `Doc` from `document` where `Title` = 'Registration Document' AND `Category` = 'form' AND `type` = 'md' AND `Status` = 'a' limit 1");
-		if ($stmt->rowCount() == 1) {
-            $doc = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $agreementTxt = $doc[0]['Doc'];
+        $idDocument = Document::findDocument($dbh, '', '', '', Document_Name::Registration);
+
+        if ($idDocument > 0) {
+
+            $document = new Document($dbh, $idDocument);
+            $parsedown = new Parsedown();
+            $mkup .= $parsedown->setBreaksEnabled(true)->text($document->getDoc());
+
+        } else {
+            $mkup .= HTMLContainer::generateMarkup('div', "Agreement text file is missing. ", array('class'=>'ui-state-error'));
         }
-        
-		if($agreementMd){
-			$Parsedown = new Parsedown();
-			$text = $Parsedown->text($agreementMd);
-		}else{
-			$text = HTMLContainer::generateMarkup('p', 'Agreement text file is missing.', array('class'=>'ui-state-error'));
-		}
+//		$stmt = $dbh->query("SELECT `Doc` from `document` where `Title` = 'Registration Document' AND `Category` = 'form' AND `type` = 'md' AND `Status` = 'a' limit 1");
+//		if ($stmt->rowCount() == 1) {
+//            $doc = $stmt->fetchAll(PDO::FETCH_ASSOC);
+//            $agreementTxt = $doc[0]['Doc'];
+//        }
+//
+//		if($agreementMd){
+//			$Parsedown = new Parsedown();
+//			$text = $Parsedown->text($agreementMd);
+//		}else{
+//			$text = HTMLContainer::generateMarkup('p', 'Agreement text file is missing.', array('class'=>'ui-state-error'));
+//		}
 
         return '<div style="margin-top:10px;">' . $text . '</div>';
 

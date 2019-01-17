@@ -249,6 +249,7 @@ CREATE TABLE if not exists `desig_holidays` (
 -- -----------------------------------------------------
 CREATE TABLE if not exists `document` (
   `idDocument` INT NOT NULL AUTO_INCREMENT,
+  `Name` varchar(45) NOT NULL DEFAULT '',
   `Title` VARCHAR(128) NOT NULL,
   `Category` VARCHAR(5) NOT NULL DEFAULT '',
   `Type` VARCHAR(5) NOT NULL DEFAULT '',

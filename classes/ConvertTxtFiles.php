@@ -45,15 +45,17 @@ class ConvertTxtFiles {
 
             $result .= '<br/>agreement.txt file found.  ';
 
-            $stmt = $dbh->query("select idDocument from document where `Title` = 'Registration Document' and `Category` = 'form' and `Type` = 'md' and `Status` = 'a'");
-            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+            $doc = new Document($dbh, Document::findDocument($dbh, '', '', '', Document_Name::Registration));
 
-            if ($stmt->rowCount() == 0) { //if agreement document cannot be found
+            if (!$doc->isValid()) { //if agreement document cannot be found
+
                 $htmlcontent = file_get_contents("../conf/agreement.txt");
                 $mdcontent = $converter->parseString($htmlcontent);
-                $agreeCt = $dbh->exec("INSERT INTO document (`Title`, `Abstract`, `Category`, `Type`, `Doc`, `Status`, `Last_Updated`, `Created_By`) VALUES ('Registration Document', '', 'form', 'md', '" . $mdcontent . "', 'a', NOW(), 'admin')");
 
-                if ($agreeCt > 0) {
+                $doc->createNew($mdcontent, 'House Registration', 'md', 'form', '', Document_Name::Registration);
+                $idDoc = $doc->save($dbh, 'admin');
+
+                if ($idDoc > 0) {
                     $result .= 'agreement.txt converted.  ';
                 }
 
@@ -69,15 +71,17 @@ class ConvertTxtFiles {
 
             $result .= '<br/>confirmation.txt file found.  ';
 
-            $stmt = $dbh->query("select idDocument from document where `Title` = 'Confirmation Document' and `Category` = 'form' and `Type` = 'md' and `Status` = 'a'");
-            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+            $doc = new Document($dbh, Document::findDocument($dbh, '', '', '', Document_Name::Confirmation));
 
-            if ($stmt->rowCount() == 0) {//if confirmation document cannot be found
+            if (!$doc->isValid()) {//if confirmation document cannot be found
+
                 $htmlcontent = file_get_contents("../conf/confirmation.txt");
                 $mdcontent = $converter->parseString($htmlcontent);
-                $agreeCt = $dbh->exec("INSERT INTO document (`Title`, `Category`, `Type`, `Doc`, `Status`, `Last_Updated`, `Created_By`) VALUES ('Registration Document', 'form', 'md', '" . $mdcontent . "', 'a', NOW(), 'admin'),");
 
-                if ($agreeCt > 0) {
+                $doc->createNew($mdcontent, 'Confirmation Form', 'md', 'form', '', Document_Name::Confirmation);
+                $idDoc = $doc->save($dbh, 'admin');
+
+                if ($idDoc > 0) {
                     $result .= 'confirmation.txt converted.  ';
                 }
             } else {
@@ -92,15 +96,17 @@ class ConvertTxtFiles {
 
             $result .= '<br/>survey.txt file found.  ';
 
-            $stmt = $dbh->query("select idDocument from document where `Title` = 'Survey Document' and `Category` = 'form' and `Type` = 'md' and `Status` = 'a'");
-            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+            $doc = new Document($dbh, Document::findDocument($dbh, '', '', '', Document_Name::Survey));
 
-            if ($stmt->rowCount() == 0) {//if survey document cannot be found
+            if (!$doc->isValid()) {//if survey document cannot be found
+
                 $htmlcontent = file_get_contents("../conf/survey.txt");
                 $mdcontent = $converter->parseString($htmlcontent);
-                $agreeCt = $dbh->exec("INSERT INTO document (`Title`, `Abstract`, `Category`, `Type`, `Doc`, `Status`, `Last_Updated`, `Created_By`) VALUES ('Registration Document', '', 'form', 'md', '" . $mdcontent . "', 'a', NOW(), 'admin'),");
 
-                if ($agreeCt > 0) {
+                $doc->createNew($mdcontent, 'Survey', 'md', 'form', '', Document_Name::Survey);
+                $idDoc = $doc->save($dbh, 'admin');
+
+                if ($idDoc > 0) {
                     $result .= 'survey.txt converted.  ';
                 }
             } else {

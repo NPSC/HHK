@@ -76,12 +76,12 @@ class ReservationSvcs {
 
         $guest = new Guest($dbh, '', $idGuest);
 
-        $confirmForm = new ConfirmationForm($dbh, "Confirmation Document");
+        $confirmForm = new ConfirmationForm($dbh, Document_Name::Confirmation);
 
         $formNotes = $confirmForm->createNotes($notes, !$sendEmail);
 
         $form = $confirmForm->createForm($confirmForm->makeReplacements($reserv, $guest, $amount, $formNotes));
-		
+
         if ($emailAddr == '') {
             $emAddr = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
             $emailAddr = $emAddr["Email"];

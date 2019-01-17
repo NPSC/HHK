@@ -64,6 +64,12 @@ class Default_Settings {
     const Fixed_Rate_Category = 'f';
 }
 
+class Document_Name {
+    const Registration = 'Registration';
+    const Confirmation = 'Confirmation';
+    const Survey = 'Survey';
+}
+
 class Editable_Forms {
 	const Registration = "reg";
 	const Confirmation = "conf";

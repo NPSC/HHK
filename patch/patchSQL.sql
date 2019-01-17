@@ -1,1 +1,4 @@
 
+ALTER TABLE `document` 
+ADD COLUMN `Name` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Title`;
+

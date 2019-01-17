@@ -20,6 +20,8 @@ require (DB_TABLES . 'PaymentsRS.php');
 require (DB_TABLES . 'PaymentGwRS.php');
 require (DB_TABLES . 'AttributeRS.php');
 
+require (CLASSES . 'Parsedown.php');
+require (CLASSES . 'Document.php');
 
 require CLASSES . 'FinAssistance.php';
 require (PMT . 'Payments.php');
@@ -50,7 +52,6 @@ require (HOUSE . 'Attributes.php');
 require (HOUSE . 'Constraint.php');
 require (HOUSE . 'Vehicle.php');
 
-require (CLASSES . 'Parsedown.php');
 
 function getVisitFromGuest(\PDO $dbh, $guestId) {
 

@@ -26,6 +26,7 @@ class Document {
     protected $idDocument = 0;
     protected $doc = NULL;
     protected $title = '';
+    protected $name = '';
     protected $abstract = '';
     protected $type = '';
     protected $category = '';
@@ -61,14 +62,21 @@ class Document {
         $this->docCategories = readGenLookupsPDO($dbh, 'Document_Category');
 
     }
-    
-    public static function findDocument(\PDO $dbh, $title, $category, $type) {
-        
+
+    public static function findDocument(\PDO $dbh, $title, $category, $type, $name = '') {
+
         $idDoc = 0;
-                
-        $stmt = $dbh->query("select idDocument from document where `Title` = '$title' and `Category` = '$category' and `Type` = '$type' and `Status` = 'a'");
-        $rows = $stmt->fetchAll(PDO::FETCH_NUM);
-        
+
+        if ($name != '') {
+            // Search by name
+            $stmt = $dbh->query("select idDocument from document where `Name` = '$name' and `Status` = 'a'");
+            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+
+        } else {
+
+            $stmt = $dbh->query("select idDocument from document where `Title` = '$title' and `Category` = '$category' and `Type` = '$type' and `Status` = 'a'");
+            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+        }
         if ($stmt->rowCount() > 0) {
             $idDoc = $rows[0][0];
         }
@@ -92,14 +100,15 @@ class Document {
 
                 $this->setStatus($docRS->Status->getStoredVal())
                         ->setDoc($docRS->Doc->getStoredVal())
+                        ->setName($docRS->Name->getStoredVal())
                         ->setTitle($docRS->Title->getStoredVal())
                         ->setAbstract($docRS->Abstract->getStoredVal())
                         ->setType($docRS->Type->getStoredVal())
-                        ->setUpdatedBy($docRS->Updated_By->getstoredVal())
+                        ->setCategory($docRS->Category->getStoredVal())
+                        ->setUpdatedBy($docRS->Updated_By->getStoredVal())
                         ->setLastUpdated($docRS->Last_Updated->getStoredVal());
 
                 $this->createdBy = $docRS->Created_By->getStoredVal();
-                $this->category = $docRS->Category->getStoredVal();
                 $this->createdOn = $docRS->Timestamp->getStoredVal();
 
                 $this->hasDocument = TRUE;
@@ -118,18 +127,18 @@ class Document {
      * @param string $category
      * @param string $abstract
      */
-    public function createNew($doc, $title, $type, $category, $abstract = '') {
+    public function createNew($doc, $title, $type, $category, $abstract = '', $name = '') {
 
         if (isset($this->docTypes[$type]) && isset($this->docCategories[$category])) {
 
             $this->setDoc($doc)
                 ->setType($type)
+                ->setName($name)
                 ->setTitle($title)
                 ->setAbstract($abstract)
-                ->setStatus(Document::DOC_ACTIVE);
-
-                $document->category = $category;
-                $document->idDocument = 0;
+                ->setStatus(Document::DOC_ACTIVE)
+                ->setCategory($category)
+                ->idDocument = 0;
 
         } else {
             throw new Hk_Exception_Runtime('Document Type or Category is invalid.  ');
@@ -145,6 +154,7 @@ class Document {
             // Insert
             $docRS->Created_By->setNewVal($this->getCreatedBy());
             $docRS->Doc->setNewVal($this->getDoc());
+            $docRS->Name->setNewVal($this->getName());
             $docRS->Type->setNewVal($this->getType());
             $docRS->Category->setNewVal($this->getCategory());
             $docRS->Abstract->setNewVal($this->getAbstract());
@@ -164,6 +174,7 @@ class Document {
             // Create a new Copy
             $docRS->Created_By->setNewVal($this->getCreatedBy());
             $docRS->Doc->setNewVal($this->getDoc());
+            $docRS->Name->setNewVal($this->getName());
             $docRS->Type->setNewVal($this->getType());
             $docRS->Category->setNewVal($this->getCategory());
             $docRS->Abstract->setNewVal($this->getAbstract());
@@ -257,9 +268,23 @@ class Document {
         return $this->createdOn;
     }
 
+    public function getName() {
+        return $this->name;
+    }
+
 
     public function setDoc($doc) {
         $this->doc = $doc;
+        return $this;
+    }
+
+    public function setName($name) {
+        $this->name = $name;
+        return $this;
+    }
+
+    public function setCategory($cat) {
+        $this->category = $cat;
         return $this;
     }
 
@@ -302,11 +327,11 @@ class ListDocuments {
 //    protected $type;
 //    protected $category;
 
-    public static function listHouseForms(\PDO $dbh) {
+    public static function listHouseForms(\PDO $dbh, $type = 'md') {
 
         $docs = array();
 
-        $stmt = $dbh->query("SELECT `idDocument`, `Title`, Last_Updated from `document` where `Category` = 'form' and `Type` = 'md' and `Status` = 'a';");
+        $stmt = $dbh->query("SELECT `idDocument`, `Name`, `Title`, `Last_Updated` from `document` where `Category` = 'form' and `Type` = '$type' and `Status` = 'a';");
 
 
         If ($stmt->rowCount() > 0) {

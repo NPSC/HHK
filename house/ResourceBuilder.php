@@ -864,7 +864,7 @@ if (isset($_POST['formEdit'])) {
                 $rtn = array('warning' => 'The Form is not found.');
             }
 
-            if ($fn == 'Confirmation Document') {
+            if ($doc->getName() == Document_Name::Confirmation) {
                 $repls = array(
                     array('txt'=>'Guest Name', 'val' => '${GuestName}'),
                     array('txt'=>'Expected Arrival', 'val' => '${ExpectedArrival}'),
@@ -874,6 +874,18 @@ if (isset($_POST['formEdit'])) {
                     array('txt'=>'Amount', 'val' => '${Amount}'),
                     array('txt'=>'Notes', 'val' => '${Notes}'),
                     array('txt'=>'Visit Fee Notice', 'val' => '${VisitFeeNotice}'),
+                );
+
+                $rtn['repls'] = $repls;
+            }
+
+            if ($doc->getName() == Document_Name::Survey) {
+                $repls = array(
+                    array('txt'=>'First Name', 'val' => '${FirstName}'),
+                    array('txt'=>'Last Name', 'val' => '${LastName}'),
+                    array('txt'=>'Name Suffix', 'val' => '${NameSuffix}'),
+                    array('txt'=>'Name Prefix', 'val' => '${NamePrefix}'),
+
                 );
 
                 $rtn['repls'] = $repls;
@@ -1612,6 +1624,8 @@ $resultMessage = $alertMsg->createMarkup();
                 "use strict";
 
                 var tabIndex = parseInt('<?php echo $tabIndex; ?>');
+                var editor, $rSel;
+
                 $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn, #btnFormSave').button();
 
                 $('#txtFaIncome, #txtFaSize').change(function () {
@@ -1795,7 +1809,7 @@ $resultMessage = $alertMsg->createMarkup();
 
                         }
 
-                        var editor = new tui.Editor({
+                        editor = new tui.Editor({
                             el: document.querySelector('#editSection'),
                             initialEditType: 'wysiwyg',
                             previewStyle: 'vertical',
@@ -1818,13 +1832,17 @@ $resultMessage = $alertMsg->createMarkup();
                             ]
                         });
 
+                        if ($rSel !== undefined) {
+                            $rSel.remove();
+                        }
+
                         if (data.repls) {
 
                             // make replacements selector
-                            var $rSel = $('select id="relSelect" />');
+                            $rSel = $('<select id="relSelect" />');
 
-                            for (var i=1; i<data.repls.length; i++) {
-                                $rSel.append($('<option value="' +  data.repls[i].val + '">' + data.repls[i].txt + '</option'));
+                            for (var i=0; i<data.repls.length; i++) {
+                                $rSel.append($('<option value="' +  data.repls[i].val + '"></option').append(data.repls[i].txt));
                             }
 
                             $("#replacementTokens").append($rSel);
@@ -1842,7 +1860,10 @@ $resultMessage = $alertMsg->createMarkup();
                         $('#btnFormSave').show().click(function () {
                             // Save code here
 
-                            $.post('ResourceBuilder.php', {formEdit: 'saveform', fn: documentId, mu: simplemde.value()}, function (rawData) {
+                            var md = editor.getMarkdown();
+                            //var ht = editor.getHtml();
+
+                            $.post('ResourceBuilder.php', {formEdit: 'saveform', fn: documentId, mu: md}, function (rawData) {
                                 try {
                                     var data = $.parseJSON(rawData);
                                 } catch (error) {

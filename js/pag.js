@@ -31,7 +31,9 @@ function flagAlertMessage(mess, wasError, $txtCtrl) {
     }
     
     // Show message in a given container.
-    $txtCtrl.text(mess).show();
+    if ($txtCtrl !== undefined) {
+        $txtCtrl.text(mess).show();
+    }
 }
 
 //function altFlagAlertMessage(mess, wasError) {

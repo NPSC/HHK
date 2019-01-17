@@ -21,7 +21,7 @@ abstract class TemplateForm {
     protected $templateFileName;
     public $templateFile;
 
-    function __construct($dbh, $fileName, $path = 'conf/') {
+    function __construct($dbh, $name) {
 
         $this->mime = array(
             'txt' => 'text/html',
@@ -31,28 +31,26 @@ abstract class TemplateForm {
             'mhtml' => 'text/html',
         );
 
-        if ($dbh == null) {
-            $this->templateFileName = REL_BASE_DIR . $path . $fileName;
-            $this->getFormTemplate();
+        if ($name == '') {
+            throw new Hk_Exception_Runtime("File name is missing");
+        }
+
+        $idDocument = Document::findDocument($dbh, '', '', '', $name);
+
+        if ($idDocument > 0) {
+
+            $document = new Document($dbh, $idDocument);
+            $parsedown = new Parsedown();
+            $this->templateFile = $parsedown->setBreaksEnabled(true)->text($document->getDoc());
+
         } else {
-
-            $idDocument = Document::findDocument($dbh, $fileName, 'form', 'md');
-
-            if ($idDocument > 0) {
-                $document = new Document($dbh, $idDocument);
-                $parsedown = new Parsedown();
-                $this->document = $parsedown->setBreaksEnabled(true)->text($document->getDoc());
-            }
+            throw new Hk_Exception_Runtime("File template does not exist, name = " .$name);
         }
     }
 
     public function createForm($replacements) {
 
-        if ($this->document) {
-            $this->template = $this->document;
-        } else {
-            $this->template = $this->templateFile;
-        }
+        $this->template = $this->templateFile;
 
         $vars = $this->getVariables();
 
@@ -87,28 +85,6 @@ abstract class TemplateForm {
         preg_match_all('/\$\{(.*?)}/i', $this->template, $matches);
 
         return array_unique($matches[1]);
-    }
-
-    protected function getFormTemplate() {
-
-        $this->templateFile = '';
-
-        if (file_exists($this->templateFileName)) {
-
-            $pathInfo = pathinfo($this->templateFileName);
-
-            if (isset($pathInfo['extension']) === FALSE || isset($this->mime[strtolower($pathInfo['extension'])]) === FALSE) {
-                throw new Hk_Exception_Runtime("File extension not supported, file = " . $this->templateFileName);
-            }
-
-            if (($text = file_get_contents($this->templateFileName)) === FALSE) {
-                throw new Hk_Exception_Runtime("File template not read, file = " . $this->templateFileName);
-            }
-
-            $this->templateFile = $text;
-        } else {
-            throw new Hk_Exception_Runtime("File template does not exist, file = " . $this->templateFileName);
-        }
     }
 
 }

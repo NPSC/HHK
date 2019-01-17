@@ -159,7 +159,7 @@ $mail->FromName = $siteName;
 $mail->isHTML(true);
 $mail->Subject = $subjectLine;
 
-$sForm = new SurveyForm($dbh, "Survey Document");
+$sForm = new SurveyForm($dbh, Document_Name::Survey);
 $badAddresses = 0;
 $resultsRegister = '';
 $deparatureDT = new \DateTime();
