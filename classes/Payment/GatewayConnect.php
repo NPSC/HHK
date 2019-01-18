@@ -324,7 +324,94 @@ class VerifyCurlResponse extends GatewayResponse {
     public function getOperatorID() {
         return '';
     }
+    
+    public function getAuthorizationText() {
+        if (isset($this->result['AuthorizationText'])) {
+            return $this->result['AuthorizationText'];
+        }
+        return '';
 
+    }
+
+    
+    public function isEMVTransaction() {
+        
+        if (isset($this->result['isEMVTransaction'])) {
+            if ($this->result['isEMVTransaction'] == 'true') {
+                return TRUE;
+            }
+        }
+        return FALSE;
+
+    }
+    
+    public function IsEMVVerifiedByPIN() {
+        
+        if (isset($this->result['IsEMVVerifiedByPIN'])) {
+            if ($this->result['IsEMVVerifiedByPIN'] == 'true') {
+                return TRUE;
+            }
+        }
+        return FALSE;
+
+    }
+    
+    public function getEMVApplicationName() {
+        if (isset($this->result['EMVApplicationName'])) {
+            return $this->result['EMVApplicationName'];
+        }
+        return '';
+    }
+    public function getEMVCardHolderVerification() {
+        if (isset($this->result['EMVCardHolderVerification'])) {
+            return $this->result['EMVCardHolderVerification'];
+        }
+        return '';
+    }
+    public function getEMVAuthorizationMode() {
+        if (isset($this->result['EMVAuthorizationMode'])) {
+            return $this->result['EMVAuthorizationMode'];
+        }
+        return '';
+    }
+    public function getEMVApplicationIdentifier() {
+        if (isset($this->result['EMVApplicationIdentifier'])) {
+            return $this->result['EMVApplicationIdentifier'];
+        }
+        return '';
+    }
+    public function getEMVTerminalVerificationResults() {
+        if (isset($this->result['EMVTerminalVerificationResults'])) {
+            return $this->result['EMVTerminalVerificationResults'];
+        }
+        return '';
+    }
+    public function getEMVIssuerApplicationData() {
+        if (isset($this->result['EMVIssuerApplicationData'])) {
+            return $this->result['EMVIssuerApplicationData'];
+        }
+        return '';
+    }
+    public function getEMVTransactionStatusInformation() {
+        if (isset($this->result['EMVTransactionStatusInformation'])) {
+            return $this->result['EMVTransactionStatusInformation'];
+        }
+        return '';
+    }
+    public function getEMVApplicationResponseCode() {
+        if (isset($this->result['EMVApplicationResponseCode'])) {
+            return $this->result['EMVApplicationResponseCode'];
+        }
+        return '';
+    }
+    public function getEMVCardEntryMode() {
+        if (isset($this->result['EMVCardEntryMode'])) {
+            return $this->result['EMVCardEntryMode'];
+        }
+        return '';
+    }
+    
+    
 
 }
 

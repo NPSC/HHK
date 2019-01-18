@@ -102,8 +102,65 @@ abstract class PaymentResponse {
         return $this;
     }
 
-    public abstract function receiptMarkup(\PDO $dbh, &$tbl);
+    public function receiptMarkup(\PDO $dbh, &$tbl) {
 
+        $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardNum));
+
+        if ($this->cardName != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardName));
+        }
+
+        if ($this->response->getAuthCode() != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getAuthCode()));
+        }
+
+        if ($this->response->getStatus() != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Response Message Code: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getStatus() . '  ' . $this->response->getResponseCode()));
+        }
+
+        if ($this->response->getStatus() != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Response Message Code: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getStatusMessage() . '  ' . $this->response->getResponseCode()));
+        }
+
+        $this->getEMVItems($tbl);
+
+        if ($this->response->getAuthorizationText() != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd($this->response->getAuthorizationText(), array('colspan'=>2)));
+        }
+        $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
+
+    }
+
+    public function getEMVItems(&$tbl) {
+        
+        if ($this->response->isEMVTransaction()) {
+            
+            if ($this->response->getEMVCardEntryMode() != '') {
+                $tbl->addBodyTr(HTMLTable::makeTd("Card Entry Mode: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getEMVCardEntryMode()));
+            }
+            if ($this->response->getEMVAuthorizationMode() != '') {
+                $tbl->addBodyTr(HTMLTable::makeTd("Mode: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getEMVAuthorizationMode()));
+            }
+            if ($this->response->getEMVApplicationIdentifier() != '') {
+                $tbl->addBodyTr(HTMLTable::makeTd("AID: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getEMVApplicationIdentifier()));
+            }
+            if ($this->response->getEMVTerminalVerificationResults() != '') {
+                $tbl->addBodyTr(HTMLTable::makeTd("TVR: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getEMVTerminalVerificationResults()));
+            }
+            if ($this->response->getEMVIssuerApplicationData() != '') {
+                $tbl->addBodyTr(HTMLTable::makeTd("IAD: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getEMVIssuerApplicationData()));
+            }
+            if ($this->response->getEMVTransactionStatusInformation() != '') {
+                $tbl->addBodyTr(HTMLTable::makeTd("TSI: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getEMVTransactionStatusInformation()));
+            }
+            if ($this->response->getEMVApplicationResponseCode() != '') {
+                $tbl->addBodyTr(HTMLTable::makeTd("ARC: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getEMVApplicationResponseCode()));
+            }
+
+        }
+
+    }
 }
 
 
@@ -175,18 +232,6 @@ class ImSaleResponse extends PaymentResponse {
         return $status;
     }
 
-    public function receiptMarkup(\PDO $dbh, &$tbl) {
-
-        $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardNum));
-
-        if ($this->cardName != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardName));
-        }
-
-        $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
-
-    }
 }
 
 class ImVoidResponse extends PaymentResponse {
@@ -243,19 +288,6 @@ class ImVoidResponse extends PaymentResponse {
         return $status;
     }
 
-    public function receiptMarkup(\PDO $dbh, &$tbl) {
-
-        $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardNum));
-
-        if ($this->cardName != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardName));
-        }
-
-        $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
-
-    }
-
 }
 
 class ImReturnResponse extends PaymentResponse {
@@ -310,19 +342,6 @@ class ImReturnResponse extends PaymentResponse {
         }
 
         return $status;
-    }
-
-    public function receiptMarkup(\PDO $dbh, &$tbl) {
-
-        $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardNum));
-
-        if ($this->cardName != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardName));
-        }
-
-        $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
-
     }
 
 }
