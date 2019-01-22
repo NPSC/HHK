@@ -23,7 +23,7 @@ abstract class PaymentResponse {
     public $idReservation;
     public $idRegistration;
     public $idTrans = 0;
-
+    public $response;
     public $expDate = '';
     public $cardNum = '';
     public $cardType = '';
@@ -112,15 +112,11 @@ abstract class PaymentResponse {
         }
 
         if ($this->response->getAuthCode() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getAuthCode()));
+            $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getAuthCode(), array('style'=>'font-size:.8em;')));
         }
 
         if ($this->response->getStatus() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Response Message Code: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getStatus() . '  ' . $this->response->getResponseCode()));
-        }
-
-        if ($this->response->getStatus() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Response Message Code: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getStatusMessage() . '  ' . $this->response->getResponseCode()));
+            $tbl->addBodyTr(HTMLTable::makeTd("Response Message Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getStatusMessage() . '  ' . $this->response->getResponseCode(), array('style'=>'font-size:.8em;')));
         }
 
         $this->getEMVItems($tbl);
@@ -128,34 +124,35 @@ abstract class PaymentResponse {
         if ($this->response->getAuthorizationText() != '') {
             $tbl->addBodyTr(HTMLTable::makeTd($this->response->getAuthorizationText(), array('colspan'=>2)));
         }
-        $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:310px; border: solid 1px gray;')));
 
     }
 
     public function getEMVItems(&$tbl) {
-        
+
         if ($this->response->isEMVTransaction()) {
-            
+
             if ($this->response->getEMVCardEntryMode() != '') {
-                $tbl->addBodyTr(HTMLTable::makeTd("Card Entry Mode: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getEMVCardEntryMode()));
+                $tbl->addBodyTr(HTMLTable::makeTd("Card Entry Mode: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getEMVCardEntryMode(), array('style'=>'font-size:.8em;')));
             }
             if ($this->response->getEMVAuthorizationMode() != '') {
-                $tbl->addBodyTr(HTMLTable::makeTd("Mode: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getEMVAuthorizationMode()));
+                $tbl->addBodyTr(HTMLTable::makeTd("Mode: ", array('class'=>'tdlabel','style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getEMVAuthorizationMode(), array('style'=>'font-size:.8em;')));
             }
             if ($this->response->getEMVApplicationIdentifier() != '') {
-                $tbl->addBodyTr(HTMLTable::makeTd("AID: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getEMVApplicationIdentifier()));
+                $tbl->addBodyTr(HTMLTable::makeTd("AID: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getEMVApplicationIdentifier(), array('style'=>'font-size:.8em;')));
             }
             if ($this->response->getEMVTerminalVerificationResults() != '') {
-                $tbl->addBodyTr(HTMLTable::makeTd("TVR: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getEMVTerminalVerificationResults()));
+                $tbl->addBodyTr(HTMLTable::makeTd("TVR: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getEMVTerminalVerificationResults(), array('style'=>'font-size:.8em;')));
             }
             if ($this->response->getEMVIssuerApplicationData() != '') {
-                $tbl->addBodyTr(HTMLTable::makeTd("IAD: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getEMVIssuerApplicationData()));
+                $tbl->addBodyTr(HTMLTable::makeTd("IAD: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getEMVIssuerApplicationData(), array('style'=>'font-size:.8em;')));
             }
             if ($this->response->getEMVTransactionStatusInformation() != '') {
-                $tbl->addBodyTr(HTMLTable::makeTd("TSI: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getEMVTransactionStatusInformation()));
+                $tbl->addBodyTr(HTMLTable::makeTd("TSI: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getEMVTransactionStatusInformation(), array('style'=>'font-size:.8em;')));
             }
             if ($this->response->getEMVApplicationResponseCode() != '') {
-                $tbl->addBodyTr(HTMLTable::makeTd("ARC: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getEMVApplicationResponseCode()));
+                $tbl->addBodyTr(HTMLTable::makeTd("ARC: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getEMVApplicationResponseCode(), array('style'=>'font-size:.8em;')));
             }
 
         }
@@ -166,8 +163,9 @@ abstract class PaymentResponse {
 
 class ImSaleResponse extends PaymentResponse {
 
-    public $response;
+
     public $idToken;
+    public $isEMV;
 
     function __construct(VerifyCurlResponse $verifyCurlResponse, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
         $this->response = $verifyCurlResponse;
@@ -181,6 +179,7 @@ class ImSaleResponse extends PaymentResponse {
         $this->cardType = $verifyCurlResponse->getCardType();
         $this->cardName = $verifyCurlResponse->getCardHolderName();
         $this->amount = $verifyCurlResponse->getAuthorizeAmount();
+        $this->isEMV = $verifyCurlResponse->isEMVTransaction();
         $this->payNotes = $payNotes;
 
         if ($verifyCurlResponse->getPartialPaymentAmount() > 0) {
@@ -236,7 +235,7 @@ class ImSaleResponse extends PaymentResponse {
 
 class ImVoidResponse extends PaymentResponse {
 
-    public $response;
+
     public $idToken = '';
 
     function __construct(VerifyCurlResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
@@ -251,6 +250,7 @@ class ImVoidResponse extends PaymentResponse {
         $this->cardNum = $vcr->getMaskedAccount();
         $this->cardType = $vcr->getCardType();
         $this->cardName = $vcr->getCardHolderName();
+        $this->isEMV = $verifyCurlResponse->isEMVTransaction();
     }
 
     public function getStatus() {
@@ -292,7 +292,7 @@ class ImVoidResponse extends PaymentResponse {
 
 class ImReturnResponse extends PaymentResponse {
 
-    public $response;
+
     public $idToken = '';
 
     function __construct(VerifyCurlResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
@@ -307,6 +307,7 @@ class ImReturnResponse extends PaymentResponse {
         $this->cardNum = $vcr->getMaskedAccount();
         $this->cardType = $vcr->getCardType();
         $this->cardName = $vcr->getCardHolderName();
+        $this->isEMV = $verifyCurlResponse->isEMVTransaction();
     }
 
     public function getStatus() {
@@ -359,6 +360,7 @@ class ImCofResponse extends PaymentResponse {
         $this->cardType = $verifyCurlResponse->getCardType();
         $this->cardName = $verifyCurlResponse->getCardHolderName();
         $this->idToken = $verifyCurlResponse->getToken();
+        $this->isEMV = $verifyCurlResponse->isEMVTransaction();
     }
 
     public function getStatus() {
@@ -539,12 +541,23 @@ class SaleReply extends CreditPayments {
             $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
             $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Paid);
 
+            // EMV
+            if ($pr->isEMV) {
+
+                $pDetailRS->EMVCardEntryMode->setNewVal($vr->getEMVCardEntryMode());
+                $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
+                $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
+                $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
+                $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
+                $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
+
+            }
+
             $idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
             $pDetailRS->idPayment_auth->setNewVal($idPaymentAuth);
             EditRS::updateStoredVals($pDetailRS);
 
         }
-
 
        return $pr;
     }
@@ -597,6 +610,18 @@ class SaleReply extends CreditPayments {
             $pDetailRS->Updated_By->setNewVal($username);
             $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
             $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Declined);
+
+            // EMV
+            if ($pr->isEMV) {
+
+                $pDetailRS->EMVCardEntryMode->setNewVal($vr->getEMVCardEntryMode());
+                $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
+                $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
+                $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
+                $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
+                $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
+
+            }
 
             $idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
             $pDetailRS->idPayment_auth->setNewVal($idPaymentAuth);
@@ -653,6 +678,18 @@ class VoidReply extends CreditPayments {
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
         $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
         $pDetailRS->Code3->setNewVal($vr->getCvvResult());
+
+        // EMV
+        if ($pr->isEMV) {
+
+            $pDetailRS->EMVCardEntryMode->setNewVal($vr->getEMVCardEntryMode());
+            $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
+            $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
+            $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
+            $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
+            $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
+
+        }
 
         $pDetailRS->Updated_By->setNewVal($username);
         $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
@@ -721,6 +758,18 @@ class ReverseReply extends CreditPayments {
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
         $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
         $pDetailRS->Code3->setNewVal($vr->getCvvResult());
+
+        // EMV
+        if ($pr->isEMV) {
+
+            $pDetailRS->EMVCardEntryMode->setNewVal($vr->getEMVCardEntryMode());
+            $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
+            $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
+            $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
+            $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
+            $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
+
+        }
 
         $pDetailRS->Updated_By->setNewVal($username);
         $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
@@ -815,6 +864,18 @@ class ReturnReply extends CreditPayments {
         $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
         $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Retrn);
 
+        // EMV
+        if ($pr->isEMV) {
+
+            $pDetailRS->EMVCardEntryMode->setNewVal($vr->getEMVCardEntryMode());
+            $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
+            $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
+            $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
+            $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
+            $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
+
+        }
+
         $idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
 
         $pDetailRS->idPayment_auth->setNewVal($idPaymentAuth);
@@ -868,6 +929,18 @@ class ReturnReply extends CreditPayments {
                 $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
                 $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
                 $pDetailRS->Code3->setNewVal($vr->getCvvResult());
+
+                // EMV
+                if ($pr->isEMV) {
+
+                    $pDetailRS->EMVCardEntryMode->setNewVal($vr->getEMVCardEntryMode());
+                    $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
+                    $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
+                    $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
+                    $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
+                    $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
+
+                }
 
                 $pDetailRS->Updated_By->setNewVal($username);
                 $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));

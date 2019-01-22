@@ -78,6 +78,16 @@ class PaymentResult {
         $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
         EditRS::insert($dbh, $payInvRs);
 
+        // Make out receipt
+        $this->receiptMarkup = Receipt::createDeclinedMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
+
+        // Email receipt
+        try {
+            $this->displayMessage .= $this->emailReceipt($dbh);
+        } catch (Exception $ex) {
+            $this->displayMessage .= "Email Failed, Error = " . $ex->getMessage();
+        }
+
 
     }
 
@@ -104,8 +114,8 @@ class PaymentResult {
 
         if ($fromAddr == '') {
             // Config data not set.
-            $this->displayMessage = '';
-            return;
+
+            return '';
         }
 
 
@@ -133,8 +143,8 @@ WHERE r.Email_Receipt = 1 and
 
         if ($toAddrSan === FALSE || $toAddrSan == '') {
             // Config data not set.
-            $this->displayMessage = '';
-            return;
+
+            return '';
         }
 
 
@@ -165,11 +175,13 @@ WHERE r.Email_Receipt = 1 and
 
         if($mail->send()) {
             if ($guestHasEmail) {
-                $this->displayMessage .= "Email sent" . $guestName;
+                return "Email sent" . $guestName;
             }
         } else {
-            $this->displayMessage .= "Send Email failed:  " . $mail->ErrorInfo;
+            return "Send Email failed:  " . $mail->ErrorInfo;
         }
+
+        return '';
 
     }
 

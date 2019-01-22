@@ -313,7 +313,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             var calDateIncrement = '<?php echo $calDateIncrement; ?>';
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
-            var resvPageName = '<?php echo $config->getString('house', 'ReservationPage', 'Reserve.php'); ?>';
+            var resvPageName = 'Reserve.php';
             var showCreatedDate = '<?php echo $uS->ShowCreatedDate; ?>';
             var expandResources = '<?php echo $uS->CalExpandResources; ?>';
             var shoHospitalName = '<?php echo $shoHosptialName; ?>';

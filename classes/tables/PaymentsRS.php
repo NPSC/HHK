@@ -119,6 +119,13 @@ class Payment_AuthRS extends TableRS {
     public $Code3;   // varchar(45) NOT NULL DEFAULT '',
     public $Serialized_Details;   // varchar(1000) NOT NULL DEFAULT '',
     public $Status_Code;   // varchar(5) NOT NULL DEFAULT '',
+    public $EMVCardEntryMode;  // VARCHAR(45) NULL AFTER `Status_Code`,
+    public $EMVAuthorizationMode;  // VARCHAR(45) NULL AFTER `EMVCardEntryMode`,
+    public $EMVApplicationIdentifier;  // VARCHAR(45) NULL AFTER `EMVAuthoriationMode`,
+    public $EMVTerminalVerificationResults;  // VARCHAR(45) NULL AFTER `EMVApplicationIdentifier`,
+    public $EMVIssuerApplicationData;  // VARCHAR(45) NULL AFTER `EMVTerminalVerificationResults`,
+    public $EMVTransactionStatusInformation;  // VARCHAR(45) NULL AFTER `EMVIssuerApplicationData`,
+    public $EMVApplicationResponseCode;  // VARCHAR(45) NULL AFTER `EMVTransactionStatusInformation`;
     public $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
     public $Last_Updated;   // datetime DEFAULT NULL,
     public $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -142,6 +149,13 @@ class Payment_AuthRS extends TableRS {
         $this->Code3 = new DB_Field("Code3", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Serialized_Details = new DB_Field("Serialized_Details", "", new DbStrSanitizer(1000), TRUE, TRUE);
         $this->Status_Code = new DB_Field("Status_Code", "", new DbStrSanitizer(5), TRUE, TRUE);
+        $this->EMVCardEntryMode = new DB_Field("EMVCardEntryMode", "", new DbStrSanitizer(45), TRUE, TRUE);
+        $this->EMVAuthorizationMode = new DB_Field("EMVAuthorizationMode", "", new DbStrSanitizer(45), TRUE, TRUE);
+        $this->EMVApplicationIdentifier = new DB_Field("EMVApplicationIdentifier", "", new DbStrSanitizer(45), TRUE, TRUE);
+        $this->EMVTerminalVerificationResults = new DB_Field("EMVTerminalVerificationResults", "", new DbStrSanitizer(45), TRUE, TRUE);
+        $this->EMVIssuerApplicationData = new DB_Field("EMVIssuerApplicationData", "", new DbStrSanitizer(45), TRUE, TRUE);
+        $this->EMVTransactionStatusInformation = new DB_Field("EMVTransactionStatusInformation", "", new DbStrSanitizer(45), TRUE, TRUE);
+        $this->EMVApplicationResponseCode = new DB_Field("EMVApplicationResponseCode", "", new DbStrSanitizer(45), TRUE, TRUE);
 
         $this->Updated_By = new DB_Field("Updated_By", '', new DbStrSanitizer(45), TRUE, True);
         $this->Last_Updated = new DB_Field("Last_Updated", null, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);

@@ -210,6 +210,80 @@ class Receipt {
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
     }
 
+    public static function createDeclinedMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, PaymentResponse $payResp) {
+
+        // Assemble the statement
+        $rec = self::getHouseIconMarkup();
+
+        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;'));
+
+        $tbl = new HTMLTable();
+        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Receipt", array('colspan'=>'2')));
+
+//        $info = self::getVisitInfo($dbh, $invoice);
+//
+//        // Get labels
+//        $labels = new Config_Lite(LABEL_FILE);
+//
+//
+//        if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
+//            $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
+//        }
+//
+//        if (isset($info['Patient']) && $info['Patient'] != '') {
+//            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Patient']));
+//        }
+//
+//        $idPriGuest = 0;
+//        if (isset($info['idPrimaryGuest'])) {
+//            $idPriGuest = $info['idPrimaryGuest'];
+//        }
+//
+//        if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
+//            $payor = Member::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
+//            $tbl->addBodyTr(HTMLTable::makeTd("Payor: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($payor->getMemberName()));
+//        }
+//
+//        if (isset($info['HospName']) && $info['HospName'] != '') {
+//            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['HospName']));
+//        }
+//
+//        $tbl->addBodyTr(HTMLTable::makeTd("Visit Id: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($invoice->getOrderNumber() . '-' . $invoice->getSuborderNumber()));
+//
+//        if (isset($info['Room']) && $info['Room'] != '') {
+//            $tbl->addBodyTr(HTMLTable::makeTd("Room: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Room']));
+//        }
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel')) . HTMLTable::makeTd(($payResp->getPaymentDate() == '' ? date('D M jS, Y') : date('D M jS, Y', strtotime($payResp->getPaymentDate())))));
+
+//        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoice()));
+//
+//        foreach ($invoice->getLines($dbh) as $line) {
+//            $tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($line->getAmount(), 2), array('style'=>'font-size:.8em;')));
+//        }
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($invoice->getAmount(), 2), array('class'=>'hhk-tdTotals')));
+
+
+        // Create pay type determined markup
+        $payResp->receiptMarkup($dbh, $tbl);
+
+        if ($invoice->getBalance() > 0 || $invoice->getAmount() != $payResp->getAmount()) {
+            $tbl->addBodyTr(HTMLTable::makeTd("Remaining Balance:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(($invoice->getBalance()), 2)));
+        }
+
+        $disclaimer = '';
+//        $config = new Config_Lite(ciCFG_FILE);
+//        if ($config->getString('financial', 'PaymentDisclaimer', '') != '') {
+//            $disclaimer = HTMLContainer::generateMarkup('div', $config->getString('financial', 'PaymentDisclaimer', ''), array('style'=>'font-size:0.7em; text-align:justify'));
+//        }
+
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup() . $disclaimer, array('style'=>'margin-bottom:10px;clear:both;float:left;'));
+        $rec .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
+
+        return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'display:block;padding:10px;'));
+    }
+
     public static function getHouseIconMarkup() {
 
         $uS = Session::getInstance();
@@ -230,6 +304,8 @@ class Receipt {
     }
 
     public static function getVisitInfo(\PDO $dbh, Invoice $invoice) {
+
+        $data = array();
 
         try {
 
@@ -259,13 +335,16 @@ where
             $stmt->execute(array(':idv'=>$invoice->getOrderNumber(), ':spn'=>$invoice->getSuborderNumber()));
 
             $r = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            $data = $r[0];
+
+            if (isset($r[0])) {
+                $data = $r[0];
 
                 if ($data['Assoc'] != '' && $data['Assoc'] != '(None)') {
                     $data['HospName'] = $data['Assoc'] . '/' . $data['Hospital'];
                 } else {
                     $data['HospName'] = $data['Hospital'];
                 }
+            }
 
         } catch (PDOException $pex) {
             $data = array();

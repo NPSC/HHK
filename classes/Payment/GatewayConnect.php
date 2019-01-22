@@ -324,18 +324,18 @@ class VerifyCurlResponse extends GatewayResponse {
     public function getOperatorID() {
         return '';
     }
-    
+
     public function getAuthorizationText() {
-        if (isset($this->result['AuthorizationText'])) {
-            return $this->result['AuthorizationText'];
+        if (isset($this->result['authorizationText'])) {
+            return $this->result['authorizationText'];
         }
         return '';
 
     }
 
-    
+
     public function isEMVTransaction() {
-        
+
         if (isset($this->result['isEMVTransaction'])) {
             if ($this->result['isEMVTransaction'] == 'true') {
                 return TRUE;
@@ -344,9 +344,9 @@ class VerifyCurlResponse extends GatewayResponse {
         return FALSE;
 
     }
-    
+
     public function IsEMVVerifiedByPIN() {
-        
+
         if (isset($this->result['IsEMVVerifiedByPIN'])) {
             if ($this->result['IsEMVVerifiedByPIN'] == 'true') {
                 return TRUE;
@@ -355,7 +355,7 @@ class VerifyCurlResponse extends GatewayResponse {
         return FALSE;
 
     }
-    
+
     public function getEMVApplicationName() {
         if (isset($this->result['EMVApplicationName'])) {
             return $this->result['EMVApplicationName'];
@@ -410,8 +410,8 @@ class VerifyCurlResponse extends GatewayResponse {
         }
         return '';
     }
-    
-    
+
+
 
 }
 

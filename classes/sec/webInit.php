@@ -185,6 +185,10 @@ class webInit {
         $uS = Session::getInstance();
 
         // Load sys config table entries.
+        SysConfig::getCategory($this->dbh, $uS, "'f'", $uS->sconf);
+        SysConfig::getCategory($this->dbh, $uS, "'r'", $uS->sconf);
+        SysConfig::getCategory($this->dbh, $uS, "'d'", $uS->sconf);
+
         SysConfig::getCategory($this->dbh, $uS, "'h'", $uS->sconf);
 
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
