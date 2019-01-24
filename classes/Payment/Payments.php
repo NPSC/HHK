@@ -104,7 +104,7 @@ abstract class PaymentResponse {
 
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
+        $tbl->addBodyTr(HTMLTable::makeTd("Credit Card Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
         $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardNum));
 
         if ($this->cardName != '') {
@@ -115,7 +115,7 @@ abstract class PaymentResponse {
             $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getAuthCode(), array('style'=>'font-size:.8em;')));
         }
 
-        if ($this->response->getStatus() != '') {
+        if ($this->response->getStatusMessage() != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Response Message Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getStatusMessage() . '  ' . $this->response->getResponseCode(), array('style'=>'font-size:.8em;')));
         }
 
