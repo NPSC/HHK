@@ -272,13 +272,8 @@ class Receipt {
             $tbl->addBodyTr(HTMLTable::makeTd("Remaining Balance:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(($invoice->getBalance()), 2)));
         }
 
-        $disclaimer = '';
-//        $config = new Config_Lite(ciCFG_FILE);
-//        if ($config->getString('financial', 'PaymentDisclaimer', '') != '') {
-//            $disclaimer = HTMLContainer::generateMarkup('div', $config->getString('financial', 'PaymentDisclaimer', ''), array('style'=>'font-size:0.7em; text-align:justify'));
-//        }
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup() . $disclaimer, array('style'=>'margin-bottom:10px;clear:both;float:left;'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;float:left;'));
         $rec .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'display:block;padding:10px;'));

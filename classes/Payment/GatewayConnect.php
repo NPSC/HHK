@@ -4,6 +4,37 @@
  *
  * @author Eric
  */
+
+
+interface iGatewayResponse {
+
+    public function getResponseCode();
+    public function getResponseMessage();
+    public function getTranType();
+
+    public function getAuthorizeAmount();
+    public function getPartialPaymentAmount();
+    public function getAuthCode();
+    public function isEMVTransaction();
+    public function getTransPostTime();
+    public function getAuthorizationText();
+
+    public function getAVSAddress();
+    public function getAVSResult();
+    public function getAVSZip();
+    public function getCvvResult();
+
+    public function getCardType();
+    public function getMaskedAccount();
+    public function getCardHolderName();
+    public function getExpDate();
+
+    public function getToken();
+    public function getInvoice();
+
+}
+
+
 abstract class GatewayResponse {
 
     /**
@@ -56,11 +87,6 @@ abstract class GatewayResponse {
         return $this->tranType;
     }
 
-
-    public function getAuthorizeAmount() {
-        return 0;
-    }
-
 }
 
 class PollingResponse extends GatewayResponse {
@@ -111,7 +137,7 @@ class PollingResponse extends GatewayResponse {
 
 }
 
-class VerifyCurlResponse extends GatewayResponse {
+class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
 
     public function parseResponse(){
 
@@ -130,29 +156,11 @@ class VerifyCurlResponse extends GatewayResponse {
         return '';
     }
 
-    public function getStatus() {
-        if (isset($this->result['responseCode'])) {
-            return $this->result['responseCode'];
-        }
-        return '';
-    }
-
-    public function getStatusMessage() {
+    public function getResponseMessage() {
         if (isset($this->result['responseMessage'])) {
             return $this->result['responseMessage'];
         }
         return '';
-    }
-
-    public function getMessage() {
-        if (isset($this->result['responseMessage'])) {
-            return $this->result['responseMessage'];
-        }
-        return '';
-    }
-
-    public function getDisplayMessage() {
-        return $this->getMessage();
     }
 
     public function getToken() {
@@ -171,18 +179,10 @@ class VerifyCurlResponse extends GatewayResponse {
         return '';
     }
 
-    public function getCardUsage() {
-        return '';
-    }
-
     public function getMaskedAccount() {
         if (isset($this->result['lastFourDigits'])) {
             return $this->result['lastFourDigits'];
         }
-        return '';
-    }
-
-    public function getPaymentIDExpired() {
         return '';
     }
 
@@ -213,15 +213,10 @@ class VerifyCurlResponse extends GatewayResponse {
         return '';
     }
 
-    public function getAcqRefData() {
-        return '';
-    }
-
     public function getAuthorizeAmount() {
 
-        if (isset($this->result['partialApprovalAmount'])) {
-            return $this->result['partialApprovalAmount'];
-
+        if ($this->getPartialPaymentAmount() != '') {
+            return $this->getPartialPaymentAmount();
         } else if (isset($this->result['Amount'])) {
             return $this->result['Amount'];
         }
@@ -270,10 +265,6 @@ class VerifyCurlResponse extends GatewayResponse {
         return '';
     }
 
-    public function getMemo() {
-        return '';
-    }
-
     public function getPaymentPlanID() {
         if (isset($this->result['paymentPlanID'])) {
             return $this->result['paymentPlanID'];
@@ -286,14 +277,6 @@ class VerifyCurlResponse extends GatewayResponse {
             return $this->result['primaryTransactionID'];
         }
         return '';
-    }
-
-    public function getProcessData() {
-        return $this->getTransactionStatus();
-    }
-
-    public function getRefNo() {
-        return $this->getTransactionId();
     }
 
     public function getTransactionId() {
@@ -314,14 +297,6 @@ class VerifyCurlResponse extends GatewayResponse {
         if (isset($this->result['transactionDate'])) {
             return $this->result['transactionDate'];
         }
-        return '';
-    }
-
-    public function getCustomerCode() {
-        return '';
-    }
-
-    public function getOperatorID() {
         return '';
     }
 
@@ -410,8 +385,6 @@ class VerifyCurlResponse extends GatewayResponse {
         }
         return '';
     }
-
-
 
 }
 

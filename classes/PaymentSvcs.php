@@ -67,7 +67,7 @@ class PaymentResult {
 
     }
 
-    public function feePaymentRejected(\PDO $dbh, Session $uS, PaymentResponse $payResp) {
+    public function feePaymentRejected(\PDO $dbh, Session $uS, PaymentResponse $payResp, Invoice $invoice) {
 
 
 
@@ -875,7 +875,7 @@ class PaymentSvcs {
             case MpStatusValues::Declined:
 
                 $rtnResult->setStatus(PaymentResult::DENIED);
-                $rtnResult->feePaymentRejected($dbh, $uS, $rtnResp);
+                $rtnResult->feePaymentRejected($dbh, $uS, $rtnResp, $invoice);
                 $rtnResult->setDisplayMessage('** The Return is Declined. **  Message: ' . $rtnResp->response->getDisplayMessage());
 
                 break;
@@ -1034,7 +1034,7 @@ class PaymentSvcs {
             case CreditPayments::STATUS_DECLINED:
 
                 $payResult->setStatus(PaymentResult::DENIED);
-                $payResult->feePaymentRejected($dbh, $uS, $payResp);
+                $payResult->feePaymentRejected($dbh, $uS, $payResp, $invoice);
 
                 $msg = '** The Payment is Declined. **';
                 if ($payResp->response->getDisplayMessage() != '') {
@@ -1175,10 +1175,10 @@ class PaymentSvcs {
                     return array('warning'=>'Charge payment record not found.');
                 }
 
-                $ckRs = new Payment_AuthRS();
-                EditRS::loadRow($rows[count($rows)-1], $ckRs);
+                $pAuthRs = new Payment_AuthRS();
+                EditRS::loadRow($rows[count($rows)-1], $pAuthRs);
 
-                $payResp = new ManualChargeResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $ckRs->Card_Type->getStoredVal(), $ckRs->Acct_Number->getStoredVal(), '', $payRs->idToken->getStoredVal());
+                $payResp = new ManualChargeResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal(), '', $payRs->idToken->getStoredVal());
                 $payResp->paymentRs = $payRs;
                 break;
 
@@ -1191,9 +1191,9 @@ class PaymentSvcs {
                     return array('warning'=>'Charge payment record not found.');
                 }
 
-                $ckRs = new Payment_AuthRS();
-                EditRS::loadRow($rows[0], $ckRs);
-                $payResp = new ManualChargeResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $ckRs->Card_Type->getStoredVal(), $ckRs->Acct_Number->getStoredVal());
+                $pAuthRs = new Payment_AuthRS();
+                EditRS::loadRow($rows[0], $pAuthRs);
+                $payResp = new ManualChargeResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal());
                 $payResp->paymentRs = $payRs;
                 break;
 
@@ -1212,6 +1212,11 @@ class PaymentSvcs {
             case PaymentStatusCode::Paid:
 
                 $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
+                break;
+
+            case PaymentStatusCode::Declined:
+
+                $dataArray['receipt'] = Receipt::createDeclineMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
                 break;
 
             case PaymentStatusCode::VoidSale:

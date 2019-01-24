@@ -149,14 +149,19 @@ class CashTX {
 
 class ManualChargeResponse extends PaymentResponse {
 
-    function __construct($amount, $idPayor, $invoiceNumber, $chargeType, $chargeAcct, $payNote = '', $idGuestToken = 0) {
+    protected $rawStatus;
+
+    function __construct($amount, $idPayor, $invoiceNumber, Payment_AuthRS $pAuthRs, $payNote = '', $idGuestToken = 0) {
 
         $this->paymentType = PayType::ChargeAsCash;
         $this->idPayor = $idPayor;
         $this->amount = $amount;
         $this->invoiceNumber = $invoiceNumber;
-        $this->cardNum = $chargeAcct;
-        $this->cardType = $chargeType;
+        $this->cardNum = $$pAuthRs->Acct_Number->getStoredVal();
+        $this->cardType = $pAuthRs->Card_Type->getStoredVal();
+
+        $this->authCode = $pAuthRs->Approval_Code->getStoredVal();
+        $this->rawStatus = $pAuthRs->Status_Code->getStoredVal();
         $this->payNotes = $payNote;
         $this->idGuestToken = $idGuestToken;
     }
@@ -171,7 +176,45 @@ class ManualChargeResponse extends PaymentResponse {
     }
 
     public function getStatus() {
-        return CreditPayments::STATUS_APPROVED;
+
+        $status = '';
+
+        switch ($this->rawStatus) {
+
+            case '000':
+                $status = CreditPayments::STATUS_APPROVED;
+                break;
+
+            case '010':
+                // Partial Payment
+                $status = CreditPayments::STATUS_APPROVED;
+                break;
+
+            case '001':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '003':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '005':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '051':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '063':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            default:
+                $status = CreditPayments::STATUS_ERROR;
+        }
+
+        return $status;
     }
 
     public function receiptMarkup(\PDO $dbh, &$tbl) {
