@@ -2162,6 +2162,14 @@ function resvManager(initData) {
             $('div#guestSearch').hide();
 
             $('#btnDone').val('Save Family').show();
+            
+            // Insurance chooser
+            $('select.hhk-multisel').each( function () {
+                $(this).multiselect({
+                    selectedList: 3
+                });
+            });
+
         }
 
         // Expected Dates Control

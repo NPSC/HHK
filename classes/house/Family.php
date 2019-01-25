@@ -18,6 +18,7 @@ class Family {
     protected $patientAddr;
     protected $showGuestAddr;
     protected $showDemographics;
+    protected $showInsurance;
 
 
     public function __construct(\PDO $dbh, &$rData, $incldEmContact = FALSE) {
@@ -32,6 +33,7 @@ class Family {
         $this->patientAddr = $uS->PatientAddr;
         $this->showGuestAddr = $uS->GuestAddr;
         $this->showDemographics = $uS->ShowDemographics;
+        $this->showInsurance = $uS->InsuranceChooser;
 
         // Prefix
         if (isset($uS->addPerPrefix) === FALSE) {
@@ -352,10 +354,17 @@ class Family {
 
                 if ($this->IncldEmContact) {
                     // Emergency Contact
-                    $demoMu = $this->getEmergencyConntactMu($dbh, $role);
-                } else if ($this->showDemographics) {
+                    $demoMu .= $this->getEmergencyConntactMu($dbh, $role);
+                }
+                
+                if ($this->showDemographics) {
                     // Demographics
-                    $demoMu = $this->getDemographicsMarkup($dbh, $role);
+                    $demoMu .= $this->getDemographicsMarkup($dbh, $role);
+                }
+
+                if ($this->showInsurance) {
+                    // Demographics
+                    $demoMu .= $this->getInsuranceMarkup($dbh, $role);
                 }
 
                 $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
@@ -444,6 +453,14 @@ class Family {
             HTMLContainer::generateMarkup('legend', 'Demographics', array('style'=>'font-weight:bold;'))
                 . $role->getRoleMember()->createDemographicsPanel($dbh, TRUE, FALSE), array('class'=>'hhk-panel')),
             array('style'=>'float:left; margin-right:3px;'));
+
+    }
+
+    protected function getInsuranceMarkup(\PDO $dbh, $role) {
+
+        return HTMLContainer::generateMarkup('div', 
+                $role->getRoleMember()->createInsurancePanel($dbh, $role->getRoleMember()->getIdPrefix())
+                , array('style'=>'float:left; margin-top:5px; background-color:white;'));
 
     }
 
