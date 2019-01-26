@@ -463,6 +463,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('fy_diff_Months','0','i','f','Fiscal year difference months (12 - fiscal year start month)'),
 ('GuestNameColor', '', 's', 'h', 'Use this Guest demographic to drive guest name color'),
 ('GuestAddr', 'true', 'b', 'h', 'False = do not collect guest address'),
+('GuestPhoto', 'false', 'b', 'h', 'Manage guest photographs.'),
 ('HouseKeepingEmail', '', 's', 'h', 'Gets notice of visit endings.'),
 ('IncludeLastDay','false','b','h','Include the departure day in room searches.'),
 ('IncomeRated', 'true', 'b', 'h','Use Income chooser rate assistance'),

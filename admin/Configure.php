@@ -228,7 +228,7 @@ if (isset($_FILES['zipfile'])) {
 
     try {
 
-        SiteConfig::checkZipFile('zipfile');
+        SiteConfig::checkUploadFile('zipfile');
 
         $resultMsg .= SiteConfig::loadZipCodeFile($dbh, $_FILES['zipfile']['tmp_name']);
 
