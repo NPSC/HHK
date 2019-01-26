@@ -12,25 +12,19 @@
 abstract class PaymentResponse {
 
     protected $paymentType;
-    protected $amount = 0.0;
     protected $amountDue = 0.0;
-    protected $partialPayment = false;
-    protected $responseMessage = '';
-    public $idPayor = 0;
     protected $invoiceNumber = '';
+    protected $partialPaymentFlag;
+    protected $amount;
 
+
+    public $idPayor = 0;
     public $idVisit;
     public $idReservation;
     public $idRegistration;
     public $idTrans = 0;
     public $response;
-    public $expDate = '';
-    public $cardNum = '';
-    public $cardType = '';
-    public $cardName = '';
     public $idGuestToken = 0;
-
-    public $checkNumber = '';
 
     public $payNotes = '';
 
@@ -40,36 +34,36 @@ abstract class PaymentResponse {
      * @var PaymentRS
      */
     public $paymentRs;
+    
+    public abstract function getStatus();
+    public abstract function receiptMarkup(\PDO $dbh, &$tbl);
+
 
     public function getPaymentType() {
         return $this->paymentType;
-    }
-
-    public function getAmount() {
-        return $this->amount;
     }
 
     public function getAmountDue() {
         return $this->amountDue;
     }
 
-    public function getResponseMessage() {
-        return $this->responseMessage;
+    public function getAmount() {
+        return $this->amount;
     }
 
-    public function getInvoice() {
+    public function getInvoiceNumber() {
         return $this->invoiceNumber;
     }
 
     public function isPartialPayment() {
-        return $this->partialPayment;
+        return $this->partialPaymentFlag;
     }
 
     public function setPartialPayment($v) {
         if ($v) {
-            $this->partialPayment = TRUE;
+            $this->partialPaymentFlag = TRUE;
         } else {
-            $this->partialPayment = FALSE;
+            $this->partialPaymentFlag = FALSE;
         }
     }
 
@@ -82,16 +76,6 @@ abstract class PaymentResponse {
         return 0;
     }
 
-    public abstract function getStatus();
-
-    public function getPaymentDate() {
-
-        if (is_null($this->paymentRs) === FALSE) {
-            return $this->paymentRs->Payment_Date->getStoredVal();
-        }
-
-        return '';
-    }
 
     public function getIdTrans() {
         return $this->idTrans;
@@ -102,21 +86,87 @@ abstract class PaymentResponse {
         return $this;
     }
 
+}
+
+
+class ImPaymentResponse extends PaymentResponse {
+
+
+    public $isEMV;
+
+    function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+        $this->response = $vcr;
+        $this->paymentType = PayType::Charge;
+        $this->idPayor = $idPayor;
+        $this->idRegistration = $idGroup;
+        $this->invoiceNumber = $invoiceNumber;
+        $this->isEMV = $vcr->isEMVTransaction();
+        $this->payNotes = $payNotes;
+
+        if ($vcr->getPartialPaymentAmount() > 0) {
+            $this->setPartialPayment(TRUE);
+        } else {
+            $this->setPartialPayment(FALSE);
+        }
+    }
+
+    public function getStatus() {
+
+        $status = '';
+
+        switch ($this->response->getResponseCode()) {
+
+            case '000':
+                $status = CreditPayments::STATUS_APPROVED;
+                break;
+
+            case '010':
+                // Partial Payment
+                $status = CreditPayments::STATUS_APPROVED;
+                break;
+
+            case '001':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '003':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '005':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '051':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            case '063':
+                $status = CreditPayments::STATUS_DECLINED;
+                break;
+
+            default:
+                $status = CreditPayments::STATUS_ERROR;
+        }
+
+        return $status;
+    }
+
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Credit Card Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardNum));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->response->getCardType() . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getMaskedAccount()));
 
-        if ($this->cardName != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardName));
+        if ($this->response->getCardHolderName() != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getCardHolderName()));
         }
 
         if ($this->response->getAuthCode() != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getAuthCode(), array('style'=>'font-size:.8em;')));
         }
 
-        if ($this->response->getStatusMessage() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Response Message Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getStatusMessage() . '  ' . $this->response->getResponseCode(), array('style'=>'font-size:.8em;')));
+        if ($this->response->getResponseMessage() != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Response Message Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getResponseMessage() . '  ' . $this->response->getResponseCode(), array('style'=>'font-size:.8em;')));
         }
 
         $this->getEMVItems($tbl);
@@ -158,78 +208,6 @@ abstract class PaymentResponse {
         }
 
     }
-}
-
-
-class ImSaleResponse extends PaymentResponse {
-
-
-    public $idToken;
-    public $isEMV;
-
-    function __construct(VerifyCurlResponse $verifyCurlResponse, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
-        $this->response = $verifyCurlResponse;
-        $this->responseMessage = $verifyCurlResponse->getStatusMessage();
-        $this->paymentType = PayType::Charge;
-        $this->idPayor = $idPayor;
-        $this->idRegistration = $idGroup;
-        $this->invoiceNumber = $invoiceNumber;
-        $this->expDate = $verifyCurlResponse->getExpDate();
-        $this->cardNum = $verifyCurlResponse->getMaskedAccount();
-        $this->cardType = $verifyCurlResponse->getCardType();
-        $this->cardName = $verifyCurlResponse->getCardHolderName();
-        $this->amount = $verifyCurlResponse->getAuthorizeAmount();
-        $this->isEMV = $verifyCurlResponse->isEMVTransaction();
-        $this->payNotes = $payNotes;
-
-        if ($verifyCurlResponse->getPartialPaymentAmount() > 0) {
-            $this->partialPayment = TRUE;
-        } else {
-            $this->partialPayment = FALSE;
-        }
-    }
-
-    public function getStatus() {
-
-        $status = '';
-
-        switch ($this->response->getStatus()) {
-
-            case '000':
-                $status = CreditPayments::STATUS_APPROVED;
-                break;
-
-            case '010':
-                // Partial Payment
-                $status = CreditPayments::STATUS_APPROVED;
-                break;
-
-            case '001':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '003':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '005':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '051':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '063':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            default:
-                $status = CreditPayments::STATUS_ERROR;
-        }
-
-        return $status;
-    }
 
 }
 
@@ -238,24 +216,19 @@ class ImVoidResponse extends PaymentResponse {
 
     public $idToken = '';
 
-    function __construct(VerifyCurlResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+    function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
         $this->response = $vcr;
-        $this->responseMessage = $vcr->getStatusMessage();
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
         $this->invoiceNumber = $invoiceNumber;
-        $this->amount = $vcr->getAuthorizeAmount();
         $this->payNotes = $payNotes;
-        $this->cardNum = $vcr->getMaskedAccount();
-        $this->cardType = $vcr->getCardType();
-        $this->cardName = $vcr->getCardHolderName();
-        $this->isEMV = $verifyCurlResponse->isEMVTransaction();
+        $this->isEMV = $vcr->isEMVTransaction();
     }
 
     public function getStatus() {
 
-        switch ($this->response->getStatus()) {
+        switch ($this->response->getResponseCode()) {
 
             case '000':
                 $status = CreditPayments::STATUS_APPROVED;
@@ -296,23 +269,18 @@ class ImReturnResponse extends PaymentResponse {
     public $idToken = '';
 
     function __construct(VerifyCurlResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
-        $this->responseMessage = $vcr->getStatusMessage();
         $this->response = $vcr;
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
         $this->invoiceNumber = $invoiceNumber;
-        $this->amount = $vcr->getAuthorizeAmount();
         $this->payNotes = $payNotes;
-        $this->cardNum = $vcr->getMaskedAccount();
-        $this->cardType = $vcr->getCardType();
-        $this->cardName = $vcr->getCardHolderName();
-        $this->isEMV = $verifyCurlResponse->isEMVTransaction();
+        $this->isEMV = $vcr->isEMVTransaction();
     }
 
     public function getStatus() {
 
-        switch ($this->response->getStatus()) {
+        switch ($this->response->getResponseCode()) {
 
             case '000':
                 $status = CreditPayments::STATUS_APPROVED;
@@ -350,22 +318,19 @@ class ImReturnResponse extends PaymentResponse {
 class ImCofResponse extends PaymentResponse {
 
     public $idToken;
+    public $isEMV;
 
-    function __construct(VerifyCurlResponse $verifyCurlResponse, $idPayor, $idGroup) {
-        $this->response = $verifyCurlResponse;
+    function __construct(iGatewayResponse $vcr, $idPayor, $idGroup) {
+        $this->response = $vcr;
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
-        $this->expDate = $verifyCurlResponse->getExpDate();
-        $this->cardNum = str_ireplace('x', '', $verifyCurlResponse->getMaskedAccount());
-        $this->cardType = $verifyCurlResponse->getCardType();
-        $this->cardName = $verifyCurlResponse->getCardHolderName();
-        $this->idToken = $verifyCurlResponse->getToken();
-        $this->isEMV = $verifyCurlResponse->isEMVTransaction();
+        $this->idToken = $vcr->getToken();
+        $this->isEMV = $vcr->isEMVTransaction();
     }
 
     public function getStatus() {
 
-        switch ($this->response->getStatus()) {
+        switch ($this->response->getResponseCode()) {
 
             case '000':
                 $status = CreditPayments::STATUS_APPROVED;
@@ -463,7 +428,7 @@ class SaleReply extends CreditPayments {
 
 
         // Check for replay - AP*
-        if ($vr->getStatusMessage() == MpStatusMessage::Replay) {
+        if ($vr->getResponseMessage() == MpStatusMessage::Replay) {
 
             // Find previous response, if we caught it.
             $paRs = new Payment_AuthRS();
@@ -502,7 +467,7 @@ class SaleReply extends CreditPayments {
             $payRs->Is_Refund->setStoredVal(1);
         }
 
-        $payRs->Amount->setNewVal($pr->getAmount());
+        $payRs->Amount->setNewVal($vr->getAuthorizeAmount());
         $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
         $payRs->idPayor->setNewVal($pr->idPayor);
         $payRs->idTrans->setNewVal($pr->getIdTrans());
@@ -524,14 +489,14 @@ class SaleReply extends CreditPayments {
             //Payment Detail
             $pDetailRS = new Payment_AuthRS();
             $pDetailRS->idPayment->setNewVal($idPayment);
-            $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
+            $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizeAmount());
             $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
-            $pDetailRS->Status_Message->setNewVal($vr->getStatusMessage());
+            $pDetailRS->Status_Message->setNewVal($vr->getResponseMessage());
             $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
-            $pDetailRS->Acct_Number->setNewVal($pr->cardNum);
+            $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
             $pDetailRS->Card_Type->setNewVal($vr->getCardType());
             $pDetailRS->AVS->setNewVal($vr->getAVSResult());
-            $pDetailRS->Invoice_Number->setNewVal($vr->getInvoice());
+            $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
             $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
             $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
             $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
@@ -574,14 +539,14 @@ class SaleReply extends CreditPayments {
 
         $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
         $payRs->idPayor->setNewVal($pr->idPayor);
-        $payRs->idToken->setNewVal($pr->idToken);
+        $payRs->idToken->setNewVal($vr->getIdToken());
         $payRs->idTrans->setNewVal($pr->getIdTrans());
         $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
         $payRs->Status_Code->setNewVal(PaymentStatusCode::Declined);
         $payRs->Result->setNewVal(MpStatusValues::Declined);
         $payRs->Created_By->setNewVal($username);
         $payRs->Attempt->setNewVal($attempts);
-        $payRs->Amount->setNewVal($pr->getAmount());
+        $payRs->Amount->setNewVal($vr->getAuthorizeAmount());
         $payRs->Notes->setNewVal($pr->payNotes);
 
         $idPmt = EditRS::insert($dbh, $payRs);
@@ -594,14 +559,14 @@ class SaleReply extends CreditPayments {
             //Payment Detail
             $pDetailRS = new Payment_AuthRS();
             $pDetailRS->idPayment->setNewVal($idPmt);
-            $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
+            $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizeAmount());
             $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
-            $pDetailRS->Status_Message->setNewVal($vr->getStatusMessage());
+            $pDetailRS->Status_Message->setNewVal($vr->getResponseMessage());
             $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
-            $pDetailRS->Acct_Number->setNewVal($pr->cardNum);
+            $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
             $pDetailRS->Card_Type->setNewVal($vr->getCardType());
             $pDetailRS->AVS->setNewVal($vr->getAVSResult());
-            $pDetailRS->Invoice_Number->setNewVal($vr->getInvoice());
+            $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
             $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
             $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
             $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
@@ -671,9 +636,9 @@ class VoidReply extends CreditPayments {
         $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
         $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
         $pDetailRS->AVS->setNewVal($vr->getAVSResult());
-        $pDetailRS->Acct_Number->setNewVal($pr->cardNum);
+        $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
         $pDetailRS->Card_Type->setNewVal($vr->getCardType());
-        $pDetailRS->Invoice_Number->setNewVal($vr->getInvoice());
+        $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
         $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
         $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
@@ -707,7 +672,7 @@ class VoidReply extends CreditPayments {
 
     protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $username, PaymentRs $payRs = NULL, $attempts = 1) {
 
-        if ($pr->response->getMessage() == 'ITEM VOIDED') {
+        if ($pr->response->getResponseMessage() == 'ITEM VOIDED') {
             $pr = self::caseApproved($dbh, $pr, $username, $payRs, $attempts);
         }
         return $pr;
@@ -747,13 +712,13 @@ class ReverseReply extends CreditPayments {
         // Payment Detail
         $pDetailRS = new Payment_AuthRS();
         $pDetailRS->idPayment->setNewVal($payRs->idPayment->getStoredVal());
-        $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
+        $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizedAmount());
         $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
         $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
         $pDetailRS->AVS->setNewVal($vr->getAVSResult());
-        $pDetailRS->Acct_Number->setNewVal($pr->cardNum);
+        $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
         $pDetailRS->Card_Type->setNewVal($vr->getCardType());
-        $pDetailRS->Invoice_Number->setNewVal($vr->getInvoice());
+        $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
         $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
         $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
@@ -801,7 +766,7 @@ class ReturnReply extends CreditPayments {
             $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
             $payRs->idPayor->setNewVal($pr->idPayor);
             $payRs->idTrans->setNewVal($pr->getIdTrans());
-            $payRs->idToken->setNewVal($pr->idToken);
+            $payRs->idToken->setNewVal($vr->getToken());
             $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
             $payRs->Result->setNewVal(MpStatusValues::Approved);
             $payRs->Attempt->setNewVal($attempts);
@@ -853,9 +818,9 @@ class ReturnReply extends CreditPayments {
         $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
         $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
         $pDetailRS->AVS->setNewVal($vr->getAVSResult());
-        $pDetailRS->Acct_Number->setNewVal($pr->cardNum);
+        $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
         $pDetailRS->Card_Type->setNewVal($vr->getCardType());
-        $pDetailRS->Invoice_Number->setNewVal($vr->getInvoice());
+        $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
         $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
         $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
@@ -896,7 +861,7 @@ class ReturnReply extends CreditPayments {
 
             $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
             $payRs->idPayor->setNewVal($pr->idPayor);
-            $payRs->idToken->setNewVal($pr->idToken);
+            $payRs->idToken->setNewVal($vr->getToken());
             $payRs->idTrans->setNewVal($pr->getIdTrans());
             $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
             $payRs->Status_Code->setNewVal(PaymentStatusCode::Declined);
@@ -904,8 +869,8 @@ class ReturnReply extends CreditPayments {
             $payRs->Created_By->setNewVal($username);
             $payRs->Attempt->setNewVal($attempts);
             $payRs->Is_Refund->setNewVal(1);
-            $payRs->Amount->setNewVal($pr->getAmount());
-            $payRs->Balance->setNewVal($pr->getAmount());
+            $payRs->Amount->setNewVal($vr->getAuthorizedAmount());
+            $payRs->Balance->setNewVal($vr->getAuthorizedAmount());
             $payRs->Notes->setNewVal($pr->payNotes);
 
             $idPmt = EditRS::insert($dbh, $payRs);
@@ -918,13 +883,13 @@ class ReturnReply extends CreditPayments {
                 //Payment Detail
                 $pDetailRS = new Payment_AuthRS();
                 $pDetailRS->idPayment->setNewVal($idPmt);
-                $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
+                $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizedAmount());
                 $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
                 $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
-                $pDetailRS->Acct_Number->setNewVal($pr->cardNum);
+                $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
                 $pDetailRS->Card_Type->setNewVal($vr->getCardType());
                 $pDetailRS->AVS->setNewVal($vr->getAVSResult());
-                $pDetailRS->Invoice_Number->setNewVal($vr->getInvoice());
+                $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
                 $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
                 $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
                 $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
@@ -1005,9 +970,9 @@ class VoidReturnReply extends CreditPayments {
         $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
         $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
         $pDetailRS->AVS->setNewVal($vr->getAVSResult());
-        $pDetailRS->Acct_Number->setNewVal($pr->cardNum);
+        $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
         $pDetailRS->Card_Type->setNewVal($vr->getCardType());
-        $pDetailRS->Invoice_Number->setNewVal($vr->getInvoice());
+        $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
         $pDetailRS->idTrans->setNewVal($pr->idTrans);
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
         $pDetailRS->ProcessData->setNewVal($vr->getProcessData());

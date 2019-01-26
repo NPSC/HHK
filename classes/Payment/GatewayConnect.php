@@ -15,10 +15,14 @@ interface iGatewayResponse {
     public function getAuthorizeAmount();
     public function getPartialPaymentAmount();
     public function getAuthCode();
-    public function isEMVTransaction();
     public function getTransPostTime();
     public function getAuthorizationText();
+    public function getRefNo();
+    public function getAcqRefData();
+    public function getProcessData();
 
+    public function isEMVTransaction();
+    
     public function getAVSAddress();
     public function getAVSResult();
     public function getAVSZip();
@@ -30,7 +34,7 @@ interface iGatewayResponse {
     public function getExpDate();
 
     public function getToken();
-    public function getInvoice();
+    public function getInvoiceNumber();
 
 }
 
@@ -257,13 +261,24 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
         return '';
     }
 
-    public function getInvoice() {
+    public function getInvoiceNumber() {
         if (isset($this->result['InvoiceNumber'])) {
             return $this->result['InvoiceNumber'];
         }
 
         return '';
     }
+    
+    public function getRefNo() {
+        return $this->getPaymentPlanID();
+    }
+    public function getAcqRefData() {
+        return $this->getPrimaryTransactionID();
+    }
+    public function getProcessData() {
+        return $this->getTransactionId();
+    }
+
 
     public function getPaymentPlanID() {
         if (isset($this->result['paymentPlanID'])) {

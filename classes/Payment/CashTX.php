@@ -150,7 +150,11 @@ class CashTX {
 class ManualChargeResponse extends PaymentResponse {
 
     protected $rawStatus;
-
+    protected $cardNum;
+    protected $cardType;
+    protected $authCode;
+    
+    
     function __construct($amount, $idPayor, $invoiceNumber, Payment_AuthRS $pAuthRs, $payNote = '', $idGuestToken = 0) {
 
         $this->paymentType = PayType::ChargeAsCash;
@@ -165,10 +169,14 @@ class ManualChargeResponse extends PaymentResponse {
         $this->payNotes = $payNote;
         $this->idGuestToken = $idGuestToken;
     }
-
+    
 
     public function getChargeType() {
         return $this->cardType;
+    }
+
+    public function getAuthCode() {
+        return $this->authCode;
     }
 
     public function getCardNum() {
@@ -220,14 +228,18 @@ class ManualChargeResponse extends PaymentResponse {
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         $chgTypes = readGenLookupsPDO($dbh, 'Charge_Cards');
-        $cgType = $this->cardType;
+        $cgType = $this->getChargeType();
 
         if (isset($chgTypes[$this->getChargeType()])) {
             $cgType = $chgTypes[$this->getChargeType()][1];
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd($cgType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardNum));
+        $tbl->addBodyTr(HTMLTable::makeTd($cgType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getCardNum()));
+        
+        if($this->getAuthCode() != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd('Authorization:', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getAuthCode()));
+        }
 
          if ($this->idGuestToken > 0) {
 

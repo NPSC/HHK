@@ -47,7 +47,7 @@ class PaymentResult {
         if ($payResp->getIdPayment() > 0 && $this->idInvoice > 0) {
             // payment-invoice
             $payInvRs = new PaymentInvoiceRS();
-            $payInvRs->Amount->setNewVal($payResp->getAmount());
+            $payInvRs->Amount->setNewVal($payResp->response->getAuthorizedAmount());
             $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
             $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
             EditRS::insert($dbh, $payInvRs);
@@ -73,7 +73,7 @@ class PaymentResult {
 
         // payment-invoice
         $payInvRs = new PaymentInvoiceRS();
-        $payInvRs->Amount->setNewVal($payResp->getAmount());
+        $payInvRs->Amount->setNewVal($payResp->response->getAuthorizedAmount());
         $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
         $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
         EditRS::insert($dbh, $payInvRs);
@@ -285,7 +285,7 @@ class ReturnResult extends PaymentResult {
         if ($rtnResp->getIdPayment() > 0 && $this->idInvoice > 0) {
             // payment-invoice
             $payInvRs = new PaymentInvoiceRS();
-            $payInvRs->Amount->setNewVal($rtnResp->getAmount());
+            $payInvRs->Amount->setNewVal($rtnResp->response->getAuthorizedAmount());
             $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
             $payInvRs->Payment_Id->setNewVal($rtnResp->getIdPayment());
             EditRS::insert($dbh, $payInvRs);
@@ -860,9 +860,9 @@ class PaymentSvcs {
 
         $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $idToken);
 
-        switch ($rtnResp->response->getStatus()) {
+        switch ($rtnResp->getStatus()) {
 
-            case MpStatusValues::Approved:
+            case CreditPayments::STATUS_APPROVED:
 
                 // Update invoice
                 $invoice->updateInvoiceBalance($dbh, 0 - $rtnResp->response->getAuthorizeAmount(), $uS->username);
@@ -872,11 +872,11 @@ class PaymentSvcs {
 
                 break;
 
-            case MpStatusValues::Declined:
+            case CreditPayments::STATUS_DECLINED:
 
                 $rtnResult->setStatus(PaymentResult::DENIED);
                 $rtnResult->feePaymentRejected($dbh, $uS, $rtnResp, $invoice);
-                $rtnResult->setDisplayMessage('** The Return is Declined. **  Message: ' . $rtnResp->response->getDisplayMessage());
+                $rtnResult->setDisplayMessage('** The Return is Declined. **  Message: ' . $rtnResp->response->getResponseMessage());
 
                 break;
 
@@ -884,7 +884,7 @@ class PaymentSvcs {
 
                 $rtnResult->setStatus(PaymentResult::ERROR);
                 $rtnResult->feePaymentError($dbh, $uS);
-                $rtnResult->setDisplayMessage('** Return Invalid or Error **  Message: ' . $rtnResp->response->getMessage());
+                $rtnResult->setDisplayMessage('** Return Invalid or Error **  Message: ' . $rtnResp->response->getResponseMessage());
         }
 
         return $rtnResult;
@@ -960,9 +960,9 @@ class PaymentSvcs {
 
             $csResp = TokenTX::creditVoidReturnToken($dbh, $payRs->idPayor->getstoredVal(), $uS->ccgw, $revRequest, $payRs);
 
-            switch ($csResp->response->getStatus()) {
+            switch ($csResp->getStatus()) {
 
-                case MpStatusValues::Approved:
+                case CreditPayments::STATUS_APPROVED:
 
                     // Update invoice
                     $invoice->updateInvoiceBalance($dbh, $csResp->response->getAuthorizeAmount(), $uS->username);
@@ -974,7 +974,7 @@ class PaymentSvcs {
 
                     break;
 
-                case MpStatusValues::Declined:
+                case CreditPayments::STATUS_DECLINED:
 
                     $dataArray['success'] = 'Declined.';
                     break;
@@ -1005,13 +1005,13 @@ class PaymentSvcs {
             case CreditPayments::STATUS_APPROVED:
 
                 // Update invoice
-                $invoice->updateInvoiceBalance($dbh, $payResp->getAmount(), $uS->username);
+                $invoice->updateInvoiceBalance($dbh, $payResp->response->getAuthorizedAmount(), $uS->username);
 
                 $payResult->feePaymentAccepted($dbh, $uS, $payResp, $invoice);
                 $payResult->setDisplayMessage('Paid by Credit Card.  ');
 
                 if ($payResp->isPartialPayment()) {
-                    $payResult->setDisplayMessage('** Partially Approved Amount: ' . number_format($payResp->getAmount(), 2) . ' (Remaining Balance Due: ' . number_format($invoice->getBalance(), 2) . ').  ');
+                    $payResult->setDisplayMessage('** Partially Approved Amount: ' . number_format($payResp->response->getAuthorizedAmount(), 2) . ' (Remaining Balance Due: ' . number_format($invoice->getBalance(), 2) . ').  ');
                 }
 
                 if ($useAVS) {
@@ -1037,8 +1037,8 @@ class PaymentSvcs {
                 $payResult->feePaymentRejected($dbh, $uS, $payResp, $invoice);
 
                 $msg = '** The Payment is Declined. **';
-                if ($payResp->response->getDisplayMessage() != '') {
-                    $msg .= 'Message: ' . $payResp->response->getDisplayMessage();
+                if ($payResp->response->getResponseMessage() != '') {
+                    $msg .= 'Message: ' . $payResp->response->getResponseMessage();
                 }
                 $payResult->setDisplayMessage($msg);
 
@@ -1048,7 +1048,7 @@ class PaymentSvcs {
 
                 $payResult->setStatus(PaymentResult::ERROR);
                 $payResult->feePaymentError($dbh, $uS);
-                $payResult->setDisplayMessage('** Payment Invalid or Error **  Message: ' . $payResp->response->getMessage());
+                $payResult->setDisplayMessage('** Payment Invalid or Error **  Message: ' . $payResp->response->getResponseMessage());
         }
 
         return $payResult;
@@ -1178,7 +1178,7 @@ class PaymentSvcs {
                 $pAuthRs = new Payment_AuthRS();
                 EditRS::loadRow($rows[count($rows)-1], $pAuthRs);
 
-                $payResp = new ManualChargeResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal(), '', $payRs->idToken->getStoredVal());
+                $payResp = new ManualChargeResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs, '', $payRs->idToken->getStoredVal(), $pAuthRs->Approval_Code->getStoredVal());
                 $payResp->paymentRs = $payRs;
                 break;
 
