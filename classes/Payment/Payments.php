@@ -211,110 +211,110 @@ class ImPaymentResponse extends PaymentResponse {
 
 }
 
-class ImVoidResponse extends PaymentResponse {
-
-
-    public $idToken = '';
-
-    function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
-        $this->response = $vcr;
-        $this->paymentType = PayType::Charge;
-        $this->idPayor = $idPayor;
-        $this->idRegistration = $idGroup;
-        $this->invoiceNumber = $invoiceNumber;
-        $this->payNotes = $payNotes;
-        $this->isEMV = $vcr->isEMVTransaction();
-    }
-
-    public function getStatus() {
-
-        switch ($this->response->getResponseCode()) {
-
-            case '000':
-                $status = CreditPayments::STATUS_APPROVED;
-                break;
-
-            case '001':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '003':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '005':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '051':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '063':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            default:
-                $status = CreditPayments::STATUS_ERROR;
-        }
-
-        return $status;
-    }
-
-}
-
-class ImReturnResponse extends PaymentResponse {
-
-
-    public $idToken = '';
-
-    function __construct(VerifyCurlResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
-        $this->response = $vcr;
-        $this->paymentType = PayType::Charge;
-        $this->idPayor = $idPayor;
-        $this->idRegistration = $idGroup;
-        $this->invoiceNumber = $invoiceNumber;
-        $this->payNotes = $payNotes;
-        $this->isEMV = $vcr->isEMVTransaction();
-    }
-
-    public function getStatus() {
-
-        switch ($this->response->getResponseCode()) {
-
-            case '000':
-                $status = CreditPayments::STATUS_APPROVED;
-                break;
-
-            case '001':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '003':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '005':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '051':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '063':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            default:
-                $status = CreditPayments::STATUS_ERROR;
-        }
-
-        return $status;
-    }
-
-}
-
+//class ImVoidResponse extends PaymentResponse {
+//
+//
+//    public $idToken = '';
+//
+//    function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+//        $this->response = $vcr;
+//        $this->paymentType = PayType::Charge;
+//        $this->idPayor = $idPayor;
+//        $this->idRegistration = $idGroup;
+//        $this->invoiceNumber = $invoiceNumber;
+//        $this->payNotes = $payNotes;
+//        $this->isEMV = $vcr->isEMVTransaction();
+//    }
+//
+//    public function getStatus() {
+//
+//        switch ($this->response->getResponseCode()) {
+//
+//            case '000':
+//                $status = CreditPayments::STATUS_APPROVED;
+//                break;
+//
+//            case '001':
+//                $status = CreditPayments::STATUS_DECLINED;
+//                break;
+//
+//            case '003':
+//                $status = CreditPayments::STATUS_DECLINED;
+//                break;
+//
+//            case '005':
+//                $status = CreditPayments::STATUS_DECLINED;
+//                break;
+//
+//            case '051':
+//                $status = CreditPayments::STATUS_DECLINED;
+//                break;
+//
+//            case '063':
+//                $status = CreditPayments::STATUS_DECLINED;
+//                break;
+//
+//            default:
+//                $status = CreditPayments::STATUS_ERROR;
+//        }
+//
+//        return $status;
+//    }
+//
+//}
+//
+//class ImReturnResponse extends PaymentResponse {
+//
+//
+//    public $idToken = '';
+//
+//    function __construct(VerifyCurlResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+//        $this->response = $vcr;
+//        $this->paymentType = PayType::Charge;
+//        $this->idPayor = $idPayor;
+//        $this->idRegistration = $idGroup;
+//        $this->invoiceNumber = $invoiceNumber;
+//        $this->payNotes = $payNotes;
+//        $this->isEMV = $vcr->isEMVTransaction();
+//    }
+//
+//    public function getStatus() {
+//
+//        switch ($this->response->getResponseCode()) {
+//
+//            case '000':
+//                $status = CreditPayments::STATUS_APPROVED;
+//                break;
+//
+//            case '001':
+//                $status = CreditPayments::STATUS_DECLINED;
+//                break;
+//
+//            case '003':
+//                $status = CreditPayments::STATUS_DECLINED;
+//                break;
+//
+//            case '005':
+//                $status = CreditPayments::STATUS_DECLINED;
+//                break;
+//
+//            case '051':
+//                $status = CreditPayments::STATUS_DECLINED;
+//                break;
+//
+//            case '063':
+//                $status = CreditPayments::STATUS_DECLINED;
+//                break;
+//
+//            default:
+//                $status = CreditPayments::STATUS_ERROR;
+//        }
+//
+//        return $status;
+//    }
+//
+//}
+//
 class ImCofResponse extends PaymentResponse {
 
     public $idToken;

@@ -8,19 +8,16 @@
 --
 DROP function IF EXISTS `dateDefaultNow`;
 
-CREATE FUNCTION `dateDefaultNow`(dt datetime) RETURNS datetime
+CREATE FUNCTION `dateDefaultNow`(dt datetime) 
+RETURNS datetime
 DETERMINISTIC
-BEGIN
-	declare ndt datetime;
-    select
+    return
     case when dt is null
 		then now()
 	when DATE(dt) < DATE(now())
 		then now()
-        else dt end
-        into ndt;
-	return ndt;
-END -- ;
+        else dt end;
+ -- ;
 
 
 

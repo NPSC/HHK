@@ -90,7 +90,7 @@ abstract class PaymentGateway {
 
     public static function factory(\PDO $dbh, $gwType, $gwName) {
 
-        switch ($gwType) {
+        switch (strtolower($gwType)) {
 
             case PaymentGateway::VANTIV:
 
