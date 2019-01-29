@@ -93,6 +93,27 @@ if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
         }
     }
 
+    // Set Ready
+    if (isset($_POST[$prefix . 'cbReady']) && $uS->HouseKeepingSteps > 1) {
+
+        foreach ($_POST[$prefix . 'cbReady'] as $key => $p) {
+
+            $idRoom = intval(filter_var($key, FILTER_SANITIZE_NUMBER_INT), 10);
+            if ($idRoom == 0) {
+                continue;
+            }
+
+            if (isset($rooms[$idRoom])) {
+                $room = $rooms[$idRoom];
+            } else {
+                $room = new Room($dbh, $idRoom);
+                $rooms[$idRoom] = $room;
+            }
+
+            $room->putReady();
+        }
+    }
+
     // Set dirty
     if (isset($_POST[$prefix . 'cbDirty'])) {
 
@@ -491,7 +512,7 @@ if ($checkingIn == '') {
             <form action="RoomStatus.php" method="post"  id="form1" name="form1" >
                 <div id="mainTabs" style="font-size: .8em; display:none;" class="hhk-tdbox">
                     <ul>
-                        <li><a href="#clnToday">Rooms set Dirty</a></li>
+                        <li><a href="#clnToday">Rooms Not Ready</a></li>
                         <li><a href="#ckin">Guests Checking In</a></li>
                         <li><a href="#ckout">Guests Checking Out</a></li>
                         <li><a href="#showAll">Show All Rooms</a></li>

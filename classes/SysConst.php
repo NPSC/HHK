@@ -303,6 +303,7 @@ class RoomState {
     const Dirty = 'dty';
     const Clean = 'a';
     const TurnOver = 'to';
+    const Ready = 'r';
 }
 class RoomAvailable {
     const Unavailable = 'un';

@@ -118,16 +118,31 @@ class Room {
         return $this->roomRS->Status->getStoredVal() == RoomState::Clean;
     }
 
+    public function isReady() {
+        return $this->roomRS->Status->getStoredVal() == RoomState::Ready;
+    }
+
     public function putDirty() {
 
         $this->setStatus(RoomState::Dirty);
-        return;
+        return TRUE;
     }
 
     public function putTurnOver() {
 
         $this->setStatus(RoomState::TurnOver);
-        return;
+        return TRUE;
+    }
+
+    public function putReady() {
+
+        if ($this->getStatus() == RoomState::Clean) {
+
+            $this->setStatus(RoomState::Ready);
+            return TRUE;
+        }
+
+        return FALSE;
     }
 
     public function putClean($date = '') {
@@ -142,10 +157,43 @@ class Room {
 
         $this->roomRS->Last_Cleaned->setNewVal($date);
 
-        return;
+        return TRUE;
     }
 
-    public function setStatus($roomState) {
+    public function setCleanStatus($stat) {
+
+        $uS = Session::getInstance();
+        $response = TRUE;
+
+        switch ($stat) {
+
+            case RoomState::Dirty:
+                $response = $this->putDirty();
+                break;
+
+            case RoomState::Clean:
+                $response = $this->putClean();
+                break;
+
+            case RoomState::Ready:
+                if ($uS->HouseKeepingSteps > 1) {
+                    $response = $this->putReady();
+                }
+                break;
+
+            case RoomState::TurnOver:
+                $response = $this->putTurnOver();
+                break;
+
+            default:
+                $response = FALSE;
+
+        }
+
+        return $response;
+    }
+
+    private function setStatus($roomState) {
 
         $this->roomRS->Status->setNewVal($roomState);
         return;
