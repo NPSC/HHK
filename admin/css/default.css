@@ -87,14 +87,14 @@ h2.logo {
 #banner {
     height: 45px;
 }
-div#divSubmitButtons {
+div.divSubmitButtons {
     position: fixed;
     bottom: 1px;
     right: 80px;
     padding: 5px 10px;
     border: solid 1px teal;
 }
-div#divSubmitButtons:hover {
+div.divSubmitButtons:hover {
     background-color: white;
 }
 div#contentDiv {

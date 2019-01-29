@@ -334,6 +334,9 @@ if (count($rows) > 0 && $rows[0][0] != '') {
     $zipLoadDate = '';
 }
 
+// Patch tab markup
+$patchMarkup = Patch::patchTabMu();
+
 $conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));
 
 $labels = SiteConfig::createCliteMarkup($labl)->generateMarkup();
@@ -448,6 +451,7 @@ $(document).ready(function () {
     var tabIndex = '<?php echo $tabIndex; ?>';
     var tbs = $('#tabs').tabs();
 
+    $('#btnreset, #btnSiteCnf, #btnLogs, #btnSaveSQL, #btnUpdate, #btnlblreset, #btnLabelCnf, #btnPay, #btnZipGo, #zipfile').button();
     $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
 
         $('#financialRoomSubsidyId, #financialReturnPayorId').removeClass('ui-state-error');
@@ -481,13 +485,20 @@ $(document).ready(function () {
                     <div style="color:red;font-size:1.5em;"><?php echo $confError; ?></div>
                     <form method="post" name="form4" action="">
                         <?php echo $conf; ?>
-                        <div style="float:right;margin-right:40px;"><input type="reset" name="btnreset" value="Reset" style="margin-right:5px;"/><input type="submit" name="btnSiteCnf" value="Save Site Configuration"/></div>
+                        <br>
+                        <div class="divSubmitButtons ui-corner-all">
+                            <input type="reset" name="btnreset" id="btnreset" value="Reset" style="margin-right:5px;"/>
+                            <input type="submit" name="btnSiteCnf" id="btnSiteCnf" value="Save Site Configuration"/>
+                        </div>
                     </form>
                 </div>
                 <div id="labels" class="ui-tabs-hide" >
                     <form method="post" name="form5" action="">
                         <?php echo $labels; ?>
-                        <div style="float:right;margin-right:40px;"><input type="reset" name="btnreset" value="Reset" style="margin-right:5px;"/><input type="submit" name="btnLabelCnf" value="Save Labels"/></div>
+                        <div class="divSubmitButtons ui-corner-all">
+                            <input type="reset" name="btnlblreset" id="btnlblreset" value="Reset" style="margin-right:5px;"/>
+                            <input type="submit" name="btnLabelCnf" id="btnLabelCnf" value="Save Labels"/>
+                        </div>
                     </form>
                 </div>
                     <?php if ($serviceName != '') { ?>
@@ -506,7 +517,7 @@ $(document).ready(function () {
                 <div id="pay" class="ui-tabs-hide" >
                     <form method="post" name="form2" action="">
                         <?php echo $payments; ?>
-                        <div style="float:right;margin-right:40px;"><input type="submit" name="btnPay" value="Save"/></div>
+                        <div style="float:right;margin-right:40px;"><input type="submit" name="btnPay" id="btnPay" value="Save"/></div>
                     </form>
                 </div>
                 <div id="holidays" class="ui-tabs-hide hhk-tdbox" >
@@ -518,15 +529,12 @@ $(document).ready(function () {
                 <div id="patch" class="ui-tabs-hide">
                     <div class="hhk-member-detail">
                         <p style="color:red;"><?php echo $errorMsg; ?></p>
-                        <p>Database: <?php echo $uS->dbms; ?></p>
-                        <p>URL: <?php echo $uS->databaseURL; ?></p>
-                        <p>Schema: <?php echo $uS->databaseName; ?></p>
-                        <p>User: <?php echo $uS->databaseUName; ?></p>
-
+                        <?php echo $patchMarkup; ?>
+                        <div style="clear:both"></div>
                         <form method="post" action="" name="form1">
-                            <input type="submit" name="btnLogs" value="View Site Log" style="margin-left:100px;margin-top:20px;"/>
-                            <input type="submit" name="btnSaveSQL" value="Re-Create Tables, Views and SP's" style="margin-left:20px;margin-top:20px;"/>
-                            <input type="submit" name="btnUpdate" value="Update Config" style="margin-left:20px;margin-top:20px;"/>
+                            <input type="submit" name="btnLogs" id="btnLogs" value="View Site Log" style="margin-left:100px;margin-top:20px;"/>
+                            <input type="submit" name="btnSaveSQL" id="btnSaveSQL" value="Re-Create Tables, Views and SP's" style="margin-left:20px;margin-top:20px;"/>
+                            <input type="submit" name="btnUpdate" id="btnUpdate" value="Update Config" style="margin-left:20px;margin-top:20px;"/>
                         </form>
                         <?php echo $resultAccumulator; ?>
                         <div style="margin-top:20px;">
@@ -541,9 +549,9 @@ $(document).ready(function () {
                         <input type="hidden" name="MAX_FILE_SIZE" value="10000000" />
                         <!-- Name of input element determines name in $_FILES array -->
                         <p style="color:red;"><?php echo $resultMsg; ?></p>
-                        <p><input name="zipfile" type="file" /></p><br/>
+                        <p><input name="zipfile" id="zipfile" type="file" /></p><br/>
 
-                        <div style="float:right;margin-right:40px;"><input type="submit" value="Go" /></div>
+                        <div style="float:right;margin-right:40px;"><input type="submit" name="btnZipGo" id="btnZipGo" value="Go" /></div>
                     </form>
                 </div>
             </div>

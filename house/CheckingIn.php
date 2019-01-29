@@ -172,6 +172,7 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo DR_PICKER_CSS ?>
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
+        <?php echo MULTISELECT_CSS; ?>
 
         <?php echo FAVICON; ?>
 <!--        Fix the ugly checkboxes-->
@@ -429,6 +430,8 @@ $(document).ready(function() {
         if ($(this).val() === 'Saving >>>>') {
             return;
         }
+
+        $('#pWarnings').hide();
 
         if (pageManager.verifyInput() === true) {
 

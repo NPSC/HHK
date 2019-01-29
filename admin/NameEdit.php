@@ -512,8 +512,7 @@ $alertMessage = $alertMsg->createMarkup();
                     <div id="vwuser"> </div>
                </div>
                 <!-- End of Tabs Control -->
-                <div id="divSubmitButtons" class="ui-corner-all">
-
+                <div class="divSubmitButtons" class="ui-corner-all">
                     <input type="submit" name="btnSubmit" value="Save" id="btnSubmit" />
                 </div>
                 <input type="hidden" name="hdnid" id="hdnid" value="<?php echo $id; ?>" />

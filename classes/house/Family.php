@@ -356,7 +356,7 @@ class Family {
                     // Emergency Contact
                     $demoMu .= $this->getEmergencyConntactMu($dbh, $role);
                 }
-                
+
                 if ($this->showDemographics) {
                     // Demographics
                     $demoMu .= $this->getDemographicsMarkup($dbh, $role);
@@ -458,7 +458,7 @@ class Family {
 
     protected function getInsuranceMarkup(\PDO $dbh, $role) {
 
-        return HTMLContainer::generateMarkup('div', 
+        return HTMLContainer::generateMarkup('div',
                 $role->getRoleMember()->createInsurancePanel($dbh, $role->getRoleMember()->getIdPrefix())
                 , array('style'=>'float:left; margin-top:5px; background-color:white;'));
 
@@ -634,6 +634,11 @@ class FamilyAddGuest extends Family {
                     $demoMu = $this->getDemographicsMarkup($dbh, $role);
                 }
 
+                if ($this->showInsurance) {
+                    // Demographics
+                    $demoMu .= $this->getInsuranceMarkup($dbh, $role);
+                }
+                
                 $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
             }
         }
