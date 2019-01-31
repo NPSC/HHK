@@ -166,16 +166,16 @@ if ($uS->GuestPhoto && isset($_FILES['photo'])) {
 
     try {
         SiteConfig::checkUploadFile('photo');
-        
+
     } catch (RuntimeException $rex) {
 
         $alertMsg->set_Context(alertMessage::Alert);
         $alertMsg->set_Text($rex->getMessage());
         $alertMsg->set_DisplayAttr("block");
         $resultMessage = $alertMsg->createMarkup();
-        
+
     }
-    
+
 }
 
 
@@ -184,10 +184,10 @@ if ($uS->GuestPhoto && isset($_FILES['photo'])) {
 * This is the ID that the previous page instance saved for us.
 */
 if (isset($_POST["hdnid"])) {
-    
+
    $h_idTxt = filter_var($_POST["hdnid"], FILTER_SANITIZE_NUMBER_INT);
    $id = intval($h_idTxt, 10);
-   
+
    if ($uS->guestId != $id) {
         $alertMsg->set_Context(alertMessage::Alert);
         $alertMsg->set_Text("Posted id does not match what the server remembers.");
@@ -526,7 +526,7 @@ $nameMarkup = $tbl->generateMarkup();
 
 // Guest Photo
 if ($uS->guestPhoto) {
-    
+
 }
 
 
