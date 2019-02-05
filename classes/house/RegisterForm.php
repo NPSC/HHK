@@ -13,7 +13,7 @@
  * @package name
  * @author Eric
  *
- * This form is used by all Houses except IMD GH.
+ * This form is used by all Houses except IMD GH and St marys
  */
 class RegisterForm {
 

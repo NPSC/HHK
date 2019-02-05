@@ -10,7 +10,7 @@
 require ("AdminIncludes.php");
 
 require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'MercuryRS.php');
+require (DB_TABLES . 'PaymentGwRS.php');
 
 
 $wInit = new webInit();
@@ -159,7 +159,7 @@ $txSelector = HTMLSelector::generateMarkup(
         <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
         <?php echo FAVICON; ?>
-        
+
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>

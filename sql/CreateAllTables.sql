@@ -1794,6 +1794,7 @@ CREATE TABLE if not exists `shell_events` (
 
 CREATE TABLE if not exists `static_doc` (
   `idStatic_doc` INT NOT NULL AUTO_INCREMENT,
+  `idName` INT NOT NULL DEFAULT '0',
   `Doc_Type` VARCHAR(5) NOT NULL DEFAULT '',
   `Doc_Category` VARCHAR(5) NOT NULL DEFAULT '',
   `Doc_Blob` BLOB NULL,

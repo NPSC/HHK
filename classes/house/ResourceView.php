@@ -828,7 +828,7 @@ from
             $rm = new Room($dbh, 0, $roomRs);
 
             // Put dirty if room active for longer than days.
-            if ($r['idVisit'] > 0 && $r['Status'] == RoomState::Clean && isset($cleanDays[$rm->getCleaningCycleCode()])) {
+            if ($r['idVisit'] > 0 && ($r['Status'] == RoomState::Clean || $r['Status'] == RoomState::Ready) && isset($cleanDays[$rm->getCleaningCycleCode()])) {
 
                 $arrDT = $today;
                 $lastCleanedDT = $today;
@@ -861,6 +861,7 @@ from
 
     public static function roomsClean(\PDO $dbh, $filter = '', $guestAdmin = FALSE, $printOnly = FALSE) {
 
+        $uS = Session::getInstance();
         $today = new \DateTime();
         $today->setTime(0,0,0);
 
@@ -893,8 +894,16 @@ from
         // Loop rooms.
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            if ($filter == RoomState::Dirty && !($r['Status'] == RoomState::Dirty || $r['Status'] == RoomState::TurnOver)) {
-                continue;
+            if ($uS->HouseKeepingSteps > 1) {
+                if ($filter == RoomState::Dirty && !($r['Status'] == RoomState::Dirty || $r['Status'] == RoomState::TurnOver|| $r['Status'] == RoomState::Clean)) {
+                    continue;
+                }
+
+            } else {
+
+                if ($filter == RoomState::Dirty && !($r['Status'] == RoomState::Dirty || $r['Status'] == RoomState::TurnOver)) {
+                    continue;
+                }
             }
 
             $expDeparture = $r['Expected_Departure'];
@@ -906,21 +915,37 @@ from
             $fixedRows = array();
             $stat = '';
             $isDirty = FALSE;
+            $isClean = FALSE;
 
             // Mangle room status
-            if ($r['Status'] == RoomState::TurnOver) {
-                $stat = HTMLContainer::generateMarkup('span', $r['Status_Text'], array('style'=>'background-color:yellow;'));
-                $isDirty = TRUE;
-            } else if ($r['idVisit'] > 0 && $r['Status'] == RoomState::Dirty) {
-                $stat = HTMLContainer::generateMarkup('span', 'Active-Dirty', array('style'=>'background-color:#E3FF14;'));
-                $isDirty = TRUE;
-            } else if ($r['idVisit'] > 0 && $r['Status'] == RoomState::Clean) {
-                $stat = HTMLContainer::generateMarkup('span', 'Active', array('style'=>'background-color:lightgreen;'));
-            } else if ($r['Status'] == RoomState::Dirty) {
-                $stat = HTMLContainer::generateMarkup('span', 'Dirty', array('style'=>'background-color:yellow;'));
-                $isDirty = TRUE;
+            if ($r['idVisit'] > 0) {
+                // active room
+
+                if ($r['Status'] == RoomState::Dirty || $r['Status'] == RoomState::TurnOver) {
+                    $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text'], array('style'=>'background-color:yellow;'));
+                    $isDirty = TRUE;
+
+                } else if ($r['Status'] == RoomState::Clean || $r['Status'] == RoomState::Ready) {
+                    $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text'], array('style'=>'background-color:#bbf7b2;'));
+
+                } else {
+                    $stat = HTMLContainer::generateMarkup('span', 'Active-' . $r['Status_Text']);
+                }
+
             } else {
-                $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);
+                // Inactive room
+
+                if ($r['Status'] == RoomState::TurnOver || $r['Status'] == RoomState::Dirty) {
+                    $stat = HTMLContainer::generateMarkup('span', $r['Status_Text'], array('style'=>'background-color:yellow;'));
+                    $isDirty = TRUE;
+
+                } else if ($r['Status'] == RoomState::Ready) {
+                    $stat = HTMLContainer::generateMarkup('span', $r['Status_Text'], array('style'=>'background-color:#3fff0f;'));
+
+                } else {
+                    $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);
+                    $isClean = TRUE;
+                }
             }
 
             if ($printOnly) {
@@ -939,9 +964,14 @@ from
                 $notes = Notes::markupShell($r['Notes'], $filter.'taNotes[' . $r['idRoom'] . ']');
 
                 if ($isDirty) {
-                $action = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbClean[' . $r['idRoom'] . ']', 'id'=>$filter.'cbClean' . $r['idRoom']))
-                    .HTMLContainer::generateMarkup('label', 'Set Clean', array('for'=>$filter.'cbClean' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
+                    $action = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbClean[' . $r['idRoom'] . ']', 'id'=>$filter.'cbClean' . $r['idRoom']))
+                        .HTMLContainer::generateMarkup('label', 'Set Clean', array('for'=>$filter.'cbClean' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
 
+                } else if ($isClean && $uS->HouseKeepingSteps > 1) {
+                    $action .= HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbReady[' . $r['idRoom'] . ']', 'id'=>$filter.'cbReady' . $r['idRoom']))
+                        .HTMLContainer::generateMarkup('label', 'Set Ready', array('for'=>$filter.'cbReady' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
+                    $action .= HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'id'=>$filter.'cbDirty' . $r['idRoom']))
+                        .HTMLContainer::generateMarkup('label', 'Set Dirty', array('for'=>$filter.'cbDirty' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
                 } else {
                     $action .= HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'id'=>$filter.'cbDirty' . $r['idRoom']))
                         .HTMLContainer::generateMarkup('label', 'Set Dirty', array('for'=>$filter.'cbDirty' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
@@ -1010,15 +1040,14 @@ from
         }
 
 
-
-            $returnRows[] = array(
-                'Room' => $r['Title'],
-                'Visit Status' => $r['Visit_Status'],
-                'Primary Guest' => $r['Name'],
-                'Arrival Date' => $r['Arrival_Date'] == '' ? '' : $r['Arrival_Date'],
-                'Expected Checkout' => $r['Departure_Date'] == '' ? '' : $r['Departure_Date'],
-                'Notes' => $reverse
-            );
+        $returnRows[] = array(
+            'Room' => $r['Title'],
+            'Visit Status' => $r['Visit_Status'],
+            'Primary Guest' => $r['Name'],
+            'Arrival Date' => $r['Arrival_Date'] == '' ? '' : $r['Arrival_Date'],
+            'Expected Checkout' => $r['Departure_Date'] == '' ? '' : $r['Departure_Date'],
+            'Notes' => $reverse
+        );
 
         }
 

@@ -107,6 +107,7 @@ $uname = $uS->username;
 $receipt = '';
 $guestTabIndex = 0;
 $guestName = '';
+$guestPhotoMU ='';
 $memberData = array();
 $showSearchOnly = TRUE;
 
@@ -161,13 +162,32 @@ if (isset($_GET['psg'])) {
 
 }
 
+if ($uS->GuestPhoto && isset($_FILES['photo'])) {
+
+    try {
+        SiteConfig::checkUploadFile('photo');
+
+    } catch (RuntimeException $rex) {
+
+        $alertMsg->set_Context(alertMessage::Alert);
+        $alertMsg->set_Text($rex->getMessage());
+        $alertMsg->set_DisplayAttr("block");
+        $resultMessage = $alertMsg->createMarkup();
+
+    }
+
+}
+
+
 
 /*
 * This is the ID that the previous page instance saved for us.
 */
 if (isset($_POST["hdnid"])) {
+
    $h_idTxt = filter_var($_POST["hdnid"], FILTER_SANITIZE_NUMBER_INT);
    $id = intval($h_idTxt, 10);
+
    if ($uS->guestId != $id) {
         $alertMsg->set_Context(alertMessage::Alert);
         $alertMsg->set_Text("Posted id does not match what the server remembers.");
@@ -504,6 +524,11 @@ $tbl->addBodyTr($name->createMarkupRow('', TRUE));
 
 $nameMarkup = $tbl->generateMarkup();
 
+// Guest Photo
+if ($uS->guestPhoto) {
+
+}
+
 
 // Demographics
 $demogTab = $name->createDemographicsPanel($dbh, FALSE, FALSE);
@@ -731,6 +756,7 @@ $memberData['memStatus'] = $name->get_status();
 $memberData['idPsg'] = $psg->getIdPsg();
 $memberData['idReg'] = $registration->getIdRegistration();
 $memberData['psgOnly'] = $psgOnly;
+$memberData['guestPhoto'] = $uS->GuestPhoto;
 
 $idReg = $registration->getIdRegistration();
 
@@ -784,6 +810,7 @@ $uS->guestId = $id;
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
+        <?php echo DROPZONE_CSS; ?>
         <?php echo FAVICON; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
@@ -803,6 +830,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo DROPZONE_JS; ?>"></script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
@@ -824,6 +852,7 @@ $uS->guestId = $id;
                 <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
                     <?php echo $nameMarkup; ?>
                     <?php echo $contactLastUpdated; ?>
+                    <?php echo $guestPhotoMU; ?>
                 </div>
                 <div style="clear:both;"></div>
                 <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>

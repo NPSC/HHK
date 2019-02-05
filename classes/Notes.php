@@ -38,7 +38,7 @@ class Notes {
             $reverse .= $lines[$i] . "<br/>";
         }
 
-        $output = HTMLContainer::generateMarkup('div', $reverse, array('id'=>'hhk-existgNotes'));
+        $output = HTMLContainer::generateMarkup('div', $reverse, array('class'=>'hhk-existgNotes'));
 
         return HTMLContainer::generateMarkup('div', $output . $inputTa, array('class'=>'hhk-noteBox'));
 

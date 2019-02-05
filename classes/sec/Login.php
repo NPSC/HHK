@@ -59,7 +59,7 @@ class Login {
         $ssn->siteName = $config->getString('site','Site_Name', 'Hospitality HouseKeeper');
         $ssn->resourceURL = $secureComp->getRootURL();
         $ssn->tz = $config->getString('calendar', 'TimeZone', 'America/Chicago');
-        $ssn->ver = $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
+        $ssn->ver = CodeVersion::VERSION . '.' . CodeVersion::BUILD;
         $ssn->ssl = $ssl;
         $ssn->mode = strtolower($config->getString('site', 'Mode', 'live'));
         $ssn->sconf = 'sys_config';

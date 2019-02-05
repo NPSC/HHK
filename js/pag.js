@@ -1,5 +1,5 @@
 /**
- * 
+ *
  * @param {string} mess
  * @param {boolean} wasError
  * @returns {undefined}
@@ -8,7 +8,7 @@ function flagAlertMessage(mess, wasError, $txtCtrl) {
     "use strict";
     //Types:  alert, success, warning, error, info/information
     var type = 'info';
-    
+
     if (!mess || mess == '') {
         return;
     }
@@ -29,15 +29,17 @@ function flagAlertMessage(mess, wasError, $txtCtrl) {
     } catch(err) {
         // do nothing for now.
     }
-    
+
     // Show message in a given container.
-    if ($txtCtrl !== undefined) {
-        $txtCtrl.text(mess).show();
+    if ($txtCtrl === undefined || $txtCtrl === null) {
+        return;
     }
+
+    $txtCtrl.text(mess).show();
 }
 
 //function altFlagAlertMessage(mess, wasError) {
-//    
+//
 //    var spn = document.getElementById('alrMessage');
 //    if (!wasError) {
 //        // define the success message markup

@@ -123,15 +123,15 @@ class Patch {
     public function updateWithSqlStmts(\PDO $dbh, $tfile, $type = '', $delimiter = ';', $splitAt = ';') {
 
         $this->results = array();
-        $tresult = array();
 
         if ($tfile == '') {
             return $type . ' Filename is missing.  ';
         }
 
-        $tresult = self::multiQueryPDO($dbh, file_get_contents($tfile), $delimiter, $splitAt);
+        $tquery = file_get_contents($tfile);
 
-        // Check for errors
+        $tresult = self::multiQueryPDO($dbh, $tquery, $delimiter, $splitAt);
+
         if (count($tresult) > 0) {
 
             foreach ($tresult as $err) {
@@ -382,6 +382,42 @@ class Patch {
         return $msg;
     }
 
+    public static function patchTabMu() {
+
+        $uS = Session::getInstance();
+
+        // Database info
+        $dbt = new HTMLTable();
+
+        $dbt->addBodyTr(HTMLTable::makeTd('Database:', array('class' => 'tdlabel')) . HTMLTable::makeTd($uS->dbms));
+        $dbt->addBodyTr(HTMLTable::makeTd('URL:', array('class' => 'tdlabel')) . HTMLTable::makeTd($uS->databaseURL));
+        $dbt->addBodyTr(HTMLTable::makeTd('Schema:', array('class' => 'tdlabel')) . HTMLTable::makeTd($uS->databaseName));
+        $dbt->addBodyTr(HTMLTable::makeTd('User:', array('class' => 'tdlabel')) . HTMLTable::makeTd($uS->databaseUName));
+
+        $markup = HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', 'DB Info', array('style'=>'font-weight:bold;'))
+                . $dbt->generateMarkup(), array('style'=>'float:left; margin:5px;', 'class'=>'hhk-panel'));
+
+        $tbl = new HTMLTable();
+
+        $tbl->addBodyTr(
+                HTMLTable::makeTd('Build:', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd(CodeVersion::BUILD));
+        $tbl->addBodyTr(
+                HTMLTable::makeTd('Version:', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd(CodeVersion::VERSION));
+        $tbl->addBodyTr(
+                HTMLTable::makeTd('Patch:', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd(CodeVersion::PATCH));
+        $tbl->addBodyTr(
+                HTMLTable::makeTd('Git Id:', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd(CodeVersion::GIT_Id));
+
+        $markup .= HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', 'Software', array('style'=>'font-weight:bold;'))
+                . $tbl->generateMarkup(), array('style'=>'float:left; margin:5px; margin-left:25px;', 'class'=>'hhk-panel'));
+
+        return HTMLContainer::generateMarkup('div', $markup, array());
+    }
 
 }
-

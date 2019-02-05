@@ -113,6 +113,14 @@ $(document).ready(function () {
         }
     });
 
+// Guest Photo
+    if (memData.guestPhoto) {
+        $("div#gphoto").dropzone({
+            url: "/GuestEdit.php",
+            paramName: 'photo'
+        });
+    }
+    
     $("#divFuncTabs").tabs({
         collapsible: true
     });

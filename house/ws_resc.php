@@ -479,11 +479,17 @@ $(document).mousedown(function (event) {
         }
 
         $room = new Room($dbh, $id);
-        $room->setStatus($stat);
+
+        if ($room->setCleanStatus($stat) === FALSE) {
+            $events['msg'] = 'Room Cleaning State change FAILED.';
+        } else {
+            $events['msg'] = 'Room Cleaning state changed';
+        }
+
         $room->saveRoom($dbh, $uS->username);
 
         $events['curres'] = 'y';
-        $events['msg'] = 'Room Clean state changed';
+
         break;
 
     case 'cleanStat':

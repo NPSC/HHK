@@ -171,7 +171,7 @@ FROM
 visit v join reservation_note rn on v.idReservation = rn.Reservation_Id
         JOIN
     note n ON rn.Note_Id = n.idNote
-where v.Status = 'a'
+where v.`Status` = 'a' and n.`Status` = 'a'
 GROUP BY rn.Reservation_Id having max(n.Timestamp);");
 
         $notes = array();

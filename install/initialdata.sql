@@ -316,6 +316,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Resource_Status','oos','Out of Service','','',0),
 ('Resource_Status','un','Unavailable','','',0),
 
+
 ('Resource_Type','rmtroom','Remote Room','','',0),
 ('Resource_Type','room','Room','','',0),
 
@@ -342,6 +343,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Room_Status', 'a', 'Clean', '','',0),
 ('Room_Status', 'dty', 'Dirty', '','',0),
 ('Room_Status', 'to', 'Turn Over', '','',0),
+('Room_Status', 'r', 'Ready', '', '', 0),
 
 ('Room_Type','r','Room','','',10),
 ('Room_Type','s','Suite','','',20),
@@ -464,7 +466,9 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('fy_diff_Months','0','i','f','Fiscal year difference months (12 - fiscal year start month)'),
 ('GuestNameColor', '', 's', 'h', 'Use this Guest demographic to drive guest name color'),
 ('GuestAddr', 'true', 'b', 'h', 'False = do not collect guest address'),
+('GuestPhoto', 'false', 'b', 'h', 'Manage guest photographs.'),
 ('HouseKeepingEmail', '', 's', 'h', 'Gets notice of visit endings.'),
+('HouseKeepingSteps', '2', 'i', 'h', 'Number of steps to cleaning/preparing rooms for new guests.'),
 ('IncludeLastDay','false','b','h','Include the departure day in room searches.'),
 ('IncomeRated', 'true', 'b', 'h','Use Income chooser rate assistance'),
 ('InitResvStatus', 'a', 's', 'h','Initial reservation status setting, confirmed or unconfirmed'),

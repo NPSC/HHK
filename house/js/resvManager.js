@@ -1850,54 +1850,55 @@ function resvManager(initData) {
             }
             return err;
         }
-        
+
         function verify() {
 
             // vehicle
             if ($('#cbNoVehicle').length > 0) {
-                
+
                 if ($('#cbNoVehicle').prop("checked") === false) {
-                    
+
                     var carVal = validateCar(1);
-                    
+
                     if (carVal != '') {
-                        
+
                         var carVal2 = validateCar(2);
-                        
+
                         if (carVal2 != '') {
                             $('#vehValidate').text(carVal2);
-                            flagAlertMessage(carVal, 'alert');
+                            flagAlertMessage(carVal, 'alert', $pWarning);
                             return false;
                         }
                     }
                 }
-                
+
                 $('#vehValidate').text('');
             }
-            
+
             if (isCheckin) {
-                
+
                 if (t.checkPayments === true) {
-                    
+
                     // Room rate
                     if ($('#selCategory').val() == fixedRate && $('#txtFixedRate').length > 0 && $('#txtFixedRate').val() == '') {
-                        
+
                         flagAlertMessage("Set the Room Rate to an amount, or to 0.", 'alert', $pWarning);
                         $('#txtFixedRate').addClass('ui-state-error');
                         return false;
-                        
+
                     } else {
                         $('#txtFixedRate').removeClass('ui-state-error');
                     }
-                
+
 
                     // Room fees paid
                     if ($('input#feesPayment').length > 0 && $('input#feesPayment').val() == '') {
-                        
-                        $('#payChooserMsg').text("Set the Room Fees to an amount, or 0.").show('fade');
+
+                        flagAlertMessage("Set the Room Fees to an amount, or 0.", 'alert', $pWarning);
+                        $('#payChooserMsg').text("Set the Room Fees to an amount, or 0.").show();
                         $('input#feesPayment').addClass('ui-state-error');
                         return false;
-                        
+
                     } else {
                         $('input#feesPayment').removeClass('ui-state-error');
                     }
@@ -1908,9 +1909,9 @@ function resvManager(initData) {
                     }
                 }
             }
-            
+
             return true;
-            
+
         }
     }
 
@@ -2075,7 +2076,7 @@ function resvManager(initData) {
             }
 
             if (data.error) {
-                flagAlertMessage(data.error, 'error');
+                flagAlertMessage(data.error, 'error', $pWarning);
                 $('#btnDone').val('Save ' + resvTitle).show();
             }
 
@@ -2162,6 +2163,14 @@ function resvManager(initData) {
             $('div#guestSearch').hide();
 
             $('#btnDone').val('Save Family').show();
+            
+            // Insurance chooser
+            $('select.hhk-multisel').each( function () {
+                $(this).multiselect({
+                    selectedList: 3
+                });
+            });
+
         }
 
         // Expected Dates Control
