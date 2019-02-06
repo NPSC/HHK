@@ -488,7 +488,7 @@ class PaymentReport {
 
         } else {
 
-            $dateDT->setTimezone('UTC');  // = new DateTime($p['Payment_Date'], new DateTimeZone('UTC'));
+            $dateDT->setTimezone(new DateTimeZone('UTC'));  // = new DateTime($p['Payment_Date'], new DateTimeZone('UTC'));
 
             $g['Last'] = $r['i']['Last'];
             $g['First'] = $r['i']['First'];

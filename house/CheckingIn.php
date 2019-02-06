@@ -431,6 +431,7 @@ $(document).ready(function() {
             return;
         }
 
+        $(this).val('Saving >>>>');
         $('#pWarnings').hide();
 
         if (pageManager.verifyInput() === true) {
@@ -460,8 +461,6 @@ $(document).ready(function() {
 
                 }
             );
-
-            $(this).val('Saving >>>>');
         }
 
     });
