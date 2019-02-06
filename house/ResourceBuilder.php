@@ -1828,7 +1828,7 @@ $resultMessage = $alertMsg->createMarkup();
                                 'ol',
                                 'task',
                                 'indent',
-                                'outdent',
+                                'outdent'
                             ]
                         });
 
