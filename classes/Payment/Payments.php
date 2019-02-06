@@ -16,6 +16,7 @@ abstract class PaymentResponse {
     protected $invoiceNumber = '';
     protected $partialPaymentFlag;
     protected $amount;
+    protected $paymentDate;
 
 
     public $idPayor = 0;
@@ -34,7 +35,7 @@ abstract class PaymentResponse {
      * @var PaymentRS
      */
     public $paymentRs;
-    
+
     public abstract function getStatus();
     public abstract function receiptMarkup(\PDO $dbh, &$tbl);
 
@@ -49,6 +50,10 @@ abstract class PaymentResponse {
 
     public function getAmount() {
         return $this->amount;
+    }
+
+    public function getPaymentDate() {
+        return $this->paymentDate;
     }
 
     public function getInvoiceNumber() {

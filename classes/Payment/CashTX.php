@@ -153,15 +153,15 @@ class ManualChargeResponse extends PaymentResponse {
     protected $cardNum;
     protected $cardType;
     protected $authCode;
-    
-    
+
+
     function __construct($amount, $idPayor, $invoiceNumber, Payment_AuthRS $pAuthRs, $payNote = '', $idGuestToken = 0) {
 
         $this->paymentType = PayType::ChargeAsCash;
         $this->idPayor = $idPayor;
         $this->amount = $amount;
         $this->invoiceNumber = $invoiceNumber;
-        $this->cardNum = $$pAuthRs->Acct_Number->getStoredVal();
+        $this->cardNum = $pAuthRs->Acct_Number->getStoredVal();
         $this->cardType = $pAuthRs->Card_Type->getStoredVal();
 
         $this->authCode = $pAuthRs->Approval_Code->getStoredVal();
@@ -169,7 +169,7 @@ class ManualChargeResponse extends PaymentResponse {
         $this->payNotes = $payNote;
         $this->idGuestToken = $idGuestToken;
     }
-    
+
 
     public function getChargeType() {
         return $this->cardType;
@@ -181,6 +181,10 @@ class ManualChargeResponse extends PaymentResponse {
 
     public function getCardNum() {
         return $this->cardNum;
+    }
+
+    public function getPaymentDate() {
+
     }
 
     public function getStatus() {
@@ -236,7 +240,7 @@ class ManualChargeResponse extends PaymentResponse {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
         $tbl->addBodyTr(HTMLTable::makeTd($cgType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getCardNum()));
-        
+
         if($this->getAuthCode() != '') {
             $tbl->addBodyTr(HTMLTable::makeTd('Authorization:', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getAuthCode()));
         }

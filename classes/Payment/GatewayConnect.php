@@ -22,7 +22,7 @@ interface iGatewayResponse {
     public function getProcessData();
 
     public function isEMVTransaction();
-    
+
     public function getAVSAddress();
     public function getAVSResult();
     public function getAVSZip();
@@ -268,7 +268,7 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
 
         return '';
     }
-    
+
     public function getRefNo() {
         return $this->getPaymentPlanID();
     }
@@ -540,3 +540,108 @@ abstract class SoapRequest {
 
 }
 
+class StandInGwResponse implements iGatewayResponse {
+
+    protected $pAuthRs;
+    protected $invoiceNumber;
+
+    public function __construct(Payment_AuthRS $pAuthRs, $invoiceNumber) {
+
+        $this->pAuthRs = $pAuthRs;
+        $this->invoiceNumber = $invoiceNumber;
+    }
+
+    public function getAVSAddress() {
+        return 'Not Available';
+    }
+
+    public function getAVSResult() {
+        return $this->pAuthRs->AVS->getStoredVal();
+    }
+
+    public function getAVSZip() {
+        return 'Not Available';
+    }
+
+    public function getAcqRefData() {
+        return $this->pAuthRs->AcqRefData->getStoredVal();
+    }
+
+    public function getAuthCode() {
+        return $this->pAuthRs->Approval_Code->getStoredVal();
+    }
+
+    public function getAuthorizationText() {
+        return '';
+    }
+
+    public function getAuthorizeAmount() {
+        return $this->pAuthRs->Approved_Amount->getStoredVal();
+    }
+
+    public function getCardHolderName() {
+        return 'uh-oh';
+    }
+
+    public function getCardType() {
+        return $this->pAuthRs->Card_Type->getStoredVal();
+    }
+
+    public function getCvvResult() {
+        return $this->pAuthRs->Code3->getStoredVal();
+    }
+
+    public function getExpDate() {
+        return 'uh-oh';
+    }
+
+    public function getInvoiceNumber() {
+        return $this->invoiceNumber;
+    }
+
+    public function getMaskedAccount() {
+        return $this->pAuthRs->Acct_Number->getStoredVal();
+    }
+
+    public function getPartialPaymentAmount() {
+        return $this->pAuthRs->Approved_Amount->getStoredVal();
+    }
+
+    public function getProcessData() {
+        return $this->pAuthRs->ProcessData->getStoredVal();
+    }
+
+    public function getRefNo() {
+        return $this->pAuthRs->Reference_Num->getStoredVal();
+    }
+
+    public function getResponseCode() {
+        return '';
+    }
+
+    public function getResponseMessage() {
+        return $this->pAuthRs->Status_Message->getStoredVal();
+    }
+
+    public function getToken() {
+        return '';
+    }
+
+    public function getTranType() {
+        return '';
+    }
+
+    public function getTransPostTime() {
+        return $this->pAuthRs->Timestamp->getStoredVal();
+    }
+
+    public function isEMVTransaction() {
+
+        if($this->pAuthRs->EMVCardEntryMode->getStoredVal() != '') {
+            return TRUE;
+        }
+
+        return FALSE;
+    }
+
+}

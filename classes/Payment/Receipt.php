@@ -65,7 +65,7 @@ class Receipt {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel')) . HTMLTable::makeTd(($payResp->getPaymentDate() == '' ? date('D M jS, Y') : date('D M jS, Y', strtotime($payResp->getPaymentDate())))));
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoice()));
+        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
 
         foreach ($invoice->getLines($dbh) as $line) {
             $tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($line->getAmount(), 2), array('style'=>'font-size:.8em;')));
@@ -140,7 +140,7 @@ class Receipt {
         $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel'))
                 . HTMLTable::makeTd(date('D M jS, Y g:ia', strtotime($payResp->getPaymentDate()))));
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoice()));
+        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
 
         $tbl->addBodyTr(HTMLTable::makeTd("Total Voided:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
 
@@ -198,7 +198,7 @@ class Receipt {
         $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel'))
                 . HTMLTable::makeTd(date('D M jS, Y g:ia', strtotime($payResp->getPaymentDate()))));
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoice()));
+        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
 
         $tbl->addBodyTr(HTMLTable::makeTd("Total Returned:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
 
