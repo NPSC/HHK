@@ -1832,9 +1832,7 @@ $resultMessage = $alertMsg->createMarkup();
                             ]
                         });
 
-                        if ($rSel !== undefined) {
-                            $rSel.remove();
-                        }
+                        $("#replacementTokens").empty();
 
                         if (data.repls) {
 
@@ -1845,7 +1843,7 @@ $resultMessage = $alertMsg->createMarkup();
                                 $rSel.append($('<option value="' +  data.repls[i].val + '"></option').append(data.repls[i].txt));
                             }
 
-                            $("#replacementTokens").append($rSel);
+                            $("#replacementTokens").append($('<span>Replacement Tokens: </span>')).append($rSel);
 
                             $rSel.change(function () {
                                 editor.insertText($(this).val());
@@ -2007,8 +2005,8 @@ $resultMessage = $alertMsg->createMarkup();
                     <p>Select the form to edit from the following list: <?php echo $feSelectForm; ?></p><p id="spnRteLoading" style="font-style: italic; display:none;">Loading...</p>
                     <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
                     <h3 id="spnEditorTitle"></h3>
-                    <div id='replacementTokens'></div>
-                    <div id="editSection"></div>
+                    <div id='replacementTokens' style="float:right;"></div>
+                    <div id="editSection" style="clear:both;"></div>
 
                     <div style="clear:both"></div>
                     <span style="margin:10px;float:right;"><input type="button" id='btnFormSave' style="display:none;" value="Save Form"/></span>
