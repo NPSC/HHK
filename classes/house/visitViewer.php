@@ -69,7 +69,6 @@ class VisitView {
 
         $departureText = "";
         $days = "";
-        $addGuestButton = '';
 
         switch ($r['Status']) {
             case VisitStatus::CheckedIn:
@@ -91,10 +90,6 @@ class VisitView {
                     $departureText = date('M j, Y', strtotime($r['Expected_Departure']));
                     $days = $r['Expected_Nights'];
                 }
-
-                $addGuestButton = HTMLContainer::generateMarkup('div',
-                    HTMLInput::generateMarkup('Add Guest', array('id'=>'btnAddGuest', 'type'=>'button', 'data-rid'=>$r['idReservation'], 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span'], 'title'=>'Add another guest to this visit.'))
-                    , array('style'=>'float:right;margin-left:.3em;margin-bottom:.3em; margin-top:.3em;'));
 
                 break;
 
@@ -177,6 +172,14 @@ class VisitView {
         $table->addHeaderTr($th);
         $tblMarkup = $table->generateMarkup(array('id' => 'tblActiveVisit', 'style'=>'width:99%;'));
 
+        // Adjust button
+        if ($showAdjust && $action != 'ref') {
+
+            $tblMarkup .= HTMLContainer::generateMarkup('div',
+                    HTMLInput::generateMarkup('Adjust Fees...', array('name'=>'paymentAdjust', 'type'=>'button', 'class'=>'hhk-feeskeys', 'title'=>'Create one-time additional charges or discounts.'))
+                    , array('style'=>'float:left;margin-right:.5em;margin-bottom:.3em; margin-top:.3em;'));
+        }
+
         // Change Rate markup
         if ($uS->RoomPriceModel != ItemPriceCode::None && $action != 'ref') {
 
@@ -185,9 +188,8 @@ class VisitView {
             EditRS::loadRow($r, $vRs);
             $rateTbl = $rateChooser->createChangeRateMarkup($dbh, $vRs, $isAdmin);
 
-            $tblMarkup .= $rateTbl->generateMarkup(array('style'=>'clear:left;float:left;margin-bottom:.3em; margin-top:.3em;'));
+            $tblMarkup .= $rateTbl->generateMarkup(array('style'=>'float:left;margin-bottom:.3em; margin-top:.3em;'));
         }
-
 
         // Weekender button
         if ($r['Status'] == VisitStatus::CheckedIn && $extendVisitDays > 0 && $action != 'ref') {
@@ -231,25 +233,13 @@ class VisitView {
                 }
             }
 
-            $tblMarkup .= $etbl->generateMarkup(array('style'=>'float:left;margin-left:.3em;margin-bottom:.3em; margin-top:.3em;'));
+            $tblMarkup .= $etbl->generateMarkup(array('style'=>'float:left;margin-left:.5em;margin-bottom:.3em; margin-top:.3em;'));
         }
 
-        // Adjust button
-        if ($showAdjust) {
-
-            $tblMarkup .= HTMLContainer::generateMarkup('div',
-                    HTMLInput::generateMarkup('Adjust Fees', array('name'=>'paymentAdjust', 'type'=>'button', 'class'=>'hhk-feeskeys', 'title'=>'Create one-time additional charges or discounts.'))
-                    , array('style'=>'float:right;margin-left:.3em;margin-bottom:.3em; margin-top:.3em;'));
-        }
-
-        //Add Guest Button
-        $tblMarkup .= $addGuestButton;  // . HTMLContainer::generateMarkup('div','', array('style'=>'float:left;margin-left:.3em;margin-bottom:.3em; margin-top:.3em;'));
 
         $tblMarkup .= $notesContainer;
 
-
         $undoCkoutButton = '';
-
 
         // Make undo checkout button.
         if ($r['Status'] == VisitStatus::CheckedOut) {
@@ -303,6 +293,7 @@ class VisitView {
         $hdrPgRb = '';
         $chkInTitle = '';
         $visitStatus = '';
+        $guestAddButton = '';
         $onLeave = 0;
         $idV = intval($idVisit, 10);
         $idS = intval($span, 10);
@@ -528,8 +519,11 @@ class VisitView {
             . HTMLTable::makeTh($chkInTitle);
 
         if ($action == '') {
-            $th .= HTMLTable::makeTh($ckOutTitle)
-            . HTMLTable::makeTh('Nights');
+            $th .= HTMLTable::makeTh($ckOutTitle) . HTMLTable::makeTh('Nights');
+
+            // Make add guest button
+            $guestAddButton = HTMLInput::generateMarkup('Add Guest...', array('id'=>'btnAddGuest', 'type'=>'button', 'style'=>'margin-left:1.3em; font-size:.8em;', 'data-vstatus'=>$visitStatus, 'data-vid'=>$idVisit, 'data-span'=>$span, 'title'=>'Add another guest to this visit.'));
+
         }
 
         if ($includeAction) {
@@ -557,14 +551,7 @@ class VisitView {
         $titleMkup = HTMLContainer::generateMarkup('span', 'Guests', array('style'=>'float:left;'));
 
 
-        // Make add guest button
-        $guestAddButton = '';
-        if ($isAdmin && $visitStatus != VisitStatus::CheckedIn) {
 
-            $guestAddButton = HTMLContainer::generateMarkup('span', '', array('id'=>'guestAdd', 'class'=>'ui-icon ui-icon-circle-plus', 'style'=>'float:left;margin-left: 1.3em; cursor:pointer;', 'title'=>'Add a Guest to this visit'))
-                    .HTMLContainer::generateMarkup('span', 'Add Guest', array('style'=>'float:left;margin-left: 0.3em; display:none;', 'class'=>'hhk-addGuest'))
-                .HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup('', array('id'=>'txtAddGuest', 'title'=>'Type 3 characters to start the search.')), array('title'=>'Search', 'style'=>'margin-left:0.3em;margin-right:0.3em;padding-bottom:.2em; display:none;', 'class'=>'hhk-addGuest'));
-        }
 
 
         return HTMLContainer::generateMarkup('fieldset',

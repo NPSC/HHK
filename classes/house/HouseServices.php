@@ -991,31 +991,31 @@ class HouseServices {
 
         EditRS::loadRow($visits[0], $visitRs);
 
+        if ($visitRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
+            return array("error" => "Cannot add guest here.  ");
+        }
+
         $guest = new Guest($dbh, $prefix, $idGuest);
 
 
         // Arrival Date
-        $arrDate = new \DateTime($visitRs->Span_Start->getStoredVal());
+        $spanArrDate = new \DateTime($visitRs->Span_Start->getStoredVal());
 
         // Departure Date
         if ($visitRs->Span_End->getStoredVal() != '') {
-            $depDate = new \DateTime($visitRs->Span_End->getStoredVal());
+            $spanDepDate = new \DateTime($visitRs->Span_End->getStoredVal());
         } else {
-            $depDate = new \DateTime($visitRs->Expected_Departure->getStoredVal());
-            $today = new \DateTime();
-
-            if ($depDate < $today) {
-                $depDate = $today;
-            }
+            return array("error" => "End date missing.  ");
         }
 
-        if ($arrDate >= $depDate) {
-            return array("error" => "Visit Dates not suitable.  arrive: " . $arrDate->format('Y-m-d H:i:s') . ", depart: " . $depDate->format('Y-m-d H:i:s'));
+        if ($spanArrDate >= $spanDepDate) {
+            return array("error" => "Visit Dates not suitable.  arrive: " . $spanArrDate->format('Y-m-d H:i:s') . ", depart: " . $spanDepDate->format('Y-m-d H:i:s'));
         }
 
         $reg = new Registration($dbh, 0, $visitRs->idRegistration->getStoredVal());
         $psg = new Psg($dbh, $reg->getIdPsg());
 
+        //Decide what to send back
         if (isset($post[$prefix.'txtLastName'])) {
 
             // Get labels
@@ -1047,12 +1047,12 @@ class HouseServices {
             $ckoutDT = $guest->getExpectedCheckOutDT();
             $ckoutDT->setTime(0,0,0);
 
-            if ($ckinDT < $arrDate || $ckinDT > $depDate) {
-                $ckinDT = $arrDate;
+            if ($ckinDT < $spanArrDate || $ckinDT > $spanDepDate) {
+                $ckinDT = $spanArrDate;
             }
 
-            if ($ckoutDT <= $ckinDT || $ckoutDT > $depDate) {
-                $ckoutDT = $depDate;
+            if ($ckoutDT <= $ckinDT || $ckoutDT > $spanDepDate) {
+                $ckoutDT = $spanDepDate;
             }
 
 
@@ -1151,14 +1151,8 @@ class HouseServices {
         } else {
             // send back a guest dialog to collect name, address, etc.
 
-            if ($depDate <= $arrDate) {
-                $depDateStr = '';
-            } else {
-                $depDateStr = $depDate->format('M j, Y');
-            }
-
-            $guest->setCheckinDate($arrDate->format('M j, Y'));
-            $guest->setExpectedCheckOut($depDateStr);
+            $guest->setCheckinDate($spanArrDate->format('M j, Y'));
+            $guest->setExpectedCheckOut($spanDepDate->format('M j, Y'));
 
             if (isset($psg->psgMembers[$guest->getIdName()])) {
                 $guest->setPatientRelationshipCode($psg->psgMembers[$guest->getIdName()]->Relationship_Code->getStoredVal());
