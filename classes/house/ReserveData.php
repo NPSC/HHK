@@ -46,6 +46,7 @@ class ReserveData {
     protected $idHospitalStay = 0;
     protected $idVisit;
     protected $span;
+    protected $visitStatus = '';
     protected $forceNewPsg = FALSE;
     protected $forceNewResv = FALSE;
     protected $fullName = '';
@@ -91,6 +92,10 @@ class ReserveData {
 
         if (isset($post['span'])) {
             $this->setSpan(intval(filter_var($post['span'], FILTER_SANITIZE_NUMBER_INT), 10));
+        }
+
+        if (isset($post['vstatus'])) {
+            $this->setVisitStatus(filter_var($post['vstatus'], FILTER_SANITIZE_STRING));
         }
 
         if (isset($post['id'])) {
@@ -273,6 +278,10 @@ class ReserveData {
         return $this->span;
     }
 
+    public function getVisitStatus() {
+        return $this->visitStatus;
+    }
+
     public function getConcurrentRooms() {
         return $this->concurrentRooms;
     }
@@ -444,6 +453,11 @@ class ReserveData {
 
     public function setSpan($id) {
         $this->span = $id;
+        return $this;
+    }
+
+    public function setVisitStatus($id) {
+        $this->visitStatus = $id;
         return $this;
     }
 

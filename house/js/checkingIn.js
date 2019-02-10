@@ -188,15 +188,18 @@ $(document).ready(function() {
             return;
         }
 
-        $(this).val('Saving >>>>');
         $('#pWarnings').hide();
 
         if (pageManager.verifyInput() === true) {
 
+            $(this).val('Saving >>>>');
+            
             $.post(
                 'ws_resv.php',
                 $('#form1').serialize() + '&cmd=saveCheckin&idPsg=' + pageManager.getIdPsg() + '&rid=' + pageManager.getIdResv() + '&vid=' + pageManager.getIdVisit() + '&span=' + pageManager.getSpan() + '&' + $.param({mem: pageManager.people.list()}),
                 function(data) {
+
+                    $('#btnDone').val(resv.saveButtonLabel).show();
 
                     try {
                         data = $.parseJSON(data);
@@ -213,13 +216,11 @@ $(document).ready(function() {
                         flagAlertMessage(data.error, 'error');
                     }
 
-                    $('#btnDone').val(resv.saveButtonLabel).show();
+                    
                     ckedIn(data);
-
                 }
             );
         }
-
     });
 
 

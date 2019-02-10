@@ -57,9 +57,9 @@ $dbh = $wInit->dbh;
 $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
+$pageHdr = $wInit->pageHeading;
+$pageStyle = '';
 
-
-// Get labels
 $labels = new Config_Lite(LABEL_FILE);
 $paymentMarkup = '';
 $receiptMarkup = '';
@@ -133,7 +133,7 @@ if (isset($_GET['span'])) {
 }
 
 if (isset($_GET['vstatus'])) {
-    $visitStatus = intval(filter_var($_GET['vstatus'], FILTER_SANITIZE_NUMBER_INT), 10);
+    $visitStatus = filter_var($_GET['vstatus'], FILTER_SANITIZE_STRING);
 }
 
 
@@ -145,11 +145,17 @@ if ($idReserv > 0 || $idGuest > 0 || $idVisit > 0) {
     $resvObj->setIdPsg($idPsg);
     $resvObj->setIdVisit($idVisit);
     $resvObj->setSpan($span);
+    $resvObj->setVisitStatus($visitStatus);
 
 } else {
 
     $mk1 = HTMLContainer::generateMarkup('h2', 'Reservation Id is missing.');
 
+}
+
+if ($visitStatus == VisitStatus::CheckedOut) {
+    $pageHdr = 'Visit';
+    $pageStyle = 'Style="background-color:#f2f2f2"';
 }
 
 
@@ -159,8 +165,7 @@ $resvAr['patAddr'] = $uS->PatientAddr;
 $resvAr['gstAddr'] = $uS->GuestAddr;
 $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
 $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
-$resvAr['emergencyContact'] = isset($uS->EmergContactFill) ? $uS->EmergContactFill : FALSE;
-$resvAr['visitStatus'] = $visitStatus;
+$resvAr['emergencyContact'] = isset($uS->EmergContactFill) ? $uS->EmergContactFill : FALSE;;
 $resvAr['isCheckin'] = TRUE;
 
 $resvObjEncoded = json_encode($resvAr);
@@ -180,6 +185,7 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo MULTISELECT_CSS; ?>
 
         <?php echo FAVICON; ?>
+
 <!--        Fix the ugly checkboxes-->
         <style>
             .ui-icon-background, .ui-state-active .ui-icon-background {background-color:#fff;}
@@ -207,8 +213,8 @@ $resvObjEncoded = json_encode($resvAr);
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu() ?>
-        <div id="contentDiv">
-            <h1><?php echo $wInit->pageHeading; ?> <span id="spnStatus" sytle="margin-left:50px; display:inline;"></span></h1>
+        <div id="contentDiv" <?php echo $pageStyle; ?>>
+            <h1><?php echo $pageHdr; ?> <span id="spnStatus" sytle="margin-left:50px; display:inline;"></span></h1>
 
             <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
                 <?php echo $paymentMarkup; ?>
@@ -218,9 +224,9 @@ $resvObjEncoded = json_encode($resvAr);
             </div>
             <form action="CheckingIn.php" method="post"  id="form1">
                 <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
-                <div id="famSection" style="clear:left; float:left; font-size: .9em; display:none; width: 100%; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
-                <div id="hospitalSection" style="font-size: .9em; margin-bottom:.5em; clear:left; float:left; display:none; width: 100%;"  class="ui-widget hhk-visitdialog"></div>
-                <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; width: 100%;" class="ui-widget hhk-visitdialog"></div>
+                <div id="famSection" style="clear:left; float:left; font-size: .9em; display:none; margin-bottom:.5em;min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
+                <div id="hospitalSection" style="font-size: .9em; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
+                <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
                 <div style="clear:both;min-height: 70px;">.</div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <table >
@@ -238,7 +244,7 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="keysfees" style="display:none;font-size: .85em;"></div>
-            <div id="ecSearch"  style="display:none;">
+            <div id="ecSearch" style="display:none;">
                 <table>
                     <tr>
                         <td>Search: </td><td><input type="text" id="txtemSch" size="15" value="" title="Type at least 3 letters to invoke the search."/></td>

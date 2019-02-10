@@ -848,20 +848,26 @@ function resvManager(initData) {
                 numGuests = 0,
                 numPriGuests = 0,
                 nameErr = false,
-                ecIgnoreCount = 0;
+                ecIgnoreCount = 0,
+                pRelFlag = false;
             
             // Flag blank Relationships
             $('.patientRelch').removeClass('ui-state-error');
+            
             $('.patientRelch').each(function () {
 
                 if ($(this).val() === '') {
-
                     $(this).addClass('ui-state-error');
-                    flagAlertMessage('Set the highlighted Relationship.', 'alert', $pWarning);
-                    return false;
-
+                    pRelFlag = true;
+                } else {
+                    $(this).removeClass('ui-state-error');
                 }
             });
+            
+            if (pRelFlag) {
+                flagAlertMessage('Set the highlighted Relationship(s).', 'alert', $pWarning);
+                return false;
+            }
 
             findPrimaryGuest();
             findStaysChecked();
@@ -1010,18 +1016,6 @@ function resvManager(initData) {
 
                 // Guests
                 } else {
-
-                    // Check Patient Relationship
-                    if ($('#' + p + 'selPatRel').val() === '') {
-
-                        $('#' + p + 'selPatRel').addClass('ui-state-error');
-                        flagAlertMessage('Person highlighted is missing their ' + patLabel + ' Relationship.', 'alert', $pWarning);
-                        openSection(true);
-                        return false;
-
-                    } else {
-                        $('#' + p + 'selPatRel').removeClass('ui-state-error');
-                    }
 
                     // Check Guest address
                     if (gstAddrRequired) {

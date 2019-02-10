@@ -279,7 +279,7 @@ class VisitView {
      * @param string $action
      * @return string
      */
-    public static function createStaysMarkup(\PDO $dbh, $idVisit, $span, $idPrimaryGuest, $isAdmin, $idGuest, Config_Lite $labels, $action = '', $coDate = '') {
+    public static function createStaysMarkup(\PDO $dbh, $idResv, $idVisit, $span, $idPrimaryGuest, $isAdmin, $idGuest, Config_Lite $labels, $action = '', $coDate = '') {
 
         $uS = Session::getInstance();
 
@@ -522,7 +522,7 @@ class VisitView {
             $th .= HTMLTable::makeTh($ckOutTitle) . HTMLTable::makeTh('Nights');
 
             // Make add guest button
-            $guestAddButton = HTMLInput::generateMarkup('Add Guest...', array('id'=>'btnAddGuest', 'type'=>'button', 'style'=>'margin-left:1.3em; font-size:.8em;', 'data-vstatus'=>$visitStatus, 'data-vid'=>$idVisit, 'data-span'=>$span, 'title'=>'Add another guest to this visit.'));
+            $guestAddButton = HTMLInput::generateMarkup('Add Guest...', array('id'=>'btnAddGuest', 'type'=>'button', 'style'=>'margin-left:1.3em; font-size:.8em;', 'data-rid'=>$idResv, 'data-vstatus'=>$visitStatus, 'data-vid'=>$idVisit, 'data-span'=>$span, 'title'=>'Add another guest to this visit.'));
 
         }
 

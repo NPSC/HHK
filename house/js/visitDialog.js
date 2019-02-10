@@ -379,7 +379,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
             if ($('#btnAddGuest').length > 0) {
                 $('#btnAddGuest').button();
                 $('#btnAddGuest').click(function () {
-                    window.location.assign('CheckingIn.php?vid=' + $(this).data('vid') + '&span=' + $(this).data('span') + '&vstatus=' + $(this).data('vstatus'));
+                    window.location.assign('CheckingIn.php?vid=' + $(this).data('vid') + '&span=' + $(this).data('span') + '&rid=' + $(this).data('rid') + '&vstatus=' + $(this).data('vstatus'));
                 });
             }
 
