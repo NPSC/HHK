@@ -145,7 +145,7 @@ if ($idReserv > 0 || $idGuest > 0 || $idVisit > 0) {
     $resvObj->setIdPsg($idPsg);
     $resvObj->setIdVisit($idVisit);
     $resvObj->setSpan($span);
-    $resvObj->setVisitStatus($visitStatus);
+    $resvObj->setSpanStatus($visitStatus);
 
 } else {
 
@@ -165,7 +165,7 @@ $resvAr['patAddr'] = $uS->PatientAddr;
 $resvAr['gstAddr'] = $uS->GuestAddr;
 $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
 $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
-$resvAr['emergencyContact'] = isset($uS->EmergContactFill) ? $uS->EmergContactFill : FALSE;;
+$resvAr['emergencyContact'] = isset($uS->EmergContactFill) ? $uS->EmergContactFill : FALSE;
 $resvAr['isCheckin'] = TRUE;
 
 $resvObjEncoded = json_encode($resvAr);
