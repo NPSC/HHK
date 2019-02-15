@@ -23,10 +23,10 @@ require (MEMBER . "Addresses.php");
 require (MEMBER . "EmergencyContact.php");
 
 
+require (PMT . 'GatewayConnect.php');
 require (CLASSES . 'MercPay/Gateway.php');
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'Purchase/Item.php');
-require (PMT . 'GatewayConnect.php');
 require (PMT . 'PaymentGateway.php');
 require (PMT . 'Payments.php');
 require (PMT . 'HostedPayments.php');

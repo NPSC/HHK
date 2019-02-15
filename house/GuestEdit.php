@@ -64,6 +64,7 @@ require (HOUSE . 'VisitCharges.php');
 require (CLASSES . 'FinAssistance.php');
 require (CLASSES . 'Notes.php');
 
+require (PMT . 'GatewayConnect.php');
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
 require (CLASSES . 'PaymentSvcs.php');
@@ -76,7 +77,6 @@ require (PMT . 'InvoiceLine.php');
 require (PMT . 'CreditToken.php');
 require (PMT . 'Transaction.php');
 require (PMT . 'Receipt.php');
-require (PMT . 'GatewayConnect.php');
 require (PMT . 'PaymentGateway.php');
 require (PMT . 'CashTX.php');
 require (PMT . 'CheckTX.php');

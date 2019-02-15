@@ -17,6 +17,7 @@ require (DB_TABLES . 'ReservationRS.php');
 require (DB_TABLES . 'PaymentGwRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
 
+require (PMT . 'GatewayConnect.php');
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
 require (CLASSES . 'Purchase/Item.php');
@@ -50,7 +51,6 @@ require (HOUSE . 'VisitLog.php');
 require (HOUSE . 'Constraint.php');
 require (HOUSE . 'Attributes.php');
 
-require (PMT . 'GatewayConnect.php');
 require (PMT . 'PaymentGateway.php');
 require (PMT . 'Payments.php');
 require (PMT . 'HostedPayments.php');

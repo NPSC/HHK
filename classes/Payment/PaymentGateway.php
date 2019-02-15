@@ -132,6 +132,8 @@ abstract class PaymentGateway {
         return FALSE;
     }
 
+    public abstract function getPaymentResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '');
+    public abstract function getCofResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup);
 }
 
 class VantivGateway extends PaymentGateway {
@@ -535,9 +537,9 @@ class VantivGateway extends PaymentGateway {
 
                 $csResp = HostedCheckout::portalReply($dbh, $this->getGwName(), $paymentId, $payNotes);
 
-                if ($csResp->getInvoice() != '') {
+                if ($csResp->getInvoiceNumber() != '') {
 
-                    $invoice = new Invoice($dbh, $csResp->getInvoice());
+                    $invoice = new Invoice($dbh, $csResp->getInvoiceNumber());
 
                     // Analyze the result
                     $payResult = self::AnalyzeCredSaleResult($dbh, $csResp, $invoice);
@@ -624,6 +626,14 @@ class VantivGateway extends PaymentGateway {
         }
 
         return $dataArray;
+    }
+
+    public function getPaymentResponseObj(iGatewayResponse $creditTokenResponse, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
+        return new TokenResponse($creditTokenResponse, $idPayor, $idToken, $payNotes);
+    }
+
+    public function getCofResponseObj(iGatewayResponse $verifyCiResponse, $idPayor, $idGroup) {
+        return new CardInfoResponse($verifyCiResponse, $idPayor, $idGroup);
     }
 
     protected function loadGateway(\PDO $dbh) {
@@ -1278,7 +1288,7 @@ class InstamedGateway extends PaymentGateway {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $response->getStatus(), $params, json_encode($response->getResultArray()), 'COFVerify');
+            Gateway::saveGwTx($dbh, $response->getResponseCode(), $params, json_encode($response->getResultArray()), 'COFVerify');
         } catch(Exception $ex) {
             // Do Nothing
         }
@@ -1310,13 +1320,13 @@ class InstamedGateway extends PaymentGateway {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $curlResponse->getStatus(), $params, json_encode($curlResponse->getResultArray()), 'HostedCoVerify');
+            Gateway::saveGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'HostedCoVerify');
         } catch(Exception $ex) {
             // Do Nothing
         }
 
         // Make a sale response...
-        $sr = new ImSaleResponse($curlResponse, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $paymentNotes);
+        $sr = new ImPaymentResponse($curlResponse, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $paymentNotes);
 
         // Record transaction
         try {
@@ -1331,9 +1341,9 @@ class InstamedGateway extends PaymentGateway {
         $ssr = SaleReply::processReply($dbh, $sr, $userName);
 
 
-        if ($ssr->getInvoice() != '') {
+        if ($ssr->getInvoiceNumber() != '') {
 
-            $invoice = new Invoice($dbh, $ssr->getInvoice());
+            $invoice = new Invoice($dbh, $ssr->getInvoiceNumber());
 
             // Analyze the result
             $payResult = PaymentSvcs::AnalyzeCredSaleResult($dbh, $ssr, $invoice, 0, FALSE, FALSE);
@@ -1463,7 +1473,13 @@ where r.idRegistration =" . $idReg);
 //
 //    }
 
+    public function getPaymentResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
+        return new ImPaymentResponse($vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes);
+    }
 
+    public function getCofResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup) {
+        return new ImCofResponse($vcr, $idPayor, $idGroup);
+    }
 
     public function createEditMarkup(\PDO $dbh, $resultMessage = '') {
 
@@ -1711,5 +1727,15 @@ class LocalGateway extends PaymentGateway {
     public function processHostedReturn(\PDO $dbh, $post, $token, $idInv, $payNotes) {
 
     }
+
+    public function getPaymentResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
+
+    }
+
+    public function getCofResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup) {
+
+    }
+
+
 
 }

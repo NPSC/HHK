@@ -637,7 +637,7 @@ abstract class MercResponse {
     }
 
 
-    public function getAuthorizeAmount() {
+    public function getAuthorizedAmount() {
         return 0;
     }
 
@@ -793,7 +793,7 @@ class InitCiResponse extends MercResponse {
 
 }
 
-class VerifyCiResponse extends MercResponse {
+class VerifyCiResponse extends MercResponse implements iGatewayResponse {
 
     function __construct($response) {
         parent::__construct($response);
@@ -806,6 +806,61 @@ class VerifyCiResponse extends MercResponse {
         }
 
         $this->tranType = MpTranType::CardOnFile;
+    }
+    public function getAVSAddress() {
+
+    }
+
+    public function getAVSResult() {
+
+    }
+
+    public function getAVSZip() {
+
+    }
+
+    public function getAcqRefData() {
+
+    }
+
+    public function getAuthCode() {
+
+    }
+
+    public function getAuthorizationText() {
+
+    }
+
+    public function getCvvResult() {
+
+    }
+
+    public function getInvoiceNumber() {
+
+    }
+
+    public function getPartialPaymentAmount() {
+
+    }
+
+    public function getProcessData() {
+
+    }
+
+    public function getRefNo() {
+
+    }
+
+    public function getResponseMessage() {
+
+    }
+
+    public function getTransPostTime() {
+
+    }
+
+    public function isEMVTransaction() {
+
     }
 
     public function getCardId() {
@@ -1679,7 +1734,7 @@ class CreditAdjustTokenRequest extends MercTokenRequest {
 }
 
 
-class CreditTokenResponse extends MercResponse {
+class CreditTokenResponse extends MercResponse implements iGatewayResponse {
 
     protected $tranType;
 
@@ -1702,6 +1757,42 @@ class CreditTokenResponse extends MercResponse {
         if (is_null($this->result)) {
             throw new Hk_Exception_Payment($resultName . ' is missing from the payment gateway response. ');
         }
+    }
+
+    public function getPartialPaymentAmount() {
+        return 0;
+    }
+
+    public function getAuthorizationText() {
+        return '';
+    }
+
+    public function getAVSAddress() {
+        return '';
+    }
+
+    public function getAVSZip() {
+        return '';
+    }
+
+    public function getCardHolderName() {
+        return '';
+    }
+
+    public function getExpDate() {
+        return '';
+    }
+
+    public function getOperatorId() {
+        return '';
+    }
+
+    public function getResponseMessage() {
+        return $this->getMessage();
+    }
+
+    public function getTransPostTime() {
+        return '';
     }
 
     public function getMaskedAccount() {
@@ -1728,7 +1819,7 @@ class CreditTokenResponse extends MercResponse {
         return '';
     }
 
-    public function getAuthorizeAmount() {
+    public function getAuthorizedAmount() {
         if (isset($this->result->AuthorizeAmount)) {
             return $this->result->AuthorizeAmount;
         } else if (isset($this->result->Amount)) {
@@ -1773,7 +1864,7 @@ class CreditTokenResponse extends MercResponse {
         return 0.00;
     }
 
-    public function getInvoice() {
+    public function getInvoiceNumber() {
         if (isset($this->result->Invoice)) {
             return $this->result->Invoice;
         }
@@ -1801,12 +1892,12 @@ class CreditTokenResponse extends MercResponse {
        return '';
     }
 
-    public function getStatus() {
-        if (isset($this->result->Status)) {
-            return $this->result->Status;
-        }
-        return '';
-    }
+//    public function getStatus() {
+//        if (isset($this->result->Status)) {
+//            return $this->result->Status;
+//        }
+//        return '';
+//    }
 
     public function getMessage() {
         if (isset($this->result->Message)) {
@@ -1832,6 +1923,11 @@ class CreditTokenResponse extends MercResponse {
         }
         return '';
     }
+
+    public function isEMVTransaction() {
+        return FALSE;
+    }
+
 
 }
 

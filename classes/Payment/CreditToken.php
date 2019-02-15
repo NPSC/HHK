@@ -17,7 +17,7 @@
  */
 class CreditToken {
 
-    public static function storeToken(\PDO $dbh, $idRegistration, $idPayor, $vr) {
+    public static function storeToken(\PDO $dbh, $idRegistration, $idPayor, iGatewayResponse $vr) {
 
         $cardNum = str_ireplace('x', '', $vr->getMaskedAccount());
 
@@ -29,7 +29,7 @@ class CreditToken {
 
         $gtRs->CardHolderName->setNewVal($vr->getCardHolderName());
         $gtRs->CardType->setNewVal($vr->getCardType());
-        $gtRs->CardUsage->setNewVal($vr->getCardUsage());
+        //$gtRs->CardUsage->setNewVal($vr->getCardUsage());
         $gtRs->ExpDate->setNewVal($vr->getExpDate());
         $gtRs->Frequency->setNewVal('OneTime');
         $gtRs->Granted_Date->setNewVal(date('Y-m-d H:i:s'));
@@ -37,12 +37,12 @@ class CreditToken {
         $gtRs->MaskedAccount->setNewVal($cardNum);
         $gtRs->OperatorID->setNewVal($vr->getOperatorID());
         $gtRs->Response_Code->setNewVal($vr->getResponseCode());
-        $gtRs->Status->setNewVal($vr->getStatus());
-        $gtRs->StatusMessage->setNewVal($vr->getStatusMessage());
+        $gtRs->Status->setNewVal($vr->getResponseCode());
+        $gtRs->StatusMessage->setNewVal($vr->getResponseMessage());
         $gtRs->Tran_Type->setNewVal($vr->getTranType());
         $gtRs->Token->setNewVal($vr->getToken());
 
-        $runTot = self::calculateRunningTotal($gtRs->Running_Total->getStoredVal(), $vr->getAuthorizeAmount(), $vr->getTranType());
+        $runTot = self::calculateRunningTotal($gtRs->Running_Total->getStoredVal(), $vr->getAuthorizedAmount(), $vr->getTranType());
         $gtRs->Running_Total->setNewVal($runTot);
 
         // Write
@@ -107,7 +107,7 @@ class CreditToken {
             $gtRs->Response_Code->setNewVal($vr->response->getResponseCode());
             $gtRs->Granted_Date->setNewVal(date('Y-m-d H:i:s'));
             $gtRs->Status->setNewVal($vr->response->getStatus());
-            $gtRs->StatusMessage->setNewVal($vr->response->getMessage());
+            $gtRs->StatusMessage->setNewVal($vr->response->getResponseMessage());
 
             $runTot = self::calculateRunningTotal($gtRs->Running_Total->getStoredVal(), $vr->getAmount(), $vr->response->getTranType());
             $gtRs->Running_Total->setNewVal($runTot);

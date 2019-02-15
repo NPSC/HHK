@@ -71,14 +71,14 @@ class Receipt {
             $tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($line->getAmount(), 2), array('style'=>'font-size:.8em;')));
         }
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($invoice->getAmount(), 2), array('class'=>'hhk-tdTotals')));
+        $tbl->addBodyTr(HTMLTable::makeTd("Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($invoice->getAmount(), 2), array('class'=>'hhk-tdTotals')));
 
 
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);
 
         if ($invoice->getBalance() > 0 || $invoice->getAmount() != $payResp->getAmount()) {
-            $tbl->addBodyTr(HTMLTable::makeTd("Remaining Balance:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(($invoice->getBalance()), 2)));
+            $tbl->addBodyTr(HTMLTable::makeTd("Remaining Balance:", array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format(($invoice->getBalance()), 2)));
         }
 
         $disclaimer = '';
@@ -262,14 +262,14 @@ class Receipt {
 //            $tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($line->getAmount(), 2), array('style'=>'font-size:.8em;')));
 //        }
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($invoice->getAmount(), 2), array('class'=>'hhk-tdTotals')));
+        $tbl->addBodyTr(HTMLTable::makeTd("Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($invoice->getAmount(), 2), array('class'=>'hhk-tdTotals')));
 
 
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);
 
         if ($invoice->getBalance() > 0 || $invoice->getAmount() != $payResp->getAmount()) {
-            $tbl->addBodyTr(HTMLTable::makeTd("Remaining Balance:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(($invoice->getBalance()), 2)));
+            $tbl->addBodyTr(HTMLTable::makeTd("Remaining Balance:", array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format(($invoice->getBalance()), 2)));
         }
 
 

@@ -12,7 +12,7 @@ interface iGatewayResponse {
     public function getResponseMessage();
     public function getTranType();
 
-    public function getAuthorizeAmount();
+    public function getAuthorizedAmount();
     public function getPartialPaymentAmount();
     public function getAuthCode();
     public function getTransPostTime();
@@ -35,6 +35,7 @@ interface iGatewayResponse {
 
     public function getToken();
     public function getInvoiceNumber();
+    public function getOperatorId();
 
 }
 
@@ -217,7 +218,7 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
         return '';
     }
 
-    public function getAuthorizeAmount() {
+    public function getAuthorizedAmount() {
 
         if ($this->getPartialPaymentAmount() != '') {
             return $this->getPartialPaymentAmount();
@@ -279,6 +280,12 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
         return $this->getTransactionId();
     }
 
+    public function getOperatorId() {
+        if (isset($this->result['userID'])) {
+            return $this->result['userID'];
+        }
+        return '';
+    }
 
     public function getPaymentPlanID() {
         if (isset($this->result['paymentPlanID'])) {
@@ -543,11 +550,13 @@ abstract class SoapRequest {
 class StandInGwResponse implements iGatewayResponse {
 
     protected $pAuthRs;
+    protected $gtRs;
     protected $invoiceNumber;
 
-    public function __construct(Payment_AuthRS $pAuthRs, $invoiceNumber) {
+    public function __construct(Payment_AuthRS $pAuthRs, Guest_TokenRS $gtRs, $invoiceNumber) {
 
         $this->pAuthRs = $pAuthRs;
+        $this->gtRs = $gtRs;
         $this->invoiceNumber = $invoiceNumber;
     }
 
@@ -563,6 +572,11 @@ class StandInGwResponse implements iGatewayResponse {
         return 'Not Available';
     }
 
+    public function getOperatorId() {
+        return $this->gtRs->OperatorID->getStoredVal();
+    }
+
+
     public function getAcqRefData() {
         return $this->pAuthRs->AcqRefData->getStoredVal();
     }
@@ -575,12 +589,12 @@ class StandInGwResponse implements iGatewayResponse {
         return '';
     }
 
-    public function getAuthorizeAmount() {
+    public function getAuthorizedAmount() {
         return $this->pAuthRs->Approved_Amount->getStoredVal();
     }
 
     public function getCardHolderName() {
-        return 'uh-oh';
+        return $this->gtRs->CardHolderName->getStoredVal();
     }
 
     public function getCardType() {
@@ -592,7 +606,7 @@ class StandInGwResponse implements iGatewayResponse {
     }
 
     public function getExpDate() {
-        return 'uh-oh';
+        return $this->gtRs->ExpDate->getStoredVal();
     }
 
     public function getInvoiceNumber() {
@@ -624,7 +638,7 @@ class StandInGwResponse implements iGatewayResponse {
     }
 
     public function getToken() {
-        return '';
+        return $this->gtRs->Token->getStoredVal();
     }
 
     public function getTranType() {

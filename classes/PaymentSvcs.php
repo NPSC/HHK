@@ -1189,8 +1189,20 @@ class PaymentSvcs {
                 $pAuthRs = new Payment_AuthRS();
                 EditRS::loadRow($rows[count($rows)-1], $pAuthRs);
 
+                $guestTokenRs = new Guest_TokenRS();
+                $guestTokenRs->idGuest_token->setStoredVal($payRs->idToken->getStoredVal());
+                $guestTkns = EditRS::select($dbh, $guestTokenRs, array($guestTokenRs->idGuest_token));
 
-                $payResp = new ManualChargeResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs, '', $payRs->idToken->getStoredVal());
+                if (count($guestTkns) > 0) {
+                    EditRS::loadRow($guestTkns[0], $guestTokenRs);
+                }
+
+
+                $gwResp = new StandInGwResponse($pAuthRs, $guestTokenRs, $invoice->getInvoiceNumber());
+
+                $gateway = PaymentGateway::factory($dbh, $pAuthRs->Processor->getStoredVal(), $uS->ccgw);
+
+                $payResp = $gateway->getPaymentResponseObj($gwResp, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber());
                 $payResp->paymentRs = $payRs;
                 break;
 
@@ -1229,7 +1241,7 @@ class PaymentSvcs {
 
             case PaymentStatusCode::Declined:
 
-                $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
+                $dataArray['receipt'] = Receipt::createDeclinedMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
                 break;
 
             case PaymentStatusCode::VoidSale:

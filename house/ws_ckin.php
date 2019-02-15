@@ -35,13 +35,13 @@ require (CLASSES . 'US_Holidays.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'FinAssistance.php');
 
+require (PMT . 'GatewayConnect.php');
 
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
 
-require (PMT . 'GatewayConnect.php');
 require (PMT . 'Payments.php');
 require (PMT . 'TokenTX.php');
 require (PMT . 'HostedPayments.php');
