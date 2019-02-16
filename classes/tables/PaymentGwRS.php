@@ -72,7 +72,7 @@ class Gateway_TransactionRS extends TableRS {
     public $GwResultCode;   // varchar(44) NOT NULL DEFAULT '',
     public $Amount;   // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $Vendor_Request;   // varchar(2000) NOT NULL DEFAULT '',
-    public $Vendor_Response;   // varchar(2000) NOT NULL DEFAULT '',
+    public $Vendor_Response;   // varchar(5000) NOT NULL DEFAULT '',
     public $AuthCode;   // varchar(45) NOT NULL DEFAULT '',
     public $idPayment_Detail;   // int(11) NOT NULL DEFAULT '0',
     public $Created_By;   // varchar(45) NOT NULL DEFAULT '',
@@ -84,7 +84,7 @@ class Gateway_TransactionRS extends TableRS {
         $this->GwResultCode = new DB_Field("GwResultCode", "", new DbStrSanitizer(44), TRUE, TRUE);
         $this->Amount = new DB_Field('Amount', 0, new DbDecimalSanitizer(), TRUE, TRUE);
         $this->Vendor_Request = new DB_Field("Vendor_Request", "", new DbStrSanitizer(2000), TRUE, TRUE);
-        $this->Vendor_Response = new DB_Field("Vendor_Response", "", new DbStrSanitizer(2000), TRUE, TRUE);
+        $this->Vendor_Response = new DB_Field("Vendor_Response", "", new DbStrSanitizer(5000), TRUE, TRUE);
         $this->AuthCode = new DB_Field("AuthCode", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->idPayment_Detail = new DB_Field("idPayment_Detail", 0, new DbIntSanitizer(), TRUE, TRUE);
 

@@ -96,7 +96,6 @@ abstract class PaymentResponse {
 
 class ImPaymentResponse extends PaymentResponse {
 
-
     public $isEMV;
 
     function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes) {

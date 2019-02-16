@@ -1461,17 +1461,6 @@ where r.idRegistration =" . $idReg);
         return array();
     }
 
-    //    protected function pollPaymentStatus($token, $trace = FALSE) {
-//
-//        $data = $this->getCredentials()->toSOAP();
-//
-//        $data['tokenID'] = $token;
-//
-//        $soapReq = new PollingRequest();
-//
-//        return new PollingResponse($soapReq->submit($data, $this->soapUrl, $trace));
-//
-//    }
 
     public function getPaymentResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
         return new ImPaymentResponse($vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes);

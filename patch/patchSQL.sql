@@ -16,7 +16,7 @@ ALTER TABLE `gateway_transaction`
     CHANGE COLUMN `Vendor_Request` `Vendor_Request` VARCHAR(2000) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL DEFAULT '' ;
 
 ALTER TABLE `gateway_transaction` 
-    CHANGE COLUMN `Vendor_Response` `Vendor_Response` VARCHAR(2000) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL DEFAULT '' ;
+    CHANGE COLUMN `Vendor_Response` `Vendor_Response` VARCHAR(5000) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL DEFAULT '' ;
 
 
 ALTER TABLE `payment_auth` 

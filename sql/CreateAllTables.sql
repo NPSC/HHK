@@ -422,7 +422,7 @@ CREATE TABLE if not exists `gateway_transaction` (
   `GwResultCode` varchar(44) NOT NULL DEFAULT '',
   `Amount` decimal(10,2) NOT NULL DEFAULT '0.00',
   `Vendor_Request` varchar(2000) NOT NULL DEFAULT '',
-  `Vendor_Response` varchar(2000) NOT NULL DEFAULT '',
+  `Vendor_Response` varchar(5000) NOT NULL DEFAULT '',
   `AuthCode` varchar(45) NOT NULL DEFAULT '',
   `idPayment_Detail` int(11) NOT NULL DEFAULT '0',
   `Created_By` varchar(45) NOT NULL DEFAULT '',
