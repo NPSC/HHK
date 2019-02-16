@@ -72,6 +72,7 @@ try {
     // Do Nothing
 }
 
+$whookResp = new WebhookResponse($data);
 
 //$payment_message = new stdClass();
 //$payment_message->single_sign_on_token = $input['SingleSignOnToken'];

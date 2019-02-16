@@ -1066,7 +1066,7 @@ class InstamedGateway extends PaymentGateway {
         }
 
         // Make a void response...
-        $sr = new ImVoidResponse($curlResponse, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $paymentNotes);
+        $sr = new ImPaymentResponse($curlResponse, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $paymentNotes);
 
         // Record transaction
         try {
@@ -1140,7 +1140,7 @@ class InstamedGateway extends PaymentGateway {
         $resp['InvoiceNumber'] = $invoice->getInvoiceNumber();
         $resp['Amount'] = $payRs->Amount->getStoredVal();
 
-        $curlResponse = new VerifyCurlResponse($resp);
+        $curlResponse = new VerifyCurlResponse($resp, MpTranType::ReturnAmt);
 
         // Save raw transaction in the db.
         try {
@@ -1150,7 +1150,7 @@ class InstamedGateway extends PaymentGateway {
         }
 
         // Make a return response...
-        $sr = new ImReturnResponse($curlResponse, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), '');
+        $sr = new ImPaymentResponse($curlResponse, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), '');
 
         // Record transaction
         try {
