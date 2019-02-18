@@ -1088,6 +1088,24 @@ class PaymentSvcs {
         return $infoArray;
     }
 
+    public static function processWebhook(\PDO $dbh, $data) {
+
+        $uS = Session::getInstance();
+
+        // Payment Gateway
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+
+        $payNotes = '';
+
+        if (isset($uS->paymentNotes)) {
+            $payNotes = $uS->paymentNotes;
+            unset($uS->paymentNotes);
+        }
+
+        return $gateway->processWebhook($dbh, $data, '', 0, $payNotes, $uS->username);
+
+    }
+
     public static function processSiteReturn(\PDO $dbh, $post) {
 
         $uS = Session::getInstance();
@@ -1101,6 +1119,7 @@ class PaymentSvcs {
 
         if (isset($uS->paymentNotes)) {
             $payNotes = $uS->paymentNotes;
+            unset($uS->paymentNotes);
         }
 
         if (isset($uS->imtoken)) {

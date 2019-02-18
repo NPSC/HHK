@@ -176,7 +176,7 @@ class Login {
 
     }
 
-    protected function getChallengeVar() {
+    public function getChallengeVar() {
 
         // get session instance
         $uS = Session::getInstance();

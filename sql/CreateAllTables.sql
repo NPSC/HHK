@@ -1779,6 +1779,23 @@ CREATE TABLE if not exists `shell_events` (
 ) ENGINE=InnoDB AUTO_INCREMENT=3;
 
 
+-- -----------------------------------------------------
+-- Table `ssotoken`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `ssotoken` (
+  `Token` varchar(136) NOT NULL DEFAULT '',
+  `idName` int(11) NOT NULL,
+  `idGroup` int(11) NOT NULL,
+  `InvoiceNumber` varchar(36) NOT NULL DEFAULT '',
+  `Amount` DECIMAL(11,2) NOT NULL DEFAULT 0.00,
+  `State` varchar(5) NOT NULL DEFAULT '',
+  `Updated_By` varchar(45) NOT NULL DEFAULT '',
+  `Last_Updated` datetime DEFAULT NULL,
+  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Token`)
+) ENGINE=InnoDB;
+
+
 
 -- -----------------------------------------------------
 -- Table `stays`

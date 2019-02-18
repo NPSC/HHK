@@ -201,7 +201,8 @@ class WebhookResponse extends GatewayResponse implements iGatewayResponse {
 
     public function getMaskedAccount() {
         if (isset($this->result['CardLastFourDigits'])) {
-            return str_replace('***', '', $this->result['CardLastFourDigits'], 4);
+            $last4 = str_replace('*', '', $this->result['CardLastFourDigits']);
+            return $last4;
         }
         return '';
     }

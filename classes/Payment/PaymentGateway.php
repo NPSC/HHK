@@ -36,7 +36,8 @@ abstract class PaymentGateway {
     protected abstract function setCredentials($credentials);
 
     public abstract function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl);
-    public abstract function processHostedReturn(\PDO $dbh, $post, $token, $idInv, $payNotes);
+    public abstract function processHostedReturn(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName);
+    public abstract function processWebhook(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName);
 
     public abstract function createEditMarkup(\PDO $dbh);
     public abstract function SaveEditMarkup(\PDO $dbh, $post);
@@ -490,6 +491,10 @@ class VantivGateway extends PaymentGateway {
 
 
         return CardInfo::sendToPortal($dbh, $this->gwName, $idGuest, $idGroup, $initCi);
+    }
+
+    public function processWebhook(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName) {
+        ;
     }
 
     public function processHostedReturn(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName = '') {
@@ -951,10 +956,18 @@ class InstamedGateway extends PaymentGateway {
         if ($headerResponse->getToken() != '') {
 
             // Save payment ID
-            $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode, Amount)"
-                . " values (" . $invoice->getSoldToId() . " , " . $invoice->getIdGroup() . ", '" . InstamedGateway::HCO_TRANS . "', '" . $invoice->getInvoiceNumber() . "', '" . $headerResponse->getToken() . "', now(), 'OneTime', '" . $headerResponse->getResponseCode() . "', " . $invoice->getAmountToPay() . ")";
+            $ssoTknRs = new SsoTokenRS();
+            $ssoTknRs->Amount->setNewVal($invoice->getAmountToPay());
+            $ssoTknRs->InvoiceNumber->setNewVal($invoice->getInvoiceNumber());
+            $ssoTknRs->Token->setNewVal($headerResponse->getToken());
+            $ssoTknRs->idGroup->setNewVal($invoice->getIdGroup());
+            $ssoTknRs->idName->setNewVal($invoice->getSoldToId());
 
-            $dbh->exec($ciq);
+            $rowCount = EditRS::insert($dbh, $ssoTknRs);
+
+            if ($rowCount != 1) {
+                throw new Hk_Exception_Payment("Database Insert error. ");
+            }
 
             $uS->imtoken = $headerResponse->getToken();
 
@@ -1237,23 +1250,11 @@ class InstamedGateway extends PaymentGateway {
             return $payResult;
         }
 
-        // Check DB for record
-        $cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $ssoToken);
-
-        if (count($cidInfo) < 1) {
-
-            $payResult = new PaymentResult(0, 0, 0);
-            $payResult->setDisplayMessage('');
-
-            return $payResult;
-        }
-
-
         // Finally, process the transaction
         if ($transType == InstamedGateway::HCO_TRANS) {
 
             try {
-                $payResult = $this->completeHostedPayment($dbh, $idInv, $ssoToken, $payNotes, $userName, $cidInfo);
+                $payResult = $this->completeHostedPayment($dbh, $idInv, $ssoToken, $payNotes, $userName);
 
             } catch (Hk_Exception_Payment $hex) {
 
@@ -1264,13 +1265,108 @@ class InstamedGateway extends PaymentGateway {
 
         } else if ($transType == InstamedGateway::COF_TRANS) {
 
-            $payResult = $this->completeCof($dbh, $ssoToken, $cidInfo);
+            $payResult = $this->completeCof($dbh, $ssoToken);
         }
 
         return $payResult;
     }
 
-    public function completeCof(\PDO $dbh, $ssoToken, $cidInfo) {
+    public function processWebhook(\PDO $dbh, $data, $n, $v, $payNotes, $userName) {
+
+        $webhookResp = new WebhookResponse($data);
+        $result = FALSE;
+
+        if ($webhookResp->getSsoToken() == '') {
+           return FALSE;
+        }
+
+        // Check DB for record
+        $ssoTknRs = new SsoTokenRS();
+        $ssoTknRs->Token->setStoredVal($webhookResp->getSsoToken());
+
+        $tokenRow = EditRS::select($dbh, $ssoTknRs, array($ssoTknRs->Token));
+
+        if (count($tokenRow) < 1) {
+            return FALSE;
+        }
+
+        if ($webhookResp->getTranType() == MpTranType::Sale) {
+
+            // Make a sale response...
+            $sr = new ImPaymentResponse($webhookResp, $tokenRow['idName'], $tokenRow['idGroup'], $tokenRow['InvoiceNumber'], $payNotes);
+
+            // Record transaction
+            try {
+                $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Sale, TransMethod::Webhook);
+                $sr->setIdTrans($transRs->idTrans->getStoredVal());
+
+            } catch(Exception $ex) {
+                // do nothing
+            }
+
+            // record payment
+            $payResp = SaleReply::processReply($dbh, $sr, $userName);
+
+            $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
+
+
+            // Analyze the result
+            switch ($payResp->getStatus()) {
+
+                case CreditPayments::STATUS_APPROVED:
+
+                    // Update invoice
+                    $invoice->updateInvoiceBalance($dbh, $payResp->response->getAuthorizedAmount(), $userName);
+
+                    if ($payResp->getIdPayment() > 0 && $invoice->getIdInvoice() > 0) {
+                        // payment-invoice
+                        $payInvRs = new PaymentInvoiceRS();
+                        $payInvRs->Amount->setNewVal($payResp->response->getAuthorizedAmount());
+                        $payInvRs->Invoice_Id->setNewVal($invoice->getIdInvoice());
+                        $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
+                        EditRS::insert($dbh, $payInvRs);
+
+                        $result = TRUE;
+                    }
+
+                    break;
+
+                case CreditPayments::STATUS_DECLINED:
+
+                    $payInvRs = new PaymentInvoiceRS();
+                    $payInvRs->Amount->setNewVal($payResp->response->getAuthorizedAmount());
+                    $payInvRs->Invoice_Id->setNewVal($invoice->getIdInvoice());
+                    $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
+                    EditRS::insert($dbh, $payInvRs);
+
+                    $result = TRUE;
+                    break;
+
+                default:
+                    $result = FALSE;
+
+            }
+
+            if ($result) {
+                $ssoTknRs->State->setNewValue(WebHookStatus::Complete);
+                EditRS::update($dbh, $ssoTknRs, array($ssoTknRs->Token));
+            }
+        }
+
+        return $result;
+    }
+
+    public function completeCof(\PDO $dbh, $ssoToken) {
+
+        $cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $ssoToken);
+
+        if (count($cidInfo) < 1) {
+
+            $payResult = new PaymentResult(0, 0, 0);
+            $payResult->setDisplayMessage('');
+
+            return $payResult;
+        }
 
         //get transaction details
         $params = $this->getCredentials()->toCurl()
@@ -1302,7 +1398,21 @@ class InstamedGateway extends PaymentGateway {
 
     }
 
-    protected function completeHostedPayment(\PDO $dbh, $idInv, $ssoToken, $paymentNotes, $userName, $cidInfo) {
+    protected function completeHostedPayment(\PDO $dbh, $idInv, $ssoToken, $paymentNotes, $userName) {
+
+        // Check DB for record
+        $ssoTknRs = new SsoTokenRS();
+        $ssoTknRs->Token->setStoredVal($ssoToken);
+
+        $tokenRow = EditRS::select($dbh, $ssoTknRs, array($ssoTknRs->Token));
+
+        if (count($tokenRow) < 1) {
+
+            $payResult = new PaymentResult(0, 0, 0);
+            $payResult->setDisplayMessage('');
+
+            return $payResult;
+        }
 
         //get transaction details
         $params = $this->getCredentials()->toCurl()
@@ -1313,8 +1423,8 @@ class InstamedGateway extends PaymentGateway {
         $curl = new CurlRequest();
         $resp = $curl->submit($params, $this->NvpUrl);
 
-        $resp['InvoiceNumber'] = $cidInfo['InvoiceNumber'];
-        $resp['Amount'] = $cidInfo['Amount'];
+        $resp['InvoiceNumber'] = $tokenRow['InvoiceNumber'];
+        $resp['Amount'] = $tokenRow['Amount'];
 
         $curlResponse = new VerifyCurlResponse($resp, MpTranType::Sale);
 
@@ -1326,7 +1436,7 @@ class InstamedGateway extends PaymentGateway {
         }
 
         // Make a sale response...
-        $sr = new ImPaymentResponse($curlResponse, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $paymentNotes);
+        $sr = new ImPaymentResponse($curlResponse, $tokenRow['idName'], $tokenRow['idGroup'], $tokenRow['InvoiceNumber'], $paymentNotes);
 
         // Record transaction
         try {
@@ -1337,24 +1447,24 @@ class InstamedGateway extends PaymentGateway {
             // do nothing
         }
 
-        // record payment
-        $ssr = SaleReply::processReply($dbh, $sr, $userName);
+        // Find the payment Id
+        $paymentAuthRs = new Payment_AuthRS();
+        $paymentAuthRs->Reference_Num->setStoredVal($curlResponse->getPrimaryTransactionID());
 
+        $slept = 0;
 
-        if ($ssr->getInvoiceNumber() != '') {
+        while ($slept < 5) {
 
-            $invoice = new Invoice($dbh, $ssr->getInvoiceNumber());
+            $paRows = EditRS::select($dbh, $paymentAuthRs, array($paymentAuthRs->Reference_Num));
 
-            // Analyze the result
-            $payResult = PaymentSvcs::AnalyzeCredSaleResult($dbh, $ssr, $invoice, 0, FALSE, FALSE);
-
-        } else {
-
-            $payResult = new PaymentResult($idInv, 0, 0);
-            $payResult->setStatus(PaymentResult::ERROR);
-            $payResult->setDisplayMessage('Invoice Not Found!  ');
+            if (count($paRows) > 0) {
+                $slept = 10;
+            } else {
+                $slept++;
+                sleep(1);
+            }
         }
-
+        
         return $payResult;
     }
 

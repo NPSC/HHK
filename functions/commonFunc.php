@@ -68,7 +68,7 @@ function initPDO($override = FALSE) {
 
     } catch (\PDOException $e) {
 
-        $ssn->destroy();
+        $ssn->destroy(TRUE);
 
         if ($roleCode >= WebRole::DefaultRole && $override === FALSE) {
             exit("<br/>Database Error: " . $e->getMessage());

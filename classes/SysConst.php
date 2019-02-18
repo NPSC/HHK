@@ -338,6 +338,7 @@ class TransMethod {
     const Cash = 'cash';
     const Check = 'check';
     const Transfer = 'txfer';
+    const Webhook = 'wh';
 }
 
 class TransType {
@@ -386,6 +387,10 @@ class VolMemberType {
     const ReferralAgent = 'ra';
     const Doctor = 'doc';
     const BillingAgent = 'ba';
+}
+
+class WebHookStatus {
+    const Complete = 'c';
 }
 
 class WebRole {
