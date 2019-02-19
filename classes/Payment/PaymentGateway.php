@@ -955,7 +955,7 @@ class InstamedGateway extends PaymentGateway {
 
         if ($headerResponse->getToken() != '') {
 
-            // Save payment ID
+            // Save ssoToken
             $ssoTknRs = new SsoTokenRS();
             $ssoTknRs->Amount->setNewVal($invoice->getAmountToPay());
             $ssoTknRs->InvoiceNumber->setNewVal($invoice->getInvoiceNumber());
@@ -966,7 +966,7 @@ class InstamedGateway extends PaymentGateway {
 
             $rowCount = EditRS::insert($dbh, $ssoTknRs);
 
-            if ($rowCount != 1) {
+            if (count($rowCount) != 1) {
                 throw new Hk_Exception_Payment("Database Insert error. ");
             }
 
@@ -1074,7 +1074,7 @@ class InstamedGateway extends PaymentGateway {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $curlResponse->getStatus(), $params, json_encode($curlResponse->getResultArray()), 'ImTokenVoid');
+            Gateway::saveGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'ImTokenVoid');
         } catch(Exception $ex) {
             // Do Nothing
         }
@@ -1100,7 +1100,7 @@ class InstamedGateway extends PaymentGateway {
             case CreditPayments::STATUS_APPROVED:
 
                 // Update invoice
-                $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizeAmount(), $uS->username);
+                $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
 
                 $csResp->idVisit = $invoice->getOrderNumber();
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
@@ -1110,10 +1110,10 @@ class InstamedGateway extends PaymentGateway {
 
             case CreditPayments::STATUS_DECLINED:
 
-                if (strtoupper($csResp->response->getMessage()) == 'APPROVED') {
+                if (strtoupper($csResp->response->getResponseMessage()) == 'APPROVED') {
 
                     // Update invoice
-                    $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizeAmount(), $uS->username);
+                    $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
 
                     $csResp->idVisit = $invoice->getOrderNumber();
                     $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
@@ -1121,14 +1121,14 @@ class InstamedGateway extends PaymentGateway {
 
                 } else {
 
-                    $dataArray['warning'] = $csResp->response->getMessage();
+                    $dataArray['warning'] = $csResp->response->getResponseMessage();
                 }
 
                 break;
 
             default:
 
-                $dataArray['warning'] = '** Void Invalid or Error. **  ' . 'Message: ' . $csResp->response->getMessage();
+                $dataArray['warning'] = '** Void Invalid or Error. **  ' . 'Message: ' . $csResp->getErrorMessage();;
 
         }
 
@@ -1158,7 +1158,7 @@ class InstamedGateway extends PaymentGateway {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $curlResponse->getStatus(), $params, json_encode($curlResponse->getResultArray()), 'ImTokenReturn');
+            Gateway::saveGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'ImTokenReturn');
         } catch(Exception $ex) {
             // Do Nothing
         }
@@ -1186,7 +1186,7 @@ class InstamedGateway extends PaymentGateway {
             case CreditPayments::STATUS_APPROVED:
 
                 // Update invoice
-                $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizeAmount(), $uS->username);
+                $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
 
                 $reply .= 'Payment is Returned.  ';
                 $csResp->idVisit = $invoice->getOrderNumber();
@@ -1196,13 +1196,13 @@ class InstamedGateway extends PaymentGateway {
 
             case CreditPayments::STATUS_DECLINED:
 
-                $dataArray['warning'] = $csResp->response->getMessage();
+                $dataArray['warning'] = $csResp->response->getResponseMessage();
 
                 break;
 
             default:
 
-                $dataArray['warning'] = "Payment Error = " . $exPay->getMessage();
+                $dataArray['warning'] = $csResp->getErrorMessage();
 
         }
 
@@ -1403,6 +1403,8 @@ class InstamedGateway extends PaymentGateway {
 
     protected function completeHostedPayment(\PDO $dbh, $idInv, $ssoToken, $paymentNotes, $userName) {
 
+        $uS = Session::getInstance();
+
         // Check DB for record
         $ssoTknRs = new SsoTokenRS();
         $ssoTknRs->Token->setStoredVal($ssoToken);
@@ -1438,43 +1440,54 @@ class InstamedGateway extends PaymentGateway {
         }
 
         // Make a sale response...
-        $sr = new ImPaymentResponse($curlResponse, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $paymentNotes);
+        $payResp = new ImPaymentResponse($curlResponse, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $paymentNotes);
 
         // Record transaction
         try {
-            $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Sale, TransMethod::HostedPayment);
-            $sr->setIdTrans($transRs->idTrans->getStoredVal());
+            $transRs = Transaction::recordTransaction($dbh, $payResp, $this->gwName, TransType::Sale, TransMethod::HostedPayment);
+            $payResp->setIdTrans($transRs->idTrans->getStoredVal());
 
         } catch(Exception $ex) {
             // do nothing
         }
 
-        if ($ssoTknRs->State->getStoredVal() == WebHookStatus::Init) {
-            $ssoTknRs = $this->waitForWebhook($dbh, $ssoToken);
-        }
+        $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
+
+        $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), 0);
 
 
-        switch ($ssoTknRs->State->GetStoredVal()) {
+        switch ($payResp->getStatus()) {
 
-            case WebHookStatus::Complete:
+            case CreditPayments::STATUS_APPROVED:
+
+                $payResult->feePaymentAccepted($dbh, $uS, $payResp, $invoice);
+                $payResult->setDisplayMessage('Paid by Credit Card.  ');
+
+                if ($payResp->isPartialPayment()) {
+                    $payResult->setDisplayMessage('** Partially Approved Amount: ' . number_format($payResp->response->getAuthorizedAmount(), 2) . ' (Remaining Balance Due: ' . number_format($invoice->getBalance(), 2) . ').  ');
+                }
 
                 break;
 
-            case WebHookStatus::Error:
+            case CreditPayments::STATUS_DECLINED:
 
-                break;
+                $payResult->feePaymentRejected($dbh, $uS, $payResp, $invoice);
 
-            case WebHookStatus::Init:
+                $msg = '** The Payment is Declined. **';
+                if ($payResp->response->getResponseMessage() != '') {
+                    $msg .= 'Message: ' . $payResp->response->getResponseMessage();
+                }
+                $payResult->setDisplayMessage($msg);
 
                 break;
 
             default:
 
-        }
+                $payResult->setStatus(PaymentResult::ERROR);
+                $payResult->feePaymentError($dbh, $uS);
+                $payResult->setDisplayMessage('** Payment Invalid or Error **  Message: ' . $payResp->response->getResponseMessage());
 
-        // Find the payment Id
-        $paymentAuthRs = new Payment_AuthRS();
-        $paymentAuthRs->Reference_Num->setStoredVal($curlResponse->getPrimaryTransactionID());
+        }
 
         return $payResult;
     }
@@ -1853,7 +1866,7 @@ class LocalGateway extends PaymentGateway {
 
     }
 
-    public function processHostedReturn(\PDO $dbh, $post, $token, $idInv, $payNotes) {
+    public function processHostedReturn(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName) {
 
     }
 
@@ -1865,6 +1878,9 @@ class LocalGateway extends PaymentGateway {
 
     }
 
+    public function processWebhook(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName) {
+
+    }
 
 
 }

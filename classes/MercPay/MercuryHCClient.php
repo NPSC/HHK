@@ -641,6 +641,32 @@ abstract class MercResponse {
         return 0;
     }
 
+    public function getEMVAuthorizationMode() {
+        return '';
+    }
+    public function getEMVApplicationIdentifier() {
+        return '';
+    }
+    public function getEMVTerminalVerificationResults() {
+        return '';
+    }
+    public function getEMVIssuerApplicationData() {
+        return '';
+    }
+    public function getEMVTransactionStatusInformation() {
+        return '';
+    }
+    public function getEMVApplicationResponseCode() {
+        return '';
+    }
+    public function getEMVCardEntryMode() {
+        return '';
+    }
+
+    public function getErrorMessage() {
+        return '';
+    }
+
 }
 
 
@@ -793,7 +819,7 @@ class InitCiResponse extends MercResponse {
 
 }
 
-class VerifyCiResponse extends MercResponse implements iGatewayResponse {
+class VerifyCiResponse extends MercResponse {
 
     function __construct($response) {
         parent::__construct($response);
@@ -960,6 +986,7 @@ class VerifyCiResponse extends MercResponse implements iGatewayResponse {
         }
         return '';
     }
+
 
 }
 
@@ -1190,7 +1217,7 @@ class InitCkOutResponse extends MercResponse {
 
 }
 
-class VerifyCkOutResponse extends MercResponse {
+class VerifyCkOutResponse extends MercResponse  implements iGatewayResponse{
 
     function __construct($response) {
         parent::__construct($response);
@@ -1296,7 +1323,7 @@ class VerifyCkOutResponse extends MercResponse {
         return '';
     }
 
-    public function getAuthorizeAmount() {
+    public function getAuthorizedAmount() {
         if (isset($this->result->AuthAmount)) {
             return $this->result->AuthAmount;
         }
@@ -1341,7 +1368,7 @@ class VerifyCkOutResponse extends MercResponse {
         return '';
     }
 
-    public function getInvoice() {
+    public function getInvoiceNumber() {
         if (isset($this->result->Invoice)) {
             return $this->result->Invoice;
         }
@@ -1404,6 +1431,20 @@ class VerifyCkOutResponse extends MercResponse {
         return '';
     }
 
+    public function getAuthorizationText() {
+        return '';
+    }
+
+    public function getPartialPaymentAmount() {
+        return 0;
+    }
+
+    public function getResponseMessage() {
+        if (isset($this->result->StatusMessage)) {
+            return $this->result->StatusMessage;
+        }
+        return '';
+    }
 
 }
 
@@ -1924,9 +1965,6 @@ class CreditTokenResponse extends MercResponse implements iGatewayResponse {
         return '';
     }
 
-    public function isEMVTransaction() {
-        return FALSE;
-    }
 
 
 }

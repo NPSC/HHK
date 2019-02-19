@@ -54,7 +54,6 @@ class PaymentResult {
 
         }
 
-
         // Make out receipt
         $this->receiptMarkup = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
 
@@ -69,14 +68,16 @@ class PaymentResult {
 
     public function feePaymentRejected(\PDO $dbh, Session $uS, PaymentResponse $payResp, Invoice $invoice) {
 
+        $this->status = PaymentResult::DENIED;
 
-
-        // payment-invoice
-        $payInvRs = new PaymentInvoiceRS();
-        $payInvRs->Amount->setNewVal($payResp->response->getAuthorizedAmount());
-        $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
-        $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
-        EditRS::insert($dbh, $payInvRs);
+        if ($payResp->getIdPayment() > 0 && $this->idInvoice > 0) {
+            // payment-invoice
+            $payInvRs = new PaymentInvoiceRS();
+            $payInvRs->Amount->setNewVal($payResp->response->getAuthorizedAmount());
+            $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
+            $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
+            EditRS::insert($dbh, $payInvRs);
+        }
 
         // Make out receipt
         $this->receiptMarkup = Receipt::createDeclinedMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
@@ -87,7 +88,6 @@ class PaymentResult {
         } catch (Exception $ex) {
             $this->displayMessage .= "Email Failed, Error = " . $ex->getMessage();
         }
-
 
     }
 
