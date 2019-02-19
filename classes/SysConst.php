@@ -391,6 +391,8 @@ class VolMemberType {
 
 class WebHookStatus {
     const Complete = 'c';
+    const Error = 'e';
+    const Init = 'i';
 }
 
 class WebRole {

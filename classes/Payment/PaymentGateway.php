@@ -962,6 +962,7 @@ class InstamedGateway extends PaymentGateway {
             $ssoTknRs->Token->setNewVal($headerResponse->getToken());
             $ssoTknRs->idGroup->setNewVal($invoice->getIdGroup());
             $ssoTknRs->idName->setNewVal($invoice->getSoldToId());
+            $ssoTknRs->State->setNewVal(WebHookStatus::Init);
 
             $rowCount = EditRS::insert($dbh, $ssoTknRs);
 
@@ -1343,6 +1344,8 @@ class InstamedGateway extends PaymentGateway {
                     break;
 
                 default:
+                    $ssoTknRs->State->setNewValue(WebHookStatus::Error);
+                    EditRS::update($dbh, $ssoTknRs, array($ssoTknRs->Token));
                     $result = FALSE;
 
             }
@@ -1403,16 +1406,15 @@ class InstamedGateway extends PaymentGateway {
         // Check DB for record
         $ssoTknRs = new SsoTokenRS();
         $ssoTknRs->Token->setStoredVal($ssoToken);
-
         $tokenRow = EditRS::select($dbh, $ssoTknRs, array($ssoTknRs->Token));
 
         if (count($tokenRow) < 1) {
-
             $payResult = new PaymentResult(0, 0, 0);
-            $payResult->setDisplayMessage('');
-
+            $payResult->setDisplayMessage('SSO Token not found');
             return $payResult;
         }
+
+        EditRS::loadRow($tokenRow[0], $ssoTknRs);
 
         //get transaction details
         $params = $this->getCredentials()->toCurl()
@@ -1423,8 +1425,8 @@ class InstamedGateway extends PaymentGateway {
         $curl = new CurlRequest();
         $resp = $curl->submit($params, $this->NvpUrl);
 
-        $resp['InvoiceNumber'] = $tokenRow['InvoiceNumber'];
-        $resp['Amount'] = $tokenRow['Amount'];
+        $resp['InvoiceNumber'] = $ssoTknRs->InvoiceNumber->getStoredVal();
+        $resp['Amount'] = $ssoTknRs->Amount->getStoredVal();
 
         $curlResponse = new VerifyCurlResponse($resp, MpTranType::Sale);
 
@@ -1436,7 +1438,7 @@ class InstamedGateway extends PaymentGateway {
         }
 
         // Make a sale response...
-        $sr = new ImPaymentResponse($curlResponse, $tokenRow['idName'], $tokenRow['idGroup'], $tokenRow['InvoiceNumber'], $paymentNotes);
+        $sr = new ImPaymentResponse($curlResponse, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $paymentNotes);
 
         // Record transaction
         try {
@@ -1447,24 +1449,33 @@ class InstamedGateway extends PaymentGateway {
             // do nothing
         }
 
+        if ($ssoTknRs->State->getStoredVal() == WebHookStatus::Init) {
+            $ssoTknRs = $this->waitForWebhook($dbh, $ssoToken);
+        }
+
+
+        switch ($ssoTknRs->State->GetStoredVal()) {
+
+            case WebHookStatus::Complete:
+
+                break;
+
+            case WebHookStatus::Error:
+
+                break;
+
+            case WebHookStatus::Init:
+
+                break;
+
+            default:
+
+        }
+
         // Find the payment Id
         $paymentAuthRs = new Payment_AuthRS();
         $paymentAuthRs->Reference_Num->setStoredVal($curlResponse->getPrimaryTransactionID());
 
-        $slept = 0;
-
-        while ($slept < 5) {
-
-            $paRows = EditRS::select($dbh, $paymentAuthRs, array($paymentAuthRs->Reference_Num));
-
-            if (count($paRows) > 0) {
-                $slept = 10;
-            } else {
-                $slept++;
-                sleep(1);
-            }
-        }
-        
         return $payResult;
     }
 
@@ -1571,6 +1582,25 @@ where r.idRegistration =" . $idReg);
         return array();
     }
 
+    protected function waitForWebhook(\PDO $dbh, SsoTokenRS $ssoTknRs, $delaySeconds = 5) {
+
+        $slept = 0;
+
+        while ($slept < $delaySeconds) {
+
+            $tokenRow = EditRS::select($dbh, $ssoTknRs, array($ssoTknRs->Token));
+
+            if (count($tokenRow) > 0 && $tokenRow[0]['State'] != WebHookStatus::Init) {
+                EditRS::loadRow($tokenRow[0], $ssoTknRs);
+                $slept = $delaySeconds;
+            } else {
+                $slept++;
+                sleep(1);
+            }
+        }
+
+        return $ssoTknRs;
+    }
 
     public function getPaymentResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
         return new ImPaymentResponse($vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes);
