@@ -126,7 +126,7 @@ if (isset($_GET['r'])) {
 }
 
 $pageTitle = $config->getString("site", "Site_Name", "Hospitality House");
-$build = 'Build:' . $config->getString('code', 'Version', '*') . '.' . $config->getString('code', 'Build', '*');
+$build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 $copyYear = date('Y');
 
 

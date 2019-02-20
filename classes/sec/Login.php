@@ -42,7 +42,7 @@ class Login {
 
         // Check SsL
         $ssl = $config->getBool('site', 'SSL', FALSE);
-        $secureComp = new SecurityComponent(FALSE);
+        $secureComp = new SecurityComponent();
 
         if ($ssl === TRUE) {
 

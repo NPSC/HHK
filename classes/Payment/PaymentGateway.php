@@ -37,7 +37,7 @@ abstract class PaymentGateway {
 
     public abstract function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl);
     public abstract function processHostedReturn(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName);
-    public abstract function processWebhook(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName);
+    public abstract function processWebhook(\PDO $dbh, $post, $payNotes, $userName);
 
     public abstract function createEditMarkup(\PDO $dbh);
     public abstract function SaveEditMarkup(\PDO $dbh, $post);
@@ -493,7 +493,7 @@ class VantivGateway extends PaymentGateway {
         return CardInfo::sendToPortal($dbh, $this->gwName, $idGuest, $idGroup, $initCi);
     }
 
-    public function processWebhook(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName) {
+    public function processWebhook(\PDO $dbh, $post, $payNotes, $userName) {
         ;
     }
 
@@ -1272,7 +1272,7 @@ class InstamedGateway extends PaymentGateway {
         return $payResult;
     }
 
-    public function processWebhook(\PDO $dbh, $data, $n, $v, $payNotes, $userName) {
+    public function processWebhook(\PDO $dbh, $data, $payNotes, $userName) {
 
         $webhookResp = new WebhookResponse($data);
         $result = FALSE;
@@ -1334,24 +1334,28 @@ class InstamedGateway extends PaymentGateway {
 
                 case CreditPayments::STATUS_DECLINED:
 
-                    $payInvRs = new PaymentInvoiceRS();
-                    $payInvRs->Amount->setNewVal($payResp->response->getAuthorizedAmount());
-                    $payInvRs->Invoice_Id->setNewVal($invoice->getIdInvoice());
-                    $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
-                    EditRS::insert($dbh, $payInvRs);
+                    if ($payResp->getIdPayment() > 0 && $invoice->getIdInvoice() > 0) {
+                        // payment-invoice
+                        $payInvRs = new PaymentInvoiceRS();
+                        $payInvRs->Amount->setNewVal($payResp->response->getAuthorizedAmount());
+                        $payInvRs->Invoice_Id->setNewVal($invoice->getIdInvoice());
+                        $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
+                        EditRS::insert($dbh, $payInvRs);
 
-                    $result = TRUE;
+                        $result = TRUE;
+                    }
+
                     break;
 
                 default:
-                    $ssoTknRs->State->setNewValue(WebHookStatus::Error);
+                    $ssoTknRs->State->setNewVal(WebHookStatus::Error);
                     EditRS::update($dbh, $ssoTknRs, array($ssoTknRs->Token));
                     $result = FALSE;
 
             }
 
             if ($result) {
-                $ssoTknRs->State->setNewValue(WebHookStatus::Complete);
+                $ssoTknRs->State->setNewVal(WebHookStatus::Complete);
                 EditRS::update($dbh, $ssoTknRs, array($ssoTknRs->Token));
             }
         }
@@ -1878,7 +1882,7 @@ class LocalGateway extends PaymentGateway {
 
     }
 
-    public function processWebhook(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName) {
+    public function processWebhook(\PDO $dbh, $post, $payNotes, $userName) {
 
     }
 

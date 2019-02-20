@@ -17,9 +17,9 @@ class SecurityComponent {
     private $hhkSiteDir = '';
     private $rootPath = '';
 
-    public function __construct($isRoot = FALSE) {
 
-        $this->defineThisURL($isRoot);
+    public function __construct() {
+        $this->defineThisURL();
     }
 
     public static function is_Authorized($name) {
@@ -121,7 +121,7 @@ class SecurityComponent {
         return TRUE;
     }
 
-    public function defineThisURL($isRoot = FALSE) {
+    private function defineThisURL() {
 
         $scriptName = filter_var($_SERVER["SCRIPT_NAME"], FILTER_SANITIZE_STRING);
         $serverName = filter_var($_SERVER["SERVER_NAME"], FILTER_SANITIZE_URL);
@@ -147,17 +147,25 @@ class SecurityComponent {
 
         $this->path = implode("/", $parts) . '/';
 
-        if ($isRoot === FALSE && count($parts) >= 1) {
+        if (count($parts) >= 1) {
 
             $this->hhkSiteDir = $parts[count($parts) - 1] . '/';
-            unset($parts[count($parts) - 1]);
 
-            // THe root path is what's left.
-            $this->rootPath = implode("/", $parts) . '/';
+            if ($this->hhkSiteDir != 'admin/' && $this->hhkSiteDir != 'house/' && $this->hhkSiteDir != 'volunteer/') {
+                // assume the root path.
+                $this->hhkSiteDir = '/';
+                $this->rootPath = $this->getPath();
 
+            } else {
+
+                unset($parts[count($parts) - 1]);
+
+                // THe root path is what's left.
+                $this->rootPath = implode("/", $parts) . '/';
+            }
 
         } else {
-            $this->hhkSiteDir = '';
+            $this->hhkSiteDir = '/';
             $this->rootPath = $this->getPath();
         }
 

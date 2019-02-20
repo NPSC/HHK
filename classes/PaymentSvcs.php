@@ -1102,7 +1102,7 @@ class PaymentSvcs {
             unset($uS->paymentNotes);
         }
 
-        return $gateway->processWebhook($dbh, $data, '', 0, $payNotes, $uS->username);
+        return $gateway->processWebhook($dbh, $data, $payNotes, $uS->username);
 
     }
 

@@ -27,9 +27,13 @@ class webInit {
 
     function __construct($page_Type = WebPageCode::Page, $addCSP = TRUE) {
 
-        // check session for login - redirects to index.php otherwise
-        $secureComp = new SecurityComponent();
-        $secureComp->die_if_not_Logged_In($page_Type, "index.php");
+        // define db connection obj
+        $this->dbh = initPDO(FALSE);
+
+        // Page authorization check
+        $this->page = new ScriptAuthClass($this->dbh);
+
+        $this->page->Authorize_Or_Die();
 
         // get session instance
         $uS = Session::getInstance();
@@ -55,12 +59,6 @@ class webInit {
             $this->pageTitle = "TEST - " . $this->siteName;
         }
 
-        // define db connection obj
-        $this->dbh = initPDO(FALSE);
-
-        // Page authorization check
-        $this->page = new ScriptAuthClass($this->dbh);
-        $this->page->Authorize_Or_Die();
 
         $this->pageHeading = $this->page->get_Page_Title();
 
