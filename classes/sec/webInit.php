@@ -80,7 +80,7 @@ class webInit {
         } else {
             if ($uS->timeout_idle < time()) {
                 $uS->logged = FALSE;
-                $secureComp->die_if_not_Logged_In($page_Type, "index.php");
+                $this->page->die_if_not_Logged_In($page_Type, "index.php");
             } else {
                 $uS->timeout_idle = $t + ($uS->SessionTimeout * 60);
             }

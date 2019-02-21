@@ -213,7 +213,9 @@ class ScriptAuthClass extends SecurityComponent {
                     echo("Unauthorized");
                     //include("../errorPages/forbid.html");
                 } else if ($this->get_Page_Type() == "s") {
-                    $rtn = array("error" => "Unauthorized");
+                    $rtn = array("error" => "Unauthorized-");
+                    $uS = Session::getInstance();
+                    $uS->destroy(TRUE);
                     echo json_encode($rtn);
                 } else {
                     echo("No Such Page.  <a href='" . $this->indexPage . "'>Continue</a>");

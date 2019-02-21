@@ -62,11 +62,11 @@ class SecurityComponent {
 
         if (!$ssn->logged) {
 
-            $ssn->destroy();
+            $ssn->destroy(TRUE);
 
             if ($pageType != WebPageCode::Page) {
 
-                echo json_encode(array("error" => "Unauthorized", 'gotopage' => $loginPage));
+                echo json_encode(array("error" => "Unauthorized.", 'gotopage' => $loginPage));
 
             } else {
 
