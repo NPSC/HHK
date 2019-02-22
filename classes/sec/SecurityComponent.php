@@ -39,13 +39,12 @@ class SecurityComponent {
                 $pageCode = $r["Codes"];
             }
         } else {
-            exit('Web Page file name missing from DB. ');
+            return FALSE;
         }
 
         // check authorization codes.
-        $tokn = self::does_User_Code_Match($pageCode);
+        return self::does_User_Code_Match($pageCode);
 
-        return $tokn;
     }
 
     public function die_if_not_Logged_In($pageType, $loginPage) {
@@ -54,13 +53,11 @@ class SecurityComponent {
         if ($ssn->ssl === TRUE && self::isHTTPS() === FALSE) {
 
             // Must access pages through SSL
-                // non-SSL access.
-               header("Location: " . $this->getSiteURL());
-
+            header("Location: " . $this->getSiteURL() . 'index.php');
+            exit();
         }
 
-
-        if (!$ssn->logged) {
+        if (isset($ssn->logged) == FALSE || $ssn->logged == FALSE) {
 
             $ssn->destroy(TRUE);
 
@@ -82,7 +79,7 @@ class SecurityComponent {
     }
 
     protected static function does_User_Code_Match(array $pageCodes) {
-        $tokn = FALSE;
+
         $ssn = Session::getInstance();
         $userCodes = $ssn->groupcodes;
 
@@ -94,16 +91,17 @@ class SecurityComponent {
             }
 
             if ($pageCode != "" && is_array($userCodes)) {
+
                 foreach ($userCodes as $c) {
+
                     if ($c == $pageCode) {
                         return TRUE;
-
                     }
                 }
             }
         }
 
-        return $tokn;
+        return FALSE;
     }
 
     public static function isHTTPS() {

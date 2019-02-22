@@ -41,19 +41,20 @@ require ('classes/Payment/Receipt.php');
 
 require ('classes/PaymentSvcs.php');
 
-
-$uS = Session::getInstance();
+$inputJSON = file_get_contents('php://input');
 
 try {
     $login = new Login();
     $config = $login->initializeSession('conf/site.cfg');
+
 } catch (Exception $ex) {
+
     http_response_code(500);
     exit ("<h3>" . $ex->getMessage());
 }
 
 
-// Override user credentials
+// Authenticate user
 $dbh = initPDO(TRUE);
 
 $user = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
@@ -70,25 +71,26 @@ if ($u->_checkLogin($dbh, addslashes($user), $password, FALSE) === FALSE) {
 
 }
 
+$dbh = NULL;
+
 try {
     $wInit = new webInit(WebPageCode::Service, FALSE);
 } catch (Exception $ex) {
-    $uS->destroy();
-    header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
-    header('HTTP/1.0 401 Unauthorized');
-    die ("Not authorized");
+
+    header('HTTP/1.0 403 Forbidden');
+    die ("Forbidden");
 }
 
+$uS = Session::getInstance();
 
 // Grab the data
-$inputJSON = file_get_contents('php://input');
 $data = json_decode($inputJSON, TRUE); //convert JSON into array
-
 
 // dump payment plan messages.
 if (isset($data['PaymentPlanTransactionType'])) {
-     http_response_code(200);
-     exit();
+    $uS->destroy(TRUE);
+    http_response_code(200);
+    exit();
 }
 
 
@@ -102,23 +104,33 @@ if (filter_has_var(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR')) {
 
 // log the data
 try {
-    Gateway::saveGwTx($dbh, '', json_encode(array('user'=>addslashes($user), 'remote IP'=>$remoteIp, 'json Error'=> json_last_error_msg())), $inputJSON, 'Webhook');
+    Gateway::saveGwTx($wInit->dbh, '', json_encode(array('user'=>addslashes($user), 'remote IP'=>$remoteIp, 'json Error'=> json_last_error_msg())), $inputJSON, 'Webhook');
 } catch(Exception $ex) {
     // Do Nothing
 }
 
 
-// Deal with it
+// Process the webhook.
 try {
-    $error = PaymentSvcs::processWebhook($dbh, $data);
+    $error = PaymentSvcs::processWebhook($wInit->dbh, $data);
 } catch (Exception $ex) {
+    echo($ex);
+    try {
+        Gateway::saveGwTx($wInit->dbh, '', $ex->getMessage(), json_encode($ex->getTrace()), 'Webhook Error');
+    } catch(Exception $ex) {
+        // Do Nothing
+    }
+
     $error = TRUE;
 }
 
 if($error) {
     http_response_code(500);
+
 } else {
     http_response_code(200);
 }
+
+$uS->destroy(TRUE);
 
 exit();

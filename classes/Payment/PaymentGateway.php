@@ -1070,7 +1070,7 @@ class InstamedGateway extends PaymentGateway {
         $resp['cardBrand'] = $pAuthRs->Card_Type->getStoredVal();
         $resp['lastFourDigits'] = $pAuthRs->Acct_Number->getStoredVal();
 
-        $curlResponse = new VerifyCurlResponse($resp, MpTranType::Void);
+        $curlResponse = new VerifyCurlVoidResponse($resp, MpTranType::Void);
 
         // Save raw transaction in the db.
         try {
@@ -1275,10 +1275,10 @@ class InstamedGateway extends PaymentGateway {
     public function processWebhook(\PDO $dbh, $data, $payNotes, $userName) {
 
         $webhookResp = new WebhookResponse($data);
-        $result = FALSE;
+        $error = TRUE;
 
         if ($webhookResp->getSsoToken() == '') {
-           return FALSE;
+           return $error;
         }
 
         // Check DB for record
@@ -1288,13 +1288,15 @@ class InstamedGateway extends PaymentGateway {
         $tokenRow = EditRS::select($dbh, $ssoTknRs, array($ssoTknRs->Token));
 
         if (count($tokenRow) < 1) {
-            return FALSE;
+            return $error;
         }
+
+        EditRS::loadRow($tokenRow[0], $ssoTknRs);
 
         if ($webhookResp->getTranType() == MpTranType::Sale) {
 
             // Make a sale response...
-            $sr = new ImPaymentResponse($webhookResp, $tokenRow['idName'], $tokenRow['idGroup'], $tokenRow['InvoiceNumber'], $payNotes);
+            $sr = new ImPaymentResponse($webhookResp, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $payNotes);
 
             // Record transaction
             try {
@@ -1327,7 +1329,7 @@ class InstamedGateway extends PaymentGateway {
                         $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
                         EditRS::insert($dbh, $payInvRs);
 
-                        $result = TRUE;
+                        $error = FALSE;
                     }
 
                     break;
@@ -1342,7 +1344,7 @@ class InstamedGateway extends PaymentGateway {
                         $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
                         EditRS::insert($dbh, $payInvRs);
 
-                        $result = TRUE;
+                        $error = FALSE;
                     }
 
                     break;
@@ -1350,17 +1352,17 @@ class InstamedGateway extends PaymentGateway {
                 default:
                     $ssoTknRs->State->setNewVal(WebHookStatus::Error);
                     EditRS::update($dbh, $ssoTknRs, array($ssoTknRs->Token));
-                    $result = FALSE;
+                    $error = FALSE;
 
             }
 
-            if ($result) {
+            if ($error === FALSE) {
                 $ssoTknRs->State->setNewVal(WebHookStatus::Complete);
                 EditRS::update($dbh, $ssoTknRs, array($ssoTknRs->Token));
             }
         }
 
-        return $result;
+        return $error;
     }
 
     public function completeCof(\PDO $dbh, $ssoToken) {
@@ -1455,6 +1457,31 @@ class InstamedGateway extends PaymentGateway {
             // do nothing
         }
 
+
+        //Wait for web hook
+        $state = $this->waitForWebhook($dbh, $ssoTknRs, 5);
+
+        if ($state == WebHookStatus::Init) {
+            // Webhook has not shown up yet.
+
+            $payResult = new PaymentResult(0, 0, 0);
+            $payResult->setStatus(PaymentResult::ERROR);
+            $payResult->feePaymentError($dbh, $uS);
+            $payResult->setDisplayMessage('** Payment status unknown, try again later. *** ');
+            return $payResult;
+
+        } else if ($state == WebHookStatus::Error) {
+            // HHK's webhook processing failed..
+
+            $payResult = new PaymentResult(0, 0, 0);
+            $payResult->setStatus(PaymentResult::ERROR);
+            $payResult->feePaymentError($dbh, $uS);
+            $payResult->setDisplayMessage('** Payment processing error in HHK **');
+            return $payResult;
+        }
+
+
+        // Create reciept.
         $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
 
         $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), 0);
@@ -1602,21 +1629,22 @@ where r.idRegistration =" . $idReg);
     protected function waitForWebhook(\PDO $dbh, SsoTokenRS $ssoTknRs, $delaySeconds = 5) {
 
         $slept = 0;
+        $state = WebHookStatus::Init;
 
         while ($slept < $delaySeconds) {
 
             $tokenRow = EditRS::select($dbh, $ssoTknRs, array($ssoTknRs->Token));
 
             if (count($tokenRow) > 0 && $tokenRow[0]['State'] != WebHookStatus::Init) {
-                EditRS::loadRow($tokenRow[0], $ssoTknRs);
-                $slept = $delaySeconds;
+                $state = $tokenRow[0]['State'];
+                $slept = $delaySeconds + 2;
             } else {
                 $slept++;
                 sleep(1);
             }
         }
 
-        return $ssoTknRs;
+        return $state;
     }
 
     public function getPaymentResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {

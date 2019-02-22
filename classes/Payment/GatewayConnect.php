@@ -402,8 +402,6 @@ class WebhookResponse extends GatewayResponse implements iGatewayResponse {
 
 }
 
-
-
 class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
 
     public function parseResponse(){
@@ -648,6 +646,31 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
         return '';
     }
 
+}
+
+class VerifyCurlVoidResponse extends VerifyCurlResponse {
+
+    public function getResponseMessage() {
+
+        if (isset($this->result['errorMessage'])) {
+            return $this->result['errorMessage'];
+        } else if (isset($this->result['status'])) {
+            return $this->result['status'];
+        }
+
+        return '';
+    }
+
+    public function getResponseCode() {
+
+        if (isset($this->result['errorCode'])) {
+            return $this->result['errorCode'];
+        } else if (strtolower($this->getResponseMessage()) == 'approved') {
+            return '000';  // approved
+        }
+
+        return '001';  //decline
+    }
 }
 
 class HeaderResponse extends GatewayResponse {

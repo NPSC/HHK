@@ -49,7 +49,7 @@ class Login {
             // Must access pages through SSL
             if ($secureComp->isHTTPS() === FALSE) {
                 // non-SSL access.
-                header("Location: " . $secureComp->getRootURL());
+                header("Location: " . $secureComp->getRootURL() . 'index.php');
             }
         }
 
