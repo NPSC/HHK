@@ -14,7 +14,7 @@ abstract class PaymentResponse {
     protected $paymentType;
     protected $amountDue = 0.0;
     protected $invoiceNumber = '';
-    protected $partialPaymentFlag;
+    protected $partialPaymentFlag = FALSE;
     protected $amount;
     protected $paymentDate;
 
@@ -104,6 +104,7 @@ class ImPaymentResponse extends PaymentResponse {
         $this->idRegistration = $idGroup;
         $this->invoiceNumber = $invoiceNumber;
         $this->payNotes = $payNotes;
+        $this->amount = $vcr->getAuthorizedAmount();
 
         if ($vcr->getPartialPaymentAmount() > 0) {
             $this->setPartialPayment(TRUE);

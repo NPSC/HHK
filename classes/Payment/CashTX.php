@@ -149,13 +149,12 @@ class CashTX {
 
 class ManualChargeResponse extends PaymentResponse {
 
-    protected $rawStatus;
     protected $cardNum;
     protected $cardType;
     protected $authCode;
 
 
-    function __construct($amount, $idPayor, $invoiceNumber, Payment_AuthRS $pAuthRs, $payNote = '', $idGuestToken = 0) {
+    function __construct($amount, $idPayor, $invoiceNumber, Payment_AuthRS $pAuthRs, $payNote = '') {
 
         $this->paymentType = PayType::ChargeAsCash;
         $this->idPayor = $idPayor;
@@ -163,11 +162,9 @@ class ManualChargeResponse extends PaymentResponse {
         $this->invoiceNumber = $invoiceNumber;
         $this->cardNum = $pAuthRs->Acct_Number->getStoredVal();
         $this->cardType = $pAuthRs->Card_Type->getStoredVal();
-
         $this->authCode = $pAuthRs->Approval_Code->getStoredVal();
-        $this->rawStatus = $pAuthRs->Status_Code->getStoredVal();
         $this->payNotes = $payNote;
-        $this->idGuestToken = $idGuestToken;
+
     }
 
 
@@ -189,44 +186,7 @@ class ManualChargeResponse extends PaymentResponse {
 
     public function getStatus() {
 
-        $status = '';
-
-        switch ($this->rawStatus) {
-
-            case '000':
-                $status = CreditPayments::STATUS_APPROVED;
-                break;
-
-            case '010':
-                // Partial Payment
-                $status = CreditPayments::STATUS_APPROVED;
-                break;
-
-            case '001':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '003':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '005':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '051':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '063':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            default:
-                $status = CreditPayments::STATUS_ERROR;
-        }
-
-        return $status;
+        return CreditPayments::STATUS_APPROVED;;
     }
 
     public function receiptMarkup(\PDO $dbh, &$tbl) {
@@ -245,17 +205,6 @@ class ManualChargeResponse extends PaymentResponse {
             $tbl->addBodyTr(HTMLTable::makeTd('Authorization:', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getAuthCode()));
         }
 
-         if ($this->idGuestToken > 0) {
-
-            $tknRs = CreditToken::getTokenRsFromId($dbh, $this->idGuestToken);
-
-            if ($tknRs->CardHolderName->getStoredVal() != '') {
-                $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($tknRs->CardHolderName->getStoredVal()));
-            }
-
-            $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
-
-        }
     }
 }
 

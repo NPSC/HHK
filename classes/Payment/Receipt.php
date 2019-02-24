@@ -65,7 +65,7 @@ class Receipt {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel')) . HTMLTable::makeTd(($payResp->getPaymentDate() == '' ? date('D M jS, Y') : date('D M jS, Y', strtotime($payResp->getPaymentDate())))));
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
+        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($invoice->getInvoiceNumber()));
 
         foreach ($invoice->getLines($dbh) as $line) {
             $tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($line->getAmount(), 2), array('style'=>'font-size:.8em;')));
@@ -105,7 +105,7 @@ class Receipt {
         $tbl = new HTMLTable();
         $tbl->addBodyTr(HTMLTable::makeTh($siteName . ' ' . $type . " Receipt", array('colspan'=>'2')));
 
-        $invoice = new Invoice($dbh, $payResp->getInvoice());
+        $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
         $info = self::getVisitInfo($dbh, $invoice);
 
         if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
@@ -164,7 +164,7 @@ class Receipt {
         $tbl = new HTMLTable();
         $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Return Receipt", array('colspan'=>'2')));
 
-        $invoice = new Invoice($dbh, $payResp->getInvoice());
+        $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
         $info = self::getVisitInfo($dbh, $invoice);
 
         if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
@@ -256,7 +256,7 @@ class Receipt {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel')) . HTMLTable::makeTd(($payResp->getPaymentDate() == '' ? date('D M jS, Y') : date('D M jS, Y', strtotime($payResp->getPaymentDate())))));
 
-//        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoice()));
+//        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
 //
 //        foreach ($invoice->getLines($dbh) as $line) {
 //            $tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($line->getAmount(), 2), array('style'=>'font-size:.8em;')));

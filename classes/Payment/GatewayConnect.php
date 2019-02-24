@@ -110,54 +110,6 @@ abstract class GatewayResponse {
 
 }
 
-class PollingResponse extends GatewayResponse {
-
-    const WAIT = 'NEW';
-    const EXPIRED = 'EXPIRED';
-    const COMPLETE = 'complete';
-
-
-    protected function parseResponse() {
-
-        if (isset($this->response->GetSSOTokenStatusResponse)) {
-            $this->result = $this->response->GetSSOTokenStatusResponse;
-        } else {
-            throw new Hk_Exception_Payment("GetSSOTokenStatusResponse is missing from the payment gateway response.  ");
-        }
-    }
-
-    public function getResponseCode() {
-
-        if (isset($this->result['GetSSOTokenStatusResult'])) {
-            return $this->result['GetSSOTokenStatusResult'];
-        } else {
-            throw new Hk_Exception_Payment("GetSSOTokenStatusResult is missing from the payment gateway response.  ");
-        }
-    }
-
-    public function isWaiting() {
-        if ($this->getResponseCode() == PollingResponse::WAIT) {
-            return TRUE;
-        }
-        return FALSE;
-    }
-
-    public function isExpired() {
-        if ($this->getResponseCode() == PollingResponse::EXPIRED) {
-            return TRUE;
-        }
-        return FALSE;
-    }
-
-    public function isComplete() {
-        if ($this->getResponseCode() == PollingResponse::COMPLETE) {
-            return TRUE;
-        }
-        return FALSE;
-    }
-
-}
-
 class WebhookResponse extends GatewayResponse implements iGatewayResponse {
 
     public function parseResponse(){
@@ -491,7 +443,7 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
 
     public function getPartialPaymentAmount() {
         if (isset($this->result['partialApprovalAmount'])) {
-            return $this->result['partialApprovalAmount'];
+            return trim($this->result['partialApprovalAmount']);
         }
         return '';
     }
@@ -661,11 +613,21 @@ class VerifyCurlVoidResponse extends VerifyCurlResponse {
         return '';
     }
 
+    public function getErrorMessage() {
+
+        if (isset($this->result['errorMessage'])) {
+            return $this->result['errorMessage'];
+        }
+
+        return '';
+    }
+
+
     public function getResponseCode() {
 
         if (isset($this->result['errorCode'])) {
             return $this->result['errorCode'];
-        } else if (strtolower($this->getResponseMessage()) == 'approved') {
+        } else if (strtolower(trim($this->getResponseMessage())) == 'approved') {
             return '000';  // approved
         }
 
@@ -807,6 +769,89 @@ abstract class SoapRequest {
     }
 
     protected abstract function execute(SoapClient $sc, $data);
+
+}
+
+class PollingRequest extends SoapRequest {
+
+    protected function execute(\SoapClient $soapClient, $data) {
+        return new PollingResponse($soapClient->GetSSOTokenStatus($data));
+    }
+}
+
+class DoVoidRequest extends SoapRequest {
+
+    protected function execute(\SoapClient $soapClient, $data) {
+        return new DoVoidResponse($soapClient->DoCreditCardSecondaryVoid($data));
+    }
+}
+
+class DoVoidResponse extends GatewayResponse {
+
+    protected function parseResponse() {
+
+        if (isset($this->response->SecondaryCreditCardVoidRequestData)) {
+            $this->result = $this->response->DoCreditCardSecondaryVoidResponse;
+        } else {
+            throw new Hk_Exception_Payment("DoCreditCardSecondaryVoidResponse is missing from the payment gateway response.  ");
+        }
+    }
+
+    public function getResponseCode() {
+
+        if (isset($this->result['PrimaryTransactionStatus'])) {
+            return $this->result['PrimaryTransactionStatus'];
+        }
+
+        return '';
+    }
+}
+
+class PollingResponse extends GatewayResponse {
+
+    const WAIT = 'NEW';
+    const EXPIRED = 'EXPIRED';
+    const COMPLETE = 'complete';
+
+
+    protected function parseResponse() {
+
+        if (isset($this->response->GetSSOTokenStatusResponse)) {
+            $this->result = $this->response->GetSSOTokenStatusResponse;
+        } else {
+            throw new Hk_Exception_Payment("GetSSOTokenStatusResponse is missing from the payment gateway response.  ");
+        }
+    }
+
+    public function getResponseCode() {
+
+        if (isset($this->result['GetSSOTokenStatusResult'])) {
+            return $this->result['GetSSOTokenStatusResult'];
+        } else {
+            throw new Hk_Exception_Payment("GetSSOTokenStatusResult is missing from the payment gateway response.  ");
+        }
+    }
+
+    public function isWaiting() {
+        if ($this->getResponseCode() == PollingResponse::WAIT) {
+            return TRUE;
+        }
+        return FALSE;
+    }
+
+    public function isExpired() {
+        if ($this->getResponseCode() == PollingResponse::EXPIRED) {
+            return TRUE;
+        }
+        return FALSE;
+    }
+
+    public function isComplete() {
+        if ($this->getResponseCode() == PollingResponse::COMPLETE) {
+            return TRUE;
+        }
+        return FALSE;
+    }
 
 }
 

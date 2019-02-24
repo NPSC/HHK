@@ -849,7 +849,7 @@ class InstamedGateway extends PaymentGateway {
         return $payResult;
     }
 
-    public function voidSale(\PDO $dbh, $invoice, PaymentRS $payRs, $paymentNotes, $bid) {
+    public function voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, $paymentNotes, $bid) {
 
         // Find hte detail record.
         $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
@@ -1061,6 +1061,15 @@ class InstamedGateway extends PaymentGateway {
                 . "&primaryCardPresentStatus=PresentManualKey"
                 . "&primaryTransactionID=" . $pAuthRs->Reference_Num->getStoredVal();
 
+//        $data = $this->getCredentials()->toSOAP();
+//
+//        $data['PrimaryTransactionID'] = $pAuthRs->Reference_Num->getStoredVal();
+//        $data['PrimaryCardPresentStatus'] = 'PresentManualKey';
+//
+//        $soapReq = new DoVoidRequest();
+//
+//        $doVoidResp = new DoVoidResponse($soapReq->submit($data, $this->soapUrl, $trace), MpTranType::Void);
+
         $curlRequest = new CurlRequest();
 
         $resp = $curlRequest->submit($params, $this->NvpUrl);
@@ -1110,25 +1119,13 @@ class InstamedGateway extends PaymentGateway {
 
             case CreditPayments::STATUS_DECLINED:
 
-                if (strtoupper($csResp->response->getResponseMessage()) == 'APPROVED') {
-
-                    // Update invoice
-                    $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
-
-                    $csResp->idVisit = $invoice->getOrderNumber();
-                    $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
-                    $dataArray['success'] = 'Payment is void.  ';
-
-                } else {
-
-                    $dataArray['warning'] = $csResp->response->getResponseMessage();
-                }
+                $dataArray['warning'] = '** Void Declined. **  Message: ' . $csResp->response->getResponseMessage();
 
                 break;
 
             default:
 
-                $dataArray['warning'] = '** Void Invalid or Error. **  ' . 'Message: ' . $csResp->getErrorMessage();;
+                $dataArray['warning'] = '** Void Invalid or Error. **  Message: ' . $csResp->getErrorMessage();
 
         }
 
@@ -1523,6 +1520,18 @@ class InstamedGateway extends PaymentGateway {
         return $payResult;
     }
 
+//    protected function pollPaymentStatus($token, $trace = FALSE) {
+//
+//        $data = $this->getCredentials()->toSOAP();
+//
+//        $data['tokenID'] = $token;
+//
+//        $soapReq = new PollingRequest();
+//
+//        return new PollingResponse($soapReq->submit($data, $this->soapUrl, $trace));
+//
+//    }
+
     protected function loadGateway(\PDO $dbh) {
 
         $gwRs = new InstamedGatewayRS();
@@ -1866,14 +1875,6 @@ class InstaMedCredentials {
     }
 
 }
-
-
-//class PollingRequest extends SoapRequest {
-//
-//    protected function execute(\SoapClient $soapClient, $data) {
-//        return new PollingResponse($soapClient->GetSSOTokenStatus($data));
-//    }
-//}
 
 
 class LocalGateway extends PaymentGateway {

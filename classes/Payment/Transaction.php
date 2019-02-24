@@ -22,9 +22,6 @@ class Transaction {
         $transRs = new TransRs();
 
         $transRs->Amount->setNewVal($vr->getAmount());
-        $transRs->Card_Number->setNewVal($vr->response->getMaskedAccount());
-        $transRs->Card_Expire->setNewVal($vr->response->getExpDate());
-        $transRs->Card_Name->setNewVal($vr->response->getCardHolderName());
         $transRs->Invoice_Number->setNewVal($vr->getInvoiceNumber());
         $transRs->Date_Entered->setNewVal(date("Y-m-d H:i:s"));
         $transRs->Payment_Type->setNewVal($vr->getPaymentType());
@@ -37,6 +34,9 @@ class Transaction {
 
 
         if (isset($vr->response)) {
+            $transRs->Card_Number->setNewVal($vr->response->getMaskedAccount());
+            $transRs->Card_Expire->setNewVal($vr->response->getExpDate());
+            $transRs->Card_Name->setNewVal($vr->response->getCardHolderName());
             $transRs->Payment_Status->setNewVal($vr->response->getResponseCode());
             $transRs->Card_Authorize->setNewVal($vr->response->getAuthCode());
             $transRs->RefNo->setNewVal($vr->response->getRefNo());

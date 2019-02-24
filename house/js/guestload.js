@@ -158,6 +158,10 @@ $(document).ready(function () {
         showReceipt('#pmtRcpt', rctMkup);
     }
 
+    if (pmtMkup !== '') {
+        $('#paymentMessage').val(pmtMkup).show();
+    }
+
     $('.hhk-view-visit').click(function () {
         var vid = $(this).data('vid');
         var gid = $(this).data('gid');

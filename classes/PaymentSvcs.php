@@ -47,7 +47,7 @@ class PaymentResult {
         if ($payResp->getIdPayment() > 0 && $this->idInvoice > 0) {
             // payment-invoice
             $payInvRs = new PaymentInvoiceRS();
-            $payInvRs->Amount->setNewVal($payResp->response->getAuthorizedAmount());
+            $payInvRs->Amount->setNewVal($payResp->getAmount());
             $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
             $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
             EditRS::insert($dbh, $payInvRs);
@@ -73,7 +73,7 @@ class PaymentResult {
         if ($payResp->getIdPayment() > 0 && $this->idInvoice > 0) {
             // payment-invoice
             $payInvRs = new PaymentInvoiceRS();
-            $payInvRs->Amount->setNewVal($payResp->response->getAuthorizedAmount());
+            $payInvRs->Amount->setNewVal($payResp->getAmount());
             $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
             $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
             EditRS::insert($dbh, $payInvRs);
@@ -633,23 +633,19 @@ class PaymentSvcs {
 
         $uS = Session::getInstance();
 
-        if ($idPayment < 1) {
-            return array('warning' => 'Payment record Id not defined.  ', 'bid' => $bid);
-        }
-
         $payRs = new PaymentRS();
         $payRs->idPayment->setStoredVal($idPayment);
         $pments = EditRS::select($dbh, $payRs, array($payRs->idPayment));
 
         if (count($pments) != 1) {
-            return array('warning' => 'Payment record not found for Void.  ', 'bid' => $bid);
+            return array('warning' => 'Payment record not found for Void/Reverse.  ', 'bid' => $bid);
         }
 
         EditRS::loadRow($pments[0], $payRs);
 
         // Already voided, or otherwise ineligible
         if ($payRs->Status_Code->getStoredVal() != PaymentStatusCode::Paid) {
-            return array('warning' => 'Payment is ineligable for Void.  ', 'bid' => $bid);
+            return array('warning' => 'Payment is ineligable for Void/Reverse.  ', 'bid' => $bid);
         }
 
         $invoice = new Invoice($dbh);
@@ -675,14 +671,14 @@ class PaymentSvcs {
         $pments = EditRS::select($dbh, $payRs, array($payRs->idPayment));
 
         if (count($pments) != 1) {
-            return array('warning' => 'Payment record not found.  Unable to Reverse this purchase.  ', 'bid' => $bid);
+            return array('warning' => 'Payment record not found.  Unable to Reverse/Void this purchase.  ', 'bid' => $bid);
         }
 
         EditRS::loadRow($pments[0], $payRs);
 
         // Already voided, or otherwise ineligible
         if ($payRs->Status_Code->getStoredVal() != PaymentStatusCode::Paid) {
-            return array('warning' => 'Payment is ineligable for Reversal.  ', 'bid' => $bid);
+            return array('warning' => 'Payment is ineligable for Reversal/Void.  ', 'bid' => $bid);
         }
 
         $invoice = new Invoice($dbh);
