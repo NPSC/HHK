@@ -36,8 +36,10 @@ if ($resultStr == '') {
 
 }
 
+$uS = Session::getInstance();
+$uS->imcomplete = $resultParms;
 
-$finalPage = $houseUrl . $transferPageStr . '?' . http_build_query($resultParms);
+$finalPage = $houseUrl . $transferPageStr;  // . '?' . http_build_query($resultParms);
 
 ?>
 <!DOCTYPE html>

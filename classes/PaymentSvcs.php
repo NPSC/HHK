@@ -1127,6 +1127,11 @@ class PaymentSvcs {
             $idInv = $uS->paymentIds[$tokenId];
         }
 
+        if (isset($uS->imcomplete)) {
+            $post = $uS->imcomplete;
+            unset($uS->imcomplete);
+        }
+
         return $gateway->processHostedReturn($dbh, $post, $tokenId, $idInv, $payNotes, $uS->username);
 
     }

@@ -1,203 +1,1159 @@
-<wsdl:definitions xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://tempuri.org/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" targetNamespace="http://tempuri.org/">
-<wsdl:types>
-<s:schema elementFormDefault="qualified" targetNamespace="http://tempuri.org/">
-<s:element name="GetSSOTokenStatus">
-<s:complexType>
-<s:sequence>
-<s:element minOccurs="0" maxOccurs="1" name="tokenID" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="accountID" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="alias" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="password" type="s:string"/>
-</s:sequence>
-</s:complexType>
-</s:element>
-<s:element name="GetSSOTokenStatusResponse">
-<s:complexType>
-<s:sequence>
-<s:element minOccurs="0" maxOccurs="1" name="GetSSOTokenStatusResult" type="s:string"/>
-</s:sequence>
-</s:complexType>
-</s:element>
-<s:element name="GetTransactionDetails">
-<s:complexType>
-<s:sequence>
-<s:element minOccurs="0" maxOccurs="1" name="tokenID" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="accountID" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="alias" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="password" type="s:string"/>
-</s:sequence>
-</s:complexType>
-</s:element>
-<s:element name="GetTransactionDetailsResponse">
-<s:complexType>
-<s:sequence>
-<s:element minOccurs="0" maxOccurs="1" name="GetTransactionDetailsResult" type="tns:BasePaymentDetailedResponse"/>
-</s:sequence>
-</s:complexType>
-</s:element>
-<s:complexType name="BasePaymentDetailedResponse">
-<s:complexContent mixed="false">
-<s:extension base="tns:BasePaymentResponseData">
-<s:sequence>
-<s:element minOccurs="0" maxOccurs="1" name="TransactionDate" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="TenderType" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="TenderInfo" type="s:string"/>
-</s:sequence>
-</s:extension>
-</s:complexContent>
-</s:complexType>
-<s:complexType name="BasePaymentResponseData">
-<s:complexContent mixed="false">
-<s:extension base="tns:BasePaymentTransactionData">
-<s:sequence>
-<s:element minOccurs="0" maxOccurs="1" name="AuthorizationNumber" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="ResponseCode" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="ResponseMessage" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="PrimaryTransactionID" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="AuthorizationText" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="interfaceTransactionStatus" type="s:string"/>
-</s:sequence>
-</s:extension>
-</s:complexContent>
-</s:complexType>
-<s:complexType name="BasePaymentTransactionData">
-<s:sequence>
-<s:element minOccurs="0" maxOccurs="1" name="MerchantID" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="StoreID" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="TerminalID" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="TransactionID" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="TransactionNumber" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="BatchID" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="TransactionCode" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="MarketSegment" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="TransactionStatus" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="PaymentPlanID" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="ReasonCode" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="ReasonText" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="InstaMedAccountID" type="s:string"/>
-</s:sequence>
-</s:complexType>
-<s:element name="GetTransactionDetailsByTransactionID">
-<s:complexType>
-<s:sequence>
-<s:element minOccurs="0" maxOccurs="1" name="tokenID" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="transactionID" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="accountID" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="alias" type="s:string"/>
-<s:element minOccurs="0" maxOccurs="1" name="password" type="s:string"/>
-</s:sequence>
-</s:complexType>
-</s:element>
-<s:element name="GetTransactionDetailsByTransactionIDResponse">
-<s:complexType>
-<s:sequence>
-<s:element minOccurs="0" maxOccurs="1" name="GetTransactionDetailsByTransactionIDResult" type="tns:BasePaymentDetailedResponse"/>
-</s:sequence>
-</s:complexType>
-</s:element>
-</s:schema>
-</wsdl:types>
-<wsdl:message name="GetSSOTokenStatusSoapIn">
-<wsdl:part name="parameters" element="tns:GetSSOTokenStatus"/>
-</wsdl:message>
-<wsdl:message name="GetSSOTokenStatusSoapOut">
-<wsdl:part name="parameters" element="tns:GetSSOTokenStatusResponse"/>
-</wsdl:message>
-<wsdl:message name="GetTransactionDetailsSoapIn">
-<wsdl:part name="parameters" element="tns:GetTransactionDetails"/>
-</wsdl:message>
-<wsdl:message name="GetTransactionDetailsSoapOut">
-<wsdl:part name="parameters" element="tns:GetTransactionDetailsResponse"/>
-</wsdl:message>
-<wsdl:message name="GetTransactionDetailsByTransactionIDSoapIn">
-<wsdl:part name="parameters" element="tns:GetTransactionDetailsByTransactionID"/>
-</wsdl:message>
-<wsdl:message name="GetTransactionDetailsByTransactionIDSoapOut">
-<wsdl:part name="parameters" element="tns:GetTransactionDetailsByTransactionIDResponse"/>
-</wsdl:message>
-<wsdl:portType name="SSOServiceSoap">
-<wsdl:operation name="GetSSOTokenStatus">
-<wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Gets the status of a Token</wsdl:documentation>
-<wsdl:input message="tns:GetSSOTokenStatusSoapIn"/>
-<wsdl:output message="tns:GetSSOTokenStatusSoapOut"/>
-</wsdl:operation>
-<wsdl:operation name="GetTransactionDetails">
-<wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Gets details of a processed transaction</wsdl:documentation>
-<wsdl:input message="tns:GetTransactionDetailsSoapIn"/>
-<wsdl:output message="tns:GetTransactionDetailsSoapOut"/>
-</wsdl:operation>
-<wsdl:operation name="GetTransactionDetailsByTransactionID">
-<wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Gets details of a processed transaction</wsdl:documentation>
-<wsdl:input message="tns:GetTransactionDetailsByTransactionIDSoapIn"/>
-<wsdl:output message="tns:GetTransactionDetailsByTransactionIDSoapOut"/>
-</wsdl:operation>
-</wsdl:portType>
-<wsdl:binding name="SSOServiceSoap" type="tns:SSOServiceSoap">
-<soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
-<wsdl:operation name="GetSSOTokenStatus">
-<soap:operation soapAction="http://tempuri.org/GetSSOTokenStatus" style="document"/>
-<wsdl:input>
-<soap:body use="literal"/>
-</wsdl:input>
-<wsdl:output>
-<soap:body use="literal"/>
-</wsdl:output>
-</wsdl:operation>
-<wsdl:operation name="GetTransactionDetails">
-<soap:operation soapAction="http://tempuri.org/GetTransactionDetails" style="document"/>
-<wsdl:input>
-<soap:body use="literal"/>
-</wsdl:input>
-<wsdl:output>
-<soap:body use="literal"/>
-</wsdl:output>
-</wsdl:operation>
-<wsdl:operation name="GetTransactionDetailsByTransactionID">
-<soap:operation soapAction="http://tempuri.org/GetTransactionDetailsByTransactionID" style="document"/>
-<wsdl:input>
-<soap:body use="literal"/>
-</wsdl:input>
-<wsdl:output>
-<soap:body use="literal"/>
-</wsdl:output>
-</wsdl:operation>
-</wsdl:binding>
-<wsdl:binding name="SSOServiceSoap12" type="tns:SSOServiceSoap">
-<soap12:binding transport="http://schemas.xmlsoap.org/soap/http"/>
-<wsdl:operation name="GetSSOTokenStatus">
-<soap12:operation soapAction="http://tempuri.org/GetSSOTokenStatus" style="document"/>
-<wsdl:input>
-<soap12:body use="literal"/>
-</wsdl:input>
-<wsdl:output>
-<soap12:body use="literal"/>
-</wsdl:output>
-</wsdl:operation>
-<wsdl:operation name="GetTransactionDetails">
-<soap12:operation soapAction="http://tempuri.org/GetTransactionDetails" style="document"/>
-<wsdl:input>
-<soap12:body use="literal"/>
-</wsdl:input>
-<wsdl:output>
-<soap12:body use="literal"/>
-</wsdl:output>
-</wsdl:operation>
-<wsdl:operation name="GetTransactionDetailsByTransactionID">
-<soap12:operation soapAction="http://tempuri.org/GetTransactionDetailsByTransactionID" style="document"/>
-<wsdl:input>
-<soap12:body use="literal"/>
-</wsdl:input>
-<wsdl:output>
-<soap12:body use="literal"/>
-</wsdl:output>
-</wsdl:operation>
-</wsdl:binding>
-<wsdl:service name="SSOService">
-<wsdl:port name="SSOServiceSoap" binding="tns:SSOServiceSoap">
-<soap:address location="https://online.instamed.com/providers/Forms/WebServices/SSOService.asmx"/>
-</wsdl:port>
-<wsdl:port name="SSOServiceSoap12" binding="tns:SSOServiceSoap12">
-<soap12:address location="https://online.instamed.com/providers/Forms/WebServices/SSOService.asmx"/>
-</wsdl:port>
-</wsdl:service>
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://online.instamed.com/TransactionServices/Payment/v1r3/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" targetNamespace="http://online.instamed.com/TransactionServices/Payment/v1r3/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://online.instamed.com/TransactionServices/Payment/v1r3/">
+      <s:element name="DoCashSale">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="transaction" type="tns:CashAuthAndCaptRequestData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CashAuthAndCaptRequestData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CashPrimaryRequestData" />
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="CashPrimaryRequestData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:BasePaymentTransactionData">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="PaymentType" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Payee" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Amount" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Patient" type="tns:PatientInfo" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo1" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo2" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo3" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo4" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo5" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo6" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AddressVerificationInfo" type="tns:AddressVerificationInfo" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="BasePaymentTransactionData">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="MerchantID" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="StoreID" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="TerminalID" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="TransactionID" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="TransactionNumber" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="BatchID" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="TransactionCode" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="MarketSegment" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="TransactionStatus" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="PaymentPlanID" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="ReasonCode" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="ReasonText" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="InstaMedAccountID" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="BasePaymentResponseData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:BasePaymentTransactionData">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="AuthorizationNumber" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="ResponseCode" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="ResponseMessage" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="PrimaryTransactionID" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AuthorizationText" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="interfaceTransactionStatus" type="s:string" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="CashPrimaryResponseData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:BasePaymentResponseData" />
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="CashAuthAndCaptResponseData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CashPrimaryResponseData" />
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="PatientInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="PatientID" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="PatientFirstName" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="PatientLastName" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="PatientMiddleName" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="AddressVerificationInfo">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:BusinessEntity">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="Street1" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Street2" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Street3" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="City" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="State" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Zip" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Country" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Company" type="s:string" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="BusinessEntity" abstract="true">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="EntityID" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="DoCashSaleResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="DoCashSaleResult" type="tns:CashAuthAndCaptResponseData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="DoCashCredit">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="transaction" type="tns:CashCreditRequestData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CashCreditRequestData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CashPrimaryRequestData" />
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoCashCreditResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="DoCashCreditResult" type="tns:CashCreditResponseData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CashCreditResponseData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CashPrimaryResponseData" />
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoCreditCardAuthAndCapt">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="transaction" type="tns:CreditCardAuthAndCaptRequestData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CreditCardAuthAndCaptRequestData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CreditCardPrimaryRequestData">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="AuthNumber" type="s:string" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="CreditCardPrimaryRequestData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:BasePaymentTransactionData">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="InstallementSequence" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="InstallementCount" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardNumber" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardExpiration" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Amount" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardVerificationNumber" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardHolderName" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="SaveOnFileTransactionID" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="SaveOnFileTransactionIDInitialPayment" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="IsRecurring" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="IsInstallment" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="IsSaveOnFile" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Track1Data" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Track2Data" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AddressVerificationInfo" type="tns:AddressVerificationInfo" />
+              <s:element minOccurs="0" maxOccurs="1" name="Patient" type="tns:PatientInfo" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo1" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo2" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo3" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo4" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo5" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo6" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardPresentStatus" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="PurchaseIdentifier" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardType" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardHolderEmail" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardHolderFirstName" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardHolderLastName" type="s:string" />
+              <s:element minOccurs="1" maxOccurs="1" name="IsCardholderInitiatedTransaction" nillable="true" type="s:boolean" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoCreditCardAuthAndCaptResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="DoCreditCardAuthAndCaptResult" type="tns:CreditCardAuthAndCaptResponseData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CreditCardAuthAndCaptResponseData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CreditCardPrimaryResponseData" />
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="CreditCardPrimaryResponseData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:BasePaymentResponseData">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="AddressVerificationResponseCode" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AddressVerificationResponseDescription" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardVerificationResponseCode" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardVerificationResponseDescription" type="s:string" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoCreditCardAuth">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="transaction" type="tns:CreditCardAuthRequestData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CreditCardAuthRequestData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CreditCardPrimaryRequestData" />
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoCreditCardAuthResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="DoCreditCardAuthResult" type="tns:CreditCardAuthResponseData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CreditCardAuthResponseData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CreditCardPrimaryResponseData" />
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoCreditCardSaveOnFile">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="transaction" type="tns:CreditCardSaveOnFileRequestData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CreditCardSaveOnFileRequestData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CreditCardAuthRequestData" />
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoCreditCardSaveOnFileResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="DoCreditCardSaveOnFileResult" type="tns:CreditCardSaveOnFileResponseData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CreditCardSaveOnFileResponseData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CreditCardPrimaryResponseData">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="SaveOnFileTransactionID" type="s:string" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoCreditCardAuthAndSaveOnFile">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="transaction" type="tns:CreditCardAuthAndSaveOnFileRequestData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CreditCardAuthAndSaveOnFileRequestData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CreditCardAuthRequestData" />
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoCreditCardAuthAndSaveOnFileResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="DoCreditCardAuthAndSaveOnFileResult" type="tns:CreditCardAuthAndSaveOnFileResponseData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CreditCardAuthAndSaveOnFileResponseData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CreditCardPrimaryResponseData">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="SaveOnFileTransactionID" type="s:string" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoCreditCardCredit">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="transaction" type="tns:CreditCardCreditRequestData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CreditCardCreditRequestData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CreditCardPrimaryRequestData" />
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoCreditCardCreditResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="DoCreditCardCreditResult" type="tns:CreditCardCreditResponseData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CreditCardCreditResponseData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:CreditCardPrimaryResponseData" />
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoCreditCardSecondaryVoid">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="transaction" type="tns:SecondaryCreditCardVoidRequestData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="SecondaryCreditCardVoidRequestData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:BasePaymentTransactionData">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="PrimaryTransactionID" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="PrimaryCardPresentStatus" type="s:string" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoCreditCardSecondaryVoidResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="DoCreditCardSecondaryVoidResult" type="tns:SecondaryCreditCardVoidResponseData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="SecondaryCreditCardVoidResponseData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:BasePaymentResponseData">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="PrimaryTransactionStatus" type="s:string" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoCreditCardSimpleRefund">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="transaction" type="tns:CreditCardSimpleRefundRequestData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CreditCardSimpleRefundRequestData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:BasePaymentTransactionData">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="Amount" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="PrimaryTransactionID" type="s:string" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoCreditCardSimpleRefundResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="DoCreditCardSimpleRefundResult" type="tns:CreditCardCreditResponseData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="DoECheckAuthAndCapt">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="transaction" type="tns:ECheckAuthAndCaptRequestData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ECheckAuthAndCaptRequestData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:ECheckRequestData">
+            <s:sequence>
+              <s:element minOccurs="1" maxOccurs="1" name="IsARC" type="s:boolean" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="ECheckRequestData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:BasePaymentTransactionData">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="Source" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Recurring" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="PaperDraft" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AccountNumber" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="RoutingNumber" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AccountType" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CheckHolderFirstName" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CheckHolderLastName" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CheckNumber" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="IsBusinessECheck" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="BusinessAccountName" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="BusinessAccountIdentifier" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AddressInfo" type="tns:AddressVerificationInfo" />
+              <s:element minOccurs="0" maxOccurs="1" name="Patient" type="tns:PatientInfo" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo1" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo2" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo3" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo4" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo5" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo6" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="SaveOnFileTransactionID" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CustomerPhoneNumber" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CustomerDLLNumber" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="MICRData" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="EPCField" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="ImageData" type="s:base64Binary" />
+              <s:element minOccurs="0" maxOccurs="1" name="ImageFormat" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="NumPages" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Amount" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="InstallementSequence" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="InstallementCount" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CheckHolderEmail" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="MerchantCycleTime" type="tns:Date" />
+              <s:element minOccurs="0" maxOccurs="1" name="OutletCutTime" type="tns:Date" />
+              <s:element minOccurs="0" maxOccurs="1" name="TransactionBusinessDate" type="tns:Date" />
+              <s:element minOccurs="1" maxOccurs="1" name="CreditEffectiveOffset" type="s:int" />
+              <s:element minOccurs="1" maxOccurs="1" name="DebitEffectiveOffset" type="s:int" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:complexType name="Date">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="IsSet" type="s:boolean" />
+          <s:element minOccurs="1" maxOccurs="1" name="DateTimeValue" type="s:dateTime" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="DoECheckAuthAndCaptResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="DoECheckAuthAndCaptResult" type="tns:ECheckAuthAndCaptResponseData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ECheckAuthAndCaptResponseData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:BasePaymentResponseData">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="FreeFormTextResponse" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="TransactionServiceFee" type="s:string" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoECheckVoidByTransactionID">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="transactionID" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="DoECheckVoidByTransactionIDResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="DoECheckVoidByTransactionIDResult" type="tns:ECheckVoidResponseData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ECheckVoidResponseData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:BasePaymentResponseData">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="PrimaryTransactionStatus" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="TransactionServiceFee" type="s:string" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoCheckOCRAnalysis">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="image" type="s:base64Binary" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="DoCheckOCRAnalysisResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="DoCheckOCRAnalysisResult" type="tns:CheckImageAnalysisResultData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="CheckImageAnalysisResultData">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="CARAmount" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Amount" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="ConfidenceLevel" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="CARConfidenceLevel" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="LARAmount" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="LARConfidenceLevel" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="TransactionID" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="CheckDate" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="PayerName" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="MICRData" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="MaskedOCRMICRLine" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="MICRDataConfidenceLevel" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="PayerAddress" type="tns:AddressVerificationInfo" />
+          <s:element minOccurs="0" maxOccurs="1" name="MemoLine" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="PayeeName" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="doCARLAR" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="OCRMICRMismatch" type="s:boolean" />
+          <s:element minOccurs="0" maxOccurs="1" name="OCRMICRMismatchError" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="ReferenceNumber" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="OCRAmountError" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="OCRMICRError" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="doImageQualityAnalysis" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="undersizeImageFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="foldedOrTornDocumentCornersFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="foldedOrTornDocumentEdgesFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="documentFramingErrorFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="documentSkewFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="oversizeImageFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="piggybackDocumentFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="imageTooLightFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="imageTooDarkFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="horizontalStreaksFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="belowMinimumCompressedFrontImageSizeFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="aboveMaximumCompressedFrontImageSizeFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="belowMinimumCompressedRearImageSizeFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="aboveMaximumCompressedRearImageSizeFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="spotNoiseFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="frontRearImageDimensionMismatchFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="carbonStripFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="outOfFocusFlag" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="imageWidth" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="imageHeight" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="topleftCornerWidth" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="topleftCornerHeight" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="bottomleftCornerWidth" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="bottomleftCornerHeight" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="toprightCornerWidth" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="toprightCornerHeight" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="bottomrightCornerWidth" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="bottomrightCornerHeight" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="topEdgeTearWidth" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="topEdgetTearHeight" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="rightEdgeTearWidth" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="rightEdgeTearHeight" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="bottomEdgeTearWidth" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="bottomEdgeTearHeight" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="leftEdgeTearWidth" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="leftEdgeTearHeight" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="additionalLeftScanLinesWidth" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="additionalTopScanLinesHeight" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="additionalRightScanLinesHeight" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="additionalBottomScanLinesHeight" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="documentSkewAngle" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="percentBlackPixels" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="percentAverageImageBrightness" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="percentAverageImageContrast" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="blackStreakCount" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="blackStreakMaxHeight" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="grayLevelStreakCount" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="grayLevelStreakMaxHeight" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="averageSpotNoiseGroupsPerSquareInch" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="frontRearWidthDifference" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="frontRearHeightDifference" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="carbonStripHeight" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="imageFocusScore" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="compressedFrontImageSize" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="compressedRearImageSize" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="backImageMissing" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="frontImageMissing" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="generalCheckAnalysisFailure" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="generalCheckAnalysisFailureMessage" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="detailedErrorMessage" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="DoECheckCredit">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="transaction" type="tns:ECheckCreditRequestData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ECheckCreditRequestData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:ECheckRequestData">
+            <s:sequence>
+              <s:element minOccurs="1" maxOccurs="1" name="IsARC" type="s:boolean" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoECheckCreditResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="DoECheckCreditResult" type="tns:ECheckCreditResponseData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="ECheckCreditResponseData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:BasePaymentResponseData">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="FreeFormTextResponse" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="TransactionServiceFee" type="s:string" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoPaymentPlanCreate">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="transaction" type="tns:PaymentPlanRequestData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="PaymentPlanRequestData">
+        <s:complexContent mixed="false">
+          <s:extension base="tns:BasePaymentTransactionData">
+            <s:sequence>
+              <s:element minOccurs="0" maxOccurs="1" name="PaymentPlanTransactionType" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="PaymentPlanType" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="TotalAmountDue" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Frequency" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="PaymentAmount" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="StartDate" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="NumberOfPayments" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AllowCardExpirationDateBeforeEndDate" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardType" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardHolderFirstName" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardHolderLastName" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardNumber" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardExpiration" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Amount" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardVerificationNumber" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardHolderName" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="SaveOnFileTransactionID" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="IsRecurring" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="IsInstallment" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="IsSaveOnFile" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Track1Data" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="Track2Data" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CardPresentStatus" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AccountHolderEmail" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AccountHolderPhone" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="PatientAddressInfo" type="tns:AddressVerificationInfo" />
+              <s:element minOccurs="0" maxOccurs="1" name="AddressVerificationInfo" type="tns:AddressVerificationInfo" />
+              <s:element minOccurs="0" maxOccurs="1" name="Patient" type="tns:PatientInfo" />
+              <s:element minOccurs="0" maxOccurs="1" name="PatientBirthDate" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="PatientPhoneNumber" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="PatientMedicalRecordNumber" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="PatientServiceBeginDate" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="PatientServiceEndDate" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo1" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo2" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo3" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo4" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo5" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalInfo6" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalCode1" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalCode2" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalCode3" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalCode4" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalCode5" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AdditionalCode6" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="EstimatedAmount" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AccountNumber" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="RoutingNumber" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="AccountType" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CheckHolderFirstName" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CheckHolderLastName" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="CheckState" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="MICRData" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="EPCField" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="ImageData" type="s:base64Binary" />
+              <s:element minOccurs="0" maxOccurs="1" name="ImageFormat" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="NumPages" type="s:string" />
+              <s:element minOccurs="0" maxOccurs="1" name="TimeZoneOffSetInMinutes" type="s:string" />
+            </s:sequence>
+          </s:extension>
+        </s:complexContent>
+      </s:complexType>
+      <s:element name="DoPaymentPlanCreateResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="DoPaymentPlanCreateResult" type="tns:PaymentPlanResponseData" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:complexType name="PaymentPlanResponseData">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="PaymentPlanID" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="ReceiptText" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="ReceiptHTML" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Status" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="CreatedDate" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="LastUpdatedDate" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="MaskedCardNumber" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="CardNumberSha" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="CardType" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="CardHolderName" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="CardExpDate" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="CheckingAccountHolderFirstName" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="CheckingAccountHolderLastName" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="AccountNumberSha" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="MaskedAccountNumber" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="RoutingNumber" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="TotalAmountDue" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="FrequencyType" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="PaymentAmount" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="StartDate" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="NumberOfPayments" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="EndDate" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="TotalPaidToDate" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="TotalBalanceRemaining" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="NumberOfPaymentsRemaining" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="NumberOfPaymentsToDate" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="PreviousTransactionDate" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="PreviousTransactionAmount" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="DisclaimerText" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="EstimatedAmountText" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="FooterText" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="NextTransactionDate" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="NextTransactionAmount" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="NextTransactionStatus" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="WorkflowStatus" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="DoCashSaleSoapIn">
+    <wsdl:part name="parameters" element="tns:DoCashSale" />
+  </wsdl:message>
+  <wsdl:message name="DoCashSaleSoapOut">
+    <wsdl:part name="parameters" element="tns:DoCashSaleResponse" />
+  </wsdl:message>
+  <wsdl:message name="DoCashCreditSoapIn">
+    <wsdl:part name="parameters" element="tns:DoCashCredit" />
+  </wsdl:message>
+  <wsdl:message name="DoCashCreditSoapOut">
+    <wsdl:part name="parameters" element="tns:DoCashCreditResponse" />
+  </wsdl:message>
+  <wsdl:message name="DoCreditCardAuthAndCaptSoapIn">
+    <wsdl:part name="parameters" element="tns:DoCreditCardAuthAndCapt" />
+  </wsdl:message>
+  <wsdl:message name="DoCreditCardAuthAndCaptSoapOut">
+    <wsdl:part name="parameters" element="tns:DoCreditCardAuthAndCaptResponse" />
+  </wsdl:message>
+  <wsdl:message name="DoCreditCardAuthSoapIn">
+    <wsdl:part name="parameters" element="tns:DoCreditCardAuth" />
+  </wsdl:message>
+  <wsdl:message name="DoCreditCardAuthSoapOut">
+    <wsdl:part name="parameters" element="tns:DoCreditCardAuthResponse" />
+  </wsdl:message>
+  <wsdl:message name="DoCreditCardSaveOnFileSoapIn">
+    <wsdl:part name="parameters" element="tns:DoCreditCardSaveOnFile" />
+  </wsdl:message>
+  <wsdl:message name="DoCreditCardSaveOnFileSoapOut">
+    <wsdl:part name="parameters" element="tns:DoCreditCardSaveOnFileResponse" />
+  </wsdl:message>
+  <wsdl:message name="DoCreditCardAuthAndSaveOnFileSoapIn">
+    <wsdl:part name="parameters" element="tns:DoCreditCardAuthAndSaveOnFile" />
+  </wsdl:message>
+  <wsdl:message name="DoCreditCardAuthAndSaveOnFileSoapOut">
+    <wsdl:part name="parameters" element="tns:DoCreditCardAuthAndSaveOnFileResponse" />
+  </wsdl:message>
+  <wsdl:message name="DoCreditCardCreditSoapIn">
+    <wsdl:part name="parameters" element="tns:DoCreditCardCredit" />
+  </wsdl:message>
+  <wsdl:message name="DoCreditCardCreditSoapOut">
+    <wsdl:part name="parameters" element="tns:DoCreditCardCreditResponse" />
+  </wsdl:message>
+  <wsdl:message name="DoCreditCardSecondaryVoidSoapIn">
+    <wsdl:part name="parameters" element="tns:DoCreditCardSecondaryVoid" />
+  </wsdl:message>
+  <wsdl:message name="DoCreditCardSecondaryVoidSoapOut">
+    <wsdl:part name="parameters" element="tns:DoCreditCardSecondaryVoidResponse" />
+  </wsdl:message>
+  <wsdl:message name="DoCreditCardSimpleRefundSoapIn">
+    <wsdl:part name="parameters" element="tns:DoCreditCardSimpleRefund" />
+  </wsdl:message>
+  <wsdl:message name="DoCreditCardSimpleRefundSoapOut">
+    <wsdl:part name="parameters" element="tns:DoCreditCardSimpleRefundResponse" />
+  </wsdl:message>
+  <wsdl:message name="DoECheckAuthAndCaptSoapIn">
+    <wsdl:part name="parameters" element="tns:DoECheckAuthAndCapt" />
+  </wsdl:message>
+  <wsdl:message name="DoECheckAuthAndCaptSoapOut">
+    <wsdl:part name="parameters" element="tns:DoECheckAuthAndCaptResponse" />
+  </wsdl:message>
+  <wsdl:message name="DoECheckVoidByTransactionIDSoapIn">
+    <wsdl:part name="parameters" element="tns:DoECheckVoidByTransactionID" />
+  </wsdl:message>
+  <wsdl:message name="DoECheckVoidByTransactionIDSoapOut">
+    <wsdl:part name="parameters" element="tns:DoECheckVoidByTransactionIDResponse" />
+  </wsdl:message>
+  <wsdl:message name="DoCheckOCRAnalysisSoapIn">
+    <wsdl:part name="parameters" element="tns:DoCheckOCRAnalysis" />
+  </wsdl:message>
+  <wsdl:message name="DoCheckOCRAnalysisSoapOut">
+    <wsdl:part name="parameters" element="tns:DoCheckOCRAnalysisResponse" />
+  </wsdl:message>
+  <wsdl:message name="DoECheckCreditSoapIn">
+    <wsdl:part name="parameters" element="tns:DoECheckCredit" />
+  </wsdl:message>
+  <wsdl:message name="DoECheckCreditSoapOut">
+    <wsdl:part name="parameters" element="tns:DoECheckCreditResponse" />
+  </wsdl:message>
+  <wsdl:message name="DoPaymentPlanCreateSoapIn">
+    <wsdl:part name="parameters" element="tns:DoPaymentPlanCreate" />
+  </wsdl:message>
+  <wsdl:message name="DoPaymentPlanCreateSoapOut">
+    <wsdl:part name="parameters" element="tns:DoPaymentPlanCreateResponse" />
+  </wsdl:message>
+  <wsdl:portType name="ServiceSoap">
+    <wsdl:operation name="DoCashSale">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Cash Sale</wsdl:documentation>
+      <wsdl:input message="tns:DoCashSaleSoapIn" />
+      <wsdl:output message="tns:DoCashSaleSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="DoCashCredit">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Cash Credit</wsdl:documentation>
+      <wsdl:input message="tns:DoCashCreditSoapIn" />
+      <wsdl:output message="tns:DoCashCreditSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardAuthAndCapt">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Credit Card Sale</wsdl:documentation>
+      <wsdl:input message="tns:DoCreditCardAuthAndCaptSoapIn" />
+      <wsdl:output message="tns:DoCreditCardAuthAndCaptSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardAuth">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Credit Card Auth</wsdl:documentation>
+      <wsdl:input message="tns:DoCreditCardAuthSoapIn" />
+      <wsdl:output message="tns:DoCreditCardAuthSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardSaveOnFile">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Credit Card Save On File</wsdl:documentation>
+      <wsdl:input message="tns:DoCreditCardSaveOnFileSoapIn" />
+      <wsdl:output message="tns:DoCreditCardSaveOnFileSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardAuthAndSaveOnFile">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Credit Card Auth And Save On File</wsdl:documentation>
+      <wsdl:input message="tns:DoCreditCardAuthAndSaveOnFileSoapIn" />
+      <wsdl:output message="tns:DoCreditCardAuthAndSaveOnFileSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardCredit">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Credit Card Primary Credit</wsdl:documentation>
+      <wsdl:input message="tns:DoCreditCardCreditSoapIn" />
+      <wsdl:output message="tns:DoCreditCardCreditSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardSecondaryVoid">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Credit Card Void</wsdl:documentation>
+      <wsdl:input message="tns:DoCreditCardSecondaryVoidSoapIn" />
+      <wsdl:output message="tns:DoCreditCardSecondaryVoidSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardSimpleRefund">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Credit Card Simple Refund</wsdl:documentation>
+      <wsdl:input message="tns:DoCreditCardSimpleRefundSoapIn" />
+      <wsdl:output message="tns:DoCreditCardSimpleRefundSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="DoECheckAuthAndCapt">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">eCheck Sale</wsdl:documentation>
+      <wsdl:input message="tns:DoECheckAuthAndCaptSoapIn" />
+      <wsdl:output message="tns:DoECheckAuthAndCaptSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="DoECheckVoidByTransactionID">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">eCheck Void</wsdl:documentation>
+      <wsdl:input message="tns:DoECheckVoidByTransactionIDSoapIn" />
+      <wsdl:output message="tns:DoECheckVoidByTransactionIDSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="DoCheckOCRAnalysis">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Check OCR Analysis</wsdl:documentation>
+      <wsdl:input message="tns:DoCheckOCRAnalysisSoapIn" />
+      <wsdl:output message="tns:DoCheckOCRAnalysisSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="DoECheckCredit">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">eCheck Primary Credit</wsdl:documentation>
+      <wsdl:input message="tns:DoECheckCreditSoapIn" />
+      <wsdl:output message="tns:DoECheckCreditSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="DoPaymentPlanCreate">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Payment Plan Create</wsdl:documentation>
+      <wsdl:input message="tns:DoPaymentPlanCreateSoapIn" />
+      <wsdl:output message="tns:DoPaymentPlanCreateSoapOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="ServiceSoap" type="tns:ServiceSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="DoCashSale">
+      <soap:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCashSale" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCashCredit">
+      <soap:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCashCredit" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardAuthAndCapt">
+      <soap:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCreditCardAuthAndCapt" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardAuth">
+      <soap:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCreditCardAuth" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardSaveOnFile">
+      <soap:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCreditCardSaveOnFile" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardAuthAndSaveOnFile">
+      <soap:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCreditCardAuthAndSaveOnFile" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardCredit">
+      <soap:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCreditCardCredit" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardSecondaryVoid">
+      <soap:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCreditCardSecondaryVoid" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardSimpleRefund">
+      <soap:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCreditCardSimpleRefund" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoECheckAuthAndCapt">
+      <soap:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoECheckAuthAndCapt" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoECheckVoidByTransactionID">
+      <soap:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoECheckVoidByTransactionID" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCheckOCRAnalysis">
+      <soap:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCheckOCRAnalysis" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoECheckCredit">
+      <soap:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoECheckCredit" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoPaymentPlanCreate">
+      <soap:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoPaymentPlanCreate" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="ServiceSoap12" type="tns:ServiceSoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="DoCashSale">
+      <soap12:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCashSale" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCashCredit">
+      <soap12:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCashCredit" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardAuthAndCapt">
+      <soap12:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCreditCardAuthAndCapt" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardAuth">
+      <soap12:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCreditCardAuth" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardSaveOnFile">
+      <soap12:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCreditCardSaveOnFile" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardAuthAndSaveOnFile">
+      <soap12:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCreditCardAuthAndSaveOnFile" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardCredit">
+      <soap12:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCreditCardCredit" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardSecondaryVoid">
+      <soap12:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCreditCardSecondaryVoid" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCreditCardSimpleRefund">
+      <soap12:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCreditCardSimpleRefund" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoECheckAuthAndCapt">
+      <soap12:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoECheckAuthAndCapt" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoECheckVoidByTransactionID">
+      <soap12:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoECheckVoidByTransactionID" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoCheckOCRAnalysis">
+      <soap12:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoCheckOCRAnalysis" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoECheckCredit">
+      <soap12:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoECheckCredit" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoPaymentPlanCreate">
+      <soap12:operation soapAction="http://online.instamed.com/TransactionServices/Payment/v1r3/DoPaymentPlanCreate" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="Service">
+    <wsdl:port name="ServiceSoap" binding="tns:ServiceSoap">
+      <soap:address location="https://connect.instamed.com/payment/service.asmx" />
+    </wsdl:port>
+    <wsdl:port name="ServiceSoap12" binding="tns:ServiceSoap12">
+      <soap12:address location="https://connect.instamed.com/payment/service.asmx" />
+    </wsdl:port>
+  </wsdl:service>
 </wsdl:definitions>

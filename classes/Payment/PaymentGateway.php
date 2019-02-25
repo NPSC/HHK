@@ -1285,7 +1285,8 @@ class InstamedGateway extends PaymentGateway {
         $tokenRow = EditRS::select($dbh, $ssoTknRs, array($ssoTknRs->Token));
 
         if (count($tokenRow) < 1) {
-            return $error;
+            // Not an error that webhook can do something about, so return No Error.
+            return FALSE;
         }
 
         EditRS::loadRow($tokenRow[0], $ssoTknRs);
