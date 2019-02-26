@@ -554,6 +554,7 @@ WHERE
                             'Payment_Status'=>$p['Payment_Status'],
                             'Payment_Status_Title'=>$p['Payment_Status_Title'],
                             'Payment_Date'=>$p['Payment_Date'],
+                            'Payment_Timestamp'=>$p['Payment_Timestamp'],
                             'Is_Refund'=>$p['Is_Refund'],
                             'Payment_idPayor'=>$p['Payment_idPayor'],
                             'Payment_Updated_By'=>$p['Payment_Updated_By'],

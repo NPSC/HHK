@@ -1384,7 +1384,7 @@ where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdRe
 
             if (count($rows) == 1) {
                 EditRS::loadRow($rows[0], $resourceRS);
-                $this->roomTitle = $resourceRS->Title->getStoredVal();
+                $this->roomTitle = htmlspecialchars_decode($resourceRS->Title->getStoredVal(), ENT_QUOTES);
             }
         }
 
