@@ -104,10 +104,11 @@ class ImPaymentResponse extends PaymentResponse {
         $this->idRegistration = $idGroup;
         $this->invoiceNumber = $invoiceNumber;
         $this->payNotes = $payNotes;
-        $this->amount = $vcr->getAuthorizedAmount();
+        $this->amount = $vcr->getRequestAmount();
 
         if ($vcr->getPartialPaymentAmount() > 0) {
             $this->setPartialPayment(TRUE);
+            $this->amount = $vcr->getPartialPaymentAmount();
         } else {
             $this->setPartialPayment(FALSE);
         }
@@ -153,7 +154,12 @@ class ImPaymentResponse extends PaymentResponse {
                 break;
 
             default:
-                $status = CreditPayments::STATUS_ERROR;
+
+                if ($this->response->getTransactionStatus() == InstamedGateway::DECLINE) {
+                   $status = CreditPayments::STATUS_DECLINED;
+                } else {
+                    $status = CreditPayments::STATUS_ERROR;
+                }
         }
 
         return $status;
@@ -367,7 +373,7 @@ class SaleReply extends CreditPayments {
             $payRs->Is_Refund->setStoredVal(1);
         }
 
-        $payRs->Amount->setNewVal($vr->getAuthorizedAmount());
+        $payRs->Amount->setNewVal($pr->getAmount());
         $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
         $payRs->idPayor->setNewVal($pr->idPayor);
         $payRs->idTrans->setNewVal($pr->getIdTrans());
@@ -402,6 +408,8 @@ class SaleReply extends CreditPayments {
             $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
             $pDetailRS->Code3->setNewVal($vr->getCvvResult());
             $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+            $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
+            $pDetailRS->Customer_Id->setNewVal($vr->getOperatorId());
 
             $pDetailRS->Updated_By->setNewVal($username);
             $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
@@ -445,7 +453,7 @@ class SaleReply extends CreditPayments {
         $payRs->Result->setNewVal(MpStatusValues::Declined);
         $payRs->Created_By->setNewVal($username);
         $payRs->Attempt->setNewVal($attempts);
-        $payRs->Amount->setNewVal($vr->getAuthorizedAmount());
+        $payRs->Amount->setNewVal($pr->getAmount());
         $payRs->Notes->setNewVal($pr->payNotes);
 
         $idPmt = EditRS::insert($dbh, $payRs);
@@ -471,6 +479,8 @@ class SaleReply extends CreditPayments {
             $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
             $pDetailRS->Code3->setNewVal($vr->getCvvResult());
             $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+            $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
+            $pDetailRS->Customer_Id->setNewVal($vr->getOperatorId());
 
             $pDetailRS->Updated_By->setNewVal($username);
             $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
@@ -655,7 +665,7 @@ class ReturnReply extends CreditPayments {
             // New Return payment
             $payRs = new PaymentRS();
 
-            $payRs->Amount->setNewVal($vr->getAuthorizeAmount());
+            $payRs->Amount->setNewVal($pr->getAmount());
             $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
             $payRs->idPayor->setNewVal($pr->idPayor);
             $payRs->idTrans->setNewVal($pr->getIdTrans());
@@ -760,7 +770,7 @@ class ReturnReply extends CreditPayments {
             $payRs->Created_By->setNewVal($username);
             $payRs->Attempt->setNewVal($attempts);
             $payRs->Is_Refund->setNewVal(1);
-            $payRs->Amount->setNewVal($vr->getAuthorizedAmount());
+            $payRs->Amount->setNewVal($pr->getAmount());
             $payRs->Balance->setNewVal($vr->getAuthorizedAmount());
             $payRs->Notes->setNewVal($pr->payNotes);
 

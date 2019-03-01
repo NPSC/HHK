@@ -113,6 +113,7 @@ class Payment_AuthRS extends TableRS {
     public $Acct_Number;  // varchar(25) NOT NULL DEFAULT '',
     public $Card_Type;  // varchar(10) NOT NULL DEFAULT '',
     public $Customer_Id;   // varchar(45) NOT NULL DEFAULT '',
+    public $Response_Message;  // varchar(200) NOT NULL DEFAULT '',
     public $Reference_Num;   // varchar(45) NOT NULL DEFAULT '',
     public $AcqRefData;   // varchar(200) NOT NULL DEFAULT '',
     public $ProcessData;   // varchar(200) NOT NULL DEFAULT '',
@@ -143,6 +144,7 @@ class Payment_AuthRS extends TableRS {
         $this->Acct_Number = new DB_Field("Acct_Number", "", new DbStrSanitizer(25), TRUE, TRUE);
         $this->Card_Type = new DB_Field("Card_Type", "", new DbStrSanitizer(10), TRUE, TRUE);
         $this->Customer_Id = new DB_Field("Customer_Id", "", new DbStrSanitizer(45), TRUE, TRUE);
+        $this->Response_Message = new DB_Field("Response_Message", "", new DbStrSanitizer(200), TRUE, TRUE);
         $this->Reference_Num = new DB_Field("Reference_Num", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->AcqRefData = new DB_Field("Code1", "", new DbStrSanitizer(200), TRUE, TRUE);
         $this->ProcessData = new DB_Field("Code2", "", new DbStrSanitizer(200), TRUE, TRUE);

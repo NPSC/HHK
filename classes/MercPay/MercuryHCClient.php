@@ -1330,6 +1330,13 @@ class VerifyCkOutResponse extends MercResponse  implements iGatewayResponse{
         return '';
     }
 
+    public function getRequestAmount() {
+        if (isset($this->result->AuthAmount)) {
+            return $this->result->AuthAmount;
+        }
+        return '';
+    }
+
     public function getAuthCode() {
 
         if (isset($this->result->AuthCode)) {
@@ -1867,6 +1874,13 @@ class CreditTokenResponse extends MercResponse implements iGatewayResponse {
             return $this->result->Amount;
         }
         return 0.00;
+    }
+
+    public function getRequestAmount() {
+        if (isset($this->result->AuthAmount)) {
+            return $this->result->AuthAmount;
+        }
+        return '';
     }
 
 

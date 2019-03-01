@@ -38,9 +38,6 @@ function makeParmtable($parms) {
             if ($key == 'MerchantID' && $v != '') {
                 $v = '******';
             }
-            if ($key == 'Token' && $v != '') {
-                $v = '******';
-            }
 
             $reqTbl->addBodyTr(HTMLTable::makeTd($key . ':', array('class' => 'tdlabel')) . HTMLTable::makeTd($v));
         }
@@ -117,7 +114,7 @@ if (isset($_POST['btnGo'])) {
         // Table header and top row.
         $tbl->addBodyTr(HTMLTable::makeTh('Date') . HTMLTable::makeTh('Transaction Code') . HTMLTable::makeTh('Result Code') . HTMLTable::makeTh('Amount') . HTMLTable::makeTh('Auth Code'));
         $tbl->addBodyTr(
-                HTMLTable::makeTd(date('m d, Y H:i', strtotime($txRs->Timestamp->getStoredVal())))
+                HTMLTable::makeTd(date('m d, Y H:i:s', strtotime($txRs->Timestamp->getStoredVal())))
                 . HTMLTable::makeTd($txRs->GwTransCode->getStoredVal())
                 . HTMLTable::makeTd($txRs->GwResultCode->getStoredVal())
                 . HTMLTable::makeTd('')  //$txRs->Amount->getStoredVal())
@@ -155,6 +152,7 @@ $txList = array(
     array(0=>'CreditVoidSaleToken', 1=>'Credit Void Sale Token'),
     array(0=>'CreditReturnToken', 1=>'Credit Return Token'),
     array(0=>'CreditVoidReturnToken', 1=>'Credit Void Return Token'),
+    array(0=>'Webhook', 1=>'Webhook'),
 
 );
 $txSelector = HTMLSelector::generateMarkup(

@@ -231,7 +231,7 @@ class SsoTokenRS extends TableRS {
     public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     function __construct($TableName = "ssotoken") {
-        $this->Token = new DB_Field("Token", "", new DbStrSanitizer(36), TRUE, TRUE);
+        $this->Token = new DB_Field("Token", "", new DbStrSanitizer(136), TRUE, TRUE);
         $this->idName = new DB_Field("idName", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->idGroup = new DB_Field("idGroup", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->InvoiceNumber = new DB_Field("InvoiceNumber", "", new DbStrSanitizer(36), TRUE, TRUE);

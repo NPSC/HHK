@@ -264,6 +264,7 @@ class Receipt {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($invoice->getAmount(), 2), array('class'=>'hhk-tdTotals')));
 
+        $tbl->addBodyTr(HTMLTable::makeTd("Payment Declined", array('colspan'=>'2', 'align'=>'center')));
 
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);

@@ -13,6 +13,7 @@ interface iGatewayResponse {
     public function getTranType();
 
     public function getAuthorizedAmount();
+    public function getRequestAmount();
     public function getPartialPaymentAmount();
     public function getAuthCode();
     public function getTransPostTime();
@@ -137,11 +138,11 @@ class WebhookResponse extends GatewayResponse implements iGatewayResponse {
     }
 
     public function getTranType() {
-        if ($this->getTransactionAction() == 'Sale' && $this->getTransactionStatus() == 'C') {
-            return MpTranType::Sale;
-        } else if ($this->getTransactionAction() == 'Sale' && $this->getTransactionStatus() == 'V') {
+        if ($this->getTransactionAction() == 'Sale' && $this->getTransactionStatus() == InstamedGateway::VOID) {
             return MpTranType::Void;
-        } else if ($this->getTransactionAction() == 'Refund' && $this->getTransactionStatus() == 'C') {
+        } else if ($this->getTransactionAction() == 'Sale') {
+            return MpTranType::Sale;
+        } else if ($this->getTransactionAction() == 'Refund') {
             return MpTranType::ReturnAmt;
         }
         return '';
@@ -199,6 +200,13 @@ class WebhookResponse extends GatewayResponse implements iGatewayResponse {
             return $this->result['Amount'];
         }
 
+        return '';
+    }
+
+    public function getRequestAmount() {
+        if (isset($this->result['RequestAmount'])) {
+            return $this->result['RequestAmount'];
+        }
         return '';
     }
 
@@ -448,6 +456,13 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
         return '';
     }
 
+    public function getRequestAmount() {
+        if (isset($this->result['Amount'])) {
+            return trim($this->result['Amount']);
+        }
+        return '';
+    }
+
     public function getAuthCode() {
 
         if (isset($this->result['authorizationNumber'])) {
@@ -604,10 +619,24 @@ class VerifyCurlVoidResponse extends VerifyCurlResponse {
 
     public function getResponseMessage() {
 
-        if (isset($this->result['errorMessage'])) {
-            return $this->result['errorMessage'];
-        } else if (isset($this->result['status'])) {
-            return $this->result['status'];
+        if (isset($this->result['responseMessage'])) {
+            return $this->result['responseMessage'];
+        }
+
+        $this->getErrorMessage();
+    }
+
+    public function getAuthorizedAmount() {
+        if (isset($this->result['Amount'])) {
+            return $this->result['Amount'];
+        }
+
+        return '';
+    }
+
+    public function getRequestAmount() {
+        if (isset($this->result['Amount'])) {
+            return $this->result['Amount'];
         }
 
         return '';
@@ -622,13 +651,10 @@ class VerifyCurlVoidResponse extends VerifyCurlResponse {
         return '';
     }
 
-
     public function getResponseCode() {
 
-        if (isset($this->result['errorCode'])) {
-            return $this->result['errorCode'];
-        } else if (strtolower(trim($this->getResponseMessage())) == 'approved') {
-            return '000';  // approved
+        if (isset($this->result['responseCode'])) {
+            return $this->result['responseCode'];
         }
 
         return '001';  //decline
@@ -860,12 +886,14 @@ class StandInGwResponse implements iGatewayResponse {
     protected $pAuthRs;
     protected $gtRs;
     protected $invoiceNumber;
+    protected $requestAmount;
 
-    public function __construct(Payment_AuthRS $pAuthRs, Guest_TokenRS $gtRs, $invoiceNumber) {
+    public function __construct(Payment_AuthRS $pAuthRs, Guest_TokenRS $gtRs, $invoiceNumber, $amount) {
 
         $this->pAuthRs = $pAuthRs;
         $this->gtRs = $gtRs;
         $this->invoiceNumber = $invoiceNumber;
+        $this->requestAmount = $amount;
     }
 
     public function getAVSAddress() {
@@ -894,11 +922,15 @@ class StandInGwResponse implements iGatewayResponse {
     }
 
     public function getAuthorizationText() {
-        return '';
+        return $this->pAuthRs->Response_Message->getStoredVal();
     }
 
     public function getAuthorizedAmount() {
         return $this->pAuthRs->Approved_Amount->getStoredVal();
+    }
+
+    public function getRequestAmount() {
+        return $this->requestAmount;
     }
 
     public function getCardHolderName() {
@@ -938,11 +970,23 @@ class StandInGwResponse implements iGatewayResponse {
     }
 
     public function getResponseCode() {
-        return '';
+        if ($this->pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid
+                || $this->pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Retrn
+                || $this->pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Reverse
+                || $this->pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::VoidSale) {
+
+            return '000';
+        }
+
+        return '001';
     }
 
     public function getResponseMessage() {
         return $this->pAuthRs->Status_Message->getStoredVal();
+    }
+
+    public function getTransactionStatus() {
+        return '';
     }
 
     public function getToken() {

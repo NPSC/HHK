@@ -1217,8 +1217,7 @@ class PaymentSvcs {
                     EditRS::loadRow($guestTkns[0], $guestTokenRs);
                 }
 
-
-                $gwResp = new StandInGwResponse($pAuthRs, $guestTokenRs, $invoice->getInvoiceNumber());
+                $gwResp = new StandInGwResponse($pAuthRs, $guestTokenRs, $invoice->getInvoiceNumber(), $payRs->Amount->getStoredVal());
 
                 $gateway = PaymentGateway::factory($dbh, $pAuthRs->Processor->getStoredVal(), $uS->ccgw);
 

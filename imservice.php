@@ -48,9 +48,9 @@ try {
     $config = $login->initializeSession('conf/site.cfg');
 
 } catch (Exception $ex) {
-
+    session_unset();
     http_response_code(500);
-    exit ("<h3>" . $ex->getMessage());
+    exit ($ex->getMessage());
 }
 
 
@@ -67,7 +67,7 @@ if ($u->_checkLogin($dbh, addslashes($user), $password, FALSE) === FALSE) {
 
     header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
     header('HTTP/1.0 401 Unauthorized');
-    die ("Not authorized");
+    exit("Not authorized");
 
 }
 
@@ -77,8 +77,8 @@ try {
     $wInit = new webInit(WebPageCode::Service, FALSE);
 } catch (Exception $ex) {
 
-    header('HTTP/1.0 403 Forbidden');
-    die ("Forbidden");
+    http_response_code(403);
+    exit("Forbidden");
 }
 
 $uS = Session::getInstance();
@@ -112,9 +112,13 @@ try {
 
 // Process the webhook.
 try {
+
     $error = PaymentSvcs::processWebhook($wInit->dbh, $data);
+
 } catch (Exception $ex) {
-    echo($ex);
+
+    echo($ex->getMessage());
+
     try {
         Gateway::saveGwTx($wInit->dbh, '', $ex->getMessage(), json_encode($ex->getTrace()), 'Webhook Error');
     } catch(Exception $ex) {

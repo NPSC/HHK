@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * Description of PaymentGateway
  *
@@ -17,7 +16,6 @@ abstract class PaymentGateway {
     protected $responseErrors;
     protected $useAVS;
     protected $useCVV;
-
 
     public function __construct(\PDO $dbh, $gwName) {
 
@@ -36,10 +34,13 @@ abstract class PaymentGateway {
     protected abstract function setCredentials($credentials);
 
     public abstract function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl);
+
     public abstract function processHostedReturn(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName);
+
     public abstract function processWebhook(\PDO $dbh, $post, $payNotes, $userName);
 
     public abstract function createEditMarkup(\PDO $dbh);
+
     public abstract function SaveEditMarkup(\PDO $dbh, $post);
 
     public static function logGwTx(PDO $dbh, $status, $request, $response, $transType) {
@@ -52,7 +53,6 @@ abstract class PaymentGateway {
         $gwRs->GwTransCode->setNewVal($transType);
 
         return EditRS::insert($dbh, $gwRs);
-
     }
 
     public function updatePayTypes(\PDO $dbh, $username) {
@@ -134,6 +134,7 @@ abstract class PaymentGateway {
     }
 
     public abstract function getPaymentResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '');
+
     public abstract function getCofResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup);
 }
 
@@ -158,25 +159,23 @@ class VantivGateway extends PaymentGateway {
             $cpay = new CreditSaleTokenRequest();
 
             $cpay->setPurchaseAmount($invoice->getAmountToPay())
-                ->setTaxAmount(0)
-                ->setCustomerCode($invoice->getSoldToId())
-                ->setAddress($addr["Address_1"])
-                ->setZip($addr["Postal_Code"])
-                ->setToken($tokenRS->Token->getStoredVal())
-                ->setPartialAuth(FALSE)
-                ->setCardHolderName($tokenRS->CardHolderName->getStoredVal())
-                ->setFrequency(MpFrequencyValues::OneTime)
-                ->setInvoice($invoice->getInvoiceNumber())
-                ->setTokenId($tokenRS->idGuest_token->getStoredVal())
-                ->setMemo(MpVersion::PosVersion);
+                    ->setTaxAmount(0)
+                    ->setCustomerCode($invoice->getSoldToId())
+                    ->setAddress($addr["Address_1"])
+                    ->setZip($addr["Postal_Code"])
+                    ->setToken($tokenRS->Token->getStoredVal())
+                    ->setPartialAuth(FALSE)
+                    ->setCardHolderName($tokenRS->CardHolderName->getStoredVal())
+                    ->setFrequency(MpFrequencyValues::OneTime)
+                    ->setInvoice($invoice->getInvoiceNumber())
+                    ->setTokenId($tokenRS->idGuest_token->getStoredVal())
+                    ->setMemo(MpVersion::PosVersion);
 
             // Run the token transaction
             $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $uS->ccgw, $cpay, $pmp->getPayNotes());
 
             // Analyze the result
             $payResult = self::AnalyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken());
-
-
         } else {
 
             // Initialiaze hosted payment
@@ -193,11 +192,9 @@ class VantivGateway extends PaymentGateway {
             $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
             $payResult->setForwardHostedPayment($fwrder);
             $payResult->setDisplayMessage('Forward to Payment Page. ');
-
         }
 
         return $payResult;
-
     }
 
     public function voidSale(\PDO $dbh, $invoice, PaymentRS $payRs, $paymentNotes, $bid) {
@@ -229,7 +226,6 @@ class VantivGateway extends PaymentGateway {
         }
 
         return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
-
     }
 
     public function reverseSale(\PDO $dbh, PaymentRS $payRs, $invoice, $bid, $paymentNotes) {
@@ -263,16 +259,16 @@ class VantivGateway extends PaymentGateway {
             // Set up request
             $revRequest = new CreditReversalTokenRequest();
             $revRequest->setAuthCode($pAuthRs->Approval_Code->getStoredVal())
-                ->setCardHolderName($tknRs->CardHolderName->getStoredVal())
-                ->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion)
-                ->setInvoice($invoice->getInvoiceNumber())
-                ->setPurchaseAmount($pAuthRs->Approved_Amount->getStoredVal())
-                ->setRefNo($pAuthRs->Reference_Num->getStoredVal())
-                ->setProcessData($pAuthRs->ProcessData->getStoredVal())
-                ->setAcqRefData($pAuthRs->AcqRefData->getStoredVal())
-                ->setToken($tknRs->Token->getStoredVal())
-                ->setTokenId($tknRs->idGuest_token->getStoredVal())
-                ->setTitle('CreditReversalToken');
+                    ->setCardHolderName($tknRs->CardHolderName->getStoredVal())
+                    ->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion)
+                    ->setInvoice($invoice->getInvoiceNumber())
+                    ->setPurchaseAmount($pAuthRs->Approved_Amount->getStoredVal())
+                    ->setRefNo($pAuthRs->Reference_Num->getStoredVal())
+                    ->setProcessData($pAuthRs->ProcessData->getStoredVal())
+                    ->setAcqRefData($pAuthRs->AcqRefData->getStoredVal())
+                    ->setToken($tknRs->Token->getStoredVal())
+                    ->setTokenId($tknRs->idGuest_token->getStoredVal())
+                    ->setTitle('CreditReversalToken');
 
             try {
 
@@ -303,20 +299,16 @@ class VantivGateway extends PaymentGateway {
                     default:
 
                         $dataArray['warning'] = '** Reversal Invalid or Error. **  ' . 'Message: ' . $csResp->response->getMessage();
-
                 }
-
             } catch (Hk_Exception_Payment $exPay) {
 
                 $dataArray['warning'] = "Reversal Error = " . $exPay->getMessage();
             }
 
             return $dataArray;
-
         }
 
         return array('warning' => 'Payment is ineligable for reversal.  ', 'bid' => $bid);
-
     }
 
     public function returnSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $returnAmt, $bid) {
@@ -424,15 +416,15 @@ class VantivGateway extends PaymentGateway {
         // Card reader?
         if ($uS->CardSwipe) {
             $pay->setDefaultSwipe('Swipe')
-                ->setCardEntryMethod('Both')
-                ->setPaymentPageCode('Checkout_Url');
+                    ->setCardEntryMethod('Both')
+                    ->setPaymentPageCode('Checkout_Url');
         } else {
             $pay->setPaymentPageCode('Checkout_Url');
         }
 
         $pay->setPartialAuth(TRUE);
 
-        $pay    ->setAVSZip($addr["Postal_Code"])
+        $pay->setAVSZip($addr["Postal_Code"])
                 ->setAVSAddress($addr['Address_1'])
                 ->setCardHolderName($guest->getRoleMember()->get_fullName())
                 ->setFrequency(MpFrequencyValues::OneTime)
@@ -477,8 +469,8 @@ class VantivGateway extends PaymentGateway {
         // Card reader?
         if ($uS->CardSwipe) {
             $initCi->setDefaultSwipe('Swipe')
-                ->setCardEntryMethod('Both')
-                ->setPaymentPageCode('CardInfo_Url');
+                    ->setCardEntryMethod('Both')
+                    ->setPaymentPageCode('CardInfo_Url');
         } else {
             $initCi->setPaymentPageCode('CardInfo_Url');
         }
@@ -523,11 +515,9 @@ class VantivGateway extends PaymentGateway {
                 $vr = CardInfo::portalReply($dbh, $this->getGwName(), $cardId, $post);
 
                 $payResult = new CofResult($vr->response->getDisplayMessage(), $vr->response->getStatus(), $vr->idPayor, $vr->idRegistration);
-
             } catch (Hk_Exception_Payment $hex) {
                 $payResult = new cofResult($hex->getMessage(), PaymentResult::ERROR, 0, 0);
             }
-
         } else if (isset($post[VantivGateway::PAYMENT_ID])) {
 
             $paymentId = filter_var($post[VantivGateway::PAYMENT_ID], FILTER_SANITIZE_STRING);
@@ -548,20 +538,17 @@ class VantivGateway extends PaymentGateway {
 
                     // Analyze the result
                     $payResult = self::AnalyzeCredSaleResult($dbh, $csResp, $invoice);
-
                 } else {
 
                     $payResult = new PaymentResult($idInv, 0, 0);
                     $payResult->setStatus(PaymentResult::ERROR);
                     $payResult->setDisplayMessage('Invoice Not Found!  ');
                 }
-
             } catch (Hk_Exception_Payment $hex) {
 
                 $payResult = new PaymentResult($idInv, 0, 0);
                 $payResult->setStatus(PaymentResult::ERROR);
                 $payResult->setDisplayMessage($hex->getMessage());
-
             }
         }
 
@@ -611,7 +598,6 @@ class VantivGateway extends PaymentGateway {
                         $csResp->idVisit = $invoice->getOrderNumber();
                         $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
                         $dataArray['success'] = 'Payment is void.  ';
-
                     } else {
 
                         $dataArray['warning'] = $csResp->response->getMessage();
@@ -622,12 +608,10 @@ class VantivGateway extends PaymentGateway {
                 default:
 
                     $dataArray['warning'] = '** Void Invalid or Error. **  ' . 'Message: ' . $csResp->response->getMessage();
-
             }
-
         } catch (Hk_Exception_Payment $exPay) {
 
-            $dataArray['warning'] =  "Void Error = " . $exPay->getMessage();
+            $dataArray['warning'] = "Void Error = " . $exPay->getMessage();
         }
 
         return $dataArray;
@@ -645,7 +629,7 @@ class VantivGateway extends PaymentGateway {
 
         $query = "select * from `cc_hosted_gateway` where cc_name = :ccn";
         $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':ccn'=>$this->gwName));
+        $stmt->execute(array(':ccn' => $this->gwName));
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -664,13 +648,11 @@ class VantivGateway extends PaymentGateway {
         $this->useCVV = filter_var($gwRs->Use_Ccv_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
 
         return $gwRs;
-
     }
 
     protected function setCredentials($gwRs) {
 
         $this->credentials = $gwRs;
-
     }
 
     public function createEditMarkup(\PDO $dbh, $resultMessage = '') {
@@ -683,17 +665,17 @@ class VantivGateway extends PaymentGateway {
         foreach ($rows as $r) {
 
             $indx = $r['idcc_gateway'];
-            $tbl->addBodyTr(HTMLTable::makeTd($r['cc_name'], array('class'=>'tdlabel'))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup($r['Merchant_Id'], array('name'=>$indx . '_txtMid')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup($r['Password'], array('name'=>$indx .'_txtpw')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>$indx .'_txtpw2')))
-             .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>$indx .'cbCVV')))
-             .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>$indx .'cbAVS')))
-             .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>$indx .'cbDel'))));
+            $tbl->addBodyTr(HTMLTable::makeTd($r['cc_name'], array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Merchant_Id'], array('name' => $indx . '_txtMid')))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Password'], array('name' => $indx . '_txtpw')))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => $indx . '_txtpw2')))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type' => 'checkbox', 'name' => $indx . 'cbCVV')))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type' => 'checkbox', 'name' => $indx . 'cbAVS')))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type' => 'checkbox', 'name' => $indx . 'cbDel'))));
         }
 
         if ($resultMessage != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan'=>'6', 'style'=>'font-weight:bold;')));
+            $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan' => '6', 'style' => 'font-weight:bold;')));
         }
 
         $tbl->addHeader(HTMLTable::makeTh('Name') . HTMLTable::makeTh('Merchant Id')
@@ -721,12 +703,11 @@ class VantivGateway extends PaymentGateway {
                 $ccRs->Password->setNewVal('');
                 $num = EditRS::update($dbh, $ccRs, array($ccRs->idcc_gateway));
                 $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - Payment Credentials Deleted.  ");
-
             } else {
 
                 if (isset($post[$indx . '_txtMid'])) {
                     $mid = filter_var($post[$indx . '_txtMid'], FILTER_SANITIZE_STRING);
-                        $ccRs->Merchant_Id->setNewVal($mid);
+                    $ccRs->Merchant_Id->setNewVal($mid);
                 }
 
                 if (isset($post[$indx . '_txtpw']) && isset($post[$indx . '_txtpw2']) && $post[$indx . '_txtpw2'] != '') {
@@ -740,7 +721,6 @@ class VantivGateway extends PaymentGateway {
                         if ($pw == $pw2) {
 
                             $ccRs->Password->setNewVal(encryptMessage($pw));
-
                         } else {
                             // passwords don't match
                             $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - Passwords do not match.  ");
@@ -748,13 +728,13 @@ class VantivGateway extends PaymentGateway {
                     }
                 }
 
-                if  (isset($post[$indx . 'cbCVV'])) {
+                if (isset($post[$indx . 'cbCVV'])) {
                     $ccRs->Use_Ccv_Flag->setNewVal(1);
                 } else {
                     $ccRs->Use_Ccv_Flag->setNewVal(0);
                 }
 
-                if  (isset($post[$indx . 'cbAVS'])) {
+                if (isset($post[$indx . 'cbAVS'])) {
                     $ccRs->Use_AVS_Flag->setNewVal(1);
                 } else {
                     $ccRs->Use_AVS_Flag->setNewVal(0);
@@ -768,14 +748,13 @@ class VantivGateway extends PaymentGateway {
                 } else {
                     $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - No changes detected.  ");
                 }
-
             }
         }
 
         return $msg;
     }
-}
 
+}
 
 /**
  * Description of InstamedGateway
@@ -787,29 +766,31 @@ class InstamedGateway extends PaymentGateway {
     const RELAY_STATE = 'relayState';
     const INVOICE_NUMBER = 'additionalInfo1';
     const GROUP_ID = 'additionalInfo2';
-
     // query string parameter names
     const INSTAMED_TRANS_VAR = 'imt';
     const INSTAMED_RESULT_VAR = 'imres';
-
     // query string parameter values
     const HCO_TRANS = 'imsale';
     const COF_TRANS = 'imcof';
     const VOID_TRANS = 'imvoid';
     const RETURN_TRANS = 'imret';
-
     const POSTBACK_CANCEL = 'x';
     const POSTBACK_COMPLETE = 'c';
-
     const APPROVED = '000';
     const PARTIAL_APPROVAL = '010';
-
     // IM's backward way to get back to my original page.
     const TRANSFER_URL = 'ConfirmGwPayment.php';
     const TRANSFER_VAR = 'intfr';  // query sgring parameter name for the TRANSFER_URL
     const TRANSFER_DEFAULT_PAGE = 'register.php';
     const TRANSFER_POSTBACK_PAGE_VAR = 'pg';
 
+    // Transaction Status Codes
+    const AUTH = 'A';
+    const CAPTURED_APPROVED = 'C';
+    const CHARGEBACK = 'CB';
+    const DECLINE = 'D';
+    const VOID = 'V';
+    const CANCELLED = 'X';
 
     protected $ssoUrl;
     protected $soapUrl;
@@ -838,7 +819,6 @@ class InstamedGateway extends PaymentGateway {
             $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
             $payResult->setForwardHostedPayment($fwrder);
             $payResult->setDisplayMessage('Forward to Payment Page. ');
-
         } catch (Hk_Exception_Payment $hpx) {
 
             $payResult = new PaymentResult($invoice->getIdInvoice(), 0, 0);
@@ -900,7 +880,6 @@ class InstamedGateway extends PaymentGateway {
         }
 
         return array('warning' => 'This Payment is ineligable for Return. ', 'bid' => $bid);
-
     }
 
     protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $postbackUrl) {
@@ -914,24 +893,21 @@ class InstamedGateway extends PaymentGateway {
 
         $patInfo = $this->getPatientInfo($dbh, $invoice->getIdGroup());
 
-        $data = array (
+        $data = array(
             'patientID' => $patInfo['idName'],
             'patientFirstName' => $patInfo['Name_First'],
             'patientLastName' => $patInfo['Name_Last'],
             'amount' => $invoice->getAmountToPay(),
-
             InstamedGateway::GROUP_ID => $invoice->getIdGroup(),
             InstamedGateway::INVOICE_NUMBER => $invoice->getInvoiceNumber(),
-
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
             //'id' => 'NP.SOFTWARE.TEST',
-
             'incontext' => 'true',
             'lightWeight' => 'true',
             'isReadOnly' => 'true',
             'preventCheck' => 'true',
-            'preventCash'  => 'true',
+            'preventCash' => 'true',
             'suppressReceipt' => 'true',
             'hideGuarantorID' => 'true',
             'responseActionType' => 'header',
@@ -949,7 +925,7 @@ class InstamedGateway extends PaymentGateway {
         // Save raw transaction in the db.
         try {
             Gateway::saveGwTx($dbh, $headerResponse->getResponseCode(), json_encode($req), json_encode($headerResponse->getResultArray()), 'HostedCoInit');
-        } catch(Exception $ex) {
+        } catch (Exception $ex) {
             // Do Nothing
         }
 
@@ -972,18 +948,15 @@ class InstamedGateway extends PaymentGateway {
 
             $uS->imtoken = $headerResponse->getToken();
 
-            $dataArray = array('inctx' => $headerResponse->getRelayState(), 'PaymentId' => $headerResponse->getToken() );
-
+            $dataArray = array('inctx' => $headerResponse->getRelayState(), 'PaymentId' => $headerResponse->getToken());
         } else {
 
             // The initialization failed.
             unset($uS->imtoken);
             throw new Hk_Exception_Payment("Credit Payment Gateway Error: " . $headerResponse->getResponseMessage());
-
         }
 
         return $dataArray;
-
     }
 
     public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $cardHolderName, $postbackUrl) {
@@ -993,11 +966,10 @@ class InstamedGateway extends PaymentGateway {
 
         $patInfo = $this->getPatientInfo($dbh, $idGroup);
 
-        $data = array (
+        $data = array(
             'patientID' => $patInfo['idName'],
             'patientFirstName' => $patInfo['Name_First'],
             'patientLastName' => $patInfo['Name_Last'],
-
             InstamedGateway::GROUP_ID => $idGroup,
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
@@ -1007,7 +979,7 @@ class InstamedGateway extends PaymentGateway {
             'responseActionType' => 'header',
             'cancelURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::COF_TRANS, InstamedGateway::POSTBACK_CANCEL),
             'confirmURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::COF_TRANS, InstamedGateway::POSTBACK_COMPLETE),
-           'requestToken' => 'true',
+            'requestToken' => 'true',
             'RelayState' => $this->cofUrl,
         );
 
@@ -1022,7 +994,7 @@ class InstamedGateway extends PaymentGateway {
         // Save raw transaction in the db.
         try {
             Gateway::saveGwTx($dbh, $headerResponse->getResponseCode(), json_encode($allData), json_encode($headerResponse->getResultArray()), 'HostedCoInit');
-        } catch(Exception $ex) {
+        } catch (Exception $ex) {
             // Do Nothing
         }
 
@@ -1031,20 +1003,18 @@ class InstamedGateway extends PaymentGateway {
 
             // Save payment ID
             $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode)"
-                . " values (" . $idGuest . " , " . $idGroup . ", '" . InstamedGateway::COF_TRANS . "', '', '" . $headerResponse->getToken() . "', now(), 'OneTime', " . $headerResponse->getResponseCode() . ")";
+                    . " values (" . $idGuest . " , " . $idGroup . ", '" . InstamedGateway::COF_TRANS . "', '', '" . $headerResponse->getToken() . "', now(), 'OneTime', " . $headerResponse->getResponseCode() . ")";
 
             $dbh->exec($ciq);
 
             $uS->imtoken = $headerResponse->getToken();
 
-            $dataArray = array('inctx' => $headerResponse->getRelayState(), 'CardId' => $headerResponse->getToken() );
-
+            $dataArray = array('inctx' => $headerResponse->getRelayState(), 'CardId' => $headerResponse->getToken());
         } else {
 
             // The initialization failed.
             unset($uS->imtoken);
             throw new Hk_Exception_Payment("Credit Payment Gateway Error: " . $headerResponse->getResponseMessage());
-
         }
 
         return $dataArray;
@@ -1059,16 +1029,7 @@ class InstamedGateway extends PaymentGateway {
                 . "&transactionType=CreditCard"
                 . "&transactionAction=Void"
                 . "&primaryCardPresentStatus=PresentManualKey"
-                . "&primaryTransactionID=" . $pAuthRs->Reference_Num->getStoredVal();
-
-//        $data = $this->getCredentials()->toSOAP();
-//
-//        $data['PrimaryTransactionID'] = $pAuthRs->Reference_Num->getStoredVal();
-//        $data['PrimaryCardPresentStatus'] = 'PresentManualKey';
-//
-//        $soapReq = new DoVoidRequest();
-//
-//        $doVoidResp = new DoVoidResponse($soapReq->submit($data, $this->soapUrl, $trace), MpTranType::Void);
+                . "&primaryTransactionID=" . $pAuthRs->AcqRefData->getStoredVal();
 
         $curlRequest = new CurlRequest();
 
@@ -1084,7 +1045,7 @@ class InstamedGateway extends PaymentGateway {
         // Save raw transaction in the db.
         try {
             Gateway::saveGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'ImTokenVoid');
-        } catch(Exception $ex) {
+        } catch (Exception $ex) {
             // Do Nothing
         }
 
@@ -1095,8 +1056,7 @@ class InstamedGateway extends PaymentGateway {
         try {
             $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Void, TransMethod::Token);
             $sr->setIdTrans($transRs->idTrans->getStoredVal());
-
-        } catch(Exception $ex) {
+        } catch (Exception $ex) {
             // do nothing
         }
 
@@ -1126,7 +1086,6 @@ class InstamedGateway extends PaymentGateway {
             default:
 
                 $dataArray['warning'] = '** Void Invalid or Error. **  Message: ' . $csResp->getErrorMessage();
-
         }
 
         return $dataArray;
@@ -1141,7 +1100,7 @@ class InstamedGateway extends PaymentGateway {
                 . "&transactionType=CreditCard"
                 . "&transactionAction=SimpleRefund"
                 . "&primaryCardPresentStatus=PresentManualKey"
-                . "&primaryTransactionID=" . $pAuthRs->Reference_Num->getStoredVal()
+                . "&primaryTransactionID=" . $pAuthRs->AcqRefData->getStoredVal()
                 . "&amount=" . number_format($returnAmt, 2);
 
         $curlRequest = new CurlRequest();
@@ -1156,7 +1115,7 @@ class InstamedGateway extends PaymentGateway {
         // Save raw transaction in the db.
         try {
             Gateway::saveGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'ImTokenReturn');
-        } catch(Exception $ex) {
+        } catch (Exception $ex) {
             // Do Nothing
         }
 
@@ -1167,8 +1126,7 @@ class InstamedGateway extends PaymentGateway {
         try {
             $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Void, TransMethod::Token);
             $sr->setIdTrans($transRs->idTrans->getStoredVal());
-
-        } catch(Exception $ex) {
+        } catch (Exception $ex) {
             // do nothing
         }
 
@@ -1200,7 +1158,6 @@ class InstamedGateway extends PaymentGateway {
             default:
 
                 $dataArray['warning'] = $csResp->getErrorMessage();
-
         }
 
         return $dataArray;
@@ -1225,13 +1182,12 @@ class InstamedGateway extends PaymentGateway {
             $transResult = filter_var($post[InstamedGateway::INSTAMED_RESULT_VAR], FILTER_SANITIZE_STRING);
         }
 
-       if ($transResult == InstamedGateway::POSTBACK_CANCEL) {
+        if ($transResult == InstamedGateway::POSTBACK_CANCEL) {
 
             $payResult = new PaymentResult(0, 0, 0);
             $payResult->setDisplayMessage('User Canceled.');
 
             return $payResult;
-
         } else if ($transResult != InstamedGateway::POSTBACK_COMPLETE) {
 
             $payResult = new PaymentResult(0, 0, 0);
@@ -1253,14 +1209,12 @@ class InstamedGateway extends PaymentGateway {
 
             try {
                 $payResult = $this->completeHostedPayment($dbh, $idInv, $ssoToken, $payNotes, $userName);
-
             } catch (Hk_Exception_Payment $hex) {
 
                 $payResult = new PaymentResult($idInv, 0, 0);
                 $payResult->setStatus(PaymentResult::ERROR);
                 $payResult->setDisplayMessage($hex->getMessage());
             }
-
         } else if ($transType == InstamedGateway::COF_TRANS) {
 
             $payResult = $this->completeCof($dbh, $ssoToken);
@@ -1275,21 +1229,21 @@ class InstamedGateway extends PaymentGateway {
         $error = TRUE;
 
         if ($webhookResp->getSsoToken() == '') {
-           return $error;
+            return $error;
         }
 
         // Check DB for record
         $ssoTknRs = new SsoTokenRS();
         $ssoTknRs->Token->setStoredVal($webhookResp->getSsoToken());
 
-        $tokenRow = EditRS::select($dbh, $ssoTknRs, array($ssoTknRs->Token));
+        $tokenRows = EditRS::select($dbh, $ssoTknRs, array($ssoTknRs->Token));
 
-        if (count($tokenRow) < 1) {
+        if (count($tokenRows) < 1) {
             // Not an error that webhook can do something about, so return No Error.
             return FALSE;
         }
 
-        EditRS::loadRow($tokenRow[0], $ssoTknRs);
+        EditRS::loadRow($tokenRows[0], $ssoTknRs);
 
         if ($webhookResp->getTranType() == MpTranType::Sale) {
 
@@ -1300,8 +1254,7 @@ class InstamedGateway extends PaymentGateway {
             try {
                 $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Sale, TransMethod::Webhook);
                 $sr->setIdTrans($transRs->idTrans->getStoredVal());
-
-            } catch(Exception $ex) {
+            } catch (Exception $ex) {
                 // do nothing
             }
 
@@ -1351,7 +1304,6 @@ class InstamedGateway extends PaymentGateway {
                     $ssoTknRs->State->setNewVal(WebHookStatus::Error);
                     EditRS::update($dbh, $ssoTknRs, array($ssoTknRs->Token));
                     $error = FALSE;
-
             }
 
             if ($error === FALSE) {
@@ -1392,7 +1344,7 @@ class InstamedGateway extends PaymentGateway {
         // Save raw transaction in the db.
         try {
             Gateway::saveGwTx($dbh, $response->getResponseCode(), $params, json_encode($response->getResultArray()), 'COFVerify');
-        } catch(Exception $ex) {
+        } catch (Exception $ex) {
             // Do Nothing
         }
 
@@ -1402,7 +1354,6 @@ class InstamedGateway extends PaymentGateway {
         CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response);
 
         return new CofResult($vr->response->getDisplayMessage(), $vr->getStatus(), $vr->idPayor, $vr->idRegistration);
-
     }
 
     protected function completeHostedPayment(\PDO $dbh, $idInv, $ssoToken, $paymentNotes, $userName) {
@@ -1439,7 +1390,7 @@ class InstamedGateway extends PaymentGateway {
         // Save raw transaction in the db.
         try {
             Gateway::saveGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'HostedCoVerify');
-        } catch(Exception $ex) {
+        } catch (Exception $ex) {
             // Do Nothing
         }
 
@@ -1450,8 +1401,7 @@ class InstamedGateway extends PaymentGateway {
         try {
             $transRs = Transaction::recordTransaction($dbh, $payResp, $this->gwName, TransType::Sale, TransMethod::HostedPayment);
             $payResp->setIdTrans($transRs->idTrans->getStoredVal());
-
-        } catch(Exception $ex) {
+        } catch (Exception $ex) {
             // do nothing
         }
 
@@ -1467,7 +1417,6 @@ class InstamedGateway extends PaymentGateway {
             $payResult->feePaymentError($dbh, $uS);
             $payResult->setDisplayMessage('** Payment status unknown, try again later. *** ');
             return $payResult;
-
         } else if ($state == WebHookStatus::Error) {
             // HHK's webhook processing failed..
 
@@ -1515,7 +1464,6 @@ class InstamedGateway extends PaymentGateway {
                 $payResult->setStatus(PaymentResult::ERROR);
                 $payResult->feePaymentError($dbh, $uS);
                 $payResult->setDisplayMessage('** Payment Invalid or Error **  Message: ' . $payResp->response->getResponseMessage());
-
         }
 
         return $payResult;
@@ -1552,9 +1500,8 @@ class InstamedGateway extends PaymentGateway {
 
             $this->useAVS = filter_var($gwRs->Use_AVS_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
             $this->useCVV = filter_var($gwRs->Use_Ccv_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
-
         } else {
-            throw new Hk_Exception_Runtime('The credit card payment gateway is not found: ' . $this->getGwName() .'.  ');
+            throw new Hk_Exception_Runtime('The credit card payment gateway is not found: ' . $this->getGwName() . '.  ');
         }
 
         return $gwRs;
@@ -1575,19 +1522,18 @@ class InstamedGateway extends PaymentGateway {
         //Create HTTP stream context
         $context = stream_context_create(array(
             'http' => array(
-            'method' => 'POST',
-            'header' => 'Content-Type: application/x-www-form-urlencoded,'.'\r\n'.
-            'Content-Length:'.strlen($data).'\r\n'.
-            'Expect: 100-continue,'.'\r\n'.
-            'Connection: Keep-Alive,'.'\r\n',
-            'content' => $data
+                'method' => 'POST',
+                'header' => 'Content-Type: application/x-www-form-urlencoded,' . '\r\n' .
+                'Content-Length:' . strlen($data) . '\r\n' .
+                'Expect: 100-continue,' . '\r\n' .
+                'Connection: Keep-Alive,' . '\r\n',
+                'content' => $data
             )
         ));
 
         $headers = get_headers($this->ssoUrl, 1, $context);
 
         return new HeaderResponse($headers);
-
     }
 
     protected function buildPostbackUrl($postbackPageUrl, $transVar, $resultVar) {
@@ -1680,55 +1626,54 @@ where r.idRegistration =" . $idReg);
             $indx = $gwRs->idcc_gateway->getStoredVal();
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Name', array('style'=>'border-top:2px solid black;', 'class'=>'tdlabel'))
-                    .HTMLTable::makeTd($gwRs->cc_name->getStoredVal(), array('style'=>'border-top:2px solid black;'))
+                    HTMLTable::makeTh('Name', array('style' => 'border-top:2px solid black;', 'class' => 'tdlabel'))
+                    . HTMLTable::makeTd($gwRs->cc_name->getStoredVal(), array('style' => 'border-top:2px solid black;'))
             );
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Account Id', array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->account_Id->getStoredVal(), array('name'=>$indx . '_txtaid', 'size'=>'80')))
+                    HTMLTable::makeTh('Account Id', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->account_Id->getStoredVal(), array('name' => $indx . '_txtaid', 'size' => '80')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Security Key', array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->security_Key->getStoredVal(), array('name'=>$indx .'_txtsk', 'size'=>'80')))
+                    HTMLTable::makeTh('Security Key', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->security_Key->getStoredVal(), array('name' => $indx . '_txtsk', 'size' => '80')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('SSO Alias', array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->sso_Alias->getStoredVal(), array('name'=>$indx .'_txtsalias', 'size'=>'80')))
+                    HTMLTable::makeTh('SSO Alias', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->sso_Alias->getStoredVal(), array('name' => $indx . '_txtsalias', 'size' => '80')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Merchant Id', array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->merchant_Id->getStoredVal(), array('name'=>$indx .'_txtuid', 'size'=>'80')))
+                    HTMLTable::makeTh('Merchant Id', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->merchant_Id->getStoredVal(), array('name' => $indx . '_txtuid', 'size' => '80')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Store Id', array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->store_Id->getStoredVal(), array('name'=>$indx .'_txtuname', 'size'=>'80')))
+                    HTMLTable::makeTh('Store Id', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->store_Id->getStoredVal(), array('name' => $indx . '_txtuname', 'size' => '80')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Terminal Id', array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->terminal_Id->getStoredVal(), array('name'=>$indx .'_txttremId', 'size'=>'80')))
+                    HTMLTable::makeTh('Terminal Id', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->terminal_Id->getStoredVal(), array('name' => $indx . '_txttremId', 'size' => '80')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('SSO URL', array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->providersSso_Url->getStoredVal(), array('name'=>$indx .'_txtpurl', 'size'=>'90')))
+                    HTMLTable::makeTh('SSO URL', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->providersSso_Url->getStoredVal(), array('name' => $indx . '_txtpurl', 'size' => '90')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('SOAP WSDL', array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->soap_Url->getStoredVal(), array('name'=>$indx .'_txtsurl', 'size'=>'90')))
+                    HTMLTable::makeTh('SOAP WSDL', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->soap_Url->getStoredVal(), array('name' => $indx . '_txtsurl', 'size' => '90')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('NVP URL', array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->nvp_Url->getStoredVal(), array('name'=>$indx .'_txtnvpurl', 'size'=>'90')))
+                    HTMLTable::makeTh('NVP URL', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->nvp_Url->getStoredVal(), array('name' => $indx . '_txtnvpurl', 'size' => '90')))
             );
 //            $tbl->addBodyTr(
 //                    HTMLTable::makeTh('Card on File URL', array('class'=>'tdlabel'))
 //                    .HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->COF_Url->getStoredVal(), array('name'=>$indx .'_txtcofurl', 'size'=>'90')))
 //            );
-
         }
 
         if ($resultMessage != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan'=>'2', 'style'=>'font-weight:bold;')));
+            $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan' => '2', 'style' => 'font-weight:bold;')));
         }
 
         return $tbl->generateMarkup();
@@ -1804,10 +1749,9 @@ where r.idRegistration =" . $idReg);
         }
 
         return $msg;
-
     }
-}
 
+}
 
 class InstaMedCredentials {
 
@@ -1824,13 +1768,11 @@ class InstaMedCredentials {
 
     public $merchantId;
     public $storeId;
-
     protected $securityKey;
     protected $accountID;
     protected $terminalId;
     protected $ssoAlias;
     protected $id;
-
 
     public function __construct(InstamedGatewayRS $gwRs) {
 
@@ -1844,7 +1786,6 @@ class InstaMedCredentials {
         $parts = explode('@', $this->accountID);
 
         $this->id = $parts[0];
-
     }
 
     public function toSSO() {
@@ -1860,10 +1801,9 @@ class InstaMedCredentials {
     public function toCurl() {
 
         return
-            InstaMedCredentials::MERCHANT_ID . '=' . $this->merchantId
-            . '&' . InstaMedCredentials::STORE_ID . '=' . $this->storeId
-            . '&' . InstaMedCredentials::TERMINAL_ID . '=' . $this->terminalId;
-
+                InstaMedCredentials::MERCHANT_ID . '=' . $this->merchantId
+                . '&' . InstaMedCredentials::STORE_ID . '=' . $this->storeId
+                . '&' . InstaMedCredentials::TERMINAL_ID . '=' . $this->terminalId;
     }
 
     public function toSOAP() {
@@ -1876,7 +1816,6 @@ class InstaMedCredentials {
     }
 
 }
-
 
 class LocalGateway extends PaymentGateway {
 
@@ -1915,6 +1854,5 @@ class LocalGateway extends PaymentGateway {
     public function processWebhook(\PDO $dbh, $post, $payNotes, $userName) {
 
     }
-
 
 }
