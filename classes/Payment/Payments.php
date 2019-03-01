@@ -223,14 +223,14 @@ class ImPaymentResponse extends PaymentResponse {
 class ImCofResponse extends PaymentResponse {
 
     public $idToken;
-    public $isEMV;
+
 
     function __construct(iGatewayResponse $vcr, $idPayor, $idGroup) {
         $this->response = $vcr;
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
         $this->idToken = $vcr->getToken();
-        $this->isEMV = $vcr->isEMVTransaction();
+
     }
 
     public function getStatus() {
@@ -717,7 +717,7 @@ class ReturnReply extends CreditPayments {
         //Payment Detail
         $pDetailRS = new Payment_AuthRS();
         $pDetailRS->idPayment->setNewVal($payRs->idPayment->getStoredVal());
-        $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizeAmount());
+        $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizedAmount());
         $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
         $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
         $pDetailRS->AVS->setNewVal($vr->getAVSResult());

@@ -47,6 +47,27 @@ class SecurityComponent {
 
     }
 
+    public static function rerouteIfNotLoggedIn($pageType, $loginPage) {
+
+        $ssn = Session::getInstance();
+
+        if (isset($ssn->logged) == FALSE || $ssn->logged == FALSE) {
+
+            $ssn->destroy(TRUE);
+
+            if ($pageType != WebPageCode::Page) {
+
+                echo json_encode(array("error" => "Unauthorized.", 'gotopage' => $loginPage));
+
+            } else {
+
+                header("Location: " . $loginPage);
+            }
+
+            exit();
+        }
+    }
+
     public function die_if_not_Logged_In($pageType, $loginPage) {
         $ssn = Session::getInstance();
 

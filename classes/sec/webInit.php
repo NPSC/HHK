@@ -27,8 +27,24 @@ class webInit {
 
     function __construct($page_Type = WebPageCode::Page, $addCSP = TRUE) {
 
+        SecurityComponent::rerouteIfNotLoggedIn($page_Type, 'index.php');
+
         // define db connection obj
-        $this->dbh = initPDO(FALSE);
+        try {
+
+            $this->dbh = initPDO(FALSE);
+
+        } catch (Hk_Exception_Runtime $hex) {
+
+            if ($page_Type == WebPageCode::Page) {
+                echo('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
+            } else {
+                $rtn = array("error" => $hex->getMessage());
+                echo json_encode($rtn);
+            }
+
+            exit();
+        }
 
         // Page authorization check
         $this->page = new ScriptAuthClass($this->dbh);

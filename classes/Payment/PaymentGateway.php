@@ -993,7 +993,7 @@ class InstamedGateway extends PaymentGateway {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $headerResponse->getResponseCode(), json_encode($allData), json_encode($headerResponse->getResultArray()), 'HostedCoInit');
+            Gateway::saveGwTx($dbh, $headerResponse->getResponseCode(), json_encode($allData), json_encode($headerResponse->getResultArray()), 'CardInfoInit');
         } catch (Exception $ex) {
             // Do Nothing
         }
@@ -1044,7 +1044,7 @@ class InstamedGateway extends PaymentGateway {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'ImTokenVoid');
+            Gateway::saveGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'CreditVoidSaleToken');
         } catch (Exception $ex) {
             // Do Nothing
         }
@@ -1114,7 +1114,7 @@ class InstamedGateway extends PaymentGateway {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'ImTokenReturn');
+            Gateway::saveGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'CreditReturnToken');
         } catch (Exception $ex) {
             // Do Nothing
         }
@@ -1124,7 +1124,7 @@ class InstamedGateway extends PaymentGateway {
 
         // Record transaction
         try {
-            $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Void, TransMethod::Token);
+            $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Retrn, TransMethod::Token);
             $sr->setIdTrans($transRs->idTrans->getStoredVal());
         } catch (Exception $ex) {
             // do nothing
@@ -1226,10 +1226,10 @@ class InstamedGateway extends PaymentGateway {
     public function processWebhook(\PDO $dbh, $data, $payNotes, $userName) {
 
         $webhookResp = new WebhookResponse($data);
-        $error = TRUE;
+        $error = FALSE;
 
         if ($webhookResp->getSsoToken() == '') {
-            return $error;
+            return TRUE;
         }
 
         // Check DB for record
@@ -1343,7 +1343,7 @@ class InstamedGateway extends PaymentGateway {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $response->getResponseCode(), $params, json_encode($response->getResultArray()), 'COFVerify');
+            Gateway::saveGwTx($dbh, $response->getResponseCode(), $params, json_encode($response->getResultArray()), 'CardInfoVerify');
         } catch (Exception $ex) {
             // Do Nothing
         }
@@ -1353,7 +1353,7 @@ class InstamedGateway extends PaymentGateway {
         // save token
         CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $response);
 
-        return new CofResult($vr->response->getDisplayMessage(), $vr->getStatus(), $vr->idPayor, $vr->idRegistration);
+        return new CofResult($vr->response->getResponseMessage(), $vr->getStatus(), $vr->idPayor, $vr->idRegistration);
     }
 
     protected function completeHostedPayment(\PDO $dbh, $idInv, $ssoToken, $paymentNotes, $userName) {
