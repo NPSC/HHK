@@ -260,7 +260,7 @@ class PaymentChooser {
                 , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
                 );
 
-        $payTypes = removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]);
+        $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
 
         if ($uS->ShowTxPayType == FALSE) {
             unset($payTypes[PayType::Transfer]);
@@ -796,7 +796,7 @@ ORDER BY v.idVisit , v.Span;");
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnPayAmount')), array('colspan'=>'2', 'style'=>'font-weight:bold;')));
         // Payment Types
         $payTbl->addBodyTr(HTMLTable::makeTd('Pay With:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($payTypes, $defaultPayType, FALSE), array('name'=>'PayTypeSel', 'class'=>'hhk-feeskeys')), array('colspan'=>'2')));
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $defaultPayType, FALSE), array('name'=>'PayTypeSel', 'class'=>'hhk-feeskeys')), array('colspan'=>'2')));
 
 
         // Cash Amt Tendered
@@ -825,12 +825,12 @@ ORDER BY v.idVisit , v.Span;");
                 , array('style'=>'display:none;', 'class'=>'hhk-transfer'));
 
         // credit info
-        if (isset($payTypes[PayType::Charge])) {
+        if (isset($payTypes[PayType::Charge]) && $payTypes[PayType::Charge][2] == PaymentMethod::Charge) {
 
             // Charge card gateway
             self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $paymentGateway, $prefTokenId);
 
-        } else if (isset($payTypes[PayType::ChargeAsCash])) {
+        } else if (isset($payTypes[PayType::Charge])) {
 
             // Charge as Cash markup
             $payTbl->addBodyTr(
@@ -860,7 +860,7 @@ ORDER BY v.idVisit , v.Span;");
                 .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name'=>'txtRtnAmount', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'font-weight:bold;border:none;')), array('colspan'=>'2', 'style'=>'text-align:right;')));
         // Payment Types
         $payTbl->addBodyTr(HTMLTable::makeTd('With:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($payTypes, $defaultPayType, FALSE), array('name'=>'rtnTypeSel', 'class'=>'hhk-feeskeys')), array('colspan'=>'2')));
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $defaultPayType, FALSE), array('name'=>'rtnTypeSel', 'class'=>'hhk-feeskeys')), array('colspan'=>'2')));
 
         // Check number
         $payTbl->addBodyTr(
@@ -876,12 +876,12 @@ ORDER BY v.idVisit , v.Span;");
 
 
         // credit info
-        if (isset($payTypes[PayType::Charge])) {
+        if (isset($payTypes[PayType::Charge]) && $payTypes[PayType::Charge][2] == PaymentMethod::Charge) {
 
             // Credit gateway
             self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $paymentGateway, $prefTokenId, ReturnIndex::ReturnIndex);
 
-        } else if (isset($payTypes[PayType::ChargeAsCash])) {
+        } else if (isset($payTypes[PayType::Charge])) {
 
             // Charge as Cash markup
             $payTbl->addBodyTr(
@@ -955,7 +955,7 @@ ORDER BY v.idVisit , v.Span;");
                     }
 
                     $tbl->addBodyTr(HTMLTable::makeTd('New', array('style'=>'text-align:right;', 'colspan'=> '2'))
-                        . ($paymentGateway == PaymentGateway::VANTIV ? HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr)) : '')
+                        .  HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr))
                             , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
 
                     break;

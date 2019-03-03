@@ -41,7 +41,7 @@ require ('classes/Payment/Receipt.php');
 
 require ('classes/PaymentSvcs.php');
 
-$inputJSON = file_get_contents('php://input');
+$sequence = ChallengeGenerator::getRandomString();
 
 try {
     $login = new Login();
@@ -84,6 +84,7 @@ try {
 $uS = Session::getInstance();
 
 // Grab the data
+$inputJSON = file_get_contents('php://input');
 $data = json_decode($inputJSON, TRUE); //convert JSON into array
 
 // dump payment plan messages.
@@ -104,7 +105,7 @@ if (filter_has_var(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR')) {
 
 // log the data
 try {
-    Gateway::saveGwTx($wInit->dbh, '', json_encode(array('user'=>addslashes($user), 'remote IP'=>$remoteIp, 'json Error'=> json_last_error_msg())), $inputJSON, 'Webhook');
+    Gateway::saveGwTx($wInit->dbh, '', json_encode(array('user'=>addslashes($user), 'remote IP'=>$remoteIp, 'json Error'=> json_last_error_msg(), 'sequence'=>$sequence)), $inputJSON, 'Webhook');
 } catch(Exception $ex) {
     // Do Nothing
 }

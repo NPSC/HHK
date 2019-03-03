@@ -33,6 +33,9 @@ abstract class PaymentGateway {
      */
     protected abstract function setCredentials($credentials);
 
+    // used to determine if it's a real gateway or out of band, local gateway
+    protected abstract function getPaymentMethod();
+
     public abstract function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl);
 
     public abstract function processHostedReturn(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName);
@@ -57,7 +60,6 @@ abstract class PaymentGateway {
 
     public function updatePayTypes(\PDO $dbh, $username) {
 
-        $uS = Session::getInstance();
         $msg = '';
 
         $glRs = new GenLookupsRS();
@@ -66,16 +68,11 @@ abstract class PaymentGateway {
         $rows = EditRS::select($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
 
         if (count($rows) > 0) {
+
             $glRs = new GenLookupsRS();
             EditRS::loadRow($rows[0], $glRs);
 
-
-            if ($this->getGwName() != PaymentGateway::LOCAL) {
-                $glRs->Substitute->setNewVal(PaymentMethod::Charge);
-            } else {
-                $glRs->Substitute->setNewVal(PaymentMethod::ChgAsCash);
-            }
-
+            $glRs->Substitute->setNewVal($this->getPaymentMethod());
 
             $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
 
@@ -142,6 +139,10 @@ class VantivGateway extends PaymentGateway {
 
     const CARD_ID = 'CardID';
     const PAYMENT_ID = 'PaymentID';
+
+    protected function getPaymentMethod() {
+        return PaymentMethod::Charge;
+    }
 
     public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
 
@@ -799,6 +800,10 @@ class InstamedGateway extends PaymentGateway {
     protected $cofUrl;
     protected $returnUrl;
     protected $voidUrl;
+
+    protected function getPaymentMethod() {
+        return PaymentMethod::Charge;
+    }
 
     public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
 
@@ -1819,6 +1824,10 @@ class InstaMedCredentials {
 
 class LocalGateway extends PaymentGateway {
 
+    protected function getPaymentMethod() {
+        return PaymentMethod::ChgAsCash;
+    }
+
     protected function loadGateway(\PDO $dbh) {
 
     }
@@ -1844,6 +1853,8 @@ class LocalGateway extends PaymentGateway {
     }
 
     public function getPaymentResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
+
+        return new ManualChargeResponse($vcr->getAuthorizedAmount(), $idPayor, $invoiceNumber, $vcr->getCardType(), $vcr->getMaskedAccount());
 
     }
 

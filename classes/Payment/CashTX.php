@@ -151,18 +151,18 @@ class ManualChargeResponse extends PaymentResponse {
 
     protected $cardNum;
     protected $cardType;
-    protected $authCode;
 
 
-    function __construct($amount, $idPayor, $invoiceNumber, Payment_AuthRS $pAuthRs, $payNote = '') {
+
+    function __construct($amount, $idPayor, $invoiceNumber, $cardType, $cardAcct, $payNote = '') {
 
         $this->paymentType = PayType::ChargeAsCash;
         $this->idPayor = $idPayor;
         $this->amount = $amount;
         $this->invoiceNumber = $invoiceNumber;
-        $this->cardNum = $pAuthRs->Acct_Number->getStoredVal();
-        $this->cardType = $pAuthRs->Card_Type->getStoredVal();
-        $this->authCode = $pAuthRs->Approval_Code->getStoredVal();
+        $this->cardNum = $cardAcct;
+        $this->cardType = $cardType;
+
         $this->payNotes = $payNote;
 
     }
@@ -170,10 +170,6 @@ class ManualChargeResponse extends PaymentResponse {
 
     public function getChargeType() {
         return $this->cardType;
-    }
-
-    public function getAuthCode() {
-        return $this->authCode;
     }
 
     public function getCardNum() {
@@ -200,10 +196,6 @@ class ManualChargeResponse extends PaymentResponse {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
         $tbl->addBodyTr(HTMLTable::makeTd($cgType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getCardNum()));
-
-        if($this->getAuthCode() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd('Authorization:', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getAuthCode()));
-        }
 
     }
 }
@@ -247,10 +239,10 @@ class ChargeAsCashTX {
             $pDetailRS = new Payment_AuthRS();
             $pDetailRS->idPayment->setNewVal($idPayment);
             $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
-            $pDetailRS->Acct_Number->setNewVal($pr->cardNum);
+            $pDetailRS->Acct_Number->setNewVal($pr->getCardNum());
             $pDetailRS->Card_Type->setNewVal($cType);
             $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
-            $pDetailRS->Invoice_Number->setNewVal($pr->getInvoice());
+            $pDetailRS->Invoice_Number->setNewVal($pr->getInvoiceNumber());
 
             $pDetailRS->Updated_By->setNewVal($username);
             $pDetailRS->Last_Updated->setNewVal($paymentDate);
@@ -302,10 +294,10 @@ class ChargeAsCashTX {
             $pDetailRS = new Payment_AuthRS();
             $pDetailRS->idPayment->setNewVal($idPayment);
             $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
-            $pDetailRS->Acct_Number->setNewVal($pr->cardNum);
+            $pDetailRS->Acct_Number->setNewVal($pr->getCardNum());
             $pDetailRS->Card_Type->setNewVal($cType);
             $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
-            $pDetailRS->Invoice_Number->setNewVal($pr->getInvoice());
+            $pDetailRS->Invoice_Number->setNewVal($pr->getInvoiceNumber());
             $pDetailRS->Updated_By->setNewVal($username);
             $pDetailRS->Last_Updated->setNewVal($paymentDate);
             $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Paid);
@@ -354,10 +346,10 @@ class ChargeAsCashTX {
         $pDetailRS = new Payment_AuthRS();
         $pDetailRS->idPayment->setNewVal($payRs->idPayment->getStoredVal());
         $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
-        $pDetailRS->Acct_Number->setNewVal($pr->cardNum);
-        $pDetailRS->Card_Type->setNewVal($pr->cardType);
+        $pDetailRS->Acct_Number->setNewVal($pr->getCardNum());
+        $pDetailRS->Card_Type->setNewVal($pr->getChargeType());
         $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
-        $pDetailRS->Invoice_Number->setNewVal($pr->getInvoice());
+        $pDetailRS->Invoice_Number->setNewVal($pr->getInvoiceNumber());
 
         $pDetailRS->Updated_By->setNewVal($username);
         $pDetailRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));

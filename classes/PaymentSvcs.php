@@ -388,12 +388,12 @@ class PaymentSvcs {
 
             // Manual Charge
             $pAuthRs = new Payment_AuthRS();
-            $pAuthRs->Card_Type->setStoredVal($pmp->getRtnChargeCard());
-            $pAuthRs->Acct_Number->setStoredVal($pmp->getRtnChargeAcct());
+            $pAuthRs->Card_Type->setStoredVal($pmp->getChargeCard());
+            $pAuthRs->Acct_Number->setStoredVal($pmp->getChargeAcct());
             $pAuthRs->Status_Code->setStoredVal('000');
             $pAuthRs->Timestamp->setStoredVal(date('Y-m-d H:i:s', strtotime($pmp->getPayDate())));
 
-            $cashResp = new ManualChargeResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pAuthRs, $pmp->getPayNotes());
+            $cashResp = new ManualChargeResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getChargeCard(), $pmp->getChargeAcct(), $pmp->getPayNotes());
 
             ChargeAsCashTX::sale($dbh, $cashResp, $uS->username, $paymentDate);
 
@@ -571,12 +571,7 @@ class PaymentSvcs {
             case PayType::ChargeAsCash:
 
                 // Manual Charge// $amount, $idPayor, $invoiceNumber, $chargeType, $chargeAcct, $payNote = '', $idToken = 0
-                $pAuthRs = new Payment_AuthRS();
-                $pAuthRs->Card_Type->setStoredVal($pmp->getRtnChargeCard());
-                $pAuthRs->Acct_Number->setStoredVal($pmp->getRtnChargeAcct());
-                $pAuthRs->Timestamp->setStoredVal(date('Y-m-d H:i:s', strtotime($pmp->getPayDate())));
-
-                $cashResp = new ManualChargeResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pAuthRs, $pmp->getPayNotes());
+                $cashResp = new ManualChargeResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getRtnChargeCard(), $pmp->getRtnChargeAcct(), $pmp->getPayNotes());
 
                 ChargeAsCashTX::refundAmount($dbh, $cashResp, $uS->username, $paymentDate);
 
@@ -773,7 +768,7 @@ class PaymentSvcs {
                     return array('warning' => 'Return Failed.  Return amount must be larger than 0.  ', 'bid' => $bid);
                 }
 
-                $cashResp = new ManualChargeResponse($returnAmt, $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs);
+                $cashResp = new ManualChargeResponse($returnAmt, $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal());
 
                 ChargeAsCashTX::returnPayment($dbh, $cashResp, $uS->username, $payRs);
 
@@ -1219,7 +1214,12 @@ class PaymentSvcs {
 
                 $gwResp = new StandInGwResponse($pAuthRs, $guestTokenRs, $invoice->getInvoiceNumber(), $payRs->Amount->getStoredVal());
 
-                $gateway = PaymentGateway::factory($dbh, $pAuthRs->Processor->getStoredVal(), $uS->ccgw);
+                try {
+                    $gateway = PaymentGateway::factory($dbh, $pAuthRs->Processor->getStoredVal(), $uS->ccgw);
+                } catch (Hk_Exception_Runtime $hex) {
+                    // Grab the local gateway
+                    $gateway = PaymentGateway::factory($dbh, '', '');
+                }
 
                 $payResp = $gateway->getPaymentResponseObj($gwResp, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber());
                 $payResp->paymentRs = $payRs;
@@ -1237,7 +1237,7 @@ class PaymentSvcs {
                 $pAuthRs = new Payment_AuthRS();
                 EditRS::loadRow($rows[0], $pAuthRs);
 
-                $payResp = new ManualChargeResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs);
+                $payResp = new ManualChargeResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal());
                 $payResp->paymentRs = $payRs;
                 break;
 

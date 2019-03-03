@@ -546,11 +546,7 @@ class SiteConfig {
 
         $msg = $gateway->SaveEditMarkup($dbh, $post);
 
-        $cnt = $gateway->updatePayTypes($dbh, $uS->username);
-
-        if ($cnt > 0) {
-            $msg .= "Pay Types updated.  ";
-        }
+        $msg .= $gateway->updatePayTypes($dbh, $uS->username);
 
         return $msg;
     }
