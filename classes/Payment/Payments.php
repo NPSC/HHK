@@ -97,7 +97,7 @@ abstract class PaymentResponse {
 class ImPaymentResponse extends PaymentResponse {
 
 
-    function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+    function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes, $isPartialApprovalAmount = FALSE) {
         $this->response = $vcr;
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
@@ -106,7 +106,7 @@ class ImPaymentResponse extends PaymentResponse {
         $this->payNotes = $payNotes;
         $this->amount = $vcr->getRequestAmount();
 
-        if ($vcr->getPartialPaymentAmount() > 0) {
+        if ($isPartialApprovalAmount) {
             $this->setPartialPayment(TRUE);
             $this->amount = $vcr->getPartialPaymentAmount();
         } else {
@@ -122,44 +122,18 @@ class ImPaymentResponse extends PaymentResponse {
 
         $status = '';
 
-        switch ($this->response->getResponseCode()) {
+        if ($this->response->getTransactionStatus() == InstamedGateway::DECLINE || $this->response->getResponseCode() == '001') {
 
-            case '000':
-                $status = CreditPayments::STATUS_APPROVED;
-                break;
+           $status = CreditPayments::STATUS_DECLINED;
 
-            case '010':
-                // Partial Payment
-                $status = CreditPayments::STATUS_APPROVED;
-                break;
+        } else if ($this->response->getTransactionStatus() == InstamedGateway::CAPTURED_APPROVED
+                || $this->response->getTransactionStatus() == 'O'
+                || $this->response->getResponseCode() == '000') {
 
-            case '001':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
+            $status = CreditPayments::STATUS_APPROVED;
 
-            case '003':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '005':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '051':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '063':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            default:
-
-                if ($this->response->getTransactionStatus() == InstamedGateway::DECLINE) {
-                   $status = CreditPayments::STATUS_DECLINED;
-                } else {
-                    $status = CreditPayments::STATUS_ERROR;
-                }
+        } else {
+            $status = CreditPayments::STATUS_ERROR;
         }
 
         return $status;
@@ -186,12 +160,6 @@ class ImPaymentResponse extends PaymentResponse {
             $tbl->addBodyTr(HTMLTable::makeTd("Response Message: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getResponseMessage() . ($this->response->getResponseCode() == '' ? '' :  '  (Code: ' . $this->response->getResponseCode() . ")"), array('style'=>'font-size:.8em;')));
         }
 
-            if ($this->response->getEMVCardEntryMode() != '') {
-                $tbl->addBodyTr(HTMLTable::makeTd("Card Entry Mode: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getEMVCardEntryMode(), array('style'=>'font-size:.8em;')));
-            }
-            if ($this->response->getEMVAuthorizationMode() != '') {
-                $tbl->addBodyTr(HTMLTable::makeTd("EMV Auth Mode: ", array('class'=>'tdlabel','style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getEMVAuthorizationMode(), array('style'=>'font-size:.8em;')));
-            }
             if ($this->response->getEMVApplicationIdentifier() != '') {
                 $tbl->addBodyTr(HTMLTable::makeTd("AID: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getEMVApplicationIdentifier(), array('style'=>'font-size:.8em;')));
             }
@@ -406,9 +374,10 @@ class SaleReply extends CreditPayments {
             $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
             $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
             $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
-            $pDetailRS->Code3->setNewVal($vr->getCvvResult());
+            $pDetailRS->CVV->setNewVal($vr->getCvvResult());
             $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
             $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
+            $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
             $pDetailRS->Customer_Id->setNewVal($vr->getOperatorId());
 
             $pDetailRS->Updated_By->setNewVal($username);
@@ -416,7 +385,6 @@ class SaleReply extends CreditPayments {
             $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Paid);
 
             // EMV
-            $pDetailRS->EMVCardEntryMode->setNewVal($vr->getEMVCardEntryMode());
             $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
             $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
             $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
@@ -477,9 +445,10 @@ class SaleReply extends CreditPayments {
             $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
             $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
             $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
-            $pDetailRS->Code3->setNewVal($vr->getCvvResult());
+            $pDetailRS->CVV->setNewVal($vr->getCvvResult());
             $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
             $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
+            $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
             $pDetailRS->Customer_Id->setNewVal($vr->getOperatorId());
 
             $pDetailRS->Updated_By->setNewVal($username);
@@ -487,7 +456,6 @@ class SaleReply extends CreditPayments {
             $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Declined);
 
             // EMV
-            $pDetailRS->EMVCardEntryMode->setNewVal($vr->getEMVCardEntryMode());
             $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
             $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
             $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
@@ -549,11 +517,11 @@ class VoidReply extends CreditPayments {
         $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
         $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
-        $pDetailRS->Code3->setNewVal($vr->getCvvResult());
+        $pDetailRS->CVV->setNewVal($vr->getCvvResult());
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+        $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
 
         // EMV
-        $pDetailRS->EMVCardEntryMode->setNewVal($vr->getEMVCardEntryMode());
         $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
         $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
         $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
@@ -627,11 +595,11 @@ class ReverseReply extends CreditPayments {
         $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
         $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
-        $pDetailRS->Code3->setNewVal($vr->getCvvResult());
+        $pDetailRS->CVV->setNewVal($vr->getCvvResult());
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+        $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
 
         // EMV
-        $pDetailRS->EMVCardEntryMode->setNewVal($vr->getEMVCardEntryMode());
         $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
         $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
         $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
@@ -727,14 +695,14 @@ class ReturnReply extends CreditPayments {
         $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
         $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
-        $pDetailRS->Code3->setNewVal($vr->getCvvResult());
+        $pDetailRS->CVV->setNewVal($vr->getCvvResult());
         $pDetailRS->Updated_By->setNewVal($username);
         $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
         $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Retrn);
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+        $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
 
         // EMV
-        $pDetailRS->EMVCardEntryMode->setNewVal($vr->getEMVCardEntryMode());
         $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
         $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
         $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
@@ -794,20 +762,16 @@ class ReturnReply extends CreditPayments {
                 $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
                 $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
                 $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
-                $pDetailRS->Code3->setNewVal($vr->getCvvResult());
+                $pDetailRS->CVV->setNewVal($vr->getCvvResult());
                 $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+                $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
 
                 // EMV
-
-
-                $pDetailRS->EMVCardEntryMode->setNewVal($vr->getEMVCardEntryMode());
                 $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
                 $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
                 $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
                 $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
                 $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
-
-
 
                 $pDetailRS->Updated_By->setNewVal($username);
                 $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
@@ -879,11 +843,12 @@ class VoidReturnReply extends CreditPayments {
         $pDetailRS->idTrans->setNewVal($pr->idTrans);
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
         $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
-        $pDetailRS->Code3->setNewVal($vr->getCvvResult());
+        $pDetailRS->CVV->setNewVal($vr->getCvvResult());
         $pDetailRS->Updated_By->setNewVal($username);
         $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
         $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::VoidReturn);
-            $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+        $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+        $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
 
         $idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
 

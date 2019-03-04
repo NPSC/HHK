@@ -21,6 +21,7 @@ interface iGatewayResponse {
     public function getRefNo();
     public function getAcqRefData();
     public function getProcessData();
+    public function getTransactionStatus();
 
     public function getAVSAddress();
     public function getAVSResult();
@@ -37,13 +38,11 @@ interface iGatewayResponse {
     public function getOperatorId();
     public function getErrorMessage();
 
-    public function getEMVAuthorizationMode();
     public function getEMVApplicationIdentifier();
     public function getEMVTerminalVerificationResults();
     public function getEMVIssuerApplicationData();
     public function getEMVTransactionStatusInformation();
     public function getEMVApplicationResponseCode();
-    public function getEMVCardEntryMode();
 
 
 }
@@ -131,8 +130,8 @@ class WebhookResponse extends GatewayResponse implements iGatewayResponse {
     }
 
     public function getResponseMessage() {
-        if (isset($this->result['ResponseMessage'])) {
-            return $this->result['ResponseMessage'];
+        if (isset($this->result['CurrentTransactionStatusDescription'])) {
+            return $this->result['CurrentTransactionStatusDescription'];
         }
         return '';
     }
@@ -347,13 +346,6 @@ class WebhookResponse extends GatewayResponse implements iGatewayResponse {
         return '';
     }
 
-    public function getEMVAuthorizationMode() {
-        return '';
-    }
-
-    public function getEMVCardEntryMode() {
-        return '';
-    }
 
     public function getEMVCardHolderVerification() {
         return '';
@@ -570,12 +562,6 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
 
     }
 
-    public function getEMVAuthorizationMode() {
-        if (isset($this->result['EMVAuthorizationMode'])) {
-            return $this->result['EMVAuthorizationMode'];
-        }
-        return '';
-    }
     public function getEMVApplicationIdentifier() {
         if (isset($this->result['EMVApplicationIdentifier'])) {
             return $this->result['EMVApplicationIdentifier'];
@@ -603,12 +589,6 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
     public function getEMVApplicationResponseCode() {
         if (isset($this->result['EMVApplicationResponseCode'])) {
             return $this->result['EMVApplicationResponseCode'];
-        }
-        return '';
-    }
-    public function getEMVCardEntryMode() {
-        if (isset($this->result['EMVCardEntryMode'])) {
-            return $this->result['EMVCardEntryMode'];
         }
         return '';
     }
@@ -884,16 +864,24 @@ class PollingResponse extends GatewayResponse {
 class StandInGwResponse implements iGatewayResponse {
 
     protected $pAuthRs;
-    protected $gtRs;
     protected $invoiceNumber;
     protected $requestAmount;
+    protected $operatorId;
+    protected $cardholderName;
+    protected $expDate;
+    protected $token;
 
-    public function __construct(Payment_AuthRS $pAuthRs, Guest_TokenRS $gtRs, $invoiceNumber, $amount) {
+    public function __construct(Payment_AuthRS $pAuthRs, $operatorId, $cardholderName, $expDate, $token, $invoiceNumber, $amount) {
 
         $this->pAuthRs = $pAuthRs;
-        $this->gtRs = $gtRs;
+
         $this->invoiceNumber = $invoiceNumber;
         $this->requestAmount = $amount;
+
+        $this->operatorId = $operatorId;
+        $this->expDate = $expDate;
+        $this->cardholderName = $cardholderName;
+        $this->token = $token;
     }
 
     public function getAVSAddress() {
@@ -909,7 +897,7 @@ class StandInGwResponse implements iGatewayResponse {
     }
 
     public function getOperatorId() {
-        return $this->gtRs->OperatorID->getStoredVal();
+        return $this->operatorId;
     }
 
 
@@ -934,7 +922,7 @@ class StandInGwResponse implements iGatewayResponse {
     }
 
     public function getCardHolderName() {
-        return $this->gtRs->CardHolderName->getStoredVal();
+        return $this->cardholderName;
     }
 
     public function getCardType() {
@@ -942,11 +930,11 @@ class StandInGwResponse implements iGatewayResponse {
     }
 
     public function getCvvResult() {
-        return $this->pAuthRs->Code3->getStoredVal();
+        return $this->pAuthRs->CVV->getStoredVal();
     }
 
     public function getExpDate() {
-        return $this->gtRs->ExpDate->getStoredVal();
+        return $this->expDate;
     }
 
     public function getInvoiceNumber() {
@@ -970,15 +958,11 @@ class StandInGwResponse implements iGatewayResponse {
     }
 
     public function getResponseCode() {
-        if ($this->pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid
-                || $this->pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Retrn
-                || $this->pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Reverse
-                || $this->pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::VoidSale) {
-
-            return '000';
+        if ($this->pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Declined) {
+            return '001';
         }
 
-        return '001';
+        return '000';
     }
 
     public function getResponseMessage() {
@@ -986,11 +970,11 @@ class StandInGwResponse implements iGatewayResponse {
     }
 
     public function getTransactionStatus() {
-        return '';
+        return $this->pAuthRs->Response_Code->getStoredVal();
     }
 
     public function getToken() {
-        return $this->gtRs->Token->getStoredVal();
+        return $this->token;
     }
 
     public function getTranType() {
@@ -1001,9 +985,6 @@ class StandInGwResponse implements iGatewayResponse {
         return $this->pAuthRs->Timestamp->getStoredVal();
     }
 
-    public function getEMVAuthorizationMode() {
-        return $this->pAuthRs->EMVAuthorizationMode->getStoredVal();
-    }
     public function getEMVApplicationIdentifier() {
         return $this->pAuthRs->EMVApplicationIdentifier->getStoredVal();
     }
@@ -1018,9 +999,6 @@ class StandInGwResponse implements iGatewayResponse {
     }
     public function getEMVApplicationResponseCode() {
         return $this->pAuthRs->EMVApplicationResponseCode->getStoredVal();
-    }
-    public function getEMVCardEntryMode() {
-        return $this->pAuthRs->EMVCardEntryMode->getStoredVal();
     }
 
     public function getErrorMessage() {

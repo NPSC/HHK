@@ -1204,15 +1204,15 @@ class PaymentSvcs {
                 $pAuthRs = new Payment_AuthRS();
                 EditRS::loadRow($rows[count($rows)-1], $pAuthRs);
 
-                $guestTokenRs = new Guest_TokenRS();
-                $guestTokenRs->idGuest_token->setStoredVal($payRs->idToken->getStoredVal());
-                $guestTkns = EditRS::select($dbh, $guestTokenRs, array($guestTokenRs->idGuest_token));
+                $gTRs = new Guest_TokenRS();
+                $gTRs->idGuest_token->setStoredVal($payRs->idToken->getStoredVal());
+                $guestTkns = EditRS::select($dbh, $gTRs, array($gTRs->idGuest_token));
 
                 if (count($guestTkns) > 0) {
-                    EditRS::loadRow($guestTkns[0], $guestTokenRs);
+                    EditRS::loadRow($guestTkns[0], $gTRs);
                 }
 
-                $gwResp = new StandInGwResponse($pAuthRs, $guestTokenRs, $invoice->getInvoiceNumber(), $payRs->Amount->getStoredVal());
+                $gwResp = new StandInGwResponse($pAuthRs, $gTRs->OperatorID->getStoredVal(), $gTRs->CardHolderName->getStoredVal(), $gTRs->ExpDate->getStoredVal(), $gTRs->Token->getStoredVal(), $invoice->getInvoiceNumber(), $payRs->Amount->getStoredVal());
 
                 try {
                     $gateway = PaymentGateway::factory($dbh, $pAuthRs->Processor->getStoredVal(), $uS->ccgw);

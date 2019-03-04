@@ -641,9 +641,6 @@ abstract class MercResponse {
         return 0;
     }
 
-    public function getEMVAuthorizationMode() {
-        return '';
-    }
     public function getEMVApplicationIdentifier() {
         return '';
     }
@@ -657,9 +654,6 @@ abstract class MercResponse {
         return '';
     }
     public function getEMVApplicationResponseCode() {
-        return '';
-    }
-    public function getEMVCardEntryMode() {
         return '';
     }
 
@@ -1442,6 +1436,10 @@ class VerifyCkOutResponse extends MercResponse  implements iGatewayResponse{
         return '';
     }
 
+    public function getTransactionStatus() {
+        return '';
+    }
+
     public function getPartialPaymentAmount() {
         return 0;
     }
@@ -1807,7 +1805,11 @@ class CreditTokenResponse extends MercResponse implements iGatewayResponse {
         }
     }
 
-    public function getPartialPaymentAmount() {
+    public function getTransactionStatus() {
+
+    }
+
+        public function getPartialPaymentAmount() {
         return 0;
     }
 

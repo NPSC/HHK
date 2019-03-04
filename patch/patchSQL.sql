@@ -1,29 +1,35 @@
 
 ALTER TABLE `card_id`
-    CHANGE COLUMN `Transaction` `Transaction` VARCHAR(14) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL DEFAULT '';
-
+    CHANGE COLUMN `Transaction` `Transaction` VARCHAR(14) NOT NULL DEFAULT '';
 ALTER TABLE `card_id`
-    CHANGE COLUMN `CardID` `CardID` VARCHAR(136) CHARACTER SET 'utf8' COLLATE 'utf8_unicode_ci' NOT NULL DEFAULT '';
-
+    CHANGE COLUMN `CardID` `CardID` VARCHAR(136) NOT NULL DEFAULT '';
 ALTER TABLE `card_id`
     ADD COLUMN `Amount` DECIMAL(11,2) NOT NULL DEFAULT 0.00 AFTER `InvoiceNumber`;
 
-
 ALTER TABLE `guest_token` 
-    CHANGE COLUMN `ExpDate` `ExpDate` VARCHAR(14) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL DEFAULT '' ;
+    CHANGE COLUMN `ExpDate` `ExpDate` VARCHAR(14) NOT NULL DEFAULT '' ;
 
 ALTER TABLE `gateway_transaction` 
-    CHANGE COLUMN `Vendor_Request` `Vendor_Request` VARCHAR(2000) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL DEFAULT '' ;
-
+    CHANGE COLUMN `Vendor_Request` `Vendor_Request` VARCHAR(2000) NOT NULL DEFAULT '' ;
 ALTER TABLE `gateway_transaction` 
-    CHANGE COLUMN `Vendor_Response` `Vendor_Response` VARCHAR(5000) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL DEFAULT '' ;
+    CHANGE COLUMN `Vendor_Response` `Vendor_Response` VARCHAR(5000) NOT NULL DEFAULT '' ;
 
 
 ALTER TABLE `payment_auth` 
-    ADD COLUMN `EMVCardEntryMode` VARCHAR(45) NULL AFTER `Status_Code`,
-    ADD COLUMN `EMVAuthorizationMode` VARCHAR(45) NULL AFTER `EMVCardEntryMode`,
-    ADD COLUMN `EMVApplicationIdentifier` VARCHAR(45) NULL AFTER `EMVAuthorizationMode`,
-    ADD COLUMN `EMVTerminalVerificationResults` VARCHAR(45) NULL AFTER `EMVApplicationIdentifier`,
-    ADD COLUMN `EMVIssuerApplicationData` VARCHAR(45) NULL AFTER `EMVTerminalVerificationResults`,
-    ADD COLUMN `EMVTransactionStatusInformation` VARCHAR(45) NULL AFTER `EMVIssuerApplicationData`,
-    ADD COLUMN `EMVApplicationResponseCode` VARCHAR(45) NULL AFTER `EMVTransactionStatusInformation`;
+    CHANGE COLUMN `Code3` `CVV` VARCHAR(45) NOT NULL DEFAULT '';
+ALTER TABLE `payment_auth` 
+    CHANGE COLUMN `Code1` `AcqRefData` VARCHAR(200) NOT NULL DEFAULT '' ;
+ALTER TABLE `payment_auth` 
+    CHANGE COLUMN `Code2` `ProcessData` VARCHAR(200) NOT NULL DEFAULT '' ;
+ALTER TABLE `payment_auth` 
+    ADD COLUMN `EMVApplicationIdentifier` VARCHAR(200) NULL AFTER `Status_Code`;
+ALTER TABLE `payment_auth` 
+    ADD COLUMN `EMVTerminalVerificationResults` VARCHAR(200) NULL AFTER `EMVApplicationIdentifier`;
+ALTER TABLE `payment_auth` 
+    ADD COLUMN `EMVIssuerApplicationData` VARCHAR(200) NULL AFTER `EMVTerminalVerificationResults`;
+ALTER TABLE `payment_auth` 
+    ADD COLUMN `EMVTransactionStatusInformation` VARCHAR(200) NULL AFTER `EMVIssuerApplicationData`;
+ALTER TABLE `payment_auth` 
+    ADD COLUMN `EMVApplicationResponseCode` VARCHAR(200) NULL AFTER `EMVTransactionStatusInformation`;
+ALTER TABLE `payment_auth` 
+    ADD COLUMN `Response_Code` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Response_Message`;

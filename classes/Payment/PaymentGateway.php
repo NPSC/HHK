@@ -176,7 +176,7 @@ class VantivGateway extends PaymentGateway {
             $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $uS->ccgw, $cpay, $pmp->getPayNotes());
 
             // Analyze the result
-            $payResult = self::AnalyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken());
+            $payResult = PaymentSvcs::AnalyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken());
         } else {
 
             // Initialiaze hosted payment
@@ -1234,7 +1234,7 @@ class InstamedGateway extends PaymentGateway {
         $error = FALSE;
 
         if ($webhookResp->getSsoToken() == '') {
-            return TRUE;
+            return FALSE;
         }
 
         // Check DB for record
@@ -1252,8 +1252,14 @@ class InstamedGateway extends PaymentGateway {
 
         if ($webhookResp->getTranType() == MpTranType::Sale) {
 
+            if ($webhookResp->getPartialPaymentAmount() > 0) {
+                $isPartialPayment = TRUE;
+            } else {
+                $isPartialPayment = FALSE;
+            }
+            
             // Make a sale response...
-            $sr = new ImPaymentResponse($webhookResp, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $payNotes);
+            $sr = new ImPaymentResponse($webhookResp, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $payNotes, $isPartialPayment);
 
             // Record transaction
             try {
@@ -1364,6 +1370,7 @@ class InstamedGateway extends PaymentGateway {
     protected function completeHostedPayment(\PDO $dbh, $idInv, $ssoToken, $paymentNotes, $userName) {
 
         $uS = Session::getInstance();
+        $partlyApproved = FALSE;
 
         // Check DB for record
         $ssoTknRs = new SsoTokenRS();
@@ -1400,15 +1407,15 @@ class InstamedGateway extends PaymentGateway {
         }
 
         // Make a sale response...
-        $payResp = new ImPaymentResponse($curlResponse, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $paymentNotes);
-
-        // Record transaction
-        try {
-            $transRs = Transaction::recordTransaction($dbh, $payResp, $this->gwName, TransType::Sale, TransMethod::HostedPayment);
-            $payResp->setIdTrans($transRs->idTrans->getStoredVal());
-        } catch (Exception $ex) {
-            // do nothing
-        }
+//        $payResp = new ImPaymentResponse($curlResponse, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $paymentNotes);
+//
+//        // Record transaction
+//        try {
+//            $transRs = Transaction::recordTransaction($dbh, $payResp, $this->gwName, TransType::Sale, TransMethod::HostedPayment);
+//            $payResp->setIdTrans($transRs->idTrans->getStoredVal());
+//        } catch (Exception $ex) {
+//            // do nothing
+//        }
 
 
         //Wait for web hook
@@ -1419,25 +1426,55 @@ class InstamedGateway extends PaymentGateway {
 
             $payResult = new PaymentResult(0, 0, 0);
             $payResult->setStatus(PaymentResult::ERROR);
-            $payResult->feePaymentError($dbh, $uS);
             $payResult->setDisplayMessage('** Payment status unknown, try again later. *** ');
             return $payResult;
+
         } else if ($state == WebHookStatus::Error) {
             // HHK's webhook processing failed..
 
             $payResult = new PaymentResult(0, 0, 0);
             $payResult->setStatus(PaymentResult::ERROR);
-            $payResult->feePaymentError($dbh, $uS);
             $payResult->setDisplayMessage('** Payment processing error in HHK **');
             return $payResult;
         }
 
 
         // Create reciept.
-        $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
+        $invoice = new Invoice($dbh, $ssoTknRs->InvoiceNumber->getStoredVal());
 
         $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), 0);
 
+        $pAuthRs = new Payment_AuthRS();
+        $pAuthRs->AcqRefData->setStoredVal($curlResponse->getPrimaryTransactionID());
+        $pauths = EditRS::select($dbh, $pAuthRs, array($pAuthRs->AcqRefData));
+
+        if (count($pauths) < 1) {
+            throw new Hk_Exception_Payment('Charge payment record not found.');
+        }
+
+        EditRS::loadRow($pauths[count($pauths)-1], $pAuthRs);
+
+        $payRs = new PaymentRS();
+        $payRs->idPayment->setStoredVal($pAuthRs->idPayment->getStoredVal());
+        $pays = EditRS::select($dbh, $payRs, array($payRs->idPayment));
+
+        EditRS::loadRow($pays[0], $payRs);
+
+        $gTRs = new Guest_TokenRS();
+        $gTRs->idGuest_token->setStoredVal($payRs->idToken->getStoredVal());
+        $guestTkns = EditRS::select($dbh, $gTRs, array($gTRs->idGuest_token));
+
+        if (count($guestTkns) > 0) {
+            EditRS::loadRow($guestTkns[0], $gTRs);
+        }
+
+        // Partially approved?
+        if ($curlResponse->getPartialPaymentAmount() > 0) {
+            $partlyApproved = TRUE;
+        }
+
+        $gwResp = new StandInGwResponse($pAuthRs, $gTRs->OperatorID->getStoredVal(), $gTRs->CardHolderName->getStoredVal(), $gTRs->ExpDate->getStoredVal(), $gTRs->Token->getStoredVal(), $invoice->getInvoiceNumber(), $payRs->Amount->getStoredVal());
+        $payResp = new ImPaymentResponse($gwResp, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $paymentNotes, $partlyApproved);
 
         switch ($payResp->getStatus()) {
 
@@ -1467,7 +1504,6 @@ class InstamedGateway extends PaymentGateway {
             default:
 
                 $payResult->setStatus(PaymentResult::ERROR);
-                $payResult->feePaymentError($dbh, $uS);
                 $payResult->setDisplayMessage('** Payment Invalid or Error **  Message: ' . $payResp->response->getResponseMessage());
         }
 
