@@ -765,6 +765,8 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
     public static function showList(\PDO $dbh, $rows, $editPage, $checkinPage, $reservStatus = ReservationStatus::Committed, $shoDirtyRooms = FALSE, $showConstraints = FALSE) {
 
+        $uS = Session::getInstance();
+
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
 
@@ -843,9 +845,17 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
                             EditRS::loadRow($rooms[$resv->getIdResource()], $roomRs);
                             $room = new Room($dbh, 0, $roomRs);
 
-                            if ($room->getCleaningCycleCode() != $noCleaning && $room->isClean() === FALSE) {
-                                $dirtyRoom = '(Dirty)';
-                                $roomAttr = array('style'=>'text-align:center; background-color:yellow;');
+
+                            if ($room->getCleaningCycleCode() != $noCleaning) {
+
+                                if ($uS->HouseKeepingSteps > 1 && $room->isClean() === TRUE) {
+                                    $dirtyRoom = '(Not Ready)';
+                                    $roomAttr = array('style'=>'text-align:center; background-color:yellow;');
+
+                                } else if ($room->isClean() === FALSE && $room->isReady() === FALSE) {
+                                    $dirtyRoom = '(Dirty)';
+                                    $roomAttr = array('style'=>'text-align:center; background-color:yellow;');
+                                }
                             }
                         }
                     }
@@ -1374,7 +1384,7 @@ where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdRe
 
             if (count($rows) == 1) {
                 EditRS::loadRow($rows[0], $resourceRS);
-                $this->roomTitle = $resourceRS->Title->getStoredVal();
+                $this->roomTitle = htmlspecialchars_decode($resourceRS->Title->getStoredVal(), ENT_QUOTES);
             }
         }
 

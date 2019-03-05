@@ -51,6 +51,7 @@ define('FULLC_CSS', '<link href="css/fullcalendar.css" rel="stylesheet" type="te
 define('RTE_CSS', '<link href="css/rich-text-editor.css" rel="stylesheet" type="text/css" />');
 define('SELECT2_CSS', '<link href="css/select2.min.css" rel="stylesheet" type="text/css" />');
 define('NOTY_CSS', "<link href='css/noty/noty.css' rel='stylesheet' type='text/css' /><link href='css/noty/themes/semanticui.css' rel='stylesheet' type='text/css' /><link href='css/noty/animate.css' rel='stylesheet' type='text/css' />");
+define('DROPZONE_CSS', "<link href='css/basic.min.css' rel='stylesheet' type='text/css' /><link href='css/dropzone.min.css' rel='stylesheet' type='text/css' />");
 
 define('JQ_UI_JS', '../js/jquery-ui.min.js');
 define('JQ_JS', '../js/jquery-3.1.1.min.js');
@@ -72,4 +73,5 @@ define('DR_PICKER_JS', '../js/daterangepicker.hhk.min.js');
 define('FULLC_JS', '../js/fullcalendarold.min.js');
 define('RTE_JS', '../js/rich-text-editor.js');
 define('NOTES_VIEWER_JS', '../js/notesViewer.js');
+define('DROPZONE_JS', '../js/dropzone.js');
 define('SELECT2_JS', '../js/select2.min.js');

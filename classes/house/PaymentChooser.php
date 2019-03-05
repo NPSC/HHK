@@ -464,7 +464,7 @@ dateFormat: "M d, yy" ';
 
     public static function createResvMarkup(\PDO $dbh, $idGuest, \Registration $reg, $payTypes, $defaultPayType, $ccgw) {
 
-        $labels = new Config_Lite(LABEL_FILE);
+//        $labels = new Config_Lite(LABEL_FILE);
         $cof = '';
 
 

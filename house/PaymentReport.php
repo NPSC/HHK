@@ -102,6 +102,7 @@ if (count($hospList) > 0) {
 $cFields[] = array('Payor Last', 'Last', 'checked', '', 's', '', array());
 $cFields[] = array("Payor First", 'First', 'checked', '', 's', '', array());
 $cFields[] = array("Date", 'Payment_Date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
+$cFields[] = array("Time", 'Payment_Timestamp', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_TIME3, array(), 'time');
 $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 's', '', array());
 $cFields[] = array("Room", 'Title', 'checked', '', 's', '', array('style'=>'text-align:center;'));
 

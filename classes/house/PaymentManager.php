@@ -145,7 +145,7 @@ class PaymentManager {
 
                         if ($modifiedCharges > 0 && $this->pmp->getRatePayment() < $modifiedCharges) {
                             // We are paying less in room fees than what is due, so only charge what we are paying.
-                            $roomCharges = $this->pmp->getRatePayment();
+                            $roomCharges = $this->pmp->getRatePayment() + $this->moaRefundAmt;
                         } else {
 
                             $roomCharges = $this->pmp->getTotalRoomChg();

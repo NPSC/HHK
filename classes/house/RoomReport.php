@@ -166,20 +166,24 @@ WHERE
         WHEN n.Title = '' THEN n.Note_Text
         ELSE CONCAT(n.Title, ' - ', n.Note_Text)
     END AS Note_Text,
-    MAX(n.Timestamp) as Timestamp
+    n.`Timestamp`
 FROM
 visit v join reservation_note rn on v.idReservation = rn.Reservation_Id
         JOIN
     note n ON rn.Note_Id = n.idNote
-where v.Status = 'a'
-GROUP BY rn.Reservation_Id having max(n.Timestamp);");
+where v.`Status` = 'a' and n.`Status` = 'a'
+ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
 
         $notes = array();
+        $rv = 0;
         while ($n = $stmtn->fetch(PDO::FETCH_ASSOC)) {
-            $dt = new DateTime($n['Timestamp']);
-            $notes[$n['Reservation_Id']] =  $dt->format('M j, Y H:i ') . $n['User_Name'] . '; ' . $n['Note_Text'];
-        }
 
+            if ($rv != $n['Reservation_Id']) {
+                $dt = new DateTime($n['Timestamp']);
+                $notes[$n['Reservation_Id']] =  $dt->format('M j, Y H:i ') . $n['User_Name'] . '; ' . $n['Note_Text'];
+                $rv = $n['Reservation_Id'];
+            }
+        }
 
         $query = "SELECT
             r.Util_Priority,

@@ -125,7 +125,7 @@ class SiteConfig {
         return HTMLContainer::generateMarkup('h3', 'Annual Non-Cleaning Days') . $tbl->generateMarkup() . HTMLContainer::generateMarkup('h3', 'Weekly Non-Cleaning Days', array('style'=>'margin-top:12px;')) . $wdTbl->generateMarkup();
     }
 
-    public static function checkZipFile($upFile) {
+    public static function checkUploadFile($upFile) {
 
 
         // Undefined | Multiple Files | $_FILES Corruption Attack
@@ -134,7 +134,7 @@ class SiteConfig {
                 !isset($_FILES[$upFile]['error']) ||
                 is_array($_FILES[$upFile]['error'])
         ) {
-            throw new RuntimeException('Invalid Zip File parameters.');
+            throw new RuntimeException('Invalid upload file parameters.');
         }
 
         // Check $_FILES['upfile']['error'] value.
@@ -142,7 +142,7 @@ class SiteConfig {
             case UPLOAD_ERR_OK:
                 break;
             case UPLOAD_ERR_NO_FILE:
-                throw new RuntimeException('Upload File was not received.');
+                throw new RuntimeException('Upload file was not received.');
             case UPLOAD_ERR_INI_SIZE:
             case UPLOAD_ERR_FORM_SIZE:
                 throw new RuntimeException('Exceeded upload filesize limit.');
@@ -377,9 +377,13 @@ class SiteConfig {
             if ($onlySection == '' || $onlySection == $section) {
 
                 if ($section == 'webServices') {
+
                     $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section)
                             . '<span style="margin-left:10px;"><a href="../house/SetupNeonCRM.htm" target="_blank">(Instructions)</a></span>'
                             , array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
+
+                } else if ($section == 'code') {
+                    continue;
                 } else {
                     $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section), array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
                 }
@@ -392,10 +396,6 @@ class SiteConfig {
                             'name' => $section . '[' . $key . ']',
                             'id' => $section . $key
                         );
-
-                        if ($section == 'code') {
-                            $attr['readonly'] = 'Readonly';
-                        }
 
                         if ($key == 'Disclaimer' || $key == 'PaymentDisclaimer') {
 

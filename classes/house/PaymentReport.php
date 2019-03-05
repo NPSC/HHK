@@ -466,11 +466,14 @@ class PaymentReport {
             'Notes'=>$p['Payment_Note']
         );
 
+        $timeDT = new DateTime($p['Payment_Timestamp']);
+
         if ($isLocal) {
 
             $g['Last'] = $payorLast;
             $g['First'] = $payorFirst;
             $g['Payment_Date'] = $dateDT->format('c');
+            $g['Payment_Timestamp'] = $timeDT->format('H:i');
             $g['Invoice_Number'] = $invoiceMkup;
 
             $g['Orig_Amount'] = number_format($origAmt, 2);
@@ -488,11 +491,12 @@ class PaymentReport {
 
         } else {
 
-            $dateDT->setTimezone('UTC');  // = new DateTime($p['Payment_Date'], new DateTimeZone('UTC'));
+            $dateDT->setTimezone(new DateTimeZone('UTC'));  // = new DateTime($p['Payment_Date'], new DateTimeZone('UTC'));
 
             $g['Last'] = $r['i']['Last'];
             $g['First'] = $r['i']['First'];
             $g['Payment_Date'] = PHPExcel_Shared_Date::PHPToExcel($dateDT->format('U'));
+            $g['Payment_Timestamp'] = PHPExcel_Shared_Date::PHPToExcel($timeDT->format('U'));
             $g['Invoice_Number'] = $r['i']['Invoice_Number'];
 
             $g['Orig_Amount'] = $origAmt;

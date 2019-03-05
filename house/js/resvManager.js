@@ -848,20 +848,26 @@ function resvManager(initData) {
                 numGuests = 0,
                 numPriGuests = 0,
                 nameErr = false,
-                ecIgnoreCount = 0;
+                ecIgnoreCount = 0,
+                pRelFlag = false;
 
             // Flag blank Relationships
             $('.patientRelch').removeClass('ui-state-error');
+
             $('.patientRelch').each(function () {
 
                 if ($(this).val() === '') {
-
                     $(this).addClass('ui-state-error');
-                    flagAlertMessage('Set the highlighted Relationship.', 'alert', $pWarning);
-                    return false;
-
+                    pRelFlag = true;
+                } else {
+                    $(this).removeClass('ui-state-error');
                 }
             });
+
+            if (pRelFlag) {
+                flagAlertMessage('Set the highlighted Relationship(s).', 'alert', $pWarning);
+                return false;
+            }
 
             findPrimaryGuest();
             findStaysChecked();
@@ -1010,18 +1016,6 @@ function resvManager(initData) {
 
                 // Guests
                 } else {
-
-                    // Check Patient Relationship
-                    if ($('#' + p + 'selPatRel').val() === '') {
-
-                        $('#' + p + 'selPatRel').addClass('ui-state-error');
-                        flagAlertMessage('Person highlighted is missing their ' + patLabel + ' Relationship.', 'alert', $pWarning);
-                        openSection(true);
-                        return false;
-
-                    } else {
-                        $('#' + p + 'selPatRel').removeClass('ui-state-error');
-                    }
 
                     // Check Guest address
                     if (gstAddrRequired) {
@@ -1871,7 +1865,7 @@ function resvManager(initData) {
 
                         if (carVal2 != '') {
                             $('#vehValidate').text(carVal2);
-                            flagAlertMessage(carVal, 'alert');
+                            flagAlertMessage(carVal, 'alert', $pWarning);
                             return false;
                         }
                     }
@@ -1899,7 +1893,8 @@ function resvManager(initData) {
                     // Room fees paid
                     if ($('input#feesPayment').length > 0 && $('input#feesPayment').val() == '') {
 
-                        $('#payChooserMsg').text("Set the Room Fees to an amount, or 0.").show('fade');
+                        flagAlertMessage("Set the Room Fees to an amount, or 0.", 'alert', $pWarning);
+                        $('#payChooserMsg').text("Set the Room Fees to an amount, or 0.").show();
                         $('input#feesPayment').addClass('ui-state-error');
                         return false;
 
@@ -2084,7 +2079,7 @@ function resvManager(initData) {
             }
 
             if (data.error) {
-                flagAlertMessage(data.error, 'error');
+                flagAlertMessage(data.error, 'error', $pWarning);
                 $('#btnDone').val('Save ' + resvTitle).show();
             }
 
@@ -2176,6 +2171,14 @@ function resvManager(initData) {
             $('div#guestSearch').hide();
 
             $('#btnDone').val('Save Family').show();
+
+            // Insurance chooser
+            $('select.hhk-multisel').each( function () {
+                $(this).multiselect({
+                    selectedList: 3
+                });
+            });
+
         }
 
         // Expected Dates Control

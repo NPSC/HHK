@@ -1063,7 +1063,7 @@ CREATE TABLE if not exists `name_insurance` (
   `Status` varchar(4) NOT NULL DEFAULT '',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '',
-  PRIMARY KEY (`idName`, `Insurance_Id`) 
+  PRIMARY KEY (`idName`, `Insurance_Id`)
 ) ENGINE=InnoDB;
 
 
@@ -2135,113 +2135,113 @@ CREATE TABLE if not exists `web_sites` (
 
 
 -- -----------------------------------------------------
--- 
+--
 -- Indexes
--- 
+--
 -- -----------------------------------------------------
 
-ALTER TABLE `activity` 
+ALTER TABLE `activity`
     ADD INDEX `Index_idName` (`idName` ASC);
 
-ALTER TABLE `emergency_contact` 
+ALTER TABLE `emergency_contact`
     ADD INDEX `Index_idName` (`idName` ASC);
 
-ALTER TABLE `fin_application` 
+ALTER TABLE `fin_application`
     ADD INDEX `Index_idGuest` (`idGuest` ASC);
 
-ALTER TABLE `guest_token` 
+ALTER TABLE `guest_token`
     ADD INDEX `Index_idRegistration` (`idRegistration` ASC);
 
-ALTER TABLE `hospital_stay` 
+ALTER TABLE `hospital_stay`
     ADD INDEX `Index_idPatient` (`idPatient` ASC);
-ALTER TABLE `hospital_stay` 
+ALTER TABLE `hospital_stay`
     ADD INDEX `Index_idPsg` (`idPsg` ASC);
-ALTER TABLE `hospital_stay` 
+ALTER TABLE `hospital_stay`
     ADD INDEX `Index_idHospital_Stay` (`idHospital_stay` ASC);
 
-ALTER TABLE `invoice` 
+ALTER TABLE `invoice`
     ADD INDEX `Index_Order_SO_Number` (`Order_Number` ASC, `Suborder_Number` ASC);
 ALTER TABLE `invoice`
     ADD INDEX `Index_idGroup` (`idGroup` ASC);
-ALTER TABLE `invoice` 
+ALTER TABLE `invoice`
     ADD INDEX `Index_Date` (`Invoice_Date` ASC);
 
-ALTER TABLE `invoice_line` 
+ALTER TABLE `invoice_line`
     ADD INDEX `ix_invoice_line_invoice_id` (`Invoice_Id` ASC);
 
-ALTER TABLE `name` 
+ALTER TABLE `name`
     ADD INDEX `Index_Name` (`Name_Last` ASC, `Name_First` ASC);
 
-ALTER TABLE `name_guest` 
+ALTER TABLE `name_guest`
     ADD INDEX `INDEX_IdPsg` (`idPsg` ASC);
 
-ALTER TABLE `payment` 
+ALTER TABLE `payment`
     ADD INDEX `Index_Date` (`Payment_Date` ASC);
 
-ALTER TABLE `payment_auth` 
+ALTER TABLE `payment_auth`
     ADD INDEX `Index_idPayment` (`idPayment` ASC);
 
-ALTER TABLE `payment_info_check` 
+ALTER TABLE `payment_info_check`
     ADD INDEX `Index_idPayment` (`idPayment` ASC);
 
-ALTER TABLE `psg` 
+ALTER TABLE `psg`
     ADD UNIQUE INDEX `idPatient_UNIQUE` (`idPatient` ASC);
 
-ALTER TABLE `registration` 
+ALTER TABLE `registration`
     ADD INDEX `Index_idPsg` (`idPsg` ASC);
 
-ALTER TABLE `reservation` 
+ALTER TABLE `reservation`
     ADD INDEX `Index_idregistration` (`idRegistration` ASC);
-ALTER TABLE `reservation` 
+ALTER TABLE `reservation`
     ADD INDEX `Index_idGuest` (`idGuest` ASC);
-ALTER TABLE `reservation` 
+ALTER TABLE `reservation`
     ADD INDEX `Index_Expected_Arrival` (`Expected_Arrival` ASC);
-ALTER TABLE `reservation` 
+ALTER TABLE `reservation`
     ADD INDEX `Index_Expected_Departure` (`Expected_Departure` ASC);
 ALTER TABLE `reservation`
     ADD INDEX `Index_idHosptial_Stay` (`idHospital_Stay` ASC);
 
-ALTER TABLE `resource_room` 
+ALTER TABLE `resource_room`
     ADD INDEX `Index_idResource` (`idResource` ASC);
 
-ALTER TABLE `resource_use` 
+ALTER TABLE `resource_use`
     ADD INDEX `Index_idResource` (`idResource` ASC);
 
-ALTER TABLE `stays` 
+ALTER TABLE `stays`
     ADD INDEX `index_idVisit_Span` (`idVisit` ASC, `Visit_Span` ASC);
-ALTER TABLE `stays` 
+ALTER TABLE `stays`
     ADD INDEX `index_Span_Start` (`Span_Start_Date` ASC);
-ALTER TABLE `stays` 
+ALTER TABLE `stays`
     ADD INDEX `index_Span_End` (`Span_End_Date` ASC);
-ALTER TABLE `stays` 
+ALTER TABLE `stays`
     ADD INDEX `index_idName` (`idName` ASC);
 
-ALTER TABLE `vehicle` 
+ALTER TABLE `vehicle`
     ADD INDEX `INDEX_LICENSE` (`License_Number` ASC);
-ALTER TABLE `vehicle` 
+ALTER TABLE `vehicle`
     ADD INDEX `INDEX_IdNAME` (`idName` ASC);
-ALTER TABLE `vehicle` 
+ALTER TABLE `vehicle`
     ADD INDEX `INDEX_REG` (`idRegistration` ASC);
 
-ALTER TABLE `visit` 
+ALTER TABLE `visit`
     ADD INDEX `Index_idPrimaryGuest` (`idPrimaryGuest` ASC);
 ALTER TABLE `visit`
     ADD INDEX `Index_idRegistration` (`idRegistration` ASC);
-ALTER TABLE `visit` 
+ALTER TABLE `visit`
     ADD INDEX `Index_idHosp_Stay` (`idHospital_stay` ASC);
-ALTER TABLE `visit` 
+ALTER TABLE `visit`
     ADD INDEX `Index_Span_Start` (`Span_Start` ASC);
 ALTER TABLE `visit`
     ADD INDEX `Index_Span_End` (`Span_End` ASC);
-ALTER TABLE `visit` 
+ALTER TABLE `visit`
     ADD INDEX `Index_Exp_Depart` (`Expected_Departure` ASC);
 
-ALTER TABLE `volunteer_hours` 
+ALTER TABLE `volunteer_hours`
     ADD INDEX `Index_idName` (`idName` ASC);
 
-ALTER TABLE `name_log` 
+ALTER TABLE `name_log`
     ADD INDEX `INDEX_IDNAME` (`idName` ASC);
 
-ALTER TABLE `visit_log` 
+ALTER TABLE `visit_log`
     ADD INDEX `INDX_IDNAME` (`idName` ASC),
     ADD INDEX `INDX_IDVISIT` (`idVisit` ASC, `Span` ASC);

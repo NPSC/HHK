@@ -9,9 +9,9 @@
  */
 
 class CodeVersion {
-    const BUILD = 140;
+    const BUILD = 142;
     const VERSION = 3.12;
-    const PATCH = 3;
+    const PATCH = 4;
     const GIT_Id = "";
 }
 
@@ -303,6 +303,7 @@ class RoomState {
     const Dirty = 'dty';
     const Clean = 'a';
     const TurnOver = 'to';
+    const Ready = 'r';
 }
 class RoomAvailable {
     const Unavailable = 'un';
@@ -414,4 +415,3 @@ class WebSiteCode {
     const Admin = 'a';
     const Root = 'r';
 }
-

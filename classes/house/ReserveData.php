@@ -46,6 +46,7 @@ class ReserveData {
     protected $idHospitalStay = 0;
     protected $idVisit;
     protected $span;
+    protected $spanStatus = '';
     protected $forceNewPsg = FALSE;
     protected $forceNewResv = FALSE;
     protected $fullName = '';
@@ -93,6 +94,10 @@ class ReserveData {
             $this->setSpan(intval(filter_var($post['span'], FILTER_SANITIZE_NUMBER_INT), 10));
         }
 
+        if (isset($post['vstatus'])) {
+            $this->setSpanStatus(filter_var($post['vstatus'], FILTER_SANITIZE_STRING));
+        }
+
         if (isset($post['id'])) {
             $this->setId(intval(filter_var($post['id'], FILTER_SANITIZE_NUMBER_INT), 10));
         }
@@ -117,7 +122,6 @@ class ReserveData {
             $this->setMembersFromPost(filter_var_array($post['mem'], FILTER_SANITIZE_STRING));
         }
 
-        $this->resvTitle = ($reservationTitle == '' ? $labels->getString('guestEdit', 'reservationTitle', 'Reservation') : $reservationTitle);
         $this->saveButtonLabel = 'Save ' . $this->resvTitle;
         $this->resvEarlyArrDays = $uS->ResvEarlyArrDays;
         $this->patAsGuestFlag = $uS->PatientAsGuest;
@@ -137,6 +141,7 @@ class ReserveData {
         $this->checkingInSection = '';
         $this->paymentSection = '';
         $this->errors = '';
+        $this->resvTitle = ($reservationTitle == '' ? $labels->getString('guestEdit', 'reservationTitle', 'Reservation') : $reservationTitle);
 
     }
 
@@ -271,6 +276,10 @@ class ReserveData {
 
     public function getSpan() {
         return $this->span;
+    }
+
+    public function getSpanStatus() {
+        return $this->spanStatus;
     }
 
     public function getConcurrentRooms() {
@@ -444,6 +453,11 @@ class ReserveData {
 
     public function setSpan($id) {
         $this->span = $id;
+        return $this;
+    }
+
+    public function setSpanStatus($id) {
+        $this->spanStatus = $id;
         return $this;
     }
 

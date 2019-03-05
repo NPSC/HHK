@@ -18,6 +18,7 @@ class Family {
     protected $patientAddr;
     protected $showGuestAddr;
     protected $showDemographics;
+    protected $showInsurance;
 
 
     public function __construct(\PDO $dbh, &$rData, $incldEmContact = FALSE) {
@@ -32,6 +33,7 @@ class Family {
         $this->patientAddr = $uS->PatientAddr;
         $this->showGuestAddr = $uS->GuestAddr;
         $this->showDemographics = $uS->ShowDemographics;
+        $this->showInsurance = $uS->InsuranceChooser;
 
         // Prefix
         if (isset($uS->addPerPrefix) === FALSE) {
@@ -42,6 +44,12 @@ class Family {
 
     }
 
+    /**
+     * Load the members of the PSG
+     *
+     * @param \PDO $dbh
+     * @param ReserveData $rData
+     */
     protected function initMembers(\PDO $dbh, ReserveData &$rData) {
 
         $uS = Session::getInstance();
@@ -174,6 +182,13 @@ class Family {
 
     }
 
+    /**
+     * Scan the reservation_guest table for guests initially staying
+     *
+     * @param \PDO $dbh
+     * @param ReserveData $rData
+     * @param int $resvIdGuest
+     */
     public function setGuestsStaying(\PDO $dbh, ReserveData &$rData, $resvIdGuest) {
 
         if ($rData->getIdResv() > 0) {
@@ -265,6 +280,7 @@ class Family {
             $demoMu = '';
             $addressTr = '';
 
+            //Filter out the new guest
             if ($role->getIdName() != $rData->getId()) {
                 continue;
             }
@@ -280,7 +296,7 @@ class Family {
                     . HTMLTable::makeTd($removeIcons));
 
 
-            // Decide if we show the address lin.
+            // Decide if we show the address line.
             if ($role->getIdName() > 0 && $role->getIdName() == $this->getPatientId()) {
                 $shoAddr = $this->patientAddr || ($this->patientAsGuest && $this->showGuestAddr);
             } else {
@@ -352,10 +368,17 @@ class Family {
 
                 if ($this->IncldEmContact) {
                     // Emergency Contact
-                    $demoMu = $this->getEmergencyConntactMu($dbh, $role);
-                } else if ($this->showDemographics) {
+                    $demoMu .= $this->getEmergencyConntactMu($dbh, $role);
+                }
+
+                if ($this->showDemographics) {
                     // Demographics
-                    $demoMu = $this->getDemographicsMarkup($dbh, $role);
+                    $demoMu .= $this->getDemographicsMarkup($dbh, $role);
+                }
+
+                if ($this->showInsurance) {
+                    // Demographics
+                    $demoMu .= $this->getInsuranceMarkup($dbh, $role);
                 }
 
                 $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
@@ -447,6 +470,14 @@ class Family {
 
     }
 
+    protected function getInsuranceMarkup(\PDO $dbh, $role) {
+
+        return HTMLContainer::generateMarkup('div',
+                $role->getRoleMember()->createInsurancePanel($dbh, $role->getRoleMember()->getIdPrefix())
+                , array('style'=>'float:left; margin-top:5px; background-color:white;'));
+
+    }
+
     protected function getEmergencyConntactMu(\PDO $dbh, $role) {
 
         $uS = Session::getInstance();
@@ -463,7 +494,15 @@ class Family {
 
     }
 
-
+    /**
+     * Saves people, hospital and PSG only
+     *
+     * @param \PDO $dbh
+     * @param array $post
+     * @param ReserveData $rData
+     * @param string $userName
+     * @return boolean
+     */
     public function save(\PDO $dbh, $post, ReserveData &$rData, $userName) {
 
         // Verify selected patient
@@ -594,7 +633,7 @@ class FamilyAddGuest extends Family {
                 . HTMLTable::makeTh($AdrCopyDownIcon));
 
 
-        // Staying members are first.
+        // Patient.
         if ($this->patientPrefix > 0) {
 
             $demoMu = '';
@@ -615,6 +654,11 @@ class FamilyAddGuest extends Family {
                 if ($this->showDemographics) {
                     // Demographics
                     $demoMu = $this->getDemographicsMarkup($dbh, $role);
+                }
+
+                if ($this->showInsurance) {
+                    // Demographics
+                    $demoMu .= $this->getInsuranceMarkup($dbh, $role);
                 }
 
                 $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));

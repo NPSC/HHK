@@ -1537,6 +1537,7 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
         IFNULL(`p`.`Notes`, '') AS `Payment_Note`,
         IFNULL(`p`.`External_Id`, '') AS `Payment_External_Id`,
         IFNULL(`p`.`idToken`, 0) as `Payment_idToken`,
+        IFNULL(`p`.`Timestamp`, '') as `Payment_Timestamp`,
         IFNULL(`pa`.`idPayment_auth`, 0) AS `idPayment_auth`,
         IFNULL(`pa`.`Customer_Id`, 0) AS `Charge_Customer_Id`,
         IFNULL(`pa`.`Acct_Number`, `p`.`Data2`) AS `Masked_Account`,

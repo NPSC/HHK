@@ -151,6 +151,8 @@ class ReservationSvcs {
 
         } else if ($uS->RegForm == 2) {
 
+            // IMD and St. Mary's
+
             $roomTitle = '';
             $additionalGuests = array();
             $priGuest = new Guest($dbh, '', 0);
@@ -347,6 +349,21 @@ class ReservationSvcs {
         }
 
         return array('doc'=>$doc, 'style'=>$sty);
+
+    }
+
+    public static function getReservGuests(\PDO $dbh, $idReservation) {
+
+        $idResv = intval($idReservation, 10);
+        $ids = array();
+
+        $stmt = $dbh->query("Select * from reservation_guest where idReservation = $idResv");
+
+        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $ids[$r['idGuest']] = $r['Primary_Guest'];
+        }
+
+        return $ids;
 
     }
 
