@@ -190,10 +190,10 @@ $(document).ready(function() {
 
                     if (data.resv !== undefined) {
                         if (data.warning === undefined) {
-                            flagAlertMessage(data.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle, 'success');
+                            flagAlertMessage(data.resvTitle + ' Saved. ' + (data.resv.rdiv.rStatTitle === undefined ? '' : ' Status: ' + data.resv.rdiv.rStatTitle, 'success'));
                         }
                     } else {
-                        flagAlertMessage(data.resvTitle + ' Saved.', 'success');
+                        flagAlertMessage( (data.resvTitle === undefined ? '' : data.resvTitle) + ' Saved.', 'success');
                     }
                 }
             );

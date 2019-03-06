@@ -1104,6 +1104,8 @@ class ActiveReservation extends Reservation {
         if ($this->payResult !== NULL) {
 
             if (count($this->payResult) > 0) {
+                $this->payResult['resvTitle'] = $this->reserveData->getResvTitle();
+
                 return $this->payResult;
             }
         }

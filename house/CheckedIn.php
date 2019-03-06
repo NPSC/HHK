@@ -150,7 +150,6 @@ if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FA
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
-        <script type="text/javascript" src="js/embed.js" data-displaymode="popup" data-hostname="https://online.instamed.com/providers"></script>
 
         <?php echo $sty; ?>
     </head>

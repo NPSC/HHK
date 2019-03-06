@@ -1,4 +1,4 @@
-/* global getDoc, memberData, rctMkup, psgTabIndex, getAgent */
+/* global getDoc, memberData, rctMkup, psgTabIndex, getAgent, pmtMkup */
 
 /**
  * guestload.js
@@ -113,14 +113,6 @@ $(document).ready(function () {
             ) * 1.1 );
         }
     });
-
-// Guest Photo
-    if (memData.guestPhoto) {
-        $("div#gphoto").dropzone({
-            url: "/GuestEdit.php",
-            paramName: 'photo'
-        });
-    }
     
     $("#divFuncTabs").tabs({
         collapsible: true
@@ -167,7 +159,7 @@ $(document).ready(function () {
     }
 
     if (pmtMkup !== '') {
-        $('#paymentMessage').val(pmtMkup).show();
+        $('#paymentMessage').html(pmtMkup).show();
     }
 
     $('.hhk-view-visit').click(function () {

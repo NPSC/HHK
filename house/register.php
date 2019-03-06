@@ -313,7 +313,8 @@ if ($uS->UseWLnotes) {
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
-
+        <?php echo INS_EMBED_JS; ?>
+        
         <style>
            #version {
             height: 15px;
