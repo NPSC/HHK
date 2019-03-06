@@ -360,7 +360,7 @@ class PaymentChooser {
         }
 
         // no invoices
-        $payTypes = removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]);
+        $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
         unset($payTypes[PayType::Invoice]);
 
         $labels = new Config_Lite(LABEL_FILE);
@@ -579,7 +579,7 @@ ORDER BY v.idVisit , v.Span;");
                         , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
                 );
 
-                $payTypes = removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]);
+                $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
                 unset($payTypes[PayType::Invoice]);
 
                 // House return invoices
