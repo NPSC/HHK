@@ -1502,8 +1502,8 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vlist_pments` AS
    SELECT 
-        `i`.`idInvoice` AS `idInvoice`,
-        `i`.`Invoice_Number` AS `Invoice_Number`,
+        ifnull(`i`.`idInvoice` ,0) AS `idInvoice`,
+        ifnull(`i`.`Invoice_Number`, '') AS `Invoice_Number`,
         `i`.`Amount` AS `Invoice_Amount`,
         `i`.`Sold_To_Id` AS `Sold_To_Id`,
         IFNULL(`nv`.`Vol_Status`, '') AS `Bill_Agent`,

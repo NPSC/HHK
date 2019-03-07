@@ -42,14 +42,14 @@ class Login {
 
         // Check SsL
         $ssl = $config->getBool('site', 'SSL', FALSE);
-        $secureComp = new SecurityComponent(FALSE);
+        $secureComp = new SecurityComponent();
 
         if ($ssl === TRUE) {
 
             // Must access pages through SSL
             if ($secureComp->isHTTPS() === FALSE) {
                 // non-SSL access.
-                header("Location: " . $secureComp->getRootURL());
+                header("Location: " . $secureComp->getRootURL() . 'index.php');
             }
         }
 
@@ -176,7 +176,7 @@ class Login {
 
     }
 
-    protected function getChallengeVar() {
+    public function getChallengeVar() {
 
         // get session instance
         $uS = Session::getInstance();

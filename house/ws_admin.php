@@ -19,6 +19,8 @@ require(SEC . 'ChallengeGenerator.php');
 
 require (MEMBER . 'MemberSearch.php');
 
+require (PMT . 'GatewayConnect.php');
+
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
 

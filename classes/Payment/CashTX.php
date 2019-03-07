@@ -20,6 +20,10 @@ class CashResponse extends PaymentResponse {
         $this->payNotes = $payNote;
     }
 
+    public function getStatus() {
+        return CreditPayments::STATUS_APPROVED;
+    }
+
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         if ($this->getAmount() != 0) {
@@ -145,16 +149,22 @@ class CashTX {
 
 class ManualChargeResponse extends PaymentResponse {
 
-    function __construct($amount, $idPayor, $invoiceNumber, $chargeType, $chargeAcct, $payNote = '', $idGuestToken = 0) {
+    protected $cardNum;
+    protected $cardType;
+
+
+
+    function __construct($amount, $idPayor, $invoiceNumber, $cardType, $cardAcct, $payNote = '') {
 
         $this->paymentType = PayType::ChargeAsCash;
         $this->idPayor = $idPayor;
         $this->amount = $amount;
         $this->invoiceNumber = $invoiceNumber;
-        $this->cardNum = $chargeAcct;
-        $this->cardType = $chargeType;
+        $this->cardNum = $cardAcct;
+        $this->cardType = $cardType;
+
         $this->payNotes = $payNote;
-        $this->idGuestToken = $idGuestToken;
+
     }
 
 
@@ -162,29 +172,31 @@ class ManualChargeResponse extends PaymentResponse {
         return $this->cardType;
     }
 
+    public function getCardNum() {
+        return $this->cardNum;
+    }
+
+    public function getPaymentDate() {
+
+    }
+
+    public function getStatus() {
+
+        return CreditPayments::STATUS_APPROVED;;
+    }
+
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         $chgTypes = readGenLookupsPDO($dbh, 'Charge_Cards');
-        $cgType = $this->cardType;
+        $cgType = $this->getChargeType();
 
         if (isset($chgTypes[$this->getChargeType()])) {
             $cgType = $chgTypes[$this->getChargeType()][1];
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd($cgType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardNum));
+        $tbl->addBodyTr(HTMLTable::makeTd($cgType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getCardNum()));
 
-         if ($this->idGuestToken > 0) {
-
-            $tknRs = CreditToken::getTokenRsFromId($dbh, $this->idGuestToken);
-
-            if ($tknRs->CardHolderName->getStoredVal() != '') {
-                $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($tknRs->CardHolderName->getStoredVal()));
-            }
-
-            $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
-
-        }
     }
 }
 
@@ -227,10 +239,10 @@ class ChargeAsCashTX {
             $pDetailRS = new Payment_AuthRS();
             $pDetailRS->idPayment->setNewVal($idPayment);
             $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
-            $pDetailRS->Acct_Number->setNewVal($pr->cardNum);
+            $pDetailRS->Acct_Number->setNewVal($pr->getCardNum());
             $pDetailRS->Card_Type->setNewVal($cType);
             $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
-            $pDetailRS->Invoice_Number->setNewVal($pr->getInvoice());
+            $pDetailRS->Invoice_Number->setNewVal($pr->getInvoiceNumber());
 
             $pDetailRS->Updated_By->setNewVal($username);
             $pDetailRS->Last_Updated->setNewVal($paymentDate);
@@ -282,10 +294,10 @@ class ChargeAsCashTX {
             $pDetailRS = new Payment_AuthRS();
             $pDetailRS->idPayment->setNewVal($idPayment);
             $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
-            $pDetailRS->Acct_Number->setNewVal($pr->cardNum);
+            $pDetailRS->Acct_Number->setNewVal($pr->getCardNum());
             $pDetailRS->Card_Type->setNewVal($cType);
             $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
-            $pDetailRS->Invoice_Number->setNewVal($pr->getInvoice());
+            $pDetailRS->Invoice_Number->setNewVal($pr->getInvoiceNumber());
             $pDetailRS->Updated_By->setNewVal($username);
             $pDetailRS->Last_Updated->setNewVal($paymentDate);
             $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Paid);
@@ -334,10 +346,10 @@ class ChargeAsCashTX {
         $pDetailRS = new Payment_AuthRS();
         $pDetailRS->idPayment->setNewVal($payRs->idPayment->getStoredVal());
         $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
-        $pDetailRS->Acct_Number->setNewVal($pr->cardNum);
-        $pDetailRS->Card_Type->setNewVal($pr->cardType);
+        $pDetailRS->Acct_Number->setNewVal($pr->getCardNum());
+        $pDetailRS->Card_Type->setNewVal($pr->getChargeType());
         $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
-        $pDetailRS->Invoice_Number->setNewVal($pr->getInvoice());
+        $pDetailRS->Invoice_Number->setNewVal($pr->getInvoiceNumber());
 
         $pDetailRS->Updated_By->setNewVal($username);
         $pDetailRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));

@@ -22,8 +22,10 @@ require (MEMBER . 'OrgMember.php');
 require (MEMBER . "Addresses.php");
 require (MEMBER . "EmergencyContact.php");
 
+require (PMT . 'GatewayConnect.php');
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
+require (PMT . 'PaymentGateway.php');
 require (PMT . 'Payments.php');
 require (PMT . 'HostedPayments.php');
 require (PMT . 'Receipt.php');
@@ -49,7 +51,7 @@ require (HOUSE . 'RoomReport.php');
 
 require (CLASSES . 'CreateMarkupFromDB.php');
 require (CLASSES . 'Notes.php');
-require_once(SEC . 'ChallengeGenerator.php');
+require(SEC . 'ChallengeGenerator.php');
 
 
 try {
@@ -59,9 +61,6 @@ try {
 }
 
 $dbh = $wInit->dbh;
-$pageTitle = $wInit->pageTitle;
-
-$menuMarkup = $wInit->generatePageMenu();
 
 // get session instance
 $uS = Session::getInstance();
@@ -71,18 +70,6 @@ $totalRest = $uS->PreviousNights;
 
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
-
-
-// Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("help");
-
-$resultMessage = $alertMsg->createMarkup();
 
 $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
@@ -95,6 +82,7 @@ $defaultRegisterTab = 0;
 $currentReservations = '';
 $uncommittedReservations = '';
 $waitlist = '';
+
 $rvCols = array();
 $wlCols = array();
 
@@ -104,10 +92,19 @@ if ($uS->DefaultRegisterTab > 0 && $uS->DefaultRegisterTab < 5) {
 }
 
 // Hosted payment return
-if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)) === FALSE) {
+try {
 
-    $receiptMarkup = $payResult->getReceiptMarkup();
-    $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+    if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
+
+        $receiptMarkup = $payResult->getReceiptMarkup();
+
+        if ($payResult->getDisplayMessage() != '') {
+            $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        }
+    }
+
+} catch (Hk_Exception_Runtime $ex) {
+    $paymentMarkup = $ex->getMessage();
 }
 
 
@@ -288,7 +285,7 @@ if ($uS->UseWLnotes) {
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title><?php echo $pageTitle; ?></title>
+        <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
@@ -298,9 +295,9 @@ if ($uS->UseWLnotes) {
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
 
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="js/fullcalendar.min.js"></script>
         <script type="text/javascript" src="../js/hhk-scheduler.min.js"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
@@ -316,7 +313,8 @@ if ($uS->UseWLnotes) {
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
-
+        <?php echo INS_EMBED_JS; ?>
+        
         <style>
            #version {
             height: 15px;
@@ -350,8 +348,8 @@ if ($uS->UseWLnotes) {
             }
         </style>
     </head>
-    <body <?php if ($wInit->testVersion) {echo "class='testbody'";}?>>
-        <?php echo $menuMarkup; ?>
+    <body <?php if ($wInit->testVersion) {echo "class='testbody'";}?> >
+        <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <div style="float:left; margin-top:10px;">
                 <h2><?php echo $wInit->pageHeading; ?><?php echo RoomReport::getGlobalNightsCounter($dbh, $totalRest); ?><?php echo RoomReport::getGlobalStaysCounter($dbh); ?>
@@ -359,8 +357,9 @@ if ($uS->UseWLnotes) {
                 <input type="text" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" /></span>
                 </h2>
             </div>
-            <div id="divAlertMsg" style="clear:left;"><?php echo $resultMessage; ?></div>
-            <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
+
+            <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
+            </div>
             <div style="clear:both;"></div>
             <form name="frmdownload" action="#" method="post">
             <div id="mainTabs" style="display:none; font-size:.9em;">
@@ -479,9 +478,12 @@ if ($uS->UseWLnotes) {
                 </tr>
             </table>
         </div>
+
         <div class="gmenu"></div>
+
         <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
-        <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
+        <form name="xform" id="xform" method="post"></form>
+
         <div id="cardonfile" style="font-size: .9em; display:none;"></div>
         <div id="statEvents" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;"></div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>

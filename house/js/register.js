@@ -746,6 +746,10 @@ $(document).ready(function () {
     if (pmtMkup !== '') {
         $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
     }
+
+//    if ($('iframe#instamed').length > 0) {
+//        $('iframe#instamed').remove();
+//    }
     
     $(':input[type="button"], :input[type="submit"]').button();
 
@@ -779,7 +783,7 @@ $(document).ready(function () {
     $('#vstays, #vresvs, #vwls, #vuncon').on('click', '.stupCredit', function (event) {
         event.preventDefault();
         $("#divAlert1, #paymentMessage").hide();
-        updateCredit($(this).data('id'), $(this).data('reg'), $(this).data('name'), 'cardonfile');
+        updateCredit($(this).data('id'), $(this).data('reg'), $(this).data('name'), 'cardonfile', 'register.php');
     });
     $('#vstays').on('click', '.stckout', function (event) {
         event.preventDefault();
@@ -1734,7 +1738,7 @@ $(document).ready(function () {
            dataSrc: 'waitlist'
        },
        order: [[ (showCreatedDate ? 4 : 3), 'asc' ]],
-       drawCallback: function (settings) {
+       drawCallback: function () {
             $('#spnNumWaitlist').text(this.api().rows().data().length);
             $('#waitlist .gmenu').menu();
        },

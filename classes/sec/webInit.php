@@ -27,9 +27,29 @@ class webInit {
 
     function __construct($page_Type = WebPageCode::Page, $addCSP = TRUE) {
 
-        // check session for login - redirects to index.php otherwise
-        $secureComp = new SecurityComponent();
-        $secureComp->die_if_not_Logged_In($page_Type, "index.php");
+        SecurityComponent::rerouteIfNotLoggedIn($page_Type, 'index.php');
+
+        // define db connection obj
+        try {
+
+            $this->dbh = initPDO(FALSE);
+
+        } catch (Hk_Exception_Runtime $hex) {
+
+            if ($page_Type == WebPageCode::Page) {
+                echo('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
+            } else {
+                $rtn = array("error" => $hex->getMessage());
+                echo json_encode($rtn);
+            }
+
+            exit();
+        }
+
+        // Page authorization check
+        $this->page = new ScriptAuthClass($this->dbh);
+
+        $this->page->Authorize_Or_Die();
 
         // get session instance
         $uS = Session::getInstance();
@@ -55,12 +75,6 @@ class webInit {
             $this->pageTitle = "TEST - " . $this->siteName;
         }
 
-        // define db connection obj
-        $this->dbh = initPDO(FALSE);
-
-        // Page authorization check
-        $this->page = new ScriptAuthClass($this->dbh);
-        $this->page->Authorize_Or_Die();
 
         $this->pageHeading = $this->page->get_Page_Title();
 
@@ -82,7 +96,7 @@ class webInit {
         } else {
             if ($uS->timeout_idle < time()) {
                 $uS->logged = FALSE;
-                $secureComp->die_if_not_Logged_In($page_Type, "index.php");
+                $this->page->die_if_not_Logged_In($page_Type, "index.php");
             } else {
                 $uS->timeout_idle = $t + ($uS->SessionTimeout * 60);
             }
@@ -90,10 +104,9 @@ class webInit {
 
         if ($addCSP) {
             $cspURL = $this->page->getHostName();
-            header("Content-Security-Policy: default-src $cspURL; script-src $cspURL 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
-            header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL 'unsafe-inline'; style-src $cspURL 'unsafe-inline';"); // IE 10+
-            header('X-Frame-Options: SAMEORIGIN');
-            header('X-XSS-Protection: 1; mode=block');
+            header("Content-Security-Policy: default-src $cspURL https://online.instamed.com https://pay.instamed.com; script-src $cspURL 'unsafe-inline' https://online.instamed.com; style-src $cspURL https://online.instamed.com 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+            header("X-Content-Security-Policy: default-src $cspURL https://online.instamed.com; script-src $cspURL https://online.instamed.com  'unsafe-inline'; style-src $cspURL https://online.instamed.com 'unsafe-inline';"); // IE 10+
+//            header('X-Frame-Options: SAMEORIGIN');
 
             if (SecurityComponent::isHTTPS()) {
                 header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
@@ -186,6 +199,10 @@ class webInit {
         $uS = Session::getInstance();
 
         // Load sys config table entries.
+        SysConfig::getCategory($this->dbh, $uS, "'f'", $uS->sconf);
+        SysConfig::getCategory($this->dbh, $uS, "'r'", $uS->sconf);
+        SysConfig::getCategory($this->dbh, $uS, "'d'", $uS->sconf);
+
         SysConfig::getCategory($this->dbh, $uS, "'h'", $uS->sconf);
 
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`

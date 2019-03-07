@@ -277,6 +277,24 @@ class TokenResponse extends PaymentResponse {
         $this->payNotes = $payNotes;
     }
 
+    public function getStatus() {
+        switch ($this->response->getStatus()) {
+
+            case MpStatusValues::Approved:
+                $pr = CreditPayments::STATUS_APPROVED;
+                break;
+
+            case MpStatusValues::Declined:
+                $pr = CreditPayments::STATUS_DECLINED;
+                break;
+
+            default:
+                $pr = CreditPayments::STATUS_DECLINED;
+        }
+
+        return $pr;
+    }
+
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));

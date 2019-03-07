@@ -14,6 +14,23 @@ require (DB_TABLES . 'registrationRS.php');
 require (DB_TABLES . 'ActivityRS.php');
 require (DB_TABLES . 'visitRS.php');
 require (DB_TABLES . 'ReservationRS.php');
+require (DB_TABLES . 'PaymentGwRS.php');
+require (DB_TABLES . 'PaymentsRS.php');
+
+require (PMT . 'GatewayConnect.php');
+require (CLASSES . 'MercPay/MercuryHCClient.php');
+require (CLASSES . 'MercPay/Gateway.php');
+
+require (PMT . 'PaymentGateway.php');
+require (PMT . 'Payments.php');
+require (PMT . 'HostedPayments.php');
+require (PMT . 'Receipt.php');
+require (PMT . 'Invoice.php');
+require (PMT . 'InvoiceLine.php');
+require (PMT . 'CreditToken.php');
+require (PMT . 'CheckTX.php');
+require (PMT . 'CashTX.php');
+require (PMT . 'Transaction.php');
 
 require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');
@@ -24,9 +41,12 @@ require (MEMBER . "EmergencyContact.php");
 require (CLASSES . 'CleanAddress.php');
 require (CLASSES . 'AuditLog.php');
 require (CLASSES . 'PaymentSvcs.php');
+require (CLASSES . 'Purchase/Item.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require CLASSES . 'TableLog.php';
 
+require (HOUSE . 'PaymentManager.php');
+require (HOUSE . 'PaymentChooser.php');
 require (HOUSE . 'psg.php');
 require (HOUSE . 'RoleMember.php');
 require (HOUSE . 'Role.php');
@@ -72,33 +92,19 @@ $span = 0;
 $visitStatus = '';
 
 // Hosted payment return
-if (isset($_POST['CardID']) || isset($_POST['PaymentID'])) {
+try {
 
-    require (DB_TABLES . 'PaymentGwRS.php');
-    require (DB_TABLES . 'PaymentsRS.php');
+    if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
-    require (CLASSES . 'MercPay/MercuryHCClient.php');
-    require (CLASSES . 'MercPay/Gateway.php');
-
-    require (CLASSES . 'Purchase/Item.php');
-
-    require (PMT . 'Payments.php');
-    require (PMT . 'HostedPayments.php');
-    require (PMT . 'Receipt.php');
-    require (PMT . 'Invoice.php');
-    require (PMT . 'InvoiceLine.php');
-    require (PMT . 'CreditToken.php');
-    require (PMT . 'CheckTX.php');
-    require (PMT . 'CashTX.php');
-    require (PMT . 'Transaction.php');
-
-    require (HOUSE . 'PaymentManager.php');
-    require (HOUSE . 'PaymentChooser.php');
-
-    if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)) === FALSE) {
         $receiptMarkup = $payResult->getReceiptMarkup();
-        $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+
+        if ($payResult->getDisplayMessage() != '') {
+            $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        }
     }
+
+} catch (Hk_Exception_Runtime $ex) {
+    $paymentMarkup = $ex->getMessage();
 }
 
 
@@ -193,8 +199,8 @@ $resvObjEncoded = json_encode($resvAr);
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
@@ -209,6 +215,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
+        <?php echo INS_EMBED_JS; ?>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>

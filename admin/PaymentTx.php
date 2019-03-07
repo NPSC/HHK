@@ -32,15 +32,17 @@ function makeParmtable($parms) {
 
     $reqTbl = new HTMLTable();
 
-    foreach ($parms as $key => $v) {
-        if ($key == 'MerchantID' && $v != '') {
-            $v = '******';
-        }
-        if ($key == 'Token' && $v != '') {
-            $v = '******';
-        }
+    if (is_array($parms)) {
 
-        $reqTbl->addBodyTr(HTMLTable::makeTd($key . ':', array('class' => 'tdlabel')) . HTMLTable::makeTd($v));
+        foreach ($parms as $key => $v) {
+            if ($key == 'MerchantID' && $v != '') {
+                $v = '******';
+            }
+
+            $reqTbl->addBodyTr(HTMLTable::makeTd($key . ':', array('class' => 'tdlabel')) . HTMLTable::makeTd($v));
+        }
+    } else {
+        $reqTbl->addBodyTr(HTMLTable::makeTd($parms));
     }
 
     return $reqTbl->generateMarkup(array('style' => 'width:100%;'));
@@ -86,6 +88,11 @@ if (isset($_POST['btnGo'])) {
         EditRS::loadRow($r, $txRs);
 
         $req = json_decode($txRs->Vendor_Request->getStoredVal(), TRUE);
+
+        if (is_null($req)) {
+            $req = $txRs->Vendor_Request->getStoredVal();
+        }
+
         $res = json_decode($txRs->Vendor_Response->getStoredVal(), TRUE);
 
         // Filter on names
@@ -107,7 +114,7 @@ if (isset($_POST['btnGo'])) {
         // Table header and top row.
         $tbl->addBodyTr(HTMLTable::makeTh('Date') . HTMLTable::makeTh('Transaction Code') . HTMLTable::makeTh('Result Code') . HTMLTable::makeTh('Amount') . HTMLTable::makeTh('Auth Code'));
         $tbl->addBodyTr(
-                HTMLTable::makeTd(date('m d, Y H:i', strtotime($txRs->Timestamp->getStoredVal())))
+                HTMLTable::makeTd(date('m d, Y H:i:s', strtotime($txRs->Timestamp->getStoredVal())))
                 . HTMLTable::makeTd($txRs->GwTransCode->getStoredVal())
                 . HTMLTable::makeTd($txRs->GwResultCode->getStoredVal())
                 . HTMLTable::makeTd('')  //$txRs->Amount->getStoredVal())
@@ -145,6 +152,7 @@ $txList = array(
     array(0=>'CreditVoidSaleToken', 1=>'Credit Void Sale Token'),
     array(0=>'CreditReturnToken', 1=>'Credit Return Token'),
     array(0=>'CreditVoidReturnToken', 1=>'Credit Void Return Token'),
+    array(0=>'Webhook', 1=>'Webhook'),
 
 );
 $txSelector = HTMLSelector::generateMarkup(

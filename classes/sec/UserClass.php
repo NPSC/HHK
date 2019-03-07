@@ -16,7 +16,7 @@ class UserClass {
         $chlgen = new ChallengeGenerator(FALSE);
 
         // get challenge variable
-        $challenge = $chlgen->getChallengeVar('challenge');
+        $challenge = $chlgen->getChallengeVar();
 
         if ($challenge === FALSE) {
             $this->logMessage = "Challange variable is missing.  ";
@@ -122,7 +122,7 @@ class UserClass {
 
     public static function getUserCredentials(\PDO $dbh, $username) {
 
-        if (!is_string($username)) {
+        if (!is_string($username) || $username == '') {
             return NULL;
         }
 

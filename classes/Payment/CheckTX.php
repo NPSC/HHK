@@ -22,6 +22,10 @@ class CheckResponse extends PaymentResponse {
 
     }
 
+    public function getStatus() {
+        return CreditPayments::STATUS_APPROVED;
+    }
+
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Check:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
@@ -161,6 +165,10 @@ class TransferResponse extends PaymentResponse {
         $this->checkNumber = $transferAcct;
         $this->payNotes = $payNotes;
 
+    }
+
+    public function getStatus() {
+        return CreditPayments::STATUS_APPROVED;
     }
 
     public function receiptMarkup(\PDO $dbh, &$tbl) {

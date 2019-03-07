@@ -1280,8 +1280,10 @@ class HouseServices {
         if (isset($post['cbNewCard'])) {
 
             try {
+                // Payment Gateway
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-                $dataArray = PaymentSvcs::initCardOnFile($dbh, $uS->ccgw, $uS->siteName, $idGuest, $idGroup, '', $postBackPage);
+                $dataArray = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idGroup, '', $postBackPage);
 
             } catch (Hk_Exception_Payment $ex) {
 

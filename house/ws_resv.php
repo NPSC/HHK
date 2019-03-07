@@ -37,6 +37,7 @@ require (CLASSES . 'US_Holidays.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'FinAssistance.php');
 require CLASSES . 'TableLog.php';
+require (PMT . 'GatewayConnect.php');
 
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
@@ -53,6 +54,7 @@ require (PMT . 'CreditToken.php');
 require (PMT . 'Transaction.php');
 require (PMT . 'CashTX.php');
 require (PMT . 'CheckTX.php');
+require (PMT . 'PaymentGateway.php');
 
 require (CLASSES . 'Purchase/Item.php');
 

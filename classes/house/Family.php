@@ -768,5 +768,3 @@ class JoinNewFamily extends Family {
 
     }
 }
-
-

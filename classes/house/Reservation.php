@@ -14,6 +14,7 @@ class Reservation {
     protected $reserveData;
     protected $reservRs;
     protected $family;
+    protected $payResult;
 
     function __construct(ReserveData $reserveData, $reservRs, $family) {
 
@@ -433,9 +434,14 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     $dataArray['vfee'] = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
                 }
 
-        //            $dataArray['pay'] =
-        //                    PaymentChooser::createResvMarkup($dbh, $guest->getIdName(), $reg, removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]), $resv->getExpectedPayType(), $uS->ccgw);
+                // Card on file
+                if ($uS->ccgw != '') {
 
+                    $dataArray['cof'] = HTMLcontainer::generateMarkup('div' ,HTMLContainer::generateMarkup('fieldset',
+                            HTMLContainer::generateMarkup('legend', 'Credit', array('style'=>'font-weight:bold;'))
+                            . HouseServices::viewCreditTable($dbh, $resv->getIdRegistration(), $resv->getIdGuest())
+                        ,array('style'=>'float:left;padding:5px;')));
+                }
             }
 
             // Vehicles
@@ -448,7 +454,6 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 $statusText .= ' for Room ' . $resv->getRoomTitle($dbh);
                 $hideCheckinButton = FALSE;
             }
-
         }
 
         if ($resv->isNew() || $resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
@@ -1095,10 +1100,22 @@ class ActiveReservation extends Reservation {
 
     public function createMarkup(\PDO $dbh) {
 
+        // Credit payment?
+        if ($this->payResult !== NULL) {
+
+            if (count($this->payResult) > 0) {
+                $this->payResult['resvTitle'] = $this->reserveData->getResvTitle();
+
+                return $this->payResult;
+            }
+        }
+
+        // Checking In?
         if ($this->gotoCheckingIn === 'yes' && $this->reserveData->getIdResv() > 0) {
             return array('gotopage'=>'CheckingIn.php?rid=' . $this->reserveData->getIdResv());
         }
 
+        // Verify reserve status.
         if ($this->reservRs->Status->getStoredVal() == '') {
             $this->reservRs->Status->setStoredVal(ReservationStatus::Waitlist);
         }
@@ -1262,6 +1279,21 @@ class ActiveReservation extends Reservation {
         // Room Choice
         $this->setRoomChoice($dbh, $resv, $idRescPosted);
 
+        // Add a new card
+        if (isset($post['cbNewCard'])) {
+
+            try {
+                // Payment Gateway
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+
+                $this->payResult = $gateway->initCardOnFile($dbh, $uS->siteName, $resv->getIdGuest(), $reg->getIdRegistration(), '', 'Reserve.php?rid=' . $resv->getIdReservation());
+
+            } catch (Hk_Exception_Payment $ex) {
+
+                $this->reserveData->addError($ex->getMessage());
+            }
+        }
+
         return $this;
     }
 
@@ -1305,7 +1337,6 @@ class ActiveReservation extends Reservation {
 
 class CheckingIn extends ActiveReservation {
 
-    protected $payResult;
     protected $visit;
     protected $resc;
     protected $errors;
@@ -1472,14 +1503,14 @@ WHERE r.idReservation = " . $rData->getIdResv());
         parent::save($dbh, $post);
 
         if ($this->reserveData->hasError() === FALSE) {
-            $this->checkIn($dbh, $post);
+            $this->saveCheckIn($dbh, $post);
         }
 
         return $this;
 
     }
 
-    protected function checkIn(\PDO $dbh, $post) {
+    protected function saveCheckIn(\PDO $dbh, $post) {
 
         $uS = Session::getInstance();
 
@@ -1593,8 +1624,6 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 } else {
                     $pmp->setKeyDepositPayment($depBalance);
                 }
-
-
 
             } else if ($pmp->getKeyDepositPayment() > 0) {
 
@@ -2349,4 +2378,3 @@ class StaticReservation extends ActiveReservation {
         return array();
     }
 }
-

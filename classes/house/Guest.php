@@ -177,4 +177,3 @@ class Guest extends Role {
     }
 
 }
-

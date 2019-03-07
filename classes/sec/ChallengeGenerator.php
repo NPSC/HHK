@@ -11,15 +11,12 @@
 class ChallengeGenerator{
 
   function __ChallengeGenerator($clearSession=true){
-    if($clearSession){
-      $this->clearVars();
-    }
-  }
 
-  function clearVars(){
-    // destroy existing session
-    $ssn = Session::getInstance();
-    $ssn->destroy();
+    if($clearSession){
+        $ssn = Session::getInstance();
+        unset($ssn->challenge);
+        unset($ssn->Challtries);
+    }
   }
 
   function setChallengeVar(){

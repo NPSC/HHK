@@ -119,8 +119,7 @@ class History {
         }
 
         // Reservation page name
-        $config = new Config_Lite(ciCFG_FILE);
-        $page = $config->getString('house', 'ReservationPage', 'Reserve.php');
+        $page = 'Reserve.php';
 
         $whDate = '';
 
@@ -154,7 +153,6 @@ class History {
         $uS = Session::getInstance();
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
-        $config = new Config_Lite(ciCFG_FILE);
         $returnRows = array();
 
         foreach ($this->resvEvents as $r) {

@@ -9,9 +9,9 @@
  */
 
 class CodeVersion {
-    const BUILD = 142;
-    const VERSION = 3.12;
-    const PATCH = 4;
+    const BUILD = 143;
+    const VERSION = 3.13;
+    const PATCH = 0;
     const GIT_Id = "";
 }
 
@@ -339,6 +339,7 @@ class TransMethod {
     const Cash = 'cash';
     const Check = 'check';
     const Transfer = 'txfer';
+    const Webhook = 'wh';
 }
 
 class TransType {
@@ -389,6 +390,12 @@ class VolMemberType {
     const BillingAgent = 'ba';
 }
 
+class WebHookStatus {
+    const Complete = 'c';
+    const Error = 'e';
+    const Init = 'i';
+}
+
 class WebRole {
     const DefaultRole = 100;
     const WebUser = 100;
@@ -408,4 +415,3 @@ class WebSiteCode {
     const Admin = 'a';
     const Root = 'r';
 }
-

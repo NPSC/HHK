@@ -64,6 +64,7 @@ require (HOUSE . 'VisitCharges.php');
 require (CLASSES . 'FinAssistance.php');
 require (CLASSES . 'Notes.php');
 
+require (PMT . 'GatewayConnect.php');
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
 require (CLASSES . 'PaymentSvcs.php');
@@ -76,6 +77,7 @@ require (PMT . 'InvoiceLine.php');
 require (PMT . 'CreditToken.php');
 require (PMT . 'Transaction.php');
 require (PMT . 'Receipt.php');
+require (PMT . 'PaymentGateway.php');
 require (PMT . 'CashTX.php');
 require (PMT . 'CheckTX.php');
 
@@ -114,32 +116,24 @@ $showSearchOnly = TRUE;
 
 $memberFlag = SecurityComponent::is_Authorized("guestadmin");
 
-// Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert2");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("uh-oh");
-
-
-
-
 $receiptMarkup = '';
+$paymentMarkup = '';
+
 
 // Hosted payment return
-if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)) === FALSE) {
+try {
 
-    $receiptMarkup = $payResult->getReceiptMarkup();
+    if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
 
-    if ($payResult->getDisplayMessage() != '') {
+        $receiptMarkup = $payResult->getReceiptMarkup();
 
-        $alertMsg->set_Context(alertMessage::Alert);
-        $alertMsg->set_Text($payResult->getDisplayMessage());
-        $alertMsg->set_DisplayAttr("block");
-        $resultMessage = $alertMsg->createMarkup();
+        if ($payResult->getDisplayMessage() != '') {
+            $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        }
     }
+
+} catch (Hk_Exception_Runtime $ex) {
+    $paymentMarkup = $ex->getMessage();
 }
 
 
@@ -479,19 +473,11 @@ if (isset($_POST["btnSubmit"])) {
         }
 
         // success
-        $alertMsg->set_Context(alertMessage::Notice);
-        $alertMsg->set_Text($msg);
-        $alertMsg->set_DisplayAttr("block");
-        $resultMessage = $alertMsg->createMarkup();
+        $resultMessage = $msg;
 
 
     } catch (Exception $ex) {
-
-        $alertMsg->set_Context(alertMessage::Alert);
-        $alertMsg->set_Text($ex->getMessage());
-        $alertMsg->set_DisplayAttr("block");
-        $resultMessage = $alertMsg->createMarkup();
-
+        $resultMessage = $ex->getMessage();
     }
 }
 
@@ -784,16 +770,6 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && count($d
 
 }
 
-// Instantiate the alert message control
-$xhrMsg = new alertMessage("divAlert1");
-$xhrMsg->set_DisplayAttr("none");
-$xhrMsg->set_Context(alertMessage::Success);
-$xhrMsg->set_iconId("alrIcon");
-$xhrMsg->set_styleId("alrResponse");
-$xhrMsg->set_txtSpanId("alrMessage");
-$xhrMsg->set_Text("uh-oh");
-
-$alertMessage = $xhrMsg->createMarkup();
 
 // Save guest Id.
 $uS->guestId = $id;
@@ -804,24 +780,24 @@ $uS->guestId = $id;
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
+        <meta http-equiv="x-ua-compatible" content="IE=edge">
 
         <?php echo JQ_UI_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
-        <?php echo DROPZONE_CSS; ?>
         <?php echo FAVICON; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
@@ -830,10 +806,11 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo DROPZONE_JS; ?>"></script>
+        <?php echo INS_EMBED_JS; ?>
+
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
-        <?php echo $menuMarkup; ?>
+        <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <div style="float:left; margin-right: 90px; margin-top:5px;">
                 <?php echo $guestName; ?>
@@ -845,17 +822,16 @@ $uS->guestId = $id;
                 <input type="text" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" />
             </div>
             <div style="clear:both;"></div>
-            <?php echo $resultMessage;  echo $alertMessage; ?>
+
             <?php if ($showSearchOnly === FALSE) { ?>
             <form action="GuestEdit.php" method="post" id="form1" name="form1" >
+                <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
 
-                <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
+                <div style="clear:left;float:left;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
                     <?php echo $nameMarkup; ?>
                     <?php echo $contactLastUpdated; ?>
-                    <?php echo $guestPhotoMU; ?>
                 </div>
                 <div style="clear:both;"></div>
-                <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
                 <div class="hhk-showonload hhk-tdbox" style="display:none;" >
                 <div id="divNametabs" class="hhk-tdbox hhk-member-detail" style="min-width: 850px;">
                     <ul>
@@ -865,9 +841,13 @@ $uS->guestId = $id;
                         <?php if ($memberFlag) {  ?>
                         <li id="visitLog"><a href="#vvisitLog">Activity Log</a></li>
                         <?php } ?>
+                        <li id="chglog"><a href="#vchangelog">Change Log</a></li>
                     </ul>
                     <div id="demoTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
                         <?php echo $demogTab; ?>
+                    </div>
+                    <div id="vchangelog" class="ignrSave">
+                      <table style="width:100%;" id="dataTbl" cellpadding="0" cellspacing="0" border="0"></table>
                     </div>
                     <div id="exclTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
                         <?php echo $ExcludeTab; ?>
@@ -924,7 +904,6 @@ $uS->guestId = $id;
                         <?php if ($uS->TrackAuto) { ?>
                         <li><a href="#vvehicle">Vehicles</a></li>
                         <?php } ?>
-                        <li id="chglog"><a href="#vchangelog">Change Log</a></li>
                     </ul>
                     <div id="vpsg" class="ui-tabs-hide"  style="display:none;">
                         <div id="divPSGContainer"><?php echo $psgTabMarkup; ?></div>
@@ -975,7 +954,7 @@ $uS->guestId = $id;
             <div id="zipSearch" class="hhk-tdbox-noborder" style="display:none;">
                 <table width="100%">
                     <tr>
-                        <td class="tdlabel">Postal Code: </td><td><input type="text" id="txtZipSch" class="input-medium" value="" title="Type in the postal code."/></td>
+                        <td class="tdlabel">Postal Code: </td><td><input type="text" id="txtZipSch" class="input-medium ignrSave" value="" title="Type in the postal code."/></td>
                     </tr>
                     <tr><td colspan="3" id="placeList"></td></tr>
                 </table>
@@ -998,8 +977,10 @@ $uS->guestId = $id;
             var memberData = <?php echo json_encode($memberData); ?>;
             var psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);
             var rctMkup = '<?php echo $receiptMarkup; ?>';
+            var pmtMkup = '<?php echo $paymentMarkup; ?>';
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
+            var resultMessage = '<?php echo $resultMessage; ?>';
         </script>
         <script type="text/javascript" src="js/guestload-min.js"></script>
     </body>

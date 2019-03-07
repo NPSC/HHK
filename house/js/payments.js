@@ -1160,20 +1160,56 @@ function reprintReceipt(pid, idDialg) {
             showReceipt(idDialg, data.receipt, 'Receipt Copy');
           }
     });
-        
+
+}
+
+function paymentRedirect (data, $xferForm) {
+    "use strict";
+    if (data) {
+
+        if (data.hostedError) {
+            flagAlertMessage(data.hostedError, 'error');
+
+        } else if (data.xfer && $xferForm.length > 0) {
+
+            $xferForm.children('input').remove();
+            $xferForm.prop('action', data.xfer);
+
+            if (data.paymentId && data.paymentId != '') {
+                $xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
+            } else if (data.cardId && data.cardId != '') {
+                $xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
+            } else {
+                flagAlertMessage('PaymentId and CardId are missing!', 'error');
+                return;
+            }
+
+            $xferForm.submit();
+
+        } else if (data.inctx) {
+
+            $('#contentDiv').empty().append($('<p>Processing Credit Payment...</p>'));
+            InstaMed.launch(data.inctx);
+        }
+    }
 }
 
 
+
 function cardOnFile(id, idGroup, postBackPage) {
+    
     var parms = {cmd: 'cof', idGuest: id, idGrp: idGroup, pbp: postBackPage};
+    
     $('#tblupCredit').find('input').each(function() {
         if (this.checked) {
             parms[$(this).attr('id')] = $(this).val();
         }
     });
+    
     // Go to the server for payment data, then come back and submit to new URL to enter credit info.
     $.post('ws_ckin.php', parms,
-    function(data) {
+      function(data) {
+
         if (data) {
             try {
                 data = $.parseJSON(data);
@@ -1191,20 +1227,9 @@ function cardOnFile(id, idGroup, postBackPage) {
             if (data.hostedError) {
                 flagAlertMessage(data.hostedError, 'error');
             }
-            if (data.xfer) {
-                var xferForm = $('#xform');
-                xferForm.children('input').remove();
-                xferForm.prop('action', data.xfer);
-                if (data.paymentId && data.paymentId != '') {
-                    xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
-                } else if (data.cardId && data.cardId != '') {
-                    xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
-                } else {
-                    flagAlertMessage('PaymentId and CardId are missing!', 'error');
-                    return;
-                }
-                xferForm.submit();
-            }
+
+            paymentRedirect (data, $('#xform'));
+            
             if (data.success && data.success != '') {
                 flagAlertMessage(data.success, 'success');
             }
@@ -1213,25 +1238,20 @@ function cardOnFile(id, idGroup, postBackPage) {
 }
 
 
-function updateCredit(id, idReg, name, strCOFdiag) {
-    var buttons = {
-        "Continue": function() {
-            cardOnFile(id, idReg);
-            $(this).dialog("close");
-        },
-        "Cancel": function() {
-            $(this).dialog("close");
-        }
-    };
+function updateCredit(id, idReg, name, strCOFdiag, pbp) {
+    
     var gnme = '';
+    
     if (name && name != '') {
         gnme = ' - ' + name;
     }
+    
     $.post('ws_ckin.php',
             {
                 cmd: 'viewCredit',
                 idGuest: id,
-                reg: idReg
+                reg: idReg,
+                pbp: pbp
             },
         function(data) {
           if (data) {
@@ -1246,7 +1266,19 @@ function updateCredit(id, idReg, name, strCOFdiag) {
                     window.location.assign(data.gotopage);
                 }
                 flagAlertMessage(data.error, 'error');
-            } else if (data.success) {
+            }
+            
+            var buttons = {
+                "Continue": function() {
+                    cardOnFile(id, idReg, data.pbp);
+                    $(this).dialog("close");
+                },
+                "Cancel": function() {
+                    $(this).dialog("close");
+                }
+            };
+
+            if (data.success) {
                 var cof = $('#' + strCOFdiag);
                 cof.children().remove();
                 cof.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog"/>').append($(data.success)));
@@ -1258,3 +1290,4 @@ function updateCredit(id, idReg, name, strCOFdiag) {
         }
     });
 }
+
