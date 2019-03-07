@@ -82,11 +82,7 @@ require (PMT . 'CashTX.php');
 require (PMT . 'CheckTX.php');
 
 
-try {
-    $wInit = new webInit();
-} catch (Exception $exw) {
-    die("arrg!  " . $exw->getMessage());
-}
+$wInit = new webInit();
 
 $dbh = $wInit->dbh;
 

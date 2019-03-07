@@ -53,10 +53,15 @@ try {
     exit ($ex->getMessage());
 }
 
+try {
+    $dbh = initPDO(TRUE);
+} catch (Hk_Exception_Runtime $hex) {
+    // Databasae not set up.  Nothing we can do.
+    http_response_code(200);
+    exit();
+}
 
 // Authenticate user
-$dbh = initPDO(TRUE);
-
 $user = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
 $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
 
