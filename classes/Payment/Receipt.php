@@ -31,17 +31,10 @@ class Receipt {
 
         $info = self::getVisitInfo($dbh, $invoice);
 
-        // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
-
 
         if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
         }
-
-//        if (isset($info['Patient']) && $info['Patient'] != '') {
-//            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Patient']));
-//        }
 
         $idPriGuest = 0;
         if (isset($info['idPrimaryGuest'])) {
@@ -51,10 +44,6 @@ class Receipt {
         if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
             $payor = Member::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
             $tbl->addBodyTr(HTMLTable::makeTd("Payor: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($payor->getMemberName()));
-        }
-
-        if (isset($info['HospName']) && $info['HospName'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['HospName']));
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd("Visit Id: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($invoice->getOrderNumber() . '-' . $invoice->getSuborderNumber()));
@@ -95,10 +84,7 @@ class Receipt {
 
     public static function createVoidMarkup(\PDO $dbh, PaymentResponse $payResp, $siteName, $siteId, $type = 'Void Sale') {
 
-        // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
-
-        $rec = self::getHouseIconMarkup();
+       $rec = self::getHouseIconMarkup();
 
         $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;'));
 
@@ -112,10 +98,6 @@ class Receipt {
             $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
         }
 
-        if (isset($info['Patient']) && $info['Patient'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Patient']));
-        }
-
         $idPriGuest = 0;
         if (isset($info['idPrimaryGuest'])) {
             $idPriGuest = $info['idPrimaryGuest'];
@@ -124,10 +106,6 @@ class Receipt {
         if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
             $payor = Member::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
             $tbl->addBodyTr(HTMLTable::makeTd("Payor: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($payor->getMemberName()));
-        }
-
-        if (isset($info['HospName']) && $info['HospName'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['HospName']));
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd("Visit Id: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($invoice->getOrderNumber() . '-' . $invoice->getSuborderNumber()));
@@ -154,9 +132,6 @@ class Receipt {
 
     public static function createReturnMarkup(\PDO $dbh, PaymentResponse $payResp, $siteName, $siteId) {
 
-        // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
-
         $rec = self::getHouseIconMarkup();
 
         $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;'));
@@ -172,10 +147,6 @@ class Receipt {
             $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
         }
 
-//        if (isset($info['Patient']) && $info['Patient'] != '') {
-//            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Patient']));
-//        }
-
         $idPriGuest = 0;
         if (isset($info['idPrimaryGuest'])) {
             $idPriGuest = $info['idPrimaryGuest'];
@@ -184,10 +155,6 @@ class Receipt {
         if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
             $payor = Member::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
             $tbl->addBodyTr(HTMLTable::makeTd("Payor: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($payor->getMemberName()));
-        }
-
-        if (isset($info['HospName']) && $info['HospName'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['HospName']));
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd("Visit Id: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($invoice->getOrderNumber() . '-' . $invoice->getSuborderNumber()));
@@ -223,16 +190,8 @@ class Receipt {
 
 //        $info = self::getVisitInfo($dbh, $invoice);
 //
-//        // Get labels
-//        $labels = new Config_Lite(LABEL_FILE);
-//
-//
 //        if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
 //            $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
-//        }
-//
-//        if (isset($info['Patient']) && $info['Patient'] != '') {
-//            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Patient']));
 //        }
 //
 //        $idPriGuest = 0;
@@ -243,10 +202,6 @@ class Receipt {
 //        if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
 //            $payor = Member::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
 //            $tbl->addBodyTr(HTMLTable::makeTd("Payor: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($payor->getMemberName()));
-//        }
-//
-//        if (isset($info['HospName']) && $info['HospName'] != '') {
-//            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['HospName']));
 //        }
 //
 //        $tbl->addBodyTr(HTMLTable::makeTd("Visit Id: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($invoice->getOrderNumber() . '-' . $invoice->getSuborderNumber()));
@@ -265,7 +220,7 @@ class Receipt {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($invoice->getAmount(), 2), array('class'=>'hhk-tdTotals')));
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Payment Declined", array('colspan'=>'2', 'align'=>'center')));
+        $tbl->addBodyTr(HTMLTable::makeTd("Payment Declined", array('colspan'=>'2', 'style'=>'font-weight:bold;')));
 
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);
