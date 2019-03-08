@@ -501,7 +501,7 @@ class PaymentSvcs {
         // Check balance
         if (abs($invoice->getAmountToPay()) > abs($invoice->getBalance())) {
             $rtnResult = new ReturnResult(0, 0, 0);
-            $rtnResult->setReplyMessage('error:  Return (' . $invoice->getAmountToPay() . ') cannot be larger than the remaining balance (' . $invoice->getBalance() . ') on an invoice.');
+            $rtnResult->setReplyMessage('error:  Return (' . $invoice->getAmountToPay() . ') cannot be larger than the remaining balance (' . $invoice->getBalance() . ') on the invoice.');
             return $rtnResult;
         }
 
@@ -1127,7 +1127,7 @@ class PaymentSvcs {
             unset($uS->imcomplete);
         }
 
-        return $gateway->processHostedReturn($dbh, $post, $tokenId, $idInv, $payNotes, $uS->username);
+        return $gateway->processHostedReply($dbh, $post, $tokenId, $idInv, $payNotes, $uS->username);
 
     }
 

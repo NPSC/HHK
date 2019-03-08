@@ -5,6 +5,18 @@
  *
  * @author Eric
  */
+
+Class MpTranType {
+    const Sale = 'Sale';
+    const PreAuth = 'PreAuth';
+    const ReturnAmt = 'ReturnAmount';
+    const ReturnSale = 'ReturnSale';
+    const Void = 'VoidSale';
+    const VoidReturn = 'VoidReturn';
+    const Reverse = 'ReverseSale';
+    const CardOnFile = 'COF';
+}
+
 abstract class PaymentGateway {
 
     const VANTIV = 'vantiv';
@@ -38,7 +50,7 @@ abstract class PaymentGateway {
 
     public abstract function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl);
 
-    public abstract function processHostedReturn(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName);
+    public abstract function processHostedReply(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName);
 
     public abstract function processWebhook(\PDO $dbh, $post, $payNotes, $userName);
 
@@ -490,7 +502,7 @@ class VantivGateway extends PaymentGateway {
         ;
     }
 
-    public function processHostedReturn(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName = '') {
+    public function processHostedReply(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName = '') {
 
         $payResult = NULL;
         $rtnCode = '';
@@ -766,7 +778,7 @@ class InstamedGateway extends PaymentGateway {
 
     const RELAY_STATE = 'relayState';
     const INVOICE_NUMBER = 'additionalInfo1';
-    const GROUP_ID = 'additionalInfo2';
+
     // query string parameter names
     const INSTAMED_TRANS_VAR = 'imt';
     const INSTAMED_RESULT_VAR = 'imres';
@@ -872,7 +884,7 @@ class InstamedGateway extends PaymentGateway {
         $pAuthRs = new Payment_AuthRS();
         EditRS::loadRow(array_pop($arows), $pAuthRs);
 
-        if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid && $pAuthRs->Status_Code->getStoredVal() != PaymentStatusCode::VoidReturn) {
+        if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid) {
 
             // Determine amount to return
             if ($returnAmt == 0) {
@@ -903,11 +915,9 @@ class InstamedGateway extends PaymentGateway {
             'patientFirstName' => $patInfo['Name_First'],
             'patientLastName' => $patInfo['Name_Last'],
             'amount' => $invoice->getAmountToPay(),
-            InstamedGateway::GROUP_ID => $invoice->getIdGroup(),
             InstamedGateway::INVOICE_NUMBER => $invoice->getInvoiceNumber(),
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
-            //'id' => 'NP.SOFTWARE.TEST',
             'incontext' => 'true',
             'lightWeight' => 'true',
             'isReadOnly' => 'true',
@@ -1115,7 +1125,7 @@ class InstamedGateway extends PaymentGateway {
         $resp['InvoiceNumber'] = $invoice->getInvoiceNumber();
         $resp['Amount'] = $payRs->Amount->getStoredVal();
 
-        $curlResponse = new VerifyCurlResponse($resp, MpTranType::ReturnAmt);
+        $curlResponse = new VerifyCurlResponse($resp, MpTranType::ReturnSale);
 
         // Save raw transaction in the db.
         try {
@@ -1168,7 +1178,7 @@ class InstamedGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    public function processHostedReturn(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $userName = '') {
+    public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $userName = '') {
 
         $transType = '';
         $transResult = '';
@@ -1257,7 +1267,7 @@ class InstamedGateway extends PaymentGateway {
             } else {
                 $isPartialPayment = FALSE;
             }
-            
+
             // Make a sale response...
             $sr = new ImPaymentResponse($webhookResp, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $payNotes, $isPartialPayment);
 
@@ -1696,6 +1706,10 @@ where r.idRegistration =" . $idReg);
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->terminal_Id->getStoredVal(), array('name' => $indx . '_txttremId', 'size' => '80')))
             );
             $tbl->addBodyTr(
+                    HTMLTable::makeTh('Workstation Id', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->WorkStation_Id->getStoredVal(), array('name' => $indx . '_txtwsId', 'size' => '80')))
+            );
+            $tbl->addBodyTr(
                     HTMLTable::makeTh('SSO URL', array('class' => 'tdlabel'))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->providersSso_Url->getStoredVal(), array('name' => $indx . '_txtpurl', 'size' => '90')))
             );
@@ -1753,6 +1767,10 @@ where r.idRegistration =" . $idReg);
                 $ccRs->terminal_Id->setNewVal(filter_var($post[$indx . '_txttremId'], FILTER_SANITIZE_STRING));
             }
 
+            if (isset($post[$indx . '_txtwsId'])) {
+                $ccRs->WorkStation_Id->setNewVal(filter_var($post[$indx . '_txtwsId'], FILTER_SANITIZE_STRING));
+            }
+
             if (isset($post[$indx . '_txtpurl'])) {
                 $ccRs->providersSso_Url->setNewVal(filter_var($post[$indx . '_txtpurl'], FILTER_SANITIZE_STRING));
             }
@@ -1804,6 +1822,7 @@ class InstaMedCredentials {
     const MERCHANT_ID = 'merchantId';
     const STORE_ID = 'storeId';
     const TERMINAL_ID = 'terminalID';
+    const WORKSTATION_ID = 'additionalInfo6';
     const U_NAME = 'userName';
     const U_ID = 'userID';
 
@@ -1812,6 +1831,7 @@ class InstaMedCredentials {
     protected $securityKey;
     protected $accountID;
     protected $terminalId;
+    protected $workstationId;
     protected $ssoAlias;
     protected $id;
 
@@ -1823,6 +1843,7 @@ class InstaMedCredentials {
         $this->merchantId = $gwRs->merchant_Id->getStoredVal();
         $this->storeId = $gwRs->store_Id->getStoredVal();
         $this->terminalId = $gwRs->terminal_Id->getStoredVal();
+        $this->workstationId = $gwRs->WorkStation_Id->getStoredVal();
 
         $parts = explode('@', $this->accountID);
 
@@ -1836,6 +1857,7 @@ class InstaMedCredentials {
             InstaMedCredentials::SEC_KEY => decryptMessage($this->securityKey),
             InstaMedCredentials::SSO_ALIAS => $this->ssoAlias,
             InstaMedCredentials::ID => $this->id,
+            InstaMedCredentials::WORKSTATION_ID => $this->workstationId,
         );
     }
 
@@ -1844,7 +1866,8 @@ class InstaMedCredentials {
         return
                 InstaMedCredentials::MERCHANT_ID . '=' . $this->merchantId
                 . '&' . InstaMedCredentials::STORE_ID . '=' . $this->storeId
-                . '&' . InstaMedCredentials::TERMINAL_ID . '=' . $this->terminalId;
+                . '&' . InstaMedCredentials::TERMINAL_ID . '=' . $this->terminalId
+                . '&' . InstaMedCredentials::WORKSTATION_ID . '=' . $this->workstationId;
     }
 
     public function toSOAP() {
@@ -1884,7 +1907,7 @@ class LocalGateway extends PaymentGateway {
 
     }
 
-    public function processHostedReturn(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName) {
+    public function processHostedReply(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName) {
 
     }
 

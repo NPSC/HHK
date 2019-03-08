@@ -56,15 +56,6 @@ Class MpFrequencyValues {
     const Recurring = 'Recurring';
 }
 
-Class MpTranType {
-    const Sale = 'Sale';
-    const PreAuth = 'PreAuth';
-    const ReturnAmt = 'Return';
-    const Void = 'VoidSale';
-    const VoidReturn = 'VoidReturn';
-    const Reverse = 'ReverseSale';
-    const CardOnFile = 'COF';
-}
 
 Class MpTokenTransaction {
 

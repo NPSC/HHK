@@ -39,9 +39,9 @@ class Receipt {
             $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
         }
 
-        if (isset($info['Patient']) && $info['Patient'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Patient']));
-        }
+//        if (isset($info['Patient']) && $info['Patient'] != '') {
+//            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Patient']));
+//        }
 
         $idPriGuest = 0;
         if (isset($info['idPrimaryGuest'])) {
@@ -162,7 +162,8 @@ class Receipt {
         $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;'));
 
         $tbl = new HTMLTable();
-        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Return Receipt", array('colspan'=>'2')));
+
+        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Refund Receipt", array('colspan'=>'2')));
 
         $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
         $info = self::getVisitInfo($dbh, $invoice);
@@ -171,9 +172,9 @@ class Receipt {
             $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
         }
 
-        if (isset($info['Patient']) && $info['Patient'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Patient']));
-        }
+//        if (isset($info['Patient']) && $info['Patient'] != '') {
+//            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Patient']));
+//        }
 
         $idPriGuest = 0;
         if (isset($info['idPrimaryGuest'])) {

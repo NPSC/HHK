@@ -155,7 +155,7 @@ class InstamedGatewayRS extends TableRS {
     public $soap_Url;  // varchar(145) NOT NULL DEFAULT '',
     public $nvp_Url;  // varchar(145) NOT NULL DEFAULT '',
     public $terminal_Id;  // varchar(145) NOT NULL DEFAULT '',
-//    public $CheckoutPOSiFrame_Url;  // varchar(145) NOT NULL DEFAULT '',
+    public $WorkStation_Id;  // varchar(145) NOT NULL DEFAULT '',
     public $Use_AVS_Flag;  // bit(1) NOT NULL DEFAULT b'0',
     public $Use_Ccv_Flag;  // bit(1) NOT NULL DEFAULT b'0',
     public $Retry_Count;  // int(11) NOT NULL DEFAULT '0',
@@ -175,7 +175,7 @@ class InstamedGatewayRS extends TableRS {
         $this->soap_Url = new DB_Field("Mobile_CardInfo_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->nvp_Url = new DB_Field("Mobile_Checkout_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->terminal_Id = new DB_Field("CheckoutPOS_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
-//        $this->CheckoutPOSiFrame_Url = new DB_Field("CheckoutPOSiFrame_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
+        $this->WorkStation_Id = new DB_Field("CheckoutPOSiFrame_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->Use_AVS_Flag = new DB_Field("Use_AVS_Flag", 0, new DbBitSanitizer(), TRUE, TRUE);
         $this->Use_Ccv_Flag = new DB_Field("Use_Ccv_Flag", 0, new DbBitSanitizer(), TRUE, TRUE);
         $this->Retry_Count = new DB_Field("Retry_Count", 0, new DbIntSanitizer(), TRUE, TRUE);
