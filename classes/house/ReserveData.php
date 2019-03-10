@@ -44,8 +44,8 @@ class ReserveData {
     protected $id;
     protected $idPsg = 0;
     protected $idHospitalStay = 0;
-    protected $idVisit;
-    protected $span;
+    protected $idVisit = 0;
+    protected $span = 0;
     protected $spanStatus = '';
     protected $forceNewPsg = FALSE;
     protected $forceNewResv = FALSE;
@@ -334,10 +334,10 @@ class ReserveData {
         return $this->arrivalDT;
     }
 
-    public function getArrivalDateStr() {
+    public function getArrivalDateStr($format = ReserveData::DATE_FORMAT) {
 
         if ($this->arrivalDT !== NULL) {
-            return $this->arrivalDT->format(ReserveData::DATE_FORMAT);
+            return $this->arrivalDT->format($format);
         }
 
         return '';
@@ -347,10 +347,10 @@ class ReserveData {
         return $this->departureDT;
     }
 
-    public function getDepartureDateStr() {
+    public function getDepartureDateStr($format = ReserveData::DATE_FORMAT) {
 
         if ($this->departureDT !== NULL) {
-            return $this->departureDT->format(ReserveData::DATE_FORMAT);
+            return $this->departureDT->format($format);
         }
 
         return '';
@@ -520,7 +520,7 @@ class ReserveData {
         return $this;
     }
 
-    protected function setArrivalDateStr($strDate) {
+    public function setArrivalDateStr($strDate) {
 
         if ($strDate != '') {
             $this->setArrivalDT(new \DateTime($strDate));
@@ -533,7 +533,7 @@ class ReserveData {
         return $this;
     }
 
-    protected function setDepartureDateStr($strDate) {
+    public function setDepartureDateStr($strDate) {
 
         if ($strDate != '') {
             $this->setDepartureDT(new \DateTime($strDate));

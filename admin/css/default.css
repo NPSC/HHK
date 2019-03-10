@@ -54,6 +54,9 @@ body.testbody {
     text-align:right;
     padding: 5px;
 }
+.hhk-logerrmsg {
+    color:red;
+}
 
 .hhk-deceased {
     background-color: yellow;

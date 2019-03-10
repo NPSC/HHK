@@ -160,13 +160,13 @@ class Login {
         $tbl->addBodyTr(
             HTMLTable::makeTh('User Name:', array('class'=>'hhk-loginLabel'))
             .HTMLTable::makeTd(
-                    HTMLInput::generateMarkup($this->userName, array('id'=>'txtUname', 'size'=>'15')))
-            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errUname')))
+                    HTMLInput::generateMarkup($this->userName, array('id'=>'txtUname', 'size'=>'17')))
+            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errUname', 'class'=>'hhk-logerrmsg')))
         );
         $tbl->addBodyTr(
             HTMLTable::makeTh('Password:', array('class'=>'hhk-loginLabel'))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'txtPW', 'size'=>'15', 'type'=>'password')))
-            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errPW'))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'txtPW', 'size'=>'17', 'type'=>'password')))
+            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errPW', 'class'=>'hhk-logerrmsg'))
                     . HTMLInput::generateMarkup($this->getChallengeVar(), array('type'=>'hidden', 'id'=>'challenge')))
         );
         $tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Login', array('id'=>'btnLogn', 'type'=>'button')), array('colspan'=>'2', 'class'=>'hhk-loginLabel')));

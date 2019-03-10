@@ -105,6 +105,10 @@ h2.logo {
     padding: 0.7em 0.7em;
 
 }
+.hhk-logerrmsg {
+    color:red;
+}
+
 table.hhk-badAddress {
     background-color: lightsalmon;
 }
