@@ -98,6 +98,7 @@ $labels = new Config_Lite(LABEL_FILE);
 $config = new Config_Lite(ciCFG_FILE);
 
 $resultMessage = "";
+$alertMessage = '';
 $id = 0;
 $idPsg = 0;
 $psg = NULL;
@@ -105,10 +106,11 @@ $uname = $uS->username;
 $receipt = '';
 $guestTabIndex = 0;
 $guestName = '';
-$guestPhotoMU ='';
+$psgmkup = '';
 $memberData = array();
-$showSearchOnly = TRUE;
-
+$showSearchOnly = FALSE;
+$ngRss = array();
+$isPatient = FALSE;
 
 $memberFlag = SecurityComponent::is_Authorized("guestadmin");
 
@@ -152,24 +154,6 @@ if (isset($_GET['psg'])) {
 
 }
 
-if ($uS->GuestPhoto && isset($_FILES['photo'])) {
-
-    try {
-        SiteConfig::checkUploadFile('photo');
-
-    } catch (RuntimeException $rex) {
-
-        $alertMsg->set_Context(alertMessage::Alert);
-        $alertMsg->set_Text($rex->getMessage());
-        $alertMsg->set_DisplayAttr("block");
-        $resultMessage = $alertMsg->createMarkup();
-
-    }
-
-}
-
-
-
 /*
 * This is the ID that the previous page instance saved for us.
 */
@@ -179,10 +163,7 @@ if (isset($_POST["hdnid"])) {
    $id = intval($h_idTxt, 10);
 
    if ($uS->guestId != $id) {
-        $alertMsg->set_Context(alertMessage::Alert);
-        $alertMsg->set_Text("Posted id does not match what the server remembers.");
-        $alertMsg->set_DisplayAttr("block");
-        $resultMessage = $alertMsg->createMarkup();
+        $alertMessage = "Posted id does not match what the server remembers.";
         $id = 0;
    }
 }
@@ -193,54 +174,44 @@ if ($id > 0) {
     // Check psg
     $ngRss = Psg::getNameGuests($dbh, $id);
 
-    if (count($ngRss) === 0) {
+    if (count($ngRss) == 0) {
+        // Check for guest/patient category
+        $stmv = $dbh->query("Select IFNULL(Vol_Code, '') as Vol_Code from name_volunteer2 where idName = $id and Vol_Category = 'Vol_Type' and Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "');");
 
-        $userCodes = $uS->groupcodes;
+        if ($stmv->rowCount() > 0) {
 
-        // Not a patient or guest.
-        $alertMsg->set_Context(alertMessage::Notice);
-        $alertMsg->set_Text('Person is not a patient or guest.  ' . (isset($userCodes['mm']) || $wInit->page->is_Admin() ? HTMLContainer::generateMarkup('a', 'Go to Member Edit', array('href'=>'../admin/NameEdit.php?id='.$id)) : ''));
-        $alertMsg->set_DisplayAttr("block");
-        $resultMessage = $alertMsg->createMarkup();
-        $id = 0;
-        $showSearchOnly = TRUE;
+            while ($r = $stmv->fetch(\PDO::FETCH_NUM)) {
 
-    } else {
+                if ($r[0] == VolMemberType::Patient) {
+                    $isPatient = TRUE;
+                }
+            }
 
-        // Is a patient or guest.
-        $showSearchOnly = FALSE;
-
-        // Get the name data.
-        try {
-
-            $name = new GuestMember($dbh, MemBasis::Indivual, $id, NULL);
-            $name->setIdPrefix('');
-            $id = $name->get_idName();
-
-        } catch (Exception $hkex) {
-
-            $alertMsg->set_Context(alertMessage::Notice);
-            $alertMsg->set_Text($hkex->getMessage());
-            $alertMsg->set_DisplayAttr("block");
-            $resultMessage = $alertMsg->createMarkup();
-            $id = 0;
+        } else {
+            $alertMessage = 'This person is not a patient or guest.  ' . (isset($uS->groupcodes['mm']) || $wInit->page->is_Admin() ? HTMLContainer::generateMarkup('a', 'Go to Member Edit', array('href'=>'../admin/NameEdit.php?id='.$id)) : '');
             $showSearchOnly = TRUE;
-
         }
     }
-
+} else {
+    $showSearchOnly = TRUE;
 }
 
 
 if ($showSearchOnly === FALSE) {
 
 
+// Get the name data.
+$name = new GuestMember($dbh, MemBasis::Indivual, $id, NULL);
+$name->setIdPrefix('');
+$id = $name->get_idName();
+
 $address = new Address($dbh, $name, $uS->nameLookups[GL_TableNames::AddrPurpose]);
 $phones = new Phones($dbh, $name, $uS->nameLookups[GL_TableNames::PhonePurpose]);
 $emails = new Emails($dbh, $name, $uS->nameLookups[GL_TableNames::EmailPurpose]);
 
-$psgmkup = '';
 
+// Guest History - add this ID.
+History::addToGuestHistoryList($dbh, $id, $uS->rolecode);
 
 
 // Check that the guest is a member of the indicated PSG.
@@ -256,15 +227,9 @@ if ($idPsg > 0) {
 
     // The psg is not attached to this guest.
     if ($foundIt === FALSE) {
-
-        $alertMsg->set_Context(alertMessage::Alert);
-        $alertMsg->set_Text('Guest is not a memeber of the PSG indicated on the URL (GET param).  ');
-        $alertMsg->set_DisplayAttr("block");
-        $resultMessage = $alertMsg->createMarkup();
-
+        $alertMessage = 'Guest is not a memeber of the PSG indicated on the URL (GET param).  ';
         $idPsg = 0;
     }
-
 }
 
 
@@ -506,12 +471,6 @@ $tbl->addBodyTr($name->createMarkupRow('', TRUE));
 
 $nameMarkup = $tbl->generateMarkup();
 
-// Guest Photo
-if ($uS->guestPhoto) {
-
-}
-
-
 // Demographics
 $demogTab = $name->createDemographicsPanel($dbh, FALSE, FALSE);
 
@@ -538,12 +497,6 @@ if ($name->get_lastUpdated() != '') {
 // Add Emergency contact
 $emergencyTabMarkup = HTMLContainer::generateMarkup('div',
         $emergContact->createMarkup($uS->guestLookups[GL_TableNames::PatientRel]));
-
-
-
-//
-// Guest History - add this ID.
-History::addToGuestHistoryList($dbh, $id, $uS->rolecode);
 
 
 $visitList = "";
@@ -742,6 +695,8 @@ $memberData['guestPhoto'] = $uS->GuestPhoto;
 
 $idReg = $registration->getIdRegistration();
 
+
+
 } else {
     // Show just the search message.
     $guestName = "<h2 style='font-size:2em;'>Search for a Guest/Patient:</h2>";
@@ -763,7 +718,6 @@ $discs = readGenLookupsPDO($dbh, 'House_Discount');
 // decide to show payments and invoices
 if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && count($discs) == 0) {
     $showCharges = FALSE;
-
 }
 
 
@@ -818,7 +772,11 @@ $uS->guestId = $id;
                 <input type="text" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" />
             </div>
             <div style="clear:both;"></div>
-
+            <?php if ($alertMessage != '') { ?>
+            <div id="alertMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; " class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
+                <?php echo $alertMessage; ?>
+            </div>
+            <?php } ?>
             <?php if ($showSearchOnly === FALSE) { ?>
             <form action="GuestEdit.php" method="post" id="form1" name="form1" >
                 <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
@@ -893,7 +851,7 @@ $uS->guestId = $id;
                         <li><a href="#vreserv"><?php echo $labels->getString('guestEdit', 'reservationTab', 'Reservations'); ?></a></li>
                         <?php if ($uS->IncomeRated && $showCharges) {  ?>
                         <li id="fin"><a href="#vfin">Financial Assistance...</a></li>
-                        <?php } if ($memberFlag && $showCharges) {  ?>
+                        <?php } if ($showCharges) {  ?>
                         <li><a href="ws_resc.php?cmd=payRpt&id=<?php echo $registration->getIdRegistration(); ?>" title="Payment History">Payments</a></li>
                         <?php } ?>
                         <li><a href="ShowStatement.php?cmd=show&reg=<?php echo $idReg; ?>" title="Comprehensive Statement">Statement</a></li>

@@ -2308,7 +2308,7 @@ class CheckedoutReservation extends CheckingIn {
             return $this;
         }
 
-        // Does visit exist
+        // GEt visit record
         $stmt = $dbh->query("Select * from visit where idVisit = " . $this->reserveData->getIdVisit() . " and Span = " . $this->reserveData->getSpan());
 
         if ($stmt->rowCount() == 0) {
@@ -2325,25 +2325,50 @@ class CheckedoutReservation extends CheckingIn {
         $visitDepDT = new \DateTime($visitRs->Span_End->getStoredVal());
         $visitDepDT->setTime(10, 0, 0);
 
-        $stayArrDT = new \DateTime($this->reserveData->getArrivalDateStr('Y-m-d 10:0:0'));
-        $stayDepDT = new \DateTime($this->reserveData->getDepartureDateStr('Y-m-d 10:0:0'));
+        $guestArrDT = new \DateTime($this->reserveData->getArrivalDateStr('Y-m-d 10:0:0'));
+        $guestDepDT = new \DateTime($this->reserveData->getDepartureDateStr('Y-m-d 10:0:0'));
 
-        if ($stayArrDT > $stayDepDT) {
+        if ($guestArrDT > $guestDepDT) {
             // dates reversed...
             $this->reserveData->addError('Dates are reversed.  ');
             return;
         }
 
         // Checking the stay arrival date
-        if ($stayArrDT < $visitArrDT || $stayArrDT > $visitDepDT) {
+        if ($guestArrDT < $visitArrDT || $guestArrDT > $visitDepDT) {
             // Bad arrival Date
             $this->reserveData->setArrivalDateStr($visitRs->Arrival_Date->getStoredVal());
         }
 
         // Departure dates.
-        if ($stayDepDT < $visitArrDT || $stayDepDT > $visitDepDT) {
+        if ($guestDepDT < $visitArrDT || $guestDepDT > $visitDepDT) {
             // Bad Departure Date
             $this->reserveData->setDepartureDateStr($visitRs->Span_End->getStoredVal());
+        }
+
+
+        // Is our guest already staying?
+        $stmts = $dbh->query("Select idName, Span_Start_Date, Span_End_Date from stays where idVisit = " . $this->reserveData->getIdVisit() . " and Visit_Span = " . $this->reserveData->getSpan());
+
+        // Count people staying during the new guest's time.
+        $stays = array();
+
+        while ($s = $stmts->fetch(\PDO::FETCH_ASSOC)) {
+
+            $stayArrDT = new \DateTime($s['Span_Start_Date']);
+            $stayArrDT->setTime(10, 0, 0);
+
+            $stayDepDT = new \DateTime($s['Span_End_Date']);
+            $stayDepDT->setTime(10, 0, 0);
+
+            // Checking the dates
+            if ($guestArrDT > $stayDepDT || $guestDepDT < $stayArrDT) {
+                // out of bounds
+                continue;
+            }
+
+            $stays[$s['idName']] = 1;
+
         }
 
         // Get the resource
@@ -2356,25 +2381,41 @@ class CheckedoutReservation extends CheckingIn {
         }
 
         // Maximym occupants...
-fix        $numOccupants = $resc->getCurrantOccupants($dbh) + count($this->getStayingMembers());
+        $numOccupants = count($this->getStayingMembers()) + count($stays);
 
         if ($numOccupants > $resc->getMaxOccupants()) {
             $this->reserveData->addError("The maximum occupancy (" . $resc->getMaxOccupants() . ") for room " . $resc->getTitle() . " is exceded.  ");
             return;
         }
 
-        // Is our guest already staying?
-        $stmts = $dbh->query("Select Span_Start_Date, Span_End_Date from stays where idVisit = " . $this->reserveData->getIdVisit() . " and Visit_Span = " . $this->reserveData->getSpan() .
-                " and DATE(" . $this->reserveData->getDepartureDateStr('Y-m-d H:i:s') . ") >= DATE(Span_Start_Date) and DATE(" . $this->reserveData->getArrivalDateStr('Y-m-d H:i:s') . ") <= DATE(Span_End_Date)");
-
-        if ($stmts->rowCount() > 0) {
-
-        }
-
-
         return;
     }
 
+    protected function initialSave(\PDO $dbh, $post) {
+
+        $uS = Session::getInstance();
+
+        // Save members, psg, hospital
+        if ($this->family->save($dbh, $post, $this->reserveData, $uS->username) === FALSE) {
+            return;
+        }
+
+        if (count($this->getStayingMembers()) < 1) {
+            // Nobody set to stay
+            $this->reserveData->addError('Nobody is set to stay for this ' . $this->reserveData->getResvTitle() . '.  ');
+            return;
+        }
+
+
+        // Arrival and Departure dates
+        try {
+            $this->setDates($post);
+        } catch (Hk_Exception_Runtime $hex) {
+            $this->reserveData->addError($hex->getMessage());
+            return;
+        }
+
+    }
 }
 
 

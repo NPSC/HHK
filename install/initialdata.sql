@@ -94,7 +94,6 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('Email_Purpose','1','Home','i','',10),
 ('Email_Purpose','2','Work','i','',20),
-('Email_Purpose','3','Alt','i','',30),
 ('Email_Purpose','4','Office','o','',40),
 
 ('Ethnicity','c','Caucasian','','d',0),
@@ -278,7 +277,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Phone_Type','gw','Work','i','',20),
 ('Phone_Type','hw','Office','o','',30),
 ('Phone_Type','mc','Cell','i','',40),
-('Phone_Type','xf','Fax','','',50),
+('Phone_Type','xf','Fax','o','',50),
 
 ('Photo_Permission', 'yes', 'Yes', '', 'd', '100'),
 ('Photo_Permission', 'no', 'No', '', 'd', '110'),
