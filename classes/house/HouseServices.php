@@ -1291,8 +1291,9 @@ class HouseServices {
             }
         }
 
-        if ($msg != '') {
+        if ($msg != '' && isset($post['cbNewCard']) === FALSE) {
             $dataArray['success'] = $msg;
+            $dataArray['COFmkup'] = HouseServices::viewCreditTable($dbh, $idGroup, $idGuest);
         }
 
         return $dataArray;

@@ -521,7 +521,7 @@ if ($psg->getIdPsg() > 0) {
         $ccMarkup = HTMLcontainer::generateMarkup('div' ,HTMLContainer::generateMarkup('fieldset',
                 HouseServices::viewCreditTable($dbh, $registration->getIdRegistration(), $id)
                 . HTMLInput::generateMarkup('Update Credit', array('type'=>'button','id'=>'btnCred', 'data-id'=>$id, 'data-idreg'=>$registration->getIdRegistration(), 'style'=>'margin:5px;float:right;'))
-            ,array('style'=>'float:left;padding:5px;')));
+            ,array('id'=>'upCreditfs', 'style'=>'float:left;padding:5px;')));
 
     }
 

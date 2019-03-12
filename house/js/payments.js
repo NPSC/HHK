@@ -1233,6 +1233,11 @@ function cardOnFile(id, idGroup, postBackPage) {
             if (data.success && data.success != '') {
                 flagAlertMessage(data.success, 'success');
             }
+
+            if (data.COFmkup && data.COFmkup !== '') {
+                $('#tblupCredit').remove();
+                $('#upCreditfs').append($(data.COFmkup));
+            }
         }
     });
 }

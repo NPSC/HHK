@@ -985,7 +985,6 @@ class InstamedGateway extends PaymentGateway {
             'patientID' => $patInfo['idName'],
             'patientFirstName' => $patInfo['Name_First'],
             'patientLastName' => $patInfo['Name_Last'],
-            InstamedGateway::GROUP_ID => $idGroup,
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
             //'id' => 'NP.SOFTWARE.TEST',
