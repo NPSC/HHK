@@ -133,9 +133,9 @@ class PaymentManager {
 
                 if ($this->pmp->getTotalRoomChg() > 0) {
 
-                    if ($this->pmp->getFinalPaymentFlag() == TRUE) {
+                    if ($this->pmp->getFinalPaymentFlag() == TRUE) {    // means is house waive checked.
 
-                        // Charge the entire amount due
+                        // House waive checked, charge the entire amount due
                         $roomCharges = $this->pmp->getTotalRoomChg();
 
                     } else {
@@ -145,7 +145,7 @@ class PaymentManager {
 
                         if ($modifiedCharges > 0 && $this->pmp->getRatePayment() < $modifiedCharges) {
                             // We are paying less in room fees than what is due, so only charge what we are paying.
-                            $roomCharges = $this->pmp->getRatePayment() + $this->moaRefundAmt;
+                            $roomCharges = $this->pmp->getRatePayment() + $this->moaRefundAmt + $this->depositRefundAmt;
                         } else {
 
                             $roomCharges = $this->pmp->getTotalRoomChg();

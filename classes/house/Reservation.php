@@ -361,13 +361,14 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
     }
 
-    protected function createExpDatesControl($prefix = '') {
+    protected function createExpDatesControl($updateOnChange = TRUE) {
 
         $uS = Session::getInstance();
         $nowDT = new \DateTime();
         $nowDT->setTime(0, 0, 0);
 
         $days = '';
+        $prefix = '';
 
         $cidAttr = array('name'=>$prefix.'gstDate', 'readonly'=>'readonly', 'size'=>'14' );
 
@@ -391,7 +392,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
                 , array('style'=>'float:left;font-size:.9em;', 'id'=>$prefix.'spnRangePicker'));
 
-        return array('mu'=>$mkup, 'defdays'=>$uS->DefaultDays, 'daysEle'=>$prefix.'gstDays');
+        return array('mu'=>$mkup, 'defdays'=>$uS->DefaultDays, 'daysEle'=>$prefix.'gstDays', 'updateOnChange'=>$updateOnChange);
 
     }
 
@@ -2192,19 +2193,12 @@ class CheckedoutReservation extends CheckingIn {
 
         $uS = Session::getInstance();
         $labels = new Config_Lite(LABEL_FILE);
-        $resvSectionHeaderPrompt = 'Add Guests:';
         $dataArray = array();
 
         $nowDT = new \DateTime();
         $nowDT->setTime(intval($uS->CheckInTime), 0, 0);
 
         $resv = new Reservation_1($this->reservRs);
-
-        // Dates
-//        $this->reserveData->setArrivalDT($nowDT);
-
-        // Registration
-//        $reg = new Registration($dbh, $this->reserveData->getIdPsg());
 
         // Check for max rooms per patient
         if ($this->reserveData->getConcurrentRooms() >= $uS->RoomsPerPatient) {
@@ -2216,7 +2210,9 @@ class CheckedoutReservation extends CheckingIn {
 
         // Room Chooser
         $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
-        //$dataArray['rChooser'] = $roomChooser->createAddGuestMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN), $rmSelMessage);
+        $dataArray['rChooser'] = $roomChooser->createAddGuestMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN), $rmSelMessage);
+
+        $resvSectionHeaderPrompt = 'Add Guests; ';
 
         if ($roomChooser->getCurrentGuests() < $roomChooser->getSelectedResource()->getMaxOccupants()) {
 
@@ -2225,53 +2221,6 @@ class CheckedoutReservation extends CheckingIn {
                     ->setDepartureDT(new \DateTime($this->reservRs->Actual_Departure->getStoredVal()));
 
             $dataArray = $this->createExpDatesControl();
-
-//            // Rate Chooser
-//            $rateChooser = new RateChooser($dbh);
-//
-//            // Create rate chooser markup?
-//            if ($uS->RoomPriceModel != ItemPriceCode::None) {
-//
-//                $resc = $roomChooser->getSelectedResource();
-//
-//                if (is_null($resc)) {
-//                    $roomKeyDeps = '';
-//                } else {
-//                    $roomKeyDeps = $resc->getKeyDeposit($uS->guestLookups[GL_TableNames::KeyDepositCode]);
-//                }
-//
-//                // Rate Chooser
-//                $dataArray['rate'] = HTMLContainer::generateMarkup('div',
-//                        $rateChooser->createCheckinMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'), FALSE)
-//                        , array('style'=>'clear:left; float:left; display:none;', 'id'=>'divRateChooser'));
-//            }
-//
-//            // Payment Chooser
-//            if ($uS->PayAtCkin) {
-//
-//                $checkinCharges = new CheckinCharges(0, $resv->getVisitFee(), $roomKeyDeps);
-//                $checkinCharges->sumPayments($dbh);
-//
-//                $dataArray['pay'] = HTMLContainer::generateMarkup('div',
-//                        PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $checkinCharges, $resv->getExpectedPayType(), $uS->KeyDeposit, FALSE, $uS->DefaultVisitFee, $reg->getPreferredTokenId(), FALSE)
-//                        , array('style'=>'clear:left; float:left; display:none;', 'id'=>'divPayChooser'));
-//            }
-//
-//            // Rates array with amount calculated for each rate.
-//            $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
-//
-//            // Rooms array with key deposit info
-//            $dataArray['rooms'] = $roomChooser->makeRoomsArray();
-//
-//            if ($uS->VisitFee) {
-//                // Visit Fee Array
-//                $dataArray['vfee'] = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
-//            }
-
-            // Vehicles
-//            if ($uS->TrackAuto) {
-//                $dataArray['vehicle'] = $this->vehicleMarkup($dbh);
-//            }
 
         } else {
             $resvSectionHeaderPrompt = 'The ' . $labels->getString('guestEdit', 'psgTab', 'PSG') . ' is already at maximum occupancy for our House';
@@ -2308,6 +2257,16 @@ class CheckedoutReservation extends CheckingIn {
             return $this;
         }
 
+        // Modified added guest arrival and depture dates.
+        $guestArrDT = new \DateTime($this->reserveData->getArrivalDateStr('Y-m-d 10:0:0'));
+        $guestDepDT = new \DateTime($this->reserveData->getDepartureDateStr('Y-m-d 10:0:0'));
+
+        if ($guestArrDT > $guestDepDT) {
+            // dates reversed...
+            $this->reserveData->addError('Dates are reversed.  ');
+            return;
+        }
+
         // GEt visit record
         $stmt = $dbh->query("Select * from visit where idVisit = " . $this->reserveData->getIdVisit() . " and Span = " . $this->reserveData->getSpan());
 
@@ -2319,36 +2278,27 @@ class CheckedoutReservation extends CheckingIn {
         EditRS::loadRow($vrows[0], $visitRs);
 
         // Set up comparison dates.
-        $visitArrDT = new \DateTime($visitRs->Span_Start->getStoredVal());
-        $visitArrDT->setTime(10, 0, 0);
+        $spanArrDT = new \DateTime($visitRs->Span_Start->getStoredVal());
+        $spanArrDT->setTime(10, 0, 0);
 
-        $visitDepDT = new \DateTime($visitRs->Span_End->getStoredVal());
-        $visitDepDT->setTime(10, 0, 0);
-
-        $guestArrDT = new \DateTime($this->reserveData->getArrivalDateStr('Y-m-d 10:0:0'));
-        $guestDepDT = new \DateTime($this->reserveData->getDepartureDateStr('Y-m-d 10:0:0'));
-
-        if ($guestArrDT > $guestDepDT) {
-            // dates reversed...
-            $this->reserveData->addError('Dates are reversed.  ');
-            return;
-        }
+        $spanDepDT = new \DateTime($visitRs->Span_End->getStoredVal());
+        $spanDepDT->setTime(10, 0, 0);
 
         // Checking the stay arrival date
-        if ($guestArrDT < $visitArrDT || $guestArrDT > $visitDepDT) {
+        if ($guestArrDT < $spanArrDT || $guestArrDT > $spanDepDT) {
             // Bad arrival Date
             $this->reserveData->setArrivalDateStr($visitRs->Arrival_Date->getStoredVal());
         }
 
         // Departure dates.
-        if ($guestDepDT < $visitArrDT || $guestDepDT > $visitDepDT) {
+        if ($guestDepDT < $spanArrDT || $guestDepDT > $spanDepDT) {
             // Bad Departure Date
             $this->reserveData->setDepartureDateStr($visitRs->Span_End->getStoredVal());
         }
 
 
-        // Is our guest already staying?
-        $stmts = $dbh->query("Select idName, Span_Start_Date, Span_End_Date from stays where idVisit = " . $this->reserveData->getIdVisit() . " and Visit_Span = " . $this->reserveData->getSpan());
+        // get the stays
+        $stmts = $dbh->query("Select idName, idRoom, Span_Start_Date, Span_End_Date from stays where idVisit = " . $this->reserveData->getIdVisit() . " and Visit_Span = " . $this->reserveData->getSpan());
 
         // Count people staying during the new guest's time.
         $stays = array();
@@ -2368,7 +2318,41 @@ class CheckedoutReservation extends CheckingIn {
             }
 
             $stays[$s['idName']] = 1;
+            $roomId = $s['idRoom'];
+        }
 
+
+
+        $addingMembers = array();
+
+        // Guest aleady present?
+        foreach ($this->getStayingMembers() as $m) {
+
+            if (isset($stays[$m->getId()]) === FALSE) {
+
+                // Ok to add
+                $stayRS = new StaysRS();
+
+                $stayRS->idName->setNewVal($m->getId());
+                $stayRS->idVisit->setNewVal($visitRs->idVisit->getStoredVal());
+                $stayRS->Visit_Span->setNewVal($visitRs->Span->getStoredVal());
+                $stayRS->idRoom->setNewVal($roomId);
+                $stayRS->Checkin_Date->setNewVal($this->reserveData->getArrivalDateStr());
+                $stayRS->Checkout_Date->setNewVal($this->reserveData->getDepartureDateStr());
+                $stayRS->Span_Start_Date->setNewVal($this->reserveData->getArrivalDateStr());
+                $stayRS->Span_End_Date->setNewVal($this->reserveData->getDepartureDateStr());
+                $stayRS->Expected_Co_Date->setNewVal($this->reserveData->getDepartureDateStr());
+                $stayRS->Status->setNewVal($visitRs->Status->getStoredVal());
+                $stayRS->Updated_By->setNewVal($uS->username);
+                $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+                $addingMembers[] = $stayRS;
+            }
+        }
+
+        // Amyone left?
+        if (count($addingMembers) < 1) {
+            $this->reserveData->addError('No one left to stay.  ');
+            return;
         }
 
         // Get the resource
@@ -2381,11 +2365,16 @@ class CheckedoutReservation extends CheckingIn {
         }
 
         // Maximym occupants...
-        $numOccupants = count($this->getStayingMembers()) + count($stays);
+        $numOccupants = count($addingMembers) + count($stays);
 
         if ($numOccupants > $resc->getMaxOccupants()) {
             $this->reserveData->addError("The maximum occupancy (" . $resc->getMaxOccupants() . ") for room " . $resc->getTitle() . " is exceded.  ");
             return;
+        }
+
+        // I guess that's it.
+        foreach ($addingMembers as $a) {
+            EditRS::insert($dbh, $a);
         }
 
         return;

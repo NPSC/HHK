@@ -1131,25 +1131,29 @@ function resvManager(initData) {
                         gstDate.val(s1);
                         gstCoDate.val(s2);
                     }
-                }).bind('datepicker-change', function(event, dates) {
+                })
+                
+                if (data.updateOnChange) {
+                    
+                    $('#spnRangePicker').dateRangePicker.bind('datepicker-change', function(event, dates) {
 
-                    // Update the number of days display text.
-                    var numDays = Math.ceil((dates['date2'].getTime() - dates['date1'].getTime()) / 86400000);
+                        // Update the number of days display text.
+                        var numDays = Math.ceil((dates['date2'].getTime() - dates['date1'].getTime()) / 86400000);
 
-                    $('#' + data.daysEle).val(numDays);
+                        $('#' + data.daysEle).val(numDays);
 
-                    if ($('#spnNites').length > 0) {
-                        $('#spnNites').text(numDays);
-                    }
+                        if ($('#spnNites').length > 0) {
+                            $('#spnNites').text(numDays);
+                        }
 
-                    $('#gstDate').removeClass('ui-state-error');
-                    $('#gstCoDate').removeClass('ui-state-error');
+                        $('#gstDate').removeClass('ui-state-error');
+                        $('#gstCoDate').removeClass('ui-state-error');
 
-                    if ($.isFunction(doOnDatesChange)) {
-                        doOnDatesChange(dates);
-                    }
-                });
-
+                        if ($.isFunction(doOnDatesChange)) {
+                            doOnDatesChange(dates);
+                        }
+                    });
+                }
 
                 $dateSection.show();
 
@@ -1647,8 +1651,13 @@ function resvManager(initData) {
 
         function setUp(data) {
 
-            $rDiv = $('<div id="divResvDetail" style="padding:2px; float:left; width: 100%;" class="ui-widget-content ui-corner-bottom hhk-tdbox"/>');
-            $rDiv.append($(data.resv.rdiv.rChooser));
+            $rDiv = // $('<div/>').addClass('ui-widget-content ui-corner-bottom hhk-tdbox').prop('id', 'divResvDetail').css('padding', '5px');
+                    $('<div id="divResvDetail" style="padding:2px; float:left; width: 100%;" class="ui-widget-content ui-corner-bottom hhk-tdbox"/>');
+            
+            // Room Chooser section
+            if (data.resv.rdiv.rChooser !== undefined) {
+                $rDiv.append($(data.resv.rdiv.rChooser));
+            }
 
             // Rate section
             if (data.resv.rdiv.rate !== undefined) {
@@ -1691,6 +1700,7 @@ function resvManager(initData) {
             $expanderButton = $("<ul style='list-style-type:none; float:right; margin-left:5px; padding-top:2px;' class='ui-widget'/>")
                 .append($("<li class='ui-widget-header ui-corner-all' title='Open - Close'>")
                 .append($("<span id='r_drpDown' class='ui-icon ui-icon-circle-triangle-n'></span>")));
+
             $rHdr = $('<div id="divResvHdr" style="padding:2px; cursor:pointer;"/>')
                     .append($(data.resv.hdr))
                     .append($expanderButton).append('<div style="clear:both;"/>');
