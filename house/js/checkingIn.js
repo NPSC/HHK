@@ -15,6 +15,10 @@ function ckedIn(data) {
         paymentRedirect (data, $('#xform'));
         return;
     }
+    
+    if (data.redirTo) {
+       location.replace(data.redirTo);
+    }
 
     if (data.success) {
         //flagAlertMessage(data.success, false);

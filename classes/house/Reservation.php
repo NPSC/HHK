@@ -2246,6 +2246,21 @@ class CheckedoutReservation extends CheckingIn {
         return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
     }
 
+    public function checkedinMarkup(\PDO $dbh) {
+
+//        $post = array(
+//            'vid'=>$this->reserveData->getIdVisit(),
+//            'span'=>$this->reserveData->getSpan(),
+//            'rid'=>$this->reserveData->getIdResv(),
+//            'vstatus'=>$this->reserveData->getSpanStatus(),
+//        );
+
+        $dataArray['redirTo'] = "register.php?gamess=Guest added to visit";
+
+        return $dataArray;
+
+    }
+
     protected function addGuestStay(\PDO $dbh, $post) {
 
         $uS = Session::getInstance();

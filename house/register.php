@@ -78,6 +78,7 @@ $defaultRegisterTab = 0;
 $currentReservations = '';
 $uncommittedReservations = '';
 $waitlist = '';
+$guestAddMessage = '';
 
 $rvCols = array();
 $wlCols = array();
@@ -133,6 +134,13 @@ if (isset($_POST['btnFeesDl'])) {
     PaymentReport::generateDayReport($dbh, $_POST);
 }
 
+if (isset($_GET['gamess'])) {
+
+    $contents = filter_var($_GET['gamess'], FILTER_SANITIZE_STRING);
+
+    $guestAddMessage = HTMLContainer::generateMarkup('div', $contents, array('style'=>'clear:left;float:left; margin-top:5px;margin-bottom:5px;', 'class'=>"hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"));
+
+}
 
 $locations = readGenLookupsPDO($dbh, 'Location');
 $diags = readGenLookupsPDO($dbh, 'Diagnosis');
@@ -354,8 +362,8 @@ if ($uS->UseWLnotes) {
                 </h2>
             </div>
 
-            <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
-            </div>
+            <?php echo $guestAddMessage; ?>
+            <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
             <div style="clear:both;"></div>
             <form name="frmdownload" action="#" method="post">
             <div id="mainTabs" style="display:none; font-size:.9em;">

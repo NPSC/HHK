@@ -746,10 +746,6 @@ $(document).ready(function () {
     if (pmtMkup !== '') {
         $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
     }
-
-//    if ($('iframe#instamed').length > 0) {
-//        $('iframe#instamed').remove();
-//    }
     
     $(':input[type="button"], :input[type="submit"]').button();
 
@@ -772,47 +768,47 @@ $(document).ready(function () {
 
     $('#vstays').on('click', '.stpayFees', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         payFee($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
     });
     $('#vstays').on('click', '.applyDisc', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         getApplyDiscDiag($(this).data('vid'), $('#pmtRcpt'));
     });
     $('#vstays, #vresvs, #vwls, #vuncon').on('click', '.stupCredit', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         updateCredit($(this).data('id'), $(this).data('reg'), $(this).data('name'), 'cardonfile', 'register.php');
     });
     $('#vstays').on('click', '.stckout', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         ckOut($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
     });
     $('#vstays').on('click', '.stvisit', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         editVisit($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
     });
     $('#vstays').on('click', '.hhk-getPSGDialog', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         editPSG($(this).data('psg'));
     });
     $('#vstays').on('click', '.stchgrooms', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         cgRoom($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
     });
     $('#vstays').on('click', '.stcleaning', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         chgRoomCleanStatus($(this).data('idroom'), $(this).data('clean'));
     });
     $('#vresvs, #vwls, #vuncon').on('click', '.resvStat', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         cgResvStatus($(this).data('rid'), $(this).data('stat'));
     });
 
@@ -1079,7 +1075,7 @@ $(document).ready(function () {
         
         eventDrop: function (event, delta, revertFunc) {
             
-            $("#divAlert1, #paymentMessage").hide();
+            $(".hhk-alert").hide();
             
             // visit
             if (event.idVisit > 0 && delta.asDays() !== 0) {
@@ -1116,7 +1112,7 @@ $(document).ready(function () {
         },
 
         eventResize: function (event, delta, revertFunc) {
-            $("#divAlert1, #paymentMessage").hide();
+            $(".hhk-alert").hide();
             
             if (delta === undefined) {
                 revertFunc();
@@ -1138,7 +1134,7 @@ $(document).ready(function () {
         },
 
         eventClick: function (calEvent, jsEvent) {
-            $("#divAlert1, #paymentMessage").hide();
+            $(".hhk-alert").hide();
 
             // OOS events
             if (calEvent.kind && calEvent.kind === 'oos') {
@@ -1229,6 +1225,7 @@ $(document).ready(function () {
 
     if ($('.spnHosp').length > 0) {
         $('.spnHosp').click(function () {
+            $(".hhk-alert").hide();
             $('.spnHosp').css('border', 'solid 1px black').css('font-size', '100%');
             hindx = parseInt($(this).data('id'), 10);
             if (isNaN(hindx))
@@ -1239,7 +1236,7 @@ $(document).ready(function () {
     }
 
     $('#btnActvtyGo').click(function () {
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         var stDate = $('#txtactstart').datepicker("getDate");
         if (stDate === null) {
             $('#txtactstart').addClass('ui-state-highlight');
@@ -1309,7 +1306,7 @@ $(document).ready(function () {
     });
 
     $('#btnFeesGo').click(function () {
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         var stDate = $('#txtfeestart').datepicker("getDate");
         if (stDate === null) {
             $('#txtfeestart').addClass('ui-state-highlight');
@@ -1467,13 +1464,13 @@ $(document).ready(function () {
                         
                         $('#rptInvdiv').on('click', '.invSetBill', function (event) {
                             event.preventDefault();
-                            $("#divAlert1, #paymentMessage").hide();
+                            $(".hhk-alert").hide();
                             invSetBill($(this).data('inb'), $(this).data('name'), 'div#setBillDate', '#trBillDate' + $(this).data('inb'), $('#trBillDate' + $(this).data('inb')).text(), $('#divInvNotes' + $(this).data('inb')).text(), '#divInvNotes' + $(this).data('inb'));
                         });
                         
                         $('#rptInvdiv').on('click', '.invAction', function (event) {
                             event.preventDefault();
-                            $("#divAlert1, #paymentMessage").hide();
+                            $(".hhk-alert").hide();
                             
                             if ($(this).data('stat') == 'del') {
                                 if (!confirm('Delete this Invoice?')) {
@@ -1526,6 +1523,7 @@ $(document).ready(function () {
     });
 
     $('#txtGotoDate').change(function () {
+        $(".hhk-alert").hide();
         calStartDate = new moment($(this).datepicker('getDate'));
         $('#calendar').fullCalendar( 'refetchResources' );
         $('#calendar').fullCalendar('gotoDate', calStartDate);
@@ -1553,6 +1551,7 @@ $(document).ready(function () {
 
     $('div#dchgPw').on('change', 'input', function () {
         $(this).removeClass("ui-state-error");
+        $(".hhk-alert").hide();
         $('#pwChangeErrMsg').text('');
     });
     
@@ -1563,7 +1562,7 @@ $(document).ready(function () {
         modal: true,
         buttons: {
             "Save": function () {
-                
+
                 var oldpw = $('#txtOldPw'), 
                         pw1 = $('#txtNewPw1'),
                         pw2 = $('#txtNewPw2'),
