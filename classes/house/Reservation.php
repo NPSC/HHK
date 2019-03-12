@@ -735,7 +735,7 @@ where rg.idReservation =" . $r['idReservation']);
                     . " join registration r on v.idRegistration = r.idRegistration "
                     . " where v.`Status` = '" . VisitStatus::CheckedIn . "' "
                     . " AND ("
-                            . " ( s.`Status` = '" . VisitStatus::CheckedIn . "' AND DATE(DATEDEFAULTNOW(s.Expected_Co_Date)) >= DATE('" . $arrivalDT->format('Y-m-d') . "') ) "
+                            . " ( s.`Status` = '" . VisitStatus::CheckedIn . "' AND DATE(datedefaultnow(s.Expected_Co_Date)) >= DATE('" . $arrivalDT->format('Y-m-d') . "') ) "
                         . " OR "
                             . " ( s.`Status` = '" . VisitStatus::CheckedOut . "' AND DATE(s.Checkout_Date) > DATE('" . $arrivalDT->format('Y-m-d') . "') )) "
                     . " and s.idName in (" . substr($whStays, 1) . ")");

@@ -441,7 +441,7 @@ p.label {
 
             $query = "select idName, Span_Start_Date, Expected_Co_Date, Span_End_Date, `Status`  from stays "
                     . "where idVisit = :reg and `Status` in ('" . VisitStatus::CheckedIn . "', '" . VisitStatus::CheckedOut . "')"
-                    . " and DATEDIFF(ifnull(Span_End_Date, dateDefaultNow(Expected_Co_Date)), Span_Start_Date) > 0"
+                    . " and DATEDIFF(ifnull(Span_End_Date, datedefaultnow(Expected_Co_Date)), Span_Start_Date) > 0"
                     . " order by `Status` desc";
             $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
             $stmt->bindValue(':reg', $idVisit, PDO::PARAM_INT);
