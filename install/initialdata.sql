@@ -514,16 +514,16 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('VisitFeeDelayDays', '0', 'i', 'h','Number of days before cleaning fee is charged');
 -- ;
 
-INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES 
-('tz', 'America/Chicago', 's', 'r', 'House local time zone.'),
-('adminEmailAddr', '', 's', 'h', 'If present, this address receives all notices of check-in, out, room change, etc.'),
-('noreplyAddr', '', 's', 'h', 'No reply email address'),
-('ccgw', 'test', 's', 'f', 'Values are Test or Production'),
-('subsidyId', '11', 'i', 'f', 'Member Id to use for House Discount payment source'),
-('sId', '11', 'i', 'r', 'Member Id of the House.'),
-('testVersion', 'false', 'b', 'r', 'If true, Alter the background color of each page.');
--- ;
-
+-- INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES 
+-- ('tz', 'America/Chicago', 's', 'r', 'House local time zone.'),
+-- ('adminEmailAddr', '', 's', 'h', 'If present, this address receives all notices of check-in, out, room change, etc.'),
+-- ('noreplyAddr', '', 's', 'h', 'No reply email address'),
+-- ('ccgw', 'test', 's', 'f', 'Values are Test or Production'),
+-- ('subsidyId', '11', 'i', 'f', 'Member Id to use for House Discount payment source'),
+-- ('sId', '11', 'i', 'r', 'Member Id of the House.'),
+-- ('testVersion', 'false', 'b', 'r', 'If true, Alter the background color of each page.');
+-- 
+-- 
 
 
 replace into `item` (`idItem`, `Internal_Number`, `Entity_Id`, `Gl_Code`, `Description`) values 
