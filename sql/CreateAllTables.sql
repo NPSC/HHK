@@ -994,6 +994,7 @@ CREATE TABLE if not exists `name_demog` (
   `Key_Contact` tinyint(1) NOT NULL DEFAULT '0',
   `Legislative` tinyint(1) NOT NULL DEFAULT '0',
   `Photo_Permission` varchar(5) NOT NULL DEFAULT '',
+  `Guest_Photo_Id` INT NOT NULL DEFAULT 0,
   `Gen_Notes` text,
   `Contact_Date` date DEFAULT NULL,
   `Orientation` tinyint(1) NOT NULL DEFAULT '0',
@@ -1425,6 +1426,19 @@ CREATE TABLE if not exists `payment_method` (
 ) ENGINE=InnoDB AUTO_INCREMENT=4;
 
 
+
+-- -----------------------------------------------------
+-- Table `photo`
+-- -----------------------------------------------------
+CREATE TABLE `photo` (
+  `idPhoto` INT NOT NULL AUTO_INCREMENT,
+  `Image_Type` VARCHAR(45) NOT NULL DEFAULT '',
+  `Category` VARCHAR(5) NOT NULL DEFAULT '',
+  `Image` BLOB NULL,
+  `Last_Updated` DATETIME NULL,
+  `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
+  `timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idPhoto`));
 
 
 

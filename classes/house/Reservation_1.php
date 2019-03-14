@@ -14,7 +14,6 @@
  */
 class Reservation_1 {
 
-
     protected $reservRs;
     protected $reservConstraints;
     protected $boDays;

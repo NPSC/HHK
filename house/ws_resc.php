@@ -84,6 +84,22 @@ $events = array();
 try {
 
     switch ($c) {
+        
+    case 'ulimage':
+        
+         break;
+
+     case 'getgstimage':
+        
+         break;
+
+     case 'getimage':
+        
+         break;
+
+     case 'delimage':
+
+         break;
 
      case 'vehsch':
 
