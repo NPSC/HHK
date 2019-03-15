@@ -2092,7 +2092,7 @@ select
     s.idName as `idGuest`,
     v.idReservation,
     s.Span_Start_Date as `Arrival_Date`,
-    dateDefaultNow(s.Expected_Co_Date)  as `Departure_Date`,
+    datedefaultnow(s.Expected_Co_Date)  as `Departure_Date`,
     's' as `Status`,
     v.idResource,
     'v' as `Source`

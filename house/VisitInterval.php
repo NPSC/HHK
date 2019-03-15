@@ -439,16 +439,16 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     v.Rate_Glide_Credit,
     CASE
         WHEN
-            DATE(IFNULL(v.Span_End, DATEDEFAULTNOW(v.Expected_Departure))) <= DATE('$start')
+            DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
         THEN 0
         WHEN DATE(v.Span_Start) >= DATE('$end') THEN 0
         ELSE DATEDIFF(
                 CASE
                     WHEN
-                        DATE(IFNULL(v.Span_End, DATEDEFAULTNOW(v.Expected_Departure))) > DATE('$end')
+                        DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) > DATE('$end')
                     THEN
                         DATE('$end')
-                    ELSE DATE(IFNULL(v.Span_End, DATEDEFAULTNOW(v.Expected_Departure)))
+                    ELSE DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure)))
                 END,
                 CASE
                     WHEN DATE(v.Span_Start) < DATE('$start') THEN DATE('$start')
@@ -458,15 +458,15 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
 
     CASE
         WHEN
-            DATE(IFNULL(v.Span_End, DATEDEFAULTNOW(v.Expected_Departure))) <= DATE('$start')
+            DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
         THEN 0
         WHEN DATE(v.Span_Start) >= DATE('$end') THEN 0
         ELSE (SELECT
                 SUM(DATEDIFF(CASE
                                 WHEN
-                                    DATE(IFNULL(s.Span_End_Date, DATEDEFAULTNOW(v.Expected_Departure))) > DATE('$end')
+                                    DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$end')
                                 THEN DATE('$end')
-                                ELSE DATE(IFNULL(s.Span_End_Date, DATEDEFAULTNOW(v.Expected_Departure)))
+                                ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure)))
                             END,
                             CASE
                                 WHEN DATE(s.Span_Start_Date) < DATE('$start') THEN DATE('$start')
@@ -483,10 +483,10 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
         WHEN DATE(v.Span_Start) >= DATE('$start') THEN 0
         WHEN
             DATE(IFNULL(v.Span_End,
-                        DATEDEFAULTNOW(v.Expected_Departure))) <= DATE('$start')
+                        datedefaultnow(v.Expected_Departure))) <= DATE('$start')
         THEN
             (SELECT
-                    SUM(DATEDIFF(DATE(IFNULL(s.Span_End_Date, DATEDEFAULTNOW(v.Expected_Departure))),
+                    SUM(DATEDIFF(DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))),
                                 DATE(s.Span_Start_Date)))
                 FROM
                     stays s
@@ -495,10 +495,10 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
         ELSE (SELECT
             SUM(DATEDIFF(CASE
                             WHEN
-                                DATE(IFNULL(s.Span_End_Date, DATEDEFAULTNOW(v.Expected_Departure))) > DATE('$start')
+                                DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$start')
                             THEN
                                 DATE('$start')
-                            ELSE DATE(IFNULL(s.Span_End_Date, DATEDEFAULTNOW(v.Expected_Departure)))
+                            ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure)))
                         END,
                         DATE(s.Span_Start_Date)))
         FROM
@@ -510,16 +510,16 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     CASE
         WHEN DATE(v.Span_Start) >= DATE('$start') THEN 0
         WHEN
-            DATE(IFNULL(v.Span_End, DATEDEFAULTNOW(v.Expected_Departure))) <= DATE('$start')
+            DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
         THEN
-            DATEDIFF(DATE(IFNULL(v.Span_End, DATEDEFAULTNOW(v.Expected_Departure))),
+            DATEDIFF(DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))),
                     DATE(v.Span_Start))
         ELSE DATEDIFF(CASE
                     WHEN
-                        DATE(IFNULL(v.Span_End, DATEDEFAULTNOW(v.Expected_Departure))) > DATE('$start')
+                        DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) > DATE('$start')
                     THEN
                         DATE('$start')
-                    ELSE DATE(IFNULL(v.Span_End, DATEDEFAULTNOW(v.Expected_Departure)))
+                    ELSE DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure)))
                 END,
                 DATE(v.Span_Start))
     END AS `Pre_Interval_Nights`,
