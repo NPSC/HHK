@@ -218,7 +218,7 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
     $messg = "<p>Today's date: " . date('M j, Y');
     $messg .= "<p>For guests leaving " . $deparatureDT->format('M j, Y') . ', ' . $numRecipients . " messages were sent. Bad Emails: " . $badAddresses . "</p>";
     $messg .= "<p>Subject Line: </p>" . $subjectLine;
-    $messg .= "<p>Template Text: </p>" . $sForm->templateFile . "<br/>";
+    $messg .= "<p>Template Text: </p>" . $sForm->getTemplateDoc . "<br/>";
     $messg .= "<p>Results:</p>" . $resultsRegister;
 
     $mail->msgHTML($messg);
@@ -228,7 +228,7 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
 } else if (!$sendEmail) {
     echo "<br/><br/><hr/>Auto Email Results: " . $numRecipients . " messages sent. Bad: ".$badAddresses;
     echo "<br/> Subject Line: " . $subjectLine;
-    echo "<br/>Body Template:<br/>" . $sForm->templateFile;
+    echo "<br/>Body Template:<br/>" . $sForm->getTemplateDoc;
 }
 
 // Log - Activity?

@@ -63,7 +63,7 @@ class Document {
 
     }
 
-    public static function findDocument(\PDO $dbh, $title, $category, $type, $name = '') {
+    public static function findDocumentId(\PDO $dbh, $title, $category, $type, $name = '') {
 
         $idDoc = 0;
 

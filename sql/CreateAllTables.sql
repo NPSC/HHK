@@ -1871,6 +1871,18 @@ CREATE TABLE if not exists `syslog` (
 ) ENGINE = MyISAM;
 
 
+-- -----------------------------------------------------
+-- Table `template_tag`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `template_tag` (
+  `idTemplate_tag` INT NOT NULL AUTO_INCREMENT,
+  `Doc_Name` VARCHAR(45) NOT NULL,
+  `Tag_Title` VARCHAR(25) NOT NULL DEFAULT '',
+  `Tag_Name` VARCHAR(25) NOT NULL DEFAULT '',
+  `Replacement_Wrapper` VARCHAR(45) NOT NULL DEFAULT '',
+  PRIMARY KEY (`idTemplate_tag`));
+
+
 
 -- -----------------------------------------------------
 -- Table `trans`
@@ -2225,6 +2237,9 @@ ALTER TABLE `stays`
     ADD INDEX `index_Span_End` (`Span_End_Date` ASC);
 ALTER TABLE `stays` 
     ADD INDEX `index_idName` (`idName` ASC);
+
+ALTER TABLE `template_tag` 
+    ADD INDEX `index_docName` (`Doc_Name` ASC);
 
 ALTER TABLE `vehicle` 
     ADD INDEX `INDEX_LICENSE` (`License_Number` ASC);

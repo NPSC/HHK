@@ -199,7 +199,6 @@ $uS = Session::getInstance();
 
 // Kick out 'Guest' Users
 if ($uS->rolecode > WebRole::WebUser) {
-
     exit("Unauthorized - " . HTMLContainer::generateMarkup('a', 'Continue', array('href' => 'index.php')));
 }
 
@@ -855,40 +854,15 @@ if (isset($_POST['formEdit'])) {
                 exit(json_encode(array('warning' => 'The Form id is blank.')));
             }
 
-            $doc = new Document($dbh, $fn);
-            $rtn = array();
+            $templateForm = new TemplateForm($dbh, $fn);
 
-            if ($doc->isValid()) {
-                $rtn = array('title' => $doc->getTitle(), 'tx' => $doc->getDoc());
+            if ($templateForm->getTemplateDoc()->isValid()) {
+                $rtn = array(
+                    'title' => $templateForm->getTemplateDoc()->getTitle(),
+                    'tx' => $templateForm->getTemplateDoc()->getDoc(),
+                    'tagSel'=>$templateForm->getTagSelector('selTags'));
             } else {
                 $rtn = array('warning' => 'The Form is not found.');
-            }
-
-            if ($doc->getName() == Document_Name::Confirmation) {
-                $repls = array(
-                    array('txt'=>'Guest Name', 'val' => '${GuestName}'),
-                    array('txt'=>'Expected Arrival', 'val' => '${ExpectedArrival}'),
-                    array('txt'=>'Expected Departure', 'val' => '${ExpectedDeparture}'),
-                    array('txt'=>'Date Today', 'val' => '${DateToday}'),
-                    array('txt'=>'Nites', 'val' => '${Nites}'),
-                    array('txt'=>'Amount', 'val' => '${Amount}'),
-                    array('txt'=>'Notes', 'val' => '${Notes}'),
-                    array('txt'=>'Visit Fee Notice', 'val' => '${VisitFeeNotice}'),
-                );
-
-                $rtn['repls'] = $repls;
-            }
-
-            if ($doc->getName() == Document_Name::Survey) {
-                $repls = array(
-                    array('txt'=>'First Name', 'val' => '${FirstName}'),
-                    array('txt'=>'Last Name', 'val' => '${LastName}'),
-                    array('txt'=>'Name Suffix', 'val' => '${NameSuffix}'),
-                    array('txt'=>'Name Prefix', 'val' => '${NamePrefix}'),
-
-                );
-
-                $rtn['repls'] = $repls;
             }
 
             exit(json_encode($rtn));
@@ -930,6 +904,8 @@ if (isset($_POST['btnConvertFiles'])) {
 
     $convertMsg = ConvertTxtFiles::doMarkdownify($dbh);
 }
+
+
 //
 // Generate tab content
 //

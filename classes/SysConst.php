@@ -70,12 +70,6 @@ class Document_Name {
     const Survey = 'Survey';
 }
 
-class Editable_Forms {
-	const Registration = "reg";
-	const Confirmation = "conf";
-	const Survey = "survey";
-}
-
 class Email_Purpose {
     const Home = '1';
     const Work = '2';

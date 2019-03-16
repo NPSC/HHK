@@ -152,6 +152,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('House_Discount', 'hd1', 'Service Issue','10', 'ca',0),
 ('House_Discount', 'hd2', 'Facilities Issue','15', 'ca',0),
 
+('House_Template', 'Registration', 'Registration', 'form', 'md', 10),
+('House_Template', 'Confirmation', 'Confirmation', 'form', 'md', 20),
+('House_Template', 'Survey', 'Survey', 'form', 'md', 40),
+
 ('Income_Bracket', 'ib1', '0 - 25,000', '', 'd',10),
 ('Income_Bracket', 'ib2', '26 - 50,000', '', 'd',20),
 ('Income_Bracket', 'ib3', '51 - 75,000', '', 'd',30),
@@ -707,6 +711,22 @@ REPLACE INTO document (`idDocument`, `Title`, `Abstract`, `Category`, `Type`, `D
 (2, 'Confirmation Document', '', 'form', 'md', 'Dear ${GuestName}:Thank you for your reservation. This is a confirmation for the following dates: ${ExpectedArrival} until ${ExpectedDeparture} for ${Nites} nights for an estimated $${Amount}.  ${VisitFeeNotice}', 'a', NOW(), 'admin'),
 (3, 'Survey Document', '', 'form', 'md', 'Dear ${FirstName},', 'a', NOW(), 'admin');
 -- ;
+
+REPLACE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`) VALUES 
+('Confirmation', 'Guest Name', '${GuestName}'),
+('Confirmation', 'Expected Arrival', '${ExpectedArrival}'),
+('Confirmation', 'Expected Departure', '${ExpectedDeparture}'),
+('Confirmation', 'Date Today', '${DateToday}'),
+('Confirmation', 'Nights', '${Nites}'),
+('Confirmation', 'Amount', '${Amount}'),
+('Confirmation', 'Notes', '${Notes}'),
+('Confirmation', 'Visit Fee Notice', '${VisitFeeNotice}'),
+('Survey', 'First Name', '${FirstName}'),
+('Survey', 'Last Name', '${LastName}'),
+('Survey', 'Name Suffix', '${NameSuffix}'),
+('Survey', 'Name Prefix', '${NamePrefix}');
+-- ;
+
 
 -- 
 -- Hospitals
