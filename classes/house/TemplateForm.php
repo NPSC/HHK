@@ -22,8 +22,11 @@ class TemplateForm {
 
     function __construct($dbh, $idDoc, $docName = '') {
 
-        $this->templateDoc = $this->loadTemplate($dbh, $idDoc, $docName);
         $this->template = '';
+
+        if (is_null($this->templateDoc = $this->loadTemplate($dbh, $idDoc, $docName))) {
+            throw new Hk_Exception_Runtime('Template document not found.  ');
+        }
 
         $this->templateTags = self::loadTemplateTags($dbh, $this->templateDoc->getName());
     }
@@ -67,6 +70,9 @@ class TemplateForm {
     public function createForm($replacements) {
 
         $this->template = $this->templateDoc->getDoc();
+
+//        $Parsedown = new Parsedown();
+//        $this->template = $Parsedown->text($this->template);
 
         $vars = $this->getVariables();
 

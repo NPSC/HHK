@@ -215,11 +215,15 @@ try {
                 $amount = filter_var($_POST['amt'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
             }
 
-            $notes = '-';
+            $notes = '';
             if (isset($_POST['notes'])) {
                 $notes = filter_var($_POST['notes'], FILTER_SANITIZE_STRING);
             }
 
+            $txt = '';
+            if (isset($_POST['hdnCfmText'])) {
+                $txt = base64_decode(filter_var($_POST['hdnCfmText'], FILTER_SANITIZE_STRING));
+            }
 
             $sendemail = FALSE;
             if (isset($_POST['eml'])) {
@@ -234,7 +238,7 @@ try {
                 $eaddr = filter_var($_POST['eaddr'], FILTER_SANITIZE_STRING);
             }
 
-            $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $idGuest, $amount, $sendemail, $notes, $eaddr);
+            $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $idGuest, $amount, $sendemail, $notes, $eaddr, $txt);
             break;
 
         case 'void':

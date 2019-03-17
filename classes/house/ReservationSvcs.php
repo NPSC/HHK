@@ -56,36 +56,13 @@ class ReservationSvcs {
         return $rows;
     }
 
-    public static function getConfirmForm(\PDO $dbh, $idReservation, $idGuest, $amount, $sendEmail = FALSE, $notes = '', $emailAddr = '') {
+    public static function getConfirmForm(\PDO $dbh, $idReservation, $idGuest, $amount, $sendEmail = FALSE, $notes = '', $emailAddr = '', $text = '') {
 
         if ($idReservation == 0) {
             return array('error'=>'Bad reservation Id: ' . $idReservation);
         }
 
-        require(HOUSE . 'TemplateForm.php');
-        require(HOUSE . 'ConfirmationForm.php');
-
-        $uS = Session::getInstance();
-        $dataArray = array();
-
         $reserv = Reservation_1::instantiateFromIdReserv($dbh, $idReservation);
-
-        if ($idGuest == 0) {
-            $idGuest = $reserv->getIdGuest();
-        }
-
-        $guest = new Guest($dbh, '', $idGuest);
-
-        $confirmForm = new ConfirmationForm($dbh, Document_Name::Confirmation);
-
-        $formNotes = $confirmForm->createNotes($notes, !$sendEmail);
-
-        $form = $confirmForm->createForm($confirmForm->makeReplacements($reserv, $guest, $amount, $formNotes));
-
-        if ($emailAddr == '') {
-            $emAddr = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
-            $emailAddr = $emAddr["Email"];
-        }
 
         if ($sendEmail) {
 
@@ -109,6 +86,10 @@ class ReservationSvcs {
                 $mail->isHTML(true);
 
                 $mail->Subject = htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Reservation Confirmation';
+
+                $sty = '<style>' . file_get_contents('css/tui-editor/tui-editor-contents-min.css') . '</style>';
+                $form = $sty . $text . '<p>' . $notes . '</p>';
+
                 $mail->msgHTML($form);
 
 
@@ -130,7 +111,31 @@ class ReservationSvcs {
 
         } else {
 
-            $dataArray['confrv'] = utf8_decode($form);
+
+            require(HOUSE . 'TemplateForm.php');
+            require(HOUSE . 'ConfirmationForm.php');
+
+            $uS = Session::getInstance();
+            $dataArray = array();
+
+            if ($idGuest == 0) {
+                $idGuest = $reserv->getIdGuest();
+            }
+
+            $guest = new Guest($dbh, '', $idGuest);
+
+            $confirmForm = new ConfirmationForm($dbh, 0, Document_Name::Confirmation);
+
+            $formNotes = $confirmForm->createNotes($notes, !$sendEmail);
+
+            $form = $confirmForm->createForm($confirmForm->makeReplacements($reserv, $guest, $amount, $formNotes));
+
+            if ($emailAddr == '') {
+                $emAddr = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
+                $emailAddr = $emAddr["Email"];
+            }
+
+            $dataArray['confrv'] = $form;
             $dataArray['email'] = $emailAddr;
         }
 

@@ -32,6 +32,7 @@ require (HOUSE . 'Resource.php');
 require (HOUSE . 'ResourceView.php');
 require (HOUSE . 'Attributes.php');
 require (HOUSE . 'Constraint.php');
+require (HOUSE . 'TemplateForm.php');
 
 
 try {
@@ -40,7 +41,7 @@ try {
     die($exw->getMessage());
 }
 
-function saveArchive(\PDO $dbh, $desc, $subt, $tblName) {
+function saveArchive(PDO $dbh, $desc, $subt, $tblName) {
 
     $defaultCode = '';
 
@@ -123,7 +124,7 @@ function saveArchive(\PDO $dbh, $desc, $subt, $tblName) {
     return $defaultCode;
 }
 
-function getSelections(\PDO $dbh, $tableName, $type) {
+function getSelections(PDO $dbh, $tableName, $type) {
 
     $uS = Session::getInstance();
 
@@ -860,7 +861,7 @@ if (isset($_POST['formEdit'])) {
                 $rtn = array(
                     'title' => $templateForm->getTemplateDoc()->getTitle(),
                     'tx' => $templateForm->getTemplateDoc()->getDoc(),
-                    'tagSel'=>$templateForm->getTagSelector('selTags'));
+                    'tagSel'=>$templateForm->getTagSelector('selTokens'));
             } else {
                 $rtn = array('warning' => 'The Form is not found.');
             }
@@ -881,13 +882,18 @@ if (isset($_POST['formEdit'])) {
 
             $doc = new Document($dbh, $fn);
 
-            $doc->setDoc($formEditorText);
-            $doc->save($dbh, $uS->username);
+            if ($doc->getDoc() != $formEditorText) {
 
-            if ($doc->getIdDocument() > 0) {
-                $rteMsg = "Success - form saved.";
+                $doc->setDoc($formEditorText);
+                $doc->save($dbh, $uS->username);
+
+                if ($doc->getIdDocument() > 0) {
+                    $rteMsg = "Success - form saved.";
+                } else {
+                    $rteMsg = "Form Not Saved.";
+                }
             } else {
-                $rteMsg = "Form Not Saved.";
+                $rteMsg = "No changes were detected.";
             }
 
             exit(json_encode(array('response' => $rteMsg, 'idDocument' => $doc->getIdDocument())));
@@ -898,7 +904,7 @@ if (isset($_POST['formEdit'])) {
     exit(json_encode(array('warning' => 'Unspecified')));
 }
 
-if (isset($_POST['btnConvertFiles'])) {
+if (isset($_POST['btnConvertFiles']) && SecurityComponent::is_TheAdmin()) {
 
     $tabIndex = 6;
 
@@ -1850,14 +1856,10 @@ $resultMessage = $alertMsg->createMarkup();
 
                 $("#replacementTokens").empty();
 
-                if (data.repls) {
+                if (data.tagSel) {
 
                     // make replacements selector
-                    $rSel = $('<select id="relSelect" />');
-
-                    for (var i=0; i<data.repls.length; i++) {
-                        $rSel.append($('<option value="' +  data.repls[i].val + '"></option').append(data.repls[i].txt));
-                    }
+                    $rSel = $(data.tagSel);
 
                     $("#replacementTokens").append($('<span>Replacement Tokens: </span>')).append($rSel);
 
@@ -1988,10 +1990,12 @@ $resultMessage = $alertMsg->createMarkup();
                 </div>
 
                 <div id="agreeEdit" class="ui-tabs-hide" >
+                    <?php if (SecurityComponent::is_TheAdmin()) { ?>
                     <form method="POST" action="ResourceBuilder.php" name="formConvrt">
                         <input type="submit" name='btnConvertFiles'  value="Convert Files"/>
                         <p id="convertMsg"><?php echo $convertMsg; ?></p>
                     </form>
+                    <?php } ?>
                     <p>Select the form to edit from the following list: <?php echo $feSelectForm; ?></p><p id="spnRteLoading" style="font-style: italic; display:none;">Loading...</p>
                     <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
                     <h3 id="spnEditorTitle"></h3>

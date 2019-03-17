@@ -29,6 +29,14 @@ function resvManager(initData) {
     var updateRescChooser = new updateRescChooser();
     var $pWarning = $('#pWarnings');
     
+    var viewer = tui.Editor.factory({
+        el: document.querySelector('#viewerSection'),
+        viewer: true,
+        height: '500px',
+        initialValue: ''
+    });
+
+    
     // Exports
     t.getReserve = getReserve;
     t.verifyInput = verifyInput;
@@ -43,6 +51,8 @@ function resvManager(initData) {
     t.getIdVisit = getIdVisit;
     t.getSpan = getSpan;
     t.setRooms = setRooms;
+    t.getTuiViewer = getTuiViewer;
+    t.viewer = viewer;
 
     function setRooms($r) {
         rooms = $r;
@@ -66,6 +76,10 @@ function resvManager(initData) {
     
     function getIdName() {
         return idName;
+    }
+    
+    function getTuiViewer() {
+        return viewer;
     }
 
     function FamilySection($wrapper) {
@@ -1769,9 +1783,9 @@ function resvManager(initData) {
                      if (data.confrv) {
 
                         $('div#submitButtons').hide();
-                        $("#frmConfirm").children().remove();
-                        $("#frmConfirm").html(data.confrv)
-                            .append($('<div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><span>Email Address </span><input type="text" id="confEmail" value="'+data.email+'"/></div>'));
+                        
+                        viewer.setMarkdown(data.confrv);
+                        $('#confEmail').val(data.email);
 
                         $("#confirmDialog").dialog('open');
                     }

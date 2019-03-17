@@ -48,7 +48,7 @@ class ConfirmationForm extends TemplateForm {
 
         if ($editable) {
             $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', "Special Note", array('style' => 'font-weight:bold;')));
-            $notesText .= HTMLContainer::generateMarkup('textarea', '', array('id' => 'tbCfmNotes', 'name' => 'tbCfmNotes', 'rows' => '3', 'cols' => '80'));
+            //$notesText .= HTMLContainer::generateMarkup('textarea', '', array('id' => 'tbCfmNotes', 'name' => 'tbCfmNotes', 'rows' => '3', 'cols' => '80'));
         } else if (strlen($text) > 5) {
             $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', "Special Note", array('style' => 'font-weight:bold;')) . "<br/>" . nl2br($text));
             $notesText .= '<br />';

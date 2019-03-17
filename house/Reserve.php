@@ -100,6 +100,7 @@ if (isset($_POST['CardID']) || isset($_POST['PaymentID'])) {
     }
 }
 
+// Send confrirm form as a word doc.
 if (isset($_POST['hdnCfmRid'])) {
 
     $idReserv = intval(filter_var($_POST['hdnCfmRid'], FILTER_SANITIZE_NUMBER_INT), 10);
@@ -114,14 +115,17 @@ if (isset($_POST['hdnCfmRid'])) {
         $notes = filter_var($_POST['tbCfmNotes'], FILTER_SANITIZE_STRING);
     }
 
-    require(HOUSE . 'TemplateForm.php');
-    require(HOUSE . 'ConfirmationForm.php');
+    $txt = '';
+    if (isset($_POST['hdnCfmText'])) {
+        $txt = base64_decode(filter_var($_POST['hdnCfmText'], FILTER_SANITIZE_STRING));
+    }
+
 
     try {
-        $confirmForm = new ConfirmationForm($dbh, Document_Name::Confirmation);
 
-        $formNotes = $confirmForm->createNotes($notes, FALSE);
-        $form = '<!DOCTYPE html>' . $confirmForm->createForm($confirmForm->makeReplacements($resv, $guest, 0, $formNotes));
+        $sty = '<style>' . file_get_contents('css/tui-editor/tui-editor-contents-min.css') . '</style>';
+
+        $form = '<!DOCTYPE html>' . $sty . $txt;
 
         header('Content-Disposition: attachment; filename=confirm.doc');
         header("Content-Description: File Transfer");
@@ -202,6 +206,10 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
+        <link rel="stylesheet" href="css/tui-editor/tui-editor.min.css">
+        <link rel="stylesheet" href="css/tui-editor/tui-editor-contents-min.css">
+        <link rel="stylesheet" href="css/tui-editor/codemirror.css">
+        <link rel="stylesheet" href="css/tui-editor/tui-color-picker.min.css">
 
         <?php echo FAVICON; ?>
 <!--        Fix the ugly checkboxes-->
@@ -226,6 +234,10 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
+        <script src="../js/tuiEditorSupport.js"></script>
+        <script src="../js/tui-color-picker.min.js"></script>
+        <script src="../js/tui-editor-Editor.min.js"></script>
+        <script src="../js/tui-editor-extColorSyntax.min.js"></script>
 <!--        <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>-->
 
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
@@ -272,7 +284,14 @@ $resvObjEncoded = json_encode($resvAr);
         </div>
         <form name="xform" id="xform" method="post"></form>
         <div id="confirmDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;">
-            <form id="frmConfirm" action="Reserve.php" method="post"></form>
+            <form id="frmConfirm" action="Reserve.php" method="post">
+                <div id="viewerSection"></div>
+                <textarea id ="tbCfmNotes" rows="3" cols="80" style="font-size: 13px;"></textarea>
+                <div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix">
+                    <span>Email Address</span>
+                    <input type="text" id="confEmail" value="" style="margin-left: .3em;"/>
+                </div>
+            </form>
         </div>
 
 <script type="text/javascript">
@@ -318,11 +337,20 @@ $(document).ready(function() {
         buttons: {
             'Download MS Word': function () {
                 var $confForm = $("form#frmConfirm");
-                $confForm.append($('<input name="hdnCfmRid" type="hidden" value="' + $('#btnShowCnfrm').data('rid') + '"/>'))
+                $confForm.append($('<input name="hdnCfmRid" type="hidden" value="' + $('#btnShowCnfrm').data('rid') + '"/>'));
+                $confForm.append($('<input name="hdnCfmText" type="hidden" value="' + btoa($('#viewerSection').html()) + '"/>'));
                 $confForm.submit();
             },
             'Send Email': function() {
-                $.post('ws_ckin.php', {cmd:'confrv', rid: $('#btnShowCnfrm').data('rid'), eml: '1', eaddr: $('#confEmail').val(), amt: $('#spnAmount').text(), notes: $('#tbCfmNotes').val()}, function(data) {
+                var parms = {
+                    cmd:'confrv',
+                    eml: '1',
+                    eaddr: $('#confEmail').val(),
+                    notes: $('#tbCfmNotes').val(),
+                    rid: $('#btnShowCnfrm').data('rid'),
+                    text: btoa($('#viewerSection').html())
+                };
+                $.post('ws_ckin.php', parms, function(data) {
                     data = $.parseJSON(data);
                     if (data.gotopage) {
                         window.open(data.gotopage, '_self');
