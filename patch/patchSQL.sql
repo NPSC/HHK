@@ -34,4 +34,4 @@ ALTER TABLE `payment_auth`
 ALTER TABLE `payment_auth`
     ADD COLUMN `Response_Code` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Response_Message`;
 
-UPDATE `demo`.`gen_lookups` SET `Substitute`='o' WHERE `Table_Name`='Phone_Type' and`Code`='xf';
+UPDATE `gen_lookups` SET `Substitute`='o' WHERE `Table_Name`='Phone_Type' and`Code`='xf';
