@@ -103,6 +103,9 @@ if (isset($_POST['CardID']) || isset($_POST['PaymentID'])) {
 // Send confrirm form as a word doc.
 if (isset($_POST['hdnCfmRid'])) {
 
+    require(HOUSE . 'TemplateForm.php');
+    require(HOUSE . 'ConfirmationForm.php');
+
     $idReserv = intval(filter_var($_POST['hdnCfmRid'], FILTER_SANITIZE_NUMBER_INT), 10);
     $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
 
@@ -120,12 +123,11 @@ if (isset($_POST['hdnCfmRid'])) {
         $txt = base64_decode(filter_var($_POST['hdnCfmText'], FILTER_SANITIZE_STRING));
     }
 
-
     try {
 
         $sty = '<style>' . file_get_contents('css/tui-editor/tui-editor-contents-min.css') . '</style>';
 
-        $form = '<!DOCTYPE html>' . $sty . $txt;
+        $form = '<!DOCTYPE html>' . $sty . $txt . ConfirmationForm::createNotes($notes, FALSE);
 
         header('Content-Disposition: attachment; filename=confirm.doc');
         header("Content-Description: File Transfer");
@@ -206,10 +208,7 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
-        <link rel="stylesheet" href="css/tui-editor/tui-editor.min.css">
         <link rel="stylesheet" href="css/tui-editor/tui-editor-contents-min.css">
-        <link rel="stylesheet" href="css/tui-editor/codemirror.css">
-        <link rel="stylesheet" href="css/tui-editor/tui-color-picker.min.css">
 
         <?php echo FAVICON; ?>
 <!--        Fix the ugly checkboxes-->
@@ -235,9 +234,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script src="../js/tuiEditorSupport.js"></script>
-        <script src="../js/tui-color-picker.min.js"></script>
         <script src="../js/tui-editor-Editor.min.js"></script>
-        <script src="../js/tui-editor-extColorSyntax.min.js"></script>
 <!--        <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>-->
 
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
@@ -286,7 +283,7 @@ $resvObjEncoded = json_encode($resvAr);
         <div id="confirmDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;">
             <form id="frmConfirm" action="Reserve.php" method="post">
                 <div id="viewerSection"></div>
-                <textarea id ="tbCfmNotes" rows="3" cols="80" style="font-size: 13px;"></textarea>
+                <textarea id ="tbCfmNotes" name ="tbCfmNotes" placeholder='Special Notes' rows="3" cols="80" style="font-size: 13px;"></textarea>
                 <div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix">
                     <span>Email Address</span>
                     <input type="text" id="confEmail" value="" style="margin-left: .3em;"/>

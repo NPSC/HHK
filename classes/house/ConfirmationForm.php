@@ -37,7 +37,7 @@ class ConfirmationForm extends TemplateForm {
             'DateToday' => date('M j, Y'),
             'Nites' => $reserv->getExpectedDays($reserv->getExpectedArrival(), $reserv->getExpectedDeparture()),
             'Amount' => ($amount == '' ? 0 : number_format($amount, 2)),
-            'Notes' => $notes,
+            'Notes' => '',  //$notes,
             'VisitFeeNotice' => $visitFeeNotice,
         );
     }
@@ -47,8 +47,8 @@ class ConfirmationForm extends TemplateForm {
         $notesText = '';
 
         if ($editable) {
-            $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', "Special Note", array('style' => 'font-weight:bold;')));
-            //$notesText .= HTMLContainer::generateMarkup('textarea', '', array('id' => 'tbCfmNotes', 'name' => 'tbCfmNotes', 'rows' => '3', 'cols' => '80'));
+            //$notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', "Special Note", array('style' => 'font-weight:bold;')));
+            $notesText .= HTMLContainer::generateMarkup('textarea', '', array('id' => 'tbCfmNotes', 'name' => 'tbCfmNotes', 'placeholder'=>'Special Note', 'rows' => '3', 'cols' => '80'));
         } else if (strlen($text) > 5) {
             $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', "Special Note", array('style' => 'font-weight:bold;')) . "<br/>" . nl2br($text));
             $notesText .= '<br />';

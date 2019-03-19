@@ -71,9 +71,6 @@ class TemplateForm {
 
         $this->template = $this->templateDoc->getDoc();
 
-//        $Parsedown = new Parsedown();
-//        $this->template = $Parsedown->text($this->template);
-
         $vars = $this->getVariables();
 
         foreach ($vars as $v) {

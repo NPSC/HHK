@@ -1764,10 +1764,13 @@ function resvManager(initData) {
             
             // Show confirmation form button.
             $('#btnShowCnfrm').button().click(function () {
+                
                 var amount = $('#spnAmount').text();
+                
                 if (amount === '') {
                     amount = 0;
                 }
+                
                 $.post('ws_ckin.php', {cmd:'confrv', rid: $(this).data('rid'), amt: amount, eml: '0'}, function(d) {
 
                     data = $.parseJSON(d);

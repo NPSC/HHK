@@ -62,11 +62,17 @@ class ReservationSvcs {
             return array('error'=>'Bad reservation Id: ' . $idReservation);
         }
 
+        require(HOUSE . 'ConfirmationForm.php');
+
         $reserv = Reservation_1::instantiateFromIdReserv($dbh, $idReservation);
 
         if ($sendEmail) {
 
-            if ($emailAddr != '') {
+            if ($emailAddr == '') {
+                $dataArray['mesg'] = "Guest email address is blank.  ";
+            } else if ($text == '') {
+                $dataArray['mesg'] = "The message is blank.  ";
+            } else {
 
                 $config = new Config_Lite(ciCFG_FILE);
 
@@ -88,7 +94,7 @@ class ReservationSvcs {
                 $mail->Subject = htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Reservation Confirmation';
 
                 $sty = '<style>' . file_get_contents('css/tui-editor/tui-editor-contents-min.css') . '</style>';
-                $form = $sty . $text . '<p>' . $notes . '</p>';
+                $form = $sty . $text . '<p>' . ConfirmationForm::createNotes($notes, FALSE) . '</p>';
 
                 $mail->msgHTML($form);
 
@@ -104,16 +110,9 @@ class ReservationSvcs {
                 } else {
                     $dataArray['mesg'] = "Email failed!  " . $mail->ErrorInfo;
                 }
-
-            } else {
-                $dataArray['mesg'] = "Guest email address is blank.  ";
             }
 
         } else {
-
-
-            require(HOUSE . 'TemplateForm.php');
-            require(HOUSE . 'ConfirmationForm.php');
 
             $uS = Session::getInstance();
             $dataArray = array();
@@ -146,13 +145,17 @@ class ReservationSvcs {
 
         $uS = Session::getInstance();
 
-        $instructFileName = REL_BASE_DIR . 'conf'. DS . 'agreement.txt';
+        $regTemplate = new TemplateForm($dbh, 0, Document_Name::Registration);
 
+        $parseDown = new Parsedown();
+
+        $instructFile = HTMLContainer::generateMarkup('div', $parseDown->setBreaksEnabled(TRUE)->text($regTemplate->getTemplateDoc()->getDoc()), array('class'=>'tui-editor-contents'));
+        $sty = '<style>' . file_get_contents('css/tui-editor/tui-editor-contents-min.css') . '</style>';
 
         if ($uS->RegForm == 1) {
 
-            $doc = RegisterForm::prepareRegForm($dbh, $idVisit, $idReservation, $instructFileName);
-            $sty = RegisterForm::getStyling();
+            $doc = RegisterForm::prepareRegForm($dbh, $idVisit, $idReservation, $instructFile);
+            $sty .= RegisterForm::getStyling();
 
         } else if ($uS->RegForm == 2) {
 
@@ -342,12 +345,12 @@ class ReservationSvcs {
                     $cardNumber,
                     $logoURL,
                     $logoWidth,
-                    $instructFileName,
+                    $instructFile,
                     $expectedPayType,
                     $notes,
                     $todaysDate
                 );
-            $sty = $regdoc->getStyle();
+            $sty .= $regdoc->getStyle();
 
         } else {
             return array('doc'=>'Error - Registration Form # is not defined in the system configuration table.', 'style'=>' ');

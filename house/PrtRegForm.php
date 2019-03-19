@@ -43,6 +43,9 @@ require (HOUSE . 'RegisterForm.php');
 require (HOUSE . 'RegistrationForm.php');
 require (HOUSE . 'Attributes.php');
 require (HOUSE . 'Constraint.php');
+require (CLASSES . 'Parsedown.php');
+require (CLASSES . 'Document.php');
+require(HOUSE . 'TemplateForm.php');
 
 require (HOUSE . 'Vehicle.php');
 

@@ -22,6 +22,7 @@ require (DB_TABLES . 'AttributeRS.php');
 
 require (CLASSES . 'Parsedown.php');
 require (CLASSES . 'Document.php');
+require(HOUSE . 'TemplateForm.php');
 
 require CLASSES . 'FinAssistance.php';
 require (PMT . 'Payments.php');
