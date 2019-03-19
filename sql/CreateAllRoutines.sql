@@ -6,12 +6,12 @@
 --
 -- function `dateDefaultNow`
 --
-DROP function IF EXISTS `datedefaultnow`;
+DROP function IF EXISTS `datedefaultnow`; -- ;
 
 CREATE FUNCTION `datedefaultnow` (dt DateTime)
 RETURNS DATETIME
 DETERMINISTIC NO SQL
-RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() else dt end;
+RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() else dt end
  -- ;
 
 
