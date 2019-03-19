@@ -390,7 +390,7 @@ CREATE OR REPLACE VIEW `vcredit_payments` AS
         IFNULL(`pa`.`Acct_Number`, '') AS `Acct_Number`,
         IFNULL(`pa`.`Card_Type`, '') AS `Card_Type`,
         IFNULL(`pa`.`AVS`, '') AS `AVS`,
-        IFNULL(`pa`.`Code3`, '') AS `CVV`,
+        IFNULL(`pa`.`CVV`, '') AS `CVV`,
         IFNULL(`pa`.`Last_Updated`, '') AS `Last_Updated`,
         `p`.`idPayor` AS `idPayor`,
         IFNULL(`gt`.`CardHolderName`, '') AS `CardHolderName`
@@ -2092,7 +2092,7 @@ select
     s.idName as `idGuest`,
     v.idReservation,
     s.Span_Start_Date as `Arrival_Date`,
-    dateDefaultNow(s.Expected_Co_Date)  as `Departure_Date`,
+    datedefaultnow(s.Expected_Co_Date)  as `Departure_Date`,
     's' as `Status`,
     v.idResource,
     'v' as `Source`
