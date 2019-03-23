@@ -64,6 +64,15 @@ class HouseServices {
             }
         }
 
+        if ($r['Span_End'] != '') {
+            $vspanEndDT = new \DateTime($r['Span_End']);
+            $vspanEndDT->sub(new DateInterval('P1D'));
+        } else {
+            $vspanEndDT = new \DateTime();
+        }
+
+        $vspanEndDT->setTime(23, 59, 59);
+        $vspanStartDT = new \DateTime($r['Span_Start']);
 
         $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
@@ -106,8 +115,6 @@ class HouseServices {
         // Change rooms control
         if ($action == 'cr' && $r['Status'] == VisitStatus::CheckedIn) {
 
-            $dataArray['resc'] = Resource::roomListJSON($dbh);
-
             $expDepDT = new \DateTime($r['Expected_Departure']);
             $expDepDT->setTime(10, 0, 0);
             $now = new \DateTime();
@@ -118,8 +125,9 @@ class HouseServices {
             }
 
             $reserv = Reservation_1::instantiateFromIdReserv($dbh, $r['idReservation'], $idVisit);
-            $roomChooser = new RoomChooser($dbh, $reserv, 0, new \DateTime(), $expDepDT);
+            $roomChooser = new RoomChooser($dbh, $reserv, 0, $vspanStartDT, $expDepDT);
             $mkup .= $roomChooser->createChangeRoomsMarkup($dbh, $visitCharge, $idGuest, $isAdmin);
+            $dataArray['resc'] = $roomChooser->makeRoomsArray();
 
         // Pay fees
         } else if ($action == 'pf') {
@@ -138,16 +146,7 @@ class HouseServices {
         $dataArray['success'] = $mkup;
 
 
-        if ($r['Span_End'] != '') {
-            $vspanEndDT = new \DateTime($r['Span_End']);
-            $vspanEndDT->sub(new DateInterval('P1D'));
-        } else {
-            $vspanEndDT = new \DateTime();
-        }
-
-        $vspanEndDT->setTime(23, 59, 59);
-        $vspanStartDT = new \DateTime($r['Span_Start']);
-
+        // Start and end dates for rate changer
         $dataArray['start'] = $vspanStartDT->format('c');
         $dataArray['end'] = $vspanEndDT->format('c');
 
@@ -342,9 +341,9 @@ class HouseServices {
                         }
 
                         $departDT = new \DateTime($visit->getExpectedDeparture());
-                        $departDT->setTime(10, 0, 0);
+                        $departDT->setTime($uS->CheckOutTime, 0, 0);
                         $now2 = new \DateTime();
-                        $now2->setTime(10, 0, 0);
+                        $now2->setTime($uS->CheckOutTime, 0, 0);
 
                         if ($departDT < $now2) {
                             $departDT = $now2;

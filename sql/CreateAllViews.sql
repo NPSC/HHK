@@ -925,7 +925,7 @@ CREATE OR REPLACE VIEW `vguest_listing` AS
         IFNULL(`na`.`County`, '') AS `County`,
         IFNULL(`na`.`State_Province`, '') AS `State`,
         IFNULL(`na`.`Postal_Code`, '') AS `Zip`,
-        IFNULL(`na`.`Country`, '') AS `Country`,
+        IFNULL(`na`.`Country_Code`, '') AS `Country`,
         IFNULL(`n`.`BirthDate`, '') AS `BirthDate`,
         IFNULL(`g3`.`Description`, '') AS `Patient Rel.`,
         `ng`.`Relationship_Code` AS `Relationship_Code`,

@@ -632,6 +632,10 @@ abstract class MercResponse {
         return 0;
     }
 
+    public function saveCardOnFIle() {
+        return TRUE;
+    }
+
     public function getEMVApplicationIdentifier() {
         return '';
     }

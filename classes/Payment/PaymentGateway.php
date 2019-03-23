@@ -1198,13 +1198,13 @@ class InstamedGateway extends PaymentGateway {
 
         if ($transResult == InstamedGateway::POSTBACK_CANCEL) {
 
-            $payResult = new PaymentResult(0, 0, 0);
+            $payResult = new PaymentResult($idInv, 0, 0);
             $payResult->setDisplayMessage('User Canceled.');
 
             return $payResult;
         } else if ($transResult != InstamedGateway::POSTBACK_COMPLETE) {
 
-            $payResult = new PaymentResult(0, 0, 0);
+            $payResult = new PaymentResult($idInv, 0, 0);
             $payResult->setDisplayMessage('Undefined Result: ' . $transResult);
 
             return $payResult;
@@ -1212,7 +1212,7 @@ class InstamedGateway extends PaymentGateway {
 
         if ($ssoToken === NULL || $ssoToken == '') {
 
-            $payResult = new PaymentResult(0, 0, 0);
+            $payResult = new PaymentResult($idInv, 0, 0);
             $payResult->setDisplayMessage('Missing Token. ');
 
             return $payResult;
@@ -1387,7 +1387,7 @@ class InstamedGateway extends PaymentGateway {
         $tokenRow = EditRS::select($dbh, $ssoTknRs, array($ssoTknRs->Token));
 
         if (count($tokenRow) < 1) {
-            $payResult = new PaymentResult(0, 0, 0);
+            $payResult = new PaymentResult($idInv, 0, 0);
             $payResult->setDisplayMessage('SSO Token not found');
             return $payResult;
         }
@@ -1415,17 +1415,6 @@ class InstamedGateway extends PaymentGateway {
             // Do Nothing
         }
 
-        // Make a sale response...
-//        $payResp = new ImPaymentResponse($curlResponse, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $paymentNotes);
-//
-//        // Record transaction
-//        try {
-//            $transRs = Transaction::recordTransaction($dbh, $payResp, $this->gwName, TransType::Sale, TransMethod::HostedPayment);
-//            $payResp->setIdTrans($transRs->idTrans->getStoredVal());
-//        } catch (Exception $ex) {
-//            // do nothing
-//        }
-
 
         //Wait for web hook
         $state = $this->waitForWebhook($dbh, $ssoTknRs, 5);
@@ -1433,7 +1422,7 @@ class InstamedGateway extends PaymentGateway {
         if ($state == WebHookStatus::Init) {
             // Webhook has not shown up yet.
 
-            $payResult = new PaymentResult(0, 0, 0);
+            $payResult = new PaymentResult($idInv, 0, 0);
             $payResult->setStatus(PaymentResult::ERROR);
             $payResult->setDisplayMessage('** Payment status unknown, try again later. *** ');
             return $payResult;
@@ -1441,7 +1430,7 @@ class InstamedGateway extends PaymentGateway {
         } else if ($state == WebHookStatus::Error) {
             // HHK's webhook processing failed..
 
-            $payResult = new PaymentResult(0, 0, 0);
+            $payResult = new PaymentResult($idInv, 0, 0);
             $payResult->setStatus(PaymentResult::ERROR);
             $payResult->setDisplayMessage('** Payment processing error in HHK **');
             return $payResult;

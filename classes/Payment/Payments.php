@@ -72,6 +72,14 @@ abstract class PaymentResponse {
         }
     }
 
+    public function getIdToken() {
+        return $this->idGuestToken;
+    }
+
+    public function setIdToken($idToken) {
+        $this->idGuestToken = intval($idToken, 0);
+    }
+
     public function getIdPayment() {
 
         if (is_null($this->paymentRs) === FALSE) {
@@ -112,10 +120,6 @@ class ImPaymentResponse extends PaymentResponse {
         } else {
             $this->setPartialPayment(FALSE);
         }
-    }
-
-    public function getIdToken() {
-        return 0;
     }
 
     public function getStatus() {
@@ -302,8 +306,7 @@ class SaleReply extends CreditPayments {
         $vr = $pr->response;
 
         // Store any tokens
-        $idToken = CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr);
-
+        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr));
 
         // Check for replay - AP*
         if ($vr->getResponseMessage() == MpStatusMessage::Replay) {
@@ -349,7 +352,7 @@ class SaleReply extends CreditPayments {
         $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
         $payRs->idPayor->setNewVal($pr->idPayor);
         $payRs->idTrans->setNewVal($pr->getIdTrans());
-        $payRs->idToken->setNewVal($idToken);
+        $payRs->idToken->setNewVal($pr->getIdToken());
         $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
         $payRs->Result->setNewVal(MpStatusValues::Approved);
         $payRs->Attempt->setNewVal($attempts);
@@ -641,7 +644,7 @@ class ReturnReply extends CreditPayments {
             $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
             $payRs->idPayor->setNewVal($pr->idPayor);
             $payRs->idTrans->setNewVal($pr->getIdTrans());
-            $payRs->idToken->setNewVal($vr->getToken());
+            $payRs->idToken->setNewVal($pr->getToken());
             $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
             $payRs->Result->setNewVal(MpStatusValues::Approved);
             $payRs->Attempt->setNewVal($attempts);
@@ -734,7 +737,7 @@ class ReturnReply extends CreditPayments {
 
             $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
             $payRs->idPayor->setNewVal($pr->idPayor);
-            $payRs->idToken->setNewVal($vr->getToken());
+            $payRs->idToken->setNewVal($pr->getToken());
             $payRs->idTrans->setNewVal($pr->getIdTrans());
             $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
             $payRs->Status_Code->setNewVal(PaymentStatusCode::Declined);

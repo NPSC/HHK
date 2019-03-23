@@ -155,37 +155,6 @@ order by r.Util_Priority;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
         return $nRS;
     }
 
-    public static function roomListJSON(PDO $dbh, $rescRows = array()) {
-
-        if (count($rescRows) == 0) {
-            $stmt = $dbh->query("Select * from vresources_listing where Rooms > 0");
-            $rescRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        }
-
-        $resArray = array();
-
-        foreach ($rescRows as $r) {
-            $resArray[$r['idRes']] = array(
-                "maxOcc"=>$r['Max_Occupants'],
-                "rate"=>$r['Rate'],
-                "title"=> htmlspecialchars($r['Title'], ENT_QUOTES),
-                'key' => $r['Key_Deposit'],
-                'status' => $r["Status"]
-                );
-        }
-
-        // Blank
-        $resArray['0'] = array(
-                "maxOcc"=>0,
-                "rate"=>0,
-                "title"=>'',
-                'key' => 0,
-                'status' => ''
-                );
-        return $resArray;
-    }
-
-
     public function getBeds() {
         $beds = new Beds();
         foreach ($this->rooms as $rm) {

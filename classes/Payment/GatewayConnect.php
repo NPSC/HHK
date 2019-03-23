@@ -34,6 +34,7 @@ interface iGatewayResponse {
     public function getExpDate();
 
     public function getToken();
+    public function saveCardonFIle();
     public function getInvoiceNumber();
     public function getOperatorId();
     public function getErrorMessage();
@@ -108,6 +109,9 @@ abstract class GatewayResponse {
         return '';
     }
 
+        public function saveCardonFIle() {
+            return TRUE;
+        }
 }
 
 class WebhookResponse extends GatewayResponse implements iGatewayResponse {
@@ -148,10 +152,15 @@ class WebhookResponse extends GatewayResponse implements iGatewayResponse {
     }
 
     public function getToken() {
-        if ($this->getPaymentPlanID() == '') {
-            return $this->getPrimaryTransactionID();
-        }
         return $this->getPaymentPlanID();
+    }
+
+    public function saveCardonFIle() {
+        if (isset($this->result['SaveCardOnFile']) && strtolower($this->result['SaveCardOnFile']) === 'true') {
+            return TRUE;
+        }
+
+        return FALSE;
     }
 
     public function getSsoToken() {
@@ -381,11 +390,6 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
     }
 
     public function getToken() {
-
-        if ($this->getPaymentPlanID() == '') {
-            return $this->getPrimaryTransactionID();
-        }
-
         return $this->getPaymentPlanID();
     }
 
@@ -975,6 +979,15 @@ class StandInGwResponse implements iGatewayResponse {
 
     public function getToken() {
         return $this->token;
+    }
+
+    public function saveCardonFIle() {
+
+        if ($this->getToken() != '') {
+            return TRUE;
+        }
+
+        return FALSE;
     }
 
     public function getTranType() {

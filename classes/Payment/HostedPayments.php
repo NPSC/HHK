@@ -229,19 +229,6 @@ class HostedCheckout {
 
         }
 
-        // Save token
-//        if ($vr->response->getToken() != '') {
-//
-//            try {
-//                $vr->idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr->response);
-//            } catch(Exception $ex) {
-//                $vr->idToken = 0;
-//            }
-//
-//        } else {
-//            $vr->idToken = 0;
-//        }
-
         // record payment
         return SaleReply::processReply($dbh, $vr, $uS->username);
 

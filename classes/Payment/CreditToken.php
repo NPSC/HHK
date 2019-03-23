@@ -19,6 +19,10 @@ class CreditToken {
 
     public static function storeToken(\PDO $dbh, $idRegistration, $idPayor, iGatewayResponse $vr) {
 
+        if ($vr->saveCardonFIle() === FALSE || $vr->getToken() == '') {
+            return 0;
+        }
+
         $cardNum = str_ireplace('x', '', $vr->getMaskedAccount());
 
         $gtRs = self::findTokenRS($dbh, $idPayor, $vr->getCardHolderName(), $vr->getCardType(), $cardNum);

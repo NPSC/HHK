@@ -808,7 +808,7 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
     }
     
     if (resources && $rescSelector && $rescSelector.length > 0) {
-        
+        // Change Rooms control
         $rescSelector.change(function() {
             $(this).removeClass('ui-state-error');
             var indx = $(this).val();

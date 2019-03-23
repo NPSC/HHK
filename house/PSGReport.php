@@ -328,7 +328,7 @@ function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hosp
     ifnull(ng.idName, 0) as `Id`,
     ifnull(n.Name_First,'') as `First`,
     ifnull(n.Name_Last,'') as `Last`,
-    ifnull(na.County, '') as `County`,
+    ifnull(na.County_Code, '') as `County`,
     ifnull(na.State_Province, '') as `State`,
     ifnull(ng.Relationship_Code,'') as `Patient Relationship`,
     ifnull(n.BirthDate, '') as `Birth Date`,
@@ -528,7 +528,7 @@ order by ng.idPsg";
 $assocSelections = array();
 $hospitalSelections = array();
 $stateSelection = '';
-$countrySelection = 'US';
+$countrySelection = '';
 $diagSelections = array();
 $locSelections = array();
 $statusSelections = array();

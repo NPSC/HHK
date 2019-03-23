@@ -671,13 +671,8 @@ class ReservationSvcs {
 
     public static function reviseConstraints(\PDO $dbh, $idResv, $idResc, $numGuests, $expArr, $expDep, $cbs, $isAuthorized = FALSE, $omitSelf = TRUE) {
 
-        // update reservation's constraints
-//        if ($idResv < 1) {
-//            return array('error'=>'Reservation Id is not set.');
-//        }
-
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
-        //$resv->setNumberGuests($numGuests);
+
         $resv->setIdResource($idResc);
         $resv->setExpectedArrival($expArr);
         $resv->setExpectedDeparture($expDep);
