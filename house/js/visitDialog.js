@@ -7,7 +7,12 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-
+/**
+ * 
+ * @param {int} vid
+ * @param {$} $container
+ * @returns {$}
+ */
 function setupVisitNotes(vid, $container) {
 
     $container.notesViewer({

@@ -156,6 +156,12 @@ try {
 
             break;
 
+        case 'chgRoomList':
+
+            
+
+            break;
+
         case 'newConstraint':
 
             $idResv = 0;

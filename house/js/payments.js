@@ -658,7 +658,7 @@ function amtPaid() {
     p.cashTendered.change();
 }
     
-
+var chgRoomList;
 /**
  * 
  * @param {array} resources
@@ -808,8 +808,11 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
     }
     
     if (resources && $rescSelector && $rescSelector.length > 0) {
+        
+        chgRoomList = resources;
+        
         // Change Rooms control
-        $rescSelector.change(function() {
+        $('table#moveTable').on('change', 'select', function() {
             $(this).removeClass('ui-state-error');
             var indx = $(this).val();
             if (indx == '') {
@@ -878,6 +881,7 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
         
         $('#resvChangeDate').change(function () {
             $('#rbReplaceRoomnew').prop('checked', true);
+            getVisitRoomList(idVisit, $('#resvChangeDate').val(), $rescSelector.val());
         });
     }
 
@@ -976,6 +980,30 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
     });
 
     amtPaid();
+}
+
+function getVisitRoomList(idVisit, changeDate, selRescId) {
+    var parms = {cmd:'chgRoomList', vid:idVisit, end:changeDate.toDateString(), selRescId:selRescId};
+    $post('ws_ckin.php', parms,
+        function (data) {
+            try {
+                data = $.parseJSON(data);
+            } catch (err) {
+                alert("Parser error - " + err.message);
+                return;
+            }
+            if (data.error) {
+                if (data.gotopage) {
+                    window.open(data.gotopage);
+                }
+                flagAlertMessage(data.error, 'error');
+                return;
+            }
+            
+            if (data.resc) {
+                chgRoomList = data.resc;
+            }
+        });
 }
 
 function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, idResv, rtnFunction) {
@@ -1195,7 +1223,6 @@ function paymentRedirect (data, $xferForm) {
 }
 
 
-
 function cardOnFile(id, idGroup, postBackPage) {
     
     var parms = {cmd: 'cof', idGuest: id, idGrp: idGroup, pbp: postBackPage};
@@ -1241,7 +1268,6 @@ function cardOnFile(id, idGroup, postBackPage) {
         }
     });
 }
-
 
 function updateCredit(id, idReg, name, strCOFdiag, pbp) {
     
