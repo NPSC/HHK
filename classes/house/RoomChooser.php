@@ -106,47 +106,6 @@ class RoomChooser {
         return $this->selectedResource;
     }
 
-    public static function moreRoomsMarkup($currentRoomCount, $isChecked, $currentStatus = ReservationStatus::Staying) {
-
-        $attrs = array('id'=>'cbAddnlRoom', 'type'=>'checkbox', 'style'=>'margin-right:.3em;');
-
-        if ($isChecked) {
-            $attrs['checked'] = 'checked';
-        }
-
-        $title = 'Currently reserving ';
-
-        switch ($currentStatus) {
-
-            case ReservationStatus::Staying:
-                $title = 'Currently using ';
-                break;
-
-            case ReservationStatus::Committed:
-            case ReservationStatus::UnCommitted:
-                $title = 'Currently reserving ';
-                break;
-
-            case ReservationStatus::Waitlist:
-                $title = 'Currently waitlisted for ';
-                break;
-        }
-
-        // fieldset wrapper
-        $mk1 = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('fieldset',
-                        HTMLContainer::generateMarkup('legend', 'Additional Room', array('style'=>'font-weight:bold;'))
-                        . HTMLContainer::generateMarkup('p', $title . $currentRoomCount . ' room' . ($currentRoomCount == 1 ? '' : 's'), array('style'=>'margin-bottom:10px;'))
-                        . HTMLInput::generateMarkup('Put the new guests in a new room', $attrs)
-                        . HTMLContainer::generateMarkup('label', 'Put the new guest(s) in a new room', array('for'=>'cbAddnlRoom'))
-                        , array('class'=>'hhk-panel')),
-                        array('style'=>'float:left;margin-bottom:10px;'));
-
-
-        return HTMLContainer::generateMarkup('div', $mk1, array('style'=>'clear:both;'));
-
-    }
-
     public function createConstraintsChooser(\PDO $dbh, $idReservation, $numGuests, $constraintsDisabled = FALSE, $roomTitle = '') {
 
         $constraintMkup = self::createResvConstMkup($dbh, $idReservation, $constraintsDisabled, '', $this->oldResvId);
@@ -240,7 +199,7 @@ class RoomChooser {
                 );
 
         $table->addBodyTr(
-                HTMLTable::makeTd('Change to:', array('class' => 'tdlabel'))
+                HTMLTable::makeTd('Change to:', array('class' => 'tdlabel', 'id'=>'hhk-roomChsrtitle'))
                 . HTMLTable::makeTd($this->createChangeRoomsSelector($dbh, $isAuthorized)
                         . HTMLContainer::generateMarkup('span', '', array('id'=>'rmDepMessage', 'style'=>'color:red;display:none'))));
 

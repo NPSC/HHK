@@ -158,7 +158,22 @@ try {
 
         case 'chgRoomList':
 
-            
+            $changeDate = '';
+            if (isset($_POST['chgDate'])) {
+                $changeDate = filter_var($_POST['chgDate'], FILTER_SANITIZE_STRING);
+            }
+
+            $rescId = 0;
+            if (isset($_POST['selRescId'])) {
+                $rescId = intval(filter_var($_POST['selRescId'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $span = 0;
+            if (isset($_POST['span'])) {
+                $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $events = HouseServices::changeRoomList($dbh, $idVisit, $span, $changeDate, $rescId);
 
             break;
 

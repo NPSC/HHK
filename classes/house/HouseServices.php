@@ -695,6 +695,63 @@ class HouseServices {
 
     }
 
+    public static function changeRoomList(\PDO $dbh, $idVisit, $span, $changeDate, $rescId) {
+
+        $dataArray = array();
+        $vid = intval($idVisit, 10);
+        $spanId = intval($span, 10);
+
+        $vstmt = $dbh->query("Select idReservation, Span_Start, Expected_Departure from visit where idVisit = $vid and Span = $spanId");
+
+        $vRows = $vstmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($vRows) == 1) {
+
+            $now = new \DateTime();
+            $now->setTime(10, 0, 0);
+
+            // Expected Departure
+            $expDepDT = new \DateTime($vRows[0]['Expected_Departure']);
+            $expDepDT->setTime(10, 0, 0);
+
+            if ($expDepDT < $now) {
+                $expDepDT = new \DateTime($now->format('Y-m-d H:i:s'));
+            }
+
+            // Original Span Start Date
+            $spanStartDT = new \DateTime($vRows[0]['Span_Start']);
+            $spanStartDT->setTime(10, 0, 0);
+
+            // CHange rooms start date
+            $changeDT = new \DateTime($changeDate);
+            $changeDT->setTime(10, 0, 0);
+
+            // Cannot change rooms before the span start date.
+            if ($changeDT < $spanStartDT) {
+                $changeDT = $spanStartDT;
+            }
+
+            // Cannot change rooms after today
+            if ($changeDT > $now) {
+                $changeDT = $now;
+            }
+
+            $reserv = Reservation_1::instantiateFromIdReserv($dbh, $vRows[0]['idReservation'], $vid);
+
+            $roomChooser = new RoomChooser($dbh, $reserv, 0, $changeDT, $expDepDT);
+
+            $dataArray['sel'] = $roomChooser->createChangeRoomsSelector($dbh, TRUE);
+            $dataArray['resc'] = $roomChooser->makeRoomsArray();
+            $dataArray['idResc'] = $rescId;
+
+        } else {
+            // error
+            $dataArray['error'] = 'Visit id is missing.  ';
+        }
+
+        return $dataArray;
+    }
+
     public static function undoRoomChange(\PDO $dbh, Visit $visit, $uname) {
 
         // Reservation

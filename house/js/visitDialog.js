@@ -370,7 +370,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
             }
 
 
-            setupPayments(data.resc, $('#selResource'), $('#selRateCategory'), idVisit, $('#pmtRcpt'));
+            setupPayments(data.resc, $('#selResource'), $('#selRateCategory'), idVisit, visitSpan, $('#pmtRcpt'));
 
             // Financial Application
             var $btnFapp = $('#btnFapp');

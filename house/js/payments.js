@@ -665,10 +665,11 @@ var chgRoomList;
  * @param {jquery} $rescSelector
  * @param {jquery} $rateSelector
  * @param {int} idVisit
+ * @param {int} visitSpan
  * @param {jquery} $diagBox
  * @returns {undefined}
  */
-function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBox) {
+function setupPayments(resources, $rescSelector, $rateSelector, idVisit, visitSpan, $diagBox) {
     "use strict";
     var ptsel = $('#PayTypeSel');
     var chg = $('.tblCredit');
@@ -879,9 +880,11 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
         
         $rescSelector.change();
         
-        $('#resvChangeDate').change(function () {
+        $('#resvChangeDate').datepicker('option', 'onClose', function (dateText) {
             $('#rbReplaceRoomnew').prop('checked', true);
-            getVisitRoomList(idVisit, $('#resvChangeDate').val(), $rescSelector.val());
+            if (dateText !== '') {
+                getVisitRoomList(idVisit, visitSpan, $('#resvChangeDate').val(), $rescSelector);
+            }
         });
     }
 
@@ -982,10 +985,21 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
     amtPaid();
 }
 
-function getVisitRoomList(idVisit, changeDate, selRescId) {
-    var parms = {cmd:'chgRoomList', vid:idVisit, end:changeDate.toDateString(), selRescId:selRescId};
-    $post('ws_ckin.php', parms,
+function getVisitRoomList(idVisit, visitSpan, changeDate, $rescSelector) {
+    
+    $rescSelector.prop('disabled', true);
+    $('#hhk-roomChsrtitle').addClass('hhk-loading');
+    $('#rmDepMessage').text('').hide();
+     
+    var parms = {cmd:'chgRoomList', idVisit:idVisit, span:visitSpan, chgDate:changeDate, selRescId:$rescSelector.val()};
+    
+    $.post('ws_ckin.php', parms,
         function (data) {
+            var newSel;
+
+            $rescSelector.prop('disabled', false);
+            $('#hhk-roomChsrtitle').removeClass('hhk-loading');
+            
             try {
                 data = $.parseJSON(data);
             } catch (err) {
@@ -1002,6 +1016,19 @@ function getVisitRoomList(idVisit, changeDate, selRescId) {
             
             if (data.resc) {
                 chgRoomList = data.resc;
+            }
+            
+            if (data.sel) {
+                newSel = $(data.sel);
+                $rescSelector.children().remove();
+
+                newSel.children().appendTo($rescSelector);
+                $rescSelector.val(data.idResc).change();
+
+//                if (data.msg && data.msg !== '') {
+//                    $('#hhkroomMsg').text(data.msg).show();
+//                }
+                
             }
         });
 }
