@@ -816,9 +816,6 @@ class HouseServices {
         $room = array_shift($rooms);
         $roomStatus = $room->getStatus();
 
-        // Transaction
-        //$result = $dbh->exec("Begin Trans;");
-
         // Undo visit checkout
         $visit->visitRS->Actual_Departure->setNewVal($nextVisitRs->Actual_Departure->getStoredVal());
         $visit->visitRS->Span_End->setNewVal($nextVisitRs->Span_End->getStoredVal());

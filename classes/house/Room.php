@@ -193,7 +193,7 @@ class Room {
         return $response;
     }
 
-    private function setStatus($roomState) {
+    public function setStatus($roomState) {
 
         $this->roomRS->Status->setNewVal($roomState);
         return;

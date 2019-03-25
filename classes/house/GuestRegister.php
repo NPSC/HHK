@@ -242,6 +242,11 @@ where ru.idResource_use is null
 
             $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $startDT, $endDT, $timezone, $uS->RegColors, $events);
 
+            // show event on first day of calendar
+            if ($endDT->format('Y-m-d') == $beginDate->format('Y-m-d') && $extended) {
+                $endDT->add(new DateInterval('P1D'));
+            }
+
             // Render Event
             $titleText = $r['Guest Last'];
             $visitExtended = FALSE;
