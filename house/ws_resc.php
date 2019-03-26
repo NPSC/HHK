@@ -62,7 +62,6 @@ require (CLASSES . 'FinAssistance.php');
 require (CLASSES . 'US_Holidays.php');
 
 
-
 $wInit = new webInit(WebPageCode::Service);
 
 /* @var $dbh PDO */
@@ -87,18 +86,50 @@ try {
         
     case 'ulimage':
         
+        $guestId = filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT);
+        if (is_null($guestId) || $guestId === FALSE) {
+            $guestId = 0;
+        }
+        
+        $imageFile = '';
+        if (isset($_POST['imageFile'])) {
+            $imageFile = $_POST['imageFile'];
+        }
+        
+        $photo = new Photo();
+        
+
          break;
 
      case 'getgstimage':
         
+        $guestId = filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT);
+        if (is_null($guestId) || $guestId === FALSE) {
+            $guestId = 0;
+        }
+
          break;
 
      case 'getimage':
+        
+        $imageId = filter_input(INPUT_POST, 'imageId', FILTER_SANITIZE_NUMBER_INT);
+        if (is_null($imageId) || $imageId === FALSE) {
+            $imageId = 0;
+        }
+        
+        $events = Photo::getImage($dbh, $imageId);
         
          break;
 
      case 'delimage':
 
+        $imageId = filter_input(INPUT_POST, 'imageId', FILTER_SANITIZE_NUMBER_INT);
+        if (is_null($imageId) || $imageId === FALSE) {
+            $imageId = 0;
+        }
+        
+        $events = Photo::deleteImage($dbh, $imageId);
+        
          break;
 
      case 'vehsch':
