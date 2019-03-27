@@ -56,15 +56,6 @@ Class MpFrequencyValues {
     const Recurring = 'Recurring';
 }
 
-Class MpTranType {
-    const Sale = 'Sale';
-    const PreAuth = 'PreAuth';
-    const ReturnAmt = 'Return';
-    const Void = 'VoidSale';
-    const VoidReturn = 'VoidReturn';
-    const Reverse = 'ReverseSale';
-    const CardOnFile = 'COF';
-}
 
 Class MpTokenTransaction {
 
@@ -637,8 +628,32 @@ abstract class MercResponse {
     }
 
 
-    public function getAuthorizeAmount() {
+    public function getAuthorizedAmount() {
         return 0;
+    }
+
+    public function saveCardOnFIle() {
+        return TRUE;
+    }
+
+    public function getEMVApplicationIdentifier() {
+        return '';
+    }
+    public function getEMVTerminalVerificationResults() {
+        return '';
+    }
+    public function getEMVIssuerApplicationData() {
+        return '';
+    }
+    public function getEMVTransactionStatusInformation() {
+        return '';
+    }
+    public function getEMVApplicationResponseCode() {
+        return '';
+    }
+
+    public function getErrorMessage() {
+        return '';
     }
 
 }
@@ -807,6 +822,61 @@ class VerifyCiResponse extends MercResponse {
 
         $this->tranType = MpTranType::CardOnFile;
     }
+    public function getAVSAddress() {
+
+    }
+
+    public function getAVSResult() {
+
+    }
+
+    public function getAVSZip() {
+
+    }
+
+    public function getAcqRefData() {
+
+    }
+
+    public function getAuthCode() {
+
+    }
+
+    public function getAuthorizationText() {
+
+    }
+
+    public function getCvvResult() {
+
+    }
+
+    public function getInvoiceNumber() {
+
+    }
+
+    public function getPartialPaymentAmount() {
+
+    }
+
+    public function getProcessData() {
+
+    }
+
+    public function getRefNo() {
+
+    }
+
+    public function getResponseMessage() {
+
+    }
+
+    public function getTransPostTime() {
+
+    }
+
+    public function isEMVTransaction() {
+
+    }
 
     public function getCardId() {
         if (isset($this->result->CardID)) {
@@ -905,6 +975,7 @@ class VerifyCiResponse extends MercResponse {
         }
         return '';
     }
+
 
 }
 
@@ -1135,7 +1206,7 @@ class InitCkOutResponse extends MercResponse {
 
 }
 
-class VerifyCkOutResponse extends MercResponse {
+class VerifyCkOutResponse extends MercResponse  implements iGatewayResponse{
 
     function __construct($response) {
         parent::__construct($response);
@@ -1241,7 +1312,14 @@ class VerifyCkOutResponse extends MercResponse {
         return '';
     }
 
-    public function getAuthorizeAmount() {
+    public function getAuthorizedAmount() {
+        if (isset($this->result->AuthAmount)) {
+            return $this->result->AuthAmount;
+        }
+        return '';
+    }
+
+    public function getRequestAmount() {
         if (isset($this->result->AuthAmount)) {
             return $this->result->AuthAmount;
         }
@@ -1286,7 +1364,7 @@ class VerifyCkOutResponse extends MercResponse {
         return '';
     }
 
-    public function getInvoice() {
+    public function getInvoiceNumber() {
         if (isset($this->result->Invoice)) {
             return $this->result->Invoice;
         }
@@ -1349,6 +1427,24 @@ class VerifyCkOutResponse extends MercResponse {
         return '';
     }
 
+    public function getAuthorizationText() {
+        return '';
+    }
+
+    public function getTransactionStatus() {
+        return '';
+    }
+
+    public function getPartialPaymentAmount() {
+        return 0;
+    }
+
+    public function getResponseMessage() {
+        if (isset($this->result->StatusMessage)) {
+            return $this->result->StatusMessage;
+        }
+        return '';
+    }
 
 }
 
@@ -1679,7 +1775,7 @@ class CreditAdjustTokenRequest extends MercTokenRequest {
 }
 
 
-class CreditTokenResponse extends MercResponse {
+class CreditTokenResponse extends MercResponse implements iGatewayResponse {
 
     protected $tranType;
 
@@ -1702,6 +1798,46 @@ class CreditTokenResponse extends MercResponse {
         if (is_null($this->result)) {
             throw new Hk_Exception_Payment($resultName . ' is missing from the payment gateway response. ');
         }
+    }
+
+    public function getTransactionStatus() {
+
+    }
+
+        public function getPartialPaymentAmount() {
+        return 0;
+    }
+
+    public function getAuthorizationText() {
+        return '';
+    }
+
+    public function getAVSAddress() {
+        return '';
+    }
+
+    public function getAVSZip() {
+        return '';
+    }
+
+    public function getCardHolderName() {
+        return '';
+    }
+
+    public function getExpDate() {
+        return '';
+    }
+
+    public function getOperatorId() {
+        return '';
+    }
+
+    public function getResponseMessage() {
+        return $this->getMessage();
+    }
+
+    public function getTransPostTime() {
+        return '';
     }
 
     public function getMaskedAccount() {
@@ -1728,13 +1864,20 @@ class CreditTokenResponse extends MercResponse {
         return '';
     }
 
-    public function getAuthorizeAmount() {
+    public function getAuthorizedAmount() {
         if (isset($this->result->AuthorizeAmount)) {
             return $this->result->AuthorizeAmount;
         } else if (isset($this->result->Amount)) {
             return $this->result->Amount;
         }
         return 0.00;
+    }
+
+    public function getRequestAmount() {
+        if (isset($this->result->AuthAmount)) {
+            return $this->result->AuthAmount;
+        }
+        return '';
     }
 
 
@@ -1773,7 +1916,7 @@ class CreditTokenResponse extends MercResponse {
         return 0.00;
     }
 
-    public function getInvoice() {
+    public function getInvoiceNumber() {
         if (isset($this->result->Invoice)) {
             return $this->result->Invoice;
         }
@@ -1801,12 +1944,12 @@ class CreditTokenResponse extends MercResponse {
        return '';
     }
 
-    public function getStatus() {
-        if (isset($this->result->Status)) {
-            return $this->result->Status;
-        }
-        return '';
-    }
+//    public function getStatus() {
+//        if (isset($this->result->Status)) {
+//            return $this->result->Status;
+//        }
+//        return '';
+//    }
 
     public function getMessage() {
         if (isset($this->result->Message)) {
@@ -1832,6 +1975,8 @@ class CreditTokenResponse extends MercResponse {
         }
         return '';
     }
+
+
 
 }
 

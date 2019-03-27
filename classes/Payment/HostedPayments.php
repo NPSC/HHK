@@ -113,6 +113,25 @@ class CardInfoResponse extends PaymentResponse {
         $this->cardNum = str_ireplace('x', '', $verifyCiResponse->getMaskedAccount());
     }
 
+    public function getStatus() {
+
+        switch ($this->response->getStatus()) {
+
+            case MpStatusValues::Approved:
+                $pr = CreditPayments::STATUS_APPROVED;
+                break;
+
+            case MpStatusValues::Declined:
+                $pr = CreditPayments::STATUS_DECLINED;
+                break;
+
+            default:
+                $pr = CreditPayments::STATUS_DECLINED;
+        }
+
+        return $pr;
+    }
+
     public function receiptMarkup(\PDO $dbh, &$tbl) {
         return array('error'=>'Receipts not available.');
     }
@@ -210,19 +229,6 @@ class HostedCheckout {
 
         }
 
-        // Save token
-        if ($vr->response->getToken() != '') {
-
-            try {
-                $vr->idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr->response);
-            } catch(Exception $ex) {
-                $vr->idToken = 0;
-            }
-
-        } else {
-            $vr->idToken = 0;
-        }
-
         // record payment
         return SaleReply::processReply($dbh, $vr, $uS->username);
 
@@ -236,7 +242,7 @@ class CheckOutResponse extends PaymentResponse {
     public $response;
     public $idToken = '';
 
-    function __construct(\VerifyCkOutResponse $verifyCkOutResponse, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+    function __construct($verifyCkOutResponse, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
         $this->response = $verifyCkOutResponse;
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
@@ -248,6 +254,25 @@ class CheckOutResponse extends PaymentResponse {
         $this->cardName = $verifyCkOutResponse->getCardHolderName();
         $this->amount = $verifyCkOutResponse->getAuthorizeAmount();
         $this->payNotes = $payNotes;
+    }
+
+    public function getStatus() {
+
+        switch ($this->response->getStatus()) {
+
+            case MpStatusValues::Approved:
+                $pr = CreditPayments::STATUS_APPROVED;
+                break;
+
+            case MpStatusValues::Declined:
+                $pr = CreditPayments::STATUS_DECLINED;
+                break;
+
+            default:
+                $pr = CreditPayments::STATUS_DECLINED;
+        }
+
+        return $pr;
     }
 
     public function receiptMarkup(\PDO $dbh, &$tbl) {

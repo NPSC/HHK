@@ -54,7 +54,6 @@ class PaymentResult {
 
         }
 
-
         // Make out receipt
         $this->receiptMarkup = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
 
@@ -67,17 +66,28 @@ class PaymentResult {
 
     }
 
-    public function feePaymentRejected(\PDO $dbh, Session $uS, PaymentResponse $payResp) {
+    public function feePaymentRejected(\PDO $dbh, Session $uS, PaymentResponse $payResp, Invoice $invoice) {
 
+        $this->status = PaymentResult::DENIED;
 
+        if ($payResp->getIdPayment() > 0 && $this->idInvoice > 0) {
+            // payment-invoice
+            $payInvRs = new PaymentInvoiceRS();
+            $payInvRs->Amount->setNewVal($payResp->getAmount());
+            $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
+            $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
+            EditRS::insert($dbh, $payInvRs);
+        }
 
-        // payment-invoice
-        $payInvRs = new PaymentInvoiceRS();
-        $payInvRs->Amount->setNewVal($payResp->getAmount());
-        $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
-        $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
-        EditRS::insert($dbh, $payInvRs);
+        // Make out receipt
+        $this->receiptMarkup = Receipt::createDeclinedMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
 
+        // Email receipt
+        try {
+            $this->displayMessage .= $this->emailReceipt($dbh);
+        } catch (Exception $ex) {
+            $this->displayMessage .= "Email Failed, Error = " . $ex->getMessage();
+        }
 
     }
 
@@ -104,8 +114,8 @@ class PaymentResult {
 
         if ($fromAddr == '') {
             // Config data not set.
-            $this->displayMessage = '';
-            return;
+
+            return '';
         }
 
 
@@ -133,8 +143,8 @@ WHERE r.Email_Receipt = 1 and
 
         if ($toAddrSan === FALSE || $toAddrSan == '') {
             // Config data not set.
-            $this->displayMessage = '';
-            return;
+
+            return '';
         }
 
 
@@ -165,11 +175,13 @@ WHERE r.Email_Receipt = 1 and
 
         if($mail->send()) {
             if ($guestHasEmail) {
-                $this->displayMessage .= "Email sent" . $guestName;
+                return "Email sent" . $guestName;
             }
         } else {
-            $this->displayMessage .= "Send Email failed:  " . $mail->ErrorInfo;
+            return "Send Email failed:  " . $mail->ErrorInfo;
         }
+
+        return '';
 
     }
 
@@ -248,6 +260,7 @@ WHERE r.Email_Receipt = 1 and
 
 }
 
+
 class cofResult extends PaymentResult {
 
     function __construct($displayMessage, $status, $idName, $idRegistration) {
@@ -261,6 +274,7 @@ class cofResult extends PaymentResult {
 
 }
 
+
 class ReturnResult extends PaymentResult {
 
     public function feePaymentAccepted(\PDO $dbh, Session $uS, PaymentResponse $rtnResp, Invoice $invoice) {
@@ -271,7 +285,7 @@ class ReturnResult extends PaymentResult {
         if ($rtnResp->getIdPayment() > 0 && $this->idInvoice > 0) {
             // payment-invoice
             $payInvRs = new PaymentInvoiceRS();
-            $payInvRs->Amount->setNewVal($rtnResp->getAmount());
+            $payInvRs->Amount->setNewVal($rtnResp->response->getAuthorizedAmount());
             $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
             $payInvRs->Payment_Id->setNewVal($rtnResp->getIdPayment());
             EditRS::insert($dbh, $payInvRs);
@@ -299,102 +313,8 @@ class ReturnResult extends PaymentResult {
  */
 class PaymentSvcs {
 
-    public static function initCardOnFile(\PDO $dbh, $gw, $pageTitle, $idGuest, $idGroup, $cardHolderName, $postBackPage) {
 
-        $uS = Session::getInstance();
-
-        $secure = new SecurityComponent();
-        $config = new Config_Lite(ciCFG_FILE);
-
-        $houseUrl = $secure->getSiteURL();
-        $siteUrl = $secure->getRootURL();
-        $logo = $config->getString('financial', 'PmtPageLogoUrl', '');
-
-        if ($houseUrl == '' || $siteUrl == '') {
-            throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
-        }
-
-        if ($idGuest < 1 || $idGroup < 1) {
-            throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
-        }
-
-
-        $initCi = new InitCiRequest($pageTitle, 'Custom');
-
-        // Card reader?
-        if ($uS->CardSwipe) {
-            $initCi->setDefaultSwipe('Swipe')
-                ->setCardEntryMethod('Both')
-                ->setPaymentPageCode('CardInfo_Url');
-        } else {
-            $initCi->setPaymentPageCode('CardInfo_Url');
-        }
-
-        $initCi->setCardHolderName($cardHolderName)
-                ->setFrequency(MpFrequencyValues::OneTime)
-                ->setCompleteURL($houseUrl . $postBackPage)
-                ->setReturnURL($houseUrl . $postBackPage)
-                ->setLogoUrl($siteUrl . $logo);
-
-
-        return CardInfo::sendToPortal($dbh, $gw, $idGuest, $idGroup, $initCi);
-    }
-
-    protected static function initHostedPayment(\PDO $dbh, $gw, $pageTitle, \Invoice $invoice, $cardHolderName, $address, $zipCode, $postPage, $tranType = MpTranType::Sale) {
-
-        $uS = Session::getInstance();
-
-        // Do a hosted payment.
-        $config = new Config_Lite(ciCFG_FILE);
-        $secure = new SecurityComponent();
-
-        $houseUrl = $secure->getSiteURL();
-        $siteUrl = $secure->getRootURL();
-        $logo = $config->getString('financial', 'PmtPageLogoUrl', '');
-
-        if ($houseUrl == '' || $siteUrl == '') {
-            throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
-        }
-
-        if ($invoice->getSoldToId() < 1 || $invoice->getIdGroup() < 1) {
-            throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
-        }
-
-        $pay = new InitCkOutRequest($pageTitle, 'Custom');
-
-        // Card reader?
-        if ($uS->CardSwipe) {
-            $pay->setDefaultSwipe('Swipe')
-                ->setCardEntryMethod('Both')
-                ->setPaymentPageCode('Checkout_Url');
-        } else {
-            $pay->setPaymentPageCode('Checkout_Url');
-        }
-
-        $pay->setPartialAuth(TRUE);
-
-        $pay    ->setAVSZip($zipCode)
-                ->setAVSAddress($address)
-                ->setCardHolderName($cardHolderName)
-                ->setFrequency(MpFrequencyValues::OneTime)
-                ->setInvoice($invoice->getInvoiceNumber())
-                ->setMemo(MpVersion::PosVersion)
-                ->setTaxAmount(0)
-                ->setTotalAmount($invoice->getBalance())
-                ->setCompleteURL($houseUrl . $postPage)
-                ->setReturnURL($houseUrl . $postPage)
-                ->setTranType($tranType)
-                ->setLogoUrl($siteUrl . $logo)
-                ->setCVV('on')
-                ->setAVSFields('both');
-
-        $CreditCheckOut = HostedCheckout::sendToPortal($dbh, $gw, $invoice->getSoldToId(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $pay);
-
-        return $CreditCheckOut;
-
-    }
-
-    public static function payAmount(\PDO $dbh, Invoice $invoice, PaymentManagerPayment $pmp, $postPage, $paymentDate = '') {
+    public static function payAmount(\PDO $dbh, Invoice $invoice, PaymentManagerPayment $pmp, $postbackUrl, $paymentDate = '') {
 
         $uS = Session::getInstance();
 
@@ -456,60 +376,23 @@ class PaymentSvcs {
 
           case PayType::Charge:
 
-            $guest = new Guest($dbh, '', $invoice->getSoldToId());
-            $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
+            // Payment Gateway
+            $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-            $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getIdToken());
+            $payResult = $gateway->CreditSale($dbh, $pmp, $invoice, $postbackUrl);
 
-            // Do we have a token?
-            if (CreditToken::hasToken($tokenRS)) {
-
-                $cpay = new CreditSaleTokenRequest();
-
-                $cpay->setPurchaseAmount($amount)
-                    ->setTaxAmount(0)
-                    ->setCustomerCode($invoice->getSoldToId())
-                    ->setAddress($addr["Address_1"])
-                    ->setZip($addr["Postal_Code"])
-                    ->setToken($tokenRS->Token->getStoredVal())
-                    ->setPartialAuth(FALSE)
-                    ->setCardHolderName($tokenRS->CardHolderName->getStoredVal())
-                    ->setFrequency(MpFrequencyValues::OneTime)
-                    ->setInvoice($invoice->getInvoiceNumber())
-                    ->setTokenId($tokenRS->idGuest_token->getStoredVal())
-                    ->setMemo(MpVersion::PosVersion);
-
-                // Run the token transaction
-                $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $uS->ccgw, $cpay, $pmp->getPayNotes());
-
-                // Analyze the result
-                $payResult = self::AnalyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken());
-
-
-            } else {
-
-                // Initialiaze hosted payment
-                $fwrder = self::initHostedPayment($dbh, $uS->ccgw, $uS->siteName, $invoice, '', $addr['Address_1'], $addr["Postal_Code"], $postPage);
-
-                $payIds = array();
-                if (isset($uS->paymentIds)) {
-                    $payIds = $uS->paymentIds;
-                }
-                $payIds[$fwrder['paymentId']] = $invoice->getIdInvoice();
-                $uS->paymentIds = $payIds;
-                $uS->paymentNotes = $pmp->getPayNotes();
-
-                $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
-                $payResult->setForwardHostedPayment($fwrder);
-                $payResult->setDisplayMessage('Forward to Payment Page. ');
-
-            }
 
             break;
 
           case PayType::ChargeAsCash:
 
-            // Manual Charge// $amount, $idPayor, $invoiceNumber, $chargeType, $chargeAcct, $payNote = '', $idToken = 0
+            // Manual Charge
+            $pAuthRs = new Payment_AuthRS();
+            $pAuthRs->Card_Type->setStoredVal($pmp->getChargeCard());
+            $pAuthRs->Acct_Number->setStoredVal($pmp->getChargeAcct());
+            $pAuthRs->Status_Code->setStoredVal('000');
+            $pAuthRs->Timestamp->setStoredVal(date('Y-m-d H:i:s', strtotime($pmp->getPayDate())));
+
             $cashResp = new ManualChargeResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getChargeCard(), $pmp->getChargeAcct(), $pmp->getPayNotes());
 
             ChargeAsCashTX::sale($dbh, $cashResp, $uS->username, $paymentDate);
@@ -618,7 +501,7 @@ class PaymentSvcs {
         // Check balance
         if (abs($invoice->getAmountToPay()) > abs($invoice->getBalance())) {
             $rtnResult = new ReturnResult(0, 0, 0);
-            $rtnResult->setReplyMessage('error:  Return (' . $invoice->getAmountToPay() . ') cannot be larger than the remaining balance (' . $invoice->getBalance() . ') on an invoice.');
+            $rtnResult->setReplyMessage('error:  Return (' . $invoice->getAmountToPay() . ') cannot be larger than the remaining balance (' . $invoice->getBalance() . ') on the invoice.');
             return $rtnResult;
         }
 
@@ -741,25 +624,23 @@ class PaymentSvcs {
         return $rtnResult;
     }
 
-    public static function voidFees(\PDO $dbh, $idPayment, $bid, $paymentNotes = '') {
+    public static function voidFees(\PDO $dbh, $idPayment, $bid, $postbackUrl, $paymentNotes = '') {
 
-        if ($idPayment < 1) {
-            return array('warning' => 'Payment record Id not defined.  ', 'bid' => $bid);
-        }
+        $uS = Session::getInstance();
 
         $payRs = new PaymentRS();
         $payRs->idPayment->setStoredVal($idPayment);
         $pments = EditRS::select($dbh, $payRs, array($payRs->idPayment));
 
         if (count($pments) != 1) {
-            return array('warning' => 'Payment record not found for Void.  ', 'bid' => $bid);
+            return array('warning' => 'Payment record not found for Void/Reverse.  ', 'bid' => $bid);
         }
 
         EditRS::loadRow($pments[0], $payRs);
 
         // Already voided, or otherwise ineligible
         if ($payRs->Status_Code->getStoredVal() != PaymentStatusCode::Paid) {
-            return array('warning' => 'Payment is ineligable for Void.  ', 'bid' => $bid);
+            return array('warning' => 'Payment is ineligable for Void/Reverse.  ', 'bid' => $bid);
         }
 
         $invoice = new Invoice($dbh);
@@ -769,56 +650,30 @@ class PaymentSvcs {
             return array('warning' => 'Use Return instead.  ', 'bid' => $bid);
         }
 
+        // Load gateway
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-        // find the token record
-        if ($payRs->idToken->getStoredVal() > 0) {
-            $tknRs = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
-        } else {
-            return array('warning' => 'Payment Token Id not found.  Unable to Void this purchase.  ', 'bid' => $bid);
-        }
-
-        if (CreditToken::hasToken($tknRs) === FALSE) {
-            return array('warning' => 'Payment Token not found.  Unable to Void this purchase.  ', 'bid' => $bid);
-        }
-
-        // Find hte detail record.
-        $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
-        $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($arows) < 1) {
-            return array('warning' => 'Payment Detail record not found.  Unable to Void this purchase. ', 'bid' => $bid);
-        }
-
-        $pAuthRs = new Payment_AuthRS();
-        EditRS::loadRow(array_pop($arows), $pAuthRs);
-
-        if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid || $pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::VoidReturn) {
-            return self::sendVoid($dbh, $payRs, $pAuthRs, $tknRs, $invoice, $paymentNotes);
-        }
-
-        return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
+        return $gateway->voidSale($dbh, $invoice, $payRs, $paymentNotes, $bid, $postbackUrl);
 
     }
 
     public static function reversalFees(\PDO $dbh, $idPayment, $bid, $paymentNotes = '') {
 
         $uS = Session::getInstance();
-        $dataArray = array('bid' => $bid);
-        $reply = '';
 
         $payRs = new PaymentRS();
         $payRs->idPayment->setStoredVal($idPayment);
         $pments = EditRS::select($dbh, $payRs, array($payRs->idPayment));
 
         if (count($pments) != 1) {
-            return array('warning' => 'Payment record not found.  Unable to Reverse this purchase.  ', 'bid' => $bid);
+            return array('warning' => 'Payment record not found.  Unable to Reverse/Void this purchase.  ', 'bid' => $bid);
         }
 
         EditRS::loadRow($pments[0], $payRs);
 
         // Already voided, or otherwise ineligible
         if ($payRs->Status_Code->getStoredVal() != PaymentStatusCode::Paid) {
-            return array('warning' => 'Payment is ineligable for Reversal.  ', 'bid' => $bid);
+            return array('warning' => 'Payment is ineligable for Reversal/Void.  ', 'bid' => $bid);
         }
 
         $invoice = new Invoice($dbh);
@@ -828,86 +683,10 @@ class PaymentSvcs {
             return array('warning' => 'Use Return instead.  ', 'bid' => $bid);
         }
 
-        // find the token record
-        if ($payRs->idToken->getStoredVal() > 0) {
-            $tknRs = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
-        } else {
-            return array('warning' => 'Payment Token Id not found.  Unable to Reverse this purchase.  ', 'bid' => $bid);
-        }
+        // Load gateway
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-        if (CreditToken::hasToken($tknRs) === FALSE) {
-            return array('warning' => 'Payment Token not found.  Unable to Reverse this purchase.  ', 'bid' => $bid);
-        }
-
-        // Find hte detail record.
-        $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
-        $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($arows) < 1) {
-            return array('warning' => 'Payment Detail record not found.  Unable to Reverse this purchase. ', 'bid' => $bid);
-        }
-
-        $pAuthRs = new Payment_AuthRS();
-        EditRS::loadRow(array_pop($arows), $pAuthRs);
-
-        if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid || $pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::VoidReturn) {
-
-            // Set up request
-            $revRequest = new CreditReversalTokenRequest();
-            $revRequest->setAuthCode($pAuthRs->Approval_Code->getStoredVal())
-                ->setCardHolderName($tknRs->CardHolderName->getStoredVal())
-                ->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion)
-                ->setInvoice($invoice->getInvoiceNumber())
-                ->setPurchaseAmount($pAuthRs->Approved_Amount->getStoredVal())
-                ->setRefNo($pAuthRs->Reference_Num->getStoredVal())
-                ->setProcessData($pAuthRs->ProcessData->getStoredVal())
-                ->setAcqRefData($pAuthRs->AcqRefData->getStoredVal())
-                ->setToken($tknRs->Token->getStoredVal())
-                ->setTokenId($tknRs->idGuest_token->getStoredVal())
-                ->setTitle('CreditReversalToken');
-
-            try {
-
-                $csResp = TokenTX::creditReverseToken($dbh, $payRs->idPayor->getstoredVal(), $uS->ccgw, $revRequest, $payRs, $paymentNotes);
-
-                switch ($csResp->response->getStatus()) {
-
-                    case MpStatusValues::Approved:
-
-                        // Update invoice
-                        $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizeAmount(), $uS->username);
-
-                        $reply .= 'Payment is reversed.  ';
-                        $csResp->idVisit = $invoice->getOrderNumber();
-                        $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId, 'Reverse Sale')));
-                        $dataArray['success'] = $reply;
-
-                        break;
-
-                    case MpStatusValues::Declined:
-
-                        // Try Void
-                        $dataArray = self::sendVoid($dbh, $payRs, $pAuthRs, $tknRs, $invoice, $paymentNotes);
-                        $dataArray['reversal'] = 'Reversal Declined, trying Void.  ';
-
-                        break;
-
-                    default:
-
-                        $dataArray['warning'] = '** Reversal Invalid or Error. **  ' . 'Message: ' . $csResp->response->getMessage();
-
-                }
-
-            } catch (Hk_Exception_Payment $exPay) {
-
-                $dataArray['warning'] = "Reversal Error = " . $exPay->getMessage();
-            }
-
-            return $dataArray;
-
-        }
-
-        return array('warning' => 'Payment is ineligable for reversal.  ', 'bid' => $bid);
+        return $gateway->reverseSale($dbh, $payRs, $invoice, $bid, $paymentNotes);
 
     }
 
@@ -942,79 +721,10 @@ class PaymentSvcs {
 
             case PaymentMethod::Charge:
 
-                // find the token
-                if ($payRs->idToken->getStoredVal() > 0) {
-                    $tknRs = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
-                } else {
-                    return array('warning' => 'Return Failed.  Payment Token not found.  ', 'bid' => $bid);
-                }
+                // Load gateway
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+                $dataArray = $gateway->returnSale($dbh, $payRs, $invoice, $returnAmt, $bid);
 
-                // Find hte detail record.
-                $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
-                $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-                if (count($arows) < 1) {
-                    return array('warning' => 'Payment Detail record not found.  Unable to Return. ', 'bid' => $bid);
-                }
-
-                $pAuthRs = new Payment_AuthRS();
-                EditRS::loadRow(array_pop($arows), $pAuthRs);
-
-                if ($pAuthRs->Status_Code->getStoredVal() != PaymentStatusCode::Paid && $pAuthRs->Status_Code->getStoredVal() != PaymentStatusCode::VoidReturn) {
-                    return array('warning' => 'This Payment is ineligable for Return. ', 'bid' => $bid);
-                }
-
-
-                // Set up request
-                $returnRequest = new CreditReturnTokenRequest();
-                $returnRequest->setCardHolderName($tknRs->CardHolderName->getStoredVal());
-                $returnRequest->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion);
-                $returnRequest->setInvoice($invoice->getInvoiceNumber());
-
-                // Determine amount to return
-                if ($returnAmt == 0) {
-                    $returnRequest->setPurchaseAmount($pAuthRs->Approved_Amount->getStoredVal());
-                } else if ($returnAmt <= $pAuthRs->Approved_Amount->getStoredVal()) {
-                    $returnRequest->setPurchaseAmount($returnAmt);
-                } else {
-                    return array('warning' => 'Return Failed.  Return amount is larger than the original purchase amount.  ', 'bid' => $bid);
-                }
-
-                $returnRequest->setToken($tknRs->Token->getStoredVal());
-                $returnRequest->setTokenId($tknRs->idGuest_token->getStoredVal());
-
-                try {
-
-                    $csResp = TokenTX::creditReturnToken($dbh, $payRs->idPayor->getstoredVal(), $uS->ccgw, $returnRequest, $payRs);
-
-                    switch ($csResp->response->getStatus()) {
-
-                        case MpStatusValues::Approved:
-
-
-                            // Update invoice
-                            $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizeAmount(), $uS->username);
-
-                            $reply .= 'Payment is Returned.  ';
-                            $csResp->idVisit = $invoice->getOrderNumber();
-                            $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
-
-                            break;
-
-                        case MpStatusValues::Declined:
-
-                            return array('warning' => $csResp->response->getMessage(), 'bid' => $bid);
-
-                            break;
-
-                        default:
-
-                            return array('warning' => '** Return Invalid or Error. **  ', 'bid' => $bid);
-                    }
-                } catch (Hk_Exception_Payment $exPay) {
-
-                    return array('warning' => "Payment Error = " . $exPay->getMessage(), 'bid' => $bid);
-                }
                 break;
 
             case PaymentMethod::Cash:
@@ -1152,9 +862,9 @@ class PaymentSvcs {
 
         $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $idToken);
 
-        switch ($rtnResp->response->getStatus()) {
+        switch ($rtnResp->getStatus()) {
 
-            case MpStatusValues::Approved:
+            case CreditPayments::STATUS_APPROVED:
 
                 // Update invoice
                 $invoice->updateInvoiceBalance($dbh, 0 - $rtnResp->response->getAuthorizeAmount(), $uS->username);
@@ -1164,11 +874,11 @@ class PaymentSvcs {
 
                 break;
 
-            case MpStatusValues::Declined:
+            case CreditPayments::STATUS_DECLINED:
 
                 $rtnResult->setStatus(PaymentResult::DENIED);
-                $rtnResult->feePaymentRejected($dbh, $uS, $rtnResp);
-                $rtnResult->setDisplayMessage('** The Return is Declined. **  Message: ' . $rtnResp->response->getDisplayMessage());
+                $rtnResult->feePaymentRejected($dbh, $uS, $rtnResp, $invoice);
+                $rtnResult->setDisplayMessage('** The Return is Declined. **  Message: ' . $rtnResp->response->getResponseMessage());
 
                 break;
 
@@ -1176,7 +886,7 @@ class PaymentSvcs {
 
                 $rtnResult->setStatus(PaymentResult::ERROR);
                 $rtnResult->feePaymentError($dbh, $uS);
-                $rtnResult->setDisplayMessage('** Return Invalid or Error **  Message: ' . $rtnResp->response->getMessage());
+                $rtnResult->setDisplayMessage('** Return Invalid or Error **  Message: ' . $rtnResp->response->getResponseMessage());
         }
 
         return $rtnResult;
@@ -1252,9 +962,9 @@ class PaymentSvcs {
 
             $csResp = TokenTX::creditVoidReturnToken($dbh, $payRs->idPayor->getstoredVal(), $uS->ccgw, $revRequest, $payRs);
 
-            switch ($csResp->response->getStatus()) {
+            switch ($csResp->getStatus()) {
 
-                case MpStatusValues::Approved:
+                case CreditPayments::STATUS_APPROVED:
 
                     // Update invoice
                     $invoice->updateInvoiceBalance($dbh, $csResp->response->getAuthorizeAmount(), $uS->username);
@@ -1266,7 +976,7 @@ class PaymentSvcs {
 
                     break;
 
-                case MpStatusValues::Declined:
+                case CreditPayments::STATUS_DECLINED:
 
                     $dataArray['success'] = 'Declined.';
                     break;
@@ -1285,41 +995,54 @@ class PaymentSvcs {
         return $dataArray;
     }
 
-    protected static function AnalyzeCredSaleResult(\PDO $dbh, PaymentResponse $payResp, \Invoice $invoice, $idToken = 0) {
+    public static function AnalyzeCredSaleResult(\PDO $dbh, PaymentResponse $payResp, \Invoice $invoice, $idToken = 0, $useAVS = TRUE, $useCVV = TRUE) {
 
         $uS = Session::getInstance();
 
         $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $idToken);
 
 
-        switch ($payResp->response->getStatus()) {
+        switch ($payResp->getStatus()) {
 
-            case MpStatusValues::Approved:
+            case CreditPayments::STATUS_APPROVED:
 
                 // Update invoice
-                $invoice->updateInvoiceBalance($dbh, $payResp->getAmount(), $uS->username);
+                $invoice->updateInvoiceBalance($dbh, $payResp->response->getAuthorizedAmount(), $uS->username);
 
                 $payResult->feePaymentAccepted($dbh, $uS, $payResp, $invoice);
                 $payResult->setDisplayMessage('Paid by Credit Card.  ');
 
-                $avsResult = new AVSResult($payResp->response->getAVSResult());
-                $cvvResult = new CVVResult($payResp->response->getCvvResult());
-
-                if ($avsResult->isZipMatch() === FALSE) {
-                    $payResult->setDisplayMessage($avsResult->getResultMessage() . '  ');
+                if ($payResp->isPartialPayment()) {
+                    $payResult->setDisplayMessage('** Partially Approved Amount: ' . number_format($payResp->response->getAuthorizedAmount(), 2) . ' (Remaining Balance Due: ' . number_format($invoice->getBalance(), 2) . ').  ');
                 }
 
-                if ($cvvResult->isCvvMatch() === FALSE && $uS->CardSwipe === FALSE) {
-                    $payResult->setDisplayMessage($cvvResult->getResultMessage() . '  ');
+                if ($useAVS) {
+                    $avsResult = new AVSResult($payResp->response->getAVSResult());
+
+                    if ($avsResult->isZipMatch() === FALSE) {
+                        $payResult->setDisplayMessage($avsResult->getResultMessage() . '  ');
+                    }
+                }
+
+                if ($useCVV) {
+                    $cvvResult = new CVVResult($payResp->response->getCvvResult());
+                    if ($cvvResult->isCvvMatch() === FALSE && $uS->CardSwipe === FALSE) {
+                        $payResult->setDisplayMessage($cvvResult->getResultMessage() . '  ');
+                    }
                 }
 
                 break;
 
-            case MpStatusValues::Declined:
+            case CreditPayments::STATUS_DECLINED:
 
                 $payResult->setStatus(PaymentResult::DENIED);
-                $payResult->feePaymentRejected($dbh, $uS, $payResp);
-                $payResult->setDisplayMessage('** The Payment is Declined. **  Message: ' . $payResp->response->getDisplayMessage());
+                $payResult->feePaymentRejected($dbh, $uS, $payResp, $invoice);
+
+                $msg = '** The Payment is Declined. **';
+                if ($payResp->response->getResponseMessage() != '') {
+                    $msg .= 'Message: ' . $payResp->response->getResponseMessage();
+                }
+                $payResult->setDisplayMessage($msg);
 
                 break;
 
@@ -1327,198 +1050,85 @@ class PaymentSvcs {
 
                 $payResult->setStatus(PaymentResult::ERROR);
                 $payResult->feePaymentError($dbh, $uS);
-                $payResult->setDisplayMessage('** Payment Invalid or Error **  Message: ' . $payResp->response->getMessage());
+                $payResult->setDisplayMessage('** Payment Invalid or Error **  Message: ' . $payResp->response->getResponseMessage());
         }
 
         return $payResult;
-    }
-
-    protected static function sendVoid(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Guest_TokenRS $tknRs, Invoice $invoice, $paymentNotes = '') {
-
-        $uS = Session::getInstance();
-        $dataArray = array();
-
-        // Set up request
-        $voidRequest = new CreditVoidSaleTokenRequest();
-        $voidRequest->setAuthCode($pAuthRs->Approval_Code->getStoredVal());
-        $voidRequest->setCardHolderName($tknRs->CardHolderName->getStoredVal());
-        $voidRequest->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion);
-        $voidRequest->setInvoice($invoice->getInvoiceNumber());
-        $voidRequest->setPurchaseAmount($pAuthRs->Approved_Amount->getStoredVal());
-        $voidRequest->setRefNo($pAuthRs->Reference_Num->getStoredVal());
-        $voidRequest->setToken($tknRs->Token->getStoredVal());
-        $voidRequest->setTokenId($tknRs->idGuest_token->getStoredVal());
-
-        try {
-
-            $csResp = TokenTX::creditVoidSaleToken($dbh, $payRs->idPayor->getstoredVal(), $uS->ccgw, $voidRequest, $payRs, $paymentNotes);
-
-            switch ($csResp->response->getStatus()) {
-
-                case MpStatusValues::Approved:
-
-                    // Update invoice
-                    $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizeAmount(), $uS->username);
-
-                    $csResp->idVisit = $invoice->getOrderNumber();
-                    $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
-                    $dataArray['success'] = 'Payment is void.  ';
-
-                    break;
-
-                case MpStatusValues::Declined:
-
-                    if (strtoupper($csResp->response->getMessage()) == 'ITEM VOIDED') {
-
-                        // Update invoice
-                        $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizeAmount(), $uS->username);
-
-                        $csResp->idVisit = $invoice->getOrderNumber();
-                        $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
-                        $dataArray['success'] = 'Payment is void.  ';
-
-                    } else {
-
-                        $dataArray['warning'] = $csResp->response->getMessage();
-                    }
-
-                    break;
-
-                default:
-
-                    $dataArray['warning'] = '** Void Invalid or Error. **  ' . 'Message: ' . $csResp->response->getMessage();
-
-            }
-
-        } catch (Hk_Exception_Payment $exPay) {
-
-            $dataArray['warning'] =  "Void Error = " . $exPay->getMessage();
-        }
-
-        return $dataArray;
     }
 
     public static function getInfoFromCardId(\PDO $dbh, $cardId) {
 
         $infoArray = array();
 
-        $query = "select idName, idGroup, InvoiceNumber from card_id where CardID = :cid";
+        $query = "select `idName`, `idGroup`, `InvoiceNumber`, `Amount` from `card_id` where `CardID` = :cid";
         $stmt = $dbh->prepare($query);
         $stmt->execute(array(':cid'=>$cardId));
 
-        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) > 0) {
 
-            $infoArray['idName'] = $rows[0][0];
-            $infoArray['idGroup'] = $rows[0][1];
-            $infoArray['InvoiceNumber'] = $rows[0][2];
+            $infoArray = $rows[0];
 
             // Delete to discourge replays.
             $stmt = $dbh->prepare("delete from card_id where CardID = :cid");
             $stmt->execute(array(':cid'=>$cardId));
 
-        } else {
-            throw new Hk_Exception_Payment('CardID/PaymentID not found.  ');
         }
 
         return $infoArray;
     }
 
-    public static function processSiteReturn(\PDO $dbh, $gw, $post) {
+    public static function processWebhook(\PDO $dbh, $data) {
 
         $uS = Session::getInstance();
 
-        $rtnCode = '';
-        $rtnMessage = '';
-        $payResult = null;
+        // Payment Gateway
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-        if (isset($post['ReturnCode'])) {
-            $rtnCode = intval(filter_var($post['ReturnCode'], FILTER_SANITIZE_NUMBER_INT), 10);
+        $payNotes = '';
+
+        if (isset($uS->paymentNotes)) {
+            $payNotes = $uS->paymentNotes;
+            unset($uS->paymentNotes);
         }
 
-        if (isset($post['ReturnMessage'])) {
-            $rtnMessage = filter_var($post['ReturnMessage'], FILTER_SANITIZE_STRING) . "  ";
+        return $gateway->processWebhook($dbh, $data, $payNotes, $uS->username);
+
+    }
+
+    public static function processSiteReturn(\PDO $dbh, $post) {
+
+        $uS = Session::getInstance();
+
+        // Payment Gateway
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+
+        $payNotes = '';
+        $idInv = 0;
+        $tokenId = '';
+
+        if (isset($uS->paymentNotes)) {
+            $payNotes = $uS->paymentNotes;
+            unset($uS->paymentNotes);
         }
 
-        if (isset($post['CardID'])) {
-
-            $cardId = filter_var($post['CardID'], FILTER_SANITIZE_STRING);
-
-            // Save postback in the db.
-            try {
-                Gateway::saveGwTx($dbh, $rtnCode, '', json_encode($post), 'CardInfoPostBack');
-            } catch (Exception $ex) {
-                // Do nothing
-            }
-
-//            if ($rtnCode != 0) {
-//
-//                 $payResult = new cofResult('Payment Transaction Failed: ' . $rtnMessage, PaymentResult::ERROR, 0, 0);
-//
-//            } else {
-
-                try {
-
-                    $vr = CardInfo::portalReply($dbh, $gw, $cardId, $post);
-
-                    $payResult = new CofResult($vr->response->getDisplayMessage(), $vr->response->getStatus(), $vr->idPayor, $vr->idRegistration);
-
-                } catch (Hk_Exception_Payment $hex) {
-                    $payResult = new cofResult($hex->getMessage(), PaymentResult::ERROR, 0, 0);
-                }
-
-//            }
-
-        } else if (isset($post['PaymentID'])) {
-
-            $paymentId = filter_var($post['PaymentID'], FILTER_SANITIZE_STRING);
-
-            $idInv = 0;
-            if (isset($uS->paymentIds[$paymentId])) {
-                $idInv = $uS->paymentIds[$paymentId];
-            }
-
-            $payNotes = '';
-            if (isset($uS->paymentNotes)) {
-                $payNotes = $uS->paymentNotes;
-            }
-
-
-            try {
-                Gateway::saveGwTx($dbh, $rtnCode, '', json_encode($post), 'HostedCoPostBack');
-            } catch (Exception $ex) {
-                // Do nothing
-            }
-
-            try {
-
-                $csResp = HostedCheckout::portalReply($dbh, $gw, $paymentId, $payNotes);
-
-                if ($csResp->getInvoice() != '') {
-
-                    $invoice = new Invoice($dbh, $csResp->getInvoice());
-
-                    // Analyze the result
-                    $payResult = self::AnalyzeCredSaleResult($dbh, $csResp, $invoice);
-
-                } else {
-
-                    $payResult = new PaymentResult($idInv, 0, 0);
-                    $payResult->setStatus(PaymentResult::ERROR);
-                    $payResult->setDisplayMessage('Invoice Not Found!  ');
-                }
-
-            } catch (Hk_Exception_Payment $hex) {
-
-                $payResult = new PaymentResult($idInv, 0, 0);
-                $payResult->setStatus(PaymentResult::ERROR);
-                $payResult->setDisplayMessage($hex->getMessage());
-
-            }
+        if (isset($uS->imtoken)) {
+            $tokenId = $uS->imtoken;
+            unset($uS->imtoken);
         }
 
-        return $payResult;
+        if (isset($uS->paymentIds[$tokenId])) {
+            $idInv = $uS->paymentIds[$tokenId];
+        }
+
+        if (isset($uS->imcomplete)) {
+            $post = $uS->imcomplete;
+            unset($uS->imcomplete);
+        }
+
+        return $gateway->processHostedReply($dbh, $post, $tokenId, $idInv, $payNotes, $uS->username);
+
     }
 
     public static function generateReceipt(\PDO $dbh, $idPayment) {
@@ -1584,17 +1194,34 @@ class PaymentSvcs {
 
             case PaymentMethod::Charge:
 
-                $stmt = $dbh->query("SELECT * FROM payment_auth where idPayment = $idPayment order by idPayment_auth");
+                $stmt = $dbh->query("SELECT * FROM payment_auth where idPayment = $idPayment order by `Timestamp`");
                 $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                 if (count($rows) < 1) {
                     return array('warning'=>'Charge payment record not found.');
                 }
 
-                $ckRs = new Payment_AuthRS();
-                EditRS::loadRow($rows[count($rows)-1], $ckRs);
+                $pAuthRs = new Payment_AuthRS();
+                EditRS::loadRow($rows[count($rows)-1], $pAuthRs);
 
-                $payResp = new ManualChargeResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $ckRs->Card_Type->getStoredVal(), $ckRs->Acct_Number->getStoredVal(), '', $payRs->idToken->getStoredVal());
+                $gTRs = new Guest_TokenRS();
+                $gTRs->idGuest_token->setStoredVal($payRs->idToken->getStoredVal());
+                $guestTkns = EditRS::select($dbh, $gTRs, array($gTRs->idGuest_token));
+
+                if (count($guestTkns) > 0) {
+                    EditRS::loadRow($guestTkns[0], $gTRs);
+                }
+
+                $gwResp = new StandInGwResponse($pAuthRs, $gTRs->OperatorID->getStoredVal(), $gTRs->CardHolderName->getStoredVal(), $gTRs->ExpDate->getStoredVal(), $gTRs->Token->getStoredVal(), $invoice->getInvoiceNumber(), $payRs->Amount->getStoredVal());
+
+                try {
+                    $gateway = PaymentGateway::factory($dbh, $pAuthRs->Processor->getStoredVal(), $uS->ccgw);
+                } catch (Hk_Exception_Runtime $hex) {
+                    // Grab the local gateway
+                    $gateway = PaymentGateway::factory($dbh, '', '');
+                }
+
+                $payResp = $gateway->getPaymentResponseObj($gwResp, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber());
                 $payResp->paymentRs = $payRs;
                 break;
 
@@ -1607,27 +1234,33 @@ class PaymentSvcs {
                     return array('warning'=>'Charge payment record not found.');
                 }
 
-                $ckRs = new Payment_AuthRS();
-                EditRS::loadRow($rows[0], $ckRs);
-                $payResp = new ManualChargeResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $ckRs->Card_Type->getStoredVal(), $ckRs->Acct_Number->getStoredVal());
+                $pAuthRs = new Payment_AuthRS();
+                EditRS::loadRow($rows[0], $pAuthRs);
+
+                $payResp = new ManualChargeResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal());
                 $payResp->paymentRs = $payRs;
                 break;
 
         }
 
         $dataArray = array();
-        $config = new Config_Lite(ciCFG_FILE);
-            $statusCode = $payRs->Status_Code->getStoredVal();
 
-            if ($statusCode == PaymentStatusCode::Paid && $payRs->Is_Refund->getStoredVal() > 0) {
-                $statusCode = PaymentStatusCode::Retrn;
-            }
+        $statusCode = $payRs->Status_Code->getStoredVal();
+
+        if ($statusCode == PaymentStatusCode::Paid && $payRs->Is_Refund->getStoredVal() > 0) {
+            $statusCode = PaymentStatusCode::Retrn;
+        }
 
         switch ($statusCode) {
 
             case PaymentStatusCode::Paid:
 
                 $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
+                break;
+
+            case PaymentStatusCode::Declined:
+
+                $dataArray['receipt'] = Receipt::createDeclinedMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
                 break;
 
             case PaymentStatusCode::VoidSale:

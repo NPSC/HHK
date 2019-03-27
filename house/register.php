@@ -22,8 +22,10 @@ require (MEMBER . 'OrgMember.php');
 require (MEMBER . "Addresses.php");
 require (MEMBER . "EmergencyContact.php");
 
+require (PMT . 'GatewayConnect.php');
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
+require (PMT . 'PaymentGateway.php');
 require (PMT . 'Payments.php');
 require (PMT . 'HostedPayments.php');
 require (PMT . 'Receipt.php');
@@ -49,19 +51,12 @@ require (HOUSE . 'RoomReport.php');
 
 require (CLASSES . 'CreateMarkupFromDB.php');
 require (CLASSES . 'Notes.php');
-require_once(SEC . 'ChallengeGenerator.php');
+require(SEC . 'ChallengeGenerator.php');
 
 
-try {
-    $wInit = new webInit();
-} catch (Exception $exw) {
-    die($exw->getMessage());
-}
+$wInit = new webInit();
 
 $dbh = $wInit->dbh;
-$pageTitle = $wInit->pageTitle;
-
-$menuMarkup = $wInit->generatePageMenu();
 
 // get session instance
 $uS = Session::getInstance();
@@ -71,18 +66,6 @@ $totalRest = $uS->PreviousNights;
 
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
-
-
-// Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("help");
-
-$resultMessage = $alertMsg->createMarkup();
 
 $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
@@ -95,6 +78,8 @@ $defaultRegisterTab = 0;
 $currentReservations = '';
 $uncommittedReservations = '';
 $waitlist = '';
+$guestAddMessage = '';
+
 $rvCols = array();
 $wlCols = array();
 
@@ -104,10 +89,19 @@ if ($uS->DefaultRegisterTab > 0 && $uS->DefaultRegisterTab < 5) {
 }
 
 // Hosted payment return
-if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_POST)) === FALSE) {
+try {
 
-    $receiptMarkup = $payResult->getReceiptMarkup();
-    $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+    if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
+
+        $receiptMarkup = $payResult->getReceiptMarkup();
+
+        if ($payResult->getDisplayMessage() != '') {
+            $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        }
+    }
+
+} catch (Hk_Exception_Runtime $ex) {
+    $paymentMarkup = $ex->getMessage();
 }
 
 
@@ -140,6 +134,13 @@ if (isset($_POST['btnFeesDl'])) {
     PaymentReport::generateDayReport($dbh, $_POST);
 }
 
+if (isset($_GET['gamess'])) {
+
+    $contents = filter_var($_GET['gamess'], FILTER_SANITIZE_STRING);
+
+    $guestAddMessage = HTMLContainer::generateMarkup('div', $contents, array('style'=>'clear:left;float:left; margin-top:5px;margin-bottom:5px;', 'class'=>"hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"));
+
+}
 
 $locations = readGenLookupsPDO($dbh, 'Location');
 $diags = readGenLookupsPDO($dbh, 'Diagnosis');
@@ -270,12 +271,25 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
 
 }
 
+$showRateCol = FALSE;
+if ($uS->RoomPriceModel != ItemPriceCode::None) {
+    $showRateCol = TRUE;
+}
+
+$hospTitle = $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital');
+
+if ($uS->UseWLnotes) {
+    $showWlNotes = TRUE;
+} else {
+    $showWlNotes = FALSE;
+}
+
 ?>
 <!DOCTYPE html>
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title><?php echo $pageTitle; ?></title>
+        <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
@@ -285,9 +299,9 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
 
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="js/fullcalendar.min.js"></script>
         <script type="text/javascript" src="../js/hhk-scheduler.min.js"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
@@ -303,107 +317,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
-        <script type="text/javascript">
-            var isGuestAdmin = '<?php echo $isGuestAdmin; ?>';
-            var pmtMkup = "<?php echo $paymentMarkup; ?>";
-            var rctMkup = '<?php echo $receiptMarkup; ?>';
-            var defaultTab = '<?php echo $defaultRegisterTab; ?>';
-            var resourceGroupBy = '<?php echo $resourceGroupBy; ?>';
-            var resourceColumnWidth = '<?php echo $uS->CalRescColWidth; ?>';
-            var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
-            var challVar = '<?php echo $challengeVar; ?>';
-            var defaultView = '<?php echo $defaultView; ?>';
-            var calDateIncrement = '<?php echo $calDateIncrement; ?>';
-            var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-            var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
-            var resvPageName = '<?php echo $config->getString('house', 'ReservationPage', 'Reserve.php'); ?>';
-            var showCreatedDate = '<?php echo $uS->ShowCreatedDate; ?>';
-            var expandResources = '<?php echo $uS->CalExpandResources; ?>';
-            var shoHospitalName = '<?php echo $shoHosptialName; ?>';
-            var cgCols = [
-                {data: 'Action', title: 'Action', sortable: false, searchable:false},
-                {data: 'Guest First', title: 'Guest First'},
-                {data: 'Guest Last', title: 'Guest Last'},
-                {data: 'Checked In', title: 'Checked In', render: function (data, type) {return dateRender(data, type, dateFormat);}},
-                {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},
-                {data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}},
-                {data: 'Room', title: 'Room', className: 'hhk-justify-c'},
-                <?php if ($uS->RoomPriceModel != ItemPriceCode::None) { ?>
-                {data: 'Rate', title: 'Rate'},
-                <?php } ?>
-                {data: 'Phone', title: 'Phone'},
-                <?php if (count($uS->guestLookups[GL_TableNames::Hospital]) > 1) { ?>
-                {data: 'Hospital', title: '<?php echo $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'); ?>'},
-                <?php } ?>
-                {data: 'Patient', title: patientLabel},
-            ];
-
-            var rvCols = [
-                {data: 'Action', title: 'Action', sortable: false, searchable:false},
-                {data: 'Guest First', title: 'Guest First'},
-                {data: 'Guest Last', title: 'Guest Last'},
-                {data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type, dateFormat);}},
-                {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},
-                {data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}},
-                {data: 'Room', title: 'Room', className: 'hhk-justify-c'},
-                <?php if ($uS->RoomPriceModel != ItemPriceCode::None) { ?>
-                {data: 'Rate', title: 'Rate'},
-                <?php } ?>
-                {data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'},
-                <?php if (count($uS->guestLookups[GL_TableNames::Hospital]) > 1) { ?>
-                {data: 'Hospital', title: '<?php echo $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'); ?>'},
-                <?php } ?>
-                <?php if (count($locations) > 0) { ?>
-                {data: 'Location', title: '<?php echo $labels->getString('hospital', 'location', 'Location'); ?>'},
-                <?php } if (count($diags) > 0) { ?>
-                {data: 'Diagnosis', title: '<?php echo $labels->getString('hospital', 'diagnosis', 'Diagnosis'); ?>'},
-                <?php } ?>
-                {data: 'Patient', title: patientLabel},
-            ];
-
-            var wlCols = [
-                {data: 'Action', title: 'Action', sortable: false, searchable:false},
-                {data: 'Guest First', title: 'Guest First'},
-                {data: 'Guest Last', title: 'Guest Last'},
-                <?php if ($uS->ShowCreatedDate) { ?>
-                {data: 'Timestamp', title: 'Created On', render: function (data, type) {return dateRender(data, type, "MMM D, YYYY H:mm");}},
-                <?php } ?>
-                {data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type, dateFormat);}},
-                {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},
-                {data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}},
-                {data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'},
-                <?php if (count($uS->guestLookups[GL_TableNames::Hospital]) > 1) { ?>
-                {data: 'Hospital', title: '<?php echo $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'); ?>'},
-                <?php } ?>
-                <?php if (count($locations) > 0) { ?>
-                {data: 'Location', title: '<?php echo $labels->getString('hospital', 'location', 'Location'); ?>'},
-                <?php } if (count($diags) > 0) { ?>
-                {data: 'Diagnosis', title: '<?php echo $labels->getString('hospital', 'diagnosis', 'Diagnosis'); ?>'},
-                <?php } ?>
-                {data: 'Patient', title: patientLabel},
-                <?php if ($uS->UseWLnotes) { ?>
-                {data: 'WL Notes', title: '<?php echo $labels->getString('referral', 'waitlistNotesLabel', 'WL Notes'); ?>'},
-                <?php } ?>
-            ];
-
-            var dailyCols = [
-                {data: 'titleSort', 'visible': false },
-                {data: 'Title', title: 'Room', 'orderData': [0, 1], className: 'hhk-justify-c'},
-                {data: 'Status', title: 'Status', searchable:false},
-                {data: 'Guests', title: 'Guests'},
-                {data: 'Patient_Name', title: patientLabel},
-                <?php if ($showCharges) { ?>
-                {data: 'Unpaid', title: 'Unpaid', className: 'hhk-justify-r'},
-                <?php } ?>
-                {data: 'Visit_Notes', title: 'Last Visit Note', sortable: false},
-                {data: 'Notes', title: 'Room Notes', sortable: false},
-            ];
-
-        </script>
-
-        
-        <script type="text/javascript" src="js/register-min.js?v2x=n"></script>
-
+        <?php echo INS_EMBED_JS; ?>
 
         <style>
            #version {
@@ -438,8 +352,8 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
             }
         </style>
     </head>
-    <body <?php if ($wInit->testVersion) {echo "class='testbody'";}?>>
-        <?php echo $menuMarkup; ?>
+    <body <?php if ($wInit->testVersion) {echo "class='testbody'";}?> >
+        <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <div style="float:left; margin-top:10px;">
                 <h2><?php echo $wInit->pageHeading; ?><?php echo RoomReport::getGlobalNightsCounter($dbh, $totalRest); ?><?php echo RoomReport::getGlobalStaysCounter($dbh); ?>
@@ -447,8 +361,9 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 <input type="text" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" /></span>
                 </h2>
             </div>
-            <div id="divAlertMsg" style="clear:left;"><?php echo $resultMessage; ?></div>
-            <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
+
+            <?php echo $guestAddMessage; ?>
+            <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
             <div style="clear:both;"></div>
             <form name="frmdownload" action="#" method="post">
             <div id="mainTabs" style="display:none; font-size:.9em;">
@@ -567,9 +482,12 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 </tr>
             </table>
         </div>
+
         <div class="gmenu"></div>
+
         <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
-        <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
+        <form name="xform" id="xform" method="post"></form>
+
         <div id="cardonfile" style="font-size: .9em; display:none;"></div>
         <div id="statEvents" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;"></div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
@@ -587,5 +505,33 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
                 </tr>
             </table>
         </div>
+        <input  type="hidden" id="isGuestAdmin" value='<?php echo $isGuestAdmin; ?>' />
+        <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
+        <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
+        <input  type="hidden" id="defaultTab" value='<?php echo $defaultRegisterTab; ?>' />
+        <input  type="hidden" id="resourceGroupBy" value='<?php echo $resourceGroupBy; ?>' />
+        <input  type="hidden" id="resourceColumnWidth" value='<?php echo $uS->CalRescColWidth; ?>' />
+        <input  type="hidden" id="patientLabel" value='<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>' />
+        <input  type="hidden" id="challVar" value='<?php echo $challengeVar; ?>' />
+        <input  type="hidden" id="defaultView" value='<?php echo $defaultView; ?>' />
+        <input  type="hidden" id="calDateIncrement" value='<?php echo $calDateIncrement; ?>' />
+        <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />
+        <input  type="hidden" id="fixedRate" value='<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>' />
+        <input  type="hidden" id="resvPageName" value='<?php echo $config->getString('house', 'ReservationPage', 'Reserve.php'); ?>' />
+        <input  type="hidden" id="showCreatedDate" value='<?php echo $uS->ShowCreatedDate; ?>' />
+        <input  type="hidden" id="expandResources" value='<?php echo $uS->CalExpandResources; ?>' />
+        <input  type="hidden" id="shoHospitalName" value='<?php echo $shoHosptialName; ?>' />
+        <input  type="hidden" id="showRateCol" value='<?php echo $showRateCol; ?>' />
+        <input  type="hidden" id="hospTitle" value='<?php echo $hospTitle; ?>' />
+        <input  type="hidden" id="showDiags" value='<?php if (count($diags) > 0) {echo TRUE;} else {echo FALSE;} ?>' />
+        <input  type="hidden" id="showLocs" value='<?php if (count($locations) > 0) {echo TRUE;} else {echo FALSE;} ?>' />
+        <input  type="hidden" id="locationTitle" value='<?php echo $labels->getString('hospital', 'location', 'Location'); ?>' />
+        <input  type="hidden" id="diagnosisTitle" value='<?php echo $labels->getString('hospital', 'diagnosis', 'Diagnosis'); ?>' />
+        <input  type="hidden" id="showWlNotes" value='<?php echo $showWlNotes ?>' />
+        <input  type="hidden" id="wlTitle" value='<?php echo $labels->getString('referral', 'waitlistNotesLabel', 'WL Notes'); ?>' />
+        <input  type="hidden" id="showCharges" value='<?php echo $showCharges ?>' />
+
+        <script type="text/javascript" src="js/register-min.js?v2x=n"></script>
+
     </body>
 </html>

@@ -1,4 +1,4 @@
-/* global getDoc, memberData, rctMkup, psgTabIndex, getAgent */
+/* global getDoc, memberData, rctMkup, psgTabIndex, getAgent, pmtMkup */
 
 /**
  * guestload.js
@@ -101,7 +101,8 @@ $(document).ready(function () {
     var nextVeh = 1;
     var listJSON = '../admin/ws_gen.php?cmd=chglog&vw=vguest_audit_log&uid=' + memData.id;
     var listEvtTable;
-    var setupNotes;
+    var setupNotes,
+        $psgList;
 
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
@@ -112,14 +113,6 @@ $(document).ready(function () {
             ) * 1.1 );
         }
     });
-
-// Guest Photo
-    if (memData.guestPhoto) {
-        $("div#gphoto").dropzone({
-            url: "/GuestEdit.php",
-            paramName: 'photo'
-        });
-    }
     
     $("#divFuncTabs").tabs({
         collapsible: true
@@ -163,6 +156,10 @@ $(document).ready(function () {
 
     if (rctMkup !== '') {
         showReceipt('#pmtRcpt', rctMkup);
+    }
+
+    if (pmtMkup !== '') {
+        $('#paymentMessage').html(pmtMkup).show();
     }
 
     $('.hhk-view-visit').click(function () {
@@ -260,19 +257,40 @@ $(document).ready(function () {
                         }
                     }
                 });
+                
+            } else if (ui.newTab.prop('id') === 'chglog' && !listEvtTable) {
+                
+                listEvtTable = $('#dataTbl').dataTable({
+                "columnDefs": dtCols,
+                "serverSide": true,
+                "processing": true,
+                "deferRender": true,
+                "language": {"search": "Search Log Text:"},
+                "sorting": [[0,'desc']],
+                "displayLength": 25,
+                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                "Dom": '<"top"ilf>rt<"bottom"ip>',
+                ajax: {
+                    url: listJSON
+                }
+                });
             }
+
         },
         collapsible: true
     });
+    
     $('#btnSubmit, #btnReset, #btnCred').button();
+    
     $('#btnCred').click(function () {
         cardOnFile($(this).data('id'), $(this).data('idreg'), 'GuestEdit.php?id=' + $(this).data('id') + '&psg=' + memData.idPsg);
     });
+    
     // phone - email tabs block
     $('#phEmlTabs').tabs();
     $('#emergTabs').tabs();
     $('#addrsTabs').tabs();
-    $('#psgList').tabs({
+    $psgList = $('#psgList').tabs({
         collapsible: true,
         beforeActivate: function (event, ui) {
             if (ui.newPanel.length > 0) {
@@ -285,33 +303,16 @@ $(document).ready(function () {
                 if (ui.newTab.prop('id') === 'lipsg' && !setupNotes) {
                     setupNotes = setupPsgNotes(memData.idPsg, $('#psgNoteViewer'));
                 }
-                
-                if (ui.newTab.prop('id') === 'chglog' && !listEvtTable) {
-                    listEvtTable = $('#dataTbl').dataTable({
-                    "columnDefs": dtCols,
-                    "serverSide": true,
-                    "processing": true,
-                    "deferRender": true,
-                    "language": {"search": "Search Log Text:"},
-                    "sorting": [[0,'desc']],
-                    "displayLength": 25,
-                    "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                    "Dom": '<"top"ilf>rt<"bottom"ip>',
-                    ajax: {
-                        url: listJSON
-                    }
-                    });
-                }
             }
         }
     });
 
     if (memData.psgOnly) {
-        $('#psgList').tabs("disable");
+        $psgList.tabs("disable");
     }
 
-    $('#psgList').tabs("enable", psgTabIndex);
-    $('#psgList').tabs("option", "active", psgTabIndex);
+    $psgList.tabs("enable", psgTabIndex);
+    $psgList.tabs("option", "active", psgTabIndex);
 
     $('#cbnoReturn').change(function () {
         if (this.checked) {
@@ -448,6 +449,11 @@ $(document).ready(function () {
     createAutoComplete($('#txtRelSch'), 3, {cmd: 'srrel', basis: $('#hdnRelCode').val(), id: memData.id}, function (item) {
         $.post('ws_admin.php', {'rId':item.id, 'id':memData.id, 'rc':$('#hdnRelCode').val(), 'cmd':'newRel'}, relationReturn);
     });
+    
+    // Any results
+    if (resultMessage !== '') {
+        flagAlertMessage(resultMessage, 'alert');
+    }
 
 
     // Excludes tab "Check-all" button

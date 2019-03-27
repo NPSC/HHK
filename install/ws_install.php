@@ -34,8 +34,17 @@ if ($c == "testdb") {
 
 } else if ($c == 'loadmd') {
 
-    $dbh = initPDO(TRUE);
     $errorMsg = '';
+
+// define db connection obj
+    try {
+        $dbh = initPDO(TRUE);
+    } catch (Hk_Exception_Runtime $hex) {
+        echo( json_encode(array('error'=>$hex->getMessage())));
+        exit();
+    }
+
+
 
     try {
         // Load initialization data

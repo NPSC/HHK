@@ -390,7 +390,7 @@ CREATE OR REPLACE VIEW `vcredit_payments` AS
         IFNULL(`pa`.`Acct_Number`, '') AS `Acct_Number`,
         IFNULL(`pa`.`Card_Type`, '') AS `Card_Type`,
         IFNULL(`pa`.`AVS`, '') AS `AVS`,
-        IFNULL(`pa`.`Code3`, '') AS `CVV`,
+        IFNULL(`pa`.`CVV`, '') AS `CVV`,
         IFNULL(`pa`.`Last_Updated`, '') AS `Last_Updated`,
         `p`.`idPayor` AS `idPayor`,
         IFNULL(`gt`.`CardHolderName`, '') AS `CardHolderName`
@@ -925,7 +925,7 @@ CREATE OR REPLACE VIEW `vguest_listing` AS
         IFNULL(`na`.`County`, '') AS `County`,
         IFNULL(`na`.`State_Province`, '') AS `State`,
         IFNULL(`na`.`Postal_Code`, '') AS `Zip`,
-        IFNULL(`na`.`Country`, '') AS `Country`,
+        IFNULL(`na`.`Country_Code`, '') AS `Country`,
         IFNULL(`n`.`BirthDate`, '') AS `BirthDate`,
         IFNULL(`g3`.`Description`, '') AS `Patient Rel.`,
         `ng`.`Relationship_Code` AS `Relationship_Code`,
@@ -1469,6 +1469,7 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
         IFNULL(`p`.`Notes`, '') AS `Payment_Note`,
         IFNULL(`p`.`External_Id`, '') AS `Payment_External_Id`,
         IFNULL(`p`.`idToken`, 0) as `Payment_idToken`,
+        IFNULL(`p`.`Timestamp`, '') as `Payment_Timestamp`,
         IFNULL(`pa`.`idPayment_auth`, 0) AS `idPayment_auth`,
         IFNULL(`pa`.`Customer_Id`, 0) AS `Charge_Customer_Id`,
         IFNULL(`pa`.`Acct_Number`, `p`.`Data2`) AS `Masked_Account`,
@@ -1501,8 +1502,8 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vlist_pments` AS
    SELECT 
-        `i`.`idInvoice` AS `idInvoice`,
-        `i`.`Invoice_Number` AS `Invoice_Number`,
+        ifnull(`i`.`idInvoice` ,0) AS `idInvoice`,
+        ifnull(`i`.`Invoice_Number`, '') AS `Invoice_Number`,
         `i`.`Amount` AS `Invoice_Amount`,
         `i`.`Sold_To_Id` AS `Sold_To_Id`,
         IFNULL(`nv`.`Vol_Status`, '') AS `Bill_Agent`,
@@ -1537,6 +1538,7 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
         IFNULL(`p`.`Notes`, '') AS `Payment_Note`,
         IFNULL(`p`.`External_Id`, '') AS `Payment_External_Id`,
         IFNULL(`p`.`idToken`, 0) as `Payment_idToken`,
+        IFNULL(`p`.`Timestamp`, '') as `Payment_Timestamp`,
         IFNULL(`pa`.`idPayment_auth`, 0) AS `idPayment_auth`,
         IFNULL(`pa`.`Customer_Id`, 0) AS `Charge_Customer_Id`,
         IFNULL(`pa`.`Acct_Number`, `p`.`Data2`) AS `Masked_Account`,
@@ -2090,7 +2092,7 @@ select
     s.idName as `idGuest`,
     v.idReservation,
     s.Span_Start_Date as `Arrival_Date`,
-    dateDefaultNow(s.Expected_Co_Date)  as `Departure_Date`,
+    datedefaultnow(s.Expected_Co_Date)  as `Departure_Date`,
     's' as `Status`,
     v.idResource,
     'v' as `Source`

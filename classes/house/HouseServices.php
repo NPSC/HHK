@@ -64,6 +64,15 @@ class HouseServices {
             }
         }
 
+        if ($r['Span_End'] != '') {
+            $vspanEndDT = new \DateTime($r['Span_End']);
+            $vspanEndDT->sub(new DateInterval('P1D'));
+        } else {
+            $vspanEndDT = new \DateTime();
+        }
+
+        $vspanEndDT->setTime(23, 59, 59);
+        $vspanStartDT = new \DateTime($r['Span_Start']);
 
         $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
@@ -106,8 +115,6 @@ class HouseServices {
         // Change rooms control
         if ($action == 'cr' && $r['Status'] == VisitStatus::CheckedIn) {
 
-            $dataArray['resc'] = Resource::roomListJSON($dbh);
-
             $expDepDT = new \DateTime($r['Expected_Departure']);
             $expDepDT->setTime(10, 0, 0);
             $now = new \DateTime();
@@ -118,8 +125,9 @@ class HouseServices {
             }
 
             $reserv = Reservation_1::instantiateFromIdReserv($dbh, $r['idReservation'], $idVisit);
-            $roomChooser = new RoomChooser($dbh, $reserv, 0, new \DateTime(), $expDepDT);
+            $roomChooser = new RoomChooser($dbh, $reserv, 0, $vspanStartDT, $expDepDT);
             $mkup .= $roomChooser->createChangeRoomsMarkup($dbh, $visitCharge, $idGuest, $isAdmin);
+            $dataArray['resc'] = $roomChooser->makeRoomsArray();
 
         // Pay fees
         } else if ($action == 'pf') {
@@ -129,7 +137,7 @@ class HouseServices {
 
         } else {
             $mkup = HTMLContainer::generateMarkup('div',
-                    VisitView::createStaysMarkup($dbh, $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coDate) . $mkup, array('id'=>'divksStays'));
+                    VisitView::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coDate) . $mkup, array('id'=>'divksStays'));
 
             $mkup .= HTMLContainer::generateMarkup('div',
                     VisitView::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
@@ -138,16 +146,7 @@ class HouseServices {
         $dataArray['success'] = $mkup;
 
 
-        if ($r['Span_End'] != '') {
-            $vspanEndDT = new \DateTime($r['Span_End']);
-            $vspanEndDT->sub(new DateInterval('P1D'));
-        } else {
-            $vspanEndDT = new \DateTime();
-        }
-
-        $vspanEndDT->setTime(23, 59, 59);
-        $vspanStartDT = new \DateTime($r['Span_Start']);
-
+        // Start and end dates for rate changer
         $dataArray['start'] = $vspanStartDT->format('c');
         $dataArray['end'] = $vspanEndDT->format('c');
 
@@ -342,9 +341,9 @@ class HouseServices {
                         }
 
                         $departDT = new \DateTime($visit->getExpectedDeparture());
-                        $departDT->setTime(10, 0, 0);
+                        $departDT->setTime($uS->CheckOutTime, 0, 0);
                         $now2 = new \DateTime();
-                        $now2->setTime(10, 0, 0);
+                        $now2->setTime($uS->CheckOutTime, 0, 0);
 
                         if ($departDT < $now2) {
                             $departDT = $now2;
@@ -696,6 +695,63 @@ class HouseServices {
 
     }
 
+    public static function changeRoomList(\PDO $dbh, $idVisit, $span, $changeDate, $rescId) {
+
+        $dataArray = array();
+        $vid = intval($idVisit, 10);
+        $spanId = intval($span, 10);
+
+        $vstmt = $dbh->query("Select idReservation, Span_Start, Expected_Departure from visit where idVisit = $vid and Span = $spanId");
+
+        $vRows = $vstmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($vRows) == 1) {
+
+            $now = new \DateTime();
+            $now->setTime(10, 0, 0);
+
+            // Expected Departure
+            $expDepDT = new \DateTime($vRows[0]['Expected_Departure']);
+            $expDepDT->setTime(10, 0, 0);
+
+            if ($expDepDT < $now) {
+                $expDepDT = new \DateTime($now->format('Y-m-d H:i:s'));
+            }
+
+            // Original Span Start Date
+            $spanStartDT = new \DateTime($vRows[0]['Span_Start']);
+            $spanStartDT->setTime(10, 0, 0);
+
+            // CHange rooms start date
+            $changeDT = new \DateTime($changeDate);
+            $changeDT->setTime(10, 0, 0);
+
+            // Cannot change rooms before the span start date.
+            if ($changeDT < $spanStartDT) {
+                $changeDT = $spanStartDT;
+            }
+
+            // Cannot change rooms after today
+            if ($changeDT > $now) {
+                $changeDT = $now;
+            }
+
+            $reserv = Reservation_1::instantiateFromIdReserv($dbh, $vRows[0]['idReservation'], $vid);
+
+            $roomChooser = new RoomChooser($dbh, $reserv, 0, $changeDT, $expDepDT);
+
+            $dataArray['sel'] = $roomChooser->createChangeRoomsSelector($dbh, TRUE);
+            $dataArray['resc'] = $roomChooser->makeRoomsArray();
+            $dataArray['idResc'] = $rescId;
+
+        } else {
+            // error
+            $dataArray['error'] = 'Visit id is missing.  ';
+        }
+
+        return $dataArray;
+    }
+
     public static function undoRoomChange(\PDO $dbh, Visit $visit, $uname) {
 
         // Reservation
@@ -759,9 +815,6 @@ class HouseServices {
         $rooms = $resc->getRooms();
         $room = array_shift($rooms);
         $roomStatus = $room->getStatus();
-
-        // Transaction
-        //$result = $dbh->exec("Begin Trans;");
 
         // Undo visit checkout
         $visit->visitRS->Actual_Departure->setNewVal($nextVisitRs->Actual_Departure->getStoredVal());
@@ -991,31 +1044,31 @@ class HouseServices {
 
         EditRS::loadRow($visits[0], $visitRs);
 
+        if ($visitRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
+            return array("error" => "Cannot add guest here.  ");
+        }
+
         $guest = new Guest($dbh, $prefix, $idGuest);
 
 
         // Arrival Date
-        $arrDate = new \DateTime($visitRs->Span_Start->getStoredVal());
+        $spanArrDate = new \DateTime($visitRs->Span_Start->getStoredVal());
 
         // Departure Date
         if ($visitRs->Span_End->getStoredVal() != '') {
-            $depDate = new \DateTime($visitRs->Span_End->getStoredVal());
+            $spanDepDate = new \DateTime($visitRs->Span_End->getStoredVal());
         } else {
-            $depDate = new \DateTime($visitRs->Expected_Departure->getStoredVal());
-            $today = new \DateTime();
-
-            if ($depDate < $today) {
-                $depDate = $today;
-            }
+            return array("error" => "End date missing.  ");
         }
 
-        if ($arrDate >= $depDate) {
-            return array("error" => "Visit Dates not suitable.  arrive: " . $arrDate->format('Y-m-d H:i:s') . ", depart: " . $depDate->format('Y-m-d H:i:s'));
+        if ($spanArrDate >= $spanDepDate) {
+            return array("error" => "Visit Dates not suitable.  arrive: " . $spanArrDate->format('Y-m-d H:i:s') . ", depart: " . $spanDepDate->format('Y-m-d H:i:s'));
         }
 
         $reg = new Registration($dbh, 0, $visitRs->idRegistration->getStoredVal());
         $psg = new Psg($dbh, $reg->getIdPsg());
 
+        //Decide what to send back
         if (isset($post[$prefix.'txtLastName'])) {
 
             // Get labels
@@ -1047,12 +1100,12 @@ class HouseServices {
             $ckoutDT = $guest->getExpectedCheckOutDT();
             $ckoutDT->setTime(0,0,0);
 
-            if ($ckinDT < $arrDate || $ckinDT > $depDate) {
-                $ckinDT = $arrDate;
+            if ($ckinDT < $spanArrDate || $ckinDT > $spanDepDate) {
+                $ckinDT = $spanArrDate;
             }
 
-            if ($ckoutDT <= $ckinDT || $ckoutDT > $depDate) {
-                $ckoutDT = $depDate;
+            if ($ckoutDT <= $ckinDT || $ckoutDT > $spanDepDate) {
+                $ckoutDT = $spanDepDate;
             }
 
 
@@ -1151,14 +1204,8 @@ class HouseServices {
         } else {
             // send back a guest dialog to collect name, address, etc.
 
-            if ($depDate <= $arrDate) {
-                $depDateStr = '';
-            } else {
-                $depDateStr = $depDate->format('M j, Y');
-            }
-
-            $guest->setCheckinDate($arrDate->format('M j, Y'));
-            $guest->setExpectedCheckOut($depDateStr);
+            $guest->setCheckinDate($spanArrDate->format('M j, Y'));
+            $guest->setExpectedCheckOut($spanDepDate->format('M j, Y'));
 
             if (isset($psg->psgMembers[$guest->getIdName()])) {
                 $guest->setPatientRelationshipCode($psg->psgMembers[$guest->getIdName()]->Relationship_Code->getStoredVal());
@@ -1286,8 +1333,10 @@ class HouseServices {
         if (isset($post['cbNewCard'])) {
 
             try {
+                // Payment Gateway
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-                $dataArray = PaymentSvcs::initCardOnFile($dbh, $uS->ccgw, $uS->siteName, $idGuest, $idGroup, '', $postBackPage);
+                $dataArray = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idGroup, '', $postBackPage);
 
             } catch (Hk_Exception_Payment $ex) {
 
@@ -1295,8 +1344,9 @@ class HouseServices {
             }
         }
 
-        if ($msg != '') {
+        if ($msg != '' && isset($post['cbNewCard']) === FALSE) {
             $dataArray['success'] = $msg;
+            $dataArray['COFmkup'] = HouseServices::viewCreditTable($dbh, $idGroup, $idGuest);
         }
 
         return $dataArray;
@@ -1353,94 +1403,6 @@ class HouseServices {
         $dataArray['success'] = $reply;
 
         return $dataArray;
-    }
-
-    /**
-     * Verify visit input dates
-     *
-     * @param \Reservation_1 $resv
-     * @param \DateTime $chkinDT
-     * @param \DateTime $chkoutDT
-     * @param bool $autoResv
-     * @throws Hk_Exception_Runtime
-     */
-    public static function verifyVisitDates(\Reservation_1 $resv, \DateTime $chkinDT, \DateTime $chkoutDT, $autoResv = FALSE) {
-
-        $uS = Session::getInstance();
-
-        $rCkinDT = new \DateTime(($resv->getActualArrival() == '' ? $resv->getExpectedArrival() : $resv->getActualArrival()));
-        $rCkinDT->setTime(0, 0, 0);
-        $rCkoutDT = new \DateTime($resv->getExpectedDeparture());
-        $rCkoutDT->setTime(23, 59, 59);
-
-        if ($resv->getStatus() == ReservationStatus::Committed && $rCkinDT->diff($chkinDT)->days > $uS->ResvEarlyArrDays) {
-            throw new Hk_Exception_Runtime('Cannot check-in earlier than ' . $uS->ResvEarlyArrDays . ' days of the reservation expected arrival date of ' . $rCkinDT->format('M d, Y'));
-        } else if ($resv->getStatus() == ReservationStatus::Committed && $chkoutDT > $rCkoutDT && $autoResv === FALSE) {
-            throw new Hk_Exception_Runtime('Cannot check-out later than the reservation expected departure date of ' . $rCkoutDT->format('M d, Y'));
-        }
-
-        if ($chkinDT >= $chkoutDT) {
-            throw new Hk_Exception_Runtime('A check-in date cannot be AFTER the check-out date.  (Silly Human)  ');
-        }
-    }
-
-    /**
-     * Veriy Stay dates, check for a continuous visit.
-     *
-     * @param array $guests
-     * @param \DateTime $chkinDT
-     * @param \DateTime $chkoutDT
-     * @throws Hk_Exception_Runtime
-     */
-    public static function verifyStayDates(array $guests, \DateTime $chkinDT, \DateTime $chkoutDT) {
-
-        if (count($guests) == 0) {
-            return;
-        }
-
-        $days = array();
-        $p1d = new \DateInterval('P1D');
-
-        foreach ($guests as $guest) {
-
-            if ($guest->getCheckinDT() > $guest->getExpectedCheckOutDT()) {
-                throw new Hk_Exception_Runtime('A check-in date cannot be AFTER the check-out date.  ');
-            }
-
-            $trackerDT = new \DateTime($guest->getCheckinDT()->format('Y-m-d H:i:s'));
-
-            // Mark the days at the house
-            while ($trackerDT <= $guest->getExpectedCheckOutDT()) {
-
-                $today = $trackerDT->format('Y-m-d');
-                if (isset($days[$today])) {
-                    $days[$today] ++;
-                } else {
-                    $days[$today] = 1;
-                }
-                $trackerDT->add($p1d);
-            }
-        }
-
-        // Continous Visit?
-        $trackerDT = new \DateTime($chkinDT->format('Y-m-d H:i:s'));
-        $mostGuests = 1;
-        $mostGuestStartDT = new \DateTime($chkinDT->format('Y-m-d H:i:s'));
-
-        while ($trackerDT <= $chkoutDT) {
-
-            $today = $trackerDT->format('Y-m-d');
-            if (isset($days[$today]) === FALSE) {
-                throw new Hk_Exception_Runtime('Non-continuous visit - At least one guest must be resident each day of the visit. ');
-            }
-
-            if ($days[$today] > $mostGuests) {
-                $mostGuests++;
-                $mostGuestStartDT = new \DateTime($today);
-            }
-
-            $trackerDT->add($p1d);
-        }
     }
 
     public static function visitChangeLogMarkup(\PDO $dbh, $idReg) {

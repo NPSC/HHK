@@ -13,6 +13,7 @@ require ("homeIncludes.php");
 require (DB_TABLES . 'PaymentGwRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
 
+require (PMT . 'GatewayConnect.php');
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
 require (CLASSES . 'FinAssistance.php');

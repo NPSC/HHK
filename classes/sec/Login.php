@@ -42,14 +42,14 @@ class Login {
 
         // Check SsL
         $ssl = $config->getBool('site', 'SSL', FALSE);
-        $secureComp = new SecurityComponent(FALSE);
+        $secureComp = new SecurityComponent();
 
         if ($ssl === TRUE) {
 
             // Must access pages through SSL
             if ($secureComp->isHTTPS() === FALSE) {
                 // non-SSL access.
-                header("Location: " . $secureComp->getRootURL());
+                header("Location: " . $secureComp->getRootURL() . 'index.php');
             }
         }
 
@@ -160,13 +160,13 @@ class Login {
         $tbl->addBodyTr(
             HTMLTable::makeTh('User Name:', array('class'=>'hhk-loginLabel'))
             .HTMLTable::makeTd(
-                    HTMLInput::generateMarkup($this->userName, array('id'=>'txtUname', 'size'=>'15')))
-            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errUname')))
+                    HTMLInput::generateMarkup($this->userName, array('id'=>'txtUname', 'size'=>'17')))
+            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errUname', 'class'=>'hhk-logerrmsg')))
         );
         $tbl->addBodyTr(
             HTMLTable::makeTh('Password:', array('class'=>'hhk-loginLabel'))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'txtPW', 'size'=>'15', 'type'=>'password')))
-            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errPW'))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'txtPW', 'size'=>'17', 'type'=>'password')))
+            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errPW', 'class'=>'hhk-logerrmsg'))
                     . HTMLInput::generateMarkup($this->getChallengeVar(), array('type'=>'hidden', 'id'=>'challenge')))
         );
         $tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Login', array('id'=>'btnLogn', 'type'=>'button')), array('colspan'=>'2', 'class'=>'hhk-loginLabel')));
@@ -176,7 +176,7 @@ class Login {
 
     }
 
-    protected function getChallengeVar() {
+    public function getChallengeVar() {
 
         // get session instance
         $uS = Session::getInstance();

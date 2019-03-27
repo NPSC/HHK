@@ -45,7 +45,12 @@ try {
 
 
 // Override user credentials
-$dbh = initPDO(TRUE);
+try {
+    $dbh = initPDO(TRUE);
+} catch (Hk_Exception_Runtime $hex) {
+    exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
+}
+
 
 
 // Load the page information
@@ -150,9 +155,11 @@ if (SecurityComponent::isHTTPS()) {
                     <div><?php echo $siteName; ?>
                         <p style="margin-left:6px; width: 65%;"><?php echo $disclaimer ?></p>
                     </div>
-                    <?php echo $loginMkup . $siteLinkMkup . $linkMkup; ?>
+                    <?php echo $loginMkup; ?>
                 </div>
-                <div style="clear:left;"></div>
+                <div style="clear:left;">
+                    <?php echo $siteLinkMkup . $linkMkup; ?>
+                </div>
                 <div style="margin-top: 90px;width:500px;">
                     <hr>
                     <div><a href ="https://nonprofitsoftwarecorp.org" ><div class="nplogo"></div></a></div>

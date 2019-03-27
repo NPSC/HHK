@@ -17,9 +17,9 @@ class SecurityComponent {
     private $hhkSiteDir = '';
     private $rootPath = '';
 
-    public function __construct($isRoot = FALSE) {
 
-        $this->defineThisURL($isRoot);
+    public function __construct() {
+        $this->defineThisURL();
     }
 
     public static function is_Authorized($name) {
@@ -39,13 +39,33 @@ class SecurityComponent {
                 $pageCode = $r["Codes"];
             }
         } else {
-            exit('Web Page file name missing from DB. ');
+            return FALSE;
         }
 
         // check authorization codes.
-        $tokn = self::does_User_Code_Match($pageCode);
+        return self::does_User_Code_Match($pageCode);
 
-        return $tokn;
+    }
+
+    public static function rerouteIfNotLoggedIn($pageType, $loginPage) {
+
+        $ssn = Session::getInstance();
+
+        if (isset($ssn->logged) == FALSE || $ssn->logged == FALSE) {
+
+            $ssn->destroy(TRUE);
+
+            if ($pageType != WebPageCode::Page) {
+
+                echo json_encode(array("error" => "Unauthorized.", 'gotopage' => $loginPage));
+
+            } else {
+
+                header("Location: " . $loginPage);
+            }
+
+            exit();
+        }
     }
 
     public function die_if_not_Logged_In($pageType, $loginPage) {
@@ -54,19 +74,17 @@ class SecurityComponent {
         if ($ssn->ssl === TRUE && self::isHTTPS() === FALSE) {
 
             // Must access pages through SSL
-                // non-SSL access.
-               header("Location: " . $this->getSiteURL());
-
+            header("Location: " . $this->getSiteURL() . 'index.php');
+            exit();
         }
 
+        if (isset($ssn->logged) == FALSE || $ssn->logged == FALSE) {
 
-        if (!$ssn->logged) {
-
-            $ssn->destroy();
+            $ssn->destroy(TRUE);
 
             if ($pageType != WebPageCode::Page) {
 
-                echo json_encode(array("error" => "Unauthorized", 'gotopage' => $loginPage));
+                echo json_encode(array("error" => "Unauthorized.", 'gotopage' => $loginPage));
 
             } else {
 
@@ -82,7 +100,7 @@ class SecurityComponent {
     }
 
     protected static function does_User_Code_Match(array $pageCodes) {
-        $tokn = FALSE;
+
         $ssn = Session::getInstance();
         $userCodes = $ssn->groupcodes;
 
@@ -94,16 +112,17 @@ class SecurityComponent {
             }
 
             if ($pageCode != "" && is_array($userCodes)) {
+
                 foreach ($userCodes as $c) {
+
                     if ($c == $pageCode) {
                         return TRUE;
-
                     }
                 }
             }
         }
 
-        return $tokn;
+        return FALSE;
     }
 
     public static function isHTTPS() {
@@ -121,7 +140,7 @@ class SecurityComponent {
         return TRUE;
     }
 
-    public function defineThisURL($isRoot = FALSE) {
+    private function defineThisURL() {
 
         $scriptName = filter_var($_SERVER["SCRIPT_NAME"], FILTER_SANITIZE_STRING);
         $serverName = filter_var($_SERVER["SERVER_NAME"], FILTER_SANITIZE_URL);
@@ -147,17 +166,25 @@ class SecurityComponent {
 
         $this->path = implode("/", $parts) . '/';
 
-        if ($isRoot === FALSE && count($parts) >= 1) {
+        if (count($parts) >= 1) {
 
             $this->hhkSiteDir = $parts[count($parts) - 1] . '/';
-            unset($parts[count($parts) - 1]);
 
-            // THe root path is what's left.
-            $this->rootPath = implode("/", $parts) . '/';
+            if ($this->hhkSiteDir != 'admin/' && $this->hhkSiteDir != 'house/' && $this->hhkSiteDir != 'volunteer/') {
+                // assume the root path.
+                $this->hhkSiteDir = '/';
+                $this->rootPath = $this->getPath();
 
+            } else {
+
+                unset($parts[count($parts) - 1]);
+
+                // THe root path is what's left.
+                $this->rootPath = implode("/", $parts) . '/';
+            }
 
         } else {
-            $this->hhkSiteDir = '';
+            $this->hhkSiteDir = '/';
             $this->rootPath = $this->getPath();
         }
 

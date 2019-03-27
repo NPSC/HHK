@@ -105,14 +105,15 @@ CREATE TABLE if not exists `campaign` (
 CREATE TABLE if not exists `card_id` (
   `idName` int(11) NOT NULL,
   `idGroup` int(11) NOT NULL,
-  `CardID` varchar(36) NOT NULL DEFAULT '',
+  `CardID` varchar(136) NOT NULL DEFAULT '',
   `Init_Date` datetime DEFAULT NULL,
   `ReturnCode` int(11) NOT NULL DEFAULT '0',
   `Frequency` varchar(9) NOT NULL DEFAULT '',
   `OperatorID` varchar(10) NOT NULL DEFAULT '',
   `ResponseCode` int(11) NOT NULL DEFAULT '0',
-  `Transaction` varchar(4) NOT NULL DEFAULT '',
+  `Transaction` varchar(14) NOT NULL DEFAULT '',
   `InvoiceNumber` varchar(36) NOT NULL DEFAULT '',
+  `Amount` DECIMAL(11,2) NOT NULL DEFAULT 0.00,
   PRIMARY KEY (`idName`,`idGroup`)
 ) ENGINE=InnoDB;
 
@@ -441,8 +442,8 @@ CREATE TABLE if not exists `gateway_transaction` (
   `GwTransCode` varchar(64) NOT NULL DEFAULT '',
   `GwResultCode` varchar(44) NOT NULL DEFAULT '',
   `Amount` decimal(10,2) NOT NULL DEFAULT '0.00',
-  `Vendor_Request` varchar(900) NOT NULL DEFAULT '',
-  `Vendor_Response` varchar(1000) NOT NULL DEFAULT '',
+  `Vendor_Request` varchar(2000) NOT NULL DEFAULT '',
+  `Vendor_Response` varchar(5000) NOT NULL DEFAULT '',
   `AuthCode` varchar(45) NOT NULL DEFAULT '',
   `idPayment_Detail` int(11) NOT NULL DEFAULT '0',
   `Created_By` varchar(45) NOT NULL DEFAULT '',
@@ -500,7 +501,7 @@ CREATE TABLE if not exists `guest_token` (
   `CardHolderName` varchar(32) NOT NULL DEFAULT '',
   `CardType` varchar(45) NOT NULL DEFAULT '',
   `CardUsage` varchar(20) NOT NULL DEFAULT '',
-  `ExpDate` varchar(4) NOT NULL DEFAULT '',
+  `ExpDate` varchar(14) NOT NULL DEFAULT '',
   `OperatorID` varchar(10) NOT NULL DEFAULT '',
   `Tran_Type` varchar(10) NOT NULL DEFAULT '',
   `StatusMessage` varchar(45) NOT NULL DEFAULT '',
@@ -1083,7 +1084,7 @@ CREATE TABLE if not exists `name_insurance` (
   `Status` varchar(4) NOT NULL DEFAULT '',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '',
-  PRIMARY KEY (`idName`, `Insurance_Id`) 
+  PRIMARY KEY (`idName`, `Insurance_Id`)
 ) ENGINE=InnoDB;
 
 
@@ -1365,19 +1366,25 @@ CREATE TABLE if not exists `payment_auth` (
   `Processor` varchar(45) NOT NULL DEFAULT '',
   `Approved_Amount` decimal(10,2) NOT NULL DEFAULT '0.00',
   `Approval_Code` varchar(20) NOT NULL DEFAULT '',
-  `Status_Message` VARCHAR(45) NOT NULL DEFAULT '',
+  `Status_Message` varchar(45) NOT NULL DEFAULT '',
   `AVS` varchar(20) NOT NULL DEFAULT '',
   `Invoice_Number` varchar(45) NOT NULL DEFAULT '',
   `Acct_Number` VARCHAR(25) NOT NULL DEFAULT '',
   `Card_Type` VARCHAR(10) NOT NULL DEFAULT '',
   `Customer_Id` varchar(45) NOT NULL DEFAULT '',
   `Response_Message` varchar(200) NOT NULL DEFAULT '',
+  `Response_Code` varchar(45) NOT NULL DEFAULT '',
   `Reference_Num` varchar(45) NOT NULL DEFAULT '',
-  `Code1` varchar(200) NOT NULL DEFAULT '',
-  `Code2` varchar(200) NOT NULL DEFAULT '',
-  `Code3` varchar(45) NOT NULL DEFAULT '',
+  `AcqRefData` varchar(200) NOT NULL DEFAULT '',
+  `ProcessData` varchar(200) NOT NULL DEFAULT '',
+  `CVV` varchar(45) NOT NULL DEFAULT '',
   `Serialized_Details` varchar(1000) NOT NULL DEFAULT '',
   `Status_Code` varchar(5) NOT NULL DEFAULT '',
+  `EMVApplicationIdentifier` varchar(200) DEFAULT '',
+  `EMVTerminalVerificationResults` varchar(200) DEFAULT '',
+  `EMVIssuerApplicationData` varchar(200) DEFAULT '',
+  `EMVTransactionStatusInformation` varchar(200) DEFAULT '',
+  `EMVApplicationResponseCode` varchar(200) DEFAULT '',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Last_Updated` datetime DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1792,17 +1799,21 @@ CREATE TABLE if not exists `shell_events` (
 ) ENGINE=InnoDB AUTO_INCREMENT=3;
 
 
-CREATE TABLE if not exists `static_doc` (
-  `idStatic_doc` INT NOT NULL AUTO_INCREMENT,
-  `idName` INT NOT NULL DEFAULT '0',
-  `Doc_Type` VARCHAR(5) NOT NULL DEFAULT '',
-  `Doc_Category` VARCHAR(5) NOT NULL DEFAULT '',
-  `Doc_Blob` BLOB NULL,
-  `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
-  `Last_Updated` DATETIME NULL,
-  `Timestamp` TIMESTAMP NOT NULL DEFAULT now(),
-  PRIMARY KEY (`idStatic_doc`)
-)ENGINE=InnoDB AUTO_INCREMENT=10;
+-- -----------------------------------------------------
+-- Table `ssotoken`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `ssotoken` (
+  `Token` varchar(136) NOT NULL DEFAULT '',
+  `idName` int(11) NOT NULL,
+  `idGroup` int(11) NOT NULL,
+  `InvoiceNumber` varchar(36) NOT NULL DEFAULT '',
+  `Amount` DECIMAL(11,2) NOT NULL DEFAULT 0.00,
+  `State` varchar(5) NOT NULL DEFAULT '',
+  `Updated_By` varchar(45) NOT NULL DEFAULT '',
+  `Last_Updated` datetime DEFAULT NULL,
+  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Token`)
+) ENGINE=InnoDB;
 
 
 
@@ -2157,116 +2168,116 @@ CREATE TABLE if not exists `web_sites` (
 
 
 -- -----------------------------------------------------
--- 
+--
 -- Indexes
--- 
+--
 -- -----------------------------------------------------
 
-ALTER TABLE `activity` 
+ALTER TABLE `activity`
     ADD INDEX `Index_idName` (`idName` ASC);
 
-ALTER TABLE `emergency_contact` 
+ALTER TABLE `emergency_contact`
     ADD INDEX `Index_idName` (`idName` ASC);
 
-ALTER TABLE `fin_application` 
+ALTER TABLE `fin_application`
     ADD INDEX `Index_idGuest` (`idGuest` ASC);
 
-ALTER TABLE `guest_token` 
+ALTER TABLE `guest_token`
     ADD INDEX `Index_idRegistration` (`idRegistration` ASC);
 
-ALTER TABLE `hospital_stay` 
+ALTER TABLE `hospital_stay`
     ADD INDEX `Index_idPatient` (`idPatient` ASC);
-ALTER TABLE `hospital_stay` 
+ALTER TABLE `hospital_stay`
     ADD INDEX `Index_idPsg` (`idPsg` ASC);
-ALTER TABLE `hospital_stay` 
+ALTER TABLE `hospital_stay`
     ADD INDEX `Index_idHospital_Stay` (`idHospital_stay` ASC);
 
-ALTER TABLE `invoice` 
+ALTER TABLE `invoice`
     ADD INDEX `Index_Order_SO_Number` (`Order_Number` ASC, `Suborder_Number` ASC);
 ALTER TABLE `invoice`
     ADD INDEX `Index_idGroup` (`idGroup` ASC);
-ALTER TABLE `invoice` 
+ALTER TABLE `invoice`
     ADD INDEX `Index_Date` (`Invoice_Date` ASC);
 
-ALTER TABLE `invoice_line` 
+ALTER TABLE `invoice_line`
     ADD INDEX `ix_invoice_line_invoice_id` (`Invoice_Id` ASC);
 
-ALTER TABLE `name` 
+ALTER TABLE `name`
     ADD INDEX `Index_Name` (`Name_Last` ASC, `Name_First` ASC);
 
-ALTER TABLE `name_guest` 
+ALTER TABLE `name_guest`
     ADD INDEX `INDEX_IdPsg` (`idPsg` ASC);
 
-ALTER TABLE `payment` 
+ALTER TABLE `payment`
     ADD INDEX `Index_Date` (`Payment_Date` ASC);
 
-ALTER TABLE `payment_auth` 
+ALTER TABLE `payment_auth`
     ADD INDEX `Index_idPayment` (`idPayment` ASC);
 
-ALTER TABLE `payment_info_check` 
+ALTER TABLE `payment_info_check`
     ADD INDEX `Index_idPayment` (`idPayment` ASC);
 
-ALTER TABLE `psg` 
+ALTER TABLE `psg`
     ADD UNIQUE INDEX `idPatient_UNIQUE` (`idPatient` ASC);
 
-ALTER TABLE `registration` 
+ALTER TABLE `registration`
     ADD INDEX `Index_idPsg` (`idPsg` ASC);
 
-ALTER TABLE `reservation` 
+ALTER TABLE `reservation`
     ADD INDEX `Index_idregistration` (`idRegistration` ASC);
-ALTER TABLE `reservation` 
+ALTER TABLE `reservation`
     ADD INDEX `Index_idGuest` (`idGuest` ASC);
-ALTER TABLE `reservation` 
+ALTER TABLE `reservation`
     ADD INDEX `Index_Expected_Arrival` (`Expected_Arrival` ASC);
-ALTER TABLE `reservation` 
+ALTER TABLE `reservation`
     ADD INDEX `Index_Expected_Departure` (`Expected_Departure` ASC);
 ALTER TABLE `reservation`
     ADD INDEX `Index_idHosptial_Stay` (`idHospital_Stay` ASC);
 
-ALTER TABLE `resource_room` 
+ALTER TABLE `resource_room`
     ADD INDEX `Index_idResource` (`idResource` ASC);
 
-ALTER TABLE `resource_use` 
+ALTER TABLE `resource_use`
     ADD INDEX `Index_idResource` (`idResource` ASC);
 
-ALTER TABLE `stays` 
+ALTER TABLE `stays`
     ADD INDEX `index_idVisit_Span` (`idVisit` ASC, `Visit_Span` ASC);
-ALTER TABLE `stays` 
+ALTER TABLE `stays`
     ADD INDEX `index_Span_Start` (`Span_Start_Date` ASC);
-ALTER TABLE `stays` 
+ALTER TABLE `stays`
     ADD INDEX `index_Span_End` (`Span_End_Date` ASC);
-ALTER TABLE `stays` 
+ALTER TABLE `stays`
     ADD INDEX `index_idName` (`idName` ASC);
 
-ALTER TABLE `template_tag` 
+ALTER TABLE `template_tag`
     ADD INDEX `index_docName` (`Doc_Name` ASC);
 
-ALTER TABLE `vehicle` 
+ALTER TABLE `vehicle`
     ADD INDEX `INDEX_LICENSE` (`License_Number` ASC);
-ALTER TABLE `vehicle` 
+ALTER TABLE `vehicle`
     ADD INDEX `INDEX_IdNAME` (`idName` ASC);
-ALTER TABLE `vehicle` 
+ALTER TABLE `vehicle`
     ADD INDEX `INDEX_REG` (`idRegistration` ASC);
 
-ALTER TABLE `visit` 
+ALTER TABLE `visit`
     ADD INDEX `Index_idPrimaryGuest` (`idPrimaryGuest` ASC);
 ALTER TABLE `visit`
     ADD INDEX `Index_idRegistration` (`idRegistration` ASC);
-ALTER TABLE `visit` 
+ALTER TABLE `visit`
     ADD INDEX `Index_idHosp_Stay` (`idHospital_stay` ASC);
-ALTER TABLE `visit` 
+ALTER TABLE `visit`
     ADD INDEX `Index_Span_Start` (`Span_Start` ASC);
 ALTER TABLE `visit`
     ADD INDEX `Index_Span_End` (`Span_End` ASC);
-ALTER TABLE `visit` 
+ALTER TABLE `visit`
     ADD INDEX `Index_Exp_Depart` (`Expected_Departure` ASC);
 
-ALTER TABLE `volunteer_hours` 
+ALTER TABLE `volunteer_hours`
     ADD INDEX `Index_idName` (`idName` ASC);
 
-ALTER TABLE `name_log` 
+ALTER TABLE `name_log`
     ADD INDEX `INDEX_IDNAME` (`idName` ASC);
 
-ALTER TABLE `visit_log` 
+ALTER TABLE `visit_log`
     ADD INDEX `INDX_IDNAME` (`idName` ASC),
     ADD INDEX `INDX_IDVISIT` (`idVisit` ASC, `Span` ASC);

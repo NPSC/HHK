@@ -47,7 +47,12 @@ try {
 
 
 // define db connection obj
-$dbh = initPDO(TRUE);
+try {
+    $dbh = initPDO(TRUE);
+} catch (Hk_Exception_Runtime $hex) {
+    exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
+}
+
 
 // Load the page information
 try {

@@ -113,6 +113,7 @@ $cFields[] = array("Nights", 'Nights', 'checked', '', 'n', '');
 $cFields[] = array("Rate", 'FA_Category', 'checked', '', 's', '');
 $cFields[] = array("Status", 'Status_Title', 'checked', '', 's', '');
 $cFields[] = array("Created Date", 'Created_Date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
+$cFields[] = array("Last Updated", 'Last_Updated', '', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
 
 $colSelector = new ColumnSelectors($cFields, 'selFld');
 
@@ -218,7 +219,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     nr.Name_Full as `Name_Agent`,
     ifnull(gl.`Description`, hs.Diagnosis) as `Diagnosis`,
     ifnull(g2.`Description`, '') as `Location`,
-    r.Timestamp as `Created_Date`
+    r.`Timestamp` as `Created_Date`,
+    r.Last_Updated
 from
     reservation r
         left join
@@ -340,6 +342,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistratio
         $arrivalDT = new DateTime($r['Arrival']);
         $departureDT = new DateTime($r['Departure']);
         $statusDT = new DateTime($r['Created_Date']);
+        $lastUpdatedDT = new DateTime($r['Last_Updated']);
 
 
         if ($local) {
@@ -348,6 +351,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistratio
             $r['Arrival'] = $arrivalDT->format('c');
             $r['Departure'] = $departureDT->format('c');
             $r['Created_Date'] = $statusDT->format('c');
+            $r['Last_Updated'] = $lastUpdatedDT->format('c');
             $r['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>'GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
             $r['FA_Category'] = $rate;
 
@@ -363,6 +367,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistratio
             $r['Arrival'] = PHPExcel_Shared_Date::PHPToExcel($arrivalDT);
             $r['Departure'] = PHPExcel_Shared_Date::PHPToExcel($departureDT);
             $r['Created_Date'] = PHPExcel_Shared_Date::PHPToExcel($statusDT);
+            $r['Last_Updated'] = PHPExcel_Shared_Date::PHPToExcel($lastUpdatedDT);
             $r['FA_Category'] = $rate;
 
             $n = 0;

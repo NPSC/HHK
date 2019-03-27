@@ -106,47 +106,6 @@ class RoomChooser {
         return $this->selectedResource;
     }
 
-    public static function moreRoomsMarkup($currentRoomCount, $isChecked, $currentStatus = ReservationStatus::Staying) {
-
-        $attrs = array('id'=>'cbAddnlRoom', 'type'=>'checkbox', 'style'=>'margin-right:.3em;');
-
-        if ($isChecked) {
-            $attrs['checked'] = 'checked';
-        }
-
-        $title = 'Currently reserving ';
-
-        switch ($currentStatus) {
-
-            case ReservationStatus::Staying:
-                $title = 'Currently using ';
-                break;
-
-            case ReservationStatus::Committed:
-            case ReservationStatus::UnCommitted:
-                $title = 'Currently reserving ';
-                break;
-
-            case ReservationStatus::Waitlist:
-                $title = 'Currently waitlisted for ';
-                break;
-        }
-
-        // fieldset wrapper
-        $mk1 = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('fieldset',
-                        HTMLContainer::generateMarkup('legend', 'Additional Room', array('style'=>'font-weight:bold;'))
-                        . HTMLContainer::generateMarkup('p', $title . $currentRoomCount . ' room' . ($currentRoomCount == 1 ? '' : 's'), array('style'=>'margin-bottom:10px;'))
-                        . HTMLInput::generateMarkup('Put the new guests in a new room', $attrs)
-                        . HTMLContainer::generateMarkup('label', 'Put the new guest(s) in a new room', array('for'=>'cbAddnlRoom'))
-                        , array('class'=>'hhk-panel')),
-                        array('style'=>'float:left;margin-bottom:10px;'));
-
-
-        return HTMLContainer::generateMarkup('div', $mk1, array('style'=>'clear:both;'));
-
-    }
-
     public function createConstraintsChooser(\PDO $dbh, $idReservation, $numGuests, $constraintsDisabled = FALSE, $roomTitle = '') {
 
         $constraintMkup = self::createResvConstMkup($dbh, $idReservation, $constraintsDisabled, '', $this->oldResvId);
@@ -228,6 +187,53 @@ class RoomChooser {
     public function createChangeRoomsMarkup(\PDO $dbh, VisitCharges $visitCharge, $idGuest, $isAuthorized) {
 
         $uS = Session::getInstance();
+        $paymentMarkup = '';
+
+        $table = new HTMLTable();
+        $table->addHeaderTr(HTMLTable::makeTh('Change Rooms', array('colspan' => '2')));
+
+        // Send along a room selector
+        $table->addBodyTr(
+                HTMLTable::makeTd('From room:', array('class' => 'tdlabel'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($this->selectedResource->getTitle(), array('id'=>'myRescId', 'style'=>'border:none;', 'data-pmdl'=>$uS->RoomPriceModel, 'data-idresc'=>$this->resv->getIdResource(), 'readonly'=>'readonly')))
+                );
+
+        $table->addBodyTr(
+                HTMLTable::makeTd('Change to:', array('class' => 'tdlabel', 'id'=>'hhk-roomChsrtitle'))
+                . HTMLTable::makeTd($this->createChangeRoomsSelector($dbh, $isAuthorized)
+                        . HTMLContainer::generateMarkup('span', '', array('id'=>'rmDepMessage', 'style'=>'color:red;display:none'))));
+
+        $table->addBodyTr(
+            HTMLTable::makeTd('As of:', array('class' => 'tdlabel', 'rowspan'=>'2'))
+            . HTMLTable::makeTd(
+                HTMLInput::generateMarkup('rpl', array('name'=>'rbReplaceRoom', 'id'=>'rbReplaceRoomrpl', 'type'=>'radio', 'checked'=>'checked', 'class'=>'hhk-feeskeys'))
+                .HTMLContainer::generateMarkup('label', 'Start of Visit', array('style'=>'margin-left:.3em;', 'for'=>'rbReplaceRoomrpl'))
+        ));
+
+        $table->addBodyTr(
+            HTMLTable::makeTd(
+                HTMLInput::generateMarkup('new', array('name'=>'rbReplaceRoom', 'id'=>'rbReplaceRoomnew', 'type'=>'radio', 'class'=>'hhk-feeskeys'))
+                .HTMLContainer::generateMarkup('label', 'Date', array('style'=>'margin-left:.3em; margin-right:.3em;', 'for'=>'rbReplaceRoomnew'))
+                .HTMLInput::generateMarkup('', array('name'=>'resvChangeDate', 'class'=>'hhk-feeskeys ckdate', 'readonly'=>'readonly'))
+            ));
+
+        $table->addBodyTr(
+            HTMLTable::makeTd(HTMLContainer::generateMarkup('span','', array('id'=>'rmChgMsg', 'style'=>'color:red;display:none')), array('colspan'=>'2')));
+
+        // Key Deposit
+        if ($uS->KeyDeposit) {
+
+            $keyDepAmount = $visitCharge->getKeyFeesPaid();
+
+            if ($keyDepAmount == 0) {
+                $paymentMarkup = PaymentChooser::createChangeRoomMarkup($dbh, $idGuest, $this->resv->getIdRegistration(), $visitCharge);
+            }
+        }
+
+        return $table->generateMarkup(array('id' => 'moveTable', 'style' => 'float:left; margin-right:.5em; margin-top:.3em; max-width:350px;')) . $paymentMarkup;
+    }
+
+    public function createChangeRoomsSelector(\PDO $dbh, $isAuthorized) {
 
         // get empty rooms
         $rescs = $this->findResources($dbh, $isAuthorized, FALSE);
@@ -238,58 +244,14 @@ class RoomChooser {
             $rmBigEnough[] = array($r->getIdResource(), $r->getTitle(), $r->optGroup);
         }
 
-        $paymentMarkup = '';
-
-        $table = new HTMLTable();
-        $table->addHeaderTr(HTMLTable::makeTh('Change Rooms', array('colspan' => '2')));
-
         if (count($rmBigEnough) > 1) {
-            // Send along a room selector
-            $table->addBodyTr(
-                    HTMLTable::makeTd('From room:', array('class' => 'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup($this->selectedResource->getTitle(), array('id'=>'myRescId', 'style'=>'border:none;', 'data-pmdl'=>$uS->RoomPriceModel, 'data-idresc'=>$this->resv->getIdResource(), 'readonly'=>'readonly')))
-                    );
+            return HTMLSelector::generateMarkup(
+                        HTMLSelector::doOptionsMkup($rmBigEnough, '0', FALSE), array('id' => 'selResource', 'name' => 'selResource', 'class' => 'hhk-feeskeys hhk-chgroom'));
 
-            $table->addBodyTr(
-                    HTMLTable::makeTd('Change to:', array('class' => 'tdlabel'))
-                    . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                              HTMLSelector::doOptionsMkup($rmBigEnough, '0', FALSE), array('id' => 'selResource', 'name' => 'selResource', 'class' => 'hhk-feeskeys hhk-chgroom'))
-                            . HTMLContainer::generateMarkup('span', '', array('id'=>'rmDepMessage', 'style'=>'color:red;display:none'))));
-
-            $table->addBodyTr(
-                HTMLTable::makeTd('As of:', array('class' => 'tdlabel', 'rowspan'=>'2'))
-                . HTMLTable::makeTd(
-                    HTMLInput::generateMarkup('rpl', array('name'=>'rbReplaceRoom', 'id'=>'rbReplaceRoomrpl', 'type'=>'radio', 'checked'=>'checked', 'class'=>'hhk-feeskeys'))
-                    .HTMLContainer::generateMarkup('label', 'Start of Visit', array('style'=>'margin-left:.3em;', 'for'=>'rbReplaceRoomrpl'))
-            ));
-            $table->addBodyTr(
-                HTMLTable::makeTd(
-                    HTMLInput::generateMarkup('new', array('name'=>'rbReplaceRoom', 'id'=>'rbReplaceRoomnew', 'type'=>'radio', 'class'=>'hhk-feeskeys'))
-                    .HTMLContainer::generateMarkup('label', 'Date', array('style'=>'margin-left:.3em; margin-right:.3em;', 'for'=>'rbReplaceRoomnew'))
-                    .HTMLInput::generateMarkup('', array('name'=>'resvChangeDate', 'class'=>'hhk-feeskeys ckdate', 'readonly'=>'readonly'))
-                ));
-
-            $table->addBodyTr(
-                HTMLTable::makeTd(HTMLContainer::generateMarkup('span','', array('id'=>'rmChgMsg', 'style'=>'color:red;display:none')), array('colspan'=>'2')));
-
-            // Key Deposit
-            if ($uS->KeyDeposit) {
-
-                $keyDepAmount = $visitCharge->getKeyFeesPaid();
-
-                if ($keyDepAmount == 0) {
-                    $paymentMarkup = PaymentChooser::createChangeRoomMarkup($dbh, $idGuest, $this->resv->getIdRegistration(), $visitCharge);
-                }
-            }
-
-        } else {
-
-            $table->addBodyTr(HTMLTable::makeTd('No available rooms'));
         }
 
-        return $table->generateMarkup(array('id' => 'moveTable', 'style' => 'float:left; margin-right:.5em; margin-top:.3em; max-width:350px;')) . $paymentMarkup;
+        return 'No available rooms';
     }
-
 
     public function findResources(\PDO $dbh, $isAuthorized, $omitSelf = TRUE, $overrideMaxOcc = 0) {
 
@@ -552,6 +514,7 @@ class RoomChooser {
         return $mk1;
 
     }
+
     public static function createResvConstMkup(\PDO $dbh, $resvId, $disableCtrl = FALSE, $classId = '', $oldResvId = 0) {
 
         $tbl = new HTMLTable();

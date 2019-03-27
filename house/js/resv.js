@@ -441,3 +441,4 @@ function showRegDialog(markup, idReg, container) {
         }
     });
 }
+

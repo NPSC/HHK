@@ -572,11 +572,167 @@ function checkStrength(pwCtrl) {
     return rtn;
 }
 
+var isGuestAdmin,
+    pmtMkup,
+    rctMkup,
+    defaultTab,
+    resourceGroupBy,
+    resourceColumnWidth,
+    patientLabel,
+    challVar,
+    defaultView,
+    calDateIncrement,
+    dateFormat,
+    fixedRate,
+    resvPageName,
+    showCreatedDate,
+    expandResources,
+    shoHospitalName,
+    showRateCol,
+    hospTitle,
+    showDiags,
+    showLocs,
+    locationTitle,
+    diagnosisTitle,
+    showWlNotes,
+    showCharges,
+    wlTitle,
+    cgCols,
+    rvCols,
+    wlCols,
+    dailyCols;
+
 $(document).ready(function () {
     "use strict";
     var hindx = 0;
     var calStartDate = new moment();
     
+    isGuestAdmin = $('#isGuestAdmin').val();
+    pmtMkup = $('#pmtMkup').val();
+    rctMkup = $('#rctMkup').val();
+    defaultTab = $('#defaultTab').val();
+    resourceGroupBy = $('#resourceGroupBy').val();
+    resourceColumnWidth = $('#resourceColumnWidth').val();
+    patientLabel = $('#patientLabel').val();
+    challVar = $('#challVar').val();
+    defaultView = $('#defaultView').val();
+    calDateIncrement = $('#calDateIncrement').val();
+    dateFormat = $('#dateFormat').val();
+    fixedRate = $('#fixedRate').val();
+    resvPageName = $('#resvPageName').val();
+    showCreatedDate = $('#showCreatedDate').val();
+    expandResources = $('#expandResources').val();
+    shoHospitalName = $('#shoHospitalName').val();
+    showRateCol = $('#showRateCol').val();
+    hospTitle = $('#hospTitle').val();
+    showDiags = $('#showDiags').val();
+    showLocs = $('#showLocs').val();
+    locationTitle = $('#locationTitle').val();
+    diagnosisTitle = $('#diagnosisTitle').val();
+    showWlNotes = $('#showWlNotes').val();
+    wlTitle = $('#wlTitle').val();
+    showCharges = $('#showCharges').val();
+
+    // Current Guests
+    cgCols = [
+            {data: 'Action', title: 'Action', sortable: false, searchable:false},
+            {data: 'Guest First', title: 'Guest First'},
+            {data: 'Guest Last', title: 'Guest Last'},
+            {data: 'Checked In', title: 'Checked In', render: function (data, type) {return dateRender(data, type, dateFormat);}},
+            {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},
+            {data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}},
+            {data: 'Room', title: 'Room', className: 'hhk-justify-c'}];
+
+        if(showRateCol) {
+           cgCols.push({data: 'Rate', title: 'Rate'});
+        }
+
+        cgCols.push({data: 'Phone', title: 'Phone'});
+
+        if(shoHospitalName) {
+            cgCols.push({data: 'Hospital', title: hospTitle});
+        }
+
+        cgCols.push({data: 'Patient', title: patientLabel});
+
+    // Reservations
+    rvCols = [
+            {data: 'Action', title: 'Action', sortable: false, searchable:false},
+            {data: 'Guest First', title: 'Guest First'},
+            {data: 'Guest Last', title: 'Guest Last'},
+            {data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type, dateFormat);}},
+            {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},
+            {data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}},
+            {data: 'Room', title: 'Room', className: 'hhk-justify-c'}];
+
+            if(showRateCol) {
+               rvCols.push({data: 'Rate', title: 'Rate'});
+            }
+
+            rvCols.push({data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'});
+
+            if(shoHospitalName) {
+                rvCols.push({data: 'Hospital', title: hospTitle});
+            }
+
+            if(showLocs) {
+                rvCols.push({data: 'Location', title: locationTitle});
+            }
+            if(showDiags) {
+                rvCols.push({data: 'Diagnosis', title: diagnosisTitle});
+            }
+
+            rvCols.push({data: 'Patient', title: patientLabel});
+
+    //Waitlist
+    wlCols = [
+            {data: 'Action', title: 'Action', sortable: false, searchable:false},
+            {data: 'Guest First', title: 'Guest First'},
+            {data: 'Guest Last', title: 'Guest Last'}];
+
+            if (showCreatedDate) {
+                wlCols.push({data: 'Timestamp', title: 'Created On', render: function (data, type) {return dateRender(data, type, "MMM D, YYYY H:mm")}});
+            }
+
+            wlCols.push({data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type, dateFormat);}});
+            wlCols.push({data: 'Nights', title: 'Nights', className: 'hhk-justify-c'});
+            wlCols.push({data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}});
+            wlCols.push({data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'});
+
+            if(shoHospitalName) {
+                wlCols.push({data: 'Hospital', title: hospTitle});
+            }
+
+            if(showLocs) {
+                wlCols.push({data: 'Location', title: locationTitle});
+            }
+            if(showDiags) {
+                wlCols.push({data: 'Diagnosis', title: diagnosisTitle});
+            }
+
+            wlCols.push({data: 'Patient', title: patientLabel});
+
+            if (showWlNotes) {
+                wlCols.push({data: 'WL Notes', title: wlTitle});
+            }
+
+    // Dailey Report
+    dailyCols = [
+            {data: 'titleSort', 'visible': false },
+            {data: 'Title', title: 'Room', 'orderData': [0, 1], className: 'hhk-justify-c'},
+            {data: 'Status', title: 'Status', searchable:false},
+            {data: 'Guests', title: 'Guests'},
+            {data: 'Patient_Name', title: patientLabel}];
+        
+            if (showCharges) {
+                dailyCols.push({data: 'Unpaid', title: 'Unpaid', className: 'hhk-justify-r'});
+            }
+            dailyCols.push({data: 'Visit_Notes', title: 'Last Visit Note', sortable: false});
+            dailyCols.push({data: 'Notes', title: 'Room Notes', sortable: false});
+
+
+
+
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
             var ul = this.menu.element;
@@ -612,47 +768,47 @@ $(document).ready(function () {
 
     $('#vstays').on('click', '.stpayFees', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         payFee($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
     });
     $('#vstays').on('click', '.applyDisc', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         getApplyDiscDiag($(this).data('vid'), $('#pmtRcpt'));
     });
     $('#vstays, #vresvs, #vwls, #vuncon').on('click', '.stupCredit', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
-        updateCredit($(this).data('id'), $(this).data('reg'), $(this).data('name'), 'cardonfile');
+        $(".hhk-alert").hide();
+        updateCredit($(this).data('id'), $(this).data('reg'), $(this).data('name'), 'cardonfile', 'register.php');
     });
     $('#vstays').on('click', '.stckout', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         ckOut($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
     });
     $('#vstays').on('click', '.stvisit', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         editVisit($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
     });
     $('#vstays').on('click', '.hhk-getPSGDialog', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         editPSG($(this).data('psg'));
     });
     $('#vstays').on('click', '.stchgrooms', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         cgRoom($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
     });
     $('#vstays').on('click', '.stcleaning', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         chgRoomCleanStatus($(this).data('idroom'), $(this).data('clean'));
     });
     $('#vresvs, #vwls, #vuncon').on('click', '.resvStat', function (event) {
         event.preventDefault();
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         cgResvStatus($(this).data('rid'), $(this).data('stat'));
     });
 
@@ -919,7 +1075,7 @@ $(document).ready(function () {
         
         eventDrop: function (event, delta, revertFunc) {
             
-            $("#divAlert1, #paymentMessage").hide();
+            $(".hhk-alert").hide();
             
             // visit
             if (event.idVisit > 0 && delta.asDays() !== 0) {
@@ -956,7 +1112,7 @@ $(document).ready(function () {
         },
 
         eventResize: function (event, delta, revertFunc) {
-            $("#divAlert1, #paymentMessage").hide();
+            $(".hhk-alert").hide();
             
             if (delta === undefined) {
                 revertFunc();
@@ -978,7 +1134,7 @@ $(document).ready(function () {
         },
 
         eventClick: function (calEvent, jsEvent) {
-            $("#divAlert1, #paymentMessage").hide();
+            $(".hhk-alert").hide();
 
             // OOS events
             if (calEvent.kind && calEvent.kind === 'oos') {
@@ -1069,6 +1225,7 @@ $(document).ready(function () {
 
     if ($('.spnHosp').length > 0) {
         $('.spnHosp').click(function () {
+            $(".hhk-alert").hide();
             $('.spnHosp').css('border', 'solid 1px black').css('font-size', '100%');
             hindx = parseInt($(this).data('id'), 10);
             if (isNaN(hindx))
@@ -1079,7 +1236,7 @@ $(document).ready(function () {
     }
 
     $('#btnActvtyGo').click(function () {
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         var stDate = $('#txtactstart').datepicker("getDate");
         if (stDate === null) {
             $('#txtactstart').addClass('ui-state-highlight');
@@ -1149,7 +1306,7 @@ $(document).ready(function () {
     });
 
     $('#btnFeesGo').click(function () {
-        $("#divAlert1, #paymentMessage").hide();
+        $(".hhk-alert").hide();
         var stDate = $('#txtfeestart').datepicker("getDate");
         if (stDate === null) {
             $('#txtfeestart').addClass('ui-state-highlight');
@@ -1307,13 +1464,13 @@ $(document).ready(function () {
                         
                         $('#rptInvdiv').on('click', '.invSetBill', function (event) {
                             event.preventDefault();
-                            $("#divAlert1, #paymentMessage").hide();
+                            $(".hhk-alert").hide();
                             invSetBill($(this).data('inb'), $(this).data('name'), 'div#setBillDate', '#trBillDate' + $(this).data('inb'), $('#trBillDate' + $(this).data('inb')).text(), $('#divInvNotes' + $(this).data('inb')).text(), '#divInvNotes' + $(this).data('inb'));
                         });
                         
                         $('#rptInvdiv').on('click', '.invAction', function (event) {
                             event.preventDefault();
-                            $("#divAlert1, #paymentMessage").hide();
+                            $(".hhk-alert").hide();
                             
                             if ($(this).data('stat') == 'del') {
                                 if (!confirm('Delete this Invoice?')) {
@@ -1366,6 +1523,7 @@ $(document).ready(function () {
     });
 
     $('#txtGotoDate').change(function () {
+        $(".hhk-alert").hide();
         calStartDate = new moment($(this).datepicker('getDate'));
         $('#calendar').fullCalendar( 'refetchResources' );
         $('#calendar').fullCalendar('gotoDate', calStartDate);
@@ -1393,6 +1551,7 @@ $(document).ready(function () {
 
     $('div#dchgPw').on('change', 'input', function () {
         $(this).removeClass("ui-state-error");
+        $(".hhk-alert").hide();
         $('#pwChangeErrMsg').text('');
     });
     
@@ -1403,7 +1562,7 @@ $(document).ready(function () {
         modal: true,
         buttons: {
             "Save": function () {
-                
+
                 var oldpw = $('#txtOldPw'), 
                         pw1 = $('#txtNewPw1'),
                         pw2 = $('#txtNewPw2'),
@@ -1578,7 +1737,7 @@ $(document).ready(function () {
            dataSrc: 'waitlist'
        },
        order: [[ (showCreatedDate ? 4 : 3), 'asc' ]],
-       drawCallback: function (settings) {
+       drawCallback: function () {
             $('#spnNumWaitlist').text(this.api().rows().data().length);
             $('#waitlist .gmenu').menu();
        },

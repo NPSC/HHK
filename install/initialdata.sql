@@ -95,7 +95,6 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('Email_Purpose','1','Home','i','',10),
 ('Email_Purpose','2','Work','i','',20),
-('Email_Purpose','3','Alt','i','',30),
 ('Email_Purpose','4','Office','o','',40),
 
 ('Ethnicity','c','Caucasian','','d',0),
@@ -283,7 +282,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Phone_Type','gw','Work','i','',20),
 ('Phone_Type','hw','Office','o','',30),
 ('Phone_Type','mc','Cell','i','',40),
-('Phone_Type','xf','Fax','','',50),
+('Phone_Type','xf','Fax','o','',50),
 
 ('Photo_Permission', 'yes', 'Yes', '', 'd', '100'),
 ('Photo_Permission', 'no', 'No', '', 'd', '110'),
@@ -450,7 +449,6 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('CalRescColWidth', '8%', 's', 'h', 'The width of the rooms column on the calendar page as percent of the overall width.'),
 ('CalResourceGroupBy', 'Type', 's', 'h', 'Calendar resource grouping parameter: Type, Category, Report_Category or Floor'),
 ('CardSwipe','false','b','f','Use POS terminal'),
-('ccgw', '', 's', 'h', 'Credit Gateway mode, test or production.'),
 ('CheckOutTime', '10', 'i', 'h', 'Normal House checkout time of day in 24-hour format, hh'),
 ('CheckInTime', '16', 'i', 'h', 'Normal House check in time of day in 24-hour format, hh'),
 ('ConcatVisitNotes', 'false', 'b', 'h', 'Show notes combined from all previous visits when true.'),
@@ -491,8 +489,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('PatientBirthDate', 'true', 'b', 'h','Insist on providing the patients birthdate'),
 ('PayAtCkin','true','b','h','Allow/Disallow payments at check-in time'),
 ('PayVFeeFirst', 'false', 'b', 'h','Default check the visit fees payment checkbox'),
-('PaymentLogoUrl','images/hostpaylogo.jpg','s','f','Path to payment page logo image file'),
-('PaymentGateway', '', 's', 'h', 'Payment Gateway, either vantiv, instamed or nothing.'),
+('PaymentGateway', '', 's', 'f', 'Payment Gateway, either vantiv, instamed or nothing.'),
 ('PreviousNights','0','i','h','Previous nights to add to nights counter'),
 ('RateChangeAuth', 'false', 'b', 'h', 'true = Only authorized users can change the defailt room rate'),
 ('RateGlideExtend', '0', 'i', 'h','# of days for the Room Rate Glide to time out after visit check-out'),
@@ -504,19 +501,16 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('RoomPriceModel', 'd', 's', 'h','Room rate price model - Do not change!'),
 ('RoomsPerPatient', '2', 'i', 'h','# simultaneous rooms per patient allowed'),
 ('RoomRateDefault', 'e', 's', 'h', 'Default room rate category (a, b, c, d, e, f)'),
-('SessionTimeout', '30', 'i', 'f', 'Number of minutes until an idle session get automatically logged out, 0 = never log out'),
+('SessionTimeout', '30', 'i', 'r', 'Number of minutes until an idle session get automatically logged out, 0 = never log out'),
 ('ShowCreatedDate', 'true', 'b', 'h', 'Show the Created Date in Register page tabs lists'),
 ('ShowDemographics', 'false', 'b', 'h', 'Show demographics selectors on Check in and Reservation pages'),
 ('ShowDiagTB', 'false', 'b', 'h', 'Show the diagnosis textbox (in addition to the diagnosis selector)'),
 ('ShoStaysCtr', 'true', 'b', 'h', 'Show the stays counter on the House Calendar page'),
 ('ShowLodgDates', 'true', 'b', 'h','Show dates on lodging invoice lines'),
 ('ShowTxPayType', 'false', 'b', 'h', 'Always Show the Transfer pay type'),
-('sId', '11', 'i', 'h', 'Site Id - House member record Id.'),
 ('ShowUncfrmdStatusTab', 'false', 'b', 'h', 'Show the Unconfirmed reservations tab on the House Register page'),
 ('ShowZeroDayStays', 'false', 'b', 'h', 'Include 0-day stays and visits in Reports and Pages'),
 ('SolicitBuffer','90','i','r','Timeout in days after visit checkout before solicit report will show new guests'),
-('subsidyId', '11', 'i', 'h', 'Financial subsidy Id, typically same as sId'),
-('tz', 'America/Chicago', 's', 'a', 'Local House Timezone.'),
 ('TrackAuto','true','b','h','Track vehicles'),
 ('UseWLnotes', 'false', 'b', 'h', 'Use wait list notes feature on reservations'),
 ('VisitFee', 'false', 'b', 'h','Use the visit fee (cleaning fee) feature'),
@@ -525,6 +519,16 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('VisitFeeDelayDays', '0', 'i', 'h','Number of days before cleaning fee is charged');
 -- ;
 
+-- INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES 
+-- ('tz', 'America/Chicago', 's', 'r', 'House local time zone.'),
+-- ('adminEmailAddr', '', 's', 'h', 'If present, this address receives all notices of check-in, out, room change, etc.'),
+-- ('noreplyAddr', '', 's', 'h', 'No reply email address'),
+-- ('ccgw', 'test', 's', 'f', 'Values are Test or Production'),
+-- ('subsidyId', '11', 'i', 'f', 'Member Id to use for House Discount payment source'),
+-- ('sId', '11', 'i', 'r', 'Member Id of the House.'),
+-- ('testVersion', 'false', 'b', 'r', 'If true, Alter the background color of each page.');
+-- 
+-- 
 
 
 replace into `item` (`idItem`, `Internal_Number`, `Entity_Id`, `Gl_Code`, `Description`) values 
@@ -628,7 +632,7 @@ REPLACE INTO `insurance` (`idInsurance`, `Type`, `Title`, `Opens_Type`) VALUES
 REPLACE into name (idName, Name_Last, Name_First, Member_Type, Member_Status, Record_Member, Record_Company, Company) values 
 (-1, 'admin', '', 'ai', 'a', 1, 0, ''),
 (10, 'User', 'NPSC', 'ai', 'a', 1, 0, ''),
-(11, '', '', 'ai', 'a', 0, 1, 'Hospitality House');
+(11, '', '', 'np', 'a', 0, 1, 'Hospitality House');
 -- ;
 
 REPLACE INTO `w_auth` (`idName`,`Role_Id`,`Organization_Id`,`Policy_id`,`Updated_By`,`Last_Updated`,`User_Name`,`Status`) VALUES 

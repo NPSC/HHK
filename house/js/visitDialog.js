@@ -7,7 +7,12 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-
+/**
+ * 
+ * @param {int} vid
+ * @param {$} $container
+ * @returns {$}
+ */
 function setupVisitNotes(vid, $container) {
 
     $container.notesViewer({
@@ -21,130 +26,11 @@ function setupVisitNotes(vid, $container) {
 
     return $container;
 }
-/**
- * 
- * @param {object} item
- * @param {int} idVisit
- * @param {int} visitSpan
- * @returns {undefined}
- */
-function getMember(item, idVisit, visitSpan) {
-    "use strict";
-    $.post('ws_ckin.php',
-            {
-                cmd: 'addStay',
-                vid: idVisit,
-                id: item.id,
-                span: visitSpan
-            },
-        function(data) {
-            myReply(data, item.id, idVisit, visitSpan);
-        });
-    function myReply(data, idGuest, idVisit, visitSpan) {
-        "use strict";
-        if (!data) {
-            alert('Bad Reply from Server');
-            return;
-        }
-        try {
-            data = $.parseJSON(data);
-        } catch (err) {
-            alert("Parser error - " + err.message);
-            return;
-        }
-        if (data.error) {
-            if (data.gotopage) {
-                window.open(data.gotopage);
-            }
-            flagAlertMessage(data.error, true);
-            return;
-        }
-        $('#txtAddGuest').val('');
-        if (data.addtguest) {
-            $('#keysfees').dialog('close');
-            $('#diagAddGuest').remove();
-            // create a dialog and show the form.
-            var acBody = $('<div style="font-size:.9em;"/>').append($(data.addtguest.memMkup));
-            var acHdr = $('<div style="min-height:30px; padding:3px;font-size:.9em;"/>')
-                .append($(data.addtguest.txtHdr))
-                .append($('<span id="' + data.addtguest.idPrefix + 'memMsg" style="color: red; margin-right:20px;margin-left:20px;margin-top:7px;"></span>'))
-                .addClass('ui-widget-header ui-state-default ui-corner-top');
-            var acDiv = $('<div id="diagAddGuest"/>').append($('<form id="fAddGuest"  style="font-size:.9em;"/>').append(acHdr).append(acBody));
-            acDiv.dialog({
-                autoOpen: false,
-                resizable: true,
-                width: 950,
-                modal: true,
-                title: 'Additional Guest',
-                buttons: {
-                    Save: function () {
-                        myReq(idGuest, idVisit, visitSpan);
-                        $(this).dialog("close");
-                    },
-                    "Cancel": function() {
-                        $(this).dialog("close");
-                    }
-                }
-            });
-            // Guest date
-            $('div#diagAddGuest .ckdate').datepicker();
-            acDiv.find('select.bfh-countries').each(function() {
-                var $countries = $(this);
-                $countries.bfhcountries($countries.data());
-            });
-            acDiv.find('select.bfh-states').each(function() {
-                var $states = $(this);
-                $states.bfhstates($states.data());
-            });
-            $('#diagAddGuest #qphEmlTabs').tabs();
-            verifyAddrs('#diagAddGuest');
-            if (data.addr) {
-                $('#diagAddGuest').on('click', '.hhk-addrCopy', function() {
-                    $('#qadraddress11').val(data.addr.adraddress1);
-                    $('#qadraddress21').val(data.addr.adraddress2);
-                    $('#qadrcity1').val(data.addr.adrcity);
-                    $('#qadrstate1').val(data.addr.adrstate);
-                    $('#qadrzip1').val(data.addr.adrzip);
-                });
-            }
-            $('#diagAddGuest').on('click', '.hhk-addrErase', function() {
-                $('#qadraddress11').val('');
-                $('#qadraddress21').val('');
-                $('#qadrcity1').val('');
-                $('#qadrstate1').val('');
-                $('#qadrzip1').val('');
-                $('#qadrbad1').prop('checked', false);
-            });
-            acDiv.dialog('open');
-            return;
-        }
-    }
-    function myReq(idGuest, idVisit, visitSpan) {
-        $.post('ws_ckin.php', $('#fAddGuest').serialize() + '&cmd=addStay' + '&id=' + idGuest + '&vid=' + idVisit + '&span=' + visitSpan, function(data) {
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.open(data.gotopage);
-                }
-                flagAlertMessage(data.error, true);
-            }
-            if (data.stays && data.stays !== '') {
-                $('#keysfees').dialog('open');
-                $('#divksStays').children().remove();
-                $('#divksStays').append($(data.stays));
-            }
-        });
-    }
-}
 
 var isCheckedOut = false;
+
 /**
- * 
+ *
  * @param {int} idGuest
  * @param {int} idVisit
  * @param {object} buttons
@@ -181,14 +67,14 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 }
                 flagAlertMessage(data.error, 'error');
                 return;
-                
+
             }
-                
+
             var $diagbox = $('#keysfees');
 
             $diagbox.children().remove();
             $diagbox.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.success)));
-            
+
             $diagbox.find('.ckdate').datepicker({
                 yearRange: '-07:+01',
                 changeMonth: true,
@@ -294,11 +180,11 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
             var roomChgBal = 0.00;
             var vFeeChgBal = 0.00;
-            
+
             if ($('#spnCfBalDue').length > 0) {
                 roomChgBal = parseFloat($('#spnCfBalDue').data('bal'));
                 vFeeChgBal = parseFloat($('#spnCfBalDue').data('vfee'));
-                
+
                 roomChgBal -= vFeeChgBal;
             }
 
@@ -384,9 +270,9 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                             $('.hhk-refundDeposit').hide('fade');
                         }
 
-                        
+
                         if (roomChgBal < 0) {
-                            
+
                             $('#guestCredit').val(roomChgBal.toFixed(2).toString());
                             $('#feesCharges').val('');
                             $('.hhk-RoomCharge').hide();
@@ -397,7 +283,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                             }
 
                         } else {
-                            
+
                             $('#feesCharges').val(roomChgBal.toFixed(2).toString());
                             $('#guestCredit').val('');
                             $('.hhk-GuestCredit').hide();
@@ -442,13 +328,13 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 });
 
                 $('#cbCoAll').button().click(function () {
-                    
+
                     $('input.hhk-ckoutCB').each(function () {
                         $(this).prop('checked', true);
                     });
                     $('input.hhk-ckoutCB').change();
                 });
-                
+
                 $('input.hhk-ckoutCB').change();
 
             } else if ($('#cbFinalPayment').length > 0) {
@@ -456,7 +342,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 isCheckedOut = true;
 
                 $('.hhk-finalPayment').show();
-                
+
                 // Key Deposit
                 var kdamt = parseFloat($('#kdPaid').data('amt'));
 
@@ -484,7 +370,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
             }
 
 
-            setupPayments(data.resc, $('#selResource'), $('#selRateCategory'), idVisit, $('#pmtRcpt'));
+            setupPayments(data.resc, $('#selResource'), $('#selRateCategory'), idVisit, visitSpan, $('#pmtRcpt'));
 
             // Financial Application
             var $btnFapp = $('#btnFapp');
@@ -495,20 +381,13 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 });
             }
 
-            // Add search to add guest icon
-            $('#guestAdd').click(function () {
-                $('.hhk-addGuest').toggle();
-            });
-
-            // Add Guest button
+           // Add Guest button
             if ($('#btnAddGuest').length > 0) {
                 $('#btnAddGuest').button();
                 $('#btnAddGuest').click(function () {
-                    window.location.assign('CheckingIn.php?vid=' + $(this).data('vid') + '&span=' + $(this).data('span') + '&rid=' + $(this).data('rid'));
+                    window.location.assign('CheckingIn.php?vid=' + $(this).data('vid') + '&span=' + $(this).data('span') + '&rid=' + $(this).data('rid') + '&vstatus=' + $(this).data('vstatus'));
                 });
             }
-
-            createAutoComplete($('#txtAddGuest'), 3, {cmd: "role"}, function (item) { getMember(item, idVisit, visitSpan); });
 
             if ($('#selRateCategory').length > 0) {
                 $('#selRateCategory').change(function () {
@@ -537,7 +416,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 }
 
 /**
- * 
+ *
  * @param {int} idGuest
  * @param {int} idVisit
  * @param {int} visitSpan
@@ -592,23 +471,23 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
 
     $('input.hhk-ckoutCB').each(function() {
         if (this.checked) {
-            
+
             var parts = $(this).attr('id').split('_');
-            
+
             if (parts.length > 0) {
-                
+
                 parms['stayActionCb[' + parts[1] + ']'] = 'on';
                 var tdate = $('#stayCkOutDate_' + parts[1]).datepicker('getDate');
-                
+
                 if (tdate) {
-                    
+
                     var nowDate = new Date();
                     tdate.setHours(nowDate.getHours());
                     tdate.setMinutes(nowDate.getMinutes());
                 } else {
                     tdate = new Date();
                 }
-                
+
                 if ($('#stayCkOutHour_' + parts[1]).length > 0) {
                     parms['stayCkOutHour[' + parts[1] + ']'] = $('#stayCkOutHour_' + parts[1]).val();
                 }
@@ -717,7 +596,9 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     });
 
     $('#keysfees').css('background-color', 'white');
-    $('#keysfees').dialog("close");
+
+    //working
+    $('#keysfees').empty().append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Working...</p></div>');
 
     $.post('ws_ckin.php', parms,
         function(data) {
@@ -734,7 +615,12 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                     window.location.assign(data.gotopage);
                 }
                 flagAlertMessage(data.error, 'error');
-            }            
+                return;
+            }
+
+            $('#keysfees').dialog("close");
+
+            paymentRedirect(data, $('#xform'));
 
             if (typeof refreshdTables !== 'undefined') {
                 refreshdTables(data);
@@ -745,54 +631,35 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 pageManager.doOnDatesChange(dates);
             }
 
-            paymentReply(data, true);
+            if (data.success && data.success !== '') {
+                flagAlertMessage(data.success, 'success');
+
+                if ($('#calendar').length > 0) {
+                    $('#calendar').fullCalendar('refetchEvents');
+                }
+            }
+
+            if (data.receipt && data.receipt !== '') {
+                showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
+            }
+
+            if (data.invoiceNumber && data.invoiceNumber !== '') {
+                window.open('ShowInvoice.php?invnum=' + data.invoiceNumber);
+            }
 
     });
-}
-
-function paymentReply (data, updateCal) {
-    "use strict";
-    if (data) {
-        
-        if (data.hostedError) {
-            
-            flagAlertMessage(data.hostedError, 'error');
-            
-        } else if (data.xfer && $('#xform').length > 0) {
-            
-            var xferForm = $('#xform');
-            xferForm.children('input').remove();
-            xferForm.prop('action', data.xfer);
-            if (data.paymentId && data.paymentId != '') {
-                xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
-            } else if (data.cardId && data.cardId != '') {
-                xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
-            } else {
-                flagAlertMessage('PaymentId and CardId are missing!', 'error');
-                return;
-            }
-            
-            xferForm.submit();
-        }
-        
-        
-        if (data.success && data.success !== '') {
-            flagAlertMessage(data.success, 'success');
-        
-            if ($('#calendar').length > 0 && updateCal) {
-                $('#calendar').fullCalendar('refetchEvents');
-            }
-        }
-        
-        if (data.receipt && data.receipt !== '') {
-            showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
-        }
-        
-        if (data.invoiceNumber && data.invoiceNumber !== '') {
-            window.open('ShowInvoice.php?invnum=' + data.invoiceNumber);
-        }
-    }
 
 }
 
-
+/**
+ *
+ * @param {string} header
+ * @param {string} body
+ * @returns {undefined}
+ */
+function updateVisitMessage(header, body) {
+    //$('#visitMsg').toggle("clip");
+    $('#h3VisitMsgHdr').text(header);
+    $('#spnVisitMsg').text(body);
+    $('#visitMsg').effect("pulsate");
+}

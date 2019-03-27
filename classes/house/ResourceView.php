@@ -1012,7 +1012,7 @@ from
         r.`Title`,
         ifnull(n.Name_Full, '') as `Name`,
         v.Arrival_Date,
-        ifnull(DATE(v.Span_End), DATE(dateDefaultNow(v.Expected_Departure))) as `Departure_Date`,
+        ifnull(DATE(v.Span_End), DATE(datedefaultnow(v.Expected_Departure))) as `Departure_Date`,
         g.`Description` as `Visit_Status`,
         r.`Last_Cleaned`,
         r.`Notes`
@@ -1026,7 +1026,7 @@ from
         name n ON v.idPrimaryGuest = n.idName
             left join
         gen_lookups g on g.Table_Name = 'Visit_Status' and g.Code = v.`Status`
-    where ifnull(DATE(v.Span_End), DATE(dateDefaultNow(v.Expected_Departure))) = Date('$coDate');");
+    where ifnull(DATE(v.Span_End), DATE(datedefaultnow(v.Expected_Departure))) = Date('$coDate');");
 
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {

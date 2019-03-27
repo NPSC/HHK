@@ -23,6 +23,7 @@ class ScriptAuthClass extends SecurityComponent {
         parent::__construct();
         $uS = Session::getInstance();
 
+
         // try reading the web site table
         try {
 
@@ -202,22 +203,26 @@ class ScriptAuthClass extends SecurityComponent {
 
         $this->die_if_not_Logged_In($this->get_Page_Type(), $this->get_Login_Page());
 
-        $tokn = self::is_Admin();
-
-        if ($tokn == FALSE) {
+        if (self::is_Admin() === FALSE) {
             // Not the admin, so check authorization codes.
-            $tokn = self::does_User_Code_Match($this->pageCodes);
 
-            if ($tokn == FALSE) {
+            if (self::does_User_Code_Match($this->pageCodes) === FALSE) {
+
                 if ($this->get_Page_Type() == "p") {
+
                     echo("Unauthorized");
-                    //include("../errorPages/forbid.html");
+
                 } else if ($this->get_Page_Type() == "s") {
-                    $rtn = array("error" => "Unauthorized");
+
+                    $rtn = array("error" => "Unauthorized-");
+                    $uS = Session::getInstance();
+                    $uS->destroy(TRUE);
                     echo json_encode($rtn);
+
                 } else {
                     echo("No Such Page.  <a href='" . $this->indexPage . "'>Continue</a>");
                 }
+
                 exit();
             }
         }

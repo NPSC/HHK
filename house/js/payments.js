@@ -658,17 +658,18 @@ function amtPaid() {
     p.cashTendered.change();
 }
     
-
+var chgRoomList;
 /**
  * 
  * @param {array} resources
  * @param {jquery} $rescSelector
  * @param {jquery} $rateSelector
  * @param {int} idVisit
+ * @param {int} visitSpan
  * @param {jquery} $diagBox
  * @returns {undefined}
  */
-function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBox) {
+function setupPayments(resources, $rescSelector, $rateSelector, idVisit, visitSpan, $diagBox) {
     "use strict";
     var ptsel = $('#PayTypeSel');
     var chg = $('.tblCredit');
@@ -809,7 +810,10 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
     
     if (resources && $rescSelector && $rescSelector.length > 0) {
         
-        $rescSelector.change(function() {
+        chgRoomList = resources;
+        
+        // Change Rooms control
+        $('table#moveTable').on('change', 'select', function() {
             $(this).removeClass('ui-state-error');
             var indx = $(this).val();
             if (indx == '') {
@@ -876,8 +880,11 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
         
         $rescSelector.change();
         
-        $('#resvChangeDate').change(function () {
+        $('#resvChangeDate').datepicker('option', 'onClose', function (dateText) {
             $('#rbReplaceRoomnew').prop('checked', true);
+            if (dateText !== '') {
+                getVisitRoomList(idVisit, visitSpan, $('#resvChangeDate').val(), $rescSelector);
+            }
         });
     }
 
@@ -976,6 +983,54 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, $diagBo
     });
 
     amtPaid();
+}
+
+function getVisitRoomList(idVisit, visitSpan, changeDate, $rescSelector) {
+    
+    $rescSelector.prop('disabled', true);
+    $('#hhk-roomChsrtitle').addClass('hhk-loading');
+    $('#rmDepMessage').text('').hide();
+     
+    var parms = {cmd:'chgRoomList', idVisit:idVisit, span:visitSpan, chgDate:changeDate, selRescId:$rescSelector.val()};
+    
+    $.post('ws_ckin.php', parms,
+        function (data) {
+            var newSel;
+
+            $rescSelector.prop('disabled', false);
+            $('#hhk-roomChsrtitle').removeClass('hhk-loading');
+            
+            try {
+                data = $.parseJSON(data);
+            } catch (err) {
+                alert("Parser error - " + err.message);
+                return;
+            }
+            if (data.error) {
+                if (data.gotopage) {
+                    window.open(data.gotopage);
+                }
+                flagAlertMessage(data.error, 'error');
+                return;
+            }
+            
+            if (data.resc) {
+                chgRoomList = data.resc;
+            }
+            
+            if (data.sel) {
+                newSel = $(data.sel);
+                $rescSelector.children().remove();
+
+                newSel.children().appendTo($rescSelector);
+                $rescSelector.val(data.idResc).change();
+
+//                if (data.msg && data.msg !== '') {
+//                    $('#hhkroomMsg').text(data.msg).show();
+//                }
+                
+            }
+        });
 }
 
 function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, idResv, rtnFunction) {
@@ -1160,20 +1215,55 @@ function reprintReceipt(pid, idDialg) {
             showReceipt(idDialg, data.receipt, 'Receipt Copy');
           }
     });
-        
+
+}
+
+function paymentRedirect (data, $xferForm) {
+    "use strict";
+    if (data) {
+
+        if (data.hostedError) {
+            flagAlertMessage(data.hostedError, 'error');
+
+        } else if (data.xfer && $xferForm.length > 0) {
+
+            $xferForm.children('input').remove();
+            $xferForm.prop('action', data.xfer);
+
+            if (data.paymentId && data.paymentId != '') {
+                $xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
+            } else if (data.cardId && data.cardId != '') {
+                $xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
+            } else {
+                flagAlertMessage('PaymentId and CardId are missing!', 'error');
+                return;
+            }
+
+            $xferForm.submit();
+
+        } else if (data.inctx) {
+
+            $('#contentDiv').empty().append($('<p>Processing Credit Payment...</p>'));
+            InstaMed.launch(data.inctx);
+        }
+    }
 }
 
 
 function cardOnFile(id, idGroup, postBackPage) {
+    
     var parms = {cmd: 'cof', idGuest: id, idGrp: idGroup, pbp: postBackPage};
+    
     $('#tblupCredit').find('input').each(function() {
         if (this.checked) {
             parms[$(this).attr('id')] = $(this).val();
         }
     });
+    
     // Go to the server for payment data, then come back and submit to new URL to enter credit info.
     $.post('ws_ckin.php', parms,
-    function(data) {
+      function(data) {
+
         if (data) {
             try {
                 data = $.parseJSON(data);
@@ -1191,47 +1281,35 @@ function cardOnFile(id, idGroup, postBackPage) {
             if (data.hostedError) {
                 flagAlertMessage(data.hostedError, 'error');
             }
-            if (data.xfer) {
-                var xferForm = $('#xform');
-                xferForm.children('input').remove();
-                xferForm.prop('action', data.xfer);
-                if (data.paymentId && data.paymentId != '') {
-                    xferForm.append($('<input type="hidden" name="PaymentID" value="' + data.paymentId + '"/>'));
-                } else if (data.cardId && data.cardId != '') {
-                    xferForm.append($('<input type="hidden" name="CardID" value="' + data.cardId + '"/>'));
-                } else {
-                    flagAlertMessage('PaymentId and CardId are missing!', 'error');
-                    return;
-                }
-                xferForm.submit();
-            }
+
+            paymentRedirect (data, $('#xform'));
+            
             if (data.success && data.success != '') {
                 flagAlertMessage(data.success, 'success');
+            }
+
+            if (data.COFmkup && data.COFmkup !== '') {
+                $('#tblupCredit').remove();
+                $('#upCreditfs').append($(data.COFmkup));
             }
         }
     });
 }
 
-
-function updateCredit(id, idReg, name, strCOFdiag) {
-    var buttons = {
-        "Continue": function() {
-            cardOnFile(id, idReg);
-            $(this).dialog("close");
-        },
-        "Cancel": function() {
-            $(this).dialog("close");
-        }
-    };
+function updateCredit(id, idReg, name, strCOFdiag, pbp) {
+    
     var gnme = '';
+    
     if (name && name != '') {
         gnme = ' - ' + name;
     }
+    
     $.post('ws_ckin.php',
             {
                 cmd: 'viewCredit',
                 idGuest: id,
-                reg: idReg
+                reg: idReg,
+                pbp: pbp
             },
         function(data) {
           if (data) {
@@ -1246,7 +1324,19 @@ function updateCredit(id, idReg, name, strCOFdiag) {
                     window.location.assign(data.gotopage);
                 }
                 flagAlertMessage(data.error, 'error');
-            } else if (data.success) {
+            }
+            
+            var buttons = {
+                "Continue": function() {
+                    cardOnFile(id, idReg, data.pbp);
+                    $(this).dialog("close");
+                },
+                "Cancel": function() {
+                    $(this).dialog("close");
+                }
+            };
+
+            if (data.success) {
                 var cof = $('#' + strCOFdiag);
                 cof.children().remove();
                 cof.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog"/>').append($(data.success)));
@@ -1258,3 +1348,4 @@ function updateCredit(id, idReg, name, strCOFdiag) {
         }
     });
 }
+

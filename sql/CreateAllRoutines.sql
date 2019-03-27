@@ -6,12 +6,12 @@
 --
 -- function `dateDefaultNow`
 --
-DROP function IF EXISTS `dateDefaultNow`;
+DROP function IF EXISTS `datedefaultnow`; -- ;
 
-CREATE FUNCTION `dateDefaultNow` (dt DateTime)
+CREATE FUNCTION `datedefaultnow` (dt DateTime)
 RETURNS DATETIME
 DETERMINISTIC NO SQL
-RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() else dt end;
+RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() else dt end
  -- ;
 
 
@@ -30,8 +30,8 @@ Declare asscId int;
 Declare rId int;
 
 -- Pick up the hospital and association id's
-select 
-	CASE WHEN ce.idEntity is null THEN 0 Else hs.idHospital End, 
+select
+	CASE WHEN ce.idEntity is null THEN 0 Else hs.idHospital End,
     CASE WHEN ce2.idEntity is null THEN 0 Else hs.idAssociation  END,
     CASE WHEN ce3.idEntity is null THEN 0 Else r.idReservation  END
 		into hospId, asscId, rId
@@ -45,7 +45,7 @@ where r.idReservation = resvId LIMIT 1;
 if (hospId + asscId + rId) > 0 THEN
 	-- find the rooms that have the attributes.
 	select idEntity, count(idEntity) as `num`
-	from attribute_entity 
+	from attribute_entity
 	where idAttribute in (
 		select ca.idAttribute
 		from constraint_entity ce join constraint_attribute ca on ce.idConstraint = ca.idConstraint and ca.Operation = ''
@@ -54,7 +54,7 @@ if (hospId + asscId + rId) > 0 THEN
 		select count(ca.idAttribute)
 		from constraint_entity ce join constraint_attribute ca on ce.idConstraint = ca.idConstraint and ca.Operation = ''
 		where ce.idEntity in (hospId, asscId, rId));
-ELSE 
+ELSE
 	-- there are no constraints.
 	select 0 as `idEntity`, 0 as `num`;
 END if;
@@ -156,7 +156,7 @@ delete from payment_invoice where Payment_Id in (select idPay from ptemp);
 delete from payment where idPayment in (select idPay from ptemp);
 
 drop temporary table ptemp;
-    
+
 END -- ;
 
 
@@ -509,20 +509,20 @@ BEGIN
     update ignore name_guest set idName = goodId where idName = badId;
     delete from name_guest where idName = badId;
 
-    update stays set 
-        idName = goodId 
+    update stays set
+        idName = goodId
         where idName = badId;
 
     update visit set
         idPrimaryGuest = goodId
         where idPrimaryGuest = badId;
 
-    update reservation set 
-        idGuest = goodId 
+    update reservation set
+        idGuest = goodId
         where idGuest = badId;
 
-    update reservation_guest set 
-	idGuest = goodId 
+    update reservation_guest set
+	idGuest = goodId
         where idGuest = badId;
 
     update fin_application set
@@ -533,24 +533,24 @@ BEGIN
 	idName = goodId
         where idName = badId;
 
-    update invoice set 
-	Sold_To_Id = goodId 
+    update invoice set
+	Sold_To_Id = goodId
         where Sold_To_Id = badId;
 
-    update payment set 
-	idPayor = goodId 
+    update payment set
+	idPayor = goodId
         where idPayor = badId;
 
     update guest_token set
 	idGuest = goodId
         where idGuest = badId;
 
-    update trans set 
-	idName = goodId 
+    update trans set
+	idName = goodId
         where idName = badId;
 
-    update `name` set 
-	Member_Status = 'TBD' 
+    update `name` set
+	Member_Status = 'TBD'
         where idName = badId;
 
     call `delete_names_u_tbd`;
@@ -576,7 +576,7 @@ BEGIN
     Declare badReg int;
     Declare goodIdP int;
     Declare badIdP int;
-    
+
     update ignore name_guest set idPsg = keepIdPsg where idPsg = dupIdPsg;
     delete from name_guest where idPsg = dupIdPsg;
 
@@ -586,8 +586,8 @@ BEGIN
     select idRegistration into goodReg from registration where idPsg = keepIdPsg;
     select idRegistration into badreg from registration where idPsg = dupIdPsg;
 
-    update reservation set 
-        idRegistration = goodReg, 
+    update reservation set
+        idRegistration = goodReg,
         idHospital_stay = goodHs
     where idRegistration = badReg;
 
@@ -600,7 +600,7 @@ BEGIN
             idregistration = goodReg
     where idRegistration = badReg;
 
-    update invoice set 
+    update invoice set
             idGroup = goodReg
     where idGroup = badReg;
 
@@ -608,7 +608,7 @@ BEGIN
             idRegistration = goodReg
     where idRegistration = badReg;
 
-    update vehicle set 
+    update vehicle set
             idRegistration = goodReg
     where idRegistration = badReg;
 
@@ -630,7 +630,7 @@ DROP procedure IF EXISTS `delImediateResv`; -- ;
 
 CREATE PROCEDURE `delImediateResv` ()
 BEGIN
-	delete from reservation_guest 
+	delete from reservation_guest
 		where idReservation in (Select r.idReservation from reservation r where r.`Status` = 'im' and DATE(r.Expected_Arrival) < DATE(now()));
 	delete from reservation where `Status` = 'im' and DATE(Expected_Arrival) < DATE(now());
 END -- ;
@@ -643,7 +643,7 @@ END -- ;
 DROP procedure IF EXISTS `set_pagesecurity`; -- ;
 
 CREATE PROCEDURE `set_pagesecurity` (
-    IN pageId int, 
+    IN pageId int,
     IN secCode varchar(5)
 )
 BEGIN
@@ -658,7 +658,7 @@ BEGIN
         end if;
 
     end if;
-    
+
 END --;
 
 
@@ -688,18 +688,18 @@ BEGIN
     declare p int;
     declare n int;
     declare id int;
-    
+
     select idPage into p from `page` where `File_Name` = fileName;
-    
+
     -- Take care of page table
     if p > 0 then
         -- update
         update `page` set `Login_Page_Id` = loginPageId, `Title` = pageTitle, `Hide` = hideMe, `Menu_Parent` = menuParent, `Menu_Position` = menuPosition, `Type` = pageType,
                 `Validity_Code` = validityCode, `Updated_By` = updatedBy, `Last_Updated` = lastUpdated
                 where idPage = p;
-            
+
         Select p into id;
-        
+
     else
         -- insert
         INSERT INTO `page`
@@ -713,6 +713,3 @@ BEGIN
     call set_pagesecurity(id, secCode);
 
 END --;
-
-
-

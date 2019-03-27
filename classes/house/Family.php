@@ -44,6 +44,12 @@ class Family {
 
     }
 
+    /**
+     * Load the members of the PSG
+     *
+     * @param \PDO $dbh
+     * @param ReserveData $rData
+     */
     protected function initMembers(\PDO $dbh, ReserveData &$rData) {
 
         $uS = Session::getInstance();
@@ -176,6 +182,13 @@ class Family {
 
     }
 
+    /**
+     * Scan the reservation_guest table for guests initially staying
+     *
+     * @param \PDO $dbh
+     * @param ReserveData $rData
+     * @param int $resvIdGuest
+     */
     public function setGuestsStaying(\PDO $dbh, ReserveData &$rData, $resvIdGuest) {
 
         if ($rData->getIdResv() > 0) {
@@ -267,6 +280,7 @@ class Family {
             $demoMu = '';
             $addressTr = '';
 
+            //Filter out the new guest
             if ($role->getIdName() != $rData->getId()) {
                 continue;
             }
@@ -282,7 +296,7 @@ class Family {
                     . HTMLTable::makeTd($removeIcons));
 
 
-            // Decide if we show the address lin.
+            // Decide if we show the address line.
             if ($role->getIdName() > 0 && $role->getIdName() == $this->getPatientId()) {
                 $shoAddr = $this->patientAddr || ($this->patientAsGuest && $this->showGuestAddr);
             } else {
@@ -480,7 +494,15 @@ class Family {
 
     }
 
-
+    /**
+     * Saves people, hospital and PSG only
+     *
+     * @param \PDO $dbh
+     * @param array $post
+     * @param ReserveData $rData
+     * @param string $userName
+     * @return boolean
+     */
     public function save(\PDO $dbh, $post, ReserveData &$rData, $userName) {
 
         // Verify selected patient
@@ -611,7 +633,7 @@ class FamilyAddGuest extends Family {
                 . HTMLTable::makeTh($AdrCopyDownIcon));
 
 
-        // Staying members are first.
+        // Patient.
         if ($this->patientPrefix > 0) {
 
             $demoMu = '';
@@ -638,7 +660,7 @@ class FamilyAddGuest extends Family {
                     // Demographics
                     $demoMu .= $this->getInsuranceMarkup($dbh, $role);
                 }
-                
+
                 $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
             }
         }
@@ -746,5 +768,3 @@ class JoinNewFamily extends Family {
 
     }
 }
-
-

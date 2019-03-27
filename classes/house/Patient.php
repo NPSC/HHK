@@ -42,24 +42,6 @@ class Patient extends Role {
         return $this->patientPsg;
     }
 
-    protected function createNameMU() {
-
-        // Build name.
-        $tbl = new HTMLTable();
-        $tbl->addHeaderTr($this->roleMember->createMarkupHdr(NULL, TRUE));
-        $tbl->addBodyTr($this->roleMember->createMarkupRow('', TRUE));
-
-        $mk1 = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('fieldset',
-                        HTMLContainer::generateMarkup('legend', $this->title.' Name', array('style'=>'font-weight:bold;'))
-                        . $tbl->generateMarkup()
-                        . HTMLContainer::generateMarkup('div', $this->roleMember->getContactLastUpdatedMU(new DateTime ($this->roleMember->get_lastUpdated()), 'Name'), array('style'=>'float:right;'))
-                        , array('class'=>'hhk-panel'))
-                , array('style'=>'float:left; margin-right:.5em;margin-bottom:.4em; font-size:.9em;'));
-
-        return $mk1;
-    }
-
     public function createThinMarkup(PSGMember $mem, $lockRelChooser) {
 
         $uS = Session::getInstance();
@@ -119,26 +101,4 @@ class Patient extends Role {
         return $td;
     }
 
-    public function createReservationMarkup($lockRelChooser = FALSE) {
-
-        $uS = Session::getInstance();
-
-        // Name
-        $mk1 = $this->createNameMU();
-
-        $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
-
-        if ($uS->PatientAddr) {
-            $mk1 .= $this->createAddsBLock();
-            $mk1 .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
-        }
-
-        return HTMLContainer::generateMarkup('div', $mk1, array('class'=>'ui-widget ui-widget-content ui-corner-bottom hhk-panel hhk-tdbox'));
-    }
-
-    public function createMarkup() {
-
-        return $this->createReservationMarkup();
-    }
 }
-

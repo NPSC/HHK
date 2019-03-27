@@ -81,7 +81,7 @@ class Config_Lite implements ArrayAccess, IteratorAggregate, Countable
      * or already setted filename.
      *
      * this method uses the native PHP function
-     * parse_ini_file behind the scenes.
+     * parse_ini_string behind the scenes.
      *
      * @param string $filename Filename
      *
@@ -105,12 +105,18 @@ class Config_Lite implements ArrayAccess, IteratorAggregate, Countable
                 . $filename
             );
         }
-        $this->sections = parse_ini_file($filename, $this->processSections);
+
+        $this->sections = $this->parseConfig($filename, $this->processSections);
         if (false === $this->sections) {
             throw new Config_Lite_Exception_Runtime(
                 'failure: cannot parse the file: ' . $filename
             );
         }
+    }
+    protected function parseConfig($filename, $processSections) {
+        $data = file_get_contents($filename);
+        $ini_array = parse_ini_string($data,$processSections);
+        return $ini_array;
     }
     /**
      * save the object to the already setted filename

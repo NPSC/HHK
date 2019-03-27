@@ -14,6 +14,7 @@ class Reservation {
     protected $reserveData;
     protected $reservRs;
     protected $family;
+    protected $payResult;
 
     function __construct(ReserveData $reserveData, $reservRs, $family) {
 
@@ -104,6 +105,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             return new CheckedoutReservation($rData, $rRs, new Family($dbh, $rData));
         }
 
+        // Turned away, cancelled, etc.
         return new StaticReservation($rData, $rRs, new Family($dbh, $rData));
 
     }
@@ -359,13 +361,14 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
     }
 
-    protected function createExpDatesControl($prefix = '') {
+    protected function createExpDatesControl($updateOnChange = TRUE) {
 
         $uS = Session::getInstance();
         $nowDT = new \DateTime();
         $nowDT->setTime(0, 0, 0);
 
         $days = '';
+        $prefix = '';
 
         $cidAttr = array('name'=>$prefix.'gstDate', 'readonly'=>'readonly', 'size'=>'14' );
 
@@ -389,7 +392,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
                 , array('style'=>'float:left;font-size:.9em;', 'id'=>$prefix.'spnRangePicker'));
 
-        return array('mu'=>$mkup, 'defdays'=>$uS->DefaultDays, 'daysEle'=>$prefix.'gstDays');
+        return array('mu'=>$mkup, 'defdays'=>$uS->DefaultDays, 'daysEle'=>$prefix.'gstDays', 'updateOnChange'=>$updateOnChange);
 
     }
 
@@ -432,9 +435,14 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     $dataArray['vfee'] = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
                 }
 
-        //            $dataArray['pay'] =
-        //                    PaymentChooser::createResvMarkup($dbh, $guest->getIdName(), $reg, removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]), $resv->getExpectedPayType(), $uS->ccgw);
+                // Card on file
+                if ($uS->ccgw != '') {
 
+                    $dataArray['cof'] = HTMLcontainer::generateMarkup('div' ,HTMLContainer::generateMarkup('fieldset',
+                            HTMLContainer::generateMarkup('legend', 'Credit', array('style'=>'font-weight:bold;'))
+                            . HouseServices::viewCreditTable($dbh, $resv->getIdRegistration(), $resv->getIdGuest())
+                        ,array('style'=>'float:left;padding:5px;')));
+                }
             }
 
             // Vehicles
@@ -447,7 +455,6 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 $statusText .= ' for Room ' . $resv->getRoomTitle($dbh);
                 $hideCheckinButton = FALSE;
             }
-
         }
 
         if ($resv->isNew() || $resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
@@ -728,7 +735,7 @@ where rg.idReservation =" . $r['idReservation']);
                     . " join registration r on v.idRegistration = r.idRegistration "
                     . " where v.`Status` = '" . VisitStatus::CheckedIn . "' "
                     . " AND ("
-                            . " ( s.`Status` = '" . VisitStatus::CheckedIn . "' AND DATE(DATEDEFAULTNOW(s.Expected_Co_Date)) > DATE('" . $arrivalDT->format('Y-m-d') . "') ) "
+                            . " ( s.`Status` = '" . VisitStatus::CheckedIn . "' AND DATE(datedefaultnow(s.Expected_Co_Date)) >= DATE('" . $arrivalDT->format('Y-m-d') . "') ) "
                         . " OR "
                             . " ( s.`Status` = '" . VisitStatus::CheckedOut . "' AND DATE(s.Checkout_Date) > DATE('" . $arrivalDT->format('Y-m-d') . "') )) "
                     . " and s.idName in (" . substr($whStays, 1) . ")");
@@ -1094,10 +1101,22 @@ class ActiveReservation extends Reservation {
 
     public function createMarkup(\PDO $dbh) {
 
+        // Credit payment?
+        if ($this->payResult !== NULL) {
+
+            if (count($this->payResult) > 0) {
+                $this->payResult['resvTitle'] = $this->reserveData->getResvTitle();
+
+                return $this->payResult;
+            }
+        }
+
+        // Checking In?
         if ($this->gotoCheckingIn === 'yes' && $this->reserveData->getIdResv() > 0) {
             return array('gotopage'=>'CheckingIn.php?rid=' . $this->reserveData->getIdResv());
         }
 
+        // Verify reserve status.
         if ($this->reservRs->Status->getStoredVal() == '') {
             $this->reservRs->Status->setStoredVal(ReservationStatus::Waitlist);
         }
@@ -1261,6 +1280,38 @@ class ActiveReservation extends Reservation {
         // Room Choice
         $this->setRoomChoice($dbh, $resv, $idRescPosted);
 
+        // Delete any credit cards on file
+        $keys = array_keys($post);
+
+        foreach ($keys as $k) {
+
+            $parts = explode('_', $k);
+
+            if (count($parts) > 1 && $parts[0] == 'crdel') {
+
+                $idGt = intval(filter_var($parts[1], FILTER_SANITIZE_NUMBER_INT), 10);
+
+                if ($idGt > 0) {
+                    $dbh->exec("update guest_token set Token = '' where idGuest_token = " . $idGt);
+                }
+            }
+        }
+
+        // Adding a new card?
+        if (isset($post['cbNewCard'])) {
+
+            try {
+                // Payment Gateway
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+
+                $this->payResult = $gateway->initCardOnFile($dbh, $uS->siteName, $resv->getIdGuest(), $reg->getIdRegistration(), '', 'Reserve.php?rid=' . $resv->getIdReservation());
+
+            } catch (Hk_Exception_Payment $ex) {
+
+                $this->reserveData->addError($ex->getMessage());
+            }
+        }
+
         return $this;
     }
 
@@ -1304,7 +1355,6 @@ class ActiveReservation extends Reservation {
 
 class CheckingIn extends ActiveReservation {
 
-    protected $payResult;
     protected $visit;
     protected $resc;
     protected $errors;
@@ -1324,14 +1374,14 @@ class CheckingIn extends ActiveReservation {
 
     public static function loadReservation(\PDO $dbh, ReserveData $rData) {
 
-        // Load reservation
-        $stmt = $dbh->query("SELECT r.*, rg.idPsg, ifnull(v.idVisit, 0) as idVisit
+        // Load reservation and visit
+        $stmt = $dbh->query("SELECT r.*, rg.idPsg, ifnull(v.`idVisit`, 0) as `idVisit`, ifnull(v.`Status`, '') as `SpanStatus`
 FROM reservation r
         LEFT JOIN
     registration rg ON r.idRegistration = rg.idRegistration
 	LEFT JOIN
-    visit v on v.idReservation = r.idReservation and v.Span = 0
-WHERE r.idReservation = " . $rData->getIdResv());
+    visit v on v.idReservation = r.idReservation and v.Span = " . $rData->getSpan() .
+" WHERE r.idReservation = " . $rData->getIdResv());
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -1344,12 +1394,18 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         $rData->setIdPsg($rows[0]['idPsg']);
         $rData->setIdVisit($rows[0]['idVisit']);
+        $rData->setSpanStatus($rows[0]['SpanStatus']);
 
         // Reservation status determines which class to use.
 
         // Uncommitted cannot check in.
         if ($rRs->Status->getStoredVal() == ReservationStatus::UnCommitted) {
             return new ActiveReservation($rData, $rRs, new Family($dbh, $rData, TRUE));
+        }
+
+        // check for additional visit span guest
+        if ($rData->getSpanStatus() == VisitStatus::ChangeRate || $rData->getSpanStatus() == VisitStatus::NewSpan || $rData->getSpanStatus() == VisitStatus::CheckedOut) {
+            return new CheckedoutReservation($rData, $rRs, new Family($dbh, $rData));
         }
 
         // Staying resv - add guests
@@ -1466,14 +1522,14 @@ WHERE r.idReservation = " . $rData->getIdResv());
         parent::save($dbh, $post);
 
         if ($this->reserveData->hasError() === FALSE) {
-            $this->checkIn($dbh, $post);
+            $this->saveCheckIn($dbh, $post);
         }
 
         return $this;
 
     }
 
-    protected function checkIn(\PDO $dbh, $post) {
+    protected function saveCheckIn(\PDO $dbh, $post) {
 
         $uS = Session::getInstance();
 
@@ -1587,8 +1643,6 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 } else {
                     $pmp->setKeyDepositPayment($depBalance);
                 }
-
-
 
             } else if ($pmp->getKeyDepositPayment() > 0) {
 
@@ -2075,16 +2129,297 @@ class StayingReservation extends CheckingIn {
 
 }
 
-class CheckedoutReservation extends ActiveReservation {
+
+class CheckedoutReservation extends CheckingIn {
+
+    public function createMarkup(\PDO $dbh) {
+
+        $this->createFamilyMarkup($dbh);
+
+        $this->reserveData->setResvSection($this->createAddGuestMarkup($dbh));
+
+        return $this->reserveData->toArray();
+
+    }
 
     public function save(\PDO $dbh, $post) {
-        return array('error'=>'Saving is not allowed.');
+
+        // Same room, just add the guests.
+        $this->addGuestStay($dbh, $post);
+
+        return $this;
     }
 
-    public function addPerson(\PDO $dbh) {
-        return array('error'=>'Adding a person is not allowed.');
+    protected function createFamilyMarkup(\PDO $dbh) {
+
+
+        if ($this->reserveData->getIdVisit() > 0 && $this->reserveData->getSpan() >= 0) {
+
+            // set guests staying
+            $stayRss = $dbh->query("Select s.idName, v.idPrimaryGuest, s.Visit_Span from stays s "
+                    . " join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span "
+                    . " where s.idVisit = " . $this->reserveData->getIdVisit() . " and s.`Visit_Span` = " . $this->reserveData->getSpan());
+
+
+            while ($g = $stayRss->fetch(PDO::FETCH_ASSOC)) {
+
+                // update the span id
+                $this->reserveData->setSpan($g['Visit_Span']);
+
+                $mem = $this->reserveData->findMemberById($g['idName']);
+
+                if ($mem !== NULL) {
+
+                    $mem->setStayObj(new PSGMemVisit(array()));
+
+                    if ($g['idPrimaryGuest'] == $g['idName']) {
+                        $mem->setPrimaryGuest(TRUE);
+                    } else {
+                        $mem->setPrimaryGuest(FALSE);
+                    }
+
+                    $this->reserveData->setMember($mem);
+                }
+            }
+        } else {
+            throw new Hk_Exception_Runtime('The visit is not defined.');
+        }
+
+        $this->reserveData->setFamilySection($this->family->createFamilyMarkup($dbh, $this->reserveData));
+
     }
 
+    protected function createAddGuestMarkup(\PDO $dbh) {
+
+        $uS = Session::getInstance();
+        $labels = new Config_Lite(LABEL_FILE);
+        $dataArray = array();
+
+        $nowDT = new \DateTime();
+        $nowDT->setTime(intval($uS->CheckInTime), 0, 0);
+
+        $resv = new Reservation_1($this->reservRs);
+
+        // Check for max rooms per patient
+        if ($this->reserveData->getConcurrentRooms() >= $uS->RoomsPerPatient) {
+            $rmSelMessage = 'Already at maximum rooms per patient of ' .$uS->RoomsPerPatient . '.';
+        } else {
+            $rmSelMessage = '';
+        }
+
+
+        // Room Chooser
+        $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
+        $dataArray['rChooser'] = $roomChooser->createAddGuestMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN), $rmSelMessage);
+
+        $resvSectionHeaderPrompt = 'Add Guests; ';
+
+        if ($roomChooser->getCurrentGuests() < $roomChooser->getSelectedResource()->getMaxOccupants()) {
+
+            $this->reserveData
+                    ->setArrivalDT(new \DateTime($this->reservRs->Actual_Arrival->getStoredVal()))
+                    ->setDepartureDT(new \DateTime($this->reservRs->Actual_Departure->getStoredVal()));
+
+            $dataArray = $this->createExpDatesControl();
+
+        } else {
+            $resvSectionHeaderPrompt = 'The ' . $labels->getString('guestEdit', 'psgTab', 'PSG') . ' is already at maximum occupancy for our House';
+            $dataArray['hideCkinBtn'] = TRUE;
+        }
+
+        // Reservation status title
+        $dataArray['rStatTitle'] = 'Adding Guests';
+
+        // Reservation notes
+        $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', 'Visit Notes', array('style'=>'font-weight:bold;'))
+                , array('id'=>'hhk-noteViewer', 'style'=>'clear:left; float:left; width:90%; font-size: 0.9em;', 'class'=>'hhk-panel'));
+
+
+        // Collapsing header
+        $hdr = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('span', $resvSectionHeaderPrompt, array('style'=>'float:left;font-size:.9em; margin-right: 1em;'))
+                 . HTMLContainer::generateMarkup('span', '', array('id'=>'addGuestHeader', 'style'=>'float:left;'))
+                , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
+
+
+        return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
+    }
+
+    public function checkedinMarkup(\PDO $dbh) {
+
+//        $post = array(
+//            'vid'=>$this->reserveData->getIdVisit(),
+//            'span'=>$this->reserveData->getSpan(),
+//            'rid'=>$this->reserveData->getIdResv(),
+//            'vstatus'=>$this->reserveData->getSpanStatus(),
+//        );
+
+        $dataArray['redirTo'] = "register.php?gamess=Guest added to visit";
+
+        return $dataArray;
+
+    }
+
+    protected function addGuestStay(\PDO $dbh, $post) {
+
+        $uS = Session::getInstance();
+        $visitRs = new VisitRs();
+
+        $this->initialSave($dbh, $post);
+
+        if ($this->reserveData->hasError()) {
+            return $this;
+        }
+
+        // Modified added guest arrival and depture dates.
+        $guestArrDT = new \DateTime($this->reserveData->getArrivalDateStr('Y-m-d 10:0:0'));
+        $guestDepDT = new \DateTime($this->reserveData->getDepartureDateStr('Y-m-d 10:0:0'));
+
+        if ($guestArrDT > $guestDepDT) {
+            // dates reversed...
+            $this->reserveData->addError('Dates are reversed.  ');
+            return;
+        }
+
+        // GEt visit record
+        $stmt = $dbh->query("Select * from visit where idVisit = " . $this->reserveData->getIdVisit() . " and Span = " . $this->reserveData->getSpan());
+
+        if ($stmt->rowCount() == 0) {
+            throw new Hk_Exception_Runtime('Visit not found for reservation Id ' . $this->reserveData->getIdResv());
+        }
+
+        $vrows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        EditRS::loadRow($vrows[0], $visitRs);
+
+        // Set up comparison dates.
+        $spanArrDT = new \DateTime($visitRs->Span_Start->getStoredVal());
+        $spanArrDT->setTime(10, 0, 0);
+
+        $spanDepDT = new \DateTime($visitRs->Span_End->getStoredVal());
+        $spanDepDT->setTime(10, 0, 0);
+
+        // Checking the stay arrival date
+        if ($guestArrDT < $spanArrDT || $guestArrDT > $spanDepDT) {
+            // Bad arrival Date
+            $this->reserveData->setArrivalDateStr($visitRs->Arrival_Date->getStoredVal());
+        }
+
+        // Departure dates.
+        if ($guestDepDT < $spanArrDT || $guestDepDT > $spanDepDT) {
+            // Bad Departure Date
+            $this->reserveData->setDepartureDateStr($visitRs->Span_End->getStoredVal());
+        }
+
+
+        // get the stays
+        $stmts = $dbh->query("Select idName, idRoom, Span_Start_Date, Span_End_Date from stays where idVisit = " . $this->reserveData->getIdVisit() . " and Visit_Span = " . $this->reserveData->getSpan());
+
+        // Count people staying during the new guest's time.
+        $stays = array();
+
+        while ($s = $stmts->fetch(\PDO::FETCH_ASSOC)) {
+
+            $stayArrDT = new \DateTime($s['Span_Start_Date']);
+            $stayArrDT->setTime(10, 0, 0);
+
+            $stayDepDT = new \DateTime($s['Span_End_Date']);
+            $stayDepDT->setTime(10, 0, 0);
+
+            // Checking the dates
+            if ($guestArrDT > $stayDepDT || $guestDepDT < $stayArrDT) {
+                // out of bounds
+                continue;
+            }
+
+            $stays[$s['idName']] = 1;
+            $roomId = $s['idRoom'];
+        }
+
+
+
+        $addingMembers = array();
+
+        // Guest aleady present?
+        foreach ($this->getStayingMembers() as $m) {
+
+            if (isset($stays[$m->getId()]) === FALSE) {
+
+                // Ok to add
+                $stayRS = new StaysRS();
+
+                $stayRS->idName->setNewVal($m->getId());
+                $stayRS->idVisit->setNewVal($visitRs->idVisit->getStoredVal());
+                $stayRS->Visit_Span->setNewVal($visitRs->Span->getStoredVal());
+                $stayRS->idRoom->setNewVal($roomId);
+                $stayRS->Checkin_Date->setNewVal($this->reserveData->getArrivalDateStr());
+                $stayRS->Checkout_Date->setNewVal($this->reserveData->getDepartureDateStr());
+                $stayRS->Span_Start_Date->setNewVal($this->reserveData->getArrivalDateStr());
+                $stayRS->Span_End_Date->setNewVal($this->reserveData->getDepartureDateStr());
+                $stayRS->Expected_Co_Date->setNewVal($this->reserveData->getDepartureDateStr());
+                $stayRS->Status->setNewVal($visitRs->Status->getStoredVal());
+                $stayRS->Updated_By->setNewVal($uS->username);
+                $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+                $addingMembers[] = $stayRS;
+            }
+        }
+
+        // Amyone left?
+        if (count($addingMembers) < 1) {
+            $this->reserveData->addError('No one left to stay.  ');
+            return;
+        }
+
+        // Get the resource
+        $resc = null;
+        if ($visitRs->idResource->getStoredVal() > 0) {
+            $resc = Resource::getResourceObj($dbh, $visitRs->idResource->getStoredVal());
+        } else {
+            $this->reserveData->addError('Room not found.  ');
+            return;
+        }
+
+        // Maximym occupants...
+        $numOccupants = count($addingMembers) + count($stays);
+
+        if ($numOccupants > $resc->getMaxOccupants()) {
+            $this->reserveData->addError("The maximum occupancy (" . $resc->getMaxOccupants() . ") for room " . $resc->getTitle() . " is exceded.  ");
+            return;
+        }
+
+        // I guess that's it.
+        foreach ($addingMembers as $a) {
+            EditRS::insert($dbh, $a);
+        }
+
+        return;
+    }
+
+    protected function initialSave(\PDO $dbh, $post) {
+
+        $uS = Session::getInstance();
+
+        // Save members, psg, hospital
+        if ($this->family->save($dbh, $post, $this->reserveData, $uS->username) === FALSE) {
+            return;
+        }
+
+        if (count($this->getStayingMembers()) < 1) {
+            // Nobody set to stay
+            $this->reserveData->addError('Nobody is set to stay for this ' . $this->reserveData->getResvTitle() . '.  ');
+            return;
+        }
+
+
+        // Arrival and Departure dates
+        try {
+            $this->setDates($post);
+        } catch (Hk_Exception_Runtime $hex) {
+            $this->reserveData->addError($hex->getMessage());
+            return;
+        }
+
+    }
 }
 
 
@@ -2095,4 +2430,3 @@ class StaticReservation extends ActiveReservation {
         return array();
     }
 }
-

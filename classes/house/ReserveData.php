@@ -44,8 +44,9 @@ class ReserveData {
     protected $id;
     protected $idPsg = 0;
     protected $idHospitalStay = 0;
-    protected $idVisit;
-    protected $span;
+    protected $idVisit = 0;
+    protected $span = 0;
+    protected $spanStatus = '';
     protected $forceNewPsg = FALSE;
     protected $forceNewResv = FALSE;
     protected $fullName = '';
@@ -91,6 +92,10 @@ class ReserveData {
 
         if (isset($post['span'])) {
             $this->setSpan(intval(filter_var($post['span'], FILTER_SANITIZE_NUMBER_INT), 10));
+        }
+
+        if (isset($post['vstatus'])) {
+            $this->setSpanStatus(filter_var($post['vstatus'], FILTER_SANITIZE_STRING));
         }
 
         if (isset($post['id'])) {
@@ -273,6 +278,10 @@ class ReserveData {
         return $this->span;
     }
 
+    public function getSpanStatus() {
+        return $this->spanStatus;
+    }
+
     public function getConcurrentRooms() {
         return $this->concurrentRooms;
     }
@@ -325,10 +334,10 @@ class ReserveData {
         return $this->arrivalDT;
     }
 
-    public function getArrivalDateStr() {
+    public function getArrivalDateStr($format = ReserveData::DATE_FORMAT) {
 
         if ($this->arrivalDT !== NULL) {
-            return $this->arrivalDT->format(ReserveData::DATE_FORMAT);
+            return $this->arrivalDT->format($format);
         }
 
         return '';
@@ -338,10 +347,10 @@ class ReserveData {
         return $this->departureDT;
     }
 
-    public function getDepartureDateStr() {
+    public function getDepartureDateStr($format = ReserveData::DATE_FORMAT) {
 
         if ($this->departureDT !== NULL) {
-            return $this->departureDT->format(ReserveData::DATE_FORMAT);
+            return $this->departureDT->format($format);
         }
 
         return '';
@@ -447,6 +456,11 @@ class ReserveData {
         return $this;
     }
 
+    public function setSpanStatus($id) {
+        $this->spanStatus = $id;
+        return $this;
+    }
+
     public function addConcurrentRooms($numberRooms) {
         $this->concurrentRooms += intval($numberRooms);
         return $this;
@@ -506,7 +520,7 @@ class ReserveData {
         return $this;
     }
 
-    protected function setArrivalDateStr($strDate) {
+    public function setArrivalDateStr($strDate) {
 
         if ($strDate != '') {
             $this->setArrivalDT(new \DateTime($strDate));
@@ -519,7 +533,7 @@ class ReserveData {
         return $this;
     }
 
-    protected function setDepartureDateStr($strDate) {
+    public function setDepartureDateStr($strDate) {
 
         if ($strDate != '') {
             $this->setDepartureDT(new \DateTime($strDate));

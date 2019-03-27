@@ -47,6 +47,7 @@ require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require (PMT . 'Payments.php');
 require (PMT . 'TokenTX.php');
 require (PMT . 'HostedPayments.php');
+require (PMT . 'PaymentGateway.php');
 require (PMT . 'Invoice.php');
 require (PMT . 'InvoiceLine.php');
 require (PMT . 'Receipt.php');
@@ -154,6 +155,27 @@ try {
             } else {
                 $events =  array('error'=>'Reservation Id is not set.');
             }
+
+            break;
+
+        case 'chgRoomList':
+
+            $changeDate = '';
+            if (isset($_POST['chgDate'])) {
+                $changeDate = filter_var($_POST['chgDate'], FILTER_SANITIZE_STRING);
+            }
+
+            $rescId = 0;
+            if (isset($_POST['selRescId'])) {
+                $rescId = intval(filter_var($_POST['selRescId'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $span = 0;
+            if (isset($_POST['span'])) {
+                $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $events = HouseServices::changeRoomList($dbh, $idVisit, $span, $changeDate, $rescId);
 
             break;
 
@@ -667,7 +689,12 @@ try {
             $idReg = intval(filter_var($_POST['reg'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $events = array('success'=>HouseServices::viewCreditTable($dbh, $idReg, 0));
+        $pbp = '';
+        if (isset($_POST['pbp'])) {
+            $pbp = filter_var($_POST['pbp'], FILTER_SANITIZE_STRING);
+        }
+
+        $events = array('success'=>HouseServices::viewCreditTable($dbh, $idReg, 0), 'pbp'=>$pbp);
 
         break;
 
@@ -784,4 +811,3 @@ if (is_array($events)) {
 }
 
 exit();
-
