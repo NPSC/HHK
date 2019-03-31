@@ -53,6 +53,7 @@ require (PMT . 'CreditToken.php');
 require (PMT . 'Transaction.php');
 require (PMT . 'CashTX.php');
 require (PMT . 'CheckTX.php');
+require (PMT . 'ConvergeGateway.php');
 
 require (CLASSES . 'Purchase/Item.php');
 

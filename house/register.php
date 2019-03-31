@@ -26,6 +26,7 @@ require (PMT . 'GatewayConnect.php');
 require (CLASSES . 'MercPay/MercuryHCClient.php');
 require (CLASSES . 'MercPay/Gateway.php');
 require (PMT . 'PaymentGateway.php');
+require (PMT . 'ConvergeGateway.php');
 require (PMT . 'Payments.php');
 require (PMT . 'HostedPayments.php');
 require (PMT . 'Receipt.php');

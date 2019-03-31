@@ -1225,6 +1225,10 @@ function paymentRedirect (data, $xferForm) {
         if (data.hostedError) {
             flagAlertMessage(data.hostedError, 'error');
 
+        } else if (data.cvtx) {
+            
+            window.location.assign(data.cvtx);
+            
         } else if (data.xfer && $xferForm.length > 0) {
 
             $xferForm.children('input').remove();

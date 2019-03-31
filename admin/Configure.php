@@ -23,6 +23,7 @@ require CLASSES . 'US_Holidays.php';
 
 require (PMT . 'GatewayConnect.php');
 require PMT . 'PaymentGateway.php';
+require PMT . 'ConvergeGateway.php';
 
 require SEC . 'Login.php';
 require SEC . 'ChallengeGenerator.php';

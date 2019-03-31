@@ -21,6 +21,7 @@ abstract class PaymentGateway {
 
     const VANTIV = 'vantiv';
     const INSTAMED = 'instamed';
+    const CONVERGE = 'converge';
     const LOCAL = '';
 
     protected $gwName;
@@ -52,7 +53,9 @@ abstract class PaymentGateway {
 
     public abstract function processHostedReply(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName);
 
-    public abstract function processWebhook(\PDO $dbh, $post, $payNotes, $userName);
+    public function processWebhook(\PDO $dbh, $post, $payNotes, $userName) {
+        throw new Hk_Exception_Payment('Webhook not implemeneted');
+    }
 
     public abstract function createEditMarkup(\PDO $dbh);
 
@@ -105,12 +108,14 @@ abstract class PaymentGateway {
             case PaymentGateway::VANTIV:
 
                 return new VantivGateway($dbh, $gwName);
-                break;
 
             case PaymentGateway::INSTAMED:
 
                 return new InstamedGateway($dbh, $gwName);
-                break;
+
+            case PaymentGateway::CONVERGE:
+
+                return new ConvergeGateway($dbh, $gwName);
 
             default:
 
@@ -496,10 +501,6 @@ class VantivGateway extends PaymentGateway {
 
 
         return CardInfo::sendToPortal($dbh, $this->gwName, $idGuest, $idGroup, $initCi);
-    }
-
-    public function processWebhook(\PDO $dbh, $post, $payNotes, $userName) {
-        ;
     }
 
     public function processHostedReply(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName = '') {
