@@ -22,8 +22,7 @@ require (DB_TABLES . 'AttributeRS.php');
 
 
 require CLASSES . 'FinAssistance.php';
-require (PMT . 'Payments.php');
-require (PMT . 'CreditToken.php');
+require (PMT . 'paymentgateway/CreditToken.php');
 require (PMT . 'Receipt.php');
 
 

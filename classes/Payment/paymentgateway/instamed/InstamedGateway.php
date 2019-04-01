@@ -24,21 +24,44 @@
  * THE SOFTWARE.
  */
 
-/**
- * Description of ConvergeGateWay
- *
- * @author Eric
- */
-class ConvergeGateway extends PaymentGateway {
+class InstamedGateway extends PaymentGateway {
 
-    const TRANS_VAR = 'cvt';
-    const RESULT_VAR = 'cvres';
+    const RELAY_STATE = 'relayState';
+    const INVOICE_NUMBER = 'additionalInfo1';
+
+    // query string parameter names
+    const INSTAMED_TRANS_VAR = 'imt';
+    const INSTAMED_RESULT_VAR = 'imres';
     // query string parameter values
-    const HCO_TRANS = 'cvsale';
-    const COF_TRANS = 'cvcof';
+    const HCO_TRANS = 'imsale';
+    const COF_TRANS = 'imcof';
+    const VOID_TRANS = 'imvoid';
+    const RETURN_TRANS = 'imret';
+    const POSTBACK_CANCEL = 'x';
+    const POSTBACK_COMPLETE = 'c';
+    const APPROVED = '000';
+    const PARTIAL_APPROVAL = '010';
+    // IM's backward way to get back to my original page.
+    const TRANSFER_URL = 'ConfirmGwPayment.php';
+    const TRANSFER_VAR = 'intfr';  // query sgring parameter name for the TRANSFER_URL
+    const TRANSFER_DEFAULT_PAGE = 'register.php';
+    const TRANSFER_POSTBACK_PAGE_VAR = 'pg';
 
-    protected $hostedInitURL;
-    protected $hostedPaymentURL;
+    // Transaction Status Codes
+    const AUTH = 'A';
+    const CAPTURED_APPROVED = 'C';
+    const CHARGEBACK = 'CB';
+    const DECLINE = 'D';
+    const VOID = 'V';
+    const CANCELLED = 'X';
+
+    protected $ssoUrl;
+    protected $soapUrl;
+    protected $NvpUrl;
+    protected $saleUrl;
+    protected $cofUrl;
+    protected $returnUrl;
+    protected $voidUrl;
 
     protected function getPaymentMethod() {
         return PaymentMethod::Charge;
@@ -46,10 +69,19 @@ class ConvergeGateway extends PaymentGateway {
 
     public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
 
+        $uS = Session::getInstance();
+
         // Initialiaze hosted payment
         try {
 
             $fwrder = $this->initHostedPayment($dbh, $invoice, $postbackUrl);
+
+            $payIds = array();
+            if (isset($uS->paymentIds)) {
+                $payIds = $uS->paymentIds;
+            }
+            $payIds[$fwrder['PaymentId']] = $invoice->getIdInvoice();
+            $uS->paymentIds = $payIds;
 
             $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
             $payResult->setForwardHostedPayment($fwrder);
@@ -126,41 +158,67 @@ class ConvergeGateway extends PaymentGateway {
             throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
         }
 
+        $patInfo = $this->getPatientInfo($dbh, $invoice->getIdGroup());
 
-        $params = $this->getCredentials()->toCurl()
-                . "&ssl_transaction_type=ccsale"
-                //. "&ssl_invoicenumber=" . $invoice->getInvoiceNumber()
-                . "&ssl_amount=" . $invoice->getAmountToPay();
+        $data = array(
+            'patientID' => $patInfo['idName'],
+            'patientFirstName' => $patInfo['Name_First'],
+            'patientLastName' => $patInfo['Name_Last'],
+            'amount' => $invoice->getAmountToPay(),
+            InstamedGateway::INVOICE_NUMBER => $invoice->getInvoiceNumber(),
+            InstaMedCredentials::U_ID => $uS->uid,
+            InstaMedCredentials::U_NAME => $uS->username,
+            'incontext' => 'true',
+            'lightWeight' => 'true',
+            'isReadOnly' => 'true',
+            'preventCheck' => 'true',
+            'preventCash' => 'true',
+            'suppressReceipt' => 'true',
+            'hideGuarantorID' => 'true',
+            'responseActionType' => 'header',
+            'cancelURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::HCO_TRANS, InstamedGateway::POSTBACK_CANCEL),
+            'confirmURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::HCO_TRANS, InstamedGateway::POSTBACK_COMPLETE),
+            'requestToken' => 'true',
+            'RelayState' => $this->saleUrl,
+        );
 
-        $curlRequest = new ConvergeCurlRequest();
+        $req = array_merge($data, $this->getCredentials()->toSSO());
+        $headerResponse = $this->doHeaderRequest(http_build_query($req));
 
-        $resp = $curlRequest->submit($params, $this->hostedInitURL);
-
+        unset($req[InstaMedCredentials::SEC_KEY]);
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, '', $params, json_encode($resp), 'HostedCoInit');
+            self::logGwTx($dbh, $headerResponse->getResponseCode(), json_encode($req), json_encode($headerResponse->getResultArray()), 'HostedCoInit');
         } catch (Exception $ex) {
             // Do Nothing
         }
 
-        if ($resp != '') {
+        if ($headerResponse->getToken() != '') {
 
-            // Save payment ID
-            $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode)"
-                    . " values (" . $invoice->getSoldToId() . " , " . $invoice->getIdGroup() . ", '" . self::COF_TRANS . "', '', '" . $resp . "', now(), 'OneTime', 0)";
+            // Save ssoToken
+            $ssoTknRs = new SsoTokenRS();
+            $ssoTknRs->Amount->setNewVal($invoice->getAmountToPay());
+            $ssoTknRs->InvoiceNumber->setNewVal($invoice->getInvoiceNumber());
+            $ssoTknRs->Token->setNewVal($headerResponse->getToken());
+            $ssoTknRs->idGroup->setNewVal($invoice->getIdGroup());
+            $ssoTknRs->idName->setNewVal($invoice->getSoldToId());
+            $ssoTknRs->State->setNewVal(WebHookStatus::Init);
 
-            $dbh->exec($ciq);
+            $rowCount = EditRS::insert($dbh, $ssoTknRs);
 
-            $uS->cvtoken = $resp;
+            if (count($rowCount) != 1) {
+                throw new Hk_Exception_Payment("Database Insert error. ");
+            }
 
-            $dataArray = array('cvtx' => $this->hostedPaymentURL . '?ssl_txn_auth_token='. $resp);
+            $uS->imtoken = $headerResponse->getToken();
 
+            $dataArray = array('inctx' => $headerResponse->getRelayState(), 'PaymentId' => $headerResponse->getToken());
         } else {
 
             // The initialization failed.
-            unset($uS->cvtoken);
-            throw new Hk_Exception_Payment("Credit Payment Gateway Error.");
+            unset($uS->imtoken);
+            throw new Hk_Exception_Payment("Credit Payment Gateway Error: " . $headerResponse->getResponseMessage());
         }
 
         return $dataArray;
@@ -179,7 +237,6 @@ class ConvergeGateway extends PaymentGateway {
             'patientLastName' => $patInfo['Name_Last'],
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
-            //'id' => 'NP.SOFTWARE.TEST',
             'lightWeight' => 'true',
             'incontext' => 'true',
             'responseActionType' => 'header',
@@ -199,7 +256,7 @@ class ConvergeGateway extends PaymentGateway {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $headerResponse->getResponseCode(), json_encode($allData), json_encode($headerResponse->getResultArray()), 'CardInfoInit');
+            self::logGwTx($dbh, $headerResponse->getResponseCode(), json_encode($allData), json_encode($headerResponse->getResultArray()), 'CardInfoInit');
         } catch (Exception $ex) {
             // Do Nothing
         }
@@ -237,7 +294,7 @@ class ConvergeGateway extends PaymentGateway {
                 . "&primaryCardPresentStatus=PresentManualKey"
                 . "&primaryTransactionID=" . $pAuthRs->AcqRefData->getStoredVal();
 
-        $curlRequest = new CurlRequest();
+        $curlRequest = new ImCurlRequest();
 
         $resp = $curlRequest->submit($params, $this->NvpUrl);
 
@@ -250,7 +307,7 @@ class ConvergeGateway extends PaymentGateway {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'CreditVoidSaleToken');
+            self::logGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'CreditVoidSaleToken');
         } catch (Exception $ex) {
             // Do Nothing
         }
@@ -309,7 +366,7 @@ class ConvergeGateway extends PaymentGateway {
                 . "&primaryTransactionID=" . $pAuthRs->AcqRefData->getStoredVal()
                 . "&amount=" . number_format($returnAmt, 2);
 
-        $curlRequest = new CurlRequest();
+        $curlRequest = new ImCurlRequest();
 
         $resp = $curlRequest->submit($params, $this->NvpUrl);
 
@@ -320,7 +377,7 @@ class ConvergeGateway extends PaymentGateway {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'CreditReturnToken');
+            self::logGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'CreditReturnToken');
         } catch (Exception $ex) {
             // Do Nothing
         }
@@ -429,6 +486,104 @@ class ConvergeGateway extends PaymentGateway {
         return $payResult;
     }
 
+    public function processWebhook(\PDO $dbh, $data, $payNotes, $userName) {
+
+        $webhookResp = new WebhookResponse($data);
+        $error = FALSE;
+
+        if ($webhookResp->getSsoToken() == '') {
+            return FALSE;
+        }
+
+        // Check DB for record
+        $ssoTknRs = new SsoTokenRS();
+        $ssoTknRs->Token->setStoredVal($webhookResp->getSsoToken());
+
+        $tokenRows = EditRS::select($dbh, $ssoTknRs, array($ssoTknRs->Token));
+
+        if (count($tokenRows) < 1) {
+            // Not an error that webhook can do something about, so return No Error.
+            return FALSE;
+        }
+
+        EditRS::loadRow($tokenRows[0], $ssoTknRs);
+
+        if ($webhookResp->getTranType() == MpTranType::Sale) {
+
+            if ($webhookResp->getPartialPaymentAmount() > 0) {
+                $isPartialPayment = TRUE;
+            } else {
+                $isPartialPayment = FALSE;
+            }
+
+            // Make a sale response...
+            $sr = new ImPaymentResponse($webhookResp, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $payNotes, $isPartialPayment);
+
+            // Record transaction
+            try {
+                $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Sale, TransMethod::Webhook);
+                $sr->setIdTrans($transRs->idTrans->getStoredVal());
+            } catch (Exception $ex) {
+                // do nothing
+            }
+
+            // record payment
+            $payResp = SaleReply::processReply($dbh, $sr, $userName);
+
+            $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
+
+
+            // Analyze the result
+            switch ($payResp->getStatus()) {
+
+                case CreditPayments::STATUS_APPROVED:
+
+                    // Update invoice
+                    $invoice->updateInvoiceBalance($dbh, $payResp->response->getAuthorizedAmount(), $userName);
+
+                    if ($payResp->getIdPayment() > 0 && $invoice->getIdInvoice() > 0) {
+                        // payment-invoice
+                        $payInvRs = new PaymentInvoiceRS();
+                        $payInvRs->Amount->setNewVal($payResp->response->getAuthorizedAmount());
+                        $payInvRs->Invoice_Id->setNewVal($invoice->getIdInvoice());
+                        $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
+                        EditRS::insert($dbh, $payInvRs);
+
+                        $error = FALSE;
+                    }
+
+                    break;
+
+                case CreditPayments::STATUS_DECLINED:
+
+                    if ($payResp->getIdPayment() > 0 && $invoice->getIdInvoice() > 0) {
+                        // payment-invoice
+                        $payInvRs = new PaymentInvoiceRS();
+                        $payInvRs->Amount->setNewVal($payResp->response->getAuthorizedAmount());
+                        $payInvRs->Invoice_Id->setNewVal($invoice->getIdInvoice());
+                        $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
+                        EditRS::insert($dbh, $payInvRs);
+
+                        $error = FALSE;
+                    }
+
+                    break;
+
+                default:
+                    $ssoTknRs->State->setNewVal(WebHookStatus::Error);
+                    EditRS::update($dbh, $ssoTknRs, array($ssoTknRs->Token));
+                    $error = FALSE;
+            }
+
+            if ($error === FALSE) {
+                $ssoTknRs->State->setNewVal(WebHookStatus::Complete);
+                EditRS::update($dbh, $ssoTknRs, array($ssoTknRs->Token));
+            }
+        }
+
+        return $error;
+    }
+
     public function completeCof(\PDO $dbh, $ssoToken) {
 
         $cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $ssoToken);
@@ -447,17 +602,17 @@ class ConvergeGateway extends PaymentGateway {
                 . "&requestToken=false"
                 . "&singleSignOnToken=" . $ssoToken;
 
-        $curl = new CurlRequest();
+        $curl = new ImCurlRequest();
         $resp = $curl->submit($params, $this->NvpUrl);
 
         $resp['InvoiceNumber'] = 0;
         $resp['Amount'] = 0;
 
-        $response = new VerifyCurlResponse($resp);
+        $response = new VerifyCurlCofResponse($resp);
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $response->getResponseCode(), $params, json_encode($response->getResultArray()), 'CardInfoVerify');
+            self::logGwTx($dbh, $response->getResponseCode(), $params, json_encode($response->getResultArray()), 'CardInfoVerify');
         } catch (Exception $ex) {
             // Do Nothing
         }
@@ -494,7 +649,7 @@ class ConvergeGateway extends PaymentGateway {
                 . "&requestToken=false"
                 . "&singleSignOnToken=" . $ssoToken;
 
-        $curl = new CurlRequest();
+        $curl = new ImCurlRequest();
         $resp = $curl->submit($params, $this->NvpUrl);
 
         $resp['InvoiceNumber'] = $ssoTknRs->InvoiceNumber->getStoredVal();
@@ -504,7 +659,7 @@ class ConvergeGateway extends PaymentGateway {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'HostedCoVerify');
+            self::logGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'HostedCoVerify');
         } catch (Exception $ex) {
             // Do Nothing
         }
@@ -602,10 +757,23 @@ class ConvergeGateway extends PaymentGateway {
         return $payResult;
     }
 
+//    protected function pollPaymentStatus($token, $trace = FALSE) {
+//
+//        $data = $this->getCredentials()->toSOAP();
+//
+//        $data['tokenID'] = $token;
+//
+//        $soapReq = new PollingRequest();
+//
+//        return new PollingResponse($soapReq->submit($data, $this->soapUrl, $trace));
+//
+//    }
+
     protected function loadGateway(\PDO $dbh) {
 
         $gwRs = new InstamedGatewayRS();
         $gwRs->cc_name->setStoredVal($this->getGwName());
+
 
         $rows = EditRS::select($dbh, $gwRs, array($gwRs->cc_name));
 
@@ -614,8 +782,9 @@ class ConvergeGateway extends PaymentGateway {
             $gwRs = new InstamedGatewayRS();
             EditRS::loadRow($rows[0], $gwRs);
 
-            $this->hostedInitURL = $gwRs->providersSso_Url->getStoredVal();
-            $this->hostedPaymentURL = $gwRs->nvp_Url->getStoredVal();
+            $this->ssoUrl = $gwRs->providersSso_Url->getStoredVal();
+            $this->soapUrl = $gwRs->soap_Url->getStoredVal();
+            $this->NvpUrl = $gwRs->nvp_Url->getStoredVal();
 
             $this->useAVS = filter_var($gwRs->Use_AVS_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
             $this->useCVV = filter_var($gwRs->Use_Ccv_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
@@ -628,8 +797,12 @@ class ConvergeGateway extends PaymentGateway {
 
     protected function setCredentials($gwRs) {
 
-        $this->credentials = new ConvergeCredentials($gwRs);
+        $this->credentials = new InstaMedCredentials($gwRs);
 
+        $this->saleUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPatientPaymentSSO';
+        $this->cofUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPaymentPlanSimpleSSO';
+        $this->voidUrl = 'https://online.instamed.com/providers/Form/PatientPayments/VoidPaymentSSO?';
+        $this->returnUrl = 'https://online.instamed.com/providers/Form/PatientPayments/RefundPaymentSSO?';
     }
 
     protected function doHeaderRequest($data) {
@@ -679,6 +852,45 @@ class ConvergeGateway extends PaymentGateway {
         return $houseUrl . InstamedGateway::TRANSFER_URL . '?' . InstamedGateway::TRANSFER_VAR . '=' . $queryStr;
     }
 
+    protected function getPatientInfo(\PDO $dbh, $idRegistration) {
+
+        $idReg = intval($idRegistration);
+
+        $stmt = $dbh->query("Select n.idName, n.Name_First, n.Name_Last
+from registration r join psg p on r.idPsg = p.idPsg
+	join name n on p.idPatient = n.idName
+where r.idRegistration =" . $idReg);
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($rows) > 0) {
+            return $rows[0];
+        }
+
+        return array();
+    }
+
+    protected function waitForWebhook(\PDO $dbh, SsoTokenRS $ssoTknRs, $delaySeconds = 5) {
+
+        $slept = 0;
+        $state = WebHookStatus::Init;
+
+        while ($slept < $delaySeconds) {
+
+            $tokenRow = EditRS::select($dbh, $ssoTknRs, array($ssoTknRs->Token));
+
+            if (count($tokenRow) > 0 && $tokenRow[0]['State'] != WebHookStatus::Init) {
+                $state = $tokenRow[0]['State'];
+                $slept = $delaySeconds + 2;
+            } else {
+                $slept++;
+                sleep(1);
+            }
+        }
+
+        return $state;
+    }
+
     public function getPaymentResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
         return new ImPaymentResponse($vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes);
     }
@@ -707,24 +919,44 @@ class ConvergeGateway extends PaymentGateway {
             );
 
             $tbl->addBodyTr(
+                    HTMLTable::makeTh('Account Id', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->account_Id->getStoredVal(), array('name' => $indx . '_txtaid', 'size' => '80')))
+            );
+            $tbl->addBodyTr(
+                    HTMLTable::makeTh('Security Key', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->security_Key->getStoredVal(), array('name' => $indx . '_txtsk', 'size' => '80')))
+            );
+            $tbl->addBodyTr(
+                    HTMLTable::makeTh('SSO Alias', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->sso_Alias->getStoredVal(), array('name' => $indx . '_txtsalias', 'size' => '80')))
+            );
+            $tbl->addBodyTr(
                     HTMLTable::makeTh('Merchant Id', array('class' => 'tdlabel'))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->merchant_Id->getStoredVal(), array('name' => $indx . '_txtmid', 'size' => '80')))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->merchant_Id->getStoredVal(), array('name' => $indx . '_txtuid', 'size' => '80')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Merchant User Id', array('class' => 'tdlabel'))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->store_Id->getStoredVal(), array('name' => $indx . '_txtmuid', 'size' => '80')))
+                    HTMLTable::makeTh('Store Id', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->store_Id->getStoredVal(), array('name' => $indx . '_txtuname', 'size' => '80')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Merchant PIN', array('class' => 'tdlabel'))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->security_Key->getStoredVal(), array('name' => $indx . '_txtmPIN', 'size' => '80')))
+                    HTMLTable::makeTh('Terminal Id', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->terminal_Id->getStoredVal(), array('name' => $indx . '_txttremId', 'size' => '80')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Token URL', array('class' => 'tdlabel'))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->providersSso_Url->getStoredVal(), array('name' => $indx . '_txttkurl', 'size' => '90')))
+                    HTMLTable::makeTh('Workstation Id', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->WorkStation_Id->getStoredVal(), array('name' => $indx . '_txtwsId', 'size' => '80')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Hospted Payment URL', array('class' => 'tdlabel'))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->nvp_Url->getStoredVal(), array('name' => $indx . '_txthppurl', 'size' => '90')))
+                    HTMLTable::makeTh('SSO URL', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->providersSso_Url->getStoredVal(), array('name' => $indx . '_txtpurl', 'size' => '90')))
+            );
+            $tbl->addBodyTr(
+                    HTMLTable::makeTh('SOAP WSDL', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->soap_Url->getStoredVal(), array('name' => $indx . '_txtsurl', 'size' => '90')))
+            );
+            $tbl->addBodyTr(
+                    HTMLTable::makeTh('NVP URL', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->nvp_Url->getStoredVal(), array('name' => $indx . '_txtnvpurl', 'size' => '90')))
             );
 //            $tbl->addBodyTr(
 //                    HTMLTable::makeTh('Card on File URL', array('class'=>'tdlabel'))
@@ -752,31 +984,51 @@ class ConvergeGateway extends PaymentGateway {
 
             $indx = $ccRs->idcc_gateway->getStoredVal();
 
-            if (isset($post[$indx . '_txtmid'])) {
-                $ccRs->merchant_Id->setNewVal(filter_var($post[$indx . '_txtmid'], FILTER_SANITIZE_STRING));
+            if (isset($post[$indx . '_txtaid'])) {
+                $ccRs->account_Id->setNewVal(filter_var($post[$indx . '_txtaid'], FILTER_SANITIZE_STRING));
             }
 
-            if (isset($post[$indx . '_txtmuid'])) {
-                $ccRs->store_Id->setNewVal(filter_var($post[$indx . '_txtmuid'], FILTER_SANITIZE_STRING));
+            if (isset($post[$indx . '_txtsalias'])) {
+                $ccRs->sso_Alias->setNewVal(filter_var($post[$indx . '_txtsalias'], FILTER_SANITIZE_STRING));
             }
 
-            if (isset($post[$indx . '_txtmPIN'])) {
+            if (isset($post[$indx . '_txtuid'])) {
+                $ccRs->merchant_Id->setNewVal(filter_var($post[$indx . '_txtuid'], FILTER_SANITIZE_STRING));
+            }
 
-                $pw = filter_var($post[$indx . '_txtmPIN'], FILTER_SANITIZE_STRING);
+            if (isset($post[$indx . '_txtuname'])) {
+                $ccRs->store_Id->setNewVal(filter_var($post[$indx . '_txtuname'], FILTER_SANITIZE_STRING));
+            }
+
+            if (isset($post[$indx . '_txttremId'])) {
+                $ccRs->terminal_Id->setNewVal(filter_var($post[$indx . '_txttremId'], FILTER_SANITIZE_STRING));
+            }
+
+            if (isset($post[$indx . '_txtwsId'])) {
+                $ccRs->WorkStation_Id->setNewVal(filter_var($post[$indx . '_txtwsId'], FILTER_SANITIZE_STRING));
+            }
+
+            if (isset($post[$indx . '_txtpurl'])) {
+                $ccRs->providersSso_Url->setNewVal(filter_var($post[$indx . '_txtpurl'], FILTER_SANITIZE_STRING));
+            }
+
+            if (isset($post[$indx . '_txtsurl'])) {
+                $ccRs->soap_Url->setNewVal(filter_var($post[$indx . '_txtsurl'], FILTER_SANITIZE_STRING));
+            }
+
+            if (isset($post[$indx . '_txtnvpurl'])) {
+                $ccRs->nvp_Url->setNewVal(filter_var($post[$indx . '_txtnvpurl'], FILTER_SANITIZE_STRING));
+            }
+
+            if (isset($post[$indx . '_txtsk'])) {
+
+                $pw = filter_var($post[$indx . '_txtsk'], FILTER_SANITIZE_STRING);
 
                 if ($pw != '' && $ccRs->security_Key->getStoredVal() != $pw) {
                     $ccRs->security_Key->setNewVal(encryptMessage($pw));
                 } else if ($pw == '') {
                     $ccRs->security_Key->setNewVal('');
                 }
-            }
-
-            if (isset($post[$indx . '_txttkurl'])) {
-                $ccRs->providersSso_Url->setNewVal(filter_var($post[$indx . '_txttkurl'], FILTER_SANITIZE_STRING));
-            }
-
-            if (isset($post[$indx . '_txthppurl'])) {
-                $ccRs->nvp_Url->setNewVal(filter_var($post[$indx . '_txthppurl'], FILTER_SANITIZE_STRING));
             }
 
             $ccRs->Use_Ccv_Flag->setNewVal(0);
@@ -794,133 +1046,75 @@ class ConvergeGateway extends PaymentGateway {
 
         return $msg;
     }
-}
-
-class ConvergeCurlRequest extends CurlRequest {
-
-    protected function execute($url, $params) {
-
-        $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_URL,$url); // set POST target URL
-        curl_setopt($ch,CURLOPT_POST, true); // set POST method
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-//        curl_setopt($ch, CURLOPT_URL, $url . $params);
-//        curl_setopt($ch, CURLOPT_USERPWD, "NP.SOFTWARE.TEST:vno9cFqM");
-//        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-//        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-        curl_setopt($ch,CURLOPT_POSTFIELDS, $params);
-
-        $responseString = curl_exec($ch);
-        $msg = curl_error($ch);
-        curl_close($ch);
-
-        if ( ! $responseString ) {
-            throw new Hk_Exception_Payment('Network (cURL) Error: ' . $msg);
-        }
-
-        return $responseString;
-
-//        $transaction = array();
-//        parse_str($responseString, $transaction);
-//
-//        return $transaction;
-    }
 
 }
 
-class ConvergeCredentials {
+class InstaMedCredentials {
 
     // NVP names
-    const SEC_KEY = 'ssl_pin';
-    const MERCHANT_ID = 'ssl_merchant_id';
-    const USER_ID = 'ssl_user_id';
+    const SEC_KEY = 'securityKey';
+    const ACCT_ID = 'accountID';
+    const ID = 'id';
+    const SSO_ALIAS = 'ssoAlias';
+    const MERCHANT_ID = 'merchantId';
+    const STORE_ID = 'storeId';
+    const TERMINAL_ID = 'terminalID';
+    const WORKSTATION_ID = 'additionalInfo6';
+    const U_NAME = 'userName';
+    const U_ID = 'userID';
 
     public $merchantId;
-    public $userId;
+    public $storeId;
     protected $securityKey;
+    protected $accountID;
+    protected $terminalId;
+    protected $workstationId;
+    protected $ssoAlias;
+    protected $id;
 
     public function __construct(InstamedGatewayRS $gwRs) {
 
+        $this->accountID = $gwRs->account_Id->getStoredVal();
         $this->securityKey = $gwRs->security_Key->getStoredVal();
+        $this->ssoAlias = $gwRs->sso_Alias->getStoredVal();
         $this->merchantId = $gwRs->merchant_Id->getStoredVal();
-        $this->userId = $gwRs->store_Id->getStoredVal();
+        $this->storeId = $gwRs->store_Id->getStoredVal();
+        $this->terminalId = $gwRs->terminal_Id->getStoredVal();
+        $this->workstationId = $gwRs->WorkStation_Id->getStoredVal();
 
+        $parts = explode('@', $this->accountID);
+
+        $this->id = $parts[0];
+    }
+
+    public function toSSO() {
+
+        return array(
+            InstaMedCredentials::ACCT_ID => $this->accountID,
+            InstaMedCredentials::SEC_KEY => decryptMessage($this->securityKey),
+            InstaMedCredentials::SSO_ALIAS => $this->ssoAlias,
+            InstaMedCredentials::ID => $this->id,
+            InstaMedCredentials::WORKSTATION_ID => $this->workstationId,
+        );
     }
 
     public function toCurl() {
 
         return
-                self::MERCHANT_ID . '=' . $this->merchantId
-                . '&' . self::USER_ID . '=' . $this->userId
-                . '&' . self::SEC_KEY . '=' . decryptMessage($this->securityKey);
+                InstaMedCredentials::MERCHANT_ID . '=' . $this->merchantId
+                . '&' . InstaMedCredentials::STORE_ID . '=' . $this->storeId
+                . '&' . InstaMedCredentials::TERMINAL_ID . '=' . $this->terminalId
+                . '&' . InstaMedCredentials::WORKSTATION_ID . '=' . $this->workstationId;
+    }
+
+    public function toSOAP() {
+
+        return array(
+            InstaMedCredentials::ACCT_ID => $this->accountID,
+            'password' => decryptMessage($this->securityKey),
+            'alias' => $this->ssoAlias,
+        );
     }
 
 }
 
-
-/**
-   // Provide Converge Credentials
-  $merchantID = "XXXXXX"; //Converge 6-Digit Account ID *Not the 10-Digit Elavon Merchant ID*
-  $merchantUserID = "ConvergeAPIHostedUser"; //Converge User ID *MUST FLAG AS HOSTED API USER IN CONVERGE UI*
-  $merchantPIN = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"; //Converge PIN (64 CHAR A/N)
-
-
-  $url = "https://demo.convergepay.com/hosted-payments/transaction_token"; // URL to Converge demo session token server
-  //$url = "https://www.convergepay.com/hosted-payments/transaction_token"; // URL to Converge production session token server
-
-  $hppurl = "https://demo.convergepay.com/hosted-payments"; // URL to the demo Hosted Payments Page
-  //$hppurl = "https://www.convergepay.com/hosted-payments"; // URL to the production Hosted Payments Page
-
-
-  //Payment Field Variables
-
-  // In this section, we set variables to be captured by the PHP file and passed to Converge in the curl request.
-
-  $amount= '1.00'; //Hard-coded transaction amount for testing.
-
-  //$amount  = $_POST['ssl_amount'];   //Capture ssl_amount as POST data
-  //$firstname  = $_POST['ssl_first_name'];   //Capture ssl_first_name as POST data
-  //$lastname  = $_POST['ssl_last_name'];   //Capture ssl_last_name as POST data
-  //$merchanttxnid = $_POST['ssl_merchant_txn_id']; //Capture ssl_merchant_txn_id as POST data
-  //$invoicenumber = $_POST['ssl_invoice_number']; //Capture ssl_invoice_number as POST data
-
-  //Follow the above pattern to add additional fields to be sent in curl request below.
-
-
-  $ch = curl_init();    // initialize curl handle
-  curl_setopt($ch, CURLOPT_URL,$url); // set POST target URL
-  curl_setopt($ch,CURLOPT_POST, true); // set POST method
-  curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-  curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-  //Build the request for the session id. Make sure all payment field variables created above get included in the CURLOPT_POSTFIELDS section below.
-
-  curl_setopt($ch,CURLOPT_POSTFIELDS,
-  "ssl_merchant_id=$merchantID".
-  "&ssl_user_id=$merchantUserID".
-  "&ssl_pin=$merchantPIN".
-  "&ssl_transaction_type=ccsale".
-  "&ssl_amount=$amount"
-  );
-
-
-
-  $result = curl_exec($ch); // run the curl to post to Converge
-  curl_close($ch); // Close cURL
-
-  $sessiontoken= urlencode($result);
-
-
-  // Now we redirect to the HPP
-
-  header("Location: https://demo.convergepay.com/hosted-payments?ssl_txn_auth_token=$sessiontoken");  //Demo Redirect
-  //header("Location: https://www.convergepay.com/hosted-payments?ssl_txn_auth_token=$sessiontoken"); //Prod Redirect
-
-
-  exit;
- **/

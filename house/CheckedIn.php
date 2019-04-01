@@ -22,21 +22,17 @@ require (MEMBER . 'OrgMember.php');
 require (MEMBER . "Addresses.php");
 require (MEMBER . "EmergencyContact.php");
 
-
 require (PMT . 'GatewayConnect.php');
-require (CLASSES . 'MercPay/Gateway.php');
-require (CLASSES . 'MercPay/MercuryHCClient.php');
-require (CLASSES . 'Purchase/Item.php');
 require (PMT . 'PaymentGateway.php');
-require (PMT . 'Payments.php');
-require (PMT . 'HostedPayments.php');
+require (PMT . 'PaymentResponse.php');
 require (PMT . 'Receipt.php');
 require (PMT . 'Invoice.php');
 require (PMT . 'InvoiceLine.php');
-require (PMT . 'CreditToken.php');
-require (PMT . 'Transaction.php');
-require (PMT . 'CashTX.php');
 require (PMT . 'CheckTX.php');
+require (PMT . 'CashTX.php');
+require (PMT . 'Transaction.php');
+
+require (CLASSES . 'Purchase/Item.php');
 require (CLASSES . 'PaymentSvcs.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
@@ -72,6 +68,7 @@ $pageTitle = $wInit->pageTitle;
 
 // get session instance
 $uS = Session::getInstance();
+creditIncludes($uS->PaymentGateway);
 
 $menuMarkup = $wInit->generatePageMenu();
 

@@ -64,22 +64,19 @@ require (HOUSE . 'VisitCharges.php');
 require (CLASSES . 'FinAssistance.php');
 require (CLASSES . 'Notes.php');
 
-require (PMT . 'GatewayConnect.php');
-require (CLASSES . 'MercPay/MercuryHCClient.php');
-require (CLASSES . 'MercPay/Gateway.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'Purchase/RoomRate.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (PMT . 'Payments.php');
-require (PMT . 'HostedPayments.php');
+
+require (PMT . 'GatewayConnect.php');
+require (PMT . 'PaymentGateway.php');
+require (PMT . 'PaymentResponse.php');
+require (PMT . 'Receipt.php');
 require (PMT . 'Invoice.php');
 require (PMT . 'InvoiceLine.php');
-require (PMT . 'CreditToken.php');
-require (PMT . 'Transaction.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'CashTX.php');
 require (PMT . 'CheckTX.php');
+require (PMT . 'CashTX.php');
+require (PMT . 'Transaction.php');
 
 
 $wInit = new webInit();
@@ -90,6 +87,7 @@ $pageTitle = $wInit->pageTitle;
 
 // get session instance
 $uS = Session::getInstance();
+creditIncludes($uS->PaymentGateway);
 
 $menuMarkup = $wInit->generatePageMenu();
 
@@ -756,7 +754,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
-        <?php echo INS_EMBED_JS; ?>
+        <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>

@@ -13,20 +13,8 @@ require ("homeIncludes.php");
 require (DB_TABLES . 'PaymentGwRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
 
-require (PMT . 'GatewayConnect.php');
-require (CLASSES . 'MercPay/MercuryHCClient.php');
-require (CLASSES . 'MercPay/Gateway.php');
 require (CLASSES . 'FinAssistance.php');
 
-require (PMT . 'Payments.php');
-require (PMT . 'HostedPayments.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'Invoice.php');
-require (PMT . 'InvoiceLine.php');
-require (PMT . 'CreditToken.php');
-require (PMT . 'CheckTX.php');
-require (PMT . 'CashTX.php');
-require (PMT . 'Transaction.php');
 require (CLASSES . 'ColumnSelectors.php');
 require CLASSES . 'OpenXML.php';
 

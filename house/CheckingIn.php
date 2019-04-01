@@ -18,16 +18,11 @@ require (DB_TABLES . 'PaymentGwRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
 
 require (PMT . 'GatewayConnect.php');
-require (CLASSES . 'MercPay/MercuryHCClient.php');
-require (CLASSES . 'MercPay/Gateway.php');
-
 require (PMT . 'PaymentGateway.php');
-require (PMT . 'Payments.php');
-require (PMT . 'HostedPayments.php');
+require (PMT . 'PaymentResponse.php');
 require (PMT . 'Receipt.php');
 require (PMT . 'Invoice.php');
 require (PMT . 'InvoiceLine.php');
-require (PMT . 'CreditToken.php');
 require (PMT . 'CheckTX.php');
 require (PMT . 'CashTX.php');
 require (PMT . 'Transaction.php');
@@ -75,6 +70,7 @@ $dbh = $wInit->dbh;
 
 // get session instance
 $uS = Session::getInstance();
+creditIncludes($uS->PaymentGateway);
 
 $menuMarkup = $wInit->generatePageMenu();
 $pageHdr = $wInit->pageHeading;
@@ -217,7 +213,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
-        <?php echo INS_EMBED_JS; ?>
+        <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>

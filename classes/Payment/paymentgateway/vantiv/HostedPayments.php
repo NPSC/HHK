@@ -31,7 +31,7 @@ class CardInfo {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $ciResponse->getResponseCode(), json_encode($initCi->getFieldsArray()), json_encode($ciResponse->getResultArray()), 'CardInfoInit');
+            PaymentGateway::logGwTx($dbh, $ciResponse->getResponseCode(), json_encode($initCi->getFieldsArray()), json_encode($ciResponse->getResultArray()), 'CardInfoInit');
         } catch(Exception $ex) {
             // Do Nothing
         }
@@ -76,7 +76,7 @@ class CardInfo {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $vr->response->getStatus(), json_encode($verify->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CardInfoVerify');
+            PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($verify->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CardInfoVerify');
         } catch(Exception $ex) {
             // Do Nothing
         }
@@ -157,7 +157,7 @@ class HostedCheckout {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $ciResponse->getResponseCode(), json_encode($initCoRequest->getFieldsArray()), json_encode($ciResponse->getResultArray()), 'HostedCoInit');
+            PaymentGateway::logGwTx($dbh, $ciResponse->getResponseCode(), json_encode($initCoRequest->getFieldsArray()), json_encode($ciResponse->getResultArray()), 'HostedCoInit');
         } catch(Exception $ex) {
             // Do Nothing
         }
@@ -208,7 +208,7 @@ class HostedCheckout {
 
         // Save raw transaction in the db.
         try {
-            Gateway::saveGwTx($dbh, $vr->response->getStatus(), json_encode($verify->getFieldsArray()), json_encode($vr->response->getResultArray()), 'HostedCoVerify');
+            PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($verify->getFieldsArray()), json_encode($vr->response->getResultArray()), 'HostedCoVerify');
         } catch(Exception $ex) {
             // Do Nothing
         }

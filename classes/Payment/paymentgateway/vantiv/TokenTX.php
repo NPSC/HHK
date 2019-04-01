@@ -43,7 +43,7 @@ class TokenTX {
 
 
         // Save raw transaction in the db.
-        Gateway::saveGwTx($dbh, $vr->response->getStatus(), json_encode($cstReq->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditSaleToken');
+        PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($cstReq->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditSaleToken');
 
 
         // New Token?
@@ -96,7 +96,7 @@ class TokenTX {
         $vr = new TokenResponse($creditResponse, $idGuest, $voidSale->getTokenId(), $payNotes);
 
         // Save raw transaction in the db.
-        Gateway::saveGwTx($dbh, $vr->response->getStatus(), json_encode($voidSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditVoidSaleToken');
+        PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($voidSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditVoidSaleToken');
 
 
         // New Token?
@@ -141,7 +141,7 @@ class TokenTX {
         $vr = new TokenResponse($creditResponse, $idGuest, $reverseSale->getTokenId(), $payNotes);
 
         // Save raw transaction in the db.
-        Gateway::saveGwTx($dbh, $vr->response->getStatus(), json_encode($reverseSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditReverseToken');
+        PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($reverseSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditReverseToken');
 
 
         // New Token?
@@ -188,7 +188,7 @@ class TokenTX {
 
 
         // Save raw transaction in the db.
-        Gateway::saveGwTx($dbh, $vr->response->getStatus(), json_encode($returnSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditReturnToken');
+        PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($returnSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditReturnToken');
 
 
         // New Token?
@@ -233,7 +233,7 @@ class TokenTX {
 
 
         // Save raw transaction in the db.
-        Gateway::saveGwTx($dbh, $vr->response->getStatus(), json_encode($returnVoid->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditVoidReturnToken');
+        PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($returnVoid->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditVoidReturnToken');
 
         // New Token?
         if ($vr->response->getToken() != '') {

@@ -103,6 +103,44 @@ function initMy_SQL($dbURL, $dbName, $dbuName, $dbPw) {
 
 }
 
+function creditIncludes($gatewayName) {
+
+    if ($gatewayName == '') {
+        return;
+    }
+
+    require (PMT . 'paymentgateway/CreditToken.php');
+    require (PMT . 'paymentgateway/CreditPayments.php');
+
+
+    switch ($gatewayName) {
+
+        case PaymentGateway::INSTAMED:
+            require (PMT . 'paymentgateway/instamed/InstamedConnect.php');
+            require (PMT . 'paymentgateway/instamed/InstamedResponse.php');
+            require (PMT . 'paymentgateway/instamed/InstamedGateway.php');
+
+            break;
+
+        case PaymentGateway::CONVERGE:
+           require (PMT . 'paymentgateway/converge/ConvergeConnect.php');
+            require (PMT . 'paymentgateway/converge/ConvergeGateway.php');
+
+            break;
+
+        case PaymentGateway::VANTIV:
+
+            require (PMT . 'paymentgateway/vantiv/MercuryHCClient.php');
+            require (PMT . 'paymentgateway/vantiv/Gateway.php');
+            require (PMT . 'paymentgateway/vantiv/HostedPayments.php');
+            require (PMT . 'paymentgateway/vantiv/TokenTX.php');
+            require (PMT . 'paymentgateway/vantiv/VantivGateway.php');
+            break;
+
+    }
+
+}
+
 function syncTimeZone(\PDO $dbh) {
 
     $now = new \DateTime();

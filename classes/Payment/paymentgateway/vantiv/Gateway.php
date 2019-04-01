@@ -36,17 +36,6 @@ class Gateway {
 
     }
 
-    public static function saveGwTx(PDO $dbh, $status, $request, $response, $transType) {
-
-        $gwRs = new Gateway_TransactionRS();
-        $gwRs->Vendor_Response->setNewVal($response);
-        $gwRs->Vendor_Request->setNewVal($request);
-        $gwRs->GwResultCode->setNewVal($status);
-        $gwRs->GwTransCode->setNewVal($transType);
-
-        return EditRS::insert($dbh, $gwRs);
-
-    }
 
 
 

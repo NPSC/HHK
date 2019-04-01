@@ -22,8 +22,8 @@ require CLASSES . 'Patch.php';
 require CLASSES . 'US_Holidays.php';
 
 require (PMT . 'GatewayConnect.php');
-require PMT . 'PaymentGateway.php';
-require PMT . 'ConvergeGateway.php';
+require (PMT . 'PaymentGateway.php');
+require (PMT . 'PaymentResponse.php');
 
 require SEC . 'Login.php';
 require SEC . 'ChallengeGenerator.php';
@@ -38,6 +38,7 @@ try {
 
 // get session instance
 $uS = Session::getInstance();
+creditIncludes($uS->PaymentGateway);
 
 // Kick out 'Guest' Users
 if ($uS->rolecode > WebRole::WebUser) {
