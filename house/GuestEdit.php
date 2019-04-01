@@ -780,13 +780,13 @@ $uS->guestId = $id;
             <?php if ($showSearchOnly === FALSE) { ?>
             <form action="GuestEdit.php" method="post" id="form1" name="form1" >
                 <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
-
-				<div style="clear:left;float:left;overflow: hidden;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog ui-button ui-widget ui-corner-all">
-					<input type="file" name="file" data-uppload-button="true" style="position: absolute; left: 0; top: 0; font-size: 100px; opacity: 0"/>
-					<span class="ui-icon ui-icon-person"></span>Upload
-					
+				<div class="ui-widget-content ui-corner-all" style="float: left" id="hhk-guest-photo">
+					<img src="https://dev.wireland.me/HHK/house/ws_guestPhoto.php">
+					<button data-uppload-button="true" class="ui-button ui-corner-all ui-widget" style="display:block;">
+						<span class="ui-icon ui-icon-person"></span>Upload
+					</button>
 				</div>
-                <div style="clear:left;float:left;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
+                <div style="float:left;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
                     <?php echo $nameMarkup; ?>
                     <?php echo $contactLastUpdated; ?>
                 </div>
@@ -947,6 +947,22 @@ $uS->guestId = $id;
         <script type="text/javascript">
 	    	$(document).ready(function(){
 		    	new Uppload({
+			    uploadFunction: (file, metadata) => {
+			        return new Promise((resolve, reject) => {
+				        console.log("file: " + file);
+			            fetch("testUpload.php", {
+			                method: "POST",
+			                body: file
+			            })
+			                .then(response => response.json())
+			                .then(json => {
+				                console.log(json);
+			                    let url = json.url;
+			                    resolve(url);
+			                })
+			                .catch(error => reject(error));
+			        });
+			    },
 			    	services: [
 				    	"upload",
 				    	"camera",
@@ -954,10 +970,13 @@ $uS->guestId = $id;
 			    	],
 			    	allowedTypes: "image",
 			    	crop: {
-				    	aspectRatio: "1"
+				    	aspectRatio: 1/1,
 			    	}
-				});
-				
+			});
+			
+			$(document).on("click", "#hhk-guest-photo", function(e){
+				e.preventDefault();
+			});
 				
 	    	});
 	    </script>

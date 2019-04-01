@@ -389,3 +389,12 @@ li.hhk-myMenuTop {
     float: left;
     margin: 0 4px;
 }
+
+/* uppload styles */
+.uppload-modal {
+	font-family: Lucida Grande,Lucida Sans,Arial,sans-serif;
+}
+
+.uppload-modal ul i {
+	margin-right: 0.5em;
+}
