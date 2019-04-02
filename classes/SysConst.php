@@ -201,6 +201,29 @@ class Mode {
     const Training = "train";
 }
 
+class MpStatusMessage {
+    const Approved = 'AP';
+    const Replay = 'AP*';
+}
+
+Class MpStatusValues {
+
+    const Approved = 'Approved';
+    const Declined = 'Declined';
+    const Error = 'Error';
+    const Invalid = 'Invalid';
+    const AuthFail = 'AuthFail';
+    const MPSError = 'MPSError';
+    const Blank = 'Blank';
+    const MercInternalFail = 'MercuryInternalFail';
+    const ValidateFail = 'ValidateFail';
+}
+
+Class MpFrequencyValues {
+    const OneTime = 'OneTime';
+    const Recurring = 'Recurring';
+}
+
 class NoteCategory {
     const Reservation = 'ncr';
     const PSG = 'ncf';

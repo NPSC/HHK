@@ -33,28 +33,6 @@
 */
 
 // Mercury helper classes
-Class MpStatusValues {
-
-    const Approved = 'Approved';
-    const Declined = 'Declined';
-    const Error = 'Error';
-    const Invalid = 'Invalid';
-    const AuthFail = 'AuthFail';
-    const MPSError = 'MPSError';
-    const Blank = 'Blank';
-    const MercInternalFail = 'MercuryInternalFail';
-    const ValidateFail = 'ValidateFail';
-}
-
-class MpStatusMessage {
-    const Approved = 'AP';
-    const Replay = 'AP*';
-}
-
-Class MpFrequencyValues {
-    const OneTime = 'OneTime';
-    const Recurring = 'Recurring';
-}
 
 
 Class MpTokenTransaction {
