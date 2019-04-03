@@ -266,7 +266,6 @@ function dirReport(\PDO $dbh, chkBoxCtrlClass $cbBasisDir, chkBoxCtrlClass $cbRe
     // Mail list
     else if ($dordr == "'m'") {
         // Create Mailing List
-        $wClause = "and vm2.Exclude_Directory = 0 " . $wClause;
 
         if ($dlFlag) {
 
@@ -299,16 +298,17 @@ case when vm.MemberRecord then ifnull(vp.Address_Code,'') else ifnull(ve.Address
 from mail_listing a left join vmember_listing_noex vm on a.id = vm.Id
 left join vmember_listing_noex vp ON vp.Id = a.sp
 left join vmember_listing_noex ve ON ve.Id = a.fm and a.mr = 0
- where 1=1 $wClause
+left join name_volunteer2 nv on vm.Id = nv.idName and nv.Vol_Status = 'a' and nv.Vol_Category = 'Vol_Type'
+where ifnull(nv.Vol_Code, '') not in ('p', 'g') $wClause
  group by a.adr_frag, a.rel, a.fm"
                 . " order by a.zip, vm.Name_Last, vm.Name_First");
 
             MailList::createList($stmt, MailList::FORMAT_EXCEL, SalutationCodes::Formal, FALSE, FALSE, TRUE);
         }
 
-        $txtreport = "<div class='ui-widget ui-widget-content'><table><tr><th colspan='2'>Member Directory Mail Listing  Date: " . date("m/d/Y") . "</th></tr>";
+        $txtreport = "<div class='ui-widget ui-widget-content'><table><tr><th>Only Available as an Excel file.</th></tr>";
 
-        $txtreport .= "<tr><td class='tdlabel'>Member Basis: </td><td>" . $incBasis . "</td></tr></table>";
+        //$txtreport .= "<tr><td class='tdlabel'>Member Basis: </td><td>" . $incBasis . "</td></tr></table>";
 
         $dirmarkup = $txtreport; // . "<table style='margin-top:10px;'>". $mlArray["rpt"] . "</table></div>";
     }
@@ -322,7 +322,8 @@ from vemail_directory vm2
 	left join name_guest ng on vm2.idName = ng.idName
 	left join registration r on ng.idPsg = r.idPsg
 	left join visit v on r.idRegistration = v.idRegistration and v.Status in ('co', 'a')
-        where 1 = 1 $wClause
+left join name_volunteer2 nv on vm2.idName = nv.idName and nv.Vol_Status = 'a' and nv.Vol_Category = 'Vol_Type'
+where ifnull(nv.Vol_Code, '') not in ('p', 'g') $wClause
 group by vm2.idName
   having case when v.idVisit is not null then DATEDIFF(now(), spanEnd) > $guestBlackOutDays else 1=1 end";
 

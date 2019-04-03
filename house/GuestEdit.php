@@ -77,6 +77,7 @@ require (PMT . 'InvoiceLine.php');
 require (PMT . 'CheckTX.php');
 require (PMT . 'CashTX.php');
 require (PMT . 'Transaction.php');
+require (PMT . 'CreditToken.php');
 
 
 $wInit = new webInit();

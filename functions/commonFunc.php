@@ -109,7 +109,6 @@ function creditIncludes($gatewayName) {
         return;
     }
 
-    require (PMT . 'paymentgateway/CreditToken.php');
     require (PMT . 'paymentgateway/CreditPayments.php');
 
 

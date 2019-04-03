@@ -209,15 +209,28 @@ class HouseServices {
             $vFees = readGenLookupsPDO($dbh, 'Visit_Fee_Code');
 
             if (isset($vFees[$visitFeeOption])) {
+
                 $resv = Reservation_1::instantiateFromIdReserv($dbh, $visit->getReservationId());
+
                 if ($resv->isNew() === FALSE) {
 
                     if ($resv->getVisitFee() != $vFees[$visitFeeOption][2]) {
+                        // visit fee is updated.
 
-                        $resv->setVisitFee($vFees[$visitFeeOption][2]);
-                        $resv->saveReservation($dbh, $visit->getIdRegistration(), $uS->username);
+                        $visitCharge = new VisitCharges($idVisit);
+                        $visitCharge->sumPayments($dbh);
 
-                        $reply .= 'Cleaning Fee Setting Updated.  ';
+                        if ($visitCharge->getVisitFeesPaid() > 0) {
+                            // Change to no visit fee, already paid fee
+                            $reply .= ' Return Cleaning Fee Payment and delete the invoice before changing it.  ';
+
+                        } else {
+
+                            $resv->setVisitFee($vFees[$visitFeeOption][2]);
+                            $resv->saveReservation($dbh, $visit->getIdRegistration(), $uS->username);
+
+                            $reply .= 'Cleaning Fee Setting Updated.  ';
+                        }
                     }
                 }
             }

@@ -19,6 +19,7 @@ require(CLASSES . 'Purchase/RoomRate.php');
 require (PMT . 'Invoice.php');
 require (PMT . 'InvoiceLine.php');
 require (PMT . 'Receipt.php');
+require (PMT . 'CreditToken.php');
 require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');
 require (MEMBER . 'OrgMember.php');

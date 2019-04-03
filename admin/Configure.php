@@ -24,6 +24,7 @@ require CLASSES . 'US_Holidays.php';
 require (PMT . 'GatewayConnect.php');
 require (PMT . 'PaymentGateway.php');
 require (PMT . 'PaymentResponse.php');
+require (PMT . 'CreditToken.php');
 
 require SEC . 'Login.php';
 require SEC . 'ChallengeGenerator.php';

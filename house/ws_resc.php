@@ -30,7 +30,8 @@ require CLASSES . 'TableLog.php';
 require (PMT . 'Invoice.php');
 require (PMT . 'InvoiceLine.php');
 require (PMT . 'Receipt.php');
-require (CLASSES . 'Purchase/Item.php');
+require (PMT . 'CreditToken.php');
+
 require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');
 require (MEMBER . 'OrgMember.php');
@@ -57,6 +58,7 @@ require (HOUSE . 'RoomReport.php');
 require (HOUSE . 'VisitCharges.php');
 
 require (CLASSES . 'HouseLog.php');
+require (CLASSES . 'Purchase/Item.php');
 require (CLASSES . 'Purchase/RoomRate.php');
 require (CLASSES . 'FinAssistance.php');
 require (CLASSES . 'US_Holidays.php');

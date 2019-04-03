@@ -31,6 +31,7 @@ require (PMT . 'InvoiceLine.php');
 require (PMT . 'CheckTX.php');
 require (PMT . 'CashTX.php');
 require (PMT . 'Transaction.php');
+require (PMT . 'CreditToken.php');
 
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'Purchase/RoomRate.php');
