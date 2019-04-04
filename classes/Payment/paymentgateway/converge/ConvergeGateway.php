@@ -44,6 +44,10 @@ class ConvergeGateway extends PaymentGateway {
         return PaymentMethod::Charge;
     }
 
+    protected function getGatewayName() {
+        return 'converge';
+    }
+
     public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
 
         // Initialiaze hosted payment
@@ -129,8 +133,8 @@ class ConvergeGateway extends PaymentGateway {
 
         $params = $this->getCredentials()->toCurl()
                 . "&ssl_transaction_type=ccsale"
-                //. "&ssl_invoicenumber=" . $invoice->getInvoiceNumber()
-                . "&ssl_amount=" . $invoice->getAmountToPay();
+                . "&ssl_invoicenumber=" . $invoice->getInvoiceNumber()
+                . "&ssl_amount=" . number_format($invoice->getAmountToPay(), 2);
 
         $curlRequest = new ConvergeCurlRequest();
 
@@ -148,7 +152,7 @@ class ConvergeGateway extends PaymentGateway {
 
             // Save payment ID
             $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode)"
-                    . " values (" . $invoice->getSoldToId() . " , " . $invoice->getIdGroup() . ", '" . self::COF_TRANS . "', '', '" . $resp . "', now(), 'OneTime', 0)";
+                    . " values (" . $invoice->getSoldToId() . " , " . $invoice->getIdGroup() . ", '" . self::HCO_TRANS . "', '', '" . $resp . "', now(), 'OneTime', 0)";
 
             $dbh->exec($ciq);
 
@@ -309,7 +313,7 @@ class ConvergeGateway extends PaymentGateway {
                 . "&primaryTransactionID=" . $pAuthRs->AcqRefData->getStoredVal()
                 . "&amount=" . number_format($returnAmt, 2);
 
-        $curlRequest = new CurlRequest();
+        $curlRequest = new ConvergeCurlRequest();
 
         $resp = $curlRequest->submit($params, $this->NvpUrl);
 
@@ -447,7 +451,7 @@ class ConvergeGateway extends PaymentGateway {
                 . "&requestToken=false"
                 . "&singleSignOnToken=" . $ssoToken;
 
-        $curl = new CurlRequest();
+        $curl = new ConvergeCurlRequest();
         $resp = $curl->submit($params, $this->NvpUrl);
 
         $resp['InvoiceNumber'] = 0;
@@ -494,7 +498,7 @@ class ConvergeGateway extends PaymentGateway {
                 . "&requestToken=false"
                 . "&singleSignOnToken=" . $ssoToken;
 
-        $curl = new CurlRequest();
+        $curl = new ConvergeCurlRequest();
         $resp = $curl->submit($params, $this->NvpUrl);
 
         $resp['InvoiceNumber'] = $ssoTknRs->InvoiceNumber->getStoredVal();
@@ -605,9 +609,10 @@ class ConvergeGateway extends PaymentGateway {
     protected function loadGateway(\PDO $dbh) {
 
         $gwRs = new InstamedGatewayRS();
-        $gwRs->cc_name->setStoredVal($this->getGwName());
+        $gwRs->cc_name->setStoredVal($this->gwType);
+        $gwRs->Gateway_Name->setStoredVal($this->getGatewayName());
 
-        $rows = EditRS::select($dbh, $gwRs, array($gwRs->cc_name));
+        $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name, $gwRs->cc_name));
 
         if (count($rows) == 1) {
 
@@ -620,7 +625,7 @@ class ConvergeGateway extends PaymentGateway {
             $this->useAVS = filter_var($gwRs->Use_AVS_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
             $this->useCVV = filter_var($gwRs->Use_Ccv_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
         } else {
-            throw new Hk_Exception_Runtime('The credit card payment gateway is not found: ' . $this->getGwName() . '.  ');
+            throw new Hk_Exception_Runtime('The credit card payment gateway is not found: ' . $this->getGatewayName() . '.  ');
         }
 
         return $gwRs;
@@ -690,7 +695,8 @@ class ConvergeGateway extends PaymentGateway {
     public function createEditMarkup(\PDO $dbh, $resultMessage = '') {
 
         $gwRs = new InstamedGatewayRS();
-        $rows = EditRS::select($dbh, $gwRs, array());
+        $gwRs->Gateway_Name->setStoredVal($this->getGatewayName());
+        $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name));
 
         $tbl = new HTMLTable();
 
@@ -716,7 +722,7 @@ class ConvergeGateway extends PaymentGateway {
             );
             $tbl->addBodyTr(
                     HTMLTable::makeTh('Merchant PIN', array('class' => 'tdlabel'))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->security_Key->getStoredVal(), array('name' => $indx . '_txtmPIN', 'size' => '80')))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->security_Key->getStoredVal(), array('name' => $indx . '_txtmPIN', 'size' => '100')))
             );
             $tbl->addBodyTr(
                     HTMLTable::makeTh('Token URL', array('class' => 'tdlabel'))
@@ -743,8 +749,8 @@ class ConvergeGateway extends PaymentGateway {
 
         $msg = '';
         $ccRs = new InstamedGatewayRS();
-
-        $rows = EditRS::select($dbh, $ccRs, array());
+        $ccRs->Gateway_Name->setStoredVal($this->getGatewayName());
+        $rows = EditRS::select($dbh, $ccRs, array($ccRs->Gateway_Name));
 
         foreach ($rows as $r) {
 
@@ -783,12 +789,12 @@ class ConvergeGateway extends PaymentGateway {
             $ccRs->Use_AVS_Flag->setNewVal(0);
 
             // Save record.
-            $num = EditRS::update($dbh, $ccRs, array($ccRs->idcc_gateway));
+            $num = EditRS::update($dbh, $ccRs, array($ccRs->Gateway_Name, $ccRs->idcc_gateway));
 
             if ($num > 0) {
-                $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - Payment Credentials Updated.  ");
+                $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " " . $ccRs->cc_name->getStoredVal() . " - Payment Credentials Updated.  ");
             } else {
-                $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - No changes detected.  ");
+                $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " " . $ccRs->cc_name->getStoredVal() . " - No changes detected.  ");
             }
         }
 

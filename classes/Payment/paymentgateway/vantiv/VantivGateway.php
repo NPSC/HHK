@@ -16,6 +16,10 @@ class VantivGateway extends PaymentGateway {
         return PaymentMethod::Charge;
     }
 
+    protected function getGatewayName() {
+        return 'vantiv';
+    }
+
     public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
@@ -496,7 +500,7 @@ class VantivGateway extends PaymentGateway {
 
     protected function loadGateway(\PDO $dbh) {
 
-        $query = "select * from `cc_hosted_gateway` where cc_name = :ccn";
+        $query = "select * from `cc_hosted_gateway` where cc_name = :ccn and Gateway_Name = 'vantiv'";
         $stmt = $dbh->prepare($query);
         $stmt->execute(array(':ccn' => $this->gwName));
 
@@ -526,7 +530,7 @@ class VantivGateway extends PaymentGateway {
 
     public function createEditMarkup(\PDO $dbh, $resultMessage = '') {
 
-        $stmt = $dbh->query("Select * from cc_hosted_gateway");
+        $stmt = $dbh->query("Select * from cc_hosted_gateway where Gateway_Name = 'vantiv'");
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $tbl = new HTMLTable();
@@ -557,7 +561,8 @@ class VantivGateway extends PaymentGateway {
 
         $msg = '';
         $ccRs = new Cc_Hosted_GatewayRS();
-        $rows = EditRS::select($dbh, $ccRs, array());
+        $ccRs->Gateway_Name->setStoredVal($this->getGatewayName());
+        $rows = EditRS::select($dbh, $ccRs, array($ccRs->Gateway_Name));
 
         foreach ($rows as $r) {
 
@@ -610,7 +615,7 @@ class VantivGateway extends PaymentGateway {
                 }
 
                 // Save record.
-                $num = EditRS::update($dbh, $ccRs, array($ccRs->idcc_gateway));
+                $num = EditRS::update($dbh, $ccRs, array($ccRs->Gateway_Name, $ccRs->idcc_gateway));
 
                 if ($num > 0) {
                     $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - Payment Credentials Updated.  ");

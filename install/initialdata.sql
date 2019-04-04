@@ -624,7 +624,7 @@ REPLACE INTO `insurance` (`idInsurance`, `Type`, `Title`, `Opens_Type`) VALUES
 --
 -- insert users
 --
-REPLACE into name (idName, Name_Last, Name_First, Member_Type, Member_Status, Record_Member, Record_Company, Company) values 
+REPLACE into `name` (idName, Name_Last, Name_First, Member_Type, Member_Status, Record_Member, Record_Company, Company) values 
 (-1, 'admin', '', 'ai', 'a', 1, 0, ''),
 (10, 'User', 'NPSC', 'ai', 'a', 1, 0, ''),
 (11, '', '', 'np', 'a', 0, 1, 'Hospitality House');

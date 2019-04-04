@@ -25,16 +25,19 @@ abstract class PaymentGateway {
     const LOCAL = '';
 
     protected $gwName;
+    protected $gwType;
     protected $credentials;
     protected $responseErrors;
     protected $useAVS;
     protected $useCVV;
 
-    public function __construct(\PDO $dbh, $gwName) {
+    public function __construct(\PDO $dbh, $gwType) {
 
-        $this->setGwName($gwName);
+        $this->gwType = $gwType;
         $this->setCredentials($this->loadGateway($dbh));
     }
+
+    protected abstract function getGatewayName();
 
     /**
      *  Get the gateway information from the database.
@@ -123,21 +126,12 @@ abstract class PaymentGateway {
         }
     }
 
-    public function getGwName() {
-        return $this->gwName;
-    }
-
     public function getResponseErrors() {
         return $this->responseErrors;
     }
 
     public function getCredentials() {
         return $this->credentials;
-    }
-
-    protected function setGwName($gwName) {
-        $this->gwName = $gwName;
-        return $this;
     }
 
     public function useAVS() {
@@ -156,6 +150,10 @@ class LocalGateway extends PaymentGateway {
 
     protected function getPaymentMethod() {
         return PaymentMethod::ChgAsCash;
+    }
+
+    protected function getGatewayName() {
+        return 'local';
     }
 
     protected function loadGateway(\PDO $dbh) {

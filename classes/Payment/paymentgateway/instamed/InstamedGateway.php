@@ -67,6 +67,10 @@ class InstamedGateway extends PaymentGateway {
         return PaymentMethod::Charge;
     }
 
+    protected function getGatewayName() {
+        return 'instamed';
+    }
+
     public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
@@ -168,7 +172,7 @@ class InstamedGateway extends PaymentGateway {
             InstamedGateway::INVOICE_NUMBER => $invoice->getInvoiceNumber(),
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
-            'incontext' => 'true',
+            'incontext' => 'false',
             'lightWeight' => 'true',
             'isReadOnly' => 'true',
             'preventCheck' => 'true',
@@ -772,10 +776,10 @@ class InstamedGateway extends PaymentGateway {
     protected function loadGateway(\PDO $dbh) {
 
         $gwRs = new InstamedGatewayRS();
-        $gwRs->cc_name->setStoredVal($this->getGwName());
+        $gwRs->cc_name->setStoredVal($this->gwType);
+        $gwRs->Gateway_Name->setStoredVal($this->getGatewayName());
 
-
-        $rows = EditRS::select($dbh, $gwRs, array($gwRs->cc_name));
+        $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name, $gwRs->cc_name));
 
         if (count($rows) == 1) {
 
@@ -789,7 +793,7 @@ class InstamedGateway extends PaymentGateway {
             $this->useAVS = filter_var($gwRs->Use_AVS_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
             $this->useCVV = filter_var($gwRs->Use_Ccv_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
         } else {
-            throw new Hk_Exception_Runtime('The credit card payment gateway is not found: ' . $this->getGwName() . '.  ');
+            throw new Hk_Exception_Runtime('The credit card payment gateway is not found: ' . $this->getGatewayName() . '.  ');
         }
 
         return $gwRs;
@@ -902,7 +906,8 @@ where r.idRegistration =" . $idReg);
     public function createEditMarkup(\PDO $dbh, $resultMessage = '') {
 
         $gwRs = new InstamedGatewayRS();
-        $rows = EditRS::select($dbh, $gwRs, array());
+        $gwRs->Gateway_Name->setStoredVal($this->getGatewayName());
+        $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name));
 
         $tbl = new HTMLTable();
 
@@ -975,8 +980,8 @@ where r.idRegistration =" . $idReg);
 
         $msg = '';
         $ccRs = new InstamedGatewayRS();
-
-        $rows = EditRS::select($dbh, $ccRs, array());
+        $ccRs->Gateway_Name->setStoredVal($this->getGatewayName());
+        $rows = EditRS::select($dbh, $ccRs, array($ccRs->Gateway_Name));
 
         foreach ($rows as $r) {
 
@@ -1035,12 +1040,12 @@ where r.idRegistration =" . $idReg);
             $ccRs->Use_AVS_Flag->setNewVal(0);
 
             // Save record.
-            $num = EditRS::update($dbh, $ccRs, array($ccRs->idcc_gateway));
+            $num = EditRS::update($dbh, $ccRs, array($ccRs->Gateway_Name, $ccRs->idcc_gateway));
 
             if ($num > 0) {
-                $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - Payment Credentials Updated.  ");
+                $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " " . $ccRs->cc_name->getStoredVal() . " - Payment Credentials Updated.  ");
             } else {
-                $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - No changes detected.  ");
+                $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " " . $ccRs->cc_name->getStoredVal() . " - No changes detected.  ");
             }
         }
 
