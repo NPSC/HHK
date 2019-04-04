@@ -1107,16 +1107,17 @@ class Visit {
 
         $stays = $this->loadStaysStatic($dbh, $this->getIdVisit(), $this->getSpan(), '');  // Loads all stays
 
-        // Can't change the start date of a visit span > 0
-        if (count($stays) == 1 && $this->getSpan() > 0 ) {
-            return 'Cannot change start date here.  ';
-        }
-
+        // Collect stay start dates
         foreach ($stays as $stayRs) {
             $stayStartDT = new \DateTime($stayRs->Span_Start_Date->getStoredVal());
             $stayStartDT->setTime(0, 0, 0);
             $stayStartDates[$stayRs->idStays->getStoredVal()] = $stayStartDT;
         }
+
+        // Can't change the start date of a visit span > 0
+//        if (count($stays) == 1 && $this->getSpan() > 0 ) {
+//            return 'Cannot change start date, this visit has a previous span.  ';
+//        }
 
         foreach ($stays as $stayRs) {
 
@@ -1199,7 +1200,7 @@ class Visit {
 
                 } else {
 
-                    $reply .= "Guest's start date cannot be on or before the visit span starts: " . $visitStartDT->format('M j, Y') . '.  ';
+                    $reply .= "Guest's start date cannot be on or before this visit span starts: " . $visitStartDT->format('M j, Y') . '.  ';
                     if ($visitActive && $stayStartDT < $firstStayStartDT) {
                         $firstStayStartDT = new \DateTime($stayStartDT->format('Y-m-d 00:00:00'));
                     }
@@ -1255,7 +1256,7 @@ class Visit {
                 }
 
                 if ($num < 2 && $isMine) {
-                    $reply .= 'Cannot change last start date for this visit span.';
+                    $reply .= 'Cannot change start date for this visit span.';
                     continue;
                 }
             }
