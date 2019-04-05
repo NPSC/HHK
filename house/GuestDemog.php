@@ -28,6 +28,9 @@ $demos = array();
 $whDemos = '';
 $fields = '';
 
+$numRecords = 25;
+$startAt = 0;
+
 foreach (readGenLookupsPDO($dbh, 'Demographics') as $d) {
 
     if (strtolower($d[2]) == 'y') {
@@ -116,7 +119,14 @@ if (isset($_POST['btnnotind'])) {
             }
         }
     }
+
+    $startAt = intval(filter_input(INPUT_POST, 'btnNext'), 10) + 50;
+
 }
+
+
+
+
 
 
 $query = "select distinct $fields
@@ -134,7 +144,7 @@ from
         left join
     name np on p.idPatient = np.idName
 where  n.Member_Status in ('a' , 'in', 'd')
-        and $whDemos order by n.idName desc Limit 0, 25";
+        and $whDemos order by n.idName desc Limit $startAt, 50";
 
 $stmt = $dbh->query($query);
 
@@ -160,10 +170,13 @@ foreach ($demos as $d) {
     $th .= HTMLTable::makeTh($d['title']);
 }
 
+$nextBtn = HTMLInput::generateMarkup("$startAt", array('name'=>'btnNext', 'type'=>'hidden'));
+
 $tbl->addHeaderTr($th . HTMLTable::makeTh('Unknown'));
 
-$saveBtn = HTMLInput::generateMarkup('Save', array('name'=>'btnnotind', 'type'=>'submit', 'style'=>'margin:15px;float:right;'));
-$form = HTMLContainer::generateMarkup('form', $tbl->generateMarkup(array(), "- Shows only 25 names at a time -") . $saveBtn, array('action'=>'GuestDemog.php', 'method'=>'post', 'name'=>'frmmissing'));
+$saveBtn = HTMLInput::generateMarkup('Save/Next', array('name'=>'btnnotind', 'type'=>'submit', 'style'=>'margin:15px;float:right;'));
+
+$form = HTMLContainer::generateMarkup('form', $tbl->generateMarkup(array(), "Shows 50 names at a time") . $saveBtn . $nextBtn, array('action'=>'GuestDemog.php', 'method'=>'post', 'name'=>'frmmissing'));
 
 ?>
 <!DOCTYPE html>

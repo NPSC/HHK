@@ -172,7 +172,7 @@ class InstamedGateway extends PaymentGateway {
             InstamedGateway::INVOICE_NUMBER => $invoice->getInvoiceNumber(),
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
-            'incontext' => 'false',
+            //'incontext' => 'true',
             'lightWeight' => 'true',
             'isReadOnly' => 'true',
             'preventCheck' => 'true',
@@ -242,7 +242,7 @@ class InstamedGateway extends PaymentGateway {
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
             'lightWeight' => 'true',
-            'incontext' => 'true',
+          //  'incontext' => 'true',
             'responseActionType' => 'header',
             'cancelURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::COF_TRANS, InstamedGateway::POSTBACK_CANCEL),
             'confirmURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::COF_TRANS, InstamedGateway::POSTBACK_COMPLETE),
@@ -760,18 +760,6 @@ class InstamedGateway extends PaymentGateway {
 
         return $payResult;
     }
-
-//    protected function pollPaymentStatus($token, $trace = FALSE) {
-//
-//        $data = $this->getCredentials()->toSOAP();
-//
-//        $data['tokenID'] = $token;
-//
-//        $soapReq = new PollingRequest();
-//
-//        return new PollingResponse($soapReq->submit($data, $this->soapUrl, $trace));
-//
-//    }
 
     protected function loadGateway(\PDO $dbh) {
 

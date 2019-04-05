@@ -1249,6 +1249,7 @@ function paymentRedirect (data, $xferForm) {
 
             $('#contentDiv').empty().append($('<p>Processing Credit Payment...</p>'));
             InstaMed.launch(data.inctx);
+            $('#instamed').css('visibility', 'visible').css('margin-top', '50px;');
         }
     }
 }
