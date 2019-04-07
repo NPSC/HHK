@@ -1,9 +1,11 @@
 <?php
-
 /**
- * Description of PaymentGateway
+ * PaymentGateway.php
  *
- * @author Eric
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2019 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 Class MpTranType {
@@ -52,7 +54,78 @@ abstract class PaymentGateway {
     // used to determine if it's a real gateway or out of band, local gateway
     protected abstract function getPaymentMethod();
 
-    public abstract function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl);
+    public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
+
+        // Initialiaze hosted payment
+        try {
+
+            $fwrder = $this->initHostedPayment($dbh, $invoice, $postbackUrl);
+
+            $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+            $payResult->setForwardHostedPayment($fwrder);
+            $payResult->setDisplayMessage('Forward to Payment Page. ');
+        } catch (Hk_Exception_Payment $hpx) {
+
+            $payResult = new PaymentResult($invoice->getIdInvoice(), 0, 0);
+            $payResult->setStatus(PaymentResult::ERROR);
+            $payResult->setDisplayMessage($hpx->getMessage());
+        }
+
+        return $payResult;
+    }
+
+    public function voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, $paymentNotes, $bid) {
+
+        // Find hte detail record.
+        $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
+        $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($arows) < 1) {
+            return array('warning' => 'Payment Detail record not found.  Unable to Void this purchase. ', 'bid' => $bid);
+        }
+
+        $pAuthRs = new Payment_AuthRS();
+        EditRS::loadRow(array_pop($arows), $pAuthRs);
+
+        if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid) {
+            return $this->sendVoid($dbh, $payRs, $pAuthRs, $invoice, $paymentNotes, $bid);
+        }
+
+        return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
+    }
+
+    public function returnSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $returnAmt, $bid) {
+
+        // Find hte detail record.
+        $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
+        $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($arows) < 1) {
+            return array('warning' => 'Payment Detail record not found.  Unable to Return. ', 'bid' => $bid);
+        }
+
+        $pAuthRs = new Payment_AuthRS();
+        EditRS::loadRow(array_pop($arows), $pAuthRs);
+
+        if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid) {
+
+            // Determine amount to return
+            if ($returnAmt == 0) {
+                $returnAmt = $pAuthRs->Approved_Amount->getStoredVal();
+            } else if ($returnAmt > $pAuthRs->Approved_Amount->getStoredVal()) {
+                return array('warning' => 'Return Failed.  Return amount is larger than the original purchase amount.  ', 'bid' => $bid);
+            }
+
+            return $this->sendReturn($dbh, $payRs, $pAuthRs, $invoice, $returnAmt, $bid);
+        }
+
+        return array('warning' => 'This Payment is ineligable for Return. ', 'bid' => $bid);
+    }
+
+    public function reverseSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid, $paymentNotes) {
+
+        return $this->voidSale($dbh, $invoice, $payRs, $paymentNotes, $bid);
+    }
 
     public abstract function processHostedReply(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName);
 

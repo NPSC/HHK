@@ -1,8 +1,11 @@
 <?php
 /**
- * Description of GatewayConnect
+ * GatewayConnect.php
  *
- * @author Eric
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2019 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
 
 

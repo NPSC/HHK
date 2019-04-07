@@ -1,4 +1,12 @@
 <?php
+/**
+ * VantivGateway.php
+ *
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2019 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
+ */
 
 
 /**

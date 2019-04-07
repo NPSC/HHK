@@ -1,28 +1,13 @@
 <?php
-
-/*
- * The MIT License
+/**
+ * InstamedGateway.php
  *
- * Copyright 2019 Eric.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2019 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
  */
+
 
 class InstamedGateway extends PaymentGateway {
 
@@ -69,88 +54,6 @@ class InstamedGateway extends PaymentGateway {
 
     protected function getGatewayName() {
         return 'instamed';
-    }
-
-    public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
-
-        $uS = Session::getInstance();
-
-        // Initialiaze hosted payment
-        try {
-
-            $fwrder = $this->initHostedPayment($dbh, $invoice, $postbackUrl);
-
-            $payIds = array();
-            if (isset($uS->paymentIds)) {
-                $payIds = $uS->paymentIds;
-            }
-            $payIds[$fwrder['PaymentId']] = $invoice->getIdInvoice();
-            $uS->paymentIds = $payIds;
-
-            $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
-            $payResult->setForwardHostedPayment($fwrder);
-            $payResult->setDisplayMessage('Forward to Payment Page. ');
-        } catch (Hk_Exception_Payment $hpx) {
-
-            $payResult = new PaymentResult($invoice->getIdInvoice(), 0, 0);
-            $payResult->setStatus(PaymentResult::ERROR);
-            $payResult->setDisplayMessage($hpx->getMessage());
-        }
-
-        return $payResult;
-    }
-
-    public function voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, $paymentNotes, $bid) {
-
-        // Find hte detail record.
-        $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
-        $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($arows) < 1) {
-            return array('warning' => 'Payment Detail record not found.  Unable to Void this purchase. ', 'bid' => $bid);
-        }
-
-        $pAuthRs = new Payment_AuthRS();
-        EditRS::loadRow(array_pop($arows), $pAuthRs);
-
-        if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid) {
-            return $this->sendVoid($dbh, $payRs, $pAuthRs, $invoice, $paymentNotes, $bid);
-        }
-
-        return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
-    }
-
-    public function reverseSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid, $paymentNotes) {
-
-        return $this->voidSale($dbh, $invoice, $payRs, $paymentNotes, $bid);
-    }
-
-    public function returnSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $returnAmt, $bid) {
-
-        // Find hte detail record.
-        $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
-        $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($arows) < 1) {
-            return array('warning' => 'Payment Detail record not found.  Unable to Return. ', 'bid' => $bid);
-        }
-
-        $pAuthRs = new Payment_AuthRS();
-        EditRS::loadRow(array_pop($arows), $pAuthRs);
-
-        if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid) {
-
-            // Determine amount to return
-            if ($returnAmt == 0) {
-                $returnAmt = $pAuthRs->Approved_Amount->getStoredVal();
-            } else if ($returnAmt > $pAuthRs->Approved_Amount->getStoredVal()) {
-                return array('warning' => 'Return Failed.  Return amount is larger than the original purchase amount.  ', 'bid' => $bid);
-            }
-
-            return $this->sendReturn($dbh, $payRs, $pAuthRs, $invoice, $returnAmt, $bid);
-        }
-
-        return array('warning' => 'This Payment is ineligable for Return. ', 'bid' => $bid);
     }
 
     protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $postbackUrl) {

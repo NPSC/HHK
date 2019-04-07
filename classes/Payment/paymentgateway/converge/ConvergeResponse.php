@@ -1,6 +1,6 @@
 <?php
 /**
- * InstamedResponse.php
+ * ConvergeResponse.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2019 <nonprofitsoftwarecorp.org>
@@ -9,21 +9,21 @@
  */
 
 
-class ImPaymentResponse extends PaymentResponse {
+class ConvergePaymentResponse extends PaymentResponse {
 
 
-    function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes, $isPartialApprovalAmount = FALSE) {
+    function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken, $payNotes, $isPartialApprovalAmount = FALSE) {
         $this->response = $vcr;
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
         $this->invoiceNumber = $invoiceNumber;
         $this->payNotes = $payNotes;
-        $this->amount = $vcr->getRequestAmount();
+        $this->amount = $vcr->getAuthorizedAmount();
+        $this->idToken = $vcr->getToken();
 
         if ($isPartialApprovalAmount) {
             $this->setPartialPayment(TRUE);
-            $this->amount = $vcr->getPartialPaymentAmount();
         } else {
             $this->setPartialPayment(FALSE);
         }
@@ -33,18 +33,15 @@ class ImPaymentResponse extends PaymentResponse {
 
         $status = '';
 
-        if ($this->response->getTransactionStatus() == InstamedGateway::DECLINE || $this->response->getResponseCode() == '001') {
-
-           $status = CreditPayments::STATUS_DECLINED;
-
-        } else if ($this->response->getTransactionStatus() == InstamedGateway::CAPTURED_APPROVED
-                || $this->response->getTransactionStatus() == 'O'
-                || $this->response->getResponseCode() == '000') {
-
-            $status = CreditPayments::STATUS_APPROVED;
-
-        } else {
+        If ($his->response->getErrorCode() != '') {
+            // Error
             $status = CreditPayments::STATUS_ERROR;
+        } else if ($this->response->getResponseCode() == 0) {
+            //Approved
+            $status = CreditPayments::STATUS_APPROVED;
+        } else {
+            // Declined
+            $status = CreditPayments::STATUS_DECLINED;
         }
 
         return $status;
@@ -103,7 +100,7 @@ class ImPaymentResponse extends PaymentResponse {
 
 }
 
-class ImCofResponse extends PaymentResponse {
+class ConvergeCofResponse extends PaymentResponse {
 
     public $idToken;
 
@@ -118,38 +115,24 @@ class ImCofResponse extends PaymentResponse {
 
     public function getStatus() {
 
-        switch ($this->response->getResponseCode()) {
+        $status = '';
 
-            case '000':
-                $status = CreditPayments::STATUS_APPROVED;
-                break;
-
-            case '001':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '003':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '005':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '051':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            case '063':
-                $status = CreditPayments::STATUS_DECLINED;
-                break;
-
-            default:
-                $status = CreditPayments::STATUS_ERROR;
-
+        If ($his->response->getErrorCode() != '') {
+            // Error
+            $status = CreditPayments::STATUS_ERROR;
+        } else if ($this->response->getResponseCode() == 0) {
+            //Approved
+            $status = CreditPayments::STATUS_APPROVED;
+        } else {
+            // Declined
+            $status = CreditPayments::STATUS_DECLINED;
         }
 
         return $status;
+    }
+
+    public function getErrorMessage() {
+        return $this->response->getErrorMessage();
     }
 
     public function receiptMarkup(\PDO $dbh, &$tbl) {
