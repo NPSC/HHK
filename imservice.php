@@ -38,7 +38,7 @@ require ('classes/Payment/CheckTX.php');
 require ('classes/Payment/CashTX.php');
 require ('classes/Payment/Transaction.php');
 
-require ('classes/Payment/paymentgateway/CreditToken.php');
+require ('classes/Payment/CreditToken.php');
 require ('classes/Payment/paymentgateway/CreditPayments.php');
 
 require ('classes/Payment/paymentgateway/instamed/InstamedConnect.php');
