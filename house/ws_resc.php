@@ -75,15 +75,63 @@ if (isset($_REQUEST["cmd"])) {
     $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
 }
 
-
 $uS = Session::getInstance();
 $events = array();
-
 
 try {
 
     switch ($c) {
+    
+    case 'getguestphoto':
+    
+        $guestId = filter_input(INPUT_GET, 'guestId', FILTER_SANITIZE_NUMBER_INT);
         
+        if (is_null($guestId) || $guestId === FALSE) {
+            $guestId = 0;
+        }
+        $stmt = $dbh->query("SELECT photo.* FROM photo JOIN name_demog demog ON photo.idPhoto = demog.Guest_Photo_Id WHERE demog.idName = $guestId");
+	    $results = $stmt->fetchAll();
+        if(count($results) > 0){
+	        
+	        $mimetype = $results[0]['Image_Type'];
+	        $image = base64_decode($results[0]['Image']);
+	        header("Content-Type: " . $mimetype);
+	        echo $image;
+	        exit;
+	    }else{
+             $path = realpath('../images/defaultGuestPhoto.png');
+			if(file_exists($path)){
+				header("Content-Type: " . mime_content_type($path));
+				header("Content-Length: " . filesize($path));
+				echo file_get_contents($path);
+				exit;
+			}
+		}
+		
+		break;
+        
+    case 'putguestphoto':
+    
+        $guestId = filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT);
+        $guestPhoto = $_FILES["guestPhoto"];
+        if (is_null($guestId) || $guestId === FALSE) {
+            throw new Exception("GuestId missing");
+            break;
+        }else if(is_null($guestPhoto) || $guestPhoto === FALSE){
+	        throw new Exception("guestPhoto missing");
+	        break;
+        }else{
+	        $mime = $guestPhoto['type'];
+	        $content = file_get_contents($guestPhoto['tmp_name']);
+	        $content = base64_encode($content);
+	        $insert = 'INSERT INTO photo (Image_Type, Image, Updated_By) VALUES ("' . $mime . '", "' . $content . '", "' . $uS->username . '");';
+
+	        $dbh->exec($insert);
+	        $idPhoto = $dbh->lastInsertId();
+	        $dbh->exec("UPDATE name_demog SET Guest_Photo_Id = $idPhoto WHERE idName = $guestId");
+
+        }
+		break;
     case 'ulimage':
         
         $guestId = filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT);
