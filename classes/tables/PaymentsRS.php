@@ -110,6 +110,7 @@ class Payment_AuthRS extends TableRS {
     public $Status_Message;  // VARCHAR(45) NOT NULL DEFAULT ''
     public $AVS;   // varchar(20) NOT NULL DEFAULT '',
     public $CVV;   // varchar(45) NOT NULL DEFAULT '',
+    public $Signature_Required;  // INT(4) NOT NULL DEFAULT 0 AFTER `ProcessData`;
     public $Invoice_Number;   // varchar(45) NOT NULL DEFAULT '',
     public $Acct_Number;  // varchar(25) NOT NULL DEFAULT '',
     public $Card_Type;  // varchar(10) NOT NULL DEFAULT '',
@@ -134,6 +135,7 @@ class Payment_AuthRS extends TableRS {
         $this->idPayment_auth = new DB_Field("idPayment_auth", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->idPayment = new DB_Field("idPayment", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Approved_Amount = new DB_Field('Approved_Amount', 0, new DbDecimalSanitizer(), TRUE, TRUE);
+        $this->Signature_Required = new DB_Field('Signature_Required', 1, new DbBitSanitizer(), TRUE, TRUE);
         $this->idTrans = new DB_Field("idTrans", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Processor = new DB_Field("Processor", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Approval_Code = new DB_Field("Approval_Code", "", new DbStrSanitizer(20), TRUE, TRUE);

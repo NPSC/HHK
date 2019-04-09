@@ -608,6 +608,14 @@ class InstamedGateway extends PaymentGateway {
 
         EditRS::loadRow($pauths[count($pauths)-1], $pAuthRs);
 
+        // Signature required
+        if (!$curlResponse->isSignatureRequired()) {
+            $pAuthRs->Signature_Required->setNewVal(0);
+            $pAuthRs->Response_Message->setNewVal('');
+            EditRS::update($dbh, $pAuthRs, array($pAuthRs->idPayment_auth));
+            EditRS::updateStoredVals($pAuthRs);
+        }
+
         $payRs = new PaymentRS();
         $payRs->idPayment->setStoredVal($pAuthRs->idPayment->getStoredVal());
         $pays = EditRS::select($dbh, $payRs, array($payRs->idPayment));

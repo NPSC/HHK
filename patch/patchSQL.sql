@@ -33,6 +33,8 @@ ALTER TABLE `payment_auth`
     ADD COLUMN `EMVApplicationResponseCode` VARCHAR(200) NULL AFTER `EMVTransactionStatusInformation`;
 ALTER TABLE `payment_auth`
     ADD COLUMN `Response_Code` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Response_Message`;
+ALTER TABLE `payment_auth` 
+    ADD COLUMN `Signature_Required` INT(4) NOT NULL DEFAULT 1 AFTER `ProcessData`;
 
 ALTER TABLE `cc_hosted_gateway` 
     ADD COLUMN `Gateway_Name` VARCHAR(45) NOT NULL DEFAULT '' AFTER `idcc_gateway`;

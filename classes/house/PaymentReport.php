@@ -328,6 +328,8 @@ class PaymentReport {
 
     public static function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$total, &$tbl, &$sml, &$reportRows, $subsidyId) {
 
+        $uS = Session::getInstance();
+
         $origAmt = $p['Payment_Amount'];
         $amt = 0;
         $payDetail = '';
@@ -479,7 +481,6 @@ class PaymentReport {
             $g['Orig_Amount'] = number_format($origAmt, 2);
             $g['Amount'] = number_format($amt, 2);
 
-
             $tr = '';
             foreach ($fltrdFields as $f) {
                 $tr .= HTMLTable::makeTd($g[$f[1]], $f[6]);
@@ -490,8 +491,6 @@ class PaymentReport {
 
 
         } else {
-
-            $dateDT->setTimezone(new DateTimeZone('UTC'));  // = new DateTime($p['Payment_Date'], new DateTimeZone('UTC'));
 
             $g['Last'] = $r['i']['Last'];
             $g['First'] = $r['i']['First'];

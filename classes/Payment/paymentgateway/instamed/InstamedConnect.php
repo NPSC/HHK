@@ -371,6 +371,15 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
         return '';
     }
 
+    public function isSignatureRequired() {
+        if (isset($this->result['isSignatureRequired'])) {
+            $sr = filter_var($this->result['isSignatureRequired'], FILTER_VALIDATE_BOOLEAN);
+            return $sr;
+        }
+
+        return TRUE;
+    }
+
     public function getAVSZip() {
         return '';
     }

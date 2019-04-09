@@ -91,11 +91,11 @@ class ImPaymentResponse extends PaymentResponse {
             $tbl->addBodyTr(HTMLTable::makeTd("ARC: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getEMVApplicationResponseCode(), array('style'=>'font-size:.8em;')));
         }
 
-        if ($this->response->getAuthorizationText() != '') {
+        if ($this->response->getAuthorizationText() != '' && $this->response->isSignatureRequired()) {
             $tbl->addBodyTr(HTMLTable::makeTd($this->response->getAuthorizationText(), array('colspan'=>2)));
         }
 
-        if ($this->getStatus() != CreditPayments::STATUS_DECLINED) {
+        if ($this->getStatus() != CreditPayments::STATUS_DECLINED && $this->response->isSignatureRequired()) {
             $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:310px; border: solid 1px gray;')));
         }
 

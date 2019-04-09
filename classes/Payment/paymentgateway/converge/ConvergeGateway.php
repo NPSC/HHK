@@ -42,7 +42,6 @@ class ConvergeGateway extends PaymentGateway {
             throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
         }
 
-
         $params = $this->getCredentials()->toCurl()
                 . "&ssl_transaction_type=ccsale"
                 . "&ssl_invoicenumber=" . $invoice->getInvoiceNumber()
@@ -50,15 +49,16 @@ class ConvergeGateway extends PaymentGateway {
 
         $curlRequest = new ConvergeCurlRequest();
         $resp = $curlRequest->submit($params, $this->hostedInitURL);
+        $httpRespCode = $curlRequest->getCurlInfo();
 
         // Save raw transaction in the db.
         try {
-            self::logGwTx($dbh, '', $params, json_encode($resp), 'HostedCoInit');
+            self::logGwTx($dbh, $httpRespCode['http_code'], $params, ($httpRespCode['http_code'] == 200 ? json_encode($resp) : json_encode($httpRespCode)), 'HostedCoInit');
         } catch (Exception $ex) {
             // Do Nothing
         }
 
-        if ($resp != '') {
+        if ($httpRespCode['http_code'] == 200 && $resp != '') {
 
             // Save payment ID
             $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode)"
@@ -74,7 +74,7 @@ class ConvergeGateway extends PaymentGateway {
 
             // The initialization failed.
             unset($uS->cvtoken);
-            throw new Hk_Exception_Payment("Credit Payment Gateway Error.");
+            throw new Hk_Exception_Payment("Credit Payment Gateway Error: Response Code = " . $httpRespCode['http_code'] . ', Error Message = ' . $curlRequest->getErrorMsg());
         }
 
         return $dataArray;
@@ -676,6 +676,9 @@ class ConvergeGateway extends PaymentGateway {
 
 class ConvergeCurlRequest extends CurlRequest {
 
+    protected $errorMsg = '';
+    protected $curlInfo = array();
+
     protected function execute($url, $params) {
 
         $ch = curl_init();
@@ -689,15 +692,23 @@ class ConvergeCurlRequest extends CurlRequest {
         curl_setopt($ch,CURLOPT_POSTFIELDS, $params);
 
         $responseString = curl_exec($ch);
-        $msg = curl_error($ch);
+        $this->errorMsg = curl_error($ch);
+        $this->curlInfo = curl_getinfo($ch);
         curl_close($ch);
 
         if ( ! $responseString ) {
-            throw new Hk_Exception_Payment('Network (cURL) Error: ' . $msg);
+            throw new Hk_Exception_Payment('Network (cURL) Error: ' . $this->errorMsg);
         }
 
         return $responseString;
+    }
 
+    public function getErrorMsg() {
+        return $this->errorMsg;
+    }
+
+    public function getCurlInfo() {
+        return $this->curlInfo;
     }
 
 }

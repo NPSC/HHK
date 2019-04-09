@@ -275,6 +275,13 @@ class StandInGwResponse implements iGatewayResponse {
         return $this->pAuthRs->Reference_Num->getStoredVal();
     }
 
+    public function isSignatureRequired() {
+        if ($this->pAuthRs->Signature_Required->getStoredVal() == 1) {
+            return TRUE;
+        }
+        return FALSE;
+    }
+
     public function getResponseCode() {
         if ($this->pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Declined) {
             return '001';

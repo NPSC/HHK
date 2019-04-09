@@ -1357,6 +1357,7 @@ CREATE TABLE if not exists `payment_auth` (
   `Reference_Num` varchar(45) NOT NULL DEFAULT '',
   `AcqRefData` varchar(200) NOT NULL DEFAULT '',
   `ProcessData` varchar(200) NOT NULL DEFAULT '',
+  `Signature_Required` INT(4) NOT NULL DEFAULT 1,
   `CVV` varchar(45) NOT NULL DEFAULT '',
   `Serialized_Details` varchar(1000) NOT NULL DEFAULT '',
   `Status_Code` varchar(5) NOT NULL DEFAULT '',
