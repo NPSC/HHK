@@ -781,8 +781,8 @@ $uS->guestId = $id;
             <form action="GuestEdit.php" method="post" id="form1" name="form1" >
                 <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
 				<div class="ui-widget-content ui-corner-all" style="float: left" id="hhk-guest-photo">
-					<img src="https://dev.wireland.me/HHK/house/ws_guestPhoto.php">
-					<button data-uppload-button="true" class="ui-button ui-corner-all ui-widget" style="display:block;">
+					<img id="guestPhoto" src="ws_resc.php?cmd=getguestphoto&guestId=<?php echo $uS->guestId; ?>" width="100" height="100">
+					<button data-uppload-button="true" class="ui-button ui-corner-all ui-widget" style="display:block; padding:.4em .5em">
 						<span class="ui-icon ui-icon-person"></span>Upload
 					</button>
 				</div>
@@ -949,18 +949,31 @@ $uS->guestId = $id;
 		    	new Uppload({
 			    uploadFunction: (file, metadata) => {
 			        return new Promise((resolve, reject) => {
-				        console.log("file: " + file);
-			            fetch("testUpload.php", {
-			                method: "POST",
-			                body: file
-			            })
-			                .then(response => response.json())
-			                .then(json => {
-				                console.log(json);
-			                    let url = json.url;
-			                    resolve(url);
-			                })
-			                .catch(error => reject(error));
+				        var formData = new FormData();
+						formData.append('cmd', 'putguestphoto');
+						formData.append('guestPhoto', file);
+						formData.append('guestId', <?php echo $uS->guestId; ?>);
+						
+						$.ajax({
+						    type: "POST",
+						    url: "ws_resc.php",
+						    dataType: "json",
+						    data: formData,
+						    //use contentType, processData for sure.
+						    contentType: false,
+						    processData: false,
+						    success: function(data) {
+						        if(data.error){
+							        reject(data.error);
+						        }else{
+							        resolve("success");
+							        $("#guestPhoto").prop("src", "ws_resc.php?cmd=getguestphoto&guestId=<?php echo $uS->guestId; ?>");
+						        }
+						    },
+						    error: function(error) {
+						        reject(error);
+						    }
+						});
 			        });
 			    },
 			    	services: [
