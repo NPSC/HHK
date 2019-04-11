@@ -154,7 +154,16 @@ function invPay(id, pbp, dialg) {
                 
             }
             
-            paymentReply(data, false);
+            paymentRedirect(data, $('#xform'));
+
+            if (data.success && data.success !== '') {
+                flagAlertMessage(data.success, 'success');
+            }
+
+            if (data.receipt && data.receipt !== '') {
+                showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
+            }
+            
             $('#btnInvGo').click();
     });
 }
