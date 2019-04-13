@@ -345,7 +345,7 @@ class HouseServices {
 
                             if (isset($post['resvChangeDate']) && $post['resvChangeDate'] != '') {
 
-                                $chDT = setTimeZone($uS, filter_var($post['resvChangeDate'], FILTER_SANITIZE_STRING));
+                                $chDT = new \DateTime(filter_var($post['resvChangeDate'], FILTER_SANITIZE_STRING));
                                 $chRoomDT = new \DateTime($chDT->format('Y-m-d') . ' ' . $now->format('H:i:s'));
 
                             } else {
@@ -425,7 +425,7 @@ class HouseServices {
                             }
                         }
 
-                        $coDT = setTimeZone($uS, $coDate);
+                        $coDT = new \DateTime($coDate);
 
                         $coDT->setTime($coHour, $coMin, 0);
 

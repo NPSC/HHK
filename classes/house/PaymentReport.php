@@ -335,6 +335,7 @@ class PaymentReport {
         $payDetail = '';
         $payStatus = $p['Payment_Status_Title'];
         $dateDT = new DateTime($p['Payment_Date']);
+        $timeDT = new DateTime($p['Payment_Timestamp'], new DateTimeZone($uS->tz));
 
         $payStatusAttr = array();
         $payType = $p['Payment_Method_Title'];
@@ -468,7 +469,6 @@ class PaymentReport {
             'Notes'=>$p['Payment_Note']
         );
 
-        $timeDT = new DateTime($p['Payment_Timestamp']);
 
         if ($isLocal) {
 
