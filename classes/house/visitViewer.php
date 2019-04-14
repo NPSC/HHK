@@ -983,7 +983,6 @@ class VisitView {
         $spans = array();
         $stays = array();
         $firstArrival = NULL;
-        $lastDeparture = NULL;
         $visitCheckedIn = FALSE;
 
         $lastSpanId = 0;
@@ -1147,7 +1146,7 @@ class VisitView {
             $visits[$s]['start'] = $spanStartDT;
             $visits[$s]['end'] = $spanEndDt;
 
-            $stayMsg = self::moveStaysDates($stays[$vRs->Span->getStoredVal()], $startDelta, $endDelta, $spanStartDT, $spanEndDt);
+            $stayMsg = self::moveStaysDates($stays[$vRs->Span->getStoredVal()], $startDelta, $endDelta, $visits[$s]);
 
             if ($stayMsg != '') {
                 return $stayMsg;
@@ -1295,7 +1294,7 @@ class VisitView {
      * @param int $endDelta
      * @param DateTime $spanEndDT
      */
-    protected static function moveStaysDates($stays, $startDelta, $endDelta, \DateTime $spanStartDT, \DateTime $spanEndDT) {
+    protected static function moveStaysDates($stays, $startDelta, $endDelta, $visits) {
 
         $uS = Session::getInstance();
 
@@ -1309,83 +1308,121 @@ class VisitView {
         $today = new \DateTime();
         $today->setTime(intval($uS->CheckOutTime), 0, 0);
 
+        $spanStartDT = DateTimeImmutable::createFromMutable($visits['start']->setTime(10,0,0));
+        $spanEndDT = DateTimeImmutable::createFromMutable($visits['end']->setTime(10,0,0));
+
+
         foreach ($stays as $stayRS) {
 
-            $checkInDT = new \DateTime($stayRS->Checkin_Date->getStoredVal());
-            $stayStartDT = new \DateTime($stayRS->Span_Start_Date->getStoredVal());
+            $checkInDT = new \DateTimeImmutable($stayRS->Checkin_Date->getStoredVal());
+            $stayStartDT = new \DateTimeImmutable($stayRS->Span_Start_Date->getStoredVal());
 
             if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
-                $stayEndDt = new \DateTime($stayRS->Expected_Co_Date->getStoredVal());
-                $stayEndDt->setTime(intval($uS->CheckOutTime),0,0);
+                $stayEndDt = new \DateTimeImmutable($stayRS->Expected_Co_Date->getStoredVal());
 
                 if ($stayEndDt < $tonight) {
-                    $stayEndDt = new \DateTime();
-                    $stayEndDt->setTime(intval($uS->CheckOutTime), 0, 0);
+                    $stayEnd = new \DateTimeImmutable();
+                    $stayEndDt = $stayEnd->setTime(intval($uS->CheckOutTime), 0, 0);
+
                 }
             } else {
-                $stayEndDt = new \DateTime($stayRS->Span_End_Date->getStoredVal());
+                $stayEndDt = new \DateTimeImmutable($stayRS->Span_End_Date->getStoredVal());
             }
 
 
             if ($endDelta < 0 && $startDelta < 0) {
                 // Move the entire stay back
 
-                $stayStartDT->sub($startInterval);
-                $checkInDT->sub($startInterval);
-                $stayEndDt->sub($endInterval);
+                $stayStartDT = $stayStartDT->sub($startInterval);
+                $checkInDT = $checkInDT->sub($startInterval);
+                $stayEndDt = $stayEndDt->sub($endInterval);
 
             } else if ($startDelta > 0 && $endDelta > 0) {
                 // Move entire stay ahead
 
-                $stayStartDT->add($startInterval);
-                $checkInDT->add($startInterval);
-                $stayEndDt->add($endInterval);
+                $stayStartDT = $stayStartDT->add($startInterval);
+                $checkInDT = $checkInDT->add($startInterval);
+                $stayEndDt = $stayEndDt->add($endInterval);
 
+
+            // Manipulate end of visit
             } else if ($startDelta == 0) {
-                // Manipulate end of visit
-
-                $testDT = new \DateTime($stayEndDt->format('Y-m-d H:i:s'));
 
                 if ($endDelta < 0) {
                     // Shrink
 
-                    // Checked out to late
                     // Checked in to late
                     if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
-                        // Is my Start Date after the new ending date?
+                        // Is my Start Date after the span ending date?
+                        if ($stayStartDT->setTime(10, 0, 0) > $spanEndDT) {
+                            return "Cannot shrink the visit span this far - a stay checks in after the new span end date.  ";
+                        }
 
                     } else {
+                        // checked in too late and cannot tolerate a 0 day stay.
+                        if ($stayStartDT->setTime(10, 0, 0) >= $spanEndDT) {
+                            return "Cannot shrink the visit span this far - a stay starts after the new span end date.  ";
+                        }
 
+                        // Dont shrink these
+                        if ($stayEndDt->setTime(10, 0, 0) <= $spanEndDT) {
+                            continue;
+                        }
                     }
+
+                    // Shrink to span end date.
+                    $stayEndDt = $spanEndDT->setTime(intval($uS->CheckOutTime),0,0);
+
                 } else if ($endDelta > 0) {
                     // Expand
 
                     if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
-                        $stayEndDt->add($endInterval);
+
+                        $stayEndDt = $stayEndDt->add($endInterval);
+
                     } else {
 
-                        $testDT->add($endInterval);
+                        $oldSpanEndDT = new \DateTime($visits['rs']->Span_End->getStoredVal());
+                        $oldSpanEndDT->setTime(10,0,0);
 
-                        if ($spanEndDT->diff($testDT, TRUE)->days < 1) {
-                            $stayEndDt->add($endInterval);
+                        // If ends on old span end date and the span is checked out, expand the stay.
+                        if ($oldSpanEndDT->diff($stayEndDt->setTime(10,0,0), TRUE)->days < 1 && $visits['rs']->Status->getStoredVal() != VisitStatus::CheckedIn) {
+                            $stayEndDt = $stayEndDt->add($endInterval);
                         }
                     }
                 }
 
+            // Manipulate Start of visit
             } else if ($endDelta == 0) {
-                // Manipulate Start of visit
 
                 if ($startDelta > 0) {
                     // Shrink
+
+                    if ($stayEndDt->setTime(10, 0, 0) <= $spanStartDT) {
+                        return "Cannot shrink the visit span this far - a stay checks out before or on the new span start date.  ";
+                    }
+
+                    if ($stayStartDT->setTime(10, 0, 0) >= $spanStartDT) {
+                        // ignore these
+                        continue;
+                    }
+
+                    // Shrink to span start date.
+                    $stayStartDT = $spanStartDT->setTime(intval($uS->CheckInTime),0,0);
+
                 } else if ($startDelta < 0) {
                     // Expand
 
+                    $oldSpanStartDT = new \DateTime($visits['rs']->Span_Start->getStoredVal());
+                    $oldSpanStartDT->setTIme(10,0,0);
+
+                    // If ends on old span end date, expand the stay.
+                    if ($oldSpanStartDT->diff($stayStartDT->setTime(10,0,0), TRUE)->days < 1) {
+                        $stayStartDT = $stayStartDT->sub($startDelta);
+                    }
                 }
-
             }
-
-
 
             // Validity check
             $endDATE = new \DateTime($stayEndDt->format('Y-m-d 00:00:00'));
@@ -1402,17 +1439,12 @@ class VisitView {
             $stayRS->Checkin_Date->setNewVal($checkInDT->format('Y-m-d H:i:s'));
             $stayRS->Span_Start_Date->setNewVal($stayStartDT->format('Y-m-d H:i:s'));
 
-            
-            if ($stayRS->Span_End_Date->getStoredVal() != '') {
+            if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
+                $stayRS->Expected_Co_Date->setNewVal($spanEndDT->format('Y-m-d H:i:s'));
+            } else {
                 $stayRS->Span_End_Date->setNewVal($stayEndDt->format('Y-m-d H:i:s'));
-            }
-
-            if ($stayRS->Checkout_Date->getStoredVal() != '') {
                 $stayRS->Checkout_Date->setNewVal($stayEndDt->format('Y-m-d H:i:s'));
             }
-
-            $stayRS->Expected_Co_Date->setNewVal($expectedDeparture->format('Y-m-d H:i:s'));
-
         }
 
         return '';
