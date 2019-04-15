@@ -181,6 +181,9 @@ class RoomChooser {
 //            }
 
             return $this->createAddedMarkup($dbh, TRUE, $replaceRoomSel);
+
+        } else {
+            return $this->createStaticMarkup($dbh);
         }
     }
 

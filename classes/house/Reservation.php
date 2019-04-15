@@ -298,9 +298,14 @@ WHERE r.idReservation = " . $rData->getIdResv());
             $labels = new Config_Lite(LABEL_FILE);
             $psgMembers = array();
             $idVisit = 0;
+            $span = 0;
 
             if (isset($post['idVisit'])) {
                 $idVisit = intval(filter_var($post['idVisit'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            if (isset($post['span'])) {
+                $span = intval(filter_var($post['span'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
             $idPsg = intval(filter_var($post['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
@@ -347,7 +352,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             // Create new stay controls for each member
             self::findConflictingReservations($dbh, $idPsg, $idResv, $psgMembers, $arrivalDT, $departDT, $labels->getString('guestEdit', 'reservationTitle', 'Reservation'));
-            self::findConflictingStays($dbh, $psgMembers, $arrivalDT, $idPsg, $idVisit);
+            self::findConflictingStays($dbh, $psgMembers, $arrivalDT, $idPsg, $idVisit, $span);
 
             $events = [];
 
@@ -713,7 +718,7 @@ where rg.idReservation =" . $r['idReservation']);
 
     }
 
-    protected static function findConflictingStays(\PDO $dbh, array &$psgMembers, \DateTime $arrivalDT, $idPsg, $idVisit = 0) {
+    protected static function findConflictingStays(\PDO $dbh, array &$psgMembers, \DateTime $arrivalDT, $idPsg, $idVisit = 0, $span = 0) {
 
         $whStays = '';
         $rooms = array();
@@ -2210,7 +2215,6 @@ class CheckedoutReservation extends CheckingIn {
 
         // Room Chooser
         $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
-        $dataArray['rChooser'] = $roomChooser->createAddGuestMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN), $rmSelMessage);
 
         $resvSectionHeaderPrompt = 'Add Guests; ';
 
@@ -2226,6 +2230,10 @@ class CheckedoutReservation extends CheckingIn {
             $resvSectionHeaderPrompt = 'The ' . $labels->getString('guestEdit', 'psgTab', 'PSG') . ' is already at maximum occupancy for our House';
             $dataArray['hideCkinBtn'] = TRUE;
         }
+
+        // Room Chooser
+        $dataArray['rChooser'] = $roomChooser->createAddGuestMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN), $rmSelMessage);
+
 
         // Reservation status title
         $dataArray['rStatTitle'] = 'Adding Guests';

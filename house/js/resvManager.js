@@ -1254,6 +1254,7 @@ function resvManager(initData) {
                 idPsg: idPsg,
                 idResv: idResv,
                 idVisit: idVisit,
+                span: span,
                 dt1: dates["date1"].getFullYear() + '-' + (dates["date1"].getMonth() + 1) + '-' + dates["date1"].getDate(),
                 dt2: dates["date2"].getFullYear() + '-' + (dates["date2"].getMonth() + 1) + '-'  + dates["date2"].getDate(),
                 mems:people.list()};
@@ -1651,8 +1652,7 @@ function resvManager(initData) {
 
         function setUp(data) {
 
-            $rDiv = // $('<div/>').addClass('ui-widget-content ui-corner-bottom hhk-tdbox').prop('id', 'divResvDetail').css('padding', '5px');
-                    $('<div id="divResvDetail" style="padding:2px; float:left; width: 100%;" class="ui-widget-content ui-corner-bottom hhk-tdbox"/>');
+            $rDiv = $('<div/>').addClass(' hhk-tdbox').prop('id', 'divResvDetail').css('padding', '5px');
             
             // Room Chooser section
             if (data.resv.rdiv.rChooser !== undefined) {
