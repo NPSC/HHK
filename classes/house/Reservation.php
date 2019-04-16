@@ -297,7 +297,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             $labels = new Config_Lite(LABEL_FILE);
             $psgMembers = array();
-            $idVisit = 0;
+            $idVisit = -1;
             $span = 0;
 
             if (isset($post['idVisit'])) {
@@ -352,7 +352,43 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             // Create new stay controls for each member
             self::findConflictingReservations($dbh, $idPsg, $idResv, $psgMembers, $arrivalDT, $departDT, $labels->getString('guestEdit', 'reservationTitle', 'Reservation'));
-            self::findConflictingStays($dbh, $psgMembers, $arrivalDT, $idPsg, $idVisit, $span);
+
+            if ($idVisit == -1) {
+
+                self::findConflictingStays($dbh, $psgMembers, $arrivalDT, $idPsg);
+
+            } else {
+                // Adding a stay.
+
+                $whStays = '';
+                foreach ($psgMembers as $m) {
+                    if ($m->getId() != 0 && $m->isBlocked() === FALSE) {
+                        $whStays .= ',' . $m->getId();
+                    }
+                }
+
+                $vstmt = $dbh->query("Select v.idVisit, v.Span, v.Status as Visit_Status, v.Span_Start, ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)), rm.Title, s.idName "
+                    . " from visit v join stays s on v.idVisit = s.idVisit and v.Span = s.Visit_Span"
+                        . " join room rm on s.idRoom = rm.idRoom"
+                    . " where s.idName in (" . substr($whStays, 1) . ") and DATE(s.Span_Start_Date) < DATE('" . $departDT->format('Y-m-d') . "') and DATE(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) >= DATE('" . $arrivalDT->format('Y-m-d') . "')");
+
+
+                while ($s = $vstmt->fetch(\PDO::FETCH_ASSOC)) {
+
+                    foreach ($psgMembers as $mem) {
+
+                        if ($mem->getId() == $s['idName']) {
+
+                            if ($s['idVisit'] != $idVisit) {
+                                $psgMembers[$m->getPrefix()]->setStayObj(new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'], 'room'=>$s['Title'])));
+                            } else {
+                                $psgMembers[$mem->getPrefix()]->setStayObj(new PSGMemVisit(array()));
+                            }
+                            continue;
+                        }
+                    }
+                }
+            }
 
             $events = [];
 
@@ -718,7 +754,7 @@ where rg.idReservation =" . $r['idReservation']);
 
     }
 
-    protected static function findConflictingStays(\PDO $dbh, array &$psgMembers, \DateTime $arrivalDT, $idPsg, $idVisit = 0, $span = 0) {
+    protected static function findConflictingStays(\PDO $dbh, array &$psgMembers, \DateTime $arrivalDT, $idPsg) {
 
         $whStays = '';
         $rooms = array();
@@ -749,14 +785,10 @@ where rg.idReservation =" . $r['idReservation']);
                 // These guests are already staying
 
                 foreach ($psgMembers as $m) {
-                    if ($m->getId() == $s['idName']) {
 
-                        if ($idVisit == 0 || $idVisit != $s['idVisit']) {
-                            $psgMembers[$m->getPrefix()]->setStayObj(new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'], 'room'=>$s['Title'])));
-                        } else {
-                            $psgMembers[$m->getPrefix()]->setStayObj(new PSGMemVisit(array()));
-                        }
-                    }
+                    if ($m->getId() == $s['idName']) {
+                        $psgMembers[$m->getPrefix()]->setStayObj(new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'], 'room'=>$s['Title'])));
+                   }
                 }
 
                 // Count different rooms
@@ -2137,7 +2169,20 @@ class StayingReservation extends CheckingIn {
 
 class CheckedoutReservation extends CheckingIn {
 
+    protected $stays;
+
     public function createMarkup(\PDO $dbh) {
+
+        if ($this->reserveData->getIdVisit() > 0 && $this->reserveData->getSpan() >= 0) {
+            $vstmt = $dbh->query("Select v.Status as Visit_Status, v.Span_Start, v.Span_End, v.idPrimaryGuest, s.* from visit v join stays s on v.idVisit = s.idVisit and v.Span = s.Visit_Span "
+                . "where v.idVisit = " . $this->reserveData->getIdVisit() . " and v.Span = " . $this->reserveData->getSpan());
+
+            $this->stays = $vstmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        } else {
+            throw new Hk_Exception_Runtime('The visit is not defined.');
+        }
+
 
         $this->createFamilyMarkup($dbh);
 
@@ -2157,37 +2202,24 @@ class CheckedoutReservation extends CheckingIn {
 
     protected function createFamilyMarkup(\PDO $dbh) {
 
+        foreach ($this->stays as $g) {
+            // update the span id
+            $this->reserveData->setSpan($g['Visit_Span']);
 
-        if ($this->reserveData->getIdVisit() > 0 && $this->reserveData->getSpan() >= 0) {
+            $mem = $this->reserveData->findMemberById($g['idName']);
 
-            // set guests staying
-            $stayRss = $dbh->query("Select s.idName, v.idPrimaryGuest, s.Visit_Span from stays s "
-                    . " join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span "
-                    . " where s.idVisit = " . $this->reserveData->getIdVisit() . " and s.`Visit_Span` = " . $this->reserveData->getSpan());
+            if ($mem !== NULL) {
 
+                $mem->setStayObj(new PSGMemVisit(array()));
 
-            while ($g = $stayRss->fetch(PDO::FETCH_ASSOC)) {
-
-                // update the span id
-                $this->reserveData->setSpan($g['Visit_Span']);
-
-                $mem = $this->reserveData->findMemberById($g['idName']);
-
-                if ($mem !== NULL) {
-
-                    $mem->setStayObj(new PSGMemVisit(array()));
-
-                    if ($g['idPrimaryGuest'] == $g['idName']) {
-                        $mem->setPrimaryGuest(TRUE);
-                    } else {
-                        $mem->setPrimaryGuest(FALSE);
-                    }
-
-                    $this->reserveData->setMember($mem);
+                if ($g['idPrimaryGuest'] == $g['idName']) {
+                    $mem->setPrimaryGuest(TRUE);
+                } else {
+                    $mem->setPrimaryGuest(FALSE);
                 }
+
+                $this->reserveData->setMember($mem);
             }
-        } else {
-            throw new Hk_Exception_Runtime('The visit is not defined.');
         }
 
         $this->reserveData->setFamilySection($this->family->createFamilyMarkup($dbh, $this->reserveData));
@@ -2203,6 +2235,9 @@ class CheckedoutReservation extends CheckingIn {
         $nowDT = new \DateTime();
         $nowDT->setTime(intval($uS->CheckInTime), 0, 0);
 
+        $spanStartDT = new \DateTime($this->stays[0]['Span_Start']);
+        $spanEndDT = new \DateTime($this->stays[0]['Span_End']);
+
         $resv = new Reservation_1($this->reservRs);
 
         // Check for max rooms per patient
@@ -2214,15 +2249,15 @@ class CheckedoutReservation extends CheckingIn {
 
 
         // Room Chooser
-        $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
+        $roomChooser = new RoomChooser($dbh, $resv, 1, $spanStartDT, $spanEndDT);
 
         $resvSectionHeaderPrompt = 'Add Guests; ';
 
         if ($roomChooser->getCurrentGuests() < $roomChooser->getSelectedResource()->getMaxOccupants()) {
 
             $this->reserveData
-                    ->setArrivalDT(new \DateTime($this->reservRs->Actual_Arrival->getStoredVal()))
-                    ->setDepartureDT(new \DateTime($this->reservRs->Actual_Departure->getStoredVal()));
+                    ->setArrivalDT($spanStartDT)
+                    ->setDepartureDT($spanEndDT);
 
             $dataArray = $this->createExpDatesControl();
 

@@ -13,6 +13,7 @@
  */
 $(document).ready(function() {
     "use strict";
+    var dateFormat = $('dateFormat').val();
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
             var ul = this.menu.element;
