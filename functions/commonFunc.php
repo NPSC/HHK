@@ -628,7 +628,7 @@ function showGuestPicure ($idGuest, $widthPx) {
         HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-plusthick'))
         , array("class"=>"ui-button ui-corner-all ui-widget", 'style'=>'padding: .3em; margin-right:0.3em;', 'data-uppload-button'=>'true')) . HTMLContainer::generateMarkup('button',
         htmlContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
-        , array("class"=>"ui-button ui-corner-all ui-widget", 'style'=>'padding: .3em'))
+        , array("class"=>"ui-button ui-corner-all ui-widget delete-guest-photo", 'style'=>'padding: .3em'))
         , array('style'=>"position:absolute; top:25%; left:20%; width: 100%; height: 100%; display:none;", 'id'=>'hhk-guest-photo-actions'))
         ,array('class'=>'hhk-panel', 'style'=>'display: inline-block; position:relative', 'id'=>'hhk-guest-photo'));
 
@@ -641,7 +641,7 @@ function showGuestPicure ($idGuest, $widthPx) {
  * @param $_FILES['photo'] $photo
  * @param int $newwidth
  * @param int $newheight
- * @return photo data
+ * @return binary photo data
  */
 
 function makeThumbnail($photo, $newwidth, $newheight){

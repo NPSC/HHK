@@ -132,7 +132,7 @@ try {
 	        
 	        $stmt = $dbh->query("SELECT * FROM name_demog WHERE idName = $guestId");
 			$results = $stmt->fetchAll();
-			if(count($results) > 0){
+			if($results[0]['Guest_Photo_Id'] > 0){
 				$idPhoto = $results[0]['Guest_Photo_Id'];
 				$update = 'UPDATE photo SET Image_Type = "' . $guestPhoto['type'] . '", Image = "' . $content . '", Updated_By = "' . $uS->username . '" WHERE idPhoto = ' . $idPhoto . ';';
 				$dbh->exec($update);
@@ -142,6 +142,20 @@ try {
 				$idPhoto = $dbh->lastInsertId();
 				$dbh->exec("UPDATE name_demog SET Guest_Photo_Id = $idPhoto WHERE idName = $guestId");
 			}
+        }
+		break;
+		
+	case 'deleteguestphoto':
+    
+        $guestId = filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT);
+        
+        if (is_null($guestId) || $guestId === FALSE) {
+            throw new Exception("GuestId missing");
+            break;
+		}else{
+			$idPhoto = $results[0]['Guest_Photo_Id'];
+			$delete = "CALL delete_guest_photo($guestId)";
+			$dbh->exec($delete);
         }
 		break;
     case 'ulimage':

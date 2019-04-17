@@ -510,6 +510,7 @@ $(document).ready(function () {
 				        }else{
 					        resolve("success");
 					        $("#guestPhoto").prop("src", "ws_resc.php?cmd=getguestphoto&guestId=" + guestId);
+					        $(".delete-guest-photo").show();
 				        }
 				    },
 				    error: function(error) {
@@ -519,20 +520,23 @@ $(document).ready(function () {
 	        });
 	    },
 	    	services: [
-		    	"upload",
 		    	"camera",
-		    	"import"
+		    	"upload"
 	    	],
+	    	defaultService: "camera",
 	    	allowedTypes: "image",
 	    	crop: {
 		    	aspectRatio: 1/1,
 	    	}
 	});
 	
+	$(".uppload-branding").hide(); //hide Get Uppload branding from upload box
+	
 	$(document).on("click", "#hhk-guest-photo", function(e){
 		e.preventDefault();
 	});
 	
+	//toggle guest photo action buttons on hover
 	$("#hhk-guest-photo").on({
 		mouseenter: function () {
 			$("#hhk-guest-photo-actions").show();
@@ -542,5 +546,27 @@ $(document).ready(function () {
 			$("#hhk-guest-photo-actions").hide();
 			$("#hhk-guest-photo img").fadeTo(100, 1);
 		}
+	});
+	
+	$(".delete-guest-photo").on("click", function(e){
+		$.ajax({
+		    type: "POST",
+		    url: "ws_resc.php",
+		    dataType: "json",
+		    data: {
+			    cmd: "deleteguestphoto",
+			    guestId: guestId
+			},
+		    success: function(data) {
+		        if(data.error){
+			        console.log(data.error);
+		        }else{
+			        $("#guestPhoto").prop("src", "ws_resc.php?cmd=getguestphoto&guestId=" + guestId);
+		        }
+		    },
+		    error: function(error) {
+		        console.log(error);
+		    }
+		});
 	});
 });
