@@ -101,7 +101,7 @@ try {
 	    }else{
              $path = realpath('../images/defaultGuestPhoto.png');
 			if(file_exists($path)){
-				header("Content-Type: " . mime_content_type($path));
+				header("Content-Type: Image/PNG");
 				header("Content-Length: " . filesize($path));
 				echo file_get_contents($path);
 				exit;
@@ -114,6 +114,7 @@ try {
     
         $guestId = filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT);
         $guestPhoto = $_FILES["guestPhoto"];
+        
         if (is_null($guestId) || $guestId === FALSE) {
             throw new Exception("GuestId missing");
             break;
@@ -121,15 +122,26 @@ try {
 	        throw new Exception("guestPhoto missing");
 	        break;
         }else{
-	        $mime = $guestPhoto['type'];
-	        $content = file_get_contents($guestPhoto['tmp_name']);
+	        if($uS->MemberImageSizePx > 100){
+	            $content = makeThumbnail($guestPhoto, $uS->MemberImageSizePx, $uS->MemberImageSizePx);
+	        }else{
+		        $content = makeThumbnail($guestPhoto, 100, 100);
+	        }
+	        
 	        $content = base64_encode($content);
-	        $insert = 'INSERT INTO photo (Image_Type, Image, Updated_By) VALUES ("' . $mime . '", "' . $content . '", "' . $uS->username . '");';
-
-	        $dbh->exec($insert);
-	        $idPhoto = $dbh->lastInsertId();
-	        $dbh->exec("UPDATE name_demog SET Guest_Photo_Id = $idPhoto WHERE idName = $guestId");
-
+	        
+	        $stmt = $dbh->query("SELECT * FROM name_demog WHERE idName = $guestId");
+			$results = $stmt->fetchAll();
+			if(count($results) > 0){
+				$idPhoto = $results[0]['Guest_Photo_Id'];
+				$update = 'UPDATE photo SET Image_Type = "' . $guestPhoto['type'] . '", Image = "' . $content . '", Updated_By = "' . $uS->username . '" WHERE idPhoto = ' . $idPhoto . ';';
+				$dbh->exec($update);
+			}else{
+				$insert = 'INSERT INTO photo (Image_Type, Image, Updated_By) VALUES ("' . $guestPhoto['type'] . '", "' . $content . '", "' . $uS->username . '");';
+				$dbh->exec($insert);
+				$idPhoto = $dbh->lastInsertId();
+				$dbh->exec("UPDATE name_demog SET Guest_Photo_Id = $idPhoto WHERE idName = $guestId");
+			}
         }
 		break;
     case 'ulimage':

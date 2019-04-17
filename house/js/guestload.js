@@ -486,4 +486,61 @@ $(document).ready(function () {
 
     // init dirrty
     $("#form1").dirrty();
+    
+    //GuestPhoto
+    new Uppload({
+	    uploadFunction: (file, metadata) => {
+	        return new Promise((resolve, reject) => {
+		        var formData = new FormData();
+				formData.append('cmd', 'putguestphoto');
+				formData.append('guestPhoto', file);
+				formData.append('guestId', guestId);
+				
+				$.ajax({
+				    type: "POST",
+				    url: "ws_resc.php",
+				    dataType: "json",
+				    data: formData,
+				    //use contentType, processData for sure.
+				    contentType: false,
+				    processData: false,
+				    success: function(data) {
+				        if(data.error){
+					        reject(data.error);
+				        }else{
+					        resolve("success");
+					        $("#guestPhoto").prop("src", "ws_resc.php?cmd=getguestphoto&guestId=" + guestId);
+				        }
+				    },
+				    error: function(error) {
+				        reject(error);
+				    }
+				});
+	        });
+	    },
+	    	services: [
+		    	"upload",
+		    	"camera",
+		    	"import"
+	    	],
+	    	allowedTypes: "image",
+	    	crop: {
+		    	aspectRatio: 1/1,
+	    	}
+	});
+	
+	$(document).on("click", "#hhk-guest-photo", function(e){
+		e.preventDefault();
+	});
+	
+	$("#hhk-guest-photo").on({
+		mouseenter: function () {
+			$("#hhk-guest-photo-actions").show();
+			$("#hhk-guest-photo img").fadeTo(100, 0.5);
+		},
+		mouseleave: function () {
+			$("#hhk-guest-photo-actions").hide();
+			$("#hhk-guest-photo img").fadeTo(100, 1);
+		}
+	});
 });

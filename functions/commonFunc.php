@@ -610,3 +610,73 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
 
     return $rowsAffected;
 }
+
+/**
+ * Show guest photo HTML
+ *
+ * @param int $idGuest
+ * @param int $widthPx - desired pixel width of image
+ * @return HTML
+ */
+
+function showGuestPicure ($idGuest, $widthPx) {
+    
+    return HTMLContainer::generateMarkup('div', 
+        HTMLContainer::generateMarkup('img ', '', array('id'=>'guestPhoto', 'src'=>"ws_resc.php?cmd=getguestphoto&guestId=$idGuest", 'width'=>$widthPx)) . 
+        HTMLContainer::generateMarkup('div', 
+        HTMLContainer::generateMarkup('button',
+        HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-plusthick'))
+        , array("class"=>"ui-button ui-corner-all ui-widget", 'style'=>'padding: .3em; margin-right:0.3em;', 'data-uppload-button'=>'true')) . HTMLContainer::generateMarkup('button',
+        htmlContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
+        , array("class"=>"ui-button ui-corner-all ui-widget", 'style'=>'padding: .3em'))
+        , array('style'=>"position:absolute; top:25%; left:20%; width: 100%; height: 100%; display:none;", 'id'=>'hhk-guest-photo-actions'))
+        ,array('class'=>'hhk-panel', 'style'=>'display: inline-block; position:relative', 'id'=>'hhk-guest-photo'));
+
+}
+
+
+/**
+ * create thumbnail from uploaded photo
+ *
+ * @param $_FILES['photo'] $photo
+ * @param int $newwidth
+ * @param int $newheight
+ * @return photo data
+ */
+
+function makeThumbnail($photo, $newwidth, $newheight){
+	$mime = "";
+	$content = "";
+	
+	if($photo['type'] && $photo['tmp_name']){
+		$mime = $photo['type'];
+		$file = $photo['tmp_name'];
+		$temp = imagecreatetruecolor($newwidth, $newheight); //temp GD image object
+		list($oldwidth, $oldheight) = getimagesize($file); //get current width & height
+		
+		ob_start(); //start object buffer to capture image data
+		switch($mime){
+			case 'image/jpg':
+			case 'image/jpeg':
+				$image = imagecreatefromjpeg($file); //create GD image from input file
+				//imagecopyresampled ( resource $dst_image , resource $src_image , int $dst_x , int $dst_y , int $src_x , int $src_y , int $dst_w , int $dst_h , int $src_w , int $src_h ) : bool
+				imagecopyresampled($temp, $image, 0, 0, 0, 0, $newwidth, $newheight, $oldwidth, $oldheight); //resize image and save to $temp object
+				imagejpeg($temp); //output image
+				break;
+			case 'image/png':
+				$image = imagecreatefrompng($file); //create GD image from input file
+				imagecopyresampled($temp, $image, 0, 0, 0, 0, $newwidth, $newheight, $oldwidth, $oldheight); //resize image and save to $temp object
+				imagepng($temp); //output image
+				break;
+			default:
+				throw new Exception("File Type not supported");
+				break;
+		}
+		$thumbnailData = ob_get_contents(); //send object buffer/image data to variable
+		ob_end_clean(); //close object buffer
+		
+		return $thumbnailData;
+	}else{
+		return false;
+	}
+}

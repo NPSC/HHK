@@ -671,6 +671,10 @@ if ($psg->getIdPsg() > 0) {
     $psgOnly = TRUE;
 }
 
+$guestPhotoMarkup = "";
+if($uS->ShowGuestPhoto){
+	$guestPhotoMarkup = showGuestPicure($name->get_idName(), $uS->MemberImageSizePx);
+}
 
 $guestName = "<span style='font-size:2em;'>$niceName</span>";
 
@@ -780,15 +784,12 @@ $uS->guestId = $id;
             <?php if ($showSearchOnly === FALSE) { ?>
             <form action="GuestEdit.php" method="post" id="form1" name="form1" >
                 <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
-				<div class="ui-widget-content ui-corner-all" style="float: left" id="hhk-guest-photo">
-					<img id="guestPhoto" src="ws_resc.php?cmd=getguestphoto&guestId=<?php echo $uS->guestId; ?>" width="100" height="100">
-					<button data-uppload-button="true" class="ui-button ui-corner-all ui-widget" style="display:block; padding:.4em .5em">
-						<span class="ui-icon ui-icon-person"></span>Upload
-					</button>
-				</div>
-                <div style="float:left;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
-                    <?php echo $nameMarkup; ?>
-                    <?php echo $contactLastUpdated; ?>
+                <div style="float:left; margin-bottom: 10px;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
+	                <?php echo $guestPhotoMarkup; ?>
+	                <div class="hhk-panel" style="display: inline-block">
+                        <?php echo $nameMarkup; ?>
+                       <?php echo $contactLastUpdated; ?>
+	                </div>
                 </div>
                 <div style="clear:both;"></div>
                 <div class="hhk-showonload hhk-tdbox" style="display:none;" >
@@ -940,58 +941,10 @@ $uS->guestId = $id;
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
             var resultMessage = '<?php echo $resultMessage; ?>';
+            var guestId = '<?php echo $uS->guestId; ?>';
         </script>
         
         <script type="text/javascript" src="../js/uppload.js"></script>
         <script type="text/javascript" src="js/guestload-min.js"></script>
-        <script type="text/javascript">
-	    	$(document).ready(function(){
-		    	new Uppload({
-			    uploadFunction: (file, metadata) => {
-			        return new Promise((resolve, reject) => {
-				        var formData = new FormData();
-						formData.append('cmd', 'putguestphoto');
-						formData.append('guestPhoto', file);
-						formData.append('guestId', <?php echo $uS->guestId; ?>);
-						
-						$.ajax({
-						    type: "POST",
-						    url: "ws_resc.php",
-						    dataType: "json",
-						    data: formData,
-						    //use contentType, processData for sure.
-						    contentType: false,
-						    processData: false,
-						    success: function(data) {
-						        if(data.error){
-							        reject(data.error);
-						        }else{
-							        resolve("success");
-							        $("#guestPhoto").prop("src", "ws_resc.php?cmd=getguestphoto&guestId=<?php echo $uS->guestId; ?>");
-						        }
-						    },
-						    error: function(error) {
-						        reject(error);
-						    }
-						});
-			        });
-			    },
-			    	services: [
-				    	"upload",
-				    	"camera",
-				    	"import"
-			    	],
-			    	allowedTypes: "image",
-			    	crop: {
-				    	aspectRatio: 1/1,
-			    	}
-			});
-			
-			$(document).on("click", "#hhk-guest-photo", function(e){
-				e.preventDefault();
-			});
-				
-	    	});
-	    </script>
     </body>
 </html>
