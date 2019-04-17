@@ -55,8 +55,8 @@ class UpdateSite {
             $patch = new Patch();
 
             // Update config file
-            $this->resultAccumulator .= $patch->loadConfigUpdates('../patch/patchSite.cfg', $config);
-            $this->resultAccumulator .= $patch->deleteConfigItems('../patch/deleteSiteItems.cfg', $config);
+//            $this->resultAccumulator .= $patch->loadConfigUpdates('../patch/patchSite.cfg', $config);
+//            $this->resultAccumulator .= $patch->deleteConfigItems('../patch/deleteSiteItems.cfg', $config);
 
             // Update labels file
             $this->resultAccumulator .= $patch->loadConfigUpdates('../patch/patchLabel.cfg', $labels);
