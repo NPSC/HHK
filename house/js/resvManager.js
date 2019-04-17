@@ -1102,11 +1102,20 @@ function resvManager(initData) {
                 var gstDate = $('#gstDate'),
                     gstCoDate = $('#gstCoDate'),
                     nextDays = parseInt(data.defdays, 10),
+                    stDate = false,
+                    enDate = false,
                     drp;
 
                 // default number of days for a new stay.
                 if (isNaN(nextDays) || nextDays < 1) {
                     nextDays = 21;
+                }
+                
+                if (data.startDate) {
+                    stDate = data.startDate;
+                }
+                if (data.endDate) {
+                    enDate = data.endDate;
                 }
 
                 drp = $('#spnRangePicker').dateRangePicker({
@@ -1131,7 +1140,9 @@ function resvManager(initData) {
                     {
                         gstDate.val(s1);
                         gstCoDate.val(s2);
-                    }
+                    },
+                    startDate: stDate,
+                    endDate: enDate
                 })
                 
                 if (data.updateOnChange) {

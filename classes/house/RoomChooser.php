@@ -170,15 +170,11 @@ class RoomChooser {
         }
     }
 
-    public function createAddGuestMarkup(\PDO $dbh, $isAuthorized, $replaceRoomSel) {
+    public function createAddGuestMarkup(\PDO $dbh, $isAuthorized, $replaceRoomSel, $visitStatus = '') {
 
-        if ($this->resv->getStatus() === ReservationStatus::Staying) {
+        if (($visitStatus == '' || $visitStatus == VisitStatus::CheckedIn) && $this->resv->getStatus() === ReservationStatus::Staying) {
 
             $this->findResources($dbh, $isAuthorized, FALSE, 0);
-//
-//            if (isset($rescs[$this->resv->getIdResource()])) {
-//                $this->selectedResource = $rescs[$this->resv->getIdResource()];
-//            }
 
             return $this->createAddedMarkup($dbh, TRUE, $replaceRoomSel);
 

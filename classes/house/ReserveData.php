@@ -47,6 +47,7 @@ class ReserveData {
     protected $idVisit = 0;
     protected $span = 0;
     protected $spanStatus = '';
+    protected $spanStartDT = NULL;
     protected $forceNewPsg = FALSE;
     protected $forceNewResv = FALSE;
     protected $fullName = '';
@@ -282,6 +283,10 @@ class ReserveData {
         return $this->spanStatus;
     }
 
+    public function getSpanStartDT() {
+        return $this->spanStartDT;
+    }
+
     public function getConcurrentRooms() {
         return $this->concurrentRooms;
     }
@@ -458,6 +463,11 @@ class ReserveData {
 
     public function setSpanStatus($id) {
         $this->spanStatus = $id;
+        return $this;
+    }
+
+    public function setSpanStartDT($id) {
+        $this->spanStartDT = new DateTimeImmutable($id);
         return $this;
     }
 
