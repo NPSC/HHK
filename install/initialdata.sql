@@ -475,7 +475,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('MaxDonate','100000','i','d','Maximum amount amount for a single payment'),
 ('MaxExpected','90','i','h','Maximum Expected days out for a visit'),
 ('MaxRepeatEvent','53','i','v','Maximum number of times to repeat a calendar event.'),
-('MemberImageSizePx', '50', 'i', 'h', 'Guest image thumbnail size'),
+('MemberImageSizePx', '75', 'i', 'h', 'Guest image thumbnail size in pixels'),
 ('NightsCounter', 'calYear', 's', 'h','Count nights by year (calYear) or by grand total.'),
 ('noreplyAddr', '', 's', 'a', 'Houses no-reply email address.'),
 ('OpenCheckin','true','b','h','Allow walk-ups to check in'),
