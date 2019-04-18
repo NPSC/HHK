@@ -490,83 +490,83 @@ $(document).ready(function () {
     
     //GuestPhoto
     new Uppload({
-	    uploadFunction: (file) => {
-	        return new Promise((resolve, reject) => {
-                    var formData = new FormData();
-                    formData.append('cmd', 'putguestphoto');
-                    formData.append('guestId', memData.id);
-                    formData.append('guestPhoto', file);
+        uploadFunction: (file) => {
+            return new Promise((resolve, reject) => {
+                var formData = new FormData();
+                formData.append('cmd', 'putguestphoto');
+                formData.append('guestId', memData.id);
+                formData.append('guestPhoto', file);
 
-                    $.ajax({
-                        type: "POST",
-                        url: "ws_resc.php",
-                        dataType: "json",
-                        data: formData,
-                        //use contentType, processData for sure.
-                        contentType: false,
-                        processData: false,
-                        success: function(data) {
-                            if(data.error){
-                                reject(data.error);
-                            }else{
-                                resolve("success");
-                                $("#guestPhoto").prop("src", "ws_resc.php?cmd=getguestphoto&guestId=" + memData.id + "r&x="+new Date().getTime());
-                                $(".delete-guest-photo").show();
-                            }
-                        },
-                        error: function(error) {
-                            reject(error);
+                $.ajax({
+                    type: "POST",
+                    url: "ws_resc.php",
+                    dataType: "json",
+                    data: formData,
+                    //use contentType, processData for sure.
+                    contentType: false,
+                    processData: false,
+                    success: function(data) {
+                        if(data.error){
+                            reject(data.error);
+                        }else{
+                            resolve("success");
+                            $("#guestPhoto").prop("src", "ws_resc.php?cmd=getguestphoto&guestId=" + memData.id + "r&x="+new Date().getTime());
+                            $(".delete-guest-photo").show();
                         }
-                    });
-                });
-            },
-            services: [
-                "camera",
-                "upload"
-            ],
-            defaultService: "camera",
-            allowedTypes: "image",
-            crop: {
-                aspectRatio: 1/1
-            }
-	});
-	
-	$(".uppload-branding").hide(); //hide Get Uppload branding from upload box
-	
-	$(document).on("click", "#hhk-guest-photo", function(e){
-            e.preventDefault();
-	});
-	
-	//toggle guest photo action buttons on hover
-	$("#hhk-guest-photo").on({
-            mouseenter: function () {
-                $("#hhk-guest-photo-actions").show();
-                $("#hhk-guest-photo img").fadeTo(100, 0.5);
-            },
-            mouseleave: function () {
-                $("#hhk-guest-photo-actions").hide();
-                $("#hhk-guest-photo img").fadeTo(100, 1);
-            }
-	});
-	
-	$(".delete-guest-photo").on("click", function(){
-            $.ajax({
-                type: "POST",
-                url: "ws_resc.php",
-                dataType: "json",
-                data: {
-                        cmd: "deleteguestphoto",
-                        guestId: memData.id
                     },
-                success: function(data) {
-                    if(data.error){
-                    }else{
-                        $("#guestPhoto").prop("src", "ws_resc.php?cmd=getguestphoto&guestId=" + memData.id + "&rx="+new Date().getTime());
+                    error: function(error) {
+                        reject(error);
                     }
-                },
-                error: function(error) {
-
-                }
+                });
             });
-	});
+        },
+        services: [
+            "camera",
+            "upload"
+        ],
+        defaultService: "camera",
+        allowedTypes: "image",
+        crop: {
+            aspectRatio: 1/1
+        }
+    });
+	
+    $(".uppload-branding").hide(); //hide Get Uppload branding from upload box
+
+    $(document).on("click", "#hhk-guest-photo", function(e){
+        e.preventDefault();
+    });
+
+    //toggle guest photo action buttons on hover
+    $("#hhk-guest-photo").on({
+        mouseenter: function () {
+            $("#hhk-guest-photo-actions").show();
+            $("#hhk-guest-photo img").fadeTo(100, 0.5);
+        },
+        mouseleave: function () {
+            $("#hhk-guest-photo-actions").hide();
+            $("#hhk-guest-photo img").fadeTo(100, 1);
+        }
+    });
+
+    $(".delete-guest-photo").on("click", function(){
+        $.ajax({
+            type: "POST",
+            url: "ws_resc.php",
+            dataType: "json",
+            data: {
+                    cmd: "deleteguestphoto",
+                    guestId: memData.id
+                },
+            success: function(data) {
+                if(data.error){
+                }else{
+                    $("#guestPhoto").prop("src", "ws_resc.php?cmd=getguestphoto&guestId=" + memData.id + "&rx="+new Date().getTime());
+                }
+            },
+            error: function(error) {
+
+            }
+        });
+    });
 });
