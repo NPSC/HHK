@@ -670,6 +670,10 @@ if ($psg->getIdPsg() > 0) {
     $psgOnly = TRUE;
 }
 
+$guestPhotoMarkup = "";
+if($uS->ShowGuestPhoto){
+	$guestPhotoMarkup = showGuestPicure($name->get_idName(), $uS->MemberImageSizePx);
+}
 
 $guestName = "<span style='font-size:2em;'>$niceName</span>";
 
@@ -779,10 +783,12 @@ $uS->guestId = $id;
             <?php if ($showSearchOnly === FALSE) { ?>
             <form action="GuestEdit.php" method="post" id="form1" name="form1" >
                 <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
-
-                <div style="clear:left;float:left;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
-                    <?php echo $nameMarkup; ?>
-                    <?php echo $contactLastUpdated; ?>
+                <div style="float:left; margin-bottom: 10px;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
+	                <?php echo $guestPhotoMarkup; ?>
+	                <div class="hhk-panel" style="display: inline-block">
+                        <?php echo $nameMarkup; ?>
+                       <?php echo $contactLastUpdated; ?>
+	                </div>
                 </div>
                 <div style="clear:both;"></div>
                 <div class="hhk-showonload hhk-tdbox" style="display:none;" >
@@ -935,6 +941,8 @@ $uS->guestId = $id;
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
             var resultMessage = '<?php echo $resultMessage; ?>';
         </script>
+
+        <script type="text/javascript" src="../js/uppload.js"></script>
         <script type="text/javascript" src="js/guestload-min.js"></script>
     </body>
 </html>

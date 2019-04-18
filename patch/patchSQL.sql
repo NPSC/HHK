@@ -33,10 +33,15 @@ ALTER TABLE `payment_auth`
     ADD COLUMN `EMVApplicationResponseCode` VARCHAR(200) NULL AFTER `EMVTransactionStatusInformation`;
 ALTER TABLE `payment_auth`
     ADD COLUMN `Response_Code` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Response_Message`;
-ALTER TABLE `payment_auth` 
+ALTER TABLE `payment_auth`
     ADD COLUMN `Signature_Required` INT(4) NOT NULL DEFAULT 1 AFTER `ProcessData`;
 
-ALTER TABLE `cc_hosted_gateway` 
-    ADD COLUMN `Gateway_Name` VARCHAR(45) NOT NULL DEFAULT '' AFTER `idcc_gateway`;
+ALTER TABLE `name_demog` 
+    ADD COLUMN `Guest_Photo_Id` INT NOT NULL DEFAULT 0 AFTER `Photo_Permission`;
 
 UPDATE `gen_lookups` SET `Substitute`='o' WHERE `Table_Name`='Phone_Type' and`Code`='xf';
+
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES
+ ('ShowGuestPhoto', 'false', 'b', 'h', 'Use guest photos.');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES
+('MemberImageSizePx', '50', 'i', 'h', 'Guest image thumbnail size');
