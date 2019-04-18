@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ws_resc.php
  *
@@ -7,7 +8,6 @@
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
-
 /**
  *  includes and requries
  */
@@ -60,6 +60,8 @@ require (CLASSES . 'HouseLog.php');
 require (CLASSES . 'Purchase/RoomRate.php');
 require (CLASSES . 'FinAssistance.php');
 require (CLASSES . 'US_Holidays.php');
+require (CLASSES . 'Photo.php');
+require (CLASSES . 'SiteConfig.php');
 
 
 $wInit = new webInit(WebPageCode::Service);
@@ -81,229 +83,150 @@ $events = array();
 try {
 
     switch ($c) {
-    
-    case 'getguestphoto':
-    
-        $guestId = filter_input(INPUT_GET, 'guestId', FILTER_SANITIZE_NUMBER_INT);
-        
-        if (is_null($guestId) || $guestId === FALSE) {
-            $guestId = 0;
-        }
-        $stmt = $dbh->query("SELECT photo.* FROM photo JOIN name_demog demog ON photo.idPhoto = demog.Guest_Photo_Id WHERE demog.idName = $guestId");
-	    $results = $stmt->fetchAll();
-        if(count($results) > 0){
-	        
-	        $mimetype = $results[0]['Image_Type'];
-	        $image = base64_decode($results[0]['Image']);
-	        header("Content-Type: " . $mimetype);
-	        echo $image;
-	        exit;
-	    }else{
-             $path = realpath('../images/defaultGuestPhoto.png');
-			if(file_exists($path)){
-				header("Content-Type: Image/PNG");
-				header("Content-Length: " . filesize($path));
-				echo file_get_contents($path);
-				exit;
-			}
-		}
-		
-		break;
-        
-    case 'putguestphoto':
-    
-        $guestId = filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT);
-        $guestPhoto = $_FILES["guestPhoto"];
-        
-        if (is_null($guestId) || $guestId === FALSE) {
-            throw new Exception("GuestId missing");
+
+        case 'getguestphoto':
+
+            $guestId = intval(filter_input(INPUT_GET, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
+
+            $photo = new Photo();
+            $photo->loadGuestPhoto($dbh, $guestId);
+
+            header("Content-Type: " . $photo->getImageType());
+            echo $photo->getImage();
+            exit();
+
             break;
-        }else if(is_null($guestPhoto) || $guestPhoto === FALSE){
-	        throw new Exception("guestPhoto missing");
-	        break;
-        }else{
-	        if($uS->MemberImageSizePx > 100){
-	            $content = makeThumbnail($guestPhoto, $uS->MemberImageSizePx, $uS->MemberImageSizePx);
-	        }else{
-		        $content = makeThumbnail($guestPhoto, 100, 100);
-	        }
-	        
-	        $content = base64_encode($content);
-	        
-	        $stmt = $dbh->query("SELECT * FROM name_demog WHERE idName = $guestId");
-			$results = $stmt->fetchAll();
-			if($results[0]['Guest_Photo_Id'] > 0){
-				$idPhoto = $results[0]['Guest_Photo_Id'];
-				$update = 'UPDATE photo SET Image_Type = "' . $guestPhoto['type'] . '", Image = "' . $content . '", Updated_By = "' . $uS->username . '" WHERE idPhoto = ' . $idPhoto . ';';
-				$dbh->exec($update);
-			}else{
-				$insert = 'INSERT INTO photo (Image_Type, Image, Updated_By) VALUES ("' . $guestPhoto['type'] . '", "' . $content . '", "' . $uS->username . '");';
-				$dbh->exec($insert);
-				$idPhoto = $dbh->lastInsertId();
-				$dbh->exec("UPDATE name_demog SET Guest_Photo_Id = $idPhoto WHERE idName = $guestId");
-			}
-        }
-		break;
-		
-	case 'deleteguestphoto':
-    
-        $guestId = filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT);
-        
-        if (is_null($guestId) || $guestId === FALSE) {
-            throw new Exception("GuestId missing");
+
+        case 'putguestphoto':
+
+            SiteConfig::checkUploadFile('guestPhoto');
+
+            $guestId = filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT);
+            $guestPhoto = $_FILES['guestPhoto'];
+
+            if (is_null($guestId) || $guestId === FALSE) {
+                throw new Exception('GuestId missing');
+            } else if (is_null($guestPhoto) || $guestPhoto === FALSE) {
+                throw new Exception('guest Photo missing');
+            }
+
+            $photo = new Photo();
+
+            $photo->saveGuestPhoto($dbh, $guestId, $guestPhoto, $uS->MemberImageSizePx, $uS->username);
+
             break;
-		}else{
-			$idPhoto = $results[0]['Guest_Photo_Id'];
-			$delete = "CALL delete_guest_photo($guestId)";
-			$dbh->exec($delete);
-        }
-		break;
-    case 'ulimage':
-        
-        $guestId = filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT);
-        if (is_null($guestId) || $guestId === FALSE) {
-            $guestId = 0;
-        }
-        
-        $imageFile = '';
-        if (isset($_POST['imageFile'])) {
-            $imageFile = $_POST['imageFile'];
-        }
-        
-        $photo = new Photo();
-        
 
-         break;
+        case 'deleteguestphoto':
 
-     case 'getgstimage':
-        
-        $guestId = filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT);
-        if (is_null($guestId) || $guestId === FALSE) {
-            $guestId = 0;
-        }
+            $guestId = intval(filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
 
-         break;
+            if ($guestId < 1) {
+                throw new Exception("GuestId missing");
+            } else {
+                // Delete it.
+                $delete = "CALL delete_guest_photo($guestId)";
+                $dbh->exec($delete);
+            }
 
-     case 'getimage':
-        
-        $imageId = filter_input(INPUT_POST, 'imageId', FILTER_SANITIZE_NUMBER_INT);
-        if (is_null($imageId) || $imageId === FALSE) {
-            $imageId = 0;
-        }
-        
-        $events = Photo::getImage($dbh, $imageId);
-        
-         break;
+            break;
 
-     case 'delimage':
-
-        $imageId = filter_input(INPUT_POST, 'imageId', FILTER_SANITIZE_NUMBER_INT);
-        if (is_null($imageId) || $imageId === FALSE) {
-            $imageId = 0;
-        }
-        
-        $events = Photo::deleteImage($dbh, $imageId);
-        
-         break;
-
-     case 'vehsch':
+        case 'vehsch':
 
             if (isset($_REQUEST['letters'])) {
                 require (HOUSE . 'Vehicle.php');
                 $tag = filter_var($_REQUEST['letters'], FILTER_SANITIZE_STRING);
                 $events = Vehicle::searchTag($dbh, $tag);
-
             }
 
-         break;
+            break;
 
-    case 'actrpt':
+        case 'actrpt':
 
-        if (isset($_REQUEST["start"]) && $_REQUEST["start"] != '') {
-            $startDate = filter_var($_REQUEST["start"], FILTER_SANITIZE_STRING);
-            $startDT = setTimeZone($uS, $startDate);
-        } else {
-            $startDT = new DateTime();
-        }
+            if (isset($_REQUEST["start"]) && $_REQUEST["start"] != '') {
+                $startDate = filter_var($_REQUEST["start"], FILTER_SANITIZE_STRING);
+                $startDT = setTimeZone($uS, $startDate);
+            } else {
+                $startDT = new DateTime();
+            }
 
-        if (isset($_REQUEST["end"]) && $_REQUEST["end"] != '') {
-            $endDate = filter_var($_REQUEST["end"], FILTER_SANITIZE_STRING);
-            $endDT = setTimeZone($uS, $endDate);
-        } else {
-            $endDT = new DateTime();
-        }
+            if (isset($_REQUEST["end"]) && $_REQUEST["end"] != '') {
+                $endDate = filter_var($_REQUEST["end"], FILTER_SANITIZE_STRING);
+                $endDT = setTimeZone($uS, $endDate);
+            } else {
+                $endDT = new DateTime();
+            }
 
-        $strt = $startDT->format('Y-m-d');
-        $end = $endDT->format('Y-m-d');
+            $strt = $startDT->format('Y-m-d');
+            $end = $endDT->format('Y-m-d');
 
-        $markup = '';
-        if (isset($_REQUEST['visit'])) {
-            $markup .= HTMLContainer::generateMarkup('div', ActivityReport::staysLog($dbh, $strt, $end), array('style'=>'float:left;'));
-        }
+            $markup = '';
+            if (isset($_REQUEST['visit'])) {
+                $markup .= HTMLContainer::generateMarkup('div', ActivityReport::staysLog($dbh, $strt, $end), array('style' => 'float:left;'));
+            }
 
-        if (isset($_REQUEST['resv'])) {
-            $markup .= HTMLContainer::generateMarkup('div', ActivityReport::reservLog($dbh, $strt, $end), array('style'=>'float:left;'));
-        }
+            if (isset($_REQUEST['resv'])) {
+                $markup .= HTMLContainer::generateMarkup('div', ActivityReport::reservLog($dbh, $strt, $end), array('style' => 'float:left;'));
+            }
 
-        if (isset($_REQUEST['hstay'])) {
+            if (isset($_REQUEST['hstay'])) {
+
+                $idPsg = 0;
+                if (isset($_REQUEST["psg"])) {
+                    $idPsg = intval(filter_var($_REQUEST["psg"], FILTER_SANITIZE_NUMBER_INT), 10);
+                }
+
+                $markup .= HTMLContainer::generateMarkup('div', ActivityReport::HospStayLog($dbh, $strt, $end, $idPsg), array('style' => 'float:left;'));
+            }
+
+            if (isset($_REQUEST['fee'])) {
+
+                $st = array();
+                if (isset($_REQUEST['st'])) {
+                    $st = filter_var_array($_REQUEST['st'], FILTER_SANITIZE_STRING);
+                }
+                $pt = array();
+                if (isset($_REQUEST['pt'])) {
+                    $pt = filter_var_array($_REQUEST['pt'], FILTER_SANITIZE_STRING);
+                }
+                $id = 0;
+                if (isset($_REQUEST["id"])) {
+                    $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+                }
+
+                $showDelInv = FALSE;
+                if (isset($_REQUEST['sdinv'])) {
+                    $showDelInv = TRUE;
+                }
+
+                $markup = HTMLContainer::generateMarkup('div', ActivityReport::feesLog($dbh, $startDT, $endDT, $st, $pt, $id, 'Payments Report', $showDelInv), array('style' => 'margin-left:5px;'));
+            }
+
+            if (isset($_REQUEST['inv'])) {
+
+
+                $markup = HTMLContainer::generateMarkup('div', ActivityReport::unpaidInvoiceLog($dbh), array('style' => 'margin-left:5px;'));
+            }
+
+            if (isset($_REQUEST['direct'])) {
+                $events = HTMLContainer::generateMarkup('div', $markup, array('style' => 'position:relative;top:12px;')) . HTMLContainer::generateMarkup('div', '', array('style' => 'clear:both;'));
+            } else {
+                $events = array('success' => HTMLContainer::generateMarkup('div', $markup, array('style' => 'position:relative;top:12px;')) . HTMLContainer::generateMarkup('div', '', array('style' => 'clear:both;')));
+            }
+
+            break;
+
+        case 'hstay':
 
             $idPsg = 0;
             if (isset($_REQUEST["psg"])) {
                 $idPsg = intval(filter_var($_REQUEST["psg"], FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
-            $markup .= HTMLContainer::generateMarkup('div', ActivityReport::HospStayLog($dbh, $strt, $end, $idPsg), array('style'=>'float:left;'));
-        }
+            $events = ActivityReport::HospStayLog($dbh, '', '', $idPsg);
 
-        if (isset($_REQUEST['fee'])) {
+            break;
 
-            $st = array();
-            if (isset($_REQUEST['st'])) {
-                $st = filter_var_array($_REQUEST['st'], FILTER_SANITIZE_STRING);
-            }
-            $pt = array();
-            if (isset($_REQUEST['pt'])) {
-                $pt = filter_var_array($_REQUEST['pt'], FILTER_SANITIZE_STRING);
-            }
-            $id = 0;
-            if (isset($_REQUEST["id"])) {
-                $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
-            }
-
-            $showDelInv = FALSE;
-            if (isset($_REQUEST['sdinv'])) {
-                $showDelInv = TRUE;
-            }
-
-            $markup = HTMLContainer::generateMarkup('div', ActivityReport::feesLog($dbh, $startDT, $endDT, $st, $pt, $id, 'Payments Report', $showDelInv), array('style'=>'margin-left:5px;'));
-        }
-
-        if (isset($_REQUEST['inv'])) {
-
-
-            $markup = HTMLContainer::generateMarkup('div', ActivityReport::unpaidInvoiceLog($dbh), array('style'=>'margin-left:5px;'));
-        }
-
-        if (isset($_REQUEST['direct'])) {
-            $events = HTMLContainer::generateMarkup('div', $markup, array('style'=>'position:relative;top:12px;')) . HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
-        } else {
-            $events = array('success'=> HTMLContainer::generateMarkup('div', $markup, array('style'=>'position:relative;top:12px;')) . HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;')));
-        }
-
-        break;
-
-    case 'hstay':
-
-        $idPsg = 0;
-        if (isset($_REQUEST["psg"])) {
-            $idPsg = intval(filter_var($_REQUEST["psg"], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        $events = ActivityReport::HospStayLog($dbh, '', '', $idPsg);
-
-        break;
-
-    case 'payRpt':
+        case 'payRpt':
 
             $id = 0;
             if (isset($_REQUEST["id"])) {
@@ -311,9 +234,9 @@ try {
             }
 
             if ($id > 0) {
-                $events = HTMLContainer::generateMarkup('div', ActivityReport::feesLog($dbh, '', '', array(0=>''), array(0=>''), $id, 'Payment History', FALSE), array('id'=>'rptfeediv', 'class'=>'ignrSave'))
-                    . '<script type= "text/javascript"> ' .
-"$('#feesTable').dataTable({
+                $events = HTMLContainer::generateMarkup('div', ActivityReport::feesLog($dbh, '', '', array(0 => ''), array(0 => ''), $id, 'Payment History', FALSE), array('id' => 'rptfeediv', 'class' => 'ignrSave'))
+                        . '<script type= "text/javascript"> ' .
+                        "$('#feesTable').dataTable({
     'dom': '<\"ignrSave\"if>rt<\"ignrSave\"lp><\"clear\">',
     'displayLength': 50,
     'lengthMenu': [[25, 50, -1], [25, 50, 'All']],
@@ -324,7 +247,7 @@ try {
         }
     ]
 });" .
-'// Void/Return button
+                        '// Void/Return button
 $("#rptfeediv").on("click", ".hhk-voidPmt", function() {
     var btn = $(this);
     if (btn.val() != "Saving..." && confirm("Void/Reverse?")) {
@@ -373,288 +296,280 @@ $(document).mousedown(function (event) {
     }
 });
 </script>';
-
             } else {
                 $events = '';
             }
-        break;
+            break;
 
-    case "getResc":
+        case "getResc":
 
-        $id = 0;
-        if (isset($_REQUEST["id"])) {
-            $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        $type = '';
-        if (isset($_REQUEST["tp"])) {
-            $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_STRING);
-        }
-
-        if ($type == 'resc') {
-
-            $hospList = array();
-            if (isset($uS->guestLookups[GL_TableNames::Hospital])) {
-                $hospList = $uS->guestLookups[GL_TableNames::Hospital];
+            $id = 0;
+            if (isset($_REQUEST["id"])) {
+                $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+            $type = '';
+            if (isset($_REQUEST["tp"])) {
+                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_STRING);
             }
 
-            $events = ResourceView::resourceDialog($dbh, $id, $uS->guestLookups[GL_TableNames::RescType],$hospList);
+            if ($type == 'resc') {
 
-        } else if ($type == 'room') {
+                $hospList = array();
+                if (isset($uS->guestLookups[GL_TableNames::Hospital])) {
+                    $hospList = $uS->guestLookups[GL_TableNames::Hospital];
+                }
 
-            $roomRates = array();
-            if (isset($uS->guestLookups['Static_Room_Rate'])) {
-                $roomRates = $uS->guestLookups['Static_Room_Rate'];
+                $events = ResourceView::resourceDialog($dbh, $id, $uS->guestLookups[GL_TableNames::RescType], $hospList);
+            } else if ($type == 'room') {
+
+                $roomRates = array();
+                if (isset($uS->guestLookups['Static_Room_Rate'])) {
+                    $roomRates = $uS->guestLookups['Static_Room_Rate'];
+                }
+
+                $reportCategories = readGenLookupsPDO($dbh, 'Room_Rpt_Cat');
+
+
+                $events = ResourceView::roomDialog($dbh, $id, $uS->guestLookups[GL_TableNames::RoomType], $uS->guestLookups[GL_TableNames::RoomCategory], $reportCategories, $roomRates, $uS->guestLookups[GL_TableNames::KeyDepositCode], $uS->KeyDeposit);
+            } else if ($type == 'rs') {
+                // constraint
+                $constraints = new Constraints($dbh);
+                $events = $constraints->editMarkup($dbh, $id);
             }
 
-            $reportCategories = readGenLookupsPDO($dbh, 'Room_Rpt_Cat');
+            break;
+
+        case 'getStatEvent':
 
+            $id = 0;
+            if (isset($_REQUEST["id"])) {
+                $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+            $type = '';
+            if (isset($_REQUEST["tp"])) {
+                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_STRING);
+            }
+            $title = '';
+            if (isset($_REQUEST["title"])) {
+                $title = filter_var($_REQUEST["title"], FILTER_SANITIZE_STRING);
+            }
 
-            $events = ResourceView::roomDialog($dbh, $id, $uS->guestLookups[GL_TableNames::RoomType],
-                    $uS->guestLookups[GL_TableNames::RoomCategory], $reportCategories, $roomRates, $uS->guestLookups[GL_TableNames::KeyDepositCode], $uS->KeyDeposit);
+            $events = ResourceView::getStatusEvents($dbh, $id, $type, $title, $uS->guestLookups[GL_TableNames::RescStatus], readGenLookupsPDO($dbh, 'OOS_Codes'));
 
-        } else if ($type == 'rs') {
-            // constraint
-            $constraints = new Constraints($dbh);
-            $events = $constraints->editMarkup($dbh, $id);
-        }
+            break;
 
-        break;
+        case 'saveStatEvent':
+
+            $id = 0;
+            if (isset($_REQUEST["id"])) {
+                $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+            $type = '';
+            if (isset($_REQUEST["tp"])) {
+                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_STRING);
+            }
+
+            $events = ResourceView::saveStatusEvents($dbh, $id, $type, $_POST);
+
+            break;
+
+        case 'redit':
+
+            $id = 0;
+            if (isset($_REQUEST["id"])) {
+                $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+            $type = '';
+            if (isset($_REQUEST["tp"])) {
+                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_STRING);
+            }
+
+            if ($type == 'rs') {
+                // constraint
+                $constraints = new Constraints($dbh);
+                $events = $constraints->saveMarkup($dbh, $id, $_POST['parm'], $uS->username);
+            } else {
+
+                $events = ResourceView::saveResc_Room($dbh, $id, $type, $_POST['parm'], $uS->username, $uS->ShrRm, $uS->KeyDeposit);
+            }
+
+            break;
+
+        case 'rdel':
+
+            $id = 0;
+            if (isset($_REQUEST["id"])) {
+                $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+            $type = '';
+            if (isset($_REQUEST["tp"])) {
+                $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_STRING);
+            }
+
+            if ($type == 'rs') {
+
+                $constraints = new Constraints($dbh);
+                $events = $constraints->delete($dbh, $id);
+            } else {
+
+                $events = ResourceView::deleteResc_Room($dbh, $id, $type, $uS->username);
+            }
+
+            break;
+
+        case 'getHist':
+
+            $tbl = '';
+            if (isset($_REQUEST['tbl'])) {
+                $tbl = filter_var($_REQUEST['tbl'], FILTER_SANITIZE_STRING);
+            }
+
+            $history = new History();
+
+            switch ($tbl) {
+                case 'curres':
+                    $events['curres'] = History::getCheckedInGuestMarkup($dbh, "GuestEdit.php", TRUE);
+                    break;
+
+                case 'daily':
+                    $events['daily'] = RoomReport::dailyReport($dbh);
+                    break;
+
+                case 'reservs':
+                    $events['reservs'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Committed, TRUE);
+                    break;
+
+                case 'unreserv':
+                    $events['unreserv'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, TRUE);
+                    break;
+
+                case 'waitlist':
+                    $events['waitlist'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, TRUE);
+                    break;
+            }
+
+            break;
+
+        case 'invAct':
+
+            $id = 0;
+            if (isset($_REQUEST["iid"])) {
+                $id = intval(filter_var($_REQUEST["iid"], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+            $type = '';
+            if (isset($_REQUEST["action"])) {
+                $type = filter_var($_REQUEST["action"], FILTER_SANITIZE_STRING);
+            }
 
-    case 'getStatEvent':
+            $x = 0;
+            if (isset($_POST['x'])) {
+                $x = filter_var($_POST['x'], FILTER_SANITIZE_STRING);
+            }
 
-        $id = 0;
-        if (isset($_REQUEST["id"])) {
-            $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        $type = '';
-        if (isset($_REQUEST["tp"])) {
-            $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_STRING);
-        }
-        $title = '';
-        if (isset($_REQUEST["title"])) {
-            $title = filter_var($_REQUEST["title"], FILTER_SANITIZE_STRING);
-        }
-
-        $events = ResourceView::getStatusEvents($dbh, $id, $type, $title, $uS->guestLookups[GL_TableNames::RescStatus], readGenLookupsPDO($dbh, 'OOS_Codes'));
-
-        break;
-
-    case 'saveStatEvent':
-
-        $id = 0;
-        if (isset($_REQUEST["id"])) {
-            $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        $type = '';
-        if (isset($_REQUEST["tp"])) {
-            $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_STRING);
-        }
-
-        $events = ResourceView::saveStatusEvents($dbh, $id, $type, $_POST);
-
-        break;
-
-    case 'redit':
-
-        $id = 0;
-        if (isset($_REQUEST["id"])) {
-            $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        $type = '';
-        if (isset($_REQUEST["tp"])) {
-            $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_STRING);
-        }
-
-        if ($type == 'rs') {
-            // constraint
-            $constraints = new Constraints($dbh);
-            $events = $constraints->saveMarkup($dbh, $id, $_POST['parm'], $uS->username);
-
-        } else {
-
-            $events = ResourceView::saveResc_Room($dbh, $id, $type, $_POST['parm'], $uS->username, $uS->ShrRm, $uS->KeyDeposit);
-        }
-
-        break;
-
-    case 'rdel':
-
-        $id = 0;
-        if (isset($_REQUEST["id"])) {
-            $id = intval(filter_var($_REQUEST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        $type = '';
-        if (isset($_REQUEST["tp"])) {
-            $type = filter_var($_REQUEST["tp"], FILTER_SANITIZE_STRING);
-        }
-
-        if ($type == 'rs') {
-
-            $constraints = new Constraints($dbh);
-            $events = $constraints->delete($dbh, $id);
-
-        } else {
-
-            $events = ResourceView::deleteResc_Room($dbh, $id, $type, $uS->username);
-        }
-
-        break;
-
-    case 'getHist':
-
-        $tbl = '';
-        if (isset($_REQUEST['tbl'])) {
-            $tbl = filter_var($_REQUEST['tbl'], FILTER_SANITIZE_STRING);
-        }
-
-        $history = new History();
-
-        switch ($tbl) {
-            case 'curres':
-                $events['curres'] = History::getCheckedInGuestMarkup($dbh, "GuestEdit.php", TRUE);
-                break;
-
-            case 'daily':
-                $events['daily'] = RoomReport::dailyReport($dbh);
-                break;
-
-            case 'reservs':
-                $events['reservs'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Committed, TRUE);
-                break;
-
-            case 'unreserv':
-                $events['unreserv'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::UnCommitted, TRUE);
-                break;
-
-            case 'waitlist':
-                $events['waitlist'] = $history->getReservedGuestsMarkup($dbh, ReservationStatus::Waitlist, TRUE);
-                break;
-
-        }
-
-        break;
-
-    case 'invAct':
-
-        $id = 0;
-        if (isset($_REQUEST["iid"])) {
-            $id = intval(filter_var($_REQUEST["iid"], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        $type = '';
-        if (isset($_REQUEST["action"])) {
-            $type = filter_var($_REQUEST["action"], FILTER_SANITIZE_STRING);
-        }
-
-        $x = 0;
-        if (isset($_POST['x'])) {
-            $x = filter_var($_POST['x'], FILTER_SANITIZE_STRING);
-        }
-
-        $showBillTo = FALSE;
-        if (isset($_REQUEST["sbt"])) {
-            $showBillTo = filter_var($_REQUEST["sbt"], FILTER_VALIDATE_BOOLEAN);
-        }
-
-        $events = invoiceAction($dbh, $id, $type, $x, $showBillTo);
-        break;
-
-    case 'invSetBill':
-
-        $invNum = '';
-        if (isset($_POST['inb'])) {
-            $invNum = filter_var($_POST['inb'], FILTER_SANITIZE_STRING);
-        }
-
-        $element = '';
-        if (isset($_POST['ele'])) {
-            $element = filter_var($_POST['ele'], FILTER_SANITIZE_STRING);
-        }
-
-        $notesElement = '';
-        if (isset($_POST['ntele'])) {
-            $notesElement = filter_var($_POST['ntele'], FILTER_SANITIZE_STRING);
-        }
-
-        $invDateStr = '';
-        if (isset($_POST["date"])) {
-            $invDateStr = filter_var($_POST["date"], FILTER_SANITIZE_STRING);
-        }
-
-        $invNotes = '';
-        if (isset($_POST["nts"])) {
-            $invNotes = filter_var($_POST["nts"], FILTER_SANITIZE_STRING);
-        }
-
-        $events = invoiceSetBill($dbh, $invNum, $invDateStr, $uS->username, $element, $invNotes, $notesElement);
-        break;
-
-    case 'saveRmCleanCode':
-
-        $id = 0;
-        if (isset($_REQUEST["idr"])) {
-            $id = intval(filter_var($_REQUEST["idr"], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        $stat = '';
-        if (isset($_REQUEST["stat"])) {
-            $stat = filter_var($_REQUEST["stat"], FILTER_SANITIZE_STRING);
-        }
-
-        $room = new Room($dbh, $id);
-
-        if ($room->setCleanStatus($stat) === FALSE) {
-            $events['msg'] = 'Room Cleaning State change FAILED.';
-        } else {
-            $events['msg'] = 'Room Cleaning state changed';
-        }
-
-        $room->saveRoom($dbh, $uS->username);
-
-        $events['curres'] = 'y';
-
-        break;
-
-    case 'cleanStat':
-
-        $tbl = '';
-        if (isset($_REQUEST['tbl'])) {
-            $tbl = filter_var($_REQUEST['tbl'], FILTER_SANITIZE_STRING);
-        }
-
-        $date = '';
-        if (isset($_REQUEST['dte'])) {
-            $date = filter_var($_REQUEST['dte'], FILTER_SANITIZE_STRING);
-        }
-
-        switch ($tbl) {
-            case 'roomTable':
-                $events['roomTable'] = ResourceView::roomsClean($dbh, '', $guestAdmin);
-                break;
-
-            case 'dirtyTable':
-                $events['dirtyTable'] = ResourceView::roomsClean($dbh, RoomState::Dirty, $guestAdmin);
-                break;
-
-            case 'outTable':
-                $events['outTable'] = ResourceView::showCoList($dbh, $date);
-                break;
-
-        }
-
-        break;
-
-    case "clnlog" :
-
-        $idRoom = 0;
-        if (isset($_REQUEST["rid"])) {
-            $idRoom = filter_var(urldecode($_REQUEST["rid"]), FILTER_VALIDATE_INT);
-        }
-
-        $events = ResourceView::CleanLog($dbh, $idRoom, $_POST);
-        break;
-
-    default:
-        $events = array("error" => "Bad Command: \"" . $c . "\"");
-}
+            $showBillTo = FALSE;
+            if (isset($_REQUEST["sbt"])) {
+                $showBillTo = filter_var($_REQUEST["sbt"], FILTER_VALIDATE_BOOLEAN);
+            }
+
+            $events = invoiceAction($dbh, $id, $type, $x, $showBillTo);
+            break;
+
+        case 'invSetBill':
+
+            $invNum = '';
+            if (isset($_POST['inb'])) {
+                $invNum = filter_var($_POST['inb'], FILTER_SANITIZE_STRING);
+            }
+
+            $element = '';
+            if (isset($_POST['ele'])) {
+                $element = filter_var($_POST['ele'], FILTER_SANITIZE_STRING);
+            }
+
+            $notesElement = '';
+            if (isset($_POST['ntele'])) {
+                $notesElement = filter_var($_POST['ntele'], FILTER_SANITIZE_STRING);
+            }
+
+            $invDateStr = '';
+            if (isset($_POST["date"])) {
+                $invDateStr = filter_var($_POST["date"], FILTER_SANITIZE_STRING);
+            }
+
+            $invNotes = '';
+            if (isset($_POST["nts"])) {
+                $invNotes = filter_var($_POST["nts"], FILTER_SANITIZE_STRING);
+            }
+
+            $events = invoiceSetBill($dbh, $invNum, $invDateStr, $uS->username, $element, $invNotes, $notesElement);
+            break;
+
+        case 'saveRmCleanCode':
+
+            $id = 0;
+            if (isset($_REQUEST["idr"])) {
+                $id = intval(filter_var($_REQUEST["idr"], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+            $stat = '';
+            if (isset($_REQUEST["stat"])) {
+                $stat = filter_var($_REQUEST["stat"], FILTER_SANITIZE_STRING);
+            }
+
+            $room = new Room($dbh, $id);
+
+            if ($room->setCleanStatus($stat) === FALSE) {
+                $events['msg'] = 'Room Cleaning State change FAILED.';
+            } else {
+                $events['msg'] = 'Room Cleaning state changed';
+            }
+
+            $room->saveRoom($dbh, $uS->username);
+
+            $events['curres'] = 'y';
+
+            break;
+
+        case 'cleanStat':
+
+            $tbl = '';
+            if (isset($_REQUEST['tbl'])) {
+                $tbl = filter_var($_REQUEST['tbl'], FILTER_SANITIZE_STRING);
+            }
+
+            $date = '';
+            if (isset($_REQUEST['dte'])) {
+                $date = filter_var($_REQUEST['dte'], FILTER_SANITIZE_STRING);
+            }
+
+            switch ($tbl) {
+                case 'roomTable':
+                    $events['roomTable'] = ResourceView::roomsClean($dbh, '', $guestAdmin);
+                    break;
+
+                case 'dirtyTable':
+                    $events['dirtyTable'] = ResourceView::roomsClean($dbh, RoomState::Dirty, $guestAdmin);
+                    break;
+
+                case 'outTable':
+                    $events['outTable'] = ResourceView::showCoList($dbh, $date);
+                    break;
+            }
+
+            break;
+
+        case "clnlog" :
+
+            $idRoom = 0;
+            if (isset($_REQUEST["rid"])) {
+                $idRoom = filter_var(urldecode($_REQUEST["rid"]), FILTER_VALIDATE_INT);
+            }
+
+            $events = ResourceView::CleanLog($dbh, $idRoom, $_POST);
+            break;
+
+        default:
+            $events = array("error" => "Bad Command: \"" . $c . "\"");
+    }
 
 } catch (PDOException $ex) {
     $events = array("error" => "Database Error: " . $ex->getMessage());
@@ -674,11 +589,10 @@ if (is_array($events)) {
 
 exit();
 
-
 function invoiceSetBill(\PDO $dbh, $invNum, $invDateStr, $user, $element, $notes, $notesElement) {
 
     if ($invNum == '') {
-        return array('error'=>'Empty Invoice Number.');
+        return array('error' => 'Empty Invoice Number.');
     }
 
     if ($invDateStr != '') {
@@ -686,9 +600,8 @@ function invoiceSetBill(\PDO $dbh, $invNum, $invDateStr, $user, $element, $notes
         try {
             $billDT = setTimeZone(NULL, $invDateStr);
         } catch (Exception $ex) {
-            return array('error'=>'Bad Date.');
+            return array('error' => 'Bad Date.');
         }
-
     } else {
         $billDT = NULL;
     }
@@ -699,21 +612,21 @@ function invoiceSetBill(\PDO $dbh, $invNum, $invDateStr, $user, $element, $notes
 
 
     if ($wrked) {
-        return array('success'=>'Invoice number ' . $invNum . ' updated.',
-            'elemt'=>$element,
-            'strDate'=>(is_null($billDT) ? '' : $billDT->format('M j, Y')),
-            'notes'=>$invoice->getNotes(),
-            'notesElemt'=>$notesElement
+        return array('success' => 'Invoice number ' . $invNum . ' updated.',
+            'elemt' => $element,
+            'strDate' => (is_null($billDT) ? '' : $billDT->format('M j, Y')),
+            'notes' => $invoice->getNotes(),
+            'notesElemt' => $notesElement
         );
     }
 
-    return array('error'=>'Set invoice billing date Failed.');
+    return array('error' => 'Set invoice billing date Failed.');
 }
 
 function invoiceAction(\PDO $dbh, $iid, $action, $eid, $showBillTo = FALSE) {
 
     if ($iid < 1) {
-        return array('error'=>'Bad Invoice Id');
+        return array('error' => 'Bad Invoice Id');
     }
 
     $uS = Session::getInstance();
@@ -760,33 +673,30 @@ WHERE
             if ($l['Item_Deleted'] == 0) {
 
                 $tbl->addBodyTr(
-                    HTMLTable::makeTd($l['Description'], array('class'=>'tdlabel'))
-                    . HTMLTable::makeTd(number_format($l['LineAmount'], 2), array('style'=>'text-align:right;')));
+                        HTMLTable::makeTd($l['Description'], array('class' => 'tdlabel'))
+                        . HTMLTable::makeTd(number_format($l['LineAmount'], 2), array('style' => 'text-align:right;')));
             }
         }
 
 
-        $divAttr = array('id'=>'pudiv', 'class'=>'ui-widget ui-widget-content ui-corner-all hhk-tdbox', 'style'=>'clear:both; float:left; position:absolute; min-width:300px;');
-        $tblAttr = array('style'=>'background-color:lightyellow; width:100%;');
+        $divAttr = array('id' => 'pudiv', 'class' => 'ui-widget ui-widget-content ui-corner-all hhk-tdbox', 'style' => 'clear:both; float:left; position:absolute; min-width:300px;');
+        $tblAttr = array('style' => 'background-color:lightyellow; width:100%;');
 
         if ($lines[0]['Deleted'] == 1) {
             $tblAttr['style'] = 'background-color:red;';
         }
 
-        $mkup = HTMLContainer::generateMarkup('div',
-                $tbl->generateMarkup(
-                        $tblAttr, 'Items For Invoice #' . $lines[0]['Invoice_Number'] . HTMLContainer::generateMarkup('span', ' (' . $lines[0]['GuestName'] . ')', array('style'=>'font-size:.8em;')))
-                . ($showBillTo ? Invoice::getBillToAddress($dbh, $lines[0]['Sold_To_Id'])->generateMarkup(array(), 'Bill To'): '')
-                , $divAttr);
+        $mkup = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(
+                                $tblAttr, 'Items For Invoice #' . $lines[0]['Invoice_Number'] . HTMLContainer::generateMarkup('span', ' (' . $lines[0]['GuestName'] . ')', array('style' => 'font-size:.8em;')))
+                        . ($showBillTo ? Invoice::getBillToAddress($dbh, $lines[0]['Sold_To_Id'])->generateMarkup(array(), 'Bill To') : '')
+                        , $divAttr);
 
-        return array('markup'=>$mkup, 'eid'=>$eid);
-
-
+        return array('markup' => $mkup, 'eid' => $eid);
     } else if ($action == 'vpmt') {
 
         // Return listing of Payments
-        $divAttr = array('id'=>'pudiv', 'class'=>'ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-panel', 'style'=>'clear:both; float:left;');
-        $tblAttr = array('style'=>'background-color:lightyellow;');
+        $divAttr = array('id' => 'pudiv', 'class' => 'ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-panel', 'style' => 'clear:both; float:left;');
+        $tblAttr = array('style' => 'background-color:lightyellow;');
 
         $tbl = new HTMLTable();
         $mkup = HTMLContainer::generateMarkup('div', 'No Payments', $divAttr);
@@ -796,25 +706,23 @@ WHERE
 
         foreach ($invoices as $r) {
 
-            $tbl->addHeaderTr(HTMLTable::makeTh('Date').HTMLTable::makeTh('Method').HTMLTable::makeTh('Status').HTMLTable::makeTh('Amount'));
+            $tbl->addHeaderTr(HTMLTable::makeTh('Date') . HTMLTable::makeTh('Method') . HTMLTable::makeTh('Status') . HTMLTable::makeTh('Amount'));
 
             // Payments
             foreach ($r['p'] as $p) {
 
                 $tbl->addBodyTr(
-                    HTMLTable::makeTd(($p['Payment_Date'] == '' ? '' : date('M j, Y', strtotime($p['Payment_Date']))), array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd($p['Payment_Method_Title'], array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd($p['Payment_Status_Title'], array('class'=>'tdlabel'))
-                    . HTMLTable::makeTd(number_format($p['Payment_Amount'], 2), array('style'=>'text-align:right;'))
-                        );
+                        HTMLTable::makeTd(($p['Payment_Date'] == '' ? '' : date('M j, Y', strtotime($p['Payment_Date']))), array('class' => 'tdlabel'))
+                        . HTMLTable::makeTd($p['Payment_Method_Title'], array('class' => 'tdlabel'))
+                        . HTMLTable::makeTd($p['Payment_Status_Title'], array('class' => 'tdlabel'))
+                        . HTMLTable::makeTd(number_format($p['Payment_Amount'], 2), array('style' => 'text-align:right;'))
+                );
             }
 
             $mkup = HTMLContainer::generateMarkup('div', $tbl->generateMarkup($tblAttr, 'Payments For Invoice #: ' . $r['i']['Invoice_Number']), $divAttr);
         }
 
-        return array('markup'=>$mkup, 'eid'=>$eid);
-
-
+        return array('markup' => $mkup, 'eid' => $eid);
     } else if ($action == 'del') {
 
         $invoice = new Invoice($dbh);
@@ -822,10 +730,9 @@ WHERE
 
         try {
             $invoice->deleteInvoice($dbh, $uS->username);
-            return array('delete'=>'Invoice Number ' . $invoice->getInvoiceNumber() . ' is deleted.', 'eid'=>$eid);
-
+            return array('delete' => 'Invoice Number ' . $invoice->getInvoiceNumber() . ' is deleted.', 'eid' => $eid);
         } catch (Hk_Exception_Payment $ex) {
-            return array('error'=>$ex->getMessage());
+            return array('error' => $ex->getMessage());
         }
     } else if ($action == 'srch') {
 
@@ -836,11 +743,11 @@ WHERE
 
         while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
-            $numbers[] = array('id'=>$r['idInvoice'], 'value'=>$r['Invoice_Number']);
+            $numbers[] = array('id' => $r['idInvoice'], 'value' => $r['Invoice_Number']);
         }
 
         return $numbers;
     }
 
-    return array('error'=>'Bad Invoice Action.  ');
+    return array('error' => 'Bad Invoice Action.  ');
 }
