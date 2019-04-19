@@ -170,7 +170,7 @@ class RoomChooser {
         }
     }
 
-    public function createAddGuestMarkup(\PDO $dbh, $isAuthorized, $replaceRoomSel, $visitStatus = '') {
+    public function createAddGuestMarkup(\PDO $dbh, $isAuthorized, $replaceRoomSel, $visitStatus = '', $numOccupants = 0) {
 
         if (($visitStatus == '' || $visitStatus == VisitStatus::CheckedIn) && $this->resv->getStatus() === ReservationStatus::Staying) {
 
@@ -179,7 +179,7 @@ class RoomChooser {
             return $this->createAddedMarkup($dbh, TRUE, $replaceRoomSel);
 
         } else {
-            return $this->createStaticMarkup($dbh);
+            return $this->createStaticMarkup($dbh, $numOccupants);
         }
     }
 
@@ -402,7 +402,7 @@ class RoomChooser {
         return $mk1;
     }
 
-    protected function createStaticMarkup(\PDO $dbh) {
+    protected function createStaticMarkup(\PDO $dbh, $numOccupants = 0) {
 
         $roomSelectedMsg = '';
 
@@ -423,7 +423,7 @@ class RoomChooser {
         $ttbl = new HTMLTable();
 
         $ttbl->addBodyTr( HTMLTable::makeTh("Total Guests:")
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->getTotalGuests(), array('id'=>'spnNumGuests','style'=>'font-weight:bold;')), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', "$numOccupants", array('id'=>'spnNumGuests','style'=>'font-weight:bold;')), array('style'=>'text-align:center;'))
                 .(is_null($this->selectedResource) ? '' : HTMLTable::makeTh('Room:'). HTMLTable::makeTd($this->selectedResource->getTitle(), array('style'=>'font-weight:bold;')))
                 .HTMLTable::makeTh('Nights:') . HTMLTable::makeTd($this->resv->getExpectedDays(), array('style'=>'text-align:center;font-weight:bold;'))
                 );

@@ -418,7 +418,10 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
 
         if (is_null($this->reserveData->getArrivalDT()) === FALSE && is_null($this->reserveData->getDepartureDT()) === FALSE) {
-            $days = $this->reserveData->getDepartureDT()->diff($this->reserveData->getArrivalDT(), TRUE)->days + 1;
+            $days = $this->reserveData->getDepartureDT()->diff($this->reserveData->getArrivalDT(), TRUE)->days;
+            if ($this->reserveData->getSpanStatus() == '' || $this->reserveData->getSpanStatus() == VisitStatus::CheckedIn) {
+                $days++;
+            }
         }
 
         $mkup = HTMLContainer::generateMarkup('div',
@@ -1909,7 +1912,20 @@ class ReserveSearcher extends ActiveReservation {
 
 class StayingReservation extends CheckingIn {
 
+    protected $stays;
+
     public function createMarkup(\PDO $dbh) {
+
+        if ($this->reserveData->getIdVisit() > 0 && $this->reserveData->getSpan() >= 0) {
+            $vstmt = $dbh->query("Select v.Span_Start, v.Span_End, v.idPrimaryGuest, s.* "
+                    . "from visit v join stays s on v.idVisit = s.idVisit and v.Span = s.Visit_Span "
+                . "where v.idVisit = " . $this->reserveData->getIdVisit() . " and v.`Status` = '" . VisitStatus::CheckedIn . "';");
+
+            $this->stays = $vstmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        } else {
+            throw new Hk_Exception_Runtime('The visit is not defined.');
+        }
 
         $this->createFamilyMarkup($dbh);
 
@@ -1949,37 +1965,31 @@ class StayingReservation extends CheckingIn {
 
     protected function createFamilyMarkup(\PDO $dbh) {
 
-
-        if ($this->reserveData->getIdVisit() > 0 && $this->reserveData->getSpan() >= 0) {
-
             // set guests staying
-            $stayRss = $dbh->query("Select s.idName, v.idPrimaryGuest, s.Visit_Span from stays s "
-                    . " join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span "
-                    . " where s.idVisit = " . $this->reserveData->getIdVisit() . " and s.`Status` = '" . VisitStatus::CheckedIn . "' ");
+//            $stayRss = $dbh->query("Select s.idName, v.idPrimaryGuest, s.Visit_Span from stays s "
+//                    . " join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span "
+//                    . " where s.idVisit = " . $this->reserveData->getIdVisit() . " and s.`Status` = '" . VisitStatus::CheckedIn . "' ");
 
 
-            while ($g = $stayRss->fetch(PDO::FETCH_ASSOC)) {
+        foreach ($this->stays as $g) {
 
-                // update the span id
-                $this->reserveData->setSpan($g['Visit_Span']);
+            // update the span id
+            $this->reserveData->setSpan($g['Visit_Span']);
 
-                $mem = $this->reserveData->findMemberById($g['idName']);
+            $mem = $this->reserveData->findMemberById($g['idName']);
 
-                if ($mem !== NULL) {
+            if ($mem !== NULL) {
 
-                    $mem->setStayObj(new PSGMemVisit(array()));
+                $mem->setStayObj(new PSGMemVisit(array()));
 
-                    if ($g['idPrimaryGuest'] == $g['idName']) {
-                        $mem->setPrimaryGuest(TRUE);
-                    } else {
-                        $mem->setPrimaryGuest(FALSE);
-                    }
-
-                    $this->reserveData->setMember($mem);
+                if ($g['idPrimaryGuest'] == $g['idName']) {
+                    $mem->setPrimaryGuest(TRUE);
+                } else {
+                    $mem->setPrimaryGuest(FALSE);
                 }
+
+                $this->reserveData->setMember($mem);
             }
-        } else {
-            throw new Hk_Exception_Runtime('The visit is not defined.');
         }
 
         $this->reserveData->setFamilySection($this->family->createFamilyMarkup($dbh, $this->reserveData));
@@ -2253,7 +2263,13 @@ class CheckedoutReservation extends CheckingIn {
 
         $resvSectionHeaderPrompt = 'Add Guests; ';
 
-        if ($roomChooser->getCurrentGuests() < $roomChooser->getSelectedResource()->getMaxOccupants()) {
+        // Calculate room occupation
+        $occs = array();
+        foreach ($this->stays as $s) {
+            $occs[$s['idName']] = 1;
+        }
+
+        if (count($occs) < $roomChooser->getSelectedResource()->getMaxOccupants()) {
 
             $this->reserveData
                     ->setArrivalDT($spanStartDT)
@@ -2267,7 +2283,7 @@ class CheckedoutReservation extends CheckingIn {
         }
 
         // Room Chooser
-        $dataArray['rChooser'] = $roomChooser->createAddGuestMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN), $rmSelMessage, $this->stays[0]['Visit_Status']);
+        $dataArray['rChooser'] = $roomChooser->createAddGuestMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN), $rmSelMessage, $this->stays[0]['Visit_Status'], count($occs));
 
 
         // Reservation status title

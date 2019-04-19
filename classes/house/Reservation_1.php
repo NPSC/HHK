@@ -832,9 +832,16 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
                 if ($reservStatus == ReservationStatus::Staying || $expArr <= $today) {
 
                     if ($checkinPage != '') {
+
+                        $href = $checkinPage.'?rid='.$resv->getIdReservation();
+
+                        if ($r['idVisit'] > 0) {
+                            $href .= '&vid='.$r['idVisit'].'&span='.$r['Span'].'&vstatus='.$r['Visit_Status'];
+                        }
+
                         $star = HTMLContainer::generateMarkup('a',
-                        HTMLInput::generateMarkup($buttonText, array('type'=>'button'))
-                                , array('href'=>$checkinPage.'?rid='.$resv->getIdReservation()));
+                            HTMLInput::generateMarkup($buttonText, array('type'=>'button'))
+                                , array('href'=>$href));
                     }
 
                     if ($shoDirtyRooms) {

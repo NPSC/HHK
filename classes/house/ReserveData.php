@@ -32,11 +32,13 @@ class ReserveData {
     const ID = 'id';
     const PRI = 'pri';
 
+
     const GUEST_ADMIN = 'guestadmin';
 
     const STAYING = '1';
     const NOT_STAYING = '0';
     const CANT_STAY = 'x';
+    const IN_ROOM = 'r';
 
     const DATE_FORMAT = 'M j, Y';
 
@@ -710,7 +712,7 @@ class PSGMemStay {
 
     public function __construct($stayIndex) {
 
-        if ($stayIndex == ReserveData::STAYING || $stayIndex == ReserveData::NOT_STAYING || $stayIndex == ReserveData::CANT_STAY) {
+        if ($stayIndex == ReserveData::STAYING || $stayIndex == ReserveData::NOT_STAYING || $stayIndex == ReserveData::CANT_STAY || $stayIndex == ReserveData::IN_ROOM) {
             $this->stay = $stayIndex;
         } else {
             $this->stay = ReserveData::NOT_STAYING;
@@ -796,6 +798,7 @@ class PSGMemVisit extends PSGMemStay {
         if (isset($this->index['idVisit']) && isset($this->index['Visit_Span'])) {
             return HTMLInput::generateMarkup($this->index['room'], array('type'=>'button', 'class'=>'hhk-getVDialog hhk-stayIndicate', 'data-vid'=>$this->index['idVisit'], 'data-span'=>$this->index['Visit_Span']));
         } else {
+            $this->setStay(ReserveData::IN_ROOM);
             return HTMLContainer::generateMarkup('span', 'In Room', array('class'=>'hhk-stayIndicate'));
         }
     }

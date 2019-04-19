@@ -76,6 +76,7 @@ function resvManager(initData) {
 
         // Exports
         t.findStaysChecked = findStaysChecked;
+        t.findStays = findStays;
         t.findPrimaryGuest = findPrimaryGuest;
         t.setUp = setUp;
         t.newGuestMarkup = newGuestMarkup;
@@ -104,6 +105,19 @@ function resvManager(initData) {
             });
 
             return numGuests;
+        }
+        
+        function findStays(stayType) {
+            var numInRoom = 0;
+            
+            for (var p in people.list()) {
+                
+                if (people.list()[p].stay === stayType) {
+                    numInRoom++;
+                }
+                
+            }
+            return numInRoom;
         }
 
         function findPrimaryGuest() {
@@ -1105,11 +1119,6 @@ function resvManager(initData) {
                     stDate = false,
                     enDate = false,
                     drp;
-
-                // default number of days for a new stay.
-                if (isNaN(nextDays) || nextDays < 1) {
-                    nextDays = 21;
-                }
                 
                 if (data.startDate) {
                     stDate = data.startDate;
@@ -1837,7 +1846,7 @@ function resvManager(initData) {
                 });
 
                 $('#' + familySection.divFamDetailId).on('change', '.hhk-cbStay', function () {
-                    updateRescChooser.numberGuests = familySection.findStaysChecked();
+                    updateRescChooser.numberGuests = familySection.findStaysChecked() + familySection.findStays('r');
                 });
             }
 
@@ -2221,10 +2230,10 @@ function resvManager(initData) {
 
             resvSection.setUp(data);
 
-            // String together some events
+            // Manage Total Guests indicator.
             $('#' + familySection.divFamDetailId).on('change', '.hhk-cbStay', function () {
 
-                var tot = familySection.findStaysChecked();
+                var tot = familySection.findStaysChecked() + familySection.findStays('r');
                 resvSection.$totalGuests.text(tot);
 
                 if (tot > 0) {

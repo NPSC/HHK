@@ -158,7 +158,7 @@ if ($idReserv > 0 || $idGuest > 0 || $idVisit > 0) {
 
 }
 
-if ($visitStatus != VisitStatus::CheckedIn) {
+if ($visitStatus != '' && $visitStatus != VisitStatus::CheckedIn) {
     $pageHdr = 'Visit';
     $pageStyle = 'Style="background-color:#f2f2f2"';
 }
