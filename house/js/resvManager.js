@@ -17,6 +17,7 @@ function resvManager(initData) {
     var idName = initData.id;
     var idVisit = initData.vid;
     var span = initData.span;
+    var arrival = initData.arrival;
 
 
     var rooms = [];
@@ -25,7 +26,7 @@ function resvManager(initData) {
     var familySection = new FamilySection($('#famSection'));
     var resvSection = new ResvSection($('#resvSection'));
     var hospSection = new HospitalSection($('#hospitalSection'));
-    var expDatesSection = new ExpDatesSection($('#datesSection'));
+    var expDatesSection = new ExpDatesSection();
     var updateRescChooser = new updateRescChooser();
     var $pWarning = $('#pWarnings');
 
@@ -106,16 +107,16 @@ function resvManager(initData) {
 
             return numGuests;
         }
-        
+
         function findStays(stayType) {
             var numInRoom = 0;
-            
+
             for (var p in people.list()) {
-                
+
                 if (people.list()[p].stay === stayType) {
                     numInRoom++;
                 }
-                
+
             }
             return numInRoom;
         }
@@ -1094,7 +1095,7 @@ function resvManager(initData) {
         };
     }
 
-    function ExpDatesSection($dateSection) {
+    function ExpDatesSection() {
 
         var t = this;
 
@@ -1105,7 +1106,7 @@ function resvManager(initData) {
         t.openControl = false;
 
 
-        t.setUp = function(data, doOnDatesChange) {
+        t.setUp = function(data, doOnDatesChange, $dateSection) {
 
             $dateSection.empty();
 
@@ -1119,6 +1120,10 @@ function resvManager(initData) {
                     stDate = false,
                     enDate = false,
                     drp;
+            
+                if (gstDate.val() === '' && arrival) {
+                    gstDate.val(arrival);
+                }
                 
                 if (data.startDate) {
                     stDate = data.startDate;
@@ -1614,36 +1619,42 @@ function resvManager(initData) {
                 });
             }
 
-            reserve.rateList = data.resv.rdiv.ratelist;
-            reserve.resources = data.resv.rdiv.rooms;
-            reserve.visitFees = data.resv.rdiv.vfee;
-            reserve.idResv = idResv;
+            if (data.resv.rdiv.ratelist) {
+                reserve.rateList = data.resv.rdiv.ratelist;
+                reserve.resources = data.resv.rdiv.rooms;
+                reserve.visitFees = data.resv.rdiv.vfee;
+                reserve.idResv = idResv;
+                setupRates(reserve);
+            }
 
-            setupRates(reserve);
+            if ($('#selResource').length > 0) {
+                $('#selResource').change(function () {
+                    $('#selRateCategory').change();
 
-            $('#selResource').change(function () {
-                $('#selRateCategory').change();
+                    var selected = $("option:selected", this);
+                    var selparent = selected.parent()[0].label;
 
-                var selected = $("option:selected", this);
-                var selparent = selected.parent()[0].label;
-
-                if (selparent === undefined || selparent === null ) {
-                    $('#hhkroomMsg').hide();
-                } else {
-                    $('#hhkroomMsg').text(selparent).show();
-                }
-            });
+                    if (selparent === undefined || selparent === null ) {
+                        $('#hhkroomMsg').hide();
+                    } else {
+                        $('#hhkroomMsg').text(selparent).show();
+                    }
+                });
+            }
 
         }
 
         function setupPay(data){
 
-            $('#paymentDate').datepicker({
-                yearRange: '-1:+00',
-                numberOfMonths: 1
-            });
-
-            setupPayments(data.resv.rdiv.rooms, $('#selResource'), $('#selRateCategory'));
+            if ($('#selResource').length > 0 && $('#selRateCategory').length > 0) {
+                
+                setupPayments(data.resv.rdiv.rooms, $('#selResource'), $('#selRateCategory'));
+                
+                $('#paymentDate').datepicker({
+                    yearRange: '-1:+00',
+                    numberOfMonths: 1
+                });
+            }
         }
 
         function setupRoom(rid) {
@@ -1820,34 +1831,34 @@ function resvManager(initData) {
 
             if ($('#addGuestHeader').length > 0) {
 
-                expDatesSection = new ExpDatesSection($('#addGuestHeader'));
+                //expDatesSection = new ExpDatesSection($('#addGuestHeader'));
                 expDatesSection.openControl = true;
-                expDatesSection.setUp(data.resv.rdiv, doOnDatesChange);
+                expDatesSection.setUp(data.resv.rdiv, doOnDatesChange, $('#addGuestHeader'));
 
-                updateRescChooser.omitSelf = false;
-                updateRescChooser.idReservation = 0;
-                t.checkPayments = false;
-
-                $('#selResource').change(function () {
-
-                    if ($('#gstDate').val() !== '' && $('#gstCoDate').val() !== '') {
-
-                        if ($(this).val() !== t.origRoomId) {
-                            $('#divRateChooser').show();
-                            $('#divPayChooser').show();
-                            t.checkPayments = true;
-                        } else {
-                            $('#divRateChooser').hide();
-                            $('#divPayChooser').hide();
-                            t.checkPayments = false;
-                        }
-
-                    }
-                });
-
-                $('#' + familySection.divFamDetailId).on('change', '.hhk-cbStay', function () {
-                    updateRescChooser.numberGuests = familySection.findStaysChecked() + familySection.findStays('r');
-                });
+//                updateRescChooser.omitSelf = false;
+//                updateRescChooser.idReservation = 0;
+//                t.checkPayments = false;
+//
+//                $('#selResource').change(function () {
+//
+//                    if ($('#gstDate').val() !== '' && $('#gstCoDate').val() !== '') {
+//
+//                        if ($(this).val() !== t.origRoomId) {
+//                            $('#divRateChooser').show();
+//                            $('#divPayChooser').show();
+//                            t.checkPayments = true;
+//                        } else {
+//                            $('#divRateChooser').hide();
+//                            $('#divPayChooser').hide();
+//                            t.checkPayments = false;
+//                        }
+//
+//                    }
+//                });
+//
+//                $('#' + familySection.divFamDetailId).on('change', '.hhk-cbStay', function () {
+//                    updateRescChooser.numberGuests = familySection.findStaysChecked() + familySection.findStays('r');
+//                });
             }
 
             t.setupComplete = true;
@@ -2214,7 +2225,7 @@ function resvManager(initData) {
 
         // Expected Dates Control
         if (data.expDates !== undefined && data.expDates !== '') {
-            expDatesSection.setUp(data.expDates, doOnDatesChange);
+            expDatesSection.setUp(data.expDates, doOnDatesChange, $('#datesSection'));
         }
 
         if (data.warning !== undefined && data.warning !== '') {

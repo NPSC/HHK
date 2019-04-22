@@ -210,8 +210,11 @@ $(document).ready(function() {
                         flagAlertMessage(data.error, 'error');
                     }
 
-                    
-                    ckedIn(data);
+                    if (!data.vid || data.vid === 0) {
+                        pageManager.loadResv(data);
+                    } else {
+                        ckedIn(data);
+                    }
                 }
             );
         }

@@ -447,8 +447,9 @@ class RoomChooser {
 
         if ($replaceRoomSel == '') {
 
-            $resOptions[] = array(0, '-None-', '');
-            $rmSelectorMarkup = $this->makeRoomSelector($resOptions, 0);
+//            $resOptions[] = array(0, '-None-', '');
+//            $rmSelectorMarkup = $this->makeRoomSelector($resOptions, 0);
+            $rmSelectorMarkup = HTMLInput::generateMarkup('', array('name'=>'cbNewRoom', 'type'=>'checkbox'));
 
         } else {
             $rmSelectorMarkup = $replaceRoomSel;
@@ -484,7 +485,7 @@ class RoomChooser {
                 HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->getCurrentGuests()), array('style'=>'text-align:center;'))
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnNumGuests')), array('style'=>'text-align:center;'))
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $curRoomMarkup), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $rmSelectorMarkup, array('id'=>'spanSelResc')))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $rmSelectorMarkup, array('id'=>'spanSelResc')), array('style'=>'text-align:center;'))
                 );
 
         // set up room suitability message area

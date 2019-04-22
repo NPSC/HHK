@@ -160,14 +160,6 @@ if (isset($_GET['idPsg'])) {
     $idPsg = intval(filter_var($_GET['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
-// Page title
-$title = $wInit->pageHeading;
-
-if (isset($_GET['title'])) {
-    $title = 'Check In';
-}
-
-
 if ($idReserv > 0 || $idGuest >= 0) {
 
     $mk1 = "<h2>Loading...</h2>";
@@ -188,6 +180,14 @@ $resvAr['patAddr'] = $uS->PatientAddr;
 $resvAr['gstAddr'] = $uS->GuestAddr;
 $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
 $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
+
+// Page title
+$title = $wInit->pageHeading;
+
+if (isset($_GET['title'])) {
+    $title = 'Check In';
+    $resvAr['arrival'] = date('M j, Y');
+}
 
 $resvObjEncoded = json_encode($resvAr);
 
