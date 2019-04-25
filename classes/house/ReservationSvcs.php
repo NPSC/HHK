@@ -137,7 +137,7 @@ class ReservationSvcs {
         return $dataArray;
     }
 
-    public static function generateCkinDoc(\PDO $dbh, $idReservation = 0, $idVisit = 0, $logoURL = '', $notes = '') {
+    public static function generateCkinDoc(\PDO $dbh, $idReservation = 0, $idVisit = 0, $span = 0, $logoURL = '', $notes = '') {
 
         $uS = Session::getInstance();
 
@@ -146,7 +146,7 @@ class ReservationSvcs {
 
         if ($uS->RegForm == 1) {
 
-            $doc = RegisterForm::prepareRegForm($dbh, $idVisit, $idReservation, $instructFileName);
+            $doc = RegisterForm::prepareRegForm($dbh, $idVisit, $span, $idReservation, $instructFileName);
             $sty = RegisterForm::getStyling();
 
         } else if ($uS->RegForm == 2) {

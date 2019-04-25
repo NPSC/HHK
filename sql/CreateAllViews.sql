@@ -1923,7 +1923,8 @@ select
         nd.Income_Bracket,
         nd.Age_Bracket,
         nd.Education_Level,
-        nd.Special_Needs
+        nd.Special_Needs,
+        count(s.idName) as `Guest_Count`
     from
         `visit` `v`
             left join
@@ -1933,9 +1934,12 @@ select
             left join
 	`name_demog` nd on v.idPrimaryGuest = nd.idName
             left join 
+	stays s on v.idVisit = s.idVisit and v.Span = s.Visit_Span and v.`Status` = s.`Status`
+            left join 
         gen_lookups gs on gs.Table_Name = 'Name_Suffix' and gs.Code = n.Name_Suffix
             left join 
-        gen_lookups gv on gv.Table_Name = 'Visit_Status' and gv.Code = v.Status;
+        gen_lookups gv on gv.Table_Name = 'Visit_Status' and gv.Code = v.Status
+    group by v.idVisit, v.Span;
 
 
 

@@ -276,6 +276,7 @@ where ru.idResource_use is null
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
             $s['end'] = $endDT->format('Y-m-d\TH:i:00');
             $s['title'] = $titleText;
+            $s['guests'] = $r['Guest_Count'];
             $s['extended'] = $visitExtended;
             $s['allDay'] = 1;
             $s['fullName'] = $r['Name_Full'];
