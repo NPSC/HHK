@@ -943,6 +943,6 @@ $uS->guestId = $id;
         </script>
 
         <script type="text/javascript" src="../js/uppload.js"></script>
-        <script type="text/javascript" src="js/guestload-min.js"></script>
+        <script type="text/javascript" src="js/guestload-min.js?vn=6"></script>
     </body>
 </html>

@@ -1201,7 +1201,8 @@ $(document).ready(function () {
 
                 // visits
                 } else if (event.idVisit !== undefined) {
-                    element.prop('title', event.fullName + ', Room: ' + resource.title + ', Status: ' + event.visitStatus + ', ' + event.guests + ' guests,' + (shoHospitalName ? ', Hospital: ' + event.hospName : ''));
+                    
+                    element.prop('title', event.fullName + ', Room: ' + resource.title + ', Status: ' + event.visitStatus + ', ' + event.guests + (event.guests > 1 ? ' guests': ' guest') + (shoHospitalName ? ', Hospital: ' + event.hospName : ''));
                     
                     if (event.extended !== undefined && event.extended) {
                         element.find('div.fc-content')
