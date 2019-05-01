@@ -702,7 +702,7 @@ class InstamedGateway extends PaymentGateway {
 
         $this->credentials = new InstaMedCredentials($gwRs);
 
-        $this->saleUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPatientPaymentSSO';
+        $this->saleUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPaymentSimpleSSO';
         $this->cofUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPaymentPlanSimpleSSO';
         $this->voidUrl = 'https://online.instamed.com/providers/Form/PatientPayments/VoidPaymentSSO?';
         $this->returnUrl = 'https://online.instamed.com/providers/Form/PatientPayments/RefundPaymentSSO?';
