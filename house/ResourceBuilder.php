@@ -30,6 +30,8 @@ require (HOUSE . 'ResourceView.php');
 require (HOUSE . 'Attributes.php');
 require (HOUSE . 'Constraint.php');
 
+const DIAGNOSIS_TABLE_NAME = 'Diagnosis';
+const LOCATION_TABLE_NAME = 'Location';
 
 try {
     $wInit = new webInit();
@@ -122,9 +124,15 @@ function saveArchive(\PDO $dbh, $desc, $subt, $tblName) {
     return $defaultCode;
 }
 
-function getSelections(\PDO $dbh, $tableName, $type) {
+function getSelections(\PDO $dbh, $tableName, $type, Config_Lite $labels) {
 
     $uS = Session::getInstance();
+    
+    if ($tableName == $labels->getString('hospital', 'diagnosis', DIAGNOSIS_TABLE_NAME)) {
+        $tableName = DIAGNOSIS_TABLE_NAME;
+    } else if ($tableName == $labels->getString('hospital', 'location', LOCATION_TABLE_NAME)) {
+        $tableName = LOCATION_TABLE_NAME;
+    }
 
     // Generate selectors.
     $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
@@ -194,9 +202,6 @@ function getSelections(\PDO $dbh, $tableName, $type) {
 
 
 $dbh = $wInit->dbh;
-$pageTitle = $wInit->pageTitle;
-
-$menuMarkup = $wInit->generatePageMenu();
 
 $uS = Session::getInstance();
 
@@ -246,6 +251,12 @@ if (isset($_POST['table'])) {
     if ($tableName == '') {
         echo '';
         exit();
+    }
+
+    if ($tableName == $labels->getString('hospital', 'diagnosis', DIAGNOSIS_TABLE_NAME)) {
+        $tableName = DIAGNOSIS_TABLE_NAME;
+    } else if ($tableName == $labels->getString('hospital', 'location', LOCATION_TABLE_NAME)) {
+        $tableName = LOCATION_TABLE_NAME;
     }
 
     $cmd = '';
@@ -451,7 +462,7 @@ if (isset($_POST['table'])) {
 
 
     // Generate selectors.
-    $tbl = getSelections($dbh, $tableName, $type);
+    $tbl = getSelections($dbh, $tableName, $type, $labels);
 
     echo($tbl->generateMarkup());
     exit();
@@ -843,83 +854,9 @@ if (isset($_POST['btnItemSave'])) {
     }
 }
 
-// Get selected Editor Form text
-//if (isset($_POST['formEdit'])) {
-//
-//    $tabIndex = 6;
-//
-//    $cmd = filter_input(INPUT_POST, 'formEdit', FILTER_SANITIZE_STRING);
-//
-//    switch ($cmd) {
-//
-//        case 'getform':
-//
-//            $fn = filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_STRING);
-//
-//            if (!$fn || $fn == '') {
-//                exit(json_encode(array('warning'=>'The Form name is blank.')));
-//            }
-//
-//            $files = readGenLookupsPDO($dbh, 'Editable_Forms');
-//
-//            if (isset($files[$fn])) {
-//
-//                if (file_exists($fn)) {
-//                    exit(json_encode(array('title'=>$files[$fn][1], 'tx'=>file_get_contents($fn), 'jsn'=>file_get_contents($files[$fn][2]))));
-//                } else {
-//                    exit(json_encode(array('warning'=>'This Form is missing from the server library.')));
-//                }
-//
-//            } else {
-//                exit(json_encode(array('warning'=>'The Form name is not on the acceptable list.')));
-//            }
-//
-//            break;
-//
-//        case 'saveform':
-//
-//            $formEditorText = urldecode(filter_input(INPUT_POST, 'mu', FILTER_SANITIZE_STRING));
-//
-//            $feFileSelection = filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_STRING);
-//
-//            $files = readGenLookupsPDO($dbh, 'Editable_Forms');
-//
-//            if ($rteFileSelection == '') {
-//
-//                $rteMsg = 'Nothing saved. Select a Form to edit.';
-//
-//            } else if (isset($files[$rteFileSelection]) === FALSE) {
-//
-//                $rteMsg = 'Nothing saved. Form name not accepted. ';
-//
-//            } else if (file_exists($rteFileSelection) === FALSE) {
-//
-//                $rteMsg = 'Nothing saved. Form does not exist. ';
-//
-//            } else if ($formEditorText == '') {
-//
-//                $rteMsg = 'Nothing saved. Form text is blank.  ';
-//
-//            } else {
-//
-//                $rtn = file_put_contents($rteFileSelection, $formEditorText);
-//
-//                if ($rtn > 0) {
-//                    $rteMsg = "Success - $rtn bytes saved.";
-//
-//                } else {
-//                    $rteMsg = "Form Not Saved.";
-//                }
-//            }
-//
-//            exit(json_encode(array('response'=>$rteMsg)));
-//
-//            break;
-//    }
-//
-//    exit(json_encode(array('warning'=>'Unspecified')));
-//}
-//
+$pageTitle = $wInit->pageTitle;
+
+$menuMarkup = $wInit->generatePageMenu();
 
 //
 // Generate tab content
@@ -1234,16 +1171,10 @@ $attrTable = $aTbl->generateMarkup();
 $constraintTable = $constraints->createConstraintTable($dbh);
 
 
-// Form editor
-//$feSelectForm = HTMLSelector::generateMarkup(
-//        HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Editable_Forms')), $feeFileSelection, TRUE)
-//        , array('id'=>'frmEdSelect', 'name'=>'frmEdSelect'));
-
-
-
 // Demographics Selection table
-$tbl = getSelections($dbh, 'Demographics', 'm');
+$tbl = getSelections($dbh, 'Demographics', 'm', $labels);
 $demoSelections = $tbl->generateMarkup();
+
 
 // Demographics category selectors
 $stmt = $dbh->query("SELECT DISTINCT
@@ -1278,14 +1209,16 @@ foreach ($rows2 as $r) {
         continue;
     }
 
-    if ($r[1] != 'Demographics') {
-        $lkups[] = $r;
+    if ($r[1] == DIAGNOSIS_TABLE_NAME) {
+        $hasDiags = TRUE;
+        $r[1] = $labels->getString('hospital', 'diagnosis', DIAGNOSIS_TABLE_NAME);
+    } else if ($r[1] == LOCATION_TABLE_NAME) {
+        $hasLocs = TRUE;
+        $r[1] = $labels->getString('hospital', 'location', LOCATION_TABLE_NAME);
     }
 
-    if ($r[1] == 'Diagnosis') {
-        $hasDiags = TRUE;
-    } else if ($r[1] == 'Location') {
-        $hasLocs = TRUE;
+    if ($r[1] != 'Demographics') {
+        $lkups[] = $r;
     }
 
 }

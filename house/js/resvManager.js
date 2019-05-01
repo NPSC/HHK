@@ -2264,7 +2264,7 @@ function resvManager(initData) {
                         window.open('ShowStatement.php?vid=' + vid, '_blank');
                     },
                     "Show Registration Form": function() {
-                        window.open('ShowRegForm.php?vid=' + vid, '_blank');
+                        window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
                     },
                     "Save": function() {
                         saveFees(0, vid, span, false, payFailPage);

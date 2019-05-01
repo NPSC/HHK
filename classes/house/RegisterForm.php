@@ -17,7 +17,7 @@
  */
 class RegisterForm {
 
-    protected static function titleBlock($roomTitle, $expectedDeparture, $rate, $title, $agent, $priceModelCode, $houseAddr = '', $roomFeeTitle = 'Pledged Fee') {
+    protected static function titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $priceModelCode, $houseAddr = '', $roomFeeTitle = 'Pledged Fee') {
 
         $mkup = "<h2>" . $title . " </h2>";
 
@@ -34,7 +34,7 @@ class RegisterForm {
   <p class='room'>" . $roomTitle . "</p>
   </td>
   <td width=180 style='width:1.5in;border:solid windowtext 1pt;border-left: none;'>
-  <p class='label'>Expected Departure</p>
+  <p class='label'>$expDepartPrompt</p>
   </td>
   <td width=278 style='width:166.5pt;border:solid windowtext 1pt;border-left: none;'>
   <p class=MsoNormal style='margin-bottom:0;line-height: normal'>" . ($expectedDeparture == '' ? '' : date("M j, Y", strtotime($expectedDeparture))) . "</p>
@@ -346,12 +346,12 @@ class RegisterForm {
     }
 
     protected static function generateDocument(\PDO $dbh, $title, \Role $patient, array $guests,  $houseAddr, $hospital, $hospRoom, $patientRelCodes,
-            $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $agreementLabel, $instructionFileName, $creditRecord = '', $notes = '', $roomFeeTitle = 'Pledged Fee') {
+            $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $expDepartPrompt, $agreementLabel, $instructionFileName, $creditRecord = '', $notes = '', $roomFeeTitle = 'Pledged Fee') {
 
         $uS = Session::getInstance();
 
         $mkup = "<div style='width:700px;margin-bottom:30px; margin-left:5px; margin-right:5px'>";
-        $mkup .= self::titleBlock($roomTitle, $expectedDeparture, $rate, $title, $agent, $uS->RoomPriceModel, $houseAddr, $roomFeeTitle);
+        $mkup .= self::titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $uS->RoomPriceModel, $houseAddr, $roomFeeTitle);
 
         // don't use notes if they are for the waitlist.
         if (!$uS->UseWLnotes) {
@@ -421,7 +421,7 @@ p.label {
 </style>';
     }
 
-    public static function prepareRegForm(PDO $dbh, $idVisit, $idReservation = 0, $instructionFileName = '') {
+    public static function prepareRegForm(PDO $dbh, $idVisit, $span, $idReservation = 0, $instructionFileName = '') {
 
         $uS = Session::getInstance();
         $labels = new Config_Lite(LABEL_FILE);
@@ -436,15 +436,17 @@ p.label {
         $rateAdj = 0.0;
         $notes = '';
         $stays = array();
+        $expectedDeparturePrompt = 'Expected Departure';
 
         if ($idVisit > 0) {
 
             $query = "select idName, Span_Start_Date, Expected_Co_Date, Span_End_Date, `Status`  from stays "
-                    . "where idVisit = :reg and `Status` in ('" . VisitStatus::CheckedIn . "', '" . VisitStatus::CheckedOut . "')"
+                    . "where idVisit = :reg and Visit_Span = :spn "
                     . " and DATEDIFF(ifnull(Span_End_Date, datedefaultnow(Expected_Co_Date)), Span_Start_Date) > 0"
                     . " order by `Status` desc";
             $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
             $stmt->bindValue(':reg', $idVisit, PDO::PARAM_INT);
+            $stmt->bindValue(':spn', $span, PDO::PARAM_INT);
             $stmt->execute();
             $rows = $stmt->fetchAll(PDO::FETCH_NAMED);
 
@@ -453,13 +455,25 @@ p.label {
             }
 
             // visit
-            $visit = new Visit($dbh, 0, $idVisit);
+            $visit = new Visit($dbh, 0, $idVisit, NULL, NULL, NULL, '', $span);
             $reg = new Registration($dbh, 0, $visit->getIdRegistration());
             $visit->getResource($dbh);
 
-            $depDate = $visit->getActualDeparture();
+            $depDate = $visit->getSpanEnd();
             if ($depDate == '') {
                 $depDate = $visit->getExpectedDeparture();
+            } else {
+                switch ($visit->getVisitStatus()) {
+                    case VisitStatus::ChangeRate:
+                        $expectedDeparturePrompt= 'Room Rate Changed';
+                        break;
+                    case VisitStatus::NewSpan:
+                        $expectedDeparturePrompt= 'Room Assignment Changed';
+                        break;
+                    case VisitStatus::CheckedOut:
+                        $expectedDeparturePrompt= 'Actual Departure';
+                        break;
+                }
             }
 
             $primaryGuestId = $visit->getPrimaryGuestId();
@@ -478,7 +492,7 @@ p.label {
                 $gst->setCheckinDate($s['Span_Start_Date']);
                 $gst->status = $s['Status'];
 
-                if ($s['Status'] == VisitStatus::CheckedOut) {
+                if ($s['Status'] != VisitStatus::CheckedIn) {
                     $gst->setExpectedCheckOut($s['Span_End_Date']);
                 } else {
                     $gst->setExpectedCheckOut($s['Expected_Co_Date']);
@@ -696,6 +710,7 @@ p.label {
                 $rate,
                 $roomTitle,
                 $depDate,
+                $expectedDeparturePrompt,
                 $labels->getString('referral', 'agreementTitle','Agreement'),
                 $instructionFileName,
                 $creditReport,
