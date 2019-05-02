@@ -21,6 +21,9 @@ class Receipt {
 
     public static function createSaleMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, PaymentResponse $payResp) {
 
+        $uS = Session::getInstance();
+        $tax = 0.05;
+
         // Assemble the statement
         $rec = self::getHouseIconMarkup();
 
@@ -56,8 +59,31 @@ class Receipt {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($invoice->getInvoiceNumber()));
 
-        foreach ($invoice->getLines($dbh) as $line) {
-            $tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($line->getAmount(), 2), array('style'=>'font-size:.8em;')));
+        if ($uS->siteName == 'Gorecki Guest House') {
+
+            $taxAmt = 0;
+
+            foreach ($invoice->getLines($dbh) as $line) {
+
+                $lineAmt = $line->getAmount();
+
+                if ($line->getItemId() == ItemId::Lodging) {
+                    $lineAmt = round($line->getAmount() / (1 + $tax), 2);
+                    $taxAmt += $line->getAmount() - $lineAmt;
+                }
+
+                $tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($lineAmt, 2), array('style'=>'font-size:.8em;')));
+            }
+
+            if ($taxAmt > 0) {
+                $tbl->addBodyTr(HTMLTable::makeTd('Taxes (' . $tax*100 . '%):', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($taxAmt, 2), array('style'=>'font-size:.8em;')));
+            }
+
+        } else {
+
+            foreach ($invoice->getLines($dbh) as $line) {
+                $tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($line->getAmount(), 2), array('style'=>'font-size:.8em;')));
+            }
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd("Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($invoice->getAmount(), 2), array('class'=>'hhk-tdTotals')));

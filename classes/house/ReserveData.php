@@ -50,6 +50,7 @@ class ReserveData {
     protected $span = 0;
     protected $spanStatus = '';
     protected $spanStartDT = NULL;
+    protected $spanEndDT = NULL;
     protected $forceNewPsg = FALSE;
     protected $forceNewResv = FALSE;
     protected $fullName = '';
@@ -289,6 +290,10 @@ class ReserveData {
         return $this->spanStartDT;
     }
 
+    public function getSpanEndDT() {
+        return $this->spanEndDT;
+    }
+
     public function getConcurrentRooms() {
         return $this->concurrentRooms;
     }
@@ -469,7 +474,20 @@ class ReserveData {
     }
 
     public function setSpanStartDT($id) {
-        $this->spanStartDT = new DateTimeImmutable($id);
+        if ($id != '') {
+            $this->spanStartDT = new DateTimeImmutable($id);
+        } else {
+            $this->spanStartDT = NULL;
+        }
+        return $this;
+    }
+
+    public function setSpanEndDT($id) {
+        if ($id != '') {
+            $this->spanEndDT = new DateTimeImmutable($id);
+        } else {
+            $this->spanEndDT = NULL;
+        }
         return $this;
     }
 
@@ -709,6 +727,7 @@ class PSGMember {
 class PSGMemStay {
 
     protected $stay;
+    protected $myStayType = 'open';
 
     public function __construct($stayIndex) {
 
@@ -779,11 +798,16 @@ class PSGMemStay {
         }
     }
 
+    public function getMyStayType() {
+        return $this->myStayType;
+    }
+
 }
 
 class PSGMemVisit extends PSGMemStay {
 
     protected $index = array();
+    protected $myStayType = 'visit';
 
     public function __construct($index) {
 
@@ -806,6 +830,8 @@ class PSGMemVisit extends PSGMemStay {
 }
 
 class PSGMemResv extends PSGMemVisit {
+
+    protected $myStayType = 'resv';
 
     public function createStayButton($prefix) {
 

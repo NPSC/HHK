@@ -2225,6 +2225,7 @@ function resvManager(initData) {
 
         // Expected Dates Control
         if (data.expDates !== undefined && data.expDates !== '') {
+            expDatesSection.openControl = false;
             expDatesSection.setUp(data.expDates, doOnDatesChange, $('#datesSection'));
         }
 
