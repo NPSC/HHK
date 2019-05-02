@@ -550,23 +550,34 @@ $(document).ready(function () {
     });
 
     $(".delete-guest-photo").on("click", function(){
-        $.ajax({
-            type: "POST",
-            url: "ws_resc.php",
-            dataType: "json",
-            data: {
-                    cmd: "deleteguestphoto",
-                    guestId: memData.id
-                },
-            success: function(data) {
-                if(data.error){
-                }else{
-                    $("#guestPhoto").prop("src", "ws_resc.php?cmd=getguestphoto&guestId=" + memData.id + "&rx="+new Date().getTime());
-                }
-            },
-            error: function(error) {
+        
+        if (confirm("Really Delete this photo?")) {
+            $.ajax({
+                type: "POST",
+                url: "ws_resc.php",
+                dataType: "json",
+                data: {
+                        cmd: "deleteguestphoto",
+                        guestId: memData.id
+                    },
+                success: function(data) {
+                    if(data.error){
+                        
+                        if (data.gotopage) {
+                            window.location.assign(data.gotopage);
+                        }
+                        
+                        flagAlertMessage("Server error - " + data.error, 'error');
+                        return;
 
-            }
-        });
+                    }else{
+                        $("#guestPhoto").prop("src", "ws_resc.php?cmd=getguestphoto&guestId=" + memData.id + "&rx="+new Date().getTime());
+                    }
+                },
+                error: function(error) {
+                    flagAlertMessage("AJAX error - " + error);
+                }
+            });
+        }
     });
 });
