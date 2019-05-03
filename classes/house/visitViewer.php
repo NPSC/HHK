@@ -485,10 +485,12 @@ class VisitView {
                     && count($rows) > 1
                     && $r['On_Leave'] == 0
                     && $r['Status'] != VisitStatus::CheckedIn
-                    && $r['Visit_Span'] == 0
-                    && ($r["Visit_Status"] == VisitStatus::CheckedIn || $r["Visit_Status"] == VisitStatus::CheckedOut)) {
+                    && $r['idName'] != $idPrimaryGuest
+//                    && $r['Visit_Span'] == 0
+//                    && ($r["Visit_Status"] == VisitStatus::CheckedIn || $r["Visit_Status"] == VisitStatus::CheckedOut)
+                    ) {
 
-                $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id' => 'removeCb_' . $r['idName'], 'name' => '[removeCb][' . $r['idName'] . ']',
+                $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id' => 'removeCb_' . $r['idStays'], 'name' => '[removeCb][' . $r['idStays'] . ']',
                     'data-nm' => $name,
                     'type' => 'checkbox',
                     'class' => 'hhk-removeCB' )), array('style'=>'text-align:center;'));
@@ -834,45 +836,55 @@ class VisitView {
      * @param string $idPrefix
      * @return string
      */
-    public static function removeStays(\PDO $dbh, $idVisit, $span, $idGuest, $uname) {
+    public static function removeStay(\PDO $dbh, $idVisit, $span, $idStay, $uname) {
 
         $reply = '';
 
-        if ($idGuest == 0) {
+        if ($idStay == 0) {
             return;
         }
 
         // recordset
         $visitRS = new VisitRs();
         $visitRS->idVisit->setStoredVal($idVisit);
-        $rows = EditRS::select($dbh, $visitRS, array($visitRS->idVisit));
+        $visitRS->Span->setStoredVal($span);
 
-        // Currently limited to single span visit.
-        if (count($rows) != 1 || $span != 0) {
-            return 'Cannot remove guest from the visit.  ';
+        $rows = EditRS::select($dbh, $visitRS, array($visitRS->idVisit, $visitRS->Span));
+
+        if (count($rows) != 1) {
+            return 'The Visit Span is not found.  ';
         }
 
         EditRS::loadRow($rows[0], $visitRS);
 
-        if ($idGuest == $visitRS->idPrimaryGuest->getStoredVal()) {
+        $stayRs = new StaysRS();
+        $stayRs->idVisit->setStoredVal($idVisit);
+        $stayRs->Visit_Span->setStoredVal($span);
+        $stayRows = EditRS::select($dbh, $stayRs, array($stayRs->idVisit, $stayRs->Visit_Span));
+
+        if (count($stayRows) < 2) {
+            return 'Cannot remove last guest from the visit.    ';
+        }
+
+        // find this stay
+        foreach ($stayRows as $st) {
+            if ($st->idName->getStoredVal() == $idStay) {
+                EditRS::loadRow($st, $stayRs);
+            }
+        }
+
+        // Primary guest
+        if ($stayRs->idName->getStoredVal() == $visitRS->idPrimaryGuest->getStoredVal()) {
             return 'Switch the primary guest to someone else before deleting this guest.  ';
         }
 
+        // Only checked in visits can adjust the start date
+        //      checked in & span = 0 can adjust end date.
+        // Only checked out visits can adjust the end date
+        //      checked out & span = 0 can adjust the start date
 
-        // Remove guests from the visit span
-        if ($visitRS->Status->getStoredVal() == VisitStatus::CheckedIn || $visitRS->Status->getStoredVal() == VisitStatus::CheckedOut) {
-
-            $stayRS = new StaysRS();
-            $stayRS->idVisit->setStoredVal($idVisit);
-            $stayRS->Visit_Span->setStoredVal($span);
-            $stays = EditRS::select($dbh, $stayRS, array($stayRS->idVisit, $stayRS->Visit_Span));
-
-            $countStays = count($stays);
-
-            if ($countStays < 2) {
-                return 'Cannot remove last guest from the visit.  ';
-            }
-
+        // other visit status can change no dates, so the removed stay must not change the visit dates.
+        
 
             $remainingStays = array();
 
@@ -938,7 +950,7 @@ class VisitView {
                     $reply .= 'Visit start and/or end dates changed due to removing the guest.  ';
                 }
             }
-        }
+
 
         return $reply;
     }

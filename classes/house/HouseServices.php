@@ -174,8 +174,8 @@ class HouseServices {
         if (isset($post['removeCb'])) {
 
             foreach ($post['removeCb'] as $r => $v) {
-                $idRemoved = intval(filter_var($r, FILTER_SANITIZE_NUMBER_INT), 10);
-                $reply .= VisitView::removeStays($dbh, $idVisit, $span, $idRemoved, $uS->username);
+                $idStay = intval(filter_var($r, FILTER_SANITIZE_NUMBER_INT), 10);
+                $reply .= VisitView::removeStay($dbh, $idVisit, $span, $idStay, $uS->username);
             }
         }
 

@@ -68,9 +68,9 @@ class InstamedGateway extends PaymentGateway {
         $patInfo = $this->getPatientInfo($dbh, $invoice->getIdGroup());
 
         $data = array(
-            'patientID' => $patInfo['idName'],
-            'patientFirstName' => $patInfo['Name_First'],
-            'patientLastName' => $patInfo['Name_Last'],
+//            'patientID' => $patInfo['idName'],
+//            'patientFirstName' => $patInfo['Name_First'],
+//            'patientLastName' => $patInfo['Name_Last'],
             'amount' => $invoice->getAmountToPay(),
             InstamedGateway::INVOICE_NUMBER => $invoice->getInvoiceNumber(),
             InstaMedCredentials::U_ID => $uS->uid,
@@ -85,7 +85,7 @@ class InstamedGateway extends PaymentGateway {
             'responseActionType' => 'header',
             'cancelURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::HCO_TRANS, InstamedGateway::POSTBACK_CANCEL),
             'confirmURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::HCO_TRANS, InstamedGateway::POSTBACK_COMPLETE),
-            'requestToken' => 'true',
+//            'requestToken' => 'true',
             'RelayState' => $this->saleUrl,
         );
 

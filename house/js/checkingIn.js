@@ -210,11 +210,11 @@ $(document).ready(function() {
                         flagAlertMessage(data.error, 'error');
                     }
 
-                    if (!data.vid || data.vid === 0) {
-                        pageManager.loadResv(data);
-                    } else {
+//                    if (!data.vid || data.vid === 0) {
+//                        pageManager.loadResv(data);
+//                    } else {
                         ckedIn(data);
-                    }
+//                    }
                 }
             );
         }

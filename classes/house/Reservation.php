@@ -286,6 +286,13 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
     public function addPerson(\PDO $dbh) {
 
+        $psgMembers = $this->reserveData->getPsgMembers();
+
+        $this->reserveData->addConcurrentRooms($this->findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $this->reserveData->getSpanStartDT(), $this->reserveData->getSpanEndDT(), $this->reserveData->getResvTitle()));
+        $this->reserveData->addConcurrentRooms($this->findConflictingStays($dbh, $psgMembers, $this->reserveData->getSpanStartDT(), $this->reserveData->getIdPsg(), $this->reserveData->getSpanEndDT(), $this->reserveData->getIdVisit(), $this->reserveData->getSpan()));
+
+        $this->reserveData->setPsgMembers($psgMembers);
+
         $this->reserveData->setAddPerson($this->family->createAddPersonMu($dbh, $this->reserveData));
         return $this->reserveData->toArray();
     }
@@ -737,31 +744,46 @@ where rg.idReservation =" . $r['idReservation']);
         if ($whStays != '') {
 
             // Check ongoing visits
-            $vstmt = $dbh->query("Select s.idName, s.idVisit, s.Visit_Span, s.idRoom, r.idPsg, rm.Title, v.`Status` "
-                    . " from stays s join visit v on s.idVisit = v.idVisit AND s.Visit_Span = v.Span "
-                    . " join room rm on s.idRoom = rm.idRoom"
-                    . " join registration r on v.idRegistration = r.idRegistration "
-//                    . " where v.`Status` = '" . VisitStatus::CheckedIn . "' "
-                    . " AND ("
-                            . " ( s.`Status` = '" . VisitStatus::CheckedIn . "' AND DATE(datedefaultnow(s.Expected_Co_Date)) >= DATE('" . $arrivalDT->format('Y-m-d') . "') ) "
-                        . " OR "
-                            . " ( s.`Status` != '" . VisitStatus::CheckedIn . "' AND DATE(s.Span_End_Date) > DATE('" . $arrivalDT->format('Y-m-d') . "') and DATE(s.Span_Start_Date) < DATE('" . $departureDT->format('Y-m-d') . "'))"
-                    . ") "
-                    . " and s.idName in (" . substr($whStays, 1) . ")");
+            $vstmt = $dbh->query("SELECT
+    s.idName,
+    s.idVisit,
+    s.Visit_Span,
+    s.idRoom,
+    r.idPsg,
+    rm.Title,
+    v.`Status`,
+    v.idPrimaryGuest
+FROM
+    stays s
+        JOIN
+    visit v ON s.idVisit = v.idVisit
+        AND s.Visit_Span = v.Span
+        JOIN
+    room rm ON s.idRoom = rm.idRoom
+        JOIN
+    registration r ON v.idRegistration = r.idRegistration
+WHERE
+    DATE(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
+    and DATE(s.Span_Start_Date) < DATE('" . $departureDT->format('Y-m-d') . "')
+    and s.idName in (" . substr($whStays, 1) . ")");
 
             while ($s = $vstmt->fetch(\PDO::FETCH_ASSOC)) {
                 // These guests are already staying
 
-                foreach ($psgMembers as $m) {
+                if ($s['idVisit'] == $idVisit && $s['Visit_Span'] == $idSpan) {
+                    $memVisit = new PSGMemVisit(array());
+                } else if ($s['idVisit'] != $idVisit) {
+                    $memVisit = new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'], 'room'=>$s['Title']));
+                }
 
-                    if ($s['idVisit'] == $idVisit) {
-                        $memVisit = new PSGMemVisit(array());
-                    } else {
-                        $memVisit = new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'], 'room'=>$s['Title']));
-                    }
+                foreach ($psgMembers as $m) {
 
                     if ($m->getId() == $s['idName']) {
                         $psgMembers[$m->getPrefix()]->setStayObj($memVisit);
+
+                        if ($m->getId() == $s['idPrimaryGuest'] && $s['idVisit'] == $idVisit) {
+                            $psgMembers[$m->getPrefix()]->setPrimaryGuest(TRUE);
+                        }
                    }
                 }
 
