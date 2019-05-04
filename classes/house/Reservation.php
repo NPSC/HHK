@@ -2210,7 +2210,7 @@ class CheckedoutReservation extends CheckingIn {
         return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
     }
 
-    public function checkedinMarkup(\PDO $dbh) {
+//    public function checkedinMarkup(\PDO $dbh) {
 
 //        $post = array(
 //            'vid'=>$this->reserveData->getIdVisit(),
@@ -2219,11 +2219,11 @@ class CheckedoutReservation extends CheckingIn {
 //            'vstatus'=>$this->reserveData->getSpanStatus(),
 //        );
 
-        $dataArray['redirTo'] = "register.php?gamess=Guest added to visit";
-
-        return $dataArray;
-
-    }
+//        $dataArray['redirTo'] = "register.php?gamess=Guest added to visit";
+//
+//        return $dataArray;
+//
+//    }
 
     protected function addGuestStay(\PDO $dbh, $post) {
 
@@ -2355,6 +2355,9 @@ class CheckedoutReservation extends CheckingIn {
         foreach ($addingMembers as $a) {
             EditRS::insert($dbh, $a);
         }
+
+        $this->resc = $resc;
+        $this->visit = new Visit($dbh, 0, $visitRs->idVisit->getStoredVal(), NULL, NULL, $resc, $uS->username, $visitRs->Span->getStoredVal());
 
         return;
     }

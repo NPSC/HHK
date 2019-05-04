@@ -838,11 +838,20 @@ class VisitView {
      */
     public static function removeStay(\PDO $dbh, $idVisit, $span, $idStay, $uname) {
 
-        $reply = '';
-
         if ($idStay == 0) {
             return;
         }
+
+        $reply = '';
+
+        $today = new \DateTimeImmutable();
+        $today->setTime(0,0,0);
+        $stayCoversSpan = FALSE;
+        $stayFound = FALSE;
+        $remainingStays = array();
+        $earliestStart = new \DateTime('2900-01-01');
+        $latestEnd = new \DateTime('1984-01-01');
+
 
         // recordset
         $visitRS = new VisitRs();
@@ -857,20 +866,70 @@ class VisitView {
 
         EditRS::loadRow($rows[0], $visitRS);
 
+        // Span dates
+        $spanStartDT = new \DateTime($visitRS->Span_Start->getStoredVal());
+        $spanStartTime = $spanStartDT->format('H:i:s');
+        $spanStartDT->setTime(0,0,0);
+
+        if ($visitRS->Span_End->getStoredVal() != '') {
+            $spanEndDT = new \DateTime($visitRS->Span_End->getStoredVal());
+            $spanEndTime = $spanEndDT->format('H:i:s');
+        } else {
+            $spanEndDT = new \DateTime($visitRS->Expected_Departure->getStoredVal());
+            $spanEndTime = $spanEndDT->format('H:i:s');
+            if ($spanEndDT < $today) {
+                $spanEndDT = $today;
+            }
+        }
+
+        $spanEndDT->setTime(0, 0, 0);
+
         $stayRs = new StaysRS();
         $stayRs->idVisit->setStoredVal($idVisit);
         $stayRs->Visit_Span->setStoredVal($span);
         $stayRows = EditRS::select($dbh, $stayRs, array($stayRs->idVisit, $stayRs->Visit_Span));
 
-        if (count($stayRows) < 2) {
-            return 'Cannot remove last guest from the visit.    ';
+        foreach ($stayRows as $st) {
+
+            if ($st['idStays'] == $idStay) {
+
+                EditRS::loadRow($st, $stayRs);
+                $stayFound = TRUE;
+
+            } else {
+
+                $remainingStays[] = $st;
+
+                $stayStartDT = new \DateTime($st['Span_Start_Date']);
+                $stayStartDT->setTime(0, 0, 0);
+
+                if ($st['Span_End_Date'] != '') {
+                    $stayEndDT = new \DateTime($st['Span_End_Date']);
+                } else {
+                    $stayEndDT = new \DateTime($st['Expected_Co_Date']);
+                    if ($stayEndDT < $today) {
+                        $stayEndDT = $today;
+                    }
+                }
+                $stayEndDT->setTime(0,0,0);
+
+                // Find stays that extend the full span.
+                if ($st['Status'] == $visitRS->Status->getStoredVal() && $stayStartDT == $spanStartDT && $stayEndDT == $spanEndDT) {
+                    $stayCoversSpan = TRUE;
+                }
+
+                // find earliest start and latest end
+                if ($stayStartDT < $earliestStart) {
+                    $earliestStart = $stayStartDT;
+                }
+                if ($stayEndDT > $latestEnd) {
+                    $latestEnd = $stayEndDT;
+                }
+            }
         }
 
-        // find this stay
-        foreach ($stayRows as $st) {
-            if ($st->idName->getStoredVal() == $idStay) {
-                EditRS::loadRow($st, $stayRs);
-            }
+        if ($stayFound === FALSE) {
+            return "The Guest Stay is not found ($idStay).  ";
         }
 
         // Primary guest
@@ -878,78 +937,51 @@ class VisitView {
             return 'Switch the primary guest to someone else before deleting this guest.  ';
         }
 
-        // Only checked in visits can adjust the start date
-        //      checked in & span = 0 can adjust end date.
-        // Only checked out visits can adjust the end date
-        //      checked out & span = 0 can adjust the start date
 
-        // other visit status can change no dates, so the removed stay must not change the visit dates.
-        
+        // Does another stay extend the full span duration?
+        if ($stayCoversSpan) {
 
-            $remainingStays = array();
+            //delete record
+            EditRS::delete($dbh, $stayRs, array($stayRs->idStays));
 
-            // delete guest stays
-            foreach ($stays as $s) {
+            $logText = VisitLog::getDeleteText($stayRs, $stayRs->idStays->getStoredVal());
+            VisitLog::logStay($dbh, $idVisit, $span, $stayRs->idRoom->getStoredVal(), $stayRs->idStays->getStoredVal(),$stayRs->idName->getStoredVal(), $visitRS->idRegistration->getStoredVal(), $logText, "delete", $uname);
 
-                $stayRS = new StaysRS();
-                EditRS::loadRow($s, $stayRS);
+            return 'Guest deleted from this visit span.  ';
 
-                if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedOut && $stayRS->idName->getStoredVal() == $idGuest) {
-                    $countStays--;
+        } else if ($visitRS->Status->getStoredVal() == VisitStatus::NewSpan || $visitRS->Status->getStoredVal() == VisitStatus::ChangeRate) {
+            return 'This guest stay defines the span length so this stay cannot be deleted.  ';
+        }
 
-                    $reply .= "Guest deleted from this visit.  ";
+        //delete stay record
+        EditRS::delete($dbh, $stayRs, array($stayRs->idStays));
 
-                    //delete record
-                    $logText = VisitLog::getDeleteText($stayRS, $stayRS->idStays->getStoredVal());
-                    VisitLog::logStay($dbh, $stayRS->idVisit->getStoredVal(), $stayRS->Visit_Span->getStoredVal(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(),$stayRS->idName->getStoredVal(), $visitRS->idRegistration->getStoredVal(), $logText, "delete", $uname);
+        $logText = VisitLog::getDeleteText($stayRs, $stayRs->idStays->getStoredVal());
+        VisitLog::logStay($dbh, $idVisit, $span, $stayRs->idRoom->getStoredVal(), $stayRs->idStays->getStoredVal(),$stayRs->idName->getStoredVal(), $visitRS->idRegistration->getStoredVal(), $logText, "delete", $uname);
 
-                    EditRS::delete($dbh, $stayRS, array($stayRS->idStays));
 
-                } else {
-                    $remainingStays[] = $stayRS;
-                }
-            }
+        $visitRS->Span_Start->setNewVal($earliestStart->format('y-m-d ' . $spanStartTime));
 
-            // Adjust visit start and end dates, if needed
-            if (count($stays) != $countStays) {
+        if ($span == 0) {
+            $visitRS->Arrival_Date->setNewVal($earliestStart->format('y-m-d H:i:s'));
+        }
 
-                $earliestStart = new \DateTime('2900-01-01');
-                $latestEnd = new \DateTime('1984-01-01');
+        if ($visitRS->Status->getStoredVal() != VisitStatus::CheckedIn) {
 
-                // Find the earlyest start and latest end of the remaining stays.
-                foreach ($remainingStays as $sRs) {
+            $visitRS->Span_End->setNewVal($latestEnd->format('y-m-d ' . $spanEndTime));
+            $visitRS->Actual_Departure->setNewVal($latestEnd->format('y-m-d ' . $spanEndTime));
+        }
 
-                    $st = new \DateTime($sRs->Span_Start_Date->getStoredVal());
-                    $ed = new \DateTime($sRs->Span_End_Date->getStoredVal());
+        $visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+        $visitRS->Updated_By->setNewVal($uname);
 
-                    if ($st < $earliestStart) {
-                        $earliestStart = $st;
-                    }
+        $uctr = EditRS::update($dbh, $visitRS, array($visitRS->idVisit, $visitRS->Span));
 
-                    if ($ed > $latestEnd) {
-                        $latestEnd = $ed;
-                    }
-                }
-
-                $visitRS->Span_Start->setNewVal($earliestStart->format('y-m-d H:i:s'));
-                $visitRS->Arrival_Date->setNewVal($earliestStart->format('y-m-d H:i:s'));
-
-                if ($visitRS->Status->getStoredVal() != VisitStatus::CheckedIn) {
-                    $visitRS->Span_End->setNewVal($latestEnd->format('y-m-d H:i:s'));
-                    $visitRS->Actual_Departure->setNewVal($latestEnd->format('y-m-d H:i:s'));
-                }
-
-                $visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-                $visitRS->Updated_By->setNewVal($uname);
-
-                $uctr = EditRS::update($dbh, $visitRS, array($visitRS->idVisit, $visitRS->Span));
-
-                if ($uctr > 0) {
-                    $logText = VisitLog::getUpdateText($visitRS);
-                    VisitLog::logVisit($dbh, $idVisit, $visitRS->Span->getStoredVal(), $visitRS->idResource->getStoredVal(), $visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
-                    $reply .= 'Visit start and/or end dates changed due to removing the guest.  ';
-                }
-            }
+        if ($uctr > 0) {
+            $logText = VisitLog::getUpdateText($visitRS);
+            VisitLog::logVisit($dbh, $idVisit, $visitRS->Span->getStoredVal(), $visitRS->idResource->getStoredVal(), $visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
+            $reply .= 'Visit start and/or end dates changed due to removing the guest.  ';
+        }
 
 
         return $reply;
