@@ -337,7 +337,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                 }
             }
             $txtIntro .= "<tr><td class='tdlabel'>Records Fetched: </td><td>" . count($rows) . "</td></tr>";
-            $txtheadr = "<thead><tr><th style='width:40px;'>Id</th><th> * </th><th>Last Name</th><th>First</th><th>#</th>";
+            $txtheadr = "<thead><tr><th style='width:40px;'>Id</th><th> * </th><th>Last Name</th><th>First</th><th>Donations</th>";
             if ($showAmounts) {
                 $txtheadr .= "<th>Total</th><th>Vendor Amount</th><th>Free & Clear</th>";
             }

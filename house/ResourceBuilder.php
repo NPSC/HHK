@@ -127,7 +127,7 @@ function saveArchive(\PDO $dbh, $desc, $subt, $tblName) {
 function getSelections(\PDO $dbh, $tableName, $type, Config_Lite $labels) {
 
     $uS = Session::getInstance();
-    
+
     if ($tableName == $labels->getString('hospital', 'diagnosis', DIAGNOSIS_TABLE_NAME)) {
         $tableName = DIAGNOSIS_TABLE_NAME;
     } else if ($tableName == $labels->getString('hospital', 'location', LOCATION_TABLE_NAME)) {
@@ -280,6 +280,10 @@ if (isset($_POST['table'])) {
             // new entry
             $dText = filter_var($_POST['txtDiag'][0], FILTER_SANITIZE_STRING);
             $aText = '';
+
+            if ($tableName == 'Patient_Rel_Type') {
+                $aText = 'Guests';
+            }
 
             if (isset($_POST['txtDiagAmt'][0])) {
                 $aText = filter_var($_POST['txtDiagAmt'][0], FILTER_SANITIZE_STRING);

@@ -763,7 +763,7 @@ FROM
         JOIN
     registration r ON v.idRegistration = r.idRegistration
 WHERE
-    DATE(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
+    DATE(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) >= DATE('" . $arrivalDT->format('Y-m-d') . "')
     and DATE(s.Span_Start_Date) < DATE('" . $departureDT->format('Y-m-d') . "')
     and s.idName in (" . substr($whStays, 1) . ")");
 
@@ -772,7 +772,7 @@ WHERE
 
                 if ($s['idVisit'] == $idVisit && $s['Visit_Span'] == $idSpan) {
                     $memVisit = new PSGMemVisit(array());
-                } else if ($s['idVisit'] != $idVisit) {
+                } else {
                     $memVisit = new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'], 'room'=>$s['Title']));
                 }
 

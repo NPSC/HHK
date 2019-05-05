@@ -9,12 +9,15 @@
  */
 
 class CodeVersion {
-    const BUILD = 151;
+    const BUILD = 152;
     const VERSION = 3.12;
     const PATCH = 8;
     const GIT_Id = "dev";
 }
 
+class DBServer {
+    const TIMEZONE = 'America/Los_Angeles';
+}
 
 class ActivityTypes {
     const Donation = 'don';

@@ -328,14 +328,23 @@ class PaymentReport {
 
     public static function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$total, &$tbl, &$sml, &$reportRows, $subsidyId) {
 
-        $uS = Session::getInstance();
-
         $origAmt = $p['Payment_Amount'];
         $amt = 0;
         $payDetail = '';
         $payStatus = $p['Payment_Status_Title'];
         $dateDT = new DateTime($p['Payment_Date']);
-        $timeDT = new DateTime($p['Payment_Timestamp'], new DateTimeZone($uS->tz));
+
+        // Change the timestamp time zone.
+        $timeDT = new DateTime($p['Payment_Timestamp']);
+        $myOffset = $timeDT->getOffset();
+
+        // Must have the date close to the timezone to include daylight savings time.
+        $pacificDT = new \DateTime('2019-'.$timeDT->format('m-d'), new DateTimeZone(DBServer::TIMEZONE));
+        $pacificOffset = $pacificDT->getOffset();
+
+        $offsetHours = abs($pacificOffset - $myOffset)/3600;
+
+        $timeDT->add(new DateInterval('PT' . $offsetHours . 'H'));
 
         $payStatusAttr = array();
         $payType = $p['Payment_Method_Title'];
