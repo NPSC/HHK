@@ -59,7 +59,7 @@ class Receipt {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($invoice->getInvoiceNumber()));
 
-        if ($uS->siteName == 'Gorecki Guest House') {
+        if ($uS->siteName == 'Gorecki Guest House' || $uS->siteName == 'Test Gorecki House') {
 
             $taxAmt = 0;
 
