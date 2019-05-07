@@ -79,6 +79,7 @@ class ReserveData {
     protected $concurrentRooms = 0;
     protected $psgMembers;
     protected $errors;
+    protected $resvPrompt;
 
     function __construct($post, $reservationTitle = '') {
 
@@ -126,7 +127,7 @@ class ReserveData {
             $this->setMembersFromPost(filter_var_array($post['mem'], FILTER_SANITIZE_STRING));
         }
 
-        $this->saveButtonLabel = 'Save ' . $this->resvTitle;
+        $this->saveButtonLabel = 'Save ';
         $this->resvEarlyArrDays = $uS->ResvEarlyArrDays;
         $this->patAsGuestFlag = $uS->PatientAsGuest;
         $this->patBirthDateFlag = $uS->InsistPatBD;
@@ -145,7 +146,8 @@ class ReserveData {
         $this->checkingInSection = '';
         $this->paymentSection = '';
         $this->errors = '';
-        $this->resvTitle = ($reservationTitle == '' ? $labels->getString('guestEdit', 'reservationTitle', 'Reservation') : $reservationTitle);
+        $this->resvPrompt = $labels->getString('guestEdit', 'reservationTitle', 'Reservation');
+        $this->resvTitle = ($reservationTitle == '' ? $this->resvPrompt : $reservationTitle);
 
     }
 
@@ -287,10 +289,16 @@ class ReserveData {
     }
 
     public function getSpanStartDT() {
+        if (is_null($this->spanStartDT)) {
+            return $this->getArrivalDT();
+        }
         return $this->spanStartDT;
     }
 
     public function getSpanEndDT() {
+        if (is_null($this->spanEndDT)) {
+            return $this->getDepartureDT();
+        }
         return $this->spanEndDT;
     }
 
@@ -300,6 +308,10 @@ class ReserveData {
 
     public function getResvTitle() {
         return $this->resvTitle;
+    }
+
+    public function getResvPrompt() {
+        return $this->resvPrompt;
     }
 
     public function getPatAsGuestFlag() {
@@ -477,7 +489,7 @@ class ReserveData {
         if ($id != '') {
             $this->spanStartDT = new DateTimeImmutable($id);
         } else {
-            $this->spanStartDT = NULL;
+            $this->spanStartDT = $this->getArrivalDT();
         }
         return $this;
     }
@@ -486,7 +498,7 @@ class ReserveData {
         if ($id != '') {
             $this->spanEndDT = new DateTimeImmutable($id);
         } else {
-            $this->spanEndDT = NULL;
+            $this->spanEndDT = $this->getDepartureDT();
         }
         return $this;
     }

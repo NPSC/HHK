@@ -22,7 +22,7 @@ class Receipt {
     public static function createSaleMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, PaymentResponse $payResp) {
 
         $uS = Session::getInstance();
-        $tax = 0.05;
+        $tax = 0.12625;
 
         // Assemble the statement
         $rec = self::getHouseIconMarkup();

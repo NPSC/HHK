@@ -745,14 +745,14 @@ where rg.idReservation =" . $r['idReservation']);
 
             // Check ongoing visits
             $vstmt = $dbh->query("SELECT
-    s.idName,
-    s.idVisit,
-    s.Visit_Span,
-    s.idRoom,
-    r.idPsg,
-    rm.Title,
-    v.`Status`,
-    v.idPrimaryGuest
+    s.`idName`,
+    s.`idVisit`,
+    s.`Visit_Span`,
+    s.`idRoom`,
+    s.`Status` as `Status`,
+    r.`idPsg`,
+    rm.`Title`,
+    v.`idPrimaryGuest`
 FROM
     stays s
         JOIN
@@ -770,7 +770,11 @@ WHERE
             while ($s = $vstmt->fetch(\PDO::FETCH_ASSOC)) {
                 // These guests are already staying
 
-                if ($s['idVisit'] == $idVisit && $s['Visit_Span'] == $idSpan) {
+                if ($s['Status'] != VisitStatus::CheckedIn) {
+                    continue;
+                }
+
+                if ($s['idVisit'] == $idVisit && $s['Visit_Span'] == $idSpan && $s['Status'] == VisitStatus::CheckedIn) {
                     $memVisit = new PSGMemVisit(array());
                 } else {
                     $memVisit = new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'], 'room'=>$s['Title']));
@@ -779,6 +783,7 @@ WHERE
                 foreach ($psgMembers as $m) {
 
                     if ($m->getId() == $s['idName']) {
+
                         $psgMembers[$m->getPrefix()]->setStayObj($memVisit);
 
                         if ($m->getId() == $s['idPrimaryGuest'] && $s['idVisit'] == $idVisit) {
@@ -798,7 +803,7 @@ WHERE
         return count($rooms);
     }
 
-    protected static function findConflictingReservations(\PDO $dbh, $idPsg, $idResv, array &$psgMembers, $arrivalDT, $departDT, $resvTitle = 'Reservation') {
+    protected static function findConflictingReservations(\PDO $dbh, $idPsg, $idResv, array &$psgMembers, $arrivalDT, $departDT, $resvPrompt = 'Reservation') {
 
         // Check reservations
         $whResv = '';
@@ -825,7 +830,7 @@ WHERE
 
                 foreach ($psgMembers as $m) {
                     if ($m->getId() == $r['idGuest'] && $r['Status'] != ReservationStatus::Staying) {
-                        $psgMembers[$m->getPrefix()]->setStayObj(new PSGMemResv(array('idReservation'=>$r['idReservation'], 'idGuest'=>$r['idGuest'], 'idPsg'=>$r['idPsg'], 'label'=>$resvTitle)));
+                        $psgMembers[$m->getPrefix()]->setStayObj(new PSGMemResv(array('idReservation'=>$r['idReservation'], 'idGuest'=>$r['idGuest'], 'idPsg'=>$r['idPsg'], 'label'=>$resvPrompt)));
                     }
                 }
 
@@ -1382,6 +1387,9 @@ class ActiveReservation extends Reservation {
         return $dataArray;
     }
 
+    public function checkedinMarkup(\PDO $dbh) {
+        return $this->createMarkup($dbh);
+    }
 }
 
 
@@ -1584,13 +1592,7 @@ FROM reservation r
 
         // Is resource specified?
         if ($resv->getIdResource() == 0) {
-
-            if (isset($post['cbNewRoom'])) {
-                $this->reserveData->addError('Check into the new room.  ');
-            } else {
-                $this->reserveData->addError('A room was not specified.  ');
-            }
-
+            $this->reserveData->addError('A room was not specified.  ');
             return;
         }
 
@@ -1709,6 +1711,11 @@ FROM reservation r
 
         if ($this->reserveData->hasError()) {
             return $this->createMarkup($dbh);
+        }
+
+        // Checking In?
+        if ($this->gotoCheckingIn === 'yes' && $this->reserveData->getIdResv() > 0) {
+            return array('gotopage'=>'CheckingIn.php?rid=' . $this->reserveData->getIdResv());
         }
 
         $uS = Session::getInstance();
@@ -1939,8 +1946,9 @@ class StayingReservation extends CheckingIn {
             $post['vid'] = 0;
             $post['span'] = 0;
             $post['rbPriGuest'] = 0;
+            $post['resvCkinNow'] = 'yes';
 
-            $checkingIn = new CheckingIn($this->reserveData, new ReservationRS(), new Family($dbh, $this->reserveData, TRUE));
+            $checkingIn = new ActiveReservation($this->reserveData, new ReservationRS(), new Family($dbh, $this->reserveData, TRUE));
             $checkingIn->save($dbh, $post);
             return $checkingIn;
 
@@ -1956,7 +1964,7 @@ class StayingReservation extends CheckingIn {
 
         $psgMembers = $this->reserveData->getPsgMembers();
 
-        $this->reserveData->addConcurrentRooms($this->findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $this->reserveData->getSpanStartDT(), $this->reserveData->getSpanEndDT(), $this->reserveData->getResvTitle()));
+        $this->reserveData->addConcurrentRooms($this->findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $this->reserveData->getSpanStartDT(), $this->reserveData->getSpanEndDT(), $this->reserveData->getResvPrompt()));
         $this->reserveData->addConcurrentRooms($this->findConflictingStays($dbh, $psgMembers, $this->reserveData->getSpanStartDT(), $this->reserveData->getIdPsg(), $this->reserveData->getSpanEndDT(), $this->reserveData->getIdVisit(), $this->reserveData->getSpan()));
 
         $this->reserveData->setPsgMembers($psgMembers);

@@ -170,6 +170,8 @@ function resvManager(initData) {
                 rid: data.rid,
                 idPsg: data.idPsg,
                 isCheckin: isCheckin,
+                gstDate: $('#gstDate').val(),
+                gstCoDate: $('#gstCoDate').val(),
                 cmd: 'addResvGuest'
             };
 
@@ -2105,6 +2107,8 @@ function resvManager(initData) {
             vid:sdata.vid,
             span:sdata.span,
             isCheckin: isCheckin,
+            gstDate: sdata.gstDate,
+            gstCoDate: sdata.gstCoDate,
             cmd:sdata.cmd};
 
         $.post('ws_resv.php', parms, function(data) {
