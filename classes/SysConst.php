@@ -286,11 +286,6 @@ class RelLinkType {
     const Friend = "frd";
     const Company = "co";
     const Self = 'slf';
-    const Grandparent = 'gp';
-    const Aunt = 'ant';
-    const Uncle = 'unc';
-    const Niece = 'nic';
-    const Nephew = 'nfw';
 }
 
 class ReservationStatus {

@@ -218,11 +218,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('NoReturnReason', 'n1', 'Irresponsible', '', 'h',0),
 
-('Note_Category', 'ncr', 'Reservation', '', 'h', 0),
-('Note_Category', 'ncf', 'PSG', '', 'h', 0),
-('Note_Category', 'ncv', 'Visit', '', 'h', 0),
-('Note_Category', 'ncg', 'Guest', '', 'h', 0),
-('Note_Category', 'ncp', 'Patient', '', 'h', 0),
+('Note_Category', 'ncr', 'Reservation', '', '', 0),
+('Note_Category', 'ncf', 'PSG', '', '', 0),
+('Note_Category', 'ncv', 'Visit', '', '', 0),
+('Note_Category', 'ncg', 'Guest', '', '', 0),
+('Note_Category', 'ncp', 'Patient', '', '', 0),
 
 ('Note_Type', 'ntxt', 'Text', '', '', 0),
 

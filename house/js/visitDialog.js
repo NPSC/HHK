@@ -119,6 +119,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
             if (action === 'ref') {
                 $diagbox.css('background-color', '#FEFF9B');
+                $('.hhk-ckoutDate').prop('disabled', true);
             }
 
             // set up Visit extension

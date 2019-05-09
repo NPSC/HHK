@@ -43,6 +43,8 @@ ALTER TABLE `name_demog`
     ADD COLUMN `Guest_Photo_Id` INT NOT NULL DEFAULT 0 AFTER `Photo_Permission`;
 
 UPDATE `gen_lookups` SET `Substitute`='o' WHERE `Table_Name`='Phone_Type' and`Code`='xf';
+UPDATE `gen_lookups` SET `Type`='' WHERE `Table_Name`='Note_Category';
+
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES
  ('ShowGuestPhoto', 'false', 'b', 'h', 'Use guest photos.');
