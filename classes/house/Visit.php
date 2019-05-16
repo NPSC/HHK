@@ -193,11 +193,13 @@ class Visit {
 
         // Measure against visit span start date
         if ($this->visitRS->Span_Start->getStoredVal() != '') {
+
             $spanStartDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
             $ssDT = new \DateTime($stayStartDate);
             $spanStartDT->setTime(0, 0, 0);
+
             if ($ssDT < $spanStartDT) {
-                throw new Hk_Exception_Runtime('Stay start date (' . $stayStartDate . ') is earlier than visit span start date (' . $spanStartDT->format('Y-m-d H:i:s') . ').  ');
+                throw new Hk_Exception_Runtime('Stay start date (' . $stayStartDate . ') is earlier than visit span start date (' . $spanStartDT->format('Y-m-d') . ').  ');
             }
         }
 
@@ -1023,7 +1025,7 @@ class Visit {
         return $msg;
     }
 
-    public function checkOutVisit(\PDO $dbh, $dateDeparted = "") {
+    public function checkOutVisit(\PDO $dbh, $dateDeparted = "", $sendEmail = TRUE) {
         $msg = "";
 
         // Check out date
@@ -1054,7 +1056,7 @@ class Visit {
         // Check out each stay
         foreach ($this->stays as $stayRS) {
             if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
-                $msg .= $this->checkOutGuest($dbh, $stayRS->idName->getStoredVal(), $dateDeparted, '');
+                $msg .= $this->checkOutGuest($dbh, $stayRS->idName->getStoredVal(), $dateDeparted, '', $sendEmail);
             }
         }
         return $msg;

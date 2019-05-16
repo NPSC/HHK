@@ -243,7 +243,6 @@ abstract class PriceModel {
 
             case ItemPriceCode::NdayBlock:
                 $pm = new PriceNdayBlock(PriceModel::getModelRoomRates($dbh, $modelCode));
-                $pm->interval = $pm->getBlockLength($dbh);
                 $pm->priceModelCode = $modelCode;
                 return $pm;
 
@@ -1616,7 +1615,6 @@ class PriceNdayBlock extends PriceModel {
 
     protected $blockTitle = '';
     protected $blocks = 0;
-    protected $interval = 0;
 
     public function amountCalculator($nites, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $guestDays = 0) {
 
@@ -1639,8 +1637,7 @@ class PriceNdayBlock extends PriceModel {
         $blockRate = floatval($rrateRs->Reduced_Rate_2->getStoredVal());
         $dailyRate = $rrateRs->Reduced_Rate_1->getStoredVal();
 
-
-        $interval = $this->getBlockLength($dbh);
+        $interval = $rrateRs->Reduced_Rate_3->getStoredVal();
         $creditNites = $this->creditDays % $interval;
 
         $blocks = floor($nites / $interval);
@@ -1656,25 +1653,6 @@ class PriceNdayBlock extends PriceModel {
         $amount = ($blocks * $blockRate) + ($nitesLeft * $dailyRate);
 
         return $amount;
-    }
-
-    public function getBlockLength(\PDO $dbh) {
-
-        $rp = readGenLookupsPDO($dbh, 'Rate_Block');
-        $interval = 0;
-
-        foreach ($rp as $d) {
-            if ($d[2] == '1') {
-                $interval = intval($d[0], 10);
-                $this->blockTitle = $d[1];
-            }
-        }
-
-        if ($interval == 0) {
-            throw new Hk_Exception_Runtime('Block Price Model discount duration interval not set (Rate_Block).');
-        }
-
-        return $interval;
     }
 
     public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e') {
@@ -1693,7 +1671,8 @@ class PriceNdayBlock extends PriceModel {
             HTMLTable::makeTh('Title')
             .HTMLTable::makeTh('Default')
             .HTMLTable::makeTh('Dailey Rate')
-            .HTMLTable::makeTh(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rp), $seld, FALSE), array('name'=>'selBlock', 'disabled'=>'disabled')) . ' Rate')
+            .HTMLTable::makeTh('Block Rate')
+            .HTMLTable::makeTh('Days in Block')
             );
 
         // Room rates
@@ -1708,6 +1687,7 @@ class PriceNdayBlock extends PriceModel {
             $titleAttrs = array('name'=>'ratetitle['.$r->idRoom_rate->getStoredVal().']', 'size'=>'17');
             $rr1Attrs = array('name'=>'rr1['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
             $rr2Attrs = array('name'=>'rr2['.$r->idRoom_rate->getStoredVal().']', 'size'=>'6');
+            $rr3Attrs = array('name'=>'rr3['.$r->idRoom_rate->getStoredVal().']', 'size'=>'4');
 
             if ($r->FA_Category->getStoredVal() == $defaultRoomRate) {
                 $attrs['checked'] = 'checked';
@@ -1730,6 +1710,7 @@ class PriceNdayBlock extends PriceModel {
                         $titleAttrs['style'] = 'background-color:#f0f0f0 ';
                         $rr1Attrs['disabled'] = 'disabled';
                         $rr2Attrs['disabled'] = 'disabled';
+                        $rr3Attrs['disabled'] = 'disabled';
 
                         $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']', 'checked'=>'checked'));
                     }
@@ -1744,7 +1725,8 @@ class PriceNdayBlock extends PriceModel {
                 HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), $titleAttrs))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup($r->FA_Category->getStoredVal(), $attrs) . ' (' . $r->FA_Category->getStoredVal() . ')')
                 .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category ? HTMLTable::makeTd('') :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_1->getStoredVal(), 2), $rr1Attrs), array('style'=>'text-align:center;')))
-                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category || $r['FA_Category'] == RoomRateCategorys::FlatRateCategory ? '' :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_2->getStoredVal()), $rr2Attrs), array('style'=>'text-align:center;')))
+                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category || $r->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory ? '' :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_2->getStoredVal()), $rr2Attrs), array('style'=>'text-align:center;')))
+                .($r->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category || $r->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory ? '' :  HTMLTable::makeTd(HTMLInput::generateMarkup(number_format($r->Reduced_Rate_3->getStoredVal()), $rr3Attrs), array('style'=>'text-align:center;')))
                 .HTMLTable::makeTd($cbRetire, array('style'=>'text-align:center;'))
             );
 
@@ -1756,6 +1738,7 @@ class PriceNdayBlock extends PriceModel {
             .HTMLTable::makeTd('')
             .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr1[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
             .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr2[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'rr3[0]', 'size'=>'4')), array('style'=>'text-align:center;'))
             .HTMLTable::makeTd('')
         );
 
@@ -1787,22 +1770,23 @@ class PriceNdayBlock extends PriceModel {
         $blockRate = floatval($rrateRs->Reduced_Rate_2->getStoredVal());
         $dailyRate = floatval($rrateRs->Reduced_Rate_1->getStoredVal());
 
+        $interval = $rrateRs->Reduced_Rate_3->getStoredVal();
 
-        $creditNites = $this->creditDays % $this->interval;
+        $creditNites = $this->creditDays % $interval;
 
-        $blocks = floor($days / $this->interval);
-        $nitesLeft = $days % $this->interval;
+        $blocks = floor($days / $interval);
+        $nitesLeft = $days % $interval;
         $freeNites = 0;
 
         // Check for a free day
-        if ($creditNites + $nitesLeft >= $this->interval) {
+        if ($creditNites + $nitesLeft >= $interval) {
             // one free day
             $nitesLeft--;
             $freeNites = 1;
         }
 
         if ($blocks > 0) {
-            $tiers[] = array('rate'=>number_format($blockRate * $adjRatio,2).'/'.$this->blockTitle, 'days'=>($blocks * $this->interval), 'amt'=>($blocks * $blockRate) * $adjRatio, 'dtext'=>($blocks * $this->interval) . ' (' . $blocks . ')');
+            $tiers[] = array('rate'=>number_format($blockRate * $adjRatio,2).'/'.$this->blockTitle, 'days'=>($blocks * $interval), 'amt'=>($blocks * $blockRate) * $adjRatio, 'dtext'=>($blocks * $interval) . ' (' . $blocks . ')');
             $this->blocks = $blocks;
         }
 
@@ -1843,12 +1827,12 @@ class PriceNdayBlock extends PriceModel {
         $modelCode = ItemPriceCode::NdayBlock;
 
         $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`Description`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
-                . "(1,'Rate A','','a','$modelCode',5.00,3.00,0,0,'a'),"
-                . "(2,'Rate B','','b','$modelCode',10.00,7.00,0,0,'a'),"
-                . "(3,'Rate C','','c','$modelCode',20.00,15.00,0,0,'a'),"
-                . "(4,'Rate D','','d','$modelCode',25.00,20.00,0,0,'a'),"
-                . "(5,'Flat Rate','','" . RoomRateCategorys::FlatRateCategory . "','$modelCode',25.00,0,0,0,'a'), "
-                . "(6,'Assigned','','" . RoomRateCategorys::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
+                . "(1,'Rate A','','a','$modelCode',5.00,30.00,7,0,'a'),"
+                . "(2,'Rate B','','b','$modelCode',10.00,60.00,7,0,'a'),"
+                . "(3,'Rate C','','c','$modelCode',20.00,180.00,7,0,'a'),"
+                . "(4,'Rate D','','d','$modelCode',25.00,150.00,7,0,'a'),"
+                . "(5,'Flat Rate','','" . RoomRateCategorys::FlatRateCategory . "','$modelCode',25.00,0,1,0,'a'), "
+                . "(6,'Assigned','','" . RoomRateCategorys::Fixed_Rate_Category . "','$modelCode',0,0,1,0,'a');");
     }
 
 }
