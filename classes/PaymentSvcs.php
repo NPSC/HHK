@@ -285,7 +285,7 @@ class ReturnResult extends PaymentResult {
         if ($rtnResp->getIdPayment() > 0 && $this->idInvoice > 0) {
             // payment-invoice
             $payInvRs = new PaymentInvoiceRS();
-            $payInvRs->Amount->setNewVal($rtnResp->response->getAuthorizedAmount());
+            $payInvRs->Amount->setNewVal($rtnResp->getAmount());
             $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
             $payInvRs->Payment_Id->setNewVal($rtnResp->getIdPayment());
             EditRS::insert($dbh, $payInvRs);
