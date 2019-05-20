@@ -398,6 +398,7 @@ class Patch {
                 HTMLContainer::generateMarkup('legend', 'DB Info', array('style'=>'font-weight:bold;'))
                 . $dbt->generateMarkup(), array('style'=>'float:left; margin:5px;', 'class'=>'hhk-panel'));
 
+        // Software info
         $tbl = new HTMLTable();
 
         $tbl->addBodyTr(
@@ -412,10 +413,38 @@ class Patch {
         $tbl->addBodyTr(
                 HTMLTable::makeTd('Git Id:', array('class' => 'tdlabel'))
                 . HTMLTable::makeTd(CodeVersion::GIT_Id));
+        $tbl->addBodyTr(
+                HTMLTable::makeTd('Release Date:', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd(CodeVersion::REL_DATE));
 
         $markup .= HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', 'Software', array('style'=>'font-weight:bold;'))
-                . $tbl->generateMarkup(), array('style'=>'float:left; margin:5px; margin-left:25px;', 'class'=>'hhk-panel'));
+            HTMLContainer::generateMarkup('legend', 'Software Version', array('style'=>'font-weight:bold;'))
+            . $tbl->generateMarkup(), array('style'=>'float:left; margin:5px; margin-left:25px;', 'class'=>'hhk-panel'));
+
+
+        // Contributors
+        $ctbl = new HTMLTable();
+
+        $contributors = array(
+            array("ML", "Eubanks"),
+            array("E", "Crane"),
+            array("K", "Lannan"),
+            array("R", "Chan"),
+            array("B", "VanderMeer"),
+            array("W", "Ireland"),
+            );
+
+        foreach ($contributors as $c) {
+
+            $ctbl->addBodyTr(
+                HTMLTable::makeTd($c[0], array('class' => 'tdlabel'))
+                . HTMLTable::makeTd($c[1]));
+
+        }
+
+        $markup .= HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', 'Major Contributors<br/>in order of Appearance', array('style'=>'font-weight:bold;'))
+                . $ctbl->generateMarkup(), array('style'=>'float:left; margin:5px; margin-left:25px;', 'class'=>'hhk-panel'));
 
         return HTMLContainer::generateMarkup('div', $markup, array());
     }
