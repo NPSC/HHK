@@ -57,7 +57,7 @@ class VantivGateway extends PaymentGateway {
                     ->setMemo(MpVersion::PosVersion);
 
             // Run the token transaction
-            $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $uS->ccgw, $cpay, $pmp->getPayNotes());
+            $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $this, $cpay, $pmp->getPayNotes());
 
             // Analyze the result
             $payResult = PaymentSvcs::AnalyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken());
@@ -157,7 +157,7 @@ class VantivGateway extends PaymentGateway {
 
             try {
 
-                $csResp = TokenTX::creditReverseToken($dbh, $payRs->idPayor->getstoredVal(), $this->gwName, $revRequest, $payRs, $paymentNotes);
+                $csResp = TokenTX::creditReverseToken($dbh, $payRs->idPayor->getstoredVal(), $this, $revRequest, $payRs, $paymentNotes);
 
                 switch ($csResp->response->getStatus()) {
 
@@ -241,7 +241,7 @@ class VantivGateway extends PaymentGateway {
 
         try {
 
-            $csResp = TokenTX::creditReturnToken($dbh, $payRs->idPayor->getstoredVal(), $uS->ccgw, $returnRequest, $payRs);
+            $csResp = TokenTX::creditReturnToken($dbh, $payRs->idPayor->getstoredVal(), $this, $returnRequest, $payRs);
 
             switch ($csResp->response->getStatus()) {
 
@@ -324,7 +324,7 @@ class VantivGateway extends PaymentGateway {
                 ->setCVV('on')
                 ->setAVSFields('both');
 
-        $CreditCheckOut = HostedCheckout::sendToPortal($dbh, $this->gwName, $invoice->getSoldToId(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $pay);
+        $CreditCheckOut = HostedCheckout::sendToPortal($dbh, $this, $invoice->getSoldToId(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $pay);
 
         return $CreditCheckOut;
     }
@@ -367,7 +367,7 @@ class VantivGateway extends PaymentGateway {
                 ->setLogoUrl($siteUrl . $logo);
 
 
-        return CardInfo::sendToPortal($dbh, $this->gwName, $idGuest, $idGroup, $initCi);
+        return CardInfo::sendToPortal($dbh, $this, $idGuest, $idGroup, $initCi);
     }
 
     public function processHostedReply(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName = '') {
@@ -393,7 +393,7 @@ class VantivGateway extends PaymentGateway {
 
             try {
 
-                $vr = CardInfo::portalReply($dbh, $this->getGwName(), $cardId, $post);
+                $vr = CardInfo::portalReply($dbh, $this, $cardId, $post);
 
                 $payResult = new CofResult($vr->response->getDisplayMessage(), $vr->response->getStatus(), $vr->idPayor, $vr->idRegistration);
             } catch (Hk_Exception_Payment $hex) {
@@ -411,7 +411,7 @@ class VantivGateway extends PaymentGateway {
 
             try {
 
-                $csResp = HostedCheckout::portalReply($dbh, $this->getGwName(), $paymentId, $payNotes);
+                $csResp = HostedCheckout::portalReply($dbh, $this, $paymentId, $payNotes);
 
                 if ($csResp->getInvoiceNumber() != '') {
 
@@ -454,7 +454,7 @@ class VantivGateway extends PaymentGateway {
 
         try {
 
-            $csResp = TokenTX::creditVoidSaleToken($dbh, $payRs->idPayor->getstoredVal(), $uS->ccgw, $voidRequest, $payRs, $paymentNotes);
+            $csResp = TokenTX::creditVoidSaleToken($dbh, $payRs->idPayor->getstoredVal(), $this, $voidRequest, $payRs, $paymentNotes);
 
             switch ($csResp->response->getStatus()) {
 
@@ -510,7 +510,7 @@ class VantivGateway extends PaymentGateway {
 
         $query = "select * from `cc_hosted_gateway` where cc_name = :ccn and Gateway_Name = 'vantiv'";
         $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':ccn' => $this->gwName));
+        $stmt->execute(array(':ccn' => $this->gwType));
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -528,12 +528,12 @@ class VantivGateway extends PaymentGateway {
         $this->useAVS = filter_var($gwRs->Use_AVS_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
         $this->useCVV = filter_var($gwRs->Use_Ccv_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
 
-        return $gwRs;
+        return $rows[0];
     }
 
-    protected function setCredentials($gwRs) {
+    protected function setCredentials($gwRow) {
 
-        $this->credentials = $gwRs;
+        $this->credentials = $gwRow;
     }
 
     public function createEditMarkup(\PDO $dbh, $resultMessage = '') {

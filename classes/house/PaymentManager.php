@@ -365,11 +365,6 @@ class PaymentManager {
                 $payResult->setReplyMessage($payResult->getDisplayMessage() . '  ' . $this->result);
 
 
-            } catch (SoapFault $sf) {
-
-                $payResult = new PaymentResult(0, 0, 0);
-                $payResult->setReplyMessage("Payment Error = " . $sf->getMessage());
-
             } catch (Exception $exPay) {
 
                 $payResult = new PaymentResult(0, 0, 0);
@@ -403,10 +398,6 @@ class PaymentManager {
 
             $rtnResult = PaymentSvcs::returnAmount($dbh, $this->invoice, $this->pmp, $paymentDate);
 
-        } catch (SoapFault $sf) {
-
-            $rtnResult = new ReturnResult(0, 0, 0);
-            $rtnResult->setReplyMessage("Return Error = " . $sf->getMessage());
 
         } catch (Exception $exPay) {
 

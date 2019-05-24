@@ -17,17 +17,17 @@
  */
 class CardInfo {
 
-    public static function sendToPortal(\PDO $dbh, $gw, $idPayor, $idGroup, InitCiRequest $initCi) {
+    public static function sendToPortal(\PDO $dbh, VantivGateway $gway, $idPayor, $idGroup, InitCiRequest $initCi) {
 
         $dataArray = array();
         $trace = FALSE;
 
-        if (strtolower($gw) == 'test') {
+        if (strtolower($gway->getGatewayType()) == 'test') {
             $initCi->setOperatorID('test');
             $trace = TRUE;
         }
 
-        $ciResponse = $initCi->submit(Gateway::getGateway($dbh, $gw), $trace);
+        $ciResponse = $initCi->submit($gway->getCredentials(), $trace);
 
         // Save raw transaction in the db.
         try {
@@ -57,7 +57,7 @@ class CardInfo {
     }
 
 
-    public static function portalReply(\PDO $dbh, $gw, $cardId, $post) {
+    public static function portalReply(\PDO $dbh, VantivGateway $gway, $cardId, $post) {
 
         $cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $cardId);
 
@@ -66,12 +66,12 @@ class CardInfo {
 
         $trace = FALSE;
 
-        if (strtolower($gw) == 'test') {
+        if (strtolower($gway->getGatewayType()) == 'test') {
             $trace = TRUE;
         }
 
         // Verify request
-        $verifyResponse = $verify->submit(Gateway::getGateway($dbh, $gw), $trace);
+        $verifyResponse = $verify->submit($gway->getCredentials(), $trace);
         $vr = new CardInfoResponse($verifyResponse, $cidInfo['idName'], $cidInfo['idGroup']);
 
         // Save raw transaction in the db.
@@ -141,19 +141,18 @@ class CardInfoResponse extends PaymentResponse {
 
 class HostedCheckout {
 
-    public static function sendToPortal(\PDO $dbh, $gw, $idPayor, $idGroup, $invoiceNumber, InitCkOutRequest $initCoRequest) {
+    public static function sendToPortal(\PDO $dbh, VantivGateway $gway, $idPayor, $idGroup, $invoiceNumber, InitCkOutRequest $initCoRequest) {
 
         $dataArray = array();
         $trace = FALSE;
 
-        if (strtolower($gw) == 'test') {
+        if (strtolower($gway->getGatewayType()) == 'test') {
             $initCoRequest->setAVSAddress('4')->setAVSZip('30329');
             $initCoRequest->setOperatorID('test');
             $trace = TRUE;
         }
 
-
-        $ciResponse = $initCoRequest->submit(Gateway::getGateway($dbh, $gw), $trace);
+        $ciResponse = $initCoRequest->submit($gway->getCredentials(), $trace);
 
         // Save raw transaction in the db.
         try {
@@ -184,7 +183,7 @@ class HostedCheckout {
         return $dataArray;
     }
 
-    public static function portalReply(\PDO $dbh, $gw, $paymentId, $payNotes) {
+    public static function portalReply(\PDO $dbh, VantivGateway $gway, $paymentId, $payNotes) {
 
         $uS = Session::getInstance();
 
@@ -193,7 +192,7 @@ class HostedCheckout {
 
         $trace = FALSE;
 
-        if (strtolower($gw) == 'test') {
+        if (strtolower($gway->getGatewayType()) == 'test') {
             $trace = TRUE;
         }
 
@@ -202,7 +201,7 @@ class HostedCheckout {
         $verify->setPaymentId($paymentId);
 
         // Verify request
-        $verifyResponse = $verify->submit(Gateway::getGateway($dbh, $gw), $trace);
+        $verifyResponse = $verify->submit($gway->getCredentials(), $trace);
         $vr = new CheckOutResponse($verifyResponse, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $payNotes);
 
 

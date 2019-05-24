@@ -130,7 +130,7 @@ function creditIncludes($gatewayName) {
         case PaymentGateway::VANTIV:
 
             require (PMT . 'paymentgateway/vantiv/MercuryHCClient.php');
-            require (PMT . 'paymentgateway/vantiv/Gateway.php');
+
             require (PMT . 'paymentgateway/vantiv/HostedPayments.php');
             require (PMT . 'paymentgateway/vantiv/TokenTX.php');
             require (PMT . 'paymentgateway/vantiv/VantivGateway.php');

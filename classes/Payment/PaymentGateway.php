@@ -38,6 +38,10 @@ abstract class PaymentGateway {
         $this->gwType = $gwType;
         $this->setCredentials($this->loadGateway($dbh));
     }
+    
+    public function getGatewayType() {
+        return $this->gwType;
+    }
 
     protected abstract function getGatewayName();
 
