@@ -70,7 +70,8 @@ class VantivGateway extends PaymentGateway {
             if (isset($uS->paymentIds)) {
                 $payIds = $uS->paymentIds;
             }
-            $payIds[$fwrder['PaymentId']] = $invoice->getIdInvoice();
+
+            $payIds[$fwrder['paymentId']] = $invoice->getIdInvoice();
             $uS->paymentIds = $payIds;
             $uS->paymentNotes = $pmp->getPayNotes();
 
@@ -82,7 +83,7 @@ class VantivGateway extends PaymentGateway {
         return $payResult;
     }
 
-    public function voidSale(\PDO $dbh, $invoice, PaymentRS $payRs, $paymentNotes, $bid) {
+    public function voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, $paymentNotes, $bid) {
 
         // find the token record
         if ($payRs->idToken->getStoredVal() > 0) {
@@ -113,7 +114,7 @@ class VantivGateway extends PaymentGateway {
         return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
     }
 
-    public function reverseSale(\PDO $dbh, PaymentRS $payRs, $invoice, $bid, $paymentNotes) {
+    public function reverseSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid, $paymentNotes) {
 
         $uS = Session::getInstance();
 
@@ -374,9 +375,14 @@ class VantivGateway extends PaymentGateway {
 
         $payResult = NULL;
         $rtnCode = '';
+        $rtnMessage = '';
 
         if (isset($post['ReturnCode'])) {
             $rtnCode = intval(filter_var($post['ReturnCode'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if (isset($post['ReturnMessage'])) {
+            $rtnMessage = filter_var($post['ReturnMessage'], FILTER_SANITIZE_STRING);
         }
 
 
@@ -391,14 +397,22 @@ class VantivGateway extends PaymentGateway {
                 // Do nothing
             }
 
+            if ($rtnCode > 0) {
+
+                $payResult = new cofResult($rtnMessage, PaymentResult::ERROR, 0, 0);
+                return $payResult;
+            }
+
             try {
 
                 $vr = CardInfo::portalReply($dbh, $this, $cardId, $post);
 
                 $payResult = new CofResult($vr->response->getDisplayMessage(), $vr->response->getStatus(), $vr->idPayor, $vr->idRegistration);
+
             } catch (Hk_Exception_Payment $hex) {
                 $payResult = new cofResult($hex->getMessage(), PaymentResult::ERROR, 0, 0);
             }
+
         } else if (isset($post[VantivGateway::PAYMENT_ID])) {
 
             $paymentId = filter_var($post[VantivGateway::PAYMENT_ID], FILTER_SANITIZE_STRING);
@@ -407,6 +421,14 @@ class VantivGateway extends PaymentGateway {
                 self::logGwTx($dbh, $rtnCode, '', json_encode($post), 'HostedCoPostBack');
             } catch (Exception $ex) {
                 // Do nothing
+            }
+
+            if ($rtnCode > 0) {
+
+                $payResult = new PaymentResult($idInv, 0, 0);
+                $payResult->setStatus(PaymentResult::ERROR);
+                $payResult->setDisplayMessage($rtnMessage);
+                return $payResult;
             }
 
             try {
@@ -418,7 +440,7 @@ class VantivGateway extends PaymentGateway {
                     $invoice = new Invoice($dbh, $csResp->getInvoiceNumber());
 
                     // Analyze the result
-                    $payResult = self::AnalyzeCredSaleResult($dbh, $csResp, $invoice);
+                    $payResult = PaymentSvcs::AnalyzeCredSaleResult($dbh, $csResp, $invoice);
                 } else {
 
                     $payResult = new PaymentResult($idInv, 0, 0);
