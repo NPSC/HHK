@@ -35,29 +35,9 @@ function initPDO($override = FALSE) {
 
     try {
 
-        switch (strtoupper($ssn->dbms)) {
+        $dbh = initMY_SQL($ssn->databaseURL, $ssn->databaseName, $dbuName, $dbPw);
 
-            case 'MS_SQL':
-                $dbh = initMS_SQL($ssn->databaseURL, $ssn->databaseName, $dbuName, $dbPw);
-                break;
-
-            case 'MYSQL':
-                $dbh = initMY_SQL($ssn->databaseURL, $ssn->databaseName, $dbuName, $dbPw);
-
-                $dbh->exec("SET SESSION wait_timeout = 3600;");
-
-                break;
-
-            case 'ODBC':
-                return initODBC($ssn->databaseURL);
-
-
-            default:
-                // Use mysql
-                $dbh = initMY_SQL($ssn->databaseURL, $ssn->databaseName, $dbuName, $dbPw);
-                $dbh->exec("SET SESSION wait_timeout = 3600;");
-
-        }
+        $dbh->exec("SET SESSION wait_timeout = 3600;");
 
         $dbh->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
         $dbh->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
@@ -81,25 +61,10 @@ function initPDO($override = FALSE) {
     return $dbh;
 }
 
-function initMS_SQL($dbURL, $dbName, $dbuName, $dbPw) {
-
-
-    return new \PDO("sqlsrv:server=$dbURL;Database=$dbName", $dbuName, $dbPw);
-
-}
-
-function initODBC($dbURL) {
-
-    /* Connect using Windows Authentication. */
-    return new \PDO("odbc:$dbURL");
-
-}
-
 function initMy_SQL($dbURL, $dbName, $dbuName, $dbPw) {
 
     return new \PDO(
-        "mysql:host=" . $dbURL . ";dbname=" . $dbName, $dbuName, $dbPw
-    );
+        "mysql:host=" . $dbURL . ";dbname=" . $dbName, $dbuName, $dbPw);
 
 }
 
@@ -694,7 +659,7 @@ function makeThumbnail($photo, $newwidth, $newheight){
         switch($mime){
             case 'image/jpg':
             case 'image/jpeg':
-    
+
                     $image = imagecreatefromjpeg($file); //create GD image from input file
                     imagecopyresampled($temp, $image, 0, 0, 0, 0, $newwidth, $newheight, $oldwidth, $oldheight); //resize image and save to $temp object
                     imagejpeg($temp); //output image
