@@ -197,7 +197,7 @@ class VantivGateway extends PaymentGateway {
         return array('warning' => 'Payment is ineligable for reversal.  ', 'bid' => $bid);
     }
 
-    public function returnSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $returnAmt, $bid) {
+    public function returnPayment(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid) {
 
         // find the token
         if ($payRs->idToken->getStoredVal() > 0) {
@@ -229,13 +229,13 @@ class VantivGateway extends PaymentGateway {
         $returnRequest->setInvoice($invoice->getInvoiceNumber());
 
         // Determine amount to return
-        if ($returnAmt == 0) {
+//        if ($returnAmt == 0) {
             $returnRequest->setPurchaseAmount($pAuthRs->Approved_Amount->getStoredVal());
-        } else if ($returnAmt <= $pAuthRs->Approved_Amount->getStoredVal()) {
-            $returnRequest->setPurchaseAmount($returnAmt);
-        } else {
-            return array('warning' => 'Return Failed.  Return amount is larger than the original purchase amount.  ', 'bid' => $bid);
-        }
+//        } else if ($returnAmt <= $pAuthRs->Approved_Amount->getStoredVal()) {
+//            $returnRequest->setPurchaseAmount($returnAmt);
+//        } else {
+//            return array('warning' => 'Return Failed.  Return amount is larger than the original purchase amount.  ', 'bid' => $bid);
+//        }
 
         $returnRequest->setToken($tknRs->Token->getStoredVal());
         $returnRequest->setTokenId($tknRs->idGuest_token->getStoredVal());
@@ -518,6 +518,10 @@ class VantivGateway extends PaymentGateway {
         }
 
         return $dataArray;
+    }
+
+    protected function sendReturn(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $returnAmt, $bid) {
+
     }
 
     public function getPaymentResponseObj(iGatewayResponse $creditTokenResponse, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {

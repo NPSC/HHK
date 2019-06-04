@@ -38,7 +38,7 @@ abstract class PaymentGateway {
         $this->gwType = $gwType;
         $this->setCredentials($this->loadGateway($dbh));
     }
-    
+
     public function getGatewayType() {
         return $this->gwType;
     }
@@ -98,7 +98,7 @@ abstract class PaymentGateway {
         return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
     }
 
-    public function returnSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $returnAmt, $bid) {
+    public function returnPayment(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid) {
 
         // Find hte detail record.
         $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
@@ -113,14 +113,7 @@ abstract class PaymentGateway {
 
         if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid) {
 
-            // Determine amount to return
-            if ($returnAmt == 0) {
-                $returnAmt = $pAuthRs->Approved_Amount->getStoredVal();
-            } else if ($returnAmt > $pAuthRs->Approved_Amount->getStoredVal()) {
-                return array('warning' => 'Return Failed.  Return amount is larger than the original purchase amount.  ', 'bid' => $bid);
-            }
-
-            return $this->sendReturn($dbh, $payRs, $pAuthRs, $invoice, $returnAmt, $bid);
+            return $this->sendReturn($dbh, $payRs, $pAuthRs, $invoice, $pAuthRs->Approved_Amount->getStoredVal(), $bid);
         }
 
         return array('warning' => 'This Payment is ineligable for Return. ', 'bid' => $bid);

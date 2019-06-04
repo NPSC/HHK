@@ -146,7 +146,7 @@ class CheckTX {
         EditRS::update($dbh, $payRs, array($payRs->idPayment));
         EditRS::updateStoredVals($payRs);
         $pr->paymentRs = $payRs;
-
+        $pr->setPaymentDate(date('Y-m-d H:i:s'));
 
     }
 
@@ -288,6 +288,7 @@ class TransferTX {
         EditRS::update($dbh, $payRs, array($payRs->idPayment));
         EditRS::updateStoredVals($payRs);
         $pr->paymentRs = $payRs;
+        $pr->setPaymentDate(date('Y-m-d H:i:s'));
 
     }
 

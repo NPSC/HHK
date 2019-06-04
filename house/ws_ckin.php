@@ -41,6 +41,7 @@ require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require (PMT . 'GatewayConnect.php');
 require (PMT . 'PaymentGateway.php');
 require (PMT . 'PaymentResponse.php');
+require (PMT . 'PaymentResult.php');
 require (PMT . 'Receipt.php');
 require (PMT . 'Invoice.php');
 require (PMT . 'InvoiceLine.php');
@@ -298,12 +299,7 @@ try {
                 $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
             }
 
-            $amt = 0;
-            if (isset($_POST['amt'])) {
-                $amt = floatval(filter_var($_POST['amt'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
-            }
-
-            $events = PaymentSvcs::returnPayment($dbh, $idPayment, $bid, $amt);
+            $events = PaymentSvcs::returnPayment($dbh, $idPayment, $bid);
 
             break;
 

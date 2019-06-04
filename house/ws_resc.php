@@ -248,8 +248,7 @@ try {
          'render': function ( data, type, row ) {return dateRender(data, type);}
         }
     ]
-});" .
-                        '// Void/Return button
+});" . '// Void/Return button
 $("#rptfeediv").on("click", ".hhk-voidPmt", function() {
     var btn = $(this);
     if (btn.val() != "Saving..." && confirm("Void/Reverse?")) {

@@ -71,6 +71,7 @@ require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require (PMT . 'GatewayConnect.php');
 require (PMT . 'PaymentGateway.php');
 require (PMT . 'PaymentResponse.php');
+require (PMT . 'PaymentResult.php');
 require (PMT . 'Receipt.php');
 require (PMT . 'Invoice.php');
 require (PMT . 'InvoiceLine.php');

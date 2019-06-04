@@ -49,4 +49,8 @@ UPDATE `gen_lookups` SET `Type`='' WHERE `Table_Name`='Note_Category';
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES
  ('ShowGuestPhoto', 'false', 'b', 'h', 'Use guest photos.');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES
-('MemberImageSizePx', '75', 'i', 'h', 'Guest image thumbnail size in pixels');
+ ('MemberImageSizePx', '75', 'i', 'h', 'Guest image thumbnail size in pixels');
+
+
+INSERT INTO `demo`.`sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES 
+ ('Volunteers', 'true', 'b', 'r', 'Use the Volunteer Site');

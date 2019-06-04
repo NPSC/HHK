@@ -9,6 +9,7 @@ require (DB_TABLES . 'PaymentsRS.php');
 require (PMT . 'GatewayConnect.php');
 require (PMT . 'PaymentGateway.php');
 require (PMT . 'PaymentResponse.php');
+require (PMT . 'PaymentResult.php');
 
 // Find Remote IP Address
 if (filter_has_var(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR')) {

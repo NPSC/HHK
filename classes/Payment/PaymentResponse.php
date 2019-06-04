@@ -89,6 +89,9 @@ abstract class PaymentResponse {
         return 0;
     }
 
+    public function setPaymentDate($d) {
+        $this->paymentDate = $d;
+    }
 
     public function getIdTrans() {
         return $this->idTrans;
