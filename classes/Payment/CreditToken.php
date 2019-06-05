@@ -3,7 +3,7 @@
  * CreditToken.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2019 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -33,11 +33,10 @@ class CreditToken {
 
         $gtRs->CardHolderName->setNewVal($vr->getCardHolderName());
         $gtRs->CardType->setNewVal($vr->getCardType());
-        //$gtRs->CardUsage->setNewVal($vr->getCardUsage());
         $gtRs->ExpDate->setNewVal($vr->getExpDate());
         $gtRs->Frequency->setNewVal('OneTime');
         $gtRs->Granted_Date->setNewVal(date('Y-m-d H:i:s'));
-        $gtRs->LifetimeDays->setNewVal(MpTokenLifetimeDays::OneTime);
+        $gtRs->LifetimeDays->setNewVal(180);
         $gtRs->MaskedAccount->setNewVal($cardNum);
         $gtRs->OperatorID->setNewVal($vr->getOperatorID());
         $gtRs->Response_Code->setNewVal($vr->getResponseCode());

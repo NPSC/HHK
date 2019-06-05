@@ -78,9 +78,9 @@ class VisitView {
 
                 if ($action == 'ref') {
                     // deal with changed checkout date
-                    $deptDT = setTimeZone($uS, $coDate);
+                    $deptDT = new \DateTime($coDate);
                     $deptDT->setTime(0, 0, 0);
-                    $arrivalDT = setTimeZone($uS, $r['Arrival_Date']);
+                    $arrivalDT = new \DateTime($r['Arrival_Date']);
                     $arrivalDT->setTime(0, 0, 0);
                     $days = $deptDT->diff($arrivalDT, TRUE)->days;
                     $departureText = $deptDT->format('M, j, Y');
@@ -485,10 +485,12 @@ class VisitView {
                     && count($rows) > 1
                     && $r['On_Leave'] == 0
                     && $r['Status'] != VisitStatus::CheckedIn
-                    && $r['Visit_Span'] == 0
-                    && ($r["Visit_Status"] == VisitStatus::CheckedIn || $r["Visit_Status"] == VisitStatus::CheckedOut)) {
+                    && $r['idName'] != $idPrimaryGuest
+//                    && $r['Visit_Span'] == 0
+//                    && ($r["Visit_Status"] == VisitStatus::CheckedIn || $r["Visit_Status"] == VisitStatus::CheckedOut)
+                    ) {
 
-                $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id' => 'removeCb_' . $r['idName'], 'name' => '[removeCb][' . $r['idName'] . ']',
+                $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id' => 'removeCb_' . $r['idStays'], 'name' => '[removeCb][' . $r['idStays'] . ']',
                     'data-nm' => $name,
                     'type' => 'checkbox',
                     'class' => 'hhk-removeCB' )), array('style'=>'text-align:center;'));
@@ -834,111 +836,153 @@ class VisitView {
      * @param string $idPrefix
      * @return string
      */
-    public static function removeStays(\PDO $dbh, $idVisit, $span, $idGuest, $uname) {
+    public static function removeStay(\PDO $dbh, $idVisit, $span, $idStay, $uname) {
+
+        if ($idStay == 0) {
+            return;
+        }
 
         $reply = '';
 
-        if ($idGuest == 0) {
-            return;
-        }
+        $today = new \DateTimeImmutable();
+        $today->setTime(0,0,0);
+        $stayCoversSpan = FALSE;
+        $stayFound = FALSE;
+        $remainingStays = array();
+        $earliestStart = new \DateTime('2900-01-01');
+        $latestEnd = new \DateTime('1984-01-01');
+
 
         // recordset
         $visitRS = new VisitRs();
         $visitRS->idVisit->setStoredVal($idVisit);
-        $rows = EditRS::select($dbh, $visitRS, array($visitRS->idVisit));
+        $visitRS->Span->setStoredVal($span);
 
-        // Currently limited to single span visit.
-        if (count($rows) != 1 || $span != 0) {
-            return 'Cannot remove guest from the visit.  ';
+        $rows = EditRS::select($dbh, $visitRS, array($visitRS->idVisit, $visitRS->Span));
+
+        if (count($rows) != 1) {
+            return 'The Visit Span is not found.  ';
         }
 
         EditRS::loadRow($rows[0], $visitRS);
 
-        if ($idGuest == $visitRS->idPrimaryGuest->getStoredVal()) {
+        // Span dates
+        $spanStartDT = new \DateTime($visitRS->Span_Start->getStoredVal());
+        $spanStartTime = $spanStartDT->format('H:i:s');
+        $spanStartDT->setTime(0,0,0);
+
+        if ($visitRS->Span_End->getStoredVal() != '') {
+            $spanEndDT = new \DateTime($visitRS->Span_End->getStoredVal());
+            $spanEndTime = $spanEndDT->format('H:i:s');
+        } else {
+            $spanEndDT = new \DateTime($visitRS->Expected_Departure->getStoredVal());
+            $spanEndTime = $spanEndDT->format('H:i:s');
+            if ($spanEndDT < $today) {
+                $spanEndDT = $today;
+            }
+        }
+
+        $spanEndDT->setTime(0, 0, 0);
+
+        $stayRs = new StaysRS();
+        $stayRs->idVisit->setStoredVal($idVisit);
+        $stayRs->Visit_Span->setStoredVal($span);
+        $stayRows = EditRS::select($dbh, $stayRs, array($stayRs->idVisit, $stayRs->Visit_Span));
+
+        foreach ($stayRows as $st) {
+
+            if ($st['idStays'] == $idStay) {
+
+                EditRS::loadRow($st, $stayRs);
+                $stayFound = TRUE;
+
+            } else {
+
+                $remainingStays[] = $st;
+
+                $stayStartDT = new \DateTime($st['Span_Start_Date']);
+                $stayStartDT->setTime(0, 0, 0);
+
+                if ($st['Span_End_Date'] != '') {
+                    $stayEndDT = new \DateTime($st['Span_End_Date']);
+                } else {
+                    $stayEndDT = new \DateTime($st['Expected_Co_Date']);
+                    if ($stayEndDT < $today) {
+                        $stayEndDT = $today;
+                    }
+                }
+                $stayEndDT->setTime(0,0,0);
+
+                // Find stays that extend the full span.
+                if ($st['Status'] == $visitRS->Status->getStoredVal() && $stayStartDT == $spanStartDT && $stayEndDT == $spanEndDT) {
+                    $stayCoversSpan = TRUE;
+                }
+
+                // find earliest start and latest end
+                if ($stayStartDT < $earliestStart) {
+                    $earliestStart = $stayStartDT;
+                }
+                if ($stayEndDT > $latestEnd) {
+                    $latestEnd = $stayEndDT;
+                }
+            }
+        }
+
+        if ($stayFound === FALSE) {
+            return "The Guest Stay is not found ($idStay).  ";
+        }
+
+        // Primary guest
+        if ($stayRs->idName->getStoredVal() == $visitRS->idPrimaryGuest->getStoredVal()) {
             return 'Switch the primary guest to someone else before deleting this guest.  ';
         }
 
 
-        // Remove guests from the visit span
-        if ($visitRS->Status->getStoredVal() == VisitStatus::CheckedIn || $visitRS->Status->getStoredVal() == VisitStatus::CheckedOut) {
+        // Does another stay extend the full span duration?
+        if ($stayCoversSpan) {
 
-            $stayRS = new StaysRS();
-            $stayRS->idVisit->setStoredVal($idVisit);
-            $stayRS->Visit_Span->setStoredVal($span);
-            $stays = EditRS::select($dbh, $stayRS, array($stayRS->idVisit, $stayRS->Visit_Span));
+            //delete record
+            EditRS::delete($dbh, $stayRs, array($stayRs->idStays));
 
-            $countStays = count($stays);
+            $logText = VisitLog::getDeleteText($stayRs, $stayRs->idStays->getStoredVal());
+            VisitLog::logStay($dbh, $idVisit, $span, $stayRs->idRoom->getStoredVal(), $stayRs->idStays->getStoredVal(),$stayRs->idName->getStoredVal(), $visitRS->idRegistration->getStoredVal(), $logText, "delete", $uname);
 
-            if ($countStays < 2) {
-                return 'Cannot remove last guest from the visit.  ';
-            }
+            return 'Guest deleted from this visit span.  ';
 
-
-            $remainingStays = array();
-
-            // delete guest stays
-            foreach ($stays as $s) {
-
-                $stayRS = new StaysRS();
-                EditRS::loadRow($s, $stayRS);
-
-                if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedOut && $stayRS->idName->getStoredVal() == $idGuest) {
-                    $countStays--;
-
-                    $reply .= "Guest deleted from this visit.  ";
-
-                    //delete record
-                    $logText = VisitLog::getDeleteText($stayRS, $stayRS->idStays->getStoredVal());
-                    VisitLog::logStay($dbh, $stayRS->idVisit->getStoredVal(), $stayRS->Visit_Span->getStoredVal(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(),$stayRS->idName->getStoredVal(), $visitRS->idRegistration->getStoredVal(), $logText, "delete", $uname);
-
-                    EditRS::delete($dbh, $stayRS, array($stayRS->idStays));
-
-                } else {
-                    $remainingStays[] = $stayRS;
-                }
-            }
-
-            // Adjust visit start and end dates, if needed
-            if (count($stays) != $countStays) {
-
-                $earliestStart = new \DateTime('2900-01-01');
-                $latestEnd = new \DateTime('1984-01-01');
-
-                // Find the earlyest start and latest end of the remaining stays.
-                foreach ($remainingStays as $sRs) {
-
-                    $st = new \DateTime($sRs->Span_Start_Date->getStoredVal());
-                    $ed = new \DateTime($sRs->Span_End_Date->getStoredVal());
-
-                    if ($st < $earliestStart) {
-                        $earliestStart = $st;
-                    }
-
-                    if ($ed > $latestEnd) {
-                        $latestEnd = $ed;
-                    }
-                }
-
-                $visitRS->Span_Start->setNewVal($earliestStart->format('y-m-d H:i:s'));
-                $visitRS->Arrival_Date->setNewVal($earliestStart->format('y-m-d H:i:s'));
-
-                if ($visitRS->Status->getStoredVal() != VisitStatus::CheckedIn) {
-                    $visitRS->Span_End->setNewVal($latestEnd->format('y-m-d H:i:s'));
-                    $visitRS->Actual_Departure->setNewVal($latestEnd->format('y-m-d H:i:s'));
-                }
-
-                $visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-                $visitRS->Updated_By->setNewVal($uname);
-
-                $uctr = EditRS::update($dbh, $visitRS, array($visitRS->idVisit, $visitRS->Span));
-
-                if ($uctr > 0) {
-                    $logText = VisitLog::getUpdateText($visitRS);
-                    VisitLog::logVisit($dbh, $idVisit, $visitRS->Span->getStoredVal(), $visitRS->idResource->getStoredVal(), $visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
-                    $reply .= 'Visit start and/or end dates changed due to removing the guest.  ';
-                }
-            }
+        } else if ($visitRS->Status->getStoredVal() == VisitStatus::NewSpan || $visitRS->Status->getStoredVal() == VisitStatus::ChangeRate) {
+            return 'This guest stay defines the span length so this stay cannot be deleted.  ';
         }
+
+        //delete stay record
+        EditRS::delete($dbh, $stayRs, array($stayRs->idStays));
+
+        $logText = VisitLog::getDeleteText($stayRs, $stayRs->idStays->getStoredVal());
+        VisitLog::logStay($dbh, $idVisit, $span, $stayRs->idRoom->getStoredVal(), $stayRs->idStays->getStoredVal(),$stayRs->idName->getStoredVal(), $visitRS->idRegistration->getStoredVal(), $logText, "delete", $uname);
+
+
+        $visitRS->Span_Start->setNewVal($earliestStart->format('y-m-d ' . $spanStartTime));
+
+        if ($span == 0) {
+            $visitRS->Arrival_Date->setNewVal($earliestStart->format('y-m-d H:i:s'));
+        }
+
+        if ($visitRS->Status->getStoredVal() != VisitStatus::CheckedIn) {
+
+            $visitRS->Span_End->setNewVal($latestEnd->format('y-m-d ' . $spanEndTime));
+            $visitRS->Actual_Departure->setNewVal($latestEnd->format('y-m-d ' . $spanEndTime));
+        }
+
+        $visitRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+        $visitRS->Updated_By->setNewVal($uname);
+
+        $uctr = EditRS::update($dbh, $visitRS, array($visitRS->idVisit, $visitRS->Span));
+
+        if ($uctr > 0) {
+            $logText = VisitLog::getUpdateText($visitRS);
+            VisitLog::logVisit($dbh, $idVisit, $visitRS->Span->getStoredVal(), $visitRS->idResource->getStoredVal(), $visitRS->idRegistration->getStoredVal(), $logText, "update", $uname);
+            $reply .= 'Visit start and/or end dates changed due to removing the guest.  ';
+        }
+
 
         return $reply;
     }
@@ -983,6 +1027,14 @@ class VisitView {
         $spans = array();
         $stays = array();
         $firstArrival = NULL;
+        $visitCheckedIn = FALSE;
+
+        $lastSpanId = 0;
+        foreach ($visitRcrds as $r) {
+            if ($r['Span'] > $lastSpanId) {
+                $lastSpanId = $r['Span'];
+            }
+        }
 
         // Pre-filter list of visit spans
         foreach ($visitRcrds as $r) {
@@ -992,15 +1044,20 @@ class VisitView {
 
             // Save first arrival
             if ($vRs->Span->getStoredVal() == 0) {
-                $firstArrival = setTimeZone(NULL, $vRs->Arrival_Date->getStoredVal());
+                $firstArrival = new \DateTime($vRs->Arrival_Date->getStoredVal());
             }
 
-            // no changes to earlier spans on resize, or spans after the next
-            if ($startDelta == 0 && ($vRs->Span->getStoredVal() < $span || $vRs->Span->getStoredVal() > ($span + 1))) {
+            if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
+                $visitCheckedIn = TRUE;
+            }
+
+            // Changing only the end of the visit, need only the last span
+            if ($startDelta == 0 && $vRs->Span->getStoredVal() < $lastSpanId) {
                 continue;
             }
 
-            if ($endDelta == 0 && ($vRs->Span->getStoredVal() < ($span - 1) || $vRs->Span->getStoredVal() > ($span))) {
+            // Changing only the start of the visit - need only the first span
+            if ($endDelta == 0 && $vRs->Span->getStoredVal() > 0) {
                 continue;
             }
 
@@ -1021,19 +1078,16 @@ class VisitView {
         }
 
         // Check the case that user moved the end of a ribbon inbetween spans.
-        if ($startDelta == 0 && isset($spans[$span])) {
-
-            $vRS = $spans[$span];
-
-            if ($vRS->Status->getStoredVal() != VisitStatus::Active && $vRS->Status->getStoredVal() != VisitStatus::CheckedOut) {
-                return 'Cannot change the end date because the visit continues in another room or at another rate.  ';
-            }
+        if (isset($spans[$span]) === FALSE) {
+            return 'Use only the begining span or the very last span to resize this visit.  ';
         }
 
+
         $visits = array();
-        $now = new \DateTime();
+
         $tonight = new \DateTime();
-        $tonight->setTime(23, 59, 59);
+        $tonight->add(new DateInterval('P1D'));
+        $tonight->setTime(0,0,0);
 
         $today = new \DateTime();
         $today->setTime(intval($uS->CheckOutTime), 0, 0);
@@ -1043,111 +1097,89 @@ class VisitView {
         // change visit span dates
         foreach ($spans as $s => $vRs) {
 
-            $newStartDT = setTimeZone(NULL, $vRs->Span_Start->getStoredVal());
+            $spanStartDT = new \DateTime($vRs->Span_Start->getStoredVal());
 
             if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
-                $newEndDt = setTimeZone(NULL, $vRs->Expected_Departure->getStoredVal());
-                $newEndDt->setTime(intval($uS->CheckOutTime),0,0);
+                $spanEndDt = new \DateTime($vRs->Expected_Departure->getStoredVal());
+                $spanEndDt->setTime(intval($uS->CheckOutTime),0,0);
 
-//                if ($newEndDt < $today) {
-//                    $newEndDt = $today;
-//                }
+                if ($spanEndDt < $tonight) {
+                    $spanEndDt = new \DateTime();
+                    $spanEndDt->setTime(intval($uS->CheckOutTime), 0, 0);
+                }
 
             } else {
-                $newEndDt = setTimeZone(NULL, $vRs->Span_End->getStoredVal());
+                // Checked out
+                $spanEndDt = new \DateTime($vRs->Span_End->getStoredVal());
             }
 
-            $newEndDt->setTime(intval($uS->CheckOutTime),0,0);
 
-            $modEndDt = new \DateTime($newEndDt->format('Y-m-d H:i:s'));
-
-
+            // Cases: end and start both change identically => move; or end or start change => shrink/expand
             if ($endDelta < 0 || $startDelta < 0) {
 
                 // Move back
-                $newEndDt->sub($endInterval);
-                $modEndDt->sub($endInterval);
-                $newStartDT->sub($startInterval);
-
-                // Validity check
-                if ($endDelta < 0 && $startDelta == 0) {
-                    $endDATE = setTimeZone(NULL, $newEndDt->format('Y-m-d 00:00:00'));
-                    $startDATE = setTimeZone(NULL, $newStartDT->format('Y-m-d 00:00:00'));
-                    if ($endDATE <= $startDATE) {
-                        return "The span End date comes before the Start date.  ";
-                    }
-                }
+                $spanEndDt->sub($endInterval);
+                $spanStartDT->sub($startInterval);
 
                 // Only change first arrival if this is the first span
-                if ($s == 0 && $startDelta != 0) {
+                if ($s == 0) {
                     $firstArrival->sub($startInterval);
-                }
-
-                // Set end time to today if checked in and end time is earlier.
-                if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
-                    if ($newEndDt < $tonight) {
-                        $modEndDt = $now;
-                    }
                 }
 
             } else {
 
                 // Spring ahead
-                $newEndDt->add($endInterval);
-                $modEndDt->add($endInterval);
-                $newStartDT->add($startInterval);
+                $spanEndDt->add($endInterval);
+                $spanStartDT->add($startInterval);
 
                 // Only change first arrival if this is the first span
-                if ($s == 0 && $startDelta != 0) {
+                if ($s == 0) {
                     $firstArrival->add($startInterval);
                 }
 
-                // Validity check
-                if ($startDelta > 0 && $endDelta == 0) {
-                    $endDATE = setTimeZone(NULL, $newEndDt->format('Y-m-d 00:00:00'));
-                    $startDATE = setTimeZone(NULL, $newStartDT->format('Y-m-d 00:00:00'));
-                    if ($endDATE <= $startDATE) {
-                        return "The span End date comes before the Start date.  ";
-                    }
-                }
-
-                // Checked-Out visits cannot move their end date beyond todays date.
-                if ($vRs->Status->getStoredVal() == VisitStatus::CheckedOut) {
-                    if ($newEndDt > $tonight) {
+                // Checked-Out spans cannot move their end date beyond todays date.
+                if ($vRs->Status->getStoredVal() != VisitStatus::CheckedIn) {
+                    if ($spanEndDt >= $tonight) {
                         return 'Checked-Out visits cannot move their end date beyond todays date  Use Undo Checkout instead. ';
                     }
                 }
 
-                // Checked-in visits cannot move their start date beyond today's date.
+                // Checked-in spans cannot move their start date beyond today's date.
                 if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
-                    if ($newStartDT > $tonight) {
+                    if ($spanStartDT >= $tonight) {
                         return 'Checked-in visits cannot move their start date beyond todays date. ';
                     }
                 }
             }
 
+            // Visit Still Good?
+            if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn && ($spanEndDt < $spanStartDT || $spanEndDt < $today)) {
+                return "The visit span End date cannot come before the Start date, or before today.  ";
+            } else if ($vRs->Status->getStoredVal() != VisitStatus::CheckedIn && $spanEndDt <= $spanStartDT) {
+                return "The visit span End date cannot come before or on the Start date.  ";
+            }
 
-            // Check visits first.
+
+            // Check room availability.
             $query = "select v.idResource from vregister v where v.Visit_Status <> :vstat and v.idVisit != :visit and v.idResource = :idr and
         DATE(v.Span_Start) < :endDate
         AND DATEDIFF(IFNULL(DATE(v.Span_End),
-                    CASE
-                        WHEN NOW() > DATE(v.Expected_Departure) THEN ADDDATE(NOW(), 1)
-                        ELSE DATE(v.Expected_Departure)
-                    END),
+            CASE
+                WHEN NOW() > DATE(v.Expected_Departure) THEN ADDDATE(NOW(), 1)
+                ELSE DATE(v.Expected_Departure)
+            END),
             v.Span_Start) != 0 and
         ifnull(DATE(v.Span_End), case when now() > DATE(v.Expected_Departure) then AddDate(now(), 1) else DATE(v.Expected_Departure) end) > :beginDate";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
-                ':beginDate'=>$newStartDT->format('Y-m-d'),
-                ':endDate'=>$modEndDt->format('Y-m-d'),
+                ':beginDate'=>$spanStartDT->format('Y-m-d'),
+                ':endDate'=>$spanEndDt->format('Y-m-d'),
                 ':vstat'=> VisitStatus::Pending,
                 ':visit'=>$vRs->idVisit->getStoredVal(),
                 ':idr'=>$vRs->idResource->getStoredVal()));
 
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 
             if (count($rows) > 0) {
                 // not available
@@ -1155,17 +1187,19 @@ class VisitView {
             }
 
             $visits[$s]['rs'] = $vRs;
-            $visits[$s]['start'] = $newStartDT;
-            $visits[$s]['end'] = $newEndDt;
+            $visits[$s]['start'] = $spanStartDT;
+            $visits[$s]['end'] = $spanEndDt;
 
-            $stayMsg = self::moveStaysDates($stays[$vRs->Span->getStoredVal()], $startDelta, $endDelta);
+            $stayMsg = self::moveStaysDates($stays[$vRs->Span->getStoredVal()], $startDelta, $endDelta, $visits[$s]);
+
             if ($stayMsg != '') {
                 return $stayMsg;
             }
         }
 
         // Check for pre-existing reservations
-        $resvs = ReservationSvcs::getCurrentReservations($dbh, $visitRcrds[0]['idReservation'], $visitRcrds[0]['idPrimaryGuest'], 0, $firstArrival, $newEndDt);
+        $resvs = ReservationSvcs::getCurrentReservations($dbh, $visitRcrds[0]['idReservation'], $visitRcrds[0]['idPrimaryGuest'], 0, $firstArrival, $spanEndDt);
+
         if (count($resvs) > 0) {
             return "The Move overlaps another reservation or visit.  ";
         }
@@ -1175,18 +1209,21 @@ class VisitView {
 
         // If I got this far, all the resouorces are available.
         foreach ($visits as $v) {
+
             $visitRS = $v['rs'];
 
             $visitRS->Span_Start->setNewVal($v['start']->format('Y-m-d H:i:s'));
             $visitRS->Arrival_Date->setNewVal($firstArrival->format('Y-m-d H:i:s'));
 
-            if ($visitRS->Span_End->getStoredVal() != '') {
-                $visitRS->Span_End->setNewVal($v['end']->format('Y-m-d H:i:s'));
-            }
-            $visitRS->Expected_Departure->setNewVal($v['end']->format('Y-m-d H:i:s'));
-            $estDepart = $v['end']->format('Y-m-d H:i:s');
+            if ($visitRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
-            if ($visitRS->Actual_Departure->getStoredVal() != '') {
+                $visitRS->Expected_Departure->setNewVal($v['end']->format('Y-m-d H:i:s'));
+                $estDepart = $v['end']->format('Y-m-d H:i:s');
+                $actualDepart = NULL;
+
+            } else {
+
+                $visitRS->Span_End->setNewVal($v['end']->format('Y-m-d H:i:s'));
                 $visitRS->Actual_Departure->setNewVal($v['end']->format('Y-m-d H:i:s'));
                 $actualDepart = $v['end']->format('Y-m-d H:i:s');
             }
@@ -1231,8 +1268,8 @@ class VisitView {
 
                 foreach ($lines as $il) {
 
-                    $stDT = setTimeZone(NULL, $il->getPeriodStart());
-                    $edDT = setTimeZone(NULL, $il->getPeriodEnd());
+                    $stDT = new \DateTime($il->getPeriodStart());
+                    $edDT = new \DateTime($il->getPeriodEnd());
 
                     if ($startDelta > 0) {
                         $stDT->add($startInterval);
@@ -1262,9 +1299,11 @@ class VisitView {
 
             $reserv->setActualArrival($firstArrival->format('Y-m-d H:i:s'));
             $reserv->setExpectedArrival($firstArrival->format('Y-m-d H:i:s'));
+
             if (is_null($actualDepart) === FALSE && $actualDepart != '') {
                 $reserv->setActualDeparture($actualDepart);
             }
+
             if (is_null($estDepart) === FALSE && $estDepart != '') {
                 $reserv->setExpectedDeparture($estDepart);
             }
@@ -1272,9 +1311,9 @@ class VisitView {
         }
 
         if (is_null($actualDepart) === FALSE && $actualDepart != '') {
-            $lastDepart = setTimeZone(NULL, $actualDepart);
+            $lastDepart = new \DateTime($actualDepart);
         } else {
-            $lastDepart = setTimeZone(NULL, $estDepart);
+            $lastDepart = new \DateTime($estDepart);
         }
 
         $lastDepart->setTime(intval($uS->CheckOutTime), 0, 0);
@@ -1285,7 +1324,7 @@ class VisitView {
         if ($startDelta == 0) {
             $reply = 'Visit checkout date changed. ' . $reply;
         } else {
-            $reply = 'Visit dates changed. ' . $reply;
+            $reply = 'Visit Moved. ' . $reply;
         }
         return $reply;
     }
@@ -1297,63 +1336,141 @@ class VisitView {
      * @param int $span
      * @param int $startDelta
      * @param int $endDelta
+     * @param DateTime $spanEndDT
      */
-    protected static function moveStaysDates($stays, $startDelta, $endDelta) {
+    protected static function moveStaysDates($stays, $startDelta, $endDelta, $visits) {
 
         $uS = Session::getInstance();
 
         $startInterval = new \DateInterval('P' . abs($startDelta) . 'D');
         $endInterval = new \DateInterval('P' . abs($endDelta) . 'D');
+
+        $tonight = new \DateTime();
+        $tonight->add(new DateInterval('P1D'));
+        $tonight->setTime(0,0,0);
+
         $today = new \DateTime();
         $today->setTime(intval($uS->CheckOutTime), 0, 0);
 
+        $spanStartDT = DateTimeImmutable::createFromMutable($visits['start']->setTime(10,0,0));
+        $spanEndDT = DateTimeImmutable::createFromMutable($visits['end']->setTime(10,0,0));
+
+
         foreach ($stays as $stayRS) {
 
-            $firstArrival = new \DateTime($stayRS->Checkin_Date->getStoredVal());
-            $expectedDeparture = new \DateTime($stayRS->Expected_Co_Date->getStoredVal());
-            $newStartDT = new \DateTime($stayRS->Span_Start_Date->getStoredVal());
+            $checkInDT = new \DateTimeImmutable($stayRS->Checkin_Date->getStoredVal());
+            $stayStartDT = new \DateTimeImmutable($stayRS->Span_Start_Date->getStoredVal());
 
             if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
-                $newEndDt = setTimeZone(NULL, $stayRS->Expected_Co_Date->getStoredVal());
-                $newEndDt->setTime(intval($uS->CheckOutTime),0,0);
+                $stayEndDt = new \DateTimeImmutable($stayRS->Expected_Co_Date->getStoredVal());
 
-                if ($newEndDt < $today) {
-                    $newEndDt = $today;
+                if ($stayEndDt < $tonight) {
+                    $stayEnd = new \DateTimeImmutable();
+                    $stayEndDt = $stayEnd->setTime(intval($uS->CheckOutTime), 0, 0);
+
                 }
-
             } else {
-                $newEndDt = setTimeZone(NULL, $stayRS->Span_End_Date->getStoredVal());
+                $stayEndDt = new \DateTimeImmutable($stayRS->Span_End_Date->getStoredVal());
             }
 
 
-            if ($endDelta < 0 || $startDelta < 0) {
-                // Move back
-                $newEndDt->sub($endInterval);
-                $newStartDT->sub($startInterval);
-                $expectedDeparture->sub($endInterval);
-                $firstArrival->sub($startInterval);
+            if ($endDelta < 0 && $startDelta < 0) {
+                // Move the entire stay back
 
-            } else if (($endDelta > 0 || $startDelta == 0) && $stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
-                // Spring ahead if checked in
-                $newEndDt->add($endInterval);
-                $newStartDT->add($startInterval);
-                $expectedDeparture->add($endInterval);
-                $firstArrival->add($startInterval);
+                $stayStartDT = $stayStartDT->sub($startInterval);
+                $checkInDT = $checkInDT->sub($startInterval);
+                $stayEndDt = $stayEndDt->sub($endInterval);
 
-            } else {
+            } else if ($startDelta > 0 && $endDelta > 0) {
+                // Move entire stay ahead
 
-                // Spring ahead
+                $stayStartDT = $stayStartDT->add($startInterval);
+                $checkInDT = $checkInDT->add($startInterval);
+                $stayEndDt = $stayEndDt->add($endInterval);
 
-                $newStartDT->add($startInterval);
 
-                $firstArrival->add($startInterval);
+            // Manipulate end of visit
+            } else if ($startDelta == 0) {
 
+                if ($endDelta < 0) {
+                    // Shrink
+
+                    // Checked in to late
+                    if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
+                        // Is my Start Date after the span ending date?
+                        if ($stayStartDT->setTime(10, 0, 0) > $spanEndDT) {
+                            return "Cannot shrink the visit span this far - a stay checks in after the new span end date.  ";
+                        }
+
+                    } else {
+                        // checked in too late and cannot tolerate a 0 day stay.
+                        if ($stayStartDT->setTime(10, 0, 0) >= $spanEndDT) {
+                            return "Cannot shrink the visit span this far - a stay starts after the new span end date.  ";
+                        }
+
+                        // Dont shrink these
+                        if ($stayEndDt->setTime(10, 0, 0) <= $spanEndDT) {
+                            continue;
+                        }
+                    }
+
+                    // Shrink to span end date.
+                    $stayEndDt = $spanEndDT->setTime(intval($uS->CheckOutTime),0,0);
+
+                } else if ($endDelta > 0) {
+                    // Expand
+
+                    if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
+
+                        $stayEndDt = $stayEndDt->add($endInterval);
+
+                    } else {
+
+                        $oldSpanEndDT = new \DateTime($visits['rs']->Span_End->getStoredVal());
+                        $oldSpanEndDT->setTime(10,0,0);
+
+                        // If ends on old span end date and the span is checked out, expand the stay.
+                        if ($oldSpanEndDT->diff($stayEndDt->setTime(10,0,0), TRUE)->days < 1 && $visits['rs']->Status->getStoredVal() != VisitStatus::CheckedIn) {
+                            $stayEndDt = $stayEndDt->add($endInterval);
+                        }
+                    }
+                }
+
+            // Manipulate Start of visit
+            } else if ($endDelta == 0) {
+
+                if ($startDelta > 0) {
+                    // Shrink
+
+                    if ($stayEndDt->setTime(10, 0, 0) <= $spanStartDT) {
+                        return "Cannot shrink the visit span this far - a stay checks out before or on the new span start date.  ";
+                    }
+
+                    if ($stayStartDT->setTime(10, 0, 0) >= $spanStartDT) {
+                        // ignore these
+                        continue;
+                    }
+
+                    // Shrink to span start date.
+                    $stayStartDT = $spanStartDT->setTime(intval($uS->CheckInTime),0,0);
+
+                } else if ($startDelta < 0) {
+                    // Expand
+
+                    $oldSpanStartDT = new \DateTime($visits['rs']->Span_Start->getStoredVal());
+                    $oldSpanStartDT->setTIme(10,0,0);
+
+                    // If ends on old span end date, expand the stay.
+                    if ($oldSpanStartDT->diff($stayStartDT->setTime(10,0,0), TRUE)->days < 1) {
+                        $stayStartDT = $stayStartDT->sub($startDelta);
+                    }
+                }
             }
 
             // Validity check
-            $endDATE = new \DateTime($newEndDt->format('Y-m-d 00:00:00'));
-            $startDATE = new \DateTime($newStartDT->format('Y-m-d 00:00:00'));
+            $endDATE = new \DateTime($stayEndDt->format('Y-m-d 00:00:00'));
+            $startDATE = new \DateTime($stayStartDT->format('Y-m-d 00:00:00'));
             if ($endDATE < $startDATE) {
                 return "The stay End date comes before the Start date.  ";
             }
@@ -1363,19 +1480,15 @@ class VisitView {
                 return "At least one guest, Id = " . $stayRS->idName->getStoredVal() . ", will have checked out into the future.  ";
             }
 
-            $stayRS->Checkin_Date->setNewVal($firstArrival->format('Y-m-d H:i:s'));
-            $stayRS->Span_Start_Date->setNewVal($newStartDT->format('Y-m-d H:i:s'));
+            $stayRS->Checkin_Date->setNewVal($checkInDT->format('Y-m-d H:i:s'));
+            $stayRS->Span_Start_Date->setNewVal($stayStartDT->format('Y-m-d H:i:s'));
 
-            if ($stayRS->Span_End_Date->getStoredVal() != '') {
-                $stayRS->Span_End_Date->setNewVal($newEndDt->format('Y-m-d H:i:s'));
+            if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
+                $stayRS->Expected_Co_Date->setNewVal($spanEndDT->format('Y-m-d H:i:s'));
+            } else {
+                $stayRS->Span_End_Date->setNewVal($stayEndDt->format('Y-m-d H:i:s'));
+                $stayRS->Checkout_Date->setNewVal($stayEndDt->format('Y-m-d H:i:s'));
             }
-
-            if ($stayRS->Checkout_Date->getStoredVal() != '') {
-                $stayRS->Checkout_Date->setNewVal($newEndDt->format('Y-m-d H:i:s'));
-            }
-
-            $stayRS->Expected_Co_Date->setNewVal($expectedDeparture->format('Y-m-d H:i:s'));
-
         }
 
         return '';

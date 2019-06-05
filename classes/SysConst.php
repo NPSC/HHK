@@ -8,13 +8,19 @@
  * @link      https://github.com/NPSC/HHK
  */
 
+// Date Released: 5/20/2019
+// Fixes two bugs in 152.
 class CodeVersion {
-    const BUILD = 145;
+    const BUILD = 153;
     const VERSION = 3.12;
-    const PATCH = 4;
-    const GIT_Id = "";
+    const PATCH = 9;
+    const GIT_Id = "dev";
+    const REL_DATE = '5/20/2019';
 }
 
+class DBServer {
+    const TIMEZONE = 'America/Los_Angeles';
+}
 
 class ActivityTypes {
     const Donation = 'don';
@@ -207,6 +213,29 @@ class Mode {
     const Training = "train";
 }
 
+class MpStatusMessage {
+    const Approved = 'AP';
+    const Replay = 'AP*';
+}
+
+Class MpStatusValues {
+
+    const Approved = 'Approved';
+    const Declined = 'Declined';
+    const Error = 'Error';
+    const Invalid = 'Invalid';
+    const AuthFail = 'AuthFail';
+    const MPSError = 'MPSError';
+    const Blank = 'Blank';
+    const MercInternalFail = 'MercuryInternalFail';
+    const ValidateFail = 'ValidateFail';
+}
+
+Class MpFrequencyValues {
+    const OneTime = 'OneTime';
+    const Recurring = 'Recurring';
+}
+
 class NoteCategory {
     const Reservation = 'ncr';
     const PSG = 'ncf';
@@ -266,11 +295,6 @@ class RelLinkType {
     const Friend = "frd";
     const Company = "co";
     const Self = 'slf';
-    const Grandparent = 'gp';
-    const Aunt = 'ant';
-    const Uncle = 'unc';
-    const Niece = 'nic';
-    const Nephew = 'nfw';
 }
 
 class ReservationStatus {

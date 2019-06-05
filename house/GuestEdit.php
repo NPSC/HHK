@@ -64,22 +64,20 @@ require (HOUSE . 'VisitCharges.php');
 require (CLASSES . 'FinAssistance.php');
 require (CLASSES . 'Notes.php');
 
-require (PMT . 'GatewayConnect.php');
-require (CLASSES . 'MercPay/MercuryHCClient.php');
-require (CLASSES . 'MercPay/Gateway.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'Purchase/RoomRate.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (PMT . 'Payments.php');
-require (PMT . 'HostedPayments.php');
+
+require (PMT . 'GatewayConnect.php');
+require (PMT . 'PaymentGateway.php');
+require (PMT . 'PaymentResponse.php');
+require (PMT . 'Receipt.php');
 require (PMT . 'Invoice.php');
 require (PMT . 'InvoiceLine.php');
-require (PMT . 'CreditToken.php');
-require (PMT . 'Transaction.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'CashTX.php');
 require (PMT . 'CheckTX.php');
+require (PMT . 'CashTX.php');
+require (PMT . 'Transaction.php');
+require (PMT . 'CreditToken.php');
 
 
 $wInit = new webInit();
@@ -90,6 +88,7 @@ $pageTitle = $wInit->pageTitle;
 
 // get session instance
 $uS = Session::getInstance();
+creditIncludes($uS->PaymentGateway);
 
 $menuMarkup = $wInit->generatePageMenu();
 
@@ -671,6 +670,10 @@ if ($psg->getIdPsg() > 0) {
     $psgOnly = TRUE;
 }
 
+$guestPhotoMarkup = "";
+if($uS->ShowGuestPhoto){
+	$guestPhotoMarkup = showGuestPicure($name->get_idName(), $uS->MemberImageSizePx);
+}
 
 $guestName = "<span style='font-size:2em;'>$niceName</span>";
 
@@ -756,7 +759,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
-        <?php echo INS_EMBED_JS; ?>
+        <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
@@ -780,10 +783,12 @@ $uS->guestId = $id;
             <?php if ($showSearchOnly === FALSE) { ?>
             <form action="GuestEdit.php" method="post" id="form1" name="form1" >
                 <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
-
-                <div style="clear:left;float:left;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
-                    <?php echo $nameMarkup; ?>
-                    <?php echo $contactLastUpdated; ?>
+                <div style="float:left; margin-bottom: 10px;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
+	                <?php echo $guestPhotoMarkup; ?>
+	                <div class="hhk-panel" style="display: inline-block">
+                        <?php echo $nameMarkup; ?>
+                       <?php echo $contactLastUpdated; ?>
+	                </div>
                 </div>
                 <div style="clear:both;"></div>
                 <div class="hhk-showonload hhk-tdbox" style="display:none;" >
@@ -936,6 +941,8 @@ $uS->guestId = $id;
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
             var resultMessage = '<?php echo $resultMessage; ?>';
         </script>
-        <script type="text/javascript" src="js/guestload-min.js"></script>
+
+        <script type="text/javascript" src="../js/uppload.js"></script>
+        <script type="text/javascript" src="js/guestload-min.js?vn=6"></script>
     </body>
 </html>

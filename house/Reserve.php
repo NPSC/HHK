@@ -17,9 +17,6 @@ require (DB_TABLES . 'ReservationRS.php');
 require (DB_TABLES . 'PaymentGwRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
 
-require (PMT . 'GatewayConnect.php');
-require (CLASSES . 'MercPay/MercuryHCClient.php');
-require (CLASSES . 'MercPay/Gateway.php');
 require (CLASSES . 'Purchase/Item.php');
 
 require (MEMBER . 'Member.php');
@@ -37,6 +34,17 @@ require CLASSES . 'TableLog.php';
 require (CLASSES . 'Document.php');
 require (CLASSES . 'Parsedown.php');
 
+require (PMT . 'GatewayConnect.php');
+require (PMT . 'PaymentGateway.php');
+require (PMT . 'PaymentResponse.php');
+require (PMT . 'Receipt.php');
+require (PMT . 'Invoice.php');
+require (PMT . 'InvoiceLine.php');
+require (PMT . 'CheckTX.php');
+require (PMT . 'CashTX.php');
+require (PMT . 'Transaction.php');
+require (PMT . 'CreditToken.php');
+
 require (HOUSE . 'psg.php');
 require (HOUSE . 'RoleMember.php');
 require (HOUSE . 'Role.php');
@@ -53,18 +61,6 @@ require (HOUSE . 'Hospital.php');
 require (HOUSE . 'VisitLog.php');
 require (HOUSE . 'Constraint.php');
 require (HOUSE . 'Attributes.php');
-
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'Payments.php');
-require (PMT . 'HostedPayments.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'Invoice.php');
-require (PMT . 'InvoiceLine.php');
-require (PMT . 'CreditToken.php');
-require (PMT . 'CheckTX.php');
-require (PMT . 'CashTX.php');
-require (PMT . 'Transaction.php');
-
 require (HOUSE . 'PaymentManager.php');
 require (HOUSE . 'PaymentChooser.php');
 
@@ -79,6 +75,7 @@ $dbh = $wInit->dbh;
 
 // get session instance
 $uS = Session::getInstance();
+creditIncludes($uS->PaymentGateway);
 
 $menuMarkup = $wInit->generatePageMenu();
 
@@ -171,14 +168,6 @@ if (isset($_GET['idPsg'])) {
     $idPsg = intval(filter_var($_GET['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
-// Page title
-$title = $wInit->pageHeading;
-
-if (isset($_GET['title'])) {
-    $title = 'Check In';
-}
-
-
 if ($idReserv > 0 || $idGuest >= 0) {
 
     $mk1 = "<h2>Loading...</h2>";
@@ -199,6 +188,14 @@ $resvAr['patAddr'] = $uS->PatientAddr;
 $resvAr['gstAddr'] = $uS->GuestAddr;
 $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
 $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
+
+// Page title
+$title = $wInit->pageHeading;
+
+if (isset($_GET['title'])) {
+    $title = 'Check In';
+    $resvAr['arrival'] = date('M j, Y');
+}
 
 $resvObjEncoded = json_encode($resvAr);
 
@@ -244,7 +241,7 @@ $resvObjEncoded = json_encode($resvAr);
 <!--        <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>-->
 
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
-        <?php echo INS_EMBED_JS; ?>
+        <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
@@ -263,7 +260,7 @@ $resvObjEncoded = json_encode($resvAr);
                 <div id="famSection" style="clear:left; float:left; font-size: .9em; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
                 <div id="hospitalSection" style="font-size: .9em; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
                 <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
-                <div style="clear:both;min-height: 70px;">.</div>
+                <div style="clear:left; min-height: 70px;"></div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <table >
                         <tr><td ><span id="pWarnings" style="display:none; font-size: 1.4em; border: 1px solid #ddce99;margin-bottom:3px; padding: 0 2px; color:red; background-color: yellow; float:right;"></span></td></tr>

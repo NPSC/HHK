@@ -48,12 +48,8 @@ define('MULTISELECT_CSS', '<link href="css/jquery.multiselect.css" rel="styleshe
 define('FAVICON', '<link rel="icon" type="image/png" href="../images/hhkIcon.png" />');
 define('DR_PICKER_CSS', '<link rel="stylesheet" href="css/daterangepicker.min.css">');
 define('FULLC_CSS', '<link href="css/fullcalendar.css" rel="stylesheet" type="text/css" />');
-define('RTE_CSS', '<link href="css/rich-text-editor.css" rel="stylesheet" type="text/css" />');
-define('FONTAWESOME_CSS', '<link href="css/fontawesome.min.css" rel="stylesheet" type="text/css" />');
-define('MDEDITOR_CSS', '<link href="css/simplemde.min.css" rel="stylesheet" type="text/css" />');
 define('SELECT2_CSS', '<link href="css/select2.min.css" rel="stylesheet" type="text/css" />');
 define('NOTY_CSS', "<link href='css/noty/noty.css' rel='stylesheet' type='text/css' /><link href='css/noty/themes/semanticui.css' rel='stylesheet' type='text/css' /><link href='css/noty/animate.css' rel='stylesheet' type='text/css' />");
-define('DROPZONE_CSS', "<link href='css/basic.min.css' rel='stylesheet' type='text/css' /><link href='css/dropzone.min.css' rel='stylesheet' type='text/css' />");
 
 define('JQ_UI_JS', '../js/jquery-ui.min.js');
 define('JQ_JS', '../js/jquery-3.1.1.min.js');
@@ -76,5 +72,4 @@ define('FULLC_JS', '../js/fullcalendarold.min.js');
 define('RTE_JS', '../js/rich-text-editor.js');
 define('MDEDITOR_JS', '../js/simplemde.min.js');
 define('NOTES_VIEWER_JS', '../js/notesViewer.js');
-define('DROPZONE_JS', '../js/dropzone.js');
 define('SELECT2_JS', '../js/select2.min.js');

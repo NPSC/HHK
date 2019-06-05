@@ -170,17 +170,16 @@ class RoomChooser {
         }
     }
 
-    public function createAddGuestMarkup(\PDO $dbh, $isAuthorized, $replaceRoomSel) {
+    public function createAddGuestMarkup(\PDO $dbh, $isAuthorized, $replaceRoomSel, $visitStatus = '', $numOccupants = 0) {
 
-        if ($this->resv->getStatus() === ReservationStatus::Staying) {
+        if (($visitStatus == '' || $visitStatus == VisitStatus::CheckedIn) && $this->resv->getStatus() === ReservationStatus::Staying) {
 
             $this->findResources($dbh, $isAuthorized, FALSE, 0);
-//
-//            if (isset($rescs[$this->resv->getIdResource()])) {
-//                $this->selectedResource = $rescs[$this->resv->getIdResource()];
-//            }
 
             return $this->createAddedMarkup($dbh, TRUE, $replaceRoomSel);
+
+        } else {
+            return $this->createStaticMarkup($dbh, $numOccupants);
         }
     }
 
@@ -244,13 +243,13 @@ class RoomChooser {
             $rmBigEnough[] = array($r->getIdResource(), $r->getTitle(), $r->optGroup);
         }
 
-        if (count($rmBigEnough) > 1) {
+//        if (count($rmBigEnough) > 1) {
             return HTMLSelector::generateMarkup(
                         HTMLSelector::doOptionsMkup($rmBigEnough, '0', FALSE), array('id' => 'selResource', 'name' => 'selResource', 'class' => 'hhk-feeskeys hhk-chgroom'));
 
-        }
+//        }
 
-        return 'No available rooms';
+//        return 'No available rooms';
     }
 
     public function findResources(\PDO $dbh, $isAuthorized, $omitSelf = TRUE, $overrideMaxOcc = 0) {
@@ -403,7 +402,7 @@ class RoomChooser {
         return $mk1;
     }
 
-    protected function createStaticMarkup(\PDO $dbh) {
+    protected function createStaticMarkup(\PDO $dbh, $numOccupants = 0) {
 
         $roomSelectedMsg = '';
 
@@ -424,7 +423,7 @@ class RoomChooser {
         $ttbl = new HTMLTable();
 
         $ttbl->addBodyTr( HTMLTable::makeTh("Total Guests:")
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->getTotalGuests(), array('id'=>'spnNumGuests','style'=>'font-weight:bold;')), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', "$numOccupants", array('id'=>'spnNumGuests','style'=>'font-weight:bold;')), array('style'=>'text-align:center;'))
                 .(is_null($this->selectedResource) ? '' : HTMLTable::makeTh('Room:'). HTMLTable::makeTd($this->selectedResource->getTitle(), array('style'=>'font-weight:bold;')))
                 .HTMLTable::makeTh('Nights:') . HTMLTable::makeTd($this->resv->getExpectedDays(), array('style'=>'text-align:center;font-weight:bold;'))
                 );
@@ -448,8 +447,9 @@ class RoomChooser {
 
         if ($replaceRoomSel == '') {
 
-            $resOptions[] = array(0, '-None-', '');
-            $rmSelectorMarkup = $this->makeRoomSelector($resOptions, 0);
+//            $resOptions[] = array(0, '-None-', '');
+//            $rmSelectorMarkup = $this->makeRoomSelector($resOptions, 0);
+            $rmSelectorMarkup = HTMLInput::generateMarkup('', array('name'=>'cbNewRoom', 'type'=>'checkbox'));
 
         } else {
             $rmSelectorMarkup = $replaceRoomSel;
@@ -485,7 +485,7 @@ class RoomChooser {
                 HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->getCurrentGuests()), array('style'=>'text-align:center;'))
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnNumGuests')), array('style'=>'text-align:center;'))
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $curRoomMarkup), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $rmSelectorMarkup, array('id'=>'spanSelResc')))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $rmSelectorMarkup, array('id'=>'spanSelResc')), array('style'=>'text-align:center;'))
                 );
 
         // set up room suitability message area

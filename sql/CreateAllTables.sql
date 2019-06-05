@@ -124,6 +124,7 @@ CREATE TABLE if not exists `card_id` (
 -- -----------------------------------------------------
 CREATE TABLE if not exists `cc_hosted_gateway` (
   `idcc_gateway` int(11) NOT NULL AUTO_INCREMENT,
+  `Gateway_Name` VARCHAR(45) NOT NULL DEFAULT '',
   `cc_name` varchar(45) NOT NULL,
   `Merchant_Id` varchar(45) NOT NULL DEFAULT '',
   `Password` varchar(245) NOT NULL DEFAULT '',
@@ -1015,6 +1016,7 @@ CREATE TABLE if not exists `name_demog` (
   `Key_Contact` tinyint(1) NOT NULL DEFAULT '0',
   `Legislative` tinyint(1) NOT NULL DEFAULT '0',
   `Photo_Permission` varchar(5) NOT NULL DEFAULT '',
+  `Guest_Photo_Id` INT NOT NULL DEFAULT 0,
   `Gen_Notes` text,
   `Contact_Date` date DEFAULT NULL,
   `Orientation` tinyint(1) NOT NULL DEFAULT '0',
@@ -1377,6 +1379,7 @@ CREATE TABLE if not exists `payment_auth` (
   `Reference_Num` varchar(45) NOT NULL DEFAULT '',
   `AcqRefData` varchar(200) NOT NULL DEFAULT '',
   `ProcessData` varchar(200) NOT NULL DEFAULT '',
+  `Signature_Required` INT(4) NOT NULL DEFAULT 1,
   `CVV` varchar(45) NOT NULL DEFAULT '',
   `Serialized_Details` varchar(1000) NOT NULL DEFAULT '',
   `Status_Code` varchar(5) NOT NULL DEFAULT '',
@@ -1446,6 +1449,19 @@ CREATE TABLE if not exists `payment_method` (
 ) ENGINE=InnoDB AUTO_INCREMENT=4;
 
 
+
+-- -----------------------------------------------------
+-- Table `photo`
+-- -----------------------------------------------------
+CREATE TABLE `photo` (
+  `idPhoto` INT NOT NULL AUTO_INCREMENT,
+  `Image_Type` VARCHAR(45) NOT NULL DEFAULT '',
+  `Category` VARCHAR(5) NOT NULL DEFAULT '',
+  `Image` BLOB NULL,
+  `Last_Updated` DATETIME NULL,
+  `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
+  `timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idPhoto`));
 
 
 

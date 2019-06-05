@@ -4,6 +4,8 @@
 
 require ("homeIncludes.php");
 require (PMT . 'PaymentGateway.php');
+require (PMT . 'paymentgateway/instamed/InstamedGateway.php');
+
 
 $secure = new SecurityComponent();
 $houseUrl = $secure->getSiteURL();

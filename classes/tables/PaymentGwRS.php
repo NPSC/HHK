@@ -99,6 +99,7 @@ class Gateway_TransactionRS extends TableRS {
 class Cc_Hosted_GatewayRS extends TableRS {
 
     public $idcc_gateway;  // int(11) NOT NULL AUTO_INCREMENT,
+    public $Gateway_Name;  // VARCHAR(45) NOT NULL DEFAULT ''
     public $cc_name;  // varchar(45) NOT NULL,
     public $Merchant_Id;  // varchar(45) NOT NULL DEFAULT '',
     public $Password;  // varchar(245) NOT NULL DEFAULT '',
@@ -119,6 +120,7 @@ class Cc_Hosted_GatewayRS extends TableRS {
 
      function __construct($TableName = "cc_hosted_gateway") {
         $this->idcc_gateway = new DB_Field("idcc_gateway", 0, new DbIntSanitizer(), TRUE, TRUE);
+        $this->Gateway_Name = new DB_Field("Gateway_Name", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->cc_name = new DB_Field("cc_name", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Merchant_Id = new DB_Field("Merchant_Id", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Password = new DB_Field("Password", "", new DbStrSanitizer(245), TRUE, TRUE);
@@ -145,6 +147,7 @@ class Cc_Hosted_GatewayRS extends TableRS {
 class InstamedGatewayRS extends TableRS {
 
     public $idcc_gateway;  // int(11) NOT NULL AUTO_INCREMENT,
+    public $Gateway_Name;  // VARCHAR(45) NOT NULL DEFAULT ''
     public $cc_name;  // varchar(45) NOT NULL,
     public $account_Id;  // varchar(45) NOT NULL DEFAULT '',
     public $security_Key;  // varchar(245) NOT NULL DEFAULT '',
@@ -165,6 +168,7 @@ class InstamedGatewayRS extends TableRS {
 
      function __construct($TableName = "cc_hosted_gateway") {
         $this->idcc_gateway = new DB_Field("idcc_gateway", 0, new DbIntSanitizer(), TRUE, TRUE);
+        $this->Gateway_Name = new DB_Field("Gateway_Name", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->cc_name = new DB_Field("cc_name", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->account_Id = new DB_Field("Merchant_Id", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->security_Key = new DB_Field("Password", "", new DbStrSanitizer(245), TRUE, TRUE);

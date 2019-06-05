@@ -141,7 +141,7 @@ class ReservationSvcs {
         return $dataArray;
     }
 
-    public static function generateCkinDoc(\PDO $dbh, $idReservation = 0, $idVisit = 0, $logoURL = '', $notes = '') {
+    public static function generateCkinDoc(\PDO $dbh, $idReservation = 0, $idVisit = 0, $span = 0, $logoURL = '', $notes = '') {
 
         $uS = Session::getInstance();
 

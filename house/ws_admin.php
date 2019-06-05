@@ -19,17 +19,6 @@ require(SEC . 'ChallengeGenerator.php');
 
 require (MEMBER . 'MemberSearch.php');
 
-require (PMT . 'GatewayConnect.php');
-
-require (CLASSES . 'MercPay/MercuryHCClient.php');
-require (CLASSES . 'MercPay/Gateway.php');
-
-require (PMT . 'Payments.php');
-require (PMT . 'TokenTX.php');
-require (PMT . 'HostedPayments.php');
-require (PMT . 'Invoice.php');
-require (PMT . 'CreditToken.php');
-require (PMT . 'Transaction.php');
 
 // Set page type for AdminPageCommon
 $wInit = new webInit(WebPageCode::Service);

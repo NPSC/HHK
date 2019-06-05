@@ -32,11 +32,13 @@ class ReserveData {
     const ID = 'id';
     const PRI = 'pri';
 
+
     const GUEST_ADMIN = 'guestadmin';
 
     const STAYING = '1';
     const NOT_STAYING = '0';
     const CANT_STAY = 'x';
+    const IN_ROOM = 'r';
 
     const DATE_FORMAT = 'M j, Y';
 
@@ -47,6 +49,8 @@ class ReserveData {
     protected $idVisit = 0;
     protected $span = 0;
     protected $spanStatus = '';
+    protected $spanStartDT = NULL;
+    protected $spanEndDT = NULL;
     protected $forceNewPsg = FALSE;
     protected $forceNewResv = FALSE;
     protected $fullName = '';
@@ -75,6 +79,7 @@ class ReserveData {
     protected $concurrentRooms = 0;
     protected $psgMembers;
     protected $errors;
+    protected $resvPrompt;
 
     function __construct($post, $reservationTitle = '') {
 
@@ -122,7 +127,7 @@ class ReserveData {
             $this->setMembersFromPost(filter_var_array($post['mem'], FILTER_SANITIZE_STRING));
         }
 
-        $this->saveButtonLabel = 'Save ' . $this->resvTitle;
+        $this->saveButtonLabel = 'Save ';
         $this->resvEarlyArrDays = $uS->ResvEarlyArrDays;
         $this->patAsGuestFlag = $uS->PatientAsGuest;
         $this->patBirthDateFlag = $uS->InsistPatBD;
@@ -141,7 +146,8 @@ class ReserveData {
         $this->checkingInSection = '';
         $this->paymentSection = '';
         $this->errors = '';
-        $this->resvTitle = ($reservationTitle == '' ? $labels->getString('guestEdit', 'reservationTitle', 'Reservation') : $reservationTitle);
+        $this->resvPrompt = $labels->getString('guestEdit', 'reservationTitle', 'Reservation');
+        $this->resvTitle = ($reservationTitle == '' ? $this->resvPrompt : $reservationTitle);
 
     }
 
@@ -282,12 +288,30 @@ class ReserveData {
         return $this->spanStatus;
     }
 
+    public function getSpanStartDT() {
+        if (is_null($this->spanStartDT)) {
+            return $this->getArrivalDT();
+        }
+        return $this->spanStartDT;
+    }
+
+    public function getSpanEndDT() {
+        if (is_null($this->spanEndDT)) {
+            return $this->getDepartureDT();
+        }
+        return $this->spanEndDT;
+    }
+
     public function getConcurrentRooms() {
         return $this->concurrentRooms;
     }
 
     public function getResvTitle() {
         return $this->resvTitle;
+    }
+
+    public function getResvPrompt() {
+        return $this->resvPrompt;
     }
 
     public function getPatAsGuestFlag() {
@@ -458,6 +482,24 @@ class ReserveData {
 
     public function setSpanStatus($id) {
         $this->spanStatus = $id;
+        return $this;
+    }
+
+    public function setSpanStartDT($id) {
+        if ($id != '') {
+            $this->spanStartDT = new DateTimeImmutable($id);
+        } else {
+            $this->spanStartDT = $this->getArrivalDT();
+        }
+        return $this;
+    }
+
+    public function setSpanEndDT($id) {
+        if ($id != '') {
+            $this->spanEndDT = new DateTimeImmutable($id);
+        } else {
+            $this->spanEndDT = $this->getDepartureDT();
+        }
         return $this;
     }
 
@@ -697,10 +739,11 @@ class PSGMember {
 class PSGMemStay {
 
     protected $stay;
+    protected $myStayType = 'open';
 
     public function __construct($stayIndex) {
 
-        if ($stayIndex == ReserveData::STAYING || $stayIndex == ReserveData::NOT_STAYING || $stayIndex == ReserveData::CANT_STAY) {
+        if ($stayIndex == ReserveData::STAYING || $stayIndex == ReserveData::NOT_STAYING || $stayIndex == ReserveData::CANT_STAY || $stayIndex == ReserveData::IN_ROOM) {
             $this->stay = $stayIndex;
         } else {
             $this->stay = ReserveData::NOT_STAYING;
@@ -767,11 +810,16 @@ class PSGMemStay {
         }
     }
 
+    public function getMyStayType() {
+        return $this->myStayType;
+    }
+
 }
 
 class PSGMemVisit extends PSGMemStay {
 
     protected $index = array();
+    protected $myStayType = 'visit';
 
     public function __construct($index) {
 
@@ -786,6 +834,7 @@ class PSGMemVisit extends PSGMemStay {
         if (isset($this->index['idVisit']) && isset($this->index['Visit_Span'])) {
             return HTMLInput::generateMarkup($this->index['room'], array('type'=>'button', 'class'=>'hhk-getVDialog hhk-stayIndicate', 'data-vid'=>$this->index['idVisit'], 'data-span'=>$this->index['Visit_Span']));
         } else {
+            $this->setStay(ReserveData::IN_ROOM);
             return HTMLContainer::generateMarkup('span', 'In Room', array('class'=>'hhk-stayIndicate'));
         }
     }
@@ -793,6 +842,8 @@ class PSGMemVisit extends PSGMemStay {
 }
 
 class PSGMemResv extends PSGMemVisit {
+
+    protected $myStayType = 'resv';
 
     public function createStayButton($prefix) {
 

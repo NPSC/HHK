@@ -90,29 +90,36 @@ class HTMLTable extends HTMLControl {
 
     public function addHeader($contents) {
         $this->headerTR .= $contents;
+        return $this;
     }
     public function addHeaderTr($contents, array $attr = array()) {
         $this->headerTR .= HTMLContainer::generateMarkup('tr', $contents, $attr);
+        return $this;
     }
 
     public function addFooter($contents) {
         $this->footerTR .= $contents;
+        return $this;
     }
 
     public function addFooterTr($contents, array $attr = array()) {
         $this->footerTR .= HTMLContainer::generateMarkup('tr', $contents, $attr);
+        return $this;
     }
 
     public function addBodyTr($contents, array $attr = array()) {
         $this->bodyTR .= HTMLContainer::generateMarkup('tr', $contents, $attr);
+        return $this;
     }
 
     public function addBody($contents) {
         $this->bodyTR .= $contents;
+        return $this;
     }
 
     public function prependBodyTr($contents) {
         $this->bodyTR = HTMLContainer::generateMarkup('tr', $contents) . $this->bodyTR;
+        return $this;
     }
 
     public static function makeTd($contents = '', array $attr = array()) {

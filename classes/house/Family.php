@@ -239,13 +239,13 @@ class Family {
                 foreach ($mems as $mem) {
 
                     if ($mem !== NULL) {
-                        $mem->getStayObj()->setStaying();
+                        // Family house would rather the people come up not styaing.
+                        //$mem->getStayObj()->setStaying();
                         $mem->setPrimaryGuest(FALSE);
                     }
                 }
             }
         }
-
 
     }
 

@@ -25,9 +25,8 @@ require (CLASSES . 'Document.php');
 require(HOUSE . 'TemplateForm.php');
 
 require CLASSES . 'FinAssistance.php';
-require (PMT . 'Payments.php');
-require (PMT . 'CreditToken.php');
 require (PMT . 'Receipt.php');
+require (PMT . 'CreditToken.php');
 
 
 require (MEMBER . 'Member.php');
@@ -80,9 +79,14 @@ $uS = Session::getInstance();
 $idVisit = 0;
 $idGuest = 0;
 $idResv = 0;
+$span =0;
 
 if (isset($_GET['vid'])) {
     $idVisit = intval(filter_var($_REQUEST['vid'], FILTER_SANITIZE_STRING), 10);
+}
+
+if (isset($_GET['span'])) {
+    $span = intval(filter_var($_REQUEST['span'], FILTER_SANITIZE_STRING), 10);
 }
 
 if (isset($_GET['gid'])) {
@@ -103,7 +107,7 @@ if ($idVisit == 0 && $idResv > 0) {
 }
 
 // Generate Registration
-$reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, '../conf/registrationLogo.png');
+$reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, $span, '../conf/registrationLogo.png');
 
 $sty = $reservArray['style'];
 $regForm = $reservArray['doc'];

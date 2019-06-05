@@ -174,8 +174,8 @@ class HouseServices {
         if (isset($post['removeCb'])) {
 
             foreach ($post['removeCb'] as $r => $v) {
-                $idRemoved = intval(filter_var($r, FILTER_SANITIZE_NUMBER_INT), 10);
-                $reply .= VisitView::removeStays($dbh, $idVisit, $span, $idRemoved, $uS->username);
+                $idStay = intval(filter_var($r, FILTER_SANITIZE_NUMBER_INT), 10);
+                $reply .= VisitView::removeStay($dbh, $idVisit, $span, $idStay, $uS->username);
             }
         }
 
@@ -209,15 +209,28 @@ class HouseServices {
             $vFees = readGenLookupsPDO($dbh, 'Visit_Fee_Code');
 
             if (isset($vFees[$visitFeeOption])) {
+
                 $resv = Reservation_1::instantiateFromIdReserv($dbh, $visit->getReservationId());
+
                 if ($resv->isNew() === FALSE) {
 
                     if ($resv->getVisitFee() != $vFees[$visitFeeOption][2]) {
+                        // visit fee is updated.
 
-                        $resv->setVisitFee($vFees[$visitFeeOption][2]);
-                        $resv->saveReservation($dbh, $visit->getIdRegistration(), $uS->username);
+                        $visitCharge = new VisitCharges($idVisit);
+                        $visitCharge->sumPayments($dbh);
 
-                        $reply .= 'Cleaning Fee Setting Updated.  ';
+                        if ($visitCharge->getVisitFeesPaid() > 0) {
+                            // Change to no visit fee, already paid fee
+                            $reply .= ' Return Cleaning Fee Payment and delete the invoice before changing it.  ';
+
+                        } else {
+
+                            $resv->setVisitFee($vFees[$visitFeeOption][2]);
+                            $resv->saveReservation($dbh, $visit->getIdRegistration(), $uS->username);
+
+                            $reply .= 'Cleaning Fee Setting Updated.  ';
+                        }
                     }
                 }
             }
@@ -332,7 +345,7 @@ class HouseServices {
 
                             if (isset($post['resvChangeDate']) && $post['resvChangeDate'] != '') {
 
-                                $chDT = setTimeZone($uS, filter_var($post['resvChangeDate'], FILTER_SANITIZE_STRING));
+                                $chDT = new \DateTime(filter_var($post['resvChangeDate'], FILTER_SANITIZE_STRING));
                                 $chRoomDT = new \DateTime($chDT->format('Y-m-d') . ' ' . $now->format('H:i:s'));
 
                             } else {
@@ -412,7 +425,7 @@ class HouseServices {
                             }
                         }
 
-                        $coDT = setTimeZone($uS, $coDate);
+                        $coDT = new \DateTime($coDate);
 
                         $coDT->setTime($coHour, $coMin, 0);
 

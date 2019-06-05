@@ -1,4 +1,5 @@
-/* global getDoc, memberData, rctMkup, psgTabIndex, getAgent, pmtMkup */
+/* global getDoc, memberData, rctMkup, psgTabIndex, getAgent, pmtMkup, $,
+  flagAlertMessage, saveFees, viewVisit, dateRender, dateFormat */
 
 /**
  * guestload.js
@@ -57,9 +58,9 @@ var dtCols = [
 
 ];
 
-function relationReturn(data) {
+function relationReturn(dat) {
 
-    data = $.parseJSON(data);
+    var data = $.parseJSON(dat);
     if (data.error) {
         if (data.gotopage) {
             window.open(data.gotopage, '_self');
@@ -135,8 +136,8 @@ $(document).ready(function () {
         autoOpen: false,
         resizable: true,
         modal: true,
-        close: function (event, ui) {$('div#submitButtons').show();},
-        open: function (event, ui) {$('div#submitButtons').hide();}
+        close: function () {$('div#submitButtons').show();},
+        open: function () {$('div#submitButtons').hide();}
     });
 
     $('#pmtRcpt').dialog({
@@ -172,7 +173,7 @@ $(document).ready(function () {
                 window.open('ShowStatement.php?vid=' + vid, '_blank');
             },
             "Show Registration Form": function() {
-                window.open('ShowRegForm.php?vid=' + vid, '_blank');
+                window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
             },
             "Save": function() {
                 saveFees(gid, vid, span, false, 'GuestEdit.php?id=' + gid + '&psg=' + memData.idPsg);
@@ -486,4 +487,97 @@ $(document).ready(function () {
 
     // init dirrty
     $("#form1").dirrty();
+    
+    //GuestPhoto
+    new Uppload({
+        uploadFunction: (file) => {
+            return new Promise((resolve, reject) => {
+                var formData = new FormData();
+                formData.append('cmd', 'putguestphoto');
+                formData.append('guestId', memData.id);
+                formData.append('guestPhoto', file);
+
+                $.ajax({
+                    type: "POST",
+                    url: "ws_resc.php",
+                    dataType: "json",
+                    data: formData,
+                    //use contentType, processData for sure.
+                    contentType: false,
+                    processData: false,
+                    success: function(data) {
+                        if(data.error){
+                            reject(data.error);
+                        }else{
+                            resolve("success");
+                            $("#guestPhoto").prop("src", "ws_resc.php?cmd=getguestphoto&guestId=" + memData.id + "r&x="+new Date().getTime());
+                            $(".delete-guest-photo").show();
+                        }
+                    },
+                    error: function(error) {
+                        reject(error);
+                    }
+                });
+            });
+        },
+        services: [
+            "camera",
+            "upload"
+        ],
+        defaultService: "camera",
+        allowedTypes: "image",
+        crop: {
+            aspectRatio: 1/1
+        }
+    });
+	
+    $(".uppload-branding").hide(); //hide Get Uppload branding from upload box
+
+    $(document).on("click", "#hhk-guest-photo", function(e){
+        e.preventDefault();
+    });
+
+    //toggle guest photo action buttons on hover
+    $("#hhk-guest-photo").on({
+        mouseenter: function () {
+            $("#hhk-guest-photo-actions").show();
+            $("#hhk-guest-photo img").fadeTo(100, 0.5);
+        },
+        mouseleave: function () {
+            $("#hhk-guest-photo-actions").hide();
+            $("#hhk-guest-photo img").fadeTo(100, 1);
+        }
+    });
+
+    $(".delete-guest-photo").on("click", function(){
+        
+        if (confirm("Really Delete this photo?")) {
+            $.ajax({
+                type: "POST",
+                url: "ws_resc.php",
+                dataType: "json",
+                data: {
+                        cmd: "deleteguestphoto",
+                        guestId: memData.id
+                    },
+                success: function(data) {
+                    if(data.error){
+                        
+                        if (data.gotopage) {
+                            window.location.assign(data.gotopage);
+                        }
+                        
+                        flagAlertMessage("Server error - " + data.error, 'error');
+                        return;
+
+                    }else{
+                        $("#guestPhoto").prop("src", "ws_resc.php?cmd=getguestphoto&guestId=" + memData.id + "&rx="+new Date().getTime());
+                    }
+                },
+                error: function(error) {
+                    flagAlertMessage("AJAX error - " + error);
+                }
+            });
+        }
+    });
 });

@@ -37,24 +37,19 @@ require (CLASSES . 'US_Holidays.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'FinAssistance.php');
 require CLASSES . 'TableLog.php';
-require (PMT . 'GatewayConnect.php');
-
-require (CLASSES . 'MercPay/MercuryHCClient.php');
-require (CLASSES . 'MercPay/Gateway.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
 
-require (PMT . 'Payments.php');
-require (PMT . 'TokenTX.php');
-require (PMT . 'HostedPayments.php');
+require (PMT . 'GatewayConnect.php');
+require (PMT . 'PaymentGateway.php');
+require (PMT . 'PaymentResponse.php');
+require (PMT . 'Receipt.php');
 require (PMT . 'Invoice.php');
 require (PMT . 'InvoiceLine.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'CreditToken.php');
-require (PMT . 'Transaction.php');
-require (PMT . 'CashTX.php');
 require (PMT . 'CheckTX.php');
-require (PMT . 'PaymentGateway.php');
+require (PMT . 'CashTX.php');
+require (PMT . 'Transaction.php');
+require (PMT . 'CreditToken.php');
 
 require (CLASSES . 'Purchase/Item.php');
 
@@ -108,6 +103,7 @@ $wInit = new webInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
+creditIncludes($uS->PaymentGateway);
 
 $c = "";
 

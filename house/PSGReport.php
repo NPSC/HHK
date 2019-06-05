@@ -60,7 +60,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 
     if ($showAddr && $showFullName) {
 
-        $query = "select vg.Id, vg.idPsg, vg.Relationship_Code, v.idReservation as `Resv ID`, "
+        $query = "select s.idName, hs.idPsg, vg.Relationship_Code, v.idReservation as `Resv ID`, "
             . "vg.`Patient Rel.`, vg.Prefix, vg.First as `Guest First`, vg.Last as `Guest Last`, vg.Suffix, ifnull(vg.BirthDate, '') as `Birth Date`, "
             . "np.Name_First as `Patient First` , np.Name_Last as `Patient Last`, "
             . " vg.Address, vg.City, vg.County, vg.State, vg.Zip, vg.Country, vg.Phone, vg.Email, "
@@ -72,7 +72,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 
     } else if ($showAddr && !$showFullName) {
 
-        $query = "select vg.Id, vg.idPsg, vg.Relationship_Code,
+        $query = "select s.idName, hs.idPsg, vg.Relationship_Code,
             vg.Last as `Guest Last`, vg.First as `Guest First`, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.Phone, vg.Email, vg.`Address`, vg.City, vg.County, vg.State, vg.Zip, case when vg.Country = '' then 'US' else vg.Country end as Country, vg.ngStatus, "
             . "ifnull(g2.Description,'') as `Status`, "
             . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
@@ -83,7 +83,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 
     } else if (!$showAddr && $showFullName) {
 
-        $query = "select vg.Id, vg.idPsg, vg.Relationship_Code, vg.Prefix, vg.First as `Guest First`, vg.Middle, vg.Last as `Guest Last`, vg.Suffix, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.ngStatus, "
+        $query = "select s.idName, hs.idPsg, vg.Relationship_Code, vg.Prefix, vg.First as `Guest First`, vg.Middle, vg.Last as `Guest Last`, vg.Suffix, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.ngStatus, "
                 . "ifnull(g2.Description,'') as `Status`, "
                 . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
                 . "np.Name_Last as `Patient Last`, np.Name_First as `Patient First` , "
@@ -93,7 +93,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 
     } else {
 
-        $query = "select vg.Id, vg.idPsg, vg.Relationship_Code, vg.Last as `Guest Last`, vg.First as `Guest First`, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.ngStatus, "
+        $query = "select s.idName, hs.idPsg, vg.Relationship_Code, vg.Last as `Guest Last`, vg.First as `Guest First`, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.ngStatus, "
             . "ifnull(g2.Description,'') as `Status`,  ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
                 . "np.Name_Last as `Patient Last`, np.Name_First as `Patient First`, "
                 . " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
@@ -126,7 +126,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     gen_lookups g2 on g2.Code = s.Status and g2.Table_Name = 'Visit_Status'
         left join
     room_rate rr on v.idRoom_rate = rr.idRoom_rate
-where  ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end') and DATEDIFF(ifnull(DATE(s.Span_End_Date), DATE(now())), DATE(s.Span_Start_Date)) > 0 $whClause";
+where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end') and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0 $whClause";
 
     $stmt = $dbh->query($query);
 
@@ -238,7 +238,7 @@ where  ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DATE(s.Sp
 
         if ($local) {
 
-            $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
+            $r['Id'] = HTMLContainer::generateMarkup('a', $r['idName'], array('href'=>'GuestEdit.php?id=' . $r['idName'] . '&psg=' . $r['idPsg']));
 
             if (isset($r['Birth Date']) && $r['Birth Date'] != '') {
                 $r['Birth Date'] = date('n/d/Y', strtotime($r['Birth Date']));
@@ -328,8 +328,9 @@ function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hosp
     ifnull(ng.idName, 0) as `Id`,
     ifnull(n.Name_First,'') as `First`,
     ifnull(n.Name_Last,'') as `Last`,
-    ifnull(na.County_Code, '') as `County`,
+    ifnull(na.County, '') as `County`,
     ifnull(na.State_Province, '') as `State`,
+    ifnull(na.Country_Code, '') as `Country`,
     ifnull(ng.Relationship_Code,'') as `Patient Relationship`,
     ifnull(n.BirthDate, '') as `Birth Date`,
     ifnull(hs.idHospital, '') as `Hospital`,

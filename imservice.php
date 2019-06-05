@@ -29,15 +29,21 @@ require ('classes/sec/ScriptAuthClass.php');
 require ('classes/sec/webInit.php');
 
 require ('classes/Payment/GatewayConnect.php');
-require ('classes/MercPay/Gateway.php');
-require ('classes/MercPay/MercuryHCClient.php');
 require ('classes/Payment/PaymentGateway.php');
-require ('classes/Payment/Payments.php');
-require ('classes/Payment/CreditToken.php');
-require ('classes/Payment/Transaction.php');
+require ('classes/Payment/PaymentResponse.php');
+require ('classes/Payment/Receipt.php');
 require ('classes/Payment/Invoice.php');
 require ('classes/Payment/InvoiceLine.php');
-require ('classes/Payment/Receipt.php');
+require ('classes/Payment/CheckTX.php');
+require ('classes/Payment/CashTX.php');
+require ('classes/Payment/Transaction.php');
+
+require ('classes/Payment/CreditToken.php');
+require ('classes/Payment/paymentgateway/CreditPayments.php');
+
+require ('classes/Payment/paymentgateway/instamed/InstamedConnect.php');
+require ('classes/Payment/paymentgateway/instamed/InstamedResponse.php');
+require ('classes/Payment/paymentgateway/instamed/InstamedGateway.php');
 
 require ('classes/PaymentSvcs.php');
 
@@ -110,7 +116,7 @@ if (filter_has_var(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR')) {
 
 // log the data
 try {
-    Gateway::saveGwTx($wInit->dbh, '', json_encode(array('user'=>addslashes($user), 'remote IP'=>$remoteIp, 'json Error'=> json_last_error_msg(), 'sequence'=>$sequence)), $inputJSON, 'Webhook');
+    PaymentGateway::logGwTx($wInit->dbh, '', json_encode(array('user'=>addslashes($user), 'remote IP'=>$remoteIp, 'json Error'=> json_last_error_msg(), 'sequence'=>$sequence)), $inputJSON, 'Webhook');
 } catch(Exception $ex) {
     // Do Nothing
 }
@@ -126,7 +132,7 @@ try {
     echo($ex->getMessage());
 
     try {
-        Gateway::saveGwTx($wInit->dbh, '', $ex->getMessage(), json_encode($ex->getTrace()), 'Webhook Error');
+        PaymentGateway::logGwTx($wInit->dbh, '', $ex->getMessage(), json_encode($ex->getTrace()), 'Webhook Error');
     } catch(Exception $ex) {
         // Do Nothing
     }

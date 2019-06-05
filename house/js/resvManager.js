@@ -17,6 +17,7 @@ function resvManager(initData) {
     var idName = initData.id;
     var idVisit = initData.vid;
     var span = initData.span;
+    var arrival = initData.arrival;
 
 
     var rooms = [];
@@ -25,7 +26,7 @@ function resvManager(initData) {
     var familySection = new FamilySection($('#famSection'));
     var resvSection = new ResvSection($('#resvSection'));
     var hospSection = new HospitalSection($('#hospitalSection'));
-    var expDatesSection = new ExpDatesSection($('#datesSection'));
+    var expDatesSection = new ExpDatesSection();
     var updateRescChooser = new updateRescChooser();
     var $pWarning = $('#pWarnings');
 
@@ -90,6 +91,7 @@ function resvManager(initData) {
 
         // Exports
         t.findStaysChecked = findStaysChecked;
+        t.findStays = findStays;
         t.findPrimaryGuest = findPrimaryGuest;
         t.setUp = setUp;
         t.newGuestMarkup = newGuestMarkup;
@@ -118,6 +120,19 @@ function resvManager(initData) {
             });
 
             return numGuests;
+        }
+
+        function findStays(stayType) {
+            var numInRoom = 0;
+
+            for (var p in people.list()) {
+
+                if (people.list()[p].stay === stayType) {
+                    numInRoom++;
+                }
+
+            }
+            return numInRoom;
         }
 
         function findPrimaryGuest() {
@@ -169,6 +184,8 @@ function resvManager(initData) {
                 rid: data.rid,
                 idPsg: data.idPsg,
                 isCheckin: isCheckin,
+                gstDate: $('#gstDate').val(),
+                gstCoDate: $('#gstCoDate').val(),
                 cmd: 'addResvGuest'
             };
 
@@ -1094,7 +1111,7 @@ function resvManager(initData) {
         };
     }
 
-    function ExpDatesSection($dateSection) {
+    function ExpDatesSection() {
 
         var t = this;
 
@@ -1105,7 +1122,7 @@ function resvManager(initData) {
         t.openControl = false;
 
 
-        t.setUp = function(data, doOnDatesChange) {
+        t.setUp = function(data, doOnDatesChange, $dateSection) {
 
             $dateSection.empty();
 
@@ -1115,14 +1132,23 @@ function resvManager(initData) {
 
                 var gstDate = $('#gstDate'),
                     gstCoDate = $('#gstCoDate'),
-                    nextDays = parseInt(data.defdays, 10);
+                    nextDays = parseInt(data.defdays, 10),
+                    stDate = false,
+                    enDate = false,
+                    drp;
 
-                // default number of days for a new stay.
-                if (isNaN(nextDays) || nextDays < 1) {
-                    nextDays = 21;
+                if (gstDate.val() === '' && arrival) {
+                    gstDate.val(arrival);
                 }
 
-                $('#spnRangePicker').dateRangePicker({
+                if (data.startDate) {
+                    stDate = data.startDate;
+                }
+                if (data.endDate) {
+                    enDate = data.endDate;
+                }
+
+                drp = $('#spnRangePicker').dateRangePicker({
                     format: 'MMM D, YYYY',
                     separator : ' to ',
                     minDays: 1,
@@ -1144,12 +1170,14 @@ function resvManager(initData) {
                     {
                         gstDate.val(s1);
                         gstCoDate.val(s2);
-                    }
+                    },
+                    startDate: stDate,
+                    endDate: enDate
                 })
 
                 if (data.updateOnChange) {
 
-                    $('#spnRangePicker').dateRangePicker.bind('datepicker-change', function(event, dates) {
+                    drp.bind('datepicker-change', function(event, dates) {
 
                         // Update the number of days display text.
                         var numDays = Math.ceil((dates['date2'].getTime() - dates['date1'].getTime()) / 86400000);
@@ -1268,6 +1296,7 @@ function resvManager(initData) {
                 idPsg: idPsg,
                 idResv: idResv,
                 idVisit: idVisit,
+                span: span,
                 dt1: dates["date1"].getFullYear() + '-' + (dates["date1"].getMonth() + 1) + '-' + dates["date1"].getDate(),
                 dt2: dates["date2"].getFullYear() + '-' + (dates["date2"].getMonth() + 1) + '-'  + dates["date2"].getDate(),
                 mems:people.list()};
@@ -1606,36 +1635,42 @@ function resvManager(initData) {
                 });
             }
 
-            reserve.rateList = data.resv.rdiv.ratelist;
-            reserve.resources = data.resv.rdiv.rooms;
-            reserve.visitFees = data.resv.rdiv.vfee;
-            reserve.idResv = idResv;
+            if (data.resv.rdiv.ratelist) {
+                reserve.rateList = data.resv.rdiv.ratelist;
+                reserve.resources = data.resv.rdiv.rooms;
+                reserve.visitFees = data.resv.rdiv.vfee;
+                reserve.idResv = idResv;
+                setupRates(reserve);
+            }
 
-            setupRates(reserve);
+            if ($('#selResource').length > 0) {
+                $('#selResource').change(function () {
+                    $('#selRateCategory').change();
 
-            $('#selResource').change(function () {
-                $('#selRateCategory').change();
+                    var selected = $("option:selected", this);
+                    var selparent = selected.parent()[0].label;
 
-                var selected = $("option:selected", this);
-                var selparent = selected.parent()[0].label;
-
-                if (selparent === undefined || selparent === null ) {
-                    $('#hhkroomMsg').hide();
-                } else {
-                    $('#hhkroomMsg').text(selparent).show();
-                }
-            });
+                    if (selparent === undefined || selparent === null ) {
+                        $('#hhkroomMsg').hide();
+                    } else {
+                        $('#hhkroomMsg').text(selparent).show();
+                    }
+                });
+            }
 
         }
 
         function setupPay(data){
 
-            $('#paymentDate').datepicker({
-                yearRange: '-1:+00',
-                numberOfMonths: 1
-            });
+            if ($('#selResource').length > 0 && $('#selRateCategory').length > 0) {
 
-            setupPayments(data.resv.rdiv.rooms, $('#selResource'), $('#selRateCategory'));
+                setupPayments(data.resv.rdiv.rooms, $('#selResource'), $('#selRateCategory'));
+
+                $('#paymentDate').datepicker({
+                    yearRange: '-1:+00',
+                    numberOfMonths: 1
+                });
+            }
         }
 
         function setupRoom(rid) {
@@ -1665,8 +1700,7 @@ function resvManager(initData) {
 
         function setUp(data) {
 
-            $rDiv = // $('<div/>').addClass('ui-widget-content ui-corner-bottom hhk-tdbox').prop('id', 'divResvDetail').css('padding', '5px');
-                    $('<div id="divResvDetail" style="padding:2px; float:left; width: 100%;" class="ui-widget-content ui-corner-bottom hhk-tdbox"/>');
+            $rDiv = $('<div/>').addClass(' hhk-tdbox').prop('id', 'divResvDetail').css('padding', '5px');
 
             // Room Chooser section
             if (data.resv.rdiv.rChooser !== undefined) {
@@ -1816,34 +1850,34 @@ function resvManager(initData) {
 
             if ($('#addGuestHeader').length > 0) {
 
-                expDatesSection = new ExpDatesSection($('#addGuestHeader'));
+                //expDatesSection = new ExpDatesSection($('#addGuestHeader'));
                 expDatesSection.openControl = true;
-                expDatesSection.setUp(data.resv.rdiv, doOnDatesChange);
+                expDatesSection.setUp(data.resv.rdiv, doOnDatesChange, $('#addGuestHeader'));
 
-                updateRescChooser.omitSelf = false;
-                updateRescChooser.idReservation = 0;
-                t.checkPayments = false;
-
-                $('#selResource').change(function () {
-
-                    if ($('#gstDate').val() !== '' && $('#gstCoDate').val() !== '') {
-
-                        if ($(this).val() !== t.origRoomId) {
-                            $('#divRateChooser').show();
-                            $('#divPayChooser').show();
-                            t.checkPayments = true;
-                        } else {
-                            $('#divRateChooser').hide();
-                            $('#divPayChooser').hide();
-                            t.checkPayments = false;
-                        }
-
-                    }
-                });
-
-                $('#' + familySection.divFamDetailId).on('change', '.hhk-cbStay', function () {
-                    updateRescChooser.numberGuests = familySection.findStaysChecked();
-                });
+//                updateRescChooser.omitSelf = false;
+//                updateRescChooser.idReservation = 0;
+//                t.checkPayments = false;
+//
+//                $('#selResource').change(function () {
+//
+//                    if ($('#gstDate').val() !== '' && $('#gstCoDate').val() !== '') {
+//
+//                        if ($(this).val() !== t.origRoomId) {
+//                            $('#divRateChooser').show();
+//                            $('#divPayChooser').show();
+//                            t.checkPayments = true;
+//                        } else {
+//                            $('#divRateChooser').hide();
+//                            $('#divPayChooser').hide();
+//                            t.checkPayments = false;
+//                        }
+//
+//                    }
+//                });
+//
+//                $('#' + familySection.divFamDetailId).on('change', '.hhk-cbStay', function () {
+//                    updateRescChooser.numberGuests = familySection.findStaysChecked() + familySection.findStays('r');
+//                });
             }
 
             t.setupComplete = true;
@@ -2090,6 +2124,8 @@ function resvManager(initData) {
             vid:sdata.vid,
             span:sdata.span,
             isCheckin: isCheckin,
+            gstDate: sdata.gstDate,
+            gstCoDate: sdata.gstCoDate,
             cmd:sdata.cmd};
 
         $.post('ws_resv.php', parms, function(data) {
@@ -2210,7 +2246,8 @@ function resvManager(initData) {
 
         // Expected Dates Control
         if (data.expDates !== undefined && data.expDates !== '') {
-            expDatesSection.setUp(data.expDates, doOnDatesChange);
+            expDatesSection.openControl = false;
+            expDatesSection.setUp(data.expDates, doOnDatesChange, $('#datesSection'));
         }
 
         if (data.warning !== undefined && data.warning !== '') {
@@ -2226,10 +2263,10 @@ function resvManager(initData) {
 
             resvSection.setUp(data);
 
-            // String together some events
+            // Manage Total Guests indicator.
             $('#' + familySection.divFamDetailId).on('change', '.hhk-cbStay', function () {
 
-                var tot = familySection.findStaysChecked();
+                var tot = familySection.findStaysChecked() + familySection.findStays('r');
                 resvSection.$totalGuests.text(tot);
 
                 if (tot > 0) {
@@ -2249,7 +2286,7 @@ function resvManager(initData) {
                         window.open('ShowStatement.php?vid=' + vid, '_blank');
                     },
                     "Show Registration Form": function() {
-                        window.open('ShowRegForm.php?vid=' + vid, '_blank');
+                        window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
                     },
                     "Save": function() {
                         saveFees(0, vid, span, false, payFailPage);

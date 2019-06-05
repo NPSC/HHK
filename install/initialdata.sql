@@ -223,11 +223,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('NoReturnReason', 'n1', 'Irresponsible', '', 'h',0),
 
-('Note_Category', 'ncr', 'Reservation', '', 'h', 0),
-('Note_Category', 'ncf', 'PSG', '', 'h', 0),
-('Note_Category', 'ncv', 'Visit', '', 'h', 0),
-('Note_Category', 'ncg', 'Guest', '', 'h', 0),
-('Note_Category', 'ncp', 'Patient', '', 'h', 0),
+('Note_Category', 'ncr', 'Reservation', '', '', 0),
+('Note_Category', 'ncf', 'PSG', '', '', 0),
+('Note_Category', 'ncv', 'Visit', '', '', 0),
+('Note_Category', 'ncg', 'Guest', '', '', 0),
+('Note_Category', 'ncp', 'Patient', '', '', 0),
 
 ('Note_Type', 'ntxt', 'Text', '', '', 0),
 
@@ -468,7 +468,6 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('fy_diff_Months','0','i','f','Fiscal year difference months (12 - fiscal year start month)'),
 ('GuestNameColor', '', 's', 'h', 'Use this Guest demographic to drive guest name color'),
 ('GuestAddr', 'true', 'b', 'h', 'False = do not collect guest address'),
-('GuestPhoto', 'false', 'b', 'h', 'Manage guest photographs.'),
 ('HouseKeepingEmail', '', 's', 'h', 'Gets notice of visit endings.'),
 ('HouseKeepingSteps', '2', 'i', 'h', 'Number of steps to cleaning/preparing rooms for new guests.'),
 ('IncludeLastDay','false','b','h','Include the departure day in room searches.'),
@@ -481,6 +480,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('MaxDonate','100000','i','d','Maximum amount amount for a single payment'),
 ('MaxExpected','90','i','h','Maximum Expected days out for a visit'),
 ('MaxRepeatEvent','53','i','v','Maximum number of times to repeat a calendar event.'),
+('MemberImageSizePx', '75', 'i', 'h', 'Guest image thumbnail size in pixels'),
 ('NightsCounter', 'calYear', 's', 'h','Count nights by year (calYear) or by grand total.'),
 ('noreplyAddr', '', 's', 'a', 'Houses no-reply email address.'),
 ('OpenCheckin','true','b','h','Allow walk-ups to check in'),
@@ -505,6 +505,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('ShowCreatedDate', 'true', 'b', 'h', 'Show the Created Date in Register page tabs lists'),
 ('ShowDemographics', 'false', 'b', 'h', 'Show demographics selectors on Check in and Reservation pages'),
 ('ShowDiagTB', 'false', 'b', 'h', 'Show the diagnosis textbox (in addition to the diagnosis selector)'),
+('ShowGuestPhoto', 'false', 'b', 'h', 'Use guest photos.'),
 ('ShoStaysCtr', 'true', 'b', 'h', 'Show the stays counter on the House Calendar page'),
 ('ShowLodgDates', 'true', 'b', 'h','Show dates on lodging invoice lines'),
 ('ShowTxPayType', 'false', 'b', 'h', 'Always Show the Transfer pay type'),
@@ -629,7 +630,7 @@ REPLACE INTO `insurance` (`idInsurance`, `Type`, `Title`, `Opens_Type`) VALUES
 --
 -- insert users
 --
-REPLACE into name (idName, Name_Last, Name_First, Member_Type, Member_Status, Record_Member, Record_Company, Company) values 
+REPLACE into `name` (idName, Name_Last, Name_First, Member_Type, Member_Status, Record_Member, Record_Company, Company) values 
 (-1, 'admin', '', 'ai', 'a', 1, 0, ''),
 (10, 'User', 'NPSC', 'ai', 'a', 1, 0, ''),
 (11, '', '', 'np', 'a', 0, 1, 'Hospitality House');

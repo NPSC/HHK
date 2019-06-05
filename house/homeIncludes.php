@@ -8,7 +8,7 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-define('JSV', '?qr=5');
+define('JSV', '?qr=33');
 
 define('HOUSE_CSS', "<link href='css/house.css' rel='stylesheet' type='text/css' />");
 
@@ -16,7 +16,7 @@ define('RESV_MANAGER_JS', 'js/resvManager.js' . JSV);
 define('PAYMENT_JS', "js/payments-min.js" . JSV);
 define('RESV_JS', "js/resv.js" . JSV);
 define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JSV);
-define('INS_EMBED_JS', '<script src="js/embed.js" data-displaymode="incontext" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="incontext"></script>');
+define('INS_EMBED_JS', '<script src="https://instamedprd.cachefly.net/Content/Js/embed.js" data-displaymode="embedded" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="embedded"></script>');
 
 /**
  * Includes

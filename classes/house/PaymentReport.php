@@ -334,6 +334,18 @@ class PaymentReport {
         $payStatus = $p['Payment_Status_Title'];
         $dateDT = new DateTime($p['Payment_Date']);
 
+        // Change the timestamp time zone.
+        $timeDT = new DateTime($p['Payment_Timestamp']);
+        $myOffset = $timeDT->getOffset();
+
+        // Must have the date close to the timezone to include daylight savings time.
+        $pacificDT = new \DateTime('2019-'.$timeDT->format('m-d'), new DateTimeZone(DBServer::TIMEZONE));
+        $pacificOffset = $pacificDT->getOffset();
+
+        $offsetHours = abs($pacificOffset - $myOffset)/3600;
+
+        $timeDT->add(new DateInterval('PT' . $offsetHours . 'H'));
+
         $payStatusAttr = array();
         $payType = $p['Payment_Method_Title'];
         $attr['style'] = 'text-align:right;';
@@ -466,7 +478,6 @@ class PaymentReport {
             'Notes'=>$p['Payment_Note']
         );
 
-        $timeDT = new DateTime($p['Payment_Timestamp']);
 
         if ($isLocal) {
 
@@ -479,7 +490,6 @@ class PaymentReport {
             $g['Orig_Amount'] = number_format($origAmt, 2);
             $g['Amount'] = number_format($amt, 2);
 
-
             $tr = '';
             foreach ($fltrdFields as $f) {
                 $tr .= HTMLTable::makeTd($g[$f[1]], $f[6]);
@@ -490,8 +500,6 @@ class PaymentReport {
 
 
         } else {
-
-            $dateDT->setTimezone(new DateTimeZone('UTC'));  // = new DateTime($p['Payment_Date'], new DateTimeZone('UTC'));
 
             $g['Last'] = $r['i']['Last'];
             $g['First'] = $r['i']['First'];

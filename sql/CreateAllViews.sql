@@ -1923,7 +1923,8 @@ select
         nd.Income_Bracket,
         nd.Age_Bracket,
         nd.Education_Level,
-        nd.Special_Needs
+        nd.Special_Needs,
+        count(s.idName) as `Guest_Count`
     from
         `visit` `v`
             left join
@@ -1933,9 +1934,12 @@ select
             left join
 	`name_demog` nd on v.idPrimaryGuest = nd.idName
             left join 
+	stays s on v.idVisit = s.idVisit and v.Span = s.Visit_Span and v.`Status` = s.`Status`
+            left join 
         gen_lookups gs on gs.Table_Name = 'Name_Suffix' and gs.Code = n.Name_Suffix
             left join 
-        gen_lookups gv on gv.Table_Name = 'Visit_Status' and gv.Code = v.Status;
+        gen_lookups gv on gv.Table_Name = 'Visit_Status' and gv.Code = v.Status
+    group by v.idVisit, v.Span;
 
 
 
@@ -2284,9 +2288,13 @@ CREATE or replace VIEW `vresv_patient` AS
         `r`.`Timestamp` AS `Timestamp`,
         ifnull(`n`.`Name_Full`, '') AS `Patient_Name`,
         ifnull(`n`.`idName`, 0) AS `idPatient`,
-        ifnull(`h`.`idPsg`, 0) AS `idPsg`
+        ifnull(`h`.`idPsg`, 0) AS `idPsg`,
+        ifnull(v.idVisit, 0) as idVisit,
+        ifnull(v.Span, 0) as Span,
+        ifnull(v.Status, '') as Visit_Status
     from
         `reservation` `r`
+        left join visit v on r.idReservation = v.idReservation and v.Status = 'a'
         left join `hospital_stay` `h` ON `r`.`idHospital_Stay` = `h`.`idHospital_stay`
         left join resource re on r.idResource = re.idResource
         left join `name` `n` ON `h`.`idPatient` = `n`.`idName`;

@@ -34,6 +34,8 @@ require (HOUSE . 'Attributes.php');
 require (HOUSE . 'Constraint.php');
 require (HOUSE . 'TemplateForm.php');
 
+const DIAGNOSIS_TABLE_NAME = 'Diagnosis';
+const LOCATION_TABLE_NAME = 'Location';
 
 try {
     $wInit = new webInit();
@@ -124,9 +126,15 @@ function saveArchive(PDO $dbh, $desc, $subt, $tblName) {
     return $defaultCode;
 }
 
-function getSelections(PDO $dbh, $tableName, $type) {
+function getSelections(\PDO $dbh, $tableName, $type, Config_Lite $labels) {
 
     $uS = Session::getInstance();
+
+    if ($tableName == $labels->getString('hospital', 'diagnosis', DIAGNOSIS_TABLE_NAME)) {
+        $tableName = DIAGNOSIS_TABLE_NAME;
+    } else if ($tableName == $labels->getString('hospital', 'location', LOCATION_TABLE_NAME)) {
+        $tableName = LOCATION_TABLE_NAME;
+    }
 
     // Generate selectors.
     $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
@@ -192,9 +200,6 @@ function getSelections(PDO $dbh, $tableName, $type) {
 }
 
 $dbh = $wInit->dbh;
-$pageTitle = $wInit->pageTitle;
-
-$menuMarkup = $wInit->generatePageMenu();
 
 $uS = Session::getInstance();
 
@@ -246,6 +251,12 @@ if (isset($_POST['table'])) {
         exit();
     }
 
+    if ($tableName == $labels->getString('hospital', 'diagnosis', DIAGNOSIS_TABLE_NAME)) {
+        $tableName = DIAGNOSIS_TABLE_NAME;
+    } else if ($tableName == $labels->getString('hospital', 'location', LOCATION_TABLE_NAME)) {
+        $tableName = LOCATION_TABLE_NAME;
+    }
+
     $cmd = '';
     $type = '';
     $order = 0;
@@ -267,6 +278,10 @@ if (isset($_POST['table'])) {
             // new entry
             $dText = filter_var($_POST['txtDiag'][0], FILTER_SANITIZE_STRING);
             $aText = '';
+
+            if ($tableName == 'Patient_Rel_Type') {
+                $aText = 'Guests';
+            }
 
             if (isset($_POST['txtDiagAmt'][0])) {
                 $aText = filter_var($_POST['txtDiagAmt'][0], FILTER_SANITIZE_STRING);
@@ -448,7 +463,7 @@ if (isset($_POST['table'])) {
 
 
     // Generate selectors.
-    $tbl = getSelections($dbh, $tableName, $type);
+    $tbl = getSelections($dbh, $tableName, $type, $labels);
 
     echo($tbl->generateMarkup());
     exit();
@@ -1233,8 +1248,9 @@ $feSelectForm = HTMLSelector::generateMarkup(
 
 
 // Demographics Selection table
-$tbl = getSelections($dbh, 'Demographics', 'm');
+$tbl = getSelections($dbh, 'Demographics', 'm', $labels);
 $demoSelections = $tbl->generateMarkup();
+
 
 // Demographics category selectors
 $stmt = $dbh->query("SELECT DISTINCT
@@ -1269,14 +1285,16 @@ foreach ($rows2 as $r) {
         continue;
     }
 
-    if ($r[1] != 'Demographics') {
-        $lkups[] = $r;
+    if ($r[1] == DIAGNOSIS_TABLE_NAME) {
+        $hasDiags = TRUE;
+        $r[1] = $labels->getString('hospital', 'diagnosis', DIAGNOSIS_TABLE_NAME);
+    } else if ($r[1] == LOCATION_TABLE_NAME) {
+        $hasLocs = TRUE;
+        $r[1] = $labels->getString('hospital', 'location', LOCATION_TABLE_NAME);
     }
 
-    if ($r[1] == 'Diagnosis') {
-        $hasDiags = TRUE;
-    } else if ($r[1] == 'Location') {
-        $hasLocs = TRUE;
+    if ($r[1] != 'Demographics') {
+        $lkups[] = $r;
     }
 }
 
@@ -1335,11 +1353,11 @@ $resultMessage = $alertMsg->createMarkup();
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
-<?php echo JQ_UI_CSS; ?>
-<?php echo JQ_DT_CSS; ?>
-<?php echo HOUSE_CSS; ?>
-<?php echo NOTY_CSS; ?>
-<?php echo FAVICON; ?>
+        <?php echo JQ_UI_CSS; ?>
+        <?php echo JQ_DT_CSS; ?>
+        <?php echo HOUSE_CSS; ?>
+        <?php echo NOTY_CSS; ?>
+        <?php echo FAVICON; ?>
         <style>
             @media screen {
                 .hhk-printmedia {display:none;}

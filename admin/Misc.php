@@ -193,6 +193,10 @@ if (isset($_POST["btnGenLookups"])) {
     $accordIndex = 0;
     $lookUpAlert = new alertMessage("lookUpAlert");
     $lookUpAlert->set_Context(alertMessage::Alert);
+    
+    if ($wInit->page->is_TheAdmin() == FALSE) {
+        $lookUpAlert->set_Text("Don't mess with these settings.  ");
+    } else {
 
     $code = filter_var($_POST["txtCode"], FILTER_SANITIZE_STRING);
     //$code = substr($code, 0, $flen["Code"]);
@@ -241,6 +245,7 @@ if (isset($_POST["btnGenLookups"])) {
                 $lookUpAlert->set_Text("Okay");
             }
         }
+    }
     }
     $lookupErrMsg = $lookUpAlert->createMarkup();
 }

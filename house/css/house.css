@@ -245,7 +245,7 @@ table {
 .hhk-htip {
     /*  help tip     */
     color: #228C5F;
-    
+
 }
 textarea {
     padding: .3em;
@@ -395,3 +395,10 @@ li.hhk-myMenuTop {
 	padding-top: 0.5em;
 	padding-bottom: 0.5em;
 }
+/* uppload styles */
+.uppload-modal {
+	font-family: Lucida Grande,Lucida Sans,Arial,sans-serif;
+}
+
+.uppload-modal ul i {
+	margin-right: 0.5em;
