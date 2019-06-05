@@ -294,7 +294,7 @@ class PaymentChooser {
                 $payTypes,
                 $chargeCards,
                 $uS->PaymentGateway,
-                $idGuest, $idRegistration, $prefTokenId, 'r'),
+                $idGuest, $idRegistration, $prefTokenId),
                 array('id'=>'divReturnPay', 'style'=>'float:left;display:none;'));
 
 
@@ -858,6 +858,7 @@ ORDER BY v.idVisit , v.Span;");
         // Payment Amount
         $payTbl->addBodyTr(HTMLTable::makeTd('Return Amount:', array('class'=>'tdlabel', 'style'=>'font-weight:bold;'))
                 .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name'=>'txtRtnAmount', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'font-weight:bold;border:none;')), array('colspan'=>'2', 'style'=>'text-align:right;')));
+
         // Payment Types
         $payTbl->addBodyTr(HTMLTable::makeTd('With:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $defaultPayType, FALSE), array('name'=>'rtnTypeSel', 'class'=>'hhk-feeskeys')), array('colspan'=>'2')));

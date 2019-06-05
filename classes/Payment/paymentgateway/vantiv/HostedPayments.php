@@ -221,7 +221,7 @@ class HostedCheckout {
                 $trType = TransType::Sale;
             }
 
-            $transRs = Transaction::recordTransaction($dbh, $vr, $gw, $trType, TransMethod::HostedPayment);
+            $transRs = Transaction::recordTransaction($dbh, $vr, $gway->getGatewayType(), $trType, TransMethod::HostedPayment);
             $vr->setIdTrans($transRs->idTrans->getStoredVal());
 
         } catch(Exception $ex) {
@@ -251,7 +251,7 @@ class CheckOutResponse extends PaymentResponse {
         $this->cardNum = str_ireplace('x', '', $verifyCkOutResponse->getMaskedAccount());
         $this->cardType = $verifyCkOutResponse->getCardType();
         $this->cardName = $verifyCkOutResponse->getCardHolderName();
-        $this->amount = $verifyCkOutResponse->getAuthorizeAmount();
+        $this->amount = $verifyCkOutResponse->getAuthorizedAmount();
         $this->payNotes = $payNotes;
     }
 

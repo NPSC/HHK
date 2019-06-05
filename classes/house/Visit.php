@@ -746,7 +746,6 @@ class Visit {
             }
         }
 
-
         if (is_null($stayRS) || $stayRS->idStays->getStoredVal() == 0) {
             return "Checkout Failed: The guest was not checked-in.  ";
         }
@@ -796,17 +795,6 @@ class Visit {
         VisitLog::logStay($dbh, $stayRS->idVisit->getStoredVal(), $stayRS->Visit_Span->getStoredVal(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(), $idGuest, $this->visitRS->idRegistration->getStoredVal(), $logText, "update", $uS->username);
 
         EditRS::updateStoredVals($stayRS);
-
-
-//        // Update the visit expected departure
-//        $visitExpectedDepartDT = new \DateTime($this->getExpectedDeparture());
-//
-//        if ($dateDepartedDT > $visitExpectedDepartDT) {
-//
-//            $this->visitRS->Expected_Departure->setNewVal($dateDepartedDT->format('Y-m-d H:i:s'));
-//            $this->updateVisitRecord($dbh, $username);
-//        }
-
 
         $msg = $this->checkStaysEndVisit($dbh, $uS->username, $dateDepartedDT, $sendEmail);
 
@@ -1065,7 +1053,7 @@ class Visit {
     /**
      *
      * @param \PDO $dbh
-     * @param array $newStayStartDates posted array of stay start dates
+     * @param array $newStayStartDates posted array of stay start dates indexed by idStays.
      * @return string
      */
     public function checkStayStartDates(\PDO $dbh, $newStayStartDates) {

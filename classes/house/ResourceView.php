@@ -33,7 +33,7 @@ class ResourceView {
     ifnull(h.Title, '') as `Hospital`,
     ifnull(rm.Title, '') as `Room`,
     r.Util_Priority as `Priority`,
-    ifnull(g2.Description,'') as 'Util Category',
+
     r.Background_Color as `Bkgrd Color`,
     r.Text_Color as `Text Color`,
     r.Border_Color as `Border Color`
@@ -94,7 +94,7 @@ order by r.Title;");
             'Hospital' => '',
             'Room' => '',
             'Priority' => '',
-           'Util Category' =>'',
+//            'Util Category' =>'',
             'Bkgrd Color' => '',
             'Text Color' => '',
             'Border Color' => '',
@@ -778,7 +778,7 @@ order by r.Title;");
                         HTMLSelector::doOptionsMkup(removeOptionGroups($hospitals), $resc->getIdSponsor(), TRUE), array('id'=>'selspons', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
                 . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($options, $useRooms, TRUE), array('id'=>'selRooms', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->getUtilPriority(), array('id'=>'txtRePriority', 'class'=>$cls, 'size'=>'7')), array('style'=>'padding-right:0;padding-left:0;'))
-                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(readGenLookupsPDO($dbh, 'Utilization_Category'), $resc->getUtilizationCategory(), TRUE), array('id'=>'selUtilCat', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
+                //. HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(readGenLookupsPDO($dbh, 'Utilization_Category'), $resc->getUtilizationCategory(), TRUE), array('id'=>'selUtilCat', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Background_Color->getStoredVal(), array('id'=>'txtReBgc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Text_Color->getStoredVal(), array('id'=>'txtReTc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Border_Color->getStoredVal(), array('id'=>'txtReBc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))

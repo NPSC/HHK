@@ -426,6 +426,7 @@ class HouseServices {
                         }
 
                         $coDT = new \DateTime($coDate);
+                        $coDT->setTimezone(new DateTimeZone($uS->tz));
 
                         $coDT->setTime($coHour, $coMin, 0);
 

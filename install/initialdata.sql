@@ -517,9 +517,11 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('VisitFee', 'false', 'b', 'h','Use the visit fee (cleaning fee) feature'),
 ('VisitExcessPaid', 'd', 's', 'h','Default place for excess visit payments'),
 ('VerifyHospDate', 'true', 'b', 'h','Insist on hospital treatment date entry'),
-('VisitFeeDelayDays', '0', 'i', 'h','Number of days before cleaning fee is charged');
+('VisitFeeDelayDays', '0', 'i', 'h','Number of days before cleaning fee is charged'),
+('Volunteers', 'true', 'b', 'r', 'Use the Volunteer Site');
 -- ;
 
+-- Move site.cfg items to here:
 -- INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES 
 -- ('tz', 'America/Chicago', 's', 'r', 'House local time zone.'),
 -- ('adminEmailAddr', '', 's', 'h', 'If present, this address receives all notices of check-in, out, room change, etc.'),

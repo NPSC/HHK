@@ -243,13 +243,9 @@ class RoomChooser {
             $rmBigEnough[] = array($r->getIdResource(), $r->getTitle(), $r->optGroup);
         }
 
-//        if (count($rmBigEnough) > 1) {
-            return HTMLSelector::generateMarkup(
-                        HTMLSelector::doOptionsMkup($rmBigEnough, '0', FALSE), array('id' => 'selResource', 'name' => 'selResource', 'class' => 'hhk-feeskeys hhk-chgroom'));
+        return HTMLSelector::generateMarkup(
+                HTMLSelector::doOptionsMkup($rmBigEnough, '0', FALSE), array('id' => 'selResource', 'name' => 'selResource', 'class' => 'hhk-feeskeys hhk-chgroom'));
 
-//        }
-
-//        return 'No available rooms';
     }
 
     public function findResources(\PDO $dbh, $isAuthorized, $omitSelf = TRUE, $overrideMaxOcc = 0) {

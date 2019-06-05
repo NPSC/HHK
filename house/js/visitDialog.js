@@ -440,6 +440,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         pbp: postbackPage
     };
 
+    // Expected Checkout date
     $('input.hhk-expckout').each(function() {
         var parts = $(this).attr('id').split('_');
         if (parts.length > 0) {
@@ -447,6 +448,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         }
     });
 
+    // Change Check in stay dates
     $('input.hhk-stayckin').each(function() {
         var parts = $(this).attr('id').split('_');
         if (parts.length > 0) {
@@ -469,7 +471,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         return;
     }
 
-
+    // Checkout check boxes, one per active guest.
     $('input.hhk-ckoutCB').each(function() {
         if (this.checked) {
 
@@ -483,8 +485,8 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 if (tdate) {
 
                     var nowDate = new Date();
-                    tdate.setHours(nowDate.getHours());
-                    tdate.setMinutes(nowDate.getMinutes());
+                    tdate.setHours(nowDate.getHours(), nowDate.getMinutes(), 0, 0);
+
                 } else {
                     tdate = new Date();
                 }
@@ -499,6 +501,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         }
     });
 
+    // Remove stay 
     $('input.hhk-removeCB').each(function () {
         if (this.checked) {
             var parts = $(this).attr('id').split('_');

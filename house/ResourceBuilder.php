@@ -1685,6 +1685,10 @@ $resultMessage = $alertMsg->createMarkup();
         $('div#mainTabs').on('click', '.reStatBtn', function () {
             getStatusEvent($(this).attr('name'), $(this).data('enty'), $(this).data('title'));
         });
+//        $('div#mainTabs').on('click', '.reDelBtn', function () {
+//            delConstraint($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
+//        });
+
         $('#tblroom, #tblresc').dataTable({
             "dom": '<"top"if>rt<"bottom"lp><"clear">',
             "displayLength": 50,

@@ -11,13 +11,14 @@
 
 class CashResponse extends PaymentResponse {
 
-    function __construct($amount, $idPayor, $invoiceNumber, $payNote = '') {
+    function __construct($amount, $idPayor, $invoiceNumber, $payNote = '', $payDate = '') {
 
         $this->paymentType = PayType::Cash;
         $this->idPayor = $idPayor;
         $this->amount = $amount;
         $this->invoiceNumber = $invoiceNumber;
         $this->payNotes = $payNote;
+        $this->paymentDate = $payDate;
     }
 
     public function getStatus() {
@@ -141,6 +142,7 @@ class CashTX {
         EditRS::update($dbh, $payRs, array($payRs->idPayment));
         EditRS::updateStoredVals($payRs);
         $pr->paymentRs = $payRs;
+        $pr->setPaymentDate(date('Y-m-d H:i:s'));
 
     }
 }
@@ -162,7 +164,6 @@ class ManualChargeResponse extends PaymentResponse {
         $this->invoiceNumber = $invoiceNumber;
         $this->cardNum = $cardAcct;
         $this->cardType = $cardType;
-
         $this->payNotes = $payNote;
 
     }
@@ -340,6 +341,7 @@ class ChargeAsCashTX {
         EditRS::update($dbh, $payRs, array($payRs->idPayment));
         EditRS::updateStoredVals($payRs);
         $pr->paymentRs = $payRs;
+        $pr->setPaymentDate(date('Y-m-d H:i:s'));
 
 
         //Payment Detail

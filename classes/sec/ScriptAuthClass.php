@@ -77,6 +77,11 @@ class ScriptAuthClass extends SecurityComponent {
             if ($stmt->rowCount() > 0) {
 
                 while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+                    if ($r['Site_Code'] == WebSiteCode::Volunteer && !$uS->Volunteers) {
+                        continue;
+                    }
+                    
                     $site = array(
                         "Site_Code" => $r["Site_Code"],
                         "Relative_Address" => $r['Relative_Address'],

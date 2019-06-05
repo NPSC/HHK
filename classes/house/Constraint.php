@@ -113,8 +113,8 @@ class Constraints {
 
             // put the edit at the beginning of the array.
 
-            $markup['Edit'] = HTMLInput::generateMarkup('', array('id'=>$c->getId().'rsbtn', 'name'=>$c->getId(), 'type'=>'button', 'data-enty'=>'rs', 'class'=>'reEditBtn ui-icon ui-icon-pencil', 'style'=>'width:20px;height:20px;margin-right:.5em;display:inline;', 'title'=>'Edit This Constraint'))
-                . HTMLInput::generateMarkup('', array('id'=>$c->getId().'rsDelete', 'name'=>$c->getId(), 'type'=>'button', 'data-enty'=>'rs', 'class'=>'reDelBtn ui-icon ui-icon-trash', 'style'=>'width:20px;height:20px;display:inline;', 'title'=>'Delete Constraint'));
+            $markup['Edit'] = HTMLInput::generateMarkup('', array('id'=>$c->getId().'rsbtn', 'name'=>$c->getId(), 'type'=>'button', 'data-enty'=>'rs', 'class'=>'reEditBtn ui-icon ui-icon-pencil', 'style'=>'width:20px;height:20px;margin-right:.5em;display:inline;', 'title'=>'Edit This Constraint'));
+                //. HTMLInput::generateMarkup('', array('id'=>$c->getId().'rsDelete', 'name'=>$c->getId(), 'type'=>'button', 'data-enty'=>'rs', 'class'=>'reDelBtn ui-icon ui-icon-trash', 'style'=>'width:20px;height:20px;display:inline;', 'title'=>'Delete Constraint'));
 
             $markup['Id'] = $c->getId();
             $markup['Title'] = $c->getTitle();

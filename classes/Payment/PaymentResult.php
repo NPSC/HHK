@@ -1,0 +1,306 @@
+<?php
+/**
+ * CashTX.php
+ *
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @license   MIT
+ * @link      https://github.com/NPSC/HHK
+ */
+
+class PaymentResult {
+
+    protected $displayMessage = '';
+    protected $status = '';
+    protected $idName = 0;
+    protected $idRegistration = 0;
+    protected $idToken;
+
+    protected $receiptMarkup = '';
+    protected $invoiceMarkup = '';
+    protected $forwardHostedPayment;
+    protected $idInvoice = 0;
+    protected $invoiceNumber = '';
+    protected $replyMessage = '';
+
+    const ACCEPTED = 'a';
+    const DENIED = 'd';
+    const ERROR = 'e';
+    const FORWARDED = 'f';
+
+    function __construct($idInvoice, $idRegistration, $idName, $idToken = 0) {
+
+        $this->idRegistration = $idRegistration;
+        $this->idInvoice = $idInvoice;
+        $this->idName = $idName;
+        $this->forwardHostedPayment = array();
+        $this->idToken = $idToken;
+    }
+
+    public function feePaymentAccepted(\PDO $dbh, Session $uS, PaymentResponse $payResp, Invoice $invoice) {
+
+        // set status
+        $this->status = PaymentResult::ACCEPTED;
+
+        // zero total invoices do not have payment records.
+        if ($payResp->getIdPayment() > 0 && $this->idInvoice > 0) {
+            // payment-invoice
+            $payInvRs = new PaymentInvoiceRS();
+            $payInvRs->Amount->setNewVal($payResp->getAmount());
+            $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
+            $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
+            EditRS::insert($dbh, $payInvRs);
+
+        }
+
+        // Make out receipt
+        $this->receiptMarkup = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
+
+        // Email receipt
+        try {
+            $this->displayMessage .= $this->emailReceipt($dbh);
+        } catch (Exception $ex) {
+            $this->displayMessage .= "Email Failed, Error = " . $ex->getMessage();
+        }
+
+    }
+
+    public function feePaymentRejected(\PDO $dbh, Session $uS, PaymentResponse $payResp, Invoice $invoice) {
+
+        $this->status = PaymentResult::DENIED;
+
+        if ($payResp->getIdPayment() > 0 && $this->idInvoice > 0) {
+            // payment-invoice
+            $payInvRs = new PaymentInvoiceRS();
+            $payInvRs->Amount->setNewVal($payResp->getAmount());
+            $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
+            $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
+            EditRS::insert($dbh, $payInvRs);
+        }
+
+        // Make out receipt
+        $this->receiptMarkup = Receipt::createDeclinedMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
+
+        // Email receipt
+        try {
+            $this->displayMessage .= $this->emailReceipt($dbh);
+        } catch (Exception $ex) {
+            $this->displayMessage .= "Email Failed, Error = " . $ex->getMessage();
+        }
+
+    }
+
+    public function feePaymentError(\PDO $dbh, Session $uS) {
+
+
+    }
+
+    public function feePaymentInvoiced(\PDO $dbh, Invoice $invoice) {
+
+        //$this->invoiceMarkup = $invoice->createMarkup($dbh);
+        $this->invoiceNumber = $invoice->getInvoiceNumber();
+
+    }
+
+    public function emailReceipt(\PDO $dbh) {
+
+        $config = new Config_Lite(ciCFG_FILE);
+        $toAddr = '';
+        $guestName = '';
+        $guestHasEmail = FALSE;
+
+        $fromAddr = $config->getString('guest_email', 'FromAddress', '');
+
+        if ($fromAddr == '') {
+            // Config data not set.
+
+            return '';
+        }
+
+
+        $query = "SELECT ne.Email, n.Name_Full FROM
+    `registration` r,
+    `name` n
+        LEFT JOIN
+    `name_email` ne ON n.idName = ne.idName
+        AND n.Preferred_Email = ne.Purpose
+WHERE r.Email_Receipt = 1 and
+    r.idregistration = :idreg AND n.idName = :id";
+
+        $stmt = $dbh->prepare($query);
+        $stmt->execute(array(':idreg'=>$this->idRegistration, ':id'=>$this->idName));
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($rows) > 0 && $rows[0]['Email'] != '') {
+            $toAddr = $rows[0]['Email'];
+            $guestName = ' to ' . $rows[0]['Name_Full'];
+            $guestHasEmail = TRUE;
+        }
+
+        $toAddrSan = filter_var($toAddr, FILTER_SANITIZE_EMAIL);
+
+        if ($toAddrSan === FALSE || $toAddrSan == '') {
+            // Config data not set.
+
+            return '';
+        }
+
+
+        $mail = prepareEmail($config);
+
+        $mail->From = $fromAddr;
+        $mail->addReplyTo($config->getString('guest_email', 'ReplyTo', ''));
+        $mail->FromName = $config->getString('site', 'Site_Name', '');
+
+        $mail->addAddress($toAddrSan);     // Add a recipient
+
+        $bccEntry = $config->getString('guest_email', 'BccAddress', '');
+        $bccs = explode(',', $bccEntry);
+
+        foreach ($bccs as $b) {
+
+            $bcc = filter_var($b, FILTER_SANITIZE_EMAIL);
+
+            if ($bcc !== FALSE && $bcc != '') {
+                $mail->addBCC($bcc);
+            }
+        }
+
+        $mail->isHTML(true);
+
+        $mail->Subject = $config->getString('site', 'Site_Name', '') . ' Payment Receipt';
+        $mail->msgHTML($this->receiptMarkup);
+
+        if($mail->send()) {
+            if ($guestHasEmail) {
+                return "Email sent" . $guestName;
+            }
+        } else {
+            return "Send Email failed:  " . $mail->ErrorInfo;
+        }
+
+        return '';
+
+    }
+
+    public function wasError() {
+        if ($this->getStatus() == self::ERROR) {
+            return TRUE;
+        }
+        return FALSE;
+    }
+
+    public function getReceiptMarkup() {
+        return $this->receiptMarkup;
+    }
+
+    public function getDisplayMessage() {
+        return $this->displayMessage;
+    }
+
+    public function getInvoiceMarkup() {
+        return $this->invoiceMarkup;
+    }
+
+    public function getIdInvoice() {
+        return $this->idInvoice;
+    }
+
+    public function getInvoiceNumber() {
+        return $this->invoiceNumber;
+    }
+
+    public function getIdToken() {
+        return $this->idToken;
+    }
+
+    public function getReplyMessage() {
+        return $this->replyMessage;
+    }
+
+    public function setReplyMessage($replyMessage) {
+        $this->replyMessage .= $replyMessage;
+        return $this;
+    }
+
+
+    public function setDisplayMessage($displayMessage) {
+        $this->displayMessage = $displayMessage . $this->displayMessage;
+        return $this;
+    }
+
+    public function getForwardHostedPayment() {
+        return $this->forwardHostedPayment;
+    }
+
+    public function setForwardHostedPayment(array $fwdHostedPayment) {
+        $this->setStatus(PaymentResult::FORWARDED);
+        $this->forwardHostedPayment = $fwdHostedPayment;
+        return $this;
+    }
+
+    public function getStatus() {
+        return $this->status;
+    }
+
+    public function setStatus($s) {
+        $this->status = $s;
+        return $this;
+    }
+
+    public function getIdName() {
+        return $this->idName;
+    }
+
+    public function getIdRegistration() {
+        return $this->idRegistration;
+    }
+
+}
+
+
+class cofResult extends PaymentResult {
+
+    function __construct($displayMessage, $status, $idName, $idRegistration) {
+
+        parent::__construct(0, $idRegistration, $idName);
+
+        $this->displayMessage = $displayMessage;
+        $this->status = $status;
+
+    }
+
+}
+
+
+class ReturnResult extends PaymentResult {
+
+    public function feePaymentAccepted(\PDO $dbh, Session $uS, PaymentResponse $rtnResp, Invoice $invoice) {
+
+        // set status
+        $this->status = PaymentResult::ACCEPTED;
+
+        if ($rtnResp->getIdPayment() > 0 && $this->idInvoice > 0) {
+            // payment-invoice
+            $payInvRs = new PaymentInvoiceRS();
+            $payInvRs->Amount->setNewVal($rtnResp->getAmount());
+            $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
+            $payInvRs->Payment_Id->setNewVal($rtnResp->getIdPayment());
+            EditRS::insert($dbh, $payInvRs);
+
+        }
+
+        // Make out receipt
+        $this->receiptMarkup = Receipt::createReturnMarkup($dbh, $rtnResp, $uS->siteName, $uS->sId);
+
+        // Email receipt
+        try {
+            $this->displayMessage .= $this->emailReceipt($dbh);
+        } catch (Exception $ex) {
+            $this->displayMessage .= "Email Failed, Error = " . $ex->getMessage();
+        }
+    }
+}
+
+
