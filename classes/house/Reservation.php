@@ -733,6 +733,12 @@ where rg.idReservation =" . $r['idReservation']);
         $whStays = '';
         $rooms = array();
 
+        // Dates correct?
+        if (is_null($departureDT)) {
+            $departureDT = new \DateTime($arrivalDT->format('Y-m-d H:i:s'));
+            $departureDT->add(new DateInterval('P1D'));
+        }
+
         // Collect member ids
         foreach ($psgMembers as $m) {
             if ($m->getId() != 0 && $m->isBlocked() === FALSE) {
@@ -808,6 +814,12 @@ WHERE
         // Check reservations
         $whResv = '';
         $rescs = array();
+
+        // Dates correct?
+        if (is_null($departDT)) {
+            $departDT = new \DateTime($arrivalDT->format('Y-m-d H:i:s'));
+            $departDT->add(new DateInterval('P1D'));
+        }
 
         foreach ($psgMembers as $m) {
             if ($m->getId() != 0 && $m->isBlocked() === FALSE) {

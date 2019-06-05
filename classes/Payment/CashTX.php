@@ -28,7 +28,7 @@ class CashResponse extends PaymentResponse {
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         if ($this->getAmount() != 0) {
-            $tbl->addBodyTr(HTMLTable::makeTd("Cash Refund", array('colspan'=>'2', 'style'=>'text-align:center;')));
+            $tbl->addBodyTr(HTMLTable::makeTd("Cash Tendered:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
         }
     }
 
