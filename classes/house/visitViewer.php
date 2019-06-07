@@ -1044,7 +1044,7 @@ class VisitView {
 
             // Save first arrival
             if ($vRs->Span->getStoredVal() == 0) {
-                $firstArrival = new \DateTime($vRs->Arrival_Date->getStoredVal());
+                $firstArrival = newDateWithTz($vRs->Arrival_Date->getStoredVal(), $uS->tz);
             }
 
             if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
@@ -1063,6 +1063,7 @@ class VisitView {
 
             $spans[$vRs->Span->getStoredVal()] = $vRs;
 
+            // Collect the stays.
             $stayRS = new StaysRS();
             $stayRS->idVisit->setStoredVal($vRs->idVisit->getStoredVal());
             $stayRS->Visit_Span->setStoredVal($vRs->Span->getStoredVal());
@@ -1097,21 +1098,21 @@ class VisitView {
         // change visit span dates
         foreach ($spans as $s => $vRs) {
 
-            $spanStartDT = new \DateTime($vRs->Span_Start->getStoredVal());
+            $spanStartDT = newDateWithTz($vRs->Span_Start->getStoredVal(), $uS->tz);
 
             if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
-                $spanEndDt = new \DateTime($vRs->Expected_Departure->getStoredVal());
+                $spanEndDt = newDateWithTz($vRs->Expected_Departure->getStoredVal(), $uS->tz);
                 $spanEndDt->setTime(intval($uS->CheckOutTime),0,0);
 
                 if ($spanEndDt < $tonight) {
-                    $spanEndDt = new \DateTime();
+                    $spanEndDt = newDateWithTz('', $uS->tz);
                     $spanEndDt->setTime(intval($uS->CheckOutTime), 0, 0);
                 }
 
             } else {
                 // Checked out
-                $spanEndDt = new \DateTime($vRs->Span_End->getStoredVal());
+                $spanEndDt = newDateWithTz($vRs->Span_End->getStoredVal(), $uS->tz);
             }
 
 
@@ -1120,6 +1121,12 @@ class VisitView {
 
                 // Move back
                 $spanEndDt->sub($endInterval);
+                
+                if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn && $spanEndDt < $tonight) {
+                    $spanEndDt = new \DateTime();
+                    $spanEndDt->setTime(intval($uS->CheckOutTime), 0, 0);
+                }
+
                 $spanStartDT->sub($startInterval);
 
                 // Only change first arrival if this is the first span
@@ -1352,8 +1359,8 @@ class VisitView {
         $today = new \DateTime();
         $today->setTime(intval($uS->CheckOutTime), 0, 0);
 
-        $spanStartDT = DateTimeImmutable::createFromMutable($visits['start']->setTime(10,0,0));
-        $spanEndDT = DateTimeImmutable::createFromMutable($visits['end']->setTime(10,0,0));
+        $spanStartDT = \DateTimeImmutable::createFromMutable($visits['start']->setTime(10,0,0));
+        $spanEndDT = \DateTimeImmutable::createFromMutable($visits['end']->setTime(10,0,0));
 
 
         foreach ($stays as $stayRS) {
