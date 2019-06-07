@@ -572,7 +572,7 @@ class ReservationSvcs {
         $oldStatus = $resv->getStatus();
 
         if ($oldStatus == ReservationStatus::Waitlist && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted)) {
-            return array('error'=>'Cannot change from Waitlist to Confirmed or Unconfirmed.');
+            return array('error'=>'Cannot change from Waitlist to Confirmed or Unconfirmed here.');
         }
 
         if ($status == ReservationStatus::Waitlist) {
