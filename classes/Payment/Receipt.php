@@ -449,11 +449,12 @@ WHERE
 
         foreach ($spans as $v) {
 
-            // Set expected departure to now if earlier than "today"
-            $expDepDT = new \DateTime($v['Expected_Departure']);
             $now = new \DateTime();
             $now->setTime(0, 0, 0);
 
+            $expDepDT = new \DateTime($v['Expected_Departure']);
+
+            // Set expected departure to now if earlier than "today"
             if ($expDepDT < $now) {
                 $expDepStr = $now->format('Y-m-d');
             } else {
@@ -461,9 +462,7 @@ WHERE
             }
 
 
-            $rateCounter++;
-
-            $rates[$rateCounter] = array(
+            $rates[++$rateCounter] = array(
                 'vid'=>$v['idVisit'],
                 'span'=>$v['Span'],
                 'status'=>$v['Status'],

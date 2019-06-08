@@ -60,7 +60,7 @@ abstract class PriceModel {
         // Short circuit for fixed rate x
         if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategorys::Fixed_Rate_Category) {
             if ($pledgedRate > 0) {
-                //$this->remainderAmt = $amount % $pledgedRate;
+
                 $days = floor($amount / $pledgedRate);
                 $this->remainderAmt = $amount - ($amount * $days);
                 return $days;
@@ -72,7 +72,7 @@ abstract class PriceModel {
         if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory) {
             if ($rrateRs->Reduced_Rate_1->getStoredVal() > 0) {
                 $rate = (1 + $rateAdjust / 100) * $rrateRs->Reduced_Rate_1->getStoredVal();
-                //$this->remainderAmt = $amount % $rate;
+
                 $days = floor($amount / $rate);
                 $this->remainderAmt = $amount - ($amount * $days);
                 return $days;

@@ -182,6 +182,7 @@ class PaymentManager {
                 $endPricingDT->add(new \DateInterval('P' . $this->pmp->visitCharges->getNightsToPay() . "D"));
 
                 $lodging = new Item($dbh, ItemId::Lodging, $roomCharges);
+
                 $invLine = new RecurringInvoiceLine();
                 $invLine->setUseDetail($uS->ShowLodgDates);
                 $invLine->appendDescription($notes);

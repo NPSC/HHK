@@ -677,8 +677,8 @@ where rg.idReservation =" . $r['idReservation']);
 
         $uS = Session::getInstance();
         $tbl2 = new HTMLTable();
-        // Pay option, verbal confirmation
 
+        // Pay option, verbal confirmation
         $attr = array('name'=>'cbVerbalConf', 'type'=>'checkbox');
 
         if ($resv->getVerbalConfirm() == 'v') {
@@ -734,6 +734,10 @@ where rg.idReservation =" . $r['idReservation']);
         $rooms = array();
 
         // Dates correct?
+        if (is_null($arrivalDT)) {
+            return 0;
+        }
+
         if (is_null($departureDT)) {
             $departureDT = new \DateTime($arrivalDT->format('Y-m-d H:i:s'));
             $departureDT->add(new DateInterval('P1D'));
@@ -814,6 +818,10 @@ WHERE
         // Check reservations
         $whResv = '';
         $rescs = array();
+
+        if (is_null($arrivalDT)) {
+            return 0;
+        }
 
         // Dates correct?
         if (is_null($departDT)) {
