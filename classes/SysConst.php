@@ -18,10 +18,6 @@ class CodeVersion {
     const REL_DATE = '';
 }
 
-class DBServer {
-    const TIMEZONE = 'America/Los_Angeles';
-}
-
 class ActivityTypes {
     const Donation = 'don';
     const Volunteer = 'vol';

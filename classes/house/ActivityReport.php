@@ -664,9 +664,7 @@ where `lp`.`idPayment` > 0
 
                             if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d')) {
                                 $voidContent .= HTMLInput::generateMarkup('Void Refund', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidRefundPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
-                            } else if ($p['idPayment_Method'] != PaymentMethod::Charge) {
-                                $voidContent .= HTMLInput::generateMarkup('Claw Back', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-returnPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
-                            }
+                            } 
                         } else {
 
                             $payTypeTotals[$p['idPayment_Method']]['amount'] += $amt;

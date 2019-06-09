@@ -172,7 +172,7 @@ class VisitCharges {
                 }
 
                 // Do I have enough to pay this span?
-                $unpaid = $rateAmt['charged'] - $rateAmt['paid'];
+                $unpaid = $rateAmt['charged'] - ($payment + $rateAmt['paid']);
 
                 if ($payment >= $unpaid && ($unpaid > 0 || $rateAmt['charged'] == 0)) {
 

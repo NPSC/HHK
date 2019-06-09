@@ -186,7 +186,7 @@ class PaymentManager {
                 $invLine = new RecurringInvoiceLine();
                 $invLine->setUseDetail($uS->ShowLodgDates);
                 $invLine->appendDescription($notes);
-                $invLine->createNewLine($lodging, 1, $paidThruDT->format('Y-m-d H:i:s'), $endPricingDT->format('Y-m-d H:i:s'));
+                $invLine->createNewLine($lodging, 1, $paidThruDT->format('Y-m-d H:i:s'), $endPricingDT->format('Y-m-d H:i:s'), $this->pmp->visitCharges->getNightsToPay());
 
                 $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
                 $this->invoice->addLine($dbh, $invLine, $uS->username);
@@ -222,6 +222,7 @@ class PaymentManager {
 
                     $invLine = new OneTimeInvoiceLine();
                     $invLine->createNewLine(new Item($dbh, ItemId::LodgingReversal, (0 - $this->guestCreditAmt)), 1, 'Lodging');
+
                     $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, $notes);
                     $this->invoice->addLine($dbh, $invLine, $uS->username);
 

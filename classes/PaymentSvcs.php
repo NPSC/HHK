@@ -925,15 +925,16 @@ class PaymentSvcs {
 
         $statusCode = $payRs->Status_Code->getStoredVal();
 
-        if ($statusCode == PaymentStatusCode::Paid && $payRs->Is_Refund->getStoredVal() > 0) {
-            $statusCode = PaymentStatusCode::Retrn;
-        }
 
         switch ($statusCode) {
 
             case PaymentStatusCode::Paid:
 
-                $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
+                if ($payRs->Is_Refund->getStoredVal() > 0) {
+                    $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $payResp, $uS->siteName, $uS->sId)));
+                } else {
+                    $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
+                }
                 break;
 
             case PaymentStatusCode::Declined:

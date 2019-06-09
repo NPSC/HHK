@@ -611,6 +611,7 @@ WHERE
                             'Is_Refund'=>$p['Is_Refund'],
                             'Payment_idPayor'=>$p['Payment_idPayor'],
                             'Payment_Updated_By'=>$p['Payment_Updated_By'],
+                            'Last_Updated'=>$p['Payment_Last_Updated'],
                             'Payment_Created_By'=>$p['Payment_Created_By'],
                             'Check_Number'=>$p['Check_Number'],
                             'Payment_External_Id'=>$p['Payment_External_Id'],

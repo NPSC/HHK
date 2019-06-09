@@ -234,6 +234,7 @@ class RecurringInvoiceLine extends InvoiceLine {
 
     protected $periodStart;
     protected $periodEnd;
+    protected $units;
 
     public function __construct() {
         parent::__construct();
@@ -248,10 +249,11 @@ class RecurringInvoiceLine extends InvoiceLine {
 
     }
 
-    public function createNewLine(Item $item, $quantity, $startDate = '', $endDate = '') {
+    public function createNewLine(Item $item, $quantity, $startDate = '', $endDate = '', $units = 0) {
 
         $this->setPeriodEnd($endDate);
         $this->setPeriodStart($startDate);
+        $this->setUnits($units);
 
         parent::createNewLine($item, $quantity, $this->var);
     }
@@ -295,7 +297,13 @@ class RecurringInvoiceLine extends InvoiceLine {
     public function setDescription($description) {
 
         if ($this->useDetail && $this->getPeriodStart() != '' && $this->getPeriodEnd() != '') {
-            $this->description = $description .  ':  ' . date('M j, Y', strtotime($this->getPeriodStart())) . ' - ' . date('M j, Y', strtotime($this->getPeriodEnd()));
+
+            if ($this->units < 1) {
+                $this->description = $description .  ':  ' . date('M j, Y', strtotime($this->getPeriodStart())) . ' - ' . date('M j, Y', strtotime($this->getPeriodEnd()));
+            } else {
+                $this->description = $description .  ':  ' . date('M j, Y', strtotime($this->getPeriodStart())) . ' - ' . date('M j, Y', strtotime($this->getPeriodEnd()))
+                    . ' (' . $this->units . ($this->units > 1 ? ' days)' : ' day)');
+            }
         } else {
             $this->description = trim($description . ' ' . $this->var);
         }
@@ -320,6 +328,16 @@ class RecurringInvoiceLine extends InvoiceLine {
         $this->periodEnd = $strDate;
         return $this;
     }
+
+    public function getUnits() {
+        return $this->units;
+    }
+
+    public function setUnits($units) {
+        $this->units = $units;
+        return $this;
+    }
+
 
 }
 
