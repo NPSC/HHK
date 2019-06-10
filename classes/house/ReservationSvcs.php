@@ -673,10 +673,6 @@ class ReservationSvcs {
 
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
 
-        $resv->setIdResource($idResc);
-        $resv->setExpectedArrival($expArr);
-        $resv->setExpectedDeparture($expDep);
-
         $resv->saveConstraints($dbh, $cbs);
 
         $roomChooser = new RoomChooser($dbh, $resv, $numGuests, new DateTime($expArr), new DateTime($expDep));
@@ -685,7 +681,6 @@ class ReservationSvcs {
         $resOptions = $roomChooser->makeRoomSelectorOptions();
         $errorMessage = $roomChooser->getRoomSelectionError($dbh, $resOptions);
 
-        //$results = ReservationSvcs::getRoomList($dbh, $resv, '', $isAuthorized, $numGuests);
         return array('rooms'=>$roomChooser->makeRoomsArray(), 'selectr'=>$roomChooser->makeRoomSelector($resOptions, $idResc), 'idResource' => $idResc, 'msg'=>$errorMessage);
 
     }

@@ -316,7 +316,8 @@ class RoomChooser {
 
         $errorMessage = '';
 
-        if (($this->resv->getStatus() == ReservationStatus::Committed || $this->resv->getStatus() == ReservationStatus::UnCommitted || $this->resv->getStatus() == ReservationStatus::Staying) && isset($resOptions[$this->resv->getIdResource()])) {
+        if (($this->resv->getStatus() == ReservationStatus::Committed || $this->resv->getStatus() == ReservationStatus::UnCommitted || $this->resv->getStatus() == ReservationStatus::Staying || $this->resv->getStatus() == ReservationStatus::Waitlist) &&
+                isset($resOptions[$this->resv->getIdResource()])) {
 
             $myResc = $resOptions[$this->resv->getIdResource()];
 
