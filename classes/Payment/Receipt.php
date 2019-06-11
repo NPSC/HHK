@@ -55,7 +55,7 @@ class Receipt {
             $tbl->addBodyTr(HTMLTable::makeTd("Room: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Room']));
         }
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel')) . HTMLTable::makeTd(($payResp->getPaymentDate() == '' ? date('D M jS, Y') : date('D M jS, Y', strtotime($payResp->getPaymentDate())))));
+        $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel')) . HTMLTable::makeTd(date('D M jS, Y', strtotime($payResp->getPaymentDate()))));
 
         $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($invoice->getInvoiceNumber()));
 
@@ -156,7 +156,57 @@ class Receipt {
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
     }
 
+    // Return a Payment
     public static function createReturnMarkup(\PDO $dbh, PaymentResponse $payResp, $siteName, $siteId) {
+
+        $rec = self::getHouseIconMarkup();
+
+        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;'));
+
+        $tbl = new HTMLTable();
+
+        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Return Receipt", array('colspan'=>'2')));
+
+        $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
+        $info = self::getVisitInfo($dbh, $invoice);
+
+        if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
+        }
+
+        $idPriGuest = 0;
+        if (isset($info['idPrimaryGuest'])) {
+            $idPriGuest = $info['idPrimaryGuest'];
+        }
+
+        if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
+            $payor = Member::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
+            $tbl->addBodyTr(HTMLTable::makeTd("Payor: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($payor->getMemberName()));
+        }
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Visit Id: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($invoice->getOrderNumber() . '-' . $invoice->getSuborderNumber()));
+
+        if (isset($info['Room']) && $info['Room'] != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Room: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Room']));
+        }
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel'))
+                . HTMLTable::makeTd(date('D M jS, Y g:ia', strtotime($payResp->getPaymentDate()))));
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Total Returned:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
+
+        // Create pay type determined markup
+        $payResp->receiptMarkup($dbh, $tbl);
+
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;float:left;'));
+
+        return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
+    }
+
+    // Refund arbitrary Amount
+    public static function createRefundAmtMarkup(\PDO $dbh, PaymentResponse $payResp, $siteName, $siteId) {
 
         $rec = self::getHouseIconMarkup();
 
@@ -194,7 +244,7 @@ class Receipt {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Total Returned:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
+        $tbl->addBodyTr(HTMLTable::makeTd("Total Refunded:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
 
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);
@@ -236,7 +286,7 @@ class Receipt {
 //            $tbl->addBodyTr(HTMLTable::makeTd("Room: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Room']));
 //        }
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel')) . HTMLTable::makeTd(($payResp->getPaymentDate() == '' ? date('D M jS, Y') : date('D M jS, Y', strtotime($payResp->getPaymentDate())))));
+        $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel')) . HTMLTable::makeTd(date('D M jS, Y', strtotime($payResp->getPaymentDate()))));
 
 //        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
 //

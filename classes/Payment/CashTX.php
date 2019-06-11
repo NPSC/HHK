@@ -11,14 +11,14 @@
 
 class CashResponse extends PaymentResponse {
 
-    function __construct($amount, $idPayor, $invoiceNumber, $payNote = '', $payDate = '') {
+    function __construct($amount, $idPayor, $invoiceNumber, $payNote = '') {
 
         $this->paymentType = PayType::Cash;
         $this->idPayor = $idPayor;
         $this->amount = $amount;
         $this->invoiceNumber = $invoiceNumber;
         $this->payNotes = $payNote;
-        $this->paymentDate = $payDate;
+
     }
 
     public function getStatus() {
@@ -65,6 +65,8 @@ class CashTX {
         $idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPayment);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate($paymentDate);
         $pr->paymentRs = $payRs;
 
     }
@@ -100,6 +102,8 @@ class CashTX {
         $idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPayment);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate($paymentDate);
         $pr->paymentRs = $payRs;
 
     }
@@ -125,7 +129,6 @@ class CashTX {
 
         // Payment record
         $payRs->Status_Code->setNewVal(PaymentStatusCode::Retrn);
-//        $payRs->Balance->setNewVal($payRs->Amount->getStoredVal());
         $payRs->Updated_By->setNewVal($username);
         $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
@@ -232,6 +235,8 @@ class ChargeAsCashTX {
         $idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPayment);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate($paymentDate);
         $pr->paymentRs = $payRs;
 
         if ($idPayment > 0) {
@@ -287,6 +292,8 @@ class ChargeAsCashTX {
         $idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPayment);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate($paymentDate);
         $pr->paymentRs = $payRs;
 
         if ($idPayment > 0) {

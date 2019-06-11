@@ -301,8 +301,7 @@ class RecurringInvoiceLine extends InvoiceLine {
             if ($this->units < 1) {
                 $this->description = $description .  ':  ' . date('M j, Y', strtotime($this->getPeriodStart())) . ' - ' . date('M j, Y', strtotime($this->getPeriodEnd()));
             } else {
-                $this->description = $description .  ':  ' . date('M j, Y', strtotime($this->getPeriodStart())) . ' - ' . date('M j, Y', strtotime($this->getPeriodEnd()))
-                    . ' (' . $this->units . ($this->units > 1 ? ' days)' : ' day)');
+                $this->description = $description .  ':  ' . date('M j, Y', strtotime($this->getPeriodStart())) . ' - ' . date('M j, Y', strtotime($this->getPeriodEnd()));
             }
         } else {
             $this->description = trim($description . ' ' . $this->var);

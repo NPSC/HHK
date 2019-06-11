@@ -924,15 +924,17 @@ class PaymentSvcs {
         $dataArray = array();
 
         $statusCode = $payRs->Status_Code->getStoredVal();
-
+        $payResp->setPaymentDate($payRs->Payment_Date->getStoredVal());
 
         switch ($statusCode) {
 
             case PaymentStatusCode::Paid:
 
                 if ($payRs->Is_Refund->getStoredVal() > 0) {
-                    $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $payResp, $uS->siteName, $uS->sId)));
+                    // Refund amount
+                    $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createRefundAmtMarkup($dbh, $payResp, $uS->siteName, $uS->sId)));
                 } else {
+                    // Pay Amount
                     $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $payResp);
                 }
                 break;

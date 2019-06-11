@@ -116,6 +116,8 @@ class SaleReply extends CreditPayments {
         $idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPayment);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate(date("Y-m-d H:i:s"));
         $pr->paymentRs = $payRs;
 
         if ($idPayment > 0) {
@@ -187,6 +189,8 @@ class SaleReply extends CreditPayments {
         $idPmt = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPmt);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate(date("Y-m-d H:i:s"));
         $pr->paymentRs = $payRs;
 
         if ($idPmt > 0) {
@@ -262,6 +266,8 @@ class VoidReply extends CreditPayments {
 
         EditRS::update($dbh, $payRs, array($payRs->idPayment));
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate(date("Y-m-d H:i:s"));
         $pr->paymentRs = $payRs;
 
         // Payment Detail
@@ -339,6 +345,8 @@ class ReverseReply extends CreditPayments {
 
         EditRS::update($dbh, $payRs, array($payRs->idPayment));
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate(date("Y-m-d H:i:s"));
         $pr->paymentRs = $payRs;
 
 
@@ -438,6 +446,8 @@ class ReturnReply extends CreditPayments {
         }
 
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate(date("Y-m-d H:i:s"));
         $pr->paymentRs = $payRs;
 
 
@@ -505,6 +515,8 @@ class ReturnReply extends CreditPayments {
             $idPmt = EditRS::insert($dbh, $payRs);
             $payRs->idPayment->setNewVal($idPmt);
             EditRS::updateStoredVals($payRs);
+
+            $pr->setPaymentDate(date("Y-m-d H:i:s"));
             $pr->paymentRs = $payRs;
 
             if ($idPmt > 0) {
@@ -588,6 +600,8 @@ class VoidReturnReply extends CreditPayments {
 
         EditRS::update($dbh, $payRs, array($payRs->idPayment));
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate(date("Y-m-d H:i:s"));
         $pr->paymentRs = $payRs;
 
         // Payment Detail

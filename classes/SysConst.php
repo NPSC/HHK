@@ -8,10 +8,8 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-// Date Released: 5/20/2019
-// Fixes two bugs in 152.
 class CodeVersion {
-    const BUILD = 155;
+    const BUILD = 156;
     const VERSION = 3.12;
     const PATCH = 9;
     const GIT_Id = "dev";

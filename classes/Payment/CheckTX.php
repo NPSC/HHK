@@ -65,6 +65,8 @@ class CheckTX {
         $idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPayment);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate($paymentDate);
         $pr->paymentRs = $payRs;
 
         if ($idPayment > 0) {
@@ -103,6 +105,8 @@ class CheckTX {
         $idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPayment);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate($paymentDate);
         $pr->paymentRs = $payRs;
 
         if ($idPayment > 0) {
@@ -206,6 +210,8 @@ class TransferTX {
         $idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPayment);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate($paymentDate);
         $pr->paymentRs = $payRs;
 
         if ($idPayment > 0) {
@@ -244,6 +250,8 @@ class TransferTX {
         $idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPayment);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate($paymentDate);
         $pr->paymentRs = $payRs;
 
         if ($idPayment > 0) {
