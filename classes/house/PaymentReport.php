@@ -331,11 +331,13 @@ class PaymentReport {
         $amt = 0;
         $payDetail = '';
         $payStatus = $p['Payment_Status_Title'];
-        $dateDT = new DateTime($p['Payment_Date']);
+        $dateDT = new \DateTime($p['Payment_Date']);
 
-        // Change the timestamp time zone.
+        // Use timestamp for time of day.
         $timeDT = new DateTime($p['Payment_Timestamp']);
-        $timeDT->setTimezone(new DateTimeZone($uS->tz));
+        $dbmsDt = new DateTime('', new DateTimeZone('America/Los_Angeles'));
+        $offset = abs(($dbmsDt->getOffset() - $timeDT->getOffset()) / 3600);
+        $timeDT->add(new DateInterval('PT' . $offset ."H"));
 
         $payType = $p['Payment_Method_Title'];
         $statusAttr = array();
@@ -382,7 +384,7 @@ class PaymentReport {
             case PaymentStatusCode::Retrn:  // Return payment
                 $statusAttr['style'] = 'color:#ea4848;';
                 $dateDT = new DateTime($p['Last_Updated']);
-
+                $timeDT = new DateTime($p['Last_Updated']);
                 break;
 
             case PaymentStatusCode::Paid:
