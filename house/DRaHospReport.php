@@ -465,7 +465,6 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
         // Create settings markup
         $sTbl = new HTMLTable();
-        $sTbl->addBodyTr(HTMLTable::makeTh('Report Characteristics', array('colspan'=>'4')));
 
         $colTitle = '';
         $blanksOnly = FALSE;
@@ -483,12 +482,14 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             case 'd':
                 $type = VolMemberType::Doctor;
                 $colTitle = 'Doctor';
+                $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Doctor Report', array('colspan'=>'4')));
 
                 break;
 
             case 'r':
                 $type = VolMemberType::ReferralAgent;
                 $colTitle = $labels->getString('hospital', 'referralAgent', 'Referral Agent');
+                $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $colTitle . ' Report', array('colspan'=>'4')));
 
                 break;
         }
@@ -501,7 +502,6 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         } else {
 
             $dataTable = getRecords($dbh, $local, $type, $colTitle, $whHosp, $hospList, $start, $end);
-            $sTbl->addBodyTr(HTMLTable::makeTh($colTitle, array('colspan'=>'4')));
         }
 
         $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));

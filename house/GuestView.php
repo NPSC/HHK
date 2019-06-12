@@ -126,6 +126,8 @@ order by l.Title, `Arrival`");
 
 }
 
+$title = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Resident Guests for ' . date('D M j, Y'), array('style'=>'margin-top: .5em;'));
+
 $guestMessage = '';
 $vehicleMessage = '';
 $emtableMarkupv = '';
@@ -170,7 +172,7 @@ if (isset($_POST['btnEmail']) || isset($_POST['btnEmailv'])) {
             $body = $vehicleTable;
         }
 
-        $mail->msgHTML($guestTable);
+        $mail->msgHTML($title . $body);
         if($mail->send()) {
             $resultMessage .= "Email sent.  ";
         } else {
@@ -316,14 +318,18 @@ if ($uS->TrackAuto) {
                         <?php echo $emtableMarkup; ?>
                     </form>
                     <input type="button" value="Print" id='btnPrint' name='btnPrint' style="margin-right:.3em;"/>
-                    <div class="PrintArea"><?php echo $guestTable; ?></div>
+                    <div class="PrintArea">
+                        <?php echo $title . $guestTable; ?>
+                    </div>
                 </div>
                 <div id="tabVeh" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
                     <form name="formEmv" method="Post" action="GuestView.php">
                         <?php echo $emtableMarkupv; ?>
                     </form>
                     <input type="button" value="Print" id='btnPrintv' name='btnPrintv' style="margin-right:.3em;"/>
-                    <div class="PrintAreav"><?php echo $vehicleTable; ?></div>
+                    <div class="PrintAreav">
+                        <?php echo $title . $vehicleTable; ?>
+                    </div>
                 </div>
                 <div id="tabsrch" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
                     Search <?php echo $labels->getString('referral', 'licensePlate', 'License Plate'); ?>:

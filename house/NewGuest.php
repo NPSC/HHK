@@ -211,7 +211,8 @@ ORDER BY `First Stay`";
 
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
-$headerTable = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
+$headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' New Guests Report Details', array('style'=>'margin-top: .5em;'))
+        . HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 $dataTable = '';
 $statsTable = '';
 
@@ -457,7 +458,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $sTbl->addBodyTr(HTMLTable::makeTd('Total Guests:', array('class'=>'tdlabel')) . HTMLTable::makeTd($numAllGuests));
 
 
-        $statsTable = HTMLContainer::generateMarkup('h3', 'Report Statistics')
+        $statsTable = HTMLContainer::generateMarkup('h3', $uS->siteName . 'New Guests Report Statistics')
                 . HTMLContainer::generateMarkup('p', 'These numbers are specific to this report\'s selected filtering parameters.')
                 . $sTbl->generateMarkup();
 

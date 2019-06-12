@@ -46,7 +46,8 @@ $resultMessage = $alertMsg->createMarkup();
 
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
-$headerTable = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
+$headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Reservation Report', array('style'=>'margin-top: .5em;'))
+        . HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 $dataTable = '';
 $status = '';
 $statusSelections = array();

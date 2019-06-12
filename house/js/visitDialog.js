@@ -27,6 +27,46 @@ function setupVisitNotes(vid, $container) {
     return $container;
 }
 
+function getVisitRoomList(idVisit, visitSpan, changeDate, $rescSelector) {
+    
+    $rescSelector.prop('disabled', true);
+    $('#hhk-roomChsrtitle').addClass('hhk-loading');
+    $('#rmDepMessage').text('').hide();
+     
+    var parms = {cmd:'chgRoomList', idVisit:idVisit, span:visitSpan, chgDate:changeDate, selRescId:$rescSelector.val()};
+    
+    $.post('ws_ckin.php', parms,
+        function (data) {
+            var newSel;
+
+            $rescSelector.prop('disabled', false);
+            $('#hhk-roomChsrtitle').removeClass('hhk-loading');
+            
+            try {
+                data = $.parseJSON(data);
+            } catch (err) {
+                alert("Parser error - " + err.message);
+                return;
+            }
+            if (data.error) {
+                if (data.gotopage) {
+                    window.open(data.gotopage);
+                }
+                flagAlertMessage(data.error, 'error');
+                return;
+            }
+            
+            if (data.sel) {
+                newSel = $(data.sel);
+                $rescSelector.children().remove();
+
+                newSel.children().appendTo($rescSelector);
+                $rescSelector.val(data.idResc).change();
+                
+            }
+        });
+}
+
 var isCheckedOut = false;
 
 /**
@@ -371,8 +411,87 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
             }
 
 
-            setupPayments(data.resc, $('#selResource'), $('#selRateCategory'), idVisit, visitSpan, $('#pmtRcpt'));
+            setupPayments($('#selRateCategory'), idVisit, visitSpan, $('#pmtRcpt'));
 
+            if ($('table#moveTable').length > 0) {
+
+                // Change Rooms control - only used for visit editor
+                $('table#moveTable').on('change', 'select', function() {
+                    $(this).removeClass('ui-state-error');
+                    var indx = $(this).val();
+                    if (indx == '') {
+                        indx = 0;
+                    }
+                    // UPdate the key deposit amount
+                    if ($('#keyDepAmt').length > 0 && data.resc[indx]) {
+
+                        if (data.resc[indx].key === 0) {
+                            $('#spnDepAmt').data('amt', '');
+                            $('#spnDepAmt').text('');
+                            $('#keyDepAmt').val('');
+                            $('#keyDepRx').prop("checked", false);
+                            $('.hhk-kdrow').hide();
+
+                        } else {
+                            $('#spnDepAmt').data('amt', data.resc[indx].key);
+                            $('#spnDepAmt').text('($' + data.resc[indx].key + ')');
+                            $('#keyDepAmt').val(data.resc[indx].key);
+                            $('.hhk-kdrow').show('fade');
+                        }
+
+                        amtPaid();
+                    }
+
+                    // Change Rooms Markup only
+                    if (indx > 0 && data.resc[indx] && $('#myRescId').length > 0) {
+
+                        $('#rmChgMsg').text('').hide();
+                        $('#rmDepMessage').text('').hide();
+
+                        var idResc = $('#myRescId').data('idresc'),
+                            priceModel = $('#myRescId').data('pmdl');
+
+                        if (data.resc[idResc].rate !== data.resc[indx].rate && priceModel === 'b') {
+                            $('#rmChgMsg').text('The room rate is different.').show('fade');
+                        }
+
+                        if (data.resc[idResc].key !== data.resc[indx].key) {
+                            var rdmessage = '';
+
+                            $('#spnDepMsg').hide();
+                            $('#selDepDisposition').show('fade');
+
+                            if (data.resc[indx].key == 0) {
+                                if ($('#kdPaid').data('amt') != '0') {
+                                    rdmessage = 'There is no deposit for this room.  Set the Deposit Status (above) accordingly.';
+                                }
+                            } else {
+                                rdmessage = 'The deposit for this room is $' + data.resc[indx].key.toFixed(2).toString();
+                            }
+
+                            $('#rmDepMessage').text(rdmessage).show('fade');
+
+                        } else {
+                            $('#selDepDisposition').hide();
+                            $('#spnDepMsg').show('fade');
+
+                        }
+                    }
+
+                    $('#selRateCategory').change();
+                });
+
+                $('#selResource').change();
+
+                $('#resvChangeDate').datepicker('option', 'onClose', function (dateText) {
+                    $('#rbReplaceRoomnew').prop('checked', true);
+                    if (dateText !== '') {
+                        getVisitRoomList(idVisit, visitSpan, $('#resvChangeDate').val(), $('#selResource'));
+                    }
+                });
+            }
+    
+    
             // Financial Application
             var $btnFapp = $('#btnFapp');
             if ($btnFapp.length > 0) {

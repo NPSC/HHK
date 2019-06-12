@@ -30,7 +30,7 @@ $uS = Session::getInstance();
 
 $config = new Config_Lite(ciCFG_FILE);
 
-function statsPanel(\PDO $dbh, $visitNites, $totalCatNites, $start, $end, $categories, $avDailyFee, $rescGroup) {
+function statsPanel(\PDO $dbh, $visitNites, $totalCatNites, $start, $end, $categories, $avDailyFee, $rescGroup, $siteName) {
 
     // Stats panel
     if (count($visitNites) < 1) {
@@ -185,7 +185,7 @@ order by r.idResource;";
 
     $sTbl->addBodyTr($trs[5]);
 
-    return HTMLContainer::generateMarkup('h3', 'Report Statistics')
+    return HTMLContainer::generateMarkup('h3', $siteName . ' Visit Report Statistics')
             . HTMLContainer::generateMarkup('p', 'These numbers are specific to this report\'s selected filtering parameters.')
             . $sTbl->generateMarkup();
 
@@ -1117,7 +1117,7 @@ where
         $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display compact'));
 
         // Stats panel
-        $statsTable = statsPanel($dbh, $nites, $totalCatNites, $start, $end, $categories, $avDailyFee, $rescGroup[0]);
+        $statsTable = statsPanel($dbh, $nites, $totalCatNites, $start, $end, $categories, $avDailyFee, $rescGroup[0], $uS->siteName);
 
         return array('data'=>$dataTable, 'stats'=>$statsTable);
 
@@ -1139,7 +1139,9 @@ where
 $labels = new Config_Lite(LABEL_FILE);
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
-$headerTable = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
+$headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Visit Report Detail', array('style'=>'margin-top: .5em;'))
+        .HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
+
 $dataTable = '';
 $statsTable = '';
 $errorMessage = '';

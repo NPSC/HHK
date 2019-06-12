@@ -711,7 +711,8 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
                 HTMLTable::makeTd('Total Balance:', array('class'=>'tdlabel'))
                 . HTMLTable::makeTd('$'.number_format($totalBalance,2), array('style'=>'text-align:right;')));
 
-        $headerTableMkup = $headerTable->generateMarkup(array('style'=>'float:left;')) . $totTable->generateMarkup(array('style'=>'float:left;'));
+        $headerTableMkup = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Invoice Report ', array('style'=>'margin-top: .5em;'))
+                .$headerTable->generateMarkup(array('style'=>'float:left;')) . $totTable->generateMarkup(array('style'=>'float:left;'));
 
 
     } else {

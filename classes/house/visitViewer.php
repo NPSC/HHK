@@ -769,7 +769,11 @@ class VisitView {
                 . HTMLTable::makeTd('$' . number_format($totalPaid, 2), array('style'=>'text-align:right;'))
         );
 
-        $amtPending = $visitCharge->getRoomFeesPending() + $visitCharge->getVisitFeesPending() + $visitCharge->getItemInvPending(ItemId::AddnlCharge) + $visitCharge->getItemInvPending(ItemId::Waive);
+        $amtPending = $visitCharge->getRoomFeesPending()
+                + $visitCharge->getVisitFeesPending()
+                + $visitCharge->getItemInvPending(ItemId::AddnlCharge)
+                + $visitCharge->getItemInvPending(ItemId::LodgingMOA)
+                + $visitCharge->getItemInvPending(ItemId::Waive);
 
         // unpaid invoices
         if ($amtPending != 0) {
@@ -1121,7 +1125,7 @@ class VisitView {
 
                 // Move back
                 $spanEndDt->sub($endInterval);
-                
+
                 if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn && $spanEndDt < $tonight) {
                     $spanEndDt = new \DateTime();
                     $spanEndDt->setTime(intval($uS->CheckOutTime), 0, 0);

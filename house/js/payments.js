@@ -658,18 +658,16 @@ function amtPaid() {
     p.cashTendered.change();
 }
     
-var chgRoomList;
+
 /**
  * 
- * @param {array} resources
- * @param {jquery} $rescSelector
  * @param {jquery} $rateSelector
  * @param {int} idVisit
  * @param {int} visitSpan
  * @param {jquery} $diagBox
  * @returns {undefined}
  */
-function setupPayments(resources, $rescSelector, $rateSelector, idVisit, visitSpan, $diagBox) {
+function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
     "use strict";
     var ptsel = $('#PayTypeSel');
     var chg = $('.tblCredit');
@@ -808,86 +806,6 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, visitSp
         });
     }
     
-    if (resources && $rescSelector && $rescSelector.length > 0) {
-        
-        chgRoomList = resources;
-        
-        // Change Rooms control
-        $('table#moveTable').on('change', 'select', function() {
-            $(this).removeClass('ui-state-error');
-            var indx = $(this).val();
-            if (indx == '') {
-                indx = 0;
-            }
-            // UPdate the key deposit amount
-            if (p.keyDepAmt.length > 0 && resources[indx]) {
-                
-                if (resources[indx].key === 0) {
-                    $('#spnDepAmt').data('amt', '');
-                    $('#spnDepAmt').text('');
-                    p.keyDepAmt.val('');
-                    p.keyDepCb.prop("checked", false);
-                    $('.hhk-kdrow').hide();
-                    
-                } else {
-                    $('#spnDepAmt').data('amt', resources[indx].key);
-                    $('#spnDepAmt').text('($' + resources[indx].key + ')');
-                    p.keyDepAmt.val(resources[indx].key);
-                    $('.hhk-kdrow').show('fade');
-                }
-                
-                amtPaid();
-            }
-            
-            // Change Rooms Markup only
-            if (indx > 0 && resources[indx] && $('#myRescId').length > 0) {
-                
-                $('#rmChgMsg').text('').hide();
-                $('#rmDepMessage').text('').hide();
-                
-                var idResc = $('#myRescId').data('idresc'),
-                    priceModel = $('#myRescId').data('pmdl');
-
-                if (resources[idResc].rate !== resources[indx].rate && priceModel === 'b') {
-                    $('#rmChgMsg').text('The room rate is different.').show('fade');
-                }
-                
-                if (resources[idResc].key !== resources[indx].key) {
-                    var rdmessage = '';
-                    
-                    $('#spnDepMsg').hide();
-                    $('#selDepDisposition').show('fade');
-                    
-                    if (resources[indx].key == 0) {
-                        if ($('#kdPaid').data('amt') != '0') {
-                            rdmessage = 'There is no deposit for this room.  Set the Deposit Status (above) accordingly.';
-                        }
-                    } else {
-                        rdmessage = 'The deposit for this room is $' + resources[indx].key.toFixed(2).toString();
-                    }
-                    
-                    $('#rmDepMessage').text(rdmessage).show('fade');
-                    
-                } else {
-                    $('#selDepDisposition').hide();
-                    $('#spnDepMsg').show('fade');
-                    
-                }
-            }
-            
-            $rateSelector.change();
-        });
-        
-        $rescSelector.change();
-        
-        $('#resvChangeDate').datepicker('option', 'onClose', function (dateText) {
-            $('#rbReplaceRoomnew').prop('checked', true);
-            if (dateText !== '') {
-                getVisitRoomList(idVisit, visitSpan, $('#resvChangeDate').val(), $rescSelector);
-            }
-        });
-    }
-
     // Extra payments or credits applied.
     if (p.adjustBtn.length > 0) {
         p.adjustBtn.button();
@@ -983,54 +901,6 @@ function setupPayments(resources, $rescSelector, $rateSelector, idVisit, visitSp
     });
 
     amtPaid();
-}
-
-function getVisitRoomList(idVisit, visitSpan, changeDate, $rescSelector) {
-    
-    $rescSelector.prop('disabled', true);
-    $('#hhk-roomChsrtitle').addClass('hhk-loading');
-    $('#rmDepMessage').text('').hide();
-     
-    var parms = {cmd:'chgRoomList', idVisit:idVisit, span:visitSpan, chgDate:changeDate, selRescId:$rescSelector.val()};
-    
-    $.post('ws_ckin.php', parms,
-        function (data) {
-            var newSel;
-
-            $rescSelector.prop('disabled', false);
-            $('#hhk-roomChsrtitle').removeClass('hhk-loading');
-            
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.open(data.gotopage);
-                }
-                flagAlertMessage(data.error, 'error');
-                return;
-            }
-            
-            if (data.resc) {
-                chgRoomList = data.resc;
-            }
-            
-            if (data.sel) {
-                newSel = $(data.sel);
-                $rescSelector.children().remove();
-
-                newSel.children().appendTo($rescSelector);
-                $rescSelector.val(data.idResc).change();
-
-//                if (data.msg && data.msg !== '') {
-//                    $('#hhkroomMsg').text(data.msg).show();
-//                }
-                
-            }
-        });
 }
 
 function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, idResv, rtnFunction) {

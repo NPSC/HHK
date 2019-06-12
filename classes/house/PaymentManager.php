@@ -223,7 +223,7 @@ class PaymentManager {
                     $invLine = new OneTimeInvoiceLine();
                     $invLine->createNewLine(new Item($dbh, ItemId::LodgingReversal, (0 - $this->guestCreditAmt)), 1, 'Lodging');
 
-                    $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, $notes);
+                    $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
                     $this->invoice->addLine($dbh, $invLine, $uS->username);
 
                 }
@@ -238,7 +238,7 @@ class PaymentManager {
                         $invLine = new HoldInvoiceLine();
                         $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, $overPaymemntAmt), 1);
 
-                        $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, $notes);
+                        $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
                         $this->invoice->addLine($dbh, $invLine, $uS->username);
 
                     } else if ($this->pmp->getBalWith() == ExcessPay::RoomFund) {
@@ -246,7 +246,7 @@ class PaymentManager {
                         $invLine = new OneTimeInvoiceLine();
                         $invLine->createNewLine(new Item($dbh, ItemId::LodgingDonate, $overPaymemntAmt), 1);
 
-                        $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, $notes);
+                        $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
                         $this->invoice->addLine($dbh, $invLine, $uS->username);
 
                     } else if ($this->pmp->getBalWith() == ExcessPay::Refund && $this->hasInvoice()) {

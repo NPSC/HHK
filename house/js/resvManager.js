@@ -1643,14 +1643,13 @@ function resvManager(initData) {
                     }
                 });
             }
-
         }
 
         function setupPay(data){
 
             if ($('#selResource').length > 0 && $('#selRateCategory').length > 0) {
                 
-                setupPayments(data.resv.rdiv.rooms, $('#selResource'), $('#selRateCategory'));
+                setupPayments($('#selRateCategory'));
                 
                 $('#paymentDate').datepicker({
                     yearRange: '-1:+00',
@@ -2251,6 +2250,17 @@ function resvManager(initData) {
 
                 var tot = familySection.findStaysChecked() + familySection.findStays('r');
                 resvSection.$totalGuests.text(tot);
+                
+                if ($('#selResource').val() !== '0') {
+                    var msg = 'Room may be too small';
+                    var room = rooms[$('#selResource').val()];
+                    
+                    if (tot > room.maxOcc) {
+                        $('#hhkroomMsg').text(msg).show();
+                    } else if ($('#hhkroomMsg').text() == msg) {
+                        $('#hhkroomMsg').text('').hide();
+                    }
+                }
 
                 if (tot > 0) {
                     resvSection.$totalGuests.parent().removeClass('ui-state-highlight');

@@ -905,7 +905,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             case 'psg':
                 $rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $end, readGenLookupsPDO($dbh, 'Patient_Rel_Type'), $uS->guestLookups[GL_TableNames::Hospital], $labels, $showAssoc, $showDiag, $showLocation, $uS->ShowBirthDate, $uS->PatientAsGuest);
                 $dataTable = $rptArry['table'];
-                $sTbl->addBodyTr(HTMLTable::makeTh($labels->getString('statement', 'psgLabel', 'PSG') . ' Report', array('colspan'=>'4')));
+                $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $labels->getString('statement', 'psgLabel', 'PSG') . ' Report', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
                 $sTbl->addBodyTr(HTMLTable::makeTd('Hospitals', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
                 if ($showDiag) {
@@ -924,7 +924,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
             case 'p':
                 $dataTable = getPeopleReport($dbh, $local, FALSE, $whPeople . " and Relationship_Code = '" . RelLinkType::Self . "' ", $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation);
-                $sTbl->addBodyTr(HTMLTable::makeTh('Just Patients', array('colspan'=>'4')));
+                $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Just Patients', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
                 $sTbl->addBodyTr(HTMLTable::makeTd('Hospitals', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
                 if ($showDiag) {
@@ -940,7 +940,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
             case 'g':
                 $dataTable = getPeopleReport($dbh, $local, TRUE, $whPeople, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation);
-                $sTbl->addBodyTr(HTMLTable::makeTh('Patients & Guests', array('colspan'=>'4')));
+                $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Patients & Guests', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
                 $sTbl->addBodyTr(HTMLTable::makeTd('Hospitals', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
                 if ($showDiag) {

@@ -477,7 +477,8 @@ where lp.idPayment > 0
 
         $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display'));
         $mkTable = 1;
-        $hdrTbl = $headerTable->generateMarkup();
+        $hdrTbl = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Payment Report', array('style'=>'margin-top: .5em;'))
+                . $headerTable->generateMarkup();
 
     } else {
 
