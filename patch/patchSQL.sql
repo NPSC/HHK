@@ -52,5 +52,5 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VAL
  ('MemberImageSizePx', '75', 'i', 'h', 'Guest image thumbnail size in pixels');
 
 
-INSERT INTO `demo`.`sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES 
- ('Volunteers', 'true', 'b', 'r', 'Use the Volunteer Site');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES 
+ ('Volunteers', 'false', 'b', 'r', 'Use the Volunteer Site');

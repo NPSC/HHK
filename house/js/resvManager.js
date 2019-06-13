@@ -2251,7 +2251,7 @@ function resvManager(initData) {
                 var tot = familySection.findStaysChecked() + familySection.findStays('r');
                 resvSection.$totalGuests.text(tot);
                 
-                if ($('#selResource').val() !== '0') {
+                if ($('#selResource').length > 0 && $('#selResource').val() !== '0') {
                     var msg = 'Room may be too small';
                     var room = rooms[$('#selResource').val()];
                     

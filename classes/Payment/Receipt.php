@@ -142,7 +142,7 @@ class Receipt {
 
 
         $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(date('D M jS, Y g:ia', strtotime($payResp->getPaymentDate()))));
+                . HTMLTable::makeTd(date('D M jS, Y', strtotime($payResp->getPaymentDate()))));
 
         $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
 
@@ -191,7 +191,7 @@ class Receipt {
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(date('D M jS, Y g:ia', strtotime($payResp->getPaymentDate()))));
+                . HTMLTable::makeTd(date('D M jS, Y', strtotime($payResp->getPaymentDate()))));
 
         $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
 

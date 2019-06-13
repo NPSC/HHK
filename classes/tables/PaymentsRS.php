@@ -228,7 +228,6 @@ class InvoiceRs extends TableRS {
     public $idInvoice;  // int(11) NOT NULL AUTO_INCREMENT,
     public $Delegated_Invoice_Id;  // int(11) NOT NULL DEFAULT '0',
     public $Invoice_Number;  // varchar(45) DEFAULT NULL,
-    public $Invoice_Type;  // varchar(4) DEFAULT NULL,
     public $Deleted;  // SMALLINT default 0 NOT NULL,
     public $Amount;  // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $Sold_To_Id;  //;  // int(11) DEFAULT NULL,
@@ -240,11 +239,9 @@ class InvoiceRs extends TableRS {
     public $Balance;  // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $Order_Number;  // varchar(45) DEFAULT NULL,
     public $Suborder_Number; //   `Suborder_Number` smallint(6) NOT NULL DEFAULT '0',
-    public $First_Payment_Due;  // date DEFAULT NULL,
+    public $Billing_Process_Id;
     public $BillStatus;  // VARCHAR(5) NOT NULL DEFAULT '',
     public $BillDate;  // DATE NULL,
-    public $Last_Reminder;  // DATETIME,
-    public $Overdue_Step;  // INTEGER NOT NULL DEFAULT '0',
     public $Description;  // varchar(45) DEFAULT NULL,
     public $Notes;  // varchar(450) DEFAULT NULL,
     public $Updated_By;  // varchar(45) DEFAULT NULL,
@@ -267,7 +264,6 @@ class InvoiceRs extends TableRS {
         $this->Balance = new DB_Field('Balance', 0, new DbDecimalSanitizer(), TRUE, TRUE);
         $this->Order_Number = new DB_Field('Order_Number', "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Suborder_Number = new DB_Field('Suborder_Number', 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->Due_Date = new DB_Field("Due_Date", NULL, new DbDateSanitizer("Y-m-d"), TRUE, TRUE);
         $this->Description = new DB_Field("Description", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Notes = new DB_Field("Notes", "", new DbStrSanitizer(450), TRUE, TRUE);
         $this->BillStatus = new DB_Field('BillStatus', "", new DbStrSanitizer(5), TRUE, TRUE);
