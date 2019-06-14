@@ -69,6 +69,8 @@ function resvManager(initData) {
         return idName;
     }
 
+
+
     function FamilySection($wrapper) {
         var t = this;
         var divFamDetailId = 'divfamDetail';
@@ -1894,7 +1896,7 @@ function resvManager(initData) {
         }
 
         function verify() {
-
+            
             // vehicle
             if ($('#cbNoVehicle').length > 0) {
 

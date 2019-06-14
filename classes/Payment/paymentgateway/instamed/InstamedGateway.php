@@ -638,6 +638,8 @@ class InstamedGateway extends PaymentGateway {
         $gwResp = new StandInGwResponse($pAuthRs, $gTRs->OperatorID->getStoredVal(), $gTRs->CardHolderName->getStoredVal(), $gTRs->ExpDate->getStoredVal(), $gTRs->Token->getStoredVal(), $invoice->getInvoiceNumber(), $payRs->Amount->getStoredVal());
         $payResp = new ImPaymentResponse($gwResp, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $paymentNotes, $partlyApproved);
 
+        $payResp->setPaymentDate($payRs->Payment_Date->getStoredVal());
+
         switch ($payResp->getStatus()) {
 
             case CreditPayments::STATUS_APPROVED:

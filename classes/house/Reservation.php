@@ -780,9 +780,9 @@ WHERE
             while ($s = $vstmt->fetch(\PDO::FETCH_ASSOC)) {
                 // These guests are already staying
 
-                if ($s['Status'] != VisitStatus::CheckedIn) {
-                    continue;
-                }
+//                if ($s['Status'] != VisitStatus::CheckedIn) {
+//                    continue;
+//                }
 
                 if ($s['idVisit'] == $idVisit && $s['Visit_Span'] == $idSpan && $s['Status'] == VisitStatus::CheckedIn) {
                     $memVisit = new PSGMemVisit(array());
@@ -2063,8 +2063,6 @@ class StayingReservation extends CheckingIn {
         $visitRs = new VisitRs();
 
 
-        $this->initialSave($dbh, $post);
-
         if ($this->reserveData->hasError()) {
             return $this;
         }
@@ -2102,6 +2100,9 @@ class StayingReservation extends CheckingIn {
             $this->reserveData->addError("The maximum occupancy (" . $resc->getMaxOccupants() . ") for room " . $resc->getTitle() . " is exceded.  ");
             return;
         }
+
+        // Save any new guests now.  (after error checking)
+        $this->initialSave($dbh, $post);
 
         // open visit
         $visit = new Visit($dbh, 0, $visitRs->idVisit->getStoredVal(), NULL, NULL, $resc, $uS->username, $visitRs->Span->getStoredVal());
