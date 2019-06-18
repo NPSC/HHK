@@ -180,13 +180,9 @@ class ManualChargeResponse extends PaymentResponse {
         return $this->cardNum;
     }
 
-    public function getPaymentDate() {
-
-    }
-
     public function getStatus() {
 
-        return CreditPayments::STATUS_APPROVED;;
+        return CreditPayments::STATUS_APPROVED;
     }
 
     public function receiptMarkup(\PDO $dbh, &$tbl) {

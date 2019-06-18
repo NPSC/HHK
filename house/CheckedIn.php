@@ -119,7 +119,7 @@ if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FA
 
     if ($idVisit > 0) {
 
-        $reservArray = ReservationSvcs::generateCkinDoc($dbh, 0, $idVisit, '../images/receiptlogo.png');
+        $reservArray = ReservationSvcs::generateCkinDoc($dbh, 0, $idVisit, 0, '../images/receiptlogo.png');
 
         $sty = $reservArray['style'];
         $regForm = $reservArray['doc'];

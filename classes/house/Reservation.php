@@ -1764,7 +1764,7 @@ FROM reservation r
 
 
         // Generate Reg form
-        $reservArray = ReservationSvcs::generateCkinDoc($dbh, 0, $this->visit->getIdVisit(), $uS->resourceURL . 'images/receiptlogo.png');
+        $reservArray = ReservationSvcs::generateCkinDoc($dbh, 0, $this->visit->getIdVisit(), $this->visit->getSpan(), $uS->resourceURL . 'images/receiptlogo.png');
 
         $dataArray['style'] = $reservArray['style'];
         $dataArray['regform'] = $reservArray['doc'];
