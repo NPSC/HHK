@@ -169,7 +169,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 $psgMembers = $this->reserveData->getPsgMembers();
 
                 $this->reserveData->addConcurrentRooms($this->findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $arrivalDT, $departDT, $this->reserveData->getResvTitle()));
-                $this->reserveData->addConcurrentRooms($this->findConflictingStays($dbh, $psgMembers, $arrivalDT, $this->reserveData->getIdPsg(), $departDT));
+                $this->reserveData->addConcurrentRooms($this->findConflictingStays($dbh, $psgMembers, $arrivalDT, $this->reserveData->getIdPsg(), $departDT, $this->reserveData->getIdVisit(), $this->reserveData->getSpan()));
 
                 $this->reserveData->setPsgMembers($psgMembers);
 
@@ -776,7 +776,8 @@ WHERE
     DATEDIFF(DATE(s.Span_Start_Date), DATE(ifnull(s.Span_End_Date, '2500-01-01'))) != 0
     and DATE(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) >= DATE('" . $arrivalDT->format('Y-m-d') . "')
     and DATE(s.Span_Start_Date) < DATE('" . $departureDT->format('Y-m-d') . "')
-    and s.idName in (" . substr($whStays, 1) . ")");
+    and s.idName in (" . substr($whStays, 1) . ") "
+                    . " order by s.Visit_Span");
 
             while ($s = $vstmt->fetch(\PDO::FETCH_ASSOC)) {
                 // These guests are already staying somewhere
@@ -787,7 +788,7 @@ WHERE
 
                 } else {
                     // Not my visit
-                    $memVisit = new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'], 'room'=>$s['Title']));
+                    $memVisit = new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'], 'room'=>$s['Title'], 'status'=>$s['Status']));
                 }
 
                 foreach ($psgMembers as $m) {
@@ -1996,7 +1997,7 @@ class StayingReservation extends CheckingIn {
     protected function createAddGuestMarkup(\PDO $dbh) {
 
         $uS = Session::getInstance();
-        $labels = new Config_Lite(LABEL_FILE);
+
         $resvSectionHeaderPrompt = 'Add Guests:';
         $rmSelMessage = '';
 
@@ -2009,7 +2010,7 @@ class StayingReservation extends CheckingIn {
         $this->reserveData->setArrivalDT($nowDT);
 
         // Registration
-        $reg = new Registration($dbh, $this->reserveData->getIdPsg());
+//        $reg = new Registration($dbh, $this->reserveData->getIdPsg());
 
         // Check for max rooms per patient
 //        if ($this->reserveData->getConcurrentRooms() >= $uS->RoomsPerPatient) {
@@ -2175,19 +2176,12 @@ class CheckedoutReservation extends CheckingIn {
     protected function createAddGuestMarkup(\PDO $dbh) {
 
         $uS = Session::getInstance();
-        $dataArray = array();
 
+        $rmSelMessage = '';
         $nowDT = new \DateTime();
         $nowDT->setTime(intval($uS->CheckInTime), 0, 0);
 
         $resv = new Reservation_1($this->reservRs);
-
-        // Check for max rooms per patient
-        if ($this->reserveData->getConcurrentRooms() >= $uS->RoomsPerPatient) {
-            $rmSelMessage = 'Already at the maximum rooms per patient ( ' .$uS->RoomsPerPatient . ').';
-        } else {
-            $rmSelMessage = '';
-        }
 
         // Room Chooser
         $roomChooser = new RoomChooser($dbh, $resv, 0, $this->reserveData->getSpanStartDT(), $this->reserveData->getSpanEndDT());
@@ -2197,7 +2191,7 @@ class CheckedoutReservation extends CheckingIn {
         // Calculate room occupation
         $occs = 0;
         foreach ($this->reserveData->getPsgMembers() as $s) {
-            if ($s->getStayObj()->getMyStayType() != 'open') {
+            if ($s->getStayObj()->getStay() == 'r') {
                 $occs++;
             }
         }
@@ -2238,20 +2232,6 @@ class CheckedoutReservation extends CheckingIn {
         return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
     }
 
-//    public function checkedinMarkup(\PDO $dbh) {
-
-//        $post = array(
-//            'vid'=>$this->reserveData->getIdVisit(),
-//            'span'=>$this->reserveData->getSpan(),
-//            'rid'=>$this->reserveData->getIdResv(),
-//            'vstatus'=>$this->reserveData->getSpanStatus(),
-//        );
-
-//        $dataArray['redirTo'] = "register.php?gamess=Guest added to visit";
-//
-//        return $dataArray;
-//
-//    }
 
     protected function addGuestStay(\PDO $dbh, $post) {
 
