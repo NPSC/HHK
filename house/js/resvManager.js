@@ -1335,6 +1335,9 @@ function resvManager(initData) {
                     if ($('#gstDate').val() != '' && $('#gstCoDate').val() != '') {
                         updateRescChooser.go($('#gstDate').val(), $('#gstCoDate').val());
                     }
+                    
+                    // stay buttons and total guests.
+                    $('.hhk-cbStay').change();
                 }
             });
         }
@@ -1666,7 +1669,7 @@ function resvManager(initData) {
 
             // Room selector update for constraints changes.
             $('input.hhk-constraintsCB').change( function () {
-                // Disable max room size.
+
                 updateRescChooser.go($('#gstDate').val(), $('#gstCoDate').val());
             });
         }
@@ -1838,30 +1841,6 @@ function resvManager(initData) {
                 expDatesSection.openControl = true;
                 expDatesSection.setUp(data.resv.rdiv, doOnDatesChange, $('#addGuestHeader'));
 
-//                updateRescChooser.omitSelf = false;
-//                updateRescChooser.idReservation = 0;
-//                t.checkPayments = false;
-//
-//                $('#selResource').change(function () {
-//
-//                    if ($('#gstDate').val() !== '' && $('#gstCoDate').val() !== '') {
-//
-//                        if ($(this).val() !== t.origRoomId) {
-//                            $('#divRateChooser').show();
-//                            $('#divPayChooser').show();
-//                            t.checkPayments = true;
-//                        } else {
-//                            $('#divRateChooser').hide();
-//                            $('#divPayChooser').hide();
-//                            t.checkPayments = false;
-//                        }
-//
-//                    }
-//                });
-//
-//                $('#' + familySection.divFamDetailId).on('change', '.hhk-cbStay', function () {
-//                    updateRescChooser.numberGuests = familySection.findStaysChecked() + familySection.findStays('r');
-//                });
             }
 
             t.setupComplete = true;

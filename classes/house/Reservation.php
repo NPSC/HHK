@@ -773,20 +773,20 @@ FROM
         JOIN
     registration r ON v.idRegistration = r.idRegistration
 WHERE
-    DATE(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) >= DATE('" . $arrivalDT->format('Y-m-d') . "')
+    DATEDIFF(DATE(s.Span_Start_Date), DATE(ifnull(s.Span_End_Date, '2500-01-01'))) != 0
+    and DATE(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) >= DATE('" . $arrivalDT->format('Y-m-d') . "')
     and DATE(s.Span_Start_Date) < DATE('" . $departureDT->format('Y-m-d') . "')
     and s.idName in (" . substr($whStays, 1) . ")");
 
             while ($s = $vstmt->fetch(\PDO::FETCH_ASSOC)) {
-                // These guests are already staying
+                // These guests are already staying somewhere
 
-//                if ($s['Status'] != VisitStatus::CheckedIn) {
-//                    continue;
-//                }
-
-                if ($s['idVisit'] == $idVisit && $s['Visit_Span'] == $idSpan && $s['Status'] == VisitStatus::CheckedIn) {
+                if ($s['idVisit'] == $idVisit && $s['Visit_Span'] == $idSpan) {
+                    // My visit
                     $memVisit = new PSGMemVisit(array());
+
                 } else {
+                    // Not my visit
                     $memVisit = new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'], 'room'=>$s['Title']));
                 }
 
@@ -1998,6 +1998,7 @@ class StayingReservation extends CheckingIn {
         $uS = Session::getInstance();
         $labels = new Config_Lite(LABEL_FILE);
         $resvSectionHeaderPrompt = 'Add Guests:';
+        $rmSelMessage = '';
 
         $nowDT = new \DateTime();
         $nowDT->setTime(intval($uS->CheckInTime), 0, 0);
@@ -2011,27 +2012,25 @@ class StayingReservation extends CheckingIn {
         $reg = new Registration($dbh, $this->reserveData->getIdPsg());
 
         // Check for max rooms per patient
-        if ($this->reserveData->getConcurrentRooms() >= $uS->RoomsPerPatient) {
-            $rmSelMessage = 'Already at the maximum rooms per patient ( ' .$uS->RoomsPerPatient . ').';
-        } else {
-            $rmSelMessage = '';
-        }
+//        if ($this->reserveData->getConcurrentRooms() >= $uS->RoomsPerPatient) {
+//            $rmSelMessage = 'Already at the maximum rooms per patient ( ' .$uS->RoomsPerPatient . ').';
+//        }
 
 
         // Room Chooser
         $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
         $dataArray['rChooser'] = $roomChooser->createAddGuestMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN), $rmSelMessage);
 
-        if ( ($roomChooser->getCurrentGuests() < $roomChooser->getSelectedResource()->getMaxOccupants())
-                || $this->reserveData->getConcurrentRooms() < $uS->RoomsPerPatient) {
+//        if ($roomChooser->getCurrentGuests() < $roomChooser->getSelectedResource()->getMaxOccupants()) {
+//                || $this->reserveData->getConcurrentRooms() < $uS->RoomsPerPatient) {
 
             $dataArray = array_merge($dataArray, $this->createExpDatesControl(TRUE, $this->reserveData->getSpanStartDT()->format('M j, Y')));
 
 
-        } else {
-            $resvSectionHeaderPrompt = 'The ' . $labels->getString('guestEdit', 'psgTab', 'PSG') . ' is already at maximum occupancy for our House';
-            $dataArray['hideCkinBtn'] = TRUE;
-        }
+//        } else {
+//            $resvSectionHeaderPrompt = 'The ' . $labels->getString('guestEdit', 'psgTab', 'PSG') . ' is already at maximum occupancy for our House';
+//            $dataArray['hideCkinBtn'] = TRUE;
+//        }
 
         // Vehicles
         if ($uS->TrackAuto) {
