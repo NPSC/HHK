@@ -73,7 +73,7 @@ class Reservation {
     public static function loadReservation(\PDO $dbh, ReserveData $rData) {
 
         // Load reservation
-        $stmt = $dbh->query("SELECT r.*, rg.idPsg, ifnull(v.idVisit, 0) as idVisit
+        $stmt = $dbh->query("SELECT r.*, rg.idPsg, ifnull(v.idVisit, 0) as idVisit, ifnull(v.`Status`, '') as `SpanStatus`, ifnull(v.Span_Start, '') as `SpanStart`, ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) as `SpanEnd`
 FROM reservation r
         LEFT JOIN
     registration rg ON r.idRegistration = rg.idRegistration
@@ -91,7 +91,10 @@ WHERE r.idReservation = " . $rData->getIdResv());
         EditRS::loadRow($rows[0], $rRs);
 
         $rData->setIdPsg($rows[0]['idPsg']);
-        $rData->setIdVisit($rows[0]['idVisit']);
+        $rData->setIdVisit($rows[0]['idVisit'])
+            ->setSpanStatus($rows[0]['SpanStatus'])
+            ->setSpanStartDT($rows[0]['SpanStart'])
+            ->setSpanEndDT($rows[0]['SpanEnd']);
 
         if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
             return new ActiveReservation($rData, $rRs, new Family($dbh, $rData));
@@ -2009,29 +2012,12 @@ class StayingReservation extends CheckingIn {
         // Dates
         $this->reserveData->setArrivalDT($nowDT);
 
-        // Registration
-//        $reg = new Registration($dbh, $this->reserveData->getIdPsg());
-
-        // Check for max rooms per patient
-//        if ($this->reserveData->getConcurrentRooms() >= $uS->RoomsPerPatient) {
-//            $rmSelMessage = 'Already at the maximum rooms per patient ( ' .$uS->RoomsPerPatient . ').';
-//        }
-
 
         // Room Chooser
         $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
         $dataArray['rChooser'] = $roomChooser->createAddGuestMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN), $rmSelMessage);
 
-//        if ($roomChooser->getCurrentGuests() < $roomChooser->getSelectedResource()->getMaxOccupants()) {
-//                || $this->reserveData->getConcurrentRooms() < $uS->RoomsPerPatient) {
-
-            $dataArray = array_merge($dataArray, $this->createExpDatesControl(TRUE, $this->reserveData->getSpanStartDT()->format('M j, Y')));
-
-
-//        } else {
-//            $resvSectionHeaderPrompt = 'The ' . $labels->getString('guestEdit', 'psgTab', 'PSG') . ' is already at maximum occupancy for our House';
-//            $dataArray['hideCkinBtn'] = TRUE;
-//        }
+        $dataArray = array_merge($dataArray, $this->createExpDatesControl(TRUE, $this->reserveData->getSpanStartDT()->format('M j, Y')));
 
         // Vehicles
         if ($uS->TrackAuto) {
@@ -2214,7 +2200,7 @@ class CheckedoutReservation extends CheckingIn {
 
 
         // Reservation status title
-        $dataArray['rStatTitle'] = 'Adding Guests';
+        $dataArray['rStatTitle'] = 'Checked Out - Adding Guests';
 
         // Reservation notes
         $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
