@@ -613,7 +613,7 @@ WHERE
                     'Invoice_Status'=>$p['Invoice_Status'],
                     'Invoice_Status_Title'=>$p['Invoice_Status_Title'],
                     'Carried_Amount'=>$p['Carried_Amount'],
-                    'Invoice_Description'=>$p['Description'],
+                    'Invoice_Description'=>$p['Notes'],
                     'Invoice_Balance'=>$p['Invoice_Balance'],
                     'Delegated_Invoice_Id'=>$p['Delegated_Invoice_Id'],
                     'Invoice_Deleted'=>$p['Deleted'],
