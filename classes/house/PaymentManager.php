@@ -66,41 +66,37 @@ class PaymentManager {
         // Process a visit payment
         if (is_null($visit) === FALSE) {
 
-
             // Visit Fee Payments
             if ($this->pmp->getVisitFeePayment() > 0) {
                 // cleaning fee
 
-                $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
-
                 $visitFeeItem = new Item($dbh, ItemId::VisitFee, $this->pmp->getVisitFeePayment());
-                $invLine = new OneTimeInvoiceLine();
-                $invLine->createNewLine($visitFeeItem, 1);
+                $invLine = new OneTimeInvoiceLine($uS->ShowLodgDates);
+                $invLine->createNewLine($visitFeeItem, 1, $notes);
 
+                $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
                 $this->invoice->addLine($dbh, $invLine, $uS->username);
 
             }
-
 
             // Deposit payments
             if ($this->pmp->getKeyDepositPayment() > 0) {
 
-                $invLine = new HoldInvoiceLine();
-                $invLine->createNewLine(new Item($dbh, ItemId::KeyDeposit, $this->pmp->getKeyDepositPayment()), 1);
+                $invLine = new HoldInvoiceLine($uS->ShowLodgDates);
+                $invLine->createNewLine(new Item($dbh, ItemId::KeyDeposit, $this->pmp->getKeyDepositPayment()), 1, $notes);
 
                 $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
                 $this->invoice->addLine($dbh, $invLine, $uS->username);
 
             }
-
 
             // Deposit Refunds - only if checked out...
             if ($visit->getVisitStatus() == VisitStatus::CheckedOut && abs($this->pmp->getDepositRefundAmt()) > 0 && $this->pmp->getBalWith() != ExcessPay::Ignore) {
                 // Return the deposit
                 $this->depositRefundAmt = abs($this->pmp->getDepositRefundAmt());
 
-                $invLine = new ReimburseInvoiceLine();
-                $invLine->createNewLine(new Item($dbh, ItemId::DepositRefund, (0 - $this->depositRefundAmt)), 1);
+                $invLine = new ReimburseInvoiceLine($uS->ShowLodgDates);
+                $invLine->createNewLine(new Item($dbh, ItemId::DepositRefund, (0 - $this->depositRefundAmt)), 1, $notes);
                 $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
                 $this->invoice->addLine($dbh, $invLine, $uS->username);
             }
@@ -116,7 +112,8 @@ class PaymentManager {
 
                     // Refund the MOA amount
                     $this->moaRefundAmt = abs($this->pmp->getRetainedAmtPayment());
-                    $invLine = new ReimburseInvoiceLine();
+                    $invLine = new ReimburseInvoiceLine($uS->ShowLodgDates);
+                    $invLine->appendDescription($notes);
                     $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, (0 - $this->moaRefundAmt)), 1, 'Payout');
 
                     $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
@@ -183,8 +180,8 @@ class PaymentManager {
 
                 $lodging = new Item($dbh, ItemId::Lodging, $roomCharges);
 
-                $invLine = new RecurringInvoiceLine();
-                $invLine->setUseDetail($uS->ShowLodgDates);
+                $invLine = new RecurringInvoiceLine($uS->ShowLodgDates);
+
                 $invLine->appendDescription($notes);
                 $invLine->createNewLine($lodging, 1, $paidThruDT->format('Y-m-d H:i:s'), $endPricingDT->format('Y-m-d H:i:s'), $this->pmp->visitCharges->getNightsToPay());
 
@@ -203,8 +200,8 @@ class PaymentManager {
                 if ($housePaymentAmt > 0 && $this->pmp->getFinalPaymentFlag()) {
 
                     $lodging = new Item($dbh, ItemId::Waive, (0 - $housePaymentAmt));
-                    $invLine = new OneTimeInvoiceLine();
-                    $invLine->createNewLine($lodging, 1, '');
+                    $invLine = new OneTimeInvoiceLine($uS->ShowLodgDates);
+                    $invLine->createNewLine($lodging, 1, $notes);
 
                     $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
                     $this->invoice->addLine($dbh, $invLine, $uS->username);
@@ -235,8 +232,9 @@ class PaymentManager {
                     if ($this->pmp->getBalWith() == ExcessPay::Hold) {
                         // Money on accoount
 
-                        $invLine = new HoldInvoiceLine();
-                        $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, $overPaymemntAmt), 1);
+                        $invLine = new HoldInvoiceLine($uS->ShowLodgDates);
+                        $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, $overPaymemntAmt), 1, $notes);
+
 
                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
                         $this->invoice->addLine($dbh, $invLine, $uS->username);

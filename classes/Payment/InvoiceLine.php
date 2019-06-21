@@ -30,8 +30,8 @@ abstract class InvoiceLine {
     protected $carriedFrom;
     protected $useDetail;
 
-    public function __construct() {
-        $this->useDetail = TRUE;
+    public function __construct($useDetail = TRUE) {
+        $this->useDetail = $useDetail;
         $this->invLineRs = new InvoiceLineRS();
     }
 
@@ -214,8 +214,9 @@ abstract class InvoiceLine {
 
         $this->description = $description;
 
-        if ($this->useDetail && $this->var != '') {
-            $this->description .= ' ' . $this->var;
+        // var will have invoice notes when useDetail is off.
+        if (!$this->useDetail) {
+            $this->description .= ';  ' . $this->var;
         }
 
         return $this;
@@ -236,8 +237,8 @@ class RecurringInvoiceLine extends InvoiceLine {
     protected $periodEnd;
     protected $units;
 
-    public function __construct() {
-        parent::__construct();
+    public function __construct($useDetail = TRUE) {
+        parent::__construct($useDetail);
         $this->setTypeId(InvoiceLineType::Recurring);
     }
 
@@ -342,8 +343,8 @@ class RecurringInvoiceLine extends InvoiceLine {
 
 class InvoiceInvoiceLine extends InvoiceLine {
 
-    public function __construct() {
-        parent::__construct();
+    public function __construct($useDetail = TRUE) {
+        parent::__construct($useDetail);
         $this->setTypeId(InvoiceLineType::Invoice);
     }
 
@@ -351,8 +352,8 @@ class InvoiceInvoiceLine extends InvoiceLine {
 
 class OneTimeInvoiceLine extends InvoiceLine {
 
-    public function __construct() {
-        parent::__construct();
+    public function __construct($useDetail = TRUE) {
+        parent::__construct($useDetail);
         $this->setTypeId(InvoiceLineType::OneTime);
     }
 
@@ -360,8 +361,8 @@ class OneTimeInvoiceLine extends InvoiceLine {
 
 class HoldInvoiceLine extends InvoiceLine {
 
-    public function __construct() {
-        parent::__construct();
+    public function __construct($useDetail = TRUE) {
+        parent::__construct($useDetail);
         $this->setTypeId(InvoiceLineType::Hold);
     }
 
@@ -369,8 +370,8 @@ class HoldInvoiceLine extends InvoiceLine {
 
 class ReimburseInvoiceLine extends InvoiceLine {
 
-    public function __construct() {
-        parent::__construct();
+    public function __construct($useDetail = TRUE) {
+        parent::__construct($useDetail);
         $this->setTypeId(InvoiceLineType::Reimburse);
     }
 
