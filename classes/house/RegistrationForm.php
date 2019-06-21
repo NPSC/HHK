@@ -16,7 +16,7 @@ class RegistrationForm {
     public function getDocument(\PDO $dbh, \Guest $priGuest, \Guest $billGuest, array $addtionalGuests, $patientName, $hospitalName, $roomTitle,
             $cardName, $cardType, $cardNumber, $logoUrl, $logoWidth, $instructionFileName, $expectedPayType = '', $note = '', $todaysDate = '') {
 
-        $paymentInfoSection = '<div><span>The House asks that guests leave a card on file for security purposes. You will be charged for the nights stayed at the agreed upon rate after check-out or after x weeks. </div>';
+//        $paymentInfoSection = '<div><span>The House asks that guests leave a card on file for security purposes. You will be charged for the nights stayed at the agreed upon rate after check-out or after x weeks. </div>';
 
         $uS = Session::getInstance();
 
@@ -78,13 +78,13 @@ class RegistrationForm {
 
         }
 
-        if ($uS->RoomPriceModel != ItemPriceCode::None) {
-            $doc .= $this->makePayor($billGuest, $cardName, $cardType, $cardNumber, ($cardNumber != '' ? 'xx/xx' : ''), $expectedPayType, $paymentInfoSection);
-        }
+//        if ($uS->RoomPriceModel != ItemPriceCode::None) {
+//            $doc .= $this->makePayor($billGuest, $cardName, $cardType, $cardNumber, ($cardNumber != '' ? 'xx/xx' : ''), $expectedPayType, $paymentInfoSection);
+//        }
 
-        $doc .= HTMLContainer::generateMarkup('div', '', array('style'=>'page-break-before: always;'));
-
-        $doc .= $this->makeHeader($logoUrl, $logoWidth, $uS->siteName, $house->get_webSite(), $address, $phones);
+//        $doc .= HTMLContainer::generateMarkup('div', '', array('style'=>'page-break-before: always;'));
+//
+//        $doc .= $this->makeHeader($logoUrl, $logoWidth, $uS->siteName, $house->get_webSite(), $address, $phones);
 
         $doc .= $this->makeInstructions($instructionFileName);
 

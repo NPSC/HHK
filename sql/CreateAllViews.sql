@@ -1515,7 +1515,7 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
         `i`.`Carried_Amount` AS `Carried_Amount`,
         `i`.`Balance` AS `Invoice_Balance`,
         `i`.`Delegated_Invoice_Id` AS `Delegated_Invoice_Id`,
-        `i`.`Description` AS `Description`,
+        `i`.`Notes` AS `Notes`,
         `i`.`Deleted` AS `Deleted`,
         `i`.`Updated_By` AS `Invoice_Updated_By`,
         ifnull(`il`.`idInvoice_Line`, '') as `il_Id`,

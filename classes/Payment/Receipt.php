@@ -726,7 +726,7 @@ WHERE
         }
     }
 
-    public static function makeOrdersRatesTable($rates, &$totalAmt, PriceModel $priceModel, Config_Lite $labels, array $invLines, &$numberNites) {
+    public static function makeOrdersRatesTable($rates, &$totalAmt, PriceModel $priceModel, Config_Lite $labels, array $invLines, &$numberNites, Item $moaItem, Item $donateItem) {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
@@ -878,20 +878,17 @@ WHERE
 
         // Room Donations & retained loging fees
         $donAmt = 0;
-        $donTitle = '';
         $moaAmt = 0;
-        $moaTitle = '';
+
         foreach ($invLines as $l) {
 
             $itemAmount = floatval($l['Amount']);
 
             if ($l['Item_Id'] == ItemId::LodgingDonate && $itemAmount != 0) {
-                $donTitle = $l['Description'];
                 $donAmt += $itemAmount;
             }
 
             if ($l['Item_Id'] == ItemId::LodgingMOA && $itemAmount > 0) {
-                $moaTitle = $l['Description'];
                 $moaAmt += $itemAmount;
             }
         }
@@ -901,7 +898,7 @@ WHERE
 
             $totalAmt += $donAmt;
 
-            $priceModel->rateTotalMarkup($tbl, $donTitle, '', number_format($donAmt,2), '');
+            $priceModel->rateTotalMarkup($tbl, $donateItem->getDescription(), '', number_format($donAmt,2), '');
         }
 
         // Print MOA total
@@ -909,7 +906,7 @@ WHERE
 
             $totalAmt += $moaAmt;
 
-            $priceModel->rateTotalMarkup($tbl, $moaTitle, '', number_format($moaAmt,2), '');
+            $priceModel->rateTotalMarkup($tbl, $moaItem->getDescription(), '', number_format($moaAmt,2), '');
         }
 
         // Second total line
@@ -1312,7 +1309,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
 
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable($rates, $totalAmt, $priceModel, $labels, $invLines, $totalNights);
+        $tbl = self::makeOrdersRatesTable($rates, $totalAmt, $priceModel, $labels, $invLines, $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
         $totalCharge = $totalAmt;
 
         // Thirdparty payments
@@ -1418,7 +1415,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
         $config = new Config_Lite(ciCFG_FILE);
 
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, $totalNights);
+        $tbl = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
         $totalCharge = $totalAmt;
 
         // Thirdparty payments

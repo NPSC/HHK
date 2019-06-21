@@ -13,6 +13,8 @@ require(DB_TABLES . "visitRS.php");
 require(DB_TABLES . "registrationRS.php");
 require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
+require (DB_TABLES . 'ItemRS.php');
+
 require (CLASSES . 'Purchase/Item.php');
 require(CLASSES . 'Purchase/RoomRate.php');
 

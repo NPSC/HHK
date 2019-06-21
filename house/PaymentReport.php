@@ -9,6 +9,8 @@
  */
 
 require ("homeIncludes.php");
+require (DB_TABLES . 'ItemRS.php');
+
 require (PMT . 'Receipt.php');
 require (CLASSES . 'ColumnSelectors.php');
 require CLASSES . 'OpenXML.php';
