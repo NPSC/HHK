@@ -777,7 +777,7 @@ FROM
     registration r ON v.idRegistration = r.idRegistration
 WHERE
     DATEDIFF(DATE(s.Span_Start_Date), DATE(ifnull(s.Span_End_Date, '2500-01-01'))) != 0
-    and DATE(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) >= DATE('" . $arrivalDT->format('Y-m-d') . "')
+    and DATE(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
     and DATE(s.Span_Start_Date) < DATE('" . $departureDT->format('Y-m-d') . "')
     and s.idName in (" . substr($whStays, 1) . ") "
                     . " order by s.Visit_Span");

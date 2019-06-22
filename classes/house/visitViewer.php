@@ -706,14 +706,14 @@ class VisitView {
 
         // MOA
         $totalMOA = 0;
-        if ($visitCharge->getItemInvCharges(ItemId::LodgingMOA) > 0) {
+        if ($visitCharge->getMoaInvCharges() > 0) {
 
-            $totalMOA = $visitCharge->getItemInvCharges(ItemId::LodgingMOA);
+            $totalMOA = $visitCharge->getMoaInvCharges();
             $showSubTotal = TRUE;
 
             $tbl2->addBodyTr(
                 HTMLTable::makeTd('Money On Account', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . number_format($visitCharge->getItemInvCharges(ItemId::LodgingMOA), 2), array('style'=>'text-align:right;'))
+                . HTMLTable::makeTd('$' . number_format($totalMOA, 2), array('style'=>'text-align:right;'))
             );
         }
 
