@@ -864,6 +864,9 @@ $uS->guestId = $id;
                         <?php if ($uS->TrackAuto) { ?>
                         <li><a href="#vvehicle">Vehicles</a></li>
                         <?php } ?>
+                        <?php if ($uS->UseIncidentReports) { ?>
+                        <li><a href="#vincidents">Incidents</a></li>
+                        <?php } ?>
                     </ul>
                     <div id="vpsg" class="ui-tabs-hide"  style="display:none;">
                         <div id="divPSGContainer"><?php echo $psgTabMarkup; ?></div>
@@ -887,6 +890,9 @@ $uS->guestId = $id;
                         <div id="visitAccordion">
                         <?php echo $visitList; ?>
                         </div>
+                    </div>
+                    <div id="vincidents" class="ui-tabs-hide" style="display: none;">
+	                    
                     </div>
                 </div>
                 <?php } ?>
@@ -944,6 +950,7 @@ $uS->guestId = $id;
         </script>
 
         <script type="text/javascript" src="../js/uppload.js"></script>
-        <script type="text/javascript" src="js/guestload-min.js?vn=6"></script>
+        <script type="text/javascript" src="js/incidentReports.js"></script>
+        <script type="text/javascript" src="js/guestload.js?vn=6"></script>
     </body>
 </html>

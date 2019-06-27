@@ -45,7 +45,7 @@ class ConvertTxtFiles {
 
             $result .= '<br/>agreement.txt file found.  ';
 
-            $doc = new Document($dbh, Document::findDocument($dbh, '', '', '', Document_Name::Registration));
+            $doc = new Document($dbh, Document::findDocumentId($dbh, '', '', '', Document_Name::Registration));
 
             if (!$doc->isValid()) { //if agreement document cannot be found
 
@@ -71,7 +71,7 @@ class ConvertTxtFiles {
 
             $result .= '<br/>confirmation.txt file found.  ';
 
-            $doc = new Document($dbh, Document::findDocument($dbh, '', '', '', Document_Name::Confirmation));
+            $doc = new Document($dbh, Document::findDocumentId($dbh, '', '', '', Document_Name::Confirmation));
 
             if (!$doc->isValid()) {//if confirmation document cannot be found
 
@@ -96,7 +96,7 @@ class ConvertTxtFiles {
 
             $result .= '<br/>survey.txt file found.  ';
 
-            $doc = new Document($dbh, Document::findDocument($dbh, '', '', '', Document_Name::Survey));
+            $doc = new Document($dbh, Document::findDocumentId($dbh, '', '', '', Document_Name::Survey));
 
             if (!$doc->isValid()) {//if survey document cannot be found
 
