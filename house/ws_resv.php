@@ -32,6 +32,7 @@ require (CLASSES . 'CreateMarkupFromDB.php');
 
 require (CLASSES . 'Note.php');
 require (CLASSES . 'ListNotes.php');
+require (CLASSES . 'ListReports.php');
 require (CLASSES . 'LinkNote.php');
 require (CLASSES . 'US_Holidays.php');
 require (CLASSES . 'PaymentSvcs.php');
@@ -302,8 +303,7 @@ try {
         $events = array('delete'=>$deleteCount, 'idNote'=>$noteId);
 
         break;
-
-
+        
     case 'linkNote':
 
         $noteId = 0;
@@ -326,6 +326,112 @@ try {
 
         break;
 
+
+	case 'getIncidentList':
+
+        $psgId = 0;
+        $guestId = 0;
+
+        if (isset($_GET['psgId'])) {
+            $psgId = intval(filter_input(INPUT_GET, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if (isset($_GET['guestId'])) {
+            $guestId = intval(filter_input(INPUT_GET, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        require(CLASSES . 'DataTableServer.php');
+
+        $events = ListReports::loadList($dbh, $guestId, $psgId, $_GET);
+
+        break;
+
+
+    case 'saveIncident':
+
+        $data = '';
+        $linkType = '';
+        $idLink = 0;
+
+        if (isset($_POST['data'])) {
+            $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
+        }
+
+        if (isset($_POST['linkType'])) {
+            $linkType = filter_input(INPUT_POST, 'linkType', FILTER_SANITIZE_STRING);
+        }
+
+        if (isset($_POST['linkId'])) {
+            $idLink = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $events = array('idNote'=>LinkNote::save($dbh, $data, $idLink, $linkType, $uS->username, $uS->ConcatVisitNotes));
+
+        break;
+
+
+    case 'updateIncidentContent':
+
+        $data = '';
+        $noteId = 0;
+        $updateCount = 0;
+
+        if (isset($_POST['data'])) {
+	    $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
+            //$data = addcslashes(filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING));
+        }
+        if (isset($_POST['idNote'])) {
+            $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if ($noteId > 0 && $data != '') {
+
+            $note = new Note($noteId);
+            $updateCount = $note->updateContents($dbh, $data, $uS->username);
+        }
+
+        $events = array('update'=>$updateCount, 'idNote'=>$noteId);
+
+        break;
+
+
+    case 'deleteIncident':
+
+        $noteId = 0;
+        $deleteCount = 0;
+
+        if (isset($_POST['idNote'])) {
+            $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if ($noteId > 0) {
+            $note = new Note($noteId);
+            $deleteCount = $note->deleteNote($dbh, $uS->userName);
+        }
+
+        $events = array('delete'=>$deleteCount, 'idNote'=>$noteId);
+
+        break;
+
+
+    case 'undoDeleteIncident':
+
+        $noteId = 0;
+        $deleteCount = 0;
+
+        if (isset($_POST['idNote'])) {
+            $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if ($noteId > 0) {
+            $note = new Note($noteId);
+            $deleteCount = $note->undoDeleteNote($dbh, $uS->userName);
+        }
+
+        $events = array('delete'=>$deleteCount, 'idNote'=>$noteId);
+
+        break;
+        
 
     case 'updateAgenda':
 

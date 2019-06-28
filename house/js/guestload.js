@@ -309,8 +309,10 @@ $(document).ready(function () {
     });
 
 	//incident reports
-	
-	$('#vincidents').incidentReport();
+	$('#vIncidentContent').incidentViewer({
+		guestId: memData.id,
+		psgId: memData.idPsg
+	});
 
     if (memData.psgOnly) {
         $psgList.tabs("disable");

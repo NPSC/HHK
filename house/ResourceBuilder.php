@@ -42,6 +42,7 @@ try {
 } catch (Exception $exw) {
     die($exw->getMessage());
 }
+$pageTitle = $wInit->pageTitle;
 
 function saveArchive(PDO $dbh, $desc, $subt, $tblName) {
 
@@ -1905,7 +1906,7 @@ $resultMessage = $alertMsg->createMarkup();
     <body <?php if ($wInit->testVersion) {
     echo "class='testbody'";
 } ?>>
-<?php echo $menuMarkup; ?>
+<?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <div style="float:left; margin-right: 100px; margin-top:10px;">
                 <h1><?php echo $wInit->pageHeading; ?></h1>

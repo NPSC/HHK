@@ -892,7 +892,7 @@ $uS->guestId = $id;
                         </div>
                     </div>
                     <div id="vincidents" class="ui-tabs-hide" style="display: none;">
-	                    
+	                    <div id="vIncidentContent"></div>
                     </div>
                 </div>
                 <?php } ?>
@@ -928,6 +928,7 @@ $uS->guestId = $id;
             <div id="keysfees" style="font-size: .85em;"></div>
             <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
+            <div id="incidentDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
             <div id="submit" style="display:none;">
                 <table>
                     <tr>

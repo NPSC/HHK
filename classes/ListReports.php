@@ -19,10 +19,12 @@ class ListReports {
     public static function loadList (\PDO $dbh, $guestId, $psgId, $parms) {
 
         $columns = array(
-            array( 'db' => 'Report_Date',  'dt' => 'Date' ),
+            array( 'db' => 'Date',  'dt' => 'Date' ),
+            array( 'db' => 'Category', 'dt' => 'Category'),
             array( 'db' => 'Author',   'dt' => 'User' ),
             array( 'db' => 'Title', 'dt' => 'Title'),
             array( 'db' => 'Description', 'dt' => 'Description'),
+            array( 'db' => 'Status', 'dt' => 'Status'),
             array( 'db' => 'idReport', 'dt' => 'ReportId'),
             array( 'db' => 'Action', 'dt' => 'Action')
         );
@@ -36,7 +38,7 @@ class ListReports {
         }
         
         if($guestId != ''){
-	        $whereClause .= "Guest_Id = $guestId"
+	        $whereClause .= "Guest_Id = $guestId";
         }
 
 		if($psgId != ''){

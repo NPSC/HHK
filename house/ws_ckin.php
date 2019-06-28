@@ -39,8 +39,8 @@ require (CLASSES . 'Parsedown.php');
 require (CLASSES . 'Document.php');
 require(HOUSE . 'TemplateForm.php');
 
-require (CLASSES . 'MercPay/MercuryHCClient.php');
-require (CLASSES . 'MercPay/Gateway.php');
+//require (CLASSES . 'MercPay/MercuryHCClient.php');
+//require (CLASSES . 'MercPay/Gateway.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
 
