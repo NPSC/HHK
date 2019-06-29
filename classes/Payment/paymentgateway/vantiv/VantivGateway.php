@@ -405,7 +405,7 @@ class VantivGateway extends PaymentGateway {
 
             try {
 
-                $vr = CardInfo::portalReply($dbh, $this, $cardId, $post);
+                $vr = CardInfo::portalReply($dbh, $this, $cardId);
 
                 $payResult = new CofResult($vr->response->getDisplayMessage(), $vr->response->getStatus(), $vr->idPayor, $vr->idRegistration);
 

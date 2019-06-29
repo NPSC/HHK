@@ -54,3 +54,6 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VAL
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES 
  ('Volunteers', 'false', 'b', 'r', 'Use the Volunteer Site');
+
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES 
+('ImpliedTaxRate', '0', 's', 'h', '% assumed room rate tax');

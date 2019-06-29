@@ -465,6 +465,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('GuestAddr', 'true', 'b', 'h', 'False = do not collect guest address'),
 ('HouseKeepingEmail', '', 's', 'h', 'Gets notice of visit endings.'),
 ('HouseKeepingSteps', '2', 'i', 'h', 'Number of steps to cleaning/preparing rooms for new guests.'),
+('ImpliedTaxRate', '0', 's', 'h', '% assumed room rate tax'),
 ('IncludeLastDay','false','b','h','Include the departure day in room searches.'),
 ('IncomeRated', 'true', 'b', 'h','Use Income chooser rate assistance'),
 ('InitResvStatus', 'a', 's', 'h','Initial reservation status setting, confirmed or unconfirmed'),
