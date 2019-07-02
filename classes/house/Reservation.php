@@ -433,25 +433,20 @@ WHERE r.idReservation = " . $rData->getIdResv());
             $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
             $roomChooser->setOldResvId($oldResv);
 
+            $rateChooser = new RateChooser($dbh);
+
             $dataArray['rChooser'] = $roomChooser->CreateResvMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
+
+            // Rooms array
+            $dataArray['rooms'] = $roomChooser->makeRoomsArray();
 
             // Rate Chooser
             if ($uS->RoomPriceModel != ItemPriceCode::None) {
 
                 $showPayWith = TRUE;
 
-                $rateChooser = new RateChooser($dbh);
 
                 $dataArray['rate'] = $rateChooser->createResvMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'), $reg->getIdRegistration());
-                // Array with amount calculated for each rate.
-                $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
-                // Array with key deposit info
-                $dataArray['rooms'] = $roomChooser->makeRoomsArray();
-
-                if ($uS->VisitFee) {
-                    // Visit Fee Array
-                    $dataArray['vfee'] = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
-                }
 
                 // Card on file
                 if ($uS->ccgw != '') {
@@ -461,6 +456,14 @@ WHERE r.idReservation = " . $rData->getIdResv());
                             . HouseServices::viewCreditTable($dbh, $resv->getIdRegistration(), $resv->getIdGuest())
                         ,array('style'=>'float:left;padding:5px;')));
                 }
+            }
+
+            // Array with amount calculated for each rate.
+            $dataArray['ratelist'] = $rateChooser->makeRateArray($dbh, $resv->getExpectedDays(), $resv->getIdRegistration(), $resv->getFixedRoomRate(), ($resv->getNumberGuests() * $resv->getExpectedDays()));
+
+            if ($uS->VisitFee) {
+                // Visit Fee Array
+                $dataArray['vfee'] = $rateChooser->makeVisitFeeArray($dbh, $resv->getVisitFee());
             }
 
             // Vehicles
@@ -777,7 +780,7 @@ FROM
     registration r ON v.idRegistration = r.idRegistration
 WHERE
     DATEDIFF(DATE(s.Span_Start_Date), DATE(ifnull(s.Span_End_Date, '2500-01-01'))) != 0
-    and DATE(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
+    and DATE(ifnull(s.Span_End_Date, DATE_ADD(datedefaultnow(s.Expected_Co_Date),INTERVAL 1 DAY))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
     and DATE(s.Span_Start_Date) < DATE('" . $departureDT->format('Y-m-d') . "')
     and s.idName in (" . substr($whStays, 1) . ") "
                     . " order by s.Visit_Span");
@@ -1533,17 +1536,16 @@ FROM reservation r
             // Rate Chooser
             $dataArray['rate'] = $rateChooser->createCheckinMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'));
 
-        }
+            // Payment Chooser
+            if ($uS->PayAtCkin) {
 
-        // Payment Chooser
-        if ($uS->PayAtCkin) {
+                $checkinCharges = new CheckinCharges(0, $resv->getVisitFee(), $roomKeyDeps);
+                $checkinCharges->sumPayments($dbh);
 
-            $checkinCharges = new CheckinCharges(0, $resv->getVisitFee(), $roomKeyDeps);
-            $checkinCharges->sumPayments($dbh);
-
-            $dataArray['pay'] = HTMLContainer::generateMarkup('div',
-                    PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $checkinCharges, $resv->getExpectedPayType(), $uS->KeyDeposit, FALSE, $uS->DefaultVisitFee, $reg->getPreferredTokenId())
-                    , array('style'=>'clear:left; float:left;'));
+                $dataArray['pay'] = HTMLContainer::generateMarkup('div',
+                        PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $checkinCharges, $resv->getExpectedPayType(), $uS->KeyDeposit, FALSE, $uS->DefaultVisitFee, $reg->getPreferredTokenId())
+                        , array('style'=>'clear:left; float:left;'));
+            }
         }
 
         // Room Chooser
@@ -2002,7 +2004,6 @@ class StayingReservation extends CheckingIn {
         $uS = Session::getInstance();
 
         $resvSectionHeaderPrompt = 'Add Guests:';
-        $rmSelMessage = '';
 
         $nowDT = new \DateTime();
         $nowDT->setTime(intval($uS->CheckInTime), 0, 0);
@@ -2015,7 +2016,7 @@ class StayingReservation extends CheckingIn {
 
         // Room Chooser
         $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
-        $dataArray['rChooser'] = $roomChooser->createAddGuestMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN), $rmSelMessage);
+        $dataArray['rChooser'] = $roomChooser->createAddGuestMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
 
         $dataArray = array_merge($dataArray, $this->createExpDatesControl(TRUE, $this->reserveData->getSpanStartDT()->format('M j, Y')));
 
@@ -2163,7 +2164,6 @@ class CheckedoutReservation extends CheckingIn {
 
         $uS = Session::getInstance();
 
-        $rmSelMessage = '';
         $nowDT = new \DateTime();
         $nowDT->setTime(intval($uS->CheckInTime), 0, 0);
 
@@ -2196,7 +2196,7 @@ class CheckedoutReservation extends CheckingIn {
         }
 
         // Room Chooser
-        $dataArray['rChooser'] = $roomChooser->createAddGuestMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN), $rmSelMessage, $this->reserveData->getSpanStatus(), $occs);
+        $dataArray['rChooser'] = $roomChooser->createAddGuestMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN), $this->reserveData->getSpanStatus(), $occs);
 
 
         // Reservation status title

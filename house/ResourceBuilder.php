@@ -866,7 +866,7 @@ $menuMarkup = $wInit->generatePageMenu();
 // Generate tab content
 //
 // hospital tab title
-$hospitalTabTitle = $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospitals & Associations');
+$hospitalTabTitle = $labels->getString('hospital', 'hospital', 'Hospitals & Associations');
 
 // Room pricing model
 $rPrices = readGenLookupsPDO($dbh, 'Price_Model');

@@ -277,7 +277,7 @@ $ckdate";
     public function hospitalMarkup() {
 
         $assocs = '';
-
+        $labels = new Config_Lite(LABEL_FILE);
         // Setups for the page.
         if (count($this->aList) > 1) {
             $assocs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->aList, $this->selectedAssocs, FALSE),
@@ -290,10 +290,10 @@ $ckdate";
         $tbl = new HTMLTable();
         $tr = '';
 
-        $tbl->addHeaderTr(HTMLTable::makeTh('Hospitals', array('colspan'=>'2')));
+        $tbl->addHeaderTr(HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital').'s', array('colspan'=>'2')));
 
         if (count($this->aList) > 1) {
-            $tbl->addHeaderTr(HTMLTable::makeTh('Associations') . HTMLTable::makeTh('Hospitals'));
+            $tbl->addHeaderTr(HTMLTable::makeTh('Associations') . HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital').'s'));
             $tr .= HTMLTable::makeTd($assocs, array('style'=>'vertical-align: top;'));
         }
 

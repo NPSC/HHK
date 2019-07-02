@@ -170,13 +170,13 @@ class RoomChooser {
         }
     }
 
-    public function createAddGuestMarkup(\PDO $dbh, $isAuthorized, $replaceRoomSel, $visitStatus = '', $numOccupants = 0) {
+    public function createAddGuestMarkup(\PDO $dbh, $isAuthorized, $visitStatus = '', $numOccupants = 0) {
 
         if (($visitStatus == '' || $visitStatus == VisitStatus::CheckedIn) && $this->resv->getStatus() === ReservationStatus::Staying) {
 
             $this->findResources($dbh, $isAuthorized, FALSE, 0);
 
-            return $this->createAddedMarkup($dbh, TRUE, $replaceRoomSel);
+            return $this->createAddedMarkup($dbh, TRUE);
 
         } else {
             return $this->createStaticMarkup($dbh, $numOccupants);
@@ -437,19 +437,13 @@ class RoomChooser {
 
     }
 
-    protected function createAddedMarkup(\PDO $dbh, $constraintsDisabled, $replaceRoomSel) {
+    protected function createAddedMarkup(\PDO $dbh, $constraintsDisabled) {
 
         $errorMessage = '';
         $rmSelectorMarkup = '';
 
-        if ($replaceRoomSel == '') {
-
-//            $resOptions[] = array(0, '-None-', '');
-//            $rmSelectorMarkup = $this->makeRoomSelector($resOptions, 0);
+        if ($this->maxRoomsPerPatient > 1) {
             $rmSelectorMarkup = HTMLInput::generateMarkup('', array('name'=>'cbNewRoom', 'type'=>'checkbox'));
-
-        } else {
-            $rmSelectorMarkup = $replaceRoomSel;
         }
 
         $resvConstraints = $this->resv->getConstraints($dbh);
@@ -476,13 +470,13 @@ class RoomChooser {
         $tbl->addHeaderTr(HTMLTable::makeTh("Existing Guests")
                 . HTMLTable::makeTh("New Guests")
                 . HTMLTable::makeTh("Current Room")
-                . HTMLTable::makeTh('New Room', array('id'=>'hhk-roomChsrtitle')));
+                . ($rmSelectorMarkup == '' ? '' : HTMLTable::makeTh('New Room', array('id'=>'hhk-roomChsrtitle'))));
 
         $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->getCurrentGuests()), array('style'=>'text-align:center;'))
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnNumGuests')), array('style'=>'text-align:center;'))
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $curRoomMarkup), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $rmSelectorMarkup, array('id'=>'spanSelResc')), array('style'=>'text-align:center;'))
+                .($rmSelectorMarkup == '' ? '' : HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $rmSelectorMarkup, array('id'=>'spanSelResc')), array('style'=>'text-align:center;')))
                 );
 
         // set up room suitability message area

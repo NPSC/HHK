@@ -41,6 +41,7 @@ class Hospital {
         $uS = Session::getInstance();
 
         $hospList = $uS->guestLookups[GL_TableNames::Hospital];
+        $labels = new Config_Lite(LABEL_FILE);
         $hList = array();
         $aList = array();
         $assocNoneId = 0;
@@ -64,7 +65,7 @@ class Hospital {
 
         $table->addHeaderTr(
                 (count($aList) > 0 ? HTMLTable::makeTh('Association') : '')
-                .HTMLTable::makeTh('Hospital')
+                .HTMLTable::makeTh($labels->getString('hospital', 'hosptial', 'Hospital'))
                 .HTMLTable::makeTh('Room')
                 .HTMLTable::makeTh('Treatment Start')
                 .($showExitDate ? HTMLTable::makeTh('Treatment End') : '')
@@ -318,18 +319,18 @@ class Hospital {
         if ($hstay->getIdPsg() > 0) {
             $hstayLog = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-circle-triangle-s hhk-showhsLog', 'title'=>'Click to view', 'style'=>'float: left; margin-left:.2em;'))
-                .HTMLContainer::generateMarkup('span', 'View Hospital Log', array('id'=>'spnhsctrl', 'class'=>'hhk-showhsLog', 'title'=>'Click to view', 'style'=>'float: left; margin-left:.2em;'))
+                .HTMLContainer::generateMarkup('span', 'View ' . $labels->getString('hospital', 'hosptial', 'Hospital') . ' Log', array('id'=>'spnhsctrl', 'class'=>'hhk-showhsLog', 'title'=>'Click to view', 'style'=>'float: left; margin-left:.2em;'))
                 .HTMLContainer::generateMarkup('div','', array('style'=>'margin-top:.3em;clear:left;float:left;padding:5px;display:none;', 'id'=>'hhk-viewhsLog'))
                 .'<script type="text/javascript">
 $(document).ready(function () {
     "use strict";
     $(".hhk-showhsLog").click(function () {
-        if ($("#spnhsctrl").text() == "View Hospital Log") {
+        if ($("#spnhsctrl").text() == "View '. $labels->getString('hospital', 'hosptial', 'Hospital') . ' Log") {
             $("#hhk-viewhsLog").load("ws_resc.php?cmd=hstay&psg=' . $hstay->getIdPsg() . '" ).show();
             $("#spnhsctrl").text("Hide Log");
         } else {
             $("#hhk-viewhsLog").hide();
-            $("#spnhsctrl").text("View Hospital Log");
+            $("#spnhsctrl").text("View '. $labels->getString('hospital', 'hosptial', 'Hospital') . ' Log");
         }
     });});</script>'
                 , array('style'=>'margin-top:.3em;clear:left;float:left;padding:5px;', 'class'=>'ui-widget-content ui-corner-all'))
@@ -353,7 +354,7 @@ $(document).ready(function () {
 
         // Collapsing header
         $hdr = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('span', 'Hospital: ')
+                HTMLContainer::generateMarkup('span', $labels->getString('hospital', 'hosptial', 'Hospital') . ': ')
                 .HTMLContainer::generateMarkup('span', $hospNameTxt, array('id'=>'spnHospName'))
 
                 , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));

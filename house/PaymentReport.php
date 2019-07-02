@@ -109,7 +109,7 @@ $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 's', '', array())
 $cFields[] = array("Room", 'Title', 'checked', '', 's', '', array('style'=>'text-align:center;'));
 
 if ((count($hospList)) > 1) {
-    $cFields[] = array($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'), 'idHospital', 'checked', '', 's', '', array());
+    $cFields[] = array($labels->getString('hospital', 'hosptial', 'Hospital'), 'idHospital', 'checked', '', 's', '', array());
 }
 
 $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Last", 'Patient_Last', '', '', 's', '', array());
@@ -292,7 +292,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
     }
 
-    $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital').'s: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrHosps));
+    $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hosptial', 'Hospital').'s: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrHosps));
 
     if (count($aList) > 0) {
         $headerTable->addBodyTr(HTMLTable::makeTd('Associations: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrAssocs));
@@ -400,9 +400,9 @@ where lp.idPayment > 0
     $reportRows = 0;
 
     if (count($aList) > 0) {
-        $hospHeader = 'Hospital / Assoc';
+        $hospHeader = $labels->getString('hospital', 'hosptial', 'Hospital').' / Assoc';
     } else {
-        $hospHeader = 'Hospital';
+        $hospHeader = $labels->getString('hospital', 'hosptial', 'Hospital');
     }
 
     $fltrdTitles = $colSelector->getFilteredTitles();
@@ -682,11 +682,11 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                     <?php if ((count($aList) + count($hList)) > 1) { ?>
                     <table style="float: left;">
                         <tr>
-                            <th colspan="2"><?php echo $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'); ?> Filter</th>
+                            <th colspan="2"><?php echo $labels->getString('hospital', 'hosptial', 'Hospital'); ?> Filter</th>
                         </tr>
                         <?php if (count($aList) > 0) { ?><tr>
                             <th>Associations</th>
-                            <th><?php echo $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'); ?>s</th>
+                            <th><?php echo $labels->getString('hospital', 'hosptial', 'Hospital'); ?>s</th>
                         </tr><?php } ?>
                         <tr>
                             <?php if (count($aList) > 0) { ?><td><?php echo $assocs; ?></td><?php } ?>

@@ -158,7 +158,7 @@ class VisitView {
         }
 
         // Patient Name
-        $th .= HTMLTable::makeTh($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'));
+        $th .= HTMLTable::makeTh($labels->getString('hospital', 'hosptial', 'Hospital'));
         $tr .= HTMLTable::makeTd($hname);
 
         if ($r['Patient_Name'] != '') {

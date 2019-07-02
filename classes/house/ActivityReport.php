@@ -392,7 +392,7 @@ class ActivityReport {
             $tbl->addBodyTr($trow);
         }
 
-        return $tbl->generateMarkup(array(), '<h3>Hospital Stay Activity</h3>');
+        return $tbl->generateMarkup(array(), '<h3>' . $labels->getString('hospital', 'hosptial', 'Hospital') . ' Stay Activity</h3>');
     }
 
     /**

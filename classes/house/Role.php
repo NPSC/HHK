@@ -172,7 +172,8 @@ abstract class Role {
         if ($this->getNoReturn() != '') {
 
             // Set for no return
-            $td = HTMLTable::makeTd('No Return', array('title'=>$this->getNoReturn() . ';  Id: ' . $this->getIdName()), array('colspan'=>'2'));
+            $td = HTMLTable::makeTd('No Return', array('title'=>$this->getNoReturn() . ';  Id: ' . $this->getIdName()), array('colspan'=>'2'))
+                    . HTMLTable::makeTd('');
 
         } else {
 

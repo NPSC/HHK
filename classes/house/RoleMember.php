@@ -419,7 +419,8 @@ class PatientMember extends RoleMember {
 
     public function createThinMarkupRow($patientRelationship = '', $hideRelChooser = TRUE, $lockRelChooser = FALSE) {
 
-        return parent::createThinMarkupRow() . HTMLTable::makeTd('Patient', array('style'=>'text-align:center;'));
+        $labels = new Config_Lite(LABEL_FILE);
+        return parent::createThinMarkupRow() . HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient'), array('style'=>'text-align:center;'));
 
     }
 
