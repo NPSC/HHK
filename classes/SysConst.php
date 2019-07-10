@@ -74,6 +74,7 @@ class Document_Name {
     const Registration = 'Registration';
     const Confirmation = 'Confirmation';
     const Survey = 'Survey';
+    const Incident = 'Incident';
 }
 
 class Email_Purpose {

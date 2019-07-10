@@ -22,6 +22,7 @@ require (DB_TABLES . 'ActivityRS.php');
 require (DB_TABLES . 'PaymentGwRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
 require (DB_TABLES . 'AttributeRS.php');
+require (DB_TABLES . 'ReportRS.php');
 
 require CLASSES . 'CleanAddress.php';
 require CLASSES . 'AuditLog.php';
@@ -34,6 +35,7 @@ require (CLASSES . 'LinkNote.php');
 require (CLASSES . 'US_Holidays.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'FinAssistance.php');
+require (CLASSES . 'Report.php');
 
 require (CLASSES . 'Parsedown.php');
 require (CLASSES . 'Document.php');
@@ -264,6 +266,17 @@ try {
 
             $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $idGuest, $amount, $sendemail, $notes, $eaddr, $txt);
             break;
+            
+        case 'getincidentreport':
+        
+        	$idReport = 0;
+            if (isset($_POST['repid'])) {
+                $idReport = intval(filter_var($_POST['repid'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+            
+            $events = ReservationSvcs::getReportForm($dbh, $idReport);
+        
+        	break;
 
         case 'void':
 

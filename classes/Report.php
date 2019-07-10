@@ -1,6 +1,6 @@
 <?php
 /**
- * Note.php
+ * Report.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
@@ -15,7 +15,7 @@
  * @author Will
  */
 
-class Note {
+class Report {
 
     // Report Status
     const ActiveStatus = 'a';
@@ -39,6 +39,7 @@ class Note {
     protected $status = '';
     protected $lastUpdated = null;
     protected $updatedBy = '';
+    protected $timestamp = '';
 
     private $reportRS;
 
@@ -58,7 +59,7 @@ class Note {
      * @param \PDO $dbh
      * @return boolean
      */
-    protected function loadNote(\PDO $dbh) {
+    public function loadReport(\PDO $dbh) {
 
         $response = TRUE;
 
@@ -155,7 +156,7 @@ class Note {
      * @param string $updatedBy
      * @return int the number of records updated.
      */
-    public function updateContents(\PDO $dbh, $reportTitle, $reportDate, $reportResolutionDate = '', $reportDescription, $reportResolution = '' $reportSignature = '' $reportSignatureDate = '', $reportAuthor = '', $reportStatus = Report::ActiveStatus, $updatedBy) {
+    public function updateContents(\PDO $dbh, $reportTitle, $reportDate, $reportResolutionDate = '', $reportDescription, $reportResolution = '', $reportSignature = '', $reportSignatureDate = '', $reportAuthor = '', $reportStatus = Report::ActiveStatus, $updatedBy) {
 
         $counter = 0;
 
@@ -238,8 +239,12 @@ class Note {
         return $this->idReport;
     }
 
-    public function getReportTitle() {
+    public function getTitle() {
         return $this->title;
+    }
+    
+    public function getCategory() {
+	    return $this->category;
     }
 
     public function getReportDate() {
@@ -250,24 +255,32 @@ class Note {
         return $this->resolutionDate;
     }
 
-    public function getReportDescription() {
+    public function getDescription() {
         return $this->description;
     }
     
-    public function getReportResolution(){
+    public function getResolution(){
 	    return $this->resolution;
     }
     
-    public function getReportSignature(){
+    public function getSignature(){
 	    return $this->signature;
     }
     
-    public function getReportSignatureDate(){
+    public function getSignatureDate(){
 	    return $this->signatureDate;
     }
     
-    public function getReportAuthor(){
+    public function getAuthor(){
 	    return $this->author;
+    }
+    
+    public function getGuestId(){
+	    return $this->guestId;
+    }
+    
+    public function getPsgId(){
+	    return $this->psgId;
     }
 
     public function getLastUpdated() {
@@ -281,10 +294,19 @@ class Note {
     public function getStatus() {
         return $this->status;
     }
+    
+    public function getTimestamp(){
+	    return $this->timestamp;
+    }
 
-    public function setReportTitle($title) {
+    public function setTitle($title) {
         $this->title = $title;
         return $this;
+    }
+    
+    public function setCategory($category) {
+	    $this->category = $category;
+	    return $this;
     }
 
     public function setReportDate($date) {
@@ -292,33 +314,43 @@ class Note {
         return $this;
     }
 
-    public function setReportResolutionDate($resolutionDate) {
+    public function setResolutionDate($resolutionDate) {
         $this->resolutionDate = $resolutionDate;
         return $this;
     }
     
-    public function setReportDescription($description){
+    public function setDescription($description){
 	    $this->description = $description;
 	    return $this;
     }
     
-    public function setReportResolution($resolution){
+    public function setResolution($resolution){
 	    $this->resolution = $resolution;
 	    return $this;
     }
     
-    public function setReportSignature($signature){
+    public function setSignature($signature){
 	    $this->signature = $signature;
 	    return $this;
     }
     
-    public function setReportSignatureDate($signatureDate){
+    public function setSignatureDate($signatureDate){
 	    $this->signatureDate = $signatureDate;
 	    return $this;
     }
     
-    public function setReportAuthor($username){
+    public function setAuthor($username){
 	    $this->author = $username;
+	    return $this;
+    }
+    
+    public function setGuestId($guestId){
+	    $this->guestId = $guestId;
+	    return $this;
+    }
+    
+    public function setPsgId($psgId){
+	    $this->psgId = $psgId;
 	    return $this;
     }
 
@@ -335,6 +367,11 @@ class Note {
     public function setUpdatedBy($updatedBy) {
         $this->updatedBy = $updatedBy;
         return $this;
+    }
+    
+    public function setTimestamp($timestamp) {
+	    $this->timestamp = $timestamp;
+	    return $this;
     }
 
 }

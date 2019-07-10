@@ -140,6 +140,33 @@ class ReservationSvcs {
 
         return $dataArray;
     }
+    
+    public static function getReportForm(\PDO $dbh, $idReport) {
+
+        if ($idReport == 0) {
+            return array('error'=>'Bad report Id: ' . $idReport);
+        }
+
+        require(HOUSE . 'ReportForm.php');
+        
+
+        $uS = Session::getInstance();
+        $dataArray = array();
+
+		$report = new Report($idReport);
+		$report->loadReport($dbh);
+
+        $reportForm = new ReportForm($dbh, 0, Document_Name::Incident);
+
+        $form = $reportForm->createForm($reportForm->makeReplacements($dbh, $report));
+		
+		//debug
+		//return $reportForm->makeReplacements($dbh, $report);
+		
+        $dataArray['reportform'] = $form;
+
+        return $dataArray;
+    }
 
     public static function generateCkinDoc(\PDO $dbh, $idReservation = 0, $idVisit = 0, $span = 0, $logoURL = '', $notes = '') {
 

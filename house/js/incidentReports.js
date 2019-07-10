@@ -2,6 +2,13 @@
 
     $.fn.incidentViewer = function (options) {
 
+		var viewer = tui.Editor.factory({
+	        el: document.querySelector('#incidentDialog'),
+	        viewer: true,
+	        height: '500px',
+	        initialValue: ''
+	    });
+
         var defaults = {
             guestId: 0,
             psgId: 0,
@@ -75,6 +82,7 @@
         var settings = $.extend(true, {}, defaults, options);
 
         var $wrapper = $(this);
+        $wrapper.viewer = viewer;
 
         createViewer($wrapper, settings);
 
@@ -170,11 +178,30 @@
         //Show Edit mode
         $wrapper.on('click', '.incident-edit', function(e){
             e.preventDefault();
-            console.log(".incident-edit clicked!");
-            $dialog = $('<div id="incidentDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;" title="Incident"><h5>It&quot;s an incident, but where&quot;s the content????</h5></div>');
-            $dialog.append("<h5>It's an incident, but where's the content????</h5>");
-			$dialog.dialog();
-			$wrapper.append($dialog);
+            var repID = $(e.target).parent().data('incidentid');
+            $.ajax({
+                url: 'ws_ckin.php',
+                dataType: 'JSON',
+                type: 'post',
+                data: {
+                        cmd: 'getincidentreport',
+                        repid: repID,
+                },
+                success: function( data ){
+                        if(data.reportform){
+                            $dialog = $('<div id="incidentDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;" title="Incident"></div>');
+				            $wrapper.append($dialog);
+							$dialog.dialog({modal:true});
+							console.log($wrapper.viewer);
+							$wrapper.viewer.setMarkdown(data.confrv);
+                        }else{
+                            
+                        }
+                }
+            });
+            
+            
+			
         });
         //End Show Edit mode
         

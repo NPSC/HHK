@@ -37,9 +37,9 @@ class ReportRs extends TableRS {
         $this->Category = new DB_Field("Category", '', new DbStrSanitizer(5), TRUE, TRUE);
         $this->Report_Date = new DB_Field("Report_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->Resolution_Date = new DB_Field("Resolution_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
-        $this->Description = new DB_Field("Description", '', new DbStrSanitizer(), TRUE, TRUE);
-        $this->Resolution = new DB_Field("Resolution", '', new DbStrSanitizer(), TRUE, TRUE);
-        $this->Signature = new DB_Field("Signature", NULL, new DbStrSanitizer(), TRUE, TRUE);
+        $this->Description = new DB_Field("Description", '', new DbStrSanitizer(5000), TRUE, TRUE);
+        $this->Resolution = new DB_Field("Resolution", '', new DbStrSanitizer(5000), TRUE, TRUE);
+        $this->Signature = new DB_Field("Signature", NULL, new DbBlobSanitizer(), TRUE, TRUE);
         $this->Signature_Date = new DB_Field("Signature_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->Author = new DB_Field("Author", '', new DbStrSanitizer('45'), TRUE, TRUE);
         $this->Guest_Id = new DB_Field("Guest_Id", 0, new DbIntSanitizer(), TRUE, TRUE);

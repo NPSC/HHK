@@ -9,7 +9,7 @@
  */
 require ("homeIncludes.php");
 
-require (DB_TABLES . 'visitRS.php');
+require (DBTABLES . 'visitRS.php');
 require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'registrationRS.php');
 require (DB_TABLES . 'ActivityRS.php');
@@ -761,7 +761,8 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-
+		<script src="../js/tuiEditorSupport.js"></script>
+        <script src="../js/tui-editor-Editor.min.js"></script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu(); ?>
