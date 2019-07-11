@@ -203,9 +203,9 @@ class HostedCheckout {
 
         // Verify request
         $verifyResponse = $verify->submit($gway->getCredentials(), $trace);
-        
+
 //        $object = (object) [
-//    'VerifyPaymentResult' => 
+//    'VerifyPaymentResult' =>
 //        (object) [
 //            "ResponseCode"=>0,
 //            "Status"=>"Approved",
@@ -236,8 +236,8 @@ class HostedCheckout {
 //                "OperatorID"=>"",
 //                "TerminalName"=>"",
 //                "ExpDate"=>"0220"]];
-        
-        $verifyResponse = new VerifyCkOutResponse($object);
+
+//        $verifyResponse = new VerifyCkOutResponse($object);
         $vr = new CheckOutResponse($verifyResponse, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $payNotes);
 
 
@@ -289,7 +289,7 @@ class CheckOutResponse extends PaymentResponse {
     }
 
     public function getStatus() {
-        
+
         switch ($this->response->getStatus()) {
 
             case MpStatusValues::Approved:
@@ -323,7 +323,7 @@ class CheckOutResponse extends PaymentResponse {
         if ($this->response->getResponseMessage() != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Response Message: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getResponseMessage() . ($this->response->getResponseCode() == '' ? '' :  '  (Code: ' . $this->response->getResponseCode() . ")"), array('style'=>'font-size:.8em;')));
         }
-        
+
         $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
 
     }

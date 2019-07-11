@@ -132,7 +132,7 @@ class SaleReply extends CreditPayments {
             $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
             $pDetailRS->Card_Type->setNewVal($vr->getCardType());
             $pDetailRS->AVS->setNewVal($vr->getAVSResult());
-            $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
+            $pDetailRS->Invoice_Number->setNewVal($pr->getInvoiceNumber());
             $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
             $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
             $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
@@ -205,7 +205,7 @@ class SaleReply extends CreditPayments {
             $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
             $pDetailRS->Card_Type->setNewVal($vr->getCardType());
             $pDetailRS->AVS->setNewVal($vr->getAVSResult());
-            $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
+            $pDetailRS->Invoice_Number->setNewVal($pr->getInvoiceNumber());
             $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
             $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
             $pDetailRS->ProcessData->setNewVal($vr->getProcessData());

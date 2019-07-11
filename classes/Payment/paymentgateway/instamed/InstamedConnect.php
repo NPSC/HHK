@@ -96,7 +96,7 @@ class WebhookResponse extends GatewayResponse implements iGatewayResponse {
     }
 
     public function SignatureRequired() {
-        return 1;
+        return 0;
     }
 
     public function getAuthorizedAmount() {

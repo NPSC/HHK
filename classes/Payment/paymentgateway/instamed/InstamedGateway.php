@@ -65,7 +65,7 @@ class InstamedGateway extends PaymentGateway {
             throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
         }
 
-        $patInfo = $this->getPatientInfo($dbh, $invoice->getIdGroup());
+        //$patInfo = $this->getPatientInfo($dbh, $invoice->getIdGroup());
 
         $data = array(
 //            'patientID' => $patInfo['idName'],
@@ -333,6 +333,7 @@ class InstamedGateway extends PaymentGateway {
         return $dataArray;
     }
 
+    // $idInv is 0.
     public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $userName = '') {
 
         $transType = '';
@@ -352,39 +353,62 @@ class InstamedGateway extends PaymentGateway {
             $transResult = filter_var($post[InstamedGateway::INSTAMED_RESULT_VAR], FILTER_SANITIZE_STRING);
         }
 
-        if ($transResult == InstamedGateway::POSTBACK_CANCEL) {
-
-            $payResult = new PaymentResult($idInv, 0, 0);
-            $payResult->setDisplayMessage('User Canceled.');
-
-            return $payResult;
-        } else if ($transResult != InstamedGateway::POSTBACK_COMPLETE) {
-
-            $payResult = new PaymentResult($idInv, 0, 0);
-            $payResult->setDisplayMessage('Undefined Result: ' . $transResult);
-
-            return $payResult;
-        }
-
+        // Need the token.
         if ($ssoToken === NULL || $ssoToken == '') {
 
-            $payResult = new PaymentResult($idInv, 0, 0);
+            $payResult = new PaymentResult(0, 0, 0);
             $payResult->setDisplayMessage('Missing Token. ');
 
             return $payResult;
         }
 
+        // Check DB for ssoToken
+        $ssoTknRs = new SsoTokenRS();
+        $ssoTknRs->Token->setStoredVal($ssoToken);
+        $tokenRow = EditRS::select($dbh, $ssoTknRs, array($ssoTknRs->Token));
+
+        if (count($tokenRow) < 1) {
+            $payResult = new PaymentResult(0, 0, 0);
+            $payResult->setDisplayMessage('SSO Token not found');
+            return $payResult;
+        }
+
+        EditRS::loadRow($tokenRow, $ssoTknRs);
+
+        // Get the invoice
+        $invoice = new Invoice($dbh, $ssoTknRs->InvoiceNumber->getStoredVal());
+
+
+        if ($transResult == InstamedGateway::POSTBACK_CANCEL) {
+
+            $payResult = new PaymentResult($invoice->getIdInvoice(), 0, 0);
+            $payResult->setDisplayMessage('User Canceled.');
+
+            return $payResult;
+
+        } else if ($transResult != InstamedGateway::POSTBACK_COMPLETE) {
+
+            $payResult = new PaymentResult($invoice->getIdInvoice(), 0, 0);
+            $payResult->setDisplayMessage('Undefined Result: ' . $transResult);
+
+            return $payResult;
+        }
+
+
         // Finally, process the transaction
         if ($transType == InstamedGateway::HCO_TRANS) {
 
             try {
-                $payResult = $this->completeHostedPayment($dbh, $idInv, $ssoToken, $payNotes, $userName);
+
+                $payResult = $this->completeHostedPayment($dbh, $invoice, $ssoTknRs, $payNotes, $userName);
+
             } catch (Hk_Exception_Payment $hex) {
 
-                $payResult = new PaymentResult($idInv, 0, 0);
+                $payResult = new PaymentResult($invoice->getIdInvoice(), 0, 0);
                 $payResult->setStatus(PaymentResult::ERROR);
                 $payResult->setDisplayMessage($hex->getMessage());
             }
+
         } else if ($transType == InstamedGateway::COF_TRANS) {
 
             $payResult = $this->completeCof($dbh, $ssoToken);
@@ -534,87 +558,64 @@ class InstamedGateway extends PaymentGateway {
         return new CofResult($vr->response->getResponseMessage(), $vr->getStatus(), $vr->idPayor, $vr->idRegistration);
     }
 
-    protected function completeHostedPayment(\PDO $dbh, $idInv, $ssoToken, $paymentNotes, $userName) {
+    protected function completeHostedPayment(\PDO $dbh, Invoice $invoice, SsoTokenRS $ssoTknRs, $paymentNotes, $userName) {
 
         $uS = Session::getInstance();
         $partlyApproved = FALSE;
 
-        // Check DB for record
-        $ssoTknRs = new SsoTokenRS();
-        $ssoTknRs->Token->setStoredVal($ssoToken);
-        $tokenRow = EditRS::select($dbh, $ssoTknRs, array($ssoTknRs->Token));
-
-        if (count($tokenRow) < 1) {
-            $payResult = new PaymentResult($idInv, 0, 0);
-            $payResult->setDisplayMessage('SSO Token not found');
-            return $payResult;
-        }
-
-//        //get transaction details
-//        $params = $this->getCredentials()->toCurl()
-//                . "&transactionAction=ViewReceipt"
-//                . "&requestToken=false"
-//                . "&singleSignOnToken=" . $ssoToken;
-//
-//        $curl = new ImCurlRequest();
-//        $resp = $curl->submit($params, $this->NvpUrl);
-//
-//        $resp['InvoiceNumber'] = $ssoTknRs->InvoiceNumber->getStoredVal();
-//        $resp['Amount'] = $ssoTknRs->Amount->getStoredVal();
-//
-//        $curlResponse = new VerifyCurlResponse($resp, MpTranType::Sale);
-//
-//        // Save raw transaction in the db.
-//        try {
-//            self::logGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'HostedCoVerify');
-//        } catch (Exception $ex) {
-//            // Do Nothing
-//        }
-
-
         //Wait for web hook
-        $whArry = $this->waitForWebhook($dbh, $ssoToken, 5);
+        $whookArry = $this->waitForWebhook($dbh, $ssoTknRs->Token->getStoredVal(), 5);
 
-        if ($whArry['state'] == WebHookStatus::Init) {
+        // Analyze web hook results.
+        if ($whookArry['state'] == WebHookStatus::Init) {
             // Webhook has not shown up yet.
 
-            $payResult = new PaymentResult($idInv, 0, 0);
+            $payResult = new PaymentResult($invoice->getIdInvoice(), 0, 0);
             $payResult->setStatus(PaymentResult::ERROR);
             $payResult->setDisplayMessage('** Web Hook is delayed *** ');
             return $payResult;
 
-        } else if ($whArry['state'] == WebHookStatus::Error) {
+        } else if ($whookArry['state'] == WebHookStatus::Error) {
             // HHK's webhook processing failed..
 
-            $payResult = new PaymentResult($idInv, 0, 0);
+            $payResult = new PaymentResult($invoice->getIdInvoice(), 0, 0);
             $payResult->setStatus(PaymentResult::ERROR);
             $payResult->setDisplayMessage('** Payment processing error in HHK **');
             return $payResult;
         }
 
 
-        // Create reciept.
-        $invoice = new Invoice($dbh, $ssoTknRs->InvoiceNumber->getStoredVal());
-
-        $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), 0);
-
+        // Get PaymentAuth record.
         $pAuthRs = new Payment_AuthRS();
-        $pAuthRs->idPayment_auth->setStoredVal($whArry['idPaymentAuth']);
-        $pauths = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment_auth));
+        $pAuthRs->idPayment_auth->setStoredVal($whookArry['idPaymentAuth']);
+        $pauthRows = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment_auth));
 
-        if (count($pauths) < 1) {
-            throw new Hk_Exception_Payment('Charge payment record not found.');
+        if (count($pauthRows) < 1) {
+            throw new Hk_Exception_Payment('Charge paymentAuth record not found.');
         }
 
-        EditRS::loadRow($pauths[0], $pAuthRs);
+        EditRS::loadRow($pauthRows[0], $pAuthRs);
 
-
+        // Get associated payment record.
         $payRs = new PaymentRS();
         $payRs->idPayment->setStoredVal($pAuthRs->idPayment->getStoredVal());
-        $pays = EditRS::select($dbh, $payRs, array($payRs->idPayment));
+        $payRows = EditRS::select($dbh, $payRs, array($payRs->idPayment));
 
-        EditRS::loadRow($pays[0], $payRs);
+        if (count($payRows) < 1) {
+            throw new Hk_Exception_Payment('Payment record not found.');
+        }
 
+        EditRS::loadRow($payRows[0], $payRs);
+
+        // Update Payment notes
+        if ($paymentNotes != '' && $paymentNotes != $payRs->Notes->getStoredVal()) {
+
+            $payRs->Notes->setNewVal($paymentNotes);
+            EditRS::update($dbh, $payRs, array($payRs->idPayment));
+            EditRS::updateStoredVals($payRs);
+        }
+
+        // get The guest token recordl.
         $gTRs = new Guest_TokenRS();
         $gTRs->idGuest_token->setStoredVal($payRs->idToken->getStoredVal());
         $guestTkns = EditRS::select($dbh, $gTRs, array($gTRs->idGuest_token));
@@ -632,6 +633,8 @@ class InstamedGateway extends PaymentGateway {
         $payResp = new ImPaymentResponse($gwResp, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $paymentNotes, $partlyApproved);
 
         $payResp->setPaymentDate($payRs->Payment_Date->getStoredVal());
+
+        $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), 0);
 
         switch ($payResp->getStatus()) {
 

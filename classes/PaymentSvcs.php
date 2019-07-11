@@ -766,11 +766,6 @@ class PaymentSvcs {
 
         $payNotes = '';
 
-        if (isset($uS->paymentNotes)) {
-            $payNotes = $uS->paymentNotes;
-            unset($uS->paymentNotes);
-        }
-
         return $gateway->processWebhook($dbh, $data, $payNotes, $uS->username);
 
     }
