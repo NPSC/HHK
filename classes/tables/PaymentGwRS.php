@@ -225,6 +225,7 @@ class Card_IdRS extends TableRS {
 class SsoTokenRS extends TableRS {
 
     public $Token;  // varchar(136) NOT NULL DEFAULT '',
+    public $idPaymentAuth;  // INT NOT NULL DEFAULT 0
     public $idName;  // int(11) NOT NULL,
     public $idGroup;  // int(11) NOT NULL,
     public $InvoiceNumber;  // varchar(36) NOT NULL DEFAULT '',
@@ -236,6 +237,7 @@ class SsoTokenRS extends TableRS {
 
     function __construct($TableName = "ssotoken") {
         $this->Token = new DB_Field("Token", "", new DbStrSanitizer(136), TRUE, TRUE);
+        $this->idPaymentAuth = new DB_Field("idPaymentAuth", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->idName = new DB_Field("idName", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->idGroup = new DB_Field("idGroup", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->InvoiceNumber = new DB_Field("InvoiceNumber", "", new DbStrSanitizer(36), TRUE, TRUE);

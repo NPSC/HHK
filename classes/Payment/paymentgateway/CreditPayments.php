@@ -141,6 +141,8 @@ class SaleReply extends CreditPayments {
             $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
             $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
             $pDetailRS->Customer_Id->setNewVal($vr->getOperatorId());
+            $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+            $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
 
             $pDetailRS->Updated_By->setNewVal($username);
             $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
@@ -154,9 +156,7 @@ class SaleReply extends CreditPayments {
             $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
 
 
-            $idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
-            $pDetailRS->idPayment_auth->setNewVal($idPaymentAuth);
-            EditRS::updateStoredVals($pDetailRS);
+            $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
 
         }
 
@@ -214,6 +214,8 @@ class SaleReply extends CreditPayments {
             $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
             $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
             $pDetailRS->Customer_Id->setNewVal($vr->getOperatorId());
+            $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+            $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
 
             $pDetailRS->Updated_By->setNewVal($username);
             $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
@@ -226,9 +228,7 @@ class SaleReply extends CreditPayments {
             $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
             $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
 
-            $idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
-            $pDetailRS->idPayment_auth->setNewVal($idPaymentAuth);
-            EditRS::updateStoredVals($pDetailRS);
+            $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
 
         }
 
@@ -286,6 +286,8 @@ class VoidReply extends CreditPayments {
         $pDetailRS->CVV->setNewVal($vr->getCvvResult());
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
         $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
+            $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+            $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
 
         // EMV
         $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
@@ -298,10 +300,10 @@ class VoidReply extends CreditPayments {
         $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
         $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::VoidSale);
 
-        $idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
+        $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
 
-        $pDetailRS->idPayment_auth->setNewVal($idPaymentAuth);
-        EditRS::updateStoredVals($pDetailRS);
+//        $pDetailRS->idPayment_auth->setNewVal($idPaymentAuth);
+//        EditRS::updateStoredVals($pDetailRS);
 
 
         return $pr;
@@ -366,6 +368,8 @@ class ReverseReply extends CreditPayments {
         $pDetailRS->CVV->setNewVal($vr->getCvvResult());
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
         $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
+            $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+            $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
 
         // EMV
         $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
@@ -378,10 +382,7 @@ class ReverseReply extends CreditPayments {
         $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
         $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Reverse);
 
-        $idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
-        $pDetailRS->idPayment_auth->setNewVal($idPaymentAuth);
-        EditRS::updateStoredVals($pDetailRS);
-        //$pr->paymentAuthRs = $pDetailRS;
+        $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
 
         return $pr;
 
@@ -471,6 +472,8 @@ class ReturnReply extends CreditPayments {
         $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Retrn);
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
         $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
+            $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+            $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
 
         // EMV
         $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
@@ -479,11 +482,7 @@ class ReturnReply extends CreditPayments {
         $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
         $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
 
-        $idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
-
-        $pDetailRS->idPayment_auth->setNewVal($idPaymentAuth);
-        EditRS::updateStoredVals($pDetailRS);
-
+        $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
 
         return $pr;
 
@@ -537,6 +536,8 @@ class ReturnReply extends CreditPayments {
                 $pDetailRS->CVV->setNewVal($vr->getCvvResult());
                 $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
                 $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
+            $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+            $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
 
                 // EMV
                 $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
@@ -549,9 +550,7 @@ class ReturnReply extends CreditPayments {
                 $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
                 $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Declined);
 
-                $idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
-                $pDetailRS->idPayment_auth->setNewVal($idPaymentAuth);
-                EditRS::updateStoredVals($pDetailRS);
+                $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
 
             }
         }
@@ -623,11 +622,10 @@ class VoidReturnReply extends CreditPayments {
         $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::VoidReturn);
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
         $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
+            $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+            $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
 
-        $idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
-
-        $pDetailRS->idPayment_auth->setNewVal($idPaymentAuth);
-        EditRS::updateStoredVals($pDetailRS);
+        $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
 
         return $pr;
 

@@ -894,7 +894,7 @@ class PaymentSvcs {
 
                 try {
                     $gateway = PaymentGateway::factory($dbh, $pAuthRs->Processor->getStoredVal(), $uS->ccgw);
-                } catch (Hk_Exception_Runtime $hex) {
+                } catch (Exception $ex) {
                     // Grab the local gateway
                     $gateway = PaymentGateway::factory($dbh, '', '');
                 }

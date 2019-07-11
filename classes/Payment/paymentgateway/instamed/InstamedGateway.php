@@ -478,12 +478,14 @@ class InstamedGateway extends PaymentGateway {
 
                 default:
                     $ssoTknRs->State->setNewVal(WebHookStatus::Error);
+                    $ssoTknRs->idPaymentAuth->setNewVal($payResp->idPaymentAuth);
                     EditRS::update($dbh, $ssoTknRs, array($ssoTknRs->Token));
                     $error = FALSE;
             }
 
             if ($error === FALSE) {
                 $ssoTknRs->State->setNewVal(WebHookStatus::Complete);
+                $ssoTknRs->idPaymentAuth->setNewVal($payResp->idPaymentAuth);
                 EditRS::update($dbh, $ssoTknRs, array($ssoTknRs->Token));
             }
         }
@@ -548,42 +550,40 @@ class InstamedGateway extends PaymentGateway {
             return $payResult;
         }
 
-        EditRS::loadRow($tokenRow[0], $ssoTknRs);
-
-        //get transaction details
-        $params = $this->getCredentials()->toCurl()
-                . "&transactionAction=ViewReceipt"
-                . "&requestToken=false"
-                . "&singleSignOnToken=" . $ssoToken;
-
-        $curl = new ImCurlRequest();
-        $resp = $curl->submit($params, $this->NvpUrl);
-
-        $resp['InvoiceNumber'] = $ssoTknRs->InvoiceNumber->getStoredVal();
-        $resp['Amount'] = $ssoTknRs->Amount->getStoredVal();
-
-        $curlResponse = new VerifyCurlResponse($resp, MpTranType::Sale);
-
-        // Save raw transaction in the db.
-        try {
-            self::logGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'HostedCoVerify');
-        } catch (Exception $ex) {
-            // Do Nothing
-        }
+//        //get transaction details
+//        $params = $this->getCredentials()->toCurl()
+//                . "&transactionAction=ViewReceipt"
+//                . "&requestToken=false"
+//                . "&singleSignOnToken=" . $ssoToken;
+//
+//        $curl = new ImCurlRequest();
+//        $resp = $curl->submit($params, $this->NvpUrl);
+//
+//        $resp['InvoiceNumber'] = $ssoTknRs->InvoiceNumber->getStoredVal();
+//        $resp['Amount'] = $ssoTknRs->Amount->getStoredVal();
+//
+//        $curlResponse = new VerifyCurlResponse($resp, MpTranType::Sale);
+//
+//        // Save raw transaction in the db.
+//        try {
+//            self::logGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'HostedCoVerify');
+//        } catch (Exception $ex) {
+//            // Do Nothing
+//        }
 
 
         //Wait for web hook
-        $state = $this->waitForWebhook($dbh, $ssoTknRs, 5);
+        $whArry = $this->waitForWebhook($dbh, $ssoToken, 5);
 
-        if ($state == WebHookStatus::Init) {
+        if ($whArry['state'] == WebHookStatus::Init) {
             // Webhook has not shown up yet.
 
             $payResult = new PaymentResult($idInv, 0, 0);
             $payResult->setStatus(PaymentResult::ERROR);
-            $payResult->setDisplayMessage('** Payment status unknown, try again later. *** ');
+            $payResult->setDisplayMessage('** Web Hook is delayed *** ');
             return $payResult;
 
-        } else if ($state == WebHookStatus::Error) {
+        } else if ($whArry['state'] == WebHookStatus::Error) {
             // HHK's webhook processing failed..
 
             $payResult = new PaymentResult($idInv, 0, 0);
@@ -599,22 +599,15 @@ class InstamedGateway extends PaymentGateway {
         $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), 0);
 
         $pAuthRs = new Payment_AuthRS();
-        $pAuthRs->AcqRefData->setStoredVal($curlResponse->getPrimaryTransactionID());
-        $pauths = EditRS::select($dbh, $pAuthRs, array($pAuthRs->AcqRefData));
+        $pAuthRs->idPayment_auth->setStoredVal($whArry['idPaymentAuth']);
+        $pauths = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment_auth));
 
         if (count($pauths) < 1) {
             throw new Hk_Exception_Payment('Charge payment record not found.');
         }
 
-        EditRS::loadRow($pauths[count($pauths)-1], $pAuthRs);
+        EditRS::loadRow($pauths[0], $pAuthRs);
 
-        // Signature required
-        if (!$curlResponse->isSignatureRequired()) {
-            $pAuthRs->Signature_Required->setNewVal(0);
-            $pAuthRs->Response_Message->setNewVal('');
-            EditRS::update($dbh, $pAuthRs, array($pAuthRs->idPayment_auth));
-            EditRS::updateStoredVals($pAuthRs);
-        }
 
         $payRs = new PaymentRS();
         $payRs->idPayment->setStoredVal($pAuthRs->idPayment->getStoredVal());
@@ -631,7 +624,7 @@ class InstamedGateway extends PaymentGateway {
         }
 
         // Partially approved?
-        if ($curlResponse->getPartialPaymentAmount() > 0) {
+        if ($pAuthRs->PartialPayment->getStoredVal() > 0) {
             $partlyApproved = TRUE;
         }
 
@@ -775,17 +768,22 @@ where r.idRegistration =" . $idReg);
         return array();
     }
 
-    protected function waitForWebhook(\PDO $dbh, SsoTokenRS $ssoTknRs, $delaySeconds = 5) {
+    protected function waitForWebhook(\PDO $dbh, $ssoToken, $delaySeconds = 5) {
 
         $slept = 0;
         $state = WebHookStatus::Init;
+        $idPaymentAuth = 0;
 
         while ($slept < $delaySeconds) {
 
+            // Check DB for record
+            $ssoTknRs = new SsoTokenRS();
+            $ssoTknRs->Token->setStoredVal($ssoToken);
             $tokenRow = EditRS::select($dbh, $ssoTknRs, array($ssoTknRs->Token));
 
             if (count($tokenRow) > 0 && $tokenRow[0]['State'] != WebHookStatus::Init) {
                 $state = $tokenRow[0]['State'];
+                $idPaymentAuth = $tokenRow[0]['idPaymentAuth'];
                 $slept = $delaySeconds + 2;
             } else {
                 $slept++;
@@ -793,7 +791,7 @@ where r.idRegistration =" . $idReg);
             }
         }
 
-        return $state;
+        return array('state' =>$state, 'idPaymentAuth' => $idPaymentAuth);
     }
 
     public function getPaymentResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {

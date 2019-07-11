@@ -35,6 +35,7 @@ interface iGatewayResponse {
     public function getMaskedAccount();
     public function getCardHolderName();
     public function getExpDate();
+    public function SignatureRequired();
 
     public function getToken();
     public function saveCardonFIle();
@@ -255,6 +256,10 @@ class StandInGwResponse implements iGatewayResponse {
         return $this->expDate;
     }
 
+    public function SignatureRequired() {
+        return $this->pAuthRs->Signature_Required->getStoredVal();
+    }
+
     public function getInvoiceNumber() {
         return $this->invoiceNumber;
     }
@@ -276,7 +281,7 @@ class StandInGwResponse implements iGatewayResponse {
     }
 
     public function isSignatureRequired() {
-        if ($this->pAuthRs->Signature_Required->getStoredVal() == 1) {
+        if ($this->SignatureRequired() == 1) {
             return TRUE;
         }
         return FALSE;

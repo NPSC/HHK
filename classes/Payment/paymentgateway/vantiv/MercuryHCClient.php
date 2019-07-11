@@ -606,6 +606,10 @@ abstract class MercResponse {
         return '';
     }
 
+    public function SignatureRequired() {
+        return 1;
+    }
+
     public function getErrorMessage() {
         return '';
     }

@@ -757,9 +757,9 @@ class VisitView {
 
 
 
-        if ($visitCharge->getItemInvPayments(ItemId::LodgingMOA) > 0) {
+        //if ($visitCharge->getItemInvPayments(ItemId::LodgingMOA) > 0) {
             $totalPaid += $visitCharge->getItemInvPayments(ItemId::LodgingMOA);
-        }
+        //}
 
         // Add Waived amounts.
         $totalPaid += $visitCharge->getItemInvPayments(ItemId::Waive);

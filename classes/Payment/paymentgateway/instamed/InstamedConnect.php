@@ -95,6 +95,10 @@ class WebhookResponse extends GatewayResponse implements iGatewayResponse {
         return '';
     }
 
+    public function SignatureRequired() {
+        return 1;
+    }
+
     public function getAuthorizedAmount() {
 
         if ($this->getPartialPaymentAmount() != '') {
@@ -200,8 +204,9 @@ class WebhookResponse extends GatewayResponse implements iGatewayResponse {
     }
 
     public function getTransPostTime() {
-        if (isset($this->result['transactionDate'])) {
-            return $this->result['transactionDate'];
+        // UCT
+        if (isset($this->result['ResponseDateTime'])) {
+            return $this->result['ResponseDateTime'];
         }
         return '';
     }
@@ -369,6 +374,19 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
     public function getAVSResult() {
         //AddressVerificationResponseCode
         return '';
+    }
+
+    public function SignatureRequired() {
+        if (isset($this->result['isSignatureRequired'])) {
+
+            $sr = filter_var($this->result['isSignatureRequired'], FILTER_VALIDATE_BOOLEAN);
+
+            if ($sr === FALSE) {
+                return 0;
+            }
+        }
+
+        return 1;
     }
 
     public function isSignatureRequired() {

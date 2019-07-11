@@ -1359,6 +1359,7 @@ CREATE TABLE if not exists `payment_auth` (
   `AcqRefData` varchar(200) NOT NULL DEFAULT '',
   `ProcessData` varchar(200) NOT NULL DEFAULT '',
   `Signature_Required` INT(4) NOT NULL DEFAULT 1,
+  `PartialPayment` INT(4) NOT NULL DEFAULT 0,
   `CVV` varchar(45) NOT NULL DEFAULT '',
   `Serialized_Details` varchar(1000) NOT NULL DEFAULT '',
   `Status_Code` varchar(5) NOT NULL DEFAULT '',
@@ -1798,7 +1799,8 @@ CREATE TABLE if not exists `shell_events` (
 -- Table `ssotoken`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `ssotoken` (
-  `Token` varchar(136) NOT NULL DEFAULT '',
+  `Token` varchar(136) NOT NULL,
+  `idPaymentAuth` INT NOT NULL DEFAULT 0,
   `idName` int(11) NOT NULL,
   `idGroup` int(11) NOT NULL,
   `InvoiceNumber` varchar(36) NOT NULL DEFAULT '',
