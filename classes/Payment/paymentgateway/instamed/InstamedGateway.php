@@ -112,11 +112,7 @@ class InstamedGateway extends PaymentGateway {
             $ssoTknRs->idName->setNewVal($invoice->getSoldToId());
             $ssoTknRs->State->setNewVal(WebHookStatus::Init);
 
-            $rowCount = EditRS::insert($dbh, $ssoTknRs);
-
-            if (count($rowCount) != 1) {
-                throw new Hk_Exception_Payment("Database Insert error. ");
-            }
+            EditRS::insert($dbh, $ssoTknRs);
 
             $uS->imtoken = $headerResponse->getToken();
 

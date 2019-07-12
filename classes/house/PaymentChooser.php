@@ -63,7 +63,7 @@ class PaymentChooser {
         }
 
         // Manual Key check box
-        if (isset($post['btnKeyNumber' . $rtnIndex])) {
+        if (isset($post['btnKeyNumber'])) {
             $pmp->setManualKeyEntry(TRUE);
         } else {
             $pmp->setManualKeyEntry(FALSE);
