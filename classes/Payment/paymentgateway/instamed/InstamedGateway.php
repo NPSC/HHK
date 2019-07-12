@@ -56,13 +56,13 @@ class InstamedGateway extends PaymentGateway {
         return 'instamed';
     }
 
-    protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $postbackUrl) {
+    protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $postbackUrl, $manualKey = FALSE) {
 
         $uS = Session::getInstance();
         $dataArray = array();
 
         if ($invoice->getSoldToId() < 1 || $invoice->getIdGroup() < 1) {
-            throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
+            throw new Hk_Exception_Runtime("Invoice payor information is missing.  ");
         }
 
         //$patInfo = $this->getPatientInfo($dbh, $invoice->getIdGroup());
@@ -75,7 +75,7 @@ class InstamedGateway extends PaymentGateway {
             InstamedGateway::INVOICE_NUMBER => $invoice->getInvoiceNumber(),
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
-            //'incontext' => 'true',
+            'creditCardKeyed' => ($manualKey ? 'true' : 'false'),
             'lightWeight' => 'true',
             'isReadOnly' => 'true',
             'preventCheck' => 'true',

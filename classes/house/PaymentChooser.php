@@ -62,6 +62,13 @@ class PaymentChooser {
             $pmp->setRtnIdToken(intval(filter_var($post['rbUseCard' . $rtnIndex], FILTER_SANITIZE_STRING), 10));
         }
 
+        // Manual Key check box
+        if (isset($post['btnKeyNumber' . $rtnIndex])) {
+            $pmp->setManualKeyEntry(TRUE);
+        } else {
+            $pmp->setManualKeyEntry(FALSE);
+        }
+
         // Invoice payor
         if (isset($post['txtInvId'])) {
             $pmp->setIdInvoicePayor(intval(filter_var($post['txtInvId'], FILTER_SANITIZE_NUMBER_INT), 10));
@@ -796,7 +803,10 @@ ORDER BY v.idVisit , v.Span;");
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnPayAmount')), array('colspan'=>'2', 'style'=>'font-weight:bold;')));
         // Payment Types
         $payTbl->addBodyTr(HTMLTable::makeTd('Pay With:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $defaultPayType, FALSE), array('name'=>'PayTypeSel', 'class'=>'hhk-feeskeys')), array('colspan'=>'2')));
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $defaultPayType, FALSE), array('name'=>'PayTypeSel', 'class'=>'hhk-feeskeys'))
+                        . ($paymentGateway == PaymentGateway::INSTAMED ? 
+                        HTMLContainer::generateMarkup('label', 'Key:', array('for'=>'btnKeyNumber', 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number')) 
+                        . HTMLInput::generateMarkup('Key', array('type'=>'checkbox', 'name'=>'btnKeyNumber', 'class'=>'hhk-feeskeys', 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number')) : ''), array('colspan'=>'2')));
 
 
         // Cash Amt Tendered

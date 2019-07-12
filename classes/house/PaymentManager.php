@@ -467,7 +467,7 @@ class PaymentManagerPayment {
     protected $newInvoice;
     protected $invoiceNotes;
     protected $balWith;
-
+    protected $manualKeyEntry;
     /**
      *
      * @var PriceModel
@@ -885,5 +885,12 @@ class PaymentManagerPayment {
         return $this;
     }
 
+    function getManualKeyEntry() {
+        return $this->manualKeyEntry;
+    }
+
+    function setManualKeyEntry($manualKeyEntry) {
+        $this->manualKeyEntry = $manualKeyEntry;
+    }
 
 }

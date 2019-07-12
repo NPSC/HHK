@@ -63,7 +63,7 @@ abstract class PaymentGateway {
         // Initialiaze hosted payment
         try {
 
-            $fwrder = $this->initHostedPayment($dbh, $invoice, $postbackUrl);
+            $fwrder = $this->initHostedPayment($dbh, $invoice, $postbackUrl, $pmp->getManualKeyEntry());
 
             $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
             $payResult->setForwardHostedPayment($fwrder);
