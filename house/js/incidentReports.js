@@ -2,12 +2,54 @@
 
     $.fn.incidentViewer = function (options) {
 
-		var viewer = tui.Editor.factory({
-	        el: document.querySelector('#incidentDialog'),
-	        viewer: true,
-	        height: '500px',
-	        initialValue: ''
-	    });
+		var incidentdialog = $('<div id="incidentDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;" title="Incident">' +
+		'<form>' +
+			'<table style="width: 100%">' +
+			'<tr>' +
+				'<td class="tdlabel">Incident Title</td>' +
+				'<td>' +
+					'<input type="text" name="incidentTitle" style="width: 100%">' +
+				'</td>' +
+			'</tr>' +
+			'<tr>' +
+				'<td class="tdlabel" style="width: 25%">Incident Date</td>' +
+				'<td>' +
+					'<input type="text" name="incidentDate" class="ckdate" style="width: 100%">' +
+				'</td>' +
+			'</tr>' +
+			'<tr>' +
+				'<td class="tdlabel">Incident Description</td>' +
+				'<td>' +
+					'<textarea name="incidentDescription" rows="5" style="width: 100%"></textarea>' +
+				'</td>' +
+			'</tr>' +
+			'<tr>' +
+				'<td class="tdlabel">Incident Status</td>' +
+				'<td>' +
+					'<select name="incidentStatus" style="width: 100%">' +
+						'<option vlaue="a">Active</option>' +
+						'<option value="r">Resolved</option>' +
+						'<option value="h">On Hold</option>' +
+						'<option value="d">Delete</option>' +
+					'</select>' +
+				'</td>' +
+			'</tr>' +
+			'<tr>' +
+				'<td class="tdlabel">Incident Resolution</td>' +
+				'<td>' +
+					'<textarea name="incidentResolution" rows="5" style="width: 100%"></textarea>' +
+				'</td>' +
+			'</tr>' +
+			'<tr>' +
+				'<td class="tdlabel" style="width: 25%">Resolution Date</td>' +
+				'<td>' +
+					'<input type="text" name="resolutionDate" class="ckdate" style="width: 100%">' +
+				'</td>' +
+			'</tr>' +
+			'</table>' +
+		'</form>' +
+		'</div>');
+
 
         var defaults = {
             guestId: 0,
@@ -82,68 +124,13 @@
         var settings = $.extend(true, {}, defaults, options);
 
         var $wrapper = $(this);
-        $wrapper.viewer = viewer;
+        $wrapper.incidentdialog = incidentdialog
 
         createViewer($wrapper, settings);
 
         return this;
     };
 	
-    function createNewIncident(settings, dtTable) {
-        var $div, $ta, $button;
-        
-        // Create textarea contorl with greyed out label
-        $ta = $('<textarea placeholder="' + settings.newTaLabel + '" />').attr(settings.newNoteAttrs);
-                
-        $div = $('<div style="margin-top:5px;" class="hhk-panel" />').append($ta);
-        
-        if (settings.linkId > 0) {
-            
-            $button = $('<button class=" ui-button ui-corner-all ui-widget" id=' + settings.linkId + '"note-newNote" style="vertical-align: top; margin:7px;">Save New Note</button>')
-                .click(function (e) {
-                    e.preventDefault();
-                    var noteTextarea = $('#' + settings.newNoteAttrs.id);
-                    var noteData = noteTextarea.val();
-
-                    if (settings.linkId == 0) {
-                        settings.alertMessage.call('Link Id is not set.  ', 'alert');
-                        return;
-                    }
-
-                    if(noteData != ""){
-
-                        $('#note-newNote').attr("disabled", "disabled").text("Saving...");
-
-                        $.ajax({
-                            url: 'ws_resv.php',
-                            dataType: 'JSON',
-                            type: 'post',
-                            data: {
-                                cmd: 'saveNote',
-                                linkType: settings.linkType,
-                                linkId: settings.linkId,
-                                data: noteData
-                            },
-                            success: function( data ){
-                                if(data.idNote > 0){
-                                    dtTable.ajax.reload();
-                                    noteTextarea.val("");
-                                    $('#note-newNote').removeAttr("disabled").text(settings.newLabel);
-                                }else{
-                                    settings.alertMessage.call(data.error, 'alert');
-                                }
-                            }
-                        });
-                    }
-                });
-
-            
-            $div.append($button);
-        }
-        
-        return $div;
-    }
-
     function createActions(reportId, row) {
         
         var $ul, $li;
@@ -173,7 +160,41 @@
         //return $ul.html();
     }
     
+    function saveIncident($wrapper){
+	    console.log($wrapper.incidentdialog.find("form").serialize());
+
+        $.ajax({
+            url: settings.serviceURL,
+            dataType: 'JSON',
+            type: 'post',
+            data: {
+                    cmd: 'newIncident',
+            },
+            success: function( data ){
+                    if(data.idReport > 0){
+                        $table.ajax.reload();
+                    }else{
+                        if(data.error){
+                            settings.alertMessage.call(data.error, 'alert');
+                        }else{
+                            settings.alertMessage.call('An unknown error occurred.', 'alert');
+                        }
+                    }
+            }
+        });
+    }
+    
     function actions($wrapper, settings, $table) {
+        
+        //Show new incident
+        $wrapper.on('click', '#incident-create', function(e){
+        	e.preventDefault();                            
+            $wrapper.incidentdialog.find("form")[0].reset();
+            $wrapper.incidentdialog.find("textarea").empty();
+            $wrapper.incidentdialog.find("option").removeAttr("selected");
+            $wrapper.incidentdialog.find("option[value=a]").attr("selected", "selected");
+            $wrapper.incidentdialog.dialog("open");			
+        });
         
         //Show Edit mode
         $wrapper.on('click', '.incident-edit', function(e){
@@ -188,12 +209,16 @@
                         repid: repID,
                 },
                 success: function( data ){
-                        if(data.reportform){
-                            $dialog = $('<div id="incidentDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;" title="Incident"></div>');
-				            $wrapper.append($dialog);
-							$dialog.dialog({modal:true});
-							console.log($wrapper.viewer);
-							$wrapper.viewer.setMarkdown(data.confrv);
+                        if(data.title){
+                            
+                            $wrapper.incidentdialog.find("input[name=incidentTitle]").val(data.title);
+							$wrapper.incidentdialog.find("input[name=incidentDate]").val(data.reportDate);
+							$wrapper.incidentdialog.find("textarea[name=incidentDescription]").text(data.description);
+							$wrapper.incidentdialog.find("option[value=" + data.status + "]").attr("selected", "selected");
+							$wrapper.incidentdialog.find("textarea[name=incidentResolution]").text(data.resolution);
+							$wrapper.incidentdialog.find("input[name=resolutionDate]").val(data.resolutionDate);
+                            $wrapper.incidentdialog.dialog("open");
+				            
                         }else{
                             
                         }
@@ -320,6 +345,7 @@
 //        console.log(settings.dtCols);
         
         if (settings.guestId > 0 || settings.psgId > 0) {
+	        var newBtn = $('<button class="ui-button ui-corner-all ui-state-default" id="incident-create"><span class="ui-icon ui-icon-plus"></span>New Incident</button>').appendTo($wrapper);
             var $table = $('<table />').attr(settings.tableAttrs).appendTo($wrapper);
 
             var dtTable = $table.DataTable({
@@ -348,6 +374,21 @@
             $(".dataTables_filter").addClass('ignrSave');
             $(".dtBottom").addClass('ignrSave');
             
+            //add incident dialog
+            $wrapper.append($wrapper.incidentdialog);
+			$wrapper.incidentdialog.dialog({
+				autoOpen: false,
+				modal:true,
+				width: 800,
+				buttons: {
+					"Save": function(){
+						saveIncident($wrapper)
+					},
+					Cancel: function() {
+						$wrapper.incidentdialog.dialog( "close" );
+        			}
+      			},
+			});
         }
         
         //$wrapper.append(createNewNote(settings, dtTable));

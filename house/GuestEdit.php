@@ -9,7 +9,7 @@
  */
 require ("homeIncludes.php");
 
-require (DBTABLES . 'visitRS.php');
+require (DB_TABLES . 'visitRS.php');
 require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'registrationRS.php');
 require (DB_TABLES . 'ActivityRS.php');

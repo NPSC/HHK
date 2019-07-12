@@ -229,6 +229,19 @@ class Report {
 
         return $counter;
     }
+    
+    public function toArray(){
+	    return array(
+		    "idReport"=>$this->idReport,
+		    "title"=>$this->title,
+		    "category"=>$this->category,
+		    "reportDate"=>date("M j, Y", strtotime($this->reportDate)),
+		    "resolutionDate"=>($this->resolutionDate ? date("M j, Y", strtotime($this->resolutionDate)): ""),
+		    "description"=>$this->description,
+		    "resolution"=>$this->resolution,
+		    "status"=>$this->status,
+	    );
+    }
 
     protected function isValid() {
 

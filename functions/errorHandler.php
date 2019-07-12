@@ -1,7 +1,6 @@
 <?php
 register_shutdown_function( "fatal_handler" );
 $errorMsg = "";
-$success = "";
 
 function fatal_handler() {
     $errfile = "unknown file";
@@ -26,6 +25,8 @@ function fatal_handler() {
 }
 
 function formHandler($error){
+	$to = "wireland@nonprofitsoftwarecorp.org";
+	
 	if($_POST && isset($_POST['name'], $_POST['email'], $_POST['message'])) {
 
     $name = $_POST['name'];
@@ -36,11 +37,11 @@ function formHandler($error){
 
 	$message .= "File: " . $error["file"] . " line " . $error["line"] . "\r\nError: " . $error["message"];
       // send email and redirect
-      $to = "wireland@nonprofitsoftwarecorp.org";
+      
       $subject = "New bug report received";
       $headers = "From: noreply@wireland.me" . "\r\n";
       mail($to, $subject, $message, $headers);
-      header('Location: /functions/errorsuccess.php');
+      header('Location: /HHK/functions/errorsuccess.php');
       exit;
   }
 }
@@ -135,6 +136,9 @@ function buildPage($error){
 									<input type="submit" class="ui-button ui-corner-all ui-widget" value="Submit" style="width: initial;">
 								</div>
 							</form>
+							<p>File: <?php echo $error["file"];?></p>
+							<p>Line: <?php echo $error["line"];?></p>
+							<p>Message: <?php echo $error["message"];?></p>
 						</div>
 					</div>
 		        </div>

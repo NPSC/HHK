@@ -274,7 +274,11 @@ try {
                 $idReport = intval(filter_var($_POST['repid'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
             
-            $events = ReservationSvcs::getReportForm($dbh, $idReport);
+            $report = new Report($idReport);
+			$report->loadReport($dbh);
+			$events = $report->toArray();
+            
+            //$events = ReservationSvcs::getReportForm($dbh, $idReport);
         
         	break;
 
