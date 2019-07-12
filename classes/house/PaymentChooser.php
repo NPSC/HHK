@@ -804,9 +804,9 @@ ORDER BY v.idVisit , v.Span;");
         // Payment Types
         $payTbl->addBodyTr(HTMLTable::makeTd('Pay With:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $defaultPayType, FALSE), array('name'=>'PayTypeSel', 'class'=>'hhk-feeskeys'))
-                        . ($paymentGateway == PaymentGateway::INSTAMED ? 
-                        HTMLContainer::generateMarkup('label', 'Key:', array('for'=>'btnKeyNumber', 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number')) 
-                        . HTMLInput::generateMarkup('Key', array('type'=>'checkbox', 'name'=>'btnKeyNumber', 'class'=>'hhk-feeskeys', 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number')) : ''), array('colspan'=>'2')));
+                        . ($paymentGateway == PaymentGateway::INSTAMED ?
+                        HTMLContainer::generateMarkup('label', 'Key:', array('for'=>'btnKeyNumber', 'class'=>'hhkKeyNumber', 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number'))
+                        . HTMLInput::generateMarkup('Key', array('type'=>'checkbox', 'name'=>'btnKeyNumber', 'class'=>'hhk-feeskeys hhkKeyNumber', 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number')) : ''), array('colspan'=>'2')));
 
 
         // Cash Amt Tendered

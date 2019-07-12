@@ -685,11 +685,13 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             $('.hhk-transfer').hide();
             $('.hhk-tfnum').hide();
             chg.hide();
+            $('.hhkKeyNumber').hide();
             $('#tdCashMsg').hide();
             $('.paySelectNotes').show();
             
             if ($(this).val() === 'cc') {
                 chg.show('fade');
+                $('.hhkKeyNumber').show();
             } else if ($(this).val() === 'ck') {
                 $('.hhk-cknum').show('fade');
             } else if ($(this).val() === 'in') {
