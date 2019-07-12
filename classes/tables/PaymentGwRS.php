@@ -151,11 +151,11 @@ class InstamedGatewayRS extends TableRS {
     public $cc_name;  // varchar(45) NOT NULL,
     public $account_Id;  // varchar(45) NOT NULL DEFAULT '',
     public $security_Key;  // varchar(245) NOT NULL DEFAULT '',
+    public $password;
     public $sso_Alias;  // varchar(145) NOT NULL DEFAULT '',
     public $merchant_Id;  // varchar(145) NOT NULL DEFAULT '',
     public $store_Id;  // varchar(145) NOT NULL DEFAULT '',
     public $providersSso_Url;  // varchar(145) NOT NULL DEFAULT '',
-    public $soap_Url;  // varchar(145) NOT NULL DEFAULT '',
     public $nvp_Url;  // varchar(145) NOT NULL DEFAULT '',
     public $terminal_Id;  // varchar(145) NOT NULL DEFAULT '',
     public $WorkStation_Id;  // varchar(145) NOT NULL DEFAULT '',
@@ -172,11 +172,11 @@ class InstamedGatewayRS extends TableRS {
         $this->cc_name = new DB_Field("cc_name", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->account_Id = new DB_Field("Merchant_Id", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->security_Key = new DB_Field("Password", "", new DbStrSanitizer(245), TRUE, TRUE);
+        $this->password = new DB_Field("Mobile_CardInfo_Url", "", new DbStrSanitizer(245), TRUE, TRUE);
         $this->sso_Alias = new DB_Field("Credit_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->merchant_Id = new DB_Field("Trans_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->store_Id = new DB_Field("CardInfo_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->providersSso_Url = new DB_Field("Checkout_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
-        $this->soap_Url = new DB_Field("Mobile_CardInfo_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->nvp_Url = new DB_Field("Mobile_Checkout_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->terminal_Id = new DB_Field("CheckoutPOS_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->WorkStation_Id = new DB_Field("CheckoutPOSiFrame_Url", "", new DbStrSanitizer(145), TRUE, TRUE);

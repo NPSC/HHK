@@ -634,12 +634,12 @@ class HeaderResponse extends GatewayResponse {
 
 class ImCurlRequest extends CurlRequest {
 
-    protected function execute($url, $params) {
+    protected function execute($url, $params, $accountId, $password) {
 
         $ch = curl_init();
 
         curl_setopt($ch, CURLOPT_URL, $url . $params);
-        curl_setopt($ch, CURLOPT_USERPWD, "NP.SOFTWARE.TEST:vno9cFqM");
+        curl_setopt($ch, CURLOPT_USERPWD, "$accountId:$password");
         curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 

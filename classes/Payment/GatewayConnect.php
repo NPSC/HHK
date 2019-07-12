@@ -120,13 +120,13 @@ abstract class GatewayResponse {
 
 abstract class CurlRequest {
 
-    public function submit($parmStr, $url, $trace = FALSE) {
+    public function submit($parmStr, $url, $accountId, $password, $trace = FALSE) {
 
         if ($url == '') {
             throw new Hk_Exception_Payment('Curl Request is missing the URL.  ');
         }
 
-        $xaction = $this->execute($url, $parmStr);
+        $xaction = $this->execute($url, $parmStr, $accountId, $password);
 
         try {
             if ($trace) {
@@ -141,7 +141,7 @@ abstract class CurlRequest {
         return $xaction;
     }
 
-    protected abstract function execute($url, $params);
+    protected abstract function execute($url, $params, $accountId, $password);
 
 }
 
