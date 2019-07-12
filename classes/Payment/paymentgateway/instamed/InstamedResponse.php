@@ -91,7 +91,7 @@ class ImPaymentResponse extends PaymentResponse {
             $tbl->addBodyTr(HTMLTable::makeTd("ARC: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getEMVApplicationResponseCode(), array('style'=>'font-size:.8em;')));
         }
 
-        if ($this->response->getAuthorizationText() != '' && $this->response->SignatureRequired() == 1) {
+        if ($this->response->getAuthorizationText() != '') {
             $tbl->addBodyTr(HTMLTable::makeTd($this->response->getAuthorizationText(), array('colspan'=>2)));
         }
 
