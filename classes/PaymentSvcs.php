@@ -90,14 +90,7 @@ class PaymentSvcs {
 
           case PayType::ChargeAsCash:
 
-            // Manual Charge
-            $pAuthRs = new Payment_AuthRS();
-            $pAuthRs->Card_Type->setStoredVal($pmp->getChargeCard());
-            $pAuthRs->Acct_Number->setStoredVal($pmp->getChargeAcct());
-            $pAuthRs->Status_Code->setStoredVal('000');
-            $pAuthRs->Timestamp->setStoredVal(date('Y-m-d H:i:s', strtotime($pmp->getPayDate())));
-
-            $cashResp = new ManualChargeResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getChargeCard(), $pmp->getChargeAcct(), $pmp->getPayNotes());
+             $cashResp = new ManualChargeResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getChargeCard(), $pmp->getChargeAcct(), $pmp->getPayNotes());
 
             ChargeAsCashTX::sale($dbh, $cashResp, $uS->username, $paymentDate);
 
@@ -668,6 +661,114 @@ class PaymentSvcs {
         } catch (Hk_Exception_Payment $exPay) {
 
             $dataArray['warning'] = "Void-Return Error = " . $exPay->getMessage();
+        }
+
+        return $dataArray;
+    }
+
+    public static function undoReturnFees(\PDO $dbh, $idPayment, $bid) {
+
+        $uS = Session::getInstance();
+        $dataArray = array('bid' => $bid);
+
+        $payRs = new PaymentRS();
+        $payRs->idPayment->setStoredVal($idPayment);
+        $pments = EditRS::select($dbh, $payRs, array($payRs->idPayment));
+
+        if (count($pments) != 1) {
+            return array('warning' => 'Payment record not found.  Unable to Undo this return.  ', 'bid' => $bid);
+        }
+
+        EditRS::loadRow($pments[0], $payRs);
+
+        // ineligible
+        if ($payRs->Status_Code->getStoredVal() != PaymentStatusCode::Retrn) {
+            return array('warning' => 'Payment is ineligable.  ', 'bid' => $bid);
+        }
+
+        $invoice = new Invoice($dbh);
+        $invoice->loadInvoice($dbh, 0, $idPayment);
+
+        // Record transaction
+
+        switch ($payRs->idPayment_Method->getStoredVal()) {
+
+            case PaymentMethod::Check:
+
+                $ckResp = new CheckResponse($payRs->Amount->getStoredVal(), $invoice->getSoldToId(), $invoice->getInvoiceNumber());
+
+                CheckTX::undoReturnPayment($dbh, $ckResp, $uS->username, $payRs);
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, $ckResp->getAmount(), $uS->username);
+
+                $ckResp->idVisit = $invoice->getOrderNumber();
+
+                $dataArray['success'] = 'Check return is undone.  ';
+                $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $ckResp);
+
+                break;
+
+            case PaymentMethod::Transfer:
+
+                $ckResp = new TransferResponse($payRs->Amount->getStoredVal(), $invoice->getSoldToId(), $invoice->getInvoiceNumber());
+
+                TransferTX::undoTransferReturn($dbh, $ckResp, $uS->username, $payRs);
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, $ckResp->getAmount(), $uS->username);
+
+                $ckResp->idVisit = $invoice->getOrderNumber();
+
+                $dataArray['success'] = 'Transfer return is undone.  ';
+                $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $ckResp);
+
+                break;
+
+            case PaymentMethod::Cash:
+
+                $cashResp = new CashResponse($payRs->Amount->getStoredVal(), $invoice->getSoldToId(), $invoice->getInvoiceNumber());
+
+                CashTX::undoReturnPayment($dbh, $cashResp, $uS->username, $payRs);
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
+
+                $cashResp->idVisit = $invoice->getOrderNumber();
+
+                $dataArray['success'] = 'Cash Return is undone.  ';
+                $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $cashResp);
+
+                break;
+
+          case PayType::ChargeAsCash:
+
+                $pAuthRs = new Payment_AuthRS();
+                $pAuthRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
+                $arows = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment));
+
+                if (count($arows) != 1) {
+                    throw new Hk_Exception_Payment('Payment Detail record not found. ');
+                }
+
+                EditRS::loadRow($arows[0], $pAuthRs);
+
+                $cashResp = new ManualChargeResponse($pAuthRs->Approved_Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal());
+
+                ChargeAsCashTX::undoReturnPayment($dbh, $cashResp, $uS->username, $payRs);
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
+
+                $cashResp->idVisit = $invoice->getOrderNumber();
+
+                $dataArray['success'] = 'External Credit Return is undone.  ';
+                $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $cashResp);
+
+                break;
+
+            default:
+                throw new Hk_Exception_Payment('The pay type is ineligible.  ');
         }
 
         return $dataArray;

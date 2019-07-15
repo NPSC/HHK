@@ -44,13 +44,7 @@ class PaymentResult {
 
         // zero total invoices do not have payment records.
         if ($payResp->getIdPayment() > 0 && $this->idInvoice > 0) {
-            // payment-invoice
-            $payInvRs = new PaymentInvoiceRS();
-            $payInvRs->Amount->setNewVal($payResp->getAmount());
-            $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
-            $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
-            EditRS::insert($dbh, $payInvRs);
-
+            $this->createPaymentInvoiceRcrd($dbh, $payResp->getIdPayment(), $this->idInvoice, $payResp->getAmount());
         }
 
         // Make out receipt
@@ -71,11 +65,7 @@ class PaymentResult {
 
         if ($payResp->getIdPayment() > 0 && $this->idInvoice > 0) {
             // payment-invoice
-            $payInvRs = new PaymentInvoiceRS();
-            $payInvRs->Amount->setNewVal($payResp->getAmount());
-            $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
-            $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
-            EditRS::insert($dbh, $payInvRs);
+            $this->createPaymentInvoiceRcrd($dbh, $payResp->getIdPayment(), $this->idInvoice, $payResp->getAmount());
         }
 
         // Make out receipt
@@ -100,6 +90,23 @@ class PaymentResult {
         //$this->invoiceMarkup = $invoice->createMarkup($dbh);
         $this->invoiceNumber = $invoice->getInvoiceNumber();
 
+    }
+
+    protected function createPaymentInvoiceRcrd(\PDO $dbh, $idPayment, $idInvoice, $amount) {
+
+        // payment-invoice
+        $payInvRs = new PaymentInvoiceRS();
+        $payInvRs->Invoice_Id->setStoredVal($idInvoice);
+        $payInvRs->Payment_Id->setStoredVal($idPayment);
+        $invPayRows = EditRS::select($dbh, $payInvRs, array($payInvRs->Invoice_Id, $payInvRs->Payment_Id));
+
+        if (count($invPayRows) == 0) {
+            // Make a payment-invoice entry.
+            $payInvRs->Amount->setNewVal($amount());
+            $payInvRs->Invoice_Id->setNewVal($idInvoice);
+            $payInvRs->Payment_Id->setNewVal($idPayment);
+            EditRS::insert($dbh, $payInvRs);
+        }
     }
 
     public function emailReceipt(\PDO $dbh) {

@@ -366,6 +366,7 @@ class TransType {
     const Retrn = 'r';
     const VoidReturn = 'vr';
     const Reverse = 'rv';
+    const undoRetrn = 'ur';
 }
 
 

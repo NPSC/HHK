@@ -323,12 +323,12 @@ where
     }
 
     // THis is for Visit Editor Current Charges...
-    public function getMoaInvCharges() {
-        if (isset($this->itemSums[ItemId::LodgingMOA])) {
-            return $this->itemSums[ItemId::LodgingMOA][InvoiceStatus::Unpaid];
-        }
-        return 0;
-    }
+//    public function getMoaInvCharges() {
+//        if (isset($this->itemSums[ItemId::LodgingMOA])) {
+//            return $this->itemSums[ItemId::LodgingMOA][InvoiceStatus::Unpaid];
+//        }
+//        return 0;
+//    }
 
     public function getDepositPayType() {
         return $this->depositPayType;

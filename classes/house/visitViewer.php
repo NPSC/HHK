@@ -680,16 +680,18 @@ class VisitView {
         $showSubTotal = FALSE;
 
         // Visit fees charged
+        $visitFeeCharged = 0;
         if ($showVisitFee && $visitCharge->getVisitFeeCharged() > 0) {
+
+            $visitFeeCharged = $visitCharge->getVisitFeeCharged();
 
             // Get labels
             $labels = new Config_Lite(LABEL_FILE);
-
             $showSubTotal = TRUE;
 
             $tbl2->addBodyTr(
-                HTMLTable::makeTd($labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'), array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . number_format($visitCharge->getVisitFeeCharged(), 2), array('style'=>'text-align:right;'))
+                HTMLTable::makeTd($labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee') . ':', array('class'=>'tdlabel'))
+                . HTMLTable::makeTd('$' . number_format($visitFeeCharged, 2), array('style'=>'text-align:right;'))
             );
         }
 
@@ -704,16 +706,16 @@ class VisitView {
             );
         }
 
-        // MOA
-        $totalMOA = 0;
-        if ($visitCharge->getMoaInvCharges() > 0) {
+        // Unpaid MOA
+        $unpaidMOA = 0;
+        if ($visitCharge->getItemInvPending(ItemId::LodgingMOA) > 0) {
 
-            $totalMOA = $visitCharge->getMoaInvCharges();
+            $unpaidMOA = $visitCharge->getItemInvPending(ItemId::LodgingMOA);
             $showSubTotal = TRUE;
 
             $tbl2->addBodyTr(
-                HTMLTable::makeTd('Money On Account', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . number_format($totalMOA, 2), array('style'=>'text-align:right;'))
+                HTMLTable::makeTd('Money On Account:', array('class'=>'tdlabel'))
+                . HTMLTable::makeTd('$' . number_format($unpaidMOA, 2), array('style'=>'text-align:right;'))
             );
         }
 
@@ -732,13 +734,10 @@ class VisitView {
         $totalCharged =
                 $visitCharge->getRoomFeesCharged()
                 + $visitCharge->getItemInvCharges(ItemId::AddnlCharge)
-                + $totalMOA
-                + $totalDiscounts;
+                + $unpaidMOA
+                + $totalDiscounts
+                + $visitFeeCharged;
 
-        //if show visit fee
-        if($showVisitFee){
-                $totalCharged += $visitCharge->getVisitFeeCharged();
-        }
 
         // Subtotal line
         if ($showSubTotal) {
@@ -753,29 +752,26 @@ class VisitView {
         // Payments
         $totalPaid = $visitCharge->getRoomFeesPaid()
                 + $visitCharge->getVisitFeesPaid()
-                + $visitCharge->getItemInvPayments(ItemId::AddnlCharge);
+                + $visitCharge->getItemInvPayments(ItemId::AddnlCharge)
+                + $visitCharge->getItemInvPayments(ItemId::Waive);
 
-
-
-        //if ($visitCharge->getItemInvPayments(ItemId::LodgingMOA) > 0) {
-            $totalPaid += $visitCharge->getItemInvPayments(ItemId::LodgingMOA);
-        //}
-
-        // Add Waived amounts.
-        $totalPaid += $visitCharge->getItemInvPayments(ItemId::Waive);
-
+        // Total Paid to date
         $tbl2->addBodyTr(
                 HTMLTable::makeTd('Amount paid to-date:', array('class'=>'tdlabel'))
                 . HTMLTable::makeTd('$' . number_format($totalPaid, 2), array('style'=>'text-align:right;'))
         );
 
+        // unpaid invoices
         $amtPending = $visitCharge->getRoomFeesPending()
                 + $visitCharge->getVisitFeesPending()
                 + $visitCharge->getItemInvPending(ItemId::AddnlCharge)
                 + $visitCharge->getItemInvPending(ItemId::LodgingMOA)
                 + $visitCharge->getItemInvPending(ItemId::Waive);
 
-        // unpaid invoices
+        //if ($visitCharge->getItemInvPayments(ItemId::LodgingMOA) > 0) {
+//            $totalPaid += $visitCharge->getItemInvPayments(ItemId::LodgingMOA);
+        //}
+
         if ($amtPending != 0) {
             $tbl2->addBodyTr(
                 HTMLTable::makeTd('Amount Pending:', array('class'=>'tdlabel'))

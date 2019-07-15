@@ -303,6 +303,22 @@ try {
 
             break;
 
+        case 'undoRtn':
+
+            $idPayment = 0;
+            if (isset($_POST['pid'])) {
+                $idPayment = intval(filter_var($_POST['pid'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $bid = '';
+            if (isset($_POST['bid'])) {
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+            }
+
+            $events = PaymentSvcs::undoReturnFees($dbh, $idPayment, $bid);
+
+            break;
+
         case 'voidret':
 
             $idPayment = 0;

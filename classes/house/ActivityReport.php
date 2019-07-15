@@ -644,11 +644,15 @@ where `lp`.`idPayment` > 0
                         $stat = 'Return';
                         $attr['style'] .= 'color:red;';
 
-
+                        // Void return
                         if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d')) {
                             $voidContent .= HTMLInput::generateMarkup('Void-Return', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidRefundPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
                         }
 
+                        // Clawback
+                        if ($p['idPayment_Method'] != PaymentMethod::Charge) {
+                            $voidContent .= HTMLInput::generateMarkup('Undo Return', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-undoReturnPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
+                        }
 
                         break;
 
@@ -664,7 +668,7 @@ where `lp`.`idPayment` > 0
 
                             if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d')) {
                                 $voidContent .= HTMLInput::generateMarkup('Void Refund', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidRefundPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
-                            } 
+                            }
                         } else {
 
                             $payTypeTotals[$p['idPayment_Method']]['amount'] += $amt;

@@ -216,7 +216,7 @@ abstract class InvoiceLine {
 
         // var will have invoice notes when useDetail is off.
         if (!$this->useDetail) {
-            $this->description .= ';  ' . $this->var;
+            $this->description .= ($this->var != '' ? '; ' . $this->var : '');
         }
 
         return $this;
@@ -305,7 +305,7 @@ class RecurringInvoiceLine extends InvoiceLine {
                 $this->description = $description .  ':  ' . date('M j, Y', strtotime($this->getPeriodStart())) . ' - ' . date('M j, Y', strtotime($this->getPeriodEnd()));
             }
         } else {
-            $this->description = trim($description . ' ' . $this->var);
+            $this->description = $description . ($this->var == '' ? '' : '; ' . $this->var);
         }
 
         return $this;

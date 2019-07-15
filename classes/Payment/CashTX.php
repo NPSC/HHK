@@ -148,6 +148,24 @@ class CashTX {
         $pr->setPaymentDate(date('Y-m-d H:i:s'));
 
     }
+
+    public static function undoReturnPayment(\PDO $dbh, CashResponse &$pr, $username, PaymentRS $payRs) {
+
+        // Record transaction
+        $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Cash);
+        $pr->setIdTrans($transRs->idTrans->getStoredVal());
+
+        // Payment record
+        $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
+        $payRs->Updated_By->setNewVal($username);
+        $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+
+        EditRS::update($dbh, $payRs, array($payRs->idPayment));
+        EditRS::updateStoredVals($payRs);
+        $pr->paymentRs = $payRs;
+        $pr->setPaymentDate(date('Y-m-d H:i:s'));
+
+    }
 }
 
 
@@ -364,6 +382,32 @@ class ChargeAsCashTX {
         $pDetailRS->idPayment_auth->setNewVal($idPaymentAuth);
         EditRS::updateStoredVals($pDetailRS);
 
+    }
+
+    public static function undoReturnPayment(\PDO $dbh, ManualChargeResponse &$pr, $username, PaymentRS $payRs) {
+
+                // Record transaction
+        $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Cash);
+        $pr->setIdTrans($transRs->idTrans->getStoredVal());
+
+        // Payment record
+        $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
+        $payRs->Updated_By->setNewVal($username);
+        $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+
+        EditRS::update($dbh, $payRs, array($payRs->idPayment));
+        EditRS::updateStoredVals($payRs);
+        $pr->paymentRs = $payRs;
+        $pr->setPaymentDate(date('Y-m-d H:i:s'));
+
+
+        //Payment Detail
+        $pDetailRS = new Payment_AuthRS();
+        $pDetailRS->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
+        $pDetailRS->Status_Code->setStoredVal(PaymentStatusCode::Retrn);
+
+        // Delete return payment auth record.
+        EditRS::delete($dbh, $pDetailRS, array($pDetailRS->idPayment, $pDetailRS->Status_Code));
 
     }
 }

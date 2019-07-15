@@ -264,6 +264,13 @@ $("#rptfeediv").on("click", ".hhk-voidRefundPmt", function () {
         sendVoidReturn(btn.attr("id"), "vr", btn.data("pid"));
     }
 });
+$("#rptfeediv").on("click", ".hhk-undoReturnPmt", function () {
+    var btn = $(this);
+    if (btn.val() != "Saving..." && confirm("Undo this Return?")) {
+        btn.val("Saving...");
+        sendVoidReturn(btn.attr("id"), "ur", btn.data("pid"));
+    }
+});
 
 $("#rptfeediv").on("click", ".hhk-deleteWaive", function () {
     var btn = $(this);

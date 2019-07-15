@@ -268,6 +268,9 @@ function sendVoidReturn(btnid, vorr, idPayment, amt) {
     } else if (vorr && vorr === 'r') {
         prms.cmd = 'rtn';
         prms.amt = amt;
+    } else if (vorr && vorr === 'ur') {
+        prms.cmd = 'undoRtn';
+        prms.amt = amt;
     } else if (vorr && vorr === 'vr') {
         prms.cmd = 'voidret';
     } else if (vorr && vorr === 'd') {
