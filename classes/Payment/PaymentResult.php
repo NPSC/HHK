@@ -102,7 +102,7 @@ class PaymentResult {
 
         if (count($invPayRows) == 0) {
             // Make a payment-invoice entry.
-            $payInvRs->Amount->setNewVal($amount());
+            $payInvRs->Amount->setNewVal($amount);
             $payInvRs->Invoice_Id->setNewVal($idInvoice);
             $payInvRs->Payment_Id->setNewVal($idPayment);
             EditRS::insert($dbh, $payInvRs);

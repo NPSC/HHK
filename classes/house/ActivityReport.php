@@ -424,11 +424,11 @@ class ActivityReport {
 
         // Dates
         if ($startDT != NULL && $startDT != '') {
-            $whDates .= " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) >= DATE('" . $startDT->format('Y-m-d 00:00:00') . "') ";
+            $whDates .= " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) >= DATE('" . $startDT->format('Y-m-d') . "') ";
         }
 
         if ($endDT != NULL && $endDT != '') {
-            $whDates .= " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) <= DATE('" . $endDT->format('Y-m-d 23:59:59') . "') ";
+            $whDates .= " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) <= DATE('" . $endDT->format('Y-m-d') . "') ";
         }
 
         // Set up status totals array

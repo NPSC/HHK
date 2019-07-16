@@ -822,7 +822,7 @@ where r.idRegistration =" . $idReg);
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->password->getStoredVal(), array('name' => $indx . '_txtpwd', 'size' => '80')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Security Key', array('class' => 'tdlabel'))
+                    HTMLTable::makeTh('SSO Password', array('class' => 'tdlabel'))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->security_Key->getStoredVal(), array('name' => $indx . '_txtsk', 'size' => '80')))
             );
             $tbl->addBodyTr(

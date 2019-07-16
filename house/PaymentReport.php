@@ -185,9 +185,26 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     }
 
     if (isset($_POST['selPayType'])) {
+        // Payment Types
         $reqs = $_POST['selPayType'];
+
         if (is_array($reqs)) {
+            $addType = 0;
             $payTypeSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+
+            // Select both charge types of one is selected.
+            foreach ($payTypeSelections as $s) {
+                if ($s == PaymentMethod::Charge) {
+                    $addType = PaymentMethod::ChgAsCash;
+                } else if ($s == PaymentMethod::ChgAsCash) {
+                    $addType = PaymentMethod::Charge;
+                }
+            }
+
+            if ($addType > 0) {
+                $payTypeSelections[] = $addType;
+            }
+
         }
     }
 
@@ -351,9 +368,10 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             }
 
             if ($payTypeText == '') {
-                $payTypeText .= $payTypes[$s][1];
+                $payTypeText .= (isset($payTypes[$s][1]) ? $payTypes[$s][1] : '');
             } else {
-                $payTypeText .= ', ' . $payTypes[$s][1];
+
+                $payTypeText .= (isset($payTypes[$s][1]) ? ', ' . $payTypes[$s][1] : '');
             }
         }
     }
