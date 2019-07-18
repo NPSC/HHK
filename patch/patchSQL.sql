@@ -8,12 +8,13 @@ ALTER TABLE `card_id`
 
 ALTER TABLE `guest_token`
     CHANGE COLUMN `ExpDate` `ExpDate` VARCHAR(14) NOT NULL DEFAULT '' ;
+ALTER TABLE `guest_token` 
+    CHANGE COLUMN `CardHolderName` `CardHolderName` VARCHAR(132) NOT NULL DEFAULT '' ;
 
 ALTER TABLE `gateway_transaction`
     CHANGE COLUMN `Vendor_Request` `Vendor_Request` VARCHAR(2000) NOT NULL DEFAULT '' ;
 ALTER TABLE `gateway_transaction`
     CHANGE COLUMN `Vendor_Response` `Vendor_Response` VARCHAR(5000) NOT NULL DEFAULT '' ;
-
 
 ALTER TABLE `payment_auth`
     CHANGE COLUMN `Code3` `CVV` VARCHAR(45) NOT NULL DEFAULT '';
@@ -37,6 +38,8 @@ ALTER TABLE `payment_auth`
     ADD COLUMN `Signature_Required` INT(4) NOT NULL DEFAULT 1 AFTER `ProcessData`;
 ALTER TABLE `payment_auth` 
     ADD COLUMN `PartialPayment` INT(4) NOT NULL DEFAULT '0' AFTER `Signature_Required`;
+ALTER TABLE `payment_auth` 
+    ADD COLUMN `Cardholder_Name` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Card_Type`;
 
 ALTER TABLE `ssotoken` 
     ADD COLUMN `idPaymentAuth` INT NOT NULL DEFAULT 0 AFTER `Token`;

@@ -44,6 +44,7 @@ class InstamedGateway extends PaymentGateway {
     protected $soapUrl;
     protected $NvpUrl;
     protected $saleUrl;
+    protected $saleTokenUrl;
     protected $cofUrl;
     protected $returnUrl;
     protected $voidUrl;
@@ -55,8 +56,148 @@ class InstamedGateway extends PaymentGateway {
     protected function getGatewayName() {
         return 'instamed';
     }
+    public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
 
-    protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $postbackUrl, $manualKey = FALSE) {
+        $uS = Session::getInstance();
+        $payResult = NULL;
+
+        //$guest = new Guest($dbh, '', $invoice->getSoldToId());
+        //$addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
+
+        $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getIdToken());
+
+        // Do we have a token?
+        if (CreditToken::hasToken($tokenRS)) {
+            // Token available
+
+            $params = $this->getCredentials()->toCurl(FALSE)
+                    . "&amount=" . $invoice->getAmountToPay()
+                    . "&transactionType=CreditCard"
+                    . "&transactionAction=authcapt"
+                    . "&CardPresentStatus=notpresentphone"
+                    . "&paymentMethodID=" . $tokenRS->Token->getStoredVal();
+
+            $curlRequest = new ImCurlRequest();
+
+            $resp = $curlRequest->submit($params, $this->saleTokenUrl, $this->getCredentials()->id, $this->getCredentials()->password);
+
+            $resp['InvoiceNumber'] = $invoice->getInvoiceNumber();
+            $resp['Amount'] = $invoice->getAmountToPay();
+
+            $curlResponse = new VerifyCurlResponse($resp, MpTranType::Sale);
+
+            // Save raw transaction in the db.
+            try {
+                self::logGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'CreditSaleToken');
+            } catch (Exception $ex) {
+                // Do Nothing
+            }
+
+            // Make a sale response...
+            $sr = new ImPaymentResponse($curlResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $invoice->getIdInvoice(), $pmp->getPayNotes(), ($curlResponse->getPartialPaymentAmount() > 0 ? TRUE : FALSE));
+
+            // Record transaction
+            try {
+                $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Sale, TransMethod::Token);
+                $sr->setIdTrans($transRs->idTrans->getStoredVal());
+            } catch (Exception $ex) {
+                // do nothing
+            }
+
+            // record payment
+            $payResp = SaleReply::processReply($dbh, $sr, $uS->username);
+
+            // Analyze the result
+            switch ($payResp->getStatus()) {
+
+                case CreditPayments::STATUS_APPROVED:
+
+                    // Update invoice
+                    $invoice->updateInvoiceBalance($dbh, $payResp->response->getAuthorizedAmount(), $uS->username);
+
+                    if ($payResp->getIdPayment() > 0 && $invoice->getIdInvoice() > 0) {
+                        // payment-invoice
+                        $payInvRs = new PaymentInvoiceRS();
+                        $payInvRs->Amount->setNewVal($payResp->response->getAuthorizedAmount());
+                        $payInvRs->Invoice_Id->setNewVal($invoice->getIdInvoice());
+                        $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
+                        EditRS::insert($dbh, $payInvRs);
+
+                    }
+
+                case CreditPayments::STATUS_DECLINED:
+
+                    if ($payResp->getIdPayment() > 0 && $invoice->getIdInvoice() > 0) {
+                        // payment-invoice
+                        $payInvRs = new PaymentInvoiceRS();
+                        $payInvRs->Amount->setNewVal($payResp->response->getAuthorizedAmount());
+                        $payInvRs->Invoice_Id->setNewVal($invoice->getIdInvoice());
+                        $payInvRs->Payment_Id->setNewVal($payResp->getIdPayment());
+                        EditRS::insert($dbh, $payInvRs);
+
+                    }
+
+                    break;
+            }
+
+
+            $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+
+            switch ($payResp->getStatus()) {
+
+                case CreditPayments::STATUS_APPROVED:
+
+                    $payResult->feePaymentAccepted($dbh, $uS, $payResp, $invoice);
+                    $payResult->setDisplayMessage('Paid by Credit Card.  ');
+
+                    if ($payResp->isPartialPayment()) {
+                        $payResult->setDisplayMessage('** Partially Approved Amount: ' . number_format($payResp->response->getAuthorizedAmount(), 2) . ' (Remaining Balance Due: ' . number_format($invoice->getBalance(), 2) . ').  ');
+                    }
+
+                    break;
+
+                case CreditPayments::STATUS_DECLINED:
+
+                    $payResult->feePaymentRejected($dbh, $uS, $payResp, $invoice);
+
+                    $msg = '** The Payment is Declined. **';
+                    if ($payResp->response->getResponseMessage() != '') {
+                        $msg .= 'Message: ' . $payResp->response->getResponseMessage();
+                    }
+                    $payResult->setDisplayMessage($msg);
+
+                    break;
+
+                default:
+
+                    $payResult->setStatus(PaymentResult::ERROR);
+                    $payResult->setDisplayMessage('** Payment Invalid or Error **  Message: ' . $payResp->response->getResponseMessage());
+            }
+
+
+        } else {
+            // Initialiaze hosted payment
+            try {
+
+                $fwrder = $this->initHostedPayment($dbh, $invoice, $postbackUrl, $pmp->getManualKeyEntry(), $pmp->getCardHolderName());
+
+                $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+                $payResult->setForwardHostedPayment($fwrder);
+                $payResult->setDisplayMessage('Forward to Payment Page. ');
+
+            } catch (Hk_Exception_Payment $hpx) {
+
+                $payResult = new PaymentResult($invoice->getIdInvoice(), 0, 0);
+                $payResult->setStatus(PaymentResult::ERROR);
+                $payResult->setDisplayMessage($hpx->getMessage());
+            }
+        }
+
+        return $payResult;
+    }
+
+
+    protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $postbackUrl, $manualKey, $cardHolderName) {
 
         $uS = Session::getInstance();
         $dataArray = array();
@@ -65,12 +206,12 @@ class InstamedGateway extends PaymentGateway {
             throw new Hk_Exception_Runtime("Invoice payor information is missing.  ");
         }
 
-        //$patInfo = $this->getPatientInfo($dbh, $invoice->getIdGroup());
+        $patInfo = $this->getPatientInfo($dbh, $invoice->getIdGroup());
 
         $data = array(
-//            'patientID' => $patInfo['idName'],
-//            'patientFirstName' => $patInfo['Name_First'],
-//            'patientLastName' => $patInfo['Name_Last'],
+            'patientID' => $patInfo['idName'],
+            'patientFirstName' => $patInfo['Name_First'],
+            'patientLastName' => $patInfo['Name_Last'],
             'amount' => $invoice->getAmountToPay(),
             InstamedGateway::INVOICE_NUMBER => $invoice->getInvoiceNumber(),
             InstaMedCredentials::U_ID => $uS->uid,
@@ -85,9 +226,13 @@ class InstamedGateway extends PaymentGateway {
             'responseActionType' => 'header',
             'cancelURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::HCO_TRANS, InstamedGateway::POSTBACK_CANCEL),
             'confirmURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::HCO_TRANS, InstamedGateway::POSTBACK_COMPLETE),
-//            'requestToken' => 'true',
+            'requestToken' => 'true',
             'RelayState' => $this->saleUrl,
         );
+
+        if ($manualKey && $cardHolderName != '') {
+            $data['cardHolderName'] = $cardHolderName;
+        }
 
         $req = array_merge($data, $this->getCredentials()->toSSO());
         $headerResponse = $this->doHeaderRequest(http_build_query($req));
@@ -148,6 +293,7 @@ class InstamedGateway extends PaymentGateway {
             'patientLastName' => $patInfo['Name_Last'],
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
+            'cardHolderName' => $cardHolderName,
             'lightWeight' => 'true',
             'creditCardKeyed' => 'true',
             'responseActionType' => 'header',
@@ -607,7 +753,7 @@ class InstamedGateway extends PaymentGateway {
             $partlyApproved = TRUE;
         }
 
-        $gwResp = new StandInGwResponse($pAuthRs, $gTRs->OperatorID->getStoredVal(), $gTRs->CardHolderName->getStoredVal(), $gTRs->ExpDate->getStoredVal(), $gTRs->Token->getStoredVal(), $idInv, $payRs->Amount->getStoredVal());
+        $gwResp = new StandInGwResponse($pAuthRs, $gTRs->OperatorID->getStoredVal(), $pAuthRs->Cardholder_Name->getStoredVal(), $gTRs->ExpDate->getStoredVal(), $gTRs->Token->getStoredVal(), $idInv, $payRs->Amount->getStoredVal());
         $payResp = new ImPaymentResponse($gwResp, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $paymentNotes, $partlyApproved);
 
         $payResp->setPaymentDate($payRs->Payment_Date->getStoredVal());
@@ -681,6 +827,7 @@ class InstamedGateway extends PaymentGateway {
 
         $this->credentials = new InstaMedCredentials($gwRs);
 
+        $this->saleTokenUrl = 'https://connect.instamed.com/payment/NVP.aspx?';
         $this->saleUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPaymentSimpleSSO';
         $this->cofUrl = 'https://online.instamed.com/providers/Form/PatientPayments/NewPaymentPlanSimpleSSO';
         $this->voidUrl = 'https://online.instamed.com/providers/Form/PatientPayments/VoidPaymentSSO?';
@@ -770,10 +917,10 @@ where r.idRegistration =" . $idReg);
             $ssoTknRs = new SsoTokenRS();
             $ssoTknRs->Token->setStoredVal($ssoToken);
             $tokenRow = EditRS::select($dbh, $ssoTknRs, array($ssoTknRs->Token));
+            EditRS::loadRow($tokenRow[0], $ssoTknRs);
 
             if (count($tokenRow) > 0 && $tokenRow[0]['State'] != WebHookStatus::Init) {
 
-                EditRS::loadRow($tokenRow[0], $ssoTknRs);
                 $slept = $delaySeconds + 2;
 
             } else {
@@ -998,13 +1145,13 @@ class InstaMedCredentials {
         );
     }
 
-    public function toCurl() {
+    public function toCurl($useWorkstationId = TRUE) {
 
         return
                 InstaMedCredentials::MERCHANT_ID . '=' . $this->merchantId
                 . '&' . InstaMedCredentials::STORE_ID . '=' . $this->storeId
                 . '&' . InstaMedCredentials::TERMINAL_ID . '=' . $this->terminalId
-                . '&' . InstaMedCredentials::WORKSTATION_ID . '=' . $this->workstationId;
+                . ($useWorkstationId ? '&' . InstaMedCredentials::WORKSTATION_ID . '=' . $this->workstationId : '');
     }
 
     public function toSOAP() {

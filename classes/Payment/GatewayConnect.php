@@ -241,6 +241,11 @@ class StandInGwResponse implements iGatewayResponse {
     }
 
     public function getCardHolderName() {
+
+        if ($this->cardholderName == '') {
+            return $this->pAuthRs->Cardholder_Name->getStoredVal();
+        }
+        
         return $this->cardholderName;
     }
 

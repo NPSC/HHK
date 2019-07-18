@@ -63,10 +63,14 @@ class PaymentChooser {
         }
 
         // Manual Key check box
-        if (isset($post['btnKeyNumber'])) {
+        if (isset($post['btnvrKeyNumber'])) {
             $pmp->setManualKeyEntry(TRUE);
         } else {
             $pmp->setManualKeyEntry(FALSE);
+        }
+
+        if (isset($post['txtvdNewCardName'])) {
+            $pmp->setCardHolderName(filter_var($post['txtvdNewCardName'], FILTER_SANITIZE_STRING));
         }
 
         // Invoice payor
@@ -805,8 +809,16 @@ ORDER BY v.idVisit , v.Span;");
         $payTbl->addBodyTr(HTMLTable::makeTd('Pay With:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $defaultPayType, FALSE), array('name'=>'PayTypeSel', 'class'=>'hhk-feeskeys'))
                         . ($paymentGateway == PaymentGateway::INSTAMED ?
-                        HTMLContainer::generateMarkup('label', 'Key:', array('for'=>'btnKeyNumber', 'class'=>'hhkKeyNumber', 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number'))
-                        . HTMLInput::generateMarkup('Key', array('type'=>'checkbox', 'name'=>'btnKeyNumber', 'class'=>'hhk-feeskeys hhkKeyNumber', 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number')) : ''), array('colspan'=>'2')));
+                        HTMLContainer::generateMarkup('label', 'Key:', array('for'=>'btnvrKeyNumber', 'class'=>'hhkKeyNumber', 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number'))
+                        . HTMLInput::generateMarkup('Key', array('type'=>'checkbox', 'name'=>'btnvrKeyNumber', 'class'=>'hhk-feeskeys hhkKeyNumber', 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number')) : ''), array('colspan'=>'2')));
+
+        if ($paymentGateway == PaymentGateway::INSTAMED) {
+
+            $payTbl->addBodyTr(
+                    HTMLTable::makeTd('Cardholder Name', array('class'=>'tdlabel hhkKeyNumber'))
+                    .HTMLTable::makeTd( HTMLInput::generateMarkup('', array('type' => 'textbox', 'name' => 'txtvdNewCardName', 'class'=>'hhk-feeskeys hhkKeyNumber', 'style' => 'margin-right:4px;')), array('colspan' => '2'))
+                , array('id'=>'trvdCHName'));
+        }
 
 
         // Cash Amt Tendered
@@ -922,7 +934,7 @@ ORDER BY v.idVisit , v.Span;");
             return;
         }
 
-        $tbl->addBodyTr(HTMLTable::makeTh("Card on File") . HTMLTable::makeTh("Name") . ($paymentGateway == PaymentGateway::VANTIV ? HTMLTable::makeTh("Use") : '')
+        $tbl->addBodyTr(HTMLTable::makeTh("Card on File") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Use")
                 , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
 
         // preset useCardRb
@@ -946,7 +958,7 @@ ORDER BY v.idVisit , v.Span;");
 
                 $tbl->addBodyTr(HTMLTable::makeTd($tkRs->CardType->getStoredVal() . ' - ' . $tkRs->MaskedAccount->getStoredVal())
                         . HTMLTable::makeTd($tkRs->CardHolderName->getStoredVal())
-                        . ($paymentGateway == PaymentGateway::VANTIV ? HTMLTable::makeTd(HTMLInput::generateMarkup($tkRs->idGuest_token->getStoredVal(), $attr)) : '')
+                        . HTMLTable::makeTd(HTMLInput::generateMarkup($tkRs->idGuest_token->getStoredVal(), $attr))
                     , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
 
             }
@@ -955,35 +967,16 @@ ORDER BY v.idVisit , v.Span;");
         // New card.  Not for credit return.
         if ($index !== ReturnIndex::ReturnIndex) {
 
-            switch ($paymentGateway) {
-
-                case PaymentGateway::VANTIV:
-
-                    if ($prefTokenId == 0) {
-                        $attr['checked'] = 'checked';
-                    } else {
-                        unset($attr['checked']);
-                    }
-
-                    $tbl->addBodyTr(HTMLTable::makeTd('New', array('style'=>'text-align:right;', 'colspan'=> '2'))
-                        .  HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr))
-                            , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
-
-                    break;
-
-                case PaymentGateway::INSTAMED:
-
-                    if (count($tkRsArray) < 1) {
-                        $tbl->addBodyTr(HTMLTable::makeTd('None', array('style'=>'text-align:center;', 'colspan'=> '2'))
-                            , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
-                    }
-                    break;
-
-                default:
-
-
-
+            if ($prefTokenId == 0) {
+                $attr['checked'] = 'checked';
+            } else {
+                unset($attr['checked']);
             }
+
+            $tbl->addBodyTr(HTMLTable::makeTd('New', array('style'=>'text-align:right;', 'colspan'=> '2'))
+                .  HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr))
+                    , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
+
         }
 
     }

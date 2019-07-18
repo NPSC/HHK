@@ -377,16 +377,7 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
     }
 
     public function SignatureRequired() {
-        if (isset($this->result['isSignatureRequired'])) {
-
-            $sr = filter_var($this->result['isSignatureRequired'], FILTER_VALIDATE_BOOLEAN);
-
-            if ($sr === FALSE) {
-                return 0;
-            }
-        }
-
-        return 1;
+        return 0;
     }
 
     public function isSignatureRequired() {
@@ -419,8 +410,13 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
         return $this->getPaymentPlanID();
     }
     public function getAcqRefData() {
+
+        if ($this->getTransactionId() != '') {
+            return $this->getTransactionId();
+        }
         return $this->getPrimaryTransactionID();
     }
+
     public function getProcessData() {
         return $this->getTransactionId();
     }
@@ -435,8 +431,17 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
     public function getPaymentPlanID() {
         if (isset($this->result['paymentPlanID'])) {
             return $this->result['paymentPlanID'];
+        } else if (isset($this->result['saveOnFileTransactionID'])) {
+            return $this->result['saveOnFileTransactionID'];
         }
         return '';
+    }
+
+    public function saveCardonFIle() {
+        if ($this->getPaymentPlanID() != '') {
+            return TRUE;
+        }
+        return FALSE;
     }
 
     public function getPrimaryTransactionID() {
@@ -531,6 +536,17 @@ class VerifyCurlCofResponse extends VerifyCurlResponse {
         return '';
     }
 
+    public function saveCardonFIle() {
+        if ($this->getToken() != '') {
+            return TRUE;
+        }
+        return FALSE;
+    }
+
+    public function SignatureRequired() {
+        return 0;
+    }
+
 }
 
 class VerifyCurlVoidResponse extends VerifyCurlResponse {
@@ -577,6 +593,11 @@ class VerifyCurlVoidResponse extends VerifyCurlResponse {
 
         return '001';  //decline
     }
+
+    public function SignatureRequired() {
+        return 0;
+    }
+
 }
 
 

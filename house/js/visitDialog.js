@@ -521,6 +521,35 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 });
                 $('#selRateCategory').change();
             }
+            
+            // Card on file Cardholder name.
+            if ($('#trvdCHName').length > 0) {
+                
+                $('input[name=rbUseCard]').on('change', function () {
+                    if ($(this).val() == 0) {
+                        $('.hhkKeyNumber').show();
+                    } else {
+                        $('.hhkKeyNumber').hide();
+                        $('#btnvrKeyNumber').prop('checked', false).change();
+                    }
+                });
+                
+                if ($('input[name=rbUseCard]:checked').val() > 0) {
+                    $('.hhkKeyNumber').hide();
+                }
+                
+                $('#btnvrKeyNumber').change(function() {
+                    
+                    if (this.checked && $('input[name=rbUseCard]:checked').val() == 0) {
+                        $('#trvdCHName').show();
+                    } else {
+                        $('#trvdCHName').hide();
+                    }
+                });
+                
+                $('#btnvrKeyNumber').change();
+            }
+            
 
             // Notes
             setupVisitNotes(idVisit, $diagbox.find('#visitNoteViewer'));

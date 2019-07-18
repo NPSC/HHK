@@ -92,7 +92,7 @@ class ImPaymentResponse extends PaymentResponse {
         }
 
         if ($this->response->getAuthorizationText() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd($this->response->getAuthorizationText(), array('colspan'=>2)));
+            $tbl->addBodyTr(HTMLTable::makeTd($this->response->getAuthorizationText(), array('colspan'=>2, 'style'=>'font-size:.8em;')));
         }
 
         if ($this->getStatus() != CreditPayments::STATUS_DECLINED && $this->response->SignatureRequired() == 1) {

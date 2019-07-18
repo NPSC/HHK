@@ -131,6 +131,7 @@ class SaleReply extends CreditPayments {
             $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
             $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
             $pDetailRS->Card_Type->setNewVal($vr->getCardType());
+            $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
             $pDetailRS->AVS->setNewVal($vr->getAVSResult());
             $pDetailRS->Invoice_Number->setNewVal($pr->getInvoiceNumber());
             $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
@@ -204,6 +205,7 @@ class SaleReply extends CreditPayments {
             $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
             $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
             $pDetailRS->Card_Type->setNewVal($vr->getCardType());
+            $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
             $pDetailRS->AVS->setNewVal($vr->getAVSResult());
             $pDetailRS->Invoice_Number->setNewVal($pr->getInvoiceNumber());
             $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
@@ -279,6 +281,7 @@ class VoidReply extends CreditPayments {
         $pDetailRS->AVS->setNewVal($vr->getAVSResult());
         $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
         $pDetailRS->Card_Type->setNewVal($vr->getCardType());
+            $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
         $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
         $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
@@ -361,6 +364,7 @@ class ReverseReply extends CreditPayments {
         $pDetailRS->AVS->setNewVal($vr->getAVSResult());
         $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
         $pDetailRS->Card_Type->setNewVal($vr->getCardType());
+            $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
         $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
         $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
@@ -462,6 +466,7 @@ class ReturnReply extends CreditPayments {
         $pDetailRS->AVS->setNewVal($vr->getAVSResult());
         $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
         $pDetailRS->Card_Type->setNewVal($vr->getCardType());
+            $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
         $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
         $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
@@ -528,6 +533,7 @@ class ReturnReply extends CreditPayments {
                 $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
                 $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
                 $pDetailRS->Card_Type->setNewVal($vr->getCardType());
+            $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
                 $pDetailRS->AVS->setNewVal($vr->getAVSResult());
                 $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
                 $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
@@ -612,6 +618,7 @@ class VoidReturnReply extends CreditPayments {
         $pDetailRS->AVS->setNewVal($vr->getAVSResult());
         $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
         $pDetailRS->Card_Type->setNewVal($vr->getCardType());
+            $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
         $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
         $pDetailRS->idTrans->setNewVal($pr->idTrans);
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());

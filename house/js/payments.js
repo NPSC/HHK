@@ -694,7 +694,9 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             
             if ($(this).val() === 'cc') {
                 chg.show('fade');
-                $('.hhkKeyNumber').show();
+                if ($('input[name=rbUseCard]:checked').val() == 0) {
+                    $('.hhkKeyNumber').show();
+                }
             } else if ($(this).val() === 'ck') {
                 $('.hhk-cknum').show('fade');
             } else if ($(this).val() === 'in') {

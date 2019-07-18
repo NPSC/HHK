@@ -452,8 +452,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 if ($uS->ccgw != '') {
 
                     $dataArray['cof'] = HTMLcontainer::generateMarkup('div' ,HTMLContainer::generateMarkup('fieldset',
-                            HTMLContainer::generateMarkup('legend', 'Credit', array('style'=>'font-weight:bold;'))
-                            . HouseServices::viewCreditTable($dbh, $resv->getIdRegistration(), $resv->getIdGuest())
+                            HouseServices::viewCreditTable($dbh, $resv->getIdRegistration(), $resv->getIdGuest())
                         ,array('style'=>'float:left;padding:5px;')));
                 }
             }
@@ -1365,11 +1364,17 @@ class ActiveReservation extends Reservation {
         // Adding a new card?
         if (isset($post['cbNewCard'])) {
 
+            $newCardHolderName = '';
+
+            if (isset($post['txtNewCardName'])) {
+                $newCardHolderName = filter_var($post['txtNewCardName'], FILTER_SANITIZE_STRING);
+            }
+
             try {
                 // Payment Gateway
                 $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-                $this->payResult = $gateway->initCardOnFile($dbh, $uS->siteName, $resv->getIdGuest(), $reg->getIdRegistration(), '', 'Reserve.php?rid=' . $resv->getIdReservation());
+                $this->payResult = $gateway->initCardOnFile($dbh, $uS->siteName, $resv->getIdGuest(), $reg->getIdRegistration(), $newCardHolderName, 'Reserve.php?rid=' . $resv->getIdReservation());
 
             } catch (Hk_Exception_Payment $ex) {
 

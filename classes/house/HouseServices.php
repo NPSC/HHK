@@ -1262,6 +1262,8 @@ class HouseServices {
      */
     public static function viewCreditTable(\PDO $dbh, $idRegistration, $idGuest) {
 
+        $uS = Session::getInstance();
+
         $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idRegistration, $idGuest);
 
         $tblPayment = new HTMLTable();
@@ -1288,12 +1290,24 @@ class HouseServices {
         }
 
         $attr = array('type' => 'checkbox', 'name' => 'cbNewCard', 'class'=>'ignrSave', 'style' => 'margin-right:4px;');
+        $nameAttr = array('type' => 'textbox', 'name' => 'txtNewCardName', 'class'=>'ignrSave', 'style' => 'margin-right:4px;');
 
         $tblPayment->addBodyTr(
                 HTMLTable::makeTd(
                         HTMLInput::generateMarkup('', $attr)
-                        . HTMLContainer::generateMarkup('label', 'Put a new card on file', array('for' => 'cbNewCard')), array('colspan' => '4'))
+                        . HTMLContainer::generateMarkup('label', 'Put a new card on file', array('for' => 'cbNewCard'))
+                        . ($uS->PaymentGateway == PaymentGateway::INSTAMED ?
+                           HTMLContainer::generateMarkup('label', 'Key:', array('for'=>'btnKeyNumber', 'class'=>'hhkKeyNumber', 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number'))
+                        . HTMLInput::generateMarkup('Key', array('type'=>'checkbox', 'name'=>'btnKeyNumber', 'class'=>'hhk-feeskeys hhkKeyNumber', 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number')) : ''), array('colspan' => '4'))
         );
+
+        if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {
+
+            $tblPayment->addBodyTr(
+                    HTMLTable::makeTd('Cardholder Name', array('colspan' => '2', 'class'=>'tdlabel'))
+                    .HTMLTable::makeTd( HTMLInput::generateMarkup('', $nameAttr), array('colspan' => '2'))
+                , array('id'=>'trCHName'));
+        }
 
         return $tblPayment->generateMarkup(array('id' => 'tblupCredit'));
     }
@@ -1346,11 +1360,17 @@ class HouseServices {
         // Add a new card
         if (isset($post['cbNewCard'])) {
 
+            $newCardHolderName = '';
+
+            if (isset($post['txtNewCardName'])) {
+                $newCardHolderName = filter_var($post['txtNewCardName'], FILTER_SANITIZE_STRING);
+            }
+
             try {
                 // Payment Gateway
                 $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-                $dataArray = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idGroup, '', $postBackPage);
+                $dataArray = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idGroup, $newCardHolderName, $postBackPage);
 
             } catch (Hk_Exception_Payment $ex) {
 

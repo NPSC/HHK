@@ -27,7 +27,7 @@ class Guest_TokenRS extends TableRS {
     public $Frequency;   // varchar(15) NOT NULL DEFAULT '',
     public $Status;   // varchar(10) NOT NULL DEFAULT '',
     public $Response_Code;   // int(11) NOT NULL DEFAULT '1',
-    public $CardHolderName;   // varchar(32) NOT NULL DEFAULT '',
+    public $CardHolderName;   // varchar(132) NOT NULL DEFAULT '',
     public $CardType;   // varchar(45) NOT NULL DEFAULT '',
     public $CardUsage;   // varchar(20) NOT NULL DEFAULT '',
     public $ExpDate;   // varchar(14) NOT NULL DEFAULT '',
@@ -49,7 +49,7 @@ class Guest_TokenRS extends TableRS {
         $this->Frequency = new DB_Field("Frequency", "", new DbStrSanitizer(15), TRUE, TRUE);
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(10), TRUE, TRUE);
         $this->Response_Code = new DB_Field("Response_Code", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->CardHolderName = new DB_Field("CardHolderName", "", new DbStrSanitizer(32), TRUE, TRUE);
+        $this->CardHolderName = new DB_Field("CardHolderName", "", new DbStrSanitizer(132), TRUE, TRUE);
         $this->CardType = new DB_Field("CardType", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->CardUsage = new DB_Field("CardUsage", "", new DbStrSanitizer(20), TRUE, TRUE);
         $this->ExpDate = new DB_Field("ExpDate", "", new DbStrSanitizer(14), TRUE, TRUE);

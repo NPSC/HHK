@@ -468,6 +468,7 @@ class PaymentManagerPayment {
     protected $invoiceNotes;
     protected $balWith;
     protected $manualKeyEntry;
+    protected $cardHolderName = '';
     /**
      *
      * @var PriceModel
@@ -498,6 +499,7 @@ class PaymentManagerPayment {
         $this->setPayType($payType);
         $this->newCardOnFile = FALSE;
         $this->finalPaymentFlag = FALSE;
+        $this->manualKeyEntry = FALSE;
         $this->invoiceNotes = '';
         $this->balWith = '';
         $this->payDate = '';
@@ -891,6 +893,18 @@ class PaymentManagerPayment {
 
     function setManualKeyEntry($manualKeyEntry) {
         $this->manualKeyEntry = $manualKeyEntry;
+        return $this;
     }
+
+    public function getCardHolderName() {
+        return $this->cardHolderName;
+    }
+
+    public function setCardHolderName($cardHolderName) {
+        $this->cardHolderName = $cardHolderName;
+        return $this;
+    }
+
+
 
 }

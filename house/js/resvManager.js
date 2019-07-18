@@ -1661,6 +1661,35 @@ function resvManager(initData) {
                     numberOfMonths: 1
                 });
             }
+            
+            // Card on file Cardholder name.
+            if ($('#trvdCHName').length > 0) {
+                
+                $('input[name=rbUseCard]').on('change', function () {
+                    if ($(this).val() == 0) {
+                        $('.hhkKeyNumber').show();
+                    } else {
+                        $('.hhkKeyNumber').hide();
+                        $('#btnvrKeyNumber').prop('checked', false).change();
+                    }
+                });
+                
+                if ($('input[name=rbUseCard]:checked').val() > 0) {
+                    $('.hhkKeyNumber').hide();
+                }
+                
+                $('#btnvrKeyNumber').change(function() {
+                    
+                    if (this.checked && $('input[name=rbUseCard]:checked').val() == 0) {
+                        $('#trvdCHName').show();
+                    } else {
+                        $('#trvdCHName').hide();
+                    }
+                });
+                
+                $('#btnvrKeyNumber').change();
+            }
+
         }
 
         function setupRoom(rid) {
@@ -1688,6 +1717,37 @@ function resvManager(initData) {
             return $container;
         }
 
+        function setupCOF() {
+
+            // Card on file Cardholder name.
+            if ($('#trCHName').length > 0) {
+
+                $('#cbNewCard').change(function () {
+                    if (this.checked) {
+                        $('.hhkKeyNumber').show();
+                    } else {
+                        $('.hhkKeyNumber').hide();
+                        $('#btnKeyNumber').prop('checked', false);
+                        $('#btnKeyNumber').change();
+                    }
+                });
+
+                $('#cbNewCard').change();
+
+                $('#btnKeyNumber').change(function() {
+
+                    if ($('#btnKeyNumber').prop('checked') === true && $('#cbNewCard').prop('checked') === true) {
+                        $('#trCHName').show();
+                    } else {
+                        $('#trCHName').hide();
+                    }
+                });
+
+                $('#btnKeyNumber').change();
+            }
+
+        }
+        
         function setUp(data) {
 
             $rDiv = $('<div/>').addClass(' hhk-tdbox').prop('id', 'divResvDetail').css('padding', '5px');
@@ -1833,6 +1893,9 @@ function resvManager(initData) {
 
             if (data.resv.rdiv.pay !== undefined) {
                 setupPay(data);
+            }
+            if (data.resv.rdiv.cof !== undefined) {
+                setupCOF();
             }
 
             if ($('#addGuestHeader').length > 0) {
