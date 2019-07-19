@@ -94,7 +94,7 @@ class InstamedGateway extends PaymentGateway {
             }
 
             // Make a sale response...
-            $sr = new ImPaymentResponse($curlResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $invoice->getIdInvoice(), $pmp->getPayNotes(), ($curlResponse->getPartialPaymentAmount() > 0 ? TRUE : FALSE));
+            $sr = new ImPaymentResponse($curlResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $pmp->getPayNotes(), ($curlResponse->getPartialPaymentAmount() > 0 ? TRUE : FALSE));
 
             // Record transaction
             try {

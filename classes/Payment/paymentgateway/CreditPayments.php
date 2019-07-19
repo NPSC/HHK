@@ -289,6 +289,7 @@ class VoidReply extends CreditPayments {
         $pDetailRS->CVV->setNewVal($vr->getCvvResult());
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
         $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
+        $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
             $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
             $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
 
@@ -372,6 +373,7 @@ class ReverseReply extends CreditPayments {
         $pDetailRS->CVV->setNewVal($vr->getCvvResult());
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
         $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
+        $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
             $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
             $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
 
@@ -477,6 +479,7 @@ class ReturnReply extends CreditPayments {
         $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Retrn);
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
         $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
+        $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
             $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
             $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
 
@@ -542,6 +545,7 @@ class ReturnReply extends CreditPayments {
                 $pDetailRS->CVV->setNewVal($vr->getCvvResult());
                 $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
                 $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
+                $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
             $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
             $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
 
@@ -629,6 +633,7 @@ class VoidReturnReply extends CreditPayments {
         $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::VoidReturn);
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
         $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
+        $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
             $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
             $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
 
