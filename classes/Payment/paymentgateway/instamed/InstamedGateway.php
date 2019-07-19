@@ -125,6 +125,8 @@ class InstamedGateway extends PaymentGateway {
 
                     }
 
+                    break;
+
                 case CreditPayments::STATUS_DECLINED:
 
                     if ($payResp->getIdPayment() > 0 && $invoice->getIdInvoice() > 0) {

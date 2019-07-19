@@ -95,6 +95,37 @@ function manageRelation(id, rId, relCode, cmd) {
     $.post('ws_admin.php', {'id':id, 'rId':rId, 'rc':relCode, 'cmd':cmd}, relationReturn);
 }
 
+function setupCOF() {
+
+    // Card on file Cardholder name.
+    if ($('#trCHName').length > 0) {
+
+        $('#cbNewCard').change(function () {
+            if (this.checked) {
+                $('.hhkKeyNumber').show();
+            } else {
+                $('.hhkKeyNumber').hide();
+                $('#btnKeyNumber').prop('checked', false);
+                $('#btnKeyNumber').change();
+            }
+        });
+
+        $('#cbNewCard').change();
+
+        $('#btnKeyNumber').change(function() {
+
+            if ($('#btnKeyNumber').prop('checked') === true && $('#cbNewCard').prop('checked') === true) {
+                $('#trCHName').show();
+            } else {
+                $('#trCHName').hide();
+            }
+        });
+
+        $('#btnKeyNumber').change();
+    }
+
+}
+
 // Init j-query.
 $(document).ready(function () {
     "use strict";
@@ -485,6 +516,9 @@ $(document).ready(function () {
 	$(this).data("dirrty-initial-value", $(this).data('country'));
     });
 
+    setupCOF();
+    
+    
     // init dirrty
     $("#form1").dirrty();
     
