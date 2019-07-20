@@ -482,24 +482,6 @@ try {
         $events = HouseServices::addVisitStay($dbh, $idVisit, $visitSpan, $id, $_POST);
         break;
 
-
-    case 'changePatient':
-
-        $idPsg = 0;
-        if (isset($_GET['psg'])) {
-            $idPsg = intval(filter_var($_GET['psg'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        $idGuest = 0;
-        if (isset($_GET['gid'])) {
-            $idGuest = intval(filter_var($_GET['gid'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        $events = HouseServices::changePatient($dbh, $idPsg, $idGuest, $uS->guestLookups[GL_TableNames::PatientRel], $uS->username);
-
-        break;
-
-
     case "getincmdiag":
 
         $idresv = 0;

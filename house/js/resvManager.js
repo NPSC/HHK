@@ -1723,27 +1723,27 @@ function resvManager(initData) {
             if ($('#trCHName').length > 0) {
 
                 $('#cbNewCard').change(function () {
+                    
                     if (this.checked) {
                         $('.hhkKeyNumber').show();
                     } else {
                         $('.hhkKeyNumber').hide();
-                        $('#btnKeyNumber').prop('checked', false);
-                        $('#btnKeyNumber').change();
+                        $('#cbKeyNumber').prop('checked', false).change();
                     }
                 });
 
                 $('#cbNewCard').change();
 
-                $('#btnKeyNumber').change(function() {
+                $('#cbKeyNumber').change(function() {
 
-                    if ($('#btnKeyNumber').prop('checked') === true && $('#cbNewCard').prop('checked') === true) {
+                    if (this.checked && $('#cbNewCard').prop('checked') === true) {
                         $('#trCHName').show();
                     } else {
                         $('#trCHName').hide();
                     }
                 });
 
-                $('#btnKeyNumber').change();
+                $('#cbKeyNumber').change();
             }
 
         }

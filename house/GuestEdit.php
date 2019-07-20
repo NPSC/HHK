@@ -784,7 +784,7 @@ $uS->guestId = $id;
             <?php if ($showSearchOnly === FALSE) { ?>
             <form action="GuestEdit.php" method="post" id="form1" name="form1" >
                 <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
-                <div style="float:left; margin-bottom: 10px;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
+                <div style="clear:left;float:left; margin-bottom: 10px;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
 	                <?php echo $guestPhotoMarkup; ?>
 	                <div class="hhk-panel" style="display: inline-block">
                         <?php echo $nameMarkup; ?>
@@ -944,6 +944,6 @@ $uS->guestId = $id;
         </script>
 
         <script type="text/javascript" src="../js/uppload.js"></script>
-        <script type="text/javascript" src="js/guestload-min.js?vn=6"></script>
+        <script type="text/javascript" src="js/guestload-min.js?vn=36"></script>
     </body>
 </html>

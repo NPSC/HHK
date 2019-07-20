@@ -1137,8 +1137,24 @@ function cardOnFile(id, idGroup, postBackPage) {
     var parms = {cmd: 'cof', idGuest: id, idGrp: idGroup, pbp: postBackPage};
     
     $('#tblupCredit').find('input').each(function() {
-        if (this.checked) {
-            parms[$(this).attr('id')] = $(this).val();
+        
+        if ($(this).attr('type') === 'checkbox') {
+            if (this.checked !== false) {
+                parms[$(this).attr('id')] = 'on';
+            }
+        } else if ($(this).hasClass('ckdate')) {
+            var tdate = $(this).datepicker('getDate');
+            if (tdate) {
+                parms[$(this).attr('id')] = tdate.toJSON();
+            } else {
+                 parms[$(this).attr('id')] = '';
+            }
+        } else if ($(this).attr('type') === 'radio') {
+            if (this.checked !== false) {
+                parms[$(this).attr('id')] = this.value;
+            }
+        } else{
+            parms[$(this).attr('id')] = this.value;
         }
     });
     
@@ -1173,6 +1189,7 @@ function cardOnFile(id, idGroup, postBackPage) {
             if (data.COFmkup && data.COFmkup !== '') {
                 $('#tblupCredit').remove();
                 $('#upCreditfs').append($(data.COFmkup));
+                setupCOF();
             }
         }
     });
