@@ -373,7 +373,7 @@ class VantivGateway extends PaymentGateway {
 
     }
 
-    public function initHostedPayment(\PDO $dbh, Invoice $invoice, Guest $guest, $addr, $postbackUrl) {
+    Protected function initHostedPayment(\PDO $dbh, Invoice $invoice, Guest $guest, $addr, $postbackUrl) {
 
         $uS = Session::getInstance();
 
@@ -427,7 +427,7 @@ class VantivGateway extends PaymentGateway {
         return $CreditCheckOut;
     }
 
-    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $cardHolderName, $postBackPage) {
+    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postBackPage) {
 
         $uS = Session::getInstance();
 

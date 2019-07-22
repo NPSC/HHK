@@ -258,6 +258,7 @@ class InstamedGateway extends PaymentGateway {
             $ssoTknRs->idGroup->setNewVal($invoice->getIdGroup());
             $ssoTknRs->idName->setNewVal($invoice->getSoldToId());
             $ssoTknRs->State->setNewVal(WebHookStatus::Init);
+            $ssoTknRs->CardHolderName->setNewVal($cardHolderName);
 
             EditRS::insert($dbh, $ssoTknRs);
 
@@ -282,7 +283,7 @@ class InstamedGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $cardHolderName, $postbackUrl) {
+    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl) {
 
         $uS = Session::getInstance();
         $dataArray = array();
@@ -297,7 +298,7 @@ class InstamedGateway extends PaymentGateway {
             InstaMedCredentials::U_NAME => $uS->username,
             'cardHolderName' => $cardHolderName,
             'lightWeight' => 'true',
-            'creditCardKeyed' => 'true',
+            'creditCardKeyed' => ($manualKey ? 'true' : 'false'),
             'responseActionType' => 'header',
             'cancelURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::COF_TRANS, InstamedGateway::POSTBACK_CANCEL),
             'confirmURL' => $this->buildPostbackUrl($postbackUrl, InstamedGateway::COF_TRANS, InstamedGateway::POSTBACK_COMPLETE),
@@ -330,12 +331,14 @@ class InstamedGateway extends PaymentGateway {
             $dbh->exec($ciq);
 
             $uS->imtoken = $headerResponse->getToken();
+            $uS->cardHolderName = $cardHolderName;
 
             $dataArray = array('inctx' => $headerResponse->getRelayState(), 'CardId' => $headerResponse->getToken());
         } else {
 
             // The initialization failed.
             unset($uS->imtoken);
+            unset($uS->cardHolderName);
             throw new Hk_Exception_Payment("Credit Payment Gateway Error: " . $headerResponse->getResponseMessage());
         }
 
@@ -488,6 +491,7 @@ class InstamedGateway extends PaymentGateway {
 
     public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $userName = '') {
 
+        $uS = Session::getInstance();
         $transType = '';
         $transResult = '';
         $payResult = NULL;
@@ -526,7 +530,7 @@ class InstamedGateway extends PaymentGateway {
 
             try {
 
-                $payResult = $this->completeHostedPayment($dbh, $idInv, $ssoToken, $payNotes, $userName);
+                $payResult = $this->completeHostedPayment($dbh, $idInv, $ssoToken, $payNotes);
 
             } catch (Hk_Exception_Payment $hex) {
 
@@ -537,7 +541,7 @@ class InstamedGateway extends PaymentGateway {
 
         } else if ($transType == InstamedGateway::COF_TRANS) {
 
-            $payResult = $this->completeCof($dbh, $ssoToken);
+            $payResult = $this->completeCof($dbh, $ssoToken, $uS->cardHolderName);
         }
 
         return $payResult;
@@ -643,7 +647,7 @@ class InstamedGateway extends PaymentGateway {
         return $error;
     }
 
-    public function completeCof(\PDO $dbh, $ssoToken) {
+    protected function completeCof(\PDO $dbh, $ssoToken, $cardHolderName) {
 
         $cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $ssoToken);
 
@@ -667,6 +671,10 @@ class InstamedGateway extends PaymentGateway {
         $resp['InvoiceNumber'] = 0;
         $resp['Amount'] = 0;
 
+        if (isset($resp['cardHolderName']) === FALSE || $resp['cardHolderName'] == '') {
+            $resp['cardHolderName'] = $cardHolderName;
+        }
+
         $response = new VerifyCurlCofResponse($resp);
 
         // Save raw transaction in the db.
@@ -684,7 +692,7 @@ class InstamedGateway extends PaymentGateway {
         return new CofResult($vr->response->getResponseMessage(), $vr->getStatus(), $vr->idPayor, $vr->idRegistration);
     }
 
-    protected function completeHostedPayment(\PDO $dbh, $idInv, $ssoToken, $paymentNotes, $userName) {
+    protected function completeHostedPayment(\PDO $dbh, $idInv, $ssoToken, $paymentNotes) {
 
         $uS = Session::getInstance();
         $partlyApproved = FALSE;
@@ -748,6 +756,20 @@ class InstamedGateway extends PaymentGateway {
 
         if (count($guestTkns) > 0) {
             EditRS::loadRow($guestTkns[0], $gTRs);
+        }
+
+        // get the name if we need it.
+        if ($pAuthRs->Cardholder_Name->getStoredVal() == '' && $ssoTknRs->CardHolderName->getStoredVal() != '') {
+
+            $pAuthRs->Cardholder_Name->setNewVal($ssoTknRs->CardHolderName->getStoredVal());
+            EditRS::update($dbh, $pAuthRs, array($pAuthRs->idPayment_auth));
+            EditRS::updateStoredVals($pAuthRs);
+        }
+
+        if ($gTRs->CardHolderName->getStoredVal() == '' && $ssoTknRs->CardHolderName->getStoredVal() != '') {
+            $gTRs->CardHolderName->setNewVal($ssoTknRs->CardHolderName->getStoredVal());
+            EditRS::update($dbh, $gTRs, array($gTRs->idGuest_token));
+            EditRS::updateStoredVals($gTRs);
         }
 
         // Partially approved?

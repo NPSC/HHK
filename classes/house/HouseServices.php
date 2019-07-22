@@ -1359,16 +1359,18 @@ class HouseServices {
         if (isset($post['cbNewCard'])) {
 
             $newCardHolderName = '';
+            $manualKey = FALSE;
 
             if (isset($post['txtNewCardName']) && isset($post['cbKeyNumber'])) {
                 $newCardHolderName = filter_var($post['txtNewCardName'], FILTER_SANITIZE_STRING);
+                $manualKey = TRUE;
             }
 
             try {
                 // Payment Gateway
                 $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-                $dataArray = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idGroup, $newCardHolderName, $postBackPage);
+                $dataArray = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idGroup, $manualKey, $newCardHolderName, $postBackPage);
 
             } catch (Hk_Exception_Payment $ex) {
 

@@ -58,8 +58,26 @@ class PaymentReport {
         if (isset($post['selPayType'])) {
             $reqs = $post['selPayType'];
             if (is_array($reqs)) {
+                $addType = 0;
                 $payTypeSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+
+                // Select both charge types of one is selected.
+                foreach ($payTypeSelections as $s) {
+                    if ($s == PaymentMethod::Charge) {
+                        $addType = PaymentMethod::ChgAsCash;
+                    } else if ($s == PaymentMethod::ChgAsCash) {
+                        $addType = PaymentMethod::Charge;
+                    }
+                }
+
+                if ($addType > 0) {
+                    $payTypeSelections[] = $addType;
+                }
+
             }
+//            if (is_array($reqs)) {
+//                $payTypeSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+//            }
         }
 
         $showDelInv = FALSE;

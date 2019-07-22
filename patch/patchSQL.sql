@@ -43,6 +43,8 @@ ALTER TABLE `payment_auth`
 
 ALTER TABLE `ssotoken` 
     ADD COLUMN `idPaymentAuth` INT NOT NULL DEFAULT 0 AFTER `Token`;
+ALTER TABLE `ssotoken` 
+    ADD COLUMN `CardHolderName` VARCHAR(45) NOT NULL DEFAULT '' AFTER `idName`;
 
 ALTER TABLE `cc_hosted_gateway` 
     ADD COLUMN `Gateway_Name` VARCHAR(45) NOT NULL DEFAULT '' AFTER `idcc_gateway`;

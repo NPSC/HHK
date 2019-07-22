@@ -496,6 +496,7 @@ class ActivityReport {
 
 
         foreach ($selectedPayTypes as $s) {
+
             if ($s != '') {
                 // Set up query where part.
                 if ($whType == '') {

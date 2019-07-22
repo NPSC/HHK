@@ -1803,6 +1803,7 @@ CREATE TABLE if not exists `ssotoken` (
   `Token` varchar(136) NOT NULL,
   `idPaymentAuth` INT NOT NULL DEFAULT 0,
   `idName` int(11) NOT NULL,
+  `CardHolderName` VARCHAR(45) NOT NULL DEFAULT '',
   `idGroup` int(11) NOT NULL,
   `InvoiceNumber` varchar(36) NOT NULL DEFAULT '',
   `Amount` DECIMAL(11,2) NOT NULL DEFAULT 0.00,
