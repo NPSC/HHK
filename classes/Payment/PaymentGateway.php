@@ -98,6 +98,10 @@ abstract class PaymentGateway {
         return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
     }
 
+    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs) {
+        return array('warning' => 'Not Available.  ');
+    }
+
     public function returnPayment(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid) {
 
         // Find hte detail record.
@@ -117,6 +121,16 @@ abstract class PaymentGateway {
         }
 
         return array('warning' => 'This Payment is ineligable for Return. ', 'bid' => $bid);
+    }
+
+    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes = '') {
+
+        $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $rtnToken);
+        $rtnResult->setStatus(PaymentResult::ERROR);
+        $rtnResult->setReplyMessage('** Return Amount is not implemented.  ');
+        $rtnResult->setDisplayMessage('** Return Amount is not implemented.  ');
+
+        return $rtnResult;
     }
 
     public function reverseSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid, $paymentNotes) {

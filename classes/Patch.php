@@ -423,28 +423,28 @@ class Patch {
 
 
         // Contributors
-        $ctbl = new HTMLTable();
-
-        $contributors = array(
-            array("ML", "Eubanks"),
-            array("E", "Crane"),
-            array("K", "Lannan"),
-            array("R", "Chan"),
-            array("B", "VanderMeer"),
-            array("W", "Ireland"),
-            );
-
-        foreach ($contributors as $c) {
-
-            $ctbl->addBodyTr(
-                HTMLTable::makeTd($c[0], array('class' => 'tdlabel'))
-                . HTMLTable::makeTd($c[1]));
-
-        }
-
-        $markup .= HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', 'Major Contributors<br/>in order of Appearance', array('style'=>'font-weight:bold;'))
-                . $ctbl->generateMarkup(), array('style'=>'float:left; margin:5px; margin-left:25px;', 'class'=>'hhk-panel'));
+//        $ctbl = new HTMLTable();
+//
+//        $contributors = array(
+//            array("ML", "Eubanks"),
+//            array("E", "Crane"),
+//            array("K", "Lannan"),
+//            array("R", "Chan"),
+//            array("B", "VanderMeer"),
+//            array("W", "Ireland"),
+//            );
+//
+//        foreach ($contributors as $c) {
+//
+//            $ctbl->addBodyTr(
+//                HTMLTable::makeTd($c[0], array('class' => 'tdlabel'))
+//                . HTMLTable::makeTd($c[1]));
+//
+//        }
+//
+//        $markup .= HTMLContainer::generateMarkup('fieldset',
+//                HTMLContainer::generateMarkup('legend', 'Major Contributors<br/>in order of Appearance', array('style'=>'font-weight:bold;'))
+//                . $ctbl->generateMarkup(), array('style'=>'float:left; margin:5px; margin-left:25px;', 'class'=>'hhk-panel'));
 
         return HTMLContainer::generateMarkup('div', $markup, array());
     }

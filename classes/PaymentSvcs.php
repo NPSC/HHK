@@ -233,35 +233,9 @@ class PaymentSvcs {
 
             case PayType::Charge:
 
-                $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getRtnIdToken());
-
-                // Do we have a token?
-                if (CreditToken::hasToken($tokenRS)) {
-
-                    if ($tokenRS->Running_Total->getStoredVal() < $amount) {
-                        throw new Hk_Exception_Payment('Return Failed.  Maximum return for this card is: $' . number_format($tokenRS->Running_Total->getStoredVal(), 2));
-                    }
-
-                    // Set up request
-                    $returnRequest = new CreditReturnTokenRequest();
-                    $returnRequest->setCardHolderName($tokenRS->CardHolderName->getStoredVal());
-                    $returnRequest->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion);
-                    $returnRequest->setInvoice($invoice->getInvoiceNumber());
-                    $returnRequest->setPurchaseAmount($amount);
-
-                    $returnRequest->setToken($tokenRS->Token->getStoredVal());
-                    $returnRequest->setTokenId($tokenRS->idGuest_token->getStoredVal());
-
-
-                    $tokenResp = TokenTX::creditReturnToken($dbh, $invoice->getSoldToId(), $uS->ccgw, $returnRequest, NULL, $pmp->getPayNotes());
-
-                    // Analyze the result
-                    $rtnResult = self::AnalyzeCreditReturnResult($dbh, $tokenResp, $invoice, $pmp->getRtnIdToken());
-                    $rtnResult->setDisplayMessage('Refund to Credit Card.  ');
-
-                } else {
-                    throw new Hk_Exception_Payment('Return Failed.  Credit card token not found.  ');
-                }
+                // Load gateway
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+                $rtnResult = $gateway->returnAmount($dbh, $invoice, $pmp->getRtnIdToken(), $pmp->getPayNotes());
 
                 break;
 
@@ -567,7 +541,6 @@ class PaymentSvcs {
 
         $uS = Session::getInstance();
         $dataArray = array('bid' => $bid);
-        $reply = '';
 
         $payRs = new PaymentRS();
         $payRs->idPayment->setStoredVal($idPayment);
@@ -584,22 +557,9 @@ class PaymentSvcs {
             return array('warning' => 'Return is ineligable for Voiding.  ', 'bid' => $bid);
         }
 
-        $invoice = new Invoice($dbh);
-        $invoice->loadInvoice($dbh, 0, $idPayment);
-
+        // only available to charge cards.
         if ($payRs->idPayment_Method->getStoredVal() != PaymentMethod::Charge) {
             return array('warning' => 'Not Available.  ', 'bid' => $bid);
-        }
-
-        // find the token record
-        if ($payRs->idToken->getStoredVal() > 0) {
-            $tknRs = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
-        } else {
-            return array('warning' => 'Payment Token Id not found.  Unable to Void this return.  ', 'bid' => $bid);
-        }
-
-        if (CreditToken::hasToken($tknRs) === FALSE) {
-            return array('warning' => 'Payment Token not found.  Unable to Void this return.  ', 'bid' => $bid);
         }
 
         // Find hte detail record.
@@ -617,53 +577,13 @@ class PaymentSvcs {
             return array('warning' => 'Return is ineligable for Voiding.  ', 'bid' => $bid);
         }
 
-        // Set up request
-        $revRequest = new CreditVoidReturnTokenRequest();
-        $revRequest->setAuthCode($pAuthRs->Approval_Code->getStoredVal())
-            ->setCardHolderName($tknRs->CardHolderName->getStoredVal())
-            ->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion)
-            ->setInvoice($invoice->getInvoiceNumber())
-            ->setPurchaseAmount($pAuthRs->Approved_Amount->getStoredVal())
-            ->setRefNo($pAuthRs->Reference_Num->getStoredVal())
-            ->setToken($tknRs->Token->getStoredVal())
-            ->setTokenId($tknRs->idGuest_token->getStoredVal())
-            ->setTitle('CreditVoidReturnToken');
+        $invoice = new Invoice($dbh);
+        $invoice->loadInvoice($dbh, 0, $idPayment);
 
-        try {
+        // Payment Gateway
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+        return array_merge($dataArray,  $gateway->voidReturn($dbh, $invoice, $payRs, $pAuthRs));
 
-            $csResp = TokenTX::creditVoidReturnToken($dbh, $payRs->idPayor->getstoredVal(), $uS->ccgw, $revRequest, $payRs);
-
-            switch ($csResp->getStatus()) {
-
-                case CreditPayments::STATUS_APPROVED:
-
-                    // Update invoice
-                    $invoice->updateInvoiceBalance($dbh, $csResp->response->getAuthorizeAmount(), $uS->username);
-
-                    $reply .= 'Return is Voided.  ';
-                    $csResp->idVisit = $invoice->getOrderNumber();
-                    //$dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createSaleMarkup($dbh, $csResp, $uS->resourceURL . 'images/receiptlogo.png', $uS->siteName, $uS->sId, 'Reverse Sale')));
-                    $dataArray['success'] = $reply;
-
-                    break;
-
-                case CreditPayments::STATUS_DECLINED:
-
-                    $dataArray['success'] = 'Declined.';
-                    break;
-
-                default:
-
-                    $dataArray['warning'] = '** Void-Return Invalid or Error. **  ' . 'Message: ' . $csResp->response->getMessage();
-
-            }
-
-        } catch (Hk_Exception_Payment $exPay) {
-
-            $dataArray['warning'] = "Void-Return Error = " . $exPay->getMessage();
-        }
-
-        return $dataArray;
     }
 
     public static function undoReturnFees(\PDO $dbh, $idPayment, $bid) {
