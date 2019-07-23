@@ -61,9 +61,6 @@ class InstamedGateway extends PaymentGateway {
         $uS = Session::getInstance();
         $payResult = NULL;
 
-        //$guest = new Guest($dbh, '', $invoice->getSoldToId());
-        //$addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
-
         $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getIdToken());
 
         // Do we have a token?

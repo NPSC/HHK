@@ -618,6 +618,11 @@ function amtPaid() {
         $('.paySelectTbl').show('fade');
         $('.hhk-minPayment').show('fade');
         
+        // manage cof box
+        if ($('#cbNewCard').length > 0) {
+            $('#cbNewCard').prop('checked', false).change().prop('disabled', true);
+        }
+        
         if (totPay < 0 && ! isChdOut) {
             $('#txtRtnAmount').val((0 - totPay).toFixed(2).toString());
         }
@@ -628,6 +633,11 @@ function amtPaid() {
 
         $('.paySelectTbl').hide();
 
+        // manage cof box
+        if ($('#cbNewCard').length > 0) {
+            $('#cbNewCard').prop('disabled', false);
+        }
+        
         if (isChdOut === false && ckedInCharges === 0.0) {
             $('.hhk-minPayment').hide();
             heldAmt = 0;
@@ -688,14 +698,14 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             $('.hhk-transfer').hide();
             $('.hhk-tfnum').hide();
             chg.hide();
-            $('.hhkKeyNumber').hide();
+            $('.hhkvrKeyNumber').hide();
             $('#tdCashMsg').hide();
             $('.paySelectNotes').show();
             
             if ($(this).val() === 'cc') {
                 chg.show('fade');
                 if ($('input[name=rbUseCard]:checked').val() == 0) {
-                    $('.hhkKeyNumber').show();
+                    $('.hhkvrKeyNumber').show();
                 }
             } else if ($(this).val() === 'ck') {
                 $('.hhk-cknum').show('fade');
@@ -710,6 +720,36 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
         });
         ptsel.change();
     }
+    
+    // Card on file Cardholder name.
+    if ($('#trvdCHName').length > 0) {
+
+        $('input[name=rbUseCard]').on('change', function () {
+            if ($(this).val() == 0) {
+                $('.hhkvrKeyNumber').show();
+            } else {
+                $('.hhkvrKeyNumber').hide();
+                $('#btnvrKeyNumber').prop('checked', false).change();
+            }
+        });
+
+        if ($('input[name=rbUseCard]:checked').val() > 0) {
+            $('.hhkvrKeyNumber').hide();
+        }
+
+        $('#btnvrKeyNumber').change(function() {
+
+            if (this.checked && $('input[name=rbUseCard]:checked').val() == 0) {
+                $('#trvdCHName').show();
+            } else {
+                $('#trvdCHName').hide();
+            }
+        });
+
+        $('#btnvrKeyNumber').change();
+    }
+            
+
 
     // Set up return table
     var rtnsel = $('#rtnTypeSel');
@@ -1131,6 +1171,36 @@ function paymentRedirect (data, $xferForm) {
     }
 }
 
+function setupCOF() {
+
+    // Card on file Cardholder name.
+    if ($('#trCHName').length > 0) {
+
+        $('#cbNewCard').change(function () {
+
+            if (this.checked) {
+                $('.hhkKeyNumber').show();
+            } else {
+                $('.hhkKeyNumber').hide();
+                $('#cbKeyNumber').prop('checked', false).change();
+            }
+        });
+
+        $('#cbNewCard').change();
+
+        $('#cbKeyNumber').change(function() {
+
+            if (this.checked && $('#cbNewCard').prop('checked') === true) {
+                $('#trCHName').show();
+            } else {
+                $('#trCHName').hide();
+            }
+        });
+
+        $('#cbKeyNumber').change();
+    }
+
+}
 
 function cardOnFile(id, idGroup, postBackPage) {
     
@@ -1242,6 +1312,8 @@ function updateCredit(id, idReg, name, strCOFdiag, pbp) {
                 cof.dialog('option', 'buttons', buttons);
                 cof.dialog('option', 'width', 400);
                 cof.dialog('option', 'title', 'Card On File' + gnme);
+                
+                setupCOF();
                 cof.dialog('open');
             }
         }

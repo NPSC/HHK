@@ -1267,7 +1267,7 @@ class HouseServices {
         $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idRegistration, $idGuest);
 
         $tblPayment = new HTMLTable();
-        $tblPayment->addHeaderTr(HTMLTable::makeTh("Credit Card on File", array('colspan' => '4')));
+        //$tblPayment->addHeaderTr(HTMLTable::makeTh("Credit Card on File", array('colspan' => '4')));
         $tblPayment->addBodyTr(HTMLTable::makeTh("Type") . HTMLTable::makeTh("Account") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Delete"));
 
         // Offer to delete any stored cards
@@ -1304,7 +1304,7 @@ class HouseServices {
 
             $tblPayment->addBodyTr(
                     HTMLTable::makeTd('Cardholder Name', array('colspan' => '2', 'class'=>'tdlabel'))
-                    .HTMLTable::makeTd( HTMLInput::generateMarkup('', $nameAttr), array('colspan' => '2'))
+                    .HTMLTable::makeTd( HTMLInput::generateMarkup('', $nameAttr), array('colspan' => '2','class'=>'ignrSave'))
                 , array('id'=>'trCHName'));
         }
 
@@ -1362,7 +1362,7 @@ class HouseServices {
             $manualKey = FALSE;
 
             if (isset($post['txtNewCardName']) && isset($post['cbKeyNumber'])) {
-                $newCardHolderName = filter_var($post['txtNewCardName'], FILTER_SANITIZE_STRING);
+                $newCardHolderName = strtoupper(filter_var($post['txtNewCardName'], FILTER_SANITIZE_STRING));
                 $manualKey = TRUE;
             }
 

@@ -240,7 +240,7 @@ class SsoTokenRS extends TableRS {
         $this->Token = new DB_Field('Token', '', new DbStrSanitizer(136), TRUE, TRUE);
         $this->idPaymentAuth = new DB_Field('idPaymentAuth', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->idName = new DB_Field('idName', 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->CardHolderName = new DB_Field('CardHolderName', '', new DbStrSanitizer(5), TRUE, TRUE);
+        $this->CardHolderName = new DB_Field('CardHolderName', '', new DbStrSanitizer(45), TRUE, TRUE);
         $this->idGroup = new DB_Field('idGroup', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->InvoiceNumber = new DB_Field('InvoiceNumber', '', new DbStrSanitizer(36), TRUE, TRUE);
         $this->Amount = new DB_Field('Amount', 0, new DbDecimalSanitizer(), TRUE, TRUE);

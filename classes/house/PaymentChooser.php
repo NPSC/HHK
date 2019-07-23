@@ -70,7 +70,7 @@ class PaymentChooser {
         }
 
         if (isset($post['txtvdNewCardName'])) {
-            $pmp->setCardHolderName(filter_var($post['txtvdNewCardName'], FILTER_SANITIZE_STRING));
+            $pmp->setCardHolderName(strtoupper(filter_var($post['txtvdNewCardName'], FILTER_SANITIZE_STRING)));
         }
 
         // Invoice payor
@@ -809,14 +809,14 @@ ORDER BY v.idVisit , v.Span;");
         $payTbl->addBodyTr(HTMLTable::makeTd('Pay With:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $defaultPayType, FALSE), array('name'=>'PayTypeSel', 'class'=>'hhk-feeskeys'))
                         . ($paymentGateway == PaymentGateway::INSTAMED ?
-                        HTMLContainer::generateMarkup('label', 'Key:', array('for'=>'btnvrKeyNumber', 'class'=>'hhkKeyNumber', 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number'))
-                        . HTMLInput::generateMarkup('Key', array('type'=>'checkbox', 'name'=>'btnvrKeyNumber', 'class'=>'hhk-feeskeys hhkKeyNumber', 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number')) : ''), array('colspan'=>'2')));
+                        HTMLContainer::generateMarkup('label', 'Key:', array('for'=>'btnvrKeyNumber', 'class'=>'hhkvrKeyNumber', 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number'))
+                        . HTMLInput::generateMarkup('Key', array('type'=>'checkbox', 'name'=>'btnvrKeyNumber', 'class'=>'hhk-feeskeys hhkvrKeyNumber', 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number')) : ''), array('colspan'=>'2')));
 
         if ($paymentGateway == PaymentGateway::INSTAMED) {
 
             $payTbl->addBodyTr(
-                    HTMLTable::makeTd('Cardholder Name', array('class'=>'tdlabel hhkKeyNumber'))
-                    .HTMLTable::makeTd( HTMLInput::generateMarkup('', array('type' => 'textbox', 'name' => 'txtvdNewCardName', 'class'=>'hhk-feeskeys hhkKeyNumber', 'style' => 'margin-right:4px;')), array('colspan' => '2'))
+                    HTMLTable::makeTd('Cardholder Name', array('class'=>'tdlabel hhkvrKeyNumber'))
+                    .HTMLTable::makeTd( HTMLInput::generateMarkup('', array('type' => 'textbox', 'name' => 'txtvdNewCardName', 'class'=>'hhk-feeskeys hhkvrKeyNumber', 'style' => 'margin-right:4px;')), array('colspan' => '2'))
                 , array('id'=>'trvdCHName'));
         }
 

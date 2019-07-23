@@ -522,35 +522,6 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 $('#selRateCategory').change();
             }
             
-            // Card on file Cardholder name.
-            if ($('#trvdCHName').length > 0) {
-                
-                $('input[name=rbUseCard]').on('change', function () {
-                    if ($(this).val() == 0) {
-                        $('.hhkKeyNumber').show();
-                    } else {
-                        $('.hhkKeyNumber').hide();
-                        $('#btnvrKeyNumber').prop('checked', false).change();
-                    }
-                });
-                
-                if ($('input[name=rbUseCard]:checked').val() > 0) {
-                    $('.hhkKeyNumber').hide();
-                }
-                
-                $('#btnvrKeyNumber').change(function() {
-                    
-                    if (this.checked && $('input[name=rbUseCard]:checked').val() == 0) {
-                        $('#trvdCHName').show();
-                    } else {
-                        $('#trvdCHName').hide();
-                    }
-                });
-                
-                $('#btnvrKeyNumber').change();
-            }
-            
-
             // Notes
             setupVisitNotes(idVisit, $diagbox.find('#visitNoteViewer'));
 
@@ -749,6 +720,9 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
 
     $('#keysfees').css('background-color', 'white');
 
+    // Unlock Put Neo Card On file. 
+    $('#cbNewCard').prop('disabled', false);
+    
     //working
     $('#keysfees').empty().append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Working...</p></div>');
 

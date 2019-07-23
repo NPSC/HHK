@@ -518,14 +518,18 @@ if ($psg->getIdPsg() > 0) {
     $ccMarkup = '';
     if ($uS->ccgw != '') {
 
-        $ccMarkup = HTMLcontainer::generateMarkup('div' ,HTMLContainer::generateMarkup('fieldset',
-                HouseServices::viewCreditTable($dbh, $registration->getIdRegistration(), $id)
+        $ccMarkup = HTMLcontainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', 'Credit Cards', array('style'=>'font-weight:bold;'))
+                . HouseServices::viewCreditTable($dbh, $registration->getIdRegistration(), $id)
                 . HTMLInput::generateMarkup('Update Credit', array('type'=>'button','id'=>'btnCred', 'data-id'=>$id, 'data-idreg'=>$registration->getIdRegistration(), 'style'=>'margin:5px;float:right;'))
-            ,array('id'=>'upCreditfs', 'style'=>'float:left;padding:5px;')));
+            ,array('id'=>'upCreditfs', 'style'=>'float:left;', 'class'=>'hhk-panel')));
 
     }
 
-    $regTabMarkup = HTMLContainer::generateMarkup('div', $registration->createRegMarkup($dbh, $memberFlag), array('style'=>'float:left;margin-right:1em;')) . $ccMarkup;
+    $regTabMarkup = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
+            HTMLContainer::generateMarkup('legend', 'Registration', array('style'=>'font-weight:bold;'))
+            . $registration->createRegMarkup($dbh, $memberFlag)
+            , array('style'=>'float:left;', 'class'=>'hhk-panel'))) . $ccMarkup;
 
     if ($uS->TrackAuto) {
         $vehicleTabMarkup = Vehicle::createVehicleMarkup($dbh, $registration->getIdRegistration(), $registration->getNoVehicle());

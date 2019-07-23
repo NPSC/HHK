@@ -452,8 +452,9 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 if ($uS->ccgw != '') {
 
                     $dataArray['cof'] = HTMLcontainer::generateMarkup('div' ,HTMLContainer::generateMarkup('fieldset',
-                            HouseServices::viewCreditTable($dbh, $resv->getIdRegistration(), $resv->getIdGuest())
-                        ,array('style'=>'float:left;padding:5px;')));
+                            HTMLContainer::generateMarkup('legend', 'Credit Cards', array('style'=>'font-weight:bold;'))
+                            . HouseServices::viewCreditTable($dbh, $resv->getIdRegistration(), $resv->getIdGuest())
+                        ,array('style'=>'float:left;', 'class'=>'hhk-panel')));
                 }
             }
 
@@ -1165,7 +1166,7 @@ class ActiveReservation extends Reservation {
 
     public function createMarkup(\PDO $dbh) {
 
-        // Credit payment?
+        // COF?
         if ($this->payResult !== NULL) {
 
             if (count($this->payResult) > 0) {
@@ -1365,16 +1366,18 @@ class ActiveReservation extends Reservation {
         if (isset($post['cbNewCard'])) {
 
             $newCardHolderName = '';
+            $manualKey = FALSE;
 
-            if (isset($post['txtNewCardName'])) {
-                $newCardHolderName = filter_var($post['txtNewCardName'], FILTER_SANITIZE_STRING);
+            if (isset($post['txtNewCardName']) && isset($post['cbKeyNumber'])) {
+                $newCardHolderName = strtoupper(filter_var($post['txtNewCardName'], FILTER_SANITIZE_STRING));
+                $manualKey = TRUE;
             }
 
             try {
                 // Payment Gateway
                 $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-                $this->payResult = $gateway->initCardOnFile($dbh, $uS->siteName, $resv->getIdGuest(), $reg->getIdRegistration(), $newCardHolderName, 'Reserve.php?rid=' . $resv->getIdReservation());
+                $this->payResult = $gateway->initCardOnFile($dbh, $uS->siteName, $resv->getIdGuest(), $reg->getIdRegistration(), $manualKey, $newCardHolderName, 'Reserve.php?rid=' . $resv->getIdReservation());
 
             } catch (Hk_Exception_Payment $ex) {
 
@@ -1550,7 +1553,17 @@ FROM reservation r
                 $dataArray['pay'] = HTMLContainer::generateMarkup('div',
                         PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $checkinCharges, $resv->getExpectedPayType(), $uS->KeyDeposit, FALSE, $uS->DefaultVisitFee, $reg->getPreferredTokenId())
                         , array('style'=>'clear:left; float:left;'));
+
+                // Card on file
+                if ($uS->ccgw != '') {
+
+                    $dataArray['cof'] = HTMLcontainer::generateMarkup('div' ,HTMLContainer::generateMarkup('fieldset',
+                            HTMLContainer::generateMarkup('legend', 'Credit Cards', array('style'=>'font-weight:bold;'))
+                            . HouseServices::viewCreditTable($dbh, $resv->getIdRegistration(), $resv->getIdGuest())
+                        ,array('style'=>'float:left;', 'class'=>'hhk-panel')));
+                }
             }
+
         }
 
         // Room Chooser
