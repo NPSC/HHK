@@ -15,6 +15,8 @@ class Reservation {
     protected $reservRs;
     protected $family;
     protected $payResult;
+    protected $cofResult;
+
 
     function __construct(ReserveData $reserveData, $reservRs, $family) {
 
@@ -147,6 +149,52 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
     }
 
+    protected function processCOF(\PDO $dbh, $idGuest, $idReg, $post, $postbackPage) {
+        
+        $uS = Session::getInstance();
+        
+        // Delete any credit cards on file
+        $keys = array_keys($post);
+
+        foreach ($keys as $k) {
+
+            $parts = explode('_', $k);
+
+            if (count($parts) > 1 && $parts[0] == 'crdel') {
+
+                $idGt = intval(filter_var($parts[1], FILTER_SANITIZE_NUMBER_INT), 10);
+
+                if ($idGt > 0) {
+                    $dbh->exec("update guest_token set Token = '' where idGuest_token = " . $idGt);
+                }
+            }
+        }
+
+        // Adding a new card?
+        if (isset($post['cbNewCard'])) {
+
+            $newCardHolderName = '';
+            $manualKey = FALSE;
+
+            if (isset($post['txtNewCardName']) && isset($post['cbKeyNumber'])) {
+                $newCardHolderName = strtoupper(filter_var($post['txtNewCardName'], FILTER_SANITIZE_STRING));
+                $manualKey = TRUE;
+            }
+
+            try {
+                // Payment Gateway
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+
+                $this->cofResult = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idReg, $manualKey, $newCardHolderName, $postbackPage);
+
+            } catch (Hk_Exception_Payment $ex) {
+
+                $this->reserveData->addError($ex->getMessage());
+            }
+        }
+
+    }
+    
     public function createMarkup(\PDO $dbh) {
 
         // Add the family, hospital, etc sections.
@@ -511,10 +559,9 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             $dataArray['wlnotes'] = HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', $this->reserveData->getWlNotesLabel(), array('style'=>'font-weight:bold;'))
-                . HTMLContainer::generateMarkup('textarea', $resv->getCheckinNotes(), array('name'=>'taCkinNotes', 'rows'=>'2', 'style'=>'width:100%')),
-                array('class'=>'hhk-panel', 'style'=>'float:left; width:50%;'));
+                . HTMLContainer::generateMarkup('textarea', $resv->getCheckinNotes(), array('name'=>'taCkinNotes', 'rows'=>'2', 'style'=>'width:100%'))
+                , array('class'=>'hhk-panel', 'style'=>'float:left; width:50%;'));
         }
-
 
         // Collapsing header
         $hdr = HTMLContainer::generateMarkup('div',
@@ -522,7 +569,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 .HTMLContainer::generateMarkup('span', ($resv->isNew() ? '' : $statusText), array('id'=>$prefix.'spnResvStatus', 'style'=>'margin-right: 1em;'))
                 , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
-
+        
         return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
     }
 
@@ -1165,14 +1212,14 @@ class ActiveReservation extends Reservation {
     protected $gotoCheckingIn = '';
 
     public function createMarkup(\PDO $dbh) {
-
+        
         // COF?
-        if ($this->payResult !== NULL) {
+        if ($this->cofResult !== NULL) {
 
-            if (count($this->payResult) > 0) {
-                $this->payResult['resvTitle'] = $this->reserveData->getResvTitle();
+            if (count($this->cofResult) > 0) {
+                $this->cofResult['resvTitle'] = $this->reserveData->getResvTitle();
 
-                return $this->payResult;
+                return $this->cofResult;
             }
         }
 
@@ -1199,10 +1246,16 @@ class ActiveReservation extends Reservation {
         $this->reserveData->setResvSection($this->createResvMarkup($dbh, $oldResvId));
 
         return $this->reserveData->toArray();
-
+        
     }
+//'Reserve.php?rid=' . $resv->getIdReservation();
 
     public function save(\PDO $dbh, $post) {
+        
+        return $this->saveResv($dbh, $post, 'Reserve.php?rid=' . $this->reserveData->getIdResv());
+    }
+    
+    protected function saveResv(\PDO $dbh, $post, $cofPostbackPage) {
 
         $uS = Session::getInstance();
 
@@ -1344,46 +1397,49 @@ class ActiveReservation extends Reservation {
 
         // Room Choice
         $this->setRoomChoice($dbh, $resv, $idRescPosted);
+        
 
-        // Delete any credit cards on file
-        $keys = array_keys($post);
+        $this->processCOF($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $post, $cofPostbackPage);
 
-        foreach ($keys as $k) {
-
-            $parts = explode('_', $k);
-
-            if (count($parts) > 1 && $parts[0] == 'crdel') {
-
-                $idGt = intval(filter_var($parts[1], FILTER_SANITIZE_NUMBER_INT), 10);
-
-                if ($idGt > 0) {
-                    $dbh->exec("update guest_token set Token = '' where idGuest_token = " . $idGt);
-                }
-            }
-        }
-
-        // Adding a new card?
-        if (isset($post['cbNewCard'])) {
-
-            $newCardHolderName = '';
-            $manualKey = FALSE;
-
-            if (isset($post['txtNewCardName']) && isset($post['cbKeyNumber'])) {
-                $newCardHolderName = strtoupper(filter_var($post['txtNewCardName'], FILTER_SANITIZE_STRING));
-                $manualKey = TRUE;
-            }
-
-            try {
-                // Payment Gateway
-                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
-
-                $this->payResult = $gateway->initCardOnFile($dbh, $uS->siteName, $resv->getIdGuest(), $reg->getIdRegistration(), $manualKey, $newCardHolderName, 'Reserve.php?rid=' . $resv->getIdReservation());
-
-            } catch (Hk_Exception_Payment $ex) {
-
-                $this->reserveData->addError($ex->getMessage());
-            }
-        }
+//        // Delete any credit cards on file
+//        $keys = array_keys($post);
+//
+//        foreach ($keys as $k) {
+//
+//            $parts = explode('_', $k);
+//
+//            if (count($parts) > 1 && $parts[0] == 'crdel') {
+//
+//                $idGt = intval(filter_var($parts[1], FILTER_SANITIZE_NUMBER_INT), 10);
+//
+//                if ($idGt > 0) {
+//                    $dbh->exec("update guest_token set Token = '' where idGuest_token = " . $idGt);
+//                }
+//            }
+//        }
+//
+//        // Adding a new card?
+//        if (isset($post['cbNewCard'])) {
+//
+//            $newCardHolderName = '';
+//            $manualKey = FALSE;
+//
+//            if (isset($post['txtNewCardName']) && isset($post['cbKeyNumber'])) {
+//                $newCardHolderName = strtoupper(filter_var($post['txtNewCardName'], FILTER_SANITIZE_STRING));
+//                $manualKey = TRUE;
+//            }
+//
+//            try {
+//                // Payment Gateway
+//                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+//
+//                $this->cofResult = $gateway->initCardOnFile($dbh, $uS->siteName, $resv->getIdGuest(), $reg->getIdRegistration(), $manualKey, $newCardHolderName, 'Reserve.php?rid=' . $resv->getIdReservation());
+//
+//            } catch (Hk_Exception_Payment $ex) {
+//
+//                $this->reserveData->addError($ex->getMessage());
+//            }
+//        }
 
         return $this;
     }
@@ -1606,7 +1662,7 @@ FROM reservation r
     public function save(\PDO $dbh, $post) {
 
         // Save family, rate, hospital, room.
-        parent::save($dbh, $post);
+        parent::saveResv($dbh, $post, 'CheckedIn.php');
 
         if ($this->reserveData->hasError() === FALSE) {
             $this->saveCheckIn($dbh, $post);
@@ -1707,7 +1763,7 @@ FROM reservation r
         $resv->setExpectedDeparture($visit->getExpectedDeparture());
         $resv->setNumberGuests(count($this->getStayingMembers()));
         $resv->setIdResource($resc->getIdResource());
-        $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
+        $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);       
 
         //
         // Payment
@@ -1766,7 +1822,7 @@ FROM reservation r
         $reply = '';
 
         if ($this->payResult !== NULL) {
-
+            // Process payment
             $reply .= $this->payResult->getReplyMessage();
 
             if ($this->payResult->getStatus() == PaymentResult::FORWARDED) {
@@ -1782,6 +1838,13 @@ FROM reservation r
             // New Invoice
             if (is_null($this->payResult->getInvoiceNumber()) === FALSE && $this->payResult->getInvoiceNumber() != '') {
                 $dataArray['invoiceNumber'] = $this->payResult->getInvoiceNumber();
+            }
+            
+        } else if ($this->cofResult !== NULL) {
+            // Process card on file
+            if (count($this->cofResult) > 0) {
+                $this->cofResult['resvTitle'] = $this->reserveData->getResvTitle();
+                $creditCheckOut = $this->cofResult;
             }
         }
 
