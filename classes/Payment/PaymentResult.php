@@ -231,7 +231,6 @@ WHERE r.Email_Receipt = 1 and
         return $this;
     }
 
-
     public function setDisplayMessage($displayMessage) {
         $this->displayMessage = $displayMessage . $this->displayMessage;
         return $this;
@@ -308,6 +307,11 @@ class ReturnResult extends PaymentResult {
             $this->displayMessage .= "Email Failed, Error = " . $ex->getMessage();
         }
     }
+
+    public function getReplyMessage() {
+        return $this->replyMessage . $this->displayMessage;
+    }
+
 }
 
 

@@ -416,45 +416,8 @@ class InstamedGateway extends PaymentGateway {
     protected function sendReturn(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $returnAmt, $bid) {
 
         $uS = Session::getInstance();
-        $reply = '';
 
-        $params = $this->getCredentials()->toCurl()
-                . "&transactionType=CreditCard"
-                . "&transactionAction=SimpleRefund"
-                . "&primaryCardPresentStatus=PresentManualKey"
-                . "&primaryTransactionID=" . $pAuthRs->AcqRefData->getStoredVal()
-                . "&amount=" . number_format($returnAmt, 2);
-
-        $curlRequest = new ImCurlRequest();
-
-        $resp = $curlRequest->submit($params, $this->NvpUrl, $this->getCredentials()->id, $this->getCredentials()->password);
-
-        $resp['InvoiceNumber'] = $invoice->getInvoiceNumber();
-        $resp['Amount'] = $payRs->Amount->getStoredVal();
-
-        $curlResponse = new VerifyCurlResponse($resp, MpTranType::ReturnSale);
-
-        // Save raw transaction in the db.
-        try {
-            self::logGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'CreditReturnToken');
-        } catch (Exception $ex) {
-            // Do Nothing
-        }
-
-        // Make a return response...
-        $sr = new ImPaymentResponse($curlResponse, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), '');
-
-        // Record transaction
-        try {
-            $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Retrn, TransMethod::Token);
-            $sr->setIdTrans($transRs->idTrans->getStoredVal());
-        } catch (Exception $ex) {
-            // do nothing
-        }
-
-        // Record return
-        $csResp = ReturnReply::processReply($dbh, $sr, $uS->username, $payRs);
-
+        $csResp = $this->processReturnPayment($dbh, $payRs, $pAuthRs->AcqRefData->getStoredVal(), $invoice, $returnAmt, $uS->username, '');
 
         $dataArray = array('bid' => $bid);
 
@@ -465,7 +428,6 @@ class InstamedGateway extends PaymentGateway {
                 // Update invoice
                 $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
 
-                $reply .= 'Payment is Returned.  ';
                 $csResp->idVisit = $invoice->getOrderNumber();
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
 
@@ -485,6 +447,122 @@ class InstamedGateway extends PaymentGateway {
         return $dataArray;
     }
 
+    Public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes = '') {
+
+        $uS = Session::getInstance();
+
+        // Find a credit payment
+        $idGroup = intval($invoice->getIdGroup(), 10);
+        $amount = abs($invoice->getAmount());
+        $idToken = intval($rtnToken, 10);
+
+        $stmt = $dbh->query("select p.*, pa.AcqRefData
+from payment p join payment_auth pa on p.idPayment = pa.idPayment
+	join payment_invoice pi on p.idPayment = pi.Payment_Id
+    join invoice i on pi.Invoice_Id = i.idInvoice
+where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idGroup = $idGroup and pa.Approved_Amount > $amount"
+                . " order by pa.Approved_Amount");
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($rows) == 0) {
+
+            $payResult = new ReturnResult($invoice->getIdInvoice(), 0, 0);
+            $payResult->setStatus(PaymentResult::ERROR);
+            $payResult->setDisplayMessage('** An appropriate payment was not found for this return amount: ' . $amount . ' **');
+            return $payResult;
+        }
+
+        $payRs = new PaymentRS();
+        EditRS::loadRow($rows[0], $payRs);
+
+        $csResp = $this->processReturnPayment($dbh, $payRs, $rows[0]['AcqRefData'], $invoice, $amount, $uS->username, $paymentNotes);
+
+        $payResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+
+        switch ($csResp->getStatus()) {
+
+            case CreditPayments::STATUS_APPROVED:
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
+
+                $payResult->feePaymentAccepted($dbh, $uS, $csResp, $invoice);
+                $payResult->setDisplayMessage('Amount Returned by Credit Card.  ');
+
+                break;
+
+            case CreditPayments::STATUS_DECLINED:
+
+                $payResult->feePaymentRejected($dbh, $uS, $csResp, $invoice);
+
+                $msg = '** The Return is Declined. **';
+                if ($csResp->response->getResponseMessage() != '') {
+                    $msg .= 'Message: ' . $csResp->response->getResponseMessage();
+                }
+                $payResult->setDisplayMessage($msg);
+
+                break;
+
+            default:
+
+                $payResult->setStatus(PaymentResult::ERROR);
+                $payResult->setDisplayMessage('**  Error Message: ' . $csResp->response->getResponseMessage());
+        }
+
+        return $payResult;
+    }
+
+    /**
+     *
+     * @param \PDO $dbh
+     * @param PaymentRS $payRs
+     * @param string $paymentTransId
+     * @param Invoice $invoice
+     * @param float $returnAmt
+     * @param string $userName
+     * @return type
+     */
+    protected function processReturnPayment(\PDO $dbh, PaymentRS $payRs, $paymentTransId, Invoice $invoice, $returnAmt, $userName, $paymentNotes) {
+
+        $params = $this->getCredentials()->toCurl()
+                . "&transactionType=CreditCard"
+                . "&transactionAction=SimpleRefund"
+                . "&primaryCardPresentStatus=PresentManualKey"
+                . "&primaryTransactionID=" . $paymentTransId
+                . "&amount=" . number_format($returnAmt, 2);
+
+        $curlRequest = new ImCurlRequest();
+
+        $resp = $curlRequest->submit($params, $this->NvpUrl, $this->getCredentials()->id, $this->getCredentials()->password);
+
+        $resp['InvoiceNumber'] = $invoice->getInvoiceNumber();
+        $resp['Amount'] = $returnAmt;
+
+        $curlResponse = new VerifyCurlReturnResponse($resp, MpTranType::ReturnSale);
+
+        // Save raw transaction in the db.
+        try {
+            self::logGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'CreditReturnToken');
+        } catch (Exception $ex) {
+            // Do Nothing
+        }
+
+        // Make a return response...
+        $sr = new ImReturnResponse($curlResponse, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $paymentNotes);
+
+        // Record transaction
+        try {
+            $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Retrn, TransMethod::Token);
+            $sr->setIdTrans($transRs->idTrans->getStoredVal());
+        } catch (Exception $ex) {
+            // do nothing
+        }
+
+        // Record return
+        return ReturnReply::processReply($dbh, $sr, $userName, $payRs);
+
+    }
 
     public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $userName = '') {
 

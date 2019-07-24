@@ -455,7 +455,7 @@ if ($uS->UseWLnotes) {
                             <td colspan="2" style="text-align:right;"><input type="submit" name="btnFeesDl" value="Excel Download" style="margin-right:20px;"/><input type="button" id="btnFeesGo" value="Run"/></td>
                         </tr>
                     </table>
-                    <div id="rptfeediv" class="hhk-visitdialog"></div>
+                    <div id="rptfeediv" class="hhk-visitdialog"><p id="rptFeeLoading" class="ui-state-active" style="font-size: 1.1em; float:left; display:none; margin:20px; padding: 5px;">Loading Payment Report...</p></div>
                 </div>
                 <div id="vInv" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
                     <input type="button" id="btnInvGo" value="Refresh"/>

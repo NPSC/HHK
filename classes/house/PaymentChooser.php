@@ -938,7 +938,7 @@ ORDER BY v.idVisit , v.Span;");
                 , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
 
         // preset useCardRb
-        if (count($tkRsArray) == 1) {
+        if (count($tkRsArray) == 1 || (count($tkRsArray) > 1 && $prefTokenId == 0)) {
             $keys = array_keys($tkRsArray);
             $prefTokenId = $tkRsArray[$keys[0]]->idGuest_token->getStoredVal();
         }
@@ -948,20 +948,17 @@ ORDER BY v.idVisit , v.Span;");
         // List any valid stored cards on file
         foreach ($tkRsArray as $tkRs) {
 
-            if (CreditToken::hasToken($tkRs)) {
-
-                if ($tkRs->idGuest_token->getStoredVal() == $prefTokenId) {
-                    $attr['checked'] = 'checked';
-                } else if (isset($attr['checked'])) {
-                    unset($attr['checked']);
-                }
-
-                $tbl->addBodyTr(HTMLTable::makeTd($tkRs->CardType->getStoredVal() . ' - ' . $tkRs->MaskedAccount->getStoredVal())
-                        . HTMLTable::makeTd($tkRs->CardHolderName->getStoredVal())
-                        . HTMLTable::makeTd(HTMLInput::generateMarkup($tkRs->idGuest_token->getStoredVal(), $attr))
-                    , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
-
+            if ($tkRs->idGuest_token->getStoredVal() == $prefTokenId) {
+                $attr['checked'] = 'checked';
+            } else if (isset($attr['checked'])) {
+                unset($attr['checked']);
             }
+
+            $tbl->addBodyTr(HTMLTable::makeTd($tkRs->CardType->getStoredVal() . ' - ' . $tkRs->MaskedAccount->getStoredVal())
+                    . HTMLTable::makeTd($tkRs->CardHolderName->getStoredVal())
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($tkRs->idGuest_token->getStoredVal(), $attr))
+                , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
+
         }
 
         // New card.  Not for credit return.

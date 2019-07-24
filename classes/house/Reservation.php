@@ -150,9 +150,9 @@ WHERE r.idReservation = " . $rData->getIdResv());
     }
 
     protected function processCOF(\PDO $dbh, $idGuest, $idReg, $post, $postbackPage) {
-        
+
         $uS = Session::getInstance();
-        
+
         // Delete any credit cards on file
         $keys = array_keys($post);
 
@@ -194,7 +194,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
 
     }
-    
+
     public function createMarkup(\PDO $dbh) {
 
         // Add the family, hospital, etc sections.
@@ -569,7 +569,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 .HTMLContainer::generateMarkup('span', ($resv->isNew() ? '' : $statusText), array('id'=>$prefix.'spnResvStatus', 'style'=>'margin-right: 1em;'))
                 , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
-        
+
         return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
     }
 
@@ -1212,7 +1212,7 @@ class ActiveReservation extends Reservation {
     protected $gotoCheckingIn = '';
 
     public function createMarkup(\PDO $dbh) {
-        
+
         // COF?
         if ($this->cofResult !== NULL) {
 
@@ -1246,15 +1246,14 @@ class ActiveReservation extends Reservation {
         $this->reserveData->setResvSection($this->createResvMarkup($dbh, $oldResvId));
 
         return $this->reserveData->toArray();
-        
+
     }
-//'Reserve.php?rid=' . $resv->getIdReservation();
 
     public function save(\PDO $dbh, $post) {
-        
+
         return $this->saveResv($dbh, $post, 'Reserve.php?rid=' . $this->reserveData->getIdResv());
     }
-    
+
     protected function saveResv(\PDO $dbh, $post, $cofPostbackPage) {
 
         $uS = Session::getInstance();
@@ -1397,7 +1396,7 @@ class ActiveReservation extends Reservation {
 
         // Room Choice
         $this->setRoomChoice($dbh, $resv, $idRescPosted);
-        
+
 
         $this->processCOF($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $post, $cofPostbackPage);
 
@@ -1662,7 +1661,7 @@ FROM reservation r
     public function save(\PDO $dbh, $post) {
 
         // Save family, rate, hospital, room.
-        parent::saveResv($dbh, $post, 'CheckedIn.php');
+        parent::saveResv($dbh, $post, 'CheckedIn.php?rid=' . $this->reserveData->getIdResv());
 
         if ($this->reserveData->hasError() === FALSE) {
             $this->saveCheckIn($dbh, $post);
@@ -1763,7 +1762,7 @@ FROM reservation r
         $resv->setExpectedDeparture($visit->getExpectedDeparture());
         $resv->setNumberGuests(count($this->getStayingMembers()));
         $resv->setIdResource($resc->getIdResource());
-        $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);       
+        $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
 
         //
         // Payment
@@ -1839,7 +1838,7 @@ FROM reservation r
             if (is_null($this->payResult->getInvoiceNumber()) === FALSE && $this->payResult->getInvoiceNumber() != '') {
                 $dataArray['invoiceNumber'] = $this->payResult->getInvoiceNumber();
             }
-            
+
         } else if ($this->cofResult !== NULL) {
             // Process card on file
             if (count($this->cofResult) > 0) {

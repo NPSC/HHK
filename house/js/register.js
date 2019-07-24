@@ -1343,10 +1343,13 @@ $(document).ready(function () {
         if ($('#fcbdinv').prop('checked') !== false) {
             parms['sdinv'] = 'on';
         }
+        
+        $('#rptFeeLoading').show();
 
         parms.fee = 'on';
         $.post('ws_resc.php', parms,
             function (data) {
+                $('#rptFeeLoading').hide();
             if (data) {
                 try {
                     data = $.parseJSON(data);

@@ -644,7 +644,11 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                 $(this).prop('selected', true);
             });
         });
+        $('#btnHere').click(function () {
+            $('#rptFeeLoading').show();
+        })
         if (makeTable === '1') {
+            $('#rptFeeLoading').hide();
             $('div#printArea').css('display', 'block');
             $('#tblrpt').dataTable({
                 'columnDefs': [
@@ -737,7 +741,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                     </table>
                 </form>
             </div>
-            <div style="clear:both;"></div>
+            <div style="clear:both;"><p id="rptFeeLoading" class="ui-state-active" style="font-size: 1.1em; float:left; display:none; margin:20px; padding: 5px;">Loading Payment Report...</p></div>
             <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px;">
                 <div><input id="printButton" value="Print" type="button"/></div>
                 <div style="margin-top:10px; margin-bottom:10px; min-width: 350px;">

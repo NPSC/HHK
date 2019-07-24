@@ -125,12 +125,7 @@ abstract class PaymentGateway {
 
     public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes = '') {
 
-        $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $rtnToken);
-        $rtnResult->setStatus(PaymentResult::ERROR);
-        $rtnResult->setReplyMessage('** Return Amount is not implemented.  ');
-        $rtnResult->setDisplayMessage('** Return Amount is not implemented.  ');
-
-        return $rtnResult;
+        return array('warning' => 'Return Amount is not implemented. ');
     }
 
     public function reverseSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid, $paymentNotes) {
