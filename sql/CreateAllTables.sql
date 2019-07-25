@@ -2185,6 +2185,10 @@ ALTER TABLE `invoice`
     ADD INDEX `Index_idGroup` (`idGroup` ASC);
 ALTER TABLE `invoice`
     ADD INDEX `Index_Date` (`Invoice_Date` ASC);
+ALTER TABLE `invoice` 
+    ADD INDEX `Index_SoldToId` (`Sold_To_Id` ASC);
+ALTER TABLE `invoice` 
+    ADD INDEX `Index_Delagated` (`Delegated_Invoice_Id` ASC);
 
 ALTER TABLE `invoice_line`
     ADD INDEX `ix_invoice_line_invoice_id` (`Invoice_Id` ASC);

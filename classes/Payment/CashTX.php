@@ -166,6 +166,16 @@ class CashTX {
         $pr->setPaymentDate(date('Y-m-d H:i:s'));
 
     }
+
+    public function undoReturnAmount(\PDO $dbh, CashResponse &$pr, PaymentRS $payRs) {
+
+        // Record transaction
+        $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Cash);
+        $pr->setIdTrans($transRs->idTrans->getStoredVal());
+
+        //EditRS::delete($dbh, $payRs, array($payRs->idPayment));
+
+    }
 }
 
 

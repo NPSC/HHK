@@ -15,7 +15,7 @@ abstract class CreditPayments {
     const STATUS_DECLINED = 'DECLINED';
     const STATUS_ERROR = 'Error';
 
-    public static function processReply(\PDO $dbh, PaymentResponse $pr, $userName, PaymentRs $payRs = NULL, $attempts = 1) {
+    public static function processReply(\PDO $dbh, PaymentResponse $pr, $userName, $payRs = NULL, $attempts = 1) {
 
         // Transaction status
         switch ($pr->getStatus()) {
@@ -37,14 +37,14 @@ abstract class CreditPayments {
     }
 
 
-    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $userName, PaymentRs $payRs = NULL, $attempts = 1) {
+    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $userName, $payRs = NULL, $attempts = 1) {
         throw new Hk_Exception_Payment('Payments::caseApproved Method not overridden!');
     }
 
-    protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $userName, PaymentRs $payRs = NULL, $attempts = 1) {
+    protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $userName, $payRs = NULL, $attempts = 1) {
         return $pr;
     }
-    protected static function caseOther(\PDO $dbh, PaymentResponse $pr, $userName, PaymentRs $payRs = NULL, $attempts = 1) {
+    protected static function caseOther(\PDO $dbh, PaymentResponse $pr, $userName, $payRs = NULL, $attempts = 1) {
         return $pr;
     }
 
@@ -53,7 +53,7 @@ abstract class CreditPayments {
 class SaleReply extends CreditPayments {
 
 
-    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, PaymentRs $pRs = NULL, $attempts = 1) {
+    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, $pRs = NULL, $attempts = 1) {
 
         $uS = Session::getInstance();
         $vr = $pr->response;
@@ -164,7 +164,7 @@ class SaleReply extends CreditPayments {
        return $pr;
     }
 
-    protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $username, PaymentRs $pRs = NULL, $attempts = 1) {
+    protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $username, $pRs = NULL, $attempts = 1) {
 
         $uS = Session::getInstance();
         $vr = $pr->response;
@@ -242,7 +242,7 @@ class SaleReply extends CreditPayments {
 
 class VoidReply extends CreditPayments {
 
-    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, PaymentRs $payRs = NULL, $attempts = 1){
+    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, $payRs = NULL, $attempts = 1){
 
         if (is_null($payRs) || $payRs->idPayment->getStoredVal() == 0) {
             throw new Hk_Exception_Payment('Payment Id not given.  ');
@@ -317,7 +317,7 @@ class VoidReply extends CreditPayments {
 
     }
 
-    protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $username, PaymentRs $payRs = NULL, $attempts = 1) {
+    protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $username, $payRs = NULL, $attempts = 1) {
 
         if ($pr->response->getResponseMessage() == 'ITEM VOIDED') {
             $pr = self::caseApproved($dbh, $pr, $username, $payRs, $attempts);
@@ -328,7 +328,7 @@ class VoidReply extends CreditPayments {
 
 class ReverseReply extends CreditPayments {
 
-    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, PaymentRs $payRs = NULL, $attempts = 1){
+    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, $payRs = NULL, $attempts = 1){
 
         if (is_null($payRs) || $payRs->idPayment->getStoredVal() == 0) {
             throw new Hk_Exception_Payment('Payment Id not given.  ');
@@ -505,7 +505,7 @@ class ReturnReply extends CreditPayments {
 
     }
 
-    protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $username, PaymentRs $pRs = NULL, $attempts = 1) {
+    protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $username, $pRs = NULL, $attempts = 1) {
 
         if (is_null($pRs)) {
 
@@ -581,7 +581,7 @@ class ReturnReply extends CreditPayments {
 
 class VoidReturnReply extends CreditPayments {
 
-    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, PaymentRs $payRs = NULL, $attempts = 1){
+    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, $payRs = NULL, $attempts = 1){
 
         if (is_null($payRs) || $payRs->idPayment->getStoredVal() == 0) {
             throw new Hk_Exception_Payment('Payment Id is undefined (0).  ');
@@ -652,7 +652,7 @@ class VoidReturnReply extends CreditPayments {
 
     }
 
-    protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $userName, PaymentRs $payRs = NULL, $attempts = 1) {
+    protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $userName, $payRs = NULL, $attempts = 1) {
         // todo:  Return a timed out message - only works on un-captured transactions.
         return $pr;
     }

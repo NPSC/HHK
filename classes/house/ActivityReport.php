@@ -660,7 +660,7 @@ where `lp`.`idPayment` > 0
                     case PaymentStatusCode::Paid:
 
                         if ($p['Is_Refund'] > 0) {
-
+                            // Refund payment
                             $stat = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-check', 'style' => 'float:left;', 'title' => 'Paid')) . '(Refund)';
                             $p['Payment_Status'] = PaymentStatusCode::Retrn;
                             $amt = 0 - $amt;
@@ -668,13 +668,13 @@ where `lp`.`idPayment` > 0
 
 
                             if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d')) {
-                                $voidContent .= HTMLInput::generateMarkup('Void Refund', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidRefundPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
+                                //$voidContent .= HTMLInput::generateMarkup('Void Refund', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidRefundPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
                             } else if ($p['idPayment_Method'] != PaymentMethod::Charge) {
-                                //$voidContent .= HTMLInput::generateMarkup('Undo Refund', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-undoReturnPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
+                                $voidContent .= HTMLInput::generateMarkup('Undo Refund', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-undoReturnPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
                             }
 
                         } else {
-
+                            // Regular payment
                             $payTypeTotals[$p['idPayment_Method']]['amount'] += $amt;
                             $stat = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-check', 'style' => 'float:left;', 'title' => 'Paid'));
 
