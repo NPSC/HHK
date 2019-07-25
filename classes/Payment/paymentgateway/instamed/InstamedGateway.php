@@ -456,7 +456,7 @@ class InstamedGateway extends PaymentGateway {
         $amount = abs($invoice->getAmount());
         $idToken = intval($rtnToken, 10);
 
-        $stmt = $dbh->query("select p.*, pa.AcqRefData
+        $stmt = $dbh->query("select pa.AcqRefData
 from payment p join payment_auth pa on p.idPayment = pa.idPayment
 	join payment_invoice pi on p.idPayment = pi.Payment_Id
     join invoice i on pi.Invoice_Id = i.idInvoice
@@ -473,10 +473,8 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
             return $payResult;
         }
 
-        $payRs = new PaymentRS();
-        EditRS::loadRow($rows[0], $payRs);
 
-        $csResp = $this->processReturnPayment($dbh, $payRs, $rows[0]['AcqRefData'], $invoice, $amount, $uS->username, $paymentNotes);
+        $csResp = $this->processReturnPayment($dbh, NULL, $rows[0]['AcqRefData'], $invoice, $amount, $uS->username, $paymentNotes);
 
         $payResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
 
@@ -523,7 +521,7 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
      * @param string $userName
      * @return type
      */
-    protected function processReturnPayment(\PDO $dbh, PaymentRS $payRs, $paymentTransId, Invoice $invoice, $returnAmt, $userName, $paymentNotes) {
+    protected function processReturnPayment(\PDO $dbh, $payRs, $paymentTransId, Invoice $invoice, $returnAmt, $userName, $paymentNotes) {
 
         $params = $this->getCredentials()->toCurl()
                 . "&transactionType=CreditCard"
@@ -549,7 +547,7 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
         }
 
         // Make a return response...
-        $sr = new ImReturnResponse($curlResponse, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $paymentNotes);
+        $sr = new ImReturnResponse($curlResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $paymentNotes);
 
         // Record transaction
         try {

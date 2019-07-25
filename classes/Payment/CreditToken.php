@@ -72,14 +72,12 @@ class CreditToken {
                 $total = max(array( ($runTot + $amount), 0) );
                 break;
 
+            case MpTranType::ReturnSale:
             case MpTranType::ReturnAmt:
                 $total = max(array( ($runTot - $amount), 0) );
                 break;
 
             case MpTranType::Void:
-                $total = max(array( ($runTot - $amount), 0) );
-                break;
-
             case MpTranType::Reverse:
                 $total = max(array( ($runTot - $amount), 0) );
                 break;

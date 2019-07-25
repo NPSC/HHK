@@ -431,8 +431,6 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
     public function getPaymentPlanID() {
         if (isset($this->result['paymentPlanID'])) {
             return $this->result['paymentPlanID'];
-        } else if (isset($this->result['saveOnFileTransactionID'])) {
-            return $this->result['saveOnFileTransactionID'];
         }
         return '';
     }

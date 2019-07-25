@@ -251,6 +251,9 @@ class VoidReply extends CreditPayments {
         $uS = Session::getInstance();
         $vr = $pr->response;
 
+        // Store any tokens
+        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr));
+
         // Payment record
         $payRs->Status_Code->setNewVal(PaymentStatusCode::VoidSale);
         $payRs->Updated_By->setNewVal($username);
@@ -334,6 +337,9 @@ class ReverseReply extends CreditPayments {
         $uS = Session::getInstance();
         $vr = $pr->response;
 
+        // Store any tokens
+        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr));
+
         // Payment record
         $payRs->Status_Code->setNewVal(PaymentStatusCode::Reverse);
         $payRs->Updated_By->setNewVal($username);
@@ -398,10 +404,13 @@ class ReverseReply extends CreditPayments {
 
 class ReturnReply extends CreditPayments {
 
-    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, PaymentRs $payRs = NULL, $attempts = 1){
+    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, $payRs = NULL, $attempts = 1){
 
         $uS = Session::getInstance();
         $vr = $pr->response;
+
+        // Store any tokens
+        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr));
 
         if (is_null($payRs)) {
 
