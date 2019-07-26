@@ -215,7 +215,9 @@ abstract class InvoiceLine {
         $this->description = $description;
 
         // var will have invoice notes when useDetail is off.
-        if (!$this->useDetail) {
+        if ($this->useDetail) {
+            $this->description .= ($this->description != '' ? ' ' . $this->var : $this->var);
+        } else {
             $this->description .= ($this->var != '' ? '; ' . $this->var : '');
         }
 
