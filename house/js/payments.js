@@ -1008,14 +1008,14 @@ function verifyAmtTendrd() {
     if ($('#PayTypeSel').length === 0) {
         return true;
     }
+    var total = parseFloat($('#totalPayment').val().replace('$', '').replace(',', ''));
     
     $('#tdCashMsg').hide('fade');
     $('#tdInvceeMsg').text('').hide();
     
     if ($('#PayTypeSel').val() === 'ca') {
         
-        var total = parseFloat($('#totalPayment').val().replace('$', '').replace(',', '')),
-            tendered = parseFloat($('#txtCashTendered').val().replace('$', '').replace(',', '')),
+        var tendered = parseFloat($('#txtCashTendered').val().replace('$', '').replace(',', '')),
             remTotal = $('#remtotalPayment');
             
         if (remTotal.length > 0) {
@@ -1045,7 +1045,7 @@ function verifyAmtTendrd() {
         
         var idPayor = parseInt($('#txtInvId').val(), 10);
         
-        if (isNaN(idPayor) || idPayor < 1) {
+        if ((isNaN(idPayor) || idPayor < 1) && total != 0) {
             $('#tdInvceeMsg').text('The Invoicee is missing. ').show('fade');
             return false;
         }

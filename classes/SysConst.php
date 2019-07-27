@@ -11,7 +11,7 @@
 class CodeVersion {
     const BUILD = 161;
     const VERSION = 3.12;
-    const PATCH = 9;
+    const PATCH = 10;
     const GIT_Id = "dev";
     const REL_DATE = '';
 }

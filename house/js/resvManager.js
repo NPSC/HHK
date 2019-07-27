@@ -102,8 +102,13 @@ function resvManager(initData) {
                     numGuests++;
 
                 } else {
-
-                    people.list()[prefix].stay = '0';
+                    
+                    // Only one person? then she is staying
+                    if ($('.hhk-cbStay').length === 1) {
+                        people.list()[prefix].stay = '1';
+                    } else {
+                        people.list()[prefix].stay = '0';
+                    }
                 }
             });
 
@@ -2291,7 +2296,7 @@ function resvManager(initData) {
             }
 
             // Checking in now button
-            manageCheckInNowButton($('#gstDate').val(), data.rid, data.resv.rdiv.hideCiNowBtn);
+            manageCheckInNowButton($('#gstDate').val(), data.rid, false);
 
         }
 
