@@ -167,13 +167,14 @@ class CashTX {
 
     }
 
-    public function undoReturnAmount(\PDO $dbh, CashResponse &$pr, PaymentRS $payRs) {
+    public static function undoReturnAmount(\PDO $dbh, CashResponse &$pr, $idPayment) {
 
         // Record transaction
         $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Cash);
         $pr->setIdTrans($transRs->idTrans->getStoredVal());
 
-        //EditRS::delete($dbh, $payRs, array($payRs->idPayment));
+        $dbh->exec("delete from payment_invoice where Payment_Id = $idPayment");
+        $dbh->exec("delete from payment where idPayment = $idPayment");
 
     }
 }
@@ -420,5 +421,18 @@ class ChargeAsCashTX {
         EditRS::delete($dbh, $pDetailRS, array($pDetailRS->idPayment, $pDetailRS->Status_Code));
 
     }
+
+    public static function undoReturnAmount(\PDO $dbh, CashResponse &$pr, $idPayment) {
+
+        // Record transaction
+        $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Cash);
+        $pr->setIdTrans($transRs->idTrans->getStoredVal());
+
+        $dbh->exec("delete from payment_invoice where Payment_Id = $idPayment");
+        $dbh->exec("delete from payment_auth where idPayment = $idPayment");
+        $dbh->exec("delete from payment where idPayment = $idPayment");
+
+    }
+
 }
 

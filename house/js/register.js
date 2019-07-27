@@ -1388,7 +1388,8 @@ $(document).ready(function () {
                     // Void/Reverse button
                     $('#rptfeediv').on('click', '.hhk-voidPmt', function () {
                         var btn = $(this);
-                        if (btn.val() != 'Saving...' && confirm('Void/Reverse?')) {
+                        var amt = parseFloat(btn.data("amt"));
+                        if (btn.val() != "Saving..." && confirm("Void/Reverse this payment for $" + amt.toFixed(2).toString() + "?")) {
                             btn.val('Saving...');
                             sendVoidReturn(btn.attr('id'), 'rv', btn.data('pid'));
                         }
@@ -1404,17 +1405,22 @@ $(document).ready(function () {
                     });
                     
                     // Return button
-                    $('#rptfeediv').on('click', '.hhk-returnPmt', function () {
+                    $("#rptfeediv").on("click", ".hhk-returnPmt", function() {
                         var btn = $(this);
-                        
-                        if (btn.val() != 'Saving...') {
-                            
-                            var amt = parseFloat($(this).data('amt'));
-                            //var rtn = prompt('Amount to return:', amt.toFixed(2).toString());
-                            if (confirm('Return $' + amt.toFixed(2).toString() + '?')) {  //rtn !== null) {
-                                btn.val('Saving...');
-                                sendVoidReturn(btn.attr('id'), 'r', btn.data('pid'), amt);
-                            }
+                        var amt = parseFloat(btn.data("amt"));
+                        if (btn.val() != "Saving..." && confirm("Return this payment for $" + amt.toFixed(2).toString() + "?")) {
+                            btn.val("Saving...");
+                            sendVoidReturn(btn.attr("id"), "r", btn.data("pid"), amt);
+                        }
+                    });
+                    
+                    // Undo Return
+                    $("#rptfeediv").on("click", ".hhk-undoReturnPmt", function () {
+                        var btn = $(this);
+                        var amt = parseFloat(btn.data("amt"));
+                        if (btn.val() != "Saving..." && confirm("Undo this Return/Refund for $" + amt.toFixed(2).toString() + "?")) {
+                            btn.val("Saving...");
+                            sendVoidReturn(btn.attr("id"), "ur", btn.data("pid"));
                         }
                     });
                     

@@ -177,6 +177,18 @@ class CheckTX {
         $pr->setPaymentDate(date('Y-m-d H:i:s'));
     }
 
+    public static function undoReturnAmount(\PDO $dbh, CashResponse &$pr, $idPayment) {
+
+        // Record transaction
+        $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Cash);
+        $pr->setIdTrans($transRs->idTrans->getStoredVal());
+
+        $dbh->exec("delete from payment_invoice where Payment_Id = $idPayment");
+        $dbh->exec("delete from payment_info_check where idPayment = $idPayment");
+        $dbh->exec("delete from payment where idPayment = $idPayment");
+
+    }
+
 }
 
 
@@ -343,6 +355,18 @@ class TransferTX {
         EditRS::updateStoredVals($payRs);
         $pr->paymentRs = $payRs;
         $pr->setPaymentDate(date('Y-m-d H:i:s'));
+
+    }
+
+    public static function undoReturnAmount(\PDO $dbh, CashResponse &$pr, $idPayment) {
+
+        // Record transaction
+        $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Cash);
+        $pr->setIdTrans($transRs->idTrans->getStoredVal());
+
+        $dbh->exec("delete from payment_invoice where Payment_Id = $idPayment");
+        $dbh->exec("delete from payment_info_check where idPayment = $idPayment");
+        $dbh->exec("delete from payment where idPayment = $idPayment");
 
     }
 
