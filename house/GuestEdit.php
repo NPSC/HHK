@@ -95,7 +95,6 @@ $menuMarkup = $wInit->generatePageMenu();
 
 
 $labels = new Config_Lite(LABEL_FILE);
-$config = new Config_Lite(ciCFG_FILE);
 
 $resultMessage = "";
 $alertMessage = '';
@@ -634,7 +633,7 @@ if ($psg->getIdPsg() > 0) {
         // Get the room rate category names
         $categoryTitles = RoomRate::makeDescriptions($dbh);
 
-        $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), array('href'=>$config->getString('house', 'ReservationPage', 'Referral.php').'?rid=' . $reserv->getIdReservation())))
+        $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), array('href'=>'Referral.php?rid=' . $reserv->getIdReservation())))
                 . HTMLTable::makeTd($reserv->getStatusTitle($reserv->getStatus()))
                 . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getArrival())))
                 . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getDeparture())))

@@ -1861,8 +1861,7 @@ FROM reservation r
 
             try {
 
-                $config = new Config_Lite(ciCFG_FILE);
-                $mail = prepareEmail($config);
+                $mail = prepareEmail();
 
                 $mail->From = $uS->noreplyAddr;
                 $mail->FromName = $uS->siteName;

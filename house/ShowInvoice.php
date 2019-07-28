@@ -119,14 +119,12 @@ try {
 
     if (isset($_POST['btnEmail']) && $emAddr != '' && $emSubject != '' && $stmtMarkup != '') {
 
-        $config = new Config_Lite(ciCFG_FILE);
+        $mail = prepareEmail();
 
-        $mail = prepareEmail($config);
-
-        $mail->From = $config->getString('guest_email', 'FromAddress', '');
+        $mail->From = $uS->FromAddress;
         $mail->FromName = $uS->siteName;
         $mail->addAddress($emAddr);     // Add a recipient
-        $mail->addReplyTo($config->getString('guest_email', 'ReplyTo', ''));
+        $mail->addReplyTo($uS->ReplyToAddr);
 
         $mail->isHTML(true);
 

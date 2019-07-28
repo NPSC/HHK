@@ -125,7 +125,7 @@ if (isset($_GET['r'])) {
     $result = filter_var($_GET['r'], FILTER_SANITIZE_STRING);
 }
 
-$pageTitle = $config->getString("site", "Site_Name", "Hospitality House");
+$pageTitle = $uS->siteName;
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 $copyYear = date('Y');
 

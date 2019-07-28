@@ -59,7 +59,7 @@ try {
     $page = new ScriptAuthClass($dbh);
 } catch (Exception $ex) {
     $uS->destroy(true);
-    exit("Error accessing web page data table: " . $ex->getMessage());
+    exit("<h2>The HHK Volunteer Site is not enabled.</h2>");
 }
 
 
@@ -81,8 +81,8 @@ foreach ($uS->siteList as $r) {
 $siteName = HTMLContainer::generateMarkup('h3', 'Volunteer Site' . $icons[$page->get_Site_Code()]);
 
 // disclamer
-$disclaimer = $config->get("vol_email", "Disclaimer", "");
-$logoLink = $config->getString("site", "Public_URL", "");
+$disclaimer = $uS->Disclaimer;
+$logoLink = "";
 $copyYear = date('Y');
 
 $loginMkup = $login->loginForm($uname);

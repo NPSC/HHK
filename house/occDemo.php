@@ -21,9 +21,8 @@ $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;
 $menuMarkup = $wInit->generatePageMenu();
 
-$config = new Config_Lite(ciCFG_FILE);
-$zip = $config->getString('house', 'Zip_Code', '');
-$startYear = $config->getString('site', 'Start_Year', '2005');
+$zip = $uS->Zip_Code;
+$startYear = '2010';
 
 $report = "";
 
@@ -119,7 +118,7 @@ if (isset($_POST['btnSmt'])) {
 
 
 // Setups for the page.
-$timePeriodMarkup = $filter->timePeriodMarkup($config)->generateMarkup(array('style'=>'float: left;'));
+$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'float: left;'));
 $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
 
 ?>

@@ -357,6 +357,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('Static_Room_Rate','rb','Regular Rate','10','',0),
 
+('Sys_Config_Hdr', '10', 'Administration','10','',0),
+('Sys_Config_Hdr', '20', 'Guest Tracking','20','',0),
+('Sys_Config_Hdr', '30', 'Volunteer','30','',0),
+
 ('Utilization_Category', 'uc1', 'Standard', '', 'h',0),
 
 ('validMemStatus','a','Active','','',0),

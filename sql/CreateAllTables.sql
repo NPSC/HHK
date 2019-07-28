@@ -1861,7 +1861,9 @@ CREATE TABLE if not exists `sys_config` (
   `Value` varchar(225) NOT NULL DEFAULT '',
   `Type` varchar(15) NOT NULL DEFAULT '',
   `Category` varchar(5) NOT NULL DEFAULT '',
+  `Header` VARCHAR(5) NOT NULL DEFAULT '',
   `Description` varchar(1000) NOT NULL DEFAULT '',
+  `GenLookup` VARCHAR(45) NOT NULL DEFAULT '',
   PRIMARY KEY (`Key`)
 ) ENGINE=InnoDB;
 

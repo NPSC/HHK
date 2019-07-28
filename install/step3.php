@@ -136,12 +136,11 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
         $ssn->sId = $siteId;
 
         // log changes
-        if ($config->getString('site', 'Site_Id', '') != $siteId && is_null($dbh) === FALSE) {
+        if ($ssn->sId != $siteId && is_null($dbh) === FALSE) {
             HouseLog::logSiteConfig($dbh, 'site' . ':' . 'Site_Id', $siteId, 'admin');
         }
 
-        $config->set('site', 'Site_Id', $siteId);
-        $config->save();
+        SysConfig::saveKeyValue($dbh, 'sys_config', 'sId', $siteId);
 
     }
 
@@ -149,12 +148,12 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
         $ssn->subsidyId = $siteId;
 
         // log changes
-        if ($config->getString('financial', 'RoomSubsidyId', '') != $siteId && is_null($dbh) === FALSE) {
+        if ($ssn->subsidyId != $siteId && is_null($dbh) === FALSE) {
             HouseLog::logSiteConfig($dbh, 'financial' . ':' . 'RoomSubsidyId', $siteId, 'admin');
         }
 
-        $config->set('financial', 'RoomSubsidyId', $siteId);
-        $config->save();
+        SysConfig::saveKeyValue($dbh, 'sys_config', $siteId);
+
     }
 
 }

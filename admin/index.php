@@ -71,10 +71,8 @@ if ($uS->mode != Mode::Live) {
     $disclaimer = 'Welcome to this demonstration version of Hospitality HouseKeeper! Do NOT use real guest or patient names.  This demonstration web site is not HIPAA complient and not intended to be used for storing Protected Health Information.';
 }
 
-
-$volSiteURL = $config->getString("site", 'Volunteer_Dir', '');
-$houseSiteUrl = $config->getString("site", 'House_Dir', '');
 $tutorialSiteURL = $config->getString('site', 'Tutorial_URL', '');
+$trainingSiteURL = $config->getString('site', 'Training_URL', '');
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 
 $icons = array();
@@ -88,30 +86,17 @@ foreach ($uS->siteList as $r) {
 
 $siteName = HTMLContainer::generateMarkup('h3', 'Administration Site' . $icons[$page->get_Site_Code()]);
 $extLinkIcon = "<span class='ui-icon ui-icon-extlink' style='float: right; margin-right:.3em;margin-top:2px;'></span>";
-$siteLinkMkup = '';
 $linkMkup = '';
 
 
-if ($volSiteURL != '' && isset($icons['v'])) {
-    $siteLinkMkup .= HTMLContainer::generateMarkup('div',
-                $icons['v'] . HTMLContainer::generateMarkup('a', 'Volunteer web site', array('href'=>$page->getRootURL() . $volSiteURL)));
-}
-
-if ($houseSiteUrl != '' && isset($icons['h'])) {
-    $siteLinkMkup .= HTMLContainer::generateMarkup('div',
-                $icons['h'] . HTMLContainer::generateMarkup('a', 'Guest Tracking web site', array('href'=>$page->getRootURL() . $houseSiteUrl)), array('style'=>'margin-top:10px;'));
-}
-
-$spacer = '25px';
 if ($tutorialSiteURL != '') {
     $linkMkup .=
-            HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'You Tube Videos' . $extLinkIcon, array('href'=>$tutorialSiteURL, 'target'=>'_blank')), array('style'=>"margin-top:$spacer;float:left;"));
-    $spacer = '10px';
+            HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'You Tube Videos' . $extLinkIcon, array('href'=>$tutorialSiteURL, 'target'=>'_blank')), array('style'=>"margin-top:25px;float:left;"));
 }
 
-if ($config->getString('site', 'Training_URL', '') != '') {
+if ($trainingSiteURL != '') {
     $linkMkup .=
-            HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'HHK Playground' . $extLinkIcon, array('href'=>$config->getString('site', 'Training_URL', ''), 'target'=>'_blank')), array('style'=>"margin-top:$spacer;clear:left;float:left"));
+            HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'HHK Playground' . $extLinkIcon, array('href'=>$trainingSiteURL, 'target'=>'_blank')), array('style'=>"margin-top:25px;clear:left;float:left"));
 }
 
 $copyYear = date('Y');
@@ -153,14 +138,14 @@ if (SecurityComponent::isHTTPS()) {
                     <div><?php echo $siteName; ?>
                         <p style="margin-left:6px; width: 65%;"><?php echo $disclaimer ?></p>
                     </div>
-                    <?php echo $loginMkup . $siteLinkMkup . $linkMkup; ?></div>
+                    <?php echo $loginMkup . $linkMkup; ?></div>
                 </div>
             </div>
                 <div style="clear:left;"></div>
                 <div style="margin-top: 70px;width:500px;">
                     <hr>
                     <div><a href ="https://nonprofitsoftwarecorp.org" ><div class="nplogo"></div></a></div>
-                    <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non Profit Software</div>
+                    <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non Profit Software Corporation</div>
                 </div>
         </div>
     </body>

@@ -18,28 +18,31 @@ require ('classes' . DS . 'config' . DS . 'Lite.php');
 require ('classes' . DS . 'sec' . DS . 'SecurityComponent.php');
 require ('classes' . DS . 'Exception_hk' . DS . 'Hk_Exception.php');
 require ('classes' . DS . 'SysConst.php');
+require ('classes' . DS . 'PDOdata.php');
+require ('functions' . DS . 'commonFunc.php');
+require ('classes' . DS . 'sec' . DS . 'sessionClass.php');
+require ('classes' . DS . 'sec' . DS . 'webInit.php');
+require('classes' . DS . 'sec' . DS . 'Login.php');
+
+// get session instance
+$uS = Session::getInstance();
+
+$config = Login::initializeSession(ciCFG_FILE);
 
 
-// Get the site configuration object
-$config = new Config_Lite(ciCFG_FILE);
+try {
+    $dbh = initPDO(TRUE);
+} catch (Hk_Exception_Runtime $hex) {
+    exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
+}
 
-$secureComp = new SecurityComponent(TRUE);
 
-// Run as test?
-/* @var $testVersion bool */
-$testVersion = $config->getBool('site', 'Run_As_Test', FALSE);
+$pageTitle = SysConfig::getKeyValue($dbh, 'sys_config', 'siteName');
 
-$pageTitle = $config->getString("site", "Site_Name", "Hospitality House");
-$adminDir = $config->getString("site", "Admin_Dir", "");
-$volunteerDir = $config->getString("site", "Volunteer_Dir", "");
-$houseDir = $config->getString("site", "House_Dir", "");
-$trainingURL = $config->getString("site", "Training_URL", "");
+
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
-
-$tz = $config->getString('calendar', 'TimeZone', 'America/Chicago');
-date_default_timezone_set($tz);
-
 $copyYear = date('Y');
+$secureComp = new SecurityComponent(TRUE);
 
 header('X-Frame-Options: SAMEORIGIN');
 header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
@@ -53,7 +56,7 @@ if (SecurityComponent::isHTTPS()) {
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title><?php echo $config->getString("site", "Site_Name", "Hospitality House"); ?></title>
+        <title><?php echo $pageTitle; ?></title>
         <link rel="icon" type="image/png" href="images/hhkIcon.png" />
         <link href='root.css' rel='stylesheet' type='text/css' />
     </head>
@@ -62,7 +65,7 @@ if (SecurityComponent::isHTTPS()) {
             <div class="topNavigation"></div>
             <div>
                 <h2 class="hhk-title">
-                    <?php echo $config->getString("site", "Site_Name", "Hospitality House"); ?>
+                    <?php echo $pageTitle; ?>
                 </h2>
             </div><div class='pageSpacer'></div>
             <div style="float:right;font-size: .6em;margin-right:5px;"><?php echo $build; ?></div>
@@ -71,21 +74,15 @@ if (SecurityComponent::isHTTPS()) {
                     <a href="http://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="images/hhkLogo.png"></a>
                     <div style="clear:left; margin-bottom: 20px;"></div>
                     <ul style="margin: 20px; line-height: 1.9em;">
-                        <li><a href="<?php echo $secureComp->getSiteURL() . $adminDir; ?>">Administration Site</a></li>
-                        <?php if ($volunteerDir != '') { ?>
-                        <li><a href="<?php echo $secureComp->getSiteURL() . $volunteerDir; ?>">Volunteers' Site</a></li>
-                        <?php }
-                            if ($houseDir != '') { ?>
-                        <li><a href="<?php echo $secureComp->getSiteURL() . $houseDir; ?>">Guest Tracking</a></li>
-                        <?php }
-                            if ($trainingURL != '') { ?>
-                        <li><a href="<?php echo $trainingURL; ?>">Training & Demonstration</a></li>
-                            <?php } ?>
+                        <li><a href="<?php echo $secureComp->getSiteURL() . 'admin'; ?>">Administration Site</a></li>
+                        <li><a href="<?php echo $secureComp->getSiteURL() . 'house'; ?>">Guest Tracking</a></li>
+                        <li><a href="<?php echo $secureComp->getSiteURL() . 'volunteer'; ?>">Volunteers' Site</a></li>
+
                     </ul>
                     <div style="margin-top: 100px;">
                         <hr>
                         <div><a href ="http://nonprofitsoftwarecorp.org" ><div class="nplogo"></div></a></div>
-                        <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non Profit Software</div>
+                        <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non Profit Software Corporation</div>
                     </div>
                 </div>
             </div>

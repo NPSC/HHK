@@ -28,7 +28,6 @@ $dbh = $wInit->dbh;
 // get session instance
 $uS = Session::getInstance();
 
-$config = new Config_Lite(ciCFG_FILE);
 
 function statsPanel(\PDO $dbh, $visitNites, $totalCatNites, $start, $end, $categories, $avDailyFee, $rescGroup, $siteName) {
 
@@ -1346,7 +1345,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || isset($_POST['btnSt
 }
 
 // Setups for the page.
-$timePeriodMarkup = $filter->timePeriodMarkup($config)->generateMarkup(array('style'=>'float: left;'));
+$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'float: left;'));
 $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
 $roomGroupMarkup = $filter->resourceGroupsMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
 

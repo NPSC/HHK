@@ -40,28 +40,17 @@ class UpdateSite {
 
     public function doUpdate(\PDO $dbh) {
 
-        $config = new Config_Lite(ciCFG_FILE);
-        $labels = new Config_Lite(LABEL_FILE);
         $errorCount = 0;
         $this->errorMsg = '';
         $this->resultAccumulator = '';
 
         // Log attempt.
         $logText = "Attempt Update.";
-        SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
+        SiteLog::logPatch($dbh, $logText, CodeVersion::GIT_Id);
 
         try {
             // Update system
             $patch = new Patch();
-
-            // Update config file
-//            $this->resultAccumulator .= $patch->loadConfigUpdates('../patch/patchSite.cfg', $config);
-//            $this->resultAccumulator .= $patch->deleteConfigItems('../patch/deleteSiteItems.cfg', $config);
-
-            // Update labels file
-            $this->resultAccumulator .= $patch->loadConfigUpdates('../patch/patchLabel.cfg', $labels);
-            $this->resultAccumulator .= $patch->deleteConfigItems('../patch/deleteLabelItems.cfg', $labels);
-
 
             // Update Tables
             $this->resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
@@ -116,15 +105,9 @@ class UpdateSite {
             }
 
 
-            // Update pay types
-//            $cnt = SiteConfig::updatePayTypes($dbh);
-//            if ($cnt > 0) {
-//                $this->resultAccumulator .= "Pay Types updated.  ";
-//            }
-
             // Log update.
             $logText = "Loaded Update.  " . $this->errorMsg;
-            SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
+            SiteLog::logPatch($dbh, $logText, CodeVersion::GIT_Id);
 
 
         } catch (Exception $hex) {
@@ -132,7 +115,7 @@ class UpdateSite {
             $this->errorMsg .= '***' . $hex->getMessage();
             // Log failure.
             $logText = "Failed Update.". $this->errorMsg;
-            SiteLog::logPatch($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
+            SiteLog::logPatch($dbh, $logText, CodeVersion::GIT_Id);
 
         }
 

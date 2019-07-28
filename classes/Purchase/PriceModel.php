@@ -692,11 +692,12 @@ class PriceGuestDay extends PriceModel {
 
     public function loadVisitNights(\PDO $dbh, $idVisit, $endDate = '') {
 
+        $uS = Session::getInstance();
+
         $spans = parent::loadVisitNights($dbh, $idVisit);
 
-        $config = new Config_Lite(ciCFG_FILE);
 
-        $ageYears = $config->getString('financial', 'StartGuestFeesYr', '0');
+        $ageYears = $uS->StartGuestFeesYr;
         $parm = "NOW()";
         if ($endDate != '') {
             $parm = "'$endDate'";

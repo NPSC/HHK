@@ -15,6 +15,9 @@
  *
  */
 class webInit {
+
+    const SYS_CONFIG = 'sys_config';
+
     public $page;
     public $menuTitle;
     public $pageTitle = "";
@@ -180,10 +183,10 @@ class webInit {
 
         $uS->nameLookups = $nameLookups;
 
-        SysConfig::getCategory($this->dbh, $uS, "'f'", $uS->sconf);
-        SysConfig::getCategory($this->dbh, $uS, "'r'", $uS->sconf);
-        SysConfig::getCategory($this->dbh, $uS, "'d'", $uS->sconf);
-        SysConfig::getCategory($this->dbh, $uS, "'a'", $uS->sconf);
+        SysConfig::getCategory($this->dbh, $uS, "'f'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, "'r'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, "'d'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, "'a'", webInit::SYS_CONFIG);
 
         return $uS->nameLookups;
 
@@ -209,11 +212,11 @@ class webInit {
         $uS = Session::getInstance();
 
         // Load sys config table entries.
-        SysConfig::getCategory($this->dbh, $uS, "'f'", $uS->sconf);
-        SysConfig::getCategory($this->dbh, $uS, "'r'", $uS->sconf);
-        SysConfig::getCategory($this->dbh, $uS, "'d'", $uS->sconf);
+        SysConfig::getCategory($this->dbh, $uS, "'f'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, "'r'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, "'d'", webInit::SYS_CONFIG);
 
-        SysConfig::getCategory($this->dbh, $uS, "'h'", $uS->sconf);
+        SysConfig::getCategory($this->dbh, $uS, "'h'", webInit::SYS_CONFIG);
 
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
             where `Table_Name` in ('Patient_Rel_Type', 'Key_Deposit_Code', 'Room_Category', 'Static_Room_Rate', 'Room_Type', 'Resource_Type', 'Resource_Status', 'Room_Status', 'Visit_Status')
@@ -267,7 +270,7 @@ class webInit {
 
         $uS->volLookups = $nameLookups;
 
-        SysConfig::getCategory($this->dbh, $uS, "'v'", $uS->sconf);
+        SysConfig::getCategory($this->dbh, $uS, "'v'", webInit::SYS_CONFIG);
         return $uS->volLookups;
 
     }

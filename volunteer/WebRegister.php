@@ -19,7 +19,7 @@ require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require THIRD_PARTY .'reCAPTCHA.php';
 use Phelium\Component\reCAPTCHA;
 
-function processGuest(\PDO $dbh, \Config_Lite $config, $username, fbUserClass $fbc) {
+function processGuest(\PDO $dbh, $username, fbUserClass $fbc) {
 
     // is this username taken?
     $query = "select v.Id, v.Fullname, v.Name_last, v.Name_First, v.Preferred_Phone, v.Preferred_Email, v.MemberStatus, ifnull(w.Status, '')
@@ -50,16 +50,16 @@ function processGuest(\PDO $dbh, \Config_Lite $config, $username, fbUserClass $f
         $events = $fbc->saveToDB($dbh, $whereStr);
 
         if (isset($events["success"])) {
-            $mail = prepareEmail($config);
+            $mail = prepareEmail();
 
-            $mail->From = $config->getString("vol_email", "ReturnAddress", "");
-            $mail->addReplyTo($config->getString("vol_email", "ReturnAddress", ""));
-            $mail->FromName = $config->getString('site', 'Site_Name', 'Hospitality HouseKeeper');
+            $mail->From = $uS->ReturnAddress;
+            $mail->addReplyTo($uS->ReturnAddress);
+            $mail->FromName = $uS->siteName;
             $mail->addAddress($fbc->get_em());     // Add a recipient
-            $mail->addBCC($config->getString("vol_email", "ReturnAddress", ""));
+            $mail->addBCC($uS->ReturnAddress);
             $mail->isHTML(true);
 
-            $mail->Subject = $config->get("vol_email", "RegSubj", "Volunteer Registration");
+            $mail->Subject = $uS->RegSubj;
 
             if ($fbc->get_ph() != "") {
                 $phon ='<tr><th class="tdlabel">Phone</th><td class="tdBox"><span>' . $fbc->get_ph().'</span></td></tr>';
@@ -107,8 +107,8 @@ table
 </style>
 </head>
     <body>
-      <h4>Thank you ' . $fbc->get_fn() . ' ' . $fbc->get_ln() . ' for signing up to the ' . $config->getString("site", "Site_Name", "House") . ' Volunteer Website</h4>
-       <p>The ' . $config->getString("site", "Site_Name", "House") . ' will contact you when you are cleared to log in to the Volunteer Website.</p>
+      <h4>Thank you ' . $fbc->get_fn() . ' ' . $fbc->get_ln() . ' for signing up to the ' . $uS->siteName . ' Volunteer Website</h4>
+       <p>The ' . $uS->siteName . ' will contact you when you are cleared to log in to the Volunteer Website.</p>
        <div>
             <table>
             <caption>Volunteer Information</caption>
@@ -127,7 +127,7 @@ table
 
 
             if($mail->send() === FALSE) {
-                 return array("error" => "Your registration succeeded, but the notification Email failed.  Please contact the " . $config->getString("site", "Site_Name", "House") . ".");
+                 return array("error" => "Your registration succeeded, but the notification Email failed.  Please contact the " . $uS->siteName . ".");
             }
 
         } else {
@@ -162,7 +162,7 @@ if ($ssn->logged && isset($ssn->uid)) {
 
 $pageTitle = $ssn->siteName;
 $houseTitle = $ssn->siteName;
-$logoLink = $config->getString("site", "Public_URL", "");
+$logoLink = '';
 
 // define db connection obj
 // define db connection obj
@@ -240,7 +240,7 @@ if (isset($_POST['g-recaptcha-response'])) {
                 $errMessage = 'Registration Failed: ' . $msg;
 
             } else {
-                $events = processGuest($dbh, $config, $username, $web);
+                $events = processGuest($dbh, $username, $web);
 
                 if (isset($events['success'])) {
                     $completeDisplay = 'display:block;';

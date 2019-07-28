@@ -74,9 +74,9 @@ if (isset($_GET['sendemail']) && strtolower(filter_input(INPUT_GET, 'sendemail',
     }
 }
 
-$siteName = $config->get("site", "Site_Name", "Hospitality HouseKeeper");
-$from = $config->get("house", "NoReply", "");      // Email address message will show as coming from.
-$maxAutoEmail = $config->getString('email_server', 'MaxAutoEmail');
+$siteName = SysConfig::getKeyValue($dbh, 'sys_config', 'siteName');
+$from = SysConfig::getKeyValue($dbh, 'sys_config', 'NoReplyAddr');      // Email address message will show as coming from.
+$maxAutoEmail = SysConfig::getKeyValue($dbh, 'sys_config', 'MaxAutoEmail');
 
 $subjectLine = $labels->getString('referral', 'Survey_Subject', '');
 
@@ -147,7 +147,7 @@ if ($numRecipients > $maxAutoEmail) {
     exit("The number of email recipients, " . $stmt->rowCount() . " is higher than the maximum number allowed, $maxAutoEmail. See System Configuration, email_server -> MaxAutoEmail");
 }
 
-$mail = prepareEmail($config);
+$mail = prepareEmail();
 
 $mail->From = $from;
 $mail->addReplyTo($from);
@@ -204,7 +204,7 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
 
 }
 
-$copyEmail = filter_var($config->getString('house', 'Auto_Email_Address'), FILTER_VALIDATE_EMAIL);
+$copyEmail = filter_var(SysConfig::getKeyValue($dbh, 'sys_config', 'Auto_Email_Address'), FILTER_VALIDATE_EMAIL);
 
 if ($sendEmail && $copyEmail && $copyEmail != '') {
 

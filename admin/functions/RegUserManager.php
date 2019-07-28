@@ -12,16 +12,17 @@
  */
 function manageRegistration(PDO $dbh, $n, $admin) {
 
+    $uS = Session::getInstance();
+
     if (isset($_POST["txtfb$n"])) {
         $fbId = strtolower(filter_var($_POST["txtfb$n"], FILTER_SANITIZE_STRING));
     } else {
         return array("error" => "Bad fb Id.");
     }
 
-    $config = new Config_Lite(ciCFG_FILE);
     $rtnMsg = "";
 
-//// check for valid radio button - the selected user match
+// check for valid radio button - the selected user match
     if (isset($_POST["b$n"])) {
 
         $id = intval(filter_var($_POST["b$n"], FILTER_VALIDATE_INT), 10);
@@ -66,17 +67,17 @@ function manageRegistration(PDO $dbh, $n, $admin) {
 
         if ($fbEmail != "") {
 
-            $mail = prepareEmail($config);
+            $mail = prepareEmail();
 
-            $mail->From = $config->getString("vol_email", "ReturnAddress", "");
-            $mail->addReplyTo($config->getString("vol_email", "ReturnAddress", ""));
-            $mail->FromName = $config->getString('site', 'Site_Name', 'Hospitality HouseKeeper');
+            $mail->From = $uS->ReturnAddress;
+            $mail->addReplyTo($uS->ReturnAddress);
+            $mail->FromName = $uS->siteName;
             $mail->addAddress($fbEmail);     // Add a recipient
-            $mail->addBCC($config->getString("vol_email", "ReturnAddress", ""));
+            $mail->addBCC($uS->ReturnAddress);
             $mail->isHTML(true);
 
-            $mail->Subject = $config->get("vol_email", "RegSubj", "Volunteer Registration Confirmation");
-            $mail->msgHTML(getRegConfBody($config, $fbRs, $uname));
+            $mail->Subject = $uS->RegSubj;
+            $mail->msgHTML(getRegConfBody($uS->siteName, $fbRs, $uname));
 
             if($mail->send()) {
                 $rtnMsg .= "Email sent.  ";
@@ -92,7 +93,7 @@ function manageRegistration(PDO $dbh, $n, $admin) {
     return array("success" => $rtnMsg);
 }
 
-function getRegConfBody($config, $fbRs, $uname) {
+function getRegConfBody($siteName, $fbRs, $uname) {
 
     return '<html><head>
     <style type="text/css">
@@ -105,8 +106,8 @@ function getRegConfBody($config, $fbRs, $uname) {
     </style>
     </head>
     <body>
-    <h4>Your ' . $config->getString("site", "Site_Name", "House") . ' Volunteer Web Registration is Complete</h4>
-        <p>' . $fbRs->fb_First_Name->getStoredVal() . ' ' . $fbRs->fb_Last_Name->getStoredVal() . ' is approved for the ' . $config->getString("site", "Site_Name", "House") . ' Volunteer Website at:  <a href="' . $config->getString("site", "Volunteer_URL", "") . '?u=' . $uname . '" >Volunteer Website</a>;  with user name: ' . $uname . '</p>
+    <h4>Your ' . $siteName . ' Volunteer Web Registration is Complete</h4>
+        <p>' . $fbRs->fb_First_Name->getStoredVal() . ' ' . $fbRs->fb_Last_Name->getStoredVal() . ' is approved for the ' . $siteName . ' Volunteer Website at:  <a href="volunteer?u=' . $uname . '" >Volunteer Website</a>;  with user name: ' . $uname . '</p>
     </body>
     </html>';
 

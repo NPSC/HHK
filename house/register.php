@@ -61,7 +61,6 @@ $uS = Session::getInstance();
 
 creditIncludes($uS->PaymentGateway);
 
-$config = new Config_Lite(ciCFG_FILE);
 $totalRest = $uS->PreviousNights;
 
 // Get labels
@@ -517,7 +516,7 @@ if ($uS->UseWLnotes) {
         <input  type="hidden" id="calDateIncrement" value='<?php echo $calDateIncrement; ?>' />
         <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />
         <input  type="hidden" id="fixedRate" value='<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>' />
-        <input  type="hidden" id="resvPageName" value='<?php echo $config->getString('house', 'ReservationPage', 'Reserve.php'); ?>' />
+        <input  type="hidden" id="resvPageName" value='<?php echo 'Reserve.php'; ?>' />
         <input  type="hidden" id="showCreatedDate" value='<?php echo $uS->ShowCreatedDate; ?>' />
         <input  type="hidden" id="expandResources" value='<?php echo $uS->CalExpandResources; ?>' />
         <input  type="hidden" id="shoHospitalName" value='<?php echo $shoHosptialName; ?>' />

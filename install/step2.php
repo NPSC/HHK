@@ -55,12 +55,12 @@ if (isset($_FILES['zipfile'])) {
         SiteConfig::checkZipFile('zipfile');
         $resultMsg .= SiteConfig::loadZipCodeFile($dbh, $_FILES['zipfile']['tmp_name']);
 
-        SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Loaded. ' . $resultMsg, $config->getString('code', 'GIT_Id', ''));
+        SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Loaded. ' . $resultMsg, CodeVersion::GIT_Id);
 
     } catch (Exception $hex) {
         $resultMsg .= $hex->getMessage();
         $clr = 'color:red;';
-        SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Failed. ' . $resultMsg, $config->getString('code', 'GIT_Id', ''));
+        SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Failed. ' . $resultMsg, CodeVersion::GIT_Id);
     }
 
     $resultMsg = HTMLContainer::generateMarkup('p', $resultMsg, array('style' => $clr));
@@ -92,9 +92,9 @@ if (isset($_POST['btnSave'])) {
         }
 
         // Set web_sites table
-        $adminDir = str_ireplace('/', '', $config->getString('site', 'Admin_Dir', 'admin'));
-        $houseDir = str_ireplace('/', '', $config->getString('site', 'House_Dir', ''));
-        $volDir = str_ireplace('/', '', $config->getString('site', 'Volunteer_Dir', ''));
+        $adminDir = str_ireplace('/', '', 'admin');
+        $houseDir = str_ireplace('/', '', 'house');
+        $volDir = str_ireplace('/', '', 'volunteer');
 
 
         // Admin

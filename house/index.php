@@ -43,8 +43,7 @@ try {
     exit ("<h3>" . $ex->getMessage());
 }
 
-
-// Override user credentials
+// Override user DB login credentials
 try {
     $dbh = initPDO(TRUE);
 } catch (Hk_Exception_Runtime $hex) {
@@ -52,31 +51,30 @@ try {
 }
 
 
-
 // Load the page information
 try {
     $page = new ScriptAuthClass($dbh);
 } catch (Exception $ex) {
     $uS->destroy(true);
-    exit("Error accessing web page data table: " . $ex->getMessage());
+    exit('<h2>The HHK Guest Tracking Site is not enabled.</h2>');
 }
 
-
+// Login hook
 if (isset($_POST['txtUname'])) {
+    // User loged in
     $events = $login->checkPost($dbh, $_POST, $page->get_Default_Page());
     echo json_encode($events);
     exit();
 }
 
 // disclamer
-$disclaimer = $config->get("vol_email", "Disclaimer", "");
+$disclaimer = $uS->Disclaimer;
 
 if ($uS->mode != Mode::Live) {
     $disclaimer = 'Welcome to this demonstration version of Hospitality HouseKeeper! Do NOT use real guest or patient names.  This demonstration web site is not HIPAA complient and not intended to be used for storing Protected Health Information.';
 }
 
 
-$volSiteURL = $config->get("site", "Volunteer_Dir", '');
 $tutorialSiteURL = $config->getString('site', 'Tutorial_URL', '');
 $trainingSiteURL = $config->getString('site', 'Training_URL', '');
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
@@ -93,25 +91,17 @@ foreach ($uS->siteList as $r) {
 $siteName = HTMLContainer::generateMarkup('h3', 'Guest Tracking Site' . $icons[$page->get_Site_Code()]);
 
 $extLinkIcon = "<span class='ui-icon ui-icon-extlink' style='float: right; margin-right:.3em;margin-top:2px;'></span>";
-$siteLinkMkup = '';
+
 $linkMkup = '';
 
-
-if ($volSiteURL != '' && isset($icons['v'])) {
-    $siteLinkMkup .= HTMLContainer::generateMarkup('div',
-                $icons['v'] . HTMLContainer::generateMarkup('a', 'Volunteer web site', array('href'=>$page->getRootURL() . $volSiteURL)));
-}
-
-$spacer = '25px';
 if ($tutorialSiteURL != '') {
     $linkMkup .=
-            HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'You Tube Videos' . $extLinkIcon, array('href'=>$tutorialSiteURL, 'target'=>'_blank')), array('style'=>"margin-top:$spacer;float:left;"));
-    $spacer = '10px';
+            HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'User Demonstration Videos' . $extLinkIcon, array('href'=>$tutorialSiteURL, 'target'=>'_blank')), array('style'=>"margin-top:25px;float:left;"));
 }
 
-if ($config->getString('site', 'Training_URL', '') != '') {
+if ($trainingSiteURL != '') {
     $linkMkup .=
-            HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'HHK Playground' . $extLinkIcon, array('href'=>$config->getString('site', 'Training_URL', ''), 'target'=>'_blank')), array('style'=>"margin-top:$spacer;clear:left;float:left"));
+            HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'HHK Training Playground' . $extLinkIcon, array('href'=>$trainingSiteURL, 'target'=>'_blank')), array('style'=>"margin-top:25px;clear:left;float:left"));
 }
 
 $copyYear = date('Y');
@@ -158,7 +148,7 @@ if (SecurityComponent::isHTTPS()) {
                     <?php echo $loginMkup; ?>
                 </div>
                 <div style="clear:left;">
-                    <?php echo $siteLinkMkup . $linkMkup; ?>
+                    <?php echo $linkMkup; ?>
                 </div>
                 <div style="margin-top: 90px;width:500px;">
                     <hr>

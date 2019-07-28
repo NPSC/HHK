@@ -91,15 +91,13 @@ class ReservationSvcs {
 
             if ($emailAddr != '') {
 
-                $config = new Config_Lite(ciCFG_FILE);
-
-                $mail = prepareEmail($config);
-                $mail->From = $config->getString('guest_email', 'FromAddress', '');
+                $mail = prepareEmail();
+                $mail->From = $uS->FromAddress;
                 $mail->FromName = $uS->siteName;
                 $mail->addAddress(filter_var($emailAddr, FILTER_SANITIZE_EMAIL));     // Add a recipient
-                $mail->addReplyTo($config->getString('guest_email', 'ReplyTo', ''));
+                $mail->addReplyTo($uS->ReplyTo);
 
-                $bccs = explode(',', $config->getString('guest_email', 'BccAddress', ''));
+                $bccs = explode(',', $uS->BccAddress);
                 foreach ($bccs as $bcc) {
                     if ($bcc != ''){
                         $mail->addBCC(filter_var($bcc, FILTER_SANITIZE_EMAIL));

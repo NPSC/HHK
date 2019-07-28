@@ -265,14 +265,13 @@ if (isset($_REQUEST['cmd'])) {
             $msg .= "No Statement.  ";
         } else {
 
-            $config = new Config_Lite(ciCFG_FILE);
 
-            $mail = prepareEmail($config);
+            $mail = prepareEmail();
 
-            $mail->From = $config->getString('guest_email', 'FromAddress', '');
+            $mail->From = $uS->FromAddress;
             $mail->FromName = $uS->siteName;
             $mail->addAddress($emAddr);     // Add a recipient
-            $mail->addReplyTo($config->getString('guest_email', 'ReplyTo', ''));
+            $mail->addReplyTo($uS->ReplyToAddr);
 
             $mail->isHTML(true);
 

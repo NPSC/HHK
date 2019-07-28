@@ -410,18 +410,18 @@ class Visit {
         $uS = Session::getInstance();
 
             // Send email
-        if (is_null($this->getResource($dbh)) === FALSE && $uS->noreplyAddr != '' && $uS->adminEmailAddr != '') {
+        if (is_null($this->getResource($dbh)) === FALSE && $uS->noreplyAddr != '' && $uS->Guest_Track_Address != '') {
 
             try {
                 // Get the site configuration object
-                $config = new Config_Lite(ciCFG_FILE);
-                $mail = prepareEmail($config);
 
-                $mail->From = $uS->noreplyAddr;
+                $mail = prepareEmail();
+
+                $mail->From = $uS->NoReplyAddr;
                 $mail->FromName = $uS->siteName;
-                $mail->addReplyTo($uS->noreplyAddr, $uS->siteName);
+                $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
 
-                $tos = explode(',', $uS->adminEmailAddr);
+                $tos = explode(',', $uS->Guest_Track_Address);
                 foreach ($tos as $t) {
                     $to = filter_var($t, FILTER_SANITIZE_EMAIL);
                     if ($to !== FALSE && $to != '') {
@@ -809,7 +809,7 @@ class Visit {
 
         // prepare email message if needed
         try {
-            if ($sendEmail && $this->getVisitStatus() != VisitStatus::CheckedOut && $uS->adminEmailAddr != ''  && $uS->noreplyAddr != '') {
+            if ($sendEmail && $this->getVisitStatus() != VisitStatus::CheckedOut && $uS->Guest_Track_Address != ''  && $uS->NoReplyAddr != '') {
 
                 // Get room name
                 $roomTitle = 'Unknown';
@@ -842,16 +842,15 @@ class Visit {
                 $subj = "Check-Out from " . $roomTitle . " by " . $uS->username . ".";
 
                 // Get the site configuration object
-                $config = new Config_Lite(ciCFG_FILE);
 
                 // Send email
-                $mail = prepareEmail($config);
+                $mail = prepareEmail();
 
-                $mail->From = $uS->noreplyAddr;
+                $mail->From = $uS->NoReplyAddr;
                 $mail->FromName = $uS->siteName;
-                $mail->addReplyTo($uS->noreplyAddr, $uS->siteName);
+                $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
 
-                $tos = explode(',', $uS->adminEmailAddr);
+                $tos = explode(',', $uS->Guest_Track_Address);
                 foreach ($tos as $t) {
                     $to = filter_var($t, FILTER_SANITIZE_EMAIL);
                     if ($to !== FALSE && $to != '') {
@@ -941,7 +940,7 @@ class Visit {
 
 
         try {
-            if ($sendEmail && $uS->noreplyAddr != '' && ($uS->adminEmailAddr != '' || $uS->HouseKeepingEmail != '')) {
+            if ($sendEmail && $uS->NoReplyAddr != '' && ($uS->Guest_Track_Address != '' || $uS->HouseKeepingEmail != '')) {
                 // Get room name
                 $roomTitle = 'Unknown';
                 if (is_null($this->getResource($dbh)) === FALSE) {
@@ -978,16 +977,15 @@ class Visit {
                 $subj = "Visit audit report for room: " . $roomTitle . ".  Room is now empty.";
 
                 // Get the site configuration object
-                $config = new Config_Lite(ciCFG_FILE);
 
                 // Send email
-                $mail = prepareEmail($config);
+                $mail = prepareEmail();
 
-                $mail->From = $uS->noreplyAddr;
+                $mail->From = $uS->NoReplyAddr;
                 $mail->FromName = $uS->siteName;
-                $mail->addReplyTo($uS->noreplyAddr, $uS->siteName);
+                $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
 
-                $tos = array_merge(explode(',', $uS->adminEmailAddr), explode(',', $uS->HouseKeepingEmail));
+                $tos = array_merge(explode(',', $uS->Guest_Track_Address), explode(',', $uS->HouseKeepingEmail));
 
                 foreach ($tos as $t) {
                     $to = filter_var($t, FILTER_SANITIZE_EMAIL);
@@ -1347,7 +1345,7 @@ class Visit {
         // Init the latest departure date for the visit
         $lastDepartureDT = new \DateTime($this->getArrivalDate());
         $lastDepartureDT->setTime(0, 0, 0);
-        
+
         $visitArrivalDT = new \DateTime($this->getArrivalDate());
 
         foreach ($this->stays as $stayRS) {

@@ -60,11 +60,11 @@ class Receipt {
 
         // Taxes
         $tax = floatval($uS->ImpliedTaxRate)/100;
-        
+
         if ($tax > 0) {
             // Implement tax
             $taxAmt = 0;
-            
+
             foreach ($invoice->getLines($dbh) as $line) {
 
                 $lineAmt = $line->getAmount();
@@ -102,9 +102,9 @@ class Receipt {
         }
 
         $disclaimer = '';
-        $config = new Config_Lite(ciCFG_FILE);
-        if ($config->getString('financial', 'PaymentDisclaimer', '') != '') {
-            $disclaimer = HTMLContainer::generateMarkup('div', $config->getString('financial', 'PaymentDisclaimer', ''), array('style'=>'font-size:0.7em; text-align:justify'));
+
+        if ($uS->PaymentDisclaimer != '') {
+            $disclaimer = HTMLContainer::generateMarkup('div', $uS->PaymentDisclaimer, array('style'=>'font-size:0.7em; text-align:justify'));
         }
 
         $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup() . $disclaimer, array('style'=>'margin-bottom:10px;clear:both;float:left;'));
@@ -320,15 +320,15 @@ class Receipt {
     public static function getHouseIconMarkup() {
 
         $uS = Session::getInstance();
-        $config = new Config_Lite(ciCFG_FILE);
-        $logoUrl = '../conf/' . $config->getString('financial', 'receiptLogoFile', '');
+
+        $logoUrl = '../conf/' . $uS->receiptLogoFile;
         $rec = '';
 
         // Don't write img if logo URL not sepcified
         if ($logoUrl != '') {
 
             $rec .= HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$config->getString('financial', 'receiptLogoWidth', '150'))),
+                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$uS->receiptLogoWidth)),
                 array('style'=>'margin-bottom:10px;margin-right:20px;float:left;'));
         }
 
@@ -1291,7 +1291,6 @@ WHERE
 
         // Get labels & config
         $labels = new Config_Lite(LABEL_FILE);
-        $config = new Config_Lite(ciCFG_FILE);
 
         // Payments
         $query = "select lp.*, ifnull(n.Name_First, '') as `First`,
@@ -1321,7 +1320,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         $tpTbl = self::makeThirdParyTable($pments, $invLines, $labels, $totalAmt);
         $totalThirdPayments = $totalCharge - $totalAmt;
 
-        $ptbl = self::makePaymentsTable($pments, $invLines, $uS->subsidyId, $uS->returnId, $totalAmt, $config->getString('financial', 'PaymentDisclaimer', ''), $labels);
+        $ptbl = self::makePaymentsTable($pments, $invLines, $uS->subsidyId, $uS->returnId, $totalAmt, $uS->PaymentDisclaimer, $labels);
         $totalGuestPayments = $totalCharge - $totalThirdPayments - $totalAmt;
 
         // Find patient name
@@ -1337,14 +1336,14 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
 
         // Build the statement
-        $logoUrl = '../conf/' . $config->getString('financial', 'statementLogoFile', '');
+        $logoUrl = '../conf/' . $uS->statementLogoFile;
         $rec = '';
 
         // Don't write img if logo URL not sepcified
         if ($includeLogo && $logoUrl != '') {
 
             $rec .= HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$config->getString('financial', 'statementLogoWidth', '220'))),
+                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$uS->statementLogoWidth)),
                 array('style'=>'margin-bottom:10px;margin-right:20px;float:left;'));
         }
 
@@ -1417,7 +1416,6 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
 
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
-        $config = new Config_Lite(ciCFG_FILE);
 
         // Visits and Rates
         $tbl = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
@@ -1428,7 +1426,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
         $totalThirdPayments = $totalCharge - $totalAmt;
 
         // Payments
-        $ptbl = self::makePaymentsTable($pments, $invLines, $uS->subsidyId, $uS->returnId, $totalAmt, $config->getString('financial', 'PaymentDisclaimer', ''), $labels);
+        $ptbl = self::makePaymentsTable($pments, $invLines, $uS->subsidyId, $uS->returnId, $totalAmt, $uS->PaymentDisclaimer, $labels);
         $totalGuestPayments = $totalCharge - $totalThirdPayments - $totalAmt;
 
         // Find patient name
@@ -1444,14 +1442,14 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
 
 
         // Build the statement
-        $logoUrl = '../conf/' . $config->getString('financial', 'statementLogoFile', '');
+        $logoUrl = '../conf/' . $uS->statementLogoFile;
         $rec = '';
 
         // Don't write img if logo URL not sepcified
         if ($includeLogo && $logoUrl != '') {
 
             $rec .= HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$config->getString('financial', 'statementLogoWidth', '220'))),
+                HTMLContainer::generateMarkup('img', '', array('src'=>$logoUrl, 'id'=>'hhkrcpt', 'alt'=>$uS->siteName, 'width'=>$uS->statementLogoWidth)),
                 array('style'=>'margin-bottom:10px;margin-right:20px;float:left;'));
         }
 

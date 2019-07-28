@@ -1144,28 +1144,27 @@ class VolCal {
 
     public static function emailAdmin(cEventClass $evt, $numEvents) {
 
-        // Get the site configuration object
-        $config = new Config_Lite(ciCFG_FILE);
+        $uS = Session::getInstance();
 
-        if ($config->getString("vol_email", "Admin_Address", "") == "") {
+        if ($uS->Admin_Address == "") {
             return false;
         }
 
-       $mail = prepareEmail($config);
+       $mail = prepareEmail();
 
-       $mail->From = $config->getString("vol_email", "ReturnAddress", "");
-       $mail->addReplyTo($config->getString("vol_email", "ReturnAddress", ""));
-       $mail->FromName = $config->getString('site', 'Site_Name', 'Hospitality HouseKeeper');
-       $mail->addAddress($config->getString("vol_email", "Admin_Address", ""));     // Add a recipient
+       $mail->From = $uS->ReturnAddress;
+       $mail->addReplyTo($uS->ReturnAddress);
+       $mail->FromName = $uS->siteName;
+       $mail->addAddress($uS->Admin_Address);     // Add a recipient
        $mail->isHTML(true);
 
        $mail->Subject = "Shift Cancellation Notice for " . $evt->get_volDescription();
 
         // Set the dates with the correct timezone
         $start = new DateTime($evt->get_start());
-        $start->setTimezone(new DateTimeZone($config->getString("calendar", "TimeZone", "America/Chicago")));
+        $start->setTimezone(new DateTimeZone($uS->tz));
         $end = new DateTime($evt->get_end());
-        $end->setTimezone(new DateTimeZone($config->getString("calendar", "TimeZone", "America/Chicago")));
+        $end->setTimezone(new DateTimeZone($uS->tz));
 
         $mail->msgHTML('
 <html><head>

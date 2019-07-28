@@ -169,34 +169,35 @@ function doExcelDownLoad($rows, $fileName) {
 }
 
 
-function prepareEmail(Config_Lite $config) {
+function prepareEmail() {
+
+    $uS = Session::getInstance();
 
     $mail = new PHPMailer;
-    $mailService = $config->getString('email_server', 'Type', 'mail');
 
-    switch (strtolower($mailService)) {
+    switch (strtolower($uS->EmailType)) {
 
         case 'smtp':
 
             $mail->isSMTP();
 
-            $mail->Host = $config->getString('email_server', 'Host', '');
-            $mail->SMTPAuth = $config->getBool('email_server', 'Auth_Required', 'true');
-            $mail->Username = $config->getString('email_server', 'Username', '');
+            $mail->Host = $uS->SMTP_Host;
+            $mail->SMTPAuth = $uS->SMTP_Auth_Required;
+            $mail->Username = $uS->SMTP_Username;
 
-            if ($config->getString('email_server', 'Password', '') != '') {
-                $mail->Password = decryptMessage($config->getString('email_server', 'Password', ''));
+            if ($uS->SMTP_Password != '') {
+                $mail->Password = decryptMessage($uS->SMTP_Password);
             }
 
-            if ($config->getString('email_server', 'Port', '') != '') {
-                $mail->Port = $config->getString('email_server', 'Port', '');
+            if ($uS->SMTP_Port != '') {
+                $mail->Port = $uS->SMTP_Port;
             }
 
-            if ($config->getString('email_server', 'Secure', '') != '') {
-                $mail->SMTPSecure = $config->getString('email_server', 'Secure', '');
+            if ($uS->SMTP_Secure != '') {
+                $mail->SMTPSecure = $uS->SMTP_Secure;
             }
 
-            $mail->SMTPDebug = $config->getString('email_server', 'Debug', '0');
+            $mail->SMTPDebug = $uS->SMTP_Debug;
 
             break;
 
@@ -224,7 +225,7 @@ function stripSlashesExtended(&$arr_r) {
 }
 
 function newDateWithTz($strDate, $strTz) {
-    
+
     if ($strTz == '') {
         throw new \Exception('(newDateWithTz) - timezone not set.  ');
     }
@@ -240,7 +241,7 @@ function newDateWithTz($strDate, $strTz) {
 }
 
 function setTimeZone($uS, $strDate) {
-    
+
     if (is_null($uS) || is_a($uS, 'Session') == FALSE) {
         $uS = Session::getInstance();
     }

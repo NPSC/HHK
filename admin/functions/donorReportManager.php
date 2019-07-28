@@ -440,16 +440,8 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
 
     }
 
-    // Get the site configuration object
-    try {
-        $config = new Config_Lite(ciCFG_FILE);
-    } catch (Exception $ex) {
-        $uS->destroy();
-        throw new Hk_Exception_Runtime("Configurtion file is missing, path=".ciCFG_FILE, 999, $ex);
-    }
-
     // Major donation amount
-    $majorFloat = floatval($config->get("financial", "Major_Donation_Amount", "600"));
+    $majorFloat = floatval($uS->Major_Donation);
 
     // Loop through data
     foreach ($rows as $r) {

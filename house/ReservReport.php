@@ -31,8 +31,6 @@ $labels = new Config_Lite(LABEL_FILE);
 $menuMarkup = $wInit->generatePageMenu();
 
 
-$config = new Config_Lite(ciCFG_FILE);
-
 // Instantiate the alert message control
 $alertMsg = new alertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
@@ -348,7 +346,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistratio
 
         if ($local) {
 
-            $r['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$config->getString('house', 'ReservationPage', 'Reserve.php') . '?rid=' . $r['idReservation']));
+            $r['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>'Reserve.php?rid=' . $r['idReservation']));
             $r['Arrival'] = $arrivalDT->format('c');
             $r['Departure'] = $departureDT->format('c');
             $r['Created_Date'] = $statusDT->format('c');
@@ -448,7 +446,7 @@ $statusSelector = HTMLSelector::generateMarkup(
 
 $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;'));
 
-$timePeriodMarkup = $filter->timePeriodMarkup($config)->generateMarkup(array('style'=>'float: left;'));
+$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'float: left;'));
 $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
 
 ?>

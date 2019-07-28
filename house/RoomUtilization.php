@@ -38,7 +38,6 @@ $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
 
-$config = new Config_Lite(ciCFG_FILE);
 $labels = new Config_Lite(LABEL_FILE);
 
 // Instantiate the alert message control
@@ -243,7 +242,7 @@ $hospitals = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($hList, $
 
 
 $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'14', 'multiple'=>'multiple'));
-$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, $config->getString('site', 'Start_Year', '2010'), $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
+$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010', $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
 
 $roomGrouping = HTMLSelector::generateMarkup(
         HTMLSelector::doOptionsMkup(removeOptionGroups($roomGroups), $groupingSelection, FALSE), array('name' => 'selGroup', 'size'=>'4'));

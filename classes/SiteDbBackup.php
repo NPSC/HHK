@@ -31,8 +31,9 @@ class SiteDbBackup {
 
         $this->filePath = $filePath;
         $this->clrFileSize = 0;
+        $uS = Session::getInstance();
 
-        $timezone = $this->config->getString('calendar', 'TimeZone', 'America/Chicago');
+        $timezone = $uS->tz;
         date_default_timezone_set($timezone);
     }
 

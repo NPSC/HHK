@@ -115,12 +115,9 @@ function volSendMail(\PDO $dbh, $vcc, $subj, $body, $id) {
             $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
             $stmt->execute(array(':cat'=>$parts[0], ':cod'=>$parts[1]));
 
-            // Get the site configuration object
-            $config = new Config_Lite(ciCFG_FILE);
-
             $missingEmail = array();
             $emailAddrs = array();
-            $em = prepareEmail($config);
+            $em = prepareEmail();
 
             // Collect members in one of two containers from above
             foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
@@ -164,10 +161,10 @@ function volSendMail(\PDO $dbh, $vcc, $subj, $body, $id) {
 
                 $em->isHTML(true);
 
-                $em->Subject = $config->get("vol_email", "RegSubj", "Volunteer Registration");
+                $em->Subject = $uS->RegSubj;
 
-                $em->From = $config->getString("vol_email", "Admin_Address", "");
-                $em->addAddress($config->getString("vol_email", "Admin_Address", ""));
+                $em->From = $uS->Admin_Address;
+                $em->addAddress($uS->Admin_Address);
                 $em->Subject = $cSubj;
                 $em->msgHTML($cBody);
 

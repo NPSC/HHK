@@ -99,10 +99,10 @@ class ReportFilter {
         $this->fyDiffMonths = $fiscalYearDiffMonths;
     }
 
-    public function timePeriodMarkup(Config_Lite $config) {
+    public function timePeriodMarkup() {
 
         $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->months, $this->selectedMonths, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
-        $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($this->selectedYear, $config->getString('site', 'Start_Year', '2010'), $this->fyDiffMonths, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
+        $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($this->selectedYear, '2010', $this->fyDiffMonths, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
         $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->calendarOptions, $this->selectedCalendar, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
         $tbl = new HTMLTable();

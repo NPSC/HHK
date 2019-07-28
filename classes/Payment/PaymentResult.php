@@ -111,12 +111,12 @@ class PaymentResult {
 
     public function emailReceipt(\PDO $dbh) {
 
-        $config = new Config_Lite(ciCFG_FILE);
+        $uS = Session::getInstance();
         $toAddr = '';
         $guestName = '';
         $guestHasEmail = FALSE;
 
-        $fromAddr = $config->getString('guest_email', 'FromAddress', '');
+        $fromAddr = $uS->FromAddress;
 
         if ($fromAddr == '') {
             // Config data not set.
@@ -154,15 +154,15 @@ WHERE r.Email_Receipt = 1 and
         }
 
 
-        $mail = prepareEmail($config);
+        $mail = prepareEmail();
 
         $mail->From = $fromAddr;
-        $mail->addReplyTo($config->getString('guest_email', 'ReplyTo', ''));
-        $mail->FromName = $config->getString('site', 'Site_Name', '');
+        $mail->addReplyTo($uS->ReplyTo);
+        $mail->FromName = $uS->siteName;
 
         $mail->addAddress($toAddrSan);     // Add a recipient
 
-        $bccEntry = $config->getString('guest_email', 'BccAddress', '');
+        $bccEntry = $uS->BccAddress;
         $bccs = explode(',', $bccEntry);
 
         foreach ($bccs as $b) {
@@ -176,7 +176,7 @@ WHERE r.Email_Receipt = 1 and
 
         $mail->isHTML(true);
 
-        $mail->Subject = $config->getString('site', 'Site_Name', '') . ' Payment Receipt';
+        $mail->Subject = $uS->siteName . ' Payment Receipt';
         $mail->msgHTML($this->receiptMarkup);
 
         if($mail->send()) {

@@ -147,11 +147,9 @@ if (isset($_POST['btnEmail']) || isset($_POST['btnEmailv'])) {
 
     if ($emAddr != '' && $subject != '') {
 
-        $config = new Config_Lite(ciCFG_FILE);
+        $mail = prepareEmail();
 
-        $mail = prepareEmail($config);
-
-        $mail->From = $config->getString('house', 'NoReply', '');
+        $mail->From = $uS->NoReplyAddr;
         $mail->FromName = $uS->siteName;
 
         $tos = explode(',', $emAddr);

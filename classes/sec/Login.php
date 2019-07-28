@@ -35,8 +35,7 @@ class Login {
         }
 
         // Check site maintenance
-        $maint = $config->getBool('site', 'Site_Maintenance', FALSE);
-        if ($maint) {
+        if ($config->getBool('site', 'Site_Maintenance', FALSE)) {
             exit("<h1>".$config->getString('site','Site_Name', ''). " is offline for maintenance.  Try again later.</h1>");
         }
 
@@ -48,39 +47,34 @@ class Login {
 
             // Must access pages through SSL
             if ($secureComp->isHTTPS() === FALSE) {
-                // non-SSL access.
                 header("Location: " . $secureComp->getRootURL() . 'index.php');
             }
         }
 
-
-        // Load session
-        $ssn->testVersion = $config->getBool('site', 'Run_As_Test', true);
-        $ssn->siteName = $config->getString('site','Site_Name', 'Hospitality HouseKeeper');
-        $ssn->resourceURL = $secureComp->getRootURL();
-        $ssn->tz = $config->getString('calendar', 'TimeZone', 'America/Chicago');
-        $ssn->ver = CodeVersion::VERSION . '.' . CodeVersion::BUILD;
         $ssn->ssl = $ssl;
+        $ssn->resourceURL = $secureComp->getRootURL();
         $ssn->mode = strtolower($config->getString('site', 'Mode', 'live'));
-        $ssn->sconf = 'sys_config';
-        $ssn->sId = $config->getString('site', 'Site_Id', '');
-        $ssn->subsidyId = $config->getString('financial', 'RoomSubsidyId', '0');
-        $ssn->adminEmailAddr = $config->getString('house', 'Admin_Address', '');
-        $ssn->noreplyAddr = $config->getString('house', 'NoReply', '');
-        $ssn->ccgw = $config->getString('financial', 'CC_Gateway', '');
-        $ssn->HouseKeepingEmail = $config->getString('house', 'HouseKeepingEmail', '');
+        $ssn->testVersion = $config->getBool('site', 'Run_As_Test', true);
 
         // Initialize role code
         $ssn->rolecode = WebRole::Guest;
 
         // Set Timezone
-        date_default_timezone_set($ssn->tz);
+        self::dbParmsToSession($config);
+
+        return $config;
+    }
+
+    public static function dbParmsToSession(Config_Lite $config) {
+
+        // get session instance
+        $ssn = Session::getInstance();
 
         try {
             $dbConfig = $config->getSection('db');
         } catch (Config_Lite_Exception $e) {
             $ssn->destroy();
-            throw new Hk_Exception_Runtime("Database configurtion data is missing.", 1, $e);
+            throw new Hk_Exception_Runtime("Database configuration parameters are missing.", 1, $e);
         }
 
         if (is_array($dbConfig)) {
@@ -91,10 +85,8 @@ class Login {
             $ssn->dbms = $dbConfig['DBMS'];
         } else {
             $ssn->destroy();
-            throw new Hk_Exception_Runtime("Bad Database Configurtion");
+            throw new Hk_Exception_Runtime("Bad Database Configuration");
         }
-
-        return $config;
     }
 
     public function checkPost(\PDO $dbh, $post, $defaultPage) {
