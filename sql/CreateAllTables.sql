@@ -703,6 +703,17 @@ CREATE TABLE if not exists `item`
 
 
 -- -----------------------------------------------------
+-- Table `item`
+-- -----------------------------------------------------
+CREATE TABLE `item_item` (
+  `idItem` INT NOT NULL,
+  `Item_Id` INT NOT NULL,
+  PRIMARY KEY (`idItem`, `Item_Id`)
+) ENGINE=InnoDB;
+
+
+
+-- -----------------------------------------------------
 -- Table `item_price`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `item_price` (

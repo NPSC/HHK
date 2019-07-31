@@ -67,7 +67,7 @@ try {
 
 switch ($cmd) {
     case "insert":
-        $maxDonationAmt = floatval($config->get("financial", "Max_Donate_Amount", "200000"));
+        $maxDonationAmt = floatval($uS->MaxDonate);
 
         $id = 0;
         if (isset($_POST["id"])) {

@@ -482,7 +482,7 @@ if (isset($_POST['btnkfSave'])) {
     $newDefault = $priceModel->saveEditMarkup($dbh, $_POST, $uS->username);
 
     if ($newDefault != '') {
-        SysConfig::saveKeyValue($dbh, $uS->sconf, 'RoomRateDefault', $newDefault);
+        SysConfig::saveKeyValue($dbh, 'sys_config', 'RoomRateDefault', $newDefault);
         $uS->RoomRateDefault = $newDefault;
     }
 
@@ -601,7 +601,7 @@ if (isset($_POST['btnkfSave'])) {
 
                 if ($v[0] == $vfDefault) {
 
-                    SysConfig::saveKeyValue($dbh, $uS->sconf, 'DefaultVisitFee', $v[0]);
+                    SysConfig::saveKeyValue($dbh, 'sys_config', 'DefaultVisitFee', $v[0]);
                     $uS->DefaultVisitFee = $v[0];
                     break;
                 }
@@ -619,7 +619,7 @@ if (isset($_POST['btnkfSave'])) {
 
             if ($v[0] == $vfDefault && $v[0] != PayType::Invoice) {
 
-                SysConfig::saveKeyValue($dbh, $uS->sconf, 'DefaultPayType', $v[0]);
+                SysConfig::saveKeyValue($dbh, 'sys_config', 'DefaultPayType', $v[0]);
                 $uS->DefaultPayType = $v[0];
                 break;
             }
@@ -763,7 +763,7 @@ if (isset($_POST['btnhSave'])) {
 
 if (isset($_POST['btnAttrSave'])) {
 
-    $tabIndex = 7;
+    $tabIndex = 8;
     $postedAttr = array();
     if (isset($_POST['atTitle'])) {
         $postedAttr = filter_var_array($_POST['atTitle'], FILTER_SANITIZE_STRING);
@@ -837,25 +837,93 @@ if (isset($_POST['btnItemSave'])) {
 
     $tabIndex = 6;
 
-    $sitems = $dbh->query("Select idItem, Description from item;");
+    // item-item table
+    $iistmt = $dbh->query("Select * from item_item");
+    $taxItemMap = $iistmt->fetchAll(\PDO::FETCH_ASSOC);
+
+
+    $sitems = $dbh->query("Select  i.idItem, itm.Type_Id, i.Description, i.Gl_Code, i.Percentage
+    from item i left join item_type_map itm on itm.Item_Id = i.idItem");
     $items = $sitems->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($items as $i) {
 
-        if ($i['idItem'] == ItemId::AddnlCharge) {
+        $idItem = intval($i['idItem']);
+
+        if ($i['Type_Id'] == 2 || $idItem < 1) {
             continue;
         }
 
-        if (isset($_POST['txtItem'][$i['idItem']])) {
 
-            $desc = filter_var($_POST['txtItem'][$i['idItem']], FILTER_SANITIZE_STRING);
+        if (isset($_POST['txtItem'][$idItem])) {
 
-            if ($desc != '' && $desc != $i['Description']) {
+            $desc = filter_var($_POST['txtItem'][$idItem], FILTER_SANITIZE_STRING);
+            $glCode = filter_var($_POST['txtGlCode'][$idItem], FILTER_SANITIZE_STRING);
 
-                $dbh->exec("update `item` set `Description` = '$desc' where `idItem` = " . $i['idItem']);
+            $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode' where `idItem` = " . $idItem);
+
+        }
+
+        if (isset($_POST['cbtax'][$idItem])) {
+            // Define tax items for each item.
+            foreach ($_POST['cbtax'][$idItem] as $t) {
+
+                $idTaxItem = intval(filter_var($t, FILTER_SANITIZE_NUMBER_INT), 10);
+
+                if ($idTaxItem > 0) {
+                    $dbh->exec("Replace into item_item (idItem, Item_Id) values ($idItem, $idTaxItem)");
+                }
+
+            }
+
+        }
+
+        // delete unchecked tax items
+        foreach ($taxItemMap as $m) {
+            if ($m['idItem'] == $idItem && ! isset($_POST['cbtax'][$idItem][$m['Item_Id']])) {
+                
+                $dbh->exec("delete from item_item where idItem = $idItem and Item_Id = " . $m['Item_Id']);
             }
         }
+
+
     }
+}
+
+if (isset($_POST['btnTaxSave'])) {
+    $tabIndex = 7;
+
+    $sitems = $dbh->query("Select idItem, Description, Gl_Code, Percentage
+from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = 2");
+    $items = $sitems->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($items as $i) {
+
+        if (isset($_POST['txttItem'][$i['idItem']])) {
+
+            $desc = filter_var($_POST['txttItem'][$i['idItem']], FILTER_SANITIZE_STRING);
+            $glCode = filter_var($_POST['txttGlCode'][$i['idItem']], FILTER_SANITIZE_STRING);
+            $percentage = filter_var($_POST['txttPercentage'][$i['idItem']], FILTER_SANITIZE_STRING);
+
+            $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode', `Percentage` = '$percentage' where `idItem` = " . $i['idItem']);
+
+        }
+    }
+
+    // New tax item?
+    if (isset($_POST['txttItem'][0]) && $_POST['txttItem'][0] != '') {
+
+        $desc = filter_var($_POST['txttItem'][0], FILTER_SANITIZE_STRING);
+        $glCode = filter_var($_POST['txttGlCode'][0], FILTER_SANITIZE_STRING);
+        $percentage = filter_var($_POST['txttPercentage'][0], FILTER_SANITIZE_STRING);
+
+        $dbh->exec("insert into `item` (`Description`, `Gl_Code`, `Percentage`) Values ('$desc', '$glCode', '$percentage')");
+
+        if ($dbh->lastInsertId() > 0) {
+            $dbh->exec("insert into `item_type_map` Values ('" . $dbh->lastInsertId() . "', '2')");
+        }
+    }
+
 }
 
 $pageTitle = $wInit->pageTitle;
@@ -1192,7 +1260,7 @@ FROM
 WHERE
     `g`.`Type` = 'd';");
 
-$rows = $stmt->fetchAll(PDO::FETCH_NUM);
+$rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
 $selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''), array('name' => 'selDemoLookup', 'data-type'=>'d', 'class' => 'hhk-selLookup'));
 $lookupErrMsg = '';
@@ -1201,7 +1269,7 @@ $lookupErrMsg = '';
 
 // General Lookup categories
 $stmt2 = $dbh->query("select distinct `Type`, `Table_Name` from gen_lookups where `Type` in ('h','u', 'ha', 'm');");
-$rows2 = $stmt2->fetchAll(PDO::FETCH_NUM);
+$rows2 = $stmt2->fetchAll(\PDO::FETCH_NUM);
 
 $lkups = array();
 $hasDiags = FALSE;
@@ -1233,7 +1301,7 @@ $selLookups = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($lkups, '
 // Additional charges and discounts
 // Lookup categories
 $stmt3 = $dbh->query("select distinct `Type`, `Table_Name` from gen_lookups where `Type` = 'ca';");
-$rows3 = $stmt3->fetchAll(PDO::FETCH_NUM);
+$rows3 = $stmt3->fetchAll(\PDO::FETCH_NUM);
 $hasAddnl = FALSE;
 $hasDiscounts = FALSE;
 
@@ -1249,23 +1317,99 @@ $seldiscs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows3, '')
 
 
 // Items
-
-$sitems = $dbh->query("Select idItem, Description from item;");
-$items = $sitems->fetchAll(PDO::FETCH_NUM);
+$sitems = $dbh->query("Select  i.idItem, itm.Type_Id, i.Description, i.Gl_Code, i.Percentage
+    from item i left join item_type_map itm on itm.Item_Id = i.idItem");
+$items = $sitems->fetchAll(\PDO::FETCH_ASSOC);
 
 $itbl = new HTMLTable();
-$itbl->addHeaderTr(HTMLTable::makeTh(count($items) . ' Items'));
 
+$ths = HTMLTable::makeTh('Description').HTMLTable::makeTh('GL Code');
+$colCounter = array();
+
+// Make tax columns
 foreach ($items as $d) {
 
-    if ($d[0] == ItemId::AddnlCharge) {
-        $itbl->addBodyTr(HTMLTable::makeTd('(Additional Charges)'));
-    } else {
-        $itbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup($d[1], array('name' => 'txtItem[' . $d[0] . ']'))));
+    if ($d['Type_Id'] == 2) {
+
+        $ths .= HTMLTable::makeTh($d['Description'] . ' (' . number_format($d['Percentage'], 3) . '%)');
+        $colCounter[] = $d['idItem'];
     }
 }
 
-$itemTable = $itbl->generateMarkup(array('style' => 'float:left;'));  // . $ttbl->generateMarkup();
+// item-item table
+$iistmt = $dbh->query("Select * from item_item");
+$taxItemMap = $iistmt->fetchAll(\PDO::FETCH_ASSOC);
+
+
+$itbl->addHeaderTr($ths);
+
+
+foreach ($items as $d) {
+
+    if ($d['Type_Id'] == 2) {
+        continue;
+    }
+
+    $trs = '';
+
+    if ($d['idItem'] == ItemId::AddnlCharge) {
+        $trs .= HTMLTable::makeTd('(Additional Charges)')
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'], array('name' => 'txtGlCode[' . $d['idItem'] . ']')));
+    } else {
+        $trs .=
+            HTMLTable::makeTd(HTMLInput::generateMarkup($d['Description'], array('name' => 'txtItem[' . $d['idItem'] . ']')))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'], array('name' => 'txtGlCode[' . $d['idItem'] . ']')));
+    }
+
+    foreach ($colCounter as $c) {
+
+        $attrs = array('type'=>'checkbox', 'name'=>'cbtax[' . $d['idItem'] . '][' . $c . ']');
+
+        // Look for tax item connection
+        foreach ($taxItemMap as $m) {
+            if ($m['idItem'] == $d['idItem'] && $m['Item_Id'] == $c) {
+                $attrs['checked'] = 'checked';
+            }
+        }
+
+        $trs .= HTMLTable::makeTd(HTMLInput::generateMarkup($c, $attrs), array('style'=>'text-align:center;'));
+    }
+
+    $itbl->addBodyTr($trs);
+}
+
+$itemTable = $itbl->generateMarkup(array('style' => 'float:left;'));
+
+
+// Taxes
+$taxTable = '';
+$tstmt = $dbh->query("Select idItem, Description, Gl_Code, Percentage
+from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = 2");
+$titems = $tstmt->fetchAll(\PDO::FETCH_ASSOC);
+
+if (count($titems) > 0) {
+    $tiTbl = new HTMLTable();
+    $tiTbl->addHeaderTr(HTMLTable::makeTh(count($titems) . ' Taxes', array('colspan'=>'3')));
+    $tiTbl->addHeaderTr(HTMLTable::makeTh('Description').HTMLTable::makeTh('GL Code').HTMLTable::makeTh('Percentage'));
+
+    foreach ($titems as $d) {
+
+        $tiTbl->addBodyTr(
+                HTMLTable::makeTd(HTMLInput::generateMarkup($d['Description'], array('name' => 'txttItem[' . $d['idItem'] . ']')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'], array('name' => 'txttGlCode[' . $d['idItem'] . ']')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup(number_format($d['Percentage'], 3), array('name' => 'txttPercentage[' . $d['idItem'] . ']'))));
+
+    }
+
+    // New Tax item
+    $tiTbl->addBodyTr(
+            HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttItem[0]', 'placeholder'=>'New Tax')))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttGlCode[0]')))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttPercentage[0]'))));
+
+    $taxTable = $tiTbl->generateMarkup(array('style' => 'float:left;'));
+}
+
 // Instantiate the alert message control
 $alertMsg = new alertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
@@ -1710,6 +1854,7 @@ $resultMessage = $alertMsg->createMarkup();
                     <li><a href="#lkTable">Lookups</a></li>
 <!--                    <li><a href="#agreeEdit">Forms Editor</a></li>-->
                     <li><a href="#itemTable">Items</a></li>
+                    <?php if ($taxTable != '') {echo '<li><a href="#taxTable">Taxes</a></li>'; } ?>
                     <li><a href="#attrTable">Attributes</a></li>
                     <li><a href="#constr">Constraints</a></li>
                 </ul>
@@ -1810,6 +1955,13 @@ $resultMessage = $alertMsg->createMarkup();
 <?php echo $itemTable; ?>
                         <div style="clear:both"></div>
                         <span style="margin:10px;float:right;"><input type="submit" id='btnItemSave' name="btnItemSave" value="Save"/></span>
+                    </form>
+                </div>
+                <div id="taxTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
+                    <form method="POST" action="ResourceBuilder.php" name="formtax">
+<?php echo $taxTable; ?>
+                        <div style="clear:both"></div>
+                        <span style="margin:10px;float:right;"><input type="submit" id='btnItemSave' name="btnTaxSave" value="Save"/></span>
                     </form>
                 </div>
                 <div id="attrTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
