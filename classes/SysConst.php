@@ -128,6 +128,7 @@ class InvoiceStatus {
 
 class InvoiceLineType {
     const Recurring = 1;
+    const Tax = 2;
     const OneTime = 6;
     const Invoice = 3;
     const Hold = 4;

@@ -881,7 +881,7 @@ if (isset($_POST['btnItemSave'])) {
         // delete unchecked tax items
         foreach ($taxItemMap as $m) {
             if ($m['idItem'] == $idItem && ! isset($_POST['cbtax'][$idItem][$m['Item_Id']])) {
-                
+
                 $dbh->exec("delete from item_item where idItem = $idItem and Item_Id = " . $m['Item_Id']);
             }
         }
@@ -1387,7 +1387,7 @@ $tstmt = $dbh->query("Select idItem, Description, Gl_Code, Percentage
 from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = 2");
 $titems = $tstmt->fetchAll(\PDO::FETCH_ASSOC);
 
-if (count($titems) > 0) {
+
     $tiTbl = new HTMLTable();
     $tiTbl->addHeaderTr(HTMLTable::makeTh(count($titems) . ' Taxes', array('colspan'=>'3')));
     $tiTbl->addHeaderTr(HTMLTable::makeTh('Description').HTMLTable::makeTh('GL Code').HTMLTable::makeTh('Percentage'));
@@ -1408,7 +1408,7 @@ if (count($titems) > 0) {
             .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttPercentage[0]'))));
 
     $taxTable = $tiTbl->generateMarkup(array('style' => 'float:left;'));
-}
+
 
 // Instantiate the alert message control
 $alertMsg = new alertMessage("divAlert1");
@@ -1854,7 +1854,7 @@ $resultMessage = $alertMsg->createMarkup();
                     <li><a href="#lkTable">Lookups</a></li>
 <!--                    <li><a href="#agreeEdit">Forms Editor</a></li>-->
                     <li><a href="#itemTable">Items</a></li>
-                    <?php if ($taxTable != '') {echo '<li><a href="#taxTable">Taxes</a></li>'; } ?>
+                    <li><a href="#taxTable">Taxes</a></li>
                     <li><a href="#attrTable">Attributes</a></li>
                     <li><a href="#constr">Constraints</a></li>
                 </ul>

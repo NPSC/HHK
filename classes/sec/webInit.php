@@ -280,6 +280,14 @@ class webInit {
 
 class SysConfig {
 
+    /** Load given category into the session.
+     *
+     * @param \PDO $dbh
+     * @param \Session $uS
+     * @param string $category
+     * @param string $tableName
+     * @throws Hk_Exception_Runtime
+     */
     public static function getCategory(\PDO $dbh, \Session $uS, $category, $tableName)
     {
 
@@ -312,7 +320,7 @@ class SysConfig {
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         if (count($rows) == 1) {
-            return $rows[0]['Value'];
+            return self::getTypedVal($rows[0]['Type'], $rows[0]['Value']);
         } else {
             throw new Hk_Exception_Runtime('System Configuration key not found.  ');
         }
@@ -321,18 +329,35 @@ class SysConfig {
 
     public static function saveKeyValue(\PDO $dbh, $tableName, $key, $value) {
 
-        $oldVal = self::getKeyValue($dbh, $tableName, $key);
+        if ($tableName == '' || $key == '') {
+            throw new Hk_Exception_Runtime('System Configuration database table name or key not specified.  ');
+        }
 
-        if ($oldVal != $value) {
-            // Update table
-            $query = "update `" . $tableName . "` set `Value` = :val where `Key` = :key";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute(array(':val'=>$value, ':key'=>$key));
+        $stmt = $dbh->query("select `Value`,`Type` from `" . $tableName . "` where `Key` = '$key' ");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            $uS = Session::getInstance();
-            $logText = $key . ':' .$oldVal . '|_|' . $value;
-            HouseLog::logSysConfig($dbh, $key, $value, $logText, $uS->username);
+        if (count($rows) == 1) {
 
+            if ($rows[0]['Type'] == 'ob' && $value != '') {
+                $value = encryptMessage($rows[0]['Value']);
+            }
+
+            $oldVal = $rows[0]['Value'];
+
+
+            if ($oldVal != $value) {
+                // Update table
+                $query = "update `" . $tableName . "` set `Value` = :val where `Key` = :key";
+                $stmt = $dbh->prepare($query);
+                $stmt->execute(array(':val'=>$value, ':key'=>$key));
+
+                $uS = Session::getInstance();
+                $logText = $key . ':' .$oldVal . '|_|' . $value;
+                HouseLog::logSysConfig($dbh, $key, $value, $logText, $uS->username);
+
+            }
+        } else {
+            throw new Hk_Exception_Runtime('System Configuration key not found.  ');
         }
     }
 
@@ -344,6 +369,9 @@ class SysConfig {
                 break;
             case 'b':
                 $val = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                break;
+            case 'ob':
+                $val = decryptMessage($value);
                 break;
             default:
                 $val = $value;

@@ -195,8 +195,8 @@ $completeDisplay = 'display:none;';
 $formDisplay = 'display:block;';
 $errMessage = '';
 
-$siteKey = $config->getString('recaptcha', 'Site_Key', '') == '' ? $config->getString('recaptcha', 'HHK_Site_Key', '') : $config->getString('recaptcha', 'Site_Key');
-$secret = $config->getString('recaptcha', 'Secret_Key', '') == '' ? $config->getString('recaptcha', 'HHK_Secret_Key', '') : $config->getString('recaptcha', 'Secret_Key');
+$siteKey = SysConfig::getKeyValue($dbh, 'sys_config', 'HHK_Site_Key');  //$config->getString('recaptcha', 'Site_Key', '') == '' ? $config->getString('recaptcha', 'HHK_Site_Key', '') : $config->getString('recaptcha', 'Site_Key');
+$secret = decryptMessage(SysConfig::getKeyValue($dbh, 'sys_config', 'HHK_Secret_Key')); //$config->getString('recaptcha', 'Secret_Key', '') == '' ? $config->getString('recaptcha', 'HHK_Secret_Key', '') : $config->getString('recaptcha', 'Secret_Key');
 
 $reCAPTCHA = new reCAPTCHA($siteKey, $secret);
 

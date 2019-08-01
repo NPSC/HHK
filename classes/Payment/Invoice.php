@@ -91,6 +91,27 @@ WHERE
 
     }
 
+    public static function getIdFromInvNum(\PDO $dbh, $invNum) {
+
+        $idInvoice = 0;
+
+        if ($invNum < 1) {
+            return $idInvoice;
+        }
+
+        $invRs = new InvoiceRs();
+        $invRs->Invoice_Number->setStoredVal($invNum);
+        $rows = EditRS::select($dbh, $invRs, array($invRs->Invoice_Number));
+
+        if (count($rows) == 1) {
+            EditRS::loadRow($rows[0], $invRs);
+            $idInvoice = $invRs->idInvoice->getStoredVal();
+        }
+
+        return $idInvoice;
+
+    }
+
     public function loadInvoice(\PDO $dbh, $idInvoice = 0, $idPayment = 0) {
 
         $this->invoiceNum = '';
@@ -184,6 +205,81 @@ WHERE
         $invLine->setInvoiceId($this->getIdInvoice());
         $invLine->save($dbh);
         $this->updateInvoiceAmount($dbh, $user);
+    }
+
+    public function addTaxLines(\PDO $dbh, $username) {
+
+        if ($this->getStatus() != InvoiceStatus::Unpaid || $this->isDeleted()) {
+            return;
+        }
+
+        // Get any tax items
+        $taxstmt = $dbh->query("Select idItem, Description, Gl_Code, Percentage from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = 2");
+
+        if ($taxstmt->rowCount() == 0) {
+            // No tax items are defined by the house.
+            return;
+        }
+
+        $taxItems = array();
+
+        foreach ($taxstmt->fetchAll(PDO::FETCH_ASSOC) as $t) {
+            $t['Total'] = 0;
+            $taxItems[$t['idItem']] = $t;
+
+        }
+
+        // Delete any existing tax lines
+        $lines = $this->deleteTaxLines($this->getLines($dbh));
+
+        if (count($lines) == 0) {
+            return;
+        }
+
+        // item-item mapping table
+        $iistmt = $dbh->query("Select * from item_item");
+        $taxItemMap = $iistmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($lines as $l) {
+
+            // Look for tax item connection
+            foreach ($taxItemMap as $m) {
+
+                if ($m['idItem'] == $l->getItemId() && isset($taxItems[$m['Item_Id']])) {
+
+                    $taxItems[$m['Item_Id']]['Total'] += $l->getAmount();
+                }
+            }
+
+        }
+
+        // Add tax amount lines
+        foreach ($taxItems as $t) {
+
+            if ($t['Total'] != 0 && $t['Percentage'] != 0) {
+
+                $quant = $t['Percentage'] / 100;
+
+                $taxInvoiceLine = new TaxInvoiceLine();
+                $taxInvoiceLine->createNewLine(new Item($dbh, $t['idItem'], $t['Total']), $quant, '');
+                $this->addLine($dbh, $taxInvoiceLine, $username);
+            }
+        }
+
+    }
+
+    protected function deleteTaxLines($lines) {
+
+        $filteredLines = array();
+
+        foreach ($lines as $l) {
+
+            if ($l->getTypeId() != 2) {
+                $filteredLines[] = $l;
+            }
+        }
+
+        return $filteredLines;
     }
 
     public function deleteLine(\PDO $dbh, $idInvoiceLine, $username) {
@@ -891,27 +987,6 @@ where pi.Invoice_Id in ($whAssoc)";
 
     private function createNewInvoiceNumber(PDO $dbh) {
         return incCounter($dbh, 'invoice');
-    }
-
-    public static function getIdFromInvNum(\PDO $dbh, $invNum) {
-
-        $idInvoice = 0;
-
-        if ($invNum < 1) {
-            return $idInvoice;
-        }
-
-        $invRs = new InvoiceRs();
-        $invRs->Invoice_Number->setStoredVal($invNum);
-        $rows = EditRS::select($dbh, $invRs, array($invRs->Invoice_Number));
-
-        if (count($rows) == 1) {
-            EditRS::loadRow($rows[0], $invRs);
-            $idInvoice = $invRs->idInvoice->getStoredVal();
-        }
-
-        return $idInvoice;
-
     }
 
     public function getIdInvoice() {

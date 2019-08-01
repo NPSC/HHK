@@ -29,6 +29,7 @@ abstract class InvoiceLine {
     protected $var;
     protected $carriedFrom;
     protected $useDetail;
+    protected $isPercentage;
 
     public function __construct($useDetail = TRUE) {
         $this->useDetail = $useDetail;
@@ -53,23 +54,22 @@ abstract class InvoiceLine {
     public static function invoiceLineFactory($typeId) {
 
         if ($typeId == InvoiceLineType::Recurring) {
-
             return new RecurringInvoiceLine();
 
         } else if ($typeId == InvoiceLineType::Invoice) {
-
             return new InvoiceInvoiceLine();
 
         } else if ($typeId == InvoiceLineType::OneTime) {
-
             return new OneTimeInvoiceLine();
 
         } else if ($typeId == InvoiceLineType::Hold) {
             return new HoldInvoiceLine();
 
         } else if ($typeId == InvoiceLineType::Reimburse) {
-
             return new ReimburseInvoiceLine();
+
+        } else if ($typeId == InvoiceLineType::Tax) {
+            return new TaxInvoiceLine();
         }
 
         return NULL;
@@ -229,7 +229,6 @@ abstract class InvoiceLine {
         return $this;
     }
 
-
 }
 
 
@@ -376,5 +375,16 @@ class ReimburseInvoiceLine extends InvoiceLine {
         parent::__construct($useDetail);
         $this->setTypeId(InvoiceLineType::Reimburse);
     }
+
+}
+
+class TaxInvoiceLine extends InvoiceLine {
+
+    public function __construct($useDetail = TRUE) {
+        parent::__construct($useDetail);
+        $this->setTypeId(InvoiceLineType::Tax);
+
+    }
+
 
 }
