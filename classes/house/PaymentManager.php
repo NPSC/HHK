@@ -55,13 +55,15 @@ class PaymentManager {
         $uS = Session::getInstance();
         $this->invoice = NULL;
 
-
         if ($idPayor <= 0) {
             $this->result = 'Undefined Payor.  ';
             return $this->invoice;
         }
 
         $this->pmp->setIdInvoicePayor($idPayor);
+
+        $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.idItem as `taxIdItem` from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem");
+        $taxItems = $tistmt->fetchALl(\PDO::FETCH_ASSOC);
 
         // Process a visit payment
         if (is_null($visit) === FALSE) {
@@ -188,6 +190,16 @@ class PaymentManager {
                 $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
                 $this->invoice->addLine($dbh, $invLine, $uS->username);
 
+                // Taxes
+                foreach ($taxItems as $i) {
+
+                    if ($i['idItem'] == ItemId::Lodging) {
+                        $taxInvoiceLine = new TaxInvoiceLine();
+                        $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $roomCharges), $i['Percentage']/100, '');
+                        $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
+                    }
+                }
+
             }
 
 
@@ -296,8 +308,6 @@ class PaymentManager {
 
 
         if ($this->hasInvoice()) {
-
-            $this->invoice->addTaxLines($dbh, $uS->username);
 
             if ($this->pmp->getTotalPayment() == 0 && $this->pmp->getBalWith() == ExcessPay::Refund) {
                 // Adjust total payment
@@ -438,6 +448,7 @@ class PaymentManagerPayment {
     protected $keyDepositPayment;
     protected $depositRefundAmt;
     protected $ratePayment;
+    protected $rateTax;
     protected $retainedAmtPayment;
     protected $houseDiscPayment;
     protected $totalPayment;
@@ -487,6 +498,7 @@ class PaymentManagerPayment {
         $this->visitFeePayment = 0;
         $this->keyDepositPayment = 0;
         $this->ratePayment = 0;
+        $this->rateTax = 0;
         $this->totalPayment = 0;
         $this->cashTendered = 0;
         $this->retainedAmtPayment = 0;
@@ -707,6 +719,10 @@ class PaymentManagerPayment {
         return $this->ratePayment;
     }
 
+    public function getRateTax() {
+        return $this->rateTax;
+    }
+
     public function getPayType() {
         return $this->payType;
     }
@@ -760,6 +776,11 @@ class PaymentManagerPayment {
 
     public function setRatePayment($ratePayment) {
         $this->ratePayment = $ratePayment;
+        return $this;
+    }
+
+    public function setRateTax($rateTax) {
+        $this->rateTax = $rateTax;
         return $this;
     }
 

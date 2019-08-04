@@ -98,7 +98,7 @@ abstract class InvoiceLine {
         $ilRs1->Quantity->setNewVal($this->getQuantity());
         $ilRs1->Price->setNewVal($this->getPrice());
 
-        $ilRs1->Amount->setNewVal($this->getQuantity() * $this->getPrice());
+        $ilRs1->Amount->setNewVal(round($this->getQuantity() * $this->getPrice()), 2);
 
         if ($deleted) {
             $ilRs1->Deleted->setNewVal(1);

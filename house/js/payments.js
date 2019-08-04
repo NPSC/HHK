@@ -355,6 +355,7 @@ function amtPaid() {
         hsPay = 0,
         totPay = 0, 
         depRfAmt = 0,
+        taxAmt = 0,
         guestCreditAmt = 0,
         overPayAmt = 0,
         isChdOut = isCheckedOut;
@@ -363,18 +364,22 @@ function amtPaid() {
     
     // Visit fees
     if (p.visitFeeCb.length > 0) {
+        
         vfee = parseFloat($('#spnvfeeAmt').data('amt'));
+        
         if (isNaN(vfee) || vfee < 0 || p.visitFeeCb.prop("checked") === false) {
             vfee = 0;
             p.visitFeeAmt.val('');
         } else {
-            p.visitFeeAmt.val(vfee.toFixed(2).toString());
+           p.visitFeeAmt.val(vfee.toFixed(2).toString());
         }
     }
 
     // Deposits
     if (!isChdOut && p.keyDepCb.length > 0) {
+        
         kdep = parseFloat($('#spnDepAmt').data('amt'));
+        
         if (isNaN(kdep) || kdep < 0 || p.keyDepCb.prop("checked") === false) {
             kdep = 0;
             p.keyDepAmt.val('');
@@ -426,16 +431,25 @@ function amtPaid() {
     // Fees Payments
     if (p.feePayAmt.length > 0) {
         
+        var vtaxPercent = parseFloat(p.feePayAmt.data('tax'));
         feePayStr = p.feePayAmt.val().replace('$', '').replace(',', '');
+        
         feePay = parseFloat(feePayStr);
         
         if (isNaN(feePay) || feePay < 0) {
             p.feePayAmt.val('');
             feePay = 0;
         }
+        
+        if (!isNaN(vtaxPercent) && vtaxPercent > 0) {
+            
+            taxAmt += (feePay * vtaxPercent / 100);
+            $('#feesTax').val(taxAmt.toFixed(2).toString());
+            feePay += taxAmt;
+        }
     }
 
-    // Fees Charges (checkout)
+    // Fees Charges (checkout)  Tax already added
     if (p.feesCharges.length > 0) {
         feeCharge = parseFloat(p.feesCharges.val());
         if (isNaN(feeCharge)) {
@@ -649,7 +663,7 @@ function amtPaid() {
     if (feePay === 0 && feePayStr === '') {
         p.feePayAmt.val('');
     } else {
-        p.feePayAmt.val(feePay.toFixed(2).toString());
+        p.feePayAmt.val((feePay - taxAmt).toFixed(2).toString());
     }
 
     if (overPayAmt === 0) {
@@ -918,7 +932,10 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             idVisit = parseInt($(this).data('vid')),
             fixed = parseFloat($('#txtFixedRate').val()),
             noGuests = parseInt($('#spnNumGuests').text()),
-            feePayAmt = p.feePayAmt;
+            feePayAmt = p.feePayAmt,
+            tax = parseFloat($('#spnRcTax').data('tax')),
+            adjust = parseFloat($('#txtadjAmount').val());
+;
 
         if (isNaN(noGuests)) {
             noGuests = 1;
@@ -928,7 +945,10 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             fixed = 0;
         }
 
-        var adjust = parseFloat($('#txtadjAmount').val());
+        if (isNaN(tax)) {
+            tax = 0;
+        }
+        
         if (isNaN(adjust)) {
             adjust = 0;
         }

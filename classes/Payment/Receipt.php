@@ -731,7 +731,7 @@ WHERE
         }
     }
 
-    public static function makeOrdersRatesTable($rates, &$totalAmt, PriceModel $priceModel, Config_Lite $labels, array $invLines, &$numberNites, Item $moaItem, Item $donateItem) {
+    public static function makeOrdersRatesTable($rates, &$totalAmt, PriceModel $priceModel, Config_Lite $labels, array $invLines, array $taxItems, &$numberNites, Item $moaItem, Item $donateItem) {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
@@ -752,7 +752,8 @@ WHERE
             }
         }
 
-        // orders and rates
+
+        // orders and rates for each visit
         foreach ($rates as $r) {
 
             // New Visit
@@ -872,6 +873,19 @@ WHERE
                 }
             }
 
+            // Add tax info
+            foreach ($taxItems as $t) {
+
+                $totalTax = round($t['total'], 2);
+                $totalAmt += $totalTax;
+
+                $tbl->addBodyTr(
+                    HTMLTable::makeTd($t['Description'], array('colspan'=>'4'))
+                    .HTMLTable::makeTd(number_format($t['Percentage'], 2) . '%')
+                    .HTMLTable::makeTd(' ')
+                    .HTMLTable::makeTd($totalTax)
+                );
+            }
         }
 
         // For the last visit rate.
@@ -1267,7 +1281,6 @@ WHERE
 
         $uS = Session::getInstance();
 
-
         if (count($spans) == 0) {
             return 'Visits Not Found.  ';
         }
@@ -1311,9 +1324,19 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
         $invLines = $ilStmt->fetchAll(\PDO::FETCH_ASSOC);
 
+        // Load tax items
+        $taxItems = array();
+        $tstmt = $dbh->query("Select idItem, Description, Gl_Code, Percentage from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = 2");
+        $titems = $tstmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($titems as $i) {
+            $taxItems[$i['idItem']] = $i;
+            $taxItems[$i['idItem']]['total'] = 0;
+        }
+
 
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable($rates, $totalAmt, $priceModel, $labels, $invLines, $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
+        $tbl = self::makeOrdersRatesTable($rates, $totalAmt, $priceModel, $labels, $invLines, $taxItems, $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
         $totalCharge = $totalAmt;
 
         // Thirdparty payments
@@ -1372,6 +1395,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
         $uS = Session::getInstance();
         $spans = array();
+        $taxItems = array();
         $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
         if ($idVisit > 0) {
@@ -1417,8 +1441,18 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
 
+        // Load tax items
+        $tstmt = $dbh->query("Select idItem, Description, Gl_Code, Percentage from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = 2");
+        $titems = $tstmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($titems as $i) {
+            $taxItems[$i['idItem']] = $i;
+            $taxItems[$i['idItem']]['total'] = 0;
+        }
+
+
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
+        $tbl = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, $taxItems, $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
         $totalCharge = $totalAmt;
 
         // Thirdparty payments

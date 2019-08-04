@@ -228,6 +228,12 @@ class VisitCharges {
             }
         }
 
+        // sum taxes
+        foreach ($invStatuses as $s) {
+            $this->itemSums['tax'][$s[0]] = 0;
+        }
+
+
         $invLines = $this->loadInvoiceLines($dbh, $this->getIdVisit());
 
         // Sum the amounts
@@ -240,6 +246,11 @@ class VisitCharges {
             }
 
             $this->itemSums[$l['Item_Id']][$stat] += $l['Amount'];
+
+            // is this a tax?
+            if ($l['Type_Id'] == 2) {
+                $this->itemSums['tax'][$stat] += $l['Amount'];
+            }
 
         }
 
@@ -290,7 +301,8 @@ class VisitCharges {
     il.Description,
     il.Item_Id,
     il.Period_Start,
-    il.Period_End
+    il.Period_End,
+    il.Type_Id
 from
     invoice_line il join invoice i ON il.Invoice_Id = i.idInvoice
 where
@@ -321,14 +333,6 @@ where
         }
         return 0;
     }
-
-    // THis is for Visit Editor Current Charges...
-//    public function getMoaInvCharges() {
-//        if (isset($this->itemSums[ItemId::LodgingMOA])) {
-//            return $this->itemSums[ItemId::LodgingMOA][InvoiceStatus::Unpaid];
-//        }
-//        return 0;
-//    }
 
     public function getDepositPayType() {
         return $this->depositPayType;

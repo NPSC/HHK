@@ -1382,32 +1382,32 @@ $itemTable = $itbl->generateMarkup(array('style' => 'float:left;'));
 
 
 // Taxes
-$taxTable = '';
+
 $tstmt = $dbh->query("Select idItem, Description, Gl_Code, Percentage
 from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = 2");
 $titems = $tstmt->fetchAll(\PDO::FETCH_ASSOC);
 
 
-    $tiTbl = new HTMLTable();
-    $tiTbl->addHeaderTr(HTMLTable::makeTh(count($titems) . ' Taxes', array('colspan'=>'3')));
-    $tiTbl->addHeaderTr(HTMLTable::makeTh('Description').HTMLTable::makeTh('GL Code').HTMLTable::makeTh('Percentage'));
+$tiTbl = new HTMLTable();
+$tiTbl->addHeaderTr(HTMLTable::makeTh(count($titems) . ' Taxes', array('colspan'=>'3')));
+$tiTbl->addHeaderTr(HTMLTable::makeTh('Description').HTMLTable::makeTh('GL Code').HTMLTable::makeTh('Percentage'));
 
-    foreach ($titems as $d) {
+foreach ($titems as $d) {
 
-        $tiTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup($d['Description'], array('name' => 'txttItem[' . $d['idItem'] . ']')))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'], array('name' => 'txttGlCode[' . $d['idItem'] . ']')))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup(number_format($d['Percentage'], 3), array('name' => 'txttPercentage[' . $d['idItem'] . ']'))));
-
-    }
-
-    // New Tax item
     $tiTbl->addBodyTr(
-            HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttItem[0]', 'placeholder'=>'New Tax')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttGlCode[0]')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttPercentage[0]'))));
+            HTMLTable::makeTd(HTMLInput::generateMarkup($d['Description'], array('name' => 'txttItem[' . $d['idItem'] . ']')))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'], array('name' => 'txttGlCode[' . $d['idItem'] . ']')))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup(number_format($d['Percentage'], 3), array('name' => 'txttPercentage[' . $d['idItem'] . ']'))));
 
-    $taxTable = $tiTbl->generateMarkup(array('style' => 'float:left;'));
+}
+
+// New Tax item
+$tiTbl->addBodyTr(
+        HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttItem[0]', 'placeholder'=>'New Tax')))
+        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttGlCode[0]')))
+        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttPercentage[0]'))));
+
+$taxTable = $tiTbl->generateMarkup(array('style' => 'float:left;'));
 
 
 // Instantiate the alert message control

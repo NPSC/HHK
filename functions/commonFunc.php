@@ -168,6 +168,22 @@ function doExcelDownLoad($rows, $fileName) {
 
 }
 
+function getTaxedItems(\PDO $dbh) {
+
+    // Any taxes
+    $taxedItems = array();
+
+    $tstmt = $dbh->query("select ii.idItem, sum(ti.Percentage) as `Percent`
+        from item_item ii join item i on ii.idItem = i.idItem
+            join item ti on ii.Item_Id = ti.idItem
+        group by ii.idItem");
+
+    while ($t = $tstmt->fetch(PDO::FETCH_ASSOC)) {
+        $taxedItems[$t['idItem']] = $t['Percent'];
+    }
+
+    return $taxedItems;
+}
 
 function prepareEmail() {
 

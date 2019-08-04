@@ -167,14 +167,19 @@ function setupRates(ckIn) {
 
             var amt = parseFloat($(this).val()),
                 fa = 0,
+                taxAmt = 0,
                 total,
                 lodging,
-                days = parseInt($('#spnNites').text(), 10);
+                days = parseInt($('#spnNites').text(), 10),
+                tax = parseFloat($('#spnRcTax').data('tax'));
 
             if (isNaN(days)) {
                 days = 0;
             }
 
+            if (isNaN(tax)) {
+                tax = 0;
+            }
             if (isNaN(amt) || amt < 0) {
                 amt = parseFloat($(this).prop("defaultValue"));
                 if (isNaN(amt) || amt < 0)
@@ -195,7 +200,12 @@ function setupRates(ckIn) {
 
             lodging = amt * days;
             $('#spnLodging').text('$' + lodging.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
-            total = (amt * days) + fa;
+            
+            if (tax > 0) {
+                taxAmt = amt * tax / 100;
+                $('#spnRcTax').text('$' + taxAmt.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+            }
+            total = (amt * days) + fa + taxAmt;
             $('#spnAmount').text('$' + total.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
         }
     });
@@ -206,10 +216,15 @@ function setupRates(ckIn) {
 
             var adj = parseFloat($(this).val()),
                 fa = 0,
-                days = parseInt($('#spnNites').text(), 10);
+                taxAmt = 0,
+                days = parseInt($('#spnNites').text(), 10),
+                tax = parseFloat($('#spnRcTax').data('tax'));
 
             if (isNaN(days)) {
                 days = 0;
+            }
+            if (isNaN(tax)) {
+                tax = 0;
             }
 
             if (isNaN(adj)) {
@@ -234,7 +249,12 @@ function setupRates(ckIn) {
             daysCalculator(days, $selRateCat.val(), 0, 0, adj, parseInt($('#spnNumGuests').text()), (ckIn.idResv === undefined ? 0 : ckIn.idResv), function(amt) {
 
                 $('#spnLodging').text('$' + amt.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
-                amt += fa;
+                
+                if (tax > 0) {
+                    taxAmt = amt * tax / 100;
+                    $('#spnRcTax').text('$' + taxAmt.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+                }
+                amt += fa + taxAmt;
                 $('#spnAmount').text('$' + amt.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
             });
 

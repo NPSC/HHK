@@ -581,13 +581,19 @@ where
             $rateSelectorAttrs['disabled'] = 'disabled';
         }
 
+        // Get taxed items
+        $taxedItems = getTaxedItems($dbh);
+        $tax = (isset($taxedItems[ItemId::Lodging]) ? $taxedItems[ItemId::Lodging] : 0);
+
         $tbl = new HTMLTable();
 
-        $tbl->addHeaderTr(($this->payVisitFee ? HTMLTable::MakeTh($visitFeeTitle) : '')
+        $tbl->addHeaderTr(
+            ($this->payVisitFee ? HTMLTable::MakeTh($visitFeeTitle) : '')
             .HTMLTable::makeTh('Room Rate')
             .HTMLTable::makeTh('Adjustment', $attrAdj)
             .HTMLTable::makeTh('Estimated Nights')
-            .($this->payVisitFee ? HTMLTable::makeTh('Estimated Lodging') : '')
+            .($this->payVisitFee || $tax > 0 ? HTMLTable::makeTh('Estimated Lodging') : '')
+            .($tax > 0 ? HTMLTable::makeTh('Tax (' . number_format($tax, 3).'%)') : '')
             .HTMLTable::makeTh('Estimated Total'));
 
         $tbl->addBodyTr(
@@ -596,7 +602,8 @@ where
                     .HTMLContainer::generateMarkup('span', '$' . HTMLInput::generateMarkup($fixedRate, array('name'=>'txtFixedRate', 'size'=>'4')), $attrFixed))
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup(($resv->getRateAdjust() == 0 ? '' : number_format($resv->getRateAdjust(), 0)), array('name'=>'txtadjAmount', 'size'=>'2')) . '%'), $attrAdj)
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $nites, array('name'=>'spnNites')), array('style'=>'text-align:center;'))
-                . ($this->payVisitFee ? HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('name'=>'spnLodging')), array('style'=>'text-align:center;')) : '')
+                . ($this->payVisitFee || $tax > 0 ? HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('name'=>'spnLodging')), array('style'=>'text-align:center;')) : '')
+                . ($tax > 0 ? HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('name'=>'spnRcTax', 'data-tax'=>$tax)), array('style'=>'text-align:center;')) : '')
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('name'=>'spnAmount')), array('style'=>'text-align:center;'))
                 );
 
