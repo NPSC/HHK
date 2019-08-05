@@ -622,6 +622,11 @@ class HouseServices {
 
             if (isset($codes[$addnlCharge])) {
 
+                // Taxed items
+                $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.idItem as `taxIdItem` from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem");
+                $taxedItems = $tistmt->fetchALl(\PDO::FETCH_ASSOC);
+
+
                 $invLine = new OneTimeInvoiceLine();
                 $invLine->createNewLine(new Item($dbh, ItemId::AddnlCharge, $amount), 1, $codes[$addnlCharge][1]);
 
@@ -643,6 +648,16 @@ class HouseServices {
 
                 $invoice->addLine($dbh, $invLine, $uS->username);
                 $invoice->updateInvoiceStatus($dbh, $uS->username);
+
+                // Taxes
+                foreach ($taxedItems as $i) {
+
+                    if ($i['idItem'] == ItemId::AddnlCharge) {
+                        $taxInvoiceLine = new TaxInvoiceLine();
+                        $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $amount), $i['Percentage']/100, '');
+                        $invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
+                    }
+                }
 
                 if ($invoice->getAmount() == 0) {
 

@@ -694,11 +694,12 @@ WHERE
         }
 
         $mkup = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(
-                                $tblAttr, 'Items For Invoice #' . $lines[0]['Invoice_Number'] . HTMLContainer::generateMarkup('span', ' (' . $lines[0]['GuestName'] . ')', array('style' => 'font-size:.8em;')))
-                        . ($showBillTo ? Invoice::getBillToAddress($dbh, $lines[0]['Sold_To_Id'])->generateMarkup(array(), 'Bill To') : '')
-                        , $divAttr);
+                $tblAttr, 'Items For Invoice #' . $lines[0]['Invoice_Number'] . HTMLContainer::generateMarkup('span', ' (' . $lines[0]['GuestName'] . ')', array('style' => 'font-size:.8em;')))
+               . ($showBillTo ? Invoice::getBillToAddress($dbh, $lines[0]['Sold_To_Id'])->generateMarkup(array(), 'Bill To') : '')
+               , $divAttr);
 
         return array('markup' => $mkup, 'eid' => $eid);
+
     } else if ($action == 'vpmt') {
 
         // Return listing of Payments

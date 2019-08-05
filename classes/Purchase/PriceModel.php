@@ -157,9 +157,12 @@ abstract class PriceModel {
 
     public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator, &$totalGuestNites) {
 
+        $roomCharge = 0;
+
         foreach ($tiers as $t) {
 
             $totalAmt += $t['amt'];
+            $roomCharge += $t['amt'];
 
             $tbl->addBodyTr(
                  HTMLTable::makeTd($r['vid'] . '-' . $r['span'], array('style'=>'text-align:center;' . $separator))
@@ -174,6 +177,8 @@ abstract class PriceModel {
             $separator = '';
 
         }
+
+        return $roomCharge;
     }
 
     public function itemMarkup($r, &$tbl) {
@@ -843,10 +848,12 @@ GROUP BY s.Visit_Span");
         $today->setTime(0, 0, 0);
 
         $guestEnu = 'First';
+        $roomCharge = 0;
 
         foreach ($tiers as $t) {
 
             $totalAmt += $t['amt'];
+            $roomCharge += $t['amt'];
             $totalGuestNites += $t['gdays'];
 
             if ($today < $endDate) {
@@ -875,6 +882,8 @@ GROUP BY s.Visit_Span");
             $guestEnu = 'Others';
 
         }
+
+        return $roomCharge;
     }
 
     public function rateHeaderMarkup(&$tbl, $labels) {
@@ -1804,9 +1813,12 @@ class PriceNdayBlock extends PriceModel {
 
     public function tiersMarkup($r, &$totalAmt, &$tbl, $tiers, &$startDT, $separator, &$totalGuestNites) {
 
+        $roomCharge = 0;
+
         foreach ($tiers as $t) {
 
             $totalAmt += $t['amt'];
+            $roomCharge += $t['amt'];
 
             $tbl->addBodyTr(
                  HTMLTable::makeTd($r['vid'] . '-' . $r['span'], array('style'=>'text-align:center;' . $separator))
@@ -1821,6 +1833,8 @@ class PriceNdayBlock extends PriceModel {
             $separator = '';
 
         }
+
+        return $roomCharge;
     }
 
     protected static function installRate(\PDO $dbh) {

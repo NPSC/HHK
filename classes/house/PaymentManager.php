@@ -62,8 +62,9 @@ class PaymentManager {
 
         $this->pmp->setIdInvoicePayor($idPayor);
 
+        // Taxed items
         $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.idItem as `taxIdItem` from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem");
-        $taxItems = $tistmt->fetchALl(\PDO::FETCH_ASSOC);
+        $taxedItems = $tistmt->fetchALl(\PDO::FETCH_ASSOC);
 
         // Process a visit payment
         if (is_null($visit) === FALSE) {
@@ -191,7 +192,7 @@ class PaymentManager {
                 $this->invoice->addLine($dbh, $invLine, $uS->username);
 
                 // Taxes
-                foreach ($taxItems as $i) {
+                foreach ($taxedItems as $i) {
 
                     if ($i['idItem'] == ItemId::Lodging) {
                         $taxInvoiceLine = new TaxInvoiceLine();

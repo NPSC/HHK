@@ -1382,7 +1382,6 @@ $itemTable = $itbl->generateMarkup(array('style' => 'float:left;'));
 
 
 // Taxes
-
 $tstmt = $dbh->query("Select idItem, Description, Gl_Code, Percentage
 from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = 2");
 $titems = $tstmt->fetchAll(\PDO::FETCH_ASSOC);

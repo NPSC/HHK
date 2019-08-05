@@ -53,6 +53,7 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                     "Save": function() {
                         
                         var amt = parseFloat($('#housePayment').val().replace('$', '').replace(',', '')),
+                            tax = parseFloat($('#houseTax').val()),
                             vid = $('#housePayment').data('vid'),
                             item = '',
                             adjDate = $.datepicker.formatDate("yy-mm-dd", $('#housePaymentDate').datepicker('getDate')),
@@ -60,6 +61,9 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                             
                         if (isNaN(amt)) {
                             amt = 0;
+                        }
+                        if (isNaN(tax)) {
+                            tax = 0;
                         }
                         
                         if ($('#cbAdjustPmt1').prop('checked')) {
@@ -85,28 +89,45 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                     var hid = $(this).data('hid'),
                         sho = $(this).data('sho');
 
-                    $('#' + hid).val('');
-                    $('#' + sho).val('');
+                    $('.' + hid).val('');
+                    $('.' + sho).val('');
                     $('#housePayment').val('');
+                    $('#housePayment').change();
+                    
+                    $('.' + sho).show();
+                    $('.' + hid).hide();
 
-                    if ($(this).prop('checked')) {
-
-                        $('#' + sho).show();
-                        $('#' + hid).hide();
-
-                    } else {
-
-                        $('#' + hid).hide();
-                        $('#' + sho).show();
-                    }
                 });
 
                 gblAdjustData['disc'] = data.disc;
                 gblAdjustData['addnl'] = data.addnl;
 
                 $('#selAddnlChg, #selHouseDisc').change(function () {
-                    var amts = gblAdjustData[$(this).data('amts')];
-                    $('#housePayment').val(amts[$(this).val()]);
+                    var amts = parseFloat(gblAdjustData[$(this).data('amts')][$(this).val()]);
+                    $('#housePayment').val(amts.toFixed(2));
+                    $('#housePayment').change();
+                });
+                
+                $('#housePayment').change(function () {
+                    if ($('#cbAdjustPmt2').prop('checked') && $('#houseTax').length > 0) {
+                        
+                        var tax = parseFloat($('#houseTax').data('tax')),
+                            amt = parseFloat($('#housePayment').val().replace('$', '').replace(',', '')),
+                            taxAmt = 0,
+                            totalAmt = 0;
+                        
+                        if (isNaN(tax)) {
+                            tax = 0;
+                        }
+                        if (isNaN(amt)) {
+                            amt = 0;
+                        }
+                        
+                        taxAmt = tax * amt / 100;
+                        totalAmt = amt + taxAmt;
+                        $('#houseTax').val((taxAmt > 0 ? (taxAmt).toFixed(2) : ''));
+                        $('#totalHousePayment').val((totalAmt > 0 ? totalAmt.toFixed(2) : ''));
+                    }
                 });
 
                 if ($('#cbAdjustPmt1').length > 0) {

@@ -169,7 +169,7 @@ class PaymentChooser {
         if (isset($post["feesTax"])) {
             $pmp->setRateTax(floatval(filter_var($post["feesTax"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
         }
-        
+
         // Total Room Charge.
         if (isset($post["feesCharges"])) {
             $pmp->setTotalRoomChg(floatval(filter_var($post["feesCharges"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
@@ -399,7 +399,7 @@ class PaymentChooser {
                 FALSE,
                 array(),
                 $labels,
-                    $taxedItems,
+                getTaxedItems($dbh),
                 $visitCharge->getIdVisit(),
                 array(), '', FALSE, $depositRefundType)
             , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
@@ -417,7 +417,7 @@ class PaymentChooser {
                 . $mkup, array('class'=>'hhk-panel hhk-kdrow', 'style'=>'float:left;'));
     }
 
-    public static function createHousePaymentMarkup(array $discounts, array $addnls, $idVisit, $arrivalDate = '') {
+    public static function createHousePaymentMarkup(array $discounts, array $addnls, $idVisit, $itemTax, $arrivalDate = '') {
 
         if (count($discounts) < 1 && count($addnls) < 1) {
             return '';
@@ -429,18 +429,18 @@ class PaymentChooser {
         if (count($discounts) > 0) {
 
             $buttons .= HTMLContainer::generateMarkup('label', 'Discount', array('for'=>'cbAdjustPmt1'))
-            . HTMLInput::generateMarkup('', array('type'=>'radio', 'name'=>'cbAdjustPmt', 'id'=>'cbAdjustPmt1', 'data-sho'=>'selHouseDisc', 'data-hid'=>'selAddnlChg', 'data-item'=>ItemId::Discount));
+            . HTMLInput::generateMarkup('', array('type'=>'radio', 'name'=>'cbAdjustPmt', 'id'=>'cbAdjustPmt1', 'data-sho'=>'houseDisc', 'data-hid'=>'addnlChg', 'data-item'=>ItemId::Discount));
 
-            $select .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($discounts), '', TRUE), array('name'=>'selHouseDisc', 'data-amts'=>'disc'));
+            $select .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($discounts), '', TRUE), array('name'=>'selHouseDisc', 'class'=>'houseDisc', 'data-amts'=>'disc'));
 
         }
 
         if (count($addnls) > 0) {
 
             $buttons .= HTMLContainer::generateMarkup('label', 'Additional Charge', array('for'=>'cbAdjustPmt2'))
-                . HTMLInput::generateMarkup('', array('type'=>'radio', 'name'=>'cbAdjustPmt', 'id'=>'cbAdjustPmt2', 'data-hid'=>'selHouseDisc', 'data-sho'=>'selAddnlChg', 'data-item'=>ItemId::AddnlCharge));
+                . HTMLInput::generateMarkup('', array('type'=>'radio', 'name'=>'cbAdjustPmt', 'id'=>'cbAdjustPmt2', 'data-hid'=>'houseDisc', 'data-sho'=>'addnlChg', 'data-item'=>ItemId::AddnlCharge));
 
-            $select .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($addnls), '', TRUE), array('name'=>'selAddnlChg', 'data-amts'=>'addnl'));
+            $select .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($addnls), '', TRUE), array('name'=>'selAddnlChg', 'class'=>'addnlChg', 'data-amts'=>'addnl'));
 
         }
 
@@ -453,15 +453,28 @@ class PaymentChooser {
                 HTMLTable::makeTd('Select', array('class'=>'tdlabel')) . HTMLTable::makeTd($select));
 
         $feesTbl->addBodyTr(
-                HTMLTable::makeTd('Amount: ', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'housePayment', 'size'=>'8', 'data-vid'=>$idVisit))));
+                HTMLTable::makeTd('Amount:', array('class'=>'tdlabel'))
+                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'housePayment', 'size'=>'9', 'data-vid'=>$idVisit, 'style'=>'text-align:right;'))));
+
+        if (isset($itemTax[ItemId::AddnlCharge])) {
+
+            $feesTbl->addBodyTr(
+                HTMLTable::makeTd('Tax (' . number_format($itemTax[ItemId::AddnlCharge], 3) . ')', array('class'=>'tdlabel'))
+                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'houseTax', 'size'=>'9', 'data-tax'=>$itemTax[ItemId::AddnlCharge], 'readonly'=>'readonly', 'style'=>'text-align:right;')))
+                    , array('class'=>'addnlChg', 'style'=>'display:none;'));
+
+            $feesTbl->addBodyTr(
+                HTMLTable::makeTd('Total:', array('class'=>'tdlabel'))
+                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'totalHousePayment', 'size'=>'9', 'readonly'=>'readonly', 'style'=>'text-align:right;')))
+                    , array('class'=>'addnlChg', 'style'=>'display:none;'));
+        }
 
         $feesTbl->addBodyTr(
-                HTMLTable::makeTd('Date: ', array('class'=>'tdlabel'))
+                HTMLTable::makeTd('Date:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'housePaymentDate', 'class'=>'ckdate', 'data-vid'=>$idVisit))));
 
         $feesTbl->addBodyTr(
-                HTMLTable::makeTd('Notes: ', array('class'=>'tdlabel'))
+                HTMLTable::makeTd('Notes:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea', '', array('name'=>'housePaymentNote', 'rows'=>'2', 'cols'=>'40', 'data-vid'=>$idVisit))));
 
         $javaScript = '<script type="text/javascript">'
@@ -597,7 +610,7 @@ ORDER BY v.idVisit , v.Span;");
                                 FALSE,
                                 $unpaidInvoices,
                                 $labels,
-                                $taxedItems)
+                                getTaxedItems($dbh))
                         , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
                 );
 

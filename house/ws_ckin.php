@@ -582,7 +582,7 @@ try {
                 $arrDate = filter_var($_POST['arrDate'],FILTER_SANITIZE_STRING);
             }
 
-            $events['markup'] = PaymentChooser::createHousePaymentMarkup($discounts, $addnls, $ordNum, $arrDate);
+            $events['markup'] = PaymentChooser::createHousePaymentMarkup($discounts, $addnls, $ordNum, getTaxedItems($dbh), $arrDate);
 
         } else {
             $events = array('error'=>'Visit Id is missing.  ');
