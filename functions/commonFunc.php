@@ -185,6 +185,15 @@ function getTaxedItems(\PDO $dbh) {
     return $taxedItems;
 }
 
+function getTaxedItemList(\PDO $dbh) {
+
+    // Taxed items
+    $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.idItem as `taxIdItem` from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem");
+    return $tistmt->fetchALl(\PDO::FETCH_ASSOC);
+
+}
+
+
 function prepareEmail() {
 
     $uS = Session::getInstance();

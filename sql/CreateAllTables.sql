@@ -1896,6 +1896,21 @@ CREATE TABLE if not exists `syslog` (
 
 
 -- -----------------------------------------------------
+-- Table `syslog`
+-- -----------------------------------------------------
+-- CREATE TABLE `tax_rate` (
+--   `idTax_rate` INT NOT NULL,
+--   `Percentage` DECIMAL(10,3) NOT NULL,
+--   `Status` VARCHAR(4) NOT NULL DEFAULT '',
+--   `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
+--   `Last_Updated` DATETIME NULL,
+--   `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--   PRIMARY KEY (`idTax_rate`)
+-- ) ENGINE = InnoDB;
+
+
+
+-- -----------------------------------------------------
 -- Table `trans`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `trans` (

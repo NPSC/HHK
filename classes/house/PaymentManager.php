@@ -63,8 +63,7 @@ class PaymentManager {
         $this->pmp->setIdInvoicePayor($idPayor);
 
         // Taxed items
-        $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.idItem as `taxIdItem` from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem");
-        $taxedItems = $tistmt->fetchALl(\PDO::FETCH_ASSOC);
+        $taxedItems = getTaxedItemList($dbh);
 
         // Process a visit payment
         if (is_null($visit) === FALSE) {
@@ -230,8 +229,35 @@ class PaymentManager {
                 if ($this->guestCreditAmt > 0 &&
                         ($this->pmp->getBalWith() != ExcessPay::Ignore || $overPaymemntAmt == 0)) {
 
+                    $reversalAmt = 0 - $this->guestCreditAmt;
+
+                    // Taxes
+                    $taxRate = 0;
+                    // sum the individual tax rates.
+                    foreach ($taxedItems as $i) {
+                        if ($i['idItem'] == ItemId::Lodging) {
+                            $taxRate += $i['Percentage'];
+                        }
+                    }
+
+                    if ($taxRate > 0) {
+                        // we caught taxes.  Reduce reversalAmt by the sum of tax rates.
+                        $reversalAmt = round($reversalAmt / (1 + $taxRate), 2);
+
+                        // Add the tax lines back into the mix
+                        foreach ($taxedItems as $i) {
+
+                            if ($i['idItem'] == ItemId::Lodging) {
+                                $taxInvoiceLine = new TaxInvoiceLine();
+                                $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $reversalAmt), $i['Percentage']/100, '');
+                                $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
+                            }
+                        }
+                    }
+
+                    // Add reversal itself
                     $invLine = new OneTimeInvoiceLine();
-                    $invLine->createNewLine(new Item($dbh, ItemId::LodgingReversal, (0 - $this->guestCreditAmt)), 1, 'Lodging');
+                    $invLine->createNewLine(new Item($dbh, ItemId::LodgingReversal, $reversalAmt), 1, 'Lodging');
 
                     $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
                     $this->invoice->addLine($dbh, $invLine, $uS->username);
