@@ -242,14 +242,15 @@ class PaymentManager {
 
                     if ($taxRate > 0) {
                         // we caught taxes.  Reduce reversalAmt by the sum of tax rates.
-                        $reversalAmt = round($reversalAmt / (1 + $taxRate), 2);
+                        $preTaxAmt = $reversalAmt / (1 + ($taxRate / 100));
+                        $reversalAmt = round($preTaxAmt, 2);
 
                         // Add the tax lines back into the mix
                         foreach ($taxedItems as $i) {
 
                             if ($i['idItem'] == ItemId::Lodging) {
                                 $taxInvoiceLine = new TaxInvoiceLine();
-                                $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $reversalAmt), $i['Percentage']/100, '');
+                                $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $preTaxAmt), $i['Percentage']/100, '');
                                 $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
                             }
                         }

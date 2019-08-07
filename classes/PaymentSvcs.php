@@ -716,6 +716,7 @@ class PaymentSvcs {
 
                 CheckTX::undoReturnAmount($dbh, $ckResp, $idPayment);
 
+                $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
                 // delete invoice
                 $invoice->deleteInvoice($dbh, $uS->username);
 
@@ -729,6 +730,7 @@ class PaymentSvcs {
 
                 TransferTX::undoReturnAmount($dbh, $ckResp, $idPayment);
 
+                $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
                 // delete invoice
                 $invoice->deleteInvoice($dbh, $uS->username);
 
@@ -742,6 +744,7 @@ class PaymentSvcs {
 
                 CashTX::undoReturnAmount($dbh, $cashResp, $idPayment);
 
+                $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
                 // delete invoice
                 $invoice->deleteInvoice($dbh, $uS->username);
 
@@ -765,6 +768,7 @@ class PaymentSvcs {
 
                 ChargeAsCashTX::undoReturnAmount($dbh, $cashResp, $idPayment);
 
+                $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
                 // delete invoice
                 $invoice->deleteInvoice($dbh, $uS->username);
 

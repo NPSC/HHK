@@ -525,8 +525,8 @@ $(document).ready(function () {
     
     //GuestPhoto
     new Uppload({
-        uploadFunction: (file) => {
-            return new Promise((resolve, reject) => {
+        uploadFunction: function uploadFunction(file){
+            return new Promise(function (resolve, reject) {
                 var formData = new FormData();
                 formData.append('cmd', 'putguestphoto');
                 formData.append('guestId', memData.id);
