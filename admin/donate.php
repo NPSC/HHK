@@ -387,7 +387,7 @@ function genDonationMarkup(PDO $dbh, $id) {
         .HTMLTable::makeTh('X')
             );
 
-    $query = "SELECT iddonations, Donor_Id, Amount, Campaign_Code, Date_Entered, Record_Member, Care_Of_Id, Assoc_Id, Name_Last, Name_First, Donor_Name, Campaign_Type, Fund_Code
+    $query = "SELECT iddonations, Donor_Id, Amount, Campaign_Code, Date_Entered, Record_Member, Care_Of_Id, Assoc_Id, Name_Last, Name_First, Donor_Name, Campaign_Type, Fund_Code, Note
         FROM vdonation_view   WHERE Donor_Id = :id or Assoc_id = :id2 order by Date_Entered desc;";
     $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR=>  PDO::CURSOR_FWDONLY));
     $stmt->execute(array(":id"=>$id,":id2"=>$id));
@@ -463,20 +463,6 @@ function genDonationMarkup(PDO $dbh, $id) {
             $donorName = $r[0][0];
         }
 
-        // Did we get a student id?
-        if ($uS->StudentSG && $row2['Fund_Code'] != '') {
-
-            $studentId = intval($row2['Fund_Code'], 10);
-            $txtName = 'Unallocated';
-            if ($studentId > 0) {
-                $query = "select case when Record_Member = 1 then concat( Name_First, ' ', Name_Last) else Company end as `name` from name where idName = :id;";
-                $stmt = $dbh->prepare($query);
-                $stmt->execute(array(":id"=>$studentId));
-                $r = $stmt->fetchall();
-                $txtName = $r[0][0];
-            }
-           $row2['Campaign_Code'] .= ' (' . $txtName . ')';
-        }
 
         $tbl->addBodyTr(
             HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $src, array('class'=>'donlisting', 'title'=>$srcTitle)))
@@ -485,6 +471,12 @@ function genDonationMarkup(PDO $dbh, $id) {
             .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', date("M j, Y", strtotime($row2["Date_Entered"])), array('class'=>'donlisting')))
             .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'id'=>'undonate_' . $row2["iddonations"], 'class'=>'donlisting hhk-undonate')))
              );
+
+        if ($row2['Note'] != '') {
+            $tbl->addBodyTr( HTMLTable::makeTd('Note:', array('class'=>'tdlabel', 'style'=>'font-size:small;'))
+                    .HTMLTable::makeTd($row2['Note'], array('colspan'=>'4', 'style'=>'font-size:small;'))
+            );
+        }
 
     }
 

@@ -487,6 +487,7 @@ ifnull(`c`.`Title`,'') AS `Campaign_Code`,
 `d`.`Care_Of_Id` AS `Care_Of_Id`,
 `d`.`Assoc_Id` AS `Assoc_Id`,
 `d`.`Date_Acknowledged` AS `Date_Acknowledged`,
+`d`.`Note` as `Note`,
 case when `n`.`Record_Member` = 1 then '1' else '0' end AS `Record_Member`,
 ifnull(`ns`.`Name_Last`,'') AS `Name_Last`,
 ifnull(`ns`.`Name_First`,'') AS `Name_First`,
@@ -1267,6 +1268,7 @@ CREATE or replace VIEW `vindividual_donations` AS
         `vm`.`SpouseId` AS `Donor_Partner_Id`,
         `vm`.`Company` AS `Donor_Company`,
         `vm`.`Address_Code` AS `Donor_Preferred_Addr_Code`,
+        `vm`.`Preferred_Email` as `Email`,
         (case
             when `vm`.`MemberRecord` then ifnull(`vp`.`Name_First`, '')
             else ifnull(`ve`.`Name_First`, '')
@@ -1315,6 +1317,10 @@ CREATE or replace VIEW `vindividual_donations` AS
             when `vm`.`MemberRecord` then ifnull(`vp`.`Address_Code`, '')
             else ifnull(`ve`.`Address_Code`, '')
         end) AS `Assoc_Preferred_Addr_Code`,
+        (case
+            when `vm`.`MemberRecord` then `vm`.`Preferred_Email` 
+            else ifnull(`ve`.`Preferred_Email`, '')
+        end) AS `Assoc_Email`,
         (case
             when (lcase(`vm`.`Bad_Address`) = 'true') then '*(Bad Address)'
             else ifnull(`vm`.`Address_1`, '')

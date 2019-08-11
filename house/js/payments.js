@@ -360,6 +360,16 @@ var payCtrls = function () {
     
 };
 
+function roundTo(n, digits) {
+    if (digits === undefined) {
+        digits = 0;
+    }
+
+    var multiplicator = Math.pow(10, digits);
+    n = parseFloat((n * multiplicator).toFixed(11));
+    return Math.round(n) / multiplicator;
+}
+
 function amtPaid() {
     "use strict";
     var p = new payCtrls(),
@@ -379,10 +389,15 @@ function amtPaid() {
         taxAmt = 0,
         guestCreditAmt = 0,
         overPayAmt = 0,
-        isChdOut = isCheckedOut;
+        isChdOut = isCheckedOut,
+        vtaxPercent = parseFloat(p.feePayAmt.data('tax'));
+
+    if (isNaN(vtaxPercent)) {
+        vtaxPercent = 0;
+    }
     
     p.msg.text('').hide();
-    
+
     // Visit fees
     if (p.visitFeeCb.length > 0) {
         
@@ -451,31 +466,29 @@ function amtPaid() {
 
     // Fees Payments
     if (p.feePayAmt.length > 0) {
-        
-        var vtaxPercent = parseFloat(p.feePayAmt.data('tax'));
+
         feePayStr = p.feePayAmt.val().replace('$', '').replace(',', '');
-        
         feePay = parseFloat(feePayStr);
-        
+
         if (isNaN(feePay) || feePay < 0) {
             p.feePayAmt.val('');
             feePay = 0;
         }
-        
-        if (!isNaN(vtaxPercent) && vtaxPercent > 0) {
-            
-            taxAmt += (feePay * vtaxPercent / 100);
+
+        if (vtaxPercent > 0) {
+            taxAmt += roundTo((feePay * vtaxPercent / 100), 2);
             $('#feesTax').val(taxAmt.toFixed(2).toString());
             feePay += taxAmt;
         }
     }
 
-    // Fees Charges (checkout)  Tax already added
+    // Fees Charges (checkout)  
     if (p.feesCharges.length > 0) {
-        feeCharge = parseFloat(p.feesCharges.val());
+        feeCharge = parseFloat($('#spnCfBalDue').data('bal'));  //parseFloat(p.feesCharges.val());
         if (isNaN(feeCharge)) {
             feeCharge = 0;
         }
+        p.feesCharges.val((feeCharge === 0 ? '' : feeCharge.toFixed(2).toString()));
     }
 
     // Guest Credit (checkout)
@@ -612,13 +625,21 @@ function amtPaid() {
             
             if (p.finalPaymentCb.prop('checked')) {
                 
-                hsPay = totCharges - feePay;
+                var balDue = parseFloat($('#spnCfBalDue').data('rmbal'));
+                if (isNaN(balDue)) {
+                    balDue = 0;
+                }
+                
+                hsPay = (balDue + vfee) - feePay;  //totCharges - feePay;
                 
                 if (hsPay <= 0) {
                     hsPay = 0;
                     p.hsDiscAmt.val('');
                 } else {
                     p.hsDiscAmt.val((0 - hsPay).toFixed(2).toString());
+                    p.feesCharges.val(balDue.toFixed(2).toString());
+                    
+                    totCharges = (totCharges - feeCharge) + hsPay + feePay;
                 }
                 
                 totPay = feePay;

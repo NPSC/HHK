@@ -316,6 +316,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
             $hdr[$n++] = "City";
             $hdr[$n++] = "State";
             $hdr[$n++] = "Zip";
+            $hdr[$n++] = 'Email';
             $hdr[$n++] = "#";
 
             if ($showAmounts) {
@@ -370,6 +371,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
             $hdr[$n++] = "City";
             $hdr[$n++] = "State";
             $hdr[$n++] = "Zip";
+            $hdr[$n++] = "Email";
 
             if ($showAmounts) {
                 $hdr[$n++] = "Total";
@@ -518,6 +520,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                 $r["City"] = $r["Assoc_City"];
                 $r["State"] = $r["Assoc_State"];
                 $r["Zipcode"] = $r["Assoc_Zipcode"];
+                $r['Email'] = $r['Assoc_Email'];
                 $r["Donor_Last"] = $r["Assoc_Last"];
                 $r["Donor_First"] = $r["Assoc_First"];
 
@@ -552,40 +555,43 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
 
         if ($dlFlag) {
             if ($rollup) {
-
+                $n = 0;
                 $flds = array(
-                    0 => array('type' => "n",
+                    $n++ => array('type' => "n",
                         'value' => $r["id"]
                     ),
-                    1 => array('type' => "s",
+                    $n++ => array('type' => "s",
                         'value' => $majorDonorMark
                     ),
-                    2 => array('type' => "s",
+                    $n++ => array('type' => "s",
                         'value' => $r["Donor_Last"]
                     ),
-                    3 => array('type' => "s",
+                    $n++ => array('type' => "s",
                         'value' => $salName
                     ),
-                    4 => array('type' => "s",
+                    $n++ => array('type' => "s",
                         'value' => $envName
                     ),
-                    5 => array('type' => "s",
+                    $n++ => array('type' => "s",
                         'value' => $careof
                     ),
-                    6 => array('type' => "s",
+                    $n++ => array('type' => "s",
                         'value' => $combinedAddr
                     ),
-                    7 => array('type' => "s",
+                    $n++ => array('type' => "s",
                         'value' => $r["City"]
                     ),
-                    8 => array('type' => "s",
+                    $n++ => array('type' => "s",
                         'value' => $r["State"]
                     ),
-                    9 => array('type' => "s",
+                    $n++ => array('type' => "s",
                         'value' => $r["Zipcode"],
                         'style' => '00000'
                     ),
-                    10 => array('type' => "n",
+                    $n++ => array('type' => "s",
+                        'value' => $r["Email"]
+                    ),
+                    $n++ => array('type' => "n",
                         'value' => $r["numDon"]
                     ),
 
@@ -593,15 +599,15 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
 
                 if ($showAmounts) {
 
-                    $flds[11] = array('type' => "n",
+                    $flds[$n++] = array('type' => "n",
                         'value' => $amountMkup,
                         'style' => PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1);
 
-                    $flds[12] = array('type' => "n",
+                    $flds[$n++] = array('type' => "n",
                         'value' => $vendorAmt,
                         'style' => PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1);
 
-                    $flds[13] = array('type' => "n",
+                    $flds[$n++] = array('type' => "n",
                         'value' => $taxFreeMkup,
                         'style' => PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1);
                 }
@@ -642,7 +648,10 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                     $n++ => array('type' => "s",
                         'value' => $r["Zipcode"],
                         'style' => PHPExcel_Style_NumberFormat::FORMAT_TEXT
-                    )
+                    ),
+                    $n++ => array('type' => "s",
+                        'value' => $r["Email"]
+                    ),
                 );
 
                 if ($showAmounts) {

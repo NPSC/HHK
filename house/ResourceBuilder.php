@@ -505,7 +505,7 @@ if (isset($_POST['btnkfSave'])) {
             $glRs->Table_Name->setNewVal('Static_Room_Rate');
             $glRs->Code->setNewVal($newCode);
             $glRs->Description->setNewVal($dText);
-            $glRs->Substitute->setNewVal($dAmt);
+            $glRs->Substitute->setNewVal(number_format($dAmt, 2));
 
             EditRS::insert($dbh, $glRs);
 
@@ -524,8 +524,10 @@ if (isset($_POST['btnkfSave'])) {
     // Key Deposit
     if (isset($_POST['kdesc'])) {
 
+        // Dave deposit
         saveGenLk($dbh, 'Key_Deposit_Code', $_POST['kdesc'], $_POST['krate'], NULL);
 
+        // Copy to item
         foreach ($_POST['krate'] as $k => $p) {
 
             if ($p > 0) {
@@ -1830,7 +1832,7 @@ $resultMessage = $alertMsg->createMarkup();
             if (isNumber(this.value) === false) {
                 $(this).val('0');
             }
-            $(this).val(parseInt(this.value));
+            $(this).val(this.value);
         });
         $('#mainTabs').show();
     });

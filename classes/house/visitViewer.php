@@ -642,56 +642,121 @@ class VisitView {
 
     public static function createCurrentFees($visitStatus, VisitCharges $visitCharge, $taxedItems, $showVisitFee = FALSE, $showRoomFees = TRUE, $showGuestNights = FALSE) {
 
+        $roomAccount = new CurrentAccount($visitStatus, $visitCharge->getNightsStayed(), $showRoomFees, $showGuestNights);
 
-        // Build Output.
+        $roomAccount->setAddnlGuestNites($visitCharge->getGuestNightsStayed() - $visitCharge->getNightsStayed());
+        $roomAccount->setVisitGlideCredit($visitCharge->getGlideCredit());
+
+        // Charges.
+        $roomAccount->setRoomCharge($visitCharge->getRoomFeesCharged());
+        $roomAccount->setTotalDiscounts($visitCharge->getItemInvCharges(ItemId::Discount) + $visitCharge->getItemInvCharges(ItemId::Waive));
+        $roomAccount->setVisitFeeCharged($visitCharge->getVisitFeeCharged());
+        $roomAccount->setAdditionalCharge($visitCharge->getItemInvCharges(ItemId::AddnlCharge));
+        $roomAccount->setUnpaidMOA($visitCharge->getItemInvPending(ItemId::LodgingMOA));
+
+        // Lodging taxes
+        if (isset($taxedItems[ItemId::Lodging])) {
+            $roomAccount->setLodgingTax(($roomAccount->getRoomCharge() + $roomAccount->getTotalDiscounts()) * $taxedItems[ItemId::Lodging] / 100);
+        } else {
+            $roomAccount->setLodgingTax(0);
+        }
+
+        // Additional Charge taxes?
+        if (isset($taxedItems[ItemId::AddnlCharge])) {
+            $roomAccount->setAdditionalChargeTax($roomAccount->getAdditionalCharge() * $taxedItems[ItemId::AddnlCharge] / 100);
+        } else {
+            $roomAccount->setAdditionalChargeTax(0);
+        }
+
+        // Visit Fee Balance
+        if ($showVisitFee) {
+            $roomAccount->setVfeeBal($roomAccount->getVisitFeeCharged() - $visitCharge->getVisitFeesPaid() - $visitCharge->getVisitFeesPending());
+        } else {
+            $roomAccount->setVisitFeeCharged(0);
+        }
+
+        // Room fee balance
+        $roomAccount->setRoomFeeBalance(($roomAccount->getRoomCharge() + $roomAccount->getTotalDiscounts()) - $visitCharge->getRoomFeesPaid() - $visitCharge->getRoomFeesPending());
+
+        // Payments
+        $roomAccount->setTotalPaid($visitCharge->getRoomFeesPaid()
+                + $visitCharge->getVisitFeesPaid()
+                + $visitCharge->getItemInvPayments(ItemId::AddnlCharge)
+                + $visitCharge->getItemInvPayments(ItemId::Waive)
+                + $visitCharge->getItemInvPayments('tax'));
+
+        // Pending amounts
+        $roomAccount->setAmtPending($visitCharge->getRoomFeesPending()
+                + $visitCharge->getVisitFeesPending()
+                + $visitCharge->getItemInvPending(ItemId::AddnlCharge)
+                + $visitCharge->getItemInvPending(ItemId::LodgingMOA)
+                + $visitCharge->getItemInvPending(ItemId::Waive)
+                + $visitCharge->getItemInvPending('tax'));
+
+        return self::currentBalanceMarkup($roomAccount);
+    }
+
+    public static function currentBalanceMarkup(CurrentAccount $curAccount) {
+
         $tbl2 = new HTMLTable();
-        $taxes = 0;
+        $showSubTotal = FALSE;
 
         // Number of nights
         $tbl2->addBodyTr(
                 HTMLTable::makeTd('# of nights stayed:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd($visitCharge->getNightsStayed())
+                . HTMLTable::makeTd($curAccount->getNumberNitesStayed())
         );
 
 
         // Number of guest-nights
-        if ($showGuestNights) {
-
-            $additNights = $visitCharge->getGuestNightsStayed() - $visitCharge->getNightsStayed();
+        if ($curAccount->getShowGuestNites()) {
 
             $tbl2->addBodyTr(
                     HTMLTable::makeTd('Additional guest-nights:', array('class'=>'tdlabel'))
-                    . HTMLTable::makeTd($additNights < 0 ? 0 : $additNights)
+                    . HTMLTable::makeTd($curAccount->getAddnlGuestNites() < 0 ? 0 : $curAccount->getAddnlGuestNites())
             );
         }
 
         // Visit Glide
-        if ($visitCharge->getGlideCredit() > 0) {
+        if ($curAccount->getVisitGlideCredit() > 0) {
             $tbl2->addBodyTr(
                 HTMLTable::makeTd('Room rate aged (days):', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd($visitCharge->getGlideCredit()));
+                . HTMLTable::makeTd($curAccount->getVisitGlideCredit()));
         }
 
-        // Room Fees amount pledged
-        if ($showRoomFees) {
+        // Room Fees Charged
+        if ($curAccount->getShowRoomFees()) {
+
             $tbl2->addBodyTr(
                 HTMLTable::makeTd('Room fees pledged to-date:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . number_format($visitCharge->getRoomFeesCharged(), 2), array('style'=>'text-align:right;'))
+                . HTMLTable::makeTd('$' . number_format($curAccount->getRoomCharge(), 2), array('style'=>'text-align:right;'))
             );
 
-            // taxes?
-            if (isset($taxedItems[ItemId::Lodging])) {
-                $taxes += $visitCharge->getRoomFeesCharged() * $taxedItems[ItemId::Lodging] / 100;
+            // Discounts
+            if ($curAccount->getTotalDiscounts() != 0) {
+
+                $showSubTotal = TRUE;
+
+                $tbl2->addBodyTr(
+                    HTMLTable::makeTd('Discounts & Waives:', array('class'=>'tdlabel'))
+                    . HTMLTable::makeTd('$' . number_format($curAccount->getTotalDiscounts(), 2), array('style'=>'text-align:right;'))
+                );
+            }
+
+            // Lodging Taxes
+            if ($curAccount->getLodgingTax() != 0) {
+
+                $showSubTotal = TRUE;
+
+                $tbl2->addBodyTr(
+                    HTMLTable::makeTd('Lodging Tax:', array('class'=>'tdlabel', 'style'=>'font-size:small;'))
+                    . HTMLTable::makeTd('$' . number_format($curAccount->getLodgingTax(), 2), array('style'=>'text-align:right;font-size:small;'))
+                );
             }
         }
 
-        $showSubTotal = FALSE;
-
         // Visit fees charged
-        $visitFeeCharged = 0;
-        if ($showVisitFee && $visitCharge->getVisitFeeCharged() > 0) {
-
-            $visitFeeCharged = $visitCharge->getVisitFeeCharged();
+        if ($curAccount->getVisitFeeCharged() > 0) {
 
             // Get labels
             $labels = new Config_Lite(LABEL_FILE);
@@ -699,113 +764,65 @@ class VisitView {
 
             $tbl2->addBodyTr(
                 HTMLTable::makeTd($labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee') . ':', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . number_format($visitFeeCharged, 2), array('style'=>'text-align:right;'))
+                . HTMLTable::makeTd('$' . number_format($curAccount->getVisitFeeCharged(), 2), array('style'=>'text-align:right;'))
             );
-
         }
 
         // Additional charges
-        if ($visitCharge->getItemInvCharges(ItemId::AddnlCharge) > 0) {
+        if ($curAccount->getAdditionalCharge() > 0) {
 
             $showSubTotal = TRUE;
 
             $tbl2->addBodyTr(
-                HTMLTable::makeTd('Additional Charges', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . number_format($visitCharge->getItemInvCharges(ItemId::AddnlCharge), 2), array('style'=>'text-align:right;'))
+                HTMLTable::makeTd('Additional Charges:', array('class'=>'tdlabel'))
+                . HTMLTable::makeTd('$' . number_format($curAccount->getAdditionalCharge(), 2), array('style'=>'text-align:right;'))
             );
 
-            // taxes?
-            if (isset($taxedItems[ItemId::AddnlCharge])) {
-                $taxes += $visitCharge->getItemInvCharges(ItemId::AddnlCharge) * $taxedItems[ItemId::AddnlCharge] / 100;
+            // Additional Charge taxes?
+            if ($curAccount->getAdditionalChargeTax() > 0) {
+
+                $tbl2->addBodyTr(
+                    HTMLTable::makeTd('Additional Charges Tax:', array('class'=>'tdlabel', 'style'=>'font-size:small;'))
+                    . HTMLTable::makeTd('$' . number_format($curAccount->getAdditionalChargeTax(), 2), array('style'=>'text-align:right;font-size:small;'))
+                );
             }
         }
 
         // Unpaid MOA
-        $unpaidMOA = 0;
-        if ($visitCharge->getItemInvPending(ItemId::LodgingMOA) > 0) {
+        if ($curAccount->getUnpaidMOA() > 0) {
 
-            $unpaidMOA = $visitCharge->getItemInvPending(ItemId::LodgingMOA);
             $showSubTotal = TRUE;
 
             $tbl2->addBodyTr(
                 HTMLTable::makeTd('Money On Account:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . number_format($unpaidMOA, 2), array('style'=>'text-align:right;'))
+                . HTMLTable::makeTd('$' . number_format($curAccount->getUnpaidMOA(), 2), array('style'=>'text-align:right;'))
             );
         }
-
-        // Discounts
-        $totalDiscounts = $visitCharge->getItemInvCharges(ItemId::Discount) + $visitCharge->getItemInvCharges(ItemId::Waive);
-        if ($totalDiscounts != 0) {
-
-            $showSubTotal = TRUE;
-
-            $tbl2->addBodyTr(
-                HTMLTable::makeTd('Discounts', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . number_format($totalDiscounts, 2), array('style'=>'text-align:right;'))
-            );
-        }
-
-        // Taxes
-        if ($taxes != 0) {
-
-            $showSubTotal = TRUE;
-            $taxes = round($taxes, 2);
-
-            $tbl2->addBodyTr(
-                HTMLTable::makeTd('Tax', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . number_format($taxes, 2), array('style'=>'text-align:right;'))
-            );
-        }
-
-        $totalCharged =
-                $visitCharge->getRoomFeesCharged()
-                + $visitCharge->getItemInvCharges(ItemId::AddnlCharge)
-                + $unpaidMOA
-                + $totalDiscounts
-                + $visitFeeCharged
-                + $taxes;
-
 
         // Subtotal line
         if ($showSubTotal) {
 
             $tbl2->addBodyTr(
                 HTMLTable::makeTd('Total Charges:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . number_format($totalCharged, 2), array('style'=>'text-align:right;border-top: solid 3px #2E99DD;'))
+                . HTMLTable::makeTd('$' . number_format($curAccount->getTotalCharged(), 2), array('style'=>'text-align:right;border-top: solid 3px #2E99DD;'))
             );
         }
-
-
-        // Payments
-        $totalPaid = $visitCharge->getRoomFeesPaid()
-                + $visitCharge->getVisitFeesPaid()
-                + $visitCharge->getItemInvPayments(ItemId::AddnlCharge)
-                + $visitCharge->getItemInvPayments(ItemId::Waive)
-                + $visitCharge->getItemInvPayments('tax');
 
         // Total Paid to date
         $tbl2->addBodyTr(
                 HTMLTable::makeTd('Amount paid to-date:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . number_format($totalPaid, 2), array('style'=>'text-align:right;'))
+                . HTMLTable::makeTd('$' . number_format($curAccount->getTotalPaid(), 2), array('style'=>'text-align:right;'))
         );
 
         // unpaid invoices
-        $amtPending = $visitCharge->getRoomFeesPending()
-                + $visitCharge->getVisitFeesPending()
-                + $visitCharge->getItemInvPending(ItemId::AddnlCharge)
-                + $visitCharge->getItemInvPending(ItemId::LodgingMOA)
-                + $visitCharge->getItemInvPending(ItemId::Waive)
-                + $visitCharge->getItemInvPending('tax');
-
-
-        if ($amtPending != 0) {
+        if ($curAccount->getAmtPending() != 0) {
             $tbl2->addBodyTr(
                 HTMLTable::makeTd('Amount Pending:', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . number_format($amtPending, 2), array('style'=>'text-align:right;'))
+                . HTMLTable::makeTd('$' . number_format($curAccount->getAmtPending(), 2), array('style'=>'text-align:right;'))
             );
         }
 
-        $dueToday = $totalCharged - $totalPaid - $amtPending;
+        $dueToday = $curAccount->getTotalCharged() - $curAccount->getTotalPaid() - $curAccount->getAmtPending();
 
         // Special class for current balance.
         $balAttr = array('style'=>'border-top: solid 3px #2E99DD;');
@@ -816,7 +833,7 @@ class VisitView {
             $balAttr['class'] = 'ui-state-highlight';
             $balAttr['title'] = 'Payment due today.';
 
-            if ($visitStatus != VisitStatus::CheckedIn) {
+            if ($curAccount->getVisitStatus() != VisitStatus::CheckedIn) {
                 $feesTitle = 'House is owed at checkout:';
             } else {
                 $feesTitle = 'House is owed as of today:';
@@ -831,23 +848,16 @@ class VisitView {
 
             $balAttr['title'] = 'No payments are due today.';
 
-            if ($visitStatus != VisitStatus::CheckedIn) {
+            if ($curAccount->getVisitStatus() != VisitStatus::CheckedIn) {
                 $feesTitle = 'Guest credit at checkout:';
             } else {
                 $feesTitle = 'Guest credit as of today:';
             }
-
         }
 
-        $vfeeBal = 0;
-        if ($showVisitFee) {
-            $vfeeBal = $visitFeeCharged - $visitCharge->getVisitFeesPaid() - $visitCharge->getVisitFeesPending();
-        }
-
-        
         $tbl2->addBodyTr(
                 HTMLTable::makeTd($feesTitle, array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . HTMLContainer::generateMarkup('span', number_format(abs($dueToday), 2), array('id'=>'spnCfBalDue', 'data-vfee'=>number_format($vfeeBal, 2, '.', ''), 'data-bal'=>number_format($dueToday, 2, '.', ''))), $balAttr)
+                . HTMLTable::makeTd('$' . HTMLContainer::generateMarkup('span', number_format(abs($dueToday), 2), array('id'=>'spnCfBalDue', 'data-rmbal'=> number_format($curAccount->getRoomFeeBalance(), 2), 'data-vfee'=>number_format($curAccount->getVfeeBal(), 2, '.', ''), 'data-bal'=>number_format($dueToday, 2, '.', ''))), $balAttr)
         );
 
         return $tbl2->generateMarkup() ;
