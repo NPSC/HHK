@@ -193,9 +193,10 @@ class PaymentManager {
                 // Taxes
                 foreach ($taxedItems as $i) {
 
-                    if ($i['idItem'] == ItemId::Lodging) {
+                    if ($this->pmp->getFinalPaymentFlag() == FALSE && $i['idItem'] == ItemId::Lodging) {
                         $taxInvoiceLine = new TaxInvoiceLine();
                         $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $roomCharges), $i['Percentage']/100, '');
+                        $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
                         $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
                     }
                 }
@@ -251,6 +252,7 @@ class PaymentManager {
                             if ($i['idItem'] == ItemId::Lodging) {
                                 $taxInvoiceLine = new TaxInvoiceLine();
                                 $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $preTaxAmt), $i['Percentage']/100, '');
+                                $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
                                 $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
                             }
                         }

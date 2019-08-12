@@ -655,6 +655,7 @@ class HouseServices {
                     if ($i['idItem'] == ItemId::AddnlCharge) {
                         $taxInvoiceLine = new TaxInvoiceLine();
                         $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $amount), $i['Percentage']/100, '');
+                        $taxInvoiceLine->setSourceItemId(ItemId::AddnlCharge);
                         $invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
                     }
                 }

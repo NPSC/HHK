@@ -664,7 +664,7 @@ CREATE TABLE if not exists `invoice_line`
     `Deleted` SMALLINT NOT NULL default 0,
     `Item_Id` INTEGER NOT NULL default 0,
     `Description` VARCHAR(1000) NOT NULL default '',
-    `Source_User_Id` INTEGER NOT NULL default 0,
+    `Source_Item_Id` INTEGER NOT NULL default 0,
     `Is_Percentage` SMALLINT NOT NULL default 0,
     `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY(`idInvoice_Line`)

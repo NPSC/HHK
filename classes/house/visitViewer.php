@@ -656,14 +656,14 @@ class VisitView {
 
         // Lodging taxes
         if (isset($taxedItems[ItemId::Lodging])) {
-            $roomAccount->setLodgingTax(($roomAccount->getRoomCharge() + $roomAccount->getTotalDiscounts()) * $taxedItems[ItemId::Lodging] / 100);
+            $roomAccount->setLodgingTax(round(($roomAccount->getRoomCharge() + $roomAccount->getTotalDiscounts()) * $taxedItems[ItemId::Lodging] / 100, 2));
         } else {
             $roomAccount->setLodgingTax(0);
         }
 
         // Additional Charge taxes?
         if (isset($taxedItems[ItemId::AddnlCharge])) {
-            $roomAccount->setAdditionalChargeTax($roomAccount->getAdditionalCharge() * $taxedItems[ItemId::AddnlCharge] / 100);
+            $roomAccount->setAdditionalChargeTax(round($roomAccount->getAdditionalCharge() * $taxedItems[ItemId::AddnlCharge] / 100, 2));
         } else {
             $roomAccount->setAdditionalChargeTax(0);
         }
@@ -676,7 +676,7 @@ class VisitView {
         }
 
         // Room fee balance
-        $roomAccount->setRoomFeeBalance(($roomAccount->getRoomCharge() + $roomAccount->getTotalDiscounts()) - $visitCharge->getRoomFeesPaid() - $visitCharge->getRoomFeesPending());
+        $roomAccount->setRoomFeeBalance(($roomAccount->getRoomCharge() + $visitCharge->getItemInvCharges(ItemId::Discount)) - $visitCharge->getRoomFeesPaid() - $visitCharge->getRoomFeesPending());
 
         // Payments
         $roomAccount->setTotalPaid($visitCharge->getRoomFeesPaid()
@@ -692,6 +692,8 @@ class VisitView {
                 + $visitCharge->getItemInvPending(ItemId::LodgingMOA)
                 + $visitCharge->getItemInvPending(ItemId::Waive)
                 + $visitCharge->getItemInvPending('tax'));
+
+        $roomAccount->setDueToday();
 
         return self::currentBalanceMarkup($roomAccount);
     }
@@ -822,13 +824,13 @@ class VisitView {
             );
         }
 
-        $dueToday = $curAccount->getTotalCharged() - $curAccount->getTotalPaid() - $curAccount->getAmtPending();
+
 
         // Special class for current balance.
         $balAttr = array('style'=>'border-top: solid 3px #2E99DD;');
         $feesTitle = "";
 
-        if ($dueToday > 0) {
+        if ($curAccount->getDueToday() > 0) {
 
             $balAttr['class'] = 'ui-state-highlight';
             $balAttr['title'] = 'Payment due today.';
@@ -839,7 +841,7 @@ class VisitView {
                 $feesTitle = 'House is owed as of today:';
             }
 
-        } else if ($dueToday == 0) {
+        } else if ($curAccount->getDueToday() == 0) {
 
             $balAttr['title'] = 'No payments are due today.';
             $feesTitle = 'Balance as of today:';
@@ -857,7 +859,7 @@ class VisitView {
 
         $tbl2->addBodyTr(
                 HTMLTable::makeTd($feesTitle, array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . HTMLContainer::generateMarkup('span', number_format(abs($dueToday), 2), array('id'=>'spnCfBalDue', 'data-rmbal'=> number_format($curAccount->getRoomFeeBalance(), 2), 'data-vfee'=>number_format($curAccount->getVfeeBal(), 2, '.', ''), 'data-bal'=>number_format($dueToday, 2, '.', ''))), $balAttr)
+                . HTMLTable::makeTd('$' . HTMLContainer::generateMarkup('span', number_format(abs($curAccount->getDueToday()), 2), array('id'=>'spnCfBalDue', 'data-rmbal'=> number_format($curAccount->getRoomFeeBalance(), 2), 'data-vfee'=>number_format($curAccount->getVfeeBal(), 2, '.', ''), 'data-bal'=>number_format($curAccount->getDueToday(), 2, '.', ''))), $balAttr)
         );
 
         return $tbl2->generateMarkup() ;

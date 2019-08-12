@@ -24,6 +24,7 @@ abstract class InvoiceLine {
     protected $itemId;
     protected $description;
     protected $typeId;
+    protected $sourceItemId;
     protected $invoiceId;
     protected $invLineRs;
     protected $var;
@@ -40,6 +41,7 @@ abstract class InvoiceLine {
 
         $this->lineId = $invoiceLine->idInvoice_Line->getStoredVal();
         $this->setItemId($invoiceLine->Item_Id->getStoredVal());
+        $this->setSourceItemId($invoiceLine->Source_Item_Id->getStoredVal());
         $this->description = $invoiceLine->Description->getStoredVal();
         $this->setPrice($invoiceLine->Price->getStoredVal());
         $this->setAmount($invoiceLine->Amount->getStoredVal());
@@ -94,6 +96,7 @@ abstract class InvoiceLine {
         $ilRs1->Invoice_Id->setNewVal($this->getInvoiceId());
         $ilRs1->Item_Id->setNewVal($this->getItemId());
         $ilRs1->Type_Id->setNewVal($this->getTypeId());
+        $ilRs1->Source_Item_Id->setNewVal($this->getSourceItemId());
         $ilRs1->Description->setNewVal($this->getDescription());
         $ilRs1->Quantity->setNewVal($this->getQuantity());
         $ilRs1->Price->setNewVal($this->getPrice());
@@ -161,6 +164,16 @@ abstract class InvoiceLine {
     public function getCarriedFrom() {
         return $this->carriedFrom;
     }
+
+    public function getSourceItemId() {
+        return $this->sourceItemId;
+    }
+
+    public function setSourceItemId($sourceItemId) {
+        $this->sourceItemId = $sourceItemId;
+        return $this;
+    }
+
 
     public function setCarriedFrom($invoiceNumber) {
         $this->carriedFrom = $invoiceNumber;

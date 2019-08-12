@@ -43,8 +43,6 @@ class CurrentAccount {
     protected $additionalCharge;
     protected $unpaidMOA;
 
-    protected $totalCharged;
-
     // Visit Fee Balance
     protected $vfeeBal;
 
@@ -56,6 +54,8 @@ class CurrentAccount {
 
     // Pending amounts
     protected $amtPending;
+
+    protected $dueToday;
 
     public function __construct($visitStatus, $numberNitesStayed, $showRoomFees, $showGuestNights = FALSE) {
         $this->numberNitesStayed = $numberNitesStayed;
@@ -140,6 +140,24 @@ class CurrentAccount {
     public function getRoomFeeBalance() {
         return $this->roomFeeBalance;
     }
+
+    public function getDueToday() {
+        return $this->dueToday;
+    }
+
+    public function setDueToday() {
+
+        $dueToday = round($this->getTotalCharged() - $this->getTotalPaid() - $this->getAmtPending(), 2);
+
+        if (abs($dueToday) <= .01 && $this->getLodgingTax() > 0) {
+            $this->setLodgingTax($this->getLodgingTax() + $dueToday);
+            $dueToday = 0;
+        }
+
+        $this->dueToday = $dueToday;
+        return $this;
+    }
+
 
     public function setRoomFeeBalance($roomFeeBalance) {
         $this->roomFeeBalance = $roomFeeBalance;

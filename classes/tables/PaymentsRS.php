@@ -294,7 +294,7 @@ class InvoiceLineRS extends TableRS {
     public $Deleted;  // SMALLINT default 0 NOT NULL,
     public $Item_Id;  // INTEGER,
     public $Description;  // VARCHAR(1000),
-    public $Source_User_Id;  // INTEGER,
+    public $Source_Item_Id;  // INTEGER,
     public $Is_Percentage;  // SMALLINT default 0 NOT NULL,
     public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -310,7 +310,7 @@ class InvoiceLineRS extends TableRS {
         $this->Deleted = new DB_Field('Deleted', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Item_Id = new DB_Field('Item_Id', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Description = new DB_Field('Description', '', new DbStrSanitizer(1000), TRUE, TRUE);
-        $this->Source_User_Id = new DB_Field('Source_User_Id', 0, new DbIntSanitizer(), TRUE, TRUE);
+        $this->Source_Item_Id = new DB_Field('Source_Item_Id', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Is_Percentage = new DB_Field('Is_Percentage', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Timestamp = new DB_Field('Timestamp', null, new DbDateSanitizer('Y-m-d H:i:s'), FALSE);
         parent::__construct($TableName);

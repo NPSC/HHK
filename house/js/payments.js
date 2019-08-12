@@ -485,7 +485,7 @@ function amtPaid() {
     // Fees Charges (checkout)  
     if (p.feesCharges.length > 0) {
         feeCharge = parseFloat($('#spnCfBalDue').data('bal'));  //parseFloat(p.feesCharges.val());
-        if (isNaN(feeCharge)) {
+        if (isNaN(feeCharge) || feeCharge < 0) {
             feeCharge = 0;
         }
         p.feesCharges.val((feeCharge === 0 ? '' : feeCharge.toFixed(2).toString()));
@@ -494,7 +494,7 @@ function amtPaid() {
     // Guest Credit (checkout)
     if (p.guestCredit.length > 0) {
         guestCreditAmt = parseFloat(p.guestCredit.val());
-        if (isNaN(guestCreditAmt)) {
+        if (isNaN(guestCreditAmt) || guestCreditAmt > 0) {
             guestCreditAmt = 0;
         }
     }

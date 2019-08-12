@@ -745,11 +745,18 @@ WHERE
         $visitFeeInvoiced = FALSE;
         $visitNights = 0;
         $roomCharge = 0;
+        $preTaxRmCharge = 0;
+        $roomTaxPaid = array();
 
         // Visit fee invoiced?
         foreach ($invLines as $l) {
             if ($l['Item_Id'] == ItemId::VisitFee) {
                 $visitFeeInvoiced = TRUE;
+            }
+
+            // Clear any taxes paid
+            if ($l['Type_Id'] == 2) {
+                $roomTaxPaid[$l['Item_Id']] = 0;
             }
         }
 
@@ -760,13 +767,44 @@ WHERE
             // New Visit
             if ($idVisitTracker != $r['vid']) {
 
-                $idVisitTracker = $r['vid'];
+                if ($idVisitTracker > 0) {
+                    // Close up last visit
+                    self::addSavedTrs($trs, $tbl);
 
-                self::addSavedTrs($trs, $tbl);
+                    // Add tax info
+                    foreach ($taxedItems as $t) {
+
+                        if ($preTaxRmCharge > 0 && $t['idItem'] == ItemId::Lodging) {
+
+                            $totalTax = round( ($preTaxRmCharge * $t['Percentage'] / 100), 2);
+
+                            if (abs($totalTax - $roomTaxPaid[$t['taxIdItem']]) <= .01) {
+                                $totalTax = $roomTaxPaid[$t['taxIdItem']];
+                            }
+
+                            $totalAmt += $totalTax;
+
+                            $tbl->addBodyTr(
+                                HTMLTable::makeTd($t['Description'], array('colspan'=>'4'))
+                                .HTMLTable::makeTd(number_format($t['Percentage'], 3) . '%')
+                                .HTMLTable::makeTd(' ')
+                                .HTMLTable::makeTd($totalTax)
+                            );
+                        }
+                    }
+                }
+
+                // Prepare new visit.
                 $trs = array();
                 $separator = 'border-top: 2px solid #2E99DD;';
 
                 $visitNights = 0;
+                $preTaxRmCharge = 0;
+                $idVisitTracker = $r['vid'];
+
+                foreach ($roomTaxPaid as $k => $t) {
+                    $roomTaxPaid[$k] = 0;
+                }
 
             }
 
@@ -801,7 +839,9 @@ WHERE
 
             }
 
-            $roomCharge += $priceModel->tiersMarkup($r, $totalAmt, $tbl, $tiers, $startDT, $separator, $guestNites);
+            $rChg = $priceModel->tiersMarkup($r, $totalAmt, $tbl, $tiers, $startDT, $separator, $guestNites);
+            $roomCharge += $rChg;
+            $preTaxRmCharge += $rChg;
             $separator = '';
 
 
@@ -844,6 +884,7 @@ WHERE
 
                         $discAmt = floatval($l['Amount']);
                         $totalAmt += $discAmt;
+                        $preTaxRmCharge += $discAmt;
 
                         $invDate = new DateTime($l['Invoice_Date']);
                         $item = array(
@@ -870,30 +911,38 @@ WHERE
 
                         $trs[] = $priceModel->itemMarkup($item, $tbl);
 
+                    } else if ($l['Type_Id'] == 2 && $l['Source_Item_Id'] == ItemId::Lodging) {
+                        $roomTaxPaid[$l['Item_Id']] += floatval($l['Amount']);
                     }
                 }
             }
 
-            // Add tax info
-            foreach ($taxedItems as $t) {
-
-                if ($roomCharge > 0 && $t['idItem'] == ItemId::Lodging) {
-
-                    $totalTax = round( ($roomCharge * $t['Percentage'] / 100), 2);
-                    $totalAmt += $totalTax;
-
-                    $tbl->addBodyTr(
-                        HTMLTable::makeTd($t['Description'], array('colspan'=>'4'))
-                        .HTMLTable::makeTd(number_format($t['Percentage'], 3) . '%')
-                        .HTMLTable::makeTd(' ')
-                        .HTMLTable::makeTd($totalTax)
-                    );
-                }
-            }
         }
 
         // For the last visit rate.
         self::addSavedTrs($trs, $tbl);
+
+        // Add tax info
+        foreach ($taxedItems as $t) {
+
+            if ($preTaxRmCharge > 0 && $t['idItem'] == ItemId::Lodging) {
+
+                $totalTax = round( ($preTaxRmCharge * $t['Percentage'] / 100), 2);
+
+                if (abs($totalTax - $roomTaxPaid[$t['taxIdItem']]) <= .01) {
+                    $totalTax = $roomTaxPaid[$t['taxIdItem']];
+                }
+
+                $totalAmt += $totalTax;
+
+                $tbl->addBodyTr(
+                    HTMLTable::makeTd($t['Description'], array('colspan'=>'4'))
+                    .HTMLTable::makeTd(number_format($t['Percentage'], 3) . '%')
+                    .HTMLTable::makeTd(' ')
+                    .HTMLTable::makeTd($totalTax)
+                );
+            }
+        }
 
         // Room Fee totals
         $priceModel->rateTotalMarkup($tbl, $labels->getString('statement', 'roomTotalLabel', 'Lodging Total'), $numberNites, number_format($totalAmt, 2), $guestNites);
@@ -1322,7 +1371,7 @@ from vlist_inv_pments lp
         $pments = self::processPayments($stmt, array('Last', 'First', 'Company'));
 
         // items
-        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date
+        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date
 from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
 where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by i.idGroup, il.Invoice_Id, il.idInvoice_line");
 
@@ -1427,7 +1476,7 @@ from vlist_inv_pments `lp` left join `name` n ON lp.Sold_To_Id = n.idName
         $pments = self::processPayments($stmt, array('Last', 'First', 'Company'));
 
         // Items
-        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date
+        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date
 from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
 where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, il.idInvoice_line");
 
