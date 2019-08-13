@@ -25,6 +25,13 @@ $(document).ready(function() {
         }
     });
 
+	if(pageManager.getIdPsg()){
+		//incident reports
+		$('#vIncidentContent').incidentViewer({
+			//guestId: memData.id,
+			psgId: pageManager.getIdPsg()
+		});
+	}
 
 // Dialog Boxes
     $("#resDialog").dialog({

@@ -30,14 +30,6 @@ function resvManager(initData) {
     var updateRescChooser = new updateRescChooser();
     var $pWarning = $('#pWarnings');
 
-    var viewer = tui.Editor.factory({
-        el: document.querySelector('#viewerSection'),
-        viewer: true,
-        height: '500px',
-        initialValue: ''
-    });
-
-
     // Exports
     t.getReserve = getReserve;
     t.verifyInput = verifyInput;
@@ -52,9 +44,7 @@ function resvManager(initData) {
     t.getIdVisit = getIdVisit;
     t.getSpan = getSpan;
     t.setRooms = setRooms;
-    t.getTuiViewer = getTuiViewer;
-    t.viewer = viewer;
-
+    
     function setRooms($r) {
         rooms = $r;
     }
@@ -77,10 +67,6 @@ function resvManager(initData) {
 
     function getIdName() {
         return idName;
-    }
-
-    function getTuiViewer() {
-        return viewer;
     }
 
     function FamilySection($wrapper) {
@@ -1700,7 +1686,7 @@ function resvManager(initData) {
 
         function setUp(data) {
 
-            $rDiv = $('<div/>').addClass(' hhk-tdbox').prop('id', 'divResvDetail').css('padding', '5px');
+            $rDiv = $('<div/>').addClass(' hhk-tdbox ui-widget-content').prop('id', 'divResvDetail').css('padding', '5px');
 
             // Room Chooser section
             if (data.resv.rdiv.rChooser !== undefined) {

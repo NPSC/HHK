@@ -189,7 +189,7 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
-
+		<?php echo INCIDENT_CSS; ?>
         <?php echo FAVICON; ?>
 
 <!--        Fix the ugly checkboxes-->
@@ -230,11 +230,16 @@ $resvObjEncoded = json_encode($resvAr);
                 <?php echo $mk1; ?>
             </div>
             <form action="CheckingIn.php" method="post"  id="form1">
-                <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
-                <div id="famSection" style="clear:left; float:left; font-size: .9em; display:none; margin-bottom:.5em;min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
-                <div id="hospitalSection" style="font-size: .9em; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
-                <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
-                <div style="clear:both;min-height: 70px;">.</div>
+                <div id="datesSection" style="display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel hhk-row"></div>
+                <div id="famSection" style="font-size: .9em; display:none; min-width: 810px;" class="ui-widget hhk-visitdialog hhk-row"></div>
+                <div id="hospitalSection" style="font-size: .9em; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog hhk-row"></div>
+                <div id="resvSection" style="font-size:.9em; display:none; min-width: 810px;" class="ui-widget hhk-visitdialog hhk-row"></div>
+                <!-- <div style="clear:both;min-height: 70px;">.</div> -->
+                <?php if ($uS->UseIncidentReports) { ?>
+                <div id="vincidents">
+                    <div id="vIncidentContent"></div>
+                </div>
+                <?php } ?>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <table >
                         <tr><td>
@@ -266,6 +271,7 @@ $resvObjEncoded = json_encode($resvAr);
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
 
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
+        <script type="text/javascript" src="js/incidentReports.js"></script>
         <script type="text/javascript" src='js/checkingIn.js'></script>
     </body>
 </html>

@@ -115,7 +115,7 @@ foreach ($rows as $r) {
     );
 }
 
-$tbl->addHeaderTr(HTMLTable::makeTh('Group Code') . HTMLTable::makeTh('Title') . HTMLTable::makeTh('Cookie-Rrestricted') . HTMLTable::makeTh('Description'));
+$tbl->addHeaderTr(HTMLTable::makeTh('Group Code') . HTMLTable::makeTh('Title') . HTMLTable::makeTh('Cookie-Restricted') . HTMLTable::makeTh('Description'));
 
 
 ?>

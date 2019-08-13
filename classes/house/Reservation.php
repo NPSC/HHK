@@ -405,7 +405,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     HTMLInput::generateMarkup($days, array('name'=>$prefix.'gstDays', 'readonly'=>'readonly', 'size'=>'4'))
                     , array('style'=>'margin-left:.7em;'))
 
-                , array('style'=>'float:left;font-size:.9em;', 'id'=>$prefix.'spnRangePicker'));
+                , array('style'=>'font-size:.9em;', 'id'=>$prefix.'spnRangePicker'));
 
         return array('mu'=>$mkup, 'defdays'=>$uS->DefaultDays, 'daysEle'=>$prefix.'gstDays', 'updateOnChange'=>$updateOnChange, 'startDate'=>$startDate, 'endDate'=>$endDate);
 
@@ -495,7 +495,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         // Reservation notes
         $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'notesLabel', 'Reservation Notes'), array('style'=>'font-weight:bold;'))
-                , array('id'=>'hhk-noteViewer', 'style'=>'clear:left; float:left; width:90%; font-size:0.9em;', 'class'=>'hhk-panel'));
+                , array('id'=>'hhk-noteViewer', 'style'=>'font-size:0.9em;', 'class'=>'hhk-panel'));
 
 
         $dataArray['wlnotes'] = '';
@@ -1559,7 +1559,7 @@ FROM reservation r
         // Reservation notes
         $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Visit Notes', array('style'=>'font-weight:bold;'))
-                , array('id'=>'hhk-noteViewer', 'style'=>'clear:left; float:left; width:90%; font-size: 0.9em;', 'class'=>'hhk-panel'));
+                , array('id'=>'hhk-noteViewer', 'style'=>'font-size: 0.9em;', 'class'=>'hhk-panel'));
 
 
         // Collapsing header
@@ -2036,7 +2036,7 @@ class StayingReservation extends CheckingIn {
         // Reservation notes
         $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Visit Notes', array('style'=>'font-weight:bold;'))
-                , array('id'=>'hhk-noteViewer', 'style'=>'clear:left; float:left; width:90%; font-size: 0.9em;', 'class'=>'hhk-panel'));
+                , array('id'=>'hhk-noteViewer', 'style'=>'font-size: 0.9em;', 'class'=>'hhk-panel'));
 
 
         // Collapsing header
@@ -2217,7 +2217,7 @@ class CheckedoutReservation extends CheckingIn {
         // Reservation notes
         $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Visit Notes', array('style'=>'font-weight:bold;'))
-                , array('id'=>'hhk-noteViewer', 'style'=>'clear:left; float:left; width:90%; font-size: 0.9em;', 'class'=>'hhk-panel'));
+                , array('id'=>'hhk-noteViewer', 'style'=>'font-size: 0.9em;', 'class'=>'hhk-panel'));
 
 
         // Collapsing header

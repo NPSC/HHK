@@ -102,6 +102,13 @@ $(document).ready(function() {
         }
     });
 
+	//incident reports
+	console.log(resv);
+	$('#vIncidentContent').incidentViewer({
+		guestId: resv.guestId,
+		psgId: resv.psgId
+	});
+
 // Dialog Boxes
 
     $("#activityDialog").dialog({

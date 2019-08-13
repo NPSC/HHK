@@ -23,6 +23,7 @@ require (DB_TABLES . 'ActivityRS.php');
 require (DB_TABLES . 'PaymentGwRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
 require (DB_TABLES . 'AttributeRS.php');
+require (DB_TABLES . 'ReportRS.php');
 
 require CLASSES . 'CleanAddress.php';
 require CLASSES . 'AuditLog.php';
@@ -34,6 +35,7 @@ require (CLASSES . 'Note.php');
 require (CLASSES . 'ListNotes.php');
 require (CLASSES . 'ListReports.php');
 require (CLASSES . 'LinkNote.php');
+require (CLASSES . 'Report.php');
 require (CLASSES . 'US_Holidays.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'FinAssistance.php');
@@ -346,89 +348,136 @@ try {
 
         break;
 
-
+	case 'getincidentreport':
+        
+        	$idReport = 0;
+            if (isset($_POST['repid'])) {
+                $idReport = intval(filter_var($_POST['repid'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+            
+            $report = new Report($idReport);
+			$report->loadReport($dbh);
+			$events = $report->toArray();
+                    
+        	break;
+        	
     case 'saveIncident':
-
-        $data = '';
-        $linkType = '';
-        $idLink = 0;
-
-        if (isset($_POST['data'])) {
-            $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
+		
+		$guestId = 0;
+		$psgId = 0;
+		$incidentTitle = '';
+		$incidentDate = '';
+		$incidentDescription = '';
+		$incidentStatus = 'a';
+		$incidentResolution = '';
+		$resolutionDate = '';
+		
+		if (isset($_POST['guestId'])) {
+            $guestId = $_POST['guestId'];
         }
-
-        if (isset($_POST['linkType'])) {
-            $linkType = filter_input(INPUT_POST, 'linkType', FILTER_SANITIZE_STRING);
+        if (isset($_POST['psgId'])) {
+            $psgId = $_POST['psgId'];
         }
-
-        if (isset($_POST['linkId'])) {
-            $idLink = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
+        if (isset($_POST['incidentTitle'])) {
+            $incidentTitle = $_POST['incidentTitle'];
         }
+        if (isset($_POST['incidentDate'])) {
+            $incidentDate = $_POST['incidentDate'];
+        }
+        if (isset($_POST['incidentDescription'])) {
+            $incidentDescription = $_POST['incidentDescription'];
+        }
+        if (isset($_POST['incidentStatus'])) {
+            $incidentStatus = $_POST['incidentStatus'];
+        }
+        if (isset($_POST['incidentResolution'])) {
+            $incidentResolution = $_POST['incidentResolution'];
+        }
+        if (isset($_POST['resolutionDate'])) {
+            $resolutionDate = $_POST['resolutionDate'];
+        }
+        
+        $report = Report::createNew($incidentTitle, $incidentDate, $incidentDescription, $uS->username, $incidentStatus, $incidentResolution, $resolutionDate, $guestId, $psgId);
+		$report->saveNew($dbh);
 
-        $events = array('idNote'=>LinkNote::save($dbh, $data, $idLink, $linkType, $uS->username, $uS->ConcatVisitNotes));
+        $events = array('status'=>'success', 'idReport'=>$report->getIdReport());
 
         break;
 
 
-    case 'updateIncidentContent':
-
-        $data = '';
-        $noteId = 0;
-        $updateCount = 0;
-
-        if (isset($_POST['data'])) {
-	    $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
-            //$data = addcslashes(filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING));
+    case 'editIncident':
+		$repId = 0;
+		$incidentTitle = '';
+		$incidentDate = '';
+		$incidentDescription = '';
+		$incidentStatus = 'a';
+		$incidentResolution = '';
+		$resolutionDate = '';
+		
+		if (isset($_POST['repId'])) {
+            $repId = $_POST['repId'];
         }
-        if (isset($_POST['idNote'])) {
-            $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);
+        if (isset($_POST['incidentTitle'])) {
+            $incidentTitle = $_POST['incidentTitle'];
         }
-
-        if ($noteId > 0 && $data != '') {
-
-            $note = new Note($noteId);
-            $updateCount = $note->updateContents($dbh, $data, $uS->username);
+        if (isset($_POST['incidentDate'])) {
+            $incidentDate = $_POST['incidentDate'];
         }
+        if (isset($_POST['incidentDescription'])) {
+            $incidentDescription = $_POST['incidentDescription'];
+        }
+        if (isset($_POST['incidentStatus'])) {
+            $incidentStatus = $_POST['incidentStatus'];
+        }
+        if (isset($_POST['incidentResolution'])) {
+            $incidentResolution = $_POST['incidentResolution'];
+        }
+        if (isset($_POST['resolutionDate'])) {
+            $resolutionDate = $_POST['resolutionDate'];
+        }
+        
+        $report = new Report($repId);
+        $report->updateContents($dbh, $incidentTitle, $incidentDate, $resolutionDate, $incidentDescription, $incidentResolution, $incidentStatus, $uS->username);
 
-        $events = array('update'=>$updateCount, 'idNote'=>$noteId);
+        $events = array('status'=>'success', 'idReport'=>$report->getIdReport());
 
         break;
 
 
     case 'deleteIncident':
 
-        $noteId = 0;
+        $repId = 0;
         $deleteCount = 0;
 
-        if (isset($_POST['idNote'])) {
-            $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);
+        if (isset($_POST['idReport'])) {
+            $repId = intval(filter_input(INPUT_POST, 'idReport', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        if ($noteId > 0) {
-            $note = new Note($noteId);
-            $deleteCount = $note->deleteNote($dbh, $uS->userName);
+        if ($repId > 0) {
+            $report = new Report($repId);
+            $deleteCount = $report->deleteReport($dbh, $uS->userName);
         }
 
-        $events = array('delete'=>$deleteCount, 'idNote'=>$noteId);
+        $events = array('delete'=>$deleteCount, 'idReport'=>$repId);
 
         break;
 
 
     case 'undoDeleteIncident':
 
-        $noteId = 0;
+        $repId = 0;
         $deleteCount = 0;
 
-        if (isset($_POST['idNote'])) {
-            $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);
+        if (isset($_POST['idReport'])) {
+            $repId = intval(filter_input(INPUT_POST, 'idReport', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        if ($noteId > 0) {
-            $note = new Note($noteId);
-            $deleteCount = $note->undoDeleteNote($dbh, $uS->userName);
+        if ($repId > 0) {
+            $report = new Report($repId);
+            $deleteCount = $report->undoDeleteReport($dbh, $uS->userName);
         }
 
-        $events = array('delete'=>$deleteCount, 'idNote'=>$noteId);
+        $events = array('delete'=>$deleteCount, 'idReport'=>$repId);
 
         break;
         

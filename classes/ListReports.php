@@ -20,7 +20,7 @@ class ListReports {
 
         $columns = array(
             array( 'db' => 'Date',  'dt' => 'Date' ),
-            array( 'db' => 'Category', 'dt' => 'Category'),
+            array( 'db' => 'Guest', 'dt' => 'Guest'),
             array( 'db' => 'Author',   'dt' => 'User' ),
             array( 'db' => 'Title', 'dt' => 'Title'),
             array( 'db' => 'Description', 'dt' => 'Description'),

@@ -741,6 +741,7 @@ $uS->guestId = $id;
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
+        <?php echo INCIDENT_CSS; ?>
         <?php echo FAVICON; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
@@ -892,9 +893,11 @@ $uS->guestId = $id;
                         <?php echo $visitList; ?>
                         </div>
                     </div>
+                    <?php if ($uS->UseIncidentReports) { ?>
                     <div id="vincidents" class="ui-tabs-hide" style="display: none;">
 	                    <div id="vIncidentContent"></div>
                     </div>
+                    <?php } ?>
                 </div>
                 <?php } ?>
                 <div style="clear:both;"></div>

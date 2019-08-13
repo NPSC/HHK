@@ -12,6 +12,7 @@
     padding: 5px 10px;
     z-index: 90000;
     border: 1px solid teal;
+    background: #fff;
 }
 #submitButtons:hover { background-color: white; }
 #divAlertMsg {
@@ -150,6 +151,7 @@ div#hideCalendar, div#hideLog {
 }
 div#contentDiv {
     margin-left: 10px;
+    margin-right: 10px;
     margin-top: 43px;
 }
 .pageSpacer {
@@ -402,3 +404,21 @@ li.hhk-myMenuTop {
 
 .uppload-modal ul i {
 	margin-right: 0.5em;
+}
+
+/* Will's content layout CSS */
+
+.hhk-row {
+	display: block;
+	margin-bottom: 1em;
+}
+
+.hhk-col {
+	display: inline-block;
+	margin-right: .5em;
+	vertical-align: top;
+}
+
+#tblFamily {
+	width: 100%;
+}

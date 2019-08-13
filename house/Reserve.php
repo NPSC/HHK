@@ -213,6 +213,7 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
+        <?php echo INCIDENT_CSS; ?>
         <link rel="stylesheet" href="css/tui-editor/tui-editor-contents-min.css">
 
         <?php echo FAVICON; ?>
@@ -237,6 +238,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script src="../js/tuiEditorSupport.js"></script>
         <script src="../js/tui-editor-Editor.min.js"></script>
 <!--        <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>-->
@@ -257,10 +259,10 @@ $resvObjEncoded = json_encode($resvAr);
             </div>
 
             <form action="Reserve.php" method="post"  id="form1">
-                <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
-                <div id="famSection" style="clear:left; float:left; font-size: .9em; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
-                <div id="hospitalSection" style="font-size: .9em; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
-                <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
+                <div id="datesSection" style="display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel hhk-row"></div>
+                <div id="famSection" style="font-size: .9em; display:none; min-width: 810px;" class="ui-widget hhk-visitdialog hhk-row"></div>
+                <div id="hospitalSection" style="font-size: .9em; display:none; min-width: 810px;" class="ui-widget hhk-visitdialog hhk-row"></div>
+                <div id="resvSection" style="font-size:.9em; display:none; min-width: 810px;" class="ui-widget hhk-visitdialog hhk-row"></div>
                 <div style="clear:left; min-height: 70px;"></div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <table >
@@ -275,6 +277,12 @@ $resvObjEncoded = json_encode($resvAr);
                 </div>
 
             </form>
+
+			<?php if ($uS->UseIncidentReports) { ?>
+            <div id="vincidents" style="display: none;">
+                <div id="vIncidentContent"></div>
+            </div>
+            <?php } ?>
 
             <div id="pmtRcpt" style="font-size: .9em; display:none;"><?php echo $receiptMarkup; ?></div>
             <div id="resDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
@@ -437,6 +445,11 @@ $(document).ready(function() {
         }
     });
 
+	//incident reports
+	$('#incidentContent').incidentViewer({
+		psgId: resv.idPsg
+	});
+
 // Buttons
     $('#btnDone, #btnShowReg, #btnDelete, #btnCheckinNow').button();
 
@@ -558,5 +571,6 @@ $(document).ready(function() {
     }
 });
         </script>
+        <script type="text/javascript" src="js/incidentReports.js"></script>
     </body>
 </html>

@@ -2,32 +2,33 @@
 
     $.fn.incidentViewer = function (options) {
 
-		var incidentdialog = $('<div id="incidentDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;" title="Incident">' +
+		var incidentdialog = $('<div id="incidentDialog" class="hhk-tdbox hhk-visitdialog" title="Incident">' +
 		'<form>' +
-			'<table style="width: 100%">' +
+		'<input type="hidden" name="reportId">' +
+			'<table>' +
 			'<tr>' +
 				'<td class="tdlabel">Incident Title</td>' +
 				'<td>' +
-					'<input type="text" name="incidentTitle" style="width: 100%">' +
+					'<input type="text" name="incidentTitle">' +
 				'</td>' +
 			'</tr>' +
 			'<tr>' +
-				'<td class="tdlabel" style="width: 25%">Incident Date</td>' +
+				'<td class="tdlabel">Incident Date</td>' +
 				'<td>' +
-					'<input type="text" name="incidentDate" class="ckdate" style="width: 100%">' +
+					'<input type="text" name="incidentDate" class="ckdate">' +
 				'</td>' +
 			'</tr>' +
 			'<tr>' +
 				'<td class="tdlabel">Incident Description</td>' +
 				'<td>' +
-					'<textarea name="incidentDescription" rows="5" style="width: 100%"></textarea>' +
+					'<textarea name="incidentDescription" rows="5"></textarea>' +
 				'</td>' +
 			'</tr>' +
 			'<tr>' +
 				'<td class="tdlabel">Incident Status</td>' +
 				'<td>' +
-					'<select name="incidentStatus" style="width: 100%">' +
-						'<option vlaue="a">Active</option>' +
+					'<select name="incidentStatus">' +
+						'<option value="a">Active</option>' +
 						'<option value="r">Resolved</option>' +
 						'<option value="h">On Hold</option>' +
 						'<option value="d">Delete</option>' +
@@ -37,13 +38,13 @@
 			'<tr>' +
 				'<td class="tdlabel">Incident Resolution</td>' +
 				'<td>' +
-					'<textarea name="incidentResolution" rows="5" style="width: 100%"></textarea>' +
+					'<textarea name="incidentResolution" rows="5"></textarea>' +
 				'</td>' +
 			'</tr>' +
 			'<tr>' +
 				'<td class="tdlabel" style="width: 25%">Resolution Date</td>' +
 				'<td>' +
-					'<input type="text" name="resolutionDate" class="ckdate" style="width: 100%">' +
+					'<input type="text" name="resolutionDate" class="ckdate">' +
 				'</td>' +
 			'</tr>' +
 			'</table>' +
@@ -88,10 +89,10 @@
                 },
                 {
                 "targets": [ 2 ],
-                        title: "Category",
+                        title: "Guest",
                         searchable: true,
                         sortable: true,
-                        data: "Category"
+                        data: "Guest"
                 },
                 {
                 "targets": [ 3 ],
@@ -131,6 +132,13 @@
         return this;
     };
 	
+	function clearform($wrapper){
+		$wrapper.incidentdialog.find("input").val("");
+		$wrapper.incidentdialog.find("textarea").empty();
+		$wrapper.incidentdialog.find("textarea").val("");
+		$wrapper.incidentdialog.find("option").removeAttr("selected");
+	}
+	
     function createActions(reportId, row) {
         
         var $ul, $li;
@@ -144,14 +152,14 @@
         $ul.append($li);
         
         // Delete Edit Icon
-        $li = $('<li title="Delete report" data-reportid="' + reportId + '" />').addClass('hhk-report-button report-delete ui-corner-all ui-state-default');
+        $li = $('<li title="Delete report" data-reportid="' + reportId + '" />').addClass('hhk-report-button incident-delete ui-corner-all ui-state-default');
         $li.append($('<span class="ui-icon ui-icon-trash" />'));
         
         $ul.append($li);
         
         // Undo Delete Edit Icon
-        $li = $('<li title="Undo Delete" data-reportid="' + reportId + '" />').addClass('hhk-report-button report-undodelete ui-corner-all ui-state-default').hide();
-        $li.append($('<span class="ui-icon ui-icon-notice" />'));
+        $li = $('<li title="Undo Delete" data-reportid="' + reportId + '" />').addClass('hhk-report-button incident-undodelete ui-corner-all ui-state-default').hide();
+        $li.append($('<span class="ui-icon ui-icon-arrowreturnthick-1-w" />'));
         
         $ul.append($li);
         
@@ -160,19 +168,26 @@
         //return $ul.html();
     }
     
-    function saveIncident($wrapper){
-	    console.log($wrapper.incidentdialog.find("form").serialize());
-
+    function saveIncident($wrapper, settings, $table){
+	    var repID = $wrapper.incidentdialog.find("input[name=reportId]").val();
+	    var data = $wrapper.incidentdialog.find("form").serialize();
+	    if(repID > 0){
+		    data += "&cmd=editIncident&repId=" + repID;
+	    }else{
+		    data += "&cmd=saveIncident&guestId=" + settings.guestId + "&psgId=" + settings.psgId;
+	    }
+		
+		console.log(data);
         $.ajax({
             url: settings.serviceURL,
             dataType: 'JSON',
             type: 'post',
-            data: {
-                    cmd: 'newIncident',
-            },
+            data: data,
             success: function( data ){
                     if(data.idReport > 0){
                         $table.ajax.reload();
+                        $wrapper.incidentdialog.dialog( "close" );
+                        clearform($wrapper);
                     }else{
                         if(data.error){
                             settings.alertMessage.call(data.error, 'alert');
@@ -189,19 +204,17 @@
         //Show new incident
         $wrapper.on('click', '#incident-create', function(e){
         	e.preventDefault();                            
-            $wrapper.incidentdialog.find("form")[0].reset();
-            $wrapper.incidentdialog.find("textarea").empty();
-            $wrapper.incidentdialog.find("option").removeAttr("selected");
-            $wrapper.incidentdialog.find("option[value=a]").attr("selected", "selected");
+            clearform($wrapper);
             $wrapper.incidentdialog.dialog("open");			
         });
         
         //Show Edit mode
         $wrapper.on('click', '.incident-edit', function(e){
             e.preventDefault();
+            clearform($wrapper);
             var repID = $(e.target).parent().data('incidentid');
             $.ajax({
-                url: 'ws_ckin.php',
+                url: settings.serviceURL,
                 dataType: 'JSON',
                 type: 'post',
                 data: {
@@ -210,12 +223,12 @@
                 },
                 success: function( data ){
                         if(data.title){
-                            
+                            $wrapper.incidentdialog.find("input[name=reportId]").val(repID);
                             $wrapper.incidentdialog.find("input[name=incidentTitle]").val(data.title);
 							$wrapper.incidentdialog.find("input[name=incidentDate]").val(data.reportDate);
-							$wrapper.incidentdialog.find("textarea[name=incidentDescription]").text(data.description);
+							$wrapper.incidentdialog.find("textarea[name=incidentDescription]").val(data.description);
 							$wrapper.incidentdialog.find("option[value=" + data.status + "]").attr("selected", "selected");
-							$wrapper.incidentdialog.find("textarea[name=incidentResolution]").text(data.resolution);
+							$wrapper.incidentdialog.find("textarea[name=incidentResolution]").val(data.resolution);
 							$wrapper.incidentdialog.find("input[name=resolutionDate]").val(data.resolutionDate);
                             $wrapper.incidentdialog.dialog("open");
 				            
@@ -230,57 +243,9 @@
         });
         //End Show Edit mode
         
-        //Edit Note
-        $wrapper.on('click', '.note-done', function(e){
-            e.preventDefault();
-            var noteText = $(this).closest('tr').find('#editNoteText').val();
-            var noteId = $(this).closest('td').find('.note-edit').data('noteid');
-
-            if(noteText != ""){
-                $.ajax({
-                    url: settings.serviceURL,
-                    dataType: 'JSON',
-                    type: 'post',
-                    data: {
-                            cmd: 'updateNoteContent',
-                            idNote: noteId,
-                            data: noteText
-                    },
-                    success: function( data ){
-                            if(data.idNote > 0){
-                                $table.ajax.reload();
-                            }else{
-                                if(data.error){
-                                    settings.alertMessage.call(data.error, 'alert');
-                                }else{
-                                    settings.alertMessage.call('An unknown error occurred.', 'alert');
-                                }
-                            }
-                    }
-                });
-            }
-
-            $(this).closest('td').find('.note-action').hide();
-            $(this).closest('td').find('.note-edit').show();
-            $(this).closest('td').find('.note-delete').show();
-        });
-        //End Edit Note
-        
-        //Cancel Note
-        $wrapper.on('click', '.note-cancel', function(e){
-            e.preventDefault();
-            var noteText = $(this).data('titletext') + ' - ' + $(this).closest('tr').find('#editNoteText').val();
-            $(this).closest('tr').find('.noteText').html(noteText);
-            $(this).closest('td').find('.note-action').hide();
-            $(this).closest('td').find('.note-edit').show();
-            $(this).closest('td').find('.note-delete').show();
-
-        });
-        //End Cancel Note
-        
-        //Delete Note
-        $wrapper.on('click', '.note-delete', function(e){
-            var idnote = $(this).data("noteid");
+        //Delete Report
+        $wrapper.on('click', '.incident-delete', function(e){
+            var idReport = $(this).data("reportid");
             var row = $(this).closest('tr');
             e.preventDefault();
             $.ajax({
@@ -288,20 +253,16 @@
                     dataType: 'JSON',
                     type: 'post',
                     data: {
-                        cmd: 'deleteNote',
-                        idNote: idnote
+                        cmd: 'deleteIncident',
+                        idReport: idReport
                     },
                     success: function( data ){
-                        if(data.idNote > 0){
+                        if(data.idReport > 0){
                             row.find("td:not(:first)").css("opacity", "0.3");
-                            var noteText = row.find('#editNoteText').val();
-                                    row.find('.noteText').html(noteText);
-                                    row.find('.note-action').hide();
-                                    row.find('.note-delete').hide();
-                                    row.find('.note-edit').hide();
-                                    row.find('.note-undodelete').show();
-                            $("#noteText").val("");
-                            $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
+                            row.find('.incident-action').hide();
+                            row.find('.incident-delete').hide();
+                            row.find('.incident-edit').hide();
+                            row.find('.incident-undodelete').show();
                         }else{
                             settings.alertMessage.call(data.error, 'error');
                         }
@@ -309,11 +270,11 @@
                 });
 
         });
-        //End Delete Note
+        //End Delete Report
         
-        //Undo Delete Note
-        $wrapper.on('click', '.note-undodelete', function(e){
-            var idnote = $(this).data("noteid");
+        //Undo Delete Report
+        $wrapper.on('click', '.incident-undodelete', function(e){
+            var idReport = $(this).data("reportid");
 
             e.preventDefault();
             $.ajax({
@@ -321,14 +282,12 @@
                     dataType: 'JSON',
                     type: 'post',
                     data: {
-                        cmd: 'undoDeleteNote',
-                        idNote: idnote
+                        cmd: 'undoDeleteIncident',
+                        idReport: idReport
                     },
                     success: function( data ){
-                        if(data.idNote > 0){
+                        if(data.idReport > 0){
                             $table.ajax.reload();
-                            $("#noteText").val("");
-                            $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
                         }else{
                             settings.alertMessage.call(data.error, 'error');
                         }
@@ -336,7 +295,7 @@
                 });
 
         });
-        //End Undo Delete Note
+        //End Undo Delete Report
     }
 
     function createViewer($wrapper, settings) {
@@ -381,20 +340,18 @@
 				modal:true,
 				width: 800,
 				buttons: {
-					"Save": function(){
-						saveIncident($wrapper)
-					},
 					Cancel: function() {
 						$wrapper.incidentdialog.dialog( "close" );
-        			}
+						clearform($wrapper);
+        			},
+        			"Save": function(){
+						saveIncident($wrapper, settings, dtTable);
+					}
       			},
 			});
         }
         
-        //$wrapper.append(createNewNote(settings, dtTable));
-
         $wrapper.show();
-
     }
 
 }(jQuery));

@@ -105,7 +105,7 @@ class Report {
      * @param string $reportDescription
      * @param string $reportAuthor
      */
-    public static function createNew($reportTitle, $reportDate, $reportDescription, $reportAuthor = '', $reportStatus = Report::ActiveStatus ) {
+    public static function createNew($reportTitle, $reportDate, $reportDescription, $reportAuthor = '', $reportStatus = Report::ActiveStatus, $reportResolution, $reportResolutionDate, $guestId, $psgId ) {
 
         if ($reportTitle != '' && $reportAuthor != '' && $reportDescription != '') {
 
@@ -116,10 +116,14 @@ class Report {
             $report->setDescription($reportDescription);
             $report->setAuthor($reportAuthor);
             $report->setStatus($reportStatus);
+            $report->setResolution($reportResolution);
+            $report->setResolutionDate($reportResolutionDate);
+            $report->setPsgId($psgId);
+            $report->setGuestId($guestId);
             $report->idReport = 0;
 
         } else {
-            throw new Hk_Exception_Runtime('Trying to create an invalid note.  ');
+            throw new Hk_Exception_Runtime('Trying to create an invalid Incident.  ');
         }
 
         return $report;
@@ -138,6 +142,10 @@ class Report {
         $reportRS->Description->setNewVal($this->getDescription());
         $reportRS->Author->setNewVal($this->getAuthor());
         $reportRS->Status->setNewVal($this->getStatus());
+        $reportRS->Resolution->setNewVal($this->getResolution());
+        $reportRS->Resolution_Date->setNewVal($this->getResolutionDate());
+        $reportRS->Guest_Id->setNewVal($this->getGuestId());
+        $reportRS->Psg_Id->setNewVal($this->getPsgId());
         $reportRS->Last_Updated->setNewVal($this->getLastUpdated());
         $reportRS->Updated_By->setNewVal($this->getUpdatedBy());
 
@@ -156,7 +164,7 @@ class Report {
      * @param string $updatedBy
      * @return int the number of records updated.
      */
-    public function updateContents(\PDO $dbh, $reportTitle, $reportDate, $reportResolutionDate = '', $reportDescription, $reportResolution = '', $reportSignature = '', $reportSignatureDate = '', $reportAuthor = '', $reportStatus = Report::ActiveStatus, $updatedBy) {
+    public function updateContents(\PDO $dbh, $reportTitle, $reportDate, $reportResolutionDate, $reportDescription, $reportResolution, $reportStatus, $updatedBy) {
 
         $counter = 0;
 
@@ -167,10 +175,7 @@ class Report {
             $this->reportRS->Resolution_Date->setNewVal($reportResolutionDate);
             $this->reportRS->Description->setNewVal($reportDescription);
             $this->reportRS->Resolution->setNewVal($reportResolution);
-            $this->reportRS->Signature->setNewVal($reportSignature);
-            $this->reportRS->Signature_Date->setNewVal($reportSignatureDate);
-            $this->reportRS->Author->setNewVal($reportAuthor);
-            $this->reportRS->Status->setNewVal(self::ActiveStatus);
+            $this->reportRS->Status->setNewVal($reportStatus);
             $this->reportRS->Updated_By->setNewVal($updatedBy);
             $this->reportRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 

@@ -310,7 +310,7 @@ $(document).ready(function () {
 
 	//incident reports
 	$('#vIncidentContent').incidentViewer({
-		guestId: memData.id,
+		//guestId: memData.id,
 		psgId: memData.idPsg
 	});
 
