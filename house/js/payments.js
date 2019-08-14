@@ -376,6 +376,7 @@ function amtPaid() {
         kdep = 0, 
         vfee = 0,
         feePay = 0,
+        roomPay = 0,
         feePayStr = '',
         feeCharge = 0, 
         invAmt = 0, 
@@ -387,18 +388,22 @@ function amtPaid() {
         totPay = 0, 
         depRfAmt = 0,
         taxAmt = 0,
-        guestCreditAmt = 0,
         overPayAmt = 0,
         isChdOut = isCheckedOut,
-        vtaxPercent = parseFloat(p.feePayAmt.data('tax'));
+        vtaxPercent = parseFloat(p.feePayAmt.data('tax')),
+        roomBalDue = parseFloat($('#spnCfBalDue').data('rmbal'));
 
     if (isNaN(vtaxPercent)) {
         vtaxPercent = 0;
     }
     
+    if (isNaN(roomBalDue)) {
+        roomBalDue = 0;
+    }
+
     p.msg.text('').hide();
 
-    // Visit fees
+    // Visit fees - vfee
     if (p.visitFeeCb.length > 0) {
         
         vfee = parseFloat($('#spnvfeeAmt').data('amt'));
@@ -411,7 +416,7 @@ function amtPaid() {
         }
     }
 
-    // Deposits
+    // Deposits - kdep
     if (!isChdOut && p.keyDepCb.length > 0) {
         
         kdep = parseFloat($('#spnDepAmt').data('amt'));
@@ -424,7 +429,7 @@ function amtPaid() {
         }
     }
 
-    // Unpaid Invoices
+    // Unpaid Invoices - invAmt
     if (p.invoiceCb.length > 0) {
         
         p.invoiceCb.each(function () {
@@ -463,43 +468,26 @@ function amtPaid() {
         });
     }
 
-
-    // Fees Payments
+    // Fees Payments - feePay
     if (p.feePayAmt.length > 0) {
 
         feePayStr = p.feePayAmt.val().replace('$', '').replace(',', '');
-        feePay = parseFloat(feePayStr);
+        roomPay = parseFloat(feePayStr);
 
-        if (isNaN(feePay) || feePay < 0) {
+        if (isNaN(roomPay) || roomPay <= 0) {
             p.feePayAmt.val('');
-            feePay = 0;
-        }
+            $('#feesTax').val('');
+            roomPay = 0; taxAmt = 0;
 
-        if (vtaxPercent > 0) {
-            taxAmt += roundTo((feePay * vtaxPercent / 100), 2);
+        } else if (vtaxPercent > 0) {
+            taxAmt = roundTo((roomPay * vtaxPercent / 100), 2);
             $('#feesTax').val(taxAmt.toFixed(2).toString());
-            feePay += taxAmt;
         }
+        
+        feePay = roomPay + taxAmt;
     }
 
-    // Fees Charges (checkout)  
-    if (p.feesCharges.length > 0) {
-        feeCharge = parseFloat($('#spnCfBalDue').data('bal'));  //parseFloat(p.feesCharges.val());
-        if (isNaN(feeCharge) || feeCharge < 0) {
-            feeCharge = 0;
-        }
-        p.feesCharges.val((feeCharge === 0 ? '' : feeCharge.toFixed(2).toString()));
-    }
-
-    // Guest Credit (checkout)
-    if (p.guestCredit.length > 0) {
-        guestCreditAmt = parseFloat(p.guestCredit.val());
-        if (isNaN(guestCreditAmt) || guestCreditAmt > 0) {
-            guestCreditAmt = 0;
-        }
-    }
-
-    // Deposit refund? (checkout)
+    // Deposit refund? depRfAmt
     if (p.depRefundAmt.length > 0) {
         depRfAmt = parseFloat(p.depRefundAmt.val());
         if (isNaN(depRfAmt)) {
@@ -507,7 +495,7 @@ function amtPaid() {
         }
     }
 
-    // Test held amount if any.
+    // Test held amount if any. - heldAmt
     if (p.heldCb.length > 0) {
         
         heldTotal = parseFloat(p.heldCb.data('amt'));
@@ -524,55 +512,78 @@ function amtPaid() {
 
 
     // Compute total charges
-    totCharges = vfee + kdep + feeCharge + invAmt + guestCreditAmt + depRfAmt;
-
-
-    if (!isChdOut) {
-        totCharges += feePay;
-    }
-    
-    // Adjust charges by any held amount
-    if (totCharges > 0 && heldAmt > 0) {
-
-        // reduce total charges
-        if (heldAmt > totCharges && !isChdOut) {
-            heldAmt = totCharges;
-            totCharges = 0;
-        } else {
-            totCharges -= heldAmt;
-        }
-
-    } else if (totCharges < 0 && heldAmt > 0) {
-        // Increase return
-        totCharges -= heldAmt;
-        
-    } else if (totCharges === 0 && heldAmt > 0 && isChdOut) {
-        
-        totCharges -= heldAmt;
-        
-    } else if (p.heldCb.length > 0) {
- 
-        p.heldAmtTb.val('');
-    }
+    totCharges = vfee + kdep + invAmt + depRfAmt;
 
 
 
     if (isChdOut) {
         
+        // preset some controls
+        $('.hhk-Overpayment').hide();
+        overPayAmt = 0;
+        $('.hhk-HouseDiscount').hide();
+        p.hsDiscAmt.val('');
         $('.hhk-minPayment').show('fade');
 
-        // Payment amount
-        if (totCharges < 0) {
-            totPay = totCharges - feePay;
-        } else {
-            totPay = totCharges + feePay;
+        // Fees Charges
+        feeCharge = parseFloat($('#spnCfBalDue').data('bal'));  
+        
+        if (isNaN(feeCharge)) {
+            feeCharge = 0;
         }
 
-        // Manage overpayment
-        if ((totCharges - feePay) <= 0) {
+        p.feesCharges.val((feeCharge > 0 ? feeCharge.toFixed(2).toString() : ''));
+        p.guestCredit.val((feeCharge < 0 ? feeCharge.toFixed(2).toString() : ''));
 
-            $('.hhk-HouseDiscount').hide();
+        totCharges += feeCharge;
+        
+        // Adjust charges by any held amount
+        if (totCharges > 0 && heldAmt > 0) {
+            // Decrease charges
+            totCharges -= heldAmt;
+        } else if (totCharges < 0 && heldAmt > 0) {
+            // Increase return
+            totCharges -= heldAmt;
+        } else if (totCharges === 0 && heldAmt > 0) {
+            totCharges -= heldAmt;
+        } else if (p.heldCb.length > 0) {
+            p.heldAmtTb.val('');
+        }
+
+
+        if (totCharges - feePay > 0 && p.finalPaymentCb.prop('checked')) {
+
+            // Manage House Waive of underpaid amount
+            
+            var roomBal = roomBalDue - roomPay;   // subtract any payment added to the UI.
+            roomBalDue = roomBal + feePay;
+            
+            hsPay = (totCharges - feeCharge) + roomBal;  // remove the taxed room charge and replace with the remaining untaxed room charge.
+
+            if (hsPay <= 0) {
+                hsPay = 0;
+                p.hsDiscAmt.val('');
+            } else {
+                p.hsDiscAmt.val((0 - hsPay).toFixed(2).toString());
+                p.feesCharges.val(roomBalDue.toFixed(2).toString());
+
+                totCharges = (totCharges - feeCharge) + roomBalDue;
+            }
+
+            totPay = feePay;
+
+            $('.hhk-HouseDiscount').show('fade');
+
+        } else if (totCharges - feePay > 0) {
+
             p.hsDiscAmt.val('');
+            totPay = vfee + kdep + invAmt + feePay;
+            $('.hhk-HouseDiscount').show('fade');
+
+        } else {
+        // Guest paid too much
+
+            // Manage overpayment
             p.finalPaymentCb.prop('checked', false);
 
             
@@ -587,6 +598,13 @@ function amtPaid() {
                         alert('Pay Room Fees amount is reduced to: $' + totCharges.toFixed(2).toString());
                     }
                     feePay = totCharges;
+                    
+                    if (vtaxPercent > 0 && feePay > 0) {
+                        // back out the tax amount
+                        taxAmt = feePay - roundTo((feePay / (1 + (vtaxPercent/100))), 2);  //$line->getAmount() / (1 + $tax)
+
+                    }
+                    
                     overPayAmt = 0;
                     p.selBalTo.val('');
                     $('#txtRtnAmount').val('');
@@ -615,49 +633,34 @@ function amtPaid() {
             } else {
                 $('.hhk-Overpayment').hide();
             }
-
-
-        } else {
-
-            // Manage Underpayment
-            $('.hhk-Overpayment').hide();
-            overPayAmt = 0;
-            
-            if (p.finalPaymentCb.prop('checked')) {
-                
-                var balDue = parseFloat($('#spnCfBalDue').data('rmbal'));
-                if (isNaN(balDue)) {
-                    balDue = 0;
-                }
-                
-                hsPay = (balDue + vfee) - feePay;  //totCharges - feePay;
-                
-                if (hsPay <= 0) {
-                    hsPay = 0;
-                    p.hsDiscAmt.val('');
-                } else {
-                    p.hsDiscAmt.val((0 - hsPay).toFixed(2).toString());
-                    p.feesCharges.val(balDue.toFixed(2).toString());
-                    
-                    totCharges = (totCharges - feeCharge) + hsPay + feePay;
-                }
-                
-                totPay = feePay;
-
-            } else {
-                p.hsDiscAmt.val('');
-                totPay = vfee + kdep + invAmt + feePay;
-            }
-
-
-            $('.hhk-HouseDiscount').show('fade');
-
-
         }
 
     } else {
 
         // still checked in
+        totCharges += feePay;
+        
+        // Adjust charges by any held amount
+        if (totCharges > 0 && heldAmt > 0) {
+
+            // reduce total charges
+            if (heldAmt > totCharges) {
+                heldAmt = totCharges;
+                totCharges = 0;
+            } else {
+                totCharges -= heldAmt;
+            }
+
+        } else if (totCharges < 0 && heldAmt > 0) {
+            // Increase return
+            totCharges -= heldAmt;
+
+        } else if (p.heldCb.length > 0) {
+
+            p.heldAmtTb.val('');
+        }
+        
+        
         $('.hhk-Overpayment').hide();
         $('.hhk-HouseDiscount').hide();
         p.hsDiscAmt.val('');
@@ -704,8 +707,10 @@ function amtPaid() {
 
     if (feePay === 0 && feePayStr === '') {
         p.feePayAmt.val('');
+        $('#feesTax').val('');
     } else {
         p.feePayAmt.val((feePay - taxAmt).toFixed(2).toString());
+        $('#feesTax').val(taxAmt.toFixed(2).toString());
     }
 
     if (overPayAmt === 0) {
@@ -977,8 +982,9 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             feePayAmt = p.feePayAmt,
             tax = parseFloat($('#spnRcTax').data('tax')),
             adjust = parseFloat($('#txtadjAmount').val());
-;
 
+        $(this).val('');
+        
         if (isNaN(noGuests)) {
             noGuests = 1;
         }
@@ -996,7 +1002,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
         }
 
         if (isNaN(days)) {
-            $(this).val('');
+            
             return;
         }
 

@@ -37,6 +37,7 @@ class CurrentAccount {
     // Charges.
     protected $lodgingTax;
     protected $additionalChargeTax;
+
     protected $roomCharge;
     protected $totalDiscounts;
     protected $visitFeeCharged;

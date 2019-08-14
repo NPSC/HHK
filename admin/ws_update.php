@@ -67,6 +67,7 @@ require (FUNCTIONS . 'mySqlFunc.php');
 
 $uS = Session::getInstance();
 
+$ck = '';
 $cd = '';
 $un = '';
 $so = '';
@@ -82,6 +83,9 @@ if (isset($_GET['so'])) {
 }
 if (isset($_GET['un'])) {
     $un = filter_input(INPUT_GET, 'un');
+}
+if (isset($_GET['ck'])) {
+    $ck = filter_input(INPUT_GET, 'ck');
 }
 
 if ($cd == '' || $so == '' || $un == '') {
@@ -122,23 +126,31 @@ $record = UserClass::getUserCredentials($dbh, $un);
 
 if (is_array($record) && isset($record['Enc_PW']) && $record['Enc_PW'] === $so) {
 
-    $uS->regenSessionId();
-
-    // Record the login.
-    UserClass::_setSession($dbh, $uS, $record);
-
-    // Must be THE ADMIN
-    if ($page->is_TheAdmin()) {
-
-        $update = new UpdateSite();
-
-        $update->doUpdate($dbh);
-
-        $events['errorMsg'] = $update->getErrorMsg();
-        $events['resultMsg'] = $update->getResultAccumulator();
+    if (strtolower($ck) == 'y') {
+        // password check
+        $events['resultMsg'] = 'bubbly';
 
     } else {
-        $events['error'] = 'This user does not enjoy site update priviledges.';
+
+        //perform update
+        $uS->regenSessionId();
+
+        // Record the login.
+        UserClass::_setSession($dbh, $uS, $record);
+
+        // Must be THE ADMIN
+        if ($page->is_TheAdmin()) {
+
+            $update = new UpdateSite();
+
+            $update->doUpdate($dbh);
+
+            $events['errorMsg'] = $update->getErrorMsg();
+            $events['resultMsg'] = $update->getResultAccumulator();
+
+        } else {
+            $events['error'] = 'This user does not enjoy site update priviledges.';
+        }
     }
 
 } else {
