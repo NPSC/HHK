@@ -58,7 +58,7 @@ define('JQ_DT_JS', '../js/datatables.min.js');
 define('NOTY_JS', '../js/noty-min.js');
 define('NOTY_SETTINGS_JS', 'js/notySettings.js');  //These are local
 define('DIRRTY_JS', '../js/jquery.dirrty.js');
-
+define('JSIGNATURE_JS', '../js/jSignature.min.js');
 define('PRINT_AREA_JS', '../js/jquery.PrintArea.js');
 define('CREATE_AUTO_COMPLETE_JS', '../js/createAutoComplete.js');
 define('ADDR_PREFS_JS', '../js/addrPrefs-min.js');

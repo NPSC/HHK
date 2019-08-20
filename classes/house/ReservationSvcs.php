@@ -62,6 +62,7 @@ class ReservationSvcs {
             return array('error'=>'Bad reservation Id: ' . $idReservation);
         }
 
+		require(HOUSE . 'TemplateForm.php');
         require(HOUSE . 'ConfirmationForm.php');
 
         $reserv = Reservation_1::instantiateFromIdReserv($dbh, $idReservation);

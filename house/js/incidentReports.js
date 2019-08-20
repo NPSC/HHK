@@ -47,6 +47,14 @@
 					'<input type="text" name="resolutionDate" class="ckdate">' +
 				'</td>' +
 			'</tr>' +
+			'<tr>' +
+				'<td class="tdlabel" style="width: 25%">Signature<br><div style="color: #959595; display: block;">Use your mouse, finger or touch pen to sign</div><span></td>' +
+				'<td>' +
+					'<div class="signature-actions" style="text-align: right;">' +
+						'<div style="display: inline-block" class="hhk-clear-signature-btn hhk-report-button incident-edit ui-corner-all ui-state-default">Clear Signature</span>' +
+					'</div>' +
+					'<div style="height: 141px;" class="jsignature"></div>' +
+				'</td>' +
 			'</table>' +
 		'</form>' +
 		'</div>');
@@ -137,6 +145,13 @@
 		$wrapper.incidentdialog.find("textarea").empty();
 		$wrapper.incidentdialog.find("textarea").val("");
 		$wrapper.incidentdialog.find("option").removeAttr("selected");
+		$wrapper.incidentdialog.find(".jsignature").empty();
+		$wrapper.incidentdialog.find(".jsignature").jSignature({"width":"563px", "height": "141px"});
+		$wrapper.incidentdialog.find(".hhk-clear-signature-btn").button();
+		$wrapper.incidentdialog.on("click", ".hhk-clear-signature-btn", function(){
+			$wrapper.incidentdialog.find(".jsignature").jSignature("clear");
+		});
+
 	}
 	
     function createActions(reportId, row) {
@@ -300,9 +315,6 @@
 
     function createViewer($wrapper, settings) {
         
-//        console.log(settings.serviceURL + settings.idReservation);
-//        console.log(settings.dtCols);
-        
         if (settings.guestId > 0 || settings.psgId > 0) {
 	        var newBtn = $('<button class="ui-button ui-corner-all ui-state-default" id="incident-create"><span class="ui-icon ui-icon-plus"></span>New Incident</button>').appendTo($wrapper);
             var $table = $('<table />').attr(settings.tableAttrs).appendTo($wrapper);
@@ -340,6 +352,10 @@
 				modal:true,
 				width: 800,
 				buttons: {
+					Print: function() {
+						$wrapper.incidentdialog.dialog( "close" );
+						clearform($wrapper);
+        			},
 					Cancel: function() {
 						$wrapper.incidentdialog.dialog( "close" );
 						clearform($wrapper);

@@ -328,7 +328,21 @@ try {
 
         break;
 
+	case 'getIncidentCounts':
+		$psgId = 0;
+        $guestId = 0;
 
+        if (isset($_GET['psgId'])) {
+            $psgId = intval(filter_input(INPUT_GET, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if (isset($_GET['guestId'])) {
+            $guestId = intval(filter_input(INPUT_GET, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+        
+        $events = ListReports::loadCounts($dbh, $guestId, $psgId, $_GET);
+        
+		break;
 	case 'getIncidentList':
 
         $psgId = 0;

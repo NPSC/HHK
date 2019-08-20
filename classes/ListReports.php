@@ -16,6 +16,12 @@
  */
 class ListReports {
 
+	public static function loadCounts (\PDO $dbh, $guestId, $psgId, $parms) {
+
+        return false;
+
+    }
+    
     public static function loadList (\PDO $dbh, $guestId, $psgId, $parms) {
 
         $columns = array(
