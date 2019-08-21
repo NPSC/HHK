@@ -186,7 +186,7 @@ class RateChooser {
         }
 
         if (is_null($chRateDT)) {
-            return 'The Change Rate date not set.  ';
+            return 'The Change Rate date is not set.  ';
         }
 
 
@@ -209,7 +209,7 @@ class RateChooser {
             $departDT = new \DateTime($visitRs->Span_End->getStoredVal());
 
         } else {
-            return 'The Departure date cannot be found.  ';
+            return 'The visit Departure date cannot be found.  ';
         }
 
 
@@ -233,7 +233,7 @@ class RateChooser {
         }
 
         if ($rateCategory == '') {
-            return "The new rate category is nissing.  ";
+            return "The new rate category is not set.  ";
         }
 
         if (isset($post['txtadjAmount'])) {
@@ -276,7 +276,7 @@ class RateChooser {
         } else {
 
             if ($chRateDT == $departDT) {
-                return 'We cannot change the room rate on the last day of the visi span as there are no nights left for which to charge the new rate.';
+                return 'We cannot change the room rate on the last day of the visit span as there are no nights left for which to charge the new rate.';
             }
             // Split existing visit span into two
             $reply = $this->splitVisitSpan($dbh, $visit, $rateCategory, $assignedRate, $rateAdj, $uS->username, $chDT);

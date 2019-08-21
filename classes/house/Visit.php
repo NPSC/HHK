@@ -700,6 +700,11 @@ class Visit {
 
                 // Make second half of the stay
                 $this->addStay($stayRS, $stayOnLeave);
+
+            } else if ($stayStartDT > $visitSpanStartDT) {
+                // Remove stay from this span, add to new span at stay start date
+
+
             }
         }
 

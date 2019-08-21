@@ -505,7 +505,7 @@ if (isset($_POST['btnkfSave'])) {
             $glRs->Table_Name->setNewVal('Static_Room_Rate');
             $glRs->Code->setNewVal($newCode);
             $glRs->Description->setNewVal($dText);
-            $glRs->Substitute->setNewVal(number_format($dAmt, 2));
+            $glRs->Substitute->setNewVal($dAmt == 0 ? '0' : number_format($dAmt, 2));
 
             EditRS::insert($dbh, $glRs);
 

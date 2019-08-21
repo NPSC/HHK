@@ -515,7 +515,7 @@ abstract class PriceModel {
             }
 
             // New rate
-            if (isset($titles['0']) && $titles['0'] != '' && isset($rr1s['0']) && $rr1s['0'] != '') {
+            if (isset($titles['0']) && $titles['0'] != '') {
 
                 $rpRs = new Room_RateRS();
 
