@@ -44,7 +44,7 @@ function resvManager(initData) {
     t.getIdVisit = getIdVisit;
     t.getSpan = getSpan;
     t.setRooms = setRooms;
-    
+
     function setRooms($r) {
         rooms = $r;
     }
@@ -68,6 +68,8 @@ function resvManager(initData) {
     function getIdName() {
         return idName;
     }
+
+
 
     function FamilySection($wrapper) {
         var t = this;
@@ -100,8 +102,13 @@ function resvManager(initData) {
                     numGuests++;
 
                 } else {
-
-                    people.list()[prefix].stay = '0';
+                    
+                    // Only one person? then she is staying
+                    if ($('.hhk-cbStay').length === 1) {
+                        people.list()[prefix].stay = '1';
+                    } else {
+                        people.list()[prefix].stay = '0';
+                    }
                 }
             });
 
@@ -1122,11 +1129,11 @@ function resvManager(initData) {
                     stDate = false,
                     enDate = false,
                     drp;
-
+            
                 if (gstDate.val() === '' && arrival) {
                     gstDate.val(arrival);
                 }
-
+                
                 if (data.startDate) {
                     stDate = data.startDate;
                 }
@@ -1160,9 +1167,9 @@ function resvManager(initData) {
                     startDate: stDate,
                     endDate: enDate
                 })
-
+                
                 if (data.updateOnChange) {
-
+                    
                     drp.bind('datepicker-change', function(event, dates) {
 
                         // Update the number of days display text.
@@ -1333,6 +1340,9 @@ function resvManager(initData) {
                     if ($('#gstDate').val() != '' && $('#gstCoDate').val() != '') {
                         updateRescChooser.go($('#gstDate').val(), $('#gstCoDate').val());
                     }
+                    
+                    // stay buttons and total guests.
+                    $('.hhk-cbStay').change();
                 }
             });
         }
@@ -1643,29 +1653,28 @@ function resvManager(initData) {
                     }
                 });
             }
-
         }
 
         function setupPay(data){
 
             if ($('#selResource').length > 0 && $('#selRateCategory').length > 0) {
-
-                setupPayments(data.resv.rdiv.rooms, $('#selResource'), $('#selRateCategory'));
-
+                
+                setupPayments($('#selRateCategory'));
+                
                 $('#paymentDate').datepicker({
                     yearRange: '-1:+00',
                     numberOfMonths: 1
                 });
             }
         }
-
+        
         function setupRoom(rid) {
 
             updateRescChooser.idReservation = rid;
 
             // Room selector update for constraints changes.
             $('input.hhk-constraintsCB').change( function () {
-                // Disable max room size.
+
                 updateRescChooser.go($('#gstDate').val(), $('#gstCoDate').val());
             });
         }
@@ -1683,11 +1692,11 @@ function resvManager(initData) {
 
             return $container;
         }
-
+        
         function setUp(data) {
 
-            $rDiv = $('<div/>').addClass(' hhk-tdbox ui-widget-content').prop('id', 'divResvDetail').css('padding', '5px');
-
+            $rDiv = $('<div/>').addClass(' hhk-tdbox').prop('id', 'divResvDetail').css('padding', '5px');
+            
             // Room Chooser section
             if (data.resv.rdiv.rChooser !== undefined) {
                 $rDiv.append($(data.resv.rdiv.rChooser));
@@ -1793,13 +1802,10 @@ function resvManager(initData) {
 
             // Show confirmation form button.
             $('#btnShowCnfrm').button().click(function () {
-
                 var amount = $('#spnAmount').text();
-
                 if (amount === '') {
                     amount = 0;
                 }
-
                 $.post('ws_ckin.php', {cmd:'confrv', rid: $(this).data('rid'), amt: amount, eml: '0'}, function(d) {
 
                     data = $.parseJSON(d);
@@ -1815,9 +1821,9 @@ function resvManager(initData) {
                      if (data.confrv) {
 
                         $('div#submitButtons').hide();
-
-                        viewer.setMarkdown(data.confrv);
-                        $('#confEmail').val(data.email);
+                        $("#frmConfirm").children().remove();
+                        $("#frmConfirm").html(data.confrv)
+                            .append($('<div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><span>Email Address </span><input type="text" id="confEmail" value="'+data.email+'"/></div>'));
 
                         $("#confirmDialog").dialog('open');
                     }
@@ -1833,6 +1839,9 @@ function resvManager(initData) {
             if (data.resv.rdiv.pay !== undefined) {
                 setupPay(data);
             }
+            if (data.resv.rdiv.cof !== undefined) {
+                setupCOF();
+            }
 
             if ($('#addGuestHeader').length > 0) {
 
@@ -1840,30 +1849,6 @@ function resvManager(initData) {
                 expDatesSection.openControl = true;
                 expDatesSection.setUp(data.resv.rdiv, doOnDatesChange, $('#addGuestHeader'));
 
-//                updateRescChooser.omitSelf = false;
-//                updateRescChooser.idReservation = 0;
-//                t.checkPayments = false;
-//
-//                $('#selResource').change(function () {
-//
-//                    if ($('#gstDate').val() !== '' && $('#gstCoDate').val() !== '') {
-//
-//                        if ($(this).val() !== t.origRoomId) {
-//                            $('#divRateChooser').show();
-//                            $('#divPayChooser').show();
-//                            t.checkPayments = true;
-//                        } else {
-//                            $('#divRateChooser').hide();
-//                            $('#divPayChooser').hide();
-//                            t.checkPayments = false;
-//                        }
-//
-//                    }
-//                });
-//
-//                $('#' + familySection.divFamDetailId).on('change', '.hhk-cbStay', function () {
-//                    updateRescChooser.numberGuests = familySection.findStaysChecked() + familySection.findStays('r');
-//                });
             }
 
             t.setupComplete = true;
@@ -1898,7 +1883,7 @@ function resvManager(initData) {
         }
 
         function verify() {
-
+            
             // vehicle
             if ($('#cbNoVehicle').length > 0) {
 
@@ -2254,6 +2239,17 @@ function resvManager(initData) {
 
                 var tot = familySection.findStaysChecked() + familySection.findStays('r');
                 resvSection.$totalGuests.text(tot);
+                
+                if ($('#selResource').length > 0 && $('#selResource').val() !== '0') {
+                    var msg = 'Room may be too small';
+                    var room = rooms[$('#selResource').val()];
+                    
+                    if (tot > room.maxOcc) {
+                        $('#hhkroomMsg').text(msg).show();
+                    } else if ($('#hhkroomMsg').text() == msg) {
+                        $('#hhkroomMsg').text('').hide();
+                    }
+                }
 
                 if (tot > 0) {
                     resvSection.$totalGuests.parent().removeClass('ui-state-highlight');
@@ -2300,7 +2296,7 @@ function resvManager(initData) {
             }
 
             // Checking in now button
-            manageCheckInNowButton($('#gstDate').val(), data.rid, data.resv.rdiv.hideCiNowBtn);
+            manageCheckInNowButton($('#gstDate').val(), data.rid, false);
 
         }
 

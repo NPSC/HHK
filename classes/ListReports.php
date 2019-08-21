@@ -42,11 +42,11 @@ class ListReports {
         if ($guestId == '' && $psgId == '') {
             return array('error'=>'The Guest Id and/or PSG Id are missing.');
         }
-        
+/**        
         if($guestId != ''){
 	        $whereClause .= "Guest_Id = $guestId";
         }
-
+**/
 		if($psgId != ''){
 			if($whereClause != ''){
 				$whereClause .= ' AND ';

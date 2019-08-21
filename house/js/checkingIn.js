@@ -103,11 +103,24 @@ $(document).ready(function() {
     });
 
 	//incident reports
-	console.log(resv);
-	$('#vIncidentContent').incidentViewer({
-		guestId: resv.guestId,
-		psgId: resv.psgId
-	});
+	if(resv.rid){
+		$('#incidentContent').incidentViewer({
+			rid: resv.rid
+		});
+		$('#incidentsSection').show();
+		//incident block
+		var Ihdr = $("#incidentsSection .hhk-incidentHdr");
+		var Icontent = $("#incidentsSection #incidentContent");
+		Ihdr.click(function() {
+		    if (Icontent.css('display') === 'none') {
+		        Icontent.show('blind');
+		        Ihdr.removeClass('ui-corner-all').addClass('ui-corner-top');
+		    } else {
+		        Icontent.hide('blind');
+		        Ihdr.removeClass('ui-corner-top').addClass('ui-corner-all');
+		    }
+		});
+	}
 
 // Dialog Boxes
 

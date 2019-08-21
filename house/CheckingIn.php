@@ -236,7 +236,7 @@ $resvObjEncoded = json_encode($resvAr);
                 <div id="famSection" style="font-size: .9em; display:none; min-width: 810px;" class="ui-widget hhk-visitdialog hhk-row"></div>
                 <?php if ($uS->UseIncidentReports) { ?>
 	            <div id="incidentsSection" style="font-size: .9em; display: none; min-width: 810px" class="ui-widget hhk-visitdialog hhk-row">
-		            <div style="padding:2px; cursor:pointer;" class="ui-widget-header ui-state-default ui-corner-top">
+		            <div style="padding:2px; cursor:pointer;" class="ui-widget-header ui-state-default ui-corner-top hhk-incidentHdr">
 			            <div class="hhk-checkinHdr" style="display: inline-block;">Incidents<span id="incidentCounts"></span></div>
 			            <ul style="list-style-type:none; float:right;margin-left:5px;padding-top:2px;" class="ui-widget"><li class="ui-widget-header ui-corner-all" title="Open - Close"><span id="f_drpDown" class="ui-icon ui-icon-circle-triangle-n"></span></li></ul>
 			        </div>

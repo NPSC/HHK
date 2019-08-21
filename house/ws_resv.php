@@ -328,25 +328,11 @@ try {
 
         break;
 
-	case 'getIncidentCounts':
-		$psgId = 0;
-        $guestId = 0;
-
-        if (isset($_GET['psgId'])) {
-            $psgId = intval(filter_input(INPUT_GET, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        if (isset($_GET['guestId'])) {
-            $guestId = intval(filter_input(INPUT_GET, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        
-        $events = ListReports::loadCounts($dbh, $guestId, $psgId, $_GET);
-        
-		break;
 	case 'getIncidentList':
 
         $psgId = 0;
         $guestId = 0;
+        $rId = 0;
 
         if (isset($_GET['psgId'])) {
             $psgId = intval(filter_input(INPUT_GET, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);
@@ -354,6 +340,17 @@ try {
 
         if (isset($_GET['guestId'])) {
             $guestId = intval(filter_input(INPUT_GET, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+        
+        if (isset($_GET['rid'])) {
+            $rid = intval(filter_input(INPUT_GET, 'rid', FILTER_SANITIZE_NUMBER_INT), 10);
+            $stmt = $dbh->query("SELECT reg.idPsg FROM reservation res
+JOIN registration reg on res.`idRegistration` = reg.`idRegistration`
+WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
+			$result = $stmt->fetchAll();
+			if(count($result) == 1){
+				$psgId = $result[0]["idPsg"];
+			}
         }
 
         require(CLASSES . 'DataTableServer.php');

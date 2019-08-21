@@ -15,7 +15,7 @@
 			'<tr>' +
 				'<td class="tdlabel">Incident Date</td>' +
 				'<td>' +
-					'<input type="text" name="incidentDate" class="ckdate">' +
+					'<input type="text" name="incidentDate" class="incdate" readonly="readonly">' +
 				'</td>' +
 			'</tr>' +
 			'<tr>' +
@@ -63,6 +63,7 @@
         var defaults = {
             guestId: 0,
             psgId: 0,
+            rid: 0,
             serviceURL: 'ws_resv.php',
             newLabel: 'New Incident',
             tableAttrs: {
@@ -151,7 +152,7 @@
 		$wrapper.incidentdialog.on("click", ".hhk-clear-signature-btn", function(){
 			$wrapper.incidentdialog.find(".jsignature").jSignature("clear");
 		});
-
+		$wrapper.incidentdialog.find(".incdate").datepicker({autoSize: true, dateFormat: 'M d, yy'}).datepicker("setDate", "today");
 	}
 	
     function createActions(reportId, row) {
@@ -312,31 +313,137 @@
         });
         //End Undo Delete Report
     }
+    
+    function Print($wrapper, settings)
+	{
+		var repID = $wrapper.incidentdialog.find("input[name=reportId]").val();
+
+		$.ajax({
+        url: settings.serviceURL,
+        dataType: 'JSON',
+        type: 'post',
+        data: {
+                cmd: 'getincidentreport',
+                repid: repID,
+        },
+        success: function( data ){
+                if(data.title){
+	                console.log(data);
+	                var status = "";
+	                if(data.status == "a"){
+		                status = "Active";
+	                }else if(data.status == "h"){
+		                status = "On Hold";
+	                }else if(data.status == "r"){
+		                status = "Resolved";
+	                }
+                    var body = '<div id="incidentPrint">' +
+							'<table cellpadding="10">' +
+							'<tr>' +
+								'<td class="tdlabel">Title</td>' +
+								'<td>' +
+									data.title +
+								'</td>' +
+							'</tr>' +
+							'<tr>' +
+								'<td class="tdlabel">Date</td>' +
+								'<td>' +
+									data.reportDate +
+								'</td>' +
+							'</tr>' +
+							'<tr>' +
+								'<td class="tdlabel">Description</td>' +
+								'<td>' +
+									data.description +
+								'</td>' +
+							'</tr>' +
+							'<tr>' +
+								'<td class="tdlabel">Status</td>' +
+								'<td>' +
+									status +
+								'</td>' +
+							'</tr>' +
+							'<tr>' +
+								'<td class="tdlabel">Resolution</td>' +
+								'<td>' +
+									data.resolution +
+								'</td>' +
+							'</tr>' +
+							'<tr>' +
+								'<td class="tdlabel" style="width: 25%;">Resolution Date</td>' +
+								'<td>' +
+									data.resolutionDate +
+								'</td>' +
+							'</tr>' +
+							'<tr>' +
+								'<td class="tdlabel" style="width: 25%; height: 50px;">Signature</td>' +
+								'<td>' +
+									
+								'</td>' +
+							'</table>' +
+						'</div>';
+		            var mywindow = window.open('', 'PRINT', 'height=400,width=600');
+				    mywindow.document.write('<html><head><title>' + document.title  + '</title>');
+				    mywindow.document.write('<link href="css/incidentReports.css" rel="stylesheet" type="text/css">');
+				    mywindow.document.write('</head><body >');
+				    mywindow.document.write('<h2>' + document.title  + ' - Incident Report</h>');
+				    mywindow.document.write(body);
+				    mywindow.document.write('</body></html>');
+				
+				    mywindow.document.close(); // necessary for IE >= 10
+				    mywindow.focus(); // necessary for IE >= 10*/
+				
+				    mywindow.print();
+				    mywindow.close();
+		            
+                }else{
+                    
+                }
+        }
+    });
+	    
+	
+	    return true;
+	}
 
     function createViewer($wrapper, settings) {
         
-        if (settings.guestId > 0 || settings.psgId > 0) {
+        if (settings.guestId > 0 || settings.psgId > 0 || settings.rid > 0) {
 	        var newBtn = $('<button class="ui-button ui-corner-all ui-state-default" id="incident-create"><span class="ui-icon ui-icon-plus"></span>New Incident</button>').appendTo($wrapper);
             var $table = $('<table />').attr(settings.tableAttrs).appendTo($wrapper);
 
-            var dtTable = $table.DataTable({
+            var dtTable = $table
+            .on( 'draw.dt', function (e, settings) {
+	            var api = new $.fn.dataTable.Api( settings );
+	            var result = api.rows().data();
+                var active = 0;
+                $.each(result, function( index, value ) {
+	                if(value.Status == "Active"){
+		                active++;
+	                }
+	            })
+	            $("#incidentCounts").text(" - " + active + " active");
+		    } )
+            .DataTable({
 	        "columnDefs": settings.dtCols,
 	        "serverSide": true,
 	        "processing": true,
 	        "deferRender": true,
 	        "language": {"sSearch": "Search Incidents:"},
-	        "sorting": [[1,'desc']],
+	        "sorting": [[5,'asc']],
 	        "displayLength": 5,
 	        "lengthMenu": [[5, 10, 25, -1], [5, 10, 25, "All"]],
                 "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
 	        ajax: {
 	            url: settings.serviceURL,
-                    data: {
-                        'cmd': 'getIncidentList',
-                        'guestId': settings.guestId,
-                        'psgId': settings.psgId
-                    },
+                data: {
+                    'cmd': 'getIncidentList',
+                    'guestId': settings.guestId,
+                    'psgId': settings.psgId,
+                    'rid': settings.rid
+                },
 	        }
+				
             });
 
             actions($wrapper, settings, dtTable);
@@ -353,8 +460,7 @@
 				width: 800,
 				buttons: {
 					Print: function() {
-						$wrapper.incidentdialog.dialog( "close" );
-						clearform($wrapper);
+						Print($wrapper, settings);
         			},
 					Cancel: function() {
 						$wrapper.incidentdialog.dialog( "close" );
