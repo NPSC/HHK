@@ -400,7 +400,7 @@ abstract class PriceModel {
             }
 
             if (isset($post['cbRetire'])) {
-                $retire = filter_var_array($post['cbRetire'], FILTER_SANITIZE_STRING);
+                $retires = filter_var_array($post['cbRetire'], FILTER_SANITIZE_STRING);
             }
 
             foreach ($this->roomRates as $oldRs) {
@@ -419,7 +419,7 @@ abstract class PriceModel {
                     $rpRs->FA_Category->setNewVal($oldRs->FA_Category->getStoredVal());
 
                     // Retired?  Can't be the default rate.
-                    if (isset($retire[$idRoomRate]) && $defaultRate != $oldRs->FA_Category->getStoredVal()) {
+                    if (isset($retires[$idRoomRate]) && $defaultRate != $oldRs->FA_Category->getStoredVal()) {
                         // update
                         $oldRs->Status->setNewVal(RateStatus::Retired);
                         $oldRs->Updated_By->setNewVal($username);
@@ -430,7 +430,7 @@ abstract class PriceModel {
                         HouseLog::logRoomRate($dbh, 'update', $idRoomRate, HouseLog::getUpdateText($oldRs), $username);
                         continue;
 
-                    } else if (isset($retire[$idRoomRate]) === FALSE && $oldRs->Status->getStoredVal() == RateStatus::Retired) {
+                    } else if (isset($retires[$idRoomRate]) === FALSE && $oldRs->Status->getStoredVal() == RateStatus::Retired) {
                         $oldRs->Status->setNewVal(RateStatus::Active);
                     }
 
@@ -532,7 +532,8 @@ abstract class PriceModel {
                 if (isset($mins[0])) {
                     $rpRs->Min_Rate->setNewVal(str_replace(',', '', str_replace('$', '', $mins['0'])));
                 }
-                $rpRs->FA_Category->setNewVal('r');
+
+                $rpRs->FA_Category->setNewVal($this->getNewRateCategory());
                 $rpRs->PriceModel->setNewVal($this->getPriceModelCode());
 
                 $rpRs->Title->setNewVal($titles['0']);
@@ -548,6 +549,26 @@ abstract class PriceModel {
         }
 
         return $defaultRate;
+    }
+
+    protected function getNewRateCategory() {
+
+        $newCats = array('ra','rb','rc','rd','re','rf','rg','rh','ri','rj','rk','rl','rm','rn','ro','rp','rq','rr','rs','rt','ru','rv','rw','rx','ry','rz');
+        $flpnew = array_flip($newCats);
+
+        foreach ($this->roomRates as $oldRs) {
+            if (isset($flpnew[$oldRs->FA_Category->getStoredVal()])) {
+                unset($newCats[$flpnew[$oldRs->FA_Category->getStoredVal()]]);
+            }
+        }
+
+        reset($newCats);
+
+        if (count($newCats) > 0) {
+            return array_shift($newCats);
+        } else {
+            throw new Hk_Exception_Runtime('Ran out of new room rate codes!');
+        }
     }
 
     protected function getPriceModelCode() {

@@ -699,11 +699,15 @@ class Visit {
                 EditRS::updateStoredVals($stayRS);
 
                 // Make second half of the stay
-                $this->addStay($stayRS, $stayOnLeave);
+                $this->addStay($stayRS, $stayOnLeave, $this->visitRS->Span_Start->getStoredVal());
 
-            } else if ($stayStartDT > $visitSpanStartDT) {
-                // Remove stay from this span, add to new span at stay start date
+            } else if ($stayStartDT > $visitSpanStartDT && count($oldStayStatus) > 1) {
 
+                // Remove stay from this span
+                EditRS::delete($dbh, $stayRS, array($stayRS->idStays));
+
+                // add stay at stay start date
+                $this->addStay($stayRS, $stayOnLeave, $stayRS->Span_Start_Date->getStoredVal());
 
             }
         }
@@ -712,29 +716,29 @@ class Visit {
 
     }
 
-    protected function addStay(StaysRS $oldStay, $stayOnLeave) {
+    protected function addStay(StaysRS $oldStay, $stayOnLeave, $spanStDate) {
+
+        $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants);
 
         // Check room size
-        $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants);
         if (is_null($rm)) {
-            throw new Hk_Exception_Runtime('Room is full.  ');
+            throw new Hk_Exception_Runtime('The room is full.  ');
         }
 
-        // Create a new stay in memory
+        // Create a new stay record
         $stayRS = new StaysRS();
 
         $stayRS->idName->setNewVal($oldStay->idName->getStoredVal());
         $stayRS->idRoom->setNewVal($rm->getIdRoom());
         $stayRS->Checkin_Date->setNewVal($oldStay->Checkin_Date->getStoredVal());
         $stayRS->Checkout_Date->setNewVal($this->visitRS->Actual_Departure->getStoredVal());
-        $stayRS->Span_Start_Date->setNewVal($this->visitRS->Span_Start->getStoredVal());
+        $stayRS->Span_Start_Date->setNewVal($spanStDate);
         $stayRS->Span_End_Date->setNewVal($this->visitRS->Span_End->getStoredVal());
         $stayRS->Expected_Co_Date->setNewVal($oldStay->Expected_Co_Date->getStoredVal());
-
         $stayRS->On_Leave->setNewVal($stayOnLeave);
         $stayRS->Status->setNewVal($this->visitRS->Status->getStoredVal());
-
         $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+
         $this->stays[] = $stayRS;
     }
 

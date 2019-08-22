@@ -748,13 +748,14 @@ WHERE
         $preTaxRmCharge = 0;
         $roomTaxPaid = array();
 
-        // Visit fee invoiced?
+
         foreach ($invLines as $l) {
+            // Visit fee invoiced?
             if ($l['Item_Id'] == ItemId::VisitFee) {
                 $visitFeeInvoiced = TRUE;
             }
 
-            // Clear any taxes paid
+            // Zero taxes paid
             if ($l['Type_Id'] == 2) {
                 $roomTaxPaid[$l['Item_Id']] = 0;
             }
@@ -778,7 +779,7 @@ WHERE
 
                             $totalTax = round( ($preTaxRmCharge * $t['Percentage'] / 100), 2);
 
-                            if (abs($totalTax - $roomTaxPaid[$t['taxIdItem']]) <= .01) {
+                            if (isset($roomTaxPaid[$t['taxIdItem']]) && abs($totalTax - $roomTaxPaid[$t['taxIdItem']]) <= .01) {
                                 $totalTax = $roomTaxPaid[$t['taxIdItem']];
                             }
 
@@ -786,9 +787,9 @@ WHERE
 
                             $tbl->addBodyTr(
                                 HTMLTable::makeTd($t['Description'], array('colspan'=>'4'))
-                                .HTMLTable::makeTd(number_format($t['Percentage'], 3) . '%')
+                                .HTMLTable::makeTd((floor($t['Percentage']) == $t['Percentage'] ? number_format($t['Percentage'], 0) : number_format($t['Percentage'], 3)) . '%', array('style'=>'text-align:right;'))
                                 .HTMLTable::makeTd(' ')
-                                .HTMLTable::makeTd($totalTax)
+                                .HTMLTable::makeTd(number_format($totalTax, 2), array('style'=>'text-align:right;'))
                             );
                         }
                     }
@@ -929,7 +930,7 @@ WHERE
 
                 $totalTax = round( ($preTaxRmCharge * $t['Percentage'] / 100), 2);
 
-                if (abs($totalTax - $roomTaxPaid[$t['taxIdItem']]) <= .01) {
+                if (isset($roomTaxPaid[$t['taxIdItem']]) && abs($totalTax - $roomTaxPaid[$t['taxIdItem']]) <= .01) {
                     $totalTax = $roomTaxPaid[$t['taxIdItem']];
                 }
 
@@ -937,9 +938,9 @@ WHERE
 
                 $tbl->addBodyTr(
                     HTMLTable::makeTd($t['Description'], array('colspan'=>'4'))
-                    .HTMLTable::makeTd(number_format($t['Percentage'], 3) . '%')
+                    .HTMLTable::makeTd((floor($t['Percentage']) == $t['Percentage'] ? number_format($t['Percentage'], 0) : number_format($t['Percentage'], 3)) . '%', array('style'=>'text-align:right;'))
                     .HTMLTable::makeTd(' ')
-                    .HTMLTable::makeTd($totalTax)
+                    .HTMLTable::makeTd(number_format($totalTax, 2), array('style'=>'text-align:right;'))
                 );
             }
         }
