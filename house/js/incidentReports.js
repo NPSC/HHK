@@ -44,7 +44,7 @@
 			'<tr>' +
 				'<td class="tdlabel" style="width: 25%">Resolution Date</td>' +
 				'<td>' +
-					'<input type="text" name="resolutionDate" class="ckdate">' +
+					'<input type="text" name="resolutionDate" class="resdate" readonly="readonly">' +
 				'</td>' +
 			'</tr>' +
 			'<tr>' +
@@ -153,6 +153,7 @@
 			$wrapper.incidentdialog.find(".jsignature").jSignature("clear");
 		});
 		$wrapper.incidentdialog.find(".incdate").datepicker({autoSize: true, dateFormat: 'M d, yy'}).datepicker("setDate", "today");
+		$wrapper.incidentdialog.find(".resdate").datepicker({autoSize: true, dateFormat: 'M d, yy'});
 	}
 	
     function createActions(reportId, row) {
@@ -382,7 +383,7 @@
 								'</td>' +
 							'</table>' +
 						'</div>';
-		            var mywindow = window.open('', 'PRINT', 'height=400,width=600');
+		            var mywindow = window.open('', 'PRINT', 'height=600,width=800');
 				    mywindow.document.write('<html><head><title>' + document.title  + '</title>');
 				    mywindow.document.write('<link href="css/incidentReports.css" rel="stylesheet" type="text/css">');
 				    mywindow.document.write('</head><body >');

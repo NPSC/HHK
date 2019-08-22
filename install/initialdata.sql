@@ -518,7 +518,9 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('VisitExcessPaid', 'd', 's', 'h','Default place for excess visit payments'),
 ('VerifyHospDate', 'true', 'b', 'h','Insist on hospital treatment date entry'),
 ('VisitFeeDelayDays', '0', 'i', 'h','Number of days before cleaning fee is charged'),
-('Volunteers', 'true', 'b', 'r', 'Use the Volunteer Site');
+('Volunteers', 'true', 'b', 'r', 'Use the Volunteer Site'),
+('UseIncidentReports', 'true', 'b', 'h', 'Use the Incident Reports feature')
+;
 -- ;
 
 -- Move site.cfg items to here:
