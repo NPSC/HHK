@@ -47,7 +47,7 @@
 					'<input type="text" name="resolutionDate" class="resdate" readonly="readonly">' +
 				'</td>' +
 			'</tr>' +
-			'<tr>' +
+			'<tr style="display: none;">' +
 				'<td class="tdlabel" style="width: 25%">Signature<br><div style="color: #959595; display: block;">Use your mouse, finger or touch pen to sign</div><span></td>' +
 				'<td>' +
 					'<div class="signature-actions" style="text-align: right;">' +
