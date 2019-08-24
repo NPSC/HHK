@@ -24,6 +24,88 @@ class Patch {
         $this->results = array();
     }
 
+    public function insertSiteConf(\PDO $dbh) {
+
+        // load each section of the site.cfg file.
+        $entryArray = array();
+
+        $entryArray[] = array('site', 'Site_Name', 'siteName', 's', 'a');
+        $entryArray[] = array('site', 'Site_Id', 'sId', 'i', 'a');
+
+        $entryArray[] = array('email_server', 'Type', 'EmailType', 'lu', 'es');
+        $entryArray[] = array('email_server', 'Host', 'SMTP_Host', 's', 'es');
+        $entryArray[] = array('email_server', 'Port', 'SMTP_Port', 'i', 'es');
+        $entryArray[] = array('email_server', 'Username', 'SMTP_Username', 's', 'es');
+        $entryArray[] = array('email_server', 'Password', 'SMTP_Password', 'op', 'es');
+        $entryArray[] = array('email_server', 'Auth_Required', 'SMTP_Auth_Required', 'b', 'es');
+        $entryArray[] = array('email_server', 'Secure', 'SMTP_Secure', 's', 'es');
+        $entryArray[] = array('email_server', 'Debug', 'SMTP_Debug', 'i', 'es');
+        $entryArray[] = array('email_server', 'MaxAutoEmail', 'MaxAutoEmail', 'i', 'h');
+
+        $entryArray[] = array('guest_email', 'FromAddress', 'FromAddress', 'ea', 'g');
+        $entryArray[] = array('guest_email', 'BccAddress', 'BccAddress', 'ea', 'g');
+        $entryArray[] = array('guest_email', 'ReplyTo', 'ReplyTo', 'ea', 'g');
+
+        $entryArray[] = array('financial', 'RoomSubsidyId', 'subsidyId', 'i', 'f');
+        $entryArray[] = array('financial', 'InvoiceTerm', 'InvoiceTerm', 'i', 'f');
+        $entryArray[] = array('financial', 'CC_Gateway', 'ccgw', 'lu', 'fg');
+        $entryArray[] = array('financial', 'BatchSettlementHour', 'BatchSettlementHour', 's', 'f');
+        $entryArray[] = array('financial', 'PaymentDisclaimer', 'PaymentDisclaimer', 't', 'f');
+        $entryArray[] = array('financial', 'PmtPageLogoUrl', 'PmtPageLogoUrl', 'url', 'fg');
+        $entryArray[] = array('financial', 'receiptLogoFile', 'receiptLogoFile', 'url', 'f');
+        $entryArray[] = array('financial', 'receiptLogoWidth', 'receiptLogoWidth', 'i', 'f');
+        $entryArray[] = array('financial', 'statementLogoFile', 'statementLogoFile', 'url', 'f');
+        $entryArray[] = array('financial', 'statementLogoWidth', 'statementLogoWidth', 'i', 'f');
+        $entryArray[] = array('financial', 'StartGuestFeesYr', 'StartGuestFeesYr', 'i', 'h');
+
+        $entryArray[] = array('calendar', 'TimeZone', 'tz', 'lu', 'a');
+
+        $entryArray[] = array('house', 'NoReply', 'NoReplyAddr', 'ea', 'h');
+        $entryArray[] = array('house', 'Admin_Address', 'Admin_Address', 'ea', 'h');
+        $entryArray[] = array('house', 'Auto_Email_Address', 'Auto_Email_Address', 'ea', 'h');
+        $entryArray[] = array('house', 'HouseKeepingEmail', 'HouseKeepingEmail', 'ea', 'h');
+        $entryArray[] = array('house', 'Guest_Register_Email', 'Guest_Register_Email', 'ea', 'h');
+        $entryArray[] = array('house', 'Zip_Code', 'Zip_Code', 's', 'h');
+
+        $entryArray[] = array('recaptcha', 'HHK_Site_Key', 'HHK_Site_Key', 's', 'v');
+        $entryArray[] = array('recaptcha', 'HHK_Secret_Key', 'HHK_Secret_Key', 's', 'v');
+
+        $entryArray[] = array('vol_email', 'ReturnAddress ', 'ReturnAddress', 'ea', 'v');
+        $entryArray[] = array('vol_email', 'RegSubj ', 'RegSubj', 's', 'v');
+        $entryArray[] = array('vol_email', 'Disclaimer ', 'Disclaimer', 't', 'v');
+
+        // Process the data
+        $config = new Config_Lite(ciCFG_FILE);
+        $titles = new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg');
+
+        // Select all the values in sysConfig table
+        $stmt = $dbh->query("select `Key` from `sys_config`");
+        $sysConf = array();
+
+        while ($k = $stmt->fetch(PDO::FETCH_NUM)) {
+            $sysConf[$k[0]] = 1;
+        }
+
+        foreach ($entryArray as $r) {
+
+            // already in the database
+            if (isset($sysConf[$r[2]])) {
+                continue;
+            }
+
+            // Only if the config file has this key
+            if ($config->has($r[0], $r[1])) {
+
+                $v = filter_var($config->getString($r[0], $r[1]), FILTER_SANITIZE_STRING);
+
+                $c = $dbh->exec("REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Description`) VALUES "
+                        . "('" .$r[2]. "', '$v', '" .$r[3]. "', '" .$r[4]. "', '" .$titles->getString($r[0], $r[1], ''). "')");
+
+            }
+        }
+    }
+
+
     public function verifyUpLoad($zipFile, $versionFileName, $origBuild) {
 
         $fname = '..' . DS .'patch' . DS . 'patchVer.cfg';

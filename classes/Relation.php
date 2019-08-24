@@ -36,7 +36,7 @@ abstract class Relation {
     /** @var int */
     protected $id;
 
-    /** @var HTML control id attribute prefix - optional */
+    /** @var integer control id attribute prefix - optional */
     protected $idPrefex;
 
     /** @var RelationCode  */
@@ -97,16 +97,6 @@ abstract class Relation {
             case RelLinkType::Employee:
                 return new Employees($dbh, $idName);
                 break;
-
-            case 'stu':
-                // Student
-                return new StudentSupporter($dbh, $idName);
-
-
-            case 'm':
-                // Student
-                return new Student($dbh, $idName);
-
 
             default:
                 break;
@@ -510,13 +500,11 @@ where r.Relation_Type='". RelLinkType::Parnt ."' and r.Status='a' and r.Target_I
 
             // Am I already a child of this parent?
             if ($rw['Target_Id'] == $id) {
-                $sameId = TRUE;
                 return "BUT: I am already this child's parent!!! ";
             }
 
             // Am I a parent of this 'parent'?
             if ($rw['idName'] == $id) {
-                $sameId = TRUE;
                 return "BUT: this 'Child' is my parent!! ";
             }
 

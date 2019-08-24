@@ -32,7 +32,7 @@ class VisitCharges {
 
     /**
      *
-     * @var type
+     * @var float
      */
     private $itemSums;
 

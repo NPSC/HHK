@@ -557,17 +557,17 @@ class Visit {
      *
      * @param \PDO $dbh
      * @param Resource $resc
-     * @param type $visitStatus
-     * @param type $newRateCategory
-     * @param type $newRateId
-     * @param type $pledgedRate
-     * @param type $rateAdjust
-     * @param type $uname
-     * @param type $changeDate
-     * @param type $newSpan
-     * @param type $useRateGlide
-     * @param type $stayOnLeave
-     * @param type $idRoomRate
+     * @param string $visitStatus
+     * @param string $newRateCategory
+     * @param integer $newRateId
+     * @param float $pledgedRate
+     * @param float $rateAdjust
+     * @param string $uname
+     * @param string $changeDate
+     * @param integer $newSpan
+     * @param boolean $useRateGlide
+     * @param integer $stayOnLeave
+     * @param integer $idRoomRate
      * @throws Hk_Exception_Runtime
      */
     protected function createNewSpan(\PDO $dbh, Resource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $uname, $changeDate, $newSpan, $useRateGlide = TRUE, $stayOnLeave = 0) {
@@ -1333,7 +1333,7 @@ class Visit {
      * @param array $guestDates String dates indexed by idGuest
      * @param int $maxExpected The administrative limit on the number of days forward
      * @param \DateTimeZone $tz
-     * @param type $uname
+     * @param string $uname
      * @return string
      */
     public function changeExpectedCheckoutDates(\PDO $dbh, array $guestDates, $maxExpected, $uname) {

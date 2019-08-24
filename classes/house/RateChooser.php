@@ -34,7 +34,7 @@ class RateChooser {
      */
     protected $priceModel;
     /**
-     * @var \array
+     * @var array
      */
 
 

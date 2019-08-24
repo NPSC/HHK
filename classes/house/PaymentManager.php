@@ -46,7 +46,7 @@ class PaymentManager {
      * @param PaymentManagerPayment $pmp
      * @param Visit $visit
      * @param int $idPayor
-     * @param str $notes
+     * @param string $notes
      * @return Invoice
      * @throws Hk_Exception_Runtime
      */

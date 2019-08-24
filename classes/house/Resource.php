@@ -114,9 +114,9 @@ order by r.Util_Priority;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
                 return new RemoteResource($dbh, 0, $resRS, $loadCurrentOccupants);
                 break;
 
-            case ResourceTypes::Block:
-                return new BlockResource($dbh, 0, $resRS, $loadCurrentOccupants);
-                break;
+//            case ResourceTypes::Block:
+//                return new BlockResource($dbh, 0, $resRS, $loadCurrentOccupants);
+//                break;
 
             default:
                 break;

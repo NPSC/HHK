@@ -216,14 +216,11 @@ $year = date('Y');
 $months = array(date('n'));       // logically overloaded.
 $txtStart = '';
 $txtEnd = '';
-$status = '';
-$statsTable = '';
 $start = '';
 $end = '';
-$errorMessage = '';
 $showDeleted = FALSE;
 $useVisitDates = FALSE;
-
+$cFields = array();
 
 $monthArray = array(
     1 => array(1, 'January'),
@@ -646,16 +643,12 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
         // Hospital
         $hospital = '';
-        $assoc = '';
-        $hosp = '';
 
         if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] != '(None)') {
             $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] . ' / ';
-            $assoc = $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1];
         }
         if ($r['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
             $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
-            $hosp = $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
         }
 
         $statusTxt = '';

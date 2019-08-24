@@ -1334,7 +1334,7 @@ class HouseServices {
      * @param integer $idGuest
      * @param integer $idGroup
      * @param array $post
-     * @param URL $postBackPage
+     * @param string $postBackPage
      * @return array
      */
     public static function cardOnFile(\PDO $dbh, $idGuest, $idGroup, $post, $postBackPage) {

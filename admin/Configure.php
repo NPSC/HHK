@@ -225,6 +225,11 @@ if (isset($_POST['btnUpdate'])) {
     }
 }
 
+if (isset($_POST['btncopy'])) {
+
+    $patch = new Patch();
+    $patch->insertSiteConf($dbh);
+}
 
 // Zip code file
 if (isset($_FILES['zipfile'])) {
@@ -491,6 +496,7 @@ $(document).ready(function () {
                         <?php echo $conf; ?>
                         <br>
                         <div class="divSubmitButtons ui-corner-all">
+                            <input type="submit" name="btncopy" id="btncopy" value="Copy site.cfg to DB" style="margin-right:5px;"/>
                             <input type="reset" name="btnreset" id="btnreset" value="Reset" style="margin-right:5px;"/>
                             <input type="submit" name="btnSiteCnf" id="btnSiteCnf" value="Save Site Configuration"/>
                         </div>

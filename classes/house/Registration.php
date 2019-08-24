@@ -125,7 +125,7 @@ where
     /**
      *
      * @param \PDO $dbh
-     * @return type
+     * @return mixed
      */
     public function getDepositBalance(\PDO $dbh) {
 

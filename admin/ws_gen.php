@@ -224,7 +224,7 @@ try {
 } catch (PDOException $ex) {
 
     $events = array("error" => "Database Error" . $ex->getMessage());
-} catch (Hk_Exception $ex) {
+} catch (Hk_Exception_Runtime $ex) {
 
     $events = array("error" => "HouseKeeper Error" . $ex->getMessage());
 }

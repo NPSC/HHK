@@ -195,9 +195,9 @@ order by r.idResource;";
  *
  * @param array $r  db record row
  * @param array $visit
- * @param decimal $unpaid
+ * @param float $unpaid
  * @param \DateTime $departureDT
- * @param \HTMLTable $tbl
+ * @param HTMLTable $tbl
  * @param boolean $local  Flag for Excel output
  * @param \PHPExcel $sml
  * @param Object $reportRows  PHPExecl object
@@ -1150,7 +1150,7 @@ $headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Visit Repor
 $dataTable = '';
 $statsTable = '';
 $errorMessage = '';
-
+$cFields = array();
 $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
 
 $tstmt = $dbh->query("Select idItem, Description, Gl_Code, Percentage from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = 2");

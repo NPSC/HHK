@@ -38,6 +38,7 @@
  *  cd = string, site identifier
  *  un = string, user name
  *  so = string, MD5 encoded password
+ *  ck = check password only, returns 'bubbly' if correct
  *
  * Returns:
  *  error = string, access error message.  Update not attempted.

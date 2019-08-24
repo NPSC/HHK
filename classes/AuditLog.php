@@ -152,7 +152,7 @@ class NameLog implements iAuditLog {
      *
      * @param PDO $dbh
      * @param iTableRS $rs
-     * @param id $id  Member ID of member
+     * @param int $id  Member ID of member
      * @param string $user  Web user name of entity doing the changes
      * @param string $typeCode
      */

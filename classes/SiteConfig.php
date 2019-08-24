@@ -427,7 +427,7 @@ class SiteConfig {
             }
         }
 
-        $tbl->addFooterTr(HTMLTable::makeTd('', array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
+        //$tbl->addFooterTr(HTMLTable::makeTd('', array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
         return $tbl;
     }
 
@@ -436,35 +436,54 @@ class SiteConfig {
         $tbl = self::createCliteMarkup($config, $titles);
 
         // add sys config table
-        $stmt = $dbh->query("select * from sys_config order by `Category`, `Key`");
-
         $sctbl = new HTMLTable();
+        $cat = '';
 
-        $sctbl->addBodyTr(HTMLTable::makeTh('Sys Config', array('colspan' => '3', 'style'=>'text-align:left;')));
+        $stmt = $dbh->query("select s.*, g.Description as `Cat` from sys_config s left join gen_lookups g on s.Category = g.Code and g.Table_Name = 'Sys_Config_Category' order by `Category`, `Key`");
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            $attr = array(
-                'name' => 'sys_config' . '[' . $r['Key'] . ']'
-            );
+            // New Section?
+            if ($cat != $r['Cat']) {
+                $sctbl->addBodyTr(HTMLTable::makeTd($r['Cat'], array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
+                $cat = $r['Cat'];
+            }
 
 
             if ($r['Type'] == 'b') {
+                // Boolean
 
                 $opts = array(
                     array('true', 'True'),
                     array('false', 'False')
                 );
 
-                $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $r['Value'], FALSE), $attr);
+                $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $r['Value'], FALSE), array('name' => 'sys_config' . '[' . $r['Key'] . ']'));
+
+            } else if ($r['Type'] == 't') {
+                // text area
+
+                $inpt = HTMLContainer::generateMarkup('textarea', $r['Value'], array('name' => 'sys_config' . '[' . $r['Key'] . ']', 'rows'=>'2', 'cols'=>'38'));
+
+            } else if ($r['Type'] == 'i') {
+                // text area
+
+                $inpt = HTMLInput::generateMarkup($r['Value'], array('name' => 'sys_config' . '[' . $r['Key'] . ']', 'size'=>'7'));
+
+            } else if ($r['Type'] == 'lu' && $r['GenLookup'] != '') {
+                // Boolean
+
+                $opts = readGenLookupsPDO($dbh, $r['GenLookup']);
+
+                $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $r['Value'], TRUE), array('name' => 'sys_config' . '[' . $r['Key'] . ']'));
 
             } else {
 
-                $attr['size'] = 30;
-                $inpt = HTMLInput::generateMarkup($r['Value'], $attr);
+                // text input
+                $inpt = HTMLInput::generateMarkup($r['Value'], array('name' => 'sys_config' . '[' . $r['Key'] . ']', 'size'=>40));
             }
 
-            $sctbl->addBodyTr(HTMLTable::makeTd($r['Key'].':', array('class' => 'tdlabel')) . HTMLTable::makeTd($inpt) . HTMLTable::makeTd($r['Description']));
+            $sctbl->addBodyTr(HTMLTable::makeTd($r['Key'].':', array('class' => 'tdlabel')) . HTMLTable::makeTd($inpt . ' ' . $r['Description']));
 
         }
 

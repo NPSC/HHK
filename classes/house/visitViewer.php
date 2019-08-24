@@ -1549,7 +1549,7 @@ class VisitView {
      * @param PDO $dbh
      * @param array $stays
      * @param int $idRegistration
-     * @param sring $uname
+     * @param string $uname
      */
     public static function saveStaysDates(\PDO $dbh, $stays, $idRegistration, $uname) {
 

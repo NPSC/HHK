@@ -57,7 +57,7 @@ class Constraints {
 
     /**
      *
-     * @return \array
+     * @return array
      */
     public function getConstraints() {
         return $this->constraints;

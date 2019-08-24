@@ -18,7 +18,7 @@ class Guest extends Role {
     /**
      *
      * @param PDO $dbh
-     * @param type $id
+     * @param integer $id
      * @return GuestMember
      */
     public function __construct(\PDO $dbh, $idPrefix, $id, $title = 'Guest') {
