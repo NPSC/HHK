@@ -501,7 +501,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('RoomPriceModel', 'd', 's', 'h','Room rate price model - Do not change!'),
 ('RoomsPerPatient', '2', 'i', 'h','# simultaneous rooms per patient allowed'),
 ('RoomRateDefault', 'e', 's', 'h', 'Default room rate category (a, b, c, d, e, f)'),
-('SessionTimeout', '30', 'i', 'r', 'Number of minutes until an idle session get automatically logged out, 0 = never log out'),
+('SessionTimeout', '30', 'i', 'r', 'Number of minutes until an idle session get automatically logged out, max=45'),
 ('ShowCreatedDate', 'true', 'b', 'h', 'Show the Created Date in Register page tabs lists'),
 ('ShowDemographics', 'false', 'b', 'h', 'Show demographics selectors on Check in and Reservation pages'),
 ('ShowDiagTB', 'false', 'b', 'h', 'Show the diagnosis textbox (in addition to the diagnosis selector)'),

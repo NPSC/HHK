@@ -382,6 +382,8 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 		$incidentStatus = 'a';
 		$incidentResolution = '';
 		$resolutionDate = '';
+		$signature = '';
+		$signatureDate = '';
 		
 		if (isset($_POST['guestId'])) {
             $guestId = $_POST['guestId'];
@@ -407,8 +409,14 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         if (isset($_POST['resolutionDate'])) {
             $resolutionDate = $_POST['resolutionDate'];
         }
+        if (isset($_POST['signature'])) {
+            $signature = $_POST['signature'];
+        }
+        if (isset($_POST['signatureDate'])) {
+            $signatureDate = $_POST['signatureDate'];
+        }
         
-        $report = Report::createNew($incidentTitle, $incidentDate, $incidentDescription, $uS->username, $incidentStatus, $incidentResolution, $resolutionDate, $guestId, $psgId);
+        $report = Report::createNew($incidentTitle, $incidentDate, $incidentDescription, $uS->username, $incidentStatus, $incidentResolution, $resolutionDate, $signature, $signatureDate, $guestId, $psgId);
 		$report->saveNew($dbh);
 
         $events = array('status'=>'success', 'idReport'=>$report->getIdReport());
@@ -424,6 +432,8 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 		$incidentStatus = 'a';
 		$incidentResolution = '';
 		$resolutionDate = '';
+		$signature = '';
+		$signatureDate = '';
 		
 		if (isset($_POST['repId'])) {
             $repId = $_POST['repId'];
@@ -446,9 +456,15 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         if (isset($_POST['resolutionDate'])) {
             $resolutionDate = $_POST['resolutionDate'];
         }
+        if (isset($_POST['signature'])) {
+            $signature = $_POST['signature'];
+        }
+        if (isset($_POST['signatureDate'])) {
+            $signatureDate = $_POST['signatureDate'];
+        }
         
         $report = new Report($repId);
-        $report->updateContents($dbh, $incidentTitle, $incidentDate, $resolutionDate, $incidentDescription, $incidentResolution, $incidentStatus, $uS->username);
+        $report->updateContents($dbh, $incidentTitle, $incidentDate, $resolutionDate, $incidentDescription, $incidentResolution,$signature, $signatureDate, $incidentStatus, $uS->username);
 
         $events = array('status'=>'success', 'idReport'=>$report->getIdReport());
 

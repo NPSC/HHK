@@ -80,14 +80,16 @@ INSERT INTO `demo`.`sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
  INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES
  ('UseIncidentReports', 'true', 'b', 'h', 'Use the Incident Reports feature');
  
+ UPDATE `sys_config` SET `Description` = "Number of minutes until an idle session get automatically logged out, max = 45" WHERE `Key` = "SessionTimeout";
+ 
  CREATE TABLE IF NOT EXISTS `report` (
   `idReport` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `Title` varchar(240) NOT NULL DEFAULT '',
   `Category` varchar(5) NOT NULL DEFAULT '',
   `Report_Date` datetime DEFAULT NULL,
   `Resolution_Date` datetime DEFAULT NULL,
-  `Description` text NOT NULL,
-  `Resolution` text NOT NULL,
+  `Description` text DEFAULT NULL,
+  `Resolution` text DEFAULT NULL,
   `Signature` blob,
   `Signature_Date` datetime DEFAULT NULL,
   `Author` varchar(45) NOT NULL DEFAULT '',

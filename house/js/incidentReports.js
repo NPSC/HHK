@@ -27,7 +27,7 @@
 			'<tr>' +
 				'<td class="tdlabel">Incident Status</td>' +
 				'<td>' +
-					'<select name="incidentStatus">' +
+					'<select name="incidentStatus" class="incidentStatus">' +
 						'<option value="a">Active</option>' +
 						'<option value="r">Resolved</option>' +
 						'<option value="h">On Hold</option>' +
@@ -47,13 +47,19 @@
 					'<input type="text" name="resolutionDate" class="resdate" readonly="readonly">' +
 				'</td>' +
 			'</tr>' +
-			'<tr style="display: none;">' +
+			'<tr>' +
 				'<td class="tdlabel" style="width: 25%">Signature<br><div style="color: #959595; display: block;">Use your mouse, finger or touch pen to sign</div><span></td>' +
 				'<td>' +
 					'<div class="signature-actions" style="text-align: right;">' +
-						'<div style="display: inline-block" class="hhk-clear-signature-btn hhk-report-button incident-edit ui-corner-all ui-state-default">Clear Signature</span>' +
+						'<div style="display: inline-block" class="hhk-clear-signature-btn hhk-report-button incident-edit ui-corner-all ui-state-default">Clear Signature</span></div>' +
+						'<div style="display: inline-block" class="hhk-finish-signature-btn hhk-report-button incident-edit ui-corner-all ui-state-default">Finish Signature</span></div>' +
 					'</div>' +
 					'<div style="height: 141px;" class="jsignature"></div>' +
+				'</td>' +
+			'</tr>' +
+				'<td class="tdlabel">Signature Date</td>' +
+				'<td>' +
+					'<input type="text" name="signatureDate" class="sigDate" readonly="readonly">' +
 				'</td>' +
 			'</table>' +
 		'</form>' +
@@ -149,11 +155,14 @@
 		$wrapper.incidentdialog.find(".jsignature").empty();
 		$wrapper.incidentdialog.find(".jsignature").jSignature({"width":"563px", "height": "141px"});
 		$wrapper.incidentdialog.find(".hhk-clear-signature-btn").button();
+		$wrapper.incidentdialog.find(".hhk-finish-signature-btn").button();
 		$wrapper.incidentdialog.on("click", ".hhk-clear-signature-btn", function(){
 			$wrapper.incidentdialog.find(".jsignature").jSignature("clear");
+			$wrapper.incidentdialog.find(".sigDate").datepicker("setDate", "");
 		});
 		$wrapper.incidentdialog.find(".incdate").datepicker({autoSize: true, dateFormat: 'M d, yy'}).datepicker("setDate", "today");
 		$wrapper.incidentdialog.find(".resdate").datepicker({autoSize: true, dateFormat: 'M d, yy'});
+		$wrapper.incidentdialog.find(".sigDate").datepicker({autoSize: true, dateFormat: 'M d, yy'})
 	}
 	
     function createActions(reportId, row) {
@@ -186,34 +195,55 @@
     }
     
     function saveIncident($wrapper, settings, $table){
-	    var repID = $wrapper.incidentdialog.find("input[name=reportId]").val();
-	    var data = $wrapper.incidentdialog.find("form").serialize();
-	    if(repID > 0){
-		    data += "&cmd=editIncident&repId=" + repID;
+	    //validate
+	    var error = false;
+	    if($wrapper.incidentdialog.find("input[name=incidentTitle]").val() == ""){
+		    error = true;
+		    $wrapper.incidentdialog.find("input[name=incidentTitle]").addClass("ui-state-error");
 	    }else{
-		    data += "&cmd=saveIncident&guestId=" + settings.guestId + "&psgId=" + settings.psgId;
+		    $wrapper.incidentdialog.find("input[name=incidentTitle]").removeClass("ui-state-error");
 	    }
-		
-		console.log(data);
-        $.ajax({
-            url: settings.serviceURL,
-            dataType: 'JSON',
-            type: 'post',
-            data: data,
-            success: function( data ){
-                    if(data.idReport > 0){
-                        $table.ajax.reload();
-                        $wrapper.incidentdialog.dialog( "close" );
-                        clearform($wrapper);
-                    }else{
-                        if(data.error){
-                            settings.alertMessage.call(data.error, 'alert');
-                        }else{
-                            settings.alertMessage.call('An unknown error occurred.', 'alert');
-                        }
-                    }
-            }
-        });
+	    if($wrapper.incidentdialog.find("input[name=incidentDate]").val() == ""){
+		    error = true;
+		    $wrapper.incidentdialog.find("input[name=incidentDate]").addClass("ui-state-error");
+	    }else{
+		    $wrapper.incidentdialog.find("input[name=incidentDate]").removeClass("ui-state-error");
+	    }
+	    
+	    if(error == true){
+		    settings.alertMessage.call("Incident not saved. Check fields in red.", 'alert');
+	    }else{
+		    var repID = $wrapper.incidentdialog.find("input[name=reportId]").val();
+		    var data = $wrapper.incidentdialog.find("form").serialize();
+		    var signature = encodeURIComponent($wrapper.incidentdialog.find(".jsignature").jSignature("getData"))
+		    data += "&signature=" + signature;
+		    if(repID > 0){
+			    data += "&cmd=editIncident&repId=" + repID;
+		    }else{
+			    data += "&cmd=saveIncident&guestId=" + settings.guestId + "&psgId=" + settings.psgId;
+		    }
+			
+			console.log(data);
+	        $.ajax({
+	            url: settings.serviceURL,
+	            dataType: 'JSON',
+	            type: 'post',
+	            data: data,
+	            success: function( data ){
+	                    if(data.idReport > 0){
+	                        $table.ajax.reload();
+	                        $wrapper.incidentdialog.dialog( "close" );
+	                        clearform($wrapper);
+	                    }else{
+	                        if(data.error){
+	                            settings.alertMessage.call(data.error, 'alert');
+	                        }else{
+	                            settings.alertMessage.call('An unknown error occurred.', 'alert');
+	                        }
+	                    }
+	            }
+	        });
+	    }
     }
     
     function actions($wrapper, settings, $table) {
@@ -247,6 +277,8 @@
 							$wrapper.incidentdialog.find("option[value=" + data.status + "]").attr("selected", "selected");
 							$wrapper.incidentdialog.find("textarea[name=incidentResolution]").val(data.resolution);
 							$wrapper.incidentdialog.find("input[name=resolutionDate]").val(data.resolutionDate);
+							$wrapper.incidentdialog.find(".jsignature").jSignature("setData", data.signature)
+							$wrapper.incidentdialog.find("input[name=signatureDate]").val(data.signatureDate);
                             $wrapper.incidentdialog.dialog("open");
 				            
                         }else{
@@ -259,6 +291,22 @@
 			
         });
         //End Show Edit mode
+        
+        //Set resolution date to today if status is resolved
+        $wrapper.incidentdialog.on('change', '.incidentStatus', function(e){
+	        var statusSelector = $(e.currentTarget);
+	        if(statusSelector.val() == "r"){
+		        $wrapper.incidentdialog.find(".resdate").datepicker("setDate", "today");
+	        }else{
+		        $wrapper.incidentdialog.find(".resdate").datepicker("setDate", "");
+	        }
+        });
+        
+        //Set signature date to today if signature is captured
+        $wrapper.incidentdialog.on('click', '.hhk-finish-signature-btn', function(e){
+	        
+	        $wrapper.incidentdialog.find(".sigDate").datepicker("setDate", "today");
+        });
         
         //Delete Report
         $wrapper.on('click', '.incident-delete', function(e){
@@ -379,8 +427,15 @@
 							'<tr>' +
 								'<td class="tdlabel" style="width: 25%; height: 50px;">Signature</td>' +
 								'<td>' +
-									
+									'<img src="' + data.signature + '">' +
 								'</td>' +
+							'</tr>' +
+							'<tr>' +
+								'<td class="tdlabel">Signature Date</td>' +
+								'<td>' +
+									data.signatureDate +
+								'</td>' +
+							'</tr>' +
 							'</table>' +
 						'</div>';
 		            var mywindow = window.open('', 'PRINT', 'height=600,width=800');
@@ -394,8 +449,8 @@
 				    mywindow.document.close(); // necessary for IE >= 10
 				    mywindow.focus(); // necessary for IE >= 10*/
 				
-				    mywindow.print();
-				    mywindow.close();
+				    //mywindow.print();
+				    //mywindow.close();
 		            
                 }else{
                     
