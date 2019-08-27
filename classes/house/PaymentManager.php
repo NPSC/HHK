@@ -62,16 +62,16 @@ class PaymentManager {
 
         $this->pmp->setIdInvoicePayor($idPayor);
 
-        // Taxed items
-        $taxedItems = getTaxedItemList($dbh);
 
         // Process a visit payment
         if (is_null($visit) === FALSE) {
 
+            // Taxed items
+            $taxedItems = getTaxedItemList($dbh);
+
             // Visit Fee Payments
             if ($this->pmp->getVisitFeePayment() > 0) {
                 // cleaning fee
-
                 $visitFeeItem = new Item($dbh, ItemId::VisitFee, $this->pmp->getVisitFeePayment());
                 $invLine = new OneTimeInvoiceLine($uS->ShowLodgDates);
                 $invLine->createNewLine($visitFeeItem, 1, $notes);
@@ -103,7 +103,6 @@ class PaymentManager {
                 $this->invoice->addLine($dbh, $invLine, $uS->username);
             }
 
-
             // MOA refunds
             if ($this->pmp->getRetainedAmtPayment() > 0) {
 
@@ -124,7 +123,7 @@ class PaymentManager {
             }
 
             // Just use what they are willing to pay as the charge.
-            $roomCharges = $this->pmp->getRatePayment();
+            $roomPayment = $this->pmp->getRatePayment();
 
             // Room Charges are different for checked out
             if ($visit->getVisitStatus() == VisitStatus::CheckedOut) {
@@ -135,7 +134,7 @@ class PaymentManager {
                     if ($this->pmp->getFinalPaymentFlag() == TRUE) {    // means is house waive checked.
 
                         // House waive checked, charge the entire amount due
-                        $roomCharges = $this->pmp->getTotalRoomChg();
+                        $roomPayment = $this->pmp->getTotalRoomChg();
 
                     } else {
 
@@ -144,21 +143,21 @@ class PaymentManager {
 
                         if ($modifiedCharges > 0 && $this->pmp->getRatePayment() < $modifiedCharges) {
                             // We are paying less in room fees than what is due, so only charge what we are paying.
-                            $roomCharges = $this->pmp->getRatePayment() + $this->moaRefundAmt + $this->depositRefundAmt;
+                            $roomPayment = $this->pmp->getRatePayment() + $this->moaRefundAmt + $this->depositRefundAmt;
                         } else {
 
-                            $roomCharges = $this->pmp->getTotalRoomChg();
+                            $roomPayment = $this->pmp->getTotalRoomChg();
                         }
                     }
 
                 } else {
                     // Checked out, and no room charges to pay.
-                    $roomCharges = 0;
+                    $roomPayment = 0;
                 }
             }
 
             // Any charges?
-            if ($roomCharges > 0) {
+            if ($roomPayment > 0) {
                 // lodging
 
                 // Collect room fees
@@ -180,7 +179,7 @@ class PaymentManager {
                 $endPricingDT->setTime(0, 0, 0);
                 $endPricingDT->add(new \DateInterval('P' . $this->pmp->visitCharges->getNightsToPay() . "D"));
 
-                $lodging = new Item($dbh, ItemId::Lodging, $roomCharges);
+                $lodging = new Item($dbh, ItemId::Lodging, $roomPayment);
 
                 $invLine = new RecurringInvoiceLine($uS->ShowLodgDates);
 
@@ -195,7 +194,7 @@ class PaymentManager {
 
                     if ($this->pmp->getFinalPaymentFlag() == FALSE && $i['idItem'] == ItemId::Lodging) {
                         $taxInvoiceLine = new TaxInvoiceLine();
-                        $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $roomCharges), $i['Percentage']/100, '');
+                        $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $roomPayment), $i['Percentage']/100, '');
                         $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
                         $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
                     }
@@ -276,7 +275,6 @@ class PaymentManager {
 
                         $invLine = new HoldInvoiceLine($uS->ShowLodgDates);
                         $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, $overPaymemntAmt), 1, $notes);
-
 
                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
                         $this->invoice->addLine($dbh, $invLine, $uS->username);

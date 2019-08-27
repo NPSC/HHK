@@ -204,13 +204,13 @@ class RegisterForm {
         return $mkup;
     }
 
-    protected static function notesBlock($notes) {
+    protected static function notesBlock($notes, $title = 'Check-in Notes') {
 
         $mkup = '';
 
         if ($notes != '') {
 
-            $mkup = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('h2', 'Check-in Notes'), array('style'=>'border:none;border-bottom:1.5pt solid #98C723;padding-left:0;'));
+            $mkup = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('h2', $title), array('style'=>'border:none;border-bottom:1.5pt solid #98C723;padding-left:0;'));
             $mkup .= HTMLContainer::generateMarkup('p', $notes);
         }
 

@@ -639,66 +639,17 @@ class VisitView {
         return $currFees . $paymentMarkup;
     }
 
-
     public static function createCurrentFees($visitStatus, VisitCharges $visitCharge, $taxedItems, $showVisitFee = FALSE, $showRoomFees = TRUE, $showGuestNights = FALSE) {
 
-        $roomAccount = new CurrentAccount($visitStatus, $visitCharge->getNightsStayed(), $showRoomFees, $showGuestNights);
+        $roomAccount = new CurrentAccount($visitStatus, $showVisitFee, $showRoomFees, $showGuestNights);
 
-        $roomAccount->setAddnlGuestNites($visitCharge->getGuestNightsStayed() - $visitCharge->getNightsStayed());
-        $roomAccount->setVisitGlideCredit($visitCharge->getGlideCredit());
-
-        // Charges.
-        $roomAccount->setRoomCharge($visitCharge->getRoomFeesCharged());
-        $roomAccount->setTotalDiscounts($visitCharge->getItemInvCharges(ItemId::Discount) + $visitCharge->getItemInvCharges(ItemId::Waive));
-        $roomAccount->setVisitFeeCharged($visitCharge->getVisitFeeCharged());
-        $roomAccount->setAdditionalCharge($visitCharge->getItemInvCharges(ItemId::AddnlCharge));
-        $roomAccount->setUnpaidMOA($visitCharge->getItemInvPending(ItemId::LodgingMOA));
-
-        // Lodging taxes
-        if (isset($taxedItems[ItemId::Lodging])) {
-            $roomAccount->setLodgingTax(round(($roomAccount->getRoomCharge() + $roomAccount->getTotalDiscounts()) * $taxedItems[ItemId::Lodging] / 100, 2));
-        } else {
-            $roomAccount->setLodgingTax(0);
-        }
-
-        // Additional Charge taxes?
-        if (isset($taxedItems[ItemId::AddnlCharge])) {
-            $roomAccount->setAdditionalChargeTax(round($roomAccount->getAdditionalCharge() * $taxedItems[ItemId::AddnlCharge] / 100, 2));
-        } else {
-            $roomAccount->setAdditionalChargeTax(0);
-        }
-
-        // Visit Fee Balance
-        if ($showVisitFee) {
-            $roomAccount->setVfeeBal($roomAccount->getVisitFeeCharged() - $visitCharge->getVisitFeesPaid() - $visitCharge->getVisitFeesPending());
-        } else {
-            $roomAccount->setVisitFeeCharged(0);
-        }
-
-        // Room fee balance
-        $roomAccount->setRoomFeeBalance(($roomAccount->getRoomCharge() + $visitCharge->getItemInvCharges(ItemId::Discount)) - $visitCharge->getRoomFeesPaid() - $visitCharge->getRoomFeesPending());
-
-        // Payments
-        $roomAccount->setTotalPaid($visitCharge->getRoomFeesPaid()
-                + $visitCharge->getVisitFeesPaid()
-                + $visitCharge->getItemInvPayments(ItemId::AddnlCharge)
-                + $visitCharge->getItemInvPayments(ItemId::Waive)
-                + $visitCharge->getItemInvPayments('tax'));
-
-        // Pending amounts
-        $roomAccount->setAmtPending($visitCharge->getRoomFeesPending()
-                + $visitCharge->getVisitFeesPending()
-                + $visitCharge->getItemInvPending(ItemId::AddnlCharge)
-                + $visitCharge->getItemInvPending(ItemId::LodgingMOA)
-                + $visitCharge->getItemInvPending(ItemId::Waive)
-                + $visitCharge->getItemInvPending('tax'));
-
+        $roomAccount->load($visitCharge, $taxedItems);
         $roomAccount->setDueToday();
 
         return self::currentBalanceMarkup($roomAccount);
     }
 
-    public static function currentBalanceMarkup(CurrentAccount $curAccount) {
+    protected static function currentBalanceMarkup(CurrentAccount $curAccount) {
 
         $tbl2 = new HTMLTable();
         $showSubTotal = FALSE;
@@ -866,7 +817,6 @@ class VisitView {
 
     }
 
-
     /**
      * Save a subset of fields in the visit.
      *
@@ -1028,7 +978,6 @@ class VisitView {
 
         return $reply;
     }
-
 
     /**
      * Move a visit temporally by delta days

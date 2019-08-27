@@ -33,6 +33,7 @@ class CurrentAccount {
     protected $visitStatus;
     protected $showRoomFees;
     protected $showGuestNites;
+    protected $showVisitFee;
 
     // Charges.
     protected $lodgingTax;
@@ -58,11 +59,68 @@ class CurrentAccount {
 
     protected $dueToday;
 
-    public function __construct($visitStatus, $numberNitesStayed, $showRoomFees, $showGuestNights = FALSE) {
-        $this->numberNitesStayed = $numberNitesStayed;
+    public function __construct($visitStatus, $showVisitFee = FALSE, $showRoomFees = FALSE, $showGuestNights = FALSE) {
+
+
         $this->visitStatus = $visitStatus;
         $this->showRoomFees = $showRoomFees;
         $this->showGuestNites = $showGuestNights;
+        $this->showVisitFee = $showVisitFee;
+    }
+
+    public function load(VisitCharges $visitCharge, $taxedItems) {
+
+        $this->numberNitesStayed = $visitCharge->getNightsStayed();
+
+        $this->setAddnlGuestNites($visitCharge->getGuestNightsStayed() - $visitCharge->getNightsStayed());
+        $this->setVisitGlideCredit($visitCharge->getGlideCredit());
+
+        // Charges.
+        $this->setRoomCharge($visitCharge->getRoomFeesCharged());
+        $this->setTotalDiscounts($visitCharge->getItemInvCharges(ItemId::Discount) + $visitCharge->getItemInvCharges(ItemId::Waive));
+        $this->setVisitFeeCharged($visitCharge->getVisitFeeCharged());
+        $this->setAdditionalCharge($visitCharge->getItemInvCharges(ItemId::AddnlCharge));
+        $this->setUnpaidMOA($visitCharge->getItemInvPending(ItemId::LodgingMOA));
+
+        // Lodging taxes
+        if (isset($taxedItems[ItemId::Lodging])) {
+            $this->setLodgingTax(round(($this->getRoomCharge() + $this->getTotalDiscounts()) * $taxedItems[ItemId::Lodging] / 100, 2));
+        } else {
+            $this->setLodgingTax(0);
+        }
+
+        // Additional Charge taxes?
+        if (isset($taxedItems[ItemId::AddnlCharge])) {
+            $this->setAdditionalChargeTax(round($this->getAdditionalCharge() * $taxedItems[ItemId::AddnlCharge] / 100, 2));
+        } else {
+            $this->setAdditionalChargeTax(0);
+        }
+
+        // Visit Fee Balance
+        if ($this->showVisitFee) {
+            $this->setVfeeBal($this->getVisitFeeCharged() - $visitCharge->getVisitFeesPaid() - $visitCharge->getVisitFeesPending());
+        } else {
+            $this->setVisitFeeCharged(0);
+        }
+
+        // Room fee balance
+        $this->setRoomFeeBalance(($this->getRoomCharge() + $visitCharge->getItemInvCharges(ItemId::Discount)) - $visitCharge->getRoomFeesPaid() - $visitCharge->getRoomFeesPending());
+
+        // Payments
+        $this->setTotalPaid($visitCharge->getRoomFeesPaid()
+                + $visitCharge->getVisitFeesPaid()
+                + $visitCharge->getItemInvPayments(ItemId::AddnlCharge)
+                + $visitCharge->getItemInvPayments(ItemId::Waive)
+                + $visitCharge->getItemInvPayments('tax'));
+
+        // Pending amounts
+        $this->setAmtPending($visitCharge->getRoomFeesPending()
+                + $visitCharge->getVisitFeesPending()
+                + $visitCharge->getItemInvPending(ItemId::AddnlCharge)
+                + $visitCharge->getItemInvPending(ItemId::LodgingMOA)
+                + $visitCharge->getItemInvPending(ItemId::Waive)
+                + $visitCharge->getItemInvPending('tax'));
+
     }
 
     public function getAddnlGuestNites() {
@@ -132,6 +190,10 @@ class CurrentAccount {
 
     public function getShowRoomFees() {
         return $this->showRoomFees;
+    }
+
+    public function getShowVisitFee() {
+        return $this->showVisitFee;
     }
 
     public function getShowGuestNites() {

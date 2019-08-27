@@ -1229,6 +1229,7 @@ if (count($adjusts) > 0) {
 
 
 $cFields[] = array("Nights", 'nights', 'checked', '', 'n', '', array('style'=>'text-align:center;'));
+$cFields[] = array("Days", 'days', '', '', 'n', '', array('style'=>'text-align:center;'));
 
 $amtChecked = 'checked';
 

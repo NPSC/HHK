@@ -661,7 +661,7 @@ ORDER BY v.idVisit , v.Span;");
                      HTMLContainer::generateMarkup('label', "Pay", array('for'=>'keyDepRx', 'style'=>'margin-left:5px;margin-right:3px;'))
                     .HTMLInput::generateMarkup('', array('name'=>'keyDepRx', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.4em;', 'title'=>'Check if ' . $depositLabel . ' Received.'))
                     .HTMLContainer::generateMarkup('span', ($keyDepAmount > 0 ? '($' . $keyDepAmount . ')' : ''), array('id'=>'spnDepAmt', 'data-amt'=>$keyDepAmount)))
-                .HTMLTable::makeTd('$'. HTMLInput::generateMarkup($keyDepAmount, array('name'=>'keyDepAmt', 'size'=>'8', 'style'=>'border:none;text-align:right;', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'title'=>$depositLabel . ' Amount')), array('style'=>'text-align:right;'));
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($keyDepAmount, array('name'=>'keyDepAmt', 'size'=>'8', 'style'=>'border:none;text-align:right;', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'title'=>$depositLabel . ' Amount')), array('style'=>'text-align:right;'));
 
             $attrs = array('class'=>'hhk-kdrow', 'style'=>'display:none;');
             if ($keyDepAmount > 0) {
@@ -696,7 +696,7 @@ ORDER BY v.idVisit , v.Span;");
 
                 $visitFee .= HTMLTable::makeTd(HTMLContainer::generateMarkup('label', "Pay", array('for'=>'visitFeeCb', 'style'=>'margin-left:5px;margin-right:3px;'))
                     .HTMLInput::generateMarkup('', $vfAttr) . HTMLContainer::generateMarkup('span', ($visitFeeAmt > 0 ? '($' . $visitFeeAmt . ')' : ''), array('id'=>'spnvfeeAmt', 'data-amt'=>$visitFeeAmt)))
-                    .HTMLTable::makeTd( '$'. HTMLInput::generateMarkup($visitFeeAmt, array('name'=>'visitFeeAmt', 'size'=>'8', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;', 'class'=>'hhk-feeskeys', 'title'=>$vFeeTitle.' amount')), array('style'=>'text-align:right;'));
+                    .HTMLTable::makeTd(HTMLInput::generateMarkup($visitFeeAmt, array('name'=>'visitFeeAmt', 'size'=>'8', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;', 'class'=>'hhk-feeskeys', 'title'=>$vFeeTitle.' amount')), array('style'=>'text-align:right;'));
             }
 
 
@@ -716,13 +716,13 @@ ORDER BY v.idVisit , v.Span;");
             // Any remaining room charges
             $feesTbl->addBodyTr(
                 HTMLTable::makeTd('Room Charges:', array('colspan'=>'2', 'class'=>'tdlabel'))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'feesCharges', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesCharges', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;'))
                 , array('style'=>'display:none;', 'class'=>'hhk-RoomCharge'));
 
             // Any remaining guest credits
             $feesTbl->addBodyTr(
                 HTMLTable::makeTd('Guest Credit:', array('colspan'=>'2', 'class'=>'tdlabel'))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'guestCredit', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'guestCredit', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;'))
                 , array('style'=>'display:none;', 'class'=>'hhk-GuestCredit'));
 
 
@@ -730,7 +730,7 @@ ORDER BY v.idVisit , v.Span;");
             if ($keyDepPaid > 0) {
                 $feesTbl->addBodyTr(
                     HTMLTable::makeTd('Deposit Refund:', array('class'=>'tdlabel', 'colspan'=>'2'))
-                    .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'DepRefundAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;'))
+                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'DepRefundAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;'))
                             , array('style'=>'text-align:right;')), array('class'=>'hhk-refundDeposit'));
             }
         }
@@ -743,14 +743,14 @@ ORDER BY v.idVisit , v.Span;");
                         HTMLContainer::generateMarkup('label', "Apply", array('for'=>'keyDepRx', 'style'=>'margin-left:5px;margin-right:3px;'))
                         .HTMLInput::generateMarkup('', array('name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-amt'=>$heldAmount))
                     .HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '($' . number_format($heldAmount, 2) . ')' : ''), array('id'=>'spnHeldAmt')))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
         }
 
 
         // Total Charges
         $feesTbl->addBodyTr(
                 HTMLTable::makeTh('Total Charges:', array('colspan'=>'2', 'class'=>'tdlabel', 'style'=>'border-bottom:2px solid #2E99DD;'))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'totalCharges', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;font-weight:bold;', 'readonly'=>'readonly')), array('style'=>'text-align:right;border-bottom:2px solid #2E99DD;border-top:2px solid #2E99DD;'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'totalCharges', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;font-weight:bold;', 'readonly'=>'readonly')), array('style'=>'text-align:right;border-bottom:2px solid #2E99DD;border-top:2px solid #2E99DD;'))
                 , array('style'=>'display:none;', 'class'=>'hhk-finalPayment'));
 
 
@@ -760,14 +760,14 @@ ORDER BY v.idVisit , v.Span;");
 
             $feesTbl->addBodyTr(HTMLTable::makeTd('Pay Room Fees:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd('Days: ' . HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'1', 'data-vid'=>$idVisit)), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;', 'data-tax'=>$tax)), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;', 'data-tax'=>$tax)), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
                 , array('class'=>'hhk-RoomFees'));
 
             if ($tax > 0) {
                 // show tax line
                 $feesTbl->addBodyTr(HTMLTable::makeTd('Tax:', array('class'=>'tdlabel'))
                     .HTMLTable::makeTd('('.number_format($tax, 3).'%)', array('style'=>'text-align:center; font-size:smaller;'))
-                    .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name'=>'feesTax', 'size'=>'6', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;font-weight:bold;', 'readonly'=>'readonly')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
+                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesTax', 'size'=>'6', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;font-weight:bold;', 'readonly'=>'readonly')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
                     , array('class'=>'hhk-RoomFees'));
             }
         }
@@ -784,7 +784,7 @@ ORDER BY v.idVisit , v.Span;");
                 HTMLTable::makeTd('House Waive:', array('class'=>'tdlabel'))
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbFinalPayment', 'style'=>'margin-left:5px;margin-right:3px;'))
                     .HTMLInput::generateMarkup('', $attrs))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'HsDiscAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'HsDiscAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;'))
                     , array('style'=>'text-align:right;')), array('style'=>'display:none;', 'class'=>'hhk-HouseDiscount'));
 
         }
