@@ -42,9 +42,6 @@ require (HOUSE . 'RegisterForm.php');
 require (HOUSE . 'RegistrationForm.php');
 require (HOUSE . 'Attributes.php');
 require (HOUSE . 'Constraint.php');
-require (CLASSES . 'Parsedown.php');
-require (CLASSES . 'Document.php');
-require(HOUSE . 'TemplateForm.php');
 
 require (HOUSE . 'Vehicle.php');
 
@@ -89,7 +86,7 @@ if ($checkinDate == '') {
 
     foreach ($rows as $r) {
 
-        $reservArray = ReservationSvcs::generateCkinDoc($dbh, $r['idReservation'], 0, $wInit->resourceURL . '../conf/registrationLogo.png');
+        $reservArray = ReservationSvcs::generateCkinDoc($dbh, $r['idReservation'], 0, 0, $wInit->resourceURL . '../conf/registrationLogo.png');
         $sty = $reservArray['style'];
 
         $regForm .= $reservArray['doc'] . HTMLContainer::generateMarkup('div', '', array('style'=>'page-break-before: right;'));

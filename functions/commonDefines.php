@@ -59,6 +59,7 @@ define('NOTY_JS', '../js/noty-min.js');
 define('NOTY_SETTINGS_JS', 'js/notySettings.js');  //These are local
 define('DIRRTY_JS', '../js/jquery.dirrty.js');
 define('JSIGNATURE_JS', '../js/jSignature.min.js');
+
 define('PRINT_AREA_JS', '../js/jquery.PrintArea.js');
 define('CREATE_AUTO_COMPLETE_JS', '../js/createAutoComplete.js');
 define('ADDR_PREFS_JS', '../js/addrPrefs-min.js');
@@ -70,7 +71,5 @@ define('MOMENT_JS', '../js/moment.min.js');
 define('MULTISELECT_JS', '../js/jquery.multiselect.min.js');
 define('DR_PICKER_JS', '../js/daterangepicker.hhk.min.js');
 define('FULLC_JS', '../js/fullcalendarold.min.js');
-define('RTE_JS', '../js/rich-text-editor.js');
-define('MDEDITOR_JS', '../js/simplemde.min.js');
 define('NOTES_VIEWER_JS', '../js/notesViewer.js');
 define('SELECT2_JS', '../js/select2.min.js');

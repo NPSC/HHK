@@ -29,7 +29,6 @@ $report = "";
 
 $headerTable = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 
-$tabOpened = 0;
 
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
@@ -40,6 +39,7 @@ $calSelection = '22';
 $newGuestsChecked = 'checked="checked"';
 $allGuestsChecked = '';
 $whichGuests = 'new';
+$title = '';
 
 $year = date('Y');
 $txtStart = '';
@@ -112,7 +112,9 @@ if (isset($_POST['btnSmt'])) {
     }
 
     $report = GuestReport::demogReport($dbh, $filter->getReportStart(), $filter->getReportEnd(), $whHosp, $whAssoc, $whichGuests, $zip);
-    $tabOpened = 0;
+
+    $title = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Guest Demographics compiled on ' . date('D M j, Y'), array('style'=>'margin-top: .5em;'));
+
 }
 
 
@@ -211,7 +213,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
             </div>
             <div style="clear:both;"></div>
             <div id="printArea" style="margin-top:10px;margin-bottom:10px;font-size: .9em;">
-                <?php echo $report; ?>
+                <?php echo $title . $report; ?>
             </div>
         </div>
     </body>

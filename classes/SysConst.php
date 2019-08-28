@@ -8,18 +8,12 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-// Date Released: 5/20/2019
-// Fixes two bugs in 152.
 class CodeVersion {
-    const BUILD = 155;
+    const BUILD = 161;
     const VERSION = 3.12;
-    const PATCH = 9;
-    const GIT_Id = "dev";
-    const REL_DATE = '';
-}
-
-class DBServer {
-    const TIMEZONE = 'America/Los_Angeles';
+    const PATCH = 10;
+    const GIT_Id = "37e0f9aa2ebc054d3ac39eaf66bcff2e94a0ddd5";
+    const REL_DATE = '8/10/2019';
 }
 
 class ActivityTypes {
@@ -68,13 +62,6 @@ class CalEvent_Kind {
 class Default_Settings {
     const Rate_Category = 'e';
     const Fixed_Rate_Category = 'f';
-}
-
-class Document_Name {
-    const Registration = 'Registration';
-    const Confirmation = 'Confirmation';
-    const Survey = 'Survey';
-    const Incident = 'Incident';
 }
 
 class Email_Purpose {
@@ -379,6 +366,7 @@ class TransType {
     const Retrn = 'r';
     const VoidReturn = 'vr';
     const Reverse = 'rv';
+    const undoRetrn = 'ur';
 }
 
 

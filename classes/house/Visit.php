@@ -1347,6 +1347,8 @@ class Visit {
         // Init the latest departure date for the visit
         $lastDepartureDT = new \DateTime($this->getArrivalDate());
         $lastDepartureDT->setTime(0, 0, 0);
+        
+        $visitArrivalDT = new \DateTime($this->getArrivalDate());
 
         foreach ($this->stays as $stayRS) {
 
@@ -1460,7 +1462,8 @@ class Visit {
         $visitExpDepDT = new \DateTime($this->getExpectedDeparture());
         $visitExpDepDT->setTime(0, 0, 0);
 
-        if ($visitExpDepDT != $lastDepartureDT) {
+        // Make sure the lastDepart date is greater than the visit arrival.
+        if ($visitExpDepDT != $lastDepartureDT && $lastDepartureDT > $visitArrivalDT) {
 
             // Update visit exepected departure
             $this->visitRS->Expected_Departure->setNewVal($lastDepartureDT->format('Y-m-d '. $uS->CheckOutTime . ':00:00'));

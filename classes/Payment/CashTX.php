@@ -11,14 +11,14 @@
 
 class CashResponse extends PaymentResponse {
 
-    function __construct($amount, $idPayor, $invoiceNumber, $payNote = '', $payDate = '') {
+    function __construct($amount, $idPayor, $invoiceNumber, $payNote = '') {
 
         $this->paymentType = PayType::Cash;
         $this->idPayor = $idPayor;
         $this->amount = $amount;
         $this->invoiceNumber = $invoiceNumber;
         $this->payNotes = $payNote;
-        $this->paymentDate = $payDate;
+
     }
 
     public function getStatus() {
@@ -65,6 +65,8 @@ class CashTX {
         $idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPayment);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate($paymentDate);
         $pr->paymentRs = $payRs;
 
     }
@@ -100,6 +102,8 @@ class CashTX {
         $idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPayment);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate($paymentDate);
         $pr->paymentRs = $payRs;
 
     }
@@ -125,7 +129,6 @@ class CashTX {
 
         // Payment record
         $payRs->Status_Code->setNewVal(PaymentStatusCode::Retrn);
-//        $payRs->Balance->setNewVal($payRs->Amount->getStoredVal());
         $payRs->Updated_By->setNewVal($username);
         $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
@@ -143,6 +146,35 @@ class CashTX {
         EditRS::updateStoredVals($payRs);
         $pr->paymentRs = $payRs;
         $pr->setPaymentDate(date('Y-m-d H:i:s'));
+
+    }
+
+    public static function undoReturnPayment(\PDO $dbh, CashResponse &$pr, $username, PaymentRS $payRs) {
+
+        // Record transaction
+        $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Cash);
+        $pr->setIdTrans($transRs->idTrans->getStoredVal());
+
+        // Payment record
+        $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
+        $payRs->Updated_By->setNewVal($username);
+        $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+
+        EditRS::update($dbh, $payRs, array($payRs->idPayment));
+        EditRS::updateStoredVals($payRs);
+        $pr->paymentRs = $payRs;
+        $pr->setPaymentDate(date('Y-m-d H:i:s'));
+
+    }
+
+    public static function undoReturnAmount(\PDO $dbh, CashResponse &$pr, $idPayment) {
+
+        // Record transaction
+        $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Cash);
+        $pr->setIdTrans($transRs->idTrans->getStoredVal());
+
+        $dbh->exec("delete from payment_invoice where Payment_Id = $idPayment");
+        $dbh->exec("delete from payment where idPayment = $idPayment");
 
     }
 }
@@ -177,13 +209,9 @@ class ManualChargeResponse extends PaymentResponse {
         return $this->cardNum;
     }
 
-    public function getPaymentDate() {
-
-    }
-
     public function getStatus() {
 
-        return CreditPayments::STATUS_APPROVED;;
+        return CreditPayments::STATUS_APPROVED;
     }
 
     public function receiptMarkup(\PDO $dbh, &$tbl) {
@@ -232,6 +260,8 @@ class ChargeAsCashTX {
         $idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPayment);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate($paymentDate);
         $pr->paymentRs = $payRs;
 
         if ($idPayment > 0) {
@@ -287,6 +317,8 @@ class ChargeAsCashTX {
         $idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPayment);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate($paymentDate);
         $pr->paymentRs = $payRs;
 
         if ($idPayment > 0) {
@@ -361,7 +393,46 @@ class ChargeAsCashTX {
         $pDetailRS->idPayment_auth->setNewVal($idPaymentAuth);
         EditRS::updateStoredVals($pDetailRS);
 
+    }
+
+    public static function undoReturnPayment(\PDO $dbh, ManualChargeResponse &$pr, $username, PaymentRS $payRs) {
+
+                // Record transaction
+        $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Cash);
+        $pr->setIdTrans($transRs->idTrans->getStoredVal());
+
+        // Payment record
+        $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
+        $payRs->Updated_By->setNewVal($username);
+        $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+
+        EditRS::update($dbh, $payRs, array($payRs->idPayment));
+        EditRS::updateStoredVals($payRs);
+        $pr->paymentRs = $payRs;
+        $pr->setPaymentDate(date('Y-m-d H:i:s'));
+
+
+        //Payment Detail
+        $pDetailRS = new Payment_AuthRS();
+        $pDetailRS->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
+        $pDetailRS->Status_Code->setStoredVal(PaymentStatusCode::Retrn);
+
+        // Delete return payment auth record.
+        EditRS::delete($dbh, $pDetailRS, array($pDetailRS->idPayment, $pDetailRS->Status_Code));
 
     }
+
+    public static function undoReturnAmount(\PDO $dbh, CashResponse &$pr, $idPayment) {
+
+        // Record transaction
+        $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Cash);
+        $pr->setIdTrans($transRs->idTrans->getStoredVal());
+
+        $dbh->exec("delete from payment_invoice where Payment_Id = $idPayment");
+        $dbh->exec("delete from payment_auth where idPayment = $idPayment");
+        $dbh->exec("delete from payment where idPayment = $idPayment");
+
+    }
+
 }
 

@@ -30,7 +30,7 @@ $uS = Session::getInstance();
 
 $config = new Config_Lite(ciCFG_FILE);
 
-function statsPanel(\PDO $dbh, $visitNites, $totalCatNites, $start, $end, $categories, $avDailyFee, $rescGroup) {
+function statsPanel(\PDO $dbh, $visitNites, $totalCatNites, $start, $end, $categories, $avDailyFee, $rescGroup, $siteName) {
 
     // Stats panel
     if (count($visitNites) < 1) {
@@ -185,7 +185,7 @@ order by r.idResource;";
 
     $sTbl->addBodyTr($trs[5]);
 
-    return HTMLContainer::generateMarkup('h3', 'Report Statistics')
+    return HTMLContainer::generateMarkup('h3', $siteName . ' Visit Report Statistics')
             . HTMLContainer::generateMarkup('p', 'These numbers are specific to this report\'s selected filtering parameters.')
             . $sTbl->generateMarkup();
 
@@ -405,7 +405,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
  * @param boolean $visitFee  Flag to show/hide visit fees
  * @return type
  */
-function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp, $whAssoc, $numberAssocs, $local, $visitFee, $statsOnly, $rescGroup) {
+function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp, $whAssoc, $numberAssocs, $local, $visitFee, $statsOnly, $rescGroup, $labels) {
 
     // get session instance
     $uS = Session::getInstance();
@@ -624,9 +624,9 @@ where
     $reportRows = 0;
 
     if ($numberAssocs > 0) {
-        $hospHeader = 'Hospital / Assoc';
+        $hospHeader = $labels->getString('hospital', 'hospital', 'Hospital').' / Assoc';
     } else {
-        $hospHeader = 'Hospital';
+        $hospHeader = $labels->getString('hospital', 'hospital', 'Hospital');
     }
 
     $fltrdTitles = $colSelector->getFilteredTitles();
@@ -1117,7 +1117,7 @@ where
         $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display compact'));
 
         // Stats panel
-        $statsTable = statsPanel($dbh, $nites, $totalCatNites, $start, $end, $categories, $avDailyFee, $rescGroup[0]);
+        $statsTable = statsPanel($dbh, $nites, $totalCatNites, $start, $end, $categories, $avDailyFee, $rescGroup[0], $uS->siteName);
 
         return array('data'=>$dataTable, 'stats'=>$statsTable);
 
@@ -1139,7 +1139,9 @@ where
 $labels = new Config_Lite(LABEL_FILE);
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
-$headerTable = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
+$headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Visit Report Detail', array('style'=>'margin-top: .5em;'))
+        .HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
+
 $dataTable = '';
 $statsTable = '';
 $errorMessage = '';
@@ -1182,9 +1184,9 @@ $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Ref. Agent')
 if (count($filter->getHospitals()) > 1) {
 
     if (count($filter->getAList()) > 0) {
-        $cFields[] = array("Hospital / Assoc", 'hospitalAssoc', 'checked', '', 's', '', array());
+        $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital')." / Assoc", 'hospitalAssoc', 'checked', '', 's', '', array());
     } else {
-        $cFields[] = array($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'), 'hospitalAssoc', 'checked', '', 's', '', array());
+        $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'hospitalAssoc', 'checked', '', 's', '', array());
     }
 }
 
@@ -1306,7 +1308,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || isset($_POST['btnSt
 
     if ($filter->getReportStart() != '' && $filter->getReportEnd() != '') {
 
-        $tblArray = doReport($dbh, $colSelector, $filter->getReportStart(), $filter->getReportEnd(), $whHosp, $whAssoc, count($filter->getAList()), $local, $uS->VisitFee, $statsOnly, $rescGroups[$filter->getSelectedResourceGroups()]);
+        $tblArray = doReport($dbh, $colSelector, $filter->getReportStart(), $filter->getReportEnd(), $whHosp, $whAssoc, count($filter->getAList()), $local, $uS->VisitFee, $statsOnly, $rescGroups[$filter->getSelectedResourceGroups()],$labels);
 
         $dataTable = $tblArray['data'];
         $statsTable = $tblArray['stats'];
@@ -1332,9 +1334,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || isset($_POST['btnSt
         if ($hospitalTitles != '') {
             $h = trim($hospitalTitles);
             $hospitalTitles = substr($h, 0, strlen($h) - 1);
-            $headerTable .= HTMLContainer::generateMarkup('p', 'Hospitals: ' . $hospitalTitles);
+            $headerTable .= HTMLContainer::generateMarkup('p', $labels->getString('hospital', 'hospital', 'Hospital').'s: ' . $hospitalTitles);
         } else {
-            $headerTable .= HTMLContainer::generateMarkup('p', 'All Hospitals');
+            $headerTable .= HTMLContainer::generateMarkup('p', 'All '.$labels->getString('hospital', 'hospital', 'Hospital').'s');
         }
 
     } else {

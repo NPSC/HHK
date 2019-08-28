@@ -56,24 +56,40 @@ class ReservationSvcs {
         return $rows;
     }
 
-    public static function getConfirmForm(\PDO $dbh, $idReservation, $idGuest, $amount, $sendEmail = FALSE, $notes = '', $emailAddr = '', $text = '') {
+    public static function getConfirmForm(\PDO $dbh, $idReservation, $idGuest, $amount, $sendEmail = FALSE, $notes = '', $emailAddr = '') {
 
         if ($idReservation == 0) {
             return array('error'=>'Bad reservation Id: ' . $idReservation);
         }
 
-		require(HOUSE . 'TemplateForm.php');
+        require(HOUSE . 'TemplateForm.php');
         require(HOUSE . 'ConfirmationForm.php');
+
+        $uS = Session::getInstance();
+        $dataArray = array();
 
         $reserv = Reservation_1::instantiateFromIdReserv($dbh, $idReservation);
 
+        if ($idGuest == 0) {
+            $idGuest = $reserv->getIdGuest();
+        }
+
+        $guest = new Guest($dbh, '', $idGuest);
+
+        $confirmForm = new ConfirmationForm('confirmation.txt');
+
+        $formNotes = $confirmForm->createNotes($notes, !$sendEmail);
+
+        $form = $confirmForm->createForm($confirmForm->makeReplacements($reserv, $guest, $amount, $formNotes));
+
+        if ($emailAddr == '') {
+            $emAddr = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
+            $emailAddr = $emAddr["Email"];
+        }
+
         if ($sendEmail) {
 
-            if ($emailAddr == '') {
-                $dataArray['mesg'] = "Guest email address is blank.  ";
-            } else if ($text == '') {
-                $dataArray['mesg'] = "The message is blank.  ";
-            } else {
+            if ($emailAddr != '') {
 
                 $config = new Config_Lite(ciCFG_FILE);
 
@@ -93,10 +109,6 @@ class ReservationSvcs {
                 $mail->isHTML(true);
 
                 $mail->Subject = htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Reservation Confirmation';
-
-                $sty = '<style>' . file_get_contents('css/tui-editor/tui-editor-contents-min.css') . '</style>';
-                $form = $sty . $text . '<p>' . ConfirmationForm::createNotes($notes, FALSE) . '</p>';
-
                 $mail->msgHTML($form);
 
 
@@ -111,60 +123,16 @@ class ReservationSvcs {
                 } else {
                     $dataArray['mesg'] = "Email failed!  " . $mail->ErrorInfo;
                 }
+
+            } else {
+                $dataArray['mesg'] = "Guest email address is blank.  ";
             }
 
         } else {
 
-            $uS = Session::getInstance();
-            $dataArray = array();
-
-            if ($idGuest == 0) {
-                $idGuest = $reserv->getIdGuest();
-            }
-
-            $guest = new Guest($dbh, '', $idGuest);
-
-            $confirmForm = new ConfirmationForm($dbh, 0, Document_Name::Confirmation);
-
-            $formNotes = $confirmForm->createNotes($notes, !$sendEmail);
-
-            $form = $confirmForm->createForm($confirmForm->makeReplacements($reserv, $guest, $amount, $formNotes));
-
-            if ($emailAddr == '') {
-                $emAddr = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
-                $emailAddr = $emAddr["Email"];
-            }
-
-            $dataArray['confrv'] = $form;
+            $dataArray['confrv'] = utf8_decode($form);
             $dataArray['email'] = $emailAddr;
         }
-
-        return $dataArray;
-    }
-    
-    public static function getReportForm(\PDO $dbh, $idReport) {
-
-        if ($idReport == 0) {
-            return array('error'=>'Bad report Id: ' . $idReport);
-        }
-
-        require(HOUSE . 'ReportForm.php');
-        
-
-        $uS = Session::getInstance();
-        $dataArray = array();
-
-		$report = new Report($idReport);
-		$report->loadReport($dbh);
-
-        $reportForm = new ReportForm($dbh, 0, Document_Name::Incident);
-
-        $form = $reportForm->createForm($reportForm->makeReplacements($dbh, $report));
-		
-		//debug
-		//return $reportForm->makeReplacements($dbh, $report);
-		
-        $dataArray['reportform'] = $form;
 
         return $dataArray;
     }
@@ -173,17 +141,13 @@ class ReservationSvcs {
 
         $uS = Session::getInstance();
 
-        $regTemplate = new TemplateForm($dbh, 0, Document_Name::Registration);
+        $instructFileName = REL_BASE_DIR . 'conf'. DS . 'agreement.txt';
 
-        $parseDown = new Parsedown();
-
-        $instructFile = HTMLContainer::generateMarkup('div', $parseDown->setBreaksEnabled(TRUE)->text($regTemplate->getTemplateDoc()->getDoc()), array('class'=>'tui-editor-contents'));
-        $sty = '<style>' . file_get_contents('css/tui-editor/tui-editor-contents-min.css') . '</style>';
 
         if ($uS->RegForm == 1) {
 
-            $doc = RegisterForm::prepareRegForm($dbh, $idVisit, $idReservation, $instructFile);
-            $sty .= RegisterForm::getStyling();
+            $doc = RegisterForm::prepareRegForm($dbh, $idVisit, $span, $idReservation, $instructFileName);
+            $sty = RegisterForm::getStyling();
 
         } else if ($uS->RegForm == 2) {
 
@@ -373,12 +337,12 @@ class ReservationSvcs {
                     $cardNumber,
                     $logoURL,
                     $logoWidth,
-                    $instructFile,
+                    $instructFileName,
                     $expectedPayType,
                     $notes,
                     $todaysDate
                 );
-            $sty .= $regdoc->getStyle();
+            $sty = $regdoc->getStyle();
 
         } else {
             return array('doc'=>'Error - Registration Form # is not defined in the system configuration table.', 'style'=>' ');
@@ -608,7 +572,7 @@ class ReservationSvcs {
         $oldStatus = $resv->getStatus();
 
         if ($oldStatus == ReservationStatus::Waitlist && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted)) {
-            return array('error'=>'Cannot change from Waitlist to Confirmed or Unconfirmed.');
+            return array('error'=>'Cannot change from Waitlist to Confirmed or Unconfirmed here.');
         }
 
         if ($status == ReservationStatus::Waitlist) {
@@ -709,10 +673,6 @@ class ReservationSvcs {
 
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
 
-        $resv->setIdResource($idResc);
-        $resv->setExpectedArrival($expArr);
-        $resv->setExpectedDeparture($expDep);
-
         $resv->saveConstraints($dbh, $cbs);
 
         $roomChooser = new RoomChooser($dbh, $resv, $numGuests, new DateTime($expArr), new DateTime($expDep));
@@ -721,7 +681,6 @@ class ReservationSvcs {
         $resOptions = $roomChooser->makeRoomSelectorOptions();
         $errorMessage = $roomChooser->getRoomSelectionError($dbh, $resOptions);
 
-        //$results = ReservationSvcs::getRoomList($dbh, $resv, '', $isAuthorized, $numGuests);
         return array('rooms'=>$roomChooser->makeRoomsArray(), 'selectr'=>$roomChooser->makeRoomSelector($resOptions, $idResc), 'idResource' => $idResc, 'msg'=>$errorMessage);
 
     }

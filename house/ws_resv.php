@@ -305,7 +305,8 @@ try {
         $events = array('delete'=>$deleteCount, 'idNote'=>$noteId);
 
         break;
-        
+
+
     case 'linkNote':
 
         $noteId = 0;
@@ -507,7 +508,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         $events = array('delete'=>$deleteCount, 'idReport'=>$repId);
 
         break;
-        
+
 
     case 'updateAgenda':
 

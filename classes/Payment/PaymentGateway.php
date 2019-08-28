@@ -63,7 +63,7 @@ abstract class PaymentGateway {
         // Initialiaze hosted payment
         try {
 
-            $fwrder = $this->initHostedPayment($dbh, $invoice, $postbackUrl);
+            $fwrder = $this->initHostedPayment($dbh, $invoice, $postbackUrl, $pmp->getManualKeyEntry());
 
             $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
             $payResult->setForwardHostedPayment($fwrder);
@@ -98,6 +98,10 @@ abstract class PaymentGateway {
         return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
     }
 
+    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs) {
+        return array('warning' => 'Not Available.  ');
+    }
+
     public function returnPayment(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid) {
 
         // Find hte detail record.
@@ -117,6 +121,11 @@ abstract class PaymentGateway {
         }
 
         return array('warning' => 'This Payment is ineligable for Return. ', 'bid' => $bid);
+    }
+
+    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes = '') {
+
+        return array('warning' => 'Return Amount is not implemented. ');
     }
 
     public function reverseSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid, $paymentNotes) {

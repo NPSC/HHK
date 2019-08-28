@@ -35,11 +35,6 @@ require (CLASSES . 'US_Holidays.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'FinAssistance.php');
 
-require (CLASSES . 'Parsedown.php');
-require (CLASSES . 'Document.php');
-
-//require (CLASSES . 'MercPay/MercuryHCClient.php');
-//require (CLASSES . 'MercPay/Gateway.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
 
@@ -238,15 +233,11 @@ try {
                 $amount = filter_var($_POST['amt'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
             }
 
-            $notes = '';
+            $notes = '-';
             if (isset($_POST['notes'])) {
                 $notes = filter_var($_POST['notes'], FILTER_SANITIZE_STRING);
             }
 
-            $txt = '';
-            if (isset($_POST['hdnCfmText'])) {
-                $txt = base64_decode(filter_var($_POST['hdnCfmText'], FILTER_SANITIZE_STRING));
-            }
 
             $sendemail = FALSE;
             if (isset($_POST['eml'])) {
@@ -261,7 +252,7 @@ try {
                 $eaddr = filter_var($_POST['eaddr'], FILTER_SANITIZE_STRING);
             }
 
-            $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $idGuest, $amount, $sendemail, $notes, $eaddr, $txt);
+            $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $idGuest, $amount, $sendemail, $notes, $eaddr);
             break;
 
         case 'void':
@@ -309,6 +300,22 @@ try {
             }
 
             $events = PaymentSvcs::returnPayment($dbh, $idPayment, $bid);
+
+            break;
+
+        case 'undoRtn':
+
+            $idPayment = 0;
+            if (isset($_POST['pid'])) {
+                $idPayment = intval(filter_var($_POST['pid'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $bid = '';
+            if (isset($_POST['bid'])) {
+                $bid = filter_var($_POST['bid'], FILTER_SANITIZE_STRING);
+            }
+
+            $events = PaymentSvcs::undoReturnFees($dbh, $idPayment, $bid);
 
             break;
 
@@ -474,24 +481,6 @@ try {
 
         $events = HouseServices::addVisitStay($dbh, $idVisit, $visitSpan, $id, $_POST);
         break;
-
-
-    case 'changePatient':
-
-        $idPsg = 0;
-        if (isset($_GET['psg'])) {
-            $idPsg = intval(filter_var($_GET['psg'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        $idGuest = 0;
-        if (isset($_GET['gid'])) {
-            $idGuest = intval(filter_var($_GET['gid'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        $events = HouseServices::changePatient($dbh, $idPsg, $idGuest, $uS->guestLookups[GL_TableNames::PatientRel], $uS->username);
-
-        break;
-
 
     case "getincmdiag":
 
@@ -806,3 +795,4 @@ if (is_array($events)) {
 }
 
 exit();
+

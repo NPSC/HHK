@@ -158,10 +158,15 @@ class RegisterForm {
 
     }
 
-    protected static function AgreementBlock(\PDO $dbh, array $guests, $agreementLabel, $instructionFile) {
+    protected static function AgreementBlock(array $guests, $agreementLabel, $instructionFileName) {
 
-        $mkup = HTMLContainer::generateMarkup('h2', $agreementLabel, array('style'=>'border:none;border-bottom:1.5pt solid #98C723')) . $instructionFile;
+        $mkup = HTMLContainer::generateMarkup('h2', $agreementLabel, array('style'=>'border:none;border-bottom:1.5pt solid #98C723'));
 
+        if ($instructionFileName != '' && file_exists($instructionFileName)) {
+            $mkup .= HTMLContainer::generateMarkup('div', file_get_contents($instructionFileName), array('class'=>'hhk-agreement'));
+        } else {
+            $mkup .= HTMLContainer::generateMarkup('div', "Agreement text file is missing.  '$instructionFileName'", array('class'=>'ui-state-error'));
+        }
 
         $usedNames = array();
 
@@ -369,7 +374,7 @@ class RegisterForm {
         }
 
         // Agreement
-        $mkup .= self::AgreementBlock($dbh, $guests, $agreementLabel, $instructionFileName);
+        $mkup .= self::AgreementBlock($guests, $agreementLabel, $instructionFileName);
 
         $mkup .= "</div>";
 

@@ -158,7 +158,7 @@ class VisitView {
         }
 
         // Patient Name
-        $th .= HTMLTable::makeTh($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'));
+        $th .= HTMLTable::makeTh($labels->getString('hospital', 'hosptial', 'Hospital'));
         $tr .= HTMLTable::makeTd($hname);
 
         if ($r['Patient_Name'] != '') {
@@ -680,16 +680,18 @@ class VisitView {
         $showSubTotal = FALSE;
 
         // Visit fees charged
+        $visitFeeCharged = 0;
         if ($showVisitFee && $visitCharge->getVisitFeeCharged() > 0) {
+
+            $visitFeeCharged = $visitCharge->getVisitFeeCharged();
 
             // Get labels
             $labels = new Config_Lite(LABEL_FILE);
-
             $showSubTotal = TRUE;
 
             $tbl2->addBodyTr(
-                HTMLTable::makeTd($labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'), array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . number_format($visitCharge->getVisitFeeCharged(), 2), array('style'=>'text-align:right;'))
+                HTMLTable::makeTd($labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee') . ':', array('class'=>'tdlabel'))
+                . HTMLTable::makeTd('$' . number_format($visitFeeCharged, 2), array('style'=>'text-align:right;'))
             );
         }
 
@@ -704,16 +706,16 @@ class VisitView {
             );
         }
 
-        // MOA
-        $totalMOA = 0;
-        if ($visitCharge->getItemInvCharges(ItemId::LodgingMOA) > 0) {
+        // Unpaid MOA
+        $unpaidMOA = 0;
+        if ($visitCharge->getItemInvPending(ItemId::LodgingMOA) > 0) {
 
-            $totalMOA = $visitCharge->getItemInvCharges(ItemId::LodgingMOA);
+            $unpaidMOA = $visitCharge->getItemInvPending(ItemId::LodgingMOA);
             $showSubTotal = TRUE;
 
             $tbl2->addBodyTr(
-                HTMLTable::makeTd('Money On Account', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd('$' . number_format($visitCharge->getItemInvCharges(ItemId::LodgingMOA), 2), array('style'=>'text-align:right;'))
+                HTMLTable::makeTd('Money On Account:', array('class'=>'tdlabel'))
+                . HTMLTable::makeTd('$' . number_format($unpaidMOA, 2), array('style'=>'text-align:right;'))
             );
         }
 
@@ -732,13 +734,10 @@ class VisitView {
         $totalCharged =
                 $visitCharge->getRoomFeesCharged()
                 + $visitCharge->getItemInvCharges(ItemId::AddnlCharge)
-                + $totalMOA
-                + $totalDiscounts;
+                + $unpaidMOA
+                + $totalDiscounts
+                + $visitFeeCharged;
 
-        //if show visit fee
-        if($showVisitFee){
-                $totalCharged += $visitCharge->getVisitFeeCharged();
-        }
 
         // Subtotal line
         if ($showSubTotal) {
@@ -753,25 +752,26 @@ class VisitView {
         // Payments
         $totalPaid = $visitCharge->getRoomFeesPaid()
                 + $visitCharge->getVisitFeesPaid()
-                + $visitCharge->getItemInvPayments(ItemId::AddnlCharge);
+                + $visitCharge->getItemInvPayments(ItemId::AddnlCharge)
+                + $visitCharge->getItemInvPayments(ItemId::Waive);
 
-
-
-        if ($visitCharge->getItemInvPayments(ItemId::LodgingMOA) > 0) {
-            $totalPaid += $visitCharge->getItemInvPayments(ItemId::LodgingMOA);
-        }
-
-        // Add Waived amounts.
-        $totalPaid += $visitCharge->getItemInvPayments(ItemId::Waive);
-
+        // Total Paid to date
         $tbl2->addBodyTr(
                 HTMLTable::makeTd('Amount paid to-date:', array('class'=>'tdlabel'))
                 . HTMLTable::makeTd('$' . number_format($totalPaid, 2), array('style'=>'text-align:right;'))
         );
 
-        $amtPending = $visitCharge->getRoomFeesPending() + $visitCharge->getVisitFeesPending() + $visitCharge->getItemInvPending(ItemId::AddnlCharge) + $visitCharge->getItemInvPending(ItemId::Waive);
-
         // unpaid invoices
+        $amtPending = $visitCharge->getRoomFeesPending()
+                + $visitCharge->getVisitFeesPending()
+                + $visitCharge->getItemInvPending(ItemId::AddnlCharge)
+                + $visitCharge->getItemInvPending(ItemId::LodgingMOA)
+                + $visitCharge->getItemInvPending(ItemId::Waive);
+
+        //if ($visitCharge->getItemInvPayments(ItemId::LodgingMOA) > 0) {
+//            $totalPaid += $visitCharge->getItemInvPayments(ItemId::LodgingMOA);
+        //}
+
         if ($amtPending != 0) {
             $tbl2->addBodyTr(
                 HTMLTable::makeTd('Amount Pending:', array('class'=>'tdlabel'))
@@ -1044,7 +1044,7 @@ class VisitView {
 
             // Save first arrival
             if ($vRs->Span->getStoredVal() == 0) {
-                $firstArrival = new \DateTime($vRs->Arrival_Date->getStoredVal());
+                $firstArrival = newDateWithTz($vRs->Arrival_Date->getStoredVal(), $uS->tz);
             }
 
             if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
@@ -1063,6 +1063,7 @@ class VisitView {
 
             $spans[$vRs->Span->getStoredVal()] = $vRs;
 
+            // Collect the stays.
             $stayRS = new StaysRS();
             $stayRS->idVisit->setStoredVal($vRs->idVisit->getStoredVal());
             $stayRS->Visit_Span->setStoredVal($vRs->Span->getStoredVal());
@@ -1097,21 +1098,21 @@ class VisitView {
         // change visit span dates
         foreach ($spans as $s => $vRs) {
 
-            $spanStartDT = new \DateTime($vRs->Span_Start->getStoredVal());
+            $spanStartDT = newDateWithTz($vRs->Span_Start->getStoredVal(), $uS->tz);
 
             if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
-                $spanEndDt = new \DateTime($vRs->Expected_Departure->getStoredVal());
+                $spanEndDt = newDateWithTz($vRs->Expected_Departure->getStoredVal(), $uS->tz);
                 $spanEndDt->setTime(intval($uS->CheckOutTime),0,0);
 
                 if ($spanEndDt < $tonight) {
-                    $spanEndDt = new \DateTime();
+                    $spanEndDt = newDateWithTz('', $uS->tz);
                     $spanEndDt->setTime(intval($uS->CheckOutTime), 0, 0);
                 }
 
             } else {
                 // Checked out
-                $spanEndDt = new \DateTime($vRs->Span_End->getStoredVal());
+                $spanEndDt = newDateWithTz($vRs->Span_End->getStoredVal(), $uS->tz);
             }
 
 
@@ -1120,6 +1121,12 @@ class VisitView {
 
                 // Move back
                 $spanEndDt->sub($endInterval);
+
+                if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn && $spanEndDt < $tonight) {
+                    $spanEndDt = new \DateTime();
+                    $spanEndDt->setTime(intval($uS->CheckOutTime), 0, 0);
+                }
+
                 $spanStartDT->sub($startInterval);
 
                 // Only change first arrival if this is the first span
@@ -1352,8 +1359,8 @@ class VisitView {
         $today = new \DateTime();
         $today->setTime(intval($uS->CheckOutTime), 0, 0);
 
-        $spanStartDT = DateTimeImmutable::createFromMutable($visits['start']->setTime(10,0,0));
-        $spanEndDT = DateTimeImmutable::createFromMutable($visits['end']->setTime(10,0,0));
+        $spanStartDT = \DateTimeImmutable::createFromMutable($visits['start']->setTime(10,0,0));
+        $spanEndDT = \DateTimeImmutable::createFromMutable($visits['end']->setTime(10,0,0));
 
 
         foreach ($stays as $stayRS) {

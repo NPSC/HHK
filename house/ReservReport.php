@@ -46,7 +46,8 @@ $resultMessage = $alertMsg->createMarkup();
 
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
-$headerTable = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
+$headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Reservation Report', array('style'=>'margin-top: .5em;'))
+        . HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 $dataTable = '';
 $status = '';
 $statusSelections = array();
@@ -62,7 +63,7 @@ $cFields[] = array("Room", 'Room', 'checked', '', 's', '');
 
 if ((count($filter->getAList()) + count($filter->getHList())) > 1) {
 
-    $cFields[] = array($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'), 'Hospital', 'checked', '', 's', '');
+    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'Hospital', 'checked', '', 's', '');
 
     if (count($filter->getAList()) > 0) {
         $cFields[] = array("Association", 'Assoc', 'checked', '', 's', '');
@@ -406,9 +407,9 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistratio
         if ($hospitalTitles != '') {
             $h = trim($hospitalTitles);
             $hospitalTitles = substr($h, 0, strlen($h) - 1);
-            $headerTable .= HTMLContainer::generateMarkup('p', 'Hospitals: ' . $hospitalTitles);
+            $headerTable .= HTMLContainer::generateMarkup('p', $labels->getString('hospital', 'hospital', 'Hospital').'s: ' . $hospitalTitles);
         } else {
-            $headerTable .= HTMLContainer::generateMarkup('p', 'All Hospitals');
+            $headerTable .= HTMLContainer::generateMarkup('p', 'All '.$labels->getString('hospital', 'hospital', 'Hospital').'s');
         }
 
         $statusTitles = '';

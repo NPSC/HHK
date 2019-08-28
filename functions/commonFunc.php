@@ -223,35 +223,29 @@ function stripSlashesExtended(&$arr_r) {
     }
 }
 
-function setTimeZone($uS, $strDate) {
+function newDateWithTz($strDate, $strTz) {
+    
+    if ($strTz == '') {
+        throw new \Exception('(newDateWithTz) - timezone not set.  ');
+    }
 
+    if ($strDate != '') {
+        $theDT = new \DateTime($strDate);
+    } else {
+        $theDT = new \DateTime();
+    }
+
+    $theDT->setTimezone(new \DateTimeZone($strTz));
+    return $theDT;
+}
+
+function setTimeZone($uS, $strDate) {
+    
     if (is_null($uS) || is_a($uS, 'Session') == FALSE) {
         $uS = Session::getInstance();
     }
 
-    if (isset($uS->tz) === FALSE || $uS->tz == '') {
-        throw new \Exception('Session Timezone var (tz) not set.');
-    }
-
-    if ($strDate != '') {
-
-        try {
-            $theDT = new \DateTime($strDate);
-            $theDT->setTimezone(new \DateTimeZone($uS->tz));
-        } catch (\Exception $ex) {
-            $theDT = new \DateTime();
-        }
-    } else {
-
-        try {
-            $theDT = new \DateTime();
-            $theDT->setTimezone(new \DateTimeZone($uS->tz));
-        } catch (Exception $ex) {
-            $theDT = new \DateTime();
-        }
-    }
-
-    return $theDT;
+    return newDateWithTz($strDate, $uS->tz);
 }
 
 function incCounter(\PDO $dbh, $counterName) {

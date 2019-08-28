@@ -518,14 +518,18 @@ if ($psg->getIdPsg() > 0) {
     $ccMarkup = '';
     if ($uS->ccgw != '') {
 
-        $ccMarkup = HTMLcontainer::generateMarkup('div' ,HTMLContainer::generateMarkup('fieldset',
-                HouseServices::viewCreditTable($dbh, $registration->getIdRegistration(), $id)
+        $ccMarkup = HTMLcontainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', 'Credit Cards', array('style'=>'font-weight:bold;'))
+                . HouseServices::viewCreditTable($dbh, $registration->getIdRegistration(), $id)
                 . HTMLInput::generateMarkup('Update Credit', array('type'=>'button','id'=>'btnCred', 'data-id'=>$id, 'data-idreg'=>$registration->getIdRegistration(), 'style'=>'margin:5px;float:right;'))
-            ,array('id'=>'upCreditfs', 'style'=>'float:left;padding:5px;')));
+            ,array('id'=>'upCreditfs', 'style'=>'float:left;', 'class'=>'hhk-panel')));
 
     }
 
-    $regTabMarkup = HTMLContainer::generateMarkup('div', $registration->createRegMarkup($dbh, $memberFlag), array('style'=>'float:left;margin-right:1em;')) . $ccMarkup;
+    $regTabMarkup = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
+            HTMLContainer::generateMarkup('legend', 'Registration', array('style'=>'font-weight:bold;'))
+            . $registration->createRegMarkup($dbh, $memberFlag)
+            , array('style'=>'float:left;', 'class'=>'hhk-panel'))) . $ccMarkup;
 
     if ($uS->TrackAuto) {
         $vehicleTabMarkup = Vehicle::createVehicleMarkup($dbh, $registration->getIdRegistration(), $registration->getNoVehicle());
@@ -761,10 +765,8 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-		<script src="../js/tuiEditorSupport.js"></script>
-        <script src="../js/tui-editor-Editor.min.js"></script>
+
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu(); ?>
@@ -787,7 +789,7 @@ $uS->guestId = $id;
             <?php if ($showSearchOnly === FALSE) { ?>
             <form action="GuestEdit.php" method="post" id="form1" name="form1" >
                 <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
-                <div style="float:left; margin-bottom: 10px;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
+                <div style="clear:left;float:left; margin-bottom: 10px;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
 	                <?php echo $guestPhotoMarkup; ?>
 	                <div class="hhk-panel" style="display: inline-block">
                         <?php echo $nameMarkup; ?>
@@ -957,6 +959,6 @@ $uS->guestId = $id;
 
         <script type="text/javascript" src="../js/uppload.js"></script>
         <script type="text/javascript" src="js/incidentReports.js"></script>
-        <script type="text/javascript" src="js/guestload.js?vn=6"></script>
+        <script type="text/javascript" src="js/guestload-min.js?vn=36"></script>
     </body>
 </html>

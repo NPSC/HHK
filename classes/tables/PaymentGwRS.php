@@ -27,7 +27,7 @@ class Guest_TokenRS extends TableRS {
     public $Frequency;   // varchar(15) NOT NULL DEFAULT '',
     public $Status;   // varchar(10) NOT NULL DEFAULT '',
     public $Response_Code;   // int(11) NOT NULL DEFAULT '1',
-    public $CardHolderName;   // varchar(32) NOT NULL DEFAULT '',
+    public $CardHolderName;   // varchar(132) NOT NULL DEFAULT '',
     public $CardType;   // varchar(45) NOT NULL DEFAULT '',
     public $CardUsage;   // varchar(20) NOT NULL DEFAULT '',
     public $ExpDate;   // varchar(14) NOT NULL DEFAULT '',
@@ -49,7 +49,7 @@ class Guest_TokenRS extends TableRS {
         $this->Frequency = new DB_Field("Frequency", "", new DbStrSanitizer(15), TRUE, TRUE);
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(10), TRUE, TRUE);
         $this->Response_Code = new DB_Field("Response_Code", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->CardHolderName = new DB_Field("CardHolderName", "", new DbStrSanitizer(32), TRUE, TRUE);
+        $this->CardHolderName = new DB_Field("CardHolderName", "", new DbStrSanitizer(132), TRUE, TRUE);
         $this->CardType = new DB_Field("CardType", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->CardUsage = new DB_Field("CardUsage", "", new DbStrSanitizer(20), TRUE, TRUE);
         $this->ExpDate = new DB_Field("ExpDate", "", new DbStrSanitizer(14), TRUE, TRUE);
@@ -151,11 +151,11 @@ class InstamedGatewayRS extends TableRS {
     public $cc_name;  // varchar(45) NOT NULL,
     public $account_Id;  // varchar(45) NOT NULL DEFAULT '',
     public $security_Key;  // varchar(245) NOT NULL DEFAULT '',
+    public $password;
     public $sso_Alias;  // varchar(145) NOT NULL DEFAULT '',
     public $merchant_Id;  // varchar(145) NOT NULL DEFAULT '',
     public $store_Id;  // varchar(145) NOT NULL DEFAULT '',
     public $providersSso_Url;  // varchar(145) NOT NULL DEFAULT '',
-    public $soap_Url;  // varchar(145) NOT NULL DEFAULT '',
     public $nvp_Url;  // varchar(145) NOT NULL DEFAULT '',
     public $terminal_Id;  // varchar(145) NOT NULL DEFAULT '',
     public $WorkStation_Id;  // varchar(145) NOT NULL DEFAULT '',
@@ -172,11 +172,11 @@ class InstamedGatewayRS extends TableRS {
         $this->cc_name = new DB_Field("cc_name", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->account_Id = new DB_Field("Merchant_Id", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->security_Key = new DB_Field("Password", "", new DbStrSanitizer(245), TRUE, TRUE);
+        $this->password = new DB_Field("Mobile_CardInfo_Url", "", new DbStrSanitizer(245), TRUE, TRUE);
         $this->sso_Alias = new DB_Field("Credit_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->merchant_Id = new DB_Field("Trans_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->store_Id = new DB_Field("CardInfo_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->providersSso_Url = new DB_Field("Checkout_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
-        $this->soap_Url = new DB_Field("Mobile_CardInfo_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->nvp_Url = new DB_Field("Mobile_Checkout_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->terminal_Id = new DB_Field("CheckoutPOS_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->WorkStation_Id = new DB_Field("CheckoutPOSiFrame_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
@@ -225,7 +225,9 @@ class Card_IdRS extends TableRS {
 class SsoTokenRS extends TableRS {
 
     public $Token;  // varchar(136) NOT NULL DEFAULT '',
+    public $idPaymentAuth;  // INT NOT NULL DEFAULT 0
     public $idName;  // int(11) NOT NULL,
+    public $CardHolderName;  // VARCHAR(45) NOT NULL DEFAULT ''
     public $idGroup;  // int(11) NOT NULL,
     public $InvoiceNumber;  // varchar(36) NOT NULL DEFAULT '',
     public $Amount;  // DECIMAL(11,2) NOT NULL DEFAULT 0.00,
@@ -234,16 +236,18 @@ class SsoTokenRS extends TableRS {
     public $Last_Updated;  // datetime DEFAULT NULL,
     public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    function __construct($TableName = "ssotoken") {
-        $this->Token = new DB_Field("Token", "", new DbStrSanitizer(136), TRUE, TRUE);
-        $this->idName = new DB_Field("idName", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->idGroup = new DB_Field("idGroup", 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->InvoiceNumber = new DB_Field("InvoiceNumber", "", new DbStrSanitizer(36), TRUE, TRUE);
-        $this->Amount = new DB_Field("Amount", 0, new DbDecimalSanitizer(), TRUE, TRUE);
-        $this->State = new DB_Field("State", "", new DbStrSanitizer(5), TRUE, TRUE);
-        $this->Updated_By = new DB_Field("Updated_By", '', new DbStrSanitizer(45), TRUE, True);
-        $this->Last_Updated = new DB_Field("Last_Updated", null, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
-        $this->Timestamp = new DB_Field("Timestamp", null, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
+    function __construct($TableName = 'ssotoken') {
+        $this->Token = new DB_Field('Token', '', new DbStrSanitizer(136), TRUE, TRUE);
+        $this->idPaymentAuth = new DB_Field('idPaymentAuth', 0, new DbIntSanitizer(), TRUE, TRUE);
+        $this->idName = new DB_Field('idName', 0, new DbIntSanitizer(), TRUE, TRUE);
+        $this->CardHolderName = new DB_Field('CardHolderName', '', new DbStrSanitizer(45), TRUE, TRUE);
+        $this->idGroup = new DB_Field('idGroup', 0, new DbIntSanitizer(), TRUE, TRUE);
+        $this->InvoiceNumber = new DB_Field('InvoiceNumber', '', new DbStrSanitizer(36), TRUE, TRUE);
+        $this->Amount = new DB_Field('Amount', 0, new DbDecimalSanitizer(), TRUE, TRUE);
+        $this->State = new DB_Field('State', '', new DbStrSanitizer(5), TRUE, TRUE);
+        $this->Updated_By = new DB_Field('Updated_By', '', new DbStrSanitizer(45), TRUE, True);
+        $this->Last_Updated = new DB_Field('Last_Updated', null, new DbDateSanitizer('Y-m-d H:i:s'), FALSE);
+        $this->Timestamp = new DB_Field('Timestamp', null, new DbDateSanitizer('Y-m-d H:i:s'), FALSE);
 
         parent::__construct($TableName);
     }

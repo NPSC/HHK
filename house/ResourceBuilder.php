@@ -19,20 +19,16 @@ require (DB_TABLES . 'ReservationRS.php');
 require (DB_TABLES . 'ItemRS.php');
 
 require (CLASSES . 'TableLog.php');
-require CLASSES . 'ConvertTxtFiles.php';
-
 require (HOUSE . 'VisitLog.php');
 require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Room.php');
 require (CLASSES . 'HouseLog.php');
 require (CLASSES . 'Purchase/RoomRate.php');
 require (CLASSES . 'FinAssistance.php');
-require (CLASSES . 'Document.php');
 require (HOUSE . 'Resource.php');
 require (HOUSE . 'ResourceView.php');
 require (HOUSE . 'Attributes.php');
 require (HOUSE . 'Constraint.php');
-require (HOUSE . 'TemplateForm.php');
 
 const DIAGNOSIS_TABLE_NAME = 'Diagnosis';
 const LOCATION_TABLE_NAME = 'Location';
@@ -42,9 +38,8 @@ try {
 } catch (Exception $exw) {
     die($exw->getMessage());
 }
-$pageTitle = $wInit->pageTitle;
 
-function saveArchive(PDO $dbh, $desc, $subt, $tblName) {
+function saveArchive(\PDO $dbh, $desc, $subt, $tblName) {
 
     $defaultCode = '';
 
@@ -107,6 +102,7 @@ function saveArchive(PDO $dbh, $desc, $subt, $tblName) {
                 $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
                 $logTextu = HouseLog::getUpdateText($glRs, $tblName . $code);
                 HouseLog::logGenLookups($dbh, $tblName, $code, $logTextu, 'update', $uS->username);
+
             } else {
 
                 // update
@@ -120,6 +116,7 @@ function saveArchive(PDO $dbh, $desc, $subt, $tblName) {
                     $logText = HouseLog::getUpdateText($glRs, $tblName . $code);
                     HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'update', $uS->username);
                 }
+
             }
         }
     }
@@ -169,9 +166,11 @@ function getSelections(\PDO $dbh, $tableName, $type, Config_Lite $labels) {
             }
 
             $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', $ary));
+
         } else if ($type == GlTypeCodes::Demographics && $d[0] == 'z') {
 
             $cbDelMU = HTMLTable::makeTd('');
+
         } else if ($type != GlTypeCodes::U) {
 
             $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'cbDiagDel[' . $d[0] . ']', 'type' => 'checkbox', 'class' => 'hhkdiagdelcb', 'data-did' => 'selDiagDel[' . $d[0] . ']')));
@@ -179,7 +178,7 @@ function getSelections(\PDO $dbh, $tableName, $type, Config_Lite $labels) {
 
         $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLInput::generateMarkup($d[1], array('name' => 'txtDiag[' . $d[0] . ']')))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($d[4], array('name' => 'txtDOrder[' . $d[0] . ']', 'size' => '3')))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($d[4], array('name' => 'txtDOrder[' . $d[0] . ']', 'size'=>'3')))
                 . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA || ($type == GlTypeCodes::Demographics && $uS->GuestNameColor == $tableName) ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[2], array('size' => '10', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[' . $d[0] . ']'))) : '')
                 . $cbDelMU
                 . ($type != GlTypeCodes::m && $type != GlTypeCodes::U ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($tDiags, ''), array('name' => 'selDiagDel[' . $d[0] . ']'))) : '')
@@ -191,14 +190,16 @@ function getSelections(\PDO $dbh, $tableName, $type, Config_Lite $labels) {
         // new entry row
         $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDiag[0]')))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDOrder[0]', 'size' => '3')))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDOrder[0]', 'size'=>'3')))
                 . HTMLTable::makeTd('New', array('colspan' => 2))
                 . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA ? HTMLTable::makeTd(HTMLInput::generateMarkup('', array('size' => '7', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[0]'))) : '')
         );
     }
 
     return $tbl;
+
 }
+
 
 $dbh = $wInit->dbh;
 
@@ -206,7 +207,8 @@ $uS = Session::getInstance();
 
 // Kick out 'Guest' Users
 if ($uS->rolecode > WebRole::WebUser) {
-    exit("Unauthorized - " . HTMLContainer::generateMarkup('a', 'Continue', array('href' => 'index.php')));
+
+    exit("Unauthorized - " . HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'index.php')));
 }
 
 
@@ -214,7 +216,6 @@ $tabIndex = 0;
 $feFileSelection = '';
 $rteMsg = '';
 $rateTableErrorMessage = '';
-$convertMsg = '';
 
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
@@ -334,6 +335,7 @@ if (isset($_POST['table'])) {
                     return $dbh->exec("update name_demog set `$tableName` = '$newId' where `$tableName` = '$oldId';");
                 };
             }
+
         } else {
             switch ($tableName) {
 
@@ -551,6 +553,7 @@ if (isset($_POST['btnkfSave'])) {
 
             if ($newDesc != '') {
                 // Add a cleaning fee?
+
                 // Look for existing fee
                 $glRs = new GenLookupsRS();
                 $glRs->Table_Name->setStoredVal('Visit_Fee_Code');
@@ -558,7 +561,7 @@ if (isset($_POST['btnkfSave'])) {
                 $rows = EditRS::select($dbh, $glRs, array($glRs->Table_Name, $glRs->Description));
 
                 if (count($rows) > 0) {
-                    $rateTableErrorMessage = HTMLContainer::generateMarkup('p', 'Visit fee code "' . $newDesc . '" is already defined. ', array('style' => 'color:red;'));
+                    $rateTableErrorMessage = HTMLContainer::generateMarkup('p', 'Visit fee code "' . $newDesc . '" is already defined. ', array('style'=>'color:red;'));
                 } else {
 
                     // Insert new cleaning fee
@@ -573,6 +576,7 @@ if (isset($_POST['btnkfSave'])) {
                     EditRS::insert($dbh, $glRs);
                     $logText = HouseLog::getInsertText($glRs, 'Visit_Fee_Code');
                     HouseLog::logGenLookups($dbh, 'Visit_Fee_Code', $newCode, $logText, 'insert', $uS->username);
+
                 }
             }
         }
@@ -854,85 +858,15 @@ if (isset($_POST['btnItemSave'])) {
     }
 }
 
+$pageTitle = $wInit->pageTitle;
 
-if (isset($_POST['formEdit'])) {
-
-    $tabIndex = 6;
-
-    $cmd = filter_input(INPUT_POST, 'formEdit', FILTER_SANITIZE_STRING);
-
-    switch ($cmd) {
-
-        case 'getform':
-
-            $fn = intval(filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_NUMBER_INT), 10);
-
-            if (!$fn || $fn == '0') {
-                exit(json_encode(array('warning' => 'The Form id is blank.')));
-            }
-
-            $templateForm = new TemplateForm($dbh, $fn);
-
-            if ($templateForm->getTemplateDoc()->isValid()) {
-                $rtn = array(
-                    'title' => $templateForm->getTemplateDoc()->getTitle(),
-                    'tx' => $templateForm->getTemplateDoc()->getDoc(),
-                    'tagSel'=>$templateForm->getTagSelector('selTokens'));
-            } else {
-                $rtn = array('warning' => 'The Form is not found.');
-            }
-
-            exit(json_encode($rtn));
-
-            break;
-
-        case 'saveform':
-
-            $formEditorText = urldecode(filter_input(INPUT_POST, 'mu', FILTER_SANITIZE_STRING));
-
-            $fn = intval(filter_input(INPUT_POST, 'fn', FILTER_SANITIZE_NUMBER_INT), 10);
-
-            if (!$fn || $fn == '0') {
-                exit(json_encode(array('warning' => 'The Form id is blank.')));
-            }
-
-            $doc = new Document($dbh, $fn);
-
-            if ($doc->getDoc() != $formEditorText) {
-
-                $doc->setDoc($formEditorText);
-                $doc->save($dbh, $uS->username);
-
-                if ($doc->getIdDocument() > 0) {
-                    $rteMsg = "Success - form saved.";
-                } else {
-                    $rteMsg = "Form Not Saved.";
-                }
-            } else {
-                $rteMsg = "No changes were detected.";
-            }
-
-            exit(json_encode(array('response' => $rteMsg, 'idDocument' => $doc->getIdDocument())));
-
-            break;
-    }
-
-    exit(json_encode(array('warning' => 'Unspecified')));
-}
-
-if (isset($_POST['btnConvertFiles']) && SecurityComponent::is_TheAdmin()) {
-
-    $tabIndex = 6;
-
-    $convertMsg = ConvertTxtFiles::doMarkdownify($dbh);
-}
-
+$menuMarkup = $wInit->generatePageMenu();
 
 //
 // Generate tab content
 //
 // hospital tab title
-$hospitalTabTitle = $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospitals & Associations');
+$hospitalTabTitle = $labels->getString('hospital', 'hospital', 'Hospitals & Associations');
 
 // Room pricing model
 $rPrices = readGenLookupsPDO($dbh, 'Price_Model');
@@ -1006,7 +940,7 @@ if ($priceModel->hasRateCalculator()) {
 
 // Wrap rate table and rate calculator
 $feesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Room Rates', array('style' => 'font-weight:bold;'))
-                . HTMLContainer::generateMarkup('div', $fTbl->generateMarkup(array('style' => 'margin:7px;')), array('style' => 'max-height:310px; overflow-y:scroll;'))
+                . HTMLContainer::generateMarkup('div', $fTbl->generateMarkup(array('style' => 'margin:7px;')), array('style'=>'max-height:310px; overflow-y:scroll;'))
                 . $rcMarkup
                 . $sMarkup
                 , array('style' => 'clear:left;float:left;margin:7px;'));
@@ -1043,10 +977,10 @@ if ($uS->VisitFee) {
     }
 
     // add empty fee row
-    $kTbl->addBodyTr(
-            HTMLTable::makeTd('', array('style' => 'text-align:center;'))
-            . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'vfdesc[0]', 'size' => '16')))
-            . HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name' => 'vfrate[0]', 'size' => '6', 'class' => 'number-only'))));
+        $kTbl->addBodyTr(
+                HTMLTable::makeTd('', array('style' => 'text-align:center;'))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'vfdesc[0]', 'size' => '16')))
+                . HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name' => 'vfrate[0]', 'size' => '6', 'class' => 'number-only'))));
 
 
     $visitFeesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee') . ' Amount', array('style' => 'font-weight:bold;')) . $kTbl->generateMarkup(array('style' => 'margin:7px;')), array('style' => 'float:left;margin:7px;'));
@@ -1241,13 +1175,6 @@ $attrTable = $aTbl->generateMarkup();
 $constraintTable = $constraints->createConstraintTable($dbh);
 
 
-// Form editor
-$feSelectForm = HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup(ListDocuments::asLookups(ListDocuments::listHouseForms($dbh)), "", TRUE)
-                , array('id' => 'frmEdSelect', 'name' => 'frmEdSelect'));
-
-
-
 // Demographics Selection table
 $tbl = getSelections($dbh, 'Demographics', 'm', $labels);
 $demoSelections = $tbl->generateMarkup();
@@ -1267,7 +1194,7 @@ WHERE
 
 $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
-$selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''), array('name' => 'selDemoLookup', 'data-type' => 'd', 'class' => 'hhk-selLookup'));
+$selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''), array('name' => 'selDemoLookup', 'data-type'=>'d', 'class' => 'hhk-selLookup'));
 $lookupErrMsg = '';
 
 
@@ -1297,6 +1224,7 @@ foreach ($rows2 as $r) {
     if ($r[1] != 'Demographics') {
         $lkups[] = $r;
     }
+
 }
 
 $selLookups = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($lkups, ''), array('name' => 'sellkLookup', 'class' => 'hhk-selLookup'));
@@ -1368,12 +1296,6 @@ $resultMessage = $alertMsg->createMarkup();
             }
         </style>
 
-
-        <link rel="stylesheet" href="css/tui-editor/tui-editor.min.css">
-        <link rel="stylesheet" href="css/tui-editor/tui-editor-contents-min.css">
-        <link rel="stylesheet" href="css/tui-editor/codemirror.css">
-        <link rel="stylesheet" href="css/tui-editor/tui-color-picker.min.css">
-
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
@@ -1381,11 +1303,6 @@ $resultMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script src="../js/tuiEditorSupport.js"></script>
-        <script src="../js/tui-color-picker.min.js"></script>
-        <script src="../js/tui-editor-Editor.min.js"></script>
-        <script src="../js/tui-editor-extColorSyntax.min.js"></script>
-
 
         <script type="text/javascript">
     function isNumber(n) {
@@ -1394,9 +1311,6 @@ $resultMessage = $alertMsg->createMarkup();
     }
 
     var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
-    var documentId = 0;
-    var simplemde;
-    var savedRow;
 
     function getRoomFees(cat) {
         if (cat != '' && cat != fixedRate) {
@@ -1466,6 +1380,7 @@ $resultMessage = $alertMsg->createMarkup();
         });
         $('#selRateCategory').change();
     }
+    var savedRow;
     function getResource(idResc, type, trow) {
         "use strict";
         if ($('#cancelbtn').length > 0) {
@@ -1624,14 +1539,11 @@ $resultMessage = $alertMsg->createMarkup();
             }
         });
     }
-
     $(document).ready(function () {
         "use strict";
 
         var tabIndex = parseInt('<?php echo $tabIndex; ?>');
-        var editor, $rSel;
-
-        $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn, #btnFormSave').button();
+        $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn').button();
 
         $('#txtFaIncome, #txtFaSize').change(function () {
             var inc = $('#txtFaIncome').val().replace(',', ''),
@@ -1697,8 +1609,8 @@ $resultMessage = $alertMsg->createMarkup();
         });
         $('.hhk-selLookup').change(function () {
             var $sel = $(this),
-                    table = $(this).find("option:selected").text(),
-                    type = $(this).val();
+                table = $(this).find("option:selected").text(),
+                type = $(this).val();
 
             if ($sel.data('type') === 'd') {
                 table = $sel.val();
@@ -1720,8 +1632,8 @@ $resultMessage = $alertMsg->createMarkup();
             var $frm = $(this).closest('form');
             var sel = $frm.find('select.hhk-selLookup');
             var table = sel.find('option:selected').text(),
-                    type = $frm.find('select').val(),
-                    $btn = $(this);
+                type = $frm.find('select').val(),
+                $btn = $(this);
 
             if (sel.data('type') === 'd') {
                 table = sel.val();
@@ -1735,23 +1647,23 @@ $resultMessage = $alertMsg->createMarkup();
             $btn.val('Saving...');
 
             $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
-                    function (data) {
-                        $btn.val('Save');
-                        if (data) {
-                            $frm.children('div').empty().append(data);
-                        }
-                    });
+                function(data) {
+                    $btn.val('Save');
+                    if (data) {
+                        $frm.children('div').empty().append(data);
+                    }
+                });
         }).button();
 
         $('#btndemoSave').click(function () {
             var $frm = $(this).closest('form');
 
             $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + 'Demographics' + '&tp=' + 'm',
-                    function (data) {
-                        if (data) {
-                            $frm.children('div').children().remove().end().append(data);
-                        }
-                    });
+                function(data) {
+                    if (data) {
+                        $frm.children('div').children().remove().end().append(data);
+                    }
+                });
         }).button();
 
 
@@ -1778,135 +1690,11 @@ $resultMessage = $alertMsg->createMarkup();
             $(this).val(parseInt(this.value));
         });
         $('#mainTabs').show();
-
-
-        editor = new tui.Editor({
-            el: document.querySelector('#editSection'),
-            initialEditType: 'wysiwyg',
-            previewStyle: 'vertical',
-            initialValue: '',
-            usageStatistics: false,
-            height: '600px',
-            exts: ['colorSyntax'],
-            toolbarItems: [
-                'heading',
-                'bold',
-                'italic',
-                'divider',
-                'hr',
-                'quote',
-                'divider',
-                'ul',
-                'ol',
-                'task',
-                'indent',
-                'outdent'
-            ]
-        });
-
-
-        $('#btnFormSave').click(function () {
-
-            var md = editor.getMarkdown();
-            //var ht = editor.getHtml();
-
-            $('#btnFormSave').prop('disabled',true);
-
-            $.post('ResourceBuilder.php', {formEdit: 'saveform', fn: documentId, mu: md}, function (rawData) {
-                try {
-                    var data = $.parseJSON(rawData);
-                } catch (error) {
-                    flagAlertMessage("Server error", true);
-                    return;
-                }
-
-                if (data.gotopage) {
-                    window.open(data.gotopage, '_self');
-                }
-
-                $('#btnFormSave').prop('disabled',false);
-
-                if (data.warning && data.warning !== '') {
-                    flagAlertMessage(data.warning, true);
-                } else {
-                    flagAlertMessage(data.response, 'success');
-                    $('#frmEdSelect option[value="' + documentId + '"]').val(data.idDocument);
-                    //console.log(data);
-                }
-            });
-        });
-
-
-        // Form edit form select drives the whole process.
-        $('#frmEdSelect').change(function () {
-
-            $('#convertMsg').text('');
-            $('#rteMsg').text('');
-            $('#spnEditorTitle').text("");
-
-            if ($(this).val() === '') {
-                $('#spnRteLoading').hide();
-                documentId = 0;
-                return;
-            }
-
-            documentId = $(this).val();
-            $('#spnRteLoading').show();
-
-            $.post('ResourceBuilder.php', {formEdit: 'getform', fn: $(this).val()}, function (rawData) {
-
-                $('#spnRteLoading').hide();
-
-                try {
-                    var data = $.parseJSON(rawData);
-                } catch (error) {
-                    alert('Server Error');
-                    return;
-                }
-
-                if (data.gotopage) {
-                    window.open(data.gotopage, '_self');
-                }
-
-                if (data.warning && data.warning !== '') {
-
-                    $('#rteMsg').text(data.warning);
-                    return;
-
-                }
-
-                editor.setMarkdown(data.tx);
-
-                $("#replacementTokens").empty();
-
-                if (data.tagSel) {
-
-                    // make replacements selector
-                    $rSel = $(data.tagSel);
-
-                    $("#replacementTokens").append($('<span>Replacement Tokens: </span>')).append($rSel);
-
-                    $rSel.change(function () {
-                        editor.insertText($(this).val());
-                    });
-                }
-
-                if (data.title) {
-                    $('#spnEditorTitle').text('Editing ' + data.title);
-                }
-
-                // Form save button
-                $('#btnFormSave').show();
-
-            });
-        });
     });
         </script>
     </head>
-    <body <?php if ($wInit->testVersion) {
-    echo "class='testbody'";
-} ?>>
-<?php echo $wInit->generatePageMenu(); ?>
+    <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
+<?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <div style="float:left; margin-right: 100px; margin-top:10px;">
                 <h1><?php echo $wInit->pageHeading; ?></h1>
@@ -1920,23 +1708,23 @@ $resultMessage = $alertMsg->createMarkup();
                     <li><a href="#hospTable"><?php echo $hospitalTabTitle; ?></a></li>
                     <li><a href="#demoTable">Demographics</a></li>
                     <li><a href="#lkTable">Lookups</a></li>
-                    <li><a href="#agreeEdit">Forms Editor</a></li>
+<!--                    <li><a href="#agreeEdit">Forms Editor</a></li>-->
                     <li><a href="#itemTable">Items</a></li>
                     <li><a href="#attrTable">Attributes</a></li>
                     <li><a href="#constr">Constraints</a></li>
                 </ul>
                 <div id="rescTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
-<?php echo $rescTable; ?>
+                    <?php echo $rescTable; ?>
                 </div>
                 <div id="roomTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
-<?php echo $roomTable; ?>
+                    <?php echo $roomTable; ?>
                 </div>
                 <div id="demoTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
                     <div style="float:left;">
                         <h3>Demographic Categories</h3>
                         <form id="formdemo">
                             <div>
-<?php echo $demoSelections; ?>
+                                <?php echo $demoSelections; ?>
                             </div>
                             <span style="margin:10px;float:right;"><input type="button" id='btndemoSave' class="hhk-savedemoCat" data-type="h" value="Save"/></span>
                         </form>
@@ -1946,8 +1734,8 @@ $resultMessage = $alertMsg->createMarkup();
                         <h3>Demographics</h3>
                         <form id="formdemoCat">
                             <table><tr>
-                                    <th>Demographic</th>
-                                    <td><?php echo $selDemos; ?></td>
+                                <th>Demographic</th>
+                                <td><?php echo $selDemos; ?></td>
                                 </tr>
                             </table>
                             <div id="divdemoCat"></div>
@@ -1965,11 +1753,11 @@ $resultMessage = $alertMsg->createMarkup();
                                 </tr></table>
                             <div id="divlk" class="hhk-divLk"></div>
                             <span style="margin:10px;float:right;">
-<?php if (!$hasDiags) { ?>
-                                    <input type="submit" name='btnAddDiags' id="btnAddDiags" value="Add Diagnosis"/>
-<?php } if (!$hasLocs) { ?>
-                                    <input type="submit" id='btnAddLocs' name="btnAddLocs" value="Add Location"/>
-<?php } ?>
+                                <?php if (!$hasDiags) { ?>
+                                <input type="submit" name='btnAddDiags' id="btnAddDiags" value="Add Diagnosis"/>
+                                <?php } if (!$hasLocs) { ?>
+                                <input type="submit" id='btnAddLocs' name="btnAddLocs" value="Add Location"/>
+                                <?php } ?>
                                 <input type="button" id='btnlkSave' class="hhk-saveLookup"data-type="h" value="Save"/>
                             </span>
                         </form></div>
@@ -1982,20 +1770,19 @@ $resultMessage = $alertMsg->createMarkup();
                                 </tr></table>
                             <div id="divdisc" class="hhk-divLk"></div>
                             <span style="margin:10px;float:right;">
-<?php if (!$hasDiscounts) { ?>
-                                    <input type="submit" name='btnHouseDiscs' id="btnHouseDiscs" value="Add Discounts"/>
-<?php } if (!$hasAddnl) { ?>
-                                    <input type="submit" id='btnAddnlCharge' name="btnAddnlCharge" value="Add Additional Charges"/>
-<?php } ?>
+                                <?php if (!$hasDiscounts) { ?>
+                                <input type="submit" name='btnHouseDiscs' id="btnHouseDiscs" value="Add Discounts"/>
+                                <?php } if (!$hasAddnl) { ?>
+                                <input type="submit" id='btnAddnlCharge' name="btnAddnlCharge" value="Add Additional Charges"/>
+                                <?php } ?>
                                 <input type="button" id='btndiscSave' class="hhk-saveLookup" data-type="ha" value="Save"/>
                             </span>
                         </form>
                     </div>
                 </div>
-
                 <div id="rateTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <p style="padding:3px;background-color: #fff7db;">Make changes directly into the text boxes below and press 'Save'.</p>
-                                <?php echo $rateTableErrorMessage; ?>
+                    <?php echo $rateTableErrorMessage; ?>
                     <form method="POST" action="ResourceBuilder.php" name="form1">
                         <div style="clear:left;float:left;"><?php echo $pricingModelTable; ?></div>
 <?php echo $visitFeesTable . $keysTable . $payTypesTable . $feesTable . $faMarkup; ?>
@@ -2003,32 +1790,21 @@ $resultMessage = $alertMsg->createMarkup();
                         <span style="margin:10px;float:right;"><input type="submit" id='btnkfSave' name="btnkfSave" value="Save"/></span>
                     </form>
                 </div>
-
                 <div id="hospTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <form method="POST" action="ResourceBuilder.php" name="formh">
-                        <?php echo $hospTable; ?>
+<?php echo $hospTable; ?>
                         <div style="clear:both"></div>
                         <span style="margin:10px;float:right;"><input type="submit" id='btnhSave' name="btnhSave" value="Save"/></span>
                     </form>
                 </div>
-
-                <div id="agreeEdit" class="ui-tabs-hide" >
-                    <?php if (SecurityComponent::is_TheAdmin()) { ?>
-                    <form method="POST" action="ResourceBuilder.php" name="formConvrt">
-                        <input type="submit" name='btnConvertFiles'  value="Convert Files"/>
-                        <p id="convertMsg"><?php echo $convertMsg; ?></p>
-                    </form>
-                    <?php } ?>
-                    <p>Select the form to edit from the following list: <?php echo $feSelectForm; ?></p><p id="spnRteLoading" style="font-style: italic; display:none;">Loading...</p>
-                    <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
-                    <h3 id="spnEditorTitle"></h3>
-                    <div id='replacementTokens' style="float:right;"></div>
-                    <div id="editSection" style="clear:both;"></div>
-
-                    <div style="clear:both"></div>
-                    <span style="margin:10px;float:right;"><input type="button" id='btnFormSave' style="display:none;" value="Save Form"/></span>
-                </div>
-
+<!--                <div id="agreeEdit" class="ui-tabs-hide" >
+                    <p>Select the form to edit from the following list: <?php //echo $rteSelectForm; ?><span id="spnRteLoading" style="font-style: italic; display:none;">Loading...</span></p>
+                    <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php //echo $rteMsg; ?></p>
+                    <fieldset style="clear:left; float:left; margin-top:10px;">
+                        <legend><span id="spnEditorTitle" style="font-size: 1em; font-weight: bold;">Select a form</span></legend>
+                        <div id="rteContainer"></div>
+                    </fieldset>
+                </div>-->
                 <div id="itemTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <form method="POST" action="ResourceBuilder.php" name="formitem">
 <?php echo $itemTable; ?>
@@ -2036,17 +1812,15 @@ $resultMessage = $alertMsg->createMarkup();
                         <span style="margin:10px;float:right;"><input type="submit" id='btnItemSave' name="btnItemSave" value="Save"/></span>
                     </form>
                 </div>
-
                 <div id="attrTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <form method="POST" action="ResourceBuilder.php" name="format">
-                        <?php echo $attrTable; ?>
+<?php echo $attrTable; ?>
                         <div style="clear:both"></div>
                         <span style="margin:10px;float:right;"><input type="submit" id='btnAttrSave' name="btnAttrSave" value="Save"/></span>
                     </form>
                 </div>
-
                 <div id="constr" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
-<?php echo $constraintTable; ?>
+                        <?php echo $constraintTable; ?>
                 </div>
             </div>
             <div id="statEvents" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em;"></div>

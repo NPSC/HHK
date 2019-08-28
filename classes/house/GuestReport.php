@@ -80,8 +80,6 @@ class GuestReport {
 
             $th .= HTMLTable::makeTh($indxDT->format('M, Y'));
 
-//            $accum[$thisPeriod]['Guests']['p']['cnt'] = 0;
-//            $accum[$thisPeriod]['Guests']['p']['title'] = 'New PSGs';
             $accum[$thisPeriod]['Guests']['o']['cnt'] = 0;
             if ($whichGuests == 'new') {
                 $accum[$thisPeriod]['Guests']['o']['title'] = 'New Guests';
@@ -107,7 +105,7 @@ class GuestReport {
 
         // Totals
         foreach ($demoCategorys as $k => $d) {
-            $accum['Total'][$d] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, $k)));
+            $accum['Total'][$d] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, $k, 'Order')));
         }
 
         $accum['Total']['Distance'] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));
@@ -172,7 +170,7 @@ class GuestReport {
 
             $accum[$startPeriod]['Guests']['o']['cnt']++;
             $accum['Total']['Guests']['o']['cnt']++;
-//            $accum[$startPeriod]['Guests']['p']['cnt']++;
+
 
             try {
                 $miles = self::calcZipDistance($dbh, $sourceZip, $r['Postal_Code']);

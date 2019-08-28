@@ -35,6 +35,7 @@ interface iGatewayResponse {
     public function getMaskedAccount();
     public function getCardHolderName();
     public function getExpDate();
+    public function SignatureRequired();
 
     public function getToken();
     public function saveCardonFIle();
@@ -119,13 +120,13 @@ abstract class GatewayResponse {
 
 abstract class CurlRequest {
 
-    public function submit($parmStr, $url, $trace = FALSE) {
+    public function submit($parmStr, $url, $accountId, $password, $trace = FALSE) {
 
         if ($url == '') {
             throw new Hk_Exception_Payment('Curl Request is missing the URL.  ');
         }
 
-        $xaction = $this->execute($url, $parmStr);
+        $xaction = $this->execute($url, $parmStr, $accountId, $password);
 
         try {
             if ($trace) {
@@ -140,7 +141,7 @@ abstract class CurlRequest {
         return $xaction;
     }
 
-    protected abstract function execute($url, $params);
+    protected abstract function execute($url, $params, $accountId, $password);
 
 }
 
@@ -240,6 +241,11 @@ class StandInGwResponse implements iGatewayResponse {
     }
 
     public function getCardHolderName() {
+
+        if ($this->cardholderName == '') {
+            return $this->pAuthRs->Cardholder_Name->getStoredVal();
+        }
+        
         return $this->cardholderName;
     }
 
@@ -253,6 +259,10 @@ class StandInGwResponse implements iGatewayResponse {
 
     public function getExpDate() {
         return $this->expDate;
+    }
+
+    public function SignatureRequired() {
+        return $this->pAuthRs->Signature_Required->getStoredVal();
     }
 
     public function getInvoiceNumber() {
@@ -276,7 +286,7 @@ class StandInGwResponse implements iGatewayResponse {
     }
 
     public function isSignatureRequired() {
-        if ($this->pAuthRs->Signature_Required->getStoredVal() == 1) {
+        if ($this->SignatureRequired() == 1) {
             return TRUE;
         }
         return FALSE;

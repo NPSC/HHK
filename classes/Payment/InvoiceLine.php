@@ -30,8 +30,8 @@ abstract class InvoiceLine {
     protected $carriedFrom;
     protected $useDetail;
 
-    public function __construct() {
-        $this->useDetail = TRUE;
+    public function __construct($useDetail = TRUE) {
+        $this->useDetail = $useDetail;
         $this->invLineRs = new InvoiceLineRS();
     }
 
@@ -214,8 +214,11 @@ abstract class InvoiceLine {
 
         $this->description = $description;
 
-        if ($this->useDetail && $this->var != '') {
-            $this->description .= ' ' . $this->var;
+        // var will have invoice notes when useDetail is off.
+        if ($this->useDetail) {
+            $this->description .= ($this->description != '' ? ' ' . $this->var : $this->var);
+        } else {
+            $this->description .= ($this->var != '' ? '; ' . $this->var : '');
         }
 
         return $this;
@@ -234,9 +237,10 @@ class RecurringInvoiceLine extends InvoiceLine {
 
     protected $periodStart;
     protected $periodEnd;
+    protected $units;
 
-    public function __construct() {
-        parent::__construct();
+    public function __construct($useDetail = TRUE) {
+        parent::__construct($useDetail);
         $this->setTypeId(InvoiceLineType::Recurring);
     }
 
@@ -248,10 +252,11 @@ class RecurringInvoiceLine extends InvoiceLine {
 
     }
 
-    public function createNewLine(Item $item, $quantity, $startDate = '', $endDate = '') {
+    public function createNewLine(Item $item, $quantity, $startDate = '', $endDate = '', $units = 0) {
 
         $this->setPeriodEnd($endDate);
         $this->setPeriodStart($startDate);
+        $this->setUnits($units);
 
         parent::createNewLine($item, $quantity, $this->var);
     }
@@ -295,9 +300,14 @@ class RecurringInvoiceLine extends InvoiceLine {
     public function setDescription($description) {
 
         if ($this->useDetail && $this->getPeriodStart() != '' && $this->getPeriodEnd() != '') {
-            $this->description = $description .  ':  ' . date('M j, Y', strtotime($this->getPeriodStart())) . ' - ' . date('M j, Y', strtotime($this->getPeriodEnd()));
+
+            if ($this->units < 1) {
+                $this->description = $description .  ':  ' . date('M j, Y', strtotime($this->getPeriodStart())) . ' - ' . date('M j, Y', strtotime($this->getPeriodEnd()));
+            } else {
+                $this->description = $description .  ':  ' . date('M j, Y', strtotime($this->getPeriodStart())) . ' - ' . date('M j, Y', strtotime($this->getPeriodEnd()));
+            }
         } else {
-            $this->description = trim($description . ' ' . $this->var);
+            $this->description = $description . ($this->var == '' ? '' : '; ' . $this->var);
         }
 
         return $this;
@@ -321,12 +331,22 @@ class RecurringInvoiceLine extends InvoiceLine {
         return $this;
     }
 
+    public function getUnits() {
+        return $this->units;
+    }
+
+    public function setUnits($units) {
+        $this->units = $units;
+        return $this;
+    }
+
+
 }
 
 class InvoiceInvoiceLine extends InvoiceLine {
 
-    public function __construct() {
-        parent::__construct();
+    public function __construct($useDetail = TRUE) {
+        parent::__construct($useDetail);
         $this->setTypeId(InvoiceLineType::Invoice);
     }
 
@@ -334,8 +354,8 @@ class InvoiceInvoiceLine extends InvoiceLine {
 
 class OneTimeInvoiceLine extends InvoiceLine {
 
-    public function __construct() {
-        parent::__construct();
+    public function __construct($useDetail = TRUE) {
+        parent::__construct($useDetail);
         $this->setTypeId(InvoiceLineType::OneTime);
     }
 
@@ -343,8 +363,8 @@ class OneTimeInvoiceLine extends InvoiceLine {
 
 class HoldInvoiceLine extends InvoiceLine {
 
-    public function __construct() {
-        parent::__construct();
+    public function __construct($useDetail = TRUE) {
+        parent::__construct($useDetail);
         $this->setTypeId(InvoiceLineType::Hold);
     }
 
@@ -352,8 +372,8 @@ class HoldInvoiceLine extends InvoiceLine {
 
 class ReimburseInvoiceLine extends InvoiceLine {
 
-    public function __construct() {
-        parent::__construct();
+    public function __construct($useDetail = TRUE) {
+        parent::__construct($useDetail);
         $this->setTypeId(InvoiceLineType::Reimburse);
     }
 

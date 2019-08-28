@@ -34,11 +34,6 @@
 
 // Mercury helper classes
 
-
-Class MpTokenTransaction {
-
-}
-
 class MpReturnCodeValues {
 
     public static function returnCodeToText($returnCode) {
@@ -441,17 +436,6 @@ class AVSResult {
 
 }
 
-/*
- *  $gateWay array is required by all requests and must contain these Mercury-defined fields:
- *      Merchant_Id
- *      Password
- *      Credit_Url
- *      Trans_Url
- *      CardInfo_Url
- *      Checkout_Url
- *
- */
-
 
 
 // Base class Mercury Request and Response objects.
@@ -551,16 +535,8 @@ abstract class MercRequest {
 
 abstract class MercResponse {
 
-    /**
-     *
-     * @var array
-     */
     protected $response;
 
-    /**
-     *
-     * @var array
-     */
     protected $result;
 
     protected $tranType;
@@ -628,6 +604,10 @@ abstract class MercResponse {
     }
     public function getEMVApplicationResponseCode() {
         return '';
+    }
+
+    public function SignatureRequired() {
+        return 1;
     }
 
     public function getErrorMessage() {
@@ -901,13 +881,6 @@ class VerifyCiResponse extends MercResponse {
     public function getMaskedAccount() {
         if (isset($this->result->MaskedAccount)) {
             return $this->result->MaskedAccount;
-        }
-        return '';
-    }
-
-    public function getTranType() {
-        if (isset($this->result->TranType)) {
-            return $this->result->TranType;
         }
         return '';
     }
@@ -1250,14 +1223,7 @@ class VerifyCkOutResponse extends MercResponse  implements iGatewayResponse{
 
     public function getMaskedAccount() {
         if (isset($this->result->MaskedAccount)) {
-            return $this->result->MaskedAccount;
-        }
-        return '';
-    }
-
-    public function getTranType() {
-        if (isset($this->result->TranType)) {
-            return $this->result->TranType;
+            return str_ireplace('#', '', $this->result->MaskedAccount);
         }
         return '';
     }
@@ -1418,10 +1384,7 @@ class VerifyCkOutResponse extends MercResponse  implements iGatewayResponse{
     }
 
     public function getResponseMessage() {
-        if (isset($this->result->StatusMessage)) {
-            return $this->result->StatusMessage;
-        }
-        return '';
+        return $this->getDisplayMessage();
     }
 
 }
@@ -1755,13 +1718,6 @@ class CreditAdjustTokenRequest extends MercTokenRequest {
 
 class CreditTokenResponse extends MercResponse implements iGatewayResponse {
 
-    protected $tranType;
-
-    /**
-     *
-     * @param StdObj $response
-     * @throws Hk_Exception_Payment
-     */
     function __construct($response, $resultName, $tranType = '') {
         parent::__construct($response);
 
@@ -1782,7 +1738,7 @@ class CreditTokenResponse extends MercResponse implements iGatewayResponse {
 
     }
 
-        public function getPartialPaymentAmount() {
+    public function getPartialPaymentAmount() {
         return 0;
     }
 
@@ -1820,9 +1776,9 @@ class CreditTokenResponse extends MercResponse implements iGatewayResponse {
 
     public function getMaskedAccount() {
         if (isset($this->result->Account)) {
-            return $this->result->Account;
+            return str_ireplace('#', '', $this->result->Account);
         } else if (isset($this->result->MaskedAccount)) {
-            return $this->result->MaskedAccount;
+            return str_ireplace('#', '', $this->result->MaskedAccount);
         }
 
         return '';
@@ -1922,12 +1878,12 @@ class CreditTokenResponse extends MercResponse implements iGatewayResponse {
        return '';
     }
 
-//    public function getStatus() {
-//        if (isset($this->result->Status)) {
-//            return $this->result->Status;
-//        }
-//        return '';
-//    }
+    public function getStatus() {
+        if (isset($this->result->Status)) {
+            return $this->result->Status;
+        }
+        return '';
+    }
 
     public function getMessage() {
         if (isset($this->result->Message)) {

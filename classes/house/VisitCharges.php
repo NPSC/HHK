@@ -41,12 +41,9 @@ class VisitCharges {
         $this->itemSums = array();
     }
 
-
-
     public function sumCurrentRoomCharge(\PDO $dbh, PriceModel $priceModel, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
         return $this->getVisitData($priceModel->loadVisitNights($dbh, $this->idVisit), $priceModel, $newPayment, $calcDaysPaid, $givenPaid);
     }
-
 
     public function sumDatedRoomCharge(\PDO $dbh, PriceModel $priceModel, $coDate, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
 
@@ -85,9 +82,20 @@ class VisitCharges {
             $calcDaysPaid = TRUE;
         }
 
+        $this->nightsStayed = 0;
+        $this->guestNightsStayed = 0;
+        $this->nightsToStay = 0;
+        $this->nightsToPay = 0;
+        $this->nightsPaid = 0;
+        $this->feesCharged = 0;
+        $this->feesToCharge = 0;
+        $this->excessPaid = 0;
         $this->visitFeeCharged = 0;
         $visitFeeCharge = 0;
+        $this->DepositCharged = 0;
+        $this->depositPayType = '';
 
+        // Find any visit fees and deposits.
         foreach ($spans as $s) {
 
             // Search for visit fee
@@ -103,14 +111,6 @@ class VisitCharges {
         }
 
         $this->glideCredit = $spans[0]['Rate_Glide_Credit'];
-        $this->nightsStayed = 0;
-        $this->guestNightsStayed = 0;
-        $this->nightsToStay = 0;
-        $this->nightsToPay = 0;
-        $this->nightsPaid = 0;
-        $this->feesCharged = 0;
-        $this->feesToCharge = 0;
-        $this->excessPaid = 0;
 
 
         // Collect rates
@@ -121,9 +121,6 @@ class VisitCharges {
         } else {
             $paid = $givenPaid;
         }
-
-        $srd = NULL;
-        $rateSummary = array();
 
 
         // orders and rates
@@ -166,6 +163,7 @@ class VisitCharges {
         if ($calcDaysPaid) {
 
             $daysBeingPaid = 0;
+            $payment = $newPayment;
 
             foreach ($rateSummary as $rateAmt) {
 
@@ -174,37 +172,41 @@ class VisitCharges {
                 }
 
                 // Do I have enough to pay this span?
-                $unpaid = $rateAmt['charged'] - $rateAmt['paid'];
+                $unpaid = $rateAmt['charged'] - ($payment + $rateAmt['paid']);
 
-                if ($newPayment >= $unpaid && ($unpaid > 0 || $rateAmt['charged'] == 0)) {
+                if ($payment >= $unpaid && ($unpaid > 0 || $rateAmt['charged'] == 0)) {
 
                     $daysBeingPaid += $rateAmt['days2pay'];
-                    $newPayment -= $unpaid;
+                    $payment -= $unpaid;
                     continue;
 
                 } else {
                     // not enough, or payments into the future.
-                    $totPaid = $newPayment + $rateAmt['paid'];
+                    $totPaid = $payment + $rateAmt['paid'];
                     $priceModel->setCreditDays($rateAmt['glide']);
                     $daysPaid = $priceModel->daysPaidCalculator($totPaid, $rateAmt['idrate'], $rateAmt['cat'], $rateAmt['amt'], $rateAmt['adj'], $rateAmt['aveGDay']);
+
                     if ($daysPaid == 0) {
                         $daysBeingPaid += $rateAmt['daysPaid'];
                     } else {
                         $daysBeingPaid += ($daysPaid - $rateAmt['daysPaid']);
                     }
-                    $newPayment = $priceModel->getRemainderAmt();
+
+                    $payment = $priceModel->getRemainderAmt();
+
                    break;
                 }
             }
 
             $this->nightsToPay = $daysBeingPaid;
-            $this->excessPaid = $newPayment;
+            $this->excessPaid = $payment;
 
         }
 
 
         // Should we charge a visit fee now?
-        if ($visitFeeCharge > 0 && ($this->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == '' || $this->getVisitFeesPaid() + $this->getVisitFeesPending() > 0)) {
+        if ($visitFeeCharge > 0 && ($this->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == ''
+                || $this->getVisitFeesPaid() + $this->getVisitFeesPending() > 0)) {
             $this->visitFeeCharged = $visitFeeCharge;
         }
 
@@ -264,7 +266,6 @@ class VisitCharges {
         return;
     }
 
-
     public static function loadInvoiceLines(\PDO $dbh, $idVisit) {
 
         if ($idVisit < 1) {
@@ -321,10 +322,17 @@ where
         return 0;
     }
 
+    // THis is for Visit Editor Current Charges...
+//    public function getMoaInvCharges() {
+//        if (isset($this->itemSums[ItemId::LodgingMOA])) {
+//            return $this->itemSums[ItemId::LodgingMOA][InvoiceStatus::Unpaid];
+//        }
+//        return 0;
+//    }
+
     public function getDepositPayType() {
         return $this->depositPayType;
     }
-
 
     public function getItemInvPayments($idItem) {
         if (isset($this->itemSums[$idItem])) {
@@ -457,6 +465,7 @@ class SpanRateData {
         } else {
             $this->currentGuestDays = abs($r['days']);
         }
+
         $this->paid = $paid;
         $this->futureDays = 0;
         $this->futureCharge = 0.0;
@@ -473,7 +482,7 @@ class SpanRateData {
             $this->aveGuestsDay = $this->currentGuestDays / $this->currentDays;
         }
 
-        // any future days?
+        // any expected future days?
         if ($r['status'] == VisitStatus::CheckedIn) {
 
             $expDepDT = new \DateTime($r['expEnd']);

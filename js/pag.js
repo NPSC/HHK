@@ -8,7 +8,7 @@ function flagAlertMessage(mess, wasError, $txtCtrl) {
     "use strict";
     //Types:  alert, success, warning, error, info/information
     var type = 'info';
-
+    
     if (!mess || mess == '') {
         return;
     }
@@ -29,12 +29,12 @@ function flagAlertMessage(mess, wasError, $txtCtrl) {
     } catch(err) {
         // do nothing for now.
     }
-
+    
     // Show message in a given container.
     if ($txtCtrl === undefined || $txtCtrl === null) {
         return;
     }
-
+    
     $txtCtrl.text(mess).show();
 }
 

@@ -57,7 +57,7 @@ class CardInfo {
     }
 
 
-    public static function portalReply(\PDO $dbh, VantivGateway $gway, $cardId, $post) {
+    public static function portalReply(\PDO $dbh, VantivGateway $gway, $cardId) {
 
         $cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $cardId);
 
@@ -189,6 +189,7 @@ class HostedCheckout {
 
         // Check paymentId
         $cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $paymentId);
+        //$cidInfo['idName'] = 25; $cidInfo['idGroup'] = 14; $cidInfo['InvoiceNumber'] = '2444';
 
         $trace = FALSE;
 
@@ -202,6 +203,41 @@ class HostedCheckout {
 
         // Verify request
         $verifyResponse = $verify->submit($gway->getCredentials(), $trace);
+
+//        $object = (object) [
+//    'VerifyPaymentResult' =>
+//        (object) [
+//            "ResponseCode"=>0,
+//            "Status"=>"Approved",
+//             "StatusMessage"=>"AP",
+//            "DisplayMessage"=>"Your transaction has been approved.",
+//            "AvsResult"=>"Z",
+//            "CvvResult"=>"M",
+//                "AuthCode"=>"069586",
+//                "Token"=>"lPlIOXLDn6qPAyPh5eYDfdWlLNIUM6HSKnkDQDTloISFQcQAhEQEoCT",
+//                "RefNo"=>"5508",
+//                "Invoice"=>"2444",
+//                "AcqRefData"=>"KaWb585215765742020cW3TPd5e000lS ",
+//                "CardType"=>"VISA",
+//                "MaskedAccount"=>"xxxxxxxxxxxx7082",
+//                "Amount"=>240,
+//                "TaxAmount"=>0,
+//                "TransPostTime"=>"2015-08-03T17:16:15.213",
+//                "CardholderName"=>"Rush University Med Ctr",
+//                "AVSAddress"=>"14308 Capital Dr",
+//                "AVSZip"=>"60612",
+//                "TranType"=>"Sale",
+//                "PaymentIDExpired"=>true,
+//                "CustomerCode"=>"",
+//                "Memo"=>"hhkpos-3.1",
+//                "AuthAmount"=>240,
+//                "VoiceAuthCode"=>"",
+//                "ProcessData"=>"|17|600550672000",
+//                "OperatorID"=>"",
+//                "TerminalName"=>"",
+//                "ExpDate"=>"0220"]];
+
+//        $verifyResponse = new VerifyCkOutResponse($object);
         $vr = new CheckOutResponse($verifyResponse, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $payNotes);
 
 
@@ -237,9 +273,6 @@ class HostedCheckout {
 
 
 class CheckOutResponse extends PaymentResponse {
-
-    public $response;
-    public $idToken = '';
 
     function __construct($verifyCkOutResponse, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
         $this->response = $verifyCkOutResponse;
@@ -281,6 +314,14 @@ class CheckOutResponse extends PaymentResponse {
 
         if ($this->cardName != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardName));
+        }
+
+        if ($this->response->getAuthCode() != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getAuthCode(), array('style'=>'font-size:.8em;')));
+        }
+
+        if ($this->response->getResponseMessage() != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Response Message: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getResponseMessage() . ($this->response->getResponseCode() == '' ? '' :  '  (Code: ' . $this->response->getResponseCode() . ")"), array('style'=>'font-size:.8em;')));
         }
 
         $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));

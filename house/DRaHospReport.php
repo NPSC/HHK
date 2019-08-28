@@ -50,7 +50,7 @@ $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 $labels = new Config_Lite(LABEL_FILE);
 
 
-function getRecords(\PDO $dbh, $local, $type, $colNameTitle, $whClause, $hospitals, $start, $end) {
+function getRecords(\PDO $dbh, $local, $type, $colNameTitle, $whClause, $hospitals, $start, $end, $labels) {
 
     if ($type == VolMemberType::Doctor) {
         $Id = 'idDoctor';
@@ -70,7 +70,7 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
     if ($local) {
 
         $tbl = new HTMLTable();
-        $tbl->addHeaderTr(HTMLTable::makeTh('Id') . HTMLTable::makeTh($colNameTitle) . HTMLTable::makeTh('Hospital') . HTMLTable::makeTh('Patients'));
+        $tbl->addHeaderTr(HTMLTable::makeTh('Id') . HTMLTable::makeTh($colNameTitle) . HTMLTable::makeTh($labels->getString('hospital', 'hosptial', 'Hospital')) . HTMLTable::makeTh('Patients'));
 
     } else {
 
@@ -85,8 +85,8 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
         // HEader row
         $hdr[$n++] =  'Id';
         $hdr[$n++] =  $colNameTitle;
-        $hdr[$n++] =  'Hospital';
-        $hdr[$n++] =  'Patients';
+        $hdr[$n++] =  $labels->getString('hospital', 'hosptial', 'Hospital');
+        $hdr[$n++] =  $labels->getString('MemberType', 'patient', 'Patient');
 
         OpenXML::writeHeaderRow($sml, $hdr);
         $reportRows++;
@@ -465,7 +465,6 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
         // Create settings markup
         $sTbl = new HTMLTable();
-        $sTbl->addBodyTr(HTMLTable::makeTh('Report Characteristics', array('colspan'=>'4')));
 
         $colTitle = '';
         $blanksOnly = FALSE;
@@ -483,12 +482,14 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             case 'd':
                 $type = VolMemberType::Doctor;
                 $colTitle = 'Doctor';
+                $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Doctor Report', array('colspan'=>'4')));
 
                 break;
 
             case 'r':
                 $type = VolMemberType::ReferralAgent;
                 $colTitle = $labels->getString('hospital', 'referralAgent', 'Referral Agent');
+                $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $colTitle . ' Report', array('colspan'=>'4')));
 
                 break;
         }
@@ -500,12 +501,11 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
         } else {
 
-            $dataTable = getRecords($dbh, $local, $type, $colTitle, $whHosp, $hospList, $start, $end);
-            $sTbl->addBodyTr(HTMLTable::makeTh($colTitle, array('colspan'=>'4')));
+            $dataTable = getRecords($dbh, $local, $type, $colTitle, $whHosp, $hospList, $start, $end, $labels);
         }
 
         $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
-        $sTbl->addBodyTr(HTMLTable::makeTd('Hospitals', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc);
+        $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hosptial', 'Hospital') . 's', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc);
         $settingstable = $sTbl->generateMarkup();
 
         $mkTable = 1;
@@ -662,11 +662,11 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                     </table>
                     <table style="float: left;">
                         <tr>
-                            <th colspan="2">Hospitals</th>
+                            <th colspan="2"><?php echo $labels->getString('hospital', 'hosptial', 'Hospital'); ?>s</th>
                         </tr>
                         <?php if (count($aList) > 0) { ?><tr>
                             <th>Associations</th>
-                            <th>Hospitals</th>
+                            <th><?php echo $labels->getString('hospital', 'hosptial', 'Hospital'); ?>s</th>
                         </tr><?php } ?>
                         <tr>
                             <?php if (count($aList) > 0) { ?><td><?php echo $assocs; ?></td><?php } ?>

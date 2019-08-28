@@ -9,9 +9,6 @@
   */
 
 require 'homeIncludes.php';
-
-require (CLASSES . 'Document.php');
-require (CLASSES . 'Parsedown.php');
 require(HOUSE . 'TemplateForm.php');
 require(HOUSE . 'SurveyForm.php');
 
@@ -159,11 +156,7 @@ $mail->FromName = $siteName;
 $mail->isHTML(true);
 $mail->Subject = $subjectLine;
 
-$sForm = new SurveyForm($dbh, 0, Document_Name::Survey);
-$parseDown = new Parsedown();
-$parseDown->setBreaksEnabled(TRUE);
-$sty = '<style>' . file_get_contents('css/tui-editor/tui-editor-contents-min.css') . '</style>';
-
+$sForm = new SurveyForm('survey.txt');
 $badAddresses = 0;
 $resultsRegister = '';
 $deparatureDT = new \DateTime();
@@ -186,7 +179,7 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
         continue;
     }
 
-    $form = $sty . $parseDown->text($sForm->createForm($sForm->makeReplacements($r)));
+    $form = $sForm->createForm($sForm->makeReplacements($r));
 
     if ($sendEmail) {
 
@@ -222,7 +215,7 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
     $messg = "<p>Today's date: " . date('M j, Y');
     $messg .= "<p>For guests leaving " . $deparatureDT->format('M j, Y') . ', ' . $numRecipients . " messages were sent. Bad Emails: " . $badAddresses . "</p>";
     $messg .= "<p>Subject Line: </p>" . $subjectLine;
-    $messg .= "<p>Template Text: </p>" . $sForm->getTemplateDoc->getDoc() . "<br/>";
+    $messg .= "<p>Template Text: </p>" . $sForm->templateFile . "<br/>";
     $messg .= "<p>Results:</p>" . $resultsRegister;
 
     $mail->msgHTML($messg);
@@ -232,7 +225,7 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
 } else if (!$sendEmail) {
     echo "<br/><br/><hr/>Auto Email Results: " . $numRecipients . " messages sent. Bad: ".$badAddresses;
     echo "<br/> Subject Line: " . $subjectLine;
-    echo "<br/>Body Template:<br/>" . $sForm->getTemplateDoc->getDoc();
+    echo "<br/>Body Template:<br/>" . $sForm->templateFile;
 }
 
 // Log - Activity?

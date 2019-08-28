@@ -216,7 +216,6 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
-
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>
@@ -232,10 +231,10 @@ $resvObjEncoded = json_encode($resvAr);
                 <?php echo $mk1; ?>
             </div>
             <form action="CheckingIn.php" method="post"  id="form1">
-                <div id="datesSection" style="display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel hhk-row"></div>
-                <div id="famSection" style="font-size: .9em; display:none; min-width: 810px;" class="ui-widget hhk-visitdialog hhk-row"></div>
+                <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
+                <div id="famSection" style="clear:left; float:left; font-size: .9em; display:none; margin-bottom:.5em;min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
                 <?php if ($uS->UseIncidentReports) { ?>
-	            <div id="incidentsSection" style="font-size: .9em; display: none; min-width: 810px" class="ui-widget hhk-visitdialog hhk-row">
+	            <div id="incidentsSection" style="font-size: .9em; display: none; min-width: 810px; float:left; margin-bottom: 0.5em;" class="ui-widget hhk-visitdialog hhk-row">
 		            <div style="padding:2px; cursor:pointer;" class="ui-widget-header ui-state-default ui-corner-top hhk-incidentHdr">
 			            <div class="hhk-checkinHdr" style="display: inline-block;">Incidents<span id="incidentCounts"></span></div>
 			            <ul style="list-style-type:none; float:right;margin-left:5px;padding-top:2px;" class="ui-widget"><li class="ui-widget-header ui-corner-all" title="Open - Close"><span id="f_drpDown" class="ui-icon ui-icon-circle-triangle-n"></span></li></ul>
@@ -243,9 +242,9 @@ $resvObjEncoded = json_encode($resvAr);
 	                <div id="incidentContent" style="padding: 5px;" class="ui-corner-bottom hhk-tdbox ui-widget-content"></div>
 	            </div>
 	            <?php } ?>
-                <div id="hospitalSection" style="font-size: .9em; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog hhk-row"></div>
-                <div id="resvSection" style="font-size:.9em; display:none; min-width: 810px;" class="ui-widget hhk-visitdialog hhk-row"></div>
-                <!-- <div style="clear:both;min-height: 70px;">.</div> -->
+                <div id="hospitalSection" style="font-size: .9em; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
+                <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
+                <div style="clear:both;min-height: 70px;">.</div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <table >
                         <tr><td>
@@ -277,7 +276,7 @@ $resvObjEncoded = json_encode($resvAr);
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
 
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
-        <script type="text/javascript" src="js/incidentReports.js"></script>
+                <script type="text/javascript" src="js/incidentReports.js"></script>
         <script type="text/javascript" src='js/checkingIn.js'></script>
     </body>
 </html>

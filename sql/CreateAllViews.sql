@@ -1446,7 +1446,7 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
         `i`.`Carried_Amount` AS `Carried_Amount`,
         `i`.`Balance` AS `Invoice_Balance`,
         `i`.`Delegated_Invoice_Id` AS `Delegated_Invoice_Id`,
-        `i`.`Description` AS `Description`,
+        `i`.`Notes` AS `Notes`,
         `i`.`Deleted` AS `Deleted`,
         `i`.`Updated_By` AS `Invoice_Updated_By`,
         ifnull(`il`.`idInvoice_Line`, '') as `il_Id`,
@@ -1515,7 +1515,7 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
         `i`.`Carried_Amount` AS `Carried_Amount`,
         `i`.`Balance` AS `Invoice_Balance`,
         `i`.`Delegated_Invoice_Id` AS `Delegated_Invoice_Id`,
-        `i`.`Description` AS `Description`,
+        `i`.`Notes` AS `Notes`,
         `i`.`Deleted` AS `Deleted`,
         `i`.`Updated_By` AS `Invoice_Updated_By`,
         ifnull(`il`.`idInvoice_Line`, '') as `il_Id`,
@@ -2653,6 +2653,7 @@ left join `gen_lookups` `gr` on(((`a`.`Role_Id` = `gr`.`Code`) and (`gr`.`Table_
 left join `gen_lookups` `gs` on(((`u`.`Status` = `gs`.`Code`) and (`gs`.`Table_Name` = 'Web_User_Status'))))
 left join `gen_lookups` `gf` on(((`f`.`Status` = `gf`.`Code`) and (`gf`.`Table_Name` = 'FB_Status'))))
 where (`n`.`idName` > 0);
+
 
 -- -----------------------------------------------------
 -- View `vgetIncidentlisting`

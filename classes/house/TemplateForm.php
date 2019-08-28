@@ -1,5 +1,4 @@
 <?php
-
 /**
  * TemplateForm.php
  *
@@ -14,62 +13,32 @@
  *
  * @author Eric
  */
-class TemplateForm {
+abstract class TemplateForm {
 
+    protected $mime;
     protected $template;
-    protected $templateDoc;
-    protected $templateTags;
+    protected $templateFileName;
+    public $templateFile;
 
-    function __construct($dbh, $idDoc, $docName = '') {
 
-        $this->template = '';
+    function __construct($fileName, $path = 'conf/') {
 
-        if (is_null($this->templateDoc = $this->loadTemplate($dbh, $idDoc, $docName))) {
-            throw new Hk_Exception_Runtime('Template document not found.  ');
-        }
+        $this->mime = array(
+            'txt'      => 'text/html',
+            'html'      => 'text/html',
+            'htm'      => 'text/html',
+            'mht'      => 'text/html',
+            'mhtml'      => 'text/html',
+        );
 
-        $this->templateTags = self::loadTemplateTags($dbh, $this->templateDoc->getName());
-    }
+        $this->templateFileName = REL_BASE_DIR . $path . $fileName;
+        $this->getFormTemplate();
 
-    public static function loadTemplate(\PDO $dbh, $idDoc, $docName = '') {
-
-        $name = addslashes($docName);
-        $id = intval($idDoc, 10);
-
-        if ($id < 1 && $name !== '') {
-            $id = Document::findDocumentId($dbh, '', '', '', $name);
-        }
-
-        // Find anything
-        if ($id < 1) {
-            return NULL;
-        }
-
-       return new Document($dbh, $id);
-    }
-
-    public static function loadTemplateTags(\PDO $dbh, $docName) {
-
-        $tags = array();
-        $name = addslashes($docName);
-
-        if ($name == ''){
-            return $tags;
-        }
-
-        $stmt = $dbh->query("Select Tag_Name, Tag_Title, '' as Substitute, Replacement_Wrapper from `template_tag` where `Doc_Name` = '$name';");
-
-        while ($r = $stmt->fetch()) {
-
-            $tags[$r['Tag_Name']] = $r;
-        }
-
-        return $tags;
     }
 
     public function createForm($replacements) {
 
-        $this->template = $this->templateDoc->getDoc();
+        $this->template = $this->templateFile;
 
         $vars = $this->getVariables();
 
@@ -86,6 +55,7 @@ class TemplateForm {
     protected function setValue($search, $replace) {
 
         $this->template = str_replace(self::ensureMacroCompleted($search), $replace, $this->template);
+
     }
 
     protected static function ensureMacroCompleted($macro) {
@@ -104,33 +74,30 @@ class TemplateForm {
         preg_match_all('/\$\{(.*?)}/i', $this->template, $matches);
 
         return array_unique($matches[1]);
+
     }
 
-    public function getTagSelector($ctrlName) {
+    protected function getFormTemplate() {
 
-        if (count($this->templateTags) > 0) {
-            return HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->templateTags, '', TRUE), array('id'=>$ctrlName, 'name'=>$ctrlName));
+        $this->templateFile = '';
+
+        if (file_exists($this->templateFileName)) {
+
+            $pathInfo = pathinfo($this->templateFileName);
+
+            if (isset($pathInfo['extension']) === FALSE || isset($this->mime[strtolower($pathInfo['extension'])]) === FALSE) {
+                throw new Hk_Exception_Runtime("File extension not supported, file = " . $this->templateFileName);
+            }
+
+            if (($text = file_get_contents($this->templateFileName)) === FALSE) {
+                throw new Hk_Exception_Runtime("File template not read, file = " . $this->templateFileName);
+            }
+
+            $this->templateFile = $text;
+
+        } else {
+            throw new Hk_Exception_Runtime("File template does not exist, file = " . $this->templateFileName);
         }
 
-        return '';
     }
-
-    public function getTemplateDoc() {
-
-        if (is_null($this->templateDoc)) {
-            return '';
-        }
-
-        return $this->templateDoc;
-    }
-
-    public function getTemplateTags() {
-
-        if (is_null($this->templateTags)) {
-            return array();
-        }
-
-        return $this->templateTags;
-    }
-
 }

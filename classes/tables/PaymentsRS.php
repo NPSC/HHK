@@ -111,9 +111,11 @@ class Payment_AuthRS extends TableRS {
     public $AVS;   // varchar(20) NOT NULL DEFAULT '',
     public $CVV;   // varchar(45) NOT NULL DEFAULT '',
     public $Signature_Required;  // INT(4) NOT NULL DEFAULT 0 AFTER `ProcessData`;
+    public $PartialPayment;
     public $Invoice_Number;   // varchar(45) NOT NULL DEFAULT '',
     public $Acct_Number;  // varchar(25) NOT NULL DEFAULT '',
     public $Card_Type;  // varchar(10) NOT NULL DEFAULT '',
+    public $Cardholder_Name;  //`Cardholder_Name` VARCHAR(45) NOT NULL DEFAULT ''
     public $Customer_Id;   // varchar(45) NOT NULL DEFAULT '',
     public $Response_Message;  // varchar(200) NOT NULL DEFAULT '',
     public $Response_Code;  // VARCHAR(45) NOT NULL DEFAULT ''
@@ -136,6 +138,7 @@ class Payment_AuthRS extends TableRS {
         $this->idPayment = new DB_Field("idPayment", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Approved_Amount = new DB_Field('Approved_Amount', 0, new DbDecimalSanitizer(), TRUE, TRUE);
         $this->Signature_Required = new DB_Field('Signature_Required', 1, new DbBitSanitizer(), TRUE, TRUE);
+        $this->PartialPayment = new DB_Field('PartialPayment', 0, new DbBitSanitizer(), TRUE, TRUE);
         $this->idTrans = new DB_Field("idTrans", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Processor = new DB_Field("Processor", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Approval_Code = new DB_Field("Approval_Code", "", new DbStrSanitizer(20), TRUE, TRUE);
@@ -144,6 +147,7 @@ class Payment_AuthRS extends TableRS {
         $this->Invoice_Number = new DB_Field("Invoice_Number", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Acct_Number = new DB_Field("Acct_Number", "", new DbStrSanitizer(25), TRUE, TRUE);
         $this->Card_Type = new DB_Field("Card_Type", "", new DbStrSanitizer(10), TRUE, TRUE);
+        $this->Cardholder_Name = new DB_Field("Cardholder_Name", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Customer_Id = new DB_Field("Customer_Id", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Response_Message = new DB_Field("Response_Message", "", new DbStrSanitizer(200), TRUE, TRUE);
         $this->Response_Code = new DB_Field("Response_Code", "", new DbStrSanitizer(45), TRUE, TRUE);
@@ -228,7 +232,6 @@ class InvoiceRs extends TableRS {
     public $idInvoice;  // int(11) NOT NULL AUTO_INCREMENT,
     public $Delegated_Invoice_Id;  // int(11) NOT NULL DEFAULT '0',
     public $Invoice_Number;  // varchar(45) DEFAULT NULL,
-    public $Invoice_Type;  // varchar(4) DEFAULT NULL,
     public $Deleted;  // SMALLINT default 0 NOT NULL,
     public $Amount;  // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $Sold_To_Id;  //;  // int(11) DEFAULT NULL,
@@ -240,11 +243,9 @@ class InvoiceRs extends TableRS {
     public $Balance;  // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $Order_Number;  // varchar(45) DEFAULT NULL,
     public $Suborder_Number; //   `Suborder_Number` smallint(6) NOT NULL DEFAULT '0',
-    public $First_Payment_Due;  // date DEFAULT NULL,
+    public $Billing_Process_Id;
     public $BillStatus;  // VARCHAR(5) NOT NULL DEFAULT '',
     public $BillDate;  // DATE NULL,
-    public $Last_Reminder;  // DATETIME,
-    public $Overdue_Step;  // INTEGER NOT NULL DEFAULT '0',
     public $Description;  // varchar(45) DEFAULT NULL,
     public $Notes;  // varchar(450) DEFAULT NULL,
     public $Updated_By;  // varchar(45) DEFAULT NULL,
@@ -267,7 +268,6 @@ class InvoiceRs extends TableRS {
         $this->Balance = new DB_Field('Balance', 0, new DbDecimalSanitizer(), TRUE, TRUE);
         $this->Order_Number = new DB_Field('Order_Number', "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Suborder_Number = new DB_Field('Suborder_Number', 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->Due_Date = new DB_Field("Due_Date", NULL, new DbDateSanitizer("Y-m-d"), TRUE, TRUE);
         $this->Description = new DB_Field("Description", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Notes = new DB_Field("Notes", "", new DbStrSanitizer(450), TRUE, TRUE);
         $this->BillStatus = new DB_Field('BillStatus', "", new DbStrSanitizer(5), TRUE, TRUE);

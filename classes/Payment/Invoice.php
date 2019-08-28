@@ -822,7 +822,14 @@ where pi.Invoice_Id in ($whAssoc)";
             case InvoiceStatus::Unpaid:
 
                 if ($this->getAmount() != 0 && $this->getBalance() != $this->getAmount()) {
-                    throw new Hk_Exception_Payment('Unpaid or partially paid invoices cannot be deleted. Remove the payments first.');
+                    throw new Hk_Exception_Payment('Partially paid invoices cannot be deleted. Remove the payments first.');
+                }
+
+                $lines = $this->getLines($dbh);
+                foreach ($lines as $l) {
+                    if ($l->getItemId() == ItemId::LodgingMOA && $this->is3rdParty($dbh, $this->getSoldToId()) && $l->getAmount() > 0) {
+                        throw new Hk_Exception_Payment('Cannot delete.  This is a 3rd party invoice for MOA (Money on Account), and the amount may already have been returned to the Guest. ');
+                    }
                 }
 
                 return $this->deleteMe($dbh, $user);
@@ -851,6 +858,18 @@ where pi.Invoice_Id in ($whAssoc)";
             $dbh->exec("update invoice set Deleted = 1, Last_Updated = now(), Updated_By = '$user' where idInvoice = $id");
             $dbh->exec("update invoice_line set Deleted = 1 where Invoice_Id = $id");
 
+            return TRUE;
+        }
+
+        return FALSE;
+    }
+
+    protected function is3rdParty(\PDO $dbh, $idName) {
+
+        $stmt = $dbh->query("Select count(*) from name_volunteer2 where idName = $idName and Vol_Category = 'Vol_Type' and Vol_Code = '" .VolMemberType::ReferralAgent. "' and Vol_Status = '" .VolStatus::Active. "'");
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+        if (count($rows) > 0 && $rows[0][0] == 0) {
             return TRUE;
         }
 

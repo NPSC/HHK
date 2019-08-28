@@ -37,7 +37,7 @@ interface iDbFieldSanitizer {
 }
 
 /**
- * Class DBStrSanatizer
+ * Class DBBlobSanatizer
  */
 class DbBlobSanitizer implements iDbFieldSanitizer {
 

@@ -23,6 +23,8 @@ class ScriptAuthClass extends SecurityComponent {
         parent::__construct();
         $uS = Session::getInstance();
 
+        SysConfig::getCategory($dbh, $uS, "'r'", $uS->sconf);
+
 
         // try reading the web site table
         try {
@@ -81,7 +83,7 @@ class ScriptAuthClass extends SecurityComponent {
                     if ($r['Site_Code'] == WebSiteCode::Volunteer && !$uS->Volunteers) {
                         continue;
                     }
-                    
+
                     $site = array(
                         "Site_Code" => $r["Site_Code"],
                         "Relative_Address" => $r['Relative_Address'],

@@ -56,7 +56,7 @@ try {
 } catch (Exception $ex) {
     session_unset();
     http_response_code(500);
-    exit ($ex->getMessage());
+    exit ();
 }
 
 try {
@@ -128,8 +128,6 @@ try {
     $error = PaymentSvcs::processWebhook($wInit->dbh, $data);
 
 } catch (Exception $ex) {
-
-    echo($ex->getMessage());
 
     try {
         PaymentGateway::logGwTx($wInit->dbh, '', $ex->getMessage(), json_encode($ex->getTrace()), 'Webhook Error');

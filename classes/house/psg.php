@@ -120,12 +120,12 @@ class Psg {
     }
 
     public function createEditMarkup(\PDO $dbh, $relList, $labels, $pageName = 'GuestEdit.php', $id = 0, $shoChgLog = FALSE) {
-
+    
         // Edit Div
         $hArray = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, $this->getIdPatient()));
         $table = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('fieldset',
-                        HTMLContainer::generateMarkup('legend','Hospital', array('style'=>'font-weight:bold;'))
+                        HTMLContainer::generateMarkup('legend',$labels->getString('hospital', 'hosptial', 'Hospital'), array('style'=>'font-weight:bold;'))
                         . $hArray['div'],
                         array('class'=>'hhk-panel')),
                 array('style'=>'float:left;', 'id'=>'hospitalSection'));

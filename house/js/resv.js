@@ -264,75 +264,7 @@ function setupRates(ckIn) {
     $selRateCat.change();
 }
 
-function updateRoomChooser(idReserv, numGuests, arrivalDate, departureDate) {
-    
-    var cbRS = {};
-    var idResc;
-    var $selResource = $('#selResource');
 
-    if ($selResource.length === 0 || $('input.hhk-constraintsCB').length === 0) {
-        return;
-    }
-    
-    idResc = $selResource.find('option:selected').val();
-
-    hideAlertMessage();
-
-    $selResource.prop('disabled', true);
-    $('#hhk-roomChsrtitle').addClass('hhk-loading');
-    $('#hhkroomMsg').text('').hide();
-        
-    $('input.hhk-constraintsCB:checked').each(function () {
-        cbRS[$(this).data('cnid')] = 'ON';
-    });
-
-    $.post('ws_ckin.php', 
-      {cmd: 'newConstraint', 
-          rid: idReserv, 
-          numguests:numGuests, 
-          expArr:arrivalDate, 
-          expDep:departureDate, 
-          idr:idResc, 
-          cbRS:cbRS},
-      
-      function(data) {
-          var newSel;
-          
-        $selResource.prop('disabled', false);
-        $('#hhk-roomChsrtitle').removeClass('hhk-loading');
-        
-        try {
-            data = $.parseJSON(data);
-        } catch (err) {
-            alert("Parser error - " + err.message);
-            return;
-        }
-        
-        if (data.error) {
-            if (data.gotopage) {
-                window.location.assign(data.gotopage);
-            }
-            flagAlertMessage(data.error, 'error');
-            return;
-        }
-
-        
-        if (data.selectr) {
-            
-            newSel = $(data.selectr);
-            $selResource.children().remove();
-
-            newSel.children().appendTo($selResource);
-            $selResource.val(data.idResource).change();
-
-            if (data.msg && data.msg !== '') {
-                $('#hhkroomMsg').text(data.msg).show();
-            }
-        }
-
-    });
-
-}
 function changePsgPatient(idPsg, idGuest, patientName) {
     "use strict";
     if (!confirm('Change PSG patient to: ' + patientName)) {

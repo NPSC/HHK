@@ -28,7 +28,7 @@ $uS = Session::getInstance();
 
 $config = new Config_Lite(ciCFG_FILE);
 
-function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp, $whAssoc, $numberAssocs, $local) {
+function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp, $whAssoc, $numberAssocs, $local, $labels) {
 
     // get session instance
     $uS = Session::getInstance();
@@ -91,9 +91,9 @@ ORDER BY `First Stay`";
     $numNewGuests = $stmt->rowCount();
 
     if ($numberAssocs > 0) {
-        $hospHeader = 'Hospital/Assoc';
+        $hospHeader = $labels->getString('hospital', 'hospital', 'Hospital').'/Assoc';
     } else {
-        $hospHeader = 'Hospital';
+        $hospHeader = $labels->getString('hospital', 'hospital', 'Hospital');
     }
 
     $fltrdTitles = $colSelector->getFilteredTitles();
@@ -211,7 +211,8 @@ ORDER BY `First Stay`";
 
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
-$headerTable = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
+$headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' New Guests Report Details', array('style'=>'margin-top: .5em;'))
+        . HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 $dataTable = '';
 $statsTable = '';
 
@@ -290,9 +291,9 @@ $cFields[] = array("Patient Relation", 'Relationship', 'checked', '', 's', '', a
 $cFields[] = array("Patient Group Id", 'idPsg', 'checked', '', 's', '', array());
 
 if (count($aList) > 0) {
-    $cFields[] = array("Hospital / Assoc", 'hospitalAssoc', 'checked', '', 's', '', array());
+    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital')." / Assoc", 'hospitalAssoc', 'checked', '', 's', '', array());
 } else {
-    $cFields[] = array('Hospital', 'hospitalAssoc', 'checked', '', 's', '', array());
+    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'hospitalAssoc', 'checked', '', 's', '', array());
 }
 
 $colSelector = new ColumnSelectors($cFields, 'selFld');
@@ -434,7 +435,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     if ($start != '' && $end != '') {
 
-        $dataArray = doReport($dbh, $colSelector, $start, $end, $whHosp, $whAssoc, count($aList), $local);
+        $dataArray = doReport($dbh, $colSelector, $start, $end, $whHosp, $whAssoc, count($aList), $local, $labels);
 
         $dataTable = $dataArray['tbl'];
         $mkTable = 1;
@@ -457,7 +458,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $sTbl->addBodyTr(HTMLTable::makeTd('Total Guests:', array('class'=>'tdlabel')) . HTMLTable::makeTd($numAllGuests));
 
 
-        $statsTable = HTMLContainer::generateMarkup('h3', 'Report Statistics')
+        $statsTable = HTMLContainer::generateMarkup('h3', $uS->siteName . 'New Guests Report Statistics')
                 . HTMLContainer::generateMarkup('p', 'These numbers are specific to this report\'s selected filtering parameters.')
                 . $sTbl->generateMarkup();
 
@@ -480,9 +481,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         if ($hospitalTitles != '') {
             $h = trim($hospitalTitles);
             $hospitalTitles = substr($h, 0, strlen($h) - 1);
-            $headerTable .= HTMLContainer::generateMarkup('p', 'Hospitals: ' . $hospitalTitles);
+            $headerTable .= HTMLContainer::generateMarkup('p', $labels->getString('hospital', 'hospital', 'Hospital').'s: ' . $hospitalTitles);
         } else {
-            $headerTable .= HTMLContainer::generateMarkup('p', 'All Hospitals');
+            $headerTable .= HTMLContainer::generateMarkup('p', 'All '.$labels->getString('hospital', 'hospital', 'Hospital').'s');
         }
 
     } else {
@@ -620,11 +621,11 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                     </table>
                     <table style="float: left;">
                         <tr>
-                            <th colspan="2">Hospitals</th>
+                            <th colspan="2"><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
                         </tr>
                         <?php if (count($aList) > 1) { ?><tr>
                             <th>Associations</th>
-                            <th>Hospitals</th>
+                            <th><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
                         </tr><?php } ?>
                         <tr>
                             <?php if (count($aList) > 1) { ?><td style="vertical-align: top;"><?php echo $assocs; ?></td><?php } ?>

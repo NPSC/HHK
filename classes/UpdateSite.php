@@ -28,17 +28,11 @@
  * Description of UpdateSite
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
  * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
 
  */
-
-
-require CLASSES . 'Markdownify/Parser.php'; 
-require CLASSES . 'Markdownify/Converter.php';
-
 class UpdateSite {
 
     protected $errorMsg;
@@ -106,9 +100,6 @@ class UpdateSite {
                 }
             }
 
-            // Convert any old agreement or confirmation files.
-            //$this->resultAccumulator .= ConvertTxtFiles::doMarkdownify($dbh);
-
 
             // Update views
             if ($errorCount < 1) {
@@ -124,6 +115,12 @@ class UpdateSite {
                 $this->errorMsg .= '**Views not updated**  ';
             }
 
+
+            // Update pay types
+//            $cnt = SiteConfig::updatePayTypes($dbh);
+//            if ($cnt > 0) {
+//                $this->resultAccumulator .= "Pay Types updated.  ";
+//            }
 
             // Log update.
             $logText = "Loaded Update.  " . $this->errorMsg;

@@ -95,6 +95,10 @@ class WebhookResponse extends GatewayResponse implements iGatewayResponse {
         return '';
     }
 
+    public function SignatureRequired() {
+        return 0;
+    }
+
     public function getAuthorizedAmount() {
 
         if ($this->getPartialPaymentAmount() != '') {
@@ -200,8 +204,9 @@ class WebhookResponse extends GatewayResponse implements iGatewayResponse {
     }
 
     public function getTransPostTime() {
-        if (isset($this->result['transactionDate'])) {
-            return $this->result['transactionDate'];
+        // UCT
+        if (isset($this->result['ResponseDateTime'])) {
+            return $this->result['ResponseDateTime'];
         }
         return '';
     }
@@ -371,6 +376,10 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
         return '';
     }
 
+    public function SignatureRequired() {
+        return 0;
+    }
+
     public function isSignatureRequired() {
         if (isset($this->result['isSignatureRequired'])) {
             $sr = filter_var($this->result['isSignatureRequired'], FILTER_VALIDATE_BOOLEAN);
@@ -401,8 +410,13 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
         return $this->getPaymentPlanID();
     }
     public function getAcqRefData() {
+
+        if ($this->getTransactionId() != '') {
+            return $this->getTransactionId();
+        }
         return $this->getPrimaryTransactionID();
     }
+
     public function getProcessData() {
         return $this->getTransactionId();
     }
@@ -419,6 +433,13 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
             return $this->result['paymentPlanID'];
         }
         return '';
+    }
+
+    public function saveCardonFIle() {
+        if ($this->getPaymentPlanID() != '') {
+            return TRUE;
+        }
+        return FALSE;
     }
 
     public function getPrimaryTransactionID() {
@@ -503,6 +524,54 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
 
 }
 
+class VerifyCurlReturnResponse extends VerifyCurlResponse {
+
+    public function getResponseMessage() {
+
+        if (isset($this->result['responseMessage'])) {
+            return $this->result['responseMessage'];
+        }
+
+        return $this->getErrorMessage();
+    }
+
+    public function getResponseCode() {
+        if (isset($this->result['responseCode'])) {
+            return $this->result['responseCode'];
+        }
+
+        return $this->getErrorCode();
+    }
+
+    public function getTransactionStatus() {
+
+        if (isset($this->result['transactionStatus'])) {
+            return $this->result['transactionStatus'];
+        }
+
+        return $this->getErrorCode();
+    }
+
+    public function getErrorMessage() {
+
+        if (isset($this->result['errorMessage'])) {
+            return $this->result['errorMessage'];
+        }
+
+        return '';
+    }
+
+    public function getErrorCode() {
+
+        if (isset($this->result['errorCode'])) {
+            return $this->result['errorCode'];
+        }
+
+        return '';
+    }
+
+}
+
 class VerifyCurlCofResponse extends VerifyCurlResponse {
 
     public function getToken() {
@@ -511,6 +580,17 @@ class VerifyCurlCofResponse extends VerifyCurlResponse {
         }
 
         return '';
+    }
+
+    public function saveCardonFIle() {
+        if ($this->getToken() != '') {
+            return TRUE;
+        }
+        return FALSE;
+    }
+
+    public function SignatureRequired() {
+        return 0;
     }
 
 }
@@ -559,6 +639,11 @@ class VerifyCurlVoidResponse extends VerifyCurlResponse {
 
         return '001';  //decline
     }
+
+    public function SignatureRequired() {
+        return 0;
+    }
+
 }
 
 
@@ -616,12 +701,12 @@ class HeaderResponse extends GatewayResponse {
 
 class ImCurlRequest extends CurlRequest {
 
-    protected function execute($url, $params) {
+    protected function execute($url, $params, $accountId, $password) {
 
         $ch = curl_init();
 
         curl_setopt($ch, CURLOPT_URL, $url . $params);
-        curl_setopt($ch, CURLOPT_USERPWD, "NP.SOFTWARE.TEST:vno9cFqM");
+        curl_setopt($ch, CURLOPT_USERPWD, "$accountId:$password");
         curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 

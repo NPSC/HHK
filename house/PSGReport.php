@@ -186,18 +186,18 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
         }
 
         // Hospital
-        $r['Hospital'] = '';
+        $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
 
 
         if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] != '(None)') {
             $r['Association'] = $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1];
         }
         if ($r['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
-            $r['Hospital'] = $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
+            $r[$labels->getString('hospital', 'hospital', 'Hospital')] = $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
         }
 
         if (count($uS->guestLookups[GL_TableNames::Hospital]) < 2) {
-            unset($r['Hospital']);
+            unset($r[$labels->getString('hospital', 'hospital', 'Hospital')]);
         }
 
         unset($r['idHospital']);
@@ -333,7 +333,7 @@ function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hosp
     ifnull(na.Country_Code, '') as `Country`,
     ifnull(ng.Relationship_Code,'') as `Patient Relationship`,
     ifnull(n.BirthDate, '') as `Birth Date`,
-    ifnull(hs.idHospital, '') as `Hospital`,
+    ifnull(hs.idHospital, '') as `" . $labels->getString('hospital', 'hospital', 'Hospital') . "`,
     ifnull(hs.idAssociation, '') as `Association`,
     ifnull(g.Description, hs.Diagnosis) as `$diagTitle`,
     ifnull(g1.Description, '') as `$locTitle`
@@ -393,14 +393,14 @@ order by ng.idPsg";
             $r['Association'] = '';
         }
 
-        if ($r['Hospital'] > 0 && isset($hospCodes[$r['Hospital']])) {
-            $r['Hospital'] = $hospCodes[$r['Hospital']][1];
+        if ($r[$labels->getString('hospital', 'hospital', 'Hospital')] > 0 && isset($hospCodes[$r[$labels->getString('hospital', 'hospital', 'Hospital')]])) {
+            $r[$labels->getString('hospital', 'hospital', 'Hospital')] = $hospCodes[$r[$labels->getString('hospital', 'hospital', 'Hospital')]][1];
         } else {
-            $r['Hospital'] = '';
+            $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
         }
 
         if (count($hospCodes) < 2) {
-            unset($r['Hospital']);
+            unset($r[$labels->getString('hospital', 'hospital', 'Hospital')]);
         }
 
         if ($showDiagnosis === FALSE) {
@@ -471,8 +471,8 @@ order by ng.idPsg";
                     $r[$locTitle] = '';
                 }
 
-                if (isset($r['Hospital'])) {
-                    $r['Hospital'] = '';
+                if (isset($r[$labels->getString('hospital', 'hospital', 'Hospital')])) {
+                    $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
                 }
 
                 if (isset($r['Association'])) {
@@ -905,9 +905,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             case 'psg':
                 $rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $end, readGenLookupsPDO($dbh, 'Patient_Rel_Type'), $uS->guestLookups[GL_TableNames::Hospital], $labels, $showAssoc, $showDiag, $showLocation, $uS->ShowBirthDate, $uS->PatientAsGuest);
                 $dataTable = $rptArry['table'];
-                $sTbl->addBodyTr(HTMLTable::makeTh($labels->getString('statement', 'psgLabel', 'PSG') . ' Report', array('colspan'=>'4')));
+                $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $labels->getString('statement', 'psgLabel', 'PSG') . ' Report', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
-                $sTbl->addBodyTr(HTMLTable::makeTd('Hospitals', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
+                $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
                 if ($showDiag) {
                     $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'diagnosis', 'Diagnoses'), array('class'=>'tdlabel')) . HTMLTable::makeTd($tdDiags, array('colspan'=>'3')));
                 }
@@ -924,9 +924,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
             case 'p':
                 $dataTable = getPeopleReport($dbh, $local, FALSE, $whPeople . " and Relationship_Code = '" . RelLinkType::Self . "' ", $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation);
-                $sTbl->addBodyTr(HTMLTable::makeTh('Just Patients', array('colspan'=>'4')));
+                $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Just Patients', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
-                $sTbl->addBodyTr(HTMLTable::makeTd('Hospitals', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
+                $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
                 if ($showDiag) {
                     $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'diagnosis', 'Diagnoses'), array('class'=>'tdlabel')) . HTMLTable::makeTd($tdDiags, array('colspan'=>'3')));
                 }
@@ -940,9 +940,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
             case 'g':
                 $dataTable = getPeopleReport($dbh, $local, TRUE, $whPeople, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation);
-                $sTbl->addBodyTr(HTMLTable::makeTh('Patients & Guests', array('colspan'=>'4')));
+                $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Patients & Guests', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
-                $sTbl->addBodyTr(HTMLTable::makeTd('Hospitals', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
+                $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
                 if ($showDiag) {
                     $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'diagnosis', 'Diagnoses'), array('class'=>'tdlabel')) . HTMLTable::makeTd($tdDiags, array('colspan'=>'3')));
                 }
@@ -1140,11 +1140,11 @@ if ($uS->CoTod) {
                     <?php if (count($hList) > 1) { ?>
                     <table style="float: left;">
                         <tr>
-                            <th colspan="2">Hospitals</th>
+                            <th colspan="2"><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
                         </tr>
                         <?php if (count($aList) > 0) { ?><tr>
                             <th>Associations</th>
-                            <th>Hospitals</th>
+                            <th><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
                         </tr><?php } ?>
                         <tr>
                             <?php if (count($aList) > 0) { ?><td><?php echo $assocs; ?></td><?php } ?>

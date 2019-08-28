@@ -20,8 +20,6 @@ class PaymentReport {
 
         $uS = Session::getInstance();
 
-//        $statusList = readGenLookupsPDO($dbh, 'Payment_Status');
-
         $payTypes = array();
         $txtStart = '';
         $txtEnd = '';
@@ -60,8 +58,26 @@ class PaymentReport {
         if (isset($post['selPayType'])) {
             $reqs = $post['selPayType'];
             if (is_array($reqs)) {
+                $addType = 0;
                 $payTypeSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+
+                // Select both charge types of one is selected.
+                foreach ($payTypeSelections as $s) {
+                    if ($s == PaymentMethod::Charge) {
+                        $addType = PaymentMethod::ChgAsCash;
+                    } else if ($s == PaymentMethod::ChgAsCash) {
+                        $addType = PaymentMethod::Charge;
+                    }
+                }
+
+                if ($addType > 0) {
+                    $payTypeSelections[] = $addType;
+                }
+
             }
+//            if (is_array($reqs)) {
+//                $payTypeSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+//            }
         }
 
         $showDelInv = FALSE;
@@ -328,27 +344,21 @@ class PaymentReport {
 
     public static function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$total, &$tbl, &$sml, &$reportRows, $subsidyId) {
 
+        $uS = Session::getInstance();
         $origAmt = $p['Payment_Amount'];
         $amt = 0;
         $payDetail = '';
         $payStatus = $p['Payment_Status_Title'];
-        $dateDT = new DateTime($p['Payment_Date']);
+        $dateDT = new \DateTime($p['Payment_Date']);
 
-        // Change the timestamp time zone.
+        // Use timestamp for time of day.
         $timeDT = new DateTime($p['Payment_Timestamp']);
-        $myOffset = $timeDT->getOffset();
+        $dbmsDt = new DateTime('', new DateTimeZone('America/Los_Angeles'));
+        $offset = abs(($dbmsDt->getOffset() - $timeDT->getOffset()) / 3600);
+        $timeDT->add(new DateInterval('PT' . $offset ."H"));
 
-        // Must have the date close to the timezone to include daylight savings time.
-        $pacificDT = new \DateTime('2019-'.$timeDT->format('m-d'), new DateTimeZone(DBServer::TIMEZONE));
-        $pacificOffset = $pacificDT->getOffset();
-
-        $offsetHours = abs($pacificOffset - $myOffset)/3600;
-
-        $timeDT->add(new DateInterval('PT' . $offsetHours . 'H'));
-
-        $payStatusAttr = array();
         $payType = $p['Payment_Method_Title'];
-        $attr['style'] = 'text-align:right;';
+        $statusAttr = array();
 
         if ($p['idPayment_Method'] == PaymentMethod::Charge || $p['idPayment_Method'] == PaymentMethod::ChgAsCash) {
 
@@ -377,50 +387,37 @@ class PaymentReport {
         switch ($p['Payment_Status']) {
 
             case PaymentStatusCode::VoidSale:
-                $attr['style'] .= 'color:grey;';
-                $payStatusAttr = array('style'=>'text-align:right;');
-                $amt = 0;
-
+                $statusAttr['style'] = 'color:#ea4848;';
                 break;
 
             case PaymentStatusCode::VoidReturn:
-                $attr['style'] .= 'color:grey;';
-                $payStatusAttr = array('style'=>'text-align:right;');
-                $amt = 0;
+                $statusAttr['style'] = 'color:#ea4848;';
                 $origAmt = 0 - $origAmt;
-
                 break;
 
             case PaymentStatusCode::Reverse:
-                $attr['style'] .= 'color:grey;';
-                $payStatusAttr = array('style'=>'text-align:right;');
-                $amt = 0;
-
+                $statusAttr['style'] = 'color:#ea4848;';
                 break;
 
             case PaymentStatusCode::Retrn:  // Return payment
-                $attr['style'] .= 'color:red;';
-                $payStatusAttr = array('style'=>'text-align:right;');
-
+                $statusAttr['style'] = 'color:#ea4848;';
+                $dateDT = new DateTime($p['Last_Updated']);
+                $timeDT = new DateTime($p['Last_Updated']);
                 break;
 
             case PaymentStatusCode::Paid:
 
-                if ($p['Is_Refund'] == 1) {
+                if ($p['Is_Refund'] == 1) {  // Return Amount
                     $origAmt = 0 - $origAmt;
                     $payStatus = 'Refund';
+                    $statusAttr['style'] = 'color:#ea4848;';
                 }
 
                 $amt = $origAmt;
-
-
                 break;
 
             case PaymentStatusCode::Declined:
-                $attr['style'] .= 'color:grey;';
-                $payStatusAttr = array('style'=>'text-align:right;');
-                $amt = 0;
-
+                $statusAttr['style'] = 'color:#ea4848;';
                 break;
 
         }
@@ -463,7 +460,8 @@ class PaymentReport {
                 .HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment invAction', 'id'=>'invicon'.$p['idPayment'], 'data-stat'=>'view', 'data-iid'=>$r['i']['idInvoice'], 'style'=>'cursor:pointer;', 'title'=>'View Items'));
         }
 
-        $invoiceMkup = HTMLContainer::generateMarkup('span', $invNumber, array("style"=>'white-space:nowrap'));
+        $invoiceMkup = HTMLContainer::generateMarkup('span', $invNumber, array('style'=>'white-space:nowrap'));
+        $statusMkup = HTMLContainer::generateMarkup('span', $payStatus, $statusAttr);
 
         $g = array(
             'idHospital' => $hospital,
@@ -472,7 +470,6 @@ class PaymentReport {
             'Patient_First'=>$r['i']['Patient_First'],
             'Pay_Type' => $payType,
             'Detail' => $payDetail,
-            'Status' => $payStatus,
             'Payment_External_Id'=>$p['Payment_External_Id'],
             'By' => $p['Payment_Created_By'],
             'Notes'=>$p['Payment_Note']
@@ -486,7 +483,7 @@ class PaymentReport {
             $g['Payment_Date'] = $dateDT->format('c');
             $g['Payment_Timestamp'] = $timeDT->format('H:i');
             $g['Invoice_Number'] = $invoiceMkup;
-
+            $g['Status'] = $statusMkup;
             $g['Orig_Amount'] = number_format($origAmt, 2);
             $g['Amount'] = number_format($amt, 2);
 
@@ -503,10 +500,10 @@ class PaymentReport {
 
             $g['Last'] = $r['i']['Last'];
             $g['First'] = $r['i']['First'];
-            $g['Payment_Date'] = PHPExcel_Shared_Date::PHPToExcel($dateDT->format('U'));
-            $g['Payment_Timestamp'] = PHPExcel_Shared_Date::PHPToExcel($timeDT->format('U'));
+            $g['Payment_Date'] = PHPExcel_Shared_Date::PHPToExcel($dateDT);
+            $g['Payment_Timestamp'] = PHPExcel_Shared_Date::PHPToExcel($timeDT);
             $g['Invoice_Number'] = $r['i']['Invoice_Number'];
-
+            $g['Status'] = $payStatus;
             $g['Orig_Amount'] = $origAmt;
             $g['Amount'] = $amt;
 

@@ -1262,15 +1262,15 @@ class HouseServices {
      */
     public static function viewCreditTable(\PDO $dbh, $idRegistration, $idGuest) {
 
+        $uS = Session::getInstance();
+
         $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idRegistration, $idGuest);
 
         $tblPayment = new HTMLTable();
-        $tblPayment->addHeaderTr(HTMLTable::makeTh("Credit Card on File", array('colspan' => '4')));
+        //$tblPayment->addHeaderTr(HTMLTable::makeTh("Credit Card on File", array('colspan' => '4')));
+        $tblPayment->addBodyTr(HTMLTable::makeTh("Type") . HTMLTable::makeTh("Account") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Delete"));
 
-        if (count($tkRsArray) > 0) {
-            $tblPayment->addBodyTr(HTMLTable::makeTh("Type") . HTMLTable::makeTh("Account") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Delete"));
-        }
-
+        // Offer to delete any stored cards
         foreach ($tkRsArray as $tkRs) {
 
             if (CreditToken::hasToken($tkRs)) {
@@ -1287,13 +1287,26 @@ class HouseServices {
             }
         }
 
+        // Offer for storing a new card.
         $attr = array('type' => 'checkbox', 'name' => 'cbNewCard', 'class'=>'ignrSave', 'style' => 'margin-right:4px;');
+        $nameAttr = array('type' => 'textbox', 'name' => 'txtNewCardName', 'class'=>'ignrSave', 'style' => 'margin-right:4px;');
 
         $tblPayment->addBodyTr(
                 HTMLTable::makeTd(
                         HTMLInput::generateMarkup('', $attr)
-                        . HTMLContainer::generateMarkup('label', 'Put a new card on file', array('for' => 'cbNewCard')), array('colspan' => '4'))
+                        . HTMLContainer::generateMarkup('label', 'Put a new card on file', array('for' => 'cbNewCard'))
+                        . ($uS->PaymentGateway == PaymentGateway::INSTAMED ?
+                           HTMLContainer::generateMarkup('label', 'Key:', array('for'=>'cbKeyNumber', 'class'=>'hhkKeyNumber', 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number'))
+                        . HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbKeyNumber', 'class'=>'ignrSave hhkKeyNumber', 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number')) : ''), array('colspan' => '4'))
         );
+
+        if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {
+
+            $tblPayment->addBodyTr(
+                    HTMLTable::makeTd('Cardholder Name', array('colspan' => '2', 'class'=>'tdlabel'))
+                    .HTMLTable::makeTd( HTMLInput::generateMarkup('', $nameAttr), array('colspan' => '2','class'=>'ignrSave'))
+                , array('id'=>'trCHName'));
+        }
 
         return $tblPayment->generateMarkup(array('id' => 'tblupCredit'));
     }
@@ -1317,7 +1330,6 @@ class HouseServices {
         if ($uS->ccgw == '') {
             return $dataArray;
         }
-
 
         // Delete any tokens
         $keys = array_keys($post);
@@ -1346,11 +1358,19 @@ class HouseServices {
         // Add a new card
         if (isset($post['cbNewCard'])) {
 
+            $newCardHolderName = '';
+            $manualKey = FALSE;
+
+            if (isset($post['txtNewCardName']) && isset($post['cbKeyNumber'])) {
+                $newCardHolderName = strtoupper(filter_var($post['txtNewCardName'], FILTER_SANITIZE_STRING));
+                $manualKey = TRUE;
+            }
+
             try {
                 // Payment Gateway
                 $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-                $dataArray = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idGroup, '', $postBackPage);
+                $dataArray = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idGroup, $manualKey, $newCardHolderName, $postBackPage);
 
             } catch (Hk_Exception_Payment $ex) {
 
@@ -1461,55 +1481,4 @@ class HouseServices {
         return array('vlog' => $lTable->generateMarkup());
     }
 
-    public static function changePatient(\PDO $dbh, $psgId, $newPatientId, $relationships, $username, $replaceRelationship = RelLinkType::Friend) {
-
-        $idPsg = intval($psgId, 10);
-        $patientId = intval($newPatientId, 10);
-        // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
-
-
-        // Id's valid
-        if ($idPsg < 1 || $patientId < 1) {
-            return array('warning' => 'PSG or ' . $labels->getString('MemberType', 'patient', 'Patient') . ' not set.  ');
-        }
-
-        $stmt = $dbh->query("Select count(idName) from name_guest where idName = $patientId and Relationship_Code = '" . RelLinkType::Self . "';");
-        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
-
-        // New patient cannot already be a member of this or another PSG.
-        if ($rows[0][0] > 0) {
-            return array('warning' => 'Guest is already a ' . $labels->getString('MemberType', 'patient', 'Patient') . ' in this or another PSG.  ');
-        }
-
-        $psg = new Psg($dbh, $idPsg);
-
-        // New patient must already be a member of this PSG.
-        if (isset($psg->psgMembers[$patientId]) === FALSE) {
-            return array('warning' => 'Guest is not a member of this PSG.  ');
-        }
-
-        $oldPatient = $psg->getIdPatient();
-
-        // Update the PSG with a the changed patient
-        $psg->setNewMember($patientId, RelLinkType::Self);
-        $psg->setNewMember($oldPatient, $replaceRelationship);
-
-        $psg->psgRS->idPatient->setNewVal($patientId);
-
-        $psg->savePSG($dbh, $patientId, $username, $labels->getString('MemberType', 'patient', 'Patient') . ' Changed from ' . $oldPatient . ' to ' . $patientId);
-
-        // Hospital stay
-        $hsnum = $dbh->exec("update hospital_stay set idPatient = $patientId where idPsg = $idPsg;");
-
-        // member type
-        $patientMem = new PatientMember($dbh, MemBasis::Indivual, $patientId);
-        $patientMem->saveMemberType($dbh, $username);
-
-        $guestMem = new GuestMember($dbh, MemBasis::Indivual, $oldPatient);
-        $guestMem->saveMemberType($dbh, $username);
-
-        return array('result'=> $psg->createEditMarkup($dbh, $relationships, $labels));
-
-    }
 }

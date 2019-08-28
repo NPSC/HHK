@@ -116,17 +116,31 @@ if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FA
 
     }
 
+    if ($idVisit == 0 && isset($_REQUEST['rid'])) {
+        // Find visit
+        $idResv = intval(filter_var($_REQUEST['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
+
+        if ($idResv > 0) {
+
+            $stmt = $dbh->query("select idVisit from visit where Span = 0 and idReservation = $idResv");
+            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+
+            if (count($rows) > 0) {
+                $idVisit = $rows[0][0];
+            }
+        }
+    }
 
     if ($idVisit > 0) {
 
-        $reservArray = ReservationSvcs::generateCkinDoc($dbh, 0, $idVisit, '../images/receiptlogo.png');
+        $reservArray = ReservationSvcs::generateCkinDoc($dbh, 0, $idVisit, 0, '../images/receiptlogo.png');
 
         $sty = $reservArray['style'];
         $regForm = $reservArray['doc'];
         unset($reservArray);
 
     } else {
-        $regForm = 'No Registration Information.';
+        $regForm = 'No Register Information.';
     }
 
 } else {

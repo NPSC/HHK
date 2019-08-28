@@ -57,9 +57,6 @@ require CLASSES . 'SiteConfig.php';
 require CLASSES . 'Patch.php';
 require CLASSES . 'UpdateSite.php';
 
-require CLASSES . 'ConvertTxtFiles.php';
-
-
 require SEC . 'Login.php';
 require SEC . 'UserClass.php';
 

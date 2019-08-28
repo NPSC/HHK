@@ -247,27 +247,6 @@ CREATE TABLE if not exists `desig_holidays` (
 
 
 -- -----------------------------------------------------
--- Table `document`
--- -----------------------------------------------------
-CREATE TABLE if not exists `document` (
-  `idDocument` INT NOT NULL AUTO_INCREMENT,
-  `Name` varchar(45) NOT NULL DEFAULT '',
-  `Title` VARCHAR(128) NOT NULL,
-  `Category` VARCHAR(5) NOT NULL DEFAULT '',
-  `Type` VARCHAR(5) NOT NULL DEFAULT '',
-  `Abstract` TEXT NULL,
-  `Doc` BLOB NULL,
-  `Status` VARCHAR(5) NOT NULL,
-  `Created_By` VARCHAR(45) NOT NULL DEFAULT '',
-  `Last_Updated` DATETIME NULL,
-  `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
-  `Timestamp` TIMESTAMP NOT NULL DEFAULT now(),
-  PRIMARY KEY (`idDocument`))
-ENGINE = MyISAM;
-
-
-
--- -----------------------------------------------------
 -- Table `donations`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `donations` (
@@ -499,7 +478,7 @@ CREATE TABLE if not exists `guest_token` (
   `Frequency` varchar(15) NOT NULL DEFAULT '',
   `Status` varchar(10) NOT NULL DEFAULT '',
   `Response_Code` int(11) NOT NULL DEFAULT '1',
-  `CardHolderName` varchar(32) NOT NULL DEFAULT '',
+  `CardHolderName` varchar(132) NOT NULL DEFAULT '',
   `CardType` varchar(45) NOT NULL DEFAULT '',
   `CardUsage` varchar(20) NOT NULL DEFAULT '',
   `ExpDate` varchar(14) NOT NULL DEFAULT '',
@@ -1373,6 +1352,7 @@ CREATE TABLE if not exists `payment_auth` (
   `Invoice_Number` varchar(45) NOT NULL DEFAULT '',
   `Acct_Number` VARCHAR(25) NOT NULL DEFAULT '',
   `Card_Type` VARCHAR(10) NOT NULL DEFAULT '',
+  `Cardholder_Name` VARCHAR(45) NOT NULL DEFAULT '',
   `Customer_Id` varchar(45) NOT NULL DEFAULT '',
   `Response_Message` varchar(200) NOT NULL DEFAULT '',
   `Response_Code` varchar(45) NOT NULL DEFAULT '',
@@ -1380,6 +1360,7 @@ CREATE TABLE if not exists `payment_auth` (
   `AcqRefData` varchar(200) NOT NULL DEFAULT '',
   `ProcessData` varchar(200) NOT NULL DEFAULT '',
   `Signature_Required` INT(4) NOT NULL DEFAULT 1,
+  `PartialPayment` INT(4) NOT NULL DEFAULT 0,
   `CVV` varchar(45) NOT NULL DEFAULT '',
   `Serialized_Details` varchar(1000) NOT NULL DEFAULT '',
   `Status_Code` varchar(5) NOT NULL DEFAULT '',
@@ -1819,8 +1800,10 @@ CREATE TABLE if not exists `shell_events` (
 -- Table `ssotoken`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `ssotoken` (
-  `Token` varchar(136) NOT NULL DEFAULT '',
+  `Token` varchar(136) NOT NULL,
+  `idPaymentAuth` INT NOT NULL DEFAULT 0,
   `idName` int(11) NOT NULL,
+  `CardHolderName` VARCHAR(45) NOT NULL DEFAULT '',
   `idGroup` int(11) NOT NULL,
   `InvoiceNumber` varchar(36) NOT NULL DEFAULT '',
   `Amount` DECIMAL(11,2) NOT NULL DEFAULT 0.00,
@@ -1896,18 +1879,6 @@ CREATE TABLE if not exists `syslog` (
   `GIT_Id` varchar(45)  NOT NULL DEFAULT '',
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE = MyISAM;
-
-
--- -----------------------------------------------------
--- Table `template_tag`
--- -----------------------------------------------------
-CREATE TABLE if not exists `template_tag` (
-  `idTemplate_tag` INT NOT NULL AUTO_INCREMENT,
-  `Doc_Name` VARCHAR(45) NOT NULL,
-  `Tag_Title` VARCHAR(25) NOT NULL DEFAULT '',
-  `Tag_Name` VARCHAR(25) NOT NULL DEFAULT '',
-  `Replacement_Wrapper` VARCHAR(45) NOT NULL DEFAULT '',
-  PRIMARY KEY (`idTemplate_tag`));
 
 
 
@@ -2184,8 +2155,7 @@ CREATE TABLE if not exists `web_sites` (
 -- -----------------------------------------------------
 -- Table `report`
 -- -----------------------------------------------------
-
-CREATE TABLE `report` (
+ CREATE TABLE IF NOT EXISTS `report` (
   `idReport` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `Title` varchar(240) NOT NULL DEFAULT '',
   `Category` varchar(5) NOT NULL DEFAULT '',
@@ -2205,6 +2175,9 @@ CREATE TABLE `report` (
   PRIMARY KEY (`idReport`),
   KEY `Index_Psg_Id` (`Psg_Id`)
 ) ENGINE=InnoDB;
+
+
+
 
 -- -----------------------------------------------------
 --
@@ -2237,6 +2210,10 @@ ALTER TABLE `invoice`
     ADD INDEX `Index_idGroup` (`idGroup` ASC);
 ALTER TABLE `invoice`
     ADD INDEX `Index_Date` (`Invoice_Date` ASC);
+ALTER TABLE `invoice` 
+    ADD INDEX `Index_SoldToId` (`Sold_To_Id` ASC);
+ALTER TABLE `invoice` 
+    ADD INDEX `Index_Delagated` (`Delegated_Invoice_Id` ASC);
 
 ALTER TABLE `invoice_line`
     ADD INDEX `ix_invoice_line_invoice_id` (`Invoice_Id` ASC);
@@ -2288,9 +2265,6 @@ ALTER TABLE `stays`
 ALTER TABLE `stays`
     ADD INDEX `index_idName` (`idName` ASC);
 
-ALTER TABLE `template_tag`
-    ADD INDEX `index_docName` (`Doc_Name` ASC);
-
 ALTER TABLE `vehicle`
     ADD INDEX `INDEX_LICENSE` (`License_Number` ASC);
 ALTER TABLE `vehicle`
@@ -2310,6 +2284,9 @@ ALTER TABLE `visit`
     ADD INDEX `Index_Span_End` (`Span_End` ASC);
 ALTER TABLE `visit`
     ADD INDEX `Index_Exp_Depart` (`Expected_Departure` ASC);
+ALTER TABLE `visit` 
+    ADD INDEX `Index_idReservation` (`idReservation` ASC);
+
 
 ALTER TABLE `volunteer_hours`
     ADD INDEX `Index_idName` (`idName` ASC);

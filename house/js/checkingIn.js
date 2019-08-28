@@ -106,7 +106,7 @@ $(document).ready(function() {
 	if(resv.rid){
 		$('#incidentContent').incidentViewer({
 			rid: resv.rid
-		});
+		}).hide();
 		$('#incidentsSection').show();
 		//incident block
 		var Ihdr = $("#incidentsSection .hhk-incidentHdr");

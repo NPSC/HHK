@@ -72,14 +72,12 @@ class CreditToken {
                 $total = max(array( ($runTot + $amount), 0) );
                 break;
 
+            case MpTranType::ReturnSale:
             case MpTranType::ReturnAmt:
                 $total = max(array( ($runTot - $amount), 0) );
                 break;
 
             case MpTranType::Void:
-                $total = max(array( ($runTot - $amount), 0) );
-                break;
-
             case MpTranType::Reverse:
                 $total = max(array( ($runTot - $amount), 0) );
                 break;
@@ -137,7 +135,10 @@ where t.idRegistration = $idRegistration and nv.idName is null");
 
                 $gtRs = new Guest_TokenRS();
                 EditRS::loadRow($r, $gtRs);
-                $rsRows[$gtRs->idGuest_token->getStoredVal()] = $gtRs;
+
+                if (self::hasToken($gtRs)) {
+                    $rsRows[$gtRs->idGuest_token->getStoredVal()] = $gtRs;
+                }
             }
         }
 
@@ -151,8 +152,8 @@ where t.idRegistration = $idRegistration and nv.idName is null");
                 $gtRs = new Guest_TokenRS();
                 EditRS::loadRow($r, $gtRs);
 
-                if (isset($rsRows[$gtRs->idGuest_token->getStoredVal()]) === FALSE) {
-                    $rsRows[] = $gtRs;
+                if (self::hasToken($gtRs)) {
+                    $rsRows[$gtRs->idGuest_token->getStoredVal()] = $gtRs;
                 }
             }
         }

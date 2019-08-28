@@ -65,6 +65,8 @@ class CheckTX {
         $idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPayment);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate($paymentDate);
         $pr->paymentRs = $payRs;
 
         if ($idPayment > 0) {
@@ -103,6 +105,8 @@ class CheckTX {
         $idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPayment);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate($paymentDate);
         $pr->paymentRs = $payRs;
 
         if ($idPayment > 0) {
@@ -117,7 +121,7 @@ class CheckTX {
         }
     }
 
-    public static function checkReturn(\PDO $dbh, \CheckResponse &$pr, $username, PaymentRS $payRs) {
+    public static function checkReturn(\PDO $dbh, CheckResponse &$pr, $username, PaymentRS $payRs) {
 
         // Record transaction
         $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::Retrn, TransMethod::Check);
@@ -147,6 +151,41 @@ class CheckTX {
         EditRS::updateStoredVals($payRs);
         $pr->paymentRs = $payRs;
         $pr->setPaymentDate(date('Y-m-d H:i:s'));
+
+    }
+
+    public static function undoReturnPayment(\PDO $dbh, CheckResponse &$pr, $username, PaymentRS $payRs) {
+
+        // Record transaction
+        $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Check);
+        $pr->setIdTrans($transRs->idTrans->getStoredVal());
+
+        if ($payRs->idPayment->getStoredVal() == 0) {
+            throw new Hk_Exception_Payment('Payment Id not given.  ');
+        }
+
+
+        // Payment record
+        $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
+        $payRs->Updated_By->setNewVal($username);
+        $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+
+        EditRS::update($dbh, $payRs, array($payRs->idPayment));
+        EditRS::updateStoredVals($payRs);
+
+        $pr->paymentRs = $payRs;
+        $pr->setPaymentDate(date('Y-m-d H:i:s'));
+    }
+
+    public static function undoReturnAmount(\PDO $dbh, CashResponse &$pr, $idPayment) {
+
+        // Record transaction
+        $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Cash);
+        $pr->setIdTrans($transRs->idTrans->getStoredVal());
+
+        $dbh->exec("delete from payment_invoice where Payment_Id = $idPayment");
+        $dbh->exec("delete from payment_info_check where idPayment = $idPayment");
+        $dbh->exec("delete from payment where idPayment = $idPayment");
 
     }
 
@@ -206,6 +245,8 @@ class TransferTX {
         $idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPayment);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate($paymentDate);
         $pr->paymentRs = $payRs;
 
         if ($idPayment > 0) {
@@ -244,6 +285,8 @@ class TransferTX {
         $idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($idPayment);
         EditRS::updateStoredVals($payRs);
+
+        $pr->setPaymentDate($paymentDate);
         $pr->paymentRs = $payRs;
 
         if ($idPayment > 0) {
@@ -289,6 +332,41 @@ class TransferTX {
         EditRS::updateStoredVals($payRs);
         $pr->paymentRs = $payRs;
         $pr->setPaymentDate(date('Y-m-d H:i:s'));
+
+    }
+
+    public static function undoTransferReturn(\PDO $dbh, TransferResponse &$pr, $username, PaymentRS $payRs) {
+
+        // Record transaction
+        $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Transfer);
+        $pr->setIdTrans($transRs->idTrans->getStoredVal());
+
+        if ($payRs->idPayment->getStoredVal() == 0) {
+            throw new Hk_Exception_Payment('Payment Id not given.  ');
+        }
+
+
+        // Payment record
+        $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
+        $payRs->Updated_By->setNewVal($username);
+        $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+
+        EditRS::update($dbh, $payRs, array($payRs->idPayment));
+        EditRS::updateStoredVals($payRs);
+        $pr->paymentRs = $payRs;
+        $pr->setPaymentDate(date('Y-m-d H:i:s'));
+
+    }
+
+    public static function undoReturnAmount(\PDO $dbh, CashResponse &$pr, $idPayment) {
+
+        // Record transaction
+        $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Cash);
+        $pr->setIdTrans($transRs->idTrans->getStoredVal());
+
+        $dbh->exec("delete from payment_invoice where Payment_Id = $idPayment");
+        $dbh->exec("delete from payment_info_check where idPayment = $idPayment");
+        $dbh->exec("delete from payment where idPayment = $idPayment");
 
     }
 

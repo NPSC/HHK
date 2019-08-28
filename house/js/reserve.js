@@ -25,14 +25,6 @@ $(document).ready(function() {
         }
     });
 
-	if(pageManager.getIdPsg()){
-		//incident reports
-		$('#vIncidentContent').incidentViewer({
-			//guestId: memData.id,
-			psgId: pageManager.getIdPsg()
-		});
-	}
-
 // Dialog Boxes
     $("#resDialog").dialog({
         autoOpen: false,
@@ -206,9 +198,29 @@ $(document).ready(function() {
             );
 
         }
-
     });
 
+
+	//incident reports
+	if(resv.idPsg){
+		$('#incidentContent').incidentViewer({
+			psgId: resv.idPsg
+		}).hide();
+		
+		$('#incidentsSection').show();
+	}
+	//incident block
+	var Ihdr = $("#incidentsSection .hhk-incidentHdr");
+	var Icontent = $("#incidentsSection #incidentContent");
+	Ihdr.click(function() {
+	    if (Icontent.css('display') === 'none') {
+	        Icontent.show('blind');
+	        Ihdr.removeClass('ui-corner-all').addClass('ui-corner-top');
+	    } else {
+	        Icontent.hide('blind');
+	        Ihdr.removeClass('ui-corner-top').addClass('ui-corner-all');
+	    }
+	});
 
     function getGuest(item) {
 

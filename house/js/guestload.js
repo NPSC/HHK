@@ -95,6 +95,38 @@ function manageRelation(id, rId, relCode, cmd) {
     $.post('ws_admin.php', {'id':id, 'rId':rId, 'rc':relCode, 'cmd':cmd}, relationReturn);
 }
 
+function setupCOF() {
+
+    // Card on file Cardholder name.
+    if ($('#trCHName').length > 0) {
+
+        $('#cbNewCard').change(function () {
+            
+            if (this.checked) {
+                $('.hhkKeyNumber').show();
+            } else {
+                $('.hhkKeyNumber').hide();
+                $('#cbKeyNumber').prop('checked', false).change();
+
+            }
+        });
+
+        $('#cbNewCard').change();
+
+        $('#cbKeyNumber').change(function() {
+
+            if (this.checked && $('#cbNewCard').prop('checked') === true) {
+                $('#trCHName').show();
+            } else {
+                $('#trCHName').hide();
+            }
+        });
+
+        $('#cbKeyNumber').change();
+    }
+
+}
+
 // Init j-query.
 $(document).ready(function () {
     "use strict";
@@ -104,6 +136,12 @@ $(document).ready(function () {
     var listEvtTable;
     var setupNotes,
         $psgList;
+
+	//incident reports
+	$('#vIncidentContent').incidentViewer({
+		guestId: memData.id,
+		psgId: memData.idPsg
+	});
 
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
@@ -308,12 +346,6 @@ $(document).ready(function () {
         }
     });
 
-	//incident reports
-	$('#vIncidentContent').incidentViewer({
-		guestId: memData.id,
-		psgId: memData.idPsg
-	});
-
     if (memData.psgOnly) {
         $psgList.tabs("disable");
     }
@@ -491,13 +523,16 @@ $(document).ready(function () {
 	$(this).data("dirrty-initial-value", $(this).data('country'));
     });
 
+    setupCOF();
+    
+    
     // init dirrty
     $("#form1").dirrty();
     
     //GuestPhoto
     new Uppload({
-        uploadFunction: (file) => {
-            return new Promise((resolve, reject) => {
+        uploadFunction: function uploadFunction(file){
+            return new Promise(function (resolve, reject) {
                 var formData = new FormData();
                 formData.append('cmd', 'putguestphoto');
                 formData.append('guestId', memData.id);

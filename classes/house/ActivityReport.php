@@ -392,7 +392,7 @@ class ActivityReport {
             $tbl->addBodyTr($trow);
         }
 
-        return $tbl->generateMarkup(array(), '<h3>Hospital Stay Activity</h3>');
+        return $tbl->generateMarkup(array(), '<h3>' . $labels->getString('hospital', 'hosptial', 'Hospital') . ' Stay Activity</h3>');
     }
 
     /**
@@ -424,11 +424,11 @@ class ActivityReport {
 
         // Dates
         if ($startDT != NULL && $startDT != '') {
-            $whDates .= " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) >= DATE('" . $startDT->format('Y-m-d 00:00:00') . "') ";
+            $whDates .= " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) >= DATE('" . $startDT->format('Y-m-d') . "') ";
         }
 
         if ($endDT != NULL && $endDT != '') {
-            $whDates .= " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) <= DATE('" . $endDT->format('Y-m-d 23:59:59') . "') ";
+            $whDates .= " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) <= DATE('" . $endDT->format('Y-m-d') . "') ";
         }
 
         // Set up status totals array
@@ -496,6 +496,7 @@ class ActivityReport {
 
 
         foreach ($selectedPayTypes as $s) {
+
             if ($s != '') {
                 // Set up query where part.
                 if ($whType == '') {
@@ -644,18 +645,22 @@ where `lp`.`idPayment` > 0
                         $stat = 'Return';
                         $attr['style'] .= 'color:red;';
 
-
-                        if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d')) {
+                        // Void return
+                        if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Last_Updated'])) == date('Y-m-d')) {
                             $voidContent .= HTMLInput::generateMarkup('Void-Return', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidRefundPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
                         }
 
+                        // Clawback
+                        if ($p['idPayment_Method'] != PaymentMethod::Charge) {
+                            $voidContent .= HTMLInput::generateMarkup('Undo Return', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-undoReturnPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
+                        }
 
                         break;
 
                     case PaymentStatusCode::Paid:
 
                         if ($p['Is_Refund'] > 0) {
-
+                            // Refund payment
                             $stat = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-check', 'style' => 'float:left;', 'title' => 'Paid')) . '(Refund)';
                             $p['Payment_Status'] = PaymentStatusCode::Retrn;
                             $amt = 0 - $amt;
@@ -663,12 +668,13 @@ where `lp`.`idPayment` > 0
 
 
                             if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d')) {
-                                $voidContent .= HTMLInput::generateMarkup('Void Refund', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidRefundPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
+                                //$voidContent .= HTMLInput::generateMarkup('Void Refund', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidRefundPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
                             } else if ($p['idPayment_Method'] != PaymentMethod::Charge) {
-                                $voidContent .= HTMLInput::generateMarkup('Claw Back', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-returnPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
+                                $voidContent .= HTMLInput::generateMarkup('Undo Refund', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-undoReturnPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
                             }
-                        } else {
 
+                        } else {
+                            // Regular payment
                             $payTypeTotals[$p['idPayment_Method']]['amount'] += $amt;
                             $stat = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-check', 'style' => 'float:left;', 'title' => 'Paid'));
 

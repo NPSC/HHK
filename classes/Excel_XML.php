@@ -6,12 +6,11 @@
 
 /**
  * Class Excel_XML
- *
+ * 
  * A simple export library for dumping array data into an excel
  * readable format. Supports OpenOffice Calc as well.
- *
+ * 
  * @author    Oliver Schwarz <oliver.schwarz@gmail.com>
- * link:  https://github.com/oliverschwarz/php-excel
  */
 class Excel_XML
 {

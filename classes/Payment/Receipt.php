@@ -22,7 +22,6 @@ class Receipt {
     public static function createSaleMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, PaymentResponse $payResp) {
 
         $uS = Session::getInstance();
-        $tax = 0.12625;
 
         // Assemble the statement
         $rec = self::getHouseIconMarkup();
@@ -55,18 +54,22 @@ class Receipt {
             $tbl->addBodyTr(HTMLTable::makeTd("Room: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Room']));
         }
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel')) . HTMLTable::makeTd(($payResp->getPaymentDate() == '' ? date('D M jS, Y') : date('D M jS, Y', strtotime($payResp->getPaymentDate())))));
+        $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel')) . HTMLTable::makeTd(date('D M jS, Y', strtotime($payResp->getPaymentDate()))));
 
         $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($invoice->getInvoiceNumber()));
 
-        if ($uS->siteName == 'Gorecki Guest House' || $uS->siteName == 'Test Gorecki House') {
-
+        // Taxes
+        $tax = floatval($uS->ImpliedTaxRate)/100;
+        
+        if ($tax > 0) {
+            // Implement tax
             $taxAmt = 0;
-
+            
             foreach ($invoice->getLines($dbh) as $line) {
 
                 $lineAmt = $line->getAmount();
 
+                // Tax on lodging only
                 if ($line->getItemId() == ItemId::Lodging) {
                     $lineAmt = round($line->getAmount() / (1 + $tax), 2);
                     $taxAmt += $line->getAmount() - $lineAmt;
@@ -75,17 +78,19 @@ class Receipt {
                 $tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($lineAmt, 2), array('style'=>'font-size:.8em;')));
             }
 
+            // Tax amount
             if ($taxAmt > 0) {
                 $tbl->addBodyTr(HTMLTable::makeTd('Taxes (' . $tax*100 . '%):', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($taxAmt, 2), array('style'=>'font-size:.8em;')));
             }
 
         } else {
-
+            // No taxes.
             foreach ($invoice->getLines($dbh) as $line) {
                 $tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($line->getAmount(), 2), array('style'=>'font-size:.8em;')));
             }
         }
 
+        //Total Amount
         $tbl->addBodyTr(HTMLTable::makeTd("Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($invoice->getAmount(), 2), array('class'=>'hhk-tdTotals')));
 
 
@@ -142,7 +147,7 @@ class Receipt {
 
 
         $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(date('D M jS, Y g:ia', strtotime($payResp->getPaymentDate()))));
+                . HTMLTable::makeTd(date('D M jS, Y', strtotime($payResp->getPaymentDate()))));
 
         $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
 
@@ -156,7 +161,57 @@ class Receipt {
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
     }
 
+    // Return a Payment
     public static function createReturnMarkup(\PDO $dbh, PaymentResponse $payResp, $siteName, $siteId) {
+
+        $rec = self::getHouseIconMarkup();
+
+        $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;'));
+
+        $tbl = new HTMLTable();
+
+        $tbl->addBodyTr(HTMLTable::makeTh($siteName . " Return Receipt", array('colspan'=>'2')));
+
+        $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
+        $info = self::getVisitInfo($dbh, $invoice);
+
+        if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
+        }
+
+        $idPriGuest = 0;
+        if (isset($info['idPrimaryGuest'])) {
+            $idPriGuest = $info['idPrimaryGuest'];
+        }
+
+        if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
+            $payor = Member::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
+            $tbl->addBodyTr(HTMLTable::makeTd("Payor: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($payor->getMemberName()));
+        }
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Visit Id: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($invoice->getOrderNumber() . '-' . $invoice->getSuborderNumber()));
+
+        if (isset($info['Room']) && $info['Room'] != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Room: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Room']));
+        }
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel'))
+                . HTMLTable::makeTd(date('D M jS, Y', strtotime($payResp->getPaymentDate()))));
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Total Returned:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
+
+        // Create pay type determined markup
+        $payResp->receiptMarkup($dbh, $tbl);
+
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;float:left;'));
+
+        return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
+    }
+
+    // Refund arbitrary Amount
+    public static function createRefundAmtMarkup(\PDO $dbh, PaymentResponse $payResp, $siteName, $siteId) {
 
         $rec = self::getHouseIconMarkup();
 
@@ -194,7 +249,7 @@ class Receipt {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Total Returned:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
+        $tbl->addBodyTr(HTMLTable::makeTd("Total Refunded:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
 
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);
@@ -236,7 +291,7 @@ class Receipt {
 //            $tbl->addBodyTr(HTMLTable::makeTd("Room: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Room']));
 //        }
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel')) . HTMLTable::makeTd(($payResp->getPaymentDate() == '' ? date('D M jS, Y') : date('D M jS, Y', strtotime($payResp->getPaymentDate())))));
+        $tbl->addBodyTr(HTMLTable::makeTd("Date: ", array('class'=>'tdlabel')) . HTMLTable::makeTd(date('D M jS, Y', strtotime($payResp->getPaymentDate()))));
 
 //        $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
 //
@@ -449,11 +504,12 @@ WHERE
 
         foreach ($spans as $v) {
 
-            // Set expected departure to now if earlier than "today"
-            $expDepDT = new \DateTime($v['Expected_Departure']);
             $now = new \DateTime();
             $now->setTime(0, 0, 0);
 
+            $expDepDT = new \DateTime($v['Expected_Departure']);
+
+            // Set expected departure to now if earlier than "today"
             if ($expDepDT < $now) {
                 $expDepStr = $now->format('Y-m-d');
             } else {
@@ -461,9 +517,7 @@ WHERE
             }
 
 
-            $rateCounter++;
-
-            $rates[$rateCounter] = array(
+            $rates[++$rateCounter] = array(
                 'vid'=>$v['idVisit'],
                 'span'=>$v['Span'],
                 'status'=>$v['Status'],
@@ -564,7 +618,7 @@ WHERE
                     'Invoice_Status'=>$p['Invoice_Status'],
                     'Invoice_Status_Title'=>$p['Invoice_Status_Title'],
                     'Carried_Amount'=>$p['Carried_Amount'],
-                    'Invoice_Description'=>$p['Description'],
+                    'Invoice_Description'=>$p['Notes'],
                     'Invoice_Balance'=>$p['Invoice_Balance'],
                     'Delegated_Invoice_Id'=>$p['Delegated_Invoice_Id'],
                     'Invoice_Deleted'=>$p['Deleted'],
@@ -612,6 +666,7 @@ WHERE
                             'Is_Refund'=>$p['Is_Refund'],
                             'Payment_idPayor'=>$p['Payment_idPayor'],
                             'Payment_Updated_By'=>$p['Payment_Updated_By'],
+                            'Last_Updated'=>$p['Payment_Last_Updated'],
                             'Payment_Created_By'=>$p['Payment_Created_By'],
                             'Check_Number'=>$p['Check_Number'],
                             'Payment_External_Id'=>$p['Payment_External_Id'],
@@ -676,7 +731,7 @@ WHERE
         }
     }
 
-    public static function makeOrdersRatesTable($rates, &$totalAmt, PriceModel $priceModel, Config_Lite $labels, array $invLines, &$numberNites) {
+    public static function makeOrdersRatesTable($rates, &$totalAmt, PriceModel $priceModel, Config_Lite $labels, array $invLines, &$numberNites, Item $moaItem, Item $donateItem) {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
@@ -828,20 +883,17 @@ WHERE
 
         // Room Donations & retained loging fees
         $donAmt = 0;
-        $donTitle = '';
         $moaAmt = 0;
-        $moaTitle = '';
+
         foreach ($invLines as $l) {
 
             $itemAmount = floatval($l['Amount']);
 
             if ($l['Item_Id'] == ItemId::LodgingDonate && $itemAmount != 0) {
-                $donTitle = $l['Description'];
                 $donAmt += $itemAmount;
             }
 
             if ($l['Item_Id'] == ItemId::LodgingMOA && $itemAmount > 0) {
-                $moaTitle = $l['Description'];
                 $moaAmt += $itemAmount;
             }
         }
@@ -851,7 +903,7 @@ WHERE
 
             $totalAmt += $donAmt;
 
-            $priceModel->rateTotalMarkup($tbl, $donTitle, '', number_format($donAmt,2), '');
+            $priceModel->rateTotalMarkup($tbl, $donateItem->getDescription(), '', number_format($donAmt,2), '');
         }
 
         // Print MOA total
@@ -859,7 +911,7 @@ WHERE
 
             $totalAmt += $moaAmt;
 
-            $priceModel->rateTotalMarkup($tbl, $moaTitle, '', number_format($moaAmt,2), '');
+            $priceModel->rateTotalMarkup($tbl, $moaItem->getDescription(), '', number_format($moaAmt,2), '');
         }
 
         // Second total line
@@ -1262,7 +1314,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
 
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable($rates, $totalAmt, $priceModel, $labels, $invLines, $totalNights);
+        $tbl = self::makeOrdersRatesTable($rates, $totalAmt, $priceModel, $labels, $invLines, $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
         $totalCharge = $totalAmt;
 
         // Thirdparty payments
@@ -1368,7 +1420,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
         $config = new Config_Lite(ciCFG_FILE);
 
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, $totalNights);
+        $tbl = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
         $totalCharge = $totalAmt;
 
         // Thirdparty payments

@@ -114,6 +114,69 @@ class VantivGateway extends PaymentGateway {
         return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
     }
 
+    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs) {
+
+        $uS = Session::getInstance();
+
+        // find the token record
+        if ($payRs->idToken->getStoredVal() > 0) {
+            $tknRs = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
+        } else {
+            return array('warning' => 'Card-on-File not found.  Unable to Void this return.  ');
+        }
+
+        if (CreditToken::hasToken($tknRs) === FALSE) {
+            return array('warning' => 'Card-on-File not found.  Unable to Void this return.  ');
+        }
+
+        // Set up request
+        $revRequest = new CreditVoidReturnTokenRequest();
+        $revRequest->setAuthCode($pAuthRs->Approval_Code->getStoredVal())
+            ->setCardHolderName($tknRs->CardHolderName->getStoredVal())
+            ->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion)
+            ->setInvoice($invoice->getInvoiceNumber())
+            ->setPurchaseAmount($pAuthRs->Approved_Amount->getStoredVal())
+            ->setRefNo($pAuthRs->Reference_Num->getStoredVal())
+            ->setToken($tknRs->Token->getStoredVal())
+            ->setTokenId($tknRs->idGuest_token->getStoredVal())
+            ->setTitle('CreditVoidReturnToken');
+
+        try {
+
+            $csResp = TokenTX::creditVoidReturnToken($dbh, $payRs->idPayor->getstoredVal(), $uS->ccgw, $revRequest, $payRs);
+
+            switch ($csResp->getStatus()) {
+
+                case CreditPayments::STATUS_APPROVED:
+
+                    // Update invoice
+                    $invoice->updateInvoiceBalance($dbh, $csResp->response->getAuthorizeAmount(), $uS->username);
+
+                    $csResp->idVisit = $invoice->getOrderNumber();
+                    $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createSaleMarkup($dbh, $csResp, $uS->resourceURL . 'images/receiptlogo.png', $uS->siteName, $uS->sId, 'Void Return')));
+                    $dataArray['success'] = 'Return is Voided.  ';
+
+                    break;
+
+                case CreditPayments::STATUS_DECLINED:
+
+                    $dataArray['success'] = 'Declined.';
+                    break;
+
+                default:
+
+                    $dataArray['warning'] = '** Void-Return Invalid or Error. **  ' . 'Message: ' . $csResp->response->getMessage();
+
+            }
+
+        } catch (Hk_Exception_Payment $exPay) {
+
+            $dataArray['warning'] = "Void-Return Error = " . $exPay->getMessage();
+        }
+
+        return $dataArray;
+    }
+
     public function reverseSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid, $paymentNotes) {
 
         $uS = Session::getInstance();
@@ -276,7 +339,41 @@ class VantivGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    public function initHostedPayment(\PDO $dbh, Invoice $invoice, Guest $guest, $addr, $postbackUrl) {
+    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes = '') {
+
+        $tokenRS = CreditToken::getTokenRsFromId($dbh, $rtnToken);
+
+        // Do we have a token?
+        if (CreditToken::hasToken($tokenRS)) {
+
+            if ($tokenRS->Running_Total->getStoredVal() < $amount) {
+                throw new Hk_Exception_Payment('Return Failed.  Maximum return for this card is: $' . number_format($tokenRS->Running_Total->getStoredVal(), 2));
+            }
+
+            // Set up request
+            $returnRequest = new CreditReturnTokenRequest();
+            $returnRequest->setCardHolderName($tokenRS->CardHolderName->getStoredVal());
+            $returnRequest->setFrequency(MpFrequencyValues::OneTime)->setMemo(MpVersion::PosVersion);
+            $returnRequest->setInvoice($invoice->getInvoiceNumber());
+            $returnRequest->setPurchaseAmount($amount);
+
+            $returnRequest->setToken($tokenRS->Token->getStoredVal());
+            $returnRequest->setTokenId($tokenRS->idGuest_token->getStoredVal());
+
+
+            $tokenResp = TokenTX::creditReturnToken($dbh, $invoice->getSoldToId(), $uS->ccgw, $returnRequest, NULL, $paymentNotes);
+
+            // Analyze the result
+            $rtnResult = PaymentSvcs::AnalyzeCreditReturnResult($dbh, $tokenResp, $invoice, $rtnToken);
+            $rtnResult->setDisplayMessage('Refund to Credit Card.  ');
+
+        } else {
+            throw new Hk_Exception_Payment('Return Failed.  Credit card token not found.  ');
+        }
+
+    }
+
+    Protected function initHostedPayment(\PDO $dbh, Invoice $invoice, Guest $guest, $addr, $postbackUrl) {
 
         $uS = Session::getInstance();
 
@@ -330,7 +427,7 @@ class VantivGateway extends PaymentGateway {
         return $CreditCheckOut;
     }
 
-    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $cardHolderName, $postBackPage) {
+    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postBackPage) {
 
         $uS = Session::getInstance();
 
@@ -405,7 +502,7 @@ class VantivGateway extends PaymentGateway {
 
             try {
 
-                $vr = CardInfo::portalReply($dbh, $this, $cardId, $post);
+                $vr = CardInfo::portalReply($dbh, $this, $cardId);
 
                 $payResult = new CofResult($vr->response->getDisplayMessage(), $vr->response->getStatus(), $vr->idPayor, $vr->idRegistration);
 
@@ -518,10 +615,6 @@ class VantivGateway extends PaymentGateway {
         }
 
         return $dataArray;
-    }
-
-    protected function sendReturn(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $returnAmt, $bid) {
-
     }
 
     public function getPaymentResponseObj(iGatewayResponse $creditTokenResponse, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {

@@ -28,6 +28,7 @@ abstract class PaymentResponse {
     public $idGuestToken = 0;
     public $checkNumber;
     public $payNotes = '';
+    public $idPaymentAuth = 0;
 
 
     /**

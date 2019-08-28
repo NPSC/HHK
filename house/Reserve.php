@@ -31,9 +31,6 @@ require (CLASSES . 'PaymentSvcs.php');
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require CLASSES . 'TableLog.php';
 
-require (CLASSES . 'Document.php');
-require (CLASSES . 'Parsedown.php');
-
 require (PMT . 'GatewayConnect.php');
 require (PMT . 'PaymentGateway.php');
 require (PMT . 'PaymentResponse.php');
@@ -105,11 +102,8 @@ try {
     $paymentMarkup = $ex->getMessage();
 }
 
-// Send confrirm form as a word doc.
-if (isset($_POST['hdnCfmRid'])) {
 
-    require(HOUSE . 'TemplateForm.php');
-    require(HOUSE . 'ConfirmationForm.php');
+if (isset($_POST['hdnCfmRid'])) {
 
     $idReserv = intval(filter_var($_POST['hdnCfmRid'], FILTER_SANITIZE_NUMBER_INT), 10);
     $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
@@ -123,16 +117,14 @@ if (isset($_POST['hdnCfmRid'])) {
         $notes = filter_var($_POST['tbCfmNotes'], FILTER_SANITIZE_STRING);
     }
 
-    $txt = '';
-    if (isset($_POST['hdnCfmText'])) {
-        $txt = base64_decode(filter_var($_POST['hdnCfmText'], FILTER_SANITIZE_STRING));
-    }
+    require(HOUSE . 'TemplateForm.php');
+    require(HOUSE . 'ConfirmationForm.php');
 
     try {
+        $confirmForm = new ConfirmationForm('confirmation.txt');
 
-        $sty = '<style>' . file_get_contents('css/tui-editor/tui-editor-contents-min.css') . '</style>';
-
-        $form = '<!DOCTYPE html>' . $sty . $txt . ConfirmationForm::createNotes($notes, FALSE);
+        $formNotes = $confirmForm->createNotes($notes, FALSE);
+        $form = '<!DOCTYPE html>' . $confirmForm->createForm($confirmForm->makeReplacements($resv, $guest, 0, $formNotes));
 
         header('Content-Disposition: attachment; filename=confirm.doc');
         header("Content-Description: File Transfer");
@@ -214,8 +206,8 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo NOTY_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
         <?php echo INCIDENT_CSS; ?>
-        <link rel="stylesheet" href="css/tui-editor/tui-editor-contents-min.css">
-
+        <?php echo GRID_CSS; ?>
+        
         <?php echo FAVICON; ?>
 <!--        Fix the ugly checkboxes-->
         <style>
@@ -239,13 +231,8 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
-
-        <script src="../js/tuiEditorSupport.js"></script>
-        <script src="../js/tui-editor-Editor.min.js"></script>
-<!--        <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>-->
-
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>
@@ -261,19 +248,19 @@ $resvObjEncoded = json_encode($resvAr);
             </div>
 
             <form action="Reserve.php" method="post"  id="form1">
-                <div id="datesSection" style="display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel hhk-row"></div>
-                <div id="famSection" style="font-size: .9em; display:none; min-width: 810px;" class="ui-widget hhk-visitdialog hhk-row"></div>
+                <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
+                <div id="famSection" style="clear:left; float:left; font-size: .9em; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
                 <?php if ($uS->UseIncidentReports) { ?>
-	            <div id="incidentsSection" style="font-size: .9em; display: none; min-width: 810px" class="ui-widget hhk-visitdialog hhk-row">
+	            <div id="incidentsSection" style="font-size: .9em; display: none; min-width: 810px; float: left; margin-bottom: 0.5em" class="ui-widget hhk-visitdialog hhk-row">
 		            <div style="padding:2px; cursor:pointer;" class="ui-widget-header ui-state-default ui-corner-top hhk-incidentHdr">
 			            <div class="hhk-checkinHdr" style="display: inline-block;">Incidents<span id="incidentCounts"></span></div>
 			            <ul style="list-style-type:none; float:right;margin-left:5px;padding-top:2px;" class="ui-widget"><li class="ui-widget-header ui-corner-all" title="Open - Close"><span id="f_drpDown" class="ui-icon ui-icon-circle-triangle-n"></span></li></ul>
 			        </div>
-	                <div id="incidentContent" style="padding: 5px;" class="ui-corner-bottom hhk-tdbox ui-widget-content"></div>
+	                <div id="incidentContent" style="padding: 5px; display: none;" class="ui-corner-bottom hhk-tdbox ui-widget-content"></div>
 	            </div>
 	            <?php } ?>
-                <div id="hospitalSection" style="font-size: .9em; display:none; min-width: 810px;" class="ui-widget hhk-visitdialog hhk-row"></div>
-                <div id="resvSection" style="font-size:.9em; display:none; min-width: 810px;" class="ui-widget hhk-visitdialog hhk-row"></div>
+                <div id="hospitalSection" style="font-size: .9em; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
+                <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
                 <div style="clear:left; min-height: 70px;"></div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <table >
@@ -289,8 +276,6 @@ $resvObjEncoded = json_encode($resvAr);
 
             </form>
 
-			
-
             <div id="pmtRcpt" style="font-size: .9em; display:none;"><?php echo $receiptMarkup; ?></div>
             <div id="resDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
             <div id="psgDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;"></div>
@@ -301,14 +286,7 @@ $resvObjEncoded = json_encode($resvAr);
         </div>
         <form name="xform" id="xform" method="post"></form>
         <div id="confirmDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;">
-            <form id="frmConfirm" action="Reserve.php" method="post">
-                <div id="viewerSection"></div>
-                <textarea id ="tbCfmNotes" name ="tbCfmNotes" placeholder='Special Notes' rows="3" cols="80" style="font-size: 13px;"></textarea>
-                <div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix">
-                    <span>Email Address</span>
-                    <input type="text" id="confEmail" value="" style="margin-left: .3em;"/>
-                </div>
-            </form>
+            <form id="frmConfirm" action="Reserve.php" method="post"></form>
         </div>
         <input type="hidden" value="<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>" id="fixedRate"/>
         <input type="hidden" value="<?php echo $payFailPage; ?>" id="payFailPage"/>
@@ -316,283 +294,7 @@ $resvObjEncoded = json_encode($resvAr);
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
         <input type="hidden" value='<?php echo $paymentMarkup; ?>' id="paymentMarkup"/>
 
-<script type="text/javascript">
-var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
-var payFailPage = '<?php echo $payFailPage; ?>';
-var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-var paymentMarkup = '<?php echo $paymentMarkup; ?>';
-var pageManager;
-
-$(document).ready(function() {
-    "use strict";
-    var t = this;
-    var $guestSearch = $('#gstSearch');
-    var resv = $.parseJSON('<?php echo $resvObjEncoded; ?>');
-    var pageManager = t.pageManager;
-
-    $.widget( "ui.autocomplete", $.ui.autocomplete, {
-        _resizeMenu: function() {
-            var ul = this.menu.element;
-            ul.outerWidth( Math.max(
-                    ul.width( "" ).outerWidth() + 1,
-                    this.element.outerWidth()
-            ) * 1.1 );
-        }
-    });
-
-
-// Dialog Boxes
-    $("#resDialog").dialog({
-        autoOpen: false,
-        resizable: true,
-        width: '95%',
-        modal: true
-    });
-
-    $('#confirmDialog').dialog({
-        autoOpen: false,
-        resizable: true,
-        width: 850,
-        modal: true,
-        title: 'Confirmation Form',
-        close: function () {$('div#submitButtons').show(); $("#frmConfirm").children().remove();},
-        buttons: {
-            'Download MS Word': function () {
-                var $confForm = $("form#frmConfirm");
-                $confForm.append($('<input name="hdnCfmRid" type="hidden" value="' + $('#btnShowCnfrm').data('rid') + '"/>'));
-                $confForm.append($('<input name="hdnCfmText" type="hidden" value="' + btoa($('#viewerSection').html()) + '"/>'));
-                $confForm.submit();
-            },
-            'Send Email': function() {
-                var parms = {
-                    cmd:'confrv',
-                    eml: '1',
-                    eaddr: $('#confEmail').val(),
-                    notes: $('#tbCfmNotes').val(),
-                    rid: $('#btnShowCnfrm').data('rid'),
-                    text: btoa($('#viewerSection').html())
-                };
-                $.post('ws_ckin.php', parms, function(data) {
-                    data = $.parseJSON(data);
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
-                    }
-                    flagAlertMessage(data.mesg, true);
-                });
-                $(this).dialog("close");
-            },
-            "Cancel": function() {
-                $(this).dialog("close");
-            }
-        }
-    });
-
-    $("#activityDialog").dialog({
-        autoOpen: false,
-        resizable: true,
-        width: 900,
-        modal: true,
-        title: 'Reservation Activity Log',
-        close: function () {$('div#submitButtons').show();},
-        open: function () {$('div#submitButtons').hide();},
-        buttons: {
-            "Exit": function() {
-                $(this).dialog("close");
-            }
-        }
-    });
-
-    $("#psgDialog").dialog({
-        autoOpen: false,
-        resizable: true,
-        width: 500,
-        modal: true,
-        title: resv.patLabel + ' Chooser',
-        close: function (event, ui) {$('div#submitButtons').show();},
-        open: function (event, ui) {$('div#submitButtons').hide();}
-    });
-
-    $('#keysfees').dialog({
-        autoOpen: false,
-        resizable: true,
-        modal: true,
-        close: function() {$('#submitButtons').show();}
-    });
-
-    $('#pmtRcpt').dialog({
-        autoOpen: false,
-        resizable: true,
-        width: 530,
-        modal: true,
-        title: 'Payment Receipt'
-    });
-
-    if (paymentMarkup !== '') {
-        $('#paymentMessage').show();
-    }
-
-
-    pageManager = new resvManager(resv);
-
-    // hide the alert on mousedown
-    $(document).mousedown(function (event) {
-
-        if (isIE()) {
-            var target = $(event.target[0]);
-
-            if (target.id && target.id !== undefined && target.id !== 'divSelAddr' && target.closest('div') && target.closest('div').id !== 'divSelAddr') {
-                $('#divSelAddr').remove();
-            }
-
-        } else {
-
-            if (event.target.className === undefined || event.target.className !== 'hhk-addrPickerPanel') {
-                $('#divSelAddr').remove();
-            }
-        }
-    });
-
-	//incident reports
-	if(resv.idPsg){
-		$('#incidentContent').incidentViewer({
-			psgId: resv.idPsg
-		});
-		$('#incidentsSection').show();
-	}
-	//incident block
-	var Ihdr = $("#incidentsSection .hhk-incidentHdr");
-	var Icontent = $("#incidentsSection #incidentContent");
-	Ihdr.click(function() {
-	    if (Icontent.css('display') === 'none') {
-	        Icontent.show('blind');
-	        Ihdr.removeClass('ui-corner-all').addClass('ui-corner-top');
-	    } else {
-	        Icontent.hide('blind');
-	        Ihdr.removeClass('ui-corner-top').addClass('ui-corner-all');
-	    }
-	});
-
-// Buttons
-    $('#btnDone, #btnShowReg, #btnDelete, #btnCheckinNow').button();
-
-    $('#btnDelete').click(function () {
-
-        if ($(this).val() === 'Deleting >>>>') {
-            return;
-        }
-
-        if (confirm('Delete this ' + pageManager.resvTitle + '?')) {
-
-            $(this).val('Deleting >>>>');
-
-            pageManager.deleteReserve(pageManager.getIdResv(), 'form#form1', $(this));
-        }
-    });
-
-    $('#btnShowReg').click(function () {
-        window.open('ShowRegForm.php?rid=' + pageManager.getIdResv(), '_blank');
-    });
-
-    $('#btnCheckinNow').click(function () {
-        $('#resvCkinNow').val('yes');
-        $('#btnDone').click();
-    });
-
-    $('#btnDone').click(function () {
-
-        if ($(this).val() === 'Saving >>>>') {
-            return;
-        }
-
-        $('#pWarnings').hide();
-
-        if (pageManager.verifyInput() === true) {
-
-            $.post(
-                'ws_resv.php',
-                $('#form1').serialize() + '&cmd=saveResv&idPsg=' + pageManager.getIdPsg() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
-                function(data) {
-                    try {
-                        data = $.parseJSON(data);
-                    } catch (err) {
-                        flagAlertMessage(err.message, 'error');
-                        return;
-                    }
-
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
-                    }
-
-                    if (data.error) {
-                        flagAlertMessage(data.error, 'error');
-                        $('#btnDone').val('Save').show();
-                    }
-
-                    pageManager.loadResv(data);
-
-                    if (data.resv !== undefined) {
-                        if (data.warning === undefined) {
-                            flagAlertMessage(data.resvTitle + ' Saved.  Status: ' + data.resv.rdiv.rStatTitle, 'success');
-                        }
-                    } else {
-                        flagAlertMessage(data.resvTitle + ' Saved.', 'success');
-                    }
-                }
-            );
-
-            $(this).val('Saving >>>>');
-        }
-
-    });
-
-
-    function getGuest(item) {
-
-        if (item.No_Return !== undefined && item.No_Return !== '') {
-            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', 'alert');
-            return;
-        }
-
-        if (typeof item.id !== 'undefined') {
-            resv.id = item.id;
-        } else if (typeof item.rid !== 'undefined') {
-            resv.rid = item.rid;
-        } else {
-            return;
-        }
-
-        resv.fullName = item.fullName;
-        resv.cmd = 'getResv';
-
-        pageManager.getReserve(resv);
-
-    }
-
-    if (parseInt(resv.id, 10) >= 0 || parseInt(resv.rid, 10) > 0) {
-
-        // Avoid automatic new guest for existing reservations.
-        if (parseInt(resv.id, 10) === 0 && parseInt(resv.rid, 10) > 0) {
-            resv.id = -2;
-        }
-
-        resv.cmd = 'getResv';
-        pageManager.getReserve(resv);
-
-    } else {
-
-        createAutoComplete($guestSearch, 3, {cmd: 'role', gp:'1'}, getGuest);
-
-        // Phone number search
-        createAutoComplete($('#gstphSearch'), 4, {cmd: 'role', gp:'1'}, getGuest);
-
-        $guestSearch.keypress(function(event) {
-            $(this).removeClass('ui-state-highlight');
-        });
-
-        $guestSearch.focus();
-    }
-});
-        </script>
+        <script type="text/javascript" src="js/reserve.js"></script>
         <script type="text/javascript" src="js/incidentReports.js"></script>
     </body>
 </html>

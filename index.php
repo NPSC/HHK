@@ -10,7 +10,8 @@
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
 define('DS', DIRECTORY_SEPARATOR);
-define('ciCFG_FILE', dirname(__FILE__) . DS . 'conf' . DS . 'site.cfg');
+define('P_ROOT', dirname(__FILE__) . DS);
+define('ciCFG_FILE', P_ROOT . 'conf' . DS . 'site.cfg');
 date_default_timezone_set('America/Chicago');
 
 require ('classes' . DS . 'config' . DS . 'Lite.php');
@@ -24,12 +25,19 @@ $config = new Config_Lite(ciCFG_FILE);
 
 $secureComp = new SecurityComponent(TRUE);
 
+// Run as test?
+/* @var $testVersion bool */
+$testVersion = $config->getBool('site', 'Run_As_Test', FALSE);
 
-$adminDir = 'admin';
+$pageTitle = $config->getString("site", "Site_Name", "Hospitality House");
+$adminDir = $config->getString("site", "Admin_Dir", "");
 $volunteerDir = $config->getString("site", "Volunteer_Dir", "");
 $houseDir = $config->getString("site", "House_Dir", "");
 $trainingURL = $config->getString("site", "Training_URL", "");
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
+
+$tz = $config->getString('calendar', 'TimeZone', 'America/Chicago');
+date_default_timezone_set($tz);
 
 $copyYear = date('Y');
 
@@ -60,7 +68,7 @@ if (SecurityComponent::isHTTPS()) {
             <div style="float:right;font-size: .6em;margin-right:5px;"><?php echo $build; ?></div>
             <div id="content" style="clear:both; margin-left: 100px;margin-top:10px;">
                 <div style="margin: auto; float:left; width:450px;">
-                    <a href="https://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="images/hhkLogo.png"></a>
+                    <a href="http://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="images/hhkLogo.png"></a>
                     <div style="clear:left; margin-bottom: 20px;"></div>
                     <ul style="margin: 20px; line-height: 1.9em;">
                         <li><a href="<?php echo $secureComp->getSiteURL() . $adminDir; ?>">Administration Site</a></li>
@@ -76,7 +84,7 @@ if (SecurityComponent::isHTTPS()) {
                     </ul>
                     <div style="margin-top: 100px;">
                         <hr>
-                        <div><a href ="https://nonprofitsoftwarecorp.org" ><div class="nplogo"></div></a></div>
+                        <div><a href ="http://nonprofitsoftwarecorp.org" ><div class="nplogo"></div></a></div>
                         <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non Profit Software</div>
                     </div>
                 </div>

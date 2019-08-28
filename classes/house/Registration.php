@@ -88,11 +88,16 @@ from
     invoice_line il
         join
     invoice i ON il.Invoice_Id = i.idInvoice
+        LEFT JOIN
+    name_volunteer2 nv ON i.Sold_To_Id = nv.idName
+        AND nv.Vol_Category = 'Vol_Type'
+        AND nv.Vol_Code = 'ba'
+
 where
     il.Item_Id = ". ItemId::LodgingMOA . "
         and i.Deleted = 0
         and il.Deleted = 0
-        and i.Status = '" . InvoiceStatus::Paid . "'
+        and (i.Status = '" . InvoiceStatus::Paid . "' or nv.idName IS NOT NULL)
         and i.idGroup = " . $idg;
         $stmt = $dbh->query($query);
 

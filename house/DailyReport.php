@@ -22,10 +22,13 @@ try {
     die("arrg!  " . $exw->getMessage());
 }
 
+// get session instance
+$uS = Session::getInstance();
+
 $labels = new Config_Lite(LABEL_FILE);
 
 // Daily Log
-$dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
+$dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
         , array('style' => 'background-color:#D3D3D3; padding:10px;'))
         . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divdaily'));
 

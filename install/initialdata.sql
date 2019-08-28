@@ -84,10 +84,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Dormant_Selector_Code','both','Dormant & Active','','',0),
 ('Dormant_Selector_Code','dor','Dormant Only','','',0),
 
-('Editable_Forms', 'reg', 'Registration Agreement','js/rte-agreement.json','',0),
-('Editable_Forms', 'conf', 'Confirmation Form','js/rte-confirmation.json','',0),
-('Editable_Forms', 'survey', 'Survey Form','js/rte-survey.json','',0),
-('Editable_Forms', '../conf/permission.txt', 'Permission Form','js/rte-permission.json','',0),
+('Editable_Forms', '../conf/agreement.txt', 'Registration Agreement','js/rte-agreement.json','',0),
+('Editable_Forms', '../conf/confirmation.txt', 'Confirmation Form','js/rte-confirmation.json','',0),
+('Editable_Forms', '../conf/survey.txt', 'Survey Form','js/rte-survey.json','',0),
 
 ('Education_Level','01','Highschool','','d',0),
 ('Education_Level','02','College','','d',0),
@@ -150,10 +149,6 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('House_Discount', 'hd1', 'Service Issue','10', 'ca',0),
 ('House_Discount', 'hd2', 'Facilities Issue','15', 'ca',0),
-
-('House_Template', 'Registration', 'Registration', 'form', 'md', 10),
-('House_Template', 'Confirmation', 'Confirmation', 'form', 'md', 20),
-('House_Template', 'Survey', 'Survey', 'form', 'md', 40),
 
 ('Income_Bracket', 'ib1', '0 - 25,000', '', 'd',10),
 ('Income_Bracket', 'ib2', '26 - 50,000', '', 'd',20),
@@ -470,6 +465,7 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('GuestAddr', 'true', 'b', 'h', 'False = do not collect guest address'),
 ('HouseKeepingEmail', '', 's', 'h', 'Gets notice of visit endings.'),
 ('HouseKeepingSteps', '2', 'i', 'h', 'Number of steps to cleaning/preparing rooms for new guests.'),
+('ImpliedTaxRate', '0', 's', 'h', '% assumed room rate tax'),
 ('IncludeLastDay','false','b','h','Include the departure day in room searches.'),
 ('IncomeRated', 'true', 'b', 'h','Use Income chooser rate assistance'),
 ('InitResvStatus', 'a', 's', 'h','Initial reservation status setting, confirmed or unconfirmed'),
@@ -518,9 +514,8 @@ REPLACE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VA
 ('VisitExcessPaid', 'd', 's', 'h','Default place for excess visit payments'),
 ('VerifyHospDate', 'true', 'b', 'h','Insist on hospital treatment date entry'),
 ('VisitFeeDelayDays', '0', 'i', 'h','Number of days before cleaning fee is charged'),
-('Volunteers', 'true', 'b', 'r', 'Use the Volunteer Site'),
+('Volunteers', 'true', 'b', 'r', 'Use the Volunteer Site');
 ('UseIncidentReports', 'true', 'b', 'h', 'Use the Incident Reports feature')
-;
 -- ;
 
 -- Move site.cfg items to here:
@@ -715,26 +710,6 @@ REPLACE INTO `secondary_unit_desig` (`Common`,`Standard`,`Range_Required`,`Title
 -- ;
 
 
-REPLACE INTO document (`idDocument`, `Title`, `Abstract`, `Category`, `Type`, `Doc`, `Status`, `Last_Updated`, `Created_By`) VALUES
-(1, 'Registration Document', '', 'form', 'md', 'The (House Name) is a not-for-profit healthcare hospitality house. The Guest House is strictly a lodging facility for referred patients that are actively receiving care at our partner institutions and their families/friends.', 'a', NOW(), 'admin'),
-(2, 'Confirmation Document', '', 'form', 'md', 'Dear ${GuestName}:Thank you for your reservation. This is a confirmation for the following dates: ${ExpectedArrival} until ${ExpectedDeparture} for ${Nites} nights for an estimated $${Amount}.  ${VisitFeeNotice}', 'a', NOW(), 'admin'),
-(3, 'Survey Document', '', 'form', 'md', 'Dear ${FirstName},', 'a', NOW(), 'admin');
--- ;
-
-REPLACE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`) VALUES 
-('Confirmation', 'Guest Name', '${GuestName}'),
-('Confirmation', 'Expected Arrival', '${ExpectedArrival}'),
-('Confirmation', 'Expected Departure', '${ExpectedDeparture}'),
-('Confirmation', 'Date Today', '${DateToday}'),
-('Confirmation', 'Nights', '${Nites}'),
-('Confirmation', 'Amount', '${Amount}'),
-('Confirmation', 'Notes', '${Notes}'),
-('Confirmation', 'Visit Fee Notice', '${VisitFeeNotice}'),
-('Survey', 'First Name', '${FirstName}'),
-('Survey', 'Last Name', '${LastName}'),
-('Survey', 'Name Suffix', '${NameSuffix}'),
-('Survey', 'Name Prefix', '${NamePrefix}');
--- ;
 
 
 -- 

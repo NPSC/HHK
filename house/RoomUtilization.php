@@ -358,7 +358,7 @@ $(document).ready(function() {
                     <table style="float: left;margin-left:5px;">
                         <tr>
                             <?php if (count($aList) > 0) echo '<th>Associations</th>';  ?>
-                            <th>Hospitals</th>
+                            <th><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
                         </tr>
                         <tr>
                             <?php if (count($aList) > 0) {echo '<td style="vertical-align: top;">'. $assocs .'</td>';} ?>
