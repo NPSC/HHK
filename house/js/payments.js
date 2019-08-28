@@ -339,6 +339,8 @@ var payCtrls = function () {
     var t = this;
     t.keyDepAmt = $('#keyDepAmt');
     t.keyDepCb = $('#keyDepRx');
+    t.depRefundCb = $('#cbDepRefundApply');
+    t.depRefundAmt = $('#DepRefundAmount');
     t.visitFeeAmt = $('#visitFeeAmt');
     t.visitFeeCb = $('#visitFeeCb');
     t.feePayAmt = $('input#feesPayment');
@@ -352,7 +354,6 @@ var payCtrls = function () {
     t.heldAmtTb = $('#heldAmount');
     t.heldCb = $('#cbHeld');
     t.hsDiscAmt = $('#HsDiscAmount');
-    t.depRefundAmt = $('#DepRefundAmount');
     t.finalPaymentCb = $('input#cbFinalPayment');
     t.overPay = $('#txtOverPayAmt');
     t.guestCredit = $('#guestCredit');
@@ -376,7 +377,7 @@ function amtPaid() {
         kdep = 0, 
         vfee = 0,
         feePay = 0,
-        roomPay = 0,
+        feePayPreTax = 0,
         feePayStr = '',
         feeCharge = 0, 
         invAmt = 0, 
@@ -387,6 +388,8 @@ function amtPaid() {
         hsPay = 0,
         totPay = 0, 
         depRfAmt = 0,
+        depRfPreTax = 0,
+        depRfTax = 0,
         taxAmt = 0,
         overPayAmt = 0,
         isChdOut = isCheckedOut,
@@ -455,6 +458,8 @@ function amtPaid() {
                 } else if (Math.abs(amt) > Math.abs(maxamt)) {
                     amt = maxamt;
                     amtCtrl.val(amt.toFixed(2).toString());
+                } else {
+                    amtCtrl.val(amt.toFixed(2).toString());
                 }
                 
                 invAmt += amt;
@@ -468,33 +473,19 @@ function amtPaid() {
         });
     }
 
-    // Fees Payments - feePay
-    if (p.feePayAmt.length > 0) {
-
-        feePayStr = p.feePayAmt.val().replace('$', '').replace(',', '');
-        roomPay = parseFloat(feePayStr);
-
-        if (isNaN(roomPay) || roomPay <= 0) {
-            p.feePayAmt.val('');
-            $('#feesTax').val('');
-            roomPay = 0; taxAmt = 0;
-
-        } else if (vtaxPercent > 0) {
-            taxAmt = roundTo((roomPay * vtaxPercent / 100), 2);
-            $('#feesTax').val(taxAmt.toFixed(2).toString());
-        }
-        
-        feePay = roomPay + taxAmt;
-    }
-
     // Deposit refund? depRfAmt
     if (p.depRefundAmt.length > 0) {
-        depRfAmt = parseFloat(p.depRefundAmt.val());
-        if (isNaN(depRfAmt)) {
+        depRfAmt = parseFloat(p.depRefundAmt.data('amt'));
+        if (isNaN(depRfAmt) || p.depRefundCb.prop('checked') === false) {
             depRfAmt = 0;
+            p.depRefundAmt.val('');
+        } else {
+            depRfPreTax = depRfAmt / (1 + (depRfAmt * vtaxPercent/100));
+            depRfTax = depRfAmt - depRfPreTax;
+            p.depRefundAmt.val(0 - depRfAmt.toFixed(2).toString());
         }
     }
-
+    
     // Test held amount if any. - heldAmt
     if (p.heldCb.length > 0) {
         
@@ -507,55 +498,44 @@ function amtPaid() {
         if (p.heldCb.prop("checked")) {
             heldAmt = heldTotal;
         }
+    }
+
+    // Fees Payments - feePay
+    if (p.feePayAmt.length > 0) {
+
+        feePayStr = p.feePayAmt.val().replace('$', '').replace(',', '');
+        feePayPreTax = parseFloat(feePayStr);
+
+        if (isNaN(feePayPreTax) || feePayPreTax <= 0) {
+            p.feePayAmt.val('');
+            $('#feesTax').val('');
+            feePayPreTax = 0; taxAmt = 0;
+
+        } else if (vtaxPercent > 0) {
+            taxAmt = roundTo((feePayPreTax * vtaxPercent / 100), 2);
+            $('#feesTax').val(taxAmt.toFixed(2).toString());
+        }
         
+        feePay = feePayPreTax + taxAmt;
     }
 
 
-    // Compute total charges
-    totCharges = vfee + kdep + invAmt + depRfAmt;
-
-
-
     if (isChdOut) {
-        
-        // preset some controls
-        $('.hhk-Overpayment').hide();
-        overPayAmt = 0;
-        $('.hhk-HouseDiscount').hide();
-        p.hsDiscAmt.val('');
+
         $('.hhk-minPayment').show('fade');
 
-        // Fees Charges
-        feeCharge = parseFloat($('#spnCfBalDue').data('bal'));  
+        // preset some controls
+        overPayAmt = 0;
+        p.hsDiscAmt.val('');
+        p.feesCharges.val((roomBalDue > 0 ? roomBalDue.toFixed(2).toString() : ''));
+        p.guestCredit.val((roomBalDue < 0 ? roomBalDue.toFixed(2).toString() : ''));
+
+        totCharges = vfee + invAmt + roomBalDue - heldAmt - depRfAmt;
         
-        if (isNaN(feeCharge)) {
-            feeCharge = 0;
-        }
-
-        p.feesCharges.val((feeCharge > 0 ? feeCharge.toFixed(2).toString() : ''));
-        p.guestCredit.val((feeCharge < 0 ? feeCharge.toFixed(2).toString() : ''));
-
-        totCharges += feeCharge;
-        
-        // Adjust charges by any held amount
-        if (totCharges > 0 && heldAmt > 0) {
-            // Decrease charges
-            totCharges -= heldAmt;
-        } else if (totCharges < 0 && heldAmt > 0) {
-            // Increase return
-            totCharges -= heldAmt;
-        } else if (totCharges === 0 && heldAmt > 0) {
-            totCharges -= heldAmt;
-        } else if (p.heldCb.length > 0) {
-            p.heldAmtTb.val('');
-        }
-
-
         if (totCharges - feePay > 0 && p.finalPaymentCb.prop('checked')) {
-
             // Manage House Waive of underpaid amount
-            
-            var roomBal = roomBalDue - roomPay;   // subtract any payment added to the UI.
+
+            var roomBal = roomBalDue - feePayPreTax - depRfPreTax;   // subtract any payment added to the UI.
             roomBalDue = roomBal + feePay;
             
             hsPay = (totCharges - feeCharge) + roomBal;  // remove the taxed room charge and replace with the remaining untaxed room charge.
@@ -572,12 +552,15 @@ function amtPaid() {
 
             totPay = feePay;
 
+            $('.hhk-Overpayment').hide();
             $('.hhk-HouseDiscount').show('fade');
 
         } else if (totCharges - feePay > 0) {
-
+            // Guest underpaid, no House Waive
             p.hsDiscAmt.val('');
-            totPay = vfee + kdep + invAmt + feePay;
+            totPay = vfee + invAmt + feePay;
+            
+            $('.hhk-Overpayment').hide();
             $('.hhk-HouseDiscount').show('fade');
 
         } else {
@@ -630,15 +613,17 @@ function amtPaid() {
             
             if (overPayAmt > 0) {
                 $('.hhk-Overpayment').show('fade');
+                $('.hhk-HouseDiscount').hide();
             } else {
                 $('.hhk-Overpayment').hide();
+                $('.hhk-HouseDiscount').hide();
             }
         }
 
     } else {
 
         // still checked in
-        totCharges += feePay;
+        totCharges = vfee + kdep + invAmt + feePay;
         
         // Adjust charges by any held amount
         if (totCharges > 0 && heldAmt > 0) {
@@ -855,6 +840,12 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
 
     if (p.keyDepCb.length > 0) {
         p.keyDepCb.change(function() {
+            amtPaid();
+        });
+    }
+
+    if (p.depRefundCb.length > 0) {
+        p.depRefundCb.change(function() {
             amtPaid();
         });
     }

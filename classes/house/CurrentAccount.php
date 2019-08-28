@@ -114,12 +114,12 @@ class CurrentAccount {
                 + $visitCharge->getItemInvPayments('tax'));
 
         // Pending amounts
-        $this->setAmtPending($visitCharge->getRoomFeesPending()
-                + $visitCharge->getVisitFeesPending()
-                + $visitCharge->getItemInvPending(ItemId::AddnlCharge)
-                + $visitCharge->getItemInvPending(ItemId::LodgingMOA)
-                + $visitCharge->getItemInvPending(ItemId::Waive)
-                + $visitCharge->getItemInvPending('tax'));
+        $this->setAmtPending($visitCharge->get3pRoomFeesPending()
+                + $visitCharge->get3pVisitFeesPending()
+                + $visitCharge->get3rdPartyPending(ItemId::AddnlCharge)
+                + $visitCharge->get3rdPartyPending(ItemId::LodgingMOA)
+                + $visitCharge->get3rdPartyPending(ItemId::Waive)
+                + $visitCharge->get3rdPartyPending('tax'));
 
     }
 

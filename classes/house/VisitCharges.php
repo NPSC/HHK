@@ -15,6 +15,8 @@
  */
 class VisitCharges {
 
+    const THIRD_PARTY = '3p';
+
     protected $feesCharged = 0; // Current fees charges up until today
     protected $feesToCharge = 0;    // fees to be charged thru the end of the visit
     protected $visitFeeCharged = 0;
@@ -38,7 +40,6 @@ class VisitCharges {
 
     public function __construct($idVisit) {
         $this->idVisit = $idVisit;
-        $this->itemSums = array();
     }
 
     public function sumCurrentRoomCharge(\PDO $dbh, PriceModel $priceModel, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
@@ -217,6 +218,8 @@ class VisitCharges {
 
     public function sumPayments(\PDO $dbh) {
 
+        $this->itemSums = array();
+
         $items = Item::loadItems($dbh);
         $invStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
 
@@ -226,12 +229,16 @@ class VisitCharges {
             foreach ($invStatuses as $s) {
                 $this->itemSums[$i['idItem']][$s[0]] = 0;
             }
+
+            $this->itemSums[$i['idItem']][self::THIRD_PARTY] = 0;
         }
 
         // sum taxes
         foreach ($invStatuses as $s) {
             $this->itemSums['tax'][$s[0]] = 0;
         }
+
+        $this->itemSums['tax'][self::THIRD_PARTY] = 0;
 
 
         $invLines = $this->loadInvoiceLines($dbh, $this->getIdVisit());
@@ -241,7 +248,9 @@ class VisitCharges {
 
             $stat = $l['Status'];
 
+
             if ($stat == InvoiceStatus::Carried) {
+                // find status of my carrying (child) invoice
                 $this->findLastDelegatedInvoiceStatus($l, $invLines, $stat);
             }
 
@@ -250,6 +259,11 @@ class VisitCharges {
             // is this a tax?
             if ($l['Type_Id'] == 2) {
                 $this->itemSums['tax'][$stat] += $l['Amount'];
+            }
+
+            // Third Party invoice
+            if ($l['Billing_Agent'] > 0 && $stat == InvoiceStatus::Unpaid) {
+                $this->itemSums[$l['Item_Id']][self::THIRD_PARTY] += $l['Amount'];
             }
 
         }
@@ -279,7 +293,9 @@ class VisitCharges {
 
     public static function loadInvoiceLines(\PDO $dbh, $idVisit) {
 
-        if ($idVisit < 1) {
+        $_idVisit = intval($idVisit, 10);
+
+        if ($_idVisit < 1) {
             return array();
         }
 
@@ -302,11 +318,13 @@ class VisitCharges {
     il.Item_Id,
     il.Period_Start,
     il.Period_End,
-    il.Type_Id
+    il.Type_Id,
+    ifnull(nv.idName, 0) as Billing_Agent
 from
     invoice_line il join invoice i ON il.Invoice_Id = i.idInvoice
+    left join name_volunteer2 nv on i.Sold_To_Id = nv.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'ba' and nv.Vol_Status = 'a'
 where
-    i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = '" . $idVisit . "'"
+    i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = '" . $_idVisit . "'"
                 . " order by il.idInvoice_Line";
         $stmt = $dbh->query($query);
 
@@ -318,8 +336,16 @@ where
         return $this->getItemInvPending(ItemId::Lodging) + $this->getItemInvPending(ItemId::LodgingReversal);
     }
 
+    public function get3pRoomFeesPending() {
+        return $this->get3rdPartyPending(ItemId::Lodging) + $this->get3rdPartyPending(ItemId::LodgingReversal);
+    }
+
     public function getVisitFeesPending() {
         return $this->getItemInvPending(ItemId::VisitFee);
+    }
+
+    public function get3pVisitFeesPending() {
+        return $this->get3rdPartyPending(ItemId::VisitFee);
     }
 
     public function getDepositPending() {
@@ -327,15 +353,15 @@ where
                 + $this->getItemInvPending(ItemId::DepositRefund);
     }
 
+    public function getDepositPayType() {
+        return $this->depositPayType;
+    }
+
     public function getItemInvCharges($idItem) {
         if (isset($this->itemSums[$idItem])) {
             return $this->itemSums[$idItem][InvoiceStatus::Unpaid] + $this->itemSums[$idItem][InvoiceStatus::Paid];
         }
         return 0;
-    }
-
-    public function getDepositPayType() {
-        return $this->depositPayType;
     }
 
     public function getItemInvPayments($idItem) {
@@ -348,6 +374,13 @@ where
     public function getItemInvPending($idItem) {
         if (isset($this->itemSums[$idItem])) {
             return $this->itemSums[$idItem][InvoiceStatus::Unpaid];
+        }
+        return 0;
+    }
+
+    public function get3rdPartyPending($idItem) {
+        if (isset($this->itemSums[$idItem])) {
+            return $this->itemSums[$idItem][self::THIRD_PARTY];
         }
         return 0;
     }

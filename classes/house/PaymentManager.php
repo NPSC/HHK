@@ -162,7 +162,7 @@ class PaymentManager {
 
                 // Collect room fees
                 $this->pmp->visitCharges->sumPayments($dbh)
-                        ->sumCurrentRoomCharge($dbh, $this->pmp->priceModel, $roomCharges, TRUE);
+                        ->sumCurrentRoomCharge($dbh, $this->pmp->priceModel, $roomPayment, TRUE);
 
 
                 $nitesPaid = $this->pmp->visitCharges->getNightsPaid();

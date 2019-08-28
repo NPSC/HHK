@@ -729,8 +729,11 @@ ORDER BY v.idVisit , v.Span;");
             // Deposit Return Amount
             if ($keyDepPaid > 0) {
                 $feesTbl->addBodyTr(
-                    HTMLTable::makeTd('Deposit Refund:', array('class'=>'tdlabel', 'colspan'=>'2'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'DepRefundAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;'))
+                    HTMLTable::makeTd('Deposit Refund:', array('class'=>'tdlabel'))
+                    .HTMLTable::makeTd(
+                            HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbDepRefundApply', 'style'=>'margin-left:5px;margin-right:3px;'))
+                            .HTMLInput::generateMarkup('', array('name'=>'cbDepRefundApply', 'class'=>'hhk-feeskeys', 'checked'=>'checked', 'type'=>'checkbox', 'style'=>'margin-right:.4em;')))
+                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'DepRefundAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;', 'data-amt'=> number_format($keyDepPaid, 2)))
                             , array('style'=>'text-align:right;')), array('class'=>'hhk-refundDeposit'));
             }
         }
@@ -741,7 +744,7 @@ ORDER BY v.idVisit , v.Span;");
                 HTMLTable::makeTd('Retained Amount:', array('class'=>'tdlabel', 'title'=>'Money on Account (MOA)'))
                 . HTMLTable::makeTd(
                         HTMLContainer::generateMarkup('label', "Apply", array('for'=>'keyDepRx', 'style'=>'margin-left:5px;margin-right:3px;'))
-                        .HTMLInput::generateMarkup('', array('name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-amt'=>$heldAmount))
+                        .HTMLInput::generateMarkup('', array('name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-amt'=> number_format($heldAmount, 2)))
                     .HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '($' . number_format($heldAmount, 2) . ')' : ''), array('id'=>'spnHeldAmt')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
         }
