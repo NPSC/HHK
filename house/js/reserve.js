@@ -9,6 +9,7 @@ $(document).ready(function() {
     var t = this;
     var $guestSearch = $('#gstSearch');
     var resv = $.parseJSON($('#resv').val());
+    var pageManagerOptions = $.parseJSON($('#resvManagerOptions').val());
     var pageManager = t.pageManager;
     fixedRate = $('#fixedRate').val();
     payFailPage = $('#payFailPage').val();
@@ -106,8 +107,7 @@ $(document).ready(function() {
         $('#paymentMessage').show();
     }
 
-
-    pageManager = new resvManager(resv);
+    pageManager = new resvManager(resv, pageManagerOptions);
 
     // hide the alert on mousedown
     $(document).mousedown(function (event) {
@@ -200,28 +200,6 @@ $(document).ready(function() {
         }
     });
 
-
-	//incident reports
-	if(resv.idPsg){
-		$('#incidentContent').incidentViewer({
-			psgId: resv.idPsg
-		}).hide();
-		
-		$('#incidentsSection').show();
-	}
-	//incident block
-	var Ihdr = $("#incidentsSection .hhk-incidentHdr");
-	var Icontent = $("#incidentsSection #incidentContent");
-	Ihdr.click(function() {
-	    if (Icontent.css('display') === 'none') {
-	        Icontent.show('blind');
-	        Ihdr.removeClass('ui-corner-all').addClass('ui-corner-top');
-	    } else {
-	        Icontent.hide('blind');
-	        Ihdr.removeClass('ui-corner-top').addClass('ui-corner-all');
-	    }
-	});
-
     function getGuest(item) {
 
         if (item.No_Return !== undefined && item.No_Return !== '') {
@@ -267,6 +245,8 @@ $(document).ready(function() {
 
         $guestSearch.focus();
     }
+    
+    
 });
 
 

@@ -182,6 +182,14 @@ $resvAr['gstAddr'] = $uS->GuestAddr;
 $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
 $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
 
+$resvManagerOptions = [];
+if($uS->UseIncidentReports){
+	$resvManagerOptions["UseIncidentReports"] = true;
+}else{
+	$resvManagerOptions["UseIncidentReports"] = false;
+}
+$resvManagerOptionsEncoded = json_encode($resvManagerOptions);
+
 // Page title
 $title = $wInit->pageHeading;
 
@@ -231,6 +239,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="js/incidentReports.js"></script>
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
@@ -292,9 +301,8 @@ $resvObjEncoded = json_encode($resvAr);
         <input type="hidden" value="<?php echo $payFailPage; ?>" id="payFailPage"/>
         <input type="hidden" value="<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>" id="dateFormat"/>
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
+        <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
         <input type="hidden" value='<?php echo $paymentMarkup; ?>' id="paymentMarkup"/>
-
         <script type="text/javascript" src="js/reserve.js"></script>
-        <script type="text/javascript" src="js/incidentReports.js"></script>
     </body>
 </html>

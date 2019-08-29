@@ -149,6 +149,7 @@
 	
 	function clearform($wrapper){
 		$wrapper.incidentdialog.find("input").val("");
+		$wrapper.incidentdialog.find("input").removeClass("ui-state-error");
 		$wrapper.incidentdialog.find("textarea").empty();
 		$wrapper.incidentdialog.find("textarea").val("");
 		$wrapper.incidentdialog.find("option").removeAttr("selected");
@@ -162,7 +163,7 @@
 		});
 		$wrapper.incidentdialog.find(".incdate").datepicker({autoSize: true, dateFormat: 'M d, yy'}).datepicker("setDate", "today");
 		$wrapper.incidentdialog.find(".resdate").datepicker({autoSize: true, dateFormat: 'M d, yy'});
-		$wrapper.incidentdialog.find(".sigDate").datepicker({autoSize: true, dateFormat: 'M d, yy'})
+		$wrapper.incidentdialog.find(".sigDate").datepicker({autoSize: true, dateFormat: 'M d, yy'});
 	}
 	
     function createActions(reportId, row) {
@@ -277,7 +278,9 @@
 							$wrapper.incidentdialog.find("option[value=" + data.status + "]").attr("selected", "selected");
 							$wrapper.incidentdialog.find("textarea[name=incidentResolution]").val(data.resolution);
 							$wrapper.incidentdialog.find("input[name=resolutionDate]").val(data.resolutionDate);
-							$wrapper.incidentdialog.find(".jsignature").jSignature("setData", data.signature)
+							if(data.signature){
+								$wrapper.incidentdialog.find(".jsignature").jSignature("setData", data.signature);
+							}
 							$wrapper.incidentdialog.find("input[name=signatureDate]").val(data.signatureDate);
                             $wrapper.incidentdialog.dialog("open");
 				            
@@ -377,7 +380,6 @@
         },
         success: function( data ){
                 if(data.title){
-	                console.log(data);
 	                var status = "";
 	                if(data.status == "a"){
 		                status = "Active";
@@ -425,11 +427,15 @@
 								'</td>' +
 							'</tr>' +
 							'<tr>' +
-								'<td class="tdlabel" style="width: 25%; height: 50px;">Signature</td>' +
-								'<td>' +
+								'<td class="tdlabel" style="width: 25%; height: 100px;">Signature</td>';
+							if(data.signature){
+								body += '<td>' +
 									'<img src="' + data.signature + '">' +
-								'</td>' +
-							'</tr>' +
+								'</td>';
+							}else{
+								body+= '<td></td>';
+							}
+							body += '</tr>' +
 							'<tr>' +
 								'<td class="tdlabel">Signature Date</td>' +
 								'<td>' +
@@ -449,8 +455,8 @@
 				    mywindow.document.close(); // necessary for IE >= 10
 				    mywindow.focus(); // necessary for IE >= 10*/
 				
-				    //mywindow.print();
-				    //mywindow.close();
+				    mywindow.print();
+				    mywindow.close();
 		            
                 }else{
                     
@@ -473,12 +479,23 @@
 	            var api = new $.fn.dataTable.Api( settings );
 	            var result = api.rows().data();
                 var active = 0;
-                $.each(result, function( index, value ) {
-	                if(value.Status == "Active"){
-		                active++;
-	                }
-	            })
-	            $("#incidentCounts").text(" - " + active + " active");
+                var onHold = 0;
+                var resolved = 0;
+                if(result.length > 0){
+	                $.each(result, function( index, value ) {
+		                if(value.Status == "Active"){
+			                active++;
+		                }else if(value.Status == "On Hold"){
+			                onHold++;
+		                }else if(value.Status == "Resolved"){
+			                resolved++;
+		                }
+		            })
+		            $("#incidentCounts").text(" - " + active + " active | " + onHold + " On Hold | " + resolved + " resolved");
+                }else{
+	                $("#incidentCounts").text(" - 0");
+                }
+                
 		    } )
             .DataTable({
 	        "columnDefs": settings.dtCols,
@@ -487,7 +504,7 @@
 	        "deferRender": true,
 	        "language": {"sSearch": "Search Incidents:"},
 	        "sorting": [[5,'asc']],
-	        "displayLength": 5,
+	        "paging": false,
 	        "lengthMenu": [[5, 10, 25, -1], [5, 10, 25, "All"]],
                 "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
 	        ajax: {
@@ -526,10 +543,25 @@
 						saveIncident($wrapper, settings, dtTable);
 					}
       			},
+      			open: function(e){
+	      			//show print button if report exists
+	      			if($wrapper.incidentdialog.find("input[name=reportId]").val() > 0){
+		      			$(this).closest('.ui-dialog')
+	      					.find(".ui-dialog-buttonset .ui-button:first")
+		  					.show();
+	      			}else{
+		      			$(this).closest('.ui-dialog')
+	      					.find(".ui-dialog-buttonset .ui-button:first")
+		  					.hide();
+	      			}
+      			},
+      			create: function (){
+	      			$(this).closest('.ui-dialog')
+	      				.find(".ui-dialog-buttonset .ui-button:first")
+	      				.addClass("print");
+      			}
 			});
         }
-        
-        $wrapper.show();
     }
 
 }(jQuery));

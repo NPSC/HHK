@@ -87,6 +87,7 @@ $(document).ready(function() {
     "use strict";
     var t = this;
     var resv = $.parseJSON($('#resv').val());
+    var pageManagerOptions = $.parseJSON($('#resvManagerOptions').val());
     var pageManager = t.pageManager;
     fixedRate = $('#fixedRate').val();
     payFailPage = $('#payFailPage').val();
@@ -101,26 +102,6 @@ $(document).ready(function() {
             ) * 1.1 );
         }
     });
-
-	//incident reports
-	if(resv.rid){
-		$('#incidentContent').incidentViewer({
-			rid: resv.rid
-		}).hide();
-		$('#incidentsSection').show();
-		//incident block
-		var Ihdr = $("#incidentsSection .hhk-incidentHdr");
-		var Icontent = $("#incidentsSection #incidentContent");
-		Ihdr.click(function() {
-		    if (Icontent.css('display') === 'none') {
-		        Icontent.show('blind');
-		        Ihdr.removeClass('ui-corner-all').addClass('ui-corner-top');
-		    } else {
-		        Icontent.hide('blind');
-		        Ihdr.removeClass('ui-corner-top').addClass('ui-corner-all');
-		    }
-		});
-	}
 
 // Dialog Boxes
 
@@ -168,7 +149,7 @@ $(document).ready(function() {
     });
 
 
-    pageManager = new resvManager(resv);
+    pageManager = new resvManager(resv, pageManagerOptions);
 
     // hide the alert on mousedown
     $(document).mousedown(function (event) {
