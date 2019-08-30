@@ -491,7 +491,7 @@
 			                resolved++;
 		                }
 		            })
-		            $("#incidentCounts").text(" - " + active + " active | " + onHold + " On Hold | " + resolved + " resolved");
+		            $("#incidentCounts").text(" - " + active + " Active | " + onHold + " On Hold | " + resolved + " Resolved");
                 }else{
 	                $("#incidentCounts").text(" - 0");
                 }
@@ -503,7 +503,7 @@
 	        "processing": true,
 	        "deferRender": true,
 	        "language": {"sSearch": "Search Incidents:"},
-	        "sorting": [[5,'asc']],
+	        "sorting": [[5,'asc'],[1, 'desc']],
 	        "paging": false,
 	        "lengthMenu": [[5, 10, 25, -1], [5, 10, 25, "All"]],
                 "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',

@@ -12,6 +12,7 @@
     padding: 5px 10px;
     z-index: 90000;
     border: 1px solid teal;
+    background-color: white;
 }
 #submitButtons:hover { background-color: white; }
 #divAlertMsg {
@@ -398,3 +399,6 @@ li.hhk-myMenuTop {
 .uppload-modal ul i {
 	margin-right: 0.5em;
 }
+
+/* Put JqueryUI dialogs above submit buttons */
+.ui-dialog { z-index: 91000 !important ;}

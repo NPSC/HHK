@@ -127,7 +127,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
         left join
     room_rate rr on v.idRoom_rate = rr.idRoom_rate
 where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end') and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0 $whClause";
-
+	
     $stmt = $dbh->query($query);
 
     if (!$local) {
