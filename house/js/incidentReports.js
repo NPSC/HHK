@@ -376,9 +376,11 @@
         type: 'post',
         data: {
                 cmd: 'getincidentreport',
+                print: true,
                 repid: repID,
         },
         success: function( data ){
+	        
                 if(data.title){
 	                var status = "";
 	                if(data.status == "a"){
@@ -388,7 +390,28 @@
 	                }else if(data.status == "r"){
 		                status = "Resolved";
 	                }
-                    var body = '<div id="incidentPrint">' +
+                    var body = '<div id="incidentPrint">';
+                    if(data.guest){
+	                    body += '<fieldset>' +
+                			'<legend><strong>Guest</strong></legend>' +
+                			'<table cellpadding="10">' +
+                			'<tr>' +
+                			  '<td><strong>Name</strong></td>' +
+                			  '<td> ' + data.guest.First + ' ' + data.guest.Last + '</td>' +
+                			  '<td><strong>Phone</strong></td>' +
+                			  '<td>' + data.guest.Phone + '</td>' +
+                			  '<td rowspan="2"><strong>Address</strong></td>';
+                			  if(data.guest.Address){
+	                			  body += '<td rowspan="2">' + data.guest.Address + '<br>' + data.guest.City + ', ' + data.guest.State + ' ' + data.guest.Zip + '</td>';
+                			  }else{
+	                			  body += '<td></td>';
+                			  }
+                			body += '</tr>' +
+                		    '</table>' +
+                		'</fieldset>';
+                    }
+                    	body += '<fieldset>' +
+                    		'<legend><strong>Report</strong></legend>' +
 							'<table cellpadding="10">' +
 							'<tr>' +
 								'<td class="tdlabel">Title</td>' +
@@ -400,6 +423,12 @@
 								'<td class="tdlabel">Date</td>' +
 								'<td>' +
 									data.reportDate +
+								'</td>' +
+							'</tr>' +
+							'<tr>' +
+								'<td class="tdlabel">Author</td>' +
+								'<td>' +
+									data.createdBy +
 								'</td>' +
 							'</tr>' +
 							'<tr>' +
@@ -441,14 +470,24 @@
 								'<td>' +
 									data.signatureDate +
 								'</td>' +
-							'</tr>' +
-							'</table>' +
+							'</tr>';
+							if(data.updatedBy){
+								body += '<tr>' +
+								'<td class="tdlabel">Updated</td>' +
+								'<td>' +
+									data.updatedBy + ' - ' + data.updatedAt +
+								'</td>' +
+							'</tr>';
+							}
+							
+							body += '</table>' +
+							'</fieldset>' +
 						'</div>';
 		            var mywindow = window.open('', 'PRINT', 'height=600,width=800');
 				    mywindow.document.write('<html><head><title>' + document.title  + '</title>');
 				    mywindow.document.write('<link href="css/incidentReports.css" rel="stylesheet" type="text/css">');
 				    mywindow.document.write('</head><body >');
-				    mywindow.document.write('<h2>' + document.title  + ' - Incident Report</h>');
+				    mywindow.document.write('<h2>' + document.title  + ' - Incident Report</h2>');
 				    mywindow.document.write(body);
 				    mywindow.document.write('</body></html>');
 				

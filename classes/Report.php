@@ -253,6 +253,9 @@ class Report {
 		    "signature" =>$this->signature,
 		    "signatureDate" =>($this->signatureDate ? date("M j, Y", strtotime($this->signatureDate)): ""),
 		    "status"=>$this->status,
+		    "createdBy"=>$this->author,
+		    "updatedBy"=>$this->updatedBy,
+		    "updatedAt"=>($this->lastUpdated ? date("M j, Y h:i a", strtotime($this->lastUpdated)): ""),
 	    );
     }
 

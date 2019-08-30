@@ -369,8 +369,16 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
             
             $report = new Report($idReport);
 			$report->loadReport($dbh);
-			$events = $report->toArray();
-                    
+			$idGuest = $report->getGuestId();
+			$reportAr = $report->toArray();
+            
+            if(isset($_POST['print'])){
+	            $stmt = $dbh->query("SELECT * from `vguest_listing` where id = $idGuest limit 1");
+	            $guestAr = $stmt->fetch(PDO::FETCH_ASSOC);
+	            $reportAr = $reportAr + ["guest"=>$guestAr];
+            }
+            
+            $events = $reportAr;
         	break;
         	
     case 'saveIncident':

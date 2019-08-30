@@ -19,12 +19,16 @@
 }
 
 #incidentPrint table {
-	margin-top: 12pt;
 	border: 1pt solid black;
 	border-bottom: 0;
-	border-collapse:collapse
+	border-collapse:collapse;
+	width: 100%
 }
 
 #incidentPrint table td {
 	border-bottom: 1pt solid black;
+}
+
+#incidentPrint fieldset {
+	margin-top: 12pt;
 }
