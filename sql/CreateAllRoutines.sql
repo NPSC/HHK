@@ -11,8 +11,69 @@ DROP function IF EXISTS `datedefaultnow`; -- ;
 CREATE FUNCTION `datedefaultnow` (dt DateTime)
 RETURNS DATETIME
 DETERMINISTIC NO SQL
-RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() else dt end
- -- ;
+RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() else dt end  -- ;
+
+
+
+
+-- --------------------------------------------------------
+--
+-- Procedure `sum_visit_days`
+--
+DROP procedure IF EXISTS `sum_visit_days`; -- ;
+
+CREATE PROCEDURE `sum_visit_days`(
+    IN targetYear int
+)
+BEGIN
+
+Declare startDate varchar(12);
+Declare endDate varchar(12);
+
+Select concat_ws('-', (targetYear + 1), '01', '01') into endDate;
+Select concat_ws('-', (targetYear), '01', '01') into startDate;
+
+select sum(
+	datediff(
+             case when DATE(ifnull(Span_End, NOW())) >= DATE(endDate) then DATE(endDate) else DATE(ifnull(Span_End, NOW())) end
+            , case when  DATE(Span_Start) < DATE(startDate) then DATE(startDate) else  DATE(Span_Start) end)
+    ) 
+    as numNites 
+from visit
+Where DATE(Span_Start) < DATE(endDate) and DATE(ifnull(Span_End, NOW())) >= DATE(startDate);
+
+END -- ;
+
+
+
+-- --------------------------------------------------------
+--
+-- Procedure `sum_stay_Days`
+--
+DROP procedure IF EXISTS `sum_stay_Days`; -- ;
+
+CREATE PROCEDURE `sum_stay_Days`(
+	IN targetYear int
+)
+BEGIN
+
+	Declare startDate varchar(12);
+	Declare endDate varchar(12);
+
+	Select concat_ws('-', (targetYear + 1), '01', '01') into endDate;
+	Select concat_ws('-', (targetYear), '01', '01') into startDate;
+
+	select sum(
+		datediff(
+                    case when DATE(IFNULL(Span_End_Date, NOW())) >= DATE(endDate) then DATE(endDate) else DATE(IFNULL(Span_End_Date, NOW())) end
+                   , case when  DATE(Span_Start_Date) < DATE(startDate) then DATE(startDate) else  DATE(IFNULL(Span_Start_Date, NOW())) end)
+        ) 
+        as numNites 
+	from stays
+	Where `On_Leave` = 0 and DATE(Span_Start_Date) < DATE(endDate) and DATE(IFNULL(Span_End_Date, NOW())) >= DATE(startDate);
+
+END -- ;
+
 
 
 

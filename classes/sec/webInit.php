@@ -322,7 +322,7 @@ class SysConfig {
         if (count($rows) == 1) {
             return self::getTypedVal($rows[0]['Type'], $rows[0]['Value']);
         } else {
-            throw new Hk_Exception_Runtime('System Configuration key not found.  ');
+            throw new Hk_Exception_Runtime('System Configuration key not found: ' . $key);
         }
 
     }
@@ -357,7 +357,7 @@ class SysConfig {
 
             }
         } else {
-            throw new Hk_Exception_Runtime('System Configuration key not found.  ');
+            throw new Hk_Exception_Runtime('System Configuration key not found: ' . $key);
         }
     }
 

@@ -15,43 +15,51 @@
 class RoomReport {
 
     protected static function getGlobalNightsCount(PDO $dbh, $year = '') {
-
+        
+        $niteCount = 0;
+        
         if ($year != '') {
             // Filter out one year
-            $query = "SELECT SUM(DATEDIFF(
-IFNULL(s.Span_End_Date, NOW()),
-case when year(s.Span_Start_Date) < $year then DATE('$year-01-01') else Date(s.Span_Start_Date) end)) AS `Nights`
-FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE('$year-12-31') and Date(ifnull(s.Span_End_Date, now())) >= DATE('$year-01-01') ";
+//            $query = "SELECT SUM(DATEDIFF(
+//IFNULL(s.Span_End_Date, NOW()),
+//case when year(s.Span_Start_Date) < $year then DATE('$year-01-01') else Date(s.Span_Start_Date) end)) AS `Nights`
+//FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE('$year-12-31') and Date(ifnull(s.Span_End_Date, now())) >= DATE('$year-01-01') ";
+            
+            $stmt = $dbh->query("CALL sum_stay_Days('$year')");
 
+            while ($r = $stmt->fetch(PDO::FETCH_NUM)) {
+                $niteCount = $r[0];
+            }
+            
         } else {
+        
             // Entire history
             $query = "SELECT SUM(DATEDIFF(
 IFNULL(s.Span_End_Date, NOW()),
 DATE(s.Span_Start_Date))) AS `Nights`
 FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())";
 
+            $stmt = $dbh->query($query);
+            $rows = $stmt->fetchAll();
+            if (count($rows) == 1) {
+                $niteCount = $rows[0][0];
+            }
         }
 
-        $stmt = $dbh->query($query);
-        $rows = $stmt->fetchAll();
-        if (count($rows) == 1) {
-            return $rows[0][0];
-        } else {
-            return 0;
-        }
+        return $niteCount;
     }
 
-    protected static function getGlobalStaysCount(PDO $dbh, $year = '') {
+    protected static function getGlobalStaysCount(\PDO $dbh, $year = '') {
 
         $whClause = '';
         if ($year != '') {
-            $whClause = " and DATE(Span_Start_Date) <= '$year-12-31' and Date(ifnull(Span_End_Date, now())) >= '$year-01-01'";
+            $whClause = " and DATE(Span_Start_Date) <= DATE('$year-12-31') and Date(Span_End_Date) >= DATE('$year-01-01')";
         }
 
-        $query = "select count(*) as `Stays` "
-                . " from stays where `On_Leave` = 0 and `Status` = 'co' and DATEDIFF(ifnull(Span_End_Date, now()), Span_Start_Date) > 0" . $whClause;
+        $query = "select count(*) "
+                . " from stays where `On_Leave` = 0 and `Status` = 'co' and DATEDIFF(Span_End_Date), Span_Start_Date) > 0" . $whClause;
         $stmt = $dbh->query($query);
-        $rows = $stmt->fetchAll();
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
         if (count($rows) == 1) {
             return $rows[0][0];
         } else {
@@ -59,7 +67,7 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         }
     }
 
-    public static function getGlobalNightsCounter(PDO $dbh, $previousCount = 0) {
+    public static function getGlobalNightsCounter(\PDO $dbh, $previousCount = 0) {
 
         $uS = Session::getInstance();
         $comment = '.';
@@ -82,12 +90,12 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
             $uS->gnc = intval((self::getGlobalNightsCount($dbh, $year) + $previousCount) / 10);
         }
 
-        $span = HTMLContainer::generateMarkup('span', 'More than ' . number_format($uS->gnc * 10) . ' nights of rest' . $comment, array('style'=>'margin-left:200px;font-size:.6em;font-weight:normal;'));
+        $span = HTMLContainer::generateMarkup('span', 'More than <b>' . number_format($uS->gnc * 10) . '</b> nights of rest' . $comment, array('style'=>'margin-left:200px;font-size:.6em;font-weight:normal;'));
 
         return $span;
     }
 
-    public static function getGlobalStaysCounter(PDO $dbh, $previousCount = 0) {
+    public static function getGlobalStaysCounter(\PDO $dbh, $previousCount = 0) {
 
         $uS = Session::getInstance();
         $comment = '.';
