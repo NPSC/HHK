@@ -60,6 +60,7 @@ $externalErrMsg = '';
 $serviceName = '';
 $rteFileSelection = '';
 $rteMsg = '';
+$confError = '';
 
 $config = new Config_Lite(ciCFG_FILE);
 $labl = new Config_Lite(LABEL_FILE);
@@ -81,8 +82,6 @@ if ($config->has('webServices', 'Service_Name') && $config->getString('webServic
         $serviceName = $config->getString('webServices', 'Service_Name', '');
     }
 }
-
-$confError = '';
 
 if (isset($_POST["btnSiteCnf"])) {
 
@@ -218,17 +217,21 @@ if (isset($_POST['btnUpdate'])) {
         $update = new UpdateSite();
 
         $update->doUpdate($dbh);
-        $errorMsg = $update->getErrorMsg();
+        $errorMsg .= $update->getErrorMsg();
         $resultAccumulator = $update->getResultAccumulator();
     } else {
-        $errorMsg = 'This user does not enjoy site update priviledges.';
+        $errorMsg .= 'This user does not enjoy site update priviledges.';
     }
 }
 
 if (isset($_POST['btncopy'])) {
 
-    $patch = new Patch();
-    $patch->insertSiteConf($dbh);
+    if (SecurityComponent::is_TheAdmin()) {
+        $patch = new Patch();
+        $patch->insertSiteConf($dbh);
+    } else {
+        $confError .= 'This user does not enjoy copy configuration priviledges.';
+    }
 }
 
 // Zip code file

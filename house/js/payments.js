@@ -378,23 +378,24 @@ function amtPaid() {
         vfee = 0,
         feePay = 0,
         feePayPreTax = 0,
-        feePayStr = '',
-        feeCharge = 0, 
+
         invAmt = 0, 
         heldAmt = 0,
         heldTotal = 0,
+        heldPreTax = 0,
         totCharges = 0,
         ckedInCharges = 0,
-        hsPay = 0,
         totPay = 0, 
         depRfAmt = 0,
         depRfPreTax = 0,
-        depRfTax = 0,
-        taxAmt = 0,
+        roomBalTaxDue = 0,
+        feePayTaxAmt = 0,
         overPayAmt = 0,
         isChdOut = isCheckedOut,
         vtaxPercent = parseFloat(p.feePayAmt.data('tax')),
+        totalBalDue = parseFloat($('#spnCfBalDue').data('totbal')),
         roomBalDue = parseFloat($('#spnCfBalDue').data('rmbal'));
+ 
 
     if (isNaN(vtaxPercent)) {
         vtaxPercent = 0;
@@ -402,6 +403,8 @@ function amtPaid() {
     
     if (isNaN(roomBalDue)) {
         roomBalDue = 0;
+    } else {
+        roomBalTaxDue = roundTo((roomBalDue * vtaxPercent / 100), 2);
     }
 
     p.msg.text('').hide();
@@ -481,7 +484,6 @@ function amtPaid() {
             p.depRefundAmt.val('');
         } else {
             depRfPreTax = depRfAmt / (1 + (depRfAmt * vtaxPercent/100));
-            depRfTax = depRfAmt - depRfPreTax;
             p.depRefundAmt.val(0 - depRfAmt.toFixed(2).toString());
         }
     }
@@ -497,98 +499,96 @@ function amtPaid() {
               
         if (p.heldCb.prop("checked")) {
             heldAmt = heldTotal;
+            heldPreTax = heldAmt / (1+ (heldAmt * vtaxPercent/100));
         }
     }
 
     // Fees Payments - feePay
     if (p.feePayAmt.length > 0) {
 
-        feePayStr = p.feePayAmt.val().replace('$', '').replace(',', '');
-        feePayPreTax = parseFloat(feePayStr);
+        feePayPreTax = parseFloat(p.feePayAmt.val().replace('$', '').replace(',', ''));
 
         if (isNaN(feePayPreTax) || feePayPreTax <= 0) {
-            p.feePayAmt.val('');
-            $('#feesTax').val('');
-            feePayPreTax = 0; taxAmt = 0;
+            
+            feePayPreTax = 0; feePayTaxAmt = 0;
 
         } else if (vtaxPercent > 0) {
-            taxAmt = roundTo((feePayPreTax * vtaxPercent / 100), 2);
-            $('#feesTax').val(taxAmt.toFixed(2).toString());
+            
+            // Only tax up to the room balance due.
+            if (feePayPreTax > roomBalDue) {
+                feePayTaxAmt = roundTo((roomBalDue * vtaxPercent / 100), 2);
+            } else {
+                feePayTaxAmt = roundTo((feePayPreTax * vtaxPercent / 100), 2);
+            }
+            
         }
         
-        feePay = feePayPreTax + taxAmt;
+        feePay = feePayPreTax + feePayTaxAmt;
     }
 
 
     if (isChdOut) {
 
         $('.hhk-minPayment').show('fade');
-
-        // preset some controls
         overPayAmt = 0;
         p.hsDiscAmt.val('');
-        p.feesCharges.val((roomBalDue > 0 ? roomBalDue.toFixed(2).toString() : ''));
-        p.guestCredit.val((roomBalDue < 0 ? roomBalDue.toFixed(2).toString() : ''));
-
-        totCharges = vfee + invAmt + roomBalDue - heldAmt - depRfAmt;
         
-        if (totCharges - feePay > 0 && p.finalPaymentCb.prop('checked')) {
+        var totRmBalDue = roomBalDue + roomBalTaxDue;
+        
+        p.feesCharges.val((totRmBalDue > 0 ? totRmBalDue.toFixed(2).toString() : ''));
+        p.guestCredit.val((totRmBalDue < 0 ? totRmBalDue.toFixed(2).toString() : ''));
+
+        totCharges = vfee + invAmt + totRmBalDue - heldAmt - depRfAmt;
+        totPay = vfee + invAmt + feePay;
+        
+        
+        if (totRmBalDue - heldAmt - depRfAmt - feePay > 0 && p.finalPaymentCb.prop('checked')) {
             // Manage House Waive of underpaid amount
 
-            var roomBal = roomBalDue - feePayPreTax - depRfPreTax;   // subtract any payment added to the UI.
-            roomBalDue = roomBal + feePay;
-            
-            hsPay = (totCharges - feeCharge) + roomBal;  // remove the taxed room charge and replace with the remaining untaxed room charge.
+            var hsPay = roomBalDue - feePayPreTax - depRfPreTax - heldPreTax;   // subtract any payment added to the UI.
 
             if (hsPay <= 0) {
                 hsPay = 0;
                 p.hsDiscAmt.val('');
             } else {
                 p.hsDiscAmt.val((0 - hsPay).toFixed(2).toString());
-                p.feesCharges.val(roomBalDue.toFixed(2).toString());
+                var fCharges = hsPay + feePay + depRfAmt + heldAmt;
+                p.feesCharges.val(fCharges.toFixed(2).toString());
 
-                totCharges = (totCharges - feeCharge) + roomBalDue;
+                totCharges = (totCharges - totRmBalDue) + fCharges;
             }
 
-            totPay = feePay;
-
             $('.hhk-Overpayment').hide();
             $('.hhk-HouseDiscount').show('fade');
 
-        } else if (totCharges - feePay > 0) {
+        } else if (totRmBalDue - heldAmt - depRfAmt - feePay > 0) {
             // Guest underpaid, no House Waive
             p.hsDiscAmt.val('');
-            totPay = vfee + invAmt + feePay;
-            
+
             $('.hhk-Overpayment').hide();
             $('.hhk-HouseDiscount').show('fade');
 
-        } else {
-        // Guest paid too much
+        } 
+        
+        if (totCharges - feePay < 0) {
+            // Guest paid too much
 
-            // Manage overpayment
             p.finalPaymentCb.prop('checked', false);
-
-            
             overPayAmt = 0 - (totCharges - feePay);
 
-            
             if (p.selBalTo.val() === 'r') {
 
                 if (totCharges >= 0) {
 
-                    if (feePay !== totCharges) {
-                        alert('Pay Room Fees amount is reduced to: $' + totCharges.toFixed(2).toString());
+                    if (feePay !== totRmBalDue) {
+                        alert('Pay Room Fees amount is reduced to: $' + totRmBalDue.toFixed(2).toString());
                     }
-                    feePay = totCharges;
-                    
-                    if (vtaxPercent > 0 && feePay > 0) {
-                        // back out the tax amount
-                        taxAmt = feePay - roundTo((feePay / (1 + (vtaxPercent/100))), 2);  //$line->getAmount() / (1 + $tax)
-
-                    }
+                    feePayPreTax = roomBalDue;
+                    feePayTaxAmt = roomBalTaxDue;
+                    feePay = feePayPreTax + feePayTaxAmt;
                     
                     overPayAmt = 0;
+
                     p.selBalTo.val('');
                     $('#txtRtnAmount').val('');
                     $('#divReturnPay').hide();
@@ -603,13 +603,15 @@ function amtPaid() {
                     $('#divReturnPay').show('fade');
                     $('#txtRtnAmount').val(overPayAmt.toFixed(2).toString());
                 }
+                
+                totPay = vfee + invAmt + feePay;
 
             } else {
                 $('#txtRtnAmount').val('');
                 $('#divReturnPay').hide();
             }
 
-            totPay = feePay;
+
             
             if (overPayAmt > 0) {
                 $('.hhk-Overpayment').show('fade');
@@ -690,12 +692,12 @@ function amtPaid() {
         }
     }
 
-    if (feePay === 0 && feePayStr === '') {
+    if (feePay === 0) {
         p.feePayAmt.val('');
         $('#feesTax').val('');
     } else {
-        p.feePayAmt.val((feePay - taxAmt).toFixed(2).toString());
-        $('#feesTax').val(taxAmt.toFixed(2).toString());
+        p.feePayAmt.val(feePayPreTax.toFixed(2).toString());
+        $('#feesTax').val(feePayTaxAmt.toFixed(2).toString());
     }
 
     if (overPayAmt === 0) {

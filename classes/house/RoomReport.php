@@ -56,8 +56,7 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
             $whClause = " and DATE(Span_Start_Date) <= DATE('$year-12-31') and Date(Span_End_Date) >= DATE('$year-01-01')";
         }
 
-        $query = "select count(*) "
-                . " from stays where `On_Leave` = 0 and `Status` = 'co' and DATEDIFF(Span_End_Date), Span_Start_Date) > 0" . $whClause;
+        $query = "select count(*) from stays where `On_Leave` = 0 and `Status` = 'co' and DATEDIFF(Span_End_Date, Span_Start_Date) > 0" . $whClause;
         $stmt = $dbh->query($query);
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
         if (count($rows) == 1) {

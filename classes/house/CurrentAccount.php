@@ -84,7 +84,7 @@ class CurrentAccount {
 
         // Lodging taxes
         if (isset($taxedItems[ItemId::Lodging])) {
-            $this->setLodgingTax(round(($this->getRoomCharge() + $this->getTotalDiscounts()) * $taxedItems[ItemId::Lodging] / 100, 2));
+            $this->setLodgingTax(max(0, round(($this->getRoomCharge() + $this->getTotalDiscounts()) * $taxedItems[ItemId::Lodging] / 100, 2)));
         } else {
             $this->setLodgingTax(0);
         }
@@ -121,6 +121,14 @@ class CurrentAccount {
                 + $visitCharge->get3rdPartyPending(ItemId::Waive)
                 + $visitCharge->get3rdPartyPending('tax'));
 
+    }
+    
+    public function toJSON() {
+        
+        $pack = array(
+            'roomFeeBal' => $this->getRoomFeeBalance(),
+            
+        );
     }
 
     public function getAddnlGuestNites() {
