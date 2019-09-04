@@ -124,6 +124,7 @@ class PaymentManager {
 
             // Just use what they are willing to pay as the charge.
             $roomPayment = $this->pmp->getRatePayment();
+            $roomCharges = $roomPayment;
 
             // Room Charges are different for checked out
             if ($visit->getVisitStatus() == VisitStatus::CheckedOut) {
@@ -134,7 +135,7 @@ class PaymentManager {
                     if ($this->pmp->getFinalPaymentFlag() == TRUE) {    // means is house waive checked.
 
                         // House waive checked, charge the entire amount due
-                        $roomPayment = $this->pmp->getTotalRoomChg();
+                        $roomCharges = $this->pmp->getTotalRoomChg();
 
                     } else {
 

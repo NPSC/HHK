@@ -31,9 +31,10 @@
  */
 class HouseTotals {
     
-    // Schema List
-    public $houses = array(
-        'brents'
-    );
+    public function runTotals(\PDO $dbh) {
+        
+        // load the schemas
+        $stmt = $dbh->query("Select ");
+    }
 }
 

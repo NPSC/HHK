@@ -393,7 +393,6 @@ function amtPaid() {
         overPayAmt = 0,
         isChdOut = isCheckedOut,
         vtaxPercent = parseFloat(p.feePayAmt.data('tax')),
-        totalBalDue = parseFloat($('#spnCfBalDue').data('totbal')),
         roomBalDue = parseFloat($('#spnCfBalDue').data('rmbal'));
  
 
@@ -515,12 +514,11 @@ function amtPaid() {
         } else if (vtaxPercent > 0) {
             
             // Only tax up to the room balance due.
-            if (feePayPreTax > roomBalDue) {
+            if (feePayPreTax > roomBalDue && isChdOut) {
                 feePayTaxAmt = roundTo((roomBalDue * vtaxPercent / 100), 2);
             } else {
                 feePayTaxAmt = roundTo((feePayPreTax * vtaxPercent / 100), 2);
             }
-            
         }
         
         feePay = feePayPreTax + feePayTaxAmt;
@@ -528,65 +526,77 @@ function amtPaid() {
 
 
     if (isChdOut) {
-
+        // Checked out
         $('.hhk-minPayment').show('fade');
         overPayAmt = 0;
         p.hsDiscAmt.val('');
         
         var totRmBalDue = roomBalDue + roomBalTaxDue;
         
-        p.feesCharges.val((totRmBalDue > 0 ? totRmBalDue.toFixed(2).toString() : ''));
-        p.guestCredit.val((totRmBalDue < 0 ? totRmBalDue.toFixed(2).toString() : ''));
+        // Show correct row for charges due
+        if (roomBalDue >= 0) {
+            p.feesCharges.val(totRmBalDue.toFixed(2).toString());
+            $('.hhk-GuestCredit').hide();
+            $('.hhk-RoomCharge').show();
+        } else {
+            p.guestCredit.val(totRmBalDue.toFixed(2).toString());
+            $('.hhk-RoomCharge').hide();
+            $('.hhk-GuestCredit').show();
+        }
 
         totCharges = vfee + invAmt + totRmBalDue - heldAmt - depRfAmt;
         totPay = vfee + invAmt + feePay;
         
-        
-        if (totRmBalDue - heldAmt - depRfAmt - feePay > 0 && p.finalPaymentCb.prop('checked')) {
-            // Manage House Waive of underpaid amount
+        // Underpaid
+        if (totCharges > totPay){
+            
+            if (totRmBalDue - heldAmt - depRfAmt - feePay > 0 && p.finalPaymentCb.prop('checked')) {
+                // Manage House Waive of underpaid amount
 
-            var hsPay = roomBalDue - feePayPreTax - depRfPreTax - heldPreTax;   // subtract any payment added to the UI.
+                var hsPay = roomBalDue - feePayPreTax - depRfPreTax - heldPreTax;   // subtract any payment added to the UI.
 
-            if (hsPay <= 0) {
-                hsPay = 0;
+                if (hsPay <= 0) {
+                    hsPay = 0;
+                    p.hsDiscAmt.val('');
+                } else {
+                    p.hsDiscAmt.val(hsPay.toFixed(2).toString());
+                    var fCharges = hsPay + feePay + depRfAmt + heldAmt;
+                    p.feesCharges.val(fCharges.toFixed(2).toString());
+
+                    totCharges = (totCharges - totRmBalDue) + fCharges;
+                }
+
+                $('.hhk-Overpayment').hide();
+                $('.hhk-HouseDiscount').show('fade');
+
+            } else if (totRmBalDue - heldAmt - depRfAmt - feePay > 0) {
+                // Guest underpaid, no House Waive
                 p.hsDiscAmt.val('');
-            } else {
-                p.hsDiscAmt.val((0 - hsPay).toFixed(2).toString());
-                var fCharges = hsPay + feePay + depRfAmt + heldAmt;
-                p.feesCharges.val(fCharges.toFixed(2).toString());
 
-                totCharges = (totCharges - totRmBalDue) + fCharges;
+                $('.hhk-Overpayment').hide();
+                $('.hhk-HouseDiscount').show('fade');
+
             }
-
-            $('.hhk-Overpayment').hide();
-            $('.hhk-HouseDiscount').show('fade');
-
-        } else if (totRmBalDue - heldAmt - depRfAmt - feePay > 0) {
-            // Guest underpaid, no House Waive
-            p.hsDiscAmt.val('');
-
-            $('.hhk-Overpayment').hide();
-            $('.hhk-HouseDiscount').show('fade');
-
-        } 
+        }
         
-        if (totCharges - feePay < 0) {
+        // overpaid
+        else {
             // Guest paid too much
 
             p.finalPaymentCb.prop('checked', false);
-            overPayAmt = 0 - (totCharges - feePay);
+            overPayAmt = totPay - totCharges;
 
             if (p.selBalTo.val() === 'r') {
 
                 if (totCharges >= 0) {
-
-                    if (feePay !== totRmBalDue) {
+                    
+                    if (feePay > overPayAmt) {
                         alert('Pay Room Fees amount is reduced to: $' + totRmBalDue.toFixed(2).toString());
                     }
                     feePayPreTax = roomBalDue;
                     feePayTaxAmt = roomBalTaxDue;
                     feePay = feePayPreTax + feePayTaxAmt;
-                    
+
                     overPayAmt = 0;
 
                     p.selBalTo.val('');
@@ -621,7 +631,7 @@ function amtPaid() {
                 $('.hhk-HouseDiscount').hide();
             }
         }
-
+    // else still checked in
     } else {
 
         // still checked in
@@ -718,7 +728,7 @@ function amtPaid() {
     
     p.cashTendered.change();
 }
-    
+
 
 /**
  * 
@@ -733,11 +743,11 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
     var ptsel = $('#PayTypeSel');
     var chg = $('.tblCredit');
     var p = new payCtrls();
-    
+
     if (chg.length === 0) {
         chg = $('.hhk-mcred');
     }
-    
+
     if (ptsel.length > 0) {
         ptsel.change(function () {
             $('.hhk-cashTndrd').hide();
@@ -749,7 +759,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             $('.hhkvrKeyNumber').hide();
             $('#tdCashMsg').hide();
             $('.paySelectNotes').show();
-            
+
             if ($(this).val() === 'cc') {
                 chg.show('fade');
                 if ($('input[name=rbUseCard]:checked').val() == 0) {
@@ -768,7 +778,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
         });
         ptsel.change();
     }
-    
+
     // Card on file Cardholder name.
     if ($('#trvdCHName').length > 0) {
 
@@ -796,7 +806,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
 
         $('#btnvrKeyNumber').change();
     }
-            
+
 
 
     // Set up return table
