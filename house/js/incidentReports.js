@@ -153,6 +153,7 @@
 		$wrapper.incidentdialog.find("textarea").empty();
 		$wrapper.incidentdialog.find("textarea").val("");
 		$wrapper.incidentdialog.find("option").removeAttr("selected");
+		$wrapper.incidentdialog.find(".incidentStatus").val("a");
 		$wrapper.incidentdialog.find(".jsignature").empty();
 		$wrapper.incidentdialog.find(".jsignature").jSignature({"width":"563px", "height": "141px"});
 		$wrapper.incidentdialog.find(".hhk-clear-signature-btn").button();
@@ -195,7 +196,7 @@
         //return $ul.html();
     }
     
-    function saveIncident($wrapper, settings, $table){
+    function saveIncident($wrapper, settings, $table, print = false){
 	    //validate
 	    var error = false;
 	    if($wrapper.incidentdialog.find("input[name=incidentTitle]").val() == ""){
@@ -224,7 +225,6 @@
 			    data += "&cmd=saveIncident&guestId=" + settings.guestId + "&psgId=" + settings.psgId;
 		    }
 			
-			console.log(data);
 	        $.ajax({
 	            url: settings.serviceURL,
 	            dataType: 'JSON',
@@ -232,9 +232,12 @@
 	            data: data,
 	            success: function( data ){
 	                    if(data.idReport > 0){
-	                        $table.ajax.reload();
-	                        $wrapper.incidentdialog.dialog( "close" );
-	                        clearform($wrapper);
+		                    if(print){
+			                    Print($wrapper, settings, data.idReport);
+		                    }
+		                    $table.ajax.reload();
+							$wrapper.incidentdialog.dialog( "close" );
+							clearform($wrapper);
 	                    }else{
 	                        if(data.error){
 	                            settings.alertMessage.call(data.error, 'alert');
@@ -366,10 +369,8 @@
         //End Undo Delete Report
     }
     
-    function Print($wrapper, settings)
+    function Print($wrapper, settings, repID = 0)
 	{
-		var repID = $wrapper.incidentdialog.find("input[name=reportId]").val();
-
 		$.ajax({
         url: settings.serviceURL,
         dataType: 'JSON',
@@ -392,26 +393,29 @@
 	                }
                     var body = '<div id="incidentPrint">';
                     if(data.guest){
-	                    body += '<fieldset>' +
-                			'<legend><strong>Guest</strong></legend>' +
-                			'<table cellpadding="10">' +
-                			'<tr>' +
-                			  '<td><strong>Name</strong></td>' +
-                			  '<td> ' + data.guest.First + ' ' + data.guest.Last + '</td>' +
-                			  '<td><strong>Phone</strong></td>' +
-                			  '<td>' + data.guest.Phone + '</td>' +
-                			  '<td rowspan="2"><strong>Address</strong></td>';
+	                    body += '<h3>Guest</h3>' +
+                			'<table cellpadding="10" style="margin-bottom: 2em;">' +
+                				'<thead>' +
+								'<tr>' +
+                					'<th>Name</th>' +
+									'<th>Phone</th>' +
+									'<th>Address</th>' +
+								'</tr>' +
+								'</thead>' +
+								'<tbody>' +
+								'<tr>' +
+									'<td> ' + data.guest.First + ' ' + data.guest.Last + '</td>' +
+									'<td>' + data.guest.Phone + '</td>';
                 			  if(data.guest.Address){
-	                			  body += '<td rowspan="2">' + data.guest.Address + '<br>' + data.guest.City + ', ' + data.guest.State + ' ' + data.guest.Zip + '</td>';
+	                			  body += '<td>' + data.guest.Address + '<br>' + data.guest.City + ', ' + data.guest.State + ' ' + data.guest.Zip + '</td>';
                 			  }else{
 	                			  body += '<td></td>';
                 			  }
                 			body += '</tr>' +
-                		    '</table>' +
-                		'</fieldset>';
+                			'</tbody>' +
+                		    '</table>';
                     }
-                    	body += '<fieldset>' +
-                    		'<legend><strong>Report</strong></legend>' +
+                    	body += '<h3>Incident</h3>' +
 							'<table cellpadding="10">' +
 							'<tr>' +
 								'<td class="tdlabel">Title</td>' +
@@ -481,12 +485,12 @@
 							}
 							
 							body += '</table>' +
-							'</fieldset>' +
 						'</div>';
 		            var mywindow = window.open('', 'PRINT', 'height=600,width=800');
 				    mywindow.document.write('<html><head><title>' + document.title  + '</title>');
+				    mywindow.document.write('<link href="css/house.css" rel="stylesheet" type="text/css">');
 				    mywindow.document.write('<link href="css/incidentReports.css" rel="stylesheet" type="text/css">');
-				    mywindow.document.write('</head><body >');
+				    mywindow.document.write('</head><body class="PrintArea hhk-visitdialog hhk-tdbox">');
 				    mywindow.document.write('<h2>' + document.title  + ' - Incident Report</h2>');
 				    mywindow.document.write(body);
 				    mywindow.document.write('</body></html>');
@@ -495,7 +499,7 @@
 				    mywindow.focus(); // necessary for IE >= 10*/
 				
 				    mywindow.print();
-				    mywindow.close();
+				    //mywindow.close();
 		            
                 }else{
                     
@@ -571,33 +575,17 @@
 				modal:true,
 				width: 800,
 				buttons: {
-					Print: function() {
-						Print($wrapper, settings);
-        			},
 					Cancel: function() {
 						$wrapper.incidentdialog.dialog( "close" );
 						clearform($wrapper);
         			},
+        			"Save and Print": function() {
+	        			var print = true;
+	        			saveIncident($wrapper, settings, dtTable, print);
+        			},
         			"Save": function(){
 						saveIncident($wrapper, settings, dtTable);
 					}
-      			},
-      			open: function(e){
-	      			//show print button if report exists
-	      			if($wrapper.incidentdialog.find("input[name=reportId]").val() > 0){
-		      			$(this).closest('.ui-dialog')
-	      					.find(".ui-dialog-buttonset .ui-button:first")
-		  					.show();
-	      			}else{
-		      			$(this).closest('.ui-dialog')
-	      					.find(".ui-dialog-buttonset .ui-button:first")
-		  					.hide();
-	      			}
-      			},
-      			create: function (){
-	      			$(this).closest('.ui-dialog')
-	      				.find(".ui-dialog-buttonset .ui-button:first")
-	      				.addClass("print");
       			}
 			});
         }

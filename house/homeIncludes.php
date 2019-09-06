@@ -10,7 +10,7 @@
 
 define('JSV', '?qs=6');
 
-define('HOUSE_CSS', "<link href='css/house.css' rel='stylesheet' type='text/css' />");
+define('HOUSE_CSS', "<link href='css/house.css" . JSV . "' rel='stylesheet' type='text/css' />");
 
 define('RESV_MANAGER_JS', 'js/resvManager.js' . JSV);
 define('PAYMENT_JS', "js/payments-min.js" . JSV);
