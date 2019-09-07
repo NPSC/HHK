@@ -477,13 +477,15 @@ function amtPaid() {
 
     // Deposit refund? depRfAmt
     if (p.depRefundAmt.length > 0) {
+        
         depRfAmt = parseFloat(p.depRefundAmt.data('amt'));
+        
         if (isNaN(depRfAmt) || p.depRefundCb.prop('checked') === false) {
             depRfAmt = 0;
             p.depRefundAmt.val('');
         } else {
-            depRfPreTax = depRfAmt / (1 + (depRfAmt * vtaxPercent/100));
-            p.depRefundAmt.val(0 - depRfAmt.toFixed(2).toString());
+            depRfPreTax = depRfAmt / (1 + (vtaxPercent/100));
+            p.depRefundAmt.val((0 - depRfAmt).toFixed(2).toString());
         }
     }
     
@@ -498,7 +500,7 @@ function amtPaid() {
               
         if (p.heldCb.prop("checked")) {
             heldAmt = heldTotal;
-            heldPreTax = heldAmt / (1+ (heldAmt * vtaxPercent/100));
+            heldPreTax = heldAmt / (1+ (vtaxPercent/100));
         }
     }
 
@@ -591,7 +593,7 @@ function amtPaid() {
                 if (totCharges >= 0) {
                     
                     if (feePay > overPayAmt) {
-                        alert('Pay Room Fees amount is reduced to: $' + totRmBalDue.toFixed(2).toString());
+                        alert('Pay Room Fees amount is reduced to: $' + (totRmBalDue - heldAmt - depRfAmt).toFixed(2).toString());
                     }
                     feePayPreTax = roomBalDue;
                     feePayTaxAmt = roomBalTaxDue;

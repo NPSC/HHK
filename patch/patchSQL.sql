@@ -29,7 +29,7 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Time_Zo
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gateway_Name', 'instamed', 'Instamed');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gateway_Name', 'vantiv', 'Vantiv');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gateway_Name', 'Elavon Converge', 'converge');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gateway_Name', 'converge', 'Elavon Converge');
 
 update sys_config set Category = 'a' where Category = 'r';
 update sys_config set Category = 'fg', Type = 'lu', GenLookup = 'Pay_Gateway_Name' where `Key` = 'PaymentGateway';
@@ -52,7 +52,7 @@ SET
 WHERE
     DATE(s.Span_Start_Date) > DATE(v.Span_End);
 
--- And again in case the stay needs one more iteration.
+-- And again in case a stay needs one more iteration.
 UPDATE stays s
         JOIN
     visit v ON s.idVisit = v.idVisit AND s.Visit_Span = v.Span

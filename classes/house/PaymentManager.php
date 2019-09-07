@@ -123,8 +123,7 @@ class PaymentManager {
             }
 
             // Just use what they are willing to pay as the charge.
-            $roomPayment = $this->pmp->getRatePayment();
-            $roomCharges = $roomPayment;
+            $roomCharges = $this->pmp->getRatePayment();
 
             // Room Charges are different for checked out
             if ($visit->getVisitStatus() == VisitStatus::CheckedOut) {
@@ -144,26 +143,26 @@ class PaymentManager {
 
                         if ($modifiedCharges > 0 && $this->pmp->getRatePayment() < $modifiedCharges) {
                             // We are paying less in room fees than what is due, so only charge what we are paying.
-                            $roomPayment = $this->pmp->getRatePayment() + $this->moaRefundAmt + $this->depositRefundAmt;
+                            $roomCharges = $this->pmp->getRatePayment() + $this->moaRefundAmt + $this->depositRefundAmt;
                         } else {
 
-                            $roomPayment = $this->pmp->getTotalRoomChg();
+                            $roomCharges = $this->pmp->getTotalRoomChg();
                         }
                     }
 
                 } else {
                     // Checked out, and no room charges to pay.
-                    $roomPayment = 0;
+                    $roomCharges = 0;
                 }
             }
 
             // Any charges?
-            if ($roomPayment > 0) {
+            if ($roomCharges > 0) {
                 // lodging
 
                 // Collect room fees
                 $this->pmp->visitCharges->sumPayments($dbh)
-                        ->sumCurrentRoomCharge($dbh, $this->pmp->priceModel, $roomPayment, TRUE);
+                        ->sumCurrentRoomCharge($dbh, $this->pmp->priceModel, $roomCharges, TRUE);
 
 
                 $nitesPaid = $this->pmp->visitCharges->getNightsPaid();
@@ -180,7 +179,7 @@ class PaymentManager {
                 $endPricingDT->setTime(0, 0, 0);
                 $endPricingDT->add(new \DateInterval('P' . $this->pmp->visitCharges->getNightsToPay() . "D"));
 
-                $lodging = new Item($dbh, ItemId::Lodging, $roomPayment);
+                $lodging = new Item($dbh, ItemId::Lodging, $roomCharges);
 
                 $invLine = new RecurringInvoiceLine($uS->ShowLodgDates);
 
@@ -195,7 +194,7 @@ class PaymentManager {
 
                     if ($this->pmp->getFinalPaymentFlag() == FALSE && $i['idItem'] == ItemId::Lodging) {
                         $taxInvoiceLine = new TaxInvoiceLine();
-                        $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $roomPayment), $i['Percentage']/100, '');
+                        $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $roomCharges), $i['Percentage']/100, '');
                         $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
                         $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
                     }
@@ -245,6 +244,7 @@ class PaymentManager {
                         // we caught taxes.  Reduce reversalAmt by the sum of tax rates.
                         $preTaxAmt = $reversalAmt / (1 + ($taxRate / 100));
                         $reversalAmt = round($preTaxAmt, 2);
+                        $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
 
                         // Add the tax lines back into the mix
                         foreach ($taxedItems as $i) {

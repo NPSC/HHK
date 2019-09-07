@@ -521,7 +521,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('PatientAsGuest','true','b','h','','House allows patients to stay as guests',''),
 ('PayAtCkin','true','b','h','','Allow/Disallow payments at check-in time',''),
 ('PaymentDisclaimer','The amount of your donation that is deductible for Federal tax purposes is limited to the excess of the amount of your donation over the value of the goods and services provided to you by (House Name).  Because the estimated value of the goods and services provided to you by (House Name) exceeds the value of your donation, no part of your donation is deductible for Federal tax purposes.','t','f','','Shows on receipts and statements.',''),
-('PaymentGateway','','lu','fg','','Payment Gateway, either vantiv, instamed or nothing.','Pay_Gateway_Name'),
+('PaymentGateway','','lu','fg','','Credut Card Payment Gateway','Pay_Gateway_Name'),
 ('PayVFeeFirst','false','b','h','','Default check the visit fees payment checkbox',''),
 ('PmtPageLogoUrl','conf/hostpaylogo.jpg','url','fg','','',''),
 ('PreviousNights','0','i','h','','Previous nights to add to nights counter',''),

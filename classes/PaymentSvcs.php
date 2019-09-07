@@ -665,17 +665,17 @@ class PaymentSvcs {
 
                 break;
 
-          case PayType::ChargeAsCash:
+          case PaymentMethod::ChgAsCash:
 
                 $pAuthRs = new Payment_AuthRS();
                 $pAuthRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
                 $arows = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment));
 
-                if (count($arows) != 1) {
+                if (count($arows) < 1) {
                     throw new Hk_Exception_Payment('Payment Detail record not found. ');
                 }
 
-                EditRS::loadRow($arows[0], $pAuthRs);
+                EditRS::loadRow($arows[count($arows) - 1], $pAuthRs);
 
                 $cashResp = new ManualChargeResponse($pAuthRs->Approved_Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal());
 
@@ -752,17 +752,17 @@ class PaymentSvcs {
 
                 break;
 
-          case PayType::ChargeAsCash:
+          case PaymentMethod::ChgAsCash:
 
                 $pAuthRs = new Payment_AuthRS();
                 $pAuthRs->idPayment->setStoredVal($idPayment);
                 $arows = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment));
 
-                if (count($arows) != 1) {
+                if (count($arows) < 1) {
                     throw new Hk_Exception_Payment('Payment Detail record not found. ');
                 }
 
-                EditRS::loadRow($arows[0], $pAuthRs);
+                EditRS::loadRow($arows[count($arows) - 1], $pAuthRs);
 
                 $cashResp = new ManualChargeResponse($pAuthRs->Approved_Amount->getStoredVal(), 0, $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal());
 

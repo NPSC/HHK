@@ -422,7 +422,7 @@ class ChargeAsCashTX {
 
     }
 
-    public static function undoReturnAmount(\PDO $dbh, CashResponse &$pr, $idPayment) {
+    public static function undoReturnAmount(\PDO $dbh, ManualChargeResponse &$pr, $idPayment) {
 
         // Record transaction
         $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Cash);
