@@ -264,6 +264,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
     $r['nights'] = $visit['nit'];
     $r['gnights'] = $visit['gnit'];
     $r['lodg'] = number_format($visit['chg'],2);
+    $r['days'] = $visit['day'];
 
 
     $sub = $visit['fcg'] - $visit['chg'];
@@ -277,6 +278,10 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
     $r['pndg'] = ($visit['pndg'] == 0 ? '': number_format($visit['pndg'], 2));
     $r['thdpaid'] = ($visit['thdpd'] == 0 ? '': number_format($visit['thdpd'], 2));
     $r['donpd'] = ($visit['donpd'] == 0 ? '': number_format($visit['donpd'], 2));
+
+    $r['taxcgd'] = ($visit['taxcgd'] == 0 ? '': number_format($visit['donpd'], 2));
+    $r['taxpd'] = ($visit['taxpd'] == 0 ? '': number_format($visit['donpd'], 2));
+    $r['taxpndg'] = ($visit['taxpndg'] == 0 ? '': number_format($visit['donpd'], 2));
 
 
     $visitFeePaid = '';
@@ -690,6 +695,7 @@ where
 
     $totalNights = 0;
     $totalGuestNights = 0;
+    $totalDays = 0;
 
     $totalCatNites[] = array();
 
@@ -739,8 +745,6 @@ where
                     $expDepStr = $expDepDT->format('Y-m-d');
                 }
 
-                $departureDT = new \DateTime($savedr['Actual_Departure'] != '' ? $savedr['Actual_Departure'] : $expDepStr);
-
                 $paid = $visit['gpd'] + $visit['thdpd'] + $visit['hpd'];
                 $unpaid = ($visit['chg'] + $visit['preCh']) - $paid;
                 $preCharge = $visit['preCh'];
@@ -771,9 +775,13 @@ where
 
                 $dPaid = $visit['hpd'] + $visit['gpd'] + $visit['thdpd'];
 
+                $departureDT = new \DateTime($savedr['Actual_Departure'] != '' ? $savedr['Actual_Departure'] : $expDepStr);
+
                 if ($departureDT > $reportEndDT) {
 
                     // report period ends before the visit
+                    $visit['day'] = $visit['nit'];
+
                     if ($unpaid < 0) {
                         $unpaid = 0;
                     }
@@ -802,9 +810,12 @@ where
                         $charged -= $visit['hpd'];
                     }
 
+                } else {
+                    // visit ends in this report period
+                    $visit['day'] = $visit['nit'] + 1;
                 }
 
-
+                $totalDays += $visit['day'];
                 $totalPaid += $dPaid;
                 $totalHousePaid += $visit['hpd'];
                 $totalGuestPaid += $visit['gpd'];
@@ -833,17 +844,21 @@ where
                 'chg' => 0, // charges
                 'fcg' => 0, // Flat Rate Charge (For comparison)
                 'adj' => 0,
+                'taxcgd' => 0,
                 'gpd' => $r['AmountPaid'] - $r['ThrdPaid'],
                 'pndg' => $r['AmountPending'],
+                'taxpndg' => $r['TaxPending'],
                 'hpd' => abs($r['HouseDiscount']),
                 'thdpd' => $r['ThrdPaid'],
                 'addpd' => $r['AddnlPaid'],
+                'taxpd' => $r['TaxPaid'],
                 'addch' => $r['AddnlCharged'],
                 'donpd' => $r['ContributionPaid'],
                 'vfpd' => $r['VisitFeePaid'],  // Visit fees paid
                 'plg' => 0, // Pledged rate
                 'vfa' => $r['Visit_Fee_Amount'], // visit fees amount
                 'nit' => 0, // Nights
+                'day' => 0,  // Days
                 'gnit' => 0, // guest nights
                 'pin' => 0, // Pre-interval nights
                 'gpin' => 0, // Guest pre-interval nights
@@ -939,8 +954,6 @@ where
             $expDepStr = $expDepDT->format('Y-m-d');
         }
 
-        $departureDT = new \DateTime($savedr['Actual_Departure'] != '' ? $savedr['Actual_Departure'] : $expDepStr);
-
         $paid = $visit['gpd'] + $visit['thdpd'] + $visit['hpd'];
 
         $unpaid = ($visit['chg'] + $visit['preCh']) - $paid;
@@ -972,9 +985,13 @@ where
 
         $dPaid = $visit['hpd'] + $visit['gpd'] + $visit['thdpd'];
 
+        $departureDT = new \DateTime($savedr['Actual_Departure'] != '' ? $savedr['Actual_Departure'] : $expDepStr);
+
         if ($departureDT > $reportEndDT) {
 
             // report period ends before the visit
+            $visit['day'] = $visit['nit'];
+
             if ($unpaid < 0) {
                 $unpaid = 0;
             }
@@ -1003,9 +1020,13 @@ where
                 $charged -= $visit['hpd'];
             }
 
+        } else {
+            // visit ends in this report period
+            $visit['day'] = $visit['nit'] + 1;
         }
 
 
+        $totalDays += $visit['day'];
         $totalPaid += $dPaid;
         $totalHousePaid += $visit['hpd'];
         $totalGuestPaid += $visit['gpd'];
@@ -1046,6 +1067,10 @@ where
             switch ($f[1]) {
                 case 'nights':
                     $entry = $totalNights;
+                    break;
+
+                case 'days':
+                    $entry = $totalDays;
                     break;
 
                 case 'gnights':

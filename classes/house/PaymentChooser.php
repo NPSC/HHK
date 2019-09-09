@@ -715,8 +715,17 @@ ORDER BY v.idVisit , v.Span;");
 
             // Any remaining room charges
             $feesTbl->addBodyTr(
-                HTMLTable::makeTd('Room Charges:', array('colspan'=>'2', 'class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesCharges', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;'))
+                HTMLTable::makeTd(HTMLInput::generateMarkup('',array('name'=>'testBal'), array()))
+                .HTMLTable::makeTd('Room Charges:', array(/*'colspan'=>'2', */'class'=>'tdlabel'))
+                    .HTMLTable::makeTd(
+                          HTMLInput::generateMarkup('',
+                                  array(
+                                      'name'=>'feesCharges',
+                                      'size'=>'8',
+                                      'class'=>'hhk-feeskeys',
+                                      'style'=>'border:none;text-align:right;',
+                                      'readonly'=>'readonly'))
+                          , array('style'=>'text-align:right;'))
                 , array('style'=>'display:none;', 'class'=>'hhk-RoomCharge'));
 
             // Any remaining guest credits
@@ -810,7 +819,7 @@ ORDER BY v.idVisit , v.Span;");
         if ($defaultExcessPays !== ExcessPay::Ignore && count($excessPays) > 0) {
 
             $feesTbl->addBodyTr(HTMLTable::makeTh('Overpayment Amount:', array('class'=>'tdlabel', 'colspan'=>'2'))
-                    .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name'=>'txtOverPayAmt', 'style'=>'border:none;text-align:right;font-weight:bold;', 'data-amt'=>'0', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'size'=>'8'))
+                    .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name'=>'txtOverPayAmt', 'style'=>'border:none;text-align:right;font-weight:bold;', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'size'=>'8'))
                             , array('style'=>'text-align:right;'))
                     , array('class'=>'hhk-Overpayment'));
 
