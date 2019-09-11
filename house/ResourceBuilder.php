@@ -930,7 +930,7 @@ from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = 2
 
 $pageTitle = $wInit->pageTitle;
 
-$menuMarkup = $wInit->generatePageMenu();
+
 
 //
 // Generate tab content
@@ -1839,10 +1839,10 @@ $resultMessage = $alertMsg->createMarkup();
         </script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
-<?php echo $menuMarkup; ?>
+<?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <div style="float:left; margin-right: 100px; margin-top:10px;">
-                <h1><?php echo $wInit->pageHeading; ?></h1>
+                <h1><?php echo $wInit->pageHeading; ?>&nbsp; (Any changes require everybody to log out and log back in!)</h1>
             </div>
 <?php echo $resultMessage ?>
             <div id="mainTabs" style="font-size: .9em; clear:left; display:none;" class="hhk-member-detail">

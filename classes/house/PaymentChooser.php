@@ -275,7 +275,7 @@ class PaymentChooser {
                     $visitCharge->getIdVisit(),
                     readGenLookupsPDO($dbh, 'ExcessPays'),
                     $uS->VisitExcessPaid,
-                    $uS->DefaultCkBalStmt
+                    $uS->UseHouseWaive
                 )
                 , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
                 );
@@ -401,7 +401,10 @@ class PaymentChooser {
                 $labels,
                 getTaxedItems($dbh),
                 $visitCharge->getIdVisit(),
-                array(), '', FALSE, $depositRefundType)
+                array(),
+                '',
+                FALSE
+            )
             , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
         );
 
@@ -641,7 +644,7 @@ ORDER BY v.idVisit , v.Span;");
     }
 
     protected static function createPaymentMarkup($showRoomFees, $useKeyDeposit, $keyDepAmount, $keyDepPaid, $useVisitFee, $visitFeeAmt, $visitFeePaid, $heldAmount, $payVFeeFirst,
-            $showFinalPaymentCB, array $unpaidInvoices, $labels, $taxedItems,  $idVisit = 0, $excessPays = array(), $defaultExcessPays = ExcessPay::Ignore, $defaultCkFinalPayCB = FALSE) {
+            $showFinalPaymentCB, array $unpaidInvoices, $labels, $taxedItems,  $idVisit = 0, $excessPays = array(), $defaultExcessPays = ExcessPay::Ignore, $useHouseWaive = FALSE) {
 
         $feesTbl = new HTMLTable();
 
@@ -715,8 +718,7 @@ ORDER BY v.idVisit , v.Span;");
 
             // Any remaining room charges
             $feesTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup('',array('name'=>'testBal'), array()))
-                .HTMLTable::makeTd('Room Charges:', array(/*'colspan'=>'2', */'class'=>'tdlabel'))
+                HTMLTable::makeTd('Room Charges:', array('colspan'=>'2', 'class'=>'tdlabel'))
                     .HTMLTable::makeTd(
                           HTMLInput::generateMarkup('',
                                   array(
@@ -784,20 +786,17 @@ ORDER BY v.idVisit , v.Span;");
             }
         }
 
-        // House Discount Amount
+       // House Discount Amount
         if ($showFinalPaymentCB && $showRoomFees) {
 
             $attrs = array('name'=>'cbFinalPayment', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.4em;');
-            if ($defaultCkFinalPayCB) {
-                $attrs['checked'] = 'checked';
-            }
 
             $feesTbl->addBodyTr(
                 HTMLTable::makeTd('House Waive:', array('class'=>'tdlabel'))
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbFinalPayment', 'style'=>'margin-left:5px;margin-right:3px;'))
                     .HTMLInput::generateMarkup('', $attrs))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'HsDiscAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;'))
-                    , array('style'=>'text-align:right;')), array('style'=>'display:none;', 'class'=>'hhk-HouseDiscount'));
+                    , array('style'=>'text-align:right;')), array('style'=>'display:none;', 'class'=>($useHouseWaive ? 'hhk-HouseDiscount' : '')));
 
         }
 
@@ -815,7 +814,7 @@ ORDER BY v.idVisit , v.Span;");
                 , array('style'=>'display:none;', 'class'=>'hhk-minPayment'));
 
 
-        // Extra payment & distribution Selector
+         // Extra payment & distribution Selector
         if ($defaultExcessPays !== ExcessPay::Ignore && count($excessPays) > 0) {
 
             $feesTbl->addBodyTr(HTMLTable::makeTh('Overpayment Amount:', array('class'=>'tdlabel', 'colspan'=>'2'))

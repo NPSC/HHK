@@ -31,11 +31,18 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gat
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gateway_Name', 'vantiv', 'Vantiv');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gateway_Name', 'converge', 'Elavon Converge');
 
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('UseHouseWaive', 'true', 'b', 'h', 'Show the house waive checkbox on checkout.');
+DELETE FROM `sys_config` WHERE `Key`='DefaultCkBalStmt';
+
 update sys_config set Category = 'a' where Category = 'r';
-update sys_config set Category = 'fg', Type = 'lu', GenLookup = 'Pay_Gateway_Name' where `Key` = 'PaymentGateway';
-update sys_config set GenLookup = 'CC_Gateway_Name' where `Key` = 'ccgw';
 update sys_config set Category = 'fg' where `Key` = 'CardSwipe';
-update sys_config set Description = 'House Time Zone', GenLookup = 'Time_Zone' where `Key` = 'tz';
+
+update sys_config set Category = 'fg', Type = 'lu', GenLookup = 'Pay_Gateway_Name' where `Key` = 'PaymentGateway';
+update sys_config set GenLookup = 'CC_Gateway_Name', Type = 'lu' where `Key` = 'ccgw';
+update sys_config set Description = 'House Time Zone', GenLookup = 'Time_Zone', Type = 'lu' where `Key` = 'tz';
+UPDATE `sys_config` SET `GenLookup`='Price_Model', Type = 'lu' WHERE `Key`='RoomPriceModel';
+
+
 
 -- Fix change price bug where a stay after the price change date was not properly handled.
 UPDATE stays s
