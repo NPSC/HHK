@@ -396,25 +396,17 @@ function amtPaid() {
         vtax = parseFloat(p.feePayAmt.data('tax')),
         roomBalDue = parseFloat($('#spnCfBalDue').data('rmbal'));
 
-
- //test only
-if ($('#testBal').length > 0) {
-    roomBalDue = parseFloat($('#testBal').val());
-}
-//
-
-
     if (isNaN(vtax) || vtax < 0) {
         vtax = 0;
     } else {
         // change from percent to decimal
-        vtax = vtax / 100;
+        vtax = roundTo((vtax / 100), 3);
     }
     
-    if (isNaN(roomBalDue)) {
+    if (isNaN(roomBalDue) || roomBalDue < 0) {
         roomBalDue = 0;
     } else {
-        roomBalTaxDue = roomBalDue * vtax;
+        roomBalTaxDue = roundTo((roomBalDue * vtax), 2);
     }
 
     p.msg.text('').hide();
@@ -498,7 +490,7 @@ if ($('#testBal').length > 0) {
             
         } else {
 
-            depRfTaxAmt = depRfAmt - (depRfAmt / (1 + vtax));
+            depRfTaxAmt = roundTo((depRfAmt - (depRfAmt / (1 + vtax))), 2);
             
             // Only tax up to tax amount due
             if (depRfTaxAmt > roomBalTaxDue) {
@@ -520,7 +512,7 @@ if ($('#testBal').length > 0) {
             heldAmt = 0;
         } else {
 
-            heldTaxAmt = heldAmt - (heldAmt / (1 + vtax));
+            heldTaxAmt = roundTo((heldAmt - (heldAmt / (1 + vtax))), 2);
             
             if (heldTaxAmt > roomBalTaxDue - depRfTaxAmt) {
                 heldTaxAmt = roomBalTaxDue - depRfTaxAmt;
@@ -541,17 +533,17 @@ if ($('#testBal').length > 0) {
 
         } else if (vtax > 0) {
             
-            feePayTaxAmt = feePayPreTax * vtax;
+            feePayTaxAmt = roundTo((feePayPreTax * vtax), 2);
             
             // Only tax up to the room balance due.
             if (feePayTaxAmt > (roomBalTaxDue - depRfTaxAmt - heldTaxAmt) && isChdOut) {
                 feePayTaxAmt = (roomBalTaxDue - depRfTaxAmt - heldTaxAmt);
             } else {
-                feePayTaxAmt = (feePayPreTax * vtax) - heldTaxAmt;
+                feePayTaxAmt -= heldTaxAmt;
             }
         }
 
-        feePay = feePayPreTax + feePayTaxAmt;
+        feePay = roundTo((feePayPreTax + feePayTaxAmt), 2);
     }
 
 
@@ -574,40 +566,41 @@ if ($('#testBal').length > 0) {
             $('.hhk-GuestCredit').show();
         }
 
-        totCharges = vfee + invAmt + totRmBalDue - heldAmt - depRfAmt;
-        totPay = vfee + invAmt + feePay;
-        
-        if (totCharges - feePay > 0) {
-            
-            var hsPay = vfee + invAmt + roomBalDue - depRfPreTax - heldPreTax - feePayPreTax;
-        
+        totCharges = roundTo((vfee + invAmt + totRmBalDue - heldAmt - depRfAmt), 2);
+        totPay = roundTo((vfee + invAmt + feePay), 2);
+
+        if (totCharges - totPay >= 0) {
+
+            var hsPay = roundTo((vfee + invAmt + roomBalDue - depRfPreTax - heldPreTax - feePayPreTax), 2);
+
             // Underpaid
             if (hsPay > 0){
 
                 if (p.finalPaymentCb.prop('checked')) {
                     // Manage House Waive of underpaid amount
 
-                        p.hsDiscAmt.val(hsPay.toFixed(2).toString());
-                        var taxBal = roomBalTaxDue - (feePayTaxAmt + heldTaxAmt + depRfTaxAmt);
-                        
-                        p.feesCharges.val((totRmBalDue - taxBal).toFixed(2).toString());
+                    var taxBal = roundTo((roomBalTaxDue - (feePayTaxAmt + heldTaxAmt + depRfTaxAmt)), 2);
+                    p.hsDiscAmt.val(hsPay.toFixed(2).toString());
 
-                        totCharges = totCharges - taxBal;
-                        totPay = feePay;
+                    p.feesCharges.val((totRmBalDue - taxBal).toFixed(2).toString());
+
+                    totCharges = totCharges - taxBal;
+                    totPay = feePay;
 
                 } else {
                     // Guest underpaid, no House Waive
                     p.hsDiscAmt.val('');
-                    totPay = hsPay;
+                    //totPay = ;
                 }
 
                 $('.hhk-Overpayment').hide();
                 $('.hhk-HouseDiscount').show('fade');
 
-
             } else {
                 p.finalPaymentCb.prop('checked', false);
                 p.hsDiscAmt.val('');
+                $('.hhk-HouseDiscount').hide();
+                $('.hhk-Overpayment').hide();
             }
         }
 

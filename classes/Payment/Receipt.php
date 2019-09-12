@@ -311,7 +311,7 @@ class Receipt {
         }
 
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;float:left;'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;float:left;background-color:pink;'));
         $rec .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'display:block;padding:10px;'));

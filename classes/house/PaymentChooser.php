@@ -781,7 +781,7 @@ ORDER BY v.idVisit , v.Span;");
                 // show tax line
                 $feesTbl->addBodyTr(HTMLTable::makeTd('Tax:', array('class'=>'tdlabel'))
                     .HTMLTable::makeTd('('.number_format($tax, 3).'%)', array('style'=>'text-align:center; font-size:smaller;'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesTax', 'size'=>'6', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;font-weight:bold;', 'readonly'=>'readonly')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
+                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesTax', 'size'=>'6', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
                     , array('class'=>'hhk-RoomFees'));
             }
         }
