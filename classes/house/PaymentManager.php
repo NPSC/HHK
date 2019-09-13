@@ -67,7 +67,27 @@ class PaymentManager {
         if (is_null($visit) === FALSE) {
 
             // Taxed items
-            $taxedItems = getTaxedItemList($dbh);
+            $taxedItemList = getTaxedItemList($dbh);
+
+            // TaxeRate
+            $taxRate = 0;
+            // sum the individual tax rates.
+            foreach ($taxedItemList as $i) {
+                if ($i['idItem'] == ItemId::Lodging) {
+                    $taxRate += $i['Percentage'];
+                }
+            }
+
+            $roomAccount = new CurrentAccount(
+                    $visit->getVisitStatus(),
+                    ($uS->VisitFee &&  $this->pmp->visitCharges->getVisitFeeCharged() > 0 ? TRUE : FALSE),
+                    TRUE,
+                    ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily ? TRUE : FALSE)
+            );
+
+            $roomAccount->load($this->pmp->visitCharges, getTaxedItems($dbh));
+            $roomAccount->setDueToday();
+
 
             // Visit Fee Payments
             if ($this->pmp->getVisitFeePayment() > 0) {
@@ -122,47 +142,48 @@ class PaymentManager {
                 }
             }
 
+
             // Just use what they are willing to pay as the charge.
-            $roomCharges = $this->pmp->getRatePayment();
+            $roomChargesPreTax = $this->pmp->getRatePayment();
+
+            // Determine House Waive
+            $housePaymentAmt = 0;
+            if ($visit->getVisitStatus() == VisitStatus::CheckedOut && $this->pmp->getFinalPaymentFlag()) {
+                $housePaymentAmt = $this->pmp->getHouseDiscPayment();
+            }
 
             // Room Charges are different for checked out
             if ($visit->getVisitStatus() == VisitStatus::CheckedOut) {
                 // Checked out or checking out... Room charges.
 
-                if ($this->pmp->getTotalRoomChg() > 0) {
+                if ($roomAccount->getRoomFeeBalance() > 0) {
 
                     if ($this->pmp->getFinalPaymentFlag() == TRUE) {    // means is house waive checked.
 
                         // House waive checked, charge the entire amount due
-                        $roomCharges = $this->pmp->getTotalRoomChg();
+                        $roomChargesPreTax = $roomAccount->getRoomFeeBalance();
 
                     } else {
 
-                        // Reduce the room charges by the deposit and any MOA.
-                        $modifiedCharges = $this->pmp->getTotalRoomChg() - ($this->depositRefundAmt + $this->moaRefundAmt);
+                        $depPreTax = round($this->depositRefundAmt / (1 + $taxRate), 2);
+                        $moaPreTax = round($this->moaRefundAmt / (1 + $taxRate), 2);
 
-                        if ($modifiedCharges > 0 && $this->pmp->getRatePayment() < $modifiedCharges) {
-                            // We are paying less in room fees than what is due, so only charge what we are paying.
-                            $roomCharges = $this->pmp->getRatePayment() + $this->moaRefundAmt + $this->depositRefundAmt;
-                        } else {
-
-                            $roomCharges = $this->pmp->getTotalRoomChg();
-                        }
+                        $roomChargesPreTax = $this->pmp->getRatePayment() + $depPreTax + $moaPreTax;
                     }
 
                 } else {
                     // Checked out, and no room charges to pay.
-                    $roomCharges = 0;
+                    $roomChargesPreTax = 0;
                 }
             }
 
             // Any charges?
-            if ($roomCharges > 0) {
+            if ($roomChargesPreTax > 0) {
                 // lodging
 
                 // Collect room fees
                 $this->pmp->visitCharges->sumPayments($dbh)
-                        ->sumCurrentRoomCharge($dbh, $this->pmp->priceModel, $roomCharges, TRUE);
+                        ->sumCurrentRoomCharge($dbh, $this->pmp->priceModel, $roomChargesPreTax, TRUE);
 
 
                 $nitesPaid = $this->pmp->visitCharges->getNightsPaid();
@@ -179,7 +200,7 @@ class PaymentManager {
                 $endPricingDT->setTime(0, 0, 0);
                 $endPricingDT->add(new \DateInterval('P' . $this->pmp->visitCharges->getNightsToPay() . "D"));
 
-                $lodging = new Item($dbh, ItemId::Lodging, $roomCharges);
+                $lodging = new Item($dbh, ItemId::Lodging, $roomChargesPreTax);
 
                 $invLine = new RecurringInvoiceLine($uS->ShowLodgDates);
 
@@ -190,30 +211,37 @@ class PaymentManager {
                 $this->invoice->addLine($dbh, $invLine, $uS->username);
 
                 // Taxes
-                foreach ($taxedItems as $i) {
-
-                    if ($this->pmp->getFinalPaymentFlag() == FALSE && $i['idItem'] == ItemId::Lodging) {
-                        $taxInvoiceLine = new TaxInvoiceLine();
-                        $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $roomCharges), $i['Percentage']/100, '');
-                        $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
-                        $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
-                    }
+                if ($this->pmp->getFinalPaymentFlag() && $housePaymentAmt > 0) {
+                    $roomChargesTaxable = $roomChargesPreTax - $housePaymentAmt - $this->pmp->getPayInvoicesAmt();
+                } else {
+                    $roomChargesTaxable = $roomChargesPreTax;
                 }
 
+                if ($roomChargesTaxable > 0) {
+
+                    foreach ($taxedItemList as $i) {
+
+                        if ($i['idItem'] == ItemId::Lodging) {
+                            $taxInvoiceLine = new TaxInvoiceLine();
+                            $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $roomChargesTaxable), $i['Percentage']/100, '');
+                            $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
+                            $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
+                        }
+                    }
+                }
             }
 
 
             // Processing for checked out visits.
             if ($visit->getVisitStatus() == VisitStatus::CheckedOut) {
 
-                $housePaymentAmt = abs($this->pmp->getHouseDiscPayment());
 
                 // Check for house payment
                 if ($housePaymentAmt > 0 && $this->pmp->getFinalPaymentFlag()) {
 
-                    $lodging = new Item($dbh, ItemId::Waive, (0 - $housePaymentAmt));
+                    $waive = new Item($dbh, ItemId::Waive, (0 - $housePaymentAmt));
                     $invLine = new OneTimeInvoiceLine($uS->ShowLodgDates);
-                    $invLine->createNewLine($lodging, 1, $notes);
+                    $invLine->createNewLine($waive, 1, $notes);
 
                     $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
                     $this->invoice->addLine($dbh, $invLine, $uS->username);
@@ -231,14 +259,6 @@ class PaymentManager {
 
                     $reversalAmt = 0 - $this->guestCreditAmt;
 
-                    // Taxes
-                    $taxRate = 0;
-                    // sum the individual tax rates.
-                    foreach ($taxedItems as $i) {
-                        if ($i['idItem'] == ItemId::Lodging) {
-                            $taxRate += $i['Percentage'];
-                        }
-                    }
 
                     if ($taxRate > 0) {
                         // we caught taxes.  Reduce reversalAmt by the sum of tax rates.
@@ -247,7 +267,7 @@ class PaymentManager {
                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
 
                         // Add the tax lines back into the mix
-                        foreach ($taxedItems as $i) {
+                        foreach ($taxedItemList as $i) {
 
                             if ($i['idItem'] == ItemId::Lodging) {
                                 $taxInvoiceLine = new TaxInvoiceLine();
@@ -486,6 +506,7 @@ class PaymentManagerPayment {
     protected $refundAmount;
     protected $totalRoomChg;
     protected $payInvoicesAmt;
+    protected $totalCharges;
 
     protected $payInvoices;
     protected $payType;
@@ -529,6 +550,7 @@ class PaymentManagerPayment {
         $this->ratePayment = 0;
         $this->rateTax = 0;
         $this->totalPayment = 0;
+        $this->totalCharges = 0;
         $this->cashTendered = 0;
         $this->retainedAmtPayment = 0;
         $this->depositRefundAmt = 0;
@@ -647,6 +669,15 @@ class PaymentManagerPayment {
 
     public function setTotalPayment($totalPayment) {
         $this->totalPayment = $totalPayment;
+        return $this;
+    }
+
+    public function getTotalCharges() {
+        return $this->totalCharges;
+    }
+
+    public function setTotalCharges($totalCharges) {
+        $this->totalCharges = $totalCharges;
         return $this;
     }
 

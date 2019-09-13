@@ -378,7 +378,7 @@ function amtPaid() {
         vfee = 0,
         feePay = 0,
         feePayPreTax = 0,
-
+        feePayText = '',
         invAmt = 0, 
         heldAmt = 0,
         heldTaxAmt = 0,
@@ -427,7 +427,7 @@ function amtPaid() {
     // Deposits - kdep
     if (!isChdOut && p.keyDepCb.length > 0) {
         
-        kdep = parseFloat($('#spnDepAmt').data('amt'));
+        kdep = parseFloat($('#hdnKeyDepAmt').val());
         
         if (isNaN(kdep) || kdep < 0 || p.keyDepCb.prop("checked") === false) {
             kdep = 0;
@@ -525,6 +525,7 @@ function amtPaid() {
     // Fees Payments - feePay
     if (p.feePayAmt.length > 0) {
 
+        feePayText = p.feePayAmt.val().replace('$', '').replace(',', '');
         feePayPreTax = parseFloat(p.feePayAmt.val().replace('$', '').replace(',', ''));
 
         if (isNaN(feePayPreTax) || feePayPreTax <= 0) {
@@ -731,7 +732,7 @@ function amtPaid() {
     }
 
     if (feePay === 0) {
-        p.feePayAmt.val('');
+        p.feePayAmt.val(feePayText);
         $('#feesTax').val('');
     } else {
         p.feePayAmt.val(feePayPreTax.toFixed(2).toString());

@@ -279,6 +279,22 @@ function setupRates(ckIn) {
 
         $('#txtFixedRate').change();
         $('#txtadjAmount').change();
+        
+        if (ckIn.resources[$selResource.val()].key > 0) {
+            $('#spnDepAmt').text('($'+ckIn.resources[$selResource.val()].key+')');
+            $('#hdnKeyDepAmt').val(ckIn.resources[$selResource.val()].key);
+            $('.hhk-kdrow').show();
+            $('#keyDepRx').change();
+        } else {
+            $('#spnDepAmt').text('');
+            $('#hdnKeyDepAmt').val(0);
+            $('#keyDepAmt').val('');
+            $('.hhk-kdrow').hide();
+            $('#keyDepRx')
+                    .prop('checked', false)
+                    .change();
+        }
+        
     });
 
     $selRateCat.change();

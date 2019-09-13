@@ -56,7 +56,7 @@ class Invoice {
 
         $orderNum = str_replace("'", '', $orderNumber);
 
-        if ($orderNum == '') {
+        if ($orderNum == '' || $orderNum == '0') {
             return array();
         }
 

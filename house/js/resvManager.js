@@ -1428,6 +1428,10 @@ function resvManager(initData) {
                     }
 
 
+                    if (data.rooms) {
+                        setRooms(data.rooms);
+                    }
+                    
                     if (data.selectr) {
 
                         newSel = $(data.selectr);
@@ -1441,9 +1445,6 @@ function resvManager(initData) {
                         }
                     }
 
-                    if (data.rooms) {
-                        setRooms(data.rooms);
-                    }
 
             });
         }
@@ -1663,7 +1664,9 @@ function resvManager(initData) {
                 
                 $('#paymentDate').datepicker({
                     yearRange: '-1:+00',
-                    numberOfMonths: 1
+                    numberOfMonths: 1,
+                    autoSize: true,
+                    dateFormat: 'M d, yy'
                 });
             }
         }

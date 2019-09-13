@@ -175,6 +175,11 @@ class PaymentChooser {
             $pmp->setTotalRoomChg(floatval(filter_var($post["feesCharges"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
         }
 
+        // Total Charges.
+        if (isset($post["totalCharges"])) {
+            $pmp->setTotalCharges(floatval(filter_var($post["totalCharges"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        }
+
         // House Discount amount
         if (isset($post['HsDiscAmount'])) {
             $pmp->setHouseDiscPayment(floatval(filter_var($post["HsDiscAmount"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
@@ -663,10 +668,12 @@ ORDER BY v.idVisit , v.Span;");
                 . HTMLTable::makeTd(
                      HTMLContainer::generateMarkup('label', "Pay", array('for'=>'keyDepRx', 'style'=>'margin-left:5px;margin-right:3px;'))
                     .HTMLInput::generateMarkup('', array('name'=>'keyDepRx', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.4em;', 'title'=>'Check if ' . $depositLabel . ' Received.'))
-                    .HTMLContainer::generateMarkup('span', ($keyDepAmount > 0 ? '($' . $keyDepAmount . ')' : ''), array('id'=>'spnDepAmt', 'data-amt'=>$keyDepAmount)))
+                    .HTMLContainer::generateMarkup('span', ($keyDepAmount > 0 ? '($' . $keyDepAmount . ')' : ''), array('id'=>'spnDepAmt')))
+                    .HTMLInput::generateMarkup($keyDepAmount, array('id'=>'hdnKeyDepAmt', 'type'=>'hidden'))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup($keyDepAmount, array('name'=>'keyDepAmt', 'size'=>'8', 'style'=>'border:none;text-align:right;', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'title'=>$depositLabel . ' Amount')), array('style'=>'text-align:right;'));
 
             $attrs = array('class'=>'hhk-kdrow', 'style'=>'display:none;');
+
             if ($keyDepAmount > 0) {
                 unset($attrs['style']);
             }
