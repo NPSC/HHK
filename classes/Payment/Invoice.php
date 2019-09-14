@@ -175,12 +175,11 @@ WHERE
 
         $lines = array();
 
-        $ilRs = new InvoiceLineRS();
-        $ilRs->Invoice_Id->setstoredVal($this->idInvoice);
+        $stmt = $dbh->query("select il.*
+from invoice_line il left join invoice_line_type ilt on il.Type_Id = ilt.id
+where il.Invoice_Id = " . $this->idInvoice . " order by ilt.Order_Position");
 
-        $rows = EditRS::select($dbh, $ilRs, array($ilRs->Invoice_Id));
-
-        foreach ($rows as $r) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             $ilRs = new InvoiceLineRS();
             EditRS::loadRow($r, $ilRs);

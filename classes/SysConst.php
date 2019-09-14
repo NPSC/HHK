@@ -133,6 +133,7 @@ class InvoiceLineType {
     const Invoice = 3;
     const Hold = 4;
     const Reimburse = 7;
+    const Waive = 5;
 }
 
 class ItemId {

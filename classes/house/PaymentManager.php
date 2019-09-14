@@ -85,6 +85,10 @@ class PaymentManager {
                     ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily ? TRUE : FALSE)
             );
 
+            // Collect room fees
+            $this->pmp->visitCharges->sumPayments($dbh)
+                    ->sumCurrentRoomCharge($dbh, $this->pmp->priceModel, 0, TRUE);
+
             $roomAccount->load($this->pmp->visitCharges, getTaxedItems($dbh));
             $roomAccount->setDueToday();
 
@@ -240,7 +244,7 @@ class PaymentManager {
                 if ($housePaymentAmt > 0 && $this->pmp->getFinalPaymentFlag()) {
 
                     $waive = new Item($dbh, ItemId::Waive, (0 - $housePaymentAmt));
-                    $invLine = new OneTimeInvoiceLine($uS->ShowLodgDates);
+                    $invLine = new ReimburseInvoiceLine($uS->ShowLodgDates);
                     $invLine->createNewLine($waive, 1, $notes);
 
                     $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());

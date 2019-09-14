@@ -651,9 +651,9 @@ replace INTO invoice_line_type (id, Description, Order_Position) VALUES
 (2,'tax',6),
 (3,'due invoice',1),
 (4,'hold',8),
-(5,'sub account',5),
+(5,'waive',5),
 (6,'item one-time',3),
-('7', 'reimburse', '9');
+(7, 'reimburse', 4);
 -- ;
 
 

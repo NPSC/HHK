@@ -1374,7 +1374,8 @@ from vlist_inv_pments lp
         // items
         $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date
 from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by i.idGroup, il.Invoice_Id, il.idInvoice_line");
+left join invoice_line_Type ilt on il.Type_Id = ilt.id
+where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by i.idGroup, il.Invoice_Id, ilt.Order_Position");
 
         $invLines = $ilStmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -1479,7 +1480,8 @@ from vlist_inv_pments `lp` left join `name` n ON lp.Sold_To_Id = n.idName
         // Items
         $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date
 from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, il.idInvoice_line");
+left join invoice_line_Type ilt on il.Type_Id = ilt.id
+where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Order_Position");
 
         $invLines = $ilStmt->fetchAll(\PDO::FETCH_ASSOC);
 

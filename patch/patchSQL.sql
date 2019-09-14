@@ -42,6 +42,8 @@ update sys_config set GenLookup = 'CC_Gateway_Name', Type = 'lu' where `Key` = '
 update sys_config set Description = 'House Time Zone', GenLookup = 'Time_Zone', Type = 'lu' where `Key` = 'tz';
 UPDATE `sys_config` SET `GenLookup`='Price_Model', Type = 'lu' WHERE `Key`='RoomPriceModel';
 
+UPDATE `invoice_line_type` SET `Description`='waive' WHERE `id`='5';
+UPDATE `invoice_line_type` SET `Order_Position`='4' WHERE `id`='7';
 
 
 -- Fix change price bug where a stay after the price change date was not properly handled.

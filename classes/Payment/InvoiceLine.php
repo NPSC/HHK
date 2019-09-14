@@ -55,26 +55,32 @@ abstract class InvoiceLine {
 
     public static function invoiceLineFactory($typeId) {
 
-        if ($typeId == InvoiceLineType::Recurring) {
-            return new RecurringInvoiceLine();
+        switch ($typeId) {
+            case InvoiceLineType::Recurring:
+                return new RecurringInvoiceLine();
+                break;
+            case InvoiceLineType::Invoice:
+                return new InvoiceInvoiceLine();
+                break;
+            case InvoiceLineType::OneTime;
+                return new OneTimeInvoiceLine();
+                break;
+            case InvoiceLineType::Hold:
+                return new HoldInvoiceLine();
+                break;
+            case InvoiceLineType::Reimburse:
+                return new ReimburseInvoiceLine();
+                break;
+            case InvoiceLineType::Tax:
+                return new TaxInvoiceLine();
+                break;
+            case InvoiceLineType::Waive:
+                return new WaiveInvoiceLine();
+                break;
 
-        } else if ($typeId == InvoiceLineType::Invoice) {
-            return new InvoiceInvoiceLine();
-
-        } else if ($typeId == InvoiceLineType::OneTime) {
-            return new OneTimeInvoiceLine();
-
-        } else if ($typeId == InvoiceLineType::Hold) {
-            return new HoldInvoiceLine();
-
-        } else if ($typeId == InvoiceLineType::Reimburse) {
-            return new ReimburseInvoiceLine();
-
-        } else if ($typeId == InvoiceLineType::Tax) {
-            return new TaxInvoiceLine();
+            default:
+                return NULL;
         }
-
-        return NULL;
 
     }
 
@@ -387,6 +393,15 @@ class ReimburseInvoiceLine extends InvoiceLine {
     public function __construct($useDetail = TRUE) {
         parent::__construct($useDetail);
         $this->setTypeId(InvoiceLineType::Reimburse);
+    }
+
+}
+
+class WaiveInvoiceLine extends InvoiceLine {
+
+    public function __construct($useDetail = TRUE) {
+        parent::__construct($useDetail);
+        $this->setTypeId(InvoiceLineType::Waive);
     }
 
 }
