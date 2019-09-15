@@ -66,18 +66,30 @@ class PaymentManager {
         // Process a visit payment
         if (is_null($visit) === FALSE) {
 
+            // Collect room fees
+            $this->pmp->visitCharges->sumPayments($dbh)
+                    ->sumCurrentRoomCharge($dbh, $this->pmp->priceModel, 0, TRUE);
+
+
             // Taxed items
             $taxedItemList = getTaxedItemList($dbh);
 
-            // TaxeRate
-            $taxRate = 0;
+            // Taxes
+            $taxPercent = 0;
             // sum the individual tax rates.
             foreach ($taxedItemList as $i) {
-                if ($i['idItem'] == ItemId::Lodging) {
-                    $taxRate += $i['Percentage'];
+
+                $maxDays = intval($i['Max_Days'], 10);
+
+                if ($i['idItem'] == ItemId::Lodging && ($maxDays == 0 || $this->pmp->visitCharges->getNightsStayed() <= $maxDays)) {
+                    $taxPercent += $i['Percentage'];
                 }
             }
 
+            // Turn into decimal
+            $taxRate = $taxPercent / 100;
+
+            // Collect account information on visit.
             $roomAccount = new CurrentAccount(
                     $visit->getVisitStatus(),
                     ($uS->VisitFee &&  $this->pmp->visitCharges->getVisitFeeCharged() > 0 ? TRUE : FALSE),
@@ -85,11 +97,8 @@ class PaymentManager {
                     ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily ? TRUE : FALSE)
             );
 
-            // Collect room fees
-            $this->pmp->visitCharges->sumPayments($dbh)
-                    ->sumCurrentRoomCharge($dbh, $this->pmp->priceModel, 0, TRUE);
 
-            $roomAccount->load($this->pmp->visitCharges, getTaxedItems($dbh));
+            $roomAccount->load($this->pmp->visitCharges, getTaxedItems($dbh, $visitCharge->getNightsStayed()));
             $roomAccount->setDueToday();
 
 
@@ -172,7 +181,12 @@ class PaymentManager {
                         $depPreTax = round($this->depositRefundAmt / (1 + $taxRate), 2);
                         $moaPreTax = round($this->moaRefundAmt / (1 + $taxRate), 2);
 
-                        $roomChargesPreTax = $this->pmp->getRatePayment() + $depPreTax + $moaPreTax;
+                        // is there too much paid
+                        if ($this->pmp->getRatePayment() + $depPreTax + $moaPreTax > $roomAccount->getRoomFeeBalance()) {
+                            $roomChargesPreTax = $roomAccount->getRoomFeeBalance();
+                        } else {
+                            $roomChargesPreTax = $this->pmp->getRatePayment() + $depPreTax + $moaPreTax;
+                        }
                     }
 
                 } else {
@@ -186,8 +200,7 @@ class PaymentManager {
                 // lodging
 
                 // Collect room fees
-                $this->pmp->visitCharges->sumPayments($dbh)
-                        ->sumCurrentRoomCharge($dbh, $this->pmp->priceModel, $roomChargesPreTax, TRUE);
+                $this->pmp->visitCharges->sumCurrentRoomCharge($dbh, $this->pmp->priceModel, $roomChargesPreTax, TRUE);
 
 
                 $nitesPaid = $this->pmp->visitCharges->getNightsPaid();
@@ -225,7 +238,9 @@ class PaymentManager {
 
                     foreach ($taxedItemList as $i) {
 
-                        if ($i['idItem'] == ItemId::Lodging) {
+                        $maxDays = intval($i['Max_Days'], 10);
+
+                        if ($i['idItem'] == ItemId::Lodging && ($i['Max_Days'] == 0 || $this->pmp->visitCharges->getNightsStayed() <= $i['Max_Days'])) {
                             $taxInvoiceLine = new TaxInvoiceLine();
                             $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $roomChargesTaxable), $i['Percentage']/100, '');
                             $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
@@ -252,30 +267,30 @@ class PaymentManager {
                 }
 
 
-
                 // Overpayments
                 $this->guestCreditAmt = abs($this->pmp->getGuestCredit());
                 $overPaymemntAmt = abs($this->pmp->getOverPayment());
+
 
                 // Credit some room fees?
                 if ($this->guestCreditAmt > 0 &&
                         ($this->pmp->getBalWith() != ExcessPay::Ignore || $overPaymemntAmt == 0)) {
 
-                    $reversalAmt = 0 - $this->guestCreditAmt;
+                    $reversalAmt = $this->guestCreditAmt;
 
 
                     if ($taxRate > 0) {
                         // we caught taxes.  Reduce reversalAmt by the sum of tax rates.
-                        $preTaxAmt = $reversalAmt / (1 + ($taxRate / 100));
-                        $reversalAmt = round($preTaxAmt, 2);
+                        $reversalAmt = round($reversalAmt / (1 + ($taxRate)), 2);
+
                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
 
                         // Add the tax lines back into the mix
                         foreach ($taxedItemList as $i) {
 
-                            if ($i['idItem'] == ItemId::Lodging) {
+                            if ($i['idItem'] == ItemId::Lodging && ($i['Max_Days'] == 0 || $this->pmp->visitCharges->getNightsStayed() <= $i['Max_Days'])) {
                                 $taxInvoiceLine = new TaxInvoiceLine();
-                                $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $preTaxAmt), $i['Percentage']/100, '');
+                                $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], (0 - $reversalAmt)), $i['Percentage']/100, '');
                                 $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
                                 $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
                             }
@@ -284,7 +299,7 @@ class PaymentManager {
 
                     // Add reversal itself
                     $invLine = new OneTimeInvoiceLine();
-                    $invLine->createNewLine(new Item($dbh, ItemId::LodgingReversal, $reversalAmt), 1, 'Lodging');
+                    $invLine->createNewLine(new Item($dbh, ItemId::LodgingReversal, (0 - $reversalAmt)), 1, 'Lodging');
 
                     $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
                     $this->invoice->addLine($dbh, $invLine, $uS->username);

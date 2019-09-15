@@ -403,7 +403,7 @@ function amtPaid() {
         vtax = roundTo((vtax / 100), 3);
     }
     
-    if (isNaN(roomBalDue) || roomBalDue < 0) {
+    if (isNaN(roomBalDue)) {
         roomBalDue = 0;
     } else {
         roomBalTaxDue = roundTo((roomBalDue * vtax), 2);
@@ -526,12 +526,16 @@ function amtPaid() {
     if (p.feePayAmt.length > 0) {
 
         feePayText = p.feePayAmt.val().replace('$', '').replace(',', '');
-        feePayPreTax = parseFloat(p.feePayAmt.val().replace('$', '').replace(',', ''));
+        feePayPreTax = parseFloat(feePayText);
+        
+        if (feePayText !== '0') {
+            feePayText = '';
+        }
 
         if (isNaN(feePayPreTax) || feePayPreTax <= 0) {
             
             feePayPreTax = 0; feePayTaxAmt = 0;
-
+            
         } else if (vtax > 0) {
             
             feePayTaxAmt = roundTo((feePayPreTax * vtax), 2);

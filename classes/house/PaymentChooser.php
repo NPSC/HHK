@@ -255,7 +255,7 @@ class PaymentChooser {
         $labels = new Config_Lite(LABEL_FILE);
 
         // Get taxed items
-        $taxedItems = getTaxedItems($dbh);
+        $taxedItems = getTaxedItems($dbh, $visitCharge->getNightsStayed());
 
         $useVisitFee = FALSE;
         if($uS->VisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == '')){
@@ -404,7 +404,7 @@ class PaymentChooser {
                 FALSE,
                 array(),
                 $labels,
-                getTaxedItems($dbh),
+                getTaxedItems($dbh, $visitCharge->getNightsStayed()),
                 $visitCharge->getIdVisit(),
                 array(),
                 '',
@@ -618,7 +618,7 @@ ORDER BY v.idVisit , v.Span;");
                                 FALSE,
                                 $unpaidInvoices,
                                 $labels,
-                                getTaxedItems($dbh))
+                                getTaxedItems($dbh, 0))
                         , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
                 );
 

@@ -852,7 +852,7 @@ if (isset($_POST['btnItemSave'])) {
 
         $idItem = intval($i['idItem']);
 
-        if ($i['Type_Id'] == 2 || $idItem < 1) {
+        if ($i['Type_Id'] == InvoiceLineType::Tax || $idItem < 1) {
             continue;
         }
 
@@ -895,8 +895,8 @@ if (isset($_POST['btnItemSave'])) {
 if (isset($_POST['btnTaxSave'])) {
     $tabIndex = 7;
 
-    $sitems = $dbh->query("Select idItem, Description, Gl_Code, Percentage
-from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = 2");
+    $sitems = $dbh->query("Select i.idItem, i.Description, i.Gl_Code, i.Percentage, i.Internal_Number
+from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . InvoiceLineType::Tax);
     $items = $sitems->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($items as $i) {
@@ -906,8 +906,9 @@ from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = 2
             $desc = filter_var($_POST['txttItem'][$i['idItem']], FILTER_SANITIZE_STRING);
             $glCode = filter_var($_POST['txttGlCode'][$i['idItem']], FILTER_SANITIZE_STRING);
             $percentage = filter_var($_POST['txttPercentage'][$i['idItem']], FILTER_SANITIZE_STRING);
+            $maxDays = filter_var($_POST['txttMaxDays'][$i['idItem']], FILTER_SANITIZE_STRING);
 
-            $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode', `Percentage` = '$percentage' where `idItem` = " . $i['idItem']);
+            $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode', `Percentage` = '$percentage', `Internal_Number` = '$maxDays' where `idItem` = " . $i['idItem']);
 
         }
     }
@@ -918,11 +919,12 @@ from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = 2
         $desc = filter_var($_POST['txttItem'][0], FILTER_SANITIZE_STRING);
         $glCode = filter_var($_POST['txttGlCode'][0], FILTER_SANITIZE_STRING);
         $percentage = filter_var($_POST['txttPercentage'][0], FILTER_SANITIZE_STRING);
+        $maxDays = filter_var($_POST['txttMaxDays'][0], FILTER_SANITIZE_STRING);
 
-        $dbh->exec("insert into `item` (`Description`, `Gl_Code`, `Percentage`) Values ('$desc', '$glCode', '$percentage')");
+        $dbh->exec("insert into `item` (`Description`, `Gl_Code`, `Percentage`, `Internal_Number`) Values ('$desc', '$glCode', '$percentage', '$maxDays')");
 
         if ($dbh->lastInsertId() > 0) {
-            $dbh->exec("insert into `item_type_map` Values ('" . $dbh->lastInsertId() . "', '2')");
+            $dbh->exec("insert into `item_type_map` Values ('" . $dbh->lastInsertId() . "', '" . InvoiceLineType::Tax . "')");
         }
     }
 
@@ -1384,21 +1386,22 @@ $itemTable = $itbl->generateMarkup(array('style' => 'float:left;'));
 
 
 // Taxes
-$tstmt = $dbh->query("Select idItem, Description, Gl_Code, Percentage
-from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = 2");
+$tstmt = $dbh->query("Select i.idItem, i.Description, i.Gl_Code, i.Percentage, i.Internal_Number
+from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . InvoiceLineType::Tax);
 $titems = $tstmt->fetchAll(\PDO::FETCH_ASSOC);
 
 
 $tiTbl = new HTMLTable();
 $tiTbl->addHeaderTr(HTMLTable::makeTh(count($titems) . ' Taxes', array('colspan'=>'3')));
-$tiTbl->addHeaderTr(HTMLTable::makeTh('Description').HTMLTable::makeTh('GL Code').HTMLTable::makeTh('Percentage'));
+$tiTbl->addHeaderTr(HTMLTable::makeTh('Description').HTMLTable::makeTh('GL Code').HTMLTable::makeTh('Percentage').HTMLTable::makeTh('Max Days'));
 
 foreach ($titems as $d) {
 
     $tiTbl->addBodyTr(
             HTMLTable::makeTd(HTMLInput::generateMarkup($d['Description'], array('name' => 'txttItem[' . $d['idItem'] . ']')))
             .HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'], array('name' => 'txttGlCode[' . $d['idItem'] . ']')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup(number_format($d['Percentage'], 3), array('name' => 'txttPercentage[' . $d['idItem'] . ']'))));
+            .HTMLTable::makeTd(HTMLInput::generateMarkup(number_format($d['Percentage'], 3), array('name' => 'txttPercentage[' . $d['idItem'] . ']')))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup($d['Internal_Number'], array('name' => 'txttMaxDays[' . $d['idItem'] . ']'))));
 
 }
 
@@ -1406,7 +1409,8 @@ foreach ($titems as $d) {
 $tiTbl->addBodyTr(
         HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttItem[0]', 'placeholder'=>'New Tax')))
         .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttGlCode[0]')))
-        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttPercentage[0]'))));
+        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttPercentage[0]')))
+        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttMaxDays[0]'))));
 
 $taxTable = $tiTbl->generateMarkup(array('style' => 'float:left;'));
 

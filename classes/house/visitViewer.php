@@ -600,7 +600,7 @@ class VisitView {
         }
 
         // Any taxes
-        $taxedItems = getTaxedItems($dbh);
+        $taxedItems = getTaxedItems($dbh, $visitCharge->getNightsStayed());
 
         $currFees = '';
         $paymentMarkup = '';

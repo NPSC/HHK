@@ -731,7 +731,7 @@ WHERE
         }
     }
 
-    public static function makeOrdersRatesTable($rates, &$totalAmt, PriceModel $priceModel, Config_Lite $labels, array $invLines, array $taxedItems, &$numberNites, Item $moaItem, Item $donateItem) {
+    public static function makeOrdersRatesTable($rates, &$totalAmt, PriceModel $priceModel, Config_Lite $labels, array $invLines, array $taxedItemList, &$numberNites, Item $moaItem, Item $donateItem) {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
@@ -773,9 +773,9 @@ WHERE
                     self::addSavedTrs($trs, $tbl);
 
                     // Add tax info
-                    foreach ($taxedItems as $t) {
+                    foreach ($taxedItemList as $t) {
 
-                        if ($preTaxRmCharge > 0 && $t['idItem'] == ItemId::Lodging) {
+                        if ($preTaxRmCharge > 0 && $t['idItem'] == ItemId::Lodging && ($t['Max_Days'] == 0 || $visitNights <= $t['Max_Days'])) {
 
                             $totalTax = round( ($preTaxRmCharge * $t['Percentage'] / 100), 2);
 
@@ -924,9 +924,9 @@ WHERE
         self::addSavedTrs($trs, $tbl);
 
         // Add tax info
-        foreach ($taxedItems as $t) {
+        foreach ($taxedItemList as $t) {
 
-            if ($preTaxRmCharge > 0 && $t['idItem'] == ItemId::Lodging) {
+            if ($preTaxRmCharge > 0 && $t['idItem'] == ItemId::Lodging && ($t['Max_Days'] == 0 || $visitNights <= $t['Max_Days'])) {
 
                 $totalTax = round( ($preTaxRmCharge * $t['Percentage'] / 100), 2);
 
@@ -1379,13 +1379,9 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
         $invLines = $ilStmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        // Taxed items
-        $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.idItem as `taxIdItem` from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem");
-        $taxedItems = $tistmt->fetchALl(\PDO::FETCH_ASSOC);
-
 
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable($rates, $totalAmt, $priceModel, $labels, $invLines, $taxedItems, $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
+        $tbl = self::makeOrdersRatesTable($rates, $totalAmt, $priceModel, $labels, $invLines, getTaxedItemList($dbh), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
         $totalCharge = $totalAmt;
 
         // Thirdparty payments
@@ -1491,12 +1487,9 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
 
-        // Taxed items
-        $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.idItem as `taxIdItem` from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem");
-        $taxedItems = $tistmt->fetchALl(\PDO::FETCH_ASSOC);
 
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, $taxedItems, $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
+        $tbl = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, getTaxedItemList($dbh), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
         $totalCharge = $totalAmt;
 
         // Thirdparty payments
