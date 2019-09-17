@@ -702,7 +702,7 @@ class VisitView {
                 $showSubTotal = TRUE;
 
                 $tbl2->addBodyTr(
-                    HTMLTable::makeTd('Lodging Tax:', array('class'=>'tdlabel', 'style'=>'font-size:small;'))
+                    HTMLTable::makeTd('Tax:', array('class'=>'tdlabel', 'style'=>'font-size:small;'))
                     . HTMLTable::makeTd('$' . number_format($curAccount->getLodgingTax(), 2), array('style'=>'text-align:right;font-size:small;'))
                 );
             }

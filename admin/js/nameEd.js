@@ -327,10 +327,11 @@ $(document).ready(function () {
                     parms['wuname'] = $('#txtwUserName').val();
                     parms['wupw'] = hex_md5($('#txtwUserPW').val());
                     parms['grpSec_v'] = 'checked';  // check the volunteer auth code.
+                    
                 }
                 
                 parms['role'] = $("#selwRole").val();
-
+                parms['defaultPage'] = $('#txtwDefaultPage').val();
                 parms['uid'] = memData.id;
                 parms['status'] = $('#selwStatus').val();
                 parms['admin'] = userData.userName;

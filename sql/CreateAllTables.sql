@@ -2148,6 +2148,7 @@ CREATE TABLE if not exists `w_users` (
   `Cookie` char(32) NOT NULL DEFAULT '',
   `Session` char(32) NOT NULL DEFAULT '',
   `Ip` varchar(15) NOT NULL DEFAULT '',
+  `Default_Page` VARCHAR(100) NOT NULL DEFAULT '',
   `Verify_Address` varchar(4) NOT NULL DEFAULT '',
   `Last_Login` datetime DEFAULT NULL,
   `Hash_PW` char(32) NOT NULL DEFAULT '',

@@ -173,10 +173,6 @@ function getTaxedItems(\PDO $dbh, $numDays) {
     // Any taxes
     $taxedItems = array();
 
-//    $tstmt = $dbh->query("select ii.idItem, sum(ti.Percentage) as `Percent`
-//        from item_item ii join item i on ii.idItem = i.idItem
-//            join item ti on ii.Item_Id = ti.idItem
-//        group by ii.idItem");
     $tItems = getTaxedItemList($dbh);
 
     foreach ($tItems as $t) {

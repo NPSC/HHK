@@ -84,6 +84,7 @@ class PaymentManager {
                 if ($i['idItem'] == ItemId::Lodging && ($maxDays == 0 || $this->pmp->visitCharges->getNightsStayed() <= $maxDays)) {
                     $taxPercent += $i['Percentage'];
                 }
+
             }
 
             // Turn into decimal
@@ -98,7 +99,7 @@ class PaymentManager {
             );
 
 
-            $roomAccount->load($this->pmp->visitCharges, getTaxedItems($dbh, $visitCharge->getNightsStayed()));
+            $roomAccount->load($this->pmp->visitCharges, getTaxedItems($dbh, $this->pmp->visitCharges->getNightsStayed()));
             $roomAccount->setDueToday();
 
 
@@ -159,12 +160,6 @@ class PaymentManager {
             // Just use what they are willing to pay as the charge.
             $roomChargesPreTax = $this->pmp->getRatePayment();
 
-            // Determine House Waive
-            $housePaymentAmt = 0;
-            if ($visit->getVisitStatus() == VisitStatus::CheckedOut && $this->pmp->getFinalPaymentFlag()) {
-                $housePaymentAmt = $this->pmp->getHouseDiscPayment();
-            }
-
             // Room Charges are different for checked out
             if ($visit->getVisitStatus() == VisitStatus::CheckedOut) {
                 // Checked out or checking out... Room charges.
@@ -195,13 +190,18 @@ class PaymentManager {
                 }
             }
 
+            // Determine House Waive
+            $housePaymentAmt = 0;
+            if ($visit->getVisitStatus() == VisitStatus::CheckedOut && $this->pmp->getFinalPaymentFlag()) {
+                $housePaymentAmt = $this->pmp->getHouseDiscPayment();
+            }
+
             // Any charges?
             if ($roomChargesPreTax > 0) {
                 // lodging
 
-                // Collect room fees
+                // Collect room charges
                 $this->pmp->visitCharges->sumCurrentRoomCharge($dbh, $this->pmp->priceModel, $roomChargesPreTax, TRUE);
-
 
                 $nitesPaid = $this->pmp->visitCharges->getNightsPaid();
 
@@ -250,7 +250,6 @@ class PaymentManager {
                 }
             }
 
-
             // Processing for checked out visits.
             if ($visit->getVisitStatus() == VisitStatus::CheckedOut) {
 
@@ -292,6 +291,7 @@ class PaymentManager {
                                 $taxInvoiceLine = new TaxInvoiceLine();
                                 $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], (0 - $reversalAmt)), $i['Percentage']/100, '');
                                 $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
+                                $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
                                 $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
                             }
                         }

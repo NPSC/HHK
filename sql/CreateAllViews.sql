@@ -2620,6 +2620,7 @@ select
     u.User_Name AS Username,
     gs.Description AS Status,
     gr.Description AS Role,
+    u.Default_Page AS `Default Page`,
     wg.Title as `Authorization Code`,
     u.Last_Login AS `Last Login`,
     u.Updated_By AS `Updated By`,

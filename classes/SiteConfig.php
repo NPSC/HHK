@@ -372,9 +372,12 @@ class SiteConfig {
         $tbl = new HTMLTable();
         $inputSize = '40';
 
+        // Limit config file to remaining sections not copied to the DB
+        $allowedSections = array('site'=>'y', 'db'=>'y', 'backup'=>'y', 'webServices'=>'y');
+
         foreach ($config as $section => $name) {
 
-            if ($onlySection == '' || $onlySection == $section) {
+            if (isset($allowedSections[$section]) && ($onlySection == '' || $onlySection == $section)) {
 
                 if ($section == 'webServices') {
 

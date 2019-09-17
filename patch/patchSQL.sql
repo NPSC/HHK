@@ -9,6 +9,9 @@ ALTER TABLE `sys_config`
 ALTER TABLE `invoice_line` 
     CHANGE COLUMN `Source_User_Id` `Source_Item_Id` INT(11) NOT NULL DEFAULT '0' ;
 
+ALTER TABLE `w_users` 
+    ADD COLUMN `Default_Page` VARCHAR(100) NOT NULL DEFAULT '' AFTER `Ip`;
+
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Sys_Config_Category', 'd', 'Donation');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Sys_Config_Category', 'f', 'Financial');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Sys_Config_Category', 'h', 'House');

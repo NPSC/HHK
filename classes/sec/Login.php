@@ -55,6 +55,7 @@ class Login {
         $ssn->resourceURL = $secureComp->getRootURL();
         $ssn->mode = strtolower($config->getString('site', 'Mode', 'live'));
         $ssn->testVersion = $config->getBool('site', 'Run_As_Test', true);
+        $ssn->ver = CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 
         // Initialize role code
         $ssn->rolecode = WebRole::Guest;
@@ -118,9 +119,14 @@ class Login {
 
             if ($u->_checkLogin($dbh, $this->userName, $password, false) === FALSE) {
 
+                // Failed
                 $this->validateMsg .= $u->logMessage;
 
             } else {
+
+                if ($u->getDefaultPage() != '') {
+                    $pge = $u->getDefaultPage();
+                }
 
                 if (SecurityComponent::is_Authorized($pge)) {
                     $events['page'] = $pge;

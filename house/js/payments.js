@@ -394,7 +394,8 @@ function amtPaid() {
         overPayAmt = 0,
         isChdOut = isCheckedOut,
         vtax = parseFloat(p.feePayAmt.data('tax')),
-        roomBalDue = parseFloat($('#spnCfBalDue').data('rmbal'));
+        roomBalDue = parseFloat($('#spnCfBalDue').data('rmbal')),
+        totalBalDue = parseFloat($('#spnCfBalDue').data('totbal'));
 
     if (isNaN(vtax) || vtax < 0) {
         vtax = 0;
@@ -571,7 +572,7 @@ function amtPaid() {
             $('.hhk-GuestCredit').show();
         }
 
-        totCharges = roundTo((vfee + invAmt + totRmBalDue - heldAmt - depRfAmt), 2);
+        totCharges = roundTo((vfee + invAmt + totalBalDue - heldAmt - depRfAmt), 2);
         totPay = roundTo((vfee + invAmt + feePay), 2);
 
         if (totCharges - totPay >= 0) {

@@ -88,20 +88,18 @@ class webInit {
         date_default_timezone_set($uS->tz);
 
         // Check session timeout
-        $t = time();
-
         if (isset($uS->SessionTimeout) === FALSE || $uS->SessionTimeout < 1) {
             $uS->SessionTimeout = 30;
         }
 
         if (!isset($uS->timeout_idle)) {
-            $uS->timeout_idle = $t + ($uS->SessionTimeout * 60);
+            $uS->timeout_idle = time() + ($uS->SessionTimeout * 60);
         } else {
             if ($uS->timeout_idle < time()) {
                 $uS->logged = FALSE;
                 $this->page->die_if_not_Logged_In($page_Type, "index.php");
             } else {
-                $uS->timeout_idle = $t + ($uS->SessionTimeout * 60);
+                $uS->timeout_idle = time() + ($uS->SessionTimeout * 60);
             }
         }
 
@@ -183,10 +181,11 @@ class webInit {
 
         $uS->nameLookups = $nameLookups;
 
-        SysConfig::getCategory($this->dbh, $uS, "'f'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($this->dbh, $uS, "'r'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($this->dbh, $uS, "'d'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $uS, "'a'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, "'d'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, "'es'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, "'f'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, "'fg'", webInit::SYS_CONFIG);
 
         return $uS->nameLookups;
 
@@ -210,11 +209,6 @@ class webInit {
 
         // get session instance
         $uS = Session::getInstance();
-
-        // Load sys config table entries.
-        SysConfig::getCategory($this->dbh, $uS, "'f'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($this->dbh, $uS, "'r'", webInit::SYS_CONFIG);
-        SysConfig::getCategory($this->dbh, $uS, "'d'", webInit::SYS_CONFIG);
 
         SysConfig::getCategory($this->dbh, $uS, "'h'", webInit::SYS_CONFIG);
 

@@ -53,7 +53,7 @@ class W_usersRS extends TableRS {
     public $Ip;  // varchar(15) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
     public $Verify_Address;  // varchar(4) NOT NULL DEFAULT '',
     public $Last_Login;  // datetime DEFAULT NULL,
-    //public $Hash_PW;  // char(32) NOT NULL DEFAULT '',
+    public $Default_Page;  // varchar(100) NOT NULL DEFAULT '',
     public $Status;  // varchar(4) NOT NULL DEFAULT '',
     public $Last_Updated;  // datetime DEFAULT NULL,
     public $Updated_By;  // varchar(45) DEFAULT '',
@@ -64,6 +64,7 @@ class W_usersRS extends TableRS {
         $this->User_Name = new DB_Field("User_Name", "", new DbStrSanitizer(100), TRUE, TRUE);
         $this->Enc_PW = new DB_Field("Enc_PW", "", new DbStrSanitizer(100), TRUE, TRUE);
         $this->Certificate = new DB_Field("Certificate", "", new DbStrSanitizer(145), TRUE, TRUE);
+        $this->Default_Page = new DB_Field("Default_Page", "", new DbStrSanitizer(100), TRUE, TRUE);
         $this->Ip = new DB_Field("Ip", "", new DbStrSanitizer(15), TRUE, TRUE);
         $this->Verify_Address = new DB_Field("Verify_Address", "", new DbStrSanitizer(4), TRUE, TRUE);
         $this->Last_Login = new DB_Field("Last_Login", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);

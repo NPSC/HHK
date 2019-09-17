@@ -623,9 +623,7 @@ class HouseServices {
             if (isset($codes[$addnlCharge])) {
 
                 // Taxed items
-                $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.idItem as `taxIdItem` from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem");
-                $taxedItems = $tistmt->fetchALl(\PDO::FETCH_ASSOC);
-
+                $taxedItems = getTaxedItemList($dbh);
 
                 $invLine = new OneTimeInvoiceLine();
                 $invLine->createNewLine(new Item($dbh, ItemId::AddnlCharge, $amount), 1, $codes[$addnlCharge][1]);

@@ -538,7 +538,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('RoomPriceModel','d','lu','h','','Room rate price model - Do not change!','Price_Model'),
 ('RoomRateDefault','e','s','h','','Default room rate category (a, b, c, d, e, x)',''),
 ('RoomsPerPatient','2','i','h','','# simultaneous rooms per patient allowed',''),
-('SessionTimeout','30','i','f','','Number of minutes until an idle session get automatically logged out, 0 = never log out',''),
+('SessionTimeout','30','i','a','','Number of minutes until an idle session get automatically logged out, 0 = never log out',''),
 ('ShoStaysCtr','true','b','h','','Show the stays counter on the House Calendar page',''),
 ('ShowBirthDate','true','b','h','','Show birthdate for patients and guests',''),
 ('ShowCreatedDate','true','b','h','','Show the Created Date in Register page tabs lists',''),

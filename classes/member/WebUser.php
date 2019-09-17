@@ -64,6 +64,13 @@ class WebUser {
             $webUserName = $wUserRS->User_Name->getStoredVal();
         }
 
+        // Values for defalut page
+        if ($maintFlag) {
+            $defaultPage = HTMLInput::generateMarkup($wUserRS->Default_Page->getStoredVal(), array('id'=>'txtwDefaultPage', 'class'=>'ignrSave'));
+        } else {
+            $defaultPage = $wUserRS->Default_Page->getStoredVal();
+        }
+
         $tbl->addBodyTr(
                 HTMLTable::makeTd("User Name:", array('class'=>'tdlable'))
                 .HTMLTable::makeTd($webUserName)
@@ -87,6 +94,10 @@ class WebUser {
                 .HTMLTable::makeTd($lastWebAccess)
                 );
         $tbl->addBodyTr(
+                HTMLTable::makeTd("Default Page:", array('class'=>'tdlable'))
+                .HTMLTable::makeTd($defaultPage)
+                );
+        $tbl->addBodyTr(
                 HTMLTable::makeTd("Verify Address:", array('class'=>'tdlable'))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($wVerifyAddr, $wUserRS->Verify_Address->getStoredVal()), array('id'=>'selwVerify', 'class'=>'ignrSave')))
                 );
@@ -95,6 +106,7 @@ class WebUser {
         if ($maintFlag === FALSE) {
             $attr['disabled'] = 'disabled';
         }
+
         $tbl->addBodyTr(
                 HTMLTable::makeTd("Role:", array('class'=>'tdlable'))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($roleMkup, $wAuthRS->Role_Id->getStoredVal()), $attr))
@@ -191,6 +203,11 @@ class WebUser {
             $status = filter_var($parms["status"], FILTER_SANITIZE_STRING);
         }
 
+        $defaultPage = '';
+        if (isset($parms["defaultPage"])) {
+            $defaultPage = filter_var($parms["defaultPage"], FILTER_SANITIZE_STRING);
+        }
+
         $wUserName = "";
         if (isset($parms["wuname"])) {
             $wUserName = filter_var($parms["wuname"], FILTER_SANITIZE_STRING);
@@ -229,6 +246,7 @@ class WebUser {
             $usersRS->Verify_Address->setNewVal($vaddr);
             $usersRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
             $usersRS->Updated_By->setNewVal($admin);
+            $usersRS->Default_Page->setNewVal($defaultPage);
 
             $n = EditRS::update($dbh, $usersRS, array($usersRS->idName));
 

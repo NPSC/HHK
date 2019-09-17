@@ -10,6 +10,7 @@
 class UserClass {
 
     public $logMessage = '';
+    protected $defaultPage = '';
 
     public function _checkLogin(\PDO $dbh, $username, $password, $remember = FALSE) {
          // instantiate a ChallengeGenerator object
@@ -59,6 +60,8 @@ class UserClass {
 
             $ssn->groupcodes = self::setSecurityGroups($dbh, $r['idName'], $housePc);
 
+            $this->defaultPage = $r['Default_Page'];
+
             return TRUE;
 
         } else {
@@ -66,6 +69,10 @@ class UserClass {
         }
 
         return FALSE;
+    }
+
+    public function getDefaultPage() {
+        return $this->defaultPage;
     }
 
     public static function setCookieAccess($rootPath, $toggle = TRUE) {
