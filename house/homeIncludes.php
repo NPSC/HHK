@@ -43,4 +43,4 @@ require (CLASSES . 'Purchase/PriceModel.php');
 
 
 //Fatal Error Handler
-require('../functions/errorHandler.php');
+require(FUNCTIONS . 'errorHandler.php');

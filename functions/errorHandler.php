@@ -8,15 +8,16 @@ function fatal_handler() {
     $errno   = E_CORE_ERROR;
     $errline = 0;
 
+	//get error
     $error = error_get_last();
-
+    
+	//split error object into vars
     if( $error !== NULL) {
         $errno   = $error["type"];
         $errfile = $error["file"];
         $errline = $error["line"];
         $errstr  = $error["message"];
 
-        //error_mail(format_error( $errno, $errstr, $errfile, $errline));
         formHandler($error);
         buildPage($error);
         
@@ -25,30 +26,36 @@ function fatal_handler() {
 }
 
 function formHandler($error){
-	$to = "wireland@nonprofitsoftwarecorp.org";
+	$sec = new SecurityComponent;
+	$uS = Session::getInstance();
 	
+	//get report email address
+	$to = $uS->Error_Report_Email == "" ? "support@nonprofitsoftwarecorp.org": $uS->Error_Report_Email;
+
+	//if post data exists, send email
 	if($_POST && isset($_POST['name'], $_POST['email'], $_POST['message'])) {
 
-    $name = $_POST['name'];
-    $email = $_POST['email'];
-    $subject = $_POST['subject'];
-    $message = "New bug report received\r\nName: " . $name . "\r\nEmail: " . $email . "\r\n";
-    $message = "Message: " . $_POST['message'] . "\r\n";
-
-	$message .= "File: " . $error["file"] . " line " . $error["line"] . "\r\nError: " . $error["message"];
-      // send email and redirect
-      
-      $subject = "New bug report received";
-      $headers = "From: noreply@wireland.me" . "\r\n";
-      mail($to, $subject, $message, $headers);
-      header('Location: /HHK/functions/errorsuccess.php');
-      exit;
-  }
+    	$name = $_POST['name'];
+		$email = $_POST['email'];
+		$message = "New bug report received from " . $uS->siteName . "\r\n\r\n";
+		$message.= "Name: " . $name . "\r\n\r\n";
+		$message.= "Email: " . $email . "\r\n\r\n";
+		$message.= "Message: " . $_POST['message'] . "\r\n\r\n";
+		$message.= "File: " . $error["file"] . " line " . $error["line"] . "\r\n\r\n";
+		$message.= "Error: " . $error["message"];
+      	$subject = "New bug report received from " . $uS->siteName;
+	  	$headers = "From: BugReporter<noreply@nonprofitsoftwarecorp.org>" . "\r\n";
+	  	// send email and redirect
+	  	mail($to, $subject, $message, $headers);
+	  	header('Location: ' . $sec->getRootURL() . 'functions/errorsuccess.php');
+	  	exit;
+	}
 }
 
 function buildPage($error){
 	$wInit = new webInit();
 	$pageTitle = $wInit->pageTitle;
+	$sec = new SecurityComponent;
 	?>
 	
 	<!DOCTYPE html>
@@ -112,7 +119,7 @@ function buildPage($error){
 		        <h1>Uh oh, something's not right!</h1>
 		        <div class="container">
 			        <div class="col-6" style="text-align: center;">
-				        <img src="/HHK/images/hhkLogo.png">
+				        <img src="<?php echo $sec->getRootURL(); ?>images/hhkLogo.png">
 				        <div class="logo-text">
 				        	<p>Sometimes errors happen, help us stop them in their digital tracks by submitting a bug report.</p>
 				        </div>
@@ -136,9 +143,6 @@ function buildPage($error){
 									<input type="submit" class="ui-button ui-corner-all ui-widget" value="Submit" style="width: initial;">
 								</div>
 							</form>
-							<p>File: <?php echo $error["file"];?></p>
-							<p>Line: <?php echo $error["line"];?></p>
-							<p>Message: <?php echo $error["message"];?></p>
 						</div>
 					</div>
 		        </div>
