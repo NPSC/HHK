@@ -89,6 +89,7 @@ require (HOUSE . 'VisitLog.php');
 require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Vehicle.php');
 require (HOUSE . 'Visit.php');
+require (HOUSE . "ValueAddedTax.php");
 require (HOUSE . "CurrentAccount.php");
 require (HOUSE . "visitViewer.php");
 

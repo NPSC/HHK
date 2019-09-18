@@ -72,23 +72,8 @@ class PaymentManager {
 
 
             // Taxed items
-            $taxedItemList = getTaxedItemList($dbh);
-
-            // Taxes
-            $taxPercent = 0;
-            // sum the individual tax rates.
-            foreach ($taxedItemList as $i) {
-
-                $maxDays = intval($i['Max_Days'], 10);
-
-                if ($i['idItem'] == ItemId::Lodging && ($maxDays == 0 || $this->pmp->visitCharges->getNightsStayed() <= $maxDays)) {
-                    $taxPercent += $i['Percentage'];
-                }
-
-            }
-
-            // Turn into decimal
-            $taxRate = $taxPercent / 100;
+            $vat = new ValueAddedTax($dbh);
+            $taxRate = $vat->getTaxedItems($this->pmp->visitCharges->getNightsStayed()) / 100;
 
             // Collect account information on visit.
             $roomAccount = new CurrentAccount(
@@ -99,7 +84,7 @@ class PaymentManager {
             );
 
 
-            $roomAccount->load($this->pmp->visitCharges, getTaxedItems($dbh, $this->pmp->visitCharges->getNightsStayed()));
+            $roomAccount->load($this->pmp->visitCharges, $vat);
             $roomAccount->setDueToday();
 
 
@@ -236,11 +221,9 @@ class PaymentManager {
 
                 if ($roomChargesTaxable > 0) {
 
-                    foreach ($taxedItemList as $i) {
+                    foreach ($vat->getTaxedItemList($this->pmp->visitCharges->getNightsStayed()) as $i) {
 
-                        $maxDays = intval($i['Max_Days'], 10);
-
-                        if ($i['idItem'] == ItemId::Lodging && ($i['Max_Days'] == 0 || $this->pmp->visitCharges->getNightsStayed() <= $i['Max_Days'])) {
+                        if ($i['idItem'] == ItemId::Lodging) {
                             $taxInvoiceLine = new TaxInvoiceLine();
                             $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $roomChargesTaxable), $i['Percentage']/100, '');
                             $taxInvoiceLine->setSourceItemId(ItemId::Lodging);

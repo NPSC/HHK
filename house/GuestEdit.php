@@ -44,6 +44,7 @@ require (HOUSE . 'RoleMember.php');
 require (HOUSE . 'Registration.php');
 require (HOUSE . 'Reservation_1.php');
 require (HOUSE . 'ReservationSvcs.php');
+require (HOUSE . "ValueAddedTax.php");
 require (HOUSE . "CurrentAccount.php");
 require (HOUSE . 'visitViewer.php');
 require (HOUSE . 'Visit.php');

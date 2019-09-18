@@ -68,7 +68,7 @@ class CurrentAccount {
         $this->showVisitFee = $showVisitFee;
     }
 
-    public function load(VisitCharges $visitCharge, $taxedItems) {
+    public function load(VisitCharges $visitCharge, ValueAddedTax $vat) {
 
         $this->numberNitesStayed = $visitCharge->getNightsStayed();
 
@@ -83,11 +83,16 @@ class CurrentAccount {
         $this->setUnpaidMOA($visitCharge->getItemInvPending(ItemId::LodgingMOA));
 
         // Lodging taxes
+        $taxedItems = $vat->getTaxedItems($visitCharge->getNightsStayed());
+
         if (isset($taxedItems[ItemId::Lodging])) {
             $this->setLodgingTax(max(0, round(($this->getRoomCharge() + $this->getTotalDiscounts()) * $taxedItems[ItemId::Lodging] / 100, 2)));
         } else {
             $this->setLodgingTax(0);
         }
+
+        // Reimburse vat?
+        
 
         // Additional Charge taxes?
         if (isset($taxedItems[ItemId::AddnlCharge])) {
@@ -122,12 +127,12 @@ class CurrentAccount {
                 + $visitCharge->get3rdPartyPending('tax'));
 
     }
-    
+
     public function toJSON() {
-        
+
         $pack = array(
             'roomFeeBal' => $this->getRoomFeeBalance(),
-            
+
         );
     }
 

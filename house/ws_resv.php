@@ -94,6 +94,7 @@ require (HOUSE . 'Vehicle.php');
 require (HOUSE . 'Visit.php');
 require (HOUSE . 'Family.php');
 require (HOUSE . "visitViewer.php");
+require (HOUSE . "ValueAddedTax.php");
 require (HOUSE . "CurrentAccount.php");
 
 require (HOUSE . 'VisitCharges.php');

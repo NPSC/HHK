@@ -600,7 +600,7 @@ class VisitView {
         }
 
         // Any taxes
-        $taxedItems = getTaxedItems($dbh, $visitCharge->getNightsStayed());
+        $vat = new ValueAddedTax($dbh);
 
         $currFees = '';
         $paymentMarkup = '';
@@ -611,7 +611,7 @@ class VisitView {
             // Current fees block
             $currFees = HTMLContainer::generateMarkup('fieldset',
                     HTMLContainer::generateMarkup('legend', ($r['Status'] == VisitStatus::CheckedIn ? 'To-Date Fees & Balance Due' : 'Final Fees & Balance Due'), array('style'=>'font-weight:bold;'))
-                    . HTMLContainer::generateMarkup('div', self::createCurrentFees($r['Status'], $visitCharge, $taxedItems, $includeVisitFee, $showRoomFees, $showGuestNights), array('style'=>'float:left;', 'id'=>'divCurrFees'))
+                    . HTMLContainer::generateMarkup('div', self::createCurrentFees($r['Status'], $visitCharge, $vat, $includeVisitFee, $showRoomFees, $showGuestNights), array('style'=>'float:left;', 'id'=>'divCurrFees'))
                         , array('class'=>'hhk-panel', 'style'=>'float:left;margin-right:10px;'));
 
             // Show Final payment?
@@ -639,11 +639,11 @@ class VisitView {
         return $currFees . $paymentMarkup;
     }
 
-    public static function createCurrentFees($visitStatus, VisitCharges $visitCharge, $taxedItems, $showVisitFee = FALSE, $showRoomFees = TRUE, $showGuestNights = FALSE) {
+    public static function createCurrentFees($visitStatus, VisitCharges $visitCharge, ValueAddedTax $vat, $showVisitFee = FALSE, $showRoomFees = TRUE, $showGuestNights = FALSE) {
 
         $roomAccount = new CurrentAccount($visitStatus, $showVisitFee, $showRoomFees, $showGuestNights);
 
-        $roomAccount->load($visitCharge, $taxedItems);
+        $roomAccount->load($visitCharge, $vat);
         $roomAccount->setDueToday();
 
         return self::currentBalanceMarkup($roomAccount);
