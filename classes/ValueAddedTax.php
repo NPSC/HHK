@@ -25,52 +25,46 @@
  */
 
 /**
- * Description of ValueAddedTax
+ * Loads all items that are taxed along with details about each tax.
  *
  * @author Eric
  */
 class ValueAddedTax {
 
-    protected $taxedItemList;
-    protected $taxedItems;
+    protected $allTaxedItems;
 
     public function __construct(\PDO $dbh) {
-        $this->taxedItemList = $this->loadTaxedItemList($dbh);
 
-        foreach ($this->getTaxedItemList() as $i) {
-            $this->taxedItems[] = new TaxedItem($i['idItem'], $i['taxIdItem'], $i['Max_Days'], $i['Percentage'], $i['Description'], $i['Gl_Code']);
+        foreach ($this->loadTaxedItemList($dbh) as $i) {
+            $this->allTaxedItems[] = new TaxedItem($i['idItem'], $i['taxIdItem'], $i['Max_Days'], $i['Percentage'], $i['Description'], $i['Gl_Code']);
         }
     }
 
     protected function loadTaxedItemList(\PDO $dbh) {
 
         // Taxed items
-        $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.Internal_Number as `Max_Days`, ti.idItem as `taxIdItem`, ti.Gl_Code from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem");
+        $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.Internal_Number as `Max_Days`, ti.idItem as `taxIdItem`, ti.Gl_Code "
+                . " from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem");
         return $tistmt->fetchAll(\PDO::FETCH_ASSOC);
 
     }
 
-    /** Get sum of tax item percents connected to each taxable item.
+    /** Get sum of tax items connected to each taxable item.
      *
-     * @param type $numDays
-     * @return array
+     * @param int $numDays
+     * @return array of each taxed item containing the sum (float) of all connected taxes filtered by days.
      */
-    public function getTaxedItems($numDays) {
+    public function getTaxedItemSums($numDays) {
 
         // Any taxes
         $taxedItems = array();
 
-        foreach (getTaxedItemList() as $t) {
+        foreach ($this->getCurrentTaxedItems($numDays) as $t) {
 
-            $maxDays = intval($t['Max_Days'], 10);
-
-            if ($maxDays == 0 || $numDays <= $maxDays) {
-
-                if (isset($taxedItems[$t['idItem']])) {
-                    $taxedItems[$t['idItem']] += $t['Percentage'];
-                } else {
-                    $taxedItems[$t['idItem']] = $t['Percentage'];
-                }
+            if (isset($taxedItems[$t->getIdTaxedItem()])) {
+                $taxedItems[$t->getIdTaxedItem()] += $t->getDecimalTax();
+            } else {
+                $taxedItems[$t->getIdTaxedItem()] = $t->getDecimalTax();
             }
         }
 
@@ -92,36 +86,40 @@ class ValueAddedTax {
             throw new Hk_Exception_Runtime('The number of days to test must be > 0');
         }
 
-        foreach ($this->getTaxedItemList() as $i) {
+        foreach ($this->getAllTaxedItems() as $t) {
 
-            if ($i['idItem'] == $taxedItemId && $i['Max_Days'] > 0 && $numDays > $i['Max_Days']) {
-                $timedout[] = $i['taxIdItem'];
+            if ($t->getIdTaxedItem() == $taxedItemId && $t->getMaxDays() > 0 && $numDays > $t->getMaxDays()) {
+                $timedout[] = $t;
             }
         }
 
         return $timedout;
     }
 
-    /**
-     * Get the taxed items list who's taxing item.maxDays are optionally filtered by $numDays
-     *
-     * @param int $numDays
-     * @return array
-     */
-    public function getTaxedItemList($numDays = 0) {
+    public function getCurrentTaxedItems($numDays = 0) {
 
-        $taxedItems = array();
+        $current = array();
 
-        foreach ($this->taxedItemList as $i) {
+        foreach ($this->getAllTaxedItems() as $t) {
 
-        if ($i['Max_Days'] == 0 || $numDays <= $i['Max_Days']) {
-                $taxedItems[] = $i['taxIdItem'];
+            if ($t->getMaxDays() == 0 || $numDays <= $t->getMaxDays()) {
+                $current[] = $t;
             }
         }
 
-        return $taxedItems;
+        return $current;
     }
+
+    /**
+     *
+     * @return array of all the TaxedItems
+     */
+    public function getAllTaxedItems() {
+        return $this->allTaxedItems;
+    }
+
 }
+
 
 class TaxedItem {
 
@@ -136,7 +134,7 @@ class TaxedItem {
     public function __construct($idTaxedItem, $idTaxingItem, $maxDays, $percentTax, $taxingItemDesc, $taxingItemGlCode) {
         $this->idTaxedItem = $idTaxedItem;
         $this->idTaxingItem = $idTaxingItem;
-        $this->maxDays = $maxDays;
+        $this->maxDays = intval($maxDays, 10);
         $this->percentTax = $percentTax;
         $this->taxingItemDesc = $taxingItemDesc;
         $this->taxingItemGlCode = $taxingItemGlCode;

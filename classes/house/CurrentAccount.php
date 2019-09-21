@@ -27,45 +27,46 @@
 
 class CurrentAccount {
 
-    protected $numberNitesStayed;
-    protected $addnlGuestNites;
-    protected $visitGlideCredit;
+    protected $numberNitesStayed = 0;
+    protected $addnlGuestNites = 0;
+    protected $visitGlideCredit = 0;
     protected $visitStatus;
     protected $showRoomFees;
     protected $showGuestNites;
     protected $showVisitFee;
 
     // Charges.
-    protected $lodgingTax;
-    protected $additionalChargeTax;
+    protected $lodgingTax = 0;
+    protected $additionalChargeTax = 0;
+    protected $reimburseTax;
 
-    protected $roomCharge;
-    protected $totalDiscounts;
-    protected $visitFeeCharged;
-    protected $additionalCharge;
-    protected $unpaidMOA;
+    protected $roomCharge = 0;
+    protected $totalDiscounts = 0;
+    protected $visitFeeCharged = 0;
+    protected $additionalCharge = 0;
+    protected $unpaidMOA = 0;
 
     // Visit Fee Balance
-    protected $vfeeBal;
+    protected $vfeeBal = 0;
 
     // Room fee balance
-    protected $roomFeeBalance;
+    protected $roomFeeBalance = 0;
 
     // Payments
-    protected $totalPaid;
+    protected $totalPaid = 0;
 
     // Pending amounts
-    protected $amtPending;
+    protected $amtPending = 0;
 
-    protected $dueToday;
+    protected $dueToday = 0;
 
     public function __construct($visitStatus, $showVisitFee = FALSE, $showRoomFees = FALSE, $showGuestNights = FALSE) {
 
 
-        $this->visitStatus = $visitStatus;
-        $this->showRoomFees = $showRoomFees;
-        $this->showGuestNites = $showGuestNights;
-        $this->showVisitFee = $showVisitFee;
+        $this->visitStatus = $visitStatus === FALSE ? FALSE : TRUE;
+        $this->showRoomFees = $showRoomFees === FALSE ? FALSE : TRUE;;
+        $this->showGuestNites = $showGuestNights === FALSE ? FALSE : TRUE;;
+        $this->showVisitFee = $showVisitFee === FALSE ? FALSE : TRUE;;
     }
 
     public function load(VisitCharges $visitCharge, ValueAddedTax $vat) {
@@ -83,20 +84,22 @@ class CurrentAccount {
         $this->setUnpaidMOA($visitCharge->getItemInvPending(ItemId::LodgingMOA));
 
         // Lodging taxes
-        $taxedItems = $vat->getTaxedItems($visitCharge->getNightsStayed());
+        $taxedItems = $vat->getTaxedItemSums($visitCharge->getNightsStayed());
 
         if (isset($taxedItems[ItemId::Lodging])) {
-            $this->setLodgingTax(max(0, round(($this->getRoomCharge() + $this->getTotalDiscounts()) * $taxedItems[ItemId::Lodging] / 100, 2)));
+            $this->setLodgingTax(max(0, round(($this->getRoomCharge() + $this->getTotalDiscounts()) * $taxedItems[ItemId::Lodging], 2)));
         } else {
             $this->setLodgingTax(0);
         }
 
         // Reimburse vat?
-        
+        foreach($vat->getTimedoutTaxItems(ItemId::Lodging, $visitCharge->getNightsStayed()) as $t) {
+            $this->sumReimburseTax($t->getIdTaxingItem(), $visitCharge->getItemInvCharges($t->getIdTaxingItem()));
+        }
 
         // Additional Charge taxes?
         if (isset($taxedItems[ItemId::AddnlCharge])) {
-            $this->setAdditionalChargeTax(round($this->getAdditionalCharge() * $taxedItems[ItemId::AddnlCharge] / 100, 2));
+            $this->setAdditionalChargeTax(round($this->getAdditionalCharge() * $taxedItems[ItemId::AddnlCharge], 2));
         } else {
             $this->setAdditionalChargeTax(0);
         }
@@ -221,6 +224,24 @@ class CurrentAccount {
         return $this->dueToday;
     }
 
+    public function getReimburseTax() {
+        return $this->reimburseTax;
+    }
+
+    public function setReimburseTax($taxingId, $reimburseTax) {
+        $this->reimburseTax[$taxingId] = $reimburseTax;
+        return $this;
+    }
+
+    public function sumReimburseTax($taxingId, $reimburseTax) {
+        if (isset($this->reimburseTax[$taxingId])) {
+            $this->reimburseTax[$taxingId] += $reimburseTax;
+        } else {
+            $this->reimburseTax[$taxingId] = $reimburseTax;
+        }
+        return $this;
+    }
+
     public function setDueToday() {
 
         $dueToday = round($this->getTotalCharged() - $this->getTotalPaid() - $this->getAmtPending(), 2);
@@ -233,7 +254,6 @@ class CurrentAccount {
         $this->dueToday = $dueToday;
         return $this;
     }
-
 
     public function setRoomFeeBalance($roomFeeBalance) {
         $this->roomFeeBalance = $roomFeeBalance;

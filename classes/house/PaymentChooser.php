@@ -236,7 +236,7 @@ class PaymentChooser {
     }
 
 
-    public static function createMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, $defaultPayType, $deposit, $showFinalPayment = FALSE, $payVFeeFirst = TRUE, $prefTokenId = 0) {
+    public static function createMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, $defaultPayType, $useDeposit, $showFinalPayment = FALSE, $payVFeeFirst = TRUE, $prefTokenId = 0) {
 
         $uS = Session::getInstance();
 
@@ -255,7 +255,7 @@ class PaymentChooser {
         $labels = new Config_Lite(LABEL_FILE);
 
         // Get taxed items
-        $taxedItems = getTaxedItems($dbh, $visitCharge->getNightsStayed());
+        $vat = new ValueAddedTax($dbh);
 
         $useVisitFee = FALSE;
         if($uS->VisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == '')){
@@ -265,18 +265,19 @@ class PaymentChooser {
         $mkup = HTMLContainer::generateMarkup('div',
                 self::createPaymentMarkup(
                     $showRoomFees,
-                    $deposit,
-                    $visitCharge->getDepositCharged(),
-                    ($visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid()),
+                    $useDeposit,
+                    $visitCharge,
+                    //$visitCharge->getDepositCharged(),
+                    //($visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid()),
                     $useVisitFee,
-                    $visitCharge->getVisitFeeCharged(),
-                    ($visitCharge->getVisitFeesPaid() + $visitCharge->getVisitFeesPending()),
+                    //$visitCharge->getVisitFeeCharged(),
+                    //($visitCharge->getVisitFeesPaid() + $visitCharge->getVisitFeesPending()),
                     Registration::loadLodgingBalance($dbh, $idRegistration),
                     $payVFeeFirst,
                     $showFinalPayment,
                     $unpaidInvoices,
                     $labels,
-                    $taxedItems,
+                    $vat,
                     $visitCharge->getIdVisit(),
                     readGenLookupsPDO($dbh, 'ExcessPays'),
                     $uS->VisitExcessPaid,
@@ -404,7 +405,7 @@ class PaymentChooser {
                 FALSE,
                 array(),
                 $labels,
-                getTaxedItems($dbh, $visitCharge->getNightsStayed()),
+                new ValueAddedTax($dbh),
                 $visitCharge->getIdVisit(),
                 array(),
                 '',
@@ -618,7 +619,7 @@ ORDER BY v.idVisit , v.Span;");
                                 FALSE,
                                 $unpaidInvoices,
                                 $labels,
-                                getTaxedItems($dbh, 0))
+                                new ValueAddedTax($dbh))
                         , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
                 );
 
@@ -648,8 +649,8 @@ ORDER BY v.idVisit , v.Span;");
         return HTMLContainer('h3', "No unpaid invoices found.");
     }
 
-    protected static function createPaymentMarkup($showRoomFees, $useKeyDeposit, $keyDepAmount, $keyDepPaid, $useVisitFee, $visitFeeAmt, $visitFeePaid, $heldAmount, $payVFeeFirst,
-            $showFinalPaymentCB, array $unpaidInvoices, $labels, $taxedItems,  $idVisit = 0, $excessPays = array(), $defaultExcessPays = ExcessPay::Ignore, $useHouseWaive = FALSE) {
+    protected static function createPaymentMarkup($showRoomFees, $useKeyDeposit, VisitCharges $visitCharge, $useVisitFee, $heldAmount, $payVFeeFirst,
+            $showFinalPaymentCB, array $unpaidInvoices, $labels, ValueAddedTax $vat,  $idVisit = 0, $excessPays = array(), $defaultExcessPays = ExcessPay::Ignore, $useHouseWaive = FALSE) {
 
         $feesTbl = new HTMLTable();
 
@@ -668,13 +669,13 @@ ORDER BY v.idVisit , v.Span;");
                 . HTMLTable::makeTd(
                      HTMLContainer::generateMarkup('label', "Pay", array('for'=>'keyDepRx', 'style'=>'margin-left:5px;margin-right:3px;'))
                     .HTMLInput::generateMarkup('', array('name'=>'keyDepRx', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.4em;', 'title'=>'Check if ' . $depositLabel . ' Received.'))
-                    .HTMLContainer::generateMarkup('span', ($keyDepAmount > 0 ? '($' . $keyDepAmount . ')' : ''), array('id'=>'spnDepAmt')))
-                    .HTMLInput::generateMarkup($keyDepAmount, array('id'=>'hdnKeyDepAmt', 'type'=>'hidden'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($keyDepAmount, array('name'=>'keyDepAmt', 'size'=>'8', 'style'=>'border:none;text-align:right;', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'title'=>$depositLabel . ' Amount')), array('style'=>'text-align:right;'));
+                    .HTMLContainer::generateMarkup('span', ($visitCharge->getDepositCharged() > 0 ? '($' . $visitCharge->getDepositCharged() . ')' : ''), array('id'=>'spnDepAmt')))
+                    .HTMLInput::generateMarkup($visitCharge->getDepositCharged(), array('id'=>'hdnKeyDepAmt', 'type'=>'hidden'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($visitCharge->getDepositCharged(), array('name'=>'keyDepAmt', 'size'=>'8', 'style'=>'border:none;text-align:right;', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'title'=>$depositLabel . ' Amount')), array('style'=>'text-align:right;'));
 
             $attrs = array('class'=>'hhk-kdrow', 'style'=>'display:none;');
 
-            if ($keyDepAmount > 0) {
+            if ($visitCharge->getDepositCharged() > 0) {
                 unset($attrs['style']);
             }
 
@@ -687,6 +688,8 @@ ORDER BY v.idVisit , v.Span;");
 
             $vFeeTitle = $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee');
             $visitFee = HTMLTable::makeTd($vFeeTitle . ':', array('class'=>'tdlabel'));
+            $visitFeeAmt = $visitCharge->getVisitFeeCharged();
+            $visitFeePaid = $visitCharge->getVisitFeesPaid() + $visitCharge->getVisitFeesPending();
 
             if ($visitFeeAmt == 0) {
 
@@ -745,6 +748,7 @@ ORDER BY v.idVisit , v.Span;");
 
 
             // Deposit Return Amount
+            $keyDepPaid = $visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid();
             if ($keyDepPaid > 0) {
                 $feesTbl->addBodyTr(
                     HTMLTable::makeTd('Deposit Refund:', array('class'=>'tdlabel'))
@@ -767,6 +771,22 @@ ORDER BY v.idVisit , v.Span;");
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
         }
 
+        // Reimburse VAT.
+        $sumReimburseTax = 0;
+        foreach($vat->getTimedoutTaxItems(ItemId::Lodging, $visitCharge->getNightsStayed()) as $t) {
+            $sumReimburseTax += abs($visitCharge->getItemInvCharges($t->getIdTaxingItem()));
+        }
+
+        if ($sumReimburseTax > 0) {
+            $feesTbl->addBodyTr(
+                HTMLTable::makeTd('Tax Reimbusement:', array('class'=>'tdlabel', 'title'=>'Reimbursed taxes'))
+                .HTMLTable::makeTd(
+                        HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbReimburseVAT', 'style'=>'margin-left:5px;margin-right:3px;'))
+                        .HTMLInput::generateMarkup('', array('name'=>'cbReimburseVAT', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-amt'=> number_format($sumReimburseTax, 2)))
+                    .HTMLContainer::generateMarkup('span', ($sumReimburseTax > 0 ? '($' . number_format($sumReimburseTax, 2) . ')' : ''), array('id'=>'spnHeldAmt')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'reimburseVat', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
+        }
+
 
         // Total Charges
         $feesTbl->addBodyTr(
@@ -776,7 +796,7 @@ ORDER BY v.idVisit , v.Span;");
 
 
         if ($showRoomFees) {
-
+            $taxedItems = $vat->getTaxedItemSums($visitCharge->getNightsStayed());
             $tax = (isset($taxedItems[ItemId::Lodging]) ? $taxedItems[ItemId::Lodging] : 0);
 
             $feesTbl->addBodyTr(HTMLTable::makeTd('Pay Room Fees:', array('class'=>'tdlabel'))

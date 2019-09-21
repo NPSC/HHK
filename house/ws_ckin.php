@@ -34,6 +34,7 @@ require (CLASSES . 'LinkNote.php');
 require (CLASSES . 'US_Holidays.php');
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'FinAssistance.php');
+require (CLASSES . "ValueAddedTax.php");
 
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
@@ -89,7 +90,6 @@ require (HOUSE . 'VisitLog.php');
 require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Vehicle.php');
 require (HOUSE . 'Visit.php');
-require (HOUSE . "ValueAddedTax.php");
 require (HOUSE . "CurrentAccount.php");
 require (HOUSE . "visitViewer.php");
 

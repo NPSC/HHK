@@ -20,6 +20,7 @@ class PaymentManager {
     public $depositRefundAmt = 0;
     public $guestCreditAmt = 0;
     public $moaRefundAmt = 0;
+    public $vatReimburseAmt = 0;
 
     /**
      *
@@ -73,7 +74,8 @@ class PaymentManager {
 
             // Taxed items
             $vat = new ValueAddedTax($dbh);
-            $taxRate = $vat->getTaxedItems($this->pmp->visitCharges->getNightsStayed()) / 100;
+            $taxRates = $vat->getTaxedItemSums($this->pmp->visitCharges->getNightsStayed());
+            $taxRate = $taxRates[ItemId::Lodging];
 
             // Collect account information on visit.
             $roomAccount = new CurrentAccount(
@@ -141,6 +143,21 @@ class PaymentManager {
                 }
             }
 
+            // VAT reimbursements
+            if (count($roomAccount->getReimburseTax()) > 0) {
+
+                foreach ($roomAccount->getReimburseTax() as $taxingId => $sum) {
+
+                    $this->vatReimburseAmt = abs($sum);
+                    $invLine = new ReimburseInvoiceLine($uS->ShowLodgDates);
+                    $invLine->appendDescription($notes);
+                    $invLine->createNewLine(new Item($dbh, $taxingId, (0 - $this->vatReimburseAmt)), 1, 'Refund');
+
+                    $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
+                    $this->invoice->addLine($dbh, $invLine, $uS->username);
+                }
+            }
+
 
             // Just use what they are willing to pay as the charge.
             $roomChargesPreTax = $this->pmp->getRatePayment();
@@ -160,12 +177,13 @@ class PaymentManager {
 
                         $depPreTax = round($this->depositRefundAmt / (1 + $taxRate), 2);
                         $moaPreTax = round($this->moaRefundAmt / (1 + $taxRate), 2);
+                        $vatPreTax = round($this->vatReimburseAmt / (1 + $taxRate), 2);
 
                         // is there too much paid
-                        if ($this->pmp->getRatePayment() + $depPreTax + $moaPreTax > $roomAccount->getRoomFeeBalance()) {
+                        if ($this->pmp->getRatePayment() + $depPreTax + $moaPreTax + $vatPreTax > $roomAccount->getRoomFeeBalance()) {
                             $roomChargesPreTax = $roomAccount->getRoomFeeBalance();
                         } else {
-                            $roomChargesPreTax = $this->pmp->getRatePayment() + $depPreTax + $moaPreTax;
+                            $roomChargesPreTax = $this->pmp->getRatePayment() + $depPreTax + $moaPreTax + $vatPreTax;
                         }
                     }
 
@@ -221,11 +239,11 @@ class PaymentManager {
 
                 if ($roomChargesTaxable > 0) {
 
-                    foreach ($vat->getTaxedItemList($this->pmp->visitCharges->getNightsStayed()) as $i) {
+                    foreach ($vat->getCurrentTaxedItems($this->pmp->visitCharges->getNightsStayed()) as $t) {
 
-                        if ($i['idItem'] == ItemId::Lodging) {
+                        if ($t->getIdTaxedItem() == ItemId::Lodging) {
                             $taxInvoiceLine = new TaxInvoiceLine();
-                            $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $roomChargesTaxable), $i['Percentage']/100, '');
+                            $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), $roomChargesTaxable), $t->getDecimalTax(), '');
                             $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
                             $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
                         }

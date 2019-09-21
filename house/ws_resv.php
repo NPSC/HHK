@@ -53,7 +53,7 @@ require (PMT . 'Transaction.php');
 require (PMT . 'CreditToken.php');
 
 require (CLASSES . 'Purchase/Item.php');
-
+require (CLASSES . "ValueAddedTax.php");
 require(CLASSES . 'Purchase/RoomRate.php');
 
 require (MEMBER . 'Member.php');
@@ -94,7 +94,7 @@ require (HOUSE . 'Vehicle.php');
 require (HOUSE . 'Visit.php');
 require (HOUSE . 'Family.php');
 require (HOUSE . "visitViewer.php");
-require (HOUSE . "ValueAddedTax.php");
+
 require (HOUSE . "CurrentAccount.php");
 
 require (HOUSE . 'VisitCharges.php');

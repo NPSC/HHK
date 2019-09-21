@@ -257,7 +257,7 @@ class VisitCharges {
             $this->itemSums[$l['Item_Id']][$stat] += $l['Amount'];
 
             // is this a tax?
-            if ($l['Type_Id'] == 2) {
+            if ($l['Type_Id'] == InvoiceLineType::Tax) {
                 $this->itemSums['tax'][$stat] += $l['Amount'];
             }
 
@@ -436,6 +436,11 @@ where
 
     public function getKeyFeesPaid() {
         return $this->getItemInvPayments(ItemId::KeyDeposit)
+                    + $this->getItemInvPayments(ItemId::DepositRefund);
+    }
+
+    public function getTaxesPaid($itemId) {
+        return $this->getItemInvPayments($itemId)
                     + $this->getItemInvPayments(ItemId::DepositRefund);
     }
 
