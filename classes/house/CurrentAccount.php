@@ -64,9 +64,11 @@ class CurrentAccount {
 
 
         $this->visitStatus = $visitStatus === FALSE ? FALSE : TRUE;
-        $this->showRoomFees = $showRoomFees === FALSE ? FALSE : TRUE;;
-        $this->showGuestNites = $showGuestNights === FALSE ? FALSE : TRUE;;
-        $this->showVisitFee = $showVisitFee === FALSE ? FALSE : TRUE;;
+        $this->showRoomFees = $showRoomFees === FALSE ? FALSE : TRUE;
+        $this->showGuestNites = $showGuestNights === FALSE ? FALSE : TRUE;
+        $this->showVisitFee = $showVisitFee === FALSE ? FALSE : TRUE;
+
+        $this->reimburseTax = array();
     }
 
     public function load(VisitCharges $visitCharge, ValueAddedTax $vat) {
@@ -129,14 +131,6 @@ class CurrentAccount {
                 + $visitCharge->get3rdPartyPending(ItemId::Waive)
                 + $visitCharge->get3rdPartyPending('tax'));
 
-    }
-
-    public function toJSON() {
-
-        $pack = array(
-            'roomFeeBal' => $this->getRoomFeeBalance(),
-
-        );
     }
 
     public function getAddnlGuestNites() {

@@ -148,13 +148,15 @@ class PaymentManager {
 
                 foreach ($roomAccount->getReimburseTax() as $taxingId => $sum) {
 
-                    $this->vatReimburseAmt = abs($sum);
-                    $invLine = new ReimburseInvoiceLine($uS->ShowLodgDates);
-                    $invLine->appendDescription($notes);
-                    $invLine->createNewLine(new Item($dbh, $taxingId, (0 - $this->vatReimburseAmt)), 1, 'Refund');
+                    if (abs($sum) > 0) {
 
-                    $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
-                    $this->invoice->addLine($dbh, $invLine, $uS->username);
+                        $this->vatReimburseAmt += abs($sum);
+                        $invLine = new TaxInvoiceLine($uS->ShowLodgDates);
+                        $invLine->createNewLine(new Item($dbh, $taxingId, (0 - $sum)), 1, 'Reimburse');
+                        $invLine->setSourceItemId(ItemId::Lodging);
+                        $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
+                        $this->invoice->addLine($dbh, $invLine, $uS->username);
+                    }
                 }
             }
 

@@ -439,11 +439,6 @@ where
                     + $this->getItemInvPayments(ItemId::DepositRefund);
     }
 
-    public function getTaxesPaid($itemId) {
-        return $this->getItemInvPayments($itemId)
-                    + $this->getItemInvPayments(ItemId::DepositRefund);
-    }
-
     public function getIdVisit() {
         return $this->idVisit;
     }

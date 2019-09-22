@@ -806,14 +806,16 @@ ORDER BY v.idVisit , v.Span;");
 
             if ($tax > 0) {
 
+                $percent = $tax * 100;
                 $precision = 3;
-                if ($tax == round($tax)) {
+
+                if ($percent == round($percent)) {
                     $precision = 0;
                 }
 
                 // show tax line
                 $feesTbl->addBodyTr(HTMLTable::makeTd('Tax:', array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd('( '.number_format($tax, $precision).'% )', array('style'=>'text-align:center; font-size:smaller;'))
+                    .HTMLTable::makeTd('( '.number_format($percent, $precision).'% )', array('style'=>'text-align:center; font-size:smaller;'))
                     .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesTax', 'size'=>'6', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
                     , array('class'=>'hhk-RoomFees'));
             }

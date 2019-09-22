@@ -1314,7 +1314,7 @@ class Visit {
 
                     $reply .= 'Visit Arrival date changed to: ' . $firstStayStartDT->format('M j, Y') . '.  ';
 
-                    // Update reservation expected departure
+                    // Update reservation actual Arrival
                     $resv = Reservation_1::instantiateFromIdReserv($dbh, $this->getReservationId());
                     $resv->setActualArrival($startStr);
                     $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
