@@ -168,39 +168,6 @@ function doExcelDownLoad($rows, $fileName) {
 
 }
 
-function getTaxedItems(\PDO $dbh, $numDays) {
-
-    // Any taxes
-    $taxedItems = array();
-
-    $tItems = getTaxedItemList($dbh);
-
-    foreach ($tItems as $t) {
-
-        $maxDays = intval($t['Max_Days'], 10);
-
-        if ($maxDays == 0 || $numDays <= $maxDays) {
-
-            if (isset($taxedItems[$t['idItem']])) {
-                $taxedItems[$t['idItem']] += $t['Percentage'];
-            } else {
-                $taxedItems[$t['idItem']] = $t['Percentage'];
-            }
-        }
-    }
-
-    return $taxedItems;
-}
-
-function getTaxedItemList(\PDO $dbh) {
-
-    // Taxed items
-    $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.Internal_Number as `Max_Days`, ti.idItem as `taxIdItem` from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem");
-    return $tistmt->fetchAll(\PDO::FETCH_ASSOC);
-
-}
-
-
 function prepareEmail() {
 
     $uS = Session::getInstance();

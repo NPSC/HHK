@@ -73,9 +73,9 @@ class PaymentManager {
 
 
             // Taxed items
-            $vat = new ValueAddedTax($dbh);
+            $vat = new ValueAddedTax($dbh, $visit->getIdVisit());
             $taxRates = $vat->getTaxedItemSums($this->pmp->visitCharges->getNightsStayed());
-            $taxRate = $taxRates[ItemId::Lodging];
+            $taxRate = isset($taxRates[ItemId::Lodging]) ? $taxRates[ItemId::Lodging]: 0;
 
             // Collect account information on visit.
             $roomAccount = new CurrentAccount(
@@ -280,19 +280,21 @@ class PaymentManager {
 
                     $reversalAmt = $this->guestCreditAmt;
 
+                    $taxRates = $vat->getTaxedItemSums(0);  // Get all taxes, no timeouts.
 
-                    if ($taxRate > 0) {
+                    if ($taxRates[ItemId::Lodging] > 0) {
                         // we caught taxes.  Reduce reversalAmt by the sum of tax rates.
-                        $reversalAmt = round($reversalAmt / (1 + ($taxRate)), 2);
+                        $reversalAmt = round($reversalAmt / (1 + ($taxRates[ItemId::Lodging])), 2);
 
                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
 
                         // Add the tax lines back into the mix
-                        foreach ($taxedItemList as $i) {
+                        foreach ($vat->getAllTaxedItems() as $t) {
 
-                            if ($i['idItem'] == ItemId::Lodging && ($i['Max_Days'] == 0 || $this->pmp->visitCharges->getNightsStayed() <= $i['Max_Days'])) {
+                            if ($t->getIdTaxedItem() == ItemId::Lodging) {
+                                
                                 $taxInvoiceLine = new TaxInvoiceLine();
-                                $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], (0 - $reversalAmt)), $i['Percentage']/100, '');
+                                $taxInvoiceLine->createNewLine(new Item($dbh, $t->getTaxingItem(), (0 - $reversalAmt)), $t->getDecimalTax(), '');
                                 $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
                                 $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
                                 $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);

@@ -16,8 +16,9 @@
 class ItemRS extends TableRS {
 
     public $idItem;  // INTEGER NOT NULL,
-    public $Internal_Number;  // VARCHAR(50) NOT NULL default '',
-    public $Entity_Id;  // INTEGER NOT NULL DEFAULT 0,
+    public $Timeout_Days;  // VARCHAR(50) NOT NULL default '',
+    public $First_Order_Id;  // INTEGER NOT NULL DEFAULT 0,
+    public $Last_Order_Id;  // INTEGER NOT NULL DEFAULT 0,
     public $Percentage;  // DECIMAL(22,10) NOT NULL DEFAULT '0.00',
     public $Deleted;  // SMALLINT default 0 NOT NULL DEFAULT '0',
     public $Has_Decimals;  // SMALLINT default 0 NOT NULL DEFAULT '0',
@@ -26,8 +27,9 @@ class ItemRS extends TableRS {
 
     function __construct($TableName = 'item') {
         $this->idItem = new DB_Field('idItem', 0, new DbIntSanitizer(), TRUE, TRUE);
-        $this->Internal_Number = new DB_Field('Internal_Number', '', new DbStrSanitizer(50), TRUE, TRUE);
-        $this->Entity_Id = new DB_Field('Entity_Id', 0, new DbIntSanitizer(), TRUE, TRUE);
+        $this->Timeout_Days = new DB_Field('Timeout_Days', '', new DbStrSanitizer(50), TRUE, TRUE);
+        $this->First_Order_Id = new DB_Field('First_Order_Id', 0, new DbIntSanitizer(), TRUE, TRUE);
+        $this->Last_Order_Id = new DB_Field('Last_Order_Id', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Percentage = new DB_Field('Percentage', 0, new DbDecimalSanitizer(), TRUE, TRUE);
         $this->Deleted = new DB_Field('Deleted', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Has_Decimals = new DB_Field('Has_Decimals', 0, new DbIntSanitizer(), TRUE, TRUE);

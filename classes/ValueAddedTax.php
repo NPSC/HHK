@@ -33,33 +33,78 @@ class ValueAddedTax {
 
     protected $allTaxedItems;
 
-    public function __construct(\PDO $dbh) {
+    /**
+     * 
+     * @param \PDO $dbh
+     * @param int $idVisit  must be NULL to use idRegistration.
+     * @param int $idRegistration
+     * @throws Hk_Exception_Runtime
+     */
+    public function __construct(\PDO $dbh, $idVisit, $idRegistration = 0) {
+        
+        $this->allTaxedItems = array();
+        
+        if (is_null($idVisit) === FALSE) {
 
-        foreach ($this->loadTaxedItemList($dbh) as $i) {
-            $this->allTaxedItems[] = new TaxedItem($i['idItem'], $i['taxIdItem'], $i['Max_Days'], $i['Percentage'], $i['Description'], $i['Gl_Code']);
+            foreach ($this->loadTaxedItemList($dbh, $idVisit) as $i) {
+                $this->allTaxedItems[] = new TaxedItem($i['idItem'], $i['taxIdItem'], $i['Max_Days'], $i['Percentage'], $i['Description'], $i['Gl_Code'], $i['First_Order_Id'], $i['Last_Order_Id']);
+            }
+        } else if ($idRegistration > 0) {
+            
+            foreach ($this->loadTaxedItemListReg($dbh, $idRegistration) as $i) {
+                $this->allTaxedItems[] = new TaxedItem($i['idItem'], $i['taxIdItem'], $i['Max_Days'], $i['Percentage'], $i['Description'], $i['Gl_Code'], $i['First_Order_Id'], $i['Last_Order_Id']);
+            }
+        } else {
+            throw new Hk_Exception_Runtime('Value Added tax is missing a valid visit id or registration id');
         }
     }
 
-    protected function loadTaxedItemList(\PDO $dbh) {
+    /**
+     * Get current taxes for a particular visit id.
+     * 
+     * @param \PDO $dbh
+     * @param int $idVisit
+     * @return []
+     */
+    protected function loadTaxedItemList(\PDO $dbh, $idVisit) {
 
         // Taxed items
-        $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.Internal_Number as `Max_Days`, ti.idItem as `taxIdItem`, ti.Gl_Code "
-                . " from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem");
+        $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.Timeout_Days as `Max_Days`, ti.idItem as `taxIdItem`, ti.Gl_Code, ti.First_Order_Id, ti.Last_Order_Id "
+                . " from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem"
+                . " where ti.Deleted = 0 and (($idVisit = 0 and ti.Last_Order_Id = 0) or (($idVisit <= ti.Last_Order_Id or ti.Last_Order_Id= 0) and $idVisit >= ti.First_Order_Id))");
+        
         return $tistmt->fetchAll(\PDO::FETCH_ASSOC);
-
     }
 
+    /**
+     * Load taxes for all visits associated with a registration Id.
+     * 
+     * @param \PDO $dbh
+     * @param int $idReg
+     * @return []
+     */
+    protected function loadTaxedItemListReg(\PDO $dbh, $idReg) {
+
+        // Taxed items
+        $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.Timeout_Days as `Max_Days`, ti.idItem as `taxIdItem`, ti.Gl_Code, ti.First_Order_Id, ti.Last_Order_Id "
+                . " from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem"
+                . " Join visit v on v.idRegistration = $idReg"
+                . " where ti.Deleted = 0 and v.idVisit >= ti.First_Order_Id and v.idVisit <= ti.Last_Order_Id");
+        
+        return $tistmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+    
     /** Get sum of tax items connected to each taxable item.
      *
      * @param int $numDays
      * @return array of each taxed item containing the sum (float) of all connected taxes filtered by days.
      */
-    public function getTaxedItemSums($numDays) {
+    public function getTaxedItemSums($numDays, $idVisit = NULL) {
 
         // Any taxes
         $taxedItems = array();
 
-        foreach ($this->getCurrentTaxedItems($numDays) as $t) {
+        foreach ($this->getCurrentTaxedItems($numDays, $idVisit) as $t) {
 
             if (isset($taxedItems[$t->getIdTaxedItem()])) {
                 $taxedItems[$t->getIdTaxedItem()] += $t->getDecimalTax();
@@ -78,7 +123,7 @@ class ValueAddedTax {
      * @param int $numDays  the number of days under the tax
      * @return array tax item id's that have timed out.
      */
-    public function getTimedoutTaxItems($taxedItemId, $numDays) {
+    public function getTimedoutTaxItems($taxedItemId, $numDays, $idVisit = NULL) {
 
         $timedout = array();
 
@@ -86,7 +131,7 @@ class ValueAddedTax {
             throw new Hk_Exception_Runtime('The number of days to test must be > 0');
         }
 
-        foreach ($this->getAllTaxedItems() as $t) {
+        foreach ($this->getAllTaxedItems($idVisit) as $t) {
 
             if ($t->getIdTaxedItem() == $taxedItemId && $t->getMaxDays() > 0 && $numDays > $t->getMaxDays()) {
                 $timedout[] = $t;
@@ -96,11 +141,11 @@ class ValueAddedTax {
         return $timedout;
     }
 
-    public function getCurrentTaxedItems($numDays = 0) {
+    public function getCurrentTaxedItems($numDays = 0, $idVisit = NULL) {
 
         $current = array();
 
-        foreach ($this->getAllTaxedItems() as $t) {
+        foreach ($this->getAllTaxedItems($idVisit) as $t) {
 
             if ($t->getMaxDays() == 0 || $numDays <= $t->getMaxDays()) {
                 $current[] = $t;
@@ -114,8 +159,23 @@ class ValueAddedTax {
      *
      * @return array of all the TaxedItems
      */
-    public function getAllTaxedItems() {
-        return $this->allTaxedItems;
+    public function getAllTaxedItems($idVisit = NULL) {
+        
+        if (is_null($idVisit)) {
+            return $this->allTaxedItems;
+        } else {
+            
+            $taxSubset = [];
+            
+            foreach ($this->allTaxedItems as $t) {
+                
+                if ($idVisit >= $t->getFirstOrderId() && $idVisit <= $t->getLastOrderId()) {
+                    $taxSubset[] = $t;
+                }
+            }
+            
+            return $taxSubset;
+        }
     }
 
 }
@@ -130,14 +190,18 @@ class TaxedItem {
     protected $decimalTax;
     protected $taxingItemDesc;
     protected $taxingItemGlCode;
+    protected $firstOrderId;
+    protected $lastOrderId;
 
-    public function __construct($idTaxedItem, $idTaxingItem, $maxDays, $percentTax, $taxingItemDesc, $taxingItemGlCode) {
+    public function __construct($idTaxedItem, $idTaxingItem, $maxDays, $percentTax, $taxingItemDesc, $taxingItemGlCode, $firstOrderId, $lastOrderId) {
         $this->idTaxedItem = $idTaxedItem;
         $this->idTaxingItem = $idTaxingItem;
         $this->maxDays = intval($maxDays, 10);
         $this->percentTax = $percentTax;
         $this->taxingItemDesc = $taxingItemDesc;
         $this->taxingItemGlCode = $taxingItemGlCode;
+        $this->firstOrderId = $firstOrderId;
+        $this->lastOrderId = $lastOrderId;
     }
 
     public function getIdTaxedItem() {
@@ -168,5 +232,12 @@ class TaxedItem {
         return $this->taxingItemGlCode;
     }
 
+    public function getFirstOrderId() {
+        return $this->firstOrderId;
+    }
+
+    public function getLastOrderId() {
+        return $this->lastOrderId;
+    }
 
 }

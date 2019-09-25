@@ -202,7 +202,7 @@ function setupRates(ckIn) {
             $('#spnLodging').text('$' + lodging.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
             
             if (tax > 0) {
-                taxAmt = amt * tax / 100;
+                taxAmt = amt * tax;
                 $('#spnRcTax').text('$' + taxAmt.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
             }
             total = (amt * days) + fa + taxAmt;
@@ -251,7 +251,7 @@ function setupRates(ckIn) {
                 $('#spnLodging').text('$' + amt.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
                 
                 if (tax > 0) {
-                    taxAmt = amt * tax / 100;
+                    taxAmt = amt * tax;
                     $('#spnRcTax').text('$' + taxAmt.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
                 }
                 amt += fa + taxAmt;

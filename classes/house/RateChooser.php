@@ -582,8 +582,15 @@ where
         }
 
         // Get taxed items
-        $taxedItems = getTaxedItems($dbh);
+        $vat = new ValueAddedTax($dbh, 0);
+        $taxedItems = $vat->getTaxedItemSums(0);
         $tax = (isset($taxedItems[ItemId::Lodging]) ? $taxedItems[ItemId::Lodging] : 0);
+        $percent = $tax * 100;
+        $precision = 3;
+
+        if ($percent == round($percent)) {
+            $precision = 0;
+        }
 
         $tbl = new HTMLTable();
 
@@ -593,7 +600,7 @@ where
             .HTMLTable::makeTh('Adjustment', $attrAdj)
             .HTMLTable::makeTh('Estimated Nights')
             .($this->payVisitFee || $tax > 0 ? HTMLTable::makeTh('Estimated Lodging') : '')
-            .($tax > 0 ? HTMLTable::makeTh('Tax (' . number_format($tax, 3).'%)') : '')
+            .($tax > 0 ? HTMLTable::makeTh('Tax (' . number_format($percent, $precision).'%)') : '')
             .HTMLTable::makeTh('Estimated Total'));
 
         $tbl->addBodyTr(
