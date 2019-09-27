@@ -144,18 +144,25 @@ class PaymentManager {
             }
 
             // VAT reimbursements
-            if (count($roomAccount->getReimburseTax()) > 0) {
+            if ($this->pmp->getReimburseTaxCb() && count($roomAccount->getReimburseTax()) > 0) {
+                
+                $feeAccumulator = $this->pmp->getRatePayment();
 
                 foreach ($roomAccount->getReimburseTax() as $taxingId => $sum) {
 
                     if (abs($sum) > 0) {
 
                         $this->vatReimburseAmt += abs($sum);
-                        $invLine = new TaxInvoiceLine($uS->ShowLodgDates);
-                        $invLine->createNewLine(new Item($dbh, $taxingId, (0 - $sum)), 1, 'Reimburse');
-                        $invLine->setSourceItemId(ItemId::Lodging);
-                        $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
-                        $this->invoice->addLine($dbh, $invLine, $uS->username);
+                        
+                        if ($this->vatReimburseAmt <= $feeAccumulator) {
+                            $feeAccumulator -= $sum;
+                            
+                            $invLine = new TaxInvoiceLine($uS->ShowLodgDates);
+                            $invLine->createNewLine(new Item($dbh, $taxingId, (0 - $sum)), 1, 'Reimburse');
+                            $invLine->setSourceItemId(ItemId::Lodging);
+                            $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
+                            $this->invoice->addLine($dbh, $invLine, $uS->username);
+                        }
                     }
                 }
             }
@@ -236,7 +243,8 @@ class PaymentManager {
                 if ($this->pmp->getFinalPaymentFlag() && $housePaymentAmt > 0) {
                     $roomChargesTaxable = $roomChargesPreTax - $housePaymentAmt - $this->pmp->getPayInvoicesAmt();
                 } else {
-                    $roomChargesTaxable = $roomChargesPreTax;
+                    // Add the tax reimbursement, if any, in order to tax it.
+                    $roomChargesTaxable = $roomChargesPreTax + $this->vatReimburseAmt;
                 }
 
                 if ($roomChargesTaxable > 0) {
@@ -531,6 +539,7 @@ class PaymentManagerPayment {
     protected $totalRoomChg;
     protected $payInvoicesAmt;
     protected $totalCharges;
+    protected $reimburseTaxCb;
 
     protected $payInvoices;
     protected $payType;
@@ -589,6 +598,7 @@ class PaymentManagerPayment {
         $this->newCardOnFile = FALSE;
         $this->finalPaymentFlag = FALSE;
         $this->manualKeyEntry = FALSE;
+        $this->reimburseTaxCb = FALSE;
         $this->invoiceNotes = '';
         $this->balWith = '';
         $this->payDate = '';
@@ -788,6 +798,15 @@ class PaymentManagerPayment {
 
     public function setFinalPaymentFlag($finalPaymentFlag) {
         $this->finalPaymentFlag = $finalPaymentFlag;
+        return $this;
+    }
+
+    public function getReimburseTaxCb() {
+        return $this->reimburseTaxCb;
+    }
+
+    public function setReimburseTaxCb($ReimburseTaxCb) {
+        $this->reimburseTaxCb = $ReimburseTaxCb;
         return $this;
     }
 

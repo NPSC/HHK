@@ -175,6 +175,13 @@ class PaymentChooser {
             $pmp->setTotalRoomChg(floatval(filter_var($post["feesCharges"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
         }
 
+        // Reimburse Taxes.
+        if (isset($post["cbReimburseVAT"])) {
+            $pmp->setReimburseTaxCb(TRUE);
+        }   else {
+            $pmp->setReimburseTaxCb(FALSE);
+        }
+
         // Total Charges.
         if (isset($post["totalCharges"])) {
             $pmp->setTotalCharges(floatval(filter_var($post["totalCharges"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));

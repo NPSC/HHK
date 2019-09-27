@@ -542,7 +542,7 @@ function amtPaid() {
                 reimburseTaxAmt = roomBalTaxDue - depRfTaxAmt - heldTaxAmt;
             }
             
-            heldPreTax = reimburseAmt - reimburseTaxAmt;
+            reimbursePreTax = reimburseAmt - reimburseTaxAmt;
         }
     }
 

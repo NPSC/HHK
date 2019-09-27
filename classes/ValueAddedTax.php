@@ -25,7 +25,7 @@
  */
 
 /**
- * Loads all items that are taxed along with details about each tax.
+ * Value Added Tax (VAT).
  *
  * @author Eric
  */
@@ -40,7 +40,7 @@ class ValueAddedTax {
      * @param int $idRegistration
      * @throws Hk_Exception_Runtime
      */
-    public function __construct(\PDO $dbh, $idVisit, $idRegistration = 0) {
+    public function __construct(\PDO $dbh, $idVisit) {
         
         $this->allTaxedItems = array();
         
@@ -49,11 +49,7 @@ class ValueAddedTax {
             foreach ($this->loadTaxedItemList($dbh, $idVisit) as $i) {
                 $this->allTaxedItems[] = new TaxedItem($i['idItem'], $i['taxIdItem'], $i['Max_Days'], $i['Percentage'], $i['Description'], $i['Gl_Code'], $i['First_Order_Id'], $i['Last_Order_Id']);
             }
-        } else if ($idRegistration > 0) {
-            
-            foreach ($this->loadTaxedItemListReg($dbh, $idRegistration) as $i) {
-                $this->allTaxedItems[] = new TaxedItem($i['idItem'], $i['taxIdItem'], $i['Max_Days'], $i['Percentage'], $i['Description'], $i['Gl_Code'], $i['First_Order_Id'], $i['Last_Order_Id']);
-            }
+
         } else {
             throw new Hk_Exception_Runtime('Value Added tax is missing a valid visit id or registration id');
         }
@@ -76,25 +72,8 @@ class ValueAddedTax {
         return $tistmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Load taxes for all visits associated with a registration Id.
-     * 
-     * @param \PDO $dbh
-     * @param int $idReg
-     * @return []
-     */
-    protected function loadTaxedItemListReg(\PDO $dbh, $idReg) {
-
-        // Taxed items
-        $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.Timeout_Days as `Max_Days`, ti.idItem as `taxIdItem`, ti.Gl_Code, ti.First_Order_Id, ti.Last_Order_Id "
-                . " from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem"
-                . " Join visit v on v.idRegistration = $idReg"
-                . " where ti.Deleted = 0 and v.idVisit >= ti.First_Order_Id and v.idVisit <= ti.Last_Order_Id");
-        
-        return $tistmt->fetchAll(\PDO::FETCH_ASSOC);
-    }
     
-    /** Get sum of tax items connected to each taxable item.
+    /** Get sum of tax item percentage values connected to each taxable item.
      *
      * @param int $numDays
      * @return array of each taxed item containing the sum (float) of all connected taxes filtered by days.
@@ -128,7 +107,7 @@ class ValueAddedTax {
         $timedout = array();
 
         if ($numDays <= 0) {
-            throw new Hk_Exception_Runtime('The number of days to test must be > 0');
+            return $timedout;
         }
 
         foreach ($this->getAllTaxedItems($idVisit) as $t) {
@@ -141,6 +120,13 @@ class ValueAddedTax {
         return $timedout;
     }
 
+    /**
+     * The current taxed items include the vat objects
+     * 
+     * @param type $numDays
+     * @param type $idVisit
+     * @return type
+     */
     public function getCurrentTaxedItems($numDays = 0, $idVisit = NULL) {
 
         $current = array();
@@ -160,22 +146,55 @@ class ValueAddedTax {
      * @return array of all the TaxedItems
      */
     public function getAllTaxedItems($idVisit = NULL) {
+        return $this->allTaxedItems;
+    }
+
+}
+
+class ValueAddedTaxReg extends ValueAddedTax {
+
+    
+    /**
+     * Load taxes for all visits associated with a registration Id.
+     * 
+     * @param \PDO $dbh
+     * @param int $idReg
+     * @return []
+     */
+    protected function loadTaxedItemList(\PDO $dbh, $idReg) {
+
+        // Taxed items
+        $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.Timeout_Days as `Max_Days`, ti.idItem as `taxIdItem`, ti.Gl_Code, ti.First_Order_Id, ti.Last_Order_Id "
+                . " from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem"
+                . " Join visit v on v.idRegistration = $idReg"
+                . " where ti.Deleted = 0 and ((v.idVisit = 0 and ti.Last_Order_Id = 0) or ((v.idVisit <= ti.Last_Order_Id or ti.Last_Order_Id= 0) and v.idVisit >= ti.First_Order_Id))");
+// v.idVisit >= ti.First_Order_Id and v.idVisit <= ti.Last_Order_Id");
         
-        if (is_null($idVisit)) {
-            return $this->allTaxedItems;
-        } else {
+        return $tistmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+    
+        /**
+     *
+     * @return array of all the TaxedItems
+     */
+    public function getAllTaxedItems($idVisit = NULL) {
+        
+        if (is_null($idVisit) || $idVisit < 1) {
+            // throw an error
+            throw new Hk_Exception_Runtime('Invalid visit Id: ' . $idVisit);
+        } 
             
-            $taxSubset = [];
-            
-            foreach ($this->allTaxedItems as $t) {
-                
-                if ($idVisit >= $t->getFirstOrderId() && $idVisit <= $t->getLastOrderId()) {
-                    $taxSubset[] = $t;
-                }
+        $taxSubset = [];
+
+        foreach ($this->allTaxedItems as $t) {
+
+            if ($idVisit >= $t->getFirstOrderId() && $idVisit <= $t->getLastOrderId()) {
+                $taxSubset[] = $t;
             }
-            
-            return $taxSubset;
         }
+
+        return $taxSubset;
+
     }
 
 }
