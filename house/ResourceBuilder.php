@@ -25,6 +25,7 @@ require (HOUSE . 'Room.php');
 require (CLASSES . 'HouseLog.php');
 require (CLASSES . 'Purchase/RoomRate.php');
 require (CLASSES . 'FinAssistance.php');
+require (CLASSES . 'ValueAddedTax.php');
 require (HOUSE . 'Resource.php');
 require (HOUSE . 'ResourceView.php');
 require (HOUSE . 'Attributes.php');
@@ -1335,7 +1336,7 @@ foreach ($items as $d) {
 
     if ($d['Type_Id'] == 2) {
 
-        $ths .= HTMLTable::makeTh($d['Description'] . ' (' . number_format($d['Percentage'], 3) . '%)');
+        $ths .= HTMLTable::makeTh($d['Description'] . ' (' . TaxedItem::suppressTrailingZeros($d['Percentage']) . ')');
         $colCounter[] = $d['idItem'];
     }
 }

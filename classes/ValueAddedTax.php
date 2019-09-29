@@ -156,6 +156,12 @@ class TaxedItem {
         return $this->percentTax;
     }
 
+    public function getTextPercentTax() {
+        $strTax = (string)$this->getPercentTax();
+
+        return $this->suppressTrailingZeros($strTax);
+    }
+
     public function getDecimalTax() {
         return $this->getPercentTax() / 100;
     }
@@ -166,6 +172,31 @@ class TaxedItem {
 
     public function getTaxingItemGlCode() {
         return $this->taxingItemGlCode;
+    }
+
+    public static function suppressTrailingZeros($strTax) {
+
+        $taxPrettyStr = '';
+
+        $taxArray = str_split($strTax, 1);
+        $cntr = count($taxArray);
+
+        if ($cntr <= 1) {
+            $taxPrettyStr = $strTax;
+        } else {
+
+            for ($n = ($cntr - 1); $n>=1; $n--) {
+                if ($taxArray[$n] == '0' || $taxArray[$n] == '.') {
+                    unset($taxArray[$n]);
+                } else {
+                    break;
+                }
+            }
+
+            $taxPrettyStr = implode('', $taxArray);
+        }
+
+        return $taxPrettyStr . '%';
     }
 
 

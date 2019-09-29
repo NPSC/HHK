@@ -214,7 +214,7 @@ class PaymentChooser {
             }
         }
 
-        // balence with
+        // balance with
         if (isset($post['selexcpay'])) {
             $pmp->setBalWith(filter_var($post['selexcpay'], FILTER_SANITIZE_STRING));
         }
@@ -224,6 +224,13 @@ class PaymentChooser {
             $pmp->setFinalPaymentFlag(TRUE);
         } else {
             $pmp->setFinalPaymentFlag(FALSE);
+        }
+
+        // Reimburse Taxes
+        if (isset($post['cbReimburseVAT'])) {
+            $pmp->setReimburseTaxCb(TRUE);
+        } else {
+            $pmp->setReimburseTaxCb(FALSE);
         }
 
         if (isset($post['cbNewCard'])) {

@@ -144,7 +144,7 @@ class PaymentManager {
             }
 
             // VAT reimbursements
-            if (count($roomAccount->getReimburseTax()) > 0) {
+            if ($this->pmp->getReimburseTaxCb() && $this->pmp->getcount($roomAccount->getReimburseTax()) > 0) {
 
                 foreach ($roomAccount->getReimburseTax() as $taxingId => $sum) {
 
@@ -245,7 +245,7 @@ class PaymentManager {
 
                         if ($t->getIdTaxedItem() == ItemId::Lodging) {
                             $taxInvoiceLine = new TaxInvoiceLine();
-                            $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), $roomChargesTaxable), $t->getDecimalTax(), '');
+                            $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), $roomChargesTaxable), $t->getDecimalTax(), '(' . $t->getTextPercentTax() . '%)');
                             $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
                             $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
                         }
@@ -288,11 +288,11 @@ class PaymentManager {
                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
 
                         // Add the tax lines back into the mix
-                        foreach ($taxedItemList as $i) {
+                        foreach ($vat->getAllTaxedItems() as $t) {
 
-                            if ($i['idItem'] == ItemId::Lodging && ($i['Max_Days'] == 0 || $this->pmp->visitCharges->getNightsStayed() <= $i['Max_Days'])) {
+                            if ($t->getIdTaxedItem() == ItemId::Lodging) {
                                 $taxInvoiceLine = new TaxInvoiceLine();
-                                $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], (0 - $reversalAmt)), $i['Percentage']/100, '');
+                                $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), (0 - $reversalAmt)), $t->getDecimalTax(), '(' . $t->getTextPercentTax() . '%)');
                                 $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
                                 $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
                                 $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
@@ -547,6 +547,7 @@ class PaymentManagerPayment {
     protected $chargeAcct = '';
     protected $rtnChargeAcct = '';
     protected $finalPaymentFlag;
+    protected $reimburseTaxCb;
     protected $newCardOnFile;
     protected $cashTendered;
     protected $newInvoice;
@@ -586,6 +587,7 @@ class PaymentManagerPayment {
         $this->setPayType($payType);
         $this->newCardOnFile = FALSE;
         $this->finalPaymentFlag = FALSE;
+        $this->reimburseTaxCb = FALSE;
         $this->manualKeyEntry = FALSE;
         $this->invoiceNotes = '';
         $this->balWith = '';
@@ -786,6 +788,15 @@ class PaymentManagerPayment {
 
     public function setFinalPaymentFlag($finalPaymentFlag) {
         $this->finalPaymentFlag = $finalPaymentFlag;
+        return $this;
+    }
+
+    public function getReimburseTaxCb() {
+        return $this->reimburseTaxCb;
+    }
+
+    public function setReimburseTaxCb($reimburseTaxCb) {
+        $this->reimburseTaxCb = $reimburseTaxCb;
         return $this;
     }
 
