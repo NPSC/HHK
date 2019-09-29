@@ -13,11 +13,11 @@ ALTER TABLE `w_users`
     ADD COLUMN `Default_Page` VARCHAR(100) NOT NULL DEFAULT '' AFTER `Ip`;
 
 ALTER TABLE `item` 
+    CHANGE COLUMN `Entity_Id` `First_Order_Id` INT(11) NOT NULL DEFAULT '0' ;
+ALTER TABLE `item` 
     ADD COLUMN `Last_Order_Id` INT NOT NULL DEFAULT 0 AFTER `First_Order_Id`;
 ALTER TABLE `item` 
     CHANGE COLUMN `Internal_Number` `Timeout_Days` VARCHAR(50) NOT NULL DEFAULT '';
-ALTER TABLE `item` 
-    CHANGE COLUMN `Entity_Id` `First_Order_Id` INT(11) NOT NULL DEFAULT '0' ;
 
 update item set Timeout_Days = '';
 

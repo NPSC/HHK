@@ -584,7 +584,9 @@ try {
                 $arrDate = filter_var($_POST['arrDate'],FILTER_SANITIZE_STRING);
             }
 
-            $events['markup'] = PaymentChooser::createHousePaymentMarkup($discounts, $addnls, $ordNum, getTaxedItems($dbh, 0), $arrDate);
+            $vat = new ValueAddedTax($dbh, $ordNum);
+
+            $events['markup'] = PaymentChooser::createHousePaymentMarkup($discounts, $addnls, $ordNum, $vat->getTaxedItemSums(0), $arrDate);
 
         } else {
             $events = array('error'=>'Visit Id is missing.  ');

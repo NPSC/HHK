@@ -48,7 +48,9 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                 flagAlertMessage(data.error, 'error');
                 
             } else if (data.markup) {
+                
                 $diagBox.children().remove();
+                
                 var buttons = {
                     "Save": function() {
                         
@@ -113,8 +115,8 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                         
                         var tax = parseFloat($('#houseTax').data('tax')),
                             amt = parseFloat($('#housePayment').val().replace('$', '').replace(',', '')),
-                            taxAmt = 0,
-                            totalAmt = 0;
+                            taxAmt = 0.0,
+                            totalAmt = 0.0;
                         
                         if (isNaN(tax)) {
                             tax = 0;
@@ -123,7 +125,7 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                             amt = 0;
                         }
                         
-                        taxAmt = tax * amt / 100;
+                        taxAmt = tax * amt;
                         totalAmt = amt + taxAmt;
                         $('#houseTax').val((taxAmt > 0 ? (taxAmt).toFixed(2) : ''));
                         $('#totalHousePayment').val((totalAmt > 0 ? totalAmt.toFixed(2) : ''));
@@ -140,7 +142,7 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
 
                 $diagBox.dialog('option', 'buttons', buttons);
                 $diagBox.dialog('option', 'title', 'Adjust Fees');
-                $diagBox.dialog('option', 'width', 400);
+                $diagBox.dialog('option', 'width', 430);
                 $diagBox.dialog('open');
             }
         }

@@ -151,6 +151,7 @@ class ValueAddedTax {
 
 }
 
+
 class ValueAddedTaxReg extends ValueAddedTax {
 
 
@@ -256,6 +257,15 @@ class TaxedItem {
     public function getTaxingItemGlCode() {
         return $this->taxingItemGlCode;
     }
+
+    public function getFirstOrderId() {
+        return $this->firstOrderId;
+    }
+
+    public function getLastOrderId() {
+        return $this->lastOrderId;
+    }
+
 
     public static function suppressTrailingZeros($strTax) {
 

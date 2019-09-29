@@ -253,7 +253,7 @@ class PaymentManager {
 
                         if ($t->getIdTaxedItem() == ItemId::Lodging) {
                             $taxInvoiceLine = new TaxInvoiceLine();
-                            $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), $roomChargesTaxable), $t->getDecimalTax(), '(' . $t->getTextPercentTax() . '%)');
+                            $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), $roomChargesTaxable), $t->getDecimalTax(), '(' . $t->getTextPercentTax() . ')');
                             $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
                             $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
                         }
@@ -538,7 +538,6 @@ class PaymentManagerPayment {
     protected $totalRoomChg;
     protected $payInvoicesAmt;
     protected $totalCharges;
-    protected $reimburseTaxCb;
 
     protected $payInvoices;
     protected $payType;

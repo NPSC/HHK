@@ -622,9 +622,6 @@ class HouseServices {
 
             if (isset($codes[$addnlCharge])) {
 
-                // Taxed items
-                $taxedItems = getTaxedItemList($dbh);
-
                 $invLine = new OneTimeInvoiceLine();
                 $invLine->createNewLine(new Item($dbh, ItemId::AddnlCharge, $amount), 1, $codes[$addnlCharge][1]);
 
@@ -647,12 +644,14 @@ class HouseServices {
                 $invoice->addLine($dbh, $invLine, $uS->username);
                 $invoice->updateInvoiceStatus($dbh, $uS->username);
 
-                // Taxes
-                foreach ($taxedItems as $i) {
+                // Taxed items
+                $vat = new ValueAddedTax($dbh, $visit->getIdVisit());
 
-                    if ($i['idItem'] == ItemId::AddnlCharge) {
+                foreach ($vat->getCurrentTaxedItems() as $t) {
+
+                    if ($t->getIdTaxedItem() == ItemId::AddnlCharge) {
                         $taxInvoiceLine = new TaxInvoiceLine();
-                        $taxInvoiceLine->createNewLine(new Item($dbh, $i['taxIdItem'], $amount), $i['Percentage']/100, '');
+                        $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), $amount), $t->getDecimalTax(),  ' ('. $t->getTextPercentTax().')');
                         $taxInvoiceLine->setSourceItemId(ItemId::AddnlCharge);
                         $invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
                     }

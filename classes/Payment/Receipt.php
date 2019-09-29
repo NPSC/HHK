@@ -739,7 +739,6 @@ WHERE
         $priceModel->rateHeaderMarkup($tbl, $labels);
 
         $idVisitTracker = 0;
-        $trs = array();
         $separator = '';
         $guestNites = 0;
         $visitFeeInvoiced = FALSE;
@@ -770,7 +769,6 @@ WHERE
 
                 if ($idVisitTracker > 0) {
                     // Close up last visit
-                    self::addSavedTrs($trs, $tbl);
 
                     // Add tax info
                     foreach ($vat->getCurrentTaxedItems($visitNights, $r['vid']) as $t) {
@@ -786,17 +784,15 @@ WHERE
                             $totalAmt += $totalTax;
 
                             $tbl->addBodyTr(
-                                HTMLTable::makeTd($t->getTaxingItemDesc(), array('colspan'=>'4'))
-                                .HTMLTable::makeTd((floor($t->getPercentTax()) == $t->getPercentTax() ? number_format($t->getPercentTax(), 0) : number_format($t->getPercentTax(), 3)) . '%', array('style'=>'text-align:right;'))
-                                .HTMLTable::makeTd(' ')
+                                HTMLTable::makeTd($t->getTaxingItemDesc() . ' (' . $t->getTextPercentTax() . ')', array('colspan'=>'6', 'style'=>'text-align:right;'))
                                 .HTMLTable::makeTd(number_format($totalTax, 2), array('style'=>'text-align:right;'))
                             );
                         }
                     }
                 }
 
+
                 // Prepare new visit.
-                $trs = array();
                 $separator = 'border-top: 2px solid #2E99DD;';
 
                 $visitNights = 0;
@@ -856,7 +852,7 @@ WHERE
                     'amt'=>number_format($r['vfa'],2)
                         );
 
-                $trs[] = $priceModel->itemMarkup($item, $tbl);
+                $priceModel->itemMarkup($item, $tbl);
 
                 $totalAmt += $r['vfa'];
 
@@ -869,17 +865,27 @@ WHERE
 
                     if ($l['Item_Id'] == ItemId::AddnlCharge) {
 
+                        $addChgAmt = $l['Amount'];
+
+                        // Look for tax line
+                        foreach ($invLines as $t) {
+                            if ($t['Invoice_Id'] == $l['Invoice_Id'] && $t['Type_Id'] == InvoiceLineType::Tax && $t['Source_Item_Id'] == ItemId::AddnlCharge) {
+                                $addChgAmt += $t['Amount'];
+                                break;
+                            }
+                        }
+
                         $invDate = new DateTime($l['Invoice_Date']);
                         $item = array(
                             'orderNum'=>$r['vid'] . '-' . $r['span'],
                             'date'=>$invDate->format('M j, Y'),
                             'desc'=>$l['Description'],
-                            'amt'=>number_format($l['Amount'],2)
-                                );
+                            'amt'=>number_format($addChgAmt,2)
+                        );
 
-                        $trs[] = $priceModel->itemMarkup($item, $tbl);
+                        $priceModel->itemMarkup($item, $tbl);
 
-                        $totalAmt += floatval($l['Amount']);
+                        $totalAmt += floatval($addChgAmt);
 
                     } else if ($l['Item_Id'] == ItemId::Discount || $l['Item_Id'] == ItemId::Waive) {
 
@@ -893,9 +899,9 @@ WHERE
                             'date'=>$invDate->format('M j, Y'),
                             'desc'=>$l['Description'],
                             'amt'=>number_format($discAmt,2)
-                                );
+                        );
 
-                        $trs[] = $priceModel->itemMarkup($item, $tbl);
+                        $priceModel->itemMarkup($item, $tbl);
 
                     } else if ($l['Item_Id'] == ItemId::LodgingMOA && $l['Amount'] < 0) {
 
@@ -908,20 +914,18 @@ WHERE
                             'date'=>$invDate->format('M j, Y'),
                             'desc'=>$l['Description'],
                             'amt'=>number_format($moaAmt,2)
-                                );
+                        );
 
-                        $trs[] = $priceModel->itemMarkup($item, $tbl);
+                        $priceModel->itemMarkup($item, $tbl);
 
-                    } else if ($l['Type_Id'] == 2 && $l['Source_Item_Id'] == ItemId::Lodging) {
+                    } else if ($l['Type_Id'] == InvoiceLineType::Tax && $l['Source_Item_Id'] == ItemId::Lodging) {
                         $roomTaxPaid[$l['Item_Id']] += floatval($l['Amount']);
                     }
                 }
             }
-
         }
 
         // For the last visit rate.
-        self::addSavedTrs($trs, $tbl);
 
         // Add tax info
         foreach ($vat->getCurrentTaxedItems($visitNights, $idVisitTracker) as $t) {
@@ -937,17 +941,15 @@ WHERE
                 $totalAmt += $totalTax;
 
                 $tbl->addBodyTr(
-                    HTMLTable::makeTd($t->getTaxingItemDesc(), array('colspan'=>'4'))
-                    .HTMLTable::makeTd((floor($t->getPercentTax()) == $t->getPercentTax() ? number_format($t->getPercentTax(), 0) : number_format($t->getPercentTax(), 3)) . '%', array('style'=>'text-align:right;'))
-                    .HTMLTable::makeTd(' ')
+                    HTMLTable::makeTd($t->getTaxingItemDesc() . ' (' . $t->getTextPercentTax() . ')', array('colspan'=>'6', 'style'=>'text-align:right;'))
                     .HTMLTable::makeTd(number_format($totalTax, 2), array('style'=>'text-align:right;'))
                 );
             }
         }
-    
+
 
         // Room Fee totals
-        $priceModel->rateTotalMarkup($tbl, $labels->getString('statement', 'roomTotalLabel', 'Lodging Total'), $numberNites, number_format($totalAmt, 2), $guestNites);
+        $priceModel->rateTotalMarkup($tbl, $labels->getString('statement', 'roomTotalLabel', 'Total'), $numberNites, number_format($totalAmt, 2), $guestNites);
 
 
         // Room Donations & retained loging fees
@@ -1476,9 +1478,9 @@ from vlist_inv_pments `lp` left join `name` n ON lp.Sold_To_Id = n.idName
 
         // Items
         $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date
-from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
+from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice and il.Deleted = 0
 left join invoice_line_Type ilt on il.Type_Id = ilt.id
-where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Order_Position");
+where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Order_Position");
 
         $invLines = $ilStmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -1487,7 +1489,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
 
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
-        
+
 
         // Visits and Rates
         $tbl = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, new ValueAddedTax($dbh, $idVisit), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));

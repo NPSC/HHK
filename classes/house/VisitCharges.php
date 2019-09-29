@@ -16,6 +16,7 @@
 class VisitCharges {
 
     const THIRD_PARTY = '3p';
+    const TAX_PAID = 'tax';
 
     protected $feesCharged = 0; // Current fees charges up until today
     protected $feesToCharge = 0;    // fees to be charged thru the end of the visit
@@ -231,9 +232,10 @@ class VisitCharges {
             }
 
             $this->itemSums[$i['idItem']][self::THIRD_PARTY] = 0;
+            $this->itemSums[$i['idItem']][self::TAX_PAID] = 0;
         }
 
-        // sum taxes
+        // pre define taxes
         foreach ($invStatuses as $s) {
             $this->itemSums['tax'][$s[0]] = 0;
         }
@@ -258,7 +260,10 @@ class VisitCharges {
 
             // is this a tax?
             if ($l['Type_Id'] == InvoiceLineType::Tax) {
+
                 $this->itemSums['tax'][$stat] += $l['Amount'];
+
+                $this->itemSums[$l['Source_Item_Id']][self::TAX_PAID] += $l['Amount'];
             }
 
             // Third Party invoice
@@ -319,6 +324,7 @@ class VisitCharges {
     il.Period_Start,
     il.Period_End,
     il.Type_Id,
+    il.Source_Item_Id,
     ifnull(nv.idName, 0) as Billing_Agent
 from
     invoice_line il join invoice i ON il.Invoice_Id = i.idInvoice
@@ -381,6 +387,13 @@ where
     public function get3rdPartyPending($idItem) {
         if (isset($this->itemSums[$idItem])) {
             return $this->itemSums[$idItem][self::THIRD_PARTY];
+        }
+        return 0;
+    }
+
+    public function getTaxInvoices($idItem) {
+        if (isset($this->itemSums[$idItem][self::TAX_PAID])) {
+            return $this->itemSums[$idItem][self::TAX_PAID];
         }
         return 0;
     }

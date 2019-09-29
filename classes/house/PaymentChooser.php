@@ -437,7 +437,7 @@ class PaymentChooser {
                 . $mkup, array('class'=>'hhk-panel hhk-kdrow', 'style'=>'float:left;'));
     }
 
-    public static function createHousePaymentMarkup(array $discounts, array $addnls, $idVisit, $itemTax, $arrivalDate = '') {
+    public static function createHousePaymentMarkup(array $discounts, array $addnls, $idVisit, $itemTaxSums, $arrivalDate = '') {
 
         if (count($discounts) < 1 && count($addnls) < 1) {
             return '';
@@ -476,11 +476,11 @@ class PaymentChooser {
                 HTMLTable::makeTd('Amount:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'housePayment', 'size'=>'9', 'data-vid'=>$idVisit, 'style'=>'text-align:right;'))));
 
-        if (isset($itemTax[ItemId::AddnlCharge])) {
+        if (isset($itemTaxSums[ItemId::AddnlCharge])) {
 
             $feesTbl->addBodyTr(
-                HTMLTable::makeTd('Tax (' . number_format($itemTax[ItemId::AddnlCharge], 3) . ')', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'houseTax', 'size'=>'9', 'data-tax'=>$itemTax[ItemId::AddnlCharge], 'readonly'=>'readonly', 'style'=>'text-align:right;')))
+                HTMLTable::makeTd('Tax ('. TaxedItem::suppressTrailingZeros($itemTaxSums[ItemId::AddnlCharge]*100).'):', array('class'=>'tdlabel'))
+                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'houseTax', 'size'=>'9', 'data-tax'=>$itemTaxSums[ItemId::AddnlCharge], 'readonly'=>'readonly', 'style'=>'text-align:right;')))
                     , array('class'=>'addnlChg', 'style'=>'display:none;'));
 
             $feesTbl->addBodyTr(
@@ -770,7 +770,7 @@ ORDER BY v.idVisit , v.Span;");
 
         // MOA money on account - held amount.
         if ($heldAmount > 0) {
-            
+
             $feesTbl->addBodyTr(
                 HTMLTable::makeTd('Retained Amount:', array('class'=>'tdlabel', 'title'=>'Money on Account (MOA)'))
                 . HTMLTable::makeTd(
@@ -782,9 +782,9 @@ ORDER BY v.idVisit , v.Span;");
 
         // Reimburse VAT.
         if (is_null($visitCharge) === FALSE && $visitCharge->getNightsStayed() > 0) {
-            
+
             $sumReimburseTax = 0;
-            
+
             foreach($vat->getTimedoutTaxItems(ItemId::Lodging, $visitCharge->getNightsStayed()) as $t) {
                 $sumReimburseTax += abs($visitCharge->getItemInvCharges($t->getIdTaxingItem()));
             }
@@ -808,7 +808,7 @@ ORDER BY v.idVisit , v.Span;");
 
 
         if ($showRoomFees && is_null($visitCharge) === FALSE) {
-            
+
             $taxedItems = $vat->getTaxedItemSums($visitCharge->getNightsStayed());
             $tax = (isset($taxedItems[ItemId::Lodging]) ? $taxedItems[ItemId::Lodging] : 0);
 
@@ -819,16 +819,8 @@ ORDER BY v.idVisit , v.Span;");
 
             if ($tax > 0) {
 
-                $percent = $tax * 100;
-                $precision = 3;
-
-                if ($percent == round($percent)) {
-                    $precision = 0;
-                }
-
                 // show tax line
-                $feesTbl->addBodyTr(HTMLTable::makeTd('Tax:', array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd('( '.number_format($percent, $precision).'% )', array('style'=>'text-align:center; font-size:smaller;'))
+                $feesTbl->addBodyTr(HTMLTable::makeTd('Tax ('. TaxedItem::suppressTrailingZeros($tax*100).' ):', array('class'=>'tdlabel', 'colspan'=>'2'))
                     .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesTax', 'size'=>'6', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
                     , array('class'=>'hhk-RoomFees'));
             }
