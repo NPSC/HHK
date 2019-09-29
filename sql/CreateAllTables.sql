@@ -690,8 +690,9 @@ CREATE TABLE if not exists `invoice_line_type`
 CREATE TABLE if not exists `item`
 (
     `idItem` INTEGER NOT NULL AUTO_INCREMENT,
-    `Internal_Number` VARCHAR(50) NOT NULL default '',
-    `Entity_Id` INTEGER NOT NULL DEFAULT 0,
+    `Timeout_Days` VARCHAR(50) NOT NULL default '',
+    `First_Order_Id` INTEGER NOT NULL DEFAULT 0,
+    `Last_Order_Id` INTEGER NOT NULL DEFAULT 0,
     `Percentage` DECIMAL(22,10) NOT NULL DEFAULT '0.00',
     `Deleted` SMALLINT default 0 NOT NULL DEFAULT '0',
     `Has_Decimals` SMALLINT default 0 NOT NULL DEFAULT '0',
@@ -703,7 +704,7 @@ CREATE TABLE if not exists `item`
 
 
 -- -----------------------------------------------------
--- Table `item`
+-- Table `item_item`
 -- -----------------------------------------------------
 CREATE TABLE `item_item` (
   `idItem` INT NOT NULL,

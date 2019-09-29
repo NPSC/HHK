@@ -73,9 +73,9 @@ class PaymentManager {
 
 
             // Taxed items
-            $vat = new ValueAddedTax($dbh);
+            $vat = new ValueAddedTax($dbh, $visit->getIdVisit());
             $taxRates = $vat->getTaxedItemSums($this->pmp->visitCharges->getNightsStayed());
-            $taxRate = $taxRates[ItemId::Lodging];
+            $taxRate = isset($taxRates[ItemId::Lodging]) ? $taxRates[ItemId::Lodging]: 0;
 
             // Collect account information on visit.
             $roomAccount = new CurrentAccount(
@@ -144,18 +144,25 @@ class PaymentManager {
             }
 
             // VAT reimbursements
-            if ($this->pmp->getReimburseTaxCb() && $this->pmp->getcount($roomAccount->getReimburseTax()) > 0) {
+            if ($this->pmp->getReimburseTaxCb() && count($roomAccount->getReimburseTax()) > 0) {
+
+                $feeAccumulator = $this->pmp->getRatePayment();
 
                 foreach ($roomAccount->getReimburseTax() as $taxingId => $sum) {
 
                     if (abs($sum) > 0) {
 
                         $this->vatReimburseAmt += abs($sum);
-                        $invLine = new TaxInvoiceLine($uS->ShowLodgDates);
-                        $invLine->createNewLine(new Item($dbh, $taxingId, (0 - $sum)), 1, 'Reimburse');
-                        $invLine->setSourceItemId(ItemId::Lodging);
-                        $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
-                        $this->invoice->addLine($dbh, $invLine, $uS->username);
+
+                        if ($this->vatReimburseAmt <= $feeAccumulator) {
+                            $feeAccumulator -= $sum;
+
+                            $invLine = new TaxInvoiceLine($uS->ShowLodgDates);
+                            $invLine->createNewLine(new Item($dbh, $taxingId, (0 - $sum)), 1, 'Reimburse');
+                            $invLine->setSourceItemId(ItemId::Lodging);
+                            $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
+                            $this->invoice->addLine($dbh, $invLine, $uS->username);
+                        }
                     }
                 }
             }
@@ -236,7 +243,8 @@ class PaymentManager {
                 if ($this->pmp->getFinalPaymentFlag() && $housePaymentAmt > 0) {
                     $roomChargesTaxable = $roomChargesPreTax - $housePaymentAmt - $this->pmp->getPayInvoicesAmt();
                 } else {
-                    $roomChargesTaxable = $roomChargesPreTax;
+                    // Add the tax reimbursement, if any, in order to tax it.
+                    $roomChargesTaxable = $roomChargesPreTax + $this->vatReimburseAmt;
                 }
 
                 if ($roomChargesTaxable > 0) {
@@ -280,10 +288,11 @@ class PaymentManager {
 
                     $reversalAmt = $this->guestCreditAmt;
 
+                    $taxRates = $vat->getTaxedItemSums(0);  // Get all taxes, no timeouts.
 
-                    if ($taxRate > 0) {
+                    if ($taxRates[ItemId::Lodging] > 0) {
                         // we caught taxes.  Reduce reversalAmt by the sum of tax rates.
-                        $reversalAmt = round($reversalAmt / (1 + ($taxRate)), 2);
+                        $reversalAmt = round($reversalAmt / (1 + ($taxRates[ItemId::Lodging])), 2);
 
                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
 
@@ -529,6 +538,7 @@ class PaymentManagerPayment {
     protected $totalRoomChg;
     protected $payInvoicesAmt;
     protected $totalCharges;
+    protected $reimburseTaxCb;
 
     protected $payInvoices;
     protected $payType;
@@ -589,6 +599,7 @@ class PaymentManagerPayment {
         $this->finalPaymentFlag = FALSE;
         $this->reimburseTaxCb = FALSE;
         $this->manualKeyEntry = FALSE;
+        $this->reimburseTaxCb = FALSE;
         $this->invoiceNotes = '';
         $this->balWith = '';
         $this->payDate = '';

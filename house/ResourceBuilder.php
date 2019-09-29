@@ -217,6 +217,7 @@ $tabIndex = 0;
 $feFileSelection = '';
 $rteMsg = '';
 $rateTableErrorMessage = '';
+$itemMessage = '';
 
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
@@ -853,7 +854,7 @@ if (isset($_POST['btnItemSave'])) {
 
         $idItem = intval($i['idItem']);
 
-        if ($i['Type_Id'] == InvoiceLineType::Tax || $idItem < 1) {
+        if ($i['Type_Id'] == ItemType::Tax || $idItem < 1) {
             continue;
         }
 
@@ -896,10 +897,17 @@ if (isset($_POST['btnItemSave'])) {
 if (isset($_POST['btnTaxSave'])) {
     $tabIndex = 7;
 
-    $sitems = $dbh->query("Select i.idItem, i.Description, i.Gl_Code, i.Percentage, i.Internal_Number
-from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . InvoiceLineType::Tax);
+    $sitems = $dbh->query("Select i.idItem, i.Description, i.Gl_Code, i.Percentage, i.Timeout_Days, i.First_Order_Id, i.Last_Order_Id
+        from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax );
     $items = $sitems->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Get the latest visit id
+    $stmt = $dbh->query("select max(idVisit) from visit");
+    $vrows = $stmt->fetchAll(\PDO::FETCH_NUM);
+    $maxVisitId = $vrows[0][0];
+    $nextVisitId = $maxVisitId + 1;
 
+    // Save any changes to existing items.
     foreach ($items as $i) {
 
         if (isset($_POST['txttItem'][$i['idItem']])) {
@@ -908,9 +916,43 @@ from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = "
             $glCode = filter_var($_POST['txttGlCode'][$i['idItem']], FILTER_SANITIZE_STRING);
             $percentage = filter_var($_POST['txttPercentage'][$i['idItem']], FILTER_SANITIZE_STRING);
             $maxDays = filter_var($_POST['txttMaxDays'][$i['idItem']], FILTER_SANITIZE_STRING);
+            $last = $i['Last_Order_Id'];
+            $first = $i['First_Order_Id'];
+            
+            if ($maxDays != $i['Timeout_Days'] || $percentage != $i['Percentage']) {
+                
+                if ($last != 0) {
+                    $itemMessage = HTMLContainer::generateMarkup('span', 'Cannot change that tax item.', array('style'=>'color:red;'));
+                } else {
+                    
+                    // save this one with the last order id
+                    $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode', Last_Order_Id = $maxVisitId "
+                        . " where `idItem` = " . $i['idItem']);
 
-            $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode', `Percentage` = '$percentage', `Internal_Number` = '$maxDays' where `idItem` = " . $i['idItem']);
+                    // Create the a new item with the new percentage or maxDays
+                    $dbh->exec("insert into `item` (`Description`, `Gl_Code`, `Percentage`, `Timeout_Days`, First_Order_Id) "
+                            . "Values ('$desc', '$glCode', '$percentage', '$maxDays', $nextVisitId)");
 
+                    $newItemId = $dbh->lastInsertId();
+
+                    // Add to the item type map
+                    if ($newItemId > 0) {
+                        $dbh->exec("insert into `item_type_map` Values ('" . $newItemId . "', '" . ItemType::Tax . "')");
+                    }
+
+                    // Get the items these tax
+                    $tstmt = $dbh->query("SELECT idItem from item_item where Item_Id = " . $i['idItem']);
+
+                    // add to item_item to connet with the taxed item id.
+                    while ($t = $tstmt->fetch(\PDO::FETCH_NUM)) {
+                        $dbh->exec("Insert into item_item (idItem, Item_Id) values (" . $t[0] . ", $newItemId)" );
+                    }
+                }
+            } else {
+
+                $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode'"
+                    . " where `idItem` = " . $i['idItem']);
+            }
         }
     }
 
@@ -922,10 +964,10 @@ from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = "
         $percentage = filter_var($_POST['txttPercentage'][0], FILTER_SANITIZE_STRING);
         $maxDays = filter_var($_POST['txttMaxDays'][0], FILTER_SANITIZE_STRING);
 
-        $dbh->exec("insert into `item` (`Description`, `Gl_Code`, `Percentage`, `Internal_Number`) Values ('$desc', '$glCode', '$percentage', '$maxDays')");
+        $dbh->exec("insert into `item` (`Description`, `Gl_Code`, `Percentage`, `Timeout_Days`, First_Order_Id) Values ('$desc', '$glCode', '$percentage', '$maxDays', $nextVisitId)");
 
         if ($dbh->lastInsertId() > 0) {
-            $dbh->exec("insert into `item_type_map` Values ('" . $dbh->lastInsertId() . "', '" . InvoiceLineType::Tax . "')");
+            $dbh->exec("insert into `item_type_map` Values ('" . $dbh->lastInsertId() . "', '" . ItemType::Tax . "')");
         }
     }
 
@@ -1322,7 +1364,7 @@ $seldiscs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows3, '')
 
 
 // Items
-$sitems = $dbh->query("Select  i.idItem, itm.Type_Id, i.Description, i.Gl_Code, i.Percentage
+$sitems = $dbh->query("Select  i.idItem, itm.Type_Id, i.Description, i.Gl_Code, i.Percentage, i.Last_Order_Id
     from item i left join item_type_map itm on itm.Item_Id = i.idItem");
 $items = $sitems->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -1334,7 +1376,7 @@ $colCounter = array();
 // Make tax columns
 foreach ($items as $d) {
 
-    if ($d['Type_Id'] == 2) {
+    if ($d['Type_Id'] == ItemType::Tax && $d['Last_Order_Id'] == 0) {
 
         $ths .= HTMLTable::makeTh($d['Description'] . ' (' . TaxedItem::suppressTrailingZeros($d['Percentage']) . ')');
         $colCounter[] = $d['idItem'];
@@ -1387,31 +1429,48 @@ $itemTable = $itbl->generateMarkup(array('style' => 'float:left;'));
 
 
 // Taxes
-$tstmt = $dbh->query("Select i.idItem, i.Description, i.Gl_Code, i.Percentage, i.Internal_Number
-from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . InvoiceLineType::Tax);
+$tstmt = $dbh->query("Select i.idItem, i.Description, i.Gl_Code, i.Percentage, i.Timeout_Days, i.First_Order_Id, i.Last_Order_Id
+from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax ." order by i.Last_Order_Id");
 $titems = $tstmt->fetchAll(\PDO::FETCH_ASSOC);
-
+$hotTaxes = 0;
+$lastId = 0;
 
 $tiTbl = new HTMLTable();
-$tiTbl->addHeaderTr(HTMLTable::makeTh(count($titems) . ' Taxes', array('colspan'=>'3')));
-$tiTbl->addHeaderTr(HTMLTable::makeTh('Description').HTMLTable::makeTh('GL Code').HTMLTable::makeTh('Percentage').HTMLTable::makeTh('Max Days'));
 
 foreach ($titems as $d) {
+    
+    $trArry = [];
 
+    if ($d['Last_Order_Id'] == 0) {
+        $hotTaxes++;
+    }
+    
+    if ($lastId == 0 && $d['Last_Order_Id'] > 0) {
+        $trArry['style'] = 'background-color:yellow;';
+    }
+    
+    $lastId = $d['Last_Order_Id'];
+    
     $tiTbl->addBodyTr(
-            HTMLTable::makeTd(HTMLInput::generateMarkup($d['Description'], array('name' => 'txttItem[' . $d['idItem'] . ']')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'], array('name' => 'txttGlCode[' . $d['idItem'] . ']')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup(number_format($d['Percentage'], 3), array('name' => 'txttPercentage[' . $d['idItem'] . ']')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup($d['Internal_Number'], array('name' => 'txttMaxDays[' . $d['idItem'] . ']'))));
+            HTMLTable::makeTd(HTMLInput::generateMarkup($d['Description'], array('name' => 'txttItem[' . $d['idItem'] . ']', 'size'=>'18')))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'], array('name' => 'txttGlCode[' . $d['idItem'] . ']', 'size'=>'18')))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup(number_format($d['Percentage'], 3), array('name' => 'txttPercentage[' . $d['idItem'] . ']', 'size'=>'8')))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup($d['Timeout_Days'], array('name' => 'txttMaxDays[' . $d['idItem'] . ']', 'size'=>'5')))
+            .HTMLTable::makeTd($d['First_Order_Id'])
+            .HTMLTable::makeTd($d['Last_Order_Id'])
+            , $trArry);
 
 }
 
 // New Tax item
 $tiTbl->addBodyTr(
-        HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttItem[0]', 'placeholder'=>'New Tax')))
-        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttGlCode[0]')))
-        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttPercentage[0]')))
-        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttMaxDays[0]'))));
+        HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttItem[0]', 'placeholder'=>'New Tax', 'size'=>'18')))
+        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttGlCode[0]', 'size'=>'18')))
+        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttPercentage[0]', 'size'=>'8')))
+        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttMaxDays[0]', 'size'=>'5'))));
+
+$tiTbl->addHeaderTr(HTMLTable::makeTh($hotTaxes . ' Taxes' . (count($titems) > $hotTaxes ? ' and '.(count($titems) > $hotTaxes) . ' Old taxes' : ''), array('colspan'=>'6')));
+$tiTbl->addHeaderTr(HTMLTable::makeTh('Description').HTMLTable::makeTh('GL Code').HTMLTable::makeTh('Percentage').HTMLTable::makeTh('Max Days').HTMLTable::makeTh('First Visit').HTMLTable::makeTh('Last Visit'));
 
 $taxTable = $tiTbl->generateMarkup(array('style' => 'float:left;'));
 
@@ -1964,6 +2023,7 @@ $resultMessage = $alertMsg->createMarkup();
                     </form>
                 </div>
                 <div id="taxTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
+                    <?php echo $itemMessage; ?>
                     <form method="POST" action="ResourceBuilder.php" name="formtax">
 <?php echo $taxTable; ?>
                         <div style="clear:both"></div>

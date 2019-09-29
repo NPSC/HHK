@@ -19,6 +19,7 @@ require (DB_TABLES . 'ItemRS.php');
 
 
 require CLASSES . 'FinAssistance.php';
+require CLASSES . 'ValueAddedTax.php';
 require CLASSES . 'Purchase/Item.php';
 require(CLASSES . 'Purchase/RoomRate.php');
 

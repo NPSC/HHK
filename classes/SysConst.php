@@ -150,6 +150,15 @@ class ItemId {
     const Waive = 11;
 }
 
+class ItemType {
+    const Items = 1;
+    const Tax = 2;
+    const Refundable = 3;
+    const Duration = 4;
+    const Refund = 5;
+    const Discount= 6;
+}
+
 
 class ItemPriceCode {
     const Basic = 'b';

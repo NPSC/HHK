@@ -731,7 +731,7 @@ WHERE
         }
     }
 
-    public static function makeOrdersRatesTable($rates, &$totalAmt, PriceModel $priceModel, Config_Lite $labels, array $invLines, array $taxedItemList, &$numberNites, Item $moaItem, Item $donateItem) {
+    public static function makeOrdersRatesTable($rates, &$totalAmt, PriceModel $priceModel, Config_Lite $labels, array $invLines, ValueAddedTax $vat, &$numberNites, Item $moaItem, Item $donateItem) {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
@@ -773,21 +773,21 @@ WHERE
                     self::addSavedTrs($trs, $tbl);
 
                     // Add tax info
-                    foreach ($taxedItemList as $t) {
+                    foreach ($vat->getCurrentTaxedItems($visitNights, $r['vid']) as $t) {
 
-                        if ($preTaxRmCharge > 0 && $t['idItem'] == ItemId::Lodging && ($t['Max_Days'] == 0 || $visitNights <= $t['Max_Days'])) {
+                        if ($preTaxRmCharge > 0 && $t->getIdTaxedItem() == ItemId::Lodging) {
 
-                            $totalTax = round( ($preTaxRmCharge * $t['Percentage'] / 100), 2);
+                            $totalTax = round( ($preTaxRmCharge * $t->getDecimalTax()), 2);
 
-                            if (isset($roomTaxPaid[$t['taxIdItem']]) && abs($totalTax - $roomTaxPaid[$t['taxIdItem']]) <= .01) {
-                                $totalTax = $roomTaxPaid[$t['taxIdItem']];
+                            if (isset($roomTaxPaid[$t->getIdTaxingItem()]) && abs($totalTax - $roomTaxPaid[$t->getIdTaxingItem()]) <= .01) {
+                                $totalTax = $roomTaxPaid[$t->getIdTaxingItem()];
                             }
 
                             $totalAmt += $totalTax;
 
                             $tbl->addBodyTr(
-                                HTMLTable::makeTd($t['Description'], array('colspan'=>'4'))
-                                .HTMLTable::makeTd((floor($t['Percentage']) == $t['Percentage'] ? number_format($t['Percentage'], 0) : number_format($t['Percentage'], 3)) . '%', array('style'=>'text-align:right;'))
+                                HTMLTable::makeTd($t->getTaxingItemDesc(), array('colspan'=>'4'))
+                                .HTMLTable::makeTd((floor($t->getPercentTax()) == $t->getPercentTax() ? number_format($t->getPercentTax(), 0) : number_format($t->getPercentTax(), 3)) . '%', array('style'=>'text-align:right;'))
                                 .HTMLTable::makeTd(' ')
                                 .HTMLTable::makeTd(number_format($totalTax, 2), array('style'=>'text-align:right;'))
                             );
@@ -924,26 +924,27 @@ WHERE
         self::addSavedTrs($trs, $tbl);
 
         // Add tax info
-        foreach ($taxedItemList as $t) {
+        foreach ($vat->getCurrentTaxedItems($visitNights, $idVisitTracker) as $t) {
 
-            if ($preTaxRmCharge > 0 && $t['idItem'] == ItemId::Lodging && ($t['Max_Days'] == 0 || $visitNights <= $t['Max_Days'])) {
+            if ($preTaxRmCharge > 0 && $t->getIdTaxedItem() == ItemId::Lodging) {
 
-                $totalTax = round( ($preTaxRmCharge * $t['Percentage'] / 100), 2);
+                $totalTax = round( ($preTaxRmCharge * $t->getDecimalTax()), 2);
 
-                if (isset($roomTaxPaid[$t['taxIdItem']]) && abs($totalTax - $roomTaxPaid[$t['taxIdItem']]) <= .01) {
-                    $totalTax = $roomTaxPaid[$t['taxIdItem']];
+                if (isset($roomTaxPaid[$t->getIdTaxingItem()]) && abs($totalTax - $roomTaxPaid[$t->getIdTaxingItem()]) <= .01) {
+                    $totalTax = $roomTaxPaid[$t->getIdTaxingItem()];
                 }
 
                 $totalAmt += $totalTax;
 
                 $tbl->addBodyTr(
-                    HTMLTable::makeTd($t['Description'], array('colspan'=>'4'))
-                    .HTMLTable::makeTd((floor($t['Percentage']) == $t['Percentage'] ? number_format($t['Percentage'], 0) : number_format($t['Percentage'], 3)) . '%', array('style'=>'text-align:right;'))
+                    HTMLTable::makeTd($t->getTaxingItemDesc(), array('colspan'=>'4'))
+                    .HTMLTable::makeTd((floor($t->getPercentTax()) == $t->getPercentTax() ? number_format($t->getPercentTax(), 0) : number_format($t->getPercentTax(), 3)) . '%', array('style'=>'text-align:right;'))
                     .HTMLTable::makeTd(' ')
                     .HTMLTable::makeTd(number_format($totalTax, 2), array('style'=>'text-align:right;'))
                 );
             }
         }
+    
 
         // Room Fee totals
         $priceModel->rateTotalMarkup($tbl, $labels->getString('statement', 'roomTotalLabel', 'Lodging Total'), $numberNites, number_format($totalAmt, 2), $guestNites);
@@ -1381,7 +1382,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
 
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable($rates, $totalAmt, $priceModel, $labels, $invLines, getTaxedItemList($dbh), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
+        $tbl = self::makeOrdersRatesTable($rates, $totalAmt, $priceModel, $labels, $invLines, new ValueAddedTaxReg($dbh, $idRegistration), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
         $totalCharge = $totalAmt;
 
         // Thirdparty payments
@@ -1486,10 +1487,10 @@ where i.Deleted = 0 and il.Deleted = 0 and i.Order_Number = $idVisit order by il
 
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
-
+        
 
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, getTaxedItemList($dbh), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
+        $tbl = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, new ValueAddedTax($dbh, $idVisit), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
         $totalCharge = $totalAmt;
 
         // Thirdparty payments

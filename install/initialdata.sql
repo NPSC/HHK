@@ -566,7 +566,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('subsidyId','11','i','f','','Member Id to use for House Discount payment source',''),
 ('TrackAuto','false','b','h','','Track vehicles',''),
 ('tz','America/Chicago','lu','a','','House Time Zone','Time_Zone'),
-('UseHouseWaive', 'true', 'b', 'h', 'Show the house waive checkbox on checkout.'),
+('UseHouseWaive', 'true', 'b', 'h','', 'Show the house waive checkbox on checkout.', ''),
 ('UseWLnotes','false','b','h','','Use wait list notes feature on reservations',''),
 ('VerifyHospDate','false','b','h','','Insist on hospital treatment date entry',''),
 ('VisitExcessPaid','d','s','h','','Default place for excess visit payments',''),
@@ -578,18 +578,18 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 
 
 
-replace into `item` (`idItem`, `Internal_Number`, `Entity_Id`, `Gl_Code`, `Description`) values 
-(1, 'n1', 0, 1, 'Lodging'),
-(2, 'c1', 0, 1, 'Cleaning Fee'),
-(3, 'k1', 0, 2, 'Deposit'),
-(4, 'k2', 0, 2, 'Deposit Refund'),
-('5', 'I1', '0', '3', 'Carried From Inv. #'),
-('6', 'd1', '0', '4', 'Discount'),
-('7', 'n2', '0', '5', 'Reversal'),
-('8', 'n0', '0', '6', 'Lodging Donation'),
-('9', 'a1', '0', '7', ''),
-('10', 'n3', '0',  '8', 'Lodging MOA'),
-('11', 'd2', '0', '4', 'Waive');
+replace into `item` (`idItem`, `Description`) values 
+(1, 'Lodging'),
+(2, 'Cleaning Fee'),
+(3, 'Deposit'),
+(4, 'Deposit Refund'),
+(5, 'Carried From Inv. #'),
+(6, 'Discount'),
+(7, 'Reversal'),
+(8, 'Lodging Donation'),
+(9, ''),
+(10, 'Lodging MOA'),
+(11, 'Waive');
 -- ;
 
 

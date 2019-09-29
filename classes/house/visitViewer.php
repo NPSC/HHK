@@ -600,7 +600,7 @@ class VisitView {
         }
 
         // Any taxes
-        $vat = new ValueAddedTax($dbh);
+        $vat = new ValueAddedTax($dbh, $visitCharge->getIdVisit());
 
         $currFees = '';
         $paymentMarkup = '';
@@ -778,7 +778,7 @@ class VisitView {
 
 
         // Special class for current balance.
-        $balAttr = array('style'=>'border-top: solid 3px #2E99DD;');
+        $balAttr = array('style'=>'border-top: solid 3px #2E99DD;text-align:right;');
         $feesTitle = "";
 
         if ($curAccount->getDueToday() > 0) {
