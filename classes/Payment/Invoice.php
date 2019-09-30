@@ -846,9 +846,16 @@ where pi.Invoice_Id in ($whAssoc)";
                 }
 
                 $lines = $this->getLines($dbh);
+
                 foreach ($lines as $l) {
+
                     if ($l->getItemId() == ItemId::LodgingMOA && $this->is3rdParty($dbh, $this->getSoldToId()) && $l->getAmount() > 0) {
-                        throw new Hk_Exception_Payment('Cannot delete.  This is a 3rd party invoice for MOA (Money on Account), and the amount may already have been returned to the Guest. ');
+
+                        $moaAmt = Registration::loadLodgingBalance($dbh, $this->getIdGroup());
+
+                        if ($l->getAmount() > $moaAmt) {
+                            throw new Hk_Exception_Payment('Cannot delete.  The Money On Account (MOA) balance for this guest is not enough: ' . number_format($moaAmt, 2));
+                        }
                     }
                 }
 

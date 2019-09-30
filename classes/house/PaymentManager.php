@@ -170,6 +170,7 @@ class PaymentManager {
 
             // Just use what they are willing to pay as the charge.
             $roomChargesPreTax = $this->pmp->getRatePayment();
+            $housePaymentAmt = 0;
 
             // Room Charges are different for checked out
             if ($visit->getVisitStatus() == VisitStatus::CheckedOut) {
@@ -200,12 +201,11 @@ class PaymentManager {
                     // Checked out, and no room charges to pay.
                     $roomChargesPreTax = 0;
                 }
-            }
 
-            // Determine House Waive
-            $housePaymentAmt = 0;
-            if ($visit->getVisitStatus() == VisitStatus::CheckedOut && $this->pmp->getFinalPaymentFlag()) {
-                $housePaymentAmt = $this->pmp->getHouseDiscPayment();
+                // Determine House Waive
+                if ($this->pmp->getFinalPaymentFlag()) {
+                    $housePaymentAmt = $this->pmp->getHouseDiscPayment();
+                }
             }
 
             // Any charges?

@@ -84,8 +84,6 @@ class CurrentAccount {
         $this->setVisitFeeCharged($visitCharge->getVisitFeeCharged());
         $this->setAdditionalCharge($visitCharge->getItemInvCharges(ItemId::AddnlCharge));
         $this->setUnpaidMOA($visitCharge->getItemInvPending(ItemId::LodgingMOA));
-        $this->setLodgingTax(max(0, $visitCharge->getTaxInvoices(ItemId::Lodging)));
-        $this->setAdditionalChargeTax($visitCharge->getTaxInvoices(ItemId::AddnlCharge));
 
         // Reimburse vat?
         foreach($vat->getTimedoutTaxItems(ItemId::Lodging, $visitCharge->getNightsStayed()) as $t) {
@@ -94,6 +92,10 @@ class CurrentAccount {
 
         // Tax percent sums
         $this->taxedItemSumsDecimal = $vat->getTaxedItemSums($visitCharge->getNightsStayed());
+
+        $this->setLodgingTax(max(0, round($visitCharge->getRoomFeesCharged() * $this->taxedItemSumsDecimal[ItemId::Lodging], 3)));
+
+        $this->setAdditionalChargeTax($visitCharge->getTaxInvoices(ItemId::AddnlCharge));
 
 
         // Visit Fee Balance

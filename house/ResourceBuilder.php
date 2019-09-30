@@ -900,7 +900,7 @@ if (isset($_POST['btnTaxSave'])) {
     $sitems = $dbh->query("Select i.idItem, i.Description, i.Gl_Code, i.Percentage, i.Timeout_Days, i.First_Order_Id, i.Last_Order_Id
         from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax );
     $items = $sitems->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // Get the latest visit id
     $stmt = $dbh->query("select max(idVisit) from visit");
     $vrows = $stmt->fetchAll(\PDO::FETCH_NUM);
@@ -918,13 +918,13 @@ if (isset($_POST['btnTaxSave'])) {
             $maxDays = filter_var($_POST['txttMaxDays'][$i['idItem']], FILTER_SANITIZE_STRING);
             $last = $i['Last_Order_Id'];
             $first = $i['First_Order_Id'];
-            
+
             if ($maxDays != $i['Timeout_Days'] || $percentage != $i['Percentage']) {
-                
+
                 if ($last != 0) {
                     $itemMessage = HTMLContainer::generateMarkup('span', 'Cannot change that tax item.', array('style'=>'color:red;'));
                 } else {
-                    
+
                     // save this one with the last order id
                     $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode', Last_Order_Id = $maxVisitId "
                         . " where `idItem` = " . $i['idItem']);
@@ -1438,19 +1438,19 @@ $lastId = 0;
 $tiTbl = new HTMLTable();
 
 foreach ($titems as $d) {
-    
+
     $trArry = [];
 
     if ($d['Last_Order_Id'] == 0) {
         $hotTaxes++;
     }
-    
-    if ($lastId == 0 && $d['Last_Order_Id'] > 0) {
+
+    if ($d['Last_Order_Id'] > 0) {
         $trArry['style'] = 'background-color:yellow;';
     }
-    
+
     $lastId = $d['Last_Order_Id'];
-    
+
     $tiTbl->addBodyTr(
             HTMLTable::makeTd(HTMLInput::generateMarkup($d['Description'], array('name' => 'txttItem[' . $d['idItem'] . ']', 'size'=>'18')))
             .HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'], array('name' => 'txttGlCode[' . $d['idItem'] . ']', 'size'=>'18')))
@@ -1469,7 +1469,7 @@ $tiTbl->addBodyTr(
         .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttPercentage[0]', 'size'=>'8')))
         .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttMaxDays[0]', 'size'=>'5'))));
 
-$tiTbl->addHeaderTr(HTMLTable::makeTh($hotTaxes . ' Taxes' . (count($titems) > $hotTaxes ? ' and '.(count($titems) > $hotTaxes) . ' Old taxes' : ''), array('colspan'=>'6')));
+$tiTbl->addHeaderTr(HTMLTable::makeTh($hotTaxes . ' Taxes' . (count($titems) > $hotTaxes ? ' and '.(count($titems) - $hotTaxes) . ' Old taxes' : ''), array('colspan'=>'6')));
 $tiTbl->addHeaderTr(HTMLTable::makeTh('Description').HTMLTable::makeTh('GL Code').HTMLTable::makeTh('Percentage').HTMLTable::makeTh('Max Days').HTMLTable::makeTh('First Visit').HTMLTable::makeTh('Last Visit'));
 
 $taxTable = $tiTbl->generateMarkup(array('style' => 'float:left;'));
