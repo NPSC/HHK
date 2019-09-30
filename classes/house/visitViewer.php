@@ -702,7 +702,7 @@ class VisitView {
                 $showSubTotal = TRUE;
 
                 $tbl2->addBodyTr(
-                    HTMLTable::makeTd('Tax' ($curAccount->getSumTaxDecimal(ItemId::Lodging) > 0 ? '(' . TaxedItem::suppressTrailingZeros($curAccount->getSumTaxDecimal(ItemId::Lodging) * 100) . '):' : ':'), array('class'=>'tdlabel', 'style'=>'font-size:small;'))
+                    HTMLTable::makeTd('Tax' . ($curAccount->getSumTaxDecimal(ItemId::Lodging) > 0 ? '(' . TaxedItem::suppressTrailingZeros($curAccount->getSumTaxDecimal(ItemId::Lodging) * 100) . '):' : ':'), array('class'=>'tdlabel', 'style'=>'font-size:small;'))
                     . HTMLTable::makeTd('$' . number_format($curAccount->getLodgingTax(), 2), array('style'=>'text-align:right;font-size:small;'))
                 );
             }

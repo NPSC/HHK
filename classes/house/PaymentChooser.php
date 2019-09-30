@@ -416,7 +416,7 @@ class PaymentChooser {
                 FALSE,
                 array(),
                 $labels,
-                new ValueAddedTax($dbh),
+                new ValueAddedTax($dbh, $visitCharge->getIdVisit()),
                 $visitCharge->getIdVisit(),
                 array(),
                 '',
