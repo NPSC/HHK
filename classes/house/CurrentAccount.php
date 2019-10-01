@@ -93,7 +93,7 @@ class CurrentAccount {
         // Tax percent sums
         $this->taxedItemSumsDecimal = $vat->getTaxedItemSums($visitCharge->getNightsStayed());
 
-        $this->setLodgingTax(max(0, round($visitCharge->getRoomFeesCharged() * $this->taxedItemSumsDecimal[ItemId::Lodging], 3)));
+        $this->setLodgingTax(max(0, round($visitCharge->getRoomFeesCharged() * $this->getSumTaxDecimal(ItemId::Lodging), 3)));
 
         $this->setAdditionalChargeTax($visitCharge->getTaxInvoices(ItemId::AddnlCharge));
 
