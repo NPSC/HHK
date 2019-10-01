@@ -9,6 +9,7 @@ $(document).ready(function() {
     var t = this;
     var $guestSearch = $('#gstSearch');
     var resv = $.parseJSON($('#resv').val());
+    var pageManagerOptions = $.parseJSON($('#resvManagerOptions').val());
     var pageManager = t.pageManager;
     fixedRate = $('#fixedRate').val();
     payFailPage = $('#payFailPage').val();
@@ -24,7 +25,6 @@ $(document).ready(function() {
             ) * 1.1 );
         }
     });
-
 
 // Dialog Boxes
     $("#resDialog").dialog({
@@ -107,8 +107,7 @@ $(document).ready(function() {
         $('#paymentMessage').show();
     }
 
-
-    pageManager = new resvManager(resv);
+    pageManager = new resvManager(resv, pageManagerOptions);
 
     // hide the alert on mousedown
     $(document).mousedown(function (event) {
@@ -199,9 +198,7 @@ $(document).ready(function() {
             );
 
         }
-
     });
-
 
     function getGuest(item) {
 
@@ -248,6 +245,8 @@ $(document).ready(function() {
 
         $guestSearch.focus();
     }
+    
+    
 });
 
 

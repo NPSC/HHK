@@ -62,6 +62,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
             . "vg.`Patient Rel.`, vg.Prefix, vg.First as `Guest First`, vg.Last as `Guest Last`, vg.Suffix, ifnull(vg.BirthDate, '') as `Birth Date`, "
             . "np.Name_First as `Patient First` , np.Name_Last as `Patient Last`, "
             . " vg.Address, vg.City, vg.County, vg.State, vg.Zip, vg.Country, vg.Phone, vg.Email, "
+            . "r.title as `Room`,"
             . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
             . " ifnull(rr.Title, '') as `Rate Category`, 0 as `Total Cost`, "
             . "hs.idHospital, hs.idAssociation, "
@@ -73,6 +74,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
         $query = "select s.idName, hs.idPsg, vg.Relationship_Code,
             vg.Last as `Guest Last`, vg.First as `Guest First`, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.Phone, vg.Email, vg.`Address`, vg.City, vg.County, vg.State, vg.Zip, case when vg.Country = '' then 'US' else vg.Country end as Country, vg.ngStatus, "
             . "ifnull(g2.Description,'') as `Status`, "
+            . "r.title as `Room`,"
             . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
             . "hs.idHospital, hs.idAssociation, "
             . "np.Name_Last as `Patient Last`, np.Name_First as `Patient First`, "
@@ -83,6 +85,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 
         $query = "select s.idName, hs.idPsg, vg.Relationship_Code, vg.Prefix, vg.First as `Guest First`, vg.Middle, vg.Last as `Guest Last`, vg.Suffix, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.ngStatus, "
                 . "ifnull(g2.Description,'') as `Status`, "
+                . "r.title as `Room`,"
                 . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
                 . "np.Name_Last as `Patient Last`, np.Name_First as `Patient First` , "
                 . " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
@@ -92,7 +95,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     } else {
 
         $query = "select s.idName, hs.idPsg, vg.Relationship_Code, vg.Last as `Guest Last`, vg.First as `Guest First`, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.ngStatus, "
-            . "ifnull(g2.Description,'') as `Status`,  ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
+            . "ifnull(g2.Description,'') as `Status`, r.title as `Room`, ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
                 . "np.Name_Last as `Patient Last`, np.Name_First as `Patient First`, "
                 . " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
             . "hs.idHospital, hs.idAssociation, "
@@ -124,8 +127,10 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     gen_lookups g2 on g2.Code = s.Status and g2.Table_Name = 'Visit_Status'
         left join
     room_rate rr on v.idRoom_rate = rr.idRoom_rate
+    	join 
+    room r on s.idRoom = r.idRoom
 where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end') and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0 $whClause";
-
+	
     $stmt = $dbh->query($query);
 
     if (!$local) {

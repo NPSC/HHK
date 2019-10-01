@@ -8,9 +8,9 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-define('JSV', '?qs=5');
+define('JSV', '?qs=6');
 
-define('HOUSE_CSS', "<link href='css/house.css' rel='stylesheet' type='text/css' />");
+define('HOUSE_CSS', "<link href='css/house.css" . JSV . "' rel='stylesheet' type='text/css' />");
 
 define('RESV_MANAGER_JS', 'js/resvManager-min.js' . JSV);
 define('PAYMENT_JS', "js/payments.js" . JSV);
@@ -18,6 +18,8 @@ define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JSV);
 
 define('RESV_JS', "js/resv.js" . JSV);
 define('INS_EMBED_JS', '<script src="https://instamedprd.cachefly.net/Content/Js/embed.js" data-displaymode="embedded" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="embedded"></script>');
+
+define('GRID_CSS', "<link href='css/bootstrap-grid.min.css' rel='stylesheet' type='text/css' />");
 
 /**
  * Includes
@@ -40,3 +42,5 @@ require (SEC . 'webInit.php');
 require (CLASSES . 'Purchase/PriceModel.php');
 
 
+//Fatal Error Handler
+require(FUNCTIONS . 'errorHandler.php');

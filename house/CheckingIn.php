@@ -176,6 +176,14 @@ $resvAr['isCheckin'] = TRUE;
 
 $resvObjEncoded = json_encode($resvAr);
 
+$resvManagerOptions = [];
+if($uS->UseIncidentReports){
+	$resvManagerOptions["UseIncidentReports"] = true;
+}else{
+	$resvManagerOptions["UseIncidentReports"] = false;
+}
+$resvManagerOptionsEncoded = json_encode($resvManagerOptions);
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -189,7 +197,7 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
-
+		<?php echo INCIDENT_CSS; ?>
         <?php echo FAVICON; ?>
 
 <!--        Fix the ugly checkboxes-->
@@ -215,6 +223,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>
@@ -264,8 +273,10 @@ $resvObjEncoded = json_encode($resvAr);
         <input type="hidden" value="<?php echo $payFailPage; ?>" id="payFailPage"/>
         <input type="hidden" value="<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>" id="dateFormat"/>
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
+        <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
 
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
+                <script type="text/javascript" src="js/incidentReports.js"></script>
         <script type="text/javascript" src='js/checkingIn.js'></script>
     </body>
 </html>

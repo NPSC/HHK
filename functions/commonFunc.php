@@ -248,6 +248,15 @@ function setTimeZone($uS, $strDate) {
     return newDateWithTz($strDate, $uS->tz);
 }
 
+function setTimeZone($uS, $strDate) {
+
+    if (is_null($uS) || is_a($uS, 'Session') == FALSE) {
+        $uS = Session::getInstance();
+    }
+
+    return newDateWithTz($strDate, $uS->tz);
+}
+
 function incCounter(\PDO $dbh, $counterName) {
 
     $dbh->query("CALL IncrementCounter('$counterName', @num);");

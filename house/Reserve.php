@@ -182,6 +182,14 @@ $resvAr['gstAddr'] = $uS->GuestAddr;
 $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
 $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
 
+$resvManagerOptions = [];
+if($uS->UseIncidentReports){
+	$resvManagerOptions["UseIncidentReports"] = true;
+}else{
+	$resvManagerOptions["UseIncidentReports"] = false;
+}
+$resvManagerOptionsEncoded = json_encode($resvManagerOptions);
+
 // Page title
 $title = $wInit->pageHeading;
 
@@ -205,7 +213,9 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
-
+        <?php echo INCIDENT_CSS; ?>
+        <?php echo GRID_CSS; ?>
+        
         <?php echo FAVICON; ?>
 <!--        Fix the ugly checkboxes-->
         <style>
@@ -229,7 +239,9 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="js/incidentReports.js"></script>
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>
@@ -247,6 +259,15 @@ $resvObjEncoded = json_encode($resvAr);
             <form action="Reserve.php" method="post"  id="form1">
                 <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
                 <div id="famSection" style="clear:left; float:left; font-size: .9em; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
+                <?php if ($uS->UseIncidentReports) { ?>
+	            <div id="incidentsSection" style="font-size: .9em; display: none; min-width: 810px; float: left; margin-bottom: 0.5em" class="ui-widget hhk-visitdialog hhk-row">
+		            <div style="padding:2px; cursor:pointer;" class="ui-widget-header ui-state-default ui-corner-top hhk-incidentHdr">
+			            <div class="hhk-checkinHdr" style="display: inline-block;">Incidents<span id="incidentCounts"></span></div>
+			            <ul style="list-style-type:none; float:right;margin-left:5px;padding-top:2px;" class="ui-widget"><li class="ui-widget-header ui-corner-all" title="Open - Close"><span id="f_drpDown" class="ui-icon ui-icon-circle-triangle-n"></span></li></ul>
+			        </div>
+	                <div id="incidentContent" style="padding: 5px; display: none;" class="ui-corner-bottom hhk-tdbox ui-widget-content"></div>
+	            </div>
+	            <?php } ?>
                 <div id="hospitalSection" style="font-size: .9em; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
                 <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
                 <div style="clear:left; min-height: 70px;"></div>
@@ -280,8 +301,8 @@ $resvObjEncoded = json_encode($resvAr);
         <input type="hidden" value="<?php echo $payFailPage; ?>" id="payFailPage"/>
         <input type="hidden" value="<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>" id="dateFormat"/>
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
+        <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
         <input type="hidden" value='<?php echo $paymentMarkup; ?>' id="paymentMarkup"/>
-
         <script type="text/javascript" src="js/reserve.js"></script>
     </body>
 </html>

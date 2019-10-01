@@ -503,7 +503,7 @@ if ($checkingIn == '') {
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
 <?php echo $menuMarkup; ?>
-        <div id="contentDiv">
+        <div id="contentDiv" style="margin-bottom: 60px;">
             <div style="float:left; margin-right: 100px; margin-top:10px;">
                 <h1><?php echo $wInit->pageHeading; ?></h1>
             </div>

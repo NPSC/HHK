@@ -1354,6 +1354,8 @@ class Visit {
         // Init the latest departure date for the visit
         $lastDepartureDT = new \DateTime($this->getArrivalDate());
         $lastDepartureDT->setTime(0, 0, 0);
+        
+        $visitArrivalDT = new \DateTime($this->getArrivalDate());
 
         $visitArrivalDT = new \DateTime($this->getArrivalDate());
 

@@ -87,6 +87,7 @@ $(document).ready(function() {
     "use strict";
     var t = this;
     var resv = $.parseJSON($('#resv').val());
+    var pageManagerOptions = $.parseJSON($('#resvManagerOptions').val());
     var pageManager = t.pageManager;
     fixedRate = $('#fixedRate').val();
     payFailPage = $('#payFailPage').val();
@@ -148,7 +149,7 @@ $(document).ready(function() {
     });
 
 
-    pageManager = new resvManager(resv);
+    pageManager = new resvManager(resv, pageManagerOptions);
 
     // hide the alert on mousedown
     $(document).mousedown(function (event) {

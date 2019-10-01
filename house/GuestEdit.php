@@ -746,6 +746,7 @@ $uS->guestId = $id;
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
+        <?php echo INCIDENT_CSS; ?>
         <?php echo FAVICON; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
@@ -765,6 +766,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>
@@ -869,6 +871,9 @@ $uS->guestId = $id;
                         <?php if ($uS->TrackAuto) { ?>
                         <li><a href="#vvehicle">Vehicles</a></li>
                         <?php } ?>
+                        <?php if ($uS->UseIncidentReports) { ?>
+                        <li><a href="#vincidents">Incidents</a></li>
+                        <?php } ?>
                     </ul>
                     <div id="vpsg" class="ui-tabs-hide"  style="display:none;">
                         <div id="divPSGContainer"><?php echo $psgTabMarkup; ?></div>
@@ -893,6 +898,11 @@ $uS->guestId = $id;
                         <?php echo $visitList; ?>
                         </div>
                     </div>
+                    <?php if ($uS->UseIncidentReports) { ?>
+                    <div id="vincidents" class="ui-tabs-hide" style="display: none;">
+	                    <div id="vIncidentContent"></div>
+                    </div>
+                    <?php } ?>
                 </div>
                 <?php } ?>
                 <div style="clear:both;"></div>
@@ -927,6 +937,7 @@ $uS->guestId = $id;
             <div id="keysfees" style="font-size: .85em;"></div>
             <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
+            <div id="incidentDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
             <div id="submit" style="display:none;">
                 <table>
                     <tr>
@@ -949,6 +960,7 @@ $uS->guestId = $id;
         </script>
 
         <script type="text/javascript" src="../js/uppload.js"></script>
+        <script type="text/javascript" src="js/incidentReports.js"></script>
         <script type="text/javascript" src="js/guestload-min.js?vn=36"></script>
     </body>
 </html>

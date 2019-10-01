@@ -711,6 +711,8 @@ class VisitView {
         // Visit fees charged
         if ($curAccount->getVisitFeeCharged() > 0) {
 
+            $visitFeeCharged = $visitCharge->getVisitFeeCharged();
+
             // Get labels
             $labels = new Config_Lite(LABEL_FILE);
             $showSubTotal = TRUE;

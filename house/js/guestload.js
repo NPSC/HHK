@@ -101,7 +101,7 @@ function setupCOF() {
     if ($('#trCHName').length > 0) {
 
         $('#cbNewCard').change(function () {
-            
+
             if (this.checked) {
                 $('.hhkKeyNumber').show();
             } else {
@@ -137,6 +137,12 @@ $(document).ready(function () {
     var setupNotes,
         $psgList;
 
+	//incident reports
+	$('#vIncidentContent').incidentViewer({
+		guestId: memData.id,
+		psgId: memData.idPsg
+	});
+
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
             var ul = this.menu.element;
@@ -146,7 +152,7 @@ $(document).ready(function () {
             ) * 1.1 );
         }
     });
-    
+
     $("#divFuncTabs").tabs({
         collapsible: true
     });
@@ -265,13 +271,13 @@ $(document).ready(function () {
     });
 
     $('#divNametabs').tabs({
-        
+
         beforeActivate: function (event, ui) {
-            
+
             var tbl = $('#vvisitLog').find('table');
-            
+
             if (ui.newTab.prop('id') === 'visitLog' && tbl.length === 0) {
-                
+
                 $.post('ws_ckin.php', {cmd: 'gtvlog', idReg: memData.idReg}, function (data) {
                     if (data) {
                         try {
@@ -290,9 +296,9 @@ $(document).ready(function () {
                         }
                     }
                 });
-                
+
             } else if (ui.newTab.prop('id') === 'chglog' && !listEvtTable) {
-                
+
                 listEvtTable = $('#dataTbl').dataTable({
                 "columnDefs": dtCols,
                 "serverSide": true,
@@ -312,13 +318,13 @@ $(document).ready(function () {
         },
         collapsible: true
     });
-    
+
     $('#btnSubmit, #btnReset, #btnCred').button();
-    
+
     $('#btnCred').click(function () {
         cardOnFile($(this).data('id'), $(this).data('idreg'), 'GuestEdit.php?id=' + $(this).data('id') + '&psg=' + memData.idPsg);
     });
-    
+
     // phone - email tabs block
     $('#phEmlTabs').tabs();
     $('#emergTabs').tabs();
@@ -327,12 +333,12 @@ $(document).ready(function () {
         collapsible: true,
         beforeActivate: function (event, ui) {
             if (ui.newPanel.length > 0) {
-                
+
                 if (ui.newTab.prop('id') === 'fin') {
                     getIncomeDiag(0, memData.idReg);
                     event.preventDefault();
                 }
-                
+
                 if (ui.newTab.prop('id') === 'lipsg' && !setupNotes) {
                     setupNotes = setupPsgNotes(memData.idPsg, $('#psgNoteViewer'));
                 }
@@ -465,14 +471,14 @@ $(document).ready(function () {
         $('.hhk-docInfo').hide();
     }
 
-    createAutoComplete($('#txtsearch'), 3, {cmd: 'role', mode: 'mo', gp:'1'}, 
+    createAutoComplete($('#txtsearch'), 3, {cmd: 'role', mode: 'mo', gp:'1'},
         function (item) {
             if (item.id > 0) {
                 window.location.assign("GuestEdit.php?id=" + item.id);
             }
         });
 
-    createAutoComplete($('#txtPhsearch'), 5, {cmd: 'role', mode: 'mo', gp:'1'}, 
+    createAutoComplete($('#txtPhsearch'), 5, {cmd: 'role', mode: 'mo', gp:'1'},
         function (item) {
             if (item.id > 0) {
                 window.location.assign("GuestEdit.php?id=" + item.id);
@@ -482,7 +488,7 @@ $(document).ready(function () {
     createAutoComplete($('#txtRelSch'), 3, {cmd: 'srrel', basis: $('#hdnRelCode').val(), id: memData.id}, function (item) {
         $.post('ws_admin.php', {'rId':item.id, 'id':memData.id, 'rc':$('#hdnRelCode').val(), 'cmd':'newRel'}, relationReturn);
     });
-    
+
     // Any results
     if (resultMessage !== '') {
         flagAlertMessage(resultMessage, 'alert');
@@ -518,11 +524,11 @@ $(document).ready(function () {
     });
 
     setupCOF();
-    
-    
+
+
     // init dirrty
     $("#form1").dirrty();
-    
+
     //GuestPhoto
     new Uppload({
         uploadFunction: function uploadFunction(file){
@@ -565,7 +571,7 @@ $(document).ready(function () {
             aspectRatio: 1/1
         }
     });
-	
+
     $(".uppload-branding").hide(); //hide Get Uppload branding from upload box
 
     $(document).on("click", "#hhk-guest-photo", function(e){
@@ -585,7 +591,7 @@ $(document).ready(function () {
     });
 
     $(".delete-guest-photo").on("click", function(){
-        
+
         if (confirm("Really Delete this photo?")) {
             $.ajax({
                 type: "POST",
@@ -597,11 +603,11 @@ $(document).ready(function () {
                     },
                 success: function(data) {
                     if(data.error){
-                        
+
                         if (data.gotopage) {
                             window.location.assign(data.gotopage);
                         }
-                        
+
                         flagAlertMessage("Server error - " + data.error, 'error');
                         return;
 

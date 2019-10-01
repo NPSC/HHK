@@ -133,16 +133,16 @@ function setupRates(ckIn) {
     if ($selVisitFee.length > 0) {
 
         $selVisitFee.change(function() {
-            
+
             $selRateCat.change();
-            
+
             if ($('#visitFeeCb').length > 0) {
                 // update the visit fee
                 var amt = parseFloat(ckIn.visitFees[$(this).val()][2]);
                 if (isNaN(amt) || amt < 0) {
                     amt = 0;
                 }
-                
+
                 if (amt === 0) {
                     $('#visitFeeAmt').val('');
                     $('#visitFeeCb').prop('checked', false);
@@ -152,7 +152,7 @@ function setupRates(ckIn) {
                     $('#spnvfeeAmt').text('($' + amt.toFixed(2).toString() + ')');
                     $('.hhk-vfrow').show('fade');
                 }
-                
+
                 $('#spnvfeeAmt').data('amt', amt);
                 $('#visitFeeCb').change();
             }
@@ -200,7 +200,7 @@ function setupRates(ckIn) {
 
             lodging = amt * days;
             $('#spnLodging').text('$' + lodging.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
-            
+
             if (tax > 0) {
                 taxAmt = amt * tax;
                 $('#spnRcTax').text('$' + taxAmt.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
@@ -249,7 +249,7 @@ function setupRates(ckIn) {
             daysCalculator(days, $selRateCat.val(), 0, 0, adj, parseInt($('#spnNumGuests').text()), (ckIn.idResv === undefined ? 0 : ckIn.idResv), function(amt) {
 
                 $('#spnLodging').text('$' + amt.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
-                
+
                 if (tax > 0) {
                     taxAmt = amt * tax;
                     $('#spnRcTax').text('$' + taxAmt.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
@@ -267,19 +267,19 @@ function setupRates(ckIn) {
 
             $('.hhk-fxAdj').hide();
             $('.hhk-fxFixed').show();
-            
+
             if (ckIn.resources[$selResource.val()]) {
                 $('#txtFixedRate').val(ckIn.resources[$selResource.val()].rate);
             }
         } else {
-            
+
             $('.hhk-fxFixed').hide();
             $('.hhk-fxAdj').show();
         }
 
         $('#txtFixedRate').change();
         $('#txtadjAmount').change();
-        
+
         if (ckIn.resources[$selResource.val()].key > 0) {
             $('#spnDepAmt').text('($'+ckIn.resources[$selResource.val()].key+')');
             $('#hdnKeyDepAmt').val(ckIn.resources[$selResource.val()].key);
@@ -294,7 +294,7 @@ function setupRates(ckIn) {
                     .prop('checked', false)
                     .change();
         }
-        
+
     });
 
     $selRateCat.change();
@@ -409,4 +409,3 @@ function showRegDialog(markup, idReg, container) {
         }
     });
 }
-

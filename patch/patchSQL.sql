@@ -1,22 +1,22 @@
 
-ALTER TABLE `sys_config` 
+ALTER TABLE `sys_config`
     ADD COLUMN `Header` VARCHAR(5) NOT NULL DEFAULT '' AFTER `Category`;
-ALTER TABLE `sys_config` 
+ALTER TABLE `sys_config`
     ADD COLUMN `GenLookup` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Description`;
-ALTER TABLE `sys_config` 
+ALTER TABLE `sys_config`
     CHANGE COLUMN `Value` `Value` VARCHAR(500) NOT NULL DEFAULT '' ;
 
-ALTER TABLE `invoice_line` 
+ALTER TABLE `invoice_line`
     CHANGE COLUMN `Source_User_Id` `Source_Item_Id` INT(11) NOT NULL DEFAULT '0' ;
 
-ALTER TABLE `w_users` 
+ALTER TABLE `w_users`
     ADD COLUMN `Default_Page` VARCHAR(100) NOT NULL DEFAULT '' AFTER `Ip`;
 
-ALTER TABLE `item` 
+ALTER TABLE `item`
     CHANGE COLUMN `Entity_Id` `First_Order_Id` INT(11) NOT NULL DEFAULT '0' ;
-ALTER TABLE `item` 
+ALTER TABLE `item`
     ADD COLUMN `Last_Order_Id` INT NOT NULL DEFAULT 0 AFTER `First_Order_Id`;
-ALTER TABLE `item` 
+ALTER TABLE `item`
     CHANGE COLUMN `Internal_Number` `Timeout_Days` VARCHAR(50) NOT NULL DEFAULT '';
 
 update item set Timeout_Days = '';
@@ -63,8 +63,8 @@ UPDATE stays s
         JOIN
     visit v ON s.idVisit = v.idVisit AND s.Visit_Span = v.Span
         JOIN
-    visit vs ON s.idVisit = vs.idVisit AND vs.Span = ((@n:=s.Visit_Span) + 1) 
-SET 
+    visit vs ON s.idVisit = vs.idVisit AND vs.Span = ((@n:=s.Visit_Span) + 1)
+SET
     s.Visit_Span = vs.Span,
     s.Status = CASE
         WHEN s.Status != 'co' THEN v.Status
@@ -78,8 +78,8 @@ UPDATE stays s
         JOIN
     visit v ON s.idVisit = v.idVisit AND s.Visit_Span = v.Span
         JOIN
-    visit vs ON s.idVisit = vs.idVisit AND vs.Span = ((@n:=s.Visit_Span) + 1) 
-SET 
+    visit vs ON s.idVisit = vs.idVisit AND vs.Span = ((@n:=s.Visit_Span) + 1)
+SET
     s.Visit_Span = vs.Span,
     s.Status = CASE
         WHEN s.Status != 'co' THEN v.Status
@@ -87,5 +87,3 @@ SET
     END
 WHERE
     DATE(s.Span_Start_Date) > DATE(v.Span_End);
-
-

@@ -102,7 +102,7 @@ function resvManager(initData) {
                     numGuests++;
 
                 } else {
-                    
+
                     // Only one person? then she is staying
                     if ($('.hhk-cbStay').length === 1) {
                         people.list()[prefix].stay = '1';
@@ -1129,11 +1129,11 @@ function resvManager(initData) {
                     stDate = false,
                     enDate = false,
                     drp;
-            
+
                 if (gstDate.val() === '' && arrival) {
                     gstDate.val(arrival);
                 }
-                
+
                 if (data.startDate) {
                     stDate = data.startDate;
                 }
@@ -1167,9 +1167,9 @@ function resvManager(initData) {
                     startDate: stDate,
                     endDate: enDate
                 })
-                
+
                 if (data.updateOnChange) {
-                    
+
                     drp.bind('datepicker-change', function(event, dates) {
 
                         // Update the number of days display text.
@@ -1340,7 +1340,7 @@ function resvManager(initData) {
                     if ($('#gstDate').val() != '' && $('#gstCoDate').val() != '') {
                         updateRescChooser.go($('#gstDate').val(), $('#gstCoDate').val());
                     }
-                    
+
                     // stay buttons and total guests.
                     $('.hhk-cbStay').change();
                 }
@@ -1431,7 +1431,7 @@ function resvManager(initData) {
                     if (data.rooms) {
                         setRooms(data.rooms);
                     }
-                    
+
                     if (data.selectr) {
 
                         newSel = $(data.selectr);
@@ -1659,9 +1659,9 @@ function resvManager(initData) {
         function setupPay(data){
 
             if ($('#selResource').length > 0 && $('#selRateCategory').length > 0) {
-                
+
                 setupPayments($('#selRateCategory'));
-                
+
                 $('#paymentDate').datepicker({
                     yearRange: '-1:+00',
                     numberOfMonths: 1,
@@ -1670,7 +1670,7 @@ function resvManager(initData) {
                 });
             }
         }
-        
+
         function setupRoom(rid) {
 
             updateRescChooser.idReservation = rid;
@@ -1695,11 +1695,11 @@ function resvManager(initData) {
 
             return $container;
         }
-        
+
         function setUp(data) {
 
             $rDiv = $('<div/>').addClass(' hhk-tdbox').prop('id', 'divResvDetail').css('padding', '5px');
-            
+
             // Room Chooser section
             if (data.resv.rdiv.rChooser !== undefined) {
                 $rDiv.append($(data.resv.rdiv.rChooser));
@@ -1886,7 +1886,7 @@ function resvManager(initData) {
         }
 
         function verify() {
-            
+
             // vehicle
             if ($('#cbNoVehicle').length > 0) {
 
@@ -2242,11 +2242,11 @@ function resvManager(initData) {
 
                 var tot = familySection.findStaysChecked() + familySection.findStays('r');
                 resvSection.$totalGuests.text(tot);
-                
+
                 if ($('#selResource').length > 0 && $('#selResource').val() !== '0') {
                     var msg = 'Room may be too small';
                     var room = rooms[$('#selResource').val()];
-                    
+
                     if (tot > room.maxOcc) {
                         $('#hhkroomMsg').text(msg).show();
                     } else if ($('#hhkroomMsg').text() == msg) {

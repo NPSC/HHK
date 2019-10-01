@@ -37,6 +37,41 @@ interface iDbFieldSanitizer {
 }
 
 /**
+ * Class DBBlobSanatizer
+ */
+class DbBlobSanitizer implements iDbFieldSanitizer {
+
+    /**
+     *
+     * @param int $maxLength
+     */
+    function __construct() {
+    }
+
+    /**
+     *
+     * @param string $v
+     * @return null|string
+     */
+    public function sanitize($v) {
+        if (is_null($v)) {
+            return null;
+        }
+
+        return $v;
+    }
+
+    /**
+     *
+     * @return int
+     */
+    public function getDbType(){
+        return PDO::PARAM_LOB;
+    }
+
+}
+
+/**
  * Class DBStrSanatizer
  */
 class DbStrSanitizer implements iDbFieldSanitizer {
