@@ -9,11 +9,11 @@
  */
 
 class CodeVersion {
-    const BUILD = 163;
-    const VERSION = 3.12;
-    const PATCH = 10;
+    const BUILD = 164;
+    const VERSION = 3.13;
+    const PATCH = 0;
     const GIT_Id = "dev";
-    const REL_DATE = '';
+    const REL_DATE = 'October 1st, 2019';
 }
 
 class ActivityTypes {

@@ -1919,7 +1919,7 @@ $resultMessage = $alertMsg->createMarkup();
                     <li><a href="#lkTable">Lookups</a></li>
 <!--                    <li><a href="#agreeEdit">Forms Editor</a></li>-->
                     <li><a href="#itemTable">Items</a></li>
-                    <li><a href="#taxTable">Taxes</a></li>
+<!--                    <li><a href="#taxTable">Taxes</a></li>-->
                     <li><a href="#attrTable">Attributes</a></li>
                     <li><a href="#constr">Constraints</a></li>
                 </ul>
@@ -2022,14 +2022,14 @@ $resultMessage = $alertMsg->createMarkup();
                         <span style="margin:10px;float:right;"><input type="submit" id='btnItemSave' name="btnItemSave" value="Save"/></span>
                     </form>
                 </div>
-                <div id="taxTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
-                    <?php echo $itemMessage; ?>
+<!--                <div id="taxTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
+                    <?php //echo $itemMessage; ?>
                     <form method="POST" action="ResourceBuilder.php" name="formtax">
-<?php echo $taxTable; ?>
+<?php //echo $taxTable; ?>
                         <div style="clear:both"></div>
                         <span style="margin:10px;float:right;"><input type="submit" id='btnItemSave' name="btnTaxSave" value="Save"/></span>
                     </form>
-                </div>
+                </div>-->
                 <div id="attrTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <form method="POST" action="ResourceBuilder.php" name="format">
 <?php echo $attrTable; ?>
