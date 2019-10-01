@@ -567,6 +567,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('TrackAuto','false','b','h','','Track vehicles',''),
 ('tz','America/Chicago','lu','a','','House Time Zone','Time_Zone'),
 ('UseHouseWaive', 'true', 'b', 'h','', 'Show the house waive checkbox on checkout.', ''),
+('UseIncidentReports', 'false', 'b', 'h', '', 'Use the Incident Reports feature', ''),
 ('UseWLnotes','false','b','h','','Use wait list notes feature on reservations',''),
 ('VerifyHospDate','false','b','h','','Insist on hospital treatment date entry',''),
 ('VisitExcessPaid','d','s','h','','Default place for excess visit payments',''),

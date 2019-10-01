@@ -1,5 +1,5 @@
 
-function resvManager(initData) {
+function resvManager(initData, options = false) {
     var t = this;
 
     var patLabel = initData.patLabel;
@@ -29,6 +29,7 @@ function resvManager(initData) {
     var expDatesSection = new ExpDatesSection();
     var updateRescChooser = new updateRescChooser();
     var $pWarning = $('#pWarnings');
+    var options = options;
 
     // Exports
     t.getReserve = getReserve;
@@ -44,6 +45,7 @@ function resvManager(initData) {
     t.getIdVisit = getIdVisit;
     t.getSpan = getSpan;
     t.setRooms = setRooms;
+    t.options = options;
 
     function setRooms($r) {
         rooms = $r;
@@ -559,6 +561,44 @@ function resvManager(initData) {
 
         }
 
+        function initIncidentSection(){
+            if(idPsg){
+                var iSection, iHdr, iDiv;
+
+                iSection = $('<div style="font-size: 0.9em; min-width: 810px; margin-bottom: 0.5em; margin-top: 0.5em; display: none;"/>').addClass('ui-widget hhk-visitdialog hhk-row').prop('id', 'incidentsSection');
+
+                iHdr = $('<div style="padding:2px; cursor:pointer;"/>').addClass('ui-widget-header ui-state-default ui-corner-all hhk-incidentHdr');
+                iDiv = $('<div style="padding: 5px;"/>').addClass("ui-corner-bottom hhk-tdbox ui-widget-content").prop('id', 'incidentContent').hide();
+
+                //add header title, count span and open/close arrow
+                iHdr
+                .append('<div class="hhk-checkinHdr" style="display: inline-block">Incidents<span id="incidentCounts"/></div>')
+                .append('<ul style="list-style-type:none; float:right;margin-left:5px;padding-top:2px;" class="ui-widget"><li class="ui-widget-header ui-corner-all" title="Open - Close"><span id="f_drpDown" class="ui-icon ui-icon-circle-triangle-n"></span></li></ul>');
+
+                //call incident report jQuery				
+                iDiv.incidentViewer({
+                    psgId: idPsg
+                });
+
+                //incident section toggler
+                iHdr.click(function() {
+                    if (iDiv.css('display') === 'none') {
+                        iDiv.show('blind');
+                        iHdr.removeClass('ui-corner-all').addClass('ui-corner-top');
+                    } else {
+                        iDiv.hide('blind');
+                        iHdr.removeClass('ui-corner-top').addClass('ui-corner-all');
+                    }
+                });
+
+                //add iHdr and iDiv to iSection
+                iSection.append(iHdr).append(iDiv).show();
+
+                //add iSection to $wrapper
+                $wrapper.find("#divfamDetail").append(iSection);
+            }
+        }
+
         function setUp(data) {
 
             var $addrTog, $addrFlag;
@@ -569,6 +609,9 @@ function resvManager(initData) {
 
             if (setupComplete === false) {
                 initFamilyTable(data);
+                if(options.UseIncidentReports){
+	            initIncidentSection();
+                }
             }
 
             // Remove any previous entries.

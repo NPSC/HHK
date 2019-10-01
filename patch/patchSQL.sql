@@ -46,6 +46,8 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gat
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('UseHouseWaive', 'true', 'b', 'h', 'Show the house waive checkbox on checkout.');
 DELETE FROM `sys_config` WHERE `Key`='DefaultCkBalStmt';
 
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('UseIncidentReports', 'false', 'b', 'h', 'Use the Incident Reports feature');
+
 update sys_config set Category = 'a' where Category = 'r';
 update sys_config set Category = 'fg' where `Key` = 'CardSwipe';
 
