@@ -42,10 +42,10 @@ try {
 // get session instance
 $ssn = Session::getInstance();
 
-SysConfig::getCategory($dbh, $ssn, "'f'", $ssn->sconf);
-SysConfig::getCategory($dbh, $ssn, "'r'", $ssn->sconf);
-SysConfig::getCategory($dbh, $ssn, "'d'", $ssn->sconf);
-SysConfig::getCategory($dbh, $ssn, "'h'", $ssn->sconf);
+SysConfig::getCategory($dbh, $ssn, "'f'", webInit::SYS_CONFIG);
+SysConfig::getCategory($dbh, $ssn, "'r'", webInit::SYS_CONFIG);
+SysConfig::getCategory($dbh, $ssn, "'d'", webInit::SYS_CONFIG);
+SysConfig::getCategory($dbh, $ssn, "'h'", webInit::SYS_CONFIG);
 
 $pageTitle = $ssn->siteName;
 
