@@ -103,7 +103,7 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
     if ($rateCode != '' && isset($rPrices[$rateCode])) {
 
         SysConfig::saveKeyValue($dbh, 'sys_config', 'RoomPriceModel', $rateCode);
-        SysConfig::getCategory($dbh, $ssn, "'h'", $ssn->sconf);
+        SysConfig::getCategory($dbh, $ssn, "'h'", webInit::SYS_CONFIG);
 
         $dbh->exec("delete from `room_rate`");
 

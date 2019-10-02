@@ -385,8 +385,6 @@ class SiteConfig {
                             . '<span style="margin-left:10px;"><a href="../house/SetupNeonCRM.htm" target="_blank">(Instructions)</a></span>'
                             , array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
 
-                } else if ($section == 'code') {
-                    continue;
                 } else {
                     $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section), array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
                 }
@@ -395,21 +393,23 @@ class SiteConfig {
 
                     foreach ($name as $key => $val) {
 
-                        $attr = array(
-                            'name' => $section . '[' . $key . ']',
-                            'id' => $section . $key
-                        );
+                        $attr = array();
+//                            'name' => $section . '[' . $key . ']',
+//                            'id' => $section . $key
+//                        );
 
                         if ($key == 'Disclaimer' || $key == 'PaymentDisclaimer') {
 
                             $attr["rows"] = "3";
                             $attr["cols"] = $inputSize;
-                            $inpt = HTMLCONTAINER::generateMarkup('textarea', $val, $attr);
+                            $inpt = HTMLCONTAINER::generateMarkup('span', $val, $attr);
 
                         } else {
 
                             $attr['size'] = $inputSize;
-                            $inpt = HTMLInput::generateMarkup($val, $attr);
+                            //
+                            //$inpt = HTMLInput::generateMarkup($val, $attr);
+                            $inpt = HTMLCONTAINER::generateMarkup('span', $val, $attr);
                         }
 
 
@@ -495,34 +495,32 @@ class SiteConfig {
 
     public static function saveConfig($dbh, Config_Lite $config, array $post, $userName = '') {
 
-        foreach ($post as $secName => $secArray) {
-
-            if ($config->hasSection($secName)) {
-
-                foreach ($secArray as $itemName => $val) {
-
-                    $val = filter_var($val, FILTER_SANITIZE_STRING);
-
-                    if ($config->has($secName, $itemName)) {
-
-                        // password cutout
-                        if ($val != '' && (strstr($itemName, 'Password') !== FALSE) && $config->getString($secName, $itemName, '') != $val) {
-                            $val = encryptMessage($val);
-                        }
-
-                        // log changes
-                        if ($config->getString($secName, $itemName, '') != $val && is_null($dbh) === FALSE) {
-                            HouseLog::logSiteConfig($dbh, $secName . ':' . $itemName, $val, $userName);
-                        }
-
-                        $config->set($secName, $itemName, $val);
-
-                    }
-                }
-            }
-        }
-
-        $config->save();
+//        foreach ($post as $secName => $secArray) {
+//
+//            if ($config->hasSection($secName)) {
+//
+//                foreach ($secArray as $itemName => $val) {
+//
+//                    $val = filter_var($val, FILTER_SANITIZE_STRING);
+//
+//                    if ($config->has($secName, $itemName)) {
+//
+//                        // password cutout
+//                        if ($val != '' && (strstr($itemName, 'Password') !== FALSE) && $config->getString($secName, $itemName, '') != $val) {
+//                            $val = encryptMessage($val);
+//                        }
+//
+//                        // log changes
+//                        if ($config->getString($secName, $itemName, '') != $val && is_null($dbh) === FALSE) {
+//                            HouseLog::logSiteConfig($dbh, $secName . ':' . $itemName, $val, $userName);
+//                            $config->set($secName, $itemName, $val);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        $config->save();
 
     }
 

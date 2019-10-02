@@ -10,7 +10,7 @@ function fatal_handler() {
 
 	//get error
     $error = error_get_last();
-    
+
 	//split error object into vars
     if( $error !== NULL) {
         $errno   = $error["type"];
@@ -20,7 +20,7 @@ function fatal_handler() {
 
         formHandler($error);
         buildPage($error);
-        
+
 		die();
     }
 }
@@ -28,7 +28,7 @@ function fatal_handler() {
 function formHandler($error){
 	$sec = new SecurityComponent;
 	$uS = Session::getInstance();
-	
+
 	//get report email address
 	$to = $uS->Error_Report_Email == "" ? "support@nonprofitsoftwarecorp.org": $uS->Error_Report_Email;
 
@@ -57,7 +57,7 @@ function buildPage($error){
 	$pageTitle = $wInit->pageTitle;
 	$sec = new SecurityComponent;
 	?>
-	
+
 	<!DOCTYPE html>
 	<html lang="en">
 	    <head>
@@ -70,7 +70,7 @@ function buildPage($error){
 	        <?php echo JQ_DT_CSS; ?>
 	        <?php echo NOTY_CSS; ?>
 	        <?php echo FAVICON; ?>
-	        
+
 	        <style>
 		        .wrapper {
 			        margin-top: 2em;
@@ -78,21 +78,21 @@ function buildPage($error){
 		        .container {
 			        width: 1140px;
 		        }
-		        
+
 		        .col-6 {
 			        width: 45%;
 			        display: inline-block;
 		        }
-		        
+
 		        h1 {
 			        text-align: center;
 			        margin-bottom: 1em;
 		        }
-		        
+
 		        h2 {
 			        margin: .2em;
 		        }
-		        
+
 		        form input,textarea {
 			        display: block;
 			        width: 95%;
@@ -101,12 +101,12 @@ function buildPage($error){
 			        border-radius: 5px;
 			        border: 1px solid #ccc;
 		        }
-		        
+
 		        .form-input {
 			        margin: 1em;
 			        text-align: center;
 		        }
-		        
+
 		        .logo-text {
 			        width: 45%;
 			        display: block;
@@ -129,7 +129,7 @@ function buildPage($error){
 							<h2>File a bug report</h2>
 						</div>
 						<div class="ui-widget-content ui-corner-bottom hhk-tdbox">
-							<form action="<?PHP echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="POST">
+							<form action="<?PHP echo htmlspecialchars($_SERVER['#']); ?>" method="POST">
 								<div class="form-input">
 									<input type="text" name="name" placeholder="Name">
 								</div>
@@ -149,7 +149,7 @@ function buildPage($error){
 		    </div>
 	    </body>
 	</html>
-	
+
 	<?php
 }
 ?>

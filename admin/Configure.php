@@ -315,6 +315,35 @@ if (isset($_POST['btnLogs'])) {
     $logs = CreateMarkupFromDB::generateHTML_Table($edRows, 'syslog');
 }
 
+$logMarkup = '';
+if (isset($_POST['btnLogSel'])) {
+    $tabIndex = 6;
+
+    if (isset($_POST['logSel'])) {
+        $logSel = filter_var($_POST['logSel'], FILTER_SANITIZE_STRING);
+    }
+
+    if ($logSel == '') {
+
+    }
+    if ($logSel != '') {
+
+        $stmt = $dbh->query("Select * from house_log order by Timestamp DESC Limit 100;");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $edRows = array();
+
+        foreach ($rows as $r) {
+
+            $r['Date'] = date('M j, Y H:i:s', strtotime($r['Timestamp']));
+            unset($r['Timestamp']);
+
+            $edRows[] = $r;
+        }
+
+        $logMarkup = CreateMarkupFromDB::generateHTML_Table($edRows, 'syslog');
+    }
+}
+
 $pgw = $uS->PaymentGateway;
 try {
     $payments = SiteConfig::createPaymentCredentialsMarkup($dbh, $ccResultMessage);
@@ -348,6 +377,15 @@ if (count($rows) > 0 && $rows[0][0] != '') {
 
 // Patch tab markup
 $patchMarkup = Patch::patchTabMu();
+
+$logSelRows = array(
+    1=>array(0=>'p', 1=>'Patch Log'),
+    2=>array(0=>'s', 1=>'Sys Config Log'),
+    3=>array(0=>'r', 1=>'Rooms Log'),
+    4=>array(0=>'l', 1=>'Lookups Log'),
+);
+
+$logSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkuP($logSelRows, 'p', FALSE), array('name'=>'logSel'));
 
 $conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));
 
@@ -491,6 +529,7 @@ $(document).ready(function () {
                     <li><a href="#holidays">Set Holidays</a></li>
                     <li><a href="#loadZip">Load Zip Codes</a></li>
                     <li><a href="#labels">Labels & Prompts</a></li>
+                    <li><a href="#logs">System Logs</a></li>
                     <?php if ($serviceName != '') {echo '<li><a href="#external">' . $serviceName . '</a></li>';} ?>
                 </ul>
                 <div id="config" class="ui-tabs-hide" >
@@ -538,6 +577,15 @@ $(document).ready(function () {
                         <?php echo $holidays; ?>
                         <div style="float:right;margin-right:40px;"><input type="submit" name="btnHoliday" value="Save"/></div>
                     </form>
+                </div>
+                <div id="logs" class="ui-tabs-hide hhk-tdbox" >
+                    <form method="post" name="formlog" action="">
+                        <?php echo $logSelector; ?>
+                        <input type="submit" name="btnLogSel" id="btnLogSel" value="View Site Log" style="margin-left:100px;"/>
+                    </form>
+                        <div style="margin-top:20px;">
+                            <?php echo $logMarkup; ?>
+                        </div>
                 </div>
                 <div id="patch" class="ui-tabs-hide">
                     <div class="hhk-member-detail">
