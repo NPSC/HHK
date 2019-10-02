@@ -402,3 +402,15 @@ li.hhk-myMenuTop {
 
 /* Put JqueryUI dialogs above submit buttons */
 .ui-dialog { z-index: 91000 !important ;}
+
+/* Styles for button groups on housekeeping page */
+
+.week-button-group {
+	display: inline-block;
+	margin: 0 1em 0 1em;
+}
+
+.week-button-group >* {
+	margin: 0 0 0 -1px;
+	float: left;
+}
