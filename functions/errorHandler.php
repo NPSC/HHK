@@ -47,7 +47,7 @@ function formHandler($error){
 	  	$headers = "From: BugReporter<noreply@nonprofitsoftwarecorp.org>" . "\r\n";
 	  	// send email and redirect
 	  	mail($to, $subject, $message, $headers);
-	  	header('Location: ' . $sec->getRootURL() . 'functions/errorsuccess.php');
+	  	header("location: ?status=success");
 	  	exit;
 	}
 }
@@ -92,6 +92,10 @@ function buildPage($error){
 		        h2 {
 			        margin: .2em;
 		        }
+		        
+		        h4,.ui-button {
+			        margin: 1em;
+		        }
 
 		        form input,textarea {
 			        display: block;
@@ -129,7 +133,11 @@ function buildPage($error){
 							<h2>File a bug report</h2>
 						</div>
 						<div class="ui-widget-content ui-corner-bottom hhk-tdbox">
-							<form action="<?PHP echo htmlspecialchars($_SERVER['#']); ?>" method="POST">
+							<?php if($_GET["status"] == "success"){ ?>
+								<h4>Thanks for submitting!</h4>
+								<a href="<?php echo $sec->getRootURL(); ?>" class="ui-button ui-corner-all ui-widget">Go Home</a>
+							<?php }else{ ?>
+							<form action="#" method="POST">
 								<div class="form-input">
 									<input type="text" name="name" placeholder="Name">
 								</div>
@@ -143,6 +151,7 @@ function buildPage($error){
 									<input type="submit" class="ui-button ui-corner-all ui-widget" value="Submit" style="width: initial;">
 								</div>
 							</form>
+							<?php } ?>
 						</div>
 					</div>
 		        </div>
