@@ -1921,21 +1921,6 @@ CREATE TABLE if not exists `syslog` (
 
 
 -- -----------------------------------------------------
--- Table `syslog`
--- -----------------------------------------------------
--- CREATE TABLE `tax_rate` (
---   `idTax_rate` INT NOT NULL,
---   `Percentage` DECIMAL(10,3) NOT NULL,
---   `Status` VARCHAR(4) NOT NULL DEFAULT '',
---   `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
---   `Last_Updated` DATETIME NULL,
---   `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
---   PRIMARY KEY (`idTax_rate`)
--- ) ENGINE = InnoDB;
-
-
-
--- -----------------------------------------------------
 -- Table `trans`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `trans` (
@@ -2156,8 +2141,9 @@ CREATE TABLE if not exists `w_user_log` (
   `Access_Date` DATETIME NOT NULL COMMENT '',
   `IP` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
   `Session_Id` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
-  `Page` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '')
-ENGINE = MyISAM;
+  `Page` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
+  `Action` VARCHAR(45) NOT NULL DEFAULT ''
+) ENGINE = MyISAM;
 
 
 
@@ -2168,6 +2154,8 @@ CREATE TABLE if not exists `w_users` (
   `idName` int(11) NOT NULL,
   `User_Name` varchar(100) NOT NULL DEFAULT '',
   `Enc_PW` varchar(100) NOT NULL DEFAULT '',
+  `PW_Change_Date` DATETIME DEFAULT NULL,
+  `PW_Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
   `Status` varchar(4) NOT NULL DEFAULT '',
   `Certificate` varchar(145) NOT NULL DEFAULT '',
   `Cookie` char(32) NOT NULL DEFAULT '',

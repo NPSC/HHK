@@ -568,11 +568,8 @@ function getRoomList(idResv, eid) {
 }
 function checkStrength(pwCtrl) {
     var strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})");
-    var mediumRegex = new RegExp("^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{8,})");
     var rtn = true;
     if(strongRegex.test(pwCtrl.val())) {
-        pwCtrl.removeClass("ui-state-error");
-    } else if(mediumRegex.test(pwCtrl.val())) {
         pwCtrl.removeClass("ui-state-error");
     } else {
         pwCtrl.addClass("ui-state-error");
@@ -1576,7 +1573,7 @@ $(document).ready(function () {
     
     $('#dchgPw').dialog({
         autoOpen: false,
-        width: 450,
+        width: 490,
         resizable: true,
         modal: true,
         buttons: {
@@ -1594,13 +1591,8 @@ $(document).ready(function () {
                     oldpw.focus();
                     msg.text('Enter your old password');
                     return;
-                }
-
-                if (checkStrength(pw1) === false) {
-                    pw1.addClass("ui-state-error");
-                    msg.text('Password must have 8 characters including at least one uppercase and one lower case alphabetical character and one number.');
-                    pw1.focus();
-                    return;
+                } else {
+                    oldpw.removeClass("ui-state-error");
                 }
 
                 if (pw1.val() !== pw2.val()) {
@@ -1612,8 +1604,18 @@ $(document).ready(function () {
                     pw1.addClass("ui-state-error");
                     msg.text("The new password must be different from the old password");
                     pw1.focus();
+                    pw2.val('');
                     return;
                 }
+                
+                if (checkStrength(pw1) === false) {
+                    pw1.addClass("ui-state-error");
+                    msg.text('Password must have 8 characters including at least one uppercase and one lower case alphabetical character and one number.');
+                    pw1.focus();
+                    return;
+                }
+
+                pw1.removeClass("ui-state-error");
 
                 // make MD5 hash of password and concatenate challenge value
                 // next calculate MD5 hash of combined values

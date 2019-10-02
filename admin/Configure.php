@@ -318,17 +318,25 @@ if (isset($_POST['btnLogs'])) {
 $logMarkup = '';
 if (isset($_POST['btnLogSel'])) {
     $tabIndex = 6;
+    $where = '';
 
     if (isset($_POST['logSel'])) {
         $logSel = filter_var($_POST['logSel'], FILTER_SANITIZE_STRING);
     }
 
-    if ($logSel == '') {
-
+    if ($logSel == 's') {
+        $where = " where `Log_Type` in ('sys_config', 'Site_Config_File') ";
     }
-    if ($logSel != '') {
+    if ($logSel == 'r') {
+        $where = " where `Log_Type` in ('resource', 'room_rate', 'room') ";
+    }
+    if ($logSel == 'l') {
+        $where = " where `Log_Type` ='gen_lookups' ";
+    }
 
-        $stmt = $dbh->query("Select * from house_log order by Timestamp DESC Limit 100;");
+    if ($where != '') {
+
+        $stmt = $dbh->query("Select * from house_log $where order by Timestamp DESC Limit 100;");
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $edRows = array();
 
@@ -337,10 +345,12 @@ if (isset($_POST['btnLogSel'])) {
             $r['Date'] = date('M j, Y H:i:s', strtotime($r['Timestamp']));
             unset($r['Timestamp']);
 
+            unset($r['Id1']);
+            unset($r['Id2']);
             $edRows[] = $r;
         }
 
-        $logMarkup = CreateMarkupFromDB::generateHTML_Table($edRows, 'syslog');
+        $logMarkup = CreateMarkupFromDB::generateHTML_Table($edRows, 'houselog');
     }
 }
 
@@ -379,7 +389,7 @@ if (count($rows) > 0 && $rows[0][0] != '') {
 $patchMarkup = Patch::patchTabMu();
 
 $logSelRows = array(
-    1=>array(0=>'p', 1=>'Patch Log'),
+
     2=>array(0=>'s', 1=>'Sys Config Log'),
     3=>array(0=>'r', 1=>'Rooms Log'),
     4=>array(0=>'l', 1=>'Lookups Log'),

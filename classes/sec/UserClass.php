@@ -43,13 +43,7 @@ class UserClass {
             $housePc = FALSE;
             if (filter_has_var(INPUT_COOKIE, 'housepc')) {
 
-                $remoteIp = '';
-
-                if (filter_has_var(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR')) {
-                    $remoteIp = filter_input(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR', FILTER_VALIDATE_IP);
-                } else {
-                    $remoteIp = filter_input(INPUT_SERVER, 'REMOTE_ADDR', FILTER_VALIDATE_IP);
-                }
+                $remoteIp = self::getRemoteIp();
 
                 if (decryptMessage(filter_var($_COOKIE['housepc'], FILTER_SANITIZE_STRING)) == $remoteIp . 'eric') {
                     $housePc = TRUE;
@@ -71,19 +65,19 @@ class UserClass {
         return FALSE;
     }
 
-    public function getDefaultPage() {
-        return $this->defaultPage;
+    public function getDefaultPage($site = 'h') {
+        if ($site == 'h') {
+            return $this->defaultPage;
+        }
+
+        return '';
     }
 
     public static function setCookieAccess($rootPath, $toggle = TRUE) {
 
         if ($toggle) {
 
-            if (filter_has_var(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR')) {
-                $remoteIp = filter_input(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR', FILTER_VALIDATE_IP);
-            } else {
-                $remoteIp = filter_input(INPUT_SERVER, 'REMOTE_ADDR', FILTER_VALIDATE_IP);
-            }
+            $remoteIp = self::getRemoteIp();
 
             return setcookie('housepc', encryptMessage($remoteIp . 'eric'), (time() + 84600*365*5), $rootPath, null,null, TRUE);
 
@@ -96,15 +90,22 @@ class UserClass {
 
         $ssn = Session::getInstance();
 
+        if ($oldPw == $newPw) {
+            $this->logMessage = "The new password must be different from the old one.  ";
+            return FALSE;
+        }
+
         // Are we legit?
         $success = $this->_checkLogin($dbh, $ssn->username, $oldPw);
 
         if ($success) {
-            $query = "update w_users set Last_Updated = now(), Updated_By = :uname, Enc_PW = :newPw where idName = :id and Status='a';";
+            $query = "update w_users set PW_Change_Date = now(), PW_Updated_By = :uname, Enc_PW = :newPw where idName = :id and Status='a';";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(':uname'=>$ssn->username, ':newPw'=>$newPw, ':id'=>$id));
 
             if ($stmt->rowCount() == 1) {
+                $remoteIp = self::getRemoteIp();
+                $dbh->exec("insert into w_user_log (Username, Access_Date, IP, Action) values ('" . $ssn->username . "', now(), '$remoteIp', 'PC')");
 
                 return TRUE;
             }
@@ -116,15 +117,29 @@ class UserClass {
 
         if ($newPw != '' && $id != 0) {
 
-            $query = "update w_users set Last_Updated = now(), Updated_By = 'install', Enc_PW = :newPw where idName = :id;";
+            $query = "update w_users set PW_Change_Date = now(), PW_Updated_By = 'install', Enc_PW = :newPw where idName = :id;";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(':newPw'=>$newPw, ':id'=>$id));
 
             if ($stmt->rowCount() == 1) {
+
+                $remoteIp = self::getRemoteIp();
+                $dbh->exec("insert into w_user_log (Username, Access_Date, IP, Action) values ('install', now(), '$remoteIp', 'PS')");
                 return TRUE;
             }
         }
         return FALSE;
+    }
+
+    protected static function getRemoteIp() {
+
+        if (filter_has_var(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR')) {
+            $remoteIp = filter_input(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR', FILTER_VALIDATE_IP);
+        } else {
+            $remoteIp = filter_input(INPUT_SERVER, 'REMOTE_ADDR', FILTER_VALIDATE_IP);
+        }
+
+        return $remoteIp;
     }
 
     public static function getUserCredentials(\PDO $dbh, $username) {
@@ -187,17 +202,13 @@ WHERE n.idName is not null and u.Status='a' and u.User_Name = '$uname'");
             $sessionId = session_id();
             $remoteIp = '';
 
-            if (filter_has_var(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR')) {
-                $remoteIp = filter_input(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR', FILTER_VALIDATE_IP);
-            } else {
-                $remoteIp = filter_input(INPUT_SERVER, 'REMOTE_ADDR', FILTER_VALIDATE_IP);
-            }
+            $remoteIp = self::getRemoteIp();
 
             $query = "UPDATE w_users SET Session = '$sessionId', Ip = '$remoteIp', Last_Login=now() WHERE User_Name = '" . $ssn->username . "'";
             $dbh->exec($query);
 
             // Log access
-            $dbh->exec("insert into w_user_log (Username, Access_Date, IP, Session_Id) values ('" . $ssn->username . "', now(), '$remoteIp', '')");
+            $dbh->exec("insert into w_user_log (Username, Access_Date, IP, Action) values ('" . $ssn->username . "', now(), '$remoteIp', 'L')");
         }
     }
 

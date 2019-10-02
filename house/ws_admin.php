@@ -276,14 +276,10 @@ function changePW(\PDO $dbh, $oldPw, $newPw, $uname, $id) {
 
     $u = new UserClass();
 
-    if ($u->_checkLogin($dbh, $uname, $oldPw) === FALSE) {
-        return array('warning'=>$u->logMessage);
-    }
-
     if ($u->updateDbPassword($dbh, $id, $oldPw, $newPw, $uname) === TRUE) {
         $event = array('success'=>'User Password updated.');
     } else {
-        $event = array('warning'=>'Password is unchanged!');
+        $event = array('warning'=>$u->logMessage);
     }
 
     return $event;

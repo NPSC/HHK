@@ -11,6 +11,13 @@ ALTER TABLE `invoice_line`
 
 ALTER TABLE `w_users`
     ADD COLUMN `Default_Page` VARCHAR(100) NOT NULL DEFAULT '' AFTER `Ip`;
+ALTER TABLE `w_users` 
+    ADD COLUMN `PW_Change_Date` DATETIME NULL AFTER `Enc_PW`;
+ALTER TABLE `w_users` 
+    ADD COLUMN `PW_Updated_By` VARCHAR(45) NOT NULL DEFAULT '' AFTER `PW_Change_Date`;
+
+ALTER TABLE `w_user_log` 
+    ADD COLUMN `Action` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Page`;
 
 ALTER TABLE `item`
     CHANGE COLUMN `Entity_Id` `First_Order_Id` INT(11) NOT NULL DEFAULT '0' ;
@@ -58,6 +65,12 @@ UPDATE `sys_config` SET `GenLookup`='Price_Model', Type = 'lu' WHERE `Key`='Room
 
 UPDATE `invoice_line_type` SET `Description`='waive' WHERE `id`='5';
 UPDATE `invoice_line_type` SET `Order_Position`='4' WHERE `id`='7';
+
+-- delete old rows from user access log table.
+delete from w_user_log where DATE(Access_Date) < DATE('2018-01-01');
+
+-- update the action column for existing rows
+update w_user_log set Action = 'L' where Action = '';
 
 
 -- Fix change price bug where a stay after the price change date was not properly handled.

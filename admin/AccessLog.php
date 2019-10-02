@@ -19,22 +19,23 @@ $menuMarkup = $wInit->generatePageMenu();
 // View user log
 $log = '';
 $users = array();
+$actions = array();
 $userNameDate = '';
 
 if (isset($_POST['btnAccess'])) {
 
     $whereStr = '';
+
+
     $dte = filter_var($_POST['aclogdate'], FILTER_SANITIZE_STRING);
 
     if ($dte != '') {
         $userNameDate = date('M j, Y', strtotime($dte));
-        $whereStr = " DATE(Access_Date) = DATE('" . date('Y-m-d', strtotime($dte)) . "') ";
+        $whereStr = " and DATE(Access_Date) = DATE('" . date('Y-m-d', strtotime($dte)) . "') ";
     }
 
-    $userStr = '';
-
     if (isset($_POST['selUsers'])) {
-
+        $userStr = '';
         $postUsers = filter_var_array($_POST['selUsers']);
 
         foreach ($postUsers as $u) {
@@ -43,19 +44,26 @@ if (isset($_POST['btnAccess'])) {
         }
 
         if ($userStr != '') {
-            $userStr = " w.idName in (" . $userStr . ")";
+            $whereStr .= " and w.idName in (" . $userStr . ")";
         }
     }
 
-    if ($whereStr != '' && $userStr != '') {
-        $whereStr = " where " . $whereStr . ' and ' . $userStr;
-    } else if ($whereStr != '' && $userStr == '') {
-        $whereStr = " where " . $whereStr;
-    } else if ($whereStr == '' && $userStr != '') {
-        $whereStr = "where " . $userStr;
+    if (isset($_POST['selActions'])) {
+        $userStr = '';
+        $postActions = filter_var_array($_POST['selActions']);
+
+        foreach ($postActions as $u) {
+            $userStr .= ($userStr == '' ? "'" : ",'") . $u . "'";
+            $actions[$u] = $u;
+        }
+
+        if ($userStr != '') {
+            $whereStr .= " and l.Action in (" . $userStr . ")";
+        }
     }
 
-    $stmt = $dbh->query("Select w.idName as Id, l.* from w_user_log l left join w_users w on l.Username = w.User_Name $whereStr order by Access_Date DESC Limit 100;");
+
+    $stmt = $dbh->query("Select w.idName as Id, l.Username, l.Access_Date, l.`Action` from w_user_log l left join w_users w on l.Username = w.User_Name WHERE 1=1 $whereStr order by Access_Date DESC Limit 100;");
 
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $edRows = array();
@@ -64,9 +72,7 @@ if (isset($_POST['btnAccess'])) {
 
         $r['Date'] = date('M j, Y H:i:s', strtotime($r['Access_Date']));
 
-        unset($r['Session_Id']);
         unset($r['Access_Date']);
-        unset($r['Page']);
 
         $edRows[] = $r;
     }
@@ -77,6 +83,15 @@ if (isset($_POST['btnAccess'])) {
 
 $usernames = HTMLSelector::generateMarkup(HTMLSelector::getLookups($dbh, "select idName, User_Name from w_users", $users, TRUE), array('name'=>'selUsers[]', 'multiple'=>'multiple', 'size'=>'5'));
 
+$actOpts = array(
+    0=>array(0=>'L', 1=>'Logins'),
+    1=>array(0=>'PS', 1=>'Set Password'),
+    2=>array(0=>'PC', 1=>'Change Password'),
+    3=>array(0=>'PL', 1=>'Lock out'),
+
+);
+
+$actionsel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($actOpts, $actions, FALSE), array('name'=>'selActions[]', 'multiple'=>'multiple', 'size'=>'4'));
 ?>
 <!DOCTYPE html >
 <html>
@@ -110,12 +125,17 @@ $(document).ready(function() {
             <div class="ui-widget ui-widget-content hhk-tdbox" style="float:left;">
                 <table>
                     <tr>
-                        <td >Choose a date (leave empty for most recent entries):</td>
+                        <td>Choose a date (leave empty for most recent entries):</td>
                         <td><input type="text" id ="aclogdate" class="autoCal" name="aclogdate" VALUE='<?php echo $userNameDate; ?>' /></td>
                     </tr>
                     <tr>
                         <td >Choose one or more usernames:</td>
                         <td><?php echo $usernames; ?></td>
+
+                    </tr>
+                    <tr>
+                        <td >Choose one or more Actions</td>
+                        <td><?php echo $actionsel; ?></td>
                     </tr>
                     <tr>
                         <td colspan="2" style="text-align: center;"><input name="btnAccess" id="btnAccess" type="submit" value="View Access Log" style="margin:3px;"/></td>
