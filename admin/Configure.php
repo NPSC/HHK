@@ -87,13 +87,8 @@ if (isset($_POST["btnSiteCnf"])) {
 
     addslashesextended($_POST);
 
-    SiteConfig::saveSysConfig($dbh, $_POST);
-
-    try{
-        SiteConfig::saveConfig($dbh, $config, $_POST, $uS->username);
-    } catch (Exception $ex) {
-        $confError = $ex->getMessage();
-    }
+    $confError = SiteConfig::saveSysConfig($dbh, $_POST);
+    SiteConfig::savePaymentCredentials($dbh, $post);
 
 }
 
@@ -543,7 +538,7 @@ $(document).ready(function () {
                     <?php if ($serviceName != '') {echo '<li><a href="#external">' . $serviceName . '</a></li>';} ?>
                 </ul>
                 <div id="config" class="ui-tabs-hide" >
-                    <div style="color:red;font-size:1.5em;"><?php echo $confError; ?></div>
+                    <div style="color:black;font-size:1em;"><?php echo $confError; ?></div>
                     <form method="post" name="form4" action="">
                         <?php echo $conf; ?>
                         <br>

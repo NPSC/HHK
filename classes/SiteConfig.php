@@ -495,32 +495,32 @@ class SiteConfig {
 
     public static function saveConfig($dbh, Config_Lite $config, array $post, $userName = '') {
 
-//        foreach ($post as $secName => $secArray) {
-//
-//            if ($config->hasSection($secName)) {
-//
-//                foreach ($secArray as $itemName => $val) {
-//
-//                    $val = filter_var($val, FILTER_SANITIZE_STRING);
-//
-//                    if ($config->has($secName, $itemName)) {
-//
-//                        // password cutout
-//                        if ($val != '' && (strstr($itemName, 'Password') !== FALSE) && $config->getString($secName, $itemName, '') != $val) {
-//                            $val = encryptMessage($val);
-//                        }
-//
-//                        // log changes
-//                        if ($config->getString($secName, $itemName, '') != $val && is_null($dbh) === FALSE) {
-//                            HouseLog::logSiteConfig($dbh, $secName . ':' . $itemName, $val, $userName);
-//                            $config->set($secName, $itemName, $val);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
-//        $config->save();
+        foreach ($post as $secName => $secArray) {
+
+            if ($config->hasSection($secName)) {
+
+                foreach ($secArray as $itemName => $val) {
+
+                    $val = filter_var($val, FILTER_SANITIZE_STRING);
+
+                    if ($config->has($secName, $itemName)) {
+
+                        // password cutout
+                        if ($val != '' && (strstr($itemName, 'Password') !== FALSE) && $config->getString($secName, $itemName, '') != $val) {
+                            $val = encryptMessage($val);
+                        }
+
+                        // log changes
+                        if ($config->getString($secName, $itemName, '') != $val && is_null($dbh) === FALSE) {
+                            HouseLog::logSiteConfig($dbh, $secName . ':' . $itemName, $val, $userName);
+                            $config->set($secName, $itemName, $val);
+                        }
+                    }
+                }
+            }
+        }
+
+        $config->save();
 
     }
 
@@ -535,6 +535,8 @@ class SiteConfig {
             SysConfig::saveKeyValue($dbh, 'sys_config', $key, $value);
 
         }
+
+        return 'Parameters saved.';
 
     }
 

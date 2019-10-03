@@ -12,6 +12,10 @@ class UserClass {
     public $logMessage = '';
     protected $defaultPage = '';
 
+    const PW_Changed = 'PC';
+    const PW_New = 'PS';
+    const Login = 'L';
+
     public function _checkLogin(\PDO $dbh, $username, $password, $remember = FALSE) {
          // instantiate a ChallengeGenerator object
         $chlgen = new ChallengeGenerator(FALSE);
@@ -104,8 +108,7 @@ class UserClass {
             $stmt->execute(array(':uname'=>$ssn->username, ':newPw'=>$newPw, ':id'=>$id));
 
             if ($stmt->rowCount() == 1) {
-                $remoteIp = self::getRemoteIp();
-                $dbh->exec("insert into w_user_log (Username, Access_Date, IP, Action) values ('" . $ssn->username . "', now(), '$remoteIp', 'PC')");
+                $this->insertUserLog($dbh, UserClass::PW_Changed);
 
                 return TRUE;
             }
@@ -123,8 +126,7 @@ class UserClass {
 
             if ($stmt->rowCount() == 1) {
 
-                $remoteIp = self::getRemoteIp();
-                $dbh->exec("insert into w_user_log (Username, Access_Date, IP, Action) values ('install', now(), '$remoteIp', 'PS')");
+                $this->insertUserLog($dbh, UserClass::PW_New);
                 return TRUE;
             }
         }
@@ -140,6 +142,13 @@ class UserClass {
         }
 
         return $remoteIp;
+    }
+
+    protected function insertUserLog(\PDO $dbh, $action) {
+
+        $ssn = Session::getInstance();
+        $remoteIp = self::getRemoteIp();
+        $dbh->exec("insert into w_user_log (Username, Access_Date, IP, `Action`) values ('" . $ssn->username . "', now(), '$remoteIp', '$action')");
     }
 
     public static function getUserCredentials(\PDO $dbh, $username) {
@@ -181,7 +190,7 @@ WHERE n.idName is not null and u.Status='a' and u.User_Name = '$uname'");
         return $grpArray;
     }
 
-    public static function _setSession(\PDO $dbh, Session $ssn, $r, $init = true) {
+    public function _setSession(\PDO $dbh, Session $ssn, $r, $init = true) {
 
         $ssn->uid = $r["idName"];
         $ssn->username = htmlspecialchars($r["User_Name"]);
@@ -200,7 +209,6 @@ WHERE n.idName is not null and u.Status='a' and u.User_Name = '$uname'");
         if ($init) {
 
             $sessionId = session_id();
-            $remoteIp = '';
 
             $remoteIp = self::getRemoteIp();
 
@@ -208,7 +216,7 @@ WHERE n.idName is not null and u.Status='a' and u.User_Name = '$uname'");
             $dbh->exec($query);
 
             // Log access
-            $dbh->exec("insert into w_user_log (Username, Access_Date, IP, Action) values ('" . $ssn->username . "', now(), '$remoteIp', 'L')");
+            $this->insertUserLog($dbh, UserClass::Login);
         }
     }
 

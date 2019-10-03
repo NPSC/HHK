@@ -940,7 +940,12 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
         $uS = Session::getInstance();
 
-        return $uS->guestLookups['ReservStatus'][$status][1];
+        if (isset($uS->guestLookups['ReservStatus'][$status][1])) {
+
+            return $uS->guestLookups['ReservStatus'][$status][1];
+        }
+
+        return '';
     }
 
     public function getStatusIcon($status = '') {
@@ -955,8 +960,12 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
         $uS = Session::getInstance();
 
-        return HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ' . $uS->guestLookups['ReservStatus'][$status][2], 'style'=>'float: left; margin-left:.3em;', 'title'=>$uS->guestLookups['ReservStatus'][$status][1]));
+        if (isset($uS->guestLookups['ReservStatus'][$status][2])) {
 
+            return HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ' . $uS->guestLookups['ReservStatus'][$status][2], 'style'=>'float: left; margin-left:.3em;', 'title'=>$uS->guestLookups['ReservStatus'][$status][1]));
+        }
+
+        return '';
     }
 
     public function getChooserStatuses($reserveStatuses) {
@@ -964,7 +973,9 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         $uS = Session::getInstance();
 
         $limResvStatuses = array();
+
         foreach (removeOptionGroups($reserveStatuses) as $s) {
+
             if ($s['0'] != ReservationStatus::Checkedout && $s[0] != ReservationStatus::Staying && $s[0] != ReservationStatus::Pending && $s[0] != ReservationStatus::Imediate) {
 
                 if ($s[0] == ReservationStatus::UnCommitted && $uS->ShowUncfrmdStatusTab === FALSE) {
@@ -1002,6 +1013,10 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
     public static function isRemovedStatus($reservStatus) {
 
         if ($reservStatus == ReservationStatus::Canceled || $reservStatus == ReservationStatus::NoShow || $reservStatus == ReservationStatus::TurnDown) {
+            return TRUE;
+        }
+
+        if ($reservStatus == ReservationStatus::Canceled1 || $reservStatus == ReservationStatus::Canceled2 || $reservStatus == ReservationStatus::Canceled3 || $reservStatus == ReservationStatus::Canceled4) {
             return TRUE;
         }
 

@@ -46,6 +46,10 @@ abstract class Member {
 
         $uS = Session::getInstance();
 
+        if ($nid < 0) {
+            throw new Hk_Exception_Runtime('The member Id cannot be negative');
+        }
+
         if (is_null($nRS)) {
             $this->nameRS = $this->loadNameRS($dbh, $nid);
         } else {

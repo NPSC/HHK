@@ -39,8 +39,10 @@ if (isset($_POST['btnAccess'])) {
         $postUsers = filter_var_array($_POST['selUsers']);
 
         foreach ($postUsers as $u) {
-            $userStr .= ($userStr == '' ? "'" : ",'") . $u . "'";
-            $users[$u] = $u;
+            if ($u != '') {
+                $userStr .= ($userStr == '' ? "'" : ",'") . $u . "'";
+                $users[$u] = $u;
+            }
         }
 
         if ($userStr != '') {
@@ -53,8 +55,10 @@ if (isset($_POST['btnAccess'])) {
         $postActions = filter_var_array($_POST['selActions']);
 
         foreach ($postActions as $u) {
-            $userStr .= ($userStr == '' ? "'" : ",'") . $u . "'";
-            $actions[$u] = $u;
+            if ($u != '') {
+                $userStr .= ($userStr == '' ? "'" : ",'") . $u . "'";
+                $actions[$u] = $u;
+            }
         }
 
         if ($userStr != '') {
@@ -62,8 +66,7 @@ if (isset($_POST['btnAccess'])) {
         }
     }
 
-
-    $stmt = $dbh->query("Select w.idName as Id, l.Username, l.Access_Date, l.`Action` from w_user_log l left join w_users w on l.Username = w.User_Name WHERE 1=1 $whereStr order by Access_Date DESC Limit 100;");
+    $stmt = $dbh->query("Select w.idName as Id, l.Username, l.IP, l.Access_Date, l.`Action` from w_user_log l left join w_users w on l.Username = w.User_Name WHERE 1=1 $whereStr order by Access_Date DESC Limit 100;");
 
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $edRows = array();
@@ -71,6 +74,10 @@ if (isset($_POST['btnAccess'])) {
     foreach ($rows as $r) {
 
         $r['Date'] = date('M j, Y H:i:s', strtotime($r['Access_Date']));
+
+        if ($r['Id'] > 0) {
+            $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'NameEdit.php?id='.$r['Id']));
+        }
 
         unset($r['Access_Date']);
 
@@ -91,7 +98,7 @@ $actOpts = array(
 
 );
 
-$actionsel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($actOpts, $actions, FALSE), array('name'=>'selActions[]', 'multiple'=>'multiple', 'size'=>'4'));
+$actionsel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($actOpts, $actions, TRUE), array('name'=>'selActions[]', 'multiple'=>'multiple', 'size'=>'4'));
 ?>
 <!DOCTYPE html >
 <html>

@@ -87,7 +87,9 @@ $idRaw = filter_input(INPUT_GET, "id", FILTER_SANITIZE_NUMBER_INT);
 if (is_null($idRaw) === FALSE) {
 
     $id = intval($idRaw, 10);
+
 }
+
 /*
  *  Check for new member command on get line
  *
@@ -114,8 +116,12 @@ $h_idTxt = filter_input(INPUT_POST, 'hdnid', FILTER_SANITIZE_NUMBER_INT);
 if (is_null($h_idTxt) === FALSE) {
 
     $id = intval($h_idTxt, 10);
+
 }
 
+if ($id < 0) {
+    $id = 0;
+}
 
 
 // If posting a new member, check the member basis

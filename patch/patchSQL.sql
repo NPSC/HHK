@@ -66,8 +66,13 @@ UPDATE `sys_config` SET `GenLookup`='Price_Model', Type = 'lu' WHERE `Key`='Room
 UPDATE `invoice_line_type` SET `Description`='waive' WHERE `id`='5';
 UPDATE `invoice_line_type` SET `Order_Position`='4' WHERE `id`='7';
 
+INSERT INTO `lookups` (`Category`, `Code`, `Title`, `Use`, `Show`, `Other`) VALUES ('ReservStatus', 'c1', 'Canceled 1', 'y', 'y', 'ui-icon-cancel');
+INSERT INTO `lookups` (`Category`, `Code`, `Title`, `Use`, `Show`, `Other`) VALUES ('ReservStatus', 'c2', 'Canceled 2', 'n', 'n', 'ui-icon-cancel');
+INSERT INTO `lookups` (`Category`, `Code`, `Title`, `Use`, `Show`, `Other`) VALUES ('ReservStatus', 'c3', 'Canceled 3', 'n', 'n', 'ui-icon-cancel');
+INSERT INTO `lookups` (`Category`, `Code`, `Title`, `Use`, `Show`, `Other`) VALUES ('ReservStatus', 'c4', 'Canceled 4', 'n', 'n', 'ui-icon-cancel');
+
 -- delete old rows from user access log table.
-delete from w_user_log where DATE(Access_Date) < DATE('2018-01-01');
+delete from w_user_log where DATE(Access_Date) < DATE('2018-06-01');
 
 -- update the action column for existing rows
 update w_user_log set Action = 'L' where Action = '';

@@ -148,6 +148,21 @@ class History {
         return $this->createMarkup($status, $page, $includeAction, $static);
     }
 
+    protected function makeResvCanceledStatuses($resvStatuses, $idResv) {
+
+        $markup = HTMLContainer::generateMarkup('li', '-------');
+
+        foreach ($resvStatuses as $s) {
+
+            if (Reservation_1::isRemovedStatus($s[0])) {
+                $markup .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $s[1], array('class'=>'resvStat', 'data-stat'=>$s[0], 'data-rid'=>$idResv)));
+            }
+        }
+
+        return $markup;
+
+    }
+
     protected function createMarkup($status, $page, $includeAction, $static = FALSE) {
 
         $uS = Session::getInstance();
@@ -165,9 +180,7 @@ class History {
                     'ul', HTMLContainer::generateMarkup('li', 'Action' .
                         HTMLContainer::generateMarkup('ul',
                            HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'View ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('href'=>'Reserve.php' . '?rid='.$r['idReservation'], 'style'=>'text-decoration:none;')))
-                           .HTMLContainer::generateMarkup('li', '-------') .  HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Canceled][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Canceled, 'data-rid'=>$r['idReservation'])))
-                           . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::NoShow][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::NoShow, 'data-rid'=>$r['idReservation'])))
-                           . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::TurnDown][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::TurnDown, 'data-rid'=>$r['idReservation'])))
+                           . $this->makeResvCanceledStatuses($uS->guestLookups['ReservStatus'], $r['idReservation'])
                            . ($includeAction && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted) ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Waitlist][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Waitlist, 'data-rid'=>$r['idReservation']))) : '')
                            . ($includeAction && $status == ReservationStatus::Committed ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::UnCommitted][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::UnCommitted, 'data-rid'=>$r['idReservation']))) : '')
                            . ($includeAction && $status == ReservationStatus::UnCommitted ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Committed][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Committed, 'data-rid'=>$r['idReservation']))) : '')

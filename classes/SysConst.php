@@ -302,7 +302,10 @@ class ReservationStatus {
     const NoShow = 'ns';
     const TurnDown = 'td';
     const Canceled = 'c';
-    const ToHotel = 'h';
+    const Canceled1 = 'c1';
+    const Canceled2 = 'c2';
+    const Canceled3 = 'c3';
+    const Canceled4 = 'c4';
     const Pending = 'p';
     const Staying = 's';
     const Checkedout = 'co';
