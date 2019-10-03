@@ -162,9 +162,9 @@
 			$wrapper.incidentdialog.find(".jsignature").jSignature("clear");
 			$wrapper.incidentdialog.find(".sigDate").datepicker("setDate", "");
 		});
-		$wrapper.incidentdialog.find(".incdate").datepicker({autoSize: true, dateFormat: 'M d, yy'}).datepicker("setDate", "today");
-		$wrapper.incidentdialog.find(".resdate").datepicker({autoSize: true, dateFormat: 'M d, yy'});
-		$wrapper.incidentdialog.find(".sigDate").datepicker({autoSize: true, dateFormat: 'M d, yy'});
+		$wrapper.incidentdialog.find(".incdate").datepicker({autoSize: true, dateFormat: 'M d, yy', yearRange: "c-5:c+3"}).datepicker("setDate", "today");
+		$wrapper.incidentdialog.find(".resdate").datepicker({autoSize: true, dateFormat: 'M d, yy', yearRange: "c-5:c+3"});
+		$wrapper.incidentdialog.find(".sigDate").datepicker({autoSize: true, dateFormat: 'M d, yy', yearRange: "c-5:c+3"});
 	}
 	
     function createActions(reportId, row) {
