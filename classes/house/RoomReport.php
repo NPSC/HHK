@@ -15,24 +15,24 @@
 class RoomReport {
 
     protected static function getGlobalNightsCount(PDO $dbh, $year = '') {
-        
+
         $niteCount = 0;
-        
+
         if ($year != '') {
             // Filter out one year
 //            $query = "SELECT SUM(DATEDIFF(
 //IFNULL(s.Span_End_Date, NOW()),
 //case when year(s.Span_Start_Date) < $year then DATE('$year-01-01') else Date(s.Span_Start_Date) end)) AS `Nights`
 //FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE('$year-12-31') and Date(ifnull(s.Span_End_Date, now())) >= DATE('$year-01-01') ";
-            
+
             $stmt = $dbh->query("CALL sum_stay_Days('$year')");
 
             while ($r = $stmt->fetch(PDO::FETCH_NUM)) {
                 $niteCount = $r[0];
             }
-            
+
         } else {
-        
+
             // Entire history
             $query = "SELECT SUM(DATEDIFF(
 IFNULL(s.Span_End_Date, NOW()),
@@ -674,7 +674,7 @@ resource_use ru on r.idResource = ru.idResource and ru.`Status` = '" . ResourceS
     DATEDIFF(ifnull(v.Span_End, now()), v.Span_Start) as `Nights`
 from visit v left join resource r on v.idResource = r.idResource
 where v.Status != '" . VisitStatus::Pending . "' and DATEDIFF(ifnull(v.Span_End, now()), v.Span_Start) > 0
-and v.Span_Start < '" . $endDT->format('Y-m-d 00:00:00') . "' and ifnull(v.Span_End,  now() ) >= '" . $stDT->format('Y-m-d 00:00:00') ."' order by r.Title;";
+and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull(v.Span_End,  datedefaultnow(v.Expected_Departure) )) >= DATE('" . $stDT->format('Y-m-d') ."') order by r.Title;";
 
         $stmt = $dbh->query($query);
 

@@ -536,7 +536,7 @@ class SiteConfig {
 
         }
 
-        return 'Parameters saved.';
+        return 'Parameters saved.  ';
 
     }
 
@@ -573,5 +573,11 @@ class SiteConfig {
         return $msg;
     }
 
+    public static function updatePayTypes(\PDO $dbh, $payGw, $ccgw, $username) {
+
+        creditIncludes($payGw);
+        $gateway = PaymentGateway::factory($dbh, $payGw, $ccgw);
+        return $gateway->updatePayTypes($dbh, $username);
+    }
 }
 

@@ -248,7 +248,7 @@ where ru.idResource_use is null
             }
 
             // Render Event
-            $titleText = $r['Guest Last'];
+            $titleText = htmlspecialchars_decode($r['Guest Last'], ENT_QUOTES);
             $visitExtended = FALSE;
 
             if ($r['Visit_Status'] == VisitStatus::NewSpan) {
@@ -268,8 +268,8 @@ where ru.idResource_use is null
             $s['id'] = 'v' . $r['id'];
             $s['idVisit'] = $r['idVisit'];
             $s['Span'] = $r['Span'];
-            $s['idHosp'] = $r['idHospital'];
-            $s['idAssoc'] = $r['idAssociation'];
+            $s['idHosp'] = htmlspecialchars_decode($r['idHospital'], ENT_QUOTES);
+            $s['idAssoc'] = htmlspecialchars_decode($r['idAssociation'], ENT_QUOTES);
             $s['hospName'] = $hospitals[$r['idHospital']]['Title'];
             $s['resourceId'] = $r["idResource"];
             $s['idResc'] = $r["idResource"];
@@ -279,7 +279,7 @@ where ru.idResource_use is null
             $s['guests'] = $r['Guest_Count'];
             $s['extended'] = $visitExtended;
             $s['allDay'] = 1;
-            $s['fullName'] = $r['Name_Full'];
+            $s['fullName'] = htmlspecialchars_decode($r['Name_Full'], ENT_QUOTES);
             $s['visitStatus'] = $r['Status_Text'];
             $s['borderColor'] = $backgroundBorderColor;
             $event = new Event($s, $timezone);
@@ -513,13 +513,13 @@ where ru.idResource_use is null
             $s['className'] = 'hhk-schrm';
             $s['borderColor'] = '#111';
 
-            // Set ribbon color
+            // Set ribbon color  htmlspecialchars_decode($r['title'], ENT_QUOTES);
             $this->setRibbonColors($uS->GuestNameColor, $r, $s, $nameColors);
 
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
             $s['end'] = $endDT->format('Y-m-d\TH:i:00');
-            $s['title'] = '<span id="' . $r['idReservation'] . '" class="hhk-schrm ui-icon ui-icon-arrowthick-2-n-s" style="background-color:white; border:1px solid black;  margin-right:.3em;"></span>' . $r['Guest Last'];
-            $s['hospName'] = $hospitals[$r['idHospital']]['Title'];
+            $s['title'] = '<span id="' . $r['idReservation'] . '" class="hhk-schrm ui-icon ui-icon-arrowthick-2-n-s" style="background-color:white; border:1px solid black;  margin-right:.3em;"></span>' . htmlspecialchars_decode($r['Guest Last'], ENT_QUOTES);
+            $s['hospName'] = htmlspecialchars_decode($hospitals[$r['idHospital']]['Title'], ENT_QUOTES);
             $s['idHosp'] = $r['idHospital'];
             $s['idAssoc'] = $r['idAssociation'];
             $s['allDay'] = 1;
@@ -527,7 +527,7 @@ where ru.idResource_use is null
             $s['idResc'] = $r["idResource"];
             $s['resvStatus'] = $r['Status_Text'];
             $s['status'] = $r['Status'];
-            $s['fullName'] = $r['Name_Full'];
+            $s['fullName'] = htmlspecialchars_decode($r['Name_Full'], ENT_QUOTES);
 
             $event = new Event($s, $timezone);
             $events[] = $event->toArray();

@@ -1,4 +1,0 @@
-Patch for build 125.
-Fixes a list of problems.
-There are no user interface changes, except a small one on ShowRegForm.php
-

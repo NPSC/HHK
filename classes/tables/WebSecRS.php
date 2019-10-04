@@ -54,6 +54,8 @@ class W_usersRS extends TableRS {
     public $Verify_Address;  // varchar(4) NOT NULL DEFAULT '',
     public $Last_Login;  // datetime DEFAULT NULL,
     public $Default_Page;  // varchar(100) NOT NULL DEFAULT '',
+    public $PW_Change_Date;  // DATETIME NULL
+    public $PW_Updated_By;  // VARCHAR(45) NOT NULL DEFAULT ''
     public $Status;  // varchar(4) NOT NULL DEFAULT '',
     public $Last_Updated;  // datetime DEFAULT NULL,
     public $Updated_By;  // varchar(45) DEFAULT '',
@@ -68,6 +70,8 @@ class W_usersRS extends TableRS {
         $this->Ip = new DB_Field("Ip", "", new DbStrSanitizer(15), TRUE, TRUE);
         $this->Verify_Address = new DB_Field("Verify_Address", "", new DbStrSanitizer(4), TRUE, TRUE);
         $this->Last_Login = new DB_Field("Last_Login", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
+        $this->PW_Change_Date = new DB_Field("PW_Change_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
+        $this->PW_Updated_By = new DB_Field("PW_Updated_By", "", new DbStrSanitizer(45), FALSE);
 
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(4), TRUE, TRUE);
         $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);

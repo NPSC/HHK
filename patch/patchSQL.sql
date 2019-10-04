@@ -77,6 +77,8 @@ delete from w_user_log where DATE(Access_Date) < DATE('2018-06-01');
 -- update the action column for existing rows
 update w_user_log set Action = 'L' where Action = '';
 
+-- add new authorization level for house
+INSERT INTO w_groups (Group_Code, Title, Description, Last_Updated, Updated_By) Values ('gr','Guest Reports', 'Can be more restricted than the others', now(), 'admin');
 
 -- Fix change price bug where a stay after the price change date was not properly handled.
 UPDATE stays s

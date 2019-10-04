@@ -607,7 +607,7 @@ function invoiceSetBill(\PDO $dbh, $invNum, $invDateStr, $user, $element, $notes
         try {
             $billDT = setTimeZone(NULL, $invDateStr);
         } catch (Exception $ex) {
-            return array('error' => 'Bad Date.');
+            return array('error' => 'Bad Date:  ' . $ex->getMessage());
         }
     } else {
         $billDT = NULL;

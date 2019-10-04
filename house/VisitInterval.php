@@ -445,8 +445,11 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
         WHEN
             DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
         THEN 0
-        WHEN DATE(v.Span_Start) >= DATE('$end') THEN 0
-        ELSE DATEDIFF(
+        WHEN
+            DATE(v.Span_Start) >= DATE('$end')
+        THEN 0
+        ELSE
+            DATEDIFF(
                 CASE
                     WHEN
                         DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) > DATE('$end')
@@ -457,8 +460,9 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
                 CASE
                     WHEN DATE(v.Span_Start) < DATE('$start') THEN DATE('$start')
                     ELSE DATE(v.Span_Start)
-                END)
-    END AS `Actual_Month_Nights`,
+                END
+            )
+        END AS `Actual_Month_Nights`,
 
     CASE
         WHEN

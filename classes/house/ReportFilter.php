@@ -213,7 +213,7 @@ $ckdate";
             $this->reportStart = date('Y') . '-01-01';
 
             $endDT = new DateTime();
-            $endDT->add(new DateInterval('P1D'));
+            //$endDT->add(new DateInterval('P1D'));
             $this->reportEnd = $endDT->format('Y-m-d');
 
         } else if ($this->selectedCalendar == self::DATES) {

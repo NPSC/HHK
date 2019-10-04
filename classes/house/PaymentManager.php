@@ -290,7 +290,7 @@ class PaymentManager {
 
                     $taxRates = $vat->getTaxedItemSums(0);  // Get all taxes, no timeouts.
 
-                    if ($taxRates[ItemId::Lodging] > 0) {
+                    if (isset($taxRates[ItemId::Lodging]) && $taxRates[ItemId::Lodging] > 0) {
                         // we caught taxes.  Reduce reversalAmt by the sum of tax rates.
                         $reversalAmt = round($reversalAmt / (1 + ($taxRates[ItemId::Lodging])), 2);
 
