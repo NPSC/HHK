@@ -65,9 +65,15 @@ class ValueAddedTax {
     protected function loadTaxedItemList(\PDO $dbh, $idVisit) {
 
         // Taxed items
-        $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.Timeout_Days as `Max_Days`, ti.idItem as `taxIdItem`, ti.Gl_Code, ti.First_Order_Id, ti.Last_Order_Id "
-                . " from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem"
-                . " where ti.Deleted = 0 and (($idVisit = 0 and ti.Last_Order_Id = 0) or $idVisit <= ti.Last_Order_Id or ti.Last_Order_Id= 0) and $idVisit >= ti.First_Order_Id");
+        if ($idVisit == 0) {
+            $where = "ti.Last_Order_Id = 0";
+        } else {
+            $where = " $idVisit >= ti.First_Order_Id AND ($idVisit BETWEEN ti.First_Order_Id AND (CASE WHEN ti.Last_Order_Id = 0 THEN $idVisit ELSE ti.Last_Order_Id END))";
+        }
+
+        $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.Timeout_Days as `Max_Days`, ti.idItem as `taxIdItem`, ti.Gl_Code, ti.First_Order_Id, ti.Last_Order_Id
+	from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem
+	where ti.Deleted = 0 and $where;");
 
         return $tistmt->fetchAll(\PDO::FETCH_ASSOC);
     }

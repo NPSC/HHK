@@ -585,12 +585,6 @@ where
         $vat = new ValueAddedTax($dbh, 0);
         $taxedItems = $vat->getTaxedItemSums(0);
         $tax = (isset($taxedItems[ItemId::Lodging]) ? $taxedItems[ItemId::Lodging] : 0);
-        $percent = $tax * 100;
-        $precision = 3;
-
-        if ($percent == round($percent)) {
-            $precision = 0;
-        }
 
         $tbl = new HTMLTable();
 
@@ -598,9 +592,9 @@ where
             ($this->payVisitFee ? HTMLTable::MakeTh($visitFeeTitle) : '')
             .HTMLTable::makeTh('Room Rate')
             .HTMLTable::makeTh('Adjustment', $attrAdj)
-            .HTMLTable::makeTh('Estimated Nights')
+            .HTMLTable::makeTh('Nights')
             .($this->payVisitFee || $tax > 0 ? HTMLTable::makeTh('Estimated Lodging') : '')
-            .($tax > 0 ? HTMLTable::makeTh('Tax (' . number_format($percent, $precision).'%)') : '')
+            .($tax > 0 ? HTMLTable::makeTh('Tax (' . TaxedItem::suppressTrailingZeros($tax*100).')') : '')
             .HTMLTable::makeTh('Estimated Total'));
 
         $tbl->addBodyTr(

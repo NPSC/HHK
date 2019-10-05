@@ -269,6 +269,10 @@ class VisitCharges {
             // Third Party invoice
             if ($l['Billing_Agent'] > 0 && $stat == InvoiceStatus::Unpaid) {
                 $this->itemSums[$l['Item_Id']][self::THIRD_PARTY] += $l['Amount'];
+
+                if ($l['Type_Id'] == InvoiceLineType::Tax) {
+                    $this->itemSums['tax'][self::THIRD_PARTY] += $l['Amount'];
+                }
             }
 
         }

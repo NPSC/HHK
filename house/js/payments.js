@@ -366,6 +366,7 @@ var payCtrls = function () {
 };
 
 function roundTo(n, digits) {
+    
     if (digits === undefined) {
         digits = 0;
     }
@@ -385,36 +386,32 @@ function amtPaid() {
         feePayText = '',
         invAmt = 0, 
         heldAmt = 0,
-        heldTaxAmt = 0,
-        heldPreTax = 0,
         reimburseAmt = 0,
-        reimbursePreTax = 0,
-        reimburseTaxAmt = 0,
         totCharges = 0,
         ckedInCharges = 0,
         totPay = 0, 
         depRfAmt = 0,
-        depRfPreTax = 0,
-        depRfTaxAmt = 0,
         roomBalTaxDue = 0,
         feePayTaxAmt = 0,
         overPayAmt = 0,
+        totReturns = 0,
+        totReturnTax = 0,
+        totReturnPreTax = 0,
         isChdOut = isCheckedOut,
-        vtax = parseFloat(p.feePayAmt.data('tax')),
+        vtax = parseFloat($('#feesTax').data('taxrate')),
         roomBalDue = parseFloat($('#spnCfBalDue').data('rmbal')),
         totalBalDue = parseFloat($('#spnCfBalDue').data('totbal'));
 
     if (isNaN(vtax) || vtax < 0) {
         vtax = 0;
     } else {
-        // change from percent to decimal
         vtax = roundTo((vtax), 3);
     }
     
     if (isNaN(roomBalDue)) {
         roomBalDue = 0;
     } else {
-        roomBalTaxDue = roundTo((roomBalDue * vtax), 2);
+        roomBalTaxDue = roundTo((roomBalDue * vtax), 4);
     }
 
     p.msg.text('').hide();
@@ -496,17 +493,7 @@ function amtPaid() {
             depRfAmt = 0;
             p.depRefundAmt.val('');
             
-        } else {
-
-            depRfTaxAmt = roundTo((depRfAmt - (depRfAmt / (1 + vtax))), 2);
-            
-            // Only tax up to tax amount due
-            if (depRfTaxAmt > roomBalTaxDue) {
-                depRfTaxAmt = roomBalTaxDue;
-            }
-            
-            depRfPreTax = depRfAmt - depRfTaxAmt;
-            
+        } else {            
             p.depRefundAmt.val((0 - depRfAmt).toFixed(2).toString());
         }
     }
@@ -518,15 +505,6 @@ function amtPaid() {
         
         if (isNaN(heldAmt) || heldAmt < 0 || p.heldCb.prop("checked") === false) {
             heldAmt = 0;
-        } else {
-
-            heldTaxAmt = roundTo((heldAmt - (heldAmt / (1 + vtax))), 2);
-            
-            if (heldTaxAmt > roomBalTaxDue - depRfTaxAmt) {
-                heldTaxAmt = roomBalTaxDue - depRfTaxAmt;
-            }
-            
-            heldPreTax = heldAmt - heldTaxAmt;
         }
     }
     
@@ -537,16 +515,17 @@ function amtPaid() {
         
         if (isNaN(reimburseAmt) || reimburseAmt < 0 || p.reimburseVatCb.prop('checked') === false) {
             reimburseAmt = 0;
-        } else {
-            reimburseTaxAmt = roundTo((reimburseAmt - (reimburseAmt / (1 + vtax))), 2);
-            
-            if (reimburseTaxAmt > roomBalTaxDue - depRfTaxAmt - heldTaxAmt) {
-                reimburseTaxAmt = roomBalTaxDue - depRfTaxAmt - heldTaxAmt;
-            }
-            
-            reimbursePreTax = reimburseAmt - reimburseTaxAmt;
         }
     }
+    
+    totReturns = heldAmt + depRfAmt + reimburseAmt;
+    totReturnTax = totReturns * vtax;
+        
+    if (totReturnTax > roomBalTaxDue) {
+       totReturnTax = roomBalTaxDue;
+    }
+    
+    totReturnPreTax = totReturns - totReturnTax;
 
     // Fees Payments - feePay
     if (p.feePayAmt.length > 0) {
@@ -554,12 +533,12 @@ function amtPaid() {
         feePayText = p.feePayAmt.val().replace('$', '').replace(',', '');
         feePayPreTax = parseFloat(feePayText);
         
+        // allow zeros through.
         if (feePayText !== '0') {
             feePayText = '';
         }
 
         if (isNaN(feePayPreTax) || feePayPreTax <= 0) {
-            
             feePayPreTax = 0;
             
         } else if (vtax > 0) {
@@ -567,13 +546,13 @@ function amtPaid() {
             feePayTaxAmt = roundTo((feePayPreTax * vtax), 2);
             
             // Only tax up to the room balance due.
-            if (feePayTaxAmt > (roomBalTaxDue - depRfTaxAmt - heldTaxAmt - reimburseTaxAmt) && isChdOut) {
-                feePayTaxAmt = (roomBalTaxDue - depRfTaxAmt - heldTaxAmt - reimburseTaxAmt);
-            } else {
-                feePayTaxAmt -= heldTaxAmt - reimburseTaxAmt;
-            }
+            if (feePayTaxAmt > (roomBalTaxDue - totReturnTax) && isChdOut) {
+                feePayTaxAmt = (roomBalTaxDue - totReturnTax);
+        } else {
+                feePayTaxAmt -= totReturnTax;
         }
-        
+    }
+
         if (feePayTaxAmt < 0) {
             feePayTaxAmt = 0;
         }
@@ -601,12 +580,14 @@ function amtPaid() {
             $('.hhk-GuestCredit').show();
         }
 
-        totCharges = roundTo((vfee + invAmt + totalBalDue - heldAmt - depRfAmt - reimburseAmt), 2);
+                
+        totCharges = roundTo((vfee + invAmt + totalBalDue - totReturns), 2);
+        
         totPay = roundTo((vfee + invAmt + feePay), 2);
 
         if (totCharges - totPay >= 0) {
 
-            var hsPay = roundTo((vfee + invAmt + roomBalDue - depRfPreTax - heldPreTax - reimbursePreTax - feePayPreTax), 2);
+            var hsPay = roundTo((vfee + invAmt + roomBalDue - totReturnPreTax - feePayPreTax), 2);
 
             // Underpaid
             if (hsPay > 0){
@@ -614,7 +595,7 @@ function amtPaid() {
                 if (p.finalPaymentCb.prop('checked')) {
                     // Manage House Waive of underpaid amount
 
-                    var taxBal = roundTo((roomBalTaxDue - (feePayTaxAmt + heldTaxAmt + depRfTaxAmt + reimburseTaxAmt)), 2);
+                    var taxBal = roundTo((roomBalTaxDue - (feePayTaxAmt + totReturnTax)), 2);
                     p.hsDiscAmt.val(hsPay.toFixed(2).toString());
 
                     p.feesCharges.val((totRmBalDue - taxBal).toFixed(2).toString());

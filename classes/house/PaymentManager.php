@@ -249,6 +249,18 @@ class PaymentManager {
 
                 if ($roomChargesTaxable > 0) {
 
+                    $taxInvLines = array();
+
+                    foreach ($vat->getCurrentTaxedItems($this->pmp->visitCharges->getNightsStayed()) as $t) {
+
+                        if ($t->getIdTaxedItem() == ItemId::Lodging) {
+                            $taxInvoiceLine = new TaxInvoiceLine();
+                            $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), $roomChargesTaxable), $t->getDecimalTax(), '(' . $t->getTextPercentTax() . ')');
+                            $taxInvoiceLine->setSourceItemId(ItemId::Lodging);
+
+                        }
+                    }
+
                     foreach ($vat->getCurrentTaxedItems($this->pmp->visitCharges->getNightsStayed()) as $t) {
 
                         if ($t->getIdTaxedItem() == ItemId::Lodging) {
