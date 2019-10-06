@@ -623,7 +623,7 @@ ORDER BY v.idVisit , v.Span;");
                                 FALSE,
                                 $unpaidInvoices,
                                 $labels,
-                                new ValueAddedTax($dbh))
+                                NULL)
                         , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
                 );
 
@@ -654,7 +654,7 @@ ORDER BY v.idVisit , v.Span;");
     }
 
     protected static function createPaymentMarkup($showRoomFees, $useKeyDeposit, $visitCharge, $useVisitFee, $heldAmount, $payVFeeFirst,
-            $showFinalPaymentCB, array $unpaidInvoices, $labels, ValueAddedTax $vat,  $idVisit = 0, $excessPays = array(), $defaultExcessPays = ExcessPay::Ignore, $useHouseWaive = FALSE) {
+            $showFinalPaymentCB, array $unpaidInvoices, $labels, $vat,  $idVisit = 0, $excessPays = array(), $defaultExcessPays = ExcessPay::Ignore, $useHouseWaive = FALSE) {
 
         $feesTbl = new HTMLTable();
 

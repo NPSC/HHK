@@ -174,13 +174,15 @@ class ValueAddedTaxReg extends ValueAddedTax {
         $tistmt = $dbh->query("select ii.idItem, ti.Percentage, ti.Description, ti.Timeout_Days as `Max_Days`, ti.idItem as `taxIdItem`, ti.Gl_Code, ti.First_Order_Id, ti.Last_Order_Id "
                 . " from item_item ii join item i on ii.idItem = i.idItem join item ti on ii.Item_Id = ti.idItem"
                 . " Join visit v on v.idRegistration = $idReg"
-                . " where ti.Deleted = 0 and ((v.idVisit = 0 and ti.Last_Order_Id = 0) or ((v.idVisit <= ti.Last_Order_Id or ti.Last_Order_Id= 0) and v.idVisit >= ti.First_Order_Id))");
+                . " where ti.Deleted = 0 and v.idVisit >= ti.First_Order_Id AND (v.idVisit BETWEEN ti.First_Order_Id AND (CASE WHEN ti.Last_Order_Id = 0 THEN v.idVisit ELSE ti.Last_Order_Id END))");
+
+//                . "((v.idVisit = 0 and ti.Last_Order_Id = 0) or ((v.idVisit <= ti.Last_Order_Id or ti.Last_Order_Id= 0) and v.idVisit >= ti.First_Order_Id))");
 // v.idVisit >= ti.First_Order_Id and v.idVisit <= ti.Last_Order_Id");
 
         return $tistmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-        /**
+    /**
      *
      * @return array of all the TaxedItems
      */
