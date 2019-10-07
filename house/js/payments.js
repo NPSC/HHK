@@ -637,6 +637,12 @@ function amtPaid() {
                 $('.hhk-HouseDiscount').hide();
                 $('.hhk-Overpayment').hide();
             }
+            
+            // Clear overpayment selector
+            p.selBalTo.val('');
+            $('#txtRtnAmount').val('');
+            $('#divReturnPay').hide();
+
         }
 
         // overpaid
