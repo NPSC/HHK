@@ -582,8 +582,8 @@ where
         }
 
         // Get taxed items
-        $vat = new ValueAddedTax($dbh, 0);
-        $taxedItems = $vat->getTaxedItemSums(0);
+        $vat = new ValueAddedTax($dbh);
+        $taxedItems = $vat->getTaxedItemSums(0, 0);
         $tax = (isset($taxedItems[ItemId::Lodging]) ? $taxedItems[ItemId::Lodging] : 0);
 
         $tbl = new HTMLTable();

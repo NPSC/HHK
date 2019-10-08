@@ -398,20 +398,18 @@ function amtPaid() {
         totReturnTax = 0,
         totReturnPreTax = 0,
         isChdOut = isCheckedOut,
-        vtax = parseFloat($('#feesTax').data('taxrate')),
         roomBalDue = parseFloat($('#spnCfBalDue').data('rmbal')),
-        totalBalDue = parseFloat($('#spnCfBalDue').data('totbal'));
-
-    if (isNaN(vtax) || vtax < 0) {
-        vtax = 0;
-    } else {
-        vtax = roundTo((vtax), 3);
-    }
+        totalBalDue = parseFloat($('#spnCfBalDue').data('totbal')),
+        $taxingItems = $('.hhk-TaxingItem');
     
     if (isNaN(roomBalDue)) {
         roomBalDue = 0;
     } else {
-        roomBalTaxDue = roomBalDue * vtax;
+        
+        $taxingItems.each(function () {
+            var rate = parseFloat($(this).data('taxrate'));
+            roomBalTaxDue += roundTo(roomBalDue* rate, 2);
+        });
     }
 
     p.msg.text('').hide();
@@ -484,7 +482,7 @@ function amtPaid() {
     }
 
     // Deposit refund? depRfAmt
-    if (p.depRefundAmt.length > 0) {
+    if (p.depRefundAmt.length > 0 && isChdOut) {
         
         depRfAmt = parseFloat(p.depRefundAmt.data('amt'));
         
@@ -519,8 +517,14 @@ function amtPaid() {
     }
     
     totReturns = heldAmt + depRfAmt + reimburseAmt;
-    totReturnTax = totReturns - (totReturns / (1 + vtax));
+    
+    $taxingItems.each(function () {
+        var rate = parseFloat($(this).data('taxrate'));
         
+        totReturnTax += roundTo(totReturns / (1 + rate), 2);
+    });
+    //totReturnTax = totReturns - (totReturns / (1 + vtax));
+
     if (totReturnTax > roomBalTaxDue) {
        totReturnTax = roomBalTaxDue;
     }
@@ -542,9 +546,15 @@ function amtPaid() {
             feePayPreTax = 0;
         }
 
-        if (vtax > 0) {
+        if ($taxingItems.length > 0) {
 
-            feePayTaxAmt = feePayPreTax * vtax;
+            $taxingItems.each(function () {
+                var rate = parseFloat($(this).data('taxrate'));
+                var tax = roundTo(feePayPreTax * rate, 2);
+                $(this).val(tax);
+                feePayTaxAmt += tax
+            });
+
 
             // Only tax up to the room balance due.
             if (feePayTaxAmt > (roomBalTaxDue - totReturnTax) && isChdOut) {
@@ -553,8 +563,6 @@ function amtPaid() {
 
             if (feePayTaxAmt <= 0) {
                 feePayTaxAmt = 0;
-            } else {
-                feePayTaxAmt = roundTo(feePayTaxAmt, 2);
             }
             
         }
@@ -660,6 +668,9 @@ function amtPaid() {
                     overPayAmt -= feePay;
                     feePayPreTax = 0;
                     feePayTaxAmt = 0;
+                    $taxingItems.each(function () {
+                        $(this).val('');
+                    });
                     feePay = 0;
                     
                     $('#divReturnPay').show('fade');
@@ -713,8 +724,7 @@ function amtPaid() {
 
             // reduce total charges
             if (reimburseAmt > totCharges) {
-                reimburseAmt = totCharges;
-                totCharges = 0;
+                reimburseAmt = 0;
             } else {
                 totCharges -= reimburseAmt;
             }
@@ -725,7 +735,7 @@ function amtPaid() {
 
         } else if (p.reimburseVatCb.length > 0) {
 
-            p.reimburseVatCb.val('');
+            reimburseAmt = 0;
         }
         
         
@@ -768,6 +778,7 @@ function amtPaid() {
         if (isChdOut === false && ckedInCharges === 0.0) {
             $('.hhk-minPayment').hide();
             heldAmt = 0;
+            reimburseAmt = 0;
         } else {
             $('.hhk-minPayment').show('fade');
         }
@@ -775,10 +786,10 @@ function amtPaid() {
 
     if (feePay === 0) {
         p.feePayAmt.val(feePayText);
-        $('#feesTax').val('');
+        //$('#feesTax').val('');
     } else {
         p.feePayAmt.val(feePayPreTax.toFixed(2).toString());
-        $('#feesTax').val(feePayTaxAmt.toFixed(2).toString());
+        //$('#feesTax').val(feePayTaxAmt.toFixed(2).toString());
     }
 
     if (overPayAmt === 0) {

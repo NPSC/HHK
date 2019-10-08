@@ -276,6 +276,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
     $r['totpd'] = ($paid == 0 ? '' : number_format($paid,2));
     $r['unpaid'] = ($unpaid == 0 ? '' : number_format($unpaid,2));
     $r['adjch'] = ($visit['addpd'] == 0 ? '': number_format($visit['addpd'], 2));
+    $r['adjchtx'] = ($visit['adjchtx'] == 0 ? '': number_format($visit['adjchtx'], 2));
     $r['pndg'] = ($visit['pndg'] == 0 ? '': number_format($visit['pndg'], 2));
     $r['thdpaid'] = ($visit['thdpd'] == 0 ? '': number_format($visit['thdpd'], 2));
     $r['donpd'] = ($visit['donpd'] == 0 ? '': number_format($visit['donpd'], 2));
@@ -692,6 +693,10 @@ where
     $totalFullCharge = 0;
     $totalAddnlCharged = 0;
 
+    $totalAddnlTax = 0;
+    $totalTaxCharged = 0;
+    $totalTaxPaid = 0;
+    $totalTaxPending = 0;
 
     $totalPaid = 0;
     $totalHousePaid = 0;
@@ -722,6 +727,8 @@ where
     $now = new \DateTime();
     $now->setTime(0, 0, 0);
 
+    $vat = new ValueAddedTax($dbh);
+
     $stmt = $dbh->query($query);
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -734,6 +741,11 @@ where
 
                 $totalLodgingCharge += $visit['chg'];
                 $totalAddnlCharged += ($visit['addch']);
+
+                $totalTaxCharged += $visit['taxcgd'];
+                $totalAddnlTax += $visit['adjchtx'];
+                $totalTaxPaid += $visit['taxpd'];
+                $totalTaxPending += $visit['taxpndg'];
 
                 if ($visit['nit'] > $uS->VisitFeeDelayDays) {
                     $totalVisitFee += $visit['vfa'];
@@ -847,14 +859,14 @@ where
             $curAdj = 0;
             $curAmt = 0;
             $curRoom = 0;
-            $addChgTx = 0;
+
+            $addChgTax = 0;
             $lodgeTax = 0;
 
-            $vat = new ValueAddedTax($dbh, $r['idVisit']);
-            $taxSums = $vat->getTaxedItemSums($r['Visit_Age']);
+            $taxSums = $vat->getTaxedItemSums($r['idVisit'], $r['Visit_Age']);
 
             if (isset($taxSums[ItemId::AddnlCharge])) {
-                $addChgTx = $taxSums[ItemId::AddnlCharge];
+                $addChgTax = $taxSums[ItemId::AddnlCharge];
             }
 
             if (isset($taxSums[ItemId::Lodging])) {
@@ -877,6 +889,7 @@ where
                 'addtxpd'=> $r['AddnlTaxPaid'],
                 'taxpd' => $r['TaxPaid'],
                 'addch' => $r['AddnlCharged'],
+                'adjchtx' => round($r['AddnlCharged'] * $addChgTax, 2),
                 'donpd' => $r['ContributionPaid'],
                 'vfpd' => $r['VisitFeePaid'],  // Visit fees paid
                 'plg' => 0, // Pledged rate
@@ -968,6 +981,11 @@ where
         $totalAmtPending += $visit['pndg'];
         $totalNights += $visit['nit'];
         $totalGuestNights += $visit['gnit'];
+
+        $totalTaxCharged += $visit['taxcgd'];
+        $totalAddnlTax += $visit['adjchtx'];
+        $totalTaxPaid += $visit['taxpd'];
+        $totalTaxPending += $visit['taxpndg'];
 
         // Set expected departure to now if earlier than "today"
         $expDepDT = new \DateTime($savedr['Expected_Departure']);
@@ -1112,6 +1130,22 @@ where
 
                 case 'adjch':
                     $entry = '$' . number_format($totalAddnlCharged,2);
+                    break;
+
+                case 'adjchtx':
+                    $entry = '$' . number_format($totalAddnlTax,2);
+                    break;
+
+                case 'taxcgd':
+                    $entry = '$' . number_format($totalTaxCharged,2);
+                    break;
+
+                case 'taxpd':
+                    $entry = '$' . number_format($totalTaxPaid,2);
+                    break;
+
+                case 'taxpndg':
+                    $entry = '$' . number_format($totalTaxPending,2);
                     break;
 
                 case 'totch':
@@ -1281,7 +1315,7 @@ if (count($adjusts) > 0) {
     $cFields[] = array("Addnl Charge", 'adjch', 'checked', '', 's', '', array('style'=>'text-align:right;'));
 
     if ($useTaxes) {
-        $cFields[] = array("Addnl Charge", 'adjch', 'checked', '', 's', '', array('style'=>'text-align:right;'));
+        $cFields[] = array("Addnl Tax", 'adjchtx', 'checked', '', 's', '', array('style'=>'text-align:right;'));
     }
 }
 

@@ -645,9 +645,9 @@ class HouseServices {
                 $invoice->updateInvoiceStatus($dbh, $uS->username);
 
                 // Taxed items
-                $vat = new ValueAddedTax($dbh, $visit->getIdVisit());
+                $vat = new ValueAddedTax($dbh);
 
-                foreach ($vat->getCurrentTaxedItems() as $t) {
+                foreach ($vat->getCurrentTaxedItems($visit->getIdVisit()) as $t) {
 
                     if ($t->getIdTaxedItem() == ItemId::AddnlCharge) {
                         $taxInvoiceLine = new TaxInvoiceLine();

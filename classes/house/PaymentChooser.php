@@ -269,7 +269,7 @@ class PaymentChooser {
         $labels = new Config_Lite(LABEL_FILE);
 
         // Get taxed items
-        $vat = new ValueAddedTax($dbh, $visitCharge->getIdVisit());
+        $vat = new ValueAddedTax($dbh);
 
         $useVisitFee = FALSE;
         if($uS->VisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == '')){
@@ -412,7 +412,7 @@ class PaymentChooser {
                 FALSE,
                 array(),
                 $labels,
-                new ValueAddedTax($dbh, $visitCharge->getIdVisit()),
+                new ValueAddedTax($dbh),
                 $visitCharge->getIdVisit(),
                 array(),
                 '',
@@ -781,7 +781,7 @@ ORDER BY v.idVisit , v.Span;");
 
             $sumReimburseTax = 0;
 
-            foreach($vat->getTimedoutTaxItems(ItemId::Lodging, $visitCharge->getNightsStayed()) as $t) {
+            foreach($vat->getTimedoutTaxItems(ItemId::Lodging, $idVisit, $visitCharge->getNightsStayed()) as $t) {
                 $sumReimburseTax += abs($visitCharge->getItemInvCharges($t->getIdTaxingItem()));
             }
 
@@ -805,20 +805,20 @@ ORDER BY v.idVisit , v.Span;");
 
         if ($showRoomFees && is_null($visitCharge) === FALSE) {
 
-            $taxedItems = $vat->getTaxedItemSums($visitCharge->getNightsStayed());
-            $tax = (isset($taxedItems[ItemId::Lodging]) ? $taxedItems[ItemId::Lodging] : 0);
-
             $feesTbl->addBodyTr(HTMLTable::makeTd('Pay Room Fees:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd('Days: ' . HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'1', 'data-vid'=>$idVisit)), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;', 'data-tax'=>$tax)), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
                 , array('class'=>'hhk-RoomFees'));
 
-            if ($tax > 0) {
+            $taxedItems = $vat->getCurrentTaxingItems($idVisit, $visitCharge->getNightsStayed(), ItemId::Lodging);
+            if (count($taxedItems) > 0) {
 
-                // show tax line
-                $feesTbl->addBodyTr(HTMLTable::makeTd('Tax ('. TaxedItem::suppressTrailingZeros($tax*100).' ):', array('class'=>'tdlabel', 'colspan'=>'2'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesTax', 'data-taxrate'=>$tax, 'size'=>'6', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
-                    , array('class'=>'hhk-RoomFees'));
+                foreach ($taxedItems as $t) {
+                    // show tax line
+                    $feesTbl->addBodyTr(HTMLTable::makeTd($t->getTaxingItemDesc() . ' ('. $t->getTextPercentTax().' ):', array('class'=>'tdlabel', 'colspan'=>'2'))
+                        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesTax'.$t->getIdTaxingItem(), 'data-taxrate'=>$t->getDecimalTax(), 'size'=>'6', 'class'=>'hhk-feeskeys  hhk-TaxingItem', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
+                        , array('class'=>'hhk-RoomFees'));
+                }
             }
         }
 
