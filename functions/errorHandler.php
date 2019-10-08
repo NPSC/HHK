@@ -133,7 +133,7 @@ function buildPage($error){
 							<h2>File a bug report</h2>
 						</div>
 						<div class="ui-widget-content ui-corner-bottom hhk-tdbox">
-							<?php if($_GET["status"] == "success"){ ?>
+							<?php if(isset($_GET["status"]) && $_GET["status"] == "success"){ ?>
 								<h4>Thanks for submitting!</h4>
 								<a href="<?php echo $sec->getRootURL(); ?>" class="ui-button ui-corner-all ui-widget">Go Home</a>
 							<?php }else{ ?>
