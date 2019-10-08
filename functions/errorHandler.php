@@ -60,7 +60,7 @@ function formHandler($error, $uS){
 function sendMail($message, $uS) {
 	if($message){
 		//get report email address
-		$to = $uS->Error_Report_Email == "" ? "wireland@nonprofitsoftwarecorp.org": $uS->Error_Report_Email;
+		$to = $uS->Error_Report_Email == "" ? "support@nonprofitsoftwarecorp.org": $uS->Error_Report_Email;
 		$subject = "New bug report received from " . $uS->siteName;
 		$headers = "From: BugReporter<noreply@nonprofitsoftwarecorp.org>" . "\r\n";
 	
