@@ -36,7 +36,7 @@ class CurrentAccount {
     protected $showVisitFee;
 
     // Charges.
-    protected $lodgingTax = 0;
+    protected $lodgingTaxPd = array();
     protected $additionalChargeTax = 0;
     protected $reimburseTax;
 
@@ -90,10 +90,11 @@ class CurrentAccount {
             $this->sumReimburseTax($t->getIdTaxingItem(), $visitCharge->getItemInvCharges($t->getIdTaxingItem()));
         }
 
-        // Tax percent sums
+        // Taxex
         $this->curentTaxItems = $vat->getCurrentTaxedItems($visitCharge->getIdVisit(), $visitCharge->getNightsStayed());
 
         $this->setAdditionalChargeTax($visitCharge->getTaxInvoices(ItemId::AddnlCharge));
+
 
         // Visit Fee Balance
         if ($this->showVisitFee) {
@@ -104,6 +105,11 @@ class CurrentAccount {
 
         // Room fee balance
         $this->setRoomFeeBalance(($this->getRoomCharge() + $visitCharge->getItemInvCharges(ItemId::Discount)) - $visitCharge->getRoomFeesPaid() - $visitCharge->getRoomFeesPending());
+
+        // Lodging tax already paid
+        foreach ($visitCharge->getTaxItemIds() as $tid =>$v) {
+            $this->setLodgingTaxPd($tid, $visitCharge->getItemInvPayments($tid));
+        }
 
         // Payments
         $this->setTotalPaid($visitCharge->getRoomFeesPaid()
@@ -156,7 +162,7 @@ class CurrentAccount {
 
     public function getTotalCharged() {
 
-        return $this->getRoomCharge() + $this->getItemTaxAmt(ItemId::Lodging, $this->getRoomCharge())
+        return $this->getRoomCharge() + $this->getItemTaxAmt(ItemId::Lodging, $this->getRoomFeeBalance())
                 + $this->getAdditionalCharge() + $this->getAdditionalChargeTax()
                 + $this->getUnpaidMOA()
                 + $this->getTotalDiscounts()
@@ -207,6 +213,13 @@ class CurrentAccount {
         return $this->reimburseTax;
     }
 
+    public function getLodgingTaxPd($tid) {
+        if (isset($this->lodgingTaxPd[$tid])) {
+            return $this->lodgingTaxPd[$tid];
+        }
+        return 0;
+    }
+
     /**
      *
      * @param int $idTaxedItem
@@ -226,14 +239,14 @@ class CurrentAccount {
 
     }
 
-    public function getItemTaxAmt($idTaxedItem, $itemAmount) {
+    public function getItemTaxAmt($idTaxedItem, $balanceAmt) {
 
         $amt = 0;
 
         foreach ($this->getCurentTaxItems($idTaxedItem) as $t) {
 
             if ($t->getIdTaxedItem() == $idTaxedItem) {
-                $amt += $t->getTaxAmount($itemAmount);
+                $amt += $t->getTaxAmount($balanceAmt) + $this->getLodgingTaxPd($t->getIdTaxingItem());
             }
         }
 
@@ -254,11 +267,14 @@ class CurrentAccount {
         return $this;
     }
 
+    public function setLodgingTaxPd($tid, $amt) {
+        $this->lodgingTaxPd[$tid] = $amt;
+    }
+
     public function setDueToday() {
 
         $this->dueToday = round($this->getTotalCharged() - $this->getTotalPaid() - $this->getAmtPending(), 2);
 
-        return $this;
     }
 
     public function setRoomFeeBalance($roomFeeBalance) {

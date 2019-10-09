@@ -779,20 +779,19 @@ ORDER BY v.idVisit , v.Span;");
         // Reimburse VAT.
         if (is_null($visitCharge) === FALSE && $visitCharge->getNightsStayed() > 0) {
 
-            $sumReimburseTax = 0;
-
             foreach($vat->getTimedoutTaxItems(ItemId::Lodging, $idVisit, $visitCharge->getNightsStayed()) as $t) {
-                $sumReimburseTax += abs($visitCharge->getItemInvCharges($t->getIdTaxingItem()));
-            }
 
-            if ($sumReimburseTax > 0) {
-                $feesTbl->addBodyTr(
-                    HTMLTable::makeTd('Tax Reimbusement:', array('class'=>'tdlabel', 'title'=>'Reimbursed taxes'))
-                    .HTMLTable::makeTd(
-                            HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbReimburseVAT', 'style'=>'margin-left:5px;margin-right:3px;'))
-                            .HTMLInput::generateMarkup('', array('name'=>'cbReimburseVAT', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-amt'=> number_format($sumReimburseTax, 2)))
-                        .HTMLContainer::generateMarkup('span', ($sumReimburseTax > 0 ? '($' . number_format($sumReimburseTax, 2) . ')' : ''), array('id'=>'spnHeldAmt')))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'reimburseVat', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
+                $reimburseTax = abs($visitCharge->getItemInvCharges($t->getIdTaxingItem()));
+
+                if ($reimburseTax > 0) {
+                    $feesTbl->addBodyTr(
+                        HTMLTable::makeTd('Tax Reimbusement:', array('class'=>'tdlabel', 'title'=>'Reimbursed taxes'))
+                        .HTMLTable::makeTd(
+                                HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbReimburseVAT', 'style'=>'margin-left:5px;margin-right:3px;'))
+                                .HTMLInput::generateMarkup('', array('name'=>'cbReimburseVAT', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-amt'=> number_format($reimburseTax, 2)))
+                            .HTMLContainer::generateMarkup('span', '($' . number_format($reimburseTax, 2) . ')', array('id'=>'spnHeldAmt')))
+                        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'reimburseVat', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
+                }
             }
         }
 

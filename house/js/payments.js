@@ -523,7 +523,6 @@ function amtPaid() {
         
         totReturnTax += roundTo(totReturns / (1 + rate), 2);
     });
-    //totReturnTax = totReturns - (totReturns / (1 + vtax));
 
     if (totReturnTax > roomBalTaxDue) {
        totReturnTax = roomBalTaxDue;
@@ -591,7 +590,7 @@ function amtPaid() {
         }
 
                 
-        totCharges = vfee + invAmt + totalBalDue - totReturns;
+        totCharges = vfee + invAmt + totRmBalDue - totReturns;
         
         totPay = vfee + invAmt + feePay;
 

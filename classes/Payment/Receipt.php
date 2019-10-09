@@ -746,7 +746,7 @@ WHERE
         $roomCharge = 0;
         $preTaxRmCharge = 0;
         $roomTaxPaid = array();
-
+        $roomFeesPaid = 0;
 
         foreach ($invLines as $l) {
             // Visit fee invoiced?
@@ -775,11 +775,12 @@ WHERE
 
                         if ($preTaxRmCharge > 0 && $t->getIdTaxedItem() == ItemId::Lodging) {
 
-                            $totalTax = round( ($preTaxRmCharge * $t->getDecimalTax()), 2);
+                            $totalTax = round( (($preTaxRmCharge - $roomFeesPaid) * $t->getDecimalTax()), 2)
+                                    + $roomTaxPaid[$t->getIdTaxingItem()];
 
-                            if (isset($roomTaxPaid[$t->getIdTaxingItem()]) && abs($totalTax - $roomTaxPaid[$t->getIdTaxingItem()]) <= .01) {
-                                $totalTax = $roomTaxPaid[$t->getIdTaxingItem()];
-                            }
+//                            if (isset($roomTaxPaid[$t->getIdTaxingItem()]) && abs($totalTax - $roomTaxPaid[$t->getIdTaxingItem()]) <= .01) {
+//                                $totalTax = $roomTaxPaid[$t->getIdTaxingItem()];
+//                            }
 
                             $totalAmt += $totalTax;
 
@@ -797,7 +798,9 @@ WHERE
 
                 $visitNights = 0;
                 $preTaxRmCharge = 0;
+                $roomFeesPaid = 0;
                 $idVisitTracker = $r['vid'];
+
 
                 foreach ($roomTaxPaid as $k => $t) {
                     $roomTaxPaid[$k] = 0;
@@ -920,7 +923,10 @@ WHERE
 
                     } else if ($l['Type_Id'] == InvoiceLineType::Tax && $l['Source_Item_Id'] == ItemId::Lodging) {
                         $roomTaxPaid[$l['Item_Id']] += floatval($l['Amount']);
+                    } else if ($l['Item_Id'] == ItemId::Lodging && $l['Status'] == InvoiceStatus::Paid) {
+                        $roomFeesPaid += floatval($l['Amount']);
                     }
+
                 }
             }
         }
@@ -932,11 +938,13 @@ WHERE
 
             if ($preTaxRmCharge > 0 && $t->getIdTaxedItem() == ItemId::Lodging) {
 
-                $totalTax = round( ($preTaxRmCharge * $t->getDecimalTax()), 2);
+                //$totalTax = round( ($preTaxRmCharge * $t->getDecimalTax()), 2);
+                $totalTax = round( (($preTaxRmCharge - $roomFeesPaid) * $t->getDecimalTax()), 2)
+                        + $roomTaxPaid[$t->getIdTaxingItem()];
 
-                if (isset($roomTaxPaid[$t->getIdTaxingItem()]) && abs($totalTax - $roomTaxPaid[$t->getIdTaxingItem()]) <= .01) {
-                    $totalTax = $roomTaxPaid[$t->getIdTaxingItem()];
-                }
+//                if (isset($roomTaxPaid[$t->getIdTaxingItem()]) && abs($totalTax - $roomTaxPaid[$t->getIdTaxingItem()]) <= .01) {
+//                    $totalTax = $roomTaxPaid[$t->getIdTaxingItem()];
+//                }
 
                 $totalAmt += $totalTax;
 
@@ -1375,7 +1383,7 @@ from vlist_inv_pments lp
         $pments = self::processPayments($stmt, array('Last', 'First', 'Company'));
 
         // items
-        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date
+        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
 from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
 left join invoice_line_type ilt on il.Type_Id = ilt.id
 where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by i.idGroup, il.Invoice_Id, ilt.Order_Position");
@@ -1477,7 +1485,7 @@ from vlist_inv_pments `lp` left join `name` n ON lp.Sold_To_Id = n.idName
         $pments = self::processPayments($stmt, array('Last', 'First', 'Company'));
 
         // Items
-        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date
+        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
 from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice and il.Deleted = 0
 left join invoice_line_type ilt on il.Type_Id = ilt.id
 where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Order_Position");
