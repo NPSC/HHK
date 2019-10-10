@@ -550,8 +550,8 @@ function amtPaid() {
             $taxingItems.each(function () {
                 var rate = parseFloat($(this).data('taxrate'));
                 var tax = roundTo(feePayPreTax * rate, 2);
-                $(this).val(tax);
-                feePayTaxAmt += tax
+                $(this).val(tax.toFixed(2).toString());
+                feePayTaxAmt += tax;
             });
 
 

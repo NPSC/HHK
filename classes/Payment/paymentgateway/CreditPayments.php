@@ -67,7 +67,7 @@ class SaleReply extends CreditPayments {
             // Find previous response, if we caught it.
             $paRs = new Payment_AuthRS();
             $paRs->Approval_Code->setStoredVal($vr->getAuthCode());
-            $paRs->Invoice_Number->setStoredVal($vr->getInvoice());
+            $paRs->Invoice_Number->setStoredVal($vr->getInvoiceNumber());
 
             $rows = EditRS::select($dbh, $paRs, array($paRs->Approval_Code, $paRs->Invoice_Number));
 

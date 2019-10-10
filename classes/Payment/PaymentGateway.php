@@ -43,7 +43,7 @@ abstract class PaymentGateway {
         return $this->gwType;
     }
 
-    protected abstract function getGatewayName();
+    public abstract function getGatewayName();
 
     /**
      *  Get the gateway information from the database.
@@ -56,7 +56,7 @@ abstract class PaymentGateway {
     protected abstract function setCredentials($credentials);
 
     // used to determine if it's a real gateway or out of band, local gateway
-    protected abstract function getPaymentMethod();
+    public abstract function getPaymentMethod();
 
     public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
 
@@ -227,11 +227,11 @@ abstract class PaymentGateway {
 
 class LocalGateway extends PaymentGateway {
 
-    protected function getPaymentMethod() {
+    public function getPaymentMethod() {
         return PaymentMethod::ChgAsCash;
     }
 
-    protected function getGatewayName() {
+    public function getGatewayName() {
         return 'local';
     }
 

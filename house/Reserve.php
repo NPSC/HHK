@@ -215,7 +215,7 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo MULTISELECT_CSS; ?>
         <?php echo INCIDENT_CSS; ?>
         <?php echo GRID_CSS; ?>
-        
+
         <?php echo FAVICON; ?>
 <!--        Fix the ugly checkboxes-->
         <style>
@@ -239,7 +239,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="js/incidentReports.js"></script>
+        <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>

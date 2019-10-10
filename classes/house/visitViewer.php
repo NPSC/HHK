@@ -703,7 +703,11 @@ class VisitView {
 
                 foreach ($curAccount->getCurentTaxItems(ItemId::Lodging) as $t) {
 
-                    $taxAmt = $curAccount->getLodgingTaxPd($t->getIdTaxingItem()) + $t->getTaxAmount($curAccount->getRoomFeeBalance());
+                    if ($curAccount->getRoomFeeBalance() < 0) {
+                        $taxAmt = $t->getTaxAmount($curAccount->getRoomCharge());
+                    } else {
+                        $taxAmt = $curAccount->getLodgingTaxPd($t->getIdTaxingItem()) + $t->getTaxAmount($curAccount->getRoomFeeBalance());
+                    }
 
                     $tbl2->addBodyTr(
                         HTMLTable::makeTd($t->getTaxingItemDesc() .  ' (' . $t->getTextPercentTax() . '):', array('class'=>'tdlabel', 'style'=>'font-size:small;'))

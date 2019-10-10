@@ -20,11 +20,11 @@ class VantivGateway extends PaymentGateway {
     const CARD_ID = 'CardID';
     const PAYMENT_ID = 'PaymentID';
 
-    protected function getPaymentMethod() {
+    public function getPaymentMethod() {
         return PaymentMethod::Charge;
     }
 
-    protected function getGatewayName() {
+    public function getGatewayName() {
         return 'vantiv';
     }
 

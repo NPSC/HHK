@@ -108,7 +108,7 @@ class CurrentAccount {
 
         // Lodging tax already paid
         foreach ($visitCharge->getTaxItemIds() as $tid =>$v) {
-            $this->setLodgingTaxPd($tid, $visitCharge->getItemInvPayments($tid));
+            $this->setLodgingTaxPd($tid, ($visitCharge->getItemInvPayments($tid) + $visitCharge->get3rdPartyPending($tid)));
         }
 
         // Payments
@@ -243,12 +243,23 @@ class CurrentAccount {
 
         $amt = 0;
 
+//        foreach ($this->getCurentTaxItems($idTaxedItem) as $t) {
+//
+//            if ($t->getIdTaxedItem() == $idTaxedItem) {
+//                $amt += $t->getTaxAmount($balanceAmt) + $this->getLodgingTaxPd($t->getIdTaxingItem());
+//            }
+//        }
+
         foreach ($this->getCurentTaxItems($idTaxedItem) as $t) {
 
-            if ($t->getIdTaxedItem() == $idTaxedItem) {
-                $amt += $t->getTaxAmount($balanceAmt) + $this->getLodgingTaxPd($t->getIdTaxingItem());
+            if ($this->getRoomFeeBalance() < 0) {
+                $amt += $t->getTaxAmount($this->getRoomCharge());
+            } else {
+                $amt += $this->getLodgingTaxPd($t->getIdTaxingItem()) + $t->getTaxAmount($balanceAmt);
             }
+
         }
+
 
         return $amt;
     }

@@ -25,11 +25,11 @@ class ConvergeGateway extends PaymentGateway {
     protected $hostedPaymentURL;
     protected $xmlFormURL;
 
-    protected function getPaymentMethod() {
+    public function getPaymentMethod() {
         return PaymentMethod::Charge;
     }
 
-    protected function getGatewayName() {
+    public function getGatewayName() {
         return 'converge';
     }
 

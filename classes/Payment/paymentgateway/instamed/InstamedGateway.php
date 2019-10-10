@@ -49,11 +49,11 @@ class InstamedGateway extends PaymentGateway {
     protected $returnUrl;
     protected $voidUrl;
 
-    protected function getPaymentMethod() {
+    public function getPaymentMethod() {
         return PaymentMethod::Charge;
     }
 
-    protected function getGatewayName() {
+    public function getGatewayName() {
         return 'instamed';
     }
     public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {

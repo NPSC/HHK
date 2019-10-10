@@ -775,12 +775,16 @@ WHERE
 
                         if ($preTaxRmCharge > 0 && $t->getIdTaxedItem() == ItemId::Lodging) {
 
-                            $totalTax = round( (($preTaxRmCharge - $roomFeesPaid) * $t->getDecimalTax()), 2)
-                                    + $roomTaxPaid[$t->getIdTaxingItem()];
+                            $roomBal = $preTaxRmCharge - $roomFeesPaid;
 
-//                            if (isset($roomTaxPaid[$t->getIdTaxingItem()]) && abs($totalTax - $roomTaxPaid[$t->getIdTaxingItem()]) <= .01) {
-//                                $totalTax = $roomTaxPaid[$t->getIdTaxingItem()];
-//                            }
+                            if ($roomBal >= 0) {
+                                // normal
+                                $totalTax = round($roomBal * $t->getDecimalTax(), 2)
+                                    + (isset($roomTaxPaid[$t->getIdTaxingItem()]) ? $roomTaxPaid[$t->getIdTaxingItem()] : 0);
+                            } else {
+                                // Fees paid greater than fees charged.
+                                $totalTax = round($preTaxRmCharge * $t->getDecimalTax(), 2);
+                            }
 
                             $totalAmt += $totalTax;
 
@@ -923,7 +927,7 @@ WHERE
 
                     } else if ($l['Type_Id'] == InvoiceLineType::Tax && $l['Source_Item_Id'] == ItemId::Lodging) {
                         $roomTaxPaid[$l['Item_Id']] += floatval($l['Amount']);
-                    } else if ($l['Item_Id'] == ItemId::Lodging && $l['Status'] == InvoiceStatus::Paid) {
+                    } else if (($l['Item_Id'] == ItemId::Lodging || $l['Item_Id'] == ItemId::LodgingReversal) && ($l['Status'] == InvoiceStatus::Paid || $l['Status'] == InvoiceStatus::Unpaid)) {
                         $roomFeesPaid += floatval($l['Amount']);
                     }
 
@@ -939,12 +943,17 @@ WHERE
             if ($preTaxRmCharge > 0 && $t->getIdTaxedItem() == ItemId::Lodging) {
 
                 //$totalTax = round( ($preTaxRmCharge * $t->getDecimalTax()), 2);
-                $totalTax = round( (($preTaxRmCharge - $roomFeesPaid) * $t->getDecimalTax()), 2)
-                        + $roomTaxPaid[$t->getIdTaxingItem()];
 
-//                if (isset($roomTaxPaid[$t->getIdTaxingItem()]) && abs($totalTax - $roomTaxPaid[$t->getIdTaxingItem()]) <= .01) {
-//                    $totalTax = $roomTaxPaid[$t->getIdTaxingItem()];
-//                }
+                $roomBal = $preTaxRmCharge - $roomFeesPaid;
+
+                if ($roomBal >= 0) {
+                    // normal
+                    $totalTax = round($roomBal * $t->getDecimalTax(), 2)
+                        + (isset($roomTaxPaid[$t->getIdTaxingItem()]) ? $roomTaxPaid[$t->getIdTaxingItem()] : 0);
+                } else {
+                    // Fees paid greater than fees charged.
+                    $totalTax = round($preTaxRmCharge * $t->getDecimalTax(), 2);
+                }
 
                 $totalAmt += $totalTax;
 
