@@ -269,7 +269,7 @@ class PaymentChooser {
         $labels = new Config_Lite(LABEL_FILE);
 
         // Get taxed items
-        $vat = new ValueAddedTax($dbh, $visitCharge->getIdVisit());
+        $vat = new ValueAddedTax($dbh);
 
         $useVisitFee = FALSE;
         if($uS->VisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == '')){
@@ -281,11 +281,7 @@ class PaymentChooser {
                     $showRoomFees,
                     $useDeposit,
                     $visitCharge,
-                    //$visitCharge->getDepositCharged(),
-                    //($visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid()),
                     $useVisitFee,
-                    //$visitCharge->getVisitFeeCharged(),
-                    //($visitCharge->getVisitFeesPaid() + $visitCharge->getVisitFeesPending()),
                     Registration::loadLodgingBalance($dbh, $idRegistration),
                     $payVFeeFirst,
                     $showFinalPayment,
@@ -416,7 +412,7 @@ class PaymentChooser {
                 FALSE,
                 array(),
                 $labels,
-                new ValueAddedTax($dbh, $visitCharge->getIdVisit()),
+                new ValueAddedTax($dbh),
                 $visitCharge->getIdVisit(),
                 array(),
                 '',
@@ -627,7 +623,7 @@ ORDER BY v.idVisit , v.Span;");
                                 FALSE,
                                 $unpaidInvoices,
                                 $labels,
-                                new ValueAddedTax($dbh))
+                                NULL)
                         , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
                 );
 
@@ -658,7 +654,7 @@ ORDER BY v.idVisit , v.Span;");
     }
 
     protected static function createPaymentMarkup($showRoomFees, $useKeyDeposit, $visitCharge, $useVisitFee, $heldAmount, $payVFeeFirst,
-            $showFinalPaymentCB, array $unpaidInvoices, $labels, ValueAddedTax $vat,  $idVisit = 0, $excessPays = array(), $defaultExcessPays = ExcessPay::Ignore, $useHouseWaive = FALSE) {
+            $showFinalPaymentCB, array $unpaidInvoices, $labels, $vat,  $idVisit = 0, $excessPays = array(), $defaultExcessPays = ExcessPay::Ignore, $useHouseWaive = FALSE) {
 
         $feesTbl = new HTMLTable();
 
@@ -783,20 +779,19 @@ ORDER BY v.idVisit , v.Span;");
         // Reimburse VAT.
         if (is_null($visitCharge) === FALSE && $visitCharge->getNightsStayed() > 0) {
 
-            $sumReimburseTax = 0;
+            foreach($vat->getTimedoutTaxItems(ItemId::Lodging, $idVisit, $visitCharge->getNightsStayed()) as $t) {
 
-            foreach($vat->getTimedoutTaxItems(ItemId::Lodging, $visitCharge->getNightsStayed()) as $t) {
-                $sumReimburseTax += abs($visitCharge->getItemInvCharges($t->getIdTaxingItem()));
-            }
+                $reimburseTax = abs($visitCharge->getItemInvCharges($t->getIdTaxingItem()));
 
-            if ($sumReimburseTax > 0) {
-                $feesTbl->addBodyTr(
-                    HTMLTable::makeTd('Tax Reimbusement:', array('class'=>'tdlabel', 'title'=>'Reimbursed taxes'))
-                    .HTMLTable::makeTd(
-                            HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbReimburseVAT', 'style'=>'margin-left:5px;margin-right:3px;'))
-                            .HTMLInput::generateMarkup('', array('name'=>'cbReimburseVAT', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-amt'=> number_format($sumReimburseTax, 2)))
-                        .HTMLContainer::generateMarkup('span', ($sumReimburseTax > 0 ? '($' . number_format($sumReimburseTax, 2) . ')' : ''), array('id'=>'spnHeldAmt')))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'reimburseVat', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
+                if ($reimburseTax > 0) {
+                    $feesTbl->addBodyTr(
+                        HTMLTable::makeTd('Tax Reimbusement:', array('class'=>'tdlabel', 'title'=>'Reimbursed taxes'))
+                        .HTMLTable::makeTd(
+                                HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbReimburseVAT', 'style'=>'margin-left:5px;margin-right:3px;'))
+                                .HTMLInput::generateMarkup('', array('name'=>'cbReimburseVAT', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-amt'=> number_format($reimburseTax, 2)))
+                            .HTMLContainer::generateMarkup('span', '($' . number_format($reimburseTax, 2) . ')', array('id'=>'spnHeldAmt')))
+                        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'reimburseVat', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
+                }
             }
         }
 
@@ -809,20 +804,20 @@ ORDER BY v.idVisit , v.Span;");
 
         if ($showRoomFees && is_null($visitCharge) === FALSE) {
 
-            $taxedItems = $vat->getTaxedItemSums($visitCharge->getNightsStayed());
-            $tax = (isset($taxedItems[ItemId::Lodging]) ? $taxedItems[ItemId::Lodging] : 0);
-
             $feesTbl->addBodyTr(HTMLTable::makeTd('Pay Room Fees:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd('Days: ' . HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'1', 'data-vid'=>$idVisit)), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;', 'data-tax'=>$tax)), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
                 , array('class'=>'hhk-RoomFees'));
 
-            if ($tax > 0) {
+            $taxedItems = $vat->getCurrentTaxingItems($idVisit, $visitCharge->getNightsStayed(), ItemId::Lodging);
+            if (count($taxedItems) > 0) {
 
-                // show tax line
-                $feesTbl->addBodyTr(HTMLTable::makeTd('Tax ('. TaxedItem::suppressTrailingZeros($tax*100).' ):', array('class'=>'tdlabel', 'colspan'=>'2'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesTax', 'size'=>'6', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
-                    , array('class'=>'hhk-RoomFees'));
+                foreach ($taxedItems as $t) {
+                    // show tax line
+                    $feesTbl->addBodyTr(HTMLTable::makeTd($t->getTaxingItemDesc() . ' ('. $t->getTextPercentTax().' ):', array('class'=>'tdlabel', 'colspan'=>'2'))
+                        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesTax'.$t->getIdTaxingItem(), 'data-taxrate'=>$t->getDecimalTax(), 'size'=>'6', 'class'=>'hhk-feeskeys  hhk-TaxingItem', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
+                        , array('class'=>'hhk-RoomFees'));
+                }
             }
         }
 

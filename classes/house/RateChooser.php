@@ -486,32 +486,32 @@ class RateChooser {
 
         $dayCredit = 0;
 
-        if ($rateGlideExtend > 0 && $idRegistration > 0) {
-
-            $ext = intval($rateGlideExtend, 10);
-
-            $stmt = $dbh->query("select
-    DATEDIFF(`Span_End`,  `Span_Start`) + `Rate_Glide_Credit` as `Actual_Nights`
-from
-    `visit`
-where
-    `idRegistration` = $idRegistration
-        and `Status` = 'co'
-        and Actual_Departure in (select
-            max(Actual_Departure)
-        from
-            visit
-        where
-            `idRegistration` = $idRegistration
-                and `Status` = 'co'
-                and `Actual_Departure` > (now() - INTERVAL $ext DAY));");
-
-            $visits = $stmt->fetchall(PDO::FETCH_NUM);
-
-            if (count($visits) > 0) {
-                $dayCredit = $visits[0][0];
-            }
-        }
+//        if ($rateGlideExtend > 0 && $idRegistration > 0) {
+//
+//            $ext = intval($rateGlideExtend, 10);
+//
+//            $stmt = $dbh->query("select
+//    DATEDIFF(`Span_End`,  `Span_Start`) + `Rate_Glide_Credit` as `Actual_Nights`
+//from
+//    `visit`
+//where
+//    `idRegistration` = $idRegistration
+//        and `Status` = 'co'
+//        and Actual_Departure in (select
+//            max(Actual_Departure)
+//        from
+//            visit
+//        where
+//            `idRegistration` = $idRegistration
+//                and `Status` = 'co'
+//                and `Actual_Departure` > (now() - INTERVAL $ext DAY));");
+//
+//            $visits = $stmt->fetchall(PDO::FETCH_NUM);
+//
+//            if (count($visits) > 0) {
+//                $dayCredit = $visits[0][0];
+//            }
+//        }
 
         return $dayCredit;
 
@@ -551,10 +551,8 @@ where
         // Javascript calculates the amount based on number of days and number of guests.
         //
 
-        $attrFixed = array('class'=>'hhk-fxFixed', 'style'=>'margin-left:.5em; ');
+        $attrFixed = array('class'=>'hhk-fxFixed');
         $attrAdj = array('class'=>'hhk-fxAdj', 'style'=>'text-align:center;');
-
-        $fixedRate = '';
 
         // Fixed rate?
         if ($roomRateCategory == Default_Settings::Fixed_Rate_Category) {
@@ -564,7 +562,7 @@ where
 
         } else {
 
-            $attrFixed['style'] .= 'display:none;';
+            $attrFixed['style'] = 'display:none;';
             $fixedRate = '';
         }
 
@@ -575,22 +573,16 @@ where
         }
 
         $rateCategories = RoomRate::makeSelectorOptions($this->priceModel, $resv->getIdRoomRate());
-        $rateSelectorAttrs = array('name'=>'selRateCategory');
+        $rateSelectorAttrs = array('name'=>'selRateCategory', 'style'=>'display:table;');
 
         if ($this->isAdmin === FALSE) {
             $rateSelectorAttrs['disabled'] = 'disabled';
         }
 
         // Get taxed items
-        $vat = new ValueAddedTax($dbh, 0);
-        $taxedItems = $vat->getTaxedItemSums(0);
+        $vat = new ValueAddedTax($dbh);
+        $taxedItems = $vat->getTaxedItemSums(0, 0);
         $tax = (isset($taxedItems[ItemId::Lodging]) ? $taxedItems[ItemId::Lodging] : 0);
-        $percent = $tax * 100;
-        $precision = 3;
-
-        if ($percent == round($percent)) {
-            $precision = 0;
-        }
 
         $tbl = new HTMLTable();
 
@@ -598,15 +590,18 @@ where
             ($this->payVisitFee ? HTMLTable::MakeTh($visitFeeTitle) : '')
             .HTMLTable::makeTh('Room Rate')
             .HTMLTable::makeTh('Adjustment', $attrAdj)
-            .HTMLTable::makeTh('Estimated Nights')
+            .HTMLTable::makeTh('Nights')
             .($this->payVisitFee || $tax > 0 ? HTMLTable::makeTh('Estimated Lodging') : '')
-            .($tax > 0 ? HTMLTable::makeTh('Tax (' . number_format($percent, $precision).'%)') : '')
+            .($tax > 0 ? HTMLTable::makeTh('Tax (' . TaxedItem::suppressTrailingZeros($tax*100).')') : '')
             .HTMLTable::makeTh('Estimated Total'));
+
+        $rateSel = $this->makeRateSelControl(
+                HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $roomRateCategory, FALSE), $rateSelectorAttrs),
+                HTMLContainer::generateMarkup('span', '$' . HTMLInput::generateMarkup($fixedRate, array('name'=>'txtFixedRate', 'size'=>'4')), $attrFixed));
 
         $tbl->addBodyTr(
                 ($this->payVisitFee ? HTMLTable::makeTd($vFeeMkup, array('style'=>'text-align:center;')) : '')
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $roomRateCategory, FALSE), $rateSelectorAttrs)
-                    .HTMLContainer::generateMarkup('span', '$' . HTMLInput::generateMarkup($fixedRate, array('name'=>'txtFixedRate', 'size'=>'4')), $attrFixed))
+                .HTMLTable::makeTd($rateSel)
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup(($resv->getRateAdjust() == 0 ? '' : number_format($resv->getRateAdjust(), 0)), array('name'=>'txtadjAmount', 'size'=>'2')) . '%'), $attrAdj)
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $nites, array('name'=>'spnNites')), array('style'=>'text-align:center;'))
                 . ($this->payVisitFee || $tax > 0 ? HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('name'=>'spnLodging')), array('style'=>'text-align:center;')) : '')
@@ -621,6 +616,17 @@ where
 
         return $tbl->generateMarkup();
 
+    }
+
+    protected function makeRateSelControl($selector, $fixed) {
+
+        $tbl = new HTMLTable();
+        $tbl->addBodyTr(
+            $tbl->makeTd($selector, array('style'=>'border-style:none;padding:0;'))
+            .$tbl->makeTd($fixed, array('style'=>'border-style:none;padding:0;'))
+        );
+
+        return $tbl->generateMarkup(array('style'=>'border-style:none;padding:0;'));
     }
 
 }

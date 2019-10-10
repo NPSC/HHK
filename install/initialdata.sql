@@ -637,6 +637,7 @@ REPLACE INTO `item_type_map` (`Item_Id`,`Type_Id`) values
 (8,6),
 (9,1),
 (10, 3);
+(11, 6);
 -- ;
 
 

@@ -26,7 +26,12 @@ ALTER TABLE `item`
 ALTER TABLE `item`
     CHANGE COLUMN `Internal_Number` `Timeout_Days` VARCHAR(50) NOT NULL DEFAULT '';
 
+replace into item (idItem, Description) VALUES (11, 'Waive');
+
 update item set Timeout_Days = '';
+
+delete from item_type_map where Item_Id = 11;
+insert into item_type_map (Item_Id, Type_Id) values (11, 6);
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Sys_Config_Category', 'd', 'Donation');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Sys_Config_Category', 'f', 'Financial');
@@ -78,7 +83,7 @@ delete from w_user_log where DATE(Access_Date) < DATE('2018-06-01');
 update w_user_log set Action = 'L' where Action = '';
 
 -- add new authorization level for house
-INSERT INTO w_groups (Group_Code, Title, Description, Last_Updated, Updated_By) Values ('gr','Guest Reports', 'Can be more restricted than the others', now(), 'admin');
+INSERT INTO w_groups (Group_Code, Title, Description, Last_Updated, Updated_By) Values ('gr','Guest Reports', 'Guest Reports Only', now(), 'admin');
 
 -- Fix change price bug where a stay after the price change date was not properly handled.
 UPDATE stays s

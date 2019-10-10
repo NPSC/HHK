@@ -224,6 +224,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>
@@ -275,8 +276,8 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
         <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
 
-        <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
-                <script type="text/javascript" src="js/incidentReports.js"></script>
         <script type="text/javascript" src='js/checkingIn.js'></script>
+
+        <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
     </body>
 </html>

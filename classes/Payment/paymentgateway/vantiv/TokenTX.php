@@ -55,7 +55,7 @@ class TokenTX {
         }
 
         // Record transaction
-        $transRs = Transaction::recordTransaction($dbh, $vr, $gwName, TransType::Sale, TransMethod::Token);
+        $transRs = Transaction::recordTransaction($dbh, $vr, $gway->getGatewayName(), TransType::Sale, TransMethod::Token);
         $vr->setIdTrans($transRs->idTrans->getStoredVal());
 
 
@@ -262,8 +262,8 @@ class TokenResponse extends PaymentResponse {
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
         $this->idToken = $idToken;
-        $this->invoiceNumber = $creditTokenResponse->getInvoice();
-        $this->amount = $creditTokenResponse->getAuthorizeAmount();
+        $this->invoiceNumber = $creditTokenResponse->getInvoiceNumber();
+        $this->amount = $creditTokenResponse->getAuthorizedAmount();
         $this->payNotes = $payNotes;
     }
 
@@ -293,7 +293,7 @@ class TokenResponse extends PaymentResponse {
         if ($this->cardName != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardName));
         }
-        
+
         if ($this->response->getAuthCode() != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getAuthCode(), array('style'=>'font-size:.8em;')));
         }
@@ -301,7 +301,7 @@ class TokenResponse extends PaymentResponse {
         if ($this->response->getResponseMessage() != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Response Message: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getResponseMessage() . ($this->response->getResponseCode() == '' ? '' :  '  (Code: ' . $this->response->getResponseCode() . ")"), array('style'=>'font-size:.8em;')));
         }
-        
+
 
         $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
 

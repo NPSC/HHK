@@ -896,7 +896,7 @@ where pi.Invoice_Id in ($whAssoc)";
         $stmt = $dbh->query("Select count(*) from name_volunteer2 where idName = $idName and Vol_Category = 'Vol_Type' and Vol_Code = '" .VolMemberType::ReferralAgent. "' and Vol_Status = '" .VolStatus::Active. "'");
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
-        if (count($rows) > 0 && $rows[0][0] == 0) {
+        if (count($rows) > 0 && $rows[0][0] > 0) {
             return TRUE;
         }
 

@@ -11,7 +11,7 @@
  */
 
 /**
- * 
+ *
  * @param {int} orderNumber
  * @param {jquery} $diagBox
  * @returns {undefined}
@@ -19,12 +19,12 @@
 var gblAdjustData = [];
 function getApplyDiscDiag(orderNumber, $diagBox) {
     "use strict";
-    
+
     if (!orderNumber || orderNumber == '' || orderNumber == 0) {
         flagAlertMessage('Order Number is missing', 'error');
         return;
     }
-    
+
     $.post('ws_ckin.php',
             {
                 cmd: 'getHPay',
@@ -39,41 +39,41 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                 alert("Parser error - " + e.message);
                 return;
             }
-            
+
             if (data.error) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
-                
+
                 flagAlertMessage(data.error, 'error');
-                
+
             } else if (data.markup) {
-                
+
                 $diagBox.children().remove();
-                
+
                 var buttons = {
                     "Save": function() {
-                        
+
                         var amt = parseFloat($('#housePayment').val().replace('$', '').replace(',', '')),
                             tax = parseFloat($('#houseTax').val()),
                             vid = $('#housePayment').data('vid'),
                             item = '',
                             adjDate = $.datepicker.formatDate("yy-mm-dd", $('#housePaymentDate').datepicker('getDate')),
                             notes = $('#housePaymentNote').val();
-                            
+
                         if (isNaN(amt)) {
                             amt = 0;
                         }
                         if (isNaN(tax)) {
                             tax = 0;
                         }
-                        
+
                         if ($('#cbAdjustPmt1').prop('checked')) {
                             item = $('#cbAdjustPmt1').data('item');
                         } else {
                             item = $('#cbAdjustPmt2').data('item');
                         }
-                        
+
                         saveDiscountPayment(vid, item, amt, $('#selHouseDisc').val(), $('#selAddnlChg').val(), adjDate, notes);
                         $(this).dialog('close');
                     },
@@ -83,7 +83,7 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                 };
 
                 $diagBox.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.markup)));
-                
+
                 $( "#cbAdjustType" ).buttonset();
 
                 $('#cbAdjustPmt1, #cbAdjustPmt2').change(function () {
@@ -95,7 +95,7 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                     $('.' + sho).val('');
                     $('#housePayment').val('');
                     $('#housePayment').change();
-                    
+
                     $('.' + sho).show();
                     $('.' + hid).hide();
 
@@ -109,22 +109,22 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
                     $('#housePayment').val(amts.toFixed(2));
                     $('#housePayment').change();
                 });
-                
+
                 $('#housePayment').change(function () {
                     if ($('#cbAdjustPmt2').prop('checked') && $('#houseTax').length > 0) {
-                        
+
                         var tax = parseFloat($('#houseTax').data('tax')),
                             amt = parseFloat($('#housePayment').val().replace('$', '').replace(',', '')),
                             taxAmt = 0.0,
                             totalAmt = 0.0;
-                        
+
                         if (isNaN(tax)) {
                             tax = 0;
                         }
                         if (isNaN(amt)) {
                             amt = 0;
                         }
-                        
+
                         taxAmt = tax * amt;
                         totalAmt = amt + taxAmt;
                         $('#houseTax').val((taxAmt > 0 ? (taxAmt).toFixed(2) : ''));
@@ -149,7 +149,7 @@ function getApplyDiscDiag(orderNumber, $diagBox) {
     });
 }
 /**
- * 
+ *
  * @param {type} orderNumber
  * @param {type} item
  * @param {type} amt
@@ -180,34 +180,34 @@ function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjD
                 alert("Parser error - " + err.message);
                 return;
             }
-            
+
             if (data.error) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
                 flagAlertMessage(data.error, 'error');
             }
-            
+
             if (data.reply && data.reply != '') {
                 flagAlertMessage(data.reply, 'success');
                 $('#keysfees').dialog("close");
             }
-            
+
             if (data.receipt && data.receipt !== '') {
-                
+
                 if ($('#keysfees').length > 0) {
                     $('#keysfees').dialog("close");
                 }
 
                 showReceipt('#pmtRcpt', data.receipt, 'Payment Receipt');
             }
-            
+
          }
     });
 }
 
 /**
- * 
+ *
  * @param {object} item
  * @param {int} orderNum
  * @returns {undefined}
@@ -244,7 +244,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                 flagAlertMessage(data.error, 'error');
                 return;
             }
-            
+
             if (data.delete) {
 
                 if (data.eid == '0') {
@@ -273,7 +273,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
 }
 
 /**
- * 
+ *
  * @param {string} btnid
  * @param {string} vorr
  * @param {int} idPayment
@@ -281,9 +281,9 @@ function invoiceAction(idInvoice, action, eid, container, show) {
  * @returns {undefined}
  */
 function sendVoidReturn(btnid, vorr, idPayment, amt) {
-    
+
     var prms = {pid: idPayment, bid: btnid};
-    
+
     if (vorr && vorr === 'v') {
         prms.cmd = 'void';
     } else if (vorr && vorr === 'rv') {
@@ -366,6 +366,7 @@ var payCtrls = function () {
 };
 
 function roundTo(n, digits) {
+
     if (digits === undefined) {
         digits = 0;
     }
@@ -378,52 +379,46 @@ function roundTo(n, digits) {
 function amtPaid() {
     "use strict";
     var p = new payCtrls(),
-        kdep = 0, 
+        kdep = 0,
         vfee = 0,
         feePay = 0,
         feePayPreTax = 0,
         feePayText = '',
-        invAmt = 0, 
+        invAmt = 0,
         heldAmt = 0,
-        heldTaxAmt = 0,
-        heldPreTax = 0,
         reimburseAmt = 0,
-        reimbursePreTax = 0,
-        reimburseTaxAmt = 0,
         totCharges = 0,
         ckedInCharges = 0,
-        totPay = 0, 
+        totPay = 0,
         depRfAmt = 0,
-        depRfPreTax = 0,
-        depRfTaxAmt = 0,
         roomBalTaxDue = 0,
         feePayTaxAmt = 0,
         overPayAmt = 0,
+        totReturns = 0,
+        totReturnTax = 0,
+        totReturnPreTax = 0,
         isChdOut = isCheckedOut,
-        vtax = parseFloat(p.feePayAmt.data('tax')),
         roomBalDue = parseFloat($('#spnCfBalDue').data('rmbal')),
-        totalBalDue = parseFloat($('#spnCfBalDue').data('totbal'));
+        totalBalDue = parseFloat($('#spnCfBalDue').data('totbal')),
+        $taxingItems = $('.hhk-TaxingItem');
 
-    if (isNaN(vtax) || vtax < 0) {
-        vtax = 0;
-    } else {
-        // change from percent to decimal
-        vtax = roundTo((vtax), 3);
-    }
-    
     if (isNaN(roomBalDue)) {
         roomBalDue = 0;
     } else {
-        roomBalTaxDue = roundTo((roomBalDue * vtax), 2);
+
+        $taxingItems.each(function () {
+            var rate = parseFloat($(this).data('taxrate'));
+            roomBalTaxDue += roundTo(roomBalDue* rate, 2);
+        });
     }
 
     p.msg.text('').hide();
 
     // Visit fees - vfee
     if (p.visitFeeCb.length > 0) {
-        
+
         vfee = parseFloat($('#spnvfeeAmt').data('amt'));
-        
+
         if (isNaN(vfee) || vfee < 0 || p.visitFeeCb.prop("checked") === false) {
             vfee = 0;
             p.visitFeeAmt.val('');
@@ -434,9 +429,9 @@ function amtPaid() {
 
     // Deposits - kdep
     if (!isChdOut && p.keyDepCb.length > 0) {
-        
+
         kdep = parseFloat($('#hdnKeyDepAmt').val());
-        
+
         if (isNaN(kdep) || kdep < 0 || p.keyDepCb.prop("checked") === false) {
             kdep = 0;
             p.keyDepAmt.val('');
@@ -447,24 +442,24 @@ function amtPaid() {
 
     // Unpaid Invoices - invAmt
     if (p.invoiceCb.length > 0) {
-        
+
         p.invoiceCb.each(function () {
-            
+
             var invnum = parseInt($(this).data('invnum'));
             var amtCtrl = $('#' + invnum + 'invPayAmt');
             var maxamt = parseFloat($(this).data('invamt'));
             var amt;
-            
+
             if ($(this).prop('checked') === true) {
-                
+
                 amtCtrl.prop('disabled', false);
-                
+
                 if (amtCtrl.val() === '') {
                     amtCtrl.val(maxamt.toFixed(2).toString());
                 }
-                
+
                 amt = parseFloat(amtCtrl.val().replace('$', '').replace(',', ''));
-                
+
                 if (isNaN(amt) || amt == 0) {
                     amt = 0;
                     amtCtrl.val('');
@@ -474,9 +469,9 @@ function amtPaid() {
                 } else {
                     amtCtrl.val(amt.toFixed(2).toString());
                 }
-                
+
                 invAmt += amt;
-                
+
             } else {
                 if (amtCtrl.val() !== '') {
                     amtCtrl.val('');
@@ -487,98 +482,91 @@ function amtPaid() {
     }
 
     // Deposit refund? depRfAmt
-    if (p.depRefundAmt.length > 0) {
-        
+    if (p.depRefundAmt.length > 0 && isChdOut) {
+
         depRfAmt = parseFloat(p.depRefundAmt.data('amt'));
-        
+
         if (isNaN(depRfAmt) || depRfAmt < 0 || p.depRefundCb.prop('checked') === false) {
-            
+
             depRfAmt = 0;
             p.depRefundAmt.val('');
-            
-        } else {
 
-            depRfTaxAmt = roundTo((depRfAmt - (depRfAmt / (1 + vtax))), 2);
-            
-            // Only tax up to tax amount due
-            if (depRfTaxAmt > roomBalTaxDue) {
-                depRfTaxAmt = roomBalTaxDue;
-            }
-            
-            depRfPreTax = depRfAmt - depRfTaxAmt;
-            
+        } else {
             p.depRefundAmt.val((0 - depRfAmt).toFixed(2).toString());
         }
     }
-    
+
     // Test held amount if any. - heldAmt
     if (p.heldCb.length > 0) {
-        
+
         heldAmt = parseFloat(p.heldCb.data('amt'));
-        
+
         if (isNaN(heldAmt) || heldAmt < 0 || p.heldCb.prop("checked") === false) {
             heldAmt = 0;
-        } else {
-
-            heldTaxAmt = roundTo((heldAmt - (heldAmt / (1 + vtax))), 2);
-            
-            if (heldTaxAmt > roomBalTaxDue - depRfTaxAmt) {
-                heldTaxAmt = roomBalTaxDue - depRfTaxAmt;
-            }
-            
-            heldPreTax = heldAmt - heldTaxAmt;
         }
     }
-    
+
     // Reimburse value added taxes
     if (p.reimburseVatCb.length > 0) {
-        
+
         reimburseAmt = parseFloat(p.reimburseVatCb.data('amt'));
-        
+
         if (isNaN(reimburseAmt) || reimburseAmt < 0 || p.reimburseVatCb.prop('checked') === false) {
             reimburseAmt = 0;
-        } else {
-            reimburseTaxAmt = roundTo((reimburseAmt - (reimburseAmt / (1 + vtax))), 2);
-            
-            if (reimburseTaxAmt > roomBalTaxDue - depRfTaxAmt - heldTaxAmt) {
-                reimburseTaxAmt = roomBalTaxDue - depRfTaxAmt - heldTaxAmt;
-            }
-            
-            reimbursePreTax = reimburseAmt - reimburseTaxAmt;
         }
     }
+
+    totReturns = heldAmt + depRfAmt + reimburseAmt;
+
+    $taxingItems.each(function () {
+        var rate = parseFloat($(this).data('taxrate'));
+
+        totReturnTax += roundTo(totReturns / (1 + rate), 2);
+    });
+
+    if (totReturnTax > roomBalTaxDue) {
+       totReturnTax = roomBalTaxDue;
+    }
+
+    totReturnPreTax = totReturns - totReturnTax;
 
     // Fees Payments - feePay
     if (p.feePayAmt.length > 0) {
 
         feePayText = p.feePayAmt.val().replace('$', '').replace(',', '');
-        feePayPreTax = parseFloat(feePayText);
-        
+        feePayPreTax = roundTo(parseFloat(feePayText), 2);
+
+        // allow zeros through.
         if (feePayText !== '0') {
             feePayText = '';
         }
 
         if (isNaN(feePayPreTax) || feePayPreTax <= 0) {
-            
             feePayPreTax = 0;
-            
-        } else if (vtax > 0) {
-            
-            feePayTaxAmt = roundTo((feePayPreTax * vtax), 2);
-            
-            // Only tax up to the room balance due.
-            if (feePayTaxAmt > (roomBalTaxDue - depRfTaxAmt - heldTaxAmt - reimburseTaxAmt) && isChdOut) {
-                feePayTaxAmt = (roomBalTaxDue - depRfTaxAmt - heldTaxAmt - reimburseTaxAmt);
-            } else {
-                feePayTaxAmt -= heldTaxAmt - reimburseTaxAmt;
-            }
-        }
-        
-        if (feePayTaxAmt < 0) {
-            feePayTaxAmt = 0;
         }
 
-        feePay = roundTo((feePayPreTax + feePayTaxAmt), 2);
+        if ($taxingItems.length > 0) {
+
+            $taxingItems.each(function () {
+                var rate = parseFloat($(this).data('taxrate'));
+                var tax = roundTo(feePayPreTax * rate, 2);
+                $(this).val(tax.toFixed(2).toString());
+                feePayTaxAmt += tax;
+            });
+
+
+            // Only tax up to the room balance due.
+            if (feePayTaxAmt > (roomBalTaxDue - totReturnTax) && isChdOut) {
+                feePayTaxAmt = (roomBalTaxDue - totReturnTax);
+            }
+
+            if (feePayTaxAmt <= 0) {
+                feePayTaxAmt = 0;
+            }
+
+        }
+
+        feePay = feePayPreTax + feePayTaxAmt;
     }
 
 
@@ -588,7 +576,7 @@ function amtPaid() {
         overPayAmt = 0;
         p.hsDiscAmt.val('');
 
-        var totRmBalDue = roomBalDue + roomBalTaxDue;
+        var totRmBalDue = roundTo(roomBalDue + roomBalTaxDue, 2);
 
         // Show correct row for charges due
         if (roomBalDue >= 0) {
@@ -601,12 +589,14 @@ function amtPaid() {
             $('.hhk-GuestCredit').show();
         }
 
-        totCharges = roundTo((vfee + invAmt + totalBalDue - heldAmt - depRfAmt - reimburseAmt), 2);
-        totPay = roundTo((vfee + invAmt + feePay), 2);
 
-        if (totCharges - totPay >= 0) {
+        totCharges = vfee + invAmt + totRmBalDue - totReturns;
 
-            var hsPay = roundTo((vfee + invAmt + roomBalDue - depRfPreTax - heldPreTax - reimbursePreTax - feePayPreTax), 2);
+        totPay = vfee + invAmt + feePay;
+
+        if (totCharges >= totPay) {
+
+            var hsPay = roundTo((vfee + invAmt + roomBalDue - totReturnPreTax - feePayPreTax), 2);
 
             // Underpaid
             if (hsPay > 0){
@@ -614,7 +604,7 @@ function amtPaid() {
                 if (p.finalPaymentCb.prop('checked')) {
                     // Manage House Waive of underpaid amount
 
-                    var taxBal = roundTo((roomBalTaxDue - (feePayTaxAmt + heldTaxAmt + depRfTaxAmt + reimburseTaxAmt)), 2);
+                    var taxBal = roundTo((roomBalTaxDue - (feePayTaxAmt + totReturnTax)), 2);
                     p.hsDiscAmt.val(hsPay.toFixed(2).toString());
 
                     p.feesCharges.val((totRmBalDue - taxBal).toFixed(2).toString());
@@ -637,12 +627,11 @@ function amtPaid() {
                 $('.hhk-HouseDiscount').hide();
                 $('.hhk-Overpayment').hide();
             }
-            
+
             // Clear overpayment selector
             p.selBalTo.val('');
             $('#txtRtnAmount').val('');
             $('#divReturnPay').hide();
-
         }
 
         // overpaid
@@ -651,13 +640,13 @@ function amtPaid() {
 
             p.finalPaymentCb.prop('checked', false);
             p.hsDiscAmt.val('');
-            
+
             overPayAmt = totPay - totCharges;
 
             if (p.selBalTo.val() === 'r') {
 
                 if (totCharges >= 0) {
-                    
+
                     if (feePayPreTax > overPayAmt) {
                         alert('Pay Room Fees amount is reduced to: $' + (feePayPreTax - overPayAmt).toFixed(2).toString());
                     }
@@ -678,12 +667,15 @@ function amtPaid() {
                     overPayAmt -= feePay;
                     feePayPreTax = 0;
                     feePayTaxAmt = 0;
+                    $taxingItems.each(function () {
+                        $(this).val('');
+                    });
                     feePay = 0;
-                    
+
                     $('#divReturnPay').show('fade');
                     $('#txtRtnAmount').val(overPayAmt.toFixed(2).toString());
                 }
-                
+
                 totPay = vfee + invAmt + feePay;
 
             } else {
@@ -705,7 +697,7 @@ function amtPaid() {
 
         // still checked in
         totCharges = vfee + kdep + invAmt + feePay;
-        
+
         // Adjust charges by any held amount
         if (totCharges > 0 && heldAmt > 0) {
 
@@ -725,14 +717,13 @@ function amtPaid() {
 
             p.heldAmtTb.val('');
         }
-        
+
         // Adjust charges by any reimbursed taxes
         if (totCharges > 0 && reimburseAmt > 0) {
 
             // reduce total charges
             if (reimburseAmt > totCharges) {
-                reimburseAmt = totCharges;
-                totCharges = 0;
+                reimburseAmt = 0;
             } else {
                 totCharges -= reimburseAmt;
             }
@@ -743,10 +734,10 @@ function amtPaid() {
 
         } else if (p.reimburseVatCb.length > 0) {
 
-            p.reimburseVatCb.val('');
+            reimburseAmt = 0;
         }
-        
-        
+
+
         $('.hhk-Overpayment').hide();
         $('.hhk-HouseDiscount').hide();
         p.hsDiscAmt.val('');
@@ -762,12 +753,12 @@ function amtPaid() {
 
         $('.paySelectTbl').show('fade');
         $('.hhk-minPayment').show('fade');
-        
+
         // manage cof box
         if ($('#cbNewCard').length > 0) {
             $('#cbNewCard').prop('checked', false).change().prop('disabled', true);
         }
-        
+
         if (totPay < 0 && ! isChdOut) {
             $('#txtRtnAmount').val((0 - totPay).toFixed(2).toString());
         }
@@ -782,10 +773,11 @@ function amtPaid() {
         if ($('#cbNewCard').length > 0) {
             $('#cbNewCard').prop('disabled', false);
         }
-        
+
         if (isChdOut === false && ckedInCharges === 0.0) {
             $('.hhk-minPayment').hide();
             heldAmt = 0;
+            reimburseAmt = 0;
         } else {
             $('.hhk-minPayment').show('fade');
         }
@@ -793,10 +785,10 @@ function amtPaid() {
 
     if (feePay === 0) {
         p.feePayAmt.val(feePayText);
-        $('#feesTax').val('');
+        //$('#feesTax').val('');
     } else {
         p.feePayAmt.val(feePayPreTax.toFixed(2).toString());
-        $('#feesTax').val(feePayTaxAmt.toFixed(2).toString());
+        //$('#feesTax').val(feePayTaxAmt.toFixed(2).toString());
     }
 
     if (overPayAmt === 0) {
@@ -810,23 +802,23 @@ function amtPaid() {
     } else {
         p.heldAmtTb.val('');
     }
-    
+
     if (reimburseAmt > 0) {
         p.reimburseVatAmt.val((0 - reimburseAmt).toFixed(2).toString());
     } else {
         p.reimburseVatAmt.val('');
     }
-    
+
     p.totalCharges.val(totCharges.toFixed(2).toString());
     p.totalPayment.val(totPay.toFixed(2).toString());
     $('#spnPayAmount').text('$' + totPay.toFixed(2).toString());
-    
+
     p.cashTendered.change();
 }
 
 
 /**
- * 
+ *
  * @param {jquery} $rateSelector
  * @param {int} idVisit
  * @param {int} visitSpan
@@ -907,11 +899,11 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
     // Set up return table
     var rtnsel = $('#rtnTypeSel');
     var rtnchg = $('.tblCreditr');
-    
+
     if (rtnchg.length === 0) {
         rtnchg = $('.hhk-mcredr');
     }
-    
+
     if (rtnsel.length > 0) {
         rtnsel.change(function () {
             rtnchg.hide();
@@ -938,7 +930,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             amtPaid();
         });
     }
-    
+
     if (p.finalPaymentCb.length > 0) {
         p.finalPaymentCb.change(function () {
             amtPaid();
@@ -962,19 +954,19 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             amtPaid();
         });
     }
-    
+
     if (p.reimburseVatCb.length > 0) {
         p.reimburseVatCb.change(function() {
             amtPaid();
         });
     }
-    
+
     if (p.invoiceCb.length > 0) {
 
         p.invoiceCb.change(function() {
             amtPaid();
         });
-        
+
         $('.hhk-payInvAmt').change(function() {
             amtPaid();
         });
@@ -987,7 +979,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
     }
 
     if (p.feePayAmt.length > 0) {
-        
+
         p.feePayAmt.change(function() {
             $(this).removeClass('ui-state-error');
             amtPaid();
@@ -999,11 +991,11 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             p.cashTendered.removeClass('ui-state-highlight');
             $('#tdCashMsg').hide();
             var total = parseFloat(p.totalPayment.val().replace(',', ''));
-            
+
             if (isNaN(total) || total < 0) {
                 total = 0;
             }
-            
+
             var cash = parseFloat(p.cashTendered.val().replace('$', '').replace(',', ''));
             if (isNaN(cash) || cash < 0) {
                 cash = 0;
@@ -1017,7 +1009,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             $('#txtCashChange').text('$' + diff.toFixed(2).toString());
         });
     }
-    
+
     // Extra payments or credits applied.
     if (p.adjustBtn.length > 0) {
         p.adjustBtn.button();
@@ -1040,9 +1032,9 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
 
     // Billing agent chooser set up
     if ($('#txtInvSearch').length > 0) {
-        
+
         $('#txtInvSearch').keypress(function (event) {
-            
+
             var mm = $(this).val();
             if (event.keyCode == '13') {
 
@@ -1088,7 +1080,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             adjust = parseFloat($('#txtadjAmount').val());
 
         $(this).val('');
-        
+
         if (isNaN(noGuests)) {
             noGuests = 1;
         }
@@ -1100,18 +1092,18 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
         if (isNaN(tax)) {
             tax = 0;
         }
-        
+
         if (isNaN(adjust)) {
             adjust = 0;
         }
 
         if (isNaN(days)) {
-            
+
             return;
         }
 
         if (days > 0) {
-            
+
             daysCalculator(days, $rateSelector.val(), idVisit, fixed, adjust, noGuests, 0, function(amt) {
                 feePayAmt.val(amt.toFixed(2).toString());
                 feePayAmt.change();
@@ -1123,7 +1115,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
 }
 
 function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, idResv, rtnFunction) {
-    
+
     if (days > 0) {
         var parms = {cmd:'rtcalc', vid: idVisit, rid: idResv, nites: days, rcat: idRate, fxd: fixedAmt, adj: adjAmt, gsts: numGuests};
         // ask momma how much
@@ -1147,13 +1139,13 @@ function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, idRe
                     return;
                 }
                 if (data.amt) {
-                    
+
                     var amt = parseFloat(data.amt);
-                    
+
                     if (isNaN(amt) || amt < 0) {
                         amt = 0;
                     }
-                    
+
                     rtnFunction(amt);
                 }
         });
@@ -1162,7 +1154,7 @@ function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, idRe
 }
 
 function verifyBalDisp() {
-    
+
     if ($('#selexcpay').val() == '' && $('#txtOverPayAmt').val() != '') {
         $('#payChooserMsg').text('Set "Apply To" to the desired overpayment disposition. ').show();
         $('#selexcpay').addClass('ui-state-highlight');
@@ -1181,19 +1173,19 @@ function verifyAmtTendrd() {
         return true;
     }
     var total = parseFloat($('#totalPayment').val().replace('$', '').replace(',', ''));
-    
+
     $('#tdCashMsg').hide('fade');
     $('#tdInvceeMsg').text('').hide();
-    
+
     if ($('#PayTypeSel').val() === 'ca') {
-        
+
         var tendered = parseFloat($('#txtCashTendered').val().replace('$', '').replace(',', '')),
             remTotal = $('#remtotalPayment');
-            
+
         if (remTotal.length > 0) {
             total = parseFloat(remTotal.val().replace('$', '').replace(',', ''));
         }
-        
+
         if (isNaN(total) || total < 0) {
             total = 0;
         }
@@ -1201,22 +1193,22 @@ function verifyAmtTendrd() {
         if (isNaN(tendered) || tendered < 0) {
             tendered = 0;
         }
-    
+
         if (total > 0 && tendered <= 0) {
             $('#tdCashMsg').text('Enter the amount paid into "Amount Tendered" ').show();
             $('#pWarnings').text('Enter the amount paid into "Amount Tendered"').show();
             return false;
         }
-        
+
         if (total > 0 && tendered < total) {
             $('#tdCashMsg').text('Amount tendered is not enough ').show('fade');
             $('#pWarnings').text('Amount tendered is not enough').show();
             return false;
         }
     } else if ($('#PayTypeSel').val() === 'in') {
-        
+
         var idPayor = parseInt($('#txtInvId').val(), 10);
-        
+
         if ((isNaN(idPayor) || idPayor < 1) && total != 0) {
             $('#tdInvceeMsg').text('The Invoicee is missing. ').show('fade');
             return false;
@@ -1227,9 +1219,9 @@ function verifyAmtTendrd() {
 
 
 /**
- * 
+ *
  * @param {string} dialogId
- * @param {string} markup 
+ * @param {string} markup
  * @param {string} title
  * @param {int} width
  * @returns {undefined}
@@ -1237,7 +1229,7 @@ function verifyAmtTendrd() {
 function showReceipt(dialogId, markup, title, width) {
     var pRecpt = $(dialogId);
     var btn = $("<div id='print_button' style='margin-left:1em;'>Print</div>");
-    var opt = {mode: "popup", 
+    var opt = {mode: "popup",
         popClose: false,
         popHt      : 500,
         popWd      : 400,
@@ -1270,13 +1262,13 @@ function showReceipt(dialogId, markup, title, width) {
 }
 
 /**
- * 
+ *
  * @param {int} pid
  * @param {string} idDialg
  * @returns {undefined}
  */
 function reprintReceipt(pid, idDialg) {
-    
+
     $.post('ws_ckin.php',
             {
                 cmd: 'getPrx',
@@ -1290,16 +1282,16 @@ function reprintReceipt(pid, idDialg) {
                 alert("Parser error - " + e.message);
                 return;
             }
-            
+
             if (data.error) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
                 flagAlertMessage(data.error, 'error');
-                
+
             }
-            
-            
+
+
             // launch receipt dialog box
             showReceipt(idDialg, data.receipt, 'Receipt Copy');
           }
@@ -1315,9 +1307,9 @@ function paymentRedirect (data, $xferForm) {
             flagAlertMessage(data.hostedError, 'error');
 
         } else if (data.cvtx) {
-            
+
             window.location.assign(data.cvtx);
-            
+
         } else if (data.xfer && $xferForm.length > 0) {
 
             $xferForm.children('input').remove();
@@ -1375,11 +1367,11 @@ function setupCOF() {
 }
 
 function cardOnFile(id, idGroup, postBackPage) {
-    
+
     var parms = {cmd: 'cof', idGuest: id, idGrp: idGroup, pbp: postBackPage};
-    
+
     $('#tblupCredit').find('input').each(function() {
-        
+
         if ($(this).attr('type') === 'checkbox') {
             if (this.checked !== false) {
                 parms[$(this).attr('id')] = 'on';
@@ -1399,7 +1391,7 @@ function cardOnFile(id, idGroup, postBackPage) {
             parms[$(this).attr('id')] = this.value;
         }
     });
-    
+
     // Go to the server for payment data, then come back and submit to new URL to enter credit info.
     $.post('ws_ckin.php', parms,
       function(data) {
@@ -1423,7 +1415,7 @@ function cardOnFile(id, idGroup, postBackPage) {
             }
 
             paymentRedirect (data, $('#xform'));
-            
+
             if (data.success && data.success != '') {
                 flagAlertMessage(data.success, 'success');
             }
@@ -1438,13 +1430,13 @@ function cardOnFile(id, idGroup, postBackPage) {
 }
 
 function updateCredit(id, idReg, name, strCOFdiag, pbp) {
-    
+
     var gnme = '';
-    
+
     if (name && name != '') {
         gnme = ' - ' + name;
     }
-    
+
     $.post('ws_ckin.php',
             {
                 cmd: 'viewCredit',
@@ -1466,7 +1458,7 @@ function updateCredit(id, idReg, name, strCOFdiag, pbp) {
                 }
                 flagAlertMessage(data.error, 'error');
             }
-            
+
             var buttons = {
                 "Continue": function() {
                     cardOnFile(id, idReg, data.pbp);
@@ -1484,11 +1476,10 @@ function updateCredit(id, idReg, name, strCOFdiag, pbp) {
                 cof.dialog('option', 'buttons', buttons);
                 cof.dialog('option', 'width', 400);
                 cof.dialog('option', 'title', 'Card On File' + gnme);
-                
+
                 setupCOF();
                 cof.dialog('open');
             }
         }
     });
 }
-

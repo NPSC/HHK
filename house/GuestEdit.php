@@ -767,6 +767,9 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
+        <script type="text/javascript" src="../js/uppload.js"></script>
+
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>
@@ -948,7 +951,6 @@ $uS->guestId = $id;
             </div>
         </div>  <!-- div id="contentDiv"-->
         <form name="xform" id="xform" method="post"></form>
-
         <script type="text/javascript">
             var memberData = <?php echo json_encode($memberData); ?>;
             var psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);
@@ -958,9 +960,6 @@ $uS->guestId = $id;
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
             var resultMessage = '<?php echo $resultMessage; ?>';
         </script>
-
-        <script type="text/javascript" src="../js/uppload.js"></script>
-        <script type="text/javascript" src="js/incidentReports.js"></script>
         <script type="text/javascript" src="js/guestload-min.js?vn=36"></script>
     </body>
 </html>

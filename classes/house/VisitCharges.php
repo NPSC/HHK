@@ -35,9 +35,11 @@ class VisitCharges {
 
     /**
      *
-     * @var float
+     * @var array
      */
     private $itemSums;
+
+    private $taxItemIds;
 
     public function __construct($idVisit) {
         $this->idVisit = $idVisit;
@@ -220,6 +222,7 @@ class VisitCharges {
     public function sumPayments(\PDO $dbh) {
 
         $this->itemSums = array();
+        $this->taxItemIds = array();
 
         $items = Item::loadItems($dbh);
         $invStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
@@ -235,7 +238,7 @@ class VisitCharges {
             $this->itemSums[$i['idItem']][self::TAX_PAID] = 0;
         }
 
-        // pre define taxes
+        // predefine taxes
         foreach ($invStatuses as $s) {
             $this->itemSums['tax'][$s[0]] = 0;
         }
@@ -261,6 +264,8 @@ class VisitCharges {
             // is this a tax?
             if ($l['Type_Id'] == InvoiceLineType::Tax) {
 
+                $this->taxItemIds[$l['Item_Id']] = 't';
+
                 $this->itemSums['tax'][$stat] += $l['Amount'];
 
                 $this->itemSums[$l['Source_Item_Id']][self::TAX_PAID] += $l['Amount'];
@@ -269,6 +274,10 @@ class VisitCharges {
             // Third Party invoice
             if ($l['Billing_Agent'] > 0 && $stat == InvoiceStatus::Unpaid) {
                 $this->itemSums[$l['Item_Id']][self::THIRD_PARTY] += $l['Amount'];
+
+                if ($l['Type_Id'] == InvoiceLineType::Tax) {
+                    $this->itemSums['tax'][self::THIRD_PARTY] += $l['Amount'];
+                }
             }
 
         }
@@ -396,6 +405,10 @@ where
             return $this->itemSums[$idItem][self::TAX_PAID];
         }
         return 0;
+    }
+
+    public function getTaxItemIds() {
+        return $this->taxItemIds;
     }
 
     public function getRoomFeesCharged() {

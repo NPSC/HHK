@@ -15,6 +15,7 @@ require CLASSES . 'OpenXML.php';
 require(CLASSES . 'Purchase/RoomRate.php');
 require(HOUSE . 'Resource.php');
 require(HOUSE . 'ReportFilter.php');
+require(CLASSES . 'ValueAddedTax.php');
 
 
 try {
@@ -275,13 +276,14 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
     $r['totpd'] = ($paid == 0 ? '' : number_format($paid,2));
     $r['unpaid'] = ($unpaid == 0 ? '' : number_format($unpaid,2));
     $r['adjch'] = ($visit['addpd'] == 0 ? '': number_format($visit['addpd'], 2));
+    $r['adjchtx'] = ($visit['adjchtx'] == 0 ? '': number_format($visit['adjchtx'], 2));
     $r['pndg'] = ($visit['pndg'] == 0 ? '': number_format($visit['pndg'], 2));
     $r['thdpaid'] = ($visit['thdpd'] == 0 ? '': number_format($visit['thdpd'], 2));
     $r['donpd'] = ($visit['donpd'] == 0 ? '': number_format($visit['donpd'], 2));
 
-    $r['taxcgd'] = ($visit['taxcgd'] == 0 ? '': number_format($visit['donpd'], 2));
-    $r['taxpd'] = ($visit['taxpd'] == 0 ? '': number_format($visit['donpd'], 2));
-    $r['taxpndg'] = ($visit['taxpndg'] == 0 ? '': number_format($visit['donpd'], 2));
+    $r['taxcgd'] = ($visit['taxcgd'] == 0 ? '': number_format($visit['taxcgd'], 2));
+    $r['taxpd'] = ($visit['taxpd'] == 0 ? '': number_format($visit['taxpd'], 2));
+    $r['taxpndg'] = ($visit['taxpndg'] == 0 ? '': number_format($visit['taxpndg'], 2));
 
 
     $visitFeePaid = '';
@@ -303,12 +305,12 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
         }
     }
 
-    $addPaid = '';
+    $addPaidIcon = '';
 
     if ($visit['addch'] > 0 && $visit['addch'] <= $visit['addpd']) {
 
         $r['adjch'] = number_format($visit['addch'],2);
-        $addPaid = HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-circle-check', 'style'=>'float:left;', 'title'=>'Charges paid'));
+        $addPaidIcon = HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-circle-check', 'style'=>'float:left;', 'title'=>'Charges paid'));
 
     } else if ($visit['addch'] > 0) {
 
@@ -346,8 +348,8 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
             $r['visitFee'] = $visitFeePaid . $r['visitFee'];
         }
 
-        if ($addPaid != '') {
-            $r['adjch'] = $addPaid . $r['adjch'];
+        if ($addPaidIcon != '') {
+            $r['adjch'] = $addPaidIcon . $r['adjch'];
         }
 
         if ($visit['rtc'] > 1) {
@@ -441,6 +443,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     v.idRoom_Rate,
     v.Status,
     v.Rate_Glide_Credit,
+    DATEDIFF(DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))),DATE(v.Span_Start)) as `Visit_Age`,
     CASE
         WHEN
             DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
@@ -562,7 +565,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
         where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id in (" . ItemId::Lodging . ", " . ItemId::Waive . ", " . ItemId::Discount . ", " . ItemId::LodgingReversal . ") and i.Sold_To_Id != " . $uS->subsidyId . "  and i.Order_Number = v.idVisit),
             0) as `AmountPaid`,
     ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Type_Id = 2 and i.Order_Number = v.idVisit),
+        where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Type_Id = " . ItemType::Tax . " and il.Source_Item_Id in ( " . ItemId::Lodging . ", " . ItemId::LodgingReversal . ") and i.Order_Number = v.idVisit),
             0) as `TaxPaid`,
     ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
         where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id = " . ItemId::LodgingDonate . " and i.Order_Number = v.idVisit),
@@ -579,13 +582,16 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id = " . ItemId::AddnlCharge . " and i.Order_Number = v.idVisit),
             0) as `AddnlPaid`,
     ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
+    where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Type_Id = " . ItemType::Tax . " and il.Source_Item_Id = " . ItemId::AddnlCharge . " and  i.Order_Number = v.idVisit),
+            0) as `AddnlTaxPaid`,
+    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
     where il.Deleted = 0 and i.Deleted = 0 and il.Item_Id = " . ItemId::AddnlCharge . " and i.Order_Number = v.idVisit),
             0) as `AddnlCharged`,
     ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
         where il.Deleted = 0 and i.Deleted = 0 and i.Status = '" . InvoiceStatus::Unpaid . "' and il.Item_Id in (" . ItemId::Lodging . ", " . ItemId::Waive . ", " . ItemId::Discount . ", " . ItemId::LodgingReversal . ") and i.Order_Number = v.idVisit),
             0) as `AmountPending`,
     ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status = '" . InvoiceStatus::Unpaid . "' and il.Type_Id = 2 and i.Order_Number = v.idVisit),
+        where il.Deleted = 0 and i.Deleted = 0 and i.Status = '" . InvoiceStatus::Unpaid . "' and il.Type_Id = " . ItemType::Tax . "  and il.Source_Item_Id in (" . ItemId::Lodging . ", " . ItemId::LodgingReversal . ") and i.Order_Number = v.idVisit),
             0) as `TaxPending`,
     ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
     where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id = " . ItemId::VisitFee . " and i.Order_Number = v.idVisit),
@@ -687,6 +693,11 @@ where
     $totalFullCharge = 0;
     $totalAddnlCharged = 0;
 
+    $totalAddnlTax = 0;
+    $totalTaxCharged = 0;
+    $totalTaxPaid = 0;
+    $totalTaxPending = 0;
+
     $totalPaid = 0;
     $totalHousePaid = 0;
     $totalAmtPending = 0;
@@ -716,6 +727,8 @@ where
     $now = new \DateTime();
     $now->setTime(0, 0, 0);
 
+    $vat = new ValueAddedTax($dbh);
+
     $stmt = $dbh->query($query);
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -728,6 +741,11 @@ where
 
                 $totalLodgingCharge += $visit['chg'];
                 $totalAddnlCharged += ($visit['addch']);
+
+                $totalTaxCharged += $visit['taxcgd'];
+                $totalAddnlTax += $visit['adjchtx'];
+                $totalTaxPaid += $visit['taxpd'];
+                $totalTaxPending += $visit['taxpndg'];
 
                 if ($visit['nit'] > $uS->VisitFeeDelayDays) {
                     $totalVisitFee += $visit['vfa'];
@@ -842,6 +860,19 @@ where
             $curAmt = 0;
             $curRoom = 0;
 
+            $addChgTax = 0;
+            $lodgeTax = 0;
+
+            $taxSums = $vat->getTaxedItemSums($r['idVisit'], $r['Visit_Age']);
+
+            if (isset($taxSums[ItemId::AddnlCharge])) {
+                $addChgTax = $taxSums[ItemId::AddnlCharge];
+            }
+
+            if (isset($taxSums[ItemId::Lodging])) {
+                $lodgeTax = $taxSums[ItemId::Lodging];
+            }
+
 
             $visit = array(
                 'id' => $r['idVisit'],
@@ -855,8 +886,10 @@ where
                 'hpd' => abs($r['HouseDiscount']),
                 'thdpd' => $r['ThrdPaid'],
                 'addpd' => $r['AddnlPaid'],
+                'addtxpd'=> $r['AddnlTaxPaid'],
                 'taxpd' => $r['TaxPaid'],
                 'addch' => $r['AddnlCharged'],
+                'adjchtx' => round($r['AddnlCharged'] * $addChgTax, 2),
                 'donpd' => $r['ContributionPaid'],
                 'vfpd' => $r['VisitFeePaid'],  // Visit fees paid
                 'plg' => 0, // Pledged rate
@@ -918,6 +951,7 @@ where
 
             $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $r['Pre_Interval_Nights']);
             $visit['chg'] += ($priceModel->amountCalculator($days, $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $gdays) * $adjRatio);
+            $visit['taxcgd'] += round($visit['chg'] * $lodgeTax, 2);
 
             $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $r['Pre_Interval_Nights']);
             $fullCharge = ($priceModel->amountCalculator($days, 0, RoomRateCategorys::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $gdays));
@@ -947,6 +981,11 @@ where
         $totalAmtPending += $visit['pndg'];
         $totalNights += $visit['nit'];
         $totalGuestNights += $visit['gnit'];
+
+        $totalTaxCharged += $visit['taxcgd'];
+        $totalAddnlTax += $visit['adjchtx'];
+        $totalTaxPaid += $visit['taxpd'];
+        $totalTaxPending += $visit['taxpndg'];
 
         // Set expected departure to now if earlier than "today"
         $expDepDT = new \DateTime($savedr['Expected_Departure']);
@@ -1093,6 +1132,22 @@ where
                     $entry = '$' . number_format($totalAddnlCharged,2);
                     break;
 
+                case 'adjchtx':
+                    $entry = '$' . number_format($totalAddnlTax,2);
+                    break;
+
+                case 'taxcgd':
+                    $entry = '$' . number_format($totalTaxCharged,2);
+                    break;
+
+                case 'taxpd':
+                    $entry = '$' . number_format($totalTaxPaid,2);
+                    break;
+
+                case 'taxpndg':
+                    $entry = '$' . number_format($totalTaxPending,2);
+                    break;
+
                 case 'totch':
                     $entry = '$' . number_format($totalCharged,2);
                     break;
@@ -1181,9 +1236,13 @@ $statsTable = '';
 $errorMessage = '';
 $cFields = array();
 $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+$useTaxes = FALSE;
 
-$tstmt = $dbh->query("Select idItem, Description, Gl_Code, Percentage from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = 2");
-$taxItems = $tstmt->fetchAll(\PDO::FETCH_ASSOC);
+$tstmt = $dbh->query("Select count(idItem) from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax . " where i.Deleted = 0");
+$taxItems = $tstmt->fetchAll(\PDO::FETCH_NUM);
+if ($taxItems[0][0] > 0) {
+    $useTaxes = TRUE;
+}
 
 
 $filter = new ReportFilter();
@@ -1254,6 +1313,10 @@ if ($uS->VisitFee) {
 $adjusts = readGenLookupsPDO($dbh, 'Addnl_Charge');
 if (count($adjusts) > 0) {
     $cFields[] = array("Addnl Charge", 'adjch', 'checked', '', 's', '', array('style'=>'text-align:right;'));
+
+    if ($useTaxes) {
+        $cFields[] = array("Addnl Tax", 'adjchtx', 'checked', '', 's', '', array('style'=>'text-align:right;'));
+    }
 }
 
 
@@ -1278,7 +1341,7 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
 
     $cFields[] = array("Lodging Charge", 'lodg', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
 
-    if (count($taxItems) > 0) {
+    if ($useTaxes) {
         $cFields[] = array('Tax Charged', 'taxcgd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     }
 
@@ -1287,14 +1350,14 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
     $cFields[] = array("House Paid", 'hpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     $cFields[] = array("Lodging Paid", 'totpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
 
-    if (count($taxItems) > 0) {
+    if ($useTaxes) {
         $cFields[] = array('Tax Paid', 'taxpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     }
 
     $cFields[] = array("Unpaid", 'unpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     $cFields[] = array("Pending", 'pndg', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
 
-    if (count($taxItems) > 0) {
+    if ($useTaxes) {
         $cFields[] = array('Tax Pending', 'taxpndg', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     }
 

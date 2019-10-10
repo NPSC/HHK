@@ -697,14 +697,23 @@ class VisitView {
             }
 
             // Lodging Taxes
-            if ($curAccount->getLodgingTax() != 0) {
+            if (count($curAccount->getCurentTaxItems(ItemId::Lodging)) > 0) {
 
                 $showSubTotal = TRUE;
 
-                $tbl2->addBodyTr(
-                    HTMLTable::makeTd('Tax' . ($curAccount->getSumTaxDecimal(ItemId::Lodging) > 0 ? '(' . TaxedItem::suppressTrailingZeros($curAccount->getSumTaxDecimal(ItemId::Lodging) * 100) . '):' : ':'), array('class'=>'tdlabel', 'style'=>'font-size:small;'))
-                    . HTMLTable::makeTd('$' . number_format($curAccount->getLodgingTax(), 2), array('style'=>'text-align:right;font-size:small;'))
-                );
+                foreach ($curAccount->getCurentTaxItems(ItemId::Lodging) as $t) {
+
+                    if ($curAccount->getRoomFeeBalance() < 0) {
+                        $taxAmt = $t->getTaxAmount($curAccount->getRoomCharge());
+                    } else {
+                        $taxAmt = $curAccount->getLodgingTaxPd($t->getIdTaxingItem()) + $t->getTaxAmount($curAccount->getRoomFeeBalance());
+                    }
+
+                    $tbl2->addBodyTr(
+                        HTMLTable::makeTd($t->getTaxingItemDesc() .  ' (' . $t->getTextPercentTax() . '):', array('class'=>'tdlabel', 'style'=>'font-size:small;'))
+                        . HTMLTable::makeTd('$' . number_format($taxAmt, 2), array('style'=>'text-align:right;font-size:small;'))
+                    );
+                }
             }
         }
 
@@ -734,10 +743,14 @@ class VisitView {
             // Additional Charge taxes?
             if ($curAccount->getAdditionalChargeTax() > 0) {
 
-                $tbl2->addBodyTr(
-                    HTMLTable::makeTd('Additional Charges Tax' . ($curAccount->getSumTaxDecimal(ItemId::AddnlCharge) > 0 ? ' (' . TaxedItem::suppressTrailingZeros($curAccount->getSumTaxDecimal(ItemId::AddnlCharge) * 100) . '):' : ':'), array('class'=>'tdlabel', 'style'=>'font-size:small;'))
-                    . HTMLTable::makeTd('$' . number_format($curAccount->getAdditionalChargeTax(), 2), array('style'=>'text-align:right;font-size:small;'))
-                );
+                $taxingItems = $curAccount->getCurentTaxItems(ItemId::AddnlCharge);
+
+                foreach ($taxingItems as $t) {
+                    $tbl2->addBodyTr(
+                        HTMLTable::makeTd('Additional Charges Tax (' . $t->getTextPercentTax() . '):', array('class'=>'tdlabel', 'style'=>'font-size:small;'))
+                        . HTMLTable::makeTd('$' . number_format($curAccount->getAdditionalChargeTax(), 2), array('style'=>'text-align:right;font-size:small;'))
+                    );
+                }
             }
         }
 

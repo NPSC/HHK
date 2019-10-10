@@ -746,7 +746,7 @@ WHERE
         $roomCharge = 0;
         $preTaxRmCharge = 0;
         $roomTaxPaid = array();
-
+        $roomFeesPaid = 0;
 
         foreach ($invLines as $l) {
             // Visit fee invoiced?
@@ -771,14 +771,19 @@ WHERE
                     // Close up last visit
 
                     // Add tax info
-                    foreach ($vat->getCurrentTaxedItems($visitNights, $r['vid']) as $t) {
+                    foreach ($vat->getCurrentTaxedItems($r['vid'], $visitNights) as $t) {
 
                         if ($preTaxRmCharge > 0 && $t->getIdTaxedItem() == ItemId::Lodging) {
 
-                            $totalTax = round( ($preTaxRmCharge * $t->getDecimalTax()), 2);
+                            $roomBal = $preTaxRmCharge - $roomFeesPaid;
 
-                            if (isset($roomTaxPaid[$t->getIdTaxingItem()]) && abs($totalTax - $roomTaxPaid[$t->getIdTaxingItem()]) <= .01) {
-                                $totalTax = $roomTaxPaid[$t->getIdTaxingItem()];
+                            if ($roomBal >= 0) {
+                                // normal
+                                $totalTax = round($roomBal * $t->getDecimalTax(), 2)
+                                    + (isset($roomTaxPaid[$t->getIdTaxingItem()]) ? $roomTaxPaid[$t->getIdTaxingItem()] : 0);
+                            } else {
+                                // Fees paid greater than fees charged.
+                                $totalTax = round($preTaxRmCharge * $t->getDecimalTax(), 2);
                             }
 
                             $totalAmt += $totalTax;
@@ -797,7 +802,9 @@ WHERE
 
                 $visitNights = 0;
                 $preTaxRmCharge = 0;
+                $roomFeesPaid = 0;
                 $idVisitTracker = $r['vid'];
+
 
                 foreach ($roomTaxPaid as $k => $t) {
                     $roomTaxPaid[$k] = 0;
@@ -920,7 +927,10 @@ WHERE
 
                     } else if ($l['Type_Id'] == InvoiceLineType::Tax && $l['Source_Item_Id'] == ItemId::Lodging) {
                         $roomTaxPaid[$l['Item_Id']] += floatval($l['Amount']);
+                    } else if (($l['Item_Id'] == ItemId::Lodging || $l['Item_Id'] == ItemId::LodgingReversal) && ($l['Status'] == InvoiceStatus::Paid || $l['Status'] == InvoiceStatus::Unpaid)) {
+                        $roomFeesPaid += floatval($l['Amount']);
                     }
+
                 }
             }
         }
@@ -928,14 +938,21 @@ WHERE
         // For the last visit rate.
 
         // Add tax info
-        foreach ($vat->getCurrentTaxedItems($visitNights, $idVisitTracker) as $t) {
+        foreach ($vat->getCurrentTaxedItems($idVisitTracker, $visitNights) as $t) {
 
             if ($preTaxRmCharge > 0 && $t->getIdTaxedItem() == ItemId::Lodging) {
 
-                $totalTax = round( ($preTaxRmCharge * $t->getDecimalTax()), 2);
+                //$totalTax = round( ($preTaxRmCharge * $t->getDecimalTax()), 2);
 
-                if (isset($roomTaxPaid[$t->getIdTaxingItem()]) && abs($totalTax - $roomTaxPaid[$t->getIdTaxingItem()]) <= .01) {
-                    $totalTax = $roomTaxPaid[$t->getIdTaxingItem()];
+                $roomBal = $preTaxRmCharge - $roomFeesPaid;
+
+                if ($roomBal >= 0) {
+                    // normal
+                    $totalTax = round($roomBal * $t->getDecimalTax(), 2)
+                        + (isset($roomTaxPaid[$t->getIdTaxingItem()]) ? $roomTaxPaid[$t->getIdTaxingItem()] : 0);
+                } else {
+                    // Fees paid greater than fees charged.
+                    $totalTax = round($preTaxRmCharge * $t->getDecimalTax(), 2);
                 }
 
                 $totalAmt += $totalTax;
@@ -1375,7 +1392,7 @@ from vlist_inv_pments lp
         $pments = self::processPayments($stmt, array('Last', 'First', 'Company'));
 
         // items
-        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date
+        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
 from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
 left join invoice_line_type ilt on il.Type_Id = ilt.id
 where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by i.idGroup, il.Invoice_Id, ilt.Order_Position");
@@ -1384,7 +1401,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
 
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable($rates, $totalAmt, $priceModel, $labels, $invLines, new ValueAddedTaxReg($dbh, $idRegistration), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
+        $tbl = self::makeOrdersRatesTable($rates, $totalAmt, $priceModel, $labels, $invLines, new ValueAddedTax($dbh), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
         $totalCharge = $totalAmt;
 
         // Thirdparty payments
@@ -1477,7 +1494,7 @@ from vlist_inv_pments `lp` left join `name` n ON lp.Sold_To_Id = n.idName
         $pments = self::processPayments($stmt, array('Last', 'First', 'Company'));
 
         // Items
-        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date
+        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
 from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice and il.Deleted = 0
 left join invoice_line_type ilt on il.Type_Id = ilt.id
 where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Order_Position");
@@ -1492,7 +1509,7 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
 
 
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, new ValueAddedTax($dbh, $idVisit), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
+        $tbl = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, new ValueAddedTax($dbh), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
         $totalCharge = $totalAmt;
 
         // Thirdparty payments
