@@ -575,9 +575,10 @@ class SiteConfig {
 
     public static function updatePayTypes(\PDO $dbh, $payGw, $ccgw, $username) {
 
-        creditIncludes($payGw);
-        $gateway = PaymentGateway::factory($dbh, $payGw, $ccgw);
-        return $gateway->updatePayTypes($dbh, $username);
+//        creditIncludes($payGw);
+//        $gateway = PaymentGateway::factory($dbh, $payGw, $ccgw);
+//        return $gateway->updatePayTypes($dbh, $username);
+        return "Be sure to log out, back in and save the payment credentials.";
     }
 }
 

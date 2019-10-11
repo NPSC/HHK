@@ -52,7 +52,7 @@ if (isset($_FILES['zipfile'])) {
 
     try {
 
-        SiteConfig::checkZipFile('zipfile');
+        SiteConfig::checkUploadFile('zipfile');
         $resultMsg .= SiteConfig::loadZipCodeFile($dbh, $_FILES['zipfile']['tmp_name']);
 
         SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Loaded. ' . $resultMsg, CodeVersion::GIT_Id);
