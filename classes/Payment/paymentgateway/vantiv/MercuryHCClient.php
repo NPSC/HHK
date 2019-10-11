@@ -1223,7 +1223,7 @@ class VerifyCkOutResponse extends MercResponse  implements iGatewayResponse{
 
     public function getMaskedAccount() {
         if (isset($this->result->MaskedAccount)) {
-            return str_ireplace('#', '', $this->result->MaskedAccount);
+            return str_ireplace('x', '', $this->result->MaskedAccount);
         }
         return '';
     }
@@ -1776,9 +1776,9 @@ class CreditTokenResponse extends MercResponse implements iGatewayResponse {
 
     public function getMaskedAccount() {
         if (isset($this->result->Account)) {
-            return str_ireplace('#', '', $this->result->Account);
+            return str_ireplace('x', '', $this->result->Account);
         } else if (isset($this->result->MaskedAccount)) {
-            return str_ireplace('#', '', $this->result->MaskedAccount);
+            return str_ireplace('x', '', $this->result->MaskedAccount);
         }
 
         return '';

@@ -483,7 +483,7 @@ CREATE TABLE if not exists `guest_token` (
   `CardUsage` varchar(20) NOT NULL DEFAULT '',
   `ExpDate` varchar(14) NOT NULL DEFAULT '',
   `OperatorID` varchar(10) NOT NULL DEFAULT '',
-  `Tran_Type` varchar(10) NOT NULL DEFAULT '',
+  `Tran_Type` varchar(14) NOT NULL DEFAULT '',
   `StatusMessage` varchar(45) NOT NULL DEFAULT '',
   `Last_Updated` datetime DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -512,7 +512,7 @@ class PaymentSvcs {
             case CreditPayments::STATUS_APPROVED:
 
                 // Update invoice
-                $invoice->updateInvoiceBalance($dbh, 0 - $rtnResp->response->getAuthorizeAmount(), $uS->username);
+                $invoice->updateInvoiceBalance($dbh, 0 - $rtnResp->response->getAuthorizedAmount(), $uS->username);
 
                 $rtnResult->feePaymentAccepted($dbh, $uS, $rtnResp, $invoice);
                 $rtnResult->setDisplayMessage('Refund by Credit Card.  ');

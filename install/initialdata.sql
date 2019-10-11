@@ -271,6 +271,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Payment_Status', 'r', 'Return', '','',0),
 ('Payment_Status', 'vr', 'Void Return', '','',0),
 ('Payment_Status', 'd', 'Declined', '','',0),
+('Payment_Status', 'rv', 'Reversed', '','',0),
 
 ('Pay_Type','ca','Cash','1','',0),
 ('Pay_Type','cc','Credit Card','4','',0),

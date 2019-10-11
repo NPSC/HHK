@@ -228,7 +228,7 @@ class VantivGateway extends PaymentGateway {
                     case MpStatusValues::Approved:
 
                         // Update invoice
-                        $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizeAmount(), $uS->username);
+                        $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
 
                         $reply .= 'Payment is reversed.  ';
                         $csResp->idVisit = $invoice->getOrderNumber();
@@ -313,7 +313,7 @@ class VantivGateway extends PaymentGateway {
 
 
                     // Update invoice
-                    $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizeAmount(), $uS->username);
+                    $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
 
                     $reply .= 'Payment is Returned.  ';
                     $csResp->idVisit = $invoice->getOrderNumber();
@@ -580,7 +580,7 @@ class VantivGateway extends PaymentGateway {
                 case MpStatusValues::Approved:
 
                     // Update invoice
-                    $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizeAmount(), $uS->username);
+                    $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
 
                     $csResp->idVisit = $invoice->getOrderNumber();
                     $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
@@ -593,7 +593,7 @@ class VantivGateway extends PaymentGateway {
                     if (strtoupper($csResp->response->getMessage()) == 'ITEM VOIDED') {
 
                         // Update invoice
-                        $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizeAmount(), $uS->username);
+                        $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
 
                         $csResp->idVisit = $invoice->getOrderNumber();
                         $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));

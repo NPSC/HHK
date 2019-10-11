@@ -9,6 +9,9 @@ ALTER TABLE `sys_config`
 ALTER TABLE `invoice_line`
     CHANGE COLUMN `Source_User_Id` `Source_Item_Id` INT(11) NOT NULL DEFAULT '0' ;
 
+ALTER TABLE `guest_token` 
+    CHANGE COLUMN `Tran_Type` `Tran_Type` VARCHAR(14) NOT NULL DEFAULT '' ;
+
 ALTER TABLE `w_users`
     ADD COLUMN `Default_Page` VARCHAR(100) NOT NULL DEFAULT '' AFTER `Ip`;
 ALTER TABLE `w_users` 
@@ -54,6 +57,7 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Time_Zo
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gateway_Name', 'instamed', 'Instamed');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gateway_Name', 'vantiv', 'Vantiv');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gateway_Name', 'converge', 'Elavon Converge');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Payment_Status', 'rv', 'Reversed');
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('UseHouseWaive', 'true', 'b', 'h', 'Show the house waive checkbox on checkout.');
 DELETE FROM `sys_config` WHERE `Key`='DefaultCkBalStmt';

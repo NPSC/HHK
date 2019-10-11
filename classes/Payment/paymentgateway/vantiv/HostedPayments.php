@@ -204,40 +204,6 @@ class HostedCheckout {
         // Verify request
         $verifyResponse = $verify->submit($gway->getCredentials(), $trace);
 
-//        $object = (object) [
-//    'VerifyPaymentResult' =>
-//        (object) [
-//            "ResponseCode"=>0,
-//            "Status"=>"Approved",
-//             "StatusMessage"=>"AP",
-//            "DisplayMessage"=>"Your transaction has been approved.",
-//            "AvsResult"=>"Z",
-//            "CvvResult"=>"M",
-//                "AuthCode"=>"069586",
-//                "Token"=>"lPlIOXLDn6qPAyPh5eYDfdWlLNIUM6HSKnkDQDTloISFQcQAhEQEoCT",
-//                "RefNo"=>"5508",
-//                "Invoice"=>"2444",
-//                "AcqRefData"=>"KaWb585215765742020cW3TPd5e000lS ",
-//                "CardType"=>"VISA",
-//                "MaskedAccount"=>"xxxxxxxxxxxx7082",
-//                "Amount"=>240,
-//                "TaxAmount"=>0,
-//                "TransPostTime"=>"2015-08-03T17:16:15.213",
-//                "CardholderName"=>"Rush University Med Ctr",
-//                "AVSAddress"=>"14308 Capital Dr",
-//                "AVSZip"=>"60612",
-//                "TranType"=>"Sale",
-//                "PaymentIDExpired"=>true,
-//                "CustomerCode"=>"",
-//                "Memo"=>"hhkpos-3.1",
-//                "AuthAmount"=>240,
-//                "VoiceAuthCode"=>"",
-//                "ProcessData"=>"|17|600550672000",
-//                "OperatorID"=>"",
-//                "TerminalName"=>"",
-//                "ExpDate"=>"0220"]];
-
-//        $verifyResponse = new VerifyCkOutResponse($object);
         $vr = new CheckOutResponse($verifyResponse, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $payNotes);
 
 
@@ -313,7 +279,7 @@ class CheckOutResponse extends PaymentResponse {
         $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxxxx...". $this->cardNum));
 
         if ($this->cardName != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardName));
+            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd(htmlentities($this->cardName, ENT_QUOTES)));
         }
 
         if ($this->response->getAuthCode() != '') {

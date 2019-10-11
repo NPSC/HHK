@@ -46,7 +46,7 @@ class TokenTX {
 
         // New Token?
         if ($vr->response->getToken() != '') {
-            $guestTokenRs = CreditToken::updateToken($dbh, $vr);
+            $guestTokenRs = CreditToken::getTokenRsFromId($dbh, $vr->idToken);
             $vr->cardNum = str_ireplace('x', '', $guestTokenRs->MaskedAccount->getStoredVal());
             $vr->cardName = $guestTokenRs->CardHolderName->getStoredVal();
             $vr->cardType = $guestTokenRs->CardType->getStoredVal();
@@ -97,7 +97,7 @@ class TokenTX {
 
         // New Token?
         if ($vr->response->getToken() != '') {
-            $guestTokenRs = CreditToken::updateToken($dbh, $vr);
+            $guestTokenRs = CreditToken::getTokenRsFromId($dbh, $vr->idToken);
             $vr->cardNum = str_ireplace('x', '', $guestTokenRs->MaskedAccount->getStoredVal());
             $vr->cardType = $guestTokenRs->CardType->getStoredVal();
             $vr->cardName = $guestTokenRs->CardHolderName->getStoredVal();
@@ -140,12 +140,13 @@ class TokenTX {
 
         // New Token?
         if ($vr->response->getToken() != '') {
-            $guestTokenRs = CreditToken::updateToken($dbh, $vr);
-            $vr->cardNum = str_ireplace('x', '', $guestTokenRs->MaskedAccount->getStoredVal());
+            $guestTokenRs = CreditToken::getTokenRsFromId($dbh, $vr->idToken);
+            $vr->cardNum = $guestTokenRs->MaskedAccount->getStoredVal();
             $vr->cardType = $guestTokenRs->CardType->getStoredVal();
             $vr->cardName = $guestTokenRs->CardHolderName->getStoredVal();
             $vr->expDate = $guestTokenRs->ExpDate->getStoredVal();
             $vr->idToken = $guestTokenRs->idGuest_token->getStoredVal();
+            $vr->idRegistration = $guestTokenRs->idRegistration->getStoredVal();
         }
 
         // Record transaction
@@ -185,7 +186,7 @@ class TokenTX {
 
         // New Token?
         if ($vr->response->getToken() != '') {
-            $guestTokenRs = CreditToken::updateToken($dbh, $vr);
+            $guestTokenRs = CreditToken::getTokenRsFromId($dbh, $vr->idToken);
             $vr->cardNum = str_ireplace('x', '', $guestTokenRs->MaskedAccount->getStoredVal());
             $vr->cardName = $guestTokenRs->CardHolderName->getStoredVal();
             $vr->cardType = $guestTokenRs->CardType->getStoredVal();
@@ -227,7 +228,7 @@ class TokenTX {
 
         // New Token?
         if ($vr->response->getToken() != '') {
-            $guestTokenRs = CreditToken::updateToken($dbh, $vr);
+            $guestTokenRs = CreditToken::getTokenRsFromId($dbh, $vr->idToken);
             $vr->cardNum = str_ireplace('x', '', $guestTokenRs->MaskedAccount->getStoredVal());
             $vr->cardName = $guestTokenRs->CardHolderName->getStoredVal();
             $vr->expDate = $guestTokenRs->ExpDate->getStoredVal();
@@ -257,7 +258,7 @@ class TokenResponse extends PaymentResponse {
     public $idToken = '';
 
 
-    function __construct(CreditTokenResponse $creditTokenResponse, $idPayor, $idToken, $payNotes = '') {
+    function __construct($creditTokenResponse, $idPayor, $idToken, $payNotes = '') {
         $this->response = $creditTokenResponse;
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
@@ -288,10 +289,10 @@ class TokenResponse extends PaymentResponse {
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd($this->cardType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxxxx...". $this->cardNum));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->response->getCardType() . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxxxx...". $this->response->getMaskedAccount()));
 
-        if ($this->cardName != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->cardName));
+        if ($this->response->getCardHolderName() != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getCardHolderName()));
         }
 
         if ($this->response->getAuthCode() != '') {
