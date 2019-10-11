@@ -407,10 +407,10 @@ li.hhk-myMenuTop {
 
 .week-button-group {
 	display: inline-block;
-	margin: 0 1em 0 1em;
+	margin: 0;
 }
 
-.week-button-group >* {
+/*.week-button-group >* {
 	margin: 0 0 0 -1px;
 	float: left;
-}
+}*/

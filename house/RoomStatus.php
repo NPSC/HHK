@@ -441,20 +441,20 @@ if ($checkingIn == '') {
                 });
 
                 $('#ckoutDate').datepicker('setDate', coDate);
-				
-				$('.week-button-group').on('click', 'button', function(e){
-					var btn = $(this)
-					$('.week-button-group button').removeClass("ui-state-active");
-					if(btn.data("weeks")){
-						var startDate = new Date();
-						var endDate = new Date();
-						endDate.setDate(startDate.getDate() + (btn.data("weeks") * 7));
-						
-						$('#outTable').DataTable().ajax.url('ws_resc.php?cmd=cleanStat&tbl=outTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", startDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", endDate));
+
+                $('.week-button-group').on('click', 'button', function (e) {
+                    var btn = $(this)
+                    $('.week-button-group button').removeClass("ui-state-active");
+                    if (btn.data("weeks")) {
+                        var startDate = new Date();
+                        var endDate = new Date();
+                        endDate.setDate(startDate.getDate() + (btn.data("weeks") * 7));
+
+                        $('#outTable').DataTable().ajax.url('ws_resc.php?cmd=cleanStat&tbl=outTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", startDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", endDate));
                         $('#outTable').DataTable().ajax.reload();
                         btn.addClass("ui-state-active");
-					}
-				})
+                    }
+                })
 
 
                 $('#roomTable').dataTable({
@@ -516,12 +516,12 @@ if ($checkingIn == '') {
         </script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
-<?php echo $menuMarkup; ?>
+        <?php echo $menuMarkup; ?>
         <div id="contentDiv" style="margin-bottom: 60px;">
             <div style="float:left; margin-right: 100px; margin-top:10px;">
                 <h1><?php echo $wInit->pageHeading; ?></h1>
             </div>
-<?php echo $resultMessage ?>
+            <?php echo $resultMessage ?>
             <div style="clear:both;"></div>
             <form action="RoomStatus.php" method="post"  id="form1" name="form1" >
                 <div id="mainTabs" style="font-size: .8em; display:none;" class="hhk-tdbox">
@@ -540,22 +540,22 @@ if ($checkingIn == '') {
                         </div>
                     </div>
                     <div id="ckin" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
-<?php echo $checkingIn; ?>
+                        <?php echo $checkingIn; ?>
                     </div>
                     <div id="ckout" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
-	                    <div class="row">
-		                    <div style="display: inline-block">
-                            	<label>Checkout Date: </label>
-                            	<input id="ckoutDate" class="ckdate"/>
-		                    </div>
+                        <div class="row">
+                            <div style="display: inline-block">
+                                <label>Checkout Date: </label>
+                                <input id="ckoutDate" class="ckdate"/>
+                            </div>
                             <div class="week-button-group">
-	                            <button type="button" data-weeks="1" class="ui-button ui-state-default ui-corner-left">1 Week</button>
-	                            <button type="button" data-weeks="2" class="ui-button ui-state-default">2 Weeks</button>
-	                            <button type="button" data-weeks="4" class="ui-button ui-state-default ui-corner-right">4 Weeks</button>
-	                        </div>
+                                <button type="button" data-weeks="1" class="ui-button ui-state-default ui-corner-left" style="margin:0;">1 Week</button>
+                                <button type="button" data-weeks="2" class="ui-button ui-state-default" style="margin:0;">2 Weeks</button>
+                                <button type="button" data-weeks="4" class="ui-button ui-state-default ui-corner-right" style="margin:0;">4 Weeks</button>
+                            </div>
                             <input type="button" value="Print" id="prtCkOut" style="margin:3px;"/>
                         </div>
-                        
+
                         <table id='outTable' class=' order-column display ' style='width:100%;' ></table>
                     </div>
                     <div id="showAll">
