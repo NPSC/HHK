@@ -434,13 +434,27 @@ if ($checkingIn == '') {
                         var d = new Date(dateText);
                         if (d != coDate) {
                             coDate = d;
-                            $('#outTable').DataTable().ajax.url('ws_resc.php?cmd=cleanStat&tbl=outTable&dte=' + $.datepicker.formatDate("yy-mm-dd", coDate));
+                            $('#outTable').DataTable().ajax.url('ws_resc.php?cmd=cleanStat&tbl=outTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", coDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", coDate));
                             $('#outTable').DataTable().ajax.reload();
                         }
                     }
                 });
 
                 $('#ckoutDate').datepicker('setDate', coDate);
+				
+				$('.week-button-group').on('click', 'button', function(e){
+					var btn = $(this)
+					$('.week-button-group button').removeClass("ui-state-active");
+					if(btn.data("weeks")){
+						var startDate = new Date();
+						var endDate = new Date();
+						endDate.setDate(startDate.getDate() + (btn.data("weeks") * 7));
+						
+						$('#outTable').DataTable().ajax.url('ws_resc.php?cmd=cleanStat&tbl=outTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", startDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", endDate));
+                        $('#outTable').DataTable().ajax.reload();
+                        btn.addClass("ui-state-active");
+					}
+				})
 
 
                 $('#roomTable').dataTable({
@@ -463,7 +477,7 @@ if ($checkingIn == '') {
 
                 $('#outTable').dataTable({
                     ajax: {
-                        url: 'ws_resc.php?cmd=cleanStat&tbl=outTable&dte=' + $.datepicker.formatDate("yy-mm-dd", coDate),
+                        url: 'ws_resc.php?cmd=cleanStat&tbl=outTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", coDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", coDate),
                         dataSrc: 'outTable'
                     },
                     "deferRender": true,
@@ -529,10 +543,19 @@ if ($checkingIn == '') {
 <?php echo $checkingIn; ?>
                     </div>
                     <div id="ckout" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
-                        <p>
-                            <span>Checkout Date: </span><input id="ckoutDate" class="ckdate"/>
+	                    <div class="row">
+		                    <div style="display: inline-block">
+                            	<label>Checkout Date: </label>
+                            	<input id="ckoutDate" class="ckdate"/>
+		                    </div>
+                            <div class="week-button-group">
+	                            <button type="button" data-weeks="1" class="ui-button ui-state-default ui-corner-left">1 Week</button>
+	                            <button type="button" data-weeks="2" class="ui-button ui-state-default">2 Weeks</button>
+	                            <button type="button" data-weeks="4" class="ui-button ui-state-default ui-corner-right">4 Weeks</button>
+	                        </div>
                             <input type="button" value="Print" id="prtCkOut" style="margin:3px;"/>
-                        </p>
+                        </div>
+                        
                         <table id='outTable' class=' order-column display ' style='width:100%;' ></table>
                     </div>
                     <div id="showAll">

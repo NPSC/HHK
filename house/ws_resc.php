@@ -542,10 +542,17 @@ $(document).mousedown(function (event) {
             if (isset($_REQUEST['tbl'])) {
                 $tbl = filter_var($_REQUEST['tbl'], FILTER_SANITIZE_STRING);
             }
+            
+			//start Date
+            $startDate = '';
+            if (isset($_REQUEST['stdte'])) {
+                $startDate = filter_var($_REQUEST['stdte'], FILTER_SANITIZE_STRING);
+            }
 
-            $date = '';
-            if (isset($_REQUEST['dte'])) {
-                $date = filter_var($_REQUEST['dte'], FILTER_SANITIZE_STRING);
+			//end Date
+            $endDate = '';
+            if (isset($_REQUEST['enddte'])) {
+                $endDate = filter_var($_REQUEST['enddte'], FILTER_SANITIZE_STRING);
             }
 
             switch ($tbl) {
@@ -558,7 +565,7 @@ $(document).mousedown(function (event) {
                     break;
 
                 case 'outTable':
-                    $events['outTable'] = ResourceView::showCoList($dbh, $date);
+                    $events['outTable'] = ResourceView::showCoList($dbh, $startDate, $endDate);
                     break;
             }
 

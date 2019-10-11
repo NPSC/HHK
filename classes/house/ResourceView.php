@@ -998,11 +998,19 @@ from
         return $returnRows;
     }
 
-    public static function showCoList(\PDO $dbh, $coDate) {
+    public static function showCoList(\PDO $dbh, $startCoDate, $endCoDate) {
 
         $returnRows = array();
 
-        if ($coDate == '') {
+        if ($startCoDate == '' || $endCoDate == '') {
+	         $returnRows[] = array(
+	            'Room' => "",
+	            'Visit Status' => "",
+	            'Primary Guest' => "",
+	            'Arrival Date' => "",
+	            'Expected Checkout' => "",
+	            'Notes' => ""
+	        );
             return $returnRows;
         }
 
@@ -1026,7 +1034,7 @@ from
         name n ON v.idPrimaryGuest = n.idName
             left join
         gen_lookups g on g.Table_Name = 'Visit_Status' and g.Code = v.`Status`
-    where ifnull(DATE(v.Span_End), DATE(datedefaultnow(v.Expected_Departure))) = Date('$coDate');");
+    where ifnull(DATE(v.Span_End), DATE(datedefaultnow(v.Expected_Departure))) between Date('$startCoDate') and Date('$endCoDate');");
 
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {

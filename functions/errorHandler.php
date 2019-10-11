@@ -3,6 +3,7 @@ register_shutdown_function( "fatal_handler" );
 $errorMsg = "";
 
 function fatal_handler() {
+	$uS = Session::getInstance();
     $errfile = "unknown file";
     $errstr  = "shutdown";
     $errno   = E_CORE_ERROR;
@@ -18,19 +19,23 @@ function fatal_handler() {
         $errline = $error["line"];
         $errstr  = $error["message"];
 
-        formHandler($error);
-        buildPage($error);
+        formHandler($error, $uS);
+        
+        //check if ajax request
+        if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == "XMLHttpRequest"){
+	        returnJSON($error, $uS);
+        }else{
+	        buildPage($error);
+        }
 
 		die();
     }
 }
 
-function formHandler($error){
+function formHandler($error, $uS){
 	$sec = new SecurityComponent;
-	$uS = Session::getInstance();
 
-	//get report email address
-	$to = $uS->Error_Report_Email == "" ? "support@nonprofitsoftwarecorp.org": $uS->Error_Report_Email;
+
 
 	//if post data exists, send email
 	if($_POST && isset($_POST['name'], $_POST['email'], $_POST['message'])) {
@@ -43,14 +48,39 @@ function formHandler($error){
 		$message.= "Message: " . $_POST['message'] . "\r\n\r\n";
 		$message.= "File: " . $error["file"] . " line " . $error["line"] . "\r\n\r\n";
 		$message.= "Error: " . $error["message"];
-      	$subject = "New bug report received from " . $uS->siteName;
-	  	$headers = "From: BugReporter<noreply@nonprofitsoftwarecorp.org>" . "\r\n";
+      	
+	  	
 	  	// send email and redirect
-	  	mail($to, $subject, $message, $headers);
+	  	sendMail($message, $uS);
 	  	header("location: ?status=success");
 	  	exit;
 	}
 }
+
+function sendMail($message, $uS) {
+	if($message){
+		//get report email address
+		$to = $uS->Error_Report_Email == "" ? "support@nonprofitsoftwarecorp.org": $uS->Error_Report_Email;
+		$subject = "New bug report received from " . $uS->siteName;
+		$headers = "From: BugReporter<noreply@nonprofitsoftwarecorp.org>" . "\r\n";
+	
+		mail($to, $subject, $message, $headers);
+	}
+}
+
+function returnJSON($error, $uS){
+	
+	
+	$message = "New bug report received from " . $uS->siteName . "\r\n\r\n";
+	$message .= "Request Type: AJAX\r\n\r\n";
+	$message.= "File: " . $error["file"] . " line " . $error["line"] . "\r\n\r\n";
+	$message.= "Error: " . $error["message"];
+	
+	sendMail($message, $uS);
+	
+	echo json_encode(["status"=>"error", "message"=>"An error Occurred."]);
+}
+
 
 function buildPage($error){
 	$wInit = new webInit();
@@ -133,7 +163,7 @@ function buildPage($error){
 							<h2>File a bug report</h2>
 						</div>
 						<div class="ui-widget-content ui-corner-bottom hhk-tdbox">
-							<?php if($_GET["status"] == "success"){ ?>
+							<?php if(isset($_GET["status"]) && $_GET["status"] == "success"){ ?>
 								<h4>Thanks for submitting!</h4>
 								<a href="<?php echo $sec->getRootURL(); ?>" class="ui-button ui-corner-all ui-widget">Go Home</a>
 							<?php }else{ ?>
