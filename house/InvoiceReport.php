@@ -9,17 +9,30 @@
  */
 
 require ("homeIncludes.php");
-
 require (DB_TABLES . 'PaymentGwRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
+
+require (PMT . 'GatewayConnect.php');
+require (PMT . 'PaymentGateway.php');
+require (PMT . 'PaymentResponse.php');
+require (PMT . 'PaymentResult.php');
+require (PMT . 'Receipt.php');
+require (PMT . 'Invoice.php');
+require (PMT . 'InvoiceLine.php');
+require (PMT . 'CheckTX.php');
+require (PMT . 'CashTX.php');
+require (PMT . 'Transaction.php');
+require (PMT . 'CreditToken.php');
+
+require (CLASSES . 'PaymentSvcs.php');
+require (CLASSES . 'Purchase/RoomRate.php');
+require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+require CLASSES . 'TableLog.php';
 
 require (CLASSES . 'FinAssistance.php');
 
 require (CLASSES . 'ColumnSelectors.php');
 require CLASSES . 'OpenXML.php';
-
-require (CLASSES . 'PaymentSvcs.php');
-
 
 
 
@@ -35,6 +48,8 @@ $pageTitle = $wInit->pageTitle;
 
 // get session instance
 $uS = Session::getInstance();
+
+creditIncludes($uS->PaymentGateway);
 
 $menuMarkup = $wInit->generatePageMenu();
 
@@ -211,6 +226,8 @@ $invStatus = array();
 $calSelection = '19';
 $baSelections = array();
 $baSelector = '';
+$paymentMarkup = '';
+$receiptMarkup = '';
 
 $year = date('Y');
 $months = array(date('n'));       // logically overloaded.
@@ -233,6 +250,22 @@ if ($uS->fy_diff_Months == 0) {
 } else {
     $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 20 => array(20, 'Fiscal Year'), 21 => array(21, 'Calendar Year'), 22 => array(22, 'Year to Date'));
 }
+// Hosted payment return
+try {
+
+    if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
+
+        $receiptMarkup = $payResult->getReceiptMarkup();
+
+        if ($payResult->getDisplayMessage() != '') {
+            $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        }
+    }
+
+} catch (Hk_Exception_Runtime $ex) {
+    $paymentMarkup = $ex->getMessage();
+}
+
 
 
 // Hospital and association lists
@@ -786,103 +819,21 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
 <script type="text/javascript">
-function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement) {
-    var dialg =  $(idDiag);
-    var buttons = {
-        "Save": function() {
-
-            var dt;
-            var nt = dialg.find('#taBillNotes').val();
-
-            if (dialg.find('#txtBillDate').val() != '') {
-                dt = dialg.find('#txtBillDate').val();
-            }
-
-            $.post('ws_resc.php', {cmd: 'invSetBill', inb:inb, date:dt, ele: idElement, nts: nt, ntele: notesElement},
-              function(data) {
-
-                if (data) {
-                    try {
-                        data = $.parseJSON(data);
-                    } catch (err) {
-                        alert("Parser error - " + err.message);
-                        return;
-                    }
-
-                    if (data.gotopage) {
-                        window.location.assign(data.gotopage);
-                    } else if (data.success) {
-
-                        if (data.elemt && data.elemt !== '' && data.strDate) {
-                            $(data.elemt).text(data.strDate);
-                        }
-
-                        if (data.notesElemt && data.notesElemt !== '' && data.notes) {
-                            $(data.notesElemt).text(data.notes);
-                        }
-                    }
-                }
-            });
-
-            $(this).dialog("close");
-
-        },
-        "Cancel": function() {
-            $(this).dialog("close");
-        }
-    };
-
-    dialg.find('#spnInvNumber').text(inb);
-    dialg.find('#spnBillPayor').text(name);
-    dialg.find('#txtBillDate').val(billDate);
-    dialg.find('#taBillNotes').val(notes);
-    dialg.find('#txtBillDate').datepicker({numberOfMonths: 1});
-
-    dialg.dialog('option', 'buttons', buttons);
-    dialg.dialog('option', 'width', 500);
-    dialg.dialog('open');
-}
-function invoiceAction(idInvoice, action, eid) {
-    $.post('ws_resc.php', {cmd: 'invAct', iid: idInvoice, x:eid, action: action},
-      function(data) {
-        if (data) {
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.location.assign(data.gotopage);
-                }
-                flagAlertMessage(data.error, true);
-                return;
-            }
-            if (data.delete) {
-                flagAlertMessage(data.delete, false);
-            }
-            if (data.markup) {
-                var contr = $(data.markup);
-                $('body').append(contr);
-                contr.position({
-                    my: 'left top',
-                    at: 'left bottom',
-                    of: "#" + data.eid
-                });
-            }
-        }
-    });
-}
 $(document).ready(function() {
     var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
     var makeTable = '<?php echo $mkTable; ?>';
     var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
-    $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll').button();
+    var pmtMkup = '<?php echo $paymentMarkup; ?>';
+    var rctMkup = '<?php echo $receiptMarkup; ?>';
+
+    $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo').button();
     $('.ckdate').datepicker({
         yearRange: '-05:+01',
         changeMonth: true,
@@ -912,16 +863,35 @@ $(document).ready(function() {
         modal: true,
         title: 'Set Invoice Billing Date'
     });
-        $('#cbColClearAll').click(function () {
-            $('#selFld option').each(function () {
-                $(this).prop('selected', false);
-            });
+    $('#pmtRcpt').dialog({
+        autoOpen: false,
+        resizable: true,
+        width: 530,
+        modal: true,
+        title: 'Payment Receipt'
+    });
+    $('#keysfees').dialog({
+        autoOpen: false,
+        resizable: true,
+        modal: true,
+        close: function (event, ui) {
+            $('div#submitButtons').show();
+        },
+        open: function (event, ui) {
+            $('div#submitButtons').hide();
+        }
+    });
+
+    $('#cbColClearAll').click(function () {
+        $('#selFld option').each(function () {
+            $(this).prop('selected', false);
         });
-        $('#cbColSelAll').click(function () {
-            $('#selFld option').each(function () {
-                $(this).prop('selected', true);
-            });
+    });
+    $('#cbColSelAll').click(function () {
+        $('#selFld option').each(function () {
+            $(this).prop('selected', true);
         });
+    });
 
 
     // disappear the pop-ups.
@@ -931,6 +901,104 @@ $(document).ready(function() {
             $('div#pudiv').remove();
         }
     });
+
+    $('#mainTabs').tabs({
+        beforeActivate: function (event, ui) {
+            if (ui.newTab.prop('id') === 'liInvoice') {
+                $('#btnInvGo').click();
+            }
+        }
+    });
+
+    $('#btnInvGo').click(function () {
+        var statuses = ['up'];
+        var parms = {
+            cmd: 'actrpt',
+            st: statuses,
+            inv: 'on'
+        };
+
+        $.post('ws_resc.php', parms,
+            function (data) {
+
+                if (data) {
+
+                    try {
+                        data = $.parseJSON(data);
+                    } catch (err) {
+                        alert("Parser error - " + err.message);
+                        return;
+                    }
+
+                    if (data.error) {
+
+                        if (data.gotopage) {
+                            window.open(data.gotopage, '_self');
+                        }
+                        flagAlertMessage(data.error, 'error');
+
+                    } else if (data.success) {
+
+                        $('#rptInvdiv').remove();
+                        $('#vInv').append($('<div id="rptInvdiv" style="min-height:500px;"/>').append($(data.success)));
+                        $('#rptInvdiv .gmenu').menu();
+
+                        $('#rptInvdiv').on('click', '.invLoadPc', function (event) {
+                            event.preventDefault();
+                            $("#divAlert1, #paymentMessage").hide();
+                            invLoadPc($(this).data('name'), $(this).data('id'), $(this).data('iid'));
+                        });
+
+                        $('#rptInvdiv').on('click', '.invSetBill', function (event) {
+                            event.preventDefault();
+                            $(".hhk-alert").hide();
+                            invSetBill($(this).data('inb'), $(this).data('name'), 'div#setBillDate', '#trBillDate' + $(this).data('inb'), $('#trBillDate' + $(this).data('inb')).text(), $('#divInvNotes' + $(this).data('inb')).text(), '#divInvNotes' + $(this).data('inb'));
+                        });
+
+                        $('#rptInvdiv').on('click', '.invAction', function (event) {
+                            event.preventDefault();
+                            $(".hhk-alert").hide();
+
+                            if ($(this).data('stat') == 'del') {
+                                if (!confirm('Delete this Invoice?')) {
+                                    return;
+                                }
+                            }
+
+                            // Check for email
+                            if ($(this).data('stat') === 'vem') {
+                                    window.open('ShowInvoice.php?invnum=' + $(this).data('inb'));
+                                    return;
+                            }
+
+                            invoiceAction($(this).data('iid'), $(this).data('stat'), event.target.id);
+                            $('#rptInvdiv .gmenu').menu("collapse");
+                        });
+
+                        $('#InvTable').dataTable({
+                            'columnDefs': [
+                                {'targets': [2,4],
+                                 'type': 'date',
+                                 'render': function ( data, type, row ) {return dateRender(data, type);}
+                                }
+                             ],
+                            "dom": '<"top"if>rt<"bottom"lp><"clear">',
+                            "displayLength": 50,
+                            "lengthMenu": [[20, 50, 100, -1], [20, 50, 100, "All"]],
+                            "order": [[ 1, 'asc' ]]
+                        });
+                    }
+                }
+            });
+    });
+
+    if (pmtMkup !== '') {
+        $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
+    }
+
+    if (rctMkup !== '') {
+        showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt');
+    }
 
     if (makeTable === '1') {
         $('div#printArea').css('display', 'block');
@@ -970,10 +1038,17 @@ $(document).ready(function() {
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
+        <h2><?php echo $wInit->pageHeading; ?></h2>
+        <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
+        <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
+
+        <div id="mainTabs" style="font-size:.9em;" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog">
+            <ul>
+                <li><a href="#invr">All Invoices</a></li>
+                <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
+            </ul>
+            <div id="invr" >
                 <form id="fcat" action="InvoiceReport.php" method="post">
-                    <h2><?php echo $wInit->pageHeading; ?></h2>
                     <table style="float: left;">
                         <tr>
                             <th colspan="3">Time Period</th>
@@ -1042,16 +1117,26 @@ $(document).ready(function() {
                         </tr>
                     </table>
                 </form>
-            </div>
-            <div style="clear:both;"></div>
-            <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px;">
-                <div><input id="printButton" value="Print" type="button"/></div>
-                <div style="margin-top:10px; margin-bottom:10px; min-width: 350px;">
-                    <?php echo $headerTableMkup; ?>
-                    <div style="clear:both;"></div>
+                <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox" style="display:none; padding: 5px; padding-bottom:25px;">
+                    <div><input id="printButton" value="Print" type="button"/></div>
+                    <div style="margin-top:10px; margin-bottom:10px; min-width: 350px;">
+                        <?php echo $headerTableMkup; ?>
+                        <div style="clear:both;"></div>
+                    </div>
+                    <?php echo $dataTable; ?>
                 </div>
-                <?php echo $dataTable; ?>
             </div>
+                <div id="vInv" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
+                    <input type="button" id="btnInvGo" value="Refresh"/>
+                      <div id="rptInvdiv" class="hhk-visitdialog"></div>
+                </div>
+        </div>
+        <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
+        <form name="xform" id="xform" method="post"></form>
+        <div id="keysfees" style="font-size: .9em;"></div>
+
+        <div id="cardonfile" style="font-size: .9em; display:none;"></div>
+
         <div id="setBillDate" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em;">
             <span class="ui-helper-hidden-accessible"><input type="text"/></span>
             <table><tr>
