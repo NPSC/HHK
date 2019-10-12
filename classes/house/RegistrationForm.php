@@ -14,7 +14,7 @@ class RegistrationForm {
 
 
     public function getDocument(\PDO $dbh, \Guest $priGuest, \Guest $billGuest, array $addtionalGuests, $patientName, $hospitalName, $roomTitle,
-            $cardName, $cardType, $cardNumber, $logoUrl, $logoWidth, $instructionFileName, $expectedPayType = '', $note = '', $todaysDate = '') {
+            $cardName, $cardType, $cardNumber, $logoUrl, $logoWidth, $instructionFileName, $agreement, $expectedPayType = '', $note = '', $todaysDate = '') {
 
 //        $paymentInfoSection = '<div><span>The House asks that guests leave a card on file for security purposes. You will be charged for the nights stayed at the agreed upon rate after check-out or after x weeks. </div>';
 
@@ -86,7 +86,7 @@ class RegistrationForm {
 //
 //        $doc .= $this->makeHeader($logoUrl, $logoWidth, $uS->siteName, $house->get_webSite(), $address, $phones);
 
-        $doc .= $this->makeInstructions($instructionFileName);
+        $doc .= $this->makeInstructions($instructionFileName, $agreement);
 
         $doc .= $this->makeSigLine($fullNames);
 
@@ -162,11 +162,11 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
 
     }
 
-    public function makeInstructions ($instructionFileName) {
+    public function makeInstructions ($instructionFileName, $text) {
 
-        if ($instructionFileName != '' && file_exists($instructionFileName)) {
+        if ($text == '' && $instructionFileName != '' && file_exists($instructionFileName)) {
             $text = file_get_contents($instructionFileName);
-        } else {
+        } else if ($text == '') {
             $text = HTMLContainer::generateMarkup('p', 'Agreement text file is missing.', array('class'=>'ui-state-error'));
         }
 

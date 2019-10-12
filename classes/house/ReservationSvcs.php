@@ -138,14 +138,30 @@ class ReservationSvcs {
     public static function generateCkinDoc(\PDO $dbh, $idReservation = 0, $idVisit = 0, $span = 0, $logoURL = '', $notes = '') {
 
         $uS = Session::getInstance();
+        $docs = array();
 
         $instructFileName = REL_BASE_DIR . 'conf'. DS . 'agreement.txt';
 
+        $stmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = 'Reg_Agreement'");
+        $docRows = $stmt->fetchAll();
 
         if ($uS->RegForm == 1) {
 
-            $doc = RegisterForm::prepareRegForm($dbh, $idVisit, $span, $idReservation, $instructFileName);
-            $sty = RegisterForm::getStyling();
+            if (count($docRows) > 0) {
+                foreach($docRows as $d) {
+                    $docs[] = array('doc'=>RegisterForm::prepareRegForm($dbh, $idVisit, $span, $idReservation, $instructFileName, $d['Doc']),
+                        'style'=>RegisterForm::getStyling(),
+                        'tabIndex'=>$d['Code'],
+                        'tabTitle'=>$d['Description']);
+                }
+            } else {
+
+                $docs[] = array('doc'=>RegisterForm::prepareRegForm($dbh, $idVisit, $span, $idReservation, $instructFileName),
+                    'style'=>RegisterForm::getStyling(),
+                    'tabIndex'=>'en',
+                    'tabTitle'=>'English');
+
+            }
 
         } else if ($uS->RegForm == 2) {
 
@@ -323,30 +339,63 @@ class ReservationSvcs {
             $regdoc = new RegistrationForm();
             $logoWidth = 114;
 
-            $doc = $regdoc->getDocument($dbh,
-                    $priGuest,
-                    $billingGuest,
-                    $additionalGuests,
-                    $patientName,
-                    $hospitalName,
-                    $roomTitle,
-                    $cardName,
-                    $cardType,
-                    $cardNumber,
-                    $logoURL,
-                    $logoWidth,
-                    $instructFileName,
-                    $expectedPayType,
-                    $notes,
-                    $todaysDate
+            if (count($docRows) > 0) {
+            foreach($docRows as $d) {
+
+                $docs[] = array(
+                    'doc'=>$regdoc->getDocument($dbh,
+                        $priGuest,
+                        $billingGuest,
+                        $additionalGuests,
+                        $patientName,
+                        $hospitalName,
+                        $roomTitle,
+                        $cardName,
+                        $cardType,
+                        $cardNumber,
+                        $logoURL,
+                        $logoWidth,
+                        $instructFileName,
+                        $d['doc'],
+                        $expectedPayType,
+                        $notes,
+                        $todaysDate),
+                    'style'=>$regdoc->getStyle(),
+                    'tabIndex'=>$d['Code'],
+                    'tabTitle'=>$d['Description']
                 );
-            $sty = $regdoc->getStyle();
+            }
+            } else {
+
+                $docs[] = array(
+                    'doc'=>$regdoc->getDocument($dbh,
+                        $priGuest,
+                        $billingGuest,
+                        $additionalGuests,
+                        $patientName,
+                        $hospitalName,
+                        $roomTitle,
+                        $cardName,
+                        $cardType,
+                        $cardNumber,
+                        $logoURL,
+                        $logoWidth,
+                        $instructFileName,
+                        '',
+                        $expectedPayType,
+                        $notes,
+                        $todaysDate),
+                    'style'=>$regdoc->getStyle(),
+                    'tabIndex'=>'en',
+                    'tabTitle'=>'English'
+                );
+            }
 
         } else {
-            return array('doc'=>'Error - Registration Form # is not defined in the system configuration table.', 'style'=>' ');
+            return array('docs'=>'Error - Registration Form is not defined in the system configuration.', 'style'=>' ');
         }
 
-        return array('doc'=>$doc, 'style'=>$sty);
+        return array('docs'=>$docs);
 
     }
 

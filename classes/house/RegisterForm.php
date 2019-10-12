@@ -158,11 +158,13 @@ class RegisterForm {
 
     }
 
-    protected static function AgreementBlock(array $guests, $agreementLabel, $instructionFileName) {
+    protected static function AgreementBlock(array $guests, $agreementLabel, $instructionFileName, $agreement) {
 
         $mkup = HTMLContainer::generateMarkup('h2', $agreementLabel, array('style'=>'border:none;border-bottom:1.5pt solid #98C723'));
 
-        if ($instructionFileName != '' && file_exists($instructionFileName)) {
+        if ($agreement != '') {
+            $mkup .= $agreement;
+        } else if ($instructionFileName != '' && file_exists($instructionFileName)) {
             $mkup .= HTMLContainer::generateMarkup('div', file_get_contents($instructionFileName), array('class'=>'hhk-agreement'));
         } else {
             $mkup .= HTMLContainer::generateMarkup('div', "Agreement text file is missing.  '$instructionFileName'", array('class'=>'ui-state-error'));
@@ -346,7 +348,7 @@ class RegisterForm {
     }
 
     protected static function generateDocument(\PDO $dbh, $title, \Role $patient, array $guests,  $houseAddr, $hospital, $hospRoom, $patientRelCodes,
-            $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $expDepartPrompt, $agreementLabel, $instructionFileName, $creditRecord = '', $notes = '', $roomFeeTitle = 'Pledged Fee') {
+            $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $expDepartPrompt, $agreementLabel, $instructionFileName, $agreement, $creditRecord = '', $notes = '', $roomFeeTitle = 'Pledged Fee') {
 
         $uS = Session::getInstance();
 
@@ -374,7 +376,7 @@ class RegisterForm {
         }
 
         // Agreement
-        $mkup .= self::AgreementBlock($guests, $agreementLabel, $instructionFileName);
+        $mkup .= self::AgreementBlock($guests, $agreementLabel, $instructionFileName, $agreement);
 
         $mkup .= "</div>";
 
@@ -421,7 +423,7 @@ p.label {
 </style>';
     }
 
-    public static function prepareRegForm(PDO $dbh, $idVisit, $span, $idReservation = 0, $instructionFileName = '') {
+    public static function prepareRegForm(PDO $dbh, $idVisit, $span, $idReservation = 0, $instructionFileName = '', $agreement = '') {
 
         $uS = Session::getInstance();
         $labels = new Config_Lite(LABEL_FILE);
@@ -713,6 +715,7 @@ p.label {
                 $expectedDeparturePrompt,
                 $labels->getString('referral', 'agreementTitle','Agreement'),
                 $instructionFileName,
+                $agreement,
                 $creditReport,
                 $notes,
                 $labels->getString('register', 'rateTitle','Pledged Fee')

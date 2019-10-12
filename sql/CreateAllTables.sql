@@ -245,6 +245,27 @@ CREATE TABLE if not exists `desig_holidays` (
 ) ENGINE=InnoDB;
 
 
+-- -----------------------------------------------------
+-- Table `document`
+-- -----------------------------------------------------
+CREATE TABLE `document` (
+  `idDocument` int(11) NOT NULL AUTO_INCREMENT,
+  `Title` varchar(128) NOT NULL,
+  `Name` varchar(45) NOT NULL DEFAULT '',
+  `Category` varchar(5) NOT NULL DEFAULT '',
+  `Type` varchar(5) NOT NULL DEFAULT '',
+  `Folder` varchar(45) NOT NULL DEFAULT '',
+  `Language` varchar(5) NOT NULL DEFAULT '',
+  `Abstract` text,
+  `Doc` blob,
+  `Status` varchar(5) NOT NULL,
+  `Last_Updated` datetime DEFAULT NULL,
+  `Created_By` varchar(45) NOT NULL DEFAULT '',
+  `Updated_By` varchar(45) NOT NULL DEFAULT '',
+  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idDocument`)
+) ENGINE=MyISAM;
+
 
 -- -----------------------------------------------------
 -- Table `donations`

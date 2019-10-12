@@ -103,6 +103,26 @@ class Patch {
 
             }
         }
+
+        // Load Registration document
+        $instructionFileName = REL_BASE_DIR . 'conf'. DS . 'agreement.txt';
+
+        $rstmt = $dbh->query("Select Code from gen_lookups where Table_Name = 'Reg_Agreement'");
+        $rows = $rstmt->fetchAll(\PDO::FETCH_NUM);
+
+        if (count($rows) == 0 && file_exists($instructionFileName)) {
+
+            $doc = addslashes(file_get_contents($instructionFileName));
+
+            $inctr = $dbh->exec("insert into document (`Title`, `Category`, `Type`, `Language`, `Doc`, `Status`, `Last_Updated`, `Updated_By`) "
+                    . "Values ('Registration Form', 'form', 'html', 'en', '$doc', 'a', now(), 'patch')");
+
+            if ($inctr > 0) {
+                $dbh->exec("insert into gen_lookups (`Table_Name`, `Code`, `Description`, `Substitute`) "
+                        . "VALUES ('Reg_Agreement', 'en', 'English', '$inctr')");
+            }
+        }
+
     }
 
 

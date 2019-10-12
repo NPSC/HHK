@@ -104,9 +104,29 @@ if ($idVisit == 0 && $idResv > 0) {
 
 // Generate Registration
 $reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, $span, '../conf/registrationLogo.png');
+$li = '';
+$tabContent = '';
 
-$sty = $reservArray['style'];
-$regForm = $reservArray['doc'];
+foreach ($reservArray['docs'] as $r) {
+
+    $li .= HTMLContainer::generateMarkup('li',
+            HTMLContainer::generateMarkup('a', $r['tabTitle'] , array('href'=>'#'.$r['tabIndex'])));
+
+
+    $tabContent .= HTMLContainer::generateMarkup('div',
+        HTMLContainer::generateMarkup('div', $r['doc'], array('id'=>'PrintArea'.$r['tabIndex'])),
+        array('id'=>$r['tabIndex']));
+
+    $sty = $r['style'];
+}
+
+$ul = HTMLContainer::generateMarkup('ul', $li, array());
+
+$tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'regTabDiv'));
+$contrls = HTMLContainer::generateMarkup('div', HTMLInput::generateMarkup('Print', array('type'=>'button', 'id'=>'btnPrint', 'data-tab'=>$r['tabIndex'])), array());
+
+//$sty = $reservArray['style'];
+//$regForm = $reservArray['doc'];
 unset($reservArray);
 
 ?>
@@ -140,32 +160,36 @@ $(document).ready(function() {
     $('#btnPrint').button();
 
     $('#btnPrint').click(function() {
-        $('div#PrintArea').printArea(opt);
+        opt.popHt = $('div#PrintArea' + $(this).data('tab')).height();
+        $('div#PrintArea' + $(this).data('tab')).printArea(opt);
     });
 
     $('#mainTabs').tabs().show();
+    $('#regTabDiv').tabs();
 
 });
 </script>
     </head>
     <body>
-<!--        <h2><?php echo $wInit->pageHeading; ?></h2>-->
+
         <div id="mainTabs" style="max-width:900px; display:none; font-size:.9em;">
             <ul>
                 <li id="liReg"><a href="#vreg">Registration Form</a></li>
 <!--                <li><a href="#vperm">Permissions</a></li>-->
             </ul>
             <div id="vreg" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
-                <div style="margin:10px;">
+                <?php echo $contrls; ?>
+                <?php echo $tabControl; ?>
+<!--                <div style="margin-bottom:20px; display:inline;">
                     <input type="button" id="btnPrint" value="Print"/>
                 </div>
                 <div id="PrintArea">
-                    <?php echo $regForm; ?>
-                </div>
+                    <?php //echo $regForm; ?>
+                </div>-->
             </div>
-            <div id="vperm" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
-                <h2>No permission forms were found.</h2>
-            </div>
+        </div>
+        <div id="vperm" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
+            <h2>No permission forms were found.</h2>
         </div>
     </body>
 </html>

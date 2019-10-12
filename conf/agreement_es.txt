@@ -1,0 +1,17 @@
+<p style="margin-bottom:10px;">El (nombre de la casa) es una casa de hospitalidad sanitaria sin fines de lucro. El Guest House es estrictamente un centro de alojamiento para pacientes referidos que reciben atención activa en nuestras instituciones asociadas y sus familiares / amigos.</span></p>
+<ul style="list-style-type:disc;margin-left: 20px;">
+    <li><span style="font-weight: bold;">Todos los huéspedes deben registrarse en la recepción</span></li>
+    <li><span style="font-weight: bold;">Está estrictamente prohibido fumar.</span></li>
+    <li><span ">El personal debe tener acceso a la sala para realizar tareas de limpieza y mantenimiento regulares. Las habitaciones deben mantenerse ordenadas para garantizar que se limpien adecuadamente.</span></li>
+    <li><span style="font-weight: bold;">En caso de emergencia,</span> llamada ###.</li>
+    <li><span style="font-weight: bold;">Se prohíben las mascotas.</span> Si se encuentra una mascota en una habitación de invitados, el personal pedirá que se retire y puede pedirle a los huéspedes que abandonen las instalaciones.</li>
+    <li>No queme velas, incienso ni ningún otro objeto inflamable en las habitaciones.</li>
+    <li><span style="font-weight: bold;">Los alimentos deben almacenarse adecuadamente</span> en contenedores sellados o en el refrigerador. Deseche los alimentos adecuadamente al momento de la salida.</li>
+    <li><span style="font-weight: bold;">No quite nada de las habitaciones.</span></li>
+    <li><span style="font-weight: bold;">No intente hacer reparaciones usted mismo.</span> Comuníquese con el gerente de la casa o la recepción para cualquier problema con electrodomésticos, enchufes o tuberías.</li>
+    <li>La casa se esfuerza por proporcionar una comunidad de apoyo y bienvenida para sus huéspedes; ayúdenos siendo respetuosos con todo el personal, los voluntarios, los demás huéspedes y los residentes.</li>
+    <li><span style="font-weight: bold;">Hora de salida es las 10 AM.</span> Deje sus llaves en la recepción.</li>
+</ul>
+<p style="margin-top:10px;">El incumplimiento de cualquiera o todas estas políticas o el abuso del privilegio de permanecer en la casa de todos modos puede resultar en la pérdida de la estadía de la familia. Los huéspedes son responsables de comunicar cualquier problema o problema directamente al (personal).</p>
+<p style="margin-top:10px;"><span style="font-weight: bold;">Descargo de responsabilidad:</span>  He ejecutado este lanzamiento voluntariamente y entiendo eso al firmar este lanzamiento. Renuncio a cualquier derecho que pueda tener para demandar o hacer cualquier reclamo o demanda en mi nombre o en nombre de cualquier miembro de la familia por las lesiones sufridas durante el curso de la residencia en la Cámara. Entiendo y pretendo que este comunicado cubra todas las lesiones, incluso si tales lesiones son el resultado de la negligencia de la (Casa) o de cualquier persona asociada con la Casa. La autorización y la liberación constituyen el acuerdo completo entre la Cámara y yo con respecto a los temas tratados en este documento. La casa se reserva el derecho de inspeccionar cualquier habitación en cualquier momento.</p>
+<p style="font-weight: bold;margin-top:10px; font-style: italic;">He / hemos leído, entendido y acepto todas las condiciones de este acuerdo que recibí / recibimos hoy. Al firmar este formulario de registro de invitado, Acepto / aceptamos cumplir con las reglas y regulaciones de la Cámara y lo comunicaré a los demás miembros de mi grupo.</p>
