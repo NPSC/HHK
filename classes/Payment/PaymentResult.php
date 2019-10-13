@@ -287,15 +287,11 @@ class ReturnResult extends PaymentResult {
         // set status
         $this->status = PaymentResult::ACCEPTED;
 
+        // zero total invoices do not have payment records.
         if ($rtnResp->getIdPayment() > 0 && $this->idInvoice > 0) {
-            // payment-invoice
-            $payInvRs = new PaymentInvoiceRS();
-            $payInvRs->Amount->setNewVal($rtnResp->getAmount());
-            $payInvRs->Invoice_Id->setNewVal($this->idInvoice);
-            $payInvRs->Payment_Id->setNewVal($rtnResp->getIdPayment());
-            EditRS::insert($dbh, $payInvRs);
-
+            $this->createPaymentInvoiceRcrd($dbh, $rtnResp->getIdPayment(), $this->idInvoice, $rtnResp->getAmount());
         }
+
 
         // Make out receipt
         $this->receiptMarkup = Receipt::createReturnMarkup($dbh, $rtnResp, $uS->siteName, $uS->sId);

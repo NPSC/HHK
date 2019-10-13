@@ -50,7 +50,7 @@ class WebhookResponse extends GatewayResponse implements iGatewayResponse {
         return $this->getPaymentPlanID();
     }
 
-    public function saveCardonFIle() {
+    public function saveCardonFile() {
         if (isset($this->result['SaveCardOnFile']) && strtolower($this->result['SaveCardOnFile']) === 'true') {
             return TRUE;
         }
@@ -435,7 +435,7 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
         return '';
     }
 
-    public function saveCardonFIle() {
+    public function saveCardonFile() {
         if ($this->getPaymentPlanID() != '') {
             return TRUE;
         }
@@ -582,7 +582,7 @@ class VerifyCurlCofResponse extends VerifyCurlResponse {
         return '';
     }
 
-    public function saveCardonFIle() {
+    public function saveCardonFile() {
         if ($this->getToken() != '') {
             return TRUE;
         }

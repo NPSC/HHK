@@ -17,28 +17,43 @@
  */
 class CreditToken {
 
-    public static function storeToken(\PDO $dbh, $idRegistration, $idPayor, iGatewayResponse $vr) {
+    public static function storeToken(\PDO $dbh, $idRegistration, $idPayor, iGatewayResponse $vr, $idToken = 0) {
 
-        if ($vr->saveCardonFIle() === FALSE || $vr->getToken() == '') {
+        if ($vr->saveCardonFile() === FALSE || $vr->getToken() == '') {
             return 0;
         }
 
         $cardNum = str_ireplace('x', '', $vr->getMaskedAccount());
 
-        $gtRs = self::findTokenRS($dbh, $idPayor, $vr->getCardHolderName(), $vr->getCardType(), $cardNum);
+        if ($idToken > 0) {
+            $gtRs = self::getTokenRsFromId($dbh, $idToken);
+        } else {
+            $gtRs = self::findTokenRS($dbh, $idPayor, $vr->getCardHolderName(), $vr->getCardType(), $cardNum);
+        }
 
         // Load values
         $gtRs->idGuest->setNewVal($idPayor);
         $gtRs->idRegistration->setNewVal($idRegistration);
 
-        $gtRs->CardHolderName->setNewVal($vr->getCardHolderName());
+        if ($vr->getCardHolderName() != '') {
+            $gtRs->CardHolderName->setNewVal($vr->getCardHolderName());
+        }
         $gtRs->CardType->setNewVal($vr->getCardType());
-        $gtRs->ExpDate->setNewVal($vr->getExpDate());
+
+        if ($vr->getExpDate() != '') {
+            $gtRs->ExpDate->setNewVal($vr->getExpDate());
+        }
         $gtRs->Frequency->setNewVal('OneTime');
         $gtRs->Granted_Date->setNewVal(date('Y-m-d H:i:s'));
         $gtRs->LifetimeDays->setNewVal(180);
-        $gtRs->MaskedAccount->setNewVal($cardNum);
-        $gtRs->OperatorID->setNewVal($vr->getOperatorID());
+
+        if ($cardNum != '') {
+            $gtRs->MaskedAccount->setNewVal($cardNum);
+        }
+
+        if ($vr->getOperatorID() != '') {
+            $gtRs->OperatorID->setNewVal($vr->getOperatorID());
+        }
         $gtRs->Response_Code->setNewVal($vr->getResponseCode());
         $gtRs->Status->setNewVal($vr->getResponseCode());
         $gtRs->StatusMessage->setNewVal($vr->getResponseMessage());

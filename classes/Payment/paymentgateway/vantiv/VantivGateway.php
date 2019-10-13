@@ -57,10 +57,10 @@ class VantivGateway extends PaymentGateway {
                     ->setMemo(MpVersion::PosVersion);
 
             // Run the token transaction
-            $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $this, $cpay, $pmp->getPayNotes());
+            $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $invoice->getIdGroup(), $this, $cpay, $pmp->getPayNotes());
 
             // Analyze the result
-            $payResult = PaymentSvcs::AnalyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken());
+            $payResult = $this->analyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken());
         } else {
 
             // Initialiaze hosted payment
@@ -143,7 +143,7 @@ class VantivGateway extends PaymentGateway {
 
         try {
 
-            $csResp = TokenTX::creditVoidReturnToken($dbh, $payRs->idPayor->getstoredVal(), $uS->ccgw, $revRequest, $payRs);
+            $csResp = TokenTX::creditVoidReturnToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $revRequest, $payRs);
 
             switch ($csResp->getStatus()) {
 
@@ -221,7 +221,7 @@ class VantivGateway extends PaymentGateway {
 
             try {
 
-                $csResp = TokenTX::creditReverseToken($dbh, $payRs->idPayor->getstoredVal(), $this, $revRequest, $payRs, $paymentNotes);
+                $csResp = TokenTX::creditReverseToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $revRequest, $payRs, $paymentNotes);
 
                 switch ($csResp->response->getStatus()) {
 
@@ -230,7 +230,7 @@ class VantivGateway extends PaymentGateway {
                         // Update invoice
                         $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
 
-                        $reply .= 'Payment is reversed.  ';
+
                         $csResp->idVisit = $invoice->getOrderNumber();
                         $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId, 'Reverse Sale')));
                         $dataArray['success'] = $reply;
@@ -260,7 +260,10 @@ class VantivGateway extends PaymentGateway {
         return array('warning' => 'Payment is ineligable for reversal.  ', 'bid' => $bid);
     }
 
-    public function returnPayment(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid) {
+    // Returns a Payment
+    protected function _returnPayment(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $returnAmt, $bid) {
+
+        $uS = Session::getInstance();
 
         // find the token
         if ($payRs->idToken->getStoredVal() > 0) {
@@ -269,22 +272,6 @@ class VantivGateway extends PaymentGateway {
             return array('warning' => 'Return Failed.  Payment Token not found.  ', 'bid' => $bid);
         }
 
-        // Find hte detail record.
-        $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
-        $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($arows) < 1) {
-            return array('warning' => 'Payment Detail record not found.  Unable to Return. ', 'bid' => $bid);
-        }
-
-        $pAuthRs = new Payment_AuthRS();
-        EditRS::loadRow(array_pop($arows), $pAuthRs);
-
-        if ($pAuthRs->Status_Code->getStoredVal() != PaymentStatusCode::Paid && $pAuthRs->Status_Code->getStoredVal() != PaymentStatusCode::VoidReturn) {
-            return array('warning' => 'This Payment is ineligable for Return. ', 'bid' => $bid);
-        }
-
-
         // Set up request
         $returnRequest = new CreditReturnTokenRequest();
         $returnRequest->setCardHolderName($tknRs->CardHolderName->getStoredVal());
@@ -292,20 +279,16 @@ class VantivGateway extends PaymentGateway {
         $returnRequest->setInvoice($invoice->getInvoiceNumber());
 
         // Determine amount to return
-//        if ($returnAmt == 0) {
-            $returnRequest->setPurchaseAmount($pAuthRs->Approved_Amount->getStoredVal());
-//        } else if ($returnAmt <= $pAuthRs->Approved_Amount->getStoredVal()) {
-//            $returnRequest->setPurchaseAmount($returnAmt);
-//        } else {
-//            return array('warning' => 'Return Failed.  Return amount is larger than the original purchase amount.  ', 'bid' => $bid);
-//        }
+        $returnRequest->setPurchaseAmount($returnAmt);
 
         $returnRequest->setToken($tknRs->Token->getStoredVal());
         $returnRequest->setTokenId($tknRs->idGuest_token->getStoredVal());
 
+        $dataArray = array('bid' => $bid);
+
         try {
 
-            $csResp = TokenTX::creditReturnToken($dbh, $payRs->idPayor->getstoredVal(), $this, $returnRequest, $payRs);
+            $csResp = TokenTX::creditReturnToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $returnRequest, $payRs);
 
             switch ($csResp->response->getStatus()) {
 
@@ -315,7 +298,6 @@ class VantivGateway extends PaymentGateway {
                     // Update invoice
                     $invoice->updateInvoiceBalance($dbh, 0 - $csResp->response->getAuthorizedAmount(), $uS->username);
 
-                    $reply .= 'Payment is Returned.  ';
                     $csResp->idVisit = $invoice->getOrderNumber();
                     $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $csResp, $uS->siteName, $uS->sId)));
 
@@ -331,6 +313,7 @@ class VantivGateway extends PaymentGateway {
 
                     return array('warning' => '** Return Invalid or Error. **  ', 'bid' => $bid);
             }
+
         } catch (Hk_Exception_Payment $exPay) {
 
             return array('warning' => "Payment Error = " . $exPay->getMessage(), 'bid' => $bid);
@@ -342,6 +325,7 @@ class VantivGateway extends PaymentGateway {
     public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes = '') {
 
         $tokenRS = CreditToken::getTokenRsFromId($dbh, $rtnToken);
+        $amount = abs($invoice->getAmount());
 
         // Do we have a token?
         if (CreditToken::hasToken($tokenRS)) {
@@ -361,11 +345,37 @@ class VantivGateway extends PaymentGateway {
             $returnRequest->setTokenId($tokenRS->idGuest_token->getStoredVal());
 
 
-            $tokenResp = TokenTX::creditReturnToken($dbh, $invoice->getSoldToId(), $uS->ccgw, $returnRequest, NULL, $paymentNotes);
+            $tokenResp = TokenTX::creditReturnToken($dbh, $invoice->getSoldToId(), $invoice->getIdGroup(), $this, $returnRequest, NULL, $paymentNotes);
 
             // Analyze the result
-            $rtnResult = PaymentSvcs::AnalyzeCreditReturnResult($dbh, $tokenResp, $invoice, $rtnToken);
-            $rtnResult->setDisplayMessage('Refund to Credit Card.  ');
+            $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $idToken);
+
+            switch ($tokenResp->getStatus()) {
+
+                case CreditPayments::STATUS_APPROVED:
+
+                    // Update invoice
+                    $invoice->updateInvoiceBalance($dbh, 0 - $tokenResp->response->getAuthorizedAmount(), $uS->username);
+
+                    $rtnResult->feePaymentAccepted($dbh, $uS, $tokenResp, $invoice);
+                    $rtnResult->setDisplayMessage('Refund by Credit Card.  ');
+
+                    break;
+
+                case CreditPayments::STATUS_DECLINED:
+
+                    $rtnResult->setStatus(PaymentResult::DENIED);
+                    $rtnResult->feePaymentRejected($dbh, $uS, $tokenResp, $invoice);
+                    $rtnResult->setDisplayMessage('** The Return is Declined. **  Message: ' . $tokenResp->response->getResponseMessage());
+
+                    break;
+
+                default:
+
+                    $rtnResult->setStatus(PaymentResult::ERROR);
+                    $rtnResult->feePaymentError($dbh, $uS);
+                    $rtnResult->setDisplayMessage('** Return Invalid or Error **  Message: ' . $tokenResp->response->getResponseMessage());
+            }
 
         } else {
             throw new Hk_Exception_Payment('Return Failed.  Credit card token not found.  ');
@@ -468,7 +478,7 @@ class VantivGateway extends PaymentGateway {
         return CardInfo::sendToPortal($dbh, $this, $idGuest, $idGroup, $initCi);
     }
 
-    public function processHostedReply(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName = '') {
+    public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes) {
 
         $payResult = NULL;
         $rtnCode = '';
@@ -537,7 +547,8 @@ class VantivGateway extends PaymentGateway {
                     $invoice = new Invoice($dbh, $csResp->getInvoiceNumber());
 
                     // Analyze the result
-                    $payResult = PaymentSvcs::AnalyzeCredSaleResult($dbh, $csResp, $invoice);
+                    $payResult = $this->analyzeCredSaleResult($dbh, $csResp, $invoice, 0, TRUE, TRUE);
+
                 } else {
 
                     $payResult = new PaymentResult($idInv, 0, 0);
@@ -573,7 +584,7 @@ class VantivGateway extends PaymentGateway {
 
         try {
 
-            $csResp = TokenTX::creditVoidSaleToken($dbh, $payRs->idPayor->getstoredVal(), $this, $voidRequest, $payRs, $paymentNotes);
+            $csResp = TokenTX::creditVoidSaleToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $voidRequest, $payRs, $paymentNotes);
 
             switch ($csResp->response->getStatus()) {
 
@@ -615,6 +626,67 @@ class VantivGateway extends PaymentGateway {
         }
 
         return $dataArray;
+    }
+
+    public function analyzeCredSaleResult(\PDO $dbh, PaymentResponse $payResp, \Invoice $invoice, $idToken, $useAVS = FALSE, $useCVV = FALSE) {
+
+        $uS = Session::getInstance();
+
+        $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $idToken);
+
+
+        switch ($payResp->getStatus()) {
+
+            case CreditPayments::STATUS_APPROVED:
+
+                // Update invoice
+                $invoice->updateInvoiceBalance($dbh, $payResp->response->getAuthorizedAmount(), $uS->username);
+
+                $payResult->feePaymentAccepted($dbh, $uS, $payResp, $invoice);
+                $payResult->setDisplayMessage('Paid by Credit Card.  ');
+
+                if ($payResp->isPartialPayment()) {
+                    $payResult->setDisplayMessage('** Partially Approved Amount: ' . number_format($payResp->response->getAuthorizedAmount(), 2) . ' (Remaining Balance Due: ' . number_format($invoice->getBalance(), 2) . ').  ');
+                }
+
+                if ($useAVS) {
+                    $avsResult = new AVSResult($payResp->response->getAVSResult());
+
+                    if ($avsResult->isZipMatch() === FALSE) {
+                        $payResult->setDisplayMessage($avsResult->getResultMessage() . '  ');
+                    }
+                }
+
+                if ($useCVV) {
+                    $cvvResult = new CVVResult($payResp->response->getCvvResult());
+                    if ($cvvResult->isCvvMatch() === FALSE && $uS->CardSwipe === FALSE) {
+                        $payResult->setDisplayMessage($cvvResult->getResultMessage() . '  ');
+                    }
+                }
+
+                break;
+
+            case CreditPayments::STATUS_DECLINED:
+
+                $payResult->setStatus(PaymentResult::DENIED);
+                $payResult->feePaymentRejected($dbh, $uS, $payResp, $invoice);
+
+                $msg = '** The Payment is Declined. **';
+                if ($payResp->response->getResponseMessage() != '') {
+                    $msg .= 'Message: ' . $payResp->response->getResponseMessage();
+                }
+                $payResult->setDisplayMessage($msg);
+
+                break;
+
+            default:
+
+                $payResult->setStatus(PaymentResult::ERROR);
+                $payResult->feePaymentError($dbh, $uS);
+                $payResult->setDisplayMessage('** Payment Invalid or Error **  Message: ' . $payResp->response->getResponseMessage());
+        }
+
+        return $payResult;
     }
 
     public function getPaymentResponseObj(iGatewayResponse $creditTokenResponse, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {

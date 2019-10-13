@@ -38,7 +38,7 @@ interface iGatewayResponse {
     public function SignatureRequired();
 
     public function getToken();
-    public function saveCardonFIle();
+    public function saveCardonFile();
     public function getInvoiceNumber();
     public function getOperatorId();
     public function getErrorMessage();
@@ -112,7 +112,7 @@ abstract class GatewayResponse {
         return '';
     }
 
-    public function saveCardonFIle() {
+    public function saveCardonFile() {
         return TRUE;
     }
 }
@@ -245,7 +245,7 @@ class StandInGwResponse implements iGatewayResponse {
         if ($this->cardholderName == '') {
             return htmlentities($this->pAuthRs->Cardholder_Name->getStoredVal(), ENT_QUOTES);
         }
-        
+
         return htmlentities($this->cardholderName, ENT_QUOTES);
     }
 
@@ -312,7 +312,7 @@ class StandInGwResponse implements iGatewayResponse {
         return $this->token;
     }
 
-    public function saveCardonFIle() {
+    public function saveCardonFile() {
 
         if ($this->getToken() != '') {
             return TRUE;

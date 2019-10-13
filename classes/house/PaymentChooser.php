@@ -55,11 +55,11 @@ class PaymentChooser {
 
         // Credit token
         if (isset($post['rbUseCard'])) {
-            $pmp->setIdToken(intval(filter_var($post['rbUseCard'], FILTER_SANITIZE_STRING), 10));
+            $pmp->setIdToken(intval(filter_var($post['rbUseCard'], FILTER_SANITIZE_NUMBER_INT), 10));
         }
 
         if (isset($post['rbUseCard' . $rtnIndex])) {
-            $pmp->setRtnIdToken(intval(filter_var($post['rbUseCard' . $rtnIndex], FILTER_SANITIZE_STRING), 10));
+            $pmp->setRtnIdToken(intval(filter_var($post['rbUseCard' . $rtnIndex], FILTER_SANITIZE_NUMBER_INT), 10));
         }
 
         // Manual Key check box

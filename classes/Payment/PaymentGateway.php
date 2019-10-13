@@ -115,12 +115,15 @@ abstract class PaymentGateway {
         $pAuthRs = new Payment_AuthRS();
         EditRS::loadRow(array_pop($arows), $pAuthRs);
 
-        if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid) {
-
-            return $this->sendReturn($dbh, $payRs, $pAuthRs, $invoice, $pAuthRs->Approved_Amount->getStoredVal(), $bid);
+        if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid && $pAuthRs->Status_Code->getStoredVal() != PaymentStatusCode::VoidReturn) {
+            return $this->_returnPayment($dbh, $payRs, $pAuthRs, $invoice, $pAuthRs->Approved_Amount->getStoredVal(), $bid);
         }
 
         return array('warning' => 'This Payment is ineligable for Return. ', 'bid' => $bid);
+    }
+
+    protected function _returnPayment(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $retAmount, $bid) {
+        return array('warning' => '_returnPayment is not implemented. ');
     }
 
     public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes = '') {
@@ -133,7 +136,7 @@ abstract class PaymentGateway {
         return $this->voidSale($dbh, $invoice, $payRs, $paymentNotes, $bid);
     }
 
-    public abstract function processHostedReply(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName);
+    public abstract function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes);
 
     public function processWebhook(\PDO $dbh, $post, $payNotes, $userName) {
         throw new Hk_Exception_Payment('Webhook not implemeneted');
@@ -255,7 +258,7 @@ class LocalGateway extends PaymentGateway {
 
     }
 
-    public function processHostedReply(\PDO $dbh, $post, $token, $idInv, $payNotes, $userName) {
+    public function processHostedReply(\PDO $dbh, $post, $ssoTtoken, $idInv, $payNotes) {
 
     }
 

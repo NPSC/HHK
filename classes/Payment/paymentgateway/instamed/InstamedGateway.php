@@ -413,7 +413,7 @@ class InstamedGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    protected function sendReturn(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $returnAmt, $bid) {
+    protected function _returnPayment(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $returnAmt, $bid) {
 
         $uS = Session::getInstance();
 
@@ -562,7 +562,7 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
 
     }
 
-    public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $userName = '') {
+    public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes) {
 
         $uS = Session::getInstance();
         $transType = '';

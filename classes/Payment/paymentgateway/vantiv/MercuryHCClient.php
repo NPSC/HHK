@@ -586,7 +586,7 @@ abstract class MercResponse {
         return 0;
     }
 
-    public function saveCardOnFIle() {
+    public function saveCardOnFile() {
         return TRUE;
     }
 
@@ -1487,6 +1487,13 @@ abstract class MercTokenRequest extends MercRequest {
         return $this;
     }
 
+    public function getOperatorID() {
+        if (isset($this->fields["OperatorID"])) {
+            return $this->fields["OperatorID"];
+        }
+        return '';
+    }
+
     public function setTerminalName($v) {
         if ($v != '') {
             $a = substr($v, 0, 20);
@@ -1755,7 +1762,15 @@ class CreditTokenResponse extends MercResponse implements iGatewayResponse {
     }
 
     public function getCardHolderName() {
+        if (isset($this->result->CardHolderName)) {
+            return $this->result->CardHolderName;
+        }
+
         return '';
+    }
+
+    public function setCardHolderName($v) {
+        $this->result->CardHolderName = $v;
     }
 
     public function getExpDate() {
@@ -1763,10 +1778,22 @@ class CreditTokenResponse extends MercResponse implements iGatewayResponse {
     }
 
     public function getOperatorId() {
+        if (isset($this->result->OperatorId)) {
+            return $this->result->OperatorId;
+        }
+
         return '';
     }
 
+    public function setOperatorId($v) {
+        $this->result->OperatorId = $v;
+    }
+
     public function getResponseMessage() {
+        return $this->getStatus();
+    }
+
+    public function getResponseCode() {
         return $this->getMessage();
     }
 
@@ -1783,6 +1810,11 @@ class CreditTokenResponse extends MercResponse implements iGatewayResponse {
 
         return '';
     }
+
+    public function setMaskedAccount($v) {
+        $this->result->Account = $v;
+    }
+
 
     public function getAcqRefData() {
         if (isset($this->result->AcqRefData)) {

@@ -59,7 +59,7 @@ class SaleReply extends CreditPayments {
         $vr = $pr->response;
 
         // Store any tokens
-        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr));
+        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr, $pr->getIdToken()));
 
         // Check for replay - AP*
         if ($vr->getResponseMessage() == MpStatusMessage::Replay) {
@@ -252,7 +252,7 @@ class VoidReply extends CreditPayments {
         $vr = $pr->response;
 
         // Store any tokens
-        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr));
+        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr, $pr->getIdToken()));
 
         // Payment record
         $payRs->Status_Code->setNewVal(PaymentStatusCode::VoidSale);
@@ -338,7 +338,7 @@ class ReverseReply extends CreditPayments {
         $vr = $pr->response;
 
         // Store any tokens
-        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr));
+        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr, $pr->getIdToken()));
 
         // Payment record
         $payRs->Status_Code->setNewVal(PaymentStatusCode::Reverse);
@@ -410,7 +410,7 @@ class ReturnReply extends CreditPayments {
         $vr = $pr->response;
 
         // Store any tokens
-        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr));
+        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr, $pr->getIdToken()));
 
         if (is_null($payRs)) {
 

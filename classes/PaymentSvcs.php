@@ -501,42 +501,6 @@ class PaymentSvcs {
         return $dataArray;
     }
 
-    public static function AnalyzeCreditReturnResult(\PDO $dbh, PaymentResponse $rtnResp, Invoice $invoice, $idToken = 0) {
-
-        $uS = Session::getInstance();
-
-        $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $idToken);
-
-        switch ($rtnResp->getStatus()) {
-
-            case CreditPayments::STATUS_APPROVED:
-
-                // Update invoice
-                $invoice->updateInvoiceBalance($dbh, 0 - $rtnResp->response->getAuthorizedAmount(), $uS->username);
-
-                $rtnResult->feePaymentAccepted($dbh, $uS, $rtnResp, $invoice);
-                $rtnResult->setDisplayMessage('Refund by Credit Card.  ');
-
-                break;
-
-            case CreditPayments::STATUS_DECLINED:
-
-                $rtnResult->setStatus(PaymentResult::DENIED);
-                $rtnResult->feePaymentRejected($dbh, $uS, $rtnResp, $invoice);
-                $rtnResult->setDisplayMessage('** The Return is Declined. **  Message: ' . $rtnResp->response->getResponseMessage());
-
-                break;
-
-            default:
-
-                $rtnResult->setStatus(PaymentResult::ERROR);
-                $rtnResult->feePaymentError($dbh, $uS);
-                $rtnResult->setDisplayMessage('** Return Invalid or Error **  Message: ' . $rtnResp->response->getResponseMessage());
-        }
-
-        return $rtnResult;
-    }
-
     public static function voidReturnFees(\PDO $dbh, $idPayment, $bid, $paymentDate = '') {
 
         $uS = Session::getInstance();
@@ -781,67 +745,6 @@ class PaymentSvcs {
         }
 
         return $dataArray;
-    }
-
-    public static function AnalyzeCredSaleResult(\PDO $dbh, PaymentResponse $payResp, \Invoice $invoice, $idToken = 0, $useAVS = TRUE, $useCVV = TRUE) {
-
-        $uS = Session::getInstance();
-
-        $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $idToken);
-
-
-        switch ($payResp->getStatus()) {
-
-            case CreditPayments::STATUS_APPROVED:
-
-                // Update invoice
-                $invoice->updateInvoiceBalance($dbh, $payResp->response->getAuthorizedAmount(), $uS->username);
-
-                $payResult->feePaymentAccepted($dbh, $uS, $payResp, $invoice);
-                $payResult->setDisplayMessage('Paid by Credit Card.  ');
-
-                if ($payResp->isPartialPayment()) {
-                    $payResult->setDisplayMessage('** Partially Approved Amount: ' . number_format($payResp->response->getAuthorizedAmount(), 2) . ' (Remaining Balance Due: ' . number_format($invoice->getBalance(), 2) . ').  ');
-                }
-
-                if ($useAVS) {
-                    $avsResult = new AVSResult($payResp->response->getAVSResult());
-
-                    if ($avsResult->isZipMatch() === FALSE) {
-                        $payResult->setDisplayMessage($avsResult->getResultMessage() . '  ');
-                    }
-                }
-
-                if ($useCVV) {
-                    $cvvResult = new CVVResult($payResp->response->getCvvResult());
-                    if ($cvvResult->isCvvMatch() === FALSE && $uS->CardSwipe === FALSE) {
-                        $payResult->setDisplayMessage($cvvResult->getResultMessage() . '  ');
-                    }
-                }
-
-                break;
-
-            case CreditPayments::STATUS_DECLINED:
-
-                $payResult->setStatus(PaymentResult::DENIED);
-                $payResult->feePaymentRejected($dbh, $uS, $payResp, $invoice);
-
-                $msg = '** The Payment is Declined. **';
-                if ($payResp->response->getResponseMessage() != '') {
-                    $msg .= 'Message: ' . $payResp->response->getResponseMessage();
-                }
-                $payResult->setDisplayMessage($msg);
-
-                break;
-
-            default:
-
-                $payResult->setStatus(PaymentResult::ERROR);
-                $payResult->feePaymentError($dbh, $uS);
-                $payResult->setDisplayMessage('** Payment Invalid or Error **  Message: ' . $payResp->response->getResponseMessage());
-        }
-
-        return $payResult;
     }
 
     public static function getInfoFromCardId(\PDO $dbh, $cardId) {
