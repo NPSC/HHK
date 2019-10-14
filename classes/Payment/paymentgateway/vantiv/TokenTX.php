@@ -54,7 +54,6 @@ class TokenTX {
             $vr->response->setOperatorId($cstReq->getOperatorID());
             $vr->cardType = $guestTokenRs->CardType->getStoredVal();
             $vr->expDate = $guestTokenRs->ExpDate->getStoredVal();
-            $vr->setIdToken($guestTokenRs->idGuest_token->getStoredVal());
         }
 
         // Record transaction
@@ -100,13 +99,12 @@ class TokenTX {
 
         // New Token?
         if ($vr->response->getToken() != '') {
-            $guestTokenRs = CreditToken::getTokenRsFromId($dbh, $vr->idToken);
+            $guestTokenRs = CreditToken::getTokenRsFromId($dbh, $vr->getIdToken());
             $vr->response->setMaskedAccount($guestTokenRs->MaskedAccount->getStoredVal());
             $vr->response->setCardHolderName($guestTokenRs->CardHolderName->getStoredVal());
             $vr->response->setOperatorId($voidSale->getOperatorID());
             $vr->cardType = $guestTokenRs->CardType->getStoredVal();
             $vr->expDate = $guestTokenRs->ExpDate->getStoredVal();
-            $vr->idToken = $guestTokenRs->idGuest_token->getStoredVal();
         }
 
         // Record transaction
@@ -144,13 +142,12 @@ class TokenTX {
 
         // New Token?
         if ($vr->response->getToken() != '') {
-            $guestTokenRs = CreditToken::getTokenRsFromId($dbh, $vr->idToken);
+            $guestTokenRs = CreditToken::getTokenRsFromId($dbh, $vr->getIdToken());
             $vr->response->setMaskedAccount($guestTokenRs->MaskedAccount->getStoredVal());
             $vr->response->setCardHolderName($guestTokenRs->CardHolderName->getStoredVal());
             $vr->response->setOperatorId($reverseSale->getOperatorID());
             $vr->cardType = $guestTokenRs->CardType->getStoredVal();
             $vr->expDate = $guestTokenRs->ExpDate->getStoredVal();
-            $vr->idToken = $guestTokenRs->idGuest_token->getStoredVal();
 
         }
 
@@ -191,13 +188,12 @@ class TokenTX {
 
         // New Token?
         if ($vr->response->getToken() != '') {
-            $guestTokenRs = CreditToken::getTokenRsFromId($dbh, $vr->idToken);
+            $guestTokenRs = CreditToken::getTokenRsFromId($dbh, $vr->getIdToken());
             $vr->response->setMaskedAccount($guestTokenRs->MaskedAccount->getStoredVal());
             $vr->response->setCardHolderName($guestTokenRs->CardHolderName->getStoredVal());
             $vr->response->setOperatorId($returnSale->getOperatorID());
             $vr->cardType = $guestTokenRs->CardType->getStoredVal();
             $vr->expDate = $guestTokenRs->ExpDate->getStoredVal();
-            $vr->idToken = $guestTokenRs->idGuest_token->getStoredVal();
         }
 
 
@@ -234,12 +230,11 @@ class TokenTX {
 
         // New Token?
         if ($vr->response->getToken() != '') {
-            $guestTokenRs = CreditToken::getTokenRsFromId($dbh, $vr->idToken);
+            $guestTokenRs = CreditToken::getTokenRsFromId($dbh, $vr->getIdToken());
             $vr->response->setMaskedAccount($guestTokenRs->MaskedAccount->getStoredVal());
             $vr->response->setCardHolderName($guestTokenRs->CardHolderName->getStoredVal());
             $vr->response->setOperatorId($returnVoid->getOperatorID());
             $vr->expDate = $guestTokenRs->ExpDate->getStoredVal();
-            $vr->idToken = $guestTokenRs->idGuest_token->getStoredVal();
         }
 
 

@@ -1264,8 +1264,8 @@ class VerifyCkOutResponse extends MercResponse  implements iGatewayResponse{
     }
 
     public function getRequestAmount() {
-        if (isset($this->result->AuthAmount)) {
-            return $this->result->AuthAmount;
+        if (isset($this->result->Amount)) {
+            return $this->result->Amount;
         }
         return '';
     }

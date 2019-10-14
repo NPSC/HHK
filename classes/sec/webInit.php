@@ -332,9 +332,7 @@ class SysConfig {
 
         if (count($rows) == 1) {
 
-            if ($rows[0]['Type'] == 'ob' && $value != '') {
-                $value = encryptMessage($rows[0]['Value']);
-            }
+            $value = self::setValueByType($value, $rows[0]['Type']);
 
             $oldVal = $rows[0]['Value'];
 
@@ -374,4 +372,27 @@ class SysConfig {
         return $val;
     }
 
+    public static function setValueByType($value, $type) {
+
+        switch ($type) {
+            case 'i':
+                $val = (int)$value;
+                break;
+            case 'b':
+                $temp = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                if ($temp) {
+                    $val = 'true';
+                } else {
+                    $val = 'false';
+                }
+                break;
+            case 'ob':
+                $val = encryptMessage($value);
+                break;
+            default:
+                $val = $value;
+        }
+
+        return $val;
+    }
 }

@@ -2452,7 +2452,21 @@ where l.log_Type = 'stay'
 order by l.idVisit, l.Span, l.idStay, l.Timestamp;
 
 
-
+-- -----------------------------------------------------
+-- View `vsyslog`
+-- -----------------------------------------------------
+CREATE  OR REPLACE VIEW `vsyslog` AS
+    SELECT 
+        `house_log`.`Log_Type` AS `Log_Type`,
+        `house_log`.`Sub_Type` AS `Sub_Type`,
+        `house_log`.`User_Name` AS `User_Name`,
+        `house_log`.`Id1` AS `Id1`,
+        `house_log`.`Str1` AS `Str1`,
+        `house_log`.`Str2` AS `Str2`,
+        `house_log`.`Log_Text` AS `Log_Text`,
+        `house_log`.`Timestamp` AS `Timestamp`
+    FROM
+        `house_log`;
 
 -- -----------------------------------------------------
 -- View `vvisit_patient`

@@ -434,6 +434,56 @@ class SiteConfig {
         return $tbl;
     }
 
+    public static function createLabelsMarkup(Config_Lite $config, Config_Lite $titles = NULL, $onlySection = '') {
+
+        $tbl = new HTMLTable();
+        $inputSize = '40';
+
+        foreach ($config as $section => $name) {
+
+            if (($onlySection == '' || $onlySection == $section)) {
+
+                $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section), array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
+
+
+                if (is_array($name)) {
+
+                    foreach ($name as $key => $val) {
+
+                        $attr = array(
+                            'name' => $section . '[' . $key . ']',
+                            'id' => $section . $key
+                        );
+
+
+                            $attr['size'] = $inputSize;
+                            //
+                            $inpt = HTMLInput::generateMarkup($val, $attr);
+
+
+
+
+                        if (is_null($titles)) {
+                            $desc = '';
+                        } else {
+                            $desc = $titles->getString($section, $key, '');
+                        }
+
+                        $tbl->addBodyTr(
+                                HTMLTable::makeTd($key.':', array('class' => 'tdlabel'))
+                                . HTMLTable::makeTd($inpt) . HTMLTable::makeTd($desc)
+                        );
+
+                        unset($attr);
+                    }
+                }
+            }
+        }
+
+        //$tbl->addFooterTr(HTMLTable::makeTd('', array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
+        return $tbl;
+    }
+
     public static function createMarkup(\PDO $dbh, Config_Lite $config, Config_Lite $titles = NULL) {
 
         $tbl = self::createCliteMarkup($config, $titles);
@@ -474,7 +524,7 @@ class SiteConfig {
                 $inpt = HTMLInput::generateMarkup($r['Value'], array('name' => 'sys_config' . '[' . $r['Key'] . ']', 'size'=>'7'));
 
             } else if ($r['Type'] == 'lu' && $r['GenLookup'] != '') {
-                // Boolean
+                // lookup
 
                 $opts = readGenLookupsPDO($dbh, $r['GenLookup']);
 

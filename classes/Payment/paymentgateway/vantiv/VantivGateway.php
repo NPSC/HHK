@@ -547,7 +547,7 @@ class VantivGateway extends PaymentGateway {
                     $invoice = new Invoice($dbh, $csResp->getInvoiceNumber());
 
                     // Analyze the result
-                    $payResult = $this->analyzeCredSaleResult($dbh, $csResp, $invoice, 0, TRUE, TRUE);
+                    $payResult = $this->analyzeCredSaleResult($dbh, $csResp, $invoice, 0, $this->useAVS, $this->useCVV);
 
                 } else {
 
@@ -628,7 +628,7 @@ class VantivGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    public function analyzeCredSaleResult(\PDO $dbh, PaymentResponse $payResp, \Invoice $invoice, $idToken, $useAVS = FALSE, $useCVV = FALSE) {
+    public function analyzeCredSaleResult(\PDO $dbh, PaymentResponse $payResp, \Invoice $invoice, $idToken, $useAVS, $useCVV) {
 
         $uS = Session::getInstance();
 
@@ -729,29 +729,95 @@ class VantivGateway extends PaymentGateway {
 
     public function createEditMarkup(\PDO $dbh, $resultMessage = '') {
 
-        $stmt = $dbh->query("Select * from cc_hosted_gateway where Gateway_Name = 'vantiv'");
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $gwRs = new Cc_Hosted_GatewayRS();
+        $gwRs->Gateway_Name->setStoredVal($this->getGatewayName());
+        $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name));
+
+        $opts = array(
+            array(0, 'False'),
+            array(1, 'True'),
+        );
+
+        $usePOS = SysConfig::getKeyValue($dbh, 'sys_config', 'CardSwipe');
+
+        if ($usePOS) {
+            $pos = 1;
+        } else {
+            $pos = 0;
+        }
 
         $tbl = new HTMLTable();
 
+        // Use Care Swipe
+        $tbl->addBodyTr(
+                HTMLTable::makeTh('Use Card Swiper', array('class' => 'tdlabel'))
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $pos, FALSE), array('name' => 'selCardSwipe')))
+        );
+
+        // Spacer
+        $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')));
+
         foreach ($rows as $r) {
 
-            $indx = $r['idcc_gateway'];
-            $tbl->addBodyTr(HTMLTable::makeTd($r['cc_name'], array('class' => 'tdlabel'))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Merchant_Id'], array('name' => $indx . '_txtMid')))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Password'], array('name' => $indx . '_txtpw')))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => $indx . '_txtpw2')))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type' => 'checkbox', 'name' => $indx . 'cbCVV')))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type' => 'checkbox', 'name' => $indx . 'cbAVS')))
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type' => 'checkbox', 'name' => $indx . 'cbDel'))));
+            $gwRs = new Cc_Hosted_GatewayRS();
+            EditRS::loadRow($r, $gwRs);
+
+            $indx = $gwRs->idcc_gateway->getStoredVal();
+
+
+            $tbl->addBodyTr(
+                    HTMLTable::makeTh('Name', array('style' => 'border-top:2px solid black;', 'class' => 'tdlabel'))
+                    . HTMLTable::makeTd($gwRs->cc_name->getStoredVal(), array('style' => 'border-top:2px solid black;'))
+            );
+
+            $tbl->addBodyTr(
+                    HTMLTable::makeTh('Merchant Id', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Merchant_Id->getStoredVal(), array('name' => $indx . '_txtuid', 'size' => '50')))
+            );
+            $tbl->addBodyTr(
+                    HTMLTable::makeTh('Password', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Password->getStoredVal(), array('name' => $indx . '_txtpwd', 'size' => '80')) . ' (Obfuscated)')
+            );
+            $tbl->addBodyTr(
+                    HTMLTable::makeTh('Credit URL', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Credit_Url->getStoredVal(), array('name' => $indx . '_txtcrdurl', 'size' => '90')))
+            );
+            $tbl->addBodyTr(
+                    HTMLTable::makeTh('Token Trans URL', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Trans_Url->getStoredVal(), array('name' => $indx . '_txttransurl', 'size' => '90')))
+            );
+
+            if ($usePOS) {
+                $tbl->addBodyTr(
+                    HTMLTable::makeTh('CheckoutPOS URL', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->CheckoutPOS_Url->getStoredVal(), array('name' => $indx . '_txtcoposurl', 'size' => '90')))
+                );
+            } else {
+                $tbl->addBodyTr(
+                        HTMLTable::makeTh('Checkout URL', array('class' => 'tdlabel'))
+                        . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Checkout_Url->getStoredVal(), array('name' => $indx . '_txtckouturl', 'size' => '90')))
+                );
+            }
+
+            $tbl->addBodyTr(
+                    HTMLTable::makeTh('Card Info URL', array('class' => 'tdlabel'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->CardInfo_Url->getStoredVal(), array('name' => $indx . '_txtciurl', 'size' => '90')))
+            );
+            $tbl->addBodyTr(
+                    HTMLTable::makeTh('Use AVS', array('class' => 'tdlabel'))
+                    .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $gwRs->Use_AVS_Flag->getStoredVal(), FALSE), array('name' => $indx . '_txtuseAVS')))
+            );
+
+            $tbl->addBodyTr(
+                    HTMLTable::makeTh('Use CCV', array('class' => 'tdlabel'))
+                    .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $gwRs->Use_Ccv_Flag->getStoredVal(), FALSE), array('name' => $indx . '_txtuseCVV')))
+            );
+
         }
 
         if ($resultMessage != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan' => '6', 'style' => 'font-weight:bold;')));
+            $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan' => '2', 'style' => 'font-weight:bold;')));
         }
-
-        $tbl->addHeader(HTMLTable::makeTh('Name') . HTMLTable::makeTh('Merchant Id')
-                . HTMLTable::makeTh('Password') . HTMLTable::makeTh('Password Again') . HTMLTable::makeTh('use CVV') . HTMLTable::makeTh('use AVS') . HTMLTable::makeTh('Delete'));
 
         return $tbl->generateMarkup();
     }
@@ -763,64 +829,77 @@ class VantivGateway extends PaymentGateway {
         $ccRs->Gateway_Name->setStoredVal($this->getGatewayName());
         $rows = EditRS::select($dbh, $ccRs, array($ccRs->Gateway_Name));
 
+        // Use POS
+        if (isset($post['selCardSwipe'])) {
+            SysConfig::saveKeyValue($dbh, 'sys_config', 'CardSwipe', filter_var($post['selCardSwipe'], FILTER_SANITIZE_STRING));
+        }
+
         foreach ($rows as $r) {
 
             EditRS::loadRow($r, $ccRs);
 
             $indx = $ccRs->idcc_gateway->getStoredVal();
 
-            // Clear the entries??
-            if (isset($post[$indx . 'cbDel'])) {
+            // Merchant Id
+            if (isset($post[$indx . '_txtuid'])) {
+                $ccRs->Merchant_Id->setNewVal(filter_var($post[$indx . '_txtuid'], FILTER_SANITIZE_STRING));
+            }
 
-                $ccRs->Merchant_Id->setNewVal('');
-                $ccRs->Password->setNewVal('');
-                $num = EditRS::update($dbh, $ccRs, array($ccRs->idcc_gateway));
-                $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - Payment Credentials Deleted.  ");
+            // Credit URL
+            if (isset($post[$indx . '_txtcrdurl'])) {
+                $ccRs->Credit_Url->setNewVal(filter_var($post[$indx . '_txtcrdurl'], FILTER_SANITIZE_STRING));
+            }
+
+            // Transaction URL
+            if (isset($post[$indx . '_txttransurl'])) {
+                $ccRs->Trans_Url->setNewVal(filter_var($post[$indx . '_txttransurl'], FILTER_SANITIZE_STRING));
+            }
+
+            // Checkout URL
+            if (isset($post[$indx . '_txtckouturl'])) {
+                $ccRs->Checkout_Url->setNewVal(filter_var($post[$indx . '_txtckouturl'], FILTER_SANITIZE_STRING));
+            }
+
+            // Chekout POS URL
+            if (isset($post[$indx . '_txtcoposurl'])) {
+                $ccRs->CheckoutPOS_Url->setNewVal(filter_var($post[$indx . '_txtcoposurl'], FILTER_SANITIZE_STRING));
+            }
+
+            // Card Info URL
+            if (isset($post[$indx . '_txtciurl'])) {
+                $ccRs->CardInfo_Url->setNewVal(filter_var($post[$indx . '_txtciurl'], FILTER_SANITIZE_STRING));
+            }
+
+            // Use AVS
+            if (isset($post[$indx . '_txtuseAVS'])) {
+                $ccRs->Use_AVS_Flag->setNewVal(filter_var($post[$indx . '_txtuseAVS'], FILTER_SANITIZE_STRING));
+            }
+
+            // Use CCV
+            if (isset($post[$indx . '_txtuseCVV'])) {
+                $ccRs->Use_Ccv_Flag->setNewVal(filter_var($post[$indx . '_txtuseCVV'], FILTER_SANITIZE_STRING));
+            }
+
+            // Password
+            if (isset($post[$indx . '_txtpwd'])) {
+
+                $pw = filter_var($post[$indx . '_txtpwd'], FILTER_SANITIZE_STRING);
+
+                if ($pw != '' && $ccRs->Password->getStoredVal() != $pw) {
+                    $ccRs->Password->setNewVal(encryptMessage($pw));
+                } else if ($pw == '') {
+                    $ccRs->Password->setNewVal('');
+                }
+            }
+
+
+            // Save record.
+            $num = EditRS::update($dbh, $ccRs, array($ccRs->Gateway_Name, $ccRs->idcc_gateway));
+
+            if ($num > 0) {
+                $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " " . $ccRs->cc_name->getStoredVal() . " - Payment Credentials Updated.  ");
             } else {
-
-                if (isset($post[$indx . '_txtMid'])) {
-                    $mid = filter_var($post[$indx . '_txtMid'], FILTER_SANITIZE_STRING);
-                    $ccRs->Merchant_Id->setNewVal($mid);
-                }
-
-                if (isset($post[$indx . '_txtpw']) && isset($post[$indx . '_txtpw2']) && $post[$indx . '_txtpw2'] != '') {
-
-                    $pw = filter_var($post[$indx . '_txtpw'], FILTER_SANITIZE_STRING);
-                    $pw2 = filter_var($post[$indx . '_txtpw2'], FILTER_SANITIZE_STRING);
-
-                    if ($pw != '' && $pw != $ccRs->Password->getStoredVal()) {
-
-                        // Don't save the pw blank characters
-                        if ($pw == $pw2) {
-
-                            $ccRs->Password->setNewVal(encryptMessage($pw));
-                        } else {
-                            // passwords don't match
-                            $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - Passwords do not match.  ");
-                        }
-                    }
-                }
-
-                if (isset($post[$indx . 'cbCVV'])) {
-                    $ccRs->Use_Ccv_Flag->setNewVal(1);
-                } else {
-                    $ccRs->Use_Ccv_Flag->setNewVal(0);
-                }
-
-                if (isset($post[$indx . 'cbAVS'])) {
-                    $ccRs->Use_AVS_Flag->setNewVal(1);
-                } else {
-                    $ccRs->Use_AVS_Flag->setNewVal(0);
-                }
-
-                // Save record.
-                $num = EditRS::update($dbh, $ccRs, array($ccRs->Gateway_Name, $ccRs->idcc_gateway));
-
-                if ($num > 0) {
-                    $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - Payment Credentials Updated.  ");
-                } else {
-                    $msg .= HTMLContainer::generateMarkup('p', $ccRs->cc_name->getStoredVal() . " - No changes detected.  ");
-                }
+                $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " " . $ccRs->cc_name->getStoredVal() . " - No changes detected.  ");
             }
         }
 

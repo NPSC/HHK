@@ -289,11 +289,11 @@ class InstamedGateway extends PaymentGateway {
 
         $data = array(
             'patientID' => $patInfo['idName'],
-            'patientFirstName' => $patInfo['Name_First'],
-            'patientLastName' => $patInfo['Name_Last'],
+            'patientFirstName' => html_entity_decode($patInfo['Name_First'], ENT_QUOTES),
+            'patientLastName' => html_entity_decode($patInfo['Name_Last'], ENT_QUOTES),
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
-            'cardHolderName' => $cardHolderName,
+            'cardHolderName' => html_entity_decode($cardHolderName, ENT_QUOTES),
             'lightWeight' => 'true',
             'creditCardKeyed' => ($manualKey ? 'true' : 'false'),
             'responseActionType' => 'header',

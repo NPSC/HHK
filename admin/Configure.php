@@ -311,44 +311,13 @@ if (isset($_POST['btnLogs'])) {
     $logs = CreateMarkupFromDB::generateHTML_Table($edRows, 'syslog');
 }
 
+
 $logMarkup = '';
-if (isset($_POST['btnLogSel'])) {
-    $tabIndex = 6;
-    $where = '';
-
-    if (isset($_POST['logSel'])) {
-        $logSel = filter_var($_POST['logSel'], FILTER_SANITIZE_STRING);
-    }
-
-    if ($logSel == 's') {
-        $where = " where `Log_Type` in ('sys_config', 'Site_Config_File') ";
-    }
-    if ($logSel == 'r') {
-        $where = " where `Log_Type` in ('resource', 'room_rate', 'room') ";
-    }
-    if ($logSel == 'l') {
-        $where = " where `Log_Type` ='gen_lookups' ";
-    }
-
-    if ($where != '') {
-
-        $stmt = $dbh->query("Select * from house_log $where order by Timestamp DESC Limit 100;");
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $edRows = array();
-
-        foreach ($rows as $r) {
-
-            $r['Date'] = date('M j, Y H:i:s', strtotime($r['Timestamp']));
-            unset($r['Timestamp']);
-
-            unset($r['Id1']);
-            unset($r['Id2']);
-            $edRows[] = $r;
-        }
-
-        $logMarkup = CreateMarkupFromDB::generateHTML_Table($edRows, 'houselog');
-    }
-}
+$logSelRows = array(
+    2=>array(0=>'ss', 1=>'Sys Config Log'),
+    3=>array(0=>'rr', 1=>'Rooms Log'),
+    4=>array(0=>'ll', 1=>'Lookups Log'),
+);
 
 $pgw = $uS->PaymentGateway;
 try {
@@ -384,18 +353,30 @@ if (count($rows) > 0 && $rows[0][0] != '') {
 // Patch tab markup
 $patchMarkup = Patch::patchTabMu();
 
-$logSelRows = array(
 
-    2=>array(0=>'s', 1=>'Sys Config Log'),
-    3=>array(0=>'r', 1=>'Rooms Log'),
-    4=>array(0=>'l', 1=>'Lookups Log'),
-);
+$li = '';
+$tabContent = '';
 
-$logSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkuP($logSelRows, 'p', FALSE), array('name'=>'logSel'));
+foreach ($logSelRows as $r) {
+
+    $li .= HTMLContainer::generateMarkup('li',
+            HTMLContainer::generateMarkup('a', $r[1] , array('href'=>'#tc'.$r[0])), array('id'=>'li'.$r[0]));
+
+    $content = HTMLContainer::generateMarkup('h3', $r[1], array('style' => 'background-color:#D3D3D3; padding:10px;'))
+        . HTMLContainer::generateMarkup('div', "<table id='tableli$r[0]' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array());
+
+    $tabContent .= HTMLContainer::generateMarkup('div',
+        $content
+        , array('id'=>'tc'.$r[0]));
+
+}
+
+$ul = HTMLContainer::generateMarkup('ul', $li, array());
+$tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'logsTabDiv'));
 
 $conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));
 
-$labels = SiteConfig::createCliteMarkup($labl)->generateMarkup();
+$labels = SiteConfig::createLabelsMarkup($labl)->generateMarkup();
 
 $externals = '';
 if (is_null($wsConfig) === FALSE) {
@@ -497,15 +478,145 @@ $getWebReplyMessage = $webAlert->createMarkup();
         <?php echo JQ_UI_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo DEFAULT_CSS; ?>
+        <?php echo JQ_DT_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
 
 <script type="text/javascript">
+
 $(document).ready(function () {
     var tabIndex = '<?php echo $tabIndex; ?>';
-    var tbs = $('#tabs').tabs();
+    var tbs;
+    var logTable = [];
+    var dateFormat = $('#dateFormat').val();
+
+    var dtCols = [
+    {
+        "targets": [ 0 ],
+        "title": "Type",
+        "searchable": false,
+        "sortable": false,
+        "data": "Log_Type"
+    },
+    {
+        "targets": [ 1 ],
+        "title": "Sub-Type",
+        "searchable": false,
+        "sortable": true,
+        "data": "Sub_Type"
+    },
+     {
+         "targets": [ 2 ],
+        "title": "User",
+        "searchable": true,
+        "sortable": true,
+        "data": "User_Name"
+    },
+    {
+        "targets": [ 3 ],
+        "title": "Id",
+        "searchable": true,
+        "sortable": true,
+        "data": "Id1"
+    },
+     {
+         "targets": [ 4 ],
+        "title": "Item",
+        "searchable": true,
+        "sortable": false,
+        "data": "Str1"
+    },
+    {
+        "targets": [ 5 ],
+        "title": "Detail",
+        "searchable": false,
+        "sortable": false,
+        "data": "Str2"
+    },
+    {
+        "targets": [ 6 ],
+        "title": "Log Text",
+        "sortable": false,
+        "data": "Log_Text"
+    },
+    {
+        "targets": [ 7 ],
+        "title": "Date",
+        'data': 'Ts',
+        render: function ( data, type ) {
+            return dateRender(data, type, dateFormat);
+        }
+    }
+];
+
+    tbs = $('#tabs').tabs({
+
+        // activate the first log tab, Sys Config Log.
+        beforeActivate: function (event, ui) {
+
+            var pid = 'liss';
+
+            if (ui.newTab.prop('id') === 'liLogs' && !logTable[pid]) {
+                logTable[pid] = 1;
+
+                $('#table'+pid).dataTable({
+                    "columnDefs": dtCols,
+                    "serverSide": true,
+                    "processing": true,
+                    //"deferRender": true,
+                    "language": {"sSearch": "Search Log:"},
+                    "sorting": [[7,'desc']],
+                    "displayLength": 25,
+                    "lengthMenu": [[25, 50, 100], [25, 50, 100]],
+                    "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
+                    ajax: {
+                        url: 'ws_gen.php',
+                        data: {
+                            'cmd': 'showLog',
+                            'logId': pid
+                        }
+                    }
+                });
+            }
+        }
+    });
+
+
+    $('#logsTabDiv').tabs({
+
+        beforeActivate: function (event, ui) {
+
+            var pid = ui.newTab.prop('id');
+            if (!logTable[pid]) {
+                logTable[pid] = 1;
+
+                $('#table'+pid).dataTable({
+                    "columnDefs": dtCols,
+                    "serverSide": true,
+                    "processing": true,
+                    //"deferRender": true,
+                    "language": {"sSearch": "Search Log:"},
+                    "sorting": [[7,'desc']],
+                    "displayLength": 25,
+                    "lengthMenu": [[25, 50, 100], [25, 50, 100]],
+                    "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
+                    ajax: {
+                        url: 'ws_gen.php',
+                        data: {
+                            'cmd': 'showLog',
+                            'logId': pid
+                        }
+                    }
+                });
+            }
+        }
+    });
+
+$('#logsTabDiv').tabs("option", "active", 0);
 
     $('#btnreset, #btnSiteCnf, #btnLogs, #btnSaveSQL, #btnUpdate, #btnlblreset, #btnLabelCnf, #btnPay, #btnZipGo, #zipfile').button();
     $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
@@ -535,7 +646,7 @@ $(document).ready(function () {
                     <li><a href="#holidays">Set Holidays</a></li>
                     <li><a href="#loadZip">Load Zip Codes</a></li>
                     <li><a href="#labels">Labels & Prompts</a></li>
-                    <li><a href="#logs">System Logs</a></li>
+                    <li id="liLogs"><a href="#logs">System Logs</a></li>
                     <?php if ($serviceName != '') {echo '<li><a href="#external">' . $serviceName . '</a></li>';} ?>
                 </ul>
                 <div id="config" class="ui-tabs-hide" >
@@ -585,13 +696,8 @@ $(document).ready(function () {
                     </form>
                 </div>
                 <div id="logs" class="ui-tabs-hide hhk-tdbox" >
-                    <form method="post" name="formlog" action="">
-                        <?php echo $logSelector; ?>
-                        <input type="submit" name="btnLogSel" id="btnLogSel" value="View Site Log" style="margin-left:100px;"/>
-                    </form>
-                        <div style="margin-top:20px;">
-                            <?php echo $logMarkup; ?>
-                        </div>
+                        <?php echo $tabControl; ?>
+                        <input  type="hidden" id="dateFormat" value='<?php echo $labl->getString("momentFormats", "dateTime", "MMM D, YYYY"); ?>' />
                 </div>
                 <div id="patch" class="ui-tabs-hide">
                     <div class="hhk-member-detail">
@@ -622,6 +728,7 @@ $(document).ready(function () {
                     </form>
                 </div>
             </div>
+
         </div>
     </body>
 </html>

@@ -496,7 +496,7 @@ class SSP {
 		/*
 		 * Output
 		 */
-		return array(
+		$resu = array(
 			"draw"            => isset ( $request['draw'] ) ?
 				intval( $request['draw'] ) :
 				0,
@@ -504,6 +504,7 @@ class SSP {
 			"recordsFiltered" => intval( $recordsFiltered ),
 			"data"            => self::data_output( $columns, $data )
 		);
+                return $resu;
 	}
 
 

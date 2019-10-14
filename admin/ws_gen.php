@@ -123,6 +123,45 @@ try {
             $events = changeLog($dbh, $id, $_GET);
             break;
 
+        case 'showLog':
+
+            $logSel = '';
+            $where = '';
+            $edRows = array();
+
+            $dbView = 'vsyslog';
+            $whereField = '';
+            $priKey = 'Log_Type';
+
+            $columns = array(
+                array( 'db' => 'Log_Type',  'dt' => 'Log_Type' ),
+                array( 'db' => 'Sub_Type',   'dt' => 'Sub_Type' ),
+                array( 'db' => 'User_Name', 'dt' => 'User_Name'),
+                array( 'db' => 'Id1', 'dt' => 'Id1'),
+                array( 'db' => 'Str1', 'dt' => 'Str1'),
+                array( 'db' => 'Str2', 'dt' => 'Str2'),
+                array( 'db' => 'Log_Text', 'dt' => 'Log_Text'),
+                array( 'db' => 'Timestamp', 'dt' => 'Ts'),
+
+            );
+
+            if (isset($_REQUEST['logId'])) {
+                $logSel = filter_var($_REQUEST['logId'], FILTER_SANITIZE_STRING);
+            }
+
+            if ($logSel == 'liss') {
+                $where = " `Log_Type` in ('sys_config', 'Site_Config_File') ";
+            } else if ($logSel == 'lirr') {
+                $where = " `Log_Type` in ('resource', 'room_rate', 'room') ";
+            } else if ($logSel == 'lill') {
+                $where = " `Log_Type` = 'gen_lookups' ";
+            }
+
+            require(CLASSES . 'DataTableServer.php');
+            $events = SSP::complex ( $_GET, $dbh, $dbView, $priKey, $columns, null, $where );
+
+            break;
+
         case "delRel":
 
             $id = 0;

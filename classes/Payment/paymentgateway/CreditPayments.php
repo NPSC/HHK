@@ -625,7 +625,7 @@ class VoidReturnReply extends CreditPayments {
         // Payment Detail
         $pDetailRS = new Payment_AuthRS();
         $pDetailRS->idPayment->setNewVal($payRs->idPayment->getStoredVal());
-        $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizeAmount());
+        $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizedAmount());
         $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
         $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
         $pDetailRS->AVS->setNewVal($vr->getAVSResult());
