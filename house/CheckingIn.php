@@ -74,7 +74,7 @@ $dbh = $wInit->dbh;
 $uS = Session::getInstance();
 creditIncludes($uS->PaymentGateway);
 
-$menuMarkup = $wInit->generatePageMenu();
+
 $pageHdr = $wInit->pageHeading;
 $pageStyle = '';
 

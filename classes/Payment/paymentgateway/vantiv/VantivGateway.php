@@ -60,7 +60,7 @@ class VantivGateway extends PaymentGateway {
             $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $invoice->getIdGroup(), $this, $cpay, $pmp->getPayNotes());
 
             // Analyze the result
-            $payResult = $this->analyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken());
+            $payResult = $this->analyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken(), $this->useAVS, $this->useCVV);
         } else {
 
             // Initialiaze hosted payment
@@ -496,6 +496,7 @@ class VantivGateway extends PaymentGateway {
         if (isset($post[VantivGateway::CARD_ID])) {
 
             $cardId = filter_var($post[VantivGateway::CARD_ID], FILTER_SANITIZE_STRING);
+            $cidInfo = $this->getInfoFromCardId($dbh, $cardId);
 
             // Save postback in the db.
             try {
@@ -512,7 +513,7 @@ class VantivGateway extends PaymentGateway {
 
             try {
 
-                $vr = CardInfo::portalReply($dbh, $this, $cardId);
+                $vr = CardInfo::portalReply($dbh, $this, $cidInfo);
 
                 $payResult = new CofResult($vr->response->getDisplayMessage(), $vr->response->getStatus(), $vr->idPayor, $vr->idRegistration);
 
@@ -524,6 +525,8 @@ class VantivGateway extends PaymentGateway {
 
             $paymentId = filter_var($post[VantivGateway::PAYMENT_ID], FILTER_SANITIZE_STRING);
 
+            $cidInfo = $this->getInfoFromCardId($dbh, $paymentId);
+
             try {
                 self::logGwTx($dbh, $rtnCode, '', json_encode($post), 'HostedCoPostBack');
             } catch (Exception $ex) {
@@ -532,7 +535,7 @@ class VantivGateway extends PaymentGateway {
 
             if ($rtnCode > 0) {
 
-                $payResult = new PaymentResult($idInv, 0, 0);
+                $payResult = new PaymentResult($idInv, $cidInfo['idGroup'], $cidInfo['idName']);
                 $payResult->setStatus(PaymentResult::ERROR);
                 $payResult->setDisplayMessage($rtnMessage);
                 return $payResult;
@@ -540,7 +543,7 @@ class VantivGateway extends PaymentGateway {
 
             try {
 
-                $csResp = HostedCheckout::portalReply($dbh, $this, $paymentId, $payNotes);
+                $csResp = HostedCheckout::portalReply($dbh, $this, $cidInfo, $payNotes);
 
                 if ($csResp->getInvoiceNumber() != '') {
 
@@ -551,19 +554,42 @@ class VantivGateway extends PaymentGateway {
 
                 } else {
 
-                    $payResult = new PaymentResult($idInv, 0, 0);
+                    $payResult = new PaymentResult($idInv, $cidInfo['idGroup'], $cidInfo['idName']);
                     $payResult->setStatus(PaymentResult::ERROR);
                     $payResult->setDisplayMessage('Invoice Not Found!  ');
                 }
             } catch (Hk_Exception_Payment $hex) {
 
-                $payResult = new PaymentResult($idInv, 0, 0);
+                $payResult = new PaymentResult($idInv, $cidInfo['idGroup'], $cidInfo['idName']);
                 $payResult->setStatus(PaymentResult::ERROR);
                 $payResult->setDisplayMessage($hex->getMessage());
             }
         }
 
         return $payResult;
+    }
+
+    protected function getInfoFromCardId(\PDO $dbh, $cardId) {
+
+        $infoArray = array();
+
+        $query = "select `idName`, `idGroup`, `InvoiceNumber`, `Amount`, `CardID` from `card_id` where `CardID` = :cid";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute(array(':cid'=>$cardId));
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($rows) > 0) {
+
+            $infoArray = $rows[0];
+
+            // Delete to discourge replays.
+            $stmt = $dbh->prepare("delete from card_id where CardID = :cid");
+            $stmt->execute(array(':cid'=>$cardId));
+
+        }
+
+        return $infoArray;
     }
 
     protected function sendVoid(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Guest_TokenRS $tknRs, Invoice $invoice, $paymentNotes = '') {
@@ -750,8 +776,15 @@ class VantivGateway extends PaymentGateway {
 
         // Use Care Swipe
         $tbl->addBodyTr(
-                HTMLTable::makeTh('Use Card Swiper', array('class' => 'tdlabel'))
+                HTMLTable::makeTh('Use Card Swiper', array('style' => 'border-top:2px solid black;'))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $pos, FALSE), array('name' => 'selCardSwipe')))
+                , array('style' => 'border-top:2px solid black;')
+        );
+
+        // hosted co page image
+        $tbl->addBodyTr(
+                HTMLTable::makeTh('Payment Page Logo URL', array())
+                .HTMLTable::makeTd(HTMLInput::generateMarkup(SysConfig::getKeyValue($dbh, 'sys_config', 'PmtPageLogoUrl'), array('name' => 'txtppUrl', 'size' => '80')))
         );
 
         // Spacer
@@ -764,52 +797,51 @@ class VantivGateway extends PaymentGateway {
 
             $indx = $gwRs->idcc_gateway->getStoredVal();
 
-
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Name', array('style' => 'border-top:2px solid black;', 'class' => 'tdlabel'))
+                    HTMLTable::makeTh('Name', array('style' => 'border-top:2px solid black;'))
                     . HTMLTable::makeTd($gwRs->cc_name->getStoredVal(), array('style' => 'border-top:2px solid black;'))
             );
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Merchant Id', array('class' => 'tdlabel'))
+                    HTMLTable::makeTh('Merchant Id', array())
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Merchant_Id->getStoredVal(), array('name' => $indx . '_txtuid', 'size' => '50')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Password', array('class' => 'tdlabel'))
+                    HTMLTable::makeTh('Password', array())
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Password->getStoredVal(), array('name' => $indx . '_txtpwd', 'size' => '80')) . ' (Obfuscated)')
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Credit URL', array('class' => 'tdlabel'))
+                    HTMLTable::makeTh('Credit URL', array())
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Credit_Url->getStoredVal(), array('name' => $indx . '_txtcrdurl', 'size' => '90')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Token Trans URL', array('class' => 'tdlabel'))
+                    HTMLTable::makeTh('Token Trans URL', array())
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Trans_Url->getStoredVal(), array('name' => $indx . '_txttransurl', 'size' => '90')))
             );
 
             if ($usePOS) {
                 $tbl->addBodyTr(
-                    HTMLTable::makeTh('CheckoutPOS URL', array('class' => 'tdlabel'))
+                    HTMLTable::makeTh('CheckoutPOS URL', array())
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->CheckoutPOS_Url->getStoredVal(), array('name' => $indx . '_txtcoposurl', 'size' => '90')))
                 );
             } else {
                 $tbl->addBodyTr(
-                        HTMLTable::makeTh('Checkout URL', array('class' => 'tdlabel'))
+                        HTMLTable::makeTh('Checkout URL', array())
                         . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Checkout_Url->getStoredVal(), array('name' => $indx . '_txtckouturl', 'size' => '90')))
                 );
             }
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Card Info URL', array('class' => 'tdlabel'))
+                    HTMLTable::makeTh('Card Info URL', array())
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->CardInfo_Url->getStoredVal(), array('name' => $indx . '_txtciurl', 'size' => '90')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Use AVS', array('class' => 'tdlabel'))
+                    HTMLTable::makeTh('Use AVS', array())
                     .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $gwRs->Use_AVS_Flag->getStoredVal(), FALSE), array('name' => $indx . '_txtuseAVS')))
             );
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Use CCV', array('class' => 'tdlabel'))
+                    HTMLTable::makeTh('Use CCV', array())
                     .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $gwRs->Use_Ccv_Flag->getStoredVal(), FALSE), array('name' => $indx . '_txtuseCVV')))
             );
 
@@ -832,6 +864,10 @@ class VantivGateway extends PaymentGateway {
         // Use POS
         if (isset($post['selCardSwipe'])) {
             SysConfig::saveKeyValue($dbh, 'sys_config', 'CardSwipe', filter_var($post['selCardSwipe'], FILTER_SANITIZE_STRING));
+        }
+        // host page image URL
+        if (isset($post['txtppUrl'])) {
+            SysConfig::saveKeyValue($dbh, 'sys_config', 'PmtPageLogoUrl', filter_var($post['txtppUrl'], FILTER_SANITIZE_STRING));
         }
 
         foreach ($rows as $r) {

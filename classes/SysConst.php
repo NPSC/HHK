@@ -9,10 +9,10 @@
  */
 
 class CodeVersion {
-    const BUILD = 167;
+    const BUILD = 168;
     const VERSION = 3.13;
     const PATCH = 0;
-    const GIT_Id = "dev";
+    const GIT_Id = 'dev';
     const REL_DATE = '';
 }
 
@@ -341,6 +341,7 @@ class RoomAvailable {
     const Unavailable = 'un';
     const Available = 'a';
 }
+
 class RoomService {
     const OutOfService = 'oos';
     const InService = 'a';

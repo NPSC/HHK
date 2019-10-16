@@ -766,7 +766,7 @@ class InitCiResponse extends MercResponse {
 
 }
 
-class VerifyCiResponse extends MercResponse {
+class VerifyCiResponse extends MercResponse implements iGatewayResponse {
 
     function __construct($response) {
         parent::__construct($response);
@@ -781,59 +781,63 @@ class VerifyCiResponse extends MercResponse {
         $this->tranType = MpTranType::CardOnFile;
     }
     public function getAVSAddress() {
-
+        return '';
     }
 
     public function getAVSResult() {
-
+        return '';
     }
 
     public function getAVSZip() {
-
+        return '';
     }
 
     public function getAcqRefData() {
-
+        return '';
     }
 
     public function getAuthCode() {
-
+        return '';
     }
 
     public function getAuthorizationText() {
-
+        return '';
     }
 
     public function getCvvResult() {
-
+        return '';
     }
 
     public function getInvoiceNumber() {
-
+        return '';
     }
 
     public function getPartialPaymentAmount() {
-
+        return '';
     }
 
     public function getProcessData() {
-
+        return '';
     }
 
     public function getRefNo() {
-
+        return '';
     }
 
     public function getResponseMessage() {
-
+        return '';
     }
 
     public function getTransPostTime() {
-
+        return '';
     }
 
-    public function isEMVTransaction() {
+    public function getTransactionStatus() {
+        return '';
+    }
 
+    public function getRequestAmount() {
+        return 0;
     }
 
     public function getCardId() {
@@ -880,7 +884,7 @@ class VerifyCiResponse extends MercResponse {
 
     public function getMaskedAccount() {
         if (isset($this->result->MaskedAccount)) {
-            return $this->result->MaskedAccount;
+            return str_ireplace('x', '', $this->result->MaskedAccount);
         }
         return '';
     }
@@ -919,14 +923,6 @@ class VerifyCiResponse extends MercResponse {
         }
         return '';
     }
-
-    public function getPaymentID() {
-        if (isset($this->result->PaymentID)) {
-            return $this->result->PaymentID;
-        }
-        return '';
-    }
-
 
 }
 
@@ -1157,7 +1153,7 @@ class InitCkOutResponse extends MercResponse {
 
 }
 
-class VerifyCkOutResponse extends MercResponse  implements iGatewayResponse{
+class VerifyCkOutResponse extends MercResponse  implements iGatewayResponse {
 
     function __construct($response) {
         parent::__construct($response);

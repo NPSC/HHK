@@ -635,7 +635,7 @@ if ($psg->getIdPsg() > 0) {
         // Get the room rate category names
         $categoryTitles = RoomRate::makeDescriptions($dbh);
 
-        $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), array('href'=>'Referral.php?rid=' . $reserv->getIdReservation())))
+        $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), array('href'=>'Reserve.php?rid=' . $reserv->getIdReservation())))
                 . HTMLTable::makeTd($reserv->getStatusTitle($reserv->getStatus()))
                 . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getArrival())))
                 . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getDeparture())))
@@ -939,6 +939,7 @@ $uS->guestId = $id;
             </div>
             <div id="keysfees" style="font-size: .85em;"></div>
             <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
+            <div id="regDialog" style="display:none;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="incidentDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
             <div id="submit" style="display:none;">

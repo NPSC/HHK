@@ -324,7 +324,7 @@ function changePsgPatient(idPsg, idGuest, patientName) {
         });
 }
 
-function getRegistrationDialog(idReg, cDiv) {
+function getRegistrationDialog(idReg) {
     "use strict";
     $.post(
             'ws_ckin.php',
@@ -348,16 +348,17 @@ function getRegistrationDialog(idReg, cDiv) {
             flagAlertMessage(data.error, 'error');
             return;
         } else if (data.success) {
-            showRegDialog(data.success, idReg, cDiv);
+            showRegDialog(data.success, idReg);
         }
     }
     );
 }
 
-function showRegDialog(markup, idReg, container) {
+function showRegDialog(markup, idReg) {
     "use strict";
-    var regDialog = $('<div id="regDialog" />').append($(markup));
-    container.append(regDialog);
+    $('#regDialog').empty();
+    $('#regDialog').append($(markup));
+    //container.append(regDialog);
     $('#regDialog').dialog({
         autoOpen: true,
         width: 360,

@@ -157,7 +157,7 @@ class PaymentManager {
                             $invLine->setSourceItemId(ItemId::Lodging);
                             $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes, $this->pmp->getPayDate());
                             $this->invoice->addLine($dbh, $invLine, $uS->username);
-                        
+
                     }
                 }
             }
@@ -220,7 +220,7 @@ class PaymentManager {
                 $paidThruDT->add(new \DateInterval('P' . $nitesPaid . 'D'));
                 $paidThruDT->setTime(0, 0, 0);
 
-                $endPricingDT = new \DateTime($paidThruDT->format('Y-m-d H:i:s'));
+                $endPricingDT = new \DateTime($paidThruDT->format('Y-m-d'));
                 $endPricingDT->setTime(0, 0, 0);
                 $endPricingDT->add(new \DateInterval('P' . $this->pmp->visitCharges->getNightsToPay() . "D"));
 

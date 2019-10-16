@@ -747,29 +747,6 @@ class PaymentSvcs {
         return $dataArray;
     }
 
-    public static function getInfoFromCardId(\PDO $dbh, $cardId) {
-
-        $infoArray = array();
-
-        $query = "select `idName`, `idGroup`, `InvoiceNumber`, `Amount` from `card_id` where `CardID` = :cid";
-        $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':cid'=>$cardId));
-
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($rows) > 0) {
-
-            $infoArray = $rows[0];
-
-            // Delete to discourge replays.
-            $stmt = $dbh->prepare("delete from card_id where CardID = :cid");
-            $stmt->execute(array(':cid'=>$cardId));
-
-        }
-
-        return $infoArray;
-    }
-
     public static function processWebhook(\PDO $dbh, $data) {
 
         $uS = Session::getInstance();

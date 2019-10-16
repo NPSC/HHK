@@ -23,7 +23,7 @@ class CreditToken {
             return 0;
         }
 
-        $cardNum = str_ireplace('x', '', $vr->getMaskedAccount());
+        $cardNum = $vr->getMaskedAccount();
 
         if ($idToken > 0) {
             $gtRs = self::getTokenRsFromId($dbh, $idToken);
@@ -55,7 +55,7 @@ class CreditToken {
             $gtRs->OperatorID->setNewVal($vr->getOperatorID());
         }
         $gtRs->Response_Code->setNewVal($vr->getResponseCode());
-        $gtRs->Status->setNewVal($vr->getResponseCode());
+        $gtRs->Status->setNewVal($vr->getStatus());
         $gtRs->StatusMessage->setNewVal($vr->getResponseMessage());
         $gtRs->Tran_Type->setNewVal($vr->getTranType());
         $gtRs->Token->setNewVal($vr->getToken());

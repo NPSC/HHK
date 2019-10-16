@@ -15,6 +15,7 @@ class PaymentResult {
     protected $idName = 0;
     protected $idRegistration = 0;
     protected $idToken;
+    protected $idPayment = 0;
 
     protected $receiptMarkup = '';
     protected $invoiceMarkup = '';
@@ -41,6 +42,7 @@ class PaymentResult {
 
         // set status
         $this->status = PaymentResult::ACCEPTED;
+        $this->idPayment = $payResp->getIdPayment();
 
         // zero total invoices do not have payment records.
         if ($payResp->getIdPayment() > 0 && $this->idInvoice > 0) {
@@ -62,6 +64,7 @@ class PaymentResult {
     public function feePaymentRejected(\PDO $dbh, Session $uS, PaymentResponse $payResp, Invoice $invoice) {
 
         $this->status = PaymentResult::DENIED;
+        $this->idPayment = $payResp->getIdPayment();
 
         if ($payResp->getIdPayment() > 0 && $this->idInvoice > 0) {
             // payment-invoice
@@ -261,6 +264,10 @@ WHERE r.Email_Receipt = 1 and
 
     public function getIdRegistration() {
         return $this->idRegistration;
+    }
+
+    public function getIdPayment() {
+        return $this->idPayment;
     }
 
 }

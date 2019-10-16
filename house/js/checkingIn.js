@@ -21,38 +21,7 @@ function ckedIn(data) {
     }
 
     if (data.success) {
-        //flagAlertMessage(data.success, false);
-        var cDiv = $('#contentDiv');
-        var opt = {mode: 'popup',
-            popClose: true,
-            popHt      : $('div#RegArea').height(),
-            popWd      : 950,
-            popX       : 20,
-            popY       : 20,
-            popTitle   : 'Guest Registration Form'};
-
-        cDiv.children().remove();
-
-        if (data.regform && data.style) {
-            cDiv.append($('<div id="print_button" style="float:left;">Print</div>'))
-                    .append($('<div id="btnReg" style="float:left; margin-left:10px;">Check In Followup</div>'))
-                    .append($('<div id="btnStmt" style="float:left; margin-left:10px;">Show Statement</div>'))
-                    .append($('<div id="mesgReg" style="color: darkgreen; clear:left; font-size:1.5em;"></div>'))
-                    .append($('<div style="clear: left;" class="RegArea"/>')
-                            .append($(data.style)).append($(data.regform)));
-
-            $("div#print_button, div#btnReg, div#btnStmt").button();
-            $("div#print_button").click(function() {
-                $("div.RegArea").printArea(opt);
-            });
-            $('div#btnReg').click(function() {
-                getRegistrationDialog(data.reg, cDiv);
-            });
-            $('div#btnStmt').click(function() {
-                window.open('ShowStatement.php?vid=' + data.vid, '_blank');
-            });
-        }
-
+        
         if (data.ckmeout) {
             var buttons = {
                 "Show Statement": function() {
@@ -66,19 +35,10 @@ function ckedIn(data) {
                 }
             };
             viewVisit(data.gid, data.vid, buttons, 'Check Out', 'co', 0, data.ckmeout);
+            return;
         }
 
-        if (data.regDialog) {
-            showRegDialog(data.regDialog, data.reg, cDiv);
-        }
-
-        if (data.receipt) {
-            showReceipt('#pmtRcpt', data.receipt);
-        }
-
-        if (data.invoiceNumber && data.invoiceNumber !== '') {
-            window.open('ShowInvoice.php?invnum=' + data.invoiceNumber);
-        }
+        location.replace('ShowRegForm.php?regid='+data.regid+'&vid='+data.vid+'&payId='+data.payId+'&invoiceNumber='+data.invoiceNumber);
 
     }
 }

@@ -451,7 +451,7 @@ class History {
             if ($page != '') {
                 $fixedRows["Room"] = HTMLContainer::generateMarkup('span', $r["Room"], array('style'=>'background-color:' . $r["backColor"]. ';color:' . $r["textColor"] . ';'));
 
-                if ($r['Room_Status'] != RoomState::Clean && $r['Cleaning_Cycle_Code'] != $noCleaning) {
+                if ($r['Room_Status'] != RoomState::Clean && $r['Room_Status'] != RoomState::Ready && $r['Cleaning_Cycle_Code'] != $noCleaning) {
                     $fixedRows['Room'] .= HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-notice', 'style'=>'float:right;', 'title'=>'Room is Dirty'));
                 }
             }

@@ -40,7 +40,7 @@ abstract class PaymentGateway {
     }
 
     public function getGatewayType() {
-        return $this->gwType;
+        return strtolower($this->gwType);
     }
 
     public abstract function getGatewayName();
@@ -186,25 +186,25 @@ abstract class PaymentGateway {
         return $msg;
     }
 
-    public static function factory(\PDO $dbh, $gwType, $gwName) {
+    public static function factory(\PDO $dbh, $gwName, $gwType) {
 
-        switch (strtolower($gwType)) {
+        switch (strtolower($gwName)) {
 
             case PaymentGateway::VANTIV:
 
-                return new VantivGateway($dbh, $gwName);
+                return new VantivGateway($dbh, $gwType);
 
             case PaymentGateway::INSTAMED:
 
-                return new InstamedGateway($dbh, $gwName);
+                return new InstamedGateway($dbh, $gwType);
 
             case PaymentGateway::CONVERGE:
 
-                return new ConvergeGateway($dbh, $gwName);
+                return new ConvergeGateway($dbh, $gwType);
 
             default:
 
-                return new LocalGateway($dbh, $gwName);
+                return new LocalGateway($dbh, $gwType);
         }
     }
 

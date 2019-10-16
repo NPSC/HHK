@@ -57,12 +57,10 @@ class CardInfo {
     }
 
 
-    public static function portalReply(\PDO $dbh, VantivGateway $gway, $cardId) {
-
-        $cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $cardId);
+    public static function portalReply(\PDO $dbh, VantivGateway $gway, $cidInfo) {
 
         $verify = new VerifyCIRequest();
-        $verify->setCardId($cardId);
+        $verify->setCardId($cidInfo['CardID']);
 
         $trace = FALSE;
 
@@ -110,7 +108,9 @@ class CardInfoResponse extends PaymentResponse {
         $this->idPayor = $idPayor;
         $this->idRegistration = $idGroup;
         $this->expDate = $verifyCiResponse->getExpDate();
-        $this->cardNum = str_ireplace('x', '', $verifyCiResponse->getMaskedAccount());
+        $this->cardNum = $verifyCiResponse->getMaskedAccount();
+        $this->cardType = $verifyCiResponse->getCardType();
+        $this->cardName = $verifyCiResponse->getCardHolderName();
     }
 
     public function getStatus() {
@@ -183,13 +183,9 @@ class HostedCheckout {
         return $dataArray;
     }
 
-    public static function portalReply(\PDO $dbh, VantivGateway $gway, $paymentId, $payNotes) {
+    public static function portalReply(\PDO $dbh, VantivGateway $gway, $cidInfo, $payNotes) {
 
         $uS = Session::getInstance();
-
-        // Check paymentId
-        $cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $paymentId);
-        //$cidInfo['idName'] = 25; $cidInfo['idGroup'] = 14; $cidInfo['InvoiceNumber'] = '2444';
 
         $trace = FALSE;
 
@@ -199,7 +195,7 @@ class HostedCheckout {
 
         // setup the verify request
         $verify = new VerifyCkOutRequest();
-        $verify->setPaymentId($paymentId);
+        $verify->setPaymentId($cidInfo['CardID']);
 
         // Verify request
         $verifyResponse = $verify->submit($gway->getCredentials(), $trace);

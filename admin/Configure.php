@@ -89,8 +89,6 @@ if (isset($_POST["btnSiteCnf"])) {
 
     $confError = SiteConfig::saveSysConfig($dbh, $_POST);
 
-    $confError .= SiteConfig::updatePayTypes($dbh, SysConfig::getKeyValue($dbh, webInit::SYS_CONFIG, 'PaymentGateway'), SysConfig::getKeyValue($dbh, webInit::SYS_CONFIG, 'ccgw'), $uS->username);
-
 }
 
 if (isset($_POST["btnLabelCnf"])) {

@@ -1796,7 +1796,7 @@ FROM reservation r
         }
 
         $paymentManager = new PaymentManager($pmp);
-        $this->payResult = HouseServices::processPayments($dbh, $paymentManager, $visit, 'CheckedIn.php', $visit->getPrimaryGuestId());
+        $this->payResult = HouseServices::processPayments($dbh, $paymentManager, $visit, 'ShowRegForm.php', $visit->getPrimaryGuestId());
 
         $this->resc = $resc;
         $this->visit = $visit;
@@ -1819,24 +1819,24 @@ FROM reservation r
 
         $uS = Session::getInstance();
         $reply = '';
+        $payId = 0;
+        $invNumber = '';
 
         if ($this->payResult !== NULL) {
-            // Process payment
+            // Payment processed
             $reply .= $this->payResult->getReplyMessage();
 
             if ($this->payResult->getStatus() == PaymentResult::FORWARDED) {
                 $creditCheckOut = $this->payResult->getForwardHostedPayment();
             }
 
-            // Receipt
-            if (is_null($this->payResult->getReceiptMarkup()) === FALSE && $this->payResult->getReceiptMarkup() != '') {
-                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', $this->payResult->getReceiptMarkup());
-                Registration::updatePrefTokenId($dbh, $this->visit->getIdRegistration(), $this->payResult->getIdToken());
-            }
+            // Payment Id
+            $payId = $this->payResult->getIdPayment();
+            Registration::updatePrefTokenId($dbh, $this->visit->getIdRegistration(), $this->payResult->getIdToken());
 
             // New Invoice
             if (is_null($this->payResult->getInvoiceNumber()) === FALSE && $this->payResult->getInvoiceNumber() != '') {
-                $dataArray['invoiceNumber'] = $this->payResult->getInvoiceNumber();
+                $invNumber = $this->payResult->getInvoiceNumber();
             }
 
         } else if ($this->cofResult !== NULL) {
@@ -1847,17 +1847,11 @@ FROM reservation r
             }
         }
 
-
-        // Generate Reg form
-        $reservArray = ReservationSvcs::generateCkinDoc($dbh, 0, $this->visit->getIdVisit(), $this->visit->getSpan(), $uS->resourceURL . 'images/receiptlogo.png');
-
-        $dataArray['style'] = $reservArray['style'];
-        $dataArray['regform'] = $reservArray['doc'];
-        unset($reservArray);
-
-
         // email the form
         if ($uS->adminEmailAddr != '' && $uS->noreplyAddr != '') {
+
+            // Generate Reg form
+            $reservArray = ReservationSvcs::generateCkinDoc($dbh, 0, $this->visit->getIdVisit(), $this->visit->getSpan(), $uS->resourceURL . 'images/receiptlogo.png');
 
             try {
 
@@ -1879,9 +1873,7 @@ FROM reservation r
 
                 $mail->Subject = "New Check-In to " . $this->resc->getTitle() . " by " . $uS->username;
 
-                $notes = '';  //HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('h4', 'Notes') . nl2br($psg->psgRS->Notes->getStoredVal()));
-
-                $mail->msgHTML($dataArray['style'] . $dataArray['regform'] . $notes);
+                $mail->msgHTML($reservArray['docs'][0]['doc'] . $reservArray['docs'][0]['style']);
                 $mail->send();
 
             } catch (Exception $ex) {
@@ -1895,14 +1887,11 @@ FROM reservation r
             return $creditCheckOut;
         }
 
-        // reload registration to reflect any new deposit payments.
-        $reg = new Registration($dbh, 0, $this->visit->getIdRegistration());
-
-
+        $dataArray['payId'] = $payId;
+        $dataArray['invoiceNumber'] = $invNumber;
         $dataArray['vid'] = $this->visit->getIdVisit();
-        $dataArray['regDialog'] = HTMLContainer::generateMarkup('div', $reg->createRegMarkup($dbh, FALSE), array('class' => "ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"));
         $dataArray['success'] = "Checked-In.  " . $reply;
-        $dataArray['reg'] = $reg->getIdRegistration();
+        $dataArray['regid'] = $this->visit->getIdRegistration();
 
         return $dataArray;
 
