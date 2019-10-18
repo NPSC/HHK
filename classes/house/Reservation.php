@@ -479,8 +479,6 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             // Allow reservations to have many guests.
             $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
-            $roomChooser->setOldResvId($oldResv);
-
             $rateChooser = new RateChooser($dbh);
 
             $dataArray['rChooser'] = $roomChooser->CreateResvMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
@@ -524,9 +522,16 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 $statusText .= ' for Room ' . $resv->getRoomTitle($dbh);
                 $hideCheckinButton = FALSE;
             }
-        }
 
-        if ($resv->isNew() || $resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
+        } else if ($resv->isNew()) {
+
+            // Allow reservations to have many guests.
+            $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
+            $roomChooser->setOldResvId($oldResv);
+
+            $dataArray['rChooser'] = $roomChooser->CreateResvMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
+
+        } else if ($resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
 
             $dataArray['rstat'] = '';
 

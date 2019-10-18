@@ -1316,6 +1316,7 @@ WHERE
 
                     $descs[] = $initialTd . HTMLTable::makeTd(($r['i']['Invoice_Date'] == '' ? '' : date('M j, Y', strtotime($r['i']['Invoice_Date']))), $mattrs)
                         .HTMLTable::makeTd($l['Description'], array_merge($mattrs, array('colspan'=>'3')))
+                        .HTMLTable::makeTd(($l['Status'] == InvoiceStatus::Unpaid ? 'Pending' : 'Paid'), $mattrs)
                         .HTMLTable::makeTd('$'.number_format($l['Amount'],2), $vattrs);
 
                 }
@@ -1324,7 +1325,6 @@ WHERE
                     $tbl->addBodyTr($d);
                 }
             }
-
         }
 
 //        $oldAmt = $totAmt;
@@ -1336,13 +1336,13 @@ WHERE
                     .HTMLTable::makeTh('Organization', $tdAttrs)
                     .HTMLTable::makeTh('Date', $tdAttrs)
                     .HTMLTable::makeTh('Item', array_merge($tdAttrs, array('colspan'=>'3')))
+                    .HTMLTable::makeTh('Status', $tdAttrs)
                     .HTMLTable::makeTh($labels->getString('statement', 'paymentHeader', 'Payment'), $tdAttrs));
 
-            $tbl->addBodyTr(HTMLTable::makeTd('Payment Total', array('colspan'=>'6', 'class'=>'tdlabel hhk-tdTotals '.$tdClass, 'style'=>'font-weight:bold;'))
+            $tbl->addBodyTr(HTMLTable::makeTd('Payment Total', array('colspan'=>'7', 'class'=>'tdlabel hhk-tdTotals '.$tdClass, 'style'=>'font-weight:bold;'))
                 .HTMLTable::makeTd('$'. number_format($totalPment, 2), array('class'=>'hhk-tdTotals '.$tdClass, 'style'=>'font-weight:bold;text-align:right;')));
 
         }
-
 
         if ($numPayments > 0) {
             return $tbl->generateMarkup();

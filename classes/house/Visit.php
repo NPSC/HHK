@@ -638,11 +638,11 @@ class Visit {
 
         EditRS::updateStoredVals($this->visitRS);
 
-        $this->replaceStays($dbh, $visitStatus, $uname, $stayOnLeave);
+        $this->replaceStays($dbh, $visitStatus, $newSpanStatus, $uname, $stayOnLeave);
 
     }
 
-    protected function replaceStays(\PDO $dbh, $oldStayStatus, $uname, $stayOnLeave = 0) {
+    protected function replaceStays(\PDO $dbh, $oldStayStatus, $newSpanStatus, $uname, $stayOnLeave = 0) {
 
         $oldStays = $this->stays;
         $this->stays = array();
@@ -662,7 +662,7 @@ class Visit {
                 $stayEndDT->setTime(0, 0, 0);
             }
 
-            if ($stayStartDT == $visitSpanStartDT) {
+            if ($stayStartDT >= $visitSpanStartDT && $newSpanStatus = VisitStatus::Active) {
                 // Special case - just update the span id and status
 
                 $rm = $this->resource->allocateRoom(1, $this->overrideMaxOccupants);
@@ -1354,7 +1354,7 @@ class Visit {
         // Init the latest departure date for the visit
         $lastDepartureDT = new \DateTime($this->getArrivalDate());
         $lastDepartureDT->setTime(0, 0, 0);
-        
+
         $visitArrivalDT = new \DateTime($this->getArrivalDate());
 
         $visitArrivalDT = new \DateTime($this->getArrivalDate());

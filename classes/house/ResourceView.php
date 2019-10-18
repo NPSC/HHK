@@ -907,7 +907,7 @@ where g3.Substitute > 0 and ru.idResource_use is null");
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             if ($uS->HouseKeepingSteps > 1) {
-                if ($filter == RoomState::Dirty && !($r['Status'] == RoomState::Dirty || $r['Status'] == RoomState::TurnOver|| $r['Status'] == RoomState::Clean)) {
+                if ($filter == RoomState::Dirty && !($r['Status'] == RoomState::Dirty || $r['Status'] == RoomState::TurnOver || $r['Status'] == RoomState::Clean)) {
                     continue;
                 }
 

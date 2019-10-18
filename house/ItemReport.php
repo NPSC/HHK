@@ -11,6 +11,7 @@
 require ("homeIncludes.php");
 require (PMT . 'Receipt.php');
 require (CLASSES . 'ColumnSelectors.php');
+require_once CLASSES . 'ValueAddedTax.php';
 require_once CLASSES . 'OpenXML.php';
 
 
@@ -204,7 +205,7 @@ $colSelector = new ColumnSelectors($cFields, 'selFld');
 // Items
 $addnlCharges = readGenLookupsPDO($dbh, 'Addnl_Charge');
 
-$stmt = $dbh->query("SELECT idItem, Description from item");
+$stmt = $dbh->query("SELECT idItem, Description, Percentage, Last_Order_Id from item where Deleted = 0");
 $itemList = array();
 
 while($r = $stmt->fetch(PDO::FETCH_NUM)) {
@@ -213,6 +214,18 @@ while($r = $stmt->fetch(PDO::FETCH_NUM)) {
         $r[1] = "Lodging Donation";
     } else if ($r[0] == ItemId::AddnlCharge) {
         $r[1] = "Additional Charges";
+    }
+
+    if ($r[2] != 0) {
+        $r[1] .= ' '.TaxedItem::suppressTrailingZeros($r[2]);
+
+        if ($r[3] != 0) {
+            $r[2] = 'Old Rates';
+        } else {
+            $r[2] = '';
+        }
+    } else {
+        $r[2] = '';
     }
 
     if ($r[0] == ItemId::DepositRefund && $uS->KeyDeposit === FALSE) {
@@ -483,7 +496,6 @@ from
     left join name_volunteer2 nv on nv.idName = n.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::BillingAgent . "'
 where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags order by i.idInvoice, il.idInvoice_Line";
 
-    $stmt = $dbh->query($query);
 
     $tbl = null;
     $sml = null;
@@ -520,15 +532,15 @@ where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags orde
         $reportRows++;
     }
 
-
     $total = 0.0;
-
 
     $name_lk = $uS->nameLookups;
     $name_lk['Invoice_Status'] = $statusList;
     $uS->nameLookups = $name_lk;
 
     // Now the data ...
+    $stmt = $dbh->query($query);
+
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
         doMarkupRow($colSelector->getFilteredFields(), $r, $local, $statusList, $diags, $locations, $total, $tbl, $sml, $reportRows, $uS->subsidyId, $uS->returnId);

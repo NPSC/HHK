@@ -641,50 +641,50 @@ class SiteConfig {
             }
         }
 
-        if (isset($post['payGtwyName'])) {
-            $newGW = filter_var($post['payGtwyName'], FILTER_SANITIZE_STRING);
+        $newGW = filter_var($post['payGtwyName'], FILTER_SANITIZE_STRING);
 
-            if (SysConfig::getKeyValue($dbh, 'sys_config', 'PaymentGateway') != $newGW) {
-                SysConfig::saveKeyValue($dbh, 'sys_config', 'PaymentGateway', $newGW);
-                $uS->PaymentGateway = $newGW;
-                $msg .= "Payment Gateway Changed.";
+        if (isset($post['payGtwyName']) && SysConfig::getKeyValue($dbh, 'sys_config', 'PaymentGateway') != $newGW) {
 
-                if ($newGW == '') {
-                    SysConfig::saveKeyValue($dbh, 'sys_config', 'ccgw', '');
-                    $uS->ccgw = '';
-                } else  if ($uS->ccgw == '') {
-                    SysConfig::saveKeyValue($dbh, 'sys_config', 'ccgw', 'test');
-                    $uS->ccgw == 'test';
-                }
+            SysConfig::saveKeyValue($dbh, 'sys_config', 'PaymentGateway', $newGW);
+            $uS->PaymentGateway = $newGW;
+            $msg .= "Payment Gateway Changed.";
 
-                switch ($newGW) {
-
-                    case PaymentGateway::INSTAMED:
-                        require (PMT . 'paymentgateway/instamed/InstamedConnect.php');
-                        require (PMT . 'paymentgateway/instamed/InstamedResponse.php');
-                        require (PMT . 'paymentgateway/instamed/InstamedGateway.php');
-
-                        break;
-
-                    case PaymentGateway::CONVERGE:
-                       require (PMT . 'paymentgateway/converge/ConvergeConnect.php');
-                        require (PMT . 'paymentgateway/converge/ConvergeGateway.php');
-
-                        break;
-
-                    case PaymentGateway::VANTIV:
-
-                        require (PMT . 'paymentgateway/vantiv/MercuryHCClient.php');
-                        require (PMT . 'paymentgateway/vantiv/HostedPayments.php');
-                        require (PMT . 'paymentgateway/vantiv/TokenTX.php');
-                        require (PMT . 'paymentgateway/vantiv/VantivGateway.php');
-                        break;
-
-                }
-
-                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
-                $msg .= $gateway->updatePayTypes($dbh, $uS->username);
+            if ($newGW == '') {
+                SysConfig::saveKeyValue($dbh, 'sys_config', 'ccgw', '');
+                $uS->ccgw = '';
+            } else  if ($uS->ccgw == '') {
+                SysConfig::saveKeyValue($dbh, 'sys_config', 'ccgw', 'test');
+                $uS->ccgw == 'test';
             }
+
+            switch ($newGW) {
+
+                case PaymentGateway::INSTAMED:
+                    require (PMT . 'paymentgateway/instamed/InstamedConnect.php');
+                    require (PMT . 'paymentgateway/instamed/InstamedResponse.php');
+                    require (PMT . 'paymentgateway/instamed/InstamedGateway.php');
+
+                    break;
+
+                case PaymentGateway::CONVERGE:
+                   require (PMT . 'paymentgateway/converge/ConvergeConnect.php');
+                    require (PMT . 'paymentgateway/converge/ConvergeGateway.php');
+
+                    break;
+
+                case PaymentGateway::VANTIV:
+
+                    require (PMT . 'paymentgateway/vantiv/MercuryHCClient.php');
+                    require (PMT . 'paymentgateway/vantiv/HostedPayments.php');
+                    require (PMT . 'paymentgateway/vantiv/TokenTX.php');
+                    require (PMT . 'paymentgateway/vantiv/VantivGateway.php');
+                    break;
+
+            }
+
+            $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+            $msg .= $gateway->updatePayTypes($dbh, $uS->username);
+
         } else {
 
             $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);

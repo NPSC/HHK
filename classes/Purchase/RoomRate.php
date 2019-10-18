@@ -28,7 +28,7 @@ class RoomRate {
             }
 
             $rateCategories[$rc->FA_Category->getStoredVal()] = array(0=>$rc->FA_Category->getStoredVal(),
-                1=>$rc->Title->getStoredVal() . ($rc->Reduced_Rate_1->getStoredVal() != 0 ? ': $' . number_format($rc->Reduced_Rate_1->getStoredVal(), $decimals) : ''),
+                1=>self::titleAddAmount($rc->Title->getStoredVal(), $rc->FA_Category->getStoredVal(), number_format($rc->Reduced_Rate_1->getStoredVal())),
                 2=>number_format($rc->Reduced_Rate_1->getStoredVal(), $decimals));
         }
 
@@ -44,7 +44,7 @@ class RoomRate {
             }
 
             $rateCategories[$rateRs->FA_Category->getStoredVal()] = array(0=>$rateRs->FA_Category->getStoredVal(),
-                1=>'*'.$rateRs->Title->getStoredVal() . ($rateRs->Reduced_Rate_1->getStoredVal() != 0 ? ': $' . number_format($rateRs->Reduced_Rate_1->getStoredVal(), $decimals) : ''),
+                1=>'*'.self::titleAddAmount($rc->Title->getStoredVal(), $rc->FA_Category->getStoredVal(), number_format($rc->Reduced_Rate_1->getStoredVal())),
                 2=>number_format($rateRs->Reduced_Rate_1->getStoredVal(), $decimals));
 
         }
@@ -59,9 +59,18 @@ class RoomRate {
         $titles = array();
 
         foreach ($rows as $r) {
-            $titles[$r['idRoom_rate']] = $r['Title'] . ($r['Reduced_Rate_1'] == 0 ? '' :  ': $' . number_format($r['Reduced_Rate_1'], 0));
+            $titles[$r['idRoom_rate']] = self::titleAddAmount($r['Title'], $r['FA_Category'], number_format($r['Reduced_Rate_1'], 0));
         }
 
         return $titles;
+    }
+
+    protected static function titleAddAmount($title, $faCategory, $amt) {
+
+        if ($faCategory != RoomRateCategorys::Fixed_Rate_Category) {
+            return $title . ': $' .$amt;
+        } else {
+            return $title;
+        }
     }
 }

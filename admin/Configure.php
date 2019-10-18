@@ -317,7 +317,7 @@ $logSelRows = array(
     4=>array(0=>'ll', 1=>'Lookups Log'),
 );
 
-$pgw = $uS->PaymentGateway;
+
 try {
     $payments = SiteConfig::createPaymentCredentialsMarkup($dbh, $ccResultMessage);
 } catch (Exception $pex) {

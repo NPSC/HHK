@@ -97,7 +97,7 @@ where
     il.Item_Id = ". ItemId::LodgingMOA . "
         and i.Deleted = 0
         and il.Deleted = 0
-        and (i.Status = '" . InvoiceStatus::Paid . "' or nv.idName IS NOT NULL)
+        and i.Status = '" . InvoiceStatus::Paid . "'
         and i.idGroup = " . $idg;
         $stmt = $dbh->query($query);
 

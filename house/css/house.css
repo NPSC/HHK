@@ -261,7 +261,7 @@ td.hhk-tdbox, th.hhk-tdbox {
     padding: 5px 7px;
 }
 td.hhk-tdTotals {
-    border-top-color: black;
+    border-top-color: #333;
     border-top-width: 2px;
 }
 input.ro {

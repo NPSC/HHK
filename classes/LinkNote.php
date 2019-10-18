@@ -89,7 +89,16 @@ class LinkNote {
                 case Note::VisitLink:
 
                     // We actually need the reservation ID
-                    $stmt = $dbh->query("SELECT v.`idReservation`, ifnull(r.Title, '(?)') FROM `visit` v LEFT JOIN resource r ON v.idResource = r.idResource WHERE `Span` = 0 AND `idVisit` =" . $linkId);
+                    $stmt = $dbh->query("SELECT
+    v.`idReservation`, IFNULL(r.Title, '(?)')
+FROM
+    `visit` v
+        LEFT JOIN
+    reservation rv on v.idReservation = rv.idReservation
+	LEFT JOIN
+    resource r ON rv.idResource = r.idResource
+WHERE
+    v.`Span` = 0 AND v.`idVisit` =" . $linkId);
                     $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
                     if (count($rows) > 0) {

@@ -9,13 +9,33 @@
  */
 
 require ("homeIncludes.php");
+require (DB_TABLES . 'PaymentsRS.php');
+require (DB_TABLES . 'visitRS.php');
+require (DB_TABLES . 'PaymentGwRS.php');
 
 require (CLASSES . 'ColumnSelectors.php');
 require CLASSES . 'OpenXML.php';
 require(CLASSES . 'Purchase/RoomRate.php');
+require(CLASSES . 'ValueAddedTax.php');
+require (CLASSES . 'PaymentSvcs.php');
+
+
 require(HOUSE . 'Resource.php');
 require(HOUSE . 'ReportFilter.php');
-require(CLASSES . 'ValueAddedTax.php');
+
+require (PMT . 'GatewayConnect.php');
+require (PMT . 'PaymentGateway.php');
+require (PMT . 'PaymentResponse.php');
+require (PMT . 'PaymentResult.php');
+require (PMT . 'Receipt.php');
+require (PMT . 'Invoice.php');
+require (PMT . 'InvoiceLine.php');
+require (PMT . 'CheckTX.php');
+require (PMT . 'CashTX.php');
+require (PMT . 'Transaction.php');
+require (PMT . 'CreditToken.php');
+
+require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
 
 try {
@@ -28,6 +48,7 @@ $dbh = $wInit->dbh;
 
 // get session instance
 $uS = Session::getInstance();
+creditIncludes($uS->PaymentGateway);
 
 
 function statsPanel(\PDO $dbh, $visitNites, $totalCatNites, $start, $end, $categories, $avDailyFee, $rescGroup, $siteName) {
@@ -327,6 +348,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
 
     if ($local) {
 
+        $r['idVisit'] = HTMLContainer::generateMarkup('div', $r['idVisit'], array('class'=>'hhk-viewVisit', 'data-gid'=>$r['idPrimaryGuest'], 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span'], 'style'=>'display:inline-table;'));
         $r['idPrimaryGuest'] = HTMLContainer::generateMarkup('a', $r['Name_Last'] . ', ' . $r['Name_First'], array('href'=>'GuestEdit.php?id=' . $r['idPrimaryGuest'] . '&psg=' . $r['idPsg']));
         $r['idPatient'] = HTMLContainer::generateMarkup('a', $r['Patient_Last'] . ', ' . $r['Patient_First'], array('href'=>'GuestEdit.php?id=' . $r['idPatient'] . '&psg=' . $r['idPsg']));
         $r['Arrival'] = $arrivalDT->format('c');
@@ -1226,10 +1248,29 @@ where
 
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
+$paymentMarkup = '';
+$receiptMarkup = '';
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
 $headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Visit Report Detail', array('style'=>'margin-top: .5em;'))
         .HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
+
+// Hosted payment return
+try {
+
+    if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
+
+        $receiptMarkup = $payResult->getReceiptMarkup();
+
+        if ($payResult->getDisplayMessage() != '') {
+            $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        }
+    }
+
+} catch (Hk_Exception_Runtime $ex) {
+    $paymentMarkup = $ex->getMessage();
+}
+
 
 $dataTable = '';
 $statsTable = '';
@@ -1489,19 +1530,30 @@ if ($uS->CoTod) {
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
+        <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
 <script type="text/javascript">
     var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
+    var rctMkup, pmtMkup;
+
     $(document).ready(function() {
         var dateFormat = '<?php echo $dateFormat; ?>';
         var makeTable = '<?php echo $mkTable; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
 
+        pmtMkup = $('#pmtMkup').val(),
+        rctMkup = $('#rctMkup').val();
         <?php echo $filter->getTimePeriodScript(); ?>;
 
         $('#btnHere, #btnExcel, #btnStatsOnly, #cbColClearAll, #cbColSelAll').button();
@@ -1518,6 +1570,51 @@ if ($uS->CoTod) {
                 $(this).prop('selected', true);
             });
         });
+        $('#keysfees').dialog({
+            autoOpen: false,
+            resizable: true,
+            modal: true,
+            close: function () {$('div#submitButtons').show();},
+            open: function () {$('div#submitButtons').hide();}
+        });
+        $('#pmtRcpt').dialog({
+            autoOpen: false,
+            resizable: true,
+            width: 530,
+            modal: true,
+            title: 'Payment Receipt'
+        });
+        $("#faDialog").dialog({
+            autoOpen: false,
+            resizable: true,
+            width: 650,
+            modal: true,
+            title: 'Income Chooser'
+        });
+
+        $('.hhk-viewVisit').button();
+        $('.hhk-viewVisit').click(function () {
+            var vid = $(this).data('vid');
+            var gid = $(this).data('gid');
+            var span = $(this).data('span');
+
+            var buttons = {
+                "Show Statement": function() {
+                    window.open('ShowStatement.php?vid=' + vid, '_blank');
+                },
+                "Show Registration Form": function() {
+                    window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
+                },
+                "Save": function() {
+                    saveFees(gid, vid, span, false, 'VisitInterval.php');
+                },
+                "Cancel": function() {
+                    $(this).dialog("close");
+                }
+            };
+             viewVisit(gid, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
+        });
+
         if (makeTable === '1') {
             $('div#printArea').css('display', 'block');
 
@@ -1536,21 +1633,29 @@ if ($uS->CoTod) {
                 $("div#printArea").printArea();
             });
         }
-        $("#faDialog").dialog({
-            autoOpen: false,
-            resizable: true,
-            width: 650,
-            modal: true,
-            title: 'Income Chooser'
-        });
+        if (rctMkup !== '') {
+            showReceipt('#pmtRcpt', rctMkup, 'Payment Receipt');
+        }
+    if (pmtMkup !== '') {
+        $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
+    }
+
+    $('#keysfees').mousedown(function (event) {
+        var target = $(event.target);
+        if ( target[0].id !== 'pudiv' && target.parents("#" + 'pudiv').length === 0) {
+            $('div#pudiv').remove();
+        }
+    });
+
     });
  </script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
-
             <h2><?php echo $wInit->pageHeading; ?></h2>
+            <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
+
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="VisitInterval.php" method="post">
                     <?php
@@ -1584,5 +1689,11 @@ if ($uS->CoTod) {
                 <?php echo $dataTable; ?>
             </div>
         </div>
+        <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
+        <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
+        <div id="keysfees" style="font-size: .9em;"></div>
+        <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
+        <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
+        <form name="xform" id="xform" method="post"></form>
     </body>
 </html>

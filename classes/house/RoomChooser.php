@@ -364,32 +364,35 @@ class RoomChooser {
             }
         }
 
-        $tbl = new HTMLTable();
+        $guestsRoom = '';
 
-        $tbl->addHeaderTr(HTMLTable::makeTh("Total Guests") . HTMLTable::makeTh('Room', array('id'=>'hhk-roomChsrtitle')));
+        if ($this->resv->isNew() === FALSE) {
 
-        $tbl->addBodyTr(
-                HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->getTotalGuests(), array('id'=>'spnNumGuests','style'=>'font-weight:bold;')), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->makeRoomSelector($resOptions, $this->resv->getIdResource()), array('id'=>'spanSelResc')))
-                );
+            $tbl = new HTMLTable();
+            $tbl->addHeaderTr(HTMLTable::makeTh("Total Guests") . HTMLTable::makeTh('Room', array('id'=>'hhk-roomChsrtitle')));
 
-        // set up room suitability message area
-        $errArray = array('class'=>'ui-state-highlight', 'id'=>'hhkroomMsg');
-        if ($errorMessage == '') {
-            $errArray['style'] = 'display:none;';
+            $tbl->addBodyTr(
+                    HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->getTotalGuests(), array('id'=>'spnNumGuests','style'=>'font-weight:bold;')), array('style'=>'text-align:center;'))
+                    .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->makeRoomSelector($resOptions, $this->resv->getIdResource()), array('id'=>'spanSelResc')))
+                    );
+
+            // set up room suitability message area
+            $errArray = array('class'=>'ui-state-highlight', 'id'=>'hhkroomMsg');
+            if ($errorMessage == '') {
+                $errArray['style'] = 'display:none;';
+            }
+
+            $errorMarkup = HTMLContainer::generateMarkup('p',
+                    HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-info', 'style'=>'float: left; margin-right: .3em;margin-top:1px;'))
+                    . $errorMessage, $errArray);
+            $guestsRoom = $tbl->generateMarkup(array('id'=>'tblRescList')) . $errorMarkup;
         }
-
-        $errorMarkup = HTMLContainer::generateMarkup('p',
-                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-info', 'style'=>'float: left; margin-right: .3em;margin-top:1px;'))
-                . $errorMessage, $errArray);
-
 
         // fieldset wrapper
         $mk1 = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('fieldset',
                         HTMLContainer::generateMarkup('legend', 'Room Chooser', array('style'=>'font-weight:bold;'))
-                        . $tbl->generateMarkup(array('id'=>'tblRescList'))
-                        . $errorMarkup
+                        . $guestsRoom
                         . HTMLContainer::generateMarkup('div', $constraintMkup, array('style'=>'clear:left; float:left;')),
                         array('class'=>'hhk-panel'))
                         , array('style'=>'float:left;')
