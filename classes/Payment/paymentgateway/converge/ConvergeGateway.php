@@ -679,7 +679,7 @@ class ConvergeCurlRequest extends CurlRequest {
     protected $errorMsg = '';
     protected $curlInfo = array();
 
-    protected function execute($url, $params) {
+    protected function execute($url, $params, $accountId, $password) {
 
         $ch = curl_init();
 

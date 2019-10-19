@@ -902,20 +902,19 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
 
         $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name, $gwRs->cc_name));
 
-        if (count($rows) == 1) {
-
-            $gwRs = new InstamedGatewayRS();
-            EditRS::loadRow($rows[0], $gwRs);
-
-            $this->ssoUrl = $gwRs->providersSso_Url->getStoredVal();
-            $this->soapUrl = '';  //$gwRs->soap_Url->getStoredVal();
-            $this->NvpUrl = $gwRs->nvp_Url->getStoredVal();
-
-            $this->useAVS = filter_var($gwRs->Use_AVS_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
-            $this->useCVV = filter_var($gwRs->Use_Ccv_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
-        } else {
-            throw new Hk_Exception_Runtime('The credit card payment gateway is not found: ' . $this->getGatewayName() . '.  ');
+        if (count($rows) < 1) {
+            $rows[0] = array();
         }
+
+        $gwRs = new InstamedGatewayRS();
+        EditRS::loadRow($rows[0], $gwRs);
+
+        $this->ssoUrl = $gwRs->providersSso_Url->getStoredVal();
+        $this->soapUrl = '';  //$gwRs->soap_Url->getStoredVal();
+        $this->NvpUrl = $gwRs->nvp_Url->getStoredVal();
+
+        $this->useAVS = filter_var($gwRs->Use_AVS_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
+        $this->useCVV = filter_var($gwRs->Use_Ccv_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
 
         return $gwRs;
     }
@@ -1043,6 +1042,24 @@ where r.idRegistration =" . $idReg);
         $gwRs->Gateway_Name->setStoredVal($this->getGatewayName());
         $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name));
 
+        if (count($rows) < 1) {
+            // Define new gateway rows
+            $gwrRs = new InstamedGatewayRS();
+            $gwrRs->Gateway_Name->setNewVal($this->getGatewayName());
+            $gwrRs->cc_name->setNewVal('test');
+
+            EditRS::insert($dbh, $gwrRs);
+
+            $gwpRs = new InstamedGatewayRS();
+            $gwpRs->Gateway_Name->setNewVal($this->getGatewayName());
+            $gwpRs->cc_name->setNewVal('production');
+            EditRS::insert($dbh, $gwpRs);
+
+            $gwRs = new InstamedGatewayRS();
+            $gwRs->Gateway_Name->setStoredVal($this->getGatewayName());
+            $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name));
+        }
+
         $tbl = new HTMLTable();
 
         foreach ($rows as $r) {
@@ -1053,7 +1070,7 @@ where r.idRegistration =" . $idReg);
             $indx = $gwRs->idcc_gateway->getStoredVal();
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Name', array('style' => 'border-top:2px solid black;', 'class' => 'tdlabel'))
+                    HTMLTable::makeTh('Mode', array('style' => 'border-top:2px solid black;', 'class' => 'tdlabel'))
                     . HTMLTable::makeTd($gwRs->cc_name->getStoredVal(), array('style' => 'border-top:2px solid black;'))
             );
 

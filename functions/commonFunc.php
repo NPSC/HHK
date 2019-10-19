@@ -87,8 +87,9 @@ function creditIncludes($gatewayName) {
             break;
 
         case PaymentGateway::CONVERGE:
-           require (PMT . 'paymentgateway/converge/ConvergeConnect.php');
+            require (PMT . 'paymentgateway/converge/ConvergeConnect.php');
             require (PMT . 'paymentgateway/converge/ConvergeGateway.php');
+            require (PMT . 'paymentgateway/converge/ConvergeResponse.php');
 
             break;
 

@@ -731,8 +731,8 @@ class VantivGateway extends PaymentGateway {
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if (count($rows) != 1) {
-            throw new Hk_Exception_Runtime('The credit card payment gateway is not defined.');
+        if (count($rows) < 1) {
+            $rows[0] = array();
         }
 
         if (isset($rows[0]['Password']) && $rows[0]['Password'] != '') {
@@ -758,6 +758,25 @@ class VantivGateway extends PaymentGateway {
         $gwRs = new Cc_Hosted_GatewayRS();
         $gwRs->Gateway_Name->setStoredVal($this->getGatewayName());
         $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name));
+
+
+        if (count($rows) < 1) {
+            // Define new gateway rows
+            $gwrRs = new Cc_Hosted_GatewayRS();
+            $gwrRs->Gateway_Name->setNewVal($this->getGatewayName());
+            $gwrRs->cc_name->setNewVal('test');
+
+            EditRS::insert($dbh, $gwrRs);
+
+            $gwpRs = new Cc_Hosted_GatewayRS();
+            $gwpRs->Gateway_Name->setNewVal($this->getGatewayName());
+            $gwpRs->cc_name->setNewVal('production');
+            EditRS::insert($dbh, $gwpRs);
+
+            $gwRs = new Cc_Hosted_GatewayRS();
+            $gwRs->Gateway_Name->setStoredVal($this->getGatewayName());
+            $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name));
+        }
 
         $opts = array(
             array(0, 'False'),
@@ -798,7 +817,7 @@ class VantivGateway extends PaymentGateway {
             $indx = $gwRs->idcc_gateway->getStoredVal();
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Name', array('style' => 'border-top:2px solid black;'))
+                    HTMLTable::makeTh('Mode', array('style' => 'border-top:2px solid black;'))
                     . HTMLTable::makeTd($gwRs->cc_name->getStoredVal(), array('style' => 'border-top:2px solid black;'))
             );
 

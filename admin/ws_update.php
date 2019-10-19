@@ -121,9 +121,10 @@ if ($cd !== $config->getString('db', 'Schema', '')) {
     exit();
 }
 
+$user = new UserClass();
 
 // validate username and password
-$record = UserClass::getUserCredentials($dbh, $un);
+$record = $user->getUserCredentials($dbh, $un);
 
 if (is_array($record) && isset($record['Enc_PW']) && $record['Enc_PW'] === $so) {
 
@@ -137,7 +138,7 @@ if (is_array($record) && isset($record['Enc_PW']) && $record['Enc_PW'] === $so) 
         $uS->regenSessionId();
 
         // Record the login.
-        UserClass::_setSession($dbh, $uS, $record);
+        $user->_setSession($dbh, $uS, $record);
 
         // Must be THE ADMIN
         if ($page->is_TheAdmin()) {

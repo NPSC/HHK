@@ -21,6 +21,10 @@ class VerifyCvCurlResponse extends GatewayResponse implements iGatewayResponse {
             return '';
     }
 
+    public function SignatureRequired() {
+        return 0;
+    }
+
     public function getResponseCode() {
         if (isset($this->result['ssl_result'])) {
             return $this->result['ssl_result'];
