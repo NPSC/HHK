@@ -258,7 +258,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('Pay_Gateway_Name', 'instamed', 'Instamed','','',0),
 ('Pay_Gateway_Name', 'vantiv', 'Vantiv','','',0),
-('Pay_Gateway_Name', 'Elavon Converge', 'converge','','',0),
+
 
 ('Pay_Status', 'c', 'Cleared', '','',0),
 ('Pay_Status', 'p', 'Pending', '','',0),

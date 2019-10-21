@@ -56,7 +56,7 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Time_Zo
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gateway_Name', 'instamed', 'Instamed');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gateway_Name', 'vantiv', 'Vantiv');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gateway_Name', 'converge', 'Elavon Converge');
+
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Payment_Status', 'rv', 'Reversed');
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('UseHouseWaive', 'true', 'b', 'h', 'Show the house waive checkbox on checkout.');

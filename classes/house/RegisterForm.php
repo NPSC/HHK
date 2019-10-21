@@ -17,7 +17,9 @@
  */
 class RegisterForm {
 
-    protected static function titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $priceModelCode, $houseAddr = '', $roomFeeTitle = 'Pledged Fee') {
+    public $labels;
+
+    protected function titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $priceModelCode, $houseAddr = '', $roomFeeTitle = 'Pledged Fee') {
 
         $mkup = "<h2>" . $title . " </h2>";
 
@@ -42,11 +44,11 @@ class RegisterForm {
  </tr>
  <tr>
   <td width=306 colspan=2 style='width:2.55in;border:solid windowtext 1pt; border-top:none;'>
-  " . ($priceModelCode == ItemPriceCode::None ? '' : "<p class='label'>$roomFeeTitle</p>") ."</td>
+  " . ($priceModelCode == ItemPriceCode::None ? '' : "<p class='label'>" . $this->labels->getString('register', 'rateTitle','Pledged Fee') . "</p>") ."</td>
   <td width=153 style='width:91.8pt;border-top:none;border-left:none; border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
   " . ($priceModelCode == ItemPriceCode::None ? '' : "<p class=MsoNormal style='margin-bottom:0;line-height: normal'>$"  . number_format($rate, 2) . "</p>") ."</td>
   <td width=180 style='width:1.5in;border-top:none;border-left:none;border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
-  <p class='label'>Agent</p>
+  <p class='label'>" . $this->labels->getString('hospital', 'referralAgent', 'Agent') . "</p>
   </td>
   <td width=278 style='width:166.5pt;border-top:none;border-left:none; border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
   <p class=MsoNormal style='margin-bottom:0;line-height: normal'>$agent</p>
@@ -57,14 +59,14 @@ class RegisterForm {
         return $mkup;
     }
 
-    protected static function patientBlock(\Role $patient, $hospital, $hospRoom) {
+    protected function patientBlock(\Role $patient, $hospital, $hospRoom) {
 
         $bd = '';
         if ($patient->getRoleMember()->get_birthDate() != '') {
             $bd = ' (' . date('M j, Y', strtotime($patient->getRoleMember()->get_birthDate())) . ')';
         }
 
-        $mkup = "<h2>Patient</h2>
+        $mkup = "<h2>" .$this->labels->getString('MemberType', 'patient', 'Patient'). "</h2>
 <table cellspacing=0 cellpadding=0 style='border-collapse:collapse;border:none'>
  <tr>
   <td style='width:.5in;border-top:1.5pt solid #98C723; border-left:none;border-bottom:none;border-right:solid windowtext 1pt;'>
@@ -77,13 +79,13 @@ class RegisterForm {
   <p class=MsoNormal style='margin-bottom:0;line-height: normal'>" . $patient->getRoleMember()->get_fullName() . $bd . "</p>
   </td>
   <td style='border-top:1.5pt solid #98C723; border-left:none;border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
-  <p class='label'>Hospital</p>
+  <p class='label'>" . $this->labels->getString('hospital', 'hospital', 'Hospital') . "</p>
   </td>
   <td style='width:160pt;border-top:1.5pt solid #98C723; border-left:none;border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
   <p class=MsoNormal style='margin-bottom:0;line-height: normal'>" . $hospital . "</p>
   </td>
   <td style='border-top:1.5pt solid #98C723; border-left:none;border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
-  <p class='label'>Hospital Room</p>
+  <p class='label'>" . $this->labels->getString('hospital', 'hospital', 'Hospital') . " Room</p>
   </td>
   <td style='width:50pt;border-top:1.5pt solid #98C723; border-left:none;border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
   <p class=MsoNormal style='margin-bottom:0;line-height: normal'>" . $hospRoom . "</p>
@@ -94,7 +96,7 @@ class RegisterForm {
         return $mkup;
     }
 
-    protected static function vehicleBlock(array $vehs) {
+    protected function vehicleBlock(array $vehs) {
         $mkup = "";
 
         if (count($vehs) > 0) {
@@ -158,16 +160,14 @@ class RegisterForm {
 
     }
 
-    protected static function AgreementBlock(array $guests, $agreementLabel, $instructionFileName, $agreement) {
+    protected function AgreementBlock(array $guests, $agreementLabel, $agreement) {
 
         $mkup = HTMLContainer::generateMarkup('h2', $agreementLabel, array('style'=>'border:none;border-bottom:1.5pt solid #98C723'));
 
         if ($agreement != '') {
             $mkup .= $agreement;
-        } else if ($instructionFileName != '' && file_exists($instructionFileName)) {
-            $mkup .= HTMLContainer::generateMarkup('div', file_get_contents($instructionFileName), array('class'=>'hhk-agreement'));
         } else {
-            $mkup .= HTMLContainer::generateMarkup('div', "Agreement text file is missing.  '$instructionFileName'", array('class'=>'ui-state-error'));
+            $mkup .= HTMLContainer::generateMarkup('div', "Your Registration Agreement is missing.  ", array('class'=>'ui-state-error'));
         }
 
         $usedNames = array();
@@ -192,13 +192,13 @@ class RegisterForm {
         return $mkup;
     }
 
-    protected static function paymentRecord($feesRecord) {
+    protected function paymentRecord($feesRecord) {
 
         $mkup = HTMLContainer::generateMarkup('div',  HTMLContainer::generateMarkup('h2', 'Payment Record'), array('style'=>'border:none;border-bottom:1.5pt solid #98C723;padding-left:0;')) . $feesRecord;
         return $mkup;
     }
 
-    protected static function creditBlock($creditRecord) {
+    protected function creditBlock($creditRecord) {
 
         $mkup = HTMLContainer::generateMarkup('div',  HTMLContainer::generateMarkup('h2', 'Payment Information'), array('style'=>'border:none;border-bottom:1.5pt solid #98C723;padding-left:0;'));
         $mkup .= $creditRecord;
@@ -206,7 +206,7 @@ class RegisterForm {
         return $mkup;
     }
 
-    protected static function notesBlock($notes, $title = 'Check-in Notes') {
+    protected function notesBlock($notes, $title = 'Check-in Notes') {
 
         $mkup = '';
 
@@ -219,7 +219,7 @@ class RegisterForm {
         return $mkup;
     }
 
-    protected static function guestBlock(\PDO $dbh, array $guests, array $relationText) {
+    protected function guestBlock(\PDO $dbh, array $guests, array $relationText) {
 
         $mkup = "<table style='border-collapse:collapse;border:none'>
             <tr><td colspan='6' style='border:none;border-bottom:1.5pt solid #98C723;padding-left:0;'><h2>Guests</h2></td></tr>";
@@ -330,7 +330,7 @@ class RegisterForm {
   <p class=MsoNormal align=right style='margin-bottom:0; text-align:right;line-height:normal'>&nbsp;</p>
   </td>
   <td colspan=2 style='width:24%;border-top:none;border-left:none;border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
-  <p class='label'>Relationship to Patient</p>
+  <p class='label'>Relationship to " . $this->labels->getString('MemberType', 'patient', 'Patient') . "</p>
   </td>
   <td style='border-top:none;border-left:none; border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
   <p class=MsoNormal style='margin-bottom:0;line-height: normal'>" . (isset($relationText[$guest->getPatientRelationshipCode()]) ? $relationText[$guest->getPatientRelationshipCode()][1] : ''). "</p>
@@ -347,36 +347,36 @@ class RegisterForm {
 
     }
 
-    protected static function generateDocument(\PDO $dbh, $title, \Role $patient, array $guests,  $houseAddr, $hospital, $hospRoom, $patientRelCodes,
-            $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $expDepartPrompt, $agreementLabel, $instructionFileName, $agreement, $creditRecord = '', $notes = '', $roomFeeTitle = 'Pledged Fee') {
+    protected function generateDocument(\PDO $dbh, $title, Role $patient, array $guests,  $houseAddr, $hospital, $hospRoom, $patientRelCodes,
+            $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $expDepartPrompt, $agreement, $creditRecord, $notes) {
 
         $uS = Session::getInstance();
 
         $mkup = "<div style='width:700px;margin-bottom:30px; margin-left:5px; margin-right:5px'>";
-        $mkup .= self::titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $uS->RoomPriceModel, $houseAddr, $roomFeeTitle);
+        $mkup .= self::titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $uS->RoomPriceModel, $houseAddr);
 
         // don't use notes if they are for the waitlist.
         if (!$uS->UseWLnotes) {
             $mkup .= self::notesBlock($notes);
         }
 
-        $mkup .= self::guestBlock($dbh, $guests, $patientRelCodes);
+        $mkup .= $this->guestBlock($dbh, $guests, $patientRelCodes);
 
         // Patient
-        $mkup .= self::patientBlock($patient, $hospital, $hospRoom);
+        $mkup .= $this->patientBlock($patient, $hospital, $hospRoom);
 
         // Vehicles
         if (is_null($vehicles) === FALSE) {
-            $mkup .= self::vehicleBlock($vehicles);
+            $mkup .= $this->vehicleBlock($vehicles);
         }
 
         // Credit card
         if ($creditRecord != '') {
-            $mkup .= self::creditBlock($creditRecord);
+            $mkup .= $this->creditBlock($creditRecord);
         }
 
         // Agreement
-        $mkup .= self::AgreementBlock($guests, $agreementLabel, $instructionFileName, $agreement);
+        $mkup .= $this->AgreementBlock($guests, $this->labels->getString('referral', 'agreementTitle','Agreement'), $agreement);
 
         $mkup .= "</div>";
 
@@ -423,10 +423,10 @@ p.label {
 </style>';
     }
 
-    public static function prepareRegForm(PDO $dbh, $idVisit, $span, $idReservation = 0, $instructionFileName = '', $agreement = '') {
+    public function prepareRegForm(PDO $dbh, $idVisit, $span, $idReservation, $agreement = '') {
 
         $uS = Session::getInstance();
-        $labels = new Config_Lite(LABEL_FILE);
+        $this->labels = new Config_Lite(LABEL_FILE);
         $guests = array();
         $depDate = '';
         $reg = NULL;
@@ -713,12 +713,9 @@ p.label {
                 $roomTitle,
                 $depDate,
                 $expectedDeparturePrompt,
-                $labels->getString('referral', 'agreementTitle','Agreement'),
-                $instructionFileName,
                 $agreement,
                 $creditReport,
-                $notes,
-                $labels->getString('register', 'rateTitle','Pledged Fee')
+                $notes
             );
 
     }

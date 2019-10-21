@@ -244,7 +244,7 @@ class ActivityReport {
             $doctors[$d['idName']] = $d['Name_Full'];
         }
 
-        $reservIcon = "<span class='ui-icon ui-icon-folder-open' style='float: left; margin-right: .3em;' title='Open Patient Edit page'></span>";
+        $reservIcon = "<span class='ui-icon ui-icon-folder-open' style='float: left; margin-right: .3em;' title='Open " . $labels->getString('MemberType', 'patient', 'Patient') . " Edit page'></span>";
 
         $tbl = new HTMLTable();
         $tbl->addHeaderTr(HTMLTable::makeTh("Action") . HTMLTable::makeTh("Date") . HTMLTable::makeTh("By"));
@@ -391,7 +391,7 @@ class ActivityReport {
             $tbl->addBodyTr($trow);
         }
 
-        return $tbl->generateMarkup(array(), '<h3>' . $labels->getString('hospital', 'hosptial', 'Hospital') . ' Stay Activity</h3>');
+        return $tbl->generateMarkup(array(), '<h3>' . $labels->getString('hospital', 'hospital', 'Hospital') . ' Stay Activity</h3>');
     }
 
     /**
@@ -895,7 +895,7 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
                 . HTMLTable::makeTh('Bill Date')
                 . HTMLTable::makeTh('Payor')
                 . HTMLTable::makeTh('Room')
-                . HTMLTable::makeTh($labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital'))
+                . HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'))
                 . HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient'))
                 . HTMLTable::makeTh('Amount')
                 . HTMLTable::makeTh('Payments')

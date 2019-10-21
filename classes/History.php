@@ -335,6 +335,7 @@ class History {
     public static function getCheckedInMarkup(\PDO $dbh, $creditGw, $hospitals, $page, $includeAction = TRUE, $static = FALSE) {
 
         $uS = Session::getInstance();
+        $labels = new Config_Lite(LABEL_FILE);
 
         $roomRates = array();
         $rateRs = new Room_RateRS();

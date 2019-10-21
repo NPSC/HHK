@@ -285,8 +285,8 @@ $cFields[] = array("Primary Guest", 'Primary', 'checked', '', 's', '', array());
 
 $cFields[] = array("First Stay", 'First Stay', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
 
-$cFields[] = array("Patient Relation", 'Relationship', 'checked', '', 's', '', array());
-$cFields[] = array("Patient Group Id", 'idPsg', 'checked', '', 's', '', array());
+$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Relation", 'Relationship', 'checked', '', 's', '', array());
+$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Group Id", 'idPsg', 'checked', '', 's', '', array());
 
 if (count($aList) > 0) {
     $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital')." / Assoc", 'hospitalAssoc', 'checked', '', 's', '', array());

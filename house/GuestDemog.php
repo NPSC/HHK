@@ -30,6 +30,7 @@ $fields = '';
 
 $numRecords = 25;
 $startAt = 0;
+$labels = new Config_Lite(LABEL_FILE);
 
 foreach (readGenLookupsPDO($dbh, 'Demographics') as $d) {
 
@@ -163,7 +164,7 @@ while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
     $tbl->addBodyTr($tr);
 }
 
-$th = HTMLTable::makeTh("Id") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Patient");
+$th = HTMLTable::makeTh("Id") . HTMLTable::makeTh("Name") . HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient'));
 
 // Header
 foreach ($demos as $d) {

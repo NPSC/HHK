@@ -140,23 +140,23 @@ class ReservationSvcs {
         $uS = Session::getInstance();
         $docs = array();
 
-        $instructFileName = REL_BASE_DIR . 'conf'. DS . 'agreement.txt';
-
         $stmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = 'Reg_Agreement'");
         $docRows = $stmt->fetchAll();
 
         if ($uS->RegForm == 1) {
 
+            $regForm = new RegisterForm();
+
             if (count($docRows) > 0) {
                 foreach($docRows as $d) {
-                    $docs[] = array('doc'=>RegisterForm::prepareRegForm($dbh, $idVisit, $span, $idReservation, $instructFileName, $d['Doc']),
+                    $docs[] = array('doc'=>$regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, $d['Doc']),
                         'style'=>RegisterForm::getStyling(),
                         'tabIndex'=>$d['Code'],
                         'tabTitle'=>$d['Description']);
                 }
             } else {
 
-                $docs[] = array('doc'=>RegisterForm::prepareRegForm($dbh, $idVisit, $span, $idReservation, $instructFileName),
+                $docs[] = array('doc'=>$regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, 'The registration agreement document is missing. '),
                     'style'=>RegisterForm::getStyling(),
                     'tabIndex'=>'en',
                     'tabTitle'=>'English');

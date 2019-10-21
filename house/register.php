@@ -275,7 +275,6 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
     $showRateCol = TRUE;
 }
 
-$hospTitle = $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital');
 
 if ($uS->UseWLnotes) {
     $showWlNotes = TRUE;
@@ -524,7 +523,7 @@ if ($uS->UseWLnotes) {
         <input  type="hidden" id="expandResources" value='<?php echo $uS->CalExpandResources; ?>' />
         <input  type="hidden" id="shoHospitalName" value='<?php echo $shoHosptialName; ?>' />
         <input  type="hidden" id="showRateCol" value='<?php echo $showRateCol; ?>' />
-        <input  type="hidden" id="hospTitle" value='<?php echo $hospTitle; ?>' />
+        <input  type="hidden" id="hospTitle" value='<?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>' />
         <input  type="hidden" id="showDiags" value='<?php if (count($diags) > 0) {echo TRUE;} else {echo FALSE;} ?>' />
         <input  type="hidden" id="showLocs" value='<?php if (count($locations) > 0) {echo TRUE;} else {echo FALSE;} ?>' />
         <input  type="hidden" id="locationTitle" value='<?php echo $labels->getString('hospital', 'location', 'Location'); ?>' />

@@ -54,13 +54,14 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     $agentTitle = $labels->getString('hospital', 'referralAgent', 'Referral Agent');
     $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
     $locTitle = $labels->getString('hospital', 'location', 'Location');
+    $patTitle = $labels->getString('MemberType', 'patient', 'Patient');
 
 
     if ($showAddr && $showFullName) {
 
         $query = "select s.idName, hs.idPsg, vg.Relationship_Code, v.idReservation as `Resv ID`, "
             . "vg.`Patient Rel.`, vg.Prefix, vg.First as `Guest First`, vg.Last as `Guest Last`, vg.Suffix, ifnull(vg.BirthDate, '') as `Birth Date`, "
-            . "np.Name_First as `Patient First` , np.Name_Last as `Patient Last`, "
+            . "np.Name_First as `$patTitle First` , np.Name_Last as `$patTitle Last`, "
             . " vg.Address, vg.City, vg.County, vg.State, vg.Zip, vg.Country, vg.Phone, vg.Email, "
             . "r.title as `Room`,"
             . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
@@ -77,7 +78,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
             . "r.title as `Room`,"
             . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
             . "hs.idHospital, hs.idAssociation, "
-            . "np.Name_Last as `Patient Last`, np.Name_First as `Patient First`, "
+            . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First`, "
                 ." ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
             . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
 
@@ -87,7 +88,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
                 . "ifnull(g2.Description,'') as `Status`, "
                 . "r.title as `Room`,"
                 . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
-                . "np.Name_Last as `Patient Last`, np.Name_First as `Patient First` , "
+                . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First` , "
                 . " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
             . "hs.idHospital, hs.idAssociation,
           ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
@@ -96,7 +97,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 
         $query = "select s.idName, hs.idPsg, vg.Relationship_Code, vg.Last as `Guest Last`, vg.First as `Guest First`, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.ngStatus, "
             . "ifnull(g2.Description,'') as `Status`, r.title as `Room`, ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
-                . "np.Name_Last as `Patient Last`, np.Name_First as `Patient First`, "
+                . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First`, "
                 . " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
             . "hs.idHospital, hs.idAssociation, "
                 . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
@@ -127,10 +128,10 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     gen_lookups g2 on g2.Code = s.Status and g2.Table_Name = 'Visit_Status'
         left join
     room_rate rr on v.idRoom_rate = rr.idRoom_rate
-    	join 
+    	join
     room r on s.idRoom = r.idRoom
 where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end') and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0 $whClause";
-	
+
     $stmt = $dbh->query($query);
 
     if (!$local) {
@@ -159,8 +160,11 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
         }
 
         if ($showRelationship === FALSE) {
-            unset($r['Patient First']);
-            unset($r['Patient Last']);
+            unset($r[$patTitle.' First']);
+            unset($r[$patTitle.' Last']);
+            unset($r['Patient Rel.']);
+        } else if ($patTitle != 'Patient') {
+            $r[$patTitle . ' Rel.'] = $r['Patient Rel.'];
             unset($r['Patient Rel.']);
         }
 
@@ -321,10 +325,10 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
 
 function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hospCodes, \Config_Lite $labels, $showAssoc, $showDiagnosis, $showLocation, $patBirthDate, $patAsGuest = true) {
 
-    $agentTitle = $labels->getString('hospital', 'referralAgent', 'Referral Agent');
     $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
     $locTitle = $labels->getString('hospital', 'location', 'Location');
     $psgLabel = $labels->getString('statement', 'psgAbrev', 'PSG') . ' Id';
+    $patRelTitle = $labels->getString('MemberType', 'patient', 'Patient') . " Relationship";
 
     $query = "Select DISTINCT
     ng.idPsg as `$psgLabel`,
@@ -334,7 +338,7 @@ function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hosp
     ifnull(na.County, '') as `County`,
     ifnull(na.State_Province, '') as `State`,
     ifnull(na.Country_Code, '') as `Country`,
-    ifnull(ng.Relationship_Code,'') as `Patient Relationship`,
+    ifnull(ng.Relationship_Code,'') as `$patRelTitle`,
     ifnull(n.BirthDate, '') as `Birth Date`,
     ifnull(hs.idHospital, '') as `" . $labels->getString('hospital', 'hospital', 'Hospital') . "`,
     ifnull(hs.idAssociation, '') as `Association`,
@@ -380,11 +384,11 @@ order by ng.idPsg";
 
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
-        $relCode = $r['Patient Relationship'];
+        $relCode = $r[$patRelTitle];
         if (isset($relCodes[$relCode])) {
-            $r['Patient Relationship'] = $relCodes[$relCode][1];
+            $r[$patRelTitle] = $relCodes[$relCode][1];
         } else {
-            $r['Patient Relationship'] = '';
+            $r[$patRelTitle] = '';
         }
 
         // Hospital
@@ -463,7 +467,7 @@ order by ng.idPsg";
 
             if ($relCode == RelLinkType::Self) {
 
-                $r['Patient Relationship'] = HTMLContainer::generateMarkup('span', $r['Patient Relationship'], array('style'=>'font-weight:bold;'));
+                $r[$patRelTitle] = HTMLContainer::generateMarkup('span', $r[$patRelTitle], array('style'=>'font-weight:bold;'));
 
             } else if ($patAsGuest) {
                 // Not a patient
@@ -1113,8 +1117,8 @@ if ($uS->CoTod) {
                      <table style="width:100%">
                         <tr>
                             <th><label for='rbpsg'><?php echo $labels->getString('guestEdit', 'psgTab', 'Patient Support Group'); ?></label><input type="radio" id='rbpsg' name="rbReport" value="psg" style='margin-left:.5em;' <?php if ($rptSetting == 'psg') {echo 'checked="checked"';} ?>/></th>
-                            <?php if ($uS->PatientAsGuest) { ?><th><label for='rbp'>Just Patients</label><input type="radio" id='rbp' name="rbReport" value="p" style='margin-left:.5em;' <?php if ($rptSetting == 'p') {echo 'checked="checked"';} ?>/></th><?php } ?>
-                            <th><label for='rbg'>Guests & Patients</label><input type="radio" id='rbg' name="rbReport" value="g" style='margin-left:.5em;' <?php if ($rptSetting == 'g') {echo 'checked="checked"';} ?>/></th>
+                            <?php if ($uS->PatientAsGuest) { ?><th><label for='rbp'>Just <?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>s</label><input type="radio" id='rbp' name="rbReport" value="p" style='margin-left:.5em;' <?php if ($rptSetting == 'p') {echo 'checked="checked"';} ?>/></th><?php } ?>
+                            <th><label for='rbg'>Guests & <?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>s</label><input type="radio" id='rbg' name="rbReport" value="g" style='margin-left:.5em;' <?php if ($rptSetting == 'g') {echo 'checked="checked"';} ?>/></th>
                         </tr>
                     </table>
                     </fieldset>

@@ -12,14 +12,15 @@
  */
 class RegistrationForm {
 
+    public $labels;
 
-    public function getDocument(\PDO $dbh, \Guest $priGuest, \Guest $billGuest, array $addtionalGuests, $patientName, $hospitalName, $roomTitle,
+    public function getDocument(\PDO $dbh, Guest $priGuest, Guest $billGuest, array $addtionalGuests, $patientName, $hospitalName, $roomTitle,
             $cardName, $cardType, $cardNumber, $logoUrl, $logoWidth, $instructionFileName, $agreement, $expectedPayType = '', $note = '', $todaysDate = '') {
 
 //        $paymentInfoSection = '<div><span>The House asks that guests leave a card on file for security purposes. You will be charged for the nights stayed at the agreed upon rate after check-out or after x weeks. </div>';
 
         $uS = Session::getInstance();
-
+        $this->labels = new Config_Lite(LABEL_FILE);
         $fullNames = array();
 
         $house = Member::GetDesignatedMember($dbh, $uS->sId, MemBasis::NonProfit);
@@ -156,8 +157,8 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
     public function makePatient($patientName, $hospitalName) {
 
         return "<table style='margin-top:10px;'><tr>
-     <td style=';width:12%;vertical-align: bottom;'>Patient:</td><td style='border-bottom: 1px solid black;width:35%;vertical-align: bottom;'>$patientName&nbsp;</td>
-     <td style='padding-left:21px;width:19%;vertical-align: bottom;'>Hospital:</td><td style='border-bottom: 1px solid black;width:38%;vertical-align: bottom;'>$hospitalName&nbsp;</td>
+     <td style=';width:12%;vertical-align: bottom;'>" . $this->labels->getString('MemberType', 'patient', 'Patient') . ":</td><td style='border-bottom: 1px solid black;width:35%;vertical-align: bottom;'>$patientName&nbsp;</td>
+     <td style='padding-left:21px;width:19%;vertical-align: bottom;'>" . $labels->getString('hospital', 'hospital', 'Hospital') . ":</td><td style='border-bottom: 1px solid black;width:38%;vertical-align: bottom;'>$hospitalName&nbsp;</td>
  </tr></table>";
 
     }
@@ -235,7 +236,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
 ';
     }
 
-    public function makeFirstAdditional($fName, $lName, $date, $relation, $phone, $email) {
+    public function makeFirstAdditional($fName, $lName, $date, $relation, $phone, $email, $labels) {
 
         $uS = Session::getInstance();
 
@@ -252,7 +253,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
         </table>
        <table style="width:100%; margin-left:20px;">
            <tr><td style="border-bottom: 1px solid black;width:40%;">' . $relat . '&nbsp;</td><td style="border-bottom: 1px solid black;width:20%;">&nbsp;</td><td style="border-bottom: 1px solid black;background-color: #EAEBFF; text-align:center;">&#9634; Copy of Picture ID Taken <span style="font-weight:bold;">(Guest Only)</span></td></tr>
-            <tr><td class="prompt">&#9650;Relationship to Patient/Guest</td><td class="prompt">&#9650;Age</td><td class="prompt"></td></tr>
+            <tr><td class="prompt">&#9650;Relationship to ' . $labels->getString('MemberType', 'patient', 'Patient') . '/Guest</td><td class="prompt">&#9650;Age</td><td class="prompt"></td></tr>
         </table>
    <table style="width:100%; margin-left:20px;">
        <tr><td style="border-bottom: 1px solid black;width:30%;">' . $phone . '&nbsp;</td><td style="border-bottom: 1px solid black;">' . $email . '&nbsp;</td></tr>
@@ -288,7 +289,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
         </table>
        <table style="width:100%; margin-left:20px;">
            <tr><td style="border-bottom: 1px solid black;width:40%;">' . $relat . '&nbsp;</td><td style="border-bottom: 1px solid black;width:20%;">&nbsp;</td><td style="border-bottom: 1px solid black;background-color: #EAEBFF; text-align:center;">&#9634; Copy of Picture ID Taken (18 or older)</td></tr>
-            <tr><td class="prompt">&#9650;Relationship to Patient/Guest</td><td class="prompt">&#9650;Age</td><td class="prompt"></td></tr>
+            <tr><td class="prompt">&#9650;Relationship to ' . $this->labels->getString('MemberType', 'patient', 'Patient') . '/Guest</td><td class="prompt">&#9650;Age</td><td class="prompt"></td></tr>
         </table>
     </div>';
     }
@@ -303,7 +304,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
         </table>
        <table style="width:100%; margin-left:20px;">
            <tr><td style="border-bottom: 1px solid black;width:40%;">&nbsp;</td><td style="border-bottom: 1px solid black;width:20%;">&nbsp;</td><td style="border-bottom: 1px solid black;background-color: #EAEBFF; text-align:center;">&#9634; Copy of Picture ID Taken (18 or older)</td></tr>
-            <tr><td class="prompt">&#9650;Relationship to Patient/Guest</td><td class="prompt">&#9650;Age</td><td class="prompt"></td></tr>
+            <tr><td class="prompt">&#9650;Relationship to ' . $this->labels->getString('MemberType', 'patient', 'Patient') . '/Guest</td><td class="prompt">&#9650;Age</td><td class="prompt"></td></tr>
         </table>
     </div>';
     }

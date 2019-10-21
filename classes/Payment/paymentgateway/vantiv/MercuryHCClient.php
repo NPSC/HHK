@@ -478,7 +478,7 @@ abstract class MercRequest {
 
         try {
             // Create the Soap, prepre the data
-            $txClient = new SoapClient($gway['Credit_Url'], array('trace'=>$trace));
+            $txClient = new SoapClient($gway['Credit_Url'], array('trace'=>FALSE));
 
             // Each child object must call its own Soap function.  This can be rewritten so that the children objecs
             // set a string function name, but then we have to get into the Soap.
@@ -489,14 +489,14 @@ abstract class MercRequest {
             throw new Hk_Exception_Payment('Problem with HHK web server contacting the Mercury Payment system:  ' . $sf->getMessage() .     ' (' . $sf->getCode() . '); ' . ' Trace: ' . $sf->getTraceAsString());
         }
 
-        try {
-            if ($trace) {
-                file_put_contents(REL_BASE_DIR . 'patch' . DS . 'soapLog.xml', $txClient->__getLastRequest() . $txClient->__getLastResponse(), FILE_APPEND);
-            }
-        } catch(Exception $ex) {
-
-            throw new Hk_Exception_Payment('Trace file error:  ' . $ex->getMessage());
-        }
+//        try {
+//            if ($trace) {
+//                file_put_contents(REL_BASE_DIR . 'patch' . DS . 'soapLog.xml', $txClient->__getLastRequest() . $txClient->__getLastResponse(), FILE_APPEND);
+//            }
+//        } catch(Exception $ex) {
+//
+//            throw new Hk_Exception_Payment('Trace file error:  ' . $ex->getMessage());
+//        }
 
         return $xaction;
     }

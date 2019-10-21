@@ -189,7 +189,7 @@ if ($id > 0) {
             }
 
         } else {
-            $alertMessage = 'This person is not a patient or guest.  ' . (isset($uS->groupcodes['mm']) || $wInit->page->is_Admin() ? HTMLContainer::generateMarkup('a', 'Go to Member Edit', array('href'=>'../admin/NameEdit.php?id='.$id)) : '');
+            $alertMessage = 'This person is not a '.$labels->getString('hospital', 'hospital', 'Hospital').' or guest.  ' . (isset($uS->groupcodes['mm']) || $wInit->page->is_Admin() ? HTMLContainer::generateMarkup('a', 'Go to Member Edit', array('href'=>'../admin/NameEdit.php?id='.$id)) : '');
             $showSearchOnly = TRUE;
         }
     }
@@ -241,7 +241,7 @@ if ($idPsg == 0) {
 
         // Select psg
         $tbl = new HTMLTable();
-        $tbl->addHeaderTr(HTMLTable::makeTh('Who is the Patient?'));
+        $tbl->addHeaderTr(HTMLTable::makeTh('Who is the ' . $labels->getString('MemberType', 'patient', 'Patient') . '?'));
 
         foreach ($ngRss as $n) {
 
@@ -253,7 +253,7 @@ if ($idPsg == 0) {
 
         }
 
-        $psgmkup = HTMLContainer::generateMarkup('h3', 'Choose Patient Support Group') .$tbl->generateMarkup();
+        $psgmkup = HTMLContainer::generateMarkup('h3', 'Choose ' . $labels->getString('MemberType', 'patient', 'Patient') . ' Support Group') .$tbl->generateMarkup();
         $guestTabIndex = 1;
 
     } else if (count($ngRss) == 1) {
@@ -457,7 +457,7 @@ if ($name->isNew()) {
 } else {
 
     if ($psg->getIdPatient() == $name->get_idName()) {
-        $niceName = "Patient: " . $name->getMemberName();
+        $niceName = $labels->getString('MemberType', 'patient', 'Patient').": " . $name->getMemberName();
     } else {
         $niceName = "Guest: " . $name->getMemberName();
     }
@@ -708,7 +708,7 @@ $idReg = $registration->getIdRegistration();
 
 } else {
     // Show just the search message.
-    $guestName = "<h2 style='font-size:2em;'>Search for a Guest/Patient:</h2>";
+    $guestName = "<h2 style='font-size:2em;'>Search for a Guest/" . $labels->getString('MemberType', 'patient', 'Patient') . ":</h2>";
     $idReg = 0;
 }
 

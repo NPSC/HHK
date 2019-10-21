@@ -120,12 +120,12 @@ class Psg {
     }
 
     public function createEditMarkup(\PDO $dbh, $relList, $labels, $pageName = 'GuestEdit.php', $id = 0, $shoChgLog = FALSE) {
-    
+
         // Edit Div
         $hArray = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, $this->getIdPatient()));
         $table = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('fieldset',
-                        HTMLContainer::generateMarkup('legend',$labels->getString('hospital', 'hosptial', 'Hospital'), array('style'=>'font-weight:bold;'))
+                        HTMLContainer::generateMarkup('legend',$labels->getString('hospital', 'hospital', 'Hospital'), array('style'=>'font-weight:bold;'))
                         . $hArray['div'],
                         array('class'=>'hhk-panel')),
                 array('style'=>'float:left;', 'id'=>'hospitalSection'));
@@ -148,7 +148,7 @@ class Psg {
         $changePatientMU = '';
 
         $mTable = new HTMLTable();
-        $mTable->addHeaderTr(HTMLTable::makeTh('Remove').HTMLTable::makeTh('Id').HTMLTable::makeTh('Name').HTMLTable::makeTh('Relationship to Patient').HTMLTable::makeTh('Guardian').HTMLTable::makeTh('Phone'));
+        $mTable->addHeaderTr(HTMLTable::makeTh('Remove').HTMLTable::makeTh('Id').HTMLTable::makeTh('Name').HTMLTable::makeTh('Relationship to '.$labels->getString('MemberType', 'patient', 'Patient')).HTMLTable::makeTh('Guardian').HTMLTable::makeTh('Phone'));
 
         $stmt = $dbh->query("SELECT
             ng.idName AS `idGuest`,
