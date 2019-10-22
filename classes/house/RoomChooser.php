@@ -354,6 +354,7 @@ class RoomChooser {
 
         $resvConstraints = $this->resv->getConstraints($dbh);
         $constraintMkup = '';
+        $guestsRoom = '';
 
         if (count($resvConstraints->getConstraints()) > 0) {
 
@@ -364,7 +365,6 @@ class RoomChooser {
             }
         }
 
-        $guestsRoom = '';
 
         if ($this->resv->isNew() === FALSE) {
 
@@ -388,8 +388,13 @@ class RoomChooser {
             $guestsRoom = $tbl->generateMarkup(array('id'=>'tblRescList')) . $errorMarkup;
         }
 
-        // fieldset wrapper
-        $mk1 = HTMLContainer::generateMarkup('div',
+
+        if ($guestsRoom == '' && $constraintMkup == '') {
+            $mk1 = '';
+        } else {
+
+            // fieldset wrapper
+            $mk1 = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('fieldset',
                         HTMLContainer::generateMarkup('legend', 'Room Chooser', array('style'=>'font-weight:bold;'))
                         . $guestsRoom
@@ -397,7 +402,7 @@ class RoomChooser {
                         array('class'=>'hhk-panel'))
                         , array('style'=>'float:left;')
                 );
-
+        }
 
         return $mk1;
     }

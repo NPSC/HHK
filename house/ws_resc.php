@@ -9,7 +9,7 @@
  * @link      https://github.com/NPSC/HHK
  */
 /**
- *  includes and requries
+ *  includes and requires
  */
 require ("homeIncludes.php");
 
@@ -542,14 +542,14 @@ $(document).mousedown(function (event) {
             if (isset($_REQUEST['tbl'])) {
                 $tbl = filter_var($_REQUEST['tbl'], FILTER_SANITIZE_STRING);
             }
-            
-			//start Date
+
+	//start Date
             $startDate = '';
             if (isset($_REQUEST['stdte'])) {
                 $startDate = filter_var($_REQUEST['stdte'], FILTER_SANITIZE_STRING);
             }
 
-			//end Date
+		//end Date
             $endDate = '';
             if (isset($_REQUEST['enddte'])) {
                 $endDate = filter_var($_REQUEST['enddte'], FILTER_SANITIZE_STRING);
