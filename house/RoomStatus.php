@@ -191,11 +191,13 @@ if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
 }
 
 
+/*
 $checkingIn = Reservation_1::showListByStatus($dbh, '', '', ReservationStatus::Committed, TRUE, NULL, 1, TRUE);
 
 if ($checkingIn == '') {
     $checkingIn = "<p style='margin-left:60px;'>-None-</p>";
 }
+*/
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -281,6 +283,59 @@ if ($checkingIn == '') {
                 {
                     'data': 'Notes',
                     'title': 'Notes',
+                    'searchable': true,
+                    'sortable': false
+                }
+            ];
+
+			var inCols = [
+                {
+                    'data': 'Primary Guest',
+                    'title': 'Primary Guest',
+                    'searchable': true,
+                    'sortable': true
+                },
+                {
+                    'data': 'Patient',
+                    'title': 'Patient',
+                    'searchable': false,
+                    'sortable': true
+                },
+                {
+                    'data': 'Guests',
+                    'title': 'Guests',
+                    'searchable': true,
+                    'sortable': true
+                },
+                {
+                    'data': 'Arrival Date',
+                    'title': 'Arrival Date',
+                    'type': 'date',
+                    render: function (data, type) {
+                        return dateRender(data, type, dateFormat);
+                    },
+                    'searchable': true,
+                    'sortable': true
+                },
+                {
+                    'data': 'Expected Departure',
+                    'title': 'Expected Departure',
+                    'type': 'date',
+                    render: function (data, type) {
+                        return dateRender(data, type, dateFormat);
+                    },
+                    'searchable': true,
+                    'sortable': true
+                },
+                {
+                    'data': 'Room',
+                    'title': 'Room',
+                    'searchable': true,
+                    'sortable': false
+                },
+                {
+                    'data': 'Nights',
+                    'title': 'Nights',
                     'searchable': true,
                     'sortable': false
                 }
@@ -399,7 +454,7 @@ if ($checkingIn == '') {
                     "order": [[0, 'asc']]
                 });
 
-                $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrint, #btnExcelAll, #btnSubmitTable, #prtCkOut').button();
+                $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrint, #btnExcelAll, #btnSubmitTable, #prtCkOut, #prtCkIn').button();
 
                 $('#mainTabs').tabs({
                     beforeActivate: function (event, ui) {
@@ -423,6 +478,39 @@ if ($checkingIn == '') {
                 });
                 $('#mainTabs').tabs("option", "active", cTab);
 
+				$('#ckInDate').datepicker({
+                    yearRange: '-1:+01',
+                    changeMonth: true,
+                    changeYear: true,
+                    autoSize: true,
+                    numberOfMonths: 1,
+                    dateFormat: 'M d, yy',
+                    onClose: function (dateText) {
+                        var d = new Date(dateText);
+                        if (d != coDate) {
+                            coDate = d;
+                            $('#inTable').DataTable().ajax.url('ws_resc.php?cmd=cleanStat&tbl=inTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", coDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", coDate));
+                            $('#inTable').DataTable().ajax.reload();
+                        }
+                    }
+                });
+
+                $('#ckInDate').datepicker('setDate', coDate);
+
+                $('#inButtonSet.week-button-group').on('click', 'button', function (e) {
+                    var btn = $(this)
+                    $('.week-button-group button').removeClass("ui-state-active");
+                    if (btn.data("weeks")) {
+                        var startDate = new Date();
+                        var endDate = new Date();
+                        endDate.setDate(startDate.getDate() + (btn.data("weeks") * 7));
+
+                        $('#inTable').DataTable().ajax.url('ws_resc.php?cmd=cleanStat&tbl=inTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", startDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", endDate));
+                        $('#inTable').DataTable().ajax.reload();
+                        btn.addClass("ui-state-active");
+                    }
+                });
+
                 $('#ckoutDate').datepicker({
                     yearRange: '-1:+01',
                     changeMonth: true,
@@ -442,7 +530,7 @@ if ($checkingIn == '') {
 
                 $('#ckoutDate').datepicker('setDate', coDate);
 
-                $('.week-button-group').on('click', 'button', function (e) {
+                $('#outButtonSet.week-button-group').on('click', 'button', function (e) {
                     var btn = $(this)
                     $('.week-button-group button').removeClass("ui-state-active");
                     if (btn.data("weeks")) {
@@ -483,6 +571,15 @@ if ($checkingIn == '') {
                     "deferRender": true,
                     "columns": outCols
                 });
+                
+                $('#inTable').dataTable({
+                    ajax: {
+                        url: 'ws_resc.php?cmd=cleanStat&tbl=inTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", coDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", coDate),
+                        dataSrc: 'inTable'
+                    },
+                    "deferRender": true,
+                    "columns": inCols
+                });
 
                 $('#atblgetter').dataTable({
                     'columnDefs': [
@@ -507,11 +604,16 @@ if ($checkingIn == '') {
                     popY: 20,
                     popTitle: 'Guests Checking Out'};
 
+				$('#prtCkIn').click(function () {
+                    $('div#ckin').printArea(opt);
+                });
+                
                 $('#prtCkOut').click(function () {
                     $('div#ckout').printArea(opt);
                 });
 
-                $('#buttonSet').controlgroup();
+                $('#outButtonSet').controlgroup();
+                $('#inButtonSet').controlgroup();
 
                 $('div#mainTabs').show();
             });
@@ -542,12 +644,26 @@ if ($checkingIn == '') {
                         </div>
                     </div>
                     <div id="ckin" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
-                        <?php echo $checkingIn; ?>
+<!--                         <?php //echo $checkingIn; ?> -->
+						<div class="row">
+                            <div id="inButtonSet" class="week-button-group">
+                                <button type="button" data-weeks="1" class="ui-corner-left">1 Week</button>
+                                <button type="button" data-weeks="2" class="">2 Weeks</button>
+                                <button type="button" data-weeks="4" class="ui-corner-right">4 Weeks</button>
+                            </div>
+                            <div style="display: inline-block; margin-left:5px;padding:5px;" class="ui-widget ui-widget-content ui-corner-all">
+                                <label>Or Choose Checkin Date: </label>
+                                <input id="ckInDate" class="ckdate"/>
+                            </div>
+                            <input type="button" value="Print" id="prtCkIn" style="margin-left:23px;"/>
+                        </div>
+
+                        <table id='inTable' class=' order-column display ' style='width:100%;' ></table>
                     </div>
                     <div id="ckout" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                         <div class="row">
-                            <div id="buttonSet" class="week-button-group">
-                                <button type="button" data-weeks="1" class="ui-corner-left"">1 Week</button>
+                            <div id="outButtonSet" class="week-button-group">
+                                <button type="button" data-weeks="1" class="ui-corner-left">1 Week</button>
                                 <button type="button" data-weeks="2" class="">2 Weeks</button>
                                 <button type="button" data-weeks="4" class="ui-corner-right">4 Weeks</button>
                             </div>

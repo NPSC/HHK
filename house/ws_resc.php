@@ -567,6 +567,10 @@ $(document).mousedown(function (event) {
                 case 'outTable':
                     $events['outTable'] = ResourceView::showCoList($dbh, $startDate, $endDate);
                     break;
+                    
+                case 'inTable':
+                    $events['inTable'] = ResourceView::showCiList($dbh, $startDate, $endDate);
+                    break;
             }
 
             break;
