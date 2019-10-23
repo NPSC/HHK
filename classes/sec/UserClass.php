@@ -54,7 +54,7 @@ class UserClass {
                 }
             }
 
-            self::_setSession($dbh, $ssn, $r);
+            $this->setSession($dbh, $ssn, $r);
 
             $ssn->groupcodes = self::setSecurityGroups($dbh, $r['idName'], $housePc);
 
@@ -116,7 +116,7 @@ class UserClass {
         return FALSE;
     }
 
-    public function setPassword(\PDO $dbh, $id, $newPw) {
+    protected function setPassword(\PDO $dbh, $id, $newPw) {
 
         if ($newPw != '' && $id != 0) {
 
@@ -190,7 +190,7 @@ WHERE n.idName is not null and u.Status='a' and u.User_Name = '$uname'");
         return $grpArray;
     }
 
-    public function _setSession(\PDO $dbh, Session $ssn, $r, $init = true) {
+    public function setSession(\PDO $dbh, Session $ssn, $r, $init = true) {
 
         $ssn->uid = $r["idName"];
         $ssn->username = htmlspecialchars($r["User_Name"]);

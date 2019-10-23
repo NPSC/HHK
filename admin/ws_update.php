@@ -138,7 +138,7 @@ if (is_array($record) && isset($record['Enc_PW']) && $record['Enc_PW'] === $so) 
         $uS->regenSessionId();
 
         // Record the login.
-        $user->_setSession($dbh, $uS, $record);
+        $user->setSession($dbh, $uS, $record);
 
         // Must be THE ADMIN
         if ($page->is_TheAdmin()) {

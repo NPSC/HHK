@@ -523,6 +523,16 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 $hideCheckinButton = FALSE;
             }
 
+            // Reservation Data
+            $dataArray['rstat'] = $this->createStatusChooser(
+                    $resv,
+                    $resv->getChooserStatuses($uS->guestLookups['ReservStatus']),
+                    $uS->nameLookups[GL_TableNames::PayType],
+                    $labels,
+                    $showPayWith,
+                    Registration::loadLodgingBalance($dbh, $resv->getIdRegistration()));
+
+
         } else if ($resv->isNew()) {
 
             // Allow reservations to have many guests.
@@ -535,16 +545,6 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             $dataArray['rstat'] = '';
 
-        } else {
-
-            // Reservation Data
-            $dataArray['rstat'] = $this->createStatusChooser(
-                    $resv,
-                    $resv->getChooserStatuses($uS->guestLookups['ReservStatus']),
-                    $uS->nameLookups[GL_TableNames::PayType],
-                    $labels,
-                    $showPayWith,
-                    Registration::loadLodgingBalance($dbh, $resv->getIdRegistration()));
         }
 
         // Reservation status title
