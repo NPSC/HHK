@@ -12,6 +12,9 @@ ALTER TABLE `invoice_line`
 ALTER TABLE `guest_token` 
     CHANGE COLUMN `Tran_Type` `Tran_Type` VARCHAR(14) NOT NULL DEFAULT '' ;
 
+ALTER TABLE `document` 
+	ADD COLUMN `Mime_Type` VARCHAR(85) NOT NULL DEFAULT '' AFTER `Type`;
+
 ALTER TABLE `w_users`
     ADD COLUMN `Default_Page` VARCHAR(100) NOT NULL DEFAULT '' AFTER `Ip`;
 ALTER TABLE `w_users` 
