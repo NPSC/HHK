@@ -288,17 +288,11 @@ if ($checkingIn == '') {
                 }
             ];
 
-			var inCols = [
+	var inCols = [
                 {
                     'data': 'Primary Guest',
                     'title': 'Primary Guest',
                     'searchable': true,
-                    'sortable': true
-                },
-                {
-                    'data': 'Patient',
-                    'title': 'Patient',
-                    'searchable': false,
                     'sortable': true
                 },
                 {
@@ -309,7 +303,7 @@ if ($checkingIn == '') {
                 },
                 {
                     'data': 'Arrival Date',
-                    'title': 'Arrival Date',
+                    'title': 'Expected Arrival',
                     'type': 'date',
                     render: function (data, type) {
                         return dateRender(data, type, dateFormat);
@@ -399,9 +393,7 @@ if ($checkingIn == '') {
                 {
                     'targets': [1],
                     'data': 'Type',
-                    'title': 'Type',
-                    'searchable': false,
-                    'sortable': true
+                    'visible': false
                 },
                 {
                     'targets': [2],

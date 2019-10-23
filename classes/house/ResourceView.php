@@ -1014,10 +1014,9 @@ where g3.Substitute > 0 and ru.idResource_use is null");
 
         $returnRows = array();
 
-        if ($startCiDate == '' || $endCiDate == '') {
+        if ($endCiDate == '') {
 	         $returnRows[] = array(
 	            'Primary Guest' => '',
-				'Patient' => '',
 				'Guests' => '',
 				'Arrival Date' => '',
 				'Expected Departure' => '',
@@ -1028,10 +1027,11 @@ where g3.Substitute > 0 and ru.idResource_use is null");
         }
 
         $stmt = $dbh->query("
-        	select pg.`Name_Full` as 'Primary Guest', IF(rp.`idGuest` = rp.`idPatient`, '(same)', rp.`Patient_Name`) as 'Patient', rp.`Number_Guests` as 'Guests', DATE(rp.`Expected_Arrival`) as 'Arrival Date', DATE(rp.`Expected_Departure`) as 'Expected Departure', rp.`Title` as 'Room', DATEDIFF(rp.`Expected_Departure`, rp.`Expected_Arrival`) as 'Nights'
+        	select pg.`Name_Full` as 'Primary Guest', rp.`Number_Guests` as 'Guests', DATE(rp.`Expected_Arrival`) as 'Arrival Date', DATE(rp.`Expected_Departure`) as 'Expected Departure', rp.`Title` as 'Room', DATEDIFF(rp.`Expected_Departure`, rp.`Expected_Arrival`) as 'Nights'
 			from vresv_patient rp
 			left join `name` pg on rp.idGuest = pg.idName
-			where rp.`Status` = \"" . ReservationStatus::Committed . "\" and ifnull(DATE(`Actual_Arrival`), DATE(`Expected_Arrival`)) between DATE(\"$startCiDate\") and DATE(\"$endCiDate\") order by `Expected_Arrival`;
+			where rp.`Status` in ('" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "', '" . ReservationStatus::Waitlist . "') "
+                . "and DATE(`Expected_Arrival`) <= DATE('$endCiDate') order by `Expected_Arrival`;
         ");
 
 		return $stmt->fetchAll(\PDO::FETCH_ASSOC);

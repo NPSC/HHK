@@ -185,8 +185,9 @@ function invSetBill(inb, name, idDiag, idElement, billDate, notes, notesElement)
     dialg.dialog('open');
 }
 
-function invoiceAction(idInvoice, action, eid) {
-    $.post('ws_resc.php', {cmd: 'invAct', iid: idInvoice, x:eid, action: action},
+function invoiceAction(idInvoice, action, eid, container, show) {
+    "use strict";
+    $.post('ws_resc.php', {cmd: 'invAct', iid: idInvoice, x:eid, action: action, 'sbt':show},
       function(data) {
         if (data) {
             try {
@@ -199,15 +200,27 @@ function invoiceAction(idInvoice, action, eid) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
                 }
-                flagAlertMessage(data.error, true);
+                flagAlertMessage(data.error, 'error');
                 return;
             }
+
             if (data.delete) {
-                flagAlertMessage(data.delete, false);
+
+                if (data.eid == '0') {
+                    flagAlertMessage(data.delete, 'success');
+                    $('#btnInvGo').click();
+                } else {
+                    $('#' + data.eid).parents('tr').first().hide('fade');
+                }
+
             }
             if (data.markup) {
                 var contr = $(data.markup);
-                $('body').append(contr);
+                if (container != undefined && container != '') {
+                    $(container).append(contr);
+                } else {
+                    $('body').append(contr);
+                }
                 contr.position({
                     my: 'left top',
                     at: 'left bottom',
@@ -217,3 +230,37 @@ function invoiceAction(idInvoice, action, eid) {
         }
     });
 }
+
+
+//function invoiceAction(idInvoice, action, eid) {
+//    $.post('ws_resc.php', {cmd: 'invAct', iid: idInvoice, x:eid, action: action},
+//      function(data) {
+//        if (data) {
+//            try {
+//                data = $.parseJSON(data);
+//            } catch (err) {
+//                alert("Parser error - " + err.message);
+//                return;
+//            }
+//            if (data.error) {
+//                if (data.gotopage) {
+//                    window.location.assign(data.gotopage);
+//                }
+//                flagAlertMessage(data.error, true);
+//                return;
+//            }
+//            if (data.delete) {
+//                flagAlertMessage(data.delete, false);
+//            }
+//            if (data.markup) {
+//                var contr = $(data.markup);
+//                $('body').append(contr);
+//                contr.position({
+//                    my: 'left top',
+//                    at: 'left bottom',
+//                    of: "#" + data.eid
+//                });
+//            }
+//        }
+//    });
+//}

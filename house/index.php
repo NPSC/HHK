@@ -36,8 +36,8 @@ try {
     $login = new Login();
     $config = $login->initializeSession(ciCFG_FILE);
 
-} catch (PDOException $pex) {
-    exit ("<h3>Database Error.  </h3>");
+} catch (Hk_Exception_InvalidArguement $pex) {
+    exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");
 
 } catch (Exception $ex) {
     exit ("<h3>" . $ex->getMessage());

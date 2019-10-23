@@ -722,7 +722,7 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
 
     protected function completeCof(\PDO $dbh, $ssoToken, $cardHolderName) {
 
-        $cidInfo = PaymentSvcs::getInfoFromCardId($dbh, $ssoToken);
+        $cidInfo = $this->getInfoFromCardId($dbh, $ssoToken);
 
         if (count($cidInfo) < 1) {
 

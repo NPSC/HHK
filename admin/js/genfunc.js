@@ -96,11 +96,16 @@ function getDonationMarkup(id) {
             var msg;
             data = $.parseJSON(data);
 
-            if (data.error) {
-                msg = data.error;
-            } else {
-                msg = data.success;
+        if (data.error) {
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
             }
+            msg = data.error;
+
+        } else {
+            msg = data.success;
+        }
+        
             $('#divListDonation').children().remove();
             $("#divListDonation").append($(msg));
         }
@@ -111,6 +116,10 @@ function donateDeleteMarkup(dataTxt, id) {
     var spn, data;
 
     data = $.parseJSON(dataTxt);
+    if (data.gotopage) {
+        window.open(data.gotopage, '_self');
+    }
+
     spn = document.getElementById('donResultMessage');
     document.getElementById('damount').value = "";
 
@@ -138,6 +147,10 @@ function donateResponse(dataTxt, id) {
     var spn, cbox, data;
 
         data = $.parseJSON(dataTxt);
+        if (data.gotopage) {
+            window.open(data.gotopage, '_self');
+        }
+
         spn = document.getElementById('donResultMessage');
         $('#damount').val('');
         $('#dnote').val('');
@@ -179,6 +192,9 @@ function getCampaign(code) {
                 var amtLimit = $('#cLimits');
 
                 if (data.error) {
+                    if (data.gotopage) {
+                        window.open(data.gotopage, '_self');
+                    }
                     amtLimit.val('');
                 } else if (data.camp) {
 
@@ -207,6 +223,9 @@ function relationReturn(data) {
 
     data = $.parseJSON(data);
     if (data.error) {
+        if (data.gotopage) {
+            window.open(data.gotopage, '_self');
+        }
         flagAlertMessage(data.error, true);
     } else if (data.success) {
         if (data.rc && data.markup) {

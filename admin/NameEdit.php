@@ -454,6 +454,7 @@ $alertMessage = $alertMsg->createMarkup();
                         <label for="rbmemName">Name</label><input type="radio" name="msearch" checked="checked" id="rbmemName" />
                         <label for="rbmemEmail">Email</label><input type="radio" name="msearch" id="rbmemEmail" />
                     </span>
+                    <input type="text" id='hdnblank' value='' style='display:none;'/>
                     <input type="text" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
                 </div>
             </div>

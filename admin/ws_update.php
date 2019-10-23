@@ -72,7 +72,7 @@ $ck = '';
 $cd = '';
 $un = '';
 $so = '';
-$events = array();
+$events = array('init'=>'Im here');
 
 
 // Check input

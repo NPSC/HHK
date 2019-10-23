@@ -569,29 +569,6 @@ class VantivGateway extends PaymentGateway {
         return $payResult;
     }
 
-    protected function getInfoFromCardId(\PDO $dbh, $cardId) {
-
-        $infoArray = array();
-
-        $query = "select `idName`, `idGroup`, `InvoiceNumber`, `Amount`, `CardID` from `card_id` where `CardID` = :cid";
-        $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':cid'=>$cardId));
-
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($rows) > 0) {
-
-            $infoArray = $rows[0];
-
-            // Delete to discourge replays.
-            $stmt = $dbh->prepare("delete from card_id where CardID = :cid");
-            $stmt->execute(array(':cid'=>$cardId));
-
-        }
-
-        return $infoArray;
-    }
-
     protected function sendVoid(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Guest_TokenRS $tknRs, Invoice $invoice, $paymentNotes = '') {
 
         $uS = Session::getInstance();

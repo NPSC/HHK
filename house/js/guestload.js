@@ -137,12 +137,6 @@ $(document).ready(function () {
     var setupNotes,
         $psgList;
 
-	//incident reports
-	$('#vIncidentContent').incidentViewer({
-		guestId: memData.id,
-		psgId: memData.idPsg
-	});
-
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
             var ul = this.menu.element;
@@ -155,6 +149,12 @@ $(document).ready(function () {
 
     $("#divFuncTabs").tabs({
         collapsible: true
+    });
+
+    //incident reports
+    $('#vIncidentContent').incidentViewer({
+            guestId: memData.id,
+            psgId: memData.idPsg
     });
 
     // relationship dialog

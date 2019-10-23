@@ -51,7 +51,7 @@ function initPDO($override = FALSE) {
         $ssn->destroy(TRUE);
 
         if ($roleCode >= WebRole::DefaultRole && $override === FALSE) {
-            throw new Hk_Exception_Runtime("<br/>Database Error: " . $e->getMessage());
+            throw new Hk_Exception_InvalidArguement("<br/>Database Error: " . $e->getMessage());
         }
 
         header('location:../reset.php?r=' . $e->getMessage());
@@ -63,8 +63,7 @@ function initPDO($override = FALSE) {
 
 function initMy_SQL($dbURL, $dbName, $dbuName, $dbPw) {
 
-    return new \PDO(
-        "mysql:host=" . $dbURL . ";dbname=" . $dbName, $dbuName, $dbPw);
+    return new \PDO("mysql:host=" . $dbURL . ";dbname=" . $dbName, $dbuName, $dbPw);
 
 }
 

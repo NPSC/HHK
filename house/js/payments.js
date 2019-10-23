@@ -226,52 +226,6 @@ function getInvoicee(item, orderNum) {
     $('#txtInvSearch').val('');
 }
 
-function invoiceAction(idInvoice, action, eid, container, show) {
-    "use strict";
-    $.post('ws_resc.php', {cmd: 'invAct', iid: idInvoice, x:eid, action: action, 'sbt':show},
-      function(data) {
-        if (data) {
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.location.assign(data.gotopage);
-                }
-                flagAlertMessage(data.error, 'error');
-                return;
-            }
-
-            if (data.delete) {
-
-                if (data.eid == '0') {
-                    flagAlertMessage(data.delete, 'success');
-                    $('#btnInvGo').click();
-                } else {
-                    $('#' + data.eid).parents('tr').first().hide('fade');
-                }
-
-            }
-            if (data.markup) {
-                var contr = $(data.markup);
-                if (container != undefined && container != '') {
-                    $(container).append(contr);
-                } else {
-                    $('body').append(contr);
-                }
-                contr.position({
-                    my: 'left top',
-                    at: 'left bottom',
-                    of: "#" + data.eid
-                });
-            }
-        }
-    });
-}
-
 /**
  *
  * @param {string} btnid

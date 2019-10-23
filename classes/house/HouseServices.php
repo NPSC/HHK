@@ -1363,7 +1363,6 @@ class HouseServices {
                         $gtRs = CreditToken::getTokenRsFromId($dbh, $idGt);
                         $msg .= 'Card ' . $gtRs->MaskedAccount->getStoredVal() . ', Name ' . $gtRs->CardHolderName->getStoredVal() . ' deleted.  ';
                     }
-
                 }
             }
         }
